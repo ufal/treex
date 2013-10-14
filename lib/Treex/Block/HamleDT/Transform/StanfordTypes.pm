@@ -203,7 +203,7 @@ sub Pnom {
     elsif ( $anode->match_iset( 'pos' => '~noun') ) {
         $type = 'obj';
         if ( $self->parent_is_preposition($anode)) {
-            $type = 'pobj';
+            $type = 'adpobj';
         }
     }
 
@@ -255,7 +255,7 @@ sub Atr {
         $type = 'rcmod';
     }
     if ( $anode->match_iset( 'pos' => '~noun' ) && $self->parent_is_preposition($anode) ) {
-        $type = 'pobj';
+        $type = 'adpobj';
     }
     # possessives
     if ( $anode->match_iset( 'poss' => '~poss' ) ) {
