@@ -99,7 +99,10 @@ sub process_anode {
     }
 
     # adpositions (some adpositions are AuxC and should stay mark)
-    elsif ( $anode->match_iset( 'pos' => '~prep' && $type ne 'mark' )) {
+    elsif ( $anode->match_iset( 'pos' => '~prep' ) &&
+        $type ne 'mark' &&
+        $anode->get_children()
+    ) {
         $type = 'adpmod';
     }
     elsif ( $self->parent_is_adposition($anode)) {
@@ -260,6 +263,12 @@ sub Atr {
             }
         }
 
+    }
+    # verb modifiers
+    elsif ( $self->parent_is_verb($anode) ) {
+        if ( $anode->match_iset( 'pos' => '~adj' ) ) {
+            $type = 'acomp';
+        }
     }
 
     # possessives
