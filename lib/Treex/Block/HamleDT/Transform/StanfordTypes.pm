@@ -273,6 +273,10 @@ sub Atr {
         #    $type = 'number';
         #}
     }
+    # advmod
+    if ( $anode->match_iset( 'poss' => '~adv' ) ) {
+        $type = 'advmod';
+    }
     #elsif ( $self->parent_is_numeral($anode) ) {
     #    $type = 'quantmod';
     #}
