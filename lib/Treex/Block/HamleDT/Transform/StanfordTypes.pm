@@ -115,7 +115,8 @@ sub process_anode {
 
     # partmod
     elsif ( $anode->match_iset( 'pos' => '~verb' ) &&
-        $self->get_simplified_verbform($anode) eq 'part'
+        $self->get_simplified_verbform($anode) eq 'part' &&
+        $type !~ /^aux/
     ) {
         $type = 'partmod';
     }
@@ -290,8 +291,7 @@ sub Adv {
         $type = 'npadvmod';
     }
     elsif ( $anode->match_iset( 'pos' => '~verb' ) &&
-        $self->parent_is_verb($anode) &&
-        $self->get_simplified_verbform($anode) eq 'fin'
+        $self->parent_is_verb($anode)
     ) {
         $type = 'advcl';
     }
