@@ -265,6 +265,12 @@ sub Atr {
 
     }
     # verb modifiers
+    elsif ( $self->parent_is_adjective($anode) ) {
+        if ( $anode->match_iset( 'pos' => '~adj' ) ) {
+            $type = 'acomp';
+        }
+    }
+    # verb modifiers
     elsif ( $self->parent_is_verb($anode) ) {
         if ( $anode->match_iset( 'pos' => '~adj' ) ) {
             $type = 'acomp';
@@ -391,7 +397,11 @@ sub parent_is_adposition {
 
     my $parent = $anode->get_parent();
     if ( defined $parent &&
-        $parent->match_iset( 'pos' => '~prep' )
+        (
+            $parent->match_iset( 'pos' => '~prep' )
+            ||
+            $parent->afun eq 'AuxP'
+        )
     ) {
         return 1;
     }
@@ -428,6 +438,19 @@ sub parent_is_numeral {
     }
 }
 
+sub parent_is_adjective {
+    my ($self, $anode) = @_;
+
+    my $parent = $anode->get_parent();
+    if ( defined $parent &&
+        $parent->match_iset( 'pos' => '~adj' )
+    ) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
 
 
 1;
