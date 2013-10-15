@@ -254,6 +254,9 @@ sub Atr {
         elsif ( $anode->match_iset( 'pos' => '~adj' ) ) {
             $type = 'amod';
         }
+        elsif ( $anode->match_iset( 'pos' => '~adv' ) ) {
+            $type = 'advmod';
+        }
         elsif ( $anode->match_iset( 'pos' => '~verb' ) ) {
             if ( $self->get_simplified_verbform($anode) eq 'fin' ) {
                 $type = 'rcmod';
