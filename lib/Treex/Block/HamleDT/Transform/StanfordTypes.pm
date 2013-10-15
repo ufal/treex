@@ -251,8 +251,13 @@ sub Atr {
     if ( $anode->match_iset( 'pos' => '~adj' ) && $self->parent_is_noun($anode) ) {
         $type = 'amod';
     }
-    if ( $anode->match_iset( 'pos' => '~verb', verbform => $FINITE ) && $self->parent_is_noun($anode) ) {
-        $type = 'rcmod';
+    if ( $anode->match_iset( 'pos' => '~verb' ) && $self->parent_is_noun($anode) ) {
+        if ( $anode->match_iset( verbform => $FINITE ) ) {
+            $type = 'rcmod';
+        }
+        else {
+            $type = 'infmod';
+        }
     }
     if ( $anode->match_iset( 'pos' => '~noun' ) && $self->parent_is_preposition($anode) ) {
         $type = 'adpobj';
