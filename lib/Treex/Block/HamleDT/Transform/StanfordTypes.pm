@@ -4,10 +4,6 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Core::Block';
 
-# regex for verbform of a finite verb
-# my $FINITE = '~fin';
-my $FINITE = '!~inf';
-
 # Prague afun to Stanford type
 # TODO 'dep' means I don't know what to use,
 # usually it should eventually become something more specific!
@@ -40,7 +36,7 @@ my %afun2type = (
     ObjAtr     => \&{Atr},
     PredC      => 'dep',      # only in ar; "conjunction as the clause's head"
     PredE      => 'dep',      # only in ar; "existential predicate"
-    PredP      => 'dep',      # only in ar; "preposition as the clause's head"
+    PredP      => 'dep',      # only in ar; "adposition as the clause's head"
     Ante       => 'dep',      # only in ar;
 
     # some crazy Aux*
@@ -90,38 +86,39 @@ sub process_anode {
     # SOME POST-CHECKS
 
     # root
-    if ( $anode->get_parent()->is_root()
-        # && $type ne 'root'
-    ) {
-        # log_warn "Attempted to use type '$type' for the root ($form)!";
+    if ( $anode->get_parent()->is_root()) {
         $type = 'root';
+    }
+    # negations
+    elsif ( $anode->match_iset( 'pos' => '~part', negativeness => 'neg' ) ) {
+        $type = 'neg';
     }
     # determiners
     elsif ( $anode->match_iset( 'subpos' => '~art|det' ) ) {
         $type = 'det';
     }
+
     # adpositions
-    elsif ( $anode->match_iset( 'pos' => '~prep' )
-        # && $type ne 'prep'
-    ) {
-        # log_warn "Attempted to use type '$type' for an adposition ($form)!";
+    elsif ( $anode->match_iset( 'pos' => '~prep' )) {
         $type = 'adp';
     }
-    # adpositional objects
-    elsif ( $anode->match_iset( 'pos' => '~noun' ) && $self->parent_is_preposition($anode)
-        # && $type ne 'adpobj'
-    ) {
-        # log_warn "Attempted to use type '$type' for a adpobj ($form)!";
-        $type = 'adpobj';
-    }
-    # adpositional complements
-    elsif ( $anode->match_iset( 'pos' => '~verb' ) && $self->parent_is_preposition($anode)
-        # && $type ne 'adpcomp'
-    ) {
-        # log_warn "Attempted to use type '$type' for a adpcomp ($form)!"
-        $type = 'adpcomp';
+    elsif ( $self->parent_is_adposition($anode)) {
+        # adpositional objects
+        if ( $anode->match_iset( 'pos' => '~noun' ) ) {
+            $type = 'adpobj';
+        }
+        # adpositional complements
+        else {
+           $type = 'adpcomp';
+        }
     }
 
+    # partmod
+    elsif ( $anode->match_iset( 'pos' => '~verb' ) &&
+        $self->get_simplified_verbform($anode) eq 'part'
+    ) {
+        $type = 'partmod';
+    }
 
     # MARK CONJUNCTS
     # the first conjunct (which is the head of the coordination) is NOT marked
@@ -151,7 +148,7 @@ sub Sb {
             $type = 'nsubjpass';
         }
     }
-    elsif ( $anode->match_iset( 'pos' => '~verb', verbform => $FINITE ) ) {
+    elsif ( $anode->match_iset( 'pos' => '~verb' ) ) {
         $type = 'csubj';
         if ( $self->parent_is_passive_verb($anode)) {
             $type = 'csubjpass';
@@ -169,9 +166,6 @@ sub Obj {
 
     if ( $anode->match_iset( 'pos' => '~noun' ) ) {
         $type = 'obj';
-        if ( $self->parent_is_preposition($anode)) {
-            $type = 'adpobj';
-        }
         # elsif ( $anode->match_iset( case => '~acc' ) ) {
         #   $type = 'dobj';
         # }
@@ -180,7 +174,7 @@ sub Obj {
         # }
     }
     elsif ( $anode->match_iset( 'pos' => '~verb' ) ) {
-        if ( $anode->match_iset( verbform => $FINITE ) ) {
+        if ( $self->get_simplified_verbform($anode) eq 'fin' ) {
             $type = 'ccomp';
         }
         else {
@@ -202,9 +196,6 @@ sub Pnom {
     }
     elsif ( $anode->match_iset( 'pos' => '~noun') ) {
         $type = 'obj';
-        if ( $self->parent_is_preposition($anode)) {
-            $type = 'adpobj';
-        }
     }
 
     return $type;
@@ -232,6 +223,9 @@ sub Atv {
     if ( $anode->match_iset( 'pos' => '~adj' ) ) {
         $type = 'acomp';
     }
+    elsif ( $anode->match_iset( 'pos' => '~verb' ) ) {
+        $type = 'partmod';
+    }
 
     return $type;
 }
@@ -245,29 +239,29 @@ sub Atr {
     # TODO: I usually do not know the priorities,
     # therefore I use "if" instead of "elsif"
     # and I do not nest the ifs
-    if ( $anode->match_iset( 'pos' => '~noun' ) && $self->parent_is_noun($anode) ) {
+    
+    # noun modifiers
+    if ( $self->parent_is_noun($anode) ) {
+    if ( $anode->match_iset( 'pos' => '~noun' ) &&  ) {
         $type = 'nmod';
     }
     if ( $anode->match_iset( 'pos' => '~adj' ) && $self->parent_is_noun($anode) ) {
         $type = 'amod';
     }
     if ( $anode->match_iset( 'pos' => '~verb' ) && $self->parent_is_noun($anode) ) {
-        if ( $anode->match_iset( verbform => $FINITE ) ) {
+        if ( $self->get_simplified_verbform($anode) eq 'fin' ) {
             $type = 'rcmod';
         }
         else {
             $type = 'infmod';
         }
     }
-    if ( $anode->match_iset( 'pos' => '~noun' ) && $self->parent_is_preposition($anode) ) {
-        $type = 'adpobj';
+
     }
+
     # possessives
     if ( $anode->match_iset( 'poss' => '~poss' ) ) {
         $type = 'poss';
-        if ( $anode->match_iset( 'pos' => '~part' ) ) {
-            $type = 'possessive';
-        }
     }
     # numerals
     if ( $anode->match_iset( 'pos' => '~num' ) ) {
@@ -295,8 +289,9 @@ sub Adv {
     elsif ( $anode->match_iset( 'pos' => '~noun' ) ) {
         $type = 'npadvmod';
     }
-    elsif ( $anode->match_iset( 'pos' => '~verb', verbform => $FINITE ) &&
-        $self->parent_is_verb($anode)
+    elsif ( $anode->match_iset( 'pos' => '~verb' ) &&
+        $self->parent_is_verb($anode) &&
+        $self->get_simplified_verbform($anode) eq 'fin'
     ) {
         $type = 'advcl';
     }
@@ -325,6 +320,26 @@ sub ExD {
 # is the same as using get_eparent() for the first conjunct, and irrelevant for
 # other conjuncts since they all should get the 'conj' type
 
+my %simplified_verbform = (
+    '' => 'fin',
+    fin => 'fin',
+    inf => 'inf',
+    sup => 'inf',
+    part => 'part',
+    trans => 'part',
+    ger => 'part',
+);
+
+sub get_simplified_verbform {
+    my ($self, $anode) = @_;
+
+    my $verbform = $anode->get_iset('verbform');
+    # TODO (now takes the first one from multiple values)
+    $verbform =~ s/\|.*//;
+
+    return $simplified_verbform{$verbform} // 'fin';
+}
+
 sub parent_is_verb {
     my ($self, $anode) = @_;
 
@@ -351,7 +366,7 @@ sub parent_is_passive_verb {
     }
 }
 
-sub parent_is_preposition {
+sub parent_is_adposition {
     my ($self, $anode) = @_;
 
     my $parent = $anode->get_parent();
