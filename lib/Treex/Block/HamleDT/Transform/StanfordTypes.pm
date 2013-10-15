@@ -242,20 +242,20 @@ sub Atr {
     
     # noun modifiers
     if ( $self->parent_is_noun($anode) ) {
-    if ( $anode->match_iset( 'pos' => '~noun' ) &&  ) {
-        $type = 'nmod';
-    }
-    if ( $anode->match_iset( 'pos' => '~adj' ) && $self->parent_is_noun($anode) ) {
-        $type = 'amod';
-    }
-    if ( $anode->match_iset( 'pos' => '~verb' ) && $self->parent_is_noun($anode) ) {
-        if ( $self->get_simplified_verbform($anode) eq 'fin' ) {
-            $type = 'rcmod';
+        if ( $anode->match_iset( 'pos' => '~noun' ) ) {
+            $type = 'nmod';
         }
-        else {
-            $type = 'infmod';
+        elsif ( $anode->match_iset( 'pos' => '~adj' ) ) {
+            $type = 'amod';
         }
-    }
+        elsif ( $anode->match_iset( 'pos' => '~verb' ) ) {
+            if ( $self->get_simplified_verbform($anode) eq 'fin' ) {
+                $type = 'rcmod';
+            }
+            else {
+                $type = 'infmod';
+            }
+        }
 
     }
 
