@@ -98,9 +98,9 @@ sub process_anode {
         $type = 'det';
     }
 
-    # adpositions
-    elsif ( $anode->match_iset( 'pos' => '~prep' )) {
-        $type = 'adp';
+    # adpositions (some adpositions are AuxC and should stay mark)
+    elsif ( $anode->match_iset( 'pos' => '~prep' && $type ne 'mark' )) {
+        $type = 'adpmod';
     }
     elsif ( $self->parent_is_adposition($anode)) {
         # adpositional objects
@@ -116,7 +116,9 @@ sub process_anode {
     # partmod
     elsif ( $anode->match_iset( 'pos' => '~verb' ) &&
         $self->get_simplified_verbform($anode) eq 'part' &&
-        $type !~ /^aux/
+        $type !~ /^aux/ &&
+        # should nto be a subordinated clause
+        ! (grep { $_->afun eq 'AuxC' } $anode->get_children())
     ) {
         $type = 'partmod';
     }
@@ -295,8 +297,13 @@ sub Adv {
     ) {
         $type = 'advcl';
     }
-    elsif ( $anode->match_iset( 'pos' => '~adj' ) && $self->parent_is_noun($anode) ) {
-        $type = 'amod';
+    elsif ( $anode->match_iset( 'pos' => '~adj' ) ) {
+        if ( $self->parent_is_noun($anode) ) {
+            $type = 'amod';
+        }
+        elsif ( $self->parent_is_verb($anode) ) {
+            $type = 'acomp';
+        }
     }
 
     return $type;
