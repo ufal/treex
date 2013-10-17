@@ -5,7 +5,8 @@ use Moose;
 use Treex::Core::Common;
 use Encode;
 extends 'Treex::Core::Block';
-use MeCab;
+
+use Treex::Tool::Tagger::MeCab;
 
 has _form_corrections => (
     is      => 'ro',
@@ -19,6 +20,14 @@ has _form_corrections => (
     documentation => q{Possible changes in forms done by tagger},
 );
 
+has tagger => ( is => 'rw' );
+
+sub BUILD {
+    my ($self) = @_;
+
+    return;
+}
+
 sub _revert_form {    #taken from Lingua::EN::Tagger
     my $self = shift;
     my %args = @_;
@@ -27,13 +36,20 @@ sub _revert_form {    #taken from Lingua::EN::Tagger
 }
 
 
+sub process_start {
+    my ($self) = @_;
+
+    my $tagger = Treex::Tool::Tagger::MeCab->new();
+  
+    $self->set_tagger( $tagger );
+    
+    return;   
+} 
+
 sub process_zone {
 
 
-#Lingua Wrapper Code
     my ( $self, $zone ) = @_;
-
-    
 
     # get the source sentence
     my $sentence = $zone->sentence;
@@ -43,19 +59,18 @@ sub process_zone {
 
     my $result = "";
 
-    my $model = new MeCab::Model();
-    my $tagger = $model->createTagger();
-
     my $debug;
     
-    # adds tags and modifies the output format of MeCab tagger
-    for (my $m = $tagger->parseToNode($sentence); $m; $m = $m->{next}) {
-    	my $wordform = decode('utf-8', $m->{surface});
-    	my @features = split /,/, decode('utf-8', $m->{feature});
-        
+    my ( @tokens ) = $self->tagger->process_sentence( $sentence );
+
+    # modifies the output format of MeCab wrapper
+    foreach my $token ( @tokens ) {
+    	my @features = split /\t/, $token;
+        my $wordform = $features[0];
+
         #TODO: should use whole IPADIC tagset (or JDEPP parser is bound to make mistakes sometimes)
-        my $bTag = $features[0].'_'.$features[1];
-        my $lemma = $features[6];      
+        my $bTag = $features[1].'_'.$features[2];
+        my $lemma = $features[7];      
 
     	if ($bTag !~ "BOS" && $bTag !~ "空白") {
             
