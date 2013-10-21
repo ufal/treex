@@ -42,6 +42,16 @@ has if_missing_tree => (
         . ' that is missing in a given zone?',
 );
 
+has if_missing_bundles => (
+    is            => 'ro',
+    isa           => enum( [qw(fatal warn ignore)] ),
+    default       => 'fatal',
+    documentation => 'What to do if process_document is to be called on a document'
+        . ' with no bundles?',
+);
+
+
+
 has report_progress => (
     is            => 'ro',
     isa           => 'Str',
@@ -185,9 +195,11 @@ sub process_document {
         { isa => 'Treex::Core::Document' },
     );
 
-    if ( !$document->get_bundles() ) {
-        log_fatal "There are no bundles in the document and block " . $self->get_block_name() .
-            " doesn't override the method process_document";
+    if ( !$document->get_bundles() && $self->if_missing_bundles =~ /fatal|warn/){
+        my $message = "There are no bundles in the document and block " . $self->get_block_name() .
+            " doesn't override the method process_document. You can use prepend 'Util::SetGlobal if_missing_bundles=ignore' to allow processing empty documents. ";
+        log_fatal($message) if $self->if_missing_bundles eq 'fatal';
+        log_warn($message);
     }
 
     my $bundleNo = 1;
