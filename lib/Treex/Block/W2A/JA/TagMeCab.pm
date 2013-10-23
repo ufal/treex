@@ -59,7 +59,7 @@ sub process_zone {
 
     my $result = "";
 
-    my $debug;
+    my $debug = "";
     
     my ( @tokens ) = $self->tagger->process_sentence( $sentence );
 
@@ -76,11 +76,12 @@ sub process_zone {
             
             $lemma = $wordform if $lemma =~ m/\*/;
 
-            $debug = $wordform if $bTag =~ "サ変接続";
+            # $debug = $wordform if $bTag =~ "サ変接続";
 
             $bTag =~ s{\_\*}{};
             $bTag =~ s{／.*}{};
             $bTag =~ s{^(.+)$}{<$1>};
+
             my $eTag = $bTag;
             $eTag =~ s{<}{</};
 	    $result .= ' '.$bTag.$wordform.$eTag.$lemma;
@@ -104,12 +105,15 @@ sub process_zone {
     my $ord         = 1;
     foreach my $tag_pair (@tagged) {
         if ( $tag_pair =~ $tag_regex ) {
-            my $form = $self->_revert_form( new => $2 );
-
+            #my $form = $self->_revert_form( new => $2 );
+            my $form = $2;
+            
             my $tag = $1; 
             $tag =~ s{^<(\w+)>.$}{$1};
 
             my $lemma = $3;
+
+            $debug .= "$form   $tag;    ";
  
             if ( $sentence =~ s/^\Q$form\E// ) {
 
@@ -132,7 +136,7 @@ sub process_zone {
                 );
             }
             else {
-                log_fatal("Mismatch between tagged word and original sentence: Tagged: $form. Original: $sentence.");
+                log_fatal("Mismatch between tagged word and original sentence: Tagged: $form; $debug.  Original: $sentence.");
             }
         }
         else {

@@ -41,7 +41,14 @@ sub process_sentence {
     # other block should edit this output as needed
     # EOS marks end of sentence
     while ( $_ !~ "EOS" ) {
+        
+        # we don't want to substitute actual commas in the sentence
+        $_ =~ s{^(.*),\t}{$1#comma\t};
+
         $_ =~ s{(.),}{$1\t}g;
+
+        $_ =~ s{#comma}{,};
+
         push @tokens, $_;
         $_ = <$reader>;
     }
