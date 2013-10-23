@@ -5,12 +5,13 @@ extends 'Treex::Block::W2A::BaseChunkParser';
 
 use Treex::Tool::Parser::JDEPP;
 
-#we use knbc corpus to train the parser
+# we use kyoto-partial model as a default model (installed as default during jdepp installation)
+# other models should be trained through jdepp itself before use
 has 'model_dir' => (
     is            => 'ro',
     isa           => 'Str',
     required      => 1,
-    default       => 'data/models/parser/jdepp/knbc',
+    default       => 'data/models/parser/jdepp/kyoto-partial',
     documentation => 'path to the model relative to Treex resource_path',
 );
 

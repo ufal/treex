@@ -74,7 +74,7 @@ sub process_zone {
 
     	if ($bTag !~ "BOS" && $bTag !~ "空白") {
             
-            $lemma = $wordform if $lemma eq '*';
+            $lemma = $wordform if $lemma =~ m/\*/;
 
             $debug = $wordform if $bTag =~ "サ変接続";
 

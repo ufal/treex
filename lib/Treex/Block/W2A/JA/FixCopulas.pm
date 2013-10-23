@@ -19,8 +19,11 @@ sub fix_subtree {
     # we change lemma of "じゃ" and "では" based on auxiliary verbs dependent on them
     if ( $lemma eq "じゃ" || $lemma eq "では" ) {
         foreach my $child ( $a_node->get_children() ) {
-            $a_node->lemma = "だ" if $child->lemma eq "ない" ;
-            $a_node->lemma = "です" if $child->lemma eq "ん";
+            
+            # should be modified differently
+
+            # $a_node->lemma = "だ" if $child->lemma eq "ない" ;
+            # $a_node->lemma = "です" if $child->lemma eq "ん";
         }
     }
     return;

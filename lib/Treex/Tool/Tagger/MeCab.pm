@@ -33,9 +33,7 @@ sub process_sentence {
     my $writer = $self->{writer};
     my $reader = $self->{reader};
 
-    print $writer $sentence;
-
-    close($writer);
+    print $writer $sentence."\n";
 
     $_ = <$reader>;
 
