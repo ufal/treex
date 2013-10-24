@@ -242,6 +242,11 @@ sub Atr {
 
     my $type = 'mod';
 
+    # default for verbs
+    if ( $anode->match_iset( 'pos' => '~verb' ) ) {
+        $type = 'vmod';
+    }
+
     # TODO: I usually do not know the priorities,
     # therefore I use "if" instead of "elsif"
     # and I do not nest the ifs
@@ -308,6 +313,11 @@ sub Adv {
 
     my $type = 'mod';
 
+    # default for verbs
+    if ( $anode->match_iset( 'pos' => '~verb' ) ) {
+        $type = 'vmod';
+    }
+    
     if ( $anode->match_iset( 'pos' => '~adv' ) ) {
         $type = 'advmod';
     }
@@ -350,7 +360,7 @@ sub ExD {
 # other conjuncts since they all should get the 'conj' type
 
 my %simplified_verbform = (
-    '' => 'fin',
+#    '' => 'fin',
     fin => 'fin',
     inf => 'inf',
     sup => 'inf',
