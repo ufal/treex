@@ -117,14 +117,14 @@ sub process_anode {
     }
 
     # partmod
-    elsif ( $anode->match_iset( 'pos' => '~verb' ) &&
-        $self->get_simplified_verbform($anode) eq 'part' &&
-        $type !~ /^aux/ &&
-        # should nto be a subordinated clause
-        ! (grep { $_->afun eq 'AuxC' } $anode->get_children())
-    ) {
-        $type = 'partmod';
-    }
+#     elsif ( $anode->match_iset( 'pos' => '~verb' ) &&
+#         $self->get_simplified_verbform($anode) eq 'part' &&
+#         $type !~ /^aux/ &&
+#         # should nto be a subordinated clause
+#         ! (grep { $_->afun eq 'AuxC' } $anode->get_children())
+#     ) {
+#         $type = 'partmod';
+#     }
 
     # MARK CONJUNCTS
     # the first conjunct (which is the head of the coordination) is NOT marked
@@ -242,11 +242,6 @@ sub Atr {
 
     my $type = 'mod';
 
-    # default for verbs
-    if ( $anode->match_iset( 'pos' => '~verb' ) ) {
-        $type = 'vmod';
-    }
-
     # TODO: I usually do not know the priorities,
     # therefore I use "if" instead of "elsif"
     # and I do not nest the ifs
@@ -266,7 +261,10 @@ sub Atr {
             if ( $self->get_simplified_verbform($anode) eq 'fin' ) {
                 $type = 'rcmod';
             }
-            else {
+            elsif ( $self->get_simplified_verbform($anode) eq 'part' ) {
+                $type = 'partmod';
+            }
+            else { # inf
                 $type = 'infmod';
             }
         }
@@ -313,11 +311,6 @@ sub Adv {
 
     my $type = 'mod';
 
-    # default for verbs
-    if ( $anode->match_iset( 'pos' => '~verb' ) ) {
-        $type = 'vmod';
-    }
-    
     if ( $anode->match_iset( 'pos' => '~adv' ) ) {
         $type = 'advmod';
     }
@@ -360,7 +353,7 @@ sub ExD {
 # other conjuncts since they all should get the 'conj' type
 
 my %simplified_verbform = (
-#    '' => 'fin',
+    '' => 'fin',
     fin => 'fin',
     inf => 'inf',
     sup => 'inf',
@@ -491,10 +484,6 @@ If C<conll/deprel> already contains a value, this value is kept. Delete the
 values first to avoid that. (But do that before calling
 L<HamleDT::Transform::MarkPunct> since this block stores the C<punct> types into
 C<conll/deprel>.)
-
-There are many log_warn messages that are commented out at the moment, which
-might suggest an error in the preceding conversion steps. Comment them back in
-if you are interested in that.
 
 =head1 PARAMETERS
 
