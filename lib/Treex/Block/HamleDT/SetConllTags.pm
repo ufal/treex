@@ -33,10 +33,13 @@ sub process_anode {
     $anode->set_conll_cpos($cpos);
     
     my $pos = $cpos;
+    # avoid duplicating values
+    my %values = ( lc($pos), 1);
     foreach my $feature (@{$self->_features}) {
         my $value = $anode->get_iset($feature);
-        if ( $value ne '' ) {
+        if ( $value ne '' && !defined $values{$value} ) {
             $pos .= "_$value";
+            $values{$value} = 1;
         }
     }
     $anode->set_conll_pos($pos);
