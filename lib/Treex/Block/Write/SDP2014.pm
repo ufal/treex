@@ -61,6 +61,9 @@ sub process_zone
                 if(defined($aparent))
                 {
                     $parent_id = $aparent->ord();
+                    ###!!! Kvůli koordinacím musíme dohledat také efektivní rodiče. Nejdřív musíme mít jistotu, že existuje alespoň nějaký rodič, jinak get_eparents hodí varování.
+                    ###!!! A pozor, na tektogramatické rovině je mnohem více funktorů, které signalizují koordinaci. Např. CONJ nebo DISJ - zahrnují totiž druh koordinace.
+                    ###!!! my @effective_parents = $node->get_eparents($arg_ref?)
                 }
             }
             if(defined($tnode->functor()))
