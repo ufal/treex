@@ -7,22 +7,6 @@ extends 'Treex::Block::Write::BaseTextWriter';
 
 Readonly my $NOT_SET   => "_";    # CoNLL-ST format: undefined value
 Readonly my $NO_NUMBER => -1;     # CoNLL-ST format: undefined integer value
-Readonly my $FILL      => "_";    # CoNLL-ST format: "fill predicate"
-Readonly my $TAG_FEATS => {
-    "SubPOS" => 1,
-    "Gen"    => 2,
-    "Num"    => 3,
-    "Cas"    => 4,
-    "PGe"    => 5,
-    "PNu"    => 6,
-    "Per"    => 7,
-    "Ten"    => 8,
-    "Gra"    => 9,
-    "Neg"    => 10,
-    "Voi"    => 11,
-    "Var"    => 14
-};    # tag positions and their meanings
-Readonly my $TAG_NOT_SET => "-";    # tagset: undefined value
 
 has '+language' => ( required => 1 );
 has '+extension' => ( default => '.conll' );
@@ -46,7 +30,7 @@ sub process_zone
         my $anode = $tnode->get_lex_anode();
         if(defined($anode))
         {
-            $anode->set_wild('tnode', $tnode);
+            $anode->wild()->{tnode} = $tnode;
         }
     }
     my @anodes = $aroot->get_descendants({ordered => 1});
@@ -56,19 +40,40 @@ sub process_zone
         my $form = $anode->form();
         my $lemma = $anode->lemma();
         my $tag = $anode->tag();
-        print {$this->_file_handle} ("$ord\t$form\t$lemma\t$tag");
         # Is there a lexically corresponding tnode?
-        my $tnode = $anode->get_wild('tnode');
+        my $tnode = $anode->wild()->{tnode};
+        my $type;
+        my $parent_id = $NOT_SET;
+        my $functor = $NOT_SET;
         if(defined($tnode))
         {
             # This is a content word and there is a lexically corresponding t-node.
-            print("\tt-node");
+            $lemma = $tnode->t_lemma();
+            $type = 't';
+            # If parent is t-root, we will not find its lexically corresponding a-node. But we want a-root.
+            if($tnode->parent()->is_root())
+            {
+                $parent_id = 0;
+            }
+            else
+            {
+                my $aparent = $tnode->parent()->get_lex_anode();
+                if(defined($aparent))
+                {
+                    $parent_id = $aparent->ord();
+                }
+            }
+            if(defined($tnode->functor()))
+            {
+                $functor = $tnode->functor();
+            }
         }
         else
         {
             # This is an auxiliary word. There is a t-node to which it belongs but they do not correspond lexically.
-            print("\ta-node");
+            $type = 'a';
         }
+        print {$this->_file_handle} ("$ord\t$form\t$lemma\t$tag\t$type\t$parent_id\t$functor");
         # Terminate the line.
         print {$this->_file_handle} ("\n");
     }
