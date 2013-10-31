@@ -50,21 +50,13 @@ sub process_zone
             # This is a content word and there is a lexically corresponding t-node.
             $lemma = $tnode->t_lemma();
             $type = 't';
-            # If parent is t-root, we will not find its lexically corresponding a-node. But we want a-root.
-            if($tnode->parent()->is_root())
+            my $aparent = $self->get_a_parent_for_t_node($tnode);
+            if(defined($aparent))
             {
-                $parent_id = 0;
-            }
-            else
-            {
-                my $aparent = $tnode->parent()->get_lex_anode();
-                if(defined($aparent))
-                {
-                    $parent_id = $aparent->ord();
+                $parent_id = $aparent->ord();
                     ###!!! Kvůli koordinacím musíme dohledat také efektivní rodiče. Nejdřív musíme mít jistotu, že existuje alespoň nějaký rodič, jinak get_eparents hodí varování.
                     ###!!! A pozor, na tektogramatické rovině je mnohem více funktorů, které signalizují koordinaci. Např. CONJ nebo DISJ - zahrnují totiž druh koordinace.
                     ###!!! my @effective_parents = $node->get_eparents($arg_ref?)
-                }
             }
             if(defined($tnode->functor()))
             {
@@ -82,6 +74,34 @@ sub process_zone
     }
     # Every sentence must be terminated by a blank line.
     print {$this->_file_handle} ("\n");
+}
+
+
+
+#------------------------------------------------------------------------------
+# Finds a-node that lexically corresponds to the t-parent of a t-node.
+#------------------------------------------------------------------------------
+sub get_a_parent_for_t_node
+{
+    my $self = shift;
+    my $tnode = shift;
+    my $aparent;
+    # If there is no t-parent, the result is undefined.
+    if($tnode->is_root())
+    {
+        return undef;
+    }
+    # If parent is t-root, we will not find its lexically corresponding a-node. But we want a-root.
+    # Even though the correspondence is no longer lexical.
+    if($tnode->parent()->is_root())
+    {
+        $aparent = $tnode->get_lex_anode()->get_root();
+    }
+    else
+    {
+        $aparent = $tnode->parent()->get_lex_anode();
+    }
+    return $aparent;
 }
 
 
