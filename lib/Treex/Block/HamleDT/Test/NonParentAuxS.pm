@@ -18,7 +18,7 @@ sub process_anode {
 
 =item Treex::Block::HamleDT::Test::NonParentAuxS
 
-AuxC must not be a leaf node.
+AuxS must not have a parent.
 
 =back
 

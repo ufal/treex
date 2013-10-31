@@ -4,7 +4,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
 
-# Tests if the punctuaion at the end of sentence (hanged on the root) is AuxK
+# Tests if the punctuation at the end of sentence (hanged on the root) is AuxK
 
 sub process_atree {
     my ( $self, $a_root ) = @_;
@@ -12,7 +12,7 @@ sub process_atree {
 
     my $lastSubtree = ($a_root->get_descendants({ordered=>1}))[-1];
     if ($lastSubtree->afun !~ /Aux[XK]/) {
-        return; # sentenece does not have punctutaion at all
+        return; # sentence does not have punctuation at all
     }
 
 

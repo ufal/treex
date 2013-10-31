@@ -29,7 +29,7 @@ sub process_anode {
 
 =item Treex::Block::HamleDT::Test::PunctUnderRoot
 
-AuxK should be direct under root one exception is direct speak
+AuxK should be directly under root, one exception is direct speech
 
 =back
 

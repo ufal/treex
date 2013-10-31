@@ -24,7 +24,7 @@ sub process_anode {
 
 =item Treex::Block::HamleDT::Test::AtvVBelow;
 
-AtrV must be below verb
+AtvV must be below verb
 =back
 
 =cut

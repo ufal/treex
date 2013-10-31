@@ -22,7 +22,7 @@ sub process_anode {
 
 =item Treex::Block::HamleDT::Test::PredUnderRoot
 
-Each predicate must be directly (effectively) dependant on the root node.
+Each predicate must be directly (effectively) dependent on the root node.
 
 =back
 

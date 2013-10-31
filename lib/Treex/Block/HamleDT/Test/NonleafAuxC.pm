@@ -19,10 +19,10 @@ sub process_anode {
 
 =over
 
-=item Treex::Block::HamleDT::Test::NonleafAuxC (unless governed by some other AuxC
-within a complex subordinating conjunction).
+=item Treex::Block::HamleDT::Test::NonleafAuxC
 
-AuxC must not be a leaf node.
+AuxC must not be a leaf node (unless governed by some other AuxC
+within a complex subordinating conjunction).
 
 =back
 
