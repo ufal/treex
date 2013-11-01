@@ -10,6 +10,7 @@ Readonly my $NO_NUMBER => -1;     # CoNLL-ST format: undefined integer value
 
 has '+language' => ( required => 1 );
 has '+extension' => ( default => '.conll' );
+has 'formatted' => ( is => 'ro', isa => 'Bool', default => 0, documentation => 'Append spaces to values so that all columns are aligned.' );
 
 
 
@@ -63,7 +64,7 @@ sub process_zone
             }
             if(defined($tnode->parent()))
             {
-                $roots[$ord] = $tnode->parent()->is_root() ? 1 : 0;
+                $roots[$ord] = $tnode->parent()->is_root() ? '+' : '-';
                 # Effective parents are important around coordination or apposition:
                 # - CoAp root (conjunction) has no effective parent.
                 # - Effective parent of conjuncts is somewhere above the conjunction (its direct parent, unless there is another coordination involved).
@@ -98,7 +99,7 @@ sub process_zone
         else
         {
             # This is an auxiliary word. There is a t-node to which it belongs but they do not correspond lexically.
-            $roots[$ord] = 0;
+            $roots[$ord] = '-';
         }
         push(@conll, [$ord, $form, $lemma, $tag]);
     }
@@ -111,8 +112,12 @@ sub process_zone
         my @depfields = $self->get_conll_dependencies_wide(\@matrix, $i, \@ispred); unshift(@depfields, $roots[$i]);
         push(@{$conll[$i]}, @depfields);
     }
-    ###!!! Comment this out for the final run. It makes the format non-standard by inserting additional spaces.
-    $self->format_table(\@conll);
+    # Formatting by inserting additional spaces makes the format non-standard.
+    # However, it is easy to adjust the CoNLL reader to split fields on "\s+", not just on "\t" (as long as all empty values are converted to '_').
+    if($self->formatted())
+    {
+        $self->format_table(\@conll);
+    }
     # Print CoNLL-like representation of the sentence.
     for(my $i = 1; $i<=$#conll; $i++)
     {
@@ -248,7 +253,7 @@ sub get_conll_dependencies_wide
             }
         }
     }
-    my $this_is_pred = $ispred->[$iline] ? 1 : 0;
+    my $this_is_pred = $ispred->[$iline] ? '+' : '-';
     return ($this_is_pred, @labels);
 }
 
@@ -319,6 +324,13 @@ Optional: the name of the output file, STDOUT by default.
 =item C<encoding>
 
 Optional: the output encoding, C<utf8> by default.
+
+=item C<formatted>
+
+Binary value (0 or 1), 0 is default.
+If set, additional spaces will be added to field values where necessary to make columns aligned.
+It makes the CoNLL format a bit non-standard.
+However, it is easy to adjust the CoNLL reader to split fields on "\s+", not just on "\t" (as long as all empty values are converted to '_').
 
 =back
 
