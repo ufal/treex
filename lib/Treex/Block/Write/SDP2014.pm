@@ -11,6 +11,9 @@ Readonly my $NO_NUMBER => -1;     # CoNLL-ST format: undefined integer value
 has '+language' => ( required => 1 );
 has '+extension' => ( default => '.conll' );
 has 'formatted' => ( is => 'ro', isa => 'Bool', default => 0, documentation => 'Append spaces to values so that all columns are aligned.' );
+has 'compact' => ( is => 'ro', isa => 'Bool', default => 0,
+    documentation => 'Default is unreadable CoNLL-2009-like format with large and variable number of columns. '.
+    'This parameter triggers a compact format resembling CoNLL 2006, with fixed number of columns; however, HEAD and DEPREL columns may contain comma-separated lists of values.' );
 
 
 
@@ -107,9 +110,16 @@ sub process_zone
     my @ispred = $self->get_is_pred(\@matrix);
     for(my $i = 1; $i<=$#conll; $i++)
     {
-        ###!!! We are negotiating the final format to represent dependencies. The following code may have to change.
-        #my @depfields = $self->get_conll_dependencies_compact(\@matrix, $i);
-        my @depfields = $self->get_conll_dependencies_wide(\@matrix, $i, \@ispred); unshift(@depfields, $roots[$i]);
+        my @depfields;
+        if($self->compact())
+        {
+            @depfields = $self->get_conll_dependencies_compact(\@matrix, $i);
+        }
+        else
+        {
+            @depfields = $self->get_conll_dependencies_wide(\@matrix, $i, \@ispred);
+            unshift(@depfields, $roots[$i]);
+        }
         push(@{$conll[$i]}, @depfields);
     }
     # Formatting by inserting additional spaces makes the format non-standard.
@@ -331,6 +341,13 @@ Binary value (0 or 1), 0 is default.
 If set, additional spaces will be added to field values where necessary to make columns aligned.
 It makes the CoNLL format a bit non-standard.
 However, it is easy to adjust the CoNLL reader to split fields on "\s+", not just on "\t" (as long as all empty values are converted to '_').
+
+=item C<compact>
+
+Binary value (0 or 1), 0 is default.
+Default format is derived from CoNLL 2009. It has large and variable number of columns, which is difficult for humans to read.
+This parameter triggers a compact format resembling CoNLL 2006, with fixed number of columns;
+however, C<HEAD> and C<DEPREL> columns may contain comma-separated lists of values.
 
 =back
 
