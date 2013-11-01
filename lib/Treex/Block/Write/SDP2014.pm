@@ -24,6 +24,13 @@ sub process_zone
     my $zone = shift;
     my $troot = $zone->get_tree('t');
     my $aroot = $zone->get_tree('a');
+    # Print sentence identifier.
+    # We assume that the input file comes from the PTB and is named according to PTB naming conventions.
+    # Bundle->get_position() is not efficient (see comment there) so we may consider simply counting the sentences using an attribute of this block.
+    my $ptb_section_file = $zone->get_document()->file_stem();
+    $ptb_section_file =~ s/^wsj_//i;
+    printf("#2%s%03d\n", $ptb_section_file, $zone->get_bundle()->get_position()+1);
+    # Compute correspondences between t-nodes and a-nodes.
     my @tnodes = $troot->get_descendants({ordered => 1});
     foreach my $tnode (@tnodes)
     {
@@ -96,12 +103,12 @@ sub process_zone
         push(@conll, [$ord, $form, $lemma, $tag]);
     }
     # Add dependency fields in the required format.
+    my @ispred = $self->get_is_pred(\@matrix);
     for(my $i = 1; $i<=$#conll; $i++)
     {
         ###!!! We are negotiating the final format to represent dependencies. The following code may have to change.
         #my @depfields = $self->get_conll_dependencies_compact(\@matrix, $i);
-        my @depfields = $self->get_conll_dependencies_wide(\@matrix, $i);
-        unshift(@depfields, $roots[$i]);
+        my @depfields = $self->get_conll_dependencies_wide(\@matrix, $i, \@ispred); unshift(@depfields, $roots[$i]);
         push(@{$conll[$i]}, @depfields);
     }
     ###!!! Comment this out for the final run. It makes the format non-standard by inserting additional spaces.
@@ -225,24 +232,11 @@ sub get_conll_dependencies_wide
     my $self = shift;
     my $matrix = shift;
     my $iline = shift;
-    # How many predicates are there and what is their mapping to the all-node indices?
-    # The artificial root node does not count as predicate because it does not have a corresponding token!
-    ###!!! This should be pre-computed once for all $ilines!
-    my @ispred;
-    for(my $i = 1; $i<=$#{$matrix}; $i++)
-    {
-        for(my $j = 1; $j<=$#{$matrix->[$i]}; $j++)
-        {
-            if(defined($matrix->[$i][$j]))
-            {
-                $ispred[$j]++;
-            }
-        }
-    }
+    my $ispred = shift;
     my @labels;
-    for(my $j = 1; $j<=$#ispred; $j++)
+    for(my $j = 1; $j<=$#{$ispred}; $j++)
     {
-        if($ispred[$j])
+        if($ispred->[$j])
         {
             if(defined($matrix->[$iline][$j]))
             {
@@ -254,8 +248,36 @@ sub get_conll_dependencies_wide
             }
         }
     }
-    my $this_is_pred = $ispred[$iline] ? 1 : 0;
+    my $this_is_pred = $ispred->[$iline] ? 1 : 0;
     return ($this_is_pred, @labels);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Takes a matrix of graph relations: $matrix[$i][$j] = 'ACT' means that node $i
+# depends on node $j and the label of the relation is 'ACT'. Returns array of
+# binary values that tell for each node whether it is a predicate (has
+# children) or not.
+#------------------------------------------------------------------------------
+sub get_is_pred
+{
+    my $self = shift;
+    my $matrix = shift;
+    # How many predicates are there and what is their mapping to the all-node indices?
+    # The artificial root node does not count as predicate because it does not have a corresponding token!
+    my @ispred;
+    for(my $i = 1; $i<=$#{$matrix}; $i++)
+    {
+        for(my $j = 1; $j<=$#{$matrix->[$i]}; $j++)
+        {
+            if(defined($matrix->[$i][$j]))
+            {
+                $ispred[$j]++;
+            }
+        }
+    }
+    return @ispred;
 }
 
 
@@ -273,9 +295,14 @@ Treex::Block::Write::SDP2014
 =head1 DESCRIPTION
 
 Prints out all t-trees in the text format required for the SemEval shared task
-on Semantic Dependency Parsing, 2014. The format is similar to CoNLL, i.e. one
-token/node per line, tab-separated values on the line, sentences/trees
-terminated by a blank line.
+on Semantic Dependency Parsing, 2014. The English part of PCEDT is used in the
+shared task but the block should work for other t-trees as well. The format is
+similar to CoNLL, i.e. one token/node per line, tab-separated values on the
+line, sentences/trees terminated by a blank line.
+
+Sample usage:
+
+C<treex -Len Read::Treex from=/net/data/pcedt2.0/data/00/wsj_0003.treex.gz Write::SDP2014 to=->
 
 =head1 PARAMETERS
 
