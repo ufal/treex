@@ -33,7 +33,7 @@ sub process_zone
     # Bundle->get_position() is not efficient (see comment there) so we may consider simply counting the sentences using an attribute of this block.
     my $ptb_section_file = $zone->get_document()->file_stem();
     $ptb_section_file =~ s/^wsj_//i;
-    printf("#2%s%03d\n", $ptb_section_file, $zone->get_bundle()->get_position()+1);
+    printf {$self->_file_handle()} ("#2%s%03d\n", $ptb_section_file, $zone->get_bundle()->get_position()+1);
     # Compute correspondences between t-nodes and a-nodes.
     my @tnodes = $troot->get_descendants({ordered => 1});
     foreach my $tnode (@tnodes)
@@ -134,7 +134,7 @@ sub process_zone
         print {$self->_file_handle()} (join("\t", @{$conll[$i]}), "\n");
     }
     # Every sentence must be terminated by a blank line.
-    print {$self->_file_handle} ("\n");
+    print {$self->_file_handle()} ("\n");
 }
 
 
@@ -315,9 +315,12 @@ shared task but the block should work for other t-trees as well. The format is
 similar to CoNLL, i.e. one token/node per line, tab-separated values on the
 line, sentences/trees terminated by a blank line.
 
+The format is described here:
+http://alt.qcri.org/semeval2014/task8/index.php?id=data-and-tools
+
 Sample usage:
 
-C<treex -Len Read::Treex from=/net/data/pcedt2.0/data/00/wsj_0003.treex.gz Write::SDP2014 to=->
+C<treex -Len Read::Treex from='!/net/data/pcedt2.0/data/00/wsj_00[012]*.treex.gz' Write::SDP2014 path=./trial-pcedt extension=.conll formatted=0 compact=0>
 
 =head1 PARAMETERS
 
