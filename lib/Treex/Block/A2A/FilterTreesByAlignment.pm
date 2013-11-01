@@ -42,18 +42,21 @@ sub process_bundle {
 		my $f_str = $self->filtering_options; 
 		if ($f_str eq '1-1') {
 			if (!$status{'1-1'}) {
+				print "removing bundle\n";
 				$bundle->remove();
 			} 
 			else {
 				my $src_una_rate = $status{'src-unalignment-rate'};
 				my $tgt_una_rate = $status{'tgt-unalignment-rate'};
 				if (($src_una_rate > $self->max_src_unalign_rate) && ($tgt_una_rate > $self->max_tgt_unalign_rate)) {
+					print "removing bundle\n";
 					$bundle->remove();
 				}				
 			}			
 		}
 		elsif ($f_str eq '1-1-perfect') {
 			if (!$status{'1-1-perfect'}) {
+				print "removing bundle\n";
 				$bundle->remove();
 			}
 		}
