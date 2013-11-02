@@ -23,10 +23,10 @@ sub process_ttree {
     }
 
     # 2. Distinguishing two object types (first and second) below bitransitively used verbs
-    foreach my $t_node (@root_descendants) {
-        next if $t_node->formeme !~ /^v:/;
-        distinguish_objects($t_node);
-    }
+    #foreach my $t_node (@root_descendants) {
+    #    next if $t_node->formeme !~ /^v:/;
+    #    distinguish_objects($t_node);
+    #}
     return 1;
 }
 
@@ -39,11 +39,11 @@ Readonly my %SUB_FOR_SYNTPOS => (
 
 # TODO: can be done better
 Readonly my %SYNTPOS_FOR_TAG => (
-    Keiyōshi => 'adj'
-    Fukushi => 'adv'
-    Meishi => 'n'
-    Dōshi => 'v'
-    Jodōshi => 'v'
+    Keiyōshi => 'adj',
+    Fukushi => 'adv',
+    Meishi => 'n',
+    Dōshi => 'v',
+    Jodōshi => 'v',
 );
 
 sub detect_syntpos {
@@ -99,7 +99,7 @@ sub _noun {
 
     my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
 
-    my $part = get_aux_string(@aux_a_nodes);
+    my $part = get_part_string(@aux_a_nodes);
     return "n:$part" if $part;
 
     # TODO?: zpracovani pro potomka rootu
@@ -161,7 +161,7 @@ sub _adj {
 
     my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
     # my @aux_a_nodes = $t_node->get_aux_anodes();
-    my $part        = get_aux_string(@aux_a_nodes);
+    my $part        = get_part_string(@aux_a_nodes);
     my $afun        = $a_node->afun;
     
     #return "n:$part" if $part; # adjectives with prepositions are treated as a nominal usage
@@ -174,6 +174,9 @@ sub _adj {
     return 'adj:attr'  if $tag =~ /^Rentaishi/;
 
     my $stem = get_stem( $a_node );
+
+    my $conj = get_verb_string(@aux_a_nodes);
+    return "adj:$stem+$conj" if $conj;
 
     #return 'n:subj'    if $afun eq 'Sb'; # adjectives in the subject positions -- nominal usage
     
@@ -195,6 +198,8 @@ sub _verb {
 
     my $stem = get_stem( $a_node );
 
+    my $conj = get_verb_string(@aux_a_nodes);
+    return "v:$stem+$conj" if $conj;
 
     #my $subconj = get_subconj_string($first_verbform, @aux_a_nodes);
 
@@ -231,7 +236,7 @@ sub _verb {
     return "v:$stem";
 }
 
-sub get_aux_string {
+sub get_part_string {
     my @part_and_conjs = grep { is_part_or_conj($_) } @_;
     return join '_', map { $_->lemma } @part_and_conjs;
 }
@@ -260,14 +265,29 @@ sub get_stem {
     my $pos = 0; 
 
     while ( $pos < scalar(@lemma) && $pos < scalar(@form) ) {
-        break if !( $lemma[$pos] eq $form[$pos] );
+        if ( !( $lemma[$pos] eq $form[$pos] ) ) {
+            return substr $a_node->form, $pos;   
+        }
         $pos++;
     }
     
     return "X" if $pos == scalar(@form);
-
-    return substr $a_node->form, $pos;
     
+}
+
+sub get_verb_string {
+    my @aux_verbs = grep { is_aux_verb($_) } @_;
+    return join '_', map { $_->lemma } @aux_verbs;
+}
+
+sub is_aux_verb {
+    my ($a_node) = @_;
+    return 1 if $a_node->afun =~ /AuxV/;
+
+    # If afun is not reliable, try also tag
+    return 1 if $a_node->tag =~ /^(Jodōshi)$/;
+
+    return 0;
 }
 
 sub get_subconj_string {
@@ -335,14 +355,16 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::A2T::EN::SetFormeme
+Treex::Block::A2T::JA::SetFormeme
 
 =head1 DESCRIPTION
 
-The attribute C<formeme> of English t-nodes is filled with
+The attribute C<formeme> of Japanese t-nodes is filled with
 a value which describes the morphosyntactic form of the given
-node in the original sentence. Values such as C<v:fin> (finite verb),
-C<n:for+X> (prepositional group), or C<n:subj> are used.
+node in the original sentence. The current set of formeme values is still
+being developed and tested.
+
+TODO: revise current formemes, and clean unnecessary code
 
 =head1 AUTHORS
 
@@ -351,6 +373,8 @@ Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 Martin Popel <popel@ufal.mff.cuni.cz>
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+Dusan Varis
 
 =head1 COPYRIGHT AND LICENSE
 
