@@ -48,6 +48,14 @@ sub process_zone
     my @conll = ([]); # left part of table, fixed features per token; dummy first line for the root node [0]
     my @matrix = ([]); # right part of table, relations between nodes: $matrix[$i][$j]='ACT' means node $i depends on node $j and its role is ACT
     my @roots; # binary value for each node index; roots as seen by Stephan Oepen, i.e. our children of the artificial root node
+    # We require that the token ids make an unbroken sequence, starting at 1.
+    # Unfortunately, this is not guaranteed in all a-trees. For example, in PCEDT 2.0 file wsj_0006.treex.gz, sentence 1, several numbers are skipped.
+    # So we have to re-index the nodes ourselves.
+    for(my $i = 0; $i <= $#anodes; $i++)
+    {
+        # We have to store the correct ord before we ask for things like parent()->ord()!
+        $anodes[$i]->_set_ord($i+1);
+    }
     foreach my $anode (@anodes)
     {
         my $ord = $anode->ord();
