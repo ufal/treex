@@ -13,7 +13,8 @@ sub process_atree {
     
     # 1) Fill Coord (coordinating conjunctions).
     foreach my $node (@all_nodes) {
-        if ( is_coord($node) ) { $node->set_afun('Coord'); }
+       # TODO: fix this
+       # if ( is_coord($node) ) { $node->set_afun('Coord'); }
     }
     
     # Now we can use effective children (without diving), since Coord is filled.

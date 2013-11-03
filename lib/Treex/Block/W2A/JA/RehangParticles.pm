@@ -69,36 +69,39 @@ sub switch_with_parent {
     $a_node->set_parent($granpa);
     $parent->set_parent($a_node);
 
+
+    # TODO: take care of particles used for coordination
     # "や" and "と" are similar to english "and" when listing things
-    if ( $form eq 'や' || $form eq 'と' ) {
-        my @children = $a_node->get_children(); 
-        if ( @children == 1 ) {
-            my $child = $children[0];
-             
-            # coordinated word should be located directly after particle
-            my $following = $a_node->get_next_node();
-            # check if word following particle is its parent and a noun
-            my $parent = $a_node->get_parent();
-            return if !defined $following;
-            if ( $following == $parent  && $parent->tag =~ /^Meishi/ ) {
-                my $granpa = $parent->get_parent();
-                $a_node->set_parent($granpa);
-                $parent->set_parent($a_node);
-                foreach my $ch ( $a_node->get_children() ) { 
-                    $ch->set_is_member(1); 
-                }
-            }
-            # otherwise check if the following word is noun
-            elsif ( $following->tag =~ /^Meishi/ ) {
-                $child->set_is_member(1);
-                $following->set_is_member(1);
-            }
-            
-            # TODO: Rehang coordinated words, if they are siblings
-            # also chceck, if current solution of coordinated words is correct
-   
-        }
-    }
+    #
+    #if ( $form eq 'や' || $form eq 'と' ) {
+    #    my @children = $a_node->get_children(); 
+    #    if ( @children == 1 ) {
+    #        my $child = $children[0];
+    #         
+    #        # coordinated word should be located directly after particle
+    #        my $following = $a_node->get_next_node();
+    #        # check if word following particle is its parent and a noun
+    #        my $parent = $a_node->get_parent();
+    #        return if !defined $following;
+    #        if ( $following == $parent  && $parent->tag =~ /^Meishi/ ) {
+    #            my $granpa = $parent->get_parent();
+    #            $a_node->set_parent($granpa);
+    #            $parent->set_parent($a_node);
+    #            foreach my $ch ( $a_node->get_children() ) { 
+    #                $ch->set_is_member(1); 
+    #            }
+    #        }
+    #        # otherwise check if the following word is noun
+    #        elsif ( $following->tag =~ /^Meishi/ ) {
+    #            $child->set_is_member(1);
+    #            $following->set_is_member(1);
+    #        }
+    #        
+    #        # TODO: Rehang coordinated words, if they are siblings
+    #        # also chceck, if current solution of coordinated words is correct
+    #
+    #    }
+    #}
     return;
 }
 
