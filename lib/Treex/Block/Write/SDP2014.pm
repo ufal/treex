@@ -51,11 +51,13 @@ sub process_zone
     # We require that the token ids make an unbroken sequence, starting at 1.
     # Unfortunately, this is not guaranteed in all a-trees. For example, in PCEDT 2.0 file wsj_0006.treex.gz, sentence 1, several numbers are skipped.
     # So we have to re-index the nodes ourselves.
-    for(my $i = 0; $i <= $#anodes; $i++)
-    {
-        # We have to store the correct ord before we ask for things like parent()->ord()!
-        $anodes[$i]->_set_ord($i+1);
-    }
+    ###!!! According to Zdeněk, this function should do what we need:
+    $aroot->_normalize_node_ordering()
+    #for(my $i = 0; $i <= $#anodes; $i++)
+    #{
+    #    # We have to store the correct ord before we ask for things like parent()->ord()!
+    #    $anodes[$i]->_set_ord($i+1);
+    #}
     foreach my $anode (@anodes)
     {
         my $ord = $anode->ord();
