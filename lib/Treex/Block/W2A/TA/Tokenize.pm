@@ -2,6 +2,7 @@ package Treex::Block::W2A::TA::Tokenize;
 use utf8;
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::Orthography::TA;
 
 extends 'Treex::Block::W2A::Tokenize';
 
@@ -9,6 +10,11 @@ extends 'Treex::Block::W2A::Tokenize';
 override 'tokenize_sentence' => sub {
     my ( $self, $sentence ) = @_;
     $sentence = super();
+    
+    # do not separate periods if they are initials as in "ரூ. " and  "ஐ.பி.எல்."  [English eq:  "Rs.", "I.P.L."]
+    $sentence =~ s/(^\s*|\s+)($TA_VOWELS_REG)\s+\./$1$2./g;
+    $sentence =~ s/(^\s*|\s+)($TA_CONSONANTS_PLUS_VOWEL_A_REG)($TA_VOWEL_SIGNS_REG)\s+\./$1$2$3./g;
+        
     $sentence =~ s/^(.*)$/ $1 /;	
 	$sentence =~ s/(^\s+|\s+$)//;
 	$sentence =~ s/\s+/ /g;	
