@@ -4,16 +4,22 @@ use Treex::Core::Common;
 
 extends 'Treex::Core::Block';
 
-has 'tagged_file' 	=> ( isa => 'Str', is => 'ro', default => 'data/models/simple_tagger/ta/tagged_data/data.pos' );
+has 'tag_file' 	=> ( isa => 'Str', is => 'ro', default => 'data/models/simple_tagger/ta/tagged_data/data.pos' );
 has 'selector' 		=> ( isa => 'Str', is => 'ro', default => '' );
-
+has 'tag_file_abspath' => (isa => 'Str', is => 'ro', predicate => 'has_tag_file_abspath');
 
 my %posdata = ();
 
 
 sub BUILD {
 	my ($self) = @_;
-	my $pos_file = require_file_from_share( $self->tagged_file );
+	my $pos_file;
+	if ($self->has_tag_file_abspath) {
+		$pos_file = $self->tag_file_abspath;
+	}
+	else {
+		$pos_file = require_file_from_share( $self->tag_file );
+	}
 	my @pos_tokens = ();
 	my @forms = ();
 	my $curr_line_num = 1;
@@ -40,7 +46,7 @@ sub BUILD {
 				$curr_line_num++;
 	    	}
 	    	else {
-				die "error at line $curr_line_num in the POS file \n";	    
+				die "Error: at line $curr_line_num in the POS file \n";	    
 		    }
 		}
 	}
