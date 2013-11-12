@@ -55,10 +55,12 @@ sub process_document {
 		my @s_nodes = $source_t->get_descendants( { ordered => 1 } );
 		my @t_nodes = $target_t->get_descendants( { ordered => 1 } );
 		my $alignment_line = $self->get_line_alignment($i);
-		my @word_a = split(/\s+/, $alignment_line);
-		foreach my $w_a (@word_a) {
-			my @st_ords = split(/-/, $w_a);
-			$s_nodes[$st_ords[0]]->add_aligned_node($t_nodes[$st_ords[1]], $self->alignment_type);
+		if ($alignment_line !~ /^$/) {
+			my @word_a = split(/\s+/, $alignment_line);
+			foreach my $w_a (@word_a) {
+				my @st_ords = split(/-/, $w_a);
+				$s_nodes[$st_ords[0]]->add_aligned_node($t_nodes[$st_ords[1]], $self->alignment_type);
+			}			
 		}
 	}
 }
