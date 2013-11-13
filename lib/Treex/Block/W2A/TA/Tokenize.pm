@@ -21,7 +21,13 @@ override 'tokenize_sentence' => sub {
     # English: sometimes "R." is written as "AR.", similary "S." as "ES."
     # rule for:  "எஸ், எல், எம், என், ஆர்"
     $sentence =~ s/(^\s*|\s+)(எஸ்|எல்|எம்|என்|ஆர்)\s+\./$1$2./g;
-
+    
+    # do not split initials-cluster such as "I.P.L" as "I. P. L."
+    $sentence =~ s/(\.)\s+($TA_VOWELS_REG)\./$1$2./g;
+    $sentence =~ s/(\.)\s+($TA_CONSONANTS_REG)\./$1$2./g;
+    $sentence =~ s/(\.)\s+($TA_CONSONANTS_PLUS_VOWEL_A_REG)\./$1$2./g;
+    $sentence =~ s/(\.)\s+($TA_CONSONANTS_PLUS_VOWEL_A_REG)($TA_VOWEL_SIGNS_REG)\./$1$2$3./g;
+    $sentence =~ s/(\.)\s+(எஸ்|எல்|எம்|என்|ஆர்)\./$1$2./g;    
 
     $sentence =~ s/^(.*)$/ $1 /;	
 	$sentence =~ s/(^\s+|\s+$)//;
