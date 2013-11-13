@@ -22,7 +22,13 @@ sub get_alignment_type {
     my ($from, $to) = @_;
     my ($nodes, $types) = $from->get_aligned_nodes();
     my ($type_idx) = grep {$nodes->[$_] == $to} 0 .. scalar(@$nodes)-1;
-    return undef if !defined $type_idx;
+    
+    # try the opposite link
+    if (!defined $type_idx) {
+        ($nodes, $types) = $to->get_aligned_nodes();
+        ($type_idx) = grep {$nodes->[$_] == $from} 0 .. scalar(@$nodes)-1;
+    }
+    return undef if (!defined $type_idx);
     return $types->[$type_idx];
 }
 
