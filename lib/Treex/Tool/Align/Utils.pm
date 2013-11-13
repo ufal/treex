@@ -54,8 +54,8 @@ sub _get_aligned_nodes_by_filter {
     my ($aligned_to, $aligned_to_types) = $node->get_aligned_nodes();
     my @aligned_from = $node->get_referencing_nodes('alignment');
     my @aligned_from_types = map {get_alignment_type($_, $node)} @aligned_from;
-    my @aligned = (@$aligned_to, @aligned_from);
-    my @aligned_types = (@$aligned_to_types, @aligned_from_types);
+    my @aligned = ($aligned_to ? @$aligned_to : (), @aligned_from);
+    my @aligned_types = ($aligned_to_types ? @$aligned_to_types : (), @aligned_from_types);
 
     my @edge_filtered = _edge_filter_out(\@aligned, \@aligned_types, $filter);
     my @node_filtered = _node_filter_out(\@edge_filtered, $filter);
