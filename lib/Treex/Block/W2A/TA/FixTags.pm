@@ -12,6 +12,14 @@ sub process_anode {
 }
 
 sub get_correct_tag {
-	my ($self, $f, $l, $t) = @_;	
+	my ($self, $f, $l, $t) = @_;
+	
+	# initials
+	return 'NmNSN----------' if ($f =~ /($TA_VOWELS_REG)\.$/);
+	return 'NmNSN----------' if ($f =~ /($TA_CONSONANTS_REG)\.$/);
+	return 'NmNSN----------' if ($f =~ /($TA_CONSONANTS_PLUS_VOWEL_A_REG)($TA_VOWEL_SIGNS_REG)\.$/);
+	return 'NmNSN----------' if ($f =~ /($TA_CONSONANTS_PLUS_VOWEL_A_REG)\.$/);
+	return 'NmNSN----------' if ($f =~ /(எஸ்|எல்|எம்|என்|ஆர்)\.$/);
+	
 	return $t;
 }
