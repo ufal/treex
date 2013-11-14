@@ -14,21 +14,31 @@ override 'tokenize_sentence' => sub {
     # do not separate periods if they are initials as in "ரூ. " and  "ஐ.பி.எல்."  [English eq:  "Rs.", "I.P.L."]
     $sentence =~ s/(^\s*|\s+)($TA_VOWELS_REG)\s+\./$1$2./g;
     $sentence =~ s/(^\s*|\s+)($TA_CONSONANTS_REG)\s+\./$1$2./g;
-    $sentence =~ s/(^\s*|\s+)($TA_CONSONANTS_PLUS_VOWEL_A_REG)\s+\./$1$2./g;
     $sentence =~ s/(^\s*|\s+)($TA_CONSONANTS_PLUS_VOWEL_A_REG)($TA_VOWEL_SIGNS_REG)\s+\./$1$2$3./g;
-    
+    $sentence =~ s/(^\s*|\s+)($TA_CONSONANTS_PLUS_VOWEL_A_REG)\s+\./$1$2./g;
+        
     # period should not be separated from 2 letter initials for ex: "எல், ஆர், எஸ், எம் "
     # English: sometimes "R." is written as "AR.", similary "S." as "ES."
     # rule for:  "எஸ், எல், எம், என், ஆர்"
     $sentence =~ s/(^\s*|\s+)(எஸ்|எல்|எம்|என்|ஆர்)\s+\./$1$2./g;
     
-    # do not split initials-cluster such as "I.P.L" as "I. P. L."
+    # do not split initials-cluster such as "I.P.L." as "I. P. L. "
     $sentence =~ s/(\.)\s+($TA_VOWELS_REG)\./$1$2./g;
+    $sentence =~ s/(\.)\s+($TA_VOWELS_REG)\./$1$2./g;
+
     $sentence =~ s/(\.)\s+($TA_CONSONANTS_REG)\./$1$2./g;
-    $sentence =~ s/(\.)\s+($TA_CONSONANTS_PLUS_VOWEL_A_REG)\./$1$2./g;
+    $sentence =~ s/(\.)\s+($TA_CONSONANTS_REG)\./$1$2./g;
+
     $sentence =~ s/(\.)\s+($TA_CONSONANTS_PLUS_VOWEL_A_REG)($TA_VOWEL_SIGNS_REG)\./$1$2$3./g;
+    $sentence =~ s/(\.)\s+($TA_CONSONANTS_PLUS_VOWEL_A_REG)($TA_VOWEL_SIGNS_REG)\./$1$2$3./g;
+
+    $sentence =~ s/(\.)\s+($TA_CONSONANTS_PLUS_VOWEL_A_REG)\./$1$2./g;
+    $sentence =~ s/(\.)\s+($TA_CONSONANTS_PLUS_VOWEL_A_REG)\./$1$2./g;
+
+    $sentence =~ s/(\.)\s+(எஸ்|எல்|எம்|என்|ஆர்)\./$1$2./g;    
     $sentence =~ s/(\.)\s+(எஸ்|எல்|எம்|என்|ஆர்)\./$1$2./g;    
 
+    
     $sentence =~ s/^(.*)$/ $1 /;	
 	$sentence =~ s/(^\s+|\s+$)//;
 	$sentence =~ s/\s+/ /g;	
