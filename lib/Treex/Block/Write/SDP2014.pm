@@ -44,26 +44,20 @@ sub process_zone
             $anode->wild()->{tnode} = $tnode;
         }
     }
+    # We require that the token ids make an unbroken sequence, starting at 1.
+    # Unfortunately, this is not guaranteed in all a-trees. For example, in PCEDT 2.0 file wsj_0006.treex.gz, sentence 1, several numbers are skipped.
+    # So we have to re-index the nodes ourselves.
+    $aroot->_normalize_node_ordering();
     my @anodes = $aroot->get_descendants({ordered => 1});
     my @conll = ([]); # left part of table, fixed features per token; dummy first line for the root node [0]
     my @matrix = ([]); # right part of table, relations between nodes: $matrix[$i][$j]='ACT' means node $i depends on node $j and its role is ACT
     my @roots; # binary value for each node index; roots as seen by Stephan Oepen, i.e. our children of the artificial root node
-    # We require that the token ids make an unbroken sequence, starting at 1.
-    # Unfortunately, this is not guaranteed in all a-trees. For example, in PCEDT 2.0 file wsj_0006.treex.gz, sentence 1, several numbers are skipped.
-    # So we have to re-index the nodes ourselves.
-    ###!!! According to Zdeněk, this function should do what we need:
-    $aroot->_normalize_node_ordering()
-    #for(my $i = 0; $i <= $#anodes; $i++)
-    #{
-    #    # We have to store the correct ord before we ask for things like parent()->ord()!
-    #    $anodes[$i]->_set_ord($i+1);
-    #}
     foreach my $anode (@anodes)
     {
         my $ord = $anode->ord();
-        my $form = $self->decode_characters($anode->form());
-        my $lemma = $self->decode_characters($anode->lemma());
         my $tag = $anode->tag();
+        my $form = $self->decode_characters($anode->form(), $tag);
+        my $lemma = $self->decode_characters($anode->lemma(), $tag);
         # Is there a lexically corresponding tnode?
         my $tnode = $anode->wild()->{tnode};
         if(defined($tnode))
@@ -316,6 +310,10 @@ sub decode_characters
 {
     my $self = shift;
     my $x = shift;
+    my $tag = shift;
+    # Do not change apostrophe if it is tagged as possessive marker (POS).
+    # Go ahead if it is marked as closing quotation mark ('').
+    return $x if($tag eq 'POS');
     # Cancel escaping of slashes.
     $x =~ s-\\/-/-g;
     # English opening double quotation mark.
@@ -323,9 +321,10 @@ sub decode_characters
     # English closing double quotation mark.
     $x =~ s/''/\x{201D}/g;
     # English opening single quotation mark.
-    $x =~ s/`/\x{2018}/g;
+    $x =~ s/^`$/\x{2018}/g;
     # English closing single quotation mark.
-    $x =~ s/'/\x{2019}/g;
+    # If we remove the ^ and $ requirement, the expression will also cover conflated English auxiliaries "n't", "'re" and "'s", see below.
+    $x =~ s/^'$/\x{2019}/g;
     # N-dash.
     $x =~ s/--/\x{2013}/g;
     # Ellipsis.
