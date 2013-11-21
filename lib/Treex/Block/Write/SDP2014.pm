@@ -61,8 +61,8 @@ sub process_zone
     foreach my $anode (@anodes)
     {
         my $ord = $anode->ord();
-        my $form = $anode->form();
-        my $lemma = $anode->lemma();
+        my $form = $self->decode_characters($anode->form());
+        my $lemma = $self->decode_characters($anode->lemma());
         my $tag = $anode->tag();
         # Is there a lexically corresponding tnode?
         my $tnode = $anode->wild()->{tnode};
@@ -307,13 +307,44 @@ sub get_is_pred
 
 
 
+#------------------------------------------------------------------------------
+# Translates selected characters that in Penn Treebank and PCEDT were encoded
+# in an old-fashioned pre-Unicode way. Takes a string and returns the adjusted
+# version of the string. Should be called for every word form and lemma.
+#------------------------------------------------------------------------------
+sub decode_characters
+{
+    my $self = shift;
+    my $x = shift;
+    # Cancel escaping of slashes.
+    $x =~ s-\\/-/-g;
+    # English opening double quotation mark.
+    $x =~ s/``/\x{201C}/g;
+    # English closing double quotation mark.
+    $x =~ s/''/\x{201D}/g;
+    # English opening single quotation mark.
+    $x =~ s/`/\x{2018}/g;
+    # English closing single quotation mark.
+    $x =~ s/'/\x{2019}/g;
+    # N-dash.
+    $x =~ s/--/\x{2013}/g;
+    # Ellipsis.
+    $x =~ s/\.\.\./\x{2026}/g;
+    ###!!! Stephan Oepen also suggested changing English "n't", "'re" and "'s" to using right single quotation mark.
+    ###!!! I disagree because quotation mark is a paired symbol and it is semantically different from the apostrophe.
+    ###!!! Besides, I suspect that the above list of occurrences might not be complete.
+    return $x;
+}
+
+
+
 1;
 
 __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::Write::SDP2014
 
