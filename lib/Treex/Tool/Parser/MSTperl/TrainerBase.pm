@@ -33,27 +33,27 @@ has number_of_inner_iterations => (
 );
 
 has skip_scores_averaging => (
-    is => 'rw',
-    isa => 'Bool',
+    is      => 'rw',
+    isa     => 'Bool',
     default => 0
 );
 
 # TRAINING COMMON SUBS
 
 sub train_dev {
-    my ($self, $training_data, $dev_data) = @_;
+    my ( $self, $training_data, $dev_data ) = @_;
 
-    $self->train($training_data, 0);
-    my $feature_count = $self->train($dev_data, 1);
+    $self->train( $training_data, 0 );
+    my $feature_count = $self->train( $dev_data, 1 );
 
     return $feature_count;
 }
 
 sub train_2parts {
-    my ($self, $training_data, $dev_data) = @_;
+    my ( $self, $training_data, $dev_data ) = @_;
 
-    $self->train($training_data, 0);
-    my $feature_count = $self->train($dev_data, 0);
+    $self->train( $training_data, 0 );
+    my $feature_count = $self->train( $dev_data, 0 );
 
     return $feature_count;
 }
@@ -141,7 +141,8 @@ sub train {
         print "FINAL FEATURE WEIGTHS:\n";
     }
 
-    if (!$self->skip_scores_averaging) {
+    if ( !$self->skip_scores_averaging ) {
+
         # average the model (is said to help overfitting)
         $self->scores_averaging();
     }

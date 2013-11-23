@@ -57,12 +57,12 @@ sub _buckets_set {
     foreach my $bucket ( @{$buckets} ) {
         if ( $value2bucket{$bucket} ) {
             warn "Bucket '$bucket' is defined more than once; "
-              . "disregarding its later definitions.\n";
+                . "disregarding its later definitions.\n";
         }
         elsif ( $bucket > 0 ) {
             croak "MSTperl config file error: "
-              . "Error on bucket '$bucket' - "
-              . "buckets must be negative integers.";
+                . "Error on bucket '$bucket' - "
+                . "buckets must be negative integers.";
         }
         else {
             $value2bucket{$bucket} = $bucket;
@@ -81,7 +81,7 @@ sub _buckets_set {
 
     # fill %value2bucket from minBucket to maxBucket
     my $lastBucket = $minBucket;
-    for ( my $value = $minBucket + 1 ; $value < $maxBucket ; $value++ ) {
+    for ( my $value = $minBucket + 1; $value < $maxBucket; $value++ ) {
         if ( defined $value2bucket{$value} ) {
 
             # the value defines a bucket
@@ -188,16 +188,18 @@ sub get_rounded_value {
 
     my $value = $self->model->{$child}->{$parent};
     if ( defined $value ) {
+
         # get the rounding coefficient
-        if (!defined $rounding) {
+        if ( !defined $rounding ) {
             $rounding = 0;
         }
         my $coef = 1;
-        for (my $i = 0; $i < $rounding; $i++) {
+        for ( my $i = 0; $i < $rounding; $i++ ) {
             $coef *= 10;
         }
+
         # get the value
-        $value = int($value*$coef) / $coef;
+        $value = int( $value * $coef ) / $coef;
     }
     else {
         $value = '?';

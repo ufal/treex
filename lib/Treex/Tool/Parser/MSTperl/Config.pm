@@ -41,9 +41,10 @@ has 'EM_EPSILON' => (
 
 # strmost sigmoidy
 has 'SIGM_LAMBDA' => (
-    is      => 'rw',
-    isa     => 'Num',
-#    default => 0.0015, probably good for data as they used to be :-)
+    is  => 'rw',
+    isa => 'Num',
+
+    #    default => 0.0015, probably good for data as they used to be :-)
     default => 1,
 );
 
@@ -401,20 +402,20 @@ has 'field_indexes' => (
 has lossFunction => ( is => 'rw', isa => 'Str', default => '' );
 
 has use_pmi => (
-    is => 'rw',
-    isa => 'Bool',
+    is      => 'rw',
+    isa     => 'Bool',
     default => 0
 );
 
 has pmi_model_file => (
-    is => 'rw',
-    isa => 'Str',
+    is      => 'rw',
+    isa     => 'Str',
     default => ''
 );
 
 has pmi_model_format => (
-    is => 'rw',
-    isa => 'Str',
+    is      => 'rw',
+    isa     => 'Str',
     default => 'tsv'
 );
 
@@ -425,20 +426,20 @@ has 'pmi_buckets' => (
 );
 
 has use_cprob => (
-    is => 'rw',
-    isa => 'Bool',
+    is      => 'rw',
+    isa     => 'Bool',
     default => 0
 );
 
 has cprob_model_file => (
-    is => 'rw',
-    isa => 'Str',
+    is      => 'rw',
+    isa     => 'Str',
     default => ''
 );
 
 has cprob_model_format => (
-    is => 'rw',
-    isa => 'Str',
+    is      => 'rw',
+    isa     => 'Str',
     default => 'tsv'
 );
 
@@ -532,7 +533,7 @@ sub BUILD {
                     )
             );
 
-            if ($self->use_pmi) {
+            if ( $self->use_pmi ) {
                 my $pmi_model = Treex::Tool::Parser::MSTperl::ModelAdditional->new(
                     config       => $self,
                     model_file   => $self->pmi_model_file,
@@ -544,8 +545,8 @@ sub BUILD {
                     $self->unlabelledFeaturesControl->pmi_model($pmi_model);
                 }
             }
-            
-            if ($self->use_cprob) {
+
+            if ( $self->use_cprob ) {
                 my $cprob_model = Treex::Tool::Parser::MSTperl::ModelAdditional->new(
                     config       => $self,
                     model_file   => $self->cprob_model_file,

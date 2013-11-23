@@ -147,14 +147,14 @@ has 'edge_features_cache' => (
 );
 
 has pmi_model => (
-    is => 'rw',
-    isa => 'Maybe[Treex::Tool::Parser::MSTperl::ModelAdditional]',
+    is      => 'rw',
+    isa     => 'Maybe[Treex::Tool::Parser::MSTperl::ModelAdditional]',
     default => undef,
 );
 
 has cprob_model => (
-    is => 'rw',
-    isa => 'Maybe[Treex::Tool::Parser::MSTperl::ModelAdditional]',
+    is      => 'rw',
+    isa     => 'Maybe[Treex::Tool::Parser::MSTperl::ModelAdditional]',
     default => undef,
 );
 
@@ -186,7 +186,7 @@ sub set_feature {
     } else {
 
         # get simple features
-        my $isArrayFeature = 0;
+        my $isArrayFeature   = 0;
         my $isDynamicFeature = 0;
         my @simple_features_indexes;
         my %simple_features_hash;
@@ -308,16 +308,22 @@ sub set_simple_feature {
         $simple_feature_sub =
             $self->get_simple_feature_sub_reference($function_name);
 
-        if ( $function_name eq 'between' || $function_name eq 'foreach'
-            || substr ($function_name, 0, 2) eq 'g.' ) {
+        if ($function_name eq 'between'
+            || $function_name eq 'foreach'
+            || substr( $function_name, 0, 2 ) eq 'g.'
+            )
+        {
 
             # array function
             $self->array_simple_features->{$simple_feature_index} = 1;
         }
 
-        if ( $function_name eq 'LABEL'
+        if ($function_name eq 'LABEL'
             || $function_name eq 'l.label' || $function_name eq 'prevlabel'
-            || $function_name eq 'G.label' || $function_name eq 'g.label' ) {
+            || $function_name eq 'G.label'
+            || $function_name eq 'g.label'
+            )
+        {
 
             # dynamic feature
             $self->dynamic_simple_features->{$simple_feature_index} = 1;
@@ -381,6 +387,7 @@ sub set_simple_feature {
 # is not present)
 # TODO maybe not returning a value is still a valuable information -> include?
 sub get_all_features {
+
     # Edge; 0: all features, 1: only dynamic, -1: only non-dynamic
     # either get only dynamic features or get all but dynamic features
     my ( $self, $edge, $only_dynamic_features ) = @_;
@@ -408,13 +415,18 @@ sub get_all_features {
         $feature_index++
         )
     {
-        if ( $only_dynamic_features && $only_dynamic_features == 1
+        if ($only_dynamic_features
+            && $only_dynamic_features == 1
             && !$self->dynamic_features->{$feature_index}
-        ) {
+            )
+        {
             next;
-        } elsif ( $only_dynamic_features && $only_dynamic_features == -1
+        } elsif (
+            $only_dynamic_features
+            && $only_dynamic_features == -1
             && $self->dynamic_features->{$feature_index}
-        ) {
+            )
+        {
             next;
         } else {
             my $feature_value =
@@ -557,7 +569,7 @@ my %simple_feature_sub_references = (
     'distance'          => \&{feature_distance},
     'G.distance'        => \&{feature_grandparent_distance},
     'attdir'            => \&{feature_attachement_direction},
-    'G.attdir'          => \&{feature_grandparent_attachement_direction}, # grandparent to child
+    'G.attdir'          => \&{feature_grandparent_attachement_direction},    # grandparent to child
     'preceding'         => \&{feature_preceding_child},
     'PRECEDING'         => \&{feature_preceding_parent},
     '1.preceding'       => \&{feature_preceding_first},
@@ -593,11 +605,12 @@ my %simple_feature_sub_references = (
     'cprob'             => \&{feature_cprob},
     'cprobbucketed'     => \&{feature_cprob_bucketed},
     'cprobrounded'      => \&{feature_cprob_rounded},
+
     # obsolete
-#    'pmitworounded'     => \&{feature_pmi_2_rounded},
-#    'pmithreerounded'   => \&{feature_pmi_3_rounded},
-#    'cprobtworounded'   => \&{feature_cprob_2_rounded},
-#    'cprobthreerounded' => \&{feature_cprob_3_rounded},
+    #    'pmitworounded'     => \&{feature_pmi_2_rounded},
+    #    'pmithreerounded'   => \&{feature_pmi_3_rounded},
+    #    'cprobtworounded'   => \&{feature_cprob_2_rounded},
+    #    'cprobthreerounded' => \&{feature_cprob_3_rounded},
 );
 
 sub get_simple_feature_sub_reference {
@@ -614,21 +627,21 @@ sub get_simple_feature_sub_reference {
 sub get_grandparent {
     my ( $self, $edge ) = @_;
 
-    return ($edge->parent)->parent;
+    return ( $edge->parent )->parent;
 }
 
 sub feature_distance {
     my ( $self, $edge ) = @_;
 
-    return $self->feature_distance_generic($edge->parent, $edge->child);
+    return $self->feature_distance_generic( $edge->parent, $edge->child );
 }
 
 sub feature_grandparent_distance {
     my ( $self, $edge ) = @_;
 
     my $grandparent = $self->get_grandparent($edge);
-    if (defined $grandparent) {
-        return $self->feature_distance_generic($edge->parent, $edge->child);
+    if ( defined $grandparent ) {
+        return $self->feature_distance_generic( $edge->parent, $edge->child );
     } else {
         return '#novalue#';
     }
@@ -640,7 +653,7 @@ sub feature_distance_generic {
     my $distance = $node1->ord - $node2->ord;
 
     my $bucket = $self->config->distance2bucket->{$distance};
-    if (defined $bucket) {
+    if ( defined $bucket ) {
         return $bucket;
     } else {
         if ( $distance <= $self->config->minBucket ) {
@@ -655,16 +668,18 @@ sub feature_attachement_direction {
     my ( $self, $edge ) = @_;
 
     return $self->feature_attachement_direction_generic(
-        $edge->parent, $edge->child );
+        $edge->parent, $edge->child
+    );
 }
 
 sub feature_grandparent_attachement_direction {
     my ( $self, $edge ) = @_;
 
     my $grandparent = $self->get_grandparent($edge);
-    if (defined $grandparent) {
-    return $self->feature_attachement_direction_generic(
-        $edge->parent, $edge->child );
+    if ( defined $grandparent ) {
+        return $self->feature_attachement_direction_generic(
+            $edge->parent, $edge->child
+        );
     } else {
         return '#novalue#';
     }
@@ -694,7 +709,7 @@ sub feature_grandparent {
     my ( $self, $edge, $field_index ) = @_;
 
     my $grandparent = $self->get_grandparent($edge);
-    if (defined $grandparent) {
+    if ( defined $grandparent ) {
         return ( $grandparent->fields->[$field_index] );
     } else {
         return '#novalue#';
@@ -710,7 +725,7 @@ sub feature_previous_label {
     my ( $self, $edge ) = @_;
 
     my $left_sibling = $self->get_left_sibling($edge);
-    if (defined $left_sibling) {
+    if ( defined $left_sibling ) {
         return ( $left_sibling->child->label );
     } else {
         return $self->config->SEQUENCE_BOUNDARY_LABEL;
@@ -721,7 +736,7 @@ sub feature_grandparent_label {
     my ( $self, $edge ) = @_;
 
     my $grandparent = $self->get_grandparent($edge);
-    if (defined $grandparent) {
+    if ( defined $grandparent ) {
         return ( $grandparent->label );
     } else {
         return '#novalue#';
@@ -742,7 +757,7 @@ sub feature_left_sibling {
     my ( $self, $edge, $field_index ) = @_;
 
     my $left_sibling = $self->get_left_sibling($edge);
-    if (defined $left_sibling) {
+    if ( defined $left_sibling ) {
         return ( $left_sibling->child->fields->[$field_index] );
     } else {
         return '#start#';
@@ -753,7 +768,7 @@ sub feature_right_sibling {
     my ( $self, $edge, $field_index ) = @_;
 
     my $right_sibling = $self->get_right_sibling($edge);
-    if (defined $right_sibling) {
+    if ( defined $right_sibling ) {
         return ( $right_sibling->child->fields->[$field_index] );
     } else {
         return '#end#';
@@ -1399,13 +1414,13 @@ sub feature_number_of_parents_children {
 sub feature_additional_model {
     my ( $self, $edge, $field_index, $model ) = @_;
 
-    my $child = $edge->child->fields->[$field_index];
+    my $child  = $edge->child->fields->[$field_index];
     my $parent = $edge->parent->fields->[$field_index];
 
-    if ( defined $child && defined $parent) {
-        return $model->get_value($child, $parent);
+    if ( defined $child && defined $parent ) {
+        return $model->get_value( $child, $parent );
     } else {
-        croak "Either child or parent is undefined in additional model feature, ".
+        croak "Either child or parent is undefined in additional model feature, " .
             "this should not happen!";
     }
 }
@@ -1413,13 +1428,13 @@ sub feature_additional_model {
 sub feature_additional_model_bucketed {
     my ( $self, $edge, $field_index, $model ) = @_;
 
-    my $child = $edge->child->fields->[$field_index];
+    my $child  = $edge->child->fields->[$field_index];
     my $parent = $edge->parent->fields->[$field_index];
 
-    if ( defined $child && defined $parent) {
-        return $model->get_bucketed_value($child, $parent);
+    if ( defined $child && defined $parent ) {
+        return $model->get_bucketed_value( $child, $parent );
     } else {
-        croak "Either child or parent is undefined in additional model feature, ".
+        croak "Either child or parent is undefined in additional model feature, " .
             "this should not happen!";
     }
 }
@@ -1427,14 +1442,14 @@ sub feature_additional_model_bucketed {
 sub feature_additional_model_rounded {
     my ( $self, $edge, $parameters, $model ) = @_;
 
-    my ($field_index, $rounding) = @$parameters;
-    my $child = $edge->child->fields->[$field_index];
+    my ( $field_index, $rounding ) = @$parameters;
+    my $child  = $edge->child->fields->[$field_index];
     my $parent = $edge->parent->fields->[$field_index];
 
-    if ( defined $child && defined $parent) {
-        return $model->get_rounded_value($child, $parent, $rounding);
+    if ( defined $child && defined $parent ) {
+        return $model->get_rounded_value( $child, $parent, $rounding );
     } else {
-        croak "Either child or parent is undefined in additional model feature, ".
+        croak "Either child or parent is undefined in additional model feature, " .
             "this should not happen!";
     }
 }
@@ -1442,14 +1457,14 @@ sub feature_additional_model_rounded {
 sub feature_additional_model_d {
     my ( $self, $edge, $parameters, $model ) = @_;
 
-    my ($field_index_c, $field_index_p) = @$parameters;
-    my $child = $edge->child->fields->[$field_index_c];
+    my ( $field_index_c, $field_index_p ) = @$parameters;
+    my $child  = $edge->child->fields->[$field_index_c];
     my $parent = $edge->parent->fields->[$field_index_p];
 
-    if ( defined $child && defined $parent) {
-        return $model->get_rounded_value($child, $parent);
+    if ( defined $child && defined $parent ) {
+        return $model->get_rounded_value( $child, $parent );
     } else {
-        croak "Either child or parent is undefined in additional model feature, ".
+        croak "Either child or parent is undefined in additional model feature, " .
             "this should not happen!";
     }
 }
@@ -1457,71 +1472,71 @@ sub feature_additional_model_d {
 sub feature_pmi {
     my ( $self, $edge, $field_index ) = @_;
 
-    return $self->feature_additional_model($edge, $field_index, $self->pmi_model);
+    return $self->feature_additional_model( $edge, $field_index, $self->pmi_model );
 }
 
 sub feature_pmi_bucketed {
     my ( $self, $edge, $field_index ) = @_;
 
-    return $self->feature_additional_model_bucketed($edge, $field_index, $self->pmi_model);
+    return $self->feature_additional_model_bucketed( $edge, $field_index, $self->pmi_model );
 }
 
 sub feature_pmi_rounded {
     my ( $self, $edge, $parameters ) = @_;
 
-    return $self->feature_additional_model_rounded($edge, $parameters, $self->pmi_model);
+    return $self->feature_additional_model_rounded( $edge, $parameters, $self->pmi_model );
 }
 
 sub feature_pmi_d {
     my ( $self, $edge, $parameters ) = @_;
 
-    return $self->feature_additional_model_d($edge, $parameters, $self->pmi_model);
+    return $self->feature_additional_model_d( $edge, $parameters, $self->pmi_model );
 }
 
 sub feature_pmi_2_rounded {
     my ( $self, $edge, $field_index ) = @_;
 
-    my @params = ($field_index, 1);
-    return $self->feature_pmi_rounded($edge, \@params);
+    my @params = ( $field_index, 1 );
+    return $self->feature_pmi_rounded( $edge, \@params );
 }
 
 sub feature_pmi_3_rounded {
     my ( $self, $edge, $field_index ) = @_;
 
-    my @params = ($field_index, 2);
-    return $self->feature_pmi_rounded($edge, \@params);
+    my @params = ( $field_index, 2 );
+    return $self->feature_pmi_rounded( $edge, \@params );
 }
 
 sub feature_cprob {
     my ( $self, $edge, $field_index ) = @_;
 
-    return $self->feature_additional_model($edge, $field_index, $self->cprob_model);
+    return $self->feature_additional_model( $edge, $field_index, $self->cprob_model );
 }
 
 sub feature_cprob_bucketed {
     my ( $self, $edge, $field_index ) = @_;
 
-    return $self->feature_additional_model_bucketed($edge, $field_index, $self->cprob_model);
+    return $self->feature_additional_model_bucketed( $edge, $field_index, $self->cprob_model );
 }
 
 sub feature_cprob_rounded {
     my ( $self, $edge, $parameters ) = @_;
 
-    return $self->feature_additional_model_rounded($edge, $parameters, $self->cprob_model);
+    return $self->feature_additional_model_rounded( $edge, $parameters, $self->cprob_model );
 }
 
 sub feature_cprob_2_rounded {
     my ( $self, $edge, $field_index ) = @_;
 
-    my @params = ($field_index, 1);
-    return $self->feature_cprob_rounded($edge, \@params);
+    my @params = ( $field_index, 1 );
+    return $self->feature_cprob_rounded( $edge, \@params );
 }
 
 sub feature_cprob_3_rounded {
     my ( $self, $edge, $field_index ) = @_;
 
-    my @params = ($field_index, 2);
-    return $self->feature_cprob_rounded($edge, \@params);
+    my @params = ( $field_index, 2 );
+    return $self->feature_cprob_rounded( $edge, \@params );
 }
 
 1;

@@ -154,8 +154,9 @@ sub label_subtree {
         $states = $self->label_edge( $edge, $states, $prev_edge );
 
         if ( $ALGORITHM == 20 ) {
+
             # set the best label
-            my $best_state_label = $self->find_best_state_label( $states );
+            my $best_state_label = $self->find_best_state_label($states);
             $edge->child->label($best_state_label);
         }
 
@@ -166,8 +167,9 @@ sub label_subtree {
     # by the label->sequence_boundary probability
 
     if ( $ALGORITHM != 20 ) {
+
         # End - find the state with the best score - this is the result
-        my $best_state_label = $self->find_best_state_label( $states );
+        my $best_state_label = $self->find_best_state_label($states);
 
         if ($best_state_label) {
 
@@ -196,7 +198,7 @@ sub label_subtree {
             print "No best state generated, cannot label the sentence!"
                 . " (This is weird.)\n";
         }
-    } # else: edges are labelled in each step
+    }    # else: edges are labelled in each step
 
     # end of Viterbi
 
@@ -243,13 +245,14 @@ sub label_edge {
 
     my ( $self, $edge, $states, $prev_edge ) = @_;
 
-    my $ALGORITHM = $self->config->labeller_algorithm;
+    my $ALGORITHM  = $self->config->labeller_algorithm;
     my $new_states = {};
     foreach my $last_state ( keys %$states ) {
 
         if ( $ALGORITHM == 21 && defined $prev_edge ) {
+
             # set last label
-            my $best_prev_state_label = $self->find_best_state_label( $states );
+            my $best_prev_state_label = $self->find_best_state_label($states);
             $prev_edge->child->label($best_prev_state_label);
         }
 
@@ -460,22 +463,28 @@ sub get_possible_labels {
 
             # score = previous score + new score
 
-            if ($ALGORITHM == 20) {
+            if ( $ALGORITHM == 20 ) {
                 if ( $self->config->DEBUG >= 4 ) {
                     print "    Score for label $label: "
-                        . ( $self->model->get_label_score(
-                    $label, $previous_label, $edge->features_all_labeller() ) ) . "\n";
+                        . (
+                        $self->model->get_label_score(
+                            $label, $previous_label, $edge->features_all_labeller()
+                            )
+                        ) . "\n";
                 }
                 $result->{$label} =
                     $self->model->get_label_score(
                     $label, $previous_label, $edge->features_all_labeller()
                     )
                     ;
-            } elsif ($ALGORITHM == 19) {
+            } elsif ( $ALGORITHM == 19 ) {
                 if ( $self->config->DEBUG >= 4 ) {
                     print "    Score for label $label: $previous_label_score + "
-                        . ( $self->model->get_label_score(
-                    $label, $previous_label, $edge->features_all_labeller() ) ) . "\n";
+                        . (
+                        $self->model->get_label_score(
+                            $label, $previous_label, $edge->features_all_labeller()
+                            )
+                        ) . "\n";
                 }
                 $result->{$label} =
                     $previous_label_score
@@ -483,11 +492,14 @@ sub get_possible_labels {
                     $label, $previous_label, $edge->features
                     )
                     ;
-            } elsif ($ALGORITHM == 21) {
+            } elsif ( $ALGORITHM == 21 ) {
                 if ( $self->config->DEBUG >= 4 ) {
                     print "    Score for label $label: $previous_label_score + "
-                        . ( $self->model->get_label_score(
-                    $label, $previous_label, $edge->features_all_labeller() ) ) . "\n";
+                        . (
+                        $self->model->get_label_score(
+                            $label, $previous_label, $edge->features_all_labeller()
+                            )
+                        ) . "\n";
                 }
                 $result->{$label} =
                     $previous_label_score
@@ -495,7 +507,7 @@ sub get_possible_labels {
                     $label, $previous_label, $edge->features_all_labeller()
                     )
                     ;
-            } elsif ($ALGORITHM == 18) {
+            } elsif ( $ALGORITHM == 18 ) {
                 $result->{$label} =
                     $self->model->get_label_score(
                     $label, $previous_label, $edge->features
@@ -504,8 +516,11 @@ sub get_possible_labels {
             } else {
                 if ( $self->config->DEBUG >= 4 ) {
                     print "    Score for label $label: $previous_label_score + "
-                        . ( $self->model->get_label_score(
-                    $label, $previous_label, $edge->features ) ) . "\n";
+                        . (
+                        $self->model->get_label_score(
+                            $label, $previous_label, $edge->features
+                            )
+                        ) . "\n";
                 }
                 $result->{$label} =
                     $previous_label_score

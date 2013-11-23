@@ -292,6 +292,7 @@ sub mira_update {
             $sumUpdateWeight,
         );
     } else {
+
         # alg in 1 2 3 4 5 6 7 10 11 12 13
         my @correct_labels =
             map { $_->label } @{ $sentence_correct_labelling->nodes_with_root };
@@ -372,7 +373,7 @@ sub mira_tree_update {
                 $label_best, $label_prev_best, $features
             );
 
-            if ($ALGORITHM == 19) {
+            if ( $ALGORITHM == 19 ) {
 
                 if ( $score_correct > $score_best ) {
                     if ( $self->config->DEBUG >= 2 ) {
@@ -384,29 +385,30 @@ sub mira_tree_update {
                     }
                     next;
                 }
-    
+
                 if ( $score_correct == 0 || $score_best == 0 ) {
                     if ( $self->config->DEBUG >= 2 ) {
                         print "correct label $label_correct on "
                             . ( $correct_edge->child->ord )
-			    . "score correct: $score_correct\n"
-			    . "score best: $score_best\n";
+                            . "score correct: $score_correct\n"
+                            . "score best: $score_best\n";
                     }
                     next;
                 }
 
                 # inverse sigmoid
-                my $em_correct = - log (1 / $score_correct - 1)
+                my $em_correct = -log( 1 / $score_correct - 1 )
                     / $self->config->SIGM_LAMBDA;
-                my $em_best = - log (1 / $score_best - 1)
+                my $em_best = -log( 1 / $score_best - 1 )
                     / $self->config->SIGM_LAMBDA;
+
                 # error to be distributed among features
                 my $margin = 1;
-                my $error = $em_best - $em_correct + $margin;
+                my $error  = $em_best - $em_correct + $margin;
 
                 # the same update is done twice with each feature
                 my $features_count = scalar( @{$features} );
-                my $update = $error / $features_count / 2;
+                my $update         = $error / $features_count / 2;
 
                 foreach my $feature ( @{$features} ) {
 

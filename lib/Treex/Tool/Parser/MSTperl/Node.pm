@@ -55,7 +55,7 @@ sub _label_set {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if ($ALGORITHM < 20) {
+    if ( $ALGORITHM < 20 ) {
         if ( $self->_fully_built ) {
 
             # TODO: not necessary to update ALL of the features!
@@ -65,6 +65,7 @@ sub _label_set {
                 $child_edge->features($edge_features);
             }
         }
+
         # else only just building -> no updating yet!
     }
 

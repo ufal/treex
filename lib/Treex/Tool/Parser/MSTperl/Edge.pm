@@ -5,8 +5,8 @@ use Moose;
 use Treex::Tool::Parser::MSTperl::Node;
 
 has config => (
-    isa      => 'Treex::Tool::Parser::MSTperl::Config',
-    is       => 'rw',
+    isa => 'Treex::Tool::Parser::MSTperl::Config',
+    is  => 'rw',
 );
 
 has parent => (
@@ -79,14 +79,17 @@ sub features_all_labeller {
 
     my $ALGORITHM = $self->config->labeller_algorithm;
 
-    if ($ALGORITHM < 20) {
+    if ( $ALGORITHM < 20 ) {
         return $self->features;
     } else {
-        if (keys %{$self->config->labelledFeaturesControl->dynamic_features}) {
-            my @features = @{$self->features};
+        if ( keys %{ $self->config->labelledFeaturesControl->dynamic_features } ) {
+            my @features = @{ $self->features };
             push @features,
-                @{$self->config->labelledFeaturesControl->get_all_features(
-                    $self, 1)};
+                @{
+                $self->config->labelledFeaturesControl->get_all_features(
+                    $self, 1
+                    )
+                };
             return \@features;
         } else {
             return $self->features;

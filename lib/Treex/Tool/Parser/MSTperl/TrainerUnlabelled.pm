@@ -202,7 +202,7 @@ sub features_diff {
     my @features_second;
     my $diff_count = 0;
     FF: foreach my $feature ( keys %feature_counts ) {
-        if ($forbid_new_features && $self->model->feature_is_unknown($feature)) {
+        if ( $forbid_new_features && $self->model->feature_is_unknown($feature) ) {
             next FF;
         }
         if ( $feature_counts{$feature} ) {

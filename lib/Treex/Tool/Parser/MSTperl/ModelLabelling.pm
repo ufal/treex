@@ -155,7 +155,7 @@ sub load_data {
         $smooth_ok = 1;
     }
 
-    if ($ALGORITHM >= 20) {
+    if ( $ALGORITHM >= 20 ) {
 
         # these algorithms do not use separate transitions
         # (transitions are included in emissions)
@@ -556,7 +556,7 @@ sub get_label_score {
         }
 
         # sigmoid transformation
-        $result = 1 / ( 1 + exp(- $result * $self->config->SIGM_LAMBDA) );
+        $result = 1 / ( 1 + exp( -$result * $self->config->SIGM_LAMBDA ) );
 
         # multiply by transitions score
         $result *= $self->get_transition_score( $label, $label_prev );
@@ -591,8 +591,8 @@ sub get_label_score {
             # with a positive emission score, even if low with a low transition
             # prob - normalizing scores to be non-negative would be necessary
             # for this, as is alg 0 and similar.
-#             $result *=
-#                 ( 1 - $self->get_transition_score( $label, $label_prev ) );
+            #             $result *=
+            #                 ( 1 - $self->get_transition_score( $label, $label_prev ) );
 
             # TODO trying new variant - setting negative scores to 0
             $result = 0;
@@ -997,7 +997,8 @@ sub get_emission_scores_no_MIRA {
     # get scores
     foreach my $feature (@$features) {
         if ( $self->emissions->{$feature} ) {
-# !!! TODO tady by měl bejt součin !!!
+
+            # !!! TODO tady by měl bejt součin !!!
             foreach my $label ( keys %{ $self->emissions->{$feature} } ) {
                 $prob_sums{$label} +=
                     $self->emissions->{$feature}->{$label};

@@ -148,7 +148,7 @@ sub get_feature_weight {
         return 0;
     }
 }
-    
+
 sub feature_is_unknown {
 
     # (Str $feature)

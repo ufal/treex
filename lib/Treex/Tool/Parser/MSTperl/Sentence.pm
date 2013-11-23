@@ -165,10 +165,10 @@ sub compute_features {
     foreach my $edge ( @{ $self->edges } ) {
         my $edge_features;
         my $ALGORITHM = $self->config->labeller_algorithm;
-        if ($ALGORITHM < 20) {
+        if ( $ALGORITHM < 20 ) {
             $edge_features = $featuresControl->get_all_features($edge);
         } else {
-            $edge_features = $featuresControl->get_all_features($edge, -1);
+            $edge_features = $featuresControl->get_all_features( $edge, -1 );
         }
         $edge->features($edge_features);
         push @features, @{$edge_features};
@@ -293,7 +293,8 @@ sub count_errors_attachement {
             if ( $self->config->lossFunction ) {
                 $errors +=
                     $self->attachement_error(
-                        $my_node, $my_node->parent, $correct_node->parent);
+                    $my_node, $my_node->parent, $correct_node->parent
+                    );
             }
             else {
                 $errors++;
@@ -305,11 +306,11 @@ sub count_errors_attachement {
 }
 
 sub attachement_error {
-    my ($self, $node, $assignedParent, $correctParent) = @_;
+    my ( $self, $node, $assignedParent, $correctParent ) = @_;
 
     # TODO how do the undefines happen?
     # they only seem to occur during testing, not during training
-    return 1 if (!defined $assignedParent || !defined $correctParent);
+    return 1 if ( !defined $assignedParent || !defined $correctParent );
 
     my $error = 1;
 
@@ -329,9 +330,10 @@ sub attachement_error {
     }
     elsif ( $lossFunction eq 'NA' ) {
         if ( defined $correctParent ) {
-            if ( $node->fields->[4] =~ /^A/
+            if ($node->fields->[4] =~ /^A/
                 && $correctParent->fields->[4] =~ /^N/
-            ) {
+                )
+            {
                 $error = 10;
             }
         }
@@ -340,6 +342,7 @@ sub attachement_error {
 
         # if the child is A
         if ( $node->fields->[4] =~ /^A/ ) {
+
             # and the assigned or correct parent is N
             if ( $correctParent->fields->[4] =~ /^N/ || $assignedParent->fields->[4] =~ /^N/ ) {
                 $error = 10;
@@ -348,13 +351,14 @@ sub attachement_error {
     }
     elsif ( $lossFunction eq 'JNA' ) {
         if ( defined $correctParent ) {
-            if ( $node->fields->[4] =~ /^A/
+            if ($node->fields->[4] =~ /^A/
                 &&
                 (
                     $correctParent->fields->[4] =~ /^N/
-                    || $correctParent->fields->[4] =~ /^J/ 
+                    || $correctParent->fields->[4] =~ /^J/
                 )
-            ) {
+                )
+            {
                 $error = 10;
             }
         }
@@ -363,6 +367,7 @@ sub attachement_error {
 
         # if the child is N
         if ( $node->fields->[4] =~ /^N/ ) {
+
             # and the assigned or correct parent is R
             if ( $correctParent->fields->[4] =~ /^R/ || $assignedParent->fields->[4] =~ /^R/ ) {
                 $error = 10;
@@ -373,6 +378,7 @@ sub attachement_error {
 
         # if the child is N or J
         if ( $node->fields->[4] =~ /^[NJ]/ ) {
+
             # and the assigned or correct parent is R
             if ( $correctParent->fields->[4] =~ /^R/ || $assignedParent->fields->[4] =~ /^R/ ) {
                 $error = 10;
@@ -389,7 +395,6 @@ sub attachement_error {
 
     return $error;
 }
-
 
 sub count_errors_labelling {
 
