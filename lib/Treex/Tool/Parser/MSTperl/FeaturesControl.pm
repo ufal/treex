@@ -768,7 +768,7 @@ sub get_left_sibling {
     if ($is_first) {
 
         # there is no left sibling to the leftmost node
-        return undef;
+        return;
     } else {
 
         # find my position among parent's children (is at least 1)
@@ -794,7 +794,7 @@ sub get_right_sibling {
     if ($is_last) {
 
         # there is no right sibling to the rightmost node
-        return undef;
+        return;
     } else {
 
         # find my position among parent's children

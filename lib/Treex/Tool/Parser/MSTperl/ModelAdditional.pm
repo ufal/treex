@@ -162,7 +162,7 @@ sub load_tsv {
     my ( $self, $filename ) = @_;
 
     {
-        open my $file, '<:utf8', $filename;
+        open my $file, '<:encoding(UTF-8)', $filename;
         my $line;
         while ( $line = <$file> ) {
             chomp $line;
