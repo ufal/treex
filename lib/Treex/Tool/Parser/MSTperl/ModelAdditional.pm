@@ -310,7 +310,7 @@ Returns the real PMI, i.e. a negative float
 
 Returns '?' if PMI is unknown.
 
-=item get_rounded_value($child, $parent) 
+=item get_rounded_value($child, $parent)
 
 Returns ceiled PMI, i.e. the integer part of the real PMI
 (there are about 30 possible values).
