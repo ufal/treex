@@ -303,7 +303,7 @@ to buckets.
 
 =item load
 
-=item get_value($child, $parent) 
+=item get_value($child, $parent)
 
 Returns the real PMI, i.e. a negative float
 (there are hundreds of thousands of possible values).
@@ -317,7 +317,7 @@ Returns ceiled PMI, i.e. the integer part of the real PMI
 
 Returns '?' if PMI is unknown.
 
-=item get_bucketed_value($child, $parent) 
+=item get_bucketed_value($child, $parent)
 
 Returns the nearest bucket that is lower or equal
 to the ceiled value of the PMI,
