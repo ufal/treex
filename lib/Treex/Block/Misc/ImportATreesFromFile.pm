@@ -36,6 +36,21 @@ sub process_document {
 	
 	# create ids hash
 	my @id_numbers = split(/\s*,\s*/, $self->ids);
+
+	# interpret ranges for ex: 10-15, 
+	my @ranges_to_push = ();
+	foreach my $id (@id_numbers) {
+		if ($id =~ /^(\d+)\-(\d+)$/) {
+			my $start = $1;
+			my $end = $2;
+			my @range = ($start..$end);
+			push @ranges_to_push, @range;
+		}
+	}
+	
+	# add the range ids if any
+	push @id_numbers, @ranges_to_push;
+		
 	if ($self->from_selector eq q{}) {
 		map{ $id_hash{'a_tree-'. $self->from_zone . '-' . 's' . $_ .'-root'}++;}@id_numbers;
 	}
