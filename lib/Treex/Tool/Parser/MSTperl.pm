@@ -1,6 +1,8 @@
 package Treex::Tool::Parser::MSTperl;
 
 use Moose;
+use File::Spec;
+
 use Treex::Tool::Parser::MSTperl::Config;
 use Treex::Tool::Parser::MSTperl::Node;
 use Treex::Tool::Parser::MSTperl::Sentence;
@@ -29,7 +31,7 @@ has 'base_name' => (
 sub build_base_name {
     my ($self) = @_;
 
-    my $base_name = $self->model_dir . '/' . $self->model_name;
+    my $base_name = File::Spec->catfile( $self->model_dir, $self->model_name );
 
     return $base_name;
 }
@@ -232,13 +234,13 @@ In Perl:
 
 This should return:
 
-  child -> parent (deprel):
-  ------------------------
-  Martin -> jde (Sb)
-  jde -> ROOT (Pred)
-  po -> jde (AuxP)
-  ulici -> po (Adv)
-  . -> ROOT (AuxK)
+ child -> parent (deprel):
+ ------------------------
+ Martin -> jde (Sb)
+ jde -> ROOT (Pred)
+ po -> jde (AuxP)
+ ulici -> po (Adv)
+ . -> ROOT (AuxK)
 
 which is the correct parse tree with correct deprels assigned.
 

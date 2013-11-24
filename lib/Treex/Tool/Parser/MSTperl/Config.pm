@@ -3,6 +3,7 @@ package Treex::Tool::Parser::MSTperl::Config;
 use Moose;
 use autodie;
 use Carp;
+use File::Spec;
 
 use Treex::Tool::Parser::MSTperl::FeaturesControl;
 use Treex::Tool::Parser::MSTperl::ModelAdditional;
@@ -456,6 +457,23 @@ sub BUILD {
 
     if ( $self->DEBUG >= 1 ) {
         print "Processing config file " . $self->config_file . "...\n";
+    }
+
+    # check if file exists
+    unless ( -e $self->config_file ) {
+        my $dir;
+        my ( $volume, $directory, $cfile ) =
+            File::Spec->splitpath( $self->config_file );
+        $dir = File::Spec->catpath( $volume, $directory, '' );
+        my @files = ();
+        opendir( my $dirhandle, $dir ) or croak $!;
+        while ( my $file = readdir($dirhandle) ) {
+            push @files, $file;
+        }
+        closedir($dirhandle);
+        croak "The config file $cfile does not exists!\n" .
+            "The directory $dir contains the following files: " .
+            join ', ', @files;
     }
     use YAML::Tiny;
     my $config = YAML::Tiny->new;
