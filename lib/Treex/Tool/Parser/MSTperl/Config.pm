@@ -989,8 +989,9 @@ training data, as it uses a lot of memory but speeds up the training greatly
 =item labeller_algorithm: 16
 
 Algorithm used for Viterbi labelling as well as for training. Several
-possibilities are being tried out
-(especially regarding the emission probabilities used in the Viterbi algorithm).
+possibilities were tried out,
+especially regarding the emission probabilities used in the Viterbi algorithm;
+this is for development purposes only, preferebly do not use.
 
 =over
 
