@@ -63,7 +63,7 @@ sub process_zone
         if(defined($tnode))
         {
             # This is a content word and there is a lexically corresponding t-node.
-            $lemma = $tnode->t_lemma();
+            $lemma = $self->decode_characters($tnode->t_lemma(), $tag);
             my $functor = $NOT_SET;
             if(defined($tnode->functor()))
             {
@@ -310,10 +310,7 @@ sub decode_characters
 {
     my $self = shift;
     my $x = shift;
-    my $tag = shift;
-    # Do not change apostrophe if it is tagged as possessive marker (POS).
-    # Go ahead if it is marked as closing quotation mark ('').
-    return $x if($tag eq 'POS');
+    my $tag = shift; # Could be used to distinguish between possessive apostrophe and right single quotation mark. Currently not used.
     # Cancel escaping of slashes.
     $x =~ s-\\/-/-g;
     # English opening double quotation mark.
@@ -323,15 +320,16 @@ sub decode_characters
     # English opening single quotation mark.
     $x =~ s/^`$/\x{2018}/g;
     # English closing single quotation mark.
-    # If we remove the ^ and $ requirement, the expression will also cover conflated English auxiliaries "n't", "'re" and "'s", see below.
-    $x =~ s/^'$/\x{2019}/g;
+    # Includes cases where the character is used as apostrophe: 's s' 're 've n't etc.
+    # According to the Unicode standard, U+2019 is the preferred character for both the single quote and the apostrophe,
+    # despite their different semantics. See also
+    # http://www.cl.cam.ac.uk/~mgk25/ucs/quotes.html and
+    # http://www.unicode.org/versions/Unicode6.2.0/ch06.pdf (page 200)
+    $x =~ s/'/\x{2019}/g;
     # N-dash.
     $x =~ s/--/\x{2013}/g;
     # Ellipsis.
     $x =~ s/\.\.\./\x{2026}/g;
-    ###!!! Stephan Oepen also suggested changing English "n't", "'re" and "'s" to using right single quotation mark.
-    ###!!! I disagree because quotation mark is a paired symbol and it is semantically different from the apostrophe.
-    ###!!! Besides, I suspect that the above list of occurrences might not be complete.
     return $x;
 }
 
