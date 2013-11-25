@@ -11,7 +11,7 @@ use Moose::Util::TypeConstraints;
 use TranslationModel::Factory;
 use TranslationModel::Static::Model;
 
-#TODO: Fix this
+#TODO: Probably fix this
 use TranslationModel::MaxEnt::FeatureExt::EN2CS;
 
 has model_dir => (
@@ -33,7 +33,7 @@ has static_weight => (
 has static_model => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'lemma_ja-cs.static.pls.slurp.gz',
+    default => 'ja-cs.static.tlemma.pls.slurp.gz',
 );
 
 enum 'DataVersion' => [ '0.9', '1.0' ];
@@ -134,7 +134,7 @@ sub process_tnode {
     
         my $all_feats = [ @$features_array_rf ];
 
-        my $en_tlemma = $ja_tnode->t_lemma;
+        my $ja_tlemma = $ja_tnode->t_lemma;
         my @translations = $static_model->get_translations( lc($ja_tlemma), $all_feats);
 
         # when lowercased models are used, then PoS tags should be uppercased

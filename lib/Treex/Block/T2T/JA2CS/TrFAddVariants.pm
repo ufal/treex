@@ -39,7 +39,7 @@ has static_weight => (
 has static_model => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'formeme_ja-cs.static.pls.slurp.gz',
+    default => 'ja-cs.static.formeme.pls.slurp.gz',
 );
 
 has max_variants => (
