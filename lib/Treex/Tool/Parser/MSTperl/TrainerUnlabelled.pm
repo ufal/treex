@@ -1,6 +1,7 @@
 package Treex::Tool::Parser::MSTperl::TrainerUnlabelled;
 
 use Moose;
+use 5.010;
 
 extends 'Treex::Tool::Parser::MSTperl::TrainerBase';
 

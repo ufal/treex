@@ -1,6 +1,7 @@
 package Treex::Tool::Parser::MSTperl::Sentence;
 
 use Moose;
+use 5.010;
 
 use Treex::Tool::Parser::MSTperl::Node;
 use Treex::Tool::Parser::MSTperl::RootNode;

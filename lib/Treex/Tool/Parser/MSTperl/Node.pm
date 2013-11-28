@@ -1,6 +1,7 @@
 package Treex::Tool::Parser::MSTperl::Node;
 
 use Moose;
+use 5.010;
 
 has config => (
     isa      => 'Treex::Tool::Parser::MSTperl::Config',

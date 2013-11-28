@@ -1,6 +1,7 @@
 package Treex::Tool::Parser::MSTperl::ModelAdditional;
 
 use Data::Dumper;
+use 5.010;
 use autodie;
 use Moose;
 use Carp;

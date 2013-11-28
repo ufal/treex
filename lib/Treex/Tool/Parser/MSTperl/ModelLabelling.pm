@@ -1,6 +1,7 @@
 package Treex::Tool::Parser::MSTperl::ModelLabelling;
 
 use Moose;
+use 5.010;
 use Carp;
 
 extends 'Treex::Tool::Parser::MSTperl::ModelBase';

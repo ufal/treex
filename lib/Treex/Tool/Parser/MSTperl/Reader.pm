@@ -1,6 +1,7 @@
 package Treex::Tool::Parser::MSTperl::Reader;
 
 use Moose;
+use 5.010;
 use autodie;
 
 has config => (

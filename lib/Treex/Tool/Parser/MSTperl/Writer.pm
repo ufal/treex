@@ -1,6 +1,7 @@
 package Treex::Tool::Parser::MSTperl::Writer;
 
 use Moose;
+use 5.010;
 use autodie;
 use Carp;
 

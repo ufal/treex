@@ -1,6 +1,7 @@
 package Treex::Tool::Parser::MSTperl::TrainerBase;
 
 use Moose;
+use 5.010;
 use Carp;
 
 has config => (
