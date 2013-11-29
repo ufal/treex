@@ -147,7 +147,20 @@ sub get_lemma
     @tnodes = sort {$a->ord() <=> $b->ord()} (@{$anode->wild()->{tnodes}}) if(defined($anode->wild()->{tnodes}));
     if(scalar(@tnodes)>1)
     {
-        $lemma = join('_', map {$self->decode_characters($_->t_lemma())} (@tnodes));
+        # There are two or more t-nodes linked to one a-node. Two model cases:
+        # 1. Retokenized a-nodes such as "1/2" --> "1", "#Slash", "2".
+        # 2. Doubled or multiplied nodes to cover ellipsis, e.g. "yield" --> "yield", "yield".
+        # In case 1, we want to see the lemmas of all t-nodes involved.
+        # In case 2, we want just one copy of the lemma.
+        my @lemmas = map {$self->decode_characters($_->t_lemma())} (@tnodes);
+        if(grep {$_ ne $lemmas[0]} (@lemmas))
+        {
+            $lemma = join('_', map {$self->decode_characters($_->t_lemma())} (@tnodes));
+        }
+        else
+        {
+            $lemma = $lemmas[0];
+        }
     }
     elsif(defined($tnode))
     {
