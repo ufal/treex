@@ -41,10 +41,12 @@ sub process_zone
         my $anode = $tnode->get_lex_anode();
         if(defined($anode))
         {
-            ###!!! Occasionally a token is re-tokenized on the t-layer and there are several t-nodes corresponding to one a-node.
-            ###!!! Example: "1/2" -> "1", "#Slash", "2" (annotated as coordination headed by #Slash).
-            ###!!! Then we should concatenate the t-lemmas of the nodes, and we should consider parents of all t-nodes involved (and do something with the dependency labels).
-            $anode->wild()->{tnode} = $tnode;
+            # Occasionally a token is re-tokenized on the t-layer and there are several t-nodes corresponding to one a-node.
+            # Example: "1/2" -> "1", "#Slash", "2" (annotated as coordination headed by #Slash).
+            # We store the link to the first t-node found for subsequent functions that can deal with at most one t-node.
+            # We store separately links to all t-nodes found for functions that can use them all.
+            $anode->wild()->{tnode} = $tnode unless(defined($anode->wild()->{tnode}));
+            push(@{$anode->wild()->{tnodes}}, $tnode);
         }
     }
     # We require that the token ids make an unbroken sequence, starting at 1.
@@ -60,58 +62,10 @@ sub process_zone
         my $ord = $anode->ord();
         my $tag = $anode->tag();
         my $form = $self->decode_characters($anode->form(), $tag);
-        my $lemma = $self->decode_characters($anode->lemma(), $tag);
-        # Is there a lexically corresponding tnode?
-        my $tnode = $anode->wild()->{tnode};
-        if(defined($tnode))
-        {
-            # This is a content word and there is a lexically corresponding t-node.
-            $lemma = $self->decode_characters($tnode->t_lemma(), $tag);
-            my $functor = $NOT_SET;
-            if(defined($tnode->functor()))
-            {
-                $functor = $tnode->functor();
-            }
-            if(defined($tnode->parent()))
-            {
-                $roots[$ord] = $tnode->parent()->is_root() ? '+' : '-';
-                # Effective parents are important around coordination or apposition:
-                # - CoAp root (conjunction) has no effective parent.
-                # - Effective parent of conjuncts is somewhere above the conjunction (its direct parent, unless there is another coordination involved).
-                # - Effective parents of shared modifier are the conjuncts.
-                my @eparents;
-                unless($tnode->is_coap_root())
-                {
-                    @eparents = $tnode->get_eparents();
-                }
-                if(scalar(@eparents)>0)
-                {
-                    foreach my $ep (@eparents)
-                    {
-                        my $pord = $self->get_a_ord_for_t_node($ep);
-                        if(defined($pord))
-                        {
-                            $matrix[$ord][$pord] = $functor;
-                        }
-                    }
-                }
-                if($tnode->is_member())
-                {
-                    my $pord = $self->get_a_ord_for_t_node($tnode->parent());
-                    my $mfunctor = $tnode->parent()->functor().'.member';
-                    if(defined($pord))
-                    {
-                        $matrix[$ord][$pord] = $mfunctor;
-                    }
-                }
-            }
-        }
-        else
-        {
-            # This is an auxiliary word. There is a t-node to which it belongs but they do not correspond lexically.
-            $roots[$ord] = '-';
-        }
+        my $lemma = $self->get_lemma($anode);
         push(@conll, [$ord, $form, $lemma, $tag]);
+        # Fill @matrix and @roots.
+        $self->get_parents($anode, \@matrix, \@roots);
     }
     # Add dependency fields in the required format.
     my @ispred = $self->get_is_pred(\@matrix);
@@ -173,6 +127,113 @@ sub get_a_ord_for_t_node
             return undef;
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns lemma for output. If there is no t-node, returns a-node's lemma.
+# If there is one t-node, returns its t-lemma. If there are more than one
+# t-node, concatenates their t-lemmas.
+#------------------------------------------------------------------------------
+sub get_lemma
+{
+    my $self = shift;
+    my $anode = shift;
+    my $lemma;
+    # Is there a lexically corresponding tnode?
+    my $tnode = $anode->wild()->{tnode};
+    my @tnodes;
+    @tnodes = @{$anode->wild()->{tnodes}} if(defined($anode->wild()->{tnodes}));
+    if(scalar(@tnodes)>1)
+    {
+        $lemma = join('_', map {$self->decode_characters($_->t_lemma())} (@tnodes));
+    }
+    elsif(defined($tnode))
+    {
+        # This is a content word and there is a lexically corresponding t-node.
+        $lemma = $self->decode_characters($tnode->t_lemma());
+    }
+    else
+    {
+        # This is a function word or punctuation and it does not have its own t-node.
+        $lemma = $self->decode_characters($anode->lemma());
+    }
+    return $lemma;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Finds all relations of an a-node to its parents. The relations are
+# projections of dependencies in the t-tree. An a-node may have zero, one or
+# more parents. The relations are added to the matrix and the array of root
+# flags is updated. We expect to get the links to matrix and roots from the
+# caller.
+#------------------------------------------------------------------------------
+sub get_parents
+{
+    my $self = shift;
+    my $anode = shift;
+    my $matrix = shift;
+    my $roots = shift;
+    my $ord = $anode->ord();
+    # Is there a lexically corresponding tnode?
+    my $tn = $anode->wild()->{tnode};
+    my @tnodes;
+    @tnodes = @{$anode->wild()->{tnodes}} if(defined($anode->wild()->{tnodes}));
+    if(defined($tn))
+    {
+        # This is a content word and there is at least one lexically corresponding t-node.
+        # Add parent relations for all corresponding t-nodes. (Some of them may collapse in the a-tree to a reflexive link.)
+        foreach my $tnode (@tnodes)
+        {
+            my $functor = $NOT_SET;
+            if(defined($tnode->functor()))
+            {
+                $functor = $tnode->functor();
+            }
+            if(defined($tnode->parent()))
+            {
+                $roots->[$ord] = $tnode->parent()->is_root() ? '+' : '-';
+                # Effective parents are important around coordination or apposition:
+                # - CoAp root (conjunction) has no effective parent.
+                # - Effective parent of conjuncts is somewhere above the conjunction (its direct parent, unless there is another coordination involved).
+                # - Effective parents of shared modifier are the conjuncts.
+                my @eparents;
+                unless($tnode->is_coap_root())
+                {
+                    @eparents = $tnode->get_eparents();
+                }
+                if(scalar(@eparents)>0)
+                {
+                    foreach my $ep (@eparents)
+                    {
+                        my $pord = $self->get_a_ord_for_t_node($ep);
+                        if(defined($pord))
+                        {
+                            $matrix->[$ord][$pord] = $functor;
+                        }
+                    }
+                }
+                if($tnode->is_member())
+                {
+                    my $pord = $self->get_a_ord_for_t_node($tnode->parent());
+                    my $mfunctor = $tnode->parent()->functor().'.member';
+                    if(defined($pord))
+                    {
+                        $matrix->[$ord][$pord] = $mfunctor;
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        # This is an auxiliary word. There is a t-node to which it belongs but they do not correspond lexically.
+        $roots->[$ord] = '-';
+    }
+    return $matrix;
 }
 
 
