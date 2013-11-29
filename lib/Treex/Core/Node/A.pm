@@ -31,7 +31,7 @@ sub is_coap_root {
 }
 
 sub n_node {
-    my ($self) = @_;
+    my ($self)         = @_;
     my ($first_n_node) = $self->get_referencing_nodes('a.rf');
     return $first_n_node;
 }
@@ -177,11 +177,11 @@ sub set_real_afun
 #------------------------------------------------------------------------------
 sub copy_atree
 {
-    my $self      = shift;
-    my $target    = shift;
+    my $self   = shift;
+    my $target = shift;
 
     # Why is this here ? the attributes of the root node are NOT copied, are they ??
-    $target->set_wild(Storable::dclone($self->wild));
+    $target->set_wild( Storable::dclone( $self->wild ) );
 
     my @children0 = $self->get_children( { ordered => 1 } );
     foreach my $child0 (@children0)
@@ -200,9 +200,8 @@ sub copy_atree
     return;
 }
 
-
 sub copy_attributes {
-    my ($self, $other) = @_;
+    my ( $self, $other ) = @_;
 
     # We should copy all attributes that the node has but it is not easy to figure out which these are.
     # TODO: As a workaround, we list the attributes here directly.
@@ -216,7 +215,7 @@ sub copy_attributes {
     }
 
     # deep copy of wild attributes
-    $other->set_wild(Storable::dclone($self->wild));
+    $other->set_wild( Storable::dclone( $self->wild ) );
 
     return;
 }
@@ -226,12 +225,12 @@ sub copy_attributes {
 sub get_terminal_pnode {
     my ($self) = @_;
     my $p_rf = $self->get_attr('p_terminal.rf') or return;
-    my $doc  = $self->get_document();
+    my $doc = $self->get_document();
     return $doc->get_node_by_id($p_rf);
 }
 
 sub set_terminal_pnode {
-    my ($self, $pnode) = @_;
+    my ( $self, $pnode ) = @_;
     my $new_id = defined $pnode ? $pnode->id : undef;
     $self->set_attr( 'p_terminal.rf', $new_id );
     return;
@@ -281,7 +280,7 @@ sub reset_morphcat {
 # Used only for reading from PCEDT/PDT trees, so far.
 sub get_subtree_string {
     my ($self) = @_;
-    return join '', map { defined($_->form) ? ($_->form . ( $_->no_space_after ? '' : ' ' )) : '' } $self->get_descendants( { ordered => 1 } );
+    return join '', map { defined( $_->form ) ? ( $_->form . ( $_->no_space_after ? '' : ' ' ) ) : '' } $self->get_descendants( { ordered => 1 } );
 }
 
 #----------- CoNLL attributes -------------
@@ -295,6 +294,36 @@ sub set_conll_deprel { return $_[0]->set_attr( 'conll/deprel', $_[1] ); }
 sub set_conll_cpos   { return $_[0]->set_attr( 'conll/cpos',   $_[1] ); }
 sub set_conll_pos    { return $_[0]->set_attr( 'conll/pos',    $_[1] ); }
 sub set_conll_feat   { return $_[0]->set_attr( 'conll/feat',   $_[1] ); }
+
+#---------- Morphcat -------------
+
+sub morphcat_pos        { return $_[0]->get_attr('morphcat/pos'); }
+sub morphcat_subpos     { return $_[0]->get_attr('morphcat/subpos'); }
+sub morphcat_number     { return $_[0]->get_attr('morphcat/number'); }
+sub morphcat_gender     { return $_[0]->get_attr('morphcat/gender'); }
+sub morphcat_case       { return $_[0]->get_attr('morphcat/case'); }
+sub morphcat_person     { return $_[0]->get_attr('morphcat/person'); }
+sub morphcat_tense      { return $_[0]->get_attr('morphcat/tense'); }
+sub morphcat_negation   { return $_[0]->get_attr('morphcat/negation'); }
+sub morphcat_voice      { return $_[0]->get_attr('morphcat/voice'); }
+sub morphcat_grade      { return $_[0]->get_attr('morphcat/grade'); }
+sub morphcat_mood       { return $_[0]->get_attr('morphcat/mood'); }
+sub morphcat_possnumber { return $_[0]->get_attr('morphcat/possnumber'); }
+sub morphcat_possgender { return $_[0]->get_attr('morphcat/possgender'); }
+
+sub set_morphcat_pos        { return $_[0]->set_attr( 'morphcat/pos',        $_[1] ); }
+sub set_morphcat_subpos     { return $_[0]->set_attr( 'morphcat/subpos',     $_[1] ); }
+sub set_morphcat_number     { return $_[0]->set_attr( 'morphcat/number',     $_[1] ); }
+sub set_morphcat_gender     { return $_[0]->set_attr( 'morphcat/gender',     $_[1] ); }
+sub set_morphcat_case       { return $_[0]->set_attr( 'morphcat/case',       $_[1] ); }
+sub set_morphcat_person     { return $_[0]->set_attr( 'morphcat/person',     $_[1] ); }
+sub set_morphcat_tense      { return $_[0]->set_attr( 'morphcat/tense',      $_[1] ); }
+sub set_morphcat_negation   { return $_[0]->set_attr( 'morphcat/negation',   $_[1] ); }
+sub set_morphcat_voice      { return $_[0]->set_attr( 'morphcat/voice',      $_[1] ); }
+sub set_morphcat_grade      { return $_[0]->set_attr( 'morphcat/grade',      $_[1] ); }
+sub set_morphcat_mood       { return $_[0]->set_attr( 'morphcat/mood',       $_[1] ); }
+sub set_morphcat_possnumber { return $_[0]->set_attr( 'morphcat/possnumber', $_[1] ); }
+sub set_morphcat_possgender { return $_[0]->set_attr( 'morphcat/possgender', $_[1] ); }
 
 1;
 
