@@ -41,6 +41,9 @@ sub process_zone
         my $anode = $tnode->get_lex_anode();
         if(defined($anode))
         {
+            ###!!! Occasionally a token is re-tokenized on the t-layer and there are several t-nodes corresponding to one a-node.
+            ###!!! Example: "1/2" -> "1", "#Slash", "2" (annotated as coordination headed by #Slash).
+            ###!!! Then we should concatenate the t-lemmas of the nodes, and we should consider parents of all t-nodes involved (and do something with the dependency labels).
             $anode->wild()->{tnode} = $tnode;
         }
     }
@@ -243,8 +246,8 @@ sub get_conll_dependencies_compact
 # depends on node $j and the label of the relation is 'ACT'. Also takes index
 # of current dependent node. Returns CoNLL dependency fields for that node in
 # the wide format, i.e. there are variable number of fields, depending of the
-# number of predicates in the sentence, each can contains the label of relation
-# if there is a relation.
+# number of predicates in the sentence, each contains the label of relation if
+# there is a relation.
 #------------------------------------------------------------------------------
 sub get_conll_dependencies_wide
 {
@@ -311,8 +314,14 @@ sub decode_characters
     my $self = shift;
     my $x = shift;
     my $tag = shift; # Could be used to distinguish between possessive apostrophe and right single quotation mark. Currently not used.
-    # Cancel escaping of slashes.
+    # Cancel escaping of brackets. The codes are uppercased in forms (and POS tags) and lowercased in lemmas.
+    $x =~ s/-LRB-/(/ig;
+    $x =~ s/-RRB-/)/ig;
+    $x =~ s/-LCB-/{/ig;
+    $x =~ s/-RCB-/}/ig;
+    # Cancel escaping of slashes and asterisks.
     $x =~ s-\\/-/-g;
+    $x =~ s/\\\*/*/g;
     # English opening double quotation mark.
     $x =~ s/``/\x{201C}/g;
     # English closing double quotation mark.
