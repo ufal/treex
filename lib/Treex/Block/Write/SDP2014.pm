@@ -144,7 +144,7 @@ sub get_lemma
     # Is there a lexically corresponding tnode?
     my $tnode = $anode->wild()->{tnode};
     my @tnodes;
-    @tnodes = @{$anode->wild()->{tnodes}} if(defined($anode->wild()->{tnodes}));
+    @tnodes = sort {$a->ord() <=> $b->ord()} (@{$anode->wild()->{tnodes}}) if(defined($anode->wild()->{tnodes}));
     if(scalar(@tnodes)>1)
     {
         $lemma = join('_', map {$self->decode_characters($_->t_lemma())} (@tnodes));
@@ -181,7 +181,7 @@ sub get_parents
     # Is there a lexically corresponding tnode?
     my $tn = $anode->wild()->{tnode};
     my @tnodes;
-    @tnodes = @{$anode->wild()->{tnodes}} if(defined($anode->wild()->{tnodes}));
+    @tnodes = sort {$a->ord() <=> $b->ord()} (@{$anode->wild()->{tnodes}}) if(defined($anode->wild()->{tnodes}));
     if(defined($tn))
     {
         # This is a content word and there is at least one lexically corresponding t-node.
