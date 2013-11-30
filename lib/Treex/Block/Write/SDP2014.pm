@@ -144,6 +144,8 @@ sub get_lemma
     # Is there a lexically corresponding tnode?
     my $tnode = $anode->wild()->{tnode};
     my @tnodes;
+    # Unfortunately the sort() does not help always. It is not rare that the annotation of PCEDT is wrong.
+    # For instance, in sentence 32 of wsj_2300, the token "7/8" yields three t-nodes but their ord values order them as "#Slash 8 7".
     @tnodes = sort {$a->ord() <=> $b->ord()} (@{$anode->wild()->{tnodes}}) if(defined($anode->wild()->{tnodes}));
     if(scalar(@tnodes)>1)
     {
