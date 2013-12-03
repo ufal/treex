@@ -1,7 +1,6 @@
 package Treex::Tool::Parser::MSTperl::FeaturesControl;
 
 use Moose;
-use 5.010;
 use autodie;
 use Carp;
 

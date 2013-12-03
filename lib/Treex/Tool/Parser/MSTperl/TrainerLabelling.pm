@@ -1,7 +1,6 @@
 package Treex::Tool::Parser::MSTperl::TrainerLabelling;
 
 use Moose;
-use 5.010;
 use Carp;
 
 extends 'Treex::Tool::Parser::MSTperl::TrainerBase';

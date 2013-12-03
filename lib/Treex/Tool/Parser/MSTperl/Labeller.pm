@@ -1,7 +1,6 @@
 package Treex::Tool::Parser::MSTperl::Labeller;
 
 use Moose;
-use 5.010;
 use Carp;
 
 use Treex::Tool::Parser::MSTperl::Sentence;

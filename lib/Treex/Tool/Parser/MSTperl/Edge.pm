@@ -1,7 +1,6 @@
 package Treex::Tool::Parser::MSTperl::Edge;
 
 use Moose;
-use 5.010;
 
 use Treex::Tool::Parser::MSTperl::Node;
 

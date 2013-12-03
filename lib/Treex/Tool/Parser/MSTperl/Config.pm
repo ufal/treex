@@ -1,7 +1,6 @@
 package Treex::Tool::Parser::MSTperl::Config;
 
 use Moose;
-use 5.010;
 use autodie;
 use Carp;
 use File::Spec;
