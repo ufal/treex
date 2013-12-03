@@ -6,7 +6,7 @@ use utf8;
 use FindBin;
 FindBin::again();
 
-use Test::More tests => 45;
+use Test::More tests => 46;
 
 binmode STDIN,  ':encoding(utf8)';
 binmode STDOUT, ':encoding(utf8)';
@@ -20,6 +20,7 @@ BEGIN {
     use_ok('Treex::Tool::Parser::MSTperl::ModelBase');
     use_ok('Treex::Tool::Parser::MSTperl::ModelLabelling');
     use_ok('Treex::Tool::Parser::MSTperl::ModelUnlabelled');
+    use_ok('Treex::Tool::Parser::MSTperl::ModelAdditional');
     use_ok('Treex::Tool::Parser::MSTperl::Node');
     use_ok('Treex::Tool::Parser::MSTperl::Parser');
     use_ok('Treex::Tool::Parser::MSTperl::Labeller');

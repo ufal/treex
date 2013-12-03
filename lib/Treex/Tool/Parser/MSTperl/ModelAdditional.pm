@@ -179,7 +179,10 @@ sub load_tsv {
 sub get_value {
     my ( $self, $child, $parent ) = @_;
 
-    my $value = $self->model->{$child}->{$parent} // '?';
+    my $value = $self->model->{$child}->{$parent};
+    if ( !defined $value ) {
+        $value = '?';
+    }
 
     return $value;
 }
