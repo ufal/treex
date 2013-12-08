@@ -1,0 +1,5 @@
+
+Depfix code is now stored in A2A::CS (and some of it on other places
+according to the layer it operates on). However, in future it shall reside
+here.
+
