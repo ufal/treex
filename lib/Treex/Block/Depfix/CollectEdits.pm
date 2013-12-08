@@ -13,28 +13,6 @@ has hpe_alignment_type => ( is => 'rw', isa => 'Str', default => 'monolingual' )
 
 my $blank_node;
 
-sub process_start {
-    my ($self) = @_;
-
-    my $blank_node_parent = Treex::Core::Node->new({
-            'ord' => 0,
-            form => '',
-            lemma => '',
-            tag => '',
-            afun => '',
-        });
-
-    $blank_node = $blank_node_parent->create_child({
-            'ord' => 1,
-            form => '',
-            lemma => '',
-            tag => '',
-            afun => '',
-        });
-
-    return;
-}
-
 sub process_anode {
     my ($self, $child) = @_;
     my ($parent) = $child->get_eparents();
@@ -45,6 +23,7 @@ sub process_anode {
         defined $parent_hpe &&
         $child->lemma eq $child_hpe->lemma
     ) {
+        my $edge_direction = $child->precedes($parent) ? '/' : '\\';
         # aligned src nodes
         my ($child_src) = $child->get_aligned_nodes_of_type($self->src_alignment_type);
         my ($parent_src) = $child->get_aligned_nodes_of_type($self->src_alignment_type);
@@ -56,20 +35,24 @@ sub process_anode {
                 $src_edge = 0;
             }
         }
-        if ( !defined $child_src ) {
-            $child_src = $blank_node;
-        }
-        if ( !defined $parent_src ) {
-            $parent_src = $blank_node;
-        }
-        
-        my $edge_direction = $child->precedes($parent) ? '/' : '\\';
+        my ($child_src_lemma, $child_src_tag, $child_src_afun) =
+            (defined $child_src)
+            ?
+            ($child_src->lemma, $child_src->tag, $child_src->afun)
+            :
+            ('', '', '');
+        my ($parent_src_lemma, $parent_src_tag, $parent_src_afun) =
+            (defined $parent_src)
+            ?
+            ($parent_src->lemma, $parent_src->tag, $parent_src->afun)
+            :
+            ('', '', '');
         my @features = (
             $child->lemma, $child->tag, $child->afun,
             $parent->lemma, $parent->tag, $parent->afun,
             $edge_direction,
-            $child_src->lemma, $child_src->tag, $child_src->afun,
-            $parent_src->lemma, $parent_src->tag, $parent_src->afun,
+            $child_src_lemma, $child_src_tag, $child_src_afun,
+            $parent_src_lemma, $parent_src_tag, $parent_src_afun,
             $src_edge,
             $child_hpe->tag, $child_hpe->afun,
             $parent_hpe->tag, $parent_hpe->afun,
