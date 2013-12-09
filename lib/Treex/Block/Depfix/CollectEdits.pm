@@ -26,7 +26,7 @@ sub process_anode {
         my $edge_direction = $child->precedes($parent) ? '/' : '\\';
         # aligned src nodes
         my ($child_src) = $child->get_aligned_nodes_of_type($self->src_alignment_type);
-        my ($parent_src) = $child->get_aligned_nodes_of_type($self->src_alignment_type);
+        my ($parent_src) = $parent->get_aligned_nodes_of_type($self->src_alignment_type);
         my $src_edge = -1;
         if ( defined $child_src && defined $parent_src ) {
             if ( grep { $_->id eq $parent_src->id } $child_src->get_eparents() ) {
