@@ -65,7 +65,7 @@ sub process_zone
         my $lemma = $self->get_lemma($anode);
         push(@conll, [$ord, $form, $lemma, $tag]);
         # Fill @matrix and @roots.
-        $self->get_parents($anode, \@matrix, \@roots);
+        $self->get_parents($anode, \@matrix, \@roots, $aroot);
     }
     # Add dependency fields in the required format.
     my @ispred = $self->get_is_pred(\@matrix);
@@ -96,37 +96,6 @@ sub process_zone
     }
     # Every sentence must be terminated by a blank line.
     print {$self->_file_handle()} ("\n");
-}
-
-
-
-#------------------------------------------------------------------------------
-# Finds a-node that lexically corresponds to the t-node and returns its ord.
-#------------------------------------------------------------------------------
-sub get_a_ord_for_t_node
-{
-    my $self = shift;
-    my $tnode = shift;
-    # If t-node is root, we will not find its lexically corresponding a-node.
-    # We want the a-root even though the correspondence is no longer lexical.
-    if($tnode->is_root())
-    {
-        return 0;
-    }
-    else
-    {
-        my $anode = $tnode->get_lex_anode();
-        if(defined($anode))
-        {
-            return $anode->ord();
-        }
-        else
-        {
-            # This could happen if we accidentally called the function on a generated t-node.
-            # All other t-nodes must have one lexical a-node and may have any number of auxiliary a-nodes.
-            return undef;
-        }
-    }
 }
 
 
@@ -180,11 +149,153 @@ sub get_lemma
 
 
 #------------------------------------------------------------------------------
+# Finds a-node that lexically corresponds to the t-node and returns its ord.
+#------------------------------------------------------------------------------
+sub get_a_ord_for_t_node
+{
+    my $self = shift;
+    my $tnode = shift;
+    my $aroot = shift; # We need this in order to check that the result is in the same sentence, see below.
+    # If t-node is root, we will not find its lexically corresponding a-node.
+    # We want the a-root even though the correspondence is no longer lexical.
+    if($tnode->is_root())
+    {
+        return 0;
+    }
+    else
+    {
+        my $anode = $tnode->get_lex_anode();
+        # Ellipsis may cause that the anode is in previous sentence.
+        # We are only interested in anodes that are in the same sentence!
+        if(defined($anode) && $anode->get_root()==$aroot)
+        {
+            return $anode->ord();
+        }
+        else
+        {
+            # This could happen if we called the function on a generated t-node.
+            # All other t-nodes must have one lexical a-node and may have any number of auxiliary a-nodes.
+            return undef;
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Recursively looks for ancestors of t-nodes that can be projected on a-nodes.
+# Paratactic structures may cause a fork, i.e. more than one ancestor.
+# Generated ancestors (without corresponding a-nodes in the same sentence) will
+# create chains of functors.
+# If a normal ancestor (effective parent) cannot be projected, we will
+# recursively look for both types of its ancestors: effective parents and
+# coap heads.
+# If a coap head cannot be projected, we will recursively search only for
+# superordinated coap heads in nested paratactic structures. If there are none,
+# the coap links will be lost without trace. (We could interlink the conjuncts
+# directly but such solution would not be consistent with the rest of the
+# data.)
+# The data structure:
+# array of references to hashes with the following keys:
+#   tnode ........ either the original tnode or one of its ancestors
+#   outfunctor ... either the original functor or chain of functors on the path
+#                  from the original tnode to the ancestor
+#   anode ........ this is the anode corresponding to the current tnode
+
+# 1. Na začátku pole obsahuje pouze jeden uzel, kterému hledáme rodiče.
+#    Označíme ho jako aktuální. Není OK (chceme jeho rodiče, ne jeho).
+# 2. Pokud je aktuální uzel kořen, hledáme rodiče, který neexistuje.
+#    Ukončíme funkci a vrátíme undef.
+# 3. Aktuální uzel není OK a hledáme jeho nejbližší předky.
+# 3a U všech uzlů včetně coaprootů hledáme závislosti typu is_member (vnořené
+#    coapy). Pokud najdeme nadřazený coaproot, je to předek.
+#    Outfunktorem tohoto vztahu je funktor coaprootu plus ".member".
+#    Pokud už u aktuálního uzlu byl nějaký outfunktor, připojí se za něj, takže
+#    vznikne např. "DISJ.member.CONJ.member" nebo "DISJ.member.RSTR".
+# 3b U uzlů, které nejsou coaprooty, hledáme navíc efektivní rodiče. Těch může
+#    být i několik, pokud jsou v koordinaci. Protože ale aktuální uzel není
+#    kořen, měli bychom najít alespoň jednoho efektivního rodiče a přidat ho
+#    k předkům.
+#    Outfunktorem těchto vztahů je funktor nalezený u aktuálního uzlu.
+#    Pokud už u aktuálního uzlu byl nějaký outfunktor, připojí se za něj, takže
+#    vznikne např. "PAT.RSTR".
+# 3c Máme pole nalezených předků. Pokud je aktuální uzel coaproot a pokud jsme
+#    nenašli nadřazený coaproot, bude toto pole prázdné!
+# 3d Aktuální uzel z pole odstraníme a nahradíme ho polem nalezených předků.
+#    Pokud jsme nalezli alespoň jednoho předka, první nalezený předek bude nový
+#    aktuální uzel. Pokud jsme nenašli žádného předka, bude novým aktuálním uzlem
+#    další uzel v poli, pokud takový existuje.
+# 4. Pokud žádný uzel není aktuální, jsme na konci pole a máme kompletní odpověď.
+#    Pole může být i prázdné. Pokud není, tak jsou všechny uzly v něm OK. KONEC.
+#    Pokud je nějaký uzel aktuální, pokračujeme krokem 5.
+# 5. Zjistíme, zda se aktuální uzel dá promítnout na a-uzel ze stejné věty.
+#    Pokud ano, je OK, onen a-uzel si u něj zapamatujeme a pokračujeme krokem 6.
+#    Pokud ne, vrátíme se na krok 3.
+# 6. Pokud nejsme na konci pole, posuneme se o uzel doprava a uděláme z něj nový
+#    aktuální uzel. Pokud jsme na konci pole, nebude žádný uzel aktuální.
+#    Vrátíme se na krok 4.
+   
+#------------------------------------------------------------------------------
+sub find_a_parent
+{
+    my $self = shift;
+    my $tnode = shift;
+    my $aroot = shift; # We need this in order to check that the result is in the same sentence, see below.
+    return undef if($tnode->is_root());
+    my %record = ('tnode' => $tnode, 'outfunctor' => undef, 'anode' => undef);
+    my @nodes = (\%record);
+    my $current = 0;
+    while(1)
+    {
+        my @eparents;
+        unless($nodes[$current]{tnode}->is_coap_root())
+        {
+            @eparents = $nodes[$current]{tnode}->get_eparents();
+        }
+        my @ancestors;
+        foreach my $ep (@eparents)
+        {
+            my $outfunctor = $nodes[$current]{tnode}->functor();
+            $outfunctor .= '.'.$nodes[$current]{outfunctor} if(defined($nodes[$current]{outfunctor}));
+            push(@ancestors, {'tnode' => $ep, 'outfunctor' => $outfunctor, 'anode' => undef});
+        }
+        if($nodes[$current]{tnode}->is_member())
+        {
+            my $coaproot = $nodes[$current]{tnode}->parent();
+            my $outfunctor = $coaproot->functor().'.member';
+            $outfunctor .= '.'.$nodes[$current]{outfunctor} if(defined($nodes[$current]{outfunctor}));
+            push(@ancestors, {'tnode' => $coaproot, 'outfunctor' => $outfunctor, 'anode' => undef});
+        }
+        # Replace the current node with its ancestors.
+        # $current will now point to the first ancestor.
+        # If the list of ancestors is empty, $current will point to the next queued node, if any.
+        splice(@nodes, $current, 1, @ancestors);
+    project_current:
+        # Return from the loop and from the function is granted.
+        # If no ancestor is found, @nodes will shrink and $current eventually will exceed $#nodes.
+        # If ancestors are found, the root at the latest will have $aord defined and $current will grow (several paths to the root can be returned).
+        if($current>$#nodes)
+        {
+            return @nodes;
+        }
+        my $aord = $self->get_a_ord_for_t_node($nodes[$current]{tnode}, $aroot);
+        if(defined($aord))
+        {
+            $nodes[$current]{anode} = $aord;
+            $current++;
+            goto project_current;
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Finds all relations of an a-node to its parents. The relations are
 # projections of dependencies in the t-tree. An a-node may have zero, one or
 # more parents. The relations are added to the matrix and the array of root
-# flags is updated. We expect to get the links to matrix and roots from the
-# caller.
+# flags is updated. We expect to get the references to matrix and roots from
+# the caller.
 #------------------------------------------------------------------------------
 sub get_parents
 {
@@ -192,6 +303,7 @@ sub get_parents
     my $anode = shift;
     my $matrix = shift;
     my $roots = shift;
+    my $aroot = shift; # We need this in order to check that the result is in the same sentence, see below.
     my $ord = $anode->ord();
     # Is there a lexically corresponding tnode?
     my $tn = $anode->wild()->{tnode};
@@ -224,20 +336,32 @@ sub get_parents
                 {
                     foreach my $ep (@eparents)
                     {
-                        my $pord = $self->get_a_ord_for_t_node($ep);
+                        my $pord = $self->get_a_ord_for_t_node($ep, $aroot);
                         if(defined($pord))
                         {
                             $matrix->[$ord][$pord] = $functor;
+                        }
+                        else
+                        {
+                            ###!!! The parent is generated node.
+                            ###!!! We should find the closest non-generated ancestor and make it the parent.
+                            ###!!! All functors on the path should be concatenated, e.g. "PAT.RSTR".
                         }
                     }
                 }
                 if($tnode->is_member())
                 {
-                    my $pord = $self->get_a_ord_for_t_node($tnode->parent());
+                    my $pord = $self->get_a_ord_for_t_node($tnode->parent(), $aroot);
                     my $mfunctor = $tnode->parent()->functor().'.member';
                     if(defined($pord))
                     {
                         $matrix->[$ord][$pord] = $mfunctor;
+                    }
+                    else
+                    {
+                        ###!!! The parent is generated node.
+                        ###!!! We should find the closest non-generated ancestor and make it the parent.
+                        ###!!! All functors on the path should be concatenated, e.g. "PAT.RSTR".
                     }
                 }
             }
