@@ -195,45 +195,50 @@ sub get_a_ord_for_t_node
 # the coap links will be lost without trace. (We could interlink the conjuncts
 # directly but such solution would not be consistent with the rest of the
 # data.)
+
 # The data structure:
 # array of references to hashes with the following keys:
 #   tnode ........ either the original tnode or one of its ancestors
 #   outfunctor ... either the original functor or chain of functors on the path
 #                  from the original tnode to the ancestor
-#   anode ........ this is the anode corresponding to the current tnode
+#   anode ........ index of the anode corresponding to the current tnode
 
-# 1. Na začátku pole obsahuje pouze jeden uzel, kterému hledáme rodiče.
-#    Označíme ho jako aktuální. Není OK (chceme jeho rodiče, ne jeho).
-# 2. Pokud je aktuální uzel kořen, hledáme rodiče, který neexistuje.
-#    Ukončíme funkci a vrátíme undef.
-# 3. Aktuální uzel není OK a hledáme jeho nejbližší předky.
-# 3a U všech uzlů včetně coaprootů hledáme závislosti typu is_member (vnořené
-#    coapy). Pokud najdeme nadřazený coaproot, je to předek.
-#    Outfunktorem tohoto vztahu je funktor coaprootu plus ".member".
-#    Pokud už u aktuálního uzlu byl nějaký outfunktor, připojí se za něj, takže
-#    vznikne např. "DISJ.member.CONJ.member" nebo "DISJ.member.RSTR".
-# 3b U uzlů, které nejsou coaprooty, hledáme navíc efektivní rodiče. Těch může
-#    být i několik, pokud jsou v koordinaci. Protože ale aktuální uzel není
-#    kořen, měli bychom najít alespoň jednoho efektivního rodiče a přidat ho
-#    k předkům.
-#    Outfunktorem těchto vztahů je funktor nalezený u aktuálního uzlu.
-#    Pokud už u aktuálního uzlu byl nějaký outfunktor, připojí se za něj, takže
-#    vznikne např. "PAT.RSTR".
-# 3c Máme pole nalezených předků. Pokud je aktuální uzel coaproot a pokud jsme
-#    nenašli nadřazený coaproot, bude toto pole prázdné!
-# 3d Aktuální uzel z pole odstraníme a nahradíme ho polem nalezených předků.
-#    Pokud jsme nalezli alespoň jednoho předka, první nalezený předek bude nový
-#    aktuální uzel. Pokud jsme nenašli žádného předka, bude novým aktuálním uzlem
-#    další uzel v poli, pokud takový existuje.
-# 4. Pokud žádný uzel není aktuální, jsme na konci pole a máme kompletní odpověď.
-#    Pole může být i prázdné. Pokud není, tak jsou všechny uzly v něm OK. KONEC.
-#    Pokud je nějaký uzel aktuální, pokračujeme krokem 5.
-# 5. Zjistíme, zda se aktuální uzel dá promítnout na a-uzel ze stejné věty.
-#    Pokud ano, je OK, onen a-uzel si u něj zapamatujeme a pokračujeme krokem 6.
-#    Pokud ne, vrátíme se na krok 3.
-# 6. Pokud nejsme na konci pole, posuneme se o uzel doprava a uděláme z něj nový
-#    aktuální uzel. Pokud jsme na konci pole, nebude žádný uzel aktuální.
-#    Vrátíme se na krok 4.
+# The algorithm:
+# 1. At the beginning there is just one node and we look for its parents.
+#    We make it the current node. It's not marked OK (we want its parents, not
+#    itself).
+# 2. If the node is root, the sought for parent does not exist. Return undef
+#    and terminate.
+# 3. Current node is not OK and we are looking for its closest ancestors.
+# 3a We always look for is_member relations (for normal nodes and coaproots).
+#    If we find a superordinated coaproot, it is one of the ancestors.
+#    The coaproot's functor plus ".member" is the outfunctor of the relation.
+#    If the current node already had an outfunctor, attach it after the new
+#    outfunctor so we get e.g. "DISJ.member.CONJ.member" or "DISJ.member.RSTR".
+# 3b In addition, for non-coaproot nodes we look for effective parents. There
+#    may be more than one effective parent if they are coordinated. The current
+#    node is not root so we should find at least one effective parent and add
+#    it to ancestors.
+#    The functor of the current node becomes outfunctor of these relations.
+#    If the current node already had an outfunctor, attach it after the new
+#    outfunctor so we get e.g. "PAT.RSTR".
+# 3c We have got an array of ancestors. If the current node is coaproot and if
+#    we have not found a superordinated coaproot, the array will be empty!
+# 3d Remove the current node from the array and replace it with the array of
+#    newly found ancestors. If we found at least one ancestor, the first
+#    ancestor will become the new current node. Otherwise the new current node
+#    will be the next node in the array, if any.
+# 4. If there is no current node, we have reached the end of the array and we
+#    have got the complete answer. The array may also be empty. If it is not,
+#    then all nodes in the array are OK. Terminate.
+#    If there is a current node, go to step 5.
+# 5. Figure out whether the current node can be projected on an a-node from the
+#    same sentence. If so, then the node is OK, we remember the corresponding
+#    a-node and go to step 6.
+#    If not, then we return to step 3.
+# 6. Unless we are at the end of the array, we move to the next node to the
+#    right and make it the new current node. If we are at the end, no node will
+#    be current. Return to step 4.
    
 #------------------------------------------------------------------------------
 sub find_a_parent
@@ -290,93 +295,6 @@ sub find_a_parent
             goto project_current;
         }
     }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Finds all relations of an a-node to its parents. The relations are
-# projections of dependencies in the t-tree. An a-node may have zero, one or
-# more parents. The relations are added to the matrix and the array of root
-# flags is updated. We expect to get the references to matrix and roots from
-# the caller.
-#------------------------------------------------------------------------------
-sub get_parents_0
-{
-    my $self = shift;
-    my $anode = shift;
-    my $matrix = shift;
-    my $roots = shift;
-    my $aroot = shift; # We need this in order to check that the result is in the same sentence, see below.
-    my $ord = $anode->ord();
-    # Is there a lexically corresponding tnode?
-    my $tn = $anode->wild()->{tnode};
-    my @tnodes;
-    @tnodes = sort {$a->ord() <=> $b->ord()} (@{$anode->wild()->{tnodes}}) if(defined($anode->wild()->{tnodes}));
-    if(defined($tn))
-    {
-        # This is a content word and there is at least one lexically corresponding t-node.
-        # Add parent relations for all corresponding t-nodes. (Some of them may collapse in the a-tree to a reflexive link.)
-        foreach my $tnode (@tnodes)
-        {
-            my $functor = $NOT_SET;
-            if(defined($tnode->functor()))
-            {
-                $functor = $tnode->functor();
-            }
-            if(defined($tnode->parent()))
-            {
-                $roots->[$ord] = $tnode->parent()->is_root() ? '+' : '-';
-                # Effective parents are important around coordination or apposition:
-                # - CoAp root (conjunction) has no effective parent.
-                # - Effective parent of conjuncts is somewhere above the conjunction (its direct parent, unless there is another coordination involved).
-                # - Effective parents of shared modifier are the conjuncts.
-                my @eparents;
-                unless($tnode->is_coap_root())
-                {
-                    @eparents = $tnode->get_eparents();
-                }
-                if(scalar(@eparents)>0)
-                {
-                    foreach my $ep (@eparents)
-                    {
-                        my $pord = $self->get_a_ord_for_t_node($ep, $aroot);
-                        if(defined($pord))
-                        {
-                            $matrix->[$ord][$pord] = $functor;
-                        }
-                        else
-                        {
-                            ###!!! The parent is generated node.
-                            ###!!! We should find the closest non-generated ancestor and make it the parent.
-                            ###!!! All functors on the path should be concatenated, e.g. "PAT.RSTR".
-                        }
-                    }
-                }
-                if($tnode->is_member())
-                {
-                    my $pord = $self->get_a_ord_for_t_node($tnode->parent(), $aroot);
-                    my $mfunctor = $tnode->parent()->functor().'.member';
-                    if(defined($pord))
-                    {
-                        $matrix->[$ord][$pord] = $mfunctor;
-                    }
-                    else
-                    {
-                        ###!!! The parent is generated node.
-                        ###!!! We should find the closest non-generated ancestor and make it the parent.
-                        ###!!! All functors on the path should be concatenated, e.g. "PAT.RSTR".
-                    }
-                }
-            }
-        }
-    }
-    else
-    {
-        # This is an auxiliary word. There is a t-node to which it belongs but they do not correspond lexically.
-        $roots->[$ord] = '-';
-    }
-    return $matrix;
 }
 
 
