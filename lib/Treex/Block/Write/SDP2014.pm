@@ -247,6 +247,10 @@ sub find_a_parent
     my $current = 0;
     while(1)
     {
+        # Effective parents are important around coordination or apposition:
+        # - CoAp root (conjunction) has no effective parent.
+        # - Effective parent of conjuncts is somewhere above the conjunction (its direct parent, unless there is another coordination involved).
+        # - Effective parents of shared modifier are the conjuncts.
         my @eparents;
         unless($nodes[$current]{tnode}->is_coap_root())
         {
@@ -297,7 +301,7 @@ sub find_a_parent
 # flags is updated. We expect to get the references to matrix and roots from
 # the caller.
 #------------------------------------------------------------------------------
-sub get_parents
+sub get_parents_0
 {
     my $self = shift;
     my $anode = shift;
@@ -371,6 +375,49 @@ sub get_parents
     {
         # This is an auxiliary word. There is a t-node to which it belongs but they do not correspond lexically.
         $roots->[$ord] = '-';
+    }
+    return $matrix;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Finds all relations of an a-node to its parents. The relations are
+# projections of dependencies in the t-tree. An a-node may have zero, one or
+# more parents. The relations are added to the matrix and the array of root
+# flags is updated. We expect to get the references to matrix and roots from
+# the caller.
+#------------------------------------------------------------------------------
+sub get_parents
+{
+    my $self = shift;
+    my $anode = shift;
+    my $matrix = shift;
+    my $roots = shift;
+    my $aroot = shift; # We need this in order to check that the result is in the same sentence, see below.
+    my $ord = $anode->ord();
+    # Is there a lexically corresponding tnode?
+    my $tn = $anode->wild()->{tnode};
+    my @tnodes;
+    @tnodes = sort {$a->ord() <=> $b->ord()} (@{$anode->wild()->{tnodes}}) if(defined($anode->wild()->{tnodes}));
+    $roots->[$ord] = '-';
+    if(defined($tn))
+    {
+        # This is a content word and there is at least one lexically corresponding t-node.
+        # Add parent relations for all corresponding t-nodes. (Some of them may collapse in the a-tree to a reflexive link.)
+        foreach my $tnode (@tnodes)
+        {
+            my @parents = $self->find_a_parent($tnode, $aroot);
+            foreach my $parent (@parents)
+            {
+                if($parent->{tnode}->is_root())
+                {
+                    $roots->[$ord] = '+';
+                }
+                ###!!! If there are two or more paths to the same a-parent, only the last functor will survive.
+                $matrix->[$ord][$parent->{anode}] = $parent->{outfunctor};
+            }
+        }
     }
     return $matrix;
 }
