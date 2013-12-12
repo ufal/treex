@@ -75,15 +75,15 @@ sub process_zone
     # Simplify functors if desired.
     if($self->simple_functors())
     {
-        foreach my $child (@matrix)
+        for(my $i = 0; $i <= $#matrix; $i++)
         {
-            foreach my $parent (@{$matrix[$child]})
+            for(my $j = 0; $j <= $#{$matrix[$i]}; $j++)
             {
-                next unless(defined($matrix[$child][$parent]));
-                my @functor_parts = split(/\./, $matrix[$child][$parent]);
+                next unless(defined($matrix[$i][$j]));
+                my @functor_parts = split(/\./, $matrix[$i][$j]);
                 my $simple_functor = shift(@functor_parts);
                 $simple_functor .= '.member' if($functor_parts[0] eq 'member');
-                $matrix[$child][$parent] = $simple_functor;
+                $matrix[$i][$j] = $simple_functor;
             }
         }
     }
