@@ -11,11 +11,14 @@ has order      => ( isa => 'Int',  is => 'rw', default  => 2 );
 has decodetype => ( isa => 'Str',  is => 'rw', default  => 'non-proj' );
 has robust     => ( isa => 'Bool', is => 'ro', default  => 0 );
 
+# other possible values: '0.5.0'
+has version		=>	(isa => 'Str', is => 'ro', default => '0.4.3b');
+
 my @all_javas;    # PIDs of java processes
 
 sub BUILD {
     my ($self) = @_;
-    my $tool_path  = 'installed_tools/parser/mst/0.4.3b';
+    my $tool_path  = 'installed_tools/parser/mst/' . $self->version;
     my $jar_path   = require_file_from_share("$tool_path/mstparser.jar");
     my $trove_path = require_file_from_share("$tool_path/lib/trove.jar");
 
@@ -26,14 +29,26 @@ sub BUILD {
     my $model = $self->model;
     log_fatal "$model model for MST does not exist." if !-f $model;
 
+	my $command;
+
     # TODO all paths/dirs have to be formatted according to platform
     # $model = File::Java->path_arg( $model );
-    my $command    = 'java'
-        . " -Xmx" . $self->memory
-        . " -cp $cp mstparser.DependencyParser test"
-        . " order:" . $self->order
-        . " decode-type:" . $self->decodetype
-        . " server-mode:true print-scores:true model-name:$model 2>/dev/null";
+	if ($self->version eq '0.4.3b') {
+	    $command    = 'java'
+	        . " -Xmx" . $self->memory
+	        . " -cp $cp mstparser.DependencyParser test"
+	        . " order:" . $self->order
+	        . " decode-type:" . $self->decodetype
+	        . " server-mode:true print-scores:true model-name:$model 2>/dev/null";		
+	}
+	elsif ($self->version eq '0.5.0') {
+	    $command    = 'java'
+	        . " -Xmx" . $self->memory
+	        . " -cp $cp mstparser.DependencyParser test"
+	        . " order:" . $self->order
+	        . " decode-type:" . $self->decodetype
+	        . " server-mode:true confidence-estimation:'KDFix*0.05*50' model-name:$model format:MST 2>/dev/null";	
+	}
 
 
     # We communicate with the parser in ISO-8859-2. In principle, any encoding is
@@ -42,6 +57,7 @@ sub BUILD {
     $SIG{PIPE} = 'IGNORE';                                   # don't die if parser gets killed
     my ( $reader, $writer, $pid )
         = ProcessUtils::bipipe( $command, ":encoding(iso-8859-2)" );
+        
 
     $self->{reader} = $reader;
     $self->{writer} = $writer;
@@ -83,6 +99,9 @@ sub parse_sentence {
     }
 
     my ( @parents, @afuns, @matrix, $writer, $reader );
+    
+    # 0.5.0
+    my @conf_scores;
 
     if ( !$self->{robust} ) {
         $writer = $self->{writer};
@@ -96,7 +115,7 @@ sub parse_sentence {
         $_ = <$reader>;
         log_fatal("Treex::Tool::Parser::MST returned nothing") if ( !defined $_ );
         chomp;
-        if ( $_ !~ /^OK/ ) {
+        if ( $_ !~ /^OK|^\d+\s+OK/ ) {
             log_warn("Treex::Tool::Parser::MST failed (FAIL message was returned) on sentence. Building flat tree.'");
             @parents = map {0} @$forms_rf;
             @afuns   = map {"ExD"} @$forms_rf;
@@ -108,7 +127,7 @@ sub parse_sentence {
         }
         else {
             $_ = <$reader>;    # forms
-            $_ = <$reader>;    # lemmas
+            $_ = <$reader>;    # pos
             $_ = <$reader>;    # afuns
             log_fatal("Treex::Tool::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
             chomp;
@@ -118,25 +137,34 @@ sub parse_sentence {
             log_fatal("Treex::Tool::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
             chomp;
             @parents = split /\t/;
-            $_       = <$reader>;                               # blank line after a valid parse
-            $_       = <$reader>;                               # scoreMatrix
-            log_fatal("Treex::Tool::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
-            chomp;
-            my @scores = split /\s/;
-
-            # back to the matrix of scores
-            shift @scores;
-
-            foreach my $i ( 0 .. @parents ) {
-                foreach my $j ( 0 .. @parents ) {
-                    $matrix[$j][$i] = shift @scores;
-                }
+            if ($self->version eq '0.4.3b') {            	
+	            $_       = <$reader>;                               # blank line after a valid parse
+	            $_       = <$reader>;                               # scoreMatrix
+	            log_fatal("Treex::Tool::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
+	            chomp;
+	            my @scores = split( /\s/ );
+	
+	            # back to the matrix of scores
+	            shift @scores;
+	
+	            foreach my $i ( 0 .. @parents ) {
+	                foreach my $j ( 0 .. @parents ) {
+	                    $matrix[$j][$i] = shift @scores;
+	                }
+	            }
+	
+	            # we don't want scores for root
+	            shift @matrix;            
             }
-
-            # we don't want scores for root
-            shift @matrix;
-        }
-        return ( \@parents, \@afuns, \@matrix );
+            elsif ($self->version eq '0.5.0') {
+	            $_ = <$reader>;    # conf scores
+            	chomp;
+            	@conf_scores = split /\t/;
+	            $_ = <$reader>;    # blank line             	            	
+            }            
+        }        
+        return ( \@parents, \@afuns, \@matrix ) if $self->version eq '0.4.3b';
+        return ( \@parents, \@afuns, \@conf_scores ) if $self->version eq '0.5.0';
     }
 
     # OBO'S ROBUST VARIANT
@@ -236,6 +264,9 @@ Treex::Tool::Parser::MST
 
 =head1 SYNOPSIS
 
+ # ***********
+ # Example 1: (uses MST version 0.4.3b)
+ # ***********
  use Treex::Tool::Parser::MST
 
  my @wordforms = qw(A group of investors recently bought the remaining assets .);
@@ -252,11 +283,28 @@ Treex::Tool::Parser::MST
    print $i + 1 . ": wordform=$wordforms[$i]\tparent=$parents_rf->[$i]\tafun=$afuns_rf->[$i]\n";
  }
 
+ # ***********
+ #  Example 2: (uses MST version 0.5.0 and prints confidence scores)
+ # ***********
+ my $v = '0.5.0';
+ my $path_to = 'news_mst_v0.5.0_order2_non-proj.model';
+ my $parser = Treex::Tool::Parser::MST->new({model => $path_to,
+                                              memory => '1000m', 
+                                              order => 2,
+                                              decodetype => 'non-proj',
+                                               version => $v});
+ my ($parents_rf,$afuns_rf, $conf_rf) = $parser->parse_sentence(\@wordforms,\@tags);
+
+ for my $i (0..$#wordforms) {
+     print $i + 1 . ": wordform=$wordforms[$i]\tparent=$parents_rf->[$i]\tafun=$afuns_rf->[$i]\tconf=$conf_rf->[$i]\n";
+ }
 
 =head1 DESCRIPTION
 
-Perl wrapper for Ryan McDonald's Maximum Spanning Tree parser 0.4.3b.
+Perl wrapper for Ryan McDonald's Maximum Spanning Tree parser 0.4.3b/0.5.0.
 When being used, it executes a Java Server and loads the parser model.
+
+
 
 =head2 CONSTRUCTOR
 
@@ -267,6 +315,20 @@ When being used, it executes a Java Server and loads the parser model.
 =item  my $parser = Treex::Tool::Parser::MST->new({model => $model});
 
 Parameter 'model' is required and specifies the path to the model.
+
+
+
+=back
+
+=head2 PARAMETERS
+
+=over 4
+
+=item version
+
+If the 'version' is '0.4.3b' (default), the parser returns scores extracted from MIRA.
+
+If the 'version' is '0.5.0', the parser returns confidence scores (probability like measures) for each edges in the sentence. 
 
 =back
 
@@ -280,6 +342,12 @@ Parameter 'model' is required and specifies the path to the model.
 References to arrays of word forms and morphological tags are given
 as arguments. References to arrays of parent indices (0 stands for artifical root)
 and analytical functions are returned.
+
+
+=item  my ($parents_rf,$afuns_rf, $conf_rf) = $parser->parse_sentence(\@wordforms,\@tags);
+
+Returns reference to confidence score for each edges in addition to parents and afuns of a given sentence. The constructor must have been initiated with '0.5.0' for the 'version' parameter. 
+   
 
 =back
 
