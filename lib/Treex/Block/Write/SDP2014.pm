@@ -82,7 +82,7 @@ sub process_zone
                 next unless(defined($matrix[$i][$j]));
                 my @functor_parts = split(/\./, $matrix[$i][$j]);
                 my $simple_functor = shift(@functor_parts);
-                $simple_functor .= '.member' if($functor_parts[0] eq 'member');
+                $simple_functor .= '.member' if(@functor_parts && $functor_parts[0] eq 'member');
                 $matrix[$i][$j] = $simple_functor;
             }
         }
