@@ -14,6 +14,11 @@ has 'formatted' => ( is => 'ro', isa => 'Bool', default => 0, documentation => '
 has 'compact' => ( is => 'ro', isa => 'Bool', default => 0,
     documentation => 'Default is unreadable CoNLL-2009-like format with large and variable number of columns. '.
     'This parameter triggers a compact format resembling CoNLL 2006, with fixed number of columns; however, HEAD and DEPREL columns may contain comma-separated lists of values.' );
+has 'simple_functors' => ( is => 'ro', isa => 'Bool', default => 1,
+    documentation => 'An output dependency may represent a chain of two or more t-layer dependencies if there is a generated t-node that had to be removed. '.
+    'All the functors on the path should be concatenated to get the correct label for the merged dependency. '.
+    'However, if this switch is turned on, the functors will be simplified to make labeled parsing easier. '.
+    'Only the top-most functor will be retained and the rest of the chain will be dropped.' );
 
 
 
@@ -66,6 +71,21 @@ sub process_zone
         push(@conll, [$ord, $form, $lemma, $tag]);
         # Fill @matrix and @roots.
         $self->get_parents($anode, \@matrix, \@roots, $aroot);
+    }
+    # Simplify functors if desired.
+    if($self->simple_functors())
+    {
+        foreach my $child (@matrix)
+        {
+            foreach my $parent (@{$matrix[$child]})
+            {
+                next unless(defined($matrix[$child][$parent]));
+                my @functor_parts = split(/\./, $matrix[$child][$parent]);
+                my $simple_functor = shift(@functor_parts);
+                $simple_functor .= '.member' if($functor_parts[0] eq 'member');
+                $matrix[$child][$parent] = $simple_functor;
+            }
+        }
     }
     # Add dependency fields in the required format.
     my @ispred = $self->get_is_pred(\@matrix);
@@ -239,7 +259,7 @@ sub get_a_ord_for_t_node
 # 6. Unless we are at the end of the array, we move to the next node to the
 #    right and make it the new current node. If we are at the end, no node will
 #    be current. Return to step 4.
-   
+
 #------------------------------------------------------------------------------
 sub find_a_parent
 {
