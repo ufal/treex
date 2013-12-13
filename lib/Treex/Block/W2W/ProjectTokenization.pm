@@ -5,11 +5,26 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 use Treex::Tool::Depfix::CS::DiacriticsStripper;
+use Treex::Tool::Depfix::CS::FixLogger;
 
 has 'source_language' => ( is => 'rw', isa => 'Str', required => 1 );
 has 'source_selector' => ( is => 'rw', isa => 'Str', default  => '' );
+has 'log_to_console'  => ( is       => 'rw', isa => 'Bool', default => 1 );
 
 my $boundary = '[ \.\/:,;!\?<>\{\}\[\]\(\)\#\$£\%\&`\'‘"“”«»„\*\^\|\+]+';
+
+my $fixLogger;
+
+sub process_start {
+    my $self = shift;
+    
+    $fixLogger = Treex::Tool::Depfix::CS::FixLogger->new({
+        language => $self->language,
+        log_to_console => $self->log_to_console
+    });
+
+    return;
+}
 
 sub process_zone {
     my ( $self, $zone ) = @_;
@@ -44,20 +59,29 @@ sub process_zone {
             # exact match has highest priority
             if ( $aligned_sentence =~ /\b($new_tok)\b/ ) {
                 $outsentence =~ s/$orig_tok/$new_tok/i;
-                log_info "Retokenizing '$orig_tok' -> '$new_tok'";
+                $fixLogger->logfixBundle(
+                    $zone->get_bundle,
+                    "Retokenizing '$orig_tok' -> '$new_tok'"
+                );
             }
 
             # case-insensitive match: also adopt the casing
             elsif ( $aligned_sentence =~ /\b($new_tok)\b/i ) {
                 my $new = $1;
                 $outsentence =~ s/$orig_tok/$new/i;
-                log_info "Retokenizing '$orig_tok' -> '$new'";
+                $fixLogger->logfixBundle(
+                    $zone->get_bundle,
+                    "Retokenizing '$orig_tok' -> '$new'"
+                );
             }
 
             # diacritics-insensitive match
             elsif ( $al_lc_strip =~ /\b($n_lc_strip)\b/ ) {
                 $outsentence =~ s/$orig_tok/$new_tok/i;
-                log_info "Retokenizing '$orig_tok' -> '$new_tok' ($n_lc_strip)";
+                $fixLogger->logfixBundle(
+                    $zone->get_bundle,
+                    "Retokenizing '$orig_tok' -> '$new_tok' ($n_lc_strip)"
+                );
             }
         }
 

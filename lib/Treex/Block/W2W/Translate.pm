@@ -4,7 +4,7 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Core::Block';
 
-use Treex::Tool::GoogleTranslate::APIv1;
+use Treex::Tool::GoogleTranslate::APIv2;
 
 #use Moose::Util::TypeConstraints;
 
@@ -30,7 +30,7 @@ has overwrite => (
 # translator API
 has _translator => (
     is       => 'ro',
-    isa      => 'Treex::Tool::GoogleTranslate::APIv1',
+    isa      => 'Treex::Tool::GoogleTranslate::APIv2',
     init_arg => undef,
     builder  => '_build_translator',
     lazy     => 1,
@@ -48,7 +48,7 @@ has _sids => (
 sub _build_translator {
     my $self = shift;
 
-    my $translator = Treex::Tool::GoogleTranslate::APIv1->new(
+    my $translator = Treex::Tool::GoogleTranslate::APIv2->new(
         {
             auth_token         => $self->auth_token,
             auth_token_in_file => $self->auth_token_in_file,
@@ -57,8 +57,6 @@ sub _build_translator {
                     ||
                 $self->language),
             tgt_lang           => $self->target_language,
-            align              => 0,
-            nbest              => 0,
         }
     );
 
@@ -80,6 +78,7 @@ sub _build_sids {
     return $sids;
 }
 
+# TODO use batch translation for batches of reasonably lomng sentences
 sub process_zone {
     my ( $self, $zone ) = @_;
 
