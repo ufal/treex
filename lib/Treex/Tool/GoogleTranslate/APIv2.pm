@@ -149,6 +149,9 @@ There is a limit of translating 100,000 characters per day.
 Some parts of the API are not implemented, such as returning
 detectedSourceLanguage.
 
+TODO: the output "encoding" is now strange, containing HTML entities. This must
+be addressed.
+
 =head1 SYNOPSIS
 
  use Treex::Tool::GoogleTranslate::APIv2;
