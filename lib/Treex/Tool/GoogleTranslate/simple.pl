@@ -26,16 +26,16 @@ binmode STDERR, ':utf8';
     @ARGV = map { decode $codeset, $_ } @ARGV;
 }
 
-if ( @ARGV != 3 ) {
-    die("Usage: $0 text src_lang tgt_lang\n" .
-            "E.g.: $0 platypus en sk\n"
+if ( @ARGV != 2 && @ARGV != 3 ) {
+    die("Usage: $0 text tgt_lang [src_lang]\n" .
+            "E.g.: $0 ptakopysk en cs\n"
     );
 }
 
-my ( $text, $src, $tgt ) = @ARGV;
+my ( $text, $tgt, $src ) = @ARGV;
 
-use Treex::Tool::GoogleTranslate::APIv1;
-my $translator = Treex::Tool::GoogleTranslate::APIv1->new();
-my $translation = $translator->translate_simple( $text, $src, $tgt );
+use Treex::Tool::GoogleTranslate::APIv2;
+my $translator = Treex::Tool::GoogleTranslate::APIv2->new();
+my $translation = $translator->translate_simple( $text, $tgt, $src );
 say $translation;
 

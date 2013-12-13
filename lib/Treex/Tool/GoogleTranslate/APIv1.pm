@@ -196,7 +196,12 @@ sub translate_nbest {
 
 Treex::Tool::GoogleTranslate::APIv1
 
+do not use, has been shut down
+
 =head1 DESCRIPTION
+
+APIv1 has been shut down by Google, use L<Treex::Tool::GoogleTranslate::APIv2>
+instead!
 
 Fetches a translation using Google Translate.
 Requires a Google API C<auth_token>.
