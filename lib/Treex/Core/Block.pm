@@ -68,6 +68,15 @@ has is_started => ( is => 'ro', isa => 'Bool', writer => '_set_is_started', defa
 Readonly our $DOCUMENT_PROCESSED  => 1;
 Readonly our $DOCUMENT_FROM_CACHE => 2;
 
+
+# For load_other_block() and get_or_load_other_block()
+# TODO this could also be in Scenario instead of Block...
+
+# new other block of same name replaces old one here
+has _loaded_other_blocks       => ( is => 'rw', isa => 'HashRef',  default => sub { {} } ); 
+# all loaded other blocks, no replacing
+has _loaded_other_blocks_array => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } ); 
+
 sub zone_label {
     my ($self) = @_;
     my $label = $self->language or return;
@@ -350,12 +359,12 @@ sub process_end {
     return;
 }
 
-my %_loaded_other_blocks = ();
-
 after 'process_end' => sub {
     my ($self) = @_;
-    foreach my $other_block (keys %_loaded_other_blocks) {
-        $other_block->process_end();
+    foreach my $other_block (@{$self->_loaded_other_blocks_array}) {
+        if ( $other_block->is_started ) {
+            $other_block->process_end();
+        }
     }
     $self->_set_is_started(0);
 };
@@ -365,68 +374,54 @@ sub get_block_name {
     return ref($self);
 }
 
-sub _get_other_block {
+sub load_other_block {
     my ($self, $other_block_name, $params_hash_ref) = @_;
 
-    $other_block_name = "Treex::Block::$other_block_name";
-    if ( exists $_loaded_other_blocks{$other_block_name} ) {
-        return $_loaded_other_blocks{$other_block_name};
-    } else {
-        eval "use $other_block_name; 1;" or
-            log_fatal "Treex::Core::Block->other_block_*: " .
-            "Can't use block $other_block_name !\n$@\n";
-        my $other_block;
-        eval {
-            $other_block = $other_block_name->new( $params_hash_ref );
-            1;
-        } or log_fatal "Treex::Core::Block->other_block_*: error " .
-            "when initializing block $other_block_name\n\nEVAL ERROR:\t$@";
-        $other_block->process_start();
-        $_loaded_other_blocks{$other_block_name} = $other_block;
-        return $other_block;
-    }
+    my $other_block_full_name = "Treex::Block::$other_block_name";
+
+    # CONSTRUCT PARAMETERS HASH
+    # global params (TODO: do that?)
+    my %params = %{$self->scenario->_global_params};
+    # overridden by selected (TODO: all?) block params
+    $params{language} = $self->language;
+    $params{selector} = $self->selector;
+    $params{scenario} = $self->scenario;
+    # overridden by locally set params
+    @params{ keys %$params_hash_ref } = values %$params_hash_ref;
+
+    # CREATE IT and start it
+    eval "use $other_block_full_name; 1;" or
+    log_fatal "Treex::Core::Block->get_other_block: " .
+    "Can't use block $other_block_name!\n$@\n";
+    my $other_block;
+    eval {
+        $other_block = $other_block_full_name->new( \%params );
+        1;
+    } or log_fatal "Treex::Core::Block->get_other_block: " .
+    "Can't initialize block $other_block_name!\n$@\n";
+    $other_block->process_start();
+
+    # this may replace older block with same name
+    $self->_loaded_other_blocks->{$other_block_name} = $other_block;
+    # this not
+    push @{$self->_loaded_other_blocks_array}, $other_block;
+
+    return $other_block;
 }
 
-# TODO do this somehow automatically for all process_*
-# Mosse probably can do that but I cannot :-)
-sub other_block_process_document {
-    my ($self, $other_block_name, $document, $params_hash_ref) = @_;
+sub get_or_load_other_block {
+    my ($self, $other_block_name, $params_hash_ref) = @_;
+
     my $other_block =
-        $self->_get_other_block($other_block_name, $params_hash_ref);
-    return $other_block->process_document($document);
-}
+        exists ($self->_loaded_other_blocks->{$other_block_name})
+        ?
+        $self->_loaded_other_blocks->{$other_block_name}
+        :
+        $self->load_other_block($other_block_name, $params_hash_ref)
+    ;
 
-sub other_block_process_bundle {
-    my ($self, $other_block_name, $bundle, $params_hash_ref) = @_;
-    my $other_block =
-        $self->_get_other_block($other_block_name, $params_hash_ref);
-    return $other_block->process_bundle($bundle);
+    return $other_block;
 }
-
-sub other_block_process_zone {
-    my ($self, $other_block_name, $zone, $params_hash_ref) = @_;
-    my $other_block =
-        $self->_get_other_block($other_block_name, $params_hash_ref);
-    return $other_block->process_zone($zone);
-}
-
-# currently to be used e.g. as:
-# $self->other_block_process_atree('HamleDT::GuessIsMember', $aroot,
-# {language => $self->language, selector => $self->selector});
-sub other_block_process_atree {
-    my ($self, $other_block_name, $atree, $params_hash_ref) = @_;
-    my $other_block =
-        $self->_get_other_block($other_block_name, $params_hash_ref);
-    return $other_block->process_atree($atree);
-}
-
-sub other_block_process_anode {
-    my ($self, $other_block_name, $anode, $params_hash_ref) = @_;
-    my $other_block =
-        $self->_get_other_block($other_block_name, $params_hash_ref);
-    return $other_block->process_anode($anode);
-}
-
 
 1;
 
