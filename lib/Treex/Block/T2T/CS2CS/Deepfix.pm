@@ -7,7 +7,7 @@ extends 'Treex::Core::Block';
 
 has '+language'          => ( required => 1 );
 has 'src_alignment_type' => ( is       => 'rw', isa => 'Str', default => 'src' );
-has 'log_to_console'     => ( is       => 'rw', isa => 'Bool', default => 0 );
+has 'log_to_console'     => ( is       => 'rw', isa => 'Bool', default => 1 );
 has 'dont_try_switch_number' => ( is => 'rw', isa => 'Bool', default => '0' );
 # has 'source_language'     => ( is       => 'rw', isa => 'Str', required => 0 );
 # has 'source_selector'     => ( is       => 'rw', isa => 'Str', default => '' );
@@ -19,13 +19,19 @@ use Treex::Tool::Lexicon::CS;
 use Treex::Tool::Depfix::CS::FormemeSplitter;
 use Treex::Tool::Depfix::CS::FormGenerator;
 use Treex::Tool::Depfix::CS::TagHandler;
+use Treex::Tool::Depfix::CS::FixLogger;
 
 my $formGenerator;
+my $fixLogger;
 
 sub process_start {
     my $self = shift;
 
     $formGenerator = Treex::Tool::Depfix::CS::FormGenerator->new();
+    $fixLogger = Treex::Tool::Depfix::CS::FixLogger->new({
+        language => $self->language,
+        log_to_console => $self->log_to_console
+    });
 
     return;
 }
@@ -256,25 +262,7 @@ sub logfix {
         return;
     }
 
-    # log to treex file
-    if ($log_to_treex) {
-
-        my $fixzone = $tnode_being_processed->get_bundle()
-            ->get_or_create_zone( $self->language, 'deepfix' );
-        my $sentence = $fixzone->sentence;
-        if ($sentence) {
-            $sentence .= " [$msg]";
-        }
-        else {
-            $sentence = "[$msg]";
-        }
-        $fixzone->set_sentence($sentence);
-    }
-
-    # log to console
-    if ( $self->log_to_console ) {
-        log_info($msg);
-    }
+    $fixLogger->logfixNode($tnode_being_processed, $msg);
 
     return;
 }

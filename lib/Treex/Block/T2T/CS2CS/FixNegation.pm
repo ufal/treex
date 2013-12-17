@@ -140,7 +140,7 @@ sub set_node_neg {
         if ( $anode->lemma =~ /^muset/ ) {
             $msg .= $self->change_anode_attribute( $anode, 'lemma', 'smět' );
         }
-        $self->logfix($msg);
+        $self->logfix("Negation $msg");
     }
     else {
         log_warn( "No lex node for "

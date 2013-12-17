@@ -22,7 +22,7 @@ sub fix {
             ) {
 
                 # try to reconstruct the missing node 
-                $self->logfix1( $dep, "AuxT+" );
+                $self->logfix1( $dep, "AuxT +" );
                 
                 # try to translate the node
                 my $translator = Treex::Tool::Depfix::CS::SimpleTranslator->new();

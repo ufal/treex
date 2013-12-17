@@ -62,12 +62,20 @@ my %stoplist = (
     take => 1,
 );
 
+use Treex::Tool::Depfix::CS::FixLogger;
+my $fixLogger;
+
 sub process_start {
     my ($self) = @_;
 
     if ( !defined $self->alignment_type_new ) {
         $self->set_alignment_type_new( $self->alignment_type );
     }
+
+    $fixLogger = Treex::Tool::Depfix::CS::FixLogger->new({
+            language => $self->language,
+            log_to_console => $self->log_to_console
+        });
 
     return;
 }
@@ -120,7 +128,8 @@ sub process_bundle {
                     # add link
                     $source_node->add_aligned_node( $target_node,
                         $self->alignment_type_new );
-                    $self->logfix( "New link type $match_type: "
+                    $fixLogger->logfixNode( $target_node,
+                        "AddMissingLinks New link type $match_type: "
                         . $source_node->form . " --> "
                         . $target_node->form );
 
@@ -139,7 +148,7 @@ sub process_bundle {
     }
     
     if ( $unaligned_target_nodes_orig != $unaligned_target_nodes_new ) {
-        $self->logfix( "Reduced number of unaligned target nodes from "
+        log_info( "Reduced number of unaligned target nodes from "
               . $unaligned_target_nodes_orig . " to "
               . $unaligned_target_nodes_new );
     }
@@ -199,15 +208,12 @@ sub nodes_match {
         
         # match if one is substring of the other
         if ( (length $lemma1 >= 3) && (length $lemma2 >= 3 ) ) {
-            $nodes_match =
-            ( $lemma1 =~ /$lemma2/ )
-            || ( $form1  =~ /$form2/ )
-            || ( $form1  =~ /$lemma2/ )
-            || ( $lemma1 =~ /$form2/)
-            || ( $lemma2 =~ /$lemma1/ )
-            || ( $form2  =~ /$form1/ )
-            || ( $form2  =~ /$lemma1/ )
-            || ( $lemma2 =~ /$form1/ );
+            $nodes_match = (
+                $self->strings_substrmatch($lemma1, $lemma2) ||
+                $self->strings_substrmatch($form1, $form2) ||
+                $self->strings_substrmatch($form1, $lemma2) ||
+                $self->strings_substrmatch($lemma1, $form2)
+            );
         }
     }
     elsif ($match_type == 3) {
@@ -230,14 +236,18 @@ sub nodes_match {
     return $nodes_match;
 }
 
-sub logfix {
-    my ( $self, $msg ) = @_;
+sub strings_substrmatch {
+    my ($self, $string1, $string2) = @_;
 
-    if ( $self->log_to_console ) {
-        log_info $msg;
+    if ( index($string1, $string2) != -1 ) {
+        return 1;
     }
-
-    return;
+    elsif ( index($string2, $string1) != -1 ) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
 }
 
 1;

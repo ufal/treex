@@ -44,7 +44,7 @@ sub fix {
         }
 
         # subject has been found, proceed to fixing
-        $self->logfix1( $dep, "VerbAuxBeAgreement" );
+        $self->logfix1( $dep, "VerbByEnSubject" );
         my $fixed = 0;
         my $lemma = $en_subject->lemma;
 

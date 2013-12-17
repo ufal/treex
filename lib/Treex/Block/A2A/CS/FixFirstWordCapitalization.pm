@@ -7,6 +7,22 @@ extends 'Treex::Core::Block';
 has '+language'       => ( required => 1 );
 has 'source_language' => ( is       => 'rw', isa => 'Str', required => 1 );
 has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
+has 'log_to_console'  => ( is => 'rw', isa => 'Bool', default => 1 );
+
+use Treex::Tool::Depfix::CS::FixLogger;
+
+my $fixLogger;
+
+sub process_start {
+    my $self = shift;
+    
+    $fixLogger = Treex::Tool::Depfix::CS::FixLogger->new({
+        language => $self->language,
+        log_to_console => $self->log_to_console
+    });
+
+    return;
+}
 
 sub process_zone {
     my ( $self, $zone ) = @_;
@@ -29,9 +45,11 @@ sub process_zone {
 
             # en sentence begins in uppercase
             # -> cs sentences should probably also begin in uppercase
+            $fixLogger->logfix1($first_node, "FirstWordCapitalization");
             $first_node->set_form(
                 uc($first_char) . substr( $first_node->form, 1 )
             );
+            $fixLogger->logfix2($first_node);
         }
 
         # else: keep as it is (both CS and EN sentence begin in lowercase)

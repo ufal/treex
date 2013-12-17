@@ -4,6 +4,23 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::T2A::CS::VocalizePrepos';
 
+use Treex::Tool::Depfix::CS::FixLogger;
+
+has 'log_to_console'  => ( is => 'rw', isa => 'Bool', default => 1 );
+
+my $fixLogger;
+
+sub process_start {
+    my $self = shift;
+    
+    $fixLogger = Treex::Tool::Depfix::CS::FixLogger->new({
+        language => $self->language,
+        log_to_console => $self->log_to_console
+    });
+
+    return;
+}
+
 sub process_atree {
     my ( $self, $a_root ) = @_;
 
@@ -15,8 +32,15 @@ sub process_atree {
             my $vocalized = Treex::Block::T2A::CS::VocalizePrepos::vocalize(
                 $anodes[$i]->form, $anodes[ $i + 1 ]->form
             );
-            $anodes[$i]->set_form($vocalized);
+            if ($anodes[$i]->form ne $vocalized) {
+                $fixLogger->logfix1($anodes[$i], "VocalizePrepos");
+                $anodes[$i]->set_form($vocalized);
+                $fixLogger->logfix2($anodes[$i]);
+            }
         }
     }
     return;
 }
+
+1;
+

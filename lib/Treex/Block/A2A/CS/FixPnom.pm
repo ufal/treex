@@ -20,13 +20,17 @@ sub fix {
             # my $subject = $subjects[@subjects-1];
             my ($subject) = @subjects;
             $self->logfix1( $dep, "Pnom" );
+            my $oldtag = $dep->tag;
             $self->set_node_tag_cat( $dep, 'number',
                 $self->get_node_tag_cat( $subject, 'number'));
             $self->set_node_tag_cat( $dep, 'gender',
                 $self->get_node_tag_cat( $subject, 'gender'));
             $self->set_node_tag_cat( $dep, 'case', 1);
-            $self->regenerate_node($dep);
-            $self->logfix2($dep);
+            my $newtag = $dep->tag;
+            if ( $oldtag ne $newtag ) {
+                $self->regenerate_node($dep);
+                $self->logfix2($dep);
+            }
         }
     }
 }

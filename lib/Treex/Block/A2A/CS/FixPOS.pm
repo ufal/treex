@@ -69,7 +69,7 @@ sub fix {
                 && $self->get_node_tag_cat( $left_child, 'case' ) ne '2'
             ) {
 
-                $self->logfix1( $left_child, "POSgenitive" );
+                $self->logfix1( $left_child, "POS genitive" );
                 $self->set_node_tag_cat($left_child, 'case', 2);
                 $self->regenerate_node($left_child);
                 $self->logfix2($left_child);
@@ -91,7 +91,7 @@ sub fix {
                     && !$left_child->parent->is_descendant_of($right_child)
                     )
                 {
-                    $self->logfix1( $right_child, "POSrehang" );
+                    $self->logfix1( $right_child, "POS rehang" );
                     $right_child->set_parent( $left_child->parent );
                     $self->logfix2($right_child);
                 }
@@ -104,7 +104,7 @@ sub fix {
                     # move last left child under first right child
                     # (the possessor should be a left attribute of the possessee)
                     # Rossum / X -> Rossum / robot
-                    $self->logfix1( $left_child, "POSparent" );
+                    $self->logfix1( $left_child, "POS parent" );
                     $left_child->set_parent($right_child);
                     $self->logfix2($left_child);
                     
@@ -137,7 +137,7 @@ sub fix {
 
             # remove the node
             # je -> x
-            $self->logfix1( $dep, "POSremove" );
+            $self->logfix1( $dep, "POS remove" );
             $self->remove_node($dep);
             $self->logfix2(undef);
         }
@@ -148,7 +148,7 @@ sub fix {
 sub pos_move {
     my ($self, $left_child, $right_child) = @_;
 
-    $self->logfix1( $left_child, "POSmove" );
+    $self->logfix1( $left_child, "POS move" );
     $left_child->set_parent($right_child);
     $self->shift_subtree_after_node(
         $left_child, $right_child
@@ -163,7 +163,7 @@ sub pos_adj {
     my ($self, $left_child, $right_child, $adj_lemma) = @_;
 
     log_info "POSlemma: $adj_lemma";
-    $self->logfix1( $left_child, "POSadj" );
+    $self->logfix1( $left_child, "POS adj" );
     $left_child->set_lemma($adj_lemma);
 
     # possessive adjective

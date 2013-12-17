@@ -138,7 +138,7 @@ sub drop {
 
         my $result = $self->remove_anode($pronoun);
         if ($result) {
-            $self->logfix( "DropSubjPersPron: $result" );
+            $self->logfix( "DropSubjPersPron $result" );
         }
         return $result;
     }
@@ -221,7 +221,7 @@ sub move {
         my $swap_temp = $parent_verb->no_space_after;
         $parent_verb->set_no_space_after($pronoun->no_space_after);
         $pronoun->set_no_space_after($swap_temp);
-        $self->logfix($msg);
+        $self->logfix("DropSubjPersPron $msg");
         return $msg;
     }
     else {

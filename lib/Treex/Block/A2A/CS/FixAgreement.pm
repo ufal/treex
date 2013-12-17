@@ -7,7 +7,7 @@ extends 'Treex::Core::Block';
 has '+language'       => ( required => 1 );
 has 'source_language' => ( is       => 'rw', isa => 'Str', required => 1 );
 has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
-has 'log_to_console'  => ( is       => 'rw', isa => 'Bool', default => 0 );
+has 'log_to_console'  => ( is       => 'rw', isa => 'Bool', default => 1 );
 has 'magic'           => ( is       => 'rw', isa => 'Str', default => '' );
 has 'dont_try_switch_number' => ( is => 'rw', isa => 'Bool', default => '0' );
 
@@ -15,16 +15,24 @@ use Carp;
 
 use Treex::Tool::Depfix::CS::FormGenerator;
 use Treex::Tool::Depfix::CS::TagHandler;
+use Treex::Tool::Depfix::CS::FixLogger;
+use Treex::Tool::Depfix::CS::PairGetter;
 
 my $formGenerator;
+my $fixLogger;
 
 sub process_start {
     my $self = shift;
 
     $formGenerator  = Treex::Tool::Depfix::CS::FormGenerator->new();
+    $fixLogger      = Treex::Tool::Depfix::CS::FixLogger->new({
+        language => $self->language,
+        log_to_console => $self->log_to_console
+    });
 
     return;
 }
+
 
 # this sub is to be to be redefined in child module
 sub fix {
@@ -102,12 +110,6 @@ sub en {
     }
 }
 
-# only a wrapper, for backward compatibility
-sub get_form {
-    my ( $self, $lemma, $tag ) = @_;
-    return $formGenerator->get_form( $lemma, $tag );
-}
-
 # changes the tag in the node and regebnerates the form correspondingly
 # only a wrapper
 sub regenerate_node {
@@ -127,105 +129,6 @@ sub regenerate_node {
 
     return $formGenerator->regenerate_node(
         $node, $dont_try_switch_number, $self->en($node) );
-}
-
-# prefetches useful information into hashes
-sub get_pair {
-    my ( $self, $node ) = @_;
-
-    return if $node->isa('Treex::Core::Node::Deleted');
-
-    # "old"
-    my $parent = $node->get_parent;
-    while (
-        $node->is_member
-        && !$parent->is_root()
-        && $parent->afun =~ /^(Coord|Apos)$/
-        )
-    {
-        $parent = $parent->get_parent();
-    }
-
-    #     # "new"
-    #     my $parent = $node->get_eparents({
-    #         first_only => 1,
-    #         or_topological => 1,
-    #         ignore_incorrect_tree_structure => 1
-    #     });
-    #     # or probably better:
-    #     my ($parent) = $node->get_eparents({
-    #         or_topological => 1,
-    #         ignore_incorrect_tree_structure => 1
-    #     });
-
-    return if ( !defined $parent || $parent->is_root );
-
-    my $d_tag = ($node->tag && length ($node->tag) >= 15) ?
-        $node->tag : '---------------';
-    my %d_categories = (
-        pos    => substr( $d_tag, 0,  1 ),
-        subpos => substr( $d_tag, 1,  1 ),
-        gen    => substr( $d_tag, 2,  1 ),
-        num    => substr( $d_tag, 3,  1 ),
-        case   => substr( $d_tag, 4,  1 ),
-        pgen   => substr( $d_tag, 5,  1 ),
-        pnum   => substr( $d_tag, 6,  1 ),
-        pers   => substr( $d_tag, 7,  1 ),
-        tense  => substr( $d_tag, 8,  1 ),
-        grade  => substr( $d_tag, 9,  1 ),
-        neg    => substr( $d_tag, 10, 1 ),
-        voice  => substr( $d_tag, 11, 1 ),
-        var    => substr( $d_tag, 14, 1 ),
-        tag    => $d_tag,
-        afun   => ( $node->afun || '' ),
-        flt    => ( $node->form || '' ) . '#' . ( $node->lemma || '' ) . '#' . ( $node->tag || '' ),
-    );
-    my $g_tag = ($parent->tag && length ($parent->tag) >= 15) ?
-        $parent->tag : '---------------';
-    my %g_categories = (
-        pos    => substr( $g_tag, 0,  1 ),
-        subpos => substr( $g_tag, 1,  1 ),
-        gen    => substr( $g_tag, 2,  1 ),
-        num    => substr( $g_tag, 3,  1 ),
-        case   => substr( $g_tag, 4,  1 ),
-        pgen   => substr( $g_tag, 5,  1 ),
-        pnum   => substr( $g_tag, 6,  1 ),
-        pers   => substr( $g_tag, 7,  1 ),
-        tense  => substr( $g_tag, 8,  1 ),
-        grade  => substr( $g_tag, 9,  1 ),
-        neg    => substr( $g_tag, 10, 1 ),
-        voice  => substr( $g_tag, 11, 1 ),
-        var    => substr( $g_tag, 14, 1 ),
-        tag    => $g_tag,
-        afun   => ( $parent->afun || '' ),
-        flt    => ( $parent->form || '' ) . '#' . ( $parent->lemma || '' ) . '#' . ( $parent->tag || '' ),
-    );
-
-    return ( $node, $parent, \%d_categories, \%g_categories );
-}
-
-sub get_tag_cat {
-    my ($self, $tag, $cat) = @_;
-
-    return Treex::Tool::Depfix::CS::TagHandler::get_tag_cat($tag, $cat);
-}
-
-sub set_tag_cat {
-    my ($self, $tag, $cat, $value) = @_;
-
-    return Treex::Tool::Depfix::CS::TagHandler::set_tag_cat($tag, $cat, $value);
-}
-
-sub get_node_tag_cat {
-    my ($self, $node, $cat) = @_;
-
-    return Treex::Tool::Depfix::CS::TagHandler::get_node_tag_cat($node, $cat);
-}
-
-sub set_node_tag_cat {
-    my ($self, $node, $cat, $value) = @_;
-
-    return Treex::Tool::Depfix::CS::TagHandler::set_node_tag_cat($node, $cat, $value);
 }
 
 # tries to guess whether the given node is a name
@@ -409,166 +312,63 @@ sub add_parent {
     return $new_parent;
 }
 
-# logging
 
-my $logfixmsg          = '';
-my $logfixold          = '';
-my $logfixnew          = '';
-my $logfixbundle       = undef;
-my $logfixold_flt_gov  = undef;
-my $logfixold_flt_dep  = undef;
-my $logfix_aligned_gov = undef;
-my $logfix_aligned_dep = undef;
 
-sub logfix1 {
-    my ( $self, $node, $mess ) = @_;
-    my ( $dep, $gov, $d, $g ) = $self->get_pair($node);
+# WRAPPERS FOR FUNCTIONALITY PROVIDED EXTERNALLY 
 
-    $logfixmsg    = $mess;
-    $logfixbundle = $node->get_bundle;
-
-    if ( $gov && $dep ) {
-
-        $logfixold_flt_gov = $g->{flt};
-        $logfixold_flt_dep = $d->{flt};
-
-        # mark with alignment arrow
-
-        my $cs_root = $node->get_bundle->get_tree(
-            $self->language, 'a'
-        );
-        my @cs_nodes = $cs_root->get_descendants(
-            {
-                add_self => 1,
-                ordered  => 1
-            }
-        );
-
-        my $cs_gov = $cs_nodes[ $gov->ord ];
-        if ( defined $cs_gov && $cs_gov->lemma eq $gov->lemma ) {
-            $logfix_aligned_gov = $cs_gov;
-        } else {
-            $logfix_aligned_gov = undef;
-        }
-
-        my $cs_dep = $cs_nodes[ $dep->ord ];
-        if ( defined $cs_dep && $cs_dep->lemma eq $dep->lemma ) {
-            $logfix_aligned_dep = $cs_dep;
-        } else {
-            $logfix_aligned_dep = undef;
-        }
-
-        # mark in fixlog
-
-        # my $distance = abs($gov->ord - $dep->ord);
-        # warn "FIXDISTANCE: $distance\n";
-
-        #original words pair
-        if ( $gov->ord < $dep->ord ) {
-            $logfixold = $gov->form;
-            $logfixold .= "[";
-            $logfixold .= $gov->tag;
-            $logfixold .= "] ";
-            $logfixold .= $dep->form;
-            $logfixold .= "[";
-            $logfixold .= $dep->tag;
-            $logfixold .= "]";
-        }
-        else {
-            $logfixold = $dep->form;
-            $logfixold .= "[";
-            $logfixold .= $dep->tag;
-            $logfixold .= "] ";
-            $logfixold .= $gov->form;
-            $logfixold .= "[";
-            $logfixold .= $gov->tag;
-            $logfixold .= "]";
-        }
-    }
-    else {
-        $logfixold         = '(undefined node)';
-        $logfixold_flt_gov = undef;
-        $logfixold_flt_dep = undef;
-    }
-
-    return;
+# generate form from lemma and tag
+sub get_form {
+    my ( $self, $lemma, $tag ) = @_;
+    return $formGenerator->get_form( $lemma, $tag );
 }
 
+# prefetches useful information into hashes
+sub get_pair {
+    my ($self, $node) = @_;
+
+    return Treex::Tool::Depfix::CS::PairGetter::get_pair($node);
+}
+
+# get category from tag
+sub get_tag_cat {
+    my ($self, $tag, $cat) = @_;
+
+    return Treex::Tool::Depfix::CS::TagHandler::get_tag_cat($tag, $cat);
+}
+
+# set category in tag
+sub set_tag_cat {
+    my ($self, $tag, $cat, $value) = @_;
+
+    return Treex::Tool::Depfix::CS::TagHandler::set_tag_cat($tag, $cat, $value);
+}
+
+# get category from node tag
+sub get_node_tag_cat {
+    my ($self, $node, $cat) = @_;
+
+    return Treex::Tool::Depfix::CS::TagHandler::get_node_tag_cat($node, $cat);
+}
+
+# set category in node tag
+sub set_node_tag_cat {
+    my ($self, $node, $cat, $value) = @_;
+
+    return Treex::Tool::Depfix::CS::TagHandler::set_node_tag_cat($node, $cat, $value);
+}
+
+# call before changing anything
+sub logfix1 {
+    my ( $self, $node, $mess ) = @_;
+
+    return $fixLogger->logfix1($node, $mess);
+}
+
+# call after changing anything
 sub logfix2 {
     my ( $self, $node ) = @_;
 
-    my $dep = undef;
-    my $gov = undef;
-    my $d   = undef;
-    my $g   = undef;
-
-    if ($node) {
-        ( $dep, $gov, $d, $g ) = $self->get_pair($node);
-        return if !$dep;
-
-        #new words pair
-        if ( $gov->ord < $dep->ord ) {
-            $logfixnew = $gov->form;
-            $logfixnew .= "[";
-            $logfixnew .= $gov->tag;
-            $logfixnew .= "] ";
-            $logfixnew .= $dep->form;
-            $logfixnew .= "[";
-            $logfixnew .= $dep->tag;
-            $logfixnew .= "] ";
-        }
-        else {
-            $logfixnew = $dep->form;
-            $logfixnew .= "[";
-            $logfixnew .= $dep->tag;
-            $logfixnew .= "] ";
-            $logfixnew .= $gov->form;
-            $logfixnew .= "[";
-            $logfixnew .= $gov->tag;
-            $logfixnew .= "] ";
-        }
-    }
-    else {
-        $logfixnew = '(removal)';
-    }
-
-    #output
-    if ( $logfixold ne $logfixnew ) {
-
-        # alignment link
-        if (
-            defined $gov && defined $logfix_aligned_gov
-            && defined $logfixold_flt_gov && $logfixold_flt_gov ne $g->{flt}
-            )
-        {
-            $logfix_aligned_gov->add_aligned_node( $gov, "depfix_$logfixmsg" );
-        }
-        if (
-            defined $dep && defined $logfix_aligned_dep
-            && defined $logfixold_flt_dep && $logfixold_flt_dep ne $d->{flt}
-            )
-        {
-            $logfix_aligned_dep->add_aligned_node( $dep, "depfix_$logfixmsg" );
-        }
-
-        # FIXLOG
-        if ( $logfixbundle->get_zone( 'cs', 'FIXLOG' ) ) {
-            my $sentence = $logfixbundle->get_or_create_zone( 'cs', 'FIXLOG' )
-                ->sentence . "{$logfixmsg: $logfixold -> $logfixnew} ";
-            $logfixbundle->get_zone( 'cs', 'FIXLOG' )->set_sentence($sentence);
-        }
-        else {
-            my $sentence = "{$logfixmsg: $logfixold -> $logfixnew} ";
-            $logfixbundle->create_zone( 'cs', 'FIXLOG' )
-                ->set_sentence($sentence);
-        }
-    }
-
-    if ( $self->log_to_console ) {
-        log_info("Fixing $logfixmsg: $logfixold -> $logfixnew");
-    }
-
-    return;
+    return $fixLogger->logfix2($node);
 }
 
 1;

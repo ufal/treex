@@ -151,7 +151,7 @@ sub fix {
     if ( $decide_on_change_result == 1 ) {
 
         # log the intention
-        $self->logfix(
+        log_info(
             $self->tnode_sgn($node) . ': '
                 . 'trying to change ' . $node->formeme
                 . ' (' . $node->wild->{'deepfix_info'}->{'original_score'} . ') '
@@ -165,7 +165,7 @@ sub fix {
 
         # log the result
         if ($msg) {
-            $self->logfix( $msg, 1 );
+            $self->logfix( "Deepfix $msg", 1 );
         }
     }
 
@@ -186,7 +186,7 @@ sub fix {
                 . ' (' . $node->wild->{'deepfix_info'}->{'best_score'} . ')'
         }
 
-        $self->logfix($msg);
+        log_info($msg);
     }
     
     # otherwise the change was not even considered

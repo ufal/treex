@@ -28,7 +28,7 @@ sub fix {
 
             $d->{tag} =~ s/^(....)./$1$case/;
 
-            $self->logfix1( $dep, "NounNoun (case $case)" );
+            $self->logfix1( $dep, "NounNounAgreement (case $case)" );
             $self->regenerate_node( $dep, $d->{tag} );
             $self->logfix2($dep);
         }

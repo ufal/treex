@@ -136,7 +136,7 @@ sub fix {
                 return;
             }
 
-            $self->logfix1( $dep, "PrepCase" );
+            $self->logfix1( $dep, "PrepositionalCase" );
             $gov->set_tag($gov_tag);
             $gov->set_lemma($gov_lemma);
             $dep->set_tag($dep_tag);

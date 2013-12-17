@@ -119,7 +119,7 @@ sub fix {
 sub switch_tense {
     my ($self, $t_node, $from, $to) = @_;
 
-    my $msg = "FixTense ($from>$to) " . $self->tnode_sgn($t_node) . ': ';
+    my $msg = "($from>$to) " . $self->tnode_sgn($t_node) . ': ';
 
     my $modal = $t_node->gram_deontmod ne 'decl';
     
@@ -174,7 +174,7 @@ sub switch_tense {
         }
     }
 
-    $self->logfix($msg);
+    $self->logfix("Tense $msg");
 
     return;
 }
