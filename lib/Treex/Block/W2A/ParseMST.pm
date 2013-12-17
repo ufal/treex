@@ -49,6 +49,10 @@ has robust => (
     documentation => 'try to recover from MST failures by paring 2 more times and returning flat tree at least'
 );
 
+# other possible values: '0.5.0'
+has version		=>	(isa => 'Str', is => 'ro', default => '0.4.3b');
+
+
 #TODO: loading each model only once should be handled in different way
 has _parser => ( is => 'rw' );
 my %loaded_models;
@@ -70,6 +74,7 @@ sub process_start {
                 order      => $self->order,
                 decodetype => $self->decodetype,
                 robust     => $self->robust,
+                version	=> $self->version,
             }
 
         );
@@ -88,7 +93,12 @@ sub parse_chunk {
     my @words = map { $_->form } @a_nodes;
     my @tags  = map { $_->get_attr( $self->pos_attribute ) } @a_nodes;
 
-    my ( $parents_rf, $deprel_rf, $matrix_rf ) = $self->_parser->parse_sentence( \@words, \@tags );
+    my ( $parents_rf, $deprel_rf, $matrix_rf ) = $self->_parser->parse_sentence( \@words, \@tags);
+    
+    my @scores;
+    if ($matrix_rf) {
+    	@scores = @$matrix_rf;
+    }
 
     my @roots = ();
     foreach my $a_node (@a_nodes) {
@@ -109,9 +119,9 @@ sub parse_chunk {
         $a_node->set_attr( $self->deprel_attribute, $deprel );
 
         if ($matrix_rf) {
-            my $scores = shift @$matrix_rf;
-            if ($scores) {
-                $a_node->set_attr( 'mst_scores', join( ' ', @$scores ) );
+            my $score = shift @scores;
+            if ($score) {
+                $a_node->set_attr( 'mst_score', $score );
             }
         }
 
