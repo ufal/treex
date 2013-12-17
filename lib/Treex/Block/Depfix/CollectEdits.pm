@@ -10,7 +10,7 @@ has '+extension' => (default => '.tsv');
 has '+stem_suffix' => (default => '_edits');
 has '+compress' => (default => '1');
 
-has src_alignment_type => ( is => 'rw', isa => 'Str', default => 'src' );
+has src_alignment_type => ( is => 'rw', isa => 'Str', default => 'intersection' );
 has ref_alignment_type => ( is => 'rw', isa => 'Str', default => 'monolingual' );
 
 #has include_unchanged => ( is => 'rw', isa => 'Bool', default => 1 );
