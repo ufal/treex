@@ -7,7 +7,7 @@ has '+language' => ( required => 1 );
 has '+selector' => ( required => 1 );
 
 has src_alignment_type => ( is => 'rw', isa => 'Str', default => 'src' );
-has hpe_alignment_type => ( is => 'rw', isa => 'Str', default => 'monolingual' );
+has ref_alignment_type => ( is => 'rw', isa => 'Str', default => 'monolingual' );
 
 #has include_unchanged => ( is => 'rw', isa => 'Bool', default => 1 );
 
@@ -16,12 +16,13 @@ my $blank_node;
 sub process_anode {
     my ($self, $child) = @_;
     my ($parent) = $child->get_eparents();
-    my ($child_hpe) = $child->get_aligned_nodes_of_type($self->hpe_alignment_type);
-    my ($parent_hpe) = $parent->get_aligned_nodes_of_type($self->hpe_alignment_type);
+    my ($child_ref) = $child->get_aligned_nodes_of_type($self->ref_alignment_type);
+    my ($parent_ref) = $parent->get_aligned_nodes_of_type($self->ref_alignment_type);
     if (!$parent->is_root() &&
-        defined $child_hpe &&
-        defined $parent_hpe &&
-        $child->lemma eq $child_hpe->lemma
+        defined $child_ref &&
+        defined $parent_ref &&
+        $child->lemma eq $child_ref->lemma &&
+        $parent->lemma eq $parent_ref->lemma
     ) {
         my $edge_direction = $child->precedes($parent) ? '/' : '\\';
         # aligned src nodes
@@ -54,8 +55,8 @@ sub process_anode {
             $child_src_lemma, $child_src_tag, $child_src_afun,
             $parent_src_lemma, $parent_src_tag, $parent_src_afun,
             $src_edge,
-            $child_hpe->tag, $child_hpe->afun,
-            $parent_hpe->tag, $parent_hpe->afun,
+            $child_ref->tag, $child_ref->afun,
+            $parent_ref->tag, $parent_ref->afun,
         );
         print { $self->_file_handle() } (join "\t", @features)."\n";
     }
@@ -72,7 +73,7 @@ Treex::Block::Depfix::CollectEdits
 A Depfix block.
 
 Collects and prints a list of performed edits, comparing the original machine
-translation with its human post-editation.
+translation with the reference translation (ideally human post-editation).
 To be used to get data to train Depfix.
 
 =head1 AUTHOR
