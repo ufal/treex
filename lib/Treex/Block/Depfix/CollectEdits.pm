@@ -6,6 +6,10 @@ extends 'Treex::Block::Write::BaseTextWriter';
 has '+language' => ( required => 1 );
 has '+selector' => ( required => 1 );
 
+has '+extension' => (default => '.tsv');
+has '+stem_suffix' => (default => '_edits');
+has '+compress' => (default => '1');
+
 has src_alignment_type => ( is => 'rw', isa => 'Str', default => 'src' );
 has ref_alignment_type => ( is => 'rw', isa => 'Str', default => 'monolingual' );
 
@@ -15,7 +19,7 @@ my $blank_node;
 
 sub process_anode {
     my ($self, $child) = @_;
-    my ($parent) = $child->get_eparents();
+    my ($parent) = $child->get_eparents( {or_topological => 1} );
     my ($child_ref) = $child->get_aligned_nodes_of_type($self->ref_alignment_type);
     my ($parent_ref) = $parent->get_aligned_nodes_of_type($self->ref_alignment_type);
     if (!$parent->is_root() &&
@@ -30,7 +34,10 @@ sub process_anode {
         my ($parent_src) = $parent->get_aligned_nodes_of_type($self->src_alignment_type);
         my $src_edge = -1;
         if ( defined $child_src && defined $parent_src ) {
-            if ( grep { $_->id eq $parent_src->id } $child_src->get_eparents() ) {
+            if ( grep {
+                    $_->id eq $parent_src->id
+                } $child_src->get_eparents( {or_topological => 1} )
+            ) {
                 $src_edge = 1;
             } else {
                 $src_edge = 0;
