@@ -122,6 +122,7 @@ sub parse_chunk {
             my $score = shift @scores;
             if ($score) {
                 $a_node->set_attr( 'mst_score', $score );
+                $a_node->wild()->{'mst_score'} = $score;
             }
         }
 
