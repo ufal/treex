@@ -3,19 +3,21 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+has propagate_to_a_nodes => ( is => 'rw', isa => 'Bool', default => 0 );
+
 my $max_number;    # Maximal clause_number assigned so far
 
 sub process_zone {
     my ( $self, $zone ) = @_;
     $max_number = 0;
     foreach my $subroot ( $zone->get_ttree->get_children( { ordered => 1 } ) ) {
-        recursive_numbering( $subroot, ++$max_number );
+        recursive_numbering( $self, $subroot, ++$max_number );
     }
     return;
 }
 
 sub recursive_numbering {
-    my ( $t_node, $my_number ) = @_;
+    my ( $self, $t_node, $my_number ) = @_;
 
     # 1) Process recursively all children nodes.
     # 1a) this node is a coordination of (finite) clauses
@@ -29,7 +31,7 @@ sub recursive_numbering {
         # All clauses in this coordination get a new number
         foreach my $clause_child ( grep { $_->is_member || $_->is_clause_head } @children ) {
             if ( !$first_clause_number ) { $first_clause_number = $max_number + 1; }
-            recursive_numbering( $clause_child, ++$max_number );
+            recursive_numbering( $self, $clause_child, ++$max_number );
         }
 
         # All shared modifiers get a number of the nearest clause
@@ -40,7 +42,7 @@ sub recursive_numbering {
                 $nearest_number = $child->clause_number;
             }
             else {
-                recursive_numbering( $child, $nearest_number );
+                recursive_numbering( $self, $child, $nearest_number );
             }
         }
     }
@@ -49,12 +51,19 @@ sub recursive_numbering {
     else {
         foreach my $child ( $t_node->get_children( { ordered => 1 } ) ) {
             my $n = $child->is_clause_head ? ++$max_number : $my_number;
-            recursive_numbering( $child, $n );
+            recursive_numbering( $self, $child, $n );
         }
     }
 
     # 2) Assign clause_number to this t-node
     $t_node->set_clause_number($my_number);
+    if ( $self->propagate_to_a_nodes ) {
+        my @anodes = $t_node->get_anodes();
+        foreach my $anode (@anodes) {
+            $anode->set_clause_number($my_number);
+        }
+        # TODO: also set is_clause_head ?
+    }
 
     return;
 }
