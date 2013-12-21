@@ -2,6 +2,7 @@ package Treex::Tool::Depfix::CS::FormGenerator;
 use Moose;
 use Treex::Core::Common;
 use utf8;
+extends 'Treex::Tool::Depfix::FormGenerator';
 
 use LanguageModel::MorphoLM;
 use Treex::Tool::Lexicon::Generation::CS;
