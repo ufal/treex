@@ -3,6 +3,7 @@ use Moose;
 use Treex::Core::Common;
 use utf8;
 use Treex::Tool::Depfix::Model;
+use Treex::Tool::Depfix::CS::FixLogger;
 
 extends 'Treex::Core::Block';
 
@@ -13,11 +14,18 @@ has formGenerator => ( is => 'rw' );
 has _models => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 # has _models => ( is => 'rw', isa => 'HashRef[Treex::Tool::Depfix::Model]', default => sub { {} } );
 
+has fixLogger => ( is => 'rw' );
+has log_to_console => ( is => 'rw', isa => 'Bool', default => 1 );
+
 sub process_start {
     my ($self) = @_;
 
     $self->set_formGenerator($self->_build_form_generator());
     $self->_load_models();
+    $self->set_fixLogger(Treex::Tool::Depfix::CS::FixLogger->new({
+        language => $self->language,
+        log_to_console => $self->log_to_console
+    }));
 
     super();
 

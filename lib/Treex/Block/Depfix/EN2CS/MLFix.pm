@@ -48,18 +48,24 @@ override 'fill_language_specific_features' => sub {
 override '_predict_new_tag' => sub {
     my ($self, $child, $model_predictions) = @_;
 
+    my $message = 'MLFix c_cas ' . $child->tag . ' (';
+
     my $max = 0;
     my $max_case = '-';
     foreach my $cas (keys %{$model_predictions->{c_cas}} ) {
+        $message .= $cas .':'. $model_predictions->{c_cas}->{$cas} . ' ';
         if ( $model_predictions->{c_cas}->{$cas} > $max ) {
             $max = $model_predictions->{c_cas}->{$cas};
             $max_case = $cas;
         }
     }
 
+    $message .= ') ';
+
     if ( $max_case =~ /[1-7]/ ) {
         my $tag = $child->tag;
         substr $tag, 4, 1, $max_case;
+        $self->fixLogger->logfixNode($child, "$message -> $tag");
         return $tag;
     } else {
         return;
