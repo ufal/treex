@@ -31,45 +31,35 @@ override '_load_models' => sub {
 my @tag_parts = qw(pos sub gen num cas pge pnu per ten gra neg voi);
 
 override 'fill_language_specific_features' => sub {
-    my ($self, $features, $child, $parent) = @_;
+    my ($self, $features, $child, $parent, $child_orig, $parent_orig) = @_;
 
     # tag parts
-    my @child_tag_split  = split //, $child->tag;
-    my @parent_tag_split = split //, $parent->tag;
+    my @new_child_tag_split  = split //, $child->tag;
+    my @new_parent_tag_split = split //, $parent->tag;
+    my @orig_child_tag_split  = split //, $child_orig->tag;
+    my @orig_parent_tag_split = split //, $parent_orig->tag;
     for (my $i = 0; $i < scalar(@tag_parts); $i++) {
         my $part = $tag_parts[$i];
-        $features->{"c_tag_$part"} = $child_tag_split[$i];
-        $features->{"p_tag_$part"} = $parent_tag_split[$i];
+        $features->{"new_c_tag_$part"} = $new_child_tag_split[$i];
+        $features->{"new_p_tag_$part"} = $new_parent_tag_split[$i];
+        $features->{"c_tag_$part"} = $orig_child_tag_split[$i];
+        $features->{"p_tag_$part"} = $orig_parent_tag_split[$i];
     }
 
     return;
 };
 
-override '_predict_new_tag' => sub {
+override '_predict_new_tags' => sub {
     my ($self, $child, $model_predictions) = @_;
 
-    my $message = 'MLFix c_cas ' . $child->tag . ' (';
-
-    my $max = 0;
-    my $max_case = '-';
+    my $tag = $child->tag;
+    my %new_tags = ();
     foreach my $cas (keys %{$model_predictions->{c_cas}} ) {
-        $message .= $cas .':'. $model_predictions->{c_cas}->{$cas} . ' ';
-        if ( $model_predictions->{c_cas}->{$cas} > $max ) {
-            $max = $model_predictions->{c_cas}->{$cas};
-            $max_case = $cas;
-        }
+        substr $tag, 4, 1, $cas;
+        $new_tags{$tag} = $model_predictions->{c_cas}->{$cas};
     }
 
-    $message .= ') ';
-
-    if ( $max_case =~ /[1-7]/ ) {
-        my $tag = $child->tag;
-        substr $tag, 4, 1, $max_case;
-        $self->fixLogger->logfixNode($child, "$message -> $tag");
-        return $tag;
-    } else {
-        return;
-    }
+    return \%new_tags;
 };
 
 
