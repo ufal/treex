@@ -110,6 +110,13 @@ sub predict_new_tag {
         my $tags = $forms{$new_form}->{tags};
         $new_tag = reduce { $tags->{$a} > $tags->{$b} ? $a : $b } keys %$tags;
     } else {
+        my $message = 'MLFix (' .
+        (join ', ',
+            (map { $_ . ':' . sprintf('%.2f', $new_tags->{$_}) }
+                keys %$new_tags) ) . 
+        ' ' .
+        $self->fixLogger->logfix1($child, $message);
+
         $new_tag = reduce { $new_tags->{$a} > $new_tags->{$b} ? $a : $b }
             keys %$new_tags;        
     }
