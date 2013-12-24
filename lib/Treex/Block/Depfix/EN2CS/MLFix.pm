@@ -7,9 +7,12 @@ extends 'Treex::Block::Depfix::MLFix';
 
 use Treex::Tool::Depfix::CS::FormGenerator;
 use Treex::Tool::Depfix::MaxEntModel;
+use Treex::Tool::Depfix::NaiveBayesModel;
 
 has c_cas_config_file => ( is => 'rw', isa => 'Str', required => 1 );
 has c_cas_model_file => ( is => 'rw', isa => 'Str', required => 1 );
+has model_type => ( is => 'rw', isa => 'Str', default => 'maxent' );
+# allowed values: maxent, nb
 
 override '_build_form_generator' => sub {
     my ($self) = @_;
@@ -20,10 +23,18 @@ override '_build_form_generator' => sub {
 override '_load_models' => sub {
     my ($self) = @_;
 
-    $self->_models->{c_cas} = Treex::Tool::Depfix::MaxEntModel->new(
+    my $model_params = {
         config_file => $self->c_cas_config_file,
         model_file  => $self->c_cas_model_file,
-    );
+    };
+    
+    if ( $self->model_type eq 'maxent' ) {
+        $self->_models->{c_cas} =
+            Treex::Tool::Depfix::MaxEntModel->new($model_params);
+    } elsif ( $self->model_type eq 'nb' ) {
+        $self->_models->{c_cas} =
+            Treex::Tool::Depfix::NaiveBayesModel->new($model_params);
+    }
     
     return;
 };
