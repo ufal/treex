@@ -15,6 +15,7 @@ has formGenerator => ( is => 'rw' );
 # has _formGenerator => ( is => 'rw', isa => 'Treex::Tool::Depfix::FormGenerator' );
 has _models => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 # has _models => ( is => 'rw', isa => 'HashRef[Treex::Tool::Depfix::Model]', default => sub { {} } );
+has form_recombination => ( is => 'rw', isa => 'Bool', default => 1 );
 
 has fixLogger => ( is => 'rw' );
 has log_to_console => ( is => 'rw', isa => 'Bool', default => 1 );
@@ -79,28 +80,39 @@ sub predict_new_tag {
 
     # process predictions to get tag suggestions
     my $new_tags = $self->_predict_new_tags($child, $model_predictions);
-    
-    # recombinantion according to form
-    my %forms = ();
-    foreach my $tag (keys %$new_tags) {
-        my $form = $self->formGenerator->get_form( $child->lemma, $tag );
-        if (defined $form) {
-            $forms{$form}->{score} += $new_tags->{$tag};
-            $forms{$form}->{tags}->{$tag} = $new_tags->{$tag};
+
+    my $new_tag;
+    if ( $self->form_recombination) {
+        # recombinantion according to form
+        my %forms = ();
+        foreach my $tag (keys %$new_tags) {
+            my $form = $self->formGenerator->get_form( $child->lemma, $tag );
+            if (defined $form) {
+                $forms{$form}->{score} += exp($new_tags->{$tag});
+                $forms{$form}->{tags}->{$tag} = $new_tags->{$tag};
+            }
         }
-    }
-    my $message = 'MLFix (' .
+        my $message = 'MLFix (' .
+        (join ', ',
+            (map { $_ . ':' . sprintf('%.2f', $new_tags->{$_}) }
+                keys %$new_tags) ) . 
+        ' ' .
         (join ', ',
             (map { $_ . ':' . sprintf('%.2f', $forms{$_}->{score}) }
-                keys %forms) ) .  ')';
-    $self->fixLogger->logfix1($child, $message);
+                keys %forms) ) .
+        ')';
+        $self->fixLogger->logfix1($child, $message);
 
-    # find new form and tag
-    my $new_form = reduce {
-        $forms{$a}->{score} > $forms{$b}->{score} ? $a : $b
-    } keys %forms;
-    my $tags = $forms{$new_form}->{tags};
-    my $new_tag = reduce { $tags->{$a} > $tags->{$b} ? $a : $b } keys %$tags;
+        # find new form and tag
+        my $new_form = reduce {
+            $forms{$a}->{score} > $forms{$b}->{score} ? $a : $b
+        } keys %forms;
+        my $tags = $forms{$new_form}->{tags};
+        $new_tag = reduce { $tags->{$a} > $tags->{$b} ? $a : $b } keys %$tags;
+    } else {
+        $new_tag = reduce { $new_tags->{$a} > $new_tags->{$b} ? $a : $b }
+            keys %$new_tags;        
+    }
 
     if ( $new_tag ne $child->tag ) {
         return $new_tag;
@@ -113,7 +125,7 @@ sub _predict_new_tags {
     my ($self, $child, $model_predictions) = @_;
 
     log_fatal "Abstract method _predict_new_tag must be overridden!";
-    
+
     return;
 }
 
