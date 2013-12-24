@@ -20,6 +20,8 @@ has form_recombination => ( is => 'rw', isa => 'Bool', default => 1 );
 has fixLogger => ( is => 'rw' );
 has log_to_console => ( is => 'rw', isa => 'Bool', default => 1 );
 
+has magic => ( is => 'rw', isa => 'Str', default => '' );
+
 sub process_start {
     my ($self) = @_;
 
@@ -51,19 +53,47 @@ sub _load_models {
     return;
 }
 
+sub process_tree {
+    my ($self, $root) = @_;
+
+    $self->process_node_recursively($root);
+
+    return;
+}
+
+sub process_node_recursively {
+    my ($self, $node) = @_;
+
+    $self->process_anode($node);
+    my @children = $node->get_children();
+    foreach my $child (@children) {
+        $self->process_node_recursively($child);
+    }
+
+    return;
+}
+
 sub process_anode {
     my ($self, $child) = @_;
 
+    if ( $child->is_root() ) {
+        return;
+    }
+    
     my $features = $self->get_features($child);
-    if ( defined $features ) {
-        my $new_tag = $self->predict_new_tag($child, $features);
-        if ( defined $new_tag ) {
-            $self->regenerate_node($child, $new_tag);
-            $self->fixLogger->logfix2($child);
-            #log_info (join ' ', (map { $_ . ':' . $features->{$_}  } keys %$features));
-        }
+    if ( !defined $features ) {
+        return;
+    }
+    
+    my $new_tag = $self->predict_new_tag($child, $features);
+    if ( !defined $new_tag ) {
+        return;
     }
 
+    $self->regenerate_node($child, $new_tag);
+    $self->fixLogger->logfix2($child);
+    #log_info (join ' ', (map { $_ . ':' . $features->{$_}  } keys %$features));
+    
     return;
 }
 
@@ -143,6 +173,12 @@ sub get_features {
 
     my ($parent) = $child->get_eparents( {or_topological => 1} );
     if ( !$parent->is_root() ) {
+
+        if ( $self->magic eq 'prep_noun' ) {
+            if ( $parent->tag !~ /^R/ || $child->tag !~ /^N/) {
+                return;
+            }
+        }
 
         my ($child_orig)  =
             $child->get_aligned_nodes_of_type($self->orig_alignment_type);

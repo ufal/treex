@@ -8,11 +8,12 @@ extends 'Treex::Block::Depfix::MLFix';
 use Treex::Tool::Depfix::CS::FormGenerator;
 use Treex::Tool::Depfix::MaxEntModel;
 use Treex::Tool::Depfix::NaiveBayesModel;
+use Treex::Tool::Depfix::DecisionTreesModel;
 
 has c_cas_config_file => ( is => 'rw', isa => 'Str', required => 1 );
 has c_cas_model_file => ( is => 'rw', isa => 'Str', required => 1 );
 has model_type => ( is => 'rw', isa => 'Str', default => 'maxent' );
-# allowed values: maxent, nb
+# allowed values: maxent, nb, dt
 
 override '_build_form_generator' => sub {
     my ($self) = @_;
@@ -34,6 +35,9 @@ override '_load_models' => sub {
     } elsif ( $self->model_type eq 'nb' ) {
         $self->_models->{c_cas} =
             Treex::Tool::Depfix::NaiveBayesModel->new($model_params);
+    } elsif ( $self->model_type eq 'dt' ) {
+        $self->_models->{c_cas} =
+            Treex::Tool::Depfix::DecisionTreesModel->new($model_params);
     }
     
     return;
