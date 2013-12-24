@@ -5,6 +5,7 @@ use utf8;
 extends 'Treex::Tool::Depfix::Model';
 
 use Algorithm::NaiveBayes;
+use Algorithm::NaiveBayes::Model::Frequency;    
 
 override '_load_model' => sub {
     my ($self) = @_;
