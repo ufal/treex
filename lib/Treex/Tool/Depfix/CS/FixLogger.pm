@@ -162,15 +162,13 @@ sub logfix2 {
         }
 
         # FIXLOG
-        if ( $logfixbundle->get_zone( 'cs', 'FIXLOG' ) ) {
-            my $sentence = $logfixbundle->get_or_create_zone( 'cs', 'FIXLOG' )
-                ->sentence . "{$logfixmsg: $logfixold -> $logfixnew} ";
-            $logfixbundle->get_zone( 'cs', 'FIXLOG' )->set_sentence($sentence);
-        }
-        else {
-            my $sentence = "{$logfixmsg: $logfixold -> $logfixnew} ";
-            $logfixbundle->create_zone( 'cs', 'FIXLOG' )
-                ->set_sentence($sentence);
+        if ( !defined $logfixbundle) {
+            log_warn 'logfixbundle is undef';
+        } else {
+            my $fixlogzone = $logfixbundle->get_or_create_zone(
+                $self->language, 'FIXLOG' );
+            $fixlogzone->set_sentence( ($fixlogzone->sentence // '') .
+                "{$logfixmsg: $logfixold -> $logfixnew} ");
         }
     }
 
