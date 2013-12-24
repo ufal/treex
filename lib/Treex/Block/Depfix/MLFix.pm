@@ -114,7 +114,7 @@ sub predict_new_tag {
         (join ', ',
             (map { $_ . ':' . sprintf('%.2f', $new_tags->{$_}) }
                 keys %$new_tags) ) . 
-        ' ' .
+        ')';
         $self->fixLogger->logfix1($child, $message);
 
         $new_tag = reduce { $new_tags->{$a} > $new_tags->{$b} ? $a : $b }
