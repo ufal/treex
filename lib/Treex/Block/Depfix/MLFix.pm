@@ -151,7 +151,7 @@ sub predict_new_tag {
             keys %$new_tags;        
     }
 
-    if ( $new_tag ne $child->tag ) {
+    if ( defined $new_tag && $new_tag ne $child->tag ) {
         return $new_tag;
     } else {
         return;
@@ -176,6 +176,12 @@ sub get_features {
 
         if ( $self->magic eq 'prep_noun' ) {
             if ( $parent->tag !~ /^R/ || $child->tag !~ /^N/) {
+                return;
+            }
+        }
+
+        if ( $self->magic eq 'noverbparent' ) {
+            if ( $parent->tag =~ /^V/ ) {
                 return;
             }
         }
