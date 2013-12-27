@@ -16,6 +16,8 @@ has formGenerator => ( is => 'rw' );
 has _models => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 # has _models => ( is => 'rw', isa => 'HashRef[Treex::Tool::Depfix::Model]', default => sub { {} } );
 has form_recombination => ( is => 'rw', isa => 'Bool', default => 1 );
+# which node to fix; implies top-down or bottom-up walk through the tree
+has fix_child => ( is => 'rw', isa => 'Bool', default => 1 );
 
 has fixLogger => ( is => 'rw' );
 has log_to_console => ( is => 'rw', isa => 'Bool', default => 1 );
@@ -56,12 +58,16 @@ sub _load_models {
 sub process_tree {
     my ($self, $root) = @_;
 
-    $self->process_node_recursively($root);
+    if ( $self->fix_child ) {
+        $self->process_node_recursively_topdown($root);
+    } else {
+        $self->process_node_recursively_bottomup($root); 
+    }
 
     return;
 }
 
-sub process_node_recursively {
+sub process_node_recursively_topdown {
     my ($self, $node) = @_;
 
     $self->process_anode($node);
@@ -73,6 +79,18 @@ sub process_node_recursively {
     return;
 }
 
+sub process_node_recursively_bottomup {
+    my ($self, $node) = @_;
+
+    my @children = $node->get_children();
+    foreach my $child (@children) {
+        $self->process_node_recursively($child);
+    }
+    $self->process_anode($node);
+
+    return;
+}
+
 sub process_anode {
     my ($self, $child) = @_;
 
@@ -80,17 +98,24 @@ sub process_anode {
         return;
     }
     
-    my $features = $self->get_features($child);
+    my ($parent) = $child->get_eparents( {or_topological => 1} );
+    if ( $parent->is_root() ) {
+        return;
+    }
+
+    my $features = $self->get_features($child, $parent);
     if ( !defined $features ) {
         return;
     }
+
+    my $node = $self->fix_child ? $child : $parent;
     
-    my $new_tag = $self->predict_new_tag($child, $features);
+    my $new_tag = $self->predict_new_tag($node, $features);
     if ( !defined $new_tag ) {
         return;
     }
 
-    $self->regenerate_node($child, $new_tag);
+    $self->regenerate_node($node, $new_tag);
     $self->fixLogger->logfix2($child);
     #log_info (join ' ', (map { $_ . ':' . $features->{$_}  } keys %$features));
     
@@ -98,7 +123,7 @@ sub process_anode {
 }
 
 sub predict_new_tag {
-    my ($self, $child, $features) = @_;
+    my ($self, $node, $features) = @_;
 
     # get predictions from models
     my $model_predictions = {};
@@ -109,14 +134,14 @@ sub predict_new_tag {
     }
 
     # process predictions to get tag suggestions
-    my $new_tags = $self->_predict_new_tags($child, $model_predictions);
+    my $new_tags = $self->_predict_new_tags($node, $model_predictions);
 
     my $new_tag;
     if ( $self->form_recombination) {
         # recombinantion according to form
         my %forms = ();
         foreach my $tag (keys %$new_tags) {
-            my $form = $self->formGenerator->get_form( $child->lemma, $tag );
+            my $form = $self->formGenerator->get_form( $node->lemma, $tag );
             if (defined $form) {
                 $forms{$form}->{score} += exp($new_tags->{$tag});
                 $forms{$form}->{tags}->{$tag} = $new_tags->{$tag};
@@ -131,7 +156,7 @@ sub predict_new_tag {
             (map { $_ . ':' . sprintf('%.2f', $forms{$_}->{score}) }
                 keys %forms) ) .
         ')';
-        $self->fixLogger->logfix1($child, $message);
+        $self->fixLogger->logfix1($node, $message);
 
         # find new form and tag
         my $new_form = reduce {
@@ -145,13 +170,13 @@ sub predict_new_tag {
             (map { $_ . ':' . sprintf('%.2f', $new_tags->{$_}) }
                 keys %$new_tags) ) . 
         ')';
-        $self->fixLogger->logfix1($child, $message);
+        $self->fixLogger->logfix1($node, $message);
 
         $new_tag = reduce { $new_tags->{$a} > $new_tags->{$b} ? $a : $b }
             keys %$new_tags;        
     }
 
-    if ( defined $new_tag && $new_tag ne $child->tag ) {
+    if ( defined $new_tag && $new_tag ne $node->tag ) {
         return $new_tag;
     } else {
         return;
@@ -159,7 +184,7 @@ sub predict_new_tag {
 }
 
 sub _predict_new_tags {
-    my ($self, $child, $model_predictions) = @_;
+    my ($self, $node, $model_predictions) = @_;
 
     log_fatal "Abstract method _predict_new_tag must be overridden!";
 
@@ -167,88 +192,83 @@ sub _predict_new_tags {
 }
 
 sub get_features {
-    my ($self, $child) = @_;
+    my ($self, $child, $parent) = @_;
 
     my $features;
 
-    my ($parent) = $child->get_eparents( {or_topological => 1} );
-    if ( !$parent->is_root() ) {
-
-        if ( $self->magic eq 'prep_noun' ) {
-            if ( $parent->tag !~ /^R/ || $child->tag !~ /^N/) {
-                return;
-            }
+    if ( $self->magic eq 'prep_noun' ) {
+        if ( $parent->tag !~ /^R/ || $child->tag !~ /^N/) {
+            return;
         }
-
-        if ( $self->magic eq 'noverbparent' ) {
-            if ( $parent->tag =~ /^V/ ) {
-                return;
-            }
-        }
-
-        my ($child_orig)  =
-            $child->get_aligned_nodes_of_type($self->orig_alignment_type);
-        my ($parent_orig)  =
-            $parent->get_aligned_nodes_of_type($self->orig_alignment_type);
-        
-        # basic features
-        $features = {
-            # new = this tree
-            new_c_lemma => $child->lemma,
-            new_c_tag => $child->tag,
-            new_c_afun => $child->afun,
-            new_p_lemma => $parent->lemma,
-            new_p_tag => $parent->tag,
-            new_p_afun => $parent->afun,
-            # orig tree
-            c_lemma => $child_orig->lemma,
-            c_tag => $child_orig->tag,
-            c_afun => $child_orig->afun,
-            p_lemma => $parent_orig->lemma,
-            p_tag => $parent_orig->tag,
-            p_afun => $parent_orig->afun,
-            dir => ($child->precedes($parent) ? '/' : '\\'),
-        };
-
-        # aligned src nodes features
-        my ($child_src)  =  $child->get_aligned_nodes_of_type($self->src_alignment_type);
-        if ( defined $child_src ) {
-            $features->{src_c_lemma} = $child_src->lemma;
-            $features->{src_c_tag} = $child_src->tag;
-            $features->{src_c_afun} = $child_src->afun;
-        } else {
-            $features->{src_c_lemma} = '';
-            $features->{src_c_tag} = '';
-            $features->{src_c_afun} = ''; 
-        }
-        my ($parent_src) = $parent->get_aligned_nodes_of_type($self->src_alignment_type);
-        if ( defined $parent_src ) {
-            $features->{src_p_lemma} = $parent_src->lemma;
-            $features->{src_p_tag} = $parent_src->tag;
-            $features->{src_p_afun} = $parent_src->afun;
-        } else {
-            $features->{src_p_lemma} = '';
-            $features->{src_p_tag} = '';
-            $features->{src_p_afun} = '';
-        }
-        if ( defined $child_src && defined $parent_src ) {
-            if ( grep {
-                    $_->id eq $parent_src->id
-                } $child_src->get_eparents( {or_topological => 1} )
-            ) {
-                $features->{src_edge} = 1;
-            } else {
-                $features->{src_edge} = 0;
-            }
-        } else {
-            $features->{src_edge} = -1;
-        }
-
-        # language specific features
-        $self->fill_language_specific_features($features, $child, $parent,
-            $child_orig, $parent_orig);
     }
 
+    if ( $self->magic eq 'noverbparent' ) {
+        if ( $parent->tag =~ /^V/ ) {
+            return;
+        }
+    }
+
+    my ($child_orig)  =
+    $child->get_aligned_nodes_of_type($self->orig_alignment_type);
+    my ($parent_orig)  =
+    $parent->get_aligned_nodes_of_type($self->orig_alignment_type);
+
+    # basic features
+    $features = {
+        # new = this tree
+        new_c_lemma => $child->lemma,
+        new_c_tag => $child->tag,
+        new_c_afun => $child->afun,
+        new_p_lemma => $parent->lemma,
+        new_p_tag => $parent->tag,
+        new_p_afun => $parent->afun,
+        # orig tree
+        c_lemma => $child_orig->lemma,
+        c_tag => $child_orig->tag,
+        c_afun => $child_orig->afun,
+        p_lemma => $parent_orig->lemma,
+        p_tag => $parent_orig->tag,
+        p_afun => $parent_orig->afun,
+        dir => ($child->precedes($parent) ? '/' : '\\'),
+    };
+
+    # aligned src nodes features
+    my ($child_src)  =  $child->get_aligned_nodes_of_type($self->src_alignment_type);
+    if ( defined $child_src ) {
+        $features->{src_c_lemma} = $child_src->lemma;
+        $features->{src_c_tag} = $child_src->tag;
+        $features->{src_c_afun} = $child_src->afun;
+    } else {
+        $features->{src_c_lemma} = '';
+        $features->{src_c_tag} = '';
+        $features->{src_c_afun} = ''; 
+    }
+    my ($parent_src) = $parent->get_aligned_nodes_of_type($self->src_alignment_type);
+    if ( defined $parent_src ) {
+        $features->{src_p_lemma} = $parent_src->lemma;
+        $features->{src_p_tag} = $parent_src->tag;
+        $features->{src_p_afun} = $parent_src->afun;
+    } else {
+        $features->{src_p_lemma} = '';
+        $features->{src_p_tag} = '';
+        $features->{src_p_afun} = '';
+    }
+    if ( defined $child_src && defined $parent_src ) {
+        if ( grep {
+                $_->id eq $parent_src->id
+            } $child_src->get_eparents( {or_topological => 1} )
+        ) {
+            $features->{src_edge} = 1;
+        } else {
+            $features->{src_edge} = 0;
+        }
+    } else {
+        $features->{src_edge} = -1;
+    }
+
+    # language specific features
+    $self->fill_language_specific_features($features, $child, $parent,
+        $child_orig, $parent_orig);
     return $features;
 }
 

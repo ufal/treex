@@ -15,8 +15,6 @@ has ref_alignment_type => ( is => 'rw', isa => 'Str', default => 'monolingual' )
 
 #has include_unchanged => ( is => 'rw', isa => 'Bool', default => 1 );
 
-my $blank_node;
-
 sub process_anode {
     my ($self, $child) = @_;
     my ($parent) = $child->get_eparents( {or_topological => 1} );

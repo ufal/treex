@@ -84,10 +84,10 @@ override 'fill_language_specific_features' => sub {
 };
 
 override '_predict_new_tags' => sub {
-    my ($self, $child, $model_predictions) = @_;
+    my ($self, $node, $model_predictions) = @_;
 
     # old
-    my $tag = $child->tag;
+    my $tag = $node->tag;
     my @categories = split //, $tag;
     my ($old_gen, $old_num, $old_cas) =
         ($categories[2], $categories[3], $categories[4]);
