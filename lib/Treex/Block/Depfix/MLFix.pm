@@ -22,6 +22,10 @@ has fix_child => ( is => 'rw', isa => 'Bool', default => 1 );
 has fixLogger => ( is => 'rw' );
 has log_to_console => ( is => 'rw', isa => 'Bool', default => 1 );
 
+# fix only what has not been fixed yet
+# (assumption: the first performed correction is the best correction)
+has fix_only_nonfixed => ( is => 'rw', isa => 'Bool', default => 0 );
+
 has magic => ( is => 'rw', isa => 'Str', default => '' );
 
 sub process_start {
@@ -103,13 +107,21 @@ sub process_anode {
         return;
     }
 
+    my $node = $self->fix_child ? $child : $parent;
+    
+    if ( $self->fix_only_nonfixed ) {
+        my ($node_orig) =
+            $node->get_aligned_nodes_of_type($self->orig_alignment_type);
+        if ( (!defined $node_orig) || ($node_orig->form ne $node->form) ) {
+            return;
+        }
+    }
+
     my $features = $self->get_features($child, $parent);
     if ( !defined $features ) {
         return;
     }
 
-    my $node = $self->fix_child ? $child : $parent;
-    
     my $new_tag = $self->predict_new_tag($node, $features);
     if ( !defined $new_tag ) {
         return;
