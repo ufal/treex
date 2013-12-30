@@ -23,6 +23,9 @@ sub process_subtree {
 sub get_afun {
 	my ($node) = @_;
 	
+	my $p = $node->get_parent();
+	my $gp = $p->get_parent();
+	
 	# assign afun to nodes that can be easily determined by POS alone
 	# AuxP
 	return 'AuxP' if $node->tag =~ /^PP/;
@@ -33,33 +36,81 @@ sub get_afun {
 		return 'AuxZ';
 	}
 	
+	# Adv
+	return 'Adv' if ($node->tag =~ /^AA/);
+	
+	# AuxC
+	return 'AuxC' if ($node->form eq 'என்று');
+	
 	
 	
 	# 1. Pred
-	if ($node->get_root() == $node->get_parent()) {
+	if ($node->get_root() == $p) {
 		return 'Pred' if $node->tag =~ /^V/;
 	}
 	
 	# 2. Sb
-	if ($node->get_parent() != $node->get_root()) {
-		my $p = $node->get_parent();
-		if ($p->afun eq 'Pred') {
+	if ($p != $node->get_root()) {
+		if (($p->afun eq 'Pred') || ($p->tag =~ /^V/)) {
 			return 'Sb' if $node->tag =~ /^(N...N|RpASN)/;
+			return 'Sb' if $node->tag =~ /^(VzN.N)/;
+			return 'Sb' if $node->tag =~ /^(QQ..N)/;
 		}
+		# TODO: try subject first, this can also be an object 
+		if ($p->form =~ /^என்பது/) {
+			return 'Sb' if $node->tag =~ /^V/;
+		}						
 	}
 	
 	# 3. Obj
-	if ($node->get_parent() != $node->get_root()) {
-		my $p = $node->get_parent();
-		if ($p->afun eq 'Pred') {
-			return 'Obj' if $node->tag =~ /^(N...A|RpASA)/;
+	if ($p != $node->get_root()) {
+		if (($p->afun eq 'Pred') || ($p->tag =~ /^V/)) {
+			return 'Obj' if $node->tag =~ /^([NR]...[AD])/;
 		}
 	}
 	
 	# 4. Adv
-
+	# postpositional phrases under verbs should be marked with 'Adv'
+	if (($p != $node->get_root()) && ($gp != $node->get_root())) {
+		if (($p->afun eq 'AuxP') && ($gp->tag =~ /^V/)) {
+			return 'Adv';
+		}
+	}
+	if ($p != $node->get_root()) {
+		# verbal participles attaching to verbs
+		if (($node->tag =~ /^Vt/) && ($p->tag =~ /^V/)) {
+			return 'Adv';
+		}	
+		# locatives 
+		if (($node->tag =~ /^(N...L)/) && ($p->tag =~ /^V/)) {
+			return 'Adv';
+		}	
+		# parent is AuxC
+		return 'Adv' if $p->afun eq 'AuxC';
 		
-	return 'Atr';
+		# sociative
+		if (($p->afun eq 'Pred') || ($p->tag =~ /^V/)) {
+			return 'Adv' if $node->tag =~ /^([NRQ]...S)/;
+		}		
+		# lower level verbs get 'Adv' if the parent is also a verb
+		if ($p->tag =~ /^V[rR]/) {
+			return 'Adv' if $node->tag =~ /^V/;
+		}		
+
+	}
+	
+	
+	
+	# 5. Atr
+	if ( ($node->tag =~ /((^DD)|(^NO)|(^JJ)|(^N...[NG])|(^U[noc])|(^Vd))/) ) {
+		return 'Atr';
+	}	
+	
+	if (($p != $node->get_root()) && ($node->tag =~ /^N/) && ($p->tag =~ /^N/)) {
+		return 'Atr';
+	}
+		
+	return 'NR';
 }
 
 1;
