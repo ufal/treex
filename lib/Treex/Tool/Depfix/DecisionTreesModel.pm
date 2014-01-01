@@ -4,32 +4,27 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Tool::Depfix::Model';
 
-use AI::DecisionTree;
+use Algorithm::DecisionTree;
 use Storable;
+
+has dt => ( is => 'rw' );
 
 override '_load_model' => sub {
     my ($self) = @_;
 
+    $self->set_dt(Algorithm::DecisionTree->new());
     return Storable::retrieve( $self->model_file );
 };
 
 override '_get_predictions' => sub {
     my ($self, $features_ar) = @_;
 
-    my %attributes = ();
-    foreach my $feature (@$features_ar) {
-        my ($k, $v) = split /:/, $feature, 2;
-        $attributes{$k} = $v;
-    }
-    
-    my $result = $self->model->get_result(attributes => \%attributes);
-    my %predicitons;
-    if ( defined $result ) {
-        %predicitons = ( $result => 1 );
-    } else {
-        %predicitons = ( ); 
-    }
-    return \%predicitons;
+    my @features = map { s/:/=/ } @$features_ar;
+
+    # $self->model is the root node of the trained Decision Tree
+    my $result = $self->dt->classify($self->model, \@features);
+
+    return $result;
 };
 
 
@@ -37,8 +32,11 @@ override '_get_predictions' => sub {
 
 =head1 NAME 
 
-Treex::Tool::Depfix::MaxEntModel -- a maximum entropy model for Depfix
-corrections
+Treex::Tool::Depfix::DecisionTreesModel -- a decision trees model for Depfix
+corrections, based on L<Algorithm::DecisionTree>.
+
+Currently using version 1.71 (AVIKAK/Algorithm-DecisionTree-1.71.tar.gz) because
+it is compatible wit Perl 12.
 
 =head1 DESCRIPTION
 
