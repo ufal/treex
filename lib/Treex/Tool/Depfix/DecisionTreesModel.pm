@@ -7,24 +7,27 @@ extends 'Treex::Tool::Depfix::Model';
 use Algorithm::DecisionTree;
 use Storable;
 
+has dt_file => ( is => 'rw', isa => 'Str', required => 1 );
 has dt => ( is => 'rw' );
 
 override '_load_model' => sub {
     my ($self) = @_;
 
-    $self->set_dt(Algorithm::DecisionTree->new());
+    # loading has 2 steps
+    # 1. load Algorithm::DecisionTree object
+    $self->set_dt(Storable::retrieve( $self->dt_file ));
+    # 2. load the trained decision tree
     return Storable::retrieve( $self->model_file );
 };
 
-override '_get_predictions' => sub {
-    my ($self, $features_ar) = @_;
+override 'get_predictions' => sub {
+    my ($self, $features_hr) = @_;
 
-    my @features = map { s/:/=/ } @$features_ar;
+    my @features_a = map {
+        $self->feature2field->{$_} . '=>' . $features_hr->{$_}
+    } @{$self->config->{features}};
 
-    # $self->model is the root node of the trained Decision Tree
-    my $result = $self->dt->classify($self->model, \@features);
-
-    return $result;
+    return $self->dt->classify($self->model, \@features_a);
 };
 
 
