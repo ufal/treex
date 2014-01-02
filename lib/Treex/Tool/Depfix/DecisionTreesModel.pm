@@ -7,27 +7,38 @@ extends 'Treex::Tool::Depfix::Model';
 use Algorithm::DecisionTree;
 use Storable;
 
-has dt_file => ( is => 'rw', isa => 'Str', required => 1 );
-has dt => ( is => 'rw' );
-
 override '_load_model' => sub {
     my ($self) = @_;
 
-    # loading has 2 steps
-    # 1. load Algorithm::DecisionTree object
-    $self->set_dt(Storable::retrieve( $self->dt_file ));
-    # 2. load the trained decision tree
     return Storable::retrieve( $self->model_file );
 };
 
 override 'get_predictions' => sub {
     my ($self, $features_hr) = @_;
 
-    my @features_a = map {
-        $self->feature2field->{$_} . '=>' . $features_hr->{$_}
-    } @{$self->config->{features}};
+    my @features_a = ();
+    foreach my $feature (@{$self->config->{features}}) {
+        my $value = $features_hr->{$feature};
+        if ($value eq '') {
+            $value = '_nic_';
+        }
+        push @features_a, ($feature . '=>' . $value);
+    }
 
-    return $self->dt->classify($self->model, \@features_a);
+    my $predictions = $self->model->{dt}->classify(
+        $self->model->{root_node}, \@features_a);
+
+    my $result = {};
+    foreach my $label (keys %$predictions) {
+        if ($label eq '_nic_') {
+            $label = '';
+        } elsif  ($label eq '_minus_') {
+            $label = '-';
+        }
+        $result->{$label} = $predictions->{$label};
+    }
+
+    return $result;
 };
 
 
