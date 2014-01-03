@@ -48,8 +48,9 @@ sub process_tnode {
             $a_node->set_morphcat_pos('P');
             $a_node->set_morphcat_subpos('P');
 
-            my $gender = $t_node->gram_gender || '';
+            my $gender = $t_node->gram_gender // '';
             $a_node->set_morphcat_gender( $M_GENDER_FOR{$gender} // '.' );
+            $a_node->set_morphcat_person( $t_node->gram_person // '.' );
         }
     }
     # verbs
