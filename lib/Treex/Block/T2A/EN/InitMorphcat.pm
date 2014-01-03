@@ -40,7 +40,7 @@ sub process_tnode {
 
         $a_node->set_morphcat_pos('N');
         $a_node->set_morphcat_subpos('N');
-        
+
         my $number = $t_node->gram_number || '';
         $a_node->set_morphcat_number( $M_NUMBER_FOR{$number} // '.' );
 
@@ -50,39 +50,52 @@ sub process_tnode {
 
             my $gender = $t_node->gram_gender // '';
             $a_node->set_morphcat_gender( $M_GENDER_FOR{$gender} // '.' );
-            $a_node->set_morphcat_person( $t_node->gram_person // '.' );
+            $a_node->set_morphcat_person( $t_node->gram_person   // '.' );
         }
     }
+
     # verbs
     elsif ( $sempos =~ /^v/ ) {
-        
+
         $a_node->set_morphcat_pos('V');
-        
+
         # voice
-        my $voice = $t_node->voice || '';       
+        my $voice = $t_node->voice || '';
         if ( $voice eq 'active' ) {
-            $a_node->set_morphcat_voice( 'A' );
+            $a_node->set_morphcat_voice('A');
         }
         elsif ( $voice eq 'passive' ) {
-            $a_node->set_morphcat_voice( 'P' );
+            $a_node->set_morphcat_voice('P');
         }
-        # tense (TODO)
+
+        # tense
         my $tense = $t_node->gram_tense // '';
-        if ( $tense eq 'sim' ) {
-            $a_node->set_morphcat_tense('[PH]');
+        if ( $tense =~ /(sim|fut)/ ) {
+            $a_node->set_morphcat_tense('P');
         }
         elsif ( $tense eq 'ant' ) {
-            $a_node->set_morphcat_tense('[R]');
+            $a_node->set_morphcat_tense('R');
         }
     }
+
     # adjectives / adverbs
-    elsif ( $sempos =~ /^a/ ){
-        my $pos = ($sempos =~ /^adj/) ? 'A' : 'D';
+    elsif ( $sempos =~ /^a/ ) {
+        my $pos = ( $sempos =~ /^adj/ ) ? 'A' : 'D';
         my $degree = $t_node->gram_degcmp // '';
-        $a_node->set_morphcat_grade( $M_DEGREE_FOR{$degree} // '.' );        
+        $a_node->set_morphcat_grade( $M_DEGREE_FOR{$degree} // '.' );
     }
     else {
-        $a_node->set_morphcat_pos('!');        
+        $a_node->set_morphcat_pos('!');
+    }
+
+    # negation: all main parts of speech
+    if ( $sempos =~ /^[nav]/ and $sempos !~ /pron|quant/ and $t_node->t_lemma ne '#PersPron' ) {
+        if ( ( $t_node->gram_negation // '' ) eq 'neg1' ) {
+            $a_node->set_morphcat_negation('N');
+        }
+        else {
+            $a_node->set_morphcat_negation('A');
+        }
     }
 
     return;
