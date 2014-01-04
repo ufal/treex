@@ -19,11 +19,11 @@ sub process_tnode {
     $new_node->reset_morphcat();
     $new_node->set_lemma( $a_node->lemma );
     $new_node->set_form( $a_node->form );
-    $new_node->set_morphcat_number( $a_node->morphcat_number() );
     $new_node->set_morphcat_pos( 'V' );
     $new_node->set_morphcat_negation( 'A' );
     $new_node->set_morphcat_voice( 'P' );
     $new_node->set_morphcat_tense( 'R' );
+    $new_node->set_conll_pos( 'VBN' );
 
     # $a_node is now auxiliary "být" and governs the autosemantic verb
     $a_node->set_lemma('be');
