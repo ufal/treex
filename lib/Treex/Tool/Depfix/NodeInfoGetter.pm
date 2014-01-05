@@ -7,24 +7,20 @@ has attributes => ( is => 'rw', isa => 'ArrayRef',
     default => sub { ['form', 'lemma', 'tag', 'afun'] } );
 
 sub add_node_info {
-    my ($self, $info, $prefix, $anode, $splittag) = @_;
+    my ($self, $info, $prefix, $anode) = @_;
 
     if ( defined $anode && !$anode->is_root() ) {
         foreach my $attribute (@{$self->attributes}) {
             $info->{$prefix.$attribute} = $anode->get_attr($attribute);
         }
         $info->{$prefix.'childno'} = scalar($anode->get_echildren({or_topological => 1}));
-        if ( $splittag ) {
-            $self->add_tag_split($info, $prefix, $anode);
-        }
+        $self->add_tag_split($info, $prefix, $anode);
     } else {
         foreach my $attribute (@{$self->attributes}) {
             $info->{$prefix.$attribute} = '';
         }
         $info->{$prefix.'childno'} = '';
-        if ( $splittag ) {
-            $self->add_tag_split($info, $prefix, undef);
-        }
+        $self->add_tag_split($info, $prefix, undef);
     }
 
     return;
