@@ -13,7 +13,9 @@ has '+compress' => (default => '1');
 has src_alignment_type => ( is => 'rw', isa => 'Str', default => 'intersection' );
 has ref_alignment_type => ( is => 'rw', isa => 'Str', default => 'monolingual' );
 
-has features => ( is => 'rw', isa => 'Str', default =>
+has config_file => ( is => 'rw', isa => 'Str', default => '' );
+
+has fields => ( is => 'rw', isa => 'Str', default =>
     'child_lemma,child_tag,child_afun,'.
     'parent_lemma,parent_tag,parent_afun,'.
     'edge_direction,'.
@@ -24,14 +26,32 @@ has features => ( is => 'rw', isa => 'Str', default =>
     'newparent_tag,newparent_afun'
 );
 
-has features_ar => ( is => 'rw', isa => 'ArrayRef',
-    lazy => 1, builder => '_build_features_ar' );
+has fields_ar => ( is => 'rw', isa => 'ArrayRef',
+    lazy => 1, builder => '_build_fields_ar' );
 
-sub _build_features_ar {
+sub _build_fields_ar {
     my ($self) = @_;
-    
-    my @features_ar = split /,/, $self->features;
-    return \@features_ar;
+
+    if ( $self->config_file ne '' ) {
+        use YAML::Tiny;
+        my $config = YAML::Tiny->new;
+        $config = YAML::Tiny->read( $self->config_file );
+        return $config->[0]->{fields};
+    } else {
+        return split /,/, $self->fields;
+    }
+}
+
+use Treex::Tool::Depfix::NodeInfoGetter;
+
+has node_info_getter => ( is => 'rw', builder => '_build_node_info_getter' );
+has src_node_info_getter => ( is => 'rw', builder => '_build_src_node_info_getter' );
+
+sub _build_node_info_getter {
+    return Treex::Tool::Depfix::NodeInfoGetter->new();
+}
+sub _build_src_node_info_getter {
+    return Treex::Tool::Depfix::NodeInfoGetter->new();
 }
 
 #has include_unchanged => ( is => 'rw', isa => 'Bool', default => 1 );
@@ -54,81 +74,26 @@ sub process_anode {
         $child->lemma eq $child_ref->lemma &&
         $parent->lemma eq $parent_ref->lemma
     ) {
+        
         my $info = {};
-        $self->add_node_info($info, 'child_',     $child,      1);
-        $self->add_node_info($info, 'parent_',    $parent,     1);
-        $self->add_node_info($info, 'newchild_',  $child_ref,  1);
-        $self->add_node_info($info, 'newparent_', $parent_ref, 1);
-        $self->add_node_info($info, 'srcchild_',  $child_src,  0);
-        $self->add_node_info($info, 'srcparent_', $parent_src, 0);
-        $self->add_edge_info($info, 'edge_',      $child,      $parent);
-        $self->add_edge_info($info, 'srcedge_',   $child_src,  $parent_src);
+        
+        # nodes info
+        $self->node_info_getter->add_node_info($info, 'oldchild_',  $child);
+        $self->node_info_getter->add_node_info($info, 'oldparent_', $parent);
+        $self->node_info_getter->add_node_info($info, 'newchild_',  $child_ref);
+        $self->node_info_getter->add_node_info($info, 'newparent_', $parent_ref);
+        $self->src_node_info_getter->add_node_info($info, 'srcchild_',  $child_src);
+        $self->src_node_info_getter->add_node_info($info, 'srcparent_', $parent_src);
+
+        # edges info
+        $self->node_info_getter->add_edge_info($info, 'oldedge_', $child,     $parent);
+        $self->node_info_getter->add_edge_info($info, 'newedge_', $child_ref, $parent_ref);
+        $self->src_node_info_getter->add_edge_info($info, 'srcedge_', $child_src, $parent_src);
     
-        my @features = map { $info->{$_}  } @{$self->features_ar};
-        print { $self->_file_handle() } (join "\t", @features)."\n";
+        my @fields = map { $info->{$_}  } @{$self->fields_ar};
+        print { $self->_file_handle() } (join "\t", @fields)."\n";
     }
 }
-
-my @attributes = qw(form lemma tag afun);
-my @tag_parts = qw(pos sub gen num cas pge pnu per ten gra neg voi);
-
-sub add_node_info {
-    my ($self, $info, $prefix, $anode, $splittag) = @_;
-
-    if ( defined $anode && !$anode->is_root() ) {
-        foreach my $attribute (@attributes) {
-            $info->{$prefix.$attribute} = $anode->get_attr($attribute);
-        }
-        $info->{$prefix.'childno'} = scalar($anode->get_echildren({or_topological => 1}));
-        if ( $splittag ) {
-            my @tag_split = split //, $anode->tag;
-            foreach my $tag_part (@tag_parts) {
-                $info->{$prefix.$tag_part} = shift @tag_split;
-            }
-        }
-    } else {
-        foreach my $attribute (@attributes) {
-            $info->{$prefix.$attribute} = '';
-        }
-        $info->{$prefix.'childno'} = '';
-        if ( $splittag ) {
-            foreach my $tag_part (@tag_parts) {
-                $info->{$prefix.$tag_part} = '';
-            }
-        }
-    }
-
-    return;
-}
-
-sub add_edge_info {
-    my ($self, $info, $prefix, $child, $parent) = @_;
-    
-    if ( !defined $child || !defined $parent ) {
-        # not even the nodes exist
-        $info->{$prefix.'existence'} = '';
-        $info->{$prefix.'direction'} = '';
-    } else {
-        # direction (more of node precedence, the edge does not have to exist)
-        $info->{$prefix.'direction'} = $child->precedes($parent) ? '/' : '\\';
-        # existence
-        my @child_parents = $child->get_eparents( {or_topological => 1} );
-        my @parent_parents = $parent->get_eparents( {or_topological => 1} );
-        if ( grep { $_->id eq $parent->id } @child_parents ) {
-            # the edge exists
-            $info->{$prefix.'existence'} = 1;
-        } elsif ( grep { $_->id eq $child->id } @parent_parents ) {
-            # an inverse edge exists
-            $info->{$prefix.'existence'} = -1;
-        } else {
-            # the edge does not exist
-            $info->{$prefix.'existence'} = 0;
-        }
-    }
-
-    return;
-}
-
 
 1;
 
@@ -143,6 +108,10 @@ A Depfix block.
 Collects and prints a list of performed edits, comparing the original machine
 translation with the reference translation (ideally human post-editation).
 To be used to get data to train Depfix.
+
+The fields to be captured can be configured either with a comma delimited list
+in C<fields>, or by a config file in C<config_file> (which has priority).
+See C<sample_config.yaml> in the C<Treex::Block::Depfix> directory for a sample.
 
 =head1 AUTHOR
 

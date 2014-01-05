@@ -1,0 +1,38 @@
+fields:
+- oldchild_lemma
+- oldchild_afun
+- oldchild_tag
+- oldparent_lemma
+- oldparent_afun
+- oldparent_tag
+- oldedge_direction
+- srcchild_lemma
+- srcchild_afun
+- srcchild_tag
+- srcparent_lemma
+- srcparent_afun
+- srcparent_tag
+- srcedge_existence
+- srcedge_direction
+- newchild_lemma
+- newchild_afun
+- newchild_tag
+- newparent_lemma
+- newparent_afun
+- newparent_tag
+
+features:
+- oldchild_afun
+- oldchild_tag
+- newparent_afun
+- newparent_tag
+- oldedge_direction
+- srcchild_afun
+- srcchild_tag
+- srcparent_afun
+- srcparent_tag
+- srcedge_existence
+- srcedge_direction
+
+predict: newchild_tag
+

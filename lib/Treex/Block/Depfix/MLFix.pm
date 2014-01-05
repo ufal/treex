@@ -28,6 +28,18 @@ has fix_only_nonfixed => ( is => 'rw', isa => 'Bool', default => 0 );
 
 has magic => ( is => 'rw', isa => 'Str', default => '' );
 
+use Treex::Tool::Depfix::NodeInfoGetter;
+
+has node_info_getter => ( is => 'rw', builder => '_build_node_info_getter' );
+has src_node_info_getter => ( is => 'rw', builder => '_build_src_node_info_getter' );
+
+sub _build_node_info_getter {
+    return Treex::Tool::Depfix::NodeInfoGetter->new();
+}
+sub _build_src_node_info_getter {
+    return Treex::Tool::Depfix::NodeInfoGetter->new();
+}
+
 sub process_start {
     my ($self) = @_;
 
@@ -117,10 +129,19 @@ sub process_anode {
         }
     }
 
-    my $features = $self->get_features($child, $parent);
-    if ( !defined $features ) {
-        return;
+    if ( $self->magic eq 'prep_noun' ) {
+        if ( $parent->tag !~ /^R/ || $child->tag !~ /^N/) {
+            return;
+        }
     }
+
+    if ( $self->magic eq 'noverbparent' ) {
+        if ( $parent->tag =~ /^V/ ) {
+            return;
+        }
+    }
+
+    my $features = $self->get_features($child, $parent);
 
     my $new_tag = $self->predict_new_tag($node, $features);
     if ( !defined $new_tag ) {
@@ -206,91 +227,29 @@ sub _predict_new_tags {
 sub get_features {
     my ($self, $child, $parent) = @_;
 
-    my $features;
+    my ($child_orig, $child_src, $parent_orig, $parent_src) = (
+        $child->get_aligned_nodes_of_type($self->orig_alignment_type),
+        $child->get_aligned_nodes_of_type($self->src_alignment_type),
+        $parent->get_aligned_nodes_of_type($self->orig_alignment_type),
+        $parent->get_aligned_nodes_of_type($self->src_alignment_type),
+    );
 
-    if ( $self->magic eq 'prep_noun' ) {
-        if ( $parent->tag !~ /^R/ || $child->tag !~ /^N/) {
-            return;
-        }
-    }
+    my $info = {};
 
-    if ( $self->magic eq 'noverbparent' ) {
-        if ( $parent->tag =~ /^V/ ) {
-            return;
-        }
-    }
+    # nodes info
+    $self->node_info_getter->add_node_info($info, 'newchild_',  $child);
+    $self->node_info_getter->add_node_info($info, 'newparent_', $parent);
+    $self->node_info_getter->add_node_info($info, 'oldchild_',  $child_orig);
+    $self->node_info_getter->add_node_info($info, 'oldparent_', $parent_orig);
+    $self->src_node_info_getter->add_node_info($info, 'srcchild_',  $child_src);
+    $self->src_node_info_getter->add_node_info($info, 'srcparent_', $parent_src);
 
-    my ($child_orig)  =
-    $child->get_aligned_nodes_of_type($self->orig_alignment_type);
-    my ($parent_orig)  =
-    $parent->get_aligned_nodes_of_type($self->orig_alignment_type);
+    # edges info
+    $self->node_info_getter->add_edge_info($info, 'newedge_', $child, $parent);
+    $self->node_info_getter->add_edge_info($info, 'oldedge_', $child_orig, $parent_orig);
+    $self->src_node_info_getter->add_edge_info($info, 'srcedge_', $child_src, $parent_src);
 
-    # basic features
-    $features = {
-        # new = this tree
-        new_c_lemma => $child->lemma,
-        new_c_tag => $child->tag,
-        new_c_afun => $child->afun,
-        new_p_lemma => $parent->lemma,
-        new_p_tag => $parent->tag,
-        new_p_afun => $parent->afun,
-        # orig tree
-        c_lemma => $child_orig->lemma,
-        c_tag => $child_orig->tag,
-        c_afun => $child_orig->afun,
-        p_lemma => $parent_orig->lemma,
-        p_tag => $parent_orig->tag,
-        p_afun => $parent_orig->afun,
-        dir => ($child->precedes($parent) ? '/' : '\\'),
-    };
-
-    # aligned src nodes features
-    my ($child_src)  =  $child->get_aligned_nodes_of_type($self->src_alignment_type);
-    if ( defined $child_src ) {
-        $features->{src_c_lemma} = $child_src->lemma;
-        $features->{src_c_tag} = $child_src->tag;
-        $features->{src_c_afun} = $child_src->afun;
-    } else {
-        $features->{src_c_lemma} = '';
-        $features->{src_c_tag} = '';
-        $features->{src_c_afun} = ''; 
-    }
-    my ($parent_src) = $parent->get_aligned_nodes_of_type($self->src_alignment_type);
-    if ( defined $parent_src ) {
-        $features->{src_p_lemma} = $parent_src->lemma;
-        $features->{src_p_tag} = $parent_src->tag;
-        $features->{src_p_afun} = $parent_src->afun;
-    } else {
-        $features->{src_p_lemma} = '';
-        $features->{src_p_tag} = '';
-        $features->{src_p_afun} = '';
-    }
-    if ( defined $child_src && defined $parent_src ) {
-        if ( grep {
-                $_->id eq $parent_src->id
-            } $child_src->get_eparents( {or_topological => 1} )
-        ) {
-            $features->{src_edge} = 1;
-        } else {
-            $features->{src_edge} = 0;
-        }
-    } else {
-        $features->{src_edge} = -1;
-    }
-
-    # language specific features
-    $self->fill_language_specific_features($features, $child, $parent,
-        $child_orig, $parent_orig);
-    return $features;
-}
-
-sub fill_language_specific_features {
-    my ($self, $features, $child, $parent, $child_orig, $parent_orig) = @_;
-
-    # to be overridden in subclasses,
-    # especially filling morphological features
-
-    return;
+    return $info;
 }
 
 # changes the tag in the node and regebnerates the form correspondingly
@@ -311,6 +270,9 @@ sub regenerate_node {
 =head1 NAME 
 
 Depfix::MLFix -- fixes errors using a machine learned correction model
+
+The features to be captured are configured by a config file in C<config_file>.
+See C<sample_config.yaml> in the C<Treex::Block::Depfix> directory for a sample.
 
 =head1 DESCRIPTION
 

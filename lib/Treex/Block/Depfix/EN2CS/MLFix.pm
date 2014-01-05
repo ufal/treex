@@ -22,6 +22,17 @@ has c_cas_model_file => ( is => 'rw', isa => 'Str', required => 1 );
 has model_type => ( is => 'rw', isa => 'Str', default => 'maxent' );
 # allowed values: maxent, nb, dt
 
+use Treex::Tool::Depfix::CS::NodeInfoGetter;
+use Treex::Tool::Depfix::EN::NodeInfoGetter;
+
+override '_build_node_info_getter' => sub  {
+    return Treex::Tool::Depfix::CS::NodeInfoGetter->new();
+};
+
+override '_build_src_node_info_getter' => sub  {
+    return Treex::Tool::Depfix::EN::NodeInfoGetter->new();
+};
+
 override '_build_form_generator' => sub {
     my ($self) = @_;
 
@@ -57,27 +68,6 @@ override '_load_models' => sub {
         Treex::Tool::Depfix::DecisionTreesModel->new($model_params_num);
         $self->_models->{c_cas} =
         Treex::Tool::Depfix::DecisionTreesModel->new($model_params_cas);
-    }
-
-    return;
-};
-
-my @tag_parts = qw(pos sub gen num cas pge pnu per ten gra neg voi);
-
-override 'fill_language_specific_features' => sub {
-    my ($self, $features, $child, $parent, $child_orig, $parent_orig) = @_;
-
-    # tag parts
-    my @new_child_tag_split  = split //, $child->tag;
-    my @new_parent_tag_split = split //, $parent->tag;
-    my @orig_child_tag_split  = split //, $child_orig->tag;
-    my @orig_parent_tag_split = split //, $parent_orig->tag;
-    for (my $i = 0; $i < scalar(@tag_parts); $i++) {
-        my $part = $tag_parts[$i];
-        $features->{"new_c_tag_$part"} = $new_child_tag_split[$i];
-        $features->{"new_p_tag_$part"} = $new_parent_tag_split[$i];
-        $features->{"c_tag_$part"} = $orig_child_tag_split[$i];
-        $features->{"p_tag_$part"} = $orig_parent_tag_split[$i];
     }
 
     return;
