@@ -13,70 +13,122 @@ has '+compress' => (default => '1');
 has src_alignment_type => ( is => 'rw', isa => 'Str', default => 'intersection' );
 has ref_alignment_type => ( is => 'rw', isa => 'Str', default => 'monolingual' );
 
-#has include_unchanged => ( is => 'rw', isa => 'Bool', default => 1 );
+has features => ( is => 'rw', isa => 'Str', default =>
+    'child_lemma,child_tag,child_afun,'.
+    'parent_lemma,parent_tag,parent_afun,'.
+    'edge_direction,'.
+    'srcchild_lemma,srcchild_tag,srcchild_afun,'.
+    'srcparent_lemma,srcparent_tag,srcparent_afun,'.
+    'srcedge_existence,srcedge_direction,'.
+    'newchild_tag,newchild_afun,'.
+    'newparent_tag,newparent_afun'
+);
 
-sub splittag {
-    my ($tag) = @_;
+has features_ar => ( is => 'rw', isa => 'ArrayRef',
+    lazy => 1, builder => '_build_features_ar' );
+
+sub _build_features_ar {
+    my ($self) = @_;
     
-    my @positions = split //, $tag;    
-    pop @positions; # varaint
-    pop @positions; # reserve 2
-    pop @positions; # reserve 1
-    
-    return join "\t", @positions;
+    my @features_ar = split /,/, $self->features;
+    return \@features_ar;
 }
+
+#has include_unchanged => ( is => 'rw', isa => 'Bool', default => 1 );
 
 sub process_anode {
     my ($self, $child) = @_;
+
     my ($parent) = $child->get_eparents( {or_topological => 1} );
-    my ($child_ref) = $child->get_aligned_nodes_of_type($self->ref_alignment_type);
-    my ($parent_ref) = $parent->get_aligned_nodes_of_type($self->ref_alignment_type);
+
+    my ($child_ref, $child_src, $parent_ref, $parent_src) = (
+        $child->get_aligned_nodes_of_type($self->ref_alignment_type),
+        $child->get_aligned_nodes_of_type($self->src_alignment_type),
+        $parent->get_aligned_nodes_of_type($self->ref_alignment_type),
+        $parent->get_aligned_nodes_of_type($self->src_alignment_type),
+    );
+    
     if (!$parent->is_root() &&
         defined $child_ref &&
         defined $parent_ref &&
         $child->lemma eq $child_ref->lemma &&
         $parent->lemma eq $parent_ref->lemma
     ) {
-        my $edge_direction = $child->precedes($parent) ? '/' : '\\';
-        # aligned src nodes
-        my ($child_src) = $child->get_aligned_nodes_of_type($self->src_alignment_type);
-        my ($parent_src) = $parent->get_aligned_nodes_of_type($self->src_alignment_type);
-        my $src_edge = -1;
-        if ( defined $child_src && defined $parent_src ) {
-            if ( grep {
-                    $_->id eq $parent_src->id
-                } $child_src->get_eparents( {or_topological => 1} )
-            ) {
-                $src_edge = 1;
-            } else {
-                $src_edge = 0;
-            }
-        }
-        my ($child_src_form, $child_src_lemma, $child_src_tag, $child_src_afun) =
-            (defined $child_src)
-            ?
-            ($child_src->form, $child_src->lemma, $child_src->tag, $child_src->afun)
-            :
-            ('', '', '', '');
-        my ($parent_src_form, $parent_src_lemma, $parent_src_tag, $parent_src_afun) =
-            (defined $parent_src)
-            ?
-            ($parent_src->form, $parent_src->lemma, $parent_src->tag, $parent_src->afun)
-            :
-            ('', '', '', '');
-        my @features = (
-            $child->form, $child->lemma, splittag($child->tag), $child->afun,
-            $parent->form, $parent->lemma, splittag($parent->tag), $parent->afun,
-            $edge_direction,
-            $child_src_form, $child_src_lemma, $child_src_tag, $child_src_afun,
-            $parent_src_form, $parent_src_lemma, $parent_src_tag, $parent_src_afun,
-            $src_edge,
-            $child_ref->form, splittag($child_ref->tag), $child_ref->afun,
-            $parent_ref->form, splittag($parent_ref->tag), $parent_ref->afun,
-        );
+        my $info = {};
+        $self->add_node_info($info, 'child_',     $child,      1);
+        $self->add_node_info($info, 'parent_',    $parent,     1);
+        $self->add_node_info($info, 'newchild_',  $child_ref,  1);
+        $self->add_node_info($info, 'newparent_', $parent_ref, 1);
+        $self->add_node_info($info, 'srcchild_',  $child_src,  0);
+        $self->add_node_info($info, 'srcparent_', $parent_src, 0);
+        $self->add_edge_info($info, 'edge_',      $child,      $parent);
+        $self->add_edge_info($info, 'srcedge_',   $child_src,  $parent_src);
+    
+        my @features = map { $info->{$_}  } @{$self->features_ar};
         print { $self->_file_handle() } (join "\t", @features)."\n";
     }
 }
+
+my @attributes = qw(form lemma tag afun);
+my @tag_parts = qw(pos sub gen num cas pge pnu per ten gra neg voi);
+
+sub add_node_info {
+    my ($self, $info, $prefix, $anode, $splittag) = @_;
+
+    if ( defined $anode && !$anode->is_root() ) {
+        foreach my $attribute (@attributes) {
+            $info->{$prefix.$attribute} = $anode->get_attr($attribute);
+        }
+        $info->{$prefix.'childno'} = scalar($anode->get_echildren({or_topological => 1}));
+        if ( $splittag ) {
+            my @tag_split = split //, $anode->tag;
+            foreach my $tag_part (@tag_parts) {
+                $info->{$prefix.$tag_part} = shift @tag_split;
+            }
+        }
+    } else {
+        foreach my $attribute (@attributes) {
+            $info->{$prefix.$attribute} = '';
+        }
+        $info->{$prefix.'childno'} = '';
+        if ( $splittag ) {
+            foreach my $tag_part (@tag_parts) {
+                $info->{$prefix.$tag_part} = '';
+            }
+        }
+    }
+
+    return;
+}
+
+sub add_edge_info {
+    my ($self, $info, $prefix, $child, $parent) = @_;
+    
+    if ( !defined $child || !defined $parent ) {
+        # not even the nodes exist
+        $info->{$prefix.'existence'} = '';
+        $info->{$prefix.'direction'} = '';
+    } else {
+        # direction (more of node precedence, the edge does not have to exist)
+        $info->{$prefix.'direction'} = $child->precedes($parent) ? '/' : '\\';
+        # existence
+        my @child_parents = $child->get_eparents( {or_topological => 1} );
+        my @parent_parents = $parent->get_eparents( {or_topological => 1} );
+        if ( grep { $_->id eq $parent->id } @child_parents ) {
+            # the edge exists
+            $info->{$prefix.'existence'} = 1;
+        } elsif ( grep { $_->id eq $child->id } @parent_parents ) {
+            # an inverse edge exists
+            $info->{$prefix.'existence'} = -1;
+        } else {
+            # the edge does not exist
+            $info->{$prefix.'existence'} = 0;
+        }
+    }
+
+    return;
+}
+
 
 1;
 
