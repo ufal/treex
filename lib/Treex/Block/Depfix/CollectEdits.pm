@@ -15,6 +15,17 @@ has ref_alignment_type => ( is => 'rw', isa => 'Str', default => 'monolingual' )
 
 #has include_unchanged => ( is => 'rw', isa => 'Bool', default => 1 );
 
+sub splittag {
+    my ($tag) = @_;
+    
+    my @positions = split //, $tag;    
+    pop @positions; # varaint
+    pop @positions; # reserve 2
+    pop @positions; # reserve 1
+    
+    return join "\t", @positions;
+}
+
 sub process_anode {
     my ($self, $child) = @_;
     my ($parent) = $child->get_eparents( {or_topological => 1} );
@@ -41,27 +52,27 @@ sub process_anode {
                 $src_edge = 0;
             }
         }
-        my ($child_src_lemma, $child_src_tag, $child_src_afun) =
+        my ($child_src_form, $child_src_lemma, $child_src_tag, $child_src_afun) =
             (defined $child_src)
             ?
-            ($child_src->lemma, $child_src->tag, $child_src->afun)
+            ($child_src->form, $child_src->lemma, $child_src->tag, $child_src->afun)
             :
-            ('', '', '');
-        my ($parent_src_lemma, $parent_src_tag, $parent_src_afun) =
+            ('', '', '', '');
+        my ($parent_src_form, $parent_src_lemma, $parent_src_tag, $parent_src_afun) =
             (defined $parent_src)
             ?
-            ($parent_src->lemma, $parent_src->tag, $parent_src->afun)
+            ($parent_src->form, $parent_src->lemma, $parent_src->tag, $parent_src->afun)
             :
-            ('', '', '');
+            ('', '', '', '');
         my @features = (
-            $child->lemma, $child->tag, $child->afun,
-            $parent->lemma, $parent->tag, $parent->afun,
+            $child->form, $child->lemma, splittag($child->tag), $child->afun,
+            $parent->form, $parent->lemma, splittag($parent->tag), $parent->afun,
             $edge_direction,
-            $child_src_lemma, $child_src_tag, $child_src_afun,
-            $parent_src_lemma, $parent_src_tag, $parent_src_afun,
+            $child_src_form, $child_src_lemma, $child_src_tag, $child_src_afun,
+            $parent_src_form, $parent_src_lemma, $parent_src_tag, $parent_src_afun,
             $src_edge,
-            $child_ref->tag, $child_ref->afun,
-            $parent_ref->tag, $parent_ref->afun,
+            $child_ref->form, splittag($child_ref->tag), $child_ref->afun,
+            $parent_ref->form, splittag($parent_ref->tag), $parent_ref->afun,
         );
         print { $self->_file_handle() } (join "\t", @features)."\n";
     }
