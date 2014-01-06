@@ -1,4 +1,5 @@
-package Treex::Block::T2A::CS::ProjectClauseNumber;
+package Treex::Block::T2A::ProjectClauseNumber;
+
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -26,16 +27,23 @@ sub process_tnode {
 }
 
 1;
+__END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::T2A::CS::ProjectClauseNumber
+=head1 NAME 
+
+Treex::Block::T2A::ProjectClauseNumber
+
+=head1 DESCRIPTION
 
 Number coindexing of finite verb clauses is projected from t-tree to a-tree.
 
-=back
+=head1 AUTHORS 
 
-=cut
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-# Copyright 2010 Zdenek Zabokrtsky
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2010-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
