@@ -12,12 +12,6 @@ override '_load_model' => sub {
     return AI::MaxEntropy::Model->new( $self->model_file );
 };
 
-override '_initialize_model' => sub {
-    my ($self) = @_;
-
-    return AI::MaxEntropy::Model->new;
-};
-
 override '_get_predictions' => sub {
     my ($self, $features) = @_;
 
