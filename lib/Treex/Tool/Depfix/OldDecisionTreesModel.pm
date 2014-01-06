@@ -6,6 +6,8 @@ extends 'Treex::Tool::Depfix::Model';
 
 use AI::DecisionTree;
 
+has max_depth => ( is => 'rw', isa => 'Num', default => 6 );
+
 override '_get_predictions' => sub {
     my ($self, $features) = @_;
 
@@ -30,7 +32,10 @@ override '_get_best_prediction' => sub {
 override '_initialize_model' => sub {
     my ($self) = @_;
 
-    return new Algorithm::DecisionTree;
+    my $dt = new AI::DecisionTree;
+    $dt->{noise_mode} = 'pick_best';
+    $dt->{max_depth} = $self->max_depth;
+    return $dt;
 };
 
 override '_see_instance' => sub {
@@ -49,6 +54,12 @@ override '_train_model' => sub {
 
     return;
 };
+
+sub get_rules {
+    my ($self) = @_;
+
+    return $self->model->rule_statements();
+}
 
 1;
 
