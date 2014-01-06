@@ -22,6 +22,8 @@ has fix_child => ( is => 'rw', isa => 'Bool', default => 1 );
 has fixLogger => ( is => 'rw' );
 has log_to_console => ( is => 'rw', isa => 'Bool', default => 1 );
 
+has 'dont_try_switch_number' => ( is => 'rw', isa => 'Bool', default => '0' );
+
 # fix only what has not been fixed yet
 # (assumption: the first performed correction is the best correction)
 has fix_only_nonfixed => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -149,7 +151,7 @@ sub process_anode {
     }
 
     $self->regenerate_node($node, $new_tag);
-    $self->fixLogger->logfix2($child);
+    $self->fixLogger->logfix2($node);
     #log_info (join ' ', (map { $_ . ':' . $features->{$_}  } keys %$features));
     
     return;
@@ -176,7 +178,7 @@ sub predict_new_tag {
         foreach my $tag (keys %$new_tags) {
             my $form = $self->formGenerator->get_form( $node->lemma, $tag );
             if (defined $form) {
-                $forms{$form}->{score} += exp($new_tags->{$tag});
+                $forms{$form}->{score} += $new_tags->{$tag};
                 $forms{$form}->{tags}->{$tag} = $new_tags->{$tag};
             }
         }
@@ -261,7 +263,7 @@ sub regenerate_node {
         $node->set_tag($new_tag);
     }
 
-    return $self->formGenerator->regenerate_node( $node );
+    return $self->formGenerator->regenerate_node( $node, $self->dont_try_switch_number );
 }
 
 
