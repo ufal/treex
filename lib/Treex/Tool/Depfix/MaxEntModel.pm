@@ -18,7 +18,8 @@ override '_get_predictions' => sub {
     my $predictions = {};
 
     for my $class ($self->model->all_labels) {
-        $predictions->{$class} = $self->model->score($features_ar => $class);
+        $predictions->{$class} =
+            exp( $self->model->score($features_ar => $class) );
     }    
 
     return $predictions;
