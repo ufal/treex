@@ -171,6 +171,37 @@ sub _store_model {
     return;
 }
 
+sub test {
+    my ($self, $testfile) = @_;
+
+    my $all = 0;
+    my $good = 0;
+
+    open my $testing_file, '<:gzip:utf8', $testfile;
+    while ( my $line = <$testing_file> ) {
+        chomp $line;
+        my @fields = split /\t/, $line;
+        my %instance_info;
+        @instance_info{ @{ $self->config->{fields} } } = @fields;
+        
+        my $prediction = $self->_get_best_prediction(\%instance_info);
+
+        my $true = $instance_info{ $self->config->{predict} };
+        if ( $prediction eq $true ) {
+            $good++;
+        }
+        $all++;
+
+        if ( $. % 10000 == 0) { log_info "Line $. processed"; }
+    }
+    close $testing_file;
+
+    my $accuracy  = int($good / $all*10000)/100;
+    log_info "Accuracy: $accuracy%  ($good of $all)";
+
+    return $accuracy;
+}
+
 1;
 
 =head1 NAME 
