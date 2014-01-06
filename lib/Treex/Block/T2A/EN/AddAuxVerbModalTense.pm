@@ -172,6 +172,7 @@ sub process_tnode {
     # replace the current verb node by the first part of the auxiliary verbal expression
     $anode->set_lemma( _get_lemma($first_verbform) );
     $anode->set_form( _get_form( $first_verbform, $person, $number ) );
+    $anode->set_afun('AuxV');
 
     # we'll use VBN for the original verb if the auxiliary verbal expression ends in 'have'
     my $use_vbn = ( $verbform =~ /have$/ );

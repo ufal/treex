@@ -24,6 +24,7 @@ sub process_tnode {
     $new_node->set_morphcat_voice( 'P' );
     $new_node->set_morphcat_tense( 'R' );
     $new_node->set_conll_pos( 'VBN' );
+    $new_node->set_afun('Obj');
 
     # $a_node is now auxiliary "být" and governs the autosemantic verb
     $a_node->set_lemma('be');
