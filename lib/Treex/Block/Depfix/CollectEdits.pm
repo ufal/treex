@@ -26,8 +26,7 @@ has fields => ( is => 'rw', isa => 'Str', default =>
     'newparent_tag,newparent_afun'
 );
 
-has fields_ar => ( is => 'rw', isa => 'ArrayRef',
-    lazy => 1, builder => '_build_fields_ar' );
+has fields_ar => ( is => 'rw', lazy => 1, builder => '_build_fields_ar' );
 
 sub _build_fields_ar {
     my ($self) = @_;
