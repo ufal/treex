@@ -126,7 +126,7 @@ sub _training_loop {
         
         $self->see_instance(\%instance_info);
 
-        if ( $. % 10000 == 0) { log_info 'Line $. processed'; }
+        if ( $. % 10000 == 0) { log_info "Line $. processed"; }
     }
     close $training_file;
 

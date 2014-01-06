@@ -41,7 +41,8 @@ override '_see_instance' => sub {
 override '_train_model' => sub {
     my ($self) = @_;
 
-    $self->model->learn;
+    my $model = $self->model->learn;
+    $self->set_model($model);
 
     return;
 };
