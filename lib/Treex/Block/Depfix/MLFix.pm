@@ -143,29 +143,27 @@ sub process_anode {
         }
     }
 
-    my $features = $self->get_features($child, $parent);
-
-    my $new_tag = $self->predict_new_tag($node, $features);
-    if ( !defined $new_tag ) {
-        return;
+    # here stuff happens
+    my $instance_info = $self->get_instance_info($child, $parent);
+    my $new_tag = $self->predict_new_tag($node, $instance_info);
+    if ( defined $new_tag ) {
+        $self->regenerate_node($node, $new_tag);
+        $self->fixLogger->logfix2($node);
     }
 
-    $self->regenerate_node($node, $new_tag);
-    $self->fixLogger->logfix2($node);
-    #log_info (join ' ', (map { $_ . ':' . $features->{$_}  } keys %$features));
-    
     return;
 }
 
 sub predict_new_tag {
-    my ($self, $node, $features) = @_;
+    my ($self, $node, $instance_info) = @_;
 
     # get predictions from models
     my $model_predictions = {};
     my @model_names = keys %{$self->_models};
     foreach my $model_name (@model_names) {
         my $model = $self->_models->{$model_name};
-        $model_predictions->{$model_name} = $model->get_predictions($features);
+        $model_predictions->{$model_name} =
+            $model->get_predictions($instance_info);
     }
 
     # process predictions to get tag suggestions
@@ -226,7 +224,7 @@ sub _predict_new_tags {
     return;
 }
 
-sub get_features {
+sub get_instance_info {
     my ($self, $child, $parent) = @_;
 
     my ($child_orig, $child_src, $parent_orig, $parent_src) = (
@@ -272,9 +270,6 @@ sub regenerate_node {
 =head1 NAME 
 
 Depfix::MLFix -- fixes errors using a machine learned correction model
-
-The features to be captured are configured by a config file in C<config_file>.
-See C<sample_config.yaml> in the C<Treex::Block::Depfix> directory for a sample.
 
 =head1 DESCRIPTION
 
