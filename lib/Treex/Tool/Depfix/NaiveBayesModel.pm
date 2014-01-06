@@ -23,6 +23,43 @@ override '_get_predictions' => sub {
     return $self->model->predict(attributes => \%features_hash);
 };
 
+## FOR TRAINING ##
+
+override '_initialize_model' => sub {
+    my ($self) = @_;
+
+    return Algorithm::NaiveBayes->new;
+};
+
+override '_see_instance' => sub {
+    my ($self, $features, $class) = @_;
+
+    my %features_hash = map {
+        $_ . ':' . $features->{$_} => 1
+    } keys %$features;
+    
+    $self->model->add_instance(
+        attributes => \%features_hash, label => $class);
+
+    return;
+};
+
+override '_train_model' => sub {
+    my ($self) = @_;
+
+    $self->model->train;
+
+    return;
+};
+
+override '_store_model' => sub {
+    my ($self) = @_;
+
+    $self->model->save_state($self->model_file);
+
+    return;
+};
+
 
 1;
 

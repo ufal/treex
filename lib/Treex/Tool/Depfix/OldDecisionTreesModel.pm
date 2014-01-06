@@ -5,13 +5,6 @@ use utf8;
 extends 'Treex::Tool::Depfix::Model';
 
 use AI::DecisionTree;
-use Storable;
-
-override '_load_model' => sub {
-    my ($self) = @_;
-
-    return Storable::retrieve( $self->model_file );
-};
 
 override '_get_predictions' => sub {
     my ($self, $features) = @_;
@@ -32,6 +25,30 @@ override '_get_best_prediction' => sub {
     return $self->model->get_result(attributes => $features);
 };
 
+## FOR TRAINING ##
+
+override '_initialize_model' => sub {
+    my ($self) = @_;
+
+    return new Algorithm::DecisionTree;
+};
+
+override '_see_instance' => sub {
+    my ($self, $features, $class) = @_;
+
+    $self->model->add_instance(
+        attributes => $features, result => $class);
+
+    return;
+};
+
+override '_train_model' => sub {
+    my ($self) = @_;
+
+    $self->model->train;
+
+    return;
+};
 
 1;
 

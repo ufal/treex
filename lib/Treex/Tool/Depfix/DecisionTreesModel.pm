@@ -5,13 +5,6 @@ use utf8;
 extends 'Treex::Tool::Depfix::Model';
 
 use Algorithm::DecisionTree;
-use Storable;
-
-override '_load_model' => sub {
-    my ($self) = @_;
-
-    return Storable::retrieve( $self->model_file );
-};
 
 override '_get_predictions' => sub {
     my ($self, $features) = @_;
