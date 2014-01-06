@@ -36,7 +36,7 @@ sub add_tag_split {
 }
 
 sub add_edge_info {
-    my ($info, $prefix, $child, $parent) = @_;
+    my ($self, $info, $prefix, $child, $parent) = @_;
     
     if ( !defined $child || !defined $parent ) {
         # not even the nodes exist
