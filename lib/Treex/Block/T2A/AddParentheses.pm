@@ -1,4 +1,4 @@
-package Treex::Block::T2A::CS::AddParentheses;
+package Treex::Block::T2A::AddParentheses;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -40,7 +40,7 @@ sub add_parenthesis_node {
 
 =over
 
-=item Treex::Block::T2A::CS::AddParentheses
+=item Treex::Block::T2A::AddParentheses
 
 Add a pair of parenthesis a-nodes, accordingly
 to t-node's C<is_parenthesis> attribute.
