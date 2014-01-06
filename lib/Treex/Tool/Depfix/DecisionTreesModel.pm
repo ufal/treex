@@ -13,12 +13,12 @@ override '_load_model' => sub {
     return Storable::retrieve( $self->model_file );
 };
 
-override 'get_predictions' => sub {
-    my ($self, $features_hr) = @_;
+override '_get_predictions' => sub {
+    my ($self, $features) = @_;
 
     my @features_a = ();
-    foreach my $feature (@{$self->config->{features}}) {
-        my $value = $features_hr->{$feature};
+    foreach my $feature (keys %$features) {
+        my $value = $features->{$feature};
         if ($value eq '') {
             $value = '_nic_';
         }

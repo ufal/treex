@@ -14,9 +14,12 @@ override '_load_model' => sub {
 };
 
 override '_get_predictions' => sub {
-    my ($self, $features_ar) = @_;
+    my ($self, $features) = @_;
 
-    my %features_hash = map { $_ => 1 } @$features_ar;
+    my %features_hash = map {
+        $_ . ':' . $features->{$_} => 1
+    } keys %$features;
+    
     return $self->model->predict(attributes => \%features_hash);
 };
 

@@ -14,22 +14,22 @@ override '_load_model' => sub {
 };
 
 override '_get_predictions' => sub {
-    my ($self, $features_ar) = @_;
+    my ($self, $features) = @_;
 
-    my %attributes = ();
-    foreach my $feature (@$features_ar) {
-        my ($k, $v) = split /:/, $feature, 2;
-        $attributes{$k} = $v;
-    }
-    
-    my $result = $self->model->get_result(attributes => \%attributes);
-    my %predicitons;
-    if ( defined $result ) {
-        %predicitons = ( $result => 1 );
+    # these DTs are single-best
+    my $prediction = $self->_get_best_prediction($features);
+
+    if ( defined $prediction ) {
+        return { $prediction => 1 };
     } else {
-        %predicitons = ( ); 
+        return {};
     }
-    return \%predicitons;
+};
+
+override '_get_best_prediction' => sub {
+    my ($self, $features) = @_;
+
+    return $self->model->get_result(attributes => $features);
 };
 
 

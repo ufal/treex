@@ -13,16 +13,19 @@ override '_load_model' => sub {
 };
 
 override '_get_predictions' => sub {
-    my ($self, $features_ar) = @_;
+    my ($self, $features) = @_;
 
-    my $predictions = {};
+    my %predictions = map {
+        $_ => exp($self->model->score($features => $_))
+    } $self->model->all_labels;
 
-    for my $class ($self->model->all_labels) {
-        $predictions->{$class} =
-            exp( $self->model->score($features_ar => $class) );
-    }    
+    return \%predictions;
+};
 
-    return $predictions;
+override '_get_best_prediction' => sub {
+    my ($self, $features) = @_;
+
+    return $self->model->predict($features);
 };
 
 

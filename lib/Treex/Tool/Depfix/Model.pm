@@ -11,19 +11,12 @@ has model_file => ( is => 'rw', isa => 'Str', required => 1 );
 has config => ( is => 'rw' );
 has model => ( is => 'rw' );
 
-has feature2field => ( is => 'rw', isa => 'HashRef', default => sub { {} } ); 
-
 sub BUILD {
     my ($self) = @_;
 
     my $config = YAML::Tiny->new;
     $config = YAML::Tiny->read( $self->config_file );
     $self->set_config($config->[0]);
-
-    my $fields = $self->config->{fields};
-    for (my $i = 0; $i < scalar(@$fields); $i++) {
-        $self->feature2field->{$fields->[$i]} = $i;
-    }
 
     $self->set_model($self->_load_model());
     
@@ -39,21 +32,45 @@ sub _load_model {
 }
 
 sub get_predictions {
-    my ($self, $features_hr) = @_;
+    my ($self, $instance_info) = @_;
 
-    my @features_a = map {
-        $self->feature2field->{$_} . ":" . $features_hr->{$_}
-    } @{$self->config->{features}};
+    my %features = map { $_ => $instance_info->{$_}  } @{$self->config->features};
 
-    return $self->_get_predictions(\@features_a);
+    return $self->_get_predictions(\%features);
 }
 
 sub _get_predictions {
-    my ($self, $features_ar) = @_;
+    my ($self, $features) = @_;
 
     log_fatal "_get_predictions is abstract";    
 
-    return ;
+    return;
+}
+
+# may be undef
+sub get_best_prediction {
+    my ($self, $instance_info) = @_;
+
+    my %features = map { $_ => $instance_info->{$_}  } @{$self->config->features};
+
+    return $self->_get_best_prediction(\%features);
+}
+
+# may be overridden if the model has a better way to do that
+sub _get_best_prediction {
+    my ($self, $features) = @_;
+
+    my $predictions = $self->_get_predictions($features);
+    my $best_prediction = undef;
+    my $best_prediction_score = 0;
+    foreach my $prediction (keys %$predictions) {
+        if ( $predictions->{$prediction} > $best_prediction_score ) {
+            $best_prediction = $prediction;
+            $best_prediction_score = $predictions->{$prediction};
+        }
+    }
+
+    return $best_prediction;
 }
 
 1;
