@@ -6,6 +6,8 @@ extends 'Treex::Tool::Depfix::Model';
 
 use AI::MaxEntropy;
 
+has cut => ( is => 'rw', isa => 'Num', default => 0 );
+
 override '_load_model' => sub {
     my ($self) = @_;
 
@@ -41,7 +43,8 @@ override '_see_instance' => sub {
 override '_train_model' => sub {
     my ($self) = @_;
 
-    my $model = $self->model->learn;
+    $self->model->cut($self->cut);
+    my $model = $self->model->learn;   
     $self->set_model($model);
 
     return;

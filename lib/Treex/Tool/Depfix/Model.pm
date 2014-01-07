@@ -176,6 +176,7 @@ sub test {
 
     my $all = 0;
     my $good = 0;
+    my $uncovered = 0;
 
     open my $testing_file, '<:gzip:utf8', $testfile;
     while ( my $line = <$testing_file> ) {
@@ -184,19 +185,29 @@ sub test {
         my %instance_info;
         @instance_info{ @{ $self->config->{fields} } } = @fields;
         
-        my $prediction = $self->_get_best_prediction(\%instance_info);
+        my $prediction = $self->get_best_prediction(\%instance_info);
 
-        my $true = $instance_info{ $self->config->{predict} };
-        if ( $prediction eq $true ) {
-            $good++;
+        # TODO this is not 100% intuitive
+        if ( defined $prediction ) {
+            my $true = $instance_info{ $self->config->{predict} };
+            if ( $prediction eq $true ) {
+                $good++;
+            }   
+            $all++;
+        } else {
+            $uncovered++;
         }
-        $all++;
 
         if ( $. % 10000 == 0) { log_info "Line $. processed"; }
     }
     close $testing_file;
 
     my $accuracy  = int($good / $all*10000)/100;
+    if ( $uncovered ) {
+        my $unc_pc = int($uncovered / ($uncovered + $all) * 10000)/100;
+        log_warn "$unc_pc% cases were not covered  ($uncovered of " .
+            ($uncovered + $all) . ')';
+    }
     log_info "Accuracy: $accuracy%  ($good of $all)";
 
     return $accuracy;
