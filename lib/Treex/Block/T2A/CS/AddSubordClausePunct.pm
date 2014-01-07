@@ -2,92 +2,58 @@ package Treex::Block::T2A::CS::AddSubordClausePunct;
 use utf8;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
+extends 'Treex::Block::T2A::AddSubordClausePunct';
 
-sub process_zone {
-    my ( $self, $zone ) = @_;
-    my $aroot          = $zone->get_atree();
-    my @anodes         = $aroot->get_descendants( { ordered => 1 } );
-    my @clause_numbers = map { $_->clause_number } @anodes;
-    ##my @afuns          = map { $_->afun || '' } @anodes;
-    my @lemmas = map { lc( $_->lemma || '' ) } @anodes;
-    push @lemmas, 'dummy';
+has 'open_punct' => ( is => 'ro', 'isa' => 'Str', default => '^[„‚]$' );
 
-    foreach my $i ( 0 .. $#anodes - 1 ) {
+has 'close_punct' => ( is => 'ro', 'isa' => 'Str', default => '^[“‘]$' );
 
-        # Skip if we are not at the clause boundary
-        next if $clause_numbers[$i] == $clause_numbers[ $i + 1 ];
+override 'no_comma_between' => sub {
+    my ($self, @nodes) = @_;
 
-        # Skip words with clause_number=0 (e.g. brackets separating clauses)
-        next if !$clause_numbers[ $i + 1 ];
+    # b) left or right token is a conjunction
+    #    (Commas in front of conjunctions are solved in Add_coord_punct.)
+    #next if any { $_ eq 'Coord' } @afuns[$i, $i + 1]; #!!! tohle by bylo lepsi reseni, ale na afuny zatim neni spoleh
+    return 1 if any { $_ =~ /^(a|ale|nebo|buď)$/ } map { $_->lemma } @nodes;    # deleted "i" because of "i kdyz"
+    return 0;
+};
 
-        # Now, we are at the clause boundary
-        # ($nodes[$i] and $nodes[$i+1] have different clause_number).
-        # However, on some boundaries the comma is not needed/allowed:
-        # a) left or right token is a punctuation (e.g. three dots)
-        next if any { $_ =~ /^[,:;.?!-]/ } @lemmas[ $i, $i + 1 ];
+override 'postprocess_comma' => sub {
+    my ( $self, $anode, $comma ) = @_;
 
-        # b) left or right token is a conjunction
-        #    (Commas in front of conjunctions are solved in Add_coord_punct.)
-        #next if any { $_ eq 'Coord' } @afuns[$i, $i + 1]; #!!! tohle by bylo lepsi reseni, ale na afuny zatim neni spoleh
-        next if any { $_ =~ /^(a|ale|nebo|buď)$/ } @lemmas[ $i, $i + 1 ];    # deleted "i" because of "i kdyz"
+    # left token is a closing quote
+    # A special typographic rule says the comma should go before quotes,
+    # if the quoted text is a whole clause. For example:
+    # „Nechci,“ řekl Karel.
+    # Bydleli jsme v hotelu „Hilton“, který spadl.
+    # Actually, it is even more complicated.
+    # According to ÚJČ (http://prirucka.ujc.cas.cz/?id=162):
+    # Pepa říkal: „Pavel je kanón.“
+    # Můj děd říkával, že „konec všechno napraví“.
+    if ( $anode->lemma eq '“' ) {
 
-        # c) left token is an opening quote or bracket
-        next if _opening( $lemmas[$i] );
+        # However, most reference translations follow the source sentence wording, not ÚJČ.
+        my $src_zone = $anode->get_bundle()->get_zone( 'en', 'src' );
+        if ( !$src_zone || $src_zone->sentence !~ /[»"'”],/ ) {
 
-        # d) right token is a closing bracket or quote followed by period (end of sentence)
-        next if $lemmas[ $i + 1 ] eq ')' || ( $lemmas[ $i + 1 ] eq '“' && $lemmas[ $i + 2 ] eq '.' );
-
-        # e) left token is a closing quote or bracket preceeded by a comma (inserted in the last iteration)
-        next if _closing( $lemmas[$i] ) && $i && $anodes[$i]->get_prev_node->lemma eq ',';
-
-        # Comma's parent should be the highest of left/right clause roots
-        my $left_clause_root  = $anodes[$i]->get_clause_root();
-        my $right_clause_root = $anodes[ $i + 1 ]->get_clause_root();
-        my $the_higher_clause_root =
-            $left_clause_root->get_depth() > $right_clause_root->get_depth()
-            ? $left_clause_root : $right_clause_root;
-
-        my $comma = $the_higher_clause_root->create_child(
-            {   'form'          => ',',
-                'lemma'         => ',',
-                'afun'          => 'AuxX',
-                'morphcat/pos'  => 'Z',
-                'clause_number' => 0,
-            }
-        );
-
-        $comma->shift_after_node( $anodes[$i] );
-
-        # left token is a closing quote
-        # A special typographic rule says the comma should go before quotes,
-        # if the quoted text is a whole clause. For example:
-        # „Nechci,“ řekl Karel.
-        # Bydleli jsme v hotelu „Hilton“, který spadl.
-        # Actually, it is even more complicated.
-        # According to ÚJČ (http://prirucka.ujc.cas.cz/?id=162):
-        # Pepa říkal: „Pavel je kanón.“
-        # Můj děd říkával, že „konec všechno napraví“.
-        if ( $lemmas[$i] eq '“' ) {
-            
-            # However, most reference translations follow the source sentence wording, not ÚJČ.
-            my $src_zone = $zone->get_bundle()->get_zone( 'en', 'src' );
-            if ( !$src_zone || $src_zone->sentence !~ /[»"'”],/ ) {
-
-                # Filter out cases as "Hilton", by looking for a verb inside the quotes
-                for my $j ( 1 .. $i ) {
-                    last if $lemmas[ $i - $j ] eq '„';
-                    if ( $anodes[ $i - $j ]->get_attr('morphcat/pos') eq 'V' ) {
-                        $comma->shift_before_node( $anodes[$i] );
-                        last;
-                    }
+            # Filter out cases as "Hilton", by looking for a verb inside the quotes
+            my (@prev_nodes) = grep { $_->ord < $anode->ord } ( $anode->get_root->get_descendants( { ordered => 1 } ) );
+            foreach my $cur_node ( reverse @prev_nodes ) {
+                last if $cur_node->lemma eq '„';
+                if ( $cur_node->morphcat_pos eq 'V' ) {
+                    $comma->shift_before_node($anode);
+                    last;
                 }
             }
         }
     }
+};
+
+override 'postprocess_sentence' => sub {
+    my ( $self, $aroot ) = @_;
 
     # moving commas in 'clausal' pronominal expletives such as ',pote co' -> 'pote, co';
-    @anodes = $aroot->get_descendants( { ordered => 1 } );
+    my @anodes = $aroot->get_descendants( { ordered => 1 } );
     foreach my $i ( 0 .. $#anodes - 2 ) {
         if ($anodes[ $i + 1 ]->lemma eq 'poté'
             and $anodes[$i]->lemma   eq ','
@@ -100,32 +66,38 @@ sub process_zone {
     }
 
     return;
-}
-
-sub _opening {
-    return $_[0] eq '„' || $_[0] eq '(';
-}
-
-sub _closing {
-    return $_[0] eq '“' || $_[0] eq ')';
-}
+};
 
 1;
 
 __END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::T2A::CS::AddSubordClausePunct
+=head1 NAME 
+
+Treex::Block::T2A::AddSubordClausePunct
+
+=head1 DESCRIPTION
 
 Add a-nodes corresponding to commas on clause boundaries
 (boundaries of relative clauses as well as
 of clauses introduced with subordination conjunction).
 
-=back
+Czech coordination conjunctions are avoided.
 
-=cut
+Note: Contains a hack specific to EN-CS translation regarding
+moving the comma before/after the punctuation.
 
-# Copyright 2008-2009 Zdenek Zabokrtsky, Martin Popel
+=head1 AUTHORS 
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
