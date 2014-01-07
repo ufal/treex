@@ -3,16 +3,15 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+has 'formeme_prep_regexp' => ( is => 'ro', default => '^(n|adj):(.+)[+]' );
+
 sub process_tnode {
     my ( $self, $tnode ) = @_;
-    my $formeme = $tnode->formeme;
-
-    return if !defined $formeme || $formeme !~ /^(n|adj):(.+)[+]/;
-    my ( $sempos, $prep_forms_string ) = ( $1, $2 );
+    my $prep_forms_string = $self->get_prep_forms($tnode->formeme);
     my $anode = $tnode->get_lex_anode();
 
-    # Skip weird t-nodes with no lex_anode
-    next if !defined $anode;
+    # Skip weird t-nodes with no lex_anode and nodes with no prepositions to add
+    return if (!defined $anode or !$prep_forms_string);
 
     # Occasionally there may be more than one preposition (e.g. na_rozdíl_od)
     my @prep_forms = split /_/, $prep_forms_string;
@@ -72,8 +71,16 @@ sub _new_prep_node {
 
 
 sub postprocess {
+    my ($self, $tnode, $anode, $prep_forms_string, $prep_nodes) = @_;
     return;
 }
+
+sub get_prep_forms {
+    my ($self, $formeme) = @_;
+    return undef if (!$formeme);
+    my ($prep_forms) = ( $formeme =~ /(?:n|adj):(.+)\+/ );
+    return $prep_forms;
+} 
 
 1;
 

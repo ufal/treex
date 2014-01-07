@@ -5,11 +5,11 @@ extends 'Treex::Core::Block';
 
 sub process_tnode {
     my ( $self, $t_node ) = @_;
-    my $formeme = $t_node->formeme;
-    return if $formeme !~ /^v:(.+)\+/;
+    my $subconj_forms_str = $self->get_subconj_forms($t_node->formeme);
+    return if (!$subconj_forms_str);
 
     # multiword conjunctions or conjunctions with expletives (pote co) are possible
-    my @subconj_forms = split /_/, $1;
+    my @subconj_forms = split /_/, $subconj_forms_str;
 
     my $a_node = $t_node->get_lex_anode();
 
@@ -55,7 +55,15 @@ sub process_tnode {
 }
 
 sub postprocess {
+    my ($t_node, $a_node, $subconj_nodes) = @_;
     return;
+}
+
+sub get_subconj_forms {
+    my ($self, $formeme) = @_;
+    return undef if (!$formeme);
+    my ($subconj_forms) = ( $formeme =~ /^v:(.+)\+/ );
+    return $subconj_forms;
 }
 
 1;

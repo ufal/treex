@@ -9,7 +9,7 @@ has 'open_punct' => ( is => 'ro', 'isa' => 'Str', default => '^[„‚]$' );
 has 'close_punct' => ( is => 'ro', 'isa' => 'Str', default => '^[“‘]$' );
 
 override 'no_comma_between' => sub {
-    my ($self, @nodes) = @_;
+    my ( $self, @nodes ) = @_;
 
     # b) left or right token is a conjunction
     #    (Commas in front of conjunctions are solved in Add_coord_punct.)
