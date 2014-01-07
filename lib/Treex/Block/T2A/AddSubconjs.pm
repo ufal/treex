@@ -60,7 +60,7 @@ sub postprocess {
 }
 
 sub get_subconj_forms {
-    my ($self, $formeme) = @_;
+    my ( $self, $formeme ) = @_;
     return undef if (!$formeme);
     my ($subconj_forms) = ( $formeme =~ /^v:(.+)\+/ );
     return $subconj_forms;
