@@ -27,6 +27,18 @@ sub get_afun {
 	my $gp = $p->get_parent();
 	
 	# assign afun to nodes that can be easily determined by POS alone
+
+	# punctuations 
+	# AuxX, AuxG, AuxK
+	return 'AuxX' if $node->form eq ',';
+	
+	if ($p == $node->root) {
+		return 'AuxK' if $node->form =~ /\p{IsP}/;		
+	}
+	else {
+		return 'AuxG' if $node->form =~ /\p{IsP}/;
+	}
+
 	# AuxP
 	return 'AuxP' if $node->tag =~ /^PP/;
 	
@@ -96,10 +108,7 @@ sub get_afun {
 		if ($p->tag =~ /^V[rR]/) {
 			return 'Adv' if $node->tag =~ /^V/;
 		}		
-
 	}
-	
-	
 	
 	# 5. Atr
 	if ( ($node->tag =~ /((^DD)|(^NO)|(^JJ)|(^N...[NG])|(^U[noc])|(^Vd))/) ) {
