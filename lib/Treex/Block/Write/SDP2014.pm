@@ -19,6 +19,10 @@ has 'simple_functors' => ( is => 'ro', isa => 'Bool', default => 1,
     'All the functors on the path should be concatenated to get the correct label for the merged dependency. '.
     'However, if this switch is turned on, the functors will be simplified to make labeled parsing easier. '.
     'Only the top-most functor will be retained and the rest of the chain will be dropped.' );
+has 'remove_cycles' => ( is => 'ro', isa => 'Bool', default => 1,
+    documentation => 'Output dependencies are surface projections of dependencies between t-nodes. Since several t-nodes may be projected on '.
+    '(have been generated from) the same token, the surface dependency graph is not guaranteed to be cycle-free. '.
+    'However, if this switch is turned on, dependencies incoming to generated nodes will be removed if they would create cycles.');
 
 
 
@@ -71,6 +75,35 @@ sub process_zone
         push(@conll, [$ord, $form, $lemma, $tag]);
         # Fill @matrix and @roots.
         $self->get_parents($anode, \@matrix, \@roots, $aroot);
+    }
+    # Remove cycles caused by generated nodes if desired.
+    if($self->remove_cycles())
+    {
+        for(my $i = 0; $i <= $#matrix; $i++)
+        {
+            for(my $j = 0; $j <= $#{$matrix[$i]}; $j++)
+            {
+                # Is there a dependency from $j (parent) to $i (child)?
+                if(defined($matrix[$i][$j]))
+                {
+                    # Remove trivial cycles (self-loops) without bothering with generated nodes.
+                    if($i == $j)
+                    {
+                        $matrix[$i][$j] = undef;
+                    }
+                    # For irreflexive dependencies check whether generated t-nodes are involved; then look for cycles.
+                    elsif($matrix[$i][$j] =~ m/\*$/)
+                    {
+                        # Dependencies whose labels end with '*' are projected from generated t-nodes. They often (always?) cause cycles.
+                        if($self->find_cycle(\@matrix, $i))
+                        {
+                            # Remove the dependency brought in by the generated t-node. That should remove the cycle.
+                            $matrix[$i][$j] = undef;
+                        }
+                    }
+                }
+            }
+        }
     }
     # Simplify functors if desired.
     if($self->simple_functors())
@@ -352,12 +385,65 @@ sub get_parents
                 {
                     $roots->[$ord] = '+';
                 }
+                my $functor = $parent->{outfunctor};
+                # Mark dependencies projected from generated t-nodes. They are often responsible for problems, e.g. cycles in graphs.
+                if($tnode->is_generated())
+                {
+                    $functor .= '*';
+                }
                 ###!!! If there are two or more paths to the same a-parent, only the last functor will survive.
-                $matrix->[$ord][$parent->{anode}] = $parent->{outfunctor};
+                $matrix->[$ord][$parent->{anode}] = $functor;
             }
         }
     }
     return $matrix;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Recursively searches for cycles on the path from the current node to the
+# root. This function does not work on Treex trees but on the output SDP
+# graphs. These are general directed graphs and there may be several branches
+# leading to different roots. But no node can be traversed twice, that would be
+# a cycle.)
+#------------------------------------------------------------------------------
+sub find_cycle
+{
+    my $self = shift;
+    my $graph = shift; # reference to matrix; $graph[$child][$parent] eq $label;
+    my $current_node = shift; # index of node
+    my @visited_nodes = @_;
+    # Get parents of the current node.
+    my @parents;
+    for(my $i = 0; $i<=$#{$graph->[$current_node]}; $i++)
+    {
+        # Trivial cycles are counted separately, so here we forbid counting self as parent.
+        unless($i==$current_node)
+        {
+            if(defined($graph->[$current_node][$i]))
+            {
+                # Parent already visited on this path? That is a cycle!
+                if($visited_nodes[$i])
+                {
+                    # We will not look for nested cycles or something. We just found one, and that is enough.
+                    return 1;
+                }
+                push(@parents, $i);
+            }
+        }
+    }
+    # We did not detect any cycles directly at this level. Let us check upper levels recursively.
+    $visited_nodes[$current_node] = 1;
+    foreach my $parent (@parents)
+    {
+        if($self->find_cycle($graph, $parent, @visited_nodes))
+        {
+            return 1;
+        }
+    }
+    # No cycle found even among our ancestors, if any.
+    return 0;
 }
 
 
@@ -584,6 +670,21 @@ Default format is derived from CoNLL 2009. It has large and variable number of c
 This parameter triggers a compact format resembling CoNLL 2006, with fixed number of columns;
 however, C<HEAD> and C<DEPREL> columns may contain comma-separated lists of values.
 
+=item C<simple_functors>
+
+Binary value (0 or 1), 1 is default.
+An output dependency may represent a chain of two or more t-layer dependencies if there is a generated t-node that had to be removed.
+All the functors on the path should be concatenated to get the correct label for the merged dependency.
+However, if this switch is turned on, the functors will be simplified to make labeled parsing easier.
+Only the top-most functor will be retained and the rest of the chain will be dropped.
+
+=item C<remove_cycles>
+
+Binary value (0 or 1), 1 is default.
+Output dependencies are surface projections of dependencies between t-nodes. Since several t-nodes may be projected on
+(have been generated from) the same token, the surface dependency graph is not guaranteed to be cycle-free.
+However, if this switch is turned on, dependencies incoming to generated nodes will be removed if they would create cycles.
+
 =back
 
 =head1 AUTHOR
@@ -592,6 +693,6 @@ Daniel Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2013 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2013-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
