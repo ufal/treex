@@ -118,6 +118,8 @@ sub process_zone
             for(my $j = 0; $j <= $#{$matrix[$i]}; $j++)
             {
                 next unless(defined($matrix[$i][$j]));
+                # Remove marking of incoming dependencies of generated nodes.
+                $matrix[$i][$j] =~ s/\*$//;
                 my @functor_parts = split(/\./, $matrix[$i][$j]);
                 my $simple_functor = shift(@functor_parts);
                 $simple_functor .= '.member' if(@functor_parts && $functor_parts[0] eq 'member');
