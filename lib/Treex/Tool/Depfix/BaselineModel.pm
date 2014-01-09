@@ -57,12 +57,11 @@ sub test {
     }
     close $testing_file;
 
-    my $accuracy  = int($good / $all*10000)/100;
-    log_info "Accuracy: $accuracy%  ($good of $all)";
+    my $accuracy  = int($good / $all*100000)/1000;
+    log_info "Accuracy: $accuracy %  ($good of $all)";
 
     return $accuracy;
 }
-
 
 1;
 

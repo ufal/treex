@@ -16,12 +16,20 @@ has model => ( is => 'rw' );
 # for training (goes to training mode if training_file is set)
 has training_file => ( is => 'rw', isa => 'Str', default => '' );
 
+has baseline_prediction => ( is => 'rw', isa => 'Str' );
+
+
 sub BUILD {
     my ($self) = @_;
 
     my $config = YAML::Tiny->new;
     $config = YAML::Tiny->read( $self->config_file );
     $self->set_config($config->[0]);
+    
+    # baseline: if predicting e.g. newchild_ccas, return oldchild_ccas
+    my $class = $config->[0]->{predict};
+    $class =~ s/new/old/;
+    $self->set_baseline_prediction($class);
 
     if ( $self->training_file ne '' ) {
         $self->set_model($self->_initialize_model());
@@ -33,6 +41,12 @@ sub BUILD {
 }
 
 ## FOR RUNTIME ##
+
+sub get_baseline_prediction {
+    my ($self, $instance_info) = @_;
+
+    return $instance_info->{$self->baseline_prediction};
+}
 
 # override if needed
 sub _load_model {
@@ -48,6 +62,7 @@ sub get_predictions {
         $_ => $instance_info->{$_}
     } @{ $self->config->{features} };
 
+    # TODO if empty, put in baseline prediction
     return $self->_get_predictions(\%features);
 }
 
@@ -67,7 +82,13 @@ sub get_best_prediction {
         $_ => $instance_info->{$_}
     } @{ $self->config->{features} };
 
-    return $self->_get_best_prediction(\%features);
+    my $prediction = $self->_get_best_prediction(\%features);
+    if ( !defined $prediction ) {
+        log_warn "No prediction generated, using the baseline instead.";
+        $prediction = $self->get_baseline_prediction(\%features);
+    }
+    
+    return $prediction;
 }
 
 # may be overridden if the model has a better way to do that
@@ -176,7 +197,6 @@ sub test {
 
     my $all = 0;
     my $good = 0;
-    my $uncovered = 0;
 
     open my $testing_file, '<:gzip:utf8', $testfile;
     while ( my $line = <$testing_file> ) {
@@ -187,28 +207,18 @@ sub test {
         
         my $prediction = $self->get_best_prediction(\%instance_info);
 
-        # TODO this is not 100% intuitive
-        if ( defined $prediction ) {
-            my $true = $instance_info{ $self->config->{predict} };
-            if ( $prediction eq $true ) {
-                $good++;
-            }   
-            $all++;
-        } else {
-            $uncovered++;
-        }
+        my $true = $instance_info{ $self->config->{predict} };
+        if ( $prediction eq $true ) {
+            $good++;
+        }   
+        $all++;
 
         if ( $. % 10000 == 0) { log_info "Line $. processed"; }
     }
     close $testing_file;
 
-    my $accuracy  = int($good / $all*10000)/100;
-    if ( $uncovered ) {
-        my $unc_pc = int($uncovered / ($uncovered + $all) * 10000)/100;
-        log_warn "$unc_pc% cases were not covered  ($uncovered of " .
-            ($uncovered + $all) . ')';
-    }
-    log_info "Accuracy: $accuracy%  ($good of $all)";
+    my $accuracy  = int($good / $all*100000)/1000;
+    log_info "Accuracy: $accuracy %  ($good of $all)";
 
     return $accuracy;
 }
