@@ -95,9 +95,14 @@ sub process_zone
                     elsif($matrix[$i][$j] =~ m/\*$/)
                     {
                         # Dependencies whose labels end with '*' are projected from generated t-nodes. They often (always?) cause cycles.
+                        ###!!! A few cycles cannot be caught this way. They also involve two t-nodes for the same a-node but the generated node is the upper one here.
+                        ###!!! So we will not find the cycle if we start at the generated copy. If we start at the original copy, we will arrive at the generated one and thus detect the cycle.
+                        ###!!! Should we look for a cycle whenever a node has more than one parent?
                         if($self->find_cycle(\@matrix, $i))
                         {
                             # Remove the dependency brought in by the generated t-node. That should remove the cycle.
+                            ###!!! This approach disconnects two components of the graph. It would be better to proceed as if the generated node had no surface realization.
+                            ###!!! We have such cases too, and we solve them by skipping the bad node and attaching its descendants to its ancestors.
                             $matrix[$i][$j] = undef;
                         }
                     }
