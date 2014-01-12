@@ -50,37 +50,33 @@ sub print_tnode_features {
     my $cs_anode = $cs_tnode->get_lex_anode or return;
 
     #return if $en_tnode->functor =~ /CONJ|DISJ|ADVS|APPS/;
-    my $en_tlemma = $self->lemma($en_tnode);
+    my $en_tlemma = $self->lemma($en_tnode);    
     my $cs_tlemma = $self->lemmapos($cs_tnode);
     return if $en_tlemma !~ /\p{IsL}/ || $cs_tlemma !~ /\p{IsL}/;
-    my ($en_tparent) = $en_tnode->get_eparents( { or_topological => 1 } );
-
     
+    # Do not train on instances where the correct translation is not listed in the Static model.
+    my $submodel = $static->_submodels->{$en_tlemma};
+    return if !$submodel || !$submodel->{$cs_tlemma};
+    
+    my ($en_tparent) = $en_tnode->get_eparents( { or_topological => 1 } );
     my $feats = 'F=' . $en_tnode->formeme
               . ' P=' . $self->lemma($en_tparent);
     $feats .= ' n=' . $en_tnode->gram_number if $en_tnode->gram_number;
 
     foreach my $child ($en_tnode->get_echildren( { or_topological => 1 } )){
         $feats .= ' CL=' . $self->lemma($child);
+        $feats .= ' CF=' . $child->formeme;
     }
     $feats =~ s/:/;/g; # VW format does not allow ":"
     $en_tlemma =~ s/:/;/g;
     $cs_tlemma =~ s/:/;/g;
 
-    my @variants = keys %{$static->_submodels->{$en_tlemma}};
-
-    my ($i, $seen_correct);
-
-    foreach my $variant (@variants){
+    my ($i);
+    foreach my $variant (keys %{$submodel}){
         $i++;
         $variant =~ s/:/;/g;
         my $cost = $variant eq $cs_tlemma ? 0 : 1;
-        $seen_correct = 1 if $cost == 0;
         print { $self->_file_handle() } "$i:$cost |S=$en_tlemma,T=$variant $feats\n";
-    }
-    if (!$seen_correct){
-        $i++;
-        print { $self->_file_handle() } "$i:0 |S=$en_tlemma,T=$cs_tlemma $feats\n";
     }
     print { $self->_file_handle() } "\n";
     return;
@@ -90,7 +86,7 @@ sub print_tnode_features {
 # $tnode->get_attr('mlayer_pos') is not filled in CzEng
 sub lemmapos {
     my ($self, $tnode) = @_;
-    my $lemma = $tnode->t_lemma;
+    my $lemma = $tnode->t_lemma // ''; #/
     $lemma =~ s/ /&#32;/g;
     my $anode = $tnode->get_lex_anode or return $lemma;
     my ($pos) = ( $anode->tag =~ /^(.)/ );
