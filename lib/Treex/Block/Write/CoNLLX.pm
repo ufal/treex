@@ -13,6 +13,7 @@ has 'feat_attribute'                   => ( is       => 'rw', isa => 'Str', defa
 has 'is_member_within_afun'            => ( is       => 'rw', isa => 'Bool', default => 0 );
 has 'is_shared_modifier_within_afun'   => ( is       => 'rw', isa => 'Bool', default => 0 );
 has 'is_coord_conjunction_within_afun' => ( is       => 'rw', isa => 'Bool', default => 0 );
+has 'randomly_select_sentences_ratio'  => ( is       => 'rw', isa => 'Num',  default => 1 );
 
 has _was => ( is => 'rw', default => sub{{}} );
 
@@ -20,6 +21,10 @@ has '+extension' => ( default => '.conll' );
 
 sub process_atree {
     my ( $self, $atree ) = @_;
+
+    # if only random sentences are printed
+    return if rand() > $self->randomly_select_sentences_ratio;
+
     foreach my $anode ( $atree->get_descendants( { ordered => 1 } ) ) {
         my ( $lemma, $pos, $cpos, $deprel ) =
             map { $self->get_attribute( $anode, $_ ) }
