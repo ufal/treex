@@ -1,72 +1,48 @@
 package Treex::Block::T2A::CS::AddCoordPunct;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
+extends 'Treex::Block::T2A::AddCoordPunct';
 
-sub process_zone {
-    my ( $self, $zone ) = @_;
-    my $aroot = $zone->get_atree();
-    my @anodes = $aroot->get_descendants( { ordered => 1 } );
+override 'comma_before_conj' => sub {
+    my ( $self, $conj_anode, $prev_anode, $members_rf ) = @_;
 
-    my ( $my_lemma, $last_lemma ) = ( '', '' );
-    foreach my $anode (@anodes) {
-        $last_lemma = $my_lemma;
-        $my_lemma   = $anode->lemma;
-        next if ( $anode->afun || '' ) ne 'Coord';
-        my @children = $anode->get_children( { ordered => 1 } ) or next;
-
-        # 1. Comma in front of the coordination node
-        # In Czech only for "ale" (but) and sometimes "nebo" (or)
-        # TODO čárka před nebo ve vylučovacím významu
-        # TODO $last_lemma ne ',' seems to be unnecessary
-        if ( $my_lemma =~ /^(ale|ani)$/ && $last_lemma ne ',' ) {
-            my $punct = add_comma_node($anode);
-            $punct->shift_before_node($anode);
-        }
-
-        # 2. Comma between conjunct
-        # Let's have e.g.: A B C $anode D
-        # then we want to put commas in front of B and C subtrees.
-        # Although it is possible that some commas are needed also
-        # after the $anode (A, B and C, D), it's more probably wrong parsing
-        # where C should depend on D.
-        my ( undef, @members_before_coord ) =
-            grep { $_->is_member && $_->precedes($anode) } @children;
-
-        foreach my $conjunct (@members_before_coord) {
-            my $punct = add_comma_node($anode);
-            $punct->shift_before_subtree($conjunct);
-        }
-    }
-
-    return;
-}
-
-sub add_comma_node {
-    my ($parent) = @_;
-    return $parent->create_child(
-        {   'form'          => ',',
-            'lemma'         => ',',
-            'afun'          => 'AuxX',
-            'morphcat/pos'  => 'Z',
-            'clause_number' => 0,
-        }
-    );
-}
+    # In Czech only for "ale" (but) and sometimes "nebo" (or)
+    # TODO čárka před nebo ve vylučovacím významu
+    # TODO $last_lemma ne ',' seems to be unnecessary
+    return 1
+        if (
+        ( $conj_anode->lemma // '' ) =~ /^(ale|ani)/
+        and ( !defined($prev_anode) or ( $prev_anode->lemma // '' ) ne ',' )
+        );
+    return 0;
+};
 
 1;
 
-=over
+__END__
 
-=item Treex::Block::T2A::CS::AddCoordPunct
+=encoding utf-8
 
-Add a-nodes corresponding to commas in front of 'ale'
-and also commas in multiple coordinations (A, B, C a D).
+=head1 NAME 
 
-=back
+Treex::Block::T2A::AddSubordClausePunct
 
-=cut
+=head1 DESCRIPTION
 
-# Copyright 2008-2009 Zdenek Zabokrtsky, Martin Popel
+Add a-nodes corresponding to commas in coordinations
+(of clauses as well as words/phrases).
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Czech-specfic: Add a-nodes corresponding to commas in front of 'ale'.
+
+=head1 AUTHORS 
+
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
