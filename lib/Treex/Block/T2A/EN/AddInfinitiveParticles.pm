@@ -22,12 +22,14 @@ sub process_tnode {
                 'morphcat/pos' => '!',
             }
         );
+
         # the particle 'to' (default case) goes right before the infinitive
-        $particle_node->shift_before_node($a_node);        
+        $particle_node->shift_before_node($a_node);
+
         # other prepositions than to precede the full subtree (i.e. the 'subject' of the infinitive)
-        if ( $particle ne 'to' ){  
+        if ( $particle ne 'to' ) {
             $particle_node->shift_before_subtree($a_node);
-        }        
+        }
         $t_node->add_aux_anodes($particle_node);
     }
 
@@ -56,5 +58,5 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2008-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
