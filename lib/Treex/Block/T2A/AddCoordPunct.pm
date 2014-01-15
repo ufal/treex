@@ -14,6 +14,7 @@ sub process_zone {
 
         next if ( $anode->afun || '' ) ne 'Coord';
         my @children = $anode->get_children( { ordered => 1 } ) or next;
+        my (@members_before_coord) = grep { $_->is_member && $_->precedes($anode) } @children;
 
         # 1. Comma between multiple conjuncts
         # Let's have e.g.: A B C $anode D
@@ -21,10 +22,8 @@ sub process_zone {
         # Although it is possible that some commas are needed also
         # after the $anode (A, B and C, D), it's more probably wrong parsing
         # where C should depend on D.
-        my ( $first_member, @members_before_coord ) =
-            grep { $_->is_member && $_->precedes($anode) } @children;
 
-        foreach my $conjunct (@members_before_coord) {
+        foreach my $conjunct ( @members_before_coord[ 1 .. $#members_before_coord ] ) {
             my $punct = $self->add_comma_node($anode);
             $punct->shift_before_subtree($conjunct);
         }
@@ -32,7 +31,7 @@ sub process_zone {
         # 2. Comma in front of the coordination word itself
         my ($following_member) = first { $_->is_member && $anode->precedes($_) } @children;
 
-        if ( $self->comma_before_conj( $anode, $prev_anode, [ $first_member, @members_before_coord, $following_member ] ) ) {
+        if ( $self->comma_before_conj( $anode, $prev_anode, [ @members_before_coord, $following_member ] ) ) {
             my $punct = $self->add_comma_node($anode);
             $punct->shift_before_node($anode);
         }

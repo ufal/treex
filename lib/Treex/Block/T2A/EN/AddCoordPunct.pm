@@ -15,7 +15,7 @@ override 'comma_before_conj' => sub {
     # must be connecting two different clauses
     my ($preceding_node) = first { $_->precedes($conj_anode) } reverse @$members_rf;
     my ($following_node) = first { $conj_anode->precedes($_) } @$members_rf;
-    return 0 if ( $preceding_node->clause_number == $following_node->clause_number );
+    return 0 if ( !$preceding_node or !$following_node or $preceding_node->clause_number == $following_node->clause_number );
 
     # a subject must be repeated in last clause
     return 0 if ( not any { ( $_->afun // '' ) eq 'Sb' } $following_node->get_echildren() );
