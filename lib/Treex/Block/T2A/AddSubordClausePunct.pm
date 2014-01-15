@@ -44,7 +44,7 @@ sub process_zone {
         # left token is a closing quote or bracket preceeded by a comma (inserted in the last iteration)
         next if ( $lemmas[$i] =~ /$close_punct/ || $lemmas[$i] eq ')' ) && $i && $anodes[$i]->get_prev_node->lemma eq ',';
 
-        # any other language-dependent reason
+        # any other language-dependent reason (e.g. coordinations)
         next if $self->no_comma_between( $anodes[$i], $anodes[ $i + 1 ] );
 
         # Comma's parent should be the highest of left/right clause roots

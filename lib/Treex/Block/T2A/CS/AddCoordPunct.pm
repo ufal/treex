@@ -8,13 +8,10 @@ override 'comma_before_conj' => sub {
 
     # In Czech only for "ale" (but) and sometimes "nebo" (or)
     # TODO čárka před nebo ve vylučovacím významu
-    # TODO $last_lemma ne ',' seems to be unnecessary
-    return 1
-        if (
-        ( $conj_anode->lemma // '' ) =~ /^(ale|ani)/
-        and ( !defined($prev_anode) or ( $prev_anode->lemma // '' ) ne ',' )
-        );
-    return 0;
+    # TODO test for preceding comma seems to be unnecessary
+    return 0 if ( ( $conj_anode->lemma // '' ) !~ /^(ale|ani)/ );
+    return 0 if ( defined($prev_anode) and ( $prev_anode->lemma // '' ) eq ',' );
+    return 1;
 };
 
 1;
