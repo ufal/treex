@@ -9,9 +9,9 @@ sub process_tnode {
     my ( $self, $tnode ) = @_;
     return if ( !$tnode->is_clause_head() );
 
-    # avoid questions
+    # avoid questions, avoid leaves
     my ($tfirst) = $tnode->get_echildren( { first_only => 1 } );
-    return if ( ( $tfirst->t_lemma // '' ) =~ /^(where|why|what|how|who|when|which)$/ );
+    return if ( !$tfirst or ( $tfirst->t_lemma // '' ) =~ /^(where|why|what|how|who|when|which)$/ );
 
     # find the subject, proceed only if it is not the first child
     my ($tsubj) = first {

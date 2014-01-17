@@ -18,7 +18,7 @@ override 'comma_before_conj' => sub {
     return 0 if ( !$preceding_node or !$following_node or $preceding_node->clause_number == $following_node->clause_number );
 
     # a subject must be repeated in last clause
-    return 0 if ( not any { ( $_->afun // '' ) eq 'Sb' } $following_node->get_echildren() );
+    return 0 if ( not any { ( $_->afun // '' ) eq 'Sb' } $following_node->get_echildren( { or_topological => 1 } ) );
 
     return 1;
 };
