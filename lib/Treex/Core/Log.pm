@@ -44,7 +44,7 @@ Readonly my %ERROR_LEVEL_VALUE => map {$ERROR_LEVEL_NAMES[$_] => $_} (0 .. $#ERR
 
 
 use Moose::Util::TypeConstraints;
-enum 'ErrorLevel' => keys %ERROR_LEVEL_VALUE;
+enum 'ErrorLevel' => [keys %ERROR_LEVEL_VALUE];
 
 # how many characters of a string-eval are to be shown in the output
 $Carp::MaxEvalLen = 100;
