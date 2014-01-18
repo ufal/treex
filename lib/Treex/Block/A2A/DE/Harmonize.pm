@@ -446,7 +446,7 @@ sub collect_coordination_members
     # AuxP occurs only if prepositional phrases have already been processed.
     # AuxP node cannot be the first member of coordination ($toplevel).
     # However, AuxP can be non-first member. In that case, its only child bears the CoordArg afun.
-    if ( $croot->afun() eq 'AuxP' )
+    if ( defined($croot->afun()) && $croot->afun() eq 'AuxP' )
     {
         if ($toplevel)
         {
@@ -467,7 +467,7 @@ sub collect_coordination_members
     my @privatemod0;
     @members0 = grep {
         my $x = $_;
-        $x->afun() eq 'CoordArg' || $x->afun() eq 'AuxP' && grep { $_->afun() eq 'CoordArg' } ( $x->children() )
+        defined($x->afun()) && ($x->afun() eq 'CoordArg' || $x->afun() eq 'AuxP' && grep { defined($_->afun()) && $_->afun() eq 'CoordArg' } ( $x->children() ))
     } (@children);
     if (@members0)
     {

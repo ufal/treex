@@ -255,7 +255,8 @@ sub check_afuns
     foreach my $node (@nodes)
     {
         my $afun = $node->afun();
-        if ( $afun !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|AtvV|ExD|Coord|Apos|Apposition|Aux[APCVTOYXZGKR]|NR)$/ &&
+        if ( defined($afun) &&
+             $afun !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|AtvV|ExD|Coord|Apos|Apposition|Aux[APCVTOYXZGKR]|NR)$/ &&
              # Special tags from the Prague Arabic Dependency Treebank:
              $afun !~ m/^(Pred[ECP]|Ante|Aux[EM])$/
            )
