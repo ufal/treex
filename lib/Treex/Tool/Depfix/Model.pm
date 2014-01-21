@@ -18,6 +18,8 @@ has training_file => ( is => 'rw', isa => 'Str', default => '' );
 
 has baseline_prediction => ( is => 'rw', isa => 'Str' );
 
+# TODO: e.g. for predicting newchild_cas, join each feature with oldchild_cas
+has join_each_feature_with_original => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub BUILD {
     my ($self) = @_;
