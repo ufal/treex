@@ -46,10 +46,16 @@ has 'model' => ( is => 'ro', isa => 'Str', required => 1, writer => '_set_model'
 # Caching settings (should be set to the sentence-id attribute name, or some reasonable numeric value)
 has 'caching' => ( is => 'ro', isa => 'Str', default => '1' );
 
+# Require a list of available model keys on startup?
+has 'require_list_of_models' => ( is => 'ro', isa => 'Bool', default => 0 );
+
 # ML-Process slave application controls (bipipe handles, application PID)
 has '_read_handle'  => ( is => 'rw', isa => 'FileHandle' );
 has '_write_handle' => ( is => 'rw', isa => 'FileHandle' );
 has '_java_pid'     => ( is => 'rw', isa => 'Int' );
+
+# List of model keys (available only if require_list_of_models is true)
+has 'models_list' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 
 sub BUILD {
 
@@ -71,6 +77,7 @@ sub BUILD {
         . ' -c UTF-8 '
         . ( $self->caching =~ m/^[0-9]+$/ ? ' -s ' : ' -a ' ) . $self->caching
         . ' -r '
+        . ( $self->require_list_of_models ? ' -l ' : '' )
         . ' ' . $self->model;
 
     log_info( "Running " . $command );
@@ -84,7 +91,14 @@ sub BUILD {
 
     my $status = <$read>;     # wait for loading of all models
     log_fatal('ML-Process not loaded correctly') if ( ($status || '') !~ /^READY/ );
-
+    
+    if ($self->require_list_of_models){
+        my $models_list = <$read>;
+        chomp $models_list;
+        foreach my $model_key (split / /, $models_list){
+            $self->models_list->{$model_key} = 1;
+        } 
+    }
     return;
 }
 

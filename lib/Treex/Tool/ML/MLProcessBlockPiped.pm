@@ -23,6 +23,9 @@ has 'verbosity' => ( is => 'ro', isa => 'Maybe[Int]' );
 # Pipe caching settings (default: one sentence at a time)
 has 'caching' => ( is => 'ro', isa => 'Str', default => 'sent_id' );
 
+# Require a list of available model keys on startup?
+has 'require_list_of_models' => ( is => 'ro', isa => 'Bool', default => 0 );
+
 # The ML-Process underlying executable
 has '_mlprocess' => ( is => 'rw', isa => 'Maybe[Treex::Tool::ML::MLProcessPiped]' );
 
@@ -63,9 +66,10 @@ sub process_start {
     my ($self) = @_;
 
     my $params = {
-        model   => $self->model,
-        memory  => $self->memory,
-        caching => $self->caching,
+        model                  => $self->model,
+        memory                 => $self->memory,
+        caching                => $self->caching,
+        require_list_of_models => $self->require_list_of_models,
     };
     $params->{verbosity} = $self->verbosity if ( $self->verbosity );
 

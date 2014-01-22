@@ -8,7 +8,7 @@ use XML::LibXML;
 use Treex::Tool::Vallex::FrameElement;
 
 # Fill the default valency lexicon path here (where vallex.xml is located)
-Readonly my $DEFAULT_LEXICON_PATH => 'data/resources/pdt_vallex/';
+Readonly my $DEFAULT_LEXICON_PATH => 'data/resources/vallex/';
 
 # The lemma of the current valency frame
 has 'lemma' => ( isa => 'Str', is => 'ro', required => 1 );
