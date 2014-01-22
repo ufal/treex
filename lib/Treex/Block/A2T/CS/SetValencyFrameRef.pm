@@ -11,6 +11,8 @@ has '+features_config' => ( default => 'data/models/wsd/cs/features.yml' );
 
 has '+valency_dict_name' => ( default => 'vallex.xml' );
 
+has '+memory' => ( default => '8g' );
+
 1;
 
 __END__
