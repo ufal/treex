@@ -264,6 +264,17 @@ my $export_rules = {
         "preprocessor" => sub {&preprocessor_for_at_output},
         "factors"      => sub {&producer_of_at_output},
     },
+    "him" => {
+        "uselayer" => "a",
+        "sort"    => "ord",
+        "factors" => sub {
+            my $n = shift;
+            return [
+                $n->get_attr('form'),
+                $n->get_attr('tag'),
+            ];
+        },
+    },
     "enm" => {
         "uselayer" => "a",
         "sort"    => "ord",
