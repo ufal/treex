@@ -18,6 +18,7 @@ sub process_atree {
             $anodes[$i]->set_form('an');
         }
     }
+    return;
 }
 
 1;
