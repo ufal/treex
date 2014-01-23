@@ -183,6 +183,7 @@ sub _has_determiner {
     my @d = grep {
         $_->t_lemma =~ /^(some|this|those|that|these)$/
             or ( $_->gram_sempos // '' ) =~ /^(adj.pron.def.pers|n.pron.indef|adj.pron.def.demon)$/
+            or $_->formeme eq 'n:poss'
     } $tnode->get_echildren();
     return scalar @d;
 }
@@ -190,7 +191,7 @@ sub _has_determiner {
 sub _is_noun_premodifier {
     my ($tnode) = @_;
     my $parent = $tnode->get_parent;
-    return $tnode->formeme eq 'n:attr' and $parent->gram_sempos =~ /^n/ and $tnode->precedes($parent);
+    return $tnode->formeme =~ /n:attr/ and $parent->gram_sempos =~ /^n/ and $tnode->precedes($parent);
 }
 
 sub _is_topic {
@@ -224,23 +225,13 @@ sub add_article_node {
     my $article = $anode->create_child(
         {
             'lemma'        => $lemma,
+            'form'         => $lemma,
             'afun'         => 'AuxA',
             'morphcat/pos' => 'T',
             'conll/pos'    => 'DT'
         }
     );
     $article->shift_before_subtree($anode);
-
-    #    TODO a -> an!!
-    #    my ($first_node) = sort {
-    #        $a->get_ordering_value() <=> $b->get_ordering_value()
-    #    } $anode->get_treelet_nodes();
-    #
-    #    if ( $article eq 'a' and $first_node->get_attr('m/form') =~ /^[aeiou]/i ) {
-    #        $form = 'an';
-    #    }
-    #
-    #    $article->set_attr( 'm/form',  $form );
 }
 
 sub _add_to_local_context {
