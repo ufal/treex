@@ -18,9 +18,20 @@ sub process_ttree {
 sub process_finite_verb {
     my ( $self, $t_vfin ) = @_;
     my $a_vfin = $t_vfin->get_lex_anode();
-    my $a_subj = find_a_subject_of($a_vfin);
 
+    # find the subject
+    my $a_subj = find_a_subject_of($a_vfin);
     return if ( not $a_subj );
+
+    # in relative clauses, the agreement is with the antecedents of the relative pronoun
+    # -> use the antecedent as the subject (if it is set)
+    if ( $a_subj->lemma =~ /^(who|that|which)/ ) {
+        my ($t_subj) = $a_subj->get_referencing_nodes('a/lex.rf');
+        if ( $t_subj and $t_subj->get_coref_gram_nodes() ) {
+            my ($t_antec) = $t_subj->get_coref_gram_nodes();
+            $a_subj = $t_antec->get_lex_anode() ? $t_antec->get_lex_anode : $a_subj;
+        }
+    }
 
     my $number = $a_subj->morphcat_number();
     $number = 'S' if ( $number !~ /[PS]/ );
