@@ -170,6 +170,7 @@ sub process_tnode {
     my ( $first_verbform, @verbforms ) = split / /, $verbform;
 
     # replace the current verb node by the first part of the auxiliary verbal expression
+    # TODO also set tags here?
     $anode->set_lemma( _get_lemma($first_verbform) );
     $anode->set_form( _get_form( $first_verbform, $person, $number ) );
     $anode->set_afun('AuxV');

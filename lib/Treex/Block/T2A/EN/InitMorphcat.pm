@@ -15,6 +15,12 @@ my %M_DEGREE_FOR = (
     'sup'  => '3',
 );
 
+my %CONLL_DEGREE_FOR = (
+    'pos'  => '',
+    'comp' => 'R',
+    'sup'  => 'S',
+);
+
 my %M_NUMBER_FOR = (
     pl => 'P',
     sg => 'S',
@@ -44,6 +50,9 @@ sub process_tnode {
         my $number = $t_node->gram_number || '';
         $a_node->set_morphcat_number( $M_NUMBER_FOR{$number} // '.' );
 
+        $a_node->set_conll_pos( $number eq 'pl' ? 'NNS' : 'NN' );
+
+        # pronouns
         if ( $t_node->t_lemma eq '#PersPron' ) {
             $a_node->set_morphcat_pos('P');
             $a_node->set_morphcat_subpos('P');
@@ -51,6 +60,12 @@ sub process_tnode {
             my $gender = $t_node->gram_gender // '';
             $a_node->set_morphcat_gender( $M_GENDER_FOR{$gender} // '.' );
             $a_node->set_morphcat_person( $t_node->gram_person   // '.' );
+            $a_node->set_conll_pos('PRP');
+            
+            if ($t_node->formeme eq 'n:poss'){ # possessive pronouns
+                $a_node->set_morphcat_subpos('S');
+                $a_node->set_conll_pos('PRP$');
+            }
         }
     }
 
@@ -58,6 +73,7 @@ sub process_tnode {
     elsif ( $sempos =~ /^v/ ) {
 
         $a_node->set_morphcat_pos('V');
+        $a_node->set_conll_pos('VB');
 
         # voice
         my $voice = $t_node->voice || '';
@@ -75,6 +91,17 @@ sub process_tnode {
         }
         elsif ( $tense eq 'ant' ) {
             $a_node->set_morphcat_tense('R');
+            $a_node->set_conll_pos('VBD');
+        }
+
+        # infinitives, gerunds
+        if ( $t_node->formeme =~ /v.*\+inf/ ) {
+            $a_node->set_morphcat_subpos('f');
+            $a_node->set_conll_pos('VB');
+        }
+        elsif ( $t_node->formeme =~ /v.*\+ger/ ) {
+            $a_node->set_morphcat_subpos('e');    # let's say it's a "transgressive"
+            $a_node->set_conll_pos('VBG');
         }
     }
 
@@ -83,6 +110,7 @@ sub process_tnode {
         my $pos = ( $sempos =~ /^adj/ ) ? 'A' : 'D';
         my $degree = $t_node->gram_degcmp // '';
         $a_node->set_morphcat_grade( $M_DEGREE_FOR{$degree} // '.' );
+        $a_node->set_conll_pos( ( $pos eq 'A' ? 'JJ' : 'RB' ) . ( $CONLL_DEGREE_FOR{$degree} // '' ) );
     }
     else {
         $a_node->set_morphcat_pos('!');
