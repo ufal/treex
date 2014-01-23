@@ -271,6 +271,7 @@ my $export_rules = {
             my $n = shift;
             return [
                 $n->get_attr('form'),
+                $n->get_attr('lemma'),
                 $n->get_attr('tag'),
             ];
         },
