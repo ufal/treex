@@ -19,7 +19,7 @@ sub BUILD {
         ref( $self ),
     );
     my $modelname = $self->model;
-    for my $suffix ( qw/123 lex lemma/ ) {
+    for my $suffix ( qw/123 lex/ ) {
         $self->_set_model( require_file_from_share( "$modelname.$suffix" ) );
     }
 
