@@ -10,7 +10,7 @@ sub process_atree {
 	my @nodes = $root->get_descendants( { ordered => 1 } );
 
 	foreach my $node (@nodes) {
-		if ( $node->form =~ /^(.+?)(\p{IsP}+)$/ ) {
+		if ( $node->form =~ /^([^\s]+)(\p{IsP}+)$/ ) {
 
 			# step 1: add a new node for the punctuation symbol
 			print "RETOKENIZING " . $node->form . " into =>\t" . $1 . "\tand\t" . $2 ."\n";
@@ -40,7 +40,7 @@ sub process_atree {
 	@nodes = $root->get_descendants({ordered=>1});
 	
 	foreach my $node (@nodes) {
-		if ( $node->form =~ /^(\p{IsP}+)(.+?)$/ ) {
+		if ( $node->form =~ /^(\p{IsP}+)([^\s]+)$/ ) {
 			print "RETOKENIZING " . $node->form . " into =>\t" . $1 . "\tand\t" . $2 ."\n";
 			$node->set_form($2);
 			my $new_node = $root->create_child( form => $1 );
