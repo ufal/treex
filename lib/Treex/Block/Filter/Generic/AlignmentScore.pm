@@ -17,7 +17,7 @@ sub process_document {
         my $therescore = $bundle->get_zone($self->language)
             ->get_atree->get_attr( "giza_scores/therevalue" );
         next if ! $therescore; # we don't want 0 in log()
-        my $backscore = $bundle->get_zone($self->to_language)
+        my $backscore = $bundle->get_zone($self->language)
             ->get_atree->get_attr( "giza_scores/backvalue" );
         next if ! $backscore;
 

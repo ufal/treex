@@ -10,16 +10,16 @@ my @bounds = ( 0, 1, 2, 3, 5, 8, 10, 15 );
 sub process_bundle {
     my ( $self, $bundle ) = @_;
 
-    my @tgt = $bundle->get_zone($self->to_language)->get_atree->get_descendants( { ordered => 1 } );
+    my @src = $bundle->get_zone($self->language)->get_atree->get_descendants( { ordered => 1 } );
 
     my %tgt2src;
     my %src2tgt;
 
-    my $tgt_index = -1;
+    my $src_index = -1;
 
     # over all nodes
-    for my $links_ref (map { $_->get_attr( "alignment" ) } @tgt) {
-        $tgt_index++;
+    for my $links_ref (map { $_->get_attr( "alignment" ) } @src) {
+        $src_index++;
         next if ! $links_ref;
 
         # over all node links
@@ -31,7 +31,7 @@ sub process_bundle {
             # get the node index
             my $node_id = $link->{"counterpart.rf"};
             $node_id =~ m/-n(\d+)$/;
-            my $src_index = $1 - 1; # zero based
+            my $tgt_index = $1 - 1; # zero based
 
             $tgt2src{$tgt_index}++;
             $src2tgt{$src_index}++;
