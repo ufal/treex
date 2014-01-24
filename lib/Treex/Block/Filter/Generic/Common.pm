@@ -3,6 +3,9 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+has language => ( isa => 'Treex::Type::LangCode', is => 'ro', default => 'und' );
+has to_language => ( isa => 'Treex::Type::LangCode', is => 'ro', default => 'und' );
+
 sub add_feature {
     my ( $self, $bundle, $feature ) = @_;
 

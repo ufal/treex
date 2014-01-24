@@ -82,7 +82,7 @@ sub process_bundle {
         }     
 
         # never reached a consistent block A
-        next if ! is_consistent_span(\%src2tgt, \%tgt2src, $a_begin, $a_length);
+        next if ! _is_consistent_span(\%src2tgt, \%tgt2src, $a_begin, $a_length);
 
         # grow B to the right, keep span AB consistent
         while ($b_begin + $b_length <= $source_length) { 
@@ -133,7 +133,7 @@ sub _get_opposite_span {
 sub _is_consistent_span {
     my ($src2tgt, $tgt2src, $begin, $length) = @_;
 
-    my ($opposite_begin, $opposite_length) = get_opposite_span($src2tgt, $begin, $length);
+    my ($opposite_begin, $opposite_length) = _get_opposite_span($src2tgt, $begin, $length);
 
     for (my $i = $opposite_begin; $i != $opposite_begin + $opposite_length; $i++) {
         my $has_link_outside = grep {
