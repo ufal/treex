@@ -10,18 +10,18 @@ my @bounds = ( 0, 0.1, 0.2, 0.35, 0.5, 0.75, 1 );
 sub process_bundle {
     my ( $self, $bundle ) = @_;
 
-    my @tgt = $bundle->get_zone($self->to_language)->get_atree->get_descendants( { ordered => 1 } );
+    my @src = $bundle->get_zone($self->language)->get_atree->get_descendants( { ordered => 1 } );
 
     my %tgt2src;
     my %src2tgt;
 
-    my $tgt_index = -1;
+    my $src_index = -1;
 
     ### load alignment from Treex representation into hashes tgt2en, en2tgt
     
     # over all nodes
-    for my $links_ref (map { $_->get_attr( "alignment" ) } @tgt) {
-        $tgt_index++;
+    for my $links_ref (map { $_->get_attr( "alignment" ) } @src) {
+        $src_index++;
         next if ! $links_ref;
 
         # over all node links
@@ -33,7 +33,7 @@ sub process_bundle {
             # get the node index
             my $node_id = $link->{"counterpart.rf"};
             $node_id =~ m/-n(\d+)$/;
-            my $src_index = $1 - 1; # zero based
+            my $tgt_index = $1 - 1; # zero based
 
             push @{ $tgt2src{$tgt_index} }, $src_index;
             push @{ $src2tgt{$src_index} }, $tgt_index;
@@ -43,6 +43,8 @@ sub process_bundle {
     ## extract all reorderings
     my $reordered_spans_length = 0;
 
+    my $source_length = scalar @src;
+
     # over all words
     for (my $i = 1; $i < $source_length; $i++) { 
 
@@ -51,13 +53,6 @@ sub process_bundle {
         my ($a_begin_opp, $a_length_opp) = _get_opposite_span(\%src2tgt, $a_begin, $a_length);
         my ($b_begin_opp, $b_length_opp) = _get_opposite_span(\%src2tgt, $b_begin, $b_length);
         
-        if ($debug) {
-            print STDERR "Span of A: $a_begin-", $a_begin+$a_length-1, "\n";
-            print STDERR "Opposite span of A: $a_begin_opp-", $a_begin_opp+$a_length_opp-1, "\n";
-            print STDERR "Span of B: $b_begin-", $b_begin+$b_length-1, "\n";
-            print STDERR "Opposite span of B: $b_begin_opp-", $b_begin_opp+$b_length_opp-1, "\n";
-        }
-
         # A or B are not aligned to anything
         next if ! defined($a_begin_opp) || ! defined($b_begin_opp);
 
@@ -70,7 +65,6 @@ sub process_bundle {
         #     - allow A to grow to the first consistent span
         #     - after that, each extension of A must be consistent
 
-        print STDERR "Growing A\n" if $debug;
         while ($a_begin > 0) { 
             if (_is_consistent_span(\%src2tgt, \%tgt2src, $a_begin, $a_length)) { 
                 last if ! _is_consistent_span(\%src2tgt, \%tgt2src, $a_begin - 1, $a_length + 1);
@@ -91,7 +85,6 @@ sub process_bundle {
         next if ! is_consistent_span(\%src2tgt, \%tgt2src, $a_begin, $a_length);
 
         # grow B to the right, keep span AB consistent
-        print STDERR "Growing B\n" if $debug;
         while ($b_begin + $b_length <= $source_length) { 
             last if _is_consistent_span(\%src2tgt, \%tgt2src, $a_begin, $a_length + $b_length);
             my ($b_ext_begin_opp, $b_ext_length_opp) = 
@@ -108,18 +101,14 @@ sub process_bundle {
         # never reached a consistent block AB
         next if ! _is_consistent_span(\%src2tgt, \%tgt2src, $a_begin, $a_length + $b_length);
 
-        print STDERR "Adding reordered span of length ", $a_length + $b_length, "\n" if $debug;
-
         $reordered_spans_length += $a_length + $b_length;
     }     
 
-    ## compute the RQuantity
-    my $rquantity = $reordered_spans_length / $source_length;
-    printf "%.03f\n", $rquantity if $verbose;
-    $tot_rquantity += $rquantity;
-}
+    $self->add_feature( $bundle, "reordering_quantity="
+        . $self->quantize_given_bounds( $reordered_spans_length / $source_length, @bounds ) );
 
-printf "%.04f (%.02f / %d)\n", $tot_rquantity / $linecount, $tot_rquantity, $linecount;
+    return 1;
+}
  
 # given a source block, return the span of its links on the target side
 sub _get_opposite_span {
@@ -143,7 +132,6 @@ sub _get_opposite_span {
 # check span consistency (i.e. no target words are aligned outside source span)
 sub _is_consistent_span {
     my ($src2tgt, $tgt2src, $begin, $length) = @_;
-    print STDERR "Checking span $begin-",$begin+$length-1, "\n" if $debug;
 
     my ($opposite_begin, $opposite_length) = get_opposite_span($src2tgt, $begin, $length);
 
@@ -151,11 +139,9 @@ sub _is_consistent_span {
         my $has_link_outside = grep {
             $_ < $begin || $_ >= $begin + $length
         } @{ $tgt2src->{$i} };
-        print STDERR "Inconsisent\n" if $debug && $has_link_outside;
         return 0 if $has_link_outside;
     }
 
-    print STDERR "Consistent\n" if $debug;
     return 1;
 }
 

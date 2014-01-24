@@ -38,7 +38,7 @@ sub process_bundle {
         }
     }
 
-    my $max_cummulation = max( values %tgt2src values %src2tgt );
+    my $max_cummulation = max( values %tgt2src, values %src2tgt );
 
     if ( defined $max_cummulation ) {
         $self->add_feature( $bundle, "alignment_cummulation="
