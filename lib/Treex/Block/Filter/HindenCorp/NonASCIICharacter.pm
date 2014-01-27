@@ -2,7 +2,7 @@ package Treex::Block::Filter::HindenCorp::NonASCIICharacter;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Log;
-extends 'Treex::Block::Filter::HindenCorp::Common';
+extends 'Treex::Block::Filter::Generic::Common';
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;

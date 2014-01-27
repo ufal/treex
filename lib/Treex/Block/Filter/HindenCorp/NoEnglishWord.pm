@@ -2,7 +2,7 @@ package Treex::Block::Filter::HindenCorp::NoEnglishWord;
 use Moose;
 use Treex::Core::Common;
 
-extends 'Treex::Block::Filter::HindenCorp::Common';
+extends 'Treex::Block::Filter::Generic::Common';
 
 has 'dictionary' => (
     isa => 'HashRef[Str]',

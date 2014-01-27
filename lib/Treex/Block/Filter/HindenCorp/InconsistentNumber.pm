@@ -2,7 +2,7 @@ package Treex::Block::Filter::HindenCorp::InconsistentNumber;
 use Moose;
 use List::Util qw( sum );
 
-extends 'Treex::Block::Filter::HindenCorp::Common';
+extends 'Treex::Block::Filter::Generic::Common';
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;

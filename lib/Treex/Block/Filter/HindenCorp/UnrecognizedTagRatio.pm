@@ -2,7 +2,7 @@ package Treex::Block::Filter::HindenCorp::UnrecognizedTagRatio;
 use Moose;
 use Treex::Core::Common;
 
-extends 'Treex::Block::Filter::HindenCorp::Common';
+extends 'Treex::Block::Filter::Generic::Common';
 
 my @bounds = ( 0, 0.2, 0.4, 0.6, 0.8, 1 );
 

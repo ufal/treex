@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 use List::Util qw( max );
 
-extends 'Treex::Block::Filter::HindenCorp::Common';
+extends 'Treex::Block::Filter::Generic::Common';
 
 # watched{en_tag} = ( hi_tags )
 my %watched = (
