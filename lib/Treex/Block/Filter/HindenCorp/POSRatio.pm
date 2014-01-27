@@ -23,7 +23,7 @@ sub process_bundle {
     my @hi_pos = map { $_->get_attr("tag") } @hi;
 
     for my $en_pos_tag (keys %watched) {
-        my $hi_pos_regex = '^(' . join('|', @{ $watched{$en_pos_tag} }), ')$';
+        my $hi_pos_regex = '^(' . join('|', @{ $watched{$en_pos_tag} }) . ')$';
         my $en_sum = scalar grep { $_ eq $en_pos_tag } @en_pos;
         my $hi_sum = scalar grep { $_ =~ m/$hi_pos_regex/ } @hi_pos;
         
