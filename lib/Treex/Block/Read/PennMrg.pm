@@ -10,12 +10,17 @@ sub next_document {
     my $document = $self->new_document();
 
     # Root non-terminal must start with S (usually, it is S, rarely SINV).
-    foreach my $tree_text ( split /\n\(\s*\(S/ms, $text ) {
+    #foreach my $tree_text ( split /\n\(\s*\(S/ms, $text ) {
+    # This does not work, e.g. wsj_0052.mrg starts with "( (NP-HLN"
+
+    # Each sentence must start on a new line with a "(" without indentation.
+    # If the sentence does not fit one line, it must be indented with one or more spaces.
+    foreach my $tree_text ( split /\n\(/ms, "\n$text" ) {
         next if $tree_text =~ /^\s*$/;
         my $bundle = $document->create_bundle();
         my $zone   = $bundle->create_zone( $self->language, $self->selector );
         my $proot  = $zone->create_ptree();
-        $proot->create_from_mrg("( (S$tree_text");
+        $proot->create_from_mrg("($tree_text");
         $zone->set_sentence( $proot->stringify_as_text() );
     }
     return $document;
