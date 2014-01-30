@@ -33,18 +33,40 @@ sub create_subtree {
     my ($xml_node, $treex_parent) = @_;
     if (defined $xml_node->{att}{cat}) { # the node is nonterminal
         my $nt = $treex_parent->create_nonterminal_child();
-        $nt->set_id( $xml_node->{att}{id} );
         $nt->set_phrase( $xml_node->{att}{cat} );
-        foreach my $child (sort {$a->{att}{begin} <=> $b->{att}{begin}} $xml_node->children('node')) {
+        $nt->set_index( $xml_node->{att}{index} ) if defined $xml_node->{att}{index};
+        foreach my $attr (keys %{$xml_node->{att}}) {
+            next if $attr =~ /^(cat|begin|end|id|index)$/;
+            $nt->wild->{$attr} = $xml_node->{att}{$attr};
+        }
+        #foreach my $child (sort {$a->{att}{begin} <=> $b->{att}{begin}} $xml_node->children('node')) {
+        foreach my $child ($xml_node->children('node')) {
             create_subtree($child, $nt);
         }
     }
-    else { # the node is terminal
+    elsif (defined $xml_node->{att}{word}) { # the node is terminal
         my $t = $treex_parent->create_terminal_child();
-        $t->set_id( $xml_node->{att}{id} );
+        #$t->set_id( $xml_node->{att}{id} );
         $t->set_form( $xml_node->{att}{word} );
         $t->set_lemma( $xml_node->{att}{lemma} );
         $t->set_tag( $xml_node->{att}{pos} );
+        $t->set_index( $xml_node->{att}{index} ) if defined $xml_node->{att}{index};
+        $t->wild->{pord} = $xml_node->{att}{begin} + 1;
+        foreach my $attr (keys %{$xml_node->{att}}) {
+            next if $attr =~ /^(word|lemma|pos|begin|end|id|index)$/;
+            $t->wild->{$attr} = $xml_node->{att}{$attr};
+        }
+    }
+    elsif (defined $xml_node->{att}{index}) { # the node is a trace
+        my $t = $treex_parent->create_terminal_child();
+        my $trace = '*-'.$xml_node->{att}{index};
+        $t->set_form($trace);
+        $t->set_lemma($trace);
+        $t->set_tag('-NONE-');
+        foreach my $attr (keys %{$xml_node->{att}}) {
+            next if $attr =~ /^(begin|end|id|index)$/;
+            $t->wild->{$attr} = $xml_node->{att}{$attr};
+        }
     }
 }
 
@@ -62,7 +84,8 @@ sub next_document {
                 my $bundle = $document->create_bundle;
                 my $zone   = $bundle->create_zone( $self->language, $self->selector );
                 my $ptree  = $zone->create_ptree;
-                foreach my $node (sort {$a->{att}{begin} <=> $b->{att}{begin}} $sentence->children('node')) {
+                #foreach my $node (sort {$a->{att}{begin} <=> $b->{att}{begin}} $sentence->children('node')) {
+                foreach my $node ($sentence->children('node')) {
                     create_subtree($node, $ptree);
                 }
             }
