@@ -28,7 +28,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2T::CS::SetFunctors
+Treex::Block::A2T::SetFunctors
 
 =head1 DESCRIPTION
 
