@@ -14,6 +14,8 @@ has 'separator' => ( isa => 'Str', is => 'ro', default => ' ' );
 
 has 'attr_sep' => ( isa => 'Str', is => 'ro', default => '|' );
 
+has 'sent_sep' => ( isa => 'Str', is => 'ro', default => "\n", documentation => 'What to print after each sentence' );
+
 has '+extension' => ( default => '.txt' );
 
 has '+instead_undef' => ( default => "" );
@@ -25,11 +27,14 @@ has instead_empty_tree => ( is => 'ro', isa => 'Str', default => '', documentati
 sub BUILDARGS {
     my ( $self, $args ) = @_;
 
-    if ( defined $args->{separator} && $args->{separator} =~ /^\\([nrt])$/ ) {
-        $args->{separator} = eval "return \"\\$1\"";
+    if ( defined $args->{separator} && $args->{separator} =~ /^((\\[nrt])+)$/ ) {
+        $args->{separator} = eval "return \"$1\"";
     }
-    if ( defined $args->{attr_sep} && $args->{attr_sep} =~ /^\\([nrt])$/ ) {
-        $args->{attr_sep} = eval "return \"\\$1\"";
+    if ( defined $args->{attr_sep} && $args->{attr_sep} =~ /^((\\[nrt])+)$/ ) {
+        $args->{attr_sep} = eval "return \"$1\"";
+    }
+    if ( defined $args->{sent_sep} && $args->{sent_sep} =~ /^((\\[nrt])+)$/ ) {
+        $args->{sent_sep} = eval "return \"$1\"";
     }
     return $args;
 }
@@ -63,7 +68,7 @@ sub _process_tree() {
             } @nodes;
     }
 
-    print { $self->_file_handle } "\n";
+    print { $self->_file_handle } $self->sent_sep;
 }
 
 sub escape {
@@ -135,6 +140,12 @@ provided as values will be replaced by LF, tab and CR, respectively.
 
 The separator character for the individual attribute values for one node. Vertical bar ("|") is the default.
 C<\n>, C<\t> and C<\r> provided as values will be replaced by LF, tab and CR, respectively.
+
+=item C<sent_sep>
+
+The separator character for sentences (printed also after the last sentence). Newline ("\n") is the default.
+C<\n>, C<\t> and C<\r> provided as values will be replaced by LF, tab and CR, respectively.
+
 
 =item C<to>
 
