@@ -315,6 +315,11 @@ sub set_gram_negation      { return $_[0]->set_attr( 'gram/negation',      $_[1]
 sub set_gram_definiteness  { return $_[0]->set_attr( 'gram/definiteness',  $_[1] ); }
 sub set_gram_diathesis     { return $_[0]->set_attr( 'gram/diathesis',     $_[1] ); }
 
+#------------- valency frame reference -----
+
+sub val_frame_rf { return $_[0]->get_attr('val_frame.rf'); }
+sub set_val_frame_rf { return $_[0]->set_attr('val_frame.rf', $_[1]); }
+
 1;
 
 __END__
