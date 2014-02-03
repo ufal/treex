@@ -23,6 +23,7 @@ sub create_subtree {
             $new_node->set_lemma($child->lemma);
             $new_node->set_tag($child->tag);
             $new_node->set_attr('ord',$child->wild->{pord});
+            $new_node->set_conll_deprel($child->wild->{rel});
         }
         elsif (defined $child->phrase) { # the node is nonterminal
             create_subtree($child, $new_node);
@@ -35,8 +36,19 @@ sub process_zone {
     my ($self, $zone) = @_;
     my $p_root = $zone->get_ptree;
     my $a_root = $zone->create_atree();
-    my $a_node = $a_root->create_child();
-    create_subtree($p_root, $a_node);
+    foreach my $child ($p_root->get_children()) {
+        my $new_node = $a_root->create_child();
+        if ($child->phrase) {
+            create_subtree($child, $new_node);
+        }
+        else {
+            $new_node->set_form($child->form);
+            $new_node->set_lemma($child->lemma);
+            $new_node->set_tag($child->tag);
+            $new_node->set_attr('ord',$child->wild->{pord});
+            $new_node->set_conll_deprel($child->wild->{rel});
+        }
+    }
 }
 
 1;
