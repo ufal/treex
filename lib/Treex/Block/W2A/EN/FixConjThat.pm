@@ -7,8 +7,7 @@ extends 'Treex::Core::Block';
 sub process_anode {
     my ( $self, $anode ) = @_;
 
-    if ( $anode->lemma eq 'that' # TODO: the question is whether it happens also for some other subconjs
-             and $anode->tag eq 'IN'
+    if ( $anode->tag eq 'IN'
                  and $anode->precedes($anode->get_parent)
                      and $anode->get_parent->tag =~ /^V/ # TODO: possible coordinations left unresolved
                          and $anode->get_children == 0) {

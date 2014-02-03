@@ -1,5 +1,6 @@
 package Treex::Block::W2A::TokenizeOnWhitespace;
 use Moose;
+use utf8;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 

@@ -11,12 +11,16 @@ sub process_atree {
 
 sub process_subtree {
 	my ($node) = @_;
+	
+	# initial labeling	
     foreach my $c ( $node->get_children( { ordered => 1 } ) ) {
     	if ($c) {
 			$c->set_afun(get_afun($c));
 			process_subtree($c);    		
     	}
     }
+    
+    
 }
 
 
@@ -38,6 +42,9 @@ sub get_afun {
 	else {
 		return 'AuxG' if $node->form =~ /\p{IsP}/;
 	}
+	
+	# Coord
+	return 'Coord' if $node->form eq 'மற்றும்';
 
 	# AuxP
 	return 'AuxP' if $node->tag =~ /^PP/;
@@ -56,10 +63,12 @@ sub get_afun {
 	
 	
 	
-	# 1. Pred
+	# 1. Pred	
 	if ($node->get_root() == $p) {
 		return 'Pred' if $node->tag =~ /^V/;
 	}
+	
+
 	
 	# 2. Sb
 	if ($p != $node->get_root()) {

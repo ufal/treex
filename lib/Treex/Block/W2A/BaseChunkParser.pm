@@ -32,6 +32,8 @@ sub split_long_chunks {
 sub process_atree {
     my ( $self, $a_root ) = @_;
     my @a_nodes = $a_root->get_descendants( { ordered => 1 } );
+    
+    print "Parsing :" . $a_root->id . "\n";
 
     # Skip the sentence if this block is used in "reparse" mode and no reparsing is needed
     return 1 if $self->reparse && !$a_root->get_attr('reparse');
