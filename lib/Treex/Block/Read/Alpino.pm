@@ -87,7 +87,8 @@ sub next_document {
                 my $bundle = $document->create_bundle;
                 my $zone   = $bundle->create_zone( $self->language, $self->selector );
                 my $ptree  = $zone->create_ptree;
-                foreach my $node ($sentence->children('node')) {
+                $ptree->set_phrase('top');
+                foreach my $node ($sentence->first_child('node')->children('node')) {
                     create_subtree($node, $ptree);
                 }
                 $zone->set_sentence($sentence->first_child_text('sentence'));
