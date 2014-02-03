@@ -3,31 +3,55 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseTextReader';
 
+has 'encode_punctuation_tags' => (
+    is => 'rw',
+    isa => 'Bool',
+    default => 1,
+    documentation => 'Convert "(" tag to "-LRB-", etc.',
+);
+
+my %SUBSTITUTE = (
+    '(' => '-LRB-',
+    ')' => '-RRB-',
+);
+
 sub next_document {
     my ($self) = @_;
     my $text = $self->next_document_text();
     return if !defined $text;
     my $document = $self->new_document();
+    
     # Sentence cannot end with a bracket
     $text =~ s/]\n//g;
+    
+    # Sentence cannot start with closing quotes or brackets
+    $text =~ s{\n\n\s*(''/''|\)/\))}{\n$1}g;
+    
+    # Stories are separated by "=====" (38 symbols), which always marks a sentence boundary
+    $text =~ s{^={10,}}{\n\n}g;
+    
     my @sentences = split /\n\n/ms, $text;
-    # Each "story" starts with 38 "=" symbols
-    #my @stories = split /^={10,}/, $text;
-        
     foreach my $sentence ( @sentences ) {
         next if $sentence =~ /^\s*$/;
         my @tokens = grep{/./ && !/^[][=]+$/} split /\s+/, $sentence;
         next if !@tokens;
-        next if @tokens==1 && $tokens[0] eq "''/''";
         
         my $bundle = $document->create_bundle();
         my $zone   = $bundle->create_zone( $self->language, $self->selector );
         my $aroot  = $zone->create_atree();
         my $ord=1;
         foreach my $token (@tokens) {
-            my ($form, $tag) = split /\//, $token;
-            log_warn "Token without a tag: '$token'" if !defined $tag;
-            my $node = $aroot->create_child({form=>$form, tag=>$tag, ord=>$ord++});
+            my $node = $aroot->create_child({ord=>$ord++});
+            if ($token =~ s{/([^/]+$)}{}) {
+                my $tag = $1;
+                if ($self->encode_punctuation_tags){
+                    $tag = $SUBSTITUTE{$tag} || $tag;
+                }
+                $node->set_tag($tag);
+            } else {
+                log_warn "Token without a tag: '$token'";
+            }
+            $node->set_form($token);
         }
         
         $zone->set_sentence( join ' ', map {$_->form} $aroot->get_children() );
