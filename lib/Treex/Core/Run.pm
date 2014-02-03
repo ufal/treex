@@ -833,10 +833,7 @@ sub _create_job_script {
 
     print $J 'echo -e "$HOSTNAME\n"`date +"%s"` > ' . $started_file . ";\n";
     print $J "stat $started_file 1>&2 > /dev/null;\n";
-    print $J "export PATH=/opt/bin/:\$PATH > /dev/null 2>&1\n\n";
     print $J "cd $current_dir\n\n";
-    #print $J "source " . Treex::Core::Config->lib_core_dir()
-    #    . "/../../../../config/init_devel_environ.sh 2> /dev/null\n\n";    # temporary hack !!!
 
     my $opts_and_scen = "";
     if ( $self->_tmp_scenario_file ) {
