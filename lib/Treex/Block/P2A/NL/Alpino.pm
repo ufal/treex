@@ -18,12 +18,16 @@ sub create_subtree {
         else {
             $new_node = $a_root->create_child();
         }
-        if (defined $child->form) { # the node is termineal
+        if (defined $child->form) { # the node is terminal
             $new_node->set_form($child->form);
             $new_node->set_lemma($child->lemma);
             $new_node->set_tag($child->tag);
             $new_node->set_attr('ord',$child->wild->{pord});
             $new_node->set_conll_deprel($child->wild->{rel});
+            foreach my $attr (keys %{$child->wild}) {
+                next if $attr =~ /^(pord|rel)$/;
+                $new_node->wild->{$attr} = $child->wild->{$attr};
+            }
         }
         elsif (defined $child->phrase) { # the node is nonterminal
             create_subtree($child, $new_node);
