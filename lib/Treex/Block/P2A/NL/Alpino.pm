@@ -9,6 +9,7 @@ my %HEAD_SCORE = ('hd' => 6, 'cmp' => 5, 'crd' => 4, 'dlink' => 3, 'rhd' => 2, '
 sub create_subtree {
     my ($p_root, $a_root) = @_;
     my @children = sort {($HEAD_SCORE{$b->wild->{rel}} || 0) <=> ($HEAD_SCORE{$a->wild->{rel}} || 0)} grep {!defined $_->form || $_->form !~ /^\*\-/} $p_root->get_children();
+    #my @children = sort {($HEAD_SCORE{$b->wild->{rel}} || 0) <=> ($HEAD_SCORE{$a->wild->{rel}} || 0)} $p_root->get_children();
     my $head = $children[0];
     foreach my $child (@children) {
         my $new_node;
@@ -22,7 +23,8 @@ sub create_subtree {
             $new_node->set_form($child->form);
             $new_node->set_lemma($child->lemma);
             $new_node->set_tag($child->tag);
-            $new_node->set_attr('ord',$child->wild->{pord});
+            #$new_node->set_attr('ord', ($child->wild->{pord} || $a_root->{ord} || 0));
+            $new_node->set_attr('ord', $child->wild->{pord});
             $new_node->set_conll_deprel($child->wild->{rel});
             foreach my $attr (keys %{$child->wild}) {
                 next if $attr =~ /^(pord|rel)$/;
@@ -51,6 +53,10 @@ sub process_zone {
             $new_node->set_tag($child->tag);
             $new_node->set_attr('ord',$child->wild->{pord});
             $new_node->set_conll_deprel($child->wild->{rel});
+            foreach my $attr (keys %{$child->wild}) {
+                next if $attr =~ /^(pord|rel)$/;
+                $new_node->wild->{$attr} = $child->wild->{$attr};
+            }
         }
     }
 }
