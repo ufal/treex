@@ -884,7 +884,7 @@ sub _run_job_script {
         $qsub_opts .= ' ' . $self->qsub;
         $qsub_opts .= ' -N ' . $self->name . '-job' . sprintf( "%03d", $jobnumber ) . '.sh ' if $self->name;
 
-        open my $QSUB, "cd $workdir && qsub $qsub_opts $script_filename |" or log_fatal $!;    ## no critic (ProhibitTwoArgOpen)
+        open my $QSUB, "cd $workdir && qsub -v TREEX_PARALLEL=1 $qsub_opts $script_filename |" or log_fatal $!;    ## no critic (ProhibitTwoArgOpen)
 
         my $firstline = <$QSUB>;
         close $QSUB;
