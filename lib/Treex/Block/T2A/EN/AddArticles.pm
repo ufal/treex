@@ -7,8 +7,6 @@ use Treex::Tool::Lexicon::EN::Hypernyms;
 
 extends 'Treex::Core::Block';
 
-my $DEBUG = 0;
-
 has 'context_size' => ( isa => 'Int', is => 'ro', default => 7 );
 
 has '_local_context' => ( isa => 'HashRef', is => 'rw', default => sub { {} } );
@@ -40,8 +38,7 @@ sub decide_article {
     my $number = $anode->morphcat_number // 'S';
     my $countability = Treex::Tool::Lexicon::EN::Countability::countability($lemma);
     my $article      = '';
-
-    print STDERR "articles: $lemma\n" if $DEBUG;
+    my $rule         = '?';
 
     #
     # fixed rules
@@ -49,79 +46,86 @@ sub decide_article {
 
     if ( _has_determiner($tnode) ) {
         $article = '';
-        print STDERR "articles: has_determiner\n" if $DEBUG;
+        $rule    = 'has_determiner';
     }
     elsif ( _is_noun_premodifier($tnode) ) {
         $article = '';
-        print STDERR "articles: is_noun_premodifier\n" if $DEBUG;
+        $rule    = 'is_noun_premodifier';
     }
     elsif ( $self->_local_context->{$lemma} ) {
         $article = 'the';
-        print STDERR "articles: local_context\n" if $DEBUG;
+        $rule    = 'local_context';
     }
     elsif ( $tnode->gram_definiteness ) {
         $article = $tnode->gram_definiteness eq 'def1' ? 'the' : 'a';
-        print STDERR "articles: gram/definiteness\n" if $DEBUG;
+        $rule = 'gram/definiteness';
     }
     elsif ( _has_relative_clause($tnode) || _is_restricted_somehow( $tnode, $countability ) ) {
         $article = 'the';
-        print STDERR "articles: has_relative_clause or is restricted\n" if $DEBUG;
+        $rule    = 'has_relative_clause or is restricted';
     }
     elsif ( $countability eq 'countable' && $number eq 'S' ) {
 
         # John was President, Karl became Pope, Hey Doctor, come closer.
         $article = $lemma eq ucfirst($lemma) ? '' : _is_topic($anode) ? 'the' : 'a';
-        print STDERR "articles: countable and singular\n" if $DEBUG;
+        $rule = 'countable and singular';
     }
     elsif ( $countability eq 'countable' && $number eq 'P' ) {
         $article = '';
-        print STDERR "articles: countable and plural\n" if $DEBUG;
+        $rule    = 'countable and plural';
     }
     elsif ( $countability eq 'uncountable' ) {
 
+        $rule    = 'uncountable';
+        $article = '';
+
         # 'a' when modified by an adjective
-        my @adj = grep { $_->gram_sempos =~ /^adj/ } $tnode->get_descendants();
-        $article = scalar @adj ? 'a' : '';
-        if ( $lemma =~ /^(pity|waste)$/ ) { $article = 'a' }
-        print STDERR "articles: uncountable\n" if $DEBUG;
+        if ( grep { $_->gram_sempos =~ /^adj/ } $tnode->get_descendants() ) {
+            $article = 'a';
+            $rule    = 'uncountable/with adj';
+        }
+        elsif ( $lemma =~ /^(pity|waste)$/ ) {
+            $article = 'a';
+            $rule    = 'uncountable/pity+waste';
+        }
     }
     elsif ( Treex::Tool::Lexicon::EN::Hypernyms::is_meal($lemma) ) {
         $article = '';
-        print STDERR "articles: meal\n" if $DEBUG;
+        $rule    = 'meal';
     }
     elsif ( Treex::Tool::Lexicon::EN::Hypernyms::is_water_body($lemma) ) {
         $article = 'the';
-        print STDERR "articles: ocean\n" if $DEBUG;
+        $rule    = 'ocean';
     }
     elsif ( Treex::Tool::Lexicon::EN::Hypernyms::is_island($lemma) ) {
         $article = $lemma =~ /\b(of)\b/ || $number eq 'P' ? 'the' : '';
-        print STDERR "articles: island\n" if $DEBUG;
+        $rule = 'island';
     }
     elsif ( Treex::Tool::Lexicon::EN::Hypernyms::is_mountain_peak($lemma) || $lemma =~ /mountain of /i ) {
         $article = $lemma =~ /\b(of)\b/ ? 'the' : '';
-        print STDERR "articles: mountain\n" if $DEBUG;
+        $rule = 'mountain';
     }
     elsif ( Treex::Tool::Lexicon::EN::Hypernyms::is_mountain_chain($lemma) ) {
         $article = 'the';
-        print STDERR "articles: chain of mountains\n" if $DEBUG;
+        $rule    = 'chain of mountains';
     }
     elsif ( $lemma =~ /^(Netherlands|Argentine)$/i ) {
         $article = 'the';
-        print STDERR "articles: countries exceptions\n" if $DEBUG;
+        $rule    = 'countries exceptions';
     }
     elsif ( $lemma =~ /\b(kingdom|union|state|republic|US|UK|U\.S\.)/i ) {
         $article = 'the';
-        print STDERR "articles: kingdoms etc\n" if $DEBUG;
+        $rule    = 'kingdoms etc';
     }
     elsif ( Treex::Tool::Lexicon::EN::Hypernyms::is_country($lemma) ) {
 
         # other countries than above
         $article = '';
-        print STDERR "articles: states\n" if $DEBUG;
+        $rule    = 'states';
     }
     elsif ( $lemma =~ /\b(union|EU)\b/i ) {
         $article = 'the';
-        print STDERR "articles: eu\n" if $DEBUG;
+        $rule    = 'eu';
     }
     elsif ( Treex::Tool::Lexicon::EN::Hypernyms::is_nation($lemma) ) {
 
@@ -129,22 +133,22 @@ sub decide_article {
         # BEWARE, this wont work, cos wn3.0 gives the 'people of a nation' into one synset with 'nation, land, country'
         # thus it will trigger the state test above
         $article = 'the';
-        print STDERR "articles: nation\n" if $DEBUG;
+        $rule    = 'nation';
     }
     elsif ( $lemma =~ /^(dozen|thousand)$/i ) {
         $article = '';
 
         # a thousand == one thousand
         $article = 'a' if $number eq 'S';
-        print STDERR "articles: dozen\n" if $DEBUG;
+        $rule = 'dozen';
     }
     elsif ( $lemma =~ /^(lot|deal)$/i ) {
         $article = 'a';
-        print STDERR "articles: lot\n" if $DEBUG;
+        $rule    = 'lot';
     }
     elsif ( $lemma =~ /^(left|right|center)$/i ) {
         $article = 'the';
-        print STDERR "articles: direction\n" if $DEBUG;
+        $rule    = 'direction';
     }
 
     #
@@ -154,28 +158,32 @@ sub decide_article {
 
         # Other names that above we want without the article
         $article = '';
-        print STDERR "articles: is_name\n" if $DEBUG;
+        $rule    = 'is_name';
     }
     elsif ( _is_topic($anode) ) {
         $article = 'the';
-        print STDERR "articles: is_topic\n" if $DEBUG;
+        $rule    = 'is_topic';
     }
     else {
 
         # = 'the'; # 6mio in bnc, 2mio for 'a'
         $article = '';
-        print STDERR "articles: default\n" if $DEBUG;
+        $rule    = 'default';
     }
-
-    print STDERR "articles: $article\n\n" if $DEBUG;
-
-    # grand finale
+    
+    #
+    # create the node and add it to context, if possible
+    #
     if ($article) {
-        add_article_node( $anode, $article );
+        my $article_anode = add_article_node( $anode, $article );
+        $tnode->add_aux_anodes($article_anode);
     }
+    $anode->wild->{article_rule} = $rule;  # store the rule for debugging purposes
 
     # rough simulation of 7 salient items in consciousness, should be synsetid and not lemma
-    $self->_add_to_local_context($lemma) if ( $article eq 'a' );
+    if ( $article eq 'a' or ( $rule =~ /(determiner|relative)/ and $countability eq 'countable' ) ){
+        $self->_add_to_local_context($lemma);
+    }
 }
 
 sub _has_determiner {
@@ -228,10 +236,11 @@ sub add_article_node {
             'form'         => $lemma,
             'afun'         => 'AuxA',
             'morphcat/pos' => 'T',
-            'conll/pos'    => 'DT'
+            'conll/pos'    => 'DT',
         }
     );
     $article->shift_before_subtree($anode);
+    return $article;
 }
 
 sub _add_to_local_context {
@@ -243,6 +252,7 @@ sub _add_to_local_context {
         $self->_local_context->{$context_lemma}--;
         delete $self->_local_context->{$context_lemma} if ( !$self->_local_context->{$context_lemma} );
     }
+    return;
 }
 
 1;
