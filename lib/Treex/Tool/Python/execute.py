@@ -14,6 +14,7 @@ module.
 
 from __future__ import unicode_literals
 import sys
+import traceback
 import re
 import codecs
 import os
@@ -53,6 +54,7 @@ while True:
             #print >> sys.stderr, 'Exec\'d ' + cmd
         except Exception, e:
             cmd = re.sub(r'[^\n]+\n$', '', cmd)
-            print >> sys.stderr, 'Command:', "\n\n", cmd, 'Exception:', e
+            _, _, tb = sys.exc_info()
+            print >> sys.stderr, '\n\nCommand:', '\n', cmd, '\nException:\n', e, '\n\n', ''.join(traceback.format_tb(tb))
             pass
         cmd = ''
