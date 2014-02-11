@@ -19,6 +19,7 @@ sub process_zone
     # Adjust the tree structure.
     $self->attach_final_punctuation_to_root($a_root);
     $self->restructure_coordination($a_root, 1);
+    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_atree($a_root);
     $self->check_afuns($a_root);
 }
 

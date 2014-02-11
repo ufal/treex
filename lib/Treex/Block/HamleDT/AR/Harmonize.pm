@@ -12,12 +12,13 @@ sub process_zone
 {
     my $self = shift;
     my $zone = shift;
-    my $root = $self->SUPER::process_zone($zone, 'padt');
-    $self->attach_final_punctuation_to_root($root);
-    $self->fill_in_lemmas($root);
-    $self->fix_coap_ismember($root);
-    $self->restructure_coordination($root);
-    $self->fix_auxp($root);
+    my $a_root = $self->SUPER::process_zone($zone, 'padt');
+    $self->attach_final_punctuation_to_root($a_root);
+    $self->fill_in_lemmas($a_root);
+    $self->fix_coap_ismember($a_root);
+    $self->restructure_coordination($a_root);
+    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_atree($a_root);
+    $self->fix_auxp($a_root);
 }
 
 #------------------------------------------------------------------------------

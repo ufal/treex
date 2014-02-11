@@ -18,6 +18,7 @@ sub process_zone {
     $self->convert_apposition($a_root);
     $self->convert_copullae($a_root);
     $self->conll_to_pdt($a_root);
+    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_atree($a_root);
     $self->check_afuns($a_root);
 } # process_zone
 

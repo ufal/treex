@@ -13,6 +13,7 @@ sub process_zone
     my $self   = shift;
     my $zone   = shift;
     my $a_root = $self->SUPER::process_zone($zone, 'tamiltb');
+    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_atree($a_root);
 }
 
 #------------------------------------------------------------------------------
