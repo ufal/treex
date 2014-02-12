@@ -21,9 +21,8 @@ sub process_zone
     $self->change_ending_colon_to_AuxK($a_root);
     $self->change_wrong_puctuation_root($a_root);
     $self->conflate_elipsis($a_root);
-	$self->change_quotation_predicate_into_obj($a_root);
-    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_atree($a_root);
-
+    $self->change_quotation_predicate_into_obj($a_root);
+    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
 }
 
 #------------------------------------------------------------------------------

@@ -20,7 +20,7 @@ sub process_zone
     $self->correct_punctuations($a_root);
     $self->correct_coordination($a_root);
     $self->check_apos_coord_membership($a_root);
-    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_atree($root);
+    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
     $self->check_afuns($a_root);    
 }
 

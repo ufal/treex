@@ -31,6 +31,7 @@ sub process_zone {
     $self->attach_final_punctuation_to_root($a_root);
     $self->restructure_coordination($a_root, $debug);
     $self->process_prep_sub_arg_cloud($a_root);
+    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
 #    $self->check_afuns($a_root);
 
 }

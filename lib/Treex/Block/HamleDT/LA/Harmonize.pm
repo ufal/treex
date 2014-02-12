@@ -15,7 +15,7 @@ sub process_zone
     my $self   = shift;
     my $zone   = shift;
     my $a_root = $self->SUPER::process_zone($zone);
-    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_atree($a_root);
+    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
     $self->check_afuns($a_root);
 }
 

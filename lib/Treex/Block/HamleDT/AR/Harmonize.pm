@@ -17,7 +17,7 @@ sub process_zone
     $self->fill_in_lemmas($a_root);
     $self->fix_coap_ismember($a_root);
     $self->restructure_coordination($a_root);
-    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_atree($a_root);
+    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
     $self->fix_auxp($a_root);
 }
 

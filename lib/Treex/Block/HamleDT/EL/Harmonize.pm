@@ -16,7 +16,7 @@ sub process_zone
     $self->hang_everything_under_pred($a_root);
     $self->attach_final_punctuation_to_root($a_root);          
     $self->check_apos_coord_membership($a_root);
-    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_atree($root);
+    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
     $self->check_afuns($a_root);
     
     # Error routines
