@@ -227,6 +227,11 @@ sub update_coref_nodes {
 
 # ----------- complement nodes -------------
 
+sub get_compl_nodes {
+    my ( $self, $arg_ref ) = @_;
+    return $self->_get_node_list( 'compl.rf', $arg_ref );
+}
+
 sub add_compl_nodes {
     my $self = shift;
     return $self->_add_to_node_list( 'compl.rf', @_ );
