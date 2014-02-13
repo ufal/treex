@@ -1,6 +1,4 @@
 package Treex::Block::W2A::EN::TagLinguaEn;
-use 5.010;
-use feature qw(switch);
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -46,39 +44,16 @@ sub _revert_form {    #because Lingua::EN::Tagger changes some forms to another,
 sub _correct_lingua_tag {
     my ( $self, $linguatag, $wordform ) = @_;
     $linguatag = uc $linguatag; # newer versions of Lingua::EN::Tagger use lowercased tags
-    given ($linguatag) {
-        when ('DET') {
-            return 'DT';
-        }
-        when ('PRPS') {
-            return 'PRP$';
-        }
-        when (/^[LR]RB$/) {
-            return "-$linguatag-";
-        }
-        when (/^PP/) {       # allowed "tags" of punctuation mark in PennTB: #  $ '' ( ) , . : ``
-
-            given ($wordform) {
-
-                when (/^(?:#|$|''|,|\.|:|``)$/) {
-                    return $wordform;
-                }
-                when (/[\(\[\{]/) {
-                    return "-LRB-";
-                }
-                when (/[\)\]\}]/) {
-                    return "-RRB-";
-                }
-                default {
-                    return ".";
-                }
-
-            }
-        }
-        default {
-            return $linguatag;
-        }
+    return 'DT' if $linguatag eq 'DET';
+    return 'PRP$' if $linguatag eq 'PRPS';
+    return "-$linguatag-" if $linguatag =~ /^[LR]RB$/;
+    if ($linguatag =~ /^PP/) {       # allowed "tags" of punctuation mark in PennTB: #  $ '' ( ) , . : ``
+        return $wordform if $wordform =~ /^(?:#|$|''|,|\.|:|``)$/;
+        return '-LRB-' if $wordform =~ /[\(\[\{]/;
+        return '-RRB-' if $wordform =~ /[\)\]\}]/;
+        return '.';
     }
+    return $linguatag;
 }
 
 sub process_zone {
