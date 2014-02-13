@@ -80,7 +80,7 @@ sub apply_contextual_rules {
     $text =~ s/(^|\n\h*)([0-9\.]+|[IVXLCMD]+|P[Řř])\.(\h*)/$1$2<<<DOT>>>$3/g;
 
     # law captions
-    $text =~ s/(^|\n\h*)(zákon|vyhláška|nařízení)(\s*)(č)\.(\s*[0-9]+\s*\/\s*[0-9]+\s*Sb)\./$1$2$3$4<<<DOT>>>$5<<<DOT>>/gi;
+    $text =~ s/(^|\n\h*)(zákon|vyhláška|nařízení)(\s*)(č)\.(\s*[0-9]+\s*\/\s*[0-9]+\s*Sb)\./$1$2$3$4<<<DOT>>>$5<<<DOT>>>/gi;
 
     # hl. m. Praha
     $text =~ s/hl\.(\s*)m\.(\s*)(Prah)/hl<<<DOT>>>$1m<<<DOT>>>$2$3/gi;
