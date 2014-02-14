@@ -11,7 +11,9 @@ has '+features_config' => ( default => 'data/models/wsd/en/features.yml' );
 
 has '+valency_dict_name' => ( default => 'engvallex.xml' );
 
-has '+memory' => ( default => '6g' );
+has '+valency_dict_prefix' => ( default => 'en-v#' );
+
+has '+memory' => ( default => '20g' );
 
 has '+sempos_filter' => ( default => 'v' );
 

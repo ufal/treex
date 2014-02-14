@@ -14,6 +14,8 @@ has '+memory' => ( default => '6g' );
 
 has 'valency_dict_name' => ( is => 'ro', isa => 'Str', required => 1 );
 
+has 'valency_dict_prefix' => ( is => 'ro', isa => 'Str', default => '' );
+
 has 'sempos_filter' => ( is => 'ro', isa => 'Str', default => '' );
 
 sub process_ttree {
@@ -44,6 +46,7 @@ sub process_ttree {
 
     for ( my $i = 0; $i < @to_classif; ++$i ) {
         $to_classif[$i]->set_val_frame_rf( $classified[$i]->{'val_frame.rf'} );
+        $to_classif[$i]->wild->{val_frame_set} = 'ML';
     }
 
     # assign first frame for the given lemma, if no model is available and frames exist
@@ -60,7 +63,8 @@ sub process_ttree {
         );
         next if ( !$frame );
 
-        $tnode->set_val_frame_rf( $frame->id );
+        $tnode->set_val_frame_rf( $self->valency_dict_prefix . $frame->id );
+        $tnode->wild->{val_frame_set} = 'VALLEX-1st';
     }
     return;
 }

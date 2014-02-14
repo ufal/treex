@@ -5,13 +5,15 @@ use Treex::Core::Common;
 
 extends 'Treex::Block::A2T::SetValencyFrameRef';
 
-has '+model' => ( default => 'data/models/wsd/cs/model-pack.dat.gz' );
+has '+model' => ( default => 'data/models/wsd/cs/model-pack.2.dat.gz' );
 
 has '+features_config' => ( default => 'data/models/wsd/cs/features.yml' );
 
 has '+valency_dict_name' => ( default => 'vallex.xml' );
 
-has '+memory' => ( default => '8g' );
+has '+valency_dict_prefix' => ( default => 'v#' );
+
+has '+memory' => ( default => '20g' );
 
 1;
 
