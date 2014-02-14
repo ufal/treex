@@ -176,7 +176,13 @@ sub _adj {
     my $stem = get_stem( $a_node );
 
     my $conj = get_verb_string(@aux_a_nodes);
-    return "adj:$stem+$conj" if $conj;
+
+    if ($stem eq "") {
+        return "adj:$conj" if $conj;
+    }
+    else {
+        return "adj:$stem+$conj" if $conj;
+    }
 
     #return 'n:subj'    if $afun eq 'Sb'; # adjectives in the subject positions -- nominal usage
     
@@ -199,7 +205,12 @@ sub _verb {
     my $stem = get_stem( $a_node );
 
     my $conj = get_verb_string(@aux_a_nodes);
-    return "v:$stem+$conj" if $conj;
+    if ($stem eq "") {
+        return "v:$conj" if $conj;
+    }
+    else {
+        return "v:$stem+$conj" if $conj;
+    }
 
     #my $subconj = get_subconj_string($first_verbform, @aux_a_nodes);
 
@@ -258,7 +269,7 @@ sub get_stem {
     my ($a_node) = @_;
 
     # when there is no difference between lemma and form, we return X as default value
-    return "X" if $a_node->lemma eq $a_node->form;
+    return "" if $a_node->lemma eq $a_node->form;
 
     my @lemma = split //, $a_node->lemma;
     my @form = split //, $a_node->form;
@@ -271,7 +282,7 @@ sub get_stem {
         $pos++;
     }
     
-    return "X" if $pos == scalar(@form);
+    return "" if $pos == scalar(@form);
     
 }
 
