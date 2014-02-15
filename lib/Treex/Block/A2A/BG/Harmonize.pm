@@ -16,9 +16,9 @@ sub process_zone
 
     # Adjust the tree structure.
     $self->attach_final_punctuation_to_root($a_root);
+    $self->restructure_coordination($a_root);
     $self->process_auxiliary_particles($a_root);
     $self->process_auxiliary_verbs($a_root);
-    $self->restructure_coordination($a_root);
     $self->mark_deficient_clausal_coordination($a_root);
     $self->check_afuns($a_root);
 }
