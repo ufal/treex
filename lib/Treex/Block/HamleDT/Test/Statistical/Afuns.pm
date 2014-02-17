@@ -4,11 +4,14 @@ use Treex::Core::Common;
 
 extends 'Treex::Core::Block';
 
-sub process_anode {
+sub process_atree {
     my $self = shift;
-    my $node = shift;
-    my $afun = $node->afun();
-    print "$afun\n";
+    my $a_root = shift;
+    my $language = $a_root->get_zone->language();
+    for my $anode ($a_root->get_descendants) {
+	my $afun = $anode->afun();
+	print "$language\t$afun\n";
+    }
 }
 
 1;
@@ -23,7 +26,7 @@ Treex::Block::HamleDT::Test::Statistical::Afuns
 
 =head1 DESCRIPTION
 
-Prints afuns to the standard output.
+For each node in a tree, prints a language code and afun to the standard output.
 
 =head1 AUTHOR
 

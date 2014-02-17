@@ -9,8 +9,9 @@ sub process_anode {
     my $self = shift;
     my $node = shift;
     my $afun = $node->afun;
-    return if ($afun eq 'AuxC' or $afun eq 'AuxP' or $afun eq 'Coord');
+    return if ($afun eq 'AuxC' or $afun eq 'AuxP' or $afun eq 'Coord' or $afun eq 'Apos');
     if ($node->get_echildren != 0) {
+	
         my $string = tree2string( $node );
         my $pomoc = $string;
         my $words;
@@ -26,7 +27,8 @@ sub process_anode {
         $tree  =~ s/^[^=]+//;
         $words =~ s/^ +//;
         $tags  =~ s/^ +//;
-        print "$words\t$tree\t$tags\n";
+	my $language = $node->get_zone()->language();
+        print "$language\t$words\t$tree\t$tags\n";
     }
 }
 
