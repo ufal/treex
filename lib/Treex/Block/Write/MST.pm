@@ -7,6 +7,9 @@ has '+language'                        => ( required => 1 );
 has 'deprel_attribute'                 => ( is       => 'rw', isa => 'Str', default => 'afun');
 has 'pos_attribute'                    => ( is       => 'rw', isa => 'Str', default => 'tag' );
 
+# if set, the forms will be replaced with 'underscores'
+has 'delex' => (is => 'Bool', is => 'ro', default => 0);
+
 sub process_atree {
     my ( $self, $atree ) = @_;
 
@@ -20,6 +23,8 @@ sub process_atree {
     map{ push @forms, $_->form; push @parents, $_->get_parent->ord }@anodes;
     map{ push @tags, $_->get_attr($self->pos_attribute) }@anodes;
     map{ push @afuns, $_->get_attr($self->deprel_attribute) }@anodes;
+
+	map{ $forms[$_] = '_' }0..$#forms if ($self->delex); 
 
     my $form_line = join("\t", @forms);
     my $tag_line = join("\t", @tags);
