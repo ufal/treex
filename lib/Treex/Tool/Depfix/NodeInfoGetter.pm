@@ -14,12 +14,16 @@ sub add_node_info {
             $info->{$prefix.$attribute} = $anode->get_attr($attribute);
         }
         $info->{$prefix.'childno'} = scalar($anode->get_echildren({or_topological => 1}));
+        $info->{$prefix.'lchildno'} = scalar($anode->get_echildren({preceding_only=>1, or_topological => 1}));
+        $info->{$prefix.'rchildno'} = scalar($anode->get_echildren({following_only=>1, or_topological => 1}));
         $self->add_tag_split($info, $prefix, $anode);
     } else {
         foreach my $attribute (@{$self->attributes}) {
             $info->{$prefix.$attribute} = '';
         }
         $info->{$prefix.'childno'} = '';
+        $info->{$prefix.'lchildno'} = '';
+        $info->{$prefix.'rchildno'} = '';
         $self->add_tag_split($info, $prefix, undef);
     }
 
@@ -47,7 +51,7 @@ sub add_edge_info {
         $info->{$prefix.'direction'} = $child->precedes($parent) ? '/' : '\\';
         # existence
         my @child_parents = $child->get_eparents( {or_topological => 1} );
-        my @parent_parents = $parent->get_eparents( {or_topological => 1} );
+        my @parent_parents = $parent->is_root ? () : $parent->get_eparents( {or_topological => 1} );
         if ( grep { $_->id eq $parent->id } @child_parents ) {
             # the edge exists
             $info->{$prefix.'existence'} = 1;

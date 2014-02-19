@@ -18,9 +18,6 @@ has training_file => ( is => 'rw', isa => 'Str', default => '' );
 
 has baseline_prediction => ( is => 'rw', isa => 'Str' );
 
-# TODO: e.g. for predicting newchild_cas, join each feature with oldchild_cas
-has join_each_feature_with_original => ( is => 'rw', isa => 'Bool', default => 0 );
-
 sub BUILD {
     my ($self) = @_;
 
@@ -60,12 +57,10 @@ sub _load_model {
 sub get_predictions {
     my ($self, $instance_info) = @_;
 
-    my %features = map {
-        $_ => $instance_info->{$_}
-    } @{ $self->config->{features} };
+    my $features = $self->fields2features($instance_info);
 
     # TODO if empty, put in baseline prediction
-    return $self->_get_predictions(\%features);
+    return $self->_get_predictions($features);
 }
 
 sub _get_predictions {
@@ -80,14 +75,12 @@ sub _get_predictions {
 sub get_best_prediction {
     my ($self, $instance_info) = @_;
 
-    my %features = map {
-        $_ => $instance_info->{$_}
-    } @{ $self->config->{features} };
+    my $features = $self->fields2features($instance_info);
 
-    my $prediction = $self->_get_best_prediction(\%features);
+    my $prediction = $self->_get_best_prediction($features);
     if ( !defined $prediction ) {
         log_warn "No prediction generated, using the baseline instead.";
-        $prediction = $self->get_baseline_prediction(\%features);
+        $prediction = $self->get_baseline_prediction($features);
     }
     
     return $prediction;
@@ -159,13 +152,11 @@ sub _training_loop {
 sub see_instance {
     my ($self, $instance_info) = @_;
 
-    my %features = map {
-        $_ => $instance_info->{$_}
-    } @{ $self->config->{features} };
+    my $features = $self->fields2features($instance_info);
     
     my $class = $instance_info->{ $self->config->{predict} };
 
-    return $self->_see_instance(\%features, $class);
+    return $self->_see_instance($features, $class);
 }
 
 sub _see_instance {
@@ -224,6 +215,20 @@ sub test {
 
     return $accuracy;
 }
+
+sub fields2features {
+    my ($self, $fields) = @_;
+
+    my $features = {};
+    foreach my $feature (@{ $self->config->{features} }) {
+        # TODO pre-split these in advance
+        my @feature_fields = split /\|/, $feature;
+        $features->{$feature} = join '|', map { $fields->{$_} } @feature_fields;
+    }
+
+    return $features;
+}
+
 
 1;
 
