@@ -6,6 +6,40 @@ use utf8;
 has attributes => ( is => 'rw', isa => 'ArrayRef',
     default => sub { ['form', 'lemma', 'tag', 'afun'] } );
 
+sub add_info {
+    my ($self, $info, $prefix, $node, $names) = @_;
+
+    if ( !defined $names ) {
+        $names = ['node', 'parent'];
+    }
+
+    my %getnodes = (
+        node => sub { $_[0] },
+        parent => sub { $_[0]->get_eparents(
+                {first_only => 1, or_topological => 1} )
+        },
+        grandparent => sub { $_[0]->get_eparents(
+                {first_only => 1, or_topological => 1}
+            )->get_eparents( {first_only => 1, or_topological => 1} )
+        },
+        precchild => sub { $_[0]->get_echildren(
+                {last_only => 1, preceding_only => 1, or_topological => 1} )
+        },
+        follchild => sub { $_[0]->get_echildren(
+                {first_only => 1, following_only => 1, or_topological => 1} )
+        },
+        precnode => sub { $_[0]->get_prev_node() },
+        follnode => sub { $_[0]->get_next_node() },
+    );
+
+    foreach my $name (@$names) {
+        my $namednode = $getnodes{$name}($node);
+        $self->add_node_info($info, $prefix.'_'.$name.'_', $namednode);
+    }
+
+    return;
+}
+
 sub add_node_info {
     my ($self, $info, $prefix, $anode) = @_;
 
