@@ -8,6 +8,13 @@ use AI::MaxEntropy;
 
 has cut => ( is => 'rw', isa => 'Num', default => 0 );
 
+has algorithm => ( is => 'rw', isa => 'Str', default => 'lbfgs' ); # or gis
+
+# only for lbfgs
+has max_iterations => ( is => 'rw', isa => 'Num', default => 0 ); # 0=unlimited
+has use_smoother => ( is => 'rw', isa => 'Bool', default => 0 );
+has smoother_sigma => ( is => 'rw', isa => 'Num', default => 0.6 );
+
 override '_load_model' => sub {
     my ($self) = @_;
 
@@ -29,7 +36,19 @@ override '_get_predictions' => sub {
 override '_initialize_model' => sub {
     my ($self) = @_;
 
-    return AI::MaxEntropy->new;
+    my %params = ();
+    if ( $self->algorithm ne 'lbfgs') {
+        $params{algorithm} = {
+            type => $self->algorithm,
+            max_iterations => $self->max_iterations
+        };
+    }
+    if ( $self->use_smoother) {
+        $params{smoother} =
+            { type => 'gaussian', sigma => $self->smoother_sigma };
+    }
+
+    return AI::MaxEntropy->new(%params);
 };
 
 override '_see_instance' => sub {
