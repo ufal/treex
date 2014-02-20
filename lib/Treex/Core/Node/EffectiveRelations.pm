@@ -248,6 +248,7 @@ sub get_coap_members {
     return @members;
 }
 
+use List::MoreUtils "any";
 sub is_echild_of {
     my ($potential_echild, $eparent, $arg_ref) = @_;
 
