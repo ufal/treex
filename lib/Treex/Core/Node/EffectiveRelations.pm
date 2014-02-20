@@ -41,17 +41,21 @@ sub get_echildren {
         $arg_ref = {};
     }
     log_fatal('Incorrect number of arguments') if @_ > 2;
-    $self->_can_apply_eff($arg_ref) or return $self->get_children();
 
-    # 1) Get my own effective children (i.e. I am their only eff. parent).
-    # These are in my subtree.
-    my @echildren = $self->_get_my_own_echildren($arg_ref);
+    my @echildren;
+    if ( $self->_can_apply_eff($arg_ref) ) {
+        # 1) Get my own effective children (i.e. I am their only eff. parent).
+        # These are in my subtree.
+        @echildren = $self->_get_my_own_echildren($arg_ref);
 
-    # 2) Add shared effective children
-    # (i.e. I am their eff. parent, but not the only one).
-    # This can happen only if I am member of a coordination
-    # and these eff. children are shared modifiers of the coordination.
-    push @echildren, $self->_get_shared_echildren($arg_ref);
+        # 2) Add shared effective children
+        # (i.e. I am their eff. parent, but not the only one).
+        # This can happen only if I am member of a coordination
+        # and these eff. children are shared modifiers of the coordination.
+        push @echildren, $self->_get_shared_echildren($arg_ref);
+    } else {
+        @echildren = $self->get_children();
+    }
 
     # 3) Process eventual switches (ordered=>1, add_self=>1,...)
     #return @echildren if !$arg_ref; TODO this cannot happen now, see $arg_ref = {} if !defined $arg_ref;
@@ -67,10 +71,10 @@ sub get_eparents {
         $arg_ref = {};
     }
     log_fatal('Incorrect number of arguments') if @_ > 2;
-    $self->_can_apply_eff($arg_ref) or return $self->get_parent();
 
     # Get effective parents
-    my @eparents = $self->_get_eparents($arg_ref);
+    my @eparents = $self->_can_apply_eff($arg_ref) ?
+        $self->_get_eparents($arg_ref) : ($self->get_parent());
 
     # Process eventual switches (ordered=>1, add_self=>1,...)
     delete $arg_ref->{dive};
