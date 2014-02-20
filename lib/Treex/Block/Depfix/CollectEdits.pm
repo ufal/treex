@@ -28,6 +28,22 @@ has fields => ( is => 'rw', isa => 'Str', default =>
 
 has fields_ar => ( is => 'rw', lazy => 1, builder => '_build_fields_ar' );
 
+# all names = 'node', 'parent', 'grandparent', 'precchild', 'follchild', 'precnode', 'follnode' 
+
+# the defaults reflect the top-down left-to-right processing
+
+# ancestors and preceding siblings are already known -> take the new ones
+has new_names_ar => ( is => 'rw', isa => 'ArrayRef',
+    default => sub { ['parent', 'grandparent', 'precnode' ] } );
+
+# the node itself, descendents and following siblings are not known yet -> take old
+has old_names_ar => ( is => 'rw', isa => 'ArrayRef',
+    default => sub { ['node', 'precchild', 'follchild', 'follnode'] } );
+
+# everything is known, so take everything
+has src_names_ar => ( is => 'rw', isa => 'ArrayRef',
+    default => sub { ['node', 'parent', 'grandparent', 'precchild', 'follchild', 'precnode', 'follnode' ] } ); 
+
 sub _build_fields_ar {
     my ($self) = @_;
 
@@ -37,7 +53,8 @@ sub _build_fields_ar {
         $config = YAML::Tiny->read( $self->config_file );
         return $config->[0]->{fields};
     } else {
-        return split /,/, $self->fields;
+        my @fields = split /,/, $self->fields;
+        return \@fields;
     }
 }
 
@@ -56,39 +73,35 @@ sub _build_src_node_info_getter {
 #has include_unchanged => ( is => 'rw', isa => 'Bool', default => 1 );
 
 sub process_anode {
-    my ($self, $child) = @_;
+    my ($self, $node) = @_;
 
-    my ($parent) = $child->get_eparents( {or_topological => 1} );
+    my $node_ref = $node->get_aligned_nodes_of_type($self->ref_alignment_type);
+    my $node_src = $node->get_aligned_nodes_of_type($self->src_alignment_type);
+    my $parent = $node->get_eparents( {or_topological => 1, first_only => 1} );
+    my $parent_ref = $parent->get_aligned_nodes_of_type($self->ref_alignment_type);
+    my $parent_src = $parent->get_aligned_nodes_of_type($self->src_alignment_type);
 
-    my ($child_ref, $child_src, $parent_ref, $parent_src) = (
-        $child->get_aligned_nodes_of_type($self->ref_alignment_type),
-        $child->get_aligned_nodes_of_type($self->src_alignment_type),
-        $parent->get_aligned_nodes_of_type($self->ref_alignment_type),
-        $parent->get_aligned_nodes_of_type($self->src_alignment_type),
-    );
-    
-    if (!$parent->is_root() &&
-        defined $child_ref &&
+    # collect only those edits that correspond to things MLfix can fix
+    # (assumes we don't change lemmas and don't rehang nodes)
+    if (!$parent->is_root() && # TODO is this needed/good?
+        defined $node_ref &&
         defined $parent_ref &&
-        $child->lemma eq $child_ref->lemma &&
-        $parent->lemma eq $parent_ref->lemma
+        $node->lemma eq $node_ref->lemma &&
+        $parent->lemma eq $parent_ref->lemma &&
+        $node_ref->is_echild_of($parent_ref, {or_topological => 1})
     ) {
         
         my $info = {};
         
-        # nodes info
-        $self->node_info_getter->add_node_info($info, 'oldchild_',  $child);
-        $self->node_info_getter->add_node_info($info, 'oldparent_', $parent);
-        $self->node_info_getter->add_node_info($info, 'newchild_',  $child_ref);
-        $self->node_info_getter->add_node_info($info, 'newparent_', $parent_ref);
-        $self->src_node_info_getter->add_node_info($info, 'srcchild_',  $child_src);
-        $self->src_node_info_getter->add_node_info($info, 'srcparent_', $parent_src);
+        # smtout (old) and ref (new) nodes info
+        $self->node_info_getter->add_info($info, 'old', $node,     $self->old_names_ar);
+        $self->node_info_getter->add_info($info, 'new', $node_ref, $self->new_names_ar);
+        
+        # src nodes need not be parent and child, so get info for both, and the edge
+        $self->src_node_info_getter->add_info($info, 'srcnode',   $node_src,   $self->src_names_ar);
+        $self->src_node_info_getter->add_info($info, 'srcparent', $parent_src, $self->src_names_ar);
+        $self->src_node_info_getter->add_edge_existence_info($info, 'srcedge', $node_src, $parent_src);
 
-        # edges info
-        $self->node_info_getter->add_edge_info($info, 'oldedge_', $child,     $parent);
-        $self->node_info_getter->add_edge_info($info, 'newedge_', $child_ref, $parent_ref);
-        $self->src_node_info_getter->add_edge_info($info, 'srcedge_', $child_src, $parent_src);
-    
         my @fields = map { $info->{$_}  } @{$self->fields_ar};
         print { $self->_file_handle() } (join "\t", @fields)."\n";
     }
