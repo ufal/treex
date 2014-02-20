@@ -225,11 +225,11 @@ sub _predict_new_tags {
 sub get_instance_info {
     my ($self, $node) = @_;
 
-    my $node_old = $node->get_aligned_nodes_of_type($self->orig_alignment_type);
-    my $node_src = $node->get_aligned_nodes_of_type($self->src_alignment_type);
-    my $parent = $node->get_eparents( {or_topological => 1, first_only => 1} );
-    my $parent_old = $parent->get_aligned_nodes_of_type($self->orig_alignment_type);
-    my $parent_src = $parent->get_aligned_nodes_of_type($self->src_alignment_type);
+    my ($node_old) = $node->get_aligned_nodes_of_type($self->orig_alignment_type);
+    my ($node_src) = $node->get_aligned_nodes_of_type($self->src_alignment_type);
+    my ($parent) = $node->get_eparents( {or_topological => 1} );
+    my ($parent_old) = $parent->get_aligned_nodes_of_type($self->orig_alignment_type);
+    my ($parent_src) = $parent->get_aligned_nodes_of_type($self->src_alignment_type);
 
     my $info = {};
 

@@ -52,17 +52,18 @@ sub _build_src_node_info_getter {
 sub process_anode {
     my ($self, $node) = @_;
 
-    my $node_ref = $node->get_aligned_nodes_of_type($self->ref_alignment_type);
-    my $node_src = $node->get_aligned_nodes_of_type($self->src_alignment_type);
-    my $parent = $node->get_eparents( {or_topological => 1, first_only => 1} );
-    my $parent_ref = $parent->get_aligned_nodes_of_type($self->ref_alignment_type);
-    my $parent_src = $parent->get_aligned_nodes_of_type($self->src_alignment_type);
+    my ($node_ref) = $node->get_aligned_nodes_of_type($self->ref_alignment_type);
+    my ($node_src) = $node->get_aligned_nodes_of_type($self->src_alignment_type);
+    my ($parent) = $node->get_eparents( {or_topological => 1} );
+    my ($parent_ref) = $parent->get_aligned_nodes_of_type($self->ref_alignment_type);
+    my ($parent_src) = $parent->get_aligned_nodes_of_type($self->src_alignment_type);
 
     # collect only those edits that correspond to things MLfix can fix
     # (assumes we don't change lemmas and don't rehang nodes)
-    if (!$parent->is_root() && # TODO is this needed/good?
-        defined $node_ref &&
-        defined $parent_ref &&
+    # TODO is the root check a good thing? (note: beware of lemmas)
+    if (!$parent->is_root() &&
+        defined $node_ref && !$node_ref->is_root() &&
+        defined $parent_ref && !$parent_ref->is_root() &&
         $node->lemma eq $node_ref->lemma &&
         $parent->lemma eq $parent_ref->lemma &&
         $node_ref->is_echild_of($parent_ref, {or_topological => 1})
