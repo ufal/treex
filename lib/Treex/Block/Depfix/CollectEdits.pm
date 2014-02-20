@@ -33,16 +33,16 @@ has fields_ar => ( is => 'rw', lazy => 1, builder => '_build_fields_ar' );
 # the defaults reflect the top-down left-to-right processing
 
 # ancestors and preceding siblings are already known -> take the new ones
-has new_names_ar => ( is => 'rw', isa => 'ArrayRef',
-    default => sub { ['parent', 'grandparent', 'precnode' ] } );
+#has new_names_ar => ( is => 'rw', isa => 'ArrayRef',
+#    default => sub { ['parent', 'grandparent', 'precnode' ] } );
 
 # the node itself, descendents and following siblings are not known yet -> take old
-has old_names_ar => ( is => 'rw', isa => 'ArrayRef',
-    default => sub { ['node', 'precchild', 'follchild', 'follnode'] } );
+#has old_names_ar => ( is => 'rw', isa => 'ArrayRef',
+#    default => sub { ['node', 'precchild', 'follchild', 'follnode'] } );
 
 # everything is known, so take everything
-has src_names_ar => ( is => 'rw', isa => 'ArrayRef',
-    default => sub { ['node', 'parent', 'grandparent', 'precchild', 'follchild', 'precnode', 'follnode' ] } ); 
+#has src_names_ar => ( is => 'rw', isa => 'ArrayRef',
+#    default => sub { ['node', 'parent', 'grandparent', 'precchild', 'follchild', 'precnode', 'follnode' ] } ); 
 
 sub _build_fields_ar {
     my ($self) = @_;
@@ -94,12 +94,12 @@ sub process_anode {
         my $info = {};
         
         # smtout (old) and ref (new) nodes info
-        $self->node_info_getter->add_info($info, 'old', $node,     $self->old_names_ar);
-        $self->node_info_getter->add_info($info, 'new', $node_ref, $self->new_names_ar);
+        $self->node_info_getter->add_info($info, 'old', $node);
+        $self->node_info_getter->add_info($info, 'new', $node_ref);
         
         # src nodes need not be parent and child, so get info for both, and the edge
-        $self->src_node_info_getter->add_info($info, 'srcnode',   $node_src,   $self->src_names_ar);
-        $self->src_node_info_getter->add_info($info, 'srcparent', $parent_src, $self->src_names_ar);
+        $self->src_node_info_getter->add_info($info, 'srcnode',   $node_src);
+        $self->src_node_info_getter->add_info($info, 'srcparent', $parent_src);
         $self->src_node_info_getter->add_edge_existence_info($info, 'srcedge', $node_src, $parent_src);
 
         my @fields = map { $info->{$_}  } @{$self->fields_ar};
