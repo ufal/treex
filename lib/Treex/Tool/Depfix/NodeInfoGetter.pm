@@ -21,8 +21,8 @@ my %getnode = (
     follchild => sub { $_[0]->get_echildren(
             {first_only => 1, following_only => 1, or_topological => 1} )
     },
-    precnode => sub { $_[0]->get_prev_node() },
-    follnode => sub { $_[0]->get_next_node() },
+    precsibling => sub { $_[0]->get_prev_node() },
+    follsibling => sub { $_[0]->get_next_node() },
 );
 
 sub add_info {
@@ -30,11 +30,9 @@ sub add_info {
 
     $prefix = $prefix . '_';
 
-    if ( !defined $names ) {
-        $names = ['node', 'parent', 'grandparent', 'precchild', 'follchild', 'precnode', 'follnode'];
-    }
+    my @names_ar = defined $names ? @$names : keys %getnode;
 
-    foreach my $name (@$names) {
+    foreach my $name (@names_ar) {
         my $namednode = $getnode{$name}($node);
         $self->add_node_info($info, $prefix.$name, $namednode);
     }
