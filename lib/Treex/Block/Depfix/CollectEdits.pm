@@ -98,8 +98,8 @@ sub process_anode {
         $self->node_info_getter->add_info($info, 'new', $node_ref);
         
         # src nodes need not be parent and child, so get info for both, and the edge
-        $self->src_node_info_getter->add_info($info, 'srcnode',   $node_src);
-        $self->src_node_info_getter->add_info($info, 'srcparent', $parent_src);
+        $self->src_node_info_getter->add_info($info, 'nodesrc',   $node_src);
+        $self->src_node_info_getter->add_info($info, 'parentsrc', $parent_src);
         $self->src_node_info_getter->add_edge_existence_info($info, 'srcedge', $node_src, $parent_src);
 
         my @fields = map { $info->{$_}  } @{$self->fields_ar};
