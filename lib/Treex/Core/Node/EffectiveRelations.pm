@@ -248,6 +248,13 @@ sub get_coap_members {
     return @members;
 }
 
+sub is_echild_of {
+    my ($potential_echild, $eparent, $arg_ref) = @_;
+
+    my @echildren = $eparent->get_echildren( $arg_ref );
+    return any { $_ == $potential_echild } @echildren;
+}
+
 1;
 
 __END__
