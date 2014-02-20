@@ -16,33 +16,10 @@ has ref_alignment_type => ( is => 'rw', isa => 'Str', default => 'monolingual' )
 has config_file => ( is => 'rw', isa => 'Str', default => '' );
 
 has fields => ( is => 'rw', isa => 'Str', default =>
-    'child_lemma,child_tag,child_afun,'.
-    'parent_lemma,parent_tag,parent_afun,'.
-    'edge_direction,'.
-    'srcchild_lemma,srcchild_tag,srcchild_afun,'.
-    'srcparent_lemma,srcparent_tag,srcparent_afun,'.
-    'srcedge_existence,srcedge_direction,'.
-    'newchild_tag,newchild_afun,'.
-    'newparent_tag,newparent_afun'
+    'old_node_lemma,new_parent_tag,nodesrc_node_form,parentsrc_node_afun,srcedge_existence'
 );
 
 has fields_ar => ( is => 'rw', lazy => 1, builder => '_build_fields_ar' );
-
-# all names = 'node', 'parent', 'grandparent', 'precchild', 'follchild', 'precnode', 'follnode' 
-
-# the defaults reflect the top-down left-to-right processing
-
-# ancestors and preceding siblings are already known -> take the new ones
-#has new_names_ar => ( is => 'rw', isa => 'ArrayRef',
-#    default => sub { ['parent', 'grandparent', 'precnode' ] } );
-
-# the node itself, descendents and following siblings are not known yet -> take old
-#has old_names_ar => ( is => 'rw', isa => 'ArrayRef',
-#    default => sub { ['node', 'precchild', 'follchild', 'follnode'] } );
-
-# everything is known, so take everything
-#has src_names_ar => ( is => 'rw', isa => 'ArrayRef',
-#    default => sub { ['node', 'parent', 'grandparent', 'precchild', 'follchild', 'precnode', 'follnode' ] } ); 
 
 sub _build_fields_ar {
     my ($self) = @_;
