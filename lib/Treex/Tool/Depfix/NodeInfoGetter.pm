@@ -33,7 +33,7 @@ sub add_info {
     my @names_ar = defined $names ? @$names : keys %getnode;
 
     foreach my $name (@names_ar) {
-        my $namednode = $getnode{$name}($node);
+        my $namednode = defined $node ? $getnode{$name}($node) : undef;
         $self->add_node_info($info, $prefix.$name, $namednode);
     }
 
