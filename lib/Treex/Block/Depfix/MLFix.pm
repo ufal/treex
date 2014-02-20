@@ -17,7 +17,7 @@ has _models => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 # has _models => ( is => 'rw', isa => 'HashRef[Treex::Tool::Depfix::Model]', default => sub { {} } );
 has form_recombination => ( is => 'rw', isa => 'Bool', default => 1 );
 # which node to fix; implies top-down or bottom-up walk through the tree
-has fix_child => ( is => 'rw', isa => 'Bool', default => 1 );
+# has fix_child => ( is => 'rw', isa => 'Bool', default => 1 );
 
 has fixLogger => ( is => 'rw' );
 has log_to_console => ( is => 'rw', isa => 'Bool', default => 1 );
@@ -26,7 +26,7 @@ has 'dont_try_switch_number' => ( is => 'rw', isa => 'Bool', default => '0' );
 
 # fix only what has not been fixed yet
 # (assumption: the first performed correction is the best correction)
-has fix_only_nonfixed => ( is => 'rw', isa => 'Bool', default => 0 );
+#has fix_only_nonfixed => ( is => 'rw', isa => 'Bool', default => 0 );
 
 has magic => ( is => 'rw', isa => 'Str', default => '' );
 
@@ -76,11 +76,11 @@ sub _load_models {
 sub process_tree {
     my ($self, $root) = @_;
 
-    if ( $self->fix_child ) {
+    #if ( $self->fix_child ) {
         $self->process_node_recursively_topdown($root);
-    } else {
-        $self->process_node_recursively_bottomup($root); 
-    }
+    #} else {
+        #$self->process_node_recursively_bottomup($root); 
+    #}
 
     return;
 }
@@ -97,54 +97,52 @@ sub process_node_recursively_topdown {
     return;
 }
 
-sub process_node_recursively_bottomup {
-    my ($self, $node) = @_;
-
-    my @children = $node->get_children();
-    foreach my $child (@children) {
-        $self->process_node_recursively($child);
-    }
-    $self->process_anode($node);
-
-    return;
-}
+#sub process_node_recursively_bottomup {
+#    my ($self, $node) = @_;
+#
+#    my @children = $node->get_children();
+#    foreach my $child (@children) {
+#        $self->process_node_recursively($child);
+#    }
+#    $self->process_anode($node);
+#
+#    return;
+#}
 
 sub process_anode {
-    my ($self, $child) = @_;
+    my ($self, $node) = @_;
 
-    if ( $child->is_root() ) {
+    if ( $node->is_root() ) {
         return;
     }
     
-    my ($parent) = $child->get_eparents( {or_topological => 1} );
+    my ($parent) = $node->get_eparents( {or_topological => 1} );
     if ( $parent->is_root() ) {
         return;
     }
 
-    my $node = $self->fix_child ? $child : $parent;
-    
-    if ( $self->fix_only_nonfixed ) {
-        my ($node_orig) =
-            $node->get_aligned_nodes_of_type($self->orig_alignment_type);
-        if ( (!defined $node_orig) || ($node_orig->form ne $node->form) ) {
-            return;
-        }
-    }
-
-    if ( $self->magic eq 'prep_noun' ) {
-        if ( $parent->tag !~ /^R/ || $child->tag !~ /^N/) {
-            return;
-        }
-    }
-
-    if ( $self->magic eq 'noverbparent' ) {
-        if ( $parent->tag =~ /^V/ ) {
-            return;
-        }
-    }
+#    if ( $self->fix_only_nonfixed ) {
+#        my ($node_orig) =
+#            $node->get_aligned_nodes_of_type($self->orig_alignment_type);
+#        if ( (!defined $node_orig) || ($node_orig->form ne $node->form) ) {
+#            return;
+#        }
+#    }
+#
+#    if ( $self->magic eq 'prep_noun' ) {
+#        if ( $parent->tag !~ /^R/ || $node->tag !~ /^N/) {
+#            return;
+#        }
+#    }
+#
+#    if ( $self->magic eq 'noverbparent' ) {
+#        if ( $parent->tag =~ /^V/ ) {
+#            return;
+#        }
+#    }
 
     # here stuff happens
-    my $instance_info = $self->get_instance_info($child, $parent);
+    my $instance_info = $self->get_instance_info($node);
     my $new_tag = $self->predict_new_tag($node, $instance_info);
     if ( defined $new_tag ) {
         $self->regenerate_node($node, $new_tag);
@@ -225,30 +223,25 @@ sub _predict_new_tags {
 }
 
 sub get_instance_info {
-    my ($self, $child, $parent) = @_;
+    my ($self, $node) = @_;
 
-    my ($child_orig, $child_src, $parent_orig, $parent_src) = (
-        $child->get_aligned_nodes_of_type($self->orig_alignment_type),
-        $child->get_aligned_nodes_of_type($self->src_alignment_type),
-        $parent->get_aligned_nodes_of_type($self->orig_alignment_type),
-        $parent->get_aligned_nodes_of_type($self->src_alignment_type),
-    );
+    my $node_old = $node->get_aligned_nodes_of_type($self->orig_alignment_type);
+    my $node_src = $node->get_aligned_nodes_of_type($self->src_alignment_type);
+    my $parent = $node->get_eparents( {or_topological => 1, first_only => 1} );
+    my $parent_old = $parent->get_aligned_nodes_of_type($self->orig_alignment_type);
+    my $parent_src = $parent->get_aligned_nodes_of_type($self->src_alignment_type);
 
     my $info = {};
 
-    # nodes info
-    $self->node_info_getter->add_node_info($info, 'newchild_',  $child);
-    $self->node_info_getter->add_node_info($info, 'newparent_', $parent);
-    $self->node_info_getter->add_node_info($info, 'oldchild_',  $child_orig);
-    $self->node_info_getter->add_node_info($info, 'oldparent_', $parent_orig);
-    $self->src_node_info_getter->add_node_info($info, 'srcchild_',  $child_src);
-    $self->src_node_info_getter->add_node_info($info, 'srcparent_', $parent_src);
+    # smtout (old) and current (new) nodes info
+    $self->node_info_getter->add_info($info, 'old', $node_old);
+    $self->node_info_getter->add_info($info, 'new', $node);
 
-    # edges info
-    $self->node_info_getter->add_edge_info($info, 'newedge_', $child, $parent);
-    $self->node_info_getter->add_edge_info($info, 'oldedge_', $child_orig, $parent_orig);
-    $self->src_node_info_getter->add_edge_info($info, 'srcedge_', $child_src, $parent_src);
-
+    # src nodes need not be parent and child, so get info for both, and the edge
+    $self->src_node_info_getter->add_info($info, 'srcnode',   $node_src);
+    $self->src_node_info_getter->add_info($info, 'srcparent', $parent_src);
+    $self->src_node_info_getter->add_edge_existence_info($info, 'srcedge', $node_src, $parent_src);
+    
     return $info;
 }
 
