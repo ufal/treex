@@ -31,7 +31,7 @@ sub add_info {
     $prefix = $prefix . '_';
 
     if ( !defined $names ) {
-        $names = ['node', 'parent'];
+        $names = ['node', 'parent', 'grandparent', 'precchild', 'follchild', 'precnode', 'follnode'];
     }
 
     foreach my $name (@$names) {
