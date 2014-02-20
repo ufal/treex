@@ -37,12 +37,10 @@ override '_initialize_model' => sub {
     my ($self) = @_;
 
     my %params = ();
-    if ( $self->algorithm ne 'lbfgs') {
-        $params{algorithm} = {
-            type => $self->algorithm,
-            max_iterations => $self->max_iterations
-        };
-    }
+    $params{algorithm} = {
+        type => $self->algorithm,
+        max_iterations => $self->max_iterations
+    };
     if ( $self->use_smoother) {
         $params{smoother} =
             { type => 'gaussian', sigma => $self->smoother_sigma };

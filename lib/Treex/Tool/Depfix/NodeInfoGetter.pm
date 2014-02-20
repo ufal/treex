@@ -6,55 +6,61 @@ use utf8;
 has attributes => ( is => 'rw', isa => 'ArrayRef',
     default => sub { ['form', 'lemma', 'tag', 'afun'] } );
 
+my %getnode = (
+    node => sub { $_[0] },
+    parent => sub { $_[0]->get_eparents(
+            {first_only => 1, or_topological => 1} )
+    },
+    grandparent => sub { $_[0]->get_eparents(
+            {first_only => 1, or_topological => 1}
+        )->get_eparents( {first_only => 1, or_topological => 1} )
+    },
+    precchild => sub { $_[0]->get_echildren(
+            {last_only => 1, preceding_only => 1, or_topological => 1} )
+    },
+    follchild => sub { $_[0]->get_echildren(
+            {first_only => 1, following_only => 1, or_topological => 1} )
+    },
+    precnode => sub { $_[0]->get_prev_node() },
+    follnode => sub { $_[0]->get_next_node() },
+);
+
 sub add_info {
     my ($self, $info, $prefix, $node, $names) = @_;
+
+    $prefix = $prefix . '_';
 
     if ( !defined $names ) {
         $names = ['node', 'parent'];
     }
 
-    my %getnodes = (
-        node => sub { $_[0] },
-        parent => sub { $_[0]->get_eparents(
-                {first_only => 1, or_topological => 1} )
-        },
-        grandparent => sub { $_[0]->get_eparents(
-                {first_only => 1, or_topological => 1}
-            )->get_eparents( {first_only => 1, or_topological => 1} )
-        },
-        precchild => sub { $_[0]->get_echildren(
-                {last_only => 1, preceding_only => 1, or_topological => 1} )
-        },
-        follchild => sub { $_[0]->get_echildren(
-                {first_only => 1, following_only => 1, or_topological => 1} )
-        },
-        precnode => sub { $_[0]->get_prev_node() },
-        follnode => sub { $_[0]->get_next_node() },
-    );
-
     foreach my $name (@$names) {
-        my $namednode = $getnodes{$name}($node);
-        $self->add_node_info($info, $prefix.'_'.$name.'_', $namednode);
+        my $namednode = $getnode{$name}($node);
+        $self->add_node_info($info, $prefix.$name, $namednode);
     }
 
     return;
 }
 
 sub add_node_info {
-    my ($self, $info, $prefix, $anode) = @_;
+    my ($self, $info, $prefix, $node) = @_;
 
-    if ( defined $anode && !$anode->is_root() ) {
+    $prefix = $prefix . '_' ;
+
+    if ( defined $node && !$node->is_root() ) {
         foreach my $attribute (@{$self->attributes}) {
-            $info->{$prefix.$attribute} = $anode->get_attr($attribute);
+            $info->{$prefix.$attribute} = $node->get_attr($attribute);
         }
-        $info->{$prefix.'childno'} = scalar($anode->get_echildren({or_topological => 1}));
-        $info->{$prefix.'lchildno'} = scalar($anode->get_echildren({preceding_only=>1, or_topological => 1}));
-        $info->{$prefix.'rchildno'} = scalar($anode->get_echildren({following_only=>1, or_topological => 1}));
-        $self->add_tag_split($info, $prefix, $anode);
+        $info->{$prefix.'edgedirection'} = $node->precedes( $getnode{parent}($node) ) ? '/' : '\\';
+        $info->{$prefix.'childno'} = scalar($node->get_echildren({or_topological => 1}));
+        $info->{$prefix.'lchildno'} = scalar($node->get_echildren({preceding_only=>1, or_topological => 1}));
+        $info->{$prefix.'rchildno'} = scalar($node->get_echildren({following_only=>1, or_topological => 1}));
+        $self->add_tag_split($info, $prefix, $node);
     } else {
         foreach my $attribute (@{$self->attributes}) {
             $info->{$prefix.$attribute} = '';
         }
+        $info->{$prefix.'edgedirection'} = '';
         $info->{$prefix.'childno'} = '';
         $info->{$prefix.'lchildno'} = '';
         $info->{$prefix.'rchildno'} = '';
@@ -65,7 +71,7 @@ sub add_node_info {
 }
 
 sub add_tag_split {
-    my ($self, $info, $prefix, $anode) = @_;
+    my ($self, $info, $prefix, $node) = @_;
 
     # nothing done by default
     # may be overridden for a specific language or tagset
@@ -73,16 +79,15 @@ sub add_tag_split {
     return;
 }
 
-sub add_edge_info {
+sub add_edge_existence_info {
     my ($self, $info, $prefix, $child, $parent) = @_;
     
+    $prefix = $prefix . '_' ;
+
     if ( !defined $child || !defined $parent ) {
         # not even the nodes exist
         $info->{$prefix.'existence'} = '';
-        $info->{$prefix.'direction'} = '';
     } else {
-        # direction (more of node precedence, the edge does not have to exist)
-        $info->{$prefix.'direction'} = $child->precedes($parent) ? '/' : '\\';
         # existence
         my @child_parents = $child->get_eparents( {or_topological => 1} );
         my @parent_parents = $parent->is_root ? () : $parent->get_eparents( {or_topological => 1} );
@@ -100,6 +105,7 @@ sub add_edge_info {
 
     return;
 }
+
 
 
 1;
