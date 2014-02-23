@@ -1,7 +1,7 @@
 package Treex::Block::Print::VectorsForTM;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
+extends 'Treex::Block::Write::BaseTextWriter';
 use Treex::Tool::TranslationModel::Features::EN;
 use Treex::Tool::Triggers::Features;
 use Treex::Tool::Coreference::ContentWordFilter;
@@ -136,14 +136,13 @@ sub print_tnode_features {
         unshift @add_features, keys %$esa_feats_hash;
     }
 
-    print join "\t", (
+    say { $self->_file_handle } join "\t", (
         lc($en_tlemma),
         $cs_tlemma . "#" . $cs_mlayer_pos,
         $en_tnode->formeme,
         $cs_tnode->formeme,
         join ' ', @add_features, map {"$_=$features_rf->{$_}"} keys %{$features_rf}
     );
-    print "\n";
     return;
 }
 
