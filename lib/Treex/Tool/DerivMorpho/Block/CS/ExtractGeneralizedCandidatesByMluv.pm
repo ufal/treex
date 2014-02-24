@@ -11,8 +11,8 @@ my @spellchange_names = qw(spellchanges1 spellchanges2);
 
 my %turns = (
     'adj+spell1+spell2' =>  { rules => [qw(rules-adj)], spell => [qw(spellchanges1 spellchanges2)] },
-    'subst1+spell1' =>  { rules => [qw(rules-subst1)], spell => [qw(spellchanges1)] },
-    'subst2+spell1+spell2' =>  { rules => [qw(rules-subst1 rules-subst2)], spell => [qw(spellchanges1 spellchanges2)] },
+    'subst1+spell2' =>  { rules => [qw(rules-subst1)], spell => [qw(spellchanges2)] },
+    'subst2+spell1+spell2' =>  { rules => [qw(rules-subst2)], spell => [qw(spellchanges1 spellchanges2)] },
 );
 
 # load derivation rules
@@ -38,6 +38,7 @@ sub BUILD {
         while (<$R>) {
 
             s/\?/-?/;
+            my $lowercase = ($_ =~ /ZMEN/);
 
             next unless /^([A-Z])-(\S+)\t([A-Z])-(\S+)/;
 
@@ -47,6 +48,7 @@ sub BUILD {
                 source_suffix => $2,
                 target_pos => $3,
                 target_suffix => $4,
+                lowercase => $lowercase,
             };
 
             last if $rule_number == $maxlimit;
@@ -87,9 +89,13 @@ sub process_dictionary {
 
             print "$turn_name\n$turn_name\tTRYING TO APPLY RULE $rule->{source_pos}-$rule->{source_suffix} --> $rule->{target_pos}-$rule->{target_suffix}\n";
 
+
+          LEXEME:
             foreach my $target_lexeme ($dict->get_lexemes) {
 
                 my ($source_suffix,$target_suffix) = ($rule->{source_suffix},$rule->{target_suffix});
+
+                next LEXEME if $target_lexeme->lemma =~ /\d/;
 
                 my $source_lemma_stem = $target_lexeme->lemma;
 
@@ -100,26 +106,47 @@ sub process_dictionary {
                     foreach my $spellchange_rule ( 0, map { @{$spellchanges{$_}} } @{$turns{$turn_name}{spell}}) {
                         my $source_lemma = $source_lemma_stem;
 
-                        if ($spellchange_rule) {
-                            my ($source,$target) = ($spellchange_rule->{source},$spellchange_rule->{target});
-                            $source_lemma =~ s/$target/$source/ or next SPELLCHANGE;
+
+                        my @source_lemmas = $source_lemma_stem;
+
+                        if ($rule->{lowercase} and $source_lemma_stem eq lc($source_lemma_stem)) {
+                            push @source_lemmas, ucfirst($source_lemma_stem);
+
                         }
 
-                        $source_lemma .= $source_suffix;
+                        my $lowercased;
+                        foreach my $source_lemma (@source_lemmas) {
 
-
-#                print  "  $source_lemma --> ".$target_lexeme->lemma."\n";
-                        my @source_lexemes = grep {$_->pos eq $rule->{source_pos}} $dict->get_lexemes_by_lemma($source_lemma);
-
-                        foreach my $source_lexeme (@source_lexemes) {
-                            print  "$turn_name\t  $source_lemma --> ".$target_lexeme->lemma;
                             if ($spellchange_rule) {
-                                print "(CHANGE: $spellchange_rule->{source} -> $spellchange_rule->{target}) ";
+                                my ($source,$target) = ($spellchange_rule->{source},$spellchange_rule->{target});
+                                $source_lemma =~ s/(.)$target/$1$source/ or next SPELLCHANGE;
                             }
-                            if ($target_lexeme->source_lexeme and $target_lexeme->source_lexeme eq $source_lexeme) {
-                                print "   (LINK ALREADY PRESENT)";
+
+                            $source_lemma .= $source_suffix;
+
+
+                            #                print  "  $source_lemma --> ".$target_lexeme->lemma."\n";
+                            my @source_lexemes = grep {$_->pos eq $rule->{source_pos}}
+                                $dict->get_lexemes_by_lemma($source_lemma);
+
+
+                            foreach my $source_lexeme (@source_lexemes) {
+                                print  "$turn_name\t  $source_lemma --> ".$target_lexeme->lemma;
+                                if ($spellchange_rule) {
+                                    print "(CHANGE: $spellchange_rule->{source} -> $spellchange_rule->{target}) ";
+                                }
+                                if ($target_lexeme->source_lexeme and $target_lexeme->source_lexeme eq $source_lexeme) {
+                                    print "   (LINK ALREADY PRESENT)";
+                                }
+
+                                if ($lowercased) {
+                                    print "   (LOWERCASED)";
+                                }
+
+
+                                print "\n";
                             }
-                            print "\n";
+                            $lowercased++;
                         }
                     }
                 }
