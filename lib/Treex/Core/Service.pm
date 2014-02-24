@@ -1,78 +1,85 @@
 package Treex::Core::Service;
 
-use Treex::Core::Log;
 use Moose;
+use namespace::autoclean;
 
-my %registered_service;    # probably will be moved to some ServiceManager in the future
+has 'manager' => (
+  is => 'ro',
+  isa => 'Treex::Core::ServiceManager'
+);
 
-sub BUILD {
-    my $self = shift;
-    return;
-}
+has 'name' => (
+  is => 'ro',
+  isa => 'Str'
+);
 
-# 'instance' should be called instead of 'new': it allows to reuse already initilized services
-sub instance {
-    my ( $class, $arg_ref ) = @_;
+has 'fingerprint' => (
+  is => 'ro',
+  isa => 'Str',
+  writer => 'set_fingerprint'
+);
 
-    my $new_service = $class->new( @_[ 1 .. $#_ ] );
+with 'Treex::Core::Service::Role';
 
-    my $existing_service = $registered_service{ $new_service->name };
-
-    return $existing_service if defined $existing_service;
-
-    $new_service->initialize(@_);
-    $registered_service{ $new_service->name } = $new_service;
-    return $new_service;
-
-}
-
-# 'initialize' should be used instead of 'BUILD'
 sub initialize {
-    my ( $self, $arg_ref ) = shift;
-
-    #    log_info 'Method initialize is supposed to be redeclared in ' .ref($self);
-    return;
+  my ($self, $args_ref) = @_;
 }
 
-sub name {
-    my ($self) = shift;
-
-    # concatenating underscores are ugly, but can service names contain spaces (e.g. in soap)?
-    return join "_",
-        ( __PACKAGE__,
-        map {"$_=$self->{$_}"} sort grep { !/^_/ } keys %{$self}
-        );
-}
-
-# unified interface to all services: one input hashref, one output hashref
 sub process {
-    my ( $self, $arg_ref ) = @_;
-    log_warn "No action defined for this service";
-    return {};
+  my ($self, $args_ref) = @_;
+  return {}
 }
+
+__PACKAGE__->meta->make_immutable;
 
 1;
 
 __END__
 
-=for Pod::Coverage BUILD
-
-=encoding utf-8
-
 =head1 NAME
 
-Treex::Core::Service
+Treex::Core::Service - Perl extension for blah blah blah
+
+=head1 SYNOPSIS
+
+   use Treex::Core::Service;
+   blah blah blah
 
 =head1 DESCRIPTION
 
-C<Service.pm>
+Stub documentation for Treex::Core::Service,
+
+Blah blah blah.
+
+=head2 EXPORT
+
+None by default.
+
+=head1 SEE ALSO
+
+Mention other useful documentation such as the documentation of
+related modules or operating system documentation (such as man pages
+in UNIX), or any relevant external documentation such as RFCs or
+standards.
+
+If you have a mailing list set up for your module, mention it here.
+
+If you have a web site set up for your module, mention it here.
 
 =head1 AUTHOR
 
-Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+Michal Sedlak, E<lt>sedlakmichal@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright (C) 2014 by Michal Sedlak
 
-This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.2 or,
+at your option, any later version of Perl 5 you may have available.
+
+=head1 BUGS
+
+None reported... yet.
+
+=cut

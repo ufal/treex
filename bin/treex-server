@@ -1,0 +1,30 @@
+#!/usr/bin/env perl
+
+use Mojolicious::Lite;
+use Treex::Core::Config;
+use Treex::Core::ServiceManager;
+
+helper service_manager => sub {
+  state $service_manager = Treex::Core::ServiceManager->new();
+};
+
+get '/' => sub {
+  my $self = shift;
+
+  return $self->render(json => {
+    services => [keys %{$self->service_manager->types}]
+  });
+};
+
+post '/service/:type' => sub {
+  my $self = shift;
+
+  my $type = $self->param('type');
+  my $init_args = $self->req->query_params->to_hash;
+
+  my $service = $self->service_manager->get_service($type, $init_args);
+
+  return $self->render(json => $service->process($self->req->json));
+};
+
+app->start;
