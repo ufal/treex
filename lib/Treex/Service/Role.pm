@@ -1,4 +1,4 @@
-package Treex::Core::Service::Role;
+package Treex::Service::Role;
 
 use Moose::Role;
 use namespace::autoclean;

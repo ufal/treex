@@ -1,11 +1,11 @@
-package Treex::Core::Service::Tagger;
+package Treex::Service::Module::Tagger;
 
 use Moose;
 use Treex::Core::Loader qw/load_module/;
 use Treex::Core::Log;
 use namespace::autoclean;
 
-extends 'Treex::Core::Service';
+extends 'Treex::Service::Module';
 
 has 'tagger' => (
   is => 'ro',
@@ -40,7 +40,7 @@ __END__
 
 =head1 NAME
 
-Treex::Core::Service::Tagger
+Treex::Service::Module::Tagger
 
 =head1 AUTHOR
 

@@ -2,17 +2,17 @@
 
 use Mojolicious::Lite;
 use Treex::Core::Config;
-use Treex::Core::ServiceManager;
+use Treex::Service::Manager;
 
 helper service_manager => sub {
-  state $service_manager = Treex::Core::ServiceManager->new();
+  state $service_manager = Treex::Service::Manager->new();
 };
 
 get '/' => sub {
   my $self = shift;
 
   return $self->render(json => {
-    services => [keys %{$self->service_manager->types}]
+    modules => [keys %{$self->service_manager->modules}]
   });
 };
 

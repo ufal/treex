@@ -1,11 +1,11 @@
-package Treex::Core::Service;
+package Treex::Service::Module;
 
 use Moose;
 use namespace::autoclean;
 
 has 'manager' => (
   is => 'ro',
-  isa => 'Treex::Core::ServiceManager'
+  isa => 'Treex::Service::Manager'
 );
 
 has 'name' => (
@@ -19,7 +19,7 @@ has 'fingerprint' => (
   writer => 'set_fingerprint'
 );
 
-with 'Treex::Core::Service::Role';
+with 'Treex::Service::Role';
 
 sub initialize {
   my ($self, $args_ref) = @_;

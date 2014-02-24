@@ -1,4 +1,4 @@
-package Treex::Core::ServiceManager;
+package Treex::Service::Manager;
 
 use Moose;
 use Moose::Util::TypeConstraints;
@@ -7,7 +7,7 @@ use Treex::Core::Log;
 use Digest::MD5 qw(md5_hex);
 use namespace::autoclean;
 
-role_type 'Service', { role => 'Treex::Core::Service::Role' };
+role_type 'Service', { role => 'Treex::Service::Role' };
 
 has 'instances' => (
   traits  => ['Hash'],
@@ -21,25 +21,23 @@ has 'instances' => (
   }
 );
 
-has 'types' => (
+has 'modules' => (
   traits  => ['Hash'],
   is => 'ro',
   isa => 'HashRef[Str]',
   lazy_build => 1,
   handles => {
-    set_type => 'set',
-    get_type => 'get',
-    type_exists => 'exists',
+    set_module => 'set',
+    get_module => 'get',
+    module_exists => 'exists',
   }
 );
 
-sub _build_types {
-  my $ns = 'Treex::Core::Service';
-  my $role = $ns.'::Role';
+sub _build_modules {
+  my $ns = 'Treex::Service::Module';
   return {
     map { (my $key = $_) =~ s/^\Q$ns\E:://; $key =~ s/::/-/; lc($key) => $_ }
-      grep { $_ ne $role }
-        @{search_module($ns)}
+      @{search_module($ns)}
   };
 }
 
@@ -47,12 +45,12 @@ sub get_service {
   my ($self, $type, $init_args) = @_;
 
   # use Data::Dumper;
-  # print STDERR Dumper($self->types);
-  log_fatal "Unknown service type: '$type'" unless $self->type_exists($type);
+  # print STDERR Dumper($self->modules);
+  log_fatal "Unknown service type: '$type'" unless $self->module_exists($type);
 
   my $fingerprint = $self->compute_fingerprint($type, $init_args);
   unless ($self->service_exists($fingerprint)) {
-    my $module = $self->get_type($type);
+    my $module = $self->get_module($type);
     load_module($module);
 
     my $service = $module->new(manager => $self,
