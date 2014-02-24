@@ -44,7 +44,7 @@ Treex::Service::Module::Tagger
 
 =head1 AUTHOR
 
-Michal Sedlak <sedlak@ufal.mff.cuni.cz>
+Michal Sedlak E<lt>sedlak@ufal.mff.cuni.czE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
