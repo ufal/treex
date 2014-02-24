@@ -13,7 +13,6 @@ use YAML 0.72 qw(LoadFile DumpFile);
 
 # this should be somehow systematized, since there will be probably many switches like this one
 our $debug_run_jobs_locally;    ## no critic (ProhibitPackageVars)
-our %service;                   ## no critic (ProhibitPackageVars)
 
 # 0: Treex::Core::Common::pos_validated_list() called if params needed, skipped otherwise
 # 1: Treex::Core::Common::pos_validated_list() called always

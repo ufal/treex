@@ -1,30 +1,10 @@
 #!/usr/bin/env perl
+use strict;
+use warnings;
 
-use Mojolicious::Lite;
-use Treex::Core::Config;
-use Treex::Service::Manager;
+use FindBin;
+BEGIN { unshift @INC, "$FindBin::Bin/../lib" }
 
-helper service_manager => sub {
-  state $service_manager = Treex::Service::Manager->new();
-};
-
-get '/' => sub {
-  my $self = shift;
-
-  return $self->render(json => {
-    modules => [keys %{$self->service_manager->modules}]
-  });
-};
-
-post '/service/:module' => sub {
-  my $self = shift;
-
-  my $module = $self->param('module');
-  my $init_args = $self->req->query_params->to_hash;
-
-  my $service = $self->service_manager->get_service($module, $init_args);
-
-  return $self->render(json => $service->process($self->req->json));
-};
-
-app->start;
+# Start command line interface for application
+require Mojolicious::Commands;
+Mojolicious::Commands->start_app('Treex::Service::Server');

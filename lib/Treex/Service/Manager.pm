@@ -42,20 +42,20 @@ sub _build_modules {
 }
 
 sub get_service {
-  my ($self, $type, $init_args) = @_;
+  my ($self, $module, $init_args) = @_;
 
   # use Data::Dumper;
   # print STDERR Dumper($self->modules);
-  log_fatal "Unknown service type: '$type'" unless $self->module_exists($type);
+  log_fatal "Unknown service module: '$module'" unless $self->module_exists($module);
 
-  my $fingerprint = $self->compute_fingerprint($type, $init_args);
+  my $fingerprint = $self->compute_fingerprint($module, $init_args);
   unless ($self->service_exists($fingerprint)) {
-    my $module = $self->get_module($type);
+    my $module = $self->get_module($module);
     load_module($module);
 
     my $service = $module->new(manager => $self,
                                fingerprint => $fingerprint,
-                               name => $type);
+                               name => $module);
 
     $service->initialize($init_args);
     $self->set_service($fingerprint, $service);
@@ -65,8 +65,8 @@ sub get_service {
 }
 
 sub compute_fingerprint {
-  my ($self, $type, $args_ref) = @_;
-  return $type.md5_hex(map {"$_=$args_ref->{$_}"} sort keys %{$args_ref});
+  my ($self, $module, $args_ref) = @_;
+  return $module.md5_hex(map {"$_=$args_ref->{$_}"} sort keys %{$args_ref});
 }
 
 __PACKAGE__->meta->make_immutable;
