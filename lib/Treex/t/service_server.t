@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Run this like so: `perl service_manager.t'
+# Run this like so: `perl service_server.t'
 #   Michal Sedlak <sedlak@ufal.mff.cuni.cz>     2014/02/22 15:34:33
 
 use FindBin;
