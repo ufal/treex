@@ -1,6 +1,5 @@
 package Treex::Tool::Depfix::NaiveBayesModel;
 use Moose;
-use Treex::Core::Common;
 use utf8;
 extends 'Treex::Tool::Depfix::Model';
 

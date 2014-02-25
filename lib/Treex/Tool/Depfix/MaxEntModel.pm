@@ -1,6 +1,5 @@
 package Treex::Tool::Depfix::MaxEntModel;
 use Moose;
-use Treex::Core::Common;
 use utf8;
 extends 'Treex::Tool::Depfix::Model';
 

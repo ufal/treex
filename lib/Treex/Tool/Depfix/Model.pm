@@ -3,33 +3,18 @@ use Moose;
 use Treex::Core::Common;
 use utf8;
 
-use YAML::Tiny;   # for config
 use Storable;     # for model
-use PerlIO::gzip; # for training data
 
-has config_file => ( is => 'rw', isa => 'Str', required => 1 );
+extends 'Treex::Tool::Depfix::Base';
+
 has model_file => ( is => 'rw', isa => 'Str', required => 1 );
-
-has config => ( is => 'rw' );
 has model => ( is => 'rw' );
 
 # for training (goes to training mode if training_file is set)
 has training_file => ( is => 'rw', isa => 'Str', default => '' );
 
-has baseline_prediction => ( is => 'rw', isa => 'Str' );
-
 sub BUILD {
     my ($self) = @_;
-
-    my $config = YAML::Tiny->new;
-    $config = YAML::Tiny->read( $self->config_file );
-    $self->set_config($config->[0]);
-    
-    # baseline: if predicting e.g. newchild_ccas, return oldchild_ccas
-    # might be conjoined, e.g. new_node_cas|new_node_gen
-    my $class = $config->[0]->{predict};
-    $class =~ s/new/old/g;
-    $self->set_baseline_prediction($class);
 
     if ( $self->training_file ne '' ) {
         $self->set_model($self->_initialize_model());
@@ -41,12 +26,6 @@ sub BUILD {
 }
 
 ## FOR RUNTIME ##
-
-sub get_baseline_prediction {
-    my ($self, $instance_info) = @_;
-
-    return $self->fields2feature($instance_info, $self->baseline_prediction);
-}
 
 # override if needed
 sub _load_model {
@@ -72,8 +51,7 @@ sub _get_predictions {
     return;
 }
 
-# may be undef
-sub get_best_prediction {
+override 'get_best_prediction' => sub {
     my ($self, $instance_info) = @_;
 
     my $features = $self->fields2features($instance_info);
@@ -85,8 +63,9 @@ sub get_best_prediction {
     }
     
     return $prediction;
-}
+};
 
+# may be undef
 # may be overridden if the model has a better way to do that
 sub _get_best_prediction {
     my ($self, $features) = @_;
@@ -186,37 +165,6 @@ sub _store_model {
     return;
 }
 
-sub test {
-    my ($self, $testfile) = @_;
-
-    my $all = 0;
-    my $good = 0;
-
-    open my $testing_file, '<:gzip:utf8', $testfile;
-    while ( my $line = <$testing_file> ) {
-        chomp $line;
-        my @fields = split /\t/, $line;
-        my %instance_info;
-        @instance_info{ @{ $self->config->{fields} } } = @fields;
-        
-        my $prediction = $self->get_best_prediction(\%instance_info);
-
-        my $true = $self->fields2feature(\%instance_info, $self->config->{predict});
-        if ( $prediction eq $true ) {
-            $good++;
-        }   
-        $all++;
-
-        if ( $. % 10000 == 0) { log_info "Line $. processed"; }
-    }
-    close $testing_file;
-
-    my $accuracy  = int($good / $all*100000)/1000;
-    log_info "Accuracy: $accuracy %  ($good of $all)";
-
-    return $accuracy;
-}
-
 sub fields2features {
     my ($self, $fields) = @_;
 
@@ -225,14 +173,6 @@ sub fields2features {
     } @{ $self->config->{features} };
     
     return \%features;
-}
-
-sub fields2feature {
-    my ($self, $fields, $feature) = @_;
-
-    # TODO pre-split these in advance
-    my @feature_fields = split /\|/, $feature;
-    return join '|', map { $fields->{$_} } @feature_fields;
 }
 
 

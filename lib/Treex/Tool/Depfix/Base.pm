@@ -1,16 +1,15 @@
-package Treex::Tool::Depfix::BaselineModel;
+package Treex::Tool::Depfix::Base;
 use Moose;
 use Treex::Core::Common;
 use utf8;
 
 use YAML::Tiny;   # for config
-use Storable;     # for model
-use PerlIO::gzip; # for training data
-
 has config_file => ( is => 'rw', isa => 'Str', required => 1 );
-
-has prediction => ( is => 'rw', isa => 'Str' );
 has config => ( is => 'rw' );
+
+has baseline_prediction => ( is => 'rw', isa => 'Str' );
+
+use PerlIO::gzip; # for testdata
 
 sub BUILD {
     my ($self) = @_;
@@ -19,23 +18,35 @@ sub BUILD {
     $config = YAML::Tiny->read( $self->config_file );
     $self->set_config($config->[0]);
     
+    # baseline: if predicting e.g. newchild_ccas, return oldchild_ccas
+    # might be conjoined, e.g. new_node_cas|new_node_gen
     my $class = $config->[0]->{predict};
-    $class =~ s/new/old/;
-    $self->set_prediction($class);
+    $class =~ s/new/old/g;
+    $self->set_baseline_prediction($class);
 
     return;
 }
 
-sub get_predictions {
-    my ($self, $instance_info) = @_;
-
-    return { $instance_info->{$self->prediction} => 1 };
-}
-
+# This is THE method that actually implements the fix.
+# To be overridden, obviously. (Now returns the baseline, i.e. the old value.)
 sub get_best_prediction {
     my ($self, $instance_info) = @_;
 
-    return $instance_info->{$self->prediction};
+    return $self->get_baseline_prediction($instance_info);
+}
+
+sub get_baseline_prediction {
+    my ($self, $instance_info) = @_;
+
+    return $self->fields2feature($instance_info, $self->baseline_prediction);
+}
+
+sub fields2feature {
+    my ($self, $fields, $feature) = @_;
+
+    # TODO pre-split these in advance
+    my @feature_fields = split /\|/, $feature;
+    return join '|', map { $fields->{$_} } @feature_fields;
 }
 
 sub test {
@@ -53,7 +64,7 @@ sub test {
         
         my $prediction = $self->get_best_prediction(\%instance_info);
 
-        my $true = $instance_info{ $self->config->{predict} };
+        my $true = $self->fields2feature(\%instance_info, $self->config->{predict});
         if ( $prediction eq $true ) {
             $good++;
         }   
@@ -73,8 +84,11 @@ sub test {
 
 =head1 NAME 
 
-Treex::Tool::Depfix::BaselineModel -- a baseline class for a model for Depfix
-corrections
+Treex::Tool::Depfix::Base -- a base class for a tool providing Depfix
+corrections, such as a model or a rule
+
+Also serves as the baseline, since it implements the methods so as to always
+return the original value unchanged.
 
 =head1 DESCRIPTION
 
