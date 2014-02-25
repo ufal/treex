@@ -26,8 +26,9 @@ sub BUILD {
     $self->set_config($config->[0]);
     
     # baseline: if predicting e.g. newchild_ccas, return oldchild_ccas
+    # might be conjoined, e.g. new_node_cas|new_node_gen
     my $class = $config->[0]->{predict};
-    $class =~ s/new/old/;
+    $class =~ s/new/old/g;
     $self->set_baseline_prediction($class);
 
     if ( $self->training_file ne '' ) {
@@ -44,7 +45,7 @@ sub BUILD {
 sub get_baseline_prediction {
     my ($self, $instance_info) = @_;
 
-    return $instance_info->{$self->baseline_prediction};
+    return $self->fields2feature($instance_info, $self->baseline_prediction);
 }
 
 # override if needed
@@ -154,7 +155,7 @@ sub see_instance {
 
     my $features = $self->fields2features($instance_info);
     
-    my $class = $instance_info->{ $self->config->{predict} };
+    my $class = $self->fields2feature($instance_info, $self->config->{predict});
 
     return $self->_see_instance($features, $class);
 }
@@ -200,7 +201,7 @@ sub test {
         
         my $prediction = $self->get_best_prediction(\%instance_info);
 
-        my $true = $instance_info{ $self->config->{predict} };
+        my $true = $self->fields2feature(\%instance_info, $self->config->{predict});
         if ( $prediction eq $true ) {
             $good++;
         }   
@@ -219,14 +220,19 @@ sub test {
 sub fields2features {
     my ($self, $fields) = @_;
 
-    my $features = {};
-    foreach my $feature (@{ $self->config->{features} }) {
-        # TODO pre-split these in advance
-        my @feature_fields = split /\|/, $feature;
-        $features->{$feature} = join '|', map { $fields->{$_} } @feature_fields;
-    }
+    my %features = map {
+        $_ => $self->fields2feature($fields, $_)
+    } @{ $self->config->{features} };
+    
+    return \%features;
+}
 
-    return $features;
+sub fields2feature {
+    my ($self, $fields, $feature) = @_;
+
+    # TODO pre-split these in advance
+    my @feature_fields = split /\|/, $feature;
+    return join '|', map { $fields->{$_} } @feature_fields;
 }
 
 

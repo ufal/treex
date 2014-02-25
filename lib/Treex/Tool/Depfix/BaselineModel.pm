@@ -26,6 +26,12 @@ sub BUILD {
     return;
 }
 
+sub get_predictions {
+    my ($self, $instance_info) = @_;
+
+    return { $instance_info->{$self->prediction} => 1 };
+}
+
 sub get_best_prediction {
     my ($self, $instance_info) = @_;
 

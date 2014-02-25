@@ -70,6 +70,7 @@ corrections, based on L<AI::DecisionTree>.
 Because of limitations of L<AI::DecisionTree>,
 L<Treex::Tool::Depfix::DecisionTreesModel>, based on L<Algorithm::DecisionTree>,
 should probably be used instead.
+(But maybe not.)
 
 =head1 AUTHOR
 
