@@ -69,7 +69,7 @@ sub deprel_to_afun
         }
 
         # combined afuns (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
-        elsif ( $afun =~ m/^[Atr,Adv,Obj][Atr,Adv,Obj]/ )
+        elsif ( $afun =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/ )
         {
             $afun = 'Atr';
         }
