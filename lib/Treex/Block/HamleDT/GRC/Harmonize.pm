@@ -16,6 +16,11 @@ sub process_zone
     $self->attach_final_punctuation_to_root($a_root);
     $self->check_apos_coord_membership($a_root);
     $self->check_afuns($a_root);
+
+    $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($a_root->get_zone());
+    $self->get_or_load_other_block('HamleDT::SetSharedModifier')->process_zone($a_root->get_zone());
+    $self->get_or_load_other_block('HamleDT::SetCoordConjunction')->process_zone($a_root->get_zone());
+    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
 }
 
 sub check_apos_coord_membership {

@@ -13,6 +13,11 @@ sub process_zone
     my $self   = shift;
     my $zone   = shift;
     my $a_root = $self->SUPER::process_zone($zone);
+
+    $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($a_root->get_zone());
+    $self->get_or_load_other_block('HamleDT::SetSharedModifier')->process_zone($a_root->get_zone());
+    $self->get_or_load_other_block('HamleDT::SetCoordConjunction')->process_zone($a_root->get_zone());
+    $self->get_or_load_other_block('HamleDT::Pdt2HamleDTApos')->process_zone($a_root->get_zone());
 }
 
 #------------------------------------------------------------------------------

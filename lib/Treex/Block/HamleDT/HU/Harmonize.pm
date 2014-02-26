@@ -19,6 +19,10 @@ sub process_zone {
 #    $self->check_afuns($a_root);
     $self->rehang_subconj($a_root);
     $self->correct_nr($a_root);
+
+    $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($a_root->get_zone());
+    $self->get_or_load_other_block('HamleDT::SetSharedModifier')->process_zone($a_root->get_zone());
+    $self->get_or_load_other_block('HamleDT::SetCoordConjunction')->process_zone($a_root->get_zone());
 }
 
 

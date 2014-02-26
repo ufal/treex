@@ -19,6 +19,9 @@ sub process_zone
     $self->process_prepositional_phrases($a_root);
     $self->restructure_coordination($a_root);
     $self->check_afuns($a_root);
+
+    $self->get_or_load_other_block('HamleDT::DE::RehangJunctors')->process_zone($a_root->get_zone());
+    $self->get_or_load_other_block('HamleDT::DE::RehangAuxc')->process_zone($a_root->get_zone());
 }
 
 #------------------------------------------------------------------------------

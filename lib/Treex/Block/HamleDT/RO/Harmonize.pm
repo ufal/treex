@@ -66,10 +66,14 @@ sub process_zone {
         $node->set_afun( $self->rdt_to_afun($node) );
     }
 
-    # There are no lemmata in RDT, but the attribut should not be empty
+    # There are no lemmata in RDT, but the attribute should not be empty
     foreach my $node ( $a_root->get_descendants() ) {
         $node->set_lemma( $node->form );
     }
+
+    # fix coordinations
+    $self->get_or_load_other_block('HamleDT::SetSharedModifier')->process_zone($a_root->get_zone());
+    $self->get_or_load_other_block('HamleDT::SetCoordConjunction')->process_zone($a_root->get_zone());
 
     return;
 }
@@ -77,7 +81,7 @@ sub process_zone {
 sub fix_errors {
     my ( $self, $node ) = @_;
 
-    # "și" cannot be a prepozition (but "si" is a pronoun)
+    # "și" cannot be a preposition (but "si" is a pronoun)
     if ($node->form eq 'si'
         && $node->conll_pos eq 'prepozitie'
         && any { $_->conll_deprel eq 'rel. conj.' } $node->get_children

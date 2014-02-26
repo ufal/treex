@@ -38,7 +38,7 @@ sub deprel_to_afun
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $afun   = $node->afun();
+        my $afun   = $node->afun() || $node->conll_deprel;
 
         # PADT defines some afuns that were not defined in PDT.
         # PredE = existential predicate
