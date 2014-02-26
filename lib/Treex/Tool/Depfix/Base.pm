@@ -29,6 +29,16 @@ sub BUILD {
 
 # This is THE method that actually implements the fix.
 # To be overridden, obviously. (Now returns the baseline, i.e. the old value.)
+sub get_predictions {
+    my ($self, $instance_info) = @_;
+
+    my $prediction = $self->get_baseline_prediction($instance_info);
+
+    return { $prediction => 1 };
+}
+
+# This is THE method that actually implements the fix.
+# To be overridden, obviously. (Now returns the baseline, i.e. the old value.)
 sub get_best_prediction {
     my ($self, $instance_info) = @_;
 
