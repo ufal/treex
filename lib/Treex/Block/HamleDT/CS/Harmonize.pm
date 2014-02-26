@@ -17,7 +17,7 @@ sub process_zone
     $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($a_root->get_zone());
     $self->get_or_load_other_block('HamleDT::SetSharedModifier')->process_zone($a_root->get_zone());
     $self->get_or_load_other_block('HamleDT::SetCoordConjunction')->process_zone($a_root->get_zone());
-    $self->get_or_load_other_block('HamleDT::Pdt2HamleDTApos')->process_zone($a_root->get_zone());
+    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
 }
 
 #------------------------------------------------------------------------------
@@ -33,6 +33,10 @@ sub deprel_to_afun
     {
         my $deprel = $node->conll_deprel();
         my $afun   = $deprel;
+        if ( $afun =~ m/^[Atr,Adv,Obj][Atr,Adv,Obj]$/ )
+        {
+            $afun = 'Atr';
+        }
         if ( $afun =~ s/_M$// )
         {
             $node->set_is_member(1);
