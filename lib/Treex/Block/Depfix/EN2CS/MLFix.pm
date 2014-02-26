@@ -6,9 +6,6 @@ use utf8;
 extends 'Treex::Block::Depfix::MLFix';
 
 use Treex::Tool::Depfix::CS::FormGenerator;
-use Treex::Tool::Depfix::MaxEntModel;
-use Treex::Tool::Depfix::NaiveBayesModel;
-use Treex::Tool::Depfix::DecisionTreesModel;
 
 has c_gen_config_file => ( is => 'rw', isa => 'Str', required => 1 );
 has c_gen_model_file => ( is => 'rw', isa => 'Str', required => 1 );

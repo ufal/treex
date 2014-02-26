@@ -1,29 +1,27 @@
-package Treex::Block::Depfix::EN2CS::MLFix_cas;
+package Treex::Block::Depfix::EN2CS::MLFix_gnc;
 use Moose;
 use Treex::Core::Common;
 use utf8;
 
-use Treex::Tool::Depfix::CS::FormGenerator;
-
 extends 'Treex::Block::Depfix::MLFix';
 
-has c_cas_config_file => ( is => 'rw', isa => 'Str', required => 1 );
-has c_cas_model_file => ( is => 'rw', isa => 'Str', required => 1 );
+has config_file => ( is => 'rw', isa => 'Str', required => 1 );
+has model_file => ( is => 'rw', isa => 'Str', required => 1 );
 
 has model_type => ( is => 'rw', isa => 'Str', default => 'maxent' );
-# allowed values: maxent, nb, dt, odt
+# allowed values: maxent, nb, dt, odt, baseline
 
 use Treex::Tool::Depfix::CS::NodeInfoGetter;
-use Treex::Tool::Depfix::EN::NodeInfoGetter;
-
 override '_build_node_info_getter' => sub  {
     return Treex::Tool::Depfix::CS::NodeInfoGetter->new();
 };
 
+use Treex::Tool::Depfix::EN::NodeInfoGetter;
 override '_build_src_node_info_getter' => sub  {
     return Treex::Tool::Depfix::EN::NodeInfoGetter->new();
 };
 
+use Treex::Tool::Depfix::CS::FormGenerator;
 override '_build_form_generator' => sub {
     my ($self) = @_;
 
@@ -34,25 +32,25 @@ override '_load_models' => sub {
     my ($self) = @_;
 
     my $model_params = {
-        config_file => $self->c_cas_config_file,
-        model_file  => $self->c_cas_model_file,
+        config_file => $self->config_file,
+        model_file  => $self->model_file,
     };
     
     if ( $self->model_type eq 'maxent' ) {
-        $self->_models->{c_cas} =
+        $self->_models->{gnc} =
             Treex::Tool::Depfix::MaxEntModel->new($model_params);
     } elsif ( $self->model_type eq 'nb' ) {
-        $self->_models->{c_cas} =
+        $self->_models->{gnc} =
             Treex::Tool::Depfix::NaiveBayesModel->new($model_params);
     } elsif ( $self->model_type eq 'dt' ) {
-        $self->_models->{c_cas} =
+        $self->_models->{gnc} =
             Treex::Tool::Depfix::DecisionTreesModel->new($model_params);
     } elsif ( $self->model_type eq 'odt' ) {
-        $self->_models->{c_cas} =
+        $self->_models->{gnc} =
             Treex::Tool::Depfix::OldDecisionTreesModel->new($model_params);
     } elsif ( $self->model_type eq 'baseline' ) {
-        $self->_models->{c_cas} =
-            Treex::Tool::Depfix::BaselineModel->new({config_file=>$self->c_cas_config_file});
+        $self->_models->{gnc} =
+            Treex::Tool::Depfix::Base->new({config_file=>$self->config_file});
     }
     
     return;
@@ -63,9 +61,11 @@ override '_predict_new_tags' => sub {
 
     my $tag = $child->tag;
     my %new_tags = ();
-    foreach my $cas (keys %{$model_predictions->{c_cas}} ) {
-        substr $tag, 4, 1, $cas;
-        $new_tags{$tag} = $model_predictions->{c_cas}->{$cas};
+    foreach my $gnc (keys %{$model_predictions->{gnc}} ) {
+        my $score = $model_predictions->{gnc}->{$gnc};
+        $gnc =~ s/\|//g;
+        substr $tag, 2, 3, $gnc;
+        $new_tags{$tag} = $score;
     }
 
     return \%new_tags;
@@ -75,7 +75,7 @@ override '_predict_new_tags' => sub {
 
 =head1 NAME 
 
-Depfix::EN2CS::MLFix -- fixes errors using a machine learned correction model,
+Depfix::EN2CS::MLFix_gnc -- fixes errors using a machine learned correction model,
 with EN as the source language and CS as the target language
 
 =head1 DESCRIPTION
@@ -92,7 +92,7 @@ Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2013 by Institute of Formal and Applied Linguistics,
+Copyright © 2014 by Institute of Formal and Applied Linguistics,
 Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it

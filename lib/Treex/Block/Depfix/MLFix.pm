@@ -6,6 +6,12 @@ use Treex::Tool::Depfix::Model;
 use Treex::Tool::Depfix::CS::FixLogger;
 use List::Util "reduce";
 
+use Treex::Tool::Depfix::Base;
+use Treex::Tool::Depfix::MaxEntModel;
+use Treex::Tool::Depfix::NaiveBayesModel;
+use Treex::Tool::Depfix::DecisionTreesModel;
+use Treex::Tool::Depfix::OldDecisionTreesModel;
+
 extends 'Treex::Core::Block';
 
 has '+language'       => ( required => 1 );
@@ -129,11 +135,6 @@ sub process_anode {
 #        }
 #    }
 #
-#    if ( $self->magic eq 'prep_noun' ) {
-#        if ( $parent->tag !~ /^R/ || $node->tag !~ /^N/) {
-#            return;
-#        }
-#    }
 #
 #    if ( $self->magic eq 'noverbparent' ) {
 #        if ( $parent->tag =~ /^V/ ) {
@@ -143,6 +144,28 @@ sub process_anode {
 
     # here stuff happens
     my $instance_info = $self->get_instance_info($node);
+    if ( $self->magic ne '' ) {
+        my $continue = 0;
+        
+        if ( $self->magic =~ '_subjchild_' &&
+            $instance_info->{old_precchild_afun} eq 'Sb' ) {
+            $continue = 1;
+        }
+        
+        if ( $self->magic =~ '_adj_' &&
+            $instance_info->{old_node_pos} eq 'A' ) {
+            $continue = 1;
+        }
+
+        if ( $self->magic =~ '_prep_' &&
+            $instance_info->{new_parent_pos} eq 'R' ) {
+            $continue = 1;
+        }
+
+        if ( !$continue ) {
+            return;
+        }
+    }
     my $new_tag = $self->predict_new_tag($node, $instance_info);
     if ( defined $new_tag ) {
         $self->regenerate_node($node, $new_tag);
@@ -193,8 +216,10 @@ sub predict_new_tag {
         my $new_form = reduce {
             $forms{$a}->{score} > $forms{$b}->{score} ? $a : $b
         } keys %forms;
-        my $tags = $forms{$new_form}->{tags};
-        $new_tag = reduce { $tags->{$a} > $tags->{$b} ? $a : $b } keys %$tags;
+        if (defined $new_form) {
+            my $tags = $forms{$new_form}->{tags};
+            $new_tag = reduce { $tags->{$a} > $tags->{$b} ? $a : $b } keys %$tags;
+        }
     } else {
         my $message = 'MLFix (' .
         (join ', ',
