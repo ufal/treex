@@ -47,7 +47,8 @@ sub BUILD {
 	        . " -cp $cp mstparser.DependencyParser test"
 	        . " order:" . $self->order
 	        . " decode-type:" . $self->decodetype
-	        . " server-mode:true confidence-estimation:'KDFix*0.05*50' model-name:$model format:MST 2>/dev/null";	
+#	        . " server-mode:true confidence-estimation:'KDFix*0.05*50' model-name:$model format:MST 2>/dev/null";	
+	        . " server-mode:true model-name:$model format:MST 2>/dev/null";	
 	}
 
 
@@ -101,7 +102,7 @@ sub parse_sentence {
     my ( @parents, @afuns, @matrix, $writer, $reader );
     
     # 0.5.0
-    my @conf_scores;
+    my @conf_scores = map {0} @$forms_rf;
 
     if ( !$self->{robust} ) {
         $writer = $self->{writer};
@@ -157,9 +158,9 @@ sub parse_sentence {
 	            shift @matrix;            
             }
             elsif ($self->version eq '0.5.0') {
-	            $_ = <$reader>;    # conf scores
-            	chomp;
-            	@conf_scores = split /\t/;
+#	            $_ = <$reader>;    # conf scores
+#            	chomp;
+#            	@conf_scores = split /\t/;
 	            $_ = <$reader>;    # blank line             	            	
             }            
         }        
