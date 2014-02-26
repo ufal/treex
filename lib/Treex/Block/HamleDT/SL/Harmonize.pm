@@ -40,7 +40,7 @@ sub deprel_to_afun
         my $afun   = $deprel;
 
         # combined afuns (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
-        if ( $afun =~ m/^[Atr,Adv,Obj][Atr,Adv,Obj]/ )
+        if ( $afun =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/ )
         {
             $afun = 'Atr';
         }
