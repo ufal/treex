@@ -46,26 +46,32 @@ sub deprel_to_afun
         # PredP = preposition as the clause's head
         if ( $afun =~ m/^Pred[ECP]$/ )
         {
-            #$afun = 'Pred';
+            $afun = 'Pred';
         }
 
         # Ante = anteposition
         elsif ( $afun eq 'Ante' )
         {
-            #$afun = 'Apos';
+            $afun = 'Apos';
         }
 
         # AuxE = emphasizing expression
         # AuxM = modifying expression
         elsif ( $afun =~ m/^Aux[EM]$/ )
         {
-            #$afun = 'AuxZ';
+            $afun = 'AuxZ';
         }
 
         # _ = excessive token esp. due to a typo
         elsif ( $afun eq '_' )
         {
             $afun = '';
+        }
+
+        # combined afuns (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
+        elsif ( $afun =~ m/^[Atr,Adv,Obj][Atr,Adv,Obj]/ )
+        {
+            $afun = 'Atr';
         }
 
         # Beware: PADT allows joint afuns such as 'ExD|Sb', which are not allowed by the PML schema.

@@ -33,7 +33,8 @@ sub deprel_to_afun
     {
         my $deprel = $node->conll_deprel();
         my $afun   = $deprel;
-        if ( $afun =~ m/^[Atr,Adv,Obj][Atr,Adv,Obj]$/ )
+        # combined afuns (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
+        if ( $afun =~ m/^[Atr,Adv,Obj][Atr,Adv,Obj]/ )
         {
             $afun = 'Atr';
         }

@@ -38,6 +38,13 @@ sub deprel_to_afun
     {
         my $deprel = $node->conll_deprel();
         my $afun   = $deprel;
+
+        # combined afuns (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
+        if ( $afun =~ m/^[Atr,Adv,Obj][Atr,Adv,Obj]/ )
+        {
+            $afun = 'Atr';
+        }
+
         $node->set_afun($afun);
 
         # Unlike the CoNLL conversion of the Czech PDT 2.0, the Slovenes don't mark coordination members.
