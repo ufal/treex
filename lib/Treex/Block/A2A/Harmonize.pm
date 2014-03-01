@@ -114,6 +114,7 @@ sub convert_tag
         pt::conll
         ro::rdt
         ru::syntagrus
+        sk::snk
         sl::conll
         sv::conll
         ta::tamiltb

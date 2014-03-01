@@ -12,7 +12,7 @@ sub process_zone
 {
     my $self   = shift;
     my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone($zone, 'sk::snk');
+    my $a_root = $self->SUPER::process_zone($zone, 'snk');
 }
 
 #------------------------------------------------------------------------------
