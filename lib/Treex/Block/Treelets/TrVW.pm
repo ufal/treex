@@ -123,7 +123,8 @@ sub fill_tnode {
     }
     log_fatal "No VW translations for $en_tlemma in $Rname trained from $Fname" if !@translations;
     
-    @translations = sort {$b->[0] <=> $a->[0]} @translations;
+    # Sort: the highest prob first. We need deterministic runs and therefore stable sorting for equally probable translations.
+    @translations = sort {($b->[0] <=> $a->[0]) || ($a->[1] cmp $b->[1])} @translations;
 
     if ( $translations[0][1] =~ /(.+)#(.)/ ) {
         $cs_tnode->set_t_lemma($1);
