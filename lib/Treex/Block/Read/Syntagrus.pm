@@ -2,18 +2,22 @@ package Treex::Block::Read::Syntagrus;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseTextReader';
+use File::Slurp;
 
 sub next_document_text {
     my ($self) = @_;
-    my $FH = $self->_current_fh;
+    my $FH = $self->current_filehandle;
     if ( !$FH ) {
         $FH = $self->next_filehandle() or return;
-        $self->_set_current_fh($FH);
+        $self->from->_set_current_filehandle($FH);
     }
     if ( $self->is_one_doc_per_file ) {
-        $self->_set_current_fh(undef);
+        $self->from->_set_current_filehandle(undef);
         return read_file($FH);
     }
+    
+    # TODO: fix this. Once, it worked.
+    log_warn "Sorry, lines_per_doc is not supported in the current version of Read::Syntagrus";
     my $text;
     my $sent_count = 0;
 
