@@ -11,6 +11,10 @@ has 'log_to_console'  => ( is       => 'rw', isa => 'Bool', default => 1 );
 has 'magic'           => ( is       => 'rw', isa => 'Str', default => '' );
 has 'dont_try_switch_number' => ( is => 'rw', isa => 'Bool', default => '0' );
 
+has src_alignment_type => ( is => 'rw', isa => 'Str', default => 'align_forward' );
+has orig_alignment_type => ( is => 'rw', isa => 'Str', default => 'copy' );
+has backward_alignment => ( is => 'rw', isa => 'Bool', default => 1 );
+
 use Carp;
 
 use Treex::Tool::Depfix::CS::FormGenerator;
@@ -69,13 +73,15 @@ sub process_zone {
     my ( $self, $zone ) = @_;
 
     # get alignment mapping
-    my $en_root = $zone->get_bundle->get_tree(
-        $self->source_language, 'a', $self->source_selector
-    );
-    foreach my $en_node ( $en_root->get_descendants ) {
-        my ( $nodes, $types ) = $en_node->get_aligned_nodes();
-        if ( $nodes->[0] ) {
-            $en_counterpart{ $nodes->[0]->id } = $en_node;
+    if ( $self->backward_alignment ) {
+        my $en_root = $zone->get_bundle->get_tree(
+            $self->source_language, 'a', $self->source_selector
+        );
+        foreach my $en_node ( $en_root->get_descendants ) {
+            my ( $nodes, $types ) = $en_node->get_aligned_nodes();
+            if ( $nodes->[0] ) {
+                $en_counterpart{ $nodes->[0]->id } = $en_node;
+            }
         }
     }
 
@@ -96,14 +102,20 @@ sub process_zone {
 # nice name
 sub get_en_counterpart {
     my ( $self, $node ) = @_;
-    return $en_counterpart{ $node->id };
+    my $aligned_node;
+    if ( $self->backward_alignment ) {
+        $aligned_node = $en_counterpart{ $node->id };
+    } else {
+        ($aligned_node) = $node->get_aligned_nodes_of_type($self->src_alignment_type);
+    }
+    return $aligned_node;
 }
 
 # quick-to-write name
 sub en {
     my ( $self, $node ) = @_;
     if ( defined $node ) {
-        return $en_counterpart{ $node->id };
+        return $self->get_en_counterpart($node);
     }
     else {
         return undef;
