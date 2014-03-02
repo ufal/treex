@@ -150,6 +150,13 @@ sub pos_move {
 
     $self->logfix1( $left_child, "POS move" );
     $left_child->set_parent($right_child);
+
+    # do not move nonprojective nodes
+    my @nonprojdescs = grep {$_->is_nonprojective} $left_child->get_descendants();
+    foreach my $desc (@nonprojdescs) {
+        $desc->set_parent($left_child->parent);
+    }
+    
     $self->shift_subtree_after_node(
         $left_child, $right_child
     );
