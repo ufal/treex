@@ -28,7 +28,7 @@ sub process_zone {
     my ( $self, $zone ) = @_;
 
     my $a_root     = $zone->get_atree;
-    my $first_node = $a_root->get_descendants( { first_only => 1 } );
+    my ($first_node) = grep { $_->form =~ /\w/ } $a_root->get_descendants( { ordered => 1 } );
     my $first_char = substr( $first_node->form, 0, 1 );
 
     # if sentence begins in lowercase
