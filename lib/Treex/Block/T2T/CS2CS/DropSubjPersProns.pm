@@ -42,6 +42,9 @@ sub fix {
         }
     }
 
+    # do not drop if has children
+    return if $lexnode->get_children();
+
     # drop only subjects that are not coordinated ("he or she")
     return if $t_node->is_member;
 

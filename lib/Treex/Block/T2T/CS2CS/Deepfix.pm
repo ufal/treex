@@ -45,6 +45,10 @@ sub process_tnode {
         log_fatal "deepfix_info must be precomputed for Deepfix to operate!!";
     }
 
+    if ($node->isa('Treex::Core::Node::Deleted')) {
+        return;
+    }
+
     # remember the node being processed
     $tnode_being_processed = $node;
 
