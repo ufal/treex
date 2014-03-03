@@ -111,7 +111,7 @@ sub fill_tnode {
     my ( $self, $cs_tnode ) = @_;
     
     # Skip nodes that were already translated by rules
-    #return if $cs_tnode->t_lemma_origin ne 'clone'; TODO: vratit zpet
+    return if $cs_tnode->t_lemma_origin ne 'clone';
     my $en_tnode = $cs_tnode->src_tnode;
     return if !$en_tnode;
     
@@ -174,7 +174,7 @@ sub print_tnode {
     my ( $self, $cs_tnode ) = @_;
     
     # Skip nodes that were already translated by rules
-    #return if $cs_tnode->t_lemma_origin ne 'clone'; TODO: vratit zpet
+    return if $cs_tnode->t_lemma_origin ne 'clone';
     my $en_tnode = $cs_tnode->src_tnode;
     return if !$en_tnode;
     

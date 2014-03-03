@@ -71,7 +71,7 @@ sub print_tnode_features {
 
     # VW loss should be comparable over experiments
     if (!$submodel || !$submodel->{$cs_tlemma}){
-        my $tag = $submodel ? "$en_tlemma^$cs_tlemma" : $en_tlemma;
+        my $tag = $submodel ? "_$en_tlemma^$cs_tlemma" : $en_tlemma;
         # Words that should not be translated should be considered as plus points (cost=0).
         # $cs_tlemma has an extra #mlayer_pos info, so let's use regex.
         my $cost = $cs_tlemma =~ /^\Q$en_tlemma\E#.$/ ? 0 : 1;
@@ -104,9 +104,9 @@ sub print_tnode_features {
         my $static_rank = int log(5*$best_static_score / $variant_static_score);
 
         if ($self->shared_format){
-            print { $self->_file_handle() } "$i:$cost $variant|T $en_tlemma^$variant $en_tlemma^$variant_pos |R r$static_rank\n";
+            print { $self->_file_handle() } "$i:$cost _$variant|T $en_tlemma^$variant $en_tlemma^$variant_pos |R r$static_rank\n";
         } else {
-            print { $self->_file_handle() } "$i:$cost $variant|S=$en_tlemma,T=$variant $src_context_feats\n";
+            print { $self->_file_handle() } "$i:$cost _$variant|S=$en_tlemma,T=$variant $src_context_feats\n";
         }
     }
     print { $self->_file_handle() } "\n";
