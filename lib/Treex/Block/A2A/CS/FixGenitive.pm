@@ -13,9 +13,11 @@ sub fix {
         # do not fix if too far apart
         $gov->ord - $dep->ord < 3 &&
         # podle Petra Kuchaře -> podle Kuchaře Petra: don't fix!
-        !$self->isName($gov)
-        # TODO:
-        # maybe also use: form ne lc(form) && ord != 1
+        !$self->isName($gov) &&
+        # identical edge exists in source
+        $self->en($dep) && $self->en($gov) &&
+        ($self->en($dep))->get_parent() &&
+        (($self->en($dep))->get_parent())->id eq ($self->en($gov))->id
     ) {
         $self->switch_nodes($dep, $gov, "Genitive move" );
     }
@@ -25,9 +27,9 @@ sub fix {
 # TODO move this method into FixAgreement
 # Rossuma robot -> robot Rossuma
 sub switch_nodes {
-    my ($self, $left_node, $right_node) = @_;
+    my ($self, $left_node, $right_node, $msg) = @_;
 
-    $self->logfix1( $left_node );
+    $self->logfix1($left_node, $msg);
     $left_node->set_parent($right_node);
 
     # do not move nonprojective nodes
