@@ -45,6 +45,11 @@ sub fix {
     # do not drop if has children
     return if $lexnode->get_children();
 
+    # keep short sentences as they are
+    # return if $lexnode->get_root()->get_descendants() < 9;
+    # maybe: but still move? $self->move($t_node);
+    # ...this did not prove to really help
+
     # drop only subjects that are not coordinated ("he or she")
     return if $t_node->is_member;
 
