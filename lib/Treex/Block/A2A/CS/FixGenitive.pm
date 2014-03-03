@@ -11,6 +11,19 @@ sub fix {
         $d->{'pos'} eq 'N' && $d->{'case'} eq '2' &&
         $dep->precedes($gov)
     ) {
+        # do not fix if too far apart
+        if ( $gov->ord - $dep->ord > 3 ) {
+            return;
+        }
+
+        # podle Petra Kuchaře -> podle Kuchaře Petra: don't fix!
+        # TODO does this actually work?
+        # otherwise check lemma eq lc(lemma),
+        # or even form eq lc(form) if ord != 1
+        if ( $self->isName($gov) && $self->isName($dep) ) {
+            return;
+        }
+
         $self->switch_nodes($dep, $gov, "Genitive move" );
     }
 
@@ -29,7 +42,8 @@ sub switch_nodes {
     foreach my $desc (@nonprojdescs) {
         $desc->set_parent($left_node->parent);
     }
-    
+
+    # TODO with children? is this the default?
     $self->shift_subtree_after_node(
         $left_node, $right_node
     );

@@ -151,6 +151,11 @@ sub isName {
     # should be computed and hashed at the beginning
     # and then use something like return $is_named_entity{$node->id}
 
+    # TODO is this good?
+    if ( $node->lemma ne lc($node->lemma) ) {
+        return 1;
+    }
+
     if (!$node->get_bundle->has_tree(
             $self->language, 'n', $self->selector )
     ) {
@@ -252,6 +257,12 @@ sub gn2pp {
 sub shift_subtree_after_node {
     my ($self, $subtree_root, $node) = @_;
     
+    # lc if beginning of sentence
+    my $first = $subtree_root->get_descendants({add_self=>1,first_only=>1});
+    if ( $first->ord eq '1' && $first->lemma eq lc($first->lemma) ) {
+        $first->set_form(lc($first->form));
+    }
+
     # do the shift
     $subtree_root->shift_after_node($node);
     
