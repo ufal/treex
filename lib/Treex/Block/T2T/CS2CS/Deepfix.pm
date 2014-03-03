@@ -172,6 +172,14 @@ sub add_parent {
         $anode, { without_children => 1 }
     );
 
+    if ( $new_parent->ord eq '1') {
+        # lc word 2 which was word 1 and therefore capitalized
+        my $first_node = $anode->get_descendants({add_self=>1,first_only=>1});
+        if ( $first_node->lemma eq lc($first_node->lemma) ) {
+            $first_node->set_form(lc($first_node->form));
+        }
+    }
+
     if ( !defined $tnode ) {
         $tnode = $tnode_being_processed;
     }
