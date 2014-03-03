@@ -16,8 +16,8 @@ has c_num_model_file => ( is => 'rw', isa => 'Str', required => 1 );
 has c_cas_config_file => ( is => 'rw', isa => 'Str', required => 1 );
 has c_cas_model_file => ( is => 'rw', isa => 'Str', required => 1 );
 
-has model_type => ( is => 'rw', isa => 'Str', default => 'maxent' );
-# allowed values: maxent, nb, dt
+has model_type => ( is => 'rw', isa => 'Str', default => 'odt' );
+# allowed values: maxent, nb, dt, odt
 
 use Treex::Tool::Depfix::CS::NodeInfoGetter;
 use Treex::Tool::Depfix::EN::NodeInfoGetter;
@@ -52,52 +52,38 @@ override '_load_models' => sub {
         model_file  => $self->c_cas_model_file,
     };
 
-    if ( $self->model_type eq 'maxent' ) {
-        $self->_models->{c_cas} =
-        Treex::Tool::Depfix::MaxEntModel->new($model_params_cas);
-    } elsif ( $self->model_type eq 'nb' ) {
-        $self->_models->{c_cas} =
-        Treex::Tool::Depfix::NaiveBayesModel->new($model_params_cas);
-    } elsif ( $self->model_type eq 'dt' ) {
+    if ( $self->model_type eq 'odt' ) {
         $self->_models->{c_gen} =
-        Treex::Tool::Depfix::DecisionTreesModel->new($model_params_gen);
+        Treex::Tool::Depfix::OldDecisionTreesModel->new($model_params_gen);
         $self->_models->{c_num} =
-        Treex::Tool::Depfix::DecisionTreesModel->new($model_params_num);
+        Treex::Tool::Depfix::OldDecisionTreesModel->new($model_params_num);
         $self->_models->{c_cas} =
-        Treex::Tool::Depfix::DecisionTreesModel->new($model_params_cas);
+        Treex::Tool::Depfix::OldDecisionTreesModel->new($model_params_cas);
     }
 
     return;
 };
 
-override '_predict_new_tags' => sub {
-    my ($self, $node, $model_predictions) = @_;
 
-    # old
+override 'predict_new_tag' => sub {
+    my ($self, $node, $instance_info) = @_;
+
+    my $model_predictions = {};
+    my @model_names = keys %{$self->_models};
+    foreach my $model_name (@model_names) {
+        my $model = $self->_models->{$model_name};
+        my $prediction = $model->get_best_prediction($instance_info);
+        $model_predictions->{$model_name} = $prediction;
+    }
+
     my $tag = $node->tag;
-    my @categories = split //, $tag;
-    my ($old_gen, $old_num, $old_cas) =
-        ($categories[2], $categories[3], $categories[4]);
-
-    # new
-    my ($new_gen) = (keys %{$model_predictions->{c_gen}} );
-    my ($new_num) = (keys %{$model_predictions->{c_num}} );
-    my ($new_cas) = (keys %{$model_predictions->{c_cas}} );
-    if ( !defined $new_gen ) {
-        $new_gen = $old_gen;
-    }
-    if ( !defined $new_num ) {
-        $new_num = $old_num;
-    }
-    if ( !defined $new_cas ) {
-        $new_cas = $old_cas;
-    }
-
-    substr $tag, 2, 3, $new_gen.$new_num.$new_cas;
-
-    return { $tag => 1 };
+    my $gnc = $model_predictions->{c_gen} . $model_predictions->{c_num} .
+        $model_predictions->{c_cas};
+    substr $tag, 2, 3, $gnc;
+    
+    $self->fixLogger->logfix1($node, "MLFix");
+    return $tag;
 };
-
 
 1;
 
