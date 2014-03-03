@@ -204,11 +204,13 @@ sub predict_new_tag {
         my $message = 'MLFix (' .
         (join ', ',
             (map { $_ . ':' . sprintf('%.2f', $new_tags->{$_}) }
-                keys %$new_tags) ) . 
+                sort {$new_tags->{$b} <=> $new_tags->{$a}}
+                    keys %$new_tags) ) . 
         ' ' .
         (join ', ',
             (map { $_ . ':' . sprintf('%.2f', $forms{$_}->{score}) }
-                keys %forms) ) .
+                sort {$forms{$b} <=> $forms{$a}}
+                    keys %forms) ) .
         ')';
         $self->fixLogger->logfix1($node, $message);
 
@@ -224,7 +226,8 @@ sub predict_new_tag {
         my $message = 'MLFix (' .
         (join ', ',
             (map { $_ . ':' . sprintf('%.2f', $new_tags->{$_}) }
-                keys %$new_tags) ) . 
+                sort {$new_tags->{$b} <=> $new_tags->{$a}}
+                    keys %$new_tags) ) . 
         ')';
         $self->fixLogger->logfix1($node, $message);
 
