@@ -26,6 +26,20 @@ has static_model => (
     default => 'tlemma_czeng09.static.pls.slurp.gz',
 );
 
+has static_weight => (
+    is            => 'ro',
+    isa           => 'Num',
+    default       => 0.5,
+    documentation => 'Weight of the Static model (NB: the model will be loaded even if the weight is zero).'
+);
+
+has normalize => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 0,
+    documentation => 'should the probs sum up to 1?'
+);
+
 has vw_model => (
     is      => 'ro',
     isa     => 'Str',
@@ -118,10 +132,15 @@ sub fill_tnode {
         my ($score, $variant) = (/^\d+:([-e\d.]+) ([^ ]+)$/) or log_fatal "Strange VW -r output: $_";
         #csoaa predicts the loss, so instead of -$score, we need +$score
         $score = 1.0 / (1.0 + exp($score));
+        # interpolate with static
+        $score += $self->static_weight * $submodel->{$variant};
+        $score /= (1 + $self->static_weight);
         $sum += $score;
         push @translations, [$score, $variant];
     }
     log_fatal "No VW translations for $en_tlemma in $Rname trained from $Fname" if !@translations;
+    $sum = 1 if !$self->normalize;
+    
     
     # Sort: the highest prob first. We need deterministic runs and therefore stable sorting for equally probable translations.
     @translations = sort {($b->[0] <=> $a->[0]) || ($a->[1] cmp $b->[1])} @translations;
