@@ -84,6 +84,8 @@
       <value>AuxG</value>
       <value>AuxK</value>
       <value>AuxX</value>
+      <!-- Official PDT release does not have it but some similar treebanks (e.g. Slovak) do: ??? for unannotated relation. -->
+      <value>???</value>
     </choice>
   </type>
 
