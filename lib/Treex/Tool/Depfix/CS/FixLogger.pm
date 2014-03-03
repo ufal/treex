@@ -112,7 +112,10 @@ sub logfix2 {
     my $d   = undef;
     my $g   = undef;
 
-    if ($node) {
+    if (defined $node &&
+        blessed $node &&
+        !$node->isa('Treex::Core::Node::Deleted')
+    ) {
         ( $dep, $gov, $d, $g ) = $self->get_pair($node);
         return if !$dep;
 
