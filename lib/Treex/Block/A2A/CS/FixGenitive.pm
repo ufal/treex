@@ -9,21 +9,14 @@ sub fix {
 
     if ( $g->{'pos'} eq 'N' &&
         $d->{'pos'} eq 'N' && $d->{'case'} eq '2' &&
-        $dep->precedes($gov)
-    ) {
+        $dep->precedes($gov) &&
         # do not fix if too far apart
-        if ( $gov->ord - $dep->ord > 3 ) {
-            return;
-        }
-
+        $gov->ord - $dep->ord < 3 &&
         # podle Petra Kuchaře -> podle Kuchaře Petra: don't fix!
-        # TODO does this actually work?
-        # otherwise check lemma eq lc(lemma),
-        # or even form eq lc(form) if ord != 1
-        if ( $self->isName($gov) && $self->isName($dep) ) {
-            return;
-        }
-
+        !$self->isName($gov)
+        # TODO:
+        # maybe also use: form ne lc(form) && ord != 1
+    ) {
         $self->switch_nodes($dep, $gov, "Genitive move" );
     }
 
