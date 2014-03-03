@@ -1,0 +1,223 @@
+<?xml version="1.0"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0" xmlns:a="http://relaxng.org/ns/annotation/1.0" xmlns:pml="http://ufal.mff.cuni.cz/pdt/pml/" xmlns:s="http://ufal.mff.cuni.cz/pdt/pml/schema/" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <include href="pml_common.rng"/>
+  <a:documentation>PML schema Revision: 1.0.1</a:documentation>
+  <a:documentation>RelaxNG schema for PML described as: PDT 2.0 analytical trees</a:documentation>
+  <start>
+    <element name="pml:adata">
+      <ref name="head.element"/>
+      <ref name="a-adata.type"/>
+    </element>
+  </start>
+  <define name="a-adata.type">
+    <interleave>
+      <optional>
+        <element name="pml:meta">
+          <ref name="a-meta.type"/>
+        </element>
+      </optional>
+      <element name="pml:trees">
+        <choice>
+          <oneOrMore>
+            <element name="pml:LM">
+              <ref name="a-root.type"/>
+            </element>
+          </oneOrMore>
+          <ref name="a-root.type"/>
+        </choice>
+      </element>
+    </interleave>
+  </define>
+  <define name="a-meta.type">
+    <interleave>
+      <optional>
+        <element name="pml:annotation_info">
+          <interleave>
+            <optional>
+              <element name="pml:version_info">
+                <text/>
+              </element>
+            </optional>
+            <optional>
+              <element name="pml:desc">
+                <text/>
+              </element>
+            </optional>
+          </interleave>
+        </element>
+      </optional>
+    </interleave>
+  </define>
+  <define name="a-root.type">
+    <interleave>
+      <attribute name="id">
+        <data type="ID"/>
+      </attribute>
+      <optional>
+        <element name="pml:s.rf">
+          <text/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:afun">
+          <choice>
+            <value>AuxS</value>
+          </choice>
+        </element>
+      </optional>
+      <element name="pml:ord">
+        <data type="nonNegativeInteger" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes"/>
+      </element>
+      <optional>
+        <element name="pml:children">
+          <choice>
+            <oneOrMore>
+              <element name="pml:LM">
+                <ref name="a-node.type"/>
+              </element>
+            </oneOrMore>
+            <ref name="a-node.type"/>
+          </choice>
+        </element>
+      </optional>
+    </interleave>
+  </define>
+  <define name="a-node.type">
+    <interleave>
+      <attribute name="id">
+        <data type="ID"/>
+      </attribute>
+      <optional>
+        <element name="pml:m.rf">
+          <text/>
+        </element>
+      </optional>
+      <element name="pml:afun">
+        <ref name="a-afun.type"/>
+      </element>
+      <optional>
+        <element name="pml:is_member">
+          <ref name="bool.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:is_parenthesis_root">
+          <ref name="bool.type"/>
+        </element>
+      </optional>
+      <element name="pml:ord">
+        <data type="nonNegativeInteger" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes"/>
+      </element>
+      <optional>
+        <element name="pml:children">
+          <choice>
+            <oneOrMore>
+              <element name="pml:LM">
+                <ref name="a-node.type"/>
+              </element>
+            </oneOrMore>
+            <ref name="a-node.type"/>
+          </choice>
+        </element>
+      </optional>
+    </interleave>
+  </define>
+  <define name="a-afun.type">
+    <choice>
+      <value>Pred</value>
+      <value>Pnom</value>
+      <value>AuxV</value>
+      <value>Sb</value>
+      <value>Obj</value>
+      <value>Atr</value>
+      <value>Adv</value>
+      <value>AtrAdv</value>
+      <value>AdvAtr</value>
+      <value>Coord</value>
+      <value>AtrObj</value>
+      <value>ObjAtr</value>
+      <value>AtrAtr</value>
+      <value>AuxT</value>
+      <value>AuxR</value>
+      <value>AuxP</value>
+      <value>Apos</value>
+      <value>ExD</value>
+      <value>AuxC</value>
+      <value>Atv</value>
+      <value>AtvV</value>
+      <value>AuxO</value>
+      <value>AuxZ</value>
+      <value>AuxY</value>
+      <value>AuxG</value>
+      <value>AuxK</value>
+      <value>AuxX</value>
+    </choice>
+  </define>
+  <define name="m-node.type">
+    <interleave>
+      <attribute name="id">
+        <data type="ID"/>
+      </attribute>
+      <optional>
+        <element name="pml:src.rf">
+          <text/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:w.rf">
+          <choice>
+            <oneOrMore>
+              <element name="pml:LM">
+                <text/>
+              </element>
+            </oneOrMore>
+            <text/>
+          </choice>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:form_change">
+          <ref name="m-form_change.type"/>
+        </element>
+      </optional>
+      <element name="pml:form">
+        <text/>
+      </element>
+      <element name="pml:lemma">
+        <text/>
+      </element>
+      <element name="pml:tag">
+        <text/>
+      </element>
+    </interleave>
+  </define>
+  <define name="m-form_change.type">
+    <choice>
+      <value>ctcd</value>
+      <value>spell</value>
+      <value>insert</value>
+      <value>num_normalization</value>
+    </choice>
+  </define>
+  <define name="w-node.type">
+    <interleave>
+      <attribute name="id">
+        <data type="ID"/>
+      </attribute>
+      <element name="pml:token">
+        <text/>
+      </element>
+      <optional>
+        <element name="pml:no_space_after">
+          <ref name="bool.type"/>
+        </element>
+      </optional>
+    </interleave>
+  </define>
+  <define name="bool.type">
+    <choice>
+      <value>0</value>
+      <value>1</value>
+    </choice>
+  </define>
+</grammar>

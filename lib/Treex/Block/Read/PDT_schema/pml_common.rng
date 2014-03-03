@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0"
+  xmlns:pml="http://ufal.mff.cuni.cz/pdt/pml/"
+  datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+
+  <define name="id.attribute">
+    <attribute name="id"><text/></attribute>
+  </define>
+
+  <define name="head.element">
+    <element name="pml:head">
+      <element name="pml:schema">
+	<attribute name="href"><text/></attribute>
+      </element>
+      <optional>
+	<element name="pml:references">
+	  <zeroOrMore>
+	    <element name="pml:reffile">
+	      <attribute name="id">
+		<data type="ID"/>
+	      </attribute>
+	      <attribute name="name">
+		<text/>
+	      </attribute>
+	      <attribute name="href">
+		<text/>
+	      </attribute>
+	    </element>
+	  </zeroOrMore>
+	</element>
+      </optional>
+    </element>
+  </define>
+
+</grammar>

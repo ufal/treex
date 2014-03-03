@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pml_schema
+  xmlns="http://ufal.mff.cuni.cz/pdt/pml/schema/"
+  version="1.1">
+  <revision>1.0.0</revision>
+  <description>PDT 2.0 word layer</description>
+  <root name="wdata" type="w-wdata.type"/>
+
+  <type name="w-wdata.type">
+    <structure>
+      <member name="meta" type="w-meta.type"/>
+      <member name="doc" type="w-doc.type"/>
+    </structure>
+  </type>
+
+  <type name="w-meta.type">
+    <structure>
+      <member name="lang"><cdata format="any"/></member>
+      <member name="original_format"><cdata format="any"/></member>
+    </structure>
+  </type>
+
+  <type name="w-doc.type">
+    <container>
+      <attribute name="id" required="1" role="#ID"><cdata format="ID"/></attribute>
+      <attribute name="source_id"><cdata format="any"/></attribute>
+      <sequence content_pattern="docmeta, para+">
+	<element name="docmeta" type="w-docmeta.type"/>
+	<element name="para" type="w-para.type"/>
+      </sequence>
+    </container>
+  </type>
+
+  <type name="w-docmeta.type">
+    <sequence>
+      <element name="othermeta" type="w-othermeta.type"/>
+    </sequence>
+  </type>
+
+  <type name="w-othermeta.type">
+    <container>
+      <attribute name="origin"><cdata format="any"/></attribute>
+      <cdata format="any"/>
+    </container>
+  </type>
+
+  <type name="w-para.type">
+    <sequence>
+      <element name="othermarkup" type="w-othermarkup.type"/>
+      <element name="w" type="w-node.type"/>
+    </sequence>
+  </type>
+
+  <type name="w-othermarkup.type">
+    <container>
+      <attribute name="origin"><cdata format="any"/></attribute>
+      <cdata format="any"/>
+    </container>
+  </type>
+
+  <type name="w-node.type">
+    <structure name="w-node">
+      <member as_attribute="1" name="id" role="#ID" required="1"><cdata format="ID"/></member>
+      <member name="token" required="1"><cdata format="any"/></member>
+      <member name="no_space_after" type="bool.type"/>
+    </structure>
+  </type>
+  
+  <type name="bool.type">
+    <choice>
+      <value>0</value>
+      <value>1</value>
+    </choice>
+  </type>
+
+</pml_schema>

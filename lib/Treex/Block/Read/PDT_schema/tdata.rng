@@ -1,0 +1,680 @@
+<?xml version="1.0"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0" xmlns:a="http://relaxng.org/ns/annotation/1.0" xmlns:pml="http://ufal.mff.cuni.cz/pdt/pml/" xmlns:s="http://ufal.mff.cuni.cz/pdt/pml/schema/" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <include href="pml_common.rng"/>
+  <a:documentation>PML schema Revision: 1.0.0</a:documentation>
+  <a:documentation>RelaxNG schema for PML described as: PDT 2.0 tectogrammatic trees</a:documentation>
+  <start>
+    <element name="pml:tdata">
+      <ref name="head.element"/>
+      <ref name="t-tdata.type"/>
+    </element>
+  </start>
+  <define name="t-tdata.type">
+    <interleave>
+      <optional>
+        <element name="pml:meta">
+          <ref name="t-meta.type"/>
+        </element>
+      </optional>
+      <element name="pml:trees">
+        <choice>
+          <oneOrMore>
+            <element name="pml:LM">
+              <ref name="t-root.type"/>
+            </element>
+          </oneOrMore>
+          <ref name="t-root.type"/>
+        </choice>
+      </element>
+    </interleave>
+  </define>
+  <define name="t-meta.type">
+    <interleave>
+      <optional>
+        <element name="pml:annotation_info">
+          <ref name="t-annotation-info.type"/>
+        </element>
+      </optional>
+    </interleave>
+  </define>
+  <define name="t-annotation-info.type">
+    <interleave>
+      <optional>
+        <element name="pml:version_info">
+          <text/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:desc">
+          <text/>
+        </element>
+      </optional>
+    </interleave>
+  </define>
+  <define name="t-root.type">
+    <interleave>
+      <attribute name="id">
+        <data type="ID"/>
+      </attribute>
+      <optional>
+        <element name="pml:atree.rf">
+          <text/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:nodetype">
+          <choice>
+            <value>root</value>
+          </choice>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:deepord">
+          <data type="nonNegativeInteger" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:children">
+          <choice>
+            <oneOrMore>
+              <element name="pml:LM">
+                <ref name="t-node.type"/>
+              </element>
+            </oneOrMore>
+            <ref name="t-node.type"/>
+          </choice>
+        </element>
+      </optional>
+    </interleave>
+  </define>
+  <define name="t-node.type">
+    <interleave>
+      <attribute name="id">
+        <data type="ID"/>
+      </attribute>
+      <optional>
+        <element name="pml:a">
+          <ref name="t-a.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:compl.rf">
+          <choice>
+            <oneOrMore>
+              <element name="pml:LM">
+                <text/>
+              </element>
+            </oneOrMore>
+            <text/>
+          </choice>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:coref_text.rf">
+          <choice>
+            <oneOrMore>
+              <element name="pml:LM">
+                <text/>
+              </element>
+            </oneOrMore>
+            <text/>
+          </choice>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:coref_gram.rf">
+          <choice>
+            <oneOrMore>
+              <element name="pml:LM">
+                <text/>
+              </element>
+            </oneOrMore>
+            <text/>
+          </choice>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:coref_special">
+          <ref name="coref_special.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:val_frame.rf">
+          <choice>
+            <oneOrMore>
+              <element name="pml:AM">
+                <text/>
+              </element>
+            </oneOrMore>
+            <text/>
+          </choice>
+        </element>
+      </optional>
+      <element name="pml:nodetype">
+        <ref name="t-nodetype.type"/>
+      </element>
+      <optional>
+        <element name="pml:is_generated">
+          <ref name="bool.type"/>
+        </element>
+      </optional>
+      <element name="pml:t_lemma">
+        <text/>
+      </element>
+      <element name="pml:functor">
+        <choice>
+          <oneOrMore>
+            <element name="pml:AM">
+              <ref name="func.type"/>
+            </element>
+          </oneOrMore>
+          <ref name="func.type"/>
+        </choice>
+      </element>
+      <optional>
+        <element name="pml:subfunctor">
+          <ref name="t-subfunctor.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:is_member">
+          <ref name="bool.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:is_name_of_person">
+          <ref name="bool.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:quot">
+          <choice>
+            <oneOrMore>
+              <element name="pml:LM">
+                <interleave>
+                  <element name="pml:type">
+                    <ref name="t-type.type"/>
+                  </element>
+                  <element name="pml:set_id">
+                    <text/>
+                  </element>
+                </interleave>
+              </element>
+            </oneOrMore>
+            <interleave>
+              <element name="pml:type">
+                <ref name="t-type.type"/>
+              </element>
+              <element name="pml:set_id">
+                <text/>
+              </element>
+            </interleave>
+          </choice>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:is_dsp_root">
+          <ref name="bool.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:sentmod">
+          <ref name="t-sentmod.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:gram">
+          <ref name="t-gram.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:tfa">
+          <ref name="t-tfa.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:is_parenthesis">
+          <ref name="bool.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:is_state">
+          <ref name="bool.type"/>
+        </element>
+      </optional>
+      <element name="pml:deepord">
+        <data type="nonNegativeInteger" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes"/>
+      </element>
+      <optional>
+        <element name="pml:children">
+          <choice>
+            <oneOrMore>
+              <element name="pml:LM">
+                <ref name="t-node.type"/>
+              </element>
+            </oneOrMore>
+            <ref name="t-node.type"/>
+          </choice>
+        </element>
+      </optional>
+    </interleave>
+  </define>
+  <define name="t-tfa.type">
+    <choice>
+      <value>t</value>
+      <value>f</value>
+      <value>c</value>
+    </choice>
+  </define>
+  <define name="t-gram.type">
+    <interleave>
+      <element name="pml:sempos">
+        <ref name="t-sempos.type"/>
+      </element>
+      <optional>
+        <element name="pml:gender">
+          <ref name="t-gender.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:number">
+          <ref name="t-number.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:degcmp">
+          <ref name="t-degcmp.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:verbmod">
+          <ref name="t-verbmod.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:deontmod">
+          <ref name="t-deontmod.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:tense">
+          <ref name="t-tense.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:aspect">
+          <ref name="t-aspect.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:resultative">
+          <ref name="t-resultative.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:dispmod">
+          <ref name="t-dispmod.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:iterativeness">
+          <ref name="t-iterativeness.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:indeftype">
+          <ref name="t-indeftype.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:person">
+          <ref name="t-person.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:numertype">
+          <ref name="t-numertype.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:politeness">
+          <ref name="t-politeness.type"/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:negation">
+          <ref name="t-negation.type"/>
+        </element>
+      </optional>
+    </interleave>
+  </define>
+  <define name="t-negation.type">
+    <choice>
+      <value>neg0</value>
+      <value>neg1</value>
+      <value>nr</value>
+    </choice>
+  </define>
+  <define name="t-politeness.type">
+    <choice>
+      <value>polite</value>
+      <value>basic</value>
+      <value>inher</value>
+      <value>nr</value>
+    </choice>
+  </define>
+  <define name="t-numertype.type">
+    <choice>
+      <value>basic</value>
+      <value>set</value>
+      <value>kind</value>
+      <value>ord</value>
+      <value>frac</value>
+      <value>nr</value>
+    </choice>
+  </define>
+  <define name="t-person.type">
+    <choice>
+      <value>1</value>
+      <value>2</value>
+      <value>3</value>
+      <value>inher</value>
+      <value>nr</value>
+    </choice>
+  </define>
+  <define name="t-indeftype.type">
+    <choice>
+      <value>relat</value>
+      <value>indef1</value>
+      <value>indef2</value>
+      <value>indef3</value>
+      <value>indef4</value>
+      <value>indef5</value>
+      <value>indef6</value>
+      <value>inter</value>
+      <value>negat</value>
+      <value>total1</value>
+      <value>total2</value>
+      <value>nr</value>
+    </choice>
+  </define>
+  <define name="t-iterativeness.type">
+    <choice>
+      <value>it1</value>
+      <value>it0</value>
+      <value>nr</value>
+    </choice>
+  </define>
+  <define name="t-dispmod.type">
+    <choice>
+      <value>disp1</value>
+      <value>disp0</value>
+      <value>nr</value>
+      <value>nil</value>
+    </choice>
+  </define>
+  <define name="t-resultative.type">
+    <choice>
+      <value>res1</value>
+      <value>res0</value>
+      <value>nr</value>
+    </choice>
+  </define>
+  <define name="t-aspect.type">
+    <choice>
+      <value>proc</value>
+      <value>cpl</value>
+      <value>nr</value>
+    </choice>
+  </define>
+  <define name="t-tense.type">
+    <choice>
+      <value>sim</value>
+      <value>ant</value>
+      <value>post</value>
+      <value>nr</value>
+      <value>nil</value>
+    </choice>
+  </define>
+  <define name="t-deontmod.type">
+    <choice>
+      <value>deb</value>
+      <value>hrt</value>
+      <value>vol</value>
+      <value>poss</value>
+      <value>perm</value>
+      <value>fac</value>
+      <value>decl</value>
+      <value>nr</value>
+    </choice>
+  </define>
+  <define name="t-verbmod.type">
+    <choice>
+      <value>ind</value>
+      <value>imp</value>
+      <value>cdn</value>
+      <value>nr</value>
+      <value>nil</value>
+    </choice>
+  </define>
+  <define name="t-degcmp.type">
+    <choice>
+      <value>pos</value>
+      <value>comp</value>
+      <value>acomp</value>
+      <value>sup</value>
+      <value>nr</value>
+    </choice>
+  </define>
+  <define name="t-number.type">
+    <choice>
+      <value>sg</value>
+      <value>pl</value>
+      <value>inher</value>
+      <value>nr</value>
+    </choice>
+  </define>
+  <define name="t-gender.type">
+    <choice>
+      <value>anim</value>
+      <value>inan</value>
+      <value>fem</value>
+      <value>neut</value>
+      <value>inher</value>
+      <value>nr</value>
+    </choice>
+  </define>
+  <define name="t-sempos.type">
+    <choice>
+      <value>n.denot</value>
+      <value>n.denot.neg</value>
+      <value>n.pron.def.demon</value>
+      <value>n.pron.def.pers</value>
+      <value>n.pron.indef</value>
+      <value>n.quant.def</value>
+      <value>adj.denot</value>
+      <value>adj.pron.def.demon</value>
+      <value>adj.pron.indef</value>
+      <value>adj.quant.def</value>
+      <value>adj.quant.indef</value>
+      <value>adj.quant.grad</value>
+      <value>adv.denot.grad.nneg</value>
+      <value>adv.denot.ngrad.nneg</value>
+      <value>adv.denot.grad.neg</value>
+      <value>adv.denot.ngrad.neg</value>
+      <value>adv.pron.def</value>
+      <value>adv.pron.indef</value>
+      <value>v</value>
+    </choice>
+  </define>
+  <define name="t-sentmod.type">
+    <choice>
+      <value>enunc</value>
+      <value>excl</value>
+      <value>desid</value>
+      <value>imper</value>
+      <value>inter</value>
+    </choice>
+  </define>
+  <define name="t-type.type">
+    <choice>
+      <value>citation</value>
+      <value>dsp</value>
+      <value>meta</value>
+      <value>other</value>
+      <value>title</value>
+    </choice>
+  </define>
+  <define name="t-subfunctor.type">
+    <choice>
+      <value>above</value>
+      <value>abstr</value>
+      <value>across</value>
+      <value>after</value>
+      <value>agst</value>
+      <value>along</value>
+      <value>approx</value>
+      <value>around</value>
+      <value>basic</value>
+      <value>before</value>
+      <value>begin</value>
+      <value>behind</value>
+      <value>below</value>
+      <value>betw</value>
+      <value>circ</value>
+      <value>elsew</value>
+      <value>end</value>
+      <value>ext</value>
+      <value>flow</value>
+      <value>front</value>
+      <value>incl</value>
+      <value>in</value>
+      <value>less</value>
+      <value>mid</value>
+      <value>more</value>
+      <value>near</value>
+      <value>opp</value>
+      <value>target</value>
+      <value>than</value>
+      <value>to</value>
+      <value>wout</value>
+      <value>wrt</value>
+      <value>nr</value>
+    </choice>
+  </define>
+  <define name="t-nodetype.type">
+    <choice>
+      <value>atom</value>
+      <value>coap</value>
+      <value>complex</value>
+      <value>dphr</value>
+      <value>fphr</value>
+      <value>list</value>
+      <value>qcomplex</value>
+    </choice>
+  </define>
+  <define name="t-a.type">
+    <interleave>
+      <optional>
+        <element name="pml:lex.rf">
+          <text/>
+        </element>
+      </optional>
+      <optional>
+        <element name="pml:aux.rf">
+          <choice>
+            <oneOrMore>
+              <element name="pml:LM">
+                <text/>
+              </element>
+            </oneOrMore>
+            <text/>
+          </choice>
+        </element>
+      </optional>
+    </interleave>
+  </define>
+  <define name="coref_special.type">
+    <choice>
+      <value>segm</value>
+      <value>exoph</value>
+    </choice>
+  </define>
+  <define name="func.type">
+    <choice>
+      <value>ACT</value>
+      <value>AUTH</value>
+      <value>PAT</value>
+      <value>ADDR</value>
+      <value>EFF</value>
+      <value>ORIG</value>
+      <value>ACMP</value>
+      <value>ADVS</value>
+      <value>AIM</value>
+      <value>APP</value>
+      <value>APPS</value>
+      <value>ATT</value>
+      <value>BEN</value>
+      <value>CAUS</value>
+      <value>CNCS</value>
+      <value>CM</value>
+      <value>COMPL</value>
+      <value>CONJ</value>
+      <value>COND</value>
+      <value>CONFR</value>
+      <value>CONTRA</value>
+      <value>CONTRD</value>
+      <value>CPHR</value>
+      <value>CPR</value>
+      <value>CRIT</value>
+      <value>CSQ</value>
+      <value>DENOM</value>
+      <value>DIFF</value>
+      <value>DIR1</value>
+      <value>DIR2</value>
+      <value>DIR3</value>
+      <value>DISJ</value>
+      <value>DPHR</value>
+      <value>EXT</value>
+      <value>FPHR</value>
+      <value>GRAD</value>
+      <value>HER</value>
+      <value>ID</value>
+      <value>INTF</value>
+      <value>INTT</value>
+      <value>LOC</value>
+      <value>MANN</value>
+      <value>MAT</value>
+      <value>MEANS</value>
+      <value>MOD</value>
+      <value>OPER</value>
+      <value>PAR</value>
+      <value>PARTL</value>
+      <value>PREC</value>
+      <value>PRED</value>
+      <value>REAS</value>
+      <value>REG</value>
+      <value>RESL</value>
+      <value>RESTR</value>
+      <value>RHEM</value>
+      <value>RSTR</value>
+      <value>SUBS</value>
+      <value>TFHL</value>
+      <value>TFRWH</value>
+      <value>THL</value>
+      <value>THO</value>
+      <value>TOWH</value>
+      <value>TPAR</value>
+      <value>TSIN</value>
+      <value>TTILL</value>
+      <value>TWHEN</value>
+      <value>VOCAT</value>
+    </choice>
+  </define>
+  <define name="bool.type">
+    <choice>
+      <value>0</value>
+      <value>1</value>
+    </choice>
+  </define>
+</grammar>

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pml_schema
+  xmlns="http://ufal.mff.cuni.cz/pdt/pml/schema/"
+  version="1.1">
+  <revision>1.0.1</revision>
+  <description>PDT 2.0 analytical trees</description>
+  <reference name="mdata" readas="dom"/>
+  <reference name="wdata" readas="dom"/>
+
+  <root name="adata" type="a-adata.type"/>
+
+  <type name="a-adata.type">
+    <structure>
+      <member name="meta" required="0" type="a-meta.type"/>
+      <member name="trees" role="#TREES" required="1">
+	<list type="a-root.type" ordered="1"/>
+      </member>
+    </structure>
+  </type>
+
+  <type name="a-meta.type">
+    <structure>
+      <member name="annotation_info">
+	<structure name="a-annotation-info">
+	  <member name="version_info"><cdata format="any"/></member>
+	  <member name="desc"><cdata format="any"/></member>
+	</structure>
+      </member>
+    </structure>
+  </type>
+
+  <type name="a-root.type">
+    <structure role="#NODE" name="a-root">
+      <member name="id" role="#ID" as_attribute="1" required="1"><cdata format="ID"/></member>
+      <member name="s.rf"><cdata format="PMLREF"/></member>
+      <member name="afun"><constant>AuxS</constant></member>
+      <member name="ord" role="#ORDER" required="1"><cdata format="nonNegativeInteger"/></member>
+      <member name="children" role="#CHILDNODES">
+	<list type="a-node.type" ordered="1"/>
+      </member>
+    </structure>
+  </type>
+
+  <type name="a-node.type">
+    <structure role="#NODE" name="a-node">
+      <member name="id" role="#ID" as_attribute="1" required="1"><cdata format="ID"/></member>
+      <member name="m.rf" role="#KNIT" type="m-node.type"/>
+      <member name="afun" type="a-afun.type" required="1"/>
+      <member name="is_member" type="bool.type"/>
+      <member type="bool.type" name="is_parenthesis_root"/>
+      <member name="ord" role="#ORDER" required="1"><cdata format="nonNegativeInteger"/></member>
+      <member name="children" role="#CHILDNODES">
+	<list type="a-node.type" ordered="1"/>
+      </member>
+    </structure>
+  </type>
+  
+  <type name="a-afun.type">
+    <choice>
+      <value>Pred</value>
+      <value>Pnom</value>
+      <value>AuxV</value>
+      <value>Sb</value>
+      <value>Obj</value>
+      <value>Atr</value>
+      <value>Adv</value>
+      <value>AtrAdv</value>
+      <value>AdvAtr</value>
+      <value>Coord</value>
+      <value>AtrObj</value>
+      <value>ObjAtr</value>
+      <value>AtrAtr</value>
+      <value>AuxT</value>
+      <value>AuxR</value>
+      <value>AuxP</value>
+      <value>Apos</value>
+      <value>ExD</value>
+      <value>AuxC</value>
+      <value>Atv</value>
+      <value>AtvV</value>
+      <value>AuxO</value>
+      <value>AuxZ</value>
+      <value>AuxY</value>
+      <value>AuxG</value>
+      <value>AuxK</value>
+      <value>AuxX</value>
+    </choice>
+  </type>
+
+  <type name="m-node.type">
+    <structure name="m-node">
+      <member name="id" as_attribute="1" role="#ID" required="1"><cdata format="ID"/></member>
+      <member name="src.rf"><cdata format="PMLREF"/></member>
+      <member name="w.rf">
+        <list ordered="1" role="#KNIT" type="w-node.type"/>
+      </member>
+      <member name="form_change" type="m-form_change.type"/>
+      <member name="form" required="1"><cdata format="any"/></member>
+      <member name="lemma" required="1"><cdata format="any"/></member>
+      <member name="tag" required="1"><cdata format="any"/></member>
+    </structure>
+  </type>
+
+  <type name="m-form_change.type">
+    <choice>
+      <value>ctcd</value>
+      <value>spell</value>
+      <value>insert</value>
+      <value>num_normalization</value>
+    </choice>
+  </type>
+
+  <type name="w-node.type">
+    <structure name="w-node">
+      <member name="id" as_attribute="1" role="#ID" required="1"><cdata format="ID"/></member>
+      <member name="token" required="1"><cdata format="any"/></member>
+      <member name="no_space_after" type="bool.type"/>
+    </structure>
+  </type>
+
+  <type name="bool.type">
+    <choice>
+      <value>0</value>
+      <value>1</value>
+    </choice>
+  </type>
+
+</pml_schema>

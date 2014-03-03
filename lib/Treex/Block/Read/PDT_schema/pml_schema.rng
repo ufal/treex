@@ -1,0 +1,287 @@
+<?xml version="1.0"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0" 
+	xmlns:s="http://ufal.mff.cuni.cz/pdt/pml/schema/" 
+        xmlns:a="http://relaxng.org/ns/compatibility/annotations/1.0"
+	datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <a:documentation>PML schema syntax</a:documentation>
+  <start>
+    <element name="s:pml_schema">
+      <optional>
+	<element name="s:description">
+	  <text/>
+	</element>
+      </optional>
+      <zeroOrMore>
+	<ref name="reference.element"/>
+      </zeroOrMore>
+      <element name="s:root">
+	<attribute name="name"/>
+	<ref name="element.content"/>
+      </element>	
+      <zeroOrMore>
+	<ref name="type.element"/>
+      </zeroOrMore>
+    </element>
+  </start>
+
+  <define name="reference.element">
+    <element name="s:reference">
+      <a:documentation>declare a bound instance and optinally provide
+        a hint for applications on how to parse it</a:documentation>
+      <attribute name="name"/>
+      <optional>
+	<attribute name="readas">
+	  <choice>
+	    <value>trees</value>
+	    <value>dom</value>
+	  </choice>      
+	</attribute>
+      </optional>
+    </element>
+  </define>
+
+  <define name="type.element">
+    <element name="s:type">
+      <a:documentation>a named complex type</a:documentation>
+      <attribute name="name">
+          <data type="ID"/>
+      </attribute>
+      <optional>
+	<ref name="role.attribute"/>
+      </optional>
+      <ref name="element.content"/>
+    </element>
+  </define>
+
+  <define name="type.attribute">
+    <attribute name="type">
+      <a:documentation>a reference to a named complex
+        type</a:documentation>
+      <data type="IDREF"/>
+    </attribute>
+  </define>
+
+  <define name="attribute.element">
+    <element name="s:attribute">
+      <a:documentation>attribute declaration</a:documentation>
+      <optional>
+	<attribute name="required">
+	  <choice>
+	    <value>0</value>
+	    <value>1</value>
+	  </choice>
+	</attribute>
+      </optional>
+      <attribute name="name"/>
+      <optional>
+	<ref name="role.attribute"/>
+      </optional>
+      <choice>
+	<ref name="type.attribute"/>
+	<choice>
+	  <ref name="choice.element"/>
+	  <ref name="cdata.element"/>
+	</choice>
+      </choice>
+    </element>
+  </define>
+
+  <define name="role.attribute">
+    <attribute name="role">
+      <a:documentation>PML role of the value</a:documentation>
+      <choice>
+	<value>#TREES</value>
+	<value>#NODE</value>
+	<value>#ORDER</value>
+	<value>#CHILDNODES</value>
+	<value>#ID</value>
+	<value>#KNIT</value>
+	<value>#HIDE</value>
+      </choice>
+    </attribute>
+  </define>
+
+  <define name="structure.element">
+    <element name="s:structure">
+      <a:documentation>a structure (AVS)</a:documentation>
+      <optional>
+	<attribute name="name"/>
+      </optional>
+      <optional>	
+ 	<ref name="role.attribute"/>
+      </optional>
+      <oneOrMore>
+	<ref name="member.element"/>
+      </oneOrMore>
+    </element>
+  </define>
+
+  <define name="alt.element">
+    <element name="s:alt">
+      <a:documentation>an alternative of values of the same
+        type</a:documentation>
+      <choice>
+	<ref name="type.attribute"/>
+	<ref name="list.element"/>
+	<ref name="data.types"/>
+      </choice>
+    </element>
+  </define>
+
+  <define name="list.element">
+    <element name="s:list">
+      <a:documentation>a list of values of the same
+        type</a:documentation>
+      <attribute name="ordered">
+	<choice>
+	  <value>1</value>
+	  <value>0</value>
+	</choice>
+      </attribute>
+      <choice>
+	<group>
+	  <attribute name="role">
+	    <value>#KNIT</value>
+	  </attribute>
+	  <attribute name="type">
+	    <a:documentation>a reference to a named complex type
+              for knitting</a:documentation>
+	    <data type="IDREF"/>
+	  </attribute>
+	  <ref name="cdata.element"/>
+	</group>
+        <group>
+          <optional>
+	    <ref name="role.attribute"/>
+          </optional>
+          <choice>
+            <ref name="type.attribute"/>
+    	    <ref name="alt.element"/>
+ 	    <ref name="data.types"/>
+          </choice>
+        </group>
+      </choice>
+    </element>
+  </define>
+
+  <define name="choice.element">
+    <element name="s:choice">
+      <a:documentation>enumerated type (atomic)</a:documentation>
+      <oneOrMore>
+	<element name="s:value">
+	  <text/>
+	</element>
+      </oneOrMore>
+    </element>
+  </define>
+
+  <define name="cdata.element">
+    <element name="s:cdata">
+      <a:documentation>cdata type (atomic)</a:documentation>
+      <attribute name="format">
+	<choice>
+	  <value>ID</value>
+	  <value>PMLREF</value>
+	  <value>nonNegativeInteger</value>
+	  <value>any</value>
+	</choice>
+      </attribute>
+    </element>
+  </define>
+
+  <define name="constant.element">
+    <element name="s:constant">
+      <a:documentation>a constant (atomic)</a:documentation>
+      <text/>
+    </element>
+  </define>
+
+  <define name="sequence.element">
+    <element name="s:sequence">
+      <a:documentation>a sequence of elements</a:documentation>
+      <optional><ref name="role.attribute"/></optional>
+      <oneOrMore>
+	<ref name="element.element"/>
+      </oneOrMore>
+    </element>
+  </define>
+
+  <define name="element.element">
+    <element name="s:element">
+      <a:documentation>an element of a sequence</a:documentation>
+      <attribute name="name"/>
+      <optional><ref name="role.attribute"/></optional>
+      <optional><ref name="required.attribute"/></optional>
+      <ref name="element.content"/>
+    </element>
+  </define>
+
+  <define name="element.content">
+    <zeroOrMore>
+      <ref name="attribute.element"/>
+    </zeroOrMore>      
+    <choice>
+      <ref name="type.attribute"/>
+      <ref name="alt.element"/>
+      <ref name="list.element"/>
+      <ref name="choice.element"/>
+      <ref name="constant.element"/>
+      <ref name="structure.element"/>
+      <ref name="cdata.element"/>
+      <group>
+	<zeroOrMore>
+	  <ref name="element.element"/>
+	</zeroOrMore>
+	<optional>
+	  <ref name="sequence.element"/>
+	</optional>
+      </group>
+    </choice>
+  </define>
+
+  <define name="required.attribute">
+    <attribute name="required">
+      <choice>
+	<value>0</value>
+	<value>1</value>
+      </choice>
+    </attribute>
+  </define>
+
+  <define name="member.element">
+    <element name="s:member">
+      <a:documentation>a member of a structure</a:documentation>
+      <optional><ref name="required.attribute"/></optional>
+      <optional>
+	<attribute name="as_attribute">
+	  <choice>
+	    <value>0</value>
+	    <value>1</value>
+	  </choice>
+	</attribute>
+      </optional>
+      <optional>
+	<ref name="role.attribute"/>
+      </optional>
+      <attribute name="name"/>
+
+      <choice>
+	<ref name="type.attribute"/>
+	<ref name="alt.element"/>
+	<ref name="list.element"/>
+	<ref name="data.types"/>
+      </choice>
+    </element>
+  </define>
+
+  <define name="data.types">
+    <choice>
+      <ref name="choice.element"/>
+      <ref name="constant.element"/>
+      <ref name="structure.element"/>
+      <ref name="sequence.element"/>
+      <ref name="cdata.element"/>
+    </choice>
+  </define>
+  
+</grammar>
