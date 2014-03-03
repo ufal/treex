@@ -29,6 +29,9 @@ sub process_zone {
 
     my $a_root     = $zone->get_atree;
     my ($first_node) = grep { $_->form =~ /\w/ } $a_root->get_descendants( { ordered => 1 } );
+    if ( !defined $first_node ) {
+        return;
+    }
     my $first_char = substr( $first_node->form, 0, 1 );
 
     # if sentence begins in lowercase
