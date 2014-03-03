@@ -24,7 +24,8 @@ override '_get_predictions' => sub {
     my ($self, $features) = @_;
 
     my %predictions = map {
-        $_ => exp($self->model->score($features => $_))
+        #$_ => exp($self->model->score($features => $_))
+        $_ => $self->model->score($features => $_)
     } $self->model->all_labels;
 
     return \%predictions;
