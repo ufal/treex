@@ -52,6 +52,22 @@ sub process_anode {
         $new_lemma = lc $anode->form;
     }
 
+    if ( $anode->form =~ /^Obam/ ) {
+        # Obamovi set to 3rd case: if it is 6th, a preposition marks this
+        # (in Depfix, this means that the case will be fixed later)
+        my %obama = ( Obama => 1, Obamy => 2, Obamovi => 3,
+            Obamu => 4, Obamo => 5, Obamou => 7 );
+        my %obamova = ( Obamová => 1, Obamové => 2, Obamovou => 4);
+ 
+        if ($obamova{$anode->form}) {
+            $new_lemma = 'Obamová';
+            $new_tag = 'NNFS'.($obamova{$anode->form}).'-----A----';
+        } else {
+            $new_lemma = 'Obama';
+            $new_tag = 'NNMS'.($obama{$anode->form} || 1).'-----A----';
+        }
+    }
+
     if ( $new_tag ) {
 #        print "form ". $anode->form." oldtag: ".$anode->tag." newtag:$new_tag\n";
         $anode->set_tag($new_tag);
@@ -60,7 +76,7 @@ sub process_anode {
     if ( $new_lemma ) {
 #        print "oldlemma: ".$anode->lemma." newlemma:$new_lemma\n";
         $anode->set_lemma($new_lemma);
-    }        
+    }       
 
     return;
 }
