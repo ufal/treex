@@ -83,6 +83,11 @@ sub get_form {
         log_info("Can't find a word for lemma '$lemma' and tag '$tag'.");
     }
 
+    # the morphology has serious problems with this verb
+    if ( $tag =~ /^V/ && $lemma =~ /^stát/ && $form !~ /^sta[ln]/ ) {
+        return;
+    }
+
     return $form;
 }
 
