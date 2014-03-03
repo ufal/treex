@@ -162,12 +162,19 @@ sub process_anode {
             $continue = 1;
         }
 
+        if ( $self->magic =~ '_verbnoun_' &&
+            $instance_info->{new_parent_pos} eq 'V' &&
+            $instance_info->{old_node_pos} eq 'N'
+        ) {
+            $continue = 1;
+        }
+
         if ( !$continue ) {
             return;
         }
     }
     my $new_tag = $self->predict_new_tag($node, $instance_info);
-    if ( defined $new_tag ) {
+    if ( defined $new_tag && $new_tag ne $node->tag ) {
         $self->regenerate_node($node, $new_tag);
         $self->fixLogger->logfix2($node);
     }
