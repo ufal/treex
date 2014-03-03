@@ -140,6 +140,9 @@ sub switch_tense {
     
     # passives with modals and non-passives are all processed in the same way
     else {
+        if ( $t_node->t_lemma =~ /^stát/ && $to ne 'ant') {
+            return;
+        }
 
         # get rid of old tense
         if ( $from eq 'post' ) {
