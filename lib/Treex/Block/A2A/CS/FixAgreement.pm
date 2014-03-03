@@ -151,9 +151,16 @@ sub isName {
     # should be computed and hashed at the beginning
     # and then use something like return $is_named_entity{$node->id}
 
-    # TODO is this good?
     if ( $node->lemma ne lc($node->lemma) ) {
         return 1;
+    }
+
+    # the form is not in lowercase
+    if ( $node->form ne lc($node->form) ) {
+        # first word node of the sentence
+        my ($first) = grep { $_->form =~ /\w/ } $node->get_root->get_descendants({ordered =>1});
+        # node is not first node of the sentence
+        return $first->id ne $node->id;
     }
 
     if (!$node->get_bundle->has_tree(
