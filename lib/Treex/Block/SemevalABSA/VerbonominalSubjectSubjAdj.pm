@@ -43,6 +43,8 @@ sub process_atree {
             log_warn "More than one subject found for predicate: " . $pred->{node}->get_attr('id');
         }
     }
+
+    return 1;
 }
 
 1;

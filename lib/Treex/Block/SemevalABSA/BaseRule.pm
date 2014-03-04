@@ -82,4 +82,24 @@ sub get_clause_descendants {
     return @out;
 }
 
+sub find_predicate {
+    my ( $node ) = @_;
+
+    my $parent = $node;
+    my $clause = $node->get_clause_number;
+
+    while ($parent->functor ne 'PRED') {
+        if ($parent->is_root) {
+            log_warn "Root node reached, predicate not found for node: " . $node->get_attr('id');
+            return undef;
+        } elsif ($parent->get_clause_number != $clause) {
+            log_warn "Escaped current clause, predicate not found for node: " . $node->get_attr('id');
+            return undef;
+        }
+        $parent = $pat->get_parent;
+    }
+
+    return $parent;
+}
+
 1;
