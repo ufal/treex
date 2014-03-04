@@ -1,4 +1,4 @@
-package Treex::Block::SemevalABSA::FirstNounAboveSubjAdj;
+package Treex::Block::SemevalABSA::SubjectOfSubjectivePat;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::SemevalABSA::BaseRule';
