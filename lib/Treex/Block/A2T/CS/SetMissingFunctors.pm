@@ -16,7 +16,8 @@ Readonly my $POS_MAP => {
     'AO'  => 'APP',     # LOC is more common
     'AU'  => 'APP',
     'C='  => 'RSTR',
-    'C?-' => 'RSTR',
+    'C-'  => 'RSTR',   # just for Slovak
+    'C?'  => 'RSTR',
     'Ca'  => 'RSTR',
     'Cd'  => 'RSTR',
     'Ch'  => 'PAT',
