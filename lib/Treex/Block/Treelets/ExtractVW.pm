@@ -6,13 +6,6 @@ extends 'Treex::Block::Write::BaseTextWriter';
 use TranslationModel::Static::Model;
 use Treex::Block::Treelets::SrcFeatures;
 
-has shared_format => (
-    is            => 'ro',
-    isa           => 'Bool',
-    default       => 1,
-    documentation => 'VW with csoaa_ldf supports a compact format for shared features'
-);
-
 has model_dir => (
     is            => 'ro',
     isa           => 'Str',
@@ -25,6 +18,14 @@ has static_model => (
     isa     => 'Str',
     default => 'tlemma_czeng09.static.pls.slurp.gz',
 );
+
+has max_variants => (
+    is            => 'ro',
+    isa           => 'Int',
+    default       => 50,
+    documentation => 'Maximal number of translation options for each lemma'
+);
+
 
 my $static;
 my $src_feature_extractor;
@@ -59,7 +60,7 @@ sub process_tnode {
 
 sub print_tnode_features {
     my ( $self, $cs_tnode, $en_tnode, $ali_types ) = @_;
-    my $cs_anode = $cs_tnode->get_lex_anode or return;
+    my $cs_anode = $cs_tnode->get_lex_anode or return; # TODO: Do we need this? It is not used in Treelets::TrVW
 
     #return if $en_tnode->functor =~ /CONJ|DISJ|ADVS|APPS/;
     my $en_tlemma = lemma($en_tnode);    
@@ -67,11 +68,15 @@ sub print_tnode_features {
     return if $en_tlemma !~ /\p{IsL}/ || $cs_tlemma !~ /\p{IsL}/;
     
     # Do not train on instances where the correct translation is not listed in the Static model.
-    my $submodel = $static->_submodels->{lc $en_tlemma};
+    #my $submodel = $static->_submodels->{lc $en_tlemma};
+    my $variants = $en_tnode->wild->{lscore};
 
     # VW loss should be comparable over experiments
-    if (!$submodel || !$submodel->{$cs_tlemma}){
-        my $tag = $submodel ? "_$en_tlemma^$cs_tlemma" : $en_tlemma;
+    if (!$variants || !$variants->{$cs_tlemma}){
+
+        # If tag starts with "save", VW will save the regressor (model).
+        # To switch this feature off, we prefix all tags with "_".
+        my $tag = $variants ? "_$en_tlemma^$cs_tlemma" : $en_tlemma;
         # Words that should not be translated should be considered as plus points (cost=0).
         # $cs_tlemma has an extra #mlayer_pos info, so let's use regex.
         my $cost = $cs_tlemma =~ /^\Q$en_tlemma\E#.$/ ? 0 : 1;
@@ -85,32 +90,47 @@ sub print_tnode_features {
     # VW format does not allow ":"
     $en_tlemma =~ s/:/;/g;
 
-    my ($best_static_score) = sort {$b <=> $a} (values %{$submodel});
+    my @translations = map {$_->[0]} sort {$b->[1] <=> $a->[1]} map {[$_, $self->prescore($variants->{$_})]} keys %{$variants};
+    splice @translations, $self->max_variants if @translations > $self->max_variants;
+    #my ($best_static_score) = sort {$b <=> $a} (values %{$submodel});
 
     # VW LDF (label-dependent features) format output
-    print { $self->_file_handle() } "shared |S $src_context_feats\n" if $self->shared_format;
+    print { $self->_file_handle() } "shared |S $src_context_feats\n";
     my ($i);
-    #foreach my $variant (keys %{$submodel}){
-    while ( my ($variant, $variant_static_score) = each %{$submodel}){
+    #while ( my ($variant, $variant_static_score) = each %{$submodel}){
+    for my $variant (@translations) {
         $i++;
         $variant =~ s/:/;/g;
         my $cost = $variant eq $cs_tlemma ? 0 : 1;
 
         # Target-partial features
-        my ($variant_pos) = ($variant =~ /#(.)$/);
+        # Default for t_lemma="#PersPron" (dropped)
+        my $variant_pos = ($variant =~ /#(.)$/) ? $1 : 'X';
         # Todo: add verbal aspect
 
         #my $static_rank = int(1.5*$best_static_score / $variant_static_score);
-        my $static_rank = int log(5*$best_static_score / $variant_static_score);
+        #my $static_rank = int log(5*$best_static_score / $variant_static_score);
 
-        if ($self->shared_format){
-            print { $self->_file_handle() } "$i:$cost _$variant|T $en_tlemma^$variant $en_tlemma^$variant_pos |R r$static_rank\n";
-        } else {
-            print { $self->_file_handle() } "$i:$cost _$variant|S=$en_tlemma,T=$variant $src_context_feats\n";
+        my $twonode_feats = '|R';
+        while ( my ($model_type, $prob) = each %{$variants->{$variant}}){
+            my $bin_logprob = int(- log($prob));
+            $twonode_feats .= " $model_type:$prob b$model_type=$bin_logprob";
         }
+
+        print { $self->_file_handle() } "$i:$cost _$variant|T $en_tlemma^$variant $en_tlemma^$variant_pos $twonode_feats\n";
     }
     print { $self->_file_handle() } "\n";
     return;
+}
+
+sub prescore {
+    my ($self, $scores) = @_;
+    # TODO: use different weights for L,F,Lf,Lf,Lfl,...
+    my $sum = 0;
+    for my $score (values %{$scores}){
+        $sum += $score;
+    }
+    return $sum
 }
 
 # Hack to include coarse-grained PoS tag for Czech lemma.

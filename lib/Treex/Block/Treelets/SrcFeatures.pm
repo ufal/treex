@@ -65,12 +65,7 @@ sub process_tnode {
 sub features_of_tnode {
     my ( $self, $tnode ) = @_;
     my $tlemma = lemma($tnode);    
-    #return if $tlemma !~ /\p{IsL}/ || $cs_tlemma !~ /\p{IsL}/;
-    
-    # Do not train on instances where the correct translation is not listed in the Static model.
-    my $submodel = $static->_submodels->{lc $tlemma};
-    return if !$submodel;
-    
+       
     # Features from this node
     my $feats = join '',
         add($tnode, 'f', 'formeme'),
@@ -173,7 +168,7 @@ sub add {
 
     # Return the lemma if it is frequent enough. Otherwise return PennTB PoS tag.
     # TODO: use something better than the static dictionary.
-    if ($attr eq 't_lemma' && !$static->_submodels->{$value}){
+    if ($attr eq 't_lemma' && !$static->_submodels->{lc $value}){
         return '' if !$anode;
         $value = $anode->tag;
     }
@@ -221,6 +216,7 @@ Treex::Block::Treelets::SrcFeatures - extract context features for VW
 =head1 DESCRIPTION
 
 Can be used as a block (which fills a wild attribute) or as a library with function C<features_of_tnode>.
+The usage aa a block is useful for debugging purposes, the library is for real-world usage.
 
 =head1 AUTHOR
 
