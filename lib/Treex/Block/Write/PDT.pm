@@ -5,6 +5,8 @@ extends 'Treex::Block::Write::BaseTextWriter';
 
 has '+compress' => (default=>1);
 
+has 'vallex_filename' => ( isa => 'Str', is => 'rw', default => 'vallex.xml' );
+
 sub _build_to {return '.';} # BaseTextWriter defaults to STDOUT
 
 my ($w_fh, $m_fh, $a_fh, $t_fh);
@@ -33,6 +35,7 @@ sub process_document{
     
     my $doc_id = $doc->file_stem . $doc->file_number;
     my $lang   = $self->language;
+    my $vallex_name = $self->vallex_filename;
     print {$w_fh} << "END";
 <?xml version="1.0" encoding="utf-8"?>
 <wdata xmlns="http://ufal.mff.cuni.cz/pdt/pml/">
@@ -72,7 +75,7 @@ END
   <schema href="tdata_schema.xml" />
   <references>
    <reffile id="a" name="adata" href="$a_fn" />
-   <reffile id="v" name="vallex" href="vallex.xml" />
+   <reffile id="v" name="vallex" href="$vallex_name" />
   </references>
 </head>
 <trees>
@@ -134,8 +137,11 @@ sub print_asubtree {
 sub process_ttree {
     my ($self, $ttree) = @_;
     my $s_id = $ttree->id;
-    my $a_s_id = $s_id;
-    $a_s_id =~ s/t_tree/a_tree/;
+    my $a_s_id = $ttree->get_attr('atree.rf');
+    if (!$a_s_id){
+        $a_s_id = $s_id;
+        $a_s_id =~ s/t_tree/a_tree/;
+    }
     print {$t_fh} "<LM id='t-$s_id'><atree.rf>a#a-$a_s_id</atree.rf><nodetype>root</nodetype><deepord>0</deepord>\n<children>\n";
     foreach my $child ($ttree->get_children()) { $self->print_tsubtree($child); }
     print {$t_fh} "</children>\n</LM>\n";
