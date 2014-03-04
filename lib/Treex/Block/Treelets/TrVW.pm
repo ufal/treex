@@ -4,6 +4,7 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 use TranslationModel::Static::Model;
+use Treex::Block::Treelets::SrcFeatures;
 use File::Temp qw(tempfile);
 
 has shared_format => (
@@ -26,10 +27,10 @@ has static_model => (
     default => 'tlemma_czeng09.static.pls.slurp.gz',
 );
 
-has static_weight => (
+has VWstatic_weight => (
     is            => 'ro',
     isa           => 'Num',
-    default       => 0.5,
+    default       => 0.45,
     documentation => 'Weight of the Static model (NB: the model will be loaded even if the weight is zero).'
 );
 
@@ -43,12 +44,18 @@ has normalize => (
 has vw_model => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'vw173182.model', # press conference -> tiskové konference 0.0968  4.5083
-    #default => 'vw154579.model',  # press conference -> konference tisku   0.0912  4.3835
+    default => 'vwN273663.model'
+    # vwN272544      0.1248 5.0956
+    # vwN273663      0.1249 5.0945
+    # vwN283830 BLEU=0.1225
+    # vwN285184 BLEU=0.1226
+    # vwN291256 BLEU=0.1219
+    #default => 'vw173182.model', # press conference -> tiskové konference 0.0968  4.5083
+    #default => 'vw154579.model', # press conference -> konference tisku   0.0912  4.3835
 );
 
-
 my $static;
+my $src_feature_extractor;
 my $vw_model_path;
 my ($F, $R, $Fname, $Rname);
 
@@ -63,6 +70,8 @@ sub process_start {
     my ($self) = @_;
     $self->SUPER::process_start();
     $static = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model );
+    $src_feature_extractor = Treex::Block::Treelets::SrcFeatures->new();
+    $src_feature_extractor->_set_static($static);
     $vw_model_path = Treex::Core::Resource::require_file_from_share($self->model_dir . '/' . $self->vw_model);
     return;
 }
@@ -128,13 +137,12 @@ sub fill_tnode {
     while (<$R>){
         chomp;
         last if $_ eq '';
-        #log_warn "Strange VW -r output: $_" if !/^\d+:(-?[\d.]+) ([^ ]+)$/
-        my ($score, $variant) = (/^\d+:([-e\d.]+) ([^ ]+)$/) or log_fatal "Strange VW -r output: $_";
+        my ($score, $variant) = (/^\d+:([-e\d.]+) _([^ ]+)$/) or log_fatal "Strange VW -r output: $_";
         #csoaa predicts the loss, so instead of -$score, we need +$score
         $score = 1.0 / (1.0 + exp($score));
         # interpolate with static
-        $score += $self->static_weight * $submodel->{$variant};
-        $score /= (1 + $self->static_weight);
+        $score += $self->VWstatic_weight * $submodel->{$variant};
+        $score /= (1 + $self->VWstatic_weight);
         $sum += $score;
         push @translations, [$score, $variant];
     }
@@ -186,132 +194,42 @@ sub print_tnode {
     my $submodel = $static->_submodels->{$en_tlemma};
     return if !$submodel;
 
-    # Features from this node
-    my $feats = join '',
-        add($en_tnode, 'f', 'formeme'),
-        add($en_tnode, 'num', 'gram/number'),
-        add($en_tnode, 'voi', 'gram/voice'),
-        add($en_tnode, 'neg', 'gram/negation'),
-        add($en_tnode, 'ten', 'gram/tense'),
-        add($en_tnode, 'per', 'gram/person'),
-        add($en_tnode, 'deg', 'gram/degcmp'),
-        add($en_tnode, 'pos', 'gram/sempos'),
-        add($en_tnode, 'mem', 'is_member'),
-        add($en_tnode, 'art', '_article'),
-        add($en_tnode, 'ent', '_ne_type'),
-        ;
-
-    # Features from its parent
-    my ($en_tparent) = $en_tnode->get_eparents( { or_topological => 1 } );
-    if (!$en_tparent->is_root){
-        $feats .= join '',
-        ' fPl=' . $en_tnode->formeme . '_' . lemma_or_tag($en_tparent),
-        add($en_tparent, 'Pnum', 'gram/number'),
-        add($en_tparent, 'Pvoi', 'gram/voice'),
-        add($en_tparent, 'Pneg', 'gram/negation'),
-        add($en_tparent, 'Pten', 'gram/tense'),
-        add($en_tparent, 'Pper', 'gram/person'),
-        add($en_tparent, 'Pdeg', 'gram/degcmp'),
-        add($en_tparent, 'Ppos', 'gram/sempos'),
-        add($en_tparent, 'Pmem', 'is_member'),
-        add($en_tparent, 'Part', '_article'),
-        add($en_tparent, 'Pent', '_ne_type'),
-        ;
-    }
-
-    # Features from its children
-    foreach my $child ($en_tnode->get_echildren( { or_topological => 1 } )){
-        if (my $achild = $child->get_lex_anode) {
-            $feats .= ' Ct=' . $achild->tag;
-            $feats .= ' Cc=' . $achild->form =~ /^\p{IsUpper}/;
-        }
-        $feats .= ' Cf=' . $child->formeme;
-        $feats .= ' CfCl=' . $child->formeme .'_'. lemma_or_tag($child);
-    }
+    # Features from the local tree (and word-order) context this node
+    my $src_context_feats = $src_feature_extractor->features_of_tnode($en_tnode);
 
     # VW format does not allow ":"
-    $feats =~ s/:/;/g;
     $en_tlemma =~ s/:/;/g;
 
+    my ($best_static_score) = sort {$b <=> $a} (values %{$submodel});
+
     # VW LDF (label-dependent features) format output
-    print {$F} "shared |S $feats\n" if $self->shared_format;
+    print {$F} "shared |S $src_context_feats\n" if $self->shared_format;
     my ($i);
-    foreach my $variant (keys %{$submodel}){
+    while ( my ($variant, $variant_static_score) = each %{$submodel}){
         $i++;
         $variant =~ s/:/;/g;
+
+        # Target-partial features
+        # Default for t_lemma="#PersPron" (dropped)
+        my $variant_pos = ($variant =~ /#(.)$/) ? $1 : 'X';
+        
+        my $static_rank = int log(5*$best_static_score / $variant_static_score);
+
         if ($self->shared_format){
-            print {$F} "$i $variant|T $en_tlemma^$variant\n";
+            print {$F} "$i _$variant|T $en_tlemma^$variant $en_tlemma^$variant_pos |R r$static_rank\n";
         } else {
-            print {$F} "$i $variant|S=$en_tlemma,T=$variant $feats\n";
+            print {$F} "$i _$variant|S=$en_tlemma,T=$variant $src_context_feats\n";
         }
     }
     print { $F } "\n";
     return;
 }
 
-sub add {
-    my ($tnode, $name, $attr) = @_;
-    my $value;
-    if ($attr eq '_article'){
-        $value = first {/^(an?|the)$/} map {lc $_->form} $tnode->get_aux_anodes;
-    } elsif ($attr eq '_ne_type'){
-        if ( my $n_node = $tnode->get_n_node() ) {
-            $value = $n_node->ne_type;
-        }
-    }
-    else {
-        $value = $tnode->get_attr($attr);
-    }
-
-    return '' if !defined $value;
-    $value =~ s/ /&#32;/g;
-
-    # Return the lemma if it is frequent enough. Otherwise return PennTB PoS tag.
-    # TODO: use something better than the static dictionary.
-    if ($attr eq 't_lemma' && !$static->_submodels->{$value}){
-        my $anode = $tnode->get_lex_anode() or return '';
-        $value = $anode->tag;
-    }
-
-    # Shorten sempos
-    $value =~ s/\..+// if $attr eq 'gram/sempos';
-
-    return " $name=$value";
-}
-
-# Hack to include coarse-grained PoS tag for Czech lemma.
-# $tnode->get_attr('mlayer_pos') is not filled in CzEng
-sub lemmapos {
-    my ($tnode) = @_;
-    my $lemma = $tnode->t_lemma // ''; #/
-    $lemma =~ s/ /&#32;/g;
-    my $anode = $tnode->get_lex_anode or return $lemma;
-    my ($pos) = ( $anode->tag =~ /^(.)/ );
-    return $lemma if !defined $pos;
-    return "$lemma#$pos";
-}
-
-# For English
 sub lemma {
     my ($tnode) = @_;
     my $lemma = $tnode->t_lemma // ''; #/
     $lemma =~ s/ /&#32;/g;
     return $lemma;
-}
-
-sub lemma_or_tag {
-    my ($tnode) = @_;
-    my $lemma = $tnode->t_lemma // ''; #/
-    $lemma =~ s/ /&#32;/g;
-
-    # Return the lemma if it is frequent enough.
-    # TODO: use something better than the static dictionary.
-    return $lemma if $static->_submodels->{$lemma};
-
-    # Otherwise, return the PennTB PoS tag
-    my $anode = $tnode->get_lex_anode();
-    return $anode->tag if $anode;
-    return '';
 }
 
 my $LOG2 = log 2;
