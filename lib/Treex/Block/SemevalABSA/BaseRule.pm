@@ -44,4 +44,42 @@ sub get_alayer_mapper {
     }
 }
 
+sub combine_polarities {
+    my ( @values ) = @_;
+
+    log_fatal "Empty list of polarity values" if ! @values;
+
+    my ($neut, $pos, $neg, $con) = qw/ 0 0 0 0 /;
+    for my $val (@values) {
+        if ($val eq '+') {
+            $pos++;
+        } elsif ($val eq '-') {
+            $neg++;
+        } elsif ($val eq '0') {
+            $neut++;
+        } elsif ($val eq 'conflict') {
+            $con++;
+        } else {
+            log_fatal "Invalid polarity value: " . $val;
+        }
+    }
+
+    if ($con || ($pos && $neg)) {
+        return 'conflict';
+    } elsif ($pos) {
+        return '+';
+    } elsif ($neg) {
+        return '-';
+    } else {
+        return '0';
+    }
+}
+
+sub get_clause_descendants {
+    my ( $node ) = @_;
+    my $clause = $node->get_clause_number;
+    my @out = grep { $_->get_clause_number == $clause } $node->get_descendants;
+    return @out;
+}
+
 1;

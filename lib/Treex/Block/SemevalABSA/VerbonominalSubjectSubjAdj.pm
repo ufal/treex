@@ -32,9 +32,9 @@ sub process_atree {
     for my $pred (@predicates) {
         my ($subj, @rest) = grep {
             $_->get_attr('afun') eq 'Sb'
-        } $pred->{node}->get_children;
+        } get_clause_descendants( $pred->{node} );
         if ($subj) {
-            mark_node( $subj, "vbnm_sb_adj" $pred->{polarity} );
+            mark_node( $subj, "vbnm_sb_adj" . $pred->{polarity} );
         } else {
             log_warn "No subject found for predicate: " . $pred->{node}->get_attr('id');
         }
@@ -54,8 +54,3 @@ sub process_atree {
 #   Pr. The staff ACT was horrible RSTR.
 # 
 #     The perk was great, The fried rice is amazing. Etc.
-# 
-# Pokud jsem jmenna cast verbonominalniho predikatu a jsem hodnotici adverbium,
-# je aspektem podmet slovesa, na kterem visim.
-# 
-#   Pr. The service ACT is fast MANN.
