@@ -16,7 +16,7 @@ Readonly my $POS_MAP => {
     'AO'  => 'APP',     # LOC is more common
     'AU'  => 'APP',
     'C='  => 'RSTR',
-    'C-'  => 'RSTR',   # just for Slovak
+    'C-'  => 'RSTR',   # just for Slovak Interset conversion (would never occur in Czech)
     'C?'  => 'RSTR',
     'Ca'  => 'RSTR',
     'Cd'  => 'RSTR',
