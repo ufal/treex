@@ -5,14 +5,15 @@ extends 'Treex::Block::SemevalABSA::BaseRule';
 
 sub process_atree {
     my ( $self, $atree ) = @_;
-    my @adj_adv = grep { 
-        ($_->get_attr('tag') =~ m/^JJ/ || $_->get_attr('tag') =~ m/^RB/)
+    my @adjs = grep { 
+        $_->get_attr('tag') =~ m/^JJ/
+        && $_->get_attr('afun') eq 'Pnom'
         && is_subjective( $_ )
     } $atree->get_descendants;
 
     my @predicates;
 
-    for my $node (@adj_adv) {
+    for my $node (@adjs) {
         my $polarity = get_polarity( $node );
         my $tag = ($node->get_attr('tag') =~ m/^JJ/ ? "adj" : "adv");
         my $parent = $node->get_parent;
@@ -21,7 +22,6 @@ sub process_atree {
                 push @predicates, {
                     node => $parent,
                     polarity => $polarity,
-                    tag => $tag,
                 };
             } else {
                 $parent = $parent->get_parent;
@@ -34,7 +34,7 @@ sub process_atree {
             $_->get_attr('afun') eq 'Sb'
         } $pred->{node}->get_children;
         if ($subj) {
-            mark_node( $subj, "vbnm_sb_" . $pred->{tag} . $pred->{polarity} );
+            mark_node( $subj, "vbnm_sb_adj" $pred->{polarity} );
         } else {
             log_warn "No subject found for predicate: " . $pred->{node}->get_attr('id');
         }
