@@ -168,7 +168,7 @@ sub add {
 
     # Return the lemma if it is frequent enough. Otherwise return PennTB PoS tag.
     # TODO: use something better than the static dictionary.
-    if ($attr eq 't_lemma' && !$static->_submodels->{lc $value}){
+    if ($attr eq 't_lemma' && !$static->_submodels->{lc $value}){ #TODO: lc
         return '' if !$anode;
         $value = $anode->tag;
     }

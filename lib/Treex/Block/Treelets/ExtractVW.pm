@@ -76,11 +76,11 @@ sub print_tnode_features {
 
         # If tag starts with "save", VW will save the regressor (model).
         # To switch this feature off, we prefix all tags with "_".
-        my $tag = $variants ? "_$en_tlemma^$cs_tlemma" : $en_tlemma;
+        my $tag = $variants ? "$en_tlemma^$cs_tlemma" : $en_tlemma;
         # Words that should not be translated should be considered as plus points (cost=0).
         # $cs_tlemma has an extra #mlayer_pos info, so let's use regex.
         my $cost = $cs_tlemma =~ /^\Q$en_tlemma\E#.$/ ? 0 : 1;
-        print  { $self->_file_handle() } "1:$cost $tag| nochance\n\n";
+        print  { $self->_file_handle() } "1:$cost _$tag| nochance\n\n";
         return;
     }
     
@@ -92,8 +92,7 @@ sub print_tnode_features {
 
     my @translations = map {$_->[0]} sort {$b->[1] <=> $a->[1]} map {[$_, $self->prescore($variants->{$_})]} keys %{$variants};
     splice @translations, $self->max_variants if @translations > $self->max_variants;
-    #my ($best_static_score) = sort {$b <=> $a} (values %{$submodel});
-
+    
     # VW LDF (label-dependent features) format output
     print { $self->_file_handle() } "shared |S $src_context_feats\n";
     my ($i);
@@ -107,9 +106,6 @@ sub print_tnode_features {
         # Default for t_lemma="#PersPron" (dropped)
         my $variant_pos = ($variant =~ /#(.)$/) ? $1 : 'X';
         # Todo: add verbal aspect
-
-        #my $static_rank = int(1.5*$best_static_score / $variant_static_score);
-        #my $static_rank = int log(5*$best_static_score / $variant_static_score);
 
         my $twonode_feats = '|R';
         while ( my ($model_type, $prob) = each %{$variants->{$variant}}){

@@ -1,4 +1,4 @@
-package Treex::Block::Treelets::TrVW;
+package Treex::Block::T2T::EN2CS::TrLAddVariantsVW;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -6,13 +6,6 @@ extends 'Treex::Core::Block';
 use TranslationModel::Static::Model;
 use Treex::Block::Treelets::SrcFeatures;
 use File::Temp qw(tempfile);
-
-has shared_format => (
-    is            => 'ro',
-    isa           => 'Bool',
-    default       => 1,
-    documentation => 'VW with csoaa_ldf supports a compact format for shared features'
-);
 
 has model_dir => (
     is            => 'ro',
@@ -41,17 +34,17 @@ has normalize => (
     documentation => 'should the probs sum up to 1?'
 );
 
+has max_variants => (
+    is            => 'ro',
+    isa           => 'Int',
+    default       => 50,
+    documentation => 'Maximal number of translation options for each lemma'
+);
+
 has vw_model => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'vwN273663.model'
-    # vwN272544      0.1248 5.0956
-    # vwN273663      0.1249 5.0945
-    # vwN283830 BLEU=0.1225
-    # vwN285184 BLEU=0.1226
-    # vwN291256 BLEU=0.1219
-    #default => 'vw173182.model', # press conference -> tiskové konference 0.0968  4.5083
-    #default => 'vw154579.model', # press conference -> konference tisku   0.0912  4.3835
+    default => 'vw233295.model'
 );
 
 my $static;
@@ -80,8 +73,7 @@ sub process_document {
     my ($self, $doc) = @_;
     
     # print feature vectors into a file
-    # $Fname = 'features.dat'; open $F, '>:utf8', $Fname;
-    ($F, $Fname) = tempfile('VWfeatsXXXXXX', TMPDIR => 1); # For debugging TMPDIR => 0 will use the current directory
+    ($F, $Fname) = tempfile('VWfeatsXXXXXX', TMPDIR => 0); # For debugging TMPDIR => 0 will use the current directory
     binmode( $F, ":utf8" );
     
     foreach my $bundle ($doc->get_bundles()){
@@ -95,7 +87,7 @@ sub process_document {
     close $F;
       
     # run VW prediction
-    ($R, $Rname) = tempfile('VWrawXXXXXX', TMPDIR => 1);
+    ($R, $Rname) = tempfile('VWrawXXXXXX', TMPDIR => 0);
     close $R;
     system "vw -i $vw_model_path --quiet -d $Fname -r $Rname";
     
@@ -112,7 +104,7 @@ sub process_document {
     close $R;
 
     # Clean up the temporary files
-    unlink $Fname, $Rname;
+    unlink $Fname, $Rname; # TODO
     return 1;
 }
 
@@ -124,14 +116,13 @@ sub fill_tnode {
     my $en_tnode = $cs_tnode->src_tnode;
     return if !$en_tnode;
     
-    #return if $en_tnode->functor =~ /CONJ|DISJ|ADVS|APPS/;
     my $en_tlemma = lemma($en_tnode);    
     return if $en_tlemma !~ /\p{IsL}/;
     
-    # Skip instances where the English lemma is not listed in the Static model.
-    my $submodel = $static->_submodels->{$en_tlemma};
-    return if !$submodel;
-    
+    # Skip instances where the English lemma is not listed in any twonode model.
+    my $variants = $en_tnode->wild->{lscore};
+    return if !$variants;
+        
     my @translations;
     my $sum = 0;
     while (<$R>){
@@ -140,10 +131,13 @@ sub fill_tnode {
         my ($score, $variant) = (/^\d+:([-e\d.]+) _([^ ]+)$/) or log_fatal "Strange VW -r output: $_";
         #csoaa predicts the loss, so instead of -$score, we need +$score
         $score = 1.0 / (1.0 + exp($score));
-        # interpolate with static
-        $score += $self->VWstatic_weight * $submodel->{$variant};
-        $score /= (1 + $self->VWstatic_weight);
+
+        # TODO interpolate with static
+        #$score += $self->VWstatic_weight * $submodel->{$variant};
+        #$score /= (1 + $self->VWstatic_weight);
+
         $sum += $score;
+        $variant = '#PersPron#X' if $variant eq '#PersPron'; # TODO
         push @translations, [$score, $variant];
     }
     log_fatal "No VW translations for $en_tlemma in $Rname trained from $Fname" if !@translations;
@@ -152,8 +146,9 @@ sub fill_tnode {
     
     # Sort: the highest prob first. We need deterministic runs and therefore stable sorting for equally probable translations.
     @translations = sort {($b->[0] <=> $a->[0]) || ($a->[1] cmp $b->[1])} @translations;
+    splice @translations, $self->max_variants if @translations > $self->max_variants;
 
-    if ( $translations[0][1] =~ /(.+)#(.)/ ) {
+    if ( $translations[0][1] =~ /^(.+)#(.)$/ ) {
         $cs_tnode->set_t_lemma($1);
         $cs_tnode->set_attr( 'mlayer_pos', $2 );
     } else {
@@ -163,13 +158,11 @@ sub fill_tnode {
     $cs_tnode->set_attr(
                 'translation_model/t_lemma_variants',
                 [   map {
-                        $_->[1] =~ /(.+)#(.)/ or log_fatal "Unexpected form of label: $_->[1]";
+                        $_->[1] =~ /^(.+)#(.)$/ or log_fatal "Unexpected form of label: $_->[1]";
                         {   't_lemma' => $1,
                             'pos'     => $2,
                             'origin'  => 'VW',
                             'logprob' => prob2binlog( $_->[0]/$sum ),
-                            #'feat_weights' => $_->{feat_weights},
-                            # 'backward_logprob' => _logprob( $_->{en_given_cs}, ),
                         }
                         } @translations
                 ]
@@ -186,13 +179,12 @@ sub print_tnode {
     my $en_tnode = $cs_tnode->src_tnode;
     return if !$en_tnode;
     
-    #return if $en_tnode->functor =~ /CONJ|DISJ|ADVS|APPS/;
     my $en_tlemma = lemma($en_tnode);    
     return if $en_tlemma !~ /\p{IsL}/;
     
-    # Skip instances where the English lemma is not listed in the Static model.
-    my $submodel = $static->_submodels->{$en_tlemma};
-    return if !$submodel;
+    # Skip instances where the English lemma is not listed in any twonode model.
+    my $variants = $en_tnode->wild->{lscore};
+    return if !$variants;
 
     # Features from the local tree (and word-order) context this node
     my $src_context_feats = $src_feature_extractor->features_of_tnode($en_tnode);
@@ -200,30 +192,42 @@ sub print_tnode {
     # VW format does not allow ":"
     $en_tlemma =~ s/:/;/g;
 
-    my ($best_static_score) = sort {$b <=> $a} (values %{$submodel});
+    my @translations = map {$_->[0]} sort {$b->[1] <=> $a->[1]} map {[$_, $self->prescore($variants->{$_})]} keys %{$variants};
+    splice @translations, $self->max_variants if @translations > $self->max_variants;
 
     # VW LDF (label-dependent features) format output
-    print {$F} "shared |S $src_context_feats\n" if $self->shared_format;
+    print {$F} "shared |S $src_context_feats\n";
     my ($i);
-    while ( my ($variant, $variant_static_score) = each %{$submodel}){
+    for my $variant (@translations) {
         $i++;
         $variant =~ s/:/;/g;
 
         # Target-partial features
         # Default for t_lemma="#PersPron" (dropped)
         my $variant_pos = ($variant =~ /#(.)$/) ? $1 : 'X';
-        
-        my $static_rank = int log(5*$best_static_score / $variant_static_score);
 
-        if ($self->shared_format){
-            print {$F} "$i _$variant|T $en_tlemma^$variant $en_tlemma^$variant_pos |R r$static_rank\n";
-        } else {
-            print {$F} "$i _$variant|S=$en_tlemma,T=$variant $src_context_feats\n";
+        my $twonode_feats = '|R';
+        while ( my ($model_type, $prob) = each %{$variants->{$variant}}){
+            my $bin_logprob = int(- log($prob));
+            $twonode_feats .= " $model_type:$prob b$model_type=$bin_logprob";
         }
+
+        print {$F} "$i _$variant|T $en_tlemma^$variant $en_tlemma^$variant_pos $twonode_feats\n";
     }
-    print { $F } "\n";
+    print {$F} "\n";
     return;
 }
+
+sub prescore {
+    my ($self, $scores) = @_;
+    # TODO: use different weights for L,F,Lf,Lf,Lfl,...
+    my $sum = 0;
+    for my $score (values %{$scores}){
+        $sum += $score;
+    }
+    return $sum
+}
+
 
 sub lemma {
     my ($tnode) = @_;
@@ -249,7 +253,7 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::Treelets::TrVW - translate lemmas using VW
+Treex::Block::T2T::EN2CS::TrLAddVariantsVW - translate lemmas using VW
 
 =head1 DESCRIPTION
 
