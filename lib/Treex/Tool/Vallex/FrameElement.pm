@@ -55,10 +55,13 @@ sub forms_list {
 }
 
 sub to_string {
-    my ($self) = @_;
-    return ( $self->oblig ? '' : '(' )
-        . $self->functor . '[' . join( ', ', keys %{ $self->forms } ) . ']'
-        . ( $self->oblig ? '' : ')' );
+    my ($self, $params) = @_;
+    my $ret = ( $self->oblig ? '' : '(' ) . $self->functor;
+    if ($params and $params->{formemes}){
+        $ret .= '[' . join( ', ', keys %{ $self->forms } ) . ']';
+    }
+    $ret .= ( $self->oblig ? '' : ')' );
+    return $ret;
 }
 
 sub _convert_formeme {
@@ -189,7 +192,7 @@ created when constructing whole valency frames from the lexicon).
 
 This returns C<1> if this frame element is marked as obligatory.
 
-=item C<to_string>
+=item C<to_string($params)>
 
 This converts the given frame element to a string form similar to the following example:
 
@@ -199,6 +202,8 @@ The functor is stated at the beginning, followed by a comma-separated list of al
 realizations) enclosed in square brackets. If the frame element is not obligatory, it is enclosed in round brackets
 as a whole.
 
+If C<$params> is set, it must be a HASHREF. If C<$params->{formemes}> is set to 0, the formemes will not be returned.
+
 =back
 
 =head1 AUTHOR
@@ -207,6 +212,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

@@ -25,6 +25,12 @@ has 'language' => ( isa => 'Str', is => 'ro', required => 1 );
 # The ID of the frame in the lexicon
 has 'id' => ( isa => 'Str', is => 'ro' );
 
+# A note given in the dictionary (such as a gloss)
+has 'note' => ( isa => 'Str', is => 'ro' );
+
+# An example given in the dictionary
+has 'example' => ( isa => 'Str', is => 'ro' );
+
 # the lexicon name, such as C<vallex.xml>
 has 'lexicon' => ( isa => 'Str', is => 'ro' );
 
@@ -92,6 +98,10 @@ sub _fill_params_from_xml {
             Treex::Tool::Vallex::FrameElement->new( xml => $element, language => $params->{language} )
         );
     }
+
+    # Fill in note and example
+    $params->{note}    = join( ' ', map { $_->textContent } $frame_xml->getElementsByTagName('note') );
+    $params->{example} = join( ' ', map { $_->textContent } $frame_xml->getElementsByTagName('example') );
 }
 
 # This is able to load the valency lexicon into the memory, or to retrieve an already loaded one.
@@ -117,7 +127,7 @@ sub _xpath_escape_quotes {
     return '"' . $str . '"' if ( $str !~ /"/ );
     return "'" . $str . "'" if ( $str !~ /'/ );
 
-    # solve strings with both types of quotes using the 'concat' function 
+    # solve strings with both types of quotes using the 'concat' function
     my @sp = split /(["'])/, $str;
     $str = 'concat(';
     for ( my $i = 0; $i < @sp - 1; $i += 2 ) {
@@ -140,7 +150,7 @@ sub get_frames_for_lemma {
     if ($pos) {
         $pos =~ s/^adj$/a/i;
         $pos =~ s/^adv$/d/i;
-        $pos = _xpath_escape_quotes(uc $pos);
+        $pos = _xpath_escape_quotes( uc $pos );
 
         @found = $xc->findnodes("//word[\@lemma=$lemma and \@POS=$pos]//frame");
     }
@@ -155,6 +165,18 @@ sub get_frames_for_lemma {
         push @frames, Treex::Tool::Vallex::ValencyFrame->new($params);
     }
     return @frames;
+}
+
+sub get_frame_by_id {
+
+    my ( $lexicon_name, $language, $id ) = @_;
+        
+    my $xc = _get_xpath_context($lexicon_name);
+    my ($frame_xml) = $xc->findnodes("//frame[\@id='$id']");
+    return if (!$frame_xml);
+    my $params = { language => $language, lexicon => $lexicon_name, id => $id }; 
+    _fill_params_from_xml( $frame_xml, $params );
+    return Treex::Tool::Vallex::ValencyFrame->new($params);
 }
 
 # This constructs the hashmap of the frame elements by their functor
@@ -201,9 +223,17 @@ sub elements_have_form {
 
 # Convert the frame to a string
 sub to_string {
-    my ($self) = @_;
+    my ($self, $params) = @_;
+    my $ret = $self->lemma . '-' . $self->pos;
 
-    return $self->lemma . '-' . $self->pos . ': ' . join( ' ', map { $_->to_string } @{ $self->elements } );
+    if ($params and $params->{id}){
+        $ret .= ' ' . ($self->id // '');
+    } 
+    if ($params and $params->{note}){
+        $ret .= ' (' . ($self->note // '') . ')';
+    } 
+    $ret .= ': ' . join( ' ', map { $_->to_string($params) } @{ $self->elements } );
+    return $ret;
 }
 
 1;
@@ -297,7 +327,7 @@ valency lexicon.
 
 The semantic part of speech (sempos) for this valency frame. The standard values are: I<n>, I<adj>, I<v>, I<adv>.  
 
-=item C<to_string>
+=item C<to_string($params)>
 
 This returns a string version of the valency frame in a format that corresponds to the following example:
 
@@ -305,6 +335,15 @@ This returns a string version of the valency frame in a format that corresponds 
 
 The lemma and POS stand at the beginning and are separated with a dash. Then, after a colon, the list of all frame
 elements follows (according to the string versions of the individual frame elements).   
+
+If C<$params> is set, it must be a HASHREF. Some values in this hashref change the behavior of C<to_string>:
+
+* Setting 'id' to 1 will print the frame ID.
+
+* Setting 'note' to 1 will print any notes associated with the frame in the lexicon.
+
+* Setting 'formemes' to 0 will not print formemes in square brackets. 
+
 
 =back
 
@@ -315,6 +354,10 @@ elements follows (according to the string versions of the individual frame eleme
 =item get_frames_for_lemma( $lexicon_name, $language, $lemma, $pos )
 
 This returns a list of all frames with the specified lemma and part-of-speech found in the specified lexicon.
+
+=item get_frame_by_id( $lexicon_name, $language, $id )
+
+Returns the frame with the given ID from the specified lexicon (or undef if not found).
 
 =back
 
@@ -342,6 +385,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
