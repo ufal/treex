@@ -22,6 +22,7 @@ sub process_atree {
                     node => $parent,
                     polarity => $polarity,
                 };
+                last;
             } else {
                 $parent = $parent->get_parent;
             }

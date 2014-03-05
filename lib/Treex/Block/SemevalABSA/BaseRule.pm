@@ -5,7 +5,11 @@ extends 'Treex::Core::Block';
 
 sub mark_node {
     my ( $self, $node, $str ) = @_;
-    $node->wild->{absa_rules} = join(" ", $str, $node->wild->{absa_rules});
+    if ($node->wild->{absa_rules}) {
+        $node->wild->{absa_rules} .= " $str";
+    } else {
+        $node->wild->{absa_rules} = $str;
+    }
 
     return 1;
 }
