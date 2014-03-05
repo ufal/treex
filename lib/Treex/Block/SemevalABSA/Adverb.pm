@@ -16,7 +16,7 @@ sub process_ttree {
         if (! @to_mark) {
             @to_mark = grep { $_->functor eq 'ACT' } $self->get_clause_descendants( $pred );
         }
-        map { mark_node ( $amapper->( $_ ), "adv_" . $polarity ) } @to_mark;
+        map { $self->mark_node( $amapper->( $_ ), "adv_" . $polarity ) } @to_mark;
     }
 
     return 1;

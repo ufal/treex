@@ -5,6 +5,11 @@ extends 'Treex::Core::Block';
 
 sub mark_node {
     my ( $self, $node, $str ) = @_;
+    if ( ! $node ) {
+        log_warn "$node is undef";
+        return 0;
+    }
+    # log_info "    adding feature $str to node " . $node->get_attr('id');
     if ($node->wild->{absa_rules}) {
         $node->wild->{absa_rules} .= " $str";
     } else {
@@ -112,14 +117,15 @@ sub find_predicate {
     my $clause = $node->clause_number;
 
     while ($parent->functor ne 'PRED') {
-        if ($parent->is_root) {
-            log_warn "Root node reached, predicate not found for node: " . $node->get_attr('id');
-            return undef;
-        } elsif ($parent->clause_number != $clause) {
+        if ($parent->clause_number != $clause) {
             log_warn "Escaped current clause, predicate not found for node: " . $node->get_attr('id');
             return undef;
         }
         $parent = $parent->get_parent;
+        if ($parent->is_root) {
+            log_warn "Root node reached, predicate not found for node: " . $node->get_attr('id');
+            return undef;
+        }
     }
 
     return $parent;
