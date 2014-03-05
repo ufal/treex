@@ -10,9 +10,9 @@ sub mark_node {
     return 1;
 }
 
-sub is_aspect {
+sub is_aspect_candidate {
     my ( $node ) = @_;
-    return defined $node->{wild}->{absa_is_aspect};
+    return defined($node->wild->{absa_rules}) && length($node->wild->{absa_rules}) > 0;
 }
 
 sub is_subjective {

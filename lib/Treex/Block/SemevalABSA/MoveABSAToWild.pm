@@ -1,4 +1,4 @@
-package Treex::Block::W2A::MoveABSAToWild;
+package Treex::Block::SemevalABSA::MoveABSAToWild;
 use utf8;
 use Moose;
 use Treex::Core::Common;

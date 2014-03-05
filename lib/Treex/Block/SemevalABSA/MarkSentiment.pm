@@ -1,4 +1,4 @@
-package Treex::Block::A2A::MarkSentiment;
+package Treex::Block::SemevalABSA::MarkSentiment;
 
 use Moose;
 use Treex::Core::Common;
