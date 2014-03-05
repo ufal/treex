@@ -44,9 +44,9 @@ sub process_anode {
     my ( $self, $anode ) = @_;   
 
     if ( $self->{forms}->{$anode->form} ) {
-        $self->mark_node( $anode, $self->{forms}->{$anode->form} );
+        $self->$self->mark_node( $anode, $self->{forms}->{$anode->form} );
     } elsif ( $self->{lemmas}->{$anode->lemma} ) {
-        $self->mark_node( $anode, $self->{lemmas}->{$anode->lemma} );
+        $self->$self->mark_node( $anode, $self->{lemmas}->{$anode->lemma} );
     }
     return 1;
 }

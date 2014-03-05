@@ -8,13 +8,13 @@ sub process_atree {
     my @adjs = grep { 
         $_->get_attr('tag') =~ m/^JJ/
         && $_->get_attr('afun') eq 'Pnom'
-        && is_subjective( $_ )
+        && $self->is_subjective( $_ )
     } $atree->get_descendants;
 
     my @predicates;
 
     for my $node (@adjs) {
-        my $polarity = get_polarity( $node );
+        my $polarity = $self->get_polarity( $node );
         my $parent = $node->get_parent;
         while (! $parent->is_root ) {
             if ($parent->get_lemma eq "be") {
@@ -31,9 +31,9 @@ sub process_atree {
     for my $pred (@predicates) {
         my ($subj, @rest) = grep {
             $_->get_attr('afun') eq 'Sb'
-        } get_clause_descendants( $pred->{node} );
+        } $self->get_clause_descendants( $pred->{node} );
         if ($subj) {
-            mark_node( $subj, "vbnm_sb_adj" . $pred->{polarity} );
+            $self->mark_node( $subj, "vbnm_sb_adj" . $pred->{polarity} );
         } else {
             log_warn "No subject found for predicate: " . $pred->{node}->get_attr('id');
         }

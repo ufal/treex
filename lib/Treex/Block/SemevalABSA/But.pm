@@ -10,16 +10,16 @@ sub process_atree {
     for my $but ( @buts ) {
         my @preds = grep { $_->afun eq 'Pred_Co' } $but->get_children;
         if ( @preds == 2 ) {
-            my @aspects_a = grep { is_aspect_candidate( $_ ) } $preds[0]->get_descendants;
-            my @aspects_b = grep { is_aspect_candidate( $_ ) } $preds[1]->get_descendants;
+            my @aspects_a = grep { $self->is_aspect_candidate( $_ ) } $preds[0]->get_descendants;
+            my @aspects_b = grep { $self->is_aspect_candidate( $_ ) } $preds[1]->get_descendants;
             next if ! @aspects_a;
             if ( @aspects_b ) {
-                my $total = combine_polarities( map { get_aspect_candidate_polarities( $_ ) } @aspects_a );
+                my $total = $self->combine_polarities( map { $self->get_aspect_candidate_polarities( $_ ) } @aspects_a );
                 if ( $total eq '+' || $total eq '-' ) {
-                    map { mark_node( $_, "but_opposite$total" ) } @aspects_b;
+                    map { $self->mark_node( $_, "but_opposite$total" ) } @aspects_b;
                 }
             } else {
-                map { mark_node( $_, "but_conflict" ) } @aspects_a;
+                map { $self->mark_node( $_, "but_conflict" ) } @aspects_a;
             }
         } else {
             log_warn "Unexpected number of clauses for node " . $but->get_attr('id') . ", skipping";

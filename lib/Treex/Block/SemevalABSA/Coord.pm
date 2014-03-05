@@ -9,13 +9,13 @@ sub process_atree {
 
     for my $and ( @ands ) {
         my @nodes = grep { $_->afun ne m/^Aux/ } $and->get_children;
-        my $total = combine_polarities(
-            map { get_aspect_candidate_polarities( $_ ) }
-            grep { is_aspect_candidate( $_ ) }
+        my $total = $self->combine_polarities(
+            map { $self->get_aspect_candidate_polarities( $_ ) }
+            grep { $self->is_aspect_candidate( $_ ) }
             @nodes
         );
         if ( $total eq '+' || $total eq '-' ) {
-            map { mark_node( $_, "coord$total" ) } @nodes;
+            map { $self->mark_node( $_, "coord$total" ) } @nodes;
         }
     }
 

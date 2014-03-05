@@ -4,24 +4,24 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 sub mark_node {
-    my ( $node, $str ) = @_;
+    my ( $self, $node, $str ) = @_;
     $node->wild->{absa_rules} = join(" ", $str, $node->wild->{absa_rules});
 
     return 1;
 }
 
 sub is_aspect_candidate {
-    my ( $node ) = @_;
+    my ( $self, $node ) = @_;
     return defined($node->wild->{absa_rules}) && length($node->wild->{absa_rules}) > 0;
 }
 
 sub is_subjective {
-    my ( $node ) = @_;
+    my ( $self, $node ) = @_;
     return defined $node->{wild}->{absa_is_subjective};
 }
 
 sub get_polarity {
-    my ( $node ) = @_;
+    my ( $self, $node ) = @_;
     if ( ! $node->{wild}->{absa_polarity} ) {
         log_fatal "Node not marked with polarity: " . $node->get_attr('id');
     }
@@ -29,7 +29,7 @@ sub get_polarity {
 }
 
 sub get_alayer_mapper {
-    my ( $ttree ) = @_;
+    my ( $self, $ttree ) = @_;
     my $doc = $ttree->get_document;
     my %links;
     my @nodes = $ttree->get_descendants;
@@ -45,9 +45,9 @@ sub get_alayer_mapper {
 }
 
 sub get_aspect_candidate_polarities {
-    my ( $node ) = @_;
+    my ( $self, $node ) = @_;
 
-    log_fatal "Not an aspect candidate" if ! is_aspect_candidate( $node );
+    log_fatal "Not an aspect candidate" if ! $self->is_aspect_candidate( $node );
 
     my @polarities;
     my @rules = split / /, $node->wild->{absa_rules};
@@ -61,7 +61,7 @@ sub get_aspect_candidate_polarities {
 }
 
 sub combine_polarities {
-    my ( @values ) = @_;
+    my ( $self, @values ) = @_;
 
     log_fatal "Empty list of polarity values" if ! @values;
 
@@ -92,14 +92,14 @@ sub combine_polarities {
 }
 
 sub get_clause_descendants {
-    my ( $node ) = @_;
+    my ( $self, $node ) = @_;
     my $clause = $node->get_clause_number;
     my @out = grep { $_->get_clause_number == $clause } $node->get_descendants;
     return @out;
 }
 
 sub find_predicate {
-    my ( $node ) = @_;
+    my ( $self, $node ) = @_;
 
     my $parent = $node;
     my $clause = $node->get_clause_number;

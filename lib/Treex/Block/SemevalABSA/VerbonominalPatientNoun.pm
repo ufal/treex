@@ -11,22 +11,22 @@ sub process_atree {
     } $atree->get_descendants;
 
     for my $node (@nouns) {
-        my $polarity = get_polarity( $node );
+        my $polarity = $self->get_polarity( $node );
         my $parent = $node->get_parent;
         while (! $parent->is_root && $parent->get_lemma ne "be") {
             $parent = $parent->get_parent;
         }
         next if $parent->is_root;
 
-        my @sbs = grep { $_->get_attr('afun') eq 'Sb' } get_clause_descendants( $parent );
+        my @sbs = grep { $_->get_attr('afun') eq 'Sb' } $self->get_clause_descendants( $parent );
 
-        my $total = combine_polarities(
-            map { get_polarity( $_ ) }
-            grep { is_subjective( $_ ) }
-            map { get_clause_descendants( $_ ) } @sbs            
+        my $total = $self->combine_polarities(
+            map { $self->get_polarity( $_ ) }
+            grep { $self->is_subjective( $_ ) }
+            map { $self->get_clause_descendants( $_ ) } @sbs            
         );
 
-        mark_node( $node, "vbnm_patn" . $total );
+        $self->mark_node( $node, "vbnm_patn" . $total );
     }
 
     return 1;

@@ -7,14 +7,14 @@ sub process_atree {
     my ( $self, $atree ) = @_;
     my @adjectives = grep { 
         $_->get_attr('tag') =~ m/^JJ/
-        && is_subjective( $_ )
+        && $self->is_subjective( $_ )
     } $atree->get_descendants;
     for my $adj (@adjectives) {
-        my $polarity = get_polarity( $adj );
+        my $polarity = $self->get_polarity( $adj );
         my $parent = $adj->get_parent;
         while (1) {
             if ($parent->get_attr('tag') =~ m/^N/) {
-                mark_node( $parent, "sub_adj" . $polarity );
+                $self->mark_node( $parent, "sub_adj" . $polarity );
                 last;
             } else {
                 $parent = $parent->get_parent;

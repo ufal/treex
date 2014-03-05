@@ -6,23 +6,23 @@ extends 'Treex::Block::SemevalABSA::BaseRule';
 sub process_ttree {
     my ( $self, $ttree ) = @_;
 
-    my $amapper = get_alayer_mapper( $ttree );
+    my $amapper = $self->get_alayer_mapper( $ttree );
 
     my @patients = grep { $_->functor eq 'PAT' } $ttree->get_descendants;
 
     for my $pat (@patients) {
         my @polarities = 
-            map { get_polarity( $_ ) }
-            grep { is_subjective( $_ ) }
+            map { $self->get_polarity( $_ ) }
+            grep { $self->is_subjective( $_ ) }
             map { $amapper->( $_ ) }
-            get_clause_descendants( $pat );
+            $self->get_clause_descendants( $pat );
 
         if (@polarities) {
-            my $total = combine_polarities( @polarities );
-            my $pred = find_predicate( $pat );
+            my $total = $self->combine_polarities( @polarities );
+            my $pred = $self->find_predicate( $pat );
             next if ! $pred;
-            my @actors = grep { $_->functor eq 'ACT' } get_clause_descendants( $pred );
-            map { mark_node( $amapper->( $_ ), "subj_of_pat_" . $total ) } @actors;
+            my @actors = grep { $_->functor eq 'ACT' } $self->get_clause_descendants( $pred );
+            map { $self->mark_node( $amapper->( $_ ), "subj_of_pat_" . $total ) } @actors;
         }
     }
 
