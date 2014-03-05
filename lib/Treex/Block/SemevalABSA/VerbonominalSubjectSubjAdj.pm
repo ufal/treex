@@ -1,4 +1,4 @@
-package Treex::Block::SemevalABSA::FirstNounAboveSubjAdjAdv;
+package Treex::Block::SemevalABSA::VerbonominalSubjectSubjAdj;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::SemevalABSA::BaseRule';
@@ -15,7 +15,6 @@ sub process_atree {
 
     for my $node (@adjs) {
         my $polarity = get_polarity( $node );
-        my $tag = ($node->get_attr('tag') =~ m/^JJ/ ? "adj" : "adv");
         my $parent = $node->get_parent;
         while (! $parent->is_root ) {
             if ($parent->get_lemma eq "be") {

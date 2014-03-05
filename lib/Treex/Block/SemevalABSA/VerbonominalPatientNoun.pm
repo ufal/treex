@@ -1,0 +1,40 @@
+package Treex::Block::SemevalABSA::VerbonominalPatientNoun;
+use Moose;
+use Treex::Core::Common;
+extends 'Treex::Block::SemevalABSA::BaseRule';
+
+sub process_atree {
+    my ( $self, $atree ) = @_;
+    my @nouns = grep { 
+        $_->get_attr('tag') =~ m/^N/
+        && $_->get_attr('afun') eq 'Pnom'
+    } $atree->get_descendants;
+
+    for my $node (@nouns) {
+        my $polarity = get_polarity( $node );
+        my $parent = $node->get_parent;
+        while (! $parent->is_root && $parent->get_lemma ne "be") {
+            $parent = $parent->get_parent;
+        }
+        next if $parent->is_root;
+
+        my @sbs = grep { $_->get_attr('afun') eq 'Sb' } get_clause_descendants( $parent );
+
+        my $total = combine_polarities(
+            map { get_polarity( $_ ) }
+            grep { is_subjective( $_ ) }
+            map { get_clause_descendants( $_ ) } @sbs            
+        );
+
+        mark_node( $node, "vbnm_patn" . $total );
+    }
+
+    return 1;
+}
+
+1;
+
+#    Pokud jsem jmenna cast verbonominalniho predikatu a jsem substantivum,
+#    jsem patiens a jsem apekt (hodnotici vyraz je v agentu).
+#
+#           Pr. Our favourite meal ACT is the sausage PAT.
