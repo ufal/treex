@@ -15,7 +15,7 @@ sub process_ttree {
             my $total = combine_polarities( @polarities );
             my $pred = find_predicate( $pat );
             next if ! $pred;
-            my @actors = grep { $_->functor eq 'ACT' } get_clause_descendants( $parent );
+            my @actors = grep { $_->functor eq 'ACT' } get_clause_descendants( $pred );
             map { mark_node( $_, "subj_of_pat_" . $total ) } @actors;
         }
     }

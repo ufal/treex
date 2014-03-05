@@ -24,7 +24,7 @@ has use_wild => (
     isa =>  'Bool',
     default => 1,
     is => 'rw',
-)
+);
 
 sub BUILD {
     my ( $self ) = @_;
@@ -54,8 +54,8 @@ sub process_anode {
 sub mark_node {
     my ( $self, $node, $polarity ) = @_;
     if ( $self->use_wild ) {
-        $node->wild{'absa_is_subjective'} = 1;
-        $node->wild{'absa_polarity'} = $polarity;
+        $node->wild->{'absa_is_subjective'} = 1;
+        $node->wild->{'absa_polarity'} = $polarity;
     } else {
         $node->set_form( $node->form . '#SUBJ#' . $polarity );
         $node->set_lemma( $node->lemma . '#SUBJ#' . $polarity );

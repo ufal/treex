@@ -15,7 +15,7 @@ sub process_atree {
             @nodes
         );
         if ( $total eq '+' || $total eq '-' ) {
-            map { mark_node( $_, "coord$total" } @nodes;
+            map { mark_node( $_, "coord$total" ) } @nodes;
         }
     }
 

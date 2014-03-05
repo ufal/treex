@@ -34,7 +34,7 @@ sub get_alayer_mapper {
     my %links;
     my @nodes = $ttree->get_descendants;
     for my $node (@nodes) {
-        my $linkednode = $doc->get_node_by_id( $tnode->get_attr("a/lex.rf") );
+        my $linkednode = $doc->get_node_by_id( $node->get_attr("a/lex.rf") );
         $links{$node->get_attr('id')} = $linkednode;
     }
 
@@ -45,7 +45,7 @@ sub get_alayer_mapper {
 }
 
 sub get_aspect_candidate_polarities {
-    my ( @node ) = @_;
+    my ( $node ) = @_;
 
     log_fatal "Not an aspect candidate" if ! is_aspect_candidate( $node );
 
@@ -112,7 +112,7 @@ sub find_predicate {
             log_warn "Escaped current clause, predicate not found for node: " . $node->get_attr('id');
             return undef;
         }
-        $parent = $pat->get_parent;
+        $parent = $parent->get_parent;
     }
 
     return $parent;
