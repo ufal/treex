@@ -26,7 +26,7 @@ sub process_atree {
         );
 
         if ( @polarities ) {
-            $self->mark_node( $node, "vbnm_patn" . combine_polarities( @polarities ));
+            $self->mark_node( $node, "vbnm_patn" . $self->combine_polarities( @polarities ));
         }
     }
 

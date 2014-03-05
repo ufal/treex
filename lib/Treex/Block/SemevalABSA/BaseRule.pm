@@ -88,7 +88,7 @@ sub combine_polarities {
         } elsif ($val eq 'conflict') {
             $con++;
         } else {
-            log_fatal "Invalid polarity value: " . $val;
+            log_warn "Invalid polarity value: " . $val;
         }
     }
 
