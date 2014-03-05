@@ -17,7 +17,7 @@ sub process_atree {
         my $polarity = $self->get_polarity( $node );
         my $parent = $node->get_parent;
         while (! $parent->is_root ) {
-            if ($parent->get_lemma eq "be") {
+            if ($parent->lemma eq "be") {
                 push @predicates, {
                     node => $parent,
                     polarity => $polarity,

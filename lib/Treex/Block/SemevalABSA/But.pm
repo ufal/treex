@@ -5,7 +5,7 @@ extends 'Treex::Block::SemevalABSA::BaseRule';
 
 sub process_atree {
     my ( $self, $atree ) = @_;
-    my @buts = grep { $_->afun eq 'Coord' && $_->get_lemma eq 'but' } $atree->get_descendants;
+    my @buts = grep { $_->afun eq 'Coord' && $_->lemma eq 'but' } $atree->get_descendants;
 
     for my $but ( @buts ) {
         my @preds = grep { $_->afun eq 'Pred_Co' } $but->get_children;

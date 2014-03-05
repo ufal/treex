@@ -5,7 +5,7 @@ extends 'Treex::Block::SemevalABSA::BaseRule';
 
 sub process_atree {
     my ( $self, $atree ) = @_;
-    my @ands = grep { $_->afun eq 'Coord' && $_->get_lemma eq 'and' } $atree->get_descendants;
+    my @ands = grep { $_->afun eq 'Coord' && $_->lemma eq 'and' } $atree->get_descendants;
 
     for my $and ( @ands ) {
         my @nodes = grep { $_->afun ne m/^Aux/ } $and->get_children;

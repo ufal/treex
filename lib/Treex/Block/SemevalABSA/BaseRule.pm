@@ -34,8 +34,11 @@ sub get_alayer_mapper {
     my %links;
     my @nodes = $ttree->get_descendants;
     for my $node (@nodes) {
-        my $linkednode = $doc->get_node_by_id( $node->get_attr("a/lex.rf") );
-        $links{$node->get_attr('id')} = $linkednode;
+        my $linkedid = $node->get_attr("a/lex.rf");
+        if ( $linkedid ) {
+            my $linkednode = $doc->get_node_by_id( $linkedid );
+            $links{$node->get_attr('id')} = $linkednode;
+        }
     }
 
     return sub {
@@ -63,7 +66,7 @@ sub get_aspect_candidate_polarities {
 sub combine_polarities {
     my ( $self, @values ) = @_;
 
-    log_fatal "Empty list of polarity values" if ! @values;
+    return 0 if ! @values;
 
     my ($neut, $pos, $neg, $con) = qw/ 0 0 0 0 /;
     for my $val (@values) {
