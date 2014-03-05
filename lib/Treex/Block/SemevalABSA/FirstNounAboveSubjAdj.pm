@@ -11,8 +11,8 @@ sub process_atree {
     } $atree->get_descendants;
     for my $adj (@adjectives) {
         my $polarity = $self->get_polarity( $adj );
-        my $parent = $adj->get_parent;
-        while (1) {
+        my $parent = $adj;
+        while (! $parent->is_root) {
             if ($parent->get_attr('tag') =~ m/^N/) {
                 $self->mark_node( $parent, "sub_adj" . $polarity );
                 last;

@@ -12,7 +12,7 @@ sub process_atree {
 
     for my $node (@nouns) {
         my $polarity = $self->get_polarity( $node );
-        my $parent = $node->get_parent;
+        my $parent = $node;
         while (! $parent->is_root && $parent->lemma ne "be") {
             $parent = $parent->get_parent;
         }

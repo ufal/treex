@@ -96,8 +96,8 @@ sub combine_polarities {
 
 sub get_clause_descendants {
     my ( $self, $node ) = @_;
-    my $clause = $node->get_clause_number;
-    my @out = grep { $_->get_clause_number == $clause } $node->get_descendants;
+    my $clause = $node->clause_number;
+    my @out = grep { $_->clause_number == $clause } $node->get_descendants;
     return @out;
 }
 
@@ -105,13 +105,13 @@ sub find_predicate {
     my ( $self, $node ) = @_;
 
     my $parent = $node;
-    my $clause = $node->get_clause_number;
+    my $clause = $node->clause_number;
 
     while ($parent->functor ne 'PRED') {
         if ($parent->is_root) {
             log_warn "Root node reached, predicate not found for node: " . $node->get_attr('id');
             return undef;
-        } elsif ($parent->get_clause_number != $clause) {
+        } elsif ($parent->clause_number != $clause) {
             log_warn "Escaped current clause, predicate not found for node: " . $node->get_attr('id');
             return undef;
         }
