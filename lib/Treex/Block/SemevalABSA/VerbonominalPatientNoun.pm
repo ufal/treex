@@ -19,13 +19,15 @@ sub process_atree {
 
         my @sbs = grep { $_->get_attr('afun') eq 'Sb' } $self->get_clause_descendants( $parent );
 
-        my $total = $self->combine_polarities(
+        my @polarities = (
             map { $self->get_polarity( $_ ) }
             grep { $self->is_subjective( $_ ) }
             map { $self->get_clause_descendants( $_ ) } @sbs            
         );
 
-        $self->mark_node( $node, "vbnm_patn" . $total );
+        if ( @polarities ) {
+            $self->mark_node( $node, "vbnm_patn" . combine_polarities( @polarities ));
+        }
     }
 
     return 1;
