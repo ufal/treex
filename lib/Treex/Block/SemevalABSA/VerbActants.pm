@@ -1,4 +1,4 @@
-package Treex::Block::SemevalABSA::VerbActant;
+package Treex::Block::SemevalABSA::VerbActants;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::SemevalABSA::BaseRule';

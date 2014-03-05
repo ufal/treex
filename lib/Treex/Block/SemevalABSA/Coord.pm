@@ -1,4 +1,4 @@
-package Treex::Block::SemevalABSA::But;
+package Treex::Block::SemevalABSA::Coord;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::SemevalABSA::BaseRule';
