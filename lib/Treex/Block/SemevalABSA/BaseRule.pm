@@ -44,6 +44,22 @@ sub get_alayer_mapper {
     }
 }
 
+sub get_aspect_candidate_polarities {
+    my ( @node ) = @_;
+
+    log_fatal "Not an aspect candidate" if ! is_aspect_candidate( $node );
+
+    my @polarities;
+    my @rules = split / /, $node->wild->{absa_rules};
+    for my $rule (@rules) {
+        if ($rule =~ m/(\+|\-|0|conflict)$/) {
+            push @polarities, $1;
+        }    
+    }
+
+    return @polarities;
+}
+
 sub combine_polarities {
     my ( @values ) = @_;
 

@@ -14,8 +14,10 @@ sub process_atree {
             my @aspects_b = grep { is_aspect_candidate( $_ ) } $preds[1]->get_descendants;
             next if ! @aspects_a;
             if ( @aspects_b ) {
-                # this will only be useful with paired features!!
-                map { mark_node( $_, "but_opposite" ) } @aspects_b;
+                my $total = combine_polarities( map { get_aspect_candidate_polarities( $_ ) } @aspects_a );
+                if ( $total eq '+' || $total eq '-' ) {
+                    map { mark_node( $_, "but_opposite$total" ) } @aspects_b;
+                }
             } else {
                 map { mark_node( $_, "but_conflict" ) } @aspects_a;
             }
