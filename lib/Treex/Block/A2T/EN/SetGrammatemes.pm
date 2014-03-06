@@ -213,9 +213,14 @@ sub _number {
     # This should be distinguished already on the m-layer, but for
     # numerals (tag=CD) there is no analogy to NN/NNS tags.
     # Similarly for thousand, million and billion.
-    if ( $form =~ /^(hundred|thousand|million|billion)$/ ) {
+    # Numerals "two", "three", ... "ninty" should be annotated as plural.
+    # I am not sure about years (e.g. "1997 was a nice year."), probably they should be singular.
+    my $number = Treex::Tool::Lexicon::EN::number_for($form) || 0;
+    if ($number >= 100) {#( $form =~ /^(hundred|thousand|million|billion)$/ ) {
         my $plural = _has_numeral_child_needed_for_plural($tnode);
         $tnode->set_attr( 'gram/number', $plural ? 'pl' : 'sg' );
+    } elsif ( $number >= 2) { #&& $number < 100) {
+        $tnode->set_gram_number('pl');
     }
     return;
 }
