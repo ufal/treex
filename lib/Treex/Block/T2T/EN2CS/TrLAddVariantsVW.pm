@@ -73,7 +73,7 @@ sub process_document {
     my ($self, $doc) = @_;
     
     # print feature vectors into a file
-    ($F, $Fname) = tempfile('VWfeatsXXXXXX', TMPDIR => 0); # For debugging TMPDIR => 0 will use the current directory
+    ($F, $Fname) = tempfile('VWfeatsXXXXXX', TMPDIR => 1); # For debugging TMPDIR => 0 will use the current directory
     binmode( $F, ":utf8" );
     
     foreach my $bundle ($doc->get_bundles()){
@@ -87,7 +87,7 @@ sub process_document {
     close $F;
       
     # run VW prediction
-    ($R, $Rname) = tempfile('VWrawXXXXXX', TMPDIR => 0);
+    ($R, $Rname) = tempfile('VWrawXXXXXX', TMPDIR => 1);
     close $R;
     system "vw -i $vw_model_path --quiet -d $Fname -r $Rname";
     
