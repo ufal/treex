@@ -39,19 +39,6 @@ W2A::EN::ParseMST model=conll_mcd_order2_0.1.model
 SCEN
         test_tool('Parser::MST::EN', $scenario_string);
     }
-
-    {                           # test MST parser Czech
-        my $scenario_string = <<"SCEN";
-Util::SetGlobal language=cs
-Read::Text from=$cs_sample
-W2A::CS::Segment
-W2A::CS::Tokenize
-W2A::CS::TagFeaturama lemmatize=1
-W2A::CS::FixMorphoErrors
-W2A::CS::ParseMSTAdapted
-SCEN
-        test_tool('Parser::MST::CS', $scenario_string);
-    }
 };
 
 print STDERR "$@\n" if $@;
