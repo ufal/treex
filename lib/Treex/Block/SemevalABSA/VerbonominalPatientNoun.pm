@@ -16,6 +16,7 @@ sub process_atree {
             $parent = $parent->get_parent;
         }
         next if $parent->is_root;
+        my $negated = grep { $_->lemma eq 'not' } $parent->get_children;
 
         my @sbs = grep { $_->afun =~ m/^Sb/ } $self->get_clause_descendants( $parent );
 
@@ -26,7 +27,9 @@ sub process_atree {
         );
 
         if ( @polarities ) {
-            $self->mark_node( $node, "vbnm_patn" . $self->combine_polarities( @polarities ));
+            my $total = $self->combine_polarities( @polarities );
+            $total = $self->switch_polarity( $total ) if $negated;
+            $self->mark_node( $node, "vbnm_patn" . $total );
         }
     }
 

@@ -10,7 +10,9 @@ sub process_atree {
     for my $adv (@advs) {
         my $pred = $self->find_predicate( $adv );
         next if ! $pred;
+        my $negated = grep { $_->lemma eq 'not' } $pred->get_children;
         my $polarity = $self->get_polarity( $adv );
+        $polarity = $self->switch_polarity( $polarity ) if $negated;
         my @to_mark = grep { $_->afun =~ m/^Obj/ } $self->get_clause_descendants( $pred );
         if (! @to_mark) {
             @to_mark = grep { $_->afun =~ m/^Sb/ } $self->get_clause_descendants( $pred );

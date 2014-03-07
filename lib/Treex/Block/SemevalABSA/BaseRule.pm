@@ -65,6 +65,17 @@ sub get_polarity {
     return $node->{wild}->{absa_polarity};
 }
 
+sub switch_polarity {
+    my ( $self, $polarity ) = @_;
+    if ( $polarity eq '+' ) {
+        return '-';
+    } elsif ( $polarity eq '-') {
+        return '+';
+    } else {
+        return $polarity;
+    }
+}
+
 sub get_alayer_mapper {
     my ( $self, $ttree ) = @_;
     my $doc = $ttree->get_document;

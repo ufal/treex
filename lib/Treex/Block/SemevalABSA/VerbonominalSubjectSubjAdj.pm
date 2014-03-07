@@ -19,6 +19,8 @@ sub process_atree {
         my $parent = $node;
         while (! $parent->is_root ) {
             if ($parent->lemma eq "be") {
+                my $negated = grep { $_->lemma eq 'not' } $parent->get_children;
+                $polarity = $self->switch_polarity( $polarity ) if $negated;
                 push @predicates, {
                     node => $parent,
                     polarity => $polarity,
