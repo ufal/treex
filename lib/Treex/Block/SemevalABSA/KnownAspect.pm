@@ -3,7 +3,12 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::SemevalABSA::BaseRule';
 
-has aspects => (
+has forms => (
+    isa => 'HashRef',
+    is  => 'rw',
+);
+
+has lemmas => (
     isa => 'HashRef',
     is  => 'rw',
 );
@@ -19,7 +24,10 @@ sub BUILD {
     open( my $hdl, $self->{aspect_file} ) or log_fatal "$self->{aspect_file}: $!";
     while (<$hdl>) {
         chomp;
-        $self->{aspects}->{$_} = 1;
+        my ( $form, $lemma, $tag ) = split /\|/;
+        log_fatal "Bad format of line '$_' in $self->{aspect_file}" if ! $tag;
+        $self->{forms}->{lc($form)} = 1
+        $self->{lemmas}->{$lemma} = 1;
     }
     close $hdl;
     return 1;
@@ -30,7 +38,7 @@ sub process_atree {
 
     my @nodes = $atree->get_descendants;
     for my $node ( @nodes ) {
-        if ( $self->{aspects}->{ lc( $node->form ) }
+        if ( ( $self->{aspects}->{ lc( $node->form ) } || $self->{aspects}->{ $node->lemma } )
             && ! $self->is_aspect_candidate( $node ) ) {
             $self->mark_node( "known0" );
         }
