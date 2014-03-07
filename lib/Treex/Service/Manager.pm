@@ -51,8 +51,8 @@ sub _build_modules {
 sub init_service {
     my ($self, $module, $init_args) = @_;
 
-    use Data::Dumper;
-    print STDERR Dumper($init_args);
+    # use Data::Dumper;
+    # print STDERR Dumper($init_args);
     log_fatal "Unknown service module: '$module'" unless $self->module_exists($module);
 
     my $fingerprint = $self->compute_fingerprint($module, $init_args);

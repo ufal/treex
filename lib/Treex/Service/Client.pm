@@ -3,6 +3,7 @@ package Treex::Service::Client;
 use Moose;
 use Mojo::UserAgent;
 use Mojo::URL;
+use Treex::Core::Config;
 use namespace::autoclean;
 
 has ua => (
@@ -16,7 +17,7 @@ has server_url => (
     is  => 'ro',
     isa => 'Str',
     required => 1,
-    default => 'http://localhost:3000'
+    default => sub { Treex::Core::Config->treex_server_url }
 );
 
 has available_services => (
