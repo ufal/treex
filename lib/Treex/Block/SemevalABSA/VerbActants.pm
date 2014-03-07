@@ -6,7 +6,7 @@ extends 'Treex::Block::SemevalABSA::BaseRule';
 sub process_atree {
     my ( $self, $atree ) = @_;
 
-    my @preds = grep { $_->afun eq 'Pred' && $self->is_subjective( $_ ) } $atree->get_descendants;
+    my @preds = grep { $_->tag =~ m/^VB/ && $self->is_subjective( $_ ) } $atree->get_descendants;
 
     for my $pred (@preds) {
         my $polarity = $self->get_polarity( $pred );

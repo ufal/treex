@@ -38,9 +38,9 @@ sub process_atree {
 
     my @nodes = $atree->get_descendants;
     for my $node ( @nodes ) {
-        if ( ( $self->{aspects}->{ lc( $node->form ) } || $self->{aspects}->{ $node->lemma } )
+        if ( ( $self->{forms}->{ lc( $node->form ) } || $self->{lemmas}->{ $node->lemma } )
             && ! $self->is_aspect_candidate( $node ) ) {
-            $self->mark_node( "known0" );
+            $self->mark_node( $node, "known0" );
         }
     }
 

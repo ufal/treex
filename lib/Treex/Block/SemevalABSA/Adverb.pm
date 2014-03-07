@@ -5,7 +5,7 @@ extends 'Treex::Block::SemevalABSA::BaseRule';
 
 sub process_atree {
     my ( $self, $atree ) = @_;
-    my @advs = grep { $_->afun =~ m/^Adv/ && $self->is_subjective( $_ ) } $atree->get_descendants;
+    my @advs = grep { $_->tag =~ m/^RB/ && $self->is_subjective( $_ ) } $atree->get_descendants;
 
     for my $adv (@advs) {
         my $pred = $self->find_predicate( $adv );

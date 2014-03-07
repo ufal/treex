@@ -11,14 +11,21 @@ sub mark_node {
     }
 
     my @stopwords = qw/ everyone everybody everything anything anyone anybody thing /;
-    my @pronoun_tags = ( 'PRP', 'PRP$', 'WP', 'WP$' );
+    my @function_word_tags = ( 'PRP', 'PRP$', 'WP', 'WP$', 'DT', 'PDT', 'IN', 'CC', 'WDT' );
+    my @avoided_afuns = ( 'Aux' );
 
-    if ( grep { $node->tag eq $_ } @pronoun_tags ) {
+    if ( grep { $node->tag eq $_ } @function_word_tags ) {
         log_info "Tag in the stop-list, not marking node: " . $node->form;
         return 0;
     }
+
     if ( grep { lc( $node->form ) eq lc( $_ ) } @stopwords ) {
         log_info "Form in the stop-list, not marking node: " . $node->form;
+        return 0;
+    }
+
+    if ( grep { $node->afun =~ m/^$_/ } @avoided_afuns ) {
+        log_info "Afun in the stop-list, not marking node: " . $node->form;
         return 0;
     }
 
@@ -26,13 +33,19 @@ sub mark_node {
     my @subtree = $node->get_children( { ordered => 1, add_self => 1 } );
     my @avoidparents = grep { $self->is_subjective( $_ ) } @subtree;
     @subtree = grep { ! $self->is_subjective( $_ ) } @subtree;
+    my $clause = $node->clause_number;
+    @subtree = grep { $_->clause_number == $clause } @subtree;
     for my $avoid ( @avoidparents ) {
         @subtree = grep { ! $_->is_descendant_of( $avoid ) } @subtree;
     }
 
-    my @function_word_tags = ( 'PRP', 'PRP$', 'WP', 'WP$', 'DT', 'PDT', 'IN', 'CC' );
     while ( @subtree && grep { $subtree[0]->tag eq $_ } @function_word_tags ) {
         log_info "shifting initial function word: " . $subtree[0]->form;
+        shift @subtree;
+    }
+
+    while ( @subtree && grep { $subtree[0]->afun =~ m/^$_/ } @function_word_tags ) {
+        log_info "shifting initial function word (afun): " . $subtree[0]->form;
         shift @subtree;
     }
 
@@ -156,14 +169,14 @@ sub find_predicate {
     my $parent = $node;
     my $clause = $node->clause_number;
 
-    while ($parent->afun ne 'Pred') {
+    while ($parent->tag =~ m/^VB/) {
         if ($parent->clause_number != $clause) {
-            log_warn "Escaped current clause, predicate not found for node: " . $node->get_attr('id');
+            log_warn "Escaped current clause, predicate not found for node: " . $node->id;
             return undef;
         }
         $parent = $parent->get_parent;
         if ($parent->is_root) {
-            log_warn "Root node reached, predicate not found for node: " . $node->get_attr('id');
+            log_warn "Root node reached, predicate not found for node: " . $node->id;
             return undef;
         }
     }
