@@ -17,7 +17,7 @@ sub process_atree {
         }
         next if $parent->is_root;
 
-        my @sbs = grep { $_->get_attr('afun') eq 'Sb' } $self->get_clause_descendants( $parent );
+        my @sbs = grep { $_->afun =~ m/^Sb/ } $self->get_clause_descendants( $parent );
 
         my @polarities = (
             map { $self->get_polarity( $_ ) }

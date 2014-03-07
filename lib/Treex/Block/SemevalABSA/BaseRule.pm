@@ -10,23 +10,33 @@ sub mark_node {
         return 0;
     }
 
-    my @stopwords = qw/ everyone everybody everything /;
+    my @stopwords = qw/ everyone everybody everything anything anyone anybody thing /;
     my @pronoun_tags = ( 'PRP', 'PRP$', 'WP', 'WP$' );
 
-    if ( grep { $node->tag eq $_ } @pronoun_tags
-        || grep { lc( $node->form ) eq lc( $_ ) } @stopwords ) {
-        log_info "not marking node: " . $node->get_attr('id');
+    if ( grep { $node->tag eq $_ } @pronoun_tags ) {
+        log_info "Tag in the stop-list, not marking node: " . $node->form;
+        return 0;
+    }
+    if ( grep { lc( $node->form ) eq lc( $_ ) } @stopwords ) {
+        log_info "Form in the stop-list, not marking node: " . $node->form;
         return 0;
     }
 
-    # log_info "    adding feature $str to node " . $node->get_attr('id');
-
     my @subtree = $node->get_descendants( { ordered => 1, add_self => 1 } );
-    if ( $subtree[0]->tag eq 'DT' && $subtree[0]->tag eq 'PDT' ) {
+    my @avoidparents = grep { $self->is_subjective( $_ ) } @subtree;
+    @subtree = grep { ! $self->is_subjective( $_ ) } @subtree;
+    for my $avoid ( @avoidparents ) {
+        @subtree = grep { ! $_->is_descendant_of( $avoid ) } @subtree;
+    }
+
+    my @function_word_tags = ( 'PRP', 'PRP$', 'WP', 'WP$', 'DT', 'PDT', 'IN', 'CC' );
+    while ( @subtree && grep { $subtree[0]->tag eq $_ } @function_word_tags ) {
+        log_info "shifting initial function word: " . $subtree[0]->form;
         shift @subtree;
     }
+
     for my $subnode (@subtree) {
-        next if $self->is_subjective( $subnode );
+        log_info "Marking node " . $node->form;
         if ($subnode->wild->{absa_rules}) {
             $subnode->wild->{absa_rules} .= " $str";
         } else {

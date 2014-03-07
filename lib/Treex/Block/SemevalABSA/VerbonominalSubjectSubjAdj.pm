@@ -14,6 +14,7 @@ sub process_atree {
     my @predicates;
 
     for my $node (@adjs) {
+        log_info "at node " . $node->form;
         my $polarity = $self->get_polarity( $node );
         my $parent = $node;
         while (! $parent->is_root ) {
@@ -22,6 +23,7 @@ sub process_atree {
                     node => $parent,
                     polarity => $polarity,
                 };
+                log_info "found its predicate: " . $parent->id;
                 last;
             } else {
                 $parent = $parent->get_parent;
@@ -30,18 +32,12 @@ sub process_atree {
     }
 
     for my $pred (@predicates) {
-        my ($subj, @rest) = grep {
-            $_->get_attr('afun') eq 'Sb'
+        log_info "at predicate: " . $pred->{node}->id;
+        my @subjects = grep {
+            $_->afun =~ m/^Sb/
         } $self->get_clause_descendants( $pred->{node} );
-        if ($subj) {
-            $self->mark_node( $subj, "vbnm_sb_adj" . $pred->{polarity} );
-        } else {
-            log_warn "No subject found for predicate: " . $pred->{node}->get_attr('id');
-        }
-
-        if (@rest) {
-            log_warn "More than one subject found for predicate: " . $pred->{node}->get_attr('id');
-        }
+        log_info "found subjects: " . scalar(@subjects);
+        map { $self->mark_node( $_, "vbnm_sb_adj" . $pred->{polarity} ) } @subjects;
     }
 
     return 1;
