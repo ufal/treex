@@ -38,8 +38,12 @@ sub allow_switch_context_hook {
 
 sub switch_context_hook {
     $tredview->tree_layout->load_layouts();
-    SetCurrentStylesheet('Treex_stylesheet');
-    # Redraw() if GUI();
+    my $cur_stylesheet = GetCurrentStylesheet();
+    if ($cur_stylesheet ne 'Treex_stylesheet') {
+        SetCurrentStylesheet('Treex_stylesheet');
+        Redraw() if GUI();
+    }
+    return;
 }
 
 sub pre_switch_context_hook {
@@ -55,7 +59,7 @@ sub file_opened_hook {
 }
 
 sub file_reloaded_hook {
-    file_opened_hook();
+    file_opened_hook(@_);
 }
 
 sub get_nodelist_hook {

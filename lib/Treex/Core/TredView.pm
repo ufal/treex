@@ -9,13 +9,20 @@ use Treex::Core::TredView::Labels;
 use Treex::Core::TredView::Styles;
 use Treex::Core::TredView::Vallex;
 use Treex::Core::Types;
+use Scalar::Util qw(blessed refaddr);
 use List::Util qw(first);
+use Cache::LRU;
 
 use Treex::Core::Config;
 $Treex::Core::Config::running_in_tred = 1;
 
 has 'grp'       => ( is => 'rw' );
 has 'pml_doc'   => ( is => 'rw' );
+has 'doc_cache' => (
+    is  => 'ro',
+    isa => 'Cache::LRU',
+    default => sub { Cache::LRU->new(size => 20); }
+);
 has 'treex_doc' => ( is => 'rw' );
 has 'tree_layout' => (
     is      => 'ro',
@@ -97,10 +104,19 @@ sub _spread_nodes {
     return ( $mid + 1 ), @lower[ 0 .. $mid ], $node, @lower[ ( $mid + 1 ) .. $#lower ];
 }
 
+sub _pmldoc_equals {
+    my ($self, $fsfile) = @_;
+    return ($self->pml_doc && $fsfile && refaddr($self->pml_doc) == refaddr($fsfile));
+}
+
 sub get_nodelist_hook {
     my ( $self, $fsfile, $treeNo, $currentNode ) = @_;
 
-    return if not $self->pml_doc();    # get_nodelist_hook is invoked also before file_opened_hook
+    #return if not $self->pml_doc();    # get_nodelist_hook is invoked also before file_opened_hook
+
+    unless ($self->_pmldoc_equals($fsfile)) {
+        $self->file_opened_hook($fsfile);
+    }
 
     my $bundle = $fsfile->tree($treeNo);
     bless $bundle, 'Treex::Core::Bundle';    # TODO: how to make this automatically?
@@ -220,20 +236,27 @@ sub recompute_visualization {
 }
 
 sub file_opened_hook {
-    my ($self) = @_;
-    my $pmldoc = $self->grp()->{FSFile};
+    my ($self, $fsfile) = @_;
+    my $pmldoc = $fsfile || $self->grp()->{FSFile};
+
+    return unless $pmldoc && $pmldoc->metaData('schema') &&
+      $pmldoc->metaData('schema')->get_root_name() eq 'treex_document';
+
+    return if $self->_pmldoc_equals($pmldoc);
 
     $self->pml_doc($pmldoc);
 
-    my $treex_doc;
-    if ( defined $pmldoc->[13]->{_treex_core_document} ) {    # if it comes from storable (i.e., already with moose)
-        $treex_doc = $pmldoc->[13]->{_treex_core_document};
+    my $treex_doc = $self->doc_cache->get(refaddr($self->pml_doc));
+    unless ($treex_doc) {
+        if ( defined $pmldoc->[13]->{_treex_core_document} ) { # if it comes from storable (i.e., already with moose)
+            $treex_doc = $pmldoc->[13]->{_treex_core_document};
 
-        # streex files do not have "wild_dump" filled, but we want to show this in ttred
-        $treex_doc->_serialize_all_wild();
-    }
-    else {
-        $treex_doc = Treex::Core::Document->new( { pmldoc => $pmldoc } );
+            # streex files do not have "wild_dump" filled, but we want to show this in ttred
+            $treex_doc->_serialize_all_wild();
+        } else {
+            $treex_doc = Treex::Core::Document->new( { pmldoc => $pmldoc } );
+        }
+        $self->doc_cache->set(refaddr($self->pml_doc), $treex_doc);
     }
 
     $self->treex_doc($treex_doc);
@@ -248,7 +271,7 @@ sub file_opened_hook {
         # If we don't care about slow loading of the whole file,
         # we can precompute all bundles now, so browsing through bundles
         # will be a bit faster.
-        if ( !$self->fast_loading ) {
+        if ( !$self->fast_loading && !$bundle->{_precomputed} ) {
             $self->precompute_tree_depths($bundle);
             $self->precompute_tree_shifts($bundle);
             $self->precompute_visualization($bundle);
@@ -264,8 +287,12 @@ sub file_opened_hook {
 }
 
 sub get_value_line_hook {
-    my ( $self, undef, $treeNo ) = @_;    # the unused argument stands for $fsfile
-    return if not $self->pml_doc();
+    my ( $self, $fsfile, $treeNo ) = @_;    # the unused argument stands for $fsfile
+    #return if not $self->pml_doc();
+
+    unless ($self->_pmldoc_equals($fsfile)) {
+        $self->file_opened_hook($fsfile);
+    }
 
     my $bundle = $self->pml_doc->tree($treeNo);
     if ( !$bundle->{_precomputed_value_line} ) {
@@ -503,6 +530,7 @@ sub precompute_value_line {
     my ( $self, $bundle ) = @_;
 
     my %alignment = ();
+
     foreach my $zone ( $bundle->get_all_zones() ) {
         foreach my $layer (@layers) {
             if ( $zone->has_tree($layer) ) {
