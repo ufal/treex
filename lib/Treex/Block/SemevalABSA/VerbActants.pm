@@ -3,21 +3,19 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::SemevalABSA::BaseRule';
 
-sub process_ttree {
-    my ( $self, $ttree ) = @_;
+sub process_atree {
+    my ( $self, $atree ) = @_;
 
-    my $amapper = $self->get_alayer_mapper( $ttree );
-
-    my @preds = grep { $_->functor eq 'PRED' && $self->is_subjective( $amapper->( $_ ) ) } $ttree->get_descendants;
+    my @preds = grep { $_->afun eq 'Pred' && $self->is_subjective( $_ ) } $atree->get_descendants;
 
     for my $pred (@preds) {
-        my $polarity = $self->get_polarity( $amapper->( $pred ) );
-        my @actors = grep { $_->functor eq 'ACT' } $self->get_clause_descendants( $pred );
-        my @patients = grep { $_->functor eq 'PAT' } $self->get_clause_descendants( $pred );
-        if (@patients) {
-            map { $self->mark_node( $amapper->( $_ ), "verb_actant_pat$polarity" ) } @patients;
-        } elsif (@actors) {
-            map { $self->mark_node( $amapper->( $_ ), "verb_actant_act$polarity" ) } @actors;
+        my $polarity = $self->get_polarity( $pred );
+        my @subjects = grep { $_->afun =~ m/^Sb/ } $self->get_clause_descendants( $pred );
+        my @objects = grep { $_->afun =~ m/^Obj/ } $self->get_clause_descendants( $pred );
+        if (@objects) {
+            map { $self->mark_node( $_, "verb_actant_pat$polarity" ) } @objects;
+        } elsif (@subjects) {
+            map { $self->mark_node( $_, "verb_actant_act$polarity" ) } @subjects;
         }
     }
 

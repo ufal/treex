@@ -3,20 +3,19 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::SemevalABSA::BaseRule';
 
-sub process_ttree {
-    my ( $self, $ttree ) = @_;
-    my $amapper = $self->get_alayer_mapper( $ttree );
-    my @advs = grep { $_->formeme eq 'adv' && $self->is_subjective( $amapper->( $_ ) ) } $ttree->get_descendants;
+sub process_atree {
+    my ( $self, $atree ) = @_;
+    my @advs = grep { $_->afun =~ m/^Adv/ && $self->is_subjective( $_ ) } $atree->get_descendants;
 
     for my $adv (@advs) {
         my $pred = $self->find_predicate( $adv );
         next if ! $pred;
-        my $polarity = $self->get_polarity( $amapper->( $adv ) );
-        my @to_mark = grep { $_->functor eq 'PAT' } $self->get_clause_descendants( $pred );
+        my $polarity = $self->get_polarity( $adv );
+        my @to_mark = grep { $_->afun =~ m/^Obj/ } $self->get_clause_descendants( $pred );
         if (! @to_mark) {
-            @to_mark = grep { $_->functor eq 'ACT' } $self->get_clause_descendants( $pred );
+            @to_mark = grep { $_->afun =~ m/^Sb/ } $self->get_clause_descendants( $pred );
         }
-        map { $self->mark_node( $amapper->( $_ ), "adv_" . $polarity ) } @to_mark;
+        map { $self->mark_node( $_, "adv_" . $polarity ) } @to_mark;
     }
 
     return 1;

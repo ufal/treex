@@ -8,7 +8,7 @@ sub process_atree {
     my @ands = grep { $_->afun eq 'Coord' && $_->lemma eq 'and' } $atree->get_descendants;
 
     for my $and ( @ands ) {
-        my @nodes = grep { $_->afun ne m/^Aux/ } $and->get_children;
+        my @nodes = grep { $_->afun !~ m/^Aux/ } $and->get_children;
         my $total = $self->combine_polarities(
             map { $self->get_aspect_candidate_polarities( $_ ) }
             grep { $self->is_aspect_candidate( $_ ) }

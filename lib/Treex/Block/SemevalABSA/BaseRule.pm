@@ -116,7 +116,7 @@ sub find_predicate {
     my $parent = $node;
     my $clause = $node->clause_number;
 
-    while ($parent->functor ne 'PRED') {
+    while ($parent->afun ne 'Pred') {
         if ($parent->clause_number != $clause) {
             log_warn "Escaped current clause, predicate not found for node: " . $node->get_attr('id');
             return undef;
