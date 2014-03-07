@@ -26,6 +26,7 @@ sub startup {
     my $r = $self->routes;
 
     $r->get('/' => \&status);
+    $r->get('/ping' => sub { shift->render(text => '', status => 204) });
     $r->post('/service' => \&run_service);
 }
 

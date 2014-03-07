@@ -1,31 +1,31 @@
-package Treex::Tool::Tagger::Service;
+package Treex::Tool::Tagger::Factory;
 
 use Moose;
+use Treex::Tool::Factory;
 use namespace::autoclean;
-extends 'Treex::Core::Service';
-with 'Treex::Tool::Tagger::Role';
 
-has '+module' => ( default => 'tagger' );
-
-sub tag_sentence {
-    my ( $self, $tokens_rf ) = @_;
-
-    return $self->run($tokens_rf);
-}
+implementation_does [ qw( Treex::Tool::Tagger::Role ) ];
+implementation_class_via sub { 'Treex::Tool::Tagger::' . shift };
+implementation_service_attr 'tagger_name';
 
 __PACKAGE__->meta->make_immutable;
-
 1;
 __END__
 
 =head1 NAME
 
-Treex::Tool::Tagger::Service - Perl extension for blah blah blah
+Treex::Tool::Tagger::Factory - Perl extension for blah blah blah
 
 =head1 SYNOPSIS
 
-   use Treex::Tool::Tagger::Service;
+   use Treex::Tool::Tagger::Factory;
    blah blah blah
+
+=head1 DESCRIPTION
+
+Stub documentation for Treex::Tool::Tagger::Factory,
+
+Blah blah blah.
 
 =head1 AUTHOR
 

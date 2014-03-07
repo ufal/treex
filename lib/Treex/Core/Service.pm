@@ -36,6 +36,12 @@ sub run {
     return __PACKAGE__->client->run_service($self->module, $self->args, $input);
 }
 
+sub ping {
+    my $self = shift;
+
+    return __PACKAGE__->client->ping_server();
+}
+
 __PACKAGE__->meta->make_immutable;
 
 1;

@@ -44,13 +44,20 @@ sub run_service {
     delete $args->{language};
     delete $args->{scenario};
 
-    my $url = Mojo::URL->new($self->server_url . "/service");
+    my $url = Mojo::URL->new($self->server_url . '/service');
 
     return $self->ua->post($url => json => {
         module => $module,
         args => $args,
         input => $input
     })->res->json;
+}
+
+sub ping_server {
+    my $self = shift;
+
+    my $url = Mojo::URL->new($self->server_url . '/ping');
+    return $self->ua->get($url)->success;
 }
 
 __PACKAGE__->meta->make_immutable;

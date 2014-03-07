@@ -1,17 +1,13 @@
-package Treex::Tool::Tagger::Service;
+package Treex::Tool::PrefixerFactory;
 
-use Moose;
+use Treex::Tool::Factory;
 use namespace::autoclean;
-extends 'Treex::Core::Service';
-with 'Treex::Tool::Tagger::Role';
 
-has '+module' => ( default => 'tagger' );
-
-sub tag_sentence {
-    my ( $self, $tokens_rf ) = @_;
-
-    return $self->run($tokens_rf);
-}
+implementation_class_via sub {
+    my ($impl, $factory) = @_;
+    return $factory->use_services ? 'Treex::Tool::PrefixerService' :
+      'Treex::Tool::Prefixer';
+};
 
 __PACKAGE__->meta->make_immutable;
 
@@ -20,12 +16,18 @@ __END__
 
 =head1 NAME
 
-Treex::Tool::Tagger::Service - Perl extension for blah blah blah
+Treex::Tool::PrefixerFactory - Perl extension for blah blah blah
 
 =head1 SYNOPSIS
 
-   use Treex::Tool::Tagger::Service;
+   use Treex::Tool::PrefixerFactory;
    blah blah blah
+
+=head1 DESCRIPTION
+
+Stub documentation for Treex::Tool::PrefixerFactory,
+
+Blah blah blah.
 
 =head1 AUTHOR
 

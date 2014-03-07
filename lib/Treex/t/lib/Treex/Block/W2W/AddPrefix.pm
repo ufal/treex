@@ -2,8 +2,7 @@ package Treex::Block::W2W::AddPrefix;
 
 use Moose;
 use Treex::Core::Config;
-use Treex::Tool::PrefixerService;
-use Treex::Tool::Prefixer;
+use Treex::Tool::PrefixerFactory;
 use namespace::autoclean;
 
 extends 'Treex::Core::Block';
@@ -21,9 +20,7 @@ has _prefixer => (
 sub process_start {
     my ($self) = shift;
 
-    my $prefixer = Treex::Core::Config->use_services ?
-      Treex::Tool::PrefixerService->new(args => { prefix => $self->prefix })
-          : Treex::Tool::Prefixer->new(prefix => $self->prefix);
+    my $prefixer = Treex::Tool::PrefixerFactory->create('Prefixer', prefix => $self->prefix);
     $self->_set_prefixer($prefixer);
 }
 

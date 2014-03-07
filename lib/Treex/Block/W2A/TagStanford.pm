@@ -2,8 +2,7 @@ package Treex::Block::W2A::TagStanford;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Config;
-use Treex::Tool::Tagger::Stanford;
-use Treex::Tool::Tagger::Service;
+use Treex::Tool::Tagger::Factory;
 
 extends 'Treex::Block::W2A::Tag';
 
@@ -46,9 +45,7 @@ sub _build_tagger {
     else {
         log_fatal('Model path (model=path/to/model) or language (using_lang_model=XX) must be set!');
     }
-    return Treex::Core::Config->use_services ?
-      Treex::Tool::Tagger::Service->new(tagger_name => 'Stanford', %{$self->_args}) :
-      Treex::Tool::Tagger::Stanford->new($self->_args);
+    return Treex::Tool::Tagger::Factory->create('Stanford', %{$self->_args});
 }
 
 1;
