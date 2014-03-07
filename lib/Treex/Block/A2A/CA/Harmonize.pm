@@ -91,23 +91,75 @@ my %deprel2afun = (
 );
 
 
-sub deprel_to_afun {
+
+#------------------------------------------------------------------------------
+# Convert dependency relation tags to analytical functions.
+# /net/data/CoNLL/2009/es/doc/tagsets.pdf
+# http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
+#------------------------------------------------------------------------------
+sub deprel_to_afun
+{
     my ( $self, $root ) = @_;
-
-    foreach my $node ($root->get_descendants)  {
-
+    foreach my $node ($root->get_descendants)
+    {
         my $deprel = $node->conll_deprel();
         my ($parent) = $node->get_eparents();
         my $pos    = $node->get_iset('pos');
         my $subpos = $node->get_iset('subpos');
         my $ppos   = $parent ? $parent->get_iset('pos') : '';
 
+        ###!!! Nevím, jestli tohle nechci spíš odbourat. Tabulky jsou sice přehlednější než ify, ale když do nich přidám komentáře, tak už stejně přehledné nebudou.
+        ###!!! Nelíbí se mi, že to nemůže být všechno v jedné tabulce. Navíc hashe neumožňují jednoduše nadefinovat větev "else".
         my $afun = $deprel2afun{$deprel} || # from the most specific to the least specific
             $subpos2afun{$subpos} ||
                 $pos2afun{$pos} ||
                     $parentpos2afun{$ppos} ||
                         'NR';
 
+        # Adjective in leaf node. Could be headed by article! Example:
+        # aquests primers tres mesos
+        # these first three months
+        # TREE: mesos ( aquests/spec ( primers/a , tres/d ) )
+        if($deprel eq 'a')
+        {
+            $afun = 'Atr';
+        }
+        # Orational adjunct. Example:
+        # segons el Tribunal Suprem
+        # according to the Supreme Court
+        # NOTE: "segons" is by far the most frequent lemma with the "ao" tag.
+        elsif($deprel eq 'ao')
+        {
+            $afun = 'Adv';
+        }
+        # Attribute. The meaning is different from attribute in PDT.
+        # els accidents van ser reals
+        # the accidents were real
+        # ser ( accidents/suj ( els/spec ) , van/v , reals/atr )
+        elsif($deprel eq 'atr')
+        {
+            $afun = 'Pnom';
+        }
+        # Conjunction in leaf node. Very rare (errors?) In the examples, coordinating conjunctions are more frequent than subordinating ones.
+        # See also "conj" and "coord".
+        elsif($deprel eq 'c')
+        {
+            ###!!!
+        }
+        # Agent complement.
+        # In a passive clause where subject is not the agent, this is the tag for the agent. Most frequently with the preposition "per". Example:
+        # jutjat per un tribunal popular
+        # tried by a kangaroo court
+        elsif($deprel eq 'cag')
+        {
+            $afun = 'Obj';
+        }
+        # Adjunct.
+        elsif($deprel eq 'cc')
+        {
+        }
+
+        ###!!! DALE ZDEDENO PO ZDENKOVI
         if ($pos eq 'prep' and $ppos eq 'verb') {
             $afun = 'AuxV'; # vamos a estar
         }
@@ -120,6 +172,8 @@ sub deprel_to_afun {
         $node->set_afun($afun);
     }
 }
+
+
 
 use Treex::Tool::ATreeTransformer::DepReverser;
 my $subconj_reverser =
@@ -179,5 +233,5 @@ the Prague Dependency Treebank.
 
 =cut
 
-# Copyright 2011 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011-2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
