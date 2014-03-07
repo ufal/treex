@@ -9,11 +9,29 @@ sub mark_node {
         log_warn "$node is undef";
         return 0;
     }
+
+    my @stopwords = qw/ everyone everybody everything /;
+    my @pronoun_tags = ( 'PRP', 'PRP$', 'WP', 'WP$' );
+
+    if ( grep { $node->tag eq $_ } @pronoun_tags
+        || grep { lc( $node->form ) eq lc( $_ ) } @stopwords ) {
+        log_info "not marking node: " . $node->get_attr('id');
+        return 0;
+    }
+
     # log_info "    adding feature $str to node " . $node->get_attr('id');
-    if ($node->wild->{absa_rules}) {
-        $node->wild->{absa_rules} .= " $str";
-    } else {
-        $node->wild->{absa_rules} = $str;
+
+    my @subtree = $node->get_descendants( { ordered => 1, add_self => 1 } );
+    if ( $subtree[0]->tag eq 'DT' && $subtree[0]->tag eq 'PDT' ) {
+        shift @subtree;
+    }
+    for my $subnode (@subtree) {
+        next if $self->is_subjective( $subnode );
+        if ($subnode->wild->{absa_rules}) {
+            $subnode->wild->{absa_rules} .= " $str";
+        } else {
+            $subnode->wild->{absa_rules} = $str;
+        }
     }
 
     return 1;
