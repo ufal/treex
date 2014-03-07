@@ -5,6 +5,8 @@ use Treex::Core::Resource;
 use ProcessUtils;
 use DowngradeUTF8forISO2;
 
+with 'Treex::Tool::Parser::Role';
+
 has model      => ( isa => 'Str',  is => 'rw', required => 1 );
 has memory     => ( isa => 'Str',  is => 'rw', default  => '1800m' );
 has order      => ( isa => 'Int',  is => 'rw', default  => 2 );
@@ -39,7 +41,7 @@ sub BUILD {
 	        . " -cp $cp mstparser.DependencyParser test"
 	        . " order:" . $self->order
 	        . " decode-type:" . $self->decodetype
-	        . " server-mode:true print-scores:true model-name:$model 2>/dev/null";		
+	        . " server-mode:true print-scores:true model-name:$model 2>/dev/null";
 	}
 	elsif ($self->version eq '0.5.0') {
 	    $command    = 'java'
@@ -47,8 +49,8 @@ sub BUILD {
 	        . " -cp $cp mstparser.DependencyParser test"
 	        . " order:" . $self->order
 	        . " decode-type:" . $self->decodetype
-#	        . " server-mode:true confidence-estimation:'KDFix*0.05*50' model-name:$model format:MST 2>/dev/null";	
-	        . " server-mode:true model-name:$model format:MST 2>/dev/null";	
+#	        . " server-mode:true confidence-estimation:'KDFix*0.05*50' model-name:$model format:MST 2>/dev/null";
+	        . " server-mode:true model-name:$model format:MST 2>/dev/null";
 	}
 
 
@@ -58,7 +60,7 @@ sub BUILD {
     $SIG{PIPE} = 'IGNORE';                                   # don't die if parser gets killed
     my ( $reader, $writer, $pid )
         = ProcessUtils::bipipe( $command, ":encoding(iso-8859-2)" );
-        
+
 
     $self->{reader} = $reader;
     $self->{writer} = $writer;
@@ -100,7 +102,7 @@ sub parse_sentence {
     }
 
     my ( @parents, @afuns, @matrix, $writer, $reader );
-    
+
     # 0.5.0
     my @conf_scores = map {0} @$forms_rf;
 
@@ -138,32 +140,32 @@ sub parse_sentence {
             log_fatal("Treex::Tool::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
             chomp;
             @parents = split /\t/;
-            if ($self->version eq '0.4.3b') {            	
+            if ($self->version eq '0.4.3b') {
 	            $_       = <$reader>;                               # blank line after a valid parse
 	            $_       = <$reader>;                               # scoreMatrix
 	            log_fatal("Treex::Tool::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
 	            chomp;
 	            my @scores = split( /\s/ );
-	
+
 	            # back to the matrix of scores
 	            shift @scores;
-	
+
 	            foreach my $i ( 0 .. @parents ) {
 	                foreach my $j ( 0 .. @parents ) {
 	                    $matrix[$j][$i] = shift @scores;
 	                }
 	            }
-	
+
 	            # we don't want scores for root
-	            shift @matrix;            
+	            shift @matrix;
             }
             elsif ($self->version eq '0.5.0') {
 #	            $_ = <$reader>;    # conf scores
 #            	chomp;
 #            	@conf_scores = split /\t/;
-	            $_ = <$reader>;    # blank line             	            	
-            }            
-        }        
+	            $_ = <$reader>;    # blank line
+            }
+        }
         return ( \@parents, \@afuns, \@matrix ) if $self->version eq '0.4.3b';
         return ( \@parents, \@afuns, \@conf_scores ) if $self->version eq '0.5.0';
     }
@@ -274,7 +276,7 @@ Treex::Tool::Parser::MST
  my @tags      = qw(D N     I  N         R        V      D   V         N      .);
 
  my $parser = Treex::Tool::Parser::MST->new({model => $path_to . 'conll_mcd_order2_0.01.model',
-                                              memory => '1000m', 
+                                              memory => '1000m',
                                               order => 2,
                                               decodetype => 'non-proj'});
 
@@ -290,7 +292,7 @@ Treex::Tool::Parser::MST
  my $v = '0.5.0';
  my $path_to = 'news_mst_v0.5.0_order2_non-proj.model';
  my $parser = Treex::Tool::Parser::MST->new({model => $path_to,
-                                              memory => '1000m', 
+                                              memory => '1000m',
                                               order => 2,
                                               decodetype => 'non-proj',
                                                version => $v});
@@ -329,7 +331,7 @@ Parameter 'model' is required and specifies the path to the model.
 
 If the 'version' is '0.4.3b' (default), the parser returns scores extracted from MIRA.
 
-If the 'version' is '0.5.0', the parser returns confidence scores (probability like measures) for each edges in the sentence. 
+If the 'version' is '0.5.0', the parser returns confidence scores (probability like measures) for each edges in the sentence.
 
 =back
 
@@ -347,8 +349,8 @@ and analytical functions are returned.
 
 =item  my ($parents_rf,$afuns_rf, $conf_rf) = $parser->parse_sentence(\@wordforms,\@tags);
 
-Returns reference to confidence score for each edges in addition to parents and afuns of a given sentence. The constructor must have been initiated with '0.5.0' for the 'version' parameter. 
-   
+Returns reference to confidence score for each edges in addition to parents and afuns of a given sentence. The constructor must have been initiated with '0.5.0' for the 'version' parameter.
+
 
 =back
 

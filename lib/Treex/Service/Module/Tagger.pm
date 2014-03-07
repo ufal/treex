@@ -25,8 +25,7 @@ sub initialize {
 }
 
 sub process {
-    my ( $tags_rf, $lemmas_rf ) = shift->tagger->tag_sentence(@_);
-    return [$tags_rf, $lemmas_rf];
+    return shift->tagger->tag_sentence(@_);
 }
 
 __PACKAGE__->meta->make_immutable;

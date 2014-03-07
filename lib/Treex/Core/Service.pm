@@ -29,11 +29,12 @@ has args => (
 );
 
 sub run {
-    my ($self, $input) = @_;
+    my $self = shift;
 
     log_fatal "Using services is not allowed in configuration!" unless Treex::Core::Config->use_services;
 
-    return __PACKAGE__->client->run_service($self->module, $self->args, $input);
+    my $res = __PACKAGE__->client->run_service($self->module, $self->args, [@_]);
+    return wantarray ? @{$res} : $res->[0];
 }
 
 sub ping {

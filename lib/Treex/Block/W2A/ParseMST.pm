@@ -3,7 +3,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::W2A::BaseChunkParser';
 
-use Treex::Tool::Parser::MST;
+use Treex::Core::Config;
+use Treex::Tool::Parser::Factory;
 
 has model => (
     is            => 'ro',
@@ -66,21 +67,21 @@ sub BUILD {
 sub process_start {
     my ($self)  = @_;
     my ($model) = $self->require_files_from_share( $self->model_dir . '/' . $self->model );
+    my $key = Treex::Core::Config->use_services . '-'. $model;
 
-    if ( !$loaded_models{$model} ) {
-        my $parser = Treex::Tool::Parser::MST->new(
-            {   model      => $model,
-                memory     => $self->memory,
-                order      => $self->order,
-                decodetype => $self->decodetype,
-                robust     => $self->robust,
-                version	=> $self->version,
-            }
-
+    if ( !$loaded_models{$key} ) {
+        my $parser = Treex::Tool::Parser::Factory->create(
+            'MST',
+            model      => $model,
+            memory     => $self->memory,
+            order      => $self->order,
+            decodetype => $self->decodetype,
+            robust     => $self->robust,
+            version	   => $self->version,
         );
-        $loaded_models{$model} = $parser;
+        $loaded_models{$key} = $parser;
     }
-    $self->_set_parser( $loaded_models{$model} );
+    $self->_set_parser( $loaded_models{$key} );
 
     $self->SUPER::process_start();
 

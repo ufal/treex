@@ -21,7 +21,7 @@ my $prefix = 'text_';
 $t->post_ok('/service' => json => {
     module => 'addprefix',
     args => { prefix => $prefix },
-    input => \@input
-})->json_is([map {$prefix.$_} @input], 'Prefix service works');
+    input => [\@input]
+})->json_is([[map {$prefix.$_} @input]], 'Prefix service works');
 
 done_testing();

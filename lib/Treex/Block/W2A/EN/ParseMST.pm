@@ -19,10 +19,6 @@ has '+detect_attributes_from_deprel' => ( default=>0);
 
 has '+model_dir' => ( default => 'data/models/parser/mst/en' );
 
-#TODO: loading each model only once should be handled in different way
-has _parser => ( is => 'rw' );
-my %loaded_models;
-
 my %MEMORY_FOR_MODEL = (
     'conll_mcd_order2.model'      => '2600m',
     'conll_mcd_order2_0.01.model' => '750m',

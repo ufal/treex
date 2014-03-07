@@ -15,8 +15,8 @@ eval {
 
   ok($client->service_available('addprefix'), 'Service AddPrefix is available');
 
-  my $res = $client->run_service('addprefix', {prefix => 'test_'}, ['a', 'b']);
-  is_deeply($res, ['test_a', 'test_b'], 'Result from client is ok');
+  my $res = $client->run_service('addprefix', {prefix => 'test_'}, [['a', 'b']]);
+  is_deeply($res, [['test_a', 'test_b']], 'Result from client is ok');
 
   my $fixture_file = File::Spec->catfile($FindBin::Bin, 'fixtures', 'en_sample.txt');
   my $scenario_string = <<"SCEN";

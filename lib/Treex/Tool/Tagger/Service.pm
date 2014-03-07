@@ -8,9 +8,7 @@ with 'Treex::Tool::Tagger::Role';
 has '+module' => ( default => 'tagger' );
 
 sub tag_sentence {
-    my ( $self, $tokens_rf ) = @_;
-
-    return @{$self->run($tokens_rf)};
+    return shift->run(@_);
 }
 
 __PACKAGE__->meta->make_immutable;

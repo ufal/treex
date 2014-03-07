@@ -21,8 +21,6 @@ has prefixer => (
 
 sub initialize {
     my ($self, $args_ref) = @_;
-
-    super();
     $self->_set_prefix($args_ref->{prefix});
 }
 

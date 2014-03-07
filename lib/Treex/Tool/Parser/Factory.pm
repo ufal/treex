@@ -1,15 +1,15 @@
-package Treex::Tool::PrefixerService;
+package Treex::Tool::Parser::Factory;
 
-use Moose;
+use Treex::Tool::Factory;
 use namespace::autoclean;
 
-extends 'Treex::Core::Service';
-
-has '+module' => ( default => 'addprefix' );
-
-sub prefix_words {
-    return shift->run(@_);
-}
+implementation_does [ qw( Treex::Tool::Parser::Role ) ];
+implementation_class_via sub {
+    my ($impl, $factory) = @_;
+    return $factory->use_services ? 'Treex::Tool::Parser::Service'
+      : 'Treex::Tool::Parser::'.$impl;
+};
+implementation_service_attr 'parser_name';
 
 __PACKAGE__->meta->make_immutable;
 
@@ -18,16 +18,16 @@ __END__
 
 =head1 NAME
 
-Treex::Tool::PrefixerService - Perl extension for blah blah blah
+Treex::Tool::Parser::Factory - Perl extension for blah blah blah
 
 =head1 SYNOPSIS
 
-   use Treex::Tool::PrefixerService;
+   use Treex::Tool::Parser::Factory;
    blah blah blah
 
 =head1 DESCRIPTION
 
-Stub documentation for Treex::Tool::PrefixerService,
+Stub documentation for Treex::Tool::Parser::Factory,
 
 Blah blah blah.
 

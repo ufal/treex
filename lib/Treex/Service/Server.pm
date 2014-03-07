@@ -55,14 +55,14 @@ sub run_service {
     my $module = $self->req->json->{module};
     my $init_args = $self->req->json->{args};
     my $service = $self->service_manager->init_service($module, $init_args);
-    my $result = $service->process($self->req->json->{input});
+    my @result = $service->process(@{$self->req->json->{input}});
 
     #print STDERR $self->dumper($result);
     $mu->record("request for: $module") if DEBUG_MEMORY;
 
     print STDERR $mu->report() if DEBUG_MEMORY;
 
-    return $self->render(json => $result);
+    return $self->render(json => [@result]);
 }
 
 1;
