@@ -5,9 +5,16 @@ use Treex::Service::Manager;
 use Treex::Core::Config;
 use File::Spec;
 
+use constant DEBUG_MEMORY => $ENV{DEBUG_MEMORY};
+use if DEBUG_MEMORY, qw/Memory::Usage/;
+
 has service_manager => sub {
-    Treex::Service::Manager->new();
+    my $self = shift;
+    my $cache_size = $ENV{TREEX_SERVER_CACHE_SIZE} || $self->config->{cache_size};
+    Treex::Service::Manager->new(($cache_size ? (cache_size => $cache_size) : ()));
 };
+
+my $mu = Memory::Usage->new() if DEBUG_MEMORY;
 
 sub startup {
     my $self = shift;
@@ -28,6 +35,8 @@ sub startup {
     $r->get('/' => \&status);
     $r->get('/ping' => sub { shift->render(text => '', status => 204) });
     $r->post('/service' => \&run_service);
+
+    $mu->record('starting work') if DEBUG_MEMORY;
 }
 
 sub status {
@@ -41,12 +50,19 @@ sub status {
 sub run_service {
     my $self = shift;
 
+    #print STDERR $self->dumper($self->req->json);
+
     my $module = $self->req->json->{module};
     my $init_args = $self->req->json->{args};
-
     my $service = $self->service_manager->init_service($module, $init_args);
+    my $result = $service->process($self->req->json->{input});
 
-    return $self->render(json => $service->process($self->req->json->{input}));
+    #print STDERR $self->dumper($result);
+    $mu->record("request for: $module") if DEBUG_MEMORY;
+
+    print STDERR $mu->report() if DEBUG_MEMORY;
+
+    return $self->render(json => $result);
 }
 
 1;

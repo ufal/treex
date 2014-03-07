@@ -38,7 +38,9 @@ sub create {
 
         my $implementation = $factory->_create_instance();
 
-        if ($factory->use_services && !$implementation->ping()) {
+        if ($factory->use_services &&
+              $implementation->isa('Treex::Core::Service') &&
+                !$implementation->ping()) {
             log_warn 'Service server ping is unvailable. Falling back to standard tool implementation.';
             $factory->_set_use_services(0); # Disable service
             $implementation = $factory->_create_instance(); # Create standard instanace for the tool

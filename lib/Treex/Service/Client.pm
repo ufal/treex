@@ -4,6 +4,7 @@ use Moose;
 use Mojo::UserAgent;
 use Mojo::URL;
 use Treex::Core::Config;
+use Treex::Core::Log;
 use namespace::autoclean;
 
 has ua => (
@@ -45,12 +46,17 @@ sub run_service {
     delete $args->{scenario};
 
     my $url = Mojo::URL->new($self->server_url . '/service');
-
-    return $self->ua->post($url => json => {
+    my $tx = $self->ua->post($url => json => {
         module => $module,
         args => $args,
         input => $input
-    })->res->json;
+    });
+
+    if (my $res = $tx->success) { return $res->json }
+    else {
+        my ($err, $code) = $tx->error;
+        log_fatal $code ? "$code response: $err" : "Connection error: $err";
+    }
 }
 
 sub ping_server {

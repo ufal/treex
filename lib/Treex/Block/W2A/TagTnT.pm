@@ -4,10 +4,10 @@ use Treex::Core::Common;
 use Treex::Tool::Tagger::TnT;
 extends 'Treex::Block::W2A::Tag';
 
-has 'model' => ( 
-    is => 'ro', 
-    isa => 'Str', 
-    lazy_build => 1 
+has 'model' => (
+    is => 'ro',
+    isa => 'Str',
+    lazy_build => 1
 );
 
 has 'known_models' => (
@@ -16,13 +16,13 @@ has 'known_models' => (
     default => sub {{
         'hi' => "data/models/tagger/tnt/hindi",
     }},
-); 
+);
 
 has 'using_lang_model' => (
     is => 'ro',
     isa => 'Str',
     lazy_build => 1
-);    
+);
 
 sub _build_tagger {
     my ($self) = @_;
@@ -34,7 +34,7 @@ sub _build_tagger {
     }
     else {
         log_fatal('Model path (model=path/to/model) or language (using_lang_model=XX) must be set!');
-    }   
+    }
     return Treex::Tool::Tagger::TnT->new($self->_args);
 }
 
@@ -53,9 +53,9 @@ Treex::Block::W2A::TagTnT
 
 =head1 DESCRIPTION
 
-This block loads L<Treex::Tool::Tagger::TnT> (a wrapper for the TnT tagger) with 
-the given C<model>,  feeds it with all the input tokenized sentences, and fills the C<tag> 
-parameter of all a-nodes with the tagger output. 
+This block loads L<Treex::Tool::Tagger::TnT> (a wrapper for the TnT tagger) with
+the given C<model>,  feeds it with all the input tokenized sentences, and fills the C<tag>
+parameter of all a-nodes with the tagger output.
 
 =head1 PARAMETERS
 
@@ -68,8 +68,8 @@ is not supplied.
 
 =item C<using_lang_model>
 
-The 2-letter language code of the POS model to be loaded. The C<model> parameter can be omitted if this 
-parameter is supplied. Currently, the models are available for the following 
+The 2-letter language code of the POS model to be loaded. The C<model> parameter can be omitted if this
+parameter is supplied. Currently, the models are available for the following
 languages,
 
 

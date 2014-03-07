@@ -1,11 +1,14 @@
 package Treex::Tool::Tagger::Factory;
 
-use Moose;
 use Treex::Tool::Factory;
 use namespace::autoclean;
 
 implementation_does [ qw( Treex::Tool::Tagger::Role ) ];
-implementation_class_via sub { 'Treex::Tool::Tagger::' . shift };
+implementation_class_via sub {
+    my ($impl, $factory) = @_;
+    return $factory->use_services ? 'Treex::Tool::Tagger::Service'
+      : 'Treex::Tool::Tagger::'.$impl;
+};
 implementation_service_attr 'tagger_name';
 
 __PACKAGE__->meta->make_immutable;

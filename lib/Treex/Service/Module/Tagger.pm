@@ -16,7 +16,6 @@ has 'tagger' => (
 sub initialize {
     my ($self, $args_ref) = @_;
 
-    super();
     my $tagger_name = delete $args_ref->{tagger_name};
     log_fatal "Can't use service as a tagger" if $tagger_name eq 'Service';
     my $tagger = "Treex::Tool::Tagger::$tagger_name";
@@ -26,7 +25,8 @@ sub initialize {
 }
 
 sub process {
-    return shift->tagger->tag_sentence(@_);
+    my ( $tags_rf, $lemmas_rf ) = shift->tagger->tag_sentence(@_);
+    return [$tags_rf, $lemmas_rf];
 }
 
 __PACKAGE__->meta->make_immutable;

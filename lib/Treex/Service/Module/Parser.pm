@@ -15,7 +15,6 @@ has 'parser' => (
 sub initialize {
     my ($self, $args_ref) = @_;
 
-    super();
     my $parser_name = delete $args_ref->{parser_name};
     my $parser = "Treex::Tool::Parser::$parser_name";
     load_module($parser);

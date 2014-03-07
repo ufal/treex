@@ -10,7 +10,7 @@ has '+module' => ( default => 'tagger' );
 sub tag_sentence {
     my ( $self, $tokens_rf ) = @_;
 
-    return $self->run($tokens_rf);
+    return @{$self->run($tokens_rf)};
 }
 
 __PACKAGE__->meta->make_immutable;

@@ -2,10 +2,10 @@ package Treex::Block::W2A::CS::TagFeaturama;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::W2A::Tag';
-use Treex::Tool::Tagger::Featurama::CS;
+use Treex::Tool::Tagger::Factory;
 
 sub _build_tagger{
-    return Treex::Tool::Tagger::Featurama::CS->new();
+    return Treex::Tool::Tagger::Factory->create('Featurama::CS');
 }
 
 1;
