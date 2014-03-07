@@ -18,7 +18,10 @@ ok((grep $_ eq 'addprefix', @{$t->tx->res->json->{modules}}), 'Has AddPrefix Ser
 my @input = qw/a b/;
 my $prefix = 'text_';
 
-$t->post_ok("/service/addprefix?prefix=$prefix" => json => \@input)
-  ->json_is([map {$prefix.$_} @input], 'Prefix service works');
+$t->post_ok('/service' => json => {
+    module => 'addprefix',
+    args => { prefix => $prefix },
+    input => \@input
+})->json_is([map {$prefix.$_} @input], 'Prefix service works');
 
 done_testing();

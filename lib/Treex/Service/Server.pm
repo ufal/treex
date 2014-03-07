@@ -6,46 +6,46 @@ use Treex::Core::Config;
 use File::Spec;
 
 has service_manager => sub {
-  Treex::Service::Manager->new();
+    Treex::Service::Manager->new();
 };
 
 sub startup {
-  my $self = shift;
+    my $self = shift;
 
-  $self->helper(service_manager => sub {
-    state $service_manager = shift->app->service_manager;
-  });
+    $self->helper(service_manager => sub {
+                      state $service_manager = shift->app->service_manager;
+                  });
 
-  my $config = $self->plugin(Config => {
-    file => File::Spec->catfile(Treex::Core::Config->config_dir(), 'treex_server.conf')
-  });
+    my $config = $self->plugin(Config => {
+        file => File::Spec->catfile(Treex::Core::Config->config_dir(), 'treex_server.conf')
+    });
 
-  $self->moniker('treex-service-server');
-  $self->secrets([$config->{secret} || 'make_mojo_happy_s3cr3t']);
+    $self->moniker('treex-service-server');
+    $self->secrets([$config->{secret} || 'make_mojo_happy_s3cr3t']);
 
-  my $r = $self->routes;
+    my $r = $self->routes;
 
-  $r->get('/' => \&status);
-  $r->post('/service' => \&run_service);
+    $r->get('/' => \&status);
+    $r->post('/service' => \&run_service);
 }
 
 sub status {
-  my $self = shift;
+    my $self = shift;
 
-  return $self->render(json => {
-    modules => [keys %{$self->service_manager->modules}]
-  });
+    return $self->render(json => {
+        modules => [keys %{$self->service_manager->modules}]
+    });
 }
 
 sub run_service {
-  my $self = shift;
+    my $self = shift;
 
-  my $module = $self->req->json->{module};
-  my $init_args = $self->req->json->{args};
+    my $module = $self->req->json->{module};
+    my $init_args = $self->req->json->{args};
 
-  my $service = $self->service_manager->get_service($module, $init_args);
+    my $service = $self->service_manager->init_service($module, $init_args);
 
-  return $self->render(json => $service->process($self->req->json->{input}));
+    return $self->render(json => $service->process($self->req->json->{input}));
 }
 
 1;

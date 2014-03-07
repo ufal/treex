@@ -5,7 +5,8 @@ use namespace::autoclean;
 
 has 'manager' => (
     is => 'ro',
-    isa => 'Treex::Service::Manager'
+    isa => 'Treex::Service::Manager',
+    weak_ref => 1
 );
 
 has 'name' => (
@@ -29,11 +30,6 @@ sub process {
     my ($self, $args_ref) = @_;
     return {}
 }
-
-# after 'process' => sub {
-#   my $self = shift;
-#   $self->manager->service_used($self);
-# };
 
 __PACKAGE__->meta->make_immutable;
 

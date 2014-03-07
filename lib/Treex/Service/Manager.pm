@@ -5,23 +5,30 @@ use Moose::Util::TypeConstraints;
 use Treex::Core::Loader qw/load_module search_module/;
 use Treex::Core::Log;
 use Digest::MD5 qw(md5_hex);
+use Cache::LRU;
 use namespace::autoclean;
 
 role_type 'Service', { role => 'Treex::Service::Role' };
 
-has 'instances' => (
-    traits  => ['Hash'],
+has cache_size => (
+    is  => 'ro',
+    isa => 'Int',
+    default => 20
+);
+
+has instances => (
     is => 'ro',
-    isa => 'HashRef[Service]',
-    default => sub {{}},
+    isa => 'Cache::LRU',
+    lazy => 1,
+    default => sub { Cache::LRU->new(size => $_[0]->cache_size); },
     handles => {
         set_service => 'set',
-        service_exists => 'exists',
-        service_count => 'count'
+        get_service => 'get',
+        service_remove => 'remove'
     }
 );
 
-has 'modules' => (
+has modules => (
     traits  => ['Hash'],
     is => 'ro',
     isa => 'HashRef[Str]',
@@ -41,7 +48,7 @@ sub _build_modules {
       };
 }
 
-sub get_service {
+sub init_service {
     my ($self, $module, $init_args) = @_;
 
     use Data::Dumper;
@@ -49,19 +56,20 @@ sub get_service {
     log_fatal "Unknown service module: '$module'" unless $self->module_exists($module);
 
     my $fingerprint = $self->compute_fingerprint($module, $init_args);
-    unless ($self->service_exists($fingerprint)) {
+    my $service = $self->get_service($fingerprint);
+    unless ($service) {
         my $module = $self->get_module($module);
         load_module($module);
 
-        my $service = $module->new(manager => $self,
-                                   fingerprint => $fingerprint,
-                                   name => $module);
+        $service = $module->new(manager => $self,
+                                fingerprint => $fingerprint,
+                                name => $module);
 
         $service->initialize($init_args);
         $self->set_service($fingerprint, $service);
     }
 
-    return $self->instances->{$fingerprint};
+    return $service;
 }
 
 sub compute_fingerprint {
