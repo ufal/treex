@@ -18,6 +18,8 @@ sub process_atree {
             my $total = $self->combine_polarities( @polarities );
             my $pred = $self->find_predicate( $obj );
             next if ! $pred;
+            my $negated = grep { $_->lemma eq 'not' } $pred->get_children;
+            $total = $self->switch_polarity( $total ) if $negated;
             my @subjects = grep { $_->afun =~ m/^Sb/ } $self->get_clause_descendants( $pred );
             map { $self->mark_node( $_, "subj_of_pat_" . $total ) } @subjects;
         }
