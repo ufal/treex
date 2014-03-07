@@ -2,6 +2,7 @@ package Treex::Service::Module::Parser;
 
 use Moose;
 use Treex::Core::Loader qw/load_module/;
+use Treex::Core::Log;
 use namespace::autoclean;
 
 extends 'Treex::Service::Module';
@@ -17,6 +18,7 @@ sub initialize {
 
     my $parser_name = delete $args_ref->{parser_name};
     my $parser = "Treex::Tool::Parser::$parser_name";
+    log_fatal "Can't use service as a parser" if $parser_name eq 'Service';
     load_module($parser);
 
     $self->_set_parser($parser->new($args_ref));
