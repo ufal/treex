@@ -94,7 +94,7 @@ sub parse_chunk {
     my @tags  = map { $_->get_attr( $self->pos_attribute ) } @a_nodes;
 
     my ( $parents_rf, $deprel_rf, $matrix_rf ) = $self->_parser->parse_sentence( \@words, \@tags);
-    
+
     my @scores;
     if ($matrix_rf) {
     	@scores = @$matrix_rf;
@@ -141,7 +141,7 @@ sub parse_chunk {
 1;
 
 __END__
- 
+
 =head1 NAME
 
 Treex::Block::W2A::ParseMST
