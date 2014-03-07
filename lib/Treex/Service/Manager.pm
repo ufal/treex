@@ -10,63 +10,63 @@ use namespace::autoclean;
 role_type 'Service', { role => 'Treex::Service::Role' };
 
 has 'instances' => (
-  traits  => ['Hash'],
-  is => 'ro',
-  isa => 'HashRef[Service]',
-  default => sub {{}},
-  handles => {
-    set_service => 'set',
-    service_exists => 'exists',
-    service_count => 'count'
-  }
+    traits  => ['Hash'],
+    is => 'ro',
+    isa => 'HashRef[Service]',
+    default => sub {{}},
+    handles => {
+        set_service => 'set',
+        service_exists => 'exists',
+        service_count => 'count'
+    }
 );
 
 has 'modules' => (
-  traits  => ['Hash'],
-  is => 'ro',
-  isa => 'HashRef[Str]',
-  lazy_build => 1,
-  handles => {
-    set_module => 'set',
-    get_module => 'get',
-    module_exists => 'exists',
-  }
+    traits  => ['Hash'],
+    is => 'ro',
+    isa => 'HashRef[Str]',
+    lazy_build => 1,
+    handles => {
+        set_module => 'set',
+        get_module => 'get',
+        module_exists => 'exists',
+    }
 );
 
 sub _build_modules {
-  my $ns = 'Treex::Service::Module';
-  return {
-    map { (my $key = $_) =~ s/^\Q$ns\E:://; $key =~ s/::/-/; lc($key) => $_ }
-      @{search_module($ns)}
-  };
+    my $ns = 'Treex::Service::Module';
+    return {
+        map { (my $key = $_) =~ s/^\Q$ns\E:://; $key =~ s/::/-/; lc($key) => $_ }
+          @{search_module($ns)}
+      };
 }
 
 sub get_service {
-  my ($self, $module, $init_args) = @_;
+    my ($self, $module, $init_args) = @_;
 
-  # use Data::Dumper;
-  # print STDERR Dumper($self->modules);
-  log_fatal "Unknown service module: '$module'" unless $self->module_exists($module);
+    use Data::Dumper;
+    print STDERR Dumper($init_args);
+    log_fatal "Unknown service module: '$module'" unless $self->module_exists($module);
 
-  my $fingerprint = $self->compute_fingerprint($module, $init_args);
-  unless ($self->service_exists($fingerprint)) {
-    my $module = $self->get_module($module);
-    load_module($module);
+    my $fingerprint = $self->compute_fingerprint($module, $init_args);
+    unless ($self->service_exists($fingerprint)) {
+        my $module = $self->get_module($module);
+        load_module($module);
 
-    my $service = $module->new(manager => $self,
-                               fingerprint => $fingerprint,
-                               name => $module);
+        my $service = $module->new(manager => $self,
+                                   fingerprint => $fingerprint,
+                                   name => $module);
 
-    $service->initialize($init_args);
-    $self->set_service($fingerprint, $service);
-  }
+        $service->initialize($init_args);
+        $self->set_service($fingerprint, $service);
+    }
 
-  return $self->instances->{$fingerprint};
+    return $self->instances->{$fingerprint};
 }
 
 sub compute_fingerprint {
-  my ($self, $module, $args_ref) = @_;
-  return $module.md5_hex(map {"$_=$args_ref->{$_}"} sort keys %{$args_ref});
+    my ($self, $module, $args_ref) = @_;
+    return $module.md5_hex(map {"$_=$args_ref->{$_}"} sort keys %{$args_ref});
 }
 
 __PACKAGE__->meta->make_immutable;

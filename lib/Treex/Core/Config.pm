@@ -183,6 +183,14 @@ sub tmp_dir {
     return $config->{tmp_dir};
 }
 
+sub treex_server_url {
+    return $ENV{TREEX_SERVER_URL} || $config->{treex_server_url};
+}
+
+sub use_services {
+    return $ENV{USE_SERVICES} || $config->{use_services};
+}
+
 sub _default_tmp_dir {
     my $self      = shift;
     my $dot_treex = File::HomeDir->my_dist_data( 'Treex-Core', { create => 1 } );

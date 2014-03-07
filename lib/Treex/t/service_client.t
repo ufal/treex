@@ -11,6 +11,7 @@ BEGIN { use_ok (qw/Treex::Service::Client/) }
 use Treex::Service::Server;
 use IO::Socket::INET;
 use Mojo::IOLoop;
+
 my $port  = Mojo::IOLoop->generate_port;
 my $server_url = "http://localhost:$port";
 
@@ -26,8 +27,8 @@ eval {
 
   ok($client->service_available('addprefix'), 'Service AddPrefix is available');
 
-  my $res = $client->run_service('addprefix', {prefix => 'test_'}, ['a']);
-  is_deeply($res, ['test_a'], 'Result from client is ok');
+  my $res = $client->run_service('addprefix', {prefix => 'test_'}, ['a', 'b']);
+  is_deeply($res, ['test_a', 'test_b'], 'Result from client is ok');
 };
 
 kill(9, $pid) if $pid;

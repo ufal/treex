@@ -6,42 +6,50 @@ use Mojo::URL;
 use namespace::autoclean;
 
 has ua => (
-  is  => 'ro',
-  isa => 'Mojo::UserAgent',
-  lazy => 1,
-  default => sub { Mojo::UserAgent->new->connect_timeout(1) }
+    is  => 'ro',
+    isa => 'Mojo::UserAgent',
+    lazy => 1,
+    default => sub { Mojo::UserAgent->new->connect_timeout(1) }
 );
 
 has server_url => (
-  is  => 'ro',
-  isa => 'Str',
-  default => 'http://localhost:3000'
+    is  => 'ro',
+    isa => 'Str',
+    required => 1,
+    default => 'http://localhost:3000'
 );
 
 has available_services => (
-  traits  => ['Hash'],
-  is  => 'ro',
-  isa => 'HashRef[Bool]',
-  lazy => 1,
-  builder => '_build_available_services',
-  handles => {
-    service_available => 'exists'
-  }
+    traits  => ['Hash'],
+    is  => 'ro',
+    isa => 'HashRef[Bool]',
+    lazy => 1,
+    builder => '_build_available_services',
+    handles => {
+        service_available => 'exists'
+    }
 );
 
 sub _build_available_services {
-  my $self = shift;
-  return { map { $_ => 1 } @{$self->ua->get($self->server_url)->res->json('/modules')} };
+    my $self = shift;
+    return { map { $_ => 1 } @{$self->ua->get($self->server_url)->res->json('/modules')} };
 }
 
 sub run_service {
-  my ($self, $module, $init_args, $input) = @_;
+    my ($self, $module, $args, $input) = @_;
 
-  $input = [$input] unless ref $input;
+    # cleanup default input
+    $args = { %$args };
+    delete $args->{language};
+    delete $args->{scenario};
 
-  my $url = Mojo::URL->new($self->server_url . "/service/$module")
-    ->query($init_args);
-  return $self->ua->post($url => json => $input)->res->json;
+    my $url = Mojo::URL->new($self->server_url . "/service");
+
+    return $self->ua->post($url => json => {
+        module => $module,
+        args => $args,
+        input => $input
+    })->res->json;
 }
 
 __PACKAGE__->meta->make_immutable;

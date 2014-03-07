@@ -4,31 +4,36 @@ use Moose;
 use namespace::autoclean;
 
 has 'manager' => (
-  is => 'ro',
-  isa => 'Treex::Service::Manager'
+    is => 'ro',
+    isa => 'Treex::Service::Manager'
 );
 
 has 'name' => (
-  is => 'ro',
-  isa => 'Str'
+    is => 'ro',
+    isa => 'Str'
 );
 
 has 'fingerprint' => (
-  is => 'ro',
-  isa => 'Str',
-  writer => 'set_fingerprint'
+    is => 'ro',
+    isa => 'Str',
+    writer => 'set_fingerprint'
 );
 
 with 'Treex::Service::Role';
 
 sub initialize {
-  my ($self, $args_ref) = @_;
+    my ($self, $args_ref) = @_;
 }
 
 sub process {
-  my ($self, $args_ref) = @_;
-  return {}
+    my ($self, $args_ref) = @_;
+    return {}
 }
+
+# after 'process' => sub {
+#   my $self = shift;
+#   $self->manager->service_used($self);
+# };
 
 __PACKAGE__->meta->make_immutable;
 

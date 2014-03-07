@@ -8,24 +8,25 @@ use namespace::autoclean;
 extends 'Treex::Service::Module';
 
 has 'tagger' => (
-  is => 'ro',
-  does => 'Treex::Tool::Tagger::Role',
-  writer => '_set_tagger'
+    is => 'ro',
+    does => 'Treex::Tool::Tagger::Role',
+    writer => '_set_tagger'
 );
 
 sub initialize {
-  my ($self, $args_ref) = @_;
+    my ($self, $args_ref) = @_;
 
-  super();
-  my $module_name = delete $args_ref->{module};
-  my $module = "Treex::Tool::Tagger::$module_name";
-  load_module($module);
+    super();
+    my $tagger_name = delete $args_ref->{tagger_name};
+    log_fatal "Can't use service as a tagger" if $tagger_name eq 'Service';
+    my $tagger = "Treex::Tool::Tagger::$tagger_name";
+    load_module($tagger);
 
-  $self->_set_tagger($module->new($args_ref));
+    $self->_set_tagger($tagger->new($args_ref));
 }
 
 sub process {
-  return shift->tagger->tag_sentence(@_);
+    return shift->tagger->tag_sentence(@_);
 }
 
 __PACKAGE__->meta->make_immutable;

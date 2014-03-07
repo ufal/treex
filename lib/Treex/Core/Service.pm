@@ -1,49 +1,59 @@
-package Treex::Service::Module::Parser;
+package Treex::Core::Service;
 
 use Moose;
-use Treex::Core::Loader qw/load_module/;
+use MooseX::ClassAttribute;
+use Treex::Core::Log;
+use Treex::Core::Config;
 use namespace::autoclean;
 
-extends 'Treex::Service::Module';
-
-has 'parser' => (
-    is => 'ro',
-    does => 'Treex::Tool::Parser::Role',
-    writer => '_set_parser'
+class_has client => (
+    is  => 'ro',
+    isa => 'Treex::Service::Client',
+    lazy => 1,
+    default => sub {
+        require Treex::Service::Client;
+        Treex::Service::Client->new();
+    }
 );
 
-sub initialize {
-    my ($self, $args_ref) = @_;
+has module => (
+    is  => 'ro',
+    isa => 'Str',
+    required => 1,
+);
 
-    super();
-    my $parser_name = delete $args_ref->{parser_name};
-    my $parser = "Treex::Tool::Parser::$parser_name";
-    load_module($parser);
+has args => (
+    is  => 'rw',
+    isa => 'HashRef',
+    default => sub {{}}
+);
 
-    $self->_set_parser($parser->new($args_ref));
-}
+sub run {
+    my ($self, $input) = @_;
 
-sub process {
-    return shift->parser->parse_sentence(@_);
+    log_fatal "Using services is not allowed in configuration!" unless Treex::Core::Config->use_services;
+
+    return __PACKAGE__->client->run_service($self->module, $self->args, $input);
 }
 
 __PACKAGE__->meta->make_immutable;
 
 1;
+
 __END__
 
 =head1 NAME
 
-Treex::Service::Module::Parser - Perl extension for blah blah blah
+Treex::Core::Service - Provides access for Treex::Service::Client in Treex::Core
 
 =head1 SYNOPSIS
 
-   use Treex::Service::Module::Parser;
+   use Treex::Core::Service;
    blah blah blah
 
 =head1 DESCRIPTION
 
-Stub documentation for Treex::Service::Module::Parser,
+Stub documentation for Treex::Core::Service,
 
 Blah blah blah.
 

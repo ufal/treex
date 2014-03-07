@@ -1,6 +1,9 @@
 package Treex::Block::W2A::Tag;
 use Moose;
 use Treex::Core::Common;
+use Treex::Core::Config;
+use Treex::Tool::Tagger::Service;
+
 extends 'Treex::Core::Block';
 
 has lemmatize => (
@@ -43,6 +46,11 @@ sub BUILD {
 sub _build_tagger {
     my ($self) = @_;
     my $module = $self->module;
+    
+    if (Treex::Core::Config->use_services && $module =~ /^Treex::Tool::Tagger::(.+)$/) {
+        return Treex::Tool::Tagger::Service->new(tagger_name => $1, %{$self->_args});
+    }
+    
     eval "use $module;1" or log_fatal "Can't use $module\n$@";
     my $tagger = eval "$module->new(\$self->_args);" or log_fatal "Can't load $module\n$@";
     return $tagger;

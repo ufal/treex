@@ -2,6 +2,8 @@ package Treex::Service::Server;
 
 use Mojo::Base 'Mojolicious';
 use Treex::Service::Manager;
+use Treex::Core::Config;
+use File::Spec;
 
 has service_manager => sub {
   Treex::Service::Manager->new();
@@ -14,10 +16,17 @@ sub startup {
     state $service_manager = shift->app->service_manager;
   });
 
+  my $config = $self->plugin(Config => {
+    file => File::Spec->catfile(Treex::Core::Config->config_dir(), 'treex_server.conf')
+  });
+
+  $self->moniker('treex-service-server');
+  $self->secrets([$config->{secret} || 'make_mojo_happy_s3cr3t']);
+
   my $r = $self->routes;
 
   $r->get('/' => \&status);
-  $r->post('/service/:module' => \&run_service);
+  $r->post('/service' => \&run_service);
 }
 
 sub status {
@@ -31,12 +40,12 @@ sub status {
 sub run_service {
   my $self = shift;
 
-  my $module = $self->param('module');
-  my $init_args = $self->req->query_params->to_hash;
+  my $module = $self->req->json->{module};
+  my $init_args = $self->req->json->{args};
 
   my $service = $self->service_manager->get_service($module, $init_args);
 
-  return $self->render(json => $service->process($self->req->json));
+  return $self->render(json => $service->process($self->req->json->{input}));
 }
 
 1;

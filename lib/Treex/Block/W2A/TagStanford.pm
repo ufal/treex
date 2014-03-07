@@ -1,13 +1,16 @@
 package Treex::Block::W2A::TagStanford;
 use Moose;
 use Treex::Core::Common;
+use Treex::Core::Config;
 use Treex::Tool::Tagger::Stanford;
+use Treex::Tool::Tagger::Service;
+
 extends 'Treex::Block::W2A::Tag';
 
-has 'model' => ( 
-	is => 'ro', 
-	isa => 'Str', 
-	lazy_build => 1 
+has 'model' => (
+	is => 'ro',
+	isa => 'Str',
+    predicate => 'has_model'
 );
 
 has 'known_models' => (
@@ -20,19 +23,19 @@ has 'known_models' => (
       	'en'	=> "data/models/tagger/stanford/english-left3words-distsim.tagger",
       	'fr'	=> "data/models/tagger/stanford/french.tagger",
       	'hi'	=> "data/models/tagger/stanford/hindi-icon10-pdtstyle.model",
-      	'mr'	=> "data/models/tagger/stanford/marathi-kumaran.model",	
+      	'mr'	=> "data/models/tagger/stanford/marathi-kumaran.model",
       	'ta'	=> "data/models/tagger/stanford/tamil-TamilTB-pdtstyle.model",
       	'te'	=> "data/models/tagger/stanford/telugu-icon10-pdtstyle.model",
   	}}
-); 
+);
 
 has 'using_lang_model' => (
 	is => 'ro',
 	isa => 'Str',
-	lazy_build => 1
-);	
+    predicate => 'has_using_lang_model'
+);
 
-sub _build_tagger{
+sub _build_tagger {
     my ($self) = @_;
     if ($self->has_model) {
     	$self->_args->{model} = $self->model;
@@ -42,8 +45,10 @@ sub _build_tagger{
     }
     else {
         log_fatal('Model path (model=path/to/model) or language (using_lang_model=XX) must be set!');
-    }   
-    return Treex::Tool::Tagger::Stanford->new($self->_args);
+    }
+    return Treex::Core::Config->use_services ?
+      Treex::Tool::Tagger::Service->new(tagger_name => 'Stanford', %{$self->_args}) :
+      Treex::Tool::Tagger::Stanford->new($self->_args);
 }
 
 1;
@@ -60,9 +65,9 @@ Treex::Block::W2A::TagStanford
 
 =head1 DESCRIPTION
 
-This block loads L<Treex::Tool::Tagger::Stanford> (a wrapper for the Stanford tagger) with 
-the given C<model>,  feeds it with all the input tokenized sentences, and fills the C<tag> 
-parameter of all a-nodes with the tagger output. 
+This block loads L<Treex::Tool::Tagger::Stanford> (a wrapper for the Stanford tagger) with
+the given C<model>,  feeds it with all the input tokenized sentences, and fills the C<tag>
+parameter of all a-nodes with the tagger output.
 
 =head1 PARAMETERS
 
@@ -75,14 +80,14 @@ is not supplied.
 
 =item C<using_lang_model>
 
-The 2-letter language code of the POS model to be loaded. The C<model> parameter can be omitted if this 
-parameter is supplied. Currently, the models are available for the following 
+The 2-letter language code of the POS model to be loaded. The C<model> parameter can be omitted if this
+parameter is supplied. Currently, the models are available for the following
 languages,
 
 
 =over 3
 
-=item - 'bn', 'cs', 'hi', 'mr', 'ta' and 'te'. 
+=item - 'bn', 'cs', 'hi', 'mr', 'ta' and 'te'.
 
 =item - 'de', 'en' and 'fr' (Comes with the Stanford tagger)
 
