@@ -22,7 +22,8 @@ sub mark_node {
         return 0;
     }
 
-    my @subtree = $node->get_descendants( { ordered => 1, add_self => 1 } );
+    # my @subtree = $node->get_descendants( { ordered => 1, add_self => 1 } );
+    my @subtree = $node->get_children( { ordered => 1, add_self => 1 } );
     my @avoidparents = grep { $self->is_subjective( $_ ) } @subtree;
     @subtree = grep { ! $self->is_subjective( $_ ) } @subtree;
     for my $avoid ( @avoidparents ) {

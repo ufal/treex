@@ -26,7 +26,7 @@ sub BUILD {
         chomp;
         my ( $form, $lemma, $tag ) = split /\|/;
         log_fatal "Bad format of line '$_' in $self->{aspect_file}" if ! $tag;
-        $self->{forms}->{lc($form)} = 1
+        $self->{forms}->{lc($form)} = 1;
         $self->{lemmas}->{$lemma} = 1;
     }
     close $hdl;
