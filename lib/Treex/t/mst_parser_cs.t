@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
-# Run this like so: `perl mst_parser.t'
-#   Michal Sedlak <sedlakmichal@gmail.com>     2014/03/07 13:31:43
+# Run this like so: `perl mst_parser_cs.t'
+#   Michal Sedlak <sedlakmichal@gmail.com>     2014/03/07 15:27:32
 
 use FindBin;
 use lib "$FindBin::Bin/lib";
@@ -17,29 +17,9 @@ BEGIN {
 
 use TestTreexTool;
 
-my $en_sample = File::Spec->catfile($FindBin::Bin, 'fixtures', 'en_sample.txt');
 my $cs_sample = File::Spec->catfile($FindBin::Bin, 'fixtures', 'cs_sample.txt');
 
 eval {
-    {                           # test MST parser
-        my $scenario_string = <<"SCEN";
-Util::SetGlobal language=en
-Read::Text from=$en_sample
-W2A::EN::Segment
-W2A::EN::Tokenize
-W2A::EN::NormalizeForms
-W2A::EN::FixTokenization
-W2A::EN::TagStanford
-W2A::EN::FixTags
-W2A::EN::Lemmatize
-A2N::EN::StanfordNamedEntities model=ner-eng-ie.crf-3-all2008.ser.gz
-A2N::EN::DistinguishPersonalNames
-W2A::MarkChunks
-W2A::EN::ParseMST model=conll_mcd_order2_0.1.model
-SCEN
-        test_tool('Parser::MST::EN', $scenario_string);
-    }
-
     {                           # test MST parser Czech
         my $scenario_string = <<"SCEN";
 Util::SetGlobal language=cs
@@ -48,7 +28,7 @@ W2A::CS::Segment
 W2A::CS::Tokenize
 W2A::CS::TagFeaturama lemmatize=1
 W2A::CS::FixMorphoErrors
-W2A::CS::ParseMSTAdapted
+W2A::CS::ParseMSTAdapted model=pdt20_train_autTag_golden_latin2_pruned_0.10.model
 SCEN
         test_tool('Parser::MST::CS', $scenario_string);
     }
