@@ -2017,7 +2017,7 @@ sub treex {
 
 __END__
 
---watch option
+=head2 --watch option
 
 SYNOPSIS:
 touch timestamp.file
