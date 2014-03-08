@@ -154,9 +154,153 @@ sub deprel_to_afun
         {
             $afun = 'Obj';
         }
-        # Adjunct.
+        # Adjunct. Example:
+        # gràcies al fet
+        # thanks to
         elsif($deprel eq 'cc')
         {
+            $afun = 'Adv';
+        }
+        # Direct object. Example:
+        # Llorens ha criticat la Generalitat/cd
+        # Llorens has criticized the Government
+        elsif($deprel eq 'cd')
+        {
+            $afun = 'Obj';
+        }
+        # Indirect object. Example:
+        # La norma/suj permetrà a/ci les autonomies habilitar/cd altres sales de/cc forma extraordinària.
+        # The rule will allow the autonomies to enable other rooms dramatically.
+        elsif($deprel eq 'ci')
+        {
+            $afun = 'Obj';
+        }
+        # Subordinating conjunction (que, perquè, si, quan, ...)
+        # The conjunction is attached to the head of the subordinate clause, which is attached to the superordinate predicate.
+        elsif($deprel eq 'conj')
+        {
+            ###!!! We will later want to reattach it. Now it is a leaf.
+            $afun = 'AuxC';
+        }
+        # Coordinating conjunction (i, o, però, ni, ...)
+        # The conjunction is attached to the first conjunct.
+        elsif($deprel eq 'coord')
+        {
+            $afun = 'Coord';
+        }
+        # Prepositional object. Example:
+        # entrar en crisi
+        # enter crisis
+        elsif($deprel eq 'creg')
+        {
+            $afun = 'Obj';
+        }
+        # Determiner leaf. Example:
+        # tots els usuaris
+        # all the users
+        # TREE: usuaris ( els/spec ( tots/d ) )
+        elsif($deprel eq 'd')
+        {
+            $afun = 'Atr';
+        }
+        # Textual element, e.g. introducing expression at the beginning of the sentence. Example:
+        # En aquest sentit, ...
+        # In this sense, ...
+        elsif($deprel eq 'et')
+        {
+            $afun = 'Adv';
+        }
+        # Punctuation mark.
+        elsif($deprel eq 'f')
+        {
+            if($node->form() eq ',')
+            {
+                $afun = 'AuxX';
+            }
+            else
+            {
+                $afun = 'AuxG';
+            }
+        }
+        # Gerund. Example:
+        # perdre el temps intentant debatre amb el grup
+        # waste time trying to discuss with the group
+        # TREE: debatre ( perdre/infinitiu , temps/cd ( el/spec ) , intentant/gerundi , amb/cc ( grup/sn ( el/spec ) ) )
+        elsif($deprel eq 'gerundi')
+        {
+            ###!!! The structure in the above example is strange.
+            ###!!! We would make "debatre" object of "intentant".
+            $afun = 'AuxV';
+        }
+        # Adjective conjunct, member of adjective group.
+        # Adverbial conjunct, member of adverb group.
+        # Nominal conjunct, member of noun group.
+        elsif($deprel =~ m/^grup\.(a|adv|nom)$/)
+        {
+            $afun = 'CoordArg';
+        }
+        # grup.verb is probably an error. There is just one occurrence and it is the first part of a compound coordinating conjunction either-or.
+        elsif($deprel eq 'grup.verb')
+        {
+            $afun = 'AuxY';
+        }
+        # Interjection leaf, single occurrence.
+        elsif($deprel eq 'i')
+        {
+            $afun = 'ExD';
+        }
+        # Impersonality mark (reflexive pronoun, passive construction).
+        elsif($deprel eq 'impers')
+        {
+            $afun = 'AuxR';
+        }
+        # Inserted element (parenthesis). Example:
+        # , ha afegit,
+        # , he added,
+        elsif($deprel eq 'inc')
+        {
+            # Annotation in PDT (http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s06.html):
+            # If it is a particle that would normally get AuxY, it gets AuxY-Pa.
+            # If it is a constituent that matches the sentence, just is delimited by commas or brackets: its normal afun + -Pa.
+            # If it is a sentence with predicate and it does not fit in the structure of the surrounding sentence, Pred-Pa.
+            # Otherwise, ExD-Pa.
+            ###!!! We did not capture parenthesis in HamleDT so far.
+            if($pos eq 'verb')
+            {
+                $afun = 'Pred';
+            }
+            else
+            {
+                $afun = 'ExD';
+            }
+        }
+        # Infinitive. Example:
+        # destacar que toca un violí
+        # to emphasize that he plays a violin
+        # TREE: toca ( destacar/infinitiu , que/conj , violí/cd ( un/spec ) )
+        elsif($deprel eq 'infinitiu')
+        {
+            ###!!! The structure in the above example is strange.
+            ###!!! We would make "que toca" object of "destacar".
+            $afun = 'AuxV';
+        }
+        # Interjection.
+        elsif($deprel eq 'interjeccio')
+        {
+            $afun = 'ExD';
+        }
+        # Non-argumental verb modifier.
+        # no, també, només, ja, tampoc
+        # not, also, only, already, either
+        elsif($deprel eq 'mod')
+        {
+            $afun = 'Adv';
+        }
+        # Reflexive pronoun.
+        # es, s', hi, -se, se
+        elsif($deprel eq 'morfema.pronominal')
+        {
+            $afun = 'Obj';
         }
 
         ###!!! DALE ZDEDENO PO ZDENKOVI
