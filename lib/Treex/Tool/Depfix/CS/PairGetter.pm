@@ -8,28 +8,10 @@ sub get_pair {
 
     return if $node->isa('Treex::Core::Node::Deleted');
 
-    # "old"
-    my $parent = $node->get_parent;
-    while (
-        $node->is_member
-        && !$parent->is_root()
-        && $parent->afun =~ /^(Coord|Apos)$/
-        )
-    {
-        $parent = $parent->get_parent();
-    }
-
-    #     # "new"
-    #     my $parent = $node->get_eparents({
-    #         first_only => 1,
-    #         or_topological => 1,
-    #         ignore_incorrect_tree_structure => 1
-    #     });
-    #     # or probably better:
-    #     my ($parent) = $node->get_eparents({
-    #         or_topological => 1,
-    #         ignore_incorrect_tree_structure => 1
-    #     });
+    my ($parent) = $node->get_eparents({
+            or_topological => 1,
+            ignore_incorrect_tree_structure => 1
+        });
 
     return if ( !defined $parent || $parent->is_root );
 

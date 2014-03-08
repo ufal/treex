@@ -38,6 +38,8 @@ sub get_predictions {
     my ($self, $instance_info) = @_;
 
     my $features = $self->fields2features($instance_info);
+    
+    log_debug "Features: " . join ' ', map { $_ . '=' . $features->{$_} } keys %$features;
 
     # TODO if empty, put in baseline prediction
     return $self->_get_predictions($features);
