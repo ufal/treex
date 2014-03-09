@@ -302,6 +302,184 @@ sub deprel_to_afun
         {
             $afun = 'Obj';
         }
+        # Reflexive pronoun. See also "impers" and "morfema.pronominal".
+        # es, s', -se, se
+        # on es podrà participar en tertúlies
+        # where one can participate in discussions
+        # en els quals es continuarà el seguiment i el control de consums
+        # in which one continues to monitor and control consumption
+        # al complir-se un segle del naixement de l'artista
+        # on completion of a century of the birth of the artist
+        elsif($deprel eq 'morfema.verbal')
+        {
+            $afun = 'AuxR';
+        }
+        # Noun leaf. Often within quantification expressions; most frequent word is "resta". Example:
+        # un centenar de representants
+        # one hundred representatives
+        # TREE: representants ( un/spec ( centenar/n , de/s ) )
+        elsif($deprel eq 'n')
+        {
+            ###!!! We will want to restructure this.
+            $afun = 'DetArg';
+        }
+        # Negation. Adverbial particle that may modify nouns, adjectives and verbs. Example:
+        # persona no grata
+        # undesirable person
+        elsif($deprel eq 'neg')
+        {
+            $afun = 'Adv';
+        }
+        # Pronoun leaf. Example:
+        # el mateix Borrell
+        # the same Borrell
+        # TREE: Borrell ( el/spec ( mateix/p ) )
+        elsif($deprel eq 'p')
+        {
+            ###!!! We will want to restructure this.
+            $afun = 'DetArg';
+        }
+        # Participle leaf. Example:
+        # distribuïda atenent a criteris
+        # distributed according to criteria
+        # TREE: atenent ( distribuïda/participi , a/creg ( criteris/sn ) )
+        elsif($deprel eq 'participi')
+        {
+            ###!!! We will want to restructure this.
+            $afun = 'AdjArg';
+        }
+        # Reflexive pronoun used to form reflexive passive. Example:
+        # See also morfema.pronominal, morfema.verbal and impers.
+        # on es va explicar
+        # where it was explained
+        elsif($deprel eq 'pass')
+        {
+            $afun = 'AuxR';
+        }
+        # Preposition leaf attached to a verb. Example: de, com, a, segons, a_punt_de
+        # per mirar de conèixer les circumstàncies
+        # to try to meet the circumstances
+        elsif($deprel eq 'prep')
+        {
+            ###!!! We will want to restructure this.
+            $afun = 'AuxP';
+        }
+        # Adverb leaf. Example:
+        # ara fa tan sols un any
+        # just a year ago
+        # LIT.: now does so only one year
+        # TREE: any ( ara/r , fa/v , tan_sols/r , un/d )
+        elsif($deprel eq 'r')
+        {
+            $afun = 'Adv';
+        }
+        # Relative pronoun (què, qual, quals, qui, que, on). Example:
+        # en el qual
+        # in which
+        # TREE: en ( qual/relatiu ( el/d ) )
+        # But also:
+        # ser el que va registrar
+        # to be the one that registered
+        # TREE: ser ( registrar/atr ( el/spec , que/relatiu , va/v ) )
+        ###!!! We would like to restructure this latter example.
+        elsif($deprel eq 'relatiu')
+        {
+            $afun = 'PrepArg';
+        }
+        # Head of subordinate clause. Example:
+        # litres que han arribat al riu
+        # liters that have reached the river
+        # TREE: litres ( arribat/S ( que/suj , han/v , al/cc ( riu/sn ) ) )
+        elsif($deprel eq 'S')
+        {
+            if($ppos eq 'noun')
+            {
+                $afun = 'Atr';
+            }
+            else
+            {
+                ###!!! We should look at children to distinguish adverbial clauses. (E.g., is "where" or "when" among the children?)
+                ###!!! On the other hand, looking at parent (verba dicendi) could reveal that it is complement clause.
+                $afun = 'Adv'; ###!!! or 'Obj'
+            }
+        }
+        # Preposition leaf. See also "prep". Example:
+        # les respostes que s'ha de donar
+        # the answers to be given
+        # LIT.: the answers that are of giving
+        # TREE: respostes ( les/spec , donar/S ( que/suj , s'/pass , ha/v , de/s ) )
+        elsif($deprel eq 's')
+        {
+            ###!!! We will want to restructure this.
+            $afun = 'AuxP';
+        }
+        # Adjective phrase that does not depend on a verb. Mostly a modifier of noun. Example:
+        # una selva petita
+        # a small forest
+        # TREE: selva ( una/spec , petita/s.a )
+        elsif($deprel eq 's.a')
+        {
+            $afun = 'Atr';
+        }
+        # Adjective phrase that depends on a verb.
+        # (But in reality, many occurrences I saw do not depend on a verb. Are they annotation errors?)
+        # Maybe it is just because of the automatic conversion from phrase trees.
+        # 16 examples in PML-TQ depend on prepositions.
+        # 11 examples in PML-TQ depend on verbs. But they are neither arguments, nor verbal attributes or nominal predicates.
+        # Example:
+        # Quan abans comencem, millor.
+        # The earlier we start the better.
+        # TREE: comencem/sentence ( Quan/conj , abans/cc , ,/f , millor/sa , ./f )
+        elsif($deprel eq 'sa')
+        {
+            if($ppos eq 'prep')
+            {
+                $afun = 'PrepArg';
+            }
+            else
+            {
+                $afun = 'Atr';
+            }
+        }
+        # Adverb phrase.
+        elsif($deprel eq 'sadv')
+        {
+            $afun = 'Adv';
+        }
+        # Main predicate or other main head if there is no predicate.
+        elsif($deprel eq 'sentence')
+        {
+            if($pos eq 'verb')
+            {
+                $afun = 'Pred';
+            }
+            else
+            {
+                $afun = 'ExD';
+            }
+        }
+        # Noun phrase that is not tagged specifically as subject or object.
+        # Most of these cases (83%) are attached to a preposition.
+        # Some of the cases where it depends on a noun resemble apposition.
+        elsif($deprel eq 'sn')
+        {
+            if($ppos =~ m/^(prep|conj)$/)
+            {
+                $afun = 'PrepArg';
+            }
+            elsif($ppos =~ m/^(verb|adj)$/)
+            {
+                $afun = 'Obj';
+            }
+            elsif($ppos eq 'adv')
+            {
+                $afun = 'Adv';
+            }
+            else
+            {
+                $afun = 'Apposition';
+            }
+        }
 
         ###!!! DALE ZDEDENO PO ZDENKOVI
         if ($pos eq 'prep' and $ppos eq 'verb') {
