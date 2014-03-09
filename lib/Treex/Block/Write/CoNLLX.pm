@@ -56,7 +56,8 @@ sub process_atree {
             $feat = '_';
         }
         my $p_ord = $anode->get_parent->ord;
-        print { $self->_file_handle } join( "\t", map {$_ // '_'} ($anode->ord, $anode->form, $lemma, $cpos, $pos, $feat, $p_ord, $deprel) ) . "\n";
+        # Make sure that values are not empty and that they do not contain spaces.
+        print { $self->_file_handle } join( "\t", map {my $x = $_ // '_'; $x =~ s/^\s+//; $x =~ s/\s+$//; $x =~ s/\s+/_/g; $x} ($anode->ord, $anode->form, $lemma, $cpos, $pos, $feat, $p_ord, $deprel) ) . "\n";
     }
     print { $self->_file_handle } "\n" if $atree->get_descendants;
     return;
