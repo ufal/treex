@@ -10,7 +10,38 @@ sub mark_node {
         return 0;
     }
 
-    my @stopwords = qw/ everyone everybody everything anything anyone anybody thing /;
+    my @stopwords = qw/
+    everyone everybody everything anything anyone anybody thing
+    laptop
+    computer
+    PC
+    notebook
+    machine
+    restaurant
+    place 
+    bar
+    pizzeria
+    café
+    bistro
+    cafeteria
+    point
+    corner
+    spot
+    pub
+    tavern
+    /;
+    # steak house
+
+    my @named_entities = qw/
+    Dell
+    dell
+    HP
+    iBook
+    mac
+    Mac
+    MacOSX
+    /;
+
     my @function_word_tags = ( 'PRP', 'PRP$', 'WP', 'WP$', 'DT', 'PDT', 'IN', 'CC', 'WDT' );
     my @avoided_afuns = ( 'Aux' );
 
@@ -26,6 +57,11 @@ sub mark_node {
 
     if ( grep { $node->afun =~ m/^$_/ } @avoided_afuns ) {
         log_info "Afun in the stop-list, not marking node: " . $node->form;
+        return 0;
+    }
+
+    if ( grep { $node->form eq lc( $_ ) } @named_entities ) {
+        log_info "Form is a named entity, not marking node: " . $node->form;
         return 0;
     }
 
