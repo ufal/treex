@@ -87,8 +87,8 @@ sub print_tnode_features {
     # Features from the local tree (and word-order) context this node
     my $src_context_feats = $src_feature_extractor->features_of_tnode($en_tnode);
 
-    # VW format does not allow ":"
-    $en_tlemma =~ s/:/;/g;
+    # VW format does not allow ":", "|" and spaces in feature names
+    $en_tlemma =~ tr/:| /;!_/;
 
     my @translations = map {$_->[0]} sort {$b->[1] <=> $a->[1]} map {[$_, $self->prescore($variants->{$_})]} keys %{$variants};
     splice @translations, $self->max_variants if @translations > $self->max_variants;
@@ -99,7 +99,7 @@ sub print_tnode_features {
     #while ( my ($variant, $variant_static_score) = each %{$submodel}){
     for my $variant (@translations) {
         $i++;
-        $variant =~ s/:/;/g;
+        $variant =~ tr/:| /;!_/;
         my $cost = $variant eq $cs_tlemma ? 0 : 1;
 
         # Target-partial features
@@ -110,6 +110,7 @@ sub print_tnode_features {
         my $twonode_feats = '|R';
         while ( my ($model_type, $prob) = each %{$variants->{$variant}}){
             my $bin_logprob = int(- log($prob));
+            $prob = sprintf('%.4f',$prob);
             $twonode_feats .= " $model_type:$prob b$model_type=$bin_logprob";
         }
 

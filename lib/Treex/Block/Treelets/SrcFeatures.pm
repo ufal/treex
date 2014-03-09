@@ -127,9 +127,8 @@ sub features_of_tnode {
         $feats .= ' Cf&Cl=' . $child->formeme .'&'. lemma_or_tag($child);
     }
 
-    # VW format does not allow ":"
-    $feats =~ s/:/;/g;
-
+    # VW format does not allow ":" and "|" in feature names (and spaces as well)
+    $feats =~ tr/:|/;!/;
     return $feats;
 }
 

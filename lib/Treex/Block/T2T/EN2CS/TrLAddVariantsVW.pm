@@ -34,6 +34,14 @@ has normalize => (
     documentation => 'should the probs sum up to 1?'
 );
 
+has add_twonode => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 1,
+    documentation => 'add_twonode_features?'
+);
+
+
 has max_variants => (
     is            => 'ro',
     isa           => 'Int',
@@ -190,7 +198,9 @@ sub print_tnode {
     my $src_context_feats = $src_feature_extractor->features_of_tnode($en_tnode);
 
     # VW format does not allow ":"
-    $en_tlemma =~ s/:/;/g;
+    #$en_tlemma =~ s/:/;/g;
+    # VW format does not allow ":", "|" and spaces in feature names
+    $en_tlemma =~ tr/:| /;!_/;
 
     my @translations = map {$_->[0]} sort {$b->[1] <=> $a->[1]} map {[$_, $self->prescore($variants->{$_})]} keys %{$variants};
     splice @translations, $self->max_variants if @translations > $self->max_variants;
@@ -200,16 +210,19 @@ sub print_tnode {
     my ($i);
     for my $variant (@translations) {
         $i++;
-        $variant =~ s/:/;/g;
+        $variant =~ tr/:| /;!_/;# s/:/;/g;
 
         # Target-partial features
         # Default for t_lemma="#PersPron" (dropped)
         my $variant_pos = ($variant =~ /#(.)$/) ? $1 : 'X';
 
-        my $twonode_feats = '|R';
-        while ( my ($model_type, $prob) = each %{$variants->{$variant}}){
-            my $bin_logprob = int(- log($prob));
-            $twonode_feats .= " $model_type:$prob b$model_type=$bin_logprob";
+        my $twonode_feats = '';
+        if ($self->add_twonode){
+            $twonode_feats = '|R';
+            while ( my ($model_type, $prob) = each %{$variants->{$variant}}){
+                my $bin_logprob = int(- log($prob));
+                $twonode_feats .= " $model_type:$prob b$model_type=$bin_logprob";
+            }
         }
 
         print {$F} "$i _$variant|T $en_tlemma^$variant $en_tlemma^$variant_pos $twonode_feats\n";
