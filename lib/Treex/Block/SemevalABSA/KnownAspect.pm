@@ -36,12 +36,55 @@ sub BUILD {
 sub process_atree {
     my ( $self, $atree ) = @_;
 
-    my @nodes = $atree->get_descendants;
+    my @nodes = $atree->get_descendants( { ordered => 1 } );
+    my @closest_polarities;
+
+    my $closest_pos = -1;
+    my $closest_pol = '0';
+    my $pos = 0;
+
+    # there
+    for my $node ( @nodes ) {
+        if ( $self->is_aspect_candidate( $node ) ) {
+            $closest_pos = $pos;
+            $closest_pol = $self->combine_polarities( $self->get_aspect_candidate_polarities( $node ) );
+        } elsif ( $self->is_subjective( $node ) ) {
+            $closest_pos = $pos;
+            $closest_pol = $self->get_polarity( $node );
+        }
+        push @closest_polarities, { diff => abs($closest_pos - $pos), pol => $closest_pol };
+        $pos++;
+    }
+
+    # back
+    $closest_pos = scalar @nodes;
+    $closest_pol = '0';
+    $pos = $#nodes;
+
+    for my $node ( reverse @nodes ) {
+        if ( $self->is_aspect_candidate( $node ) ) {
+            $closest_pos = $pos;
+            $closest_pol = $self->combine_polarities( $self->get_aspect_candidate_polarities( $node ) );
+        } elsif ( $self->is_subjective( $node ) ) {
+            $closest_pos = $pos;
+            $closest_pol = $self->get_polarity( $node );
+        }
+        my $prevdiff = $closest_polarities[$pos]->{diff};
+        if (abs($closest_pos - $pos) < $prevdiff) {
+            $closest_polarities[$pos] = { diff => abs($closest_pos - $pos), pol => $closest_pol };
+        }
+        $pos--;
+    }
+
+    $pos = 0;
     for my $node ( @nodes ) {
         if ( ( $self->{forms}->{ lc( $node->form ) } || $self->{lemmas}->{ $node->lemma } )
             && ! $self->is_aspect_candidate( $node ) ) {
-            $self->mark_node( $node, "known0" );
+            my $polarity = $closest_polarities[$pos]->{pol};
+            $self->mark_node( $node, "known$polarity" );
         }
+
+        $pos++;
     }
 
     return 1;

@@ -40,6 +40,41 @@ sub mark_node {
     mac
     Mac
     MacOSX
+    Apache
+    Bijin
+    Bisque
+    Bukhara
+    Butter
+    Cantonese
+    Carol
+    Chops
+    Chowder
+    Decor
+    Dosa
+    Ew
+    Fixe
+    Gigondas
+    Hamburgers
+    Kali
+    Kamikaze
+    Lassi
+    Lizard
+    MOSHPHERE
+    Moules
+    Onglet
+    Poivre
+    Puree
+    Saul
+    SC
+    Se-Ew
+    Shabu-Shabu
+    Soh
+    Sum
+    Susan
+    Tail
+    Taxan
+    Thali
+    Urchin
     /;
 
     my @function_word_tags = ( 'PRP', 'PRP$', 'WP', 'WP$', 'DT', 'PDT', 'IN', 'CC', 'WDT' );
@@ -99,7 +134,7 @@ sub mark_node {
 
 sub is_aspect_candidate {
     my ( $self, $node ) = @_;
-    return defined($node->wild->{absa_rules}) && length($node->wild->{absa_rules}) > 0;
+    return defined($node->{wild}->{absa_rules}) && length($node->wild->{absa_rules}) > 0;
 }
 
 sub is_subjective {
