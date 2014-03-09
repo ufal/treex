@@ -107,15 +107,7 @@ sub deprel_to_afun
         my $pos    = $node->get_iset('pos');
         my $subpos = $node->get_iset('subpos');
         my $ppos   = $parent ? $parent->get_iset('pos') : '';
-
-        ###!!! Nevím, jestli tohle nechci spíš odbourat. Tabulky jsou sice přehlednější než ify, ale když do nich přidám komentáře, tak už stejně přehledné nebudou.
-        ###!!! Nelíbí se mi, že to nemůže být všechno v jedné tabulce. Navíc hashe neumožňují jednoduše nadefinovat větev "else".
-        my $afun = $deprel2afun{$deprel} || # from the most specific to the least specific
-            $subpos2afun{$subpos} ||
-                $pos2afun{$pos} ||
-                    $parentpos2afun{$ppos} ||
-                        'NR';
-
+        my $afun = 'NR';
         # Adjective in leaf node. Could be headed by article! Example:
         # aquests primers tres mesos
         # these first three months
@@ -480,17 +472,52 @@ sub deprel_to_afun
                 $afun = 'Apposition';
             }
         }
-
-        ###!!! DALE ZDEDENO PO ZDENKOVI
-        if ($pos eq 'prep' and $ppos eq 'verb') {
-            $afun = 'AuxV'; # vamos a estar
+        # Prepositional phrase.
+        elsif($deprel eq 'sp')
+        {
+            $afun = 'AuxP';
         }
-
-        # AuxX should be used for commas, AuxG for other graphic symbols
-        if($deprel eq q(f) && $node->form ne q(,)) {
-            $afun = q(AuxG);
+        # Specifier, i.e. article, numeral or other determiner.
+        elsif($deprel eq 'spec')
+        {
+            $afun = 'Atr';
         }
-
+        # Subject, including inserted empty nodes (Catalan is pro-drop language) and relative pronouns in subordinate clauses.
+        elsif($deprel eq 'suj')
+        {
+            $afun = 'Sb';
+        }
+        # Auxiliary or semi-auxiliary verb. Example:
+        # La moció ha estat aprovada.
+        # The motion has been approved.
+        elsif($deprel eq 'v')
+        {
+            $afun = 'AuxV';
+        }
+        # Vocative. Example:
+        # Senyora, escriure una cançó així és molt difícil.
+        # Madam, it is very difficult to write a song here.
+        elsif($deprel eq 'voc')
+        {
+            # In PDT, vocatives are annotated as "ExD_Pa" (parenthesis).
+            $afun = "ExD"; ###!!! a co ta parenteze?
+        }
+        # Date/time. Example:
+        # les 22.30 hores
+        # 22:30
+        # TREE: hores ( les/spec ( 22.30/w ) )
+        # This tag is very rare (possible annotation error?) Majority of time expressions is annotated otherwise, e.g.:
+        # 1.15 hores
+        # TREE: hores ( 1.15/spec )
+        elsif($deprel eq 'w')
+        {
+            $afun = 'DetArg';
+        }
+        # Number (expressed in digits) leaf, usually attached to a determiner.
+        elsif($deprel eq 'z')
+        {
+            $afun = 'DetArg';
+        }
         $node->set_afun($afun);
     }
 }
