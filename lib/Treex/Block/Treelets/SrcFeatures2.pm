@@ -1,4 +1,4 @@
-package Treex::Block::Treelets::SrcFeatures;
+package Treex::Block::Treelets::SrcFeatures2;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -68,8 +68,8 @@ sub features_of_tnode {
        
     # Features from this node
     my $feats = join '',
-        add($tnode, 'f', 'formeme'),
-        add($tnode, 'l', 't_lemma'),
+        add($tnode, 'f', 'formeme'),         # Lf**
+        add($tnode, 'l', 't_lemma'),         # L***
         add($tnode, 'num', 'gram/number'),
         add($tnode, 'voi', 'gram/voice'),
         add($tnode, 'neg', 'gram/negation'),
@@ -101,7 +101,7 @@ sub features_of_tnode {
     my ($tparent) = $tnode->get_eparents( { or_topological => 1 } );
     if (!$tparent->is_root){
         $feats .= join '',
-        ' f&Pl=' . $tnode->formeme . '&' . lemma_or_tag($tparent),
+        ' f&Pl=' . $tnode->formeme . '&' . lemma_or_tag($tparent),  # Lfl*
         add($tparent, 'Pnum', 'gram/number'),
         add($tparent, 'Pvoi', 'gram/voice'),
         add($tparent, 'Pneg', 'gram/negation'),
@@ -123,8 +123,15 @@ sub features_of_tnode {
             $feats .= ' Ct=' . $achild->tag;
             $feats .= ' Cc=' . $achild->form =~ /^\p{IsUpper}/;
         }
-        $feats .= ' Cf=' . $child->formeme;
-        $feats .= ' Cf&Cl=' . $child->formeme .'&'. lemma_or_tag($child);
+        $feats .= ' Cf=' . $child->formeme;                                                       # *fL*
+        $feats .= ' Cl&Cf=' . lemma_or_tag($child) .'&'. $child->formeme;                         # lfL*
+        $feats .= ' Cf&f=' . $child->formeme .'&'. $tnode->formeme;                               # *fLf
+        $feats .= ' Cl&Cf&f=' . lemma_or_tag($child) .'&'. $child->formeme .'&'. $tnode->formeme; # lfLf
+        $feats .= add($child, 'Cart', '_article')
+                . add($child, 'Cppa', '_precedes_parent')
+                . add($child, 'Cent', '_ne_type')
+                . add($child, 'Ctag', '_pos_tag')
+                . add($child, 'Ccap', '_capitalized');
     }
 
     # VW format does not allow ":" and "|" in feature names (and spaces as well)
@@ -210,7 +217,7 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::Treelets::SrcFeatures - extract context features for VW
+Treex::Block::Treelets::SrcFeatures2 - extract context features for VW
 
 =head1 DESCRIPTION
 
