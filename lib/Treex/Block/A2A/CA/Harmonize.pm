@@ -7,88 +7,15 @@ extends 'Treex::Block::A2A::Harmonize';
 sub process_zone {
     my $self   = shift;
     my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone( $zone, 'conll2009' );
-#    $self->deprel_to_afun($a_root)
-    $self->attach_final_punctuation_to_root($a_root);
-#    $self->process_prepositional_phrases($a_root);
-#    $self->restructure_coordination($a_root);
-    $self->rehang_coordconj($a_root);
-    $self->check_afuns($a_root);
-    $self->rehang_subconj($a_root);
+    my $root = $self->SUPER::process_zone($zone, 'conll2009');
+    $self->attach_final_punctuation_to_root($root);
+    $self->restructure_coordination($root);
+    # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
+    # and with special care at places where prepositions and coordinations interact.
+    $self->process_prep_sub_arg_cloud($root);
+    $self->lift_noun_phrases($root);
+    $self->check_afuns($root);
 }
-
-
-my %pos2afun = (
-    q(prep) => 'AuxP',
-    q(adj) => 'Atr',
-    q(adv) => 'Adv',
-);
-
-my %subpos2afun = (
-    q(det) => 'AuxA',
-    q(sub) => 'AuxC',
-);
-
-my %parentpos2afun = (
-    q(prep) => 'Adv',
-    q(noun) => 'Atr',
-);
-
-
-# deprels extracted from the conll2009 data, documentation in /net/data/CoNLL/2009/es/doc/tagsets.pdf
-my %deprel2afun = (
-#    'coord' => 'uspech',
-    q(a) => q(Atr),
-    q(ao) => q(),
-    q(atr) => q(),
-    q(c) => q(Adv), # ?
-    q(cag) => q(),
-#    q(cc) => q(AuxC),
-    q(cd) => q(Obj),
-    q(ci) => q(Obj),
-    q(conj) => q(AuxC),
-    q(coord) => q(Coord),
-    q(cpred) => q(Compl),
-    q(creg) => q(AuxP),
-    q(d) => q(AuxA),
-    q(et) => q(),
-    q(f) => q(AuxX),
-    q(gerundi) => q(), # ?
-    q(grup.a) => q(),
-    q(grup.adv) => q(),
-    q(grup.nom) => q(),
-    q(grup.verb) => q(),
-    q(i) => q(),
-    q(impers) => q(),
-    q(inc) => q(),
-    q(infinitiu) => q(),
-    q(interjeccio) => q(),
-    q(mod) => q(Adv),
-    q(morfema.pronominal) => q(AuxR),
-    q(morfema.verbal) => q(AuxR),
-    q(n) => q(), # noun?
-    q(neg) => q(), # negation
-    q(p) => q(), # pronoun?
-    q(participi) => q(),
-    q(pass) => q(AuxR),
-    q(prep) => q(AuxP),
-    q(r) => q(Adv),
-    q(relatiu) => q(), # relative pronoun
-    q(s) => q(AuxP),
-    q(S) => q(Pred),
-    q(sa) => q(Compl),
-    q(s.a) => q(Atr),
-    q(sadv) => q(Adv),
-    q(sentence) => q(Pred),
-    q(sn) => q(),
-    q(sp) => q(AuxP),
-    q(spec) => q(),
-    q(suj) => q(Sb),
-    q(v) => q(AuxV),
-    q(voc) => q(),
-    q(w) => q(),
-    q(z) => q(), # number
-);
 
 
 
@@ -179,6 +106,16 @@ sub deprel_to_afun
         elsif($deprel eq 'coord')
         {
             $afun = 'Coord';
+            $node->wild()->{coordinator} = 1;
+        }
+        # Predicative complement. Noun/prepositional part of compound verbs? Example:
+        # ha fet públic
+        # have made public
+        # TREE: fet ( ha/v , públic/cpred )
+        # The most frequent expression tagged cpred is "com_a".
+        elsif($deprel eq 'cpred')
+        {
+            $afun = 'Obj'; ###!!! Should we invent a new tag for this?
         }
         # Prepositional object. Example:
         # entrar en crisi
@@ -230,6 +167,7 @@ sub deprel_to_afun
         elsif($deprel =~ m/^grup\.(a|adv|nom)$/)
         {
             $afun = 'CoordArg';
+            $node->wild()->{conjunct} = 1;
         }
         # grup.verb is probably an error. There is just one occurrence and it is the first part of a compound coordinating conjunction either-or.
         elsif($deprel eq 'grup.verb')
@@ -455,9 +393,13 @@ sub deprel_to_afun
         # Some of the cases where it depends on a noun resemble apposition.
         elsif($deprel eq 'sn')
         {
-            if($ppos =~ m/^(prep|conj)$/)
+            if($ppos eq 'prep')
             {
                 $afun = 'PrepArg';
+            }
+            elsif($ppos eq 'conj')
+            {
+                $afun = 'SubArg';
             }
             elsif($ppos =~ m/^(verb|adj)$/)
             {
@@ -475,7 +417,29 @@ sub deprel_to_afun
         # Prepositional phrase.
         elsif($deprel eq 'sp')
         {
-            $afun = 'AuxP';
+            # We do not want to assign AuxP now. That will be achieved by swapping afuns later.
+            # Now we have to figure out the relation of the prepositional phrase to its parent.
+            if($ppos eq 'noun')
+            {
+                $afun = 'Atr';
+            }
+            elsif($ppos eq 'verb' && lc($node->form()) eq 'a')
+            {
+                $afun = 'Obj';
+            }
+            elsif($ppos eq 'adv')
+            {
+                $afun = 'Adv';
+            }
+            elsif($ppos eq 'prep')
+            {
+                # Example: per a quatre veterinaris gironins
+                $afun = 'PrepArg';
+            }
+            else
+            {
+                $afun = 'NR'; ###!!! Where else does it occur?
+            }
         }
         # Specifier, i.e. article, numeral or other determiner.
         elsif($deprel eq 'spec')
@@ -520,48 +484,97 @@ sub deprel_to_afun
         }
         $node->set_afun($afun);
     }
+    # Improve analytical functions for processing of coordinations.
+    $self->catch_runaway_conjuncts($root);
 }
 
 
 
-use Treex::Tool::ATreeTransformer::DepReverser;
-my $subconj_reverser =
-    Treex::Tool::ATreeTransformer::DepReverser->new(
+#------------------------------------------------------------------------------
+# Coordinated structures are poorly marked in the Catalan treebank. Before we
+# launch coordination processing, this method will try to catch some less
+# obvious instances.
+#------------------------------------------------------------------------------
+sub catch_runaway_conjuncts
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        # Coordinated nouns, adjectives and adverbs: second and further conjuncts should have deprel=grup.nom (grup.a, grup.adv).
+        # If they do, then we have assigned $node->wild()->{conjunct} = 1. Unfortunately, many do not; neither do coordinated verbs (clauses).
+        # If there is a coordinating conjunction without conjuncts, we should investigate.
+        # (Exclude coordinating conjunctions that are children of the root. The root cannot be the first conjunct.)
+        if($node->wild()->{coordinator} && !$node->parent()->is_root())
+        {
+            # The right sibling of the coordinator should be a conjunct. Is there a conjunct?
+            my @right_siblings = $node->get_siblings({following_only => 1});
+            my @right_conjuncts = grep {$_->wild()->{conjunct}} (@right_siblings);
+            if(scalar(@right_conjuncts)==0)
             {
-                subscription     => '',
-                nodes_to_reverse => sub {
-                    my ( $child, $parent ) = @_;
-                    return ( $child->afun eq 'AuxC' );
-                },
-                move_with_parent => sub {1;},
-                move_with_child => sub {1;},
+                # Coordinating conjunction does not have right sibling marked as conjunct.
+                # Does it have any right neighbor? Does its type somehow match that of their common parent (which would be the first conjunct)?
+                my $rn = $node->get_right_neighbor();
+                if($rn)
+                {
+                    my $pos = $rn->get_iset('pos');
+                    my $ppos = $node->parent()->get_iset('pos');
+                    if($rn->conll_deprel() eq 'sn' && $ppos eq 'noun' ||
+                       $pos eq $ppos ||
+                       # There are correct cases where the part of speech of the sibling does not match that of the parent.
+                       # What else could we do if the left sibling of the rightmost child is coordinating conjunction?
+                       scalar(@right_siblings)==1)
+                    {
+                        $rn->wild()->{conjunct} = 1;
+                    }
+                }
             }
-        );
-
-
-sub rehang_subconj {
-    my ( $self, $root ) = @_;
-    $subconj_reverser->apply_on_tree($root);
-
+        }
+    }
 }
 
-sub rehang_coordconj {
-    my ( $self, $root ) = @_;
 
-    foreach my $coord (grep {$_->conll_deprel eq 'coord'}
-                           map {$_->get_descendants} $root->get_children) {
-        my $first_member = $coord->get_parent;
-        $first_member->set_is_member(1);
-        $coord->set_parent($first_member->get_parent);
-        $first_member->set_parent($coord);
 
-        my $second_member = 1;
-        foreach my $node (grep {$_->ord > $coord->ord} $first_member->get_children({ordered=>1})) {
-            $node->set_parent($coord);
-            if ($second_member) {
-                $node->set_is_member(1);
-                $second_member = 0;
-            }
+#------------------------------------------------------------------------------
+# Detects coordination in the shape we expect to find it in the Catalan
+# treebank.
+#------------------------------------------------------------------------------
+sub detect_coordination
+{
+    my $self = shift;
+    my $node = shift;
+    my $coordination = shift;
+    my $debug = shift;
+    $coordination->detect_stanford($node);
+    # The caller does not know where to apply recursion because it depends on annotation style.
+    # Return all conjuncts and shared modifiers for the Prague family of styles.
+    # Return non-head conjuncts, private modifiers of the head conjunct and all shared modifiers for the Stanford family of styles.
+    # (Do not return delimiters, i.e. do not return all original children of the node. One of the delimiters will become the new head and then recursion would fall into an endless loop.)
+    # Return orphan conjuncts and all shared and private modifiers for the other styles.
+    my @recurse = grep {$_ != $node} ($coordination->get_conjuncts());
+    push(@recurse, $coordination->get_shared_modifiers());
+    push(@recurse, $coordination->get_private_modifiers($node));
+    return @recurse;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Swaps nodes at some edges where the Danish notion of dependency violates the
+# principle of reducibility: nouns attached to determiners, numbers etc.
+#------------------------------------------------------------------------------
+sub lift_noun_phrases
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $afun = $node->afun();
+        if ( $afun =~ m/^(DetArg|NumArg|PossArg|AdjArg)$/ )
+        {
+            $self->lift_node( $node, 'Atr' );
         }
     }
 }
@@ -575,8 +588,7 @@ sub rehang_coordconj {
 
 =item Treex::Block::A2A::CA::Harmonize
 
-Converts Catalan trees from CoNLL to the style of
-the Prague Dependency Treebank.
+Converts Catalan trees from CoNLL 2009 to the HamleDT (Prague) style.
 
 =back
 
