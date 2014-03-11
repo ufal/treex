@@ -7,9 +7,9 @@ extends 'Treex::Core::Block';
 
 sub process_zone {
     my ( $self, $zone ) = @_;
-    
+
+    return if !$zone->has_ntree();
     my $n_root = $zone->get_ntree();
-    return if !$n_root;
    
     # To prevent deleting one node twice, in case of nested named entities.
     my %solved = ();
