@@ -42,6 +42,8 @@ so this block searches for all a-nodes of the inner n-nodes to fix it.
 N-nodes without links to a-nodes even among the inner entities
 (including n-nodes without children) are deleted.
 
+Consider runnign this block with parameter if_missing_zone=ignore, if there are bundles with no n-trees (n-trees with no n-nodes are ok).
+
 =head1 AUTHOR
 
 Martin Popel <popel@ufal.mff.cuni.cz>
