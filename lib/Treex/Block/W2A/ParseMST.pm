@@ -67,7 +67,8 @@ sub BUILD {
 sub process_start {
     my ($self)  = @_;
     my ($model) = $self->require_files_from_share( $self->model_dir . '/' . $self->model );
-    my $key = Treex::Core::Config->use_services . '-'. $model;
+    my $use_services = Treex::Core::Config->use_services || 0;
+    my $key = "$use_services-$model";
 
     if ( !$loaded_models{$key} ) {
         my $parser = Treex::Tool::Parser::Factory->create(
