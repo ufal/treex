@@ -93,10 +93,9 @@ sub process_atree {
     my ( $self, $atree ) = @_;
     my %polarities;
     for my $node ( grep { $self->is_aspect_candidate( $_ ) } $atree->get_descendants ) {
-        $node->{lemma} =~ s/#.*//; # XXX REMOVE ME
         log_info "Processing node $node->{lemma}";
         my $polarity = $self->combine_polarities( $self->get_aspect_candidate_polarities( $node ) );
-        if ( $exceptions{ $node->lemma } ) {
+        if ( $exceptions{ lc( $node->form ) } || $exceptions{ $node->lemma } ) {
             log_info "Found in exceptions";
             push @{ $polarities{ $exceptions{ $node->lemma } } }, $polarity;
         } else {
