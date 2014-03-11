@@ -8,7 +8,7 @@ sub process_atree {
     my $self = shift;
     my $a_root = shift;
     my $language = $a_root->get_zone->language();
-    for my $anode ($a_root->get_descendants) {
+    for my $anode ($a_root->get_descendants( { add_self => 1 } )) {
 	my $afun = $anode->afun();
 	print "$language\t$afun\n";
     }
