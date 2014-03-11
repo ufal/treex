@@ -12,7 +12,7 @@ has wn_instance => (
 );
 
 has wn_path => (
-    isa => 'String',
+    isa => 'Str',
     default => '/data/resources/wordnet3.0/new/WordNet-3.0/dict/',
     is => 'ro',
 );
@@ -36,6 +36,10 @@ my %exceptions = (
 );
 
 my %known = (
+  price => "price",
+  food => "food",
+  service => "service", 
+  ambience => "ambience",
   chemical => "food",
   cost => "price",
   atmosphere => "ambience",
@@ -58,7 +62,7 @@ my %known = (
 sub BUILD {
     my ( $self ) = @_;
     my $wn_realpath = Treex::Core::Resource::require_file_from_share( $self->wn_path );
-    $self->{wn_instance} = WordNet::QueryData->new( $wn_realpath );
+    $self->{wn_instance} = WordNet::QueryData->new( $wn_realpath . "/" );
 
     return 1;
 }
@@ -66,32 +70,44 @@ sub BUILD {
 sub _get_all_hyperonyms {
     my ( $self, $node ) = @_;
     return if $node->tag !~ m/^N/; # only handle nouns
-    my @queue = $self->wn->querySense( $node->lemma . "#n" );
+    my @queue = $self->{wn_instance}->querySense( $node->lemma . "#n" );
     my %hyperonyms;
-    while ( shift @queue ) {
-        my $current = $_;
+    while ( @queue ) {
+        my $current = shift @queue;
         $hyperonyms{ $current } = 1;
         my @hyper = grep { ! $hyperonyms{ $_ } && ! m/^entity/ }
-            $self->wn->querySense( $hyper, "hype" );
+            $self->{wn_instance}->querySense( $current, "hype" );
         push @queue, @hyper;
     }
 
-    map { $_ =~ s/#.*// } keys %hyperonyms;
-    return keys %hyperonyms;
+    my @stripped;
+    for my $hyper (keys %hyperonyms) {
+        $hyper =~ s/#.*//;
+        push @stripped, $hyper;
+    }
+    log_info "Hyperonyms for $node->{lemma}: " . join(" ", @stripped);
+    return @stripped;
 }
 
 sub process_atree {
     my ( $self, $atree ) = @_;
     my %polarities;
     for my $node ( grep { $self->is_aspect_candidate( $_ ) } $atree->get_descendants ) {
-        my $polarity = $self->get_candidate_polarity( $_ );
+        $node->{lemma} =~ s/#.*//; # XXX REMOVE ME
+        log_info "Processing node $node->{lemma}";
+        my $polarity = $self->combine_polarities( $self->get_aspect_candidate_polarities( $node ) );
         if ( $exceptions{ $node->lemma } ) {
+            log_info "Found in exceptions";
             push @{ $polarities{ $exceptions{ $node->lemma } } }, $polarity;
         } else {
+            log_info "Looking up hyperonyms";
             my @hypers = grep { $known{ $_ } } $self->_get_all_hyperonyms( $node );
             if ( @hypers ) {
+                log_info "Found known hyperonym, marking node";
                 # let's just take the first known hyperonym
-                push @{ $polarities{ $known{ $hyper[0] } } }, $polarity;
+                push @{ $polarities{ $known{ $hypers[0] } } }, $polarity;
+            } else {
+                log_info "No known hyperonym";
             }
         }
     }
@@ -100,14 +116,14 @@ sub process_atree {
         my $categorystr = "#CAT#";
 
         for my $category ( keys %polarities ) {
-            my $polarity = $self->combine_polarities( $polarities{ $category } );
-            $categorystr .= " $category$polarity";
+            my $polarity = $self->combine_polarities( @{ $polarities{ $category } } );
+            $categorystr .= "$category$polarity ";
         }
 
         # let's just rudely prepend our annotation to the first word
         my ( $first ) = $atree->get_descendants( { ordered => 1 } );
-        $first->form = $categorystr . $first->form;
-        $first->lemma = $categorystr . $first->lemma;
+        $first->{form} = $categorystr . $first->form;
+        $first->{lemma} = $categorystr . $first->lemma;
     }
 
     return 1;
