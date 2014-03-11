@@ -4,18 +4,21 @@ use Treex::Core::Common;
 
 extends 'Treex::Core::Block';
 
-sub process_anode {
+sub process_atree {
     my $self = shift;
-    my $node = shift;
-    my @parents = $node->get_eparents({or_topological => 1, dive => 'AuxCP'});
+    my $a_root = shift;
+    my $language = $a_root->get_zone->language();
+    for my $anode ($a_root->get_descendants( )) {
+        my @parents = $anode->get_eparents({or_topological => 1, dive => 'AuxCP'});
 
-    my $afun = $node->afun();
-    my $pos  = $node->get_iset('pos');
+        my $afun = $anode->afun();
+        my $pos  = $anode->get_iset('pos');
 
-    for my $parent (@parents) {
-        my $parent_afun = (defined $parent) ? $parent->afun() : 'ROOT';
-        my $parent_pos  = (defined $parent) ? $parent->get_iset('pos') : 'ROOT';
-        print join "\t", ($parent_pos, $pos, $parent_afun, $afun), "\n";
+        for my $parent (@parents) {
+            my $parent_afun =  $parent->afun();
+            my $parent_pos  =  $parent->get_iset('pos') || 'ROOT';
+            print join "\t", ($language, $parent_pos, $pos, $parent_afun, $afun), "\n";
+        }
     }
 }
 
