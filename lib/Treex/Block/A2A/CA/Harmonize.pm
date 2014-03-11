@@ -419,11 +419,13 @@ sub deprel_to_afun
         {
             # We do not want to assign AuxP now. That will be achieved by swapping afuns later.
             # Now we have to figure out the relation of the prepositional phrase to its parent.
-            if($ppos eq 'noun')
+            if($ppos =~ m/^(noun|adj|num)$/)
             {
+                # adj example: propietària de les mines
+                # num example: una de cada tres pessetes
                 $afun = 'Atr';
             }
-            elsif($ppos eq 'verb' && lc($node->form()) eq 'a')
+            elsif($ppos eq 'verb' && $node->form() =~ m/^(a|al|d'|de|del|dels)$/i)
             {
                 $afun = 'Obj';
             }
@@ -518,13 +520,26 @@ sub catch_runaway_conjuncts
                 my $rn = $node->get_right_neighbor();
                 if($rn)
                 {
+                    # Trailing punctuation nodes in the sequence of right siblings are not interesting.
+                    my @rswtp = @right_siblings;
+                    for(my $i = $#rswtp; $i>=0 && $i<=$#rswtp; $i--)
+                    {
+                        if($rswtp[$i]->afun() =~ m/^Aux[GX]$/)
+                        {
+                            splice(@rswtp, $#rswtp);
+                        }
+                        else
+                        {
+                            last;
+                        }
+                    }
                     my $pos = $rn->get_iset('pos');
                     my $ppos = $node->parent()->get_iset('pos');
                     if($rn->conll_deprel() eq 'sn' && $ppos eq 'noun' ||
                        $pos eq $ppos ||
                        # There are correct cases where the part of speech of the sibling does not match that of the parent.
                        # What else could we do if the left sibling of the rightmost child is coordinating conjunction?
-                       scalar(@right_siblings)==1)
+                       scalar(@rswtp)==1)
                     {
                         $rn->wild()->{conjunct} = 1;
                     }
