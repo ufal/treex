@@ -1,4 +1,4 @@
-package Treex::Block::HamleDT::Test::AuxXisComma;
+package Treex::Block::HamleDT::Test::AuxXIsComma;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';

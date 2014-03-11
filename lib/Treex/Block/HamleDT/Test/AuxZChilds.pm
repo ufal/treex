@@ -1,4 +1,4 @@
-package Treex::Block::HamleDT::Test::AuxZchilds;
+package Treex::Block::HamleDT::Test::AuxZChilds;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
