@@ -14,7 +14,7 @@ has 'lm_weight' => (
 has 'formeme_weight' => (
     is            => 'ro',
     isa           => 'Num',
-    default       => 0.8,
+    default       => 0.9,
     documentation => 'Weight of formeme forward logprobs.',
 );
 
