@@ -64,6 +64,12 @@ sub test {
 
     my $all = 0;
     my $good = 0;
+    
+    my $true_positive = 0;
+    my $true_negative = 0;
+    my $false_positive = 0;
+    my $false_negative = 0;
+    my $wrong_positive = 0;
 
     open my $testing_file, '<:gzip:utf8', $testfile;
     while ( my $line = <$testing_file> ) {
@@ -73,11 +79,25 @@ sub test {
         @instance_info{ @{ $self->config->{fields} } } = @fields;
         
         my $prediction = $self->get_best_prediction(\%instance_info);
-
+        my $baseline_prediction = $self->get_baseline_prediction(\%instance_info);
         my $true = $self->fields2feature(\%instance_info, $self->config->{predict});
+
         if ( $prediction eq $true ) {
             $good++;
-        }   
+            if ( $prediction eq $baseline_prediction ) {
+                $true_negative++;
+            } else {
+                $true_positive++;
+            }
+        } else {
+            if ( $prediction eq $baseline_prediction ) {
+                $false_negative++;
+            } elsif ( $true eq $baseline_prediction ) {
+                $false_positive++;
+            } else {
+                $wrong_positive++;
+            }
+        }
         $all++;
 
         if ( $. % 10000 == 0) { log_info "Line $. processed"; }
@@ -85,7 +105,8 @@ sub test {
     close $testing_file;
 
     my $accuracy  = int($good / $all*100000)/1000;
-    log_info "Accuracy: $accuracy %  ($good of $all)";
+    log_info "Accuracy: $accuracy %  ($good of $all; $true_positive TP, " .
+    "$true_negative TN, $false_positive FP, $false_negative FN, $wrong_positive WP)";
 
     return $accuracy;
 }
