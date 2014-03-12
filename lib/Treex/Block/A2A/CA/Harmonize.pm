@@ -425,9 +425,14 @@ sub deprel_to_afun
                 # num example: una de cada tres pessetes
                 $afun = 'Atr';
             }
-            elsif($ppos eq 'verb' && $node->form() =~ m/^(a|al|d'|de|del|dels)$/i)
+            elsif($ppos eq 'verb' && $node->lemma() =~ m/^(a|al|d'|de|del)$/i)
             {
                 $afun = 'Obj';
+            }
+            elsif($ppos eq 'verb')
+            {
+                # Observed with a variety of other prepositions, e.g.: com_a, al_marge_de, sobre, per, en.
+                $afun = 'Adv';
             }
             elsif($ppos eq 'adv')
             {
