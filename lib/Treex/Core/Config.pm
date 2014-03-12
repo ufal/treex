@@ -26,7 +26,7 @@ my $running_in_tred;                        ## no critic (ProhibitUnusedVariable
 sub _load_config {
     my $self     = shift;
     my %args     = @_;
-    my $from     = $args{from} // $self->config_file();
+    my $from     = $args{from} // $self->config_file(); #/
     return {} if !-e $from;
     my $yaml     = read_file( $from, { err_mode => 'quiet' } );
     my $toReturn = YAML::Load($yaml);
@@ -36,7 +36,7 @@ sub _load_config {
 sub _save_config {
     my $self = shift;
     my %args = @_;
-    my $to   = $args{to} // $self->config_file();
+    my $to   = $args{to} // $self->config_file(); #/
     return if ( -e $to && !$dirty );        #skip when config file already exists and no changes made from this run of treex so we won't overwrite existing configuration
     return if ( !scalar %{$config} );       #skip when config is empty
     eval {
@@ -52,7 +52,7 @@ END {
 
 sub config_dir {
     my $self = shift;
-    my $dirname = $ENV{TREEX_CONFIG} // File::Spec->catdir( File::HomeDir->my_home(), '.treex' );    # if evironment variable not set defaults to ~/.treex
+    my $dirname = $ENV{TREEX_CONFIG} // File::Spec->catdir( File::HomeDir->my_home(), '.treex' );  #/ # if evironment variable not set defaults to ~/.treex
     if ( !-e $dirname ) {
         mkdir $dirname;
     }
