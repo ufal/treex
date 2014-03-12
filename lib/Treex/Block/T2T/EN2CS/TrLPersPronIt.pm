@@ -36,6 +36,7 @@ has '_feat_extractor' => (
     builder => '_build_feat_extractor',
 );
 
+# TODO: move loading of models to process_start (so creating an instance of this class does not take too long)
 sub BUILD {
     my ($self) = @_;
     $self->_model;
@@ -70,6 +71,9 @@ sub _build_feat_extractor {
 
 sub process_tnode {
     my ( $self, $cs_tnode ) = @_;
+
+	# This is needed for newstest2014. TODO: why?
+    return if ref $cs_tnode eq 'Treex::Core::Node::Deleted';
 
     if ( my $en_tnode = $cs_tnode->src_tnode ) {
         return if ($en_tnode->t_lemma ne "#PersPron");
