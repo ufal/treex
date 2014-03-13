@@ -63,7 +63,16 @@ sub deprel_to_afun
         # See also "conj" and "coord".
         elsif($deprel eq 'c')
         {
-            ###!!!
+            if($node->lemma() eq 'com' && scalar($node->get_children())==1 && $ppos eq 'verb')
+            {
+                $afun = 'AuxC';
+                ###!!! We would like to assign $node->get_children()[0]->set_afun('Adv'). But we should not do it at this moment because the child may be processed by deprel_to_afun() later.
+            }
+            else
+            {
+                $afun = 'Coord';
+                $node->wild()->{coordinator} = 1;
+            }
         }
         # Agent complement.
         # In a passive clause where subject is not the agent, this is the tag for the agent. Most frequently with the preposition "per". Example:
@@ -515,38 +524,110 @@ sub catch_runaway_conjuncts
         # (Exclude coordinating conjunctions that are children of the root. The root cannot be the first conjunct.)
         if($node->wild()->{coordinator} && !$node->parent()->is_root())
         {
-            # The right sibling of the coordinator should be a conjunct. Is there a conjunct?
-            my @right_siblings = $node->get_siblings({following_only => 1});
-            my @right_conjuncts = grep {$_->wild()->{conjunct}} (@right_siblings);
-            if(scalar(@right_conjuncts)==0)
+            # Left-headed Stanford style prevails in the treebank. Coordinating conjunction is attached to the left, to the first conjunct.
+            # Surprisingly, some coordinating conjunctions are attached to the right (is this an error?)
+            # The parent is probably the last conjunct in coordination.
+            my $attached_to_left = $node->ord() > $node->parent()->ord();
+            if($attached_to_left)
             {
-                # Coordinating conjunction does not have right sibling marked as conjunct.
-                # Does it have any right neighbor? Does its type somehow match that of their common parent (which would be the first conjunct)?
-                my $rn = $node->get_right_neighbor();
-                if($rn)
+                # The right sibling of the coordinator should be a conjunct. Is there a conjunct?
+                my @right_siblings = $node->get_siblings({following_only => 1});
+                my @right_conjuncts = grep {$_->wild()->{conjunct}} (@right_siblings);
+                if(scalar(@right_conjuncts)==0)
                 {
-                    # Trailing punctuation nodes in the sequence of right siblings are not interesting.
-                    my @rswtp = @right_siblings;
-                    for(my $i = $#rswtp; $i>=0 && $i<=$#rswtp; $i--)
+                    # Coordinating conjunction does not have right sibling marked as conjunct.
+                    # Does it have any right neighbor? Does its type somehow match that of their common parent (which would be the first conjunct)?
+                    my $rn = $node->get_right_neighbor();
+                    my $ln = $node->get_left_neighbor();
+                    if($rn)
                     {
-                        if($rswtp[$i]->afun() =~ m/^Aux[GX]$/)
+                        # Trailing punctuation nodes in the sequence of right siblings are not interesting.
+                        my @rswtp = @right_siblings;
+                        for(my $i = $#rswtp; $i>=0 && $i<=$#rswtp; $i--)
                         {
-                            splice(@rswtp, $#rswtp);
+                            if($rswtp[$i]->afun() =~ m/^Aux[GX]$/)
+                            {
+                                splice(@rswtp, $#rswtp);
+                            }
+                            else
+                            {
+                                last;
+                            }
                         }
-                        else
+                        my $pos = $rn->get_iset('pos');
+                        my $ppos = $node->parent()->get_iset('pos');
+                        if($rn->conll_deprel() eq 'sn' && $node->parent()->conll_deprel() eq 'sn' ||
+                        $rn->conll_deprel() eq 'sn' && $ppos eq 'noun' ||
+                        $pos eq $ppos ||
+                        # There are correct cases where the part of speech of the sibling does not match that of the parent.
+                        # What else could we do if the left sibling of the rightmost child is coordinating conjunction?
+                        scalar(@rswtp)==1)
                         {
-                            last;
+                            $rn->wild()->{conjunct} = 1;
+                        }
+                        # Fall back: sometimes the conjunction joins its two neighbors.
+                        elsif($ln && $ln->ord() > $node->parent()->ord())
+                        {
+                            $node->set_parent($ln);
+                            $rn->set_parent($ln);
+                            $rn->wild()->{conjunct} = 1;
                         }
                     }
-                    my $pos = $rn->get_iset('pos');
-                    my $ppos = $node->parent()->get_iset('pos');
-                    if($rn->conll_deprel() eq 'sn' && $ppos eq 'noun' ||
-                       $pos eq $ppos ||
-                       # There are correct cases where the part of speech of the sibling does not match that of the parent.
-                       # What else could we do if the left sibling of the rightmost child is coordinating conjunction?
-                       scalar(@rswtp)==1)
+                }
+            }
+            else # attached to right
+            {
+                # If there is just one left sibling, it is the only candidate for the other conjunct, regardless whether parts of speech match.
+                # Punctuation nodes in the sequence of left siblings are not interesting.
+                my @left_siblings = $node->get_siblings({preceding_only => 1});
+                my @lswp = grep {$_->afun() !~ m/^Aux[GX]$/} (@left_siblings);
+                my $form = $node->form();
+                my $search_for = $form eq 'tant' ? 'com' : $form eq 'ja_sigui' ? 'o' : $form eq 'no_només' ? 'sinó_també' : '';
+                my @com = grep {$_->lemma() eq $search_for && $_->ord() > $node->ord()} ($node->parent()->get_descendants());
+                # Compound conjunctions such as tant-com. Example:
+                # tant a nivell nacional com internacional
+                # as on national level as on international
+                # ORIGINAL TREE: a ( tant/coord , nivell/sn ( nacional/s.a ( com/coord , internacional/grup.a ) ) )
+                # DESIRED TREE: a/AuxP ( nivell ( com/Coord ( tant/AuxY , nacional/Atr_Co , internacional/Atr_Co ) ) )
+                # Check that tant is leaf to prevent finding com as its dependent (which would lead to a cycle).
+                if($node->lemma() =~ m/^(tant|ja_sigui|no_només)$/ && $node->is_leaf() && scalar(@com)==1)
+                {
+                    my $com = $com[0];
+                    $node->set_parent($com);
+                    $node->set_afun('AuxY');
+                }
+                # Other cases than compound conjunctions.
+                elsif(scalar(@lswp)==1)
+                {
+                    my $first_conjunct = $lswp[0];
+                    $first_conjunct->wild()->{conjunct} = 1;
+                }
+                # Although in many coordinations the conjunct have all the same part of speech, it is not guaranteed:
+                # quines són/v funcions, si hi haurà/v especialitzacions, on estaran/v ubicats i/c altres aspectes/n
+                # So we cannot effectively check for matching types of conjuncts.
+                else
+                {
+                    my $conjuncts_found = 0;
+                    my $expected_comma = 0;
+                    for(my $i = $#left_siblings; $i>=0 && $i<=$#left_siblings; $i--)
                     {
-                        $rn->wild()->{conjunct} = 1;
+                        my $current = $left_siblings[$i];
+                        last if($expected_comma && $current->afun() ne 'AuxX');
+                        $expected_comma = 0;
+                        if($current->afun() ne 'AuxX')
+                        {
+                            $conjuncts_found++;
+                            $current->wild()->{conjunct} = 1;
+                            $expected_comma = 1;
+                        }
+                    }
+                    # If we found no conjuncts, it is not coordination. Example: parenthesis in
+                    # IC-V , i més si perd el_seu principal referent , Rafael_Ribó , serà
+                    # IC-V , and more if it loses its principal referee , Rafael_Ribó , will be
+                    if($conjuncts_found==0)
+                    {
+                        $node->wild()->{coordinator} = 0;
+                        $node->set_afun('AuxY');
                     }
                 }
             }
