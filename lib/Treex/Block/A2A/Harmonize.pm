@@ -1122,6 +1122,41 @@ sub validate_coap
 }
 
 #------------------------------------------------------------------------------
+# Some treebanks attach subordinating conjunctions to predicates of subordinate
+# clauses. This method makes them govern the predicates, as in PDT. Other
+# children of the predicate remain attached to the predicate. Exception: comma.
+#------------------------------------------------------------------------------
+sub raise_subordinating_conjunctions
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        if($node->afun() eq 'AuxC' && $node->is_leaf() && !$node->is_member())
+        {
+            my $parent = $node->parent();
+            unless($parent->is_root())
+            {
+                my $grandparent = $parent->parent();
+                # Is there a left neighbor and is it a comma?
+                my $ln = $node->get_left_neighbor();
+                my $comma = $ln && $ln->afun() eq 'AuxX' ? $ln : undef;
+                if($comma)
+                {
+                    $comma->set_parent($node);
+                }
+                $node->set_parent($grandparent);
+                $parent->set_parent($node);
+                # Both conjunction and its former parent keep their afuns but the is_member flag must be moved.
+                $node->set_is_member($parent->is_member());
+                $parent->set_is_member(0);
+            }
+        }
+    }
+}
+
+#------------------------------------------------------------------------------
 # Swaps node with its parent. The original parent becomes a child of the node.
 # All other children of the original parent become children of the node. The
 # node also keeps its original children.

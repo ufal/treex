@@ -5,14 +5,15 @@ use utf8;
 extends 'Treex::Block::A2A::Harmonize';
 
 sub process_zone {
-    my $self   = shift;
-    my $zone   = shift;
+    my $self = shift;
+    my $zone = shift;
     my $root = $self->SUPER::process_zone($zone, 'conll2009');
     $self->attach_final_punctuation_to_root($root);
     $self->restructure_coordination($root);
     # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
     # and with special care at places where prepositions and coordinations interact.
     $self->process_prep_sub_arg_cloud($root);
+    $self->raise_subordinating_conjunctions($root);
     $self->lift_noun_phrases($root);
     $self->check_afuns($root);
 }
@@ -67,6 +68,13 @@ sub deprel_to_afun
             {
                 $afun = 'AuxC';
                 ###!!! We would like to assign $node->get_children()[0]->set_afun('Adv'). But we should not do it at this moment because the child may be processed by deprel_to_afun() later.
+            }
+            elsif($node->lemma() eq 'que' && scalar($node->get_children())==0 && $ppos =~ m/^(adv|conj)$/)
+            {
+                # Example: més que suficients
+                # more than sufficient
+                # TREE: suficients/s.a ( més/spec ( que/c ) )
+                $afun = 'AuxY';
             }
             else
             {
@@ -452,6 +460,11 @@ sub deprel_to_afun
                 # Example: per a quatre veterinaris gironins
                 $afun = 'PrepArg';
             }
+            elsif($ppos eq 'conj')
+            {
+                # Example: com en la passada legislatura
+                $afun = 'SubArg';
+            }
             else
             {
                 $afun = 'NR'; ###!!! Where else does it occur?
@@ -570,6 +583,11 @@ sub catch_runaway_conjuncts
                         {
                             $node->set_parent($ln);
                             $rn->set_parent($ln);
+                            $rn->wild()->{conjunct} = 1;
+                        }
+                        # No left neighbors, two right siblings (conjunct and shared modifier).
+                        elsif(!$ln || $ln->ord() < $node->parent()->ord())
+                        {
                             $rn->wild()->{conjunct} = 1;
                         }
                     }
