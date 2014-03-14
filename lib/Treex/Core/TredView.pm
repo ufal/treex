@@ -538,6 +538,7 @@ sub precompute_value_line {
                 foreach my $node ( $root, $root->get_descendants ) {
                     if ( exists $node->{'alignment'} ) {
                         foreach my $ref ( @{ $node->get_attr('alignment') } ) {
+                            next if !defined $ref || ! defined $ref->{'counterpart.rf'};
                             push @{ $alignment{ $node->{id} } }, $self->treex_doc->get_node_by_id( $ref->{'counterpart.rf'} );
                             push @{ $alignment{ $ref->{'counterpart.rf'} } }, $node;
                         }

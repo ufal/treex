@@ -188,6 +188,7 @@ sub draw_arrows {
     my ( $rotate_prv_snt, $rotate_nxt_snt, $rotate_dfr_doc ) = ( 0, 0, 0 );
 
     foreach my $target_id (@$target_ids) {
+        next if !defined $target_ids || $target_id eq ""; # skip blank IDs
         # some alignment links do not have their type filled, default to generic alignment
         my $arrow_type = shift @$arrow_types // 'alignment';         
 
