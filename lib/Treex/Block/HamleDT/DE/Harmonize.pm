@@ -470,7 +470,7 @@ sub collect_coordination_members
     my @privatemod0;
     @members0 = grep {
         my $x = $_;
-        $x->afun() eq 'CoordArg' || $x->afun() eq 'AuxP' && grep { $_->afun() eq 'CoordArg' } ( $x->children() )
+        defined($x->afun()) && ($x->afun() eq 'CoordArg' || $x->afun() eq 'AuxP' && grep { defined($_->afun()) && $_->afun() eq 'CoordArg' } ( $x->children() ))
     } (@children);
     if (@members0)
     {
