@@ -22,6 +22,12 @@ has '+instead_undef' => ( default => "" );
 
 has instead_empty_tree => ( is => 'ro', isa => 'Str', default => '', documentation => 'What line to write instead of empty tree. Default is the empty string.' );
 
+has skip_nodes => (
+    isa => 'Str',
+    is => 'ro',
+    default => '',
+    documentation => 'Perl expression specifying which nodes should be skipped (not printed)',
+);
 
 # Change '\n', '\r', '\t'
 sub BUILDARGS {
@@ -58,6 +64,9 @@ sub _process_tree() {
     my ( $self, $tree ) = @_;
 
     my @nodes = $tree->get_descendants( { ordered => 1 } );
+    if ($self->skip_nodes) {
+        @nodes = grep {! eval($self->skip_nodes)} @nodes;
+    }
     if (!@nodes) {
       print { $self->_file_handle } $self->instead_empty_tree;
     } else {
@@ -99,8 +108,8 @@ Treex::Block::Write::AttributeSentences
   treex Read::Treex from=data.treex.gz Write::AttributeSentences to=- \
     language=cs layer=a attributes='form lemma tag parent->lemma' separator='\n' attr_sep='\t' 
 
-  # print wild attributes
-  treex layer=a attributes=wild_MyAttribute -- data.treex.gz
+  # print wild attributes of words with lemma ending with "man"
+  treex layer=a attributes=wild_MyAttribute skip_nodes='$_->lemma !~ /man$/' -- data.treex.gz
   
 =head1 DESCRIPTION
 
