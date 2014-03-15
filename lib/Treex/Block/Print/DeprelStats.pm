@@ -8,7 +8,7 @@ sub build_language { return log_fatal "Parameter 'language' must be given"; }
 has _deprelset => ( is => 'ro', default => sub { {} } );
 has _deprelex  => ( is => 'ro', default => sub { {} } );
 
-sub process_end
+sub process_anode
 {
     my $self      = shift;
     my $anode     = shift;
