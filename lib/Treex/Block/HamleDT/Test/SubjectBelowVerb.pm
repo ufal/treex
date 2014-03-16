@@ -14,6 +14,9 @@ sub process_anode {
                     $self->complain($anode);
 #                }
             }
+            else {
+                $self->praise($anode);
+            }
         }
     }
     return;

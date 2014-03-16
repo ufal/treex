@@ -5,8 +5,13 @@ extends 'Treex::Block::Test::BaseTester';
 
 sub process_anode {
     my ($self, $anode) = @_;
-    if ($anode->is_coap_root and not first {$_->is_member} $anode->get_children) {
-        $self->complain($anode);
+    if ($anode->is_coap_root) {
+        if (not first {$_->is_member} $anode->get_children) {
+            $self->complain($anode);
+        }
+        else {
+            $self->praise($anode);
+        }
     }
 }
 

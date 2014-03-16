@@ -27,6 +27,9 @@ sub process_anode
             $subject_found = 1;
         }
     }
+    if ($subject_found == 1) {
+        $self->praise($node);
+    }
 }
 
 1;

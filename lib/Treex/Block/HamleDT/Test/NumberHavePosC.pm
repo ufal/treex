@@ -6,8 +6,13 @@ extends 'Treex::Block::Test::BaseTester';
 sub process_anode {
     my ($self, $anode) = @_;
 
-    if ($anode->conll_deprel eq 'number' && $anode->tag !~ m/^C/) {
-        $self->complain($anode);
+    if ($anode->conll_deprel eq 'number') {
+        if ($anode->tag !~ m/^C/) {
+            $self->complain($anode);
+        }
+        else {
+            $self->praise($anode);
+        }
     }
 }
 

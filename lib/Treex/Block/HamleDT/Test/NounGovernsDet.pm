@@ -31,6 +31,10 @@ sub process_anode
         {
             $self->complain($node, $parent->form().'->'.$node->form());
         }
+        elsif($ppos =~ m/^(noun|adj)$/ && $pos =~ m/^(pronoun|num|art)$/)
+        {
+            $self->praise($node);
+        }
     }
 }
 
