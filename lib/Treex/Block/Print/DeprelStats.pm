@@ -37,13 +37,17 @@ sub process_end
     my $deprelex  = $self->_deprelex();
     my $n_types   = 0;
     my $n_tokens  = 0;
+    foreach my $tag ( keys( %{$deprelset} ) )
+    {
+        $n_types++;
+        $n_tokens += $deprelset->{$tag};
+    }
     foreach my $tag ( sort( keys( %{$deprelset} ) ) )
     {
         my $freq    = $deprelset->{$tag};
+        my $relfreq = $n_tokens ? $freq/$n_tokens : 0;
         my $example = $deprelex->{$tag};
-        print { $self->_file_handle() } ("$tag\t$freq\t$example\n");
-        $n_types++;
-        $n_tokens += $freq;
+        printf { $self->_file_handle() } ("$tag\t$freq\t%.5f\t$example\n", $relfreq);
     }
     print { $self->_file_handle() } ("TOTAL $n_types TAG TYPES FOR $n_tokens TOKENS\n");
 }
