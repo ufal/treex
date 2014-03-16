@@ -17,6 +17,13 @@ sub complain {
         "\n";
 }
 
+sub praise {
+    my ( $self, $node ) = @_;
+    print "OK", "\t", $self->_subscription,
+        "\t", $node->get_address,
+        "\n";
+}
+
 1;
 
 =over
