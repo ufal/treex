@@ -5,6 +5,7 @@ extends 'Treex::Block::Write::BaseTextWriter';
 
 sub build_language { return log_fatal "Parameter 'language' must be given"; }
 
+has attribute  => ( is => 'rw', default => 'conll_deprel' );
 has _deprelset => ( is => 'ro', default => sub { {} } );
 has _deprelex  => ( is => 'ro', default => sub { {} } );
 
@@ -14,7 +15,8 @@ sub process_anode
     my $anode     = shift;
     my $deprelset = $self->_deprelset();
     my $deprelex  = $self->_deprelex();
-    my $deprel    = $anode->conll_deprel();
+    #my $deprel    = $anode->conll_deprel();
+    my $deprel    = $anode->get_attr($self->attribute());
     $deprel = '' if ( !defined($deprel) );
     $deprelset->{$deprel}++;
 
@@ -56,7 +58,11 @@ Treex::Block::Print::DeprelStats
 
 Lists all encountered C<conll/deprel> tags with frequencies.
 
+The optional C<attribute> parameter can be used to collect afuns instead of conll deprels.
+In fact, the parameter makes this a pretty general block to collect value frequencies
+from any attribute of a-nodes.
+
 =cut
 
-# Copyright 2011 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011, 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
