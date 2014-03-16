@@ -18,8 +18,6 @@ sub process_anode {
     unless ($left->afun eq 'AuxG' || $right->afun eq 'AuxG') { 
 	    $self->complain($anode);
 	}
-	
-	
     }
 }
 

@@ -11,7 +11,6 @@ sub process_anode {
     my $afun = $node->afun;
     return if ($afun eq 'AuxC' or $afun eq 'AuxP' or $afun eq 'Coord' or $afun eq 'Apos');
     if ($node->get_echildren != 0) {
-	
         my $string = tree2string( $node );
         my $pomoc = $string;
         my $words;
@@ -35,7 +34,7 @@ sub process_anode {
 sub tree2string {
     my $node = shift;
 
-     # list
+    # list
     if ($node->children == 0) {
         return $node->afun()."=".$node->get_iset('pos')."@".$node->form();#."#".$node->ord();
     }

@@ -9,7 +9,7 @@ extends 'Treex::Block::Test::BaseTester';
 
 sub process_atree {
     my ( $self, $a_root ) = @_;
-   
+
     foreach my $anode ($a_root->get_children()) {
         if ($anode->afun =~ /^Aux[XK]/) {
             return;
@@ -20,8 +20,7 @@ sub process_atree {
     if ($subtrees[-1]->afun =~ /^Aux[XK]/) {
     	$self->complain($a_root);
     }
-           
-}
+
 
 # (C) 2012 Jindřich Libovický <jlibovicky@gmail.com>
 

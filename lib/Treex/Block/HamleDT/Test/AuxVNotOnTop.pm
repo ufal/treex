@@ -4,7 +4,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
 
-#Testing if there is not an auxiliary verb directly under the root
+# Testing if there is not an auxiliary verb directly under the root
 
 sub process_atree {
     my ( $self, $a_root ) = @_;
@@ -17,6 +17,6 @@ sub process_atree {
     }
 }
 
-#(C) 2012 Karel Bílek <kb@karelbilek.com>, Jindřich Libovický <jlibovicky@gmail.com>
+# (C) 2012 Karel Bílek <kb@karelbilek.com>, Jindřich Libovický <jlibovicky@gmail.com>
 
 1;

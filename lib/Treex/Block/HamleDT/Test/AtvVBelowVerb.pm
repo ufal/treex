@@ -5,13 +5,10 @@ extends 'Treex::Block::Test::BaseTester';
 
 sub process_anode {
     my ($self, $anode) = @_;
-      if (($anode->afun||'') eq 'AtvV') { # Atrv must be under Verb
+    if (($anode->afun||'') eq 'AtvV') { # Atrv must be under Verb
         foreach my $parent ($anode->get_eparents()) {
             if ($parent->get_attr('iset/pos') eq 'verb' ) {
-
-
-                    $self->complain($anode);
-
+                $self->complain($anode);
             }
         }
     }

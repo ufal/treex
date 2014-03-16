@@ -9,21 +9,19 @@ extends 'Treex::Block::Test::BaseTester';
 sub process_atree {
     my ( $self, $a_root ) = @_;
 
-
-    my $lastSubtree = ($a_root->get_descendants({ordered=>1}))[-1];
-    if ($lastSubtree->afun !~ /Aux[XK]/) {
+    my $last_subtree = ($a_root->get_descendants({ordered=>1}))[-1];
+    if ($last_subtree->afun !~ /Aux[XK]/) {
         return; # sentence does not have punctuation at all
     }
 
-
     # if it has punctuation at the end, test if it's AuxK
     foreach my $a_node  ($a_root->get_children()) {
-        if ($a_node->afun eq "AuxK") { 
+        if ($a_node->afun eq "AuxK") {
             return; # ending punctuation found => does not complain
         }
     }
-    
-    $self->complain($a_root);             
+
+    $self->complain($a_root);
 }
 
 # (C) 2012 Jindřich Libovický <jlibovicky@gmail.com>

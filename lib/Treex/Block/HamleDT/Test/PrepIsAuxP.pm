@@ -10,18 +10,24 @@ sub process_anode
     my $pos  = $node->get_iset('pos');
     my $afun = $node->afun();
     $afun = '' if(!defined($afun));
-    if($pos eq 'prep' && $afun ne 'AuxP')
-    {
-        # Germanic languages use specific prepositions to mark infinitives (en:to, de:zu, nl:te, da:at, sv:att).
-        # Such preposition governs the infinitive instead of a noun and should be labeled AuxC instead of AuxP.
-        my @children = $node->children();
-        my $nc = scalar(@children);
-        my $ok = $afun eq 'AuxC' && $nc==1 && $children[0]->match_iset('pos' => 'verb', 'verbform' => 'inf');
-        # Some prepositions in Germanic languages (English, Dutch) may act as verbal particles.
-        $ok = $ok || $afun eq 'AuxT';
-        unless($ok)
-        {
-            $self->complain($node, $node->form());
+    if ($pos eq 'prep') {
+        if ($afun ne 'AuxP') {
+            # Germanic languages use specific prepositions to mark infinitives (en:to, de:zu, nl:te, da:at, sv:att).
+            # Such preposition governs the infinitive instead of a noun and should be labeled AuxC instead of AuxP.
+            my @children = $node->children();
+            my $nc = scalar(@children);
+            my $ok = $afun eq 'AuxC' && $nc==1 && $children[0]->match_iset('pos' => 'verb', 'verbform' => 'inf');
+            # Some prepositions in Germanic languages (English, Dutch) may act as verbal particles.
+            $ok = $ok || $afun eq 'AuxT';
+            unless ($ok) {
+                $self->complain($node, $node->form());
+            }
+            else {
+                $self->praise($node);
+            }
+        }
+        else {
+            $self->praise($node);
         }
     }
 }
