@@ -33,6 +33,10 @@ This class just sets the English model C<conll_2007_small> as the default
 and defines a method for obtaining coarse-grained PoS tags
 (first two characters of PennTB-like tags).
 
+The default model is very small and good only for testing and demonstration
+purposes.
+Use e.g. C<model_name=conll_2007_best> instead to get good results.
+
 =head1 SEE ALSO
 
 L<Treex::Block::W2A::ParseMSTperl>
