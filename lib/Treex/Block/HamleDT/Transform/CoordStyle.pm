@@ -827,7 +827,7 @@ TODO
 
 =head1 SEE ALSO
 
-L<Treex::Block::HamleDT::SetSharedModifier>,
+L<Treex::Block::A2A::SetSharedModifier>,
 L<Treex::Block::HamleDT::SetCoordConjunction>
 
 

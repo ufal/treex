@@ -18,7 +18,7 @@ sub process_zone
     $self->check_afuns($a_root);
 
     $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($a_root->get_zone());
-    $self->get_or_load_other_block('HamleDT::SetSharedModifier')->process_zone($a_root->get_zone());
+    $self->get_or_load_other_block('A2A::SetSharedModifier')->process_zone($a_root->get_zone());
     $self->get_or_load_other_block('HamleDT::SetCoordConjunction')->process_zone($a_root->get_zone());
     $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
 }
