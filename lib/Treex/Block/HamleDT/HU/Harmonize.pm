@@ -22,7 +22,7 @@ sub process_zone {
 
     $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($a_root->get_zone());
     $self->get_or_load_other_block('A2A::SetSharedModifier')->process_zone($a_root->get_zone());
-    $self->get_or_load_other_block('HamleDT::SetCoordConjunction')->process_zone($a_root->get_zone());
+    $self->get_or_load_other_block('A2A::SetCoordConjunction')->process_zone($a_root->get_zone());
 }
 
 
