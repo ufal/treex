@@ -75,6 +75,15 @@ sub copy_subtree {
         $target_node->set_src_tnode($source_node);
         $target_node->set_t_lemma_origin('clone');
 
+        # create polarity - for negated nodes
+        my $neg = $source_node->get_attr('gram/negation');
+        if (defined $neg && $neg eq "neg1") {
+          # create AMR auxiliary node indicating negation
+          my $negnode = $target_node->create_child();
+          $negnode->set_attr('t_lemma', "-");
+          $negnode->wild->{'modifier'} = "polarity";
+        }
+
         copy_subtree( $source_node, $target_node, $src2tgt );
     }
 }
