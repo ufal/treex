@@ -1,4 +1,5 @@
-package Treex::Block::T2TAMR::CopyTtree;
+package Treex::Block::T2TAMR::CreateTAMRfromT;
+# usage: treex Read::Treex from=csen.merged.treex.gz T2TAMR::CreateTAMRfromT language=cs Write::Treex to=csen.merged.with_tamr.treex.gz
 use Moose;
 use Unicode::Normalize;
 use Treex::Core::Common;
@@ -46,6 +47,29 @@ sub process_document {
 
         copy_subtree( $source_root, $target_root, \%src2tgt );
         $target_root->set_src_tnode($source_root);
+    }
+
+    # copying coreference links
+    foreach my $bundle ( $document->get_bundles() ) {
+        print STDERR "Copying coref for ", $bundle->id(), "\n";
+        my $target_zone = $bundle->get_zone( $self->language, $self->selector );
+        my $target_root = $target_zone->get_ttree();
+        foreach my $t_node ( $target_root->get_descendants ) {
+            my $src_tnode  = $t_node->src_tnode;
+            next if !defined $src_tnode;
+              # can happen for e.g. the generated polarity node
+            my $coref_gram = $src_tnode->get_deref_attr('coref_gram.rf');
+            my $coref_text = $src_tnode->get_deref_attr('coref_text.rf');
+            my @nodelist = ();
+            if ( defined $coref_gram ) {
+                push @nodelist, map { $src2tgt{'nodemap'}->{$_} } @$coref_gram;
+            }
+            if ( defined $coref_text ) {
+                push @nodelist, map { $src2tgt{'nodemap'}->{$_} } @$coref_text;
+            }
+            $t_node->set_deref_attr( 'coref_text.rf', \@nodelist )
+              if 0< scalar(@nodelist);
+        }
     }
 }
 
