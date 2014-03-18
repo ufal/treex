@@ -69,6 +69,7 @@ sub convert_tags
     foreach my $node ( $root->get_descendants() )
     {
         $self->convert_tag( $node, $tagset );
+        $self->set_pdt_tag( $node );
     }
 }
 
@@ -138,8 +139,22 @@ sub convert_tag
     my $conll_feat = $node->conll_feat();
     my $src_tag = $tagset eq 'conll2009' ? "$conll_pos\t$conll_feat" : $tagset =~ m/^(conll|tamiltb)/ ? "$conll_cpos\t$conll_pos\t$conll_feat" : $tag;
     my $f = tagset::common::decode($driver, $src_tag);
-    my $pdt_tag = tagset::cs::pdt::encode($f, 1);
     $node->set_iset($f);
+}
+
+#------------------------------------------------------------------------------
+# Interset is the main means of storing part of speech and morphosyntactic
+# features of a node. The tag attribute could be left empty but we are
+# currently using it to provide the morphosyntactic information in a form that
+# the users of the Czech PDT will be familiar with (even though many feature
+# values will not be visible in a Czech tag).
+#------------------------------------------------------------------------------
+sub set_pdt_tag
+{
+    my $self   = shift;
+    my $node   = shift;
+    my $f = $node->get_iset_structure();
+    my $pdt_tag = tagset::cs::pdt::encode($f, 1);
     $node->set_tag($pdt_tag);
 }
 

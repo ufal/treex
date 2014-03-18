@@ -587,6 +587,10 @@ sub shape_prague
         $modifier->set_is_member(0);
         $modifier->set_is_shared_modifier(1);
     }
+    # Martin's transformations might also need the flag whether a node is the coordinating conjunction that serves as the head of the coordination.
+    # This flag is currently not saved (it is a wild attribute, not included in the Treex XML schema), so it will only be visible for the rest of the current scenario.
+    # Thus any scenario that reads the harmonized trees from file and needs the flag should include the block A2A::SetCoordConjunction.
+    $croot->wild()->{is_coord_conjunction} = 1;
     return $croot;
 }
 
@@ -606,6 +610,8 @@ sub detect_alpino
 {
     my $self = shift;
     my $node = shift; # suspected root node of coordination
+    # Root of the tree cannot be the head of coordination structure.
+    return if($node->is_root());
     # Are there any children that are conjuncts?
     my @children = $node->children();
     my @conjuncts = grep {$_->wild()->{conjunct}} (@children);
