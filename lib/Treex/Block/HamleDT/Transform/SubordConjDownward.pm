@@ -36,6 +36,11 @@ Move a subordinating conjunction below the node (usually a verb) which
 it has governed. In the case of complex conjunctions, the additional
 AuxC children are kept below the main AuxC node.
 
+TODO: yields a lot of warnings:
+"A node cannot participate in two swaps. The second attempt is skipped."
+(and then the conjunction is departed from its original child which becomes only
+its sibling...)
+
 =back
 
 =cut
