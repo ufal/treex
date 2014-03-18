@@ -12,7 +12,7 @@ my %afun2type = (
     # ordinary afuns
     Sb   => \&{Sb},
     Obj  => \&{Obj},
-    Pnom => \&{Pnom},
+    Pnom => \&{PnomAtv},
     AuxV => \&{AuxV},
     Pred => 'root',
     AuxP => \&{AuxP},
@@ -27,8 +27,8 @@ my %afun2type = (
     ExD        => 'remnant',
     Apos       => 'appos',    # ?
     Apposition => 'appos',    # ???
-    Atv        => \&{Atv},
-    AtvV       => \&{Atv},
+    Atv        => \&{PnomAtv},
+    AtvV       => \&{PnomAtv},
     AtrAtr     => \&{Atr},
     AtrAdv     => \&{Atr},
     AdvAtr     => \&{Atr},
@@ -170,13 +170,14 @@ sub Obj {
     return $type;
 }
 
-# probably TODO
-sub Pnom {
+# Pnom or Atv (Pnom will hopefully get a different label in the subsequent
+# StanfordCopulas block)
+sub PnomAtv {
     my ( $self, $anode ) = @_;
 
     my $type = 'comp';
 
-    if ( $anode->match_iset( 'pos' => '~adj' ) ) {
+    if ( $anode->match_iset( 'pos' => '~adj|verb' ) ) {
         $type = 'xcomp';
     }
     elsif ( $anode->match_iset( 'pos' => '~noun') ) {
@@ -212,22 +213,6 @@ sub AuxP {
         # compound preps: the "auxiliaries" are thought to be parts of a
         # multi word expression
         $type = 'mwe';
-    }
-
-    return $type;
-}
-
-# probably TODO
-sub Atv {
-    my ( $self, $anode ) = @_;
-
-    my $type = 'comp';
-
-    if ( $anode->match_iset( 'pos' => '~adj' ) ) {
-        $type = 'xcomp';
-    }
-    elsif ( $anode->match_iset( 'pos' => '~verb' ) ) {
-        $type = 'partmod';
     }
 
     return $type;
