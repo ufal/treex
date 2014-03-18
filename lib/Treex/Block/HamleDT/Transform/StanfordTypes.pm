@@ -15,7 +15,7 @@ my %afun2type = (
     Pnom => \&{Pnom},
     AuxV => \&{AuxV},
     Pred => 'root',
-    AuxP => 'adpmod',
+    AuxP => 'case',
     Atr  => \&{Atr},
     Adv  => \&{Adv},
     Coord => 'cc',
@@ -24,7 +24,7 @@ my %afun2type = (
     NR         => 'dep',
     AuxA       => 'det',      # not always used in the harmonization!
     Neg        => 'neg',      # not always used in the harmonization!
-    ExD        => 'dep',      # TODO? \&{ExD},
+    ExD        => 'remnant',
     Apos       => 'appos',    # ?
     Apposition => 'appos',    # ???
     Atv        => \&{Atv},
@@ -40,7 +40,7 @@ my %afun2type = (
     Ante       => 'dep',      # only in ar;
 
     # some crazy Aux*
-    AuxC => 'mark',    # or complm? or ... ???
+    AuxC => 'mark',
     AuxG => 'dep', # usually already marked as 'punct' from MarkPunct
     AuxK => 'dep', # usually already marked as 'punct' from MarkPunct
     AuxX => 'dep', # usually already marked as 'punct' from MarkPunct
@@ -103,28 +103,11 @@ sub process_anode {
         $type ne 'mark' &&
         $anode->get_children()
     ) {
-        $type = 'adpmod';
+        $type = 'case';
     }
     elsif ( $self->parent_is_adposition($anode)) {
-        # adpositional objects
-        if ( $anode->match_iset( 'pos' => '~noun' ) ) {
-            $type = 'adpobj';
-        }
-        # adpositional complements
-        else {
-           $type = 'adpcomp';
-        }
+        # TODO after rehanging the adpositions this will not hapen any more!
     }
-
-    # partmod
-#     elsif ( $anode->match_iset( 'pos' => '~verb' ) &&
-#         $self->get_simplified_verbform($anode) eq 'part' &&
-#         $type !~ /^aux/ &&
-#         # should nto be a subordinated clause
-#         ! (grep { $_->afun eq 'AuxC' } $anode->get_children())
-#     ) {
-#         $type = 'partmod';
-#     }
 
     # MARK CONJUNCTS
     # the first conjunct (which is the head of the coordination) is NOT marked
@@ -198,7 +181,7 @@ sub Pnom {
     my $type = 'comp';
 
     if ( $anode->match_iset( 'pos' => '~adj' ) ) {
-        $type = 'acomp';
+        $type = 'xcomp';
     }
     elsif ( $anode->match_iset( 'pos' => '~noun') ) {
         $type = 'obj';
@@ -227,7 +210,7 @@ sub Atv {
     my $type = 'comp';
 
     if ( $anode->match_iset( 'pos' => '~adj' ) ) {
-        $type = 'acomp';
+        $type = 'xcomp';
     }
     elsif ( $anode->match_iset( 'pos' => '~verb' ) ) {
         $type = 'partmod';
@@ -261,11 +244,8 @@ sub Atr {
             if ( $self->get_simplified_verbform($anode) eq 'fin' ) {
                 $type = 'rcmod';
             }
-            elsif ( $self->get_simplified_verbform($anode) eq 'part' ) {
-                $type = 'partmod';
-            }
-            else { # inf
-                $type = 'infmod';
+            else {
+                $type = 'vmod';
             }
         }
 
@@ -273,34 +253,28 @@ sub Atr {
     # verb modifiers
     elsif ( $self->parent_is_adjective($anode) ) {
         if ( $anode->match_iset( 'pos' => '~adj' ) ) {
-            $type = 'acomp';
+            $type = 'xcomp';
         }
     }
     # verb modifiers
     elsif ( $self->parent_is_verb($anode) ) {
         if ( $anode->match_iset( 'pos' => '~adj' ) ) {
-            $type = 'acomp';
+            $type = 'xcomp';
         }
     }
 
     # possessives
-    if ( $anode->match_iset( 'poss' => '~poss' ) ) {
-        $type = 'poss';
-    }
+    #if ( $anode->match_iset( 'poss' => '~poss' ) ) {
+    #    $type = 'poss';
+    #}
     # numerals
     if ( $anode->match_iset( 'pos' => '~num' ) ) {
-        $type = 'num';
-        #if ( $self->parent_is_numeral($anode) ) {
-        #    $type = 'number';
-        #}
+        $type = 'nummod';
     }
     # advmod
-    if ( $anode->match_iset( 'poss' => '~adv' ) ) {
+    if ( $anode->match_iset( 'pos' => '~adv' ) ) {
         $type = 'advmod';
     }
-    #elsif ( $self->parent_is_numeral($anode) ) {
-    #    $type = 'quantmod';
-    #}
 
     return $type;
 }
@@ -327,21 +301,8 @@ sub Adv {
             $type = 'amod';
         }
         elsif ( $self->parent_is_verb($anode) ) {
-            $type = 'acomp';
+            $type = 'xcomp';
         }
-    }
-
-    return $type;
-}
-
-# TODO
-sub ExD {
-    my ($self, $anode) = @_;
-
-    my $type = 'dep';
-
-    if ( $anode->get_parent()->is_root() ) {
-        $type = 'root';
     }
 
     return $type;
@@ -357,9 +318,9 @@ my %simplified_verbform = (
     fin => 'fin',
     inf => 'inf',
     sup => 'inf',
-    part => 'part',
-    trans => 'part',
-    ger => 'part',
+    part => 'inf',
+    trans => 'inf',
+    ger => 'inf',
 );
 
 sub get_simplified_verbform {
@@ -398,44 +359,12 @@ sub parent_is_passive_verb {
     }
 }
 
-sub parent_is_adposition {
-    my ($self, $anode) = @_;
-
-    my $parent = $anode->get_parent();
-    if ( defined $parent &&
-        (
-            $parent->match_iset( 'pos' => '~prep' )
-            ||
-            $parent->afun eq 'AuxP'
-        )
-    ) {
-        return 1;
-    }
-    else {
-        return 0;
-    }
-}
-
 sub parent_is_noun {
     my ($self, $anode) = @_;
 
     my $parent = $anode->get_parent();
     if ( defined $parent &&
         $parent->match_iset( 'pos' => '~noun' )
-    ) {
-        return 1;
-    }
-    else {
-        return 0;
-    }
-}
-
-sub parent_is_numeral {
-    my ($self, $anode) = @_;
-
-    my $parent = $anode->get_parent();
-    if ( defined $parent &&
-        $parent->match_iset( 'pos' => '~num' )
     ) {
         return 1;
     }
