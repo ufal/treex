@@ -25,7 +25,7 @@ has 'pos' => (
 
 has 'source_lexeme' => (
     is      => 'rw',
-    isa     => 'Ref',
+#    isa     => 'Ref',
     trigger => \&_set_source_lexeme_trigger,
     documentation => 'part of speech, single-letter PDT m-layer convention',
 );
@@ -68,8 +68,10 @@ sub _set_source_lexeme_trigger {
     if ( defined $old_source ) {
         delete $old_source->_derived_lexemes->{$self};
     }
-    $new_source->_derived_lexemes->{ $self } = $self;
-    weaken( $new_source->_derived_lexemes->{ $self} );
+    if (defined $new_source) {
+        $new_source->_derived_lexemes->{ $self } = $self;
+        weaken( $new_source->_derived_lexemes->{ $self} );
+    }
 }
 
 sub get_derived_lexemes {

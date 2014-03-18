@@ -108,7 +108,7 @@ sub _number2id {
 }
 
 sub load {
-    my ( $self, $filename ) = @_;
+    my ( $self, $filename, $argref ) = @_;
 
     if ( $filename =~ /\.slex$/ ) {
 
@@ -138,8 +138,11 @@ sub load {
         my %derived_number_to_source_number;
 
         open my $F,'<:utf8',$filename or die $!;
+        my $linenumber;
         while (<$F>) {
             chomp;
+            $linenumber++;
+            last if $argref and $argref->{limit} and $argref->{limit} < $linenumber;
             my ($number, $lemma, $mlemma, $pos, $source_lexeme_number, $deriv_type, $lexeme_creator, $derivation_creator) = split /\t/;
             my $new_lexeme = $self->create_lexeme({lemma => $lemma,
                                                    mlemma => $mlemma,
@@ -162,7 +165,12 @@ sub load {
         foreach my $derived_number (keys %derived_number_to_source_number) {
             my $derived_lexeme =  $self->_lexemes->[$derived_number];
             my $source_lexeme = $self->_lexemes->[$derived_number_to_source_number{$derived_number}];
-            $derived_lexeme->set_source_lexeme($source_lexeme);
+            if ($source_lexeme) {
+                $derived_lexeme->set_source_lexeme($source_lexeme);
+            }
+            else {
+                log_warn("Non-existent numerical reference to source lexeme: $derived_number_to_source_number{$derived_number}");
+            }
         }
 
         return $self;

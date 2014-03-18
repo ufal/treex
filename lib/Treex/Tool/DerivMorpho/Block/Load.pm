@@ -8,12 +8,19 @@ has file => (
     documentation => q(file name to load),
 );
 
+has limit => (
+    is            => 'ro',
+    isa           => 'Int',
+    documentation => 'maximum number of lexemes to load (risky because of forward links)',
+);
+
+
 use Treex::Tool::DerivMorpho::Dictionary;
 
 sub process_dictionary {
     my ($self, $dict) = @_;
     $dict = Treex::Tool::DerivMorpho::Dictionary->new;
-    $dict->load($self->file);
+    $dict->load($self->file,{limit=>$self->limit});
     return $dict;
 }
 
