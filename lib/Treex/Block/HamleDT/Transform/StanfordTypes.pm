@@ -104,7 +104,7 @@ sub process_anode {
     ) {
         my $parent = $anode->get_parent();
         if ( defined $parent &&
-            (parent->match_iset('pos', '~prep') || $parent->afun eq 'AuxP')
+            ($parent->match_iset('pos', '~prep') || $parent->afun eq 'AuxP')
         ) {
             # compound preps: the "auxiliaries" are thought to be parts of a
             # multi word expression
