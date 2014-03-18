@@ -9,6 +9,7 @@ extends 'Treex::Block::HamleDT::Harmonize';
 #W2A::EN::SetAfunAuxCPCoord
 #W2A::FixAuxLeaves
 #W2A::FixNonleafAuxC
+#HamleDT::RehangModalVerbs
 
 sub process_zone
 {
@@ -22,8 +23,11 @@ sub process_zone
     # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
     # and with special care at places where prepositions and coordinations interact.
     $self->process_prep_sub_arg_cloud($root);
+    # "for someone to do something" must be fixed before raising subordinating conjunctions because the procedure assumes the original layout.
+    $self->fix_for_someone_to_do_something($root);
     $self->raise_subordinating_conjunctions($root);
-    $self->fix_auxiliary_verbs($root);
+    ###!!! Tohle zatím funguje divně a mrzačí to koordinace.
+    ###!!!$self->fix_auxiliary_verbs($root);
     $self->check_afuns($root);
 }
 
@@ -58,7 +62,17 @@ sub deprel_to_afun
         # weeks/AMOD ago, very/AMOD unwise
         elsif($deprel eq 'AMOD')
         {
-            $afun = 'Adv';
+            # Special case: about 25 %
+            # TREE: % ( about/NMOD ( 25/AMOD ) )
+            # Here it is a prepositional phrase and we want it to be treated as such.
+            if($ppos eq 'prep')
+            {
+                $afun = 'PrepArg';
+            }
+            else
+            {
+                $afun = 'Adv';
+            }
         }
         # Coordinating conjunction that does not head coordination. This could be the first token of the sentence (deficient sentential coordination).
         # Most frequent words: But, And, or, and, not
@@ -201,9 +215,18 @@ sub deprel_to_afun
             {
                 $afun = 'Adv';
             }
-            else
+            elsif($node->get_iset('pos') =~ m/^(prep|conj)$/)
             {
                 $afun = 'AuxC';
+            }
+            elsif($parent->lemma() eq 'be')
+            {
+                # may ( be/VC ( difficult/VMOD ) )
+                $afun = 'Pnom';
+            }
+            else ###!!! ??? investigate!
+            {
+                $afun = 'Adv';
             }
         }
         $node->set_afun($afun);
@@ -267,9 +290,13 @@ sub distinguish_subordinators_from_prepositions
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        # We cannot be sure with the following lemmas so we do not change them: as, for, after, since, before, until, in, with, at, like, from, by, on, except, of, out, about, over, worth, lest, without, during, under, 'til
+        # Sometimes the borderline between prepositions and conjunctions is fuzzy (that's why they gave them one tag after all).
+        # We cannot be sure with the following lemmas (all of them occurred with the VMOD deprel tag) so we do not change them:
+        # for, after, since, before, until, in, with, at, like, from, by, on, except, of, out, about, over, worth, lest, without, during, under, 'til
+        my $lemma = $node->lemma();
         if($node->get_iset('pos') eq 'prep' &&
-           $node->lemma() =~ m/^(that|if|because|while|whether|although|than|though|so|unless|once|whereas|albeit|but)$/)
+           ($lemma =~ m/^(that|if|because|while|whether|although|than|though|so|unless|once|whereas|albeit|but|as)$/ ||
+            $node->conll_deprel() eq 'VMOD' && $lemma =~ m/^(before|after|since|until|except)$/))
         {
             $node->set_iset('pos' => 'conj', 'subpos' => 'sub');
             $self->set_pdt_tag($node);
@@ -303,6 +330,41 @@ sub detect_coordination
 
 
 #------------------------------------------------------------------------------
+# Construction type: they have been desperate for the US to rejoin the group
+# ORIGINAL TREE: desperate ( rejoin/AMOD ( for/VMOD, US/SBJ, to/VMOD, group/OBJ ) )
+# DESIRED TREE: desperate ( to/AuxC ( rejoin/Obj ( for/AuxP ( US/Sb ), group/Obj ) ) )
+#------------------------------------------------------------------------------
+sub fix_for_someone_to_do_something
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        if(lc($node->form()) eq 'for' && $node->is_leaf() && $node->parent()->get_iset('pos') eq 'verb')
+        {
+            my $verb = $node->parent();
+            my @children = $verb->children();
+            my ($to) = grep {$_->form() eq 'to'} (@children);
+            my $subject = $node->get_right_neighbor();
+            ###!!! Pozor, podmět taky může být koordinace, s tím tady zatím nepočítáme!
+            if($to && $subject && $subject->afun() eq 'Sb')
+            {
+                my $grandparent = $verb->parent();
+                $node->set_afun('AuxP');
+                $subject->set_parent($node);
+                $to->set_parent($grandparent);
+                $to->set_afun('AuxC');
+                $verb->set_parent($to);
+                $verb->set_afun('Obj');
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Adapted from Martin Popel's W2A::EN::RehangConllToPdtStyle.
 #------------------------------------------------------------------------------
 sub fix_auxiliary_verbs
@@ -313,11 +375,14 @@ sub fix_auxiliary_verbs
     foreach my $node (@nodes)
     {
         my $raise = 0;
+        next if($node->is_coap_root());
         my @eparents = $node->get_eparents();
         if(scalar(@eparents)>=1)
         {
             my $eparent = $eparents[0];
+            next unless($eparent);
             my $eplemma = $eparent->lemma();
+            next unless($eplemma);
             # We want to switch the auxiliary verb "be", e.g.:
             # What are you doing(deprel=VC, tag=VBG, orig_parent=are)
             # It was done(deprel=VC, tag=VBN, orig_parent=was)
