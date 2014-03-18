@@ -235,7 +235,7 @@ sub Atr {
     # and I do not nest the ifs
     
     # noun modifiers
-    if ( $self->parent_is_noun($anode) ) {
+    if ( $self->parent_has_pos($anode, 'noun') ) {
         if ( $anode->match_iset( 'pos' => '~noun' ) ) {
             $type = 'nmod';
         }
@@ -256,13 +256,13 @@ sub Atr {
 
     }
     # verb modifiers
-    elsif ( $self->parent_is_adjective($anode) ) {
+    elsif ( $self->parent_has_pos($anode, 'adj') ) {
         if ( $anode->match_iset( 'pos' => '~adj' ) ) {
             $type = 'xcomp';
         }
     }
     # verb modifiers
-    elsif ( $self->parent_is_verb($anode) ) {
+    elsif ( $self->parent_has_pos($anode, 'verb') ) {
         if ( $anode->match_iset( 'pos' => '~adj' ) ) {
             $type = 'xcomp';
         }
@@ -274,7 +274,11 @@ sub Atr {
     #}
     # numerals
     if ( $anode->match_iset( 'pos' => '~num' ) ) {
-        $type = 'nummod';
+        if ( $self->parent_has_pos($anode, 'num') ) {
+            $type = 'compmod';
+        } else {
+            $type = 'nummod';
+        }
     }
     # advmod
     if ( $anode->match_iset( 'pos' => '~adv' ) ) {
@@ -297,15 +301,15 @@ sub Adv {
         $type = 'npadvmod';
     }
     elsif ( $anode->match_iset( 'pos' => '~verb' ) &&
-        $self->parent_is_verb($anode)
+        $self->parent_has_pos($anode, 'verb')
     ) {
         $type = 'advcl';
     }
     elsif ( $anode->match_iset( 'pos' => '~adj' ) ) {
-        if ( $self->parent_is_noun($anode) ) {
+        if ( $self->parent_has_pos($anode, 'noun') ) {
             $type = 'amod';
         }
-        elsif ( $self->parent_is_verb($anode) ) {
+        elsif ( $self->parent_has_pos($anode, 'verb') ) {
             $type = 'xcomp';
         }
     }
@@ -338,18 +342,6 @@ sub get_simplified_verbform {
     return $simplified_verbform{$verbform} // 'fin';
 }
 
-sub parent_is_verb {
-    my ($self, $anode) = @_;
-
-    my $parent = $anode->get_parent();
-    if ( defined $parent && $parent->match_iset( 'pos' => '~verb' )) {
-        return 1;
-    }
-    else {
-        return 0;
-    }
-}
-
 sub parent_is_passive_verb {
     my ($self, $anode) = @_;
 
@@ -364,26 +356,12 @@ sub parent_is_passive_verb {
     }
 }
 
-sub parent_is_noun {
-    my ($self, $anode) = @_;
+sub parent_has_pos {
+    my ($self, $anode, $pos) = @_;
 
     my $parent = $anode->get_parent();
     if ( defined $parent &&
-        $parent->match_iset( 'pos' => '~noun' )
-    ) {
-        return 1;
-    }
-    else {
-        return 0;
-    }
-}
-
-sub parent_is_adjective {
-    my ($self, $anode) = @_;
-
-    my $parent = $anode->get_parent();
-    if ( defined $parent &&
-        $parent->match_iset( 'pos' => '~adj' )
+        $parent->match_iset( 'pos' => '~' . $pos )
     ) {
         return 1;
     }
