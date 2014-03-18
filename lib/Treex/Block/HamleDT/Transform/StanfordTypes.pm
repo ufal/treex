@@ -127,7 +127,7 @@ sub Sb {
 
     my $type = 'subj';
 
-    if ( $anode->match_iset( 'pos' => '~noun' ) ) {
+    if ( $anode->match_iset( 'pos' => '~noun|adj|num' ) ) {
         $type = 'nsubj';
         if ( $self->parent_is_passive_verb($anode)) {
             $type = 'nsubjpass';
@@ -149,7 +149,7 @@ sub Obj {
 
     my $type = 'comp';
 
-    if ( $anode->match_iset( 'pos' => '~noun' ) ) {
+    if ( $anode->match_iset( 'pos' => '~noun|adj|num' ) ) {
         $type = 'obj';
         # elsif ( $anode->match_iset( case => '~acc' ) ) {
         #   $type = 'dobj';
