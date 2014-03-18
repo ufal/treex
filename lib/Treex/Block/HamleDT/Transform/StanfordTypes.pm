@@ -15,7 +15,7 @@ my %afun2type = (
     Pnom => \&{Pnom},
     AuxV => \&{AuxV},
     Pred => 'root',
-    AuxP => 'case',
+    AuxP => \&{AuxP},
     Atr  => \&{Atr},
     Adv  => \&{Adv},
     Coord => 'cc',
@@ -49,7 +49,7 @@ my %afun2type = (
     AuxO => \&{Adv},
     AuxE => 'dep',   # only in ar(?)
     AuxM => 'dep',   # only in ar(?)
-    AuxY => \&{Adv}, # it seems to be labeled e.g. as advmod by the Stanford parser
+    AuxY => \&{AuxY},
     AuxZ => \&{Adv}, # it seems to be labeled e.g. as advmod by the Stanford parser
 );
 
@@ -102,16 +102,7 @@ sub process_anode {
     elsif ( $anode->match_iset( 'pos' => '~prep' ) &&
         $type ne 'mark'
     ) {
-        my $parent = $anode->get_parent();
-        if ( defined $parent &&
-            ($parent->match_iset('pos', '~prep') || $parent->afun eq 'AuxP')
-        ) {
-            # compound preps: the "auxiliaries" are thought to be parts of a
-            # multi word expression
-            $type = 'mwe';
-        } else {
-           $type = 'case';
-        }
+       $type = $self->AuxP($anode); 
     }
 
     # MARK CONJUNCTS
@@ -203,6 +194,24 @@ sub AuxV {
 
     if ( $self->parent_is_passive_verb($anode) ) {
         $type = 'auxpass';
+    }
+
+    return $type;
+}
+
+sub AuxP {
+    my ($self, $anode) = @_;
+
+    my $type = 'case';
+
+    # compound preps
+    my $parent = $anode->get_parent();
+    if ( defined $parent &&
+        ($parent->match_iset('pos', '~prep') || $parent->afun eq 'AuxP')
+    ) {
+        # compound preps: the "auxiliaries" are thought to be parts of a
+        # multi word expression
+        $type = 'mwe';
     }
 
     return $type;
@@ -314,6 +323,23 @@ sub Adv {
         }
     }
 
+    return $type;
+}
+
+sub AuxY {
+    my ($self, $anode) = @_;
+
+    my $type;
+    
+    my $parent = $anode->get_parent();
+    if ( defined $parent && $parent->afun =~ /^Aux[XY]$/) {
+        # compound AuxY
+        $type = 'mwe';
+    } else {
+        # it seems to be labeled e.g. as advmod by the Stanford parser
+        $type = $self->Adv($anode);
+    }
+    
     return $type;
 }
 
