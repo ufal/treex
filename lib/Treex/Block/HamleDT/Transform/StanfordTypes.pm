@@ -100,13 +100,16 @@ sub process_anode {
 
     # adpositions (some adpositions are AuxC and should stay mark)
     elsif ( $anode->match_iset( 'pos' => '~prep' ) &&
-        $type ne 'mark' &&
-        $anode->get_children()
+        $type ne 'mark'
     ) {
-        $type = 'case';
-    }
-    elsif ( $self->parent_is_adposition($anode)) {
-        # TODO after rehanging the adpositions this will not hapen any more!
+        my $parent = $anode->get_parent();
+        if ( defined $parent && $parent->match_iset('pos', '~prep')) {
+            # compound preps: the "auxiliaries" are thought to be parts of a
+            # multi word expression
+            $type = 'mwe';
+        } else {
+           $type = 'case';
+        }
     }
 
     # MARK CONJUNCTS
