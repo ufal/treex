@@ -13,6 +13,33 @@ has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
 # TODO: copy attributes in a cleverer way
 my @ATTRS_TO_COPY = qw(ord t_lemma functor);
 
+  # simply use the following in place of AMR modifier
+my %modifier_is_ftor = map {($_, 1)} qw(COORD APOS PAR DENOM VOCAT);
+  # deterministically map the following
+my %modifier_from_ftor = qw(
+ACT  	ARG0
+PAT  	ARG1
+ADDR 	ARG2
+ORIG 	ARG3
+EFF  	ARG4
+TWHEN	time
+THL  	duration
+DIR1 	source
+DIR3 	direction
+DIR2 	location
+LOC  	location
+BEN  	beneficiary
+ACMP 	accompanier
+MANN 	manner
+AIM  	purpose
+CAUS 	cause
+MEANS	instrument
+APP  	poss
+CMP  	compared-to
+RSTR 	mod
+EXT  	scale
+);
+
 sub _build_source_selector {
     my ($self) = @_;
     return $self->selector;
@@ -94,7 +121,7 @@ sub copy_subtree {
         $target_node->set_attr('t_lemma', $varname."/".$tlemma);
 
         # the original functor serves as 
-        $target_node->wild->{'modifier'} = $source_node->get_attr('functor');
+        $target_node->wild->{'modifier'} = make_default_modifier($source_node);
 
         $target_node->set_src_tnode($source_node);
         $target_node->set_t_lemma_origin('clone');
@@ -111,6 +138,40 @@ sub copy_subtree {
         copy_subtree( $source_node, $target_node, $src2tgt );
     }
 }
+
+sub make_default_modifier {
+  # given a t-node, maps its functor to the AMR modifier using Zdenka's
+  # heuristics
+  my $node = shift;
+  my $ftor = $node->get_attr('functor');
+
+  # don't translate some functors
+  return $ftor if $modifier_is_ftor{$ftor};
+
+  if ($node->get_attr('is_member')) {
+    # this should be an op1, op2, ...
+    # process the whole coordination at once
+    my $parent = $node->parent;
+    if (!defined $node->wild->{'AMR_op_number'}) {
+      # walk all members in the coord
+      my $i = 1;
+      foreach my $sibl ($parent->get_coap_members({direct_only=>1, ordered=>1})) {
+        $sibl->wild->{'AMR_op_number'} = $i;
+        $i++;
+      }
+    }
+    my $opnr = $node->wild->{'AMR_op_number'};
+    return "op".$opnr;
+  }
+
+  my $modif = $modifier_from_ftor{$ftor};
+  return $modif if defined $modif; # use the default mapping
+
+  # final options
+  return "time" if $ftor =~ /^T/;
+  return "ARGm";
+}
+
 
 sub firstletter {
   my $str = shift;
