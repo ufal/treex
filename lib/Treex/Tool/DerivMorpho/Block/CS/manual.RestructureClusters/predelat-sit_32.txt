@@ -1,0 +1,44 @@
+﻿% vymazat ohvězdičkovamé řádky!
+% SPRÁVNÉ ŘEŠENÍ: A-ý --> N-ec, A-ý --> V-ět
+
+
+---------------------------------
+12 GROUPS FOR RULE COMBINATION: A-ý --> N-ec, V-ět --> N-ec
+
+hladový	hladovec	A-ý --> N-ec		
+hladovět	hladovec	V-ět --> N-ec		
+
+krvavý	krvavec	A-ý --> N-ec		
+krvavět	krvavec	V-ět --> N-ec		
+
+lenivý	lenivec	A-ý --> N-ec		
+lenivět	lenivec	V-ět --> N-ec		
+
+pitomý	pitomec	A-ý --> N-ec		
+pitomět	pitomec	V-ět --> N-ec		
+
+plesnivý	plesnivec	A-ý --> N-ec		
+plesnivět	plesnivec	V-ět --> N-ec		
+
+plešatý	plešatec	A-ý --> N-ec		
+plešatět	plešatec	V-ět --> N-ec		
+
+rezavý	rezavec	A-ý --> N-ec		
+rezavět	rezavec	V-ět --> N-ec		
+
+surový	surovec	A-ý --> N-ec		
+surovět	surovec	V-ět --> N-ec		
+
+vousatý	vousatec	A-ý --> N-ec		
+vousatět	vousatec	V-ět --> N-ec		
+
+zrzavý	zrzavec	A-ý --> N-ec		
+zrzavět	zrzavec	V-ět --> N-ec		
+
+šedivý	šedivec	A-ý --> N-ec		
+šedivět	šedivec	V-ět --> N-ec		
+
+špinavý	špinavec	A-ý --> N-ec		
+špinavět	špinavec	V-ět --> N-ec		
+
+

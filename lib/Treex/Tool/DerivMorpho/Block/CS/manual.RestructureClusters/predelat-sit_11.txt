@@ -1,0 +1,268 @@
+﻿% vymazat ohvězdičkovamé řádky!
+% SPRÁVNÉ ŘEŠENÍ: V-hnout --> N-žení, V-hnout --> A-žený
+
+---------------------------------
+66 GROUPS FOR RULE COMBINATION: A-ý --> N-í, V-hnout --> N-žení
+
+* dosazený	dosažení	A-ý --> N-í	CHANGE: z -> ž	
+dosažený	dosažení	A-ý --> N-í		
+dosáhnout	dosažení	V-hnout --> N-žení	CHANGE: á -> a	
+dosáhnout	dosažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+dostihnout	dostižení	V-hnout --> N-žení		
+dostihnout	dostižení	V-hnout --> N-žení		LINK ALREADY PRESENT
+dostižený	dostižení	A-ý --> N-í		
+
+dotažený	dotažení	A-ý --> N-í		
+dotáhnout	dotažení	V-hnout --> N-žení	CHANGE: á -> a	
+dotáhnout	dotažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+* křehnout	křížení	V-hnout --> N-žení	CHANGE: e -> í	
+křížený	křížení	A-ý --> N-í		
+
+nadzdvihnout	nadzdvižení	V-hnout --> N-žení		
+nadzdvihnout	nadzdvižení	V-hnout --> N-žení		LINK ALREADY PRESENT
+nadzdvižený	nadzdvižení	A-ý --> N-í		
+
+nastřihnout	nastřižení	V-hnout --> N-žení		LINK ALREADY PRESENT
+nastřižený	nastřižení	A-ý --> N-í		
+nastříhnout	nastřižení	V-hnout --> N-žení	CHANGE: í -> i	
+
+natrhnout	natržení	V-hnout --> N-žení		
+natrhnout	natržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+natržený	natržení	A-ý --> N-í		
+
+navrhnout	navržení	V-hnout --> N-žení		
+navrhnout	navržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+navržený	navržení	A-ý --> N-í		
+
+oblehnout	obležení	V-hnout --> N-žení		
+oblehnout	obležení	V-hnout --> N-žení		LINK ALREADY PRESENT
+obležený	obležení	A-ý --> N-í		
+
+* obsazený	obsažení	A-ý --> N-í	CHANGE: z -> ž	
+obsažený	obsažení	A-ý --> N-í		
+obsáhnout	obsažení	V-hnout --> N-žení	CHANGE: á -> a	
+obsáhnout	obsažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+obtažený	obtažení	A-ý --> N-í		
+obtáhnout	obtažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+odstřihnout	odstřižení	V-hnout --> N-žení		
+odstřihnout	odstřižení	V-hnout --> N-žení		LINK ALREADY PRESENT
+odstřižený	odstřižení	A-ý --> N-í		
+
+odtažený	odtažení	A-ý --> N-í		
+odtáhnout	odtažení	V-hnout --> N-žení	CHANGE: á -> a	
+odtáhnout	odtažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+odtrhnout	odtržení	V-hnout --> N-žení		
+odtrhnout	odtržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+odtržený	odtržení	A-ý --> N-í		
+
+odvrhnout	odvržení	V-hnout --> N-žení		
+odvrhnout	odvržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+odvržený	odvržení	A-ý --> N-í		
+
+opovrhnout	opovržení	V-hnout --> N-žení		
+opovrhnout	opovržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+opovržený	opovržení	A-ý --> N-í		
+
+podtrhnout	podtržení	V-hnout --> N-žení		
+podtrhnout	podtržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+podtržený	podtržení	A-ý --> N-í		
+
+podvrhnout	podvržení	V-hnout --> N-žení		
+podvrhnout	podvržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+podvržený	podvržení	A-ý --> N-í		
+
+postihnout	postižení	V-hnout --> N-žení		
+postihnout	postižení	V-hnout --> N-žení		LINK ALREADY PRESENT
+postižený	postižení	A-ý --> N-í		
+
+potažený	potažení	A-ý --> N-í		
+potáhnout	potažení	V-hnout --> N-žení	CHANGE: á -> a	
+potáhnout	potažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+povytažený	povytažení	A-ý --> N-í		
+povytáhnout	povytažení	V-hnout --> N-žení	CHANGE: á -> a	
+
+pozdvihnout	pozdvižení	V-hnout --> N-žení		
+pozdvihnout	pozdvižení	V-hnout --> N-žení		LINK ALREADY PRESENT
+pozdvižený	pozdvižení	A-ý --> N-í		
+
+* prahnout	pražení	V-hnout --> N-žení		
+* pražený	pražení	A-ý --> N-í		
+
+protažený	protažení	A-ý --> N-í		
+protáhnout	protažení	V-hnout --> N-žení	CHANGE: á -> a	
+protáhnout	protažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+protrhnout	protržení	V-hnout --> N-žení		
+protrhnout	protržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+protržený	protržení	A-ý --> N-í		
+
+* přesazený	přesažení	A-ý --> N-í	CHANGE: z -> ž	
+přesáhnout	přesažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+přestřihnout	přestřižení	V-hnout --> N-žení		
+přestřihnout	přestřižení	V-hnout --> N-žení		LINK ALREADY PRESENT
+přestřižený	přestřižení	A-ý --> N-í		
+* přestříhnout	přestřižení	V-hnout --> N-žení	CHANGE: í -> i	
+
+přetažený	přetažení	A-ý --> N-í		
+přetáhnout	přetažení	V-hnout --> N-žení	CHANGE: á -> a	
+přetáhnout	přetažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+přetrhnout	přetržení	V-hnout --> N-žení		
+přetrhnout	přetržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+přetržený	přetržení	A-ý --> N-í		
+
+převrhnout	převržení	V-hnout --> N-žení		
+převrhnout	převržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+převržený	převržení	A-ý --> N-í		
+
+přistihnout	přistižení	V-hnout --> N-žení		
+přistihnout	přistižení	V-hnout --> N-žení		LINK ALREADY PRESENT
+přistižený	přistižení	A-ý --> N-í		
+
+přistřihnout	přistřižení	V-hnout --> N-žení		
+přistřihnout	přistřižení	V-hnout --> N-žení		LINK ALREADY PRESENT
+přistřižený	přistřižení	A-ý --> N-í		
+
+přitažený	přitažení	A-ý --> N-í		
+přitáhnout	přitažení	V-hnout --> N-žení	CHANGE: á -> a	
+přitáhnout	přitažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+* rozpražený	rozpřažení	A-ý --> N-í	CHANGE: r -> ř	
+rozpřažený	rozpřažení	A-ý --> N-í		
+rozpřáhnout	rozpřažení	V-hnout --> N-žení	CHANGE: á -> a	
+rozpřáhnout	rozpřažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+roztažený	roztažení	A-ý --> N-í		
+roztáhnout	roztažení	V-hnout --> N-žení	CHANGE: á -> a	
+roztáhnout	roztažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+roztrhnout	roztržení	V-hnout --> N-žení		
+roztrhnout	roztržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+roztržený	roztržení	A-ý --> N-í		
+
+rozvrhnout	rozvržení	V-hnout --> N-žení		
+rozvrhnout	rozvržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+rozvržený	rozvržení	A-ý --> N-í		
+
+spřažený	spřažení	A-ý --> N-í		
+spřáhnout	spřažení	V-hnout --> N-žení	CHANGE: á -> a	
+spřáhnout	spřažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+stažený	stažení	A-ý --> N-í		
+stáhnout	stažení	V-hnout --> N-žení	CHANGE: á -> a	
+stáhnout	stažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+stihnout	stižení	V-hnout --> N-žení		
+stihnout	stižení	V-hnout --> N-žení		LINK ALREADY PRESENT
+stižený	stižení	A-ý --> N-í		
+stížený	stižení	A-ý --> N-í	CHANGE: í -> i	
+
+strhnout	stržení	V-hnout --> N-žení		
+strhnout	stržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+stržený	stržení	A-ý --> N-í		
+
+střihnout	střižení	V-hnout --> N-žení		
+střihnout	střižení	V-hnout --> N-žení		LINK ALREADY PRESENT
+střižený	střižení	A-ý --> N-í		
+
+svrhnout	svržení	V-hnout --> N-žení		
+svrhnout	svržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+svržený	svržení	A-ý --> N-í		
+
+tažený	tažení	A-ý --> N-í		
+táhnout	tažení	V-hnout --> N-žení	CHANGE: á -> a	
+táhnout	tažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+toužený	toužení	A-ý --> N-í		
+* tuhnout	toužení	V-hnout --> N-žení	CHANGE: u -> ou	
+
+usmahnout	usmažení	V-hnout --> N-žení		
+usmažený	usmažení	A-ý --> N-í		
+
+utažený	utažení	A-ý --> N-í		
+utáhnout	utažení	V-hnout --> N-žení	CHANGE: á -> a	
+utáhnout	utažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+utrhnout	utržení	V-hnout --> N-žení		
+utrhnout	utržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+utržený	utržení	A-ý --> N-í		
+
+uvrhnout	uvržení	V-hnout --> N-žení		
+uvrhnout	uvržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+uvržený	uvržení	A-ý --> N-í		
+
+vrhnout	vržení	V-hnout --> N-žení		
+vrhnout	vržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+vržený	vržení	A-ý --> N-í		
+
+vtažený	vtažení	A-ý --> N-í		
+vtáhnout	vtažení	V-hnout --> N-žení	CHANGE: á -> a	
+vtáhnout	vtažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+* vyprahnout	vypřažení	V-hnout --> N-žení	CHANGE: r -> ř	
+* vypražený	vypřažení	A-ý --> N-í	CHANGE: r -> ř	
+vypřažený	vypřažení	A-ý --> N-í		
+vypřáhnout	vypřažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+vystihnout	vystižení	V-hnout --> N-žení		
+vystihnout	vystižení	V-hnout --> N-žení		LINK ALREADY PRESENT
+vystižený	vystižení	A-ý --> N-í		
+
+vystřihnout	vystřižení	V-hnout --> N-žení		
+vystřihnout	vystřižení	V-hnout --> N-žení		LINK ALREADY PRESENT
+vystřižený	vystřižení	A-ý --> N-í		
+* vystříhnout	vystřižení	V-hnout --> N-žení	CHANGE: í -> i	
+
+vytažený	vytažení	A-ý --> N-í		
+vytáhnout	vytažení	V-hnout --> N-žení	CHANGE: á -> a	
+vytáhnout	vytažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+vytrhnout	vytržení	V-hnout --> N-žení		
+vytrhnout	vytržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+vytržený	vytržení	A-ý --> N-í		
+
+vyvrhnout	vyvržení	V-hnout --> N-žení		
+vyvrhnout	vyvržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+vyvržený	vyvržení	A-ý --> N-í		
+
+vyzdvihnout	vyzdvižení	V-hnout --> N-žení		LINK ALREADY PRESENT
+vyzdvižený	vyzdvižení	A-ý --> N-í		
+
+vztažený	vztažení	A-ý --> N-í		
+vztáhnout	vztažení	V-hnout --> N-žení	CHANGE: á -> a	
+vztáhnout	vztažení	V-hnout --> N-žení	CHANGE: á -> a	LINK ALREADY PRESENT
+
+zastihnout	zastižení	V-hnout --> N-žení		
+zastihnout	zastižení	V-hnout --> N-žení		LINK ALREADY PRESENT
+zastižený	zastižení	A-ý --> N-í		
+
+zastřihnout	zastřižení	V-hnout --> N-žení		LINK ALREADY PRESENT
+zastřižený	zastřižení	A-ý --> N-í		
+zastříhnout	zastřižení	V-hnout --> N-žení	CHANGE: í -> i	
+
+zatrhnout	zatržení	V-hnout --> N-žení		
+zatrhnout	zatržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+zatržený	zatržení	A-ý --> N-í		
+
+zavrhnout	zavržení	V-hnout --> N-žení		
+zavrhnout	zavržení	V-hnout --> N-žení		LINK ALREADY PRESENT
+zavržený	zavržení	A-ý --> N-í		
+
+zdvihnout	zdvižení	V-hnout --> N-žení		
+zdvihnout	zdvižení	V-hnout --> N-žení		LINK ALREADY PRESENT
+zdvižený	zdvižení	A-ý --> N-í		
+
+* zkřehnout	zkřížení	V-hnout --> N-žení	CHANGE: e -> í	
+zkřížený	zkřížení	A-ý --> N-í		
+
+* zváhnout	zvážení	V-hnout --> N-žení		
+zvážený	zvážení	A-ý --> N-í		
+
+

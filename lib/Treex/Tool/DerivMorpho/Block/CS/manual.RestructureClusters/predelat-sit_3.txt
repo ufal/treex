@@ -1,0 +1,1242 @@
+﻿% vymazat ohvězdičkovamé řádky!
+% SPRÁVNÉ ŘEŠENÍ: V-nout --> N-nutí, V-nout --> A-nutý
+
+---------------------------------
+374 GROUPS FOR RULE COMBINATION: A-ý --> N-í, V-nout --> N-nutí
+
+blbnout	blbnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+blbnutý	blbnutí	A-ý --> N-í		
+
+bodnout	bodnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+bodnutý	bodnutí	A-ý --> N-í		
+
+chrstnout	chrstnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+chrstnutý	chrstnutí	A-ý --> N-í		
+
+cinknout	cinknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+cinknutý	cinknutí	A-ý --> N-í		
+
+cáknout	cáknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+cáknutý	cáknutí	A-ý --> N-í		
+
+doběhnout	doběhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+doběhnutý	doběhnutí	A-ý --> N-í		
+
+dohodnout	dohodnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+dohodnutý	dohodnutí	A-ý --> N-í		
+
+dotknout	dotknutí	V-nout --> N-nutí		
+dotknutý	dotknutí	A-ý --> N-í		
+
+hnout	hnutí	V-nout --> N-nutí		
+hnutý	hnutí	A-ý --> N-í		
+
+klapnout	klapnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+klapnutý	klapnutí	A-ý --> N-í		
+
+klenout	klenutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+klenutý	klenutí	A-ý --> N-í		
+
+klepnout	klepnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+klepnutý	klepnutí	A-ý --> N-í		
+
+kliknout	kliknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+kliknutý	kliknutí	A-ý --> N-í		
+
+kousnout	kousnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+kousnutý	kousnutí	A-ý --> N-í		
+
+krknout	krknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+krknutý	krknutí	A-ý --> N-í		
+
+kynout	kynutí	V-nout --> N-nutí		
+kynout	kynutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+kynutý	kynutí	A-ý --> N-í		
+
+líznout	líznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+líznutý	líznutí	A-ý --> N-í		
+
+minout	minutí	V-nout --> N-nutí		
+minout	minutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+minutý	minutí	A-ý --> N-í		
+
+mnout	mnutí	V-nout --> N-nutí		
+mnout	mnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+mnutý	mnutí	A-ý --> N-í		
+
+nabodnout	nabodnutí	V-nout --> N-nutí		
+nabodnout	nabodnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+nabodnutý	nabodnutí	A-ý --> N-í		
+
+nabídnout	nabídnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+nabídnutý	nabídnutí	A-ý --> N-í		
+
+naběhnout	naběhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+naběhnutý	naběhnutí	A-ý --> N-í		
+
+nadechnout	nadechnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+nadechnutý	nadechnutí	A-ý --> N-í		
+
+nadzvednout	nadzvednutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+nadzvednutý	nadzvednutí	A-ý --> N-í		
+
+nadýchnout	nadýchnutí	V-nout --> N-nutí		
+nadýchnout	nadýchnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+nadýchnutý	nadýchnutí	A-ý --> N-í		
+
+nafouknout	nafouknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+nafouknutý	nafouknutí	A-ý --> N-í		
+
+nahnout	nahnutí	V-nout --> N-nutí		
+nahnout	nahnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+nahnutý	nahnutí	A-ý --> N-í		
+
+nahrnout	nahrnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+nahrnutý	nahrnutí	A-ý --> N-í		
+
+naklepnout	naklepnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+naklepnutý	naklepnutí	A-ý --> N-í		
+
+nakopnout	nakopnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+nakopnutý	nakopnutí	A-ý --> N-í		
+
+nakousnout	nakousnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+nakousnutý	nakousnutí	A-ý --> N-í		
+
+nakrknout	nakrknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+nakrknutý	nakrknutí	A-ý --> N-í		
+
+nakynout	nakynutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+nakynutý	nakynutí	A-ý --> N-í		
+
+nakřápnout	nakřápnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+nakřápnutý	nakřápnutí	A-ý --> N-í		
+
+namáčknout	namáčknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+namáčknutý	namáčknutí	A-ý --> N-í		
+
+namíchnout	namíchnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+namíchnutý	namíchnutí	A-ý --> N-í		
+
+napadnout	napadnutí	V-nout --> N-nutí		
+napadnout	napadnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+napadnutý	napadnutí	A-ý --> N-í		
+
+napnout	napnutí	V-nout --> N-nutí		
+napnout	napnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+napnutý	napnutí	A-ý --> N-í		
+
+napíchnout	napíchnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+napíchnutý	napíchnutí	A-ý --> N-í		
+
+naskytnout	naskytnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+naskytnutý	naskytnutí	A-ý --> N-í		
+
+nastříknout	nastříknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+nastříknutý	nastříknutí	A-ý --> N-í		
+
+nasunout	nasunutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+nasunutý	nasunutí	A-ý --> N-í		
+
+nasáknout	nasáknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+nasáknutý	nasáknutí	A-ý --> N-í		
+
+natisknout	natisknutí	V-nout --> N-nutí		
+natisknout	natisknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+natisknutý	natisknutí	A-ý --> N-í		
+
+natrhnout	natrhnutí	V-nout --> N-nutí		
+natrhnout	natrhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+natrhnutý	natrhnutí	A-ý --> N-í		
+
+natáhnout	natáhnutí	V-nout --> N-nutí		
+natáhnout	natáhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+natáhnutý	natáhnutí	A-ý --> N-í		
+
+navinout	navinutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+navinutý	navinutí	A-ý --> N-í		
+
+navléknout	navléknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+navléknutý	navléknutí	A-ý --> N-í		
+
+navrhnout	navrhnutí	V-nout --> N-nutí		
+navrhnout	navrhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+navrhnutý	navrhnutí	A-ý --> N-í		
+
+načrtnout	načrtnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+načrtnutý	načrtnutí	A-ý --> N-í		
+
+naříznout	naříznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+naříznutý	naříznutí	A-ý --> N-í		
+
+našlápnout	našlápnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+našlápnutý	našlápnutí	A-ý --> N-í		
+
+naštípnout	naštípnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+naštípnutý	naštípnutí	A-ý --> N-í		
+
+obepnout	obepnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+obepnutý	obepnutí	A-ý --> N-í		
+
+oblbnout	oblbnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+oblbnutý	oblbnutí	A-ý --> N-í		
+
+obléknout	obléknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+obléknutý	obléknutí	A-ý --> N-í		
+
+ochrnout	ochrnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+ochrnutý	ochrnutí	A-ý --> N-í		
+
+odchlípnout	odchlípnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odchlípnutý	odchlípnutí	A-ý --> N-í		
+
+odemknout	odemknutí	V-nout --> N-nutí		
+odemknout	odemknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odemknutý	odemknutí	A-ý --> N-í		
+
+odepnout	odepnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odepnutý	odepnutí	A-ý --> N-í		
+
+odfouknout	odfouknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odfouknutý	odfouknutí	A-ý --> N-í		
+
+odhadnout	odhadnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odhadnutý	odhadnutí	A-ý --> N-í		
+
+odkopnout	odkopnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odkopnutý	odkopnutí	A-ý --> N-í		
+
+odloupnout	odloupnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odloupnutý	odloupnutí	A-ý --> N-í		
+
+odmítnout	odmítnutí	V-nout --> N-nutí		
+odmítnout	odmítnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odmítnutý	odmítnutí	A-ý --> N-í		
+
+odpočinout	odpočinutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odpočinutý	odpočinutí	A-ý --> N-í		
+
+odprásknout	odprásknutí	V-nout --> N-nutí		
+odprásknout	odprásknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odprásknutý	odprásknutí	A-ý --> N-í		
+
+odpřisáhnout	odpřisáhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odpřisáhnutý	odpřisáhnutí	A-ý --> N-í		
+
+odseknout	odseknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odseknutý	odseknutí	A-ý --> N-í		
+
+odstřihnout	odstřihnutí	V-nout --> N-nutí		
+odstřihnout	odstřihnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odstřihnutý	odstřihnutí	A-ý --> N-í		
+
+odsunout	odsunutí	V-nout --> N-nutí		
+odsunout	odsunutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odsunutý	odsunutí	A-ý --> N-í		
+
+odtrhnout	odtrhnutí	V-nout --> N-nutí		
+odtrhnout	odtrhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odtrhnutý	odtrhnutí	A-ý --> N-í		
+
+odvinout	odvinutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odvinutý	odvinutí	A-ý --> N-í		
+
+odvrhnout	odvrhnutí	V-nout --> N-nutí		
+odvrhnout	odvrhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odvrhnutý	odvrhnutí	A-ý --> N-í		
+
+odvyknout	odvyknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odvyknutý	odvyknutí	A-ý --> N-í		
+
+odřeknout	odřeknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odřeknutý	odřeknutí	A-ý --> N-í		
+
+odříznout	odříznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odříznutý	odříznutí	A-ý --> N-í		
+
+odškrtnout	odškrtnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odškrtnutý	odškrtnutí	A-ý --> N-í		
+
+odštípnout	odštípnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+odštípnutý	odštípnutí	A-ý --> N-í		
+
+ohnout	ohnutí	V-nout --> N-nutí		
+ohnout	ohnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+ohnutý	ohnutí	A-ý --> N-í		
+
+ohrnout	ohrnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+ohrnutý	ohrnutí	A-ý --> N-í		
+
+okřiknout	okřiknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+okřiknutý	okřiknutí	A-ý --> N-í		
+
+olíznout	olíznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+olíznutý	olíznutí	A-ý --> N-í		
+
+omítnout	omítnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+omítnutý	omítnutí	A-ý --> N-í		
+
+opláchnout	opláchnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+opláchnutý	opláchnutí	A-ý --> N-í		
+
+opomenout	opomenutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+opomenutý	opomenutí	A-ý --> N-í		
+
+opominout	opominutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+opominutý	opominutí	A-ý --> N-í		
+
+otisknout	otisknutí	V-nout --> N-nutí		
+otisknout	otisknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+otisknutý	otisknutí	A-ý --> N-í		
+
+ovinout	ovinutí	V-nout --> N-nutí		
+ovinout	ovinutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+ovinutý	ovinutí	A-ý --> N-í		
+
+ovládnout	ovládnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+ovládnutý	ovládnutí	A-ý --> N-í		
+
+oříznout	oříznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+oříznutý	oříznutí	A-ý --> N-í		
+
+ožehnout	ožehnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+ožehnutý	ožehnutí	A-ý --> N-í		
+
+plácnout	plácnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+plácnutý	plácnutí	A-ý --> N-í		
+
+pnout	pnutí	V-nout --> N-nutí		
+pnout	pnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+pnutý	pnutí	A-ý --> N-í		
+
+podniknout	podniknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+podniknutý	podniknutí	A-ý --> N-í		
+
+podvrknout	podvrknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+podvrknutý	podvrknutí	A-ý --> N-í		
+
+podvrtnout	podvrtnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+podvrtnutý	podvrtnutí	A-ý --> N-í		
+
+podříznout	podříznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+podříznutý	podříznutí	A-ý --> N-í		
+
+pohnout	pohnutí	V-nout --> N-nutí		
+pohnout	pohnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+pohnutý	pohnutí	A-ý --> N-í		
+
+poklesnout	poklesnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+poklesnutý	poklesnutí	A-ý --> N-í		
+
+polknout	polknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+polknutý	polknutí	A-ý --> N-í		
+
+pominout	pominutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+pominutý	pominutí	A-ý --> N-í		
+
+popíchnout	popíchnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+popíchnutý	popíchnutí	A-ý --> N-í		
+
+posednout	posednutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+posednutý	posednutí	A-ý --> N-í		
+
+poskytnout	poskytnutí	V-nout --> N-nutí		
+poskytnutý	poskytnutí	A-ý --> N-í		
+
+postihnout	postihnutí	V-nout --> N-nutí		
+postihnout	postihnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+postihnutý	postihnutí	A-ý --> N-í		
+
+posunout	posunutí	V-nout --> N-nutí		
+posunout	posunutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+posunutý	posunutí	A-ý --> N-í		
+
+potáhnout	potáhnutí	V-nout --> N-nutí		
+potáhnout	potáhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+potáhnutý	potáhnutí	A-ý --> N-í		
+
+povšimnout	povšimnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+povšimnutý	povšimnutí	A-ý --> N-í		
+
+pozdvihnout	pozdvihnutí	V-nout --> N-nutí		
+pozdvihnout	pozdvihnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+pozdvihnutý	pozdvihnutí	A-ý --> N-í		
+
+pozvednout	pozvednutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+pozvednutý	pozvednutí	A-ý --> N-í		
+
+pošoupnout	pošoupnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+pošoupnutý	pošoupnutí	A-ý --> N-í		
+
+prasknout	prasknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+prasknutý	prasknutí	A-ý --> N-í		
+* prásknout	prasknutí	V-nout --> N-nutí	CHANGE: á -> a	
+
+* prasknout	prásknutí	V-nout --> N-nutí	CHANGE: a -> á	
+* prasknutý	prásknutí	A-ý --> N-í	CHANGE: a -> á	
+prásknout	prásknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+
+probodnout	probodnutí	V-nout --> N-nutí		
+probodnout	probodnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+probodnutý	probodnutí	A-ý --> N-í		
+
+prochladnout	prochladnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+prochladnutý	prochladnutí	A-ý --> N-í		
+
+prohlédnout	prohlédnutí	V-nout --> N-nutí		
+prohlédnout	prohlédnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+prohlédnutý	prohlédnutí	A-ý --> N-í		
+
+prohnout	prohnutí	V-nout --> N-nutí		
+prohnout	prohnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+prohnutý	prohnutí	A-ý --> N-í		
+
+prokouknout	prokouknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+prokouknutý	prokouknutí	A-ý --> N-í		
+
+prokousnout	prokousnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+prokousnutý	prokousnutí	A-ý --> N-í		
+
+prolnout	prolnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+prolnutý	prolnutí	A-ý --> N-í		
+
+prominout	prominutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+prominutý	prominutí	A-ý --> N-í		
+
+promáčknout	promáčknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+promáčknutý	promáčknutí	A-ý --> N-í		
+
+promítnout	promítnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+promítnutý	promítnutí	A-ý --> N-í		
+
+proniknout	proniknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+proniknutý	proniknutí	A-ý --> N-í		
+
+propadnout	propadnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+propadnutý	propadnutí	A-ý --> N-í		
+
+propláchnout	propláchnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+propláchnutý	propláchnutí	A-ý --> N-í		
+
+propíchnout	propíchnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+propíchnutý	propíchnutí	A-ý --> N-í		
+
+proseknout	proseknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+proseknutý	proseknutí	A-ý --> N-í		
+
+prosáknout	prosáknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+prosáknutý	prosáknutí	A-ý --> N-í		
+
+protnout	protnutí	V-nout --> N-nutí		
+protnout	protnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+protnutý	protnutí	A-ý --> N-í		
+
+proříznout	proříznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+proříznutý	proříznutí	A-ý --> N-í		
+
+proštípnout	proštípnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+proštípnutý	proštípnutí	A-ý --> N-í		
+
+prsknout	prsknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+prsknutý	prsknutí	A-ý --> N-í		
+
+píchnout	píchnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+píchnutý	píchnutí	A-ý --> N-í		
+
+předsunout	předsunutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+předsunutý	předsunutí	A-ý --> N-í		
+
+přehlédnout	přehlédnutí	V-nout --> N-nutí		
+přehlédnout	přehlédnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přehlédnutý	přehlédnutí	A-ý --> N-í		
+
+přehnout	přehnutí	V-nout --> N-nutí		
+přehnout	přehnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přehnutý	přehnutí	A-ý --> N-í		
+
+překlenout	překlenutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+překlenutý	překlenutí	A-ý --> N-í		
+
+překousnout	překousnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+překousnutý	překousnutí	A-ý --> N-í		
+
+přepadnout	přepadnutí	V-nout --> N-nutí		
+přepadnutý	přepadnutí	A-ý --> N-í		
+
+přepnout	přepnutí	V-nout --> N-nutí		
+přepnout	přepnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přepnutý	přepnutí	A-ý --> N-í		
+
+přeseknout	přeseknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přeseknutý	přeseknutí	A-ý --> N-í		
+
+přesunout	přesunutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přesunutý	přesunutí	A-ý --> N-í		
+
+přetnout	přetnutí	V-nout --> N-nutí		
+přetnout	přetnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přetnutý	přetnutí	A-ý --> N-í		
+
+přetrhnout	přetrhnutí	V-nout --> N-nutí		
+přetrhnout	přetrhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přetrhnutý	přetrhnutí	A-ý --> N-í		
+
+přetáhnout	přetáhnutí	V-nout --> N-nutí		
+přetáhnout	přetáhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přetáhnutý	přetáhnutí	A-ý --> N-í		
+
+převinout	převinutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+převinutý	převinutí	A-ý --> N-í		
+
+převrhnout	převrhnutí	V-nout --> N-nutí		
+převrhnout	převrhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+převrhnutý	převrhnutí	A-ý --> N-í		
+
+přeříznout	přeříznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přeříznutý	přeříznutí	A-ý --> N-í		
+
+přeškrtnout	přeškrtnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přeškrtnutý	přeškrtnutí	A-ý --> N-í		
+
+přihlédnout	přihlédnutí	V-nout --> N-nutí		
+přihlédnout	přihlédnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přihlédnutý	přihlédnutí	A-ý --> N-í		
+
+přilnout	přilnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přilnutý	přilnutí	A-ý --> N-í		
+
+přilípnout	přilípnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přilípnutý	přilípnutí	A-ý --> N-í		
+
+přimknout	přimknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přimknutý	přimknutí	A-ý --> N-í		
+
+přimáčknout	přimáčknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přimáčknutý	přimáčknutí	A-ý --> N-í		
+
+připnout	připnutí	V-nout --> N-nutí		
+připnout	připnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+připnutý	připnutí	A-ý --> N-í		
+
+připomenout	připomenutí	V-nout --> N-nutí		
+připomenout	připomenutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+připomenutý	připomenutí	A-ý --> N-í		
+
+přiskřípnout	přiskřípnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přiskřípnutý	přiskřípnutí	A-ý --> N-í		
+
+přitisknout	přitisknutí	V-nout --> N-nutí		
+přitisknout	přitisknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přitisknutý	přitisknutí	A-ý --> N-í		
+
+přitáhnout	přitáhnutí	V-nout --> N-nutí		
+přitáhnout	přitáhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přitáhnutý	přitáhnutí	A-ý --> N-í		
+
+přivyknout	přivyknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přivyknutý	přivyknutí	A-ý --> N-í		
+
+přizvednout	přizvednutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přizvednutý	přizvednutí	A-ý --> N-í		
+
+přiřknout	přiřknutí	V-nout --> N-nutí		
+přiřknout	přiřknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přiřknutý	přiřknutí	A-ý --> N-í		
+
+přišlápnout	přišlápnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+přišlápnutý	přišlápnutí	A-ý --> N-í		
+
+rozběhnout	rozběhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+rozběhnutý	rozběhnutí	A-ý --> N-í		
+
+rozepnout	rozepnutí	V-nout --> N-nutí		
+rozepnout	rozepnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+rozepnutý	rozepnutí	A-ý --> N-í		
+
+rozetnout	rozetnutí	V-nout --> N-nutí		
+rozetnout	rozetnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+rozetnutý	rozetnutí	A-ý --> N-í		
+
+rozhodnout	rozhodnutí	V-nout --> N-nutí		
+rozhodnout	rozhodnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+rozhodnutý	rozhodnutí	A-ý --> N-í		
+
+rozhrnout	rozhrnutí	V-nout --> N-nutí		
+rozhrnout	rozhrnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+rozhrnutý	rozhrnutí	A-ý --> N-í		
+
+rozhrábnout	rozhrábnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+rozhrábnutý	rozhrábnutí	A-ý --> N-í		
+
+rozkousnout	rozkousnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+rozkousnutý	rozkousnutí	A-ý --> N-í		
+
+rozlousknout	rozlousknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+rozlousknutý	rozlousknutí	A-ý --> N-í		
+
+rozmáchnout	rozmáchnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+rozmáchnutý	rozmáchnutí	A-ý --> N-í		
+
+rozmáznout	rozmáznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+rozmáznutý	rozmáznutí	A-ý --> N-í		
+
+rozmáčknout	rozmáčknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+rozmáčknutý	rozmáčknutí	A-ý --> N-í		
+
+rozpadnout	rozpadnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+rozpadnutý	rozpadnutí	A-ý --> N-í		
+
+rozplácnout	rozplácnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+rozplácnutý	rozplácnutí	A-ý --> N-í		
+
+rozpomenout	rozpomenutí	V-nout --> N-nutí		
+rozpomenout	rozpomenutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+rozpomenutý	rozpomenutí	A-ý --> N-í		
+
+rozstříknout	rozstříknutí	V-nout --> N-nutí		
+rozstříknout	rozstříknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+rozstříknutý	rozstříknutí	A-ý --> N-í		
+
+roztrhnout	roztrhnutí	V-nout --> N-nutí		
+roztrhnout	roztrhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+roztrhnutý	roztrhnutí	A-ý --> N-í		
+
+roztáhnout	roztáhnutí	V-nout --> N-nutí		
+roztáhnout	roztáhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+roztáhnutý	roztáhnutí	A-ý --> N-í		
+
+rozvinout	rozvinutí	V-nout --> N-nutí		
+rozvinout	rozvinutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+rozvinutý	rozvinutí	A-ý --> N-í		
+
+rozříznout	rozříznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+rozříznutý	rozříznutí	A-ý --> N-í		
+
+rozšoupnout	rozšoupnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+rozšoupnutý	rozšoupnutí	A-ý --> N-í		
+
+rozštípnout	rozštípnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+rozštípnutý	rozštípnutí	A-ý --> N-í		
+
+scvrknout	scvrknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+scvrknutý	scvrknutí	A-ý --> N-í		
+
+sehnout	sehnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+sehnutý	sehnutí	A-ý --> N-í		
+
+seknout	seknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+seknutý	seknutí	A-ý --> N-í		
+
+semknout	semknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+semknutý	semknutí	A-ý --> N-í		
+
+sepnout	sepnutí	V-nout --> N-nutí		
+sepnout	sepnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+sepnutý	sepnutí	A-ý --> N-í		
+
+sesednout	sesednutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+sesednutý	sesednutí	A-ý --> N-í		
+
+setnout	setnutí	V-nout --> N-nutí		
+setnout	setnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+setnutý	setnutí	A-ý --> N-í		
+
+seříznout	seříznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+seříznutý	seříznutí	A-ý --> N-í		
+
+sešlápnout	sešlápnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+sešlápnutý	sešlápnutí	A-ý --> N-í		
+
+sežehnout	sežehnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+sežehnutý	sežehnutí	A-ý --> N-í		
+
+sfouknout	sfouknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+sfouknutý	sfouknutí	A-ý --> N-í		
+
+shluknout	shluknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+shluknutý	shluknutí	A-ý --> N-í		
+
+shlédnout	shlédnutí	V-nout --> N-nutí		
+shlédnout	shlédnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+shlédnutý	shlédnutí	A-ý --> N-í		
+
+shrnout	shrnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+shrnutý	shrnutí	A-ý --> N-í		
+
+shýbnout	shýbnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+shýbnutý	shýbnutí	A-ý --> N-í		
+
+sklapnout	sklapnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+sklapnutý	sklapnutí	A-ý --> N-í		
+
+sklouznout	sklouznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+sklouznutý	sklouznutí	A-ý --> N-í		
+
+skousnout	skousnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+skousnutý	skousnutí	A-ý --> N-í		
+
+skřípnout	skřípnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+skřípnutý	skřípnutí	A-ý --> N-í		
+
+spadnout	spadnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+spadnutý	spadnutí	A-ý --> N-í		
+
+spiknout	spiknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+spiknutý	spiknutí	A-ý --> N-í		
+
+splasknout	splasknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+splasknutý	splasknutí	A-ý --> N-í		
+
+splynout	splynutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+splynutý	splynutí	A-ý --> N-í		
+
+spláchnout	spláchnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+spláchnutý	spláchnutí	A-ý --> N-í		
+
+spolehnout	spolehnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+spolehnutý	spolehnutí	A-ý --> N-í		
+
+spolknout	spolknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+spolknutý	spolknutí	A-ý --> N-í		
+
+spřáhnout	spřáhnutí	V-nout --> N-nutí		
+spřáhnout	spřáhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+spřáhnutý	spřáhnutí	A-ý --> N-í		
+
+stisknout	stisknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+stisknutý	stisknutí	A-ý --> N-í		
+
+strhnout	strhnutí	V-nout --> N-nutí		
+strhnout	strhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+strhnutý	strhnutí	A-ý --> N-í		
+
+strnout	strnutí	V-nout --> N-nutí		
+strnout	strnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+strnutý	strnutí	A-ý --> N-í		
+
+stáhnout	stáhnutí	V-nout --> N-nutí		
+stáhnout	stáhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+stáhnutý	stáhnutí	A-ý --> N-í		
+
+stárnout	stárnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+stárnutý	stárnutí	A-ý --> N-í		
+
+střetnout	střetnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+střetnutý	střetnutí	A-ý --> N-í		
+
+stříknout	stříknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+stříknutý	stříknutí	A-ý --> N-í		
+
+svinout	svinutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+svinutý	svinutí	A-ý --> N-í		
+
+svléknout	svléknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+svléknutý	svléknutí	A-ý --> N-í		
+
+* svléknout	svlíknutí	V-nout --> N-nutí	CHANGE: é -> í	
+* svléknutý	svlíknutí	A-ý --> N-í	CHANGE: é -> í	
+svlíknout	svlíknutí	V-nout --> N-nutí		
+svlíknout	svlíknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+svlíknutý	svlíknutí	A-ý --> N-í		
+
+svrhnout	svrhnutí	V-nout --> N-nutí		
+svrhnout	svrhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+svrhnutý	svrhnutí	A-ý --> N-í		
+
+tipnout	tipnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+* típnout	tipnutí	V-nout --> N-nutí	CHANGE: í -> i	
+* típnutý	tipnutí	A-ý --> N-í	CHANGE: í -> i	
+
+tisknout	tisknutí	V-nout --> N-nutí		
+tisknout	tisknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+tisknutý	tisknutí	A-ý --> N-í		
+
+trhnout	trhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+trhnutý	trhnutí	A-ý --> N-í		
+
+táhnout	táhnutí	V-nout --> N-nutí		
+táhnout	táhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+táhnutý	táhnutí	A-ý --> N-í		
+
+třesknout	třesknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+třesknutý	třesknutí	A-ý --> N-í		
+
+* třesknout	třísknutí	V-nout --> N-nutí	CHANGE: e -> í	
+* třesknutý	třísknutí	A-ý --> N-í	CHANGE: e -> í	
+třísknout	třísknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+
+uběhnout	uběhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+uběhnutý	uběhnutí	A-ý --> N-í		
+
+uchechtnout	uchechtnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+uchechtnutý	uchechtnutí	A-ý --> N-í		
+
+uhnout	uhnutí	V-nout --> N-nutí		
+uhnout	uhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+uhnutý	uhnutí	A-ý --> N-í		
+
+uhodnout	uhodnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+uhodnutý	uhodnutí	A-ý --> N-í		
+
+uhranout	uhranutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+uhranutý	uhranutí	A-ý --> N-í		
+
+uhynout	uhynutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+uhynutý	uhynutí	A-ý --> N-í		
+
+ukousnout	ukousnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+ukousnutý	ukousnutí	A-ý --> N-í		
+
+uplynout	uplynutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+uplynutý	uplynutí	A-ý --> N-í		
+
+upnout	upnutí	V-nout --> N-nutí		
+upnout	upnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+upnutý	upnutí	A-ý --> N-í		
+
+uposlechnout	uposlechnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+uposlechnutý	uposlechnutí	A-ý --> N-í		
+
+uprdnout	uprdnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+uprdnutý	uprdnutí	A-ý --> N-í		
+
+useknout	useknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+useknutý	useknutí	A-ý --> N-í		
+
+uskřípnout	uskřípnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+uskřípnutý	uskřípnutí	A-ý --> N-í		
+
+ustrnout	ustrnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+ustrnutý	ustrnutí	A-ý --> N-í		
+
+* ustřihnout	ustříhnutí	V-nout --> N-nutí	CHANGE: i -> í	
+ustříhnout	ustříhnutí	V-nout --> N-nutí		
+ustříhnout	ustříhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+ustříhnutý	ustříhnutí	A-ý --> N-í		
+
+utnout	utnutí	V-nout --> N-nutí		
+utnout	utnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+utnutý	utnutí	A-ý --> N-í		
+
+utonout	utonutí	V-nout --> N-nutí		
+utonout	utonutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+utonutý	utonutí	A-ý --> N-í		
+
+utrhnout	utrhnutí	V-nout --> N-nutí		
+utrhnout	utrhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+utrhnutý	utrhnutí	A-ý --> N-í		
+
+uváznout	uváznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+uváznutý	uváznutí	A-ý --> N-í		
+
+uvíznout	uvíznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+uvíznutý	uvíznutí	A-ý --> N-í		
+
+uzamknout	uzamknutí	V-nout --> N-nutí		
+uzamknout	uzamknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+uzamknutý	uzamknutí	A-ý --> N-í		
+
+uříznout	uříznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+uříznutý	uříznutí	A-ý --> N-í		
+
+ušlápnout	ušlápnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+ušlápnutý	ušlápnutí	A-ý --> N-í		
+
+uštknout	uštknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+uštknutý	uštknutí	A-ý --> N-í		
+
+vadnout	vadnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vadnutý	vadnutí	A-ý --> N-í		
+
+vbodnout	vbodnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vbodnutý	vbodnutí	A-ý --> N-í		
+
+vdechnout	vdechnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vdechnutý	vdechnutí	A-ý --> N-í		
+
+vetknout	vetknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vetknutý	vetknutí	A-ý --> N-í		
+
+vinout	vinutí	V-nout --> N-nutí		
+vinout	vinutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vinutý	vinutí	A-ý --> N-í		
+
+vniknout	vniknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vniknutý	vniknutí	A-ý --> N-í		
+
+vnuknout	vnuknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vnuknutý	vnuknutí	A-ý --> N-í		
+
+vpíchnout	vpíchnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vpíchnutý	vpíchnutí	A-ý --> N-í		
+
+* vstříknout	vstřiknutí	V-nout --> N-nutí	CHANGE: í -> i	
+* vstříknutý	vstřiknutí	A-ý --> N-í	CHANGE: í -> i	
+
+vstříknout	vstříknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vstříknutý	vstříknutí	A-ý --> N-í		
+
+vsunout	vsunutí	V-nout --> N-nutí		
+vsunout	vsunutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vsunutý	vsunutí	A-ý --> N-í		
+
+vsáknout	vsáknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vsáknutý	vsáknutí	A-ý --> N-í		
+
+vtisknout	vtisknutí	V-nout --> N-nutí		
+vtisknout	vtisknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vtisknutý	vtisknutí	A-ý --> N-í		
+
+vybafnout	vybafnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vybafnutý	vybafnutí	A-ý --> N-í		
+
+vydechnout	vydechnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vydechnutý	vydechnutí	A-ý --> N-í		
+
+vydrhnout	vydrhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vydrhnutý	vydrhnutí	A-ý --> N-í		
+
+* vydychnout	vydýchnutí	V-nout --> N-nutí	CHANGE: y -> ý	
+vydýchnout	vydýchnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vydýchnutý	vydýchnutí	A-ý --> N-í		
+
+vyfiknout	vyfiknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyfiknutý	vyfiknutí	A-ý --> N-í		
+
+vyfouknout	vyfouknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyfouknutý	vyfouknutí	A-ý --> N-í		
+
+vyhnout	vyhnutí	V-nout --> N-nutí		
+vyhnout	vyhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyhnutý	vyhnutí	A-ý --> N-í		
+
+vyhynout	vyhynutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyhynutý	vyhynutí	A-ý --> N-í		
+
+vyklenout	vyklenutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyklenutý	vyklenutí	A-ý --> N-í		
+
+vykopnout	vykopnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vykopnutý	vykopnutí	A-ý --> N-í		
+
+vykynout	vykynutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vykynutý	vykynutí	A-ý --> N-í		
+
+vykřiknout	vykřiknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vykřiknutý	vykřiknutí	A-ý --> N-í		
+
+vyloupnout	vyloupnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyloupnutý	vyloupnutí	A-ý --> N-í		
+
+vylíhnout	vylíhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vylíhnutý	vylíhnutí	A-ý --> N-í		
+
+vymknout	vymknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vymknutý	vymknutí	A-ý --> N-í		
+
+vypadnout	vypadnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vypadnutý	vypadnutí	A-ý --> N-í		
+
+vyplivnout	vyplivnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyplivnutý	vyplivnutí	A-ý --> N-í		
+
+vypláchnout	vypláchnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vypláchnutý	vypláchnutí	A-ý --> N-í		
+
+vypnout	vypnutí	V-nout --> N-nutí		
+vypnout	vypnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vypnutý	vypnutí	A-ý --> N-í		
+
+vyschnout	vyschnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyschnutý	vyschnutí	A-ý --> N-í		
+
+vyskytnout	vyskytnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyskytnutý	vyskytnutí	A-ý --> N-í		
+
+vyslechnout	vyslechnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyslechnutý	vyslechnutí	A-ý --> N-í		
+
+vysunout	vysunutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vysunutý	vysunutí	A-ý --> N-í		
+
+vytisknout	vytisknutí	V-nout --> N-nutí		
+vytisknout	vytisknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vytisknutý	vytisknutí	A-ý --> N-í		
+
+vytknout	vytknutí	V-nout --> N-nutí		
+vytknout	vytknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vytknutý	vytknutí	A-ý --> N-í		
+
+vytrhnout	vytrhnutí	V-nout --> N-nutí		
+vytrhnout	vytrhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vytrhnutý	vytrhnutí	A-ý --> N-í		
+
+vytáhnout	vytáhnutí	V-nout --> N-nutí		
+vytáhnout	vytáhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vytáhnutý	vytáhnutí	A-ý --> N-í		
+
+vyvinout	vyvinutí	V-nout --> N-nutí		
+vyvinout	vyvinutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyvinutý	vyvinutí	A-ý --> N-í		
+
+vyvléknout	vyvléknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyvléknutý	vyvléknutí	A-ý --> N-í		
+
+vyvrhnout	vyvrhnutí	V-nout --> N-nutí		
+vyvrhnout	vyvrhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyvrhnutý	vyvrhnutí	A-ý --> N-í		
+
+vyvrtnout	vyvrtnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyvrtnutý	vyvrtnutí	A-ý --> N-í		
+
+vyzdvihnout	vyzdvihnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyzdvihnutý	vyzdvihnutí	A-ý --> N-í		
+
+vyzvednout	vyzvednutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyzvednutý	vyzvednutí	A-ý --> N-í		
+
+vyříznout	vyříznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyříznutý	vyříznutí	A-ý --> N-í		
+
+vyšinout	vyšinutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyšinutý	vyšinutí	A-ý --> N-í		
+
+vyškrtnout	vyškrtnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyškrtnutý	vyškrtnutí	A-ý --> N-í		
+
+vyšlehnout	vyšlehnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyšlehnutý	vyšlehnutí	A-ý --> N-í		
+
+vyštěknout	vyštěknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vyštěknutý	vyštěknutí	A-ý --> N-í		
+
+vzplanout	vzplanutí	V-nout --> N-nutí		
+vzplanout	vzplanutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vzplanutý	vzplanutí	A-ý --> N-í		
+
+vzpomenout	vzpomenutí	V-nout --> N-nutí		
+vzpomenout	vzpomenutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+vzpomenutý	vzpomenutí	A-ý --> N-í		
+
+zabodnout	zabodnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zabodnutý	zabodnutí	A-ý --> N-í		
+
+zabouchnout	zabouchnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zabouchnutý	zabouchnutí	A-ý --> N-í		
+
+zaběhnout	zaběhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zaběhnutý	zaběhnutí	A-ý --> N-í		
+
+zacvaknout	zacvaknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zacvaknutý	zacvaknutí	A-ý --> N-í		
+
+zadrhnout	zadrhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zadrhnutý	zadrhnutí	A-ý --> N-í		
+
+* zahlednout	zahlédnutí	V-nout --> N-nutí	CHANGE: e -> é	
+zahlédnout	zahlédnutí	V-nout --> N-nutí		
+zahlédnout	zahlédnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zahlédnutý	zahlédnutí	A-ý --> N-í		
+
+zahnout	zahnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zahnutý	zahnutí	A-ý --> N-í		
+
+* zahnout	žahnutí	V-nout --> N-nutí	CHANGE: z -> ž	
+* zahnutý	žahnutí	A-ý --> N-í	CHANGE: z -> ž	
+žahnout	žahnutí	V-nout --> N-nutí		
+žahnutý	žahnutí	A-ý --> N-í		
+* žáhnout	žahnutí	V-nout --> N-nutí	CHANGE: á -> a	
+
+zahrnout	zahrnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zahrnutý	zahrnutí	A-ý --> N-í		
+
+zahryznout	zahryznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zahryznutý	zahryznutí	A-ý --> N-í		
+
+zaháknout	zaháknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zaháknutý	zaháknutí	A-ý --> N-í		
+
+zaklapnout	zaklapnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zaklapnutý	zaklapnutí	A-ý --> N-í		
+
+zaklenout	zaklenutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zaklenutý	zaklenutí	A-ý --> N-í		
+
+zaklesnout	zaklesnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zaklesnutý	zaklesnutí	A-ý --> N-í		
+
+zakopnout	zakopnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zakopnutý	zakopnutí	A-ý --> N-í		
+
+zakousnout	zakousnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zakousnutý	zakousnutí	A-ý --> N-í		
+
+zakřiknout	zakřiknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zakřiknutý	zakřiknutí	A-ý --> N-í		
+
+zamknout	zamknutí	V-nout --> N-nutí		
+zamknout	zamknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zamknutý	zamknutí	A-ý --> N-í		
+
+zamrznout	zamrznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zamrznutý	zamrznutí	A-ý --> N-í		
+
+zamítnout	zamítnutí	V-nout --> N-nutí		
+zamítnout	zamítnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zamítnutý	zamítnutí	A-ý --> N-í		
+
+zaniknout	zaniknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zaniknutý	zaniknutí	A-ý --> N-í		
+
+zapnout	zapnutí	V-nout --> N-nutí		
+zapnout	zapnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zapnutý	zapnutí	A-ý --> N-í		
+
+zapomenout	zapomenutí	V-nout --> N-nutí		
+zapomenout	zapomenutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zapomenutý	zapomenutí	A-ý --> N-í		
+
+zapíchnout	zapíchnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zapíchnutý	zapíchnutí	A-ý --> N-í		
+
+zarudnout	zarudnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zarudnutý	zarudnutí	A-ý --> N-í		
+
+zaschnout	zaschnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zaschnutý	zaschnutí	A-ý --> N-í		
+
+zaseknout	zaseknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zaseknutý	zaseknutí	A-ý --> N-í		
+
+zaslechnout	zaslechnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zaslechnutý	zaslechnutí	A-ý --> N-í		
+
+zasunout	zasunutí	V-nout --> N-nutí		
+zasunout	zasunutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zasunutý	zasunutí	A-ý --> N-í		
+
+zasyknout	zasyknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zasyknutý	zasyknutí	A-ý --> N-í		
+
+zasáhnout	zasáhnutí	V-nout --> N-nutí		
+zasáhnutý	zasáhnutí	A-ý --> N-í		
+
+zatknout	zatknutí	V-nout --> N-nutí		
+zatknout	zatknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zatknutý	zatknutí	A-ý --> N-í		
+
+zatnout	zatnutí	V-nout --> N-nutí		
+zatnout	zatnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zatnutý	zatnutí	A-ý --> N-í		
+
+zatvrdnout	zatvrdnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zatvrdnutý	zatvrdnutí	A-ý --> N-í		
+
+zatáhnout	zatáhnutí	V-nout --> N-nutí		
+zatáhnout	zatáhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zatáhnutý	zatáhnutí	A-ý --> N-í		
+
+zavadnout	zavadnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zavadnutý	zavadnutí	A-ý --> N-í		
+
+zavinout	zavinutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zavinutý	zavinutí	A-ý --> N-í		
+
+zavrhnout	zavrhnutí	V-nout --> N-nutí		
+zavrhnout	zavrhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zavrhnutý	zavrhnutí	A-ý --> N-í		
+
+zaříznout	zaříznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zaříznutý	zaříznutí	A-ý --> N-í		
+
+zaškrtnout	zaškrtnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zaškrtnutý	zaškrtnutí	A-ý --> N-í		
+
+zašlápnout	zašlápnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zašlápnutý	zašlápnutí	A-ý --> N-í		
+
+zaštípnout	zaštípnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zaštípnutý	zaštípnutí	A-ý --> N-í		
+
+zažehnout	zažehnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zažehnutý	zažehnutí	A-ý --> N-í		
+
+zblbnout	zblbnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zblbnutý	zblbnutí	A-ý --> N-í		
+
+zbouchnout	zbouchnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zbouchnutý	zbouchnutí	A-ý --> N-í		
+
+zcvoknout	zcvoknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zcvoknutý	zcvoknutí	A-ý --> N-í		
+
+zdvihnout	zdvihnutí	V-nout --> N-nutí		
+zdvihnout	zdvihnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zdvihnutý	zdvihnutí	A-ý --> N-í		
+
+zhasnout	zhasnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zhasnutý	zhasnutí	A-ý --> N-í		
+
+* zhlédnout	zhlednutí	V-nout --> N-nutí	CHANGE: é -> e	
+* zhlédnutý	zhlednutí	A-ý --> N-í	CHANGE: é -> e	
+
+zhlédnout	zhlédnutí	V-nout --> N-nutí		
+zhlédnout	zhlédnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zhlédnutý	zhlédnutí	A-ý --> N-í		
+
+zhoupnout	zhoupnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zhoupnutý	zhoupnutí	A-ý --> N-í		
+
+zmačknout	zmačknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+* zmáčknout	zmačknutí	V-nout --> N-nutí	CHANGE: á -> a	
+* zmáčknutý	zmačknutí	A-ý --> N-í	CHANGE: á -> a	
+
+* zmačknout	zmáčknutí	V-nout --> N-nutí	CHANGE: a -> á	
+zmáčknout	zmáčknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zmáčknutý	zmáčknutí	A-ý --> N-í		
+
+ztuhnout	ztuhnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+ztuhnutý	ztuhnutí	A-ý --> N-í		
+
+zvednout	zvednutí	V-nout --> N-nutí		
+zvednout	zvednutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zvednutý	zvednutí	A-ý --> N-í		
+
+zvládnout	zvládnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zvládnutý	zvládnutí	A-ý --> N-í		
+
+zívnout	zívnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+zívnutý	zívnutí	A-ý --> N-í		
+
+říznout	říznutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+říznutý	říznutí	A-ý --> N-í		
+
+škrtnout	škrtnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+škrtnutý	škrtnutí	A-ý --> N-í		
+
+škrábnout	škrábnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+škrábnutý	škrábnutí	A-ý --> N-í		
+
+škubnout	škubnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+škubnutý	škubnutí	A-ý --> N-í		
+
+škytnout	škytnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+škytnutý	škytnutí	A-ý --> N-í		
+
+šlohnout	šlohnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+šlohnutý	šlohnutí	A-ý --> N-í		
+
+štrejchnout	štrejchnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+štrejchnutý	štrejchnutí	A-ý --> N-í		
+
+štípnout	štípnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+štípnutý	štípnutí	A-ý --> N-í		
+
+štěknout	štěknutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+štěknutý	štěknutí	A-ý --> N-í		
+
+švihnout	švihnutí	V-nout --> N-nutí		LINK ALREADY PRESENT
+švihnutý	švihnutí	A-ý --> N-í		
+
+
+

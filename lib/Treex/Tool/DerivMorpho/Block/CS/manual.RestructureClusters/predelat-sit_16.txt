@@ -1,0 +1,205 @@
+﻿% vymazat ohvězdičkovamé řádky!
+% SPRÁVNÉ ŘEŠENÍ: V-tit --> N-cení, V-tit --> A-cený
+
+
+
+---------------------------------
+39 GROUPS FOR RULE COMBINATION: A-ý --> N-í, V-et --> N-ení, V-tit --> N-cení
+
+* navracený	navrácení	A-ý --> N-í	CHANGE: a -> á	
+* navracet	navrácení	V-et --> N-ení	CHANGE: a -> á	
+navrácený	navrácení	A-ý --> N-í		
+navrátit	navrácení	V-tit --> N-cení		
+navrátit	navrácení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+obracený	obracení	A-ý --> N-í		
+obracet	obracení	V-et --> N-ení		
+* obrácený	obracení	A-ý --> N-í	CHANGE: á -> a	
+* obrátit	obracení	V-tit --> N-cení	CHANGE: á -> a	
+
+* obracený	obrácení	A-ý --> N-í	CHANGE: a -> á	
+* obracet	obrácení	V-et --> N-ení	CHANGE: a -> á	
+obrácený	obrácení	A-ý --> N-í		
+obrátit	obrácení	V-tit --> N-cení		
+obrátit	obrácení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+odvracet	odvracení	V-et --> N-ení		LINK ALREADY PRESENT
+* odvrácený	odvracení	A-ý --> N-í	CHANGE: á -> a	
+* odvrátit	odvracení	V-tit --> N-cení	CHANGE: á -> a	
+
+* odvracet	odvrácení	V-et --> N-ení	CHANGE: a -> á	
+odvrácený	odvrácení	A-ý --> N-í		
+odvrátit	odvrácení	V-tit --> N-cení		
+odvrátit	odvrácení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+* oplatit	oplácení	V-tit --> N-cení	CHANGE: a -> á	
+oplácený	oplácení	A-ý --> N-í		
+oplácet	oplácení	V-et --> N-ení		LINK ALREADY PRESENT
+
+podplacený	podplacení	A-ý --> N-í		
+podplatit	podplacení	V-tit --> N-cení		LINK ALREADY PRESENT
+* podplácet	podplacení	V-et --> N-ení	CHANGE: á -> a	
+
+* podplacený	podplácení	A-ý --> N-í	CHANGE: a -> á	
+* podplatit	podplácení	V-tit --> N-cení	CHANGE: a -> á	
+podplácet	podplácení	V-et --> N-ení		LINK ALREADY PRESENT
+
+proplacený	proplacení	A-ý --> N-í		
+proplatit	proplacení	V-tit --> N-cení		LINK ALREADY PRESENT
+* proplácený	proplacení	A-ý --> N-í	CHANGE: á -> a	
+* proplácet	proplacení	V-et --> N-ení	CHANGE: á -> a	
+
+* proplacený	proplácení	A-ý --> N-í	CHANGE: a -> á	
+* proplatit	proplácení	V-tit --> N-cení	CHANGE: a -> á	
+proplácený	proplácení	A-ý --> N-í		
+proplácet	proplácení	V-et --> N-ení		LINK ALREADY PRESENT
+
+předplacený	předplacení	A-ý --> N-í		
+předplatit	předplacení	V-tit --> N-cení		LINK ALREADY PRESENT
+* předplácený	předplacení	A-ý --> N-í	CHANGE: á -> a	
+* předplácet	předplacení	V-et --> N-ení	CHANGE: á -> a	
+
+* předplacený	předplácení	A-ý --> N-í	CHANGE: a -> á	
+* předplatit	předplácení	V-tit --> N-cení	CHANGE: a -> á	
+předplácený	předplácení	A-ý --> N-í		
+předplácet	předplácení	V-et --> N-ení		LINK ALREADY PRESENT
+
+přeplacený	přeplacení	A-ý --> N-í		
+přeplatit	přeplacení	V-tit --> N-cení		LINK ALREADY PRESENT
+* přeplácený	přeplacení	A-ý --> N-í	CHANGE: á -> a	
+* přeplácet	přeplacení	V-et --> N-ení	CHANGE: á -> a	
+
+* přeplacený	přeplácení	A-ý --> N-í	CHANGE: a -> á	
+* přeplatit	přeplácení	V-tit --> N-cení	CHANGE: a -> á	
+přeplácený	přeplácení	A-ý --> N-í		
+přeplácet	přeplácení	V-et --> N-ení		LINK ALREADY PRESENT
+
+převracený	převracení	A-ý --> N-í		
+převracet	převracení	V-et --> N-ení		LINK ALREADY PRESENT
+* převrácený	převracení	A-ý --> N-í	CHANGE: á -> a	
+* převrátit	převracení	V-tit --> N-cení	CHANGE: á -> a	
+
+* převracený	převrácení	A-ý --> N-í	CHANGE: a -> á	
+* převracet	převrácení	V-et --> N-ení	CHANGE: a -> á	
+převrácený	převrácení	A-ý --> N-í		
+převrátit	převrácení	V-tit --> N-cení		
+převrátit	převrácení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+rozsvícený	rozsvícení	A-ý --> N-í		
+rozsvítit	rozsvícení	V-tit --> N-cení		
+rozsvítit	rozsvícení	V-tit --> N-cení		LINK ALREADY PRESENT
+* rozsvěcený	rozsvícení	A-ý --> N-í	CHANGE: ě -> í	
+* rozsvěcet	rozsvícení	V-et --> N-ení	CHANGE: ě -> í	
+
+rozvracený	rozvracení	A-ý --> N-í		
+rozvracet	rozvracení	V-et --> N-ení		LINK ALREADY PRESENT
+* rozvrácený	rozvracení	A-ý --> N-í	CHANGE: á -> a	
+* rozvrátit	rozvracení	V-tit --> N-cení	CHANGE: á -> a	
+
+* rozvracený	rozvrácení	A-ý --> N-í	CHANGE: a -> á	
+* rozvracet	rozvrácení	V-et --> N-ení	CHANGE: a -> á	
+rozvrácený	rozvrácení	A-ý --> N-í		
+rozvrátit	rozvrácení	V-tit --> N-cení		
+rozvrátit	rozvrácení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+splacený	splacení	A-ý --> N-í		
+splatit	splacení	V-tit --> N-cení		LINK ALREADY PRESENT
+* splácený	splacení	A-ý --> N-í	CHANGE: á -> a	
+* splácet	splacení	V-et --> N-ení	CHANGE: á -> a	
+
+* splacený	splácení	A-ý --> N-í	CHANGE: a -> á	
+* splatit	splácení	V-tit --> N-cení	CHANGE: a -> á	
+splácený	splácení	A-ý --> N-í		
+splácet	splácení	V-et --> N-ení		
+splácet	splácení	V-et --> N-ení		LINK ALREADY PRESENT
+
+uplacený	uplacení	A-ý --> N-í		
+uplatit	uplacení	V-tit --> N-cení		LINK ALREADY PRESENT
+* uplácený	uplacení	A-ý --> N-í	CHANGE: á -> a	
+* uplácet	uplacení	V-et --> N-ení	CHANGE: á -> a	
+
+* uplacený	uplácení	A-ý --> N-í	CHANGE: a -> á	
+* uplatit	uplácení	V-tit --> N-cení	CHANGE: a -> á	
+uplácený	uplácení	A-ý --> N-í		
+uplácet	uplácení	V-et --> N-ení		LINK ALREADY PRESENT
+
+utracený	utracení	A-ý --> N-í		
+utratit	utracení	V-tit --> N-cení		LINK ALREADY PRESENT
+* utrácený	utracení	A-ý --> N-í	CHANGE: á -> a	
+* utrácet	utracení	V-et --> N-ení	CHANGE: á -> a	
+
+* utracený	utrácení	A-ý --> N-í	CHANGE: a -> á	
+* utratit	utrácení	V-tit --> N-cení	CHANGE: a -> á	
+utrácený	utrácení	A-ý --> N-í		
+utrácet	utrácení	V-et --> N-ení		LINK ALREADY PRESENT
+
+vracený	vracení	A-ý --> N-í		
+vracet	vracení	V-et --> N-ení		LINK ALREADY PRESENT
+* vrácený	vracení	A-ý --> N-í	CHANGE: á -> a	
+* vrátit	vracení	V-tit --> N-cení	CHANGE: á -> a	
+
+* vracený	vrácení	A-ý --> N-í	CHANGE: a -> á	
+* vracet	vrácení	V-et --> N-ení	CHANGE: a -> á	
+vrácený	vrácení	A-ý --> N-í		
+vrátit	vrácení	V-tit --> N-cení		
+vrátit	vrácení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+vyplacený	vyplacení	A-ý --> N-í		
+vyplatit	vyplacení	V-tit --> N-cení		LINK ALREADY PRESENT
+* vyplácený	vyplacení	A-ý --> N-í	CHANGE: á -> a	
+* vyplácet	vyplacení	V-et --> N-ení	CHANGE: á -> a	
+
+* vyplacený	vyplácení	A-ý --> N-í	CHANGE: a -> á	
+* vyplatit	vyplácení	V-tit --> N-cení	CHANGE: a -> á	
+vyplácený	vyplácení	A-ý --> N-í		
+vyplácet	vyplácení	V-et --> N-ení		LINK ALREADY PRESENT
+
+vytracený	vytracení	A-ý --> N-í		
+vytratit	vytracení	V-tit --> N-cení		LINK ALREADY PRESENT
+* vytrácet	vytracení	V-et --> N-ení	CHANGE: á -> a	
+
+* vytracený	vytrácení	A-ý --> N-í	CHANGE: a -> á	
+* vytratit	vytrácení	V-tit --> N-cení	CHANGE: a -> á	
+vytrácet	vytrácení	V-et --> N-ení		LINK ALREADY PRESENT
+
+vyvracet	vyvracení	V-et --> N-ení		LINK ALREADY PRESENT
+* vyvrácený	vyvracení	A-ý --> N-í	CHANGE: á -> a	
+* vyvrátit	vyvracení	V-tit --> N-cení	CHANGE: á -> a	
+
+* vyvracet	vyvrácení	V-et --> N-ení	CHANGE: a -> á	
+vyvrácený	vyvrácení	A-ý --> N-í		
+vyvrátit	vyvrácení	V-tit --> N-cení		
+vyvrátit	vyvrácení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zachvácený	zachvácení	A-ý --> N-í		
+* zachvácet	zachvácení	V-et --> N-ení		
+zachvátit	zachvácení	V-tit --> N-cení		
+zachvátit	zachvácení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zkrácený	zkrácení	A-ý --> N-í		
+* zkrácet	zkrácení	V-et --> N-ení		
+zkrátit	zkrácení	V-tit --> N-cení		
+zkrátit	zkrácení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+ztracený	ztracení	A-ý --> N-í		
+ztratit	ztracení	V-tit --> N-cení		LINK ALREADY PRESENT
+* ztrácený	ztracení	A-ý --> N-í	CHANGE: á -> a	
+* ztrácet	ztracení	V-et --> N-ení	CHANGE: á -> a	
+
+ztracený	ztrácení	A-ý --> N-í	CHANGE: a -> á	
+ztratit	ztrácení	V-tit --> N-cení	CHANGE: a -> á	
+ztrácený	ztrácení	A-ý --> N-í		
+ztrácet	ztrácení	V-et --> N-ení		LINK ALREADY PRESENT
+
+zvracený	zvracení	A-ý --> N-í		
+zvracet	zvracení	V-et --> N-ení		LINK ALREADY PRESENT
+* zvrácený	zvracení	A-ý --> N-í	CHANGE: á -> a	
+* zvrátit	zvracení	V-tit --> N-cení	CHANGE: á -> a	
+
+* zvracený	zvrácení	A-ý --> N-í	CHANGE: a -> á	
+* zvracet	zvrácení	V-et --> N-ení	CHANGE: a -> á	
+zvrácený	zvrácení	A-ý --> N-í		
+zvrátit	zvrácení	V-tit --> N-cení		
+
+
+

@@ -1,0 +1,199 @@
+﻿% vymazat ohvězdičkovamé řádky!
+% SPRÁVNÉ ŘEŠENÍ: V-řít --> N-ření, V-řít --> A-řený
+
+
+---------------------------------
+42 GROUPS FOR RULE COMBINATION: A-ý --> N-í, V-ít --> N-ení, V-řít --> N-ření
+
+dřený	dření	A-ý --> N-í		
+* dřít	dření	V-ít --> N-ení		
+* dřít	dření	V-ít --> N-ení		LINK ALREADY PRESENT
+dřít	dření	V-řít --> N-ření		
+dřít	dření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+nadřený	nadření	A-ý --> N-í		
+* nadřít	nadření	V-ít --> N-ení		LINK ALREADY PRESENT
+nadřít	nadření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+napřený	napření	A-ý --> N-í		
+* napřít	napření	V-ít --> N-ení		LINK ALREADY PRESENT
+napřít	napření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+natřený	natření	A-ý --> N-í		
+* natřít	natření	V-ít --> N-ení		LINK ALREADY PRESENT
+natřít	natření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+odepřený	odepření	A-ý --> N-í		
+* odepřít	odepření	V-ít --> N-ení		LINK ALREADY PRESENT
+odepřít	odepření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+odřený	odření	A-ý --> N-í		
+* odřít	odření	V-ít --> N-ení		LINK ALREADY PRESENT
+odřít	odření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+opřený	opření	A-ý --> N-í		
+* opřít	opření	V-ít --> N-ení		
+* opřít	opření	V-ít --> N-ení		LINK ALREADY PRESENT
+opřít	opření	V-řít --> N-ření		
+opřít	opření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+otevřený	otevření	A-ý --> N-í		
+* otevřít	otevření	V-ít --> N-ení		
+* otevřít	otevření	V-ít --> N-ení		LINK ALREADY PRESENT
+otevřít	otevření	V-řít --> N-ření		
+otevřít	otevření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+otřený	otření	A-ý --> N-í		
+* otřít	otření	V-ít --> N-ení		LINK ALREADY PRESENT
+otřít	otření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+podepřený	podepření	A-ý --> N-í		
+* podepřít	podepření	V-ít --> N-ení		LINK ALREADY PRESENT
+podepřít	podepření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+pootevřený	pootevření	A-ý --> N-í		
+* pootevřít	pootevření	V-ít --> N-ení		LINK ALREADY PRESENT
+pootevřít	pootevření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+popřený	popření	A-ý --> N-í		
+* popřít	popření	V-ít --> N-ení		LINK ALREADY PRESENT
+popřít	popření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+potřený	potření	A-ý --> N-í		
+* potřít	potření	V-ít --> N-ení		LINK ALREADY PRESENT
+potřít	potření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+pozřený	pozření	A-ý --> N-í		
+* pozřít	pozření	V-ít --> N-ení		LINK ALREADY PRESENT
+pozřít	pozření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+prodřený	prodření	A-ý --> N-í		
+* prodřít	prodření	V-ít --> N-ení		LINK ALREADY PRESENT
+prodřít	prodření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+prostřený	prostření	A-ý --> N-í		
+* prostřít	prostření	V-ít --> N-ení		LINK ALREADY PRESENT
+prostřít	prostření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+přený	pření	A-ý --> N-í		
+* přít	pření	V-ít --> N-ení		
+* přít	pření	V-ít --> N-ení		LINK ALREADY PRESENT
+přít	pření	V-řít --> N-ření		
+přít	pření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+přetřený	přetření	A-ý --> N-í		
+* přetřít	přetření	V-ít --> N-ení		LINK ALREADY PRESENT
+přetřít	přetření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+přivřený	přivření	A-ý --> N-í		
+* přivřít	přivření	V-ít --> N-ení		LINK ALREADY PRESENT
+přivřít	přivření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+rozestřený	rozestření	A-ý --> N-í		
+* rozestřít	rozestření	V-ít --> N-ení		LINK ALREADY PRESENT
+rozestřít	rozestření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+rozetřený	rozetření	A-ý --> N-í		
+* rozetřít	rozetření	V-ít --> N-ení		LINK ALREADY PRESENT
+rozetřít	rozetření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+rozevřený	rozevření	A-ý --> N-í		
+* rozevřít	rozevření	V-ít --> N-ení		LINK ALREADY PRESENT
+rozevřít	rozevření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+rozprostřený	rozprostření	A-ý --> N-í		
+* rozprostřít	rozprostření	V-ít --> N-ení		LINK ALREADY PRESENT
+rozprostřít	rozprostření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+setřený	setření	A-ý --> N-í		
+* setřít	setření	V-ít --> N-ení		LINK ALREADY PRESENT
+setřít	setření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+* setřený	šetření	A-ý --> N-í	CHANGE: s -> š	
+* setřít	šetření	V-ít --> N-ení	CHANGE: s -> š	
+* setřít	šetření	V-řít --> N-ření	CHANGE: s -> š	
+* šetřený	šetření	A-ý --> N-í		
+
+sevřený	sevření	A-ý --> N-í		
+* sevřít	sevření	V-ít --> N-ení		
+sevřít	sevření	V-ít --> N-ení		LINK ALREADY PRESENT
+sevřít	sevření	V-řít --> N-ření		
+sevřít	sevření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+třený	tření	A-ý --> N-í		
+* třít	tření	V-ít --> N-ení		
+* třít	tření	V-ít --> N-ení		LINK ALREADY PRESENT
+třít	tření	V-řít --> N-ření		
+třít	tření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+udřený	udření	A-ý --> N-í		
+* udřít	udření	V-ít --> N-ení		LINK ALREADY PRESENT
+udřít	udření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+upřený	upření	A-ý --> N-í		
+* upřít	upření	V-ít --> N-ení		
+* upřít	upření	V-ít --> N-ení		LINK ALREADY PRESENT
+upřít	upření	V-řít --> N-ření		
+upřít	upření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+utřený	utření	A-ý --> N-í		
+* utřít	utření	V-ít --> N-ení		LINK ALREADY PRESENT
+utřít	utření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+uzavřený	uzavření	A-ý --> N-í		
+* uzavřít	uzavření	V-ít --> N-ení		
+* uzavřít	uzavření	V-ít --> N-ení		LINK ALREADY PRESENT
+uzavřít	uzavření	V-řít --> N-ření		
+uzavřít	uzavření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+vetřený	vetření	A-ý --> N-í		
+* vetřít	vetření	V-ít --> N-ení		LINK ALREADY PRESENT
+vetřít	vetření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+vytřený	vytření	A-ý --> N-í		
+* vytřít	vytření	V-ít --> N-ení		LINK ALREADY PRESENT
+vytřít	vytření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+vzepřený	vzepření	A-ý --> N-í		
+* vzepřít	vzepření	V-ít --> N-ení		LINK ALREADY PRESENT
+vzepřít	vzepření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+vzezřený	vzezření	A-ý --> N-í		
+* vzezřít	vzezření	V-ít --> N-ení		LINK ALREADY PRESENT
+vzezřít	vzezření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+vřený	vření	A-ý --> N-í		
+* vřít	vření	V-ít --> N-ení		
+* vřít	vření	V-ít --> N-ení		LINK ALREADY PRESENT
+vřít	vření	V-řít --> N-ření		
+vřít	vření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+zadřený	zadření	A-ý --> N-í		
+* zadřít	zadření	V-ít --> N-ení		LINK ALREADY PRESENT
+zadřít	zadření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+zapřený	zapření	A-ý --> N-í		
+* zapřít	zapření	V-ít --> N-ení		LINK ALREADY PRESENT
+zapřít	zapření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+zastřený	zastření	A-ý --> N-í		
+* zastřít	zastření	V-ít --> N-ení		LINK ALREADY PRESENT
+zastřít	zastření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+zavřený	zavření	A-ý --> N-í		
+* zavřít	zavření	V-ít --> N-ení		
+* zavřít	zavření	V-ít --> N-ení		LINK ALREADY PRESENT
+zavřít	zavření	V-řít --> N-ření		
+zavřít	zavření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+znovuotevřený	znovuotevření	A-ý --> N-í		
+* znovuotevřít	znovuotevření	V-ít --> N-ení		LINK ALREADY PRESENT
+znovuotevřít	znovuotevření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+zřený	zření	A-ý --> N-í		
+* zřít	zření	V-ít --> N-ení		
+* zřít	zření	V-ít --> N-ení		LINK ALREADY PRESENT
+zřít	zření	V-řít --> N-ření		
+zřít	zření	V-řít --> N-ření		LINK ALREADY PRESENT
+
+

@@ -1,0 +1,149 @@
+﻿% vymazat ohvězdičkovamé řádky!
+% SPRÁVNÉ ŘEŠENÍ: V-et --> N-ení, V-et --> A-ený
+
+
+---------------------------------
+---------------------------------
+27 GROUPS FOR RULE COMBINATION: A-ý --> N-í, V-et --> N-ení, V-zit --> N-žení
+
+* narazit	narážení	V-zit --> N-žení	CHANGE: a -> á	
+* naražený	narážení	A-ý --> N-í	CHANGE: a -> á	
+narážený	narážení	A-ý --> N-í		
+narážet	narážení	V-et --> N-ení		LINK ALREADY PRESENT
+
+* odrazený	odražení	A-ý --> N-í	CHANGE: z -> ž	
+odrazit	odražení	V-zit --> N-žení		
+odrazit	odražení	V-zit --> N-žení		LINK ALREADY PRESENT
+odražený	odražení	A-ý --> N-í		
+* odrážený	odražení	A-ý --> N-í	CHANGE: á -> a	
+* odrážet	odražení	V-et --> N-ení	CHANGE: á -> a	
+
+* odrazit	odrážení	V-zit --> N-žení	CHANGE: a -> á	
+* odražený	odrážení	A-ý --> N-í	CHANGE: a -> á	
+odrážený	odrážení	A-ý --> N-í		
+odrážet	odrážení	V-et --> N-ení		LINK ALREADY PRESENT
+
+podrazit	podražení	V-zit --> N-žení		
+podražený	podražení	A-ý --> N-í		
+* podrážet	podražení	V-et --> N-ení	CHANGE: á -> a	
+
+* podrazit	podrážení	V-zit --> N-žení	CHANGE: a -> á	
+* podražený	podrážení	A-ý --> N-í	CHANGE: a -> á	
+podrážet	podrážení	V-et --> N-ení		LINK ALREADY PRESENT
+
+* porazený	poražení	A-ý --> N-í	CHANGE: z -> ž	
+porazit	poražení	V-zit --> N-žení		
+porazit	poražení	V-zit --> N-žení		LINK ALREADY PRESENT
+poražený	poražení	A-ý --> N-í		
+* porážený	poražení	A-ý --> N-í	CHANGE: á -> a	
+* porážet	poražení	V-et --> N-ení	CHANGE: á -> a	
+
+* porazit	porážení	V-zit --> N-žení	CHANGE: a -> á	
+* poražený	porážení	A-ý --> N-í	CHANGE: a -> á	
+porážený	porážení	A-ý --> N-í		
+porážet	porážení	V-et --> N-ení		LINK ALREADY PRESENT
+
+povyrazit	povyražení	V-zit --> N-žení		LINK ALREADY PRESENT
+povyražený	povyražení	A-ý --> N-í		
+* povyrážený	povyražení	A-ý --> N-í	CHANGE: á -> a	
+* povyrážet	povyražení	V-et --> N-ení	CHANGE: á -> a	
+
+prorazit	proražení	V-zit --> N-žení		
+prorazit	proražení	V-zit --> N-žení		LINK ALREADY PRESENT
+proražený	proražení	A-ý --> N-í		
+* prorážený	proražení	A-ý --> N-í	CHANGE: á -> a	
+* prorážet	proražení	V-et --> N-ení	CHANGE: á -> a	
+
+* prorazit	prorážení	V-zit --> N-žení	CHANGE: a -> á	
+* proražený	prorážení	A-ý --> N-í	CHANGE: a -> á	
+prorážený	prorážení	A-ý --> N-í		
+prorážet	prorážení	V-et --> N-ení		LINK ALREADY PRESENT
+
+překazit	překažení	V-zit --> N-žení		
+překazit	překažení	V-zit --> N-žení		LINK ALREADY PRESENT
+překažený	překažení	A-ý --> N-í		
+* překážet	překažení	V-et --> N-ení	CHANGE: á -> a	
+
+* překazit	překážení	V-zit --> N-žení	CHANGE: a -> á	
+* překažený	překážení	A-ý --> N-í	CHANGE: a -> á	
+překážet	překážení	V-et --> N-ení		LINK ALREADY PRESENT
+
+přerazit	přeražení	V-zit --> N-žení		
+přerazit	přeražení	V-zit --> N-žení		LINK ALREADY PRESENT
+přeražený	přeražení	A-ý --> N-í		
+* přerážet	přeražení	V-et --> N-ení	CHANGE: á -> a	
+
+přirazit	přiražení	V-zit --> N-žení		
+přirazit	přiražení	V-zit --> N-žení		LINK ALREADY PRESENT
+přiražený	přiražení	A-ý --> N-í		
+* přirážet	přiražení	V-et --> N-ení	CHANGE: á -> a	
+
+* přirazit	přirážení	V-zit --> N-žení	CHANGE: a -> á	
+* přiražený	přirážení	A-ý --> N-í	CHANGE: a -> á	
+přirážet	přirážení	V-et --> N-ení		LINK ALREADY PRESENT
+
+* rozrazit	rozrážení	V-zit --> N-žení	CHANGE: a -> á	
+* rozražený	rozrážení	A-ý --> N-í	CHANGE: a -> á	
+rozrážený	rozrážení	A-ý --> N-í		
+rozrážet	rozrážení	V-et --> N-ení		LINK ALREADY PRESENT
+
+srazit	sražení	V-zit --> N-žení		
+srazit	sražení	V-zit --> N-žení		LINK ALREADY PRESENT
+sražený	sražení	A-ý --> N-í		
+* srážený	sražení	A-ý --> N-í	CHANGE: á -> a	
+* srážet	sražení	V-et --> N-ení	CHANGE: á -> a	
+
+* srazit	srážení	V-zit --> N-žení	CHANGE: a -> á	
+* sražený	srážení	A-ý --> N-í	CHANGE: a -> á	
+srážený	srážení	A-ý --> N-í		
+srážet	srážení	V-et --> N-ení		LINK ALREADY PRESENT
+
+urazit	uražení	V-zit --> N-žení		
+urazit	uražení	V-zit --> N-žení		LINK ALREADY PRESENT
+uražený	uražení	A-ý --> N-í		
+* urážený	uražení	A-ý --> N-í	CHANGE: á -> a	
+* urážet	uražení	V-et --> N-ení	CHANGE: á -> a	
+
+* urazit	urážení	V-zit --> N-žení	CHANGE: a -> á	
+* uražený	urážení	A-ý --> N-í	CHANGE: a -> á	
+urážený	urážení	A-ý --> N-í		
+urážet	urážení	V-et --> N-ení		LINK ALREADY PRESENT
+
+vrazit	vražení	V-zit --> N-žení		
+vrazit	vražení	V-zit --> N-žení		LINK ALREADY PRESENT
+vražený	vražení	A-ý --> N-í		
+* vrážený	vražení	A-ý --> N-í	CHANGE: á -> a	
+* vrážet	vražení	V-et --> N-ení	CHANGE: á -> a	
+
+* vrazit	vrážení	V-zit --> N-žení	CHANGE: a -> á	
+* vražený	vrážení	A-ý --> N-í	CHANGE: a -> á	
+vrážený	vrážení	A-ý --> N-í		
+vrážet	vrážení	V-et --> N-ení		LINK ALREADY PRESENT
+
+vyrazit	vyražení	V-zit --> N-žení		
+vyrazit	vyražení	V-zit --> N-žení		LINK ALREADY PRESENT
+vyražený	vyražení	A-ý --> N-í		
+* vyrážený	vyražení	A-ý --> N-í	CHANGE: á -> a	
+* vyrážet	vyražení	V-et --> N-ení	CHANGE: á -> a	
+
+* vyrazit	vyrážení	V-zit --> N-žení	CHANGE: a -> á	
+* vyražený	vyrážení	A-ý --> N-í	CHANGE: a -> á	
+vyrážený	vyrážení	A-ý --> N-í		
+vyrážet	vyrážení	V-et --> N-ení		
+
+* vězený	věžení	A-ý --> N-í	CHANGE: z -> ž	
+* vězet	věžení	V-et --> N-ení	CHANGE: z -> ž	
+* vězit	věžení	V-zit --> N-žení		
+
+* zarazit	zarážení	V-zit --> N-žení	CHANGE: a -> á	
+* zaražený	zarážení	A-ý --> N-í	CHANGE: a -> á	
+zarážený	zarážení	A-ý --> N-í		
+zarážet	zarážení	V-et --> N-ení		LINK ALREADY PRESENT
+
+* zavazit	zavážení	V-zit --> N-žení	CHANGE: a -> á	
+* zavázet	zavážení	V-et --> N-ení	CHANGE: z -> ž	
+zavážený	zavážení	A-ý --> N-í		
+zavážet	zavážení	V-et --> N-ení		
+
+
+

@@ -1,0 +1,59 @@
+﻿% vymazat ohvězdičkovamé řádky!
+% SPRÁVNÉ ŘEŠENÍ: V-ést --> N-etení, V-ést --> A-etený
+
+
+---------------------------------
+---------------------------------
+14 GROUPS FOR RULE COMBINATION: A-ý --> N-í, V-ést --> N-etení
+
+odmetený	odmetení	A-ý --> N-í		
+odmést	odmetení	V-ést --> N-etení		LINK ALREADY PRESENT
+
+opletený	opletení	A-ý --> N-í		
+oplést	opletení	V-ést --> N-etení		LINK ALREADY PRESENT
+
+pletený	pletení	A-ý --> N-í		
+plést	pletení	V-ést --> N-etení		
+plést	pletení	V-ést --> N-etení		LINK ALREADY PRESENT
+
+popletený	popletení	A-ý --> N-í		
+poplést	popletení	V-ést --> N-etení		
+poplést	popletení	V-ést --> N-etení		LINK ALREADY PRESENT
+
+propletený	propletení	A-ý --> N-í		
+proplést	propletení	V-ést --> N-etení		LINK ALREADY PRESENT
+
+rozpletený	rozpletení	A-ý --> N-í		
+rozplést	rozpletení	V-ést --> N-etení		LINK ALREADY PRESENT
+
+smetený	smetení	A-ý --> N-í		
+smést	smetení	V-ést --> N-etení		
+smést	smetení	V-ést --> N-etení		LINK ALREADY PRESENT
+
+spletený	spletení	A-ý --> N-í		
+splést	spletení	V-ést --> N-etení		
+splést	spletení	V-ést --> N-etení		LINK ALREADY PRESENT
+
+umetený	umetení	A-ý --> N-í		
+umést	umetení	V-ést --> N-etení		
+umést	umetení	V-ést --> N-etení		LINK ALREADY PRESENT
+
+vpletený	vpletení	A-ý --> N-í		
+vplést	vpletení	V-ést --> N-etení		LINK ALREADY PRESENT
+
+vymetený	vymetení	A-ý --> N-í		
+vymést	vymetení	V-ést --> N-etení		LINK ALREADY PRESENT
+
+vypletený	vypletení	A-ý --> N-í		
+vyplést	vypletení	V-ést --> N-etení		LINK ALREADY PRESENT
+
+zametený	zametení	A-ý --> N-í		
+zamést	zametení	V-ést --> N-etení		
+zamést	zametení	V-ést --> N-etení		LINK ALREADY PRESENT
+
+zapletený	zapletení	A-ý --> N-í		
+zaplést	zapletení	V-ést --> N-etení		
+zaplést	zapletení	V-ést --> N-etení		LINK ALREADY PRESENT
+
+
+

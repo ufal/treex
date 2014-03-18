@@ -1,0 +1,70 @@
+﻿% vymazat ohvězdičkovamé řádky!
+% SPRÁVNÉ ŘEŠENÍ: V-ět --> N-ění, V-ět --> A-ěný
+
+---------------------------------
+13 GROUPS FOR RULE COMBINATION: A-ý --> N-í, V-stit --> N-štění, V-ět --> N-ění
+
+napouštěný	napouštění	A-ý --> N-í		
+napouštět	napouštění	V-ět --> N-ění		LINK ALREADY PRESENT
+* napustit	napouštění	V-stit --> N-štění	CHANGE: u -> ou	
+* napuštěný	napouštění	A-ý --> N-í	CHANGE: u -> ou	
+
+odpouštět	odpouštění	V-ět --> N-ění		LINK ALREADY PRESENT
+* odpustit	odpouštění	V-stit --> N-štění	CHANGE: u -> ou	
+* odpuštěný	odpouštění	A-ý --> N-í	CHANGE: u -> ou	
+
+opouštěný	opouštění	A-ý --> N-í		
+opouštět	opouštění	V-ět --> N-ění		LINK ALREADY PRESENT
+* opustit	opouštění	V-stit --> N-štění	CHANGE: u -> ou	
+* opuštěný	opouštění	A-ý --> N-í	CHANGE: u -> ou	
+
+popouštěný	popouštění	A-ý --> N-í		
+popouštět	popouštění	V-ět --> N-ění		LINK ALREADY PRESENT
+* popustit	popouštění	V-stit --> N-štění	CHANGE: u -> ou	
+* popuštěný	popouštění	A-ý --> N-í	CHANGE: u -> ou	
+
+pouštět	pouštění	V-ět --> N-ění		LINK ALREADY PRESENT
+* pustit	pouštění	V-stit --> N-štění	CHANGE: u -> ou	
+* puštěný	pouštění	A-ý --> N-í	CHANGE: u -> ou	
+
+propouštěný	propouštění	A-ý --> N-í		
+propouštět	propouštění	V-ět --> N-ění		LINK ALREADY PRESENT
+* propustit	propouštění	V-stit --> N-štění	CHANGE: u -> ou	
+* propuštěný	propouštění	A-ý --> N-í	CHANGE: u -> ou	
+
+přepouštěný	přepouštění	A-ý --> N-í		
+přepouštět	přepouštění	V-ět --> N-ění		LINK ALREADY PRESENT
+* přepustit	přepouštění	V-stit --> N-štění	CHANGE: u -> ou	
+* přepuštěný	přepouštění	A-ý --> N-í	CHANGE: u -> ou	
+
+připouštěný	připouštění	A-ý --> N-í		
+připouštět	připouštění	V-ět --> N-ění		LINK ALREADY PRESENT
+* připustit	připouštění	V-stit --> N-štění	CHANGE: u -> ou	
+* připuštěný	připouštění	A-ý --> N-í	CHANGE: u -> ou	
+
+rozpouštěný	rozpouštění	A-ý --> N-í		
+rozpouštět	rozpouštění	V-ět --> N-ění		LINK ALREADY PRESENT
+* rozpustit	rozpouštění	V-stit --> N-štění	CHANGE: u -> ou	
+* rozpuštěný	rozpouštění	A-ý --> N-í	CHANGE: u -> ou	
+
+spouštěný	spouštění	A-ý --> N-í		
+spouštět	spouštění	V-ět --> N-ění		LINK ALREADY PRESENT
+* spustit	spouštění	V-stit --> N-štění	CHANGE: u -> ou	
+* spuštěný	spouštění	A-ý --> N-í	CHANGE: u -> ou	
+
+upouštěný	upouštění	A-ý --> N-í		
+upouštět	upouštění	V-ět --> N-ění		LINK ALREADY PRESENT
+* upustit	upouštění	V-stit --> N-štění	CHANGE: u -> ou	
+* upuštěný	upouštění	A-ý --> N-í	CHANGE: u -> ou	
+
+vpouštěný	vpouštění	A-ý --> N-í		
+vpouštět	vpouštění	V-ět --> N-ění		LINK ALREADY PRESENT
+* vpustit	vpouštění	V-stit --> N-štění	CHANGE: u -> ou	
+* vpuštěný	vpouštění	A-ý --> N-í	CHANGE: u -> ou	
+
+vypouštěný	vypouštění	A-ý --> N-í		
+vypouštět	vypouštění	V-ět --> N-ění		LINK ALREADY PRESENT
+* vypustit	vypouštění	V-stit --> N-štění	CHANGE: u -> ou	
+* vypuštěný	vypouštění	A-ý --> N-í	CHANGE: u -> ou	
+
+

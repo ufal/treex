@@ -1,0 +1,41 @@
+﻿% vymazat ohvězdičkovamé řádky!
+% SPRÁVNÉ ŘEŠENÍ: V-át --> N-ání, V-át --> A-aný
+
+
+---------------------------------
+10 GROUPS FOR RULE COMBINATION: A-ý --> N-í, V-át --> N-ání
+
+dbaný	dbání	A-ý --> N-í	CHANGE: a -> á	
+dbát	dbání	V-át --> N-ání		
+
+klaný	klání	A-ý --> N-í	CHANGE: a -> á	
+klát	klání	V-át --> N-ání		LINK ALREADY PRESENT
+
+nahraný	nahrání	A-ý --> N-í	CHANGE: a -> á	
+nahrát	nahrání	V-át --> N-ání		
+nahrát	nahrání	V-át --> N-ání		LINK ALREADY PRESENT
+
+obehraný	obehrání	A-ý --> N-í	CHANGE: a -> á	
+obehrát	obehrání	V-át --> N-ání		LINK ALREADY PRESENT
+
+odehraný	odehrání	A-ý --> N-í	CHANGE: a -> á	
+odehrát	odehrání	V-át --> N-ání		LINK ALREADY PRESENT
+
+přehraný	přehrání	A-ý --> N-í	CHANGE: a -> á	
+přehrát	přehrání	V-át --> N-ání		
+přehrát	přehrání	V-át --> N-ání		LINK ALREADY PRESENT
+
+sehraný	sehrání	A-ý --> N-í	CHANGE: a -> á	
+sehrát	sehrání	V-át --> N-ání		LINK ALREADY PRESENT
+
+vdaný	vdání	A-ý --> N-í	CHANGE: a -> á	
+vdát	vdání	V-át --> N-ání		LINK ALREADY PRESENT
+
+vzdaný	vzdání	A-ý --> N-í	CHANGE: a -> á	
+vzdát	vzdání	V-át --> N-ání		LINK ALREADY PRESENT
+
+zahraný	zahrání	A-ý --> N-í	CHANGE: a -> á	
+zahrát	zahrání	V-át --> N-ání		
+zahrát	zahrání	V-át --> N-ání		LINK ALREADY PRESENT
+
+

@@ -1,0 +1,107 @@
+﻿% vymazat ohvězdičkovamé řádky!
+% SPRÁVNÉ ŘEŠENÍ: V-dit --> N-zení, V-dit --> A-zený; V-et --> N-ení, V-et --> A-ený
+
+
+---------------------------------
+21 GROUPS FOR RULE COMBINATION: A-ý --> N-í, V-dit --> N-zení, V-et --> N-ení
+
+odklidit	odklizení	V-dit --> N-zení		LINK ALREADY PRESENT
+odklizený	odklizení	A-ý --> N-í		
+* odklízet	odklizení	V-et --> N-ení	CHANGE: í -> i	
+
+* odklidit	odklízení	V-dit --> N-zení	CHANGE: i -> í	
+* odklizený	odklízení	A-ý --> N-í	CHANGE: i -> í	
+odklízet	odklízení	V-et --> N-ení		
+
+osadit	osazení	V-dit --> N-zení		LINK ALREADY PRESENT
+osazený	osazení	A-ý --> N-í		
+* osázený	osazení	A-ý --> N-í	CHANGE: á -> a	
+* osázet	osazení	V-et --> N-ení	CHANGE: á -> a	
+
+* osadit	osázení	V-dit --> N-zení	CHANGE: a -> á	
+* osazený	osázení	A-ý --> N-í	CHANGE: a -> á	
+osázený	osázení	A-ý --> N-í		
+osázet	osázení	V-et --> N-ení		LINK ALREADY PRESENT
+
+* poklidit	poklízení	V-dit --> N-zení	CHANGE: i -> í	
+* poklizený	poklízení	A-ý --> N-í	CHANGE: i -> í	
+poklízet	poklízení	V-et --> N-ení		LINK ALREADY PRESENT
+
+popouzet	popouzení	V-et --> N-ení		LINK ALREADY PRESENT
+* popudit	popouzení	V-dit --> N-zení	CHANGE: u -> ou	
+* popuzený	popouzení	A-ý --> N-í	CHANGE: u -> ou	
+
+posadit	posazení	V-dit --> N-zení		LINK ALREADY PRESENT
+posazený	posazení	A-ý --> N-í		
+* posázený	posazení	A-ý --> N-í	CHANGE: á -> a	
+* posázet	posazení	V-et --> N-ení	CHANGE: á -> a	
+
+probouzený	probouzení	A-ý --> N-í		
+probouzet	probouzení	V-et --> N-ení		LINK ALREADY PRESENT
+* probudit	probouzení	V-dit --> N-zení	CHANGE: u -> ou	
+* probuzený	probouzení	A-ý --> N-í	CHANGE: u -> ou	
+
+prosadit	prosazení	V-dit --> N-zení		LINK ALREADY PRESENT
+prosazený	prosazení	A-ý --> N-í		
+* prosázet	prosazení	V-et --> N-ení	CHANGE: á -> a	
+
+* sadit	sázení	V-dit --> N-zení	CHANGE: a -> á	
+* sazený	sázení	A-ý --> N-í	CHANGE: a -> á	
+sázený	sázení	A-ý --> N-í		
+sázet	sázení	V-et --> N-ení		LINK ALREADY PRESENT
+
+sklidit	sklizení	V-dit --> N-zení		LINK ALREADY PRESENT
+sklizený	sklizení	A-ý --> N-í		
+* sklízený	sklizení	A-ý --> N-í	CHANGE: í -> i	
+* sklízet	sklizení	V-et --> N-ení	CHANGE: í -> i	
+
+* sklidit	sklízení	V-dit --> N-zení	CHANGE: i -> í	
+* sklizený	sklízení	A-ý --> N-í	CHANGE: i -> í	
+sklízený	sklízení	A-ý --> N-í		
+sklízet	sklízení	V-et --> N-ení		LINK ALREADY PRESENT
+
+uklidit	uklizení	V-dit --> N-zení		LINK ALREADY PRESENT
+uklizený	uklizení	A-ý --> N-í		
+* uklízený	uklizení	A-ý --> N-í	CHANGE: í -> i	
+* uklízet	uklizení	V-et --> N-ení	CHANGE: í -> i	
+
+* uklidit	uklízení	V-dit --> N-zení	CHANGE: i -> í	
+* uklizený	uklízení	A-ý --> N-í	CHANGE: i -> í	
+uklízený	uklízení	A-ý --> N-í		
+uklízet	uklízení	V-et --> N-ení		
+
+vsadit	vsazení	V-dit --> N-zení		LINK ALREADY PRESENT
+vsazený	vsazení	A-ý --> N-í		
+* vsázet	vsazení	V-et --> N-ení	CHANGE: á -> a	
+
+* vsadit	vsázení	V-dit --> N-zení	CHANGE: a -> á	
+* vsazený	vsázení	A-ý --> N-í	CHANGE: a -> á	
+vsázet	vsázení	V-et --> N-ení		LINK ALREADY PRESENT
+
+vyklidit	vyklizení	V-dit --> N-zení		LINK ALREADY PRESENT
+vyklizený	vyklizení	A-ý --> N-í		
+* vyklízený	vyklizení	A-ý --> N-í	CHANGE: í -> i	
+* vyklízet	vyklizení	V-et --> N-ení	CHANGE: í -> i	
+
+* vyklidit	vyklízení	V-dit --> N-zení	CHANGE: i -> í	
+* vyklizený	vyklízení	A-ý --> N-í	CHANGE: i -> í	
+vyklízený	vyklízení	A-ý --> N-í		
+vyklízet	vyklízení	V-et --> N-ení		LINK ALREADY PRESENT
+
+vysadit	vysazení	V-dit --> N-zení		LINK ALREADY PRESENT
+vysazený	vysazení	A-ý --> N-í		
+* vysázený	vysazení	A-ý --> N-í	CHANGE: á -> a	
+* vysázet	vysazení	V-et --> N-ení	CHANGE: á -> a	
+
+* vysadit	vysázení	V-dit --> N-zení	CHANGE: a -> á	
+* vysazený	vysázení	A-ý --> N-í	CHANGE: a -> á	
+vysázený	vysázení	A-ý --> N-í		
+vysázet	vysázení	V-et --> N-ení		LINK ALREADY PRESENT
+
+zostouzený	zostouzení	A-ý --> N-í		
+zostouzet	zostouzení	V-et --> N-ení		LINK ALREADY PRESENT
+* zostudit	zostouzení	V-dit --> N-zení	CHANGE: u -> ou	
+* zostuzený	zostouzení	A-ý --> N-í	CHANGE: u -> ou	
+
+
+

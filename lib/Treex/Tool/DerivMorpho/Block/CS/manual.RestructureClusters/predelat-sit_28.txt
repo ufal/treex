@@ -1,0 +1,63 @@
+﻿% vymazat ohvězdičkovamé řádky!
+% SPRÁVNÉ ŘEŠENÍ: V-zit --> N-zení, V-zit --> A-zený
+
+
+---------------------------------
+14 GROUPS FOR RULE COMBINATION: A-ý --> N-í, V-zit --> N-zení
+
+mrazený	mrazení	A-ý --> N-í		
+mrazit	mrazení	V-zit --> N-zení		
+mrazit	mrazení	V-zit --> N-zení		LINK ALREADY PRESENT
+
+odcizený	odcizení	A-ý --> N-í		
+odcizit	odcizení	V-zit --> N-zení		
+odcizit	odcizení	V-zit --> N-zení		LINK ALREADY PRESENT
+
+odmrazený	odmrazení	A-ý --> N-í		
+odmrazit	odmrazení	V-zit --> N-zení		
+odmrazit	odmrazení	V-zit --> N-zení		LINK ALREADY PRESENT
+
+omezený	omezení	A-ý --> N-í		
+omezit	omezení	V-zit --> N-zení		
+omezit	omezení	V-zit --> N-zení		LINK ALREADY PRESENT
+
+přimrazený	přimrazení	A-ý --> N-í		
+přimrazit	přimrazení	V-zit --> N-zení		
+přimrazit	přimrazení	V-zit --> N-zení		LINK ALREADY PRESENT
+
+rozmrazený	rozmrazení	A-ý --> N-í		
+rozmrazit	rozmrazení	V-zit --> N-zení		
+rozmrazit	rozmrazení	V-zit --> N-zení		LINK ALREADY PRESENT
+
+vymezený	vymezení	A-ý --> N-í		
+vymezit	vymezení	V-zit --> N-zení		
+vymezit	vymezení	V-zit --> N-zení		LINK ALREADY PRESENT
+
+vyobrazený	vyobrazení	A-ý --> N-í		
+vyobrazit	vyobrazení	V-zit --> N-zení		
+vyobrazit	vyobrazení	V-zit --> N-zení		LINK ALREADY PRESENT
+
+zamezený	zamezení	A-ý --> N-í		
+zamezit	zamezení	V-zit --> N-zení		
+zamezit	zamezení	V-zit --> N-zení		LINK ALREADY PRESENT
+
+zamrazený	zamrazení	A-ý --> N-í		
+zamrazit	zamrazení	V-zit --> N-zení		
+zamrazit	zamrazení	V-zit --> N-zení		LINK ALREADY PRESENT
+
+zmrazený	zmrazení	A-ý --> N-í		
+zmrazit	zmrazení	V-zit --> N-zení		
+
+zobrazený	zobrazení	A-ý --> N-í		
+zobrazit	zobrazení	V-zit --> N-zení		
+zobrazit	zobrazení	V-zit --> N-zení		LINK ALREADY PRESENT
+
+zřetězený	zřetězení	A-ý --> N-í		
+zřetězit	zřetězení	V-zit --> N-zení		
+zřetězit	zřetězení	V-zit --> N-zení		LINK ALREADY PRESENT
+
+řetězený	řetězení	A-ý --> N-í		
+řetězit	řetězení	V-zit --> N-zení		
+řetězit	řetězení	V-zit --> N-zení		LINK ALREADY PRESENT
+
+

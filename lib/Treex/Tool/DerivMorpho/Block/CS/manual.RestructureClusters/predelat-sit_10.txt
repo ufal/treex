@@ -1,0 +1,260 @@
+﻿% vymazat ohvězdičkovamé řádky!
+% SPRÁVNÉ ŘEŠENÍ: V-at --> N-ání, V-at --> N-a
+
+---------------------------------
+75 GROUPS FOR RULE COMBINATION: N-a --> N-ání, V-at --> N-ání
+
+blouma	bloumání	N-a --> N-ání		
+bloumat	bloumání	V-at --> N-ání		LINK ALREADY PRESENT
+* bluma	bloumání	N-a --> N-ání	CHANGE: u -> ou	
+
+brebta	brebtání	N-a --> N-ání		
+brebtat	brebtání	V-at --> N-ání		LINK ALREADY PRESENT
+
+brumla	brumlání	N-a --> N-ání		
+brumlat	brumlání	V-at --> N-ání		LINK ALREADY PRESENT
+
+brynda	bryndání	N-a --> N-ání		
+bryndat	bryndání	V-at --> N-ání		LINK ALREADY PRESENT
+
+chátra	chátrání	N-a --> N-ání		
+chátrat	chátrání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* chátra	šátrání	N-a --> N-ání	CHANGE: ch -> š	
+* chátrat	šátrání	V-at --> N-ání	CHANGE: ch -> š	
+šátrat	šátrání	V-at --> N-ání		LINK ALREADY PRESENT
+
+cinta	cintání	N-a --> N-ání		
+cintat	cintání	V-at --> N-ání		LINK ALREADY PRESENT
+
+coura	courání	N-a --> N-ání		
+courat	courání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* cuchat	čuchání	V-at --> N-ání	CHANGE: c -> č	
+* kuchat	čuchání	V-at --> N-ání	CHANGE: k -> č	
+* čucha	čuchání	N-a --> N-ání		
+čuchat	čuchání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* diva	dívání	N-a --> N-ání	CHANGE: i -> í	
+dívat	dívání	V-at --> N-ání		LINK ALREADY PRESENT
+* děva	dívání	N-a --> N-ání	CHANGE: ě -> í	
+
+* doleza	dolízání	N-a --> N-ání	CHANGE: e -> í	
+* dolézat	dolízání	V-at --> N-ání	CHANGE: é -> í	
+dolízat	dolízání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* dostava	dostávání	N-a --> N-ání	CHANGE: a -> á	
+dostávat	dostávání	V-at --> N-ání		
+
+dotírat	dotírání	V-at --> N-ání		LINK ALREADY PRESENT
+dotěra	dotírání	N-a --> N-ání	CHANGE: ě -> í	
+
+* drba	drbání	N-a --> N-ání		
+drbat	drbání	V-at --> N-ání		
+drbat	drbání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* duma	dumání	N-a --> N-ání		
+dumat	dumání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* fara	fárání	N-a --> N-ání	CHANGE: a -> á	
+fárat	fárání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* hádat	žádání	V-at --> N-ání	CHANGE: h -> ž	
+* záda	žádání	N-a --> N-ání	CHANGE: z -> ž	
+žádat	žádání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* kapka	kapkání	N-a --> N-ání		
+kapkat	kapkání	V-at --> N-ání		
+
+* klika	klikání	N-a --> N-ání		
+* klikat	klikání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* klima	klímání	N-a --> N-ání	CHANGE: i -> í	
+* klímat	klímání	V-at --> N-ání		LINK ALREADY PRESENT
+
+kokta	koktání	N-a --> N-ání		
+koktat	koktání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* kora	kořání	N-a --> N-ání	CHANGE: r -> ř	
+* korat	kořání	V-at --> N-ání	CHANGE: r -> ř	
+
+* kroupa	křoupání	N-a --> N-ání	CHANGE: r -> ř	
+křoupat	křoupání	V-at --> N-ání		LINK ALREADY PRESENT
+* křupat	křoupání	V-at --> N-ání	CHANGE: u -> ou	
+
+krákora	krákorání	N-a --> N-ání		
+krákorat	krákorání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* kura	čurání	N-a --> N-ání	CHANGE: k -> č	
+čurat	čurání	V-at --> N-ání		LINK ALREADY PRESENT
+
+kuňka	kuňkání	N-a --> N-ání		
+kuňkat	kuňkání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* kvaka	kvákání	N-a --> N-ání	CHANGE: a -> á	
+kvákat	kvákání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* kára	kárání	N-a --> N-ání		
+kárat	kárání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* kůra	čůrání	N-a --> N-ání	CHANGE: k -> č	
+čůrat	čůrání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* lama	lámání	N-a --> N-ání	CHANGE: a -> á	
+* láma	lámání	N-a --> N-ání		
+lámat	lámání	V-at --> N-ání		
+lámat	lámání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* lata	látání	N-a --> N-ání	CHANGE: a -> á	
+látat	látání	V-at --> N-ání		LINK ALREADY PRESENT
+
+louda	loudání	N-a --> N-ání		
+loudat	loudání	V-at --> N-ání		LINK ALREADY PRESENT
+
+louskat	louskání	V-at --> N-ání		LINK ALREADY PRESENT
+* luska	louskání	N-a --> N-ání	CHANGE: u -> ou	
+* luskat	louskání	V-at --> N-ání	CHANGE: u -> ou	
+
+* lupa	lupání	N-a --> N-ání		
+lupat	lupání	V-at --> N-ání		LINK ALREADY PRESENT
+
+luska	luskání	N-a --> N-ání		
+luskat	luskání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* lísa	lísání	N-a --> N-ání		
+lísat	lísání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* macha	máchání	N-a --> N-ání	CHANGE: a -> á	
+máchat	máchání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* muka	mukání	N-a --> N-ání		
+mukat	mukání	V-at --> N-ání		LINK ALREADY PRESENT
+
+odmlouvat	odmlouvání	V-at --> N-ání		LINK ALREADY PRESENT
+odmluva	odmlouvání	N-a --> N-ání	CHANGE: u -> ou	
+
+omlouvat	omlouvání	V-at --> N-ání		LINK ALREADY PRESENT
+omluva	omlouvání	N-a --> N-ání	CHANGE: u -> ou	
+
+* para	párání	N-a --> N-ání	CHANGE: a -> á	
+* pára	párání	N-a --> N-ání		
+párat	párání	V-at --> N-ání		
+párat	párání	V-at --> N-ání		LINK ALREADY PRESENT
+
+pipla	piplání	N-a --> N-ání		
+piplat	piplání	V-at --> N-ání		LINK ALREADY PRESENT
+
+plivat	plivání	V-at --> N-ání		
+plivat	plivání	V-at --> N-ání		LINK ALREADY PRESENT
+* plíva	plivání	N-a --> N-ání	CHANGE: í -> i	
+
+* postava	postávání	N-a --> N-ání	CHANGE: a -> á	
+postávat	postávání	V-at --> N-ání		
+
+prodleva	prodlévání	N-a --> N-ání	CHANGE: e -> é	
+prodlévat	prodlévání	V-at --> N-ání		LINK ALREADY PRESENT
+
+promlouvat	promlouvání	V-at --> N-ání		LINK ALREADY PRESENT
+promluva	promlouvání	N-a --> N-ání	CHANGE: u -> ou	
+
+* práva	právání	N-a --> N-ání		
+právat	právání	V-at --> N-ání		LINK ALREADY PRESENT
+
+předseda	předsedání	N-a --> N-ání		
+předsedat	předsedání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* rachat	řachání	V-at --> N-ání	CHANGE: r -> ř	
+řacha	řachání	N-a --> N-ání		
+
+rozmlouvat	rozmlouvání	V-at --> N-ání		LINK ALREADY PRESENT
+rozmluva	rozmlouvání	N-a --> N-ání	CHANGE: u -> ou	
+
+* sapa	sápání	N-a --> N-ání	CHANGE: a -> á	
+* sápa	sápání	N-a --> N-ání		
+sápat	sápání	V-at --> N-ání		
+sápat	sápání	V-at --> N-ání		LINK ALREADY PRESENT
+
+slinta	slintání	N-a --> N-ání		
+slintat	slintání	V-at --> N-ání		LINK ALREADY PRESENT
+
+smlouva	smlouvání	N-a --> N-ání		
+smlouvat	smlouvání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* socha	sochání	N-a --> N-ání		
+* sochat	sochání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* spása	spásání	N-a --> N-ání		
+spásat	spásání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* stenat	stínání	V-at --> N-ání	CHANGE: e -> í	
+* sténat	stínání	V-at --> N-ání	CHANGE: é -> í	
+stínat	stínání	V-at --> N-ání		LINK ALREADY PRESENT
+* stěna	stínání	N-a --> N-ání	CHANGE: ě -> í	
+
+stoupa	stoupání	N-a --> N-ání		
+stoupat	stoupání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* tapa	tápání	N-a --> N-ání	CHANGE: a -> á	
+tápat	tápání	V-at --> N-ání		
+tápat	tápání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* tapa	ťapání	N-a --> N-ání	CHANGE: t -> ť	
+ťapat	ťapání	V-at --> N-ání		
+ťapat	ťapání	V-at --> N-ání		LINK ALREADY PRESENT
+* ťápa	ťapání	N-a --> N-ání	CHANGE: á -> a	
+
+* treska	třeskání	N-a --> N-ání	CHANGE: r -> ř	
+třeskat	třeskání	V-at --> N-ání		LINK ALREADY PRESENT
+
+tryska	tryskání	N-a --> N-ání		
+tryskat	tryskání	V-at --> N-ání		LINK ALREADY PRESENT
+
+třaska	třaskání	N-a --> N-ání		
+třaskat	třaskání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* vláda	vládání	N-a --> N-ání		
+vládat	vládání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* váha	váhání	N-a --> N-ání		
+váhat	váhání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* váza	vázání	N-a --> N-ání		
+vázat	vázání	V-at --> N-ání		
+
+* zebra	žebrání	N-a --> N-ání	CHANGE: z -> ž	
+žebrat	žebrání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* zéva	zívání	N-a --> N-ání	CHANGE: é -> í	
+zívat	zívání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* četa	čítání	N-a --> N-ání	CHANGE: e -> í	
+čítat	čítání	V-at --> N-ání		LINK ALREADY PRESENT
+
+čmára	čmárání	N-a --> N-ání		
+čmárat	čmárání	V-at --> N-ání		LINK ALREADY PRESENT
+
+škrabat	škrabání	V-at --> N-ání		
+škrabat	škrabání	V-at --> N-ání		LINK ALREADY PRESENT
+* škrába	škrabání	N-a --> N-ání	CHANGE: á -> a	
+* škrábat	škrabání	V-at --> N-ání	CHANGE: á -> a	
+
+* škrabat	škrábání	V-at --> N-ání	CHANGE: a -> á	
+škrába	škrábání	N-a --> N-ání		
+škrábat	škrábání	V-at --> N-ání		
+škrábat	škrábání	V-at --> N-ání		LINK ALREADY PRESENT
+
+šlapat	šlapání	V-at --> N-ání		
+šlapat	šlapání	V-at --> N-ání		LINK ALREADY PRESENT
+* šlápa	šlapání	N-a --> N-ání	CHANGE: á -> a	
+
+šťoura	šťourání	N-a --> N-ání		
+šťourat	šťourání	V-at --> N-ání		LINK ALREADY PRESENT
+
+* ťapka	ťapkání	N-a --> N-ání		
+* ťapkat	ťapkání	V-at --> N-ání		LINK ALREADY PRESENT
+
+žvejka	žvejkání	N-a --> N-ání		
+žvejkat	žvejkání	V-at --> N-ání		LINK ALREADY PRESENT
+
+
+

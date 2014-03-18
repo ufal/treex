@@ -1,0 +1,82 @@
+﻿% vymazat ohvězdičkovamé řádky!
+% SPRÁVNÉ ŘEŠENÍ: V-stit --> N-stění, V-stit --> A-stěný
+
+
+
+---------------------------------
+12 GROUPS FOR RULE COMBINATION: A-ý --> N-í, V-stit --> N-stění, V-tit --> N-tění
+
+očistit	očistění	V-stit --> N-stění		
+očistit	očistění	V-stit --> N-stění		LINK ALREADY PRESENT
+* očistit	očistění	V-tit --> N-tění		
+* očistit	očistění	V-tit --> N-tění		LINK ALREADY PRESENT
+očistěný	očistění	A-ý --> N-í		
+
+pěstit	pěstění	V-stit --> N-stění		
+pěstit	pěstění	V-stit --> N-stění		LINK ALREADY PRESENT
+* pěstit	pěstění	V-tit --> N-tění		
+* pěstit	pěstění	V-tit --> N-tění		LINK ALREADY PRESENT
+pěstěný	pěstění	A-ý --> N-í		
+
+přemostit	přemostění	V-stit --> N-stění		
+přemostit	přemostění	V-stit --> N-stění		LINK ALREADY PRESENT
+* přemostit	přemostění	V-tit --> N-tění		
+* přemostit	přemostění	V-tit --> N-tění		LINK ALREADY PRESENT
+přemostěný	přemostění	A-ý --> N-í		
+
+přemístit	přemístění	V-stit --> N-stění		
+přemístit	přemístění	V-stit --> N-stění		LINK ALREADY PRESENT
+* přemístit	přemístění	V-tit --> N-tění		
+* přemístit	přemístění	V-tit --> N-tění		LINK ALREADY PRESENT
+přemístěný	přemístění	A-ý --> N-í		
+
+rozmístit	rozmístění	V-stit --> N-stění		
+rozmístit	rozmístění	V-stit --> N-stění		LINK ALREADY PRESENT
+* rozmístit	rozmístění	V-tit --> N-tění		
+* rozmístit	rozmístění	V-tit --> N-tění		LINK ALREADY PRESENT
+rozmístěný	rozmístění	A-ý --> N-í		
+
+ukořistit	ukořistění	V-stit --> N-stění		
+ukořistit	ukořistění	V-stit --> N-stění		LINK ALREADY PRESENT
+* ukořistit	ukořistění	V-tit --> N-tění		
+* ukořistit	ukořistění	V-tit --> N-tění		LINK ALREADY PRESENT
+ukořistěný	ukořistění	A-ý --> N-í		
+
+umístit	umístění	V-stit --> N-stění		
+umístit	umístění	V-stit --> N-stění		LINK ALREADY PRESENT
+* umístit	umístění	V-tit --> N-tění		
+* umístit	umístění	V-tit --> N-tění		LINK ALREADY PRESENT
+umístěný	umístění	A-ý --> N-í		
+
+vyhostit	vyhostění	V-stit --> N-stění		
+vyhostit	vyhostění	V-stit --> N-stění		LINK ALREADY PRESENT
+* vyhostit	vyhostění	V-tit --> N-tění		
+* vyhostit	vyhostění	V-tit --> N-tění		LINK ALREADY PRESENT
+vyhostěný	vyhostění	A-ý --> N-í		
+
+vykostit	vykostění	V-stit --> N-stění		
+vykostit	vykostění	V-stit --> N-stění		LINK ALREADY PRESENT
+* vykostit	vykostění	V-tit --> N-tění		
+* vykostit	vykostění	V-tit --> N-tění		LINK ALREADY PRESENT
+vykostěný	vykostění	A-ý --> N-í		
+
+vyústit	vyústění	V-stit --> N-stění		
+vyústit	vyústění	V-stit --> N-stění		LINK ALREADY PRESENT
+* vyústit	vyústění	V-tit --> N-tění		
+* vyústit	vyústění	V-tit --> N-tění		LINK ALREADY PRESENT
+vyústěný	vyústění	A-ý --> N-í		
+
+vyčistit	vyčistění	V-stit --> N-stění		
+vyčistit	vyčistění	V-stit --> N-stění		LINK ALREADY PRESENT
+* vyčistit	vyčistění	V-tit --> N-tění		
+* vyčistit	vyčistění	V-tit --> N-tění		LINK ALREADY PRESENT
+vyčistěný	vyčistění	A-ý --> N-í		
+
+znečistit	znečistění	V-stit --> N-stění		
+znečistit	znečistění	V-stit --> N-stění		LINK ALREADY PRESENT
+* znečistit	znečistění	V-tit --> N-tění		
+* znečistit	znečistění	V-tit --> N-tění		LINK ALREADY PRESENT
+znečistěný	znečistění	A-ý --> N-í		
+
+
+

@@ -1,0 +1,71 @@
+﻿% vymazat ohvězdičkovamé řádky!
+% SPRÁVNÉ ŘEŠENÍ: V-ést --> N-esení, V-ést --> A-esený
+
+
+---------------------------------
+16 GROUPS FOR RULE COMBINATION: A-ý --> N-í, V-ést --> N-esení
+
+donesený	donesení	A-ý --> N-í		
+donést	donesení	V-ést --> N-esení		
+donést	donesení	V-ést --> N-esení		LINK ALREADY PRESENT
+
+nanesený	nanesení	A-ý --> N-í		
+nanést	nanesení	V-ést --> N-esení		
+nanést	nanesení	V-ést --> N-esení		LINK ALREADY PRESENT
+
+nesený	nesení	A-ý --> N-í		
+nést	nesení	V-ést --> N-esení		
+nést	nesení	V-ést --> N-esení		LINK ALREADY PRESENT
+
+odnesený	odnesení	A-ý --> N-í		
+odnést	odnesení	V-ést --> N-esení		
+odnést	odnesení	V-ést --> N-esení		LINK ALREADY PRESENT
+
+povznesený	povznesení	A-ý --> N-í		
+povznést	povznesení	V-ést --> N-esení		
+povznést	povznesení	V-ést --> N-esení		LINK ALREADY PRESENT
+
+pronesený	pronesení	A-ý --> N-í		
+pronést	pronesení	V-ést --> N-esení		
+pronést	pronesení	V-ést --> N-esení		LINK ALREADY PRESENT
+
+přednesený	přednesení	A-ý --> N-í		
+přednést	přednesení	V-ést --> N-esení		LINK ALREADY PRESENT
+
+přenesený	přenesení	A-ý --> N-í		
+přenést	přenesení	V-ést --> N-esení		
+přenést	přenesení	V-ést --> N-esení		LINK ALREADY PRESENT
+
+přinesený	přinesení	A-ý --> N-í		
+přinést	přinesení	V-ést --> N-esení		
+přinést	přinesení	V-ést --> N-esení		LINK ALREADY PRESENT
+
+snesený	snesení	A-ý --> N-í		
+snést	snesení	V-ést --> N-esení		
+snést	snesení	V-ést --> N-esení		LINK ALREADY PRESENT
+
+unesený	unesení	A-ý --> N-í		
+unést	unesení	V-ést --> N-esení		
+unést	unesení	V-ést --> N-esení		LINK ALREADY PRESENT
+
+usnesený	usnesení	A-ý --> N-í		
+usnést	usnesení	V-ést --> N-esení		
+usnést	usnesení	V-ést --> N-esení		LINK ALREADY PRESENT
+
+vnesený	vnesení	A-ý --> N-í		
+vnést	vnesení	V-ést --> N-esení		
+vnést	vnesení	V-ést --> N-esení		LINK ALREADY PRESENT
+
+vynesený	vynesení	A-ý --> N-í		
+vynést	vynesení	V-ést --> N-esení		
+vynést	vynesení	V-ést --> N-esení		LINK ALREADY PRESENT
+
+vznesený	vznesení	A-ý --> N-í		
+vznést	vznesení	V-ést --> N-esení		
+vznést	vznesení	V-ést --> N-esení		LINK ALREADY PRESENT
+
+zanesený	zanesení	A-ý --> N-í		
+zanést	zanesení	V-ést --> N-esení		
+zanést	zanesení	V-ést --> N-esení		LINK ALREADY PRESENT
+
+

@@ -1,0 +1,237 @@
+﻿% vymazat ohvězdičkovamé řádky!
+% SPRÁVNÉ ŘEŠENÍ: V-tit --> N-tění, V-tit --> A-těný
+
+---------------------------------
+---------------------------------
+38 GROUPS FOR RULE COMBINATION: A-ý --> N-í, V-stit --> N-štění, V-tit --> N-tění
+
+* hostit	hoštění	V-stit --> N-štění		
+* hostit	hoštění	V-stit --> N-štění		LINK ALREADY PRESENT
+hostit	hoštění	V-tit --> N-tění	CHANGE: s -> š	
+hostit	hoštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+hoštěný	hoštění	A-ý --> N-í		
+
+* jistit	jištění	V-stit --> N-štění		
+* jistit	jištění	V-stit --> N-štění		LINK ALREADY PRESENT
+jistit	jištění	V-tit --> N-tění	CHANGE: s -> š	
+jistit	jištění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+jištěný	jištění	A-ý --> N-í		
+
+* mastit	maštění	V-stit --> N-štění		LINK ALREADY PRESENT
+mastit	maštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+maštěný	maštění	A-ý --> N-í		
+
+* nahustit	nahuštění	V-stit --> N-štění		
+* nahustit	nahuštění	V-stit --> N-štění		LINK ALREADY PRESENT
+nahustit	nahuštění	V-tit --> N-tění	CHANGE: s -> š	
+nahustit	nahuštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+nahuštěný	nahuštění	A-ý --> N-í		
+
+* napustit	napuštění	V-stit --> N-štění		
+* napustit	napuštění	V-stit --> N-štění		LINK ALREADY PRESENT
+napustit	napuštění	V-tit --> N-tění	CHANGE: s -> š	
+napustit	napuštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+napuštěný	napuštění	A-ý --> N-í		
+
+* odjistit	odjištění	V-stit --> N-štění		
+* odjistit	odjištění	V-stit --> N-štění		LINK ALREADY PRESENT
+odjistit	odjištění	V-tit --> N-tění	CHANGE: s -> š	
+odjistit	odjištění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+odjištěný	odjištění	A-ý --> N-í		
+
+* odmastit	odmaštění	V-stit --> N-štění		LINK ALREADY PRESENT
+odmastit	odmaštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+odmaštěný	odmaštění	A-ý --> N-í		
+
+* odpustit	odpuštění	V-stit --> N-štění		
+* odpustit	odpuštění	V-stit --> N-štění		LINK ALREADY PRESENT
+odpustit	odpuštění	V-tit --> N-tění	CHANGE: s -> š	
+odpustit	odpuštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+odpuštěný	odpuštění	A-ý --> N-í		
+
+* oklestit	okleštění	V-stit --> N-štění		
+* oklestit	okleštění	V-stit --> N-štění		LINK ALREADY PRESENT
+* oklestit	okleštění	V-tit --> N-tění	CHANGE: s -> š	
+* oklestit	okleštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+okleštit	okleštění	V-tit --> N-tění		
+okleštěný	okleštění	A-ý --> N-í		
+
+* oprostit	oproštění	V-stit --> N-štění		
+* oprostit	oproštění	V-stit --> N-štění		LINK ALREADY PRESENT
+oprostit	oproštění	V-tit --> N-tění	CHANGE: s -> š	
+oprostit	oproštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+oproštěný	oproštění	A-ý --> N-í		
+
+* opustit	opuštění	V-stit --> N-štění		
+* opustit	opuštění	V-stit --> N-štění		LINK ALREADY PRESENT
+opustit	opuštění	V-tit --> N-tění	CHANGE: s -> š	
+opustit	opuštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+opuštěný	opuštění	A-ý --> N-í		
+
+* očistit	očištění	V-stit --> N-štění		
+* očistit	očištění	V-stit --> N-štění		LINK ALREADY PRESENT
+očistit	očištění	V-tit --> N-tění	CHANGE: s -> š	
+očistit	očištění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+očistěný	očištění	A-ý --> N-í	CHANGE: s -> š	
+očištěný	očištění	A-ý --> N-í		
+
+* pojistit	pojištění	V-stit --> N-štění		
+* pojistit	pojištění	V-stit --> N-štění		LINK ALREADY PRESENT
+pojistit	pojištění	V-tit --> N-tění	CHANGE: s -> š	
+pojistit	pojištění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+pojištěný	pojištění	A-ý --> N-í		
+
+* popustit	popuštění	V-stit --> N-štění		
+* popustit	popuštění	V-stit --> N-štění		LINK ALREADY PRESENT
+popustit	popuštění	V-tit --> N-tění	CHANGE: s -> š	
+popustit	popuštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+popuštěný	popuštění	A-ý --> N-í		
+
+* propustit	propuštění	V-stit --> N-štění		
+* propustit	propuštění	V-stit --> N-štění		LINK ALREADY PRESENT
+propustit	propuštění	V-tit --> N-tění	CHANGE: s -> š	
+propustit	propuštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+propuštěný	propuštění	A-ý --> N-í		
+
+* pročistit	pročištění	V-stit --> N-štění		
+* pročistit	pročištění	V-stit --> N-štění		LINK ALREADY PRESENT
+pročistit	pročištění	V-tit --> N-tění	CHANGE: s -> š	
+pročistit	pročištění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+pročištěný	pročištění	A-ý --> N-í		
+
+* pustit	puštění	V-stit --> N-štění		
+* pustit	puštění	V-stit --> N-štění		LINK ALREADY PRESENT
+pustit	puštění	V-tit --> N-tění	CHANGE: s -> š	
+pustit	puštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+puštěný	puštění	A-ý --> N-í		
+
+* přepustit	přepuštění	V-stit --> N-štění		
+* přepustit	přepuštění	V-stit --> N-štění		LINK ALREADY PRESENT
+přepustit	přepuštění	V-tit --> N-tění	CHANGE: s -> š	
+přepustit	přepuštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+přepuštěný	přepuštění	A-ý --> N-í		
+
+* přečistit	přečištění	V-stit --> N-štění		
+* přečistit	přečištění	V-stit --> N-štění		LINK ALREADY PRESENT
+přečistit	přečištění	V-tit --> N-tění	CHANGE: s -> š	
+přečistit	přečištění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+přečištěný	přečištění	A-ý --> N-í		
+
+* připustit	připuštění	V-stit --> N-štění		
+* připustit	připuštění	V-stit --> N-štění		LINK ALREADY PRESENT
+připustit	připuštění	V-tit --> N-tění	CHANGE: s -> š	
+připustit	připuštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+připuštěný	připuštění	A-ý --> N-í		
+
+* rozpustit	rozpuštění	V-stit --> N-štění		
+* rozpustit	rozpuštění	V-stit --> N-štění		LINK ALREADY PRESENT
+rozpustit	rozpuštění	V-tit --> N-tění	CHANGE: s -> š	
+rozpustit	rozpuštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+rozpuštěný	rozpuštění	A-ý --> N-í		
+
+* spustit	spuštění	V-stit --> N-štění		
+* spustit	spuštění	V-stit --> N-štění		LINK ALREADY PRESENT
+spustit	spuštění	V-tit --> N-tění	CHANGE: s -> š	
+spustit	spuštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+spuštěný	spuštění	A-ý --> N-í		
+
+* ujistit	ujištění	V-stit --> N-štění		
+* ujistit	ujištění	V-stit --> N-štění		LINK ALREADY PRESENT
+ujistit	ujištění	V-tit --> N-tění	CHANGE: s -> š	
+ujistit	ujištění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+ujištěný	ujištění	A-ý --> N-í		
+
+* upustit	upuštění	V-stit --> N-štění		
+* upustit	upuštění	V-stit --> N-štění		LINK ALREADY PRESENT
+upustit	upuštění	V-tit --> N-tění	CHANGE: s -> š	
+upustit	upuštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+upuštěný	upuštění	A-ý --> N-í		
+
+* vpustit	vpuštění	V-stit --> N-štění		
+* vpustit	vpuštění	V-stit --> N-štění		LINK ALREADY PRESENT
+vpustit	vpuštění	V-tit --> N-tění	CHANGE: s -> š	
+vpustit	vpuštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+vpuštěný	vpuštění	A-ý --> N-í		
+
+* vyhostit	vyhoštění	V-stit --> N-štění		
+* vyhostit	vyhoštění	V-stit --> N-štění		LINK ALREADY PRESENT
+vyhostit	vyhoštění	V-tit --> N-tění	CHANGE: s -> š	
+vyhostit	vyhoštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+vyhostěný	vyhoštění	A-ý --> N-í	CHANGE: s -> š	
+vyhoštěný	vyhoštění	A-ý --> N-í		
+
+* vyklestit	vykleštění	V-stit --> N-štění		
+* vyklestit	vykleštění	V-stit --> N-štění		LINK ALREADY PRESENT
+* vyklestit	vykleštění	V-tit --> N-tění	CHANGE: s -> š	
+* vyklestit	vykleštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+vykleštit	vykleštění	V-tit --> N-tění		
+vykleštěný	vykleštění	A-ý --> N-í		
+
+* vyprostit	vyproštění	V-stit --> N-štění		
+* vyprostit	vyproštění	V-stit --> N-štění		LINK ALREADY PRESENT
+vyprostit	vyproštění	V-tit --> N-tění	CHANGE: s -> š	
+vyprostit	vyproštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+vyproštěný	vyproštění	A-ý --> N-í		
+
+* vypustit	vypuštění	V-stit --> N-štění		
+* vypustit	vypuštění	V-stit --> N-štění		LINK ALREADY PRESENT
+vypustit	vypuštění	V-tit --> N-tění	CHANGE: s -> š	
+vypustit	vypuštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+vypuštěný	vypuštění	A-ý --> N-í		
+
+* vyčistit	vyčištění	V-stit --> N-štění		
+* vyčistit	vyčištění	V-stit --> N-štění		LINK ALREADY PRESENT
+vyčistit	vyčištění	V-tit --> N-tění	CHANGE: s -> š	
+vyčistit	vyčištění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+vyčistěný	vyčištění	A-ý --> N-í	CHANGE: s -> š	
+vyčištěný	vyčištění	A-ý --> N-í		
+
+* zahustit	zahuštění	V-stit --> N-štění		
+* zahustit	zahuštění	V-stit --> N-štění		LINK ALREADY PRESENT
+zahustit	zahuštění	V-tit --> N-tění	CHANGE: s -> š	
+zahustit	zahuštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+zahuštěný	zahuštění	A-ý --> N-í		
+
+* zajistit	zajištění	V-stit --> N-štění		
+zajistit	zajištění	V-tit --> N-tění	CHANGE: s -> š	
+zajištěný	zajištění	A-ý --> N-í		
+
+* zapustit	zapuštění	V-stit --> N-štění		
+* zapustit	zapuštění	V-stit --> N-štění		LINK ALREADY PRESENT
+zapustit	zapuštění	V-tit --> N-tění	CHANGE: s -> š	
+zapustit	zapuštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+zapuštěný	zapuštění	A-ý --> N-í		
+
+* zhustit	zhuštění	V-stit --> N-štění		
+* zhustit	zhuštění	V-stit --> N-štění		LINK ALREADY PRESENT
+zhustit	zhuštění	V-tit --> N-tění	CHANGE: s -> š	
+zhustit	zhuštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+zhuštěný	zhuštění	A-ý --> N-í		
+
+* zjistit	zjištění	V-stit --> N-štění		
+* zjistit	zjištění	V-stit --> N-štění		LINK ALREADY PRESENT
+zjistit	zjištění	V-tit --> N-tění	CHANGE: s -> š	
+zjistit	zjištění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+zjištěný	zjištění	A-ý --> N-í		
+
+* znečistit	znečištění	V-stit --> N-štění		
+* znečistit	znečištění	V-stit --> N-štění		LINK ALREADY PRESENT
+znečistit	znečištění	V-tit --> N-tění	CHANGE: s -> š	
+znečistit	znečištění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+znečistěný	znečištění	A-ý --> N-í	CHANGE: s -> š	
+znečištěný	znečištění	A-ý --> N-í		
+
+* zprostit	zproštění	V-stit --> N-štění		
+* zprostit	zproštění	V-stit --> N-štění		LINK ALREADY PRESENT
+zprostit	zproštění	V-tit --> N-tění	CHANGE: s -> š	
+zprostit	zproštění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+zproštěný	zproštění	A-ý --> N-í		
+
+* čistit	čištění	V-stit --> N-štění		
+* čistit	čištění	V-stit --> N-štění		LINK ALREADY PRESENT
+čistit	čištění	V-tit --> N-tění	CHANGE: s -> š	
+čistit	čištění	V-tit --> N-tění	CHANGE: s -> š	LINK ALREADY PRESENT
+čištěný	čištění	A-ý --> N-í		
+
+
+

@@ -1,0 +1,66 @@
+﻿% vymazat ohvězdičkovamé řádky!
+% SPRÁVNÉ ŘEŠENÍ: V-zit --> N-žení, V-zit --> A-žený
+
+
+---------------------------------
+14 GROUPS FOR RULE COMBINATION: A-ý --> N-í, V-zit --> N-žení
+
+* mrazený	mražení	A-ý --> N-í	CHANGE: z -> ž	
+mrazit	mražení	V-zit --> N-žení		
+mrazit	mražení	V-zit --> N-žení		LINK ALREADY PRESENT
+mražený	mražení	A-ý --> N-í		
+
+nakazit	nakažení	V-zit --> N-žení		
+nakazit	nakažení	V-zit --> N-žení		LINK ALREADY PRESENT
+nakažený	nakažení	A-ý --> N-í		
+
+* nalozit	naložení	V-zit --> N-žení		
+* naložený	naložení	A-ý --> N-í		
+
+narazit	naražení	V-zit --> N-žení		
+narazit	naražení	V-zit --> N-žení		LINK ALREADY PRESENT
+naražený	naražení	A-ý --> N-í		
+
+ohrozit	ohrožení	V-zit --> N-žení		
+ohrozit	ohrožení	V-zit --> N-žení		LINK ALREADY PRESENT
+ohrožený	ohrožení	A-ý --> N-í		
+
+orazit	orážení	V-zit --> N-žení	CHANGE: a -> á	
+oražený	orážení	A-ý --> N-í	CHANGE: a -> á	
+
+pokazit	pokažení	V-zit --> N-žení		
+pokazit	pokažení	V-zit --> N-žení		LINK ALREADY PRESENT
+pokažený	pokažení	A-ý --> N-í		
+
+* přimrazený	přimražení	A-ý --> N-í	CHANGE: z -> ž	
+přimrazit	přimražení	V-zit --> N-žení		
+přimrazit	přimražení	V-zit --> N-žení		LINK ALREADY PRESENT
+přimražený	přimražení	A-ý --> N-í		
+
+razit	ražení	V-zit --> N-žení		
+razit	ražení	V-zit --> N-žení		LINK ALREADY PRESENT
+ražený	ražení	A-ý --> N-í		
+
+* rozmrazený	rozmražení	A-ý --> N-í	CHANGE: z -> ž	
+rozmrazit	rozmražení	V-zit --> N-žení		
+rozmrazit	rozmražení	V-zit --> N-žení		LINK ALREADY PRESENT
+rozmražený	rozmražení	A-ý --> N-í		
+
+zarazit	zaražení	V-zit --> N-žení		
+zarazit	zaražení	V-zit --> N-žení		LINK ALREADY PRESENT
+zaražený	zaražení	A-ý --> N-í		
+
+* zasazený	zasažení	A-ý --> N-í	CHANGE: z -> ž	
+* zasazit	zasažení	V-zit --> N-žení		
+* zasažený	zasažení	A-ý --> N-í		
+
+zkazit	zkažení	V-zit --> N-žení		
+zkazit	zkažení	V-zit --> N-žení		LINK ALREADY PRESENT
+zkažený	zkažení	A-ý --> N-í		
+
+* zmrazený	zmražení	A-ý --> N-í	CHANGE: z -> ž	
+zmrazit	zmražení	V-zit --> N-žení		
+zmražený	zmražení	A-ý --> N-í		
+
+
+

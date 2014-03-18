@@ -1,0 +1,85 @@
+﻿% vymazat ohvězdičkovamé řádky!
+% SPRÁVNÉ ŘEŠENÍ: V-tit --> N-tění, V-tit --> A-těný
+
+
+---------------------------------
+20 GROUPS FOR RULE COMBINATION: A-ý --> N-í, V-tit --> N-tění
+
+cítit	cítění	V-tit --> N-tění		
+cítit	cítění	V-tit --> N-tění		LINK ALREADY PRESENT
+cítěný	cítění	A-ý --> N-í		
+
+naleštit	naleštění	V-tit --> N-tění		
+naleštit	naleštění	V-tit --> N-tění		LINK ALREADY PRESENT
+naleštěný	naleštění	A-ý --> N-í		
+
+odlidštit	odlidštění	V-tit --> N-tění		
+odlidštit	odlidštění	V-tit --> N-tění		LINK ALREADY PRESENT
+odlidštěný	odlidštění	A-ý --> N-í		
+
+odmrštit	odmrštění	V-tit --> N-tění		
+odmrštit	odmrštění	V-tit --> N-tění		LINK ALREADY PRESENT
+odmrštěný	odmrštění	A-ý --> N-í		
+
+opláštit	opláštění	V-tit --> N-tění		
+opláštit	opláštění	V-tit --> N-tění		LINK ALREADY PRESENT
+opláštěný	opláštění	A-ý --> N-í		
+
+polidštit	polidštění	V-tit --> N-tění		LINK ALREADY PRESENT
+polidštěný	polidštění	A-ý --> N-í		
+
+procítit	procítění	V-tit --> N-tění		
+procítit	procítění	V-tit --> N-tění		LINK ALREADY PRESENT
+procítěný	procítění	A-ý --> N-í		
+
+přeleštit	přeleštění	V-tit --> N-tění		LINK ALREADY PRESENT
+přeleštěný	přeleštění	A-ý --> N-í		
+
+rozdychtit	rozdychtění	V-tit --> N-tění		LINK ALREADY PRESENT
+rozdychtěný	rozdychtění	A-ý --> N-í		
+
+rozluštit	rozluštění	V-tit --> N-tění		
+rozluštit	rozluštění	V-tit --> N-tění		LINK ALREADY PRESENT
+rozluštěný	rozluštění	A-ý --> N-í		
+
+vycítit	vycítění	V-tit --> N-tění		
+vycítit	vycítění	V-tit --> N-tění		LINK ALREADY PRESENT
+vycítěný	vycítění	A-ý --> N-í		
+
+vyleštit	vyleštění	V-tit --> N-tění		
+vyleštit	vyleštění	V-tit --> N-tění		LINK ALREADY PRESENT
+vyleštěný	vyleštění	A-ý --> N-í		
+
+vyluštit	vyluštění	V-tit --> N-tění		
+vyluštit	vyluštění	V-tit --> N-tění		LINK ALREADY PRESENT
+vyluštěný	vyluštění	A-ý --> N-í		
+
+vymrštit	vymrštění	V-tit --> N-tění		
+vymrštit	vymrštění	V-tit --> N-tění		LINK ALREADY PRESENT
+vymrštěný	vymrštění	A-ý --> N-í		
+
+vyšlechtit	vyšlechtění	V-tit --> N-tění		
+vyšlechtit	vyšlechtění	V-tit --> N-tění		LINK ALREADY PRESENT
+vyšlechtěný	vyšlechtění	A-ý --> N-í		
+
+zapečetit	zapečetění	V-tit --> N-tění		
+zapečetit	zapečetění	V-tit --> N-tění		LINK ALREADY PRESENT
+zapečetěný	zapečetění	A-ý --> N-í		
+
+zaštítit	zaštítění	V-tit --> N-tění		
+zaštítit	zaštítění	V-tit --> N-tění		LINK ALREADY PRESENT
+zaštítěný	zaštítění	A-ý --> N-í		
+
+zpečetit	zpečetění	V-tit --> N-tění		
+zpečetit	zpečetění	V-tit --> N-tění		LINK ALREADY PRESENT
+zpečetěný	zpečetění	A-ý --> N-í		
+
+zušlechtit	zušlechtění	V-tit --> N-tění		
+zušlechtit	zušlechtění	V-tit --> N-tění		LINK ALREADY PRESENT
+zušlechtěný	zušlechtění	A-ý --> N-í		
+
+šlechtit	šlechtění	V-tit --> N-tění		
+šlechtit	šlechtění	V-tit --> N-tění		LINK ALREADY PRESENT
+šlechtěný	šlechtění	A-ý --> N-í		
+
+

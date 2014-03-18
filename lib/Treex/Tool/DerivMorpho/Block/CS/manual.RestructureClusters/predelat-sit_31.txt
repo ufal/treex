@@ -1,0 +1,66 @@
+﻿% vymazat ohvězdičkovamé řádky!
+% SPRÁVNÉ ŘEŠENÍ: V-sit --> N-šení, V-sit --> A-šený
+
+
+---------------------------------
+12 GROUPS FOR RULE COMBINATION: A-ý --> N-í, V-et --> N-ení, V-sit --> N-šení
+
+ohlásit	ohlášení	V-sit --> N-šení		
+ohlásit	ohlášení	V-sit --> N-šení		LINK ALREADY PRESENT
+ohlášený	ohlášení	A-ý --> N-í		
+* ohlášet	ohlášení	V-et --> N-ení		
+
+ověsit	ověšení	V-sit --> N-šení		
+ověsit	ověšení	V-sit --> N-šení		LINK ALREADY PRESENT
+ověšený	ověšení	A-ý --> N-í		
+* ověšet	ověšení	V-et --> N-ení		
+
+pokoušený	pokoušení	A-ý --> N-í		
+pokoušet	pokoušení	V-et --> N-ení		LINK ALREADY PRESENT
+* pokusit	pokoušení	V-sit --> N-šení	CHANGE: u -> ou	
+* pokušený	pokoušení	A-ý --> N-í	CHANGE: u -> ou	
+
+rozvěsit	rozvěšení	V-sit --> N-šení		
+rozvěsit	rozvěšení	V-sit --> N-šení		LINK ALREADY PRESENT
+rozvěšený	rozvěšení	A-ý --> N-í		
+* rozvěšet	rozvěšení	V-et --> N-ení		
+
+vyhlásit	vyhlášení	V-sit --> N-šení		
+vyhlásit	vyhlášení	V-sit --> N-šení		LINK ALREADY PRESENT
+vyhlášený	vyhlášení	A-ý --> N-í		
+* vyhlášet	vyhlášení	V-et --> N-ení		
+
+vyzkoušený	vyzkoušení	A-ý --> N-í		
+vyzkoušet	vyzkoušení	V-et --> N-ení		LINK ALREADY PRESENT
+* vyzkusit	vyzkoušení	V-sit --> N-šení	CHANGE: u -> ou	
+
+* věsit	věšení	V-sit --> N-šení		
+* věsit	věšení	V-sit --> N-šení		LINK ALREADY PRESENT
+věšený	věšení	A-ý --> N-í		
+věšet	věšení	V-et --> N-ení		
+
+zakoušený	zakoušení	A-ý --> N-í		
+zakoušet	zakoušení	V-et --> N-ení		LINK ALREADY PRESENT
+* zakusit	zakoušení	V-sit --> N-šení	CHANGE: u -> ou	
+
+zavěsit	zavěšení	V-sit --> N-šení		
+zavěsit	zavěšení	V-sit --> N-šení		LINK ALREADY PRESENT
+zavěšený	zavěšení	A-ý --> N-í		
+* zavěšet	zavěšení	V-et --> N-ení		
+
+zhasit	zhašení	V-sit --> N-šení		
+zhasit	zhašení	V-sit --> N-šení		LINK ALREADY PRESENT
+* zhášený	zhašení	A-ý --> N-í	CHANGE: á -> a	
+* zhášet	zhašení	V-et --> N-ení	CHANGE: á -> a	
+
+* zhasit	zhášení	V-sit --> N-šení	CHANGE: a -> á	
+zhášený	zhášení	A-ý --> N-í		
+zhášet	zhášení	V-et --> N-ení		
+
+zkoušený	zkoušení	A-ý --> N-í		
+zkoušet	zkoušení	V-et --> N-ení		LINK ALREADY PRESENT
+* zkusit	zkoušení	V-sit --> N-šení	CHANGE: u -> ou	
+* zkušený	zkoušení	A-ý --> N-í	CHANGE: u -> ou	
+
+
+

@@ -1,0 +1,366 @@
+﻿% vymazat ohvězdičkovamé řádky!
+% SPRÁVNÉ ŘEŠENÍ: V-tit --> N-cení, V-tit --> A-cený
+
+---------------------------------
+
+108 GROUPS FOR RULE COMBINATION: A-ý --> N-í, V-tit --> N-cení
+
+borcený	borcení	A-ý --> N-í		
+bortit	borcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+chycený	chycení	A-ý --> N-í		
+chytit	chycení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+dochucený	dochucení	A-ý --> N-í		
+dochutit	dochucení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+donucený	donucení	A-ý --> N-í		
+donutit	donucení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+drcený	drcení	A-ý --> N-í		
+drtit	drcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+focený	focení	A-ý --> N-í		
+fotit	focení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+hodnocený	hodnocení	A-ý --> N-í		
+hodnotit	hodnocení	V-tit --> N-cení		
+hodnotit	hodnocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+krocený	krocení	A-ý --> N-í		
+krotit	krocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+kroucený	kroucení	A-ý --> N-í		
+kroutit	kroucení	V-tit --> N-cení		
+kroutit	kroucení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+krácený	krácení	A-ý --> N-í		
+krátit	krácení	V-tit --> N-cení		
+krátit	krácení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+lichocený	lichocení	A-ý --> N-í		
+lichotit	lichocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+mlácený	mlácení	A-ý --> N-í		
+mlátit	mlácení	V-tit --> N-cení		
+mlátit	mlácení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+nadhodnocený	nadhodnocení	A-ý --> N-í		
+nadhodnotit	nadhodnocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+nasvícený	nasvícení	A-ý --> N-í		
+nasvítit	nasvícení	V-tit --> N-cení		
+nasvítit	nasvícení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+nasycený	nasycení	A-ý --> N-í		
+nasytit	nasycení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+nucený	nucení	A-ý --> N-í		
+nutit	nucení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+obohacený	obohacení	A-ý --> N-í		
+obohatit	obohacení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+ochucený	ochucení	A-ý --> N-í		
+ochutit	ochucení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+odchycený	odchycení	A-ý --> N-í		
+odchytit	odchycení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+ofocený	ofocení	A-ý --> N-í		
+ofotit	ofocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+ohodnocený	ohodnocení	A-ý --> N-í		
+ohodnotit	ohodnocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+oplocený	oplocení	A-ý --> N-í		
+oplotit	oplocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+opocený	opocení	A-ý --> N-í		
+opotit	opocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+osamocený	osamocení	A-ý --> N-í		
+osamotit	osamocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+osvícený	osvícení	A-ý --> N-í		
+osvítit	osvícení	V-tit --> N-cení		
+osvítit	osvícení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+ošacený	ošacení	A-ý --> N-í		
+ošatit	ošacení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+placený	placení	A-ý --> N-í		
+platit	placení	V-tit --> N-cení		
+platit	placení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+podchycený	podchycení	A-ý --> N-í		
+podchytit	podchycení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+podhodnocený	podhodnocení	A-ý --> N-í		
+podhodnotit	podhodnocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+podnícený	podnícení	A-ý --> N-í		
+podnítit	podnícení	V-tit --> N-cení		
+podnítit	podnícení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+podsvícený	podsvícení	A-ý --> N-í		
+podsvítit	podsvícení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+pohlcený	pohlcení	A-ý --> N-í		
+pohltit	pohlcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+pokroucený	pokroucení	A-ý --> N-í		
+pokroutit	pokroucení	V-tit --> N-cení		
+pokroutit	pokroucení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+polichocený	polichocení	A-ý --> N-í		
+polichotit	polichocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+* posvítit	posvícení	V-tit --> N-cení		
+* posvítit	posvícení	V-tit --> N-cení		LINK ALREADY PRESENT
+posvěcený	posvícení	A-ý --> N-í	CHANGE: ě -> í	
+posvětit	posvícení	V-tit --> N-cení	CHANGE: ě -> í	
+
+posvěcený	posvěcení	A-ý --> N-í		
+posvětit	posvěcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+potracený	potracení	A-ý --> N-í		
+potratit	potracení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+pozlacený	pozlacení	A-ý --> N-í		
+pozlatit	pozlacení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+pošramocený	pošramocení	A-ý --> N-í		
+pošramotit	pošramocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+propocený	propocení	A-ý --> N-í		
+propotit	propocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+prosvícený	prosvícení	A-ý --> N-í		
+prosvítit	prosvícení	V-tit --> N-cení		
+prosvítit	prosvícení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+prosycený	prosycení	A-ý --> N-í		
+prosytit	prosycení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+přehodnocený	přehodnocení	A-ý --> N-í		
+přehodnotit	přehodnocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+překocený	překocení	A-ý --> N-í		
+překotit	překocení	V-tit --> N-cení		
+překotit	překocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+překroucený	překroucení	A-ý --> N-í		
+překroutit	překroucení	V-tit --> N-cení		
+překroutit	překroucení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+přesycený	přesycení	A-ý --> N-í		
+přesytit	přesycení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+přichycený	přichycení	A-ý --> N-í		
+přichytit	přichycení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+přinucený	přinucení	A-ý --> N-í		
+přinutit	přinucení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+přiškrcený	přiškrcení	A-ý --> N-í		
+přiškrtit	přiškrcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+rozdrcený	rozdrcení	A-ý --> N-í		
+rozdrtit	rozdrcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+rozlícený	rozlícení	A-ý --> N-í		
+rozlítit	rozlícení	V-tit --> N-cení		
+rozlítit	rozlícení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+rozmlácený	rozmlácení	A-ý --> N-í		
+rozmlátit	rozmlácení	V-tit --> N-cení		
+rozmlátit	rozmlácení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+roznícený	roznícení	A-ý --> N-í		
+roznítit	roznícení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+rozpolcený	rozpolcení	A-ý --> N-í		
+rozpoltit	rozpolcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+rozčtvrcený	rozčtvrcení	A-ý --> N-í		
+rozčtvrtit	rozčtvrcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+schvácený	schvácení	A-ý --> N-í		
+schvátit	schvácení	V-tit --> N-cení		
+schvátit	schvácení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+seškrcený	seškrcení	A-ý --> N-í		
+seškrtit	seškrcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+sjednocený	sjednocení	A-ý --> N-í		
+sjednotit	sjednocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+srocený	srocení	A-ý --> N-í		
+srotit	srocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+svítit	svícení	V-tit --> N-cení		
+svítit	svícení	V-tit --> N-cení		LINK ALREADY PRESENT
+* svěcený	svícení	A-ý --> N-í	CHANGE: ě -> í	
+* světit	svícení	V-tit --> N-cení	CHANGE: ě -> í	
+
+svěcený	svěcení	A-ý --> N-í		
+světit	svěcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+sycený	sycení	A-ý --> N-í		
+sytit	sycení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+uchvácený	uchvácení	A-ý --> N-í		
+uchvátit	uchvácení	V-tit --> N-cení		
+uchvátit	uchvácení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+uchycený	uchycení	A-ý --> N-í		
+uchytit	uchycení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+ujednocený	ujednocení	A-ý --> N-í		
+ujednotit	ujednocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+ukrácený	ukrácení	A-ý --> N-í		
+ukrátit	ukrácení	V-tit --> N-cení		
+ukrátit	ukrácení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+usmrcený	usmrcení	A-ý --> N-í		
+usmrtit	usmrcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+uškrcený	uškrcení	A-ý --> N-í		
+uškrtit	uškrcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+vnucený	vnucení	A-ý --> N-í		
+vnutit	vnucení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+vyfocený	vyfocení	A-ý --> N-í		
+vyfotit	vyfocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+vyhodnocený	vyhodnocení	A-ý --> N-í		
+vyhodnotit	vyhodnocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+vyhrocený	vyhrocení	A-ý --> N-í		
+vyhrotit	vyhrocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+vykroucený	vykroucení	A-ý --> N-í		
+vykroutit	vykroucení	V-tit --> N-cení		
+vykroutit	vykroucení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+vymlácený	vymlácení	A-ý --> N-í		
+vymlátit	vymlácení	V-tit --> N-cení		
+vymlátit	vymlácení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+vymýcený	vymýcení	A-ý --> N-í		
+vymýtit	vymýcení	V-tit --> N-cení		
+vymýtit	vymýcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+vynucený	vynucení	A-ý --> N-í		
+vynutit	vynucení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+vypocený	vypocení	A-ý --> N-í		
+vypotit	vypocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+vysvěcený	vysvěcení	A-ý --> N-í		
+vysvětit	vysvěcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+vznícený	vznícení	A-ý --> N-í		
+vznítit	vznícení	V-tit --> N-cení		
+vznítit	vznícení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zablácený	zablácení	A-ý --> N-í		
+zablátit	zablácení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zachycený	zachycení	A-ý --> N-í		
+zachytit	zachycení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zahlcený	zahlcení	A-ý --> N-í		
+zahltit	zahlcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zaklikacený	zaklikacení	A-ý --> N-í		
+zaklikatit	zaklikacení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zakroucený	zakroucení	A-ý --> N-í		
+zakroutit	zakroucení	V-tit --> N-cení		
+zakroutit	zakroucení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zakulacený	zakulacení	A-ý --> N-í		
+zakulatit	zakulacení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zanícený	zanícení	A-ý --> N-í		
+zanítit	zanícení	V-tit --> N-cení		
+
+zaplacený	zaplacení	A-ý --> N-í		
+zaplatit	zaplacení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zarmoucený	zarmoucení	A-ý --> N-í		
+zarmoutit	zarmoucení	V-tit --> N-cení		
+zarmoutit	zarmoucení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zasvěcený	zasvěcení	A-ý --> N-í		
+zasvětit	zasvěcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zatracený	zatracení	A-ý --> N-í		
+zatratit	zatracení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zaškrcený	zaškrcení	A-ý --> N-í		
+zaškrtit	zaškrcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zborcený	zborcení	A-ý --> N-í		
+zbortit	zborcení	V-tit --> N-cení		
+zbortit	zborcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zchvácený	zchvácení	A-ý --> N-í		
+zchvátit	zchvácení	V-tit --> N-cení		
+zchvátit	zchvácení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zdrcený	zdrcení	A-ý --> N-í		
+zdrtit	zdrcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zhodnocený	zhodnocení	A-ý --> N-í		
+zhodnotit	zhodnocení	V-tit --> N-cení		
+zhodnotit	zhodnocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zhroucený	zhroucení	A-ý --> N-í		
+zhroutit	zhroucení	V-tit --> N-cení		
+zhroutit	zhroucení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zkrocený	zkrocení	A-ý --> N-í		
+zkrotit	zkrocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zkroucený	zkroucení	A-ý --> N-í		
+zkroutit	zkroucení	V-tit --> N-cení		
+zkroutit	zkroucení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zlacený	zlacení	A-ý --> N-í		
+zlatit	zlacení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zmlácený	zmlácení	A-ý --> N-í		
+zmlátit	zmlácení	V-tit --> N-cení		
+zmlátit	zmlácení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+znechucený	znechucení	A-ý --> N-í		
+znechutit	znechucení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+znehodnocený	znehodnocení	A-ý --> N-í		
+znehodnotit	znehodnocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+znesvěcený	znesvěcení	A-ý --> N-í		
+znesvětit	znesvěcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+znovusjednocený	znovusjednocení	A-ý --> N-í		
+znovusjednotit	znovusjednocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zpocený	zpocení	A-ý --> N-í		
+zpotit	zpocení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+zřícený	zřícení	A-ý --> N-í		
+zřítit	zřícení	V-tit --> N-cení		
+zřítit	zřícení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+čtvrcený	čtvrcení	A-ý --> N-í		
+čtvrtit	čtvrcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+škrcený	škrcení	A-ý --> N-í		
+škrtit	škrcení	V-tit --> N-cení		LINK ALREADY PRESENT
+
+
