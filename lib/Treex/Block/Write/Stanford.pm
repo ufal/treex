@@ -9,7 +9,7 @@ has '+extension' => ( default => '.stanford' );
 
 has type_attribute => ( is => 'rw', isa => 'Str', default => 'conll/deprel' );
 
-has retain_punct => ( is => 'ro', isa => 'Bool', default => 0 );
+has retain_punct => ( is => 'ro', isa => 'Bool', default => 1 );
 
 has version => ( is => 'ro', isa => 'Str', default => 'basic' );
 
