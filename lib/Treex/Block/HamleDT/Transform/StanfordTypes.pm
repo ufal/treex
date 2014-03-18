@@ -159,7 +159,7 @@ sub Obj {
         # }
     }
     elsif ( $anode->match_iset( 'pos' => '~verb' ) ) {
-        if ( $self->get_simplified_verbform($anode) eq 'fin' ) {
+        if ( $self->is_finite($anode) ) {
             $type = 'ccomp';
         }
         else {
@@ -172,6 +172,7 @@ sub Obj {
 
 # Pnom or Atv (Pnom will hopefully get a different label in the subsequent
 # StanfordCopulas block)
+# hopefully OK
 sub PnomAtv {
     my ( $self, $anode ) = @_;
 
@@ -200,6 +201,7 @@ sub AuxV {
     return $type;
 }
 
+# hopefully OK
 sub AuxP {
     my ($self, $anode) = @_;
 
@@ -218,99 +220,63 @@ sub AuxP {
     return $type;
 }
 
-# TODO
+# hopefully OK
 sub Atr {
     my ( $self, $anode ) = @_;
 
-    my $type = 'mod';
-
-    # TODO: I usually do not know the priorities,
-    # therefore I use "if" instead of "elsif"
-    # and I do not nest the ifs
+    # default ("modifier word")
+    my $type = 'amod';
     
-    # noun modifiers
-    if ( $self->parent_has_pos($anode, 'noun') ) {
-        if ( $anode->match_iset( 'pos' => '~noun' ) ) {
-            $type = 'nmod';
-        }
-        elsif ( $anode->match_iset( 'pos' => '~adj' ) ) {
-            $type = 'amod';
-        }
-        elsif ( $anode->match_iset( 'pos' => '~adv' ) ) {
-            $type = 'advmod';
-        }
-        elsif ( $anode->match_iset( 'pos' => '~verb' ) ) {
-            if ( $self->get_simplified_verbform($anode) eq 'fin' ) {
-                $type = 'rcmod';
-            }
-            else {
-                $type = 'vmod';
-            }
-        }
-
+    if ( $anode->match_iset( 'pos' => '~noun' ) ) {
+        # nominal dependent
+        $type = 'nmod';
     }
-    # verb modifiers
-    elsif ( $self->parent_has_pos($anode, 'adj') ) {
-        if ( $anode->match_iset( 'pos' => '~adj' ) ) {
-            $type = 'xcomp';
-        }
-    }
-    # verb modifiers
-    elsif ( $self->parent_has_pos($anode, 'verb') ) {
-        if ( $anode->match_iset( 'pos' => '~adj' ) ) {
-            $type = 'xcomp';
-        }
-    }
-
-    # possessives
-    #if ( $anode->match_iset( 'poss' => '~poss' ) ) {
-    #    $type = 'poss';
-    #}
-    # numerals
-    if ( $anode->match_iset( 'pos' => '~num' ) ) {
+    elsif ( $anode->match_iset( 'pos' => '~num' ) ) {
+        # numeral
         if ( $self->parent_has_pos($anode, 'num') ) {
             $type = 'compmod';
         } else {
             $type = 'nummod';
         }
     }
-    # advmod
-    if ( $anode->match_iset( 'pos' => '~adv' ) ) {
-        $type = 'advmod';
+    elsif ( $anode->match_iset( 'pos' => '~verb' ) ) {
+        # predicate dependent
+        if ( $self->is_finite($anode) ) {
+            $type = 'rcmod';
+        }
+        else {
+            $type = 'nfcmod';
+        }
     }
 
     return $type;
 }
 
-# TODO
+# hopefully OK
 sub Adv {
     my ( $self, $anode ) = @_;
 
-    my $type = 'mod';
+    # default ("modifier word")
+    my $type = 'advmod';
 
-    if ( $anode->match_iset( 'pos' => '~adv' ) ) {
-        $type = 'advmod';
+    if ( $anode->match_iset( 'pos' => '~noun' ) ) {
+        # nominal dependent
+        $type = 'nmod';
     }
-    elsif ( $anode->match_iset( 'pos' => '~noun' ) ) {
-        $type = 'npadvmod';
-    }
-    elsif ( $anode->match_iset( 'pos' => '~verb' ) &&
-        $self->parent_has_pos($anode, 'verb')
-    ) {
-        $type = 'advcl';
-    }
-    elsif ( $anode->match_iset( 'pos' => '~adj' ) ) {
-        if ( $self->parent_has_pos($anode, 'noun') ) {
-            $type = 'amod';
+    elsif ( $anode->match_iset( 'pos' => '~verb' ) ) {
+        # predicate dependent
+        if ( $self->is_finite($anode) ) {
+            $type = 'advcl';
         }
-        elsif ( $self->parent_has_pos($anode, 'verb') ) {
-            $type = 'xcomp';
+        else {
+            $type = 'nfcmod';
         }
     }
 
     return $type;
 }
 
+# hopefully +- OK
 sub AuxY {
     my ($self, $anode) = @_;
 
@@ -333,24 +299,14 @@ sub AuxY {
 # is the same as using get_eparent() for the first conjunct, and irrelevant for
 # other conjuncts since they all should get the 'conj' type
 
-my %simplified_verbform = (
-    '' => 'fin',
-    fin => 'fin',
-    inf => 'inf',
-    sup => 'inf',
-    part => 'inf',
-    trans => 'inf',
-    ger => 'inf',
-);
-
-sub get_simplified_verbform {
+sub is_finite {
     my ($self, $anode) = @_;
 
     my $verbform = $anode->get_iset('verbform');
     # TODO (now takes the first one from multiple values)
     $verbform =~ s/\|.*//;
 
-    return $simplified_verbform{$verbform} // 'fin';
+    return ($verbform eq '' || $verbform eq 'fin');
 }
 
 sub parent_is_passive_verb {
@@ -381,7 +337,6 @@ sub parent_has_pos {
     }
 }
 
-
 1;
 
 =head1 NAME 
@@ -396,7 +351,8 @@ This is for this block to be able to look at the C<afun>s at any time;
 however, this block should B<not> look at original deprels, as it should be
 language-independent (and especially treebank-independent).
 
-TODO: not yet ready, still many things to solve
+TODO: not yet ready, still many things to solve -- e.g. possessives (not marked
+now)
 
 Coordination structures should get marked correctly -- the block relies on
 the data previously having been processed by L<HamleDT::Transform::CoordStyle>.
@@ -408,11 +364,7 @@ values first to avoid that. (But do that before calling
 L<HamleDT::Transform::MarkPunct> since this block stores the C<punct> types into
 C<conll/deprel>.)
 
-=head1 PARAMETERS
-
-=over
-
-=back
+Now based on USD 2014 (LREC).
 
 =head1 AUTHOR
 
