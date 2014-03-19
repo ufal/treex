@@ -43,6 +43,7 @@ sub process_dictionary {
     print "\nDERIVATIONAL CLUSTERS\n";
 
     my %signature_cnt;
+    my %signature_example;
     my %touched;
     my $i;
 
@@ -51,13 +52,17 @@ sub process_dictionary {
             my $root = $lexeme->get_root_lexeme;
             my $signature = $dict->_get_subtree_pos_signature($root,\%touched);
             $signature_cnt{$signature}++;
+            $signature_example{$signature}{$root->lemma} = 1;
         }
     }
 
     print "Types of derivational clusters:\n";
     my @signatures = sort {$signature_cnt{$b}<=>$signature_cnt{$a}} keys %signature_cnt;
     foreach my $signature (@signatures) {
-        print "    $signature_cnt{$signature} $signature\n";
+        print "    $signature_cnt{$signature} $signature: ";
+        my @examples = keys %{$signature_example{$signature}};
+        print join " ",grep {$_} @examples[0..20];
+        print "\n";
     }
 
     return $dict;
