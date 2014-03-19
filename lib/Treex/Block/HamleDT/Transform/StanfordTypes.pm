@@ -234,7 +234,7 @@ sub Atr {
     elsif ( $anode->match_iset( 'pos' => '~num' ) ) {
         # numeral
         if ( $self->parent_has_pos($anode, 'num') ) {
-            $type = 'compmod';
+            $type = 'compound';
         } else {
             $type = 'nummod';
         }
