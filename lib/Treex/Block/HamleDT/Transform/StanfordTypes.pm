@@ -34,10 +34,6 @@ my %afun2type = (
     AdvAtr     => \&{Atr},
     AtrObj     => \&{Atr},
     ObjAtr     => \&{Atr},
-    PredC      => 'dep',      # only in ar; "conjunction as the clause's head"
-    PredE      => 'dep',      # only in ar; "existential predicate"
-    PredP      => 'dep',      # only in ar; "adposition as the clause's head"
-    Ante       => 'dep',      # only in ar;
 
     # some crazy Aux*
     AuxC => 'mark',
@@ -47,10 +43,24 @@ my %afun2type = (
     AuxT => \&{Adv},
     AuxR => \&{Adv},
     AuxO => \&{Adv},
-    AuxE => 'dep',   # only in ar(?)
-    AuxM => 'dep',   # only in ar(?)
     AuxY => \&{AuxY},
     AuxZ => \&{Adv}, # it seems to be labeled e.g. as advmod by the Stanford parser
+
+    # only in ar
+    AuxE => \&{Adv},
+    AuxM => \&{Adv},
+    PredC      => 'dep',      #  "conjunction as the clause's head"
+    PredE      => 'dep',      #  "existential predicate"
+    PredP      => 'dep',      #  "adposition as the clause's head"
+    Ante       => 'appos',
+
+    # only in ta
+    AAdjn => \&{Adv},
+    AComp => \&{Adv},
+    AdjAtr => \&{Atr},
+    CC => 'mwe',
+    Comp => \&{Atr},
+
 );
 
 sub process_anode {
