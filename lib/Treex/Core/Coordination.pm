@@ -547,6 +547,8 @@ sub shape_prague
     $croot->set_parent($self->parent());
     $croot->set_afun('Coord');
     $croot->set_is_member($self->is_member());
+    # Martin's transformations might also need the flag whether a node is coordinating conjunction.
+    $croot->wild()->{is_coord_conjunction} = 1;
     # Attach all coordination members to the new root.
     foreach my $conjunct ( @conjuncts )
     {
@@ -578,6 +580,8 @@ sub shape_prague
         else
         {
             $delimiter->set_afun('AuxY');
+            # Martin's transformations might also need the flag whether a node is coordinating conjunction.
+            $delimiter->wild()->{is_coord_conjunction} = 1;
         }
     }
     # Attach all shared modifiers to the new root.
@@ -587,10 +591,6 @@ sub shape_prague
         $modifier->set_is_member(0);
         $modifier->set_is_shared_modifier(1);
     }
-    # Martin's transformations might also need the flag whether a node is the coordinating conjunction that serves as the head of the coordination.
-    # This flag is currently not saved (it is a wild attribute, not included in the Treex XML schema), so it will only be visible for the rest of the current scenario.
-    # Thus any scenario that reads the harmonized trees from file and needs the flag should include the block A2A::SetCoordConjunction.
-    $croot->wild()->{is_coord_conjunction} = 1;
     return $croot;
 }
 
