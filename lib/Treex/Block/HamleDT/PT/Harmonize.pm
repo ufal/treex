@@ -392,6 +392,30 @@ sub deprel_to_afun
         {
             $afun = 'ExD';
         }
+        # Unknown function.
+        elsif($deprel eq '?')
+        {
+            if($ppos =~ m/^(noun|num)$/)
+            {
+                $afun = 'Atr';
+            }
+            elsif($ppos =~ m/^(adj|adv|verb)$/)
+            {
+                $afun = 'Adv';
+            }
+            elsif($ppos eq 'prep')
+            {
+                $afun = 'PrepArg';
+            }
+            elsif($ppos eq 'conj')
+            {
+                $afun = 'SubArg';
+            }
+            else # part, int, punc, NONE
+            {
+                $afun = 'ExD';
+            }
+        }
         $node->set_afun($afun);
     }
     return;
