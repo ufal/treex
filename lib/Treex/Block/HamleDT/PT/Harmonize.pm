@@ -4,137 +4,424 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::HamleDT::Harmonize';
 
-sub process_zone {
-    my ( $self, $zone ) = @_;
-    my $a_root = $self->SUPER::process_zone($zone);
-    $self->attach_final_punctuation_to_root($a_root);
-    $self->rehang_coordconj($a_root);
-    $self->rehang_subconj($a_root);
-    return;
+sub process_zone
+{
+    my $self = shift;
+    my $zone = shift;
+    my $root = $self->SUPER::process_zone($zone, 'conll');
+    $self->attach_final_punctuation_to_root($root);
+    $self->restructure_coordination($root);
+    # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
+    # and with special care at places where prepositions and coordinations interact.
+    $self->process_prep_sub_arg_cloud($root);
+    $self->raise_subordinating_conjunctions($root);
+    $self->check_afuns($root);
 }
 
-my %deprel2afun = (
-    ACC  => 'Obj',      # direct (accusative) object
-    ADVL => 'Adv',
-    APP  => 'Atr',      # Apposition, but mostly hanged on a wrong parent TODO: handle it correctly
-    CJT  => 0,          # conjunct = coord. member - solved in rehang_coordconj
-    CMD  => 'Pred',     # phrase function for commad
-    CO   => 'Coord',    # coordinator = conjunction (hanged on the first member)
-    EXC  => 'Pred',     # phrase function for exclamation
-    FOC  => 'AuxZ',     # focus marker ("é" and "que" forming so-called focus brackets)
-    MV   => 'Obj',      # main verb as a child of a modal or auxiliary verb TODO: auxiliary should be reversed under main verbs
-    PUNC => 'AuxX',     # punctuation
-    STA  => 'Pred',     # phrase function for statements
-    SUBJ => 'Sb',       # subject, including impersonal 'se'-subjects
-    QUE  => 'Pred',     # phrase function for questions
-);
 
-my %pos2afun = (
-    q(prep) => 'AuxP',
-    q(adj)  => 'Atr',
-    q(adv)  => 'Adv',
-);
 
-my %subpos2afun = (
-    q(det) => 'AuxA',
-    q(sub) => 'AuxC',
-);
-
-my %parentpos2afun = (
-    q(prep) => 'Adv',
-    q(noun) => 'Atr',
-);
-
-sub deprel_to_afun {
+#------------------------------------------------------------------------------
+# Convert dependency relation tags to analytical functions.
+# http://www.linguateca.pt/Floresta/BibliaFlorestal/anexo1.html
+# http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
+#------------------------------------------------------------------------------
+sub deprel_to_afun
+{
     my ( $self, $root ) = @_;
-
-    foreach my $node ( $root->get_descendants ) {
-
+    foreach my $node ( $root->get_descendants )
+    {
         my $deprel   = $node->conll_deprel();
-        my ($parent) = $node->get_eparents();
+        my $parent   = $node->parent();
         my $pos      = $node->get_iset('pos');
         my $subpos   = $node->get_iset('subpos');
         my $ppos     = $parent ? $parent->get_iset('pos') : '';
-
-        # from the most specific to the least specific
-        my $afun = $deprel2afun{$deprel} ||
-            $subpos2afun{$subpos} ||
-            $pos2afun{$pos} ||
-            $parentpos2afun{$ppos} ||
-            'NR';
-
-        # AuxX should be used for commas, AuxG for other graphic symbols
-        if($deprel eq q(PUNC) && $node->form ne q(,)) {
-            $afun = q(AuxG);
+        my $afun     = 'NR';
+        # Left dependent of adjective or adverb. Typically realized by adverbs.
+        # acrescidamente/>A prudentes, tão/>A favoráveis
+        if($deprel eq '>A')
+        {
+            $afun = 'Adv';
         }
-
+        # Left dependent of noun. Articles, numbers and other determiners.
+        # o, a, os, as, um
+        elsif($deprel eq '>N')
+        {
+            $afun = 'Atr';
+        }
+        # Left dependent of preposition.
+        # At least some examples are emphasizers of prepositional phrases.
+        # sobretudo/>P em a colecta
+        # particularly in the collection
+        # só, ainda, não, apenas, também
+        elsif($deprel eq '>P')
+        {
+            $afun = 'AuxZ';
+        }
+        # Left dependent of subordinating conjunction.
+        # Typically attached to the predicate of the subordinate clause (instead of to the conjunction)
+        # Also note that sometimes there is a relative pronoun or adverb instead of the conjunction.
+        # These nodes seem to be an analogy to emphasizers of prepositional phrases.
+        # Só quando Pereira lhe surge em a frente
+        # Only when Pereira appears in front of you
+        # até, só, sobretudo, principalmente
+        elsif($deprel eq '>S')
+        {
+            $afun = 'AuxZ';
+        }
+        # Right dependent of adjective or adverb. Prepositional phrases.
+        # de, a, em, para, por
+        elsif($deprel eq 'A<')
+        {
+            $afun = 'Adv';
+        }
+        # Parenthetical attribute, number.
+        # This label is undocumented and occurred only once in the data.
+        elsif($deprel eq 'A<PRED')
+        {
+            $afun = 'Atr';
+        }
+        # Accusative, direct object.
+        # manter os traços decorativos, querem fugir, encontramos-nos
+        # se, que, é, o, está
+        elsif($deprel eq 'ACC')
+        {
+            $afun = 'Obj';
+        }
+        # Accusative pronoun that could be also analyzed as passive agent.
+        elsif($deprel =~ m/^ACC>?-PASS$/)
+        {
+            $afun = 'AuxR';
+        }
+        # Adverbial modifier. Adverbs, prepositional phrases. Also the negative particle “não”.
+        # em, não, para, com, a
+        # The ADVO variant is not documented. Adverbial somehow related to an object?
+        # The ADVS variant is not documented. Adverbial somehow related to a subject?
+        elsif($deprel =~ m/^ADV[LOS]$/)
+        {
+            $afun = 'Adv';
+        }
+        # Apposition. Typically a noun phrase modifying another noun.
+        elsif($deprel eq 'APP')
+        {
+            $afun = 'Apposition';
+        }
+        # Right dependent of subordinating conjunction.
+        # Often but not always in comparative expressions. Most frequent parent lemmas: como, que, do_que, conforme, quanto, assim_como.
+        elsif($deprel eq 'AS<')
+        {
+            $afun = 'SubArg';
+        }
+        # Auxiliary verb.
+        # Auxiliary verbs often head verbal groups and thus their label represents the whole group and is something else than AUX.
+        # However, if the group involves a chain of two auxiliaries and one main verb, the middle auxiliary will be labeled AUX.
+        # ter sido/AUX suspensa, está a ser/AUX preparado
+        # ser, sido, ter, sendo, vir
+        elsif($deprel eq 'AUX')
+        {
+            $afun = 'AuxV';
+        }
+        # Right modifier of auxiliary verb.
+        # In the few examples I saw, this was the first (head) conjunct of coordinate participles or infinitives, attached to an auxiliary verb.
+        # beber, leiloado, eternizar, entregue, apresentada
+        elsif($deprel eq 'AUX<')
+        {
+            $afun = 'AuxV';
+        }
+        # Conjunct. Non-first conjunct in coordination is attached to the first conjunct as CJT.
+        elsif($deprel eq 'CJT')
+        {
+            $afun = 'CoordArg';
+            $node->wild()->{conjunct} = 1;
+        }
+        # There are a few (very rare!) examples of coordination of conjuncts with different functions.
+        # The first conjunct is labeled PRED, the second is CJT&PRED and the last one is CJT&ADVL.
+        ###!!! We cannot currently keep the distinction. Prague solution would be to label the last one as ExD_M.
+        elsif($deprel =~ m/^CJT&(PRED|ADVL)$/)
+        {
+            $afun = 'CoordArg';
+            $node->wild()->{conjunct} = 1;
+        }
+        # Command. Main predicate of a command utterance.
+        # Olha/CMD o Carnaval de salão!
+        elsif($deprel eq 'CMD')
+        {
+            $afun = 'Pred';
+        }
+        # Coordinating conjunction.
+        # It is attached to the first conjunct, regardless between which conjuncts it appears.
+        # Punctuation (comma) is also attached to the first conjunct but it is labeled PUNC, not CO.
+        # e, mas, ou, nem, como
+        elsif($deprel eq 'CO')
+        {
+            $afun = 'AuxY';
+            $node->wild()->{coordinator} = 1;
+        }
+        # Complementizer in comparative structures.
+        # Broken analysis? Normally it should be KOMP<, right? These are leaves and are relatively rare.
+        # como, do_que, que, tal_como, conforme
+        elsif($deprel eq 'COM')
+        {
+            $afun = 'AuxC';
+        }
+        # Dative (indirect object).
+        # Only objects without prepositions, thus pronouns.
+        # terá para lhe/DAT dizer
+        # will have to tell you
+        # lhe, me, lhes, nos, se
+        elsif($deprel eq 'DAT')
+        {
+            $afun = 'Obj';
+        }
+        # Exclamation. Main predicate of an exclamative utterance.
+        # E bomba!
+        elsif($deprel eq 'EXC')
+        {
+            $afun = 'Pred';
+        }
+        # Focus marker.
+        # Example: in this case, who wins is the consumer.
+        # Same sentence without the focal markers: The consumer wins in this case.
+        # quem/FOC sai ganhando é/FOC o consumidor
+        # que, é_que, foi, é, era
+        elsif($deprel eq 'FOC')
+        {
+            ###!!! We probably want to reshape the tree here. Nonprojectively, I'm afraid.
+            $afun = 'AuxY';
+        }
+        # Nucleus.
+        # Broken analysis? Normally it should bear the label of the whole noun phrase with respect to its parent.
+        # Example: “a dificuldade de...” The three nodes are siblings but they should form one subtree headed by “dificuldade”.
+        # Their labels in this wrong structure are >N, H, N<.
+        elsif($deprel eq 'H')
+        {
+            ###!!! The only right thing to do would be to try to reconstruct the correct tree.
+            $afun = 'ExD';
+        }
+        # Comparative complement. This is the “then” part in “better than me”, attached to “better”.
+        # tal ordem, que/SUB só vem/KOMP< a público a verdade oficial
+        # such order that only the official truth comes to the public
+        # TREE: ordem ( vem/KOMP< ( que/SUB ) )
+        # O valor é mais que o dobro de o estimado.
+        # The value is more than double the estimate.
+        # TREE: é ( valor/SUBJ, mais/SC, que/KOMP< ( dobro/AS< ) )
+        # do_que, de, que, como, quanto
+        elsif($deprel eq 'KOMP<')
+        {
+            $afun = $ppos eq 'verb' ? 'Adv' : 'Atr';
+        }
+        # Main verb. Infinitive under modal verb, participle under auxiliary “ser” or “ter”.
+        # pudessem cair, ser considerada, ter deixado
+        # ser, ter, feito, sido, fazer
+        elsif($deprel eq 'MV')
+        {
+            $afun = 'Obj';
+        }
+        # Right dependent of noun. Adjectives, prepositional phrases.
+        # de, em, para, a, com
+        elsif($deprel eq 'N<')
+        {
+            $afun = 'Atr';
+        }
+        # Predicative right modifier of noun.
+        # It can be a relative clause but it can also be a noun phrase (we could perceive it as a relative clause with elided copula).
+        # Similarly, it can also be a prepositional phrase.
+        # de, em, com, é, a
+        elsif($deprel eq 'N<PRED')
+        {
+            $afun = 'Atr';
+        }
+        # Dependent of numeral.
+        # For example: “X to Y” constructions. Prepositions em, a.
+        # 54 a 44
+        elsif($deprel eq 'NUM<')
+        {
+            $afun = 'Atr';
+        }
+        # Object complement.
+        # Attached to verb but at the same time adding information about the verb's object.
+        # Most frequent parent verbs: tornar (render), considerar (consider), ter (have), encontrar (find).
+        # encontravam-no enforcado
+        # como, em, de, por, impossível
+        elsif($deprel eq 'OC')
+        {
+            $afun = 'AtvV';
+        }
+        # Predicator.
+        # Lost verb. Examples suggest that in these cases something went wrong with the analysis or its automatic conversion.
+        # The verb is sibling of nodes that should be its dependents etc.
+        elsif($deprel eq 'P')
+        {
+            ###!!! The only right thing to do would be to try to reconstruct the correct tree.
+            $afun = 'ExD';
+        }
+        # Right dependent of preposition. Head noun in prepositional phrase.
+        # anos, que, ano, dia, país
+        elsif($deprel eq 'P<')
+        {
+            $afun = 'PrepArg';
+        }
+        # Agent in passive construction.
+        # Typically a prepositional phrase with preposition “por”.
+        # causados por centenas de cães
+        # caused by hundreds of dogs
+        elsif($deprel eq 'PASS')
+        {
+            $afun = 'Obj';
+        }
+        # Coordinate prepositional phrases.
+        # In other treebanks this might be analyzed as two separate prepositional phrases modifying the same verb.
+        # However, there is a semantic link between them and this treebank keeps them together.
+        # Example: from two to five. Here, “to five” will be attached to “from two” (more precisely it will be attached to “from”) as PCJT.
+        # de segunda a quinta
+        # TREE: de ( segunda/P<, a/PCJT ( quinta/P< ) )
+        elsif($deprel eq 'PCJT')
+        {
+            ###!!! We will want to reshape the structure so that the first preposition has only one child.
+            $afun = 'Adv';
+        }
+        # Prepositional object. Prepositional phrases that are arguments of verb, i.e. governed by valency.
+        # a, de, em, com, para
+        elsif($deprel eq 'PIV')
+        {
+            $afun = 'Obj';
+        }
+        # Main verb coordinate with one of its proper constituents.
+        # I found only one example and it was broken. The PMV node “preguntar” was not at all coordinate.
+        # It modified a conjunct. But in fact it should be the conjunct and the CJT node here should have be its object.
+        elsif($deprel eq 'PMV')
+        {
+            $afun = 'Obj';
+        }
+        # Undocumented and undeciphered tag PRD.
+        # This is always the adverb “como” attached to a verb.
+        elsif($deprel eq 'PRD')
+        {
+            $afun = 'Adv';
+        }
+        # Predicative adjunct.
+        # Loosely attached predicate that provides context to the main predicate.
+        # Example: In June, away from the news for months, there was again news.
+        # Em Junho, afastada/PRED de os noticiários há meses, era outra vez notícia.
+        elsif($deprel eq 'PRED')
+        {
+            $afun = 'Adv';
+        }
+        # Verbal particle.
+        # The part of speech of these nodes is often (not always) preposition but they function as conjunctions
+        # between auxiliary and main verb. They are attached to the auxiliary as PRT-AUX< and they are leaves.
+        # The main verb is their sibling.
+        # Variant: PRT-AUX. Here the particle does not lie between the auxiliary and the main verbs because the main verb has been moved.
+        # Variant 2: PRT-AUX>. I found only one occurrence and the sentence (not the analysis) was broken.
+        # tiveram de/PRT-AUX< esfriar, passou a/PRT-AUX< conversar, tem que/PRT-AUX< ser rápido
+        # resistir três vezes quem há de/PRT-AUX?
+        # a, de, que, por, para
+        elsif($deprel =~ m/^PRT-AUX[<>]?$/)
+        {
+            $afun = 'AuxT';
+        }
+        # Punctuation.
+        # , . « » ) (
+        elsif($deprel eq 'PUNC')
+        {
+            if($node->form() eq ',')
+            {
+                $afun = 'AuxX';
+            }
+            else
+            {
+                $afun = 'AuxG';
+            }
+        }
+        # Question. Main predicate of an interrogative utterance.
+        # Dá/QUE o emprego a o seu amigo?
+        elsif($deprel eq 'QUE')
+        {
+            $afun = 'Pred';
+        }
+        # Right addition to utterance. Subordinate clauses.
+        elsif($deprel eq 'S<')
+        {
+            $afun = 'Adv';
+        }
+        # Subject complement.
+        # This is often what we call nominal predicate with copula. Most frequent parents: é, foi, são, ser, como.
+        # O museu está orçado/SC em seis milhões.
+        elsif($deprel eq 'SC')
+        {
+            $afun = 'Pnom';
+        }
+        # Statement. Main predicate of a declarative sentence.
+        # Verbs. It is not guaranteed that this node's parent is the root.
+        # Main predicate of parenthesis is also STA.
+        # Coordinate sentences seem to be solved differently from noun coordinations and there are several STA nodes depending on another STA node.
+        # é, foi, disse, são, tem
+        elsif($deprel eq 'STA')
+        {
+            $afun = 'Pred';
+        }
+        # Subordinating conjunctions are attached to the predicate of their subordinate clause. They are mostly leaves.
+        # que, se, porque, embora, já_que
+        elsif($deprel eq 'SUB')
+        {
+            $afun = 'AuxC';
+        }
+        # Subject. Nouns and pronouns (including relative pronouns).
+        elsif($deprel eq 'SUBJ')
+        {
+            $afun = 'Sb';
+        }
+        # Topic.
+        # As esculturas/TOP, ela diz que faz em seis meses.
+        # The sculptures, she says she does in six months.
+        elsif($deprel eq 'TOP')
+        {
+            ###!!!
+            $afun = 'ExD';
+        }
+        # Utterance.
+        # Typically non-verb node that governs the whole utterance. This is mostly the only child of the root.
+        # Sometimes it occurs deeper in the tree and governs an autonomous subtree. Or it can be one of coordinate utterances.
+        elsif($deprel eq 'UTT')
+        {
+            $afun = 'ExD';
+        }
+        # Vocative.
+        # VOK: noun phrases used to address people (deputado, gente, governador, mãe, querido).
+        # VOC: mostly reflexive pronouns attached to imperative verbs; in a few cases (errors) noun phrases as in VOK.
+        elsif($deprel =~ m/^VO[CK]$/)
+        {
+            $afun = 'ExD';
+        }
         $node->set_afun($afun);
     }
     return;
 }
 
-use Treex::Tool::ATreeTransformer::DepReverser;
-my $subconj_reverser =
-    Treex::Tool::ATreeTransformer::DepReverser->new(
-    {
-        subscription     => '',
-        nodes_to_reverse => sub {
-            my ( $child, $parent ) = @_;
-            return ( $child->afun =~ /Aux[CP]/ && !$child->get_children );
-        },
-        move_with_parent => sub { 1; },
-        move_with_child  => sub { 1; },
-    }
-    );
 
-sub rehang_subconj {
-    my ( $self, $root ) = @_;
-    $subconj_reverser->apply_on_tree($root);
 
+#------------------------------------------------------------------------------
+# Detects coordination in the shape we expect to find it in the Portuguese
+# treebank.
+#------------------------------------------------------------------------------
+sub detect_coordination
+{
+    my $self = shift;
+    my $node = shift;
+    my $coordination = shift;
+    my $debug = shift;
+    $coordination->detect_stanford($node);
+    # The caller does not know where to apply recursion because it depends on annotation style.
+    # Return all conjuncts and shared modifiers for the Prague family of styles.
+    # Return non-head conjuncts, private modifiers of the head conjunct and all shared modifiers for the Stanford family of styles.
+    # (Do not return delimiters, i.e. do not return all original children of the node. One of the delimiters will become the new head and then recursion would fall into an endless loop.)
+    # Return orphan conjuncts and all shared and private modifiers for the other styles.
+    my @recurse = grep {$_ != $node} ($coordination->get_conjuncts());
+    push(@recurse, $coordination->get_shared_modifiers());
+    push(@recurse, $coordination->get_private_modifiers($node));
+    return @recurse;
 }
 
-sub rehang_coordconj {
-    my ( $self, $root ) = @_;
 
-    foreach my $coord (
-        grep { $_->afun eq 'Coord' }
-        map { $_->get_descendants } $root->get_children
-        )
-    {
-        my $first_member = $coord->get_parent;
-        $first_member->set_is_member(1);
-        $coord->set_parent( $first_member->get_parent );
-        $first_member->set_parent($coord);
-
-        my $second_member = 1;
-        foreach my $node ( grep { $coord->precedes($_) } $first_member->get_children( { ordered => 1 } ) ) {
-            $node->set_parent($coord);
-
-            my $pos      = $node->get_iset('pos');
-            my $subpos   = $node->get_iset('subpos');
-
-            #TODO this should solve test.treex#4 but it does not work as intended
-            if ( $node->conll_deprel =~ /CJT&(.*)/ && ( my $afun = $deprel2afun{$1} ) ) {
-                $node->set_afun($afun);
-                $node->set_is_member(1);
-            }
-
-            elsif ( $node->conll_deprel eq 'CJT' ) {
-                $afun = $subpos2afun{$subpos} ||
-                    $pos2afun{$pos} ||
-                        $first_member->afun;
-                $node->set_afun( $afun );
-                $node->set_is_member(1);
-            }
-
-            elsif ($second_member) {
-                $node->set_is_member(1);
-            }
-            $second_member = 0;
-        }
-    }
-    return;
-}
 
 1;
 
@@ -142,12 +429,12 @@ sub rehang_coordconj {
 
 =item Treex::Block::HamleDT::PT::Harmonize
 
-Converts Portuguese trees from CoNLL-X to the style of
-the Prague Dependency Treebank.
+Converts Portuguese trees from CoNLL-X to the HamleDT (Prague) style.
 
 =back
 
 =cut
 
+# Copyright 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # Copyright 2011 Martin Popel <popel@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
