@@ -125,18 +125,18 @@ sub process_anode {
 sub Sb {
     my ( $self, $anode ) = @_;
 
-    my $type = 'subj';
+    my $type;
 
-    if ( $anode->match_iset( 'pos' => '~noun|adj|num' ) ) {
-        $type = 'nsubj';
-        if ( $self->parent_is_passive_verb($anode)) {
-            $type = 'nsubjpass';
-        }
-    }
-    elsif ( $anode->match_iset( 'pos' => '~verb' ) ) {
+    if ( $anode->match_iset( 'pos' => '~verb' ) ) {
         $type = 'csubj';
         if ( $self->parent_is_passive_verb($anode)) {
             $type = 'csubjpass';
+        }
+    }
+    else {
+        $type = 'nsubj';
+        if ( $self->parent_is_passive_verb($anode)) {
+            $type = 'nsubjpass';
         }
     }
 
@@ -147,18 +147,10 @@ sub Sb {
 sub Obj {
     my ( $self, $anode ) = @_;
 
-    my $type = 'comp';
+    # subsequent StanfordObjects sets type to dobj if there is only 1 obj
+    my $type = 'obj';
 
-    if ( $anode->match_iset( 'pos' => '~noun|adj|num' ) ) {
-        $type = 'obj';
-        # elsif ( $anode->match_iset( case => '~acc' ) ) {
-        #   $type = 'dobj';
-        # }
-        # elsif ( $anode->match_iset( case => '~dat' ) ) {
-        #   $type = 'iobj';
-        # }
-    }
-    elsif ( $anode->match_iset( 'pos' => '~verb' ) ) {
+    if ( $anode->match_iset( 'pos' => '~verb' ) ) {
         if ( $self->is_finite($anode) ) {
             $type = 'ccomp';
         }
@@ -176,13 +168,10 @@ sub Obj {
 sub PnomAtv {
     my ( $self, $anode ) = @_;
 
-    my $type = 'comp';
+    my $type = 'obj';
 
     if ( $anode->match_iset( 'pos' => '~adj|verb' ) ) {
         $type = 'xcomp';
-    }
-    elsif ( $anode->match_iset( 'pos' => '~noun') ) {
-        $type = 'obj';
     }
 
     return $type;
