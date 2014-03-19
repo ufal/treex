@@ -1,0 +1,454 @@
+V-it	N-ba	#VALUE!	léčba, prosba			
+V-at	N-ba	#VALUE!	skladba, vazba			
+A-ý	N-oba	#VALUE!	siroba, staroba, hniloba			
+V-it	N-itba	#VALUE!	modlitba, ženitba			
+N?	N-nda	#VALUE!	vojanda			
+A-ý	N-ucha	#VALUE!	černucha			
+V-át	N-ačka	#VALUE!	rvačka, sračka			
+N-ka	N-ečka	#VALUE!	knížečka			
+N-ůrka	N-ůrečka	#VALUE!	šňůrečka			
+N-ůstka	N-ůstečka	#VALUE!	kůstečka			
+N-a	N-ička	#VALUE!	chodbička			
+N-	N-ička	#VALUE!	věcička, básnička			
+N-e	N-ička	#VALUE!	šavlička, růžička			
+N-ka	N-ička	#VALUE!	rybička			
+N-ce	N-čka	#VALUE!	ulička			@
+N-ka	N-čka	#VALUE!	ručka			
+V-t	N-čka	#VALUE!	čistička, plácačka; lítačka, tancovačka, honička			
+N-ik	N-ika	#VALUE!	metodika			
+N-	N-ka	#VALUE!	vnučka, manželka, Srbka, uklízečka; klícka			@
+N-a	N-ka	#VALUE!	penzistka, policistka; babka			@
+N-í	N-ka	#VALUE!	povolenka			
+A-ský	N-ka	#VALUE!	poděbradka			
+A-ý	N-ka	#VALUE!	veselka, zlatka			
+A-ní	N-ka	#VALUE!	plenárka, detektivka			
+A?	N-ka	#VALUE!				
+V-it	N-ka	#VALUE!	lapka, mluvka; vývěska; otočka; spojka; vykládka			
+V-at	N-ka	#VALUE!	vyžírka; vynechávka, sbírka; škrabka, výhybka			
+V-et	N-ka	#VALUE!	navážka; otáčka			
+C-	N-ka	#VALUE!	pětka, šestka, padesátka			
+N?	N-enka	#VALUE!	cukřenka			
+N-e	N-enka	#VALUE!	šavlenka			
+N-	N-enka	#VALUE!	vstupenka			
+N-a	N-enka	#VALUE!	omluvenka			
+N-o	N-enka	#VALUE!	místenka			
+A-ní	N-enka	#VALUE!	peněženka			
+A-ný	N-enka	#VALUE!	sněženka			
+N-ě	N-ěnka	#VALUE!	hraběnka			
+N?	N-ěnka	#VALUE!				
+A-ěný	N-ěnka	#VALUE!	měděnka, drátěnka			
+N?	N-inka	#VALUE!	krvinka			
+N-a	N-inka	#VALUE!	tetinka			
+N-k	N-řka	#VALUE!	básnířka			
+N-a	N-uška	#VALUE!	dceruška			
+A-ý	N-uška	#VALUE!	světluška			
+A-atý	N-atka	#VALUE!	závojnatka, břichatka			
+V-ít	N-itka	#VALUE!	bitka, pitka			
+C-et	N-ítka	#VALUE!	dvacítka			
+A-avý	N-avka	#VALUE!	voňavka			
+V-at	N-avka	#VALUE!	škytavka, ukolébavka			
+A-ivý	N-ivka	#VALUE!	zářivka, prašivka			
+V-ít	N-ivka	#VALUE!	zálivka, výšivka			
+N-	N-ovka	#VALUE!	Židovka			
+A-ový	N-ovka	#VALUE!	koncovka, sodovka, křížovka			
+A-ový	N-ůvka	#VALUE!	močůvka, borůvka, jalůvka			
+N-log	N-ložka	#VALUE!	psycholožka			
+A-ný	N-a	#VALUE!	mizera			
+V-ět	N-a	#VALUE!	neposeda			
+V-at	N-a	#VALUE!	brbla, louda, brepta, předseda; přísaha, zácpa, hra			
+V-it	N-a	#VALUE!	záliba, příhoda, úcta			
+N-ý	N-á	#VALUE!	hospodská, vrátná			
+V-at	N-aná	#VALUE!	schovávaná			
+V-it	N-ená	#VALUE!	dovolená			
+A-cký	N-čina	#VALUE!	sedlačina			
+A-lý	N-lina	#VALUE!	zdechlina			
+N?	N-ina	#VALUE!	bučina, smrčina, písčina			
+A-ý	N-ina	#VALUE!	holina, pevnina, proláklina			
+N?	N-ina	#VALUE!	křovina, travina			
+A-í	N-ina	#VALUE!	rybina, jehněčina, třetina			
+A-ý	N-ina	#VALUE!	holina, pevnina, mokřina, čtvrtina			
+A-ský	N-ina	#VALUE!	kantořina			
+A-ský	N-ina	#VALUE!	lotrovina			
+V-ět	N-ina	#VALUE!	vidina			
+V-it	N-ina	#VALUE!	zplodina			
+V-ovat	N-ina	#VALUE!	hoblina, pilina			
+C-	N-ina	#VALUE!	pětina			
+A-rský	N-řina	#VALUE!	taškařina			
+A-cký	N-čtina	#VALUE!	řečtina			
+C-	N-tina	#VALUE!	miliontina			
+A-ský	N-ština	#VALUE!	arabština, čeština			
+A-ní	N-ština	#VALUE!	intelektuálština			
+A-ský	N-ština	#VALUE!	šturmovština			
+A-vý	N-vina	#VALUE!	trhavina			
+A-ový	N-ovina	#VALUE!	lihovina, těstovina, želvovina			
+A-ý	N-ovina	#VALUE!	blbovina			
+A-í	N-ovina	#VALUE!	slonovina			
+A-zký	N-žina	#VALUE!	úžina, nížina			
+V-t	V-telna	#VALUE!	podatelna, vychovatelna			
+N-	N-na		prodejna			
+N-a	N-na	#VALUE!	opravna			
+V-at	N-na	#VALUE!	drbna, štěkna			
+N?	N-árna	#VALUE!	kavárna, vodárna, železárna			
+V-it	N-írna	#VALUE!	tančírna			
+V?	N-írna	#VALUE!	stáčírna, šermírna			
+N?	N-ovna	#VALUE!	klubovna, mincovna			
+V-ovat	N-ovna	#VALUE!	pracovna, studovna, mandlovna			
+N-	N-ovna	#VALUE!	královna, císařovna			
+N-a	N-izna	#VALUE!	babizna			
+N-a	N-ajzna	#VALUE!	tlamajzna			
+N-íže	N-ěžna	#VALUE!	kněžna			
+N-	N-ita	#VALUE!	adamita, husita			
+A-ní	N-ita		absurdita			
+A-ní	N-eita		spontaneita			
+A-ý	N-ota	#VALUE!	slepota, teplota			
+N?	N-ista	#VALUE!	alibista, fotbalista, houslista, stylista			
+N?	N-ová	#VALUE!	švagrová, krejčová			
+N-ea	N-ejec	#VALUE!	Korejec			
+N-sko	N-ec	#VALUE!	Thajec			
+N-ie	N-ec	#VALUE!	Brazilec			
+N?	N-ec	#VALUE!	Vietnamec, Litevec; od kompozit: dějepisec			
+N-	N-ec	#VALUE!	dílec, smyčec			@
+A-ý	N-ec	#VALUE!	blbec, usmrkanec			@
+A-í	N-ec	#VALUE!	ryzec			
+V-it	N-ec	#VALUE!	chodec			
+V-at	N-ec	#VALUE!	sportovec			
+V-ět	N-ec	#VALUE!	letec			
+V-et	N-ec	#VALUE!	běžec			
+N-ie	N-inec	#VALUE!				
+N?	N-inec	#VALUE!	chudobinec, blázinec			
+A-í	N-inec	#VALUE!	kobylinec, mušinec			
+V-ýt	N-ytec	#VALUE!	krytec			
+N?	N-ovec	#VALUE!	lumírovec, Přemyslovec			
+V-at	N-ač	#VALUE!	vysévač			@
+N?	N-áč	#VALUE!	květináč, kořenáč			
+A-atý	N-áč	#VALUE!	nosáč			
+A-ý	N-áč	#VALUE!	pečenáč, uzenáč			
+V-at	N-áč	#VALUE!	pohrabáč, sekáč			
+V-it	N-áč	#VALUE!	kropáč			
+V-át	N-áč	#VALUE!	spáč, sráč			@
+V-ávat	N-avač	#VALUE!	nakladač, prodavač			
+V-et	N-eč	#VALUE!	vynašeč			@
+V-it	N-ič	#VALUE!	kropič			@
+V-ovat	N-ace	#VALUE!	bonifikace			
+N-ba	N-bce	#VALUE!	žalobce			
+C-jí	N-jice	#VALUE!	dvojice			
+N?	N-ice	#VALUE!	vinice, vápenice			
+N-ík	N-ice	#VALUE!	poručice, mladice, dlužnice, školnice			
+N-	N-ice	#VALUE!	holubice, tygřice			
+N?	N-ice	#VALUE!	krupice, matice, hlavice			
+A-ý	N-ice	#VALUE!	mladice			
+A-ný	N-ice	#VALUE!	prkenice			
+V-it	N-ice	#VALUE!	veselice, metelice			
+V-ovat	N-ice	#VALUE!	investice			
+C-	N-ice	#VALUE!	pětice			
+A-aný	N-anice	#VALUE!	šrábanice			
+V-at	N-anice	#VALUE!	hádanice			
+V-át	N-anice	#VALUE!	pranice, žranice			
+V-it	N-enice	#VALUE!	chumelenice			
+V-ít	N-enice	#VALUE!	třenice			
+N?	N-nice	#VALUE!	nemocnice, lednice			
+A-ní	N-nice	#VALUE!	beranice, krajnice			
+A-ný	N-nice	#VALUE!	houfnice			
+A-ový	N-nice	#VALUE!	šachovnice, kulovnice			
+N-	N-nice	#VALUE!	nábojnice			
+A-ový	N-ovice	#VALUE!	makovice			
+V-ovat	N-kce	#VALUE!	konstrukce			
+V-hovat	N-kce	#VALUE!	kontrakce			
+V-it	N-ce	#VALUE!	obhájce			
+N-	N-ce	#VALUE!	vynálezce, strážce, dovozce			
+N-k	N-če	#VALUE!	vlče, ptáče			
+C-jí	N-če	#VALUE!	dvojče			
+A-ý	N-če	#VALUE!	padavče			
+A-ský	N-če	#VALUE!	rajče			
+C-rý	N-rče	#VALUE!	paterče			
+N-graf	N-grafie	#VALUE!				
+N-log	N-logie	#VALUE!				
+N-nom	N-nomie	#VALUE!				
+N?	N-erie	#VALUE!	rafinierie, parfumerie			
+A-ý	N-ule	#VALUE!	bledule			
+N?	N-e	#VALUE!	kůzle, lvíče			
+N?	N-ě	#VALUE!	cikáně, holoubě			
+A-ý	N-ě	#VALUE!	mládě			
+N?	N-né	#VALUE!	stravné			
+N?	N-ovné	#VALUE!	cestovné			
+N-ec	N-kyně	#VALUE!	jezdkyně			
+N-ce	N-kyně	#VALUE!	soudkyně			
+N-a	N-kyně	#VALUE!	předsedkyně, vévodkyně			
+N-	N-kyně	#VALUE!	vězeňkyně			
+N-	N-yně	#VALUE!	bohyně, sokyně, náměstkyně			
+N-a	N-yně	#VALUE!	kolegyně			
+N-án	N-yně	#VALUE!	tchyně			
+N?	N-iště	#VALUE!	hnojiště, kolejiště, sídliště; hrabiště, lučiště			
+N?	N-oviště	#VALUE!	pískoviště, jíloviště			
+V-ktovat	N-xe	#VALUE!	reflexe			
+N?	N-graf	#VALUE!	fotograf			
+V-ovat	N-ing	#VALUE!	parking			
+N?	N-log	#VALUE!	psycholog			
+A-ý	N-och	#VALUE!	slaboch, staroch			
+N-	N-čí	#VALUE!	dozorčí, průvodčí			
+N-a	N-čí	#VALUE!	popravčí, námluvčí			
+V-nout	N-čí	#VALUE!	rozhodčí			
+N?	N-í	#VALUE!	dříví, hloží, kvítí, ořeší			
+A-ý	N-í	#VALUE!	zdraví, vědomí, ostří			
+V-át	N-aní	#VALUE!	psaní, zvaní			
+V-at	N-ání	#VALUE!	volání			
+V-át	N-ání	#VALUE!	lání, vání			
+N-a	N-ání	#VALUE!	primán, sekundán			
+V-ovat	N-ování	#VALUE!	kupování			
+V-tit	N-cení	#VALUE!	nucení			
+V-éct	N-ečení	#VALUE!	oblečení, pečení			
+V-ást	N-adení	#VALUE!	kladení, kradení			
+V-zdit	N-zdění	#VALUE!	jezdění			
+V-zdit	N-ždění	#VALUE!	ježdění, zpoždění			
+V-et	N-ení	#VALUE!	sázení			
+V-ít	N-ení	#VALUE!	clení, mžení			
+V-ět	N-ění	#VALUE!	trpění; spění, čpění			
+V-ít	N-ění	#VALUE!	dění, bdění			
+V-řít	N-ření	#VALUE!	dření, pření			
+V-ést	N-esení	#VALUE!	nesení			
+V-sit	N-šení	#VALUE!	kříšení, nošení			
+V-chnout	N-šení	#VALUE!	nadšení			
+V-ást	N-atení	#VALUE!	matení			
+V-ést	N-etení	#VALUE!	metení			
+V-tit	N-tění	#VALUE!	šlechtění, přemístění			
+V-stit	N-stění	#VALUE!	čistění			
+V-stit	N-štění	#VALUE!	maštění, huštění			
+V-sknout	N-štění	#VALUE!	tištění			
+V-ézt	N-ezení	#VALUE!	lezení			
+V-dit	N-zení	#VALUE!	chlazení, hlazení			
+V-zit	N-zení	#VALUE!	hrození			
+V-zit	N-žení	#VALUE!	vožení, kažení			
+V-hnout	N-žení	#VALUE!	utržen, tažení			
+N-a	sou-N-í	#VALUE!	sousoší, souhvězdí			
+N-o	sou-N-í	#VALUE!	soukolí, sousloví			
+N-	sou-N-í	#VALUE!	soustrojí			
+V-ít	N-ití	#VALUE!	bití, hnití			
+V-nout	N-nutí	#VALUE!	hnutí, vyšinutí; pnutí, projmutí			
+V-ýt	N-ytí	#VALUE!	bytí, mytí, vytí			
+N-a	N-oví	#VALUE!	krajkoví, lískoví, laťkoví			
+N-	N-oví	#VALUE!	stromoví, jilmoví			
+N-o	N-oví	#VALUE!	lanoví			
+N?	N-oví	#VALUE!	křoví			
+A-cký	N-ctví	#VALUE!	vlastenectví			@
+A-ský	N-ství	#VALUE!	vyzvědačství			@
+A-enecký	N-ství	#VALUE!	obrozenství			
+A-ý	N-ství	#VALUE!	hrubství			
+A-ný	N-ství	#VALUE!	tajemství			
+V-at	N-ej	#VALUE!	prodej, výdej			
+N-ce	N-čák	#VALUE!	opičák			
+N?	N-ák	#VALUE!	ovčák, dudák; Polák, Hanák, Sudeťák, pravičák			
+N-ka	N-ák	#VALUE!	veverák			
+N-ena	N-ák	#VALUE!	pradlena, přadlena			
+N-	N-ák	#VALUE!	labuťák; šutrák, Rusák			
+N-a	N-ák	#VALUE!	žabák			
+A-í	N-ák	#VALUE!	spacák			
+A-ý	N-ák	#VALUE!	chudák			
+A-ový	N-ák	#VALUE!	tenisák			
+A-ní	N-ák	#VALUE!	náklaďák, osobák			
+A-atý	N-ák	#VALUE!	paličák			
+A-ěný	N-ák	#VALUE!	slamák			
+A-ský	N-ák	#VALUE!	uherák			
+V-at	N-ák	#VALUE!	divák, žebrák, cucák			
+V-et	N-ák	#VALUE!	syčák, zabiják			
+V-it	N-ák	#VALUE!	honák			
+V-at	N-ák	#VALUE!	zobák			
+V-et	N-ák	#VALUE!	bzučák			
+V-it	N-ák	#VALUE!	sušák			
+C-tý	N-ťák	#VALUE!				
+N-	N-áček	#VALUE!	synáček			
+N-ek	N-eček	#VALUE!	hříbeček			@
+N-ec	N-eček	#VALUE!	paleček			
+N-	N-íček	#VALUE!	chlebíček, hospodáříček			
+N-ík	N-íček	#VALUE!	kostelíček, balíček			@
+N-k	N-ček	#VALUE!	svazeček, potůček			
+N-c	N-ček	#VALUE!	sameček, kopeček			
+N-	N-ek	#VALUE!	křížek			@
+A-ý	N-ek	#VALUE!	žloutek, svátek, mládek			
+V-it	N-ek	#VALUE!	posudek			
+V-at	N-ek	#VALUE!	výdělek			
+V-ovat	N-ek	#VALUE!	výlisek			
+A-í	N-ek	#VALUE!	vnějšek			
+N-anec	N-ánek	#VALUE!	otrhánek			
+N-	N-ánek	#VALUE!	nosánek			
+N-a	N-ínek	#VALUE!	tatínek			
+N?	N-ínek	#VALUE!				
+A-ý	N-ásek	#VALUE!	bělásek, volňásek			
+A-ejší	N-ejšek	#VALUE!	dolejšek, včerejšek			
+A-ější	N-ějšek	#VALUE!	nynějšek, dřívějšek			
+A-šní	N-šek	#VALUE!	dnešek			
+N-a	N-oušek	#VALUE!	dědoušek			
+N?	N-ik	#VALUE!	metodik			
+N-k	N-čík	#VALUE!	parčík			
+N-a	N-ík	#VALUE!	straník			
+N-	N-ík	#VALUE!	kyblík, hadřík			@
+N-a	N-ík	#VALUE!	Pepík			
+N-í	N-ík	#VALUE!	Jiřík			
+A-ý	N-ík	#VALUE!	hanebník			
+A-í	N-ík	#VALUE!	nočník			
+V-it	N-ík	#VALUE!	budík			
+N-ba	N-ebník	#VALUE!	prosebník, hudebník			
+N?	N-ník	#VALUE!	kriminálník, vrstevník, tábirník, mravenečník; rybník, šatník			
+A-ý	N-ník	#VALUE!	makovník, pomerančovník			
+A-í	N-ník	#VALUE!	jestřábník			
+V-at	N-ník	#VALUE!	pracovník			
+V-it	N-ník	#VALUE!	tlumočník			
+N-	N-ník	#VALUE!	nájemník, loupežník; závitník, nárazník			
+C-átý	N-átník	#VALUE!	třicátník			
+C-t	N-tník	#VALUE!	dvacetník, padesátník			
+N-	N-ovník	#VALUE!	křížovník			
+V-ovat	N-ink	#VALUE!	parkink			
+V-at	N-al	#VALUE!	hrabal			
+V-at	N-el	#VALUE!	koupel			
+V-ovávat	N-ovatel	#VALUE!	vychovatel			
+V-ět	N-itel	#VALUE!	trpitel			
+V-et	N-itel	#VALUE!	velitel			
+V-oct	N-ožitel	#VALUE!	přemožitel			
+V-oci	N-ožitel	#VALUE!	přemožitel			
+V-t	N-tel	#VALUE!	nositel			@
+V-it	N-il	#VALUE!	slídil			
+N?	N-nom	#VALUE!	agronom			
+N?	N-ium	#VALUE!	terárium, lapidárium			
+N-ce	N-tivum	#VALUE!	sedativum, deminutivum			
+A-	N-	#VALUE!	SUBSTANTIVIZACE ADJEKTIV			
+A-ý	N-	#VALUE!	šeď, zeleň, čerň			
+V-at	N-	#VALUE!	překlad, náklad, úhyb, západ			
+V-it	N-	#VALUE!	úklon, průstřel			
+V-et	N-	#VALUE!	zvuk			
+V-ět	N-	#VALUE!	výlet			
+N-ie	N-ičan	#VALUE!	Belgičan			
+N?	N-an	#VALUE!	Slovan, Američan			
+A-ý	N-an	#VALUE!	dusičnan			
+V-at	N-an	#VALUE!	hafan			
+N?	N-ián	#VALUE!	hegelián			
+A-ý	N-ián	#VALUE!	hrubián			
+N?	N-án	#VALUE!	republikán, mafián			
+A-ý	N-án	#VALUE!	dlouhán			
+N-	pa-N-	#VALUE!	pavěda, paklíč, pakůň			
+N-	pra-N-	#VALUE!	pračeština, praotec			
+N-	ultra-N-	#VALUE!	ultrademokrat, ultrazvuk			
+N-	kontra-N-	#VALUE!	kontraindikace			
+N-	sub-N-	#VALUE!	subdivize			
+N-	truc-N-	#VALUE!	trucpodnik			
+N-	nad-N-	#VALUE!	nadporučík			
+N-	pod-N-	#VALUE!	podporučík, podprůměr, podtlak			
+N-	vice-N-	#VALUE!	vicepremiér			
+N-	ne-N-	#VALUE!	nečlen, nekuřák, nepohodlí, nesvár, nestvůra			
+N-	arci-N-	#VALUE!	arciblázen, arcibiskup			
+N?	N-ín	#VALUE!	včelín, hřebčín; vojín, čeledín			
+N-	quasi-N-	#VALUE!				
+N-	kvasi-N-	#VALUE!				
+N-	anti-N-	#VALUE!	antisemitismus			
+N-	proti-N-	#VALUE!	protihráč, protihodnota			
+N-	kvazi-N-	#VALUE!	kvaziparlament			
+N-	lži-N-	#VALUE!	lžibásník			
+N-	kon-N-	#VALUE!	kontext			
+N-	syn-N-	#VALUE!	synchronie			
+N-	pseudo-N-	#VALUE!	pseudokritik			
+N?	N-oň	#VALUE!	jabloň, madloň, broskvoň			
+N-	pro-N-	#VALUE!	proděkan			
+N-	místo-N-	#VALUE!	místopředseda			
+N-	super-N-	#VALUE!	supernova			
+N-	kontr-N-	#VALUE!	kontradmirál			
+N-	spolu-N-	#VALUE!	spoluautor, spoluhráč			
+N-	N-oun	#VALUE!	vrahoun			
+A-ý	N-oun	#VALUE!	blboun, vztekloun, hezoun			
+V-et	N-oun	#VALUE!	bručoun			
+V-at	N-oun	#VALUE!	tahoun			
+V-ovat	N-oun	#VALUE!	pěstoun			
+N-	sou-N-	#VALUE!	soudruh, souběh			
+N-	ex-N-	#VALUE!	exministr, exmanžel			
+N-	rádoby-N-	#VALUE!	rádobykonference			
+N-o	N-ečko	#VALUE!	hnízdečko, místečko			
+N-í	N-íčko	#VALUE!	obilíčko			
+N-ko	N-íčko	#VALUE!	zrníčko			
+N-ko	N-čko	#VALUE!	mlíčko, víčko			
+N-	N-ko	#VALUE!	plecko			
+N-o	N-ko	#VALUE!	písmenko			
+N?	N-isko	#VALUE!	hledisko, oranisko, středisko; babisko, zubisko			@
+N?	N-ovisko	#VALUE!	letovisko, rumovisko			
+N-ě	N-átko	#VALUE!	hříbátko			
+N-e	N-átko	#VALUE!	ptáčátko			
+A-ný	N-átko	#VALUE!	drobátko			
+A-ý	N-átko	#VALUE!	holátko			
+V-at	N-átko	#VALUE!	sedátko			
+A-ní	N-ňátko	#VALUE!	nedělňátko			
+A-nný	N-ňátko	#VALUE!	neviňátko			
+V-ovat	N-ovátko	#VALUE!	ukazovátko			
+A-hý	N-žátko	#VALUE!	nebožátko			
+V-it	N-ítko	#VALUE!	tlačítko			
+V-it	N-idlo	#VALUE!	strašidlo			
+V-ět	N-idlo	#VALUE!	vřeštidlo			
+N?	N-dlo	#VALUE!	divadlo, bělidlo			
+V-t	N-dlo	#VALUE!	sedadlo, švihadlo, mýdlo			
+V-nout	N-lo	#VALUE!	bodlo, táhlo, sedlo			
+A-ý	N-o	#VALUE!	šero, dobro			
+A-cký	N-čno	#VALUE!	psychično			
+V-it	N-ivo	#VALUE!	učivo, léčivo			
+N-ík	N-ictvo	#VALUE!	dělnictvo			
+N-c	N-ctvo	#VALUE!	jezdectvo			
+N-k	N-ctvo	#VALUE!	žactvo			
+N-	N-stvo	#VALUE!	hasičstvo			
+N?	N-stvo	#VALUE!	vodstvo, včelstvo			
+A-ný	N-stvo	#VALUE!	smilstvo			
+A-ský	N-stvo	#VALUE!	svinstvo			
+N-ch	N-šstvo	#VALUE!	mnišstvo, živočišstvo			
+N-	N-ovstvo	#VALUE!	žákovstvo, Židovstvo			
+N-h	N-žstvo	#VALUE!				
+N-	N-er	#VALUE!	boxer, sprinter			
+N?	N-ér	#VALUE!	kaskadér			
+N-	N-ér	#VALUE!	boxér, hazardér			
+N-áž	N-ér	#VALUE!	reportér			
+N?	N-iér	#VALUE!	hoteliér			
+N-e	N-sér	#VALUE!	režisér			
+N?	N-or	#VALUE!	plagiátor			
+N-	N-or	#VALUE!	diktátor			
+N-e	N-or	#VALUE!	agresor, kompresor			
+N-ice	N-or	#VALUE!	investor			
+N?	N-átor	#VALUE!	glosátor			
+N-ace	N-átor	#VALUE!	navigátor			
+N-a	N-átor	#VALUE!	vědátor			
+N-ice	N-itor	#VALUE!	korepetitor			
+N-ce	N-tor	#VALUE!	redaktor, projektor			
+N?	N-our	#VALUE!	Němčour			
+N?	N-ař	#VALUE!	houbař; vlajkař			
+V-at	N-ař	#VALUE!	tesař			
+N?	N-ář	#VALUE!	sklář; odborář; slabikář, snář; herbář, skicář, adresář			@
+V-át	N-ář	#VALUE!	lhář			
+V-at	N-ář	#VALUE!	kovář			
+N-ce	N-cionář	#VALUE!	milicionář			
+N-ie	N-ionář	#VALUE!	legionář			
+N?	N-éř	#VALUE!	bankéř			
+N?	N-íř	#VALUE!	mečíř, uhlíř			
+N?	N-toř	#VALUE!	laboratoř, konzervatoř			
+N?	N-ýř	#VALUE!	kumštýř			
+A-dný	N-ďas	#VALUE!	kliďas			
+N-	N-as	#VALUE!	lotras			
+A-tý	N-ťas	#VALUE!	kruťas, kliďas			
+A-ický	N-ismus	#VALUE!	kriticismus, fanatismus			
+A-cký	N-cismus	#VALUE!	anglicismus			
+A-enský	N-akismus	#VALUE!	slovakismus			
+A-ální	N-alismus	#VALUE!	radikalismus			
+N-ista	N-ismus	#VALUE!				
+A-ský	N-ismus	#VALUE!	latinismus; vandalismus			
+A-cký	N-kanismus	#VALUE!	amerikanismus			
+A-ský	N-sismus	#VALUE!	rusismus			
+A-ý	N-ouš	#VALUE!	starouš			
+A-ý	N-ýš	#VALUE!	měkkýš, hroznýš			
+N-ace	N-át	#VALUE!	predikát, falzifikát			
+N-um	N-ant	#VALUE!	praktikant			
+N-ita	N-ant	#VALUE!	maturant			
+N-ace	N-ant	#VALUE!	kolaborant			
+N-kce	N-cent	#VALUE!	producent			
+N-ence	N-ent	#VALUE!	konkurent			
+V-at	N-ot	#VALUE!	hvízdot			
+V-ít	N-ot	#VALUE!	hřmot			
+V-it	N-ot	#VALUE!	šustot			
+A-í	N-est	#VALUE!	svěžest			
+V-dět	N-st	#VALUE!	nenávist, závist			
+A-ý	N-ost	#VALUE!	mladost			
+A-cí	N-cnost	#VALUE!	budoucnost			
+A-cký	N-čnost	#VALUE!	kritičnost			
+V-ýt	N-yt	#VALUE!	odbyt, zákryt			
+V-ít	N-iv	#VALUE!				
+N-a	N-ský	#VALUE!	ženský, husitský			
+C-t	N-tiny	#VALUE!	dvacetiny			
