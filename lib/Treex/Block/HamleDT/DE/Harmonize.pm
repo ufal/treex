@@ -10,18 +10,22 @@ extends 'Treex::Block::HamleDT::Harmonize';
 #------------------------------------------------------------------------------
 sub process_zone
 {
-    my $self   = shift;
-    my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone( $zone, 'conll2009' );
+    my $self = shift;
+    my $zone = shift;
+    my $root = $self->SUPER::process_zone( $zone, 'conll2009' );
 
     # Adjust the tree structure.
-    $self->attach_final_punctuation_to_root($a_root);
-    $self->process_prepositional_phrases($a_root);
-    $self->restructure_coordination($a_root);
-    $self->check_afuns($a_root);
-
-    $self->get_or_load_other_block('HamleDT::DE::RehangJunctors')->process_zone($a_root->get_zone());
-    $self->get_or_load_other_block('HamleDT::DE::RehangAuxc')->process_zone($a_root->get_zone());
+    $self->attach_final_punctuation_to_root($root);
+    $self->restructure_coordination($root);
+    # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
+    # and with special care at places where prepositions and coordinations interact.
+    # Prepositional phrases in Tiger are different from most treebanks. That's why we do this in two steps,
+    # the first one is Tiger-specific, the second is applied to many treebanks.
+    $self->process_tiger_prepositional_phrases($root);
+    $self->process_prep_sub_arg_cloud($root);
+    $self->mark_deficient_coordination($root);
+    $self->rehang_auxc($root);
+    $self->check_afuns($root);
 }
 
 #------------------------------------------------------------------------------
@@ -198,23 +202,20 @@ sub deprel_to_afun
         elsif ( $deprel =~ m/^(CD|JU)$/ )
         {
             $afun = 'Coord';
+            $node->wild()->{coordinator} = 1;
         }
 
         # Member of coordination.
         elsif ( $deprel eq 'CJ' )
         {
             $afun = 'CoordArg';
+            $node->wild()->{conjunct} = 1;
         }
 
         # Second member of apposition.
         elsif ( $deprel eq 'APP' )
         {
-            ## TODO: ZZ: yes, it's an annotated apposition,
-            # but making it compatible with the PDT apposition style
-            # would require also systematic rehanging of the neighborhood.
-            # Let's make the hamledt tests happy and pretend in the meantime
-            # that it's an attribute
-            $afun = 'Atr'; #'Apos';
+            $afun = 'Apposition';
         }
 
         # Adposition (preposition, postposition or circumposition).
@@ -318,6 +319,8 @@ sub deprel_to_afun
     }
 }
 
+
+
 #------------------------------------------------------------------------------
 # In Tiger prepositional phrases, not only the noun is attached to the
 # preposition, but also all adjectives (that in fact modify the noun).
@@ -330,7 +333,7 @@ sub deprel_to_afun
 #     nach < (einer > Umfrage < (des Fortune > Wirtschaftsmagazins) (unter < (den > Bossen)))
 # The preposition does not have the 'AuxP' afun.
 #------------------------------------------------------------------------------
-sub process_prepositional_phrases
+sub process_tiger_prepositional_phrases
 {
     my $self = shift;
     my $root = shift;
@@ -340,46 +343,47 @@ sub process_prepositional_phrases
         {
             my @prepchildren = $node->children();
             my $preparg;
-
             # If there are no children this preposition cannot get the AuxP afun.
             if ( scalar(@prepchildren) == 0 )
             {
                 next;
             }
-
+            # Sanity check: A preposition should not work like coordinating conjunction and thus there should be no is_member children.
+            # But if they are there, we cannot process it as prepositional phrase, we would violate the coordination constraints!
+            elsif ( grep {$_->is_member()} (@prepchildren) )
+            {
+                next;
+            }
             # If there is just one child it is the PrepArg.
             elsif ( scalar(@prepchildren) == 1 )
             {
                 $preparg = $prepchildren[0];
             }
-
             # If there are two or more children we have to estimate which one is the PrepArg.
             # We will assume that the other are in fact modifiers of the PrepArg, not of the preposition.
             else
             {
-
                 # If there are nouns among the children we will pick a noun.
                 my @nouns = grep { $_->get_iset('pos') eq 'noun' } (@prepchildren);
                 if ( scalar(@nouns) > 0 )
                 {
-
                     # If there are more than one noun we will pick the first one.
                     # This corresponds well to the pattern noun/anyCase + noun/genitive.
                     # However, we must also do something for other sequences of nouns.
                     $preparg = $nouns[0];
                 }
-
                 # Otherwise we will just pick the first child.
                 else
                 {
                     $preparg = $prepchildren[0];
                 }
             }
-
-            # Keep PrepArg as the only child of the AuxP node.
-            # Reattach all other children to PrepArg.
-            $preparg->set_afun( $node->afun() );
-            $node->set_afun('AuxP');
+            # Labeling of the preposition and its noun is a complex task and it interferes with other prepositions, subordinating conjunctions and coordinations.
+            # We leave it for further processing in process_prep_sub_arg_cloud(). However, we must make sure that the noun is temporarily labeled PrepArg
+            # (this is what process_prep_sub_arg_cloud() expects). And more importantly, we must reattach all the other children from the preposition to the noun.
+            # Note that we use set_real_afun(), not set_afun(). If the current afun of $preparg is Coord or AuxC, we cannot simply replace it because it would
+            # violate other assumptions about the tree!
+            $preparg->set_real_afun('PrepArg');
             foreach my $child (@prepchildren)
             {
                 unless ( $child == $preparg )
@@ -391,173 +395,110 @@ sub process_prepositional_phrases
     }
 }
 
+
+
 #------------------------------------------------------------------------------
-# Detects coordination in German trees.
-# - The first member is the root.
-# - Any non-first member is attached to the previous member with afun CoordArg.
-#   If prepositional phrases have already been processed and there is
-#   coordination of prepositional phrases, the prepositins are tagged AuxP and
-#   the CoordArg afun is found at the only child of the preposition.
-# - Coordinating conjunction is attached to the previous member with afun Coord.
-# - Comma is attached to the previous member with afun AuxX.
-# - Shared modifiers are attached to the first member. Private modifiers are
-#   attached to the member they modify.
-# Note that under this approach:
-# - Shared modifiers cannot be distinguished from private modifiers of the
-#   first member.
-# - Nested coordinations ("apples, oranges and [blackberries or strawberries]")
-#   cannot be distinguished from one large coordination.
-# Special cases:
-# - Coordination lacks any conjunctions or punctuation with the CD deprel tag.
-#   Example:
-#   `` Spürst du das ? '' , fragt er , `` spürst du den Knüppel ?
-#   In this example, the second 'spürst' is attached as a CoordArg to the first
-#   'Spürst'. All punctuation is attached to 'fragt', so we don't see the
-#   second comma as the potential coordinating node.
-#   Possible solutions:
-#   Ideally, there'd be a separate function that would reattach punctuation
-#   first. Commas before and after nested clauses, including direct speech,
-#   would be part of the clause and not of the surrounding main clause. Same
-#   for quotation marks around direct speech. And then we would have to
-#   find out that there is a comma before the second 'spürst' that can be used
-#   as coordinator.
-#   In reality we will be less ambitious and develop a robust fallback for
-#   coordination without coordinators.
+# Detects coordination in the shape we expect to find it in the German
+# treebank.
 #------------------------------------------------------------------------------
-# Collects members, delimiters and modifiers of one coordination. Recursive.
-# Leaves the arrays empty if called on a node that is not a coordination
-# member.
-#------------------------------------------------------------------------------
-sub collect_coordination_members
+sub detect_coordination
 {
-    my $self       = shift;
-    my $croot      = shift;    # the first node and root of the coordination
-    my $members    = shift;    # reference to array where the members are collected
-    my $delimiters = shift;    # reference to array where the delimiters are collected
-    my $sharedmod  = shift;    # reference to array where the shared modifiers are collected
-    my $privatemod = shift;    # reference to array where the private modifiers are collected
-    my $debug      = shift;
-
-    # Is this the top-level call in the recursion?
-    my $toplevel = scalar( @{$members} ) == 0;
-    my @children = $croot->children();
-    log_info( 'DEBUG ON ' . scalar(@children) ) if ($debug);
-
-    # No children to search? Nothing to do!
-    return if ( scalar(@children) == 0 );
-
-    # AuxP occurs only if prepositional phrases have already been processed.
-    # AuxP node cannot be the first member of coordination ($toplevel).
-    # However, AuxP can be non-first member. In that case, its only child bears the CoordArg afun.
-    if ( $croot->afun() eq 'AuxP' )
-    {
-        if ($toplevel)
-        {
-            return;
-        }
-        else
-        {
-
-            # We know that there is at least one child (see above) and for AuxP, there should not be more than one child.
-            # Make the PrepArg child the member instead of the preposition.
-            $croot    = $children[0];
-            @children = $croot->children();
-        }
-    }
-    my @members0;
-    my @delimiters0;
-    my @sharedmod0;
-    my @privatemod0;
-    @members0 = grep {
-        my $x = $_;
-        defined($x->afun()) && ($x->afun() eq 'CoordArg' || $x->afun() eq 'AuxP' && grep { defined($_->afun()) && $_->afun() eq 'CoordArg' } ( $x->children() ))
-    } (@children);
-    if (@members0)
-    {
-
-        # If $croot is the real root of the whole coordination we must include it in the members, too.
-        # However, if we have been called recursively on existing members, these are already present in the list.
-        if ($toplevel)
-        {
-            push( @{$members}, $croot );
-        }
-        push( @{$members}, @members0 );
-
-        # All children with the 'Coord' afun are delimiters (coordinating conjunctions).
-        # Punctuation children are usually delimiters, too.
-        # They should appear between two members, which would normally mean between $croot and its (only) CoordArg.
-        # However, the method is recursive and "before $croot" could mean between $croot and the preceding member. Same for the other end.
-        # So we take all punctuation children and hope that other punctuation (such as delimiting modifier relative clauses) would be descendant but not child.
-        my @delimiters0 = grep { $_->afun() =~ m/^(Coord|AuxX|AuxG)$/ } (@children);
-        push( @{$delimiters}, @delimiters0 );
-
-        # Recursion: If any of the member children (i.e. any members except $croot)
-        # have their own CoordArg children, these are also members of the same coordination.
-        foreach my $member (@members0)
-        {
-            $self->collect_coordination_members( $member, $members, $delimiters );
-        }
-
-        # If this is the top-level call in the recursion, we now have the complete list of coordination members
-        # and we can call the method that collects and sorts out coordination modifiers.
-        if ($toplevel)
-        {
-            $self->collect_coordination_modifiers( $members, $sharedmod, $privatemod );
-        }
-    }
+    my $self = shift;
+    my $node = shift;
+    my $coordination = shift;
+    my $debug = shift;
+    $coordination->detect_moscow($node);
+    $coordination->capture_commas();
+    # The caller does not know where to apply recursion because it depends on annotation style.
+    # Return all conjuncts and shared modifiers for the Prague family of styles.
+    # Return orphan conjuncts and all shared and private modifiers for the other styles.
+    my @recurse = $coordination->get_orphans();
+    push(@recurse, $coordination->get_children());
+    return @recurse;
 }
 
-#------------------------------------------------------------------------------
-# For a list of coordination members, finds their modifiers and sorts them out
-# as shared or private. Modifiers are children whose afuns do not suggest they
-# are members (CoordArg) or delimiters (Coord|AuxX|AuxG).
-#------------------------------------------------------------------------------
-sub collect_coordination_modifiers
-{
-    my $self       = shift;
-    my $members    = shift;                                           # reference to input array
-    my $sharedmod  = shift;                                           # reference to output array
-    my $privatemod = shift;                                           # reference to output array
-    # All children of all members are modifiers (shared or private) provided they are neither members nor delimiters.
-    # Any left modifiers of the first member will be considered shared modifiers of the coordination.
-    # Any right modifiers of the first member occurring after the second member will be considered shared modifiers, too.
-    # Note that the DDT structure does not provide for the distinction between shared modifiers and private modifiers of the first member.
-    # Modifiers of the other members are always private.
-    my $croot      = $members->[0];
-    my $ord0       = $croot->ord();
-    my $ord1       = $#{$members} >= 1 ? $members->[1]->ord() : -1;
-    foreach my $member ( @{$members} )
-    {
-        my @modifying_children = grep { $_->afun() !~ m/^(CoordArg|Coord|AuxX|AuxG)$/ } ( $member->children() );
-        if ( $member == $croot )
-        {
-            foreach my $mchild (@modifying_children)
-            {
-                my $ord = $mchild->ord();
-                if ( $ord < $ord0 || $ord1 >= 0 && $ord > $ord1 )
-                {
-                    # This may be either shared or private modifier.
-                    #push( @{$sharedmod}, $mchild );
-                    # Since there is no explicit information on shared modifiers in the treebank
-                    # and because the modifier is attached to one member of the coordination,
-                    # let's not add information and let's treat it as a private modifier.
-                    push(@{$privatemod}, $mchild);
-                }
-                else
-                {
 
-                    # This modifier of the first member occurs between the first and the second member.
-                    # Consider it private.
-                    push( @{$privatemod}, $mchild );
-                }
-            }
-        }
-        else
+
+#------------------------------------------------------------------------------
+# Deficient sentential coordination is not labeled as coordination in Tiger
+# but should be so labeled under the Prague guidelines. We must process it
+# separately.
+#
+# According to PDT annotation manual:
+# "4.1.3.6. One-member sentential coordination", conjunctions referring to
+# preceding context outside the sentence are often assigned the Coord afun, in
+# such cases, they should govern the sentence as if the sentence was the only
+# coordination member.
+#------------------------------------------------------------------------------
+sub mark_deficient_coordination
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        next unless($node->conll_deprel() eq 'JU' && $node->is_leaf() && !$node->is_member());
+        my $main = $node->parent();
+        next if($main->is_root() || $main->is_member());
+        # Make this structure coordination with just one conjunct.
+        $node->set_parent($main->parent());
+        $node->set_afun('Coord');
+        $main->set_parent($node);
+        $main->set_is_member(1);
+    }
+    return;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Adapted from Michal Auersperger's block RehangAuxc:
+#Change a-tree from
+#"Ob(parent=klappt) das freilich so klappt(parent=ist), ist(parent=root) die Frage."
+#to
+#"Ob(parent=ist) das freilich so klappt(parent=ob), ist(parent=root) die Frage."
+#According to PDT annotation manual: "3.2.7.1.2. Definition of AuxC", subordinating conjunctions should
+#govern the subordinate clause and be governed by the head word of the main clause.
+#see: http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/en/a-layer/html/ch03s02x07.html
+#German comparative conjunctions (wie, als) should be tagged as subordinating conjunctions and processed
+#accordingly.
+#------------------------------------------------------------------------------
+sub rehang_auxc
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        my $subord_conj = $node;
+        my $parent = $subord_conj->parent();
+        # Skip subordinating conjunctions that are members of coordination ("ob und wie sie etwas sichern kann").
+        # Skip even those that are shared modifiers of coordination, and those whose parent is member of coordination.
+        # There are just a few but reattaching them requires much more care; we could do more wrong than good.
+        ###!!! Later we should solve these cases. But without breaking coordination at the same time!
+        next if($subord_conj->is_member() || $parent->is_coap_root() || $parent->is_member());
+        # Get comparative conjunctions (wie, als), tag them as subord conjunctions and make
+        # them govern their parent
+        if ($subord_conj->conll_cpos eq 'KOKOM')
         {
-            push( @{$privatemod}, @modifying_children );
+            $subord_conj->set_tag('J,-------------'); ###!!! Sakra, tohle se musí udělat v Intersetu!
+            # if the parent is member of a CoAp, $subord_conj should govern the whole coordination
+            $parent = $parent->get_parent if $parent->is_member; ###!!! Hm a co když je prarodič taky Coord?
+            $subord_conj->set_parent( $parent->get_parent() );
+            $parent->set_parent($subord_conj);
+        }
+        elsif ($subord_conj->afun eq 'AuxC' and $subord_conj->tag =~ /^J,.*/ and $subord_conj->is_leaf) ###!!! Interset!
+        {
+            # if the parent is member of a CoAp, $subord_conj should govern the whole coordination
+            $parent = $parent->get_parent if $parent->is_member; ###!!! Hm a co když je prarodič taky Coord?
+            $subord_conj->set_parent( $parent->get_parent() );
+            $parent->set_parent($subord_conj);
         }
     }
+    return;
 }
+
+
 
 1;
 
@@ -565,15 +506,12 @@ sub collect_coordination_modifiers
 
 =item Treex::Block::HamleDT::DE::Harmonize
 
-Converts Tiger trees from CoNLL to the style of
-the Prague Dependency Treebank.
-Morphological tags will be
-decoded into Interset and to the 15-character positional tags
-of PDT.
+Converts Tiger trees from CoNLL to the HamleDT (Prague) style.
+Morphological tags will be decoded into Interset and to the 15-character positional tags of PDT.
 
 =back
 
 =cut
 
-# Copyright 2011 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011, 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

@@ -863,7 +863,7 @@ sub detect_moscow
         return;
     }
     # Even if there are no conjuncts and no recursion ($bottom) there may be delimiters which we have to add.
-    my @delimiters = grep
+    my @delimiters = map {$_->wild()->{is_coord_delimiter} = 1; $_} grep
     {
         ! $_->wild()->{conjunct} &&
         # Very rarely (and probably erroneously) a conjunction is attached to the left.
@@ -876,14 +876,21 @@ sub detect_moscow
         )
     }
     @children;
+    # Some commas may still have not been recognized as delimiters.
+    # Comma that is the left neighbor of a conjunct or a delimiter (", and") is also a delimiter.
+    foreach my $node (@conjuncts, @delimiters)
+    {
+        my $left = $node->get_left_neighbor();
+        if($left && !$left->wild()->{is_coord_delimiter} && $left->afun() =~ m/^Aux[GX]$/)
+        {
+            push(@delimiters, $left);
+            $left->wild()->{is_coord_delimiter} = 1;
+        }
+    }
     my @modifiers = grep
     {
         ! $_->wild()->{conjunct} &&
-        !(
-            $_->wild()->{coordinator} ||
-            $_->afun() =~ m/^Aux[GXY]$/ &&
-            $_->ord() < $node->ord()
-        )
+        ! $_->wild()->{is_coord_delimiter}
     }
     @children;
     # If we are here we have participants: either conjuncts or delimiters or both.
