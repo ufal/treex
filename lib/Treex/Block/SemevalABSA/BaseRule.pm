@@ -101,7 +101,7 @@ sub mark_node {
     }
 
     if ($node->wild->{absa_rules}) {
-        $node->wild->{absa_rules} .= " $str";
+        $node->wild->{absa_rules} .= "^$str";
     } else {
         $node->wild->{absa_rules} = $str;
     }
@@ -131,7 +131,7 @@ sub mark_node {
     for my $subnode (@subtree) {
         log_info "Marking node " . $node->form;
         if ($subnode->wild->{absa_rules}) {
-            $subnode->wild->{absa_rules} .= " $str";
+            $subnode->wild->{absa_rules} .= "^$str";
         } else {
             $subnode->wild->{absa_rules} = $str;
         }
