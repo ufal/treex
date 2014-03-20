@@ -95,8 +95,11 @@ sub process_atree {
     for my $node ( grep { $self->is_aspect_candidate( $_ ) } $atree->get_descendants ) {
         log_info "Processing node $node->{lemma}";
         my $polarity = $self->combine_polarities( $self->get_aspect_candidate_polarities( $node ) );
-        if ( $exceptions{ lc( $node->form ) } || $exceptions{ $node->lemma } ) {
-            log_info "Found in exceptions";
+        if ( $exceptions{ lc( $node->form ) } ) {
+            log_info "Found form in exceptions";
+            push @{ $polarities{ $exceptions{ lc( $node->form ) } } }, $polarity;
+        } elsif ( $exceptions{ $node->lemma } ) {
+            log_info "Found lemma in exceptions";
             push @{ $polarities{ $exceptions{ $node->lemma } } }, $polarity;
         } else {
             log_info "Looking up hyperonyms";
@@ -107,6 +110,7 @@ sub process_atree {
                 push @{ $polarities{ $known{ $hypers[0] } } }, $polarity;
             } else {
                 log_info "No known hyperonym";
+                push @{ $polarities{ "anecdotes/miscellaneous" } }, $polarity;
             }
         }
     }
@@ -116,8 +120,9 @@ sub process_atree {
 
         for my $category ( keys %polarities ) {
             my $polarity = $self->combine_polarities( @{ $polarities{ $category } } );
-            $categorystr .= "$category$polarity ";
+            $categorystr .= "$category^$polarity ";
         }
+        $categorystr .= "#";
 
         # let's just rudely prepend our annotation to the first word
         my ( $first ) = $atree->get_descendants( { ordered => 1 } );

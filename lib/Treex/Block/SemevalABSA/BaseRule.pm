@@ -100,6 +100,14 @@ sub mark_node {
         return 0;
     }
 
+    if ($node->wild->{absa_rules}) {
+        $node->wild->{absa_rules} .= " $str";
+    } else {
+        $node->wild->{absa_rules} = $str;
+    }
+
+    return 1;
+
     # my @subtree = $node->get_descendants( { ordered => 1, add_self => 1 } );
     my @subtree = $node->get_children( { ordered => 1, add_self => 1 } );
     my @avoidparents = grep { $self->is_subjective( $_ ) } @subtree;
