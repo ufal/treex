@@ -16,9 +16,10 @@ sub process_zone
 
     # Adjust the tree structure.
     $self->attach_final_punctuation_to_root($a_root);
-    $self->process_auxiliary_particles($a_root);
-    $self->process_auxiliary_verbs($a_root);
     $self->restructure_coordination($a_root);
+###!!! The following two methods must be adjusted to not destroy coordination!
+#    $self->process_auxiliary_particles($a_root);
+#    $self->process_auxiliary_verbs($a_root);
     $self->mark_deficient_clausal_coordination($a_root);
     $self->check_afuns($a_root);
 }
@@ -394,12 +395,12 @@ sub mark_deficient_clausal_coordination
 =item Treex::Block::HamleDT::BG::Harmonize
 
 Converts trees coming from BulTreeBank via the CoNLL-X format to the style of
-the Prague Dependency Treebank. Converts tags and restructures the tree.
+the HamleDT (Prague). Converts tags and restructures the tree.
 
 =back
 
 =cut
 
-# Copyright 2011 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011, 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
