@@ -364,69 +364,6 @@ sub detect_coordination
     return @recurse;
 }
 
-
-
-#------------------------------------------------------------------------------
-# Collects members and delimiters of coordination. The BulTreeBank uses two
-# approaches to coordination and one of them requires that this method is
-# recursive.
-# - The first member is the root.
-# - The first conjunction is attached to the root and s-tagged 'conj'.
-# - The second member is attached to the root and s-tagged 'conjarg'.
-# - More than two members: all members, commas and conjunctions are attached to
-#   the root. Punctuation is s-tagged 'punct'. Occasionally, a different
-#   approach is used: the members are chained, the second member is s-tagged
-#   conjarg but its children also contain a conjarg (the third member) and
-#   punctuation/conjunctions.
-# - Shared modifiers are attached to the first member. Private modifiers are
-#   attached to the member they modify.
-# - Deficient coordination: sentence-initial conjunction is the root of the
-#   sentence, tagged ROOT. The main verb is attached to it and tagged 'conj'.
-#------------------------------------------------------------------------------
-sub collect_coordination_members
-{
-    my $self       = shift;
-    my $croot      = shift;                                                  # the first node and root of the coordination
-    my $members    = shift;                                                  # reference to array where the members are collected
-    my $delimiters = shift;                                                  # reference to array where the delimiters are collected
-    my $sharedmod  = shift;                                                  # reference to array where the shared modifiers are collected
-    my $modifiers  = shift;                                                  # reference to array where the private modifiers are collected
-    # Since the BulTreeBank does not distinguish between shared and private modifiers
-    # we will return all modifers as private. They were attached to one member after all.
-    my @children   = $croot->children();
-    my @members0   = grep { $_->conll_deprel() eq 'conjarg' } (@children);
-    if (@members0)
-    {
-
-        # If $croot is the real root of the whole coordination we must include it in the members, too.
-        # However, if we have been called recursively on existing members, these are already present in the list.
-        if ( !@{$members} )
-        {
-            push( @{$members}, $croot );
-        }
-        my @delimiters0 = grep { $_->conll_deprel() =~ m/^(conj|punct)$/ } (@children);
-        my @modifiers0 = grep { $_->conll_deprel() !~ m/^(conjarg|conj|punct)$/ } (@children);
-
-        # Add the found nodes to the caller's storage place.
-        push( @{$members},    @members0 );
-        push( @{$delimiters}, @delimiters0 );
-        push( @{$modifiers},  @modifiers0 );
-
-        # If any of the members have their own conjarg children, these are also members of the same coordination.
-        foreach my $member (@members0)
-        {
-            $self->collect_coordination_members( $member, $members, $delimiters, $sharedmod, $modifiers );
-        }
-    }
-
-    # If some members have been found, this node is a coord member.
-    # If the node itself does not have any further member children, all its children are modifers of a coord member.
-    elsif ( @{$members} )
-    {
-        push( @{$modifiers}, @children );
-    }
-}
-
 #------------------------------------------------------------------------------
 # Conjunction as the first word of the sentence is attached as 'conj' to the main verb in BulTreeBank.
 # In PDT, it is the root of the sentence, marked as coordination, whose only member is the main verb.
