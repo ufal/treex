@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pml_schema
+  xmlns="http://ufal.mff.cuni.cz/pdt/pml/schema/"
+  version="1.1">
+  <revision>1.0.0</revision>
+  <description>PDT 3.0 analytical trees</description>
+  <reference name="mdata" readas="pml"/>
+
+  <import schema="mdata_30_schema.xml" type="m-node.type" minimal_revision="1.0.0"/>
+  <import schema="wdata_30_schema.xml" type="bool.type"/>
+
+  <derive type="m-node.type">
+    <structure name="m-node">
+      <member name="id" as_attribute="1" role="#ID" required="1">
+        <cdata format="PMLREF"/>
+      </member>
+    </structure>
+  </derive>
+
+  <root name="adata" type="a-adata.type"/>
+
+  <type name="a-adata.type">
+    <structure>
+      <member name="meta" required="0" type="a-meta.type"/>
+      <member name="trees" role="#TREES" required="1">
+        <list type="a-root.type" ordered="1"/>
+      </member>
+    </structure>
+  </type>
+
+  <type name="a-meta.type">
+    <structure>
+      <member name="annotation_info">
+        <structure name="a-annotation-info">
+          <member name="version_info"><cdata format="any"/></member>
+          <member name="desc"><cdata format="any"/></member>
+        </structure>
+      </member>
+    </structure>
+  </type>
+
+  <type name="a-root.type">
+    <structure role="#NODE" name="a-root">
+      <member name="id" role="#ID" as_attribute="1" required="1"><cdata format="ID"/></member>
+      <member name="s.rf"><cdata format="PMLREF"/></member>
+      <member name="afun"><constant>AuxS</constant></member>
+      <member name="ord" role="#ORDER" required="1"><cdata format="nonNegativeInteger"/></member>
+      <member name="clause_number"><cdata format="nonNegativeInteger"/></member>
+      <member name="children" role="#CHILDNODES">
+        <list type="a-node.type" ordered="1"/>
+      </member>
+    </structure>
+  </type>
+
+  <type name="a-node.type">
+    <structure role="#NODE" name="a-node">
+      <member name="id" role="#ID" as_attribute="1" required="1"><cdata format="ID"/></member>
+      <member name="m.rf" role="#KNIT" type="m-node.type">
+        <cdata format="PMLREF"/>
+      </member>
+      <member name="afun" type="a-afun.type" required="1"/>
+      <member name="is_member" type="bool.type"/>
+      <member name="is_parenthesis_root" type="bool.type"/>
+      <member name="ord" role="#ORDER" required="1"><cdata format="nonNegativeInteger"/></member>
+      <member name="clause_number"><cdata format="nonNegativeInteger"/></member>
+      <member name="children" role="#CHILDNODES">
+        <list type="a-node.type" ordered="1"/>
+      </member>
+    </structure>
+  </type>
+  
+  <type name="a-afun.type">
+    <choice>
+      <value>Pred</value>
+      <value>Pnom</value>
+      <value>AuxV</value>
+      <value>Sb</value>
+      <value>Obj</value>
+      <value>Atr</value>
+      <value>Adv</value>
+      <value>AtrAdv</value>
+      <value>AdvAtr</value>
+      <value>Coord</value>
+      <value>AtrObj</value>
+      <value>ObjAtr</value>
+      <value>AtrAtr</value>
+      <value>AuxT</value>
+      <value>AuxR</value>
+      <value>AuxP</value>
+      <value>Apos</value>
+      <value>ExD</value>
+      <value>AuxC</value>
+      <value>Atv</value>
+      <value>AtvV</value>
+      <value>AuxO</value>
+      <value>AuxZ</value>
+      <value>AuxY</value>
+      <value>AuxG</value>
+      <value>AuxK</value>
+      <value>AuxX</value>
+    </choice>
+  </type>
+
+</pml_schema>
