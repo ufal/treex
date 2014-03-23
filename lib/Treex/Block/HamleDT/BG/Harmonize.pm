@@ -10,18 +10,16 @@ extends 'Treex::Block::HamleDT::Harmonize';
 #------------------------------------------------------------------------------
 sub process_zone
 {
-    my $self   = shift;
-    my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone($zone);
-
+    my $self = shift;
+    my $zone = shift;
+    my $root = $self->SUPER::process_zone($zone);
     # Adjust the tree structure.
-    $self->attach_final_punctuation_to_root($a_root);
-    $self->restructure_coordination($a_root);
-###!!! The following two methods must be adjusted to not destroy coordination!
-#    $self->process_auxiliary_particles($a_root);
-#    $self->process_auxiliary_verbs($a_root);
-    $self->mark_deficient_clausal_coordination($a_root);
-    $self->check_afuns($a_root);
+    $self->attach_final_punctuation_to_root($root);
+    $self->restructure_coordination($root);
+    $self->process_auxiliary_particles($root);
+    $self->process_auxiliary_verbs($root);
+    $self->mark_deficient_clausal_coordination($root);
+    $self->check_afuns($root);
 }
 
 #------------------------------------------------------------------------------
@@ -192,6 +190,17 @@ sub deprel_to_afun
         {
             $node->set_afun('CoordArg');
             $node->wild()->{conjunct} = 1;
+            # Fix error in data: conjunction labeled as conjunct.
+            if($node->match_iset('pos' => 'conj', 'subpos' => 'coor'))
+            {
+                my $rn = $node->get_right_neighbor();
+                if($rn && $rn->conll_deprel() eq 'conjarg')
+                {
+                    $node->set_afun('AuxY');
+                    $node->wild()->{coordinator} = 1;
+                    $node->wild()->{conjunct} = 0;
+                }
+            }
         }
         elsif ( $deprel eq 'conj' )
         {
