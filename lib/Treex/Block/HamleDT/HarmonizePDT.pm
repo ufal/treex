@@ -14,7 +14,10 @@ sub process_zone
     my $zone   = shift;
     my $tagset = shift;
     my $root = $self->SUPER::process_zone($zone, $tagset);
-    $self->attach_final_punctuation_to_root($root);
+    my @nodes = $root->get_descendants({ordered => 1});
+    $self->attach_final_punctuation_to_root($root) unless($nodes[-1]->afun() eq 'Coord');
+    # See the comment at sub detect_coordination for why we are doing this even with PDT-style treebanks.
+    $self->restructure_coordination($root);
     $self->pdt2hamledt_apposition($root);
     return $root;
 }
@@ -98,6 +101,33 @@ sub pdt2hamledt_apposition
             $old_head->set_is_member(0);
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Detects coordination in the shape we expect to find it in PDT and derived
+# treebanks. Even though the harmonized shape will be almost identical (the
+# input is supposed to adhere to the style that is also used in HamleDT), there
+# are slight deviations that we want to polish by decoding and re-encoding the
+# coordinations. For example, in PADT the first conjunction serves as the head
+# of multi-conjunct coordination, while HamleDT uses the last conjunction. This
+# function will also make sure that additional attributes related to
+# coordination (such as is_shared_modifier) will be properly set.
+#------------------------------------------------------------------------------
+sub detect_coordination
+{
+    my $self = shift;
+    my $node = shift;
+    my $coordination = shift;
+    my $debug = shift;
+    $coordination->detect_prague($node);
+    # The caller does not know where to apply recursion because it depends on annotation style.
+    # Return all conjuncts and shared modifiers for the Prague family of styles.
+    # Return orphan conjuncts and all shared and private modifiers for the other styles.
+    my @recurse = $coordination->get_conjuncts();
+    push(@recurse, $coordination->get_shared_modifiers());
+    return @recurse;
 }
 
 

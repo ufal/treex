@@ -10,6 +10,8 @@ sub process_zone
     my $root  = $zone->get_atree();
     my @nodes = $root->get_descendants({'ordered' => 1});
     return if(!@nodes);
+    # Coordination has higher priority than AuxK if it is necessary to use the final punctuation as coordination head.
+    return if($nodes[-1]->afun() eq 'Coord');
     # Mimic the function HamleDT::CoNLL2PDTStyle::attach_final_punctuation_to_root().
     # Just check attachment instead of attaching.
     my $rule1chars = '[-\.\x{2026}\x{964}\x{965}?!\x{61F};:,\x{61B}\x{60C}\x{2010}-\x{2015}]';

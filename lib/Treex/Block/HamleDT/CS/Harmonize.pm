@@ -2,7 +2,7 @@ package Treex::Block::HamleDT::CS::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::HamleDT::Harmonize';
+extends 'Treex::Block::HamleDT::HarmonizePDT';
 
 #------------------------------------------------------------------------------
 # Reads the Czech tree, converts morphosyntactic tags to the PDT tagset,
@@ -10,14 +10,9 @@ extends 'Treex::Block::HamleDT::Harmonize';
 #------------------------------------------------------------------------------
 sub process_zone
 {
-    my $self   = shift;
-    my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone($zone);
-
-    $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($a_root->get_zone());
-    $self->get_or_load_other_block('A2A::SetSharedModifier')->process_zone($a_root->get_zone());
-    $self->get_or_load_other_block('A2A::SetCoordConjunction')->process_zone($a_root->get_zone());
-    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
+    my $self = shift;
+    my $zone = shift;
+    my $root = $self->SUPER::process_zone($zone);
 }
 
 #------------------------------------------------------------------------------
@@ -33,17 +28,21 @@ sub deprel_to_afun
     {
         my $deprel = $node->conll_deprel();
         my $afun   = $deprel;
+        if ( $afun =~ s/_M$// )
+        {
+            $node->set_is_member(1);
+        }
         # combined afuns (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
         if ( $afun =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/ )
         {
             $afun = 'Atr';
         }
-        if ( $afun =~ s/_M$// )
-        {
-            $node->set_is_member(1);
-        }
         $node->set_afun($afun);
     }
+    # Coordination of prepositional phrases or subordinate clauses:
+    # In PDT, is_member is set at the node that bears the real afun. It is not set at the AuxP/AuxC node.
+    # In HamleDT (and in Treex in general), is_member is set directly at the child of the coordination head (preposition or not).
+    $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($root->get_zone());
 }
 
 1;
@@ -53,7 +52,7 @@ sub deprel_to_afun
 =item Treex::Block::HamleDT::CS::Harmonize
 
 Converts PDT (Prague Dependency Treebank) trees from CoNLL to the style of
-the Prague Dependency Treebank. The structure of the trees should already
+HamleDT (Prague). The structure of the trees should already
 adhere to the PDT guidelines because the CoNLL trees come from PDT. Some
 minor adjustments to the analytical functions may be needed while porting
 them from the conll/deprel attribute to afun. Morphological tags will be
