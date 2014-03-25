@@ -7,7 +7,6 @@ extends 'Treex::Core::Block';
 
 has '+language'          => ( required => 1 );
 has 'src_alignment_type' => ( is       => 'rw', isa => 'Str', default => 'src' );
-has 'log_to_console'     => ( is       => 'rw', isa => 'Bool', default => 0 );
 has 'magic' => ( is => 'ro', isa => 'Str', default => '' );
 
 use Treex::Tool::Lexicon::CS;
@@ -157,11 +156,6 @@ to be used by Deepfix blocks.
 Type of alignment between the cs_Tfix t-tree and the en t-tree.
 Default is C<src>.
 The alignemt must lead from cs_Tfix to en.
-
-=item C<log_to_console>
-
-Set to C<1> to log details about the changes performed, using C<log_info()>.
-Default is C<0>.
 
 =back
 

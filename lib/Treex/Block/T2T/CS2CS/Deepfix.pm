@@ -7,7 +7,6 @@ extends 'Treex::Core::Block';
 
 has '+language'          => ( required => 1 );
 has 'src_alignment_type' => ( is       => 'rw', isa => 'Str', default => 'src' );
-has 'log_to_console'     => ( is       => 'rw', isa => 'Bool', default => 1 );
 has 'dont_try_switch_number' => ( is => 'rw', isa => 'Bool', default => '0' );
 # has 'source_language'     => ( is       => 'rw', isa => 'Str', required => 0 );
 # has 'source_selector'     => ( is       => 'rw', isa => 'Str', default => '' );
@@ -30,7 +29,6 @@ sub process_start {
     $formGenerator = Treex::Tool::Depfix::CS::FormGenerator->new();
     $fixLogger = Treex::Tool::Depfix::CS::FixLogger->new({
         language => $self->language,
-        log_to_console => $self->log_to_console
     });
 
     return;
@@ -316,11 +314,6 @@ is above C<upper_threshold>, the change is performed.
 Type of alignment between the cs_Tfix t-tree and the en t-tree.
 Default is C<src>.
 The alignemt must lead from cs_Tfix to en.
-
-=item C<log_to_console>
-
-Set to C<1> to log details about the changes performed, using C<log_info()>.
-Default is C<0>.
 
 =back
 

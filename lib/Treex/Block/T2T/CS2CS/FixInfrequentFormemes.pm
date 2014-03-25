@@ -644,10 +644,6 @@ The model file is automatically downloaded if missing locally but available onli
 Overrides C<model>.
 Default is undef.
 
-=item C<log_to_console>
-
-Set to C<1> to log details about the changes performed, using C<log_info()>.
-Default is C<0>.
 
 =back
 
