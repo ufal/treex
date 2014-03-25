@@ -82,20 +82,21 @@ sub _build_parser {
         :
             $model_file_name
     );
+    log_info "Loading MSTperl::Parser model $model_file";
     $parser->load_model($model_file);
 
     return $parser;
 }
 
-# TODO process_start
-sub BUILD {
-    my $self = shift;
-    
+override 'process_start' => sub {
+    my ($self) = @_;
+    super();
+
     # enforce parser initialization
     $self->parser;
-    
+
     return;
-}
+};
 
 sub parse_chunk {
     my ( $self, @a_nodes ) = @_;

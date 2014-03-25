@@ -68,20 +68,21 @@ sub _build_labeller {
         :
             "$base_name.lmodel"
     );
+    log_info "Loading MSTperl::Labeller model $model_file";
     $labeller->load_model($model_file);
 
     return $labeller;
 }
 
-# TODO process_start
-sub BUILD {
-    my $self = shift;
+override 'process_start' => sub {
+    my ($self) = @_;
+    super();
 
     # enforce labeller initialization
     $self->labeller;
 
     return;
-}
+};
 
 sub process_zone {
     my ( $self, $zone ) = @_;
