@@ -114,6 +114,8 @@ C<language> and C<selector>.
 
 =head1 PARAMETERS
 
+=over
+
 =item C<to_language>
 
 Language of the new (target) a-trees.
@@ -138,6 +140,8 @@ If this parameter is set, the target trees are aligned to the source ones.
 
 If this parameter is set, both incoming and outgoing alignments are preserved in the 
 new a-tree (to_selector). 
+
+=back
 
 =head1 AUTHOR
 
