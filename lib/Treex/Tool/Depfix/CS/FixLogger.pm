@@ -6,7 +6,6 @@ use utf8;
 use Treex::Tool::Depfix::CS::PairGetter;
 
 has 'language'       => ( is => 'rw', isa => 'Str', required => 1 );
-has 'log_to_console' => ( is => 'rw', isa => 'Bool', default => 1 );
 
 sub get_pair {
     my ($self, $node) = @_;
@@ -175,9 +174,7 @@ sub logfix2 {
         }
     }
 
-    if ( $self->log_to_console ) {
-        log_info("FIXLOG: $logfixmsg on sentence $logfixs node $logfixn: $logfixold -> $logfixnew");
-    }
+    log_info("FIXLOG: $logfixmsg on sentence $logfixs node $logfixn: $logfixold -> $logfixnew");
 
     return;
 }
@@ -203,9 +200,7 @@ sub logfixNode {
         ->set_sentence($sentence);
     }
 
-    if ( $self->log_to_console ) {
-        log_info("FIXLOG: $mess on sentence $sid node $nid");
-    }
+    log_info("FIXLOG: $mess on sentence $sid node $nid");
 
     return;
 }
@@ -228,9 +223,7 @@ sub logfixBundle {
         ->set_sentence($sentence);
     }
 
-    if ( $self->log_to_console ) {
-        log_info("FIXLOG: $mess on sentence $sid ");
-    }
+    log_info("FIXLOG: $mess on sentence $sid ");
 
     return;
 }
