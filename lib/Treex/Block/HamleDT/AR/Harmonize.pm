@@ -2,7 +2,7 @@ package Treex::Block::HamleDT::AR::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::HamleDT::Harmonize';
+extends 'Treex::Block::HamleDT::HarmonizePDT';
 
 #------------------------------------------------------------------------------
 # Reads the Arabic tree, converts morphosyntactic tags to the PDT tagset,
@@ -12,13 +12,10 @@ sub process_zone
 {
     my $self = shift;
     my $zone = shift;
-    my $a_root = $self->SUPER::process_zone($zone, 'padt');
-    $self->attach_final_punctuation_to_root($a_root);
-    $self->fill_in_lemmas($a_root);
-    $self->fix_coap_ismember($a_root);
-    $self->restructure_coordination($a_root);
-    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
-    $self->fix_auxp($a_root);
+    my $root = $self->SUPER::process_zone($zone, 'padt');
+    $self->fill_in_lemmas($root);
+    $self->fix_coap_ismember($root);
+    $self->fix_auxp($root);
 }
 
 #------------------------------------------------------------------------------
@@ -52,7 +49,7 @@ sub deprel_to_afun
         # Ante = anteposition
         elsif ( $afun eq 'Ante' )
         {
-            $afun = 'Apos';
+            $afun = 'Apposition';
         }
 
         # AuxE = emphasizing expression
@@ -178,30 +175,6 @@ sub fix_coap_ismember
     }
 }
 
-
-
-#------------------------------------------------------------------------------
-# Detects coordination in the shape we expect to find it in PADT. Even though
-# the harmonized shape will be almost identical (both are Prague styles), there
-# are slight deviations that we want to polish by decoding and re-encoding the
-# coordinations. For example, in PADT the first conjunction serves as the head
-# of multi-conjunct coordination, while HamleDT uses the last conjunction.
-#------------------------------------------------------------------------------
-sub detect_coordination
-{
-    my $self = shift;
-    my $node = shift;
-    my $coordination = shift;
-    my $debug = shift;
-    $coordination->detect_prague($node);
-    # The caller does not know where to apply recursion because it depends on annotation style.
-    # Return all conjuncts and shared modifiers for the Prague family of styles.
-    # Return orphan conjuncts and all shared and private modifiers for the other styles.
-    my @recurse = $coordination->get_conjuncts();
-    push(@recurse, $coordination->get_shared_modifiers());
-    return @recurse;
-}
-
 #------------------------------------------------------------------------------
 # Reconsiders syntactic tags of prepositions. Most of them should have AuxP and
 # those that don't should have a good reason.
@@ -305,5 +278,5 @@ tagset of PDT.)
 
 =cut
 
-# Copyright 2011, 2013 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011, 2013, 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
