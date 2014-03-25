@@ -7,7 +7,6 @@ extends 'Treex::Core::Block';
 has '+language'       => ( required => 1 );
 has 'source_language' => ( is       => 'rw', isa => 'Str', required => 1 );
 has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
-has 'log_to_console'  => ( is       => 'rw', isa => 'Bool', default => 1 );
 has 'magic'           => ( is       => 'rw', isa => 'Str', default => '' );
 has 'dont_try_switch_number' => ( is => 'rw', isa => 'Bool', default => '0' );
 
@@ -31,7 +30,6 @@ sub process_start {
     $formGenerator  = Treex::Tool::Depfix::CS::FormGenerator->new();
     $fixLogger      = Treex::Tool::Depfix::CS::FixLogger->new({
         language => $self->language,
-        log_to_console => $self->log_to_console
     });
 
     return;

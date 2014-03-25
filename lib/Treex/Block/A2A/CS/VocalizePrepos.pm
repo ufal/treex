@@ -6,7 +6,6 @@ extends 'Treex::Block::T2A::CS::VocalizePrepos';
 
 use Treex::Tool::Depfix::CS::FixLogger;
 
-has 'log_to_console'  => ( is => 'rw', isa => 'Bool', default => 1 );
 
 my $fixLogger;
 
@@ -15,7 +14,6 @@ sub process_start {
     
     $fixLogger = Treex::Tool::Depfix::CS::FixLogger->new({
         language => $self->language,
-        log_to_console => $self->log_to_console
     });
 
     return;
