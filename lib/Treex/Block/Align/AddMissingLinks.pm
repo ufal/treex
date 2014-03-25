@@ -46,12 +46,6 @@ has 'match_passes' => (
     default => 3
 );
 
-has 'log_to_console' => (
-    is      => 'ro',
-    isa     => 'Bool',
-    default => 1
-);
-
 # TODO: this is only good for EN-CS
 my %stoplist = (
     a => 1,
@@ -74,7 +68,6 @@ sub process_start {
 
     $fixLogger = Treex::Tool::Depfix::CS::FixLogger->new({
             language => $self->language,
-            log_to_console => $self->log_to_console
         });
 
     return;

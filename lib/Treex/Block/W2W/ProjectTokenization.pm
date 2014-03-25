@@ -9,7 +9,6 @@ use Treex::Tool::Depfix::CS::FixLogger;
 
 has 'source_language' => ( is => 'rw', isa => 'Str', required => 1 );
 has 'source_selector' => ( is => 'rw', isa => 'Str', default  => '' );
-has 'log_to_console'  => ( is       => 'rw', isa => 'Bool', default => 1 );
 
 my $boundary = '[ \.\/:,;!\?<>\{\}\[\]\(\)\#\$£\%\&`\'‘"“”«»„\*\^\|\+]+';
 
@@ -20,7 +19,6 @@ sub process_start {
     
     $fixLogger = Treex::Tool::Depfix::CS::FixLogger->new({
         language => $self->language,
-        log_to_console => $self->log_to_console
     });
 
     return;
