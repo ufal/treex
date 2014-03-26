@@ -28,6 +28,21 @@ sub deprel_to_afun
     # In PDT, is_member is set at the node that bears the real afun. It is not set at the AuxP/AuxC node.
     # In HamleDT (and in Treex in general), is_member is set directly at the child of the coordination head (preposition or not).
     $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($root->get_zone());
+    # Try to fix annotation inconsistencies around coordination.
+    foreach my $node (@nodes)
+    {
+        if($node->is_member())
+        {
+            my $parent = $node->parent();
+            if(!$parent->is_coap_root())
+            {
+                if($parent->get_iset('pos') eq 'conj' || $parent->form() =~ m/^(,;:-)$/)
+                {
+                    $parent->set_afun('Coord');
+                }
+            }
+        }
+    }
 }
 
 1;
