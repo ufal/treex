@@ -13,8 +13,6 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
-    ###!!! DZ: Do we still need this when HamleDT::HarmonizePDT assigns AuxK from scratch?
-    $self->change_ending_colon_to_AuxK($root);
     $self->change_wrong_puctuation_root($root);
     $self->change_quotation_predicate_into_obj($root);
 }
