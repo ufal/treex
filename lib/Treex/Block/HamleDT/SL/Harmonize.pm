@@ -37,8 +37,6 @@ sub deprel_to_afun
             $afun = 'Atr';
         }
 
-        $node->set_afun($afun);
-
         # Unlike the CoNLL conversion of the Czech PDT 2.0, the Slovenes don't mark coordination members.
         # I suspect (but I am not sure) that they always attach coordination modifiers to a member,
         # so there are no shared modifiers and all children of Coord are members. Let's start with this hypothesis.
@@ -52,6 +50,33 @@ sub deprel_to_afun
         {
             $node->set_is_member(1);
         }
+        # There are a few nodes wrongly labeled as Coord. Fix them.
+        # (We must do it now, before SUPER->restructure_coordination() starts.)
+        if($afun eq 'Coord')
+        {
+            if($node->form() eq ',' && $node->is_leaf())
+            {
+                $afun = 'AuxX';
+            }
+            elsif($node->form() eq 'In' && $node->is_leaf() && $node->parent()->is_root())
+            {
+                # In theory there could be more than one verb but we are addressing a single known annotation error here.
+                my $verb = $node->get_right_neighbor();
+                if(defined($verb) && $verb->get_iset('pos') eq 'verb')
+                {
+                    $verb->set_parent($node);
+                    $verb->set_is_member(1);
+                }
+            }
+            # Pa vendar - !
+            # And yet - !
+            elsif(lc($node->form()) eq 'pa' && $node->parent()->is_root() && ($node->is_leaf() || scalar($node->children())==1 && lc($node->children()[0]->form()) eq 'vendar'))
+            {
+                $afun = 'ExD';
+            }
+        }
+        # Set the (possibly changed) afun back to the node.
+        $node->set_afun($afun);
     }
 }
 
@@ -128,6 +153,6 @@ of PDT.
 
 =cut
 
-# Copyright 2011 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011, 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # Copyright 2012 Karel Bilek <kb@karelbilek.com>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
