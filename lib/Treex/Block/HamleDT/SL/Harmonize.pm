@@ -69,7 +69,7 @@ sub deprel_to_afun
             }
             # Pa vendar - !
             # And yet - !
-            elsif(lc($node->form()) eq 'pa' && $node->parent()->is_root() && ($node->is_leaf() || scalar(@children)==1 && lc($children[0]->form()) eq 'vendar'))
+            elsif(lc($node->form()) eq 'pa' && $node->parent()->is_root() && ($node->is_leaf() || scalar(@children)==2 && lc($children[0]->form()) eq 'vendar'))
             {
                 $afun = 'ExD';
             }
