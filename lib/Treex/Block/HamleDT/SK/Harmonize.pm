@@ -1,8 +1,8 @@
-package Treex::Block::A2A::SK::Harmonize;
+package Treex::Block::HamleDT::SK::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::A2A::Harmonize';
+extends 'Treex::Block::HamleDT::Harmonize';
 
 #------------------------------------------------------------------------------
 # Reads the Slovak tree, converts morphosyntactic tags to the PDT tagset,
