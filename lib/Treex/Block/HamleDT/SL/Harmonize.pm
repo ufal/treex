@@ -30,13 +30,11 @@ sub deprel_to_afun
     {
         my $deprel = $node->conll_deprel();
         my $afun   = $deprel;
-
         # combined afuns (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
         if ( $afun =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/ )
         {
             $afun = 'Atr';
         }
-
         # Unlike the CoNLL conversion of the Czech PDT 2.0, the Slovenes don't mark coordination members.
         # I suspect (but I am not sure) that they always attach coordination modifiers to a member,
         # so there are no shared modifiers and all children of Coord are members. Let's start with this hypothesis.
@@ -54,6 +52,7 @@ sub deprel_to_afun
         # (We must do it now, before SUPER->restructure_coordination() starts.)
         if($afun eq 'Coord')
         {
+            my @children = $node->children();
             if($node->form() eq ',' && $node->is_leaf())
             {
                 $afun = 'AuxX';
@@ -70,7 +69,7 @@ sub deprel_to_afun
             }
             # Pa vendar - !
             # And yet - !
-            elsif(lc($node->form()) eq 'pa' && $node->parent()->is_root() && ($node->is_leaf() || scalar($node->children())==1 && lc($node->children()[0]->form()) eq 'vendar'))
+            elsif(lc($node->form()) eq 'pa' && $node->parent()->is_root() && ($node->is_leaf() || scalar(@children)==1 && lc($children[0]->form()) eq 'vendar'))
             {
                 $afun = 'ExD';
             }
