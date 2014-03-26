@@ -36,13 +36,20 @@ sub deprel_to_afun
             my $parent = $node->parent();
             if(!$parent->is_coap_root())
             {
-                if($parent->get_iset('pos') eq 'conj' || $parent->form() =~ m/^(,|;|:|-)$/)
+                if($parent->get_iset('pos') eq 'conj' || $parent->form() =~ m/^(ani|,|;|:|-+)$/)
                 {
                     $parent->set_afun('Coord');
+                }
+                else
+                {
+                    $node->set_is_member(0);
                 }
             }
         }
     }
+    # Now the above conversion could be trigerred at new places.
+    # (But we have to do it above as well, otherwise the correction of coordination inconsistencies would be less successful.)
+    $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($root->get_zone());
 }
 
 1;
