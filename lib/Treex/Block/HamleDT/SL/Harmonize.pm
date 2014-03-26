@@ -35,21 +35,9 @@ sub deprel_to_afun
         {
             $afun = 'Atr';
         }
-        # Unlike the CoNLL conversion of the Czech PDT 2.0, the Slovenes don't mark coordination members.
-        # I suspect (but I am not sure) that they always attach coordination modifiers to a member,
-        # so there are no shared modifiers and all children of Coord are members. Let's start with this hypothesis.
-        # We cannot query parent's afun because it may not have been copied from conll_deprel yet.
-        my $pdeprel = $node->parent()->conll_deprel();
-        $pdeprel = '' if ( !defined($pdeprel) );
-        if ($pdeprel =~ m/^(Coord|Apos)$/
-            &&
-            $afun !~ m/^(Aux[GKXY])$/
-            )
-        {
-            $node->set_is_member(1);
-        }
         # There are a few nodes wrongly labeled as Coord. Fix them.
-        # (We must do it now, before SUPER->restructure_coordination() starts.)
+        # We must do it now, before SUPER->restructure_coordination() starts.
+        # And also before we try to reconstruct members of coordination (comma/Coord must become comma/AuxX where appropriate).
         if($afun eq 'Coord')
         {
             my @children = $node->children();
@@ -73,6 +61,20 @@ sub deprel_to_afun
             {
                 $afun = 'ExD';
             }
+        }
+        # Unlike the CoNLL conversion of the Czech PDT 2.0, the Slovenes don't mark coordination members.
+        # (They do in their original data format but the information has not been ported to CoNLL!)
+        # I suspect (but I am not sure) that they always attach coordination modifiers to a member,
+        # so there are no shared modifiers and all children of Coord are members. Let's start with this hypothesis.
+        # We cannot query parent's afun because it may not have been copied from conll_deprel yet.
+        my $pdeprel = $node->parent()->conll_deprel();
+        $pdeprel = '' if ( !defined($pdeprel) );
+        if ($pdeprel =~ m/^(Coord|Apos)$/
+            &&
+            $afun !~ m/^(Aux[GKXY])$/
+            )
+        {
+            $node->set_is_member(1);
         }
         # Set the (possibly changed) afun back to the node.
         $node->set_afun($afun);
