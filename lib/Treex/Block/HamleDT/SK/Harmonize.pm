@@ -46,6 +46,11 @@ sub deprel_to_afun
                 }
             }
         }
+        # combined afuns (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr) -> Atr
+        if ( $node->afun() =~ m/^(AtrAtr)|(AtrAdv)|(AdvAtr)|(AtrObj)|(ObjAtr)/ )
+        {
+            $node->set_afun('Atr');
+        }
     }
     # Now the above conversion could be trigerred at new places.
     # (But we have to do it above as well, otherwise the correction of coordination inconsistencies would be less successful.)
