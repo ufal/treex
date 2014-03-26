@@ -15,7 +15,7 @@ sub process_zone
     my $tagset = shift;
     my $root = $self->SUPER::process_zone($zone, $tagset);
     my @nodes = $root->get_descendants({ordered => 1});
-    $self->attach_final_punctuation_to_root($root) unless($nodes[-1]->afun() eq 'Coord');
+    $self->attach_final_punctuation_to_root($root) unless($#nodes>=0 && $nodes[$#nodes]->afun() eq 'Coord');
     # See the comment at sub detect_coordination for why we are doing this even with PDT-style treebanks.
     $self->restructure_coordination($root);
     $self->pdt2hamledt_apposition($root);
