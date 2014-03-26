@@ -36,7 +36,7 @@ sub deprel_to_afun
             my $parent = $node->parent();
             if(!$parent->is_coap_root())
             {
-                if($parent->get_iset('pos') eq 'conj' || $parent->form() =~ m/^(,;:-)$/)
+                if($parent->get_iset('pos') eq 'conj' || $parent->form() =~ m/^(,|;|:|-)$/)
                 {
                     $parent->set_afun('Coord');
                 }
