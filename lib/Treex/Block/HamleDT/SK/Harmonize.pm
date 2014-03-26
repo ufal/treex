@@ -24,7 +24,10 @@ sub deprel_to_afun
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
-    # Nothing to change at the moment. They use the Prague set of analytical functions.
+    # Coordination of prepositional phrases or subordinate clauses:
+    # In PDT, is_member is set at the node that bears the real afun. It is not set at the AuxP/AuxC node.
+    # In HamleDT (and in Treex in general), is_member is set directly at the child of the coordination head (preposition or not).
+    $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($root->get_zone());
 }
 
 1;
