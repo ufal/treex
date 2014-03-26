@@ -1,11 +1,12 @@
-package Treex::Block::HamleDT::HarmonizePDT;
+l
+    package Treex::Block::HamleDT::HarmonizePDT;
 use Moose;
 use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::HamleDT::Harmonize';
 
 #------------------------------------------------------------------------------
-# Reads the TamilTB CoNLL trees, converts morphosyntactic tags to the positional
+# Reads the Prague style trees, converts morphosyntactic tags to the positional
 # tagset and transforms the tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
