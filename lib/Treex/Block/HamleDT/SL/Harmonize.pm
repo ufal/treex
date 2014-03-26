@@ -62,24 +62,24 @@ sub deprel_to_afun
 #------------------------------------------------------------------------------
 sub change_wrong_puctuation_root
 {
-	my $self = shift;
-	my $root = shift;
-	my @children = $root->get_children();
-	if (scalar @children>2)
+    my $self = shift;
+    my $root = shift;
+    my @children = $root->get_children();
+    if (scalar @children>2)
     {
-		#I am not taking the last one
-		for my $child (@children[0..$#children-1])
+        # I am not taking the last one
+        for my $child (@children[0..$#children-1])
         {
-			if ($child->afun() =~ /^Aux[XG]$/)
+            if ($child->afun() =~ /^Aux[XG]$/ && $child->is_leaf())
             {
-				my $conjunction = $child->get_next_node();
-				if (scalar ($child->get_children())==0 and $conjunction->tag() =~ /^J/)
+                my $conjunction = $child->get_next_node();
+                if (defined($conjunction) && $conjunction->get_iset('pos') eq 'conj')
                 {
-					$child->set_parent($conjunction);
-				}
-			}
-		}
-	}
+                    $child->set_parent($conjunction);
+                }
+            }
+        }
+    }
 }
 
 #------------------------------------------------------------------------------
