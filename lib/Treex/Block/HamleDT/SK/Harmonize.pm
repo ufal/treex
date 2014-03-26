@@ -2,7 +2,7 @@ package Treex::Block::HamleDT::SK::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::HamleDT::Harmonize';
+extends 'Treex::Block::HamleDT::HarmonizePDT';
 
 #------------------------------------------------------------------------------
 # Reads the Slovak tree, converts morphosyntactic tags to the PDT tagset,
@@ -10,9 +10,9 @@ extends 'Treex::Block::HamleDT::Harmonize';
 #------------------------------------------------------------------------------
 sub process_zone
 {
-    my $self   = shift;
-    my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone($zone, 'snk');
+    my $self = shift;
+    my $zone = shift;
+    my $root = $self->SUPER::process_zone($zone, 'snk');
 }
 
 #------------------------------------------------------------------------------
@@ -31,7 +31,7 @@ sub deprel_to_afun
 
 =over
 
-=item Treex::Block::A2A::SK::Harmonize
+=item Treex::Block::HamleDT::SK::Harmonize
 
 Converts SNK (Slovak National Corpus) trees to the HamleDT style. Currently
 it only involves conversion of the morphological tags (and Interset decoding).
