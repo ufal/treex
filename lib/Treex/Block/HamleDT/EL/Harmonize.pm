@@ -13,8 +13,8 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+    # Error handling routines
     $self->check_coord_membership($root);
-    # Error routines
     $self->remove_ismember_membership($root);
 }
 
@@ -71,9 +71,48 @@ sub check_coord_membership
     foreach my $node (@nodes)
     {
         my $afun = $node->afun();
-        if ($afun eq 'Coord' && scalar(grep {$_->is_member()} ($node->children()))==0)
+        if($afun eq 'Coord')
         {
-            $self->identify_coap_members($node);
+            my @children = $node->children();
+            # Are there any children?
+            if(scalar(@children)==0)
+            {
+                # There are a few annotation errors where a leaf node is labeled Coord.
+                # In some cases, the node is rightly Coord but it ought not to be leaf.
+                my $parent = $node->parent();
+                my $sibling = $node->get_left_neighbor();
+                my $uncle = $parent->get_left_neighbor();
+                if($parent->afun() eq 'Pred' && defined($sibling) && $sibling->afun() eq 'Pred')
+                {
+                    $node->set_parent($parent->parent());
+                    $sibling->set_parent($node);
+                    $sibling->set_is_member(1);
+                    $parent->set_parent($node);
+                    $parent->set_is_member(1);
+                }
+                elsif($parent->afun() eq 'Pred' && defined($uncle)) # $uncle->afun() eq 'ExD' but it is a verb
+                {
+                    $node->set_parent($parent->parent());
+                    $uncle->set_parent($node);
+                    $uncle->set_afun('Pred');
+                    $uncle->set_is_member(1);
+                    $parent->set_parent($node);
+                    $parent->set_is_member(1);
+                }
+                elsif($node->is_leaf() && $node->get_iset('pos') eq 'conj')
+                {
+                    $node->set_afun('AuxY');
+                }
+                elsif($node->is_leaf() && $node->get_iset('pos') eq 'noun')
+                {
+                    $node->set_afun('Atr');
+                }
+            }
+            # If there are children, are there conjuncts among them?
+            elsif(scalar(grep {$_->is_member()} (@children))==0)
+            {
+                $self->identify_coap_members($node);
+            }
         }
     }
 }
