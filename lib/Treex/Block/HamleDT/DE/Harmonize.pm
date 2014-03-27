@@ -30,7 +30,7 @@ sub process_zone
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
-# http://www.ims.uni-stuttgart.de/projekte/TIGER/TIGERCorpus/annotation/tiger_scheme-syntax.pdf
+# http://www.ims.uni-stuttgart.de/forschung/ressourcen/korpora/TIGERCorpus/annotation/tiger_scheme-syntax.pdf
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
 sub deprel_to_afun
