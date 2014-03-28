@@ -1,4 +1,4 @@
-package Treex::Block::HamleDT::Test::NumberHavePosC;
+svn spackage Treex::Block::HamleDT::Test::NumberHavePosC;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -6,8 +6,8 @@ extends 'Treex::Block::Test::BaseTester';
 sub process_anode {
     my ($self, $anode) = @_;
 
-    if ($anode->conll_deprel || '' eq 'number') {
-        if ($anode->tag || '' !~ m/^C/) {
+    if ($anode->conll_deprel eq 'number') {
+        if ($anode->tag !~ m/^C/) {
             $self->complain($anode);
         }
         else {
