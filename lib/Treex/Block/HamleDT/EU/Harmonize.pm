@@ -20,8 +20,8 @@ sub process_zone
     $self->correct_punctuations($a_root);
     $self->correct_coordination($a_root);
     $self->check_apos_coord_membership($a_root);
-    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
-    $self->check_afuns($a_root);
+#    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
+#    $self->check_afuns($a_root);
 }
 
 # this function will call the function to make sure that
@@ -257,7 +257,7 @@ sub deprel_to_afun
             $deprel eq 'cmod' or
             $deprel eq 'xmod' or
             $deprel eq 'xpred' or
-            $deprel eq 'ncpred' or
+            $deprel eq 'ncpred'
         ) {
             if ($ppos eq 'noun') {
                 $afun = 'Atr';
@@ -325,27 +325,29 @@ sub deprel_to_afun
             $afun = 'Atr';
         }
 
-        # attributes
-        $afun = 'Atr' if ($deprel eq 'entios');
+        # attributes # JM not sure whether "attribute" is the right term, seems more like a part of a name
+        if ($deprel eq 'entios') {
+            $afun = 'Atr';
+        }
 
-        # postos
-        if ($deprel eq 'postos') {
-            if (($node->get_iset('pos') eq 'noun')) {
+        # postos # !!JM TODO - part of a complex postposition? so AuxP somewhere around?
+        elsif ($deprel eq 'postos') {
+            if ($pos eq 'noun') {
                 $afun = 'Atr';
             }
-            elsif (($node->get_iset('pos') eq 'adv')) {
+            elsif ($pos eq 'adv') {
                 $afun = 'Adv';
             }
-            elsif (($node->get_iset('pos') eq 'adj')) {
+            elsif ($pos eq 'adj') {
                 $afun = 'Atr';
             }
-            elsif (($node->get_iset('pos') eq 'verb')) {
+            elsif ($pos eq 'verb') {
                 $afun = 'Atr';
             }
-            elsif (($node->get_iset('pos') eq 'num')) {
+            elsif ($pos eq 'num') {
                 $afun = 'Atr';
             }
-            elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'coor')) {
+            elsif ($pos eq 'conj' and $subpos eq 'coor') {
                 if ($form =~ /^(eta|edo)$/) {
                     $afun = 'Coord';
                 }
@@ -353,29 +355,29 @@ sub deprel_to_afun
                     $afun = 'Adv';
                 }
             }
-            elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'sub')) {
+            elsif ($pos eq 'conj' and  $subpos eq 'sub') {
                 $afun = 'AuxC';
             }
         }
 
-        # gradmod
-        if ($deprel eq 'gradmod') {
-            if (($node->get_iset('pos') eq 'noun')) {
+        # gradmod # !!JM TODO "el graduador" - used in comparison; "very", "too much", "more", ... - probably Atr/Adv based on ppos
+        elsif ($deprel eq 'gradmod') {
+            if ($pos eq 'noun') {
                 $afun = 'Atr';
             }
-            elsif (($node->get_iset('pos') eq 'adv')) {
+            elsif ($pos eq 'adv') {
                 $afun = 'Adv';
             }
-            elsif (($node->get_iset('pos') eq 'adj')) {
+            elsif ($pos eq 'adj') {
                 $afun = 'Atr';
             }
-            elsif (($node->get_iset('pos') eq 'verb')) {
+            elsif ($pos eq 'verb') {
                 $afun = 'Atr';
             }
-            elsif (($node->get_iset('pos') eq 'num')) {
+            elsif ($pos eq 'num') {
                 $afun = 'Atr';
             }
-            elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'coor')) {
+            elsif ($pos eq 'conj' and $subpos eq 'coor') {
                 if ($form =~ /^(eta|edo)$/) {
                     $afun = 'Coord';
                 }
@@ -383,29 +385,29 @@ sub deprel_to_afun
                     $afun = 'Adv';
                 }
             }
-            elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'sub')) {
+            elsif ($pos eq 'conj' and $subpos eq 'sub') {
                 $afun = 'AuxC';
             }
         }
 
         # menos
-        if ($deprel eq 'menos') {
-            if (($node->get_iset('pos') eq 'noun')) {
+        elsif ($deprel eq 'menos') {
+            if ($pos eq 'noun') {
                 $afun = 'Atr';
             }
-            elsif (($node->get_iset('pos') eq 'adv')) {
+            elsif ($pos eq 'adv') {
                 $afun = 'Adv';
             }
-            elsif (($node->get_iset('pos') eq 'adj')) {
+            elsif ($pos eq 'adj') {
                 $afun = 'Atr';
             }
-            elsif (($node->get_iset('pos') eq 'verb')) {
+            elsif ($pos eq 'verb') {
                 $afun = 'Atr';
             }
-            elsif (($node->get_iset('pos') eq 'num')) {
+            elsif ($pos eq 'num') {
                 $afun = 'Atr';
             }
-            elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'coor')) {
+            elsif ($pos eq 'conj' and $subpos eq 'coor') {
                 if ($form =~ /^(eta|edo)$/) {
                     $afun = 'Coord';
                 }
@@ -413,26 +415,26 @@ sub deprel_to_afun
                     $afun = 'Adv';
                 }
             }
-            elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'sub')) {
+            elsif ($pos eq 'conj' and $subpos eq 'sub') {
                 $afun = 'AuxC';
             }
         }
 
         # haos
-        if ($deprel eq 'haos') {
+        elsif ($deprel eq 'haos') {
             $afun = 'Adv';
         }
 
         # determiner
-        if (($node->get_iset('pos') eq 'adj') && ($node->get_iset('subpos') eq 'det')) {
+        elsif ($pos eq 'adj' and $subpos eq 'det') {
             $afun = 'AuxA';
         }
 
         # default afun assignment
-        if ($afun eq "NR") {
-            print "Assigning Atr to " . $deprel . "\t POS: $pos ## $subpos" .  "\n";
-            $afun = 'Atr';
-        }
+        # if ($afun eq "NR") {
+            # print "Assigning Atr to " . $deprel . "\t POS: $pos ## $subpos" .  "\n";
+            # $afun = 'Atr';
+        # }
 
         $node->set_afun($afun);
     }
