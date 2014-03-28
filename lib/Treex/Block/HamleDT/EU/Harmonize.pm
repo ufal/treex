@@ -12,16 +12,16 @@ sub process_zone
 {
     my $self   = shift;
     my $zone   = shift;
-    
+
     my $a_root = $self->SUPER::process_zone($zone);
     $self->hang_everything_under_pred($a_root);
-    $self->attach_final_punctuation_to_root($a_root);    
+    $self->attach_final_punctuation_to_root($a_root);
     $self->make_pdt_coordination($a_root);
     $self->correct_punctuations($a_root);
     $self->correct_coordination($a_root);
     $self->check_apos_coord_membership($a_root);
     $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
-    $self->check_afuns($a_root);    
+    $self->check_afuns($a_root);
 }
 
 # this function will call the function to make sure that
@@ -36,7 +36,7 @@ sub check_apos_coord_membership {
         if ($afun =~ /^(Apos|Coord)$/) {
             $self->identify_coap_members($node);
         }
-    }    
+    }
 }
 
 # will make PDT style coordination from the CoNLL data
@@ -56,9 +56,9 @@ sub make_pdt_coordination {
                         $c->set_is_member(1) if ($afunc !~ /^(AuxX|AuxZ|AuxG|AuxK)$/);
                     }
                 }
-            }            
+            }
         }
-    }    
+    }
 }
 
 # punctuations such as "," and ";" hanging under a node will be
@@ -78,13 +78,13 @@ sub correct_punctuations {
                     my $parparnode = $parnode->get_parent();
                     if (defined $parparnode) {
                         my $ordpp = $parparnode->ord();
-                        if ($ordpp > 0) {                            
+                        if ($ordpp > 0) {
                             $node->set_parent($parparnode);
                         }
                     }
                 }
-            }            
-        }                
+            }
+        }
     }
 }
 
@@ -111,12 +111,12 @@ sub hang_everything_under_pred {
                     }
                     else {
                         $prednode = $node;
-                    }                           
-                }         
+                    }
+                }
             }
         }
-    }    
-    #
+    }
+
     if (scalar(@dnodes) > 0) {
         if (defined $prednode) {
             foreach my $dn (@dnodes) {
@@ -128,7 +128,7 @@ sub hang_everything_under_pred {
     }
 }
 
-# this function will find if there are 'Coordinations'  that are not
+# this function will find if there are 'Coordinations' that are not
 # detected using the previous make_pdt_coordination function.
 sub correct_coordination {
     my $self  = shift;
@@ -148,9 +148,9 @@ sub correct_coordination {
                         $c->set_is_member(1) if ($afunc !~ /^(AuxX|AuxZ|AuxG|AuxK)$/);
                     }
                 }
-            }            
+            }
         }
-    }       
+    }
 }
 
 #------------------------------------------------------------------------------
@@ -166,75 +166,109 @@ sub deprel_to_afun
     {
         my $deprel = $node->conll_deprel();
         my $form   = $node->form();
-        my $subpos    = $node->conll_pos();
-        my $pos    = $node->conll_cpos();
-        
+        my $pos    = $node->get_iset('pos');
+        my $subpos = $node->get_iset('subpos');
+        my $parent = $node->parent();
+        my $ppos   = $parent->get_iset('pos');
+
+        my $connl_subpos = $node->conll_pos();
+        my $connl_pos    = $node->conll_cpos();
+
         #log_info("conllpos=".$pos.", isetpos=".$node->get_iset('pos'));
-        
+
         # default assignment
-        my $afun = "unkafun";
-        
-        $afun = 'Pred' if ($deprel eq 'ROOT');
-        
+        my $afun = "NR";
+
+        # main predicate
+        if ($deprel eq 'ROOT') {
+            $afun = 'Pred';
+        }
+
         # subject
-        $afun = 'Sb' if ($deprel eq 'ncsubj');
-        $afun = 'Sb' if ($deprel eq 'ccomp_subj');
-        $afun = 'Sb' if ($deprel eq 'xcomp_subj');
-        
-        
+        elsif (
+            $deprel eq 'ncsubj' or
+            $deprel eq 'ccomp_subj' or
+            $deprel eq 'xcomp_subj'
+        ) {
+            $afun = 'Sb';
+        }
+
         # object
-        $afun = 'Obj' if ($deprel eq 'ncobj');
-        $afun = 'Obj' if ($deprel eq 'nczobj');
-        $afun = 'Obj' if ($deprel eq 'ccomp_obj');
-        $afun = 'Obj' if ($deprel eq 'ccomp_zobj');
-        $afun = 'Obj' if ($deprel eq 'xcomp_obj');
-        $afun = 'Obj' if ($deprel eq 'xcomp_zobj');
+        elsif (
+            $deprel eq 'ncobj' or
+            $deprel eq 'nczobj' or
+            $deprel eq 'ccomp_obj' or
+            $deprel eq 'ccomp_zobj' or
+            $deprel eq 'xcomp_obj' or
+            $deprel eq 'xcomp_zobj'
+        ) {
+            $afun = 'Obj';
+        }
 
         # apposition
-        $afun = 'Apos' if ($deprel eq 'apocmod');
-        $afun = 'Apos' if ($deprel eq 'apoxmod');
-        $afun = 'Apos' if ($deprel eq 'aponcmod');
-        $afun = 'Apos' if ($deprel eq 'aponcpred');                
-    
-        $afun = 'AuxA' if ($deprel eq 'detmod');
-        $afun = 'AuxV' if ($deprel eq 'auxmod');
-        
+        elsif (
+            $deprel eq 'apocmod' or
+            $deprel eq 'apoxmod' or
+            $deprel eq 'aponcmod' or
+            $deprel eq 'aponcpred'
+        ) {
+            $afun = 'Apos';
+        }
+
+        # determiner
+        elsif ($deprel eq 'detmod') {
+            $afun = 'AuxA';
+        }
+
+        # auxiliary verb
+        elsif ($deprel eq 'auxmod') {
+            $afun = 'AuxV';
+        }
+
         # negation or attribute
-        if ($deprel eq 'ncmod') {
-            if (($node->get_iset('pos') eq 'noun')) {
+        elsif ($deprel eq 'ncmod') {
+            if ($ppos eq 'noun') {
                 $afun = 'Atr';
             }
             else {
                 $afun = 'Adv';
             }
-        }        
-        
+        }
+
         # punctuation
-        if (($node->get_iset('pos') eq 'punc')) {
+        elsif (($node->get_iset('pos') eq 'punc')) {
             if ( $form eq ',' ) {
                 $afun = 'AuxX';
             }
-            elsif ( $form =~ /^(\?|\:|\.|\!)$/ ) {
+            elsif ( $form =~ /^[?:.!]$/ ) {
                 $afun = 'AuxK';
             }
             else {
                 $afun = 'AuxG';
-            }                      
+            }
         }
-        
+
         # modifiers
         # 1. clausal & predicative modifiers are labeled as 'Adv'
         # 2. non clausal modifiers are labeled as 'Atr'
-        
+
         # 1. clausal & predicative modifiers
-        $afun = 'Adv' if ($deprel eq 'cmod');
-        $afun = 'Adv' if ($deprel eq 'xmod');
-        $afun = 'Adv' if ($deprel eq 'xpred');
-        $afun = 'Adv' if ($deprel eq 'ncpred');                
+        elsif (
+            $deprel eq 'cmod' or
+            $deprel eq 'xmod' or
+            $deprel eq 'xpred' or
+            $deprel eq 'ncpred' or
+        ) {
+            if ($ppos eq 'noun') {
+                $afun = 'Atr';
+            }
+            else {
+                $afun = 'Adv';
+            }
+        }
 
-
-        # connectors
-        if (($deprel eq 'lot') || ($deprel eq 'lotat')) {
+        # connectors # !!! TODO
+        elsif (($deprel eq 'lot') || ($deprel eq 'lotat')) {
             if (($node->get_iset('pos') eq 'noun')) {
                 $afun = 'Atr';
             }
@@ -252,16 +286,16 @@ sub deprel_to_afun
             }
             elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'coor')) {
                 if ($form =~ /^(eta|edo)$/) {
-                    $afun = 'Coord';                    
+                    $afun = 'Coord';
                 }
                 else {
-                    $afun = 'Adv';                       
+                    $afun = 'Adv';
                 }
             }
             elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'sub')) {
                 $afun = 'AuxC';
-            }            
-            
+            }
+
             if ($pos eq 'ADL') {
                 $afun = 'Atr';
             }
@@ -273,19 +307,27 @@ sub deprel_to_afun
             }
             elsif ($pos eq 'BST') {
                 $afun = 'Atr';
-            }            
+            }
         }
-        
-        # particles
-        $afun = 'Atr' if ($deprel eq 'prtmod');
-        $afun = 'Adv' if ($deprel eq 'galdemod');
-        
-        # interjection
-        $afun = 'Atr' if ($deprel eq 'itj_out');
-        
+
+        # particles 
+        # prtmod # !!JM TODO - "label used to mark various particles - 'badin', 'omen', etc."
+        elsif ($deprel eq 'prtmod') {
+            $afun = 'Atr';
+        }
+        # galdemod - focalizer (?)
+        elsif ($deprel eq 'galdemod') {
+            $afun = 'AuxZ';
+        }
+
+        # interjection # !!JM TODO - "Uf.itj_out, vydechl Petr.", "Nezmokni, Pavle.itj_out."
+        if ($deprel eq 'itj_out') {
+            $afun = 'Atr';
+        }
+
         # attributes
         $afun = 'Atr' if ($deprel eq 'entios');
-        
+
         # postos
         if ($deprel eq 'postos') {
             if (($node->get_iset('pos') eq 'noun')) {
@@ -305,15 +347,15 @@ sub deprel_to_afun
             }
             elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'coor')) {
                 if ($form =~ /^(eta|edo)$/) {
-                    $afun = 'Coord';                    
+                    $afun = 'Coord';
                 }
                 else {
-                    $afun = 'Adv';                       
+                    $afun = 'Adv';
                 }
             }
             elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'sub')) {
                 $afun = 'AuxC';
-            }                        
+            }
         }
 
         # gradmod
@@ -335,17 +377,17 @@ sub deprel_to_afun
             }
             elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'coor')) {
                 if ($form =~ /^(eta|edo)$/) {
-                    $afun = 'Coord';                    
+                    $afun = 'Coord';
                 }
                 else {
-                    $afun = 'Adv';                       
+                    $afun = 'Adv';
                 }
             }
             elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'sub')) {
                 $afun = 'AuxC';
-            }                        
+            }
         }
-        
+
         # menos
         if ($deprel eq 'menos') {
             if (($node->get_iset('pos') eq 'noun')) {
@@ -365,33 +407,33 @@ sub deprel_to_afun
             }
             elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'coor')) {
                 if ($form =~ /^(eta|edo)$/) {
-                    $afun = 'Coord';                    
+                    $afun = 'Coord';
                 }
                 else {
-                    $afun = 'Adv';                       
+                    $afun = 'Adv';
                 }
             }
             elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'sub')) {
                 $afun = 'AuxC';
-            }                        
-        }        
-        
+            }
+        }
+
         # haos
         if ($deprel eq 'haos') {
             $afun = 'Adv';
         }
-        
+
         # determiner
         if (($node->get_iset('pos') eq 'adj') && ($node->get_iset('subpos') eq 'det')) {
             $afun = 'AuxA';
         }
-        
+
         # default afun assignment
-        if ($afun eq "unkafun") {
+        if ($afun eq "NR") {
             print "Assigning Atr to " . $deprel . "\t POS: $pos ## $subpos" .  "\n";
             $afun = 'Atr';
         }
-        
+
         $node->set_afun($afun);
     }
 }
