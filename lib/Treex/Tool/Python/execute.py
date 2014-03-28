@@ -33,25 +33,38 @@ decode = codecs.getdecoder('utf-8')
 
 # output utf-8 encoding
 output = codecs.getwriter('utf-8')(sys.stdout)
+stderr = codecs.getwriter('utf-8')(sys.stderr)
 
 while True:
     try:
+        # read the input and try to further enlarge the buffer at most 10 times 
+        # (we don't want to fail if there's a unicode character right at the edge of the buffer)
         data = os.read(fd, 1024)
         if data == b'':
             break
-        line = unicode(data, 'utf-8')
-        # print >> sys.stderr, 'Read line:' + data
+        converted = 0
+        trials = 10
+        while trials and not converted:
+            try:
+                line = unicode(data, 'utf-8')
+                converted = 1
+            except UnicodeDecodeError:
+                data += os.read(fd, 1024)
+                trials -= 1
+        #print >> stderr, "Read line:\n" + line
+        #stderr.flush()
         cmd += line
     except Exception, e:
-        print >> sys.stderr, e
+        print >> sys.stderr, str(type(e)), ':', e
         break
     # execute each command when it's fully read
-    if "print '<<<<END>>>>'\n" in line:
+    if "print '<<<<END>>>>'\n" in cmd:
         try:
             cmd = re.sub(r'^([\s]*)print (?!>)', r'\1print >> output, ', cmd)
             exec(cmd)
             output.flush()
-            #print >> sys.stderr, 'Exec\'d ' + cmd
+            #print >> stderr, "Exec\'d:\n" + cmd
+            #stderr.flush()
         except Exception, e:
             cmd = re.sub(r'[^\n]+\n$', '', cmd)
             _, _, tb = sys.exc_info()
