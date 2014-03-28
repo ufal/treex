@@ -1,4 +1,4 @@
-svn spackage Treex::Block::HamleDT::Test::NumberHavePosC;
+package Treex::Block::HamleDT::Test::NumberHavePosC;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
