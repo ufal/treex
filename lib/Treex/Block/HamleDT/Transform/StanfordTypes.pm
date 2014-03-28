@@ -241,10 +241,10 @@ sub Atr {
     elsif ( $anode->match_iset( 'pos' => '~verb' ) ) {
         # predicate dependent
         if ( $self->is_finite($anode) ) {
-            $type = 'rcmod';
+            $type = 'relcl';
         }
         else {
-            $type = 'nfcmod';
+            $type = 'nfincl';
         }
     }
 
@@ -268,7 +268,7 @@ sub Adv {
             $type = 'advcl';
         }
         else {
-            $type = 'nfcmod';
+            $type = 'nfincl';
         }
     }
 
