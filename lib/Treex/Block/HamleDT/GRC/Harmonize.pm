@@ -17,7 +17,8 @@ my %agdt2pdt =
     'PRED'      => 'Pred',
     'SBJ'       => 'Sb',
     'UNDEFINED' => 'NR',
-    'XSEG'      => 'NR'
+    # XSEG is assigned to initial parts of a broken word, e.g. "Achai - on": on ( Achai/XSEG , -/XSEG )
+    'XSEG'      => 'Atr' ###!!! Should we add XSeg to the set of HamleDT labels?
 );
 
 #------------------------------------------------------------------------------
