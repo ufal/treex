@@ -4,6 +4,22 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::HamleDT::HarmonizePDT';
 
+my %agdt2pdt =
+(
+    'ADV'       => 'Adv',
+    'APOS'      => 'Apos',
+    'ATR'       => 'Atr',
+    'ATV'       => 'Atv',
+    'COORD'     => 'Coord',
+    'OBJ'       => 'Obj',
+    'OCOMP'     => 'Obj', ###!!!
+    'PNOM'      => 'Pnom',
+    'PRED'      => 'Pred',
+    'SBJ'       => 'Sb',
+    'UNDEFINED' => 'NR',
+    'XSEG'      => 'NR'
+);
+
 #------------------------------------------------------------------------------
 # Reads the Ancient Greek CoNLL trees, converts morphosyntactic tags to the positional
 # tagset and transforms the tree to adhere to PDT guidelines.
@@ -34,6 +50,10 @@ sub deprel_to_afun
         my $pos    = $node->conll_pos();
         # default assignment
         my $afun = $deprel;
+        # There were occasional cycles in the source data. They were removed before importing the trees to Treex
+        # but a mark was left in the dependency label where the cycle was broken.
+        # We have no means of repairing the structure but we have to remove the mark in order to get a valid afun.
+        $afun =~ s/-CYCLE$//;
         # The _CO suffix signals conjuncts.
         # The _AP suffix signals members of apposition.
         # We will later reshape appositions but the routine will expect is_member set.
@@ -47,50 +67,14 @@ sub deprel_to_afun
         # The tag after ExD describes the dependency of the elided parent on the grandparent.
         # Example: ADV_ExD0_PRED_CO
         # Similar cases in PDT get just ExD.
-        if($afun =~ m/_ExD/)
+        if($afun =~ m/ExD/)
         {
             $afun = 'ExD';
         }
-
-        #
-        if ( $deprel =~ /^ADV/ ) {
-            $afun = "Adv";
-        }
-        elsif ( $deprel =~ /^APOS/ ) {
-            $afun = "Apos";
-        }
-        elsif ( $deprel =~ /^ATR/ ) {
-            $afun = "Atr";
-        }
-        elsif ( $deprel =~ /^ATV/ ) {
-            $afun = "Atv";
-        }
-        elsif ( $deprel =~ /^AtvV/ ) {
-            $afun = "AtvV";
-        }
-        elsif ( $deprel =~ /^COORD/ ) {
-            $afun = "Coord";
-        }
-        elsif ( $deprel =~ /^OBJ/ ) {
-            $afun = "Obj";
-        }
-        elsif ( $deprel =~ /^OCOMP/ ) {
-            $afun = "Obj";
-        }
-        elsif ( $deprel =~ /^PNOM/ ) {
-            $afun = "Pnom";
-        }
-        elsif ( $deprel =~ /^PRED/ ) {
-            $afun = "Pred";
-        }
-        elsif ( $deprel =~ /^SBJ/ ) {
-            $afun = "Sb";
-        }
-        elsif ( $deprel =~ /^(UNDEFINED|XSEG|_ExD0_PRED)$/ ) {
-            $afun = "Atr";
-        }
-        elsif ( $deprel =~ /^AuxP-CYCLE/ ) {
-            $afun = "AuxP";
+        # Most AGDT afuns are all uppercase but we typically want only the first letter uppercase.
+        if(exists($agdt2pdt{$afun}))
+        {
+            $afun = $agdt2pdt{$afun};
         }
         $node->set_afun($afun);
     }
@@ -157,14 +141,6 @@ sub check_coord_membership
 Converts Ancient Greek dependency treebank to the HamleDT (Prague) style.
 Most of the deprel tags follow PDT conventions but they are very elaborated
 so we have shortened them.
-
-1. Morphological conversion             -> No
-
-2. DEPREL conversion                    -> Yes
-
-3. Structural conversion to match PDT   -> Yes
-
-
 
 =back
 
