@@ -137,14 +137,21 @@ sub fix_undefined_punctuation
             {
                 $node->set_afun('AuxX');
             }
-            elsif($form =~ m/^\pP+$/)
+            # Besides punctuation there are also separated diacritics that should never appear alone in a node but they do:
+            # 768 \x{300} COMBINING GRAVE ACCENT
+            # 769 \x{301} COMBINING ACUTE ACCENT
+            # 787 \x{313} COMBINING COMMA ABOVE
+            # 788 \x{314} COMBINING REVERSED COMMA ABOVE
+            # 803 \x{323} COMBINING DOT BELOW
+            # 834 \x{342} COMBINING GREEK PERISPOMENI
+            # All these characters belong to the class M (marks).
+            elsif($form =~ m/^[\pP\pM]+$/)
             {
                 $node->set_afun('AuxG');
             }
-            else # not punctuation
+            else # neither punctuation nor diacritics
             {
-                ###!!! Těmhle zatím žádný afun nedám, aby mi je testy našly a abych je mohl zkontrolovat.
-                #$node->set_afun('AuxY');
+                $node->set_afun('AuxY');
             }
         }
     }
