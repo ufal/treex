@@ -42,7 +42,7 @@ sub deprel_to_afun
         # Convert the _Pa suffix to the is_parenthesis_root flag.
         if($afun =~ s/_Pa$//)
         {
-            $node->set_is_parenthesis_root();
+            $node->set_is_parenthesis_root(1);
         }
         # HamleDT currently does not distinguish direct and indirect objects.
         $afun =~ s/^IObj/Obj/;

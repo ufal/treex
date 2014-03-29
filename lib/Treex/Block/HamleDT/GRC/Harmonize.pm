@@ -66,6 +66,11 @@ sub deprel_to_afun
             # Remove the other suffix if present.
             $afun =~ s/_(CO|AP)$//;
         }
+        # Convert the _PA suffix to the is_parenthesis_root flag.
+        if($afun =~ s/_PA$//)
+        {
+            $node->set_is_parenthesis_root(1);
+        }
         # There are chained dependency labels that describe situation around elipsis.
         # They ought to contain an ExD, which may be indexed.
         # The tag before ExD describes the dependency of the node on its elided parent.
