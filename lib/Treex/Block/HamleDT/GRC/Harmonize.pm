@@ -30,7 +30,7 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
-    $self->fix_undefined_punctuation($root);
+    $self->fix_undefined_nodes($root);
     ###!!! TODO: grc trees sometimes have conjunct1, coordination, conjunct2 as siblings. We should fix it, but meanwhile we just delete afun=Coord from the coordination.
     $self->check_coord_membership($root);
     $self->check_afuns($root);
@@ -54,8 +54,9 @@ sub deprel_to_afun
         my $afun = $deprel;
         # There were occasional cycles in the source data. They were removed before importing the trees to Treex
         # but a mark was left in the dependency label where the cycle was broken.
+        # Example: AuxP-CYCLE:12-CYCLE:16-CYCLE:15-CYCLE:14
         # We have no means of repairing the structure but we have to remove the mark in order to get a valid afun.
-        $afun =~ s/-CYCLE$//;
+        $afun =~ s/-CYCLE.*//;
         # The _CO suffix signals conjuncts.
         # The _AP suffix signals members of apposition.
         # We will later reshape appositions but the routine will expect is_member set.
@@ -113,7 +114,7 @@ sub deprel_to_afun
 # UNDEFINED afun (which we temporarily converted to NR). Attach them to the
 # preceding token and give them a better afun.
 #------------------------------------------------------------------------------
-sub fix_undefined_punctuation
+sub fix_undefined_nodes
 {
     my $self  = shift;
     my $root  = shift;
@@ -123,40 +124,57 @@ sub fix_undefined_punctuation
         my $node = $nodes[$i];
         # If this is the last punctuation in the sentence, chances are that it was already recognized as AuxK.
         # In that case the problem is already fixed.
-        if($node->conll_deprel() eq 'UNDEFINED' && $node->parent()->is_root() && $node->is_leaf() && $node->afun() ne 'AuxK')
+        if($node->conll_deprel() eq 'UNDEFINED')
         {
-            # Attach the node to the preceding token if there is a preceding token.
-            if($i>0)
+            if($node->parent()->is_root() && $node->is_leaf() && $node->afun() ne 'AuxK')
             {
-                $node->set_parent($nodes[$i-1]);
+                # Attach the node to the preceding token if there is a preceding token.
+                if($i>0)
+                {
+                    $node->set_parent($nodes[$i-1]);
+                }
+                # If there is no preceding token but there is a following token, attach the node there.
+                elsif($i<$#nodes)
+                {
+                    $node->set_parent($nodes[$i+1]);
+                }
+                # If this is the only token in the sentence, it remained attached to the root.
+                # Pick the right afun for the node.
+                my $form = $node->form();
+                if($form eq ',')
+                {
+                    $node->set_afun('AuxX');
+                }
+                # Besides punctuation there are also separated diacritics that should never appear alone in a node but they do:
+                # 768 \x{300} COMBINING GRAVE ACCENT
+                # 769 \x{301} COMBINING ACUTE ACCENT
+                # 787 \x{313} COMBINING COMMA ABOVE
+                # 788 \x{314} COMBINING REVERSED COMMA ABOVE
+                # 803 \x{323} COMBINING DOT BELOW
+                # 834 \x{342} COMBINING GREEK PERISPOMENI
+                # All these characters belong to the class M (marks).
+                elsif($form =~ m/^[\pP\pM]+$/)
+                {
+                    $node->set_afun('AuxG');
+                }
+                else # neither punctuation nor diacritics
+                {
+                    $node->set_afun('AuxY');
+                }
             }
-            # If there is no preceding token but there is a following token, attach the node there.
-            elsif($i<$#nodes)
+            # Other UNDEFINED nodes.
+            elsif($node->parent()->is_root() && $node->get_iset('pos') eq 'verb')
             {
-                $node->set_parent($nodes[$i+1]);
+                $node->set_afun('Pred');
             }
-            # If this is the only token in the sentence, it remained attached to the root.
-            # Pick the right afun for the node.
-            my $form = $node->form();
-            if($form eq ',')
+            elsif($node->parent()->is_root())
             {
-                $node->set_afun('AuxX');
+                $node->set_afun('ExD');
             }
-            # Besides punctuation there are also separated diacritics that should never appear alone in a node but they do:
-            # 768 \x{300} COMBINING GRAVE ACCENT
-            # 769 \x{301} COMBINING ACUTE ACCENT
-            # 787 \x{313} COMBINING COMMA ABOVE
-            # 788 \x{314} COMBINING REVERSED COMMA ABOVE
-            # 803 \x{323} COMBINING DOT BELOW
-            # 834 \x{342} COMBINING GREEK PERISPOMENI
-            # All these characters belong to the class M (marks).
-            elsif($form =~ m/^[\pP\pM]+$/)
+            elsif(grep {$_->conll_deprel() eq 'XSEG'} ($node->get_siblings()))
             {
-                $node->set_afun('AuxG');
-            }
-            else # neither punctuation nor diacritics
-            {
-                $node->set_afun('AuxY');
+                # UNDEFINED nodes that are siblings of XSEG nodes should have been also XSEG nodes.
+                $node->set_afun('Atr');
             }
         }
     }
