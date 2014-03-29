@@ -29,7 +29,7 @@ sub process_zone {
     ###!!! tam i chybu, kterou současné testy přímo neodhalí.
     #$self->fix_InfinitivesNotBeingObjects($root);
     #$self->fix_SubordinatingConj($root);
-    $self->check_afuns($root);
+    #$self->check_afuns($root);
 }
 
 #------------------------------------------------------------------------------
@@ -129,7 +129,7 @@ sub deprel_to_afun
         # Sort of parenthesis? There is only one occurrence of this label in the whole treebank: train/025#330.
         elsif ( $deprel eq 'dp' )
         {
-            ###!!! How do we currently tag parenthesized insertions in PDT?
+            ###!!! How do we currently tag parenthesized insertions in PDT? # could be Apposition?
             $afun = 'Adv';
         }
 
@@ -171,9 +171,17 @@ sub deprel_to_afun
 
         # bijwoordelijke bepaling
         # adverbial
+        # JM: it seems this label is also used for noun modifier (i.e. as our Atr)
         elsif ( $deprel eq 'mod' )
         {
-            $afun = 'Adv';
+            if ($ppos eq 'noun')
+            {
+                $afun = 'Atr';
+            }
+            else
+            {
+                $afun = 'Adv';
+            }
         }
 
         # obcomp
