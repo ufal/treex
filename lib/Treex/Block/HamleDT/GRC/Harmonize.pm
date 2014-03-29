@@ -14,21 +14,8 @@ sub process_zone
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
     ###!!! TODO: grc trees sometimes have conjunct1, coordination, conjunct2 as siblings. We should fix it, but meanwhile we just delete afun=Coord from the coordination.
-    $self->check_apos_coord_membership($root);
+    $self->check_coord_membership($root);
     $self->check_afuns($root);
-}
-
-sub check_apos_coord_membership {
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $afun = $node->afun();
-        if ($afun =~ /^(Apos|Coord)$/) {
-            $self->identify_coap_members($node);
-        }
-    }
 }
 
 #------------------------------------------------------------------------------
@@ -40,27 +27,29 @@ sub deprel_to_afun
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
-
     foreach my $node (@nodes)
     {
         my $deprel = $node->conll_deprel();
         my $form   = $node->form();
         my $pos    = $node->conll_pos();
-
         # default assignment
         my $afun = $deprel;
-
-        if ( $afun =~ /_CO$/ ) {
+        # The _CO suffix signals conjuncts.
+        # The _AP suffix signals members of apposition.
+        # We will later reshape appositions but the routine will expect is_member set.
+        if($afun =~ s/_(CO|AP)$//)
+        {
             $node->set_is_member(1);
         }
-
-        # Remove all contents after first underscore
-        if ( $afun =~ /^(([A-Za-z]+)(_AP)(_.+)?)$/ ) {
-            $afun =~ s/^([A-Za-z]+)(_AP)(_.+)?$/$1_Ap/;
-            $afun =~ s/^ExD_Ap/ExD/;
-        }
-        else {
-            $afun =~ s/^([A-Za-z]+)(_.+)$/$1/;
+        # There are chained dependency labels that describe situation around elipsis.
+        # They ought to contain an ExD, which may be indexed.
+        # The tag before ExD describes the dependency of the node on its elided parent.
+        # The tag after ExD describes the dependency of the elided parent on the grandparent.
+        # Example: ADV_ExD0_PRED_CO
+        # Similar cases in PDT get just ExD.
+        if($afun =~ m/_ExD/)
+        {
+            $afun = 'ExD';
         }
 
         #
@@ -122,6 +111,41 @@ sub deprel_to_afun
     # In PDT, is_member is set at the node that bears the real afun. It is not set at the AuxP/AuxC node.
     # In HamleDT (and in Treex in general), is_member is set directly at the child of the coordination head (preposition or not).
     $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($root->get_zone());
+}
+
+#------------------------------------------------------------------------------
+# Catches possible annotation inconsistencies. If there are no conjuncts under
+# a Coord node, let's try to find them. (We do not care about apposition
+# because it has been restructured.)
+#------------------------------------------------------------------------------
+sub check_coord_membership
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $afun = $node->afun();
+        if($afun eq 'Coord')
+        {
+            my @children = $node->children();
+            # Are there any children?
+            if(scalar(@children)==0)
+            {
+                # There are a few annotation errors where a leaf node is labeled Coord.
+                # In some cases, the node is rightly Coord but it ought not to be leaf.
+                my $parent = $node->parent();
+                my $sibling = $node->get_left_neighbor();
+                my $uncle = $parent->get_left_neighbor();
+                ###!!! TODO
+            }
+            # If there are children, are there conjuncts among them?
+            elsif(scalar(grep {$_->is_member()} (@children))==0)
+            {
+                $self->identify_coap_members($node);
+            }
+        }
+    }
 }
 
 1;
