@@ -80,7 +80,52 @@ sub deprel_to_afun
         # Similar cases in PDT get just ExD.
         if($afun =~ m/ExD/)
         {
-            $afun = 'ExD';
+            # If the chained label is something like COORD_ExD0_OBJ_CO_ExD1_PRED,
+            # this node should be Coord and the conjuncts should get ExD.
+            # Note that we do not know whether the afuns of the children have already been processed or not.
+            # So we have to check both the _CO suffix and the is_member attribute.
+            if($afun =~ m/^COORD/)
+            {
+                ###!!! Conversion of is_member marking from PDT to Treex has not yet been done.
+                ###!!! Thus if the members are AuxP or AuxC, we will not find them.
+                my @members = grep {$_->afun() =~ m/_CO$/ || $_->is_member()} ($node->children());
+                if(@members)
+                {
+                    foreach my $member (@members)
+                    {
+                        $member->set_afun('ExD');
+                        $member->set_is_member(1);
+                    }
+                    $afun = 'Coord';
+                }
+                else
+                {
+                    $afun = 'ExD';
+                }
+            }
+            elsif($afun =~ m/^APOS/)
+            {
+                ###!!! Conversion of is_member marking from PDT to Treex has not yet been done.
+                ###!!! Thus if the members are AuxP or AuxC, we will not find them.
+                my @members = grep {$_->afun() =~ m/_AP$/ || $_->is_member()} ($node->children());
+                if(@members)
+                {
+                    foreach my $member (@members)
+                    {
+                        $member->set_afun('ExD');
+                        $member->set_is_member(1);
+                    }
+                    $afun = 'Apos';
+                }
+                else
+                {
+                    $afun = 'ExD';
+                }
+            }
+            else
+            {
+                $afun = 'ExD';
+            }
         }
         # Most AGDT afuns are all uppercase but we typically want only the first letter uppercase.
         if(exists($agdt2pdt{$afun}))
@@ -134,7 +179,7 @@ sub fix_undefined_nodes
                     $node->set_parent($nodes[$i-1]);
                 }
                 # If there is no preceding token but there is a following token, attach the node there.
-                elsif($i<$#nodes)
+                elsif($i<$#nodes && $nodes[$i+1]->afun() ne 'AuxK')
                 {
                     $node->set_parent($nodes[$i+1]);
                 }
