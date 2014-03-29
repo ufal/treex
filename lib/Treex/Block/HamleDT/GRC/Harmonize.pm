@@ -2,7 +2,7 @@ package Treex::Block::HamleDT::GRC::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::HamleDT::Harmonize';
+extends 'Treex::Block::HamleDT::HarmonizePDT';
 
 #------------------------------------------------------------------------------
 # Reads the Ancient Greek CoNLL trees, converts morphosyntactic tags to the positional
@@ -10,17 +10,12 @@ extends 'Treex::Block::HamleDT::Harmonize';
 #------------------------------------------------------------------------------
 sub process_zone
 {
-    my $self   = shift;
-    my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone($zone);
-    $self->attach_final_punctuation_to_root($a_root);
-    $self->check_apos_coord_membership($a_root);
-    $self->check_afuns($a_root);
-
-    $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($a_root->get_zone());
-    $self->get_or_load_other_block('A2A::SetSharedModifier')->process_zone($a_root->get_zone());
-    $self->get_or_load_other_block('A2A::SetCoordConjunction')->process_zone($a_root->get_zone());
-    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
+    my $self = shift;
+    my $zone = shift;
+    my $root = $self->SUPER::process_zone($zone);
+    ###!!! TODO: grc trees sometimes have conjunct1, coordination, conjunct2 as siblings. We should fix it, but meanwhile we just delete afun=Coord from the coordination.
+    $self->check_apos_coord_membership($root);
+    $self->check_afuns($root);
 }
 
 sub check_apos_coord_membership {
@@ -123,7 +118,10 @@ sub deprel_to_afun
         }
 
     }
-
+    # Coordination of prepositional phrases or subordinate clauses:
+    # In PDT, is_member is set at the node that bears the real afun. It is not set at the AuxP/AuxC node.
+    # In HamleDT (and in Treex in general), is_member is set directly at the child of the coordination head (preposition or not).
+    $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($root->get_zone());
 }
 
 1;
@@ -132,9 +130,9 @@ sub deprel_to_afun
 
 =item Treex::Block::HamleDT::GRC::Harmonize
 
-Converts Ancient Greek dependency treebank into PDT style treebank. Most of the
-deprel tags follows PDT convention, but they are very elaborated, and has been
-shortened.
+Converts Ancient Greek dependency treebank to the HamleDT (Prague) style.
+Most of the deprel tags follow PDT conventions but they are very elaborated
+so we have shortened them.
 
 1. Morphological conversion             -> No
 
@@ -148,6 +146,7 @@ shortened.
 
 =cut
 
-# Copyright 2011 Dan Zeman <zeman@ufal.mff.cuni.cz>, Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
+# Copyright 2011, 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011 Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
