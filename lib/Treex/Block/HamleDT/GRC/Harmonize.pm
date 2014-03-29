@@ -45,12 +45,11 @@ sub deprel_to_afun
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
+    # First loop: copy deprel to afun and convert _CO and _AP to is_member.
+    # Leave everything else untouched until we know that is_member is set correctly for all nodes.
     foreach my $node (@nodes)
     {
         my $deprel = $node->conll_deprel();
-        my $form   = $node->form();
-        my $pos    = $node->conll_pos();
-        # default assignment
         my $afun = $deprel;
         # There were occasional cycles in the source data. They were removed before importing the trees to Treex
         # but a mark was left in the dependency label where the cycle was broken.
@@ -72,6 +71,29 @@ sub deprel_to_afun
         {
             $node->set_is_parenthesis_root(1);
         }
+    }
+    # Second loop: we still cannot rely on is_member because it is not guaranteed that it is always set directly under COORD or APOS.
+    # The source data follow the PDT convention that AuxP and AuxC nodes do not have it (and thus it is marked at a lower level).
+    # In contrast, Treex marks is_member directly under Coord or Apos. We cannot convert it later because we need reliable is_member
+    # for afun conversion. And we cannot use the Pdt2TreexIsMemberConversion block because it relies on the afuns Coord and Apos
+    # and these are not yet ready.
+    foreach my $node (@nodes)
+    {
+        if($node->is_member())
+        {
+            my $new_member = _climb_up_below_coap($node);
+            if($new_member && $new_member != $node)
+            {
+                $new_member->set_is_member(1);
+                $node->set_is_member(undef);
+            }
+        }
+    }
+    # Third loop: now that we can rely on the is_member flags, we can recognize even interacting coordination and elipsis.
+    # Let's convert the rest of afuns.
+    foreach my $node (@nodes)
+    {
+        my $afun = $node->afun();
         # There are chained dependency labels that describe situation around elipsis.
         # They ought to contain an ExD, which may be indexed.
         # The tag before ExD describes the dependency of the node on its elided parent.
@@ -82,19 +104,14 @@ sub deprel_to_afun
         {
             # If the chained label is something like COORD_ExD0_OBJ_CO_ExD1_PRED,
             # this node should be Coord and the conjuncts should get ExD.
-            # Note that we do not know whether the afuns of the children have already been processed or not.
-            # So we have to check both the _CO suffix and the is_member attribute.
             if($afun =~ m/^COORD/)
             {
-                ###!!! Conversion of is_member marking from PDT to Treex has not yet been done.
-                ###!!! Thus if the members are AuxP or AuxC, we will not find them.
-                my @members = grep {$_->afun() =~ m/_CO$/ || $_->is_member()} ($node->children());
+                my @members = grep {$_->is_member()} ($node->children());
                 if(@members)
                 {
                     foreach my $member (@members)
                     {
-                        $member->set_afun('ExD');
-                        $member->set_is_member(1);
+                        $member->set_real_afun('ExD');
                     }
                     $afun = 'Coord';
                 }
@@ -105,15 +122,12 @@ sub deprel_to_afun
             }
             elsif($afun =~ m/^APOS/)
             {
-                ###!!! Conversion of is_member marking from PDT to Treex has not yet been done.
-                ###!!! Thus if the members are AuxP or AuxC, we will not find them.
-                my @members = grep {$_->afun() =~ m/_AP$/ || $_->is_member()} ($node->children());
+                my @members = grep {$_->is_member()} ($node->children());
                 if(@members)
                 {
                     foreach my $member (@members)
                     {
-                        $member->set_afun('ExD');
-                        $member->set_is_member(1);
+                        $member->set_real_afun('ExD');
                     }
                     $afun = 'Apos';
                 }
@@ -137,20 +151,41 @@ sub deprel_to_afun
     foreach my $node (@nodes)
     {
         # "and" and "but" have often deprel PRED
-        if ($node->form =~ /^(και|αλλ’|,)$/ and grep {$_->is_member} $node->get_children) {
-            $node->set_afun("Coord");
+        if ($node->form =~ /^(και|αλλ’|,)$/ and grep {$_->is_member} $node->get_children)
+        {
+            $node->set_afun('Coord');
         }
-
         # no is_member allowed directly below root
-        if ($node->is_member and $node->get_parent->is_root) {
+        if ($node->is_member and $node->get_parent->is_root)
+        {
             $node->set_is_member(0);
         }
-
     }
-    # Coordination of prepositional phrases or subordinate clauses:
-    # In PDT, is_member is set at the node that bears the real afun. It is not set at the AuxP/AuxC node.
-    # In HamleDT (and in Treex in general), is_member is set directly at the child of the coordination head (preposition or not).
-    $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($root->get_zone());
+}
+
+#------------------------------------------------------------------------------
+# Searches for the head of coordination or apposition in AGDT. Adapted from
+# Pdt2TreexIsMemberConversion by Zdenek Zabokrtsky (but different because of
+# slightly different afuns in this treebank). Used for moving the is_member
+# flag directly under the head (even if it is AuxP, in which case PDT would not
+# put the flag there).
+#------------------------------------------------------------------------------
+sub _climb_up_below_coap
+{
+    my ($node) = @_;
+    if ($node->parent()->is_root())
+    {
+        log_warn('No co/ap node between a co/ap member and the tree root');
+        return;
+    }
+    elsif ($node->parent()->afun() =~ m/(COORD|APOS)/i)
+    {
+        return $node;
+    }
+    else
+    {
+        return _climb_up_below_coap($node->parent());
+    }
 }
 
 #------------------------------------------------------------------------------
