@@ -60,6 +60,9 @@ sub deprel_to_afun
         if($afun =~ s/_(CO|AP)$//)
         {
             $node->set_is_member(1);
+            # There are nodes that have both _AP and _CO but we have no means of representing that.
+            # Remove the other suffix if present.
+            $afun =~ s/_(CO|AP)$//;
         }
         # There are chained dependency labels that describe situation around elipsis.
         # They ought to contain an ExD, which may be indexed.
