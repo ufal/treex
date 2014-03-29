@@ -30,6 +30,7 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+    $self->fix_undefined_punctuation($root);
     ###!!! TODO: grc trees sometimes have conjunct1, coordination, conjunct2 as siblings. We should fix it, but meanwhile we just delete afun=Coord from the coordination.
     $self->check_coord_membership($root);
     $self->check_afuns($root);
@@ -82,8 +83,8 @@ sub deprel_to_afun
         }
         $node->set_afun($afun);
     }
-
-    foreach my $node (@nodes) {
+    foreach my $node (@nodes)
+    {
         # "and" and "but" have often deprel PRED
         if ($node->form =~ /^(και|αλλ’|,)$/ and grep {$_->is_member} $node->get_children) {
             $node->set_afun("Coord");
@@ -99,6 +100,54 @@ sub deprel_to_afun
     # In PDT, is_member is set at the node that bears the real afun. It is not set at the AuxP/AuxC node.
     # In HamleDT (and in Treex in general), is_member is set directly at the child of the coordination head (preposition or not).
     $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($root->get_zone());
+}
+
+#------------------------------------------------------------------------------
+# A few punctuation nodes (commas and dashes) are attached non-projectively to
+# the root, ignoring their neighboring tokens. They are labeled with the
+# UNDEFINED afun (which we temporarily converted to NR). Attach them to the
+# preceding token and give them a better afun.
+#------------------------------------------------------------------------------
+sub fix_undefined_punctuation
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    for(my $i = 0; $i<=$#nodes; $i++)
+    {
+        my $node = $nodes[$i];
+        # If this is the last punctuation in the sentence, chances are that it was already recognized as AuxK.
+        # In that case the problem is already fixed.
+        if($node->conll_deprel() eq 'UNDEFINED' && $node->parent()->is_root() && $node->is_leaf() && $node->afun() ne 'AuxK')
+        {
+            # Attach the node to the preceding token if there is a preceding token.
+            if($i>0)
+            {
+                $node->set_parent($nodes[$i-1]);
+            }
+            # If there is no preceding token but there is a following token, attach the node there.
+            elsif($i<$#nodes)
+            {
+                $node->set_parent($nodes[$i+1]);
+            }
+            # If this is the only token in the sentence, it remained attached to the root.
+            # Pick the right afun for the node.
+            my $form = $node->form();
+            if($form eq ',')
+            {
+                $node->set_afun('AuxX');
+            }
+            elsif($form =~ m/^\pP+$/)
+            {
+                $node->set_afun('AuxG');
+            }
+            else # not punctuation
+            {
+                ###!!! Těmhle zatím žádný afun nedám, aby mi je testy našly a abych je mohl zkontrolovat.
+                #$node->set_afun('AuxY');
+            }
+        }
+    }
 }
 
 #------------------------------------------------------------------------------
