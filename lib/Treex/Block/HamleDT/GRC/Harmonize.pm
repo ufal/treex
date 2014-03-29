@@ -124,9 +124,9 @@ sub fix_undefined_nodes
         my $node = $nodes[$i];
         # If this is the last punctuation in the sentence, chances are that it was already recognized as AuxK.
         # In that case the problem is already fixed.
-        if($node->conll_deprel() eq 'UNDEFINED')
+        if($node->conll_deprel() eq 'UNDEFINED' && $node->afun() ne 'AuxK')
         {
-            if($node->parent()->is_root() && $node->is_leaf() && $node->afun() ne 'AuxK')
+            if($node->parent()->is_root() && $node->is_leaf())
             {
                 # Attach the node to the preceding token if there is a preceding token.
                 if($i>0)
@@ -175,6 +175,18 @@ sub fix_undefined_nodes
             {
                 # UNDEFINED nodes that are siblings of XSEG nodes should have been also XSEG nodes.
                 $node->set_afun('Atr');
+            }
+            elsif($node->parent()->get_iset('pos') eq 'noun')
+            {
+                $node->set_afun('Atr');
+            }
+            elsif($node->parent()->get_iset('pos') eq 'verb' && $node->match_iset('pos' => 'noun', 'case' => 'acc'))
+            {
+                $node->set_afun('Obj');
+            }
+            else
+            {
+                $node->set_afun('ExD');
             }
         }
     }
