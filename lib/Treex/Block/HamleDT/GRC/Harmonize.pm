@@ -71,6 +71,7 @@ sub deprel_to_afun
         {
             $node->set_is_parenthesis_root(1);
         }
+        $node->set_afun($afun);
     }
     # Second loop: we still cannot rely on is_member because it is not guaranteed that it is always set directly under COORD or APOS.
     # The source data follow the PDT convention that AuxP and AuxC nodes do not have it (and thus it is marked at a lower level).
