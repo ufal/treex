@@ -30,6 +30,7 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+    $self->fix_deficient_sentential_coordination($root);
     $self->fix_undefined_nodes($root);
     ###!!! TODO: grc trees sometimes have conjunct1, coordination, conjunct2 as siblings. We should fix it, but meanwhile we just delete afun=Coord from the coordination.
     $self->check_coord_membership($root);
@@ -73,13 +74,80 @@ sub deprel_to_afun
         }
         $node->set_afun($afun);
     }
-    # Second loop: we still cannot rely on is_member because it is not guaranteed that it is always set directly under COORD or APOS.
+    # Second loop: process chained dependency labels and decide, what nodes are ExD, Coord, Apos, AuxP or AuxC.
+    # At the same time translate the other afuns to the dialect of HamleDT.
+    foreach my $node (@nodes)
+    {
+        my $afun = $node->afun();
+        # There are chained dependency labels that describe situation around elipsis.
+        # They ought to contain an ExD, which may be indexed (e.g. ExD0).
+        # The tag before ExD describes the dependency of the node on its elided parent.
+        # The tag after ExD describes the dependency of the elided parent on the grandparent.
+        # Example: ADV_ExD0_PRED_CO
+        # Similar cases in PDT get just ExD.
+        if($afun =~ m/ExD/)
+        {
+            # If the chained label is something like COORD_ExD0_OBJ_CO_ExD1_PRED,
+            # this node should be Coord and the conjuncts should get ExD.
+            # However, we still cannot set afun=ExD for the conjuncts.
+            # This would involve traversing also AuxP nodes and nested Coord, so we need to have all Coords in place first.
+            if($afun =~ m/^COORD/)
+            {
+                $node->set_afun('Coord');
+                $node->wild()->{'ExD conjuncts'} = 1;
+            }
+            elsif($afun =~ m/^APOS/)
+            {
+                $node->set_afun('Apos');
+                $node->wild()->{'ExD conjuncts'} = 1;
+            }
+            elsif($afun =~ m/^(Aux[CP])/)
+            {
+                $node->set_afun($1);
+                $node->wild()->{'ExD conjuncts'} = 1;
+            }
+            else
+            {
+                $node->set_afun('ExD');
+            }
+        }
+        # Most AGDT afuns are all uppercase but we typically want only the first letter uppercase.
+        elsif(exists($agdt2pdt{$afun}))
+        {
+            $node->set_afun($agdt2pdt{$afun});
+        }
+        # Try to fix inconsistencies in annotation of coordination.
+        if($node->afun() !~ m/^(Coord|Apos)$/)
+        {
+            my @members = grep {$_->is_member()} ($node->children());
+            if(scalar(@members)>0)
+            {
+                if($node->get_iset('pos') =~ m/^(conj|punc|part|adv)$/)
+                {
+                    $node->set_afun('Coord');
+                }
+                else
+                {
+                    foreach my $member (@members)
+                    {
+                        $member->set_is_member(0);
+                    }
+                }
+            }
+        }
+    }
+    # Third loop: we still cannot rely on is_member because it is not guaranteed that it is always set directly under COORD or APOS.
     # The source data follow the PDT convention that AuxP and AuxC nodes do not have it (and thus it is marked at a lower level).
     # In contrast, Treex marks is_member directly under Coord or Apos. We cannot convert it later because we need reliable is_member
     # for afun conversion. And we cannot use the Pdt2TreexIsMemberConversion block because it relies on the afuns Coord and Apos
     # and these are not yet ready.
     foreach my $node (@nodes)
     {
+        # no is_member allowed directly below root
+        if ($node->is_member and $node->get_parent->is_root)
+        {
+            $node->set_is_member(0);
+        }
         if($node->is_member())
         {
             my $new_member = _climb_up_below_coap($node);
@@ -90,76 +158,14 @@ sub deprel_to_afun
             }
         }
     }
-    # Third loop: now that we can rely on the is_member flags, we can recognize even interacting coordination and elipsis.
-    # Let's convert the rest of afuns.
+    # Fourth loop: finish propagating ExD down the tree at coordination and apposition.
     foreach my $node (@nodes)
     {
-        my $afun = $node->afun();
-        # There are chained dependency labels that describe situation around elipsis.
-        # They ought to contain an ExD, which may be indexed.
-        # The tag before ExD describes the dependency of the node on its elided parent.
-        # The tag after ExD describes the dependency of the elided parent on the grandparent.
-        # Example: ADV_ExD0_PRED_CO
-        # Similar cases in PDT get just ExD.
-        if($afun =~ m/ExD/)
+        if($node->wild()->{'ExD conjuncts'})
         {
-            # If the chained label is something like COORD_ExD0_OBJ_CO_ExD1_PRED,
-            # this node should be Coord and the conjuncts should get ExD.
-            if($afun =~ m/^COORD/)
-            {
-                my @members = grep {$_->is_member()} ($node->children());
-                if(@members)
-                {
-                    foreach my $member (@members)
-                    {
-                        $member->set_real_afun('ExD');
-                    }
-                    $afun = 'Coord';
-                }
-                else
-                {
-                    $afun = 'ExD';
-                }
-            }
-            elsif($afun =~ m/^APOS/)
-            {
-                my @members = grep {$_->is_member()} ($node->children());
-                if(@members)
-                {
-                    foreach my $member (@members)
-                    {
-                        $member->set_real_afun('ExD');
-                    }
-                    $afun = 'Apos';
-                }
-                else
-                {
-                    $afun = 'ExD';
-                }
-            }
-            else
-            {
-                $afun = 'ExD';
-            }
-        }
-        # Most AGDT afuns are all uppercase but we typically want only the first letter uppercase.
-        if(exists($agdt2pdt{$afun}))
-        {
-            $afun = $agdt2pdt{$afun};
-        }
-        $node->set_afun($afun);
-    }
-    foreach my $node (@nodes)
-    {
-        # "and" and "but" have often deprel PRED
-        if ($node->form =~ /^(και|αλλ’|,)$/ and grep {$_->is_member} $node->get_children)
-        {
-            $node->set_afun('Coord');
-        }
-        # no is_member allowed directly below root
-        if ($node->is_member and $node->get_parent->is_root)
-        {
-            $node->set_is_member(0);
+            # set_real_afun() goes down if it sees Coord, Apos, AuxP or AuxC
+            $node->set_real_afun('ExD');
+            delete($node->wild()->{'ExD conjuncts'});
         }
     }
 }
@@ -205,7 +211,7 @@ sub fix_undefined_nodes
         my $node = $nodes[$i];
         # If this is the last punctuation in the sentence, chances are that it was already recognized as AuxK.
         # In that case the problem is already fixed.
-        if($node->conll_deprel() eq 'UNDEFINED' && $node->afun() ne 'AuxK')
+        if($node->conll_deprel() eq 'UNDEFINED' && $node->afun() ne 'AuxK' && $node->afun() ne 'Coord')
         {
             if($node->parent()->is_root() && $node->is_leaf())
             {
@@ -269,6 +275,31 @@ sub fix_undefined_nodes
             {
                 $node->set_afun('ExD');
             }
+        }
+    }
+}
+
+#------------------------------------------------------------------------------
+# Deficient sentential coordination: coordinating conjunction at or near the
+# beginning of the sentence, connects the main predicate with the predicate of
+# the previous sentence (in theory). The conjunction should be child of the
+# root and it should be labeled Coord. The main predicate should be its child,
+# labeled Pred and is_member set (sometimes there are several children, marked
+# Pred or ExD). Unfortunately in AGDT the conjunction is often labeled Pred
+# instead of Coord (and morphologically it may be tagged as particle instead of
+# conjunction).
+#------------------------------------------------------------------------------
+sub fix_deficient_sentential_coordination
+{
+    my $self = shift;
+    my $root = shift;
+    my @rchildren = $root->children();
+    if(scalar(@rchildren)==2)
+    {
+        my $conjunction = $rchildren[0];
+        if($conjunction->afun() eq 'Pred' && grep {$_->is_member()} ($conjunction->children()))
+        {
+            $conjunction->set_afun('Coord');
         }
     }
 }
