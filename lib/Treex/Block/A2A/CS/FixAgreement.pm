@@ -162,13 +162,13 @@ sub isName {
     }
 
     if (!$node->get_bundle->has_tree(
-            $self->language, 'n', $self->selector )
+            $self->language, 'n', '' )
     ) {
         log_warn "n tree is missing!";
         return 0;
     }
 
-    my $n_root = $node->get_bundle->get_tree( $self->language, 'n', $self->selector );
+    my $n_root = $node->get_bundle->get_tree( $self->language, 'n', '' );
 
     # all n nodes
     my @n_nodes = $n_root->get_descendants();
