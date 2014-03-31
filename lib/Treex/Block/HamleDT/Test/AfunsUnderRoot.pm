@@ -5,7 +5,7 @@ extends 'Treex::Block::Test::BaseTester';
 
 sub process_atree {
     my ($self, $a_root) = @_;
-    for my $anode ($a_root->get_echildren()) {
+    for my $anode ($a_root->get_echildren({dive=>'AuxCP'})) {
         my $afun = $anode->afun;
         if (
             $afun eq 'Pred' or
