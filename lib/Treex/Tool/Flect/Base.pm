@@ -46,7 +46,7 @@ sub BUILD {
 sub inflect_sentence {
     my ( $self, $tokens ) = @_;
 
-    my $sent = join( ' ', @$tokens );
+    my $sent = join( '\n', @$tokens );
     $sent = $self->_python->command("print infl.inflect_sent('$sent')");
     my @forms = split / /, $sent;
     return \@forms;

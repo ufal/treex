@@ -8,7 +8,7 @@ use List::MoreUtils "pairwise";
 
 my $flect = Treex::Tool::Flect::Base->new(
     {
-        model_file          => '/net/projects/tectomt_shared/data/models/flect/model-en_conll2009_prevword_lemtag-l1_10_00001.pickle.gz',
+        model_file          => '/net/projects/tectomt_shared/data/models/flect/model-en_conll2009_prevword_lemtag-l1_10_00001.pickle',
         features            => [ 'Lemma', 'Tag_POS' ],
         additional_features => [
             'LemmaSuff_1 substr -1 Lemma',

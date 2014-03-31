@@ -6,7 +6,7 @@ sys.path.append('./flect')
 print sys.path
 from flect.flect import SentenceInflector
 
-infl = SentenceInflector({'model_file': '/net/projects/tectomt_shared/data/models/flect/model-en_conll2009_prevword_lemtag-l1_10_00001.pickle.gz',
+infl = SentenceInflector({'model_file': '/net/projects/tectomt_shared/data/models/flect/model-en_conll2009_prevword_lemtag-l1_10_00001.pickle',
                           'features': 'Lemma|Tag_POS',
                           'additional_features': ['LemmaSuff_1 substr -1 Lemma', 
                                                   'LemmaSuff_2 substr -2 Lemma',
@@ -18,5 +18,5 @@ infl = SentenceInflector({'model_file': '/net/projects/tectomt_shared/data/model
                                                   'NEIGHBOR-1_Lemma: neighbor -1 Lemma', ],
                           })
 
-print infl.inflect_sent('the|DT cat|NNS be|VBD black|JJ')
+print infl.inflect_sent("\n".join(['the|DT', 'cat|NNS', 'be|VBD', 'black|JJ']))
 

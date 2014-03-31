@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Tool::Flect::FlectBlock';
 
-has '+model_file' => ( default => 'data/models/flect/model-en_pcedt20_tsynth-t275-l1_1_001.pickle.gz' );
+has '+model_file' => ( default => 'data/models/flect/model-en_pcedt20_tsynth-t275-l1_1_001.pickle' );
 
 has '+features_file' => ( default => 'data/models/flect/model-en_pcedt20_tsynth-t275-l1_1_001.features.yml' );
 
