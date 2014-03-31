@@ -1,4 +1,4 @@
-package Treex::Block::HamleDT::Test::AfunsUnderRoot.pm
+package Treex::Block::HamleDT::Test::AfunsUnderRoot
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -24,7 +24,7 @@ sub process_atree {
 
 =over
 
-=item Treex::Block::HamleDT::Test::PredUnderRoot
+=item Treex::Block::HamleDT::Test::AfunsUnderRoot
 
 The only afuns allowed (effectively) under the technical root are Pred, ExD, and AuxK.
 
