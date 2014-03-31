@@ -7,11 +7,14 @@ sub process_atree {
     my ($self, $a_root) = @_;
     for my $anode ($a_root->get_echildren()) {
         $afun = $anode->afun;
-        unless (
+        if (
             $afun eq 'Pred' or
             $afun eq 'ExD' or
             $afun eq 'AuxK'
         ) {
+            $self->praise();
+        }
+        else {
             $self->complain($anode, $afun);
         }
     }
