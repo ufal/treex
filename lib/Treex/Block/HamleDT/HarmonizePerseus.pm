@@ -34,7 +34,7 @@ sub process_zone
     $self->fix_undefined_nodes($root);
     ###!!! TODO: grc trees sometimes have conjunct1, coordination, conjunct2 as siblings. We should fix it, but meanwhile we just delete afun=Coord from the coordination.
     $self->check_coord_membership($root);
-    $self->check_afuns($root);
+    return $root;
 }
 
 #------------------------------------------------------------------------------
