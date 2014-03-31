@@ -19,21 +19,21 @@ sub process_zone
     $self->make_pdt_coordination($a_root);
     $self->correct_punctuations($a_root);
     $self->correct_coordination($a_root);
-    $self->check_apos_coord_membership($a_root);
+    $self->check_coord_membership($a_root);
 #    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
 #    $self->check_afuns($a_root);
 }
 
 # this function will call the function to make sure that
-# all coordination and apos members have 'is_member' set to 1
-sub check_apos_coord_membership {
+# all coordination members have 'is_member' set to 1
+sub check_coord_membership {
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
         my $afun = $node->afun();
-        if ($afun =~ /^(Apos|Coord)$/) {
+        if ($afun eq 'Coord') {
             $self->identify_coap_members($node);
         }
     }
@@ -212,7 +212,7 @@ sub deprel_to_afun
             $deprel eq 'aponcmod' or
             $deprel eq 'aponcpred'
         ) {
-            $afun = 'Apos';
+            $afun = 'Apposition';
         }
 
         # determiner
