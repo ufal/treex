@@ -12,7 +12,7 @@ sub process_atree {
             $afun eq 'ExD' or
             $afun eq 'AuxK'
         ) {
-            $self->praise();
+            $self->praise($anode);
         }
         else {
             $self->complain($anode, $afun);
