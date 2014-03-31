@@ -1,4 +1,4 @@
-package Treex::Block::HamleDT::Test::AfunsUnderRoot
+package Treex::Block::HamleDT::Test::AfunsUnderRoot;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
