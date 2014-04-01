@@ -64,6 +64,8 @@ sub _deprel_to_afun {
         my $ppos = $parent->get_iset('pos');
         my $psubpos = $parent->get_iset('subpos');
 
+        my $afun = '';
+
         # children of the technical root
         if ($deprel eq 'ROOT') {
             # "clean" predicate
@@ -72,11 +74,11 @@ sub _deprel_to_afun {
             }
             # postposition/particle as a head - but we do not want to assign AuxP now; later we will pass the label to the child
             elsif ($subpos eq 'post' or $subpos eq 'part') {
-                $afun eq 'Pred';
+                $afun = 'Pred';
             }
             # coordinating conjunction/particle (Pconj)
             elsif ($subpos eq 'coor') {
-                $afun eq 'Pred';
+                $afun = 'Pred';
                 $node->wild()->{coordinator} = 1;
             }
             elsif ($subpos eq 'punc') {
@@ -85,7 +87,7 @@ sub _deprel_to_afun {
                 }
             }
             else {
-                $afun eq 'ExD';
+                $afun = 'ExD';
             }
         }
 
@@ -110,7 +112,7 @@ sub _deprel_to_afun {
                 $node->wild()->{conjunct} = 1;
             }
             elsif ($psubpos eq 'verb') {
-                if ($pos = 'adv') {
+                if ($pos eq 'adv') {
                     $afun = 'Adv';
                 }
                 else {
@@ -123,6 +125,9 @@ sub _deprel_to_afun {
         }
         # Adjunct
         elsif ($deprel eq 'ADJ') {
+            if ( 0 ) {
+                ;
+            }
             else {
                 $afun = 'NR';
                 print STDERR $node->get_address, "\t", 'Unrecognized ADJ';
@@ -133,7 +138,7 @@ sub _deprel_to_afun {
         elsif ($deprel eq 'MARK') {
             # topicalizers and focalizers
             if ($conll_pos eq 'Pfoc') {
-                $afun = AuxZ;
+                $afun = 'AuxZ';
             }
             # particles for expressing attitude/empathy, or turning the phrase into a question
             elsif ($conll_pos eq 'PSE') {
@@ -162,6 +167,9 @@ sub _deprel_to_afun {
 
         # Co-head
         elsif ($deprel eq 'HD') {
+            if (0) {
+                ;
+            }
             else {
                 $afun = 'NR';
                 print STDERR $node->get_address, "\t", 'Unrecognized HD';
