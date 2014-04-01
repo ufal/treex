@@ -11,6 +11,7 @@ sub process_atree
     my $remove = scalar(@noafuns)>1;
     if($remove)
     {
+        log_info('Removing unannotated sentence '.$root->get_address());
         my $bundle = $root->get_bundle();
         $bundle->remove();
     }
