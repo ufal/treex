@@ -48,6 +48,40 @@ sub make_pdt_coordination {
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
+# WIP, currently unused; see 'deprel_to_afun' below
+#------------------------------------------------------------------------------
+sub _deprel_to_afun {
+    my $self = shift;
+    my $root = shift;
+    for my $node ($root->get_descendants()) {
+        my $deprel = $node->conll_deprel();
+        my $form = $node->form();
+        my $conll_cpos = $node->conll_cpos();
+        my $conll_pos = $node->conll_pos();
+        my $pos = $node->get_iset('pos');
+        my $subpos = $node->get_iset('subpos');
+
+        if ($deprel eq 'ROOT') {
+            if ($pos eq 'verb') {
+                $afun = 'Pred';
+            }
+            elsif ($subpos eq 'post') {
+                $afun eq 'AuxP';
+            }
+            elsif ($subpos eq 'coor') {
+                $afun eq 'Pred'; # later to be passed to the relevant child(ren) and changed to Coord
+                $node->wild()->{coordinator} = 1;
+            }
+            elsif ($pos eq 'part') {
+                $afun eq 'AuxP';
+            }
+        }
+    }
+}
+
+#------------------------------------------------------------------------------
+# Convert dependency relation tags to analytical functions.
+# http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
 sub deprel_to_afun
 {
@@ -62,8 +96,8 @@ sub deprel_to_afun
 
         my $deprel = $node->conll_deprel();
         my $form   = $node->form();
-        my $conll_pos = $node->conll_pos();
-        my $conll_subpos = $node->conll_cpos();
+        my $conll_pos = $node->conll_cpos();
+        my $conll_subpos = $node->conll_pos();
         my $pos    = $node->get_iset('pos');
         my $subpos = $node->get_iset('subpos');
 
