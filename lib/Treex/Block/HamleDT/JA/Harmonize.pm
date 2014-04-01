@@ -60,21 +60,117 @@ sub _deprel_to_afun {
         my $conll_pos = $node->conll_pos();
         my $pos = $node->get_iset('pos');
         my $subpos = $node->get_iset('subpos');
+        my $parent = $node->get_parent();
+        my $ppos = $parent->get_iset('pos');
+        my $psubpos = $parent->get_iset('subpos');
 
+        # children of the technical root
         if ($deprel eq 'ROOT') {
+            # "clean" predicate
             if ($pos eq 'verb') {
                 $afun = 'Pred';
             }
-            elsif ($subpos eq 'post') {
-                $afun eq 'AuxP';
+            # postposition/particle as a head - but we do not want to assign AuxP now; later we will pass the label to the child
+            elsif ($subpos eq 'post' or $subpos eq 'part') {
+                $afun eq 'Pred';
             }
+            # coordinating conjunction/particle (Pconj)
             elsif ($subpos eq 'coor') {
-                $afun eq 'Pred'; # later to be passed to the relevant child(ren) and changed to Coord
+                $afun eq 'Pred';
                 $node->wild()->{coordinator} = 1;
             }
-            elsif ($pos eq 'part') {
-                $afun eq 'AuxP';
+            elsif ($subpos eq 'punc') {
+                if ($node->get_iset('punctype') =~ m/^(peri|qest)$/) {
+                    $afun = 'AuxK';
+                }
             }
+            else {
+                $afun eq 'ExD';
+            }
+        }
+
+        # Subject
+        elsif ($deprel eq 'SBJ') {
+            $afun = 'Sb';
+            if ($subpos eq 'coor') {
+                $node->wild()->{coordinator} = 1;
+            }
+        }
+
+        # Complement (obligatory element with respect to the head)
+        elsif ($deprel eq 'COMP') {
+            if ($ppos eq 'prep') {
+                $afun = 'PrepArg';
+            }
+            elsif ($ppos eq 'part') {
+                $afun = 'SubArg';
+            }
+            elsif ($psubpos eq 'coor') {
+                $afun = 'CoordArg';
+                $node->wild()->{conjunct} = 1;
+            }
+            elsif ($psubpos eq 'verb') {
+                if ($pos = 'adv') {
+                    $afun = 'Adv';
+                }
+                else {
+                    $afun = 'Obj';
+                }
+            }
+            else {
+                $afun = 'Atr';
+            }
+        }
+        # Adjunct
+        elsif ($deprel eq 'ADJ') {
+            else {
+                $afun = 'NR';
+                print STDERR $node->get_address, "\t", 'Unrecognized ADJ';
+            }
+        }
+
+        # Marker
+        elsif ($deprel eq 'MARK') {
+            # topicalizers and focalizers
+            if ($conll_pos eq 'Pfoc') {
+                $afun = AuxZ;
+            }
+            # particles for expressing attitude/empathy, or turning the phrase into a question
+            elsif ($conll_pos eq 'PSE') {
+                $afun = 'AuxO';
+            }
+            # postpositions after adverbs with no syntactic, but instead rhetorical function
+            elsif ($conll_pos eq 'P' and $ppos eq 'adv') {
+                $afun = 'AuxO';
+            }
+            # coordination marker
+            # there are 2 types of coordination:
+            # 1. the coordinator is between the phrases in the constituency tree;
+            #    in the depencency tree, it is a child of the second conjunct and
+            #    a right sister of the first conjunct (which has the deprel HEAD)
+            # 2. the coordinator marks an individual conjuct - each conjunct is marked separately;
+            #    the coordinator is a child of the conjunct
+            elsif ($subpos eq 'coor') {
+                $afun = 'Coord';
+                $node->wild()->{coordinator} = 1;
+            }
+            else {
+                $afun = 'NR';
+                print STDERR $node->get_address, "\t", 'Unrecognized MARK';
+            }
+        }
+
+        # Co-head
+        elsif ($deprel eq 'HD') {
+            else {
+                $afun = 'NR';
+                print STDERR $node->get_address, "\t", 'Unrecognized HD';
+            }
+        }
+        # No other deprel is defined
+        else {
+            $afun = 'NR';
+            print STDERR $node->get_address, "\t", 'Unrecognized deprel';
         }
     }
 }
