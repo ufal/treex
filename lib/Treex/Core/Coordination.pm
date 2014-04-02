@@ -541,7 +541,10 @@ sub shape_prague
     # There is no guarantee that we obtained ordered lists of members and delimiters.
     # They may have been added during tree traversal, which is not ordered linearly.
     my @conjunctions = $self->get_conjunctions();
-    my @ordered_delimiters = sort {$a->ord() <=> $b->ord()} (@conjunctions ? @conjunctions : @delimiters);
+    # Some punctuation symbols (comma, semicolon, colon, hyphen) are better coordinators than others (period, exclamation, question, quotation, brackets).
+    ###!!! Punctuation between conjuncts is probably better than punctuation after the last conjunct but we do not currently take this into account.
+    my @better_punctuation = grep {$_->form() =~ m/^[-,;:]$/} (@delimiters);
+    my @ordered_delimiters = sort {$a->ord() <=> $b->ord()} (@conjunctions ? @conjunctions : @better_punctuation ? @better_punctuation : @delimiters);
     my $croot = pop(@ordered_delimiters);
     # Attach the new root to the parent of the coordination.
     $croot->set_parent($self->parent());

@@ -10,8 +10,6 @@ sub process_zone
     my $root  = $zone->get_atree();
     my @nodes = $root->get_descendants({'ordered' => 1});
     return if(!@nodes);
-    # Coordination has higher priority than AuxK if it is necessary to use the final punctuation as coordination head.
-    return if($nodes[-1]->afun() eq 'Coord');
     # Mimic the function HamleDT::CoNLL2PDTStyle::attach_final_punctuation_to_root().
     # Just check attachment instead of attaching.
     my $rule1chars = '[-\.\x{2026}\x{964}\x{965}?!\x{61F};:,\x{61B}\x{60C}\x{2010}-\x{2015}]';
@@ -23,18 +21,24 @@ sub process_zone
     my $rule2i0;
     my $rule1i1 = $#nodes;
     my $i = $#nodes;
+    # Do not touch the last node if it heads coordination or apposition.
+    return if($i>=0 && $nodes[$i]->afun() =~ m/^(Coord|Apos)$/);
     while($i>=0 && $nodes[$i]->form() =~ m/^$rule2chars+$/)
     {
         $rule2 = 1;
         $rule2i0 = $i;
         $i--;
     }
+    # Do not touch the last node if it heads coordination or apposition.
+    return if($i>=0 && $nodes[$i]->afun() =~ m/^(Coord|Apos)$/);
     while($i>=0 && $nodes[$i]->form() =~ m/^$rule1chars+$/)
     {
         $rule1 = 1;
         $rule1i0 = $i;
         $i--;
     }
+    # Do not touch the last node if it heads coordination or apposition.
+    return if($rule1i0>=0 && $rule1i0<=$#nodes && $nodes[$rule1i0]->afun() =~ m/^(Coord|Apos)$/);
     if($rule2 && $rule1)
     {
         $rule1i1 = $rule2i0-1;

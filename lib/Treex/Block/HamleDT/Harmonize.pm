@@ -575,6 +575,8 @@ sub attach_final_punctuation_to_root
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants({'ordered' => 1});
+    # Rule 0: If the last token is Coord or Apos, do not touch anything!
+    # - later we may want to check such coordination but we must take extra care not to make the structure invalid.
     # Rule 1: If the last token (or sequence of tokens) is
     # - a period ('.') or three dots ('...' or the corresponding Unicode character) or devanagari danda
     # - question or exclamation mark ('?', '!', Arabic question mark)
@@ -601,18 +603,24 @@ sub attach_final_punctuation_to_root
     my $rule2i0;
     my $rule1i1 = $#nodes;
     my $i = $#nodes;
+    # Do not touch the last node if it heads coordination or apposition.
+    return if($i>=0 && $nodes[$i]->afun() =~ m/^(Coord|Apos)$/);
     while($i>=0 && $nodes[$i]->form() =~ m/^$rule2chars+$/)
     {
         $rule2 = 1;
         $rule2i0 = $i;
         $i--;
     }
+    # Do not touch the last node if it heads coordination or apposition.
+    return if($i>=0 && $nodes[$i]->afun() =~ m/^(Coord|Apos)$/);
     while($i>=0 && $nodes[$i]->form() =~ m/^$rule1chars+$/)
     {
         $rule1 = 1;
         $rule1i0 = $i;
         $i--;
     }
+    # Do not touch the last node if it heads coordination or apposition.
+    return if(defined($rule1i0) && $rule1i0>=0 && $rule1i0<=$#nodes && $nodes[$rule1i0]->afun() =~ m/^(Coord|Apos)$/);
     if($rule2 && $rule1)
     {
         $rule1i1 = $rule2i0-1;

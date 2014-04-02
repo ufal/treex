@@ -36,7 +36,7 @@ sub deprel_to_afun
             my $parent = $node->parent();
             if(!$parent->is_coap_root())
             {
-                if($parent->get_iset('pos') eq 'conj' || $parent->form() =~ m/^(ani|,|;|:|-+)$/)
+                if($parent->get_iset('pos') eq 'conj' || $parent->form() && $parent->form() =~ m/^(ani|,|;|:|-+)$/)
                 {
                     $parent->set_afun('Coord');
                 }
@@ -63,6 +63,79 @@ sub deprel_to_afun
             $node->set_afun($self->guess_afun($node));
         }
     }
+    # Fix known annotation errors. They include coordination, i.e. the tree may now not be valid.
+    # We should fix it now, before the superordinate class will perform other tree operations.
+    $self->fix_annotation_errors($root);
+}
+
+#------------------------------------------------------------------------------
+# Fixes a few known annotation errors that appear in the data. Should be called
+# from deprel_to_afun() so that it precedes any tree operations that the
+# superordinate class may want to do.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        my $parent = $node->parent();
+        my @children = $node->children();
+        # Deficient sentential coordination ("And" at the beginning of the sentence):
+        # There are hundreds of cases where the conjunction is labeled Coord but the child has not is_member set.
+        if($node->afun() =~ m/^(Coord|Apos)$/ && !grep {$_->is_member()} (@children))
+        {
+            # If the node is leaf we cannot hope to find any conjuncts.
+            # The same holds if the node is not leaf but its children are not eligible for conjuncts.
+            if(scalar(grep {$_->afun() !~ m/^Aux[GXY]$/} (@children))==0)
+            {
+                if($node->form() eq ',')
+                {
+                    $node->set_afun('AuxX');
+                }
+                elsif($node->get_iset('pos') eq 'punc')
+                {
+                    $node->set_afun('AuxG');
+                }
+                else
+                {
+                    # It is not punctuation, thus it is a word or a number.
+                    # As it was labeled Coord, let us assume that it is an extra conjunction in coordination that is headed by another conjunction.
+                    $node->set_afun('AuxY');
+                }
+            }
+            # There are possible conjuncts and we must identify them.
+            else
+            {
+                $self->identify_coap_members($node);
+            }
+        }
+        # Verb "je" labeled AuxX.
+        elsif($node->form() eq 'je' && $node->afun() eq 'AuxX' && $parent->afun() eq 'Coord')
+        {
+            $node->set_afun('Pred');
+            $node->set_is_member(1);
+        }
+        # Conjunction "akoby" labeled AuxY ("Lenže akoby sa díval na...")
+        elsif($node->form() eq 'akoby' && $node->afun() eq 'AuxY' && $parent->afun() eq 'Coord')
+        {
+            $node->set_afun('AuxC');
+            $node->set_is_member(1);
+        }
+        # Colon at sentence end, labeled Apos although there are no children.
+        elsif($node->form() eq ':' && $node->afun() eq 'Apos' && $node->is_leaf())
+        {
+            $node->set_afun('AuxG');
+        }
+        # Colon at sentence end, subordinate clause attached to it instead of the verb.
+        elsif($node->form() eq 'a' && !$parent->is_root() && $parent->form() eq ':' && !$parent->get_next_node() && !$parent->parent()->is_root() && $parent->parent()->get_iset('pos') eq 'verb')
+        {
+            my $verb = $parent->parent();
+            $node->set_parent($verb);
+            $node->set_is_member(undef);
+        }
+    }
 }
 
 #------------------------------------------------------------------------------
@@ -83,6 +156,21 @@ sub guess_afun
         if($pos eq 'verb')
         {
             $afun = 'Pred';
+        }
+        elsif($node->form() eq 'ale' && grep {$_->afun() !~ m/^(Aux[GXY])$/} ($node->children()))
+        {
+            $afun = 'Coord';
+            foreach my $child ($node->children())
+            {
+                if($child->afun() !~ m/^Aux[GXY]$/)
+                {
+                    $child->set_is_member(1);
+                }
+                else
+                {
+                    $child->set_is_member(undef);
+                }
+            }
         }
     }
     # We may not be able to recognize coordination if parent's label is yet to be guessed.
@@ -113,11 +201,35 @@ sub guess_afun
     {
         $afun = 'AuxP';
     }
+    elsif($parent->form() eq 'než')
+    {
+        # větší než já
+        # V PDT se podobné fráze analyzují jako elipsa ("má větší příjem než [mám] já").
+        $afun = 'ExD';
+    }
+    elsif($parent->form() eq 'ako')
+    {
+        # cien známych ako Kristián
+        # V PDT se fráze se spojkou "jako" analyzují jako doplněk. Ovšem "jako" tam visí až na doplňku, čímž se liší od jiných výskytů podřadících spojek a předložek.
+        $afun = 'Atv';
+    }
+    elsif($parent->form() eq 'že')
+    {
+        $afun = 'Obj';
+    }
     elsif($ppos eq 'noun')
     {
         $afun = 'Atr';
     }
-    elsif($ppos eq 'adj' && $pos eq 'adj')
+    elsif($node->get_iset('foreign') eq 'foreign')
+    {
+        $afun = 'Atr';
+    }
+    elsif($ppos eq 'adj' && ($pos eq 'adj' || $node->get_iset('prontype') ne ''))
+    {
+        $afun = 'Atr';
+    }
+    elsif($ppos eq 'num' && $pos eq 'noun') # example: viacero stredísk
     {
         $afun = 'Atr';
     }
@@ -147,6 +259,14 @@ sub guess_afun
         elsif($pos eq 'verb') # especially infinitive
         {
             $afun = 'Obj';
+        }
+        elsif($pos eq 'adv')
+        {
+            $afun = 'Adv';
+        }
+        elsif($node->form() =~ m/^ak$/i)
+        {
+            $afun = 'AuxC';
         }
     }
     return $afun;
