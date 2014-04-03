@@ -10,7 +10,11 @@ with 'Treex::Tool::Align::FeaturesRole';
 sub _unary_features {
     my ($self, $node, $type) = @_;
 
-    return {};
+    my $feats = {};
+
+    $feats->{id} = $node->id;
+
+    return $feats;
 }
 
 sub _binary_features {
