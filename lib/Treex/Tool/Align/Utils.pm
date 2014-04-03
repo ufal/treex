@@ -50,7 +50,7 @@ sub remove_aligned_nodes_by_filter {
 
     my ($nodes, $types) = get_aligned_nodes_by_filter($node, $filter);
     for (my $i = 0; $i < @$nodes; $i++) {
-        #log_info "ALIGN REMOVE: " . $types->[$i] . " " . $nodes->[$i]->id;
+        log_info "ALIGN REMOVE: " . $types->[$i] . " " . $nodes->[$i]->id;
         if ($node->is_aligned_to($nodes->[$i], $types->[$i])) {
             $node->delete_aligned_node($nodes->[$i], $types->[$i]);
         }
