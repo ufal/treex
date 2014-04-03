@@ -33,6 +33,7 @@ has '_anaph_cands_filter' => (
     required    => 1,
     isa         => 'Maybe[Treex::Tool::Coreference::NodeFilter]',
     builder     => '_build_anaph_cands_filter',
+    lazy        => 1,
 );
 
 my $tp_count  = 0;
