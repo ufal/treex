@@ -23,9 +23,11 @@ my %PERS_PRONS_REFLEX = map {$_ => 1} qw/
     myself yourself himself herself itself ourselves yourselves themselves
 /;
 
+has 'args' => (is => "ro", isa => "HashRef", default => sub {{}});
+
 sub is_candidate {
     my ($self, $tnode) = @_;
-    return is_3rd_pers($tnode);
+    return is_3rd_pers($tnode, $self->args);
 }
 
 sub is_3rd_pers {

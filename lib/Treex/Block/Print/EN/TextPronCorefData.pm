@@ -48,7 +48,11 @@ override '_build_ante_cands_selector' => sub {
 
 override '_build_anaph_cands_filter' => sub {
     my ($self) = @_;
-    my $acf = Treex::Tool::Coreference::NodeFilter::PersPron->new();
+    my $acf = Treex::Tool::Coreference::NodeFilter::PersPron->new({
+        args => {
+                # including reflexive pronouns
+            }
+    });
     return $acf;
 };
 
