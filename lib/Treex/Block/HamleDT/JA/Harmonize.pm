@@ -15,8 +15,9 @@ sub process_zone
     my $a_root = $self->SUPER::process_zone($zone);
 
     $self->attach_final_punctuation_to_root($a_root);
-    $self->restructure_coordination($a_root);
+    # $self->restructure_coordination($a_root);
     # $self->process_prep_sub_arg_cloud($a_root);
+	make_pdt_coordination($a_root);
 }
 
 sub make_pdt_coordination {
@@ -49,9 +50,9 @@ sub make_pdt_coordination {
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
-# WIP
+# WIP, currently unused
 #------------------------------------------------------------------------------
-sub deprel_to_afun {
+sub _deprel_to_afun {
     my $self = shift;
     my $root = shift;
     for my $node ($root->get_descendants()) {
@@ -222,6 +223,7 @@ sub deprel_to_afun {
     }
 }
 
+# WIP, currently not working correctly
 sub detect_coordination {
     my $self = shift;
     my $node = shift;
@@ -237,7 +239,7 @@ sub detect_coordination {
 # Convert dependency relation tags to analytical functions.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub _old_deprel_to_afun
+sub deprel_to_afun
 {
     my $self  = shift;
     my $root  = shift;
