@@ -3,6 +3,9 @@ package Treex::Block::T2T::CopyCorefFromAlignment;
 use Moose;
 use Treex::Core::Common;
 use 5.010;    # operator //
+
+use Treex::Tool::Align::Utils;
+
 extends 'Treex::Core::Block';
 
 has 'type' => (
@@ -36,8 +39,9 @@ sub process_tnode {
     # nothing to do if no antecedent
     return if (@antecs == 0);
     
-    my @aligned_anaphs = $tnode->get_aligned_nodes_of_type('monolingual');
-    my @aligned_antecs = map {$_->get_aligned_nodes_of_type('monolingual')} @antecs;
+    my $align_filter = {rel_types => ['monolingual']};
+    my @aligned_anaphs = Treex::Tool::Align::Utils::aligned_transitively([$tnode], [$align_filter]);
+    my @aligned_antecs = Treex::Tool::Align::Utils::aligned_transitively(\@antecs, [$align_filter]);
 
     foreach my $source ( @aligned_anaphs ) {
         if (!defined $source) {
