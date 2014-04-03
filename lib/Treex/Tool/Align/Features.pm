@@ -86,6 +86,9 @@ sub _add_align_features {
 sub _add_gram_features {
     my ($self, $feats, $node1, $node2) = @_;
     
+    $feats->{t_lemma_cat} = $self->cat($feats, "t_lemma");
+    $feats->{tag_cat} = $self->cat($feats, "tag");
+    $feats->{utag_cat} = $self->cat($feats, "utag");
     $feats->{functor_cat} = $self->cat($feats, "functor");
     $feats->{functor_eq}  = $self->eq($feats, "functor");
 }
