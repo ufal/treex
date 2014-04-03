@@ -9,6 +9,7 @@ use Treex::Tool::Coreference::EN::PronCorefFeatures;
 use Treex::Tool::Coreference::CS::PronCorefFeatures;
 use Treex::Tool::Coreference::Features::Container;
 use Treex::Tool::Coreference::Features::Aligned;
+use Treex::Tool::Coreference::Features::Coreference;
 
 has 'aligned_feats' => ( is => 'ro', isa => 'Bool', default => 0 );
 
@@ -23,6 +24,7 @@ override '_build_feature_extractor' => sub {
         my $aligned_fe = Treex::Tool::Coreference::Features::Aligned->new({
             feat_extractors => [ 
                 Treex::Tool::Coreference::CS::PronCorefFeatures->new(),
+                Treex::Tool::Coreference::Features::Coreference->new(),
             ],
             align_lang => 'cs',
             align_selector => 'src',
