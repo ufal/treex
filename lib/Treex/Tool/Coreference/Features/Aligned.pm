@@ -31,16 +31,18 @@ sub _build_align_filter {
 sub _binary_features {
     my ($self, $set_features, $anaph, $cand, $candord) = @_;
 
-    my ($aligned_anaph) = Treex::Tool::Align::Utils::aligned_transitively([$anaph], [$self->_align_filter]);
+    my ($ali_anaph_nodes, $ali_anaph_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($anaph, $self->_align_filter);
 # TODO: features based on the errors returned
-    return {} if (!defined $aligned_anaph);
-    my ($aligned_cand) = Treex::Tool::Align::Utils::aligned_transitively([$cand], [$self->_align_filter]);
+    return {} if (!@$ali_anaph_nodes);
+    log_info "ANAPH_ALI_TYPES: " . join " ", @$ali_anaph_types;
+    my ($ali_cand_nodes, $ali_cand_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($cand, $self->_align_filter);
 # TODO: features based on the errors returned
-    return {} if (!defined $aligned_cand);
+    return {} if (!@$ali_cand_nodes);
+    log_info "CAND_ALI_TYPES: " . join " ", @$ali_cand_types;
     
     my %feats = ();
     foreach my $fe (@{$self->feat_extractors}) {
-        my $fe_feats = $fe->_binary_features($set_features, $aligned_anaph, $aligned_cand, $candord);
+        my $fe_feats = $fe->_binary_features($set_features, $ali_anaph_nodes->[0], $ali_cand_nodes->[0], $candord);
         %feats = (%feats, %$fe_feats);
     }
 
@@ -52,13 +54,14 @@ sub _binary_features {
 sub _unary_features {
     my ($self, $node, $type) = @_;
 
-    my ($aligned_node) = Treex::Tool::Align::Utils::aligned_transitively([$node], [$self->_align_filter]);
+    my ($ali_nodes, $ali_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($node, $self->_align_filter);
 # TODO: features based on the errors returned
-    return {} if (!defined $aligned_node);
+    return {} if (!@$ali_nodes);
+    log_info "ANAPH_TYPES: " . join " ", @$ali_types;
     
     my %feats = ();
     foreach my $fe (@{$self->feat_extractors}) {
-        my $fe_feats = $fe->_unary_features($aligned_node, $type);
+        my $fe_feats = $fe->_unary_features($ali_nodes->[0], $type);
         %feats = (%feats, %$fe_feats);
     }
 
