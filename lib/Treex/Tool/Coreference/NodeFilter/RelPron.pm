@@ -25,7 +25,6 @@ sub _is_relat_cs {
     my ($tnode) = @_;
 
     my $is_via_indeftype = _is_relat_via_indeftype($tnode);
-    log_info "INDEFTYPE: " . $is_via_indeftype if ($is_via_indeftype);
     return ($is_via_indeftype ? 1 : 0);
     #if (defined $is_via_indeftype) {
     #    return $is_via_indeftype;
