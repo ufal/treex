@@ -10,10 +10,10 @@ my $b_false = '-1';
 
 my %actants = map { $_ => 1 } qw/ACT PAT ADDR APP/;
 
-sub _build_feature_names {
-    my ($self) = @_;
-    return log_fatal "method _build_feature_names must be overriden in " . ref($self);
-}
+#sub _build_feature_names {
+#    my ($self) = @_;
+#    return log_fatal "method _build_feature_names must be overriden in " . ref($self);
+#}
 
 sub _ante_loc_buck {
     my ($self, $anaph, $cand, $sent_dist) = @_;
@@ -292,10 +292,10 @@ These methods must be implemented in classes that consume this role.
 
 =over
 
-=item _build_feature_names 
-
-A list of features required for training/resolution. Without implementing 
-in a subclass it throws an exception.
+#=item _build_feature_names 
+#
+#A list of features required for training/resolution. Without implementing 
+#in a subclass it throws an exception.
 
 =back
 

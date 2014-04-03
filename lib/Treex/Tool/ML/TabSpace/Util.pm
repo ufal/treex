@@ -4,6 +4,8 @@ use Moose;
 use Data::Dumper;
 
 my $SHARED_LABEL = "__SHARED__";
+my $REMOVE_UNDEFS = 1;
+my $UNDEF_VALUE = "__UNDEF__";
 my $FEAT_VAL_DELIM = "=";
 
 # parses one instance in singleline format
@@ -56,9 +58,14 @@ sub format_singleline {
 
     my $line = $label . "\t";
     my @feat_str = map {
-        ref($_) eq 'ARRAY' ?
-            $_->[0] .$FEAT_VAL_DELIM. $_->[1] :
+        if (ref($_) eq 'ARRAY') {
+            if (!$REMOVE_UNDEFS || defined $_->[1]) {
+                $_->[0] .$FEAT_VAL_DELIM. ($_->[1] // $UNDEF_VALUE);
+            }
+        }
+        else {
             $_;
+        }
     } @$feats;
     $line .= join " ", @feat_str;
     $line .= "\n";

@@ -3,39 +3,39 @@ package Treex::Block::Print::CorefData;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Coreference::ValueTransformer;
-use Treex::Tool::ML::VowpalWabbit::Util;
+use Treex::Tool::ML::TabSpace::Util;
 use List::Util;
 
-extends 'Treex::Core::Block';
+extends 'Treex::Block::Write::BaseTextWriter';
 
-has 'unsupervised' => (
-    is          => 'ro',
-    required    => 1,
-    isa         => 'Bool',
-    default     => 0,
-);
-
-has 'format' => (
-    is          => 'ro',
-    required    => 1,
-    isa         => enum([qw/percep unsup/]),
-    default     => 'percep',
-);
-
-has 'y_feat_name' => (
-    is          => 'ro',
-    required    => 1,
-    isa         => 'Str',
-    default     => 'class',
-);
-
-has 'feature_sep' => (
-    is          => 'ro',
-    required    => 1,
-    isa         => 'Str',
-    default     => ' ',
-);
-
+#has 'unsupervised' => (
+#    is          => 'ro',
+#    required    => 1,
+#    isa         => 'Bool',
+#    default     => 0,
+#);
+#
+#has 'format' => (
+#    is          => 'ro',
+#    required    => 1,
+#    isa         => enum([qw/percep unsup/]),
+#    default     => 'percep',
+#);
+#
+#has 'y_feat_name' => (
+#    is          => 'ro',
+#    required    => 1,
+#    isa         => 'Str',
+#    default     => 'class',
+#);
+#
+#has 'feature_sep' => (
+#    is          => 'ro',
+#    required    => 1,
+#    isa         => 'Str',
+#    default     => ' ',
+#);
+#
 has 'anaphor_as_candidate' => (
     is          => 'ro',
     required    => 1,
@@ -44,13 +44,13 @@ has 'anaphor_as_candidate' => (
     documentation => 'joint anaphoricity determination and antecedent selection',
 );
 
-has '_feature_transformer' => (
-    is          => 'ro',
-    required    => 1,
-    isa         => 'Treex::Tool::Coreference::ValueTransformer',
-    default     => sub{ Treex::Tool::Coreference::ValueTransformer->new },
-);
-
+#has '_feature_transformer' => (
+#    is          => 'ro',
+#    required    => 1,
+#    isa         => 'Treex::Tool::Coreference::ValueTransformer',
+#    default     => sub{ Treex::Tool::Coreference::ValueTransformer->new },
+#);
+#
 has '_feature_extractor' => (
     is          => 'ro',
     required    => 1,
@@ -93,123 +93,123 @@ sub _build_anaph_cands_filter {
     return log_fatal "method _build_anaph_cands_filter must be overriden in " . ref($self);
 }
 
-sub _create_instance_string {
-    my ($self, $instance, $names, $y_value) = @_;
-    
-    my $line = "";
+#sub _create_instance_string {
+#    my ($self, $instance, $names, $y_value) = @_;
+#    
+#    my $line = "";
+#
+#    # DEBUG
+#    #$line .= $instance->{cand_id} . $self->feature_sep;
+#
+#
+#    if (defined $y_value) {
+#        if ($self->format ne 'unsup') {
+#            $line .= $self->y_feat_name . '=';
+#        }
+#        $line .= $y_value . $self->feature_sep;
+#    }
+#    #my $line = $self->y_feat_name . '=' . $y_value . $self->feature_sep;
+#
+#    #use Data::Dumper;
+#    #print STDERR Dumper($names);
+#    #print STDERR Dumper($instance);
+#
+#    #my @cols = ();
+#    #foreach my $name (@$names) {
+#    #    my $col = "";
+#    #    if ($name =~ /^[br]_/) {
+#    #        if ($self->format ne 'unsup') {
+#    #            $col .= "r_$name=";
+#    #        }
+#    #        $col .= $self->_feature_transformer->replace_empty( $instance->{$name} );
+#    #    }
+#    #    else {
+#    #        if ($self->format ne 'unsup') {
+#    #            $col .= "c_$name=";
+#    #        }
+#    #        $col .= $self->_feature_transformer->special_chars_off( $instance->{$name} )
+#    #    }
+#    #}
+#
+#    my @cols = map {
+#        if ($_ =~ /_id$/) {
+#            (($self->format ne 'unsup') ? "$_=" : "") . $instance->{$_};
+#        } else {
+#            $_=~ /^[br]_/ 
+#                ? (($self->format ne 'unsup') ? "r_$_=" : "") 
+#                    . $self->_feature_transformer->replace_empty( $instance->{$_} )
+#                : (($self->format ne 'unsup') ? "c_$_=" : "") 
+#                    . $self->_feature_transformer->special_chars_off( $instance->{$_} )
+#        }
+#    } @{$names};
+#    $line .= join $self->feature_sep, @cols;
+#    return $line;
+#}
 
-    # DEBUG
-    #$line .= $instance->{cand_id} . $self->feature_sep;
-
-
-    if (defined $y_value) {
-        if ($self->format ne 'unsup') {
-            $line .= $self->y_feat_name . '=';
-        }
-        $line .= $y_value . $self->feature_sep;
-    }
-    #my $line = $self->y_feat_name . '=' . $y_value . $self->feature_sep;
-
-    #use Data::Dumper;
-    #print STDERR Dumper($names);
-    #print STDERR Dumper($instance);
-
-    #my @cols = ();
-    #foreach my $name (@$names) {
-    #    my $col = "";
-    #    if ($name =~ /^[br]_/) {
-    #        if ($self->format ne 'unsup') {
-    #            $col .= "r_$name=";
-    #        }
-    #        $col .= $self->_feature_transformer->replace_empty( $instance->{$name} );
-    #    }
-    #    else {
-    #        if ($self->format ne 'unsup') {
-    #            $col .= "c_$name=";
-    #        }
-    #        $col .= $self->_feature_transformer->special_chars_off( $instance->{$name} )
-    #    }
-    #}
-
-    my @cols = map {
-        if ($_ =~ /_id$/) {
-            (($self->format ne 'unsup') ? "$_=" : "") . $instance->{$_};
-        } else {
-            $_=~ /^[br]_/ 
-                ? (($self->format ne 'unsup') ? "r_$_=" : "") 
-                    . $self->_feature_transformer->replace_empty( $instance->{$_} )
-                : (($self->format ne 'unsup') ? "c_$_=" : "") 
-                    . $self->_feature_transformer->special_chars_off( $instance->{$_} )
-        }
-    } @{$names};
-    $line .= join $self->feature_sep, @cols;
-    return $line;
-}
-
-sub _sort_instances {
-    my ($self, $instances, $cand_list) = @_;
-
-    my @sorted = map {$instances->{$_->id}} @{$cand_list};
-    return \@sorted;
-}
-
-sub _print_bundle {
-    my ($self, $anaph_id, @lines) = @_;
-
-    print "\n";
-    print '#' . $anaph_id . "\n";
-    print join "\n", @lines;
-    print "\n";
-}
-
-sub _create_lines_unsup_format {
-    my ($self, $anaph, $cands) = @_;
-
-    my $fe = $self->_feature_extractor;
-    my $insts = $fe->create_instances( $anaph, $cands );
-
-    my @lines = ();
-    push @lines,
-        $self->_create_instance_string( $insts->{'anaph'}, $fe->anaph_feature_names );
-    my $cand_insts = $self->_sort_instances( $insts->{'cands'}, $cands );
-    push @lines,
-        map {$self->_create_instance_string( $_, $fe->nonanaph_feature_names )} @$cand_insts;
-    return @lines;
-}
-
-sub _create_lines_percep_format {
-    my ($self, $anaph, $cands, $y_value, $ords) = @_;
-
-    my $fe = $self->_feature_extractor;
-    my $insts = $fe->create_instances( $anaph, $cands, $ords );
-
-    my @lines = ();
-    my $cand_insts = $self->_sort_instances( $insts, $cands );
-    push @lines,
-        map {$self->_create_instance_string( $_, $fe->feature_names, $y_value )} @$cand_insts;
-    return @lines;
-}
-
-sub _create_lines_reranker_format {
-    my ($self, $anaph, $cands, $y_value, $ords) = @_;
-
-    my $fe = $self->_feature_extractor;
-    my $insts = $fe->create_instances( $anaph, $cands, $ords );
-
-    my @lines = ();
-    my $cand_insts = $self->_sort_instances( $insts, $cands );
-    foreach my $cand_inst ( @$cand_insts ) {
-        my @fe_names = @{$fe->feature_names};
-        foreach my $name ( keys %{$cand_inst} ) {
-            if ( not grep { $_ eq $name } @fe_names ) {
-                push @fe_names, $name;
-            }
-        }
-        push @lines, $self->_create_instance_string( $cand_inst, \@fe_names, $y_value );
-    }
-    
-    return @lines;
-}
+#sub _sort_instances {
+#    my ($self, $instances, $cand_list) = @_;
+#
+#    my @sorted = map {$instances->{$_->id}} @{$cand_list};
+#    return \@sorted;
+#}
+#
+#sub _print_bundle {
+#    my ($self, $anaph_id, @lines) = @_;
+#
+#    print "\n";
+#    print '#' . $anaph_id . "\n";
+#    print join "\n", @lines;
+#    print "\n";
+#}
+#
+#sub _create_lines_unsup_format {
+#    my ($self, $anaph, $cands) = @_;
+#
+#    my $fe = $self->_feature_extractor;
+#    my $insts = $fe->create_instances( $anaph, $cands );
+#
+#    my @lines = ();
+#    push @lines,
+#        $self->_create_instance_string( $insts->{'anaph'}, $fe->anaph_feature_names );
+#    my $cand_insts = $self->_sort_instances( $insts->{'cands'}, $cands );
+#    push @lines,
+#        map {$self->_create_instance_string( $_, $fe->nonanaph_feature_names )} @$cand_insts;
+#    return @lines;
+#}
+#
+#sub _create_lines_percep_format {
+#    my ($self, $anaph, $cands, $y_value, $ords) = @_;
+#
+#    my $fe = $self->_feature_extractor;
+#    my $insts = $fe->create_instances( $anaph, $cands, $ords );
+#
+#    my @lines = ();
+#    my $cand_insts = $self->_sort_instances( $insts, $cands );
+#    push @lines,
+#        map {$self->_create_instance_string( $_, $fe->feature_names, $y_value )} @$cand_insts;
+#    return @lines;
+#}
+#
+#sub _create_lines_reranker_format {
+#    my ($self, $anaph, $cands, $y_value, $ords) = @_;
+#
+#    my $fe = $self->_feature_extractor;
+#    my $insts = $fe->create_instances( $anaph, $cands, $ords );
+#
+#    my @lines = ();
+#    my $cand_insts = $self->_sort_instances( $insts, $cands );
+#    foreach my $cand_inst ( @$cand_insts ) {
+#        my @fe_names = @{$fe->feature_names};
+#        foreach my $name ( keys %{$cand_inst} ) {
+#            if ( not grep { $_ eq $name } @fe_names ) {
+#                push @fe_names, $name;
+#            }
+#        }
+#        push @lines, $self->_create_instance_string( $cand_inst, \@fe_names, $y_value );
+#    }
+#    
+#    return @lines;
+#}
 
 sub is_text_coref {
     my ($anaph, @cands) = @_;
@@ -243,32 +243,32 @@ sub process_tnode {
         my $acs = $self->_ante_cands_selector;
         my $fe = $self->_feature_extractor;
 
-        if ($self->unsupervised) {
-            my $cands = $acs->get_candidates( $t_node );
+#        if ($self->unsupervised) {
+#            my $cands = $acs->get_candidates( $t_node );
+#
+#            if (@$cands > 0) {
+#                my @lines = ();
+#                if ($self->format eq 'unsup') {
+#                    @lines = $self->_create_lines_unsup_format( $t_node, $cands );
+#                }
+#                else {
+#                    @lines = $self->_create_lines_reranker_format( $t_node, $cands );
+##                     @lines = $self->_create_lines_percep_format( $t_node, $cands );
+#                }
+#                $self->_print_bundle( $t_node->id, @lines );
+#            }
+#        }
+#        else {
 
-            if (@$cands > 0) {
-                my @lines = ();
-                if ($self->format eq 'unsup') {
-                    @lines = $self->_create_lines_unsup_format( $t_node, $cands );
-                }
-                else {
-                    @lines = $self->_create_lines_reranker_format( $t_node, $cands );
-#                     @lines = $self->_create_lines_percep_format( $t_node, $cands );
-                }
-                $self->_print_bundle( $t_node->id, @lines );
-            }
+        my @cands = $acs->get_candidates($t_node);
+        my @coref_idx = is_text_coref($t_node, @cands);
+
+        if (@coref_idx) {
+            my $feats = $self->_feature_extractor->create_instances($t_node, \@cands);
+            my $instance_str = Treex::Tool::ML::TabSpace::Util::format_multiline($feats, \@coref_idx);
+
+            print {$self->_file_handle} $instance_str;
         }
-        else {
-
-            my @cands = $acs->get_candidates($t_node);
-            my @coref_idx = is_text_coref($t_node, @cands);
-
-            if (@coref_idx) {
-                my $feats = $self->_feature_extractor->create_instances($anaph, \@cands);
-                my $instace_str = Treex::Tool::ML::VowpalWabbit::Util::format($feats, \@coref_idx);
-
-                print $instance_str;
-            }
 
 #            # retrieve positive and negatve antecedent candidates separated from
 #            # each other
@@ -289,7 +289,7 @@ sub process_tnode {
 #                }
 #            }
 
-        }
+#        }
     }
 }
 

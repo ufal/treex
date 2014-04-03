@@ -1,6 +1,7 @@
 package Treex::Tool::Coreference::AnteCandsGetter;
 
 use Moose::Role;
+use Treex::Tool::Context::Sentences;
 
 requires '_build_cand_filter';
 

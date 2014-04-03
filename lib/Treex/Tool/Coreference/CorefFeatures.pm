@@ -3,22 +3,22 @@ package Treex::Tool::Coreference::CorefFeatures;
 use Moose::Role;
 use Moose::Util::TypeConstraints;
 
-has 'feature_names' => (
-    is          => 'ro',
-    required    => 1,
-    isa         => 'ArrayRef[Str]',
-    lazy        => 1,
-    builder     => '_build_feature_names',
-);
+#has 'feature_names' => (
+#    is          => 'ro',
+#    required    => 1,
+#    isa         => 'ArrayRef[Str]',
+#    lazy        => 1,
+#    builder     => '_build_feature_names',
+#);
 
-has 'format' => (
-    is          => 'ro',
-    required    => 1,
-    isa         => enum([qw/percep unsup/]),
-    default     => 'percep',
-);
+#has 'format' => (
+#    is          => 'ro',
+#    required    => 1,
+#    isa         => enum([qw/percep unsup/]),
+#    default     => 'percep',
+#);
 
-requires '_build_feature_names';
+#requires '_build_feature_names';
 
 requires '_unary_features';
 requires '_binary_features';
@@ -26,97 +26,130 @@ requires '_binary_features';
 my $b_true = '1';
 my $b_false = '-1';
 
-sub anaph_feature_names {
-    my ($self) = @_;
-    my @names = grep {$_ =~ /anaph/} @{$self->feature_names};
-    return \@names;
-}
-sub nonanaph_feature_names {
-    my ($self) = @_;
-    my @names = grep {$_ !~ /anaph/} @{$self->feature_names};
-    return \@names;
-}
+#sub anaph_feature_names {
+#    my ($self) = @_;
+#    my @names = grep {$_ =~ /anaph/} @{$self->feature_names};
+#    return \@names;
+#}
+#sub nonanaph_feature_names {
+#    my ($self) = @_;
+#    my @names = grep {$_ !~ /anaph/} @{$self->feature_names};
+#    return \@names;
+#}
+#
+#sub extract_anaph_features {
+#    my ($self, $anaph) = @_;
+#    return $self->_unary_features( $anaph, 'anaph' );
+#}
 
-sub extract_anaph_features {
-    my ($self, $anaph) = @_;
-    return $self->_unary_features( $anaph, 'anaph' );
-}
+#sub extract_nonanaph_features {
+#    my ($self, $anaph_features, $anaph, $cand, $candord) = @_;
+#    
+#    my $cand_features = $self->_unary_features( $cand, 'cand' );
+#    my $unary_features = {%$anaph_features, %$cand_features};
+#    my $binary_features = $self->_binary_features( 
+#        $unary_features, $anaph, $cand, $candord );
+#
+#    return {%$cand_features, %$binary_features};
+#}
 
-sub extract_nonanaph_features {
-    my ($self, $anaph_features, $anaph, $cand, $candord) = @_;
-    
-    my $cand_features = $self->_unary_features( $cand, 'cand' );
-    my $unary_features = {%$anaph_features, %$cand_features};
-    my $binary_features = $self->_binary_features( 
-        $unary_features, $anaph, $cand, $candord );
-
-    return {%$cand_features, %$binary_features};
+sub feat_hash_to_list {
+    my ($hash) = @_;
+    my @list = map {
+        my $key = $_;
+        if (ref($hash->{$key}) eq "ARRAY") {
+            map {[$key, $_]} @{$hash->{$key}};
+        }
+        else {
+            [$key, $hash->{$key}];
+        }
+    } keys %$hash;
+    return \@list;
 }
 
 sub create_instances {
     my ($self, $anaph, $ante_cands) = @_;
-
-    if ($self->format eq 'unsup') {
-        return $self->_create_instances(
-            $anaph, $ante_cands, $ords
-        );
-    }
-    else {
-        return $self->_create_joint_instances(
-            $anaph, $ante_cands, $ords
-        );
-    }
-}
-
-sub _create_joint_instances {
-    my ($self, $anaph, $ante_cands, $ords) = @_;
-
-    my $instances = 
-        $self->_create_instances( $anaph, $ante_cands, $ords );
-    my $joint_instances = $instances->{'cands'};
-
-    foreach my $cand_id (keys %{$joint_instances}) {
-        $joint_instances->{$cand_id} = {
-            %{$joint_instances->{$cand_id}},
-            %{$instances->{'anaph'}},
-        };
-    }
-    return $joint_instances;
-}
-
-sub _create_instances {
-    my ( $self, $anaph, $ante_cands, $ords ) = @_;
-
-    if (!defined $ords) {
-        my @antes_only_cands = grep { $_ != $anaph } @$ante_cands;
-        $ords = [ 0 .. @antes_only_cands-1 ];
-    }
-
-    my $anaph_instance = $self->extract_anaph_features( $anaph );
-
-    my $cand_instances;
-    #print STDERR "ANTE_CANDS: " . @$ante_cands . "\n";
-    foreach my $cand (@$ante_cands) {
     
-        my $features = $anaph_instance;
-        if ($cand == $anaph) {
-            $features = {};
-        }
-        else {
-            my $ord = shift @$ords;
-            $features = $self->extract_nonanaph_features( 
-                $features, $anaph, $cand, $ord );
-        }
+    my $anaph_unary_h = $self->_unary_features( $anaph, 'anaph' );
+    my $anaph_unary_l = feat_hash_to_list($anaph_unary_h);
 
-        $cand_instances->{ $cand->id } = $features;
+    my @cand_feats = ();
+    my $ord = 1;
+    foreach my $cand (@$ante_cands) {
+        my $cand_unary_h = $self->_unary_features( $cand, 'cand' );
+        # TODO for convenience we merge the two hashes into a single one => should be passed separately
+        my $both_unary_h = {%$cand_unary_h, %$anaph_unary_h};
+        my $cand_binary_h = $self->_binary_features( $both_unary_h, $anaph, $cand, $ord);
+        my $cand_unary_l = feat_hash_to_list($cand_unary_h);
+        my $cand_binary_l = feat_hash_to_list($cand_binary_h);
+        push @cand_feats, [@$cand_unary_l, @$cand_binary_l];
+        $ord++;
     }
 
-    my $instances = {
-        anaph => $anaph_instance,
-        cands => $cand_instances,
-    };
-    return $instances;
+    return [\@cand_feats, $anaph_unary_l];
+
+
+#    if ($self->format eq 'unsup') {
+#        return $self->_create_instances(
+#            $anaph, $ante_cands, $ords
+#        );
+#    }
+#    else {
+#        return $self->_create_joint_instances(
+#            $anaph, $ante_cands, $ords
+#        );
+#    }
 }
+
+#sub _create_joint_instances {
+#    my ($self, $anaph, $ante_cands, $ords) = @_;
+#
+#    my $instances = 
+#        $self->_create_instances( $anaph, $ante_cands, $ords );
+#    my $joint_instances = $instances->{'cands'};
+#
+#    foreach my $cand_id (keys %{$joint_instances}) {
+#        $joint_instances->{$cand_id} = {
+#            %{$joint_instances->{$cand_id}},
+#            %{$instances->{'anaph'}},
+#        };
+#    }
+#    return $joint_instances;
+#}
+
+#sub _create_instances {
+#    my ( $self, $anaph, $ante_cands, $ords ) = @_;
+#
+#    if (!defined $ords) {
+#        my @antes_only_cands = grep { $_ != $anaph } @$ante_cands;
+#        $ords = [ 0 .. @antes_only_cands-1 ];
+#    }
+#
+#    my $anaph_instance = $self->extract_anaph_features( $anaph );
+#
+#    my $cand_instances;
+#    #print STDERR "ANTE_CANDS: " . @$ante_cands . "\n";
+#    foreach my $cand (@$ante_cands) {
+#    
+#        my $features = $anaph_instance;
+#        if ($cand == $anaph) {
+#            $features = {};
+#        }
+#        else {
+#            my $ord = shift @$ords;
+#            $features = $self->extract_nonanaph_features( 
+#                $features, $anaph, $cand, $ord );
+#        }
+#
+#        $cand_instances->{ $cand->id } = $features;
+#    }
+#
+#    my $instances = {
+#        anaph => $anaph_instance,
+#        cands => $cand_instances,
+#    };
+#    return $instances;
+#}
 
 sub init_doc_features {
     my ($self, $doc, $lang, $sel) = @_;
