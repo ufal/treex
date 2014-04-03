@@ -27,12 +27,17 @@ sub get_aligned_nodes_by_filter {
     my ($aligned_to, $aligned_to_types) = $node->get_aligned_nodes();
     #log_info "ALITO: " . Dumper($aligned_to_types);
     #log_info "ALITOIDS: " . (join ",", map {$_->id} @$aligned_to);
-    my @aligned_from = $node->get_referencing_nodes('alignment');
-    my @aligned_from_types = map {get_alignment_types($_, $node)} @aligned_from;
+    my @aligned = $aligned_to ? @$aligned_to : ();
+    my @aligned_types = $aligned_to_types ? @$aligned_to_types : ();
+    
+    if (!$filter->{directed}) {
+        my @aligned_from = $node->get_referencing_nodes('alignment');
+        my @aligned_from_types = map {get_alignment_types($_, $node)} @aligned_from;
     #log_info "ALIFROM: " . Dumper(\@aligned_from_types);
     #log_info "ALIFROMIDS: " . (join ",", map {$_->id} @aligned_from);
-    my @aligned = ($aligned_to ? @$aligned_to : (), @aligned_from);
-    my @aligned_types = ($aligned_to_types ? @$aligned_to_types : (), @aligned_from_types);
+        push @aligned, @aligned_from;
+        push @aligned_types, @aligned_from_types;
+    }
 
     my ($edge_nodes, $edge_types) = _edge_filter_out(\@aligned, \@aligned_types, $filter);
     my ($filtered_nodes, $filtered_types) = _node_filter_out($edge_nodes, $edge_types, $filter);
