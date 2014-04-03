@@ -69,7 +69,7 @@ sub format_singleline {
             $_;
     } @$feats;
     @feat_str = map {feat_perl_to_vw($_)} @feat_str;
-    my $line = sprintf "%s %s| %s\n",
+    my $line = sprintf "%s %s|default %s\n",
         defined $label ? $label : "",
         defined $comment ? $comment : "",
         join " ", @feat_str;
