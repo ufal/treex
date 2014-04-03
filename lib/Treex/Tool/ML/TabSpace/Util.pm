@@ -13,7 +13,7 @@ sub parse {
     my @bundles = ();
 
     while (my $line = <$fh>) {
-        my @line_inst = parse_line($line);
+        my @line_inst = parse_line($line, {split_key_val => 1});
         if (!defined $line_inst[0]) {
             push @bundles, \@instances;
             @instances = ();
@@ -34,23 +34,30 @@ sub parse {
 
 # parses one line
 sub parse_line {
-    my ($line) = @_;
+    my ($line, $args) = @_;
     chomp $line;
 
     return if ($line =~ /^\s*$/);
 
     my ($label, $feats) = split /\t/, $line;
-    my @feat_str = split / /, $feats;
-    my @feats = map {[split /=/, $_]} @feat_str;
+    my @feat_list = split / /, $feats;
+    if ($args->{split_key_val}) {
+        @feat_list = map {[split /=/, $_]} @feat_list;
+    }
 
-    return (\@feats, $label);
+    return (\@feat_list, $label);
 }
 
 sub format_line {
     my ($feats, $label) = @_;
 
     my $line = $label . "\t";
-    $line .= join " ", (map {$_->[0] ."=". $_->[1]} @$feats);
+    my @feat_str = map {
+        ref($_) eq 'ARRAY' ?
+            $_->[0] ."=". $_->[1] :
+            $_;
+    } @$feats;
+    $line .= join " ", @feat_str;
     $line .= "\n";
     return $line;
 }
