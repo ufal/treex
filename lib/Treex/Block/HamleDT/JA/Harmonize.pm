@@ -156,7 +156,7 @@ sub deprel_to_afun {
             else {
                 $afun = 'NR';
                 print STDERR ($node->get_address, "\t",
-                              "Unrecognized $conl_pos ADJ under $ppos", "\n");
+                              "Unrecognized $conll_pos ADJ under $ppos", "\n");
             }
         }
 
@@ -204,7 +204,7 @@ sub deprel_to_afun {
             }
             else {
                 $afun = 'NR';
-                print STDERR $node->get_address, "\t", 'Unrecognized $conll_pos HD under $ppos', "\n";
+                print STDERR $node->get_address, "\t", "Unrecognized $conll_pos HD under $ppos", "\n";
             }
         }
 
