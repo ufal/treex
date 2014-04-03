@@ -41,7 +41,8 @@ sub get_aligned_nodes_by_filter {
 
     my ($edge_nodes, $edge_types) = _edge_filter_out(\@aligned, \@aligned_types, $filter);
     my ($filtered_nodes, $filtered_types) = _node_filter_out($edge_nodes, $edge_types, $filter);
-   
+  
+    log_info "FILTERED_TYPES: " . join " ", @$filtered_types;
     return ($filtered_nodes, $filtered_types);
 }
 
