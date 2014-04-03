@@ -15,9 +15,8 @@ sub process_zone
     my $a_root = $self->SUPER::process_zone($zone);
 
     $self->attach_final_punctuation_to_root($a_root);
-   #  $self->restructure_coordination($a_root);
-    $self->process_prep_sub_arg_cloud($a_root);
-    # make_pdt_coordination($a_root);
+    $self->restructure_coordination($a_root);
+    # $self->process_prep_sub_arg_cloud($a_root);
 }
 
 sub make_pdt_coordination {
@@ -131,7 +130,7 @@ sub deprel_to_afun {
                 $afun = 'CoordArg';
                 $node->wild()->{conjunct} = 1;
             }
-            elsif ($psubpos eq 'verb') {
+            elsif ($ppos eq 'verb') {
                 # just a heuristic
                 if ($pos eq 'adv') {
                     $afun = 'Adv';
@@ -221,6 +220,17 @@ sub deprel_to_afun {
         }
         $node->set_afun($afun);
     }
+}
+
+sub detect_coordination {
+    my $self = shift;
+    my $node = shift;
+    my $coordination = shift;
+    my $debug = shift;
+    $coordination->detect_mosford($node);
+    my @recurse = $coordination->get_conjuncts();
+    push(@recurse, $coordination->get_shared_modifiers());
+    return @recurse;
 }
 
 #------------------------------------------------------------------------------
