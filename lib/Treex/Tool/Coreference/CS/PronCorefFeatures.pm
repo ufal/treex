@@ -288,19 +288,19 @@ sub _get_coord_gennum {
 # returns the gender and number of the candidate, which is relative, according to his antecedent's gender and number
 sub _get_relat_gennum {
 	my ($node) = @_;
-	my @epars = $node->get_eparents;
+	my @epars = $node->get_eparents({or_topological => 1});
 	my $par = $epars[0];
 	while ($par && !($par->is_root) && !(defined $par->gram_sempos && ($par->gram_sempos eq "v") 
         && defined $par->gram_tense && ($par->gram_tense =~ /^(sim|post|ant)$/))) {
 		
-        @epars = $par->get_eparents;
+        @epars = $par->get_eparents({or_topological => 1});
 		$par = $epars[0];
 	}
 
 	my @antecs = ();
     if (!$par->is_root) {
 # TODO this should be get_echildren, shouldn't it be?
-        @antecs = $par->get_eparents;
+        @antecs = $par->get_eparents({or_topological => 1});
     }
 	return _get_coord_gennum(\@antecs, $node);
 }
@@ -352,7 +352,7 @@ sub _get_atag {
 sub _in_collocation {
 	my ($self, $inode, $jnode) = @_;
     my $collocation = $self->_collocations;
-	foreach my $jpar ($jnode->get_eparents) {
+	foreach my $jpar ($jnode->get_eparents({or_topological => 1})) {
 		if ($jpar->gram_sempos && ($jpar->gram_sempos =~ /^v/) && !$jpar->is_generated) {
 			my $jcoll = $jnode->functor . "-" . $jpar->t_lemma;
 			my $coll_list = $collocation->{$jcoll};
@@ -367,7 +367,7 @@ sub _in_collocation {
 # return if $inode and $jnode have the same collocation in CNK corpus
 sub _in_cnk_collocation {
     my ($self, $inode, $jnode) = @_;
-    foreach my $jpar ($jnode->get_eparents) {
+    foreach my $jpar ($jnode->get_eparents({or_topological => 1})) {
         if ($jpar->gram_sempos && ($jpar->gram_sempos =~ /^v/) && !$jpar->is_generated) {
             my ($v_freq, $nv_freq) = map {$self->_cnk_freqs->{$_}} qw/v nv/;
 
