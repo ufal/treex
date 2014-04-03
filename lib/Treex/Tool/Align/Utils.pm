@@ -78,6 +78,7 @@ sub _value_of_type {
     my $i = 0;
     foreach my $type_re (@$type_list) {
         return $i if ($type =~ /$type_re/);
+        $i++;
     }
     return undef;
 }
