@@ -15,7 +15,7 @@ has '_sent_graphs' => ( is => 'rw', isa => 'HashRef', default => sub {{}});
 has '_subtree_aligns' => ( is => 'rw', isa => 'HashRef', default => sub {{}});
 has '_curr_filename' => (is => 'rw', isa => 'Str', default => "");
 
-my $NOT_GOLD_REGEX = '^(?!gold$)';
+my $GIZA_ORIG_RULES_FILTER = [ '!gold', '!robust', '!supervised', '.*' ];
 
 sub _reset_global_structs {
     my ($self, $tnode) = @_;
@@ -69,13 +69,13 @@ sub _add_align_features {
 
     # all alignmnets excpt for the gold one projected from "ref"
     # TODO: do not project gold annotation to "src" => clearer solution
-    my $nodes_aligned = Treex::Tool::Align::Utils::are_aligned($node1, $node2, { rel_types => [ $NOT_GOLD_REGEX ]});
+    my $nodes_aligned = Treex::Tool::Align::Utils::are_aligned($node1, $node2, { rel_types => $GIZA_ORIG_RULES_FILTER });
     $feats->{giza_aligned} = $nodes_aligned ? 1 : 0;
 
 
     my ($par1) = $node1->get_eparents({or_topological => 1});
     my ($par2) = $node2->get_eparents({or_topological => 1});
-    my $par_aligned = Treex::Tool::Align::Utils::are_aligned($par1, $par2, { rel_types => [ $NOT_GOLD_REGEX ]});
+    my $par_aligned = Treex::Tool::Align::Utils::are_aligned($par1, $par2, { rel_types => $GIZA_ORIG_RULES_FILTER });
     $feats->{par_aligned} = $par_aligned ? 1 : 0;
 
     $feats->{subtree_aligned} = $self->subtree_alignment($node1, $node2) ? 1 : 0;
@@ -135,7 +135,7 @@ sub _get_sent_graph {
     foreach my $node (@nodes) {
         $g->set_edge_attribute($node->id, $node->get_parent->id, "type", "parent");
         $g->set_edge_attribute($node->get_parent->id, $node->id, "type", "child");
-        my ($ali_nodes, $ali_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($node, { directed => 1, rel_types => [ $NOT_GOLD_REGEX ]});
+        my ($ali_nodes, $ali_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($node, { directed => 1, rel_types => $GIZA_ORIG_RULES_FILTER });
         foreach my $ali (@$ali_nodes) {
             $g->add_weighted_edge($node->id, $ali->id, 100);
             $g->add_weighted_edge($ali->id, $node->id, 100);
@@ -169,7 +169,7 @@ sub _get_subtree_aligns {
 
     my @phrase_nodes = $par->get_descendants();
     my @ali_phrase_nodes = map {
-        my ($an, $at) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($_, {selector => $_->selector, rel_types => [ $NOT_GOLD_REGEX ]}); @$an
+        my ($an, $at) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($_, {selector => $_->selector, rel_types => $GIZA_ORIG_RULES_FILTER }); @$an
     } @phrase_nodes;
 
     my @all_ali_desc = uniq map {$_->get_descendants({add_self => 1})} @ali_phrase_nodes;
