@@ -155,6 +155,7 @@ sub aligned_robust {
             my $filter = $filters->[$i];
             return (\@aligned, $errors) if (!defined $filter);
             my @filtered_align = $filter->(\@aligned, $tnode, $errors);
+            #print STDERR "FILTER_" . $i . ": " . $filtered_align[0]->get_address . "\n" if (@filtered_align);
             return (\@filtered_align, $errors) if (@filtered_align);
         }
     }
