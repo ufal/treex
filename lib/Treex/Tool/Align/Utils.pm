@@ -6,6 +6,13 @@ use Data::Dumper;
 
 extends 'Treex::Core::Block';
 
+my %SIEVES_HASH = (
+    self => \&access_via_self,
+    eparents => \&access_via_eparents,
+    siblings => \&access_via_siblings,
+);
+
+
 sub aligned_transitively {
     my ($nodes, $filters) = @_;
 
@@ -66,6 +73,65 @@ sub _get_aligned_nodes_by_filter {
     my @edge_filtered = _edge_filter_out(\@aligned, \@aligned_types, $filter);
     my @node_filtered = _node_filter_out(\@edge_filtered, $filter);
     return @node_filtered;
+}
+
+sub aligned_robust {
+    my ($tnode, $align_filters, $sieves, $filters) = @_;
+
+    my $errors = [];
+
+    for (my $i = 0; $i < @$sieves; $i++) {
+        my $sieve = $sieves->[$i];
+        if (ref($sieve) ne "CODE") {
+            $sieve = $SIEVES_HASH{$sieve};
+        }
+        my @aligned = $sieve->($tnode, $align_filters, $errors);
+        if (@aligned) {
+            my $filter = $filters->[$i];
+            my $filtered_align = $filter->(\@aligned, $tnode, $errors);
+            return ($filtered_align, $errors) if (defined $filtered_align);
+        }
+    }
+    return (undef, $errors);
+}
+
+sub access_via_self {
+    my ($tnode, $align_filters, $errors) = @_;
+    my ($aligned_tnode) = aligned_transitively([$tnode], $align_filters);
+    if (!defined $aligned_tnode) {
+        push @$errors, "NO_CS_REF_TNODE";
+        return;
+    }
+    return $aligned_tnode;
+}
+
+sub access_via_eparents {
+    my ($tnode, $align_filters, $errors) = @_;
+
+    my @epars = $tnode->get_eparents({or_topological => 1});
+    my @aligned_pars = aligned_transitively(\@epars, $align_filters);
+    if (!@aligned_pars) {
+        push @$errors, "NO_ALIGNED_PARENT";
+        return;
+    }
+    my @aligned_siblings = map {$_->get_echildren({or_topological => 1})} @aligned_pars;
+    return @aligned_siblings;
+}
+
+sub access_via_siblings {
+    my ($tnode, $align_filters, $errors) = @_;
+
+    my @sibs = $tnode->get_siblings();
+    if (!@sibs) {
+        push @$errors, "NO_SIBLINGS";
+        return;
+    }
+    my @aligned_sibs = aligned_transitively(\@sibs, $align_filters);
+    if (!@aligned_sibs) {
+        push @$errors, "NO_ALIGNED_SIBLINGS";
+        return;
+    }
+    return @aligned_sibs;
 }
 
 sub print_nodes {
