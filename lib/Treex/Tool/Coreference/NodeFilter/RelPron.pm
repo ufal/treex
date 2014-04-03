@@ -41,8 +41,14 @@ sub _is_relat_cs {
 
 sub _is_relat_en {
     my ($tnode) = @_;
-    my $is_via_indeftype = _is_relat_via_indeftype($tnode);
-    return $is_via_indeftype ? 1 : 0;
+    #my $is_via_indeftype = _is_relat_via_indeftype($tnode);
+    #return $is_via_indeftype ? 1 : 0;
+
+    my $anode = $tnode->get_lex_anode();
+    return 0 if (!defined $anode);
+    return 1 if ($anode->tag =~ /^W/);
+    return 1 if ($anode->tag eq "IN" && $anode->lemma eq "that" && !$anode->get_children());
+    return 0;
 }
 
 # so far the best
