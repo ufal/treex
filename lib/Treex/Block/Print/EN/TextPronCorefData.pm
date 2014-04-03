@@ -28,7 +28,7 @@ override '_build_feature_extractor' => sub {
             ],
             align_lang => 'cs',
             align_selector => 'src',
-            align_types => ['robust', '.*'],
+            align_types => ['supervised', '.*'],
         });
         push @container, $aligned_fe;
     }
