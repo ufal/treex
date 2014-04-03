@@ -205,8 +205,8 @@ sub deprel_to_afun {
             $afun = 'NR';
             print STDERR $node->get_address, "\t", 'Unrecognized deprel';
         }
+        $node->set_afun($afun);
     }
-    $node->set_afun($afun);
 }
 
 #------------------------------------------------------------------------------
