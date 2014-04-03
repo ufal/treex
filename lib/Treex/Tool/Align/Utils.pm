@@ -19,7 +19,7 @@ sub aligned_transitively {
     my @level_aligned = @$nodes;
 
     my $filter;
-    while ($filter = shift @$filters) {
+    foreach my $filter (@$filters) {
         @level_aligned = map {_get_aligned_nodes_by_filter($_, $filter)} @level_aligned;
     }
     return @level_aligned;
@@ -97,11 +97,14 @@ sub aligned_robust {
 
 sub access_via_self {
     my ($tnode, $align_filters, $errors) = @_;
+    #log_info "EN_REF: " . $tnode->get_address . "\n";
+    #log_info "FILTERS: " . Dumper($align_filters) . "\n";
     my ($aligned_tnode) = aligned_transitively([$tnode], $align_filters);
     if (!defined $aligned_tnode) {
         push @$errors, "NO_CS_REF_TNODE";
         return;
     }
+    #log_info "ALIGNED_SELF: " . $aligned_tnode->get_address . "\n";
     return $aligned_tnode;
 }
 
