@@ -8,8 +8,8 @@ use Treex::Tool::ML::VowpalWabbit::Util;
 
 with 'Treex::Tool::ML::Ranker';
 
-#has 'vw_path' => (is => 'ro', isa => 'Str', required => 1, default => '/net/cluster/TMP/mnovak/tools/vowpal_wabbit/vowpalwabbit/vw');
-has 'vw_path' => (is => 'ro', isa => 'Str', required => 1, default => '/net/work/people/mnovak/tools/x86_64/vowpal_wabbit/vowpalwabbit/vw');
+has 'vw_path' => (is => 'ro', isa => 'Str', required => 1, default => '/net/cluster/TMP/mnovak/tools/vowpal_wabbit/vowpalwabbit/vw');
+#has 'vw_path' => (is => 'ro', isa => 'Str', required => 1, default => '/net/work/people/mnovak/tools/x86_64/vowpal_wabbit/vowpalwabbit/vw');
 has '_read_handle'  => ( is => 'rw', isa => 'FileHandle' );
 has '_write_handle' => ( is => 'rw', isa => 'FileHandle' );
 
@@ -19,7 +19,7 @@ sub BUILD {
     my ($self) = @_;
     
     my $model_path = $self->_locate_model_file($self->model_path, $self);
-    my $command = sprintf "%s -t -i %s --ring_size 1024 -p /dev/stdout 2> /dev/null", $self->vw_path, $model_path;
+    my $command = sprintf "%s -t -i %s -p /dev/stdout -b 20 2> /dev/null", $self->vw_path, $model_path;
 
     my ( $read, $write, $pid ) = ProcessUtils::bipipe($command);
     
@@ -49,10 +49,10 @@ sub rank {
     my @losses = ();
 
     my $fh = $self->_read_handle;
-    my $empty_line = <$fh>;
-    if ($empty_line !~ /^\s*$/) {
-        log_fatal "First line of VW output must be empty (unless -r instead of -p)";
-    }
+    #my $empty_line = <$fh>;
+    #if ($empty_line !~ /^\s*$/) {
+    #    log_fatal "First line of VW output must be empty (unless -r instead of -p)";
+    #}
     while (my $line = <$fh>) {
         chomp $line;
         last if ($line =~ /^\s*$/);
