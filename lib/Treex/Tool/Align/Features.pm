@@ -17,8 +17,21 @@ has '_curr_filename' => (is => 'rw', isa => 'Str', default => "");
 
 my $NOT_GOLD_REGEX = '^(?!gold$)';
 
+sub _reset_global_structs {
+    my ($self, $tnode) = @_;
+    
+    my $filename = $tnode->get_document->full_filename;
+    if ($filename ne $self->_curr_filename) {
+        $self->_set_curr_filename($filename);
+        $self->_set_sent_graphs({});
+        $self->_set_subtree_aligns({});
+    }
+}
+
 sub _unary_features {
     my ($self, $node) = @_;
+
+    $self->_reset_global_structs($node);
 
     my $feats = {};
 
@@ -106,12 +119,6 @@ sub _extract_path_types {
 
 sub _get_sent_graph {
     my ($self, $l1_node, $l2_node) = @_;
-    
-    my $filename = $l1_node->get_document->full_filename;
-    if ($filename ne $self->_curr_filename) {
-        $self->_set_curr_filename($filename);
-        $self->_set_sent_graphs({});
-    }
 
     my $l1_ttree = $l1_node->get_root;
     my $l2_ttree = $l2_node->get_root;
@@ -128,7 +135,7 @@ sub _get_sent_graph {
     foreach my $node (@nodes) {
         $g->set_edge_attribute($node->id, $node->get_parent->id, "type", "parent");
         $g->set_edge_attribute($node->get_parent->id, $node->id, "type", "child");
-        my ($ali_nodes, $ali_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($node, { directed => 1, selector => $node->selector, rel_types => [ $NOT_GOLD_REGEX ]});
+        my ($ali_nodes, $ali_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($node, { directed => 1, rel_types => [ $NOT_GOLD_REGEX ]});
         foreach my $ali (@$ali_nodes) {
             $g->add_weighted_edge($node->id, $ali->id, 100);
             $g->add_weighted_edge($ali->id, $node->id, 100);
@@ -151,12 +158,6 @@ sub subtree_alignment {
 
 sub _get_subtree_aligns {
     my ($self, $tnode) = @_;
-    
-    my $filename = $tnode->get_document->full_filename;
-    if ($filename ne $self->_curr_filename) {
-        $self->_set_curr_filename($filename);
-        $self->_set_subtree_aligns({});
-    }
 
     my $subtree_align = $self->_subtree_aligns->{$tnode->id};
     return $subtree_align if (defined $subtree_align);
