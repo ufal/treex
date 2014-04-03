@@ -14,6 +14,7 @@ my %SIEVES_HASH = (
 
 sub add_aligned {
     my ($node1, $node2, $type) = @_;
+    #log_info "ALIGN ADD: " . $node2->id;
         
     my $old_type = get_alignment_type($node1, $node2);
     if (!defined $old_type) {
@@ -28,6 +29,21 @@ sub add_aligned {
     else {
         $node2->delete_aligned_node($node1, $old_type);
         $node2->add_aligned_node($node1, "$old_type $type");
+    }
+}
+
+sub remove_alignments {
+    my ($node1, $filter) = @_;
+    my (@aligned) = aligned_transitively([$node1], [$filter]);
+    foreach my $node2 (@aligned) {
+        #log_info "ALIGN REMOVE: " . $node2->id;
+        my $type = get_alignment_type($node1, $node2);
+        if ($node1->is_aligned_to($node2, $type)) {
+            $node1->delete_aligned_node($node2, $type);
+        }
+        else {
+            $node2->delete_aligned_node($node1, $type);
+        }
     }
 }
 
@@ -62,7 +78,7 @@ sub get_alignment_type {
 
 sub _node_filter_out {
     my ($aligned, $filter) = @_;
-    my $lang = $filter->{lang};
+    my $lang = $filter->{language};
     my $sel = $filter->{selector};
     
     return grep {
@@ -103,6 +119,7 @@ sub _get_aligned_nodes_by_filter {
 
     my @edge_filtered = _edge_filter_out(\@aligned, \@aligned_types, $filter);
     my @node_filtered = _node_filter_out(\@edge_filtered, $filter);
+    
     return @node_filtered;
 }
 
