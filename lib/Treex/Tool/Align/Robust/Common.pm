@@ -3,6 +3,18 @@ package Treex::Tool::Align::Robust::Common;
 use Moose;
 use Treex::Core::Common;
 
+################################################
+#### TODO: this should be replaced #############
+## the same method is in My::BitextCorefStats ##
+################################################
+sub unique {
+    my ($a) = @_;
+#        log_info "A: " . (join " ", map {$_->id} @$a);
+    my @u = values %{ {map {$_ => $_} @$a} };
+#        log_info "A: " . (join " ", map {$_->id} @u);
+    return @u;
+}
+
 sub filter_by_functor {
     my ($nodes, $functor, $errors) = @_;
     my @functor_tnodes = grep {$_->functor eq $functor} @$nodes;

@@ -3,6 +3,7 @@ package Treex::Tool::Align::Robust::EN::PersPron;
 use Moose;
 use Treex::Core::Common;
 
+use Treex::Tool::Align::Robust::Common;
 use Treex::Tool::Align::Utils;
 
 ######################### SELECTORS #############################
@@ -48,16 +49,16 @@ sub filter_self {
 
 sub filter_eparents {
     my ($aligned, $tnode, $errors) = @_;
-    my @filtered = Treex::Block::My::BitextCorefStats::filter_by_functor($aligned, $tnode->functor, $errors);
+    my @filtered = Treex::Tool::Align::Robust::Common::filter_by_functor($aligned, $tnode->functor, $errors);
     return @filtered;
 }
 
 sub filter_siblings {
     my ($aligned, $tnode, $errors) = @_;
-    my $par = Treex::Block::My::BitextCorefStats::eparents_of_aligned_siblings($aligned, $errors);
+    my $par = Treex::Tool::Align::Robust::Common::eparents_of_aligned_siblings($aligned, $errors);
     return if (!$par);
     my @kids = $par->get_echildren({or_topological => 1});
-    my @filtered = Treex::Block::My::BitextCorefStats::filter_by_functor(\@kids, $tnode->functor, $errors);
+    my @filtered = Treex::Tool::Align::Robust::Common::filter_by_functor(\@kids, $tnode->functor, $errors);
     return @filtered;
 }
 
