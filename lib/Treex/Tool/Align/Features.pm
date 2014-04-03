@@ -82,6 +82,9 @@ sub _add_comb_features {
 
     $feats->{alipar_functor_cat} = $feats->{functor_cat} . "_" . $feats->{par_aligned};
     $feats->{alipar_functor_eq} = $feats->{functor_eq} . "_" . $feats->{par_aligned};
+    $feats->{alidir_t_lemma} = $feats->{$self->node2_label . "_t_lemma"} . "_" . $feats->{giza_aligned};
+    $feats->{alipar_t_lemma} = $feats->{$self->node2_label . "_t_lemma"} . "_" . $feats->{par_aligned};
+    $feats->{alisubtree_t_lemma} = $feats->{$self->node2_label . "_t_lemma"} . "_" . $feats->{subtree_aligned};
 }
 
 sub _add_graph_features {
@@ -159,7 +162,7 @@ sub _get_subtree_aligns {
     return $subtree_align if (defined $subtree_align);
 
     my $par = $tnode;
-    while (defined $par->get_parent && $par->get_parent->formeme !~ /^v/) {
+    while (defined $par->get_parent && defined $par->get_parent->formeme && $par->get_parent->formeme !~ /^v/) {
         $par = $par->get_parent;
     }
 
