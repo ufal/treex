@@ -88,6 +88,7 @@ sub aligned_robust {
         my @aligned = $sieve->($tnode, $align_filters, $errors);
         if (@aligned) {
             my $filter = $filters->[$i];
+            return ($aligned[0], $errors) if (!defined $filter);
             my $filtered_align = $filter->(\@aligned, $tnode, $errors);
             return ($filtered_align, $errors) if (defined $filtered_align);
         }
