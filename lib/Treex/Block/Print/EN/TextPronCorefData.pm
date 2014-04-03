@@ -9,8 +9,6 @@ use Treex::Tool::Coreference::EN::PronCorefFeatures;
 use Treex::Tool::Coreference::CS::PronCorefFeatures;
 use Treex::Tool::Coreference::Features::Container;
 use Treex::Tool::Coreference::Features::Aligned;
-# TODO this should be solved in another way
-use Treex::Block::My::BitextCorefStats::EnPerspron;
 
 has 'aligned_feats' => ( is => 'ro', isa => 'Bool', default => 1 );
 
@@ -18,37 +16,24 @@ override '_build_feature_extractor' => sub {
     my ($self) = @_;
     my @container = ();
  
-    log_info "BEGIN";
     my $en_fe = Treex::Tool::Coreference::EN::PronCorefFeatures->new();
     push @container, $en_fe;
-    log_info "EN::PronCorefFeatures";
 
     if ($self->aligned_feats) {
-        log_info "Features::Aligned pred";
         my $aligned_fe = Treex::Tool::Coreference::Features::Aligned->new({
             feat_extractors => [ 
                 Treex::Tool::Coreference::CS::PronCorefFeatures->new(),
             ],
-            align_sieves => [ 'self', 'eparents', 'siblings', 
-                \&Treex::Block::My::BitextCorefStats::EnPerspron::access_via_ancestor,
-            ],
-            align_filters => [
-                \&Treex::Block::My::BitextCorefStats::EnPerspron::filter_self,
-                \&Treex::Block::My::BitextCorefStats::EnPerspron::filter_eparents,
-                \&Treex::Block::My::BitextCorefStats::EnPerspron::filter_siblings,
-                \&Treex::Block::My::BitextCorefStats::EnPerspron::filter_ancestor,
-            ],
             align_lang => 'cs',
             align_selector => 'src',
+            align_types => ['robust', '.*'],
         });
         push @container, $aligned_fe;
-        log_info "Features::Aligned po";
     }
     
     my $fe = Treex::Tool::Coreference::Features::Container->new({
         feat_extractors => \@container,
     });
-        log_info "Features::Container";
     return $fe;
 };
 

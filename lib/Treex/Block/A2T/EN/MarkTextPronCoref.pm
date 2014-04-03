@@ -9,8 +9,6 @@ use Treex::Tool::Coreference::NounAnteCandsGetter;
 use Treex::Tool::Coreference::EN::PronAnaphFilter;
 use Treex::Tool::Coreference::Features::Container;
 use Treex::Tool::Coreference::Features::Aligned;
-# TODO this should be solved in another way
-use Treex::Block::My::BitextCorefStats::EnPerspron;
 
 has '+model_path' => (
     default => 'data/models/coreference/EN/perceptron/text.perspron.analysed',
@@ -37,17 +35,9 @@ override '_build_feature_extractor' => sub {
             feat_extractors => [ 
                 Treex::Tool::Coreference::CS::PronCorefFeatures->new(),
             ],
-            align_sieves => [ 'self', 'eparents', 'siblings', 
-                \&Treex::Block::My::BitextCorefStats::EnPerspron::access_via_ancestor,
-            ],
-            align_filters => [
-                \&Treex::Block::My::BitextCorefStats::EnPerspron::filter_self,
-                \&Treex::Block::My::BitextCorefStats::EnPerspron::filter_eparents,
-                \&Treex::Block::My::BitextCorefStats::EnPerspron::filter_siblings,
-                \&Treex::Block::My::BitextCorefStats::EnPerspron::filter_ancestor,
-            ],
             align_lang => 'cs',
             align_selector => 'src',
+            align_types => ['robust', '.*'],
         });
         push @container, $aligned_fe;
     }

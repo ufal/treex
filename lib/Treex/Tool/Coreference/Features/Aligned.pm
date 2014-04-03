@@ -8,30 +8,33 @@ with 'Treex::Tool::Coreference::CorefFeatures';
 
 has 'feat_extractors' => (is => 'ro', isa => 'ArrayRef[Treex::Tool::Coreference::CorefFeatures]', required => 1);
 
-has 'align_sieves' => (is => 'ro', isa => 'ArrayRef', required => 1);
-has 'align_filters' => (is => 'ro', isa => 'ArrayRef', required => 1);
 has 'align_lang' => (is => 'ro', isa => 'Treex::Type::LangCode', required => 1);
 has 'align_selector' => (is => 'ro', isa => 'Treex::Type::Selector', required => 1);
+has 'align_types' => (is => 'ro', isa => 'ArrayRef[Str]');
 
-has '_align_zone' => (is => 'ro', isa => 'HashRef[Str]', builder => '_build_align_zone', lazy => 1);
+has '_align_filter' => (is => 'ro', isa => 'HashRef', builder => '_build_align_filter', lazy => 1);
 
 sub BUILD {
     my ($self) = @_;
-    $self->_align_zone;
+    $self->_align_filter;
 }
 
-sub _build_align_zone {
+sub _build_align_filter {
     my ($self) = @_;
-    return {language => $self->align_lang, selector => $self->align_selector};
+    my $align_filter = {language => $self->align_lang, selector => $self->align_selector};
+    if (defined $self->align_types) {
+        $align_filter->{rel_types} = $self->align_types;
+    }
+    return $align_filter;
 }
 
 sub _binary_features {
     my ($self, $set_features, $anaph, $cand, $candord) = @_;
 
-    my ($aligned_anaph, $a_errors) = Treex::Tool::Align::Utils::aligned_robust($anaph, [$self->_align_zone], $self->align_sieves, $self->align_filters);
+    my ($aligned_anaph) = Treex::Tool::Align::Utils::aligned_transitively([$anaph], [$self->_align_filter]);
 # TODO: features based on the errors returned
     return {} if (!defined $aligned_anaph);
-    my ($aligned_cand, $c_errors) = Treex::Tool::Align::Utils::aligned_robust($cand, [$self->_align_zone], $self->align_sieves, $self->align_filters);
+    my ($aligned_cand) = Treex::Tool::Align::Utils::aligned_transitively([$cand], [$self->_align_filter]);
 # TODO: features based on the errors returned
     return {} if (!defined $aligned_cand);
     
@@ -49,7 +52,7 @@ sub _binary_features {
 sub _unary_features {
     my ($self, $node, $type) = @_;
 
-    my ($aligned_node, $errors) = Treex::Tool::Align::Utils::aligned_robust($node, [$self->_align_zone], $self->align_sieves, $self->align_filters);
+    my ($aligned_node) = Treex::Tool::Align::Utils::aligned_transitively([$node], [$self->_align_filter]);
 # TODO: features based on the errors returned
     return {} if (!defined $aligned_node);
     
