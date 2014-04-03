@@ -6,12 +6,14 @@ extends 'Treex::Block::A2T::BaseMarkCoref';
 use Treex::Tool::Coreference::PerceptronRanker;
 #use Treex::Tool::Coreference::RuleBasedRanker;
 #use Treex::Tool::Coreference::ProbDistrRanker;
+use Treex::Tool::ML::VowpalWabbit::Ranker;
 use Treex::Tool::Coreference::CS::PronCorefFeatures;
 use Treex::Tool::Coreference::NounAnteCandsGetter;
 use Treex::Tool::Coreference::CS::PronAnaphFilter;
 
 has '+model_path' => (
-    default => 'data/models/coreference/CS/perceptron/text.perspron.analysed',
+    default => '/home/mnovak/projects/czeng_coref/tmp/ml/tte_feats_2013-11-17_13-35-54/4e224b442c/model/pdt.cs.analysed.vw.ranking.8411a.model',
+#    default => 'data/models/coreference/CS/perceptron/text.perspron.analysed',
 #    default => 'data/models/coreference/CS/gibbs/text.perspron.analysed',
 );
 
@@ -19,7 +21,8 @@ override '_build_ranker' => sub {
     my ($self) = @_;
 #    my $ranker = Treex::Tool::Coreference::RuleBasedRanker->new();
 #    my $ranker = Treex::Tool::Coreference::ProbDistrRanker->new(
-    my $ranker = Treex::Tool::Coreference::PerceptronRanker->new( 
+#    my $ranker = Treex::Tool::Coreference::PerceptronRanker->new( 
+    my $ranker = Treex::Tool::ML::VowpalWabbit::Ranker->new( 
         { model_path => $self->model_path } 
     );
     return $ranker;

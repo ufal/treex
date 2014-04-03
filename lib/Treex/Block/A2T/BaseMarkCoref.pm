@@ -93,7 +93,7 @@ sub process_tnode {
     
     if ( $self->_anaph_cands_filter->is_candidate( $t_node ) ) {
 
-        my $ante_cands = $self->_ante_cands_selector->get_candidates( $t_node );
+        my @ante_cands = $self->_ante_cands_selector->get_candidates( $t_node );
 
 # DEBUG
 #        my $debug = 0;
@@ -103,13 +103,16 @@ sub process_tnode {
 
         # instances is a reference to a hash in the form { id => instance }
         my $fe = $self->_feature_extractor;
-        my $instances = $fe->create_instances( $t_node, $ante_cands );
+        my $instances = $fe->create_instances( $t_node, \@ante_cands );
 
         # at this point we have to count on a very common case, when the true
         # antecedent lies in the previous sentence, which is however not
         # available (because of filtering and document segmentation)
         my $ranker = $self->_ranker;
-        my $antec  = $ranker->pick_winner( $instances );
+        my $ante_idx  = $ranker->pick_winner( $instances );
+        
+        return if (!defined $ante_idx);
+        my $ante = $ante_cands[$ante_idx];
 
 # DEBUG
 #        my $antec  = $ranker->pick_winner( $instances, $debug );
@@ -131,8 +134,8 @@ sub process_tnode {
             
         #}
 
-        if (defined $antec && ($antec ne $t_node->id)) {
-            $t_node->set_attr( 'coref_text.rf', [$antec] );
+        if ($ante != $t_node) {
+            $t_node->set_attr( 'coref_text.rf', [$ante->id] );
             $t_node->wild->{referential} = 1;
         }
         else {
