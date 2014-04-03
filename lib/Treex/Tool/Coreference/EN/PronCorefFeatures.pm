@@ -22,7 +22,7 @@ has 'ewn_classes_path' => (
 has '_ewn_classes' => (
     is          => 'ro',
     required    => 1,
-    isa         => 'HashRef',
+    isa         => 'HashRef[ArrayRef[Str]]',
     lazy        => 1,
     builder     => '_build_ewn_classes',
 );
@@ -45,7 +45,7 @@ sub BUILD {
     my ($self) = @_;
 
     $self->_ewn_classes;
-    $self->_build_feature_names;
+    #$self->_build_feature_names;
 }
 
 sub _build_tag_properties {
@@ -107,54 +107,54 @@ sub _build_ne_properties {
     return $ne_properties;
 }
 
-sub _build_feature_names {
-    my ($self) = @_;
-
-    # TODO filter out the features not used here
-    my @feat_names = qw(
-       c_sent_dist        c_clause_dist         c_file_deepord_dist
-       c_cand_ord         c_anaph_sentord
-       
-       c_cand_fmm         c_anaph_fmm           b_fmm_agree               c_join_fmm
-       c_cand_fun         c_anaph_fun           b_fun_agree               c_join_fun
-       c_cand_afun        c_anaph_afun          b_afun_agree              c_join_afun
-       b_cand_akt         b_anaph_akt           b_akt_agree 
-       b_cand_subj        b_anaph_subj          b_subj_agree
-       
-       c_cand_gen         c_anaph_gen           b_gen_agree               c_join_gen
-       c_cand_num         c_anaph_num           b_num_agree               c_join_num
-       c_cand_atag        c_anaph_atag          b_atag_agree              c_join_atag
-       c_cand_apos        c_anaph_apos          b_apos_agree              c_join_apos
-       c_cand_anum        c_anaph_anum          b_anum_agree              c_join_anum
-       
-       b_cand_coord       b_app_in_coord
-       c_cand_epar_fun    c_anaph_epar_fun      b_epar_fun_agree          c_join_epar_fun
-       c_cand_epar_fmm    c_anaph_epar_fmm      b_epar_fmm_agree          c_join_epar_fmm
-       c_cand_epar_sempos c_anaph_epar_sempos   b_epar_sempos_agree       c_join_epar_sempos
-                                                b_epar_lemma_agree        c_join_epar_lemma
-                                                                          c_join_clemma_aeparlemma
-
-       b_sibl             b_coll                
-       r_cand_freq                            
-       b_cand_pers
-
-       c_cand_loc_buck    c_anaph_loc_buck
-       c_cand_type        c_anaph_type
-       c_cand_synttype    
-       
-       c_cand_ne_cat      c_cand_ne_subcat
-
-    );
-    
-    # EuroWordNet nouns
+#sub _build_feature_names {
+#    my ($self) = @_;
+#
+#    # TODO filter out the features not used here
+#    my @feat_names = qw(
+#       c_sent_dist        c_clause_dist         c_file_deepord_dist
+#       c_cand_ord         c_anaph_sentord
+#       
+#       c_cand_fmm         c_anaph_fmm           b_fmm_agree               c_join_fmm
+#       c_cand_fun         c_anaph_fun           b_fun_agree               c_join_fun
+#       c_cand_afun        c_anaph_afun          b_afun_agree              c_join_afun
+#       b_cand_akt         b_anaph_akt           b_akt_agree 
+#       b_cand_subj        b_anaph_subj          b_subj_agree
+#       
+#       c_cand_gen         c_anaph_gen           b_gen_agree               c_join_gen
+#       c_cand_num         c_anaph_num           b_num_agree               c_join_num
+#       c_cand_atag        c_anaph_atag          b_atag_agree              c_join_atag
+#       c_cand_apos        c_anaph_apos          b_apos_agree              c_join_apos
+#       c_cand_anum        c_anaph_anum          b_anum_agree              c_join_anum
+#       
+#       b_cand_coord       b_app_in_coord
+#       c_cand_epar_fun    c_anaph_epar_fun      b_epar_fun_agree          c_join_epar_fun
+#       c_cand_epar_fmm    c_anaph_epar_fmm      b_epar_fmm_agree          c_join_epar_fmm
+#       c_cand_epar_sempos c_anaph_epar_sempos   b_epar_sempos_agree       c_join_epar_sempos
+#                                                b_epar_lemma_agree        c_join_epar_lemma
+#                                                                          c_join_clemma_aeparlemma
+#
+#       b_sibl             b_coll                
+#       r_cand_freq                            
+#       b_cand_pers
+#
+#       c_cand_loc_buck    c_anaph_loc_buck
+#       c_cand_type        c_anaph_type
+#       c_cand_synttype    
+#       
+#       c_cand_ne_cat      c_cand_ne_subcat
+#
+#    );
+#    
+#    # EuroWordNet nouns
 #     my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/nouns all/;
 #     foreach my $class (sort @{$all_c}) {
 #         my $coref_class = "b_" . $class;
 #         push @feat_names, $coref_class;
 #     }
-    
-    return \@feat_names;
-}
+#    
+#    return \@feat_names;
+#}
 
 sub _get_pos {
     my ($self, $node) = @_;
@@ -264,22 +264,14 @@ sub _build_ewn_classes {
         if !-f $ewn_file;
     open EWN, "<:utf8", $ewn_file;
     
-    my $ewn_noun;
-    my %ewn_all_classes;
+    my $ewn_classes = {};
     while (my $line = <EWN>) {
         chomp $line;
-        
         my ($noun, $classes_string) = split /\t/, $line;
         my (@classes) = split / /, $classes_string;
-        for my $class (@classes) {
-            $ewn_noun->{$noun}{$class} = 1;
-            $ewn_all_classes{$class} = 1;
-        }
+        $ewn_classes->{$noun} = \@classes;
     }
     close EWN;
-
-    my @class_list = keys %ewn_all_classes;
-    my $ewn_classes = { nouns => $ewn_noun, all => \@class_list };
 
     return $ewn_classes;
 }
@@ -348,23 +340,11 @@ override '_unary_features' => sub {
         $coref_features->{b_cand_pers} =  $node->is_name_of_person ? $b_true : $b_false;
 
         #   EuroWordNet nouns
-        my $cand_lemma      = $node->t_lemma;
-        my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/nouns all/;
-        my $cand_c = $noun_c->{$cand_lemma};
-
-#         #1   EuroWordNet nouns: print all classes (full matrix)
-#         for my $class ( @{$all_c} ) {
-#             my $coref_class = "b_" . $class;
-#             $coref_features->{$coref_class} = defined $cand_c->{$class} ? $b_true : $b_false;
-#         }
-        
-        #2   EuroWordNet nouns: print only classes to which $cand belongs (sparse matrix)
-        for my $class ( @{$all_c} ) {
-            my $coref_class = "b_" . $class;
-            if ( defined $cand_c->{$class} ) {
-                $coref_features->{$coref_class} =  $b_true;
-            }
-        }
+        $coref_features->{cand_ewn_class} = $self->_ewn_classes->{$node->t_lemma};
+    }
+    
+    if ($type eq 'anaph') {
+        $coref_features->{'b_'.$type.'_referential'} = $node->wild->{referential};
     }
     
     return $coref_features;

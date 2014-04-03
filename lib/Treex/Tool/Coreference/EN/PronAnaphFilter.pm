@@ -12,6 +12,8 @@ has 'banned_prons' => (
     builder => '_build_banned_prons',
 );
 
+has 'skip_referential' => ( is => 'ro', isa => 'Bool', default => 0, required => 1);
+
 sub _build_banned_prons {
     my ($self) = @_;
     my %banned_prons = map {$_ => 1} 
@@ -34,7 +36,7 @@ sub is_candidate {
     # skip nodes marked as non-referential
     my $is_refer = $t_node->wild->{referential};
     return (
-        (!defined $is_refer || ($is_refer == 1)) &&  # referential (if it's set)
+        (!$self->skip_referential || !defined $is_refer || ($is_refer == 1)) &&  # referential (if it's set)
         ($t_node->t_lemma eq '#PersPron') &&  # personal pronoun 
         $is_3rd_pers    # third person
     );
