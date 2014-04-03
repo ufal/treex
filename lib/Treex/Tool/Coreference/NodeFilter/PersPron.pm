@@ -31,12 +31,12 @@ sub is_candidate {
 }
 
 sub is_3rd_pers {
-    my ($tnode, $args) = @_;
-    if ($tnode->language eq 'cs') {
-        return _is_relat_cs($tnode, $args);
+    my ($node, $args) = @_;
+    if ($node->language eq 'cs') {
+        return _is_relat_cs($node, $args);
     }
-    if ($tnode->language eq 'en') {
-        my $is_pers = _is_3rd_pers_en($tnode, $args);
+    if ($node->language eq 'en') {
+        my $is_pers = _is_3rd_pers_en($node, $args);
         #if ($is_pers) {
         #    my $anode = $tnode->get_lex_anode;
         #    print "ALEMMA: " . $anode->lemma . "\n";
@@ -69,6 +69,17 @@ sub _is_relat_cs {
 #   skip_nonref : skip personal pronouns that are labeled as non-referential
 #   reflexive : include reflexive pronouns (default = 1)
 sub _is_3rd_pers_en {
+    my ($node, $args) = @_;
+
+    if ($node->get_layer eq "a") {
+        return _is_3rd_pers_en_a($node, $args);
+    }
+    else {
+        return _is_3rd_pers_en_t($node, $args);
+    }
+}
+
+sub _is_3rd_pers_en_t {
     my ($tnode, $args) = @_;
 
     if (!defined $args) {
@@ -107,6 +118,11 @@ sub _is_3rd_pers_en {
         $ok_skip_nonref &&  # referential (if it's set)
         $ok_reflexive
     );
+}
+
+sub _is_3rd_pers_en_a {
+    my ($anode, $args) = @_;
+    return defined $THIRD_PERS_PRONS{$anode->lemma};
 }
 
 sub is_reflexive {
