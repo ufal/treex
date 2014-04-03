@@ -3,6 +3,7 @@ package Treex::Tool::Align::Utils;
 use Moose;
 use Treex::Core::Common;
 use Data::Dumper;
+use List::MoreUtils qw/any/;
 
 extends 'Treex::Core::Block';
 
@@ -11,6 +12,13 @@ my %SIEVES_HASH = (
     eparents => \&access_via_eparents,
     siblings => \&access_via_siblings,
 );
+
+sub are_aligned {
+    my ($node1, $node2, $filter) = @_;
+
+    my ($nodes, $types) = get_aligned_nodes_by_filter($node1, $filter);
+    return any {$_ == $node2} @$nodes;
+}
 
 sub get_aligned_nodes_by_filter {
     my ($node, $filter) = @_;
