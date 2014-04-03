@@ -7,10 +7,15 @@ use Treex::Tool::Coreference::PerceptronRanker;
 use Treex::Tool::Coreference::EN::PronCorefFeatures;
 use Treex::Tool::Coreference::NounAnteCandsGetter;
 use Treex::Tool::Coreference::EN::PronAnaphFilter;
+use Treex::Tool::Coreference::Features::Container;
+use Treex::Tool::Coreference::Features::Aligned;
+# TODO this should be solved in another way
+use Treex::Block::My::BitextCorefStats::EnPerspron;
 
 has '+model_path' => (
     default => 'data/models/coreference/EN/perceptron/text.perspron.analysed',
 );
+has 'aligned_feats' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 override '_build_ranker' => sub {
     my ($self) = @_;
@@ -22,7 +27,34 @@ override '_build_ranker' => sub {
 
 override '_build_feature_extractor' => sub {
     my ($self) = @_;
-    my $fe = Treex::Tool::Coreference::EN::PronCorefFeatures->new();
+    my @container = ();
+    
+    my $en_fe = Treex::Tool::Coreference::EN::PronCorefFeatures->new();
+    push @container, $en_fe;
+
+    if ($self->aligned_feats) {
+        my $aligned_fe = Treex::Tool::Coreference::Features::Aligned->new({
+            feat_extractors => [ 
+                Treex::Tool::Coreference::CS::PronCorefFeatures->new(),
+            ],
+            align_sieves => [ 'self', 'eparents', 'siblings', 
+                \&Treex::Block::My::BitextCorefStats::EnPerspron::access_via_ancestor,
+            ],
+            align_filters => [
+                \&Treex::Block::My::BitextCorefStats::EnPerspron::filter_self,
+                \&Treex::Block::My::BitextCorefStats::EnPerspron::filter_eparents,
+                \&Treex::Block::My::BitextCorefStats::EnPerspron::filter_siblings,
+                \&Treex::Block::My::BitextCorefStats::EnPerspron::filter_ancestor,
+            ],
+            align_lang => 'cs',
+            align_selector => 'src',
+        });
+        push @container, $aligned_fe;
+    }
+    
+    my $fe = Treex::Tool::Coreference::Features::Container->({
+        feat_extractors => \@container,
+    });
     return $fe;
 };
 

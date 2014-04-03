@@ -33,6 +33,7 @@ has '_feature_extractor' => (
     required    => 1,
 # TODO this should be a role, not a concrete class
     isa         => 'Treex::Tool::Coreference::CorefFeatures',
+    lazy        => 1,
     builder     => '_build_feature_extractor',
 );
 
@@ -48,6 +49,7 @@ has '_anaph_cands_filter' => (
     is          => 'ro',
     required    => 1,
     isa         => 'Treex::Tool::Coreference::NodeFilter',
+    lazy        => 1,
     builder     => '_build_anaph_cands_filter',
 );
 
@@ -59,7 +61,9 @@ sub BUILD {
     my ($self) = @_;
 
     $self->_ranker;
+    $self->_feature_extractor;
     $self->_ante_cands_selector;
+    $self->_anaph_cands_filter;
 }
 
 sub _build_ranker {
