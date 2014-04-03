@@ -2,6 +2,7 @@ package Treex::Tool::Coreference::CorefFeatures;
 
 use Moose::Role;
 use Moose::Util::TypeConstraints;
+use Treex::Core::Common;
 
 #has 'feature_names' => (
 #    is          => 'ro',
@@ -53,7 +54,7 @@ my $b_false = '-1';
 #    return {%$cand_features, %$binary_features};
 #}
 
-sub feat_hash_to_list {
+sub feat_hash_to_sparse_list {
     my ($hash) = @_;
     my @list = map {
         my $key = $_;
@@ -64,6 +65,7 @@ sub feat_hash_to_list {
             [$key, $hash->{$key}];
         }
     } keys %$hash;
+    @list = grep {defined $_->[1]} @list;
     return \@list;
 }
 
@@ -71,7 +73,7 @@ sub create_instances {
     my ($self, $anaph, $ante_cands) = @_;
     
     my $anaph_unary_h = $self->_unary_features( $anaph, 'anaph' );
-    my $anaph_unary_l = feat_hash_to_list($anaph_unary_h);
+    my $anaph_unary_l = feat_hash_to_sparse_list($anaph_unary_h);
 
     my @cand_feats = ();
     my $ord = 1;
@@ -80,8 +82,8 @@ sub create_instances {
         # TODO for convenience we merge the two hashes into a single one => should be passed separately
         my $both_unary_h = {%$cand_unary_h, %$anaph_unary_h};
         my $cand_binary_h = $self->_binary_features( $both_unary_h, $anaph, $cand, $ord);
-        my $cand_unary_l = feat_hash_to_list($cand_unary_h);
-        my $cand_binary_l = feat_hash_to_list($cand_binary_h);
+        my $cand_unary_l = feat_hash_to_sparse_list($cand_unary_h);
+        my $cand_binary_l = feat_hash_to_sparse_list($cand_binary_h);
         push @cand_feats, [@$cand_unary_l, @$cand_binary_l];
         $ord++;
     }
