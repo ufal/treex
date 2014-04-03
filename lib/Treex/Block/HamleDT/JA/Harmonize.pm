@@ -15,7 +15,9 @@ sub process_zone
     my $a_root = $self->SUPER::process_zone($zone);
 
     $self->attach_final_punctuation_to_root($a_root);
-    make_pdt_coordination($a_root);
+    $self->restructure_coordination($a_root);
+    $self->process_prep_sub_arg_cloud($a_root);
+    # make_pdt_coordination($a_root);
 }
 
 sub make_pdt_coordination {
@@ -48,9 +50,9 @@ sub make_pdt_coordination {
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
-# WIP, currently unused; see 'deprel_to_afun' below
+# WIP
 #------------------------------------------------------------------------------
-sub _deprel_to_afun {
+sub deprel_to_afun {
     my $self = shift;
     my $root = shift;
     for my $node ($root->get_descendants()) {
@@ -72,7 +74,8 @@ sub _deprel_to_afun {
             if ($pos eq 'verb') {
                 $afun = 'Pred';
             }
-            # postposition/particle as a head - but we do not want to assign AuxP now; later we will pass the label to the child
+            # postposition/particle as a head - but we do not want
+            # to assign AuxP now; later we will pass the label to the child
             elsif ($subpos eq 'post' or $subpos eq 'part') {
                 $afun = 'Pred';
             }
@@ -99,7 +102,10 @@ sub _deprel_to_afun {
             }
         }
 
-        # Complement (obligatory element with respect to the head)
+        # Complement
+        # obligatory element with respect to the head incl. bound forms
+        # ("nominal suffixes, postpositions, formal nouns, auxiliary verbs and
+        # so on") and predicate-argument structures
         elsif ($deprel eq 'COMP') {
             if ($ppos eq 'prep') {
                 $afun = 'PrepArg';
@@ -112,6 +118,7 @@ sub _deprel_to_afun {
                 $node->wild()->{conjunct} = 1;
             }
             elsif ($psubpos eq 'verb') {
+                # just a heuristic
                 if ($pos eq 'adv') {
                     $afun = 'Adv';
                 }
@@ -124,13 +131,18 @@ sub _deprel_to_afun {
             }
         }
         # Adjunct
+        # any left-hand constituent that is not a complement/subject
         elsif ($deprel eq 'ADJ') {
-            if ( 0 ) {
-                ;
+            if ($ppos eq 'noun') {
+                $afun = 'Atr';
+            }
+            elsif ($ppos =~ m/^(verb|adj|adv)$/) {
+                $afun = 'Adv';
             }
             else {
                 $afun = 'NR';
-                print STDERR $node->get_address, "\t", 'Unrecognized ADJ';
+                print STDERR ($node->get_address, "\t",
+                              "Unrecognized ADJ under $ppos");
             }
         }
 
@@ -140,32 +152,38 @@ sub _deprel_to_afun {
             if ($conll_pos eq 'Pfoc') {
                 $afun = 'AuxZ';
             }
-            # particles for expressing attitude/empathy, or turning the phrase into a question
+            # particles for expressing attitude/empathy, or turning the phrase
+            # into a question
             elsif ($conll_pos eq 'PSE') {
                 $afun = 'AuxO';
             }
-            # postpositions after adverbs with no syntactic, but instead rhetorical function
+            # postpositions after adverbs with no syntactic, but instead
+            # rhetorical function
             elsif ($conll_pos eq 'P' and $ppos eq 'adv') {
                 $afun = 'AuxO';
             }
             # coordination marker
             # there are 2 types of coordination:
-            # 1. the coordinator is between the phrases in the constituency tree;
-            #    in the depencency tree, it is a child of the second conjunct and
-            #    a right sister of the first conjunct (which has the deprel HEAD)
-            # 2. the coordinator marks an individual conjuct - each conjunct is marked separately;
-            #    the coordinator is a child of the conjunct
+            # 1. coordinator is between the phrases in the constituency tree;
+            #    in depencency tree, it is a child of the second conjunct and
+            #    a right sister of the first conjunct (which has deprel HEAD)
+            # 2. the coordinator marks an individual conjuct;
+            #    each conjunct is marked separately and the coordinator is
+            #    a child of the conjunct
             elsif ($subpos eq 'coor') {
                 $afun = 'Coord';
                 $node->wild()->{coordinator} = 1;
             }
             else {
                 $afun = 'NR';
-                print STDERR $node->get_address, "\t", 'Unrecognized MARK';
+                print STDERR ($node->get_address, "\t",
+                              "Unrecognized $conll_pos MARK under $ppos");
             }
         }
 
         # Co-head
+        # "listing of items, coordinations, and compositional expressions"
+        # compositional expressions: date & time, full name, from-to expressions
         elsif ($deprel eq 'HD') {
             if (0) {
                 ;
@@ -175,19 +193,27 @@ sub _deprel_to_afun {
                 print STDERR $node->get_address, "\t", 'Unrecognized HD';
             }
         }
+
+        # Unspecified
+        # numericals, speech errors, interjections
+        elsif ($deprel eq '-') {
+            $afun = 'ExD';
+        }
+
         # No other deprel is defined
         else {
             $afun = 'NR';
             print STDERR $node->get_address, "\t", 'Unrecognized deprel';
         }
     }
+    $node->set_afun($afun);
 }
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub _old_deprel_to_afun
 {
     my $self  = shift;
     my $root  = shift;
