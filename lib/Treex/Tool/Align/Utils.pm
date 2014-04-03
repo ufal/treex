@@ -117,8 +117,6 @@ sub aligned_robust {
             $sieve = $SIEVES_HASH{$sieve};
         }
         my @aligned = $sieve->($tnode, $align_filters, $errors);
-    $Data::Dumper::Maxdepth = 1;
-    print STDERR Dumper(\@aligned);
         if (@aligned) {
             my $filter = $filters->[$i];
             return (\@aligned, $errors) if (!defined $filter);
