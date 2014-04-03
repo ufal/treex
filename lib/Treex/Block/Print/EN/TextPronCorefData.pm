@@ -17,11 +17,14 @@ has 'aligned_feats' => ( is => 'ro', isa => 'Bool', default => 1 );
 override '_build_feature_extractor' => sub {
     my ($self) = @_;
     my @container = ();
-    
+ 
+    log_info "BEGIN";
     my $en_fe = Treex::Tool::Coreference::EN::PronCorefFeatures->new();
     push @container, $en_fe;
+    log_info "EN::PronCorefFeatures";
 
     if ($self->aligned_feats) {
+        log_info "Features::Aligned pred";
         my $aligned_fe = Treex::Tool::Coreference::Features::Aligned->new({
             feat_extractors => [ 
                 Treex::Tool::Coreference::CS::PronCorefFeatures->new(),
@@ -39,11 +42,13 @@ override '_build_feature_extractor' => sub {
             align_selector => 'src',
         });
         push @container, $aligned_fe;
+        log_info "Features::Aligned po";
     }
     
-    my $fe = Treex::Tool::Coreference::Features::Container->({
+    my $fe = Treex::Tool::Coreference::Features::Container->new({
         feat_extractors => \@container,
     });
+        log_info "Features::Container";
     return $fe;
 };
 
