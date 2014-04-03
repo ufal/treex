@@ -268,10 +268,12 @@ sub process_tnode {
         my @cands = $acs->get_candidates($t_node);
         my @coref_idx = is_text_coref($t_node, @cands);
 
-        my $feats = $self->_feature_extractor->create_instances($t_node, \@cands);
-        my $instance_str = Treex::Tool::ML::TabSpace::Util::format_multiline($feats, \@coref_idx);
+        if (@coref_idx) {
+            my $feats = $self->_feature_extractor->create_instances($t_node, \@cands);
+            my $instance_str = Treex::Tool::ML::TabSpace::Util::format_multiline($feats, \@coref_idx);
 
-        print {$self->_file_handle} $instance_str;
+            print {$self->_file_handle} $instance_str;
+        }
 
 #            # retrieve positive and negatve antecedent candidates separated from
 #            # each other
