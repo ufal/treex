@@ -98,13 +98,13 @@ sub deprel_to_afun {
         elsif ($deprel eq 'PUNCT') {
             my $punctype = $node->get_iset('punctype');
             if ($punctype eq 'comm') {
-                $afun = AuxX;
+                $afun = 'AuxX';
             }
             elsif ($punctype =~ m/^(peri|qest|excl)$/) {
-                $afun = AuxK;
+                $afun = 'AuxK';
             }
             else {
-                $afun = AuxG;
+                $afun = 'AuxG';
             }
         }
 
@@ -156,7 +156,7 @@ sub deprel_to_afun {
             else {
                 $afun = 'NR';
                 print STDERR ($node->get_address, "\t",
-                              "Unrecognized ADJ under $ppos");
+                              "Unrecognized $conl_pos ADJ under $ppos", "\n");
             }
         }
 
@@ -184,14 +184,14 @@ sub deprel_to_afun {
             # 2. the coordinator marks an individual conjuct;
             #    each conjunct is marked separately and the coordinator is
             #    a child of the conjunct
-            elsif ($subpos eq 'coor') {
+            elsif ($subpos eq 'coor' or $pos eq 'conj') {
                 $afun = 'Coord';
                 $node->wild()->{coordinator} = 1;
             }
             else {
                 $afun = 'NR';
                 print STDERR ($node->get_address, "\t",
-                              "Unrecognized $conll_pos MARK under $ppos", "\n");
+                              "Unrecognized $conll_pos MRK under $ppos", "\n");
             }
         }
 
@@ -204,7 +204,7 @@ sub deprel_to_afun {
             }
             else {
                 $afun = 'NR';
-                print STDERR $node->get_address, "\t", 'Unrecognized HD', "\n";
+                print STDERR $node->get_address, "\t", 'Unrecognized $conll_pos HD under $ppos', "\n";
             }
         }
 
