@@ -24,16 +24,17 @@ sub is_relat {
 sub _is_relat_cs {
     my ($tnode) = @_;
 
-    my $is_via_indeftype = _is_relat_via_indeftype($tnode);
-    return ($is_via_indeftype ? 1 : 0);
+    #my $is_via_indeftype = _is_relat_via_indeftype($tnode);
+    #return ($is_via_indeftype ? 1 : 0);
     #if (defined $is_via_indeftype) {
     #    return $is_via_indeftype;
     #}
 
-    #my $has_relat_tag = _is_relat_cs_via_tag($tnode);
-    #my $is_relat_lemma = _is_relat_cs_via_lemma($tnode); 
+    my $has_relat_tag = _is_relat_cs_via_tag($tnode);
+    my $is_relat_lemma = _is_relat_cs_via_lemma($tnode); 
     
-    #return $has_relat_tag || $is_relat_lemma;
+    #return $has_relat_tag;
+    return $has_relat_tag || $is_relat_lemma;
     
     #return $is_relat_lemma;
 }
@@ -72,13 +73,15 @@ sub _is_relat_cs_via_tag {
     # E = Relative pronoun což (corresponding to English which in subordinate clauses referring to a part of the preceding text) 
     # J = Relative pronoun jenž, již, ... not after a preposition (lit. who, whom) 
     # K = Relative/interrogative pronoun kdo (lit. who), incl. forms with affixes -ž and -s (affixes are distinguished by the category VAR (for -ž) and PERSON (for -s))
+    # Q = Pronoun relative/interrogative co, copak, cožpak (lit. what, isn't-it-true-that)
     # ? = Numeral kolik (lit. how many/how much)
-    return $anode->tag =~ /^.[149EJK\?]/;
+    return $anode->tag =~ /^.[149EJKQ\?]/;
 }
 
 # there is a problem with "již"
 my %relat_lemmas = map {$_ => 1}
-    qw/co což jak jaký jenž již kam kde kdo kdy kolik který odkud/;
+    qw/kde kdy/;
+    #qw/co což jak jaký jenž již kam kde kdo kdy kolik který odkud/;
 
 sub _is_relat_cs_via_lemma {
     my ($tnode) = @_;
