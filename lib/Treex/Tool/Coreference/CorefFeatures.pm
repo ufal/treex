@@ -27,6 +27,8 @@ requires '_binary_features';
 my $b_true = '1';
 my $b_false = '-1';
 
+my $SELF_LABEL = "__SELF__";
+
 #sub anaph_feature_names {
 #    my ($self) = @_;
 #    my @names = grep {$_ =~ /anaph/} @{$self->feature_names};
@@ -89,7 +91,7 @@ sub create_instances {
         }
         # pushing empty instance for the anaphor as candidate (it is entirely described by shared features)
         else {
-            push @cand_feats, [];
+            push @cand_feats, [[$SELF_LABEL,1]];
         }
         $ord++;
     }
