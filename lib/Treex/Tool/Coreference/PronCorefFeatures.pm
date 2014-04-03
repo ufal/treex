@@ -141,7 +141,7 @@ sub _unary_features {
     return if (($type ne 'cand') && ($type ne 'anaph'));
 
     #   1: anaphor's ID
-    $coref_features->{$type.'_id'} = $node->id;
+    $coref_features->{$type.'_id'} = $node->get_address;
 
     if ($type eq 'anaph') {
         $coref_features->{c_anaph_sentord} = _categorize(
