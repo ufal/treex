@@ -7,10 +7,12 @@ use Treex::Tool::Align::Utils;
 use Graph;
 use Treex::Tool::Lexicon::UniversalTagset;
 use Treex::Tool::Coreference::NodeFilter::PersPron;
+use List::MoreUtils qw/uniq/;
 
 with 'Treex::Tool::Align::FeaturesRole';
 
 has '_sent_graphs' => ( is => 'rw', isa => 'HashRef', default => sub {{}});
+has '_subtree_aligns' => ( is => 'rw', isa => 'HashRef', default => sub {{}});
 has '_curr_filename' => (is => 'rw', isa => 'Str', default => "");
 
 my $NOT_GOLD_REGEX = '^(?!gold$)';
@@ -25,16 +27,14 @@ sub _unary_features {
     $feats->{functor} = $node->functor;
 
     my $anode = $node->get_lex_anode;
-    my $tag = $anode ? $anode->tag : "";
-    $feats->{tag} = substr($tag, 0, 4);
-    $feats->{utag} = Treex::Tool::Lexicon::UniversalTagset::convert_tag($tag, $node->language);
+    $feats->{tag} = defined $anode ? substr($anode->tag, 0, 4) : "undef";
+    $feats->{utag} = defined $anode ? Treex::Tool::Lexicon::UniversalTagset::convert_tag($anode->tag, $node->language) : "undef";
 
     my ($par) = $node->get_eparents({or_topological => 1});
     my $par_anode = $par->get_lex_anode;
-    my $par_tag = defined $par_anode ? $par_anode->tag : "";
-    $feats->{par_utag} = Treex::Tool::Lexicon::UniversalTagset::convert_tag($par_tag, $node->language);
+    $feats->{par_utag} = defined $par_anode ? Treex::Tool::Lexicon::UniversalTagset::convert_tag($par_anode->tag, $node->language) : "undef";
 
-    $feats->{reflex} = Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {reflexive => 1});
+    $feats->{reflex} = Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {reflexive => 1}) ? 1 : 0;
 
     return $feats;
 }
@@ -64,6 +64,8 @@ sub _add_align_features {
     my ($par2) = $node2->get_eparents({or_topological => 1});
     my $par_aligned = Treex::Tool::Align::Utils::are_aligned($par1, $par2, { rel_types => [ $NOT_GOLD_REGEX ]});
     $feats->{par_aligned} = $par_aligned ? 1 : 0;
+
+    $feats->{subtree_aligned} = $self->subtree_alignment($node1, $node2) ? 1 : 0;
 
     $self->_add_graph_features($feats, $node1, $node2);
 }
@@ -123,7 +125,7 @@ sub _get_sent_graph {
     foreach my $node (@nodes) {
         $g->set_edge_attribute($node->id, $node->get_parent->id, "type", "parent");
         $g->set_edge_attribute($node->get_parent->id, $node->id, "type", "child");
-        my ($ali_nodes, $ali_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($node, { directed => 1, rel_types => [ $NOT_GOLD_REGEX ]});
+        my ($ali_nodes, $ali_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($node, { directed => 1, selector => $node->selector, rel_types => [ $NOT_GOLD_REGEX ]});
         foreach my $ali (@$ali_nodes) {
             $g->add_weighted_edge($node->id, $ali->id, 100);
             $g->add_weighted_edge($ali->id, $node->id, 100);
@@ -136,6 +138,41 @@ sub _get_sent_graph {
     $self->_sent_graphs->{$l2_ttree->id} = $g;
 
     return $g;
+}
+
+sub subtree_alignment {
+    my ($self, $l1_node, $l2_node) = @_;
+    my $subtree_align = $self->_get_subtree_aligns($l1_node);
+    return defined $subtree_align->{$l2_node->id};
+}
+
+sub _get_subtree_aligns {
+    my ($self, $tnode) = @_;
+    
+    my $filename = $tnode->get_document->full_filename;
+    if ($filename ne $self->_curr_filename) {
+        $self->_set_curr_filename($filename);
+        $self->_set_subtree_aligns({});
+    }
+
+    my $subtree_align = $self->_subtree_aligns->{$tnode->id};
+    return $subtree_align if (defined $subtree_align);
+
+    my $par = $tnode;
+    while (defined $par->get_parent && $par->get_parent->formeme !~ /^v/) {
+        $par = $par->get_parent;
+    }
+
+    my @phrase_nodes = $par->get_descendants();
+    my @ali_phrase_nodes = map {
+        my ($an, $at) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($_, {selector => $_->selector, rel_types => [ $NOT_GOLD_REGEX ]}); @$an
+    } @phrase_nodes;
+
+    my @all_ali_desc = uniq map {$_->get_descendants({add_self => 1})} @ali_phrase_nodes;
+    $subtree_align = { map {$_->id => 1} @all_ali_desc };
+
+    $self->_subtree_aligns->{$tnode->id} = $subtree_align;
+    return $subtree_align;
 }
 
 
