@@ -12,79 +12,52 @@ my %SIEVES_HASH = (
     siblings => \&access_via_siblings,
 );
 
-sub add_aligned {
-    my ($node1, $node2, $type) = @_;
-    #log_info "ALIGN ADD: " . $node2->id;
-        
-    my $old_type = get_alignment_type($node1, $node2);
-    if (!defined $old_type) {
-        $node1->add_aligned_node($node2, $type);
-        return;
-    }
+sub get_aligned_nodes_by_filter {
+    my ($node, $filter) = @_;
+    
+    # retrieve aligned nodes and its types for both incoming and outcoming links
+    my ($aligned_to, $aligned_to_types) = $node->get_aligned_nodes();
+    #log_info "ALITO: " . Dumper($aligned_to_types);
+    #log_info "ALITOIDS: " . (join ",", map {$_->id} @$aligned_to);
+    my @aligned_from = $node->get_referencing_nodes('alignment');
+    my @aligned_from_types = map {get_alignment_types($_, $node)} @aligned_from;
+    #log_info "ALIFROM: " . Dumper(\@aligned_from_types);
+    #log_info "ALIFROMIDS: " . (join ",", map {$_->id} @aligned_from);
+    my @aligned = ($aligned_to ? @$aligned_to : (), @aligned_from);
+    my @aligned_types = ($aligned_to_types ? @$aligned_to_types : (), @aligned_from_types);
 
-    if ($node1->is_aligned_to($node2, $old_type)) {
-        $node1->delete_aligned_node($node2, $old_type);
-        $node1->add_aligned_node($node2, "$old_type $type");
-    }
-    else {
-        $node2->delete_aligned_node($node1, $old_type);
-        $node2->add_aligned_node($node1, "$old_type $type");
-    }
+    my ($edge_nodes, $edge_types) = _edge_filter_out(\@aligned, \@aligned_types, $filter);
+    my ($filtered_nodes, $filtered_types) = _node_filter_out($edge_nodes, $edge_types, $filter);
+   
+    return ($filtered_nodes, $filtered_types);
 }
 
-sub remove_alignments {
-    my ($node1, $filter) = @_;
-    my (@aligned) = aligned_transitively([$node1], [$filter]);
-    foreach my $node2 (@aligned) {
-        #log_info "ALIGN REMOVE: " . $node2->id;
-        my $type = get_alignment_type($node1, $node2);
-        if ($node1->is_aligned_to($node2, $type)) {
-            $node1->delete_aligned_node($node2, $type);
+sub remove_aligned_nodes_by_filter {
+    my ($node, $filter) = @_;
+
+    my ($nodes, $types) = get_aligned_nodes_by_filter($node, $filter);
+    for (my $i = 0; $i < @$nodes; $i++) {
+        #log_info "ALIGN REMOVE: " . $types->[$i] . " " . $nodes->[$i]->id;
+        if ($node->is_aligned_to($nodes->[$i], $types->[$i])) {
+            $node->delete_aligned_node($nodes->[$i], $types->[$i]);
         }
         else {
-            $node2->delete_aligned_node($node1, $type);
+            $nodes->[$i]->delete_aligned_node($node, $types->[$i]);
         }
     }
-}
-
-sub aligned_transitively {
-    my ($nodes, $filters) = @_;
-
-    my @level_aligned = @$nodes;
-
-    my $filter;
-    foreach my $filter (@$filters) {
-        @level_aligned = map {_get_aligned_nodes_by_filter($_, $filter)} @level_aligned;
-    }
-    return @level_aligned;
-}
-
-sub get_alignment_type {
-    my ($from, $to) = @_;
-    my ($nodes, $types) = $from->get_aligned_nodes();
-    my $type_idx;
-    if (defined $nodes) {
-        ($type_idx) = grep {$nodes->[$_] == $to} 0 .. scalar(@$nodes)-1;
-    }
-    return $types->[$type_idx] if (defined $type_idx);
-    # try the opposite link
-    ($nodes, $types) = $to->get_aligned_nodes();
-    if (defined $nodes) {
-        ($type_idx) = grep {$nodes->[$_] == $from} 0 .. scalar(@$nodes)-1;
-    }
-    return $types->[$type_idx] if (defined $type_idx);
-    return;
 }
 
 sub _node_filter_out {
-    my ($aligned, $filter) = @_;
+    my ($nodes, $types, $filter) = @_;
     my $lang = $filter->{language};
     my $sel = $filter->{selector};
-    
-    return grep {
-        (!defined $lang || ($lang eq $_->language)) &&
-        (!defined $sel || ($sel eq $_->selector))
-    } @$aligned;
+
+    my @idx = grep {
+        (!defined $lang || ($lang eq $nodes->[$_]->language)) &&
+        (!defined $sel || ($sel eq $nodes->[$_]->selector))
+    } 0 .. $#$nodes;
+
+    return ([@$nodes[@idx]], [@$types[@idx]]);
 }
 
 sub _value_of_type {
@@ -97,30 +70,74 @@ sub _value_of_type {
 }
 
 sub _edge_filter_out {
-    my ($aligned, $aligned_types, $filter) = @_;
+    my ($nodes, $types, $filter) = @_;
     my $rel_types = $filter->{rel_types};
-    return @$aligned if (!defined $rel_types);
+    return ($nodes, $types) if (!defined $rel_types);
     
-    my @values = map {_value_of_type($_, $rel_types)} @$aligned_types;
-    my @idx = grep { defined $values[$_] } 0 .. scalar(@$aligned)-1;
+    #log_info 'ALITYPES: ' . Dumper($types);
+    my @values = map {_value_of_type($_, $rel_types)} @$types;
+    #log_info 'ALITYPES: ' . Dumper(\@values);
+    my @idx = grep { defined $values[$_] } 0 .. scalar(@$nodes)-1;
     @idx = sort {$values[$a] <=> $values[$b]} @idx;
-    return @$aligned[@idx];
+
+    return ([@$nodes[@idx]], [@$types[@idx]]);
 }
 
-sub _get_aligned_nodes_by_filter {
-    my ($node, $filter) = @_;
-    
-    # retrieve aligned nodes and its types for both incoming and outcoming links
-    my ($aligned_to, $aligned_to_types) = $node->get_aligned_nodes();
-    my @aligned_from = $node->get_referencing_nodes('alignment');
-    my @aligned_from_types = map {get_alignment_type($_, $node)} @aligned_from;
-    my @aligned = ($aligned_to ? @$aligned_to : (), @aligned_from);
-    my @aligned_types = ($aligned_to_types ? @$aligned_to_types : (), @aligned_from_types);
+sub add_aligned_node {
+    my ($node1, $node2, $type) = @_;
+    #log_info "ALIGN ADD: " . $node2->id;
+        
+    my @old_types = get_alignment_types($node1, $node2);
+    my $type_defined = any {$_ eq $type} @old_types;
+    if (!$type_defined) {
+        #log_info "ADD_ALIGN: $type " . $node2->id;
+        $node1->add_aligned_node($node2, $type);
+    }
 
-    my @edge_filtered = _edge_filter_out(\@aligned, \@aligned_types, $filter);
-    my @node_filtered = _node_filter_out(\@edge_filtered, $filter);
+    #if ($node1->is_aligned_to($node2, $old_type)) {
+    #    $node1->delete_aligned_node($node2, $old_type);
+    #    $node1->add_aligned_node($node2, "$old_type $type");
+    #}
+    #else {
+    #    $node2->delete_aligned_node($node1, $old_type);
+    #    $node2->add_aligned_node($node1, "$old_type $type");
+    #}
+}
+
+sub get_alignment_types {
+    my ($from, $to, $both_dir) = @_;
+
+    my @all_types;
+    my @types_idx;
     
-    return @node_filtered;
+    my ($nodes, $types) = $from->get_aligned_nodes();
+    if (defined $nodes) {
+        @types_idx = grep {$nodes->[$_] == $to} 0 .. scalar(@$nodes)-1;
+    }
+    push @all_types, @$types[@types_idx];
+    
+    # try the opposite link
+    if ($both_dir) {
+        ($nodes, $types) = $to->get_aligned_nodes();
+        if (defined $nodes) {
+            @types_idx = grep {$nodes->[$_] == $from} 0 .. scalar(@$nodes)-1;
+        }
+        push @all_types, @$types[@types_idx];
+    }
+    
+    return @all_types;
+}
+
+sub aligned_transitively {
+    my ($nodes, $filters) = @_;
+
+    my @level_aligned = @$nodes;
+
+    my $filter;
+    foreach my $filter (@$filters) {
+        @level_aligned = map {my ($n, $t) = get_aligned_nodes_by_filter($_, $filter); @$n;} @level_aligned;
+    }
+    return @level_aligned;
 }
 
 sub aligned_robust {
