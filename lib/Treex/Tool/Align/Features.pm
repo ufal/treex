@@ -5,6 +5,8 @@ use Treex::Core::Common;
 
 use Treex::Tool::Align::Utils;
 use Graph;
+use Treex::Tool::Lexicon::UniversalTagset;
+use Treex::Tool::Coreference::NodeFilter::PersPron;
 
 with 'Treex::Tool::Align::FeaturesRole';
 
@@ -19,10 +21,20 @@ sub _unary_features {
     my $feats = {};
 
     $feats->{id} = $node->get_address;
+    $feats->{t_lemma} = $node->t_lemma;
     $feats->{functor} = $node->functor;
 
     my $anode = $node->get_lex_anode;
-    $feats->{tag} = defined $anode ? substr($anode->tag, 0, 4) : "";
+    my $tag = $anode ? $anode->tag : "";
+    $feats->{tag} = substr($tag, 0, 4);
+    $feats->{utag} = Treex::Tool::Lexicon::UniversalTagset::convert_tag($tag, $node->language);
+
+    my ($par) = $node->get_eparents({or_topological => 1});
+    my $par_anode = $par->get_lex_anode;
+    my $par_tag = defined $par_anode ? $par_anode->tag : "";
+    $feats->{par_utag} = Treex::Tool::Lexicon::UniversalTagset::convert_tag($par_tag, $node->language);
+
+    $feats->{reflex} = Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {reflexive => 1});
 
     return $feats;
 }
@@ -48,7 +60,9 @@ sub _add_align_features {
     $feats->{giza_aligned} = $nodes_aligned ? 1 : 0;
 
 
-    my $par_aligned = Treex::Tool::Align::Utils::are_aligned($node1->get_parent, $node2->get_parent, { rel_types => [ $NOT_GOLD_REGEX ]});
+    my ($par1) = $node1->get_eparents({or_topological => 1});
+    my ($par2) = $node2->get_eparents({or_topological => 1});
+    my $par_aligned = Treex::Tool::Align::Utils::are_aligned($par1, $par2, { rel_types => [ $NOT_GOLD_REGEX ]});
     $feats->{par_aligned} = $par_aligned ? 1 : 0;
 
     $self->_add_graph_features($feats, $node1, $node2);

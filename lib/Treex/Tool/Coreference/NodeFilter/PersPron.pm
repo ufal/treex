@@ -33,7 +33,7 @@ sub is_candidate {
 sub is_3rd_pers {
     my ($node, $args) = @_;
     if ($node->language eq 'cs') {
-        return _is_relat_cs($node, $args);
+        return _is_3rd_pers_cs($node, $args);
     }
     if ($node->language eq 'en') {
         my $is_pers = _is_3rd_pers_en($node, $args);
@@ -46,22 +46,40 @@ sub is_3rd_pers {
     }
 }
 
-sub _is_relat_cs {
-    my ($tnode) = @_;
+sub _is_3rd_pers_cs {
+    my ($tnode, $args) = @_;
 
-    #my $is_via_indeftype = _is_relat_via_indeftype($tnode);
-    #return ($is_via_indeftype ? 1 : 0);
-    #if (defined $is_via_indeftype) {
-    #    return $is_via_indeftype;
-    #}
+    if (!defined $args) {
+        $args = {};
+    }
+    
+    # is in 3rd person
+    my $is_3rd_pers = 0;
+    if ( defined $tnode->gram_person ) {
+        $is_3rd_pers = ($tnode->gram_person eq '3' || $tnode->gram_person eq 'inher');
+    }
 
-    my $has_relat_tag = _is_relat_cs_via_tag($tnode);
-    my $is_relat_lemma = _is_relat_cs_via_lemma($tnode); 
-    
-    #return $has_relat_tag;
-    return $has_relat_tag || $is_relat_lemma;
-    
-    #return $is_relat_lemma;
+    # skip non-referential
+    my $ok_skip_nonref = 1;
+    if ($args->{skip_nonref}) {
+        my $is_refer = $tnode->wild->{referential};
+        $ok_skip_nonref = !defined $is_refer || ($is_refer == 1);
+    }
+
+    # reflexive
+    my $ok_reflexive = 1;
+    if (defined $args->{reflexive}) {
+        my $reflex = is_reflexive($tnode);
+        $ok_reflexive = ($reflex xor !$args->{reflexive});
+#        print STDERR "OK_REFLEXIVE: " . ($ok_reflexive ? 1 : 0) . "\n";
+    }
+
+    return (
+        ($tnode->t_lemma eq '#PersPron') &&  # personal pronoun 
+        $is_3rd_pers &&    # third person
+        $ok_skip_nonref &&  # referential (if it's set)
+        $ok_reflexive
+    );
 }
 
 
@@ -130,7 +148,7 @@ sub is_reflexive {
     my $reflex = $tnode->get_attr('is_reflexive');
     my $anode = $tnode->get_lex_anode;
     return 0 if (!defined $anode);
-    if (!defined $reflex) {
+    if (!defined $reflex && $tnode->language eq "en") {
         $reflex = $PERS_PRONS_REFLEX{$anode->lemma};
     }
     return $reflex;
