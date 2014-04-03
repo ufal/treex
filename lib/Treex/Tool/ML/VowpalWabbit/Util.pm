@@ -33,8 +33,10 @@ sub format_multiline {
     if (defined $pos_idx) {
         %pos_idx_hash = map {$_ => 1} @$pos_idx;
         $comment = join ",", (map {$_ + 1} @$pos_idx);
+        
+        my ($empty_cand_idx) = grep {!@{$cands_feats->[$_]}} 0 .. $#$cands_feats;
+        $comment .= '-' . ($empty_cand_idx+1) if (defined $empty_cand_idx);
     }
-
     
     my $i = 0;
     foreach my $cand_feats (@$cands_feats) {

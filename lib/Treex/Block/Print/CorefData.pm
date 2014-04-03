@@ -217,6 +217,11 @@ sub is_text_coref {
     my @antecs = $anaph->get_coref_chain;
     push @antecs, map { $_->functor =~ /^(APPS|CONJ|DISJ|GRAD)$/ ? $_->children : () } @antecs;
 
+    # if no antecedent, insert itself and if anaphor as candidate is on, it will be marked positive
+    if (!@antecs) {
+        push @antecs, $anaph;
+    }
+
     my %antes_hash = map {$_->id => $_} @antecs;
 
     my @relat_idx = grep {defined $antes_hash{$cands[$_]->id}} 0 .. $#cands;
@@ -263,12 +268,10 @@ sub process_tnode {
         my @cands = $acs->get_candidates($t_node);
         my @coref_idx = is_text_coref($t_node, @cands);
 
-        if (@coref_idx) {
-            my $feats = $self->_feature_extractor->create_instances($t_node, \@cands);
-            my $instance_str = Treex::Tool::ML::TabSpace::Util::format_multiline($feats, \@coref_idx);
+        my $feats = $self->_feature_extractor->create_instances($t_node, \@cands);
+        my $instance_str = Treex::Tool::ML::TabSpace::Util::format_multiline($feats, \@coref_idx);
 
-            print {$self->_file_handle} $instance_str;
-        }
+        print {$self->_file_handle} $instance_str;
 
 #            # retrieve positive and negatve antecedent candidates separated from
 #            # each other
