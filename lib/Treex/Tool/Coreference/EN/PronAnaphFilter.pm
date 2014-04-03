@@ -11,7 +11,7 @@ has 'skip_referential' => ( is => 'ro', isa => 'Bool', default => 0, required =>
 sub is_candidate {
     my ($self, $t_node) = @_;
 
-    log_warn "Class Treex::Tool::Coreference::EN::PronAnaphFilter is DEPRECATED.";
+    log_warn "Class Treex::Tool::Coreference::EN::PronAnaphFilter is DEPRECATED. Use Treex::Tool::Coreference::NodeFilter::PersPron instead.";
 
     my $args = {};
     if ($self->skip_referential) {

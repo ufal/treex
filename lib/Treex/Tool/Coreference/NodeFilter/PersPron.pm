@@ -24,8 +24,8 @@ my %PERS_PRONS_REFLEX = map {$_ => 1} qw/
 /;
 
 sub is_candidate {
-    my ($self, $t_node) = @_;
-    return is_3rd_pers($t_node);
+    my ($self, $tnode) = @_;
+    return is_3rd_pers($tnode);
 }
 
 sub is_3rd_pers {

@@ -4,13 +4,13 @@ use Treex::Core::Common;
 extends 'Treex::Block::Print::CorefData';
 
 use Treex::Tool::Coreference::NounAnteCandsGetter;
-use Treex::Tool::Coreference::EN::PronAnaphFilter;
+use Treex::Tool::Coreference::NodeFilter::PersPron;
 use Treex::Tool::Coreference::EN::PronCorefFeatures;
 use Treex::Tool::Coreference::CS::PronCorefFeatures;
 use Treex::Tool::Coreference::Features::Container;
 use Treex::Tool::Coreference::Features::Aligned;
 
-has 'aligned_feats' => ( is => 'ro', isa => 'Bool', default => 1 );
+has 'aligned_feats' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 override '_build_feature_extractor' => sub {
     my ($self) = @_;
@@ -48,7 +48,7 @@ override '_build_ante_cands_selector' => sub {
 
 override '_build_anaph_cands_filter' => sub {
     my ($self) = @_;
-    my $acf = Treex::Tool::Coreference::EN::PronAnaphFilter->new();
+    my $acf = Treex::Tool::Coreference::NodeFilter::PersPron->new();
     return $acf;
 };
 
@@ -63,6 +63,6 @@ override '_build_anaph_cands_filter' => sub {
 
 =cut
 
-# Copyright 2008-2011 Michal Novak
+# Copyright 2010-2014 Michal Novak
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
