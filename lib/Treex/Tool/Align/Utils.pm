@@ -12,6 +12,24 @@ my %SIEVES_HASH = (
     siblings => \&access_via_siblings,
 );
 
+sub add_aligned {
+    my ($node1, $node2, $type) = @_;
+        
+    my $old_type = get_alignment_type($node1, $node2);
+    if (!defined $old_type) {
+        $node1->add_aligned_node($node2, $type);
+        return;
+    }
+
+    if ($node1->is_aligned_to($node2, $old_type)) {
+        $node1->delete_aligned_node($node2, $old_type);
+        $node1->add_aligned_node($node2, "$old_type $type");
+    }
+    else {
+        $node2->delete_aligned_node($node1, $old_type);
+        $node2->add_aligned_node($node1, "$old_type $type");
+    }
+}
 
 sub aligned_transitively {
     my ($nodes, $filters) = @_;
@@ -28,15 +46,18 @@ sub aligned_transitively {
 sub get_alignment_type {
     my ($from, $to) = @_;
     my ($nodes, $types) = $from->get_aligned_nodes();
-    my ($type_idx) = grep {$nodes->[$_] == $to} 0 .. scalar(@$nodes)-1;
-    
+    my $type_idx;
+    if (defined $nodes) {
+        ($type_idx) = grep {$nodes->[$_] == $to} 0 .. scalar(@$nodes)-1;
+    }
+    return $types->[$type_idx] if (defined $type_idx);
     # try the opposite link
-    if (!defined $type_idx) {
-        ($nodes, $types) = $to->get_aligned_nodes();
+    ($nodes, $types) = $to->get_aligned_nodes();
+    if (defined $nodes) {
         ($type_idx) = grep {$nodes->[$_] == $from} 0 .. scalar(@$nodes)-1;
     }
-    return undef if (!defined $type_idx);
-    return $types->[$type_idx];
+    return $types->[$type_idx] if (defined $type_idx);
+    return;
 }
 
 sub _node_filter_out {
@@ -50,13 +71,23 @@ sub _node_filter_out {
     } @$aligned;
 }
 
+sub _value_of_type {
+    my ($type, $type_list) = @_;
+    my $i = 0;
+    foreach my $type_re (@$type_list) {
+        return $i if ($type =~ /$type_re/);
+    }
+    return undef;
+}
+
 sub _edge_filter_out {
     my ($aligned, $aligned_types, $filter) = @_;
-    my $rel_type = $filter->{rel_type};
-
-    my @idx = grep {
-        !defined $rel_type || ($aligned_types->[$_] eq $rel_type)
-    } 0 .. scalar(@$aligned)-1;
+    my $rel_types = $filter->{rel_types};
+    return @$aligned if (!defined $rel_types);
+    
+    my @values = map {_value_of_type($_, $rel_types)} @$aligned_types;
+    my @idx = grep { defined $values[$_] } 0 .. scalar(@$aligned)-1;
+    @idx = sort {$values[$a] <=> $values[$b]} @idx;
     return @$aligned[@idx];
 }
 
