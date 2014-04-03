@@ -18,7 +18,7 @@ sub _unary_features {
 
     my $feats = {};
 
-    $feats->{id} = $node->id;
+    $feats->{id} = $node->get_address;
     $feats->{functor} = $node->functor;
 
     my $anode = $node->get_lex_anode;
