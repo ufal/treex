@@ -3,6 +3,8 @@ package Treex::Block::Print::CorefData;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Coreference::ValueTransformer;
+use Treex::Tool::ML::VowpalWabbit::Util;
+use List::Util;
 
 extends 'Treex::Core::Block';
 
@@ -209,6 +211,18 @@ sub _create_lines_reranker_format {
     return @lines;
 }
 
+sub is_text_coref {
+    my ($anaph, @cands) = @_;
+    
+    my @antecs = $anaph->get_coref_chain;
+    push @antecs, map { $_->functor =~ /^(APPS|CONJ|DISJ|GRAD)$/ ? $_->children : () } @antecs;
+
+    my %antes_hash = map {$_->id => $_} @antecs;
+
+    my @relat_idx = grep {defined $antes_hash{$cands[$_]->id}} 0 .. $#cands;
+    return @relat_idx;
+}
+
 before 'process_document' => sub {
     my ($self, $doc) = @_;
 
@@ -246,24 +260,34 @@ sub process_tnode {
         }
         else {
 
-            # retrieve positive and negatve antecedent candidates separated from
-            # each other
-            my ($pos_cands, $neg_cands, $pos_ords, $neg_ords) 
-                = $acs->get_pos_neg_candidates( $t_node );
-                
-            if ( @{$pos_cands} > 0 and defined $pos_cands->[0] ) {
-                my @defined_neg_cands = grep { defined $_ } @{$neg_cands};
-                my @pos_lines = $self->_create_lines_reranker_format( $t_node, $pos_cands, 1, $pos_ords );
-                my @neg_lines = $self->_create_lines_reranker_format( $t_node, \@defined_neg_cands, 0, $neg_ords );
-#                 my @neg_lines = $self->_create_lines_reranker_format( $t_node, $neg_cands, 0, $neg_ords );
-    #             my @pos_lines = $self->_create_lines_percep_format( $t_node, $pos_cands, 1, $pos_ords );
-    #             my @neg_lines = $self->_create_lines_percep_format( $t_node, $neg_cands, 0, $neg_ords );
+            my @cands = $acs->get_candidates($t_node);
+            my @coref_idx = is_text_coref($t_node, @cands);
 
-    # TODO negative instances appeared to be of 0 size, why?
-                if (@pos_lines > 0) {
-                    $self->_print_bundle( $t_node->id, (@pos_lines, @neg_lines) );
-                }
+            if (@coref_idx) {
+                my $feats = $self->_feature_extractor->create_instances($anaph, \@cands);
+                my $instace_str = Treex::Tool::ML::VowpalWabbit::Util::format($feats, \@coref_idx);
+
+                print $instance_str;
             }
+
+#            # retrieve positive and negatve antecedent candidates separated from
+#            # each other
+#            #my ($pos_cands, $neg_cands, $pos_ords, $neg_ords) 
+#            #    = $acs->get_pos_neg_candidates( $t_node );
+#                
+#            if ( @{$pos_cands} > 0 and defined $pos_cands->[0] ) {
+#                my @defined_neg_cands = grep { defined $_ } @{$neg_cands};
+#                my @pos_lines = $self->_create_lines_reranker_format( $t_node, $pos_cands, 1, $pos_ords );
+#                my @neg_lines = $self->_create_lines_reranker_format( $t_node, \@defined_neg_cands, 0, $neg_ords );
+##                 my @neg_lines = $self->_create_lines_reranker_format( $t_node, $neg_cands, 0, $neg_ords );
+#    #             my @pos_lines = $self->_create_lines_percep_format( $t_node, $pos_cands, 1, $pos_ords );
+#    #             my @neg_lines = $self->_create_lines_percep_format( $t_node, $neg_cands, 0, $neg_ords );
+#
+#    # TODO negative instances appeared to be of 0 size, why?
+#                if (@pos_lines > 0) {
+#                    $self->_print_bundle( $t_node->id, (@pos_lines, @neg_lines) );
+#                }
+#            }
 
         }
     }

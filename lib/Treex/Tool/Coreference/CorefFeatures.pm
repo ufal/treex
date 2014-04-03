@@ -54,7 +54,7 @@ sub extract_nonanaph_features {
 }
 
 sub create_instances {
-    my ($self, $anaph, $ante_cands, $ords) = @_;
+    my ($self, $anaph, $ante_cands) = @_;
 
     if ($self->format eq 'unsup') {
         return $self->_create_instances(
