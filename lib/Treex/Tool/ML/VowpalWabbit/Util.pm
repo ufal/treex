@@ -6,7 +6,7 @@ use List::Util;
 
 my $SHARED_LABEL = "shared";
 my $FEAT_VAL_DELIM = "=";
-my $SELF_LABEL = "__SELF__=1";
+my $SELF_LABEL = "__SELF__";
 
 #sub format {
 #    my ($x, @args) = @_;
@@ -35,7 +35,15 @@ sub format_multiline {
         %pos_idx_hash = map {$_ => 1} @$pos_idx;
         $comment = join ",", (map {$_ + 1} @$pos_idx);
        
-        my ($self_cand_idx) = grep {$cands_feats->[$_][0] eq $SELF_LABEL} 0 .. $#$cands_feats;
+        my ($self_cand_idx) = grep {
+            my $feat = $cands_feats->[$_][0];
+            if (ref($feat) eq 'ARRAY') {
+                $feat->[0] eq $SELF_LABEL;
+            }
+            else {
+                $feat eq $SELF_LABEL.$FEAT_VAL_DELIM."1";
+            }
+        } 0 .. $#$cands_feats;
         $comment .= '-' . ($self_cand_idx+1) if (defined $self_cand_idx);
     }
     

@@ -8,7 +8,7 @@ requires 'rank';
 sub pick_winner {
     my ($self, $instances, $debug) = @_;
 
-    my $cand_weights = $self->rank( $instances );
+    my @cand_weights = $self->rank( $instances );
     # DEBUG
     #my $cand_weights = $self->rank( $instances, $debug );
     
@@ -17,10 +17,16 @@ sub pick_winner {
     #    print STDERR join "\n", (map {$_ . " : " . $cand_weights->{$_}} keys %{$cand_weights});
     #    print STDERR "\n";
     #}
-    
-    my @cands = sort {$cand_weights->{$b} <=> $cand_weights->{$a}} 
-        keys %{$cand_weights};
-    return $cands[0];
+
+    my $max_weight;
+    my $max_idx;
+    for (my $i = 0; $i < @cand_weights; $i++) {
+        if (!defined $max_weight || $cand_weights[$i] > $max_weight) {
+            $max_weight = $cand_weights[$i];
+            $max_idx = $i;
+        }
+    }
+    return $max_idx;
 }
 
 1;
