@@ -191,8 +191,8 @@ sub _unary_features {
 # returns if $inode and $jnode have the same eparent
 sub _are_siblings {
 	my ($inode, $jnode) = @_;
-	my $ipar = ($inode->get_eparents)[0];
-	my $jpar = ($jnode->get_eparents)[0];
+	my $ipar = ($inode->get_eparents({or_topological => 1}))[0];
+	my $jpar = ($jnode->get_eparents({or_topological => 1}))[0];
 	return ($ipar == $jpar) ? $b_true : $b_false;
 }
 
@@ -200,7 +200,7 @@ sub _are_siblings {
 sub _get_eparent_features {
 	my ($node) = @_;
 # 	my $epar = ($node->get_eparents)[0];
-	if ( my $epar = ($node->get_eparents)[0] ) {
+	if ( my $epar = ($node->get_eparents({or_topological => 1}))[0] ) {
         return ($epar->functor, $epar->gram_sempos, $epar->formeme, $epar->t_lemma);
 	}
 	return;
@@ -230,7 +230,7 @@ sub _is_app_in_coord {
 # returns $b_true if the parameter is subject; otherwise $b_false
 sub _is_subject {
 	my ($node) = @_;
-	my $par = ($node->get_eparents)[0];
+	my $par = ($node->get_eparents({or_topological => 1}))[0];
     return $b_false if (!defined $par || $par->is_root);
 	
     if ($par->gram_tense && ($par->gram_tense =~ /^(sim|ant|post)/) || 
