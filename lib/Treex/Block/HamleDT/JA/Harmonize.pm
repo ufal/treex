@@ -15,7 +15,7 @@ sub process_zone
     my $a_root = $self->SUPER::process_zone($zone);
 
     $self->attach_final_punctuation_to_root($a_root);
-    $self->restructure_coordination($a_root);
+   #  $self->restructure_coordination($a_root);
     $self->process_prep_sub_arg_cloud($a_root);
     # make_pdt_coordination($a_root);
 }
@@ -94,6 +94,20 @@ sub deprel_to_afun {
             }
         }
 
+        # Punctuation
+        elsif ($deprel eq 'PUNCT') {
+            my $punctype = $node->get_iset('punctype');
+            if ($punctype eq 'comm') {
+                $afun = AuxX;
+            }
+            elsif ($punctype =~ m/^(peri|qest|excl)$/) {
+                $afun = AuxK;
+            }
+            else {
+                $afun = AuxG;
+            }
+        }
+
         # Subject
         elsif ($deprel eq 'SBJ') {
             $afun = 'Sb';
@@ -147,7 +161,7 @@ sub deprel_to_afun {
         }
 
         # Marker
-        elsif ($deprel eq 'MARK') {
+        elsif ($deprel eq 'MRK') {
             # topicalizers and focalizers
             if ($conll_pos eq 'Pfoc') {
                 $afun = 'AuxZ';
@@ -177,7 +191,7 @@ sub deprel_to_afun {
             else {
                 $afun = 'NR';
                 print STDERR ($node->get_address, "\t",
-                              "Unrecognized $conll_pos MARK under $ppos");
+                              "Unrecognized $conll_pos MARK under $ppos", "\n");
             }
         }
 
@@ -190,7 +204,7 @@ sub deprel_to_afun {
             }
             else {
                 $afun = 'NR';
-                print STDERR $node->get_address, "\t", 'Unrecognized HD';
+                print STDERR $node->get_address, "\t", 'Unrecognized HD', "\n";
             }
         }
 
@@ -203,7 +217,7 @@ sub deprel_to_afun {
         # No other deprel is defined
         else {
             $afun = 'NR';
-            print STDERR $node->get_address, "\t", 'Unrecognized deprel';
+            print STDERR $node->get_address, "\t", "Unrecognized deprel $deprel", "\n";
         }
         $node->set_afun($afun);
     }
