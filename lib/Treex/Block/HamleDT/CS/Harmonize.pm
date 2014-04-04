@@ -62,6 +62,11 @@ sub deprel_to_afun
         {
             $afun = 'Atr';
         }
+        # Annotation error (one occurrence in PDT 3.0): Coord must not be leaf.
+        if($afun eq 'Coord' && $node->is_leaf() && $node->parent()->is_root())
+        {
+            $afun = 'ExD';
+        }
         $node->set_afun($afun);
     }
     # Coordination of prepositional phrases or subordinate clauses:
