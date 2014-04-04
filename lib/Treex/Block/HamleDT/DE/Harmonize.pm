@@ -482,15 +482,15 @@ sub mark_deficient_coordination
 
 #------------------------------------------------------------------------------
 # Adapted from Michal Auersperger's block RehangAuxc:
-#Change a-tree from
-#"Ob(parent=klappt) das freilich so klappt(parent=ist), ist(parent=root) die Frage."
-#to
-#"Ob(parent=ist) das freilich so klappt(parent=ob), ist(parent=root) die Frage."
-#According to PDT annotation manual: "3.2.7.1.2. Definition of AuxC", subordinating conjunctions should
-#govern the subordinate clause and be governed by the head word of the main clause.
-#see: http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/en/a-layer/html/ch03s02x07.html
-#German comparative conjunctions (wie, als) should be tagged as subordinating conjunctions and processed
-#accordingly.
+# Change a-tree from
+# "Ob(parent=klappt) das freilich so klappt(parent=ist), ist(parent=root) die Frage."
+# to
+# "Ob(parent=ist) das freilich so klappt(parent=ob), ist(parent=root) die Frage."
+# According to PDT annotation manual: "3.2.7.1.2. Definition of AuxC", subordinating conjunctions should
+# govern the subordinate clause and be governed by the head word of the main clause.
+# see: http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/en/a-layer/html/ch03s02x07.html
+# German comparative conjunctions (wie, als) should be tagged as subordinating
+# conjunctions and processed accordingly.
 #------------------------------------------------------------------------------
 sub rehang_auxc
 {
@@ -506,22 +506,35 @@ sub rehang_auxc
         # There are just a few but reattaching them requires much more care; we could do more wrong than good.
         ###!!! Later we should solve these cases. But without breaking coordination at the same time!
         next if($subord_conj->is_member() || $parent->is_coap_root() || $parent->is_member());
-        # Get comparative conjunctions (wie, als), tag them as subord conjunctions and make
-        # them govern their parent
-        if ($subord_conj->conll_cpos eq 'KOKOM')
+        # Get comparative conjunctions (wie, als), tag them as subordinating conjunctions and make
+        # them govern their parent. The conjunction "denn" may act both as coordinator and as subordinator.
+        if ($subord_conj->conll_cpos() eq 'KOKOM' ||
+            $subord_conj->form() eq 'denn' && $parent->get_iset('pos') eq 'verb' && $parent->ord()>$subord_conj->ord())
         {
-            $subord_conj->set_tag('J,-------------'); ###!!! Sakra, tohle se musí udělat v Intersetu!
-            # if the parent is member of a CoAp, $subord_conj should govern the whole coordination
-            $parent = $parent->get_parent if $parent->is_member; ###!!! Hm a co když je prarodič taky Coord?
-            $subord_conj->set_parent( $parent->get_parent() );
-            $parent->set_parent($subord_conj);
+            $subord_conj->set_iset('pos' => 'conj', 'subpos' => 'sub');
+            $self->set_pdt_tag($subord_conj);
+            $subord_conj->set_afun('AuxC');
         }
-        elsif ($subord_conj->afun eq 'AuxC' and $subord_conj->tag =~ /^J,.*/ and $subord_conj->is_leaf) ###!!! Interset!
+        # Subordinating conjunctions are attached to the predicate of the subordinate clause.
+        # We want them on the path from the parent of the clause to its predicate.
+        if ($subord_conj->afun() eq 'AuxC' && $subord_conj->match_iset('pos' => 'conj', 'subpos' => 'sub') && $subord_conj->is_leaf())
         {
-            # if the parent is member of a CoAp, $subord_conj should govern the whole coordination
-            $parent = $parent->get_parent if $parent->is_member; ###!!! Hm a co když je prarodič taky Coord?
-            $subord_conj->set_parent( $parent->get_parent() );
+            # If the parent is conjunct, $subord_conj should govern the whole coordination.
+            while($parent->is_member())
+            {
+                $parent = $parent->parent();
+            }
+            my $grandparent = $parent->parent();
+            $subord_conj->set_parent($grandparent);
+            $subord_conj->set_is_member(undef);
             $parent->set_parent($subord_conj);
+            my $prev = $subord_conj->get_prev_node();
+            # If there is comma before the conjunction, it should be attached to the conjunction.
+            if($prev && $prev->afun() eq 'AuxX')
+            {
+                $prev->set_parent($subord_conj);
+                $prev->set_is_member(undef);
+            }
         }
     }
     return;
