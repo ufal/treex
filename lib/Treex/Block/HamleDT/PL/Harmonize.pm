@@ -36,6 +36,24 @@ sub process_zone {
 
 }
 
+#------------------------------------------------------------------------------
+# Different source treebanks may use different attributes to store information
+# needed by Interset drivers to decode the Interset feature values. By default,
+# the CoNLL 2006 fields CPOS, POS and FEAT are concatenated and used as the
+# input tag. If the morphosyntactic information is stored elsewhere (e.g. in
+# the tag attribute), the Harmonize block of the respective treebank should
+# redefine this method. Note that even CoNLL 2009 differs from CoNLL 2006.
+#------------------------------------------------------------------------------
+sub get_input_tag_for_interset
+{
+    my $self   = shift;
+    my $node   = shift;
+    my $conll_pos  = $node->conll_pos();
+    my $conll_feat = $node->conll_feat();
+    # CoNLL 2009 uses only two columns.
+    return "$conll_pos\t$conll_feat";
+}
+
 
 # ### TODO ### - currently not used
 # # http://zil.ipipan.waw.pl/FunkcjeZaleznosciowe

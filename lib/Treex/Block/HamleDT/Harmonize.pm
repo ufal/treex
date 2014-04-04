@@ -74,6 +74,24 @@ sub convert_tags
 }
 
 #------------------------------------------------------------------------------
+# Different source treebanks may use different attributes to store information
+# needed by Interset drivers to decode the Interset feature values. By default,
+# the CoNLL 2006 fields CPOS, POS and FEAT are concatenated and used as the
+# input tag. If the morphosyntactic information is stored elsewhere (e.g. in
+# the tag attribute), the Harmonize block of the respective treebank should
+# redefine this method. Note that even CoNLL 2009 differs from CoNLL 2006.
+#------------------------------------------------------------------------------
+sub get_input_tag_for_interset
+{
+    my $self   = shift;
+    my $node   = shift;
+    my $conll_cpos = $node->conll_cpos();
+    my $conll_pos  = $node->conll_pos();
+    my $conll_feat = $node->conll_feat();
+    return "$conll_cpos\t$conll_pos\t$conll_feat";
+}
+
+#------------------------------------------------------------------------------
 # Decodes the part-of-speech tag and features from a CoNLL treebank into
 # Interset features. Stores the features with the node. Then sets the tag
 # attribute to the closest match in the PDT tagset.
@@ -133,11 +151,7 @@ sub convert_tag
     }
     # Current tag is probably just a copy of conll_pos.
     # We are about to replace it by a 15-character string fitting the PDT tagset.
-    my $tag        = $node->tag();
-    my $conll_cpos = $node->conll_cpos();
-    my $conll_pos  = $node->conll_pos();
-    my $conll_feat = $node->conll_feat();
-    my $src_tag = $tagset eq 'conll2009' ? "$conll_pos\t$conll_feat" : $tagset =~ m/^(conll|tamiltb)/ ? "$conll_cpos\t$conll_pos\t$conll_feat" : $tag;
+    my $src_tag = $self->get_input_tag_for_interset($node);
     my $f = tagset::common::decode($driver, $src_tag);
     $node->set_iset($f);
 }
