@@ -1,4 +1,4 @@
-package Treex::Block::HamleDT::CS::Harmonize;
+package Treex::Block::HamleDT::CS::HarmonizeCoNLL;
 use Moose;
 use Treex::Core::Common;
 use utf8;
@@ -60,7 +60,7 @@ sub deprel_to_afun
 
 =over
 
-=item Treex::Block::HamleDT::CS::Harmonize
+=item Treex::Block::HamleDT::CS::HarmonizeCoNLL
 
 Converts PDT (Prague Dependency Treebank) trees from CoNLL to the style of
 HamleDT (Prague). The structure of the trees should already
@@ -74,6 +74,6 @@ of PDT.
 
 =cut
 
-# Copyright 2011 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011, 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
