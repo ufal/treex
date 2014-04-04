@@ -4,6 +4,17 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::HamleDT::HarmonizePDT';
 
+has iset_driver =>
+(
+    is            => 'ro',
+    isa           => 'Str',
+    required      => 1,
+    default       => 'ar::padt',
+    documentation => 'Which interset driver should be used to decode tags in this treebank? '.
+                     'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
+                     'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
+);
+
 #------------------------------------------------------------------------------
 # Reads the Arabic tree, converts morphosyntactic tags to the PDT tagset,
 # converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
@@ -12,7 +23,7 @@ sub process_zone
 {
     my $self = shift;
     my $zone = shift;
-    my $root = $self->SUPER::process_zone($zone, 'padt');
+    my $root = $self->SUPER::process_zone($zone);
     $self->fill_in_lemmas($root);
     $self->fix_coap_ismember($root);
     $self->fix_auxp($root);

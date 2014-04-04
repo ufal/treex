@@ -8,6 +8,17 @@ extends 'Treex::Core::Block';
 use tagset::common;
 use tagset::cs::pdt;
 
+has iset_driver =>
+(
+    is            => 'ro',
+    isa           => 'Str',
+    required      => 1,
+    documentation => 'Which interset driver should be used to decode tags in this treebank? '.
+                     'The default value must be set in blocks derived from this block. '.
+                     'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
+                     'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
+);
+
 #------------------------------------------------------------------------------
 # Reads the a-tree, converts the original morphosyntactic tags to the PDT
 # tagset, converts dependency relation tags to afuns and transforms the tree to
@@ -100,55 +111,7 @@ sub convert_tag
 {
     my $self   = shift;
     my $node   = shift;
-    my $tagset = shift;    # optional tagset identifier (default = 'conll'; sometimes we need 'conll2007' etc.)
-    $tagset = 'conll' unless ($tagset);
-
-    # Note that the following hack will not work for all treebanks.
-    # Some of them use tagsets not called '*::conll'.
-    # Many others are not covered by DZ Interset yet.
-    # tagset::common::find_drivers() could help but it would not be efficient to call it every time.
-    # Instead, every subclass of this block must know whether to call convert_tag() or not.
-    # List of tagsets covered so far:
-    my @known_drivers = qw(
-        ar::conll ar::conll2007 ar::padt
-        bg::conll
-        bn::conll
-        ca::conll2009
-        cs::conll cs::conll2009
-        da::conll
-        de::conll de::conll2009
-        el::conll
-        en::conll en::conll2009
-        es::conll2009
-        eu::conll
-        fa::conll
-        fi::conll
-        grc::conll
-        he::conll
-        hi::conll
-        hu::conll
-        it::conll
-        ja::conll
-        la::conll
-        nl::conll
-        pl::conll2009 pl::ipipan
-        pt::conll
-        ro::rdt
-        ru::syntagrus
-        sk::snk
-        sl::conll
-        sv::conll
-        ta::tamiltb
-        te::conll
-        tr::conll
-        zh::conll
-    );
-    my $driver = $node->get_zone()->language() . '::' . $tagset;
-    if ( !grep { $_ eq $driver } (@known_drivers) )
-    {
-        log_warn("Interset driver $driver not found");
-        return;
-    }
+    my $driver = $self->iset_driver();
     # Current tag is probably just a copy of conll_pos.
     # We are about to replace it by a 15-character string fitting the PDT tagset.
     my $src_tag = $self->get_input_tag_for_interset($node);

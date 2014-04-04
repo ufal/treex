@@ -6,6 +6,17 @@ extends 'Treex::Core::Block';
 use tagset::common;
 use tagset::cs::pdt;
 
+has iset_driver =>
+(
+    is            => 'ro',
+    isa           => 'Str',
+    required      => 1,
+    default       => 'et::puudepank',
+    documentation => 'Which interset driver should be used to decode tags in this treebank? '.
+                     'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
+                     'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
+);
+
 #------------------------------------------------------------------------------
 # Reads the Estonian tree, transforms tree to adhere to PDT guidelines,
 # converts Tiger functions to afuns.

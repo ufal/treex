@@ -4,6 +4,17 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::HamleDT::Harmonize';
 
+has iset_driver =>
+(
+    is            => 'ro',
+    isa           => 'Str',
+    required      => 1,
+    default       => 'de::conll2009',
+    documentation => 'Which interset driver should be used to decode tags in this treebank? '.
+                     'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
+                     'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
+);
+
 #------------------------------------------------------------------------------
 # Reads the German tree, converts morphosyntactic tags to the PDT tagset,
 # converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
@@ -12,7 +23,7 @@ sub process_zone
 {
     my $self = shift;
     my $zone = shift;
-    my $root = $self->SUPER::process_zone( $zone, 'conll2009' );
+    my $root = $self->SUPER::process_zone( $zone );
 
     # Adjust the tree structure.
     $self->attach_final_punctuation_to_root($root);

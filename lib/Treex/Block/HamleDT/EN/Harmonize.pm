@@ -4,6 +4,17 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::HamleDT::Harmonize';
 
+has iset_driver =>
+(
+    is            => 'ro',
+    isa           => 'Str',
+    required      => 1,
+    default       => 'en::conll',
+    documentation => 'Which interset driver should be used to decode tags in this treebank? '.
+                     'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
+                     'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
+);
+
 ###!!! The code from the following blocks should be applied here but has not been applied yet.
 #W2A::EN::FixMultiwordPrepAndConj
 #W2A::EN::SetAfunAuxCPCoord
@@ -15,7 +26,7 @@ sub process_zone
 {
     my $self = shift;
     my $zone = shift;
-    my $root = $self->SUPER::process_zone($zone, 'conll');
+    my $root = $self->SUPER::process_zone($zone);
     $self->distinguish_subordinators_from_prepositions($root);
     $self->fix_annotation_errors($root);
     $self->attach_final_punctuation_to_root($root);

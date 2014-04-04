@@ -6,6 +6,17 @@ use tagset::ro::rdt;
 use tagset::cs::pdt;
 extends 'Treex::Core::Block';
 
+has iset_driver =>
+(
+    is            => 'ro',
+    isa           => 'Str',
+    required      => 1,
+    default       => 'ro::rdt',
+    documentation => 'Which interset driver should be used to decode tags in this treebank? '.
+                     'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
+                     'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
+);
+
 # This block is inspired by
 # 'Treex::Block::HamleDT::CoNLL2PDTStyle';
 # but it actually does not extend it.

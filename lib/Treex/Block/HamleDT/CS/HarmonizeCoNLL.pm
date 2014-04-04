@@ -9,35 +9,21 @@ has iset_driver =>
     is            => 'ro',
     isa           => 'Str',
     required      => 1,
-    default       => 'cs::pdt',
+    default       => 'cs::conll',
     documentation => 'Which interset driver should be used to decode tags in this treebank? '.
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
                      'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
 );
 
 #------------------------------------------------------------------------------
-# Reads the Czech tree and transforms it to adhere to the HamleDT guidelines.
+# Reads the Czech tree, converts morphosyntactic tags to the PDT tagset,
+# converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
-}
-
-#------------------------------------------------------------------------------
-# Different source treebanks may use different attributes to store information
-# needed by Interset drivers to decode the Interset feature values. By default,
-# the CoNLL 2006 fields CPOS, POS and FEAT are concatenated and used as the
-# input tag. If the morphosyntactic information is stored elsewhere (e.g. in
-# the tag attribute), the Harmonize block of the respective treebank should
-# redefine this method. Note that even CoNLL 2009 differs from CoNLL 2006.
-#------------------------------------------------------------------------------
-sub get_input_tag_for_interset
-{
-    my $self   = shift;
-    my $node   = shift;
-    return $node->tag();
 }
 
 #------------------------------------------------------------------------------
@@ -76,14 +62,18 @@ sub deprel_to_afun
 
 =item Treex::Block::HamleDT::CS::Harmonize
 
-Converts PDT (Prague Dependency Treebank) analytical trees to the style of
-HamleDT (Prague). The two annotation styles are very similar, thus only
-minor changes take place. Morphological tags are decoded into Interset.
+Converts PDT (Prague Dependency Treebank) trees from CoNLL to the style of
+HamleDT (Prague). The structure of the trees should already
+adhere to the PDT guidelines because the CoNLL trees come from PDT. Some
+minor adjustments to the analytical functions may be needed while porting
+them from the conll/deprel attribute to afun. Morphological tags will be
+decoded into Interset and converted back to the 15-character positional tags
+of PDT.
 
 =back
 
 =cut
 
-# Copyright 2011, 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011 Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

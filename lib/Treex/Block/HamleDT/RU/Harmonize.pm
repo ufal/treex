@@ -4,11 +4,21 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::HamleDT::Harmonize';
 
+has iset_driver =>
+(
+    is            => 'ro',
+    isa           => 'Str',
+    required      => 1,
+    default       => 'ru::syntagrus',
+    documentation => 'Which interset driver should be used to decode tags in this treebank? '.
+                     'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
+                     'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
+);
+
 #------------------------------------------------------------------------------
 # Reads the Russian tree, converts morphosyntactic tags to the PDT tagset,
 # converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
-
 sub process_zone
 {
     my $self   = shift;
@@ -16,7 +26,7 @@ sub process_zone
     $self->backup_zone($zone);
     my $a_root = $zone->get_atree();
 
-    $self->convert_tags( $a_root, 'syntagrus' );
+    $self->convert_tags( $a_root );
     $self->tag_to_pos($a_root);
     $self->attach_final_punctuation_to_root($a_root);
     $self->fill_root_afun($a_root);

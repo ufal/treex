@@ -4,6 +4,17 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::HamleDT::Harmonize';
 
+has iset_driver =>
+(
+    is            => 'ro',
+    isa           => 'Str',
+    required      => 1,
+    default       => 'fi::conll',
+    documentation => 'Which interset driver should be used to decode tags in this treebank? '.
+                     'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
+                     'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
+);
+
 #------------------------------------------------------------------------------
 # Reads the Finnish tree, transforms tree to adhere to PDT guidelines,
 # converts deprel tags to afuns.
@@ -11,7 +22,7 @@ extends 'Treex::Block::HamleDT::Harmonize';
 sub process_zone {
     my $self   = shift;
     my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone( $zone, 'conll' );
+    my $a_root = $self->SUPER::process_zone( $zone );
 
     # Adjust the tree structure.
     $self->convert_coordination($a_root);
