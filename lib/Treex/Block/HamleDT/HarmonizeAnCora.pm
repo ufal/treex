@@ -4,10 +4,11 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::HamleDT::Harmonize';
 
-sub process_zone {
+sub process_zone
+{
     my $self = shift;
     my $zone = shift;
-    my $root = $self->SUPER::process_zone($zone, 'conll2009');
+    my $root = $self->SUPER::process_zone($zone);
     $self->attach_final_punctuation_to_root($root);
     $self->restructure_coordination($root);
     # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
@@ -16,6 +17,7 @@ sub process_zone {
     $self->raise_subordinating_conjunctions($root);
     $self->lift_noun_phrases($root);
     $self->check_afuns($root);
+    return $root;
 }
 
 

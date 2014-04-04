@@ -15,11 +15,80 @@ has iset_driver =>
                      'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
 );
 
+
+
 # If there are any language-specific phenomena to handle, uncomment process_zone() and put the code there.
 # Make sure to call $self->SUPER::process_zone($zone) from there!
-# sub process_zone {
-#    my $root = $self->SUPER::process_zone($zone);
-#}
+sub process_zone
+{
+    my $self = shift;
+    my $zone = shift;
+    my $root = $self->SUPER::process_zone($zone);
+    $self->fix_annotation_errors($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes a few known annotation errors that appear in the data. Unlike in other
+# treebanks, here it is called after correctly annotated coordinations are
+# solved. The function is meant to collect bad cases but it could damage the
+# good ones.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        # Coordination without conjuncts.
+        if($node->afun() eq 'Coord')
+        {
+            my $parent = $node->parent();
+            my @children = $node->children();
+            if($node->is_leaf())
+            {
+                # Three times the conjunction "y" is attached to the previous conjunct and coordination is not properly labeled.
+                my $lconjunct = $node->parent();
+                my $rconjunct = $lconjunct->get_right_neighbor();
+                # Because of previous transformations, in one case the right conjunct will be found one level higher.
+                # The subordinator que has been raised above the left conjunct.
+                if(!defined($rconjunct) && $lconjunct->form() eq 'sobrepasará')
+                {
+                    my $que = $lconjunct->parent();
+                    if($que && $que->form() eq 'que')
+                    {
+                        $rconjunct = $que->get_right_neighbor();
+                    }
+                }
+                if($lconjunct && $rconjunct)
+                {
+                    my $parent = $lconjunct->parent();
+                    $node->set_parent($parent);
+                    $node->set_is_member(undef);
+                    $lconjunct->set_parent($node);
+                    $lconjunct->set_is_member(1);
+                    $rconjunct->set_parent($node);
+                    $rconjunct->set_is_member(1);
+                }
+            }
+            elsif(scalar(@children)==1 && scalar(grep {$_->is_member()} (@children))==0 && $parent->get_iset('pos') eq 'noun' && $children[0]->get_iset('pos') eq 'noun')
+            {
+                my $lconjunct = $parent;
+                my $rconjunct = $children[0];
+                my $parent = $lconjunct->parent();
+                $node->set_parent($parent);
+                $node->set_is_member(undef);
+                $lconjunct->set_parent($node);
+                $lconjunct->set_is_member(1);
+                $rconjunct->set_parent($node);
+                $rconjunct->set_is_member(1);
+                $rconjunct->set_afun($lconjunct->afun());
+            }
+        }
+    }
+}
 
 
 
