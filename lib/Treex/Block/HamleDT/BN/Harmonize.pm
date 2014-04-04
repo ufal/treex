@@ -21,9 +21,10 @@ has iset_driver =>
 #------------------------------------------------------------------------------
 sub process_zone
 {
-    my $self   = shift;
-    my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone($zone);
+    my $self = shift;
+    my $zone = shift;
+    my $root = $self->SUPER::process_zone($zone);
+    $self->attach_final_punctuation_to_root($root);
 }
 
 #------------------------------------------------------------------------------
