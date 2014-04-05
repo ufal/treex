@@ -346,6 +346,90 @@ sub deprel_to_afun
         }
         $node->set_afun($afun);
     }
+    $self->fix_annotation_errors($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes a few known annotation errors.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    # Sowie Fernando Andrade, der eine Koalition ... anführt.
+    if(scalar(@nodes)>3 && $nodes[0]->form() eq 'Sowie' && $nodes[1]->form() eq 'Fernando' && $nodes[2]->form() eq 'Andrade' && $nodes[0]->parent()->form() eq 'anführt')
+    {
+        my $sowie = $nodes[0];
+        my $andrade = $nodes[2];
+        my $verb = $sowie->parent();
+        $sowie->set_parent($root);
+        $sowie->set_afun('Coord');
+        $sowie->set_is_member(undef);
+        $andrade->set_parent($sowie);
+        $andrade->set_afun('ExD');
+        $andrade->set_is_member(1);
+        $verb->set_parent($andrade);
+        $verb->set_afun('Atr');
+        $verb->set_is_member(undef);
+    }
+    # On and over
+    elsif(scalar(@nodes)==3 && $nodes[0]->form() eq 'On' && $nodes[1]->form() eq 'and' && $nodes[2]->form() eq 'over')
+    {
+        my $on = $nodes[0];
+        my $and = $nodes[1];
+        my $over = $nodes[2];
+        $and->set_parent($root);
+        $and->set_afun('Coord');
+        $and->set_is_member(undef);
+        $on->set_parent($and);
+        $on->set_afun('ExD');
+        $on->set_is_member(1);
+        $over->set_parent($and);
+        $over->set_afun('ExD');
+        $over->set_is_member(1);
+    }
+    foreach my $node (@nodes)
+    {
+        # Man bleibt draußen, fremd.
+        # "draußen" is mistakenly labeled as conjunction, not as conjunct.
+        if($node->form() eq 'draußen' && $node->afun() eq 'Coord' && $node->is_leaf())
+        {
+            my $draussen = $node;
+            my $comma = $draussen->get_right_neighbor();
+            my $fremd = $draussen->parent();
+            if($comma && $fremd && $comma->form() eq ',' && $fremd->form() eq 'fremd')
+            {
+                my $grandparent = $fremd->parent();
+                $comma->set_parent($grandparent);
+                $comma->set_afun('Coord');
+                $comma->set_is_member(undef);
+                $draussen->set_parent($comma);
+                $draussen->set_afun($fremd->afun());
+                $draussen->set_is_member(1);
+                $fremd->set_parent($comma);
+                $fremd->set_is_member(1);
+            }
+        }
+        # weder willens noch imstande
+        # "willens" analyzed as head conjunct, all three other nodes labeled as conjunctions.
+        elsif($node->form() eq 'imstande' && $node->parent()->form() eq 'willens' && $node->is_leaf() && $node->afun() eq 'Coord')
+        {
+            # Just label "imstande" as the second conjunct. Coordination processing will take care of the rest.
+            $node->set_afun('CoordArg');
+            $node->wild()->{conjunct} = 1;
+            $node->wild()->{coordinator} = 0;
+        }
+        # vom gesamten Ersten Senat entscheiden zu lassen
+        # "vom" is mistakenly labeled as separable verb prefix.
+        elsif($node->form() eq 'vom' && $node->afun() eq 'AuxT' && $node->parent()->form() eq 'entscheiden')
+        {
+            # The afun will be later shifted down to the noun.
+            $node->set_afun('Obj');
+        }
+    }
 }
 
 
@@ -466,7 +550,11 @@ sub mark_deficient_coordination
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
-        next unless($node->conll_deprel() eq 'JU' && $node->is_leaf() && !$node->is_member());
+        # Note: There are a few cases where the conjunction is labeled "CD" instead of "JU", mostly when the parent is not Pred but ExD.
+        # Since normal coordination has been solved by now, we just look for childless Coords.
+        my @children = $node->children();
+        next unless($node->conll_deprel() eq 'JU' && ($node->is_leaf() || scalar(@children)==1 && $children[0]->form() eq 'Nun') && !$node->is_member() ||
+            $node->afun() eq 'Coord' && $node->is_leaf());
         my $main = $node->parent();
         next if($main->is_root() || $main->is_member());
         # Make this structure coordination with just one conjunct.
@@ -505,11 +593,12 @@ sub rehang_auxc
         # Skip even those that are shared modifiers of coordination, and those whose parent is member of coordination.
         # There are just a few but reattaching them requires much more care; we could do more wrong than good.
         ###!!! Later we should solve these cases. But without breaking coordination at the same time!
+        ###!!! Do not ask whether $subord_conj->is_coap_root()! Some of the cases we try to solve here are labeled Coord but they are leaves.
         next if($subord_conj->is_member() || $parent->is_coap_root() || $parent->is_member());
         # Get comparative conjunctions (wie, als), tag them as subordinating conjunctions and make
         # them govern their parent. The conjunction "denn" may act both as coordinator and as subordinator.
-        if ($subord_conj->conll_cpos() eq 'KOKOM' ||
-            $subord_conj->form() eq 'denn' && $parent->get_iset('pos') eq 'verb' && $parent->ord()>$subord_conj->ord())
+        if ($subord_conj->conll_cpos() eq 'KOKOM' && $subord_conj->is_leaf() ||
+            $subord_conj->form() eq 'denn' && $subord_conj->is_leaf() && $parent->get_iset('pos') eq 'verb' && $parent->ord()>$subord_conj->ord())
         {
             $subord_conj->set_iset('pos' => 'conj', 'subpos' => 'sub');
             $self->set_pdt_tag($subord_conj);
