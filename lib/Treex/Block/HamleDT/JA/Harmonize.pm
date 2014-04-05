@@ -15,6 +15,8 @@ has iset_driver =>
                      'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
 );
 
+use List::Util qw(first);
+
 #------------------------------------------------------------------------------
 # Reads the Japanese CoNLL trees, converts morphosyntactic tags to the positional
 # tagset and transforms the tree to adhere to PDT guidelines.
@@ -28,7 +30,8 @@ sub process_zone
     $self->attach_final_punctuation_to_root($a_root);
     # $self->restructure_coordination($a_root);
     # $self->process_prep_sub_arg_cloud($a_root);
-	make_pdt_coordination($a_root);
+    # make_pdt_coordination($a_root);
+    $self->check_afuns($a_root);
 }
 
 sub make_pdt_coordination {
@@ -63,7 +66,7 @@ sub make_pdt_coordination {
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 # WIP, currently unused
 #------------------------------------------------------------------------------
-sub _deprel_to_afun {
+sub deprel_to_afun {
     my $self = shift;
     my $root = shift;
     for my $node ($root->get_descendants()) {
@@ -87,7 +90,7 @@ sub _deprel_to_afun {
             }
             # postposition/particle as a head - but we do not want
             # to assign AuxP now; later we will pass the label to the child
-            elsif ($subpos eq 'post' or $subpos eq 'part') {
+            elsif ($subpos eq 'post' or $pos eq 'part') {
                 $afun = 'Pred';
             }
             # coordinating conjunction/particle (Pconj)
@@ -143,8 +146,11 @@ sub _deprel_to_afun {
                 $node->wild()->{conjunct} = 1;
             }
             elsif ($ppos eq 'verb') {
+                if ($psubpos eq 'cop') {
+                    $afun = 'Pnom';
+                }
                 # just a heuristic
-                if ($pos eq 'adv') {
+                elsif ($pos eq 'adv') {
                     $afun = 'Adv';
                 }
                 else {
@@ -158,7 +164,20 @@ sub _deprel_to_afun {
         # Adjunct
         # any left-hand constituent that is not a complement/subject
         elsif ($deprel eq 'ADJ') {
-            if ($ppos eq 'noun') {
+            if ($pos eq 'conj') {
+                $afun = 'Coord';
+                $node->wild()->{coordinator} = 1;
+                $parent->wild()->{conjunct} = 1;
+            }
+            # if the parent is preposition, this node muset be rehanged onto the preposition complement
+            elsif ($parent->conll_pos =~ m/^(Nsf|P|PQ|Pacc|Pfoc|Pgen|Pnom)$/) {
+                $afun = 'Atr';
+                # find the complement among the siblings (preferring the ones to the right);
+                my @siblings = ($node->get_siblings({following_only=>1}), $node->get_siblings({preceding_only=>1}));
+                my $new_parent = ( first { $_->conll_deprel eq 'COMP' } @siblings ) || $parent;
+                $node->set_parent($new_parent);
+            }
+            elsif ($ppos =~ m/^(noun|num)$/) {
                 $afun = 'Atr';
             }
             elsif ($ppos =~ m/^(verb|adj|adv)$/) {
@@ -167,7 +186,7 @@ sub _deprel_to_afun {
             else {
                 $afun = 'NR';
                 print STDERR ($node->get_address, "\t",
-                              "Unrecognized $conll_pos ADJ under $ppos", "\n");
+                              "Unrecognized $conll_pos ADJ under $conll_pos", "\n");
             }
         }
 
@@ -198,11 +217,12 @@ sub _deprel_to_afun {
             elsif ($subpos eq 'coor' or $pos eq 'conj') {
                 $afun = 'Coord';
                 $node->wild()->{coordinator} = 1;
+                $parent->wild()->{conjunct} = 1;
             }
             else {
                 $afun = 'NR';
                 print STDERR ($node->get_address, "\t",
-                              "Unrecognized $conll_pos MRK under $ppos", "\n");
+                              "Unrecognized $conll_pos MRK under $conll_pos", "\n");
             }
         }
 
@@ -210,12 +230,15 @@ sub _deprel_to_afun {
         # "listing of items, coordinations, and compositional expressions"
         # compositional expressions: date & time, full name, from-to expressions
         elsif ($deprel eq 'HD') {
-            if (0) {
-                ;
+            if ($subpos eq 'prop' and $psubpos eq 'prop') {
+                $afun = 'Atr';
+            }
+            elsif ($pos eq 'adv' and $ppos eq 'adv' and $node->get_iset('advtype') eq 'tim') {
+                $afun = 'Adv';
             }
             else {
                 $afun = 'NR';
-                print STDERR $node->get_address, "\t", "Unrecognized $conll_pos HD under $ppos", "\n";
+                print STDERR $node->get_address, "\t", "Unrecognized $conll_pos HD under $conll_pos", "\n";
             }
         }
 
@@ -240,17 +263,15 @@ sub detect_coordination {
     my $node = shift;
     my $coordination = shift;
     my $debug = shift;
-    $coordination->detect_mosford($node);
-    my @recurse = $coordination->get_conjuncts();
-    push(@recurse, $coordination->get_shared_modifiers());
-    return @recurse;
+    return unless ($node->wild()->{conjunct});
+    return;
 }
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub old_deprel_to_afun
 {
     my $self  = shift;
     my $root  = shift;
