@@ -31,7 +31,7 @@ sub process_zone
     # $self->restructure_coordination($a_root);
     # $self->process_prep_sub_arg_cloud($a_root);
     # make_pdt_coordination($a_root);
-    $self->check_afuns($a_root);
+    # $self->check_afuns($a_root);
 }
 
 sub make_pdt_coordination {
@@ -186,7 +186,7 @@ sub deprel_to_afun {
             else {
                 $afun = 'NR';
                 print STDERR ($node->get_address, "\t",
-                              "Unrecognized $conll_pos ADJ under $conll_pos", "\n");
+                              "Unrecognized $conll_pos ADJ under ", $parent->conll_pos, "\n");
             }
         }
 
@@ -222,7 +222,7 @@ sub deprel_to_afun {
             else {
                 $afun = 'NR';
                 print STDERR ($node->get_address, "\t",
-                              "Unrecognized $conll_pos MRK under $conll_pos", "\n");
+                              "Unrecognized $conll_pos MRK under ", $parent->conll_pos, "\n");
             }
         }
 
@@ -230,15 +230,23 @@ sub deprel_to_afun {
         # "listing of items, coordinations, and compositional expressions"
         # compositional expressions: date & time, full name, from-to expressions
         elsif ($deprel eq 'HD') {
-            if ($subpos eq 'prop' and $psubpos eq 'prop') {
+            # coordinations
+            my @siblings = $node->get_siblings();
+            if ( first {$_->get_iset('pos') eq 'conj'} @siblings ) {
+                $afun = 'CoordArg';
+                $node->wild()->{conjunct} = 1;
+            }
+            # names
+            elsif ($subpos eq 'prop' and $psubpos eq 'prop') {
                 $afun = 'Atr';
             }
-            elsif ($pos eq 'adv' and $ppos eq 'adv' and $node->get_iset('advtype') eq 'tim') {
-                $afun = 'Adv';
+            # date and time
+            elsif ($node->get_iset('advtype') eq 'tim' and $parent->get_iset('advtype') eq 'tim') {
+                $afun = 'Atr';
             }
             else {
                 $afun = 'NR';
-                print STDERR $node->get_address, "\t", "Unrecognized $conll_pos HD under $conll_pos", "\n";
+                print STDERR $node->get_address, "\t", "Unrecognized $conll_pos HD under ", $parent->conll_pos, "\n";
             }
         }
 
