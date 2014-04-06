@@ -581,7 +581,7 @@ sub attach_final_punctuation_to_root
     my $rule1i1 = $#nodes;
     my $i = $#nodes;
     # Do not touch the last node if it heads coordination or apposition.
-    return if($i>=0 && $nodes[$i]->afun() =~ m/^(Coord|Apos)$/);
+    return if($i>=0 && $nodes[$i]->afun()  && $nodes[$i]->afun() =~ m/^(Coord|Apos)$/);
     while($i>=0 && $nodes[$i]->form() =~ m/^$rule2chars+$/)
     {
         $rule2 = 1;
@@ -589,7 +589,7 @@ sub attach_final_punctuation_to_root
         $i--;
     }
     # Do not touch the last node if it heads coordination or apposition.
-    return if($i>=0 && $nodes[$i]->afun() =~ m/^(Coord|Apos)$/);
+    return if($i>=0 && $nodes[$i]->afun() && $nodes[$i]->afun() =~ m/^(Coord|Apos)$/);
     while($i>=0 && $nodes[$i]->form() =~ m/^$rule1chars+$/)
     {
         $rule1 = 1;
@@ -597,7 +597,7 @@ sub attach_final_punctuation_to_root
         $i--;
     }
     # Do not touch the last node if it heads coordination or apposition.
-    return if(defined($rule1i0) && $rule1i0>=0 && $rule1i0<=$#nodes && $nodes[$rule1i0]->afun() =~ m/^(Coord|Apos)$/);
+    return if(defined($rule1i0) && $rule1i0>=0 && $rule1i0<=$#nodes && $nodes[$rule1i0]->afun() && $nodes[$rule1i0]->afun() =~ m/^(Coord|Apos)$/);
     if($rule2 && $rule1)
     {
         $rule1i1 = $rule2i0-1;

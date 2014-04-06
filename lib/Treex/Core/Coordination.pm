@@ -958,6 +958,136 @@ sub detect_moscow
 #------------------------------------------------------------------------------
 # Detects coordination structure according to current annotation (dependency
 # links between nodes and labels of the relations). Expects left-to-right
+# Moscow style. Conjunction is on the path between two conjuncts. Punctuation
+# might be attached sidewise to conjuncts but there are no punctuation nodes in
+# the Russian treebank. This style allows limited representation of nested
+# coordination. It cannot distinguish (A,(B,C)) from (A,B,C). Having nested
+# coordination as the last conjunct is a problem. Example treebank is Russian.
+# - the root of the coordination is not marked
+# - conjuncts have wild->{conjunct}
+#   (the afun 'CoordArg' may have not survived normalization)
+#   non-first conjunct is attached to previous conjunct or conjunction
+# - conjunctions have wild->{coordinator}
+#   (the afun 'Coord' may have not survived normalization)
+#   conjunction is attached to previous conjunct
+# - if a conjunct has two or more children that are either conjunctions or
+#   conjuncts, there is nested coordination. The parent conjunct first combines
+#   with the first child (and its descendants, if any). The resulting
+#   coordination is a conjunct that combines with the next child (and its
+#   descendants). The process goes on until all child conjuncts are processed.
+# - punctuation lying to the left of a conjunct and attached to it is
+#   considered delimiter
+# - all other children along the way are private modifiers
+# The method assumes that nothing has been normalized yet. In particular it
+# assumes that there are no AuxP/AuxC afuns (there are PrepArg/SubArg instead).
+# Thus the method does not call $node->set/get_real_afun().
+#------------------------------------------------------------------------------
+sub detect_moscow2
+{
+    my $self = shift;
+    my $node = shift; # suspected root node of coordination
+    my $nontop = shift; # other than top level of recursion?
+    log_fatal("Missing node") unless(defined($node));
+    my $top = !$nontop;
+    ###!!!DEBUG
+    my $debug = 0;
+    if($debug)
+    {
+        my $form = $node->form();
+        $form = '' if(!defined($form));
+        if($top)
+        {
+            $node->set_form("T:$form");
+        }
+        else
+        {
+            $node->set_form("X:$form");
+        }
+    }
+    ###!!!END
+    my @children = $node->children();
+    my @conjuncts = grep {$_->wild()->{conjunct}} @children;
+    my @delimiters = grep {$_->wild()->{coordinator}} @children;
+    my @conodes = (@conjuncts, @delimiters);
+    my $bottom = scalar(@conodes)==0;
+    if($top && $bottom)
+    {
+        # No participants found. This $node is not a root of coordination.
+        # (We do not expect delimiters under a node that is not a conjunct (first or not).)
+        return;
+    }
+    my @modifiers = grep
+    {
+        ! $_->wild()->{conjunct} &&
+        ! $_->wild()->{coordinator} &&
+        ! $_->wild()->{is_coord_delimiter}
+    }
+    @children;
+    # If we are here we have participants: either conjuncts or delimiters or both.
+    if($top)
+    {
+        # Add the root conjunct.
+        # Note: root of the tree is never a conjunct! If this is the tree root, we are dealing with a deficient (probably clausal) coordination.
+        unless($node->is_root())
+        {
+            my $orphan = 0;
+            $self->add_conjunct($node, $orphan, @modifiers);
+            # Save the relation of the coordination to its parent.
+            $self->set_parent($node->parent());
+            $self->set_afun($node->afun());
+            $self->set_is_member($node->is_member());
+        }
+        else
+        {
+            ###!!! The coordination still needs to know its parent (the root) and afun (which we are guessing here but we should find a real conjunct instead).
+            $self->set_parent($node);
+            $self->set_afun('Pred');
+            $self->set_is_member(0);
+        }
+    }
+    # If two or more children are conjunctions or conjuncts, we have a nested coordination.
+    ###!!! POZOR! Když to zůstane takhle, budeme rozpouštět vnořené koordinace!
+    ###!!! Je potřeba zjistit, zda máme více než jedno dítě, které je členem koordinace.
+    ###!!! Dokud máme dvě nebo více takových dětí, je třeba se spojit s prvním z nich a vytvořit vnořenou koordinaci.
+    ###!!! To znamená nový objekt Coordination, kompletní běh detect_moscow2(), potom asi už i shape_prague() a novým kořenem si nahradit náš člen.
+    ###!!! Další obtíž se skrývá v tom, že nás pravděpodobně zavolal někdo, kdo chce postupně rozpoznat všechny koordinace ve větě.
+    ###!!! Čili jednak je tu disproporce, protože pro nevnořené koordinace si shape_prague() volá ten někdo sám.
+    ###!!! A za druhé ten někdo chce pak detekci zavolat také na všechna rozvití (sdílená i soukromá) a všechny sirotky té koordinace, kterou mu vrátíme.
+    ###!!! OTÁZKA: Vnořená koordinace má svá sdílená i soukromá rozvití. Dostaneme opravdu všechna do seznamu soukromých rozvití člena, který je tvořen vnořenou koordinací?
+    foreach my $conode (@conodes)
+    {
+        my $nontop = 1;
+        my @partmodifiers = $self->detect_moscow2($conode, $nontop);
+        if($conode->wild()->{conjunct})
+        {
+            my $orphan = 0;
+            $self->add_conjunct($conode, $orphan, @partmodifiers);
+        }
+        else # conjunction
+        {
+            my $symbol = 0;
+            $self->add_delimiter($conode, $symbol, @partmodifiers);
+        }
+    }
+    # If this is the top level, we now know all we can.
+    # It's time for a few more heuristics.
+    if($top)
+    {
+        $self->reconsider_distant_private_modifiers();
+    }
+    # Return the list of modifiers to the upper level.
+    # They will need it when they add me as a participant.
+    unless($top)
+    {
+        return @modifiers;
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Detects coordination structure according to current annotation (dependency
+# links between nodes and labels of the relations). Expects left-to-right
 # Stanford style.
 # This style allows limited representation of nested coordination. It cannot
 # distinguish ((A,B),C) from (A,B,C). Having nested coordination as the first
