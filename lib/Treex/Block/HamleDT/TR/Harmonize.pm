@@ -21,96 +21,14 @@ has iset_driver =>
 #------------------------------------------------------------------------------
 sub process_zone
 {
-    my $self   = shift;
-    my $zone   = shift;
-
-    my $a_root = $self->SUPER::process_zone($zone);
-    $self->hang_everything_under_pred($a_root);
-    $self->attach_final_punctuation_to_root($a_root);
-    $self->make_pdt_coordination($a_root);
-    $self->check_apos_coord_membership($a_root);
-    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
-    $self->check_afuns($a_root);
-}
-
-sub check_apos_coord_membership {
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $afun = $node->afun();
-        if ($afun =~ /^(Apos|Coord)$/) {
-            $self->identify_coap_members($node);
-        }
-    }
-}
-
-# In the original treebank, some of the nodes might be attached to technical root
-# rather than with the predicate node. those nodes will
-# be attached to predicate node.
-sub hang_everything_under_pred {
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_children();
-    my @dnodes;
-    my $prednode;
-    for (my $i = 0; $i <= $#nodes; $i++) {
-        my $node = $nodes[$i];
-        if (defined $node) {
-            my $afun = $node->afun();
-            my $ordn = $node->ord();
-            my $parnode = $node->get_parent();
-            if (defined $parnode) {
-                my $ordpar = $parnode->ord();
-                if ($ordpar == 0) {
-                    if ($afun ne 'Pred') {
-                        push @dnodes, $node
-                    }
-                    else {
-                        $prednode = $node;
-                    }
-                }
-            }
-        }
-    }
-    #
-    if (scalar(@dnodes) > 0) {
-        if (defined $prednode) {
-            foreach my $dn (@dnodes) {
-                if (defined $dn) {
-                    $dn->set_parent($prednode);
-                }
-            }
-        }
-    }
-}
-
-
-sub make_pdt_coordination {
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    for (my $i = 0; $i <= $#nodes; $i++) {
-        my $node = $nodes[$i];
-        if (defined $node) {
-            my $parnode = $node->get_parent();
-            my $parparnode = $parnode->get_parent();
-            my $afun = $node->afun();
-            if ($afun eq 'Coord' && (defined $parnode) && (defined $parparnode)) {
-                my @children = $node->get_children();
-                foreach my $c (@children) {
-                    if (defined $c) {
-                        my $afunc = $c->afun();
-                        $c->set_is_member(1) if ($afunc !~ /^(AuxX|AuxZ)$/);
-                    }
-                }
-                $node->set_parent($parparnode);
-                $parnode->set_parent($node);
-                $parnode->set_is_member(1);
-            }
-        }
-    }
+    my $self = shift;
+    my $zone = shift;
+    my $root = $self->SUPER::process_zone($zone);
+    $self->hang_everything_under_pred($root);
+    $self->attach_final_punctuation_to_root($root);
+    $self->make_pdt_coordination($root);
+    $self->check_apos_coord_membership($root);
+    $self->check_afuns($root);
 }
 
 #------------------------------------------------------------------------------
@@ -127,19 +45,20 @@ sub deprel_to_afun
         my $deprel = $node->conll_deprel();
         my $form   = $node->form();
         my $pos    = $node->conll_pos();
-
-        #log_info("conllpos=".$pos.", isetpos=".$node->get_iset('pos'));
-
-        # default assignment
-        my $afun = $deprel;
+        my $afun   = 'NR';
 
         $afun = 'Adv' if ($deprel eq 'ABLATIVE.ADJUNCT');
-        $afun = 'Apos' if ($deprel eq 'APPOSITION');
+        $afun = 'Apposition' if ($deprel eq 'APPOSITION');
         $afun = 'Atr' if ($deprel eq 'CLASSIFIER');
         $afun = 'Atr' if ($deprel eq 'COLLOCATION');
-        $afun = 'Coord' if ($deprel eq 'COORDINATION');
+        # Coordinating conjunction or punctuation.
+        if ($deprel eq 'COORDINATION')
+        {
+            $afun = 'Coord';
+            $node->wild()->{coordinator} = 1;
+        }
         $afun = 'Adv' if ($deprel eq 'DATIVE.ADJUNCT');
-        $afun = 'AuxA' if ($deprel eq 'DETERMINER');
+        $afun = 'Atr' if ($deprel eq 'DETERMINER');
         $afun = 'Atr' if ($deprel eq 'EQU.ADJUNCT');
         $afun = 'Atr' if ($deprel eq 'ETOL');
         $afun = 'Atr' if ($deprel eq 'DERIV');
@@ -242,6 +161,91 @@ sub deprel_to_afun
     }
 }
 
+sub check_apos_coord_membership {
+    my $self  = shift;
+    my $root  = shift;
+    # The root never heads coordination.
+    foreach my $node ($root->children())
+    {
+        $node->set_is_member(undef);
+    }
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $afun = $node->afun();
+        if ($afun =~ /^(Apos|Coord)$/) {
+            $self->identify_coap_members($node);
+        }
+    }
+}
+
+# In the original treebank, some of the nodes might be attached to technical root
+# rather than with the predicate node. those nodes will
+# be attached to predicate node.
+sub hang_everything_under_pred {
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_children();
+    my @dnodes;
+    my $prednode;
+    for (my $i = 0; $i <= $#nodes; $i++) {
+        my $node = $nodes[$i];
+        if (defined $node) {
+            my $afun = $node->afun();
+            my $ordn = $node->ord();
+            my $parnode = $node->get_parent();
+            if (defined $parnode) {
+                my $ordpar = $parnode->ord();
+                if ($ordpar == 0) {
+                    if ($afun ne 'Pred') {
+                        push @dnodes, $node
+                    }
+                    else {
+                        $prednode = $node;
+                    }
+                }
+            }
+        }
+    }
+    #
+    if (scalar(@dnodes) > 0) {
+        if (defined $prednode) {
+            foreach my $dn (@dnodes) {
+                if (defined $dn) {
+                    $dn->set_parent($prednode);
+                }
+            }
+        }
+    }
+}
+
+
+sub make_pdt_coordination {
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    for (my $i = 0; $i <= $#nodes; $i++) {
+        my $node = $nodes[$i];
+        if (defined $node) {
+            my $parnode = $node->get_parent();
+            my $parparnode = $parnode->get_parent();
+            my $afun = $node->afun();
+            if ($afun eq 'Coord' && (defined $parnode) && (defined $parparnode)) {
+                my @children = $node->get_children();
+                foreach my $c (@children) {
+                    if (defined $c) {
+                        my $afunc = $c->afun();
+                        $c->set_is_member(1) if ($afunc !~ /^(AuxX|AuxZ)$/);
+                    }
+                }
+                $node->set_parent($parparnode);
+                $parnode->set_parent($node);
+                $parnode->set_is_member(1);
+            }
+        }
+    }
+}
+
 1;
 
 =over
@@ -254,5 +258,5 @@ sub deprel_to_afun
 =cut
 
 # Copyright 2011 Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
-
+# Copyright 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
