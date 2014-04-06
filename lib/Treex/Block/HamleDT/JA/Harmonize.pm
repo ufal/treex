@@ -27,11 +27,12 @@ sub process_zone
     my $zone   = shift;
     my $a_root = $self->SUPER::process_zone($zone);
 
+    my $debug = 1;
+
     $self->attach_final_punctuation_to_root($a_root);
-    # $self->restructure_coordination($a_root);
-    # $self->process_prep_sub_arg_cloud($a_root);
-    # make_pdt_coordination($a_root);
-    # $self->check_afuns($a_root);
+    $self->restructure_coordination($a_root, $debug);
+    $self->process_prep_sub_arg_cloud($a_root, $debug);
+    $self->check_afuns($a_root);
 }
 
 sub make_pdt_coordination {
@@ -271,8 +272,29 @@ sub detect_coordination {
     my $node = shift;
     my $coordination = shift;
     my $debug = shift;
+    log_fatal("Missing node") unless (defined($node));
     return unless ($node->wild()->{conjunct});
-    return;
+    my @children = $node->get_children();
+    return unless (first {$_->wild()->{coordinator}} @children);
+    $coordination->add_conjunct($node, 0);
+    $coordination->set_parent($node->parent());
+    $coordination->set_afun($node->afun());
+    for my $child (@children) {
+        if ($child->wild()->{conjunct}) {
+            my $orphan = 0;
+            $coordination->add_conjunct($child, $orphan);
+        }
+        elsif ($child->wild()->{coordinator}) {
+            my $symbol = ($child->get_iset('pos') eq 'punc');
+            $coordination->add_delimiter($child, $symbol);
+        }
+        else {
+            $coordination->add_shared_modifier($child);
+        }
+    }
+    my @recurse = $coordination->get_conjuncts();
+    push(@recurse, $coordination->get_shared_modifiers());
+    return @recurse;
 }
 
 #------------------------------------------------------------------------------
