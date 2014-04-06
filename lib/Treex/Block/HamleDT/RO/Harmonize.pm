@@ -32,25 +32,25 @@ my %RDT_DEPREL_TO_AFUN = (
     'atribut num.'               => 'Atr',
     'atribut pron.'              => 'Atr',
     'atribut subst.'             => 'Atr',
-    'atribut subst. apozitional' => 'Atr',     # TODO: because of missing commas, there is no node to put afun=Apos
+    'atribut subst. apozitional' => 'Apposition',
     'atribut verb.'              => 'Atr',
     'complement agent'           => 'Obj',     # Object=Actor in passive constructions, e.g. "Firma desemnata de(tag=complement agent) judecatorul(afun=Obj)" = "The company nominated by the judge"
     'complement circumst.'       => 'Adv',
     'complement dir.'            => 'Obj',
-    'complement indir.'          => 'Adv',     # indirect object, usually with preposition, but also "se adreseaza birourilor(case=dativ,afun=Adv|Obj???)"
+    'complement indir.'          => 'Obj',     # indirect object, usually with preposition, but also "se adreseaza birourilor(case=dativ,afun=Adv|Obj???)"
     'nume pred.'                 => 'Pnom',
     'predicat'                   => 'Pred',
     'rel. aux.'                  => 'AuxV',
     'rel. comp.'                 => 'Adv',     # comparative "mai bun", superlative "cel mai bun"
     'rel. conj.'                 => 0,         # coordination member - the relevant deprel is stored with the conjunction
-    'rel. dem.'                  => undef,     # TODO
-    'rel. hot.'                  => 'AuxA',    # definite article, used only in possessive constructions with male gender
+    'rel. dem.'                  => 'Atr',     # demonstrative pronoun/determiner ("cele")
+    'rel. hot.'                  => 'Atr',     # definite article, used only in possessive constructions with male gender
     'rel. infinit.'              => 'AuxV',
     'rel. negat.'                => 'Neg',     # afun used also in English analysis for "not"
-    'rel. nehot.'                => 'AuxA',    # afun for articles, used also in English analysis
+    'rel. nehot.'                => 'Atr',     # afun for articles, used also in English analysis
     'rel. poses.'                => 'Atr',
     'rel. prepoz.'               => 0,         # word governed by a preposition - the relevant deprel is stored with the preposition
-    'rel. reflex.'               => 'Obj',     # TODO: it can be also AuxT since some Romanian verbs are reflexive tantum
+    'rel. reflex.'               => 'Obj',     # TODO: it can be also AuxT since some Romanian verbs are inherently reflexive
     'subiect'                    => 'Sb',
 );
 
@@ -194,7 +194,7 @@ TODO:
 
 * test.treex#26 POS of "a" is not 'prepozitie', but 'verb aux.'
 
-* test.treex#70 strange coordination (only the last two members are annotated) 
+* test.treex#70 strange coordination (only the last two members are annotated)
 
 # For apositions, we could also create new node (comma) as a head
 # foreach my $node ( $a_root->get_descendants() ) {
@@ -238,4 +238,5 @@ decoded into Interset and to the 15-character positional tags of PDT.
 =cut
 
 # Copyright 2011 Martin Popel <popel@ufal.mff.cuni.cz>
+# Copyright 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
