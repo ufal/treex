@@ -1141,7 +1141,18 @@ sub detect_ankara
     if($node->wild()->{coordinator})
     {
         my $nc = scalar(@children);
-        log_warn("Expected 1 child of coordinator, found $nc.") if($nc!=1);
+        ###!!! There are 2662 nodes in the METU-Sabanci treebank labeled as COORDINATION.
+        ###!!! Out of this number, 228 have other number of children than 1.
+        ###!!! Among them are the two-word conjunctions ya-ya (either-or) and ne-ne (neither-nor).
+        ###!!! The first word of the conjunction should be attached at the end of the chain as a leaf and labeled COORDINATION.
+        ###!!! The other cases are annotation errors. Sometimes the conjunction is attached sidewise of the chain.
+        ###!!! Sometimes a conjunction has two conjunct children (in addition to the one conjunct parent).
+        ###!!! Sometimes conjunction has two children but only one is conjunct (e.g. SENTENCE) while the other has different label (e.g. S.MODIFIER).
+        ###!!! Sometimes the DERIV empty nodes are included in the chain and we have to go further to find the real label.
+        ###!!! Sometimes the ROOT node (usually the final punctuation) also heads a coordination of SENTENCE nodes.
+        ###!!! Etc. etc. Some of the errors can be caught here, others will result in weird structrues.
+        ###!!! We leave it for future work. One just cannot expect non-weird output when input is weird.
+        #log_warn("Expected 1 child of coordinator, found $nc. ".$node->get_address()) if($nc!=1);
         @conjuncts = @children;
         $bottom = $nc==0;
     }

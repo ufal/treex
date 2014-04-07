@@ -15,6 +15,8 @@ has iset_driver =>
                      'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
 );
 
+
+
 #------------------------------------------------------------------------------
 # Reads the Turkish CoNLL trees, converts morphosyntactic tags to the universal
 # tagset and transforms the tree to adhere to PDT guidelines.
@@ -25,10 +27,12 @@ sub process_zone
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
     $self->attach_final_punctuation_to_root($root);
-    $self->make_pdt_coordination($root);
+    $self->restructure_coordination($root);
     $self->check_coord_membership($root);
     $self->check_afuns($root);
 }
+
+
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
@@ -158,33 +162,61 @@ sub deprel_to_afun
 
         $node->set_afun($afun);
     }
+    # Fix known annotation errors that would negatively affect subsequent processing.
+    $self->fix_annotation_errors($root);
 }
 
 
-sub make_pdt_coordination {
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    for (my $i = 0; $i <= $#nodes; $i++) {
-        my $node = $nodes[$i];
-        if (defined $node) {
-            my $parnode = $node->get_parent();
-            my $parparnode = $parnode->get_parent();
-            my $afun = $node->afun();
-            if ($afun eq 'Coord' && (defined $parnode) && (defined $parparnode)) {
-                my @children = $node->get_children();
-                foreach my $c (@children) {
-                    if (defined $c) {
-                        my $afunc = $c->afun();
-                        $c->set_is_member(1) if ($afunc !~ /^(AuxX|AuxZ)$/);
-                    }
-                }
-                $node->set_parent($parparnode);
-                $parnode->set_parent($node);
-                $parnode->set_is_member(1);
-            }
-        }
+
+#------------------------------------------------------------------------------
+# Fixes a few known annotation errors that appear in the data. Should be called
+# from deprel_to_afun() so that it precedes any tree operations that the
+# superordinate class may want to do.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    my $sentence = join(' ', map {$_->form()} (@nodes));
+    # Google translate: Do not eat me ba old man, I said, what this town was founded fairs, but never came lion.
+    if($sentence =~ m/^Beni yeme be moruk , dedim , ne panay.rlar _ kuruldu bu kasabaya , ama hi.bir zaman aslan gelmedi .$/)
+    {
+        log_info("FIXING: $sentence");
+        my $dedim = $nodes[5];
+        my $comma1 = $nodes[6];
+        my $kuruldu = $nodes[10];
+        my $comma2 = $nodes[13];
+        my $ama = $nodes[14];
+        my $gelmedi = $nodes[18];
+        $dedim->set_parent($comma1);
+        $comma1->set_parent($kuruldu);
+        $kuruldu->set_parent($comma2);
+        $comma2->set_parent($ama);
+        $ama->set_parent($gelmedi);
+        $gelmedi->set_parent($root);
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Detects coordination in the shape we expect to find it in the Turkish
+# treebank.
+#------------------------------------------------------------------------------
+sub detect_coordination
+{
+    my $self = shift;
+    my $node = shift;
+    my $coordination = shift;
+    my $debug = shift;
+    $coordination->detect_ankara($node);
+    # The caller does not know where to apply recursion because it depends on annotation style.
+    # Return all conjuncts and shared modifiers for the Prague family of styles.
+    # Return orphan conjuncts and all shared and private modifiers for the other styles.
+    my @recurse = $coordination->get_orphans();
+    push(@recurse, $coordination->get_children());
+    return @recurse;
 }
 
 
