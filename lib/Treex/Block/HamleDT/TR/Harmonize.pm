@@ -24,7 +24,6 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
-    $self->hang_everything_under_pred($root);
     $self->attach_final_punctuation_to_root($root);
     $self->make_pdt_coordination($root);
     $self->check_apos_coord_membership($root);
@@ -161,64 +160,6 @@ sub deprel_to_afun
     }
 }
 
-sub check_apos_coord_membership {
-    my $self  = shift;
-    my $root  = shift;
-    # The root never heads coordination.
-    foreach my $node ($root->children())
-    {
-        $node->set_is_member(undef);
-    }
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $afun = $node->afun();
-        if ($afun =~ /^(Apos|Coord)$/) {
-            $self->identify_coap_members($node);
-        }
-    }
-}
-
-# In the original treebank, some of the nodes might be attached to technical root
-# rather than with the predicate node. those nodes will
-# be attached to predicate node.
-sub hang_everything_under_pred {
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_children();
-    my @dnodes;
-    my $prednode;
-    for (my $i = 0; $i <= $#nodes; $i++) {
-        my $node = $nodes[$i];
-        if (defined $node) {
-            my $afun = $node->afun();
-            my $ordn = $node->ord();
-            my $parnode = $node->get_parent();
-            if (defined $parnode) {
-                my $ordpar = $parnode->ord();
-                if ($ordpar == 0) {
-                    if ($afun ne 'Pred') {
-                        push @dnodes, $node
-                    }
-                    else {
-                        $prednode = $node;
-                    }
-                }
-            }
-        }
-    }
-    #
-    if (scalar(@dnodes) > 0) {
-        if (defined $prednode) {
-            foreach my $dn (@dnodes) {
-                if (defined $dn) {
-                    $dn->set_parent($prednode);
-                }
-            }
-        }
-    }
-}
-
 
 sub make_pdt_coordination {
     my $self  = shift;
@@ -242,6 +183,24 @@ sub make_pdt_coordination {
                 $parnode->set_parent($node);
                 $parnode->set_is_member(1);
             }
+        }
+    }
+}
+
+sub check_apos_coord_membership {
+    my $self  = shift;
+    my $root  = shift;
+    # The root never heads coordination.
+    foreach my $node ($root->children())
+    {
+        $node->set_is_member(undef);
+    }
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $afun = $node->afun();
+        if ($afun =~ /^(Apos|Coord)$/) {
+            $self->identify_coap_members($node);
         }
     }
 }
