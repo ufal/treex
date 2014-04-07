@@ -26,7 +26,7 @@ sub process_zone
     my $root = $self->SUPER::process_zone($zone);
     $self->attach_final_punctuation_to_root($root);
     $self->make_pdt_coordination($root);
-    $self->check_apos_coord_membership($root);
+    $self->check_coord_membership($root);
     $self->check_afuns($root);
 }
 
@@ -187,7 +187,14 @@ sub make_pdt_coordination {
     }
 }
 
-sub check_apos_coord_membership {
+
+
+#------------------------------------------------------------------------------
+# Catches possible annotation inconsistencies. If there are no conjuncts under
+# a Coord node, let's try to find them.
+#------------------------------------------------------------------------------
+sub check_coord_membership
+{
     my $self  = shift;
     my $root  = shift;
     # The root never heads coordination.
@@ -198,12 +205,14 @@ sub check_apos_coord_membership {
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $afun = $node->afun();
-        if ($afun =~ /^(Apos|Coord)$/) {
+        if ($node->is_coap_root() && ! grep {$_->is_member()} ($node->children()))
+        {
             $self->identify_coap_members($node);
         }
     }
 }
+
+
 
 1;
 
