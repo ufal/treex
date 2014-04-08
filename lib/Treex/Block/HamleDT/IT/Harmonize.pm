@@ -27,43 +27,36 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
-    $self->make_pdt_coordination($root);
-    $self->make_pdt_auxcp($root);
-    $self->set_afuns($root);
     $self->attach_final_punctuation_to_root($root);
-    $self->remove_invalid_afuns($root);
+    $self->restructure_coordination($root);
+    $self->relabel_conjunctless_commas($root);
+    # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
+    # and with special care at places where prepositions and coordinations interact.
+    $self->process_prep_sub_arg_cloud($root);
+    $self->mark_deficient_clausal_coordination($root);
 }
 
 
-
-
-
-# prevent setting the afuns before coordination
-sub deprel_to_afun {}
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub set_afuns
+sub deprel_to_afun
 {
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        next if $node->afun;
-
-        my $deprel   = $node->conll_deprel;
-        my $form     = $node->form;
-        my $pos      = $node->conll_pos;
-        my ($parent) = $node->get_eparents({ dive => 'AuxCP' });
-        my $p_iset  = $parent->get_iset('pos');
-
-        #log_info("conllpos=".$pos.", isetpos=".$node->get_iset('pos'));
+        my $deprel = $node->conll_deprel;
+        my $form   = $node->form;
+        my $pos    = $node->conll_pos;
+        my $parent = $node->parent();
+        my $ppos   = $parent->get_iset('pos');
 
         # default assignment
-        my $afun = $deprel;
+        my $afun = 'NR';
 
         # trivial conversion to PDT style afun
         $afun = 'Atv'   if ( $deprel eq 'arg' );        # arg       -> Atv
@@ -71,23 +64,33 @@ sub set_afuns
         $afun = 'AuxT'  if ( $deprel eq 'clit' );       # clit      -> AuxT
         $afun = 'Obj'   if ( $deprel eq 'comp' );       # comp      -> Obj
         $afun = 'Atr'   if ( $deprel eq 'concat' );     # concat    -> Atr
-        $afun = 'AuxC'  if ( $deprel eq 'cong_sub');    # cong_sub  -> AuxC
-        $afun = 'AuxA'  if ( $deprel eq 'det' );        # det       -> AuxA
+        $afun = 'SubArg' if ( $deprel eq 'cong_sub');    # cong_sub  -> AuxC
+        $afun = 'Atr'  if ( $deprel eq 'det' );          # det       -> Atr (in future maybe AuxA)
         $afun = 'AuxV'  if ( $deprel eq 'modal' );      # modal     -> AuxV
         $afun = 'Adv'   if ( $deprel eq 'obl' );        # obl       -> Adv
         $afun = 'Obj'   if ( $deprel eq 'ogg_d' );      # ogg_d     -> Obj
         $afun = 'Obj'   if ( $deprel eq 'ogg_i' );      # ogg_i     -> Obj
         $afun = 'Pnom'  if ( $deprel eq 'pred' );       # pred      -> Pnom
-        $afun = 'AuxP'  if ( $deprel eq 'prep' );       # prep      -> AuxP
+        $afun = 'PrepArg' if ( $deprel eq 'prep' );       # prep      -> AuxP
         $afun = 'Sb'    if ( $deprel eq 'sogg' );       # sogg      -> Sb
 
         # $afun = 'Atr'   if ( $deprel eq 'mod' );        # mod       -> Atr
         # $afun = 'Atr'   if ( $deprel eq 'mod_rel' );    # mod_rel   -> Atr
-        # $afun = 'Coord' if ( $deprel eq 'con' );        # con       -> Coord
-        # $afun = 'Coord' if ( $deprel eq 'dis' );        # dis       -> Coord
+        # Coordinating conjunctions.
+        if ($deprel =~ m/^(con|dis)$/)
+        {
+            $afun = 'Coord';
+            $node->wild()->{coordinator} = 1;
+        }
+        # Conjunct (not the first one in a coordination).
+        elsif ($deprel =~ m/^(con|dis)g$/)
+        {
+            $afun = 'CoordArg';
+            $node->wild()->{conjunct} = 1;
+        }
 
         if ($deprel =~ /^mod(?:_rel)?$/) {
-            if ($p_iset =~ /^n(?:oun|um)$/) {
+            if ($ppos =~ /^n(?:oun|um)$/) {
                 $afun = 'Atr';
             } else {
                 $afun = 'Adv';
@@ -119,84 +122,50 @@ sub set_afuns
 }
 
 
-sub make_pdt_coordination {
-    my ($self, $root) = @_;
-    my @nodes = $root->get_descendants;
-    for my $node (@nodes) {
-        my @children = $node->get_children({ ordered => 1 });
-        if (my @coords = grep $_->conll_deprel =~ /^(?:con|dis)$/, @children) {
-            next if $node->afun and 'Coord' eq $node->afun;
-            my @members = ($node,
-                           grep $_->conll_deprel =~ /^(?:con|dis)g$/,
-                               @children);
-            if (not @coords) {
-                log_warn('No coordination nodes at ' . $node->get_address);
-                next;
-            }
-            my $coord = pop @coords;
-            $coord->set_parent($node->get_parent);
-            $coord->set_afun('Coord');
-            for my $member (@members) {
-                $member->set_parent($coord);
-                if ('prep' eq $node->conll_deprel) {
-                    $member->set_conll_deprel($coord->get_parent->conll_deprel);
-                    $coord->get_parent->set_afun('AuxP');
-                } else {
-                    $member->set_conll_deprel($node->conll_deprel);
-                }
-                $member->set_is_member(1);
-            }
-            for my $aux (@coords) {
-                $aux->set_parent($coord);
-                my $afun;
-                if (',' eq $aux->form) {
-                    $afun = 'AuxX';
-                } else {
-                    $afun = 'AuxY';
-                }
-                $aux->set_afun($afun);
-            }
+
+#------------------------------------------------------------------------------
+# Detects coordination in the shape we expect to find it in the Italian
+# treebank.
+#------------------------------------------------------------------------------
+sub detect_coordination
+{
+    my $self = shift;
+    my $node = shift;
+    my $coordination = shift;
+    my $debug = shift;
+    $coordination->detect_stanford($node);
+    # The caller does not know where to apply recursion because it depends on annotation style.
+    # Return all conjuncts and shared modifiers for the Prague family of styles.
+    # Return non-head conjuncts, private modifiers of the head conjunct and all shared modifiers for the Stanford family of styles.
+    # (Do not return delimiters, i.e. do not return all original children of the node. One of the delimiters will become the new head and then recursion would fall into an endless loop.)
+    # Return orphan conjuncts and all shared and private modifiers for the other styles.
+    my @recurse = grep {$_ != $node} ($coordination->get_conjuncts());
+    push(@recurse, $coordination->get_shared_modifiers());
+    push(@recurse, $coordination->get_private_modifiers($node));
+    return @recurse;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Commas had the same label as coordinating conjunctions, regardless whether
+# their function was coordinating or not. As a result, we now have a number of
+# commas with the afun Coord, which are leaves and do not have any conjuncts.
+#------------------------------------------------------------------------------
+sub relabel_conjunctless_commas
+{
+    my $self = shift;
+    my $root = shift;
+    foreach my $node ($root->get_descendants())
+    {
+        if($node->form() eq ',' && $node->afun() eq 'Coord' && $node->is_leaf())
+        {
+            $node->set_afun('AuxX');
         }
     }
 }
 
-sub make_pdt_auxcp {
-    my ($self, $aroot) = @_;
-    state $translate_to
-        = { prep     => 'AuxP',
-            cong_sub => 'AuxC',
-          };
 
-    for my $node ($aroot->get_descendants) {
-        my $deprel = $node->conll_deprel;
-        if (grep $_ eq $deprel, keys %$translate_to) {
-            my $aux = $node->get_parent;
-            $aux = $aux->get_parent while $aux->afun
-                and 'Coord' eq $aux->afun;
-            $node->set_conll_deprel($aux->conll_deprel);
-            if ($aux == $aroot) {
-                log_warn('A-Root as candidate for AuxC '
-                         . $node->get_address);
-                # HACK, error in the input data
-                $node->set_afun('Pred');
-                $node->set_is_member(1);
-            } else {
-                $aux->set_afun($translate_to->{$deprel});
-            }
-        }
-    }
-} # make_pdt_auxcp
-
-# Coordination without Coord - just make the other nodes ExD
-sub remove_invalid_afuns {
-    my ($self, $aroot) = @_;
-    for my $node ($aroot->get_descendants) {
-        if (!$node->afun or $node->afun =~ /^[[:lower:]]/) {
-            $node->set_afun('NR');
-            log_info('No afun for ' . $node->get_address);
-        }
-    }
-} # remove_invalid_afuns
 
 1;
 
@@ -204,15 +173,8 @@ sub remove_invalid_afuns {
 
 =item Treex::Block::HamleDT::IT::Harmonize
 
-Converts ISST Italian treebank into PDT style treebank.
-
-1. Morphological conversion             -> No
-
-2. DEPREL conversion                    -> Yes
-
-3. Structural conversion to match PDT   -> Yes
-
-        a) Coordination                 -> Yes
+Converts the ISST Italian treebank (as prepared for the CoNLL 2007 shared task)
+to the HamleDT (Prague) annotation style.
 
 =back
 
