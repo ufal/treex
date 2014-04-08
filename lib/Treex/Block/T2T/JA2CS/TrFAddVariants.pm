@@ -39,7 +39,7 @@ has static_weight => (
 has static_model => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'ja-cs.static.formeme.pls.slurp.gz',
+    default => 'ja-cs.static.formeme.pls.gz',
 );
 
 has max_variants => (
@@ -55,8 +55,6 @@ has allow_fake_formemes => (
     default       => 0,
     documentation => 'Allow formemes like "???".',
 );
-
-has _model => ( is => 'rw' );
 
 has '_model_factory' => (
     is => 'ro',
@@ -75,6 +73,8 @@ sub get_required_share_files {
     return @files;
 }
 
+my $static_model;
+
 sub process_start {
     
     my $self = shift;
@@ -83,7 +83,7 @@ sub process_start {
 
     my $use_memcached = Treex::Tool::Memcached::Memcached::get_memcached_hostname();
 
-    my $static_model = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
+    $static_model = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
 
     return;
 }
@@ -100,7 +100,7 @@ sub process_tnode {
     return if !$ja_tnode;
     
     my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode( $ja_tnode, $self->maxent_features_version );
-    my $features_hash_rf2 = undef;    #TranslationModel::NaiveBayes::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->nb_version );
+    #my $features_hash_rf2 = undef;    #TranslationModel::NaiveBayes::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->nb_version );
     
     my $features_array_rf = [
         map           {"$_=$features_hash_rf->{$_}"}
@@ -110,9 +110,13 @@ sub process_tnode {
     
     my $ja_formeme = $ja_tnode->formeme;
 
-    my @translations =
-        grep { $self->can_be_translated_as( $ja_tnode, $cs_tnode, $_->{label} ) }
-        $self->_model->get_translations( $ja_formeme, $features_array_rf, $features_hash_rf2 );
+    my $feats = [ @$features_array_rf ];
+
+    my @translations = $static_model->get_translations( $ja_formeme, $feats );
+
+    #my @translations =
+    #    grep { $self->can_be_translated_as( $ja_tnode, $cs_tnode, $_->{label} ) }
+    #    $self->_model->get_translations( $ja_formeme, $features_array_rf, $features_hash_rf2 );
 
     # If the formeme is not translated and contains some function word,
     # try to translate it with only one (or no) function word.
@@ -123,12 +127,14 @@ sub process_tnode {
         foreach my $fword (@fwords) {
             push @translations,
                 grep { $self->can_be_translated_as( $ja_tnode, $cs_tnode, $_->{label} ) }
-                $self->_model->get_translations( "$sempos:$fword+$rest", $features_array_rf, $features_hash_rf2 );
+                $static_model->get_translations( "$sempos:$fword+$rest", $feats );
+#$self->$static_model->get_translations( "$sempos:$fword+$rest", $feats );
         }
         if ( !@translations ) {
             push @translations,
                 grep { $self->can_be_translated_as( $ja_tnode, $cs_tnode, $_->{label} ) }
-                $self->_model->get_translations( "$sempos:$rest", $features_array_rf, $features_hash_rf2 );
+                $static_model->get_translations( "$sempos:$rest", $feats );
+#$self->$static_model->get_translations( "$sempos:$rest", $feats );
         }
     }
 

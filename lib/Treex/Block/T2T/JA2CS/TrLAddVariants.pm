@@ -33,7 +33,7 @@ has static_weight => (
 has static_model => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'ja-cs.static.tlemma.pls.slurp.gz',
+    default => 'ja-cs.static.tlemma.pls.gz',
 );
 
 enum 'DataVersion' => [ '0.9', '1.0' ];
