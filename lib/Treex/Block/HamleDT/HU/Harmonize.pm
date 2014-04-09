@@ -17,24 +17,25 @@ has iset_driver =>
 
 # /net/data/conll/2007/hu/doc/README
 
-sub process_zone {
-    my $self   = shift;
-    my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone( $zone );
-#    $self->deprel_to_afun($a_root)
-    $self->attach_final_punctuation_to_root($a_root);
-    $self->restructure_coordination($a_root);
-    $self->deprel_to_afun($a_root);
-#    $self->process_prepositional_phrases($a_root);
-#    $self->rehang_coordconj($a_root);
-#    $self->check_afuns($a_root);
-    $self->rehang_subconj($a_root);
-    $self->correct_nr($a_root);
-
+sub process_zone
+{
+    my $self = shift;
+    my $zone = shift;
+    my $root = $self->SUPER::process_zone( $zone );
+#    $self->deprel_to_afun($root)
+    $self->attach_final_punctuation_to_root($root);
+    $self->restructure_coordination($root);
+    $self->deprel_to_afun($root);
+#    $self->process_prepositional_phrases($root);
+#    $self->rehang_coordconj($root);
+#    $self->check_afuns($root);
+    $self->rehang_subconj($root);
+    $self->correct_nr($root);
     $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($a_root->get_zone());
     $self->get_or_load_other_block('A2A::SetSharedModifier')->process_zone($a_root->get_zone());
     $self->get_or_load_other_block('A2A::SetCoordConjunction')->process_zone($a_root->get_zone());
 }
+
 
 
 my %pos2afun = (
@@ -53,7 +54,6 @@ my %parentpos2afun = (
     q(noun) => 'Atr',
 );
 
-
 # for deprels see /net/data/conll/2007/hu/doc/dep_szegedtreebank_en.pdf
 my %deprel2afun = (
     q(ABL) => q(Adv),
@@ -67,7 +67,7 @@ my %deprel2afun = (
     q(CP) => q(Pred), # any clause
     q(DAT) => q(Obj),
     q(DEL) => q(Adv),
-    q(DET) => q(AuxA),
+    q(DET) => q(Atr), # In the future this could become AuxA.
     q(DIS) => q(Adv),
     q(ELA) => q(Adv),
     q(ESS) => q(Adv),
@@ -107,29 +107,26 @@ my %deprel2afun = (
     q(XP) => q(),#?
 );
 
-
-sub deprel_to_afun {
+sub deprel_to_afun
+{
     my ( $self, $root ) = @_;
-
-    foreach my $node (grep {not $_->is_coap_root and not $_->afun} $root->get_descendants)  {
-
+    foreach my $node (grep {not $_->is_coap_root and not $_->afun} $root->get_descendants)
+    {
         my $deprel = $node->conll_deprel();
         my ($parent) = $node->get_eparents();
         my $pos    = $node->get_iset('pos');
         my $subpos = $node->get_iset('subpos');
         my $ppos   = $parent ? $parent->get_iset('pos') : '';
-
         my $afun = $deprel2afun{$deprel} || # from the most specific to the least specific
             $subpos2afun{$subpos} ||
                 $pos2afun{$pos} ||
                     $parentpos2afun{$ppos} ||
                         'NR'; # !!!!!!!!!!!!!!! temporary filler
-
-	# AuxX should be used for commas, AuxG for other graphic symbols
-	if($deprel eq q(PUNCT) && $node->form ne q(,)) {
-	    $afun = q(AuxG);
-	}
-
+        # AuxX should be used for commas, AuxG for other graphic symbols
+        if($deprel eq q(PUNCT) && $node->form ne q(,))
+        {
+            $afun = q(AuxG);
+        }
         $node->set_afun($afun);
     }
 }
@@ -219,10 +216,10 @@ sub correct_nr {
     # corrects NRs created from NPs or INFs depending on verbs
     foreach my $nr_node (grep {($_->afun eq 'NR') } $root->get_descendants ) {
         my $parent = $nr_node->get_parent;
-        if ( $parent->get_iset('pos') eq 'verb' ) { 
+        if ( $parent->get_iset('pos') eq 'verb' ) {
             my (@subjects) = grep {$_->afun eq 'Sb'} $parent->get_children ;
             if ( !@subjects ) {
-                $nr_node->set_afun('Sb') 
+                $nr_node->set_afun('Sb')
             }
             else { $nr_node->set_afun('Obj') }
         }
@@ -251,12 +248,13 @@ sub skip_commas {
 
 =item Treex::Block::HamleDT::HU::Harmonize
 
-Converts Hungarian trees from CoNLL 2007 to the style of
-the Prague Dependency Treebank.
+Converts Hungarian trees from CoNLL 2007 (Szeged Treebank) to the style of
+HamleDT (Prague).
 
 =back
 
 =cut
 
-# Copyright 2011 Zdenek Zabokrtsky <zabokrtsky@ufal.mff.cuni.cz>
+# Copyright 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
