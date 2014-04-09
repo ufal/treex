@@ -34,6 +34,7 @@ sub process_zone
     # and with special care at places where prepositions and coordinations interact.
     $self->process_prep_sub_arg_cloud($root);
     $self->mark_deficient_clausal_coordination($root);
+    $self->check_afuns($root);
 }
 
 
@@ -118,6 +119,130 @@ sub deprel_to_afun
             $afun = 'ExD';
         }
         $node->set_afun($afun);
+    }
+    # Fix known irregularities in the data.
+    # Do so here, before the superordinate class operates on the data.
+    $self->fix_annotation_errors($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes a few known annotation errors and irregularities.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    if(scalar(@nodes)>3 && lc(join(' ', map {$_->form()} (@nodes[0..2]))) eq 'già , ma')
+    {
+        my $gia = $nodes[0];
+        my $comma = $nodes[1];
+        my $ma = $nodes[2];
+        my @predicates = grep {$_->parent()->is_root()} (@nodes[3..$#nodes]);
+        if(@predicates)
+        {
+            $ma->set_parent($root);
+            $ma->set_is_member(undef);
+            $ma->set_afun('Coord');
+            foreach my $p (@predicates)
+            {
+                $p->set_parent($ma);
+                $p->set_is_member(1);
+            }
+            $gia->set_parent($ma);
+            $gia->set_is_member(1);
+            $gia->set_afun('ExD');
+            $comma->set_parent($ma);
+            $comma->set_is_member(undef);
+            $comma->set_afun('AuxX');
+        }
+    }
+    foreach my $node (@nodes)
+    {
+        # Unannotated coordination of the form "prima contro X e poi contro Y".
+        if($node->form() eq 'prima')
+        {
+            my @rsiblings = $node->get_siblings({following_only => 1});
+            if(scalar(@rsiblings)>=4 && $rsiblings[1]->form() eq 'e' && $rsiblings[2]->form() eq 'poi' && $rsiblings[0]->afun() eq $rsiblings[3]->afun())
+            {
+                # Attach prima ("first") to the first conjunct.
+                $node->set_parent($rsiblings[0]);
+                # Attach poi ("then") to the second conjunct.
+                $rsiblings[2]->set_parent($rsiblings[3]);
+                # Attach the two conjuncts to the conjunction.
+                $rsiblings[0]->set_parent($rsiblings[1]);
+                $rsiblings[3]->set_parent($rsiblings[1]);
+                $rsiblings[0]->set_is_member(1);
+                $rsiblings[3]->set_is_member(1);
+                # The conjunction probably already has the Coord afun but make sure it does.
+                $rsiblings[1]->set_afun('Coord');
+            }
+        }
+        # The verb è ("is") confused with the conjunction e ("and").
+        elsif($node->form() eq 'è' && $node->is_verb() && $node->afun() eq 'Coord')
+        {
+            ###!!! The problem is that we do not know the real afun of the verb.
+            ###!!! But we cannot leave Coord here because there are no conjuncts and the annotation would not be consistent.
+            ###!!! The Pred afun might work if this is the main predicate of the sentence; otherwise, we would have to recognize a relative clause.
+            $node->set_afun('Pred');
+        }
+        # Coordinating conjunction deeply attached to the subtree of the first conjunct instead of being left sibling of the second conjunct.
+        # We can detect it if the following node is the head of the second conjunct. If there are left dependents, we cannot.
+        elsif($node->wild()->{coordinator} && $node->is_leaf() && !$node->get_right_neighbor() && $node->get_next_node() && $node->get_next_node()->wild()->{conjunct})
+        {
+            my $conjunction = $node;
+            my $rconjunct = $node->get_next_node();
+            # Coordination has not been normalized yet, so the right conjunct should be attached to the first conjunct.
+            my $fconjunct = $rconjunct->parent();
+            $conjunction->set_parent($fconjunct);
+        }
+        # Coordinating conjunction attached as sibling of both conjuncts.
+        # Morphological annotation does not allow for the distinction between coordinating and subordinating conjunctions, so we have to look at the words.
+        elsif($node->is_conjunction() && $node->form() =~ m/^(e|o|ma)$/ && $node->is_leaf() && $node->get_left_neighbor() && $node->get_right_neighbor())
+        {
+            my $conjunction = $node;
+            my $lconjunct = $node->get_left_neighbor();
+            my $rconjunct = $node->get_right_neighbor();
+            if(!$lconjunct->wild()->{conjunct} && !$rconjunct->wild()->{conjunct} && $lconjunct->afun() eq $rconjunct->afun())
+            {
+                my $afun = $lconjunct->afun();
+                my @conjuncts = ($lconjunct, $rconjunct);
+                my @delimiters = ($conjunction);
+                my @lsiblings = $lconjunct->get_siblings({preceding_only => 1});
+                while(scalar(@lsiblings)>=2 && $lsiblings[$#lsiblings]->form() eq ',' && $lsiblings[$#lsiblings-1]->afun() eq $afun)
+                {
+                    my $comma = pop(@lsiblings);
+                    my $conjunct = pop(@lsiblings);
+                    push(@conjuncts, $conjunct);
+                    push(@delimiters, $comma);
+                }
+                # Reshape coordination to the form it should have had according to the original annotation schema.
+                my $firstconjunct = shift(@conjuncts);
+                foreach my $c (@conjuncts)
+                {
+                    $c->set_parent($firstconjunct);
+                    $c->set_afun('CoordArg');
+                    $c->wild()->{conjunct} = 1;
+                    $c->wild()->{coordinator} = undef;
+                }
+                foreach my $d (@delimiters)
+                {
+                    $d->set_parent($firstconjunct);
+                    if($d->form() eq ',')
+                    {
+                        $d->set_afun('AuxX');
+                    }
+                    else
+                    {
+                        $d->set_afun('Coord');
+                    }
+                    $d->wild()->{conjunct} = undef;
+                    $d->wild()->{coordinator} = 1;
+                }
+            }
+        }
     }
 }
 

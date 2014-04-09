@@ -180,6 +180,14 @@
            In HamleDT, the first member of apposition governs the second member which has afun=Apposition and governs the (optional) comma.
            We cannot reuse afun=Apos for HamleDT because it would break several tests and assumptions. Martin Popel 11.10.2012 -->
       <value>Apposition</value> 
+      <!-- The following values are needed for non-Prague coordination styles, non-Prague PPs (no AuxP, afun of the whole PP labeled there) etc. -->
+      <value>CoordArg</value><!-- conjunct, not the first one -->
+      <value>PrepArg</value><!-- argument of preposition, if preposition has afun of the whole PP, instead of AuxP -->
+      <value>SubArg</value><!-- argument of subordinating conjunction, if it has afun of the whole clause, instead of AuxC -->
+      <value>DetArg</value><!-- argument of determiner, if the style dictates that determiners are heads -->
+      <value>NumArg</value><!-- argument of number, if the style dictates that numbers are heads -->
+      <value>PossArg</value><!-- argument of possessive expression (indicating the possessor, i.e. the argument is the possessed thing) -->
+      <value>AdjArg</value><!-- argument of adjective, i.e. this is the modified noun, if the style dictates that adjectives shall govern -->
       <!-- afun for unrecognized value -->
       <value>NR</value>
     </choice>
