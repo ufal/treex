@@ -164,6 +164,23 @@ sub match_iset
 }
 
 #------------------------------------------------------------------------------
+# Shortcuts for some frequent tests people want to do against Interset.
+#------------------------------------------------------------------------------
+sub is_noun {my $self = shift; return $self->get_iset('pos') eq 'noun';}
+sub is_adjective {my $self = shift; return $self->get_iset('pos') eq 'adj';}
+sub is_pronoun {my $self = shift; return $self->get_iset('prontype') ne '';}
+sub is_numeral {my $self = shift; return $self->get_iset('pos') eq 'num';}
+sub is_verb {my $self = shift; return $self->get_iset('pos') eq 'verb';}
+sub is_adverb {my $self = shift; return $self->get_iset('pos') eq 'adv';}
+sub is_preposition {my $self = shift; return $self->get_iset('pos') eq 'prep';}
+sub is_conjunction {my $self = shift; return $self->get_iset('pos') eq 'conj';}
+sub is_coordinator {my $self = shift; return $self->match_iset('pos' => 'conj', 'subpos' => 'coor');}
+sub is_subordinator {my $self = shift; return $self->match_iset('pos' => 'conj', 'subpos' => 'sub');}
+sub is_particle {my $self = shift; return $self->get_iset('pos') eq 'part';}
+sub is_interjection {my $self = shift; return $self->get_iset('pos') eq 'int';}
+sub is_punctuation {my $self = shift; return $self->get_iset('pos') eq 'punc';}
+
+#------------------------------------------------------------------------------
 # Static method. Returns the list of known Interset features. Currently just
 # an access point to a global array provided by the Interset libraries.
 # However, if for some reason the Interset libraries cannot be installed
