@@ -31,9 +31,9 @@ sub process_zone
 #    $self->check_afuns($root);
     $self->rehang_subconj($root);
     $self->correct_nr($root);
-    $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($a_root->get_zone());
-    $self->get_or_load_other_block('A2A::SetSharedModifier')->process_zone($a_root->get_zone());
-    $self->get_or_load_other_block('A2A::SetCoordConjunction')->process_zone($a_root->get_zone());
+    $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($root->get_zone());
+    $self->get_or_load_other_block('A2A::SetSharedModifier')->process_zone($root->get_zone());
+    $self->get_or_load_other_block('A2A::SetCoordConjunction')->process_zone($root->get_zone());
 }
 
 
