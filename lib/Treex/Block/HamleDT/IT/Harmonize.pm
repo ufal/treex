@@ -59,6 +59,44 @@ sub deprel_to_afun
         # default assignment
         my $afun = 'NR';
 
+        # Coordinating conjunctions.
+        if ($deprel =~ m/^(con|dis)$/)
+        {
+            if($form eq ',')
+            {
+                $afun = 'AuxX';
+            }
+            elsif($node->is_punctuation())
+            {
+                $afun = 'AuxG';
+            }
+            else
+            {
+                # Some conjunctions will be relabeled Coord later during coordination processing.
+                # But some will not, often due to annotation errors. To make sure that there are no Coords without conjuncts, we label them AuxY at the moment.
+                $afun = 'AuxY';
+            }
+            $node->wild()->{coordinator} = 1;
+        }
+        # Conjunct (not the first one in a coordination).
+        elsif ($deprel =~ m/^(con|dis)g$/)
+        {
+            $afun = 'CoordArg';
+            $node->wild()->{conjunct} = 1;
+        }
+        # Punctuation that is not labeled as coordinating.
+        elsif ( $deprel eq 'punc' )
+        {
+            if ( $form eq ',' )
+            {
+                $afun = 'AuxX';
+            }
+            else
+            {
+                $afun = 'AuxG';
+            }
+        }
+
         # trivial conversion to PDT style afun
         $afun = 'Atv'   if ( $deprel eq 'arg' );        # arg       -> Atv
         $afun = 'AuxV'  if ( $deprel eq 'aux' );        # aux       -> AuxV
@@ -77,37 +115,11 @@ sub deprel_to_afun
 
         # $afun = 'Atr'   if ( $deprel eq 'mod' );        # mod       -> Atr
         # $afun = 'Atr'   if ( $deprel eq 'mod_rel' );    # mod_rel   -> Atr
-        # Coordinating conjunctions.
-        if ($deprel =~ m/^(con|dis)$/)
-        {
-            $afun = 'Coord';
-            $node->wild()->{coordinator} = 1;
-        }
-        # Conjunct (not the first one in a coordination).
-        elsif ($deprel =~ m/^(con|dis)g$/)
-        {
-            $afun = 'CoordArg';
-            $node->wild()->{conjunct} = 1;
-        }
-
         if ($deprel =~ /^mod(?:_rel)?$/) {
             if ($ppos =~ /^n(?:oun|um)$/) {
                 $afun = 'Atr';
             } else {
                 $afun = 'Adv';
-            }
-        }
-
-        # punctuations
-        if ( $deprel eq 'punc' ) {
-            if ( $form eq ',' ) {
-                $afun = 'AuxX';
-            }
-            elsif ( $form =~ /^(\?|\:|\.|\!)$/ ) {
-                $afun = 'AuxK';
-            }
-            else {
-                $afun = 'AuxG';
             }
         }
 
@@ -198,6 +210,19 @@ sub fix_annotation_errors
             my $fconjunct = $rconjunct->parent();
             $conjunction->set_parent($fconjunct);
         }
+        # Coordinating conjunction deeply attached as in the previous case but here the conjuncts are siblings and the second conjunct is not labeled as conjunct.
+        elsif($node->wild()->{coordinator} && $node->is_leaf() && !$node->get_right_neighbor() && $node->get_next_node())
+        {
+            my $conjunction = $node;
+            my $rconjunct = $node->get_next_node();
+            my $lconjunct = $rconjunct->get_left_neighbor();
+            if($lconjunct && $rconjunct && !$lconjunct->is_punctuation() && !$rconjunct->is_punctuation() && $lconjunct->afun() eq $rconjunct->afun())
+            {
+                $conjunction->set_parent($lconjunct);
+                $rconjunct->set_parent($lconjunct);
+                $rconjunct->wild()->{conjunct} = 1;
+            }
+        }
         # Coordinating conjunction attached as sibling of both conjuncts.
         # Morphological annotation does not allow for the distinction between coordinating and subordinating conjunctions, so we have to look at the words.
         elsif($node->is_conjunction() && $node->form() =~ m/^(e|o|ma)$/ && $node->is_leaf() && $node->get_left_neighbor() && $node->get_right_neighbor())
@@ -205,7 +230,9 @@ sub fix_annotation_errors
             my $conjunction = $node;
             my $lconjunct = $node->get_left_neighbor();
             my $rconjunct = $node->get_right_neighbor();
-            if(!$lconjunct->wild()->{conjunct} && !$rconjunct->wild()->{conjunct} && $lconjunct->afun() eq $rconjunct->afun())
+            if(!$lconjunct->wild()->{conjunct} && !$rconjunct->wild()->{conjunct} &&
+               !$lconjunct->is_punctuation() && !$rconjunct->is_punctuation() &&
+               $lconjunct->afun() eq $rconjunct->afun())
             {
                 my $afun = $lconjunct->afun();
                 my @conjuncts = ($lconjunct, $rconjunct);
