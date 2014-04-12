@@ -19,7 +19,7 @@ Treex::Tool::Parser::Role - role for dependency parsers
 
 =head1 REQUIRED METHOD
 
-=head2 my @parent_ords = $parser->parse_sentence(\@forms, \@lemmas, \@tags);  
+=head2 my ($parent_ords_rf, $afuns_rf) = $parser->parse_sentence(\@forms, \@lemmas, \@tags);  
 
 =head1 COPYRIGHT AND LICENCE
 
