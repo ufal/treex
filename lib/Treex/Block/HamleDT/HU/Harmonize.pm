@@ -24,38 +24,11 @@ sub process_zone
     my $root = $self->SUPER::process_zone($zone);
     $self->attach_final_punctuation_to_root($root);
     $self->restructure_coordination($root);
-    ###!!! deprel_to_afun() has been called from SUPER::process_zone().
-    ###!!! This is probably an attempt to fix anything that may have gotten broken during processing of coordination.
-    $self->deprel_to_afun($root);
     $self->rehang_subconj($root);
-    ###!!! Calling other blocks from within this block will not be needed if we process coordinations the same way as in other treebanks.
-    $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($root->get_zone());
-    $self->get_or_load_other_block('A2A::SetSharedModifier')->process_zone($root->get_zone());
-    $self->get_or_load_other_block('A2A::SetCoordConjunction')->process_zone($root->get_zone());
     $self->check_afuns($root);
 }
 
 
-
-my %pos2afun = (
-    q(prep) => 'AuxP',
-    q(adj) => 'Atr',
-    q(adv) => 'Adv',
-);
-
-my %subpos2afun = (
-    q(sub) => 'AuxC',
-    q(coor) => 'AuxZ', # coord. conj. whose conjuncts were not found, look like rhematizers
-);
-
-my %parentpos2afun = (
-    q(prep) => 'Adv',
-    q(noun) => 'Atr',
-);
-
-my %deprel2afun = (
-#    q(CONJ) => q(Coord), # but also AuxC
-);
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
@@ -64,7 +37,8 @@ my %deprel2afun = (
 #------------------------------------------------------------------------------
 sub deprel_to_afun
 {
-    my ( $self, $root ) = @_;
+    my $self = shift;
+    my $root = shift;
     foreach my $node (grep {not $_->is_coap_root and not $_->afun} $root->get_descendants)
     {
         my $deprel = $node->conll_deprel();
@@ -123,9 +97,17 @@ sub deprel_to_afun
         }
         # CONJ = conjunction (és, hogy, is, mint, ha)
         # This label is used both for coordinating conjunctions (e.g. "és" = "and") and subordinating conjunctions (e.g. "hogy" = "that").
-        elsif(0)#$deprel eq 'CONJ')
+        elsif($deprel eq 'CONJ')
         {
-            ###!!! This is currently being solved in the "else" block and later during processing of coordination.
+            if($node->is_coordinator())
+            {
+                $afun = 'AuxY';
+                $node->wild()->{coordinator} = 1;
+            }
+            else # subordinating conjunction
+            {
+                $afun = 'AuxC';
+            }
         }
         # CP = clause phrase (volt, van, hogy, kell, lesz)
         # coordinate main clauses (In this case there is Prague-style coordination: conjunction is "ROOT", clause predicates attached to it as "CP".)
@@ -232,6 +214,10 @@ sub deprel_to_afun
         {
             ###!!! If this is an incomplete sentence without verb, the main node should be "ExD" instead of "Pred".
             ###!!! However, testing part of speech would not work now because of the conjunctions in case of coordinate clauses.
+            if($node->is_coordinator())
+            {
+                $node->wild()->{coordinator} = 1;
+            }
             $afun = 'Pred';
         }
         # QUE = query word
@@ -275,15 +261,6 @@ sub deprel_to_afun
             ###!!! we may also want to set is_parenthesis_root to 1 but we should investigate the examples.
             $afun = 'ExD';
         }
-        ###!!! In the end we might not need this part at all because all alternatives will be covered above.
-        else
-        {
-            $afun = $deprel2afun{$deprel} || # from the most specific to the least specific
-                $subpos2afun{$subpos} ||
-                    $pos2afun{$pos} ||
-                        $parentpos2afun{$ppos} ||
-                            'NR'; # !!!!!!!!!!!!!!! temporary filler
-        }
         $node->set_afun($afun);
     }
     # Fix known irregularities in the data.
@@ -322,6 +299,28 @@ sub fix_annotation_errors
 
 
 
+#------------------------------------------------------------------------------
+# Detects coordination in the shape we expect to find it in the Hungarian
+# treebank.
+#------------------------------------------------------------------------------
+sub detect_coordination
+{
+    my $self = shift;
+    my $node = shift;
+    my $coordination = shift;
+    my $debug = shift;
+    $coordination->detect_szeged($node);
+    # The caller does not know where to apply recursion because it depends on annotation style.
+    # Return all conjuncts and shared modifiers for the Prague family of styles.
+    # Return non-head conjuncts, private modifiers of the head conjunct and all shared modifiers for the Stanford family of styles.
+    # (Do not return delimiters, i.e. do not return all original children of the node. One of the delimiters will become the new head and then recursion would fall into an endless loop.)
+    # Return orphan conjuncts and all shared and private modifiers for the other styles.
+    my @recurse = grep {$_ != $node} ($coordination->get_conjuncts());
+    return @recurse;
+}
+
+
+
 sub rehang_subconj {
     my ( $self, $root ) = @_;
     foreach my $auxc (grep {$_->afun eq 'AuxC'} $root->get_descendants) {
@@ -348,69 +347,6 @@ sub rehang_subconj {
 
     }
 
-}
-
-sub restructure_coordination {
-    my ( $self, $root ) = @_;
-
-    foreach my $coord (grep {($_->get_iset('subpos') || '') eq 'coor'} $root->get_descendants) {
-        my $left_neighbor = skip_commas($coord->get_left_neighbor(),'left');
-        my $right_neighbor = skip_commas($coord->get_right_neighbor(),'right');
-        if ($left_neighbor and $right_neighbor
-                and $left_neighbor->conll_deprel eq $right_neighbor->conll_deprel) {
-            $coord->set_afun('Coord');
-            $left_neighbor->set_is_member(1);
-            $left_neighbor->set_parent($coord);
-            $right_neighbor->set_is_member(1);
-            $right_neighbor->set_parent($coord);
-        }
-        elsif ($coord->ord == 1 and ($coord->get_parent->conll_deprel||'') eq 'ROOT') { # single-member sentence coordination
-            $coord->set_afun('Coord');
-            my $parent = $coord->get_parent;
-            $coord->set_parent($coord->get_root);
-            $parent->set_parent($coord);
-            $parent->set_is_member(1);
-        }
-        else {
-            my (@left_conjuncts) = grep {$_->conll_deprel ne 'PUNCT' and $_->precedes($coord)} $coord->get_children;
-            my (@right_conjuncts) = grep {$_->conll_deprel ne 'PUNCT' and not $_->precedes($coord)} $coord->get_children;
-            if (@left_conjuncts ==1 and @right_conjuncts==1
-                    and $left_conjuncts[0]->conll_deprel eq $right_conjuncts[0]->conll_deprel) {
-
-                $left_conjuncts[0]->set_is_member(1);
-                $right_conjuncts[0]->set_is_member(1);
-                $coord->set_afun('Coord');
-            }
-
-        }
-
-        # take all punctuations that conflicts with the coordination and rehang them to the coord node
-	if($coord->afun eq 'Coord') {
-	    my $leftmost = $coord->get_descendants({first_only=>1});
-	    my $rightmost = $coord->get_descendants({last_only=>1});
-
-	    my (@puncts) = grep {$_->ord > $leftmost->ord && $_->ord < $rightmost->ord && $_->conll_deprel eq 'PUNCT'} $coord->get_siblings;
-
-	    for my $punct (@puncts) {
-		$punct->set_parent($coord);
-	    }
-	}
-
-    }
-}
-
-sub skip_commas {
-    my ($node, $direction) = @_;
-    return undef if not $node;
-    if ($node->conll_deprel eq 'PUNCT') {
-        if ($direction eq 'left') {
-            return skip_commas($node->get_left_neighbor,$direction);
-        }
-        else {
-            return skip_commas($node->get_right_neighbor,$direction);
-        }
-    }
-    return $node;
 }
 
 

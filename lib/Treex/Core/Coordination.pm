@@ -1359,6 +1359,162 @@ sub detect_stanford
 }
 
 
+
+#------------------------------------------------------------------------------
+# Detects coordination structure according to current annotation (dependency
+# links between nodes and labels of the relations). Expects Tesnière style as
+# it is found in the Szeged treebank. Nested coordination is not expected and
+# some instances may not be recognizable correctly.
+# - conjuncts, conjunctions and commas are separately attached to the parent of
+#   the coordination
+# - no formal marking of conjuncts
+# - conjunctions have wild->{coordinator} ###!!!
+# The method assumes that nothing has been normalized yet. In particular it
+# assumes that there are no AuxP/AuxC afuns (there are PrepArg/SubArg instead).
+# Thus the method does not call $node->set/get_real_afun().
+#------------------------------------------------------------------------------
+sub detect_szeged
+{
+    my $self = shift;
+    my $node = shift; # suspected root node of coordination
+    # $nontop is mentioned for reasons of compatibility with other detection functions.
+    # It is not really needed here as there will be no recursion.
+    my $nontop = shift; # other than top level of recursion?
+    log_fatal("Missing node") unless(defined($node));
+    my $top = !$nontop;
+    ###!!!DEBUG
+    my $debug = 0;
+    if($debug)
+    {
+        my $form = $node->form();
+        $form = '' if(!defined($form));
+        if($top)
+        {
+            $node->set_form("T:$form");
+        }
+        else
+        {
+            $node->set_form("X:$form");
+        }
+    }
+    ###!!!END
+    # Looking for Tesnièrian coordination starts at the conjunction.
+    # Once we see a conjunction we look at its siblings and check whether they have matching dependency labels.
+    return unless($node->wild()->{coordinator});
+    my @punctuation;
+    my $lsibling = skip_commas($node->get_left_neighbor(), 'left', \@punctuation);
+    my $rsibling = skip_commas($node->get_right_neighbor(), 'right', \@punctuation);
+    if($lsibling && $rsibling && $lsibling->afun() eq $rsibling->afun() && $lsibling->afun() ne 'Coord')
+    {
+        # We have found a conjunction and two conjuncts around it.
+        # Let's add them to the coordination.
+        my $symbol = 0;
+        my @partmodifiers = $node->children();
+        $self->add_delimiter($node, $symbol, @partmodifiers);
+        my $orphan = 0;
+        foreach my $conjunct ($lsibling, $rsibling)
+        {
+            my @partmodifiers = $conjunct->children();
+            $self->add_conjunct($conjunct, $orphan, @partmodifiers);
+        }
+        # Save the skipped commas (and possibly other punctuation).
+        $symbol = 1;
+        foreach my $delimiter (@punctuation)
+        {
+            # Hopefully the comma has no children but just in case.
+            my @partmodifiers = $delimiter->children();
+            $self->add_delimiter($delimiter, $symbol, @partmodifiers);
+        }
+        # Save the relation of the coordination to its parent.
+        $self->set_parent($node->parent());
+        $self->set_afun($lsibling->afun());
+        $self->set_is_member($node->is_member());
+    }
+    elsif($node->ord()==1 && defined($node->parent()) && defined($node->parent()->parent()) && $node->parent()->parent()->is_root())
+    {
+        # Deficient (single-conjunct) sentence coordination.
+        my $conjunct = $node->parent();
+        my $root = $conjunct->parent();
+        $self->set_parent($root);
+        $self->set_afun($conjunct->afun());
+        $self->set_is_member(undef);
+        $self->add_delimiter($node, 0, $node->children());
+        $self->add_conjunct($conjunct, 0, grep {$_!=$node} ($conjunct->children()));
+    }
+    else
+    {
+        # The Szeged treebank is not always strictly Tesnièrian with respect to coordination.
+        # Some cases (especially coordinate main predicates) are analyzed as shallow Prague-like structures, i.e. conjunction heads the predicates.
+        # If we failed using the conditions above, perhaps we are dealing with this sort of coordinate structure.
+        my (@left_conjuncts)  = grep {!$_->is_punctuation() && $_->precedes($node)} $node->children();
+        my (@right_conjuncts) = grep {!$_->is_punctuation() && !$_->precedes($node)} $node->children();
+        if(scalar(@left_conjuncts)==1 && scalar(@right_conjuncts)==1 && $left_conjuncts[0]->afun() eq $right_conjuncts[0]->afun() && $left_conjuncts[0]->afun() ne 'Coord')
+        {
+            my $symbol = 0;
+            # The only children of the conjunction are the two conjuncts and possible additional punctuation.
+            # There are no other private modifiers of the conjunction.
+            $self->add_delimiter($node, $symbol);
+            my @punctuation = grep {$_->is_punctuation()} $node->children();
+            foreach my $delimiter (@punctuation)
+            {
+                # Hopefully the comma has no children but just in case.
+                my @partmodifiers = $delimiter->children();
+                $self->add_delimiter($delimiter, $symbol, @partmodifiers);
+            }
+            my $orphan = 0;
+            foreach my $conjunct (@left_conjuncts, @right_conjuncts)
+            {
+                my @partmodifiers = $conjunct->children();
+                $self->add_conjunct($conjunct, $orphan, @partmodifiers);
+            }
+            # Save the relation of the coordination to its parent.
+            $self->set_parent($node->parent());
+            $self->set_afun($left_conjuncts[0]->afun());
+            $self->set_is_member($node->is_member());
+        }
+    }
+    # If this is the top level, we now know all we can.
+    # It's time for a few more heuristics.
+    if($top)
+    {
+        $self->reconsider_distant_private_modifiers();
+    }
+    # Other detection methods return (unless this is $top) the list of modifiers to the upper level,
+    # where it is needed when the current node is added as a participant.
+    # In this style however there is no recursion and no nested coordinations so we do not have to return anything.
+    return;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Helper function to find conjuncts around a conjunction. If called on a
+# punctuation node (presumably on comma), moves to its sibling and repeats this
+# until a non-punctuation node is found.
+#------------------------------------------------------------------------------
+sub skip_commas
+{
+    my $node = shift;
+    my $direction = shift; # left | right
+    my $punctuation = shift; # ref to array; store skipped punctuation here
+    return undef if(!defined($node));
+    if ($node->is_punctuation() && $node->form() !~ m/^[\"\.\!\?]$/)
+    {
+        push(@{$punctuation}, $node);
+        if ($direction eq 'left')
+        {
+            return skip_commas($node->get_left_neighbor(), $direction, $punctuation);
+        }
+        else
+        {
+            return skip_commas($node->get_right_neighbor(), $direction, $punctuation);
+        }
+    }
+    return $node;
+}
+
+
+
 #------------------------------------------------------------------------------
 # Examines private modifiers of the first (word-order-wise) conjunct. If they
 # lie after the last conjunct, the function reclassifies them as shared
