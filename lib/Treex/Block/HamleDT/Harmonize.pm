@@ -37,25 +37,25 @@ sub process_zone
 
     # Copy the original dependency structure before adjusting it.
     $self->backup_zone($zone);
-    my $a_root = $zone->get_atree();
+    my $root = $zone->get_atree();
 
     # Convert CoNLL POS tags and features to Interset and PDT if possible.
-    $self->convert_tags( $a_root, $tagset );
+    $self->convert_tags( $root, $tagset );
 
     # Conversion from dependency relation tags to afuns (analytical function tags) must be done always
     # and it is almost always treebank-specific (only a few treebanks use the same tagset as the PDT).
-    $self->deprel_to_afun($a_root);
+    $self->deprel_to_afun($root);
 
     # Adjust the tree structure. Some of the methods are general, some will be treebank-specific.
     # The decision whether to apply a method at all is always treebank-specific.
-    #$self->attach_final_punctuation_to_root($a_root);
-    #$self->process_auxiliary_particles($a_root);
-    #$self->process_auxiliary_verbs($a_root);
-    #$self->restructure_coordination($a_root);
-    #$self->mark_deficient_clausal_coordination($a_root);
-    #$self->check_afuns($a_root);
+    #$self->attach_final_punctuation_to_root($root);
+    #$self->process_auxiliary_particles($root);
+    #$self->process_auxiliary_verbs($root);
+    #$self->restructure_coordination($root);
+    #$self->mark_deficient_clausal_coordination($root);
+    #$self->check_afuns($root);
     # The return value can be used by the overriding methods of subclasses.
-    return $a_root;
+    return $root;
 }
 
 #------------------------------------------------------------------------------
@@ -240,7 +240,9 @@ sub set_default_afun
 #------------------------------------------------------------------------------
 # After all transformations all nodes must have valid afuns (not our pseudo-
 # afuns). Report cases breaching this rule so that we can easily find them in
-# Ttred.
+# Ttred. This function allows only afuns that are part of the HamleDT label
+# set. Special Prague labels for Arabic and Tamil may be excluded. On the other
+# hand, new labels may have been introduced to HamleDT, e.g. "Neg".
 #------------------------------------------------------------------------------
 sub check_afuns
 {
@@ -251,10 +253,7 @@ sub check_afuns
     {
         my $afun = $node->afun();
         if ( defined($afun) &&
-             $afun !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|AtvV|ExD|Coord|Apos|Apposition|Aux[APCVTOYXZGKR]|NR)$/ &&
-             # Special tags from the Prague Arabic Dependency Treebank:
-             $afun !~ m/^(Pred[ECP]|Ante|Aux[EM])$/
-           )
+             $afun !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|AtvV|ExD|Coord|Apposition|Aux[APCVTOYXZGKR]|Neg|NR)$/           )
         {
             log_warn($node->get_address());
             $self->log_sentence($root);
@@ -266,10 +265,9 @@ sub check_afuns
             # This cannot be fatal if we want the trees to be saved and examined in Ttred.
             if ($afun)
             {
-                log_warn("Node $ord:$form/$tag/$deprel still has the pseudo-afun $afun.");
-
+                log_warn("Node $ord:$form/$tag/$deprel still has the afun $afun, invalid in HamleDT.");
                 # Erase the pseudo-afun to avoid further complaints of Treex and Tred.
-                log_info("Removing the pseudo-afun...");
+                log_info("Removing the invalid afun...");
                 $node->set_afun('NR');
             }
             else

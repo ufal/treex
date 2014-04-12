@@ -179,6 +179,8 @@ sub is_subordinator {my $self = shift; return $self->match_iset('pos' => 'conj',
 sub is_particle {my $self = shift; return $self->get_iset('pos') eq 'part';}
 sub is_interjection {my $self = shift; return $self->get_iset('pos') eq 'int';}
 sub is_punctuation {my $self = shift; return $self->get_iset('pos') eq 'punc';}
+sub is_foreign {my $self = shift; return $self->get_iset('foreign') eq 'foreign';}
+sub is_typo {my $self = shift; return $self->get_iset('typo') eq 'typo';}
 
 #------------------------------------------------------------------------------
 # Static method. Returns the list of known Interset features. Currently just

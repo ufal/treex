@@ -21,19 +21,18 @@ sub process_zone
 {
     my $self = shift;
     my $zone = shift;
-    my $root = $self->SUPER::process_zone( $zone );
-#    $self->deprel_to_afun($root)
+    my $root = $self->SUPER::process_zone($zone);
     $self->attach_final_punctuation_to_root($root);
     $self->restructure_coordination($root);
+    ###!!! deprel_to_afun() has been called from SUPER::process_zone().
+    ###!!! This is probably an attempt to fix anything that may have gotten broken during processing of coordination.
     $self->deprel_to_afun($root);
-#    $self->process_prepositional_phrases($root);
-#    $self->rehang_coordconj($root);
-#    $self->check_afuns($root);
     $self->rehang_subconj($root);
-    $self->correct_nr($root);
+    ###!!! Calling other blocks from within this block will not be needed if we process coordinations the same way as in other treebanks.
     $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($root->get_zone());
     $self->get_or_load_other_block('A2A::SetSharedModifier')->process_zone($root->get_zone());
     $self->get_or_load_other_block('A2A::SetCoordConjunction')->process_zone($root->get_zone());
+    $self->check_afuns($root);
 }
 
 
@@ -287,6 +286,38 @@ sub deprel_to_afun
         }
         $node->set_afun($afun);
     }
+    # Fix known irregularities in the data.
+    # Do so here, before the superordinate class operates on the data.
+    $self->fix_annotation_errors($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes a few known annotation errors and irregularities.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        # The "not only" part of compound conjunction "not only ... but" should be written as one word, "nemcsak".
+        # Cases like "nem csak" and "nem-csak" are tagged as typos. The real part of speech is thus not visible, which results in other errors.
+        if($node->is_typo() || $node->is_foreign())
+        {
+            if($node->form() eq 'nem-csak')
+            {
+                $node->set_afun('AuxY');
+            }
+            elsif($node->form() eq 'nem' && $node->parent()->form() eq 'csak')
+            {
+                $node->set_afun('Neg');
+                $node->parent()->set_afun('AuxY');
+            }
+        }
+    }
 }
 
 
@@ -365,22 +396,6 @@ sub restructure_coordination {
 	    }
 	}
 
-    }
-}
-
-sub correct_nr {
-    my ( $self, $root) = @_;
-
-    # corrects NRs created from NPs or INFs depending on verbs
-    foreach my $nr_node (grep {($_->afun eq 'NR') } $root->get_descendants ) {
-        my $parent = $nr_node->get_parent;
-        if ( $parent->get_iset('pos') eq 'verb' ) {
-            my (@subjects) = grep {$_->afun eq 'Sb'} $parent->get_children ;
-            if ( !@subjects ) {
-                $nr_node->set_afun('Sb')
-            }
-            else { $nr_node->set_afun('Obj') }
-        }
     }
 }
 
