@@ -28,6 +28,7 @@ sub process_zone
     $self->convert_coordination($root);
     $self->convert_copullae($root);
     $self->conll_to_pdt($root);
+    $self->attach_final_punctuation_to_root($root);
     $self->check_afuns($root);
 } # process_zone
 
