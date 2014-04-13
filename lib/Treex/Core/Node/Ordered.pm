@@ -19,6 +19,11 @@ sub precedes {
     my ( $self, $another_node ) = @_;
     return $self->ord() < $another_node->ord();
 }
+sub follows {
+    log_fatal 'Incorrect number of arguments' if @_ != 2;
+    my ( $self, $another_node ) = @_;
+    return $self->ord() > $another_node->ord();
+}
 
 # Methods get_next_node and get_prev_node are implemented
 # so they can handle deprecated fractional ords.

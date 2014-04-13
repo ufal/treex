@@ -153,6 +153,30 @@ sub add_participant
 
 
 #------------------------------------------------------------------------------
+# Removes participant from coordination.
+#------------------------------------------------------------------------------
+sub remove_participant
+{
+    my $self = shift;
+    my $node = shift;
+    log_fatal("Missing node") unless(defined($node));
+    my $participants = $self->_get_participants();
+    for(my $i = 0; $i<=$#{$participants}; $i++)
+    {
+        if($participants->[$i]{node}==$node)
+        {
+            my $participant = $participants->[$i];
+            splice(@{$participants}, $i, 1);
+            return $participant;
+        }
+    }
+    # If we are here we did not find the participant to remove.
+    log_fatal("Unknown participant");
+}
+
+
+
+#------------------------------------------------------------------------------
 # Adds conjunct to coordination.
 #------------------------------------------------------------------------------
 sub add_conjunct
@@ -1429,6 +1453,25 @@ sub detect_szeged
         $self->set_parent($node->parent());
         $self->set_afun($lsibling->afun());
         $self->set_is_member($node->is_member());
+        # Are there additional conjuncts to the left, separated by punctuation?
+        my @candidates = $lsibling->get_siblings({preceding_only => 1});
+        while(scalar(@candidates)>=2)
+        {
+            my $comma = pop(@candidates);
+            my $conjunct = pop(@candidates);
+            if($comma->form() =~ m/^[,;:—]$/ && $conjunct->afun() eq $lsibling->afun() && !$comma->is_member() && !$conjunct->is_member())
+            {
+                # Hopefully the comma has no children but just in case.
+                my @partmodifiers = $comma->children();
+                $self->add_delimiter($comma, 1, @partmodifiers);
+                @partmodifiers = $conjunct->children();
+                $self->add_conjunct($conjunct, 0, @partmodifiers);
+            }
+            else
+            {
+                last;
+            }
+        }
     }
     elsif($node->ord()==1 && defined($node->parent()) && defined($node->parent()->parent()) && $node->parent()->parent()->is_root())
     {

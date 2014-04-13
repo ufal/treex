@@ -24,6 +24,8 @@ sub process_zone
     my $root = $self->SUPER::process_zone($zone);
     $self->attach_final_punctuation_to_root($root);
     $self->restructure_coordination($root);
+    $self->restructure_coordinate_predicates($root);
+    $self->fix_predicates_of_parentheses($root);
     $self->rehang_subconj($root);
     $self->check_afuns($root);
 }
@@ -42,7 +44,7 @@ sub deprel_to_afun
     foreach my $node (grep {not $_->is_coap_root and not $_->afun} $root->get_descendants)
     {
         my $deprel = $node->conll_deprel();
-        my ($parent) = $node->get_eparents(); ###!!! This works only because we convert labels AFTER coordination. Unlike in most other treebanks.
+        my $parent = $node->parent();
         my $pos    = $node->get_iset('pos');
         my $subpos = $node->get_iset('subpos');
         my $ppos   = $parent ? $parent->get_iset('pos') : '';
@@ -85,7 +87,15 @@ sub deprel_to_afun
         # ATT = attribute (több, első, az, két, új)
         elsif($deprel eq 'ATT')
         {
-            $afun = 'Atr';
+            # Sometimes even a verb (clause) modifying another verb is labeled ATT.
+            if($ppos eq 'verb')
+            {
+                $afun = 'Adv';
+            }
+            else
+            {
+                $afun = 'Atr';
+            }
         }
         # AUX = auxiliary verb (volna)
         # The only word with this label is "volna", 3rd person singular conditional present indefinite of "van" ("be, exist, have").
@@ -280,6 +290,9 @@ sub fix_annotation_errors
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
+        my $parent = $node->parent();
+        my $grandparent = $parent->parent();
+        my $rsibling = $node->get_right_neighbor();
         # The "not only" part of compound conjunction "not only ... but" should be written as one word, "nemcsak".
         # Cases like "nem csak" and "nem-csak" are tagged as typos. The real part of speech is thus not visible, which results in other errors.
         if($node->is_typo() || $node->is_foreign())
@@ -288,11 +301,44 @@ sub fix_annotation_errors
             {
                 $node->set_afun('AuxY');
             }
-            elsif($node->form() eq 'nem' && $node->parent()->form() eq 'csak')
+            elsif($node->form() eq 'nem' && $parent->form() eq 'csak')
             {
                 $node->set_afun('Neg');
-                $node->parent()->set_afun('AuxY');
+                $parent->set_afun('AuxY');
             }
+        }
+        # tudni kell, hogy ... wrong nonprojective attachment
+        elsif($grandparent && !$grandparent->is_root() &&
+              $parent->form() eq 'tudni' && $grandparent->form() eq 'kell' &&
+              $parent->precedes($grandparent) && $parent->afun() ne 'Pred' && $grandparent->afun() eq 'Pred' &&
+              $grandparent->precedes($node) &&
+              !$node->is_member())
+        {
+            my @gpc = $grandparent->get_children({following_only => 1});
+            my ($hogy) = grep {$_->form() eq 'hogy'} (@gpc);
+            if(defined($hogy))
+            {
+                $node->set_parent($hogy);
+                $node->set_afun('Obj') if($node->afun() eq 'Pred');
+            }
+            else
+            {
+                $node->set_parent($grandparent);
+            }
+        }
+        # S bár = Although
+        # In theory this could be caught later with the other subordinating conjunctions
+        # but there is one sentence where it interacts with a coordinating conjunction and it goes wrong.
+        elsif($node->ord() == 2 && $node->form() eq 'bár' && $node->precedes($parent) && $parent->is_verb() &&
+              $rsibling && $rsibling->is_verb())
+        {
+            my $comma = $rsibling->get_right_neighbor();
+            if($comma && $comma->form() eq ',')
+            {
+                $comma->set_parent($node);
+            }
+            $rsibling->set_parent($node);
+            $node->set_afun('AuxC');
         }
     }
 }
@@ -321,32 +367,361 @@ sub detect_coordination
 
 
 
-sub rehang_subconj {
-    my ( $self, $root ) = @_;
-    foreach my $auxc (grep {$_->afun eq 'AuxC'} $root->get_descendants) {
+#------------------------------------------------------------------------------
+# The detect_coordination() method above does not recognize coordination that
+# lacks conjunction. Many sentences in the Szeged Treebank have coordinate
+# predicates that are delimited just by punctuation (commas, sometimes colon
+# and others). We must detect this sort of coordination separately. We must
+# also take care of processing coordinations we find because the superordinate
+# class is not prepared for us having two different detect_coordination()
+# methods.
+#------------------------------------------------------------------------------
+sub restructure_coordinate_predicates
+{
+    my $self = shift;
+    my $root = shift;
+    my $debug = shift;
+    # We require that the list of nodes be ordered.
+    # The predicate structure is right-branching and we must process it top-down, i.e. also left-to-right.
+    my @nodes = $root->get_descendants({ordered => 1});
+    map {$_->wild()->{processed} = 0;} @nodes;
+    foreach my $node (@nodes)
+    {
+        if($node->afun() eq 'Pred' && !$node->wild()->{processed})
+        {
+            my $coordination = new Treex::Core::Coordination;
+            $coordination->set_parent($node->parent());
+            $coordination->set_afun('Pred');
+            $coordination->set_is_member($node->is_member());
+            my (@modifiers) = recursively_add_coordinate_predicates($coordination, $node);
+            # If we recognized coordination, add this node as conjunct too.
+            if($coordination->get_conjuncts())
+            {
+                $coordination->add_conjunct($node, 0, @modifiers);
+                # Coordination detected. Change the tree to encode the coordination in the required way.
+                $coordination->shape_prague();
+            }
+        }
+    }
+    # There are still unrecognized coordinations with conjunction.
+    foreach my $node (@nodes)
+    {
+        if($node->afun() eq 'Pred' && $node->is_coordinator() && grep {$_->get_real_afun() eq 'Pred'} ($node->children()))
+        {
+            my $coordination = new Treex::Core::Coordination;
+            $coordination->set_parent($node->parent());
+            $coordination->set_afun('Pred');
+            $coordination->set_is_member($node->is_member());
+            $coordination->add_delimiter($node);
+            my @children = $node->children();
+            my @conjuncts = grep {$_->get_real_afun() eq 'Pred'} (@children);
+            my @delimiters = grep {$_->afun() eq 'AuxX'} (@children);
+            my @smodifiers = grep {$_->get_real_afun() ne 'Pred' && $_->afun() ne 'AuxX'} (@children);
+            foreach my $conjunct (@conjuncts)
+            {
+                $coordination->add_conjunct($conjunct, 0, $conjunct->children());
+            }
+            foreach my $delimiter (@delimiters)
+            {
+                $coordination->add_delimiter($delimiter, 1);
+            }
+            foreach my $modifier (@smodifiers)
+            {
+                $coordination->add_shared_modifier($modifier);
+            }
+            $coordination->shape_prague();
+        }
+    }
+    # Due to gradual processing in previous steps, coordinate clauses may now look as a hierarchic structure of nested coordinations.
+    # Merge them to one flat coordination.
+    foreach my $node (@nodes)
+    {
+        if($node->is_coap_root() && !$node->is_member() && $node->get_real_afun() eq 'Pred')
+        {
+            my $coordination = new Treex::Core::Coordination;
+            $coordination->detect_prague($node);
+            dissolve_nested_coordinations($coordination);
+        }
+    }
+    # In some sentences, there are clauses that appear to be coordinate and subordinate at the same time.
+    # Such a clause is headed by the subordinating conjunction "hogy" ("that") and it takes part in the chain of predicates in the upper levels of the tree.
+    # Hogy may even be the ROOT (child of the root) if this is the first clause in the sentence.
+    # Both the conjunction and the verb were labeled "Pred"; "hogy" was eventually relabeled "AuxC".
+    # Now the children of "hogy" should no longer have the label "Pred". "Obj" might be appropriate if the clause modifies a verb of saying.
+    foreach my $node (@nodes)
+    {
+        if($node->afun() eq 'Pred' && !$node->parent()->is_root() && lc($node->parent()->form()) eq 'hogy')
+        {
+            $node->set_afun('Obj');
+        }
+    }
+    # Sometimes a Pred node should have been attached to a preceding subordinating conjunction (usually "hogy")
+    # but it skips it and without any apparent reason is attached nonprojectively to something farther to the left.
+    foreach my $node (@nodes)
+    {
+        if($node->afun() eq 'Pred' && !$node->parent()->is_root() && !$node->is_member() && $node->parent()->precedes($node))
+        {
+            my $parent = $node->parent();
+            # Is there a subordinating conjunction between the node and its parent?
+            my @subs = grep {$_->is_subordinator() && $_->precedes($node) && $parent->precedes($_)} @nodes;
+            # We are looking for nonprojective dependencies. Exclude conjunctions that depend (even indirectly) on the parent.
+            # Later addition: left sibling of the predicate would also do.
+            @subs = grep {!$_->is_descendant_of($parent)} @subs;
+            my $lsibling = $node->get_left_neighbor();
+            if(!@subs && $lsibling && $parent->precedes($lsibling) && $lsibling->is_subordinator())
+            {
+                @subs = ($lsibling);
+            }
+            if(@subs)
+            {
+                # If there are more than one conjunction, take the rightmost one.
+                my $conjunction = $subs[-1];
+                # Reattach all predicates and all nodes between them.
+                # We could catch the other predicates later but it would be difficult to recognize the commas that separate them.
+                my @siblings = $parent->get_children({ordered => 1});
+                my @preds = grep {$conjunction->precedes($_) && $_->afun() eq 'Pred'} @siblings;
+                my $min = $preds[0]->ord();
+                my $max = $preds[-1]->ord();
+                my @to_move = grep {$_->ord() >= $min && $_->ord() <= $max} @siblings;
+                foreach my $ntm (@to_move)
+                {
+                    $ntm->set_parent($conjunction);
+                    $ntm->set_afun('Obj') if($ntm->afun() eq 'Pred');
+                    $ntm->set_is_member(undef);
+                }
+            }
+        }
+    }
+    # Get rid of the remaining predicates that are not attached to the root.
+    foreach my $node (@nodes)
+    {
+        if($node->afun() eq 'Pred')
+        {
+            my ($eparent) = $node->get_eparents();
+            if(!$eparent->is_root())
+            {
+                # This node is not attached to the root, thus it must not be labeled Pred.
+                # It is possible that it deserves the label and it ought to be attached elsewhere
+                # but we have not been able to find where.
+                # So we will estimate a label that matches the current attachment.
+                my $parent = $node->parent();
+                my $ppos = $parent->get_iset('pos');
+                if($parent->is_subordinator())
+                {
+                    $node->set_afun('Obj');
+                }
+                elsif($ppos =~ m/^(noun|num)$/)
+                {
+                    $node->set_afun('Atr');
+                }
+                elsif($ppos =~ m/^(verb|adj|adv)$/)
+                {
+                    $node->set_afun('Adv');
+                }
+                else
+                {
+                    $node->set_afun('ExD');
+                }
+            }
+        }
+    }
+}
 
+
+
+#------------------------------------------------------------------------------
+# Recursive function called from restructure_coordinate_predicates().
+#------------------------------------------------------------------------------
+sub recursively_add_coordinate_predicates
+{
+    my $coordination = shift;
+    my $mainpred = shift;
+    $mainpred->wild()->{processed} = 1;
+    # Get separately children to the left and to the right.
+    # We will search for Preds only to the right.
+    my @lchildren = $mainpred->get_children({preceding_only => 1});
+    my @rchildren = $mainpred->get_children({following_only => 1});
+    # Look at children to the right. Any Pred among them?
+    my @preds;
+    my @commas;
+    while(scalar(@rchildren)>=2)
+    {
+        my $pred = $rchildren[$#rchildren];
+        my $comma = $rchildren[$#rchildren-1];
+        if($comma->form() =~ m/^[,;:—]$/ && $pred->get_real_afun() eq 'Pred')
+        {
+            # The dependent predicate should not have been processed yet because we are processing the nodes left-to-right.
+            log_warn("Processing a predicate the second time.") if($pred->wild()->{processed});
+            $pred->wild()->{processed} = 1;
+            push(@preds, $pred);
+            push(@commas, $comma);
+            # Remove the two nodes from the list of children (we will return the list as modifiers).
+            splice(@rchildren, $#rchildren-1);
+        }
+        else
+        {
+            last;
+        }
+    }
+    if(@preds && @commas)
+    {
+        # Look at each Pred whether it has its own dependent Preds.
+        foreach my $pred (@preds)
+        {
+            my (@modifiers) = recursively_add_coordinate_predicates($coordination, $pred);
+            # Now we know which children of the dependent Pred are modifiers and can add it as conjunct.
+            $coordination->add_conjunct($pred, 0, @modifiers);
+        }
+        # Add the commas as delimiters.
+        foreach my $comma (@commas)
+        {
+            $coordination->add_delimiter($comma, 1, $comma->children());
+        }
+    }
+    # If we found any dependent predicate and punctuation that delimits it, these nodes have been removed from the list of children.
+    # The remaining children are modifiers. We return them so that the upper level can use them to add $mainpred as conjunct.
+    return (@lchildren, @rchildren);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Recursively finds all nested coordinations, i.e. conjuncts that are
+# themselves heads of coordination, and dissolves them, i.e. all participants
+# of the nested coordination become direct participants of the main
+# coordination.
+#
+# It would be nice to have this function as a method of the Coordination class.
+# However, that will first require to rewrite Coordination so that it can have
+# any phrase, not just a node, as conjunct. Otherwise the function depends on
+# the (Prague) style in which the coordination is encoded in the dependency
+# tree.
+#------------------------------------------------------------------------------
+sub dissolve_nested_coordinations
+{
+    my $maincoord = shift;
+    my @conjuncts = $maincoord->get_conjuncts();
+    foreach my $conjunct (@conjuncts)
+    {
+        if($conjunct->afun() eq 'Coord')
+        {
+            $maincoord->remove_participant($conjunct);
+            my $subcoord = new Treex::Core::Coordination;
+            $subcoord->detect_prague($conjunct);
+            dissolve_nested_coordinations($subcoord);
+            my @subconjuncts = $subcoord->get_conjuncts();
+            foreach my $subconjunct (@subconjuncts)
+            {
+                ###!!! We ought to distinguish orphans from normal conjuncts and port this information upwards.
+                ###!!! It is not needed for the coordinate predicates in Szeged Treebank but it should not be ignored in general.
+                my @pmodifiers = $subcoord->get_private_modifiers($subconjunct);
+                $maincoord->add_conjunct($subconjunct, 0, @pmodifiers);
+            }
+            my @subdelimiters = $subcoord->get_delimiters();
+            foreach my $delimiter (@subdelimiters)
+            {
+                ###!!! We ought to distinguish symbols from conjunctions!
+                ###!!! We should ask the nested coordination about it and not look at afuns here!
+                my $symbol = $delimiter->afun() =~ m/^Aux[GX]$/;
+                my @pmodifiers = $subcoord->get_private_modifiers($delimiter);
+                $maincoord->add_delimiter($delimiter, $symbol, @pmodifiers);
+            }
+            my @subsharedmodifiers = $subcoord->get_shared_modifiers();
+            foreach my $modifier (@subsharedmodifiers)
+            {
+                $maincoord->add_shared_modifier($modifier);
+            }
+        }
+    }
+    $maincoord->shape_prague();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Finds predicates inside brackets. These should not be labeled Pred but ExD.
+#------------------------------------------------------------------------------
+sub fix_predicates_of_parentheses
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        if($node->afun() eq 'Pred')
+        {
+            # Subordinating conjunction must not be labeled Pred, not even if its parent is root.
+            # The conjunction should be labeled AuxC. Its child can be Pred if its effective parent (skipping any AuxC and Coord) is root.
+            # In the original trees there are many cases where both the conjunction and the verb under it are labeled Pred. We must fix it!
+            if($node->is_subordinator())
+            {
+                $node->set_afun('AuxC');
+            }
+            # The node can be labeled Pred only if its effective parent is the root.
+            my ($eparent) = $node->get_eparents();
+            if(!$eparent->is_root())
+            {
+                # One of the reasons why extra Preds appear in the Szeged Treebank is parenthesis.
+                # We will not recognize parenthesis if it is delimited by dashes instead of brackets.
+                my @lpar = grep {$_->ord() < $node->ord() && $_->form() eq '('} @nodes;
+                my @rpar = grep {$_->ord() > $node->ord() && $_->form() eq ')'} @nodes;
+                my @ldash = grep {$_->ord() < $node->ord() && $_->form() eq '—'} @nodes;
+                my @rdash = grep {$_->ord() > $node->ord() && $_->form() eq '—'} @nodes;
+                if(@lpar && @rpar || @ldash && @rdash)
+                {
+                    $node->set_afun('ExD');
+                    $node->set_is_parenthesis_root(1);
+                }
+                # A special case of the above: parenthesis delimited by m-dashes, the contents headed by the adverb "mint" ("than"),
+                # labeled ExD, its child is a verb labeled Pred. We will relabel the verb ExD too.
+                elsif($eparent->afun() eq 'ExD')
+                {
+                    $node->set_afun('ExD');
+                }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Some subordinating conjunctions are attached as siblings of their subordinate
+# clauses, others govern the clauses. We want all to govern the clauses.
+#------------------------------------------------------------------------------
+sub rehang_subconj
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $auxc (grep {$_->afun eq 'AuxC'} @nodes)
+    {
         my $left_neighbor = $auxc->get_left_neighbor();
-        if ($left_neighbor and $left_neighbor->form eq ',') {
+        if ($left_neighbor and $left_neighbor->form eq ',')
+        {
             $left_neighbor->set_parent($auxc);
         }
-
         my $right_neighbor = $auxc->get_right_neighbor();
-        if ($right_neighbor and ($right_neighbor->get_iset('pos')||'') eq 'verb') {
+        if ($right_neighbor and $right_neighbor->is_verb() && !$auxc->is_member() && !$right_neighbor->is_member())
+        {
             $right_neighbor->set_parent($auxc);
         }
-
-
-	#re-hang even if the right neighbor is coordination of verbs
-	if($right_neighbor and ($right_neighbor->afun eq 'Coord')) {
-
-	    my $verbs = grep {($_->get_iset('pos')||'') eq 'verb' and $_->is_member == 1} $right_neighbor->get_children();
-	    if( $verbs > 0) {
-		$right_neighbor->set_parent($auxc);
-	    }
-	}
-
+        # Reattach even if the right neighbor is coordination of verbs.
+        if ($right_neighbor and $right_neighbor->is_coap_root() and !$auxc->is_member() and !$right_neighbor->is_member())
+        {
+            my $verbs = grep {$_->is_verb() && $_->is_member()} $right_neighbor->children();
+            if( $verbs > 0 )
+            {
+                $right_neighbor->set_parent($auxc);
+            }
+        }
+        # Some predicates of subordinate clauses are still labeled Pred.
+        my ($eparent) = $auxc->get_eparents();
+        if ($right_neighbor && $right_neighbor->parent()==$auxc && $right_neighbor->get_real_afun() eq 'Pred' && !$eparent->is_root())
+        {
+            $right_neighbor->set_real_afun('Obj');
+        }
     }
-
 }
 
 
