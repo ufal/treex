@@ -16,21 +16,19 @@ has iset_driver =>
 );
 
 #------------------------------------------------------------------------------
-# Reads the Finnish tree, transforms tree to adhere to PDT guidelines,
+# Reads the Finnish tree, transforms tree to adhere to HamleDT guidelines,
 # converts deprel tags to afuns.
 #------------------------------------------------------------------------------
-sub process_zone {
+sub process_zone
+{
     my $self   = shift;
     my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone( $zone );
-
+    my $root = $self->SUPER::process_zone( $zone );
     # Adjust the tree structure.
-    $self->convert_coordination($a_root);
-    $self->convert_apposition($a_root);
-    $self->convert_copullae($a_root);
-    $self->conll_to_pdt($a_root);
-    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
-    $self->check_afuns($a_root);
+    $self->convert_coordination($root);
+    $self->convert_copullae($root);
+    $self->conll_to_pdt($root);
+    $self->check_afuns($root);
 } # process_zone
 
 
@@ -119,38 +117,6 @@ sub convert_coordination {
         $_->set_conll_deprel($node->conll_deprel) for @conj;
     }
 } # convert_coordination
-
-
-sub convert_apposition {
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-
-    foreach my $node (grep 'appos' eq $_->conll_deprel, @nodes) {
-        next if $node->is_member;
-        my $member = $node->get_parent;
-        if ('adpos' eq $member->conll_deprel) {
-            $member = $member->parent;
-            log_warn("adpos member\t" . $node->get_address);
-        }
-        next if $member->is_member;
-        my $apos = $node->get_children({ first_only => 1 });
-        next unless $apos and $apos->lemma =~ /^[,(:]$/;
-        my $auxg = $node->get_children({ last_only => 1 });
-        undef $auxg unless $auxg and $auxg->lemma =~ /^[,)]$/;
-        undef $auxg if $auxg == $apos;
-        $apos->set_parent($member->get_parent);
-        $member->set_parent($apos);
-        $node->set_parent($apos);
-        $member->set_is_member(1);
-        $node->set_is_member(1);
-        $node->set_conll_deprel($member->conll_deprel);
-        $apos->set_afun('Apos');
-        if ($auxg) {
-            $auxg->set_parent($apos);
-        }
-    }
-} # convert_apposition
 
 
 sub convert_copullae {
@@ -279,21 +245,24 @@ sub conll_to_pdt {
         # gobj   - genitive object under nominalized verb, Atr
         # poss   - possesive under nouns, Atr
         # infmod - modification expressed by infinitive
-        # appos  - apposition. Should have been Apos, but it is not
-        #          possible to combine it with Coord - there is no way
-        #          how to find the Apos node, therefore it becomes Atr.
         # rcmod  - relative clause
         # nn     - name part
-        } elsif ($deprel =~ /^(?:appos|nn|det|gobj|amod|infmod|poss|rcmod)$/) {
+        } elsif ($deprel =~ /^(?:nn|det|gobj|amod|infmod|poss|rcmod)$/) {
             $afun = 'Atr';
             log_warn("$deprel under non-noun\t@pfeats\t" . $node->get_address)
                 unless is_noun($parent);
+        }
+        # appos  - apposition
+        elsif ($deprel eq 'appos')
+        {
+            $afun = 'Apposition';
+        }
 
         # dobj - direct object
         # acomp - adjective under verb
         # xcomp - open clausal complement
         # iccomp - infinitival clausal complement
-        } elsif ($deprel =~ /^(?:[ax]comp|iccomp|dobj|)$/) {
+        elsif ($deprel =~ /^(?:[ax]comp|iccomp|dobj|)$/) {
             $afun = 'Obj';
             log_warn("$deprel under noun\t@pfeats\t" . $node->get_address)
                 if is_noun($parent);
@@ -525,7 +494,7 @@ sub conll_to_pdt {
 =item Treex::Block::HamleDT::FI::Harmonize
 
 Converts Turku Dependency Treebank trees from CoNLL to the style of
-the Prague Dependency Treebank.
+HamleDT (Prague).
 Morphological tags will be decoded into Interset and to the
 15-character positional tags of PDT.
 
@@ -534,4 +503,5 @@ Morphological tags will be decoded into Interset and to the
 =cut
 
 # Copyright 2011 Jan Štěpánek <stepanek@ufal.mff.cuni.cz>
+# Copyright 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
