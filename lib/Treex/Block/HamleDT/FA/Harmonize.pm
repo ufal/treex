@@ -25,15 +25,13 @@ has iset_driver =>
 #------------------------------------------------------------------------------
 sub process_zone
 {
-    my $self   = shift;
-    my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone( $zone );
-
+    my $self = shift;
+    my $zone = shift;
+    my $root = $self->SUPER::process_zone( $zone );
     # Adjust the tree structure.
-    $self->attach_final_punctuation_to_root($a_root);
-    $self->restructure_coordination($a_root, 1);
-    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
-    $self->check_afuns($a_root);
+    $self->attach_final_punctuation_to_root($root);
+    $self->restructure_coordination($root, 1);
+    $self->check_afuns($root);
 }
 
 
@@ -213,7 +211,7 @@ sub deprel_to_afun
         # Second member of apposition: sädi šaer -e irani = Saadi poet EZAFE Iranian = Saadi, the Iranian poet
         elsif ( $deprel eq 'APP' )
         {
-            $afun = 'Apos';
+            $afun = 'Apposition';
         }
         # Punctuation.
         elsif ( $deprel eq 'PUNC' )
@@ -496,14 +494,12 @@ sub collect_coordination_modifiers
 =item Treex::Block::HamleDT::FA::Harmonize
 
 Converts Persian dependency trees from CoNLL to the style of
-the Prague Dependency Treebank.
-Morphological tags will be
-decoded into Interset and to the 15-character positional tags
-of PDT.
+HamleDT (Prague). Morphological tags will be decoded into
+Interset and to the 15-character positional tags of PDT.
 
 =back
 
 =cut
 
-# Copyright 2012 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2012, 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
