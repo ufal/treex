@@ -25,9 +25,10 @@ sub process_zone
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
     $self->attach_final_punctuation_to_root($root);
-    $self->make_pdt_coordination($root);
+    $self->restructure_coordination($root);
+    #$self->make_pdt_coordination($root);
     $self->correct_punctuations($root);
-    $self->correct_coordination($root);
+    #$self->correct_coordination($root);
     $self->check_coord_membership($root);
     $self->check_afuns($root);
 }
@@ -49,143 +50,145 @@ sub deprel_to_afun
         my $subpos = $node->get_iset('subpos');
         my $parent = $node->parent();
         my $ppos   = $parent->get_iset('pos');
-
-        my $connl_subpos = $node->conll_pos();
-        my $connl_pos    = $node->conll_cpos();
-
-        #log_info("conllpos=".$pos.", isetpos=".$node->get_iset('pos'));
+        my $conll_subpos = $node->conll_pos();
+        my $conll_pos    = $node->conll_cpos();
 
         # default assignment
-        my $afun = "NR";
+        my $afun = 'NR';
 
         # main predicate
-        if ($deprel eq 'ROOT') {
+        if ($deprel eq 'ROOT')
+        {
             $afun = 'Pred';
         }
 
         # subject
-        elsif (
-            $deprel eq 'ncsubj' or
-            $deprel eq 'ccomp_subj' or
-            $deprel eq 'xcomp_subj'
-        ) {
+        elsif ($deprel =~ m/^(ncsubj|ccomp_subj|xcomp_subj)$/)
+        {
             $afun = 'Sb';
         }
 
         # object
-        elsif (
-            $deprel eq 'ncobj' or
-            $deprel eq 'nczobj' or
-            $deprel eq 'ccomp_obj' or
-            $deprel eq 'ccomp_zobj' or
-            $deprel eq 'xcomp_obj' or
-            $deprel eq 'xcomp_zobj'
-        ) {
+        elsif ($deprel =~ m/^(ncobj|nczobj|ccomp_obj|ccomp_zobj|xcomp_obj|xcomp_zobj)$/)
+        {
             $afun = 'Obj';
         }
 
         # apposition
-        elsif (
-            $deprel eq 'apocmod' or
-            $deprel eq 'apoxmod' or
-            $deprel eq 'aponcmod' or
-            $deprel eq 'aponcpred'
-        ) {
+        elsif ($deprel =~ m/^(apocmod|apoxmod|aponcmod|aponcpred)$/)
+        {
             $afun = 'Apposition';
         }
 
+        # negation or attribute
+        elsif ($deprel eq 'ncmod')
+        {
+            if ($ppos eq 'noun')
+            {
+                $afun = 'Atr';
+            }
+            else
+            {
+                $afun = 'Neg';
+            }
+        }
+
         # determiner
-        elsif ($deprel eq 'detmod') {
-            $afun = 'AuxA';
+        elsif ($deprel eq 'detmod')
+        {
+            $afun = 'Atr'; ###!!! in future probably 'AuxA';
         }
 
         # auxiliary verb
-        elsif ($deprel eq 'auxmod') {
+        elsif ($deprel eq 'auxmod')
+        {
             $afun = 'AuxV';
         }
 
-        # negation or attribute
-        elsif ($deprel eq 'ncmod') {
-            if ($ppos eq 'noun') {
-                $afun = 'Atr';
-            }
-            else {
-                $afun = 'Adv';
-            }
-        }
-
         # punctuation
-        elsif (($node->get_iset('pos') eq 'punc')) {
-            if ( $form eq ',' ) {
+        elsif ($node->is_punctuation())
+        {
+            # Note: The sentence-final punctuation will get the AuxK label during later processing.
+            if ($form eq ',')
+            {
                 $afun = 'AuxX';
             }
-            elsif ( $form =~ /^[?:.!]$/ ) {
-                $afun = 'AuxK';
-            }
-            else {
+            else
+            {
                 $afun = 'AuxG';
             }
         }
 
-        # modifiers
-        # 1. clausal & predicative modifiers are labeled as 'Adv'
-        # 2. non clausal modifiers are labeled as 'Atr'
-
         # 1. clausal & predicative modifiers
-        elsif (
-            $deprel eq 'cmod' or
-            $deprel eq 'xmod' or
-            $deprel eq 'xpred' or
-            $deprel eq 'ncpred'
-        ) {
-            if ($ppos eq 'noun') {
+        elsif ($deprel =~ m/^(cmod|xmod|xpred|ncpred)$/)
+        {
+            if ($ppos eq 'noun')
+            {
                 $afun = 'Atr';
             }
-            else {
+            else
+            {
                 $afun = 'Adv';
             }
         }
 
+        # conjunct
+        elsif ($deprel eq 'lot')
+        {
+            # Conjuncts are attached to their conjunction and labeled "lot".
+            # The label of the conjunction that heads the coordination describes the relation of the coordination to its parent.
+            if ($parent->is_coordinator())
+            {
+                $afun = 'CoordArg';
+                $node->wild()->{conjunct} = 1;
+            }
+        }
+
         # connectors # !!! TODO
-        elsif (($deprel eq 'lot') || ($deprel eq 'lotat')) {
-            if (($node->get_iset('pos') eq 'noun')) {
-                $afun = 'Atr';
-            }
-            elsif (($node->get_iset('pos') eq 'adv')) {
-                $afun = 'Adv';
-            }
-            elsif (($node->get_iset('pos') eq 'adj')) {
-                $afun = 'Atr';
-            }
-            elsif (($node->get_iset('pos') eq 'verb')) {
-                $afun = 'Adv';
-            }
-            elsif (($node->get_iset('pos') eq 'num')) {
-                $afun = 'Atr';
-            }
-            elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'coor')) {
-                if ($form =~ /^(eta|edo)$/) {
-                    $afun = 'Coord';
+        elsif ($deprel eq 'lotat')
+        {
+            if(0) ###!!! Uvidíme, jestli je tohle vůbec k něčemu potřeba.
+            {
+                if ($node->is_noun() || $node->is_adjective() || $node->is_numeral())
+                {
+                    $afun = 'Atr';
                 }
-                else {
+                elsif ($node->is_adverb() || $node->is_verb())
+                {
                     $afun = 'Adv';
                 }
-            }
-            elsif (($node->get_iset('pos') eq 'conj') && ($node->get_iset('subpos') eq 'sub')) {
-                $afun = 'AuxC';
-            }
-
-            if ($pos eq 'ADL') {
-                $afun = 'Atr';
-            }
-            elsif ($pos eq 'ADI') {
-                $afun = 'Adv';
-            }
-            elsif ($pos eq 'IZE') {
-                $afun = 'Atr';
-            }
-            elsif ($pos eq 'BST') {
-                $afun = 'Atr';
+                elsif ($node->is_coordinator())
+                {
+                    if ($form =~ m/^(eta|edo)$/i)
+                    {
+                        $afun = 'Coord';
+                    }
+                    else
+                    {
+                        $afun = 'Adv';
+                    }
+                }
+                elsif ($node->is_subordinator())
+                {
+                    $afun = 'AuxC';
+                }
+                ###!!! if? not elsif?
+                # ADL = verb
+                # IZE = noun
+                # BST = other
+                if ($conll_pos =~ m/^(ADL|IZE|BST)$/)
+                {
+                    $afun = 'Atr';
+                }
+                # ADI = verb
+                elsif ($conll_pos eq 'ADI')
+                {
+                    $afun = 'Adv';
+                }
+                ###!!! Dosud nepodchycené případy:
+                # ez Argentinan ez ACBn = not Argentine, not ACB (dolní ez je částice/lot a visí na horním ez)
+                # bai Gobernuak bai oposizioak = both the government and the opposition (dolní bai je částice/lot a visí na horním bai)
+                # orekatuenak , hiru astetan mailarik onena emateko dohainik onenak dituztenak , fisikoki zein psikologikoki = balanced, free of charge for three weeks to give the best of the best, both physically and psychologically
             }
         }
 
@@ -304,20 +307,33 @@ sub deprel_to_afun
             $afun = 'Adv';
         }
 
-        # determiner
-        elsif ($pos eq 'adj' and $subpos eq 'det') {
-            $afun = 'AuxA';
-        }
-
-        # default afun assignment
-        # if ($afun eq "NR") {
-            # print "Assigning Atr to " . $deprel . "\t POS: $pos ## $subpos" .  "\n";
-            # $afun = 'Atr';
-        # }
-
         $node->set_afun($afun);
     }
 }
+
+
+
+#------------------------------------------------------------------------------
+# Detects coordination in the shape we expect to find it in the Basque
+# treebank.
+#------------------------------------------------------------------------------
+sub detect_coordination
+{
+    my $self = shift;
+    my $node = shift;
+    my $coordination = shift;
+    my $debug = shift;
+    $coordination->detect_alpino($node);
+    $coordination->capture_commas();
+    # The caller does not know where to apply recursion because it depends on annotation style.
+    # Return all conjuncts and shared modifiers for the Prague family of styles.
+    # Return orphan conjuncts and all shared and private modifiers for the other styles.
+    my @recurse = $coordination->get_conjuncts();
+    push(@recurse, $coordination->get_shared_modifiers());
+    return @recurse;
+}
+
+
 
 # will make PDT style coordination from the CoNLL data
 sub make_pdt_coordination {
@@ -392,6 +408,8 @@ sub correct_coordination {
         }
     }
 }
+
+
 
 1;
 
