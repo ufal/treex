@@ -8,7 +8,7 @@ with 'Treex::Tool::Tagger::Role';
 # Path to the model data file
 has model => ( is => 'ro', isa => 'Str', required => 1, writer => '_set_model' );
 
-# Instance of (Ufal::MorphoDiTa) Tagger
+# Instance of Ufal::MorphoDiTa::Tagger
 has '_tagger' => ( is=> 'rw');
 
 sub BUILD {
@@ -17,7 +17,7 @@ sub BUILD {
     $self->_set_model($model_file);
     log_info("Loading Ufal::MorphoDiTa tagger with model '$model_file'");
     my $tagger = Ufal::MorphoDiTa::Tagger::load($model_file)
-        or log_fatal("Cannot load Ufal::MorphoDiTa Tagger with model from file '$model_file'");
+        or log_fatal("Cannot load Ufal::MorphoDiTa::Tagger with model from file '$model_file'");
     #log_info('Done.');
     $self->_set_tagger($tagger);
     return;
@@ -53,9 +53,9 @@ Treex::Tool::Tagger::MorphoDiTa - wrapper for Ufal::MorphoDiTa
 =head1 SYNOPSIS
 
  use Treex::Tool::Tagger::MorphoDiTa;
- my $tagger = Treex::Tool::Tagger::MorphoDiTa->new({
+ my $tagger = Treex::Tool::Tagger::MorphoDiTa->new(
     model => 'data/models/morphodita/cs/czech-morfflex-pdt-131112.tagger-fast',
- });
+ );
  # or czech-morfflex-pdt-131112.tagger-best_accuracy
  my @tokens = qw(Jak to jde ?);
  my ($tags_rf, $lemmas_rf) = $tagger->tag_sentence(\@tokens);
