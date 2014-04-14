@@ -124,10 +124,11 @@ sub deprel_to_afun
         #    depends on the verb with normal inflection and the relation is labeled PARCL.
         #    Example: be xane räfte xabidäm = to home gone I slept = I went home and slept (or: Having gone home, I slept)
         # NADV: Adverbial modifier of compound predicate, attached to its non-verb component.
+        # AJADV: Adverbial complement of adjective
         # ADJADV: Adverbial complement of adjective: taksi sävar šodäm = taxi riding I-became (taksi is ADJADV of sävar).
         # APREMOD: Adjective pre-modifier by an adverb: besjar šad = very happy.
         # APOSTMOD: Adjective post-modifier by another adjective: pirahän-e abi-je asemani = shirt-EZAFE blue-EZAFE sky = a sky blue shirt.
-        elsif ( $deprel =~ m/^(ADVC|ADV|AJUCL|PARCL|NADV|ADJADV|APREMOD|APOSTMOD)$/ )
+        elsif ( $deprel =~ m/^(ADVC|ADV|AJADV|AJUCL|PARCL|NADV|ADJADV|APREMOD|APOSTMOD)$/ )
         {
             $afun = 'Adv';
         }
@@ -192,6 +193,7 @@ sub deprel_to_afun
             elsif($ppos eq 'conj' && $parent->get_iset('subpos') eq 'coor')
             {
                 $afun = 'CoordArg';
+                $node->wild()->{conjunct} = 1;
             }
             else
             {
@@ -207,6 +209,7 @@ sub deprel_to_afun
         elsif ( $deprel =~ m/^(VCONJ|NCONJ|AJCONJ|PCONJ|AVCONJ)$/ )
         {
             $afun = 'Coord';
+            $node->wild()->{coordinator} = 1;
         }
         # Second member of apposition: sädi šaer -e irani = Saadi poet EZAFE Iranian = Saadi, the Iranian poet
         elsif ( $deprel eq 'APP' )
@@ -241,140 +244,25 @@ sub deprel_to_afun
             # I do not know what the sentence means and what we should do in this strange case.
             $node->set_afun('ExD');
         }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Detects coordination in Persian trees.
-# - The first member (last if coordination of verbs) is the root.
-# - Coordinating conjunction is attached to the previous member with afun Coord.
-# - The other member is attached to the conjunction with afun CoordArg.
-# - More than two members: "verb1 verb2 conjunction verb3" (no comma between the first two verbs):
-#   verb3 ( conjunction/Coord ( verb1/CoordArg, verb2/CoordArg ) )
-# - More than two nouns, with commas. Example sentence id 39356 (test/001.treex.gz#8):
-#   rúd , kúh , džánúr va ghíre (rivers, mountains, animals etc.; for some reason (error?), rúd is not analyzed as conjunct)
-#   kúh/Atr ( ,/AuxX, džánúr/Coord ( va/Coord ghíre/CoordArg ) )
-#   => The original s-tag NCONJ, now converted to Coord, is not restricted to coordinating conjunctions.
-#   It can also appear at the second conjunct when there is no conjunction before it.
-# - Shared modifiers are attached to the first member. Private modifiers are
-#   attached to the member they modify.
-# Note that under this approach:
-# - Shared modifiers cannot be distinguished from private modifiers of the
-#   first member.
-# - Nested coordinations ("apples, oranges and [blackberries or strawberries]")
-#   cannot be always distinguished from one large coordination.
-#------------------------------------------------------------------------------
-# Collects members, delimiters and modifiers of one coordination. Recursive,
-# but only within the one coordination. Leaves the arrays empty if called on a
-# node that is not a coordination member.
-#------------------------------------------------------------------------------
-sub collect_coordination_members
-{
-    my $self       = shift;
-    my $node       = shift; # the node to examine (no recursion if this is not a coordination-related node)
-    my $members    = shift; # reference to array where the members are collected
-    my $delimiters = shift; # reference to array where the delimiters are collected
-    my $sharedmod  = shift; # reference to array where the shared modifiers are collected
-    my $privatemod = shift; # reference to array where the private modifiers are collected
-    my $debug      = shift;
-    my @children = $node->children();
-    my $cntype = $self->get_cnode_type($node);
-    # Non-coordination node: nothing to do.
-    return if(!defined($cntype));
-    # Sanity check: Normally, when we find a non-head conjunct we have already found the head conjunct.
-    # However there is a counter-example in the data:
-    # $TMT_ROOT/share/data/resources/normalized_treebanks/fa/treex/000_orig/train/022.treex.gz##483.a_tree-fa-s483-n7508
-    # It is a deficient sentence containing no verb but a long coordination of nouns.
-    # It begins with a conjunction followed by the first (but non-head) conjunct.
-    # Let's solve this by pretending the first conjunct was the head. It means that
-    # we will collect the modifiers at this level and not the level up at the conjunction...
-    # which should not do any harm.
-    if($cntype eq 'nhmember' && scalar(@{$members})==0)
-    {
-        $cntype = 'hmember';
-    }
-    # Head conjunct.
-    if($cntype eq 'hmember')
-    {
-        # Sanity check: The artificial root node cannot be coordinated.
-        # However, due to annotation errors (e.g. sentence id 31239, i.e. train/009.treex.gz#285),
-        # we may encounter a child of the root s-tagged VCONJ (instead of ROOT).
-        # When this happens we cannot report fatal error because the error is not ours and we need to go on.
-        if(!$node->parent())
+        # Consolidate information about participants of coordination so that it can be properly detected.
+        my $cnode_type = $self->get_cnode_type($node);
+        my $wild = $node->wild();
+        $wild->{cnode_type} = $cnode_type;
+        if(!defined($cnode_type) || $cnode_type eq 'hmember')
         {
-            my @deprels;
-            # Try to correct the s-tags. (But beware: we may have already re-attached the final punctuation
-            # thus there might be children of the root that rightfully are not deprel-labeled ROOT!)
-            foreach my $child (@children)
-            {
-                my $deprel = $child->conll_deprel();
-                if($deprel =~ m/CONJ$/)
-                {
-                    if($child->get_iset('pos') eq 'verb')
-                    {
-                        $child->set_afun('Pred');
-                    }
-                    else
-                    {
-                        $child->set_afun('ExD');
-                    }
-                    push(@deprels, $deprel);
-                }
-            }
-            my $warn_deprels = '';
-            $warn_deprels = ' Its children should have the deprel ROOT, not '.join('|', @deprels).'.' if(@deprels);
-            log_warn($node->get_address());
-            log_warn('The root node cannot be coordinated.'.$warn_deprels);
-            return;
+            delete($wild->{coordinator});
+            delete($wild->{conjunct});
         }
-        # The head member is always the first member we find. If we already found other members,
-        # then this one does not belong to the same coordination. Instead, it is a (coordinated)
-        # modifier of one of the conjuncts. We shall stop the recursion here. Whoever called
-        # this function from outside will have to detect the modifying coordination separately.
-        if(scalar(@{$members})!=0)
+        elsif($cnode_type eq 'nhmember')
         {
-            return;
+            $wild->{conjunct} = 1;
+            delete($wild->{coordinator});
         }
-        # Report myself as a member.
-        push(@{$members}, $node);
-        # Scan my children for punctuation (AuxX), conjunctions (Coord) and/or conjuncts (Coord).
-        foreach my $child (@children)
+        elsif($cnode_type =~ m/^(conjunction|punctuation)$/)
         {
-            $self->collect_coordination_members($child, $members, $delimiters, $sharedmod, $privatemod, $debug);
+            $wild->{coordinator} = 1;
+            delete($wild->{conjunct});
         }
-        # We now have the complete list of coordination members and we can collect and sort out their modifiers.
-        $self->collect_coordination_modifiers($members, $sharedmod, $privatemod);
-    }
-    # Non-head conjunct.
-    elsif($cntype eq 'nhmember')
-    {
-        # Report myself as a member.
-        push(@{$members}, $node);
-        # Scan my children for punctuation (AuxX), conjunctions (Coord) and/or conjuncts (Coord).
-        foreach my $child (@children)
-        {
-            $self->collect_coordination_members($child, $members, $delimiters, $sharedmod, $privatemod, $debug);
-        }
-    }
-    # Conjunction.
-    elsif($cntype eq 'conjunction')
-    {
-        # Report myself as a delimiter.
-        push(@{$delimiters}, $node);
-        # Scan my children for conjuncts (CoordArg).
-        foreach my $child (@children)
-        {
-            $self->collect_coordination_members($child, $members, $delimiters, $sharedmod, $privatemod, $debug);
-        }
-    }
-    # Punctuation.
-    elsif($cntype eq 'punctuation')
-    {
-        # Report myself as a delimiter.
-        push(@{$delimiters}, $node);
-        # No children are expected (though not forbidden either). No recursion.
     }
 }
 
@@ -436,56 +324,25 @@ sub get_cnode_type
 
 
 #------------------------------------------------------------------------------
-# For a list of coordination members, finds their modifiers and sorts them out
-# as shared or private. Modifiers are children whose afuns do not suggest they
-# are members (CoordArg) or delimiters (Coord|AuxX|AuxG).
+# Detects coordination in the shape we expect to find it in the Persian
+# treebank.
 #------------------------------------------------------------------------------
-sub collect_coordination_modifiers
+sub detect_coordination
 {
-    my $self       = shift;
-    my $members    = shift;                                           # reference to input array
-    my $sharedmod  = shift;                                           # reference to output array
-    my $privatemod = shift;                                           # reference to output array
-    # All children of all members are modifiers (shared or private) provided they are neither members nor delimiters.
-    # Any left modifiers of the first member will be considered shared modifiers of the coordination.
-    # Any right modifiers of the first member occurring after the second member will be considered shared modifiers, too.
-    # Note that the DDT structure does not provide for the distinction between shared modifiers and private modifiers of the first member.
-    # Modifiers of the other members are always private.
-    my $croot      = $members->[0];
-    my $ord0       = $croot->ord();
-    my $ord1       = $#{$members} >= 1 ? $members->[1]->ord() : -1;
-    foreach my $member ( @{$members} )
-    {
-        my @modifying_children = grep { $_->afun() !~ m/^(CoordArg|Coord|AuxX|AuxG)$/ } ( $member->children() );
-        if ( $member == $croot )
-        {
-            foreach my $mchild (@modifying_children)
-            {
-                my $ord = $mchild->ord();
-                if ( $ord < $ord0 || $ord1 >= 0 && $ord > $ord1 )
-                {
-                    # This may be either shared or private modifier.
-                    #push( @{$sharedmod}, $mchild );
-                    # Since there is no explicit information on shared modifiers in the treebank
-                    # and because the modifier is attached to one member of the coordination,
-                    # let's not add information and let's treat it as a private modifier.
-                    push(@{$privatemod}, $mchild);
-                }
-                else
-                {
-
-                    # This modifier of the first member occurs between the first and the second member.
-                    # Consider it private.
-                    push( @{$privatemod}, $mchild );
-                }
-            }
-        }
-        else
-        {
-            push( @{$privatemod}, @modifying_children );
-        }
-    }
+    my $self = shift;
+    my $node = shift;
+    my $coordination = shift;
+    my $debug = shift;
+    $coordination->detect_moscow2($node);
+    # The caller does not know where to apply recursion because it depends on annotation style.
+    # Return all conjuncts and shared modifiers for the Prague family of styles.
+    # Return orphan conjuncts and all shared and private modifiers for the other styles.
+    my @recurse = $coordination->get_orphans();
+    push(@recurse, $coordination->get_children());
+    return @recurse;
 }
+
+
 
 1;
 
