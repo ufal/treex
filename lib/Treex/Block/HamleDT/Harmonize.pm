@@ -671,49 +671,17 @@ sub restructure_coordination
     my $self  = shift;
     my $root  = shift;
     my $debug = shift;
-
+    # Wait with debugging until the problematic sentence:
     #my $debug = $self->sentence_contains($root, 'Spürst du das');
     log_info('DEBUG ON') if ($debug);
-
-    # Switch between approaches to solving coordination.
-    # The former reshapes coordination immediately upon finding it.
-    # The latter and older approach first collects all coord structures then reshapes them.
-    # It could theoretically suffer from things changing during reshaping.
-    my $test_result = $self->detect_coordination($root, new Treex::Core::Coordination);
-    my $implemented = !(defined($test_result) && $test_result eq 'not implemented');
-    if ($implemented)
-    {
-        $self->shape_coordination_recursively_object( $root, $debug );
-    }
-    elsif (1)
-    {
-        $self->shape_coordination_recursively( $root, $debug );
-    }
-    else
-    {
-        my @coords;
-
-        # Collect information about all coordination structures in the tree.
-        $self->detect_coordination( $root, \@coords );
-
-        # Loop over coordinations and restructure them.
-        # Hopefully the order in which the coordinations are processed is not significant.
-        foreach my $c (@coords)
-        {
-            $self->shape_coordination( $c, $debug );
-        }
-    }
+    $self->shape_coordination_recursively( $root, $debug );
 }
 
 #------------------------------------------------------------------------------
-###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!###
 # Every descendant of this class should implement its own method
 # detect_coordination(). It may use the prepared detect_...() methods of
 # Coordination but it must select what annotation style is to be expected in
-# the data. During the transition phase, until all descendants have implemented
-# the method, we will keep here the functions that take the old approach. In
-# order to recognize when to use them, we need a bogus implementation of the
-# new function that just says 'not implemented'.
+# the data.
 #------------------------------------------------------------------------------
 sub detect_coordination
 {
@@ -721,61 +689,7 @@ sub detect_coordination
     my $node = shift;
     my $coordination = shift;
     my $debug = shift;
-    return 'not implemented';
-}
-
-#------------------------------------------------------------------------------
-# A different approach: recursively search for coordinations and solve them
-# immediately, i.e. don't collect all first.
-#------------------------------------------------------------------------------
-sub shape_coordination_recursively
-{
-    my $self  = shift;
-    my $root  = shift;
-    my $debug = shift;
-
-    # Is the current subtree root a coordination root?
-    # Look for coordination members.
-    my @members;
-    my @delimiters;
-    my @sharedmod;
-    my @privatemod;
-    my %coord =
-        (
-        'members'           => \@members,
-        'delimiters'        => \@delimiters,
-        'shared_modifiers'  => \@sharedmod,
-        'private_modifiers' => \@privatemod,    # for debugging purposes only
-        'oldroot'           => $root
-        );
-    $self->collect_coordination_members( $root, \@members, \@delimiters, \@sharedmod, \@privatemod, $debug );
-    if (@members)
-    {
-        log_info('COORDINATION FOUND') if ($debug);
-
-        # We have found coordination! Solve it right away.
-        $self->shape_coordination( \%coord, $debug );
-
-        # Call recursively on all modifier subtrees.
-        # Do not call it on all children because they include members and delimiters.
-        # Non-first members cannot head nested coordination under this approach.
-        ###!!! TO DO: Make this function independent on coord approach taken in the current treebank!
-        ###!!! Possible solution: collect_coordination_members() also returns the list of nodes for recursive search.
-        # All CoordArg children they may have are considered members of the current coordination.
-        foreach my $node ( @sharedmod, @privatemod )
-        {
-            $self->shape_coordination_recursively( $node, $debug );
-        }
-    }
-
-    # Call recursively on all children if no coordination detected now.
-    else
-    {
-        foreach my $child ( $root->children() )
-        {
-            $self->shape_coordination_recursively( $child, $debug );
-        }
-    }
+    log_fatal("detect_coordination() must be implemented in all blocks derived from HamleDT::Harmonize.");
 }
 
 #------------------------------------------------------------------------------
@@ -783,7 +697,7 @@ sub shape_coordination_recursively
 # immediately, i.e. don't collect all first.
 # Use the Coordination object.
 #------------------------------------------------------------------------------
-sub shape_coordination_recursively_object
+sub shape_coordination_recursively
 {
     my $self  = shift;
     my $root  = shift;
@@ -793,15 +707,13 @@ sub shape_coordination_recursively_object
     if(scalar($coordination->get_conjuncts())>0)
     {
         log_info('COORDINATION FOUND') if ($debug);
-
         # We have found coordination! Solve it right away.
         $coordination->shape_prague();
-
         # Call recursively on all descendants. (The exact recursive set depends on annotation style.
         # We got it from detect_coordination().)
         foreach my $node (@recursion)
         {
-            $self->shape_coordination_recursively_object($node, $debug);
+            $self->shape_coordination_recursively($node, $debug);
         }
     }
     # Call recursively on all children if no coordination detected now.
@@ -809,160 +721,8 @@ sub shape_coordination_recursively_object
     {
         foreach my $child ($root->children())
         {
-            $self->shape_coordination_recursively_object($child, $debug);
+            $self->shape_coordination_recursively($child, $debug);
         }
-    }
-}
-
-#------------------------------------------------------------------------------
-# Restructures one coordination structure to the Prague style.
-# Takes a description of the structure as a hash with the following keys:
-# - members: list of nodes that are members of coordination
-# - delimiters: list of nodes with commas or conjunctions between the members
-# - shared_modifiers: list of nodes that depend on the whole coordination
-# - private_modifiers: list of nodes that depend on individual members
-#     for debugging purposes only
-# - oldroot: the original root node of the coordination (e.g. the first member)
-#     parent and afun of the whole structure is taken from oldroot
-#------------------------------------------------------------------------------
-sub shape_coordination
-{
-    my $self  = shift;
-    my $c     = shift;    # reference to hash
-    my $debug = shift;
-    $debug = 0 if ( !defined($debug) );
-    if ( $debug >= 1 )
-    {
-        $self->log_sentence( $c->{oldroot} );
-        log_info( "Coordination members:    " . join( ' ', map { $_->ord() . ':' . $_->form() } ( @{ $c->{members} } ) ) );
-        log_info( "Coordination delimiters: " . join( ' ', map { $_->ord() . ':' . $_->form() } ( @{ $c->{delimiters} } ) ) );
-        log_info( "Coordination modifiers:  " . join( ' ', map { $_->ord() . ':' . $_->form() } ( @{ $c->{shared_modifiers} } ) ) );
-        if ( exists( $c->{private_modifiers} ) )
-        {
-            log_info( "Member modifiers:        " . join( ' ', map { $_->ord() . ':' . $_->form() } ( @{ $c->{private_modifiers} } ) ) );
-        }
-        log_info( "Old root:                " . $c->{oldroot}->ord() . ':' . $c->{oldroot}->form() );
-    }
-    elsif ( $debug > 0 )
-    {
-        my @cnodes = sort { $a->ord() <=> $b->ord() } ( @{ $c->{members} }, @{ $c->{delimiters} } );
-        log_info( join( ' ', map { $_->ord() . ':' . $_->form() } (@cnodes) ) );
-    }
-
-    # Get the parent and afun of the whole coordination, from the old root of the coordination.
-    # Note that these may have changed since the coordination was detected,
-    # as a result of processing other coordinations, if this is a nested coordination.
-    my $parent = $c->{oldroot}->parent();
-    if ( !defined($parent) )
-    {
-        $self->log_sentence( $c->{oldroot} );
-        log_fatal('Coordination has no parent.');
-    }
-
-    # Select the last delimiter as the new root.
-    if ( !@{ $c->{delimiters} } )
-    {
-
-        # It can happen, however rare, that there are no delimiters between the coordinated nodes.
-        # Example: de:
-        #   `` Spürst du das ? '' , fragt er , `` spürst du den Knüppel ?
-        # Here, both direct speeches are coordinated and together attached to 'fragt'.
-        # All punctuation is also attached to 'fragt', it is thus not available as coordination delimiters.
-        # We have to be robust and to survive such cases.
-        # Since there seems to be no better solution, the first member of the coordination will become the root.
-        # It will no longer be recognizable as coordination member. The coordination may now be deficient and have only one member.
-        # If it was already a deficient coordination, i.e. if it had no delimiters and only one member, then something went wrong
-        # (probably it is no coordination at all).
-        log_fatal('Coordination has fewer than two members and no delimiters.') if ( scalar( @{ $c->{members} } ) < 2 );
-        push( @{ $c->{delimiters} }, shift( @{ $c->{members} } ) );
-    }
-    # There is no guarantee that we obtained ordered lists of members and delimiters.
-    # They may have been added during tree traversal, which is not ordered linearly.
-    my @ordered_members  = sort {$a->ord() <=> $b->ord()} (@{$c->{members}});
-    my @ordered_delimiters = sort {$a->ord() <=> $b->ord()} (@{$c->{delimiters}});
-
-    # If the last delimiter is punctuation and it occurs after the last member
-    # and there is at least one delimiter before the last member, choose this other delimiter.
-    # We try to avoid non-coordinating punctuation such as quotation marks after the sentence.
-    # However, some non-punctuation delimiters can occur after the last member. Example: "etc".
-    my $first_member_ord = $ordered_members[0]->ord();
-    my $last_member_ord  = $ordered_members[$#ordered_members]->ord();
-    my @inner_delimiters = grep { $_->ord() > $first_member_ord && $_->ord() < $last_member_ord } (@ordered_delimiters);
-    my $croot            = scalar(@inner_delimiters) ? pop(@inner_delimiters) : pop(@ordered_delimiters);
-
-    # Attach the new root to the parent of the coordination.
-    $croot->set_parent($parent);
-
-    # Attach all coordination members to the new root.
-    foreach my $member ( @{ $c->{members} } )
-    {
-        $member->set_parent($croot);
-        $member->set_is_member(1);
-    }
-
-    # Attach all remaining delimiters to the new root.
-    foreach my $delimiter ( @{ $c->{delimiters} } )
-    {
-
-        # The $croot is not guaranteed to be removed from delimiters if it was an inner delimiter.
-        next if ( $delimiter == $croot );
-        $delimiter->set_parent($croot);
-        if ( $delimiter->form() eq ',' )
-        {
-            $delimiter->set_afun('AuxX');
-        }
-        elsif ( $delimiter->get_iset('pos') =~ m/^(conj|adv|part)$/ )
-        {
-            $delimiter->set_afun('AuxY');
-        }
-        else
-        {
-            $delimiter->set_afun('AuxG');
-        }
-    }
-
-    # Now that members and delimiters are restructured, set also the afuns of the members.
-    # Do not ask the former root about its real afun earlier.
-    # If it is a preposition and the coordination members still sit among its children, the preposition may not know where to find its real afun.
-    my $afun = $c->{oldroot}->get_real_afun() || '';
-    $croot->set_afun('Coord');
-    foreach my $member ( @{ $c->{members} } )
-    {
-
-        # Assign the afun of the whole coordination to the member.
-        # Prepositional members require special treatment: the afun goes to the argument of the preposition.
-        # Some members are in fact orphan dependents of an ellided member.
-        # Their current afun is ExD and they shall keep it, unlike the normal members.
-        $member->set_real_afun($afun) unless ( $member->afun() eq 'ExD' );
-    }
-
-    # Attach all shared modifiers to the new root.
-    foreach my $modifier ( @{ $c->{shared_modifiers} } )
-    {
-        $modifier->set_parent($croot);
-    }
-}
-
-#------------------------------------------------------------------------------
-# Several treebanks solve apposition so that the second member is attached to
-# the first member and marked using a special dependency relation tag. Changing
-# this tag to the Apos afun is not enough Praguish: in reality we want to find
-# a suitable punctuation in between, make it the Apos root and attach both
-# members to it. Before we implement this behavior we may want to apply the
-# poor-man's solution (just to make sure that there are no invalid Apos
-# structures): remove any Apos afuns and replace them by Atr.
-#------------------------------------------------------------------------------
-sub shape_apposition
-{
-    my $self = shift;
-    my $node = shift;
-    if($node->afun() eq 'Apos')
-    {
-        $node->set_afun('Atr');
-    }
-    foreach my $child ($node->children())
-    {
-        $self->shape_apposition($child);
     }
 }
 

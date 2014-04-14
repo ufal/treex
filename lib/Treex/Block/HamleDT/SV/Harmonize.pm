@@ -33,7 +33,6 @@ sub process_zone
     # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
     # and with special care at places where prepositions and coordinations interact.
     $self->process_prep_sub_arg_cloud($root);
-    ###!!!$self->shape_apposition($root); ###!!! Nerozbil jsem tohle, když jsem značku Apos nahradil značkou Apposition?
     $self->check_afuns($root);
     $self->validate_coap($root);
 }
