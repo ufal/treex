@@ -9,7 +9,7 @@ has 'known_models' => (
     isa     => 'HashRef',
     default => sub {{
         cs => 'data/models/morphodita/cs/czech-morfflex-pdt-131112.tagger-best_accuracy',
-        en => 'data/models/morphodita/en/english-morphium-wsj-140407-no_negation.tagger',
+        en => 'data/models/morphodita/en/english-morphium-wsj-140407.tagger',
     }},
 );
 

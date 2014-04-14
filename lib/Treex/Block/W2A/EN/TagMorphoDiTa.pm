@@ -3,7 +3,11 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::W2A::TagMorphoDiTa';
 
-has '+model' => ( default => 'data/models/morphodita/en/english-morphium-wsj-140407-no_negation.tagger' );
+has '+model' => ( default => 'data/models/morphodita/en/english-morphium-wsj-140407.tagger' );
+
+# after 'tag_sentence' => sub {
+#     if ($self->model !~ /no_negation.tagger$/ && !$self->negative_prefixes_in_lemma){}
+# }
 
 1;
 
