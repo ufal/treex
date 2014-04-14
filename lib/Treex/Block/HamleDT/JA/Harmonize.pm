@@ -35,7 +35,10 @@ sub process_zone
     $self->check_afuns($a_root);
 }
 
+
+# DEPRECATED
 sub make_pdt_coordination {
+    my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants();
     for (my $i = 0; $i <= $#nodes - 2; $i++) {
@@ -65,7 +68,6 @@ sub make_pdt_coordination {
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
-# WIP, currently unused
 #------------------------------------------------------------------------------
 sub deprel_to_afun {
     my $self = shift;
@@ -126,9 +128,9 @@ sub deprel_to_afun {
         # Subject
         elsif ($deprel eq 'SBJ') {
             $afun = 'Sb';
-            if ($subpos eq 'coor') {
-                $node->wild()->{coordinator} = 1;
-            }
+            #if ($subpos eq 'coor') {
+            #    $node->wild()->{coordinator} = 1;
+            #}
         }
 
         # Complement
@@ -142,10 +144,10 @@ sub deprel_to_afun {
             elsif ($ppos eq 'part') {
                 $afun = 'SubArg';
             }
-            elsif ($psubpos eq 'coor') {
-                $afun = 'CoordArg';
-                $node->wild()->{conjunct} = 1;
-            }
+            #elsif ($psubpos eq 'coor') {
+            #    $afun = 'CoordArg';
+            #    $node->wild()->{conjunct} = 1;
+            #}
             elsif ($ppos eq 'verb') {
                 if ($psubpos eq 'cop') {
                     $afun = 'Pnom';
@@ -208,13 +210,6 @@ sub deprel_to_afun {
                 $afun = 'AuxO';
             }
             # coordination marker
-            # there are 2 types of coordination:
-            # 1. coordinator is between the phrases in the constituency tree;
-            #    in depencency tree, it is a child of the second conjunct and
-            #    a right sister of the first conjunct (which has deprel HEAD)
-            # 2. the coordinator marks an individual conjuct;
-            #    each conjunct is marked separately and the coordinator is
-            #    a child of the conjunct
             elsif ($subpos eq 'coor' or $pos eq 'conj') {
                 $afun = 'Coord';
                 $node->wild()->{coordinator} = 1;
@@ -267,39 +262,48 @@ sub deprel_to_afun {
 }
 
 # WIP, currently not working correctly
+# there are 2 types of coordination with delimiters (always non-punctuation (?))
+# 1. coordinator is between the phrases in the constituency tree;
+#    in depencency tree, it is a child of the second conjunct and
+#    a right sister of the first conjunct (which has deprel HEAD)
+# 2. the coordinator marks an individual conjuct;
+#    each conjunct is marked separately and the coordinator is
+#    a child of the conjunct
+# however, there are some coordinations without delimiters - currently we ignore those # TODO
 sub detect_coordination {
-    my $self = shift;
-    my $node = shift;
-    my $coordination = shift;
-    my $debug = shift;
-    log_fatal("Missing node") unless (defined($node));
-    return unless ($node->wild()->{conjunct});
-    my @children = $node->get_children();
-    return unless (first {$_->wild()->{coordinator}} @children);
-    $coordination->add_conjunct($node, 0);
-    $coordination->set_parent($node->parent());
-    $coordination->set_afun($node->afun());
-    for my $child (@children) {
-        if ($child->wild()->{conjunct}) {
-            my $orphan = 0;
-            $coordination->add_conjunct($child, $orphan);
-        }
-        elsif ($child->wild()->{coordinator}) {
-            my $symbol = ($child->get_iset('pos') eq 'punc');
-            $coordination->add_delimiter($child, $symbol);
-        }
-        else {
-            $coordination->add_shared_modifier($child);
-        }
-    }
-    my @recurse = $coordination->get_conjuncts();
-    push(@recurse, $coordination->get_shared_modifiers());
-    return @recurse;
+     my $self = shift;
+     my $node = shift;
+     my $coordination = shift;
+     my $debug = shift;
+     log_fatal("Missing node") unless (defined($node));
+     return unless ($node->wild()->{conjunct});
+     my @children = $node->get_children();
+     return unless (first {$_->wild()->{coordinator}} @children);
+     $coordination->add_conjunct($node, 0);
+     $coordination->set_parent($node->parent());
+     $coordination->set_afun($node->afun());
+     for my $child (@children) {
+         if ($child->wild()->{conjunct}) {
+             my $orphan = 0;
+             $coordination->add_conjunct($child, $orphan);
+         }
+         elsif ($child->wild()->{coordinator}) {
+             my $symbol = ($child->get_iset('pos') eq 'punc');
+             $coordination->add_delimiter($child, $symbol);
+         }
+         else {
+             $coordination->add_shared_modifier($child);
+         }
+     }
+     my @recurse = $coordination->get_conjuncts();
+     push(@recurse, $coordination->get_shared_modifiers());
+     return @recurse;
 }
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
+# DEPRECATED
 #------------------------------------------------------------------------------
 sub old_deprel_to_afun
 {
