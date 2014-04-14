@@ -319,21 +319,6 @@ sub deprel_to_afun
     }
 }
 
-# this function will call the function to make sure that
-# all coordination members have 'is_member' set to 1
-sub check_coord_membership {
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $afun = $node->afun();
-        if ($afun eq 'Coord') {
-            $self->identify_coap_members($node);
-        }
-    }
-}
-
 # will make PDT style coordination from the CoNLL data
 sub make_pdt_coordination {
     my $self  = shift;

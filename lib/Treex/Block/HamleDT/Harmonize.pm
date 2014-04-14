@@ -808,6 +808,29 @@ sub identify_coap_members
 }
 
 #------------------------------------------------------------------------------
+# Catches possible annotation inconsistencies. If there are no conjuncts under
+# a Coord node, let's try to find them.
+#------------------------------------------------------------------------------
+sub check_coord_membership
+{
+    my $self  = shift;
+    my $root  = shift;
+    # The root never heads coordination.
+    foreach my $node ($root->children())
+    {
+        $node->set_is_member(undef);
+    }
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if ($node->is_coap_root() && ! grep {$_->is_member()} ($node->children()))
+        {
+            $self->identify_coap_members($node);
+        }
+    }
+}
+
+#------------------------------------------------------------------------------
 # Conjunction (such as 'and', 'but') occurring as the first word of the
 # sentence should be analyzed as deficient coordination whose only member is
 # the main verb of the main clause.
