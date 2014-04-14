@@ -261,7 +261,6 @@ sub deprel_to_afun {
     }
 }
 
-# WIP, currently not working correctly
 # there are 2 types of coordination with delimiters (always non-punctuation (?))
 # 1. coordinator is between the phrases in the constituency tree;
 #    in depencency tree, it is a child of the second conjunct and
