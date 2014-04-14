@@ -26,9 +26,7 @@ sub process_zone
     my $root = $self->SUPER::process_zone($zone);
     $self->attach_final_punctuation_to_root($root);
     $self->restructure_coordination($root);
-    #$self->make_pdt_coordination($root);
     $self->correct_punctuations($root);
-    #$self->correct_coordination($root);
     $self->check_coord_membership($root);
     $self->check_afuns($root);
 }
@@ -133,66 +131,56 @@ sub deprel_to_afun
         }
 
         # conjunct
-        elsif ($deprel eq 'lot')
+        elsif ($deprel eq 'lot' && $parent->is_coordinator())
         {
             # Conjuncts are attached to their conjunction and labeled "lot".
             # The label of the conjunction that heads the coordination describes the relation of the coordination to its parent.
-            if ($parent->is_coordinator())
-            {
-                $afun = 'CoordArg';
-                $node->wild()->{conjunct} = 1;
-            }
+            $afun = 'CoordArg';
+            $node->wild()->{conjunct} = 1;
         }
 
-        # connectors # !!! TODO
-        elsif ($deprel eq 'lotat')
+        # other connectors # !!! TODO
+        elsif ($deprel =~ m/^lot(at)?$/)
         {
-            if(0) ###!!! Uvidíme, jestli je tohle vůbec k něčemu potřeba.
+            if ($node->is_noun() || $node->is_adjective() || $node->is_numeral())
             {
-                if ($node->is_noun() || $node->is_adjective() || $node->is_numeral())
-                {
-                    $afun = 'Atr';
-                }
-                elsif ($node->is_adverb() || $node->is_verb())
-                {
-                    $afun = 'Adv';
-                }
-                elsif ($node->is_coordinator())
-                {
-                    if ($form =~ m/^(eta|edo)$/i)
-                    {
-                        $afun = 'Coord';
-                    }
-                    else
-                    {
-                        $afun = 'Adv';
-                    }
-                }
-                elsif ($node->is_subordinator())
-                {
-                    $afun = 'AuxC';
-                }
-                ###!!! if? not elsif?
-                # ADL = verb
-                # IZE = noun
-                # BST = other
-                if ($conll_pos =~ m/^(ADL|IZE|BST)$/)
-                {
-                    $afun = 'Atr';
-                }
-                # ADI = verb
-                elsif ($conll_pos eq 'ADI')
-                {
-                    $afun = 'Adv';
-                }
-                ###!!! Dosud nepodchycené případy:
-                # ez Argentinan ez ACBn = not Argentine, not ACB (dolní ez je částice/lot a visí na horním ez)
-                # bai Gobernuak bai oposizioak = both the government and the opposition (dolní bai je částice/lot a visí na horním bai)
-                # orekatuenak , hiru astetan mailarik onena emateko dohainik onenak dituztenak , fisikoki zein psikologikoki = balanced, free of charge for three weeks to give the best of the best, both physically and psychologically
+                $afun = 'Atr';
             }
+            elsif ($node->is_adverb() || $node->is_verb())
+            {
+                $afun = 'Adv';
+            }
+            elsif ($node->is_coordinator())
+            {
+                ###!!! If $node is leaf, this should be probably AuxY.
+                ###!!! If it has children, we should look at their part of speech. We must not set Coord here!
+                ###!!! That is the job for subsequent coordination processing, which will move our afun downwards!
+                $afun = 'Adv';
+            }
+            elsif ($node->is_subordinator())
+            {
+                $afun = 'AuxC';
+            }
+            ###!!! if? not elsif?
+            # ADL = verb
+            # IZE = noun
+            # BST = other
+            if ($conll_pos =~ m/^(ADL|IZE|BST)$/)
+            {
+                $afun = 'Atr';
+            }
+            # ADI = verb
+            elsif ($conll_pos eq 'ADI')
+            {
+                $afun = 'Adv';
+            }
+            ###!!! Dosud nepodchycené případy:
+            # ez Argentinan ez ACBn = not Argentine, not ACB (dolní ez je částice/lot a visí na horním ez)
+            # bai Gobernuak bai oposizioak = both the government and the opposition (dolní bai je částice/lot a visí na horním bai)
+            # orekatuenak , hiru astetan mailarik onena emateko dohainik onenak dituztenak , fisikoki zein psikologikoki = balanced, free of charge for three weeks to give the best of the best, both physically and psychologically
         }
 
-        # particles 
+        # particles
         # prtmod # !!JM TODO - "label used to mark various particles - 'badin', 'omen', etc."
         elsif ($deprel eq 'prtmod') {
             $afun = 'Atr';
@@ -230,12 +218,7 @@ sub deprel_to_afun
                 $afun = 'Atr';
             }
             elsif ($pos eq 'conj' and $subpos eq 'coor') {
-                if ($form =~ /^(eta|edo)$/) {
-                    $afun = 'Coord';
-                }
-                else {
-                    $afun = 'Adv';
-                }
+                $afun = 'Adv';
             }
             elsif ($pos eq 'conj' and  $subpos eq 'sub') {
                 $afun = 'AuxC';
@@ -260,12 +243,7 @@ sub deprel_to_afun
                 $afun = 'Atr';
             }
             elsif ($pos eq 'conj' and $subpos eq 'coor') {
-                if ($form =~ /^(eta|edo)$/) {
-                    $afun = 'Coord';
-                }
-                else {
-                    $afun = 'Adv';
-                }
+                $afun = 'Adv';
             }
             elsif ($pos eq 'conj' and $subpos eq 'sub') {
                 $afun = 'AuxC';
@@ -290,12 +268,7 @@ sub deprel_to_afun
                 $afun = 'Atr';
             }
             elsif ($pos eq 'conj' and $subpos eq 'coor') {
-                if ($form =~ /^(eta|edo)$/) {
-                    $afun = 'Coord';
-                }
-                else {
-                    $afun = 'Adv';
-                }
+                $afun = 'Adv';
             }
             elsif ($pos eq 'conj' and $subpos eq 'sub') {
                 $afun = 'AuxC';
@@ -335,28 +308,6 @@ sub detect_coordination
 
 
 
-# will make PDT style coordination from the CoNLL data
-sub make_pdt_coordination {
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    for (my $i = 0; $i <= $#nodes; $i++) {
-        my $node = $nodes[$i];
-        if (defined $node) {
-            my $afun = $node->afun();
-            if ($afun eq 'Coord') {
-                my @children = $node->get_children();
-                foreach my $c (@children) {
-                    if (defined $c) {
-                        my $afunc = $c->afun();
-                        $c->set_is_member(1) if ($afunc !~ /^(AuxX|AuxZ|AuxG|AuxK)$/);
-                    }
-                }
-            }
-        }
-    }
-}
-
 # punctuations such as "," and ";" hanging under a node will be
 # attached to the parents parent node
 sub correct_punctuations {
@@ -377,31 +328,6 @@ sub correct_punctuations {
                         if ($ordpp > 0) {
                             $node->set_parent($parparnode);
                         }
-                    }
-                }
-            }
-        }
-    }
-}
-
-# this function will find if there are 'Coordinations' that are not
-# detected using the previous make_pdt_coordination function.
-sub correct_coordination {
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    for (my $i = 0; $i <= $#nodes; $i++) {
-        my $node = $nodes[$i];
-        if (defined $node) {
-            my $form = $node->form();
-            my $afun = $node->afun();
-            if (($form =~ /^(eta|edo)$/) && ($afun ne 'Coord')) {
-                $node->set_afun('Coord');
-                my @children = $node->get_children();
-                foreach my $c (@children) {
-                    if (defined $c) {
-                        my $afunc = $c->afun();
-                        $c->set_is_member(1) if ($afunc !~ /^(AuxX|AuxZ|AuxG|AuxK)$/);
                     }
                 }
             }
