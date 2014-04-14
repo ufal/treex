@@ -76,10 +76,9 @@ sub convert_tags
 {
     my $self   = shift;
     my $root   = shift;
-    my $tagset = shift;    # optional, see below
     foreach my $node ( $root->get_descendants() )
     {
-        $self->convert_tag( $node, $tagset );
+        $self->convert_tag( $node );
         $self->set_pdt_tag( $node );
     }
 }

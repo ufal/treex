@@ -2,9 +2,7 @@ package Treex::Block::HamleDT::ET::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Core::Block';
-use tagset::common;
-use tagset::cs::pdt;
+extends 'Treex::Block::HamleDT::Harmonize';
 
 has iset_driver =>
 (
@@ -25,75 +23,48 @@ sub process_zone
 {
     my $self   = shift;
     my $zone   = shift;
-
     # Copy the original dependency structure before adjusting it.
     $self->backup_zone($zone);
-    my $a_root = $zone->get_atree();
-    tiger2pdt($a_root);
+    my $root = $zone->get_atree();
+    tiger2pdt($root);
     # Convert Estonian POS tags and features to Interset and PDT if possible.
     # Jan's tiger2pdt uses the original tags so we must not change $tag before structural and s-tag conversion is done.
-    $self->convert_tags( $a_root, 'puudepank' );
-    return $a_root;
+    $self->convert_tags( $root );
+    $self->attach_final_punctuation_to_root($root);
+    return $root;
 } # process_zone
 
 #------------------------------------------------------------------------------
-# Converts tags of all nodes to Interset and PDT tagset.
+# Copies the original zone so that the user can compare the original and the
+# restructured tree in TTred.
 #------------------------------------------------------------------------------
-sub convert_tags
+sub backup_zone
 {
-    my $self   = shift;
-    my $root   = shift;
-    my $tagset = shift;    # optional, see below
-    foreach my $node ( $root->get_descendants() )
-    {
-        $self->convert_tag( $node, $tagset );
-    }
+    my $self  = shift;
+    my $zone0 = shift;
+    my $zone1 = $zone0->copy('orig');
+    $zone0->remove_tree('p');
+    return $zone1;
 }
 
 #------------------------------------------------------------------------------
-# Decodes the part-of-speech tag and features from the original tagset into
-# Interset features. Stores the features with the node. Then sets the tag
-# attribute to the closest match in the PDT tagset.
+# Different source treebanks may use different attributes to store information
+# needed by Interset drivers to decode the Interset feature values. By default,
+# the CoNLL 2006 fields CPOS, POS and FEAT are concatenated and used as the
+# input tag. If the morphosyntactic information is stored elsewhere (e.g. in
+# the tag attribute), the Harmonize block of the respective treebank should
+# redefine this method. Note that even CoNLL 2009 differs from CoNLL 2006.
 #------------------------------------------------------------------------------
-sub convert_tag
+sub get_input_tag_for_interset
 {
     my $self   = shift;
     my $node   = shift;
-    my $tagset = shift;
-    my $driver = $node->get_zone()->language() . '::' . $tagset;
-    # Current tag is probably just a copy of the original tag.
-    # We are about to replace it by a 15-character string fitting the PDT tagset.
-    my $tag = $node->tag();
-    my $f = tagset::common::decode($driver, $tag);
-    my $pdt_tag = tagset::cs::pdt::encode($f, 1);
-    $node->set_iset($f);
-    $node->set_tag($pdt_tag);
+    return $node->tag();
 }
 
 sub tiger2pdt {
     my $a_root = shift;
     for my $anode ($a_root->get_descendants) {
-        # We also need CoNLL-like attributes to run the parsers same way as for other languages.
-        my $tag = $anode->tag();
-        if($tag)
-        {
-            my @tagparts = split(/,/, $tag);
-            my $pos = shift(@tagparts);
-            my ($cpos, $fpos);
-            if($pos =~ m-^(.+)/(.+)$-)
-            {
-                $cpos = $1;
-                $fpos = $2;
-            }
-            else
-            {
-                $cpos = $pos;
-                $fpos = '_';
-            }
-            $anode->set_conll_cpos($cpos);
-            $anode->set_conll_pos($fpos);
-            $anode->set_conll_feat(join('|', @tagparts));
-        }
         set_afun($anode, $anode->get_parent, $anode->wild->{function});
         convert_coordination($anode) if 'CJT' eq $anode->wild->{function};
     }
@@ -166,19 +137,6 @@ sub convert_subordinator {
         $auxc->set_is_member(1);
     }
 } # convert_subordinator
-
-#------------------------------------------------------------------------------
-# Copies the original zone so that the user can compare the original and the
-# restructured tree in TTred.
-#------------------------------------------------------------------------------
-sub backup_zone
-{
-    my $self  = shift;
-    my $zone0 = shift;
-    my $zone1 = $zone0->copy('orig');
-    $zone0->remove_tree('p');
-    return $zone1;
-}
 
 sub set_afun {
     my ($achild, $ahead, $func) = @_;
@@ -316,8 +274,17 @@ sub set_afun {
     } elsif ('H' eq $func) {
         $afun = 'Atr';
     }
-
-
+    elsif ('ORPHAN' eq $func)
+    {
+        if ($achild->form() eq ',')
+        {
+            $afun = 'AuxX';
+        }
+        elsif ($achild->tag() eq 'adv/--')
+        {
+            $afun = 'Adv';
+        }
+    }
 
     $achild->set_afun($afun) if $afun;
 } # set_afun
@@ -332,12 +299,13 @@ sub set_afun {
 
 =item Treex::Block::HamleDT::ET::Harmonize
 
-Converts Estonian Tiger-like Treebank converted to dependency style to
-the style of the Prague Dependency Treebank.
+Takes the Estonian Treebank converted from its native Tiger-like format to
+dependencies. Converts the dependencies to the style of HamleDT (Prague).
 
 =back
 
 =cut
 
 # Copyright 2011 Jan Štěpánek <stepanek@ufal.mff.cuni.cz>
+# Copyright 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
