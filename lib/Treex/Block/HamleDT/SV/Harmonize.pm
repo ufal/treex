@@ -627,7 +627,7 @@ sub detect_coordination
 =item Treex::Block::HamleDT::SV::Harmonize
 
 Converts trees coming from the Swedish Mamba Treebank via the CoNLL-X format to the style of
-the Prague Dependency Treebank. Converts tags and restructures the tree.
+HamleDT (Prague). Converts tags and restructures the tree.
 
 =back
 

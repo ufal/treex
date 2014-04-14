@@ -16,152 +16,20 @@ has iset_driver =>
 );
 
 #------------------------------------------------------------------------------
-# Reads the Italian CoNLL trees, converts morphosyntactic tags to the positional
-# tagset and transforms the tree to adhere to PDT guidelines.
+# Reads the Basque CoNLL trees, converts morphosyntactic tags to the positional
+# tagset and transforms the tree to adhere to HamleDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
-    my $self   = shift;
-    my $zone   = shift;
-
-    my $a_root = $self->SUPER::process_zone($zone);
-    $self->hang_everything_under_pred($a_root);
-    $self->attach_final_punctuation_to_root($a_root);
-    $self->make_pdt_coordination($a_root);
-    $self->correct_punctuations($a_root);
-    $self->correct_coordination($a_root);
-    $self->check_coord_membership($a_root);
-#    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
-#    $self->check_afuns($a_root);
-}
-
-# this function will call the function to make sure that
-# all coordination members have 'is_member' set to 1
-sub check_coord_membership {
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $afun = $node->afun();
-        if ($afun eq 'Coord') {
-            $self->identify_coap_members($node);
-        }
-    }
-}
-
-# will make PDT style coordination from the CoNLL data
-sub make_pdt_coordination {
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    for (my $i = 0; $i <= $#nodes; $i++) {
-        my $node = $nodes[$i];
-        if (defined $node) {
-            my $afun = $node->afun();
-            if ($afun eq 'Coord') {
-                my @children = $node->get_children();
-                foreach my $c (@children) {
-                    if (defined $c) {
-                        my $afunc = $c->afun();
-                        $c->set_is_member(1) if ($afunc !~ /^(AuxX|AuxZ|AuxG|AuxK)$/);
-                    }
-                }
-            }
-        }
-    }
-}
-
-# punctuations such as "," and ";" hanging under a node will be
-# attached to the parents parent node
-sub correct_punctuations {
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    for (my $i = 0; $i <= $#nodes; $i++) {
-        my $node = $nodes[$i];
-        if (defined $node) {
-            my $afun = $node->afun();
-            my $ordn = $node->ord();
-            if ($afun =~ /^(AuxX|AuxG|AuxK|AuxK)$/) {
-                my $parnode = $node->get_parent();
-                if (defined $parnode) {
-                    my $parparnode = $parnode->get_parent();
-                    if (defined $parparnode) {
-                        my $ordpp = $parparnode->ord();
-                        if ($ordpp > 0) {
-                            $node->set_parent($parparnode);
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-# In the original treebank, some of the nodes might be attached to technical root
-# rather than with the predicate node. those nodes will
-# be attached to predicate node.
-sub hang_everything_under_pred {
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    my @dnodes;
-    my $prednode;
-    for (my $i = 0; $i <= $#nodes; $i++) {
-        my $node = $nodes[$i];
-        if (defined $node) {
-            my $afun = $node->afun();
-            my $ordn = $node->ord();
-            my $parnode = $node->get_parent();
-            if (defined $parnode) {
-                my $ordpar = $parnode->ord();
-                if ($ordpar == 0) {
-                    if ($afun ne 'Pred') {
-                        push @dnodes, $node
-                    }
-                    else {
-                        $prednode = $node;
-                    }
-                }
-            }
-        }
-    }
-
-    if (scalar(@dnodes) > 0) {
-        if (defined $prednode) {
-            foreach my $dn (@dnodes) {
-                if (defined $dn) {
-                    $dn->set_parent($prednode);
-                }
-            }
-        }
-    }
-}
-
-# this function will find if there are 'Coordinations' that are not
-# detected using the previous make_pdt_coordination function.
-sub correct_coordination {
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    for (my $i = 0; $i <= $#nodes; $i++) {
-        my $node = $nodes[$i];
-        if (defined $node) {
-            my $form = $node->form();
-            my $afun = $node->afun();
-            if (($form =~ /^(eta|edo)$/) && ($afun ne 'Coord')) {
-                $node->set_afun('Coord');
-                my @children = $node->get_children();
-                foreach my $c (@children) {
-                    if (defined $c) {
-                        my $afunc = $c->afun();
-                        $c->set_is_member(1) if ($afunc !~ /^(AuxX|AuxZ|AuxG|AuxK)$/);
-                    }
-                }
-            }
-        }
-    }
+    my $self = shift;
+    my $zone = shift;
+    my $root = $self->SUPER::process_zone($zone);
+    $self->attach_final_punctuation_to_root($root);
+    $self->make_pdt_coordination($root);
+    $self->correct_punctuations($root);
+    $self->correct_coordination($root);
+    $self->check_coord_membership($root);
+    $self->check_afuns($root);
 }
 
 #------------------------------------------------------------------------------
@@ -451,16 +319,109 @@ sub deprel_to_afun
     }
 }
 
+# this function will call the function to make sure that
+# all coordination members have 'is_member' set to 1
+sub check_coord_membership {
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $afun = $node->afun();
+        if ($afun eq 'Coord') {
+            $self->identify_coap_members($node);
+        }
+    }
+}
+
+# will make PDT style coordination from the CoNLL data
+sub make_pdt_coordination {
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    for (my $i = 0; $i <= $#nodes; $i++) {
+        my $node = $nodes[$i];
+        if (defined $node) {
+            my $afun = $node->afun();
+            if ($afun eq 'Coord') {
+                my @children = $node->get_children();
+                foreach my $c (@children) {
+                    if (defined $c) {
+                        my $afunc = $c->afun();
+                        $c->set_is_member(1) if ($afunc !~ /^(AuxX|AuxZ|AuxG|AuxK)$/);
+                    }
+                }
+            }
+        }
+    }
+}
+
+# punctuations such as "," and ";" hanging under a node will be
+# attached to the parents parent node
+sub correct_punctuations {
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    for (my $i = 0; $i <= $#nodes; $i++) {
+        my $node = $nodes[$i];
+        if (defined $node) {
+            my $afun = $node->afun();
+            my $ordn = $node->ord();
+            if ($afun =~ /^(AuxX|AuxG|AuxK|AuxK)$/) {
+                my $parnode = $node->get_parent();
+                if (defined $parnode) {
+                    my $parparnode = $parnode->get_parent();
+                    if (defined $parparnode) {
+                        my $ordpp = $parparnode->ord();
+                        if ($ordpp > 0) {
+                            $node->set_parent($parparnode);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+# this function will find if there are 'Coordinations' that are not
+# detected using the previous make_pdt_coordination function.
+sub correct_coordination {
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    for (my $i = 0; $i <= $#nodes; $i++) {
+        my $node = $nodes[$i];
+        if (defined $node) {
+            my $form = $node->form();
+            my $afun = $node->afun();
+            if (($form =~ /^(eta|edo)$/) && ($afun ne 'Coord')) {
+                $node->set_afun('Coord');
+                my @children = $node->get_children();
+                foreach my $c (@children) {
+                    if (defined $c) {
+                        my $afunc = $c->afun();
+                        $c->set_is_member(1) if ($afunc !~ /^(AuxX|AuxZ|AuxG|AuxK)$/);
+                    }
+                }
+            }
+        }
+    }
+}
+
 1;
 
 =over
 
 =item Treex::Block::HamleDT::EU::Harmonize
 
+Converts trees coming from the Basque Dependency Treebank via the CoNLL-X format to the style of
+HamleDT (Prague). Converts the tags and restructures the tree.
 
 =back
 
 =cut
 
 # Copyright 2011 Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
+# Copyright 2014 Jan Mašek <masek@ufal.mff.cuni.cz>
+# Copyright 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
