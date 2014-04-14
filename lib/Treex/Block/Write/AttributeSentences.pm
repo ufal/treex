@@ -63,7 +63,8 @@ sub BUILD {
 sub _process_tree() {
     my ( $self, $tree ) = @_;
 
-    my @nodes = $tree->get_descendants( { ordered => 1 } );
+    my $params = $self->layer =~ /[at]/ ? { ordered => 1 } : {};
+    my @nodes = $tree->get_descendants( $params );
     if ($self->skip_nodes) {
         @nodes = grep {! eval($self->skip_nodes)} @nodes;
     }
