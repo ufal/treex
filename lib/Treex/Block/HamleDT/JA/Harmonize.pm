@@ -35,38 +35,9 @@ sub process_zone
     $self->check_afuns($a_root);
 }
 
-
-# DEPRECATED
-sub make_pdt_coordination {
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants();
-    for (my $i = 0; $i <= $#nodes - 2; $i++) {
-        my $node = $nodes[$i];
-        my $deprel = $node->afun();
-        my $n_node = $nodes[$i+1];
-        if ($n_node->afun() eq 'Coord') {
-            my $par = $node->get_parent();
-            my $n_par = $n_node->get_parent();
-            if (defined($par) && defined($n_par)) {
-                if ($par->ord() == $n_par->ord()) {
-                    my $nn_node = $n_node->get_parent();
-                    if (defined($nn_node->get_parent())) {
-                        print "Coordination found in : " . $n_node->id . "\n";
-                        $node->set_parent($n_node);
-                        $n_node->set_parent($nn_node->get_parent());
-                        $nn_node->set_parent($n_node);
-                        $node->set_is_member(1);
-                        $nn_node->set_is_member(1);
-                    }
-                }
-            }
-        }
-    }
-}
-
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
+# /net/data/conll/2006/ja/doc/report-240-00.ps
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
 sub deprel_to_afun {
@@ -82,6 +53,7 @@ sub deprel_to_afun {
         my $parent = $node->get_parent();
         my $ppos = $parent->get_iset('pos');
         my $psubpos = $parent->get_iset('subpos');
+        my @children = $node->get_children({ordered => 1});
 
         my $afun = '';
 
@@ -172,7 +144,7 @@ sub deprel_to_afun {
                 $node->wild()->{coordinator} = 1;
                 $parent->wild()->{conjunct} = 1;
             }
-            # if the parent is preposition, this node muset be rehanged onto the preposition complement
+            # if the parent is preposition, this node must be rehanged onto the preposition complement
             elsif ($parent->conll_pos =~ m/^(Nsf|P|PQ|Pacc|Pfoc|Pgen|Pnom)$/) {
                 $afun = 'Atr';
                 # find the complement among the siblings (preferring the ones to the right);
@@ -183,7 +155,29 @@ sub deprel_to_afun {
             elsif ($ppos =~ m/^(noun|num)$/) {
                 $afun = 'Atr';
             }
-            elsif ($ppos =~ m/^(verb|adj|adv)$/) {
+            # daitai kono youna = だいたい この ような
+            # daitai = 大体 = substantially, approximately
+            # kono = この = this
+            # youna = ような = like, similar-to (adjectival postposition)
+            elsif ($ppos =~ m/^(verb|adj|adv|prep)$/) {
+                $afun = 'Adv';
+            }
+            # Topicalized adjuncts with the marker "wa" attached to the main clause.
+            # Example: kyou kite itadaita no wa, ...
+            elsif (scalar(@children) >= 1 && $children[-1]->form() eq 'wa') {
+                ###!!! There is not a better label at the moment but we may want to create a special language-specific label for this in future.
+                ###!!! We may also want to treat "wa" as postposition and reattach it to head the adjunct.
+                $afun = 'Adv';
+            }
+            elsif ($node->get_iset('advtype') eq 'tim') {
+                $afun = 'Adv';
+            }
+            elsif ($node->form() eq 'kedo' && $parent->form() eq 'kedo')
+            {
+                $afun = 'Adv';
+            }
+            elsif ($ppos eq 'part')
+            {
                 $afun = 'Adv';
             }
             else {
@@ -215,6 +209,27 @@ sub deprel_to_afun {
                 $node->wild()->{coordinator} = 1;
                 $parent->wild()->{conjunct} = 1;
             }
+            # two-word conjunction "narabi ni" = ならびに = 並びに = and (also); both ... and; as well as
+            # shashiNka = しゃしんか = 写真家 = photographer
+            # Example: doitsu no amerikajiN shashiNka narabi ni amerika no doitsujiN shashiNka
+            elsif ($form eq 'ni' && scalar(@children)==1 && $children[0]->form() eq 'narabi') {
+                ###!!! The current detection of coordination will probably fail at this.
+                $afun = 'AuxY'; # this is intended to be later shifted one level down
+                $node->wild()->{coordinator} = 1; # this is intended to survive here
+                $parent->wild()->{conjunct} = 1;
+            }
+            # douka = どうか = please
+            elsif ($form eq 'douka') {
+                $afun = 'ExD';
+            }
+            # atari = あたり: around
+            # juuninichi juusaNnichi atari de = around the twelfth, thirteenth
+            elsif ($form eq 'atari') {
+                $afun = 'AuxY';
+            }
+            elsif ($pos eq 'prep' || $node->form() =~ m/^(ato|no)$/) {
+                $afun = 'AuxP';
+            }
             else {
                 $afun = 'NR';
                 print STDERR ($node->get_address, "\t",
@@ -240,6 +255,91 @@ sub deprel_to_afun {
             elsif ($node->get_iset('advtype') eq 'tim' and $parent->get_iset('advtype') eq 'tim') {
                 $afun = 'Atr';
             }
+            # others mostly also qualify for Atr, e.g.
+            # 寒九十時で = kaNkuu juuji de = ninth-day-of-cold-season ten-o-clock at
+            # 一日版 = ichinichi haN = first-day-of-month edition
+            elsif ($ppos =~ m/^(noun|num)$/ || $parent->get_iset('advtype') eq 'tim') {
+                $afun = 'Atr';
+            }
+            elsif ($pos eq 'adv' && $ppos eq 'adv') {
+                $afun = 'Adv';
+            }
+            # juuichiji = 十一時 = 11 hours (CDtime/HD)
+            # yoNjuppuN = 四十分 = よんじゅっぷん = 40 minutes (CDtime/COMP)
+            # hatsu (Nsf/HD) = 発? = departing ... značka Nsf znamená "noun suffix", takže není jasné, proč vlastně je z toho v Intersetu záložka. I když to asi může mít podobné chování.
+            # In this case the "hatsu" was attached to another "hatsu", from "kaNsaikuukou hatsu" (location from which they departed).
+            elsif ($pos eq 'prep' && $ppos eq 'prep') {
+                $afun = 'Atr';
+            }
+            # nanika = なにか = 何か = something (NN/HD)
+            # koukuugaisha de kimetai toka
+            # toka = とか = among other things (Pcnj/COMP)
+            elsif ($pos eq 'noun' && $ppos =~ m/^(prep|conj)$/) {
+                $afun = 'Atr';
+            }
+            elsif ($ppos eq 'noun') {
+                $afun = 'Atr';
+            }
+            # yoru shichiji goro = lit. night seven-o-clock around
+            elsif ($node->get_iset('advtype') eq 'tim' && $ppos eq 'prep')
+            {
+                ###!!! We should reshape the structure so that only one of the time specifications depends directly on the postposition.
+                $afun = 'Atr';
+            }
+            ###!!! Should this be coordination?
+            # deNsha de iku ka hikouki de iku ka
+            # naNji ni shuppatsu suru ka, chuuoueki ni naNji ni koreba ii ka
+            elsif ($node->form() eq 'ka' && $parent->form() eq 'ka')
+            {
+                $afun = 'Atr';
+            }
+            elsif ($node->form() eq 'ka' && $ppos eq 'verb')
+            {
+                $afun = 'Adv';
+            }
+            # takaku mo nai hikuku mo nai
+            elsif ($node->form() eq 'nai' && $parent->form() eq 'nai')
+            {
+                $afun = 'Atr';
+            }
+            # yasui takai
+            elsif ($pos eq 'adj' && $ppos eq 'adj')
+            {
+                $afun = 'Atr';
+            }
+            # shoushou = しょうしょう = 少々 = just a minute
+            elsif ($node->form() eq 'shoushou')
+            {
+                $afun = 'Adv';
+            }
+            # yoroshikereba = よろしければ = if you please, if you don't mind
+            elsif ($node->form() eq 'yoroshikereba')
+            {
+                $afun = 'Adv';
+            }
+            elsif ($pos eq 'adv')
+            {
+                $afun = 'Adv';
+            }
+            elsif ($conll_cpos =~ m/^P/)
+            {
+                $afun = 'Adv';
+            }
+            # maireeji desu  toka oshokuji desu  toka nanika
+            # NN       PVfin Pcnj VN       PVfin Pcnj NN
+            # COMP     COMP  HD   COMP     COMP  HD   SBJ
+            # まいれえじ です とか おしょくじ です とか なにか
+            # マイレージ = mileage
+            # お食事 = dining, restaurant
+            # とか = among other things
+            elsif ($ppos eq 'noun')
+            {
+                $afun = 'Atr';
+            }
+            elsif ($pos eq 'verb' && $parent->form() eq 'ka')
+            {
+                $afun = 'SubArg';
+            }
             else {
                 $afun = 'NR';
                 print STDERR $node->get_address, "\t", "Unrecognized $conll_pos HD under ", $parent->conll_pos, "\n";
@@ -258,6 +358,57 @@ sub deprel_to_afun {
             print STDERR $node->get_address, "\t", "Unrecognized deprel $deprel", "\n";
         }
         $node->set_afun($afun);
+    }
+    # Fix known irregularities in the data.
+    # Do so here, before the superordinate class operates on the data.
+    $self->fix_annotation_errors($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes a few known annotation errors and irregularities.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        ###!!! DZ: Well, this is not really an annotation error but I am failing at the moment to solve it at the right place.
+        if ($node->form() eq 'nanika')
+        {
+            my @children = $node->children();
+            if (scalar(@children)==2 && $children[0]->form() eq 'toka' && $children[1]->form() eq 'toka')
+            {
+                # There are two conjuncts, each headed by its own coordinating postposition "toka" ("among other things").
+                my @gc0 = $children[0]->children();
+                my @gc1 = $children[1]->children();
+                if (scalar(@gc0)==1 && scalar(@gc1)==1)
+                {
+                    my $toka0 = $children[0];
+                    my $toka1 = $children[1];
+                    my $gc0 = $gc0[0];
+                    my $gc1 = $gc1[0];
+                    $toka1->set_afun('Coord');
+                    $toka1->wild()->{conjunct} = undef;
+                    $gc1->set_afun('Atr');
+                    $gc1->set_is_member(1);
+                    $toka0->set_parent($toka1);
+                    $toka0->set_afun('AuxY');
+                    $toka0->wild()->{conjunct} = undef;
+                    $gc0->set_parent($toka1);
+                    $gc0->set_afun('Atr');
+                    $gc0->set_is_member(1);
+                }
+            }
+            elsif (scalar(@children)==0 && !$node->parent()->is_root() && $node->parent()->form() eq 'nanika')
+            {
+                $node->set_afun('Atr');
+                $node->wild()->{conjunct} = undef;
+            }
+        }
     }
 }
 
@@ -299,170 +450,6 @@ sub detect_coordination {
      return @recurse;
 }
 
-#------------------------------------------------------------------------------
-# Convert dependency relation tags to analytical functions.
-# http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
-# DEPRECATED
-#------------------------------------------------------------------------------
-sub old_deprel_to_afun
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-
-    #foreach my $node (@nodes)
-    for(my $i = 0; $i <= $#nodes; $i++)
-    {
-        my $node = $nodes[$i];
-
-        my $deprel = $node->conll_deprel();
-        my $form   = $node->form();
-        my $conll_pos = $node->conll_cpos();
-        my $conll_subpos = $node->conll_pos();
-        my $pos    = $node->get_iset('pos');
-        my $subpos = $node->get_iset('subpos');
-
-        #log_info("conllpos=".$pos.", isetpos=".$node->get_iset('pos'));
-
-        my $afun = 'NR';
-
-        # Subject
-        if ( $deprel eq 'SBJ' ) {
-            $afun = 'Sb';
-        }
-
-        # Verbs
-        elsif ($deprel eq 'ROOT' and $pos eq 'verb') {
-            $afun = 'Pred';
-        }
-        elsif ($deprel eq 'ROOT') {
-            $afun = 'ExD';
-        }
-
-        # Auxiliary verbs
-        elsif ($subpos eq 'mod') {
-            $afun = 'AuxV';
-        }
-
-        # Adjunct
-        # Everything labeled as adjunct will be given afun 'Adv'
-        elsif ($deprel eq 'ADJ') {
-            $afun = 'Adv';
-        }
-
-        # Complement
-        elsif ($deprel eq 'COMP' ) {
-            $afun = 'Atv'; ###!!! DZ: really???
-        }
-
-        elsif ($deprel eq 'MRK') {
-            $afun = 'Atr';
-        }
-
-        # punctuations
-        elsif ($deprel eq 'PUNCT') {
-            if ($form eq ',') {
-                $afun = 'AuxX';
-            }
-            elsif ($form =~ /^[?:.!]$/) {
-                $afun = 'AuxK';
-            }
-            else {
-                $afun = 'AuxG';
-            }
-        }
-
-        # Co Head
-        elsif ( $deprel eq 'HD' and $pos eq 'prep' ) {
-            $afun = 'AuxP';
-        }
-        elsif ( $deprel eq 'HD' and $pos eq 'num') {
-            $afun = 'Atr';
-        }
-        elsif ( $deprel eq 'HD' and $pos eq 'noun') {
-            $afun = 'Atr';
-        }
-        elsif ( $deprel eq 'HD' and $conll_pos eq 'Pacc') {
-            $afun = 'Obj';
-        }
-        elsif ( $deprel eq 'HD' and $conll_pos eq 'P') {
-            $afun = 'AuxP';
-        }
-
-        # relative clause ('rc')
-        # 'rc' has the form 'Vfin' followed by 'NN'
-        elsif ($deprel eq 'HD' and $conll_pos eq 'Vfin') {
-            if ($i+1 <= $#nodes) {
-                my $nnode = $nodes[$i+1];
-                my $ndeprel = $nnode->conll_deprel();
-                my $npos    = $nnode->conll_pos();
-                if ($ndeprel eq 'HD' && $npos eq 'NN') {
-                    $afun = 'Atr';
-                }
-            }
-        }
-
-        # Some of the afuns can be derived directly from
-        # POS values
-
-        # adjectives and numerals
-        if ( $pos eq 'adj' ) {
-            $afun = 'Atr';
-        }
-        elsif ( $pos eq 'num' ) {
-            $afun = 'Atr';
-        }
-        elsif ( $pos eq 'adv' ) {
-            $afun = 'Adv';
-        }
-
-        # Coordination
-        if ( $conll_pos eq 'Pcnj') {
-            $afun = 'Coord';
-        }
-
-        # Sentence initial conjunction
-        elsif ($conll_pos eq 'CNJ') {
-            $afun = 'Adv';
-        }
-
-        # if some of the labels are overgeneralized, list down the very
-        # specific labels
-
-        # Obj
-        elsif ($conll_pos eq 'Pacc') {
-            $afun = 'Obj';
-        }
-
-        # AuxC
-        if ($pos eq 'sub') {
-            $afun = 'AuxC';
-        }
-
-        # AuxZ
-        if ($conll_pos eq 'PSE') {
-            $afun = 'AuxZ';
-        }
-
-        # general postposition
-        if ($conll_pos eq 'P') {
-            $afun = 'AuxP';
-        }
-
-        # possessives
-        if ($conll_pos eq 'Pgen') {
-            $afun = 'Atr';
-        }
-
-        # focus postpositions
-        if ($conll_pos eq 'Pfoc') {
-            $afun = 'AuxZ';
-        }
-
-        $node->set_afun($afun);
-    }
-}
-
 1;
 
 =over
@@ -482,5 +469,7 @@ Converts Japanese CoNLL treebank into PDT style treebank.
 
 =cut
 
-# Copyright 2011 Dan Zeman <zeman@ufal.mff.cuni.cz>, Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
+# Copyright 2011 Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
+# Copyright 2014 Jan Mašek <masek@ufal.mff.cuni.cz>
+# Copyright 2011, 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
