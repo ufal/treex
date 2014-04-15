@@ -26,6 +26,9 @@ sub process_zone
     my $root = $self->SUPER::process_zone($zone);
     $self->attach_final_punctuation_to_root($root);
     $self->restructure_coordination($root);
+    # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
+    # and with special care at places where prepositions and coordinations interact.
+    $self->process_prep_sub_arg_cloud($root);
     $self->correct_punctuations($root);
     $self->check_coord_membership($root);
     $self->check_afuns($root);
@@ -33,6 +36,7 @@ sub process_zone
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
+# http://ixa.si.ehu.es/Ixa/Argitalpenak/Barne_txostenak/1068549887/publikoak/guia.pdf
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
 sub deprel_to_afun
@@ -78,16 +82,24 @@ sub deprel_to_afun
             $afun = 'Apposition';
         }
 
-        # negation or attribute
+        # non-core modifier
+        # attribute of noun (often noun modifying another noun)
+        # adverbial of verb (including negation)
         elsif ($deprel eq 'ncmod')
         {
-            if ($ppos eq 'noun')
-            {
-                $afun = 'Atr';
-            }
-            else
+            if (lc($form) eq 'ez')
             {
                 $afun = 'Neg';
+            }
+            ###!!! Note that we would need effective parents to be able to check the real part of speech.
+            ###!!! However, these will not be available until we convert coordination.
+            elsif ($ppos =~ m/^(ad)?verb$/)
+            {
+                $afun = 'Adv';
+            }
+            else # noun, adjective, numeral
+            {
+                $afun = 'Atr';
             }
         }
 
@@ -103,20 +115,6 @@ sub deprel_to_afun
             $afun = 'AuxV';
         }
 
-        # punctuation
-        elsif ($node->is_punctuation())
-        {
-            # Note: The sentence-final punctuation will get the AuxK label during later processing.
-            if ($form eq ',')
-            {
-                $afun = 'AuxX';
-            }
-            else
-            {
-                $afun = 'AuxG';
-            }
-        }
-
         # 1. clausal & predicative modifiers
         elsif ($deprel =~ m/^(cmod|xmod|xpred|ncpred)$/)
         {
@@ -130,8 +128,11 @@ sub deprel_to_afun
             }
         }
 
-        # conjunct
-        elsif ($deprel eq 'lot' && $parent->is_coordinator())
+        # conjunct attached to conjunction, particle or punctuation
+        # coordinating particles: ez ... ez, bai ... bai
+        # ez Argentinan ez ACBn = not Argentine, not ACB (the second "ez" is particle/lot and is attached to the first "ez"; conjuncts Argentine and ACB are also "lot")
+        # bai Gobernuak bai oposizioak = both the government and the opposition
+        elsif ($deprel eq 'lot' && $parent->is_coordinator() || $parent->is_punctuation() || $parent->is_particle())
         {
             # Conjuncts are attached to their conjunction and labeled "lot".
             # The label of the conjunction that heads the coordination describes the relation of the coordination to its parent.
@@ -139,45 +140,34 @@ sub deprel_to_afun
             $node->wild()->{conjunct} = 1;
         }
 
-        # other connectors # !!! TODO
-        elsif ($deprel =~ m/^lot(at)?$/)
+        # coordinating conjunction at the beginning of the sentence (deficient sentential coordination)
+        elsif ($deprel eq 'lotat')
         {
-            if ($node->is_noun() || $node->is_adjective() || $node->is_numeral())
-            {
-                $afun = 'Atr';
-            }
-            elsif ($node->is_adverb() || $node->is_verb())
-            {
-                $afun = 'Adv';
-            }
-            elsif ($node->is_coordinator())
-            {
-                ###!!! If $node is leaf, this should be probably AuxY.
-                ###!!! If it has children, we should look at their part of speech. We must not set Coord here!
-                ###!!! That is the job for subsequent coordination processing, which will move our afun downwards!
-                $afun = 'Adv';
-            }
-            elsif ($node->is_subordinator())
+            ###!!! We should later reattach the main predicate to this conjunction as the only conjunct!
+            $afun = 'AuxY';
+        }
+
+        # other conjunctions
+        elsif ($deprel eq 'lot')
+        {
+            my @children = $node->children();
+            if (@children)
             {
                 $afun = 'AuxC';
             }
-            ###!!! if? not elsif?
-            # ADL = verb
-            # IZE = noun
-            # BST = other
-            if ($conll_pos =~ m/^(ADL|IZE|BST)$/)
+            else
             {
-                $afun = 'Atr';
+                $afun = 'AuxY';
             }
-            # ADI = verb
-            elsif ($conll_pos eq 'ADI')
-            {
-                $afun = 'Adv';
-            }
-            ###!!! Dosud nepodchycené případy:
-            # ez Argentinan ez ACBn = not Argentine, not ACB (dolní ez je částice/lot a visí na horním ez)
-            # bai Gobernuak bai oposizioak = both the government and the opposition (dolní bai je částice/lot a visí na horním bai)
-            # orekatuenak , hiru astetan mailarik onena emateko dohainik onenak dituztenak , fisikoki zein psikologikoki = balanced, free of charge for three weeks to give the best of the best, both physically and psychologically
+        }
+
+        # postos: argument of postposition
+        # The postposition's label describes the relation of the whole phrase to its parent.
+        # The noun under the postposition only has postpos.
+        # Later processing will move the function down from the postposition to the noun, and the postposition will get AuxP.
+        elsif ($deprel eq 'postos')
+        {
+            $afun = 'PrepArg';
         }
 
         # particles
@@ -191,38 +181,13 @@ sub deprel_to_afun
         }
 
         # interjection # !!JM TODO - "Uf.itj_out, vydechl Petr.", "Nezmokni, Pavle.itj_out."
-        if ($deprel eq 'itj_out') {
+        elsif ($deprel eq 'itj_out') {
             $afun = 'Atr';
         }
 
         # attributes # JM not sure whether "attribute" is the right term, seems more like a part of a name
-        if ($deprel eq 'entios') {
+        elsif ($deprel eq 'entios') {
             $afun = 'Atr';
-        }
-
-        # postos # !!JM TODO - part of a complex postposition? so AuxP somewhere around?
-        elsif ($deprel eq 'postos') {
-            if ($pos eq 'noun') {
-                $afun = 'Atr';
-            }
-            elsif ($pos eq 'adv') {
-                $afun = 'Adv';
-            }
-            elsif ($pos eq 'adj') {
-                $afun = 'Atr';
-            }
-            elsif ($pos eq 'verb') {
-                $afun = 'Atr';
-            }
-            elsif ($pos eq 'num') {
-                $afun = 'Atr';
-            }
-            elsif ($pos eq 'conj' and $subpos eq 'coor') {
-                $afun = 'Adv';
-            }
-            elsif ($pos eq 'conj' and  $subpos eq 'sub') {
-                $afun = 'AuxC';
-            }
         }
 
         # gradmod # !!JM TODO "el graduador" - used in comparison; "very", "too much", "more", ... - probably Atr/Adv based on ppos
@@ -250,27 +215,41 @@ sub deprel_to_afun
             }
         }
 
-        # menos
-        elsif ($deprel eq 'menos') {
-            if ($pos eq 'noun') {
+        # menos: comparing expressions?
+        elsif ($deprel eq 'menos')
+        {
+            if ($pos eq 'noun')
+            {
                 $afun = 'Atr';
             }
-            elsif ($pos eq 'adv') {
+            elsif ($pos eq 'adv')
+            {
                 $afun = 'Adv';
             }
-            elsif ($pos eq 'adj') {
+            elsif ($pos eq 'adj')
+            {
                 $afun = 'Atr';
             }
-            elsif ($pos eq 'verb') {
+            elsif ($pos eq 'verb')
+            {
                 $afun = 'Atr';
             }
-            elsif ($pos eq 'num') {
+            elsif ($pos eq 'num')
+            {
                 $afun = 'Atr';
             }
-            elsif ($pos eq 'conj' and $subpos eq 'coor') {
+            elsif ($pos eq 'conj' and $subpos eq 'coor')
+            {
                 $afun = 'Adv';
             }
-            elsif ($pos eq 'conj' and $subpos eq 'sub') {
+            elsif ($pos eq 'conj' and $subpos eq 'sub')
+            {
+                $afun = 'AuxC';
+            }
+            # The subordinating conjunction "baino" ("than") occurs with the BST tag (meaning "other", which does not say much).
+            # Example: ondo baino hobeto = better than well (lit. well than better)
+            elsif ($conll_pos eq 'BST' && $form eq 'baino')
+            {
                 $afun = 'AuxC';
             }
         }
@@ -278,6 +257,20 @@ sub deprel_to_afun
         # haos
         elsif ($deprel eq 'haos') {
             $afun = 'Adv';
+        }
+
+        # punctuation
+        elsif ($deprel eq 'PUNC')
+        {
+            # Note: The sentence-final punctuation will get the AuxK label during later processing.
+            if ($form eq ',')
+            {
+                $afun = 'AuxX';
+            }
+            else
+            {
+                $afun = 'AuxG';
+            }
         }
 
         $node->set_afun($afun);
@@ -297,7 +290,6 @@ sub detect_coordination
     my $coordination = shift;
     my $debug = shift;
     $coordination->detect_alpino($node);
-    $coordination->capture_commas();
     # The caller does not know where to apply recursion because it depends on annotation style.
     # Return all conjuncts and shared modifiers for the Prague family of styles.
     # Return orphan conjuncts and all shared and private modifiers for the other styles.
