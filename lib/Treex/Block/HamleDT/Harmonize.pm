@@ -19,6 +19,8 @@ has iset_driver =>
                      'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
 );
 
+
+
 #------------------------------------------------------------------------------
 # Reads the a-tree, converts the original morphosyntactic tags to the PDT
 # tagset, converts dependency relation tags to afuns and transforms the tree to
@@ -46,17 +48,11 @@ sub process_zone
     # and it is almost always treebank-specific (only a few treebanks use the same tagset as the PDT).
     $self->deprel_to_afun($root);
 
-    # Adjust the tree structure. Some of the methods are general, some will be treebank-specific.
-    # The decision whether to apply a method at all is always treebank-specific.
-    #$self->attach_final_punctuation_to_root($root);
-    #$self->process_auxiliary_particles($root);
-    #$self->process_auxiliary_verbs($root);
-    #$self->restructure_coordination($root);
-    #$self->mark_deficient_clausal_coordination($root);
-    #$self->check_afuns($root);
     # The return value can be used by the overriding methods of subclasses.
     return $root;
 }
+
+
 
 #------------------------------------------------------------------------------
 # Copies the original zone so that the user can compare the original and the
@@ -68,6 +64,8 @@ sub backup_zone
     my $zone0 = shift;
     return $zone0->copy('orig');
 }
+
+
 
 #------------------------------------------------------------------------------
 # Converts tags of all nodes to Interset and PDT tagset.
@@ -82,6 +80,8 @@ sub convert_tags
         $self->set_pdt_tag( $node );
     }
 }
+
+
 
 #------------------------------------------------------------------------------
 # Different source treebanks may use different attributes to store information
@@ -101,6 +101,8 @@ sub get_input_tag_for_interset
     return "$conll_cpos\t$conll_pos\t$conll_feat";
 }
 
+
+
 #------------------------------------------------------------------------------
 # Decodes the part-of-speech tag and features from a CoNLL treebank into
 # Interset features. Stores the features with the node. Then sets the tag
@@ -118,6 +120,8 @@ sub convert_tag
     $node->set_iset($f);
 }
 
+
+
 #------------------------------------------------------------------------------
 # Interset is the main means of storing part of speech and morphosyntactic
 # features of a node. The tag attribute could be left empty but we are
@@ -133,6 +137,8 @@ sub set_pdt_tag
     my $pdt_tag = tagset::cs::pdt::encode($f, 1);
     $node->set_tag($pdt_tag);
 }
+
+
 
 #------------------------------------------------------------------------------
 # Certain nodes in some treebanks have empty lemmas, although there are lemmas
@@ -162,6 +168,8 @@ sub fill_in_lemmas
         }
     }
 }
+
+
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
@@ -195,6 +203,8 @@ sub deprel_to_afun
         $node->set_afun($deprel);
     }
 }
+
+
 
 #------------------------------------------------------------------------------
 # Assigns default afuns. To be used if a node does not have a valid afun value
@@ -235,6 +245,8 @@ sub set_default_afun
     }
     $node->set_afun($afun);
 }
+
+
 
 #------------------------------------------------------------------------------
 # After all transformations all nodes must have valid afuns (not our pseudo-
@@ -278,85 +290,17 @@ sub check_afuns
     }
 }
 
+
+
 #------------------------------------------------------------------------------
 # Shifts afun from preposition (subordinating conjunction) to its argument and
 # gives the preposition (conjunction) new afun 'AuxP' ('AuxC'). Useful for
 # treebanks where prepositions and subordinating conjunctions bear the deprel
 # of their subtree. The subclass should not call this method before it assigns
-# or pseudo-afuns to all nodes. Arguments of prepositions (subordinating
-# conjunctions) must have the pseudo-afun 'PrepArg' ('SubArg'). There should
-# be just one child with such afun.
-#
-# Call from the end of deprel_to_afun() like this:
-# $self->process_prep_sub_arg($root);
-#
-# Tells the parent node whether the child node wants to take the parent's afun
-# and return 'AuxP' or 'AuxC' instead. Called recursively. In some treebanks
-# there may be chains of both AuxP and AuxC such as in this Danish example:
-# parate/AA/pred til/RR/pobj at/TT/nobj gå/Vf/vobj =>
-# parate/AA/Pnom til/RR/AuxP at/TT/AuxC gå/Vf/Atr
-
-###!!!
-# Je tu ale problém. Jestliže ještě nemáme vyřešené koordinace, může nám tahle
-# operace znemožnit jejich identifikaci. (Ovšem asi platí i naopak, že při
-# zpracování koordinací bychom se rádi spolehli na definované chování AuxP a
-# AuxC.)
-###!!!
-
+# afuns to all nodes and before it converts coordination. Arguments of
+# prepositions (subordinating conjunctions) must have the afun 'PrepArg'
+# ('SubArg'). There should be just one child with such afun.
 #------------------------------------------------------------------------------
-sub process_prep_sub_arg
-{
-    my $self                = shift;
-    my $node                = shift;
-    my $parent_current_afun = shift;
-    my $parent_new_afun     = $parent_current_afun;
-    my $current_afun        = $node->afun();
-    $current_afun = '' if(!defined($current_afun));
-
-    # If I am currently a prep/sub argument, let's steal the parent's afun.
-    if ( $current_afun eq 'PrepArg' )
-    {
-        $current_afun    = $parent_current_afun;
-        $parent_new_afun = 'AuxP';
-    }
-    elsif ( $current_afun eq 'SubArg' )
-    {
-        $current_afun    = $parent_current_afun;
-        $parent_new_afun = 'AuxC';
-    }
-
-    # Now let's see whether my children want my afun.
-    my $new_afun = $current_afun;
-    my @children = $node->children();
-    my $argument_found = 0;
-    foreach my $child (@children)
-    {
-
-        # Ask a child if it wants my afun and what afun it thinks I should get.
-        # A preposition can have more than one child and some of the children may not be PrepArgs.
-        # So only set $new_afun if it really differs from $current_afun
-        # (otherwise the first child could propose a change and the second could revert it).
-        my $suggested_afun = $self->process_prep_sub_arg( $child, $current_afun );
-        if($suggested_afun ne $current_afun)
-        {
-            # Even if the preposition has several children, only one can be PrepArg.
-            # Otherwise it would not be clear what to do.
-            # (Note however that there is no warranty that the input data is clean.)
-            if($argument_found)
-            {
-                log_warn("Two or more Prep/SubArg children under one preposition/conjunction.\n".$node->get_address());
-            }
-            $new_afun = $suggested_afun;
-            $argument_found = 1;
-        }
-    }
-    # Set the afun my children selected (it is either my current afun or 'AuxP' or 'AuxC').
-    $node->set_afun($new_afun);
-
-    # Let the parent know what I selected for him.
-    return $parent_new_afun;
-}
-
 sub process_prep_sub_arg_cloud
 {
     my $self = shift;
@@ -368,7 +312,6 @@ sub process_prep_sub_arg_cloud
     $self->process_prep_sub_arg_cloud_recursive($cloud);
     $cloud->destroy_children();
 }
-###!!! DOKONČIT
 sub process_prep_sub_arg_cloud_recursive
 {
     my $self                = shift;
@@ -434,106 +377,7 @@ sub process_prep_sub_arg_cloud_recursive
     return $parent_new_afun;
 }
 
-#------------------------------------------------------------------------------
-# Returns the noun phrase attached directly to the preposition in a
-# prepositional phrase. It is difficult to detect without understanding the
-# treebank-specific dependency relation tags because the preposition may have
-# more than one child (coordination members if the preposition governed
-# a coordination; modifiers (intensifiers) of the whole PP if the guidelines
-# rule to attach them to the preposition) and the main child need not be
-# necessarily a noun (it could be an adjective, a numeral etc.)
-#------------------------------------------------------------------------------
-sub get_preposition_argument
-{
-    my $self     = shift;
-    my $prepnode = shift;
 
-    # The assumption is that the preposition governs the noun phrase and not vice versa.
-    # If not, run the corresponding transformation prior to calling this method.
-    # We cannot reliably assume that a preposition has only one child.
-    # There may be rhematizers modifying the whole prepositional phrase.
-    # We assume that the real argument of the preposition can only have one of selected parts of speech and afuns.
-    # (Note that PrepArg is a pseudo-afun that is not defined in PDT but subclasses can use it to explicitly mark preposition arguments
-    # whenever no other suitable afun is readily available.)
-    my @prepchildren = grep { $_->afun() eq 'PrepArg' } ( $prepnode->children() );
-    if (@prepchildren)
-    {
-        if ( scalar(@prepchildren) > 1 )
-        {
-            $self->log_sentence($prepnode);
-            log_info( "Preposition " . $prepnode->ord() . ":" . $prepnode->form() );
-            log_warn("More than one preposition argument.");
-        }
-        return $prepchildren[0];
-    }
-    else
-    {
-        @prepchildren = grep { $_->get_iset('pos') =~ m/^(noun|adj|num)$/ } ( $prepnode->children() );
-        if (@prepchildren)
-        {
-            if ( scalar(@prepchildren) > 1 )
-            {
-                $self->log_sentence($prepnode);
-                log_info( "Preposition " . $prepnode->ord() . ":" . $prepnode->form() );
-                log_warn("More than one preposition argument.");
-            }
-            return $prepchildren[0];
-        }
-        else
-        {
-            @prepchildren = grep { $_->afun() =~ m/^(Sb|Obj|Pnom|Adv|Atv|Atr)$/ } ( $prepnode->children() );
-            if (@prepchildren)
-            {
-                if ( scalar(@prepchildren) > 1 )
-                {
-                    $self->log_sentence($prepnode);
-                    log_info( "Preposition " . $prepnode->ord() . ":" . $prepnode->form() );
-                    log_warn("More than one preposition argument.");
-                }
-                return $prepchildren[0];
-            }
-        }
-    }
-    return undef;
-}
-
-#------------------------------------------------------------------------------
-# Returns the clause attached directly to the subordinating conjunction. It is
-# difficult to detect without understanding the treebank-specific dependency
-# relation tags because the conjunction may have more than one child
-# (coordination members if the conjunction governed a coordination).
-#------------------------------------------------------------------------------
-sub get_subordinator_argument
-{
-    my $self        = shift;
-    my $subnode     = shift;
-    my @subchildren = grep { $_->afun() eq 'SubArg' } ( $subnode->children() );
-    if (@subchildren)
-    {
-        if ( scalar(@subchildren) > 1 )
-        {
-            $self->log_sentence($subnode);
-            log_info( "Subordinator " . $subnode->ord() . ":" . $subnode->form() );
-            log_warn("More than one subordinator argument.");
-        }
-        return $subchildren[0];
-    }
-    else
-    {
-        @subchildren = grep { $_->get_iset('pos') =~ m/^(verb)$/ } ( $subnode->children() );
-        if (@subchildren)
-        {
-            if ( scalar(@subchildren) > 1 )
-            {
-                $self->log_sentence($subnode);
-                log_info( "Subordinator " . $subnode->ord() . ":" . $subnode->form() );
-                log_warn("More than one subordinator argument.");
-            }
-            return $subchildren[0];
-        }
-    }
-    return undef;
-}
 
 #------------------------------------------------------------------------------
 # Examines the last node of the sentence. If it is a punctuation, makes sure
@@ -656,6 +500,8 @@ sub attach_final_punctuation_to_root
     }
 }
 
+
+
 #------------------------------------------------------------------------------
 # Restructures coordinations to the Prague style.
 # Calls a treebank-specific method detect_coordination() that fills a list of
@@ -677,6 +523,8 @@ sub restructure_coordination
     $self->shape_coordination_recursively( $root, $debug );
 }
 
+
+
 #------------------------------------------------------------------------------
 # Every descendant of this class should implement its own method
 # detect_coordination(). It may use the prepared detect_...() methods of
@@ -692,10 +540,11 @@ sub detect_coordination
     log_fatal("detect_coordination() must be implemented in all blocks derived from HamleDT::Harmonize.");
 }
 
+
+
 #------------------------------------------------------------------------------
-# A different approach: recursively search for coordinations and solve them
-# immediately, i.e. don't collect all first.
-# Use the Coordination object.
+# Recursively search for coordinations and solve them immediately, i.e. don't
+# collect all first. Use the Coordination object.
 #------------------------------------------------------------------------------
 sub shape_coordination_recursively
 {
@@ -725,6 +574,8 @@ sub shape_coordination_recursively
         }
     }
 }
+
+
 
 #------------------------------------------------------------------------------
 # This method is called for coordination and apposition nodes whose members do
@@ -807,6 +658,8 @@ sub identify_coap_members
     }
 }
 
+
+
 #------------------------------------------------------------------------------
 # Catches possible annotation inconsistencies. If there are no conjuncts under
 # a Coord node, let's try to find them.
@@ -829,6 +682,8 @@ sub check_coord_membership
         }
     }
 }
+
+
 
 #------------------------------------------------------------------------------
 # Conjunction (such as 'and', 'but') occurring as the first word of the
@@ -863,6 +718,8 @@ sub mark_deficient_clausal_coordination
         }
     }
 }
+
+
 
 #------------------------------------------------------------------------------
 # Validates coordination/apposition structures.
@@ -903,157 +760,7 @@ sub validate_coap
     }
 }
 
-#------------------------------------------------------------------------------
-# Some treebanks attach subordinating conjunctions to predicates of subordinate
-# clauses. This method makes them govern the predicates, as in PDT. Other
-# children of the predicate remain attached to the predicate. Exception: comma.
-#------------------------------------------------------------------------------
-sub raise_subordinating_conjunctions
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants({ordered => 1});
-    foreach my $node (@nodes)
-    {
-        if($node->afun() eq 'AuxC' && $node->is_leaf() && !$node->is_member())
-        {
-            my $parent = $node->parent();
-            unless($parent->is_root())
-            {
-                my $grandparent = $parent->parent();
-                # Is there a left neighbor and is it a comma?
-                my $ln = $node->get_left_neighbor();
-                my $comma = $ln && $ln->afun() eq 'AuxX' ? $ln : undef;
-                if($comma)
-                {
-                    $comma->set_parent($node);
-                }
-                $node->set_parent($grandparent);
-                $parent->set_parent($node);
-                # Both conjunction and its former parent keep their afuns but the is_member flag must be moved.
-                $node->set_is_member($parent->is_member());
-                $parent->set_is_member(0);
-            }
-        }
-    }
-}
 
-#------------------------------------------------------------------------------
-# Swaps node with its parent. The original parent becomes a child of the node.
-# All other children of the original parent become children of the node. The
-# node also keeps its original children.
-#
-# The lifted node gets the afun of the original parent while the original
-# parent gets a new afun. The conll_deprel attribute is changed, too, to
-# prevent possible coordination destruction.
-#
-# If the original parent had is_member set, the flag will be moved to the
-# lifted node. If the lifted node had is_member set, we must lift the whole
-# coordination! If the original parent is Coord and the lifted node is a shared
-# modifier of coordination, we must be careful with reattaching the original
-# siblings of the lifted node. Only other shared modifiers can be reattached.
-#------------------------------------------------------------------------------
-sub lift_node
-{
-    my $self   = shift;
-    my $node   = shift;
-    my $afun   = shift;             # new afun for the old parent
-    my $parent = $node->parent();
-    confess('Cannot lift a child of the root') if ( $parent->is_root() );
-    my $grandparent = $parent->parent();
-
-    # Lifting a conjunct means lifting the whole coordination!
-    unless($node->is_member())
-    {
-        # Reattach myself to the grandparent.
-        $node->set_parent($grandparent);
-        # If parent is coordination, we need the afun of the conjuncts.
-        $node->set_afun($parent->get_real_afun());
-        $node->set_is_member( $parent->is_member() );
-        $node->set_conll_deprel( $parent->conll_deprel() );
-        # Reattach all previous siblings to myself.
-        foreach my $sibling ( $parent->children() )
-        {
-            # No need to test whether $sibling==$node as we already reattached $node.
-            # If parent is Coord, reattach modifiers but not conjuncts!
-            unless($parent->afun() eq 'Coord' && ($sibling->is_member() || $sibling->afun() =~ m/^Aux[GXY]$/))
-            {
-                $sibling->set_parent($node);
-            }
-        }
-        # Reattach the previous parent to myself.
-        $parent->set_parent($node);
-        # If parent is coordination, we must set afun of its conjuncts.
-        $parent->set_real_afun($afun);
-        $parent->set_is_member(0);
-        $parent->set_conll_deprel('');
-    }
-    else # lift coordination
-    {
-        my $coordination = new Treex::Core::Coordination;
-        $coordination->detect_prague($parent);
-        # Now redefine parent and grandparent to those of the whole coordination.
-        my $coordroot = $parent;
-        $parent = $grandparent;
-        confess('Cannot lift a child of the root') if ( $parent->is_root() );
-        $grandparent = $parent->parent();
-        # Reattach coordination to the grandparent.
-        $coordination->set_parent($grandparent);
-        # If parent is coordination, we need the afun of the conjuncts.
-        $coordination->set_afun($parent->get_real_afun());
-        $coordroot->set_is_member($parent->is_member());
-        # Reattach all previous siblings to myself.
-        foreach my $sibling ($parent->children())
-        {
-            unless($sibling==$coordroot)
-            {
-                # If parent is Coord, reattach modifiers but not conjuncts!
-                unless($parent->afun() eq 'Coord' && ($sibling->is_member() || $sibling->afun() =~ m/^Aux[GXY]$/))
-                {
-                    $coordination->add_shared_modifier($sibling);
-                }
-            }
-        }
-        # Reattach the previous parent to myself.
-        $coordination->add_shared_modifier($parent);
-        # If parent is coordination, we must set afun of its conjuncts.
-        $parent->set_real_afun($afun);
-        $parent->set_is_member(0);
-        $parent->set_conll_deprel('');
-        $coordination->shape_prague();
-    }
-}
-
-#------------------------------------------------------------------------------
-# Writes the current sentence including the sentence number to the log. To be
-# used together with warnings so that the problematic sentence can be localized
-# and examined in Ttred.
-#------------------------------------------------------------------------------
-sub log_sentence
-{
-    my $self = shift;
-    my $node = shift;
-    my $root = $node->get_root();
-
-    # get_position() returns numbers from 0 but Tred numbers sentences from 1.
-    my $i = $root->get_bundle()->get_position() + 1;
-    log_info( "\#$i " . $root->get_zone()->sentence() );
-}
-
-#------------------------------------------------------------------------------
-# Returns 1 if the sentence of a given node contains a given substring (mind
-# tokenization). Returns 0 otherwise. Can be used to easily focus debugging on
-# a problematic sentence like this:
-# $debug = $self->sentence_contains($node, 'sondern auch mit Instrumenten');
-#------------------------------------------------------------------------------
-sub sentence_contains
-{
-    my $self     = shift;
-    my $node     = shift;
-    my $query    = shift;
-    my $sentence = $node->get_zone()->sentence();
-    return $sentence =~ m/$query/;
-}
 
 #------------------------------------------------------------------------------
 # Error handler: removes 'is_member' attribute if the node is not
@@ -1159,6 +866,168 @@ sub investigate_coordinations
     }
 }
 
+
+
+#------------------------------------------------------------------------------
+# Some treebanks attach subordinating conjunctions to predicates of subordinate
+# clauses. This method makes them govern the predicates, as in PDT. Other
+# children of the predicate remain attached to the predicate. Exception: comma.
+#------------------------------------------------------------------------------
+sub raise_subordinating_conjunctions
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        if($node->afun() eq 'AuxC' && $node->is_leaf() && !$node->is_member())
+        {
+            my $parent = $node->parent();
+            unless($parent->is_root())
+            {
+                my $grandparent = $parent->parent();
+                # Is there a left neighbor and is it a comma?
+                my $ln = $node->get_left_neighbor();
+                my $comma = $ln && $ln->afun() eq 'AuxX' ? $ln : undef;
+                if($comma)
+                {
+                    $comma->set_parent($node);
+                }
+                $node->set_parent($grandparent);
+                $parent->set_parent($node);
+                # Both conjunction and its former parent keep their afuns but the is_member flag must be moved.
+                $node->set_is_member($parent->is_member());
+                $parent->set_is_member(0);
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Swaps node with its parent. The original parent becomes a child of the node.
+# All other children of the original parent become children of the node. The
+# node also keeps its original children.
+#
+# The lifted node gets the afun of the original parent while the original
+# parent gets a new afun. The conll_deprel attribute is changed, too, to
+# prevent possible coordination destruction.
+#
+# If the original parent had is_member set, the flag will be moved to the
+# lifted node. If the lifted node had is_member set, we must lift the whole
+# coordination! If the original parent is Coord and the lifted node is a shared
+# modifier of coordination, we must be careful with reattaching the original
+# siblings of the lifted node. Only other shared modifiers can be reattached.
+#------------------------------------------------------------------------------
+sub lift_node
+{
+    my $self   = shift;
+    my $node   = shift;
+    my $afun   = shift;             # new afun for the old parent
+    my $parent = $node->parent();
+    confess('Cannot lift a child of the root') if ( $parent->is_root() );
+    my $grandparent = $parent->parent();
+
+    # Lifting a conjunct means lifting the whole coordination!
+    unless($node->is_member())
+    {
+        # Reattach myself to the grandparent.
+        $node->set_parent($grandparent);
+        # If parent is coordination, we need the afun of the conjuncts.
+        $node->set_afun($parent->get_real_afun());
+        $node->set_is_member( $parent->is_member() );
+        $node->set_conll_deprel( $parent->conll_deprel() );
+        # Reattach all previous siblings to myself.
+        foreach my $sibling ( $parent->children() )
+        {
+            # No need to test whether $sibling==$node as we already reattached $node.
+            # If parent is Coord, reattach modifiers but not conjuncts!
+            unless($parent->afun() eq 'Coord' && ($sibling->is_member() || $sibling->afun() =~ m/^Aux[GXY]$/))
+            {
+                $sibling->set_parent($node);
+            }
+        }
+        # Reattach the previous parent to myself.
+        $parent->set_parent($node);
+        # If parent is coordination, we must set afun of its conjuncts.
+        $parent->set_real_afun($afun);
+        $parent->set_is_member(0);
+        $parent->set_conll_deprel('');
+    }
+    else # lift coordination
+    {
+        my $coordination = new Treex::Core::Coordination;
+        $coordination->detect_prague($parent);
+        # Now redefine parent and grandparent to those of the whole coordination.
+        my $coordroot = $parent;
+        $parent = $grandparent;
+        confess('Cannot lift a child of the root') if ( $parent->is_root() );
+        $grandparent = $parent->parent();
+        # Reattach coordination to the grandparent.
+        $coordination->set_parent($grandparent);
+        # If parent is coordination, we need the afun of the conjuncts.
+        $coordination->set_afun($parent->get_real_afun());
+        $coordroot->set_is_member($parent->is_member());
+        # Reattach all previous siblings to myself.
+        foreach my $sibling ($parent->children())
+        {
+            unless($sibling==$coordroot)
+            {
+                # If parent is Coord, reattach modifiers but not conjuncts!
+                unless($parent->afun() eq 'Coord' && ($sibling->is_member() || $sibling->afun() =~ m/^Aux[GXY]$/))
+                {
+                    $coordination->add_shared_modifier($sibling);
+                }
+            }
+        }
+        # Reattach the previous parent to myself.
+        $coordination->add_shared_modifier($parent);
+        # If parent is coordination, we must set afun of its conjuncts.
+        $parent->set_real_afun($afun);
+        $parent->set_is_member(0);
+        $parent->set_conll_deprel('');
+        $coordination->shape_prague();
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Writes the current sentence including the sentence number to the log. To be
+# used together with warnings so that the problematic sentence can be localized
+# and examined in Ttred.
+#------------------------------------------------------------------------------
+sub log_sentence
+{
+    my $self = shift;
+    my $node = shift;
+    my $root = $node->get_root();
+
+    # get_position() returns numbers from 0 but Tred numbers sentences from 1.
+    my $i = $root->get_bundle()->get_position() + 1;
+    log_info( "\#$i " . $root->get_zone()->sentence() );
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns 1 if the sentence of a given node contains a given substring (mind
+# tokenization). Returns 0 otherwise. Can be used to easily focus debugging on
+# a problematic sentence like this:
+# $debug = $self->sentence_contains($node, 'sondern auch mit Instrumenten');
+#------------------------------------------------------------------------------
+sub sentence_contains
+{
+    my $self     = shift;
+    my $node     = shift;
+    my $query    = shift;
+    my $sentence = $node->get_zone()->sentence();
+    return $sentence =~ m/$query/;
+}
+
+
+
 override 'process_end' => sub {
     my $self = shift;
     my $counter = $self->_counter();
@@ -1167,9 +1036,10 @@ override 'process_end' => sub {
     {
         print("# Coord $n\t$counter->{$n}\n");
     }
-
     super();
 };
+
+
 
 1;
 
@@ -1177,9 +1047,8 @@ override 'process_end' => sub {
 
 =item Treex::Block::HamleDT::Harmonize
 
-Common methods for language-dependent blocks that transform trees from the
-various styles of the CoNLL treebanks to the style of the Prague Dependency
-Treebank (PDT).
+Common methods for treebank-specific blocks that transform trees from the
+various annotation styles to the style of HamleDT (Prague).
 
 The analytical functions (afuns) need to be guessed from C<conll/deprel> and
 other sources of information. The tree structure must be transformed at places
@@ -1193,5 +1062,5 @@ features.
 
 =cut
 
-# Copyright 2011 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011-2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
