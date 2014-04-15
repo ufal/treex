@@ -15,6 +15,8 @@ has iset_driver =>
                      'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
 );
 
+
+
 #------------------------------------------------------------------------------
 # Reads the Basque CoNLL trees, converts morphosyntactic tags to the positional
 # tagset and transforms the tree to adhere to HamleDT guidelines.
@@ -33,6 +35,8 @@ sub process_zone
     $self->check_coord_membership($root);
     $self->check_afuns($root);
 }
+
+
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
@@ -274,6 +278,52 @@ sub deprel_to_afun
         }
 
         $node->set_afun($afun);
+    }
+    # Fix known irregularities in the data.
+    # Do so here, before the superordinate class operates on the data.
+    $self->fix_annotation_errors($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes a few known annotation errors and irregularities.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    my $sentence = join(' ', map {$_->form()} (@nodes));
+    # The original annotation of this sentence is totally damaged and extremely nonprojective.
+    if ($sentence eq 'Bistan_da ez direla herrialde horietako txapelketetako lehen hiru sailkatuak , Larretxeak eta Arrospidek ez zutelako jardun iaz , eta , Antonio Senosiain eta Xabier Orbegozo Arria V.a izan zirelako hirugarren sailkatuak .')
+    {
+        # ords:       1         2  3      4         5         6              7     8    9          10 11        12  13         14 15       16     17  18 19 20 21     22        23  24     25       26    27  28   29       30         31         32
+        my @pord = (undef,3,    3, 0,     6,        4,        9,             8,    6,   16,        9, 12,       16, 12,        16,16,      19,    16, 19,3, 19,22,    23,       28, 25,    26,      27,   23, 19,  28,      31,        28,        0 );
+        my @afun = qw(AuxS Adv  Neg Pred  Atr       Atr       Adv            Atr   Atr  Adv        AuxX CoordArg Sb CoordArg   Neg AuxV    CoordArg Adv AuxX Obj AuxX Atr CoordArg Sb Atr  Atr      Atr   CoordArg CoordArg AuxV Atr   Adv        AuxK);
+        my @tree = @nodes;
+        unshift(@tree, $root);
+        # To prevent cycles on the fly, first attach everything to the root, then reattach to the final parents.
+        for (my $i = 1; $i <= $#tree; $i++)
+        {
+            $tree[$i]->set_parent($root);
+        }
+        for (my $i = 1; $i <= $#tree; $i++)
+        {
+            #my $message = "Attaching $i:".$tree[$i]->form()." to $pord[$i]:".$tree[$pord[$i]]->form()." as $afun[$i].";
+            #log_info($message);
+            $tree[$i]->set_parent($tree[$pord[$i]]);
+            $tree[$i]->set_afun($afun[$i]);
+            my $wild = $tree[$i]->wild();
+            if ($afun[$i] eq 'CoordArg')
+            {
+                $wild->{conjunct} = 1;
+            }
+            else
+            {
+                delete($wild->{conjunct});
+            }
+        }
     }
 }
 
