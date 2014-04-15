@@ -62,6 +62,9 @@ sub deprel_to_afun
         # default assignment
         my $afun = 'NR';
 
+        # There was one cycle in the input data. It has been broken and attached to the root, thus we will deal with it as with a predicate.
+        $deprel = 'ROOT' if ($deprel =~ m/^ncpred-CYCLE/);
+
         # main predicate
         if ($deprel eq 'ROOT')
         {
@@ -187,6 +190,25 @@ sub deprel_to_afun
             $afun = 'PrepArg';
         }
 
+        # menos: It seems to be (mostly) the argument of a subordinating conjunction (or a postposition); see also postos.
+        # DZ (based on PML-TQ observations):
+        # set bakar bat_ere galdu/menos gabe = without losing a single set (lit. set single even losing without)
+        # bi set galtzen joan/menos ondotik = after going to lose the set (lit. the set to-lose going after)
+        # herenegun Richardsonen aurkezpenean aurreratu/menos bezala/adv = like advancing Richardson's presentation yesterday (lit. yesterday Richardson's presentation advanced like)
+        elsif ($deprel eq 'menos')
+        {
+            # The subordinating conjunction "baino" ("than") occurs with the BST tag (meaning "other", which does not say much).
+            # Example: ondo baino hobeto = better than well (lit. well than better)
+            if ($conll_pos eq 'BST' && $form eq 'baino')
+            {
+                $afun = 'AuxC';
+            }
+            else
+            {
+                $afun = 'SubArg';
+            }
+        }
+
         # particles
         # prtmod # !!JM TODO - "label used to mark various particles - 'badin', 'omen', etc."
         elsif ($deprel eq 'prtmod') {
@@ -205,45 +227,6 @@ sub deprel_to_afun
         # attributes # JM not sure whether "attribute" is the right term, seems more like a part of a name
         elsif ($deprel eq 'entios') {
             $afun = 'Atr';
-        }
-
-        # menos: comparing expressions?
-        elsif ($deprel eq 'menos')
-        {
-            if ($pos eq 'noun')
-            {
-                $afun = 'Atr';
-            }
-            elsif ($pos eq 'adv')
-            {
-                $afun = 'Adv';
-            }
-            elsif ($pos eq 'adj')
-            {
-                $afun = 'Atr';
-            }
-            elsif ($pos eq 'verb')
-            {
-                $afun = 'Atr';
-            }
-            elsif ($pos eq 'num')
-            {
-                $afun = 'Atr';
-            }
-            elsif ($pos eq 'conj' and $subpos eq 'coor')
-            {
-                $afun = 'Adv';
-            }
-            elsif ($pos eq 'conj' and $subpos eq 'sub')
-            {
-                $afun = 'AuxC';
-            }
-            # The subordinating conjunction "baino" ("than") occurs with the BST tag (meaning "other", which does not say much).
-            # Example: ondo baino hobeto = better than well (lit. well than better)
-            elsif ($conll_pos eq 'BST' && $form eq 'baino')
-            {
-                $afun = 'AuxC';
-            }
         }
 
         # haos
