@@ -16,8 +16,6 @@ has iset_driver =>
 );
 
 ###!!! The code from the following blocks should be applied here but has not been applied yet.
-#W2A::EN::SetAfunAuxCPCoord
-#W2A::FixAuxLeaves
 #W2A::FixNonleafAuxC
 #HamleDT::RehangModalVerbs
 
@@ -150,6 +148,23 @@ sub deprel_to_afun
             if($node->form() eq ',')
             {
                 $afun = 'AuxX';
+                # There are a few annotation errors where the comma heads a coordination but lacks the function of the coordination towards its parent.
+                if (grep {$_->conll_deprel() eq 'COORD'} $node->children())
+                {
+                    # This is a coordinating comma. Guess what is its relation towards its parent.
+                    if ($ppos eq 'noun')
+                    {
+                        $afun = 'Atr';
+                    }
+                    elsif ($ppos eq 'verb' && $parent->lemma() eq 'be')
+                    {
+                        $afun = 'Pnom';
+                    }
+                    else # non-copula verb
+                    {
+                        $afun = 'Adv';
+                    }
+                }
             }
             else
             {
@@ -226,7 +241,9 @@ sub deprel_to_afun
             {
                 $afun = 'Adv';
             }
-            elsif($node->get_iset('pos') =~ m/^(prep|conj)$/)
+            # We must not toggle on coordinating conjunction!
+            # That is most likely a coordination of VMOD conjuncts, whose part of speech could be anything!
+            elsif($node->is_subordinator() || $node->is_preposition())
             {
                 $afun = 'AuxC';
             }
@@ -280,6 +297,20 @@ sub fix_annotation_errors
                     $child->wild()->{conjunct} = 1;
                     $the_other->set_afun('CoordArg');
                     $the_other->wild()->{conjunct} = 1;
+                }
+            }
+        }
+        # Non-coordinating non-leaf comma.
+        elsif($node->form() eq ',')
+        {
+            my @children = $node->children();
+            if(@children && !grep {$_->conll_deprel() eq 'COORD'} (@children))
+            {
+                # Reattach all children of the comma to the parent of the comma.
+                my $parent = $node->parent();
+                foreach my $child (@children)
+                {
+                    $child->set_parent($parent);
                 }
             }
         }
@@ -366,8 +397,10 @@ sub fix_for_someone_to_do_something
                 $subject->set_parent($node);
                 $to->set_parent($grandparent);
                 $to->set_afun('AuxC');
+                $to->set_is_member($verb->is_member());
                 $verb->set_parent($to);
                 $verb->set_afun('Obj');
+                $verb->set_is_member(undef);
             }
         }
     }
