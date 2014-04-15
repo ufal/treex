@@ -26,6 +26,10 @@ sub process_atree {
             # but RP (phrase verb particle) + common onword preposition:
             # "heat up to toxic levels" "He moved on to do his own work."
             last LENGTH_LOOP if $anodes[$starts_at]->tag eq 'RP';
+            # "rather than" is coordinating, not subordinating conjunction in CoNLL 2007 English data.
+            # This block is designed for subordinating conjunctions and must not damage coordination.
+            # (Even if we allowed changing the structure, we would have to be much more careful with existing is_member values!)
+            last LENGTH_LOOP if grep { $anodes[$_]->is_coap_root } ( $starts_at .. $starts_at + $length - 1 );
             my ($conj) = $string =~ $MULTI_CONJ;
             my ($prep) = $string =~ $MULTI_PREP;
             if (!$conj && !$prep) {
@@ -217,7 +221,7 @@ of multiword conjunctions (such as in 'as well as if') is
 prevented.
 
 In addition to 'as well/long/soon/far as', other spans
-that match the patter 'as X as Y' are being resolved here.
+that match the pattern 'as X as Y' are being resolved here.
 The involved nodes are reorganized as follows: as1<X as2<Y>>.
 Afuns for both 'as' are set.
 

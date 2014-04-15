@@ -16,7 +16,6 @@ has iset_driver =>
 );
 
 ###!!! The code from the following blocks should be applied here but has not been applied yet.
-#W2A::EN::FixMultiwordPrepAndConj
 #W2A::EN::SetAfunAuxCPCoord
 #W2A::FixAuxLeaves
 #W2A::FixNonleafAuxC
@@ -37,6 +36,7 @@ sub process_zone
     # "for someone to do something" must be fixed before raising subordinating conjunctions because the procedure assumes the original layout.
     $self->fix_for_someone_to_do_something($root);
     $self->raise_subordinating_conjunctions($root);
+    $self->get_or_load_other_block('W2A::EN::FixMultiwordPrepAndConj')->process_atree($root);
     ###!!! Tohle zatím funguje divně a mrzačí to koordinace.
     ###!!!$self->fix_auxiliary_verbs($root);
     $self->check_afuns($root);
