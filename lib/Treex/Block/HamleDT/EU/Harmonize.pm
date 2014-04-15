@@ -132,6 +132,19 @@ sub deprel_to_afun
             }
         }
 
+        # gradmod
+        # DZ (based on PML-TQ observations):
+        # gradmod modifies an adjective or adverb and specifies the grade of the property expressed:
+        # ezin/noun???/gradmod okerragoak dira = cannot worse be
+        # zertxobait/pronoun/gradmod hobea da = somewhat better is
+        # oso/adv/gradmod ongi irabazi = very well earned
+        # sentsazio nahikoa/adv/gradmod onak = feeling enough good
+        # askoz_ere/BST/gradmod maila hobea = much level higher
+        elsif ($deprel eq 'gradmod')
+        {
+            $afun = 'Adv';
+        }
+
         # conjunct attached to conjunction, particle or punctuation
         # coordinating particles: ez ... ez, bai ... bai
         # ez Argentinan ez ACBn = not Argentine, not ACB (the second "ez" is particle/lot and is attached to the first "ez"; conjuncts Argentine and ACB are also "lot")
@@ -192,31 +205,6 @@ sub deprel_to_afun
         # attributes # JM not sure whether "attribute" is the right term, seems more like a part of a name
         elsif ($deprel eq 'entios') {
             $afun = 'Atr';
-        }
-
-        # gradmod # !!JM TODO "el graduador" - used in comparison; "very", "too much", "more", ... - probably Atr/Adv based on ppos
-        elsif ($deprel eq 'gradmod') {
-            if ($pos eq 'noun') {
-                $afun = 'Atr';
-            }
-            elsif ($pos eq 'adv') {
-                $afun = 'Adv';
-            }
-            elsif ($pos eq 'adj') {
-                $afun = 'Atr';
-            }
-            elsif ($pos eq 'verb') {
-                $afun = 'Atr';
-            }
-            elsif ($pos eq 'num') {
-                $afun = 'Atr';
-            }
-            elsif ($pos eq 'conj' and $subpos eq 'coor') {
-                $afun = 'Adv';
-            }
-            elsif ($pos eq 'conj' and $subpos eq 'sub') {
-                $afun = 'AuxC';
-            }
         }
 
         # menos: comparing expressions?
