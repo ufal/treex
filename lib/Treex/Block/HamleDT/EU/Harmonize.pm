@@ -350,8 +350,12 @@ sub detect_coordination
 
 
 
+#------------------------------------------------------------------------------
 # punctuations such as "," and ";" hanging under a node will be
 # attached to the parents parent node
+# DZ: I am not convinced that this is always the best solution. It definitely
+# must not be applied in coordination!
+#------------------------------------------------------------------------------
 sub correct_punctuations {
     my $self  = shift;
     my $root  = shift;
@@ -361,9 +365,9 @@ sub correct_punctuations {
         if (defined $node) {
             my $afun = $node->afun();
             my $ordn = $node->ord();
-            if ($afun =~ /^(AuxX|AuxG|AuxK|AuxK)$/) {
+            if ($afun =~ /^(AuxX|AuxG)$/) {
                 my $parnode = $node->get_parent();
-                if (defined $parnode) {
+                if (defined $parnode && !$parnode->is_root() && !$parnode->is_coap_root()) {
                     my $parparnode = $parnode->get_parent();
                     if (defined $parparnode) {
                         my $ordpp = $parparnode->ord();
