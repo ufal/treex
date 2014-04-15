@@ -880,10 +880,11 @@ sub raise_subordinating_conjunctions
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
-        if($node->afun() eq 'AuxC' && $node->is_leaf() && !$node->is_member())
+        if($node->afun() eq 'AuxC' && !$node->get_echildren() && !$node->is_member())
         {
             my $parent = $node->parent();
-            unless($parent->is_root())
+            # Multi-word AuxC should have all but the last word as leaves. Skip dependent parts of AuxC MWE.
+            unless($parent->is_root() || $parent->afun() eq 'AuxC')
             {
                 my $grandparent = $parent->parent();
                 # Is there a left neighbor and is it a comma?

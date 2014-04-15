@@ -16,7 +16,6 @@ has iset_driver =>
 );
 
 ###!!! The code from the following blocks should be applied here but has not been applied yet.
-#W2A::FixNonleafAuxC
 #HamleDT::RehangModalVerbs
 
 sub process_zone
