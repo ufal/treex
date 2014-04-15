@@ -41,7 +41,6 @@ sub process_zone {
     $self->attach_final_punctuation_to_root($a_root);
     $self->restructure_coordination($a_root, $debug);
     $self->process_prep_sub_arg_cloud($a_root);
-    $self->get_or_load_other_block('HamleDT::Pdt2HamledtApos')->process_zone($a_root->get_zone());
 #    $self->check_afuns($a_root);
 
 }
@@ -78,7 +77,7 @@ sub get_input_tag_for_interset
 # 		   subj         => 'Sb',       # "subject"
 # 		   # "non-arguments"
 # 		   adjunct      => '',         # any modifier; -> Adv/Atr/...
-# 		   app          => 'Apos',     # "apposition" ### second part depends on the first part (unlike in PDT, but same as in HamleDT (?))
+# 		   app          => 'Apposition',     # "apposition" ### second part depends on the first part (unlike in PDT, but same as in HamleDT (?))
 # 		   complm       => 'AuxC',     # "complementizer" - introduces a complement clause (but is a child of its predicate, not a parent as in PDT)
 # 		   mwe          => 'AuxY',     # "multi-word expression"
 # 		   pred         => 'Pred',     # "predicate"
@@ -290,7 +289,7 @@ sub deprel_to_afun {
         # app .. apposition
         # dependent on the first part of the apposition
         elsif ($deprel eq 'app') {
-            $node->set_afun('Apos');
+            $node->set_afun('Apposition');
         }
         # coord ... coordinating conjunction
         # coordinates two sentences (in other cases, the conjunction bears the relation to its parent)
