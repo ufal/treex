@@ -8,10 +8,11 @@ use open qw( :std :utf8 );
 sub process_anode {
     my $self = shift;
     my $node = shift;
-    my $afun = $node->afun;
+    my $afun = $node->afun || $node->conll_deprel || '';
     return if ($afun eq 'AuxC' or $afun eq 'AuxP' or $afun eq 'Coord' or $afun eq 'Apos');
     if ($node->get_echildren != 0) {
         my $string = tree2string( $node );
+        # print STDERR $string . "\n";
         my $pomoc = $string;
         my $words;
         while ($pomoc =~ s/@([^ ]+)//) {
@@ -21,6 +22,10 @@ sub process_anode {
         my $tags;
         while ($pomoc =~ s/\=(\S+)@//) {
             $tags .= " $1";
+        }
+        my $ords;
+        while ($pomoc =~ s/#(\d+) //) {
+            $ords .= " $1";
         }
         my $tree = $string;
         $tree  =~ s/^[^=]+//;
@@ -36,12 +41,12 @@ sub tree2string {
 
     # list
     if ($node->children == 0) {
-        return $node->afun()."=".$node->get_iset('pos')."@".$node->form();#."#".$node->ord();
+        return ($node->afun() || $node->conll_deprel)."=".($node->get_iset('pos') || $node->conll_pos || 'X')."@".($node->form() || '')."#".$node->ord();
     }
 
     # non-list
     else {
-        my $string = $node->afun()."=".$node->get_iset('pos')."@".$node->form()." [ ".(join " ", map {tree2string($_)} $node->get_echildren( { 'ordered' => 1 } ) )." ]"; #."#".$node->ord().
+        my $string = ($node->afun() || $node->conll_deprel)."=".($node->get_iset('pos') || $node->conll_pos || 'X')."@".($node->form() || '')."#".$node->ord()." [ ".(join " ", map {tree2string($_)} $node->get_echildren( {dive=>'AuxCP', ordered=>1, or_topological=>1 } ) )." ]";
         return $string;
     }
 }
@@ -54,11 +59,12 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2A::Extract Trees
+Treex::Block::HamleDT::Extract Trees
 
 =head1 DESCRIPTION
 
-Prints a string representation of a subtree (wordforms, structure and tags, separated by tabs) to the standard output.
+Prints a string representation of a subtree (wordforms, structure, tags, and word order, separated by tabs) to the standard output.
+Uses afuns and Interset POS if available (presumably for the harmonized version), otherwise ConLL deprel and POS.
 
 =head1 AUTHOR
 
