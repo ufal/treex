@@ -34,8 +34,7 @@ sub process_zone
     $self->fix_for_someone_to_do_something($root);
     $self->raise_subordinating_conjunctions($root);
     $self->get_or_load_other_block('W2A::EN::FixMultiwordPrepAndConj')->process_atree($root);
-    ###!!! Tohle zatím funguje divně a mrzačí to koordinace.
-    ###!!!$self->fix_auxiliary_verbs($root);
+    $self->fix_auxiliary_verbs($root);
     $self->check_afuns($root);
 }
 
@@ -229,7 +228,7 @@ sub deprel_to_afun
         # is based/VC, before being released/VC, did n't interfere/VC, have n't raised/VC
         elsif($deprel eq 'VC')
         {
-            $afun = 'Obj';
+            $afun = 'AuxV';
         }
         # Modifier of verb. Typically a subordinating conjunction or negation.
         # Most frequent words: to, that, n't, not, as
@@ -408,6 +407,25 @@ sub fix_for_someone_to_do_something
 
 
 #------------------------------------------------------------------------------
+# The auxiliary verb "to be" governs the content verb in the input data because
+# if one of the two is finite verb, it is the auxiliary. In PDT however, and so
+# far also in HamleDT, auxiliaries are attached to content verbs as AuxV:
+#
+#   přišel jsem domů: přišel/Pred ( jsem/AuxV , domů/Adv )
+#   zítra budu vařit: vařit/Pred ( zítra/Adv , budu/AuxV )
+#   to bych neřekl: neřekl/Pred ( to/Obj , bych/AuxV )
+#   silnice je opravována: opravována/Pred ( silnice/Sb , je/AuxV )
+#
+# Thus in English, we also want to make the auxiliary verb depend on the main
+# verb:
+#
+#   we are witnessing:
+#     INPUT: are ( we/Sb , witnessing/VBG/VC )
+#     OUTPUT: witnessing ( we/Sb , are/AuxV )
+#   it was done:
+#     INPUT: was ( it/Sb , done/VBN/VC )
+#     OUTPUT: done ( it/Sb , was/AuxV )
+#
 # Adapted from Martin Popel's W2A::EN::RehangConllToPdtStyle.
 #------------------------------------------------------------------------------
 sub fix_auxiliary_verbs
@@ -418,72 +436,60 @@ sub fix_auxiliary_verbs
     foreach my $node (@nodes)
     {
         my $raise = 0;
-        next if($node->is_coap_root());
-        my @eparents = $node->get_eparents();
-        if(scalar(@eparents)>=1)
+        my @eparents;
+        # Look for constructions we want to change. Note that we also require that the node already is labeled AuxV (original label VC).
+        # We do that to distinguish from adjunct clauses.
+        if($node->is_verb() && $node->afun() eq 'AuxV')
         {
-            my $eparent = $eparents[0];
-            next unless($eparent);
-            my $eplemma = $eparent->lemma();
-            next unless($eplemma);
-            # We want to switch the auxiliary verb "be", e.g.:
-            # What are you doing(deprel=VC, tag=VBG, orig_parent=are)
-            # It was done(deprel=VC, tag=VBN, orig_parent=was)
-            # but not:
-            # According(deprel=ADV, parent=is) to me, it is bad.
-            # It has solved(tag=VBN, orig_parent=has) our problems.
-            if($eplemma =~ m/^(be|have)$/ && $node->get_iset('pos') eq 'verb' && $node->get_iset('verbform') eq 'part')
+            @eparents = $node->get_eparents();
+            if(scalar(@eparents)>=1)
             {
-                $raise = 1;
-            }
-            # It will solve(tag=VB, orig_parent=will) our problems.
-            elsif($eplemma eq 'will' && $node->get_iset('pos') eq 'verb')
-            {
-                $raise = 1;
-            }
-            # It did not solve(tag=VB/VBP, orig_parent=did) anything.
-            # The people he does know(tag=VB/VBP, orig_parent=does) are rich.
-            elsif($eplemma eq 'do' && $node->get_iset('pos') eq 'verb' && $node->get_iset('verbform') ne 'part')
-            {
-                $raise = 1;
+                my $eparent = $eparents[0];
+                next unless($eparent);
+                my $eplemma = $eparent->lemma();
+                next unless($eplemma);
+                # We want to switch the auxiliary verb "be", e.g.:
+                # What are you doing(deprel=VC, tag=VBG, orig_parent=are)
+                # It was done(deprel=VC, tag=VBN, orig_parent=was)
+                # It has solved(tag=VBN, orig_parent=has) our problems.
+                # but not:
+                # According(deprel=ADV, parent=is) to me, it is bad.
+                if($node->get_iset('verbform') eq 'part' && $eplemma =~ m/^(be|have)$/)
+                {
+                    $raise = 1;
+                }
+                # It will solve(tag=VB, orig_parent=will) our problems.
+                elsif($eplemma eq 'will')
+                {
+                    $raise = 1;
+                }
+                # It did not solve(tag=VB/VBP, orig_parent=did) anything.
+                # The people he does know(tag=VB/VBP, orig_parent=does) are rich.
+                elsif($node->get_iset('verbform') ne 'part' && $eplemma eq 'do')
+                {
+                    $raise = 1;
+                }
             }
         }
+        # Exchange the auxiliary with the main verb if the triggering situation has been identified.
         if($raise)
         {
             ###!!! Bacha! Je to efektivní rodič, ne nutně topologický rodič, takže převěšování nebude taková sranda!
-            ###!!! Správně bychom tady měli pracovat s objekty Cloud a Coordination! Místo toho zatím předpokládáme, že koordinace jsou převěšeny po pražsku.
-            if($node->is_member())
+            ###!!! Správně bychom tady měli pracovat s objekty Cloud a Coordination!
+            ###!!! Místo toho se zatím koordinacím vyhýbáme a když nějakou spatříme, od převěšování upustíme.
+            my $parent = $node->parent();
+            unless($node->is_member() || $parent->is_member() || scalar(@eparents)!=1 || $eparents[0]!=$parent)
             {
-                my $coord_head = $node->get_parent();
-                my $eparent = $coord_head->get_parent();
-                my $grandparent = $eparent->get_parent();
-                if($grandparent)
-                {
-                    $coord_head->set_parent($grandparent);
-                    $eparent->set_parent($coord_head);
-                    my @epchildren = $eparent->get_children();
-                    for my $child (@epchildren)
-                    {
-                        $child->set_parent($coord_head);
-                    }
-                }
-            }
-            else
-            {
-                my $parent = $node->get_parent();
                 my $grandparent = $parent->get_parent();
-                if($parent->is_member())
-                {
-                    $parent->set_is_member(0);
-                    $node->set_is_member(1);
-                }
                 $node->set_parent($grandparent);
+                $node->set_afun($parent->afun());
                 my @be_children = $parent->get_children();
                 for my $child (@be_children)
                 {
                     $child->set_parent($node);
                 }
                 $parent->set_parent($node);
+                $parent->set_afun('AuxV');
             }
         }
     }
@@ -505,4 +511,5 @@ conversion of Penn Treebank) to the HamleDT (Prague) style.
 =cut
 
 # Copyright 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011 Martin Popel <popel@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
