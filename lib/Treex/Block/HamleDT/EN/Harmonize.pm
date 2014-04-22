@@ -15,9 +15,6 @@ has iset_driver =>
                      'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
 );
 
-###!!! The code from the following blocks should be applied here but has not been applied yet.
-#HamleDT::RehangModalVerbs
-
 sub process_zone
 {
     my $self = shift;
@@ -226,9 +223,21 @@ sub deprel_to_afun
         # Verb complement. A typical VC node is a content verb whose parent is a finite form of an auxiliary such as will, has, is, would, be.
         # Most frequent words: be, been, have, and, expected
         # is based/VC, before being released/VC, did n't interfere/VC, have n't raised/VC
+        # Note that verbal (infinitive) arguments of some verbs are also labeled VC.
+        # These "some" verbs are roughly the modal verbs (tagged MD) with the exception of "ought" and with the addition of "be going to";
+        # also note that the auxiliaries for future tense ("will") and conditional ("would") are tagged MD as well:
+        # will, would; must, can, could, may, might, shall, should; [be] going [to]
         elsif($deprel eq 'VC')
         {
-            $afun = 'AuxV';
+            if($parent->form() =~ m/^(must|can|could|may|might|shall|should|going)$/i)
+            {
+                $afun = 'Obj';
+            }
+            else
+            {
+                # The structure will be later changed. This node will become parent and the current parent will become child, labeled AuxV.
+                $afun = 'AuxV';
+            }
         }
         # Modifier of verb. Typically a subordinating conjunction or negation.
         # Most frequent words: to, that, n't, not, as
