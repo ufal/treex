@@ -6,6 +6,7 @@ use utf8;
 use LWP::UserAgent;
 use URL::Encode;
 use JSON;
+use HTML::Entities;
 
 has auth_token         => ( is => 'rw', isa => 'Maybe[Str]', default => undef );
 has auth_token_in_file => ( is => 'rw', isa => 'Maybe[Str]', default => undef );
@@ -19,6 +20,10 @@ my $SL    = 'source'; # src lang param
 my $TL    = 'target'; # tgt lang param
 my $Q     = 'q';      # src text param
 my $KEY   = 'key';    # authorization key param
+
+# POST 
+my %POST_PARAMS;
+my %POST_HEADERS = ('X-HTTP-Method-Override' => 'GET');
 
 sub BUILD {
     my ($self) = @_;
@@ -74,7 +79,12 @@ sub translate {
     # make the request
     # TODO: implement POST instead of GET to avoid length limit (2K characters)
     # log_info $query;
-    my $response = $ua->get($query);
+    #my $response = $ua->get($query);
+
+	# using POST
+	%POST_PARAMS = ("$KEY" => $self->auth_token, "$SL" => $src_lang, "$TL" => $tgt_lang, "$Q" => $src_texts_array_ref );
+	my $response = $ua->post($URL, \%POST_PARAMS , %POST_HEADERS);
+
 
     # process the response
     if ( $response->is_success ) {
@@ -83,7 +93,7 @@ sub translate {
         my $json = decode_json $response->decoded_content;
         my $translations = $json->{data}->{translations};
         foreach my $translation (@$translations) {
-            push @$result, $translation->{translatedText};
+            push @$result, HTML::Entities::decode($translation->{translatedText});
         }
 
         # log_info "Translated $src_lang:'$src_text'" .
