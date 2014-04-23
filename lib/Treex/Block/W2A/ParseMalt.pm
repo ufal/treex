@@ -86,16 +86,7 @@ sub get_feat
     }
     elsif($source =~ m/^i(nter)?set/i && $node->get_iset_pairs_list())
     {
-        my @list = $node->get_iset_pairs_list();
-        my @pairs;
-        for(my $i = 0; $i<=$#list; $i += 2)
-        {
-            my $pair = "$list[$i]=$list[$i+1]";
-            # Interset values might contain vertical bars if there are disjunctions of values.
-            $pair =~ s/\|/;/g;
-            push(@pairs, $pair);
-        }
-        $feat = join('|', @pairs);
+        $feat = $node->get_iset_conll_feat();
     }
     else
     {
@@ -114,7 +105,7 @@ Treex::Block::W2A::ParseMalt
 
 =head1 DECRIPTION
 
-Malt parser (developed by Johan Hall, Jens Nilsson and Joakim Nivre, see http://maltparser.org)
+Malt parser (developed by Johan Hall, Jens Nilsson and Joakim Nivre, see http://maltparser.org/)
 is used to determine the topology of a-layer trees and I<deprel> edge labels.
 
 =head1 SEE ALSO

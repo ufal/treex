@@ -44,13 +44,7 @@ sub process_atree {
             $feat = $anode->conll_feat();
         }
         elsif ( $self->feat_attribute eq 'iset' && $anode->get_iset_pairs_list() ) {
-            my @list = $anode->get_iset_pairs_list();
-            my @pairs;
-            for ( my $i = 0; $i <= $#list; $i += 2 )
-            {
-                push( @pairs, "$list[$i]=$list[$i+1]" );
-            }
-            $feat = join( '|', @pairs );
+            $feat = $anode->get_iset_conll_feat();
         }
         else {
             $feat = '_';
