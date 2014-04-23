@@ -214,6 +214,10 @@ sub copy_attributes {
         $other->set_attr( $attribute, $value );
     }
 
+    # copy values of interset features
+    my $f = $self->get_iset_structure();
+    $other->set_iset($f);
+
     # deep copy of wild attributes
     $other->set_wild( Storable::dclone( $self->wild ) );
 
