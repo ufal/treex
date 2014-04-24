@@ -16,8 +16,6 @@ sub next_document_text {
         return read_file($FH);
     }
     
-    # TODO: fix this. Once, it worked.
-    log_warn "Sorry, lines_per_doc is not supported in the current version of Read::Syntagrus";
     my $text;
     my $sent_count = 0;
 
@@ -74,6 +72,8 @@ sub next_document {
             $newnode->set_form($word_form);
             $newnode->set_lemma( $attr{'LEMMA'} );
             $newnode->set_tag( $attr{'FEAT'} );
+            # Derive conll/cpos, conll/pos and conll/feat from tag.
+            $self->fill_conll_attributes( $newnode );
             $newnode->set_conll_deprel( $attr{'LINK'} );
             $attr{'DOM'} = 0 if $attr{'DOM'} eq '_root';
             push @parents, $attr{'DOM'};
@@ -81,6 +81,31 @@ sub next_document {
         }
     }
     return $document;
+}
+
+#------------------------------------------------------------------------------
+# Fills the CoNLL attributes CPOS, POS and FEAT, based on the value of tag.
+# Some subsequent blocks may need these attributes.
+#------------------------------------------------------------------------------
+sub fill_conll_attributes
+{
+    my $self = shift;
+    my $node = shift;
+    my $tag = $node->tag();
+    if (!defined($tag) || $tag =~ m/^\s*$/)
+    {
+        my $id = $node->id();
+        my $form = $node->form() // ''; # / syntax highlighting hack
+        log_warn("Undefined tag of node id='$id' form='$form'");
+        return;
+    }
+    # Example tag: 'S ЕД МУЖ ИМ ОД'
+    my @features = split(/\s+/, $tag);
+    my $pos = shift(@features);
+    my $feat = @features ? join('|', @features) : '_';
+    $node->set_conll_cpos($pos);
+    $node->set_conll_pos($pos);
+    $node->set_conll_feat($feat);
 }
 
 1;
@@ -124,6 +149,7 @@ L<Treex::Core::Bundle>
 =head1 AUTHOR
 
 David Mareček
+Dan Zeman
 
 =head1 COPYRIGHT AND LICENSE
 

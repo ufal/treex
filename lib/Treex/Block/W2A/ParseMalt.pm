@@ -36,6 +36,11 @@ sub parse_chunk {
     my @features = map { get_feat($_, $self->feat_attribute) } @a_nodes;
 
     # parse sentence
+    log_info("PARSING ".join(' ', @forms));
+    log_info("LEMMATA ".join(' ', @lemmas));
+    log_info("CPOSTAG ".join(' ', @cpos));
+    log_info("POSTAGS ".join(' ', @pos));
+    log_info("INTRSET ".join(' ', @features));
     my ( $parents_rf, $deprel_rf ) = $self->_parser->parse( \@forms, \@lemmas, \@cpos, \@pos, \@features );
 
     # build a-tree

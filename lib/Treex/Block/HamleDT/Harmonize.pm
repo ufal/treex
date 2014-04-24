@@ -78,6 +78,12 @@ sub convert_tags
     {
         $self->convert_tag( $node );
         $self->set_pdt_tag( $node );
+        # For the case we later access the CoNLL attributes, reset them as well.
+        # (We can still specify other source attributes in Write::CoNLLX and similar blocks.)
+        my $tag = $node->tag(); # now the PDT tag
+        $node->set_conll_cpos(substr($tag, 0, 1));
+        $node->set_conll_pos(substr($tag, 0, 2).$node->get_iset('case'));
+        $node->set_conll_feat($node->get_iset_conll_feat());
     }
 }
 
