@@ -28,6 +28,7 @@ sub process_bundle {
 
 	my $ref_zone;
 	my @ref_parents;
+	my @ref_afuns;
 	my @ref_is_member;
 	my @ref_is_shared_modifier;
 	
@@ -46,6 +47,7 @@ sub process_bundle {
 	}
 	
    	@ref_parents = map { $_->get_parent->ord } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
+   	@ref_afuns = map { defined($_->afun) ? $_->afun : defined($_->conll_deprel) ? $_->conll_deprel : '' } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
    	@ref_is_member = map { $_->is_member ? 1 : 0 } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
    	@ref_is_shared_modifier = map { $_->is_shared_modifier ? 1 : 0 } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
 
@@ -53,6 +55,7 @@ sub process_bundle {
 	    $self->_set_number_of_nodes($self->_number_of_nodes + @ref_parents);	
 	    foreach my $compared_zone (@compared_zones) {
 	        my @parents = map { $_->get_parent->ord } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
+	        my @afuns = map { defined($_->afun) ? $_->afun : defined($_->conll_deprel) ? $_->conll_deprel : '' } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
 	        my @is_member = map { $_->is_member ? 1 : 0 } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
 	        my @is_shared_modifier = map { $_->is_shared_modifier ? 1 : 0 } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
 	
@@ -69,12 +72,17 @@ sub process_bundle {
 
 	        foreach my $i ( 0 .. $#parents ) {
 	            my $eqp = $parents[$i] == $ref_parents[$i];
+	            my $eqa = $afuns[$i] eq $ref_afuns[$i];
 	            my $eqm = $is_member[$i] == $ref_is_member[$i];
 	            my $eqs = $is_shared_modifier[$i] == $ref_is_shared_modifier[$i];
 	            $self->_same_as_ref->{'UASp('.$label.','.$ref_label.')'}++ if($eqp);
 	            $self->_same_as_ref->{'UASpm('.$label.','.$ref_label.')'}++ if($eqp && $eqm);
 	            $self->_same_as_ref->{'UASps('.$label.','.$ref_label.')'}++ if($eqp && $eqs);
 	            $self->_same_as_ref->{'UASpms('.$label.','.$ref_label.')'}++ if($eqp && $eqm && $eqs);
+	            $self->_same_as_ref->{'LASp('.$label.','.$ref_label.')'}++ if($eqp && $eqa);
+	            $self->_same_as_ref->{'LASpm('.$label.','.$ref_label.')'}++ if($eqp && $eqa && $eqm);
+	            $self->_same_as_ref->{'LASps('.$label.','.$ref_label.')'}++ if($eqp && $eqa && $eqs);
+	            $self->_same_as_ref->{'LASpms('.$label.','.$ref_label.')'}++ if($eqp && $eqa && $eqm && $eqs);
 	            # Depending on block parameters, one of the above values is also "the" UAS required by the caller.
 	            # For the sake of compatibility, we will output it only with the label, without extras.
 	            if ( $eqp &&
