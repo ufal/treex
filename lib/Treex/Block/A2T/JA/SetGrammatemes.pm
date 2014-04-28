@@ -40,6 +40,8 @@ sub assign_grammatemes_to_tnode {
 sub _verb {
     my ($tnode, $tag, $form ) = @_;
 
+    $tnode->set_gram_sempos('v');
+
     # negation (simple solution, should be revised)
     # negative copulas will probably not be set right
     my @negation_nodes = map { $_->form eq "ない" || $_->form eq "ん" } 
@@ -59,10 +61,16 @@ sub _verb {
 
 =item Treex::Block::A2T::JA::SetGrammatemes
 
-Negation grammmatemes of Japanese complex nodes are filled by this block, using
-POS tags and info about auxiliary words.
+Negation grammmatemes of Japanese verb nodes are filled by this block, using
+POS tags and info about auxiliary words. Sempos is also set for verbs,
+because it is needed to generate negative forms correctly after transfer
 
-TODO: set other grammatemes too
+TODO: set other grammatemes too, mainly:
+    - degcmp
+    - politeness
+    - tense
+    - verbmod
+... and maybe others
 
 =back
 

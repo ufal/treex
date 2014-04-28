@@ -4,9 +4,9 @@ use Treex::Core::Common;
 use Encode;
 extends 'Treex::Core::Block';
 
-# We rehang copulas "だ" and "です" which are auxiliary words
-# But they are often dependent on non-verb token (noun, adjective...)
-# So they function as a predicate in a sentence (often translated as "to be")
+# We rehang copulas "だ" and "です" which are marked as auxiliary verbs
+# but they are often dependent on non-verb token (noun, adjective...)
+# so they function as a predicate in a sentence (often translated as "to be")
 # Note that polite form "でございます" contains lemma "だ" so it is also processed
 
 # TODO: take care of negative form of "だ" and "です" (maybe just change lemmas?)
@@ -66,10 +66,9 @@ sub switch_with_parent {
     $a_node->set_parent($granpa);
     $parent->set_parent($a_node);
 
-    # we rehang aux verbs which were dependent on previous parent
-    # we also rehang all the particles dependent on coplusas previous parent
+    # we rehang children from previous parent to copula
+
     foreach my $child ( $parent->get_children() ) {
-        next if ( $child->tag !~ /^Joshi/ && $child->tag !~ /^Jodōshi/ ) ;
         $child->set_parent($a_node);
     }
     return;
@@ -85,7 +84,15 @@ __END__
 
 Modifies the topology of trees parsed by JDEPP parser.
 W2A::JA::RehangConjunctions should be used before using this block.
-The word made into predicate by copula should depend on the copula, because that way the sentence should be easier to translate.
+The word made into predicate by copula should depend on the copula,
+because we hope that way the sentence should be easier to translate.
+
+---
+
+Suggested order of applying Rehang* blocks:
+W2A::JA::RehangAuxVerbs
+W2A::JA::RehangCopulas
+W2A::JA::RehangParticles
 
 =back
 

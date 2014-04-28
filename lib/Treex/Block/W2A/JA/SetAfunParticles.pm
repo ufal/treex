@@ -19,8 +19,8 @@ sub process_atree {
     
     # Now we can use effective children (without diving), since Coord is filled.
     foreach my $node ( grep { !$_->afun } @all_nodes ) {
-        my $auxP_afun = get_AuxP_afun($node) or next;
-        $node->set_afun($auxP_afun);
+        my $aux_afun = get_Particle_afun($node) or next;
+        $node->set_afun($aux_afun);
     }
                                                                                     return 1;
                                                                               
@@ -31,10 +31,13 @@ sub is_coord {
     return any { $_->is_member } $node->get_children();
 }
 
-sub get_AuxP_afun {
+sub get_Particle_afun {
     my ($node) = @_;
 
-    # we need to set different Afun for "て" particle (for now we treat it like aux verb
+    # we treat adverbial particles same way as adverbs
+    return 'Adv' if $node->tag =~ /FukuJoshi/;
+
+    # we need to set different Afun for "て" particle (for now we treat it like aux verb)
     return 'AuxV' if ( $node->form eq "て" && $node->tag =~ /Setsuzoku/ ) ;
 
     return 'AuxP' if $node->tag =~ /^Joshi/ ;
@@ -54,6 +57,7 @@ Treex::Block::W2A::JA::SetAfunParticles
 
 Fills afun attributes for particles.
 C<Coord> (coordinating conjunction), C<AuxP> (we treat almost every particle as preposition). C<AuxV> is used for particle "て".
+We also set C<Adv> for adverbial particles.
 This block doesn't change already filled afun values 
 
 =head1 AUTHORS

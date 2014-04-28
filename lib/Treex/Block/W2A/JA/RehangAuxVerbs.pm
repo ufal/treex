@@ -1,14 +1,9 @@
-package Treex::Block::W2A::JA::RehangConjunctions;
+package Treex::Block::W2A::JA::RehangAuxVerbs;
 use Moose;
 use Treex::Core::Common;
 use Encode;
 extends 'Treex::Core::Block';
 
-# We process only conjunctive articles here
-
-# While recursively depth-first-traversing the tree
-# we sometimes rehang already processed parent node as a child node.
-# But we don't want to process such nodes again.
 my %is_processed;
 
 sub process_atree {
@@ -38,17 +33,13 @@ sub fix_subtree {
 sub should_switch_with_parent {
     my ($a_node) = @_;
     my $tag = $a_node->tag;
-    my $form = $a_node->form;
-    return 0 if $tag !~ /^Joshi_Setsuzoku/;
-
-    # we need to treat "て" particle differently
-    return 0 if $form eq "て";
+    return 0 if ( $tag !~ /^Dōshi/ );
 
     my $parent = $a_node->get_parent();
     return 0 if $parent->is_root();
 
-    # All particles processed in following steps must stand after the word to which they are related
-    return 0 if $a_node->precedes($parent);
+    # check, if our verb is dependent on a non-independent verb
+    return 0 if $parent->tag !~ /_HiJiritsu/;
 
     return 1;
 }
@@ -59,7 +50,14 @@ sub switch_with_parent {
     my $granpa = $parent->get_parent();
     $a_node->set_parent($granpa);
     $parent->set_parent($a_node);
-    return;
+
+    # we must also rehang other nodes which shouldnt be dependent on the
+    # non-independent verb
+    foreach my $child ($parent->get_children()) {
+      # we don't want to rehang aux verbs
+      $child->set_parent($a_node) if ($child->tag !~ /Jodōshi/);
+    }
+
 }
 
 1;
@@ -68,17 +66,21 @@ __END__
 
 =over
 
-=item Treex::Block::W2A::JA::RehangConjunctions
+=item Treex::Block::W2A::JA::RehangAuxVerbs
 
-Modifies the topology of trees parsed by JDEPP parser so it easier to work with later (transforming to t-layer, transfer ja2cs).
-At the moment we only rehang the particles but not the conjuncts
+Verbs (Dōshi) with subtag HiJiritsu (non-independent) should be
+dependent on independent verbs (subtag Jiritsu) and not vice versa.
+This block takes care of that.
 
-TODO: fix this
+---
 
-TODO: correct some special cases, take care of conjuncions between two sentences
+Suggested order of applying Rehang* blocks:
+W2A::JA::RehangAuxVerbs
+W2A::JA::RehangCopulas
+W2A::JA::RehangParticles
 
 =back
 
 =cut
 
-Author: Dusan Varis
+# Author: Dusan Varis

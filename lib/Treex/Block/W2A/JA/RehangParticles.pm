@@ -46,11 +46,14 @@ sub should_switch_with_parent {
     my ($a_node) = @_;
     my $tag = $a_node->tag;
     return 0 if $tag !~ /^Joshi/;
-   
-    # TODO: We may not want to rehang all particles (for example sentence ending particles)
 
-    #Conjunctive particles should be taken care of independently
+    # TODO: we do not want to rehang every particle
+
+    # conjunctive particles should be taken care of independently
     return 0 if $tag =~ /Setsuzoku/;
+    
+    # adverbial particles shouldn't be rehanged
+    return 0 if $tag =~ /FukuJoshi/;
 
     my $parent = $a_node->get_parent();
     return 0 if $parent->is_root();

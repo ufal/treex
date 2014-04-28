@@ -69,7 +69,7 @@ sub process_zone {
         my $wordform = $features[0];
 
         #TODO: should use whole IPADIC tagset (or JDEPP parser is bound to make mistakes sometimes)
-        my $bTag = $features[1].'_'.$features[2];
+        my $bTag = $features[1].'_'.$features[2].'_'.$features[3].'_'.$features[4];
         my $lemma = $features[7];      
 
     	if ($bTag !~ "BOS" && $bTag !~ "空白") {
@@ -78,8 +78,8 @@ sub process_zone {
 
             # $debug = $wordform if $bTag =~ "サ変接続";
 
-            $bTag =~ s{\_\*}{};
-            $bTag =~ s{／.*}{};
+            #$bTag =~ s{\_\*}{\_\-}g;
+            #$bTag =~ s{／}{\/};
             $bTag =~ s{^(.+)$}{<$1>};
 
             my $eTag = $bTag;
@@ -96,7 +96,7 @@ sub process_zone {
     # create a-tree
     my $a_root    = $zone->create_atree();
     my $tag_regex = qr{
-        <(\w+)> #<tag>
+        <([^\_]+_[^\_]+_[^\_]+_[^\_]+)> #<tag>
         ([^<]+) #form
         </\1>   #</tag>
         (.+)    #lemma
@@ -162,7 +162,8 @@ Treex::Block::W2A::JA::TagMeCab
 =head1 DESCRIPTION
 
 Each sentence is tokenized and tagged using C<MeCab> (Ipadic POS tags).
-Ipadic tagset uses hierarchical tags. This module uses only basic tag and first subtag layer if available.
+Ipadic tagset uses hierarchical tags. There are four levels of hierarchy,
+each level is separated by "_". Empty kategories are marked as "*".
 Tags are in kanji, in the future they should be replaced by Romanized tags or their abbreviations (other japanese treex modules should be modified accordingly).
 
 =head1 AUTHORS

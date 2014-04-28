@@ -410,6 +410,20 @@ my $export_rules = {
             ];
         },
     },
+    "jaa" => {    # Japanese a-layer, more or less canonic
+        "sort"    => "ord",
+        "factors" => sub {
+            my $n = shift;
+            return [
+                $n->get_attr('form'),
+                $n->get_attr('lemma'),
+                $n->get_attr('tag'),
+                $n->get_attr('ord'),
+                ( defined $n->get_parent ? $n->get_parent->get_attr('ord') : "0" ),
+                $n->get_attr('afun'),
+            ];
+        },
+    },
     "cst" => {
         "sort"    => "ord",
         "factors" => sub {
@@ -512,6 +526,66 @@ my $export_rules = {
                     "is_relclause_head",
                     "val_frame.rf",
                     )
+            ];
+        },
+    },
+    "jat" => {  # Japanese t-layer
+        "sort"    => "ord",
+        "factors" => sub {
+            my $n = shift;
+            return [
+
+                # obligatory attributes
+                $n->get_attr('t_lemma'),
+                $n->get_attr('functor'),
+                $n->get_attr('ord'),
+                ( defined $n->get_parent ? $n->get_parent->get_attr('ord') : "0" ),
+
+                (
+
+                    # optional attributes, default to '-'
+                    map {
+                        my $val = $n->get_attr($_);
+                        defined $val && $val ne "" ? $val : "-"
+                        } (
+                        "nodetype",
+                        "formeme",
+                        "gram/sempos",
+                        "gram/number",
+                        "gram/negation",
+                        "gram/tense",
+                        "gram/verbmod",
+                        "gram/deontmod",
+                        "gram/indeftype",
+                        "gram/aspect",
+                        "gram/numertype",
+                        "gram/degcmp",
+                        "gram/dispmod",
+                        "gram/gender",
+                        "gram/iterativeness",
+                        "gram/person",
+                        "gram/politeness",
+                        "gram/resultative",
+                        "is_passive",
+                        "is_member",
+                        "is_clause_head",
+                        "is_relclause_head",
+                        "val_frame.rf",
+                        )
+                ),
+
+                # Something unfinished...
+                ## lex.rf's ord
+                #eval {
+                #    my $a_ord    = 0;
+                #    my $a_lex_rf = $n->get_attr('a/lex.rf');
+                #    if ( defined $a_lex_rf ) {
+                #        my $document = $n->get_document;
+                #        my $a_node   = $document->get_node_by_id($a_lex_rf);
+                #        $a_ord = $a_node->get_attr("ord");
+                #    }
+                #    $a_ord;
+                #    }
             ];
         },
     },

@@ -143,10 +143,10 @@ sub get_afun {
     # TODO: further modify for japanese
 
     # Possesive 's
-    return 'Atr' if $tag eq 'POS';
+    #return 'Atr' if $tag eq 'POS';
 
     # Particles of phrasal verbs
-    return 'AuxV' if $tag eq 'RP';
+    #return 'AuxV' if $tag eq 'RP';
 
     # Punctuation
     # AuxK = terminal punctuation of a sentence
@@ -160,24 +160,28 @@ sub get_afun {
     return 'AuxG' if ( $form =~ /^(\p{Punct}+|-LRB-|-RRB-|``)$/ && $form ne '%' );
 
     # Articles a, an, the
-    my $lemma = $node->lemma;
-    return 'AuxA' if $lemma =~ /^(an?|the)$/ && $tag eq 'DT';
+    #my $lemma = $node->lemma;
+    #return 'AuxA' if $lemma =~ /^(an?|the)$/ && $tag eq 'DT';
 
-    # Negation 
-    return 'Neg' if $lemma eq 'not';
+    # TODO: Negation 
+    #return 'Neg' if $lemma eq 'not';
 
     # Precompute some values (eparent can be the root, so let's use undefs => '')
-    my ($eparent) = $node->get_eparents();
-    my ( $ep_tag, $ep_lemma, $ep_afun ) = $eparent->get_attrs(qw(tag lemma afun), { undefs => '' } );
-    my $ep_is_noun = ( $ep_tag =~ $NOUN_REGEX );
-    my $precedes_ep = $node->precedes($eparent);
+    #my ($eparent) = $node->get_eparents();
+    #my ( $ep_tag, $ep_lemma, $ep_afun ) = $eparent->get_attrs(qw(tag lemma afun), { undefs => '' } );
+    #my $ep_is_noun = ( $ep_tag =~ $NOUN_REGEX );
+    #my $precedes_ep = $node->precedes($eparent);
+
+
+    # TODO: Does Japanese have determiners?
+    #    -  Do we need to detect them?
 
     # Determiners (except the already solved articles)
-    if ( $tag eq 'DT' ) {
-        return 'Atr' if $ep_is_noun && $precedes_ep;
-        return 'Adv' if $ep_tag =~ /^JJ/;
-        return 'Obj' if $ep_tag =~ /^V/;
-    }
+    #if ( $tag eq 'DT' ) {
+    #    return 'Atr' if $ep_is_noun && $precedes_ep;
+    #    return 'Adv' if $ep_tag =~ /^JJ/;
+    #    return 'Obj' if $ep_tag =~ /^V/;
+    #}
 
     # Adjectives and possesive pronouns ("your", "mine")
     # Most adjectives are Atr ($ep_is_noun) except for:
@@ -185,63 +189,63 @@ sub get_afun {
     # "It remains red(parent=remains, afun=Atr)." ... not considered a copula
     # according to http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s03.html#predsljm
     # "V našem pojetí za sponu pokládáme pouze sloveso být, ačkoli v běžných mluvnicích to bývá i stát se apod."
-    if ( $tag =~ /^(JJ|PRP\$)/ ) {
-        return 'Pnom' if $ep_lemma eq 'be' && !$precedes_ep;
-        return 'Atr';
-    }
+    #if ( $tag =~ /^(JJ|PRP\$)/ ) {
+    #    return 'Pnom' if $ep_lemma eq 'be' && !$precedes_ep;
+    #    return 'Atr';
+    #}
 
     # Adverbs
-    if ( $tag =~ /^RB/ ) {
-        return 'Atr' if $ep_is_noun;
-        return 'Adv';
-    }
+    #if ( $tag =~ /^RB/ ) {
+    #    return 'Atr' if $ep_is_noun;
+    #    return 'Adv';
+    #}
 
     # Nouns/Verbs/Numerals/Predeterminers as Atr
-    if ( $tag =~ $NOUN_REGEX || $tag =~ /^(V|MD|CD|PDT)/ ) {
-        return 'Atr' if $ep_is_noun;
-    }
+    #if ( $tag =~ $NOUN_REGEX || $tag =~ /^(V|MD|CD|PDT)/ ) {
+    #    return 'Atr' if $ep_is_noun;
+    #}
 
     # Nouns/determiners/verbs under preposition/subord. conjunction
-    my $grandpa = $eparent->get_parent();
-    my $i_am_noun = $tag =~ $NOUN_REGEX;
-    if ( ( $i_am_noun || $tag =~ /^(DT|V|MD)/ ) && $ep_afun =~ /Aux[PC]/ && $grandpa ) {
-        my $grandpa_tag   = $grandpa->tag   || '_root';
-        my $grandpa_lemma = $grandpa->lemma || '_root';
+    #my $grandpa = $eparent->get_parent();
+    #my $i_am_noun = $tag =~ $NOUN_REGEX;
+    #if ( ( $i_am_noun || $tag =~ /^(DT|V|MD)/ ) && $ep_afun =~ /Aux[PC]/ && $grandpa ) {
+    #    my $grandpa_tag   = $grandpa->tag   || '_root';
+    #    my $grandpa_lemma = $grandpa->lemma || '_root';
 
         # "This is of great interest(afun=Pnom,parent=of,grandpa=is)."
-        return 'Pnom' if $grandpa_lemma eq 'be' && $ep_lemma eq 'of' && $grandpa->precedes($node);
-        return 'Adv' if $grandpa_tag =~ /^(V|MD)/;
-        return 'Atr' if $grandpa_tag =~ $NOUN_REGEX;
-        return 'Adv' if $i_am_noun;
-    }
+    #    return 'Pnom' if $grandpa_lemma eq 'be' && $ep_lemma eq 'of' && $grandpa->precedes($node);
+    #    return 'Adv' if $grandpa_tag =~ /^(V|MD)/;
+    #    return 'Atr' if $grandpa_tag =~ $NOUN_REGEX;
+    #    return 'Adv' if $i_am_noun;
+    #}
 
     # Nouns under verbs (but subjects are already solved)
-    if ( $i_am_noun && $ep_tag =~ /^(V|MD)/ ) {
+    #if ( $i_am_noun && $ep_tag =~ /^(V|MD)/ ) {
 
         # "This month(afun=Adv), we are happy."
-        return 'Adv' if _is_adverbial_noun($lemma);
+    #    return 'Adv' if _is_adverbial_noun($lemma);
 
         # "It is a dog(afun=Pnom)"
         # TODO: questions -- "Is immigration a burden for the economy?"
-        return 'Pnom' if $ep_lemma eq 'be' && !$precedes_ep;
+    #    return 'Pnom' if $ep_lemma eq 'be' && !$precedes_ep;
 
-        return 'Obj' if !$precedes_ep || $tag =~ /^W/;
-        return 'NR';
-    }
+    #    return 'Obj' if !$precedes_ep || $tag =~ /^W/;
+    #    return 'NR';
+    #}
 
     # Verbs under verbs
-    if ( $tag =~ /^(V|MD)/ && $ep_tag =~ /^(V|MD)/ ) {
+    #if ( $tag =~ /^(V|MD)/ && $ep_tag =~ /^(V|MD)/ ) {
 
         # TODO: distinguish Obj and Adv by better rules
         # "I must|want|need|have to go(afun=Obj)"
-        return 'Obj' if $ep_tag eq 'MD' || $ep_lemma =~ /^(have|need)$/;
+    #    return 'Obj' if $ep_tag eq 'MD' || $ep_lemma =~ /^(have|need)$/;
 
         # "Go there to see(afun=Adv) it."
-        return 'Adv';
-    }
+    #    return 'Adv';
+    #}
 
     # And the rest - we don't know
-    return 'NR';
+    #return 'NR';
 }
 
 # Adverbials are usually expressed by prepositional phrases

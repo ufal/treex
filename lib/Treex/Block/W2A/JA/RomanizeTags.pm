@@ -57,6 +57,8 @@ sub process_anode {
             $tag =~ s{空白}{Kūhaku};
             $tag =~ s{読点}{Tōten};
             $tag =~ s{数}{Kazu};
+            $tag =~ s{地域}{Chiiki};
+            $tag =~ s{国}{Kuni};
 
     $anode->set_tag($tag);
 
