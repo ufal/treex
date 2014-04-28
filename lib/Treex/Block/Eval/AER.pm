@@ -73,14 +73,35 @@ sub process_end {
     # AER = 1 -   ------------------
     #                 |A| + |S| 
 	# --------------------------------
-	my $AER = 100;
-	my $den = $proposed_edges + $sure_edges;
-	# 'possible_intersection' is at least 'sure_intersection'
-	# TODO: should replace with the correct estimate
-	my $num = $sure_intersection * 2;
-	if ($den > 0) {
-		$AER = (1 - ($num / $den)) * 100;
-	}
+#	my $AER = 100;
+#	my $den = $proposed_edges + $sure_edges;
+#	# 'possible_intersection' is at least 'sure_intersection'
+#	# TODO: should replace with the correct estimate
+#	my $num = $sure_intersection * 2;
+#	if ($den > 0) {
+#		$AER = (1 - ($num / $den)) * 100;
+#	}
+	
+	# --------------------------------
+	# Alignment Error Rate (AER)
+	# --------------------------------
+	#       | proposed alignments ^ gold alignments |
+	# P =   -----------------------------------------
+	#              |proposed alignments|
+    # 
+  	#       | proposed alignments ^ gold alignments |
+	# R =   -----------------------------------------
+	#              |gold alignments|
+
+    #			       P * R 
+    # AER = 1 -  2 *  -------
+    #                  P + R 
+	# --------------------------------
+    my $gold_edges = $sure_edges;
+    my $P = ($sure_intersection * 1.0) / $proposed_edges; 
+    my $R = ($sure_intersection * 1.0) / $gold_edges;
+	my $AER = 1 - (2* ($P * $R)) / ($P + $R);
+	
 	print "Alignment Error Rate (AER)\t:\t$AER\n";
 }
 
