@@ -22,7 +22,9 @@ sub process_atree {
         foreach my $i (0 .. $#$alinodes) {
             if ($$alitypes[$i] =~ /int/) {
                 $alignment{$node} = $$alinodes[$i];
-                last;
+            }
+            else {
+                $node->delete_aligned_node($$alinodes[$i]);
             }
         }
     }
@@ -32,6 +34,9 @@ sub process_atree {
             $total_count++;
             my $parent = $node->get_parent;
             if (defined $alignment{$parent} && $alignment{$parent} == $counterpart->get_parent) {
+                $biedge_count++;
+            }
+            elsif ($parent->is_root && $counterpart->get_parent->is_root) {
                 $biedge_count++;
             }
         }
