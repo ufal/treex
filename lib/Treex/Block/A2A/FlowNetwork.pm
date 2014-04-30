@@ -2,7 +2,8 @@ package Treex::Block::A2A::FlowNetwork;
 use Moose;
 use Treex::Core::Common;
 use Graph;
-use Graph::Undirected;
+use Graph::Directed;
+use Graph::MaxFlow;
 
 extends 'Treex::Core::Block';
 
@@ -13,14 +14,19 @@ sub process_bundle {
     my ( $self, $bundle ) = @_;
     my $source_tree = $bundle->get_tree( $self->language, 'a', $self->selector);
     my $target_tree = $bundle->get_tree( $self->to_language, 'a', $self->to_selector);
-    my $network = Graph::Undirected->new;
-    foreach my $node ($source_tree->get_descendants) {
+    my $network = Graph::Directed->new;
+    my @source_nodes = $source_tree->get_descendants();
+    my @target_nodes = $target_tree->get_descendants();
+    return if @source_nodes < 2 || @target_nodes < 2;
+    foreach my $node (@source_nodes) {
         my $ord = $node->ord;
-        my @scores = split /\s/, $node->wild()->{'mst_score'};
+        print $node->form."\n" if !defined $node->wild()->{'mst_score'};
+        my @scores = @{$node->wild()->{'mst_score'} || [0]};
         foreach my $to_ord (0 .. $#scores) {
-            $network->add_weighted_edge("sn$ord", "se$ord", $score[$to_ord]);
-            $network->add_weighted_edge("se$ord", "sn$to_ord", $score[$to_ord]);
-            $network->add_weighted_edge("s", "se$ord", 2*$score[$to_ord]);
+            next if $ord == $to_ord;
+            $network->add_weighted_edge("se$ord", "sn$ord", $scores[$to_ord]);
+            $network->add_weighted_edge("se$ord", "sn$to_ord", $scores[$to_ord]);
+            $network->add_weighted_edge("s", "se$ord", 2*$scores[$to_ord]);
         }
         my ($alinodes, $alitypes) = $node->get_aligned_nodes();
         foreach my $n (0 .. $#$alinodes) {
@@ -30,15 +36,17 @@ sub process_bundle {
             $network->add_weighted_edge("sn$ord", "tn$target_ord", $weight);
         }
     }
-    foreach my $node ($target_tree->get_descendants) {
+    foreach my $node (@target_nodes) {
         my $ord = $node->ord;
-        my @scores = split /\s/, $node->wild()->{'mst_score'};
+        my @scores = @{$node->wild()->{'mst_score'} || [0]};
         foreach my $to_ord (0 .. $#scores) {
-            $network->add_weighted_edge("tn$ord", "te$ord", $score[$to_ord]);
-            $network->add_weighted_edge("te$ord", "tn$to_ord", $score[$to_ord]);
-            $network->add_weighted_edge("t", "te$ord", 2*$score[$to_ord]);
+            next if $ord == $to_ord;
+            $network->add_weighted_edge("tn$ord", "te$ord", $scores[$to_ord]);
+            $network->add_weighted_edge("tn$to_ord", "te$ord", $scores[$to_ord]);
+            $network->add_weighted_edge("te$ord", "t", 2*$scores[$to_ord]);
         }
     }
+    my $maxflow = Graph::MaxFlow::max_flow($network, "s", "t");
 }
 
 1;
