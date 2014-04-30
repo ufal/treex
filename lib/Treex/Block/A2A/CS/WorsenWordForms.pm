@@ -9,6 +9,7 @@ has 'err_distr' => ( is => 'rw', isa => 'HashRef', builder => '_get_err_distr' )
 
 my $changed = 0;
 my $total = 0;
+my $unable_to_generate = 0;
 
 use LanguageModel::MorphoLM;
 use Treex::Tool::Lexicon::Generation::CS;
@@ -88,6 +89,7 @@ sub get_form {
     }
     if ( !$form ) {
 #        print STDERR "Can't find a word for lemma '$lemma' and tag '$tag'.\n";
+        $unable_to_generate++;
     }
     else {
         $changed++;
@@ -112,7 +114,7 @@ sub regenerate_node {
 }
 
 sub process_end {
-    log_info "$changed wordforms (out of $total) have been changed.";
+    log_info "$changed wordforms (out of $total) have been changed. Generator failed in generation of $unable_to_generate tokens.";
 
     return;
 }
