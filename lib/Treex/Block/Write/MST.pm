@@ -6,6 +6,7 @@ extends 'Treex::Block::Write::BaseTextWriter';
 has '+language'                        => ( required => 1 );
 has 'deprel_attribute'                 => ( is       => 'rw', isa => 'Str', default => 'afun');
 has 'pos_attribute'                    => ( is       => 'rw', isa => 'Str', default => 'tag' );
+has 'shorten_czech_tags'               => ( is       => 'rw', isa => 'Str', default => 0     );
 
 # if set, the forms will be replaced with 'underscores'
 has 'delex' => (is => 'Bool', is => 'ro', default => 0);
@@ -24,7 +25,14 @@ sub process_atree {
     map{ push @tags, $_->get_attr($self->pos_attribute) }@anodes;
     map{ push @afuns, $_->get_attr($self->deprel_attribute) }@anodes;
 
-	map{ $forms[$_] = '_' }0..$#forms if ($self->delex); 
+	map { $forms[$_] = '_' } (0 ..$#forms) if ($self->delex); 
+    
+    if ($self->shorten_czech_tags) {
+        foreach my $i (0 .. $#tags) {
+            my @positions = split //, $tags[$i];
+            $tags[$i] = $positions[4] eq '-' ? "$positions[0]$positions[1]" : "$positions[0]$positions[4]";
+        }
+    }
 
     my $form_line = join("\t", @forms);
     my $tag_line = join("\t", @tags);
@@ -63,9 +71,10 @@ Specifies the name of the node attribute which contains POS tag. The possible va
  
 =back
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
+David Marecek <marecek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
