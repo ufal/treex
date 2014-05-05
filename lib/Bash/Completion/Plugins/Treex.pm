@@ -115,11 +115,18 @@ Bash::Completion::Plugins::Treex - Bash completion for treex
 
 L<Bash::Completion> profile for C<treex>.
 
-Simply add this line to your C<.bashrc> file:
+Simply add these two lines to your C<.bashrc> file:
 
- source `perldoc -l setup-bash-complete`
+ eval "$(bash-complete setup)"
+ bind 'set show-all-if-ambiguous on'
 
 or run it manually in a bash session.
+
+The second line is optional, but highly recommended
+(unless you already have "set show-all-if-ambiguous on" in your C<~/.inputrc>).
+It overrides the default Bash/Readline behavior,
+so when more completions are possible
+you don't need to press TAB second time to see all the suggestions.
 
 =head1 AUTHOR
 
