@@ -3,6 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BasePMLReader';
 
+use Treex::PML; # Without this, the following use Treex::PML::Instance generates many warnings, e.g. "Can't locate PML.pm"
 use Treex::PML::Factory;
 use Treex::PML::Instance;
 
