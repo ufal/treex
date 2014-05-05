@@ -3,7 +3,6 @@ package Treex::Block::A2T::CS::SetFormeme::NodeInfo;
 use Moose;
 use Treex::Core::Common;
 
-use CzechMorpho;
 require Treex::Tool::Lexicon::CS;
 require Treex::Tool::Lexicon::CS::Numerals;
 require Treex::Tool::Lexicon::CS::NamedEntityLabels;
@@ -45,7 +44,7 @@ has 'ne_type' => ( is => 'ro', isa => 'Str', lazy_build => 1 );
 
 has '_prep_case' => ( is => 'ro', isa => 'HashRef', lazy_build => 1 );
 
-has '_analyzer' => ( is => 'rw', isa => 'Object', lazy => 1, default => sub { CzechMorpho::Analyzer->new() } );
+has '_analyzer' => ( is => 'rw', isa => 'Object', lazy => 1, default => sub { require CzechMorpho; CzechMorpho::Analyzer->new() } );
 
 has 'verbform' => ( is => 'ro', isa => 'Str', lazy_build => 1 );
 
