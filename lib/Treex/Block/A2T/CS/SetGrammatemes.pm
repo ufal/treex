@@ -22,7 +22,10 @@ my %t_lemma2attribs;    # hodnoty atributu, ktere se maji vyplnit na zaklade hod
 my %origrule;
 my %premise;            # seznam moznych premis
 
-get_conversion_rules_from_file("$ENV{TMT_ROOT}/treex/lib/Treex/Block/A2T/CS/conversion_rules.txt");
+sub _my_dir {
+  return dirname((caller)[1]);
+}
+get_conversion_rules_from_file(_my_dir() . "/conversion_rules.txt");
 
 my %tnumber2gnumber = ( 'S' => 'sg', 'P' => 'pl', 'D' => 'pl' );
 my %tgender2ggender = ( 'F' => 'fem', 'I' => 'inan', 'M' => 'anim', 'N' => 'neut' );
