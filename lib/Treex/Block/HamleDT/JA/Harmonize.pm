@@ -195,7 +195,7 @@ sub deprel_to_afun {
             }
             # particles for expressing attitude/empathy, or turning the phrase
             # into a question
-            elsif ($conll_pos eq 'PSE') {
+            elsif ($pos eq 'part' && $form =~ m/^(ne|ka|yo|mono|kke|na|kana|kashira|shi|naa|wa|moN)$/) {
                 $afun = 'AuxO';
             }
             # postpositions after adverbs with no syntactic, but instead
