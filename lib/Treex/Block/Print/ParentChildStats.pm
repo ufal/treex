@@ -47,7 +47,7 @@ sub process_end {
 	print "******************************************\n";
 	foreach my $k ( sort { $_deprel_stats{$b} <=> $_deprel_stats{$a} } keys %_deprel_stats) {
 		my @for_format = split "=>", $k;
-		my $str_line = sprintf("%8s / %-8s : %-5d", $for_format[0], $for_format[1], $_deprel_stats{$k});
+		my $str_line = sprintf("[ %8s / %-8s ] : %-5d", $for_format[0], $for_format[1], $_deprel_stats{$k});
 		print $str_line . "\n";
 	}
 	print "\n";
@@ -56,7 +56,7 @@ sub process_end {
 	print "******************************************\n";
 	foreach my $k ( sort { $_tag_stats{$b} <=> $_tag_stats{$a} } keys %_tag_stats) {
 		my @for_format = split "=>", $k;
-		my $str_line = sprintf("%10s / %-10s : %-5d", $for_format[0], $for_format[1], $_tag_stats{$k});
+		my $str_line = sprintf("[ %10s / %-10s ] : %-5d", $for_format[0], $for_format[1], $_tag_stats{$k});
 		print $str_line . "\n";
 	}
 
