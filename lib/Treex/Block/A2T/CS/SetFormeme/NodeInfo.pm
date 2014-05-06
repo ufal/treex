@@ -44,8 +44,6 @@ has 'ne_type' => ( is => 'ro', isa => 'Str', lazy_build => 1 );
 
 has '_prep_case' => ( is => 'ro', isa => 'HashRef', lazy_build => 1 );
 
-has '_analyzer' => ( is => 'rw', isa => 'Object', lazy => 1, default => sub { require CzechMorpho; CzechMorpho::Analyzer->new() } );
-
 has 'verbform' => ( is => 'ro', isa => 'Str', lazy_build => 1 );
 
 has 'syntpos' => ( is => 'ro', isa => 'Str', lazy_build => 1 );
