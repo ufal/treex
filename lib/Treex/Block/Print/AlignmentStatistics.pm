@@ -23,10 +23,10 @@ has alignment_direction => (
 'Default trg2src means alignment from <language,selector> to <source_language,source_selector> tree. src2trg means the opposite direction.',
 );
 has _stats => ( is => 'ro', default => sub { {} } );
-has one_to_one  => ( is => 'Bool', is => 'rw', default => 0 );
-has one_to_many => ( is => 'Bool', is => 'rw', default => 0 );
-has many_to_one => ( is => 'Bool', is => 'rw', default => 0 );
-has statistics  => ( is => 'Bool', is => 'rw', default => 0 );
+has one_to_one  => ( isa => 'Bool', is => 'rw', default => 0 );
+has one_to_many => ( isa => 'Bool', is => 'rw', default => 0 );
+has many_to_one => ( isa => 'Bool', is => 'rw', default => 0 );
+has statistics  => ( isa => 'Bool', is => 'rw', default => 0 );
 
 sub process_zone {
 	my ( $self, $zone ) = @_;
@@ -35,7 +35,7 @@ sub process_zone {
 	  ->get_zone( $self->source_language, $self->source_selector );
 	my ( $tree, $source_tree ) =
 	  map { $_->get_tree( $self->layer ) } ( $zone, $source_zone );
-	my $local_stat_rf = $self->print_alignment_info( $source_tree, $tree );
+	my $local_stat_rf = $self->get_local_stat( $source_tree, $tree );
 	$self->print_alignment_info($source_tree, $tree, $local_stat_rf);
 }
 
