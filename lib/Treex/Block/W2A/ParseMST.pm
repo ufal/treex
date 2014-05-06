@@ -43,6 +43,8 @@ has decodetype       => ( is => 'ro', isa => 'Str', default => 'non-proj' );
 has pos_attribute    => ( is => 'ro', isa => 'Str', default => 'tag' );
 has deprel_attribute => ( is => 'ro', isa => 'Str', default => 'conll/deprel' );
 
+has shorten_czech_tags => ( is => 'ro', isa => 'Bool', default => 0 );
+
 has robust => (
     is            => 'ro',
     isa           => 'Bool',
@@ -94,6 +96,13 @@ sub parse_chunk {
 
     my @words = map { $_->form } @a_nodes;
     my @tags  = map { $_->get_attr( $self->pos_attribute ) } @a_nodes;
+    
+    if ($self->shorten_czech_tags) {
+        foreach my $i (0 .. $#tags) {
+            my @positions = split //, $tags[$i];
+            $tags[$i] = $positions[4] eq '-' ? "$positions[0]$positions[1]" : "$positions[0]$positions[4]";
+        }
+    }
 
     my ( $parents_rf, $deprel_rf, $matrix_rf ) = $self->_parser->parse_sentence( \@words, \@tags);
 
