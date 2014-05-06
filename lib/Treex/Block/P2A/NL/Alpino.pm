@@ -6,6 +6,17 @@ extends 'Treex::Core::Block';
 
 my %HEAD_SCORE = ('hd' => 6, 'cmp' => 5, 'crd' => 4, 'dlink' => 3, 'rhd' => 2, 'whd' => 1);
 
+sub convert_pos {
+    my $pos = shift;
+    return 'N' if $pos eq 'noun';
+    return 'Art' if $pos eq 'det';
+    return 'Punc' if $pos eq 'punct';
+    return 'V' if $pos eq 'verb';
+    my @chars = split //, $pos;
+    $chars[0] = uc($chars[0]);
+    return join("", @chars);
+}
+
 sub create_subtree {
     my ($p_root, $a_root) = @_;
     my @children = sort {($HEAD_SCORE{$b->wild->{rel}} || 0) <=> ($HEAD_SCORE{$a->wild->{rel}} || 0)} grep {!defined $_->form || $_->form !~ /^\*\-/} $p_root->get_children();
@@ -23,9 +34,10 @@ sub create_subtree {
             $new_node->set_form($child->form);
             $new_node->set_lemma($child->lemma);
             $new_node->set_tag($child->tag);
-            #$new_node->set_attr('ord', ($child->wild->{pord} || $a_root->{ord} || 0));
             $new_node->set_attr('ord', $child->wild->{pord});
             $new_node->set_conll_deprel($child->wild->{rel});
+            $new_node->set_conll_pos(convert_pos($child->wild->{'pos'}));
+            $new_node->set_conll_cpos(convert_pos($child->wild->{'pos'}));
             foreach my $attr (keys %{$child->wild}) {
                 next if $attr =~ /^(pord|rel)$/;
                 $new_node->wild->{$attr} = $child->wild->{$attr};
@@ -53,6 +65,8 @@ sub process_zone {
             $new_node->set_tag($child->tag);
             $new_node->set_attr('ord',$child->wild->{pord});
             $new_node->set_conll_deprel($child->wild->{rel});
+            $new_node->set_conll_pos(convert_pos($child->wild->{'pos'}));
+            $new_node->set_conll_cpos(convert_pos($child->wild->{'pos'}));
             foreach my $attr (keys %{$child->wild}) {
                 next if $attr =~ /^(pord|rel)$/;
                 $new_node->wild->{$attr} = $child->wild->{$attr};
