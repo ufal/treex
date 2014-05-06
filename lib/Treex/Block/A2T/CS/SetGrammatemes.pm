@@ -22,6 +22,7 @@ my %t_lemma2attribs;    # hodnoty atributu, ktere se maji vyplnit na zaklade hod
 my %origrule;
 my %premise;            # seznam moznych premis
 
+use File::Basename;
 sub _my_dir {
   return dirname((caller)[1]);
 }
