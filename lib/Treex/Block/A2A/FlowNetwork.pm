@@ -20,62 +20,96 @@ sub process_bundle {
     my $network = Graph::Directed->new;
     my @source_nodes = $source_tree->get_descendants({'ordered' => 1});
     my @target_nodes = $target_tree->get_descendants({'ordered' => 1});
-    return if @source_nodes < 2 || @target_nodes < 2;
+    my $source_length = scalar @source_nodes;
+    my $target_length = scalar @target_nodes;
+    return if $source_length < 2 || $target_length < 2;
 
-=under construction
     # get source matrix
     my @source_matrix;
-    my $minimum = 0;
-    my $total = 
+    my $source_minimum = 0;
+    my $source_total = 0; 
     foreach my $node (@source_nodes) {
-        my @mst_scores = @{$node->wild()->{'mst_score'} || [0]};
-        #if ($#mst_scores != $#source_nodes + 1) {
-        #   @mst_scores = map {0} (0 .. $#source_nodes + 1);
-        #}
-        my $ord = $node->ord;
+        my @mst_scores = map {sprintf("%.2f",$_)} @{$node->wild()->{'mst_score'} || [0]};
+        if ($#mst_scores != $source_length) {
+            log_warn("mst-scores not filled properly at ".$node->id.".");
+            @mst_scores = map {0} (0 .. $source_length);
+        }
+        foreach my $score (@mst_scores) {
+            $source_minimum = $score if $score < $source_minimum;
+            $source_total += $score;
+        }
         $source_matrix[$node->ord] = \@mst_scores;
     }
-=cut
+
+    # get target matrix
+    my @target_matrix;
+    my $target_minimum = 0;
+    my $target_total = 0;
+    foreach my $node (@target_nodes) {
+        my @mst_scores = map {sprintf("%.2f",$_)} @{$node->wild()->{'mst_score'} || [0]};
+        if ($#mst_scores != $target_length) {
+            log_warn("mst-scores not filled properly at ".$node->id.".");
+            @mst_scores = map {0} (0 .. $target_length);
+        }
+        foreach my $score (@mst_scores) {
+            $target_minimum = $score if $score < $target_minimum;
+            $target_total += $score;
+        }
+        $target_matrix[$node->ord] = \@mst_scores;
+    }
+
+    # get alignment matrix
+    my @alignment_matrix;
+    foreach my $s_ord (0 .. $source_length) {
+        foreach my $t_ord (0 .. $target_length) {
+            $alignment_matrix[$s_ord][$t_ord] = 1000;
+        }
+        #next if $s_ord == 0;
+        #my ($alinodes, $alitypes) = $source_nodes[$s_ord - 1]->get_aligned_nodes();
+        #foreach my $n (0 .. $#$alinodes) {
+        #    my $t_ord = $$alinodes[$n]->ord;
+        #    my $weight = $$alitypes[$n] =~ /left/ ? 0.5 : 0;
+        #    $weight += $$alitypes[$n] =~ /right/ ? 0.5 : 0;
+        #    $weight += 50;
+        #    $alignment_matrix[$s_ord][$t_ord] = $weight;
+        #}
+    }
+
+    # normalize matrices
+    my $to_add_total = max(-$source_minimum * $source_length**2, -$target_minimum * $target_length**2);
+    my $source_shift = $to_add_total / $source_length**2;
+    my $target_shift = ($to_add_total + $source_total - $target_total) / $target_length**2;
 
     # create flow network
-    foreach my $node (@source_nodes) {
-        my $ord = $node->ord;
-        my @scores = @{$node->wild()->{'mst_score'} || [0]};
-        foreach my $to_ord (0 .. $#scores) {
+    foreach my $ord (1 .. $source_length) {
+        foreach my $to_ord (0 .. $source_length) {
             next if $ord == $to_ord;
-            $network->add_weighted_edge("se-$ord-$to_ord", "sn-$ord", $scores[$to_ord]+$EDGE_SCORE_SHIFT);
-            $network->add_weighted_edge("se-$ord-$to_ord", "sn-$to_ord", $scores[$to_ord]+$EDGE_SCORE_SHIFT);
+            my $weight = $source_matrix[$ord][$to_ord] + $source_shift;
+            $network->add_weighted_edge("se-$ord-$to_ord", "sn-$ord", $weight);
+            $network->add_weighted_edge("se-$ord-$to_ord", "sn-$to_ord", $weight);
             # reverse edges
-            $network->add_weighted_edge("sn-$ord", "se-$ord-$to_ord", $scores[$to_ord]+$EDGE_SCORE_SHIFT);
-            $network->add_weighted_edge("sn-$to_ord", "se-$ord-$to_ord", $scores[$to_ord]+$EDGE_SCORE_SHIFT);
+            $network->add_weighted_edge("sn-$ord", "se-$ord-$to_ord", $weight);
+            $network->add_weighted_edge("sn-$to_ord", "se-$ord-$to_ord", $weight);
             # edges from the source
-            $network->add_weighted_edge("s", "se-$ord-$to_ord", $scores[$to_ord]+$EDGE_SCORE_SHIFT);
-        }
-        foreach my $node2 (@target_nodes) {
-            my $ord2 = $node2->ord;
-            $network->add_weighted_edge("sn-$ord", "tn-$ord2", 5);
-        }
-        my ($alinodes, $alitypes) = $node->get_aligned_nodes();
-        foreach my $n (0 .. $#$alinodes) {
-            my $target_ord = $$alinodes[$n]->ord;
-            my $weight = $$alitypes[$n] =~ /left/ ? 0.5 : 0;
-            $weight += $$alitypes[$n] =~ /right/ ? 0.5 : 0;
-            $weight += 5;
-            $network->add_weighted_edge("sn-$ord", "tn-$target_ord", $weight);
+            $network->add_weighted_edge("s", "se-$ord-$to_ord", $weight);
         }
     }
-    foreach my $node (@target_nodes) {
-        my $ord = $node->ord;
-        my @scores = @{$node->wild()->{'mst_score'} || [0]};
-        foreach my $to_ord (0 .. $#scores) {
+    foreach my $ord (1 .. $target_length) {
+        foreach my $to_ord (0 .. $target_length) {
             next if $ord == $to_ord;
-            $network->add_weighted_edge("tn-$ord", "te-$ord-$to_ord", $scores[$to_ord]+$EDGE_SCORE_SHIFT);
-            $network->add_weighted_edge("tn-$to_ord", "te-$ord-$to_ord", $scores[$to_ord]+$EDGE_SCORE_SHIFT);
+            my $weight = $target_matrix[$ord][$to_ord] + $target_shift;
+            $network->add_weighted_edge("tn-$ord", "te-$ord-$to_ord", $weight);
+            $network->add_weighted_edge("tn-$to_ord", "te-$ord-$to_ord", $weight);
             # reverse edges
-            $network->add_weighted_edge("te-$ord-$to_ord", "tn-$ord", $scores[$to_ord]);
-            $network->add_weighted_edge("te-$ord-$to_ord", "tn-$to_ord", $scores[$to_ord]+$EDGE_SCORE_SHIFT);
+            $network->add_weighted_edge("te-$ord-$to_ord", "tn-$ord", $weight);
+            $network->add_weighted_edge("te-$ord-$to_ord", "tn-$to_ord", $weight);
             # edges to the sink
-            $network->add_weighted_edge("te-$ord-$to_ord", "t", $scores[$to_ord]+$EDGE_SCORE_SHIFT);
+            $network->add_weighted_edge("te-$ord-$to_ord", "t", $weight);
+        }
+    }
+    foreach my $ord (1 .. $source_length) {
+        foreach my $target_ord (1 .. $target_length) {
+            $network->add_weighted_edge("sn-$ord", "tn-$target_ord", $alignment_matrix[$ord][$target_ord]);
         }
     }
 
@@ -89,20 +123,22 @@ sub process_bundle {
     foreach my $node (@source_nodes) {
         my $ord = $node->ord;
         my @flow;
+        my @scores;
         foreach my $to_ord (0 .. scalar @source_nodes) {
             if ($to_ord == $ord) {
                 push @flow, 0;
+                push @scores, 0;
             }
             else {
-                my $weight = $maxflow->get_edge_weight("se-$ord-$to_ord", "sn-$ord")
-                           + $maxflow->get_edge_weight("se-$ord-$to_ord", "sn-$to_ord")
-                           + $maxflow->get_edge_weight("sn-$ord", "se-$ord-$to_ord")
-                           + $maxflow->get_edge_weight("sn-$to_ord", "se-$ord-$to_ord");
+                my $weight = $maxflow->get_edge_weight("s", "se-$ord-$to_ord");
                 $source_graph->add_weighted_edge($to_ord, $ord, -$weight);
                 push @flow, $weight;
+                my $score = $network->get_edge_weight("s", "se-$ord-$to_ord");
+                push @scores, $score;
             }
         }
         $node->wild()->{'flow'} = \@flow;
+        $node->wild()->{'scores'} = \@scores;
     }
     my $source_mst = $source_graph->MST_ChuLiuEdmonds();
 
@@ -130,10 +166,7 @@ sub process_bundle {
                 push @flow, 0;
             }
             else {
-                my $weight = $maxflow->get_edge_weight("te-$ord-$to_ord", "tn-$ord")
-                           + $maxflow->get_edge_weight("te-$ord-$to_ord", "tn-$to_ord")
-                           + $maxflow->get_edge_weight("tn-$ord", "te-$ord-$to_ord")
-                           + $maxflow->get_edge_weight("tn-$to_ord", "te-$ord-$to_ord");
+                my $weight = $maxflow->get_edge_weight("te-$ord-$to_ord", "t");
                 $target_graph->add_weighted_edge($to_ord, $ord, -$weight);
                 push @flow, $weight;
             }
