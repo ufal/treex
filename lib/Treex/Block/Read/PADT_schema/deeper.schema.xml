@@ -85,7 +85,6 @@
             <member name="note" type="String"/>
             <member name="parallel" type="Parallel"/>
             <member name="paren" type="Paren"/>
-            <member name="arabfa" type="String"/>
             <member name="coref" type="Coref"/>
             <member name="clause" type="Clause"/>
             <member name="parent" type="String"/>

@@ -82,8 +82,10 @@
             <member name="note" type="String"/>
             <member name="sense" type="String"/>
             <member name="root" type="Root"/>
-            <member name="core" type="Entry"/>
+            <member name="cite" type="Entry"/>
+            <!--
             <member name="lemma" type="String"/>
+            -->
             <member name="score" type="Score"/>
         </structure>
     </type>
@@ -151,7 +153,7 @@
         <structure role="#NODE">
             <member name="id" as_attribute="1" role="#ID" type="ID"/>
             <member name="root" type="Root"/>
-            <member name="core" type="Entry"/>
+            <member name="cite" type="Entry"/>
             <member name="form" type="String"/>
             <member name="note" type="String"/>
             <member name="apply" type="String"/>
@@ -248,7 +250,7 @@
     <type name="Lexeme.Lists">
         <structure>
             <member name="root" type="Root"/>
-            <member name="core" type="Entry"/>
+            <member name="cite" type="Entry"/>
             <member name="form" type="String"/>
             <member name="note" type="String"/>
         </structure>
@@ -307,9 +309,12 @@
     <type name="Entry">
         <structure role="#NODE">
             <member name="morphs" type="Morphs"/>
+            <!--
             <member name="entity" type="Entity"/>
             <member name="limits" type="Limits"/>
+            -->
             <member name="reflex" type="Reflex"/>
+            <member name="form" type="String"/>
             <member name="note">
                 <list type="String" ordered="1"/>
             </member>
