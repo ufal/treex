@@ -44,37 +44,45 @@ sub process_anode {
 
 sub process_end {
 	my $self = shift;
-	if ( $self->deprel_stats || $self->both_stats ) {
+	my $total_count = 0.0;
+
+	my @individual_counts = values %_deprel_stats;	
+	map{ $total_count += $_; }@individual_counts;
+	
+	if ( $self->deprel_stats || $self->both_stats ) {		
 		print "******************************************\n";
-		print "Parent/child deprel statistics\n";
+		print "Parent/child deprel frequency\n";
 		print "******************************************\n";
 		foreach my $k ( sort { $_deprel_stats{$b} <=> $_deprel_stats{$a} } keys %_deprel_stats ) {
 			my @for_format = split "=>", $k;
-			my $str_line = sprintf( "[ %8s / %-8s ] : %-5d",
-				$for_format[0], $for_format[1], $_deprel_stats{$k} );
+			my $perc = ( $_deprel_stats{$k} / $total_count ) * 100.0; 
+			my $str_line = sprintf( "[ %8s / %-8s ] : %-8d / %5.2f",
+				$for_format[0], $for_format[1], $_deprel_stats{$k}, $perc );
 			print $str_line . "\n";
 		}
 		print "\n";
 	}
 	if ( $self->tag_stats || $self->both_stats ) {
 		print "******************************************\n";
-		print "Parent/child tag statistics\n";
+		print "Parent/child tag frequency\n";
 		print "******************************************\n";
 		foreach my $k ( sort { $_tag_stats{$b} <=> $_tag_stats{$a} } keys %_tag_stats ) {
 			my @for_format = split "=>", $k;
-			my $str_line = sprintf( "[ %10s / %-10s ] : %-5d", $for_format[0], $for_format[1], $_tag_stats{$k} );
+			my $perc = ( $_tag_stats{$k} / $total_count ) * 100.0; 
+			my $str_line = sprintf( "[ %10s / %-10s ] : %-8d / %5.2f", $for_format[0], $for_format[1], $_tag_stats{$k}, $perc );
 			print $str_line . "\n";
 		}
 	}
 	if ( $self->both_stats ) {
-		print "******************************************\n";
-		print "Parent/child deprel/tag statistics\n";
-		print "******************************************\n";
+		print "***********************************************\n";
+		print "deprel parent/child, tag parent/child frequency\n";
+		print "***********************************************\n";
 		foreach my $k ( sort { $_deprel_tag_stats{$b} <=> $_deprel_tag_stats{$a} } keys %_deprel_tag_stats ) {
+			my $perc = ( $_deprel_tag_stats{$k} / $total_count ) * 100.0; 
 			my @for_format  = split "=>",  $k;
 			my @for_format1 = split ' / ', $for_format[0];
 			my @for_format2 = split ' / ', $for_format[1];
-			my $str_line    = sprintf("[ %8s / %-8s , %10s / %-10s ] : %-5d", $for_format1[0], $for_format2[0], $for_format1[1], $for_format2[1], $_deprel_tag_stats{$k} );
+			my $str_line    = sprintf("[ %8s / %-8s , %10s / %-10s ] : %-8d / %5.2f", $for_format1[0], $for_format2[0], $for_format1[1], $for_format2[1], $_deprel_tag_stats{$k}, $perc );
 			print $str_line . "\n";
 		}
 	}
