@@ -236,7 +236,7 @@ sub deprel_to_afun
 
     # Once all nodes have hopefully their afuns, prepositions must delegate their afuns to their children.
     # (Don't do this earlier. If appositions are postpositions, we would be copying afuns that don't exist yet.)
-    $self->process_prep_sub_arg($root);
+    $self->process_prep_sub_arg_cloud($root);
 }
 
 #------------------------------------------------------------------------------
