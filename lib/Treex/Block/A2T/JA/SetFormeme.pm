@@ -33,8 +33,9 @@ sub process_ttree {
 Readonly my %SUB_FOR_SYNTPOS => (
     n   => \&_noun,
     adj => \&_adj,
-    adv => sub {'adv'},
+    adv => sub {'adv:'},
     v   => \&_verb,
+    part => \&_particle,
 );
 
 # TODO: can be done better
@@ -43,6 +44,7 @@ Readonly my %SYNTPOS_FOR_TAG => (
     Fukushi => 'adv',
     Meishi => 'n',
     Dōshi => 'v',
+    Joshi => 'part',  # particles   
     Jodōshi => 'v',
 );
 
@@ -245,6 +247,17 @@ sub _verb {
     # direct speech, imperatives, parsing errors (which in fact mostly are finite forms, if they're verbs at all)
     
     return "v:$stem";
+}
+
+sub _particle {
+    my ( $t_node, $a_node ) = @_;
+    
+    # we treat adverbial particles as normal adverbs at the moment
+    return "adv:" if ($a_node->tag =~ /Fukujoshi/);
+    
+    # Other than adverbial particle should not be present at the t-layer at the
+    # moment, so we assign them default value for the time being
+    return "x";
 }
 
 sub get_part_string {
