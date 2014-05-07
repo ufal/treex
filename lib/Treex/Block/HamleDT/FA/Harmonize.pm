@@ -234,7 +234,7 @@ sub deprel_to_afun
     }
     # Prepositions now have the afun of the whole prepositional phrase and nouns below prepositions have the pseudo-afun PrepArg.
     # In the whole tree, move the afun of the PPs to the nouns, and give the prepositions new afun AuxP.
-    $self->process_prep_sub_arg($root);
+    $self->process_prep_sub_arg_cloud($root);
     # Sentence test/001.treex.gz#41: conjunction 'va' m-tagged 'CONJ' (correct) but s-tagged 'PUNC' instead of *CONJ.
     # Thus it is not coordination, thus the 'PREDEP' verb attached to it should not get the 'CoordArg' pseudo-afun.
     foreach my $node (@nodes)
