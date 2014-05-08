@@ -190,7 +190,7 @@ sub deprel_to_afun {
         # Marker
         elsif ($deprel eq 'MRK') {
             # topicalizers and focalizers
-            if ($conll_pos eq 'Pfoc') {
+            if ($conll_pos eq 'Pfoc') { ###!!! We must not depend on the original value of $conll_pos because it has been replaced by now.
                 $afun = 'AuxZ';
             }
             # particles for expressing attitude/empathy, or turning the phrase
@@ -289,7 +289,7 @@ sub deprel_to_afun {
             ###!!! Should this be coordination?
             # deNsha de iku ka hikouki de iku ka
             # naNji ni shuppatsu suru ka, chuuoueki ni naNji ni koreba ii ka
-            elsif ($node->form() eq 'ka' && $parent->form() eq 'ka')
+            elsif ($node->form() =~ m/^(ka|nari|toka)$/ && $parent->form() eq $node->form())
             {
                 $afun = 'Atr';
             }
