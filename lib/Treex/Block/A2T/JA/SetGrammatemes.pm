@@ -26,7 +26,7 @@ sub assign_grammatemes_to_tnode {
     
     # TODO: do it better and for all types of nodes
     # right now we only set negation grammateme for verbs
-    # need to make solution compatible with our aproach towards japanese copulas
+    # need to make solution compatible with our aproach towards japanese copulasor predicate verbs and adjectives with ommited copulas
 
     if ( $tag =~ /^Dōshi/ ) {
         _verb( $tnode, $tag, $form);
@@ -47,7 +47,7 @@ sub _verb {
     my @negation_nodes = map { $_->form eq "ない" || $_->form eq "ん" } 
                             $tnode->get_aux_anodes();
 
-    if (@negation_nodes) {
+    if (scalar @negation_nodes == 0) {
         $tnode->set_gram_negation('neg1');
     }
     else {
