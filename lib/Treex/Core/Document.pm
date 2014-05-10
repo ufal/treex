@@ -155,21 +155,17 @@ sub BUILD {
                 # If the file contains invalid PML (e.g. unknown afun value)
                 # Treex::PML fails with die.
                 # TODO: we should rather catch the die message and report it via log_fatal
-
-                my @warnings;
-    local $SIG{__WARN__} = sub {
-        my $msg = shift;
-        chomp $msg;
-        print STDERR $msg . "\n";
-        push @warnings, $msg;
-    };
-
-
-
                 $pmldoc = eval {
-                    $factory->createDocumentFromFile( $params_rf->{filename}, { recover => 1 });
+                    # In r10421, ZŽ added here recover => 1:
+                    # $factory->createDocumentFromFile( $params_rf->{filename}, { recover => 1 });
+                    # However, if the file contains invalid PML (e.g. unknown afun value), the recover=>1 option
+                    # results in returning a $pmldoc which seems to be OK, but it contains no bundles,
+                    # so Treex crashes on subsequent blocks which is misleading for users.
+                    # If we really want to be fault-tolerant, it seems we would need to set Treex::PML::Instance::Reader::STRICT=0,
+                    # but I don't no enough about PML internals and I think it's better to make such errors fatal.
+                    # Martin Popel
+                    $factory->createDocumentFromFile( $params_rf->{filename});
                 };
-#                log_warn $Treex::PML::FSError;
                 log_fatal "Error while loading " . $params_rf->{filename} . ( $@ ? "\n$@" : '' )
                     if !defined $pmldoc;
             }
