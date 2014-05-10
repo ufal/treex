@@ -22,9 +22,13 @@ sub next_document {
         
         my $bundle = $document->create_bundle();
         foreach my $lang (@langs){
-            my ($l, $s) = $lang =~ /-/ ? split(/-/, $lang) : ($lang, $self->selector);
-            my $zone = $bundle->create_zone( $l, $s );
-            $zone->set_sentence(shift @sentences); 
+            if ($lang eq "BUNDLE_ID") {
+                $bundle->set_id( shift @sentences);
+            } else {
+                my ($l, $s) = $lang =~ /-/ ? split(/-/, $lang) : ($lang, $self->selector);
+                my $zone = $bundle->create_zone( $l, $s );
+                $zone->set_sentence(shift @sentences); 
+            }
         }
     }
 
@@ -48,6 +52,9 @@ Treex::Block::Read::SentencesTSV
  
  # or if each language should have different selector
  Read::SentencesTSV from='!dir*/file*.txt' langs=en-hello,cs-bye
+
+ # or if one of the columns contains bundle id
+ Read::SentencesTSV from='!dir*/file*.txt' langs=BUNDLE_ID,en-hello,cs-bye
 
 =head1 DESCRIPTION
 
