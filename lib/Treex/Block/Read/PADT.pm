@@ -258,6 +258,15 @@ override '_convert_atree' => sub
                 $treex_node->set_afun('NR');
                 $deprel = '_';
             }
+            # The AuxS afun is reserved for tree roots and should never occur in a non-root node.
+            # Nevertheless, it is listed in the PADT XML schema and it has occurred in the data.
+            # We must not leave it in Treex because it is not allowed there and reading such a Treex document will fail mysteriously
+            # (there will be no bundles in the document; this could be considered a bug in the PML reader, as of 10.5.2014).
+            elsif($treex_node->afun() eq 'AuxS')
+            {
+                $treex_node->set_afun('NR');
+                $deprel = '_';
+            }
             else
             {
                 $deprel = $treex_node->afun();

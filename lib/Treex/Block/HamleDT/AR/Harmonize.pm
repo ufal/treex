@@ -123,7 +123,7 @@ sub fix_coap_ismember
             if($parent->afun() !~ m/^(Coord|Apos)$/)
             {
                 # Make the parent Coord root if it is a coordinating conjunction or a comma.
-                if($parent->get_iset('pos') eq 'conj' || $parent->form() eq '،')
+                if($parent->get_iset('pos') eq 'conj' || $parent->form() && $parent->form() eq '،')
                 {
                     $parent->set_afun('Coord');
                 }
