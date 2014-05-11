@@ -17,6 +17,8 @@ use namespace::autoclean;
 
 use constant DEBUG => 1; #$ENV{TREEX_WORKER_DEBUG} || 0;
 
+extends 'Treex::Service::EventEmitter';
+
 has [qw(router module fingerprint)] => (
     is  => 'ro',
     isa => 'Str'
@@ -196,32 +198,46 @@ sub reconnect_router {
 
     my $socket = $self->socket;
     $socket->connect($self->router);
+    $self->emit(connected => $socket);
 
-    warn "--- router connected";
+    return $self;
+}
+
+sub accept_requests {
+    my $self = shift;
 
     $self->clear_watcher;
-    $self->clear_timer;
-
-    weaken $self;
+    my $socket = $self->socket;
     my $fd = $socket->get_fd;
+    weaken $self;
     my $w = AE::io $fd, 0, sub {
-        while ( $self->socket->has_pollin ) {
-            $self->_process_request;
-        }
-    };
-
-    my $t = AE::timer 0, HEARTBEAT_INTERVAL() => sub {
-        $self->send_heartbeat;
-        if ($self->timeout < AE::time) {
-            $self->reconnect_router;
+        my $socket = $self->socket;
+        while ( $socket->has_pollin ) {
+            $self->emit(request => $socket->recv_multipart());
         }
     };
 
     $self->watcher($w);
+
+    return $self;
+}
+
+sub start_heartbeat {
+    my $self = shift;
+
+    $self->clear_timer;
+    my $t = AE::timer 0, HEARTBEAT_INTERVAL() => sub {
+        $self->send_heartbeat;
+        if ($self->timeout < AE::time) {
+            $self->clear_timer;
+            $self->reconnect_router;
+        }
+    };
     $self->timer($t);
 
     $self->timeout(AE::time + HEARTBEAT_TIMEOUT);
-    $self->send_to_router(W_READY, $self->fingerprint);
+
+    return $self;
 }
 
 sub initialize {
@@ -239,22 +255,22 @@ sub initialize {
     $instance->initialize();
     $self->set_instance($instance);
 
-    print STDERR "Worker (pid: $$) initialized\n";
+    #print STDERR "Worker (pid: $$) initialized\n";
 
     return $self;
 }
 
 sub run {
-    my $self = shift;
+    my ($self, $cv) = @_;
 
-    print STDERR "Worker (pid: $$) start run\n";
+    #print STDERR "Worker (pid: $$) start run\n";
 
     return if $self->running;
 
     $self->running(1);
-    $self->cv(AE::cv);
+    $self->cv($cv || AE::cv);
 
-    print STDERR "Worker (pid: $$) running\n";
+    #print STDERR "Worker (pid: $$) running\n";
 
     $self->reconnect_router();
 
@@ -292,7 +308,19 @@ sub send_to_router {
     $self->socket->send_multipart($msg);
 }
 
-sub send_heartbeat {shift->send_to_router(W_HEARTBEAT)}
+sub send_heartbeat {$_[0]->send_to_router(W_HEARTBEAT)}
+
+sub send_ready {$_[0]->send_to_router(W_READY, $_[0]->fingerprint)}
+
+sub send_disconnect {$_[0]->send_to_router(W_DISCONNECT)}
+
+sub send_reply {
+    my $self = shift;
+    my $reply_to = shift;
+
+    my @reply = $self->instance->process(@_);
+    $self->send_to_router(W_REPLY, $reply_to, '', freeze(\@reply));
+}
 
 sub _process_request {
     my $self = shift;
@@ -309,7 +337,7 @@ sub _process_request {
         my $reply_to = shift @msg;
         assert(shift(@msg) eq '');
 
-        $self->instance->process(@{thaw(shift(@msg))});
+        $self->send_reply($reply_to, @{thaw(shift(@msg))});
 
     } elsif ($command eq W_HEARTBEAT) {
         $self->timeout(AE::time + HEARTBEAT_TIMEOUT)
