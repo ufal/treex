@@ -9,6 +9,8 @@ sub process_document {
     for my $b ($document->get_bundles) {
         for my $z ($b->get_all_zones) {
             for my $t ($z->get_all_trees) {
+                next unless $t->does('Treex::Core::Node::Ordered');
+
                 # check node order
                 for my $node ( $t, $t->descendants ) {
                     my @children = $node->get_children({ordered => 1});
