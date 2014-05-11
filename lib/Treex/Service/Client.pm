@@ -1,19 +1,24 @@
 package Treex::Service::Client;
 
 use Moose;
+use Carp::Always;
 use Carp::Assert;
 use Treex::Core::Config;
 use Treex::Core::Log;
 use ZMQ::FFI;
 use ZMQ::FFI::Constants qw(ZMQ_DEALER);
 use Treex::Service::MDP qw(:all);
-use AnyEvent;
 use EV 4.0;
+use AnyEvent;
 use Storable qw(freeze thaw);
 use Scalar::Util 'weaken';
 use namespace::autoclean;
 
 our $ZMQ_CONTEXT;
+
+# TODO: find out why it sometimes fails
+# Sometimes fails to detect for unknown reason so detect early
+AnyEvent::detect();
 
 has endpoint => (
     is  => 'ro',
