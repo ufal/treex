@@ -5,28 +5,10 @@ use Moose::Util::TypeConstraints;
 use Treex::Core::Loader qw/load_module search_module/;
 use Treex::Core::Log;
 use Digest::MD5 qw(md5_hex);
-use Cache::LRU;
+use Treex::Service::Manager::Server;
+use feature qw(state);
+use Scalar::Util qw(weaken);
 use namespace::autoclean;
-
-role_type 'Service', { role => 'Treex::Service::Role' };
-
-has cache_size => (
-    is  => 'ro',
-    isa => 'Int',
-    default => 20
-);
-
-has instances => (
-    is => 'ro',
-    isa => 'Cache::LRU',
-    lazy => 1,
-    default => sub { Cache::LRU->new(size => $_[0]->cache_size); },
-    handles => {
-        set_service => 'set',
-        get_service => 'get',
-        service_remove => 'remove'
-    }
-);
 
 has modules => (
     traits  => ['Hash'],
@@ -41,11 +23,54 @@ has modules => (
 );
 
 sub _build_modules {
-    my $ns = 'Treex::Service::Module';
+    my $ns = 'Treex::Services';
     return {
         map { (my $key = $_) =~ s/^\Q$ns\E:://; $key =~ s/::/-/; lc($key) => $_ }
           @{search_module($ns)}
       };
+}
+
+has running => (
+    is  => 'rw',
+    isa => 'Maybe[Boolean]',
+    default => undef
+);
+
+sub singleton { state $loop = shift->new }
+
+sub _instance { ref $_[0] ? $_[0] : $_[0]->singleton }
+
+sub start_manager {
+    my $self = _instance(shift);
+
+    my $server = Treex::Service::Manager::Server->new();
+    weaken $self;
+    $server->on(request => sub { $self->_handle_request(@_) });
+    $server->run;
+    exit 0;
+}
+
+sub _handle_request {
+    my ($self, $server, $tx) = @_;
+
+    my $data = $tx->input;
+    my ($module, $init_args, $fingerprint, $input) =
+      map { $data->{$_} } qw(module init_args fingerprint input);
+
+    my $instance = $self->get_instance($fingerprint);
+    unless ($instance) {
+        $instance = Treex::Service::Instance->new(
+            fingerprint => $fingerprint,
+            module => $module,
+            init_args => $init_args,
+        );
+        $self->set_instance($instance)->spawn;
+    }
+
+    if ($input) {
+        weaken $tx;
+        $instance->process($input => sub { $tx->output(shift); $tx->resume; });
+    }
 }
 
 sub init_service {

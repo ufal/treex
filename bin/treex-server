@@ -5,6 +5,36 @@ use warnings;
 use FindBin;
 BEGIN { unshift @INC, "$FindBin::Bin/../lib" }
 
-# Start command line interface for application
-require Mojolicious::Commands;
-Mojolicious::Commands->start_app('Treex::Service::Server');
+use Getopt::Long;
+use
+use Treex::Service::Worker;
+
+my ($is_service, $module);
+
+GetOptions(
+    'service|s' => \$is_service,
+    'module|m=s' => \$module,
+);
+
+if ($is_service) {
+    require Treex::Service::Worker;
+
+    $w = Treex::Service::Worker->new;
+
+} else {
+    require Treex::Service::Manager;
+
+    die "Can't fork: $!" unless defined(my $pid = fork);
+
+    if ($pid) {
+        # Hook manager client
+        Treex::Service::Manager->client($pid);
+
+        # Start command line interface for application
+        require Mojolicious::Commands;
+        Mojolicious::Commands->start_app('Treex::Service::Server');
+    } else {
+        # Start service manager server
+        Treex::Service::Manager->start_manager;
+    }
+}
