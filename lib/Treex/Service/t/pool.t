@@ -114,6 +114,7 @@ my @running = map {
     $cv->recv;
     undef $io;
 }
+is($pool->workers_count, 4, 'count');
 is($spawned, scalar(@running), 'all workers spawned');
 is($counter, scalar(@running), 'all workers ready');
 
@@ -146,5 +147,22 @@ while ($alive = kill(0, $w1_pid) && $timeout > 0) {
     $timeout -= 1;
 }
 ok(!$alive, 'w1 not running anymore');
+
+$pool->cache_size(2);
+is($pool->workers_count, 2, 'cache decrease');
+$w = shift @running;            # destroy reference
+my $w2_pid = $w->pid;
+$w = undef;
+
+while ($alive = kill(0, $w2_pid) && $timeout > 0) {
+    sleep 1;
+    $timeout -= 1;
+}
+ok(!$alive, 'w2 not running anymore');
+
+$w = shift @running;
+my $w3_pid = $w->pid;
+ok(!$pool->worker_exists($w->fingerprint), 'w3 not exists');
+ok(kill(0, $w3_pid), 'but still running');
 
 done_testing();

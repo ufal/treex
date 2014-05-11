@@ -119,7 +119,7 @@ sub spawn {
                     undef $w;
                 }
             });
-    return;
+    return $self;
 }
 
 sub despawn {
