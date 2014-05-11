@@ -11,27 +11,27 @@ use Treex::Core::Node::A;
 use Treex::Core::Node::T;
 
 sub AGetEParentsC {
-    return shift->get_eparents({or_topological => 1, ignore_incorrect_tree_structure => 1});
+    return shift->get_eparents({or_topological => 1, ignore_incorrect_tree_structure => 1, ordered => 1});
 }
 
 sub AGetEChildrenC {
-    return shift->get_echildren({or_topological => 1, ignore_incorrect_tree_structure => 1});
+    return shift->get_echildren({or_topological => 1, ignore_incorrect_tree_structure => 1, ordered => 1});
 }
 
 sub AGetEParents {
-    return shift->get_eparents({dive => 'AuxCP', or_topological => 1, ignore_incorrect_tree_structure => 1});
+    return shift->get_eparents({dive => 'AuxCP', or_topological => 1, ignore_incorrect_tree_structure => 1, ordered => 1});
 }
 
 sub AGetEChildren {
-    return shift->get_echildren({dive => 'AuxCP', or_topological => 1, ignore_incorrect_tree_structure => 1});
+    return shift->get_echildren({dive => 'AuxCP', or_topological => 1, ignore_incorrect_tree_structure => 1, ordered => 1});
 }
 
 sub TGetEChildren {
-    return shift->get_echildren({or_topological => 1, ignore_incorrect_tree_structure => 1});
+    return shift->get_echildren({or_topological => 1, ignore_incorrect_tree_structure => 1, ordered => 1});
 }
 
 sub TGetEParents {
-    return shift->get_eparents({or_topological => 1, ignore_incorrect_tree_structure => 1});
+    return shift->get_eparents({or_topological => 1, ignore_incorrect_tree_structure => 1, ordered => 1});
 }
 
 1;

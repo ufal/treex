@@ -41,7 +41,7 @@ package PMLTQ::Relation::Treex;
       target_node_type => 'a-node',
       iterator_class => __PACKAGE__,
       iterator_weight => 5,
-      test_code => q( grep($_ == $end, TreexUtils::AGetEChildrenC($start)) ? 1 : 0 ),
+      test_code => q( grep($_ == $start, TreexUtils::AGetEParentsC($end)) ? 1 : 0 ),
   };
   sub get_node_list  {
     my ($self,$node)=@_;
@@ -108,7 +108,7 @@ package PMLTQ::Relation::Treex;
       target_node_type => 'a-node',
       iterator_class => __PACKAGE__,
       iterator_weight => 5,
-      test_code => q( grep($_ == $end, TreexUtils::AGetEChildren($start)) ? 1 : 0 ),
+      test_code => q( grep($_ == $start, TreexUtils::AGetEParents($end)) ? 1 : 0 ),
   };
   sub get_node_list  {
     my ($self,$node)=@_;
@@ -131,7 +131,7 @@ package PMLTQ::Relation::Treex;
       target_node_type => 't-node',
       iterator_class => __PACKAGE__,
       iterator_weight => 5,
-      test_code => q( grep($_ == $end, TreexUtils::TGetEChildren($start)) ? 1 : 0 ),
+      test_code => q( grep($_ == $start, TreexUtils::TGetEParents($end)) ? 1 : 0 ),
   };
   sub get_node_list  {
     my ($self,$node)=@_;
