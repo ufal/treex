@@ -1,7 +1,8 @@
 package Treex::Block::W2A::TagTreeTagger;
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::Tagger::Factory;
+use Treex::Tool::Tagger::TreeTagger;
+
 extends 'Treex::Block::W2A::Tag';
 
 has model => ( isa => 'Str', is => 'ro', lazy_build => 1 );
@@ -17,7 +18,7 @@ sub _build_model {
 sub _build_tagger{
     my ($self) = @_;
     $self->_args->{model} = $self->model;
-    return Treex::Tool::Tagger::Factory->create('TreeTagger', %{$self->_args});
+    return Treex::Tool::Tagger::TreeTagger->new($self->_args);
 }
 
 1;

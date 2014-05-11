@@ -1,8 +1,7 @@
 package Treex::Block::W2A::CS::ParseMSTAdapted;
 use Moose;
 use Treex::Core::Common;
-use Treex::Core::Config;
-use Treex::Tool::Parser::Factory;
+use Treex::Tool::Parser::MST::Czech;
 
 extends 'Treex::Core::Block';
 
@@ -23,12 +22,7 @@ sub process_start {
         $arg_ref->{'model_memory'} = $self->model_memory;
     }
 
-    if (!$parser ||
-          (Treex::Core::Config->use_services && !$parser->isa('Treex::Core::Service')) ||
-          (!Treex::Core::Config->use_services && $parser->isa('Treex::Core::Service'))) {
-        $parser = Treex::Tool::Parser::Factory->create('MST::Czech', %{$arg_ref});
-    }
-
+    $parser ||= Treex::Tool::Parser::MST::Czech->new($arg_ref);
     return;
 }
 

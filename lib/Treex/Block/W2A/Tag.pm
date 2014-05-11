@@ -2,7 +2,6 @@ package Treex::Block::W2A::Tag;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Config;
-use Treex::Tool::Tagger::Factory;
 
 extends 'Treex::Core::Block';
 
@@ -46,10 +45,6 @@ sub BUILD {
 sub _build_tagger {
     my ($self) = @_;
     my $module = $self->module;
-
-    if ($module =~ /^Treex::Tool::Tagger::(.+)$/) {
-        return Treex::Tool::Tagger::Factory->create($1, %{$self->_args});
-    }
 
     eval "use $module;1" or log_fatal "Can't use $module\n$@";
     my $tagger = eval "$module->new(\$self->_args);" or log_fatal "Can't load $module\n$@";
