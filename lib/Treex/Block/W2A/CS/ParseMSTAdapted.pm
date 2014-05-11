@@ -24,7 +24,7 @@ sub process_start {
 
     unless ($parser) {
         $parser = Treex::Tool::Parser::MST::Czech->new($arg_ref);
-        $parser->inititalize;
+        $parser->initialize;
     }
 
     return;
