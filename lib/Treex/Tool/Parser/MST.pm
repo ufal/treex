@@ -1,11 +1,14 @@
 package Treex::Tool::Parser::MST;
 use Moose;
 use Treex::Core::Common;
+use Treex::Core::Config;
 use Treex::Core::Resource;
 use ProcessUtils;
 use DowngradeUTF8forISO2;
 
 with 'Treex::Tool::Parser::Role';
+with 'Treex::Service::Role'
+  if Treex::Core::Config->use_services;
 
 has model      => ( isa => 'Str',  is => 'rw', required => 1 );
 has memory     => ( isa => 'Str',  is => 'rw', default  => '1800m' );
@@ -18,8 +21,8 @@ has version		=>	(isa => 'Str', is => 'ro', default => '0.4.3b');
 
 my @all_javas;    # PIDs of java processes
 
-sub BUILD {
-    my ($self) = @_;
+sub initialize {
+    my $self = shift;
     my $tool_path  = 'installed_tools/parser/mst/' . $self->version;
     my $jar_path   = require_file_from_share("$tool_path/mstparser.jar");
     my $trove_path = require_file_from_share("$tool_path/lib/trove.jar");
@@ -76,7 +79,9 @@ sub BUILD {
     return;
 }
 
-sub parse_sentence {
+sub parse_sentence { shift->process(@_) }
+
+sub process {
 
     my ( $self, $forms_rf, $tags_rf ) = @_;
 

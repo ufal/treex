@@ -22,7 +22,11 @@ sub process_start {
         $arg_ref->{'model_memory'} = $self->model_memory;
     }
 
-    $parser ||= Treex::Tool::Parser::MST::Czech->new($arg_ref);
+    unless ($parser) {
+        $parser = Treex::Tool::Parser::MST::Czech->new($arg_ref);
+        $parser->inititalize;
+    }
+
     return;
 }
 

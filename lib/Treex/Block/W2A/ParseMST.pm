@@ -1,6 +1,8 @@
 package Treex::Block::W2A::ParseMST;
 use Moose;
 use Treex::Core::Common;
+use Treex::Core::Config;
+
 extends 'Treex::Block::W2A::BaseChunkParser';
 
 use Treex::Tool::Parser::MST;
@@ -54,7 +56,6 @@ has robust => (
 # other possible values: '0.5.0'
 has version		=>	(isa => 'Str', is => 'ro', default => '0.4.3b');
 
-
 #TODO: loading each model only once should be handled in different way
 has _parser => ( is => 'rw' );
 my %loaded_models;
@@ -68,8 +69,10 @@ sub BUILD {
 sub process_start {
     my ($self)  = @_;
     my ($model) = $self->require_files_from_share( $self->model_dir . '/' . $self->model );
+    my $services = Treex::Core::Config->use_services; # this is here only for testing
+    my $key = "$model-$services";
 
-    if ( !$loaded_models{$model} ) {
+    if ( !$loaded_models{$key} ) {
         my $parser = Treex::Tool::Parser::MST->new(
             model      => $model,
             memory     => $self->memory,
@@ -78,9 +81,10 @@ sub process_start {
             robust     => $self->robust,
             version	   => $self->version,
         );
-        $loaded_models{$model} = $parser;
+        $parser->initialize;
+        $loaded_models{$key} = $parser;
     }
-    $self->_set_parser( $loaded_models{$model} );
+    $self->_set_parser( $loaded_models{$key} );
 
     $self->SUPER::process_start();
 
@@ -92,7 +96,7 @@ sub parse_chunk {
 
     my @words = map { $_->form } @a_nodes;
     my @tags  = map { $_->get_attr( $self->pos_attribute ) } @a_nodes;
-    
+
     if ($self->shorten_czech_tags) {
         foreach my $i (0 .. $#tags) {
             my @positions = split //, $tags[$i];

@@ -2,9 +2,13 @@ package Treex::Tool::Parser::MST::Czech;
 
 use Moose;
 use Parser::MST::Czech;
+use Treex::Core::Config;
 use namespace::autoclean;
 
 with 'Treex::Tool::Parser::Role';
+with 'Treex::Service::Role'
+  if Treex::Core::Config->use_services;
+
 
 has 'model'        => ( is => 'rw', isa => 'Str' );
 has 'model_memory' => ( is => 'rw', isa => 'Str' );
@@ -12,21 +16,27 @@ has 'model_memory' => ( is => 'rw', isa => 'Str' );
 has parser => (
     is  => 'ro',
     isa => 'Parser::MST::Czech',
-    lazy_build => 1,
+    writer => 'set_parser'
 );
 
-sub _build_parser {
+sub initialize {
     my $self = shift;
-    return Parser::MST::Czech->new({
+    return if $self->parser;
+
+    my $parser = Parser::MST::Czech->new({
         ($self->model ? (model => $self->model) : ()),
         ($self->model_memory ? (model_memory => $self->model_memory) : ()),
     });
+
+    $self->set_parser($parser);
 }
 
-sub parse_sentence {
+sub process {
     my $self = shift;
     $self->parser->parse_sentence(@_);
 }
+
+sub parse_sentence { shift->process(@_) }
 
 __PACKAGE__->meta->make_immutable;
 
