@@ -96,7 +96,7 @@ has timeout => (
 );
 
 sub spawn {
-    my ($self, $cb) = @_;
+    my ($self) = @_;
 
     weaken $self;
     my $w;
@@ -111,66 +111,15 @@ sub spawn {
                 my $fh = shift;
                 return unless $self;
                 $w = AE::io $fh, 0, sub {
-                    $self->set_pid(<$fh>);
+                    my $pid = <$fh>;
+                    $self->set_pid($pid);
                     $self->running(1);
+                    $self->emit(spawn => $pid);
                     close $fh;
                     undef $w;
-                    $self->$cb() if $cb;
                 }
             });
     return;
-}
-
-# not used anymore
-sub old_spawn {
-    my $self = shift;
-
-    my $fingerprint = $self->fingerprint;
-
-    my $script_name = $ENV{TREEX_SERVER_SCRIPT} || 'treex-server';
-    my $params = "--worker=$fingerprint";
-    my $cmd = "$script_name $params";
-    my $debug = DEBUG;
-
-    die "Can't execute: $script_name" unless -x $script_name;
-
-    local $SIG{CHLD} = 'IGNORE';
-    die "Can't fork: $!" unless defined(my $pid = fork);
-
-    # Spawn child process
-    unless ($pid) {
-        unless ($debug) {
-            open STDIN, '<', '/dev/null'  or die "Can't read /dev/null: $!";
-            open STDOUT, '>', '/dev/null' or die "Can't write /dev/null: $!";
-        }
-        POSIX::setsid() or warn "setsid cannot start a new session: $!";
-        unless ($debug)
-        {
-            open STDERR, '>&STDOUT' or die "Can't dup stdout: $!";
-        }
-
-        local $| = 1;
-        unless (exec($cmd))
-        {
-            confess "Could not start child: $cmd: $!";
-            CORE::exit(0);
-        }
-    }
-
-    local $SIG{CHLD} = 'DEFAULT';
-    $self->set_pid($pid);
-
-    # catch early child exit, e.g. if program path is incorrect
-    sleep(1.0); # TODO: hate to sleep here... rewrite to be async using EV loop
-    POSIX::waitpid(-1, POSIX::WNOHANG()); # clean up any defunct child process
-    if (kill(0,$pid)) {
-        $self->running(1);
-        print STDERR "Spawned worker pid: $pid\n";
-    } else {
-        warn "Child process exited quickly: $cmd: process $pid";
-    }
-
-    return $self;
 }
 
 sub despawn {
@@ -213,9 +162,11 @@ sub accept_requests {
     my $w = AE::io $fd, 0, sub {
         my $socket = $self->socket;
         while ( $socket->has_pollin ) {
-            $self->emit(request => $socket->recv_multipart());
+            $self->_process_request;
         }
     };
+
+    $self->send_ready;
 
     $self->watcher($w);
 
@@ -290,6 +241,12 @@ sub run_worker {
         init_args => thaw($init_args)||{}
     )->initialize;
 
+    $w->on(connected => sub {
+               my $self = shift;
+               $self->start_heartbeat;
+               $self->accept_requests;
+           });
+
     syswrite $fh, "$$";
     close $fh;
 
@@ -302,6 +259,8 @@ sub run_worker {
 
 sub send_to_router {
     my $self = shift;
+
+    return unless $self->has_socket;
 
     my $msg = ['', W_WORKER, @_];
     #print STDERR Dumper($msg);
@@ -352,7 +311,7 @@ sub term {
     return unless $self->running;
 
     $self->running(0);
-    $self->send_to_router(W_DISCONNECT);
+    $self->send_disconnect;
     $self->clear_timer;
     $self->clear_watcher;
     $self->cv->send;
