@@ -8,7 +8,8 @@ use namespace::autoclean;
 has cache_size => (
     is  => 'rw',
     isa => 'Int',
-    default => 5
+    default => 5,
+    trigger => \&_prune_workers
 );
 
 has workers => (
@@ -19,7 +20,8 @@ has workers => (
     default => sub {{}},
     handles => {
         worker_exists => 'exists',
-        all => 'values'
+        workers_count => 'count',
+        _clear_workers => 'clear'
     }
 );
 
@@ -30,22 +32,28 @@ has fifo => (
     default => sub {[]}
 );
 
+sub all_workers {
+    my $self = shift;
+
+    return map { $$_ } values %{$self->workers};
+}
+
 sub get_worker {
     my ($self, $fingerprint) = @_;
 
-    my $w = $self->workers->{$fingerprint};
-    return undef unless $w;
+    my $w_ref = $self->workers->{$fingerprint};
+    return undef unless $w_ref;
 
-    $self->_update_fifo($fingerprint, $w);
-    return $w;
+    $self->_update_fifo($fingerprint, $w_ref);
+    return $$w_ref;
 }
 
 sub start_worker {
-    my ($self, $args, $cb) = @_;
+    my ($self, $args) = @_;
 
     return if $self->worker_exists($args->{fingerprint});
 
-    my $worker = Treex::Service::Worker->new($args)->spawn($cb);
+    my $worker = Treex::Service::Worker->new($args)->spawn();
     $self->set_worker($worker);
 
     return $worker;
@@ -58,13 +66,10 @@ sub set_worker {
     my $fingerprint = $worker->fingerprint;
 
     return $worker if $workers->{$fingerprint};
-    weaken($workers->{$fingerprint} = $worker);
-    $self->_update_fifo($fingerprint, $worker);
-
-    while (scalar(keys %$workers) > $self->cache_size) {
-        my $exp_fp = shift(@{$self->fifo})->[0];
-        delete $workers->{$exp_fp};
-    }
+    my $worker_ref = \$worker;
+    weaken($workers->{$fingerprint} = $worker_ref);
+    $self->_update_fifo($fingerprint, $worker_ref);
+    $self->_prune_workers;
 
     return $worker;
 }
@@ -72,19 +77,39 @@ sub set_worker {
 sub remove_worker {
     my ($self, $fingerprint) = @_;
 
-    my $worker = delete $self->workers->{$fingerprint};
-    if ($worker) {
+    my $worker_ref = delete $self->workers->{$fingerprint};
+    if ($worker_ref) {
+        my $worker = $$worker_ref;
         $worker->despawn();
+        return $worker;
     }
 
-    return $worker;
+    return undef;
+}
+
+sub clear {
+    my $self = shift;
+
+    $self->fifo([]);
+    $self->_clear_workers();
+}
+
+sub _prune_workers {
+    my $self = shift;
+
+    my $workers = $self->workers;
+
+    while (scalar(keys %$workers) > $self->cache_size) {
+        my $fp = shift(@{$self->fifo})->[0];
+        delete $workers->{$fp} unless $workers->{$fp};
+    }
 }
 
 sub _update_fifo {
-    my ($self, $fingerprint, $worker) = @_;
+    my ($self, $fingerprint, $worker_ref) = @_;
     my $fifo = $self->fifo;
 
-    push @$fifo, [$fingerprint, $worker];
+    push @$fifo, [$fingerprint, $worker_ref];
     if (@$fifo >= $self->cache_size * 10) {
         my $workers = $self->workers;
         my @new_fifo;
