@@ -92,18 +92,19 @@ around 'process' => sub {
 
     unless ($self->use_service) {
         return $self->$orig(@_);
-    } else {
-        my $res = $self->_client->send($self, [@_]);
-
-        unless ($res && ref $res eq 'ARRAY') {
-            log_warn "Client failed to contact service. Falling back to local execution";
-            $self->use_service(0);
-            $self->initialize();
-            return $self->$orig(@_);
-        }
-
-        return @$res;
     }
+
+    my $res = $self->_client->send($self, [@_]);
+    # use Data::Dumper;
+    # print STDERR Dumper($res);
+    unless ($res && ref $res eq 'ARRAY') {
+        log_warn "Client failed to contact service. Falling back to local execution";
+        $self->use_service(0);
+        $self->initialize();
+        return $self->$orig(@_);
+    }
+
+    return wantarray ? @$res : shift @$res;
 };
 
 sub get_init_args { { } }

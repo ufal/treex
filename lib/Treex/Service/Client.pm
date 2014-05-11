@@ -81,17 +81,18 @@ sub send {
             assert(@reply == 4);
             undef $w; undef $t;
 
-            # use Data::Dumper;
-            # print STDERR Dumper(\@reply);
+            use Data::Dumper;
+            #print STDERR Dumper(\@reply);
 
             assert(shift(@reply) eq '');
             assert(shift(@reply) eq C_CLIENT);
             assert(shift(@reply) eq $service->fingerprint);
             my $res = shift(@reply);
             $res = $res && $res eq 1
-              ? $res : $res ? thaw($res) : undef;
+              ? $res : ($res ? thaw($res) : undef);
+
             if ($cb) { $cb->($res) }
-            else { $cv->send }
+            else { $cv->send($res) }
             $self->socket->close();
             $self->clear_socket; # drop socket
         }
@@ -110,6 +111,7 @@ sub send {
     $client->send_multipart($msg);
 
     return $cv->recv unless $cb;
+    return;
 }
 
 __PACKAGE__->meta->make_immutable;

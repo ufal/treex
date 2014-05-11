@@ -39,14 +39,23 @@ my $cv = AE::cv;
 my $input = [qw(a b c d)];
 my $res_ex = [qw(p-a p-b p-c p-d)];
 
-$client->send($p, undef, sub { $cv->send(shift) }); # send just init
-my $res = $cv->recv;
+my $res = $client->send($p);     # send just init
 is($res, 1, 'init ok');
 
-$cv = AE::cv;
-$client->send($p, [$input], sub { $cv->send(shift) }); # process
-$res = $cv->recv;
+is($router->pool->workers_count, 1, 'has worker');
+
+$res = $client->send($p, [$input]); # process
 is_deeply($res->[0], $res_ex, 'result from client');
 
+$ENV{USE_SERVICES} = 1;
+
+$p = Treex::Tool::Prefixer->new(prefix => 'p-');
+is($p->use_service, 1, 'services enabled');
+$p->initialize;
+is($p->use_service, 1, 'services still enabled');
+
+my $a = $p->process($input);
+is($p->use_service, 1, 'services still enabled');
+is_deeply($a, $res_ex, 'result from prefixer');
 
 done_testing();
