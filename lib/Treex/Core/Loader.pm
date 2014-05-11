@@ -16,16 +16,17 @@ sub load_module {
   my ($module) = @_;
 
   # Check module name
-  return 1 if !$module || $module !~ /^\w(?:[\w:']*\w)?$/;
+  return 0 if !$module || $module !~ /^\w(?:[\w:']*\w)?$/;
 
   # Load
-  return undef if $module->can('new') || eval "require $module; 1";
+  return 1 if $module->can('new') || eval "require $module; 1";
 
   # Exists
-  return 1 if $@ =~ /^Can't locate \Q@{[class_to_path $module]}\E in \@INC/;
+  return 0 if $@ =~ /^Can't locate \Q@{[class_to_path $module]}\E in \@INC/;
 
   # Real error
-  return log_fatal $@;
+  log_fatal $@;
+  return;
 }
 
 sub search_module {

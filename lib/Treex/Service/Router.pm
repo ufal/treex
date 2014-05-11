@@ -170,6 +170,7 @@ sub process_client {
           init_args => thaw($init_args)
       });
     if (@_ == 0) {
+        print STDERR "New worker ($module) ...\n" if DEBUG;
         $self->send_initialized($sender, $fingerprint);
     } else {
         $self->dispatch($worker, [$sender, '', @_]);

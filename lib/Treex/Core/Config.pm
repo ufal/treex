@@ -9,6 +9,7 @@ use File::Spec;
 use File::Slurp 9999;    # prior versions had different interface
 use Cwd qw(realpath);
 use Treex::Core::Log;
+use Treex::Core::Loader 'load_module';
 use YAML 0.72 qw(LoadFile DumpFile);
 
 # this should be somehow systematized, since there will be probably many switches like this one
@@ -189,8 +190,13 @@ sub treex_server_url {
 }
 
 sub use_services {
-    return exists $ENV{USE_SERVICES} ?
-      $ENV{USE_SERVICES} : $config->{use_services};
+    return $ENV{USE_SERVICES} if defined $ENV{USE_SERVICES};
+
+    if ($config->{use_services}) {
+        $config->{use_services} = 0 unless load_module('Treex::Service::Role');
+    }
+
+    return $config->{use_services};
 }
 
 sub _default_tmp_dir {

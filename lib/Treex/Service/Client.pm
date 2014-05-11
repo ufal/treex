@@ -71,6 +71,8 @@ sub send {
     # use Data::Dumper;
     # print STDERR Dumper($msg);
 
+    $client->send_multipart($msg);
+
     my $fd = $client->get_fd();
     my $cv; $cv = AE::cv unless $cb;
     my ($w, $t);
@@ -81,8 +83,8 @@ sub send {
             assert(@reply == 4);
             undef $w; undef $t;
 
-            use Data::Dumper;
-            #print STDERR Dumper(\@reply);
+            # use Data::Dumper;
+            # print STDERR Dumper(\@reply);
 
             assert(shift(@reply) eq '');
             assert(shift(@reply) eq C_CLIENT);
@@ -99,16 +101,17 @@ sub send {
     };
 
     my $timeout = $input ? $service->process_timeout : $service->init_timeout;
+    #print STDERR "Setting timeout: $timeout\n";
+
     $t = AE::timer $timeout, 0, sub {
         undef $t; undef $w;
 
+        #print STDERR "Request timeout\n";
         $self->socket->close();
         $self->clear_socket; # drop socket
         if ($cb) { $cb->() }
         else { $cv->send };
     };
-
-    $client->send_multipart($msg);
 
     return $cv->recv unless $cb;
     return;

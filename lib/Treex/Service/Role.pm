@@ -27,7 +27,7 @@ has use_service => (
 has init_timeout => (
     is  => 'rw',
     isa => 'Int',
-    default => 3
+    default => 10
 );
 
 has process_timeout => (
@@ -77,10 +77,15 @@ around 'initialize' => sub {
     my ($orig, $self) = (shift, shift);
 
     if ($self->use_service) {
-        $self->use_service(!!$self->_client->send($self));
+        my $res = $self->_client->send($self);
+        # use Data::Dumper;
+        # print STDERR Dumper($res);
+
+        $self->use_service(!!$res);
     }
 
     unless ($self->use_service) {
+        log_info 'Initializing with no service for '. $self->impl_module . '...';
         return $self->$orig(@_);
     }
 

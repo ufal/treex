@@ -235,6 +235,7 @@ sub run {
 
 sub run_worker {
     my ($fh, $router, $fingerprint, $module, $init_args) = @_;
+    $ENV{USE_SERVICES} = 0; # no service for the worker
 
     my $w = Treex::Service::Worker->new(
         router => $router,
