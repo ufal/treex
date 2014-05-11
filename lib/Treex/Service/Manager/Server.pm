@@ -3,7 +3,7 @@ package Treex::Service::Manager::Server;
 use Mojo::Base 'Mojo::EventEmitter';
 
 use Mojo::IOLoop;
-use Treex::Service::IPC::Parent;
+use Treex::Service::IPC::Child;
 use Scalar::Util 'weaken';
 
 has ioloop => sub { Mojo::IOLoop->singleton };
@@ -17,7 +17,7 @@ sub run {
 sub start {
     my $self = shift;
 
-    my $ipc = Treex::Service::IPC::Parent->new;
+    my $ipc = Treex::Service::IPC::Child->new;
     weaken $self;
     $ipc->on(
         accept => sub {

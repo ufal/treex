@@ -10,25 +10,9 @@ use feature qw(state);
 use Scalar::Util qw(weaken);
 use namespace::autoclean;
 
-has modules => (
-    traits  => ['Hash'],
-    is => 'ro',
-    isa => 'HashRef[Str]',
-    lazy_build => 1,
-    handles => {
-        set_module => 'set',
-        get_module => 'get',
-        module_exists => 'exists',
-    }
-);
-
-sub _build_modules {
-    my $ns = 'Treex::Services';
-    return {
-        map { (my $key = $_) =~ s/^\Q$ns\E:://; $key =~ s/::/-/; lc($key) => $_ }
-          @{search_module($ns)}
-      };
-}
+use constant HEARTBEAT_LIVENESS => 3;    # 3-5 is reasonable
+use constant HEARTBEAT_INTERVAL => 2500; # msec
+use constant HEARTBEAT_EXPIRY => HEARTBEAT_LIVENESS * HEARTBEAT_INTERVAL;
 
 has running => (
     is  => 'rw',

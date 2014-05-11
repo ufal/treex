@@ -3,11 +3,15 @@ use strict;
 use warnings;
 
 use FindBin;
-use lib "$FindBin::Bin/lib";
-BEGIN { unshift @INC, "$FindBin::Bin/../lib" }
+BEGIN {
+    unshift @INC, "$FindBin::Bin/../lib";
+    unshift @INC, "$FindBin::Bin/lib";
+}
+use AnyEvent::Fork::Early;
+use Treex::Core::Config;
+use Treex::Service::Router;
 
-$ENV{TREEX_SERVER_CACHE_SIZE} = 1;
+my $url = $ARGV[0] || Treex::Core::Config->treex_server_url;
+Treex::Service::Router::run_router($url);
 
-# Start command line interface for application
-require Mojolicious::Commands;
-Mojolicious::Commands->start_app('Treex::Service::Server');
+print STDERR "Server has exited gracefully\n";

@@ -4,37 +4,31 @@ use warnings;
 
 use FindBin;
 BEGIN { unshift @INC, "$FindBin::Bin/../lib" }
+use AnyEvent::Fork::Early;
 
-use Getopt::Long;
-use
-use Treex::Service::Worker;
+use Treex::Core::Config;
+use Treex::Service::Router;
 
-my ($is_service, $module);
+my $url = Treex::Core::Config->treex_server_url || $ARGV[0];
+Treex::Service::Router::run_router($url);
 
-GetOptions(
-    'service|s' => \$is_service,
-    'module|m=s' => \$module,
-);
+print STDERR "Router has exited peacefully\n";
 
-if ($is_service) {
-    require Treex::Service::Worker;
+# use AnyEvent::Fork;
 
-    $w = Treex::Service::Worker->new;
+# AnyEvent::Fork
+#   ->new
+#   ->require('Treex::Service::Router')
+#   ->send_arg($ENV{TREEX_SERVER_ROUTER})
+#   ->run('Treex::Service::Router::run_router' => sub {close shift});
 
-} else {
-    require Treex::Service::Manager;
+# require Treex::Service::Server;
+# require Treex::Service::Manager;
+# require Mojo::Server::Daemon;
 
-    die "Can't fork: $!" unless defined(my $pid = fork);
+# Treex::Service::Manager->singleton->set_router($ENV{TREEX_SERVER_ROUTER});
 
-    if ($pid) {
-        # Hook manager client
-        Treex::Service::Manager->client($pid);
-
-        # Start command line interface for application
-        require Mojolicious::Commands;
-        Mojolicious::Commands->start_app('Treex::Service::Server');
-    } else {
-        # Start service manager server
-        Treex::Service::Manager->start_manager;
-    }
-}
+# my $server = Mojo::Server::Daemon->new(
+#     app => Treex::Service::Server->new,
+# );
+# $server->listen([Treex::Core::Config->treex_server_url])->run;

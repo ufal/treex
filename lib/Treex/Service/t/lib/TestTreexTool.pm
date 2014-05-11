@@ -8,39 +8,33 @@ BEGIN {
     use base qw(Exporter);
 
     our @ISA    = qw(Exporter);
-    our @EXPORT = qw($port $server_url test_tool close_connection);
+    our @EXPORT = qw(test_tool close_connection);
 }
 
 use Test::More;
 
 use FindBin;
-use lib "$FindBin::Bin/lib";
-
-use IO::Socket::INET;
-use Treex::Service::Server;
 use Treex::Core::Scenario;
 use File::Spec;
 use File::Temp;
 use Test::Files;
-use Mojo::IOLoop;
 
-our $port  = Mojo::IOLoop->generate_port;
-our $server_url = "http://localhost:$port";
-$ENV{TREEX_SERVER_URL} = $server_url;
+my $server_socket = File::Temp->new()->filename;
+my $closed;
+
+our $socket = "ipc://$server_socket";
+$ENV{TREEX_SERVER_URL} = $socket;
 
 my $treex_server_script = "$FindBin::Bin/test_server.pl";
 my ($pid, $server);
 eval {
-    $pid = open($server, '-|', $treex_server_script, 'daemon', '-l', $server_url)
+    $pid = open($server, '-|', $treex_server_script, $socket)
       || die "Can't start server";
-    print STDERR "server pid: $pid on url: $server_url\n";
-    sleep 1 while !_port($port);
+    print STDERR "server (pid: $pid) on: $socket\n";
 };
 
 die "$@\n" if $@;
 ok(!$@, "No errors during server start");
-
-sub _port { IO::Socket::INET->new(PeerAddr => 'localhost', PeerPort => shift) }
 
 sub test_tool {
     my ($tool_name, $scen) = @_;
@@ -72,10 +66,19 @@ sub test_tool {
 }
 
 sub close_connection {
-    kill(9, $pid) if $pid;
+    my $force = shift;
+
+    return if $closed;
+
+    kill($force ? 'KILL' : 'QUIT', $pid) if $pid;
     close $server if $server;
 
     print STDERR (!kill(0, $pid) ? "Server successfully killed\n" : "Server kill failed\n");
+    $closed = 1;
+}
+
+END {
+    close_connection(1);
 }
 
 1;

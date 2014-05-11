@@ -2,6 +2,7 @@ package Treex::Service::Pool;
 
 use Moose;
 use Scalar::Util 'weaken';
+use Treex::Service::Worker;
 use namespace::autoclean;
 
 has cache_size => (
@@ -11,12 +12,14 @@ has cache_size => (
 );
 
 has workers => (
+    traits  => ['Hash'],
     is  => 'ro',
-    isa => 'HashRef[Treex::Service::Worker]',
+    isa => 'HashRef',
     init_arg => undef,
     default => sub {{}},
     handles => {
-        worker_exists => 'exists'
+        worker_exists => 'exists',
+        all => 'values'
     }
 );
 
@@ -37,6 +40,17 @@ sub get_worker {
     return $w;
 }
 
+sub start_worker {
+    my ($self, $args, $cb) = @_;
+
+    return if $self->worker_exists($args->{fingerprint});
+
+    my $worker = Treex::Service::Worker->new($args)->spawn($cb);
+    $self->set_worker($worker);
+
+    return $worker;
+}
+
 sub set_worker {
     my ($self, $worker) = @_;
 
@@ -49,7 +63,18 @@ sub set_worker {
 
     while (scalar(keys %$workers) > $self->cache_size) {
         my $exp_fp = shift(@{$self->fifo})->[0];
-        delete $workers->{$exp_fp} if $workers->{$exp_fp};
+        delete $workers->{$exp_fp};
+    }
+
+    return $worker;
+}
+
+sub remove_worker {
+    my ($self, $fingerprint) = @_;
+
+    my $worker = delete $self->workers->{$fingerprint};
+    if ($worker) {
+        $worker->despawn();
     }
 
     return $worker;

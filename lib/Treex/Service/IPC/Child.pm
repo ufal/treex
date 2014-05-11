@@ -1,62 +1,44 @@
 package Treex::Service::IPC::Child;
 
-use Mojo::Base 'Treex::Service::IPC';
-
+use Moose;
 use IO::Socket::UNIX;
-use Scalar::Util 'weaken';
+use Treex::Core::Log;
+use namespace::autoclean;
 
-sub connect {
-    my $self = shift;
-    my $args = ref $_[0] ? $_[0] : {@_};
-    weaken $self;
-    $self->reactor->next_tick(sub { $self && $self->_connect($args) });
-}
+extends 'Treex::Service::IPC';
 
-sub _connect {
-    my ($self, $args) = @_;
+sub new_from_file {
+    my ($class, $file) = @_;
 
-    $self->socket_pid($args->{pid}) if $args->{pid};
-
-    my $handle;
-    my $reactor = $self->reactor;
-    unless ($handle = $self->{handle} = $args->{handle}) {
-        my %options = (
-            Blocking => 0,
-            Peer     => $args->{file}
-        );
-        return $self->emit(error => "Couldn't connect: $@")
-          unless $self->{handle} = $handle = IO::Socket::UNIX->new(%options);
-
-        # Timeout
-        $self->{timer} = $reactor->timer($args->{timeout} || 10,
-                                         sub { $self->emit(error => 'Connect timeout') });
-    }
-    $handle->blocking(0);
-
-    # Wait for handle to become writable
-    weaken $self;
-    $reactor->io($handle => sub { $self->_try($args) })->watch($handle, 0, 1);
-}
-
-sub _try {
-    my ($self, $args) = @_;
-
-    # Retry or handle exceptions
-    my $handle = $self->{handle};
-    return $self->emit(error => $! = $handle->sockopt(SO_ERROR))
-      unless $handle->connected;
-
-    return $self->_cleanup->emit_safe(connect => $handle)
-}
-
-sub _cleanup {
-    my $self = shift;
-    return $self unless my $reactor = $self->reactor;
-    $self->{$_} && $reactor->remove(delete $self->{$_}) for qw(timer handle);
+    my $self = $class->new(socket_file => $file);
+    $self->set_pid($self->connect(15));
     return $self;
 }
 
-sub DESTROY { shift->_cleanup }
+sub connect {
+    my ($self, $timeout) = @_;
+
+    return if $self->connected;
+
+    my $file = $self->socket_file;
+    while ( ! -e $file && $timeout ) {
+        $timeout--;
+        sleep 1;
+    }
+
+    return unless -e $file;
+
+    my $handle = IO::Socket::UNIX->new( $file )
+      || log_fatal ( "Could not connect to socket '" . $file . "': $!" );
+
+    $self->set_handle( $handle );
+    $self->connected(1);
+    chomp( my $pid = <$handle> );
+
+    return $pid;
+}
+
+__PACKAGE__->meta->make_immutable;
 
 1;
 __END__

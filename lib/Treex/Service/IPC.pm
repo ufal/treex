@@ -1,18 +1,52 @@
 package Treex::Service::IPC;
 
-use Mojo::Base 'Mojo::EventEmitter';
+use Moose;
+use namespace::autoclean;
+
 use File::Spec ();
 
-has reactor     => sub {
-    require Mojo::IOLoop;
-    Mojo::IOLoop->singleton->reactor;
-};
+has socket_file => (
+    is  => 'ro',
+    isa => 'Str',
+    lazy => 1,
+    builder => '_generate_socket_file'
+);
 
-has socket_file => sub {
-    shift->_generate_socket_file;
-};
+has socket_pid => (
+    is  => 'ro',
+    isa => 'Int',
+    writer => 'set_pid',
+    default => sub { $$ }
+);
 
-has socket_pid  => sub { $$ };
+has handle => (
+    is  => 'ro',
+    isa => 'GlobRef',
+    writer => 'set_handle'
+);
+
+has connected => (
+    is  => 'rw',
+    isa => 'Bool',
+    default => 0
+);
+
+sub read {
+    my $self = shift;
+    my $handle = $self->handle;
+    return <$handle>;
+}
+
+sub say {
+    my $self = shift;
+    $self->write( map {$_ . $/} @_ );
+}
+
+sub write {
+    my $self = shift;
+    my $handle = $self->handle;
+    print $handle @_;
+}
 
 sub _generate_socket_file {
     my $self = shift;
@@ -21,6 +55,7 @@ sub _generate_socket_file {
     return File::Spec->catfile($dir, "treex-ipc-socket.$pid")
 }
 
+__PACKAGE__->meta->make_immutable;
 1;
 
 __END__

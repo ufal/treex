@@ -3,15 +3,20 @@
 #   Michal Sedlak <sedlakmichal@gmail.com>     2014/02/22 16:56:55
 
 use FindBin;
-use lib "$FindBin::Bin/lib";
-use lib "$FindBin::Bin/";
+BEGIN {
+    unshift @INC, "$FindBin::Bin/../lib";
+    unshift @INC, "$FindBin::Bin/lib";
+}
 
 use TestTreexTool;
 use Test::More;
 BEGIN { use_ok (qw/Treex::Service::Client/) }
 
+done_testing;
+exit 0;
+
 eval {
-  my $client = Treex::Service::Client->new(server_url => $server_url);
+  my $client = Treex::Service::Client->new();
 
   ok($client->service_available('addprefix'), 'Service AddPrefix is available');
 

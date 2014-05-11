@@ -1,69 +1,94 @@
 package Treex::Service::Client;
 
 use Moose;
-use Mojo::UserAgent;
-use Mojo::URL;
+use Carp::Assert;
 use Treex::Core::Config;
 use Treex::Core::Log;
+use ZMQ::FFI::Constants qw(ZMQ_DEALER);
+use Treex::Service::MDP qw(:all);
+use AnyEvent;
+use EV 4.0;
+use Storable qw(freeze thaw);
 use namespace::autoclean;
 
-has ua => (
-    is  => 'ro',
-    isa => 'Mojo::UserAgent',
-    lazy => 1,
-    default => sub { Mojo::UserAgent->new->connect_timeout(1) }
-);
+our $ZMQ_CONTEXT;
 
-has server_url => (
+has endpoint => (
     is  => 'ro',
     isa => 'Str',
-    required => 1,
     default => sub { Treex::Core::Config->treex_server_url }
 );
 
-has available_services => (
-    traits  => ['Hash'],
+has context => (
     is  => 'ro',
-    isa => 'HashRef[Bool]',
+    isa => 'ZMQ::FFI::ContextBase',
     lazy => 1,
-    builder => '_build_available_services',
-    handles => {
-        service_available => 'exists'
+    default => sub { $ZMQ_CONTEXT ||= ZMQ::FFI->new }
+);
+
+has socket => (
+    is  => 'ro',
+    isa => 'ZMQ::FFI::SocketBase',
+    clearer   => 'clear_socket',
+    predicate => 'has_socket',
+    lazy => 1,
+    default => sub {
+        my $socket = shift->context->socket( ZMQ_DEALER );
+        $socket->set_linger(0);
+        return $socket;
     }
 );
 
-sub _build_available_services {
+after 'BUILDARGS' => sub { shift->reconnect_router };
+
+sub reconnect_router {
     my $self = shift;
-    return { map { $_ => 1 } @{$self->ua->get($self->server_url)->res->json('/modules')} };
-}
 
-sub run_service {
-    my ($self, $module, $args, $input) = @_;
-
-    # cleanup default input
-    $args = { %$args };
-    delete $args->{language};
-    delete $args->{scenario};
-
-    my $url = Mojo::URL->new($self->server_url . '/service');
-    my $tx = $self->ua->post($url => json => {
-        module => $module,
-        args => $args,
-        input => $input
-    });
-
-    if (my $res = $tx->success) { return $res->json }
-    else {
-        my ($err, $code) = $tx->error;
-        log_fatal $code ? "$code response: $err" : "Connection error: $err";
+    if ($self->has_socket) {
+        $self->socket->close();
+        $self->clear_socket;
     }
+
+    my $socket = $self->socket;
+    $socket->connect($self->endpoint);
 }
 
-sub ping_server {
-    my $self = shift;
+sub send {
+    my ($self, $fingerprint, $data) = @_;
 
-    my $url = Mojo::URL->new($self->server_url . '/ping');
-    return $self->ua->get($url)->success;
+    $self->reconnect_router unless $self->has_socket;
+
+    my $timeout = 20;
+    my $client = $self->socket;
+    my $msg = [C_CLIENT,
+               $fingerprint,
+               $data->{module},
+               map { freeze($data->{$_}) } qw( init_args input )];
+
+    $client->send_multipart($msg);
+
+    my $fd = $client->get_fd();
+    my $cv = AE::cv;
+    my ($w, $t);
+    $w = AE::io $fd, 0, sub {
+        if ($client->has_pollin) {
+            my @reply = $client->recv_multipart();
+            assert(@reply == 3);
+            undef $w; undef $t;
+
+            assert(shift(@reply) eq C_CLIENT);
+            assert(shift(@reply) eq $fingerprint);
+            $cv->send(shift(@reply));
+        }
+    };
+
+    $t = AE::timer $timeout, 0, sub {
+        undef $t; undef $w;
+        $cv->send;
+    };
+
+    my $reply = $cv->recv;
+    return $reply ? thaw($reply) : undef;
 }
 
 __PACKAGE__->meta->make_immutable;

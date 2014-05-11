@@ -5,9 +5,6 @@ use Treex::Service::Manager;
 use Treex::Core::Config;
 use File::Spec;
 
-use constant DEBUG_MEMORY => $ENV{DEBUG_MEMORY};
-use if DEBUG_MEMORY, qw/Memory::Usage/;
-
 has service_manager => sub {
     my $self = shift;
     my $cache_size = $ENV{TREEX_SERVER_CACHE_SIZE} || $self->config->{cache_size};

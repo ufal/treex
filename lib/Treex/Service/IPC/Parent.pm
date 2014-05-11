@@ -1,12 +1,17 @@
 package Treex::Service::IPC::Parent;
 
-use Mojo::Base 'Treex::Service::IPC';
-
-use Carp 'croak';
+use Moose;
 use IO::Socket::UNIX;
-use Scalar::Util 'weaken';
+use Treex::Core::Log;
+use namespace::autoclean;
 
-has max_accept => 10;
+extends 'Treex::Service::IPC';
+
+has listener => (
+    is  => 'ro',
+    isa => 'GlobRef',
+    writer => 'set_listener'
+);
 
 sub listen {
     my $self = shift;
@@ -14,39 +19,40 @@ sub listen {
     my $file = $self->socket_file;
 
     my %options = (
-        Local => $file,
-        Type  => SOCK_STREAM
+        Local  => $file,
+        Listen => 1
     );
-    my $handle = IO::Socket::UNIX->new(%options) or croak "Can't create listen socket: $@";
-    $handle->blocking(0);
-    $self->{handle} = $handle;
+    my $handle = IO::Socket::UNIX->new(%options) or log_fatal "Can't create listen socket: $@";
+    $self->set_listener($handle);
+
+    $self->connect(15);
 }
 
-sub start {
+sub connect {
+    my ($self, $timeout) = @_;
+    return if $self->connected;
+
+    my $client;
+    while (!($client = $self->listener->accept) && $timeout) {
+        $timeout--;
+        sleep 1;
+    }
+
+    return unless $client;
+
+    $self->set_handle($client);
+    $self->connected(1);
+    $self->say($self->socket_pid);
+}
+
+sub DEMOLISH {
     my $self = shift;
-    weaken $self;
-    $self->reactor->io(
-        $self->{handle} => sub { $self->_accept for 1 .. $self->max_accept }
-    );
+    my $file = $self->socket_file;
+
+    unlink $file if $file && -e $file;
 }
 
-sub stop { $_[0]->reactor->remove($_[0]{handle}) }
-
-sub _accept {
-    my $self = shift;
-
-    return unless my $handle = $self->{handle}->accept;
-    $handle->blocking(0);
-
-    return $self->emit_safe(accept => $handle);
-}
-
-sub DESTROY {
-    my $self = shift;
-    return unless my $reactor = $self->reactor;
-    $self->stop if $self->{handle};
-}
-
+__PACKAGE__->meta->make_immutable;
 
 1;
 __END__

@@ -3,11 +3,25 @@ package Treex::Tool::Prefixer;
 use Moose;
 use namespace::autoclean;
 
+with 'Treex::Service::Role';
+
 has prefix => (
     is  => 'ro',
     isa => 'Str',
     default => 'prefix_',
 );
+
+has init_time => (
+    is  => 'ro',
+    isa => 'Int',
+    default => 3
+);
+
+sub initialize {
+    #sleep shift->init_time;
+}
+
+sub process { shift->prefix_words(@_) }
 
 sub prefix_words {
     my $self = shift;
