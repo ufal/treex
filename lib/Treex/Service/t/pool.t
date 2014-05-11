@@ -10,6 +10,7 @@ BEGIN {
     unshift @INC, "$FindBin::Bin/lib";
 }
 
+$ENV{USE_SERVICES} = 0;
 use Test::More;
 BEGIN { use_ok( 'Treex::Service::Pool' ); }
 

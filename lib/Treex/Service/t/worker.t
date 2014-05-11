@@ -9,6 +9,8 @@ BEGIN {
 
 use Test::More;
 
+$ENV{USE_SERVICES} = 0;
+
 BEGIN { use_ok( Treex::Service::Worker ); }
 
 use File::Spec ();

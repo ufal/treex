@@ -4,11 +4,13 @@ use Moose;
 use Carp::Assert;
 use Treex::Core::Config;
 use Treex::Core::Log;
+use ZMQ::FFI;
 use ZMQ::FFI::Constants qw(ZMQ_DEALER);
 use Treex::Service::MDP qw(:all);
 use AnyEvent;
 use EV 4.0;
 use Storable qw(freeze thaw);
+use Scalar::Util 'weaken';
 use namespace::autoclean;
 
 our $ZMQ_CONTEXT;
@@ -39,8 +41,6 @@ has socket => (
     }
 );
 
-after 'BUILDARGS' => sub { shift->reconnect_router };
-
 sub reconnect_router {
     my $self = shift;
 
@@ -54,41 +54,62 @@ sub reconnect_router {
 }
 
 sub send {
-    my ($self, $fingerprint, $data) = @_;
+    my ($self, $service, $input, $cb) = @_;
+
+    log_fatal "Parameter doesn't implement Treex::Service::Role"
+      unless $service && $service->does('Treex::Service::Role');
 
     $self->reconnect_router unless $self->has_socket;
 
-    my $timeout = 20;
     my $client = $self->socket;
-    my $msg = [C_CLIENT,
-               $fingerprint,
-               $data->{module},
-               map { freeze($data->{$_}) } qw( init_args input )];
+    my $msg = ['', C_CLIENT,
+               $service->fingerprint,
+               $service->impl_module,
+               freeze($service->init_args),
+               $input ? freeze($input) : ()];
 
-    $client->send_multipart($msg);
+    # use Data::Dumper;
+    # print STDERR Dumper($msg);
 
     my $fd = $client->get_fd();
-    my $cv = AE::cv;
+    my $cv; $cv = AE::cv unless $cb;
     my ($w, $t);
+    weaken $self;
     $w = AE::io $fd, 0, sub {
         if ($client->has_pollin) {
             my @reply = $client->recv_multipart();
-            assert(@reply == 3);
+            assert(@reply == 4);
             undef $w; undef $t;
 
+            # use Data::Dumper;
+            # print STDERR Dumper(\@reply);
+
+            assert(shift(@reply) eq '');
             assert(shift(@reply) eq C_CLIENT);
-            assert(shift(@reply) eq $fingerprint);
-            $cv->send(shift(@reply));
+            assert(shift(@reply) eq $service->fingerprint);
+            my $res = shift(@reply);
+            $res = $res && $res eq 1
+              ? $res : $res ? thaw($res) : undef;
+            if ($cb) { $cb->($res) }
+            else { $cv->send }
+            $self->socket->close();
+            $self->clear_socket; # drop socket
         }
     };
 
+    my $timeout = $input ? $service->process_timeout : $service->init_timeout;
     $t = AE::timer $timeout, 0, sub {
         undef $t; undef $w;
-        $cv->send;
+
+        $self->socket->close();
+        $self->clear_socket; # drop socket
+        if ($cb) { $cb->() }
+        else { $cv->send };
     };
 
-    my $reply = $cv->recv;
-    return $reply ? thaw($reply) : undef;
+    $client->send_multipart($msg);
+
+    return $cv->recv unless $cb;
 }
 
 __PACKAGE__->meta->make_immutable;

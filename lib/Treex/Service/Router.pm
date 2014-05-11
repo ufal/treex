@@ -1,8 +1,8 @@
 package Treex::Service::Router;
 
 use Moose;
-use Carp;
-use Carp::Assert;
+use Carp 'croak';
+use Carp::Assert 'assert';
 use Treex::Service::MDP qw(:all);
 use Treex::Service::Pool;
 use Scalar::Util 'weaken';
@@ -12,6 +12,10 @@ use EV 4.0;
 use AnyEvent;
 use Storable qw(freeze thaw);
 use namespace::autoclean;
+
+extends 'Treex::Service::EventEmitter';
+
+use constant DEBUG => $ENV{TREEX_ROUTER_DEBUG} || 0;
 
 has context => (
     is  => 'ro',
@@ -55,7 +59,7 @@ has pool => (
     }
 );
 
-# identity to fingerprint
+# map identity => fingerprint
 has identities => (
     traits  => ['Hash'],
     is  => 'ro',
@@ -68,7 +72,19 @@ has identities => (
     }
 );
 
-sub run {
+has watcher => (
+    is  => 'rw',
+    isa => 'Any',
+    clearer => 'clear_watcher',
+);
+
+has timer => (
+    is  => 'rw',
+    isa => 'Any',
+    clearer => 'clear_timer',
+);
+
+sub listen {
     my $self = shift;
 
     my $socket = $self->socket;
@@ -76,27 +92,33 @@ sub run {
     my $fd = $socket->get_fd;
 
     weaken $self;
+    $self->clear_watcher;
     my $w = AE::io $fd, 0, sub {
         while ( $self->socket->has_pollin ) {
             $self->_process;
         }
     };
+    $self->watcher($w);
+
+    $self->clear_timer;
     my $t = AE::timer 0, HEARTBEAT_INTERVAL, sub {
         $self->send_heartbeats;
         $self->purge_workers;
     };
-
-    local $SIG{INT} = local $SIG{TERM} = sub { EV::break(EV::BREAK_ALL) };
-    local $SIG{QUIT} = sub { undef $w; undef $t; };
-
-    EV::run();
+    $self->timer($t);
 }
 
 sub run_router {
     my ($endpoint) = @_;
-    #close $fh; # just close the socket
-    Treex::Service::Router->new(endpoint => $endpoint)->run;
-    #print STDERR "Router is exiting peacefully\n";
+
+    my $cv = AE::cv;
+
+    local $SIG{INT} = local $SIG{TERM} = sub { exit 0 };
+    local $SIG{QUIT} = sub { $cv->send };
+
+    my $router = Treex::Service::Router->new(endpoint => $endpoint);
+    $router->listen;
+    $cv->recv;
 }
 
 sub _process {
@@ -104,15 +126,16 @@ sub _process {
 
     my $socket = $self->socket;
     my @msg = $socket->recv_multipart();
-    use Data::Dumper;
-    print STDERR Dumper(\@msg);
-    
+
+    # use Data::Dumper;
+    # print STDERR Dumper(\@msg);
+
     my $sender = shift @msg;
     assert(shift(@msg) eq '');
 
     my $header = shift @msg;
     if (C_CLIENT eq $header) {
-        assert(@msg > 3);
+        assert(@msg >= 3);
         $self->process_client($sender, @msg);
     } elsif (W_WORKER eq $header) {
         $self->process_worker($sender, @msg);
@@ -126,22 +149,31 @@ sub DEMOLISH {
 
     return unless $self && $self->pool;
 
-    $self->delete_worker($_, 1) for ($self->pool->all);
+    for my $w ($self->pool->all_workers) {
+        $w->on(spawn => sub { shift->despawn(1) });
+        $self->delete_worker($w, 1);
+        $self->pool->remove_worker($w->fingerprint); # In case it's not registered
+    };
 }
 
 sub process_client {
     my ($self, $sender, $fingerprint, $module, $init_args) =
       (shift, shift, shift, shift, shift);
 
+    print STDERR "Request from client ($sender) ...\n" if DEBUG;
     weaken $self;
     my $worker = $self->get_worker($fingerprint)
       or $self->start_worker({
-          router => $self->router,
+          router => $self->endpoint,
           fingerprint => $fingerprint,
           module => $module,
           init_args => thaw($init_args)
-      } => sub { $self->dispatch(shift); });
-    $self->dispatch($worker, [$sender, '', @_]);
+      });
+    if (@_ == 0) {
+        $self->send_initialized($sender, $fingerprint);
+    } else {
+        $self->dispatch($worker, [$sender, '', @_]);
+    }
 }
 
 sub process_worker {
@@ -167,8 +199,9 @@ sub process_worker {
         if ($worker_exists) {
             my $client = shift;
             assert(shift eq '');
-            my @msg = ($client, '', C_CLIENT, $worker_fingerprint, @_);
-            $socket->send_multipart(\@msg);
+            print STDERR "Reply to client ($client) ...\n" if DEBUG;
+            my $msg = [$client, '', C_CLIENT, $worker_fingerprint, @_];
+            $socket->send_multipart($msg);
             $self->worker_waiting($worker_id);
         } else {
             $self->delete_worker($worker_id, 1);
@@ -197,6 +230,8 @@ sub worker_waiting {
     my $worker = $self->get_worker_by_id($worker_id) or return;
     $worker->waiting(1);
     $worker->timeout(AE::time + HEARTBEAT_TIMEOUT);
+    my $pid = $worker->pid;
+    print STDERR "Worker ($pid) waiting...\n" if DEBUG;
     $self->dispatch($worker);
 }
 
@@ -207,7 +242,7 @@ sub dispatch {
     my $fingerprint = $worker->fingerprint;
 
     if ($msg) {
-        push @{$self->requests->{$fingerprint}} => $msg;
+        push @{$self->requests->{$fingerprint} ||= []} => $msg;
     }
 
     $self->purge_workers;
@@ -215,8 +250,17 @@ sub dispatch {
     if ($worker->ready && @{$self->requests->{$fingerprint}}) {
         $msg = shift @{$self->requests->{$fingerprint}};
         $worker->waiting(0);
+        my $pid = $worker->pid;
+        print STDERR "Worker ($pid) working...\n" if DEBUG;
         $self->send_to_worker($worker->identity, W_REQUEST, $msg);
     }
+}
+
+sub send_initialized {
+    my ($self, $client, $fingerprint) = @_;
+
+    my $msg = [$client, '', C_CLIENT, $fingerprint, '1'];
+    $self->socket->send_multipart($msg);
 }
 
 sub send_to_worker {
@@ -244,7 +288,8 @@ sub delete_worker {
     $self->send_to_worker($worker_id, W_DISCONNECT)
       if $disconnect;
 
-    $self->pool->remove_worker($self->get_fingerprint($worker_id));
+    my $fingerprint = $self->get_fingerprint($worker_id);
+    $self->pool->remove_worker($fingerprint) if $fingerprint;
 
     delete $self->workers->{$worker_id};
 }
@@ -253,7 +298,7 @@ sub purge_workers {
     my $self = shift;
 
     my $time = AE::time;
-    for my $w (grep {$_->waiting && $_->timeout < $time} $self->pool->all) {
+    for my $w (grep {$_->waiting && $_->timeout < $time} $self->pool->all_workers) {
         $self->delete_worker($w->identity, 0);
         $w->waiting(0);
     }
@@ -264,7 +309,14 @@ sub send_heartbeats {
 
     my $time = AE::time;
     $self->send_to_worker($_->identity, W_HEARTBEAT)
-      for (grep {$_->waiting} $self->pool->all);
+      for (grep {$_->waiting} $self->pool->all_workers);
+}
+
+sub recv_heartbeat {
+    my ($self, $worker_id) = @_;
+
+    my $worker = $self->get_worker_by_id($worker_id);
+    $worker->timeout(AE::time + HEARTBEAT_TIMEOUT);
 }
 
 __PACKAGE__->meta->make_immutable;

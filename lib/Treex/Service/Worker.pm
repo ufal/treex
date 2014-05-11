@@ -1,8 +1,8 @@
 package Treex::Service::Worker;
 
 use Moose;
-use Carp;
-use Carp::Assert;
+use Carp::Always;
+use Carp::Assert 'assert';
 use ZMQ::FFI;
 use ZMQ::FFI::Constants qw(ZMQ_DEALER);
 use Treex::Service::MDP qw(:all);
@@ -15,7 +15,7 @@ use EV 4.0;
 use Time::HiRes;
 use namespace::autoclean;
 
-use constant DEBUG => 1; #$ENV{TREEX_WORKER_DEBUG} || 0;
+use constant DEBUG => $ENV{TREEX_WORKER_DEBUG} || 0;
 
 extends 'Treex::Service::EventEmitter';
 
@@ -112,9 +112,11 @@ sub spawn {
                 return unless $self;
                 $w = AE::io $fh, 0, sub {
                     my $pid = <$fh>;
+                    syswrite $fh, '1';
                     $self->set_pid($pid);
                     $self->running(1);
                     $self->emit(spawn => $pid);
+                    print STDERR "Worker ($pid) spawned\n" if DEBUG;
                     close $fh;
                     undef $w;
                 }
@@ -248,13 +250,18 @@ sub run_worker {
            });
 
     syswrite $fh, "$$";
+    my $check = <$fh>;
     close $fh;
 
-    print STDERR "Worker (pid: $$) pid sent\n";
+    unless ($check) { # other end is dead
+        exit 0;
+    }
+
+    print STDERR "Worker (pid: $$) pid sent\n" if DEBUG;
 
     $w->run;
 
-    print STDERR "Worker (pid: $$) exited gracefully\n";
+    print STDERR "Worker (pid: $$) exited gracefully\n" if DEBUG;
 }
 
 sub send_to_router {

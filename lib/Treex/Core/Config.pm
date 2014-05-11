@@ -185,7 +185,7 @@ sub tmp_dir {
 
 sub treex_server_url {
     return exists $ENV{TREEX_SERVER_URL} ?
-      $ENV{TREEX_SERVER_URL} : $config->{treex_server_url} || 'http://127.0.0.1:7338';
+      $ENV{TREEX_SERVER_URL} : $config->{treex_server_url} || 'tcp://127.0.0.1:7338';
 }
 
 sub use_services {
