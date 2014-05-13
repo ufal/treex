@@ -5,9 +5,28 @@ extends 'Treex::Block::W2A::TagMorphoDiTa';
 
 has '+model' => ( default => 'data/models/morphodita/en/english-morphium-wsj-140407.tagger' );
 
-# after 'tag_sentence' => sub {
-#     if ($self->model !~ /no_negation.tagger$/ && !$self->negative_prefixes_in_lemma){}
-# }
+has 'negative_prefixes_in_lemma' => (
+    is => 'ro',
+    isa => 'Bool',
+    default => 0,
+    documentation => 'Some English MorphoDiTa models lemmatize words with negative prefixes'
+                   . ' e.g. as "unable"->"able^un". Do we want to have such lemmas? Default is false.',
+);
+
+
+after 'process_atree' => sub {
+    my ($self, $atree) = @_;
+    if ($self->lemmatize && $self->model !~ /no_negation.tagger$/ && !$self->negative_prefixes_in_lemma){
+        foreach my $anode ($atree->get_descendants()){
+            my ($lemma, $prefix) = split /\^/, $anode->lemma;
+            if (defined $prefix){
+                $anode->set_lemma($lemma);
+                $anode->set_iset(negativeness => 'neg');
+            }
+        }
+    }
+    return;
+};
 
 1;
 

@@ -77,6 +77,10 @@ languages,
 
 data/models/morphodita/cs/czech-morfflex-pdt-131112.tagger-best_accuracy
 
+=item en
+
+data/models/morphodita/en/english-morphium-wsj-140407.tagger
+
 =back
 
 =head1 AUTHORS
