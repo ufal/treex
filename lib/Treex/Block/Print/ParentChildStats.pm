@@ -56,7 +56,7 @@ sub process_end {
 		foreach my $k ( sort { $_deprel_stats{$b} <=> $_deprel_stats{$a} } keys %_deprel_stats ) {
 			my @for_format = split "=>", $k;
 			my $perc = ( $_deprel_stats{$k} / $total_count ) * 100.0; 
-			my $str_line = sprintf( "[ %8s / %-8s ] : %-8d / %05.2f\%",
+			my $str_line = sprintf( "[ %8s / %-8s ] : %8d / %05.2f\%",
 				$for_format[0], $for_format[1], $_deprel_stats{$k}, $perc );
 			print $str_line . "\n";
 		}
@@ -69,7 +69,7 @@ sub process_end {
 		foreach my $k ( sort { $_tag_stats{$b} <=> $_tag_stats{$a} } keys %_tag_stats ) {
 			my @for_format = split "=>", $k;
 			my $perc = ( $_tag_stats{$k} / $total_count ) * 100.0; 
-			my $str_line = sprintf( "[ %10s / %-10s ] : %-8d / %05.2f\%", $for_format[0], $for_format[1], $_tag_stats{$k}, $perc );
+			my $str_line = sprintf( "[ %10s / %-10s ] : %8d / %05.2f\%", $for_format[0], $for_format[1], $_tag_stats{$k}, $perc );
 			print $str_line . "\n";
 		}
 	}
@@ -82,10 +82,13 @@ sub process_end {
 			my @for_format  = split "=>",  $k;
 			my @for_format1 = split ' / ', $for_format[0];
 			my @for_format2 = split ' / ', $for_format[1];
-			my $str_line    = sprintf("[ %8s / %-8s , %10s / %-10s ] : %-8d / %05.2f\%", $for_format1[0], $for_format2[0], $for_format1[1], $for_format2[1], $_deprel_tag_stats{$k}, $perc );
+			my $str_line    = sprintf("[ %8s / %-8s , %10s / %-10s ] : %8d / %05.2f\%", $for_format1[0], $for_format2[0], $for_format1[1], $for_format2[1], $_deprel_tag_stats{$k}, $perc );
 			print $str_line . "\n";
 		}
 	}
+	print "***********************************************\n";
+	print "Total count : $total_count\n";
+	print "***********************************************\n";	
 }
 
 1;
