@@ -1,44 +1,41 @@
 package Treex::Block::A2T::EN::MarkRelClauseHeads;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
+extends 'Treex::Block::A2T::MarkRelClauseHeads';
 
-sub process_tnode {
-    my ( $self, $tnode ) = @_;
-    if ( is_relclause_head($tnode) ) {
-        $tnode->set_is_relclause_head(1);
-    }
-
-    return 1;
-}
-
-sub is_relclause_head {
-    my ($t_node) = @_;
-    return 0 if !$t_node->is_clause_head;
-
-    # Usually wh-pronouns are children of the verb, but sometimes...
-    # "licenses, the validity(parent=expire) of which(tparent=validity) will expire"
-    return any { is_wh_pronoun($_) } $t_node->get_clause_descendants();
-}
-
-sub is_wh_pronoun {
-    my ($t_node) = @_;
+override 'is_relative_pronoun' => sub {
+    my ($self, $t_node) = @_;
     my $a_node = $t_node->get_lex_anode() or return 0;
     return $a_node->tag =~ /W/;
-}
+};
 
 1;
 
-=over
+__END__
 
-=item Treex::Block::A2T::EN::MarkRelClauseHeads
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Block::A2T::MarkRelClauseHeads
+
+=head1 DESCRIPTION
 
 Finds relative clauses and mark their heads using the C<is_relclause_head> attribute.
 
-=back
+The English implementation looks for relative/interrogative pronouns within the clause
+(their Penn Treebank tag starts with 'W').
 
-=cut
+=head1 AUTHORS
 
-# Copyright 2008-2009 Zdenek Zabokrtsky, Martin Popel
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

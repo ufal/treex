@@ -1,30 +1,42 @@
 package Treex::Block::A2T::CS::MarkRelClauseHeads;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
+extends 'Treex::Block::A2T::MarkRelClauseHeads';
 
-sub process_tnode {
-    my ( $self, $t_node ) = @_;
-
-    if ( $t_node->is_clause_head ) {
-        if ( grep { $_->get_lex_anode && $_->get_lex_anode->tag =~ /^.[149EJK\?]/ } $t_node->get_children ) {
-            $t_node->set_is_relclause_head(1);
-        }
-    }
-}
+override 'is_relative_pronoun' => sub {
+    my ($self, $t_node) = @_;
+    my $a_node = $t_node->get_lex_anode() or return 0;
+    return $a_node->tag =~ /^.[149EJK\?]/;
+};
 
 1;
 
-=over
+__END__
 
-=item Treex::Block::A2T::CS::MarkRelClauseHeads
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Block::A2T::MarkRelClauseHeads
+
+=head1 DESCRIPTION
 
 Finds relative clauses and mark their heads using the C<is_relclause_head> attribute.
 
-=back
+The Czech implementation uses PDT tags to find relative/interrogative pronouns.
 
-=cut
+TODO: Switching to Interset will render this override obsolete.
 
-# Copyright 2008-2011 Zdenek Zabokrtsky, David Marecek
+=head1 AUTHORS
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+
+David Mareček <marecek@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
