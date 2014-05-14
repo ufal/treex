@@ -1,12 +1,25 @@
-package Treex::Block::A2T::CS::MarkClauseHeads;
+package Treex::Block::A2T::MarkClauseHeads;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block::A2T::MarkClauseHeads';
+extends 'Treex::Core::Block';
 
-override 'is_clause_head' => sub {
+sub process_tnode {
+    my ( $self, $tnode ) = @_;
+    $tnode->set_is_clause_head( $self->is_clause_head($tnode) );
+    return 1;
+}
+
+sub is_clause_head {
     my ( $self, $t_node ) = @_;
-    return ( $t_node->get_lex_anode && grep { $_->tag =~ /^V[Bpi]/ } $t_node->get_anodes );
-};
+
+    return 0 if ( !$t_node->get_lex_anode );
+    return 1 if grep {
+        $_->match_iset( 'verbform' => 'fin' )
+            or $_->match_iset( 'verbform' => 'part', 'voice' => 'act' )
+    } $t_node->get_anodes;
+    
+    return 0;
+}
 
 1;
 
@@ -16,17 +29,15 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::A2T::CS::MarkClauseHeads
+Treex::Block::A2T::MarkClauseHeads
 
 =head1 DESCRIPTION
 
 T-nodes representing the heads of finite verb clauses are marked
 by the value 1 in the C<is_clause_head> attribute.
 
-This implementation uses Czech positional tags to find finite verb forms
-and active participles.
-
-TODO: Using Interset will make this compatible with the default, language-independent block.
+The default implementation checks for finite verb forms or active participles
+among the aux/lex a-nodes (via Interset).
 
 =head1 AUTHOR
 

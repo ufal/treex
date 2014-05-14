@@ -1,18 +1,12 @@
 package Treex::Block::A2T::EN::MarkClauseHeads;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
+extends 'Treex::Block::A2T::MarkClauseHeads';
 
 # zatim nejake rozbite, znackuje to i infinitivy
 
-sub process_tnode {
-    my ( $self, $tnode ) = @_;
-    $tnode->set_is_clause_head( is_clause_head($tnode) );
-    return 1;
-}
-
-sub is_clause_head {
-    my ($t_node) = @_;
+override 'is_clause_head' => sub {
+    my ( $self, $t_node ) = @_;
     my $lex_a_node = $t_node->get_lex_anode() or return 0;
     return 0 if $lex_a_node->tag !~ /^V/;
 
@@ -38,7 +32,7 @@ sub is_clause_head {
         return 1 if
             any { $_->afun eq 'Sb' }
             map { $_->get_echildren( { or_topological => 1 } ) }
-            grep { $_->tag =~ /^V/ } @anodes;
+                grep { $_->tag =~ /^V/ } @anodes;
 
         #my @leftchildren = map { $_->get_echildren( { or_topological => 1, preceding_only => 1 } ) }
         #    grep { $_->tag =~ /^V/ } @anodes;
@@ -49,28 +43,43 @@ sub is_clause_head {
 
     # Otherwise: non-finite
     return 0;
-}
+};
 
-sub is_possible_subject {
-    my ($a_node) = @_;
-    return 0 if $a_node->tag  =~ /^(RB[SR]?|IN|\(|\)|:|\$|MD|POS|PRP\$|RP|SYM|TO|WH\$|WRB)$/;
-    return 0 if $a_node->form =~ /^(be|have|[,;()'`:-])$/;
-    return 1;
-}
+#sub is_possible_subject {
+#    my ($a_node) = @_;
+#    return 0 if $a_node->tag  =~ /^(RB[SR]?|IN|\(|\)|:|\$|MD|POS|PRP\$|RP|SYM|TO|WH\$|WRB)$/;
+#    return 0 if $a_node->form =~ /^(be|have|[,;()'`:-])$/;
+#    return 1;
+#}
 
 1;
 
-=over
+__END__
 
-=item Treex::Block::A2T::EN::MarkClauseHeads
+=encoding utf-8
 
-SEnglishT nodes representing the heads of finite verb clauses are marked
+=head1 NAME 
+
+Treex::Block::A2T::CS::MarkClauseHeads
+
+=head1 DESCRIPTION
+
+T-nodes representing the heads of finite verb clauses are marked
 by the value 1 in the C<is_clause_head> attribute.
 
-=back
+The English implementation uses various heurstics over lemmas and Penn-Treebank-style tags.
 
-=cut
+=head1 AUTHOR
 
-# Copyright 2008-2009 Zdenek Zabokrtsky, Martin Popel
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+David Mareček <marecek@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
