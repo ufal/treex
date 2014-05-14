@@ -5,7 +5,8 @@ extends 'Treex::Block::A2T::MarkClauseHeads';
 
 override 'is_clause_head' => sub {
     my ( $self, $t_node ) = @_;
-    return ( $t_node->get_lex_anode && grep { $_->tag =~ /^V[Bpi]/ } $t_node->get_anodes );
+    return 1 if ( $t_node->get_lex_anode && grep { $_->tag =~ /^V[Bpi]/ } $t_node->get_anodes );
+    return 0;
 };
 
 1;
@@ -26,7 +27,7 @@ by the value 1 in the C<is_clause_head> attribute.
 This implementation uses Czech positional tags to find finite verb forms
 and active participles.
 
-TODO: Using Interset will make this compatible with the default, language-independent block.
+TODO: Switching to Interset will render this override obsolete.
 
 =head1 AUTHOR
 
