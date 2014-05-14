@@ -18,8 +18,7 @@ sub process_subtree {
 			$c->set_afun(get_afun($c));
 			process_subtree($c);    		
     	}
-    }
-    
+    }    
     
 }
 
