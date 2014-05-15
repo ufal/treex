@@ -63,7 +63,7 @@ sub convert_deprel {
             $afun = 'Atr' if ($node->match_iset('synpos' => 'attr'));
             $afun = 'Pred' if ($node->is_verb and $node->parent->is_root);
             $afun = 'AuxP' if ($node->is_preposition);
-            $afun = 'Obj' if (!$afun);  # TODO fix subject selection
+            $afun = 'Obj' if (!$afun);  # subject is selected later
         }
         elsif($deprel eq 'det'){
             $afun = $node->match_iset('subpos' => 'art') ? 'AuxA' : 'Atr';        
@@ -182,8 +182,19 @@ sub process_zone {
     foreach my $node (values %{$self->_nodes_to_remove}){
         $node->remove();
     }
+    # setting coordination members
+    # TODO shared modifiers
+    $self->set_coord_members($a_root);
     # post-processing
     $self->rehang_relative_clauses($a_root);
+    $self->mark_subjects($a_root);
+}
+
+sub set_coord_members {
+    my ($self, $a_root) = @_;
+    foreach my $a_node ($a_root->get_descendants()){
+        $a_node->set_is_member(1) if (($a_node->parent->afun // '') =~ /^(Coord|Apos)$/);
+    }
 }
 
 sub rehang_relative_clauses {
@@ -194,8 +205,29 @@ sub rehang_relative_clauses {
         my $parent = $anode->get_parent();
         $clause->set_parent($parent);
         $anode->set_parent($clause);
-        $anode->set_afun('Obj');
+        $anode->set_afun( $anode->is_adverb ? 'Adv' : 'Obj' );
         $clause->set_afun('Atr');
+    }
+}
+
+sub mark_subjects {
+    my ($self, $a_root) = @_;
+
+    foreach my $a_verb (grep { $_->match_iset('verbform' => 'fin') } $a_root->get_descendants()){
+        my @objects = grep { $_->is_noun or $_->match_iset('synpos' => 'subst') } $a_verb->get_echildren({ordered=>1, or_topological=>1});
+        # skip clauses where subjects are already marked
+        next if (any { $_->afun eq 'Sb' } @objects);
+        # look for explicite nominatives
+        my $first_nom = first { $_->match_iset('case' => 'nom') } @objects;
+        if ($first_nom){
+            $first_nom->set_afun('Sb');
+            next;
+        }
+        # look for first noun with unmarked case
+        my $first_unmarked = first { !$_->get_iset('case') } @objects;
+        if ($first_unmarked){
+            $first_unmarked->set_afun('Sb');
+        }
     }
 }
 
