@@ -309,7 +309,7 @@ Attributes corresponding to Interset features.
 
 =over
 
-=item my $boolean = $node->match_iset($node, 'pos' => 'noun', 'gender' => '!masc', ...);
+=item my $boolean = $node->match_iset('pos' => 'noun', 'gender' => '!masc', ...);
 
 Do the feature values of this node match the specification?
 (Values of other features do not matter.)
