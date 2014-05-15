@@ -24,7 +24,7 @@ sub process_tnode {
         $new_node->set_is_generated(1);
         $new_node->shift_before_node($t_node);
 
-        my @anode_tags = map { $_->tag } ( $t_node->get_lex_anode, $t_node->get_aux_anodes );
+        my @anode_tags = $self->_get_anode_tags($t_node);
 
         my ( $person, $gender, $number );
         my ( $aux_gender, $aux_number );
@@ -103,6 +103,11 @@ sub process_tnode {
     return;
 }
 
+sub _get_anode_tags {
+    my ($self, $t_node) = @_;
+    return map { $_->tag } ( $t_node->get_lex_anode, $t_node->get_aux_anodes );
+}
+
 1;
 __END__
 
@@ -127,6 +132,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2008-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

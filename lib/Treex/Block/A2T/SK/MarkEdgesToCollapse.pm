@@ -17,7 +17,6 @@ has expletives => (
     documentation => 'mark expletives (e.g. "v *tom*, že") as auxiliary?',
 );
 
-
 override tnode_although_aux => sub {
     my ( $self, $node ) = @_;
 
@@ -38,13 +37,13 @@ sub _is_infinitive {
     my ( $self, $modal, $infinitive ) = @_;
 
     # active voice 'dělat'
-    return 1 if $infinitive->tag =~ /^Vf/;
+    return 1 if $infinitive->match_iset( 'verbform' => 'inf' );
 
     # passive voice 'být dělán'
     return 1
         if (
-        $infinitive->tag =~ /^Vs/
-        && any { $_->lemma eq 'byť' && $_->tag =~ m/^Vf/ } $infinitive->get_echildren( { or_topological => 1 } )
+        $infinitive->match_iset( 'verbform' => 'part' )
+        && any { $_->lemma eq 'byť' && $_->match_iset( 'verbform' => 'inf' ) } $infinitive->get_echildren( { or_topological => 1 } )
         );
 
     return 0;
@@ -53,11 +52,11 @@ sub _is_infinitive {
 # Return 1 if $modal is a modal verb with regards to its $infinitive child
 override is_modal => sub {
     my ( $self, $modal, $infinitive ) = @_;
-    
-    # state passive "je(lemma=být) připraven(parent=je,tag=Vs,afun=Pnom)"
+
+    # state passive "je(lemma=být) připraven(parent=je,tag=participle,afun=Pnom)"
     # This is definitely not a modal construction,
     # but technicaly it's easiest to solve it here.
-    return 1 if $infinitive->tag =~ /^Vs/ && $modal->lemma eq 'byť';
+    return 1 if $infinitive->match_iset( 'verbform' => 'part' ) && $modal->lemma eq 'byť';
 
     # Check if $infinitive is the lexical verb with which the modal should merge.
     return 0 if !$self->_is_infinitive( $modal, $infinitive );
@@ -71,7 +70,6 @@ override is_modal => sub {
 
     return 0;
 };
-
 
 override is_aux_to_parent => sub {
     my ( $self, $node ) = @_;
@@ -98,8 +96,8 @@ override solve_multi_lex => sub {
 
         # For preps the 'real' child is a noun, and for conjs a verb or TODO: noun.
         # Why nouns for conjs? "víc než auto"
-        my $wanted_regex = $node->afun eq 'AuxP' ? '^[NPC]' : '^V';
-        return if $self->try_rule( sub { $_[0]->tag =~ $wanted_regex }, \@adepts );
+        my $wanted_regex = $node->afun eq 'AuxP' ? '(noun|num)' : 'verb';
+        return if $self->try_rule( sub { $_[0]->match_iset( 'pos' => $wanted_regex ) }, \@adepts );
 
         # If no previous heuristic helped, choose the leftmost child.
         return if $self->try_rule( sub { $_[0] == $adepts[0] }, \@adepts );
@@ -114,13 +112,18 @@ override is_parent_aux_to_me => sub {
     # Reuse base-class language independent rules
     my $base_result = super();
     return $base_result if defined $base_result;
-    
+
     # collapse expletive 'to' above the conjunction 'že'/'aby'
-    my $parent = $node->get_parent();   
-    return 1 if $self->expletives && $node->form =~ /^(že|aby)$/ && $parent->lemma eq 'ten' && $parent->tag =~ /^PD[ZNH]S.*/;
+    my $parent = $node->get_parent();
+    return 1
+        if (
+           $self->expletives
+        && $node->form =~ /^(že|aby)$/
+        && $parent->lemma eq 'ten' 
+        && $parent->match_iset( 'prontype' => 'dem', 'gender' => 'neut')
+        );
     return 0;
 };
 
 1;
-
 

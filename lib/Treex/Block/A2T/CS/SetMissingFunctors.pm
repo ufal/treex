@@ -76,9 +76,11 @@ sub process_tnode {
     if ( !defined $tnode->functor || $tnode->functor eq '???' ) {
 
         my $anode = $tnode->get_lex_anode();
-        return if ( !$anode || !$anode->tag );
+        return if ( !$anode );
+        my $tag = $anode->wild->{tag_cs_pdt} // $anode->tag;
+        return if ( !$tag );
 
-        my $functor = $POS_MAP->{ substr( $anode->tag, 0, 2 ) };
+        my $functor = $POS_MAP->{ substr( $tag, 0, 2 ) };
 
         if ( any { $_->is_member } $tnode->get_children() ) {
             $functor = 'CONJ';
@@ -107,12 +109,15 @@ its functors is hard-set to 'CONJ'.
 If no functor is found in the POS mapping and no co/ap members are found,
 the functor is assigned a special '???' value.
 
+NB: The block is adjusted so that it can be applied to Slovak (with a tagset 
+conversion) as well.
+
 =head1 AUTHOR
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

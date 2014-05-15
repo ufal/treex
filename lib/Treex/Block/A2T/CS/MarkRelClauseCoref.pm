@@ -6,10 +6,11 @@ extends 'Treex::Core::Block';
 sub process_tnode {
     my ( $self, $t_node ) = @_;
 
+    my $lex_anode_tag = $self->_get_lex_anode_tag($t_node);
     my $antec;
 
     # relative pronouns without "coz"
-    if ( $t_node->get_lex_anode && $t_node->get_lex_anode->tag =~ /^.[149JK\?]/ ) {
+    if ( $lex_anode_tag =~ /^.[149JK\?]/ ) {
 
         my $relclause = $t_node->get_clause_head;        
         if (!$relclause->is_root){ # probably due to parsing errors, this happens from time to time
@@ -34,7 +35,7 @@ sub process_tnode {
     }
 
     # relative pronoun "coz"
-    elsif ( $t_node->get_lex_anode && $t_node->get_lex_anode->tag =~ /^.E/ ) {
+    elsif ( $lex_anode_tag =~ /^.E/ ) {
 
         my $parent = $t_node->get_parent;
         if (   defined $parent
@@ -91,22 +92,44 @@ sub process_tnode {
     }
 }
 
+sub _get_lex_anode_tag {
+    my ($self, $tnode) = @_;
+    my $anode = $tnode->get_lex_anode();
+    return '' if (!$anode);
+    return $anode->tag // '';
+}
+
 1;
+__END__
 
-# prakticky identicke s anglickym protejskem, mozna by to chtelo predelat na genericky blok!!!
+=encoding utf-8
 
-=over
+=head1 NAME 
 
-=item Treex::Block::A2T::CS::MarkRelClauseCoref
+Treex::Block::A2T::CS::MarkRelClauseCoref
+
+=head1 DESCRIPTION
 
 Coreference link between a relative pronoun (or other relative pronominal word)
-and its antecedent (in the sense of grammatical coreference) is detected in SCzechT trees
-and store into the C<coref_gram.rf> attribute.
+and its antecedent (in the sense of grammatical coreference) is detected in Czech t-trees
+and stored into the C<coref_gram.rf> attribute.
 
-=back
+This implementation uses the rules given by Nguy (2006, pp. 44-7)
+L<http://ufal.mff.cuni.cz/~linh/theses/aca-diplomka.pdf>, with simple heuristics
+to compensate for parser errors.
 
-=cut
+=head1 AUTHORS
 
-# Copyright 2008-2011 Zdenek Zabokrtsky, David Marecek
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+David Mareček <marecek@ufal.mff.cuni.cz>
+
+Michal Novák <mnovak@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

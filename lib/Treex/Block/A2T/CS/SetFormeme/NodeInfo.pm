@@ -20,7 +20,7 @@ has 't_lemma' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { $_[0]->
 
 has 'a' => ( is => 'ro', isa => 'Maybe[Object]', lazy => 1, default => sub { $_[0]->t->get_lex_anode() } );
 
-has 'tag' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { $_[0]->a ? $_[0]->a->tag : '' } );
+has 'tag' => ( is => 'ro', isa => 'Str', lazy_build => 1 );
 
 has 'afun' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { $_[0]->a ? $_[0]->a->afun : '' } );
 
@@ -34,7 +34,7 @@ has 'case' => ( is => 'ro', isa => 'Str', lazy_build => 1 );
 
 has 'prep' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { $_[0]->_prep_case->{prep} } );
 
-has 'trunc_lemma' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { Treex::Tool::Lexicon::CS::truncate_lemma( $_[0]->lemma, 1 ) } );
+has 'trunc_lemma' => ( is => 'ro', isa => 'Str', lazy_build => 1 );
 
 has 'is_term_label' => ( is => 'ro', isa => enum( [ '', 'congr', 'incon' ] ), lazy => 1, default => sub { Treex::Tool::Lexicon::CS::NamedEntityLabels::is_label( $_[0]->lemma ) } );
 
@@ -47,6 +47,17 @@ has '_prep_case' => ( is => 'ro', isa => 'HashRef', lazy_build => 1 );
 has 'verbform' => ( is => 'ro', isa => 'Str', lazy_build => 1 );
 
 has 'syntpos' => ( is => 'ro', isa => 'Str', lazy_build => 1 );
+
+
+sub _build_tag {
+    my ($self) = @_;
+    return $self->a ? $self->a->tag : '';
+}
+
+sub _build_trunc_lemma {
+    my ($self) = @_;
+    return Treex::Tool::Lexicon::CS::truncate_lemma( $self->lemma, 1 );
+}
 
 # Detects the case this word is or should be in
 sub _build_case {
@@ -156,8 +167,9 @@ sub _get_prep_nodes {
 
         # filter out punctuation, auxiliary / modal verbs and everything that's already contained in the lemma
         # keep prepositions for verbs if followed by an expletive pronoun
-        if ((   $cand->tag !~ /^$pos_filter/
-                || ( $cand->tag =~ /^R/ && any { $_->tag =~ /^PD/ } @{ $self->aux }[ $i .. $#{ $self->aux } ] )
+        if ((   $self->_aux_tag($cand)
+                !~ /^$pos_filter/
+                || ( $self->_aux_tag($cand) =~ /^R/ && any { $self->_aux_tag($_) =~ /^PD/ } @{ $self->aux }[ $i .. $#{ $self->aux } ] )
             )
             and $self->t_lemma !~ /(^|_)\Q$cand_lemma\E(_|$)/
             )
@@ -186,16 +198,16 @@ sub _build__prep_case {
         while ( $gov_prep < @prep_nodes - 1 and ( !$self->a or $prep_nodes[ $gov_prep + 1 ]->ord < $self->a->ord ) ) {
             $gov_prep++;
         }
-        my $gov_case = $prep_nodes[$gov_prep]->tag =~ m/^R...(\d)/ ? $1 : '';
-        $gov_case = ( !$gov_case and $prep_nodes[$gov_prep]->tag =~ m/^[ND]/ ) ? 2 : $gov_case;
+        my $gov_case = $self->_aux_tag( $prep_nodes[$gov_prep] ) =~ m/^R...(\d)/ ? $1 : '';
+        $gov_case = ( !$gov_case and $self->_aux_tag( $prep_nodes[$gov_prep] ) =~ m/^[ND]/ ) ? 2 : $gov_case;
 
         # gather the auxiliaries' forms (lemma for subjunctions and the main preposition, in order to omit vocalization)
         my @prep_forms =
-            map { $_->tag =~ m/^J,/ ? Treex::Tool::Lexicon::CS::truncate_lemma( $_->lemma, 1 ) : lc( $_->form ) }
+            map { $self->_aux_tag($_) =~ m/^J,/ ? $self->_aux_lemma($_) : lc( $_->form ) }
             @prep_nodes;
 
-        if ( $gov_prep >= 0 and $gov_prep < @prep_forms and $prep_nodes[$gov_prep]->tag =~ m/^R/ ) {
-            $prep_forms[$gov_prep] = Treex::Tool::Lexicon::CS::truncate_lemma( $prep_nodes[$gov_prep]->lemma, 1 );
+        if ( $gov_prep >= 0 and $gov_prep < @prep_forms and $self->_aux_tag( $prep_nodes[$gov_prep] ) =~ m/^R/ ) {
+            $prep_forms[$gov_prep] = $self->_aux_lemma( $prep_nodes[$gov_prep] );
         }
 
         $ret->{prep} = join( '_', @prep_forms );
@@ -213,10 +225,10 @@ sub _build_verbform {
     return 'rc' if ( $self->t->is_relclause_head );
 
     # finite aux -> finite form
-    return 'fin' if ( any { $_->tag =~ /^V[Bp]/ } @{ $self->aux } );
+    return 'fin' if ( any { $self->_aux_tag($_) =~ /^V[Bp]/ } @{ $self->aux } );
 
     # active infinitive / transgressive || passive infinitive
-    return 'inf' if ( $self->tag =~ /^V[fme]/ || ( $self->tag =~ /^Vs/ && grep { $_->lemma eq 'být' } @{ $self->aux } ) );
+    return 'inf' if ( $self->tag =~ /^V[fme]/ || ( $self->tag =~ /^Vs/ && grep { $self->_aux_lemma($_) eq 'být' } @{ $self->aux } ) );
 
     # default: finite
     return 'fin';
@@ -254,6 +266,17 @@ sub _build_ne_type {
     return '' if ( !$n_node );
     return $n_node->ne_type;
 }
+
+sub _aux_tag {
+    my ( $self, $anode ) = @_;
+    return $anode->tag;
+}
+
+sub _aux_lemma {
+    my ( $self, $anode ) = @_;
+    return Treex::Tool::Lexicon::CS::truncate_lemma( $anode->lemma, 1 );
+}
+
 
 1;
 

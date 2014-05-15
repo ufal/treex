@@ -122,7 +122,7 @@ sub assign_functors {
         my $afun        = $lex_a_node->afun;
         my $mlemma      = lc $lex_a_node->lemma;                            #Monday -> monday
         my @aux_a_nodes = $node->get_aux_anodes();
-        my ($first_aux_mlemma) = map { $_->lemma } grep { $_->tag =~ /^[RJ]/ } @aux_a_nodes;
+        my ($first_aux_mlemma) = map { $_->lemma } grep { $_->is_conjunction() or $_->is_preposition() } @aux_a_nodes;
         $first_aux_mlemma = '' if !defined $first_aux_mlemma;
 
         my $functor;

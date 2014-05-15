@@ -6,10 +6,7 @@ use Treex::Tool::Lexicon::CS::AdjectivalComplements;
 
 extends 'Treex::Core::Block';
 
-# 1 = original version, 1a = original with syntpos instead of sempos, 2 = modified
-has 'use_version' => ( is => 'ro', isa => enum( [ '1', '1a', '2' ] ), default => '2' );
-
-has 'fix_prep' => ( is => 'ro', isa => 'Bool', default => 1 );
+has 'fix_prep' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 has 'fix_numer' => ( is => 'ro', isa => 'Bool', default => 1 );
 
@@ -23,9 +20,8 @@ sub process_ttree {
     my ( $self, $t_root ) = @_;
 
     # Clear NodeInfo cache for each tree
-    if ( $self->use_version eq '2' ) {
-        $self->_set_node_info_cache( {} );
-    }
+    $self->_set_node_info_cache( {} );
+
     foreach my $t_node ( $t_root->get_descendants() ) {
         $self->process_tnode($t_node);
     }
@@ -41,28 +37,21 @@ sub process_tnode {
     $t_node->set_formeme('???');
 
     # For complex type nodes (i.e. almost all except coordinations, rhematizers etc.)
-    # fill in formemes
-    if ( $self->use_version eq '2' ) {
+    # Percnt, Deg are qcomplex but should get a formeme, too
+    if ( $t_node->nodetype eq 'complex' || $t_node->t_lemma =~ /^(%|°|#(Percnt|Deg))/ ) { 
+        
+        my ($t_parent) = $t_node->get_eparents( { or_topological => 1 } );
 
-        # Percnt, Deg are qcomplex but should get a formeme, too
-        if ( $t_node->nodetype eq 'complex' || $t_node->t_lemma =~ /^(%|°|#(Percnt|Deg))/ ) { 
-            
-            my ($t_parent) = $t_node->get_eparents( { or_topological => 1 } );
-    
-            my $parent = $self->_get_node_info( $t_parent );
-            my $node =  $self->_get_node_info( $t_node );
-            my $formeme = $self->_detect_formeme2($node, $parent);
-    
-            if ($formeme){
-                $t_node->set_formeme($formeme);
-            }
-        }
-        else {
-            $t_node->set_formeme('x');
+        my $parent = $self->_get_node_info( $t_parent );
+        my $node =  $self->_get_node_info( $t_node );
+        my $formeme = $self->_detect_formeme2($node, $parent);
+
+        if ($formeme){
+            $t_node->set_formeme($formeme);
         }
     }
-    elsif ( $t_node->nodetype eq 'complex' ){
-        detect_formeme($t_node, $self->use_version eq '1');
+    else {
+        $t_node->set_formeme('x');
     }
     return;
 }
@@ -248,130 +237,6 @@ sub _is_nonattributive_numeral {
 }
 
 
-sub detect_formeme {
-    my ($tnode, $use_syntpos) = @_;
-    my $lex_a_node = $tnode->get_lex_anode() or return;
-    my @aux_a_nodes = $tnode->get_aux_anodes( { ordered => 1 } );
-    my $tag = $lex_a_node->tag;
-    my ($tparent) = $tnode->get_eparents( { or_topological => 1 } );
-    my $parent_lex_a_node = $tparent->get_lex_anode();
-    my ($sempos, $parent_sempos);
-    my $formeme;
-    
-    # modification (v 1a) - using syntpos instead of sempos
-    if ($use_syntpos){
-        $sempos = detect_syntpos( $tnode, $tag, $lex_a_node->lemma );
-        $parent_sempos = detect_syntpos( $tparent, $parent_lex_a_node ? $parent_lex_a_node->tag : '', 
-                $parent_lex_a_node ? $parent_lex_a_node->lemma : '' );
-    }
-    # original formemes - using sempos
-    else {
-        $sempos        = $tnode->gram_sempos   || '';
-        $parent_sempos = $tparent->gram_sempos || '';        
-    }
-
-    # semantic nouns
-    if ( $sempos =~ /^n/ ) {
-        if ( $tag =~ /^(AU|PS|P8)/ ) {
-            $formeme = 'n:poss';
-        }
-        elsif ( $tag =~ /^[NAP]...(\d)/ ) {
-            my $case = $1;
-            my $prep = join '_',
-                map { my $preplemma = $_->lemma; $preplemma =~ s/\-.+//; $preplemma }
-                grep { $_->tag =~ /^R/ or $_->afun =~ /^Aux[PC]/ or $_->lemma eq 'jako' } @aux_a_nodes;
-            if ( $prep ne '' ) {
-                $formeme = "n:$prep+$case";
-            }
-            elsif ( $parent_sempos =~ /^n/ and $tparent->ord > $tnode->ord ) {
-                $formeme = 'n:attr';
-            }
-            else {
-                $formeme = "n:$case";
-            }
-        }
-        else {
-            $formeme = 'n:???';
-        }
-    }
-
-    # semantic adjectives
-    elsif ( $sempos =~ /^adj/ ) {
-        my $prep = join '_',
-            map { my $preplemma = $_->lemma; $preplemma =~ s/\-.+//; $preplemma }
-            grep { $_->tag =~ /^R/ or $_->afun =~ /^AuxP/ } @aux_a_nodes;
-        if ( $prep ne '' ) {
-            $formeme = "adj:$prep+X";
-        }
-        elsif ( $parent_sempos =~ /v/ ) {
-            $formeme = 'adj:compl';
-        }
-        else {
-            $formeme = 'adj:attr';
-        }
-    }
-
-    # semantic adverbs
-    elsif ( $sempos =~ /^adv/ ) {
-        $formeme = 'adv:';
-    }
-
-    # semantic verbs
-    elsif ( $sempos =~ /^v/ ) {
-        if ( $tag =~ /^Vf/ and not grep { $_->tag =~ /^V[Bp]/ } @aux_a_nodes ) {
-            $formeme = 'v:inf';
-        }
-        else {
-            my $subconj = join '_',
-                map { my $subconjlemma = $_->lemma; $subconjlemma =~ s/\-.+//; $subconjlemma }
-                grep { $_->tag =~ /^J,/ or $_->form eq "li" } @aux_a_nodes;
-
-            if ( $tnode->is_relclause_head ) {
-                $formeme = 'v:rc';
-            }
-            elsif ( $subconj ne '' ) {
-                $formeme = "v:$subconj+fin";
-            }
-            else {
-                $formeme = 'v:fin';
-            }
-        }
-    }
-
-    if ($formeme) {
-        $tnode->set_formeme($formeme);
-    }
-    return;
-}
-
-
-# Copied from NodeInfo.pm and edited to resemble the old formeme system a little bit more
-# (possesives moved to nouns)
-sub detect_syntpos {
-    my ($tnode, $tag, $lemma) = @_;
-
-    # skip technical root, conjunctions, prepositions, punctuation etc.
-    return '' if ( $tnode->is_root or $tag =~ m/^.[%#^,FRVXc:]/ );
-
-    # adjectives, adjectival numerals and pronouns
-    return 'adj' if ( $tag =~ m/^.[\}=\?4ACDGLOadhklnrwyz]/ );
-
-    # indefinite and negative pronous cannot be disambiguated simply based on POS (some of them are nouns)
-    return 'adj' if ( $tag =~ m/^.[WZ]/ and $lemma =~ m/(žádný|čí|aký|který|[íý]koli|[ýí]si|ýs)$/ );
-
-    # adverbs, adverbial numerals ("dvakrát" etc.),
-    # including interjections and particles (they behave the same if they're full nodes on t-layer)
-    return 'adv' if ( $tag =~ m/^.[\*bgouvTI]/ );
-
-    # verbs
-    return 'v' if ( $tag =~ m/^V/ );
-
-    # everything else are nouns: POS -- 56789EHPNJQYj@SXU, no POS (possibly -- generated nodes)
-    return 'n';
-}
-
-
-
 1;
 __END__
 
@@ -392,18 +257,19 @@ C<n:pro+X> (prepositional group), or C<n:1> are used.
 
 =over
 
-=item C<use_version>
+=item C<fix_prep>
 
-Which version of Czech formemes should be used (1, 1a or 2, defaults to 1).
+Fix prepositional case (return X for noun case inconsistent with governing preposition, default: 0).
 
-Version 1 is the original formemes using sempos, version 1a is a slight modification of the original using 
-syntpos instead of sempos, version 2 is a more or less completely rewritten variant with a different behavior.
+=item C<fix_numer>
+
+Fix incongruent numerals and assign formemes as if they were congruent (default: 1).
+
+=item C<detect_diathesis>
+
+Include verbal diathesis in formemes (default: 0).
 
 =back
-
-=TODO
-
-Test, unify versions.
 
 =head1 AUTHORS
 
@@ -415,6 +281,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2008-2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2008-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
