@@ -21,17 +21,28 @@ sub process_zone {
     log_fatal("No sentence to tokenize!") if !defined $sentence;
     my @tokens = split( /\s/, $self->tokenize_sentence($sentence) );
 
+    # Create a-nodes and detect the no_space_after attribute.
     foreach my $i ( ( 0 .. $#tokens ) ) {
         my $token = $tokens[$i];
+        
+        # By default, there is a space after each token.
+        my $no_space_after = 0;
 
-        # delete the token from the begining of the sentence
-        $sentence =~ s/^\Q$token\E//;
-
-        # if there are no spaces left, the parameter no_space_after will be set to 1
-        my $no_space_after = $sentence =~ /^\s/ ? 0 : 1;
-
-        # delete this spaces
-        $sentence =~ s/^\s+//;
+        # Delete the token from the begining of the sentence.
+        if ($sentence =~ s/^\Q$token\E//){
+            # This is the expected case. The sentence starts with the $token.
+            # If it is followed by a space, delete the space and set no_space_after=1.
+            $no_space_after = 1 if length($sentence) && $sentence !~ s/^\s+//;
+        } elsif ($i < $#tokens) {
+            # The token (returned from tokenization) does not match the start of sentence.
+            # E.g. '. . . word' is tokenized as  '... word'.
+            # Let's delete the start of sentence anyway,
+            # using a non-greedy regex and the expected next token returned from the tokenization.
+            my $next_token = $tokens[$i+1];
+            my ($first, $rest) = ($sentence =~ /^(.*?)($next_token.*)$/);
+            $no_space_after = 1 if $first !~ /\s$/;
+            $sentence = $rest;
+        }
 
         # create new a-node
         $a_root->create_child(
