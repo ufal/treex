@@ -96,7 +96,7 @@ override solve_multi_lex => sub {
 
         # For preps the 'real' child is a noun, and for conjs a verb or TODO: noun.
         # Why nouns for conjs? "víc než auto"
-        my $wanted_regex = $node->afun eq 'AuxP' ? '(noun|num)' : 'verb';
+        my $wanted_regex = $node->afun eq 'AuxP' ? '~(noun|num)' : 'verb';
         return if $self->try_rule( sub { $_[0]->match_iset( 'pos' => $wanted_regex ) }, \@adepts );
 
         # If no previous heuristic helped, choose the leftmost child.

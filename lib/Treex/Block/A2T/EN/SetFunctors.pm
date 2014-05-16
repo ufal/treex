@@ -79,7 +79,7 @@ my %temporal_noun;
 foreach (
     qw(
     sunday monday tuesday wednesday thursday friday saturday
-    january february march april may june july august semptember october november december
+    january february march april may june july august september october november december
     spring summer autumn winter
     year month week day hour minute
     today yesterday tomorrow

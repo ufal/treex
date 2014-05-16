@@ -19,15 +19,19 @@ sub process_tnode {
     my ($anode) = $tnode->get_lex_anode();
 
     return if ( $tnode->nodetype ne 'complex' or !$anode );
-    
-    $self->set_sempos($tnode, $anode);
+
+    $self->set_sempos( $tnode, $anode );
+
+    if ( ( $tnode->gram_sempos // '' ) eq 'v' ) {
+        $self->set_verbal_grammatemes( $tnode, $anode );
+    }
 
     return;
 }
 
 sub set_sempos {
-    
-    my ($self, $tnode, $anode) = @_;
+
+    my ( $self, $tnode, $anode ) = @_;
 
     my $syntpos = $tnode->formeme;
     $syntpos =~ s/:.*//;
@@ -40,7 +44,10 @@ sub set_sempos {
     elsif ( $tag2sempos{$syntpos} ) {
         $tnode->set_gram_sempos( $tag2sempos{$syntpos} );
     }
-    
+
+}
+
+sub set_verbal_grammatemes {
 }
 
 1;

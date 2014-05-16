@@ -23,7 +23,7 @@ sub process_tnode {
 sub is_relative_word {
     my ( $self, $t_node ) = @_;
     my $a_node = $t_node->get_lex_anode();
-    return ( $a_node and $a_node->match_iset( 'prontype' => '(rel|int' ) );
+    return ( $a_node and $a_node->match_iset( 'prontype' => '~(rel|int)' ) );
 }
 
 sub is_allowed_antecedent {

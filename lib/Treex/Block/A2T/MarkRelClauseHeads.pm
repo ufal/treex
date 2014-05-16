@@ -24,7 +24,7 @@ sub is_relclause_head {
 sub is_relative_pronoun {
     my ( $self, $t_node ) = @_;
     my $a_node = $t_node->get_lex_anode() or return 0;
-    return $a_node->match_iset( 'prontype' => '(rel|int)' );
+    return $a_node->match_iset( 'prontype' => '~(rel|int)' );
 }
 
 1;

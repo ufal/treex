@@ -16,8 +16,14 @@ override 'detect_syntpos' => sub {
 
     my $tag = $a_node->tag;
 
+    # adjective-like pronouns and numerals
+    return 'adj' if ( $a_node->match_iset( 'prontype' => '~(dem|rel|int|ind)', 'synpos' => 'attr' ) );
+    return 'adj' if ( $a_node->is_numeral and $a_node->match_iset( 'synpos' => 'attr' ) );
+
     # nouns, adjectives in predicative and substantival positions
-    return 'n' if ( $a_node->is_noun or $a_node->match_iset( 'synpos' => '(subst|pred)' ) );
+    return 'n' if ( $a_node->is_noun );
+    return 'n' if ( $a_node->match_iset( 'pos' => 'verb', 'synpos' => 'subst' ) );
+    return 'n' if ( $a_node->match_iset( 'pos' => 'adj', 'synpos' => '~(subst|pred)' ) );
 
     # verbs (including attributive)
     return 'v' if ( $a_node->is_verb );
@@ -28,7 +34,8 @@ override 'detect_syntpos' => sub {
     # adverbs, adverbial adjectives
     return 'adv' if ( $a_node->is_adverb or $a_node->match_iset( 'synpos' => 'adv' ) );
 
-    return 'n';    # default to noun
+    # default to noun
+    return 'n';
 };
 
 # semantic nouns
@@ -43,16 +50,13 @@ override '_noun' => sub {
 
     if ( $self->below_verb($t_node) ) {
 
-        my $afun         = $a_node->afun;
+        my $afun = $a_node->afun;
+
         # TODO: same as English, should fix afuns though
         return 'n:adv'  if $afun eq 'Adv';
         return 'n:subj' if $afun eq 'Sb';
-        return 'n:obj'  if $afun eq 'Obj';
 
-        # If something went wrong (parser and consequently afun=NR)
-        # try a guess - it is better than having formeme 'n:'.
-        my $parent_anode = $self->get_parent_anode($t_node, $a_node);
-        return 'n:subj' if $a_node->precedes($parent_anode);
+        # word-order guesses wouldn't work, afuns use them anyway in the P2A::NL::Alpino block
         return 'n:obj';
     }
     if ( $self->below_noun($t_node) or $self->below_adj($t_node) ) {
@@ -71,9 +75,9 @@ override '_adj' => sub {
     my $prep = $self->get_aux_string( $t_node->get_aux_anodes( { ordered => 1 } ) );
     my $afun = $a_node->afun;
 
-    return "n:$prep+X" if $prep;                                       # adjectives with prepositions are treated as a nominal usage
+    return "n:$prep+X" if $prep;                                                     # adjectives with prepositions are treated as a nominal usage
     return 'adj:attr'  if $self->below_noun($t_node) || $self->below_adj($t_node);
-    return 'n:subj'    if $afun eq 'Sb';                               # adjectives in the subject positions -- nominal usage
+    return 'n:subj'    if $afun eq 'Sb';                                             # adjectives in the subject positions -- nominal usage
     return 'adj:compl' if $self->below_verb($t_node);
 
     return 'adj:';
@@ -88,12 +92,12 @@ override '_verb' => sub {
 
     my $subconj = $self->get_subconj_string( $first_verbform, @aux_a_nodes );
 
-    if ( $a_node->match_iset('verbform' => 'inf') ) {
+    if ( $first_verbform->match_iset( 'verbform' => 'inf' ) ) {
         return "v:$subconj+inf" if ($subconj);
         return 'v:inf';
     }
 
-    if ( $first_verbform->match_iset('verbform' => 'part', 'tense' => 'pres') ) {
+    if ( $first_verbform->match_iset( 'verbform' => 'part', 'tense' => 'pres' ) ) {
         return "v:$subconj+ger" if $subconj;
         return 'v:attr' if $self->below_noun($t_node);
         return 'v:ger';
@@ -105,10 +109,9 @@ override '_verb' => sub {
         return 'v:fin';
     }
 
-    if ( $first_verbform->match_iset('verbform' => 'part', 'tense' => 'past') ) {
+    if ( $first_verbform->match_iset( 'verbform' => 'part', 'tense' => 'past' ) ) {
         return "v:$subconj+fin" if $subconj;
-        return 'v:attr' if $self->below_noun($t_node);    # TODO -- what about adjectives ?
-        return 'v:fin';
+        return 'v:attr';
     }
 
     # default to finite forms
