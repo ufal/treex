@@ -183,10 +183,11 @@ sub process_ttree {
 
 =item Treex::Block::A2T::EN::SetFunctors
 
-This blocks assings functors to SEnglishT node. The procedure is based
+This block assings functors to English t-nodes.
+The procedure is based
 on a few heuristic rules and conversion tables from functional words and POS tags to functors.
 Simple lexical lists are used too.
-In each SEnglishT node, the resulting functor (or value '???') is stored in the C<functor> attribute.
+In each t-node, the resulting functor (or value '???') is stored in the C<functor> attribute.
 
 =back
 
