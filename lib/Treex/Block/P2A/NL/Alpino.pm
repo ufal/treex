@@ -202,7 +202,8 @@ sub set_coord_members {
     }
 }
 
-# Rehang relative clauses so the predicate of the clause governs it, not the WH-word 
+# Rehang relative clauses so the predicate of the clause governs it, not the WH-word
+# TODO: coordinated verbs in the clause? 
 sub rehang_relative_clauses {
     my ($self, $a_root) = @_;
 
@@ -213,11 +214,13 @@ sub rehang_relative_clauses {
         $anode->set_parent($clause);
         $anode->set_afun( $anode->is_adverb ? 'Adv' : 'Obj' );
         $clause->set_afun('Atr');
+        $clause->set_is_member($anode->is_member);
+        $anode->set_is_member(undef);
     }
 }
 
 # Set the afun 'Sb' for the first plain noun group in nominative or non-marked case
-# TODO: check for congruency in number?
+# TODO: check for congruency in number
 sub mark_subjects {
     my ($self, $a_root) = @_;
 
@@ -245,12 +248,12 @@ sub rehang_aux_verbs {
     my ($self, $a_root) = @_;
     
     foreach my $aux_verb (grep { $_->lemma =~ /^(zullen|worden|hebben|zijn)$/ } $a_root->get_descendants({ordered=>1})){
-        log_info($aux_verb->lemma . ' ' . $aux_verb->id);
+
         # find full verbs hanging on the auxiliary
         my $full_verbform = $aux_verb->lemma eq 'zullen' ? 'inf' : 'part';
         my @full_verbs = first { $_->match_iset('verbform' => $full_verbform) } $aux_verb->get_echildren({or_topological=>1});
         my $verb_head;
-        log_info('Heads:' . scalar(@full_verbs));
+
         # find where to rehang (under full verb or its coordination head if more full verbs
         # share the auxiliary
         if (@full_verbs > 1 and $full_verbs[0]->is_member){
@@ -261,8 +264,9 @@ sub rehang_aux_verbs {
         }
         # rehang (including children of the auxiliary), update afuns
         if ($verb_head){
-            log_info('Head:' . $verb_head->lemma . ' ' . $verb_head->id);
             $verb_head->set_parent($aux_verb->get_parent);
+            $verb_head->set_is_member($aux_verb->is_member);
+            $aux_verb->set_is_member(undef);
             $aux_verb->set_parent($verb_head);
             map { $_->set_parent($verb_head) } $aux_verb->get_children();
             map { $_->set_afun($aux_verb->afun) } @full_verbs;
