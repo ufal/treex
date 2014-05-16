@@ -38,10 +38,7 @@ my %DEPREL_CONV = (
     'vc' => 'Obj', # verbal complement (?)
     'obcomp' => 'Obj', # comparative complement of an adjective
     'pc' => 'Obj', # prepositional object
-    'svb' => 'AuxV', # separable verbal prefix
-    'svp' => 'Obj', # compound predicate
     'predm' => 'Adv',
-    'mwp' => 'AuxP',
     'cmp' => 'AuxC',
     'crd' => 'Coord',
     'app' => 'Apos',
@@ -73,6 +70,15 @@ sub convert_deprel {
             $afun = 'AuxK' if ($node->lemma =~ /[\.!?]/);
             $afun = 'AuxX' if ($node->lemma eq ',');
             $afun = 'AuxG' if (!$afun);
+        }
+        elsif ($deprel eq 'mwp'){
+            # set AuxP for multi-word prepositions, avoid other multi-word units
+            $afun = 'AuxP' if ($node->is_preposition or (($node->parent->conll_deprel // '') eq 'mwp' and ($node->parent->afun // '') eq 'AuxP'));
+            $afun = 'NR' if (!$afun);
+        }
+        elsif ($deprel eq 'svp'){
+            $afun = 'AuxV' if ($node->is_preposition or $node->is_adverb);
+            $afun = 'Obj';
         }
         else {
             $afun = 'NR'; # keep unselected

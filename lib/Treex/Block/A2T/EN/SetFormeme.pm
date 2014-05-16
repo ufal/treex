@@ -12,30 +12,23 @@ sub process_ttree {
 
     # 0. Fill syntpos (avoid using sempos)
     foreach my $t_node (@root_descendants) {
-        my $syntpos = detect_syntpos($t_node);
+        my $syntpos = $self->detect_syntpos($t_node);
         $t_node->set_attr('syntpos', $syntpos); # no need to store it in the wild attributes (used only in this block)
     }
 
     # 1. Fill formemes (but use just n:obj instead of n:obj1 and n:obj2)
     foreach my $t_node (@root_descendants) {
-        my $formeme = detect_formeme($t_node);
+        my $formeme = $self->detect_formeme($t_node);
         $t_node->set_formeme($formeme);
     }
 
     # 2. Distinguishing two object types (first and second) below bitransitively used verbs
     foreach my $t_node (@root_descendants) {
         next if $t_node->formeme !~ /^v:/;
-        distinguish_objects($t_node);
+        $self->distinguish_objects($t_node);
     }
     return 1;
 }
-
-Readonly my %SUB_FOR_SYNTPOS => (
-    n   => \&_noun,
-    adj => \&_adj,
-    adv => sub {'adv'},
-    v   => \&_verb,
-);
 
 Readonly my %SYNTPOS_FOR_TAG => (
     NN => 'n', NNS => 'n', NNP => 'n', NNPS => 'n', '$' => 'n',
@@ -48,7 +41,7 @@ Readonly my %SYNTPOS_FOR_TAG => (
 
 sub detect_syntpos {
 
-    my ( $t_node ) = @_;
+    my ( $self, $t_node ) = @_;
     my $a_node = $t_node->get_lex_anode();
     
      # coap nodes must have empty syntpos
@@ -75,7 +68,7 @@ sub detect_syntpos {
 }
 
 sub detect_formeme {
-    my ($t_node) = @_;
+    my ($self, $t_node) = @_;
 
     # Non-complex type nodes (coordinations, rhematizers etc.)
     # have special formeme value instead of undef,
@@ -90,32 +83,37 @@ sub detect_formeme {
     my $a_node = $t_node->get_lex_anode() or return '???';
 
     # Choose the appropriate subroutine according to the syntpos
-    my $sub_ref = $SUB_FOR_SYNTPOS{$t_node->get_attr('syntpos')};
-    return $sub_ref->( $t_node, $a_node ) if $sub_ref;
-
+    my $syntpos = $t_node->get_attr('syntpos');
+    
+    if ($syntpos eq 'n'){
+        return $self->_noun($t_node, $a_node);
+    }
+    elsif ($syntpos eq 'v'){
+        return $self->_verb($t_node, $a_node);
+    }
+    elsif ($syntpos eq 'adj'){
+        return $self->_adj($t_node, $a_node);
+    }
+    elsif ($syntpos eq 'adv'){
+        return 'adv';        
+    }
     # If no such subroutine found, the formeme is unrecognized
     return '???';
 }
 
 # semantic nouns
 sub _noun {
-    my ( $t_node, $a_node ) = @_;
+    my ( $self, $t_node, $a_node ) = @_;
     return 'n:poss' if $a_node->tag eq 'PRP$';
 
     my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
     # TODO: Postpositons are not handled: n:ago+X instead of n:X+ago
     # my @aux_a_nodes = $t_node->get_aux_anodes();
 
-    my $prep = get_aux_string(@aux_a_nodes);
+    my $prep = $self->get_aux_string(@aux_a_nodes);
     return "n:$prep+X" if $prep;
 
-    # specialni zpracovani pro potomka rootu,
-    # protoze pro root nefunguje get_lex_anode, ktery je jinak lepsi
-    my ($parent_t_node) = $t_node->get_eparents();
-    my $parent_a_node =
-        $parent_t_node->is_root()
-        ? ( $a_node->get_eparents )[0]
-        : $parent_t_node->get_lex_anode();
+    my $parent_a_node = $self->get_parent_anode($t_node, $a_node);
 
     # treba v pedt v konstrukcich s #Equal rodic nema a-uzel
     return 'n:???' if !$parent_a_node;
@@ -137,7 +135,7 @@ sub _noun {
         return 'n:obj';
     }
     return 'n:poss' if grep { $_->tag eq 'POS' } @aux_a_nodes;
-    return 'n:attr' if below_noun($t_node) || below_adj($t_node);
+    return 'n:attr' if $self->below_noun($t_node) || $self->below_adj($t_node);
     my ( $lemma, $id ) = $t_node->get_attrs( 't_lemma', 'id' );
     log_warn("Formeme n: $lemma $id") if $DEBUG;
     return 'n:';
@@ -145,29 +143,29 @@ sub _noun {
 
 # semantic adjectives
 sub _adj {
-    my ( $t_node, $a_node ) = @_;
+    my ( $self, $t_node, $a_node ) = @_;
 
     my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
     # my @aux_a_nodes = $t_node->get_aux_anodes();
-    my $prep        = get_aux_string(@aux_a_nodes);
+    my $prep        = $self->get_aux_string(@aux_a_nodes);
     my $afun        = $a_node->afun;
     
     return "n:$prep+X" if $prep; # adjectives with prepositions are treated as a nominal usage
-    return 'adj:attr'  if below_noun($t_node) || below_adj($t_node);
+    return 'adj:attr'  if $self->below_noun($t_node) || $self->below_adj($t_node);
     return 'n:subj'    if $afun eq 'Sb'; # adjectives in the subject positions -- nominal usage
-    return 'adj:compl' if below_verb($t_node);
+    return 'adj:compl' if $self->below_verb($t_node);
     
     return 'adj:';
 }
 
 # semantic verbs
 sub _verb {
-    my ( $t_node, $a_node ) = @_;
+    my ( $self, $t_node, $a_node ) = @_;
 
     my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
     my $first_verbform = ( first { $_->tag =~ m/^[VM]/ && $_->afun !~ /^Aux[CP]$/ } $t_node->get_anodes( { ordered => 1 } ) ) || $a_node;
     
-    my $subconj = get_subconj_string($first_verbform, @aux_a_nodes);
+    my $subconj = $self->get_subconj_string($first_verbform, @aux_a_nodes);
 
     if ( $t_node->get_attr('is_infin') ) {        
         return "v:$subconj+inf" if ($subconj); # this includes the particle 'to'
@@ -176,7 +174,7 @@ sub _verb {
 
     if ( $first_verbform->tag eq 'VBG' ) {        
         return "v:$subconj+ger" if $subconj;
-        return 'v:attr' if below_noun($t_node);
+        return 'v:attr' if $self->below_noun($t_node);
         return 'v:ger';
     }
 
@@ -189,7 +187,7 @@ sub _verb {
     if ( $first_verbform->tag =~ /VB[DN]/ ) {
         # if there is a subjunction, it mostly is a finite form (e.g. with ellided auxiliaries: "as compared ..." etc.)
         return "v:$subconj+fin" if $subconj;  
-        return 'v:attr' if below_noun($t_node); # TODO -- what about adjectives ?
+        return 'v:attr' if $self->below_noun($t_node); # TODO -- what about adjectives ?
         return 'v:fin';
     }
 
@@ -202,12 +200,23 @@ sub _verb {
 }
 
 sub get_aux_string {
-    my @preps_and_conjs = grep { is_prep_or_conj($_) } @_;
+    my $self = shift;
+    my @preps_and_conjs = grep { $self->is_prep_or_conj($_) } @_;
     return join '_', map { $_->lemma } @preps_and_conjs;
 }
 
+sub get_parent_anode {
+    my ($self, $t_node, $a_node) = @_;
+    # special handling for root node (get_lex_anode does not work for it)
+    my ($parent_t_node) = $t_node->get_eparents();
+    my $parent_a_node =
+        $parent_t_node->is_root()
+        ? ( $a_node->get_eparents )[0]
+        : $parent_t_node->get_lex_anode();    
+}
+
 sub is_prep_or_conj {
-    my ($a_node) = @_;
+    my ($self, $a_node) = @_;
     return 1 if $a_node->afun =~ /Aux[CP]/;
 
     # If afun is not reliable, try also tag
@@ -220,35 +229,32 @@ sub is_prep_or_conj {
 
 sub get_subconj_string {
 
-    my ($first_verbform, @aux_a_nodes) = @_;
+    my ($self, $first_verbform, @aux_a_nodes) = @_;
     
     @aux_a_nodes = grep { $_->ord < $first_verbform->ord } @aux_a_nodes; 
-
-    return join '_', map { $_->lemma }
-        grep { $_->tag =~ /^(IN|TO)$/ || $_->afun =~ /Aux[CP]/ }
-        @aux_a_nodes;
+    return join '_', map { $_->lemma } grep { $self->is_prep_or_conj($_) } @aux_a_nodes;
 }
 
 sub below_noun {
-    my $tnode = shift;
+    my ($self, $tnode) = @_;
     my ($eff_parent) = $tnode->get_eparents() or return 0;
     return ( $eff_parent->get_attr('syntpos') || '' ) =~ /^n/;    #/^[n|adj]/;
 }
 
 sub below_adj {
-    my $tnode = shift;
+    my ($self, $tnode) = @_;
     my ($eff_parent) = $tnode->get_eparents() or return 0;
     return ( $eff_parent->get_attr('syntpos') || '' ) =~ /^adj/;
 }
 
 sub below_verb {
-    my $tnode = shift;
+    my ($self, $tnode) = @_;
     my ($eff_parent) = $tnode->get_eparents() or return 0;
     return ( $eff_parent->get_attr('syntpos') || '' ) =~ /^v/;
 }
 
 sub distinguish_objects {
-    my ($t_node) = @_;
+    my ($self, $t_node) = @_;
     my @objects = grep { $_->formeme =~ /^n:obj/ }
         $t_node->get_echildren( { ordered => 1 } );
 
@@ -302,6 +308,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2008-2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2008-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
