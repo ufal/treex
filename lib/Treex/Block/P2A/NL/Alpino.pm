@@ -48,6 +48,7 @@ my %DEPREL_CONV = (
     'se' => 'AuxT',
 );
 
+# convert original deprels (stored as conll_deprel) to PDT-style afuns
 sub convert_deprel {
     my ($self, $node) = @_;
 
@@ -88,6 +89,7 @@ sub convert_pos {
     $node->set_iset($iset);
 }
 
+# given a non-terminal, return the word-order value of the leftmost terminal node governed by it
 sub _leftmost_terminal_ord {
     my ($p_node) = @_;
     return min( map { $_->wild->{pord} } grep { $_->form and $_->wild->{pord} } $p_node->get_descendants() );
@@ -102,10 +104,12 @@ sub create_subtree {
     
     # no coordination head -> insert commas from those attached to sentence root
     if ($p_root->phrase eq 'conj' and not any {$_->form} @children){
+        # find a punctuation node just before the last coordination member 
         my ($last_child) = sort { _leftmost_terminal_ord($b) <=> _leftmost_terminal_ord($a) } @children;        
         my $needed_ord = _leftmost_terminal_ord($last_child) - 1;
         my ($punct_node) = grep { ($_->wild->{pord} // -1) == $needed_ord } $p_root->get_root()->get_children();
 
+        # punctuation node has been found -- use it as the coordination head
         if ($punct_node){
             $punct_node->wild->{rel} = 'crd';
             unshift @children, $punct_node;
@@ -188,6 +192,7 @@ sub process_zone {
     # post-processing
     $self->rehang_relative_clauses($a_root);
     $self->mark_subjects($a_root);
+    $self->rehang_aux_verbs($a_root);
 }
 
 sub set_coord_members {
@@ -197,6 +202,7 @@ sub set_coord_members {
     }
 }
 
+# Rehang relative clauses so the predicate of the clause governs it, not the WH-word 
 sub rehang_relative_clauses {
     my ($self, $a_root) = @_;
 
@@ -210,6 +216,8 @@ sub rehang_relative_clauses {
     }
 }
 
+# Set the afun 'Sb' for the first plain noun group in nominative or non-marked case
+# TODO: check for congruency in number?
 sub mark_subjects {
     my ($self, $a_root) = @_;
 
@@ -227,6 +235,38 @@ sub mark_subjects {
         my $first_unmarked = first { !$_->get_iset('case') } @objects;
         if ($first_unmarked){
             $first_unmarked->set_afun('Sb');
+        }
+    }
+}
+
+# Rehang auxiliaries under main verb: zullen (+infinitive), worden hebben zijn (+participle)
+# TODO: other combinations (gaan+inf, zijn+inf)?    
+sub rehang_aux_verbs {
+    my ($self, $a_root) = @_;
+    
+    foreach my $aux_verb (grep { $_->lemma =~ /^(zullen|worden|hebben|zijn)$/ } $a_root->get_descendants({ordered=>1})){
+        log_info($aux_verb->lemma . ' ' . $aux_verb->id);
+        # find full verbs hanging on the auxiliary
+        my $full_verbform = $aux_verb->lemma eq 'zullen' ? 'inf' : 'part';
+        my @full_verbs = first { $_->match_iset('verbform' => $full_verbform) } $aux_verb->get_echildren({or_topological=>1});
+        my $verb_head;
+        log_info('Heads:' . scalar(@full_verbs));
+        # find where to rehang (under full verb or its coordination head if more full verbs
+        # share the auxiliary
+        if (@full_verbs > 1 and $full_verbs[0]->is_member){
+            $verb_head = $full_verbs[0]->parent;            
+        }
+        elsif (@full_verbs){
+            $verb_head = $full_verbs[0];
+        }
+        # rehang (including children of the auxiliary), update afuns
+        if ($verb_head){
+            log_info('Head:' . $verb_head->lemma . ' ' . $verb_head->id);
+            $verb_head->set_parent($aux_verb->get_parent);
+            $aux_verb->set_parent($verb_head);
+            map { $_->set_parent($verb_head) } $aux_verb->get_children();
+            map { $_->set_afun($aux_verb->afun) } @full_verbs;
+            $aux_verb->set_afun('AuxV');
         }
     }
 }
