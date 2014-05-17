@@ -30,6 +30,8 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     'v:even_if+fin'     => 'v:i_když+fin',
     'v:as_though+fin'   => 'v:jakoby+fin',
     'n:worth+X'         => 'n:za+4',
+    'n:according_to+X'  => 'n:podle+2',
+    'v:given_that+fin'  => 'v:jelikož+fin',
 
     ## These formemes are sometimes translated strangely by the current dict.
     #    'n:subj'        => 'n:1',

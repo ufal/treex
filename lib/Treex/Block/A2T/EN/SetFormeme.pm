@@ -202,7 +202,7 @@ sub _verb {
 sub get_aux_string {
     my $self = shift;
     my @preps_and_conjs = grep { $self->is_prep_or_conj($_) } @_;
-    return join '_', map { $_->lemma } @preps_and_conjs;
+    return join '_', map { lc $_->form } @preps_and_conjs;
 }
 
 sub get_parent_anode {
@@ -232,7 +232,7 @@ sub get_subconj_string {
     my ($self, $first_verbform, @aux_a_nodes) = @_;
     
     @aux_a_nodes = grep { $_->ord < $first_verbform->ord } @aux_a_nodes; 
-    return join '_', map { $_->lemma } grep { $self->is_prep_or_conj($_) } @aux_a_nodes;
+    return join '_', map { lc $_->form } grep { $self->is_prep_or_conj($_) } @aux_a_nodes;
 }
 
 sub below_noun {
