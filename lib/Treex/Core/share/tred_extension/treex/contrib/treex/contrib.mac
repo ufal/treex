@@ -12,7 +12,7 @@ package Treex_mode;
 # I need this to detect extension presence in pmltq
 $ENV{TREEX_EXTENSION}=1;
 
-print "Initializing Treex extension\n";
+print STDERR "Initializing Treex extension\n";
 
 BEGIN { import TredMacro; }
 
