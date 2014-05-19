@@ -47,15 +47,21 @@ sub get_form_signature {
     return $anode->get_iset('verbform') . $anode->get_iset('tense');
 }
 
+# returns de-lexicalized signature of all verb forms in the verbal group (to be mapped to grammatemes) 
 sub get_verbal_group_signature {
     my ( $self, $tnode, $lex_anode ) = @_;
     my @sig = ();
     foreach my $anode ( grep { $_->is_verb } $tnode->get_anodes( { ordered => 1 } ) ) {
-        if ( $anode == $lex_anode ) {
-            push @sig, 'LEX-' . $self->get_form_signature($anode);
+
+        # de-lexicalize        
+        my $lemma = $anode == $lex_anode ? 'LEX' : $anode->lemma;
+        
+        # put finite verb first at all times (handle word order change in some embedded clauses)
+        if ( $anode->match_iset('verbform' => 'fin') ) {
+            unshift @sig, $lemma . '-' . $self->get_form_signature($anode);
         }
         else {
-            push @sig, $anode->lemma . '-' . $self->get_form_signature($anode);
+            push @sig, $lemma . '-' . $self->get_form_signature($anode);
         }
     }
     #log_info( join( ' ', map { $_->form } $tnode->get_anodes( { ordered => 1 } ) ) . ' -- ' . join( '+', @sig ) );
