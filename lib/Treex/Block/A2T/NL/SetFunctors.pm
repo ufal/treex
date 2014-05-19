@@ -34,6 +34,7 @@ my %formeme2functor = (
     "v:nadat+fin"   => "TWHEN",
     "v:voordat+fin" => "TWHEN",
     "v:dat+fin"     => "EFF",
+    "v:zoals+fin"   => "MANN",
     "adv"           => "MANN",
     "v:rc"          => "RSTR",
     "adj:compl"     => "PAT",
