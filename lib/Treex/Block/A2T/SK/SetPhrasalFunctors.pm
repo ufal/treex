@@ -15,92 +15,93 @@ my %CPHR = (
         ['(ohľad|zreteľ)'],
         ['(podiel)'],
         ['(právo|právo)'],
+        ['(právo)'],
+    ],
+    'budiť' => [
+        ['(dojem|nostalgia|pocit|pohoršenie|pozornosť|rozpaky|závisť|zdanie)'],
     ],
     'byť' => [
         ['treba'],
-        ['potreba'],
-        ['potreba'],
+        ['potrebné'],
         ['škoda'],
         ['(nutný|možný|vhodný)'],
-        ['(ťažko|ťažko|zaťažko)'],
-        ['(hanblivo)'],
-        ['(hanba|hanba)'],
+        ['(ťažko|ťažko|zaťažko|treba)'],
+        ['(hanba)'],
+        ['(hanba|trápne)'],
         ['jeden'],
         ['(ľúto)'],
     ],
     'bývať' => [
-        ['(ľúto|hanblivo|hanba|jeden|hanba)'],
-        ['(treba|potreba)'],
-        ['(nutný|možný|zaťažko|zaťažko)'],
+        ['(ľúto|hanba|hanba|jeden|trápne)'],
+        ['(treba|potrebné)'],
+        ['(nutný|možný|zaťažko|treba)'],
     ],
-    'chovať' => [
-        ['(dôvera|podozrenie|nenávisť|nádej|priateľstvo|cit)'],
+    'civieť' => [
+        ['(prekvapenie|údiv)'],
     ],
     'cítiť' => [
         ['(potreba|nutkanie)'],
     ],
     'dať' => [
-        ['(zaucho|facka|bránka|gól|rana)'],
+        ['(zaucho|facka|gól|rana)'],
         ['(poverenie|podpora|súhlas|správa|impulz|odpoveď|možnosť|príkaz|nádej|popud|príčina|právo|príležitosť|signál|šanca)'],
-        ['(prednosť|preferencia)'],
+        ['(prednosť)'],
         ['(hlas)'],
         ['(dôkaz|informácia|návrh|oznámenie|podnet|sťažnosť|záruka|správa|žiadosť|žaloba)'],
         ['(pečať)'],
         ['(priestor|možnosť|nádej|popud|právo|príležitosť|šanca)'],
         ['(dôkaz|informácia|návrh|oznámenie|podnet|sťažnosť|správa|žiadosť|žaloba)'],
-        ['(dôkaz|informácia|návrh|oznámenie|podnet|sťažnosť|správa|žiadosť|žaloba)'],
         ['(pokuta|sankcia)'],
         ['(dôraz)'],
-    ],
-    'dať sa' => [
         [ 'do', '(práca|výroba|hospodárenie|výklad|let|pohyb)' ],
         [ 'v',  '(let)' ],
+        ['(príčina|podnet)'],
     ],
     'dostať' => [
-        ['(šanca|výpoveď|odškodnenie|priestor|doporučenie|informácia|impulz|možnosť|ponuka|návrh|odpoveď|povolenie|pokuta|prednosť|príležitosť|prísľub|prístup|rada|sľub|súhlas|uistenie|rozkaz|úkol|zákaz|správa)'],
+        ['(šanca|výpoveď|odškodnenie|priestor|odporučenie|informácia|impulz|možnosť|ponuka|návrh|odpoveď|povolenie|pokuta|prednosť|príležitosť|prísľub|prístup|rada|sľub|súhlas|uistenie|rozkaz|úloha|zákaz|správa)'],
         ['(chuť|nápad)'],
+        [ 'do', '(styk|konflikt|spor)' ],
     ],
     'dostávať' => [
-        ['(priestor|doporučenie|impulz|možnosť|ponuka|návrh|odpoveď|povolenie|pokuta|prednosť|príležitosť|prísľub|prístup|sľub|súhlas|uistenie|rozkaz|úkol|zákaz|správa)'],
+        ['(priestor|odporučenie|impulz|možnosť|ponuka|návrh|odpoveď|povolenie|pokuta|prednosť|príležitosť|prísľub|prístup|sľub|súhlas|uistenie|rozkaz|úloha|zákaz|správa)'],
     ],
     'dávať' => [
         ['(priestor|poverenie|podpora|impulz|možnosť|príkaz|nádej|popud|príčina|právo|príležitosť|signál|šanca)'],
-        ['(prednosť|preferencia)'],
+        ['(prednosť)'],
         ['(dôkaz|informácia|návrh|oznámenie|podnet|sťažnosť|správa|žiadosť|žaloba)'],
         ['(dôraz)'],
         ['(pokuta|sankcia|výpoveď)'],
-        ['(dôkaz|informácia|návrh|oznámenie|podnet|sťažnosť|správa|žiadosť|žaloba)'],
-        ['(dôkaz|informácia|návrh|oznámenie|podnet|sťažnosť|správa|žiadosť|žaloba)'],
         ['(zaucho|facka)'],
-    ],
-    'dávať sa' => [
         [ 'do', '(pohyb|práca|pochod|výroba|hospodárenie|výklad)' ],
+        ['(príčina|podnet)'],
     ],
     'horieť' => [
         ['(nenávisť|túžba)'],
     ],
     'javiť' => [
-        ['(záujem|tendencia)'],
+        ['(záujem)'],
     ],
     'klásť' => [
         ['(otázka|otázka)'],
         ['(dôraz)'],
         ['(nárok|požiadavka)'],
         ['(odpor|podmienka|prekážka|cieľ|medza)'],
+        ['(dopyt|otázka)'],
+        ['(bariéra|prekážka)'],
+        ['otázka'],
     ],
     'mať' => [
         ['(dlh|oprávnenie|túžba|úloha|záväzok|sila|pochybnosť|predstava|cieľ|čas|česť|chuť|mechanizmus|možnosť|nádej|pocit|potreba|povinnosť|odvaha|právo|právomoc|schopnosť|sklon|snaha|šanca|tušenie|zámer)'],
         ['potreba'],
         ['(záujem)'],
-        ['(problém|problém)'],
-        ['(dopad|nárok|účinok|vplyv)'],
+        ['(ťažkosť|problém)'],
+        ['(dosah|nárok|účinok|vplyv)'],
         ['(obava|potešenie|strach|radosť|dojem)'],
         ['(predpoklad|sklon|tendencia|plán|šanca)'],
         ['(priestor|dôvod|motivácia|príležitosť)'],
         ['(zmysel|význam|cena)'],
-        ['(oneskorenie|skúsenosť)'],
+        ['(meškanie|skúsenosť)'],
         ['(podiel|zásluha)'],
-        ['(námietka|výhrada|nič|niečo)'],
         ['(námietka|výhrada|nič|niečo)'],
         ['(nedôvera|prednosť|rešpekt|náskok|dôvera)'],
         ['(názor|mienka)'],
@@ -115,35 +116,36 @@ my %CPHR = (
         ['(dozor|dohľad)'],
     ],
     'mávať' => [
-        ['(predstava|spomienka|vzpomienka|pocit)'],
+        ['(predstava|spomienka|pocit)'],
         ['(podiel|zásluha)'],
         ['(pripomienka|poznámka)'],
-        ['(dopad|vplyv)'],
+        ['(dosah|vplyv)'],
         ['(prednosť|rešpekt|náskok)'],
         ['(čas|česť|chuť|možnosť|nádej|potreba|povinnosť|povolenie|právo|právomoc|schopnosť|snaha|šanca)'],
         ['(zmysel|význam|cena)'],
         ['(predpoklad|sklon|tendencia)'],
         ['(obava|potešenie|strach)'],
-        ['(problém|problém|porucha)'],
+        ['(ťažkosť|problém|porucha)'],
         ['(dôvod|motivácia|príležitosť)'],
         ['(záujem)'],
         ['(dôvera|vzťah)'],
+    ],
+    'naberať' => [
+        ['(odvaha|skúsenosť)'],
+    ],
+    'nabrať' => [
+        ['(odvaha|skúsenosť)'],
     ],
     'nachádzať' => [
         ['(odvaha|potešenie|východisko|riešenie|uplatnenie)'],
     ],
     'nadobudnúť' => [
         ['(dojem|presvedčenie)'],
-        ['(dojem)'],
     ],
-    'nadväzovať' => [
+    'nadviazať' => [
         ['(dialóg|kontakt|zmluva|spojenie|spolupráca|styk|vzťah)'],
     ],
-    'naskytnúť sa' => [
-        ['(možnosť|výhľad)'],
-        ['(pohľad|možnosť|výhľad)'],
-    ],
-    'naviazať' => [
+    'nadväzovať' => [
         ['(dialóg|kontakt|zmluva|spojenie|spolupráca|styk|vzťah)'],
     ],
     'navodiť' => [
@@ -154,6 +156,7 @@ my %CPHR = (
     ],
     'nazbierať' => [
         ['(odvaha|skúsenosť|poznatok)'],
+        ['(odvaha|skúsenosť)'],
     ],
     'niesť' => [
         ['(zodpovednosť|strata|zodpovednosť|vina|riziko|dôsledok|následok|miera|spoluvina)'],
@@ -162,20 +165,11 @@ my %CPHR = (
         ['(možnosť|odvaha|potešenie|riešenie|východisko|uplatnenie)'],
         ['(možnosť|odvaha|odpoveď|potešenie|riešenie|východisko|uplatnenie)'],
     ],
-    'náležať' => [
-        ['(oprávnenie|právo)'],
-    ],
     'obracať' => [
         ['(pozornosť)'],
     ],
     'obrátiť' => [
         ['(pozornosť)'],
-    ],
-    'obstarať,poriadiť' => [
-        ['(zápis|záznam)'],
-    ],
-    'obstarávať,poriaďovať' => [
-        ['(kópia|zápis|záznam)'],
     ],
     'otvoriť' => [
         ['(možnosť|prístup|cesta|priestor)'],
@@ -184,6 +178,9 @@ my %CPHR = (
         ['(možnosť|prístup|priestor|cesta)'],
         ['(možnosť|priestor|prístup|čo)'],
     ],
+    'ovládnuť' => [
+        ['(hnev)'],
+    ],
     'padnúť' => [
         ['(slovo|zmienka|rozhodnutie|otázka|poznámka|návrh)'],
     ],
@@ -191,10 +188,10 @@ my %CPHR = (
         ['(nenávisť|túžba)'],
     ],
     'pociťovať' => [
-        ['(potreba)'],
+        ['(potreba|nutkanie)'],
     ],
     'pocítiť' => [
-        ['(potreba)'],
+        ['(potreba|nutkanie)'],
     ],
     'podať' => [
         ['(odvolanie|vysvetlenie|protest|dôkaz|informácia|návod|návrh|obžaloba|podnet|pokyn|sťažnosť|výpoveď|správa|žiadosť|žaloba)'],
@@ -202,6 +199,7 @@ my %CPHR = (
         ['(demisia|odvolanie)'],
         ['(dôkaz|informácia|návrh|odvolanie|podnet|sťažnosť|výpoveď|správa|žiadosť|žaloba)'],
         ['(obžaloba|dôkaz|informácia|návrh|podnet|protest|sťažnosť|výpoveď|správa|žiadosť|žaloba)'],
+        ['(informácia|podnet|správa)'],
     ],
     'podnikať' => [
         ['(krok|opatrenie)'],
@@ -215,40 +213,34 @@ my %CPHR = (
         ['(výkon)'],
         ['(protest|dôkaz|informácia|návrh|podnet|sťažnosť|správa|žiadosť|žaloba)'],
         ['(protest|dôkaz|informácia|návrh|sťažnosť|správa|žiadosť|žaloba)'],
-    ],
-    'pojať' => [
-        ['(podozrenie)'],
-    ],
-    'pokladať' => [
-        ['(otázka|dotaz|otázka)'],
-        ['(dôraz)'],
+        ['(informácia|podnet|správa)'],
     ],
     'položiť' => [
-        ['(otázka|dotaz|otázka)'],
+        ['(otázka|otázka)'],
         ['(dôraz|dôraz)'],
     ],
-    'popadnúť' => [
-        ['(...)'],
+    'ponúkať' => [
+        ['(spolupráca|možnosť|riešenie)'],
+        ['(možnosť|výhľad)'],
+    ],
+    'ponúknuť' => [
+        ['(pohľad|možnosť|výhľad)'],
     ],
     'poskytnúť' => [
-        ['(rozhovor|výchova|ubytovanie|dotácia|kompenzácia|pôžička|garancia|informácia|možnosť|ochrana|pomoc|podpora|záruka|rada|služba)'],
+        ['(rozhovor|výchova|ubytovanie|dotácia|kompenzácia|pôžička|garancia|informácia|liečenie|možnosť|ochrana|pomoc|podpora|záruka|rada|služba)'],
     ],
     'poskytovať' => [
-        ['(dotácia|informácia|príspevok|starosť|opatera|činnosť|možnosť|ochrana|podpora|pomoc|záruka|rada|služba|pôžička|zľava)'],
+        ['(dotácia|informácia|príspevok|liečenie|starostlivosť|činnosť|možnosť|ochrana|podpora|pomoc|záruka|rada|služba|pôžička|zľava)'],
+        ['(možnosť|pomoc|záruka|rada|služba)'],
     ],
-    'pozberať,pozbierať' => [
-        ['(vedomosť|odvaha|skúsenosť)'],
+    'prebudiť' => [
+        ['(dojem|nostalgia|pocit|pohoršenie|povaha|túžba|záujem)'],
     ],
     'prebúdzať' => [
-        ['(dojem|nostalgia|pocit|túžba|záujem)'],
+        ['(dojem|nostalgia|pocit|pohoršenie|túžba|záujem)'],
     ],
-    'predať' => [
-        ['(informácia|podnet|správa)'],
-        ['(informácia|podnet|správa)'],
-    ],
-    'predávať' => [
-        ['(informácia|podnet|správa)'],
-        ['(informácia|podnet|správa)'],
+    'prechovávať' => [
+        ['(dôvera|podozrenie|nenávisť|nádej|priateľstvo|cit)'],
     ],
     'prejaviť' => [
         ['(nezáujem|nesúhlas|záujem|ľútosť|nadšenie|prianie|názor)'],
@@ -257,11 +249,6 @@ my %CPHR = (
     'prejavovať' => [
         ['(nesúhlas|záujem|ľútosť|nadšenie|prianie)'],
         ['(dôvera|sústrasť|úcta|uznanie)'],
-    ],
-    'prevádzať,vykonávať' => [
-        ['(odber|aktualizácia|farbenie|dozor|inštruktáž|prieskum|reorganizácia|reštrukturalizácia|úkon|údržba|úprava|test|vklad|hodnotenie|zmena)'],
-        ['(debata|dialóg|rozhovor|hovor)'],
-        ['(operácia)'],
     ],
     'prichádzať' => [
         [ 'do', '(styk|kontakt)' ],
@@ -275,14 +262,14 @@ my %CPHR = (
     'prijímať' => [
         ['(rozhodnutie|opatrenie|riešenie)'],
     ],
+    'prislúchať' => [
+        ['(oprávnenie|právo)'],
+    ],
     'pristupovať' => [
         [ 'k', '(hlasovanie|realizácia|plán|udelenie|zmena|obnova|modernizácia)' ],
     ],
     'pristúpiť' => [
-        [ 'k', '(použitie|stimulácia|likvidácia|jednanie|riešenie|premena|hlasovanie|kontrola|krok|realizácia|plán|udelenie|zmena|uťahovanie)' ],
-    ],
-    'príslušať' => [
-        ['(oprávnenie|právo)'],
+        [ 'k', '(použitie|stimulácia|vypovedaniu|likvidácia|jednanie|riešenie|premena|hlasovanie|kontrola|krok|realizácia|plán|udelenie|zmena|uťahovanie|uhradeniu)' ],
     ],
     'prísť' => [
         [ 's',  '(tvrdenie|nápad|návrh|myšlienka|požiadavka|riešenie)' ],
@@ -290,80 +277,110 @@ my %CPHR = (
         [ 'o',  '(výhoda|možnosť|právo|ilúzia)' ],
         [ 'na', '(nápad|riešenie)' ],
     ],
+    'pustiť' => [
+        [ 'do', '(polemika|čítanie|boj|podnikanie|písanie|príprava|špekulácia|akcia|práca|výroba|hospodárenie|výklad|vývoj)' ],
+    ],
+    'púšťať' => [
+        [ 'do', '(polemika|kontakt|práca|výroba|hospodárenie|výklad|počet|opis)' ],
+    ],
     'robiť' => [
+        ['(rozhodnutie|pokus|krok|opatrenie|pokrok|expertíza|kontrola|obmedzenie|záťah)'],
+        ['(dojem)'],
+        ['(záver|záver)'],
+        ['(predstava|nárok|nádej)'],
         ['(rozhovor|práca|prognóza|sľub|test|chyba|inštruktáž|obhliadka|propagácia|prieskum|reorganizácia|reštrukturalizácia|údržba|ústupok|vklad|hodnotenie|pokus|krok|opatrenie|pokrok|expertíza|kontrola|obmedzenie|vyšetrenie|záťah)'],
         ['(záver)'],
-        ['(dojem)'],
+        ['(dozor|uzdravovanie|skutok|čin|pokus|príprava|práca|pozorovanie)'],
+        ['(kópia|zápis|záznam)'],
+        ['(odber|aktualizácia|farbenie|dozor|inštruktáž|obhliadka|prieskum|reorganizácia|reštrukturalizácia|úkon|údržba|úprava|test|vklad|hodnotenie|zmena)'],
+        ['(debata|dialóg|rozhovor|pohovor)'],
+        ['(operácia)'],
     ],
-    'skytať' => [
-        ['(možnosť|pomoc|záruka|rada|služba)'],
+    'sa' => [
+        [ 'do', '(práca|výroba|hospodárenie|výklad|let|pohyb)' ],
+        [ 'v',  '(let)' ],
+        [ 'do', '(pohyb|práca|pochod|výroba|hospodárenie|výklad)' ],
+        [ 'do', '(styk|konflikt|spor)' ],
+        ['(strach|nenávisť|úzkosť|túžba)'],
+        ['(spolupráca|možnosť|riešenie)'],
+        ['(možnosť|výhľad)'],
+        ['(pohľad|možnosť|výhľad)'],
+        ['(podozrenie)'],
+        [ 'do', '(polemika|kontakt|práca|výroba|hospodárenie|výklad|počet|opis)' ],
+        [ 'do', '(polemika|čítanie|boj|podnikanie|písanie|príprava|špekulácia|akcia|práca|výroba|hospodárenie|výklad|vývoj)' ],
+        ['(strach|nenávisť)'],
+    ],
+    'si' => [
+        ['(predstava|nárok|nádej)'],
+        ['(predstava|úsudok|čas|žart)'],
     ],
     'spriadať' => [
         ['(plán|úvaha)'],
     ],
-    'stavať' => [
-        ['(bariéra|prekážka)'],
-        ['otázka'],
-    ],
     'stratiť' => [
-        ['(nádej|odvaha|zmysel)'],
-        ['(nádej|odvaha|zmysel)'],
+        ['(nádej|odvaha|radosť|zmysel)'],
         ['(chuť|možnosť|príležitosť)'],
     ],
     'strácať' => [
-        ['(nádej|odvaha|zmysel)'],
-        ['(nádej|odvaha|zmysel)'],
-    ],
-    'ucítiť' => [
-        ['(potreba)'],
+        ['(nádej|odvaha|radosť|zmysel)'],
+        ['(chuť|príležitosť)'],
     ],
     'udeliť' => [
         ['(cena|pochvala|pokuta|rada|súhlas|uznanie)'],
     ],
     'udeľovať' => [
-        ['(autorizácia|cena|trest|pochvala|pokuta|rada|súhlas|uznanie|titul|zmocnenie)'],
+        ['(autorizácia|cena|trest|pochvala|pokuta|rada|súhlas|uznanie|titul|splnomocnenie)'],
     ],
     'ukladať' => [
-        ['(trest|povinnosť|pokuta|sankcia|penále|úkol)'],
+        ['(trest|povinnosť|pokuta|sankcia|penále|úloha)'],
     ],
     'uložiť' => [
-        ['(trest|povinnosť|pokuta|sankcia)'],
+        ['(trest|napomenutie|povinnosť|pokuta|sankcia)'],
     ],
     'uprieť' => [
         ['(pozornosť|zrak)'],
     ],
     'urobiť' => [
-        ['(rozhodnutie|škrt|výber|ústupok|pokus|krok|chyba|opatrenie|pokrok|expertíza|kontrola|obmedzenie|výskum|záťah)'],
-        ['(koniec)'],
-        ['(dojem)'],
-        ['(záver)'],
         ['(zápis|záznam)'],
+        ['(rozbor|vyšetrenie|aktualizácia|odškodnenie|inštruktáž|obhliadka|prieskum|reorganizácia|reštrukturalizácia|údržba|test|vklad|hodnotenie|zmena|znárodnenie)'],
+        ['(operácia)'],
+        ['(debata|dialóg|rozhovor|hovor)'],
+        ['(rozhodnutie|prehlásenie|previerka|expertíza|kontrola|obmedzenie|oznámenie|záťah|pokus|krok|opatrenie|pokrok)'],
+        ['(ústupok|ponuka)'],
+        ['(záver|zhrnutie)'],
+        ['(koniec|koniec)'],
+        ['(dojem)'],
+        ['(rozhodnutie|škrt|výber|ústupok|pokus|krok|chyba|opatrenie|pokrok|expertíza|kontrola|obmedzenie|výskum|záťah)'],
+        ['(záver)'],
+        ['(predstava|úsudok|čas|žart)'],
+    ],
+    'uskutočniť' => [
+        ['(rozbor|vyšetrenie|aktualizácia|odškodnenie|inštruktáž|obhliadka|prieskum|reorganizácia|reštrukturalizácia|údržba|test|vklad|hodnotenie|zmena|znárodnenie)'],
+        ['(operácia)'],
+        ['(debata|dialóg|rozhovor|hovor)'],
+    ],
+    'uskutočňovať' => [
+        ['(odber|aktualizácia|farbenie|dozor|inštruktáž|obhliadka|prieskum|reorganizácia|reštrukturalizácia|úkon|údržba|úprava|test|vklad|hodnotenie|zmena)'],
+        ['(debata|dialóg|rozhovor|pohovor)'],
+        ['(operácia)'],
     ],
     'uvaliť' => [
         ['(blokáda|clo|daň|embargo|exekúcia|hypotéka|karanténa|sankcia|väzba)'],
     ],
-    'uzavierať,uzatvárať' => [
+    'uzatvárať' => [
         ['(dohoda|kompromis|kontrakt|zmluva|prímerie|stávka)'],
     ],
     'uzavrieť' => [
         ['(partnerstvo|vzťah|dohoda|obchod|kontrakt|zmluva|zmier|sobáš|mier|prímerie|stávka|účet)'],
     ],
-    'učiniť' => [
-        ['(rozhodnutie|prehlásenie|previerka|expertíza|kontrola|obmedzenie|oznámenie|záťah|pokus|krok|opatrenie|pokrok)'],
-        ['(ústupok|ponuka)'],
-        ['(záver|zhrnutie)'],
-        ['(koniec)'],
-        ['(dojem)'],
-    ],
     'venovať' => [
-        ['(pozornosť|čas|záujem|priestor|starosť|opatera|priazeň|lojalita)'],
+        ['(pozornosť|čas|záujem|priestor|starostlivosť|opatera|priazeň|lojalita)'],
     ],
     'viesť' => [
-        ['(kampaň|riadenie|útok|operácia|komunikácia|pohovor|boj|debata|dialóg|diskusia|jednanie|polemika|propaganda|rozhovor|hovor|spor|tiahnutie|vojna|vyjednávanie)'],
-        ['(žaloba)'],
+        ['(kampaň|riadenie|útok|operácia|komunikácia|pohovor|boj|debata|dialóg|diskusia|jednanie|polemika|propaganda|rozhovor|hovor|spor|výprava|vojna|vyjednávanie)'],
+        ['(stíhanie|žaloba)'],
     ],
     'vojsť' => [
-        [ 'v',  '(platnosť|povedomie|styk)' ],
         [ 'do', '(platnosť|povedomie|styk)' ],
     ],
     'vrhať' => [
@@ -373,13 +390,10 @@ my %CPHR = (
         ['(tieň|podozrenie|svetlo)'],
     ],
     'vstupovať' => [
-        [ 'v', '(platnosť)' ],
+        [ 'do', '(platnosť)' ],
     ],
     'vstúpiť' => [
-        [ 'v', '(platnosť)' ],
-    ],
-    'vycítiť' => [
-        ['(potreba)'],
+        [ 'do', '(platnosť|povedomie...)' ],
     ],
     'vydať' => [
         ['(zákaz|pokyn|rozkaz|súhlas|príkaz)'],
@@ -394,24 +408,18 @@ my %CPHR = (
         ['(boj|vojna)'],
     ],
     'vyjadriť' => [
-        ['(prianie|údiv|obdiv|sklamanie|obava|súhlas|ochota|uspokojenie|nádej|prekvapenie|spokojnosť|hodnotenie|pripravenosť|podozrenie|úzkosť|stanovisko|pochyba|protest|záujem|vôľa|pochopenie|postoj|názor)'],
+        ['(prianie|presvedčenie|údiv|obdiv|poľutovanie|sklamanie|obava|súhlas|odhodlanie|ochota|uspokojenie|nádej|potešenie|rozhorčenie|prekvapenie|spokojnosť|hodnotenie|rozčarovanie|pripravenosť|znepokojenie|podozrenie|úzkosť|stanovisko|pochybnosť|protest|záujem|vôľa|pochopenie|postoj|nechápavosť|názor|poďakovanie)'],
         ['(vďaka|dôvera|sústrasť|úcta|uznanie|podpora|sympatia|preferencia)'],
     ],
     'vyjadrovať' => [
-        ['(údiv|obdiv|sklamanie|obava|súhlas|ochota|uspokojenie|nádej|prekvapenie|spokojnosť|hodnotenie|pripravenosť|podozrenie|úzkosť|stanovisko|pochyba|protest|záujem|vôľa|pochopenie|postoj|názor)'],
+        ['(presvedčenie|údiv|obdiv|sklamanie|obava|súhlas|odhodlanie|ochota|uspokojenie|nádej|potešenie|rozhorčenie|prekvapenie|spokojnosť|hodnotenie|rozčarovanie|pripravenosť|znepokojenie|podozrenie|úzkosť|stanovisko|pochybnosť|protest|záujem|vôľa|pochopenie|postoj|nechápavosť|názor|poďakovanie)'],
         ['(dôvera|sústrasť|úcta|uznanie|podpora|sympatia|preferencia)'],
     ],
     'vykonať' => [
-        ['(dozor|uzdravovanie|skutok|čin|pokus|príprava|práca|pozorovanie)'],
-        ['(poradenstvo|správa|návšteva|sľub|test|inštruktáž|prieskum|reorganizácia|reštrukturalizácia|údržba|vklad|hodnotenie)'],
-    ],
-    'vykonať,previesť' => [
-        ['(rozbor|vyšetrenie|aktualizácia|inštruktáž|prieskum|reorganizácia|reštrukturalizácia|údržba|test|vklad|hodnotenie|zmena|znárodnenie)'],
-        ['(operácia)'],
-        ['(debata|dialóg|rozhovor|hovor)'],
+        ['(poradenstvo|správa|návšteva|sľub|test|inštruktáž|obhliadka|prieskum|reorganizácia|reštrukturalizácia|údržba|vklad|hodnotenie)'],
     ],
     'vykonávať' => [
-        ['(práca|dozor|služba|činnosť|sľub|inventarizácia|test|inštruktáž|prieskum|reorganizácia|reštrukturalizácia|údržba|vklad|hodnotenie)'],
+        ['(práca|dozor|služba|činnosť|sľub|inventarizácia|test|inštruktáž|obhliadka|prieskum|reorganizácia|reštrukturalizácia|údržba|vklad|hodnotenie)'],
     ],
     'vyniesť' => [
         ['(súd|rozsudok|trest)'],
@@ -420,11 +428,11 @@ my %CPHR = (
         ['(vojna)'],
     ],
     'vysloviť' => [
-        ['(nesúhlas|námietka|informácia|názor|súhlas|spokojnosť|prianie|uspokojenie|ľútosť|hypotéza|predpoklad|verdikt|idea|myšlienka|podozrenie|domnienka|požiadavka|obava|potreba|predpoveď)'],
+        ['(obvinenie|nesúhlas|námietka|informácia|názor|znepokojenie|súhlas|spokojnosť|prianie|uspokojenie|ľútosť|hypotéza|predpoklad|verdikt|idea|myšlienka|podozrenie|presvedčenie|domnienka|požiadavka|obava|potreba|predpoveď)'],
         ['(dôvera|nedôvera|podpora|kompliment)'],
     ],
     'vyslovovať' => [
-        ['(nesúhlas|názor|súhlas|spokojnosť|prianie|uspokojenie|ľútosť|predpoklad|verdikt|idea|myšlienka|podozrenie|domnienka|požiadavka|obava|potreba|predpoveď)'],
+        ['(nesúhlas|názor|znepokojenie|súhlas|spokojnosť|prianie|uspokojenie|ľútosť|predpoklad|verdikt|idea|myšlienka|podozrenie|presvedčenie|domnienka|požiadavka|obava|potreba|predpoveď)'],
         ['(dôvera|nedôvera|podpora|kompliment)'],
     ],
     'vytvoriť' => [
@@ -434,22 +442,21 @@ my %CPHR = (
         ['(činnosť|nátlak|tlak|snaha|úsilie)'],
     ],
     'vyvolať' => [
-        ['(neistota|protest|rozpaky|dohad|dojem|dôvera|nálada|nadšenie|požiadavka|napätie|nedôvera|nevôľa|odpor|panika|prejav|reakcia|snaha|záujem|zmätok)'],
+        ['(neistota|protest|presvedčenie|rozpaky|dohad|dojem|dôvera|nálada|nadšenie|požiadavka|rozčarovanie|napätie|nedôvera|nevôľa|odpor|panika|pochybnosť|prejav|reakcia|snaha|záujem|zdesenie|zmätok|zvedavosť)'],
     ],
     'vyvolávať' => [
-        ['(protest|rozpaky|údiv|spomienka|vzpomienka|dohad|dojem|dôvera|nadšenie|napätie|nedôvera|nevôľa|odpor|panika|prejav|reakcia|snaha|záujem|zmätok)'],
+        ['(protest|presvedčenie|rozpaky|údiv|spomienka|spomienka|dohad|dojem|dôvera|nadšenie|napätie|nedôvera|nevôľa|odpor|panika|pochybnosť|prejav|reakcia|snaha|záujem|zdesenie|zmätok|zvedavosť)'],
     ],
     'vyvíjať' => [
         ['(nátlak|tlak|snaha|činnosť)'],
     ],
     'vzbudiť' => [
-        ['(dojem|nostalgia|pocit|pohoršenie|pozornosť|rozpaky|závisť|zdanie)'],
-    ],
-    'vzbudiť,zobudiť' => [
-        ['(nadšenie|nevôľa|dojem|nostalgia|pocit|túžba|cit|podozrenie|pozornosť|rozpaky|strach)'],
+        ['(dojem|nostalgia|pocit|pohoršenie|povaha|túžba|záujem)'],
+        ['(nechuť|nadšenie|nevôľa|dojem|nostalgia|pocit|pohoršenie|túžba|cit|pobúrenie|podozrenie|pozornosť|rozpaky|strach|rozhorčenie)'],
     ],
     'vzbudzovať' => [
-        ['(nedôvera|ľútosť|dojem|nostalgia|pocit|túžba|záujem|dôvera|ilúzia|nedôvera|podozrenie|rozpaky|sympatia|úsmev)'],
+        ['(dojem|nostalgia|pocit|pohoršenie|túžba|záujem)'],
+        ['(nedôvera|ľútosť|dojem|nostalgia|pocit|pohoršenie|túžba|záujem|dôvera|ilúzia|mrazenie|nedôvera|podozrenie|pochybnosť|rozpaky|sympatia|úsmev)'],
     ],
     'vzdať' => [
         ['(pocta)'],
@@ -462,7 +469,7 @@ my %CPHR = (
         ['(právo)'],
     ],
     'vzniesť' => [
-        ['(námietka|kritika|sankcia|otázka|dotaz|prosba|protest|pripomienka)'],
+        ['(námietka|kritika|sankcia|obvinenie|otázka|prosba|protest|pripomienka)'],
         ['(nárok|požiadavka)'],
     ],
     'vznikať' => [
@@ -473,13 +480,16 @@ my %CPHR = (
     ],
     'vznášať' => [
         ['(nárok)'],
-        ['(kritika|sankcia|otázka|dotaz|prosba|pripomienka)'],
+        ['(kritika|sankcia|otázka|prosba|pripomienka)'],
     ],
     'vzplanúť' => [
-        ['(hnev|nenávisť|láska)'],
+        ['(hnev|zlosť|nenávisť|láska)'],
     ],
-    'zadať' => [
-        ['(príčina|podnet)'],
+    'zabezpečiť' => [
+        ['(náprava|pokoj|spravodlivosť)'],
+    ],
+    'zabezpečovať' => [
+        ['(náprava|pokoj)'],
     ],
     'zanikať' => [
         ['(povinnosť|nárok|právo)'],
@@ -502,36 +512,24 @@ my %CPHR = (
     'zaznamenávať' => [
         ['(úspech|strata|posun)'],
     ],
-    'zbierať,zberať' => [
+    'zbierať' => [
         ['(odvaha|skúsenosť)'],
-    ],
-    'zjednať' => [
-        ['(náprava|kľud|spravodlivosť)'],
-    ],
-    'zjednávať' => [
-        ['(náprava|kľud)'],
     ],
     'zmocniť' => [
+        ['(podozrenie)'],
+        ['(strach|nenávisť)'],
+    ],
+    'zmocovať' => [
         ['(strach|nenávisť|úzkosť|túžba)'],
     ],
-    'zobrať' => [
-        ['(odvaha|skúsenosť)'],
-    ],
-    'zobudiť,prebudiť' => [
-        ['(dojem|nostalgia|pocit|povaha|túžba|záujem)'],
-    ],
     'získavať' => [
+        ['(vedomosť|odvaha|skúsenosť)'],
         ['(dôvera|impulz|možnosť|povolenie|právo|prehľad|prísľub|prístup|sľub|súhlas|vplyv|skúsenosť)'],
-        ['(dojem)'],
+        ['(dojem|presvedčenie)'],
     ],
     'získať' => [
         ['(dôvera|impulz|možnosť|povolenie|právo|prehľad|prísľub|prístup|sľub|súhlas|vplyv|skúsenosť)'],
-        ['(dojem)'],
-    ],
-    'činiť' => [
-        ['(rozhodnutie|pokus|krok|opatrenie|pokrok|expertíza|kontrola|obmedzenie|záťah)'],
-        ['(dojem)'],
-        ['(záver|záver)'],
+        ['(dojem|presvedčenie)'],
     ],
 );
 
@@ -543,7 +541,7 @@ my %DPHR = (
         [ 'mráz', 'po', 'chrbát' ],
     ],
     'bežať' => [
-        [ 'ako', 'na', 'drôtik' ],
+        [ 'ako', 'po', 'maslo' ],
         [ 'ako', 'po', 'drôtik' ],
     ],
     'biť' => [
@@ -551,17 +549,17 @@ my %DPHR = (
     ],
     'brať' => [
         [ 'do', 'úvaha' ],
-        [ 'do', 'úvaha' ],
         [ 'na', 'vedomie' ],
-        [ 'v',  'úvaha' ],
         [ 'na', 'seba' ],
         ['rozum'],
         ['koniec'],
         [ 'na', 'váha', 'ľahký' ],
         ['ten'],
         ['späť'],
+        ['vďačne'],
+        [ 'na', 'muška' ],
     ],
-    'brúsiť si' => [
+    'brúsiť' => [
         ['zub'],
     ],
     'byť' => [
@@ -569,7 +567,6 @@ my %DPHR = (
         [ 'na', 'ten' ],
         [ 'na', 'miesto' ],
         ['namieste'],
-        [ 'v',      'záujem' ],
         [ 'v',      'záujem' ],
         [ 'to',     's' ],
         [ 'názor', '(iný|rovnaký|podobný|opačný)' ],
@@ -583,7 +580,6 @@ my %DPHR = (
         [ 'na', 'uváženie' ],
         [ 'v',  'úzky' ],
         [ 'na', 'škoda' ],
-        [ 'po', 'ruka' ],
         [ 'po', 'ruka' ],
         [ 'v',  'prach' ],
         ['ďaleký'],
@@ -616,14 +612,14 @@ my %DPHR = (
         ['(spolu|dohromady)'],
         [ 'za', 'pravda' ],
         [ 'k',  'dispozícia' ],
+        [ 'na', 'vedomie' ],
         ['ten'],
-        [ 'počuť', '(sa|so)' ],
+        [ 'počuť', 'sa' ],
         ['vedieť'],
         [ 'čakať', 'na', 'seba' ],
         ['práca'],
         [ 'z', 'ruka' ],
         ['zelený'],
-        [ 'na', 'vedomie' ],
         ['pokoj'],
         ['rozum'],
         [ 'do', 'súlad' ],
@@ -633,6 +629,9 @@ my %DPHR = (
     'docieliť' => [
         ['(môj|svoj)'],
     ],
+    'dohovoriť' => [
+        ['poriadok'],
+    ],
     'dosahovať' => [
         ['(môj|svoj)'],
     ],
@@ -641,7 +640,7 @@ my %DPHR = (
     ],
     'dostať' => [
         ['zabrať'],
-        [ 'cez', 'prst' ],
+        [ 'po', 'prst' ],
         ['zelený'],
         [ 'na',   'starosť' ],
         [ 'do',   'vienok' ],
@@ -653,7 +652,7 @@ my %DPHR = (
         [ 'na', 'zadok' ],
     ],
     'druh' => [
-        ['(môj|svoj)'],
+        ['svoj'],
     ],
     'držať' => [
         ['rekord'],
@@ -674,12 +673,7 @@ my %DPHR = (
         ['váha'],
         ['(spolu|dokopy)'],
         [ 'k', 'dispozícia' ],
-        ['vedieť'],
         ['vina'],
-    ],
-    'hnúť' => [
-        ['žlč'],
-        ['brva'],
     ],
     'hodiť' => [
         [ 'za', 'hlava' ],
@@ -688,9 +682,7 @@ my %DPHR = (
     ],
     'hovoriť' => [
         [ 'za', 'všetko' ],
-        [ 'za', '(sa|so)' ],
-        [ 'do', 'duša' ],
-        [ 'za', 'všetko' ],
+        [ 'za', 'seba' ],
         [ 'do', 'duša' ],
     ],
     'hrať' => [
@@ -707,11 +699,13 @@ my %DPHR = (
     'jadro' => [
         ['pudel'],
     ],
+    'klamať' => [
+        [ 'ako', 'keď', 'tlačiť' ],
+    ],
     'koniec' => [
         ['koniec'],
     ],
     'kráčať' => [
-        [ 'v', 'šľapaj' ],
         [ 'v', 'šľapaj' ],
     ],
     'lapať' => [
@@ -719,18 +713,18 @@ my %DPHR = (
     ],
     'ležať' => [
         [ 'na', 'bedrá' ],
-        [ 'na', 'bedrá' ],
     ],
     'liezť' => [
         [ 'do', 'kapusta' ],
         [ 'na', 'nerv' ],
     ],
-    'luhať,klamať' => [
+    'luhať' => [
         [ 'ako', 'keď', 'tlačiť' ],
     ],
     'lámať' => [
         ['palica'],
         [ 'cez', 'koleno' ],
+        ['hlava'],
     ],
     'mať' => [
         [ 'k', 'dispozícia' ],
@@ -738,7 +732,6 @@ my %DPHR = (
         ['radšej'],
         [ 'v',  'úmysel' ],
         [ 'na', 'myseľ' ],
-        [ 'na', 'starosť' ],
         [ 'na', 'starosť' ],
         ['slovo'],
         [ 'na', 'svedomie' ],
@@ -749,9 +742,10 @@ my %DPHR = (
         [ 'za', 'cieľ' ],
         [ 'v',  'plán' ],
         ['jasno'],
-        [ 'na',  'pamäť' ],
-        [ 'pri', 'ruka' ],
-        [ 'po',  'ruka' ],
+        [ 'hlboko', 'do', 'kapsa' ],
+        [ 'na',     'pamäť' ],
+        [ 'po',     'ruka' ],
+        [ 'za',     'zlý' ],
         ['navrch'],
         ['zelený'],
         ['naponáhlo'],
@@ -768,7 +762,6 @@ my %DPHR = (
         [ 'v',       'krv' ],
         [ 'hlava',   'ťažký' ],
         [ 'za',      'dôsledok' ],
-        [ 'na',      'program' ],
         [ 'v',       'hra' ],
         [ 'robiť',  'čo' ],
         [ 'na',      'vybraný' ],
@@ -776,9 +769,8 @@ my %DPHR = (
         [ 'strecha', 'nad', 'hlava' ],
         [ 'z',       'krk' ],
         [ 'dno',     'zlatý' ],
-        ['(kľučka|klika)'],
+        ['šťastie'],
         [ 'ruka', 'šťastný' ],
-        [ 'za',   'dôsledok' ],
         ['česť'],
         [ 'v',  'povaha' ],
         [ 'v',  'užívanie' ],
@@ -786,6 +778,9 @@ my %DPHR = (
     ],
     'miešať' => [
         [ 'piaty', 'cez', 'deviaty' ],
+    ],
+    'nabaľovať' => [
+        [ 'na', 'seba' ],
     ],
     'nasadiť' => [
         ['koruna'],
@@ -803,24 +798,34 @@ my %DPHR = (
         ['zrkadlo'],
     ],
     'nechať' => [
-        [ 'počuť', '(sa|so)' ],
+        [ 'počuť', 'seba' ],
         [ 'na',      'pokoj' ],
-        [ 'ujsť',   '(sa|so)' ],
+        [ 'ujsť',   'si' ],
+        [ 'v',       'štich' ],
         [ 'na',      'pochyba' ],
-        [ 'ten',     'tak' ],
+        [ 'to',      'tak' ],
         [ 'kameň',  'na', 'kameň' ],
     ],
     'nechávať' => [
+        [ 'na',      'štich' ],
         [ 'na',      'pochyba' ],
-        [ 'počuť', '(sa|so)' ],
+        [ 'počuť', 'seba' ],
+    ],
+    'nevidieť' => [
+        ['čo'],
     ],
     'niesť' => [
         [ 'koža', 'na', 'trh' ],
+        [ 'v', 'znamenie' ],
     ],
     'obracať' => [
         ['naruby'],
+        [ 'k', 'dobrý' ],
     ],
-    'obrať,obrat' => [
+    'obrat' => [
+        ['ruka'],
+    ],
+    'obrať' => [
         ['ruka'],
     ],
     'obrátiť' => [
@@ -829,6 +834,9 @@ my %DPHR = (
     ],
     'obsadiť' => [
         [ 'do', 'rola' ],
+    ],
+    'ocitnúť' => [
+        [ 'na', 'ľad', 'tenký' ],
     ],
     'odísť' => [
         [ 'na', 'odpočinok' ],
@@ -841,11 +849,14 @@ my %DPHR = (
         [ 'do',       'oko' ],
         [ 'padnúť', 'kto' ],
         [ 'ako',      'uliaty' ],
-        [ 'ako',      'uliaty' ],
         [ 'do',       'nota' ],
     ],
     'pocítiť' => [
         [ 'na', 'koža', 'vlastný' ],
+    ],
+    'pohnúť' => [
+        ['žlč'],
+        ['brva'],
     ],
     'pokrčiť' => [
         ['rameno'],
@@ -863,15 +874,12 @@ my %DPHR = (
     'popriavať' => [
         ['sluch'],
     ],
-    'porovnať' => [
-        [ 's', 'zem' ],
-    ],
     'postaviť' => [
         [ 'na', 'noha' ],
         ['prekážka'],
     ],
     'praskať' => [
-        [ 'v', 'šev' ],
+        [ 'v', 'švík' ],
     ],
     'prebiehať' => [
         [ 'ako', 'po', 'maslo' ],
@@ -887,34 +895,38 @@ my %DPHR = (
         [ 'cez', 'hlava' ],
     ],
     'presadiť' => [
-        ['(môj|svoj)'],
+        ['svoj'],
     ],
     'prežiť' => [
         [ 'na', 'koža', 'vlastný' ],
     ],
     'prichádzať' => [
-        [ 'v',  'úvaha' ],
-        [ 'na', 'rada' ],
+        [ 'do', 'úvaha' ],
+        [ 'na', 'rad' ],
         [ 'na', 'pretras' ],
         ['skrátka'],
         ['reč'],
     ],
     'prijať' => [
-        [ 'za', '(môj|svoj)' ],
-        [ 'na', '(sa|so)' ],
+        [ 'za', 'svoj' ],
+        [ 'na', 'seba' ],
     ],
     'priniesť' => [
         ['jasno'],
-        [ 'ovocie', '(môj|svoj)' ],
+        [ 'ovocie', 'svoj' ],
     ],
     'pripadať' => [
-        [ 'v', 'úvaha' ],
+        [ 'do', 'úvaha' ],
+    ],
+    'pripustiť' => [
+        [ 'k', 'telo' ],
     ],
     'pripísať' => [
         [ 'k', 'dobro' ],
     ],
     'priviesť' => [
         [ 'na', 'svet' ],
+        ['navnivoč'],
     ],
     'privádzať' => [
         [ 'na', 'svet' ],
@@ -922,25 +934,27 @@ my %DPHR = (
     'prísť' => [
         [ 'k', 'slovo' ],
         ['skrátka'],
-        [ 'na', 'rada' ],
+        [ 'na', 'rad' ],
         [ 'na', 'chuť' ],
         ['vhod'],
         [ 'na', 'svet' ],
         [ 'na', 'pomoc' ],
         ['reč'],
+        ['navnivoč'],
         [ 'na', 'myseľ' ],
         [ 'na', 'program', 'deň' ],
         ['nazmar'],
-        [ 'k',  'česť' ],
-        [ 'na', 'myseľ' ],
-        ['vhod'],
+        [ 'ku', 'česť' ],
         [ 'na', 'pretras' ],
-        [ 'k',  '(sa|so)' ],
+        [ 'k',  'seba' ],
         [ 'k',  'rozum' ],
     ],
     'pustiť' => [
         [ 'k', 'slovo' ],
         [ 'k', 'voda' ],
+    ],
+    'púšťanie' => [
+        ['žila'],
     ],
     'robiť' => [
         ['zlodej'],
@@ -948,22 +962,49 @@ my %DPHR = (
         ['svoj'],
         ['neplecha'],
     ],
+    'rozdať' => [
+        ['ten'],
+    ],
+    'rozhádzať' => [
+        ['ten'],
+    ],
     'rozviazať' => [
         ['jazyk'],
-        ['jazyk'],
-        ['jazyk'],
-        ['jazyk'],
+    ],
+    'sa' => [
+        ['nuda'],
+        [ 'v',  'znamenie' ],
+        [ 'k',  'dobrý' ],
+        [ 'na', 'ľad', 'tenký' ],
+        [ 'na', 'krk' ],
+        ['mrak'],
+        [ 'majster', 'tesár' ],
+        [ 'do',      'forma' ],
+        [ 'z',       'ruka' ],
+        ['dych'],
+    ],
+    'si' => [
+        [ 'na', 'muška' ],
+        ['zub'],
+        ['hlava'],
+        [ 'k', 'telo' ],
+        ['ten'],
+        ['rada'],
+        [ 'z', 'prst' ],
+        [ 'z', 'kopyto' ],
+        [ 'z', 'kopýtko' ],
+        [ 'k', 'srdce' ],
+        ['život'],
+        ['slovo'],
+        [ 'na', 'starosť' ],
     ],
     'skloniť' => [
         ['hlava'],
     ],
     'spadnúť' => [
-        [ 'do', 'klin' ],
+        [ 'do', 'lono' ],
         [ 'z',  'nebo' ],
         [ 'z',  'višňa' ],
-    ],
-    'spatriť' => [
-        [ 'svetlo', 'svet' ],
     ],
     'stratiť' => [
         [ 'z', 'dohľad' ],
@@ -971,20 +1012,28 @@ my %DPHR = (
         [ 'z', 'dosluch' ],
         [ 'z', 'myseľ' ],
     ],
-    'stáť,štát,stať' => [
+    'strácať' => [
+        [ 'z', 'dohľad' ],
+        [ 'z', 'myseľ' ],
+    ],
+    'stáť' => [
         [ 'čo', 'stáť' ],
     ],
     'sypať' => [
         [ 'z', 'rukáv' ],
+    ],
+    'sťahovať' => [
+        ['mrak'],
     ],
     'tiahnuť' => [
         ['príklad'],
     ],
     'trafiť' => [
         [ 'do', 'čierny' ],
+        [ 'klinec', 'na', 'hlavička' ],
     ],
     'trvať' => [
-        [ 'na', '(môj|svoj)' ],
+        [ 'na', 'svoj' ],
     ],
     'tvrdiť' => [
         [ 'basa', 'muzika' ],
@@ -993,20 +1042,27 @@ my %DPHR = (
         ['pozornosť'],
     ],
     'urobiť' => [
+        ['bodka'],
         ['dobre'],
         ['bankrot'],
     ],
+    'utnúť' => [
+        [ 'majster', 'tesár' ],
+    ],
     'uviesť' => [
         [ 'na', 'miera', '(správny|pravý)' ],
-        [ 'v', 'život' ],
+        [ 'do', 'život' ],
     ],
     'uvádzať' => [
-        [ 'v', 'život' ],
+        [ 'do', 'život' ],
         [ 'na', 'miera', 'pravý' ],
+    ],
+    'uzrieť' => [
+        [ 'svetlo', 'svet' ],
     ],
     'učiniť' => [
         ['zadosť'],
-        ['(môj|svoj)'],
+        ['svoj'],
         ['šťastie'],
     ],
     'ušiť' => [
@@ -1014,10 +1070,10 @@ my %DPHR = (
         [ 'na', 'telo' ],
     ],
     'vedieť' => [
-        ['(môj|svoj)'],
+        ['svoj'],
+        ['rada'],
     ],
     'vidieť' => [
-        [ 'na', 'oko', 'vlastný' ],
         [ 'na', 'oko', 'vlastný' ],
     ],
     'viesť' => [
@@ -1027,33 +1083,46 @@ my %DPHR = (
     ],
     'visieť' => [
         ['otáznik'],
+        [ 'ako', 'meč', 'Damokles' ],
     ],
-    'vybavovať,vyriaďovať' => [
+    'vracať' => [
+        [ 'do', 'forma' ],
+    ],
+    'vybavovať' => [
         ['účet'],
     ],
     'vychádzať' => [
         ['najavo'],
     ],
+    'vycucať' => [
+        [ 'z', 'prst' ],
+    ],
     'vydať' => [
         [ 'na', 'milosť', 'na', 'nemilosť' ],
+        ['napospas'],
+        [ 'z-', 'seba' ],
+    ],
+    'vyhodiť' => [
+        [ 'z', 'kopyto' ],
+        [ 'z', 'kopýtko' ],
     ],
     'vyjsť' => [
         ['najavo'],
         ['navrch'],
     ],
     'vykonať' => [
-        ['(môj|svoj)'],
+        ['svoj'],
     ],
     'vykopať' => [
         [ 'sekera', 'vojnový' ],
     ],
-    'vypraviť' => [
-        [ 'z', '(sa|so)' ],
+    'vymknúť' => [
+        [ 'z', 'ruka' ],
     ],
     'vypáliť' => [
         ['rybník'],
     ],
-    'vyrážať' => [
+    'vyraziť' => [
         ['dych'],
     ],
     'vystrkovať' => [
@@ -1073,28 +1142,33 @@ my %DPHR = (
     'vyvolávať' => [
         [ 'v', 'život' ],
     ],
+    'vzatie' => [
+        [ 'do', 'väzba' ],
+    ],
     'vziať' => [
-        [ 'v',  'úvaha' ],
         [ 'do', 'úvaha' ],
         [ 'do', 'väzba' ],
         [ 'na', 'vedomie' ],
-        [ 'za', '(môj|svoj)' ],
-        [ 'na', '(sa|so)' ],
+        [ 'za', 'svoj' ],
+        [ 'na', 'seba' ],
         [ 'do', 'ruka', '(môj|svoj)' ],
         [ 'do', 'ruka' ],
-        [ 'za', '(môj|svoj)' ],
-        [ 'na', '(sa|so)' ],
+        ['zavďak'],
         ['späť'],
         ['naspäť'],
         [ 'na',   'zreteľ' ],
-        [ 'noha', 'na', 'rameno' ],
+        [ 'noha', 'na', 'plece' ],
         [ 'za',   'slovo' ],
         [ 'do',   'zajačí' ],
         [ 'na',   'milosť' ],
         ['roh'],
         [ 'koniec', 'rýchly' ],
-        [ 'do',     'väzba' ],
-        [ 'do',     'ruka', '(môj|svoj)' ],
+        [ 'do',     'ruka', 'svoj' ],
+        [ 'k',      'srdce' ],
+        ['život'],
+        ['slovo'],
+        [ 'na', 'starosť' ],
+        [ 'na', 'muška' ],
     ],
     'vztiahnuť' => [
         ['ruka'],
@@ -1111,24 +1185,28 @@ my %DPHR = (
     ],
     'zamiesť' => [
         [ 'prah', 'vlastný' ],
+        [ 'pred', 'prah', 'vlastný' ],
     ],
     'zanechať' => [
         ['napospas'],
     ],
     'zaplatiť' => [
-        ['boh'],
+        ['pánboh'],
     ],
     'zatajiť' => [
         ['dych'],
     ],
-    'zatvoriť,zavrieť' => [
+    'zatvoriť' => [
         ['ústa'],
+    ],
+    'zavesiť' => [
+        [ 'na', 'krk' ],
     ],
     'zaviesť' => [
         ['reč'],
     ],
-    'zavádzať' => [
-        ['reč'],
+    'zavrieť' => [
+        ['ústa'],
     ],
     'zažiť' => [
         [ 'na', 'koža', 'vlastný' ],
@@ -1145,6 +1223,9 @@ my %DPHR = (
     'zmeniť' => [
         [ 'k', 'dobrý' ],
     ],
+    'zmietnuť' => [
+        [ 'zo', 'stôl' ],
+    ],
     'zohrať' => [
         ['rola'],
         ['úloha'],
@@ -1160,15 +1241,31 @@ my %DPHR = (
         [ 'v',   'platnosť' ],
         [ 'pri', 'starý' ],
     ],
+    'zožierať' => [
+        ['nuda'],
+    ],
+    'zraziť' => [
+        [ 'na', 'koleno' ],
+        [ 'do', 'koleno' ],
+    ],
+    'zrovnať' => [
+        [ 's', 'zem' ],
+    ],
     'zájsť' => [
         [ 'do', 'krajnosť' ],
     ],
     'zísť' => [
         [ 'z', 'oko' ],
     ],
+    'zívať' => [
+        ['prázdnota'],
+    ],
+    'zľahnúť' => [
+        ['zem'],
+    ],
     'ísť' => [
         [ 'na', 'loď', 'rovnaký' ],
-        ['ďaleko'],
+        ['ďalej'],
         [ 'na',   'odbyt' ],
         [ 'do',   'tuhý' ],
         [ 'ruka', 'v', 'ruka' ],
@@ -1177,8 +1274,8 @@ my %DPHR = (
         [ 'tlstý',  'do', 'tenký' ],
         [ 'z',       'kopec' ],
         [ 's',       'cena' ],
-        [ 'kĺzať', '(sa|so)' ],
-        ['(spolu|dohromady)'],
+        [ 'kĺzať', 'sa' ],
+        ['(dokopy|dohromady)'],
         ['vzor'],
         [ 'proti', 'prúd' ],
     ],
@@ -1187,6 +1284,9 @@ my %DPHR = (
     ],
     'ľahnúť' => [
         ['popol'],
+    ],
+    'šinúť' => [
+        ['ten'],
     ],
     'šliapať' => [
         [ 'na', 'päta' ],
@@ -1201,7 +1301,7 @@ sub process_tnode {
     my ($anode) = $tnode->get_lex_anode();
 
     return if ( $tnode->nodetype ne 'complex' or !$anode );
-    
+
     my $lemma = $tnode->t_lemma;
     $lemma =~ s/_/ /g;
 
@@ -1227,13 +1327,13 @@ sub mark_phrasal_parts {
     foreach my $parts ( @{$variants} ) {
 
         # check if all parts of our phrase can be matched among the children
-        my $matches = 1;
+        my $matches         = 1;
         my @parts_to_adescs = ();
 
         foreach my $part ( @{$parts} ) {
-            
-            my $adesc = first { $_ =~ m/^$part$/ } keys %adescs_by_lemma; 
-            
+
+            my $adesc = first { $_ =~ m/^$part$/ } keys %adescs_by_lemma;
+
             if ( not $adesc ) {
                 $matches = 0;
                 last;
@@ -1244,14 +1344,14 @@ sub mark_phrasal_parts {
         next if ( not $matches );
 
         # we have found a match for the phrase -> mark functors and finish (do not look further)
-        foreach my $adesc ( @parts_to_adescs ) {
+        foreach my $adesc (@parts_to_adescs) {
             my (@tnodes) = $adesc->get_referencing_nodes('a/lex.rf');
             if (@tnodes) {
                 map { $_->set_functor($functor) } @tnodes;
             }
         }
 
-        log_info($functor . ' MATCH: ' . $anode->lemma . ' + ' . join(' ', @$parts) . ': ' .  $anode->get_address );
+        log_info( $functor . ' MATCH: ' . $anode->lemma . ' + ' . join( ' ', @$parts ) . ': ' . $anode->get_address );
         return 1;
     }
     return 0;
