@@ -58,17 +58,17 @@ sub find_shortest_halfcycles {
     foreach my $l (0 .. $left_size) {
         foreach my $r (0 .. $right_size) {
             foreach my $l2 (0 .. $left_size) {
-                next if $l == $l2;
-                if (!defined $$lr_scores[$l][$r] || $$lr_scores[$l][$r] < $$left_scores[$l][$l2] + $$alignment_scores[$l2][$r]) {
+                next if $l == $l2 || $l == 0;
+                if (!defined $$lr_scores[$l][$r] || ($$lr_scores[$l][$r] < $$left_scores[$l][$l2] + $$alignment_scores[$l2][$r])) {
                     $$lr_scores[$l][$r] = $$left_scores[$l][$l2] + $$alignment_scores[$l2][$r];
                     $$lr_paths[$l][$r] = "$$left_paths[$l][$l2] $l2"; 
                 }
             }
             foreach my $r2 (0 .. $right_size) {
-                next if $r == $r2;
-                if (!defined $$rl_scores[$r][$l] || $$rl_scores[$r][$l] < $$right_scores[$r][$r2] + $$alignment_scores[$l][$r2]) {
-                    $$rl_scores[$r][$l] = $$left_scores[$r][$r2] + $$alignment_scores[$l][$r2];
-                    $$rl_paths[$r][$l] = "$$left_paths[$r][$r2] $r2"; 
+                next if $r == $r2 || $r == 0;
+                if (!defined $$rl_scores[$r][$l] || ($$rl_scores[$r][$l] < $$right_scores[$r][$r2] + $$alignment_scores[$l][$r2])) {
+                    $$rl_scores[$r][$l] = $$right_scores[$r][$r2] + $$alignment_scores[$l][$r2];
+                    $$rl_paths[$r][$l] = "$$right_paths[$r][$r2] $r2"; 
                 }
             }
         }
