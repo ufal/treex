@@ -78,7 +78,7 @@ sub convert_deprel {
         }
         elsif ($deprel eq 'svp'){
             $afun = 'AuxV' if ($node->is_preposition or $node->is_adverb);
-            $afun = 'Obj';
+            $afun = 'Obj' if (!$afun);
         }
         else {
             $afun = 'NR'; # keep unselected
@@ -198,7 +198,7 @@ sub process_zone {
     # post-processing
     $self->rehang_relative_clauses($a_root);
     $self->mark_subjects($a_root);
-    $self->rehang_aux_verbs($a_root);
+    $self->rehang_aux_verbs($a_root);    
 }
 
 sub set_coord_members {

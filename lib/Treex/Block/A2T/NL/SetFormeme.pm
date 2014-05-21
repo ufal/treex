@@ -42,7 +42,7 @@ override 'detect_syntpos' => sub {
 override '_noun' => sub {
 
     my ( $self, $t_node, $a_node ) = @_;
-    return 'n:poss' if $a_node->match_iset( 'poss' => 'possessive' );
+    return 'n:poss' if $a_node->match_iset( 'poss' => 'poss' );
 
     # TODO: Postpositons are not handled
     my $prep = $self->get_aux_string( $t_node->get_aux_anodes( { ordered => 1 } ) );
@@ -123,8 +123,8 @@ override 'is_prep_or_conj' => sub {
     my ( $self, $a_node ) = @_;
     return 1 if $a_node->afun =~ /Aux[CP]/;
 
-    # If afun is not reliable, try also tag
-    return 1 if $a_node->is_preposition or $a_node->is_conjunction;
+    # If afun is not reliable, try also tag (but avoid separable verbal prefixes)
+    return 1 if ( $a_node->is_preposition or $a_node->is_conjunction ) and ( $a_node->afun ne 'AuxV' );
 
     return 0;
 };

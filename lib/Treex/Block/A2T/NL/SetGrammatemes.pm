@@ -7,8 +7,9 @@ extends 'Treex::Block::A2T::SetGrammatemes';
 my %SIG2GRAM = (
     'LEX-finpres'                       => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-finpast'                       => { 'diathesis' => 'act', 'tense' => 'ant',  'deontmod' => 'decl', 'verbmod' => 'ind' },
-    'LEX-partpres'                       => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'ind' },
-    'LEX-partpast'                       => { 'diathesis' => 'pas', 'tense' => 'ant',  'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'LEX-partpres'                      => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'LEX-partpast'                      => { 'diathesis' => 'pas', 'tense' => 'ant',  'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'LEX-inf'                           => { 'diathesis' => 'act', 'tense' => 'nil',  'deontmod' => 'decl', 'verbmod' => 'nil' },
     'moeten-finpres+LEX-inf'            => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'hrt',  'verbmod' => 'ind' },
     'moeten-finpast+LEX-inf'            => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'hrt',  'verbmod' => 'ind' },
     'kunnen-finpres+LEX-inf'            => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'poss', 'verbmod' => 'ind' },
@@ -47,23 +48,24 @@ sub get_form_signature {
     return $anode->get_iset('verbform') . $anode->get_iset('tense');
 }
 
-# returns de-lexicalized signature of all verb forms in the verbal group (to be mapped to grammatemes) 
+# returns de-lexicalized signature of all verb forms in the verbal group (to be mapped to grammatemes)
 sub get_verbal_group_signature {
     my ( $self, $tnode, $lex_anode ) = @_;
     my @sig = ();
     foreach my $anode ( grep { $_->is_verb } $tnode->get_anodes( { ordered => 1 } ) ) {
 
-        # de-lexicalize        
+        # de-lexicalize
         my $lemma = $anode == $lex_anode ? 'LEX' : $anode->lemma;
-        
+
         # put finite verb first at all times (handle word order change in some embedded clauses)
-        if ( $anode->match_iset('verbform' => 'fin') ) {
+        if ( $anode->match_iset( 'verbform' => 'fin' ) ) {
             unshift @sig, $lemma . '-' . $self->get_form_signature($anode);
         }
         else {
             push @sig, $lemma . '-' . $self->get_form_signature($anode);
         }
     }
+
     #log_info( join( ' ', map { $_->form } $tnode->get_anodes( { ordered => 1 } ) ) . ' -- ' . join( '+', @sig ) );
     return join( '+', @sig );
 }
