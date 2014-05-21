@@ -60,25 +60,31 @@ sub process_bundle {
 
     # get alignment matrix
     my @alignment_matrix;
+    my $alignment_total = 0;
+    my $BASE_WEIGHT = 0;
+    my $BONUS = 2;
     foreach my $s_ord (0 .. $source_length) {
         foreach my $t_ord (0 .. $target_length) {
-            $alignment_matrix[$s_ord][$t_ord] = 1000;
+            $alignment_matrix[$s_ord][$t_ord] = $BASE_WEIGHT;
+            $alignment_total += $BASE_WEIGHT;
         }
-        #next if $s_ord == 0;
-        #my ($alinodes, $alitypes) = $source_nodes[$s_ord - 1]->get_aligned_nodes();
-        #foreach my $n (0 .. $#$alinodes) {
-        #    my $t_ord = $$alinodes[$n]->ord;
-        #    my $weight = $$alitypes[$n] =~ /left/ ? 0.5 : 0;
-        #    $weight += $$alitypes[$n] =~ /right/ ? 0.5 : 0;
-        #    $weight += 50;
-        #    $alignment_matrix[$s_ord][$t_ord] = $weight;
-        #}
+        next if $s_ord == 0;
+        my ($alinodes, $alitypes) = $source_nodes[$s_ord - 1]->get_aligned_nodes();
+        foreach my $n (0 .. $#$alinodes) {
+            my $t_ord = $$alinodes[$n]->ord;
+            my $weight = $$alitypes[$n] =~ /left/ ? $BONUS : 0;
+            $weight += $$alitypes[$n] =~ /right/ ? $BONUS : 0;
+            $weight += $BASE_WEIGHT;
+            $alignment_matrix[$s_ord][$t_ord] = $weight;
+            $alignment_total += $weight - $BASE_WEIGHT;
+        }
     }
 
     # normalize matrices
     my $to_add_total = max(-$source_minimum * $source_length**2, -$target_minimum * $target_length**2);
     my $source_shift = $to_add_total / $source_length**2;
     my $target_shift = ($to_add_total + $source_total - $target_total) / $target_length**2;
+    my $alignment_shift = ($to_add_total + $source_total - $alignment_total) / ($target_length + 1) / ($source_length + 1);
 
     # create flow network
     foreach my $ord (1 .. $source_length) {
@@ -109,7 +115,7 @@ sub process_bundle {
     }
     foreach my $ord (1 .. $source_length) {
         foreach my $target_ord (1 .. $target_length) {
-            $network->add_weighted_edge("sn-$ord", "tn-$target_ord", $alignment_matrix[$ord][$target_ord]);
+            $network->add_weighted_edge("sn-$ord", "tn-$target_ord", $alignment_matrix[$ord][$target_ord] + $alignment_shift);
         }
     }
 
