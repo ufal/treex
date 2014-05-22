@@ -17,7 +17,7 @@ sub copy_array {
     }
 }
 
-sub find_shortest_paths {
+sub find_best_paths {
     my ($scores, $paths, $max_length) = @_;
     my $size = $#$scores;
     foreach my $i (0 .. $size) {
@@ -49,6 +49,37 @@ sub find_shortest_paths {
         copy_array(\@new_paths, $paths);
         copy_array(\@new_scores, $scores);
     }
+}
+
+sub find_best_cycles {
+    my ($left_scores, $left_paths, $right_scores, $right_paths, $alignment_scores) = @_;
+    my $left_size = $#$left_scores;
+    my $right_size = $#$right_scores;
+    my @left_best_paths;
+    my @right_best_paths;
+    foreach my $l (1 .. $left_size) {
+        my @best_paths = sort {$$left_scores[$l][$a] <=> $$left_scores[$l][$b]} (0 .. $l-1, $l+1 .. $left_size);
+        $left_best_paths[$l] = \@best_paths;
+    }
+    foreach my $r (1 .. $right_size) {
+        my @best_paths = sort {$$right_scores[$r][$a] <=> $$right_scores[$r][$b]} (0 .. $r-1, $r+1 .. $right_size);
+        $right_best_paths[$r] = \@best_paths;
+    }
+    my %cycle_score;
+    foreach my $l (1 .. $left_size) {
+        foreach my $li (0 .. min($left_size, 10) - 1) {
+            my $l2 = $left_best_paths[$l][$li];
+            foreach my $r (1 .. $right_size) {
+                foreach my $ri (0 .. min($right_size, 10) - 1) {
+                    my $r2 = $right_best_paths[$r][$ri];
+                    $cycle_score{"$l $l2 $r $r2"} = $$left_scores[$l][$l2] + $$right_scores[$r][$r2]
+                                                  + $$alignment_scores[$l][$r] + $$alignment_scores[$l2][$r2];
+                }
+            }
+        }
+    }
+    my @cycles = sort {$cycle_score{$b} <=> $cycle_score{$a}} (keys %cycle_score);
+    return \@cycles;
 }
 
 sub find_shortest_halfcycles {
@@ -143,23 +174,19 @@ sub process_bundle {
 
     my @left_paths;
     my @left_scores = @source_matrix;
-    find_shortest_paths(\@left_scores, \@left_paths, 5);
+    find_best_paths(\@left_scores, \@left_paths, 5);
    
     my @right_paths;
     my @right_scores = @target_matrix;
-    find_shortest_paths(\@right_scores, \@right_paths, 5);
+    find_best_paths(\@right_scores, \@right_paths, 5);
 
-    my @lr_scores;
-    my @lr_paths;
-    my @rl_scores;
-    my @rl_paths;
-    find_shortest_halfcycles(\@lr_scores, \@lr_paths, \@rl_scores, \@rl_paths, \@left_scores, \@left_paths, \@right_scores, \@right_paths, \@alignment_matrix);
+    my $cycles = find_best_cycles(\@left_scores, \@left_paths, \@right_scores, \@right_paths, \@alignment_matrix);
 
-    # normalize matrices
-    my $to_add_total = max(-$source_minimum * $source_length**2, -$target_minimum * $target_length**2);
-    my $source_shift = $to_add_total / $source_length**2;
-    my $target_shift = ($to_add_total + $source_total - $target_total) / $target_length**2;
-    my $alignment_shift = ($to_add_total + $source_total - $alignment_total) / ($target_length + 1) / ($source_length + 1);
+    foreach my $cycle (@$cycles) {
+        my ($l, $l2, $r, $r2) = split /\s/, $cycle;
+        my @forms = map {$_->form} ($source_nodes[$l], $source_nodes[$l2], $target_nodes[$r], $target_nodes[$r2]);
+        print STDERR join(" ", @forms) . "\n";
+    }
 }
 
 1;
