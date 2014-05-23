@@ -7,6 +7,8 @@ extends 'Treex::Core::Block';
 has 'to_language' => ( is => 'rw', isa => 'Str', default => '' );
 has 'to_selector' => ( is => 'rw', isa => 'Str', default => '' );
 
+my $EDGE_PENALTY = 20;
+
 sub copy_array {
     my ($array1, $array2) = @_;
     $array2 = [];
@@ -33,13 +35,13 @@ sub find_best_paths {
         foreach my $i (1 .. $size) {
             foreach my $j (0 .. $size) {
                 next if $i == $j;
-                my $best_score = $scores->[$i][$j];
-                my $best_path = $paths->[$i][$j];
+                my $best_score = $$scores[$i][$j];
+                my $best_path = $$paths[$i][$j];
                 foreach my $k (1 .. $size) {
                     next if $k == $i || $k == $j;
-                    if ($scores->[$i][$k] + $scores->[$k][$j] > $best_score) {
-                        $best_score = $scores->[$i][$k] + $scores->[$k][$j];
-                        $best_path = "$paths->[$i][$k] $k $paths->[$k][$j]";
+                    if ($$scores[$i][$k] + $$scores[$k][$j] > $best_score) {
+                        $best_score = $$scores[$i][$k] + $$scores[$k][$j];
+                        $best_path = "$$paths[$i][$k] $k $$paths[$k][$j]";
                     }
                 }
                 $new_scores[$i][$j] = $best_score;
@@ -58,19 +60,19 @@ sub find_best_cycles {
     my @left_best_paths;
     my @right_best_paths;
     foreach my $l (1 .. $left_size) {
-        my @best_paths = sort {$$left_scores[$l][$a] <=> $$left_scores[$l][$b]} (0 .. $l-1, $l+1 .. $left_size);
+        my @best_paths = sort {$$left_scores[$l][$b] <=> $$left_scores[$l][$a]} (0 .. $l-1, $l+1 .. $left_size);
         $left_best_paths[$l] = \@best_paths;
     }
     foreach my $r (1 .. $right_size) {
-        my @best_paths = sort {$$right_scores[$r][$a] <=> $$right_scores[$r][$b]} (0 .. $r-1, $r+1 .. $right_size);
+        my @best_paths = sort {$$right_scores[$r][$b] <=> $$right_scores[$r][$a]} (0 .. $r-1, $r+1 .. $right_size);
         $right_best_paths[$r] = \@best_paths;
     }
     my %cycle_score;
     foreach my $l (1 .. $left_size) {
-        foreach my $li (0 .. min($left_size, 10) - 1) {
+        foreach my $li (0 .. min($left_size, 4) - 1) {
             my $l2 = $left_best_paths[$l][$li];
             foreach my $r (1 .. $right_size) {
-                foreach my $ri (0 .. min($right_size, 10) - 1) {
+                foreach my $ri (0 .. min($right_size, 4) - 1) {
                     my $r2 = $right_best_paths[$r][$ri];
                     $cycle_score{"$l $l2 $r $r2"} = $$left_scores[$l][$l2] + $$right_scores[$r][$r2]
                                                   + $$alignment_scores[$l][$r] + $$alignment_scores[$l2][$r2];
@@ -121,7 +123,7 @@ sub process_bundle {
     my $source_minimum = 0;
     my $source_total = 0; 
     foreach my $node (@source_nodes) {
-        my @mst_scores = map {sprintf("%.2f",$_)} @{$node->wild()->{'mst_score'} || [0]};
+        my @mst_scores = map {sprintf("%.2f",($_-$EDGE_PENALTY))} @{$node->wild()->{'mst_score'} || [0]};
         if ($#mst_scores != $source_length) {
             log_warn("mst-scores not filled properly at ".$node->id.".");
             @mst_scores = map {0} (0 .. $source_length);
@@ -138,7 +140,7 @@ sub process_bundle {
     my $target_minimum = 0;
     my $target_total = 0;
     foreach my $node (@target_nodes) {
-        my @mst_scores = map {sprintf("%.2f",$_)} @{$node->wild()->{'mst_score'} || [0]};
+        my @mst_scores = map {sprintf("%.2f",($_-$EDGE_PENALTY))} @{$node->wild()->{'mst_score'} || [0]};
         if ($#mst_scores != $target_length) {
             log_warn("mst-scores not filled properly at ".$node->id.".");
             @mst_scores = map {0} (0 .. $target_length);
@@ -154,7 +156,7 @@ sub process_bundle {
     my @alignment_matrix;
     my $alignment_total = 0;
     my $BASE_WEIGHT = 0;
-    my $BONUS = 2;
+    my $BONUS = 1;
     foreach my $s_ord (0 .. $source_length) {
         foreach my $t_ord (0 .. $target_length) {
             $alignment_matrix[$s_ord][$t_ord] = $BASE_WEIGHT;
@@ -184,8 +186,12 @@ sub process_bundle {
 
     foreach my $cycle (@$cycles) {
         my ($l, $l2, $r, $r2) = split /\s/, $cycle;
-        my @forms = map {$_->form} ($source_nodes[$l], $source_nodes[$l2], $target_nodes[$r], $target_nodes[$r2]);
-        print STDERR join(" ", @forms) . "\n";
+        my $form_l = $l ? $source_nodes[$l-1]->form : '<root>';
+        my $form_l2 = $l2 ? $source_nodes[$l2-1]->form : '<root>';
+        my $form_r = $r ? $target_nodes[$r-1]->form : '<root>';
+        my $form_r2 = $r2 ? $target_nodes[$r2-1]->form : '<root>';
+        print STDERR "$form_l $form_l2 (".$left_scores[$l][$l2] .") $form_r $form_r2 (".$right_scores[$r][$r2].") "
+                   . "[$alignment_matrix[$l][$r] $alignment_matrix[$l2][$r2]]\n";
     }
 }
 
