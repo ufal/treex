@@ -9,8 +9,8 @@ use tagset::common;
 
 #------------------------------------------------------------------------------
 # Takes the Interset feature structure as a hash reference (as output by an
-# Interset decode() function). For all hash keys that are known Interset
-# feature names, sets the corresponding iset attribute.
+# Interset decode() or get_iset_structure() function). For all hash keys that
+# are known Interset feature names, sets the corresponding iset attribute.
 #
 # If the first argument is not a hash reference, the list of arguments is
 # considered a list of features and values. Usage examples:
