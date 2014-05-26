@@ -177,16 +177,11 @@ sub BUILD {
         $self->_set_pmldoc($pmldoc);
 
         # ensuring Treex::Core types (partially copied from the factory)
-        if ($self->metaData) {
-            my $meta = $self->metaData('pml_root')->{meta};
-            if ( $meta and defined $meta->{zones} ) {
-                foreach my $doczone ( map { $_->value() } $meta->{zones}->elements ) {
-
-                # $doczone hashref will be reused as the blessed instance variable
-                    Treex::Core::DocZone->new($doczone);
-                }
-            }
+        # $doczone hashref will be reused as the blessed instance variable
+        for my $doczone ($self->get_all_zones()){
+            Treex::Core::DocZone->new($doczone);
         }
+
         $self->_rebless_and_index();
     }
 
