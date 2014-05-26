@@ -7,11 +7,11 @@ extends 'Treex::Core::Block';
 has 'to_language' => ( is => 'rw', isa => 'Str', default => '' );
 has 'to_selector' => ( is => 'rw', isa => 'Str', default => '' );
 
-my $EDGE_PENALTY = 20;
+my $EDGE_PENALTY = 3;
+my $ALIGNMENT_BONUS = 1;
 
 sub copy_array {
     my ($array1, $array2) = @_;
-    $array2 = [];
     foreach my $i (0 .. $#$array1) {
         foreach my $j (0 .. $#{$$array1[$i]}) {
             $$array2[$i][$j] = $$array1[$i][$j];
@@ -28,29 +28,45 @@ sub find_best_paths {
         }
     }
     foreach my $d (1 .. $max_length - 1) {
-        my @new_paths;
-        my @new_scores;
-        copy_array($paths, \@new_paths);
-        copy_array($scores, \@new_scores);
+        my $new_paths = [];
+        my $new_scores = [];
+        copy_array($paths, $new_paths);
+        copy_array($scores, $new_scores);
         foreach my $i (1 .. $size) {
             foreach my $j (0 .. $size) {
                 next if $i == $j;
                 my $best_score = $$scores[$i][$j];
                 my $best_path = $$paths[$i][$j];
                 foreach my $k (1 .. $size) {
-                    next if $k == $i || $k == $j;
+                    next if ($k == $i || $k == $j);
                     if ($$scores[$i][$k] + $$scores[$k][$j] > $best_score) {
+                        my $path = $$paths[$i][$k].($$paths[$i][$k] ? ' ' : '').$k.($$paths[$k][$j] ? ' ' : '').$$paths[$k][$j];
+                        my $is_path = 1;
+                        my %is_in_path;
+                        foreach my $x (split /\s/, $path) {
+                            if (defined $is_in_path{$x}) {
+                                $is_path = 0;
+                                last;
+                            }
+                            $is_in_path{$x} = 1;
+                        }
+                        next if !$is_path;
                         $best_score = $$scores[$i][$k] + $$scores[$k][$j];
-                        $best_path = $$paths[$i][$k].($$paths[$i][$k] ? ' ' : '').$k.($$paths[$k][$j] ? ' ' : '').$$paths[$k][$j];
+                        $best_path = $path;
                     }
                 }
-                $new_scores[$i][$j] = $best_score;
-                $new_paths[$i][$j] = $best_path;
+                $$new_scores[$i][$j] = $best_score;
+                $$new_paths[$i][$j] = $best_path;
             }
         }
-        copy_array(\@new_paths, $paths);
-        copy_array(\@new_scores, $scores);
+        copy_array($new_paths, $paths);
+        copy_array($new_scores, $scores);
     }
+#    foreach my $i (1 .. $size) {
+#        foreach my $j (0 .. $size) {
+#            print STDERR "$$paths[$i][$j]   ";
+#        }
+#    }
 }
 
 sub find_best_cycles {
@@ -82,30 +98,6 @@ sub find_best_cycles {
     }
     my @cycles = sort {$cycle_score{$b} <=> $cycle_score{$a}} (keys %cycle_score);
     return \@cycles;
-}
-
-sub find_shortest_halfcycles {
-    my ($lr_scores, $lr_paths, $rl_scores, $rl_paths, $left_scores, $left_paths, $right_scores, $right_paths, $alignment_scores) = @_;
-    my $left_size = $#$left_scores;
-    my $right_size = $#$right_scores;
-    foreach my $l (0 .. $left_size) {
-        foreach my $r (0 .. $right_size) {
-            foreach my $l2 (0 .. $left_size) {
-                next if $l == $l2 || $l == 0;
-                if (!defined $$lr_scores[$l][$r] || ($$lr_scores[$l][$r] < $$left_scores[$l][$l2] + $$alignment_scores[$l2][$r])) {
-                    $$lr_scores[$l][$r] = $$left_scores[$l][$l2] + $$alignment_scores[$l2][$r];
-                    $$lr_paths[$l][$r] = "$$left_paths[$l][$l2] $l2"; 
-                }
-            }
-            foreach my $r2 (0 .. $right_size) {
-                next if $r == $r2 || $r == 0;
-                if (!defined $$rl_scores[$r][$l] || ($$rl_scores[$r][$l] < $$right_scores[$r][$r2] + $$alignment_scores[$l][$r2])) {
-                    $$rl_scores[$r][$l] = $$right_scores[$r][$r2] + $$alignment_scores[$l][$r2];
-                    $$rl_paths[$r][$l] = "$$right_paths[$r][$r2] $r2"; 
-                }
-            }
-        }
-    }
 }
 
 sub process_bundle {
@@ -154,23 +146,18 @@ sub process_bundle {
 
     # get alignment matrix
     my @alignment_matrix;
-    my $alignment_total = 0;
-    my $BASE_WEIGHT = 0;
-    my $BONUS = 1;
     foreach my $s_ord (0 .. $source_length) {
         foreach my $t_ord (0 .. $target_length) {
-            $alignment_matrix[$s_ord][$t_ord] = $BASE_WEIGHT;
-            $alignment_total += $BASE_WEIGHT;
+            $alignment_matrix[$s_ord][$t_ord] = 0;
         }
         next if $s_ord == 0;
         my ($alinodes, $alitypes) = $source_nodes[$s_ord - 1]->get_aligned_nodes();
         foreach my $n (0 .. $#$alinodes) {
             my $t_ord = $$alinodes[$n]->ord;
-            my $weight = $$alitypes[$n] =~ /left/ ? $BONUS : 0;
-            $weight += $$alitypes[$n] =~ /right/ ? $BONUS : 0;
-            $weight += $BASE_WEIGHT;
+            my $weight = $$alitypes[$n] =~ /int/ ? $ALIGNMENT_BONUS : 0;
+            #my $weight = $$alitypes[$n] =~ /left/ ? $ALIGNMENT_BONUS : 0;
+            #$weight += $$alitypes[$n] =~ /right/ ? $ALIGNMENT_BONUS : 0;
             $alignment_matrix[$s_ord][$t_ord] = $weight;
-            $alignment_total += $weight - $BASE_WEIGHT;
         }
     }
 
@@ -238,11 +225,15 @@ sub process_bundle {
         foreach my $i (1 .. $#r_path) {
             $right_parents[$r_path[$i-1]] = $r_path[$i];
         }
-        my $form_l = $l ? $source_nodes[$l-1]->form : '<root>';
-        my $form_l2 = $l2 ? $source_nodes[$l2-1]->form : '<root>';
-        my $form_r = $r ? $target_nodes[$r-1]->form : '<root>';
-        my $form_r2 = $r2 ? $target_nodes[$r2-1]->form : '<root>';
-        print STDERR "$form_l $form_l2 (".$left_scores[$l][$l2] .") $form_r $form_r2 (".$right_scores[$r][$r2].") "
+        my $l_forms = $source_nodes[$l-1]->form . " ";
+        my @left_inner_nodes = split /\s/, $left_paths[$l][$l2];
+        map { $l_forms .= $source_nodes[$_-1]->form . " " } @left_inner_nodes; 
+        $l_forms .= $l2 ? $source_nodes[$l2-1]->form : '<root>';
+        my $r_forms = $target_nodes[$r-1]->form . " ";
+        my @right_inner_nodes = split /\s/, $right_paths[$r][$r2];
+        map { $r_forms .= $target_nodes[$_-1]->form . " " } @right_inner_nodes;
+        $r_forms .= $r2 ? $target_nodes[$r2-1]->form : '<root>';
+        print STDERR "$l_forms(".$left_scores[$l][$l2] .") $r_forms(".$right_scores[$r][$r2].") "
                    . "[$alignment_matrix[$l][$r] $alignment_matrix[$l2][$r2]]\n";
     }
     
@@ -273,6 +264,7 @@ sub process_bundle {
         $right_parents[$i] = 0 if !defined $right_parents[$i];
         $new_target_nodes[$i]->set_parent($new_target_nodes[$right_parents[$i]]);
     }
+    print STDERR "\n";
 }
 
 1;
