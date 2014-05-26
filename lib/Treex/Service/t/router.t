@@ -2,6 +2,14 @@
 # Run this like so: `perl router.t'
 #   Michal Sedlak <sedlakmichal@gmail.com>     2014/05/09 18:23:13
 
+BEGIN {
+    if ( ! $ENV{AUTHOR_TESTING}) {
+        require Test::More;
+        Test::More::plan( skip_all => 'these tests requires AUTHOR_TESTING' );
+    }
+}
+
+
 use warnings;
 use strict;
 

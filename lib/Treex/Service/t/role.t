@@ -2,6 +2,13 @@
 # Run this like so: `perl role.t'
 #   Michal Sedlak <sedlakmichal@gmail.com>     2014/05/05 00:27:18
 
+BEGIN {
+    if ( ! $ENV{AUTHOR_TESTING}) {
+        require Test::More;
+        Test::More::plan( skip_all => 'these tests requires AUTHOR_TESTING' );
+    }
+}
+
 use FindBin;
 BEGIN {
     unshift @INC, "$FindBin::Bin/lib";

@@ -2,6 +2,14 @@
 # Run this like so: `perl worker.t'
 #   Michal Sedlak <sedlakmichal@gmail.com>     2014/04/30 13:31:57
 
+BEGIN {
+    if ( ! $ENV{AUTHOR_TESTING}) {
+        require Test::More;
+        Test::More::plan( skip_all => 'these tests requires AUTHOR_TESTING' );
+    }
+}
+
+
 use FindBin;
 BEGIN {
     unshift @INC, "$FindBin::Bin/lib";
