@@ -13,7 +13,7 @@ my @decoding_tests = (
 );
 
 my @encoding_tests = (
-    [ {pos => 'adj',  subpos => 'art'} => 'ART' ],
+    [ {pos => 'conj',  subpos => 'sub'} => 'C' ],
     [ {pos => 'int'} => 'ITJ' ],
     [ {pos => 'int', definiteness => 'def'} => 'ITJ' ], # definiteness is extra
 );
