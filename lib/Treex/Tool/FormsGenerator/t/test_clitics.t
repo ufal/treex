@@ -1,3 +1,12 @@
+#!/usr/bin/env perl
+
+BEGIN {
+    if ( ! $ENV{AUTHOR_TESTING}) {
+        require Test::More;
+        Test::More::plan( skip_all => 'these tests requires AUTHOR_TESTING' );
+    }
+}
+
 use Treex::Tool::FormsGenerator::TA;
 use Test::More;
 use utf8;
@@ -6,7 +15,7 @@ binmode STDIN,  ":utf8";
 binmode STDOUT, ":utf8";
 binmode STDERR, ":utf8";
 
-my $generator = Treex::Tool::FormsGenerator::Tamil->new();
+my $generator = Treex::Tool::FormsGenerator::TA->new();
 
 while (<DATA>) {
 	chomp;

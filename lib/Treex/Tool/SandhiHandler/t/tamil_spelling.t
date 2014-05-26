@@ -1,4 +1,12 @@
-use Treex::Tool::SandhiHandler::Tamil 'combine';
+#!/usr/bin/env perl
+BEGIN {
+    if ( ! $ENV{AUTHOR_TESTING}) {
+        require Test::More;
+        Test::More::plan( skip_all => 'these tests requires AUTHOR_TESTING' );
+    }
+}
+
+use Treex::Tool::SandhiHandler::TA 'combine';
 use Test::More;
 use utf8;
 

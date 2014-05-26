@@ -14,7 +14,7 @@ my $translator = new_ok('Treex::Tool::GoogleTranslate::APIv2');
 #        {auth_token => 'D51f3D5d41...' } );
 
 # the default is to translate from autodetected to en
-my $translation1 = $translator->translate_simple('vtákopysk');
+my $translation1 = $translator->translate_simple('vtákopysk', 'en', 'sk');
 is( $translation1, 'platypus', 'sk to en' );
 
 # you can specify the translation direction in the query

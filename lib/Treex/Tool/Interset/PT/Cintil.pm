@@ -48,7 +48,7 @@ __END__
 
 =head1 NAME
 
-Treex::Tool::Interset::Driver - morphological tagset of the (Portuguese) CINTIL  DepBank
+Treex::Tool::Interset:PT::Cintil - morphological tagset of the (Portuguese) CINTIL  DepBank
 
 =head1 SYNOPSIS
 

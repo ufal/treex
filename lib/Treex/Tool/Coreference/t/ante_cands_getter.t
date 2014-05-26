@@ -1,4 +1,12 @@
 #!/usr/bin/env perl
+
+BEGIN {
+    if ( ! $ENV{AUTHOR_TESTING}) {
+        require Test::More;
+        Test::More::plan( skip_all => 'these tests requires AUTHOR_TESTING' );
+    }
+}
+
 use strict;
 use warnings;
 
@@ -9,7 +17,7 @@ use Treex::Block::Read::Treex;
 
 BEGIN {
     use_ok('Treex::Tool::Coreference::NounAnteCandsGetter');
-    use_ok('Treex::Tool::Coreference::ContentCandsGetter');
+    use_ok('Treex::Tool::Coreference::ContentWordFilter');
     use_ok('Treex::Tool::Context::Sentences');
 }
 
