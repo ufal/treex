@@ -65,7 +65,12 @@ sub process_start {
 
     $self->SUPER::process_start();
 
-    my $use_memcached = Treex::Tool::Memcached::Memcached::get_memcached_hostname();
+    # TODO: add better support for preloaded models (or delete this memcached stuff).
+    # So far the ja2cs models are not loaded in the memcached server.
+    # Moreover, if there is a memcached server running for the current user (e.g. for en2cs translation),
+    # but it has no ja2cs models, no translations will be found **without reporting any error**.
+    # Let's turn off memcached for now.
+    my $use_memcached = 0;#Treex::Tool::Memcached::Memcached::get_memcached_hostname();
 
     $static_model   = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
 
