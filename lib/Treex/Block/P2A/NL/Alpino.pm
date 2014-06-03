@@ -74,6 +74,7 @@ sub convert_deprel {
         elsif ($deprel eq 'mwp'){
             # set AuxP for multi-word prepositions, avoid other multi-word units
             $afun = 'AuxP' if ($node->is_preposition or (($node->parent->conll_deprel // '') eq 'mwp' and ($node->parent->afun // '') eq 'AuxP'));
+            $afun = 'AuxA' if (!$afun and $node->match_iset('subpos' => 'art'));
             $afun = 'NR' if (!$afun);
         }
         elsif ($deprel eq 'svp'){
@@ -150,6 +151,7 @@ sub create_subtree {
 sub fill_attribs {
     my ($self, $source, $new_node) = @_;
 
+    $new_node->set_terminal_pnode($source);
     $new_node->set_form($source->form);
     $new_node->set_lemma($source->lemma);
     $new_node->set_tag($source->tag);
@@ -198,7 +200,8 @@ sub process_zone {
     # post-processing
     $self->rehang_relative_clauses($a_root);
     $self->mark_subjects($a_root);
-    $self->rehang_aux_verbs($a_root);    
+    $self->rehang_aux_verbs($a_root);
+    $self->fix_mwu($a_root);    
 }
 
 sub set_coord_members {
@@ -277,6 +280,39 @@ sub rehang_aux_verbs {
             map { $_->set_parent($verb_head) } $aux_verb->get_children();
             map { $_->set_afun($aux_verb->afun) } @full_verbs;
             $aux_verb->set_afun('AuxV');
+        }
+    }
+}
+
+# Heuristics for fixing multi-word units: rehanging everything under the last part of the MWU
+# TODO: Solve "van" by rehanging the following under it 
+# (e.g. Van Gasteren, De smalle basis van de engelse roman) 
+sub fix_mwu {
+    my ($self, $a_root) = @_;
+    my %mwus = ();
+    
+    # find MWUs in a tree
+    foreach my $mwu_member (grep { $_->conll_deprel eq 'mwp' } $a_root->get_descendants({ordered=>1})){
+        my ($mwu_id) = $mwu_member->get_terminal_pnode->get_parent->id;
+        if (!$mwus{$mwu_id}){
+            $mwus{$mwu_id} = [];    
+        }
+        push @{ $mwus{$mwu_id} }, $mwu_member;
+    }
+    
+    # process each MWU separately
+    foreach my $mwu (values %mwus){
+        # get the last member
+        my $last_member = pop @$mwu;
+        # rehang last member under the parent of the MWU
+        $last_member->set_parent($mwu->[0]->get_parent);
+        # rehang all MWU members under the last member
+        foreach my $mwu_member (@$mwu){
+            $mwu_member->set_parent($last_member);
+        }
+        # rehang all further children of the MWU under the last member 
+        foreach my $mwu_child (@$mwu->[0]->get_children){
+            $mwu_child->set_parent($last_member);
         }
     }
 }
