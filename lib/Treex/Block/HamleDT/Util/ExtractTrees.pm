@@ -1,4 +1,4 @@
-package Treex::Block::HamleDT::Test::Statistical::ExtractTrees;
+package Treex::Block::HamleDT::Util::ExtractTrees;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -10,16 +10,18 @@ use open qw( :std :utf8 );
 sub process_anode {
     my $self = shift;
     my $node = shift;
-    my $afun = $node->afun || $node->conll_deprel || '';
+
+    my $type = $self->type;
+    my $afun = ($type eq 'pdt' ? $node->afun : $node->conll_deprel) || '';
     return if ($afun eq 'AuxC' or $afun eq 'AuxP' or $afun eq 'Coord' or $afun eq 'Apos');
-    if ($node->get_echildren != 0) {
-        my $type = $self->type;
+
+    if ($node->get_echildren({or_topological=>1}) != 0) {
         my $string = tree2string( $node, $type );
         $node->get_address() =~ m/(^.*)##/;
         my $file = $1;
         my $pomoc = $string;
         my $words;
-        while ($pomoc =~ s/\|([^ \$]+)//) {
+        while ($pomoc =~ s/\|([^ ^]+)//) {
             $words .= " $1";
         }
         $pomoc = $string;
@@ -33,19 +35,20 @@ sub process_anode {
             $tags .= " $1";
         }
         my $ords;
-        while ($pomoc =~ s/~(\d+)\$/\$/) {
+        while ($pomoc =~ s/~(\d+)\^/\^/) {
             $ords .= " $1";
         }
         my $ids;
-        while ($pomoc =~ s/\$(\S+)//) {
+        while ($pomoc =~ s/\^(\S+)//) {
             $ids .= " $1";
         }
         my $tree = $string;
-        $tree =~ s/~\d+\$\S+//g;
+        $tree =~ s/~\d+\^\S+//g;
         $tree  =~ s/^[^=]+//;
         $words =~ s/^ +//;
         $tags  =~ s/^ +//;
 	my $language = $node->get_zone()->language();
+#        print $string, "\n";
         print join("\t", ($language, $words, $tree, $tags, $afuns, $file, $ids)), "\n";
     }
 }
@@ -54,25 +57,22 @@ sub tree2string {
     my $node = shift;
     my $type = shift;
 
+    my $afun = ($type eq 'pdt' ? $node->afun() : $node->conll_deprel) || '';
+    my $POS = ($type eq 'pdt' ? $node->get_iset('pos') : $node->conll_cpos) || 'X';
+    my $form = $node->form() || '_';
+    $form =~ s/\s/_/g; # some treebanks allow whitespace in forms
+    my $ord = $node->ord();
+    my $id = $node->get_attr('id');
+    my $string;
     # list
     if ($node->children == 0) {
-        return (($type eq 'pdt' ? $node->afun() : $node->conll_deprel) || '')
-                . '=' . (($type eq 'pdt' ? $node->get_iset('pos') : $node->conll_cpos) || 'X')
-                . '|' . ($node->form() || '')
-                . '~' . $node->ord()
-                . '$' . $node->get_attr('id');
+        $string = $afun.'='.$POS.'|'.$form.'~'.$ord.'^'.$id;
     }
-
     # non-list
     else {
-        my $string = (($type eq 'pdt' ? $node->afun() : $node->conll_deprel) || '')
-                      . '=' . (($type eq 'pdt' ? $node->get_iset('pos') : $node->conll_cpos) || 'X')
-                      . '|' . ($node->form() || '')
-                      . '~' . $node->ord()
-                      . '$' . $node->get_attr('id')
-                      . ' [ ' . (join ' ', map {tree2string($_, $type)} $node->get_children( {ordered=>1} ) ) . ' ]';
-        return $string;
+        $string = $afun.'='.$POS.'|'.$form.'~'.$ord.'^'.$id.' [ ' . (join ' ', map {tree2string($_, $type)} $node->get_children( {ordered=>1} ) ) . ' ]';
     }
+    return $string;
 }
 
 1;
@@ -83,7 +83,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::HamleDT::Test::Statistical::Extract Trees
+Treex::Block::HamleDT::Util::Extract Trees
 
 =head1 DESCRIPTION
 

@@ -1,4 +1,4 @@
-package Treex::Block::HamleDT::Test::Statistical::OutputAfunBigrams;
+package Treex::Block::HamleDT::Util::ExtractDependencyBigrams;
 use Moose;
 use Treex::Core::Common;
 
@@ -30,7 +30,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::HamleDT::Test::Statistical::OutputAfunBigrams
+Treex::Block::HamleDT::Util::ExtractDependencyBigrams
 
 =head1 DESCRIPTION
 

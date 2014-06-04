@@ -1,4 +1,4 @@
-package Treex::Block::HamleDT::Test::Statistical::Afuns;
+package Treex::Block::HamleDT::Util::ExtractAfuns;
 use Moose;
 use Treex::Core::Common;
 
@@ -22,7 +22,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::HamleDT::Test::Statistical::Afuns
+Treex::Block::HamleDT::Util::ExtractAfuns
 
 =head1 DESCRIPTION
 
