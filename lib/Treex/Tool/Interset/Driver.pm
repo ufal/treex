@@ -64,7 +64,6 @@ sub encode {
             } else {
                 $missing++;
             }
-            #next RULE if !exists $f->{$key} || $f->{$key} ne $iset->{$key};            
         }
         
         # If yes, we found the best matching tag.
@@ -163,6 +162,10 @@ If no such rule exists, it tries to find a rule with a highest overlap
 =head3 my $list_ref = $driver->list()
 
 List of possible tags.
+
+=head1 SEE ALSO
+
+L<Treex::Block::Print::IntersetDriverStub> -- generates a base source code of a driver based on morphological tags occuring in a given Treex document.
 
 =head1 AUTHOR
 

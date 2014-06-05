@@ -52,11 +52,25 @@ Treex::Tool::Interset:PT::Cintil - morphological tagset of the (Portuguese) CINT
 
 =head1 SYNOPSIS
 
+ ######## From Treex scenario
+ A2A::ConvertTagsInterset input_driver=PT::Cintil
+
+ ######## From Perl code
+ use Treex::Tool::Interset::PT::Cintil;
+ my $driver = Treex::Tool::Interset::PT::Cintil->new();
+ my $iset = $driver->decode('ART');
+ # $iset = { pos => 'adj',  subpos => 'art', tagset => 'PT::Cintil' };
+ my $tag = $driver->encode({ pos => 'adj',  subpos => 'art' });
+
 =head1 DESCRIPTION
 
+Conversion between Portuguese CINTIL tagset and Interset (universal tagset by Dan Zeman).
 
+=head1 SEE ALSO
 
-=head1 METHODS
+L<Treex::Tool::Interset::Driver>
+
+L<Treex::Block::A2A::ConvertTagsInterset>
 
 =head1 AUTHOR
 
