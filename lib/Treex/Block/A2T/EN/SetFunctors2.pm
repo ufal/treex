@@ -3,7 +3,7 @@ package Treex::Block::A2T::EN::SetFunctors2;
 use Moose;
 use Treex::Core::Common;
 
-extends 'Treex::Block::A2T::SetFunctors';
+extends 'Treex::Block::A2T::SetFunctorsMLProcess';
 
 has '+model' => ( default => 'data/models/functors/en/model-pack.dat.gz' );
 
@@ -22,7 +22,7 @@ Treex::Block::A2T::EN::SetFunctors2
 
 =head1 DESCRIPTION
 
-This is just a default configuration of L<Treex::Block::A2T::SetFunctors> for English, containing pre-set
+This is just a default configuration of L<Treex::Block::A2T::SetFunctorsMLProcess> for English, containing pre-set
 paths to the trained models and configuration in the Treex shared directory. 
 
 =head1 AUTHOR

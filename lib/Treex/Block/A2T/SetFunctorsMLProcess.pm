@@ -1,4 +1,4 @@
-package Treex::Block::A2T::SetFunctors;
+package Treex::Block::A2T::SetFunctorsMLProcess;
 
 use Moose;
 use Treex::Core::Common;
@@ -28,7 +28,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2T::SetFunctors
+Treex::Block::A2T::SetFunctorsMLProcess
 
 =head1 DESCRIPTION
 
