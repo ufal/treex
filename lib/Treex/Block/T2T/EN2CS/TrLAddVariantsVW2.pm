@@ -52,7 +52,7 @@ has max_variants => (
 has vw_model => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'vwTMP/m00-05_p1_b29_l4.model'
+    default => 'vwTMP/mA_p1_b29_l3.model'
 );
 
 my $static;
