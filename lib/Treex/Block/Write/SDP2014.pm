@@ -9,7 +9,7 @@ Readonly my $NOT_SET   => "_";    # CoNLL-ST format: undefined value
 Readonly my $NO_NUMBER => -1;     # CoNLL-ST format: undefined integer value
 
 has '+language' => ( required => 1 );
-has '+extension' => ( default => '.conll' );
+has '+extension' => ( default => '.sdp' );
 has 'formatted' => ( is => 'ro', isa => 'Bool', default => 0, documentation => 'Append spaces to values so that all columns are aligned.' );
 has 'compact' => ( is => 'ro', isa => 'Bool', default => 0,
     documentation => 'Default is unreadable CoNLL-2009-like format with large and variable number of columns. '.

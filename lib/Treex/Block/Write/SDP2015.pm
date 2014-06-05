@@ -2,6 +2,7 @@ package Treex::Block::Write::SDP2015;
 
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::Vallex::ValencyFrame;
 
 extends 'Treex::Block::Write::BaseTextWriter';
 
@@ -9,7 +10,7 @@ Readonly my $NOT_SET   => "_";    # CoNLL-ST format: undefined value
 Readonly my $NO_NUMBER => -1;     # CoNLL-ST format: undefined integer value
 
 has '+language' => ( required => 1 );
-has '+extension' => ( default => '.conll' );
+has '+extension' => ( default => '.sdp' );
 has 'formatted' => ( is => 'ro', isa => 'Bool', default => 0, documentation => 'Append spaces to values so that all columns are aligned.' );
 has 'compact' => ( is => 'ro', isa => 'Bool', default => 0,
     documentation => 'Default is unreadable CoNLL-2009-like format with large and variable number of columns. '.
@@ -23,6 +24,9 @@ has 'remove_cycles' => ( is => 'ro', isa => 'Bool', default => 1,
     documentation => 'Output dependencies are surface projections of dependencies between t-nodes. Since several t-nodes may be projected on '.
     '(have been generated from) the same token, the surface dependency graph is not guaranteed to be cycle-free. '.
     'However, if this switch is turned on, dependencies incoming to generated nodes will be removed if they would create cycles.');
+has 'valency_dict_name' => ( is => 'ro', isa => 'Str', default => 'engvallex.xml',
+    documentation => 'Name of the file with the valency dictionary to which the val_frame.rf attributes point. '.
+    'Full path is not needed. The XML logic will somehow magically find the file.');
 
 
 
@@ -56,6 +60,16 @@ sub process_zone
             # We store separately links to all t-nodes found for functions that can use them all.
             $anode->wild()->{tnode} = $tnode unless(defined($anode->wild()->{tnode}));
             push(@{$anode->wild()->{tnodes}}, $tnode);
+        }
+        $tnode->wild()->{valency_frame} = $self->get_valency_frame($tnode);
+        # DEBUGGING: Are we actually able to find the valency frames?
+        if(defined($tnode->wild()->{valency_frame}))
+        {
+            my $frame = $tnode->wild()->{valency_frame};
+            my $elements = $frame->elements();
+            my $frame_id = $frame->id();
+            my $functors = join(' ', map {$_->functor()} (@{$elements}));
+            log_info("Found valency frame for t-node ".$tnode->t_lemma().": $frame_id $functors.");
         }
     }
     # We require that the token ids make an unbroken sequence, starting at 1.
@@ -622,6 +636,22 @@ sub decode_characters
 
 
 
+#------------------------------------------------------------------------------
+# For a t-node, gets the reference to its corresponding valency frame, if it
+# exists.
+#------------------------------------------------------------------------------
+sub get_valency_frame
+{
+    my $self = shift;
+    my $tnode = shift;
+    my $frame_id = $tnode->val_frame_rf();
+    return if(!defined($frame_id));
+    $frame_id =~ s/^.*#//;
+    return Treex::Tool::Vallex::ValencyFrame::get_frame_by_id($self->valency_dict_name(), $self->language(), $frame_id);
+}
+
+
+
 1;
 
 __END__
@@ -694,6 +724,19 @@ Binary value (0 or 1), 1 is default.
 Output dependencies are surface projections of dependencies between t-nodes. Since several t-nodes may be projected on
 (have been generated from) the same token, the surface dependency graph is not guaranteed to be cycle-free.
 However, if this switch is turned on, dependencies incoming to generated nodes will be removed if they would create cycles.
+
+=item C<valency_dict_name>
+
+File name of the valency lexicon to which the valency frame references point. This is a required parameter.
+For the English part of PCEDT 2.0, its value should probably be "engvallex.xml".
+(DZ: But I do not know how Treex is supposed to actually find the file. In PCEDT, the file is not in the same folder as the tree files.
+It is in ../../valency_lexicons, from the point of view of a tree file. The headers of the tree files contain a reference but it also
+lacks the full path.)
+
+    <references>
+      <reffile id="cs-v" name="vallex" href="vallex3.xml" />
+      <reffile id="en-v" name="vallex" href="engvallex.xml" />
+    </references>
 
 =back
 
