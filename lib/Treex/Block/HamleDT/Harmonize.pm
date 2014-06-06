@@ -35,14 +35,13 @@ sub process_zone
 {
     my $self   = shift;
     my $zone   = shift;
-    my $tagset = shift;    # optional argument from the subclass->process_zone()
 
     # Copy the original dependency structure before adjusting it.
     $self->backup_zone($zone);
     my $root = $zone->get_atree();
 
     # Convert CoNLL POS tags and features to Interset and PDT if possible.
-    $self->convert_tags( $root, $tagset );
+    $self->convert_tags( $root );
 
     # Conversion from dependency relation tags to afuns (analytical function tags) must be done always
     # and it is almost always treebank-specific (only a few treebanks use the same tagset as the PDT).
