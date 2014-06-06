@@ -44,7 +44,7 @@ after BUILD => sub {
 
 sub decode {
     my ($self, $orig_tag) = @_;
-    return $self->decoding_table->{$orig_tag};
+    return $self->decoding_table->{$orig_tag} || {};
 }
 
 sub encode {

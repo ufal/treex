@@ -9,7 +9,7 @@ my $driver = new_ok('Treex::Tool::Interset::PT::Cintil');
 
 my @decoding_tests = (
    [ART          => { pos => 'adj',  subpos => 'art', tagset => 'PT::Cintil' }],
-   [UNKNOWN_TAG  => undef ],
+   [UNKNOWN_TAG  => {} ],
 );
 
 my @encoding_tests = (
