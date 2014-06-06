@@ -231,7 +231,6 @@ sub next_document
     );
     local $state;
     $parser->parse($shakti);
-    ###!!! Ještě by to chtělo posbírat celý text dokumentu. Obdobně u každé věty posbírat text věty!
     return $state->{current_document};
 }
 
