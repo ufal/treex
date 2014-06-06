@@ -29,6 +29,8 @@ sub set_iset
     }
     else
     {
+        log_fatal "No parameters for 'set_iset'" if @_ == 0;
+        log_fatal "Odd parameters for 'set_iset'" if @_%2;
         %f = @_;
     }
     my $known = list_iset_values();

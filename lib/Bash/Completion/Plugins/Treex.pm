@@ -102,7 +102,7 @@ Bash::Completion::Plugins::Treex - Bash completion for treex
  $ treex A
  A2A::    A2N::    A2P::    A2T::    A2W::    Align::
 
- $ ftreex Read::Sentences 
+ $ treex Read::Sentences 
  Blocks:
  W2W::   Read::  A2W::   T2A::   Tutorial::  Misc:: ...
  

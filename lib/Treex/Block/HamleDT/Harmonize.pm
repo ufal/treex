@@ -123,6 +123,7 @@ sub convert_tag
     # We are about to replace it by a 15-character string fitting the PDT tagset.
     my $src_tag = $self->get_input_tag_for_interset($node);
     my $f = tagset::common::decode($driver, $src_tag);
+    log_fatal "Could not decode '$src_tag' with '$driver' Interset driver" if !defined $f;
     $node->set_iset($f);
 }
 
