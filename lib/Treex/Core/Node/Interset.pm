@@ -132,6 +132,16 @@ sub get_iset_pairs_list
 }
 
 #------------------------------------------------------------------------------
+# Return the values of all non-empty Interset features.
+#------------------------------------------------------------------------------
+sub get_iset_values
+{
+    my $self = shift;
+    return map {my $v = $self->get_iset($_); $v ? $v : ()} list_iset_features();
+}
+
+
+#------------------------------------------------------------------------------
 # Returns list of non-empty Interset features and their values as one string
 # suitable for the FEAT column in the CoNLL format. Besides Write::CoNLLX, this
 # method should be called also from other blocks that work with the CoNLL

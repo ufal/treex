@@ -27,6 +27,7 @@ my $DECODING_TABLE = {
     REL     => { pos => 'noun', prontype => 'rel' }, #  Relative  pronoun : "que", "quem", ...
 
     # Most frequent tags found in depbank-v3v4.conll (and undefined by the guidelines)
+    ADJ     => { pos => 'adj'},
     CN      => { pos => 'noun'},
     PREP    => { pos => 'prep'},
     DA      => { pos => 'adj',  subpos => 'art'}, # or subpos => 'det' ? : "o", "a"
