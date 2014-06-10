@@ -52,16 +52,25 @@ sub process_zone {
         $node->set_tag(join ' ', $node->get_iset_values());
 
         # CINTIL (parsed output) uses ".*/" instead of ".", let's fix it.
-        $self->normalize_form($node);
+        $self->fix_form($node);
+
+        $self->fix_lemma($node);
 
         # Conversion from dependency relation tags to afuns (analytical function tags)
         my $afun = $self->guess_afun($node);
         $node->set_afun($afun || 'NR');
     }
 
+    $self->fill_sentence($zone);
+
     $self->attach_final_punctuation_to_root($root);
 
     $self->restructure_coordination($root);
+
+    foreach my $node (@nodes) {
+        $self->rehang_adverbs_to_verbs($node);
+    }
+    
 
     return;
 }
@@ -71,11 +80,19 @@ sub get_input_tag_for_interset {
     return $node->conll_cpos();
 }
 
-sub normalize_form {
+sub fix_form {
     my ($self, $node) = @_;
     my $real_form = $CHANGE_FORM{$node->form};
     if (defined $real_form) {
         $node->set_form($real_form);
+    }
+    return;
+}
+
+sub fix_lemma {
+    my ($self, $node) = @_;
+    if ($node->lemma eq '_') {
+        $node->set_lemma($node->form);
     }
     return;
 }
@@ -123,6 +140,46 @@ sub detect_coordination {
     return @recurse;
 }
 
+# The surface sentence cannot be stored in the CoNLL format,
+# so let's try to reconstruct it.
+# This is not needed for the analysis (in real scenario, surface sentences will be on the input),
+# but it helps when debugging, so the real sentence is shown in TrEd.
+sub fill_sentence {
+    my ($self, $zone) = @_;
+    my $str = join ' ', map {$_->form} $zone->get_atree->get_descendants({ordered=>1});
+
+    # Contractions, e.g. "de_" + "o" = "do"
+    $str =~ s/por_ elos/pelos/g;
+    $str =~ s/por_ elas/pelas/g;
+    $str =~ s/por_ /pel/g; # pelo, pela
+    $str =~ s/em_ /n/g;    # no, na, nos, nas, num, numa, nuns, numas
+    $str =~ s/a_ a/à/g;    # à, às
+    $str =~ s/a_ o/ao/g;   # ao, aos,
+    $str =~ s/de_ /d/g;    # do, da, dos, das, dum, duma, duns, dumas, deste, desta,...
+
+    # TODO: detached  clitic, e.g. "dá" + "-se-" + "-lhe" + "o" = "dá-se-lho"
+
+    # Simple detokenization
+    $str =~ s/ ([,.:])/$1/g;
+
+    # Make sure the first word is capitalized
+    $zone->set_sentence(ucfirst $str);
+    return;
+}
+
+# Some adverbs (mostly rhematizers "apenas", "mesmo",...) depend on a preposition ("de", "a") in CINTIL.
+# However, prepositions should have only one child in the HamleDT/Prague style (except for multi-word prepositions).
+sub rehang_adverbs_to_verbs {
+    my ($self, $node) = @_;
+    my $parent = $node->get_parent();
+    if ($node->is_adverb && $parent->is_preposition){
+        my $grandpa = $parent->get_parent();
+        if ($grandpa->is_verb) {
+            $node->set_parent($grandpa);
+        }
+    }
+    return;
+}
 
 1;
 
