@@ -119,8 +119,8 @@ sub is_modal {
     #  should not be considered being part of modal construction."
     return 0 if $infinitive->afun eq 'Sb';
 
-    # Either use a block that fills wild->{is_modal}, or override this method.
-    return 1 if $node->wild->{is_modal};
+    # Either use a block that fills Interset features, or override this method.
+    return 1 if $node->match_iset('pos' => 'verb', 'subpos' => 'mod') && $infinitive->get_iset('pos') eq 'inf';
 
     return 0;
 }
