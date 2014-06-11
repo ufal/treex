@@ -46,7 +46,6 @@ sub generate_wordform {
     my ($self, $node, $tag) = @_;
     my $form_info = $morphoLM->best_form_of_lemma($node->lemma, $tag) || $generator->best_form_of_lemma($node->lemma, $tag);
     my $form = defined $form_info ? $form_info->get_form() : $node->form;
-warn $node->lemma . " $tag = $form" . (defined $form_info ? '' : ' (morfo FAILED)') . "\n";
     if ($node->form eq uc $node->form){
         $form = uc $form;
     } elsif ($node->form =~ /^\p{IsUpper}/){
