@@ -26,7 +26,7 @@ my %CINTIL_DEPREL_TO_AFUN = (
     N     => 'Atr',  # Name  in  multi‐word  proper  names
     CARD  => 'Atr',  # Cardinal  in  multi‐word  cardinals 
     PUNCT => 'AuxX', # Punctuation
-    DEP   => 'AuxZ', #  Generic  dependency (mostly commas)
+    DEP   => 'AuxX', #  Generic  dependency (mostly commas)
 # C     => 'AuxC', #  Complement 
 #COORD Coordination 
 #CONJ   Conjunction 
@@ -89,11 +89,11 @@ sub fix_form {
     return;
 }
 
+# Lowercase lemmas (CINTIL has all-uppercase) and fill form instead of "_".
 sub fix_lemma {
     my ($self, $node) = @_;
-    if ($node->lemma eq '_') {
-        $node->set_lemma($node->form);
-    }
+    my $lemma = $node->lemma;
+    $node->set_lemma($lemma eq '_' ? $node->form : lc $lemma);
     return;
 }
 
@@ -117,11 +117,15 @@ sub guess_afun {
     
     if ($deprel eq 'C') {
         return 'Adv' if $pos eq 'noun';
-        return 'AuxV' if $pos eq 'verb';
-        return 'NR';
+        return 'Obj' if $pos eq 'verb';
     }
 
+
     return 'AuxP' if $pos eq 'prep';
+    return 'Adv' if $pos eq 'adv';
+    return 'AuxX' if $node->lemma eq ',';
+    return 'AuxG' if $pos eq 'punc';
+
 
     return $CINTIL_DEPREL_TO_AFUN{$node->conll_deprel};
 }
@@ -169,6 +173,10 @@ sub fill_sentence {
 
 # Some adverbs (mostly rhematizers "apenas", "mesmo",...) depend on a preposition ("de", "a") in CINTIL.
 # However, prepositions should have only one child in the HamleDT/Prague style (except for multi-word prepositions).
+# E.g. "A encomenda está mesmo(afun=Adv,parent=em_,newparent=está) em_ o armazém . "
+# TODO: In some cases, it may be more appropriate to rehang the adverb to its sibling, e.g.:
+# "A criança obedece apenas(afun=Adv,parent=a_) a_ a mãe ."
+# This may differentiate the scope of the rhematizer: "The child obeys only the mother" and "The child only obeys the mother"
 sub rehang_adverbs_to_verbs {
     my ($self, $node) = @_;
     my $parent = $node->get_parent();

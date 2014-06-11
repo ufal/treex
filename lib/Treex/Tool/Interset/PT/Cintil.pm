@@ -36,7 +36,8 @@ my $DECODING_TABLE = {
     CJ      => { pos => 'prep'}, # "que", "como"
     UM      => { pos => 'adj', subpos => 'art', definitness => 'ind'}, # "um"
     PPA     => { pos => 'adj'},
-    DGT     => { pos => 'num', numform => 'digit'},   
+    DGT     => { pos => 'num', numform => 'digit'},
+    INF     => { pos => 'verb', verbform => 'inf'},
 };
 
 sub decoding_table {
