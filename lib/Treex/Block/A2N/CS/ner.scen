@@ -1,6 +1,0 @@
-Util::SetGlobal language=cs
-Read::Sentences from=-
-W2A::Tokenize
-W2A::CS::TagFeaturama lemmatize=1
-A2N::CS::SysNERV
-Write::Treex
