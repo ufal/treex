@@ -107,7 +107,7 @@ override is_aux_to_parent => sub {
     if ( $node->lemma =~ /^(more|most)$/ ) {
         my ($eparent) = $node->get_eparents();
         return 0 if $eparent->is_root();
-        return 1 && $eparent->tag =~ /^(JJ|RB)/;
+        return 1 if $eparent->tag =~ /^(JJ|RB)/;
     }
 
     return 0;
