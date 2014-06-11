@@ -117,7 +117,7 @@ sub process_zone {
             }
         }
         if ( my $code = $self->_args->{"${layer}node"} ) {
-            foreach my $node ( $tree->get_descendants({ordered => ($layer ne 'p')}) ) {
+            foreach my $node ( $tree->get_descendants({ordered => ($layer =~ /[at]/ ? 1 : 0)}) ) {
                 $this = $node;
                 if ( !eval $self->expand_eval_code("my \$${layer}node = \$node; $code;") ) {
                     log_fatal "Eval error: $@";
