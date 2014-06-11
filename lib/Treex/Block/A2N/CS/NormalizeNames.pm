@@ -26,6 +26,11 @@ sub process_nnode {
     my @queue = grep {!$is_in_entity{$_->get_parent()}} @anodes;
     while(@queue){
         my $node = shift @queue;
+        if ($node->is_coap_root){
+            push @queue, grep {$is_in_entity{$_}} $node->get_coap_members();
+            # TODO handle also shared modifiers
+            next;
+        }
         my $tag = $node->tag;
         next if $tag !~ /^[NAC]...[^1X]/;
         substr $tag, 4, 1, '1';
