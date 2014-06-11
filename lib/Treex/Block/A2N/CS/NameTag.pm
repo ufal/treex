@@ -34,6 +34,21 @@ Treex::Block::A2N::CS::NameTag - Czech named entity recognizer NameTag
 This is just a small modification of L<Treex::Block::A2N::NameTag> which adds the path to the
 default model for Czech and filling "raw" lemmas into the C<normalized_name>.
 
+This block fills concatenation of (raw) lemmas to the C<normalized_name> attribute,
+so e.g. "Ústím nad Labem" is normalized as "Ústí nad Labe".
+If you have parsed tree, you should use block C<A2N::CS::NormalizeNames>
+to get higher quality normalized names ("Ústí nad Labem").
+
+This block fill a flat n-tree, you should use block C<A2N::NestEntities> to get proper nesting.
+
+=head1 SEE ALSO
+
+L<Treex::Block::A2N::NameTag>
+
+L<Treex::Block::A2N::CS::NormalizeNames>
+
+L<Treex::Block::A2N::NestEntities>
+
 =head1 AUTHORS
 
 Martin Popel <popel@ufal.mff.cuni.cz>
