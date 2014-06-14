@@ -113,18 +113,14 @@ __END__
 
 =head1 NAME
 
-Treex::Tool::Interset:PT::Cintil - morphological tagset of the (Portuguese) CINTIL  DepBank
+Treex::Tool::Interset:PT::Cintil - morphological tagset of the (Portuguese) CINTIL corpus
 
 =head1 SYNOPSIS
 
- ######## From Treex scenario
- A2A::ConvertTagsInterset input_driver=PT::Cintil
-
- ######## From Perl code
  use Treex::Tool::Interset::PT::Cintil;
  my $driver = Treex::Tool::Interset::PT::Cintil->new();
- my $iset = $driver->decode('ART');
- # $iset = { pos => 'adj',  subpos => 'art', tagset => 'PT::Cintil' };
+ my $iset = $driver->decode('V#pi-3s');
+ # $iset = { pos=>'verb', tense=>'pres', mood=>'ind', person=>'3', number=>'sing', tagset => 'PT::Cintil' };
  my $tag = $driver->encode({ pos => 'adj',  subpos => 'art' });
 
 =head1 DESCRIPTION
@@ -133,9 +129,9 @@ Conversion between Portuguese CINTIL tagset and Interset (universal tagset by Da
 
 =head1 SEE ALSO
 
-L<Treex::Tool::Interset::Driver>
+L<http://cintil.ul.pt/cintilwhatsin.html#guidelines>
 
-L<Treex::Block::A2A::ConvertTagsInterset>
+L<Treex::Tool::Interset::Driver>
 
 =head1 AUTHOR
 
