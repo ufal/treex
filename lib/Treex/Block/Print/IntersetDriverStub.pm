@@ -37,7 +37,7 @@ sub process_end {
 package Treex::Tool::Interset::$driver_name;
 use utf8;
 use Moose;
-with 'Treex::Tool::Interset::Driver';
+with 'Treex::Tool::Interset::SimpleDriver';
 
 # See https://wiki.ufal.ms.mff.cuni.cz/user:zeman:interset:features
 my \$DECODING_TABLE = {

@@ -71,13 +71,14 @@ sub process_zone {
         $self->rehang_adverbs_to_verbs($node);
     }
     
-
     return;
 }
 
+# According to the guidelines, the original CINTIL uses tags in form PoS#features,
+# e.g. "CN#mp" (common noun, masculine plural). The Interset driver expects this format.
 sub get_input_tag_for_interset {
     my ($self, $node) = @_;
-    return $node->conll_cpos();
+    return $node->conll_pos() . '#' . $node->conll_feat;
 }
 
 sub fix_form {
