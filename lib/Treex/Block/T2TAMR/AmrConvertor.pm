@@ -48,7 +48,7 @@ CMP  	compared-to
 RSTR 	mod
 EXT  	scale
 );
-
+# TODO: Move this list of rule ids and mapping rule ids to corresponding rule tamr tree to another file
 my @rules_ids = qw (
 001a
 001b
@@ -489,6 +489,7 @@ sub process_document {
 
     # the forward links (from source to target nodes) must be kept so that coreference links are copied properly
     my %src2tgt;
+    # mapping rule ids to corresponding tamr trees
     my $count = 0;
     foreach my $bundle ($self->rules->get_bundles()){
       my ($current_num) = $rules_ids[$count] =~ /(\d+)/;
@@ -564,46 +565,79 @@ sub copy_subtree {
         }
         $target_node->set_attr('t_lemma', $varname."/".$tlemma);
 
+        #Searching for specific rules to apply
+        my $flag_found = 0;
 	if ($source_node->wild->{'query_label'}) {
 	  foreach my $query (keys %{$source_node->wild->{'query_label'}}) {
+            # if we have an active rule
             if (1 || $active_rule_label ~~ @{$source_node->wild->{'query_label'}->{$query}}){
               if ($query =~ /^([^-]+)/) {
                 print STDERR "Query $query \n";
                 print STDERR "Active rule id $1\n";
                 my $active_rule_id = $1;
-                my $rule_role = ${$source_node->wild->{'query_label'}->{$query}}[0];
-                print STDERR "Applying role $rule_role\n";
+                my $node_rule_id = ${$source_node->wild->{'query_label'}->{$query}}[0];
+                print STDERR "Applying rule-id $node_rule_id\n";
+                # searching tamr rule trees for found rule
                 if (my $rule_tree = $rules2ttrees{$active_rule_id}) {
-                  my $flag_found = 0;
+                  # searching for node with lemma corresponding to nodes rule-id
                   foreach my $rule_node ($rule_tree->get_descendants()){
-                    if ($rule_node->t_lemma =~ /$rule_role/i ) {
-                      print STDERR "Role $rule_role is found in $active_rule_id, in the node " . $rule_node->t_lemma . "\n";
+                    # if we've found the node in tamr rule tree, which corresponds to our node
+                    if ($rule_node->t_lemma =~ /$node_rule_id/i ) {
+                      print STDERR "Rule node id $node_rule_id is found in $active_rule_id, in the node " . $rule_node->t_lemma . "\n";
                       $flag_found = 1;
+                      # the logic is:
+                      # if the source node has no modifier or "root" modifier, then copy modifier from rule node to target node and rehang it
+                      # else if rule nodes' modifier is "root", then do nothing
+                      # else output an error
+                      if ((!$source_node->wild->{'modifier'} || $source_node->wild->{'modifier'} eq 'root')) {
+                        # copy modifier
+                        $target_node->wild->{'modifier'} = $rule_node->wild->{'modifier'};
+                        # rehang it, if rule node isn't root
+                        if ($rule_node->wild->{'modifier'} ne "root"){
+                          my $rule_node_parent = $rule_node->get_parent();
+                          # look in the whole tree
+                          foreach my $target_tree_node ($target_node->get_root()->get_descendants()) {
+                            # for a node with the same rule $query and rule-id corresponding to rule node parents' lemma
+                            if ($rule_node_parent->t_lemma =~ /{$target_tree_node->wild->{'query_label'}->{$query}}[0]/i) {
+                              $target_node->set_parent($target_tree_node);
+                            }
+                          }
+                        }
+                      } else {
+                        # warn of an error
+                        if (($rule_node->wild->{'modifier'} ne "root")  && ($source_node->wild->{'modifier'} ne $rule_node->wild->{'modifier'})){
+                          print "Node " . $source_node->id . " has 2 conflicting modifiers: " . $source_node->wild->{'modifier'} . " and " . $rule_node->wild->{'modifier'} . " from rule " . $query;
+                        }
+                      }
                     }
                   }
                   if (!$flag_found) {
-                    print "Role $rule_role wasn't found in $query\n";
-                  } 
+                    print "Rule-id $node_rule_id wasn't found in $query\n";
+                  }
                 } else {
                   print "Rule $active_rule_id wasn't found. Original query is $query \n";
                 }
               }
             }
           }
-	}
-        # the original functor serves as 
-        $target_node->wild->{'modifier'} = make_default_modifier($source_node);
+        }
+        # if we didn't find any rule
+	if (!$flag_found) {
+          # applying default rule
+          # the original functor serves as 
+          $target_node->wild->{'modifier'} = make_default_modifier($source_node);
 
-        $target_node->set_src_tnode($source_node);
-        $target_node->set_t_lemma_origin('clone');
+          $target_node->set_src_tnode($source_node);
+          $target_node->set_t_lemma_origin('clone');
 
-        # create polarity - for negated nodes
-        my $neg = $source_node->get_attr('gram/negation');
-        if (defined $neg && $neg eq "neg1") {
-          # create AMR auxiliary node indicating negation
-          my $negnode = $target_node->create_child();
-          $negnode->set_attr('t_lemma', "-");
-          $negnode->wild->{'modifier'} = "polarity";
+          # create polarity - for negated nodes
+          my $neg = $source_node->get_attr('gram/negation');
+          if (defined $neg && $neg eq "neg1") {
+            # create AMR auxiliary node indicating negation
+            my $negnode = $target_node->create_child();
+            $negnode->set_attr('t_lemma', "-");
+            $negnode->wild->{'modifier'} = "polarity";
+          }
         }
 
         copy_subtree( $source_node, $target_node, $src2tgt );
