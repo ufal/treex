@@ -32,7 +32,7 @@ my $DECODING_TABLE = {
     '$'     => {'pos' => 'punc', 'punctype' => 'symb', 'other' => 'currency'},
     # channel
     # example: #
-    "\#"    => {'pos' => 'punc', 'other' => "\#"},
+    '#'    => {'pos' => 'punc', 'other' => '#'},
     # "common postmodifiers of biomedical entities such as genes" (Blitzer, MdDonald, Pereira, Proc of EMNLP 2006, Sydney)
     # Example 1: "anti-CYP2E1-IgG" is tokenized and tagged as "anti/AFX -/HYPH CYP2E1-IgG/NN".
     # Example 2: "mono- and diglycerides" is tokenized and tagged as "mono/AFX -/HYPH and/CC di/AFX glycerides/NNS".
@@ -141,7 +141,7 @@ my $DECODING_TABLE = {
     'VBN'   => {'pos' => 'verb', 'verbform' => 'part', 'tense' => 'past', 'aspect' => 'perf'},
     # verb, non-3rd person singular present
     # examples: do, go, see, walk
-    'VBP'   => {'pos' => 'verb', 'verbform' => 'fin', 'tense' => 'pres', 'number' => 'sing', 'person' => {1, 2}},
+    'VBP'   => {'pos' => 'verb', 'verbform' => 'fin', 'tense' => 'pres', 'number' => 'sing', 'person' => [1, 2]},
     # verb, 3rd person singular present
     # examples: does, goes, sees, walks
     'VBZ'   => {'pos' => 'verb', 'verbform' => 'fin', 'tense' => 'pres', 'number' => 'sing', 'person' => 3},
