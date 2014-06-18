@@ -127,7 +127,7 @@ sub formeme_for_noun {
         return 'n:obj';
     }
 
-    return 'n:poss' if grep { $_->match_iset('pos' => 'part', 'poss' => 'poss') } @aux_a_nodes;
+    return 'n:poss' if any { $_->match_iset('pos' => 'part', 'poss' => 'poss') } @aux_a_nodes;
     return 'n:attr' if $self->below_noun($t_node) || $self->below_adj($t_node);
     return 'n:';
 }
@@ -156,7 +156,7 @@ sub formeme_for_verb {
     my $subconj = $self->get_subconj_string($first_verbform, @aux_a_nodes);
 
     # Infinitives
-    if ( $t_node->get_iset('verbform') eq 'inf' ) {        
+    if ( $a_node->get_iset('verbform') eq 'inf' ) {        
         return "v:$subconj+inf" if $subconj; # this includes the particle 'to'
         return 'v:inf';
     }

@@ -108,14 +108,6 @@ sub guess_gender {
         || $self->firstname_gender_from_czech_morpho($lemma) || '?';
 }
 
-# HACK: m-layer has no ord attribute, so $tmt_node->get_prev_node does not work.
-#sub get_prev_mnode {
-#    my $tmt_mnode = shift;
-#    my $fs_mnode  = $tmt_mnode->get_tied_fsnode();
-#    my $fs_prev   = $fs_mnode->lbrother() or return;
-#    return TectoMT::Node->_fsnode2tmt_node($fs_prev);
-#}
-
 sub firstname_gender_from_czech_morpho {
     my $self = shift;
     return if !defined $self->generator;

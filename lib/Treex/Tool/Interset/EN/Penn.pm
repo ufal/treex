@@ -1,4 +1,4 @@
-package Treex::Tool::Interset::PT::Cintil;
+package Treex::Tool::Interset::EN::Penn;
 use utf8;
 use Moose;
 with 'Treex::Tool::Interset::SimpleDriver';
@@ -158,6 +158,10 @@ my $DECODING_TABLE = {
     # examples: where, when, how
     'WRB'   => {'pos' => 'adv', 'prontype' => 'int'},
 };
+
+sub decoding_table {
+    return $DECODING_TABLE;
+}
 
 1;
 

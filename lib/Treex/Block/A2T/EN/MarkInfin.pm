@@ -7,46 +7,46 @@ use Treex::Tool::Lexicon::EN;
 extends 'Treex::Core::Block';
 
 sub process_tnode {
-
     my ( $self, $tnode ) = @_;
     my $anode = $tnode->get_lex_anode();
 
-    return if ( !$anode );
-
-    if ( $anode->tag =~ /^VB[NG]?$/ ) {
-        
-        # find the infinitive particle 'to'
-        my @aux = $tnode->get_aux_anodes();
-        my $to = first { $_->tag eq 'TO' } @aux;
-
-         # require base form (possibly of an auxiliary)
-        return if ( $anode->tag ne 'VB' && !(any { $_->form =~ /^(be|have)$/i } @aux) );
-        
-        # infinitive with the particle "to"
-        if ( $to ){
-
-            # require the particle 'to' in front of the main verb and in front of all auxiliaries
-            if ( all { $_->ord > $to->ord } grep { $_->tag =~ /^[VM]/ } ($anode, @aux) ){
-                $tnode->set_is_infin(1);
-                return;
-            }
-        }
-        # try plain infinitives (with specified verbs)
-        else {
-
-            my ($tparent) = $tnode->get_eparents( { or_topological => 1 } );
-            return if (!$tparent || $tparent->is_root );
-            my $aparent = $tparent->get_lex_anode();
-            return if (!$aparent);
-        
-            if ( Treex::Tool::Lexicon::EN::takes_bare_infin( $aparent->lemma ) ){
-                $tnode->set_is_infin(1);
-                return;
-            }
+    # Fill $tnode->is_infin and fix $anode->get_iset('verbform') eq 'inf'
+    if ( $anode && $anode->tag =~ /^VB[NG]?$/ ) {
+        if ($self->is_infinitive($tnode, $anode)){
+            $tnode->set_is_infin(1);
+            $anode->set_iset('verbform', 'inf');
+        } elsif ($anode->get_iset('verbform') eq 'inf') {
+            $anode->set_iset('verbform', '');
         }
     }   
     
     return;
+}
+
+sub is_infinitive {
+    my ($self, $tnode, $anode) = @_;
+
+    # find the infinitive particle 'to'
+    my @aux = $tnode->get_aux_anodes();
+    my $to = first { $_->tag eq 'TO' } @aux;
+
+    # require base form (possibly of an auxiliary)
+    return 0 if $anode->tag ne 'VB' && !(any { $_->form =~ /^(be|have)$/i } @aux);
+        
+    # infinitive with the particle "to"
+    if ( $to ){
+        # require the particle 'to' in front of the main verb and in front of all auxiliaries
+        return 1 if all { $_->ord > $to->ord } grep { $_->tag =~ /^[VM]/ } ($anode, @aux);
+    }
+    # try plain infinitives (with specified verbs)
+    else {
+        my ($tparent) = $tnode->get_eparents( { or_topological => 1 } );
+        return 0 if !$tparent || $tparent->is_root;
+        my $aparent = $tparent->get_lex_anode();
+        return 0 if !$aparent;
+        return 1 if Treex::Tool::Lexicon::EN::takes_bare_infin($aparent->lemma);
+    }
+    return 0;
 }
 
 1;
