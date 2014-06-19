@@ -76,7 +76,9 @@ sub should_switch_with_parent {
 
     # "It did not solve(tag=VB/VBP, orig_parent=did) anything".
     # "The people he does know(tag=VB/VBP, orig_parent=does) are rich.
-    return 1 if $ep_lemma eq 'do' && $tag =~ /VBP?$/ && $eparent->tag !~ /VB[NG]/;
+    # BUT: "They do everything to(parent=help) help(tag=VB/VBP, orig_parent=do) him."
+    # "The things don't belong(tag=VB/VBP, orig_parent=don't) to(parent=belong) you"
+    return 1 if $ep_lemma eq 'do' && $tag =~ /VBP?$/ && $eparent->tag !~ /VB[NG]/ && !any {$_->lemma eq 'to'} $a_node->get_children({preceding_only=>1});
 
     # "to go(tag=VB)" Only in rare cases is "to" hanged above the infinitive
     return 1 if $ep_lemma eq 'to' && $tag eq 'VB';
