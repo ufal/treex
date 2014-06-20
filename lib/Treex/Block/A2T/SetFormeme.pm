@@ -27,33 +27,33 @@ my %INTERSET_TO_SYNTPOS = (
     noun => 'n',
     adj  => 'adj',
     adv  => 'adv',
-    verb => 'verb',
+    verb => 'v',
 );
 
 sub detect_syntpos {
     my ( $self, $t_node ) = @_;
 
     # Coordinators ("coap" nodes), rhematizers etc.
-    return 'x' if $t_node->nodetype ne 'complex' && $t_node->t_lemma !~ m/^(%|°|#(Percnt|Deg))/;
+    return 'x' if $t_node->is_root || ($t_node->nodetype ne 'complex' && $t_node->t_lemma !~ m/^(%|°|#(Percnt|Deg))/);
 
-    # Let's assume generated nodes are (pro)nouns.
+    # Rule 1: Let's assume generated nodes are (pro)nouns.
     my $a_node = $t_node->get_lex_anode();
     return 'n' if !$a_node;
-
-    # First, try Interset feature "synpos" (which should be filled for numerals).
+    
+    # Rule 2: try Interset feature "synpos" (which should be filled for numerals).
     my $syntpos = $INTERSET_TO_SYNTPOS{$a_node->get_iset('synpos') || ''};
     return $syntpos if $syntpos;
 
-    # Second, check for ordinal numerals (e.g. first, první, poprvé).
+    # Rule 3: check for ordinal numerals (e.g. first, první, poprvé).
     # Sometimes, these can be syntactic advebs (poprvé=first_time), but usualy they are syntactic adjectives.
     # Ideally, they should have synpos=attr, so they are handled by the rule above, but let's make this robust.
     return 'adj' if $a_node->match_iset( 'pos' => 'num', numtype => 'ord' );
 
-    # Third, try Interset feature "pos".
+    # Rule 4: try Interset feature "pos".
     $syntpos = $INTERSET_TO_SYNTPOS{$a_node->get_iset('pos') || ''};
     return $syntpos if $syntpos;
 
-    # Fallback to noun.
+    # Rule 5: fallback to noun.
     return 'n';
 }
 
@@ -73,6 +73,13 @@ sub detect_formeme {
     # Choose the appropriate (possibly overriden) method according to the syntpos.
     my $a_node = $t_node->get_lex_anode();
     return $self->formeme_for_drop($t_node) if !$a_node;
+    
+    # Adjectives in subject and object positions are considered nominal usage
+    # Note that this depends on the definitions of afuns and formemems for each language. Feel free to override.
+    if ($syntpos eq 'adj' && $a_node->afun =~ /^(Sb|Obj)$/){
+        $syntpos = 'n';
+    }
+    
     return $self->formeme_for_noun($t_node, $a_node) if $syntpos eq 'n';
     return $self->formeme_for_verb($t_node, $a_node) if $syntpos eq 'v';
     return $self->formeme_for_adj($t_node, $a_node) if $syntpos eq 'adj';
