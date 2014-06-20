@@ -71,19 +71,24 @@ sub BUILD {
     
     # run ML-Process, loading the model
     my $mlprocess = File::Java->path_arg( $self->ml_process_jar );
-    my $command   = 'java ' . ' -Xmx' . $self->memory
-        . ' -cp ' . $mlprocess . ' en_deep.mlprocess.simple.Simple '
-        . ' -v ' . $self->verbosity
-        . ' -c UTF-8 '
-        . ( $self->caching =~ m/^[0-9]+$/ ? ' -s ' : ' -a ' ) . $self->caching
-        . ' -r '
-        . ( $self->require_list_of_models ? ' -l ' : '' )
-        . ' ' . $self->model;
+    my @params =  
+        ('java', '-Xmx' . $self->memory,
+        '-cp', $mlprocess, 'en_deep.mlprocess.simple.Simple',
+        '-v', $self->verbosity,
+        '-c', 'UTF-8',
+        ( $self->caching =~ m/^[0-9]+$/ ? '-s' : '-a' ), $self->caching,
+        '-r');
+        
+    if ($self->require_list_of_models) { 
+      push @params, '-l';
+    }
 
-    log_info( "Running " . $command );
+    push @params, $self->model;
+
+    log_info( "Running @params");
 
     $SIG{PIPE} = 'IGNORE';    # don't die if ML-Process gets killed
-    my ( $read, $write, $pid ) = ProcessUtils::bipipe($command);
+    my ( $read, $write, $pid ) = ProcessUtils::bipipe_noshell(":utf8", @params);
 
     $self->_set_read_handle($read);
     $self->_set_write_handle($write);
@@ -109,6 +114,7 @@ sub DEMOLISH {
     # Close the ML-Process application
     close( $self->_write_handle );
     close( $self->_read_handle );
+    kill(9, $self->_java_pid); #Needed on Windows
     ProcessUtils::safewaitpid( $self->_java_pid );
     return;
 }

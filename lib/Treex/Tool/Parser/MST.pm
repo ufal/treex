@@ -34,26 +34,26 @@ sub initialize {
     my $model = $self->model;
     log_fatal "$model model for MST does not exist." if !-f $model;
 
-	my $command;
+	my @command;
 
     # TODO all paths/dirs have to be formatted according to platform
     # $model = File::Java->path_arg( $model );
 	if ($self->version eq '0.4.3b') {
-	    $command    = 'java'
-	        . " -Xmx" . $self->memory
-	        . " -cp $cp mstparser.DependencyParser test"
-	        . " order:" . $self->order
-	        . " decode-type:" . $self->decodetype
-	        . " server-mode:true print-scores:true model-name:$model 2>/dev/null";
+	    @command    = ('java'
+	        , "-Xmx" . $self->memory
+	        , "-cp", $cp, "mstparser.DependencyParser", "test"
+	        , "order:" . $self->order
+	        , "decode-type:" . $self->decodetype
+	        , "server-mode:true", "print-scores:true", "model-name:$model", $redirect);
 	}
 	elsif ($self->version eq '0.5.0') {
-	    $command    = 'java'
-	        . " -Xmx" . $self->memory
-	        . " -cp $cp mstparser.DependencyParser test"
-	        . " order:" . $self->order
-	        . " decode-type:" . $self->decodetype
-#	        . " server-mode:true confidence-estimation:'KDFix*0.05*50' model-name:$model format:MST 2>/dev/null";
-	        . " server-mode:true model-name:$model format:MST 2>/dev/null";
+	    @command    = ('java'
+	        , "-Xmx" . $self->memory
+	        , "-cp", $cp, "mstparser.DependencyParser", "test"
+	        , "order:" . $self->order
+	        , "decode-type:" . $self->decodetype
+#	        , "server-mode:true", "confidence-estimation:'KDFix*0.05*50', "model-name:$model", "format:MST", $redirect);
+	        , "server-mode:true", "model-name:$model", "format:MST", $redirect);
 	}
 
 
@@ -62,7 +62,7 @@ sub initialize {
     # encoding given as arg 2 to server.PerlParser.
     $SIG{PIPE} = 'IGNORE';                                   # don't die if parser gets killed
     my ( $reader, $writer, $pid )
-        = ProcessUtils::bipipe( $command, ":encoding(iso-8859-2)" );
+        = ProcessUtils::bipipe_noshell( ":encoding(iso-8859-2)", @command );
 
 
     $self->{reader} = $reader;
@@ -258,6 +258,7 @@ END {
     foreach my $java (@all_javas) {
         close( $java->{writer} );
         close( $java->{reader} );
+        kill(9, $java->{pid}); #Needed on Windows 
         ProcessUtils::safewaitpid( $java->{pid} );
     }
 }
