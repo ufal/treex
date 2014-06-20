@@ -209,7 +209,7 @@ sub get_parent_anode {
     my ($parent_t_node) = $t_node->get_eparents();
     my $parent_a_node =
         $parent_t_node->is_root()
-        ? ( $a_node->get_eparents )[0]
+        ? ( $a_node->get_eparents({or_topological=>1}) )[0]
         : $parent_t_node->get_lex_anode();
     return $parent_a_node;
 }

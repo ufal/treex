@@ -80,8 +80,11 @@ my $DECODING_TABLE = {
     ifl     => { }, # Inflected
     nifl    => { }, # Not Inflected
     # Not in guidelines
+    inf     => { verbform => 'inf'}, # probably infinitive
     ninf    => { }, # probably the same as "nifl"
-    g       => {}, # probably undetermined gender
+    nInf    => { }, # probably the same as "nifl"
+    g       => { }, # probably undetermined gender
+    n       => { }, # probably undetermined number
 };
 
 sub split_tag {
