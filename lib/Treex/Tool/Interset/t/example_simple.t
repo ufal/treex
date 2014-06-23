@@ -9,16 +9,16 @@ my $driver = new_ok('Treex::Tool::Interset::Example::Simple');
 
 my @decoding_tests = (
    [ADJ          => { pos => 'adj', tagset => 'Example::Simple' }],
-   [ART          => { pos => 'adj', subpos => 'art', tagset => 'Example::Simple' }],
+   [ART          => { pos => 'adj', adjtype => 'art', tagset => 'Example::Simple' }],
    [INT          => { pos => [qw(noun adv)], prontype => 'int', tagset => 'Example::Simple' }],
    [UNKNOWN_TAG  => {} ],
 );
 
 my @encoding_tests = (
     [ {pos => 'adj'} => 'ADJ' ],
-    [ {pos => 'adj',  subpos => 'art'} => 'ART' ],
-    [ {subpos => 'art'} => 'ART' ], # pos is missing
-    [ {subpos => 'art', definiteness => 'def'} => 'ART' ], # definiteness is extra
+    [ {pos => 'adj',  adjtype => 'art'} => 'ART' ],
+    [ {adjtype => 'art'} => 'ART' ], # pos is missing
+    [ {adjtype => 'art', definiteness => 'def'} => 'ART' ], # definiteness is extra
     [ {pos => 'noun',  prontype => 'int'} => 'INT' ],
     [ {pos => 'adv',  prontype => 'int'} => 'INT' ],
     [ {prontype => 'int'} => 'INT' ],

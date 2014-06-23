@@ -6,7 +6,7 @@ with 'Treex::Tool::Interset::SimpleDriver';
 # See https://wiki.ufal.ms.mff.cuni.cz/user:zeman:interset:features
 my $DECODING_TABLE = {
     ADJ     => { pos => 'adj' }, # Adjective
-    ART     => { pos => 'adj', subpos => 'art' }, # Article
+    ART     => { pos => 'adj', adjtype => 'art' }, # Article
     INT     => { pos => [qw(noun adv)], prontype => 'int'}, # Interrogative (pro)noun ("who") or (pro)adverb ("why")
 };
 
@@ -31,7 +31,7 @@ Treex::Tool::Interset::Example::Simple - for demo and tests
  use Treex::Tool::Interset::Example::Simple;
  my $driver = Treex::Tool::Interset::Example::Simple->new();
  my $iset = $driver->decode('ART');
- # $iset = { pos => 'adj',  subpos => 'art', tagset => 'Example::Simple' };
+ # $iset = { pos => 'adj',  adjtype => 'art', tagset => 'Example::Simple' };
  my $tag = $driver->encode({ pos => 'adj',  subpos => 'art' });
 
 =head1 DESCRIPTION
