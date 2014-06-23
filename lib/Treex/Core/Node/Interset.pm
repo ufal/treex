@@ -53,19 +53,31 @@ sub is_preposition {my $self = shift; return $self->iset->pos =~ /^(prep|adp)$/;
 #    set_iset(\%feature_structure);
 #    set_iset('pos', 'noun');
 #    set_iset('pos' => 'noun', 'gender' => 'masc', 'number' => 'sing');
+#
+# TODO: Note that this is not a proper setter method yet.
+# For backward compatibility, it only *adds* features to the Interset feature structure.
+# For example:
+#   $anode->set_iset(case=>'nom', gender=>'fem');
+#   $anode->set_iset(case=>'gen', pos=>'noun');
+# Now $anode->get_iset_structure() would return
+# {case=>'gen', pos=>'noun', gender=>'fem'}
+# If you want to delete a feature, you must explicitely set it to an empty string
+#  $anode->set_iset(gender=>'');
+# Now: {case=>'gen', pos=>'noun', gender=>''} which is equivalent to
+#      {case=>'gen', pos=>'noun'}
 #------------------------------------------------------------------------------
 sub set_iset{
     my $self = shift;
-    my $f;
-    if ( ref( $_[0] ) eq 'HASH' ) {
-        $f = $_[0];
+    my @assignments;
+    if ( ref( $_[0] ) =~ /(HASH|Lingua::Interset::FeatureStructure)/ ) {
+        @assignments = %{$_[0]};
     }
     else {
         log_fatal "No parameters for 'set_iset'" if @_ == 0;
         log_fatal "Odd parameters for 'set_iset'" if @_%2;
-        $f = {@_};
+        @assignments = @_;;
     }
-    return $self->iset->set_hash($f);
+    return $self->iset->multiset(@assignments);
 }
 
 #------------------------------------------------------------------------------
