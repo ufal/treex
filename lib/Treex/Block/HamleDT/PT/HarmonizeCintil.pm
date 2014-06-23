@@ -14,22 +14,19 @@ my %CHANGE_FORM = (
 
 my %CINTIL_DEPREL_TO_AFUN = (
     ROOT  => 'Pred',
-    SJ    => 'Sb',   #  Subject 
-    SJac  => 'Sb',   #  Subject  of  an  anticausative 
-    SJcp  => 'Sb',   #  Subject  of  complex  predicate 
-    DO    => 'Obj',  # Direct  Object 
-    IO    => 'AuxP', # Indirect  Object 
-    OBL   => 'AuxP', # Oblique  Object  
-    M     => 'Atr',  # Modifier 
-    PRD   => 'Pnom', # Predicate 
-    SP    => 'AuxA', #  Specifier 
-    N     => 'Atr',  # Name  in  multi‐word  proper  names
-    CARD  => 'Atr',  # Cardinal  in  multi‐word  cardinals 
+    SJ    => 'Sb',   # Subject
+    SJac  => 'Sb',   # Subject of an anticausative
+    SJcp  => 'Sb',   # Subject of complex predicate
+    DO    => 'Obj',  # Direct Object
+    IO    => 'AuxP', # Indirect Object
+    OBL   => 'AuxP', # Oblique Object
+    M     => 'Atr',  # Modifier
+    PRD   => 'Pnom', # Predicate
+    SP    => 'Atr',  # Specifier
+    N     => 'Atr',  # Name in multi‐word proper names
+    CARD  => 'Atr',  # Cardinal in multi‐word cardinals
     PUNCT => 'AuxX', # Punctuation
-    DEP   => 'AuxX', #  Generic  dependency (mostly commas)
-# C     => 'AuxC', #  Complement 
-#COORD Coordination 
-#CONJ   Conjunction 
+    DEP   => 'AuxX', # Generic dependency (mostly commas)
 );
 
 sub process_zone {
@@ -101,10 +98,7 @@ sub fix_lemma {
 sub guess_afun {
     my ($self, $node) = @_;
     my $deprel   = $node->conll_deprel();
-    my $pos      = $node->get_iset('pos');
-#     my $parent   = $node->parent();
-#     my $subpos   = $node->get_iset('subpos');
-#     my $ppos     = $parent ? $parent->get_iset('pos') : '';
+    my $pos      = $node->iset->pos;
 
     if ($deprel eq 'CONJ'){
         $node->wild->{coordinator} = 1;
@@ -126,7 +120,7 @@ sub guess_afun {
     return 'Adv' if $pos eq 'adv';
     return 'AuxX' if $node->lemma eq ',';
     return 'AuxG' if $pos eq 'punc';
-
+    return 'AuxA' if $node->iset->adjtype eq 'art'; # articles
 
     return $CINTIL_DEPREL_TO_AFUN{$node->conll_deprel};
 }

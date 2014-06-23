@@ -100,9 +100,9 @@ sub get_iset{
     if (!Lingua::Interset::FeatureStructure::feature_valid($feature)){
     
         # TODO: convert all Treex code to Interset 2.0, so the next line is not needed.
-        if ($feature ne 'subpos'){
+        #if ($feature ne 'subpos'){
             log_warn("Querying unknown Interset feature $feature");
-        }
+        #}
     }
 
     # Return empty string instead of undef.
