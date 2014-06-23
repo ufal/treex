@@ -120,7 +120,7 @@ sub is_modal {
     return 0 if $infinitive->afun eq 'Sb';
 
     # Either use a block that fills Interset features, or override this method.
-    return 1 if $node->match_iset('pos' => 'verb', 'subpos' => 'mod') && $infinitive->get_iset('pos') eq 'inf';
+    return 1 if $node->match_iset('pos' => 'verb', 'verbtype' => 'mod') && $infinitive->iset->verbform eq 'inf';
 
     return 0;
 }

@@ -41,7 +41,7 @@ sub detect_syntpos {
     return 'n' if !$a_node;
     
     # Rule 2: try Interset feature "synpos" (which should be filled for numerals).
-    my $syntpos = $INTERSET_TO_SYNTPOS{$a_node->get_iset('synpos') || ''};
+    my $syntpos = $INTERSET_TO_SYNTPOS{$a_node->iset->synpos};
     return $syntpos if $syntpos;
 
     # Rule 3: check for ordinal numerals (e.g. first, první, poprvé).
@@ -50,7 +50,7 @@ sub detect_syntpos {
     return 'adj' if $a_node->match_iset( 'pos' => 'num', numtype => 'ord' );
 
     # Rule 4: try Interset feature "pos".
-    $syntpos = $INTERSET_TO_SYNTPOS{$a_node->get_iset('pos') || ''};
+    $syntpos = $INTERSET_TO_SYNTPOS{$a_node->iset->pos};
     return $syntpos if $syntpos;
 
     # Rule 5: fallback to noun.
@@ -111,7 +111,7 @@ sub formeme_for_noun {
     return "n:$prep+X" if $prep;
 
     # possesive nouns
-    return 'n:poss' if $a_node->get_iset('poss'); 
+    return 'n:poss' if $a_node->iset->poss; 
 
     # We need to know lex a-node of the effective parent of $t_node.
     # Check if it is missing (e.g. PEDT contains constructions with generated parent node #Equal).
@@ -163,13 +163,13 @@ sub formeme_for_verb {
     my $subconj = $self->get_subconj_string($first_verbform, @aux_a_nodes);
 
     # Infinitives
-    if ( $a_node->get_iset('verbform') eq 'inf' ) {        
+    if ( $a_node->iset->verbform eq 'inf' ) {        
         return "v:$subconj+inf" if $subconj; # this includes the particle 'to'
         return 'v:inf';
     }
 
     # Gerunds (English -ing form is used both for gerunds and present participle, we handle both here, if syntpos=v)
-    if ( $first_verbform->get_iset('verbform') eq 'ger' || $first_verbform->match_iset(verbform=>'part', tense=>'pres') ) {
+    if ( $first_verbform->iset->verbform eq 'ger' || $first_verbform->match_iset(verbform=>'part', tense=>'pres') ) {
         return "v:$subconj+ger" if $subconj;
         return 'v:attr' if $self->below_noun($t_node);
         return 'v:ger';
@@ -183,7 +183,7 @@ sub formeme_for_verb {
     }
 
     # Past participles and past simple (but not clause heads)
-    if ( $first_verbform->get_iset('tense') eq 'past' ) {
+    if ( $first_verbform->iset->tense eq 'past' ) {
         # if there is a subjunction, it mostly is a finite form (e.g. with ellided auxiliaries: "as compared ..." etc.)
         return "v:$subconj+fin" if $subconj;
         return 'v:attr' if $self->below_noun($t_node);

@@ -48,7 +48,7 @@ my $DECODING_TABLE = {
     'DT'    => {'pos' => 'adj', 'adjtype' => 'det', 'synpos' => 'attr'},
     # existential there
     # examples: there
-    'EX'    => {'pos' => 'adv', 'subpos' => 'ex'},
+    'EX'    => {'pos' => 'adv', 'advtype' => 'ex'},
     # foreign word
     # examples: kašpárek
     'FW'    => {'foreign' => 'foreign'},
@@ -123,7 +123,8 @@ my $DECODING_TABLE = {
     # to
     # examples: to
     # Both the infinitival marker "to" and the preposition "to" get this tag.
-    'TO'    => {'pos' => 'part', 'subpos' => 'inf', 'verbform' => 'inf'},
+    # TODO: why verbform=>'inf' when TO is never assigned to verbs?
+    'TO'    => {'pos' => 'part', 'parttype' => 'inf', 'verbform' => 'inf'},
     # interjection
     # examples: uh
     'UH'    => {'pos' => 'int'},
@@ -139,10 +140,11 @@ my $DECODING_TABLE = {
     # verb, past participle
     # examples: done, gone, seen, walked
     'VBN'   => {'pos' => 'verb', 'verbform' => 'part', 'tense' => 'past', 'aspect' => 'perf'},
-    # verb, non-3rd person singular present
+    # verb, present tense, other than 3rd person singular
     # examples: do, go, see, walk
-    'VBP'   => {'pos' => 'verb', 'verbform' => 'fin', 'tense' => 'pres', 'number' => 'sing', 'person' => [1, 2]},
-    # verb, 3rd person singular present
+    # TODO: [number=>'sing', person=>[1, 2]] OR [number=>'plu', person=>[1, 2, 3]]
+    'VBP'   => {'pos' => 'verb', 'verbform' => 'fin', 'tense' => 'pres'},
+    # verb, present tense, 3rd person singular
     # examples: does, goes, sees, walks
     'VBZ'   => {'pos' => 'verb', 'verbform' => 'fin', 'tense' => 'pres', 'number' => 'sing', 'person' => 3},
     # wh-determiner
@@ -177,7 +179,7 @@ Treex::Tool::Interset:EN::Penn - morphological tagset of the (English) Penn Tree
  my $driver = Treex::Tool::Interset::EN::Penn->new();
  my $iset = $driver->decode('NNPS');
  # $iset = { 'pos' => 'noun', 'nountype' => 'prop', 'number' => 'plu', tagset => 'EN::Penn' };
- my $tag = $driver->encode({ pos => 'adj',  subpos => 'art' });
+ my $tag = $driver->encode({ pos => 'adj',  adjtype => 'art' });
 
 =head1 DESCRIPTION
 
