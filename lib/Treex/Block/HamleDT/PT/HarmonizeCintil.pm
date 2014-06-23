@@ -100,7 +100,7 @@ sub guess_afun {
     my $deprel   = $node->conll_deprel();
     my $pos      = $node->iset->pos;
 
-    if ($deprel eq 'CONJ'){
+    if ($deprel eq 'CONJ' && any {$_->conll_deprel eq 'COORD'} $node->get_children()){
         $node->wild->{coordinator} = 1;
         return 'AuxY';
     }
@@ -115,7 +115,9 @@ sub guess_afun {
         return 'Obj' if $pos eq 'verb';
     }
 
-
+    # Coordinating conjunctions (deprel=CONJ, child_deprel=COORD) are already solved,
+    # so pos=conj means subordinating conjunction.
+    return 'AuxC' if $pos eq 'conj';
     return 'AuxP' if $pos eq 'prep';
     return 'Adv' if $pos eq 'adv';
     return 'AuxX' if $node->lemma eq ',';
