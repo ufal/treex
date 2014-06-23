@@ -5,7 +5,42 @@ use Moose::Role;
 use MooseX::SemiAffordanceAccessor;
 use Treex::Core::Log;
 use List::Util qw(first);    # TODO: this wouldn't be needed if there was Treex::Core::Common for roles
-use tagset::common;
+use Lingua::Interset;
+use Lingua::Interset::FeatureStructure;
+
+has iset => (
+    # Unfortunatelly, the old interface uses $anode->set_iset('tense', 'past'),
+    # so set_iset cannot be used as a setter for the whole structure
+    # $anode->set_iset(Lingua::Interset::FeatureStructure->new(tense=>'past'))
+    is => 'ro',
+    isa => 'Lingua::Interset::FeatureStructure',
+    lazy_build => 1,
+    #builder => '_build_iset',
+    handles => [qw(
+        is_noun
+        is_adjective
+        is_pronoun
+        is_numeral
+        is_verb
+        is_adverb
+        is_adposition
+        is_conjunction
+        is_coordinator
+        is_subordinator
+        is_particle
+        is_interjection
+        is_punctuation
+        is_foreign
+        is_typo
+    )],
+);
+
+sub _build_iset {
+    return Lingua::Interset::FeatureStructure->new();
+}
+
+# Interset 1.0 legacy method (works with both Interset 1.0 and 2.0 feature structures)
+sub is_preposition {my $self = shift; return $self->iset->pos =~ /^(prep|adp)$/;}
 
 #------------------------------------------------------------------------------
 # Takes the Interset feature structure as a hash reference (as output by an
@@ -19,47 +54,18 @@ use tagset::common;
 #    set_iset('pos', 'noun');
 #    set_iset('pos' => 'noun', 'gender' => 'masc', 'number' => 'sing');
 #------------------------------------------------------------------------------
-sub set_iset
-{
+sub set_iset{
     my $self = shift;
-    my %f;
-    if ( ref( $_[0] ) eq 'HASH' )
-    {
-        %f = %{ $_[0] };
+    my $f;
+    if ( ref( $_[0] ) eq 'HASH' ) {
+        $f = $_[0];
     }
-    else
-    {
+    else {
         log_fatal "No parameters for 'set_iset'" if @_ == 0;
         log_fatal "Odd parameters for 'set_iset'" if @_%2;
-        %f = @_;
+        $f = {@_};
     }
-    my $known = list_iset_values();
-    foreach my $feature ( list_iset_features() )
-    {
-        if ( exists( $f{$feature} ) )
-        {
-            if ( $f{$feature} eq '' )
-            {
-                $self->set_attr( "iset/$feature", '' );
-            }
-            elsif ( ref( $f{$feature} ) eq 'ARRAY' )
-            {
-                $self->set_attr( "iset/$feature", join( '|', sort_iset_values( $feature, @{ $f{$feature} } ) ) );
-            }
-            else
-            {
-                my @values = split( /\|/, $f{$feature} );
-                foreach my $value (@values)
-                {
-                    unless ( grep { $_ eq $value } ( @{ $known->{$feature} } ) )
-                    {
-                        warn("Unknown value $value of Interset feature $feature");
-                    }
-                }
-                $self->set_attr( "iset/$feature", join( '|', sort_iset_values( $feature, @values ) ) );
-            }
-        }
-    }
+    return $self->iset->set_hash($f);
 }
 
 #------------------------------------------------------------------------------
@@ -71,23 +77,24 @@ sub set_iset
 # returns just a string with vertical bars as delimiters. The caller can use
 # a split() function to get an array, or call get_iset_structure() instead.
 #------------------------------------------------------------------------------
-sub get_iset
-{
-    my $self    = shift;
-    my $feature = shift;
-    my $value   = $self->get_attr("iset/$feature");
-    if ( is_known_iset($feature) )
-    {
-        if ( !defined($value) )
-        {
-            $value = '';
+sub get_iset{
+    my ($self, $feature) = @_;
+    my $value = $self->get_attr("iset/$feature");
+    # TODO: convert arrayref to string, e.g. "fem|neut"
+    return $value if defined $value;
+    
+    # Check valid feature name only when the feature is missing.
+    # TODO: Lingua::Interset::FeatureStructure::set should check for valid feature names.
+    if (!Lingua::Interset::FeatureStructure::feature_valid($feature)){
+    
+        # TODO: convert all Treex code to Interset 2.0, so the next line is not needed.
+        if ($feature ne 'subpos'){
+            log_warn("Querying unknown Interset feature $feature");
         }
     }
-    else
-    {
-        warn("Querying unknown Interset feature $feature");
-    }
-    return $value;
+
+    # Return empty string instead of undef.
+    return '';
 }
 
 #------------------------------------------------------------------------------
@@ -99,7 +106,7 @@ sub get_iset_structure
 {
     my $self = shift;
     my %f;
-    foreach my $feature ( list_iset_features() )
+    foreach my $feature ( Lingua::Interset::FeatureStructure::known_features() )
     {
         $f{$feature} = $self->get_iset($feature);
         if ( $f{$feature} =~ m/\|/ )
@@ -120,7 +127,7 @@ sub get_iset_pairs_list
 {
     my $self = shift;
     my @list;
-    foreach my $feature ( list_iset_features() )
+    foreach my $feature ( Lingua::Interset::FeatureStructure::known_features() )
     {
         my $value = $self->get_iset($feature);
         unless ( $value eq '' )
@@ -137,7 +144,7 @@ sub get_iset_pairs_list
 sub get_iset_values
 {
     my $self = shift;
-    return map {my $v = $self->get_iset($_); $v ? $v : ()} list_iset_features();
+    return map {my $v = $self->get_iset($_); $v ? $v : ()} Lingua::Interset::FeatureStructure::known_features();
 }
 
 
@@ -177,18 +184,19 @@ sub match_iset
     my @req  = @_;
     for ( my $i = 0; $i <= $#req; $i += 2 )
     {
-        my $feature = $req[$i];
+        my $feature  = $req[$i];
+        my $expected = $req[$i+1];
         confess("Undefined feature") unless ($feature);
         my $value = $self->get_iset($feature);
         my $comp =
-            $req[ $i + 1 ] =~ s/^\!\~// ? 'nr' :
-            $req[ $i + 1 ] =~ s/^\!//   ? 'ne' :
-            $req[ $i + 1 ] =~ s/^\~//   ? 're' : 'eq';
+            $expected =~ s/^\!\~// ? 'nr' :
+            $expected =~ s/^\!//   ? 'ne' :
+            $expected =~ s/^\~//   ? 're' : 'eq';
         if (
-            $comp eq 'eq' && $value ne $req[ $i + 1 ] ||
-            $comp eq 'ne' && $value eq $req[ $i + 1 ] ||
-            $comp eq 're' && $value !~ m/$req[$i+1]/  ||
-            $comp eq 'nr' && $value =~ m/$req[$i+1]/
+            $comp eq 'eq' && $value ne $expected ||
+            $comp eq 'ne' && $value eq $expected ||
+            $comp eq 're' && $value !~ m/$expected/  ||
+            $comp eq 'nr' && $value =~ m/$expected/
            )
         {
             return 0;
@@ -197,99 +205,12 @@ sub match_iset
     return 1;
 }
 
-#------------------------------------------------------------------------------
-# Shortcuts for some frequent tests people want to do against Interset.
-#------------------------------------------------------------------------------
-sub is_noun {my $self = shift; return $self->get_iset('pos') eq 'noun';}
-sub is_adjective {my $self = shift; return $self->get_iset('pos') eq 'adj';}
-sub is_pronoun {my $self = shift; return $self->get_iset('prontype') ne '';}
-sub is_numeral {my $self = shift; return $self->get_iset('pos') eq 'num';}
-sub is_verb {my $self = shift; return $self->get_iset('pos') eq 'verb';}
-sub is_adverb {my $self = shift; return $self->get_iset('pos') eq 'adv';}
-sub is_preposition {my $self = shift; return $self->get_iset('pos') eq 'prep';}
-sub is_conjunction {my $self = shift; return $self->get_iset('pos') eq 'conj';}
-sub is_coordinator {my $self = shift; return $self->match_iset('pos' => 'conj', 'subpos' => 'coor');}
-sub is_subordinator {my $self = shift; return $self->match_iset('pos' => 'conj', 'subpos' => 'sub');}
-sub is_particle {my $self = shift; return $self->get_iset('pos') eq 'part';}
-sub is_interjection {my $self = shift; return $self->get_iset('pos') eq 'int';}
-sub is_punctuation {my $self = shift; return $self->get_iset('pos') eq 'punc';}
-sub is_foreign {my $self = shift; return $self->get_iset('foreign') eq 'foreign';}
-sub is_typo {my $self = shift; return $self->get_iset('typo') eq 'typo';}
 
-#------------------------------------------------------------------------------
-# Static method. Returns the list of known Interset features. Currently just
-# an access point to a global array provided by the Interset libraries.
-# However, if for some reason the Interset libraries cannot be installed
-# together with Treex, the list could be simply copied here.
-#------------------------------------------------------------------------------
-sub list_iset_features
-{
-
-    # We do not use the Interset features 'tagset' and 'other' in Treex.
-    return grep { $_ !~ m/^(tagset|other)$/ } @tagset::common::known_features;
-}
-
-#------------------------------------------------------------------------------
-# Static method. Returns the list of known values for a given Interset feature,
-# or a reference to a hash of list of values for each feature, if no specific
-# feature is asked for.
-#------------------------------------------------------------------------------
-sub list_iset_values
-{
-    my $feature = shift;
-    my $hash    = \%tagset::common::known_values;
-    if ($feature)
-    {
-        return $hash->{$feature};
-    }
-    else
-    {
-        return $hash;
-    }
-}
-
-#------------------------------------------------------------------------------
-# Static method. Tells whether a string is a name of a known Interset feature.
-# If there is a second argument, it checks whether it is a known value of that
-# feature.
-#------------------------------------------------------------------------------
-sub is_known_iset
-{
-    my $feature = shift;
-    unless ($feature)
-    {
-        return 0;
-    }
-    my $known = list_iset_values();
-    unless ( exists( $known->{$feature} ) )
-    {
-        return 0;
-    }
-    my @values = @{ $known->{$feature} };
-    foreach my $value (@_)
-    {
-        unless ( $value eq '' || grep { $_ eq $value } (@values) )
-        {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-#------------------------------------------------------------------------------
-# Static method. Sorts values of a feature "intuitively" (according to order
-# defined in Interset). For example, for the number feature, singular is
-# intuitively before plural, although plural goes first alphabetically. Useful
-# for displaying lists of values.
-#------------------------------------------------------------------------------
-sub sort_iset_values
-{
-    my $feature = shift;
-    my @values  = @_;
-    confess("Cannot order values of Interset feature '$feature'") if ( !exists( $tagset::common::order_values{$feature} ) );
-    my $order = $tagset::common::order_values{$feature};
-    return sort { $order->{$a} <=> $order->{$b} } (@values);
-}
+# Methods should not be mixed with (public) functions in one API.
+# Moose roles should provide only methods (no functions).
+sub list_iset_values {log_fatal 'use Lingua::Interset::FeatureStructure::known_features instead';}
+sub is_known_iset{ log_fatal 'use Lingua::Interset::FeatureStructure::value_valid instead';}
+sub sort_iset_values {log_fatal 'use Lingua::Interset::FeatureStructure::known_features instead';}
 
 1;
 
@@ -337,8 +258,10 @@ Other values are tested on string equality.
 
 Dan Zeman <zeman@ufal.mff.cuni.cz>
 
+Martin Popel <popel@ufal.mff.cuni.cz>
+
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011, 2013 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011, 2013, 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
