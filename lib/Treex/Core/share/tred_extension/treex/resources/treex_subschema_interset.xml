@@ -11,12 +11,19 @@
   <type name="iset.type">
     <structure>
       <member name="pos"><cdata format="any"/></member>
-      <member name="subpos"><cdata format="any"/></member>
+      <member name="subpos"><cdata format="any"/></member> <!--deprecated -->
+      <member name="nountype"><cdata format="any"/></member>
+      <member name="adjtype"><cdata format="any"/></member>
       <member name="prontype"><cdata format="any"/></member>
       <member name="numtype"><cdata format="any"/></member>
       <member name="numform"><cdata format="any"/></member>
       <member name="numvalue"><cdata format="any"/></member>
+      <member name="accommodability"><cdata format="any"/></member>
+      <member name="verbtype"><cdata format="any"/></member>
       <member name="advtype"><cdata format="any"/></member>
+      <member name="adpostype"><cdata format="any"/></member>
+      <member name="conjtype"><cdata format="any"/></member>
+      <member name="parttype"><cdata format="any"/></member>
       <member name="punctype"><cdata format="any"/></member>
       <member name="puncside"><cdata format="any"/></member>
       <member name="synpos"><cdata format="any"/></member>
@@ -34,6 +41,8 @@
       <member name="politeness"><cdata format="any"/></member>
       <member name="possgender"><cdata format="any"/></member>
       <member name="possnumber"><cdata format="any"/></member>
+      <member name="possperson"><cdata format="any"/></member>
+      <member name="possednumber"><cdata format="any"/></member>
       <member name="subcat"><cdata format="any"/></member>
       <member name="verbform"><cdata format="any"/></member>
       <member name="mood"><cdata format="any"/></member>
