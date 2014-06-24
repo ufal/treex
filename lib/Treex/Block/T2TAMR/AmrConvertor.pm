@@ -1,5 +1,5 @@
 package Treex::Block::T2TAMR::AmrConvertor;
-# usage: treex Read::Treex from=csen.merged.treex.gz T2TAMR::AmrConvertor language=cs rules_file=corpus.tamr.gz Write::Treex to=csen.merged.with_tamr.treex.gz
+# usage: treex Read::Treex from=csen.merged.treex.gz T2TAMR::AmrConvertor language=cs rules_file=corpus.tamr.gz [verbalization_file=N_V.txt] Write::Treex to=csen.merged.with_tamr.treex.gz
 
 use Moose;
 use Treex::Core::Common;
