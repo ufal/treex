@@ -11,6 +11,10 @@ extends 'Treex::Core::Block';
 
 has 'rules_file' => ( isa => 'Maybe[Str]', is => 'ro' );
 
+has 'verbalization_file' => ( isa => 'Maybe[Str]', is => 'ro' );
+
+has 'verb_rules' => ( is => 'ro', isa => 'Maybe[HashRef]', builder => '_load_verbalization', lazy => 1);
+
 has 'rules' => ( is => 'ro', isa => 'Treex::Core::Document', builder => '_load_rules', lazy => 1 );
 
 has '+language'       => ( required => 1 );
@@ -452,6 +456,32 @@ my @rules_ids = qw (
 258a
 259a);
 
+
+sub _load_verbalization {
+    my ($self) = @_;
+    my $result = {};
+    if ( defined($self->verbalization_file) ) {
+        open(my $fh, '<', $self->verbalization_file);
+        while (<$fh>) {
+            my @line = split(' ', $_);
+            if ($line[1]) {
+                my $rule = {};
+                $line[3] =~ s/\-\d+//;
+                $rule->{'new_lemma'} = $line[3];
+                if ($line[4]) {
+                    print STDERR "4: " . $line[4] . "\n";
+                    $rule->{'add_modifier'} = $line[4];
+                    $line[5] =~ s/\-\d+//;
+                    print STDERR "5: " . $line[5] . "\n";
+                    $rule->{'add_lemma'} = $line[5];
+                }
+                $result->{$line[1]} = $rule;
+            }
+        }
+    }
+    return $result;
+}
+
 sub _load_rules {
     
     my ($self) = @_;
@@ -516,9 +546,26 @@ sub process_document {
 
         my $target_zone = $bundle->get_or_create_zone( $self->language, $self->selector );
         my $target_root = $target_zone->create_ttree( { overwrite => 1 } );
-
-        copy_subtree( $source_root, $target_root, \%src2tgt );
+        
+        copy_subtree( $source_root, $target_root, \%src2tgt, $self->verb_rules);
         $target_root->set_src_tnode($source_root);
+    }
+    # look for all nodes, marked for deletion
+    foreach my $bundle ( $document->get_bundles() ) {
+        print STDERR "Copying coref for ", $bundle->id(), "\n";
+        my $target_zone = $bundle->get_zone( $self->language, $self->selector );
+        my $target_root = $target_zone->get_ttree();
+        foreach my $target_node ($target_root->get_descendants ) {
+            if (defined $target_node->wild->{'special'} && $target_node->wild->{'special'}  eq 'Delete'){
+                # move all its children to its parent
+                my $parent_node = $target_node->get_parent();
+                foreach my $child_node ($target_node->get_children){
+                    $child_node->set_parent($parent_node);
+                }
+                print STDERR "Delete " . $target_node->t_lemma . "\n";
+                #$target_node->remove();
+            }
+        }
     }
 
     # copying coreference links
@@ -543,10 +590,11 @@ sub process_document {
               if 0< scalar(@nodelist);
         }
     }
+ 
 }
 
 sub copy_subtree {
-    my ( $source_root, $target_root, $src2tgt ) = @_;
+    my ( $source_root, $target_root, $src2tgt, $verb_rules) = @_;
 
     foreach my $source_node ( $source_root->get_children( { ordered => 1 } ) ) {
         my $target_node = $target_root->create_child();
@@ -556,6 +604,12 @@ sub copy_subtree {
         # copying attributes
         # t_lemma gets assigned a unique variable name
         my $tlemma = $source_node->get_attr('t_lemma');
+
+        # check verbalization dictionary
+        if (defined $verb_rules->{$tlemma}->{'new_lemma'}){
+           $tlemma = $verb_rules->{$tlemma}->{'new_lemma'};
+        }
+
         my $varname = firstletter($tlemma);
         if (defined $src2tgt->{'varname_used'}->{$varname}) {
           $src2tgt->{'varname_used'}->{$varname}++;
@@ -565,17 +619,51 @@ sub copy_subtree {
         }
         $target_node->set_attr('t_lemma', $varname."/".$tlemma);
 
+        my $source_tlemma = $source_node->get_attr('t_lemma');
+
+        #add new nodes from verbalization rules
+        if (defined $verb_rules->{$source_tlemma}->{'add_lemma'}){
+            $varname = firstletter($verb_rules->{$source_tlemma}->{'add_lemma'});
+            if (defined $src2tgt->{'varname_used'}->{$varname}) {
+                $src2tgt->{'varname_used'}->{$varname}++;
+                $varname .= $src2tgt->{'varname_used'}->{$varname};
+            } else {
+                $src2tgt->{'varname_used'}->{$varname} = 1;
+            }
+            print STDERR "Added node " . $verb_rules->{$source_tlemma}->{'add_lemma'} . " for $source_tlemma\n";
+            # adding new node with appropriate modifier
+            my $added_node = $target_node->create_child();
+            $added_node->set_attr('t_lemma', $varname."/".$verb_rules->{$source_tlemma}->{'add_lemma'});
+            $added_node->wild->{'modifier'} = $verb_rules->{$source_tlemma}->{'add_modifier'};
+        }
+
         #Searching for specific rules to apply
         my $flag_found = 0;
 	if ($source_node->wild->{'query_label'}) {
 	  foreach my $query (keys %{$source_node->wild->{'query_label'}}) {
             # if we have an active rule, disabled for now, cause we don't have applied rule disambiguator
             if (1 || $active_rule_label ~~ @{$source_node->wild->{'query_label'}->{$query}}){
-              if ($query =~ /^([^-]+)/) {
+              if ($query =~ /^#?([^-]+)/) {
                 print STDERR "Query $query \n";
                 print STDERR "Active rule id $1\n";
                 my $active_rule_id = $1;
                 my $node_rule_id = ${$source_node->wild->{'query_label'}->{$query}}[0];
+                # if node rule id is marked with "_DEL", remove the mark from node rule id and mark the node for deletion
+                if ($node_rule_id =~ /_DEL/){
+                  print STDERR "Fixing $node_rule_id ";
+                  $node_rule_id = $node_rule_id =~ s/\_DEL//; 
+                  print STDERR "with $node_rule_id\n";
+                  $target_node->wild->{'special'} = 'Delete';
+                }
+                # fixing the "w_word_01" or "w_word" to "word"
+                if ($node_rule_id =~ /_/) {
+                  print STDERR "Strange node rule id $node_rule_id\n";
+                  my @temp_array = split ('_', $node_rule_id);
+                  if (defined $temp_array[1]) { 
+                      $node_rule_id = $temp_array[1];
+                      print STDERR "New node rule id $node_rule_id\n";
+                  } 
+                }
                 print STDERR "Applying rule-id $node_rule_id\n";
                 # searching tamr rule trees for found rule
                 if (my $rule_tree = $rules2ttrees{$active_rule_id}) {
@@ -639,7 +727,7 @@ sub copy_subtree {
           }
         }
 
-        copy_subtree( $source_node, $target_node, $src2tgt );
+        copy_subtree( $source_node, $target_node, $src2tgt, $verb_rules);
     }
 }
 
