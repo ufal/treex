@@ -25,6 +25,7 @@ sub process_tnode {
                 'morphcat/pos' => 'J',
             }
         );
+        $subconj_node->iset->multiset(pos=>'conj', conjtype=>'sub');
         push @subconj_nodes, $subconj_node;
 
         # hang the first subconj node above the clause

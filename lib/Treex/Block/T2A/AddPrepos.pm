@@ -65,6 +65,7 @@ sub _new_prep_node {
             'morphcat/pos' => 'R',
         }
     );
+    $prep_node->iset->set_pos('adp');
     $prep_node->shift_before_subtree($parent);
     return $prep_node;
 }

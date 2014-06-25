@@ -32,6 +32,7 @@ sub process_zone {
             'clause_number' => 0,
         }
     );
+    $punct->iset->set_pos('punc');
 
     # The $punct goes to the end, except for some sentences with quotes:
     #   Do you know the word "pun"?

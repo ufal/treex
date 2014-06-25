@@ -6,12 +6,6 @@ extends 'Treex::Block::HamleDT::Harmonize';
 
 has '+iset_driver' => (default=>'pt::cintil');
 
-my %CHANGE_FORM = (
-    '.*/' => '.',
-    ',*/' => ',',
-    q{\*'} => q{'},
-);
-
 my %CINTIL_DEPREL_TO_AFUN = (
     ROOT  => 'Pred',
     SJ    => 'Sb',   # Subject
@@ -38,6 +32,9 @@ sub process_zone {
     my $root  = $zone->get_atree();
     my @nodes = $root->get_descendants();
 
+    $self->fill_sentence($root);
+
+
     foreach my $node (@nodes) {
 
         # Convert CoNLL POS tags and features to Interset and PDT if possible.
@@ -57,8 +54,6 @@ sub process_zone {
         my $afun = $self->guess_afun($node);
         $node->set_afun($afun || 'NR');
     }
-
-    $self->fill_sentence($zone);
 
     $self->attach_final_punctuation_to_root($root);
 
@@ -80,10 +75,26 @@ sub get_input_tag_for_interset {
 
 sub fix_form {
     my ($self, $node) = @_;
-    my $real_form = $CHANGE_FORM{$node->form};
-    if (defined $real_form) {
-        $node->set_form($real_form);
+    my $form = $node->form;
+
+    # For punctuation and symbols the default is no space before and no space after.
+    # "*/" means a space after the token, "\*" means a space before.
+    # Let's delete those marks and set the attribute no_space_after
+    if ($form =~ /^(\\\*)?([,.'])(\*\/)?$/){
+        $form = $2;
+        my $space_before = $1 ? 1 : 0;
+        my $space_after = $3 ? 1 : 0;
+        $node->set_no_space_after(1) if !$space_after;
+        if (!$space_before){
+            my $prev_node = $node->get_prev_node();
+            $prev_node->set_no_space_after(1) if $prev_node;
+        }
     }
+
+    # "em_" -> "em" etc. because the underscore character is reserved for formemes
+    $form =~ s/_$//;
+
+    $node->set_form($form);
     return;
 }
 
@@ -147,8 +158,8 @@ sub detect_coordination {
 # This is not needed for the analysis (in real scenario, surface sentences will be on the input),
 # but it helps when debugging, so the real sentence is shown in TrEd.
 sub fill_sentence {
-    my ($self, $zone) = @_;
-    my $str = join ' ', map {$_->form} $zone->get_atree->get_descendants({ordered=>1});
+    my ($self, $root) = @_;
+    my $str = join ' ', map {$_->form} $root->get_descendants({ordered=>1});
 
     # Contractions, e.g. "de_" + "o" = "do"
     $str =~ s/por_ elos/pelos/g;
@@ -165,7 +176,7 @@ sub fill_sentence {
     $str =~ s/ ([,.:])/$1/g;
 
     # Make sure the first word is capitalized
-    $zone->set_sentence(ucfirst $str);
+    $root->get_zone->set_sentence(ucfirst $str);
     return;
 }
 
