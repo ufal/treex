@@ -81,11 +81,15 @@ sub process_tnode {
     }
 
     # Czech-specific relict: grammateme gender contains info about animateness (only for masculine)
+    # So far, gram_gender="anim" is used instead of gram_gender="masc", so we cannot induce animateness from this value.
     my $gender = $t_node->gram_gender || '';
-    if ($gender eq 'anim'){
-        $a_node->iset->set_animateness('anim');
-    } elsif ($gender eq 'inan'){
+    if ($gender eq 'inan'){
         $a_node->iset->set_animateness('inan');
+    }
+
+    # The type of pronoun is not preserved on t-layer, but at least we know it is a pronoun
+    if ($t_node->gram_sempos =~ /pron/){
+        $a_node->iset->set_prontype('prn');
     }
 
     return;

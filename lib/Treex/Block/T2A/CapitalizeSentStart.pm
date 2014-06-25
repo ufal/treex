@@ -23,7 +23,7 @@ sub process_zone {
 
     foreach my $a_sent_root ( grep {defined} ( $first_root, @dsp_aroots ) ) {
         my ($first_word) =
-            first { $_->get_attr('morphcat/pos') ne 'Z' and ( $_->form // $_->lemma // '' ) !~ /^[$opening_punct]+$/ }
+            first { ($_->get_attr('morphcat/pos') || '') ne 'Z' and ( $_->form // $_->lemma // '' ) !~ /^[$opening_punct]+$/ }
         $a_sent_root->get_descendants( { ordered => 1, add_self => 1 } );
 
         # skip empty sentences and first words with no form
@@ -34,7 +34,7 @@ sub process_zone {
         next if $prev_node and ( $prev_node->get_attr('morphcat/pos') || '' ) ne "Z"
                 and ( $prev_node->form // $prev_node->lemma // '' ) !~ /^[$opening_punct]+$/;
 
-        $first_word->set_attr( 'form', ucfirst( $first_word->form ) );
+        $first_word->set_form(ucfirst $first_word->form);
 
     }
     return;

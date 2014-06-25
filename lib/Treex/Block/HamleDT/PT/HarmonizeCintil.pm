@@ -91,7 +91,8 @@ sub fix_form {
 sub fix_lemma {
     my ($self, $node) = @_;
     my $lemma = $node->lemma;
-    $node->set_lemma($lemma eq '_' ? $node->form : lc $lemma);
+    $lemma = $node->form if $lemma eq '_';
+    $node->set_lemma(lc $lemma);
     return;
 }
 
