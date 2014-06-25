@@ -30,7 +30,6 @@ sub copy_subtree {
             my $a_node = $a_root->create_child();
             $t_node->set_deref_attr( 'a/lex.rf', $a_node );
 
-            $lemma =~ s/_s[ie]$//g;    # strip reflexive verb particles
             $a_node->set_lemma($lemma);
             $a_node->_set_ord( $t_node->ord );
 
