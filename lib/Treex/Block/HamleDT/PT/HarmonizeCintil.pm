@@ -119,7 +119,7 @@ sub guess_afun {
     # Coordinating conjunctions (deprel=CONJ, child_deprel=COORD) are already solved,
     # so pos=conj means subordinating conjunction.
     return 'AuxC' if $pos eq 'conj';
-    return 'AuxP' if $pos eq 'prep';
+    return 'AuxP' if $pos eq 'adp';
     return 'Adv' if $pos eq 'adv';
     return 'AuxX' if $node->lemma eq ',';
     return 'AuxG' if $pos eq 'punc';
