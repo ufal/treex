@@ -20,6 +20,8 @@ sub BUILD {
 
     my $command = "$executable -token -lemma -no-unknown " . $self->model . ' 2>/dev/null';
 
+    
+
     # start TreeTagger and load the model
     my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::bipipe( $command, ':encoding(utf-8)' );
     $self->_set_reader($reader);
@@ -66,8 +68,17 @@ sub tag_sentence {
         chomp $got;
         my @items = split( /\t/, $got );
         $cnt--;
-        push @tags,   $items[1];
-        push @lemmas, $items[2];
+        
+        my $i=scalar(@lemmas);
+        my $form=$toks->[$i];
+        my $lemma=$items[2];
+        if ($lemma eq '@card@') {
+            $lemma=$form;
+        }
+        my $tag = $items[1];
+        
+        push @tags,   $tag;
+        push @lemmas, $lemma;
     }
 
     return \@tags, \@lemmas;
