@@ -5,7 +5,7 @@ use Treex::Core::Common;
 extends 'Treex::Block::T2A::GenerateWordforms';
 
 has 'generator_class' => ( is => 'rw', 
-                              default=>'Treex::Tool::Lexicon::Generation::RUBigger');
+                              default=>'Treex::Tool::Lexicon::Generation::RU');
 
 
 sub process_anode  {
