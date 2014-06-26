@@ -5,13 +5,19 @@ use utf8;
 use LanguageModel::FormInfo;
 use Class::Std;
 
+use PerlIO::gzip;
+
+use Treex::Core::Resource qw(require_file_from_share);
+my $freq_file = 'data/models/morpho_analysis/ru/extracted_freq.bigger.tsv.gz';
+my $freq_file_path = require_file_from_share( $freq_file, 'Treex::Tool::Lexicon::Generation::RU' );
+
 my %lemma_tag_form;
 
-
-#TODO: move to share, I have no idea how
-open my $MORPHO,'<:utf8',
-    '/home/bilek/.treex/share/data/models/morpho_analysis/ru/extracted_freq.bigger.tsv'
+open my $MORPHO,'<:gzip',
+    $freq_file_path,
     or die $!;
+
+binmode($MORPHO,":utf8");
 
 while (<$MORPHO>) {
     chomp;
