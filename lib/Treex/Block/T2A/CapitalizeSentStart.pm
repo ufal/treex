@@ -4,18 +4,21 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-has 'opening_punct' => ( isa => 'Str', is => 'ro', default => '({[‚„«‹|*"\'' );
-
+has 'opening_punct' => ( isa => 'Str', is => 'ro', default => '({[‚„«‹|*"\'“' );
+has 'skip_dsp_nodes' => ( isa=>'Bool', is=>'ro', default=>0);
 
 sub process_zone {
     my ( $self, $zone ) = @_;
     
     my $a_root = $zone->get_atree();
-    my $t_root = $zone->get_ttree();
     my $opening_punct = $self->opening_punct;
 
-    my @dsp_aroots = grep { defined $_ } map { $_->get_lex_anode() }
-        grep { $_->is_dsp_root } $t_root->get_descendants();
+    my @dsp_aroots=();
+    if (!$self->skip_dsp_nodes){
+        my $t_root = $zone->get_ttree();
+        @dsp_aroots = grep { defined $_ } map { $_->get_lex_anode() }
+            grep { $_->is_dsp_root } $t_root->get_descendants();
+    }
 
     # Technical root should have just one child unless something (parsing) went wrong.
     # Anyway, we want to capitalize the very first word in the sentence.
