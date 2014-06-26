@@ -4,7 +4,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::T2A::CapitalizeSentStart';
 
-has '+opening_punct' => ( isa => 'Str', is => 'ro', default => '({[‚„«‹|*"\'' );
+
+has '+opening_punct' => ( isa => 'Str', is => 'ro', default => '({[‚„«‹|*"\'“' );
 
 1;
 
