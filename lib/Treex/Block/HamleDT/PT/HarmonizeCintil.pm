@@ -98,14 +98,20 @@ sub fix_form {
     return;
 }
 
-# Lowercase lemmas (CINTIL has all-uppercase) and fill form instead of "_".
 sub fix_lemma {
     my ($self, $node) = @_;
     my $lemma = $node->lemma;
+
+    # Some words don't have assigned lemmas in CINTIL.
     $lemma = $node->form if $lemma eq '_';
-    $node->set_lemma(lc $lemma);
+
+    # Otherwise, lemmas in CINTIL are all-uppercase.
+    # Let's lowercase it except for proper names.
+    $lemma = lc $lemma if $node->iset->nountype ne 'prop';
+    $node->set_lemma($lemma);
     return;
 }
+
 
 sub guess_afun {
     my ($self, $node) = @_;

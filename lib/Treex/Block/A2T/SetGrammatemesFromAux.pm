@@ -19,6 +19,19 @@ sub process_tnode {
             my $d = $anode->iset->definiteness;
             $tnode->set_gram_definiteness('definite') if $d eq 'def';
             $tnode->set_gram_definiteness('indefinite') if $d eq 'ind';
+
+            # Personal names (Manuel, Maria) are missing gender and number
+            if (!$tnode->gram_gender){
+                my $gender = $anode->iset->gender || '';
+                $gender =~ s/masc/anim/;
+                $tnode->set_gram_gender($gender);
+            }
+            if (!$tnode->gram_number){
+                my $number = $anode->iset->number || '';
+                $number =~ s/sing/sg/;
+                $number =~ s/plu/pl/;
+                $tnode->set_gram_number($number);
+            }
         }
     }
 
