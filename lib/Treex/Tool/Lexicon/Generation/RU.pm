@@ -7,8 +7,10 @@ use Class::Std;
 
 my %lemma_tag_form;
 
+
+#TODO: move to share, I have no idea how
 open my $MORPHO,'<:utf8',
-    '/net/projects/tectomt_shared/data/models/morpho_analysis/ru/extracted_freq.tsv'
+    '/home/bilek/.treex/share/data/models/morpho_analysis/ru/extracted_freq.bigger.tsv'
     or die $!;
 
 while (<$MORPHO>) {
@@ -28,6 +30,7 @@ sub forms_of_lemma {
     my ( $self, $lemma, $arg_ref ) = @_;
 
     $lemma = lc($lemma);
+    log_fatal('lemma je '.$lemma) if ($lemma eq '@card@');
 
     log_fatal('No lemma given to forms_of_lemma()') if !defined $lemma;
 
@@ -35,22 +38,21 @@ sub forms_of_lemma {
     my $limit     = $arg_ref->{'limit'}     || 0;
     my $guess = defined $arg_ref->{'guess'} ? $arg_ref->{'guess'} : 1;
 
-    # By default, if a lemma starts with a capital letter, return also capitalized form
-    my $no_capitalization = $arg_ref->{'no_capitalization'} || 0;
 
     my @all_forms = ();
 
     my $forms_tags = keys %{$lemma_tag_form{$lemma} || {}};
 
-#    if ( !$forms_tags && $guess ) {
-#        ( $origin, $forms_tags ) = $self->_guess_forms($lemma);
-#    }
-
     if ($lemma_tag_form{$lemma}) {
         foreach my $form_tag ( sort {$lemma_tag_form{$lemma}{$b} <=> $lemma_tag_form{$lemma}{$a}}
                                    keys %{$lemma_tag_form{$lemma} } ) {
 
+
             my ( $form, $tag ) = split /\|/,$form_tag;
+            
+            #replacing incorrect latin c to cyrillic "es" ( U+0063 -> U+0441 )
+            $form =~ s/\x{0063}/\x{0441}/g;
+
             my $form_info = LanguageModel::FormInfo->new(
                 {
                     form   => $form,
@@ -60,6 +62,7 @@ sub forms_of_lemma {
                     count => $lemma_tag_form{$lemma}{$form_tag},
                 }
             );
+
             push @all_forms, $form_info;
         }
     }
