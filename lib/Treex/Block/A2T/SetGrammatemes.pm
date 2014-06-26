@@ -92,7 +92,6 @@ sub set_grammatemes_from_iset {
 }
 
 sub set_sempos {
-
     my ( $self, $tnode, $anode ) = @_;
 
     my $syntpos = $tnode->formeme || '';
@@ -106,7 +105,7 @@ sub set_sempos {
     elsif ( $tag2sempos{$syntpos} ) {
         $tnode->set_gram_sempos( $tag2sempos{$syntpos} );
     }
-
+    return;
 }
 
 sub set_verbal_grammatemes {
@@ -125,10 +124,8 @@ Treex::Block::A2T::SetGrammatemes
 =head1 DESCRIPTION
 
 A very basic, language-independent grammateme setting block for t-nodes. 
-
-The only grammateme
-currently supported is C<sempos>, which is set based on the formeme and Interset
-part-of-speech features of the corresponding lexical a-node.
+Grammatemes are set based on the Interset features (and formeme)
+of the corresponding lexical a-node.
 
 =head1 AUTHOR
 
