@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-has 'formeme_prep_regexp' => ( is => 'ro', default => '^(n|adj):(.+)[+]' );
+has 'formeme_prep_regexp' => ( is => 'ro', default => '^(?:n|adj):(.+)[+]' );
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
@@ -79,7 +79,7 @@ sub postprocess {
 sub get_prep_forms {
     my ($self, $formeme) = @_;
     return undef if (!$formeme);
-    my ($prep_forms) = ( $formeme =~ /(?:n|adj):(.+)\+/ );
+    my ($prep_forms) = ( $formeme =~ $self->formeme_prep_regexp );
     return $prep_forms;
 } 
 
