@@ -55,6 +55,10 @@ my %iset2gram = (
     'tense=past' => 'tense=ant',
     'tense=pres' => 'tense=sim',
     'tense=fut' => 'tense=post',
+    'tense=aor' => 'tense=ant',
+    'tense=imp' => 'tense=ant',
+    'tense=pqp' => 'tense=ant',
+    'tense=nar' => 'tense=ant',
     
     'mood=ind' => 'verbmod=ind',
     'mood=imp' => 'verbmod=imp',

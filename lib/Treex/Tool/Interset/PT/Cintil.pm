@@ -68,12 +68,12 @@ my $DECODING_TABLE = {
     3       => { person => '3' }, # Third Person
     pi      => { tense => 'pres', mood => 'ind' }, # Presente do Indicativo
     ppi     => { tense => 'past', aspect => 'perf', mood => 'ind' }, # Pretérito Perfeito do Indicativo
-    ii      => { tense => 'past', subtense => 'imp', mood => 'ind'}, # Pretérito Imperfeito do Indicativo
-    mpi     => { tense => 'past', subtense => 'pluperfect', mood => 'ind'}, # Pretérito Mais que Perfeito do Indicativo
+    ii      => { tense => 'imp', mood => 'ind'}, # Pretérito Imperfeito do Indicativo
+    mpi     => { tense => 'pqp', mood => 'ind'}, # Pretérito Mais que Perfeito do Indicativo
     fi      => { tense => 'fut', mood => 'ind'}, # Futuro do Indicativo
     c       => { mood => 'cond' }, # Condicional
     pc      => { tense => 'pres', mood => 'sub'}, # Presente do Conjuntivo
-    ic      => { tense => 'past', subtense => 'imp', mood => 'sub'}, # Pretérito Imperfeito do Conjuntivo
+    ic      => { tense => 'imp', mood => 'sub'}, # Pretérito Imperfeito do Conjuntivo
     fc      => { tense => 'fut', mood => 'sub'}, # Futuro do Conjuntivo
     imp     => { mood => 'imp'}, # Imperativo
     # Tags for infinitive verbs
