@@ -10,13 +10,17 @@ sub process_anode {
     my $noun = $rhematizer->get_parent;
     return if !$noun->is_noun;
     my $article = $noun->get_children({preceding_only=>1, first_only=>1});
-    return if !$article || $article->iset->adjtype ne 'art';
-    my $start_of_scope = $article;
     my $preposition = $noun->get_parent();
-    if ($preposition && $preposition->is_adposition && $preposition->precedes($article)){
-        $start_of_scope = $preposition;
+    my $start_of_scope;
+    if ($article && $article->iset->adjtype eq 'art'){
+        $start_of_scope = $article;
     }
-    $rhematizer->shift_before_node($start_of_scope);
+    if ($preposition && $preposition->is_adposition && (!$article || $preposition->precedes($article))){
+        $start_of_scope = $preposition 
+    }
+    if ($start_of_scope){
+        $rhematizer->shift_before_node($start_of_scope);
+    }
     return;
 }
 
