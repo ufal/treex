@@ -98,6 +98,13 @@ sub formeme_for_drop {
 # semantic adverbs
 sub formeme_for_adv {
     my ($self, $t_node, $a_node) = @_;
+
+    # E.g. in Portuguese, it seems that adverbs may have prepositions,
+    # e.g. "por(afun=AuxP) ali(afun=Adv,parent=por)"
+    # Let's handle it here. If needed it is easy to override this method to return always 'adv'.
+    my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
+    my $prep = $self->get_aux_string(@aux_a_nodes);
+    return "adv:$prep+X" if $prep;
     return 'adv';
 }
 
