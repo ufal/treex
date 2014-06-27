@@ -60,7 +60,7 @@ sub process_zone {
     $self->restructure_coordination($root);
 
     foreach my $node (@nodes) {
-        $self->rehang_adverbs_to_verbs($node);
+        $self->rehang_rhematizers($node);
     }
     
     return;
@@ -188,17 +188,16 @@ sub fill_sentence {
 
 # Some adverbs (mostly rhematizers "apenas", "mesmo",...) depend on a preposition ("de", "a") in CINTIL.
 # However, prepositions should have only one child in the HamleDT/Prague style (except for multi-word prepositions).
-# E.g. "A encomenda está mesmo(afun=Adv,parent=em_,newparent=está) em_ o armazém . "
-# TODO: In some cases, it may be more appropriate to rehang the adverb to its sibling, e.g.:
-# "A criança obedece apenas(afun=Adv,parent=a_) a_ a mãe ."
-# This may differentiate the scope of the rhematizer: "The child obeys only the mother" and "The child only obeys the mother"
-sub rehang_adverbs_to_verbs {
+# E.g. "A encomenda está mesmo(afun=Adv,parent=em_,newparent=armazém) em_ o armazém . "
+#      "A criança obedece apenas(afun=Adv,parent=a_,newparent=mãe) a_ a mãe ."
+# Should we differentiate the scope of the rhematizer: "The child obeys only the mother" and "The child only obeys the mother"?
+sub rehang_rhematizers {
     my ($self, $node) = @_;
     my $parent = $node->get_parent();
     if ($node->is_adverb && $parent->is_preposition){
-        my $grandpa = $parent->get_parent();
-        if ($grandpa->is_verb) {
-            $node->set_parent($grandpa);
+        my $sibling = $parent->get_children({following_only=>1, first_only=>1});
+        if ($sibling && $sibling->is_noun) {
+            $node->set_parent($sibling);
         }
     }
     return;
