@@ -33,11 +33,15 @@ sub process_tnode {
                 $tnode->set_gram_number($number);
             }
         }
+        $self->check_anode($tnode, $anode);
     }
 
     return;
 }
 
+sub check_anode {
+    my ($self, $tnode, $anode) = @_;
+}
 
 1;
 
