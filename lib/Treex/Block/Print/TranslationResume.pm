@@ -5,7 +5,15 @@ use Treex::Tool::Eval::Bleu;
 extends 'Treex::Block::Write::BaseTextWriter';
 
 sub build_language { return log_fatal "Parameter 'language' must be given"; }
-has 'source_language' => ( is => 'rw', isa => 'Str', required => 1 );
+has 'source_language' => ( is => 'ro', isa => 'Str', required => 1 );
+has 'source_selector' => ( is => 'ro', isa => 'Str', default => 'src' );
+has 'reference_language' => ( is => 'ro', isa => 'Str', lazy_build=>1 );
+has 'reference_selector' => ( is => 'ro', isa => 'Str', default => 'ref' );
+
+sub _build_reference_language {
+    my ($self) = @_;
+    return $self->language;
+}
 
 override '_do_process_document' => sub {
     my ( $self, $document ) = @_;
@@ -17,10 +25,10 @@ override '_do_process_document' => sub {
 
     foreach my $bundle ( $document->get_bundles ) {
         $position++;
-        my $ref_zone = $bundle->get_zone( $self->language, 'ref' );
-        push @src, $bundle->get_zone( $self->source_language, 'src' )->sentence;
+        my $ref_zone = $bundle->get_zone( $self->reference_language, $self->reference_selector );
+        push @src, $bundle->get_zone( $self->source_language, $self->source_selector )->sentence;
         push @ref, $ref_zone ? $ref_zone->sentence : '';
-        push @tst, $bundle->get_zone( $self->language, 'tst' )->sentence;
+        push @tst, $bundle->get_zone( $self->language, $self->selector )->sentence;
 
         if ( $bundle->id !~ /(\d+)of(\d+)$/ or $1 == $2 ) {
             my $src_joined = join ' ', @src;
