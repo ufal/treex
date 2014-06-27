@@ -5,7 +5,7 @@ extends 'Treex::Core::Block';
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
-    if ($tnode->gram_degcmp eq 'comp' && $tnode->t_lemma !~ /^(maior|melhor)$/){
+    if (($tnode->gram_degcmp || '') eq 'comp' && $tnode->t_lemma !~ /^(maior|melhor)$/){
         my $anode = $tnode->get_lex_anode() or return;
         my $mais = $anode->create_child({
             lemma => 'mais',
@@ -14,6 +14,7 @@ sub process_tnode {
         });
         $mais->shift_before_node($anode);
         $mais->iset->set_pos('adv');
+        $tnode->add_aux_anodes($mais);
     }
     return;
 };

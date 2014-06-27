@@ -16,7 +16,7 @@ sub process_zone {
     $sentence =~ s/\ba a(s?)\b/à$1/g;    # à, às
     $sentence =~ s/\ba (os?)/a$1/g;   # ao, aos
     $sentence =~ s/\bem ([oa]s?|um|uma|uns|umas)\b/n$1/g;    # no, na, nos, nas, num, numa, nuns, numas
-    $sentence =~ s/\bde ([oa]s?|um|uma|uns|umas)\b/d$1/g;    # do, da, dos, das, dum, duma, duns, dumas, deste, desta,...
+    $sentence =~ s/\bde ([oa]s?|um|uma|uns|umas|este|esta)\b/d$1/g;    # do, da, dos, das, dum, duma, duns, dumas, deste, desta,...
 
     # TODO: detached  clitic, e.g. "dá" + "-se-" + "-lhe" + "o" = "dá-se-lho"
 
@@ -38,6 +38,8 @@ sub process_zone {
         $sentence =~ s/\)\./.)/;
     }
     
+    # HACKS:
+    $sentence =~ s/muito muito/muito, muito/g;
 
     $zone->set_sentence($sentence);
     return;

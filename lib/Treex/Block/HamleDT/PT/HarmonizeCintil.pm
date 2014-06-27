@@ -94,6 +94,9 @@ sub fix_form {
     # "em_" -> "em" etc. because the underscore character is reserved for formemes
     $form =~ s/_$//;
 
+    # For some strange reason feminine definite singular articles are capitalized in CINTIL.
+    $form = 'a' if $form eq 'A' && $node->ord > 1;
+    
     $node->set_form($form);
     return;
 }
@@ -166,6 +169,9 @@ sub detect_coordination {
 sub fill_sentence {
     my ($self, $root) = @_;
     my $str = join ' ', map {$_->form} $root->get_descendants({ordered=>1});
+
+    # For some strange reason feminine definite singular articles are capitalized in CINTIL.
+    $str =~ s/ A / a /g;
 
     # Contractions, e.g. "de_" + "o" = "do"
     $str =~ s/por_ elos/pelos/g;
