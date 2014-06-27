@@ -67,8 +67,8 @@ my $DECODING_TABLE = {
     2       => { person => '2' }, # Second Person
     3       => { person => '3' }, # Third Person
     pi      => { tense => 'pres', mood => 'ind' }, # Presente do Indicativo
-    ppi     => { tense => 'past', aspect => 'perf', mood => 'ind' }, # Pretérito Perfeito do Indicativo
-    ii      => { tense => 'imp', mood => 'ind'}, # Pretérito Imperfeito do Indicativo
+    ppi     => { tense => 'past', mood => 'ind', aspect => 'perf' }, # Pretérito Perfeito do Indicativo
+    ii      => { tense => 'imp', mood => 'ind', aspect => 'imp'}, # Pretérito Imperfeito do Indicativo
     mpi     => { tense => 'pqp', mood => 'ind'}, # Pretérito Mais que Perfeito do Indicativo
     fi      => { tense => 'fut', mood => 'ind'}, # Futuro do Indicativo
     c       => { mood => 'cond' }, # Condicional

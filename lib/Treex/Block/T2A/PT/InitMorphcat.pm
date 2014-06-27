@@ -3,6 +3,18 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::T2A::InitMorphcat';
 
+after process_tnode => sub {
+    my ( $self, $t_node ) = @_;
+    my $a_node = $t_node->get_lex_anode() or return;
+
+    # Interset distinguishes imperfect tense (as a subcategory of past tense) and imperfect aspect.
+    # There is no such distinction on t-layer, so far, but in Portuguese we need to distinguish
+    # "Pretérito Perfeito" from "Pretérito Imperfeito".
+    # TODO: distinguish/guess also "Pretérito Mais que Perfeito" ($anode->iset->set_tense('pqp')).
+    $a_node->iset->set_tense('imp') if $a_node->match_iset(aspect=>'imp', tense=>'past');
+    return;
+};
+
 sub should_fill {
     my ($self, $grammateme, $tnode) = @_;
 

@@ -73,12 +73,11 @@ sub process_tnode {
     # Grammatemes -> Interset features
     my $grammatemes_rf = $t_node->get_attr('gram') or return;
     while ( my ($name, $value) = each %{$grammatemes_rf}){
-        #next if !defined $value;
         if (defined $value && $self->should_fill($name, $t_node) && (my $iset_rule = $gram2iset{"$name=$value"})){
             my ($i_name, $i_value) = split /=/, $iset_rule;
             $a_node->set_iset($i_name, $i_value);
         }
-    }
+    }   
 
     # Czech-specific relict: grammateme gender contains info about animateness (only for masculine)
     # So far, gram_gender="anim" is used instead of gram_gender="masc", so we cannot induce animateness from this value.
