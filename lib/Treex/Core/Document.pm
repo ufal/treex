@@ -17,6 +17,7 @@ use Scalar::Util qw( weaken reftype );
 use PerlIO::via::gzip;
 use Storable;
 use Digest::MD5 qw(md5_hex);
+use Lingua::Interset::FeatureStructure;
 
 has loaded_from => ( is => 'rw', isa => 'Str', default => '' );
 has path        => ( is => 'rw', isa => 'Str' );
@@ -223,6 +224,9 @@ sub _rebless_and_index {
                     foreach my $node ( $tree, $tree->descendants ) {    # must still call Treex::PML::Node's API
                         bless $node, "Treex::Core::Node::$layer";
                         $self->index_node_by_id( $node->get_id, $node );
+                        if ($layer eq 'A' && $node->{iset}){
+                            $node->{iset} = Lingua::Interset::FeatureStructure->new(%{$node->{iset}});
+                        }
                     }
                     $tree->_set_zone($zone);
                 }
