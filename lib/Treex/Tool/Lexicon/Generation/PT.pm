@@ -36,7 +36,7 @@ my %CONJUGATION = (
         'sub imp'  => 'isse isses isse íssemos ísseis issem',
         'sub fut'  => 'ir ires ir irmos irdes irem',
     },
-    estar => {
+    verb_estar => {
         'ind pres' => 'estou estás está estamos estais estão',
         'ind past' => 'estive estiveste esteve estivemos estivestes estiveram',
         'ind imp'  => 'estava estavas estava estávamos estáveis estavam',
@@ -47,7 +47,7 @@ my %CONJUGATION = (
         'sub imp'  => 'estivesse estivesses estivesse estivéssemos estivésseis estivessem',
         'sub fut'  => 'estiver estiveres estiver estivermos estiverdes estiverem',
     },
-    ser => {
+    verb_ser => {
         'ind pres' => 'sou és é somos sois são',
         'ind past' => 'fui foste foi fomos fostes foram',
         'ind imp'  => 'era eras era éramos éreis eram',
@@ -58,14 +58,33 @@ my %CONJUGATION = (
         'sub imp'  => 'fosse fosses fosse fôssemos fôsseis fossem',
         'sub fut'  => 'for fores for formos fordes forem',
     },
+    verb_ir => {
+        'ind pres' => 'vou vais vai vamos ides vão',
+        'ind past' => 'fui foste foi fomos fostes foram',
+        'ind imp'  => 'ia ias ia íamos íeis iam',
+        'ind pqp'  => 'fora foras fora fôramos fôreis foram',
+        'ind fut'  => 'irei irás irá iremos ireis irão',
+        'cond '    => 'iria irias iria iríamos iríeis iriam',
+        'sub pres' => 'vá vás vá vamos vades vão',
+        'sub imp'  => 'fosse fosses fosse fôssemos fôsseis fossem',
+        'sub fut'  => 'for fores for formos fordes forem',
+    }
 );
 
 
 
 sub best_form_of_lemma {
     my ( $self, $lemma, $iset ) = @_;
-    if ($iset->pos eq 'verb'){
-        my ($stem, $class) = ($lemma =~ /^(.*?)(estar|ser|ar|er|ir)$/);
+    my $pos = $iset->pos;
+    if ($pos eq 'verb'){
+        my ($stem, $class) = ('', '');
+
+        # check irregular verbs first
+        if ($lemma =~ /^(ir|ser|estar)$/){
+            $class = "verb_$lemma";
+        } else {
+            ($stem, $class) = ($lemma =~ /^(.+)(ar|er|ir)$/);
+        }
         return $lemma if !$class;
         my $mood = $iset->mood;
         my $tense = $iset->tense;
@@ -76,8 +95,18 @@ sub best_form_of_lemma {
         my $ending = (split / /, $forms)[$person - 1];
         return $stem.$ending;
     }
-    elsif ($iset->pos =~/noun|adj/){
-        return $lemma.'s' if $iset->number eq 'plu';
+    elsif ($pos =~/noun|adj/){
+        if ($iset->degree eq 'sup'){
+            $lemma =~ s/[oe]?$/íssimo/;
+        }
+        if ($pos eq 'adj' && $iset->gender eq 'fem'){
+            $lemma =~ s/ão$/ona/; # grandão -> grandona
+            $lemma =~ s/[oe]?$/a/ if $lemma !~ /a$/;
+        }
+        if ($iset->number eq 'plu'){
+            $lemma =~ s/ão$/ães/ or
+            $lemma = $lemma.'s';
+        }
     }
     return $lemma;
 }
