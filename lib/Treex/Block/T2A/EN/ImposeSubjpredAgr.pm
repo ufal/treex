@@ -36,7 +36,7 @@ sub process_finite_verb {
     my $number = $a_subj->morphcat_number();
     $number = 'S' if ( $number !~ /[PS]/ );
     $number = 'P' if ( $a_subj->is_member() );
-    $a_vfin->set_morphcat_number( $a_subj->morphcat_number() );
+    $a_vfin->set_morphcat_number($number);
 
     my $person = $a_subj->morphcat_person();
     $person = '3' if ( $person !~ /[123]/ );
