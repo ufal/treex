@@ -32,17 +32,17 @@ sub process_zone {
     my $root  = $zone->get_atree();
     my @nodes = $root->get_descendants();
 
+    # $zone->sentence should contain the (surface, detokenized) sentence string.
     $self->fill_sentence($root);
 
-
+    # Harmonize tags, forms, lemmas and dependency labels.
     foreach my $node (@nodes) {
 
         # Convert CoNLL POS tags and features to Interset and PDT if possible.
         $self->convert_tag($node);
 
-        # Save interset features to the "tag" attribute,
-        # so we can see them in TrEd
-        #$node->set_tag($node->get_iset_conll_feat());
+        # Save Interset features to the "tag" attribute,
+        # so we can see them in TrEd (tooltip shows also the categories).
         $node->set_tag(join ' ', $node->get_iset_values());
 
         # CINTIL (parsed output) uses ".*/" instead of ".", let's fix it.
@@ -55,10 +55,13 @@ sub process_zone {
         $node->set_afun($afun || 'NR');
     }
 
+    # See HamleDT::Harmonize for implementation details.
     $self->attach_final_punctuation_to_root($root);
 
+    # See HamleDT::Harmonize and detect_coordination() for implementation details.
     $self->restructure_coordination($root);
 
+    # Adverbs (including rhematizers) should not depend on prepositions.
     foreach my $node (@nodes) {
         $self->rehang_rhematizers($node);
     }
@@ -77,7 +80,7 @@ sub fix_form {
     my ($self, $node) = @_;
     my $form = $node->form;
 
-    # For punctuation and symbols the default is no space before and no space after.
+    # For punctuation and symbols, the default is no space before and no space after.
     # "*/" means a space after the token, "\*" means a space before.
     # Let's delete those marks and set the attribute no_space_after
     if ($form =~ /^(\\\*)?([,.'])(\*\/)?$/){
@@ -108,6 +111,10 @@ sub fix_lemma {
     # Some words don't have assigned lemmas in CINTIL.
     $lemma = $node->form if $lemma eq '_';
 
+    # Automatically analyzed lemmas sometimes include alternatives
+    # (e.g. AFASTAR,AFASTADO). Let's hope the first is the most probable one and delete the rest.
+    $lemma =~ s/(.),.+/$1/;
+
     # Otherwise, lemmas in CINTIL are all-uppercase.
     # Let's lowercase it except for proper names.
     $lemma = lc $lemma if $node->iset->nountype ne 'prop';
@@ -121,7 +128,7 @@ sub guess_afun {
     my $deprel   = $node->conll_deprel();
     my $pos      = $node->iset->pos;
 
-    if ($deprel eq 'CONJ' && any {$_->conll_deprel eq 'COORD'} $node->get_children()){
+    if ($deprel eq 'CONJ' && $node->get_parent->conll_deprel eq 'COORD'){
         $node->wild->{coordinator} = 1;
         return 'AuxY';
     }
@@ -130,7 +137,7 @@ sub guess_afun {
         $node->wild->{conjunct} = 1;
         return 'CoordArg';
     }
-    
+   
     if ($deprel eq 'C') {
         return 'Adv' if $pos eq 'noun';
         return 'Obj' if $pos eq 'verb';
@@ -170,6 +177,9 @@ sub fill_sentence {
     my ($self, $root) = @_;
     my $str = join ' ', map {$_->form} $root->get_descendants({ordered=>1});
 
+    # Add spaces around the sentence, so we don't need to check for (\s|^) or \b.
+    $str = " $str ";
+
     # For some strange reason feminine definite singular articles are capitalized in CINTIL.
     $str =~ s/ A / a /g;
 
@@ -182,10 +192,19 @@ sub fill_sentence {
     $str =~ s/a_ o/ao/g;   # ao, aos,
     $str =~ s/de_ /d/g;    # do, da, dos, das, dum, duma, duns, dumas, deste, desta,...
 
-    # TODO: detached  clitic, e.g. "dá" + "-se-" + "-lhe" + "o" = "dá-se-lho"
+    # TODO: detached clitic, e.g. "dá" + "-se-" + "-lhe" + "o" = "dá-se-lho"
 
-    # Simple detokenization
-    $str =~ s/ ([,.:])/$1/g;
+    # Punctuation detokenization
+    $str =~ s{ \s       # single space
+               (\\\*)?  # $1 = optional "\*" means "space before"
+               ([,.:])  # $2 = punctuation
+               (\*/)?   # $3 = optiona; "*/" meand "space after"
+               \s       # single space
+             }
+             {($1 ? ' ' : '') . $2 . ($3 ? ' ' : '')}gxe;
+
+    # Remove the spaces around the sentence
+    $str =~ s/(^ | $)//g;
 
     # Make sure the first word is capitalized
     $root->get_zone->set_sentence(ucfirst $str);

@@ -12,7 +12,7 @@ has 'if_loss' => (
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
-    my $sempos = $tnode->gram_sempos;
+    my $sempos = $tnode->gram_sempos || '';
     
     if ($sempos =~ /^v/){
         my $noun = $self->find_subject($tnode);

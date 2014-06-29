@@ -85,6 +85,8 @@ my $DECODING_TABLE = {
     nInf    => { }, # probably the same as "nifl"
     g       => { }, # probably undetermined gender
     n       => { }, # probably undetermined number
+    '?'     => { },
+    '??'    => { },
 };
 
 sub split_tag {
