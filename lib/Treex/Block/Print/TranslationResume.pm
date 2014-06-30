@@ -9,6 +9,7 @@ has 'source_language' => ( is => 'ro', isa => 'Str', required => 1 );
 has 'source_selector' => ( is => 'ro', isa => 'Str', default => 'src' );
 has 'reference_language' => ( is => 'ro', isa => 'Str', lazy_build=>1 );
 has 'reference_selector' => ( is => 'ro', isa => 'Str', default => 'ref' );
+has 'extension' => ( is => 'ro', isa => 'Str', default => 'streex' );
 
 sub _build_reference_language {
     my ($self) = @_;
@@ -40,7 +41,7 @@ override '_do_process_document' => sub {
             print { $self->_file_handle } join(
                 "\n",
                 (
-                    "ID\t" . $bundle->id . " ($doc_name.streex##$position)",
+                    "ID\t" . $bundle->id . " ($doc_name." . $self->extension . "##$position)",
                     "SRC\t$src_joined",
                     "REF\t$ref_joined",
                     "TST\t$tst_joined",

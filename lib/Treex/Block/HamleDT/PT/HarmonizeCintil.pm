@@ -6,6 +6,13 @@ extends 'Treex::Block::HamleDT::Harmonize';
 
 has '+iset_driver' => (default=>'pt::cintil');
 
+has punctuation_spaces_marked => (
+    is => 'ro',
+    isa => 'Bool',
+    default => 1,
+    documentation => 'Does the input use "*/" and "\*" to mark spaces around punctuation?',
+);
+
 my %CINTIL_DEPREL_TO_AFUN = (
     ROOT  => 'Pred',
     SJ    => 'Sb',   # Subject
@@ -22,6 +29,9 @@ my %CINTIL_DEPREL_TO_AFUN = (
     PUNCT => 'AuxX', # Punctuation
     DEP   => 'AuxX', # Generic dependency (mostly commas)
 );
+
+# Regex for detecting punctuation symbols
+my $PUNCT= q{[,.'()-]};
 
 sub process_zone {
     my ($self, $zone) = @_;
@@ -83,7 +93,7 @@ sub fix_form {
     # For punctuation and symbols, the default is no space before and no space after.
     # "*/" means a space after the token, "\*" means a space before.
     # Let's delete those marks and set the attribute no_space_after
-    if ($form =~ /^(\\\*)?([,.'])(\*\/)?$/){
+    if ($self->punctuation_spaces_marked && $form =~ /^(\\\*)?($PUNCT)(\*\/)?$/){
         $form = $2;
         my $space_before = $1 ? 1 : 0;
         my $space_after = $3 ? 1 : 0;
@@ -93,6 +103,7 @@ sub fix_form {
             $prev_node->set_no_space_after(1) if $prev_node;
         }
     }
+
 
     # "em_" -> "em" etc. because the underscore character is reserved for formemes
     $form =~ s/_$//;
@@ -195,13 +206,20 @@ sub fill_sentence {
     # TODO: detached clitic, e.g. "dá" + "-se-" + "-lhe" + "o" = "dá-se-lho"
 
     # Punctuation detokenization
-    $str =~ s{ \s       # single space
-               (\\\*)?  # $1 = optional "\*" means "space before"
-               ([,.:])  # $2 = punctuation
-               (\*/)?   # $3 = optiona; "*/" meand "space after"
-               \s       # single space
-             }
-             {($1 ? ' ' : '') . $2 . ($3 ? ' ' : '')}gxe;
+    # CINTIL guidelines define special marking for spaces around punctuation "*/" and "\*",
+    # but these are not used in CINTIL-DepBank (in conll format).
+    if ($self->punctuation_spaces_marked){
+        $str =~ s{ \s       # single space
+                   (\\\*)?  # $1 = optional "\*" means "space before"
+                   ($PUNCT)  # $2 = punctuation
+                   (\*/)?   # $3 = optiona; "*/" meand "space after"
+                   \s       # single space
+                }
+                {($1 ? ' ' : '') . $2 . ($3 ? ' ' : '')}gxe;
+    } else {
+        $str =~ s/ ($PUNCT)/$1/g;
+    }
+
 
     # Remove the spaces around the sentence
     $str =~ s/(^ | $)//g;
