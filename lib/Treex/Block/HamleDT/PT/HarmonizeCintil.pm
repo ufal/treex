@@ -31,7 +31,7 @@ my %CINTIL_DEPREL_TO_AFUN = (
 );
 
 # Regex for detecting punctuation symbols
-my $PUNCT= q{[,.'()-]};
+my $PUNCT= q{[\[\](),.;:'?-]};
 
 sub process_zone {
     my ($self, $zone) = @_;
@@ -41,6 +41,9 @@ sub process_zone {
 
     my $root  = $zone->get_atree();
     my @nodes = $root->get_descendants();
+
+    # ".*/" -> "." etc.
+    $self->normalize_punctuation_and_spaces($root);
 
     # $zone->sentence should contain the (surface, detokenized) sentence string.
     $self->fill_sentence($root);
@@ -55,7 +58,7 @@ sub process_zone {
         # so we can see them in TrEd (tooltip shows also the categories).
         $node->set_tag(join ' ', $node->get_iset_values());
 
-        # CINTIL (parsed output) uses ".*/" instead of ".", let's fix it.
+        # "em_" -> "em" etc.
         $self->fix_form($node);
 
         $self->fix_lemma($node);
@@ -86,24 +89,43 @@ sub get_input_tag_for_interset {
     return $node->conll_pos() . '#' . $node->conll_feat;
 }
 
+sub normalize_punctuation_and_spaces {
+    my ($self, $root) = @_;
+    my $prev_node;
+    foreach my $node ($root->get_descendants({ordered=>1})){
+        my $form = $node->form;
+
+        if (!$self->punctuation_spaces_marked){
+            if ($form =~ /^($PUNCT)$/){
+                if ($form =~ /[(\[]/){
+                    $node->set_no_space_after(1);
+                } else {
+                    $prev_node->set_no_space_after(1) if $prev_node;
+                }
+            }
+        }
+
+        # For punctuation and symbols, the default is no space before and no space after.
+        # "*/" means a space after the token, "\*" means a space before.
+        # Let's delete those marks and set the attribute no_space_after
+        elsif ($form =~ /^(\\\*)?($PUNCT)(\*\/)?$/){
+            $form = $2;
+            my $space_before = $1 ? 1 : 0;
+            my $space_after = $3 ? 1 : 0;
+            $node->set_no_space_after(1) if !$space_after;
+            if (!$space_before){
+                $prev_node->set_no_space_after(1) if $prev_node;
+            }
+            $node->set_form($form);
+        }
+        $prev_node = $node;
+    }
+    return;
+}
+
 sub fix_form {
     my ($self, $node) = @_;
     my $form = $node->form;
-
-    # For punctuation and symbols, the default is no space before and no space after.
-    # "*/" means a space after the token, "\*" means a space before.
-    # Let's delete those marks and set the attribute no_space_after
-    if ($self->punctuation_spaces_marked && $form =~ /^(\\\*)?($PUNCT)(\*\/)?$/){
-        $form = $2;
-        my $space_before = $1 ? 1 : 0;
-        my $space_after = $3 ? 1 : 0;
-        $node->set_no_space_after(1) if !$space_after;
-        if (!$space_before){
-            my $prev_node = $node->get_prev_node();
-            $prev_node->set_no_space_after(1) if $prev_node;
-        }
-    }
-
 
     # "em_" -> "em" etc. because the underscore character is reserved for formemes
     $form =~ s/_$//;
@@ -186,7 +208,7 @@ sub detect_coordination {
 # but it helps when debugging, so the real sentence is shown in TrEd.
 sub fill_sentence {
     my ($self, $root) = @_;
-    my $str = join ' ', map {$_->form} $root->get_descendants({ordered=>1});
+    my $str = join '', map {$_->form . ($_->no_space_after ? '' : ' ')} $root->get_descendants({ordered=>1});
 
     # Add spaces around the sentence, so we don't need to check for (\s|^) or \b.
     $str = " $str ";
@@ -222,7 +244,7 @@ sub fill_sentence {
 
 
     # Remove the spaces around the sentence
-    $str =~ s/(^ | $)//g;
+    $str =~ s/(^\s+|\s+$)//g;
 
     # Make sure the first word is capitalized
     $root->get_zone->set_sentence(ucfirst $str);
