@@ -550,23 +550,6 @@ sub process_document {
         copy_subtree( $source_root, $target_root, \%src2tgt, $self->verb_rules);
         $target_root->set_src_tnode($source_root);
     }
-    # look for all nodes, marked for deletion
-    foreach my $bundle ( $document->get_bundles() ) {
-        print STDERR "Copying coref for ", $bundle->id(), "\n";
-        my $target_zone = $bundle->get_zone( $self->language, $self->selector );
-        my $target_root = $target_zone->get_ttree();
-        foreach my $target_node ($target_root->get_descendants ) {
-            if (defined $target_node->wild->{'special'} && $target_node->wild->{'special'}  eq 'Delete'){
-                # move all its children to its parent
-                my $parent_node = $target_node->get_parent();
-                foreach my $child_node ($target_node->get_children){
-                    $child_node->set_parent($parent_node);
-                }
-                print STDERR "Delete " . $target_node->t_lemma . "\n";
-                #$target_node->remove();
-            }
-        }
-    }
 
     # copying coreference links
     foreach my $bundle ( $document->get_bundles() ) {
@@ -588,6 +571,25 @@ sub process_document {
             }
             $t_node->set_deref_attr( 'coref_text.rf', \@nodelist )
               if 0< scalar(@nodelist);
+        }
+    }
+
+    # look for all nodes, marked for deletion
+    foreach my $bundle ( $document->get_bundles() ) {
+        print STDERR "Deleting marked nodes for ", $bundle->id(), "\n";
+        my $target_zone = $bundle->get_zone( $self->language, $self->selector );
+        my $target_root = $target_zone->get_ttree();
+        foreach my $target_node ($target_root->get_descendants ) {
+            if (defined $target_node->wild->{'special'} && $target_node->wild->{'special'}  eq 'Delete'){
+                # move all its children to its parent
+                my $parent_node = $target_node->get_parent();
+                foreach my $child_node ($target_node->get_children){
+                    $child_node->set_parent($parent_node);
+                }
+                print STDERR "Delete " . $target_node->t_lemma . "\n";
+                print STDERR "Modifier " . $target_node->wild->{'modifier'} . "\n";
+                $target_node->remove();
+            }
         }
     }
  
