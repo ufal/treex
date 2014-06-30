@@ -1,123 +1,152 @@
 package Treex::Tool::Lexicon::Generation::CS;
-
-# I cannot modify CzechMorpho, since I don't have write permision
-# for /mnt/h/repl/perl_repo/lib/perl/5.8.8/CzechMorpho.pm
-# There is a bug in CzechMorpho due to analysis used in genaration,
-# e.g. it generates "pesech" as a form of lemma "pes".
-# This module is a temporary hack how to solve it.
-
+use Moose;
 use Treex::Core::Common;
-use utf8;
-use Readonly;
+use Ufal::MorphoDiTa;
 use LanguageModel::FormInfo;
-use Class::Std;
-
-use CzechMorpho;
-my $generator = CzechMorpho::Generator->new();
-my $analyzer  = CzechMorpho::Analyzer->new();
-
 use Treex::Tool::Lexicon::CS::Prefixes;
+use Treex::Core::Resource;
 
-# If the string is longer than 249 bytes, the C code will die.
-# For safety, we set the limit a bit lower.
-# For speed,  we add another limit on (possibly multi-byte Unicode) characters.
-my $MAXBYTES = 200;
-my $MAXCHARS = 120;
+has dict_name => (is=>'ro', isa=>'Str', default=>'czech-morfflex-131112.dict');
+has dict_path => (is=>'ro', isa=>'Str', lazy_build=>1);
+has tool  => (is=>'ro', lazy_build=>1);
 
-sub _split_tags {
-    my $lemma_and_tags = shift;
-    my ( $pdt_lemma, $tags ) = split /\t/, $lemma_and_tags, 2;
-    log_fatal(
-        "CzechMorpho changed in r3720 its internal separator of tags from + to tabulator.\n"
-            . "Make sure you have the new version of CzechMorpho installed (in " . $INC{'CzechMorpho.pm'} . ").\n"
-            . "The string '$lemma_and_tags' contains no tabulator."
-        )
-        if !defined $tags;
-    return ( $pdt_lemma, $tags );
+sub _build_dict_path {
+    my ($self) = @_;
+    return Treex::Core::Resource::require_file_from_share('data/models/morphodita/cs/'.$self->dict_name);
+}
+
+# tool can be shared by more instances (if the dictionary file is the same)
+my %TOOL_FOR_PATH;
+sub _build_tool {
+    my ($self) = @_;
+    my $path = $self->dict_path;
+    my $tool = $TOOL_FOR_PATH{$path};
+    return $tool if $tool;
+    $tool = Ufal::MorphoDiTa::Morpho::load($path);
+    $TOOL_FOR_PATH{$path} = $tool;
+    return $tool;
+}
+
+# Shared global variable
+my $lemmas_forms = Ufal::MorphoDiTa::TaggedLemmasForms->new();
+
+sub BUILD {
+    my ($self) = @_;
+    # The tool is lazy_build, so load it now
+    $self->tool;
+    return;
 }
 
 sub forms_of_lemma {
-
     my ( $self, $lemma, $arg_ref ) = @_;
-
-    log_debug(
-        'FORMS_OF_LEMMA' . "\t" . join(
-            "\t", $lemma, $arg_ref->{tag_regex} // '', $arg_ref->{limit} // '', $arg_ref->{guess} // '',
-            $arg_ref->{no_capitalization} // ''
-        ),
-        1
-    );
-
     log_fatal('No lemma given to forms_of_lemma()') if !defined $lemma;
 
-    return if length $lemma > $MAXCHARS;
-    my $tag_regex = $arg_ref->{'tag_regex'} || '.*';
-    my $limit     = $arg_ref->{'limit'}     || 0;
-    my $guess = defined $arg_ref->{'guess'} ? $arg_ref->{'guess'} : 1;
+    my $tag_regex = $arg_ref->{tag_regex} || '.*';
+    my $limit     = $arg_ref->{limit}     || 0;
+    my $guess = defined $arg_ref->{guess} ? $arg_ref->{guess} : 1;
 
     # By default, if a lemma starts with a capital letter, return also capitalized form
-    my $no_capitalization = $arg_ref->{'no_capitalization'} || 0;
+    my $no_capitalization = $arg_ref->{no_capitalization} || 0;
 
-    # prepare special utf8 glyphs for conversion (like three dots)
-    my $dlemma = DowngradeUTF8forISO2::downgrade_utf8_for_iso2($lemma);
-    {
-        use bytes;
-        return if length $dlemma > $MAXBYTES;
-    }
-    $dlemma =~ s/&#241;/ň/g;    # "ñ" is not in latin2, "ň" looks similar
+    # MorphoDiTa's internal guesser does not seem to work for generation.
+    # We use $tag_regex which is more poverful than MorphoDiTa's internal wildcard filtering.
+    my $morphodita_guesser = 0;
+    my $morphodita_wildcard = undef;
 
-    # get numbered pdt-lemmata
-    my @pdt_lemmata = $self->pdt_lemmata_for_plain_lemma($dlemma);
+    # The main work
+    $self->tool->generate($lemma, $morphodita_wildcard, $morphodita_guesser, $lemmas_forms);
 
-    # Generate all forms for all the pdt-lemmata
-    my @all_forms = ();
-    foreach my $pdt_lemma (@pdt_lemmata) {
-
-        #TODO: try to add the regex here instead of '*'
-        my $forms_tags = _to_utf8( CzechMorpho::morpho_generate_all_swig( _from_utf8($pdt_lemma), '*' ) );
-        my $origin = 'database';
-        if ( !$forms_tags && $guess ) {
-            ( $origin, $forms_tags ) = $self->_guess_forms($lemma);
+    # Extract the generated forms from $lemmas_forms into Perl structure @forms
+    my @forms = ();
+    for (my $i = 0; $i < $lemmas_forms->size(); $i++) {
+        my $lemma_forms = $lemmas_forms->get($i);
+        my $pdt_lemma = $lemma_forms->{lemma};
+        for (my $i = 0; $i < $lemma_forms->{forms}->size(); $i++) {
+            my $form_object = $lemma_forms->{forms}->get($i);
+            my $form_info = LanguageModel::FormInfo->new(
+                {
+                    form   => $form_object->{form},
+                    lemma  => $pdt_lemma,
+                    tag    => $form_object->{tag},
+                    origin => $self->dict_name,
+                }
+            );
+            push @forms, $form_info;
         }
+    }
+
+    # If no forms found, try our guesser
+    if (!@forms){
+        my ( $origin, $forms_tags ) = $self->_guess_forms($lemma);
         foreach my $form_tag ( split /\|/, ( $forms_tags || '' ) ) {
-            my ( $form, $tag ) = _split_tags($form_tag);
+            my ( $form, $tag ) = split /\t/, $form_tag;
             my $form_info = LanguageModel::FormInfo->new(
                 {
                     form   => $form,
-                    lemma  => $pdt_lemma,
+                    lemma  => $lemma,
                     tag    => $tag,
                     origin => $origin
                 }
             );
-            push @all_forms, $form_info;
+            push @forms, $form_info;
         }
     }
 
-    # prune @all_forms
-    $tag_regex = qr{$tag_regex};    #compile regex
-    my $found = 0;
-    my @forms;
-    foreach my $fi (@all_forms) {
-        next if $fi->get_tag() !~ $tag_regex;
-        if ( !$no_capitalization && $fi->get_lemma() =~ /^\p{IsUpper}/ ) {
-            $fi->set_form( ucfirst $fi->get_form() );
-        }
-        push @forms, $fi;
-        last if $limit and ( ++$found >= $limit );
+    # Prune @forms
+    if ($tag_regex ne '.*'){
+        $tag_regex = qr{$tag_regex};    #compile regex
+        @forms = grep {$_->get_tag() =~ $tag_regex} @forms;
     }
-    my @ret = (
-        ( grep { $_->get_tag =~ /-$/ } @forms ),
-        ( grep { $_->get_tag !~ /-$/ } @forms ),
-    );
-    log_debug( "FORMS_OF_LEMMA RETURN\t" . join( "\t", @ret ), 1 );
-    return @ret;
+
+    # Uppercase @forms
+    if (!$no_capitalization){
+        foreach my $fi (@forms){
+            if ( $fi->get_lemma() =~ /^\p{IsUpper}/ ) {
+                $fi->set_form( ucfirst $fi->get_form() );
+            }
+        }
+    }
+
+    # Sort @forms using a heuristic, so the more common forms go first.
+    # For speed, we should do this only when the user asks for it,
+    # but the legacy code does not use limit.
+    @forms = map {$_->[0]->set_count($_->[1]); $_->[0]}
+             sort {$b->[1] <=> $a->[1]}
+             map {[$_, _score_tag($_)]} @forms;
+        
+    # If asked to return only the N-best forms, delete the rest.    
+    splice @forms, $limit if $limit;
+
+    log_debug( "FORMS_OF_LEMMA RETURN\t" . join( "\t", @forms ), 1 );
+    return @forms;
+}
+
+# This implementation is a heap of hacks.
+# TODO: load corpus-based tag frequencies (and use these rules only as a fallback if at all).
+# Even better would be to integrate this into MorphoDiTa.
+sub _score_tag {
+    my ($form_info) = @_;
+    my $tag = $form_info->get_tag();
+    my $lemma = $form_info->get_lemma();
+    my $score = 0;
+    $score -= 100 if $tag !~ /-$/; # non-official
+    $score -= 50 if $tag =~ /^.[CYedhjkmqst]/; # strange subpos (transgressive etc.)
+    $score -= 50 if $tag =~ /^Vp.{5}2/; # enclitics with verbs ("udělals")
+    $score -= 20 if $tag =~ /^Vi/; # imperative
+    $score -= 20 if $tag =~ /^...D/; # dual
+    $score -= 20 if $tag =~ /^.{9}[23]/; # comparative & superlative
+    $score -= 10 if $tag =~ /^.{10}N/; # negative
+    $score -= 5 if  $tag =~ /^...P/; # plural
+    $score -= 2 if  $tag =~ /^.{4}[3567]/; # case I don't like:-)
+    #$score -= 1 if  $tag ne $lemma; # to distinguish e.g. "exkluzivní" and "exklusivní" which have the same tag and lemma
+    return $score;
 }
 
 # Note that this actually returns a random form (because the forms are not sorted).
 # This method makes it just easy to fallback from LanguageModel::MorphoLM to this class.
 sub best_form_of_lemma {
     my ( $self, $lemma, $tag_regex ) = @_;
-    my ($form_info) = $self->forms_of_lemma( $lemma, { tag_regex => $tag_regex } );
+    my ($form_info) = $self->forms_of_lemma( $lemma, { tag_regex => $tag_regex, limit=>1 } );
     return $form_info ? $form_info : undef;
 }
 
@@ -149,96 +178,6 @@ sub _guess_forms_of_prefixed {
     return join '|', map { $prefix . $_->get_form() . "\t" . $_->get_tag() } @forms;
 }
 
-sub _from_utf8 {
-    my ($string) = @_;
-    return $CzechMorpho::U2I->convert($string);
-}
-
-sub _to_utf8 {
-    my ($string) = @_;
-    $string = $CzechMorpho::I2U->convert($string);
-    Encode::_utf8_on($string);
-    return $string;
-}
-
-# returns lemmata in PDT style
-sub pdt_lemmata_for_plain_lemma {
-    my ( $self, $plain_lemma ) = @_;
-
-    # There is a bug in CzechMorpho --
-    # it uses pipe symbol (|) as a delimiter, but it does not escape it.
-    # (It expects, it cannot appear in other tokens than "|", but that's a matter of tokenization.)
-    # Since CzechMorpho is not at CPAN (but needs installation), we must hack it here.
-    $plain_lemma =~ s{\|}{%7C}g;
-
-    return map { $_->{lemma} } grep { $self->can_be_tag_of_lemma( $_->{tag} ) } $analyzer->analyze($plain_lemma);
-
-    #   this version crashed for the following lemmas: 'slovák', 'británie'
-    #
-    #    # We analyze the plain lemma as if it was a word form.
-    #    # Unfortunatelly, morpho_analyze_swig uses Latin2 encoding,
-    #    # so we convert it from and to utf8 on the fly.
-    #    #<<<
-    #    my @lemmata_and_tags =
-    #        split /\|/,                            # 4. string -> array
-    #        _to_utf8(                              # 3. latin2 -> utf8
-    #            CzechMorpho::morpho_analyze_swig(  # 2. analyze to string
-    #                _from_utf8($plain_lemma)       # 1. utf8 -> latin2
-    #            )
-    #        );
-    #    #>>>
-    #
-    #    if ( !@lemmata_and_tags ) {
-    #        return $plain_lemma;
-    #    }
-    #
-    #    # We return all the pdt-lemmata with "lemma-compatible" tags.
-    #    # E.g. $plain_lemma == 'pes';
-    #    # @lemmata_and_tags == (
-    #    #   "pes_^(zvíře)\tNNMS1-----A----",
-    #    #   "peso_^(měna_někt._jihoamer._zemí)\tNNNP2-----A----" );
-    #    # @pdt_lemmata == ('pes_^(zvíře)');
-    #    # ("peso" is not a good lemma because it has genitive in its tag.)
-    #    my @pdt_lemmata;
-    #    foreach my $lemma_and_tags (@lemmata_and_tags) {
-    #        my ( $pdt_lemma, $tags ) = _split_tags($lemma_and_tags);
-    #        if ( any { $self->can_be_tag_of_lemma($_) } split /\//, $tags ) {
-    #            $pdt_lemma =~ s{%7C}{|}g;
-    #            push( @pdt_lemmata, $pdt_lemma );
-    #        }
-    #    }
-    #
-    #    # If the compatibility check was too strict, try another heuristic:
-    #    # Is $plain_lemma a prefix of $pdt_lemma?
-    #    if ( !@pdt_lemmata ) {
-    #        foreach my $lemma_and_tags (@lemmata_and_tags) {
-    #            my ( $pdt_lemma, $tags ) = _split_tags($lemma_and_tags);
-    #            if ( $pdt_lemma =~ /^$plain_lemma($|[_-])/ ) {
-    #                push( @pdt_lemmata, $pdt_lemma );
-    #            }
-    #        }
-    #    }
-    #
-    #    return @pdt_lemmata;
-}
-
-sub can_be_tag_of_lemma {
-    my ( $self, $tag ) = @_;
-    my ( $pos, $subpos, $gender, $number, $case ) = ( $tag =~ /^(.)(.)(.)(.)(.)/ );
-
-    # Nouns must be in nominative (case=1) or special (case=X)
-    return 0 if $pos eq 'N' && $case =~ /[2-7]/;
-
-    # Lemmas are usually in singular, except pluralia tanta (dveře)
-    return 0 if $pos eq 'N' && $number ne 'S';
-
-    # Verbs must be in infinitive (subpos=f)
-    return 0 if $pos eq 'V' && $subpos ne 'f';
-
-    # All other tags can be lemmas (let's say, to make it robust)
-    return 1;
-}
-
 1;
 
 __END__
@@ -246,10 +185,6 @@ __END__
 =head1 NAME
 
 Treex::Tool::Lexicon::Generation::CS
-
-=head1 VERSION
-
-0.01
 
 =head1 SYNOPSIS
 
@@ -276,9 +211,15 @@ Treex::Tool::Lexicon::Generation::CS
 
 =head1 DESCRIPTION
 
-Wrapper for Jan Ptáček's wrapper for Jan Hajič's Czech morphology tools. :-0
+Wrapper for state-of-the-art Czech morphological analyzer and synthesizer MorphoDiTa
+by Milan Straka and Jana Straková.
 
-=cut
+=head1 AUTHOR
 
-# Copyright 2010 Martin Popel
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
