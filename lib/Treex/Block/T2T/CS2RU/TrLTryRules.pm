@@ -5,7 +5,7 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 Readonly my %QUICKFIX_TRANSLATION_OF => (
-    q{cs_lemma} => 'ru_lemma',
+    q{Rusko} => 'Россия',
 );
 
 sub process_tnode {
