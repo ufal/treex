@@ -50,7 +50,7 @@ sub forms_of_lemma {
     my $forms_tags = keys %{$lemma_tag_form{$lemma} || {}};
 
     if ($lemma_tag_form{$lemma}) {
-        foreach my $form_tag ( sort {$lemma_tag_form{$lemma}{$b} <=> $lemma_tag_form{$lemma}{$a}}
+        foreach my $form_tag ( sort {$lemma_tag_form{$lemma}{$b} <=> $lemma_tag_form{$lemma}{$a} or $a cmp $b}
                                    keys %{$lemma_tag_form{$lemma} } ) {
 
 
