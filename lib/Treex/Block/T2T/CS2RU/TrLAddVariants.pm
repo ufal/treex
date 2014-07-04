@@ -20,7 +20,9 @@ has model_dir => (
 has static_model => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'tlemma_cer.static.pls.slurp.gz',
+    #default => 'tlemma_cer.static.pls.slurp.gz', # By Natalka & Martin & Zdeněk
+    #default => 'tlemma_dic_for_treex_cer.static.pls.slurp.gz', # By Natalka
+    default => 'lemma_extracted.bigger.pls.slurp.gz',  # By Karel, the best of these three
 );
 
 my $combined_model;
