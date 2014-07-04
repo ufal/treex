@@ -565,6 +565,15 @@ sub process_document {
             my @nodelist = ();
             if ( defined $coref_gram ) {
                 push @nodelist, map { $src2tgt{'nodemap'}->{$_} } @$coref_gram;
+                # changing #Cor to appropriate param
+                if ($src_tnode->t_lemma eq '#Cor'){
+                  my $src_coref_gram_node = shift @$coref_gram;
+                  my $tgt_coref_gram_node = $src2tgt{'nodemap'}->{$src_coref_gram_node};
+                  my ($new_src_tlemma) = split('/', $tgt_coref_gram_node->t_lemma);
+                  print STDERR "$new_src_tlemma\n";
+                  print STDERR "$t_node\n";
+                  $t_node->set_attr('t_lemma', $new_src_tlemma);
+                }
             }
             if ( defined $coref_text ) {
                 push @nodelist, map { $src2tgt{'nodemap'}->{$_} } @$coref_text;
@@ -637,6 +646,11 @@ sub copy_subtree {
             my $added_node = $target_node->create_child();
             $added_node->set_attr('t_lemma', $varname."/".$verb_rules->{$source_tlemma}->{'add_lemma'});
             $added_node->wild->{'modifier'} = $verb_rules->{$source_tlemma}->{'add_modifier'};
+        }
+        
+        #markeing #Gen nodes for deletion
+        if ($source_tlemma eq '#Gen') {
+          $target_node->wild->{'special'} = 'Delete' ;
         }
 
         #Searching for specific rules to apply
