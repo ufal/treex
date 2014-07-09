@@ -668,7 +668,7 @@ sub copy_subtree {
                 if ($node_rule_id =~ /_DEL/){
                   print STDERR "Fixing $node_rule_id ";
                   $node_rule_id = $node_rule_id =~ s/\_DEL//; 
-                  print STDERR "with $node_rule_id\n";
+                  print STDERR "to $node_rule_id\n";
                   $target_node->wild->{'special'} = 'Delete';
                 }
                 # fixing the "w_word_01" or "w_word" to "word"
@@ -693,7 +693,7 @@ sub copy_subtree {
                       # if the source node has no modifier or "root" modifier, then copy modifier from rule node to target node and rehang it
                       # else if rule nodes' modifier is "root", then do nothing
                       # else output an error
-                      if ((!$source_node->wild->{'modifier'} || $source_node->wild->{'modifier'} eq 'root')) {
+                      if ((!$target_node->wild->{'modifier'} || $target_node->wild->{'modifier'} eq 'root')) {
                         # if rule node isn't root, copy modifier and rehang it
                         if ($rule_node->wild->{'modifier'} ne "root"){
                           $target_node->wild->{'modifier'} = $rule_node->wild->{'modifier'};
@@ -708,8 +708,8 @@ sub copy_subtree {
                         }
                       } else {
                         # warn of an error
-                        if (($rule_node->wild->{'modifier'} ne "root")  && ($source_node->wild->{'modifier'} ne $rule_node->wild->{'modifier'})){
-                          print "Node " . $source_node->id . " has 2 conflicting modifiers: " . $source_node->wild->{'modifier'} . " and " . $rule_node->wild->{'modifier'} . " from rule " . $query;
+                        if (($rule_node->wild->{'modifier'} ne "root")  && ($target_node->wild->{'modifier'} ne $rule_node->wild->{'modifier'})){
+                          print "Node " . $target_node->id . " has 2 conflicting modifiers: " . $target_node->wild->{'modifier'} . " and " . $rule_node->wild->{'modifier'} . " from rule " . $query;
                         }
                       }
                     }
