@@ -667,7 +667,7 @@ sub copy_subtree {
 	if ($source_node->wild->{'query_label'}) {
 	  foreach my $query (keys %{$source_node->wild->{'query_label'}}) {
             # if we have an active rule, disabled for now, cause we don't have applied rule disambiguator
-            if (1 || $active_rule_label ~~ @{$source_node->wild->{'query_label'}->{$query}}){
+            if ($active_rule_label ~~ @{$source_node->wild->{'query_label'}->{$query}}){
               if ($query =~ /^#?([^-]+)/) {
                 #print STDERR "Query $query \n";
                 #print STDERR "Active rule id $1\n";
@@ -702,10 +702,9 @@ sub copy_subtree {
                       # if the source node has no modifier or "root" modifier, then copy modifier from rule node to target node and rehang it
                       # else if rule nodes' modifier is "root", then do nothing
                       # else output an error
-                      $target_node->set_src_tnode($source_node);
-                      $target_node->set_t_lemma_origin('clone');
-
                       if ((!$target_node->wild->{'modifier'} || $target_node->wild->{'modifier'} eq 'root')) {
+                        $target_node->set_src_tnode($source_node);
+                        $target_node->set_t_lemma_origin('clone');
                         # if rule node isn't root, copy modifier and rehang it
                         if ($rule_node->wild->{'modifier'} ne "root"){
                           $target_node->wild->{'modifier'} = $rule_node->wild->{'modifier'};
@@ -789,7 +788,8 @@ sub make_default_modifier {
 
   # final options
   return "time" if $ftor =~ /^T/;
-  return "ARGm";
+  return $ftor;
+  #return "ARGm";
 }
 
 
