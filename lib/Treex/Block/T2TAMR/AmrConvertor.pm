@@ -527,11 +527,11 @@ sub process_document {
         last;
       }
       my ($running_num) = $rules_ids[$count] =~ /(\d+)/;
-      print STDERR "Current num $current_num\n";
+      #print STDERR "Current num $current_num\n";
       my $source_zone = $bundle->get_zone( $self->source_language, $self->source_selector );
       my $source_root = $source_zone->get_ttree;
       while ($rules_ids[$count] && ($current_num eq $running_num)) {
-        print STDERR "Mapping rule " . ($count + 1) . " to id " . $rules_ids[$count] . "\n";
+        #print STDERR "Mapping rule " . ($count + 1) . " to id " . $rules_ids[$count] . "\n";
         $rules2ttrees{$rules_ids[$count]} = $source_root;
         $count++;
         ($running_num) = $rules_ids[$count] =~ /(\d+)/;
@@ -539,7 +539,7 @@ sub process_document {
     }
 
     foreach my $bundle ( $document->get_bundles() ) {
-        print STDERR "Converting sentence ", $bundle->id(), "\n";
+        #print STDERR "Converting sentence ", $bundle->id(), "\n";
         $src2tgt{'varname_used'} = undef; # fresh namespace
         my $source_zone = $bundle->get_zone( $self->source_language, $self->source_selector );
         my $source_root = $source_zone->get_ttree;
@@ -557,6 +557,7 @@ sub process_document {
         my $target_zone = $bundle->get_zone( $self->language, $self->selector );
         my $target_root = $target_zone->get_ttree();
         foreach my $t_node ( $target_root->get_descendants ) {
+            print STDERR $t_node->t_lemma . "\n";
             my $src_tnode  = $t_node->src_tnode;
             next if !defined $src_tnode;
               # can happen for e.g. the generated polarity node
@@ -571,12 +572,20 @@ sub process_document {
                   my $tgt_coref_gram_node = $src2tgt{'nodemap'}->{$src_coref_gram_node};
                   my ($new_src_tlemma) = split('/', $tgt_coref_gram_node->t_lemma);
                   print STDERR "$new_src_tlemma\n";
-                  print STDERR "$t_node\n";
+                  #print STDERR "$t_node\n";
                   $t_node->set_attr('t_lemma', $new_src_tlemma);
                 }
             }
+
             if ( defined $coref_text ) {
                 push @nodelist, map { $src2tgt{'nodemap'}->{$_} } @$coref_text;
+                if ($src_tnode->t_lemma eq '#PersPron'){
+                      my $src_coref_text_node = shift @$coref_text;
+                      my $tgt_coref_text_node = $src2tgt{'nodemap'}->{$src_coref_text_node};
+                      my ($new_src_tlemma) = split('/', $tgt_coref_text_node->t_lemma);
+                      print STDERR "$new_src_tlemma\n";
+                      $t_node->set_attr('t_lemma', $new_src_tlemma);
+                }            
             }
             $t_node->set_deref_attr( 'coref_text.rf', \@nodelist )
               if 0< scalar(@nodelist);
@@ -595,8 +604,8 @@ sub process_document {
                 foreach my $child_node ($target_node->get_children){
                     $child_node->set_parent($parent_node);
                 }
-                print STDERR "Delete " . $target_node->t_lemma . "\n";
-                print STDERR "Modifier " . $target_node->wild->{'modifier'} . "\n";
+                #print STDERR "Delete " . $target_node->t_lemma . "\n";
+                #print STDERR "Modifier " . $target_node->wild->{'modifier'} . "\n";
                 $target_node->remove();
             }
         }
@@ -641,7 +650,7 @@ sub copy_subtree {
             } else {
                 $src2tgt->{'varname_used'}->{$varname} = 1;
             }
-            print STDERR "Added node " . $verb_rules->{$source_tlemma}->{'add_lemma'} . " for $source_tlemma\n";
+            #print STDERR "Added node " . $verb_rules->{$source_tlemma}->{'add_lemma'} . " for $source_tlemma\n";
             # adding new node with appropriate modifier
             my $added_node = $target_node->create_child();
             $added_node->set_attr('t_lemma', $varname."/".$verb_rules->{$source_tlemma}->{'add_lemma'});
@@ -660,39 +669,42 @@ sub copy_subtree {
             # if we have an active rule, disabled for now, cause we don't have applied rule disambiguator
             if (1 || $active_rule_label ~~ @{$source_node->wild->{'query_label'}->{$query}}){
               if ($query =~ /^#?([^-]+)/) {
-                print STDERR "Query $query \n";
-                print STDERR "Active rule id $1\n";
+                #print STDERR "Query $query \n";
+                #print STDERR "Active rule id $1\n";
                 my $active_rule_id = $1;
                 my $node_rule_id = ${$source_node->wild->{'query_label'}->{$query}}[0];
                 # if node rule id is marked with "_DEL", remove the mark from node rule id and mark the node for deletion
                 if ($node_rule_id =~ /_DEL/){
-                  print STDERR "Fixing $node_rule_id ";
+                  #print STDERR "Fixing $node_rule_id ";
                   $node_rule_id = $node_rule_id =~ s/\_DEL//; 
-                  print STDERR "to $node_rule_id\n";
+                  #print STDERR "to $node_rule_id\n";
                   $target_node->wild->{'special'} = 'Delete';
                 }
                 # fixing the "w_word_01" or "w_word" to "word"
                 if ($node_rule_id =~ /_/) {
-                  print STDERR "Strange node rule id $node_rule_id\n";
+                  #print STDERR "Strange node rule id $node_rule_id\n";
                   my @temp_array = split ('_', $node_rule_id);
                   if (defined $temp_array[1]) { 
                       $node_rule_id = $temp_array[1];
-                      print STDERR "New node rule id $node_rule_id\n";
+                      #print STDERR "New node rule id $node_rule_id\n";
                   } 
                 }
-                print STDERR "Applying rule-id $node_rule_id\n";
+                #print STDERR "Applying rule-id $node_rule_id\n";
                 # searching tamr rule trees for found rule
                 if (my $rule_tree = $rules2ttrees{$active_rule_id}) {
                   # searching for node with lemma corresponding to nodes rule-id
                   foreach my $rule_node ($rule_tree->get_descendants()){
                     # if we've found the node in tamr rule tree, which corresponds to our node
                     if ($rule_node->t_lemma =~ /$node_rule_id/i ) {
-                      print STDERR "Rule node id $node_rule_id is found in $active_rule_id, in the node " . $rule_node->t_lemma . "\n";
+                      #print STDERR "Rule node id $node_rule_id is found in $active_rule_id, in the node " . $rule_node->t_lemma . "\n";
                       $flag_found = 1;
                       # the logic is:
                       # if the source node has no modifier or "root" modifier, then copy modifier from rule node to target node and rehang it
                       # else if rule nodes' modifier is "root", then do nothing
                       # else output an error
+                      $target_node->set_src_tnode($source_node);
+                      $target_node->set_t_lemma_origin('clone');
+
                       if ((!$target_node->wild->{'modifier'} || $target_node->wild->{'modifier'} eq 'root')) {
                         # if rule node isn't root, copy modifier and rehang it
                         if ($rule_node->wild->{'modifier'} ne "root"){
@@ -709,7 +721,7 @@ sub copy_subtree {
                       } else {
                         # warn of an error
                         if (($rule_node->wild->{'modifier'} ne "root")  && ($target_node->wild->{'modifier'} ne $rule_node->wild->{'modifier'})){
-                          print "Node " . $target_node->id . " has 2 conflicting modifiers: " . $target_node->wild->{'modifier'} . " and " . $rule_node->wild->{'modifier'} . " from rule " . $query;
+                          print "Node " . $target_node->id . " has 2 conflicting modifiers: " . $target_node->wild->{'modifier'} . " and " . $rule_node->wild->{'modifier'} . " from rule " . $query . "\n";
                         }
                       }
                     }
@@ -724,8 +736,8 @@ sub copy_subtree {
             }
           }
         }
-        # if we didn't find any rule
-	if (!$flag_found) {
+        # if we didn't find any rule or modifier is empty
+	if (!$flag_found || !$target_node->wild->{'modifier'}) {
           # applying default rule
           # the original functor serves as 
           $target_node->wild->{'modifier'} = make_default_modifier($source_node);
