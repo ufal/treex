@@ -22,7 +22,7 @@ sub process_document {
             my $activequery = '';
             my $activequerynodescount = 0;
             foreach my $query (keys %{$node->wild->{'query_label'}}) {
-              if (!$active_rule_label ~~ @{$source_node->wild->{'query_label'}->{$query}}){
+              if ($active_rule_label !~~ @{$node->wild->{'query_label'}->{$query}}){
                 my $querynodescount = 1;
                 foreach my $temp_node ($root->get_descendants){
                   if ($temp_node ne $node && defined $temp_node->wild->{'query_label'}->{$query}){

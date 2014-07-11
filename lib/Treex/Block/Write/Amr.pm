@@ -15,7 +15,7 @@ has '+selector' => (
 
 sub process_ttree {
     my ( $self, $ttree ) = @_;
-
+    print { $self->_file_handle } $ttree->get_bundle()->get_zone($self->language, $self->selector)->sentence . "\n";
     foreach my $ttop ($ttree->get_children({ordered=>1})){ 
         print { $self->_file_handle } '(' . $ttop->t_lemma;
         foreach my $child ($ttop->get_children({ordered=>1})){
