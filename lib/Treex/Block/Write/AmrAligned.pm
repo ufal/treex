@@ -24,24 +24,26 @@ sub process_ttree {
     print  { $self->_file_handle } "# ::tok "; # tokenized
     print  { $self->_file_handle } join(' ', map{$_->form} $atree->get_descendants({ordered=>1})) . "\n";
 
+    # determine top AMR node 
+    # (only child of the tech. root / tech. root in case of more root children)
+    my @ttop_children = $ttree->get_children();
+    my $tamr_top = @ttop_children > 1 ? $ttree : $ttop_children[0];
+
     # determine the alignment to surface and print it
     my %spans2nodes;
-    my $child_no = 0;
-    foreach my $ttop ($ttree->get_children({ordered=>1})){
-        $self->_add_aligned_spans(\%spans2nodes, $ttop, $child_no);
-        $child_no++;
-    }
+    $self->_add_aligned_spans(\%spans2nodes, $tamr_top, 0); # tech. root won't get alignment
+    
     print { $self->_file_handle } "# ::alignments " . join(' ', map { $_ . '|' . $spans2nodes{$_} } keys %spans2nodes );
-    print  { $self->_file_handle } " ::annotator FakeAnnotator ::date 2013-09-26T04:27:51.715 ::editor AlignerTool v.03\n";
+    print { $self->_file_handle } " ::annotator FakeAnnotator ::date 2013-09-26T04:27:51.715 ::editor AlignerTool v.03\n";
     
     # print the AMR graph
-    foreach my $ttop ($ttree->get_children({ordered=>1})){ 
-        print { $self->_file_handle } '(' . $ttop->t_lemma;
-        foreach my $child ($ttop->get_children({ordered=>1})){
-            $self->_process_tnode($child, '    ');
-        }
-        print { $self->_file_handle } ")\n";
+    my $tamr_top_lemma = ($tamr_top->t_lemma // 'a99/and'); # add fake lemma 'and' to tech. root
+    $tamr_top_lemma =~ s/\// \/ /;
+    print { $self->_file_handle } '(', $tamr_top_lemma; 
+    foreach my $child ($tamr_top->get_children({ordered=>1})){
+        $self->_process_tnode($child, '    ');
     }
+    print { $self->_file_handle } ")\n\n"; # separate with two newlines
 }
 
 # collecting alignments AMR <-> surface (adding it all to a hash where keys = surface word spans,
@@ -75,19 +77,19 @@ sub _add_aligned_spans {
 sub _process_tnode {
     my ( $self, $tnode, $indent ) = @_;
     my $lemma = $tnode->get_attr('t_lemma');
-    $lemma =~ s/\// \/ /;
     if ($lemma) {
+      $lemma =~ s/\// \/ /;
       print { $self->_file_handle } "\n" . $indent;
       my $modifier = $tnode->wild->{'modifier'} ? $tnode->wild->{'modifier'} : $tnode->functor;
       if ($modifier && $modifier ne "root" && $indent ne "") {
          print { $self->_file_handle } ':' . $modifier;
       }
-      print { $self->_file_handle } " ("  . $lemma;
+      print { $self->_file_handle } ($lemma =~ /\// ? " (" : " "), $lemma;
     }
     foreach my $child ($tnode->get_children({ordered=>1})){
         $self->_process_tnode($child, $indent . '    ');
     }
-    print { $self->_file_handle } ")";
+    print { $self->_file_handle } ($lemma =~ /\// ? ")" : "");
 }
 
 
