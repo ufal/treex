@@ -22,6 +22,8 @@ has '+language'       => ( required => 1 );
 has '+selector'       => ( required => 1, isa => 'Str', default => 'amrClonedFromT' );
 has 'source_language' => ( is       => 'rw', isa => 'Str', lazy_build => 1 );
 has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
+#id strict_rules = no, script tries to apply all possible rules for each node
+has 'strict_rules' => => ( is       => 'ro', isa => 'Str', default => 'no' );
 
 # TODO: copy attributes in a cleverer way
 my @ATTRS_TO_COPY = qw(ord t_lemma functor);
@@ -554,14 +556,14 @@ sub process_document {
         my $target_zone = $bundle->get_or_create_zone( $self->language, $self->selector );
         my $target_root = $target_zone->create_ttree( { overwrite => 1 } );
 
-        copy_subtree( $source_root, $target_root, \%src2tgt, $self->verb_rules );
+        copy_subtree( $source_root, $target_root, \%src2tgt, $self->verb_rules, $self->strict_rules );
         $target_root->set_src_tnode($source_root);
     }
 
 }
 
 sub copy_subtree {
-    my ( $source_root, $target_root, $src2tgt, $verb_rules ) = @_;
+    my ( $source_root, $target_root, $src2tgt, $verb_rules, $strict_rules ) = @_;
 
     foreach my $source_node ( $source_root->get_children( { ordered => 1 } ) ) {
         my $target_node = $target_root->create_child();
@@ -614,11 +616,11 @@ sub copy_subtree {
 
         #Searching for specific rules to apply
         my $flag_found = 0;
-        if ( $source_node->wild->{'query_label'} ) {
+        if (0 && $source_node->wild->{'query_label'} ) {
             foreach my $query ( keys %{ $source_node->wild->{'query_label'} } ) {
 
                 # if we have an active rule, disabled for now, cause we don't have applied rule disambiguator
-                if ($active_rule_label ~~ @{ $source_node->wild->{'query_label'}->{$query} } ) {
+                if ( $strict_rules eq 'no' || $active_rule_label ~~ @{ $source_node->wild->{'query_label'}->{$query} } ) {
                     if ( $query =~ /^#?([^-]+)/ ) {
 
                         #print STDERR "Query $query \n";
@@ -726,7 +728,7 @@ sub copy_subtree {
             }
         }
 
-        copy_subtree( $source_node, $target_node, $src2tgt, $verb_rules );
+        copy_subtree( $source_node, $target_node, $src2tgt, $verb_rules, $strict_rules );
     }
 }
 

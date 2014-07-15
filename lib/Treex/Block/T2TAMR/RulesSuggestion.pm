@@ -36,7 +36,7 @@ sub process_document {
               }
             }
             if ($activequery ne ''){
-              print STDERR "Active query $activequery\n";
+              print "Active query $activequery\n";
               foreach my $temp_node ($root->get_descendants){
                 if (defined $temp_node->wild->{'query_label'}->{$activequery}){
                   push @{$temp_node->wild->{'query_label'}->{$activequery}}, $active_rule_label;
