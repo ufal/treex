@@ -618,13 +618,14 @@ sub copy_subtree {
             foreach my $query ( keys %{ $source_node->wild->{'query_label'} } ) {
 
                 # if we have an active rule, disabled for now, cause we don't have applied rule disambiguator
-                if ( $active_rule_label ~~ @{ $source_node->wild->{'query_label'}->{$query} } ) {
+                if ($active_rule_label ~~ @{ $source_node->wild->{'query_label'}->{$query} } ) {
                     if ( $query =~ /^#?([^-]+)/ ) {
 
                         #print STDERR "Query $query \n";
                         #print STDERR "Active rule id $1\n";
                         my $active_rule_id = $1;
                         my $node_rule_id   = ${ $source_node->wild->{'query_label'}->{$query} }[0];
+                        #print STDERR "Query $query, $source_tlemma: node-rule-id $node_rule_id\n";
 
                         # if node rule id is marked with "_DEL", remove the mark from node rule id and mark the node for deletion
                         if ( $node_rule_id =~ /_DEL/ ) {
@@ -633,7 +634,7 @@ sub copy_subtree {
                             $node_rule_id = $node_rule_id =~ s/\_DEL//;
 
                             #print STDERR "to $node_rule_id\n";
-                            $target_node->wild->{'special'} = 'Delete';
+                            $target_node->wild->{'special'} = 'Delete' if not defined $verb_rules->{$source_tlemma};
                         }
 
                         # fixing the "w_word_01" or "w_word" to "word"
