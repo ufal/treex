@@ -534,7 +534,7 @@ sub process_document {
         my ($running_num) = $rules_ids[$count] =~ /(\d+)/;
 
         #print STDERR "Current num $current_num\n";
-        my $source_zone = $bundle->get_zone( $self->source_language, $self->source_selector );
+        my $source_zone = $bundle->get_zone( 'en', $self->source_selector );
         my $source_root = $source_zone->get_ttree;
         while ( $rules_ids[$count] && ( $current_num eq $running_num ) ) {
 
@@ -616,7 +616,7 @@ sub copy_subtree {
 
         #Searching for specific rules to apply
         my $flag_found = 0;
-        if (0 && $source_node->wild->{'query_label'} ) {
+        if ($source_node->wild->{'query_label'} ) {
             foreach my $query ( keys %{ $source_node->wild->{'query_label'} } ) {
 
                 # if we have an active rule, disabled for now, cause we don't have applied rule disambiguator
