@@ -40,7 +40,8 @@ sub process_ttree {
         # select the topmost one
         my $ttop = min map { $_->get_depth() } @tnodes;
 
-        # create a new head AMR node, rehang everything under it
+        # create a new head AMR node + a new “name” node, rehang everything under them
+        # TODO: “name” node
         my $tparent = $ttop->get_parent();
         my $tne_head = $tparent->create_child();
         $tne_head->wild->{modifier} = $ttop->wild->{modifier};

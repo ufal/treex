@@ -30,7 +30,7 @@ sub process_tnode {
             my $src_coref_gram_node = shift @$coref_gram;
             my ($tgt_coref_gram_node) = $src_coref_gram_node->get_referencing_nodes('src_tnode.rf');
             my ($new_src_tlemma) = split( '/', $tgt_coref_gram_node->t_lemma );
-            print STDERR "$new_src_tlemma\n";
+            #print STDERR "$new_src_tlemma\n";
 
             #print STDERR "$tnode\n";
             $tnode->set_attr( 't_lemma', $new_src_tlemma );
