@@ -1,19 +1,10 @@
 package Treex::Block::Write::AmrAligned;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block::Write::BaseTextWriter';
+extends 'Treex::Block::Write::Amr';
 
-has '+extension' => ( default => '.amr' );
 
-has '+language' => (
-    isa        => 'Maybe[Str]'
-);
-
-has '+selector' => (
-    isa        => 'Maybe[Str]'
-);
-
-sub process_ttree {
+override 'process_ttree' => sub {
     my ( $self, $ttree ) = @_;
 
     my ($src_ttree) = $ttree->src_tnode(); # the source t-ttree
@@ -35,16 +26,9 @@ sub process_ttree {
     
     print { $self->_file_handle } "# ::alignments " . join(' ', map { $_ . '|' . $spans2nodes{$_} } keys %spans2nodes );
     print { $self->_file_handle } " ::annotator FakeAnnotator ::date 2013-09-26T04:27:51.715 ::editor AlignerTool v.03\n";
-    
-    # print the AMR graph
-    my $tamr_top_lemma = ($tamr_top->t_lemma // 'a99/and'); # add fake lemma 'and' to tech. root
-    $tamr_top_lemma =~ s/\// \/ /;
-    print { $self->_file_handle } '(', $tamr_top_lemma; 
-    foreach my $child ($tamr_top->get_children({ordered=>1})){
-        $self->_process_tnode($child, '    ');
-    }
-    print { $self->_file_handle } ")\n\n"; # separate with two newlines
-}
+
+    $self->_print_ttree($tamr_top);    
+};
 
 # collecting alignments AMR <-> surface (adding it all to a hash where keys = surface word spans,
 # values = AMR nodes)
@@ -74,24 +58,6 @@ sub _add_aligned_spans {
     return;
 }
 
-sub _process_tnode {
-    my ( $self, $tnode, $indent ) = @_;
-    my $lemma = $tnode->get_attr('t_lemma');
-    if ($lemma) {
-      $lemma =~ s/\// \/ /;
-      print { $self->_file_handle } "\n" . $indent;
-      my $modifier = $tnode->wild->{'modifier'} ? $tnode->wild->{'modifier'} : $tnode->functor;
-      if ($modifier && $modifier ne "root" && $indent ne "") {
-         print { $self->_file_handle } ':' . $modifier;
-      }
-      print { $self->_file_handle } ($lemma =~ /\// ? " (" : " "), $lemma;
-    }
-    foreach my $child ($tnode->get_children({ordered=>1})){
-        $self->_process_tnode($child, $indent . '    ');
-    }
-    print { $self->_file_handle } ($lemma =~ /\// ? ")" : "");
-}
-
 
 1;
 
@@ -99,11 +65,11 @@ __END__
 
 =head1 NAME
 
-Treex::Block::Write::Amr
+Treex::Block::Write::AmrAligned
 
 =head1 DESCRIPTION
 
-Document writer for amr-like format.
+Document writer for amr-like format, with alignments
 
 =head1 ATTRIBUTES
 
@@ -121,14 +87,9 @@ Selector of tree
 
 =back
 
-=head1 METHODS
-
-=over
-
-=back
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

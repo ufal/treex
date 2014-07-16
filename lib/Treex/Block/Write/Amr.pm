@@ -15,32 +15,48 @@ has '+selector' => (
 
 sub process_ttree {
     my ( $self, $ttree ) = @_;
-    print { $self->_file_handle } $ttree->get_bundle()->get_zone($self->language, $self->selector)->sentence . "\n";
-    foreach my $ttop ($ttree->get_children({ordered=>1})){ 
-        print { $self->_file_handle } '(' . $ttop->t_lemma;
-        foreach my $child ($ttop->get_children({ordered=>1})){
-            $self->_process_tnode($child, '    ');
-        }
-        print { $self->_file_handle } ")\n";
-    }
+    print { $self->_file_handle } ($ttree->get_zone()->sentence // '') . "\n";
+
+    # determine top AMR node 
+    # (only child of the tech. root / tech. root in case of more root children)
+    my @ttop_children = $ttree->get_children();
+    my $tamr_top = @ttop_children > 1 ? $ttree : $ttop_children[0];
+
+    $self->_print_ttree($tamr_top); 
 }
 
+# Prints one AMR-like tree (given its top t-node, which is either a technical root
+# if it has more children, or the only child of the technical root)
+sub _print_ttree {
+    my ( $self, $tamr_top ) = @_;
+
+    # print the AMR graph
+    my $tamr_top_lemma = ($tamr_top->t_lemma // 'a99/and'); # add fake lemma 'and' to tech. root
+    $tamr_top_lemma =~ s/\// \/ /;
+    print { $self->_file_handle } '(', $tamr_top_lemma; 
+    foreach my $child ($tamr_top->get_children({ordered=>1})){
+        $self->_process_tnode($child, '    ');
+    }
+    print { $self->_file_handle } ")\n\n"; # separate with two newlines
+}
+
+# Prints one AMR-like node.
 sub _process_tnode {
     my ( $self, $tnode, $indent ) = @_;
     my $lemma = $tnode->get_attr('t_lemma');
-    $lemma =~ s/\// \/ /;
     if ($lemma) {
+      $lemma =~ s/\// \/ /;
       print { $self->_file_handle } "\n" . $indent;
       my $modifier = $tnode->wild->{'modifier'} ? $tnode->wild->{'modifier'} : $tnode->functor;
       if ($modifier && $modifier ne "root" && $indent ne "") {
          print { $self->_file_handle } ':' . $modifier;
       }
-      print { $self->_file_handle } " ("  . $lemma;
+      print { $self->_file_handle } ($lemma =~ /\// ? " (" : " "), $lemma;
     }
     foreach my $child ($tnode->get_children({ordered=>1})){
         $self->_process_tnode($child, $indent . '    ');
     }
-    print { $self->_file_handle } ")";
+    print { $self->_file_handle } ($lemma =~ /\// ? ")" : "");
 }
 
 
@@ -72,14 +88,9 @@ Selector of tree
 
 =back
 
-=head1 METHODS
-
-=over
-
-=back
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
