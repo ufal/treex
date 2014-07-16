@@ -26,6 +26,7 @@ sub process_zone
     my $root = $self->SUPER::process_zone($zone);
     $self->change_wrong_puctuation_root($root);
     $self->change_quotation_predicate_into_obj($root);
+    $self->check_afuns($root);
 }
 
 #------------------------------------------------------------------------------
