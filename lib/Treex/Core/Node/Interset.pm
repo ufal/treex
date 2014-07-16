@@ -77,7 +77,7 @@ sub set_iset{
         log_fatal "Odd parameters for 'set_iset'" if @_%2;
         @assignments = @_;;
     }
-    return $self->iset->multiset(@assignments);
+    return $self->iset->add(@assignments);
 }
 
 #------------------------------------------------------------------------------
@@ -94,11 +94,11 @@ sub get_iset{
     my $value = $self->get_attr("iset/$feature");
     # TODO: convert arrayref to string, e.g. "fem|neut"
     return $value if defined $value;
-    
+
     # Check valid feature name only when the feature is missing.
     # TODO: Lingua::Interset::FeatureStructure::set should check for valid feature names.
     if (!Lingua::Interset::FeatureStructure::feature_valid($feature)){
-    
+
         # TODO: convert all Treex code to Interset 2.0, so the next line is not needed.
         #if ($feature ne 'subpos'){
             log_warn("Querying unknown Interset feature $feature");
