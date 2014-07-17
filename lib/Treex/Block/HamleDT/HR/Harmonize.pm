@@ -9,10 +9,9 @@ has iset_driver =>
     is            => 'ro',
     isa           => 'Str',
     required      => 1,
-    default       => 'sl::conll',
+    default       => 'hr::multext',
     documentation => 'Which interset driver should be used to decode tags in this treebank? '.
-                     'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
-                     'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
+                     'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
 #------------------------------------------------------------------------------
@@ -27,6 +26,21 @@ sub process_zone
     $self->change_wrong_puctuation_root($root);
     $self->change_quotation_predicate_into_obj($root);
     $self->check_afuns($root);
+}
+
+#------------------------------------------------------------------------------
+# Different source treebanks may use different attributes to store information
+# needed by Interset drivers to decode the Interset feature values. By default,
+# the CoNLL 2006 fields CPOS, POS and FEAT are concatenated and used as the
+# input tag. If the morphosyntactic information is stored elsewhere (e.g. in
+# the tag attribute), the Harmonize block of the respective treebank should
+# redefine this method. Note that even CoNLL 2009 differs from CoNLL 2006.
+#------------------------------------------------------------------------------
+sub get_input_tag_for_interset
+{
+    my $self   = shift;
+    my $node   = shift;
+    return $node->tag();
 }
 
 #------------------------------------------------------------------------------

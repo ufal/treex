@@ -3,10 +3,9 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Core::Coordination;
 use Treex::Core::Cloud;
+use Lingua::Interset qw(decode encode);
 use utf8;
 extends 'Treex::Core::Block';
-use tagset::common;
-use tagset::cs::pdt;
 
 has iset_driver =>
 (
@@ -15,8 +14,7 @@ has iset_driver =>
     required      => 1,
     documentation => 'Which interset driver should be used to decode tags in this treebank? '.
                      'The default value must be set in blocks derived from this block. '.
-                     'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
-                     'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
+                     'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
 
@@ -118,11 +116,9 @@ sub convert_tag
     my $self   = shift;
     my $node   = shift;
     my $driver = $self->iset_driver();
-    # Current tag is probably just a copy of conll_pos.
-    # We are about to replace it by a 15-character string fitting the PDT tagset.
     my $src_tag = $self->get_input_tag_for_interset($node);
-    my $f = tagset::common::decode($driver, $src_tag);
-    log_fatal "Could not decode '$src_tag' with '$driver' Interset driver" if !defined $f;
+    my $f = decode($driver, $src_tag);
+    log_fatal("Could not decode '$src_tag' with '$driver' Interset driver") if(!defined($f));
     $node->set_iset($f);
 }
 
@@ -139,8 +135,9 @@ sub set_pdt_tag
 {
     my $self   = shift;
     my $node   = shift;
-    my $f = $node->get_iset_structure();
-    my $pdt_tag = tagset::cs::pdt::encode($f, 1);
+    my $f = $node->iset();
+    log_fatal("Undefined interset feature structure") if(!defined($f));
+    my $pdt_tag = encode('cs::pdt', $f);
     $node->set_tag($pdt_tag);
 }
 
