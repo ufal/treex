@@ -23,8 +23,6 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
-    $self->change_wrong_puctuation_root($root);
-    $self->change_quotation_predicate_into_obj($root);
     $self->check_afuns($root);
 }
 
@@ -56,112 +54,81 @@ sub deprel_to_afun
     {
         my $deprel = $node->conll_deprel();
         my $afun   = $deprel;
-        # combined afuns (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
-        if ( $afun =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/ )
+        # The syntactic tagset of SETimes.HR has been apparently influenced by PDT.
+        # For most part it should suffice to rename the tags (or even leave them as they are).
+        if($deprel eq 'Ap')
         {
-            $afun = 'Atr';
+            $afun = 'Apposition';
         }
-        # There are a few nodes wrongly labeled as Coord. Fix them.
-        # We must do it now, before SUPER->restructure_coordination() starts.
-        # And also before we try to reconstruct members of coordination (comma/Coord must become comma/AuxX where appropriate).
-        if($afun eq 'Coord')
+        # Rather than the verbal attribute (doplnìk) of PDT, this seems to apply to infinitives attached to modal verbs.
+        # Those would be labeled 'Obj' in PDT.
+        # Example (Croatian and Czech with PDT annotation):
+        # kažu/Pred da/Sub mogu/Pred iskoristiti/Atv
+        # øíkají/Pred že/AuxC mohou/Obj využít/Obj
+        # they-say that they-can exploit
+        elsif($deprel eq 'Atv')
         {
-            my @children = $node->children();
-            if($node->form() eq ',' && $node->is_leaf())
+            ###!!! Obj
+        }
+        # Reflexive pronoun/particle 'se', attached to verb.
+        # Negative particle 'ne', attached to verb.
+        # Auxiliary verb, e.g. 'sam' in 'Nadao sam se da' (Doufal jsem, že).
+        elsif($deprel eq 'Aux')
+        {
+            ###!!! AuxV AuxT AuxR Adv
+            if($node->lemma() eq 'biti')
+            {
+                $afun = 'AuxV';
+            }
+            elsif($node->lemma() eq 'sebe')
+            {
+                $afun = 'AuxT';
+            }
+        }
+        elsif($deprel eq 'Co')
+        {
+            $afun = 'Coord';
+            $node->wild()->{coordinator} = 1;
+            ###!!! We must reconstruct conjuncts, they are not marked.
+        }
+        elsif($deprel eq 'Elp')
+        {
+            $afun = 'ExD';
+        }
+        # Oth can be AuxZ:
+        # barem na papiru = alespoò na papíøe
+        # Also subordinating conjunction attached as a leaf:
+        # izgleda kao odlièna ideja = vypadá jako skvìlý nápad
+        # Also adverbial:
+        # desetljeæe kasnije/Oth = a decade later
+        # Also decomposed complex preposition (001#22):
+        # s obzirom da = s ohledem na to, že
+        elsif($deprel eq 'Oth')
+        {
+            ###!!! AuxZ Coord
+        }
+        elsif($deprel eq 'Prep')
+        {
+            $afun = 'AuxP';
+        }
+        elsif($deprel eq 'Punc')
+        {
+            if($node->form() eq ',')
             {
                 $afun = 'AuxX';
             }
-            elsif($node->form() eq 'In' && $node->is_leaf() && $node->parent()->is_root())
+            else
             {
-                # In theory there could be more than one verb but we are addressing a single known annotation error here.
-                my $verb = $node->get_right_neighbor();
-                if(defined($verb) && $verb->get_iset('pos') eq 'verb')
-                {
-                    $verb->set_parent($node);
-                    $verb->set_is_member(1);
-                }
-            }
-            # Pa vendar - !
-            # And yet - !
-            elsif(lc($node->form()) eq 'pa' && $node->parent()->is_root() &&
-                  (
-                      $node->is_leaf() ||
-                      scalar(@children)==2 && lc($children[0]->form()) eq 'vendar' && $children[1]->get_iset('pos') ne 'verb'
-                  ))
-            {
-                $afun = 'ExD';
+                $afun = 'AuxG';
             }
         }
-        # Unlike the CoNLL conversion of the Czech PDT 2.0, the Slovenes don't mark coordination members.
-        # (They do in their original data format but the information has not been ported to CoNLL!)
-        # I suspect (but I am not sure) that they always attach coordination modifiers to a member,
-        # so there are no shared modifiers and all children of Coord are members. Let's start with this hypothesis.
-        # We cannot query parent's afun because it may not have been copied from conll_deprel yet.
-        my $pdeprel = $node->parent()->conll_deprel();
-        $pdeprel = '' if ( !defined($pdeprel) );
-        if ($pdeprel =~ m/^(Coord|Apos)$/
-            &&
-            $afun !~ m/^(Aux[GKXY])$/
-            )
+        elsif($deprel eq 'Sub')
         {
-            $node->set_is_member(1);
+            $afun = 'AuxC';
         }
         # Set the (possibly changed) afun back to the node.
         $node->set_afun($afun);
     }
-}
-
-#------------------------------------------------------------------------------
-# For some reason, punctuation right before coordinations are not dependent
-# on the conjunction, but on the very root of the tree. I will make sure they
-# are dependent correctly on the following word, which is the conjunction.
-#------------------------------------------------------------------------------
-sub change_wrong_puctuation_root
-{
-    my $self = shift;
-    my $root = shift;
-    my @children = $root->get_children();
-    if (scalar @children>2)
-    {
-        # I am not taking the last one
-        for my $child (@children[0..$#children-1])
-        {
-            if ($child->afun() =~ /^Aux[XG]$/ && $child->is_leaf())
-            {
-                my $conjunction = $child->get_next_node();
-                if (defined($conjunction) && $conjunction->get_iset('pos') eq 'conj')
-                {
-                    $child->set_parent($conjunction);
-                }
-            }
-        }
-    }
-}
-
-#------------------------------------------------------------------------------
-# Quotations should have Obj as predicate, but here, they have Adj. I have to
-# switch them.
-#------------------------------------------------------------------------------
-sub change_quotation_predicate_into_obj
-{
-	my $self = shift;
-	my $root = shift;
-	my @nodes = $root->get_descendants();
-	for my $node (@nodes)
-    {
-		my @children = $node->get_children();
-		my $has_quotation_dependent = 0;
-		for my $child (@children)
-        {
-			if ($child->form eq q{"})
-            {
-				if ($node->afun() eq "Adv")
-                {
-					$node->set_afun("Obj");
-				}
-			}
-		}
-	}
 }
 
 
@@ -175,13 +142,13 @@ sub change_quotation_predicate_into_obj
 Converts SETimes.HR (Croatian) trees from their original annotation style
 to the style of HamleDT (Prague).
 
-###!!!
-The structure of the trees should already
-adhere to the PDT guidelines because SDT has been modeled after PDT. Some
-minor adjustments to the analytical functions may be needed while porting
-them from the conll/deprel attribute to afun. Morphological tags will be
-decoded into Interset and converted to the 15-character positional tags
-of PDT.
+The structure of the trees is apparently inspired by the PDT guidelines and
+it should not require much effort to adjust it. Some syntactic tags (dependency
+relation labels, analytical functions) have different names or have been
+merged. This block will rename them back.
+
+Morphological tags will be decoded into Interset and also converted to the
+15-character positional tags of PDT.
 
 =back
 
