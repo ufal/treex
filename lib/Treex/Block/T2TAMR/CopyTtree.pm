@@ -11,7 +11,7 @@ has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
 has 'modifier_source' => ( is => 'ro', 'isa' => 'Str', default => 'functor' );
 
 # TODO: copy attributes in a cleverer way
-my @ATTRS_TO_COPY = qw(ord is_member);
+my @ATTRS_TO_COPY = qw(ord);
 
 sub _build_source_selector {
     my ($self) = @_;
@@ -62,7 +62,7 @@ sub copy_subtree {
         $target_node->wild->{modifier} = $self->modifier_source eq 'formeme' ? $source_node->formeme : $source_node->functor;
 
         # creating AMR-style lemma
-        $target_node->set_t_lemma( _create_amr_lemma($source_node->t_lemma, $used_vars) );
+        $target_node->set_t_lemma( create_amr_lemma($source_node->t_lemma, $used_vars) );
         $target_node->set_src_tnode($source_node);
         $target_node->set_t_lemma_origin('t2tamr');
 
@@ -72,7 +72,7 @@ sub copy_subtree {
     }
 }
 
-sub _create_amr_lemma {
+sub create_amr_lemma {
     my ( $t_lemma, $used_vars ) = @_;
 
     my $var_letter = Treex::Block::T2TAMR::ApplyRules::firstletter($t_lemma);

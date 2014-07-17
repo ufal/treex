@@ -2,6 +2,7 @@ package Treex::Block::T2TAMR::FixNamedEntities;
 
 use Moose;
 use Treex::Core::Common;
+use Treex::Block::T2TAMR::CopyTtree;
 
 extends 'Treex::Core::Block';
 
@@ -22,6 +23,7 @@ sub process_ttree {
     my $used_vars = $self->_check_used_vars($troot);
 
     # get top-level NEs (skip sub-NEs embedded in them, note that this embedding is not reflected in the n-tree shape)
+    # TODO this needs fixing, everything is now a single NE ?!
     my %nodes_aspans = map { $_->id => [ $_->get_anodes ] } $nroot->get_descendants();
     my (@nnodes) = grep {
         my $id = $_->id;
@@ -38,21 +40,31 @@ sub process_ttree {
                 map { $_->get_anodes() } 
                 @nnodes;
         # select the topmost one
-        my $ttop = min map { $_->get_depth() } @tnodes;
+        my %depth_to_node = map { $_->get_depth() => $_ } @tnodes;
+        my $min_depth = min keys %depth_to_node;
+        my $ttop = $depth_to_node{$min_depth};
 
-        # create a new head AMR node + a new “name” node, rehang everything under them
-        # TODO: “name” node
+        # create a new NE head AMR node + a new “name” node, rehang everything under them
         my $tparent = $ttop->get_parent();
         my $tne_head = $tparent->create_child();
         $tne_head->wild->{modifier} = $ttop->wild->{modifier};
         $tne_head->set_functor( $ttop->functor );
-        $tne_head->set_tlemma( $self->_create_lemma( $nnode->ne_type, $used_vars )  );
+        $tne_head->set_t_lemma( $self->_create_lemma( $nnode->ne_type, $used_vars )  );
         $tne_head->shift_before_node($ttop);
+        my $tne_name = $tne_head->create_child();
+        $tne_name->wild->{modifier} = 'name';
+        $tne_name->set_t_lemma( Treex::Block::T2TAMR::CopyTtree::create_amr_lemma( 'name', $used_vars ) );
+        $tne_name->shift_after_node($tne_head);
         
+        # change the individual NE element nodes to constants with modifier opX
+        # + rehang their children under the NE head
         my $order = 1;
         map { 
-            $_->set_parent($tne_head); 
-            $_->wild->{modifier} = 'op' . ($order++); 
+            $_->set_parent($tne_name); 
+            $_->wild->{modifier} = 'op' . ($order++);
+            my $lemma = $_->t_lemma;
+            $lemma =~ s/.*\///;
+            $_->set_t_lemma('"' . $lemma . '"');
             map { $_->set_parent($tne_head) } $_->get_children();
         } @tnodes;
     }
@@ -75,8 +87,8 @@ sub _check_used_vars {
     my ( $self, $troot ) = @_;
     my %used = ();
     foreach my $tnode ($troot->get_descendants()){
-        my ($var, $number) = ($tnode->t_lemma =~ /^([a-z]+)([0-9]+)/);
-        $used{$var} = max( $used{$var} // 0, $number );
+        my ($var, $number) = ($tnode->t_lemma =~ /^([a-zX])([0-9]*)/);
+        $used{$var} = max( $used{$var} // 0, ($number || 1) );
     }
     return \%used;
 }
@@ -102,11 +114,7 @@ sub _create_lemma {
     my ( $self, $ne_type, $used_vars ) = @_;
 
     my $word_id = $NE_2_WORD->{$ne_type} // $NE_2_WORD->{substr $ne_type, 0, 1};
-    my $var_letter = substr $word_id, 0, 1;
-    my $var_no = $used_vars->{$var_letter} // 0;
-    $var_no++;
-    $used_vars->{$var_letter} = $var_no;
-    return $var_letter . ($var_no > 1 ? $var_no : '') . '/' . $word_id;
+    return Treex::Block::T2TAMR::CopyTtree::create_amr_lemma($word_id, $used_vars); 
 }
 
 
