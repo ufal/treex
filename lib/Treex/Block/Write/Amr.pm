@@ -20,6 +20,7 @@ sub process_ttree {
     # determine top AMR node 
     # (only child of the tech. root / tech. root in case of more root children)
     my @ttop_children = $ttree->get_children();
+    return if (!@ttop_children); # skip empty t-trees (TODO handle them somehow?)
     my $tamr_top = @ttop_children > 1 ? $ttree : $ttop_children[0];
 
     $self->_print_ttree($tamr_top); 
