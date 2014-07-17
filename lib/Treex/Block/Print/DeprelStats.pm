@@ -5,7 +5,7 @@ extends 'Treex::Block::Write::BaseTextWriter';
 
 sub build_language { return log_fatal "Parameter 'language' must be given"; }
 
-has attribute  => ( is => 'rw', default => 'conll_deprel' );
+has attribute  => ( is => 'rw', default => 'conll/deprel' );
 has _deprelset => ( is => 'ro', default => sub { {} } );
 has _deprelex  => ( is => 'ro', default => sub { {} } );
 
