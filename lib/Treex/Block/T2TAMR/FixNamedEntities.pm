@@ -23,7 +23,6 @@ sub process_ttree {
     my $used_vars = $self->_check_used_vars($troot);
 
     # get top-level NEs (skip sub-NEs embedded in them, note that this embedding is not reflected in the n-tree shape)
-    # TODO this needs fixing, everything is now a single NE ?!
     my %nodes_aspans = map { $_->id => [ $_->get_anodes ] } $nroot->get_descendants();
     my (@nnodes) = grep {
         my $id = $_->id;
@@ -37,8 +36,7 @@ sub process_ttree {
                 sort { $a->ord <=> $b->ord }
                 map { $_->get_referencing_nodes( 'src_tnode.rf', $self->language, $self->selector ) }
                 map { $_->get_referencing_nodes('a/lex.rf') } 
-                map { $_->get_anodes() } 
-                @nnodes;
+                $nnode->get_anodes();
         # select the topmost one
         my %depth_to_node = map { $_->get_depth() => $_ } @tnodes;
         my $min_depth = min keys %depth_to_node;
@@ -55,18 +53,23 @@ sub process_ttree {
         $tne_name->wild->{modifier} = 'name';
         $tne_name->set_t_lemma( Treex::Block::T2TAMR::CopyTtree::create_amr_lemma( 'name', $used_vars ) );
         $tne_name->shift_after_node($tne_head);
-        
-        # change the individual NE element nodes to constants with modifier opX
-        # + rehang their children under the NE head
+       
+        # update all original t-nodes belonging to the named entity
         my $order = 1;
-        map { 
-            $_->set_parent($tne_name); 
-            $_->wild->{modifier} = 'op' . ($order++);
-            my $lemma = $_->t_lemma;
+        foreach my $tnode (@tnodes){
+            # rehang the individual NE element nodes under NE 'name' node
+            $tnode->set_parent($tne_name); 
+            # change them to constants with modifier opX
+            $tnode->wild->{modifier} = 'op' . ($order++);
+            my $lemma = $tnode->t_lemma;
             $lemma =~ s/.*\///;
-            $_->set_t_lemma('"' . $lemma . '"');
-            map { $_->set_parent($tne_head) } $_->get_children();
-        } @tnodes;
+            $tnode->set_t_lemma('"' . $lemma . '"');
+            # rehang their children under the NE head
+            map { $_->set_parent($tne_head) } $tnode->get_children();
+            # redirect coreference to NE head
+            map { $_->remove_coref_nodes($tnode); $_->add_coref_gram_nodes($tne_head); } $tnode->get_referencing_nodes('coref_gram.rf');
+            map { $_->remove_coref_nodes($tnode); $_->add_coref_text_nodes($tne_head); } $tnode->get_referencing_nodes('coref_text.rf');
+        }
     }
 
     return;
