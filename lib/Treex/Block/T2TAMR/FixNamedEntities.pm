@@ -15,7 +15,7 @@ sub process_ttree {
     my ( $self, $troot ) =  @_;
 
     my $src_troot = $troot->src_tnode;
-    return if (!defined $src_troot);
+    return if (!defined $src_troot or !$src_troot->get_zone()->has_ntree());
     my $nroot = $src_troot->get_zone()->get_ntree();
     return if (!defined $nroot);
 
