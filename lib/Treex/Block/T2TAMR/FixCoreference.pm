@@ -6,7 +6,7 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has '+language'       => ( required => 1 );
-has '+selector'       => ( isa => 'Str', default => 'amrClonedFromT' );
+has '+selector'       => ( isa => 'Str', default => 'amrConvertedFromT' );
 
 
 sub process_tnode {
@@ -26,14 +26,16 @@ sub process_tnode {
         push @nodelist, map { $_->get_referencing_nodes('src_tnode.rf') } @$coref_gram;
 
         # changing #Cor to appropriate param
-        if ( $src_tnode->t_lemma eq '#Cor' ) {
+        if ( $src_tnode->t_lemma eq '#Cor') {
             my $src_coref_gram_node = shift @$coref_gram;
-            my ($tgt_coref_gram_node) = $src_coref_gram_node->get_referencing_nodes('src_tnode.rf');
-            my ($new_src_tlemma) = split( '/', $tgt_coref_gram_node->t_lemma );
-            #print STDERR "$new_src_tlemma\n";
+            if ($src_coref_gram_node->get_root eq $src_tnode->get_root){
+              my ($tgt_coref_gram_node) = $src_coref_gram_node->get_referencing_nodes('src_tnode.rf');
+              my ($new_src_tlemma) = split( '/', $tgt_coref_gram_node->t_lemma );
+              #print STDERR "$new_src_tlemma\n";
 
-            #print STDERR "$tnode\n";
-            $tnode->set_attr( 't_lemma', $new_src_tlemma );
+              #print STDERR "$tnode\n";
+              $tnode->set_attr( 't_lemma', $new_src_tlemma );
+          }
         }
     }
 
@@ -41,11 +43,13 @@ sub process_tnode {
         push @nodelist, map { $_->get_referencing_nodes('src_tnode.rf') } @$coref_text;
         if ( $src_tnode->t_lemma eq '#PersPron' ) {
             my $src_coref_text_node = shift @$coref_text;
-            my ($tgt_coref_text_node) = $src_coref_text_node->get_referencing_nodes('src_tnode.rf');
-            my ($new_src_tlemma) = split( '/', $tgt_coref_text_node->t_lemma );
-            
-            #print STDERR "$new_src_tlemma\n";
-            $tnode->set_attr( 't_lemma', $new_src_tlemma );
+            if ($src_coref_gram_node->get_root eq $src_tnode->get_root){
+              my ($tgt_coref_text_node) = $src_coref_text_node->get_referencing_nodes('src_tnode.rf');
+              my ($new_src_tlemma) = split( '/', $tgt_coref_text_node->t_lemma );
+              
+              #print STDERR "$new_src_tlemma\n";
+              $tnode->set_attr( 't_lemma', $new_src_tlemma );
+            }
         }
     }
     
