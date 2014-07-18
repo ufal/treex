@@ -37,6 +37,10 @@ sub process_ttree {
                 map { $_->get_referencing_nodes( 'src_tnode.rf', $self->language, $self->selector ) }
                 map { $_->get_referencing_nodes('a/lex.rf') } 
                 $nnode->get_anodes();
+        
+        # skip weird cases where there are no t-nodes corresponding to the NE
+        next if (!@tnodes);
+
         # select the topmost one
         my %depth_to_node = map { $_->get_depth() => $_ } @tnodes;
         my $min_depth = min keys %depth_to_node;
