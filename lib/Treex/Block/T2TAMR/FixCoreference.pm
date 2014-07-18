@@ -43,7 +43,7 @@ sub process_tnode {
         push @nodelist, map { $_->get_referencing_nodes('src_tnode.rf') } @$coref_text;
         if ( $src_tnode->t_lemma eq '#PersPron' ) {
             my $src_coref_text_node = shift @$coref_text;
-            if ($src_coref_gram_node->get_root eq $src_tnode->get_root){
+            if ($src_coref_text_node->get_root eq $src_tnode->get_root){
               my ($tgt_coref_text_node) = $src_coref_text_node->get_referencing_nodes('src_tnode.rf');
               my ($new_src_tlemma) = split( '/', $tgt_coref_text_node->t_lemma );
               
