@@ -47,17 +47,28 @@ sub fix {
 
 1;
 
-=over
+=pod
 
-=item Treex::Block::A2A::CS::FixOf
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Block::A2A::CS::FixOf
+
+=head1 DESCRIPTION
 
 The English preposition 'of' is often translated into Czech by using the
 genitive case (if a preposition is not used).
 
-=back
+=head1 AUTHORS
 
-=cut
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
-# Copyright 2011 Rudolf Rosa
+=head1 COPYRIGHT AND LICENSE
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles
+University in Prague
+
+This file is distributed under the GNU General Public License v2.
+See $TMT_ROOT/README for details on Treex licencing.
+

@@ -125,19 +125,29 @@ sub fix {
 
 1;
 
-=over
+=pod
 
-=item Treex::Block::A2A::CS::FixBy
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Block::A2A::CS::FixBy
+
+=head1 DESCRIPTION
 
 The English preposition 'by' is usually translated into Czech not by a 
 preposition but by using a specific case (genitive or instrumental: genitive 
 if the parent is a noun, instrumental if the parent is a passive verb or an 
 adjective).
 
-=back
+=head1 AUTHORS
 
-=cut
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
-# Copyright 2011 Rudolf Rosa
+=head1 COPYRIGHT AND LICENSE
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles
+University in Prague
+
+This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+

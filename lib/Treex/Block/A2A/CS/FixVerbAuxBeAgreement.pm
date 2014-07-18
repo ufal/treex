@@ -62,6 +62,7 @@ and auxiliary 'to be'.
 =head1 AUTHORS
 
 David Marecek <marecek@ufal.mff.cuni.cz>
+
 Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE

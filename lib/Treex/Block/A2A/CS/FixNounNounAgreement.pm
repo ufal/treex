@@ -38,16 +38,28 @@ sub fix {
 
 1;
 
-=over
+=pod
 
-=item Treex::Block::A2A::CS::FixNounNounAgreement
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Block::A2A::CS::FixNounNounAgreement
+
+=head1 DESCRIPTION
 
 A noun preceding a noun which is its parent should agree with it in case.
 
-=back
+=head1 AUTHORS
 
-=cut
+David Mareček <marecek@ufal.mff.cuni.cz>
 
-# Copyright 2011 Rudolf Rosa
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles
+University in Prague
+
+This file is distributed under the GNU General Public License v2.
+See $TMT_ROOT/README for details on Treex licencing.

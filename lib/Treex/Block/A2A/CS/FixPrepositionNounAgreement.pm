@@ -64,6 +64,10 @@ sub fix {
 
 1;
 
+=pod
+
+=encoding utf-8
+
 =head1 NAME 
 
 Treex::Block::A2A::CS::FixPrepositionNounAgreement
@@ -74,7 +78,7 @@ Fixing agreement between preposition and noun.
 
 =head1 AUTHOR
 
-David Marecek <marecek@ufal.mff.cuni.cz>
+David Mareček <marecek@ufal.mff.cuni.cz>
 
 Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
@@ -83,5 +87,6 @@ Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 Copyright © 2012 by Institute of Formal and Applied Linguistics,
 Charles University in Prague
 
-This module is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+This file is distributed under the GNU General Public License v2.
+See $TMT_ROOT/README for details on Treex licencing.
+

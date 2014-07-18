@@ -59,18 +59,30 @@ sub fix {
 
 1;
 
-=over
+=pod
 
-=item Treex::Block::A2A::CS::FixNounNumber
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Block::A2A::CS::FixNounNumber
+
+=head1 DESCRIPTION
 
 Fixing Noun number (and sometimes case as well) according to en_aligned_node
 number. Assumes that the form is correct and only the tag is incorrect (error
 of tagger), and so it does only such fixes, where the form is preserved.
 
-=back
+=head1 AUTHORS
 
-=cut
+David Mareček <marecek@ufal.mff.cuni.cz>
 
-# Copyright 2011 David Marecek, Rudolf Rosa
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles
+University in Prague
+
+This file is distributed under the GNU General Public License v2.
+See $TMT_ROOT/README for details on Treex licencing.
