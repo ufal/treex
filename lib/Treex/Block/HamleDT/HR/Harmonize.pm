@@ -69,6 +69,7 @@ sub deprel_to_afun
         elsif($deprel eq 'Atv')
         {
             ###!!! Obj
+            $afun = 'NR';
         }
         # Reflexive pronoun/particle 'se', attached to verb.
         # Negative particle 'ne', attached to verb.
