@@ -123,6 +123,7 @@ foreach my $correct_sentence ( @{$test_data} ) {
 }
 
 is( $total_words, 47, 'testing on 47 words' );
+note('no of errors on 47 words: ' . $total_errors);
 
 # version with bug in learning (before rev. 6899)
 #is( $total_errors, 27, 'returns on the given data 27 errors' );

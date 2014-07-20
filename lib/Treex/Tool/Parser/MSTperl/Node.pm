@@ -150,6 +150,22 @@ sub copy_nonlabelled {
     return $copy;
 }
 
+sub is_descendant_of {
+    my ($self, $other_ord) = @_;
+
+    my $result = 0;
+
+    my $node = $self->parent;
+    while ( defined $node ) {
+        if ( $node->ord eq $other_ord ) {
+            $result = 1;
+        }
+        $node = $node->parent;
+    }
+
+    return $result;
+}
+
 1;
 
 __END__
