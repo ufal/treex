@@ -3,12 +3,10 @@ package Treex::Block::T2TAMR::DeleteMarkedNodes;
 use Moose;
 use Treex::Core::Common;
 
-
 extends 'Treex::Core::Block';
 
-has '+language'       => ( required => 1 );
-has '+selector'       => ( isa => 'Str', default => 'amrClonedFromT' );
-
+has '+language' => ( required => 1 );
+has '+selector' => ( isa => 'Str', default => 'amrConvertedFromT' );
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;

@@ -5,10 +5,10 @@ use Treex::Block::T2TAMR::ApplyRules;
 extends 'Treex::Core::Block';
 
 has '+language'       => ( required => 1 );
-has '+selector'       => ( default => 'amrClonedFromT' );
+has '+selector'       => ( default  => 'amrConvertedFromT' );
 has 'source_language' => ( is       => 'rw', isa => 'Str', lazy_build => 1 );
 has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
-has 'modifier_source' => ( is => 'ro', 'isa' => 'Str', default => 'functor' );
+has 'modifier_source' => ( is       => 'ro', 'isa' => 'Str', default => 'functor' );
 
 # TODO: copy attributes in a cleverer way
 my @ATTRS_TO_COPY = qw(ord);
@@ -44,7 +44,7 @@ sub process_bundle {
 
     $self->copy_subtree( $source_root, $target_root, \%used_vars );
     $target_root->set_src_tnode($source_root);
-    
+
     # coreference is not copied here, FixCoreference should be used.
 }
 
@@ -58,15 +58,16 @@ sub copy_subtree {
         foreach my $attr (@ATTRS_TO_COPY) {
             $target_node->set_attr( $attr, $source_node->get_attr($attr) );
         }
+
         # copying the modifier labels from functors or formemes
         $target_node->wild->{modifier} = $self->modifier_source eq 'formeme' ? $source_node->formeme : $source_node->functor;
 
         # creating AMR-style lemma
-        $target_node->set_t_lemma( create_amr_lemma($source_node->t_lemma, $used_vars) );
+        $target_node->set_t_lemma( create_amr_lemma( $source_node->t_lemma, $used_vars ) );
         $target_node->set_src_tnode($source_node);
         $target_node->set_t_lemma_origin('t2tamr');
 
-        # creating the 
+        # creating the
 
         $self->copy_subtree( $source_node, $target_node, $used_vars );
     }
@@ -79,10 +80,8 @@ sub create_amr_lemma {
     my $var_no = $used_vars->{$var_letter} // 0;
     $var_no++;
     $used_vars->{$var_letter} = $var_no;
-    return $var_letter . ($var_no > 1 ? $var_no : '') . '/' . $t_lemma;
+    return $var_letter . ( $var_no > 1 ? $var_no : '' ) . '/' . $t_lemma;
 }
-
-
 
 1;
 

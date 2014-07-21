@@ -6,18 +6,17 @@ use Treex::Block::T2TAMR::CopyTtree;
 
 extends 'Treex::Core::Block';
 
-has '+language'       => ( required => 1 );
-has '+selector'       => ( isa => 'Str', default => 'amrClonedFromT' );
-
+has '+language' => ( required => 1 );
+has '+selector' => ( isa => 'Str', default => 'amrConvertedFromT' );
 
 sub process_ttree {
-    
-    my ( $self, $troot ) =  @_;
+
+    my ( $self, $troot ) = @_;
 
     my $src_troot = $troot->src_tnode;
-    return if (!defined $src_troot or !$src_troot->get_zone()->has_ntree());
+    return if ( !defined $src_troot or !$src_troot->get_zone()->has_ntree() );
     my $nroot = $src_troot->get_zone()->get_ntree();
-    return if (!defined $nroot);
+    return if ( !defined $nroot );
 
     # remember used AMR variables
     my $used_vars = $self->_check_used_vars($troot);
@@ -30,46 +29,51 @@ sub process_ttree {
     } $nroot->get_descendants();
 
     # find t-nodes pertaining to each of the NEs and group them under a node of the desired type
-    foreach my $nnode (@nnodes){
+    foreach my $nnode (@nnodes) {
+
         # find the t-nodes
-        my @tnodes = uniq 
-                sort { $a->ord <=> $b->ord }
-                map { $_->get_referencing_nodes( 'src_tnode.rf', $self->language, $self->selector ) }
-                map { $_->get_referencing_nodes('a/lex.rf') } 
-                $nnode->get_anodes();
-        
+        my @tnodes = uniq
+            sort { $a->ord <=> $b->ord }
+            map { $_->get_referencing_nodes( 'src_tnode.rf', $self->language, $self->selector ) }
+            map { $_->get_referencing_nodes('a/lex.rf') }
+            $nnode->get_anodes();
+
         # skip weird cases where there are no t-nodes corresponding to the NE
-        next if (!@tnodes);
+        next if ( !@tnodes );
 
         # select the topmost one
         my %depth_to_node = map { $_->get_depth() => $_ } @tnodes;
-        my $min_depth = min keys %depth_to_node;
-        my $ttop = $depth_to_node{$min_depth};
+        my $min_depth     = min keys %depth_to_node;
+        my $ttop          = $depth_to_node{$min_depth};
 
         # create a new NE head AMR node + a new “name” node, rehang everything under them
-        my $tparent = $ttop->get_parent();
+        my $tparent  = $ttop->get_parent();
         my $tne_head = $tparent->create_child();
         $tne_head->wild->{modifier} = $ttop->wild->{modifier};
         $tne_head->set_functor( $ttop->functor );
-        $tne_head->set_t_lemma( $self->_create_lemma( $nnode->ne_type, $used_vars )  );
+        $tne_head->set_t_lemma( $self->_create_lemma( $nnode->ne_type, $used_vars ) );
         $tne_head->shift_before_node($ttop);
         my $tne_name = $tne_head->create_child();
         $tne_name->wild->{modifier} = 'name';
         $tne_name->set_t_lemma( Treex::Block::T2TAMR::CopyTtree::create_amr_lemma( 'name', $used_vars ) );
         $tne_name->shift_after_node($tne_head);
-       
+
         # update all original t-nodes belonging to the named entity
         my $order = 1;
-        foreach my $tnode (@tnodes){
+        foreach my $tnode (@tnodes) {
+
             # rehang the individual NE element nodes under NE 'name' node
-            $tnode->set_parent($tne_name); 
+            $tnode->set_parent($tne_name);
+
             # change them to constants with modifier opX
-            $tnode->wild->{modifier} = 'op' . ($order++);
+            $tnode->wild->{modifier} = 'op' . ( $order++ );
             my $lemma = $tnode->t_lemma;
             $lemma =~ s/.*\///;
-            $tnode->set_t_lemma('"' . $lemma . '"');
+            $tnode->set_t_lemma( '"' . $lemma . '"' );
+
             # rehang their children under the NE head
             map { $_->set_parent($tne_head) } $tnode->get_children();
+
             # redirect coreference to NE head
             map { $_->remove_coref_nodes($tnode); $_->add_coref_gram_nodes($tne_head); } $tnode->get_referencing_nodes('coref_gram.rf');
             map { $_->remove_coref_nodes($tnode); $_->add_coref_text_nodes($tne_head); } $tnode->get_referencing_nodes('coref_text.rf');
@@ -81,25 +85,24 @@ sub process_ttree {
 
 # check if one set is a subset of another one
 sub _is_subset {
-    my ($littleSet, $bigSet) = @_;
+    my ( $littleSet, $bigSet ) = @_;
     my %hash;
-       
-    undef @hash{@$littleSet};  # add a hash key for each element of @$littleSet
-    delete @hash{@$bigSet};    # remove all keys for elements of @$bigSet
-    return !%hash;             # return false if any keys are left in the hash
+
+    undef @hash{@$littleSet};    # add a hash key for each element of @$littleSet
+    delete @hash{@$bigSet};      # remove all keys for elements of @$bigSet
+    return !%hash;               # return false if any keys are left in the hash
 }
 
 # keep track of all used AMR variables
 sub _check_used_vars {
     my ( $self, $troot ) = @_;
     my %used = ();
-    foreach my $tnode ($troot->get_descendants()){
-        my ($var, $number) = ($tnode->t_lemma =~ /^([a-zX])([0-9]*)/);
-        $used{$var} = max( $used{$var} // 0, ($number || 1) );
+    foreach my $tnode ( $troot->get_descendants() ) {
+        my ( $var, $number ) = ( $tnode->t_lemma =~ /^([a-zX])([0-9]*)/ );
+        $used{$var} = max( $used{$var} // 0, ( $number || 1 ) );
     }
     return \%used;
 }
-
 
 my $NE_2_WORD = {
     'a' => 'address',
@@ -114,16 +117,14 @@ my $NE_2_WORD = {
     't' => 'time',
 };
 
-
 # create an AMR-style lemma for the NE head node (find a general name for the
 # entity type, deal with variable names)
 sub _create_lemma {
     my ( $self, $ne_type, $used_vars ) = @_;
 
-    my $word_id = $NE_2_WORD->{$ne_type} // $NE_2_WORD->{substr $ne_type, 0, 1};
-    return Treex::Block::T2TAMR::CopyTtree::create_amr_lemma($word_id, $used_vars); 
+    my $word_id = $NE_2_WORD->{$ne_type} // $NE_2_WORD->{ substr $ne_type, 0, 1 };
+    return Treex::Block::T2TAMR::CopyTtree::create_amr_lemma( $word_id, $used_vars );
 }
-
 
 1;
 
