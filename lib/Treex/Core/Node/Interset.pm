@@ -18,20 +18,34 @@ has iset => (
     #builder => '_build_iset',
     handles => [qw(
         is_noun
+        is_abbreviation
         is_adjective
-        is_pronoun
-        is_numeral
-        is_verb
-        is_adverb
         is_adposition
+        is_adverb
         is_conjunction
         is_coordinator
-        is_subordinator
-        is_particle
-        is_interjection
-        is_punctuation
+        is_dual
+        is_finite_verb
         is_foreign
+        is_hyph
+        is_infinitive
+        is_interjection
+        is_numeral
+        is_participle
+        is_particle
+        is_past
+        is_possessive
+        is_plural
+        is_pronoun
+        is_proper_noun
+        is_punctuation
+        is_reflexive
+        is_singular
+        is_subordinator
+        is_transgressive
         is_typo
+        is_verb
+        is_wh
     )],
 );
 
