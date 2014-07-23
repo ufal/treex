@@ -38,11 +38,13 @@ sub process_tnode {
     if (@coref_nodes) {
         # forward the filtered coreference links to the new AMR nodes
         my @new_coref_nodes = map { $_->get_referencing_nodes('src_tnode.rf') } @coref_nodes;
-        $tnode->set_deref_attr( 'coref_text.rf', \@new_coref_nodes ) if (@new_coref_nodes);
-
-        # updating lemmas for #Cor/#PersPron
-        if ( $src_tnode->t_lemma =~ /#(Cor|PersPron)/ ) {
-            $tnode->set_t_lemma( $self->_get_coref_varname($coref_nodes[0]) );
+        if (@new_coref_nodes){
+            $tnode->set_deref_attr( 'coref_text.rf', \@new_coref_nodes );
+    
+            # update lemmas for #Cor/#PersPron
+            if ( $src_tnode->t_lemma =~ /#(Cor|PersPron)/ ) {
+                $tnode->set_t_lemma( $self->_get_coref_varname($coref_nodes[0]) );
+            }
         }
     }
 
