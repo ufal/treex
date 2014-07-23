@@ -75,8 +75,18 @@ sub process_ttree {
             map { $_->set_parent($tne_head) } $tnode->get_children();
 
             # redirect coreference to NE head
-            map { $_->remove_coref_nodes($tnode); $_->add_coref_gram_nodes($tne_head); } $tnode->get_referencing_nodes('coref_gram.rf');
-            map { $_->remove_coref_nodes($tnode); $_->add_coref_text_nodes($tne_head); } $tnode->get_referencing_nodes('coref_text.rf');
+            my $head_var = $tne_head->t_lemma;
+            $head_var =~ s/\/.*//;
+            map {
+                $_->remove_coref_nodes($tnode);
+                $_->add_coref_gram_nodes($tne_head);
+                $_->set_t_lemma($head_var);
+            } $tnode->get_referencing_nodes('coref_gram.rf');
+            map {
+                $_->remove_coref_nodes($tnode);
+                $_->add_coref_text_nodes($tne_head);
+                $_->set_t_lemma($head_var);
+            } $tnode->get_referencing_nodes('coref_text.rf');
         }
     }
 
@@ -88,9 +98,9 @@ sub _is_subset {
     my ( $littleSet, $bigSet ) = @_;
     my %hash;
 
-    undef @hash{@$littleSet};    # add a hash key for each element of @$littleSet
-    delete @hash{@$bigSet};      # remove all keys for elements of @$bigSet
-    return !%hash;               # return false if any keys are left in the hash
+    undef @hash{@$littleSet};                                    # add a hash key for each element of @$littleSet
+    delete @hash{@$bigSet};                                      # remove all keys for elements of @$bigSet
+    return !%hash;                                               # return false if any keys are left in the hash
 }
 
 # keep track of all used AMR variables
