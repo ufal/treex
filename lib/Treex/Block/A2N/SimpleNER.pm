@@ -22,7 +22,13 @@ has nested => (
     documentation => 'Allow marking nested named entities?',
 );
 
-has [qw(_type_of, _seen)] => (is=>'rw');
+# $type_of{New York} == 'GPE:CITY'
+has _type_of => (is=>'rw');
+
+# $seen{New} == 8
+# This means that longest entity starting with New has 8 tokens
+# (it is "New York State Department of Taxation and Finance").
+has _seen => (is=>'rw');
 
 sub process_start {
     my ($self) = @_;
@@ -34,8 +40,8 @@ sub process_start {
         $type_of{$phrase} = $type;
         my @tokens = split / /, $phrase;
         my $n = $seen{$tokens[0]};
-        if (!$n || $n < @tokens){
-            $seen{$tokens[0]} = @tokens;
+        if (!$n or $n < @tokens){
+            $seen{$tokens[0]} = scalar @tokens;
         }
     }
     $self->_set_type_of(\%type_of);
@@ -58,8 +64,9 @@ sub process_zone {
     my $seen = $self->_seen;
     my $type_of = $self->_type_of;
     my @forms = map {$_->form} @anodes;
-    my $i = 0;
+    my $i = -1;
     while ($i < $#anodes){
+        $i++;
         my $n = $seen->{$forms[$i]};
         next if !$n;
         if ($i+$n-1 > $#forms){
@@ -78,7 +85,6 @@ sub process_zone {
                 }
             }
         }
-        $i++;
     }
     return;
 }
