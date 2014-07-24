@@ -562,6 +562,23 @@ sub fix_annotation_errors
             $verb->set_parent($node);
             $verb->set_is_member(1);
         }
+        # train/006#247
+        # Analitičari upozoravaju na kosovski trend: osnivanje novih političkih stranaka neposredno prije izbora, a od strane ljudi iz već postojećih političkih stranaka ili nekog drugog aspekta javnog života.
+        elsif($node->afun() eq 'Oth-CYCLE:15')
+        {
+            my $stranaka = $nodes[9];
+            my $neposredno = $nodes[10];
+            my $prije = $nodes[11];
+            my $a = $nodes[14]; # or $node
+            my $od = $nodes[15];
+            $a->set_parent($stranaka);
+            $a->set_afun('Coord');
+            $prije->set_parent($a);
+            $prije->set_is_member(1);
+            $od->set_is_member(1);
+            $prije->set_afun('AuxP');
+            $neposredno->set_afun('AuxZ');
+        }
     }
 }
 
