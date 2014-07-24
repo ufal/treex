@@ -131,8 +131,12 @@ my $NE_2_WORD = {
 # entity type, deal with variable names)
 sub _create_lemma {
     my ( $self, $ne_type, $used_vars ) = @_;
+    my $word_id = lc $ne_type;
 
-    my $word_id = $NE_2_WORD->{$ne_type} // $NE_2_WORD->{ substr $ne_type, 0, 1 };
+    if (length $ne_type <= 2){
+        $word_id = $NE_2_WORD->{$ne_type} // $NE_2_WORD->{ substr $ne_type, 0, 1 };
+    }
+
     return Treex::Block::T2TAMR::CopyTtree::create_amr_lemma( $word_id, $used_vars );
 }
 
