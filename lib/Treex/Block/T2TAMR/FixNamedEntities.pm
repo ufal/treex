@@ -21,11 +21,14 @@ sub process_ttree {
     # remember used AMR variables
     my $used_vars = $self->_check_used_vars($troot);
 
-    # get top-level NEs (skip sub-NEs embedded in them, note that this embedding is not reflected in the n-tree shape)
+    # get top-level NEs:
+    # skip weird NEs that don't have any a-nodes associated
+    # skip embedded sub-NEs (note that this embedding might not be reflected in the n-tree shape)
     my %nodes_aspans = map { $_->id => [ $_->get_anodes ] } $nroot->get_descendants();
     my (@nnodes) = grep {
         my $id = $_->id;
-        not any { $_ ne $id and _is_subset( $nodes_aspans{$id}, $nodes_aspans{$_} ) } keys %nodes_aspans;
+        not scalar( $nodes_aspans{$_} ) == 0 and    
+            not any { $_ ne $id and _is_subset( $nodes_aspans{$id}, $nodes_aspans{$_} ) } keys %nodes_aspans;
     } $nroot->get_descendants();
 
     # find t-nodes pertaining to each of the NEs and group them under a node of the desired type
@@ -98,9 +101,9 @@ sub _is_subset {
     my ( $littleSet, $bigSet ) = @_;
     my %hash;
 
-    undef @hash{@$littleSet};                                    # add a hash key for each element of @$littleSet
-    delete @hash{@$bigSet};                                      # remove all keys for elements of @$bigSet
-    return !%hash;                                               # return false if any keys are left in the hash
+    undef @hash{@$littleSet};    # add a hash key for each element of @$littleSet
+    delete @hash{@$bigSet};      # remove all keys for elements of @$bigSet
+    return !%hash;               # return false if any keys are left in the hash
 }
 
 # keep track of all used AMR variables
@@ -133,7 +136,7 @@ sub _create_lemma {
     my ( $self, $ne_type, $used_vars ) = @_;
     my $word_id = lc $ne_type;
 
-    if (length $ne_type <= 2){
+    if ( length $ne_type <= 2 ) {
         $word_id = $NE_2_WORD->{$ne_type} // $NE_2_WORD->{ substr $ne_type, 0, 1 };
     }
 
