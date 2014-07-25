@@ -3,23 +3,29 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Write::Amr';
 
-with 'Treex::Block::Write::AttributeParameterized'; 
-
 # Returns the t-node's lemma/label
 sub _get_lemma {
     my ( $self, $tnode ) = @_;
-    my $lemma = $tnode->t_lemma;
-    my $info = $self->_get_info_hash($tnode);
-    
-    foreach my $attr_name (@{$self->_output_attrib}){
-        my $val = $info->{$attr_name};
-        $val =~ s/\s+/_/g;
-        $attr_name =~ s/.*->//;
-        $lemma .= ' ' . $attr_name . '=' . $val;
-    }
-    return $lemma;
-}
+    my @data = ( $tnode->t_lemma );
 
+    if ( $tnode->src_tnode ) {
+        push @data, 'formeme=' . ( $tnode->src_tnode->formeme // '' );
+
+        my @anodes;
+        if ( $tnode->wild->{is_ne_head} ) {
+            my $nnode = $tnode->get_document()->get_node_by_id( $tnode->wild->{src_nnode} );
+            @anodes = sort { $a->ord <=> $b->ord } $nnode->get_anodes();            
+        }
+        else {
+            @anodes = $tnode->src_tnode->get_anodes( { ordered => 1 } );
+        }
+        push @data, 'lemma=' . join( ' ', map { $_->lemma } @anodes );
+        push @data, 'form=' . join( ' ', map { $_->form } @anodes );
+    }
+    push @data, 'id=' . $tnode->id;
+    
+    return join(' ', map { $_ =~ s/ /_/g; $_ } @data );
+}
 
 1;
 
