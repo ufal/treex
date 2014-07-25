@@ -129,7 +129,7 @@ C<p_> = I<personal name with unspecified subtype>
 are further classified as:
 C<PF> = I<female name>,
 C<PM> = I<male name>.
-This named enitity node serves as a container:
+This named entity node serves as a container:
 its children are one-word entities with types:
 C<pd> = abbreviated title (I<Mr., Ms.>),
 C<pf> = first name,

@@ -77,7 +77,10 @@ sub process_zone {
             my $phrase = join ' ', @forms[$i .. $i+$length];
             my $type = $type_of->{$phrase};
             if ($type){
-                my $n_node = $n_root->create_child(ne_type => $type);
+                my $n_node = $n_root->create_child(
+                    ne_type => $type,
+                    normalized_name => $self->guess_normalized_name([@anodes[$i .. $i+$length]], $type),
+                );
                 $n_node->set_anodes(@anodes[$i .. $i+$length]);
                 if (!$self->nested){
                     $i += $length;
@@ -88,6 +91,12 @@ sub process_zone {
     }
     return;
 }
+
+sub guess_normalized_name {
+    my ($self, $entity_anodes_rf, $type) = @_;
+    return join ' ', map {$_->lemma // $_->form} @$entity_anodes_rf;
+}
+
 
 1;
 
