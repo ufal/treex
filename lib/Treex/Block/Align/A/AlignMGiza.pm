@@ -30,6 +30,9 @@ my $merge = "$mgizadir/scripts/merge_alignment.py";
 my $mytmpdir;
 my @parsed_dir_or_sym;
 
+use Config;
+log_fatal "$mgizadir contains binaries compiled for 'x86_64-linux' but you are using '$Config{archname}'." if $Config{archname} ne 'x86_64-linux';
+
 sub process_document {
     my ( $self, $document ) = @_; 
 
