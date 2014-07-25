@@ -3,6 +3,10 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';
 
+with 'Treex::Block::Write::AttributeParameterized';
+
+has '+attributes' => ( default => "form" );
+
 has 'lang_sep' => ( isa => 'Str', is => 'ro', default => "\t" );
 
 has 'sent_sep' => ( isa => 'Str', is => 'ro', default => "\n" );
@@ -28,8 +32,8 @@ sub process_atree {
     my ( $self, $atree ) = @_;
     my $atree2 = $atree->get_bundle()->get_zone( $self->language2, $self->selector2 )->get_atree();
 
-    my $tokens = join( ' ', map { $_->form } $atree->get_descendants( { ordered => 1 } ) );
-    my $tokens2 = join( ' ', map { $_->form } $atree2->get_descendants( { ordered => 1 } ) );
+    my $tokens = join( ' ', map { join('|', @{ $self->_get_info_list($_) } ) } $atree->get_descendants( { ordered => 1 } ) );
+    my $tokens2 = join( ' ', map { join('|', @{ $self->_get_info_list($_) } ) } $atree2->get_descendants( { ordered => 1 } ) );
 
     print { $self->_file_handle } $tokens, $self->lang_sep, $tokens2, $self->sent_sep;
 }
