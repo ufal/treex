@@ -6,12 +6,14 @@ extends 'Treex::Block::Write::AmrAligned';
 override '_get_sentence' => sub {
     my ( $self, $ttree ) = @_;
     my ($aligned_ttree) = $self->_get_aligned_ttree($ttree);
+    return '' if (!$aligned_ttree);
     return $aligned_ttree->get_zone()->sentence();
 };
 
 override '_get_tokens' => sub {
     my ( $self, $ttree ) = @_;
     my ($aligned_ttree) = $self->_get_aligned_ttree($ttree);
+    return '' if (!$aligned_ttree);
     my ($atree)         = $aligned_ttree->get_zone()->get_atree;
     return join( ' ', map { $_->form } $atree->get_descendants( { ordered => 1 } ) );
 };
@@ -36,6 +38,7 @@ sub _get_aligned_ttree {
         my ($ali_nodes) = $_->get_aligned_nodes();
         $ali_nodes ? @$ali_nodes : undef
     } $src_ttree->get_descendants();
+    return undef if (!$first_aligned);
     return $first_aligned->get_root();
 }
 
