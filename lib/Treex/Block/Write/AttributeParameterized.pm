@@ -293,6 +293,7 @@ sub _get_data {
 Readonly my $GET_REF_NODES => {
     'lex_a_node'  => sub { return $_[1]->get_lex_anode() },
     'aux_a_nodes' => sub { return $_[1]->get_aux_anodes( { ordered => 1 } ) },
+    'a_nodes' => sub { return $_[1]->get_anodes( { ordered => 1 } ) },
     'parent'      => sub { return ( $_[1]->get_parent() ) },
     'src_tnode'   => sub { return ( $_[1]->src_tnode() ) },
     'children'    => sub { return $_[1]->get_children( { ordered => 1 } ) },
