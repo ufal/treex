@@ -94,6 +94,12 @@ sub deprel_to_afun
             {
                 $afun = 'Atr';
             }
+            # Verbal attribute:
+            # Može li Turska sama/Atv?
+            elsif($node->is_adjective() && $parent->is_verb())
+            {
+                $afun = 'AtvV';
+            }
             # Prepositional phrase loosely attached to a participial adjective.
             # proces bio prenagljen bez/Prep plana/Atv za gospodarski razvoj
             elsif($node->is_noun() && $parent->is_adposition() && $parent->parent()->is_adjective())
@@ -532,7 +538,7 @@ sub fix_annotation_errors
         # In this case, the verb "biti" is mistagged as present indicative, instead of infinitive; due to that, the afun was not translated correctly.
         # moraju biti poslani
         # must be sent
-        elsif($node->form() eq 'biti' && $parent->form() eq 'moraju' && $node->get_iset('mood') eq 'ind')
+        elsif($node->form() eq 'biti' && !$parent->is_root() && $parent->form() eq 'moraju' && $node->get_iset('mood') eq 'ind')
         {
             $node->set_iset('verbform' => 'inf', 'mood' => '', 'tense' => '', 'number' => '', 'person' => '');
             $node->set_afun('Obj');
@@ -562,6 +568,17 @@ sub fix_annotation_errors
             $verb->set_parent($node);
             $verb->set_is_member(1);
         }
+        # test/001#230
+        # Stranke stalno dolaze pune obećanja/Atv, a uvijek nas ostavljaju u siromaštvu."
+        # Parties are constantly coming up full of promise, and always leave us in poverty."
+        elsif($node->form() eq 'pune' && $parent->form() eq 'obećanja' && $parent->ord() == $node->ord() + 1)
+        {
+            my $grandparent = $parent->parent();
+            $node->set_parent($grandparent);
+            $node->set_afun('AtvV');
+            $parent->set_parent($node);
+            $parent->set_afun('Atr');
+        }
         # train/006#247
         # Analitičari upozoravaju na kosovski trend: osnivanje novih političkih stranaka neposredno prije izbora, a od strane ljudi iz već postojećih političkih stranaka ili nekog drugog aspekta javnog života.
         elsif($node->afun() eq 'Oth-CYCLE:15')
@@ -578,6 +595,50 @@ sub fix_annotation_errors
             $od->set_is_member(1);
             $prije->set_afun('AuxP');
             $neposredno->set_afun('AuxZ');
+        }
+        # train/006#381
+        # "Ne možemo mnogo učiniti kako bismo je spriječili da ide malo šetati ili plivati.
+        elsif($node->afun() eq 'Adv-CYCLE:4')
+        {
+            my $mnogo = $nodes[3]; # or $node
+            my $uciniti = $nodes[4];
+            $mnogo->set_parent($uciniti);
+            $mnogo->set_afun('Adv');
+        }
+        # test/001#25
+        # Rezultat je toga da je artikulacija praktičnih zajedničkih interesa postala teža, kao i definiranje konkretnih misija.
+        elsif($node->afun() eq 'Atr-CYCLE:1-CYCLE:10-CYCLE:4-CYCLE:3')
+        {
+            my $rezultat = $nodes[0];
+            my $je = $nodes[1];
+            my $toga = $nodes[2];
+            my $da = $nodes[3];
+            $rezultat->set_parent($je);
+            $toga->set_parent($rezultat);
+            $toga->set_afun('Atr');
+            $da->set_parent($je);
+        }
+        # Unattached punctuation ($afun =~ m/^Punc-CYCLE:/).
+        # train/006#399: U međuvremenu, troškovi života porasli... the comma should be attached to the highest node on the left, i.e. "U". Or, because "U" is preposition, to "međuvremenu".
+        # train/007#6: "Nije riječ... the quotation mark should be attached to the main predicate ("nije").
+        # train/007#250: "Teror, strah i mržnja ne smiju... the quotation mark should be attached to the main predicate, here coordinate ("a").
+        # train/007#359: ... priopćila je u srijedu vlada, izražavajući... the comma should be attached to the right to "izražavajući"
+        elsif($node->form() eq ',' && $node->afun() eq 'Punc-CYCLE:19')
+        {
+            $node->set_parent($nodes[19]);
+            $node->set_afun('AuxX');
+        }
+        elsif($node->form() eq ',' && $node->afun() eq 'Punc-CYCLE:3')
+        {
+            $node->set_parent($nodes[1]);
+            $node->set_afun('AuxX');
+        }
+        elsif($node->form() eq '"' && $node->afun() eq 'Punc-CYCLE:1')
+        {
+            my @children_of_root = $root->children();
+            my ($predicate) = grep {$_->afun() =~ m/^(Pred|Coord)$/} (@children_of_root);
+            $node->set_parent($predicate);
+            $node->set_afun('AuxG');
         }
     }
 }
