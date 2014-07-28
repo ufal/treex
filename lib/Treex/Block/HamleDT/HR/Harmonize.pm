@@ -68,6 +68,7 @@ sub deprel_to_afun
         {
             $afun = 'Apposition';
         }
+        # Atv = predicate complement.
         # Rather than the verbal attribute (doplněk) of PDT, this seems to apply to infinitives attached to modal verbs.
         # However, there are other cases as well.
         elsif($deprel eq 'Atv')
