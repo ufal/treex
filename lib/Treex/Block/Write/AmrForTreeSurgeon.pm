@@ -8,25 +8,34 @@ sub _get_lemma {
     my ( $self, $tnode ) = @_;
     my @data = ( $tnode->t_lemma );
 
+    # skip NE generated nodes
     if ( $tnode->src_tnode ) {
         push @data, 'formeme=' . ( $tnode->src_tnode->formeme // '' );
 
         my @anodes;
+        # add surface information from whole NEs to NE head, otherwise just from the linked a-node
         if ( $tnode->wild->{is_ne_head} ) {
             my $nnode = $tnode->get_document()->get_node_by_id( $tnode->wild->{src_nnode} );
-            @anodes = sort { $a->ord <=> $b->ord } $nnode->get_anodes();            
+            @anodes = sort { $a->ord <=> $b->ord } $nnode->get_anodes();
         }
         else {
             @anodes = $tnode->src_tnode->get_anodes( { ordered => 1 } );
         }
         push @data, 'lemma=' . join( ' ', map { $_->lemma } @anodes );
         push @data, 'form=' . join( ' ', map { $_->form } @anodes );
+
+        # add BBN information
+        if ( $tnode->src_tnode->wild->{bbn} ) {
+            push @data, 'bbn=' . lc( $tnode->src_tnode->wild->{bbn} );
+        }
     }
+
+    # use shortened IDs (without language and selector)
     my $id = $tnode->id;
-    $id =~ s/.*([ps][0-9])/$1/; # remove language and selector
+    $id =~ s/.*([ps][0-9])/$1/;
     push @data, 'id=' . $id;
-    
-    return join('_', map { $_ =~ s/ /_/g; $_ } @data );
+
+    return join( '_', map { $_ =~ s/ /_/g; $_ } @data );
 }
 
 1;

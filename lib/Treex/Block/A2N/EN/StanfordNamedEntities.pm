@@ -22,7 +22,6 @@ Readonly my %type_for => {
     NA           => '0',
 };
 
-#TODO: check if there is not already a SEnglishN tree.
 
 sub process_zone {
     my ( $self, $zone ) = @_;
@@ -39,13 +38,13 @@ sub process_zone {
     my $test = join( '', @words );
     return if $test =~ /^[[:punct:]]*$/;
 
-    # Create new SEnglishN tree (just root)
-    my $n_root = $zone->create_ntree();
+    # Create new n-tree (or reuse existing one)
+    my $n_root = $zone->has_ntree() ? $zone->get_ntree() : $zone->create_ntree();
 
     # Run Standford NER
     my $types_rf = $self->_ner->tag_forms( \@words );
 
-    # Add all found named entities to the SEnglishN tree
+    # Add all found named entities to the n-tree
     my $last_type    = '0';
     my @actual_ids   = ();
     my @actual_words = ();
