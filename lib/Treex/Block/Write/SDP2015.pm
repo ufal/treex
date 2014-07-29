@@ -1,6 +1,7 @@
 package Treex::Block::Write::SDP2015;
 
 use Moose;
+use List::MoreUtils qw(any);
 use Treex::Core::Common;
 use Treex::Tool::Vallex::ValencyFrame;
 
@@ -80,6 +81,7 @@ sub process_zone
     my @conll = ([]); # left part of table, fixed features per token; dummy first line for the root node [0]
     my @matrix = ([]); # right part of table, relations between nodes: $matrix[$i][$j]='ACT' means node $i depends on node $j and its role is ACT
     my @roots; # binary value for each node index; roots as seen by Stephan Oepen, i.e. our children of the artificial root node
+    my @frames = ([]); # identifiers of valency frames for nodes that have them; dummy first element for the root node [0]
     foreach my $anode (@anodes)
     {
         my $ord = $anode->ord();
@@ -87,6 +89,7 @@ sub process_zone
         my $form = $self->decode_characters($anode->form(), $tag);
         my $lemma = $self->get_lemma($anode);
         push(@conll, [$ord, $form, $lemma, $tag]);
+        push(@frames, $self->get_valency_frame_for_a_node($anode));
         # Fill @matrix and @roots.
         $self->get_parents($anode, \@matrix, \@roots, $aroot);
     }
@@ -152,7 +155,7 @@ sub process_zone
         }
         else
         {
-            @depfields = $self->get_conll_dependencies_wide(\@matrix, $i, \@ispred);
+            @depfields = $self->get_conll_dependencies_wide(\@matrix, $i, \@ispred, \@frames);
             unshift(@depfields, $roots[$i]);
         }
         push(@{$conll[$i]}, @depfields);
@@ -218,6 +221,49 @@ sub get_lemma
         $lemma = $self->decode_characters($anode->lemma());
     }
     return $lemma;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns reference to valency frame. For a-nodes with one t-node this is the
+# valency frame of the t-node. If there is no t-node or if the t-node does not
+# point to a valency frame, the result is undefined. If there are more than one
+# t-node, all are searched for valency frames and the first frame found is
+# returned (if any).
+#------------------------------------------------------------------------------
+sub get_valency_frame_for_a_node
+{
+    my $self = shift;
+    my $anode = shift;
+    my $frame;
+    # Is there a lexically corresponding tnode?
+    my $tnode = $anode->wild()->{tnode};
+    my @tnodes;
+    @tnodes = sort {$a->ord() <=> $b->ord()} (@{$anode->wild()->{tnodes}}) if(defined($anode->wild()->{tnodes}));
+    if(scalar(@tnodes)>1)
+    {
+        # There are two or more t-nodes linked to one a-node. Two model cases:
+        # 1. Retokenized a-nodes such as "1/2" --> "1", "#Slash", "2".
+        # 2. Doubled or multiplied nodes to cover ellipsis, e.g. "yield" --> "yield", "yield".
+        foreach my $tnode (@tnodes)
+        {
+            if(defined($tnode->wild()->{valency_frame}))
+            {
+                $frame = $tnode->wild()->{valency_frame};
+                last;
+            }
+        }
+    }
+    elsif(defined($tnode))
+    {
+        # This is a content word and there is a lexically corresponding t-node.
+        if(defined($tnode->wild()->{valency_frame}))
+        {
+            $frame = $tnode->wild()->{valency_frame};
+        }
+    }
+    return $frame;
 }
 
 
@@ -547,6 +593,7 @@ sub get_conll_dependencies_wide
     my $matrix = shift;
     my $iline = shift;
     my $ispred = shift;
+    my $frames = shift;
     my @labels;
     for(my $j = 1; $j<=$#{$ispred}; $j++)
     {
@@ -555,6 +602,24 @@ sub get_conll_dependencies_wide
             if(defined($matrix->[$iline][$j]))
             {
                 push(@labels, $matrix->[$iline][$j]);
+                ###!!! Tady by to chtělo zkontrolovat, zda nejde o valenční doplnění, a případně rozšířit značku u "-obl" nebo "-opt".
+                ###!!! K tomu budu potřebovat, aby $frames obsahovalo nejen identifikátory rámců, ale přímo odkazy na celé rámce.
+                my $label = $matrix->[$iline][$j];
+                # $j-tý uzel je jedním z rodičů $i-tého uzlu. Zajímá nás tedy jeho rámec.
+                if(defined($frames->[$j]))
+                {
+                    my $frame = $frames->[$j]; ###!!! $tnode->wild()->{valency_frame};
+                    my $elements = $frame->elements();
+                    my @functors = map {$_->functor()} (@{$elements});
+                    if(any {$_ eq $label} (@functors))
+                    {
+                        $label .= '-obl';
+                    }
+                    else
+                    {
+                        $label .= '-opt';
+                    }
+                }
             }
             else
             {
@@ -562,8 +627,23 @@ sub get_conll_dependencies_wide
             }
         }
     }
-    my $this_is_pred = $ispred->[$iline] ? '+' : '-';
-    return ($this_is_pred, @labels);
+    my $pred;
+    if($ispred->[$iline])
+    {
+        if(defined($frames->[$iline]))
+        {
+            $pred = $frames->[$iline]->id();
+        }
+        else
+        {
+            $pred = '+';
+        }
+    }
+    else
+    {
+        $pred = '-';
+    }
+    return ($pred, @labels);
 }
 
 
