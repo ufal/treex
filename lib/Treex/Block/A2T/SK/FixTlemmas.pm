@@ -29,7 +29,9 @@ sub process_tnode {
 
     my $a_lex_node = $t_node->get_lex_anode();
     if ($a_lex_node) {
-        if ( $a_lex_node->match_iset( 'prontype' => 'prs' ) ) {    # personal pronouns, incl. possessive
+        # personal pronouns, incl. possessive
+        # but avoid non-personal pronouns that are treated as personal by Interset
+        if ( $a_lex_node->match_iset( 'prontype' => 'prs' ) and $a_lex_node->lemma !~ /(čo|ký|vek|dny|den|rý)$/) {            
             $t_lemma = "#PersPron";
         }
         # possessive adjectives
