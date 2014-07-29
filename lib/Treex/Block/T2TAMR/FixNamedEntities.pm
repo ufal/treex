@@ -28,6 +28,7 @@ sub process_ttree {
         # find the t-nodes
         my @tnodes = uniq
             sort { $a->ord <=> $b->ord }
+            grep { $_->get_bundle() == $nnode->get_bundle() }  # TODO fix generated node references that go to following sentences!
             map { $_->get_referencing_nodes( 'src_tnode.rf', $self->language, $self->selector ) }
             map { $_->get_referencing_nodes('a/lex.rf') }
             $nnode->get_anodes();
@@ -88,8 +89,8 @@ sub process_ttree {
         foreach my $ne_word ( split / /, $nnode->normalized_name ) {
             my $tnew = $tne_name->create_child(
                 t_lemma => '"' . $ne_word . '"',
-                functor => 'op' . $order++,
             );
+            $tnew->wild->{modifier} = 'op' . $order++;
             $tnew->wild->{is_ne_subnode} = 1;
             $tnew->shift_after_subtree($tne_name);
         }

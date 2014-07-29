@@ -22,9 +22,11 @@ sub _get_lemma {
         push @data, 'lemma=' . join( ' ', map { $_->lemma } @anodes );
         push @data, 'form=' . join( ' ', map { $_->form } @anodes );
     }
-    push @data, 'id=' . $tnode->id;
+    my $id = $tnode->id;
+    $id =~ s/.*([ps][0-9])/$1/; # remove language and selector
+    push @data, 'id=' . $id;
     
-    return join(' ', map { $_ =~ s/ /_/g; $_ } @data );
+    return join('_', map { $_ =~ s/ /_/g; $_ } @data );
 }
 
 1;
