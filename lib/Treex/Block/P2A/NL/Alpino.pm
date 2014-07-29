@@ -285,8 +285,6 @@ sub rehang_aux_verbs {
 }
 
 # Heuristics for fixing multi-word units: rehanging everything under the last part of the MWU
-# TODO: Solve "van" by rehanging the following under it 
-# (e.g. Van Gasteren, De smalle basis van de engelse roman) 
 sub fix_mwu {
     my ($self, $a_root) = @_;
     my %mwus = ();
@@ -298,10 +296,11 @@ sub fix_mwu {
             $mwus{$mwu_id} = [];    
         }
         push @{ $mwus{$mwu_id} }, $mwu_member;
-    }
+    }   
     
     # process each MWU separately
     foreach my $mwu (values %mwus){
+        
         # get the last member
         my $last_member = pop @$mwu;
         # rehang last member under the parent of the MWU
@@ -314,7 +313,8 @@ sub fix_mwu {
         foreach my $mwu_child (@$mwu->[0]->get_children){
             $mwu_child->set_parent($last_member);
         }
-    }
+    }    
+    
 }
 
 1;
