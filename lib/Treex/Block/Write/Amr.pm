@@ -15,7 +15,8 @@ has '+selector' => (
 
 sub process_ttree {
     my ( $self, $ttree ) = @_;
-    print { $self->_file_handle } ( $ttree->get_zone()->sentence // '' ) . "\n";
+    print { $self->_file_handle } "# ::id " . $ttree->get_document()->file_stem . '.' . $ttree->id . "\n";
+    print { $self->_file_handle } "# ::snt " . ( $ttree->get_zone()->sentence // '' ) . "\n";
 
     # determine top AMR node
     # (only child of the tech. root / tech. root in case of more root children)
