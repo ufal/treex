@@ -46,6 +46,7 @@ sub process_ttree {
         my $tne_head = $tparent->create_child();
         $tne_head->wild->{modifier} = $ttop->wild->{modifier};
         $tne_head->set_functor( $ttop->functor );
+        log_warn('No NE type: ' . $nnode->id ) if (!$nnode->ne_type);
         $tne_head->set_t_lemma( $self->_create_lemma( $nnode->ne_type, $used_vars ) );
         $tne_head->shift_before_node($ttop);
         my $tne_name = $tne_head->create_child();
@@ -115,6 +116,7 @@ sub _check_used_vars {
     my %used = ();
     foreach my $tnode ( $troot->get_descendants() ) {
         my ( $var, $number ) = ( $tnode->t_lemma =~ /^([a-zX])([0-9]*)/ );
+        next if (!$var); # skip e.g. polarity or NE nodes that start with " or -
         $used{$var} = max( $used{$var} // 0, ( $number || 1 ) );
     }
     return \%used;
@@ -129,6 +131,7 @@ my $NE_2_WORD = {
     'n' => 'number',
     'o' => 'product',
     'p' => 'person',
+    'P' => 'person',
     'q' => 'number',
     't' => 'time',
 };
