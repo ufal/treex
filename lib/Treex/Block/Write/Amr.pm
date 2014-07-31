@@ -44,13 +44,15 @@ sub _print_ttree {
 
 # Prints one AMR-like node.
 sub _process_tnode {
+    my $formeme_separator = '_#*&&*#_';
+    my $partofspeech_separator = '_#(^^)#_';
     my ( $self, $tnode, $indent ) = @_;
     my $lemma = $self->_get_lemma($tnode);
     if ($lemma) {
         $lemma =~ s/\// \/ /;
         print { $self->_file_handle } "\n" . $indent;
-        my $modifier = $tnode->wild->{'modifier'} ? $tnode->wild->{'modifier'} : $tnode->functor;
-        if ( $modifier && $modifier ne "root" && $indent ne "" ) {
+        my $modifier = $tnode->wild->{'modifier'} || $tnode->functor || 'no-modifier';
+        if ($modifier ne "root" && $indent ne "" ) {
             print { $self->_file_handle } ':' . $modifier;
         }
         print { $self->_file_handle } ( $lemma =~ /\// ? " (" : " " ), $lemma;
