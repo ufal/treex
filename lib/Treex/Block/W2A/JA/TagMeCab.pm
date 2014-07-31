@@ -69,7 +69,7 @@ sub process_zone {
         my $wordform = $features[0];
 
         #TODO: should use whole IPADIC tagset (or JDEPP parser is bound to make mistakes sometimes)
-        my $bTag = $features[1].'_'.$features[2].'_'.$features[3].'_'.$features[4];
+        my $bTag = $features[1].'-'.$features[2].'-'.$features[3].'-'.$features[4];
         my $lemma = $features[7];      
 
     	if ($bTag !~ "BOS" && $bTag !~ "空白") {
@@ -96,7 +96,7 @@ sub process_zone {
     # create a-tree
     my $a_root    = $zone->create_atree();
     my $tag_regex = qr{
-        <([^\_]+_[^\_]+_[^\_]+_[^\_]+)> #<tag>
+        <([^\-]+\-[^\-]+\-[^\-]+\-[^\-]+)> #<tag>
         ([^<]+) #form
         </\1>   #</tag>
         (.+)    #lemma
