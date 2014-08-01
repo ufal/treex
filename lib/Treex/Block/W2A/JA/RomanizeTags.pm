@@ -59,6 +59,14 @@ sub process_anode {
             $tag =~ s{数}{Kazu};
             $tag =~ s{地域}{Chiiki};
             $tag =~ s{国}{Kuni};
+            $tag =~ s{姓}{Sei};
+            $tag =~ s{連語}{Rengo};
+            $tag =~ s{組織}{Soshiki};
+            $tag =~ s{人名}{Jinmei};
+            $tag =~ s{助動詞語幹}{JodōshiGokan};
+            $tag =~ s{助数詞}{Josūshi};
+            $tag =~ s{縮約}{Shukuyaku};
+            $tag =~ s{引用}{In'yō};
 
     $anode->set_tag($tag);
 
