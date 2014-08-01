@@ -601,25 +601,37 @@ sub get_conll_dependencies_wide
         {
             if(defined($matrix->[$iline][$j]))
             {
-                push(@labels, $matrix->[$iline][$j]);
-                ###!!! Tady by to chtělo zkontrolovat, zda nejde o valenční doplnění, a případně rozšířit značku u "-obl" nebo "-opt".
-                ###!!! K tomu budu potřebovat, aby $frames obsahovalo nejen identifikátory rámců, ale přímo odkazy na celé rámce.
+                # Check whether the dependent fills a valency slot and mark it as argument if applicable.
+                # Arguments do not map precisely on obligatory / optional / core / free participants.
+                # "-arg" is mainly a signal for the system creators that this will be evaluated in the full-sense metric.
                 my $label = $matrix->[$iline][$j];
-                # $j-tý uzel je jedním z rodičů $i-tého uzlu. Zajímá nás tedy jeho rámec.
-                if(defined($frames->[$j]))
+                # All core participants are always arguments.
+                # We will mark them even for non-verbal predicates (they do not have valency frames) so that the set of labels does not grow too much.
+                if($label =~ m/^(ACT|PAT|ADDR|ORIG|EFF)$/)
                 {
+                    $label .= '-arg';
+                }
+                # The $j-th node is one of the parents of the $i-th node. Thus we want to see the frame of the $j-th node.
+                elsif(defined($frames->[$j]))
+                {
+                    ###!!! Tohle by šlo urychlit. Rámce by mohly být pro každý uzel předpočítané.
                     my $frame = $frames->[$j]; ###!!! $tnode->wild()->{valency_frame};
                     my $elements = $frame->elements();
-                    my @functors = map {$_->functor()} (@{$elements});
-                    if(any {$_ eq $label} (@functors))
+                    my %map;
+                    foreach my $e (@{$elements})
                     {
-                        $label .= '-obl';
+                        $map{$e->functor()} = $e;
                     }
-                    else
+                    if(defined($map{$label}))
                     {
-                        $label .= '-opt';
+                        my $oblig = $map{$label}->oblig();
+                        if($oblig)
+                        {
+                            $label .= '-arg';
+                        }
                     }
                 }
+                push(@labels, $label);
             }
             else
             {
@@ -630,20 +642,18 @@ sub get_conll_dependencies_wide
     my $pred;
     if($ispred->[$iline])
     {
-        if(defined($frames->[$iline]))
-        {
-            $pred = $frames->[$iline]->id();
-        }
-        else
-        {
-            $pred = '+';
-        }
+        $pred = '+';
     }
     else
     {
         $pred = '-';
     }
-    return ($pred, @labels);
+    my $frame = '_';
+    if(defined($frames->[$iline]))
+    {
+        $frame = $frames->[$iline]->id();
+    }
+    return ($pred, $frame, @labels);
 }
 
 
