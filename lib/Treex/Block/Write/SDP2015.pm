@@ -63,15 +63,6 @@ sub process_zone
             push(@{$anode->wild()->{tnodes}}, $tnode);
         }
         $tnode->wild()->{valency_frame} = $self->get_valency_frame($tnode);
-        # DEBUGGING: Are we actually able to find the valency frames?
-        if(defined($tnode->wild()->{valency_frame}))
-        {
-            my $frame = $tnode->wild()->{valency_frame};
-            my $elements = $frame->elements();
-            my $frame_id = $frame->id();
-            my $functors = join(' ', map {$_->functor()} (@{$elements}));
-            log_info("Found valency frame for t-node ".$tnode->t_lemma().": $frame_id $functors.");
-        }
     }
     # We require that the token ids make an unbroken sequence, starting at 1.
     # Unfortunately, this is not guaranteed in all a-trees. For example, in PCEDT 2.0 file wsj_0006.treex.gz, sentence 1, several numbers are skipped.
