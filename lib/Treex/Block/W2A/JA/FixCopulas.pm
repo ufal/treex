@@ -39,7 +39,7 @@ Treex::Block::W2A::JA::FixCopulas
 
 =head1 DECRIPTION
 
-Changes lemma for copulas in negative form. Negative aspect of copula should be kept in separate negative particle.
+Changes lemma for copulas in negative form. Negative aspect of copula should be kept in separate negative token.
 
 =head1 AUTHORS
 

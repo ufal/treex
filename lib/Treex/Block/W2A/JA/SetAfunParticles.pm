@@ -35,7 +35,7 @@ sub get_Particle_afun {
     my ($node) = @_;
 
     # we treat adverbial particles same way as adverbs
-    return 'Adv' if $node->tag =~ /_FukuJoshi_/;
+    return 'Adv' if $node->tag =~ /-FukuJoshi/;
 
     # we need to set different Afun for "て" particle (for now we treat it like aux verb)
     return 'AuxV' if ( $node->form eq "て" && $node->tag =~ /Setsuzoku/ ) ;

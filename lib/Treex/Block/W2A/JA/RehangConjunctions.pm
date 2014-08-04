@@ -28,9 +28,13 @@ sub fix_subtree {
     }
     $is_processed{$a_node} = 1;
     
-    foreach my $child ( $a_node->get_children() ) {
-        next if $is_processed{$child};
-        fix_subtree($child);
+    my @children = $a_node->get_children();
+    #foreach my $child ( $a_node->get_children() ) {
+    # since Japanese is head-final, we prefer to go through children
+    # in a reverse order
+    for ($i = $#children; $i > 0; $i--) {
+        next if $is_processed{$children[$i]};
+        fix_subtree($children[$i]);
     }
     return;
 }
@@ -39,10 +43,16 @@ sub should_switch_with_parent {
     my ($a_node) = @_;
     my $tag = $a_node->tag;
     my $form = $a_node->form;
-    return 0 if $tag !~ /^Joshi_Setsuzoku/;
+    #return 0 if $tag !~ /^Joshi-Setsuzoku/;
+    return 0 if $tag !~ /-Heiritsujoshi/;
+
+    # 接続詞 - conjunction (sentence introduction)
+    # 助詞-接続助詞 - particle-conjunctive
+    
+    # 助詞-並立助詞 - particle-coordinate
 
     # we need to treat "て" particle differently
-    return 0 if $form eq "て";
+    # return 0 if $form eq "て";
 
     my $parent = $a_node->get_parent();
     return 0 if $parent->is_root();
@@ -55,10 +65,38 @@ sub should_switch_with_parent {
 
 sub switch_with_parent {
     my ($a_node) = @_;
+    my $tag = $a_node->tag;
+
+
     my $parent = $a_node->get_parent();
     my $granpa = $parent->get_parent();
     $a_node->set_parent($granpa);
     $parent->set_parent($a_node);
+
+    # for coordination particles, we further change topology:
+    # we want both coordinated nodes to be dependent on the particle
+    if ($tag =~ /-Heiritsujoshi/) {
+      $parent = $a_node->get_parent();
+      $granpa = $parent->get_parent();
+      $a_node->set_parent($granpa);
+      $parent->set_parent($a_node);
+
+      # we must set IsMember for both coordinated nodes
+      foreach my $child ( $a_node->get_children() ) {
+        $child->set_is_member(1);
+      }
+
+      $parent = $a_node->get_parent();
+
+      # in case of multiple coordinations we rehang children of the particle
+      # to the higher coordination particle
+      if ($parent->tag =~ /-Heiritsujoshi/) {
+        foreach my $child ( $a_node->get_children() ) {
+          $child->set_parent($parent);
+        }
+      }
+    }
+
     return;
 }
 
@@ -66,19 +104,44 @@ sub switch_with_parent {
 
 __END__
 
-=over
+=pod
 
-=item Treex::Block::W2A::JA::RehangConjunctions
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Block::W2A::JA::RehangConjunctions
+
+=head1 DESCRIPTION
 
 Modifies the topology of trees parsed by JDEPP parser so it easier to work with later (transforming to t-layer, transfer ja2cs).
-At the moment we only rehang the particles but not the conjuncts
+We pay special attention to coordinating particles and treat them in a similar manner as in PDT.
 
-TODO: fix this
+Block shouldn't be called before blocks Treex::Block::W2A::JA::RehangCopulas Treex::Block::W2A::JA::RehangAuxVerbs have been applied
 
-TODO: correct some special cases, take care of conjuncions between two sentences
+=head1 TODO
 
-=back
+Fix default JDEPP coordination dependencies.
+  鳥や 犬や 猫や 馬が いました - There were horses and dogs and cats and birds.
+  birdsや dogsや catsや horsesや to_be.
+
+  JDEPP:
+    birds   -> to_be
+    dogs    -> horses
+    cats    -> horses
+    horses  -> to_be
+  We need: (for correct coord. particle modification)
+    birds   -> horses
+    dogs    -> horses
+    cats    -> horses
+    horses  -> to_be
+
+More complex coordination structures needs to be examined (JDEPP output).
+Block is still being tested
+
+=head1 AUTHORS
+
+Dusan Varis
 
 =cut
 
-Author: Dusan Varis

@@ -110,7 +110,7 @@ sub _noun {
 
     # nominal adjectives
     my $tag = $a_node->tag;
-    return 'n:attr' if $tag =~ /_Keiyōdōshi/;
+    return 'n:attr' if $tag =~ /-Keiyōdōshi/;
 
     # This part can probably be ommited
     my $afun = $a_node->afun;

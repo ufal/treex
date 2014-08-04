@@ -39,7 +39,7 @@ sub should_switch_with_parent {
     return 0 if $parent->is_root();
 
     # check, if our verb is dependent on a non-independent verb
-    return 0 if $parent->tag !~ /_HiJiritsu/;
+    return 0 if $parent->tag !~ /-HiJiritsu/;
 
     return 1;
 }
