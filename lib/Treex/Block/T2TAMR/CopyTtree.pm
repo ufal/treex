@@ -91,6 +91,10 @@ Treex::Block::T2TAMR::CopyTtree
 
 =head1 DESCRIPTION
 
+Copying a t-tree for the conversion to AMR.
+
+Stores either functor or formeme in the C<wild->{modifier}> attribute, 
+depending on the setting of the C<modifier_source> (functor is the default).
 
 =head1 AUTHORS
 

@@ -76,11 +76,13 @@ __END__
 
 =head1 NAME
 
-Treex::Block::Write::Amr
+Treex::Block::Write::Arm
 
 =head1 DESCRIPTION
 
-Document writer for amr-like format.
+Document writer for AMR-like (Penman) format.
+
+Uses C<wild->{modifier}> or C<functor> (as a backup) for labels.
 
 =head1 ATTRIBUTES
 
@@ -88,15 +90,19 @@ Document writer for amr-like format.
 
 =item language
 
-Language of tree
-
+Language of the trees to be printed.
 
 =item selector
 
-Selector of tree
+Selector of the trees to be printed.
 
 =back
 
+=head1 AUTHORS
+
+Roman Sudarikov <sudarikov@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

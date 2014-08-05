@@ -82,32 +82,19 @@ sub _add_aligned_spans {
 
 1;
 
-__END__
-
 =head1 NAME
 
-Treex::Block::Write::AmrAligned
+Treex::Block::Write::AmrAlignedCrossLang
 
 =head1 DESCRIPTION
 
-Document writer for amr-like format, with alignments
+Produces AMR with alignments to the surface. 
 
-=head1 ATTRIBUTES
+=head1 AUTHORS
 
-=over
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
-=item language
-
-Language of tree
-
-
-=item selector
-
-Selector of tree
-
-
-=back
-
+Roman Sudarikov <sudarikov@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
