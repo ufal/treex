@@ -4,6 +4,10 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseTextReader';
 
+has '_param2id' => ( is => 'rw', isa => 'HashRef' );
+
+has '_doc' => ( is => 'rw' );
+
 sub next_document {
 
     my ($self) = @_;
@@ -16,31 +20,25 @@ sub next_document {
 
     my $state         = 'Void';    # what we are currently reading
     my $value         = '';
-    my $lemma         = '';        # current t-lemma
     my $word          = '';
     my $modifier      = '';
     my $param         = '';        # name of the current AMR variable
-    my %param2id      = {};        # AMR variable name -> node id, used for coreference
-    my $ord           = 0;
+    my $ord           = 0;         # current node's order
     my $bracket_depth = 0;
-    my $sent_count    = 0;         # sentence count (not used)
+    my $sent_count    = 0;         # sentence count (not used, actually)
 
-    my ( $bundle, $zone, $tree, $cur_node );
+    my $cur_node;
 
     my $doc = $self->new_document();
+    $self->_set_doc($doc);
+    $self->_set_param2id( {} );
 
     foreach my $arg (@chars) {
 
-        if ( $arg eq '(' ) {
+        if ( $arg eq '(' ) {       # delving deeper (new node)
             if ( $state eq 'Void' ) {
-                %param2id = {};
-                $bundle   = $doc->create_bundle;
-                $zone     = $bundle->create_zone( $self->language, $self->selector );
-                $tree     = $zone->create_ttree();
-
-                $cur_node = $tree->create_child( { ord => $ord } );
-                $cur_node->wild->{modifier} = 'root';
-                $ord++;
+                $cur_node = $self->_next_sentence();
+                $ord      = 1;
             }
             $state = 'Param';
             $value = '';
@@ -56,59 +54,28 @@ sub next_document {
         }
 
         elsif ( $arg eq ':' ) {
-            if ( $state eq 'Word' && $value ) {
-                $lemma = '';
-                $word  = $value;
-                if ($param) {
-                    $lemma = $param;
+            if ($value) {
+                if ( $state eq 'Word' ) {
+                    $word = $value;
                 }
-                if ($lemma) {
-                    $lemma .= '/' . $word;
+                elsif ( $state eq 'Param' ) {
+                    $param = $value;
                 }
-                else {
-                    $lemma = $word;
-                }
-                if ($lemma) {
-                    $cur_node->set_attr( 't_lemma', $lemma );
-                }
-                if ($param) {
-                    if ( exists( $param2id{$param} ) ) {
-                        $cur_node->add_coref_text_nodes( $doc->get_node_by_id( $param2id{$param} ) );
-                    }
-                    else {
-                        $param2id{$param} = $cur_node->get_attr('id');
-                    }
-                }
+                $self->_fill_lemma( $cur_node, $param, $word );
+                $self->_check_coref( $cur_node, $param );
                 $param = '';
                 $word  = '';
                 $value = '';
-            }
-            if ( $state eq 'Param' && $value ) {
-                $param = $value;
-                if ($param) {
-                    $cur_node->set_attr( 't_lemma', $param );
+                if ( $state eq 'Param' ) {
+                    $cur_node = $cur_node->get_parent();
                 }
-                if ($param) {
-                    if ( exists( $param2id{$param} ) ) {
-                        $cur_node->add_coref_text_nodes( $doc->get_node_by_id( $param2id{$param} ) );
-                    }
-                    else {
-                        $param2id{$param} = $cur_node->get_attr('id');
-                    }
-                }
-                $cur_node = $cur_node->get_parent();
-                $param    = '';
-                $word     = '';
-                $value    = '';
             }
             $state = 'Modifier';
         }
         elsif ( $arg eq ' ' ) {
             if ( $state eq 'Modifier' && $value ) {
                 $modifier = $value;
-                my $newNode = $cur_node->create_child( { ord => $ord } );
-                $ord++;
-                $cur_node = $newNode;
+                $cur_node = $cur_node->create_child( { ord => $ord++ } );
                 if ($modifier) {
                     $cur_node->wild->{modifier} = $modifier;
                     $modifier = '';
@@ -118,40 +85,26 @@ sub next_document {
             }
         }
 
-        elsif ( $arg eq '"' ) {
-            if ( $state eq 'Word' && $value ) {
-                $cur_node->{t_lemma} = $value;
-                $value               = '';
-                $cur_node            = $cur_node->get_parent();
+        elsif ( $arg eq '"' ) {    # NE constant values
+            if ( $state eq 'Word' && $value ) {    # ending
+                $cur_node->set_t_lemma( '"' . $value . '"' );
+                $value    = '';
+                $cur_node = $cur_node->get_parent();
             }
-            if ( $state eq 'Param' ) {
+            if ( $state eq 'Param' ) {             # beginning
                 $state = 'Word';
             }
         }
 
         elsif ( $arg eq ')' ) {
-            $lemma = '';
             if ( $state eq 'Param' ) {
                 $param = $value;
             }
             if ( $state eq 'Word' ) {
                 $word = $value;
             }
-            $lemma = $param;
-            if ($word) {
-                $lemma .= ( $lemma ? '/' : '' ) . $word;
-            }
-            if ($lemma) {
-                $cur_node->set_attr( 't_lemma', $lemma );
-            }
-            if ($param) {
-                if ( exists( $param2id{$param} ) ) {
-                    $cur_node->add_coref_text_nodes( $doc->get_node_by_id( $param2id{$param} ) );
-                }
-                else {
-                    $param2id{$param} = $cur_node->get_attr('id');
-                }
-            }
+            $self->_fill_lemma( $cur_node, $param, $word );
+            $self->_check_coref( $cur_node, $param );
 
             $cur_node = $cur_node->get_parent();
             $value    = '';
@@ -160,7 +113,6 @@ sub next_document {
             $bracket_depth--;
             if ( $bracket_depth eq 0 ) {
                 $state = 'Void';
-                $ord   = 0;
                 $sent_count++;
             }
         }
@@ -171,6 +123,49 @@ sub next_document {
     }
 
     return $doc;
+}
+
+sub _check_coref {
+
+    my ( $self, $cur_node, $param ) = @_;
+
+    return if ( !$param );
+
+    if ( exists( $self->_param2id->{$param} ) ) {
+        $cur_node->add_coref_text_nodes( $self->_doc->get_node_by_id( $self->_param2id->{$param} ) );
+    }
+    else {
+        $self->_param2id->{$param} = $cur_node->id;
+    }
+    return;
+}
+
+sub _fill_lemma {
+    my ( $self, $cur_node, $param, $word ) = @_;
+    my $lemma = $param;
+    if ($word) {
+        $lemma .= ( $lemma ? '/' : '' ) . $word;
+    }
+    if ($lemma) {
+        $cur_node->set_t_lemma($lemma);
+    }
+    return;
+}
+
+sub _next_sentence {
+
+    my ($self) = @_;
+
+    $self->_set_param2id( {} );
+
+    my $bundle = $self->_doc->create_bundle;
+    my $zone   = $bundle->create_zone( $self->language, $self->selector );
+    my $tree   = $zone->create_ttree();
+
+    my $cur_node = $tree->create_child( { ord => 0 } );
+    $cur_node->wild->{modifier} = 'root';
+
+    return $cur_node;
 }
 
 1;
