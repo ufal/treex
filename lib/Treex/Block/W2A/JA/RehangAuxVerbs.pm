@@ -38,8 +38,9 @@ sub should_switch_with_parent {
     my $parent = $a_node->get_parent();
     return 0 if $parent->is_root();
 
-    # check, if our verb is dependent on a non-independent verb
-    return 0 if $parent->tag !~ /-HiJiritsu/;
+    # check, if our verb is dependent on a non-independent verb (non-pure auxiliary, e.g. "iru", "aru") or suffix-verb (pure auxiliary, e.g. "rareru", "saseru")
+    # NOTE: pure auxiliaries, which are marked as Jodoshi (e.g. "masu") are parsed correctly in the parser block, so we do not fix them
+    return 0 if ($parent->tag !~ /-HiJiritsu/ && $parent->tag !~ /-Setsubi/);
 
     return 1;
 }
@@ -64,22 +65,22 @@ sub switch_with_parent {
 
 __END__
 
-=over
+=pod
 
 =item Treex::Block::W2A::JA::RehangAuxVerbs
 
-Verbs (Dōshi) with subtag HiJiritsu (non-independent) should be
-dependent on independent verbs (subtag Jiritsu) and not vice versa.
+=head1 DESCRIPTION
+
+Verbs (Dōshi) with tag Dōshi-HiJiritsu (non-independent) should be
+dependent on independent verbs (tag Dōshi-Jiritsu) and "suffix" verbs (tag Dōshi-Setsubi) and not vice versa.
 This block takes care of that.
 
 ---
 
 Suggested order of applying Rehang* blocks:
-W2A::JA::RehangAuxVerbs
+W2A::JA::RehangAuxVerbsōshi
 W2A::JA::RehangCopulas
 W2A::JA::RehangParticles
-
-=back
 
 =cut
 

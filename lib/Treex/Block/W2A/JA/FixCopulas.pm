@@ -4,6 +4,9 @@ use Treex::Core::Common;
 use Encode;
 extends 'Treex::Core::Block';
 
+
+# TODO: "では" is actually tokenized as "で" and "は" (both tokens marked as particles). Where should we fix this?
+
 sub process_atree {
     my ( $self, $a_root ) = @_;
     foreach my $child ( $a_root->get_children() ) {
@@ -16,14 +19,10 @@ sub fix_subtree {
     my ($a_node) = @_;
     my $lemma = $a_node->lemma;
     
-    # we change lemma of "じゃ" and "では" based on auxiliary verbs dependent on them
+    # we change lemma of "じゃ" and "では" 
     if ( $lemma eq "じゃ" || $lemma eq "では" ) {
         foreach my $child ( $a_node->get_children() ) {
-
-            #TODO: completely revise this block (do we need it?)
-
-            $a_node->set_lemma("だ") if $child->lemma eq "ない" ;
-            $a_node->set_lemma("です") if $child->lemma eq "ん";
+            $a_node->set_lemma("です");
         }
     }
     return;
@@ -33,14 +32,18 @@ sub fix_subtree {
 
 __END__
 
+=pod
+
 =head1 NAME
 
 Treex::Block::W2A::JA::FixCopulas
 
 =head1 DECRIPTION
 
-Changes lemma for copulas in negative form. Negative aspect of copula should be kept in separate negative token.
+Fixes lemma for copula forms, which are used when creating negation. 
 
 =head1 AUTHORS
 
 Dusan Varis
+
+=cut

@@ -56,6 +56,8 @@ sub process_atree {
 
 __END__
 
+=pod
+
 =head1 NAME
 
 Treex::Block::W2A::JA::FixInterpunction
@@ -66,7 +68,8 @@ Changes the form and lemma of the interpunction from their japanese-encoding
 equivalents.
 Also, if interpunction node has children, they are rehanged.
 
-
 =head1 AUTHORS
 
 Dusan Varis
+
+=cut

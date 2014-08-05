@@ -68,7 +68,9 @@ sub process_zone {
     	my @features = split /\t/, $token;
         my $wordform = $features[0];
 
-        #TODO: should use whole IPADIC tagset (or JDEPP parser is bound to make mistakes sometimes)
+        ######
+        #TODO: For better parsing accuracy we MUST also include 5th and
+        ######  6th feature (but the tag will be very long
         my $bTag = $features[1].'-'.$features[2].'-'.$features[3].'-'.$features[4];
         my $lemma = $features[7];      
 

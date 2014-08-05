@@ -14,8 +14,10 @@ my %is_processed;
 sub process_atree {
     my ( $self, $a_root ) = @_;
     %is_processed = ();
-    foreach my $child ( $a_root->get_children() ) {
-        fix_subtree($child);
+
+    my @children = $a_root->get_children();
+    for (my $i = (scalar @children) - 1; $i >= 0; $i--) {
+        fix_subtree($children[$i]);
     }
     return 1;
 }
@@ -29,11 +31,11 @@ sub fix_subtree {
     $is_processed{$a_node} = 1;
     
     my @children = $a_node->get_children();
-    #foreach my $child ( $a_node->get_children() ) {
     # since Japanese is head-final, we prefer to go through children
     # in a reverse order
-    for ($i = $#children; $i > 0; $i--) {
+    for (my $i = (scalar @children) - 1; $i >= 0; $i--) {
         next if $is_processed{$children[$i]};
+         
         fix_subtree($children[$i]);
     }
     return;
@@ -43,22 +45,23 @@ sub should_switch_with_parent {
     my ($a_node) = @_;
     my $tag = $a_node->tag;
     my $form = $a_node->form;
-    #return 0 if $tag !~ /^Joshi-Setsuzoku/;
-    return 0 if $tag !~ /-Heiritsujoshi/;
+    return 0 if ($tag !~ /^Joshi-SetsuzokuJoshi/ && $tag !~ /^Joshi-Heiritsujoshi/ && $tag !~ /^Setsuzokushi/);
 
-    # 接続詞 - conjunction (sentence introduction)
-    # 助詞-接続助詞 - particle-conjunctive
-    
-    # 助詞-並立助詞 - particle-coordinate
-
-    # we need to treat "て" particle differently
-    # return 0 if $form eq "て";
+    # 接続詞 - Setsuzokushi - conjunction (sentence introduction)
+    # 助詞-接続助詞 - Joshi-SetsuzokuJoshi - particle-conjunctive
+    # 助詞-並立助詞 - Joshi-Heiritsujoshi - particle-coordinate
 
     my $parent = $a_node->get_parent();
     return 0 if $parent->is_root();
 
-    # All particles processed in following steps must stand after the word to which they are related
-    return 0 if $a_node->precedes($parent);
+    # we need to treat "て" particle differently, if its just a part of "continuous" form of a verb (e.g. verb + て + います).
+    if ( $form eq "て" ) {
+      
+      # note that a possible non-independent verb (e.g. います) should be already sibling of "て" particle, thanks to W2A::JA::RehangAuxVerbs
+      foreach my $child ($parent->get_children()) {
+        return 0 if $child->tag =~ /HiJiritsu/;
+      }
+    }
 
     return 1;
 }
@@ -88,9 +91,8 @@ sub switch_with_parent {
 
       $parent = $a_node->get_parent();
 
-      # in case of multiple coordinations we rehang children of the particle
-      # to the higher coordination particle
-      if ($parent->tag =~ /-Heiritsujoshi/) {
+      # in case of multiple coordinations we rehang children of the particle to the higher coordination particle
+      if ($parent->tag && $parent->tag =~ /-Heiritsujoshi/) {
         foreach my $child ( $a_node->get_children() ) {
           $child->set_parent($parent);
         }
@@ -130,7 +132,7 @@ Fix default JDEPP coordination dependencies.
     dogs    -> horses
     cats    -> horses
     horses  -> to_be
-  We need: (for correct coord. particle modification)
+  We desire: (for correct coord. particle modification)
     birds   -> horses
     dogs    -> horses
     cats    -> horses

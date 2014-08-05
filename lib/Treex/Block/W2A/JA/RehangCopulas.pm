@@ -4,12 +4,9 @@ use Treex::Core::Common;
 use Encode;
 extends 'Treex::Core::Block';
 
-# We rehang copulas "だ" and "です" which are marked as auxiliary verbs
-# but they are often dependent on non-verb token (noun, adjective...)
-# so they function as a predicate in a sentence (often translated as "to be")
-# Note that polite form "でございます" contains lemma "だ" so it is also processed
+# We rehang copula (lemmas "だ" and "です"), which are marked as auxiliary verbs but are often dependent on non-verb token (noun, adjective...). In this case they function as a predicate in a sentence (often translated as "to be"), so we want to change the dependecy.
 
-# TODO: take care of negative form of "だ" and "です" (maybe just change lemmas?)
+# TODO: take care of "では" stem form of a copula 
 
 # While recursively depth-first-traversing the tree
 # we sometimes rehang already processed parent node as a child node.
@@ -47,14 +44,13 @@ sub should_switch_with_parent {
     my $lemma = $a_node->lemma;
     return 0 if $tag !~ /^Jodōshi/;
     
-    #TODO: make sure, that lemmas "です" and "だ" (and their negative forms) cover all copulas
-    return 0 if ( $lemma ne "です" && $lemma ne "だ" && $lemma ne "じゃ" && $lemma ne "では" ) ;
+    return 0 if ( $lemma ne "です" && $lemma ne "だ" && $lemma ) ;
 
     my $parent = $a_node->get_parent();
     return 0 if $parent->is_root();
 
-    # All particles processed in following steps must stand after the word to which they are related
-    return 0 if $a_node->precedes($parent);
+    # we only switch copula, if their parent is a non-verb (otherwise they really are just auxiliary verbs, e.g formal past negation ありません "でし"  た).
+    return 0 if $parent->tag() =~ /^Dōshi/;
 
     return 1;
 }
@@ -66,10 +62,8 @@ sub switch_with_parent {
     $a_node->set_parent($granpa);
     $parent->set_parent($a_node);
 
-    # we rehang children from previous parent to copula
-
     foreach my $child ( $parent->get_children() ) {
-        $child->set_parent($a_node);
+      $child->set_parent($a_node);
     }
     return;
 }
@@ -78,12 +72,13 @@ sub switch_with_parent {
 
 __END__
 
-=over
+=pod
 
 =item Treex::Block::W2A::JA::RehangCopulas
 
+=head1 DESCRIPTION
+
 Modifies the topology of trees parsed by JDEPP parser.
-W2A::JA::RehangConjunctions should be used before using this block.
 The word made into predicate by copula should depend on the copula,
 because we hope that way the sentence should be easier to translate.
 
@@ -92,9 +87,8 @@ because we hope that way the sentence should be easier to translate.
 Suggested order of applying Rehang* blocks:
 W2A::JA::RehangAuxVerbs
 W2A::JA::RehangCopulas
+W2A::JA::RehangConjunctions
 W2A::JA::RehangParticles
-
-=back
 
 =cut
 
