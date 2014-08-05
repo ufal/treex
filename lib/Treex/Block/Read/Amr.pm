@@ -35,7 +35,14 @@ sub next_document {
 
     foreach my $arg (@chars) {
 
-        if ( $arg eq '(' ) {       # delving deeper (new node)
+        if ( $state eq 'Quote' ) {    # skipping named entities in quotes (may contain AMR special characters)
+            if ( $arg ne '"' ) {
+                $value .= $arg;
+                next;
+            }
+        }
+
+        if ( $arg eq '(' ) {          # delving deeper (new node)
             if ( $state eq 'Void' ) {
                 $cur_node = $self->_next_sentence();
                 $ord      = 1;
@@ -86,13 +93,14 @@ sub next_document {
         }
 
         elsif ( $arg eq '"' ) {    # NE constant values
-            if ( $state eq 'Word' && $value ) {    # ending
+            if ( $state eq 'Quote' && $value ) {    # ending
                 $cur_node->set_t_lemma( '"' . $value . '"' );
                 $value    = '';
+                $state    = 'Word';
                 $cur_node = $cur_node->get_parent();
             }
-            if ( $state eq 'Param' ) {             # beginning
-                $state = 'Word';
+            if ( $state eq 'Param' ) {              # beginning
+                $state = 'Quote';
             }
         }
 
@@ -106,8 +114,8 @@ sub next_document {
             $self->_fill_lemma( $cur_node, $param, $word );
             $self->_check_coref( $cur_node, $param );
 
-            if ( $state eq 'Param' ){
-                $state = 'Word';
+            if ( $state eq 'Param' ) {
+                $state    = 'Word';
                 $cur_node = $cur_node->get_parent();
             }
             $cur_node = $cur_node->get_parent();
