@@ -1,10 +1,11 @@
 package Treex::Block::Read::Amr;
-use feature qw(switch);
+
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseTextReader';
 
 sub next_document {
+
     my ($self) = @_;
     my $text = $self->next_document_text();
     return if !defined $text;
@@ -13,18 +14,18 @@ sub next_document {
 
     my @chars = split( '', $text );
 
-    my $state          = 'Void'; # what we are currently reading
-    my $value          = '';
-    my $lemma          = ''; # current t-lemma
-    my $word           = '';
-    my $modifier       = '';
-    my $param          = ''; # name of the current AMR variable
-    my %param2id       = {};
-    my $ord            = 0;
-    my $brackets_match = 0;
-    my $sentencecount  = 0;
+    my $state         = 'Void';    # what we are currently reading
+    my $value         = '';
+    my $lemma         = '';        # current t-lemma
+    my $word          = '';
+    my $modifier      = '';
+    my $param         = '';        # name of the current AMR variable
+    my %param2id      = {};        # AMR variable name -> node id, used for coreference
+    my $ord           = 0;
+    my $bracket_depth = 0;
+    my $sent_count    = 0;         # sentence count (not used)
 
-    my ( $bundle, $zone, $tree, $currentNode );
+    my ( $bundle, $zone, $tree, $cur_node );
 
     my $doc = $self->new_document();
 
@@ -37,13 +38,13 @@ sub next_document {
                 $zone     = $bundle->create_zone( $self->language, $self->selector );
                 $tree     = $zone->create_ttree();
 
-                $currentNode = $tree->create_child( { ord => $ord } );
-                $currentNode->wild->{modifier} = 'root';
+                $cur_node = $tree->create_child( { ord => $ord } );
+                $cur_node->wild->{modifier} = 'root';
                 $ord++;
             }
             $state = 'Param';
             $value = '';
-            $brackets_match++;
+            $bracket_depth++;
         }
 
         elsif ( $arg eq '/' ) {
@@ -51,7 +52,7 @@ sub next_document {
                 $param = $value;
                 $state = 'Word';
             }
-            $value = '';
+            $value = '';    # TODO check if this doesn't break AMRs containing '/' in lemma
         }
 
         elsif ( $arg eq ':' ) {
@@ -68,14 +69,14 @@ sub next_document {
                     $lemma = $word;
                 }
                 if ($lemma) {
-                    $currentNode->set_attr( 't_lemma', $lemma );
+                    $cur_node->set_attr( 't_lemma', $lemma );
                 }
                 if ($param) {
                     if ( exists( $param2id{$param} ) ) {
-                        $currentNode->add_coref_text_nodes( $doc->get_node_by_id( $param2id{$param} ) );
+                        $cur_node->add_coref_text_nodes( $doc->get_node_by_id( $param2id{$param} ) );
                     }
                     else {
-                        $param2id{$param} = $currentNode->get_attr('id');
+                        $param2id{$param} = $cur_node->get_attr('id');
                     }
                 }
                 $param = '';
@@ -85,31 +86,31 @@ sub next_document {
             if ( $state eq 'Param' && $value ) {
                 $param = $value;
                 if ($param) {
-                    $currentNode->set_attr( 't_lemma', $param );
+                    $cur_node->set_attr( 't_lemma', $param );
                 }
                 if ($param) {
                     if ( exists( $param2id{$param} ) ) {
-                        $currentNode->add_coref_text_nodes( $doc->get_node_by_id( $param2id{$param} ) );
+                        $cur_node->add_coref_text_nodes( $doc->get_node_by_id( $param2id{$param} ) );
                     }
                     else {
-                        $param2id{$param} = $currentNode->get_attr('id');
+                        $param2id{$param} = $cur_node->get_attr('id');
                     }
                 }
-                $currentNode = $currentNode->get_parent();
-                $param       = '';
-                $word        = '';
-                $value       = '';
+                $cur_node = $cur_node->get_parent();
+                $param    = '';
+                $word     = '';
+                $value    = '';
             }
             $state = 'Modifier';
         }
         elsif ( $arg eq ' ' ) {
             if ( $state eq 'Modifier' && $value ) {
                 $modifier = $value;
-                my $newNode = $currentNode->create_child( { ord => $ord } );
+                my $newNode = $cur_node->create_child( { ord => $ord } );
                 $ord++;
-                $currentNode = $newNode;
+                $cur_node = $newNode;
                 if ($modifier) {
-                    $currentNode->wild->{modifier} = $modifier;
+                    $cur_node->wild->{modifier} = $modifier;
                     $modifier = '';
                 }
                 $value = '';
@@ -119,9 +120,9 @@ sub next_document {
 
         elsif ( $arg eq '"' ) {
             if ( $state eq 'Word' && $value ) {
-                $currentNode->{t_lemma} = $value;
-                $value                  = '';
-                $currentNode            = $currentNode->get_parent();
+                $cur_node->{t_lemma} = $value;
+                $value               = '';
+                $cur_node            = $cur_node->get_parent();
             }
             if ( $state eq 'Param' ) {
                 $state = 'Word';
@@ -141,26 +142,26 @@ sub next_document {
                 $lemma .= ( $lemma ? '/' : '' ) . $word;
             }
             if ($lemma) {
-                $currentNode->set_attr( 't_lemma', $lemma );
+                $cur_node->set_attr( 't_lemma', $lemma );
             }
             if ($param) {
                 if ( exists( $param2id{$param} ) ) {
-                    $currentNode->add_coref_text_nodes( $doc->get_node_by_id( $param2id{$param} ) );
+                    $cur_node->add_coref_text_nodes( $doc->get_node_by_id( $param2id{$param} ) );
                 }
                 else {
-                    $param2id{$param} = $currentNode->get_attr('id');
+                    $param2id{$param} = $cur_node->get_attr('id');
                 }
             }
 
-            $currentNode = $currentNode->get_parent();
-            $value       = '';
-            $word        = '';
-            $param       = '';
-            $brackets_match--;
-            if ( $brackets_match eq 0 ) {
+            $cur_node = $cur_node->get_parent();
+            $value    = '';
+            $word     = '';
+            $param    = '';
+            $bracket_depth--;
+            if ( $bracket_depth eq 0 ) {
                 $state = 'Void';
                 $ord   = 0;
-                $sentencecount++;
+                $sent_count++;
             }
         }
 
@@ -212,6 +213,8 @@ Loads a document.
 Roman Sudarikov <sudarikov@ufal.mff.cuni.cz>
 
 Ondřej Bojar <bojar@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
