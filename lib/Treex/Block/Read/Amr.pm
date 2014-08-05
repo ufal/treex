@@ -106,6 +106,10 @@ sub next_document {
             $self->_fill_lemma( $cur_node, $param, $word );
             $self->_check_coref( $cur_node, $param );
 
+            if ( $state eq 'Param' ){
+                $state = 'Word';
+                $cur_node = $cur_node->get_parent();
+            }
             $cur_node = $cur_node->get_parent();
             $value    = '';
             $word     = '';
