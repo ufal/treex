@@ -48,6 +48,7 @@ my %aux2functor = (
     "above"   => "LOC",
     "below"   => "LOC",
     "under"   => "LOC",
+    "near"    => "LOC",
     "through" => "DIR2",
     "after"   => "TWHEN",
 );
@@ -97,7 +98,6 @@ sub assign_functors {
 
     NODE: foreach my $node ( grep { not defined $_->functor } $t_root->get_descendants ) {
 
-        #        my $lex_a_node  = $document->get_node_by_id( $node->get_attr('a/lex.rf') );
         my $lex_a_node = $node->get_lex_anode;
 
         if ( not defined $lex_a_node ) {
@@ -105,7 +105,7 @@ sub assign_functors {
             next NODE;
         }
 
-        my $a_parent    = $lex_a_node->get_parent;
+        my ($a_parent)  = $lex_a_node->get_eparents({or_topological => 1});
         my $afun        = $lex_a_node->afun;
         my $mlemma      = lc $lex_a_node->lemma;     #Monday -> monday
         my @aux_a_nodes = $node->get_aux_anodes();
@@ -136,7 +136,7 @@ sub assign_functors {
         }
         elsif (
             $lex_a_node->tag =~ /^(N.+|WP|PRP|WDT)$/
-            and $a_parent->tag
+            and ($a_parent->tag // '')
             =~ /^V/
             and $lex_a_node->ord < $a_parent->ord
             )
@@ -149,14 +149,14 @@ sub assign_functors {
             }
         }
         elsif (
-            $a_parent->tag
+            ($a_parent->tag // '')
             =~ /^V/
             and $lex_a_node->ord > $a_parent->ord
             )
         {
             $functor = "PAT";
         }
-        elsif ( $a_parent->tag =~ /^N/ ) {
+        elsif ( ( $a_parent->tag // '') =~ /^N/ ) {
             $functor = 'RSTR';
         }
         elsif ( $lex_a_node->tag =~ /^V/ ) {
