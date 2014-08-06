@@ -62,7 +62,7 @@ sub next_document {
         if ( $arg eq '(' ) {         # delving deeper (new node)
             if ( $state eq 'Void' ) {
                 $cur_node = $self->_next_sentence();
-                $ord      = 1;
+                $ord      = 2;
             }
             $state = 'Param';
             $value = '';
@@ -142,7 +142,7 @@ sub next_document {
             $word     = '';
             $param    = '';
             $bracket_depth--;
-            if ( $bracket_depth eq 0 ) {
+            if ( $bracket_depth eq 0 ) {    # end of sentence
                 $state = 'Void';
                 $sent_count++;
                 $self->_process_comment_data();
@@ -194,7 +194,6 @@ sub _fill_lemma {
 }
 
 # Start a new sentence (create a new bundle and t-tree).
-# If there is some content in _comment_data, try to process it.
 # Reset the coreference tracker (_param2id)
 sub _next_sentence {
 
@@ -207,7 +206,7 @@ sub _next_sentence {
     my $zone   = $bundle->create_zone( $self->language, $self->selector );
     my $ttree  = $zone->create_ttree();
 
-    my $cur_node = $ttree->create_child( { ord => 0 } );
+    my $cur_node = $ttree->create_child( { ord => 1 } );
     $cur_node->wild->{modifier} = 'root';
 
     return $cur_node;
@@ -257,7 +256,7 @@ sub _parse_comment {
     $comment =~ s/^\s+|\s+$//g;    # trim
     return if ( $comment !~ /^::[a-z]{2,}/ );
 
-    my @data = split /::([a-z]{2,})\s+/, $comment;
+    my @data = split /\s*::([a-z]{2,})\s+/, $comment;
     shift @data;                   # first will be empty
 
     while (@data) {
