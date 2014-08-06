@@ -8,20 +8,20 @@ has '_param2id' => ( is => 'rw', isa => 'HashRef' );
 
 has '_doc' => ( is => 'rw' );
 
+has '_comment_data' => ( is => 'rw', isa => 'HashRef' );
+
 sub next_document {
 
     my ($self) = @_;
     my $text = $self->next_document_text();
     return if !defined $text;
 
-    $text =~ s/[\n|\s]+/ /g;
-
     my @chars = split( '', $text );
 
     my $state         = 'Void';    # what we are currently reading
     my $value         = '';
-    my $word          = '';
-    my $modifier      = '';
+    my $word          = '';        # current concept
+    my $modifier      = '';        # current AMR dependency label
     my $param         = '';        # name of the current AMR variable
     my $ord           = 0;         # current node's order
     my $bracket_depth = 0;
@@ -31,18 +31,35 @@ sub next_document {
 
     my $doc = $self->new_document();
     $self->_set_doc($doc);
-    $self->_set_param2id( {} );
+    $self->_set_param2id(     {} );
+    $self->_set_comment_data( {} );
 
     foreach my $arg (@chars) {
 
-        if ( $state eq 'Quote' ) {    # skipping named entities in quotes (may contain AMR special characters)
+        # skipping named entities in quotes (may contain AMR special characters)
+        if ( $state eq 'Quote' ) {
             if ( $arg ne '"' ) {
                 $value .= $arg;
                 next;
             }
         }
 
-        if ( $arg eq '(' ) {          # delving deeper (new node)
+        # skipping commented-out lines
+        elsif ( $state eq 'Comment' ) {
+
+            if ( $arg eq "\n" ) {    # parse the comment at its end
+                $self->_parse_comment($value);
+                $value = '';
+                $state = 'Void';
+                next;
+            }
+            $value .= $arg;
+            next;
+        }
+
+        # normal operation mode
+
+        if ( $arg eq '(' ) {         # delving deeper (new node)
             if ( $state eq 'Void' ) {
                 $cur_node = $self->_next_sentence();
                 $ord      = 1;
@@ -52,12 +69,14 @@ sub next_document {
             $bracket_depth++;
         }
 
-        elsif ( $arg eq '/' ) {
+        elsif ( $arg eq '/' ) {      # variable name / concept name
             if ( $state eq 'Param' && $value ) {
                 $param = $value;
                 $state = 'Word';
             }
-            $value = '';    # TODO check if this doesn't break AMRs containing '/' in lemma
+
+            # TODO check if this doesn't break AMRs containing '/' in lemma
+            $value = '';
         }
 
         elsif ( $arg eq ':' ) {
@@ -79,7 +98,7 @@ sub next_document {
             }
             $state = 'Modifier';
         }
-        elsif ( $arg eq ' ' ) {
+        elsif ( $arg =~ /\s/ ) {
             if ( $state eq 'Modifier' && $value ) {
                 $modifier = $value;
                 $cur_node = $cur_node->create_child( { ord => $ord++ } );
@@ -114,7 +133,7 @@ sub next_document {
             $self->_fill_lemma( $cur_node, $param, $word );
             $self->_check_coref( $cur_node, $param );
 
-            if ( $state eq 'Param' ) {
+            if ( $state eq 'Param' ) {    # go up one more level for reentrancies
                 $state    = 'Word';
                 $cur_node = $cur_node->get_parent();
             }
@@ -126,7 +145,13 @@ sub next_document {
             if ( $bracket_depth eq 0 ) {
                 $state = 'Void';
                 $sent_count++;
+                $self->_process_comment_data();
             }
+        }
+
+        elsif ( $arg eq '#' and $state eq 'Void' and $value =~ /(\s|^)$/ ) {
+            $value = '';
+            $state = 'Comment';
         }
 
         else {
@@ -137,6 +162,9 @@ sub next_document {
     return $doc;
 }
 
+# Check for coreference -- add coreference link if the given variable name is
+# a reentrancy (i.e., has a first-mention ID in the _param2id member). Otherwise
+# remember the variable in _param2id for future reference.
 sub _check_coref {
 
     my ( $self, $cur_node, $param ) = @_;
@@ -152,6 +180,7 @@ sub _check_coref {
     return;
 }
 
+# Fill in AMR lemma (consisting of variable name, and optionally, concept name)
 sub _fill_lemma {
     my ( $self, $cur_node, $param, $word ) = @_;
     my $lemma = $param;
@@ -164,20 +193,78 @@ sub _fill_lemma {
     return;
 }
 
+# Start a new sentence (create a new bundle and t-tree).
+# If there is some content in _comment_data, try to process it.
+# Reset the coreference tracker (_param2id)
 sub _next_sentence {
 
     my ($self) = @_;
 
-    $self->_set_param2id( {} );
+    $self->_set_param2id( {} );    # reset coreference tracker
 
+    # create a new bundle and tree
     my $bundle = $self->_doc->create_bundle;
     my $zone   = $bundle->create_zone( $self->language, $self->selector );
-    my $tree   = $zone->create_ttree();
+    my $ttree  = $zone->create_ttree();
 
-    my $cur_node = $tree->create_child( { ord => 0 } );
+    my $cur_node = $ttree->create_child( { ord => 0 } );
     $cur_node->wild->{modifier} = 'root';
 
     return $cur_node;
+}
+
+# Process all comment data stored for the current sentence
+# Currently supported: surface text (set zone sentence), surface tokens (will create a-tree)
+sub _process_comment_data {
+
+    my ($self) = @_;
+
+    return if not %{ $self->_comment_data };
+
+    my @bundles = $self->_doc->get_bundles();
+    my $bundle  = $bundles[-1];
+    my $zone    = $bundle->get_zone( $self->language, $self->selector );
+    my $ttree   = $zone->get_ttree();
+
+    # store raw data in t-tree root's wild
+    $ttree->wild->{amr_comment_data} = $self->_comment_data;
+
+    # process sentence text
+    my $sent_text = $self->_comment_data->{snt} // $self->_comment_data->{tok};
+    if ($sent_text) {
+        $zone->set_sentence($sent_text);
+    }
+
+    # process surface tokens
+    my $token_text = $self->_comment_data->{tok} // $self->_comment_data->{snt};
+    if ($token_text) {
+        my $atree = $zone->create_atree();
+        foreach my $token ( split /\s+/, $token_text ) {
+            my $anode = $atree->create_child( { form => $token } );
+            $anode->shift_after_subtree($atree);
+        }
+    }
+
+    $self->_set_comment_data( {} );
+    return;
+}
+
+# Check if a comment contains meaningful data (introduced by ::xxx...) and store them
+# in the _comment_data member, which will be processed just before introducing the next sentence.
+sub _parse_comment {
+    my ( $self, $comment ) = @_;
+
+    $comment =~ s/^\s+|\s+$//g;    # trim
+    return if ( $comment !~ /^::[a-z]{2,}/ );
+
+    my @data = split /::([a-z]{2,})\s+/, $comment;
+    shift @data;                   # first will be empty
+
+    while (@data) {
+        my ( $key, $val ) = splice @data, 0, 2;
+        $self->_comment_data->{$key} = $val;
+    }
+    return;
 }
 
 1;
