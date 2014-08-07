@@ -28,7 +28,7 @@ sub process_ttree {
         # find the t-nodes
         my @tnodes = uniq
             sort { $a->ord <=> $b->ord }
-            grep { $_->get_bundle() == $nnode->get_bundle() }  # TODO fix generated node references that go to following sentences!
+            grep { $_->get_bundle() == $nnode->get_bundle() }    # TODO fix generated node references that go to following sentences!
             map { $_->get_referencing_nodes( 'src_tnode.rf', $self->language, $self->selector ) }
             map { $_->get_referencing_nodes('a/lex.rf') }
             $nnode->get_anodes();
@@ -46,7 +46,7 @@ sub process_ttree {
         my $tne_head = $tparent->create_child();
         $tne_head->wild->{modifier} = $ttop->wild->{modifier};
         $tne_head->set_functor( $ttop->functor );
-        log_warn('No NE type: ' . $nnode->id ) if (!$nnode->ne_type);
+        log_warn( 'No NE type: ' . $nnode->id ) if ( !$nnode->ne_type );
         $tne_head->set_t_lemma( $self->_create_lemma( $nnode->ne_type, $used_vars ) );
         $tne_head->shift_before_node($ttop);
         my $tne_name = $tne_head->create_child();
@@ -55,10 +55,10 @@ sub process_ttree {
         $tne_name->shift_after_node($tne_head);
 
         # store links to src-tnodes and the n-node
-        $tne_head->set_src_tnode($ttop->src_tnode);
-        $tne_head->wild->{src_nnode} = $nnode->id;
-        $tne_head->wild->{src_tnodes} = [ map { $_->id } grep { defined($_) } map { $_->src_tnode } @tnodes ];
-        $tne_head->wild->{is_ne_head} = 1;
+        $tne_head->set_src_tnode( $ttop->src_tnode );
+        $tne_head->wild->{src_nnode}     = $nnode->id;
+        $tne_head->wild->{src_tnodes}    = [ map { $_->id } grep { defined($_) } map { $_->src_tnode } @tnodes ];
+        $tne_head->wild->{is_ne_head}    = 1;
         $tne_name->wild->{is_ne_subnode} = 1;
 
         # remove original t-nodes belonging to the named entity
@@ -91,7 +91,7 @@ sub process_ttree {
             my $tnew = $tne_name->create_child(
                 t_lemma => '"' . $ne_word . '"',
             );
-            $tnew->wild->{modifier} = 'op' . $order++;
+            $tnew->wild->{modifier}      = 'op' . $order++;
             $tnew->wild->{is_ne_subnode} = 1;
             $tnew->shift_after_subtree($tne_name);
         }
@@ -116,7 +116,7 @@ sub _check_used_vars {
     my %used = ();
     foreach my $tnode ( $troot->get_descendants() ) {
         my ( $var, $number ) = ( $tnode->t_lemma =~ /^([a-zX])([0-9]*)/ );
-        next if (!$var); # skip e.g. polarity or NE nodes that start with " or -
+        next if ( !$var );       # skip e.g. polarity or NE nodes that start with " or -
         $used{$var} = max( $used{$var} // 0, ( $number || 1 ) );
     }
     return \%used;
@@ -131,7 +131,6 @@ my $NE_2_WORD = {
     'n' => 'number',
     'o' => 'product',
     'p' => 'person',
-    'P' => 'person',
     'q' => 'number',
     't' => 'time',
 };
@@ -142,10 +141,19 @@ sub _create_lemma {
     my ( $self, $ne_type, $used_vars ) = @_;
     my $word_id = lc $ne_type;    # allow BBN long NE types
 
-    if ( length $ne_type <= 2 ) { # backoff to two-letter CNEC NE types
-        $word_id = $NE_2_WORD->{$ne_type} // $NE_2_WORD->{ substr $ne_type, 0, 1 };
+    # backoff to two-letter CNEC NE types, backoff to their first character and lowercase
+    if ( length $ne_type <= 2 ) { 
+        $word_id = $NE_2_WORD->{$ne_type} 
+                // $NE_2_WORD->{ lc $ne_type }
+                // $NE_2_WORD->{ substr $ne_type, 0, 1 }
+                // $NE_2_WORD->{ lc substr $ne_type, 0, 1 };
+
     }
 
+    if ( !$word_id ) {
+        $word_id = 'named_entity';
+        log_warn( 'Unknown named entity type: ' . $ne_type );
+    }
     return Treex::Block::T2TAMR::CopyTtree::create_amr_lemma( $word_id, $used_vars );
 }
 
