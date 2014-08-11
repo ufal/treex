@@ -165,7 +165,8 @@ has 'mem' => (
     isa           => 'Str',
     default       => '2G',
     documentation => 'How much memory should be allocated for cluster jobs, default=2G. Requires -p. '
-        . 'Translates to "qsub -hard -l mem_free=$mem -l act_mem_free=$mem -l h_vmem=$mem".',
+        . 'Translates to "qsub -hard -l mem_free=$mem -l act_mem_free=$mem -l h_vmem=$mem". '
+        . 'Use --mem=0 and --qsub to set your own SGE settings (e.g. if act_mem_free is not available).',
 );
 
 has 'name' => (
@@ -246,8 +247,6 @@ has 'server' => (
     is            => 'ro',
     isa           => 'Str',
     default       => '',
-    documentation => 'Additional parameters passed to qsub. Requires -p. '
-        . 'See --priority and --mem. You can use e.g. --qsub="-q *@p*,*@s*" to use just machines p* and s*.',
 );
 
 has version => (
@@ -879,9 +878,13 @@ sub _run_job_script {
     else {
         my $mem       = $self->mem;
         my $qsub_opts = '-cwd -e error/ -S /bin/bash';
-        $qsub_opts .= " -hard -l mem_free=$mem -l act_mem_free=$mem -l h_vmem=$mem";
+        if ($mem){
+            $qsub_opts .= " -hard -l mem_free=$mem -l act_mem_free=$mem -l h_vmem=$mem";
+        }
+        if ($self->qsub){
+            $qsub_opts .= ' ' . $self->qsub;
+        }
         $qsub_opts .= ' -p ' . $self->priority;
-        $qsub_opts .= ' ' . $self->qsub;
         $qsub_opts .= ' -N ' . $self->name . '-job' . sprintf( "%03d", $jobnumber ) . '.sh ' if $self->name;
 
         open my $QSUB, "cd $workdir && qsub -v TREEX_PARALLEL=1 $qsub_opts $script_filename |" or log_fatal $!;    ## no critic (ProhibitTwoArgOpen)
