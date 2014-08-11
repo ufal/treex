@@ -5,7 +5,7 @@ use Moose::Role;
 use MooseX::SemiAffordanceAccessor;
 use Treex::Core::Log;
 use List::Util qw(first);    # TODO: this wouldn't be needed if there was Treex::Core::Common for roles
-use Lingua::Interset;
+use Lingua::Interset 2.007;
 use Lingua::Interset::FeatureStructure;
 
 has iset => (
