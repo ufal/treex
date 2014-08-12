@@ -42,12 +42,18 @@ sub _print_ttree {
     print { $self->_file_handle } ")\n\n";                       # separate with two newlines
 }
 
+sub myescape {
+  my $string = unpack "H*", shift;
+  return "%$string";
+}
+
 # Prints one AMR-like node.
 sub _process_tnode {
     my $formeme_separator = '_#*&&*#_';
     my $partofspeech_separator = '_#(^^)#_';
     my ( $self, $tnode, $indent ) = @_;
     my $lemma = $self->_get_lemma($tnode);
+    $lemma =~ s/([\(\)%])/myescape $1/ge;
     if ($lemma) {
         $lemma =~ s/\// \/ /;
         print { $self->_file_handle } "\n" . $indent;
