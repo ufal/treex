@@ -21,6 +21,7 @@ sub require_file_from_share {
     my $writable;    #will store first writable directory found
     SEARCH:
     foreach my $resource_dir ( Treex::Core::Config->resource_path() ) {
+        next if (!$resource_dir);
         my $file = File::Spec->catfile( $resource_dir, $rel_path_to_file );
         log_debug("Trying $file\n");
         if ( -e $file ) {
