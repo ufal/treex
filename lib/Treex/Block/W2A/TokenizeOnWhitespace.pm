@@ -39,7 +39,7 @@ sub process_zone {
             # Let's delete the start of sentence anyway,
             # using a non-greedy regex and the expected next token returned from the tokenization.
             my $next_token = $tokens[$i+1];
-            my ($first, $rest) = ($sentence =~ /^(.*?)($next_token.*)$/);
+            my ($first, $rest) = ($sentence =~ /^(.*?)(\Q$next_token\E.*)$/);
             $no_space_after = 1 if $first !~ /\s$/;
             $sentence = $rest;
         }
