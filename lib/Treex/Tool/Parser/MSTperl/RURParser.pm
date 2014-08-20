@@ -70,10 +70,33 @@ sub parse_rur {
         
         $hasFoundImprovment = 0;
         my $best_score = $score;
-        my $best_child_ord;
-        my $best_new_parent_ord;
+        my $best_child;
+        my $best_new_parent;
+        my $best_is_rotation = 0; # 0 -> attach, 1 -> rotate
 
-        # try to find a score-improving transformation
+        # try to find a score-improving rotation
+        foreach my $child ( @{ $sentence->nodes } ) {
+            my $parent = $child->parent;
+            # cannot rotate edge if parent is root
+            if ( $parent->ord ne 0 ) {
+                my $grandparent = $parent->parent;
+                # now scores are edge-based, so a simple update is possible
+                my $new_score = $score
+                    - $edge_weights->{$child->ord}->{$parent->ord}
+                    - $edge_weights->{$parent->ord}->{$grandparent->ord}
+                    + $edge_weights->{$parent->ord}->{$child->ord}
+                    + $edge_weights->{$child->ord}->{$grandparent->ord};
+                if ( $new_score > $best_score ) {
+                    $hasFoundImprovment++;
+                    $best_score = $new_score;
+                    $best_child = $child;
+                    $best_new_parent = $grandparent;
+                    $best_is_rotation = 1;
+                }
+            }
+        }
+
+        # try to find a score-improving reattachment
         foreach my $child ( @{ $sentence->nodes } ) {
             my $child_ord = $child->ord;
             my $parent_ord = $child->parent->ord;
@@ -89,21 +112,30 @@ sub parse_rur {
                     my $new_score = $score - $edge_weight
                         + $edge_weights->{$child_ord}->{$new_parent_ord};
                     if ( $new_score > $best_score ) {
+                        $hasFoundImprovment++;
                         $best_score = $new_score;
-                        $best_child_ord = $child_ord;
-                        $best_new_parent_ord = $new_parent_ord;
+                        $best_child = $child;
+                        $best_new_parent = $new_parent;
+                        $best_is_rotation = 0;
                     }
                 }
             }
         }
 
-        if ( defined $best_child_ord ) {
-            $hasFoundImprovment = 1;
-            $sentence->setChildParent($best_child_ord, $best_new_parent_ord);
+        if ( $hasFoundImprovment ) {
+            if ( $best_is_rotation ) {
+                my $orig_parent = $best_child->parent;
+                $sentence->setChildParent($best_child->ord, $best_new_parent->ord);
+                $sentence->setChildParent($orig_parent->ord, $best_child->ord);
+            } else {
+                $sentence->setChildParent($best_child->ord, $best_new_parent->ord);
+            }
             $score = $best_score;
         }        
 
-        if ( $self->config->DEBUG >= 3 ) { print "loop turn end, found = ".$hasFoundImprovment."\n"; }
+        if ( $self->config->DEBUG >= 3 ) {
+            print "loop turn end, found = ".$hasFoundImprovment."\n";
+        }
     }
     if ( $self->config->DEBUG >= 2 ) { print "main loop end\n"; }
 

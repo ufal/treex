@@ -450,6 +450,12 @@ has 'cprob_buckets' => (
     default => undef,
 );
 
+has magic => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => ''
+);
+
 # METHODS
 
 sub BUILD {
@@ -510,6 +516,7 @@ sub BUILD {
             'VITERBI_STATES_NUM_THRESHOLD',
             'EM_EPSILON',
             'EM_heldout_data_at',
+            'magic',
         );
 
         # name => required?
