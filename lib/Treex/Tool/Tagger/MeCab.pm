@@ -41,22 +41,22 @@ sub process_sentence {
 
     print $writer $sentence."\n";
 
-    $_ = <$reader>;
+    my $line = <$reader>;
 
     # we store each line, which consists of wordform+features into @tokens as a string where each feature/wordform is separated by '\t'
     # other block should edit this output as needed
     # EOS marks end of sentence
-    while ( $_ !~ "EOS" ) {
+    while ( $line !~ "EOS" ) {
         
         # we don't want to substitute actual commas in the sentence
-        $_ =~ s{^(.*),\t}{$1#comma\t};
+        $line =~ s{^(.*),\t}{$1#comma\t};
 
-        $_ =~ s{(.),}{$1\t}g;
+        $line =~ s{(.),}{$1\t}g;
 
-        $_ =~ s{#comma}{,};
+        $line =~ s{#comma}{,};
 
-        push @tokens, $_;
-        $_ = <$reader>;
+        push @tokens, $line;
+        $line = <$reader>;
     }
 
     return @tokens;

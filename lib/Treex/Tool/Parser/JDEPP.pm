@@ -8,7 +8,7 @@ use warnings;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Config;
-use ProcessUtils;
+use Treex::Tool::ProcessUtils;
 use Treex::Core::Resource;
 
 has model_dir => ( isa => 'Str', is => 'rw', required => 1 );
@@ -30,7 +30,7 @@ sub BUILD {
     my $cmd = "$bin_path".' 2>/dev/null';
  
     # start JDEPP parser
-    my ( $reader, $writer, $pid ) = ProcessUtils::bipipe( $cmd, ':encoding(utf-8)' );    
+    my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::bipipe( $cmd, ':encoding(utf-8)' );    
 
     $self->{reader} = $reader;
     $self->{writer} = $writer;
