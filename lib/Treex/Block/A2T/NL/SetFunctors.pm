@@ -19,6 +19,7 @@ override '_build_formeme2functor' => sub {
         'n:door+X'      => 'MEANS',
         'n:uit+X'       => 'DIR1',
         'n:naar+X'      => 'DIR3',
+        'n:over+X'      => 'DIR3',
         'n:aan+X'       => 'LOC',
         'n:in+X'        => 'LOC',
         'n:op+X'        => 'LOC',
