@@ -22,6 +22,7 @@ has ord => (
 has parent => (
     isa => 'Maybe[Treex::Tool::Parser::MSTperl::Node]',
     is  => 'rw',
+    trigger => \&_parent_set,
 );
 
 has parentOrd => (
@@ -30,6 +31,13 @@ has parentOrd => (
     default => 0,
 );
 
+sub _parent_set {
+    my ($self, $parent) = @_;
+    $self->parentOrd($parent->ord);
+    return;
+}
+
+# TODO not updated, maybe not used?
 has children => (
     isa     => 'ArrayRef[Treex::Tool::Parser::MSTperl::Edge]',
     is      => 'rw',

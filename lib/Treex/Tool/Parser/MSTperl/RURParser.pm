@@ -5,6 +5,9 @@ use Carp;
 
 extends 'Treex::Tool::Parser::MSTperl::Parser';
 
+# TODO does not use Edge, so edge fields and subs must be moved into Node!!!
+# (in RURParser, each Node has exactly 1 parent,
+# and so the node represents the edge to its parent)
 
 sub parse_sentence_internal {
 
@@ -64,11 +67,21 @@ sub parse_rur {
 
     # main loop
     if ( $self->config->DEBUG >= 2 ) { print "main loop\n"; }
-    my $new_score;
-    do {
-        # modifies $sentence
-        $new_score = $self->new_current_tree($sentence, $edge_weights, $score);
-    } while ( $new_score > $score );
+    while (1) {
+        if ( $self->config->DEBUG >= 3 ) { print "loop turn, score = ".$score."\n"; }
+        my ($candidates, $best_candidate) =
+            $self->find_candidates($sentence, $edge_weights, $score);
+        if (defined $best_candidate) {
+            $score = $best_candidate->{score};
+            $self->new_current_tree($sentence, $best_candidate);
+        } else {
+            # TODO: foreach candidate try to go 1 step deeper
+            last;
+        }
+#         if ( $self->config->DEBUG >= 3 ) {
+#             print "loop turn end, found = ".$hasFoundImprovment."\n";
+#         }    
+    }
     if ( $self->config->DEBUG >= 2 ) { print "main loop end\n"; }
 
     return $sentence;
@@ -78,16 +91,11 @@ sub parse_rur {
 # find a better scoring candidate tree, set it as the current tree,
 # and return its score;
 # return the original score if no better candidate tree is found
-sub new_current_tree {
+sub find_candidates {
     my ($self, $sentence, $edge_weights, $score) = @_;
-        
-    if ( $self->config->DEBUG >= 3 ) { print "loop turn, score = ".$score."\n"; }
 
-    my $hasFoundImprovment = 0;
-    my $best_score = $score;
-    my $best_child;
-    my $best_new_parent;
-    my $best_is_rotation = 0; # 0 -> attach, 1 -> rotate
+    my $candidates = [];
+    my $best_candidate = undef;
 
     # try to find a score-improving rotation
     foreach my $child ( @{ $sentence->nodes } ) {
@@ -109,12 +117,17 @@ sub new_current_tree {
 # TODO if depth to go to is greater than 1, recurse here for next step search
 #                 $sentence->setChildParent($parent->ord, $grandparent->ord);
 #                 $sentence->setChildParent($child->ord, $parent->ord);
-            if ( $new_score > $best_score ) {
-                $hasFoundImprovment++;
-                $best_score = $new_score;
-                $best_child = $child;
-                $best_new_parent = $grandparent;
-                $best_is_rotation = 1;
+            my $candidate = {
+                score => $new_score,
+                child => $child,
+                new_parent => $grandparent,
+                is_rotation => 1,
+            };
+            push @$candidates, $candidate;
+            if ( !defined $best_candidate ||
+                $new_score > $best_candidate->{score}
+            ) {
+                $best_candidate = $candidate;
             }
         }
     }
@@ -134,35 +147,42 @@ sub new_current_tree {
                 # now scores are edge-based, so a simple update is possible
                 my $new_score = $score - $edge_weight
                     + $edge_weights->{$child_ord}->{$new_parent_ord};
-                if ( $new_score > $best_score ) {
-                    $hasFoundImprovment++;
-                    $best_score = $new_score;
-                    $best_child = $child;
-                    $best_new_parent = $new_parent;
-                    $best_is_rotation = 0;
+                my $candidate = {
+                    score => $new_score,
+                    child => $child,
+                    new_parent => $new_parent,
+                    is_rotation => 0,
+                };
+                push @$candidates, $candidate;
+                if ( !defined $best_candidate ||
+                    $new_score > $best_candidate->{score}
+                ) {
+                    $best_candidate = $candidate;
                 }
             }
         }
     }
-
-    if ( $hasFoundImprovment ) {
-        # TODO rehang only if not in recursion called from above
-        if ( $best_is_rotation ) {
-            my $orig_parent = $best_child->parent;
-            $sentence->setChildParent($best_child->ord, $best_new_parent->ord);
-            $sentence->setChildParent($orig_parent->ord, $best_child->ord);
-        } else {
-            $sentence->setChildParent($best_child->ord, $best_new_parent->ord);
-        }
-        # TODO if depth > 1, recurse here for next step rehanging
-        $score = $best_score;
-    }        
-
-    if ( $self->config->DEBUG >= 3 ) {
-        print "loop turn end, found = ".$hasFoundImprovment."\n";
-    }
     
-    return $best_score;
+    return ($candidates, $best_candidate);
+}
+
+sub new_current_tree {
+    my ($self, $sentence, $best_candidate) = @_;
+    
+    # TODO rehang only if not in recursion called from above
+    if ( $best_candidate->{is_rotation} ) {
+        my $orig_parent = $best_candidate->{child}->parent;
+        $sentence->setChildParent(
+            $best_candidate->{child}->ord, $best_candidate->{new_parent}->ord);
+        $sentence->setChildParent(
+            $best_candidate->{parent}->ord, $best_candidate->{child}->ord);
+    } else {
+        $sentence->setChildParent(
+            $best_candidate->{child}->ord, $best_candidate->{new_parent}->ord);
+    }
+    # TODO if depth > 1, recurse here for next step rehanging
+
+    return;
 }
 
 1;
