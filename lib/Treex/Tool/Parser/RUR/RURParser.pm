@@ -78,19 +78,13 @@ sub parse_rur {
             # TODO: foreach candidate try to go 1 step deeper
             last;
         }
-#         if ( $self->config->DEBUG >= 3 ) {
-#             print "loop turn end, found = ".$hasFoundImprovment."\n";
-#         }    
     }
     if ( $self->config->DEBUG >= 2 ) { print "main loop end\n"; }
 
     return $sentence;
 }
 
-# modifies $sentence
-# find a better scoring candidate tree, set it as the current tree,
-# and return its score;
-# return the original score if no better candidate tree is found
+# find a better scoring candidate tree
 sub find_candidates {
     my ($self, $sentence, $edge_weights, $score) = @_;
 
@@ -124,10 +118,9 @@ sub find_candidates {
                 is_rotation => 1,
             };
             push @$candidates, $candidate;
-            if ( !defined $best_candidate ||
-                $new_score > $best_candidate->{score}
-            ) {
+            if ($new_score > $score) {
                 $best_candidate = $candidate;
+                $score = $new_score;
             }
         }
     }
@@ -154,10 +147,9 @@ sub find_candidates {
                     is_rotation => 0,
                 };
                 push @$candidates, $candidate;
-                if ( !defined $best_candidate ||
-                    $new_score > $best_candidate->{score}
-                ) {
+                if ($new_score > $score) {
                     $best_candidate = $candidate;
+                    $score = $new_score;
                 }
             }
         }
@@ -175,7 +167,7 @@ sub new_current_tree {
         $sentence->setChildParent(
             $best_candidate->{child}->ord, $best_candidate->{new_parent}->ord);
         $sentence->setChildParent(
-            $best_candidate->{parent}->ord, $best_candidate->{child}->ord);
+            $orig_parent->ord, $best_candidate->{child}->ord);
     } else {
         $sentence->setChildParent(
             $best_candidate->{child}->ord, $best_candidate->{new_parent}->ord);

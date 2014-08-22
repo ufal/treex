@@ -14,23 +14,22 @@ binmode STDERR, ':encoding(utf8)';
 
 BEGIN {
     note('INIT');
-    use_ok('Treex::Tool::Parser::RUR::Config');
-    use_ok('Treex::Tool::Parser::RUR::Edge');
-    use_ok('Treex::Tool::Parser::RUR::FeaturesControl');
-    use_ok('Treex::Tool::Parser::RUR::ModelBase');
-    use_ok('Treex::Tool::Parser::RUR::ModelLabelling');
-    use_ok('Treex::Tool::Parser::RUR::ModelUnlabelled');
-    use_ok('Treex::Tool::Parser::RUR::ModelAdditional');
-    use_ok('Treex::Tool::Parser::RUR::Node');
-    use_ok('Treex::Tool::Parser::RUR::RURParser');
-    use_ok('Treex::Tool::Parser::RUR::Labeller');
-    use_ok('Treex::Tool::Parser::RUR::Reader');
-    use_ok('Treex::Tool::Parser::RUR::RootNode');
-    use_ok('Treex::Tool::Parser::RUR::Sentence');
-    use_ok('Treex::Tool::Parser::RUR::TrainerBase');
-    use_ok('Treex::Tool::Parser::RUR::TrainerLabelling');
-    use_ok('Treex::Tool::Parser::RUR::TrainerUnlabelled');
-    use_ok('Treex::Tool::Parser::RUR::Writer');
+    use_ok('Treex::Tool::Parser::MSTperl::Config');
+    use_ok('Treex::Tool::Parser::MSTperl::Edge');
+    use_ok('Treex::Tool::Parser::MSTperl::FeaturesControl');
+    use_ok('Treex::Tool::Parser::MSTperl::ModelBase');
+    use_ok('Treex::Tool::Parser::MSTperl::ModelLabelling');
+    use_ok('Treex::Tool::Parser::MSTperl::ModelUnlabelled');
+    use_ok('Treex::Tool::Parser::MSTperl::ModelAdditional');
+    use_ok('Treex::Tool::Parser::MSTperl::Node');
+    use_ok('Treex::Tool::Parser::MSTperl::Labeller');
+    use_ok('Treex::Tool::Parser::MSTperl::Reader');
+    use_ok('Treex::Tool::Parser::MSTperl::RootNode');
+    use_ok('Treex::Tool::Parser::MSTperl::Sentence');
+    use_ok('Treex::Tool::Parser::MSTperl::TrainerBase');
+    use_ok('Treex::Tool::Parser::MSTperl::TrainerLabelling');
+    use_ok('Treex::Tool::Parser::MSTperl::TrainerUnlabelled');
+    use_ok('Treex::Tool::Parser::MSTperl::Writer');
 }
 
 my ( $train_file, $test_file, $config_file,
@@ -43,8 +42,10 @@ my ( $train_file, $test_file, $config_file,
     "$FindBin::Bin/sample.lmodel",
     );
 
+{
+
 my $config = new_ok(
-    'Treex::Tool::Parser::RUR::Config' => [
+    'Treex::Tool::Parser::MSTperl::Config' => [
         config_file => $config_file,
         DEBUG => 0,
     ],
@@ -52,7 +53,7 @@ my $config = new_ok(
 );
 
 my $reader = new_ok(
-    'Treex::Tool::Parser::RUR::Reader' => [ config => $config ],
+    'Treex::Tool::Parser::MSTperl::Reader' => [ config => $config ],
     "initialize Reader,"
 );
 
@@ -64,7 +65,7 @@ note('UNLABELLED TRAINING');
 ok( my $training_data = $reader->read_tsv($train_file), "read training data" );
 
 my $trainer = new_ok(
-    'Treex::Tool::Parser::RUR::TrainerUnlabelled' => [ config => $config ],
+    'Treex::Tool::Parser::MSTperl::TrainerUnlabelled' => [ config => $config ],
     "initialize Unlabelled Trainer,"
 );
 
@@ -84,11 +85,46 @@ ok( $trainer->model->load_tsv( $unlabelled_model_file . '.tsv' ),
 
 unlink $unlabelled_model_file . '.tsv';
 
+}
 
 
-
+{
 
 note('PARSING');
+
+BEGIN {
+    note('INIT');
+    use_ok('Treex::Tool::Parser::RUR::Config');
+    use_ok('Treex::Tool::Parser::RUR::Edge');
+    use_ok('Treex::Tool::Parser::RUR::FeaturesControl');
+    use_ok('Treex::Tool::Parser::RUR::ModelBase');
+    use_ok('Treex::Tool::Parser::RUR::ModelLabelling');
+    use_ok('Treex::Tool::Parser::RUR::ModelUnlabelled');
+    use_ok('Treex::Tool::Parser::RUR::ModelAdditional');
+    use_ok('Treex::Tool::Parser::RUR::Node');
+    use_ok('Treex::Tool::Parser::RUR::RURParser');
+    use_ok('Treex::Tool::Parser::RUR::Labeller');
+    use_ok('Treex::Tool::Parser::RUR::Reader');
+    use_ok('Treex::Tool::Parser::RUR::RootNode');
+    use_ok('Treex::Tool::Parser::RUR::Sentence');
+    use_ok('Treex::Tool::Parser::RUR::TrainerBase');
+    use_ok('Treex::Tool::Parser::RUR::TrainerLabelling');
+    use_ok('Treex::Tool::Parser::RUR::TrainerUnlabelled');
+    use_ok('Treex::Tool::Parser::RUR::Writer');
+}
+
+my $config = new_ok(
+    'Treex::Tool::Parser::RUR::Config' => [
+        config_file => $config_file,
+        DEBUG => 0,
+    ],
+    "process config file,"
+);
+
+my $reader = new_ok(
+    'Treex::Tool::Parser::RUR::Reader' => [ config => $config ],
+    "initialize Reader,"
+);
 
 ok( my $test_data = $reader->read_tsv($test_file), "read test data" );
 
@@ -142,6 +178,7 @@ unlink $test_file . '.out';
 
 unlink $unlabelled_model_file;
 
+}
 
 done_testing();
 
