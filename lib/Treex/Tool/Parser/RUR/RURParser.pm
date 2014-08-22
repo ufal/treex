@@ -1,9 +1,9 @@
-package Treex::Tool::Parser::MSTperl::RURParser;
+package Treex::Tool::Parser::RUR::RURParser;
 
 use Moose;
 use Carp;
 
-extends 'Treex::Tool::Parser::MSTperl::Parser';
+extends 'Treex::Tool::Parser::RUR::Parser';
 
 # TODO does not use Edge, so edge fields and subs must be moved into Node!!!
 # (in RURParser, each Node has exactly 1 parent,
@@ -11,11 +11,11 @@ extends 'Treex::Tool::Parser::MSTperl::Parser';
 
 sub parse_sentence_internal {
 
-    # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
+    # (Treex::Tool::Parser::RUR::Sentence $sentence)
     my ( $self, $sentence ) = @_;
 
     if ( !$self->model ) {
-        croak "MSTperl parser error: There is no model for unlabelled parsing!";
+        croak "RUR parser error: There is no model for unlabelled parsing!";
     }
 
     # copy the sentence (do not modify $sentence directly)
@@ -31,7 +31,7 @@ sub parse_sentence_internal {
                 next;
             }
 
-            my $edge = Treex::Tool::Parser::MSTperl::Edge->new(
+            my $edge = Treex::Tool::Parser::RUR::Edge->new(
                 child    => $child,
                 parent   => $parent,
                 sentence => $sentence_working_copy
@@ -198,7 +198,7 @@ __END__
 
 =head1 NAME
 
-Treex::Tool::Parser::MSTperl::RURParser - trying new inference algorithm
+Treex::Tool::Parser::RUR::RURParser - trying new inference algorithm
 
 =head1 DESCRIPTION
 

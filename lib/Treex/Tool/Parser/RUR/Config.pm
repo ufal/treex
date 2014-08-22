@@ -1,12 +1,12 @@
-package Treex::Tool::Parser::MSTperl::Config;
+package Treex::Tool::Parser::RUR::Config;
 
 use Moose;
 use autodie;
 use Carp;
 use File::Spec;
 
-use Treex::Tool::Parser::MSTperl::FeaturesControl;
-use Treex::Tool::Parser::MSTperl::ModelAdditional;
+use Treex::Tool::Parser::RUR::FeaturesControl;
+use Treex::Tool::Parser::RUR::ModelAdditional;
 
 # varied levels of debug info,
 # ranging from 0 (no debug info)
@@ -72,17 +72,17 @@ has 'config_file' => (
 );
 
 has 'unlabelledFeaturesControl' => (
-    isa => 'Maybe[Treex::Tool::Parser::MSTperl::FeaturesControl]',
+    isa => 'Maybe[Treex::Tool::Parser::RUR::FeaturesControl]',
     is  => 'rw',
 );
 
 has 'labelledFeaturesControl' => (
-    isa => 'Maybe[Treex::Tool::Parser::MSTperl::FeaturesControl]',
+    isa => 'Maybe[Treex::Tool::Parser::RUR::FeaturesControl]',
     is  => 'rw',
 );
 
 # has 'imlabelledFeaturesControl' => (
-#     isa => 'Maybe[Treex::Tool::Parser::MSTperl::FeaturesControl]',
+#     isa => 'Maybe[Treex::Tool::Parser::RUR::FeaturesControl]',
 #     is  => 'rw',
 # );
 
@@ -201,7 +201,7 @@ sub _root_field_values_set {
     # check number of fields
     my $root_fields_count = scalar( @{ $self->root_field_values } );
     if ( $root_fields_count != $self->field_names_count ) {
-        croak "MSTperl config file error: " .
+        croak "RUR config file error: " .
             "Incorrect number of root field values ($root_fields_count), " .
             "must be same as number of field names (" .
             $self->field_names_count . ")!";
@@ -272,7 +272,7 @@ sub _distance_buckets_set {
             warn "Bucket '$bucket' is defined more than once; " .
                 "disregarding its later definitions.\n";
         } elsif ( $bucket <= 0 ) {
-            croak "MSTperl config file error: " .
+            croak "RUR config file error: " .
                 "Error on bucket '$bucket' - " .
                 "buckets must be positive integers.";
         } else {
@@ -357,13 +357,13 @@ sub _field_names_set {
     for ( my $index = 0; $index < scalar( @{$field_names} ); $index++ ) {
         my $field_name = $field_names->[$index];
         if ( $field_names_hash{$field_name} ) {
-            croak "MSTperl config file error: " .
+            croak "RUR config file error: " .
                 "Duplicate field name '$field_name'!";
         } elsif ( $field_name ne lc($field_name) ) {
-            croak "MSTperl config file error: " .
+            croak "RUR config file error: " .
                 "Field name '$field_name' is not lowercase!";
         } elsif ( !$field_name =~ /a-z/ ) {
-            croak "MSTperl config file error: " .
+            croak "RUR config file error: " .
                 "Field name '$field_name' does not contain " .
                 "any character from [a-z]!";
         } else {
@@ -450,6 +450,12 @@ has 'cprob_buckets' => (
     default => undef,
 );
 
+has magic => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => ''
+);
+
 # METHODS
 
 sub BUILD {
@@ -480,7 +486,7 @@ sub BUILD {
     $config = YAML::Tiny->read( $self->config_file );
 
     if ( !$config ) {
-        croak "MSTperl config file error: " . YAML::Tiny->errstr;
+        croak "RUR config file error: " . YAML::Tiny->errstr;
 
     } else {
 
@@ -510,6 +516,7 @@ sub BUILD {
             'VITERBI_STATES_NUM_THRESHOLD',
             'EM_EPSILON',
             'EM_heldout_data_at',
+            'magic',
         );
 
         # name => required?
@@ -526,7 +533,7 @@ sub BUILD {
 
                 # if required, then croak
                 if ( $required_fields{$field} ) {
-                    croak "MSTperl config file error:"
+                    croak "RUR config file error:"
                         . "Field $field must be set!";
                 }
 
@@ -543,7 +550,7 @@ sub BUILD {
         # unlabelled features
         if ( $config->[0]->{features} && @{ $config->[0]->{features} } ) {
             $self->unlabelledFeaturesControl(
-                Treex::Tool::Parser::MSTperl::FeaturesControl->new(
+                Treex::Tool::Parser::RUR::FeaturesControl->new(
                     'config'                    => $self,
                     'feature_codes_from_config' => $config->[0]->{features},
                     'use_edge_features_cache'
@@ -552,7 +559,7 @@ sub BUILD {
             );
 
             if ( $self->use_pmi ) {
-                my $pmi_model = Treex::Tool::Parser::MSTperl::ModelAdditional->new(
+                my $pmi_model = Treex::Tool::Parser::RUR::ModelAdditional->new(
                     config       => $self,
                     model_file   => $self->pmi_model_file,
                     model_format => $self->pmi_model_format,
@@ -565,7 +572,7 @@ sub BUILD {
             }
 
             if ( $self->use_cprob ) {
-                my $cprob_model = Treex::Tool::Parser::MSTperl::ModelAdditional->new(
+                my $cprob_model = Treex::Tool::Parser::RUR::ModelAdditional->new(
                     config       => $self,
                     model_file   => $self->cprob_model_file,
                     model_format => $self->cprob_model_format,
@@ -584,7 +591,7 @@ sub BUILD {
             )
         {
             $self->labelledFeaturesControl(
-                Treex::Tool::Parser::MSTperl::FeaturesControl->new(
+                Treex::Tool::Parser::RUR::FeaturesControl->new(
                     'config' => $self,
                     'feature_codes_from_config'
                         => $config->[0]->{labeller_features},
@@ -600,7 +607,7 @@ sub BUILD {
         #             )
         #         {
         #             $self->imlabelledFeaturesControl(
-        #                 Treex::Tool::Parser::MSTperl::FeaturesControl->new(
+        #                 Treex::Tool::Parser::RUR::FeaturesControl->new(
         #                     'config' => $self,
         #                     'feature_codes_from_config'
         #                         => $config->[0]->{imlabeller_features},
@@ -616,7 +623,7 @@ sub BUILD {
             #             && !$self->imlabelledFeaturesControl
             )
         {
-            croak "MSTperl config file error: No features set!";
+            croak "RUR config file error: No features set!";
         }
 
     }
@@ -674,7 +681,7 @@ __END__
 
 =head1 NAME
 
-Treex::Tool::Parser::MSTperl::Config
+Treex::Tool::Parser::RUR::Config
 
 =head1 DESCRIPTION
 
@@ -890,7 +897,7 @@ precomputed and are always computed just at the time they are needed.
 
 =back
 
-See also L<Treex::Tool::Parser::MSTperl::FeaturesControl>.
+See also L<Treex::Tool::Parser::RUR::FeaturesControl>.
 
 =head3 Internal technical settings
 
@@ -906,7 +913,7 @@ You can set the values in various ways. The order of priorities is:
 
 i.e. set after having created a new Config object:
 
- my $config = Treex::Tool::Parser::MSTperl::Config->new(
+ my $config = Treex::Tool::Parser::RUR::Config->new(
     config_file => 'my_config.config');
  $config->DEBUG(4);
 
@@ -920,7 +927,7 @@ in my_config.config:
 
 in the perl script:
 
- my $config = Treex::Tool::Parser::MSTperl::Config->new(
+ my $config = Treex::Tool::Parser::RUR::Config->new(
     config_file => 'my_config.config');
 
 =item 3 set in the constructor
@@ -933,7 +940,7 @@ in my_config.config:
 
 in the perl script:
 
- my $config = Treex::Tool::Parser::MSTperl::Config->new(
+ my $config = Treex::Tool::Parser::RUR::Config->new(
     config_file => 'my_config.config',
     DEBUG => 4 );
 
@@ -973,7 +980,7 @@ part of the program.
 
 =item number_of_iterations: 3, labeller_number_of_iterations: 3
 
-How many times the trainer (Tagger::MSTperl::Trainer) should go through
+How many times the trainer (Tagger::RUR::Trainer) should go through
 all the training data.
 
 =item use_edge_features_cache: 0, labeller_use_edge_features_cache: 0
@@ -1109,12 +1116,12 @@ Provide access to things needed in more than one of the other packages.
 =item unlabelledFeaturesControl
 
 Provides access to unlabelled features, especially enabling their computation.
-Intance of L<Treex::Tool::Parser::MSTperl::FeaturesControl>.
+Intance of L<Treex::Tool::Parser::RUR::FeaturesControl>.
 
 =item labelledFeaturesControl
 
 Provides access to labeller features, especially enabling their computation.
-Intance of L<Treex::Tool::Parser::MSTperl::FeaturesControl>.
+Intance of L<Treex::Tool::Parser::RUR::FeaturesControl>.
 
 =back
 
@@ -1129,7 +1136,7 @@ commented and accompanied by real examples at the same time.
 =over 4
 
 =item my $config =
-Treex::Tool::Parser::MSTperl::Config->new(config_file => 'file.config')
+Treex::Tool::Parser::RUR::Config->new(config_file => 'file.config')
 
 Reads the configuration file (in YAML format) and applies the settings.
 

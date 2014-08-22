@@ -1,12 +1,12 @@
-package Treex::Tool::Parser::MSTperl::Sentence;
+package Treex::Tool::Parser::RUR::Sentence;
 
 use Moose;
 
-use Treex::Tool::Parser::MSTperl::Node;
-use Treex::Tool::Parser::MSTperl::RootNode;
+use Treex::Tool::Parser::RUR::Node;
+use Treex::Tool::Parser::RUR::RootNode;
 
 has config => (
-    isa      => 'Treex::Tool::Parser::MSTperl::Config',
+    isa      => 'Treex::Tool::Parser::RUR::Config',
     is       => 'ro',
     required => '1',
 );
@@ -22,14 +22,14 @@ has id => (
 
 has nodes => (
     is       => 'rw',
-    isa      => 'ArrayRef[Treex::Tool::Parser::MSTperl::Node]',
+    isa      => 'ArrayRef[Treex::Tool::Parser::RUR::Node]',
     required => 1,
 );
 
 # root node added
 has nodes_with_root => (
     is  => 'rw',
-    isa => 'ArrayRef[Treex::Tool::Parser::MSTperl::Node]',
+    isa => 'ArrayRef[Treex::Tool::Parser::RUR::Node]',
 );
 
 # used only in unlabelled parsing
@@ -47,14 +47,14 @@ has features => (
 
 has edges => (
     is  => 'rw',
-    isa => 'Maybe[ArrayRef[Treex::Tool::Parser::MSTperl::Edge]]',
+    isa => 'Maybe[ArrayRef[Treex::Tool::Parser::RUR::Edge]]',
 );
 
 sub BUILD {
     my ($self) = @_;
 
     #add root
-    my $root = Treex::Tool::Parser::MSTperl::RootNode->new(
+    my $root = Treex::Tool::Parser::RUR::RootNode->new(
         fields => $self->config->root_field_values,
         config => $self->config
     );
@@ -140,7 +140,7 @@ sub compute_edges {
         }
 
         # add a new edge
-        my $edge = Treex::Tool::Parser::MSTperl::Edge->new(
+        my $edge = Treex::Tool::Parser::RUR::Edge->new(
             child    => $node,
             parent   => $node->parent,
             sentence => $self
@@ -210,7 +210,7 @@ sub copy_nonparsed {
     }
 
     #create a new instance
-    my $copy = Treex::Tool::Parser::MSTperl::Sentence->new(
+    my $copy = Treex::Tool::Parser::RUR::Sentence->new(
 
         # TODO: maybe should get a different ID for the sake of labelling
         # (but this is curently not used anyway)
@@ -233,7 +233,7 @@ sub copy_nonlabelled {
     }
 
     #create a new instance
-    my $copy = Treex::Tool::Parser::MSTperl::Sentence->new(
+    my $copy = Treex::Tool::Parser::RUR::Sentence->new(
 
         # TODO: maybe should get a different ID for the sake of labelling
         # (but this is curently not used anyway)
@@ -254,10 +254,34 @@ sub setChildParent {
     my $parent = $self->getNodeByOrd($parentOrd);
 
     $child->parent($parent);
-    $child->parentOrd($parentOrd);
 
     return;
 }
+
+# TODO does not use Edge, so edge fields should be moved here for RURParser
+# TODO update orig_parent->children
+sub attach {
+    # (Node $child, Node $new_parent)
+    my ( $self, $child, $new_parent ) = @_;
+
+    # my $orig_parent = $child->parent;
+    $child->parent($new_parent);
+
+    return;
+}
+
+sub rotate {
+
+    # (Node $child)
+    my ( $self, $child ) = @_;
+
+    my $orig_parent = $child->parent;
+    my $orig_grandparent = $orig_parent->parent;
+    # TODO
+
+    return;
+}
+
 
 sub len {
     my ($self) = @_;
@@ -278,7 +302,7 @@ sub getNodeByOrd {
 
 sub count_errors_attachement {
 
-    # (Treex::Tool::Parser::MSTperl::Sentence $correct_sentence)
+    # (Treex::Tool::Parser::RUR::Sentence $correct_sentence)
     my ( $self, $correct_sentence ) = @_;
 
     my $errors = 0;
@@ -398,7 +422,7 @@ sub attachement_error {
 
 sub count_errors_labelling {
 
-    # (Treex::Tool::Parser::MSTperl::Sentence $correct_sentence)
+    # (Treex::Tool::Parser::RUR::Sentence $correct_sentence)
     my ( $self, $correct_sentence ) = @_;
 
     my $errors = 0;
@@ -418,7 +442,7 @@ sub count_errors_labelling {
 
 sub count_errors_attachement_and_labelling {
 
-    # (Treex::Tool::Parser::MSTperl::Sentence $correct_sentence)
+    # (Treex::Tool::Parser::RUR::Sentence $correct_sentence)
     my ( $self, $correct_sentence ) = @_;
 
     my $errors = 0;
@@ -473,7 +497,7 @@ __END__
 
 =head1 NAME
 
-Treex::Tool::Parser::MSTperl::Sentence
+Treex::Tool::Parser::RUR::Sentence
 
 =head1 DESCRIPTION
 
@@ -493,27 +517,27 @@ An integer id unique for each sentence (in its proper sense, where sentence
 is a sequence of tokens - i.e. C<id> stays the same for copies of the same
 sentence).
 
-=item nodes (ArrayRef[Treex::Tool::Parser::MSTperl::Node])
+=item nodes (ArrayRef[Treex::Tool::Parser::RUR::Node])
 
-(A reference to) an array of nodes (C<Treex::Tool::Parser::MSTperl::Node>) of
+(A reference to) an array of nodes (C<Treex::Tool::Parser::RUR::Node>) of
 the sentence.
 
 A node represents both a token of the sentence (usually this is a word) and a
 node in the parse tree of the sentence as well (if the sentence have been
 parsed).
 
-=item nodes_with_root (ArrayRef[Treex::Tool::Parser::MSTperl::Node])
+=item nodes_with_root (ArrayRef[Treex::Tool::Parser::RUR::Node])
 
 Copy of C<nodes> field with a root node
-(L<Treex::Tool::Parser::MSTperl::RootNode>) added at the beginning. As the
+(L<Treex::Tool::Parser::RUR::RootNode>) added at the beginning. As the
 root node's C<ord> is C<0> by definition, the position of the nodes in this
 array exactly corresponds to its C<ord>.
 
-=item edges (Maybe[ArrayRef[Treex::Tool::Parser::MSTperl::Edge]])
+=item edges (Maybe[ArrayRef[Treex::Tool::Parser::RUR::Edge]])
 
 If the sentence is parsed (i.e. the nodes know their parents), this field
 contains (a reference to) an array of all edges
-(L<Treex::Tool::Parser::MSTperl::Edge>) in the parse tree of the sentence.
+(L<Treex::Tool::Parser::RUR::Edge>) in the parse tree of the sentence.
 
 This field is set by the C<sub> C<fill_fields_after_parse>.
 
@@ -540,19 +564,19 @@ If the sentence is not parsed, this field is C<undef>.
 
 =over 4
 
-=item my $sentence = Treex::Tool::Parser::MSTperl::Sentence->new(
+=item my $sentence = Treex::Tool::Parser::RUR::Sentence->new(
     id => 12, nodes => [$node1, $node2, $node3, ...]);
 
 Creates a new sentence. The C<id> must be unique (but copies of the same
 sentence are to share the same id). It is used for edge signature generation
-(L<Treex::Tool::Parser::MSTperl::Edge/signature>) in edge features caching (and
+(L<Treex::Tool::Parser::RUR::Edge/signature>) in edge features caching (and
 therefore does not have to be set if caching is disabled).
 
 The order of the nodes denotes their order in the sentence, starting from the
 node with C<ord> 1, i.e. the technical root
-(L<Treex::Tool::Parser::MSTperl::RootNode>) is not to be included as it is
+(L<Treex::Tool::Parser::RUR::RootNode>) is not to be included as it is
 generated automatically in the constructor.
-The C<ord>s of the nodes (L<Treex::Tool::Parser::MSTperl::Node/ord>) do not
+The C<ord>s of the nodes (L<Treex::Tool::Parser::RUR::Node/ord>) do not
 have to (and actually shouldn't) be filled in. If they are, they are checked
 and a warning on STDERR is issued if they do not correspond to the position of
 the nodes in the array. If they are not, they are filled in automatically
@@ -562,8 +586,8 @@ Other fields (C<nodes_with_root>, C<edges> and C<features>) should usually not
 be set. C<nodes_with_root> are set automatically during sentence creation (and
 any value set to it is discarded). C<edges> and C<features> are to be set only
 if the sentence is parsed (i.e. the nodes know their parents, see
-L<Treex::Tool::Parser::MSTperl::Node/parent> and
-L<Treex::Tool::Parser::MSTperl::Node/parentOrd>) by calling the
+L<Treex::Tool::Parser::RUR::Node/parent> and
+L<Treex::Tool::Parser::RUR::Node/parentOrd>) by calling the
 C<fill_fields_after_parse> method.
 
 So, if the sentence is already parsed, you should call the
@@ -574,7 +598,7 @@ C<fill_fields_after_parse> method immediately after creaion of the sentence.
 Creates a new instance of the same sentence with the same C<id> and with
 copies of the nodes but without any parsing information (like after calling
 C<clear_parse>). The nodes are copied by calling
-L<Treex::Tool::Parser::MSTperl::Node/copy_nonparsed>.
+L<Treex::Tool::Parser::RUR::Node/copy_nonparsed>.
 
 =back
 

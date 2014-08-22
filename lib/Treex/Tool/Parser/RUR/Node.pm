@@ -1,9 +1,9 @@
-package Treex::Tool::Parser::MSTperl::Node;
+package Treex::Tool::Parser::RUR::Node;
 
 use Moose;
 
 has config => (
-    isa      => 'Treex::Tool::Parser::MSTperl::Config',
+    isa      => 'Treex::Tool::Parser::RUR::Config',
     is       => 'ro',
     required => '1',
 );
@@ -20,8 +20,9 @@ has ord => (
 );
 
 has parent => (
-    isa => 'Maybe[Treex::Tool::Parser::MSTperl::Node]',
+    isa => 'Maybe[Treex::Tool::Parser::RUR::Node]',
     is  => 'rw',
+    trigger => \&_parent_set,
 );
 
 has parentOrd => (
@@ -30,8 +31,15 @@ has parentOrd => (
     default => 0,
 );
 
+sub _parent_set {
+    my ($self, $parent) = @_;
+    $self->parentOrd($parent->ord);
+    return;
+}
+
+# TODO not updated, maybe not used?
 has children => (
-    isa     => 'ArrayRef[Treex::Tool::Parser::MSTperl::Edge]',
+    isa     => 'ArrayRef[Treex::Tool::Parser::RUR::Edge]',
     is      => 'rw',
     default => sub { [] },
 );
@@ -130,7 +138,7 @@ sub BUILD {
 sub copy_nonparsed {
     my ($self) = @_;
 
-    my $copy = Treex::Tool::Parser::MSTperl::Node->new(
+    my $copy = Treex::Tool::Parser::RUR::Node->new(
         fields => $self->fields,
         config => $self->config,
     );
@@ -141,13 +149,29 @@ sub copy_nonparsed {
 sub copy_nonlabelled {
     my ($self) = @_;
 
-    my $copy = Treex::Tool::Parser::MSTperl::Node->new(
+    my $copy = Treex::Tool::Parser::RUR::Node->new(
         fields    => $self->fields,
         config    => $self->config,
         parentOrd => $self->parentOrd,
     );
 
     return $copy;
+}
+
+sub is_descendant_of {
+    my ($self, $other_ord) = @_;
+
+    my $result = 0;
+
+    my $node = $self->parent;
+    while ( defined $node ) {
+        if ( $node->ord eq $other_ord ) {
+            $result = 1;
+        }
+        $node = $node->parent;
+    }
+
+    return $result;
 }
 
 1;
@@ -162,7 +186,7 @@ __END__
 
 =head1 NAME
 
-Treex::Tool::Parser::MSTperl::Node
+Treex::Tool::Parser::RUR::Node
 
 =head1 DESCRIPTION
 
@@ -180,13 +204,13 @@ It may also point to its parent node.
 
 Fields read from input and directly stored here,
 such as word form, morphological lemma, morphological tag etc.
-See L<Treex::Tool::Parser::MSTperl::Config> for details.
+See L<Treex::Tool::Parser::RUR::Config> for details.
 
 =item ord
 
 1-based position of the word in the sentence.
 The ord is set automatically when a sentence containing the node is created
-(see L<Treex::Tool::Parser::MSTperl::Sentence>).
+(see L<Treex::Tool::Parser::RUR::Sentence>).
 
 =back
 
@@ -213,13 +237,13 @@ is copied here, as it is used more often than the C<parent> field itself.
 
 =over 4
 
-=item my $node = my $node = Treex::Tool::Parser::MSTperl::Node->new(
+=item my $node = my $node = Treex::Tool::Parser::RUR::Node->new(
     fields => [@fields],
     config => $config,
 );
 
 Creates a new node with the given field values (C<fields>)
-and using the given L<Treex::Tool::Parser::MSTperl::Config> instance
+and using the given L<Treex::Tool::Parser::RUR::Config> instance
 (C<config>).
 
 =item my $node_copy = $node->copy_nonparsed()
