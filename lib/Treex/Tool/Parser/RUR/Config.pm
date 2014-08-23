@@ -661,6 +661,21 @@ sub field_name2index {
     }
 }
 
+sub log {
+    my ($self, $msg, $level) = @_;
+
+    if ( !defined $level ) {
+        $level = 1;
+    }
+
+    if ( $self->DEBUG >= $level ) {
+        print "$msg\n";
+    }
+
+    return ;
+}
+
+
 1;
 
 __END__

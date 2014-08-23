@@ -53,10 +53,13 @@ sub parse_sentence_internal {
 
 sub parse_rur {
     my ($self, $sentence, $edge_weights) = @_;
+    
+    # precision for folats comparison
+    my $EPSILON = 0.0000001;
 
     my $score = 0;
 
-    if ( $self->config->DEBUG >= 2 ) { print "left branching init\n"; }
+    $self->config->log("left branching init", 2);
     # init to left branching, compute tree score
     for (my $child_ord = 1; $child_ord <= $sentence->len; $child_ord++) {
         # modulo ensures last node is child of root
@@ -66,20 +69,44 @@ sub parse_rur {
     }
 
     # main loop
-    if ( $self->config->DEBUG >= 2 ) { print "main loop\n"; }
+    $self->config->log("main loop", 2);
     while (1) {
-        if ( $self->config->DEBUG >= 3 ) { print "loop turn, score = ".$score."\n"; }
+        $self->config->log("loop turn, score = ".$score, 3);
         my ($candidates, $best_candidate) =
             $self->find_candidates($sentence, $edge_weights, $score);
         if (defined $best_candidate) {
-            $score = $best_candidate->{score};
-            $self->new_current_tree($sentence, $best_candidate);
+            # sets current parse tree corresponding to $best_candidate
+            $score = $self->step($best_candidate);
         } else {
-            # TODO: foreach candidate try to go 1 step deeper
-            last;
+            # try to go 1 step deeper
+            # TODO: this is VERY slow, probably should use some heuristics,
+            # such as only inspecting the top k candidates
+            $self->config->log("no best candidate, going deeper into ".scalar(@$candidates), 3);
+            foreach my $candidate (@$candidates) {
+                my $step_score = $self->step($candidate);
+                my ($deeper_candidates, $deeper_best_candidate) =
+                    $self->find_candidates($sentence, $edge_weights, $step_score);
+                if ( defined $deeper_best_candidate &&
+                    $deeper_best_candidate->{score} > ($score + $EPSILON)
+                ) {
+                    $candidate->{next_step} = $deeper_best_candidate;
+                    $best_candidate = $candidate;
+                    $score = $deeper_best_candidate->{score};
+                }
+                $self->step_back($candidate);
+            }
+            if (defined $best_candidate) {
+                $self->config->log("found deeper best candidate", 3);
+                # sets current parse tree corresponding to $best_candidate
+                $score = $self->step($best_candidate);
+                $score = $self->step($best_candidate->{next_step});
+            } else {
+                $self->config->log("no best candidate, loop end", 3);
+                last;
+            }
         }
     }
-    if ( $self->config->DEBUG >= 2 ) { print "main loop end\n"; }
+    $self->config->log("main loop end", 2);
 
     return $sentence;
 }
@@ -87,9 +114,11 @@ sub parse_rur {
 # find a better scoring candidate tree
 sub find_candidates {
     my ($self, $sentence, $edge_weights, $score) = @_;
+    $self->config->log("find candidates, score = ".$score, 4);
 
     my $candidates = [];
     my $best_candidate = undef;
+    my $best_score = $score;
 
     # try to find a score-improving rotation
     foreach my $child ( @{ $sentence->nodes } ) {
@@ -97,31 +126,29 @@ sub find_candidates {
         # cannot rotate edge if parent is root
         if ( $parent->ord ne 0 ) {
             my $grandparent = $parent->parent;
-            # now scores are edge-based, so a simple update is possible
+            # rotate
+            my $orig_parent = $child->rotate();
+            # TODO: now scores are edge-based, so a simple update is possible
+#           my $features = $sentence->compute_features();
+#           my $new_score = $self->model->score_features($features);
             my $new_score = $score
                 - $edge_weights->{$child->ord}->{$parent->ord}
                 - $edge_weights->{$parent->ord}->{$grandparent->ord}
                 + $edge_weights->{$parent->ord}->{$child->ord}
                 + $edge_weights->{$child->ord}->{$grandparent->ord};
-            # TODO: rehang the nodes, compute tree score, rehang back
-#                 $sentence->setChildParent($child->ord, $grandparent->ord);
-#                 $sentence->setChildParent($parent->ord, $child->ord);
-#                 my $features = $sentence->compute_features();
-#                 my $new_score = $self->model->score_features($features);
-# TODO if depth to go to is greater than 1, recurse here for next step search
-#                 $sentence->setChildParent($parent->ord, $grandparent->ord);
-#                 $sentence->setChildParent($child->ord, $parent->ord);
+            # store candidate
             my $candidate = {
                 score => $new_score,
                 child => $child,
-                new_parent => $grandparent,
                 is_rotation => 1,
             };
             push @$candidates, $candidate;
-            if ($new_score > $score) {
+            if ($new_score > $best_score) {
                 $best_candidate = $candidate;
-                $score = $new_score;
+                $best_score = $new_score;
             }
+            # rotate back
+            $orig_parent->rotate();
         }
     }
 
@@ -137,9 +164,15 @@ sub find_candidates {
                 # TODO $sentence->is_descendant_of($ord, $ord)
                 !$new_parent->is_descendant_of($child_ord)
             ) {
+                # attach
+                my $orig_parent = $child->attach($new_parent);
                 # now scores are edge-based, so a simple update is possible
+                # TODO: now scores are edge-based, so a simple update is possible
+#               my $features = $sentence->compute_features();
+#               my $new_score = $self->model->score_features($features);
                 my $new_score = $score - $edge_weight
                     + $edge_weights->{$child_ord}->{$new_parent_ord};
+                # store candidate
                 my $candidate = {
                     score => $new_score,
                     child => $child,
@@ -147,10 +180,12 @@ sub find_candidates {
                     is_rotation => 0,
                 };
                 push @$candidates, $candidate;
-                if ($new_score > $score) {
+                if ($new_score > $best_score) {
                     $best_candidate = $candidate;
-                    $score = $new_score;
+                    $best_score = $new_score;
                 }
+                # attach back
+                $child->attach($orig_parent);
             }
         }
     }
@@ -158,22 +193,27 @@ sub find_candidates {
     return ($candidates, $best_candidate);
 }
 
-sub new_current_tree {
-    my ($self, $sentence, $best_candidate) = @_;
-    
-    # TODO rehang only if not in recursion called from above
-    if ( $best_candidate->{is_rotation} ) {
-        my $orig_parent = $best_candidate->{child}->parent;
-        $sentence->setChildParent(
-            $best_candidate->{child}->ord, $best_candidate->{new_parent}->ord);
-        $sentence->setChildParent(
-            $orig_parent->ord, $best_candidate->{child}->ord);
-    } else {
-        $sentence->setChildParent(
-            $best_candidate->{child}->ord, $best_candidate->{new_parent}->ord);
-    }
-    # TODO if depth > 1, recurse here for next step rehanging
+sub step {
+    my ($self, $candidate) = @_;
 
+    my $orig_parent;
+    if ( $candidate->{is_rotation} ) {
+        $orig_parent = $candidate->{child}->rotate();
+    } else {
+        $orig_parent = $candidate->{child}->attach($candidate->{new_parent});
+    }
+    $candidate->{orig_parent} = $orig_parent;
+    return $candidate->{score};
+}
+
+sub step_back {
+    my ($self, $candidate) = @_;
+
+    if ( $candidate->{is_rotation} ) {
+        $candidate->{orig_parent}->rotate();
+    } else {
+        $candidate->{child}->attach($candidate->{orig_parent});
+    }
     return;
 }
 

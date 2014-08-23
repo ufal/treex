@@ -174,6 +174,32 @@ sub is_descendant_of {
     return $result;
 }
 
+# attach to a new parent
+# returns original parent for easy reversal of the operation:
+# just call $node->attach($orig_parent)
+# TODO does not use Edge, so edge fields should be moved here for RURParser
+sub attach {
+    my ( $self, $new_parent ) = @_;
+
+    my $orig_parent = $self->parent;
+    $self->parent($new_parent);
+    # TODO update orig_parent->children
+
+    return $orig_parent;
+}
+
+# rotate edge
+# returns original parent for easy reversal of the operation:
+# just call $orig_parent->rotate()
+sub rotate {
+    my ( $self ) = @_;
+
+    my $orig_parent = $self->attach($self->parent->parent);
+    $orig_parent->attach($self);
+
+    return $orig_parent;
+}
+
 1;
 
 __END__

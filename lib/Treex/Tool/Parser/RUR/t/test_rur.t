@@ -137,6 +137,8 @@ my $parser = new_ok(
 
 ok( $parser->load_model($unlabelled_model_file), "load model" );
 
+#$config->DEBUG(3);
+
 my $total_words  = 0;
 my $total_errors = 0;
 my @sentences;

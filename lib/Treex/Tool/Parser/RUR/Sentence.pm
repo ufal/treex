@@ -258,31 +258,6 @@ sub setChildParent {
     return;
 }
 
-# TODO does not use Edge, so edge fields should be moved here for RURParser
-# TODO update orig_parent->children
-sub attach {
-    # (Node $child, Node $new_parent)
-    my ( $self, $child, $new_parent ) = @_;
-
-    # my $orig_parent = $child->parent;
-    $child->parent($new_parent);
-
-    return;
-}
-
-sub rotate {
-
-    # (Node $child)
-    my ( $self, $child ) = @_;
-
-    my $orig_parent = $child->parent;
-    my $orig_grandparent = $orig_parent->parent;
-    # TODO
-
-    return;
-}
-
-
 sub len {
     my ($self) = @_;
     return scalar( @{ $self->nodes } )
