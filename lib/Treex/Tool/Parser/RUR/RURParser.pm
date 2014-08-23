@@ -2,6 +2,7 @@ package Treex::Tool::Parser::RUR::RURParser;
 
 use Moose;
 use Carp;
+use List::Util "min";
 
 extends 'Treex::Tool::Parser::RUR::Parser';
 
@@ -79,12 +80,12 @@ sub parse_rur {
             $score = $self->step($best_candidate);
         } else {
             # try to go 1 step deeper
-            # $self->config->log("no best candidate, going deeper into ".scalar(@$candidates), 3);
-            $self->config->log("no best candidate, going deeper into ".$self->config->TOP_K, 3);
             # full search is VERY slow, slowing down the whole algorithm
             # from O(N^3) to O(N^4)
             my @sorted_candidates = sort {$b->{score} <=> $a->{score}} @$candidates;
-            foreach my $candidate (@sorted_candidates[0 .. $self->config->TOP_K]) {
+            my $top_k = min(scalar(@sorted_candidates), $self->config->TOP_K);
+            $self->config->log("no best candidate, going deeper into ".$top_k, 3);
+            foreach my $candidate (@sorted_candidates[0 .. $top_k]) {
                 my $step_score = $self->step($candidate);
                 my ($deeper_candidates, $deeper_best_candidate) =
                     $self->find_candidates($sentence, $edge_weights, $step_score);
