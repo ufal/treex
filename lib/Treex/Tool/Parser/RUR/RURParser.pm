@@ -79,10 +79,12 @@ sub parse_rur {
             $score = $self->step($best_candidate);
         } else {
             # try to go 1 step deeper
-            # TODO: this is VERY slow, probably should use some heuristics,
-            # such as only inspecting the top k candidates
-            $self->config->log("no best candidate, going deeper into ".scalar(@$candidates), 3);
-            foreach my $candidate (@$candidates) {
+            # $self->config->log("no best candidate, going deeper into ".scalar(@$candidates), 3);
+            $self->config->log("no best candidate, going deeper into ".$self->config->TOP_K, 3);
+            # full search is VERY slow, slowing down the whole algorithm
+            # from O(N^3) to O(N^4)
+            my @sorted_candidates = sort {$b->{score} <=> $a->{score}} @$candidates;
+            foreach my $candidate (@sorted_candidates[0 .. $self->config->TOP_K]) {
                 my $step_score = $self->step($candidate);
                 my ($deeper_candidates, $deeper_best_candidate) =
                     $self->find_candidates($sentence, $edge_weights, $step_score);
@@ -190,6 +192,7 @@ sub find_candidates {
         }
     }
     
+    $self->config->log("best score = ".$best_score, 4);
     return ($candidates, $best_candidate);
 }
 

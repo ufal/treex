@@ -18,6 +18,8 @@ has 'DEBUG' => (
     default => '1',
 );
 
+has TOP_K => ( is => 'rw', isa => 'Num', default => 10 );
+
 # Viterbi settings
 
 has 'SEQUENCE_BOUNDARY_LABEL' => (
@@ -517,6 +519,7 @@ sub BUILD {
             'EM_EPSILON',
             'EM_heldout_data_at',
             'magic',
+            'TOP_K',
         );
 
         # name => required?
