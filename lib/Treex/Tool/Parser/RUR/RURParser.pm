@@ -85,7 +85,7 @@ sub parse_rur {
             my @sorted_candidates = sort {$b->{score} <=> $a->{score}} @$candidates;
             my $top_k = min(scalar(@sorted_candidates), $self->config->TOP_K);
             $self->config->log("no best candidate, going deeper into ".$top_k, 3);
-            foreach my $candidate (@sorted_candidates[0 .. $top_k]) {
+            foreach my $candidate (@sorted_candidates[0 .. ($top_k-1)]) {
                 my $step_score = $self->step($candidate);
                 my ($deeper_candidates, $deeper_best_candidate) =
                     $self->find_candidates($sentence, $edge_weights, $step_score);
