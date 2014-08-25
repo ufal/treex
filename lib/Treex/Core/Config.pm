@@ -196,7 +196,7 @@ sub use_services {
         $config->{use_services} = 0 unless load_module('Treex::Service::Role');
     }
 
-    return $config->{use_services};
+    return $config->{use_services} || 0;
 }
 
 sub _default_tmp_dir {
