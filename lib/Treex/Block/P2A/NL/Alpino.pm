@@ -42,7 +42,7 @@ my %DEPREL_CONV = (
     'predm'  => 'Adv',
     'cmp'    => 'AuxC',
     'crd'    => 'Coord',
-    'app'    => 'Apos',
+    'app'    => 'Atr',     # 'hoofstad Luxembourg[app]', 'heer Sleiffer[app]', 'opus 93[app]' etc.
     'se'     => 'AuxT',
 );
 
@@ -65,7 +65,7 @@ sub convert_deprel {
             $afun = 'Obj'  if ( !$afun );                                      # subject is selected later
         }
         elsif ( $deprel eq 'det' ) {
-            $afun = $node->match_iset( 'subpos' => 'art' ) ? 'AuxA' : 'Atr';
+            $afun = $node->match_iset( 'adjtype' => 'art' ) ? 'AuxA' : 'Atr';
         }
         elsif ( $deprel eq '--' ) {
             $afun = 'AuxK' if ( $node->lemma =~ /[\.!?]/ );
@@ -76,7 +76,7 @@ sub convert_deprel {
 
             # set AuxP for multi-word prepositions, avoid other multi-word units
             $afun = 'AuxP' if ( $node->is_preposition or ( ( $node->parent->conll_deprel // '' ) eq 'mwp' and ( $node->parent->afun // '' ) eq 'AuxP' ) );
-            $afun = 'AuxA' if ( !$afun and $node->match_iset( 'subpos' => 'art' ) );
+            $afun = 'AuxA' if ( !$afun and $node->match_iset( 'adjtype' => 'art' ) );
             $afun = 'NR' if ( !$afun );
         }
         elsif ( $deprel eq 'svp' ) {
