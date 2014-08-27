@@ -242,10 +242,69 @@ sub _process_comment_data {
             my $anode = $atree->create_child( { form => $token } );
             $anode->shift_after_subtree($atree);
         }
+
+        # process alignments if applicable
+        if ( $self->_comment_data->{alignments} ) {
+            $self->_process_alignments( $ttree, $atree, $self->_comment_data->{alignments} );
+        }
     }
 
     $self->_set_comment_data( {} );
     return;
+}
+
+sub _process_alignments {
+    my ( $self, $ttree, $atree, $ali_data ) = @_;
+
+    # mapping AMR address -> node, surface address (=1-based ord) -> node
+    my %tnodes = ();
+    my ($amr_root) = $ttree->get_children( { ordered => 1 } );
+    $self->_get_amr_addresses( $amr_root, 0, \%tnodes );
+    my %anodes = map { $_->ord => $_ } $atree->get_descendants( { ordered => 1 } );
+
+    foreach my $ali ( split / /, $ali_data ) {
+
+        next if $ali =~ /^\*/;    # TODO what's this?
+
+        my ( $a_addrs, $t_addrs ) = split /\|/, $ali;
+
+        # Jeff's zero-based spans (convert them to 1-based)
+        if ( $a_addrs =~ /-/ ) {
+            my ( $lo, $hi ) = split /-/, $a_addrs;
+            $a_addrs = [ $lo + 1 .. $hi ];
+        }
+
+        # Ondrej's 1-based non-contiguous format
+        else {
+            $a_addrs = [ split /\+/, $a_addrs ];
+        }
+
+        # AMR node addresses are all the same
+        $t_addrs = [ split /\+/, $t_addrs ];
+
+        foreach my $t_addr (@$t_addrs) {
+
+            # first goes to lex-anode
+            $tnodes{$t_addr}->set_lex_anode( $anodes{ $a_addrs->[0] } );
+            if ( @$a_addrs > 1 ) {    # others go to aux-anodes
+                $tnodes{$t_addr}->set_aux_anodes( map { $anodes{$_} } @$a_addrs[ 1 .. $#$a_addrs ] );
+            }
+        }
+    }
+}
+
+# Find out AMR node addresses (given a subtree root and its ID, recurse to all nodes in
+# the subtree and save their addresses in $addr_data)
+sub _get_amr_addresses {
+    my ( $self, $troot, $node_id, $addr_data ) = @_;
+    $addr_data->{$node_id} = $troot;
+    my $child_no = 0;
+    foreach my $tchild ( $troot->get_children( { ordered => 1 } ) ) {
+        if ( $tchild->t_lemma !~ /^[a-zA-Z][0-9]*$/ ) {    # skip reentrancies
+            $self->_get_amr_addresses( $tchild, $node_id . '.' . $child_no, $addr_data );
+            $child_no++;
+        }
+    }
 }
 
 # Check if a comment contains meaningful data (introduced by ::xxx...) and store them
