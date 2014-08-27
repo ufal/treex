@@ -47,7 +47,9 @@ sub process_sentence {
     # other block should edit this output as needed
     # EOS marks end of sentence
     while ( $line !~ "EOS" ) {
-        
+       
+        log_fatal("Unitialized line (perhaps MeCab was not initialized correctly)."); # even with empty string input we should get at least "EOS" line in output, otherwise the tagger wasn't correctly initialized
+ 
         # we don't want to substitute actual commas in the sentence
         $line =~ s{^(.*),\t}{$1#comma\t};
 

@@ -79,6 +79,9 @@ sub parse_sentence {
     my @bun_heads;
     my $current_token = 1;
     while ( $_ !~ "EOS") {
+
+        log_fatal("Unitialized line (perhaps JDEPP was not initialized correctly).");        
+
         $_ = <$reader>;
         #log_info($_);
         next if $_ =~ /^#|EOS/;
