@@ -13,7 +13,7 @@ LINE:       BLOCK                               {$return = [@{$item{BLOCK}}]}
 LINE:       COMMENT                             {$return = []}
 EOF:        /^\Z/
 BLOCK:      INCLUDE                             {
-                                                    my $included = read_file( $item{INCLUDE} );
+                                                    my $included = read_file( $item{INCLUDE}, binmode => ':utf8' );
                                                     my $result = $thisparser->startrule( $included, 1, $item{INCLUDE} );
                                                     if (defined $result and ref $result eq 'ARRAY') {
                                                         $return = [@$result];
