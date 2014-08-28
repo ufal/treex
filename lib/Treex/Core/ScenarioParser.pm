@@ -3313,1940 +3313,6 @@ local $SIG{__WARN__} = sub {0};
 
 push @Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::ISA, 'Parse::RecDescent::_Runtime';
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
-sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SPACE
-{
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
-    my $thisrule = $thisparser->{"rules"}{"SPACE"};
-
-    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [SPACE]},
-                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                  q{SPACE},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-
-    
-    my $err_at = @{$thisparser->{errors}};
-
-    my $score;
-    my $score_return;
-    my $_tok;
-    my $return = undef;
-    my $_matched=0;
-    my $commit=0;
-    my @item = ();
-    my %item = ();
-    my $repeating =  $_[2];
-    my $_noactions = $_[3];
-    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
-    my $_itempos = $_[5];
-    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
-    my $text;
-    my $lastsep;
-    my $current_match;
-    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/\\s+/});
-    $expectation->at($_[1]);
-    
-    my $thisline;
-    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
-
-    
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/\\s+/]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{SPACE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[0];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{SPACE});
-        %item = (__RULE__ => q{SPACE});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/\\s+/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{SPACE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        undef $lastsep;
-        $expectation->is(q{})->at($text);
-        
-
-        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:\s+)/)
-        {
-            $text = $lastsep . $text if defined $lastsep;
-            $expectation->failed();
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                    if defined $::RD_TRACE;
-
-            last;
-        }
-        $current_match = substr($text, $-[0], $+[0] - $-[0]);
-        substr($text,0,length($current_match),q{});
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
-                        . $current_match . q{])},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                    if defined $::RD_TRACE;
-        push @item, $item{__PATTERN1__}=$current_match;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying action},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{SPACE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        
-
-        $_tok = ($_noactions) ? 0 : do {$return = $item[1]};
-        unless (defined $_tok)
-        {
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
-                    if defined $::RD_TRACE;
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
-                      . $_tok . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text))
-                        if defined $::RD_TRACE;
-        push @item, $_tok;
-        $item{__ACTION1__}=$_tok;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/\\s+/]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{SPACE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    unless ( $_matched || defined($score) )
-    {
-        
-
-        $_[1] = $text;  # NOT SURE THIS IS NEEDED
-        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
-                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                     q{SPACE},
-                     $tracelevel)
-                    if defined $::RD_TRACE;
-        return undef;
-    }
-    if (!defined($return) && defined($score))
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
-                      q{SPACE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $return = $score_return;
-    }
-    splice @{$thisparser->{errors}}, $err_at;
-    $return = $item[$#item] unless defined $return;
-    if (defined $::RD_TRACE)
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
-                      $return . q{])}, "",
-                      q{SPACE},
-                      $tracelevel);
-        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
-                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      , q{SPACE},
-                      $tracelevel)
-    }
-    $_[1] = $text;
-    return $return;
-}
-
-# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
-sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::EMPTY
-{
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
-    my $thisrule = $thisparser->{"rules"}{"EMPTY"};
-
-    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [EMPTY]},
-                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                  q{EMPTY},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-
-    
-    my $err_at = @{$thisparser->{errors}};
-
-    my $score;
-    my $score_return;
-    my $_tok;
-    my $return = undef;
-    my $_matched=0;
-    my $commit=0;
-    my @item = ();
-    my %item = ();
-    my $repeating =  $_[2];
-    my $_noactions = $_[3];
-    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
-    my $_itempos = $_[5];
-    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
-    my $text;
-    my $lastsep;
-    my $current_match;
-    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{//});
-    $expectation->at($_[1]);
-    
-    my $thisline;
-    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
-
-    
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [//]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{EMPTY},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[0];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{EMPTY});
-        %item = (__RULE__ => q{EMPTY});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [//]}, Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{EMPTY},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        undef $lastsep;
-        $expectation->is(q{})->at($text);
-        
-
-        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:)/)
-        {
-            $text = $lastsep . $text if defined $lastsep;
-            $expectation->failed();
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                    if defined $::RD_TRACE;
-
-            last;
-        }
-        $current_match = substr($text, $-[0], $+[0] - $-[0]);
-        substr($text,0,length($current_match),q{});
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
-                        . $current_match . q{])},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                    if defined $::RD_TRACE;
-        push @item, $item{__PATTERN1__}=$current_match;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [//]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{EMPTY},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    unless ( $_matched || defined($score) )
-    {
-        
-
-        $_[1] = $text;  # NOT SURE THIS IS NEEDED
-        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
-                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                     q{EMPTY},
-                     $tracelevel)
-                    if defined $::RD_TRACE;
-        return undef;
-    }
-    if (!defined($return) && defined($score))
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
-                      q{EMPTY},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $return = $score_return;
-    }
-    splice @{$thisparser->{errors}}, $err_at;
-    $return = $item[$#item] unless defined $return;
-    if (defined $::RD_TRACE)
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
-                      $return . q{])}, "",
-                      q{EMPTY},
-                      $tracelevel);
-        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
-                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      , q{EMPTY},
-                      $tracelevel)
-    }
-    $_[1] = $text;
-    return $return;
-}
-
-# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
-sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PNOTQUOTED
-{
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
-    my $thisrule = $thisparser->{"rules"}{"PNOTQUOTED"};
-
-    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PNOTQUOTED]},
-                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                  q{PNOTQUOTED},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-
-    
-    my $err_at = @{$thisparser->{errors}};
-
-    my $score;
-    my $score_return;
-    my $_tok;
-    my $return = undef;
-    my $_matched=0;
-    my $commit=0;
-    my @item = ();
-    my %item = ();
-    my $repeating =  $_[2];
-    my $_noactions = $_[3];
-    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
-    my $_itempos = $_[5];
-    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
-    my $text;
-    my $lastsep;
-    my $current_match;
-    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/\\S+/, or EMPTY});
-    $expectation->at($_[1]);
-    
-    my $thisline;
-    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
-
-    
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/\\S+/]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{PNOTQUOTED},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[0];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{PNOTQUOTED});
-        %item = (__RULE__ => q{PNOTQUOTED});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/\\S+/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PNOTQUOTED},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        undef $lastsep;
-        $expectation->is(q{})->at($text);
-        
-
-        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:\S+)/)
-        {
-            $text = $lastsep . $text if defined $lastsep;
-            $expectation->failed();
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                    if defined $::RD_TRACE;
-
-            last;
-        }
-        $current_match = substr($text, $-[0], $+[0] - $-[0]);
-        substr($text,0,length($current_match),q{});
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
-                        . $current_match . q{])},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                    if defined $::RD_TRACE;
-        push @item, $item{__PATTERN1__}=$current_match;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying action},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PNOTQUOTED},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        
-
-        $_tok = ($_noactions) ? 0 : do {$return = $item[1]};
-        unless (defined $_tok)
-        {
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
-                    if defined $::RD_TRACE;
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
-                      . $_tok . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text))
-                        if defined $::RD_TRACE;
-        push @item, $_tok;
-        $item{__ACTION1__}=$_tok;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/\\S+/]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PNOTQUOTED},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [EMPTY]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{PNOTQUOTED},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[1];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{PNOTQUOTED});
-        %item = (__RULE__ => q{PNOTQUOTED});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [EMPTY]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{PNOTQUOTED},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::EMPTY($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [EMPTY]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{PNOTQUOTED},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [EMPTY]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PNOTQUOTED},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{EMPTY}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying action},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PNOTQUOTED},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        
-
-        $_tok = ($_noactions) ? 0 : do {$return = ''};
-        unless (defined $_tok)
-        {
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
-                    if defined $::RD_TRACE;
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
-                      . $_tok . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text))
-                        if defined $::RD_TRACE;
-        push @item, $_tok;
-        $item{__ACTION1__}=$_tok;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [EMPTY]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PNOTQUOTED},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    unless ( $_matched || defined($score) )
-    {
-        
-
-        $_[1] = $text;  # NOT SURE THIS IS NEEDED
-        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
-                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                     q{PNOTQUOTED},
-                     $tracelevel)
-                    if defined $::RD_TRACE;
-        return undef;
-    }
-    if (!defined($return) && defined($score))
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
-                      q{PNOTQUOTED},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $return = $score_return;
-    }
-    splice @{$thisparser->{errors}}, $err_at;
-    $return = $item[$#item] unless defined $return;
-    if (defined $::RD_TRACE)
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
-                      $return . q{])}, "",
-                      q{PNOTQUOTED},
-                      $tracelevel);
-        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
-                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      , q{PNOTQUOTED},
-                      $tracelevel)
-    }
-    $_[1] = $text;
-    return $return;
-}
-
-# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
-sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SLASHEDSQUOTE
-{
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
-    my $thisrule = $thisparser->{"rules"}{"SLASHEDSQUOTE"};
-
-    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [SLASHEDSQUOTE]},
-                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                  q{SLASHEDSQUOTE},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-
-    
-    my $err_at = @{$thisparser->{errors}};
-
-    my $score;
-    my $score_return;
-    my $_tok;
-    my $return = undef;
-    my $_matched=0;
-    my $commit=0;
-    my @item = ();
-    my %item = ();
-    my $repeating =  $_[2];
-    my $_noactions = $_[3];
-    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
-    my $_itempos = $_[5];
-    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
-    my $text;
-    my $lastsep;
-    my $current_match;
-    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/\\\\'/});
-    $expectation->at($_[1]);
-    
-    my $thisline;
-    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
-
-    
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/\\\\'/]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{SLASHEDSQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[0];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{SLASHEDSQUOTE});
-        %item = (__RULE__ => q{SLASHEDSQUOTE});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/\\\\'/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{SLASHEDSQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        undef $lastsep;
-        $expectation->is(q{})->at($text);
-        
-
-        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:\\')/)
-        {
-            $text = $lastsep . $text if defined $lastsep;
-            $expectation->failed();
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                    if defined $::RD_TRACE;
-
-            last;
-        }
-        $current_match = substr($text, $-[0], $+[0] - $-[0]);
-        substr($text,0,length($current_match),q{});
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
-                        . $current_match . q{])},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                    if defined $::RD_TRACE;
-        push @item, $item{__PATTERN1__}=$current_match;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying action},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{SLASHEDSQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        
-
-        $_tok = ($_noactions) ? 0 : do {$return = "'"};
-        unless (defined $_tok)
-        {
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
-                    if defined $::RD_TRACE;
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
-                      . $_tok . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text))
-                        if defined $::RD_TRACE;
-        push @item, $_tok;
-        $item{__ACTION1__}=$_tok;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/\\\\'/]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{SLASHEDSQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    unless ( $_matched || defined($score) )
-    {
-        
-
-        $_[1] = $text;  # NOT SURE THIS IS NEEDED
-        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
-                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                     q{SLASHEDSQUOTE},
-                     $tracelevel)
-                    if defined $::RD_TRACE;
-        return undef;
-    }
-    if (!defined($return) && defined($score))
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
-                      q{SLASHEDSQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $return = $score_return;
-    }
-    splice @{$thisparser->{errors}}, $err_at;
-    $return = $item[$#item] unless defined $return;
-    if (defined $::RD_TRACE)
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
-                      $return . q{])}, "",
-                      q{SLASHEDSQUOTE},
-                      $tracelevel);
-        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
-                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      , q{SLASHEDSQUOTE},
-                      $tracelevel)
-    }
-    $_[1] = $text;
-    return $return;
-}
-
-# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
-sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::COMMENT
-{
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
-    my $thisrule = $thisparser->{"rules"}{"COMMENT"};
-
-    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [COMMENT]},
-                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                  q{COMMENT},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-
-    
-    my $err_at = @{$thisparser->{errors}};
-
-    my $score;
-    my $score_return;
-    my $_tok;
-    my $return = undef;
-    my $_matched=0;
-    my $commit=0;
-    my @item = ();
-    my %item = ();
-    my $repeating =  $_[2];
-    my $_noactions = $_[3];
-    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
-    my $_itempos = $_[5];
-    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
-    my $text;
-    my $lastsep;
-    my $current_match;
-    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/#[^\\n]*/});
-    $expectation->at($_[1]);
-    
-    my $thisline;
-    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
-
-    
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/#[^\\n]*/]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{COMMENT},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[0];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{COMMENT});
-        %item = (__RULE__ => q{COMMENT});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/#[^\\n]*/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{COMMENT},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        undef $lastsep;
-        $expectation->is(q{})->at($text);
-        
-
-        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:#[^\n]*)/)
-        {
-            $text = $lastsep . $text if defined $lastsep;
-            $expectation->failed();
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                    if defined $::RD_TRACE;
-
-            last;
-        }
-        $current_match = substr($text, $-[0], $+[0] - $-[0]);
-        substr($text,0,length($current_match),q{});
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
-                        . $current_match . q{])},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                    if defined $::RD_TRACE;
-        push @item, $item{__PATTERN1__}=$current_match;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying action},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{COMMENT},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        
-
-        $_tok = ($_noactions) ? 0 : do {$return = ''};
-        unless (defined $_tok)
-        {
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
-                    if defined $::RD_TRACE;
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
-                      . $_tok . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text))
-                        if defined $::RD_TRACE;
-        push @item, $_tok;
-        $item{__ACTION1__}=$_tok;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/#[^\\n]*/]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{COMMENT},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    unless ( $_matched || defined($score) )
-    {
-        
-
-        $_[1] = $text;  # NOT SURE THIS IS NEEDED
-        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
-                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                     q{COMMENT},
-                     $tracelevel)
-                    if defined $::RD_TRACE;
-        return undef;
-    }
-    if (!defined($return) && defined($score))
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
-                      q{COMMENT},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $return = $score_return;
-    }
-    splice @{$thisparser->{errors}}, $err_at;
-    $return = $item[$#item] unless defined $return;
-    if (defined $::RD_TRACE)
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
-                      $return . q{])}, "",
-                      q{COMMENT},
-                      $tracelevel);
-        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
-                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      , q{COMMENT},
-                      $tracelevel)
-    }
-    $_[1] = $text;
-    return $return;
-}
-
-# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
-sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::EOF
-{
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
-    my $thisrule = $thisparser->{"rules"}{"EOF"};
-
-    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [EOF]},
-                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                  q{EOF},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-
-    
-    my $err_at = @{$thisparser->{errors}};
-
-    my $score;
-    my $score_return;
-    my $_tok;
-    my $return = undef;
-    my $_matched=0;
-    my $commit=0;
-    my @item = ();
-    my %item = ();
-    my $repeating =  $_[2];
-    my $_noactions = $_[3];
-    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
-    my $_itempos = $_[5];
-    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
-    my $text;
-    my $lastsep;
-    my $current_match;
-    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/^\\Z/});
-    $expectation->at($_[1]);
-    
-    my $thisline;
-    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
-
-    
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/^\\Z/]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{EOF},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[0];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{EOF});
-        %item = (__RULE__ => q{EOF});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/^\\Z/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{EOF},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        undef $lastsep;
-        $expectation->is(q{})->at($text);
-        
-
-        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:^\Z)/)
-        {
-            $text = $lastsep . $text if defined $lastsep;
-            $expectation->failed();
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                    if defined $::RD_TRACE;
-
-            last;
-        }
-        $current_match = substr($text, $-[0], $+[0] - $-[0]);
-        substr($text,0,length($current_match),q{});
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
-                        . $current_match . q{])},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                    if defined $::RD_TRACE;
-        push @item, $item{__PATTERN1__}=$current_match;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/^\\Z/]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{EOF},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    unless ( $_matched || defined($score) )
-    {
-        
-
-        $_[1] = $text;  # NOT SURE THIS IS NEEDED
-        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
-                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                     q{EOF},
-                     $tracelevel)
-                    if defined $::RD_TRACE;
-        return undef;
-    }
-    if (!defined($return) && defined($score))
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
-                      q{EOF},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $return = $score_return;
-    }
-    splice @{$thisparser->{errors}}, $err_at;
-    $return = $item[$#item] unless defined $return;
-    if (defined $::RD_TRACE)
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
-                      $return . q{])}, "",
-                      q{EOF},
-                      $tracelevel);
-        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
-                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      , q{EOF},
-                      $tracelevel)
-    }
-    $_[1] = $text;
-    return $return;
-}
-
-# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
-sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::NOTSQUOTE
-{
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
-    my $thisrule = $thisparser->{"rules"}{"NOTSQUOTE"};
-
-    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [NOTSQUOTE]},
-                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                  q{NOTSQUOTE},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-
-    
-    my $err_at = @{$thisparser->{errors}};
-
-    my $score;
-    my $score_return;
-    my $_tok;
-    my $return = undef;
-    my $_matched=0;
-    my $commit=0;
-    my @item = ();
-    my %item = ();
-    my $repeating =  $_[2];
-    my $_noactions = $_[3];
-    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
-    my $_itempos = $_[5];
-    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
-    my $text;
-    my $lastsep;
-    my $current_match;
-    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/[^']*[^'\\\\]/});
-    $expectation->at($_[1]);
-    
-    my $thisline;
-    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
-
-    
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/[^']*[^'\\\\]/]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{NOTSQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[0];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{NOTSQUOTE});
-        %item = (__RULE__ => q{NOTSQUOTE});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/[^']*[^'\\\\]/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{NOTSQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        undef $lastsep;
-        $expectation->is(q{})->at($text);
-        
-
-        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:[^']*[^'\\])/)
-        {
-            $text = $lastsep . $text if defined $lastsep;
-            $expectation->failed();
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                    if defined $::RD_TRACE;
-
-            last;
-        }
-        $current_match = substr($text, $-[0], $+[0] - $-[0]);
-        substr($text,0,length($current_match),q{});
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
-                        . $current_match . q{])},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                    if defined $::RD_TRACE;
-        push @item, $item{__PATTERN1__}=$current_match;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/[^']*[^'\\\\]/]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{NOTSQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    unless ( $_matched || defined($score) )
-    {
-        
-
-        $_[1] = $text;  # NOT SURE THIS IS NEEDED
-        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
-                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                     q{NOTSQUOTE},
-                     $tracelevel)
-                    if defined $::RD_TRACE;
-        return undef;
-    }
-    if (!defined($return) && defined($score))
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
-                      q{NOTSQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $return = $score_return;
-    }
-    splice @{$thisparser->{errors}}, $err_at;
-    $return = $item[$#item] unless defined $return;
-    if (defined $::RD_TRACE)
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
-                      $return . q{])}, "",
-                      q{NOTSQUOTE},
-                      $tracelevel);
-        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
-                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      , q{NOTSQUOTE},
-                      $tracelevel)
-    }
-    $_[1] = $text;
-    return $return;
-}
-
-# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
-sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::TBNAME
-{
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
-    my $thisrule = $thisparser->{"rules"}{"TBNAME"};
-
-    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [TBNAME]},
-                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                  q{TBNAME},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-
-    
-    my $err_at = @{$thisparser->{errors}};
-
-    my $score;
-    my $score_return;
-    my $_tok;
-    my $return = undef;
-    my $_matched=0;
-    my $commit=0;
-    my @item = ();
-    my %item = ();
-    my $repeating =  $_[2];
-    my $_noactions = $_[3];
-    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
-    my $_itempos = $_[5];
-    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
-    my $text;
-    my $lastsep;
-    my $current_match;
-    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/::/, or BNAME});
-    $expectation->at($_[1]);
-    
-    my $thisline;
-    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
-
-    
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/::/ BNAME]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{TBNAME},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[0];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{TBNAME});
-        %item = (__RULE__ => q{TBNAME});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/::/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{TBNAME},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        undef $lastsep;
-        $expectation->is(q{})->at($text);
-        
-
-        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:::)/)
-        {
-            $text = $lastsep . $text if defined $lastsep;
-            $expectation->failed();
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                    if defined $::RD_TRACE;
-
-            last;
-        }
-        $current_match = substr($text, $-[0], $+[0] - $-[0]);
-        substr($text,0,length($current_match),q{});
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
-                        . $current_match . q{])},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                    if defined $::RD_TRACE;
-        push @item, $item{__PATTERN1__}=$current_match;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [BNAME]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{TBNAME},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{BNAME})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::BNAME($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [BNAME]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{TBNAME},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [BNAME]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{TBNAME},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{BNAME}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying action},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{TBNAME},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        
-
-        $_tok = ($_noactions) ? 0 : do {$return = $item{BNAME}};
-        unless (defined $_tok)
-        {
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
-                    if defined $::RD_TRACE;
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
-                      . $_tok . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text))
-                        if defined $::RD_TRACE;
-        push @item, $_tok;
-        $item{__ACTION1__}=$_tok;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/::/ BNAME]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{TBNAME},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [BNAME]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{TBNAME},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[1];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{TBNAME});
-        %item = (__RULE__ => q{TBNAME});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [BNAME]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{TBNAME},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::BNAME($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [BNAME]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{TBNAME},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [BNAME]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{TBNAME},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{BNAME}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying action},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{TBNAME},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        
-
-        $_tok = ($_noactions) ? 0 : do {$return = "Treex::Block::$item{BNAME}"};
-        unless (defined $_tok)
-        {
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
-                    if defined $::RD_TRACE;
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
-                      . $_tok . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text))
-                        if defined $::RD_TRACE;
-        push @item, $_tok;
-        $item{__ACTION1__}=$_tok;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [BNAME]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{TBNAME},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    unless ( $_matched || defined($score) )
-    {
-        
-
-        $_[1] = $text;  # NOT SURE THIS IS NEEDED
-        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
-                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                     q{TBNAME},
-                     $tracelevel)
-                    if defined $::RD_TRACE;
-        return undef;
-    }
-    if (!defined($return) && defined($score))
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
-                      q{TBNAME},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $return = $score_return;
-    }
-    splice @{$thisparser->{errors}}, $err_at;
-    $return = $item[$#item] unless defined $return;
-    if (defined $::RD_TRACE)
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
-                      $return . q{])}, "",
-                      q{TBNAME},
-                      $tracelevel);
-        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
-                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      , q{TBNAME},
-                      $tracelevel)
-    }
-    $_[1] = $text;
-    return $return;
-}
-
-# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
-sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::startrule
-{
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
-    my $thisrule = $thisparser->{"rules"}{"startrule"};
-
-    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [startrule]},
-                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                  q{startrule},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-
-    
-    my $err_at = @{$thisparser->{errors}};
-
-    my $score;
-    my $score_return;
-    my $_tok;
-    my $return = undef;
-    my $_matched=0;
-    my $commit=0;
-    my @item = ();
-    my %item = ();
-    my $repeating =  $_[2];
-    my $_noactions = $_[3];
-    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
-    my $_itempos = $_[5];
-    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
-    my $text;
-    my $lastsep;
-    my $current_match;
-    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{SCEN});
-    $expectation->at($_[1]);
-    
-    my $thisline;
-    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
-
-    
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [SCEN EOF]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{startrule},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[0];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{startrule});
-        %item = (__RULE__ => q{startrule});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [SCEN]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{startrule},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SCEN($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [SCEN]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{startrule},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [SCEN]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{startrule},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{SCEN}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [EOF]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{startrule},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{EOF})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::EOF($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [EOF]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{startrule},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [EOF]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{startrule},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{EOF}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying action},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{startrule},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        
-
-        $_tok = ($_noactions) ? 0 : do {$return = $item{SCEN}};
-        unless (defined $_tok)
-        {
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
-                    if defined $::RD_TRACE;
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
-                      . $_tok . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text))
-                        if defined $::RD_TRACE;
-        push @item, $_tok;
-        $item{__ACTION1__}=$_tok;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [SCEN EOF]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{startrule},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    unless ( $_matched || defined($score) )
-    {
-        
-
-        $_[1] = $text;  # NOT SURE THIS IS NEEDED
-        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
-                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                     q{startrule},
-                     $tracelevel)
-                    if defined $::RD_TRACE;
-        return undef;
-    }
-    if (!defined($return) && defined($score))
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
-                      q{startrule},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $return = $score_return;
-    }
-    splice @{$thisparser->{errors}}, $err_at;
-    $return = $item[$#item] unless defined $return;
-    if (defined $::RD_TRACE)
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
-                      $return . q{])}, "",
-                      q{startrule},
-                      $tracelevel);
-        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
-                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      , q{startrule},
-                      $tracelevel)
-    }
-    $_[1] = $text;
-    return $return;
-}
-
-# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
-sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::LINE
-{
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
-    my $thisrule = $thisparser->{"rules"}{"LINE"};
-
-    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [LINE]},
-                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                  q{LINE},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-
-    
-    my $err_at = @{$thisparser->{errors}};
-
-    my $score;
-    my $score_return;
-    my $_tok;
-    my $return = undef;
-    my $_matched=0;
-    my $commit=0;
-    my @item = ();
-    my %item = ();
-    my $repeating =  $_[2];
-    my $_noactions = $_[3];
-    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
-    my $_itempos = $_[5];
-    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
-    my $text;
-    my $lastsep;
-    my $current_match;
-    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{BLOCK, or COMMENT});
-    $expectation->at($_[1]);
-    
-    my $thisline;
-    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
-
-    
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [BLOCK COMMENT]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{LINE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[0];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{LINE});
-        %item = (__RULE__ => q{LINE});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [BLOCK]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{LINE},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::BLOCK($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [BLOCK]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{LINE},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [BLOCK]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{LINE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{BLOCK}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [COMMENT]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{LINE},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{COMMENT})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::COMMENT($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [COMMENT]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{LINE},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [COMMENT]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{LINE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{COMMENT}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying action},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{LINE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        
-
-        $_tok = ($_noactions) ? 0 : do {$return = [@{$item{BLOCK}}]};
-        unless (defined $_tok)
-        {
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
-                    if defined $::RD_TRACE;
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
-                      . $_tok . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text))
-                        if defined $::RD_TRACE;
-        push @item, $_tok;
-        $item{__ACTION1__}=$_tok;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [BLOCK COMMENT]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{LINE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [BLOCK]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{LINE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[1];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{LINE});
-        %item = (__RULE__ => q{LINE});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [BLOCK]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{LINE},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::BLOCK($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [BLOCK]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{LINE},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [BLOCK]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{LINE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{BLOCK}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying action},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{LINE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        
-
-        $_tok = ($_noactions) ? 0 : do {$return = [@{$item{BLOCK}}]};
-        unless (defined $_tok)
-        {
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
-                    if defined $::RD_TRACE;
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
-                      . $_tok . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text))
-                        if defined $::RD_TRACE;
-        push @item, $_tok;
-        $item{__ACTION1__}=$_tok;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [BLOCK]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{LINE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [COMMENT]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{LINE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[2];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{LINE});
-        %item = (__RULE__ => q{LINE});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [COMMENT]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{LINE},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::COMMENT($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [COMMENT]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{LINE},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [COMMENT]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{LINE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{COMMENT}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying action},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{LINE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        
-
-        $_tok = ($_noactions) ? 0 : do {$return = []};
-        unless (defined $_tok)
-        {
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
-                    if defined $::RD_TRACE;
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
-                      . $_tok . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text))
-                        if defined $::RD_TRACE;
-        push @item, $_tok;
-        $item{__ACTION1__}=$_tok;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [COMMENT]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{LINE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    unless ( $_matched || defined($score) )
-    {
-        
-
-        $_[1] = $text;  # NOT SURE THIS IS NEEDED
-        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
-                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                     q{LINE},
-                     $tracelevel)
-                    if defined $::RD_TRACE;
-        return undef;
-    }
-    if (!defined($return) && defined($score))
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
-                      q{LINE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $return = $score_return;
-    }
-    splice @{$thisparser->{errors}}, $err_at;
-    $return = $item[$#item] unless defined $return;
-    if (defined $::RD_TRACE)
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
-                      $return . q{])}, "",
-                      q{LINE},
-                      $tracelevel);
-        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
-                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      , q{LINE},
-                      $tracelevel)
-    }
-    $_[1] = $text;
-    return $return;
-}
-
-# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::BLOCK
 {
 	my $thisparser = $_[0];
@@ -5616,17 +3682,17 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::BLOCK
 }
 
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
-sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PNAME
+sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SPACE
 {
 	my $thisparser = $_[0];
 	use vars q{$tracelevel};
 	local $tracelevel = ($tracelevel||0)+1;
 	$ERRORS = 0;
-    my $thisrule = $thisparser->{"rules"}{"PNAME"};
+    my $thisrule = $thisparser->{"rules"}{"SPACE"};
 
-    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PNAME]},
+    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [SPACE]},
                   Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                  q{PNAME},
+                  q{SPACE},
                   $tracelevel)
                     if defined $::RD_TRACE;
 
@@ -5649,7 +3715,7 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PNAME
     my $text;
     my $lastsep;
     my $current_match;
-    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/\\w+/});
+    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/\\s+/});
     $expectation->at($_[1]);
     
     my $thisline;
@@ -5660,28 +3726,28 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PNAME
     while (!$_matched && !$commit)
     {
         
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/\\w+/]},
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/\\s+/]},
                       Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{PNAME},
+                      q{SPACE},
                       $tracelevel)
                         if defined $::RD_TRACE;
         my $thisprod = $thisrule->{"prods"}[0];
         $text = $_[1];
         my $_savetext;
-        @item = (q{PNAME});
-        %item = (__RULE__ => q{PNAME});
+        @item = (q{SPACE});
+        %item = (__RULE__ => q{SPACE});
         my $repcount = 0;
 
 
-        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/\\w+/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PNAME},
+        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/\\s+/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{SPACE},
                       $tracelevel)
                         if defined $::RD_TRACE;
         undef $lastsep;
         $expectation->is(q{})->at($text);
         
 
-        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:\w+)/)
+        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:\s+)/)
         {
             $text = $lastsep . $text if defined $lastsep;
             $expectation->failed();
@@ -5702,7 +3768,7 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PNAME
 
         Parse::RecDescent::_Runtime::_trace(q{Trying action},
                       Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PNAME},
+                      q{SPACE},
                       $tracelevel)
                         if defined $::RD_TRACE;
         
@@ -5722,9 +3788,9 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PNAME
         $item{__ACTION1__}=$_tok;
         
 
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/\\w+/]<<},
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/\\s+/]<<},
                       Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PNAME},
+                      q{SPACE},
                       $tracelevel)
                         if defined $::RD_TRACE;
 
@@ -5742,7 +3808,7 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PNAME
         $_[1] = $text;  # NOT SURE THIS IS NEEDED
         Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                     q{PNAME},
+                     q{SPACE},
                      $tracelevel)
                     if defined $::RD_TRACE;
         return undef;
@@ -5750,7 +3816,7 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PNAME
     if (!defined($return) && defined($score))
     {
         Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
-                      q{PNAME},
+                      q{SPACE},
                       $tracelevel)
                         if defined $::RD_TRACE;
         $return = $score_return;
@@ -5761,12 +3827,12 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PNAME
     {
         Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
                       $return . q{])}, "",
-                      q{PNAME},
+                      q{SPACE},
                       $tracelevel);
         Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
                       Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
                       Parse::RecDescent::_Runtime::_tracefirst($text),
-                      , q{PNAME},
+                      , q{SPACE},
                       $tracelevel)
     }
     $_[1] = $text;
@@ -5774,17 +3840,17 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PNAME
 }
 
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
-sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PTICKED
+sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PDQUOTE
 {
 	my $thisparser = $_[0];
 	use vars q{$tracelevel};
 	local $tracelevel = ($tracelevel||0)+1;
 	$ERRORS = 0;
-    my $thisrule = $thisparser->{"rules"}{"PTICKED"};
+    my $thisrule = $thisparser->{"rules"}{"PDQUOTE"};
 
-    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PTICKED]},
+    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PDQUOTE]},
                   Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                  q{PTICKED},
+                  q{PDQUOTE},
                   $tracelevel)
                     if defined $::RD_TRACE;
 
@@ -5807,7 +3873,7 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PTICKED
     my $text;
     my $lastsep;
     my $current_match;
-    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/[^`]+/});
+    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{NOTDQUOTE});
     $expectation->at($_[1]);
     
     my $thisline;
@@ -5818,54 +3884,117 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PTICKED
     while (!$_matched && !$commit)
     {
         
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/[^`]+/]},
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [NOTDQUOTE SLASHEDDQUOTE PDQUOTE]},
                       Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{PTICKED},
+                      q{PDQUOTE},
                       $tracelevel)
                         if defined $::RD_TRACE;
         my $thisprod = $thisrule->{"prods"}[0];
         $text = $_[1];
         my $_savetext;
-        @item = (q{PTICKED});
-        %item = (__RULE__ => q{PTICKED});
+        @item = (q{PDQUOTE});
+        %item = (__RULE__ => q{PDQUOTE});
         my $repcount = 0;
 
 
-        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/[^`]+/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PTICKED},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        undef $lastsep;
-        $expectation->is(q{})->at($text);
-        
-
-        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:[^`]+)/)
-        {
-            $text = $lastsep . $text if defined $lastsep;
-            $expectation->failed();
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [NOTDQUOTE]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{PDQUOTE},
+                  $tracelevel)
                     if defined $::RD_TRACE;
-
+        if (1) { no strict qw{refs};
+        $expectation->is(q{})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::NOTDQUOTE($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [NOTDQUOTE]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{PDQUOTE},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
             last;
         }
-        $current_match = substr($text, $-[0], $+[0] - $-[0]);
-        substr($text,0,length($current_match),q{});
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
-                        . $current_match . q{])},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                    if defined $::RD_TRACE;
-        push @item, $item{__PATTERN1__}=$current_match;
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [NOTDQUOTE]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PDQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{NOTDQUOTE}} = $_tok;
+        push @item, $_tok;
         
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [SLASHEDDQUOTE]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{PDQUOTE},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{SLASHEDDQUOTE})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SLASHEDDQUOTE($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [SLASHEDDQUOTE]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{PDQUOTE},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [SLASHEDDQUOTE]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PDQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{SLASHEDDQUOTE}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [PDQUOTE]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{PDQUOTE},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{PDQUOTE})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PDQUOTE($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [PDQUOTE]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{PDQUOTE},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [PDQUOTE]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PDQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{PDQUOTE}} = $_tok;
+        push @item, $_tok;
+        
+        }
 
         Parse::RecDescent::_Runtime::_trace(q{Trying action},
                       Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PTICKED},
+                      q{PDQUOTE},
                       $tracelevel)
                         if defined $::RD_TRACE;
         
 
-        $_tok = ($_noactions) ? 0 : do {$return = $item[1]};
+        $_tok = ($_noactions) ? 0 : do {$return = $item{NOTDQUOTE}.$item{SLASHEDDQUOTE}.$item{PDQUOTE}};
         unless (defined $_tok)
         {
             Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
@@ -5880,9 +4009,68 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PTICKED
         $item{__ACTION1__}=$_tok;
         
 
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/[^`]+/]<<},
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [NOTDQUOTE SLASHEDDQUOTE PDQUOTE]<<},
                       Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PTICKED},
+                      q{PDQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [NOTDQUOTE]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{PDQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[1];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{PDQUOTE});
+        %item = (__RULE__ => q{PDQUOTE});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [NOTDQUOTE]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{PDQUOTE},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::NOTDQUOTE($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [NOTDQUOTE]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{PDQUOTE},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [NOTDQUOTE]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PDQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{NOTDQUOTE}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [NOTDQUOTE]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PDQUOTE},
                       $tracelevel)
                         if defined $::RD_TRACE;
 
@@ -5900,7 +4088,7 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PTICKED
         $_[1] = $text;  # NOT SURE THIS IS NEEDED
         Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                     q{PTICKED},
+                     q{PDQUOTE},
                      $tracelevel)
                     if defined $::RD_TRACE;
         return undef;
@@ -5908,7 +4096,7 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PTICKED
     if (!defined($return) && defined($score))
     {
         Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
-                      q{PTICKED},
+                      q{PDQUOTE},
                       $tracelevel)
                         if defined $::RD_TRACE;
         $return = $score_return;
@@ -5919,12 +4107,12 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PTICKED
     {
         Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
                       $return . q{])}, "",
-                      q{PTICKED},
+                      q{PDQUOTE},
                       $tracelevel);
         Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
                       Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
                       Parse::RecDescent::_Runtime::_tracefirst($text),
-                      , q{PTICKED},
+                      , q{PDQUOTE},
                       $tracelevel)
     }
     $_[1] = $text;
@@ -5932,17 +4120,17 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PTICKED
 }
 
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
-sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SLASHEDDQUOTE
+sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PARAM
 {
 	my $thisparser = $_[0];
 	use vars q{$tracelevel};
 	local $tracelevel = ($tracelevel||0)+1;
 	$ERRORS = 0;
-    my $thisrule = $thisparser->{"rules"}{"SLASHEDDQUOTE"};
+    my $thisrule = $thisparser->{"rules"}{"PARAM"};
 
-    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [SLASHEDDQUOTE]},
+    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PARAM]},
                   Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                  q{SLASHEDDQUOTE},
+                  q{PARAM},
                   $tracelevel)
                     if defined $::RD_TRACE;
 
@@ -5965,7 +4153,252 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SLASHEDDQUOTE
     my $text;
     my $lastsep;
     my $current_match;
-    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/\\\\"/});
+    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{PNAME});
+    $expectation->at($_[1]);
+    
+    my $thisline;
+    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
+
+    
+
+    while (!$_matched && !$commit)
+    {
+        local $skip = defined($skip) ? $skip : $Parse::RecDescent::_Runtime::skip;
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [PNAME '=' <skip: qr//> PVALUE]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{PARAM},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[0];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{PARAM});
+        %item = (__RULE__ => q{PARAM});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [PNAME]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{PARAM},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PNAME($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [PNAME]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{PARAM},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [PNAME]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PARAM},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{PNAME}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: ['=']},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PARAM},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        undef $lastsep;
+        $expectation->is(q{'='})->at($text);
+        
+
+        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A\=/)
+        {
+            $text = $lastsep . $text if defined $lastsep;
+            
+            $expectation->failed();
+            Parse::RecDescent::_Runtime::_trace(qq{<<Didn't match terminal>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                            if defined $::RD_TRACE;
+            last;
+        }
+        $current_match = substr($text, $-[0], $+[0] - $-[0]);
+        substr($text,0,length($current_match),q{});
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
+                        . $current_match . q{])},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                            if defined $::RD_TRACE;
+        push @item, $item{__STRING1__}=$current_match;
+        
+
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying directive: [<skip: qr//>]},
+                    Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PARAM},
+                      $tracelevel)
+                        if defined $::RD_TRACE; 
+        $_tok = do { my $oldskip = $skip; $skip= qr//; $oldskip };
+        if (defined($_tok))
+        {
+            Parse::RecDescent::_Runtime::_trace(q{>>Matched directive<< (return value: [}
+                        . $_tok . q{])},
+                        Parse::RecDescent::_Runtime::_tracefirst($text))
+                            if defined $::RD_TRACE;
+        }
+        else
+        {
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match directive>>},
+                        Parse::RecDescent::_Runtime::_tracefirst($text))
+                            if defined $::RD_TRACE;
+        }
+        
+        last unless defined $_tok;
+        push @item, $item{__DIRECTIVE1__}=$_tok;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [PVALUE]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{PARAM},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{PVALUE})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PVALUE($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [PVALUE]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{PARAM},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [PVALUE]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PARAM},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{PVALUE}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying action},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PARAM},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
+
+        $_tok = ($_noactions) ? 0 : do {$return = $item{PNAME}.'='.$item{PVALUE}};
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [PNAME '=' <skip: qr//> PVALUE]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PARAM},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    unless ( $_matched || defined($score) )
+    {
+        
+
+        $_[1] = $text;  # NOT SURE THIS IS NEEDED
+        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
+                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                     q{PARAM},
+                     $tracelevel)
+                    if defined $::RD_TRACE;
+        return undef;
+    }
+    if (!defined($return) && defined($score))
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
+                      q{PARAM},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $return = $score_return;
+    }
+    splice @{$thisparser->{errors}}, $err_at;
+    $return = $item[$#item] unless defined $return;
+    if (defined $::RD_TRACE)
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
+                      $return . q{])}, "",
+                      q{PARAM},
+                      $tracelevel);
+        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
+                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      , q{PARAM},
+                      $tracelevel)
+    }
+    $_[1] = $text;
+    return $return;
+}
+
+# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
+sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::EOF
+{
+	my $thisparser = $_[0];
+	use vars q{$tracelevel};
+	local $tracelevel = ($tracelevel||0)+1;
+	$ERRORS = 0;
+    my $thisrule = $thisparser->{"rules"}{"EOF"};
+
+    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [EOF]},
+                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                  q{EOF},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+
+    
+    my $err_at = @{$thisparser->{errors}};
+
+    my $score;
+    my $score_return;
+    my $_tok;
+    my $return = undef;
+    my $_matched=0;
+    my $commit=0;
+    my @item = ();
+    my %item = ();
+    my $repeating =  $_[2];
+    my $_noactions = $_[3];
+    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
+    my $_itempos = $_[5];
+    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
+    my $text;
+    my $lastsep;
+    my $current_match;
+    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/^\\Z/});
     $expectation->at($_[1]);
     
     my $thisline;
@@ -5976,28 +4409,436 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SLASHEDDQUOTE
     while (!$_matched && !$commit)
     {
         
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/\\\\"/]},
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/^\\Z/]},
                       Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{SLASHEDDQUOTE},
+                      q{EOF},
                       $tracelevel)
                         if defined $::RD_TRACE;
         my $thisprod = $thisrule->{"prods"}[0];
         $text = $_[1];
         my $_savetext;
-        @item = (q{SLASHEDDQUOTE});
-        %item = (__RULE__ => q{SLASHEDDQUOTE});
+        @item = (q{EOF});
+        %item = (__RULE__ => q{EOF});
         my $repcount = 0;
 
 
-        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/\\\\"/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{SLASHEDDQUOTE},
+        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/^\\Z/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{EOF},
                       $tracelevel)
                         if defined $::RD_TRACE;
         undef $lastsep;
         $expectation->is(q{})->at($text);
         
 
-        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:\\")/)
+        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:^\Z)/)
+        {
+            $text = $lastsep . $text if defined $lastsep;
+            $expectation->failed();
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+
+            last;
+        }
+        $current_match = substr($text, $-[0], $+[0] - $-[0]);
+        substr($text,0,length($current_match),q{});
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
+                        . $current_match . q{])},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+        push @item, $item{__PATTERN1__}=$current_match;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/^\\Z/]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{EOF},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    unless ( $_matched || defined($score) )
+    {
+        
+
+        $_[1] = $text;  # NOT SURE THIS IS NEEDED
+        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
+                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                     q{EOF},
+                     $tracelevel)
+                    if defined $::RD_TRACE;
+        return undef;
+    }
+    if (!defined($return) && defined($score))
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
+                      q{EOF},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $return = $score_return;
+    }
+    splice @{$thisparser->{errors}}, $err_at;
+    $return = $item[$#item] unless defined $return;
+    if (defined $::RD_TRACE)
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
+                      $return . q{])}, "",
+                      q{EOF},
+                      $tracelevel);
+        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
+                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      , q{EOF},
+                      $tracelevel)
+    }
+    $_[1] = $text;
+    return $return;
+}
+
+# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
+sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PARAMS
+{
+	my $thisparser = $_[0];
+	use vars q{$tracelevel};
+	local $tracelevel = ($tracelevel||0)+1;
+	$ERRORS = 0;
+    my $thisrule = $thisparser->{"rules"}{"PARAMS"};
+
+    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PARAMS]},
+                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                  q{PARAMS},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+
+    
+    my $err_at = @{$thisparser->{errors}};
+
+    my $score;
+    my $score_return;
+    my $_tok;
+    my $return = undef;
+    my $_matched=0;
+    my $commit=0;
+    my @item = ();
+    my %item = ();
+    my $repeating =  $_[2];
+    my $_noactions = $_[3];
+    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
+    my $_itempos = $_[5];
+    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
+    my $text;
+    my $lastsep;
+    my $current_match;
+    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{PARAM});
+    $expectation->at($_[1]);
+    
+    my $thisline;
+    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
+
+    
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [PARAM PARAMS]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{PARAMS},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[0];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{PARAMS});
+        %item = (__RULE__ => q{PARAMS});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [PARAM]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{PARAMS},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PARAM($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [PARAM]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{PARAMS},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [PARAM]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PARAMS},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{PARAM}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [PARAMS]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{PARAMS},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{PARAMS})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PARAMS($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [PARAMS]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{PARAMS},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [PARAMS]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PARAMS},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{PARAMS}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying action},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PARAMS},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
+
+        $_tok = ($_noactions) ? 0 : do {$return = [$item{PARAM}, @{$item{PARAMS}}]};
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [PARAM PARAMS]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PARAMS},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [PARAM]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{PARAMS},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[1];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{PARAMS});
+        %item = (__RULE__ => q{PARAMS});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [PARAM]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{PARAMS},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PARAM($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [PARAM]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{PARAMS},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [PARAM]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PARAMS},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{PARAM}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying action},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PARAMS},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
+
+        $_tok = ($_noactions) ? 0 : do {$return = [$item{PARAM}]};
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [PARAM]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PARAMS},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    unless ( $_matched || defined($score) )
+    {
+        
+
+        $_[1] = $text;  # NOT SURE THIS IS NEEDED
+        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
+                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                     q{PARAMS},
+                     $tracelevel)
+                    if defined $::RD_TRACE;
+        return undef;
+    }
+    if (!defined($return) && defined($score))
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
+                      q{PARAMS},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $return = $score_return;
+    }
+    splice @{$thisparser->{errors}}, $err_at;
+    $return = $item[$#item] unless defined $return;
+    if (defined $::RD_TRACE)
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
+                      $return . q{])}, "",
+                      q{PARAMS},
+                      $tracelevel);
+        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
+                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      , q{PARAMS},
+                      $tracelevel)
+    }
+    $_[1] = $text;
+    return $return;
+}
+
+# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
+sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::COMMENT
+{
+	my $thisparser = $_[0];
+	use vars q{$tracelevel};
+	local $tracelevel = ($tracelevel||0)+1;
+	$ERRORS = 0;
+    my $thisrule = $thisparser->{"rules"}{"COMMENT"};
+
+    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [COMMENT]},
+                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                  q{COMMENT},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+
+    
+    my $err_at = @{$thisparser->{errors}};
+
+    my $score;
+    my $score_return;
+    my $_tok;
+    my $return = undef;
+    my $_matched=0;
+    my $commit=0;
+    my @item = ();
+    my %item = ();
+    my $repeating =  $_[2];
+    my $_noactions = $_[3];
+    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
+    my $_itempos = $_[5];
+    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
+    my $text;
+    my $lastsep;
+    my $current_match;
+    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/#[^\\n]*/});
+    $expectation->at($_[1]);
+    
+    my $thisline;
+    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
+
+    
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/#[^\\n]*/]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{COMMENT},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[0];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{COMMENT});
+        %item = (__RULE__ => q{COMMENT});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/#[^\\n]*/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{COMMENT},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        undef $lastsep;
+        $expectation->is(q{})->at($text);
+        
+
+        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:#[^\n]*)/)
         {
             $text = $lastsep . $text if defined $lastsep;
             $expectation->failed();
@@ -6018,12 +4859,12 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SLASHEDDQUOTE
 
         Parse::RecDescent::_Runtime::_trace(q{Trying action},
                       Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{SLASHEDDQUOTE},
+                      q{COMMENT},
                       $tracelevel)
                         if defined $::RD_TRACE;
         
 
-        $_tok = ($_noactions) ? 0 : do {$return = '"'};
+        $_tok = ($_noactions) ? 0 : do {$return = ''};
         unless (defined $_tok)
         {
             Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
@@ -6038,9 +4879,9 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SLASHEDDQUOTE
         $item{__ACTION1__}=$_tok;
         
 
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/\\\\"/]<<},
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/#[^\\n]*/]<<},
                       Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{SLASHEDDQUOTE},
+                      q{COMMENT},
                       $tracelevel)
                         if defined $::RD_TRACE;
 
@@ -6058,7 +4899,7 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SLASHEDDQUOTE
         $_[1] = $text;  # NOT SURE THIS IS NEEDED
         Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                     q{SLASHEDDQUOTE},
+                     q{COMMENT},
                      $tracelevel)
                     if defined $::RD_TRACE;
         return undef;
@@ -6066,7 +4907,7 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SLASHEDDQUOTE
     if (!defined($return) && defined($score))
     {
         Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
-                      q{SLASHEDDQUOTE},
+                      q{COMMENT},
                       $tracelevel)
                         if defined $::RD_TRACE;
         $return = $score_return;
@@ -6077,12 +4918,12 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SLASHEDDQUOTE
     {
         Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
                       $return . q{])}, "",
-                      q{SLASHEDDQUOTE},
+                      q{COMMENT},
                       $tracelevel);
         Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
                       Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
                       Parse::RecDescent::_Runtime::_tracefirst($text),
-                      , q{SLASHEDDQUOTE},
+                      , q{COMMENT},
                       $tracelevel)
     }
     $_[1] = $text;
@@ -6349,6 +5190,1028 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::BNAME
                       Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
                       Parse::RecDescent::_Runtime::_tracefirst($text),
                       , q{BNAME},
+                      $tracelevel)
+    }
+    $_[1] = $text;
+    return $return;
+}
+
+# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
+sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::LINE
+{
+	my $thisparser = $_[0];
+	use vars q{$tracelevel};
+	local $tracelevel = ($tracelevel||0)+1;
+	$ERRORS = 0;
+    my $thisrule = $thisparser->{"rules"}{"LINE"};
+
+    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [LINE]},
+                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                  q{LINE},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+
+    
+    my $err_at = @{$thisparser->{errors}};
+
+    my $score;
+    my $score_return;
+    my $_tok;
+    my $return = undef;
+    my $_matched=0;
+    my $commit=0;
+    my @item = ();
+    my %item = ();
+    my $repeating =  $_[2];
+    my $_noactions = $_[3];
+    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
+    my $_itempos = $_[5];
+    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
+    my $text;
+    my $lastsep;
+    my $current_match;
+    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{BLOCK, or COMMENT});
+    $expectation->at($_[1]);
+    
+    my $thisline;
+    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
+
+    
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [BLOCK COMMENT]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{LINE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[0];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{LINE});
+        %item = (__RULE__ => q{LINE});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [BLOCK]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{LINE},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::BLOCK($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [BLOCK]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{LINE},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [BLOCK]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{LINE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{BLOCK}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [COMMENT]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{LINE},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{COMMENT})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::COMMENT($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [COMMENT]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{LINE},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [COMMENT]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{LINE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{COMMENT}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying action},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{LINE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
+
+        $_tok = ($_noactions) ? 0 : do {$return = [@{$item{BLOCK}}]};
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [BLOCK COMMENT]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{LINE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [BLOCK]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{LINE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[1];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{LINE});
+        %item = (__RULE__ => q{LINE});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [BLOCK]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{LINE},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::BLOCK($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [BLOCK]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{LINE},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [BLOCK]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{LINE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{BLOCK}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying action},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{LINE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
+
+        $_tok = ($_noactions) ? 0 : do {$return = [@{$item{BLOCK}}]};
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [BLOCK]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{LINE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [COMMENT]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{LINE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[2];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{LINE});
+        %item = (__RULE__ => q{LINE});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [COMMENT]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{LINE},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::COMMENT($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [COMMENT]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{LINE},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [COMMENT]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{LINE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{COMMENT}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying action},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{LINE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
+
+        $_tok = ($_noactions) ? 0 : do {$return = []};
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [COMMENT]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{LINE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    unless ( $_matched || defined($score) )
+    {
+        
+
+        $_[1] = $text;  # NOT SURE THIS IS NEEDED
+        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
+                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                     q{LINE},
+                     $tracelevel)
+                    if defined $::RD_TRACE;
+        return undef;
+    }
+    if (!defined($return) && defined($score))
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
+                      q{LINE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $return = $score_return;
+    }
+    splice @{$thisparser->{errors}}, $err_at;
+    $return = $item[$#item] unless defined $return;
+    if (defined $::RD_TRACE)
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
+                      $return . q{])}, "",
+                      q{LINE},
+                      $tracelevel);
+        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
+                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      , q{LINE},
+                      $tracelevel)
+    }
+    $_[1] = $text;
+    return $return;
+}
+
+# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
+sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::INCLUDE
+{
+	my $thisparser = $_[0];
+	use vars q{$tracelevel};
+	local $tracelevel = ($tracelevel||0)+1;
+	$ERRORS = 0;
+    my $thisrule = $thisparser->{"rules"}{"INCLUDE"};
+
+    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [INCLUDE]},
+                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                  q{INCLUDE},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+
+    
+    my $err_at = @{$thisparser->{errors}};
+
+    my $score;
+    my $score_return;
+    my $_tok;
+    my $return = undef;
+    my $_matched=0;
+    my $commit=0;
+    my @item = ();
+    my %item = ();
+    my $repeating =  $_[2];
+    my $_noactions = $_[3];
+    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
+    my $_itempos = $_[5];
+    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
+    my $text;
+    my $lastsep;
+    my $current_match;
+    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/\\/\\S+\\.scen/, or /[^\\/#]\\S+\\.scen/});
+    $expectation->at($_[1]);
+    
+    my $thisline;
+    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
+
+    
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/\\/\\S+\\.scen/]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{INCLUDE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[0];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{INCLUDE});
+        %item = (__RULE__ => q{INCLUDE});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/\\/\\S+\\.scen/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{INCLUDE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        undef $lastsep;
+        $expectation->is(q{})->at($text);
+        
+
+        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:\/\S+\.scen)/)
+        {
+            $text = $lastsep . $text if defined $lastsep;
+            $expectation->failed();
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+
+            last;
+        }
+        $current_match = substr($text, $-[0], $+[0] - $-[0]);
+        substr($text,0,length($current_match),q{});
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
+                        . $current_match . q{])},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+        push @item, $item{__PATTERN1__}=$current_match;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying action},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{INCLUDE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
+
+        $_tok = ($_noactions) ? 0 : do {$return = $item[1]};
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/\\/\\S+\\.scen/]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{INCLUDE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/[^\\/#]\\S+\\.scen/]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{INCLUDE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[1];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{INCLUDE});
+        %item = (__RULE__ => q{INCLUDE});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/[^\\/#]\\S+\\.scen/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{INCLUDE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        undef $lastsep;
+        $expectation->is(q{})->at($text);
+        
+
+        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:[^\/#]\S+\.scen)/)
+        {
+            $text = $lastsep . $text if defined $lastsep;
+            $expectation->failed();
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+
+            last;
+        }
+        $current_match = substr($text, $-[0], $+[0] - $-[0]);
+        substr($text,0,length($current_match),q{});
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
+                        . $current_match . q{])},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+        push @item, $item{__PATTERN1__}=$current_match;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying action},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{INCLUDE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
+
+        $_tok = ($_noactions) ? 0 : do {   my $from_file = $arg[0];
+                                                    if (length $from_file) {
+                                                        $return = dirname($from_file) . "/$item[1]";
+                                                    } else {
+                                                        $return = "./$item[1]";
+                                                    }
+                                                };
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/[^\\/#]\\S+\\.scen/]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{INCLUDE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    unless ( $_matched || defined($score) )
+    {
+        
+
+        $_[1] = $text;  # NOT SURE THIS IS NEEDED
+        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
+                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                     q{INCLUDE},
+                     $tracelevel)
+                    if defined $::RD_TRACE;
+        return undef;
+    }
+    if (!defined($return) && defined($score))
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
+                      q{INCLUDE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $return = $score_return;
+    }
+    splice @{$thisparser->{errors}}, $err_at;
+    $return = $item[$#item] unless defined $return;
+    if (defined $::RD_TRACE)
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
+                      $return . q{])}, "",
+                      q{INCLUDE},
+                      $tracelevel);
+        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
+                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      , q{INCLUDE},
+                      $tracelevel)
+    }
+    $_[1] = $text;
+    return $return;
+}
+
+# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
+sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::TBNAME
+{
+	my $thisparser = $_[0];
+	use vars q{$tracelevel};
+	local $tracelevel = ($tracelevel||0)+1;
+	$ERRORS = 0;
+    my $thisrule = $thisparser->{"rules"}{"TBNAME"};
+
+    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [TBNAME]},
+                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                  q{TBNAME},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+
+    
+    my $err_at = @{$thisparser->{errors}};
+
+    my $score;
+    my $score_return;
+    my $_tok;
+    my $return = undef;
+    my $_matched=0;
+    my $commit=0;
+    my @item = ();
+    my %item = ();
+    my $repeating =  $_[2];
+    my $_noactions = $_[3];
+    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
+    my $_itempos = $_[5];
+    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
+    my $text;
+    my $lastsep;
+    my $current_match;
+    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/::/, or BNAME});
+    $expectation->at($_[1]);
+    
+    my $thisline;
+    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
+
+    
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/::/ BNAME]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{TBNAME},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[0];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{TBNAME});
+        %item = (__RULE__ => q{TBNAME});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/::/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{TBNAME},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        undef $lastsep;
+        $expectation->is(q{})->at($text);
+        
+
+        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:::)/)
+        {
+            $text = $lastsep . $text if defined $lastsep;
+            $expectation->failed();
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+
+            last;
+        }
+        $current_match = substr($text, $-[0], $+[0] - $-[0]);
+        substr($text,0,length($current_match),q{});
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
+                        . $current_match . q{])},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+        push @item, $item{__PATTERN1__}=$current_match;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [BNAME]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{TBNAME},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{BNAME})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::BNAME($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [BNAME]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{TBNAME},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [BNAME]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{TBNAME},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{BNAME}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying action},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{TBNAME},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
+
+        $_tok = ($_noactions) ? 0 : do {$return = $item{BNAME}};
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/::/ BNAME]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{TBNAME},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [BNAME]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{TBNAME},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[1];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{TBNAME});
+        %item = (__RULE__ => q{TBNAME});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [BNAME]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{TBNAME},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::BNAME($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [BNAME]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{TBNAME},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [BNAME]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{TBNAME},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{BNAME}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying action},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{TBNAME},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
+
+        $_tok = ($_noactions) ? 0 : do {$return = "Treex::Block::$item{BNAME}"};
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [BNAME]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{TBNAME},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    unless ( $_matched || defined($score) )
+    {
+        
+
+        $_[1] = $text;  # NOT SURE THIS IS NEEDED
+        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
+                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                     q{TBNAME},
+                     $tracelevel)
+                    if defined $::RD_TRACE;
+        return undef;
+    }
+    if (!defined($return) && defined($score))
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
+                      q{TBNAME},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $return = $score_return;
+    }
+    splice @{$thisparser->{errors}}, $err_at;
+    $return = $item[$#item] unless defined $return;
+    if (defined $::RD_TRACE)
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
+                      $return . q{])}, "",
+                      q{TBNAME},
+                      $tracelevel);
+        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
+                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      , q{TBNAME},
+                      $tracelevel)
+    }
+    $_[1] = $text;
+    return $return;
+}
+
+# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
+sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SLASHEDDQUOTE
+{
+	my $thisparser = $_[0];
+	use vars q{$tracelevel};
+	local $tracelevel = ($tracelevel||0)+1;
+	$ERRORS = 0;
+    my $thisrule = $thisparser->{"rules"}{"SLASHEDDQUOTE"};
+
+    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [SLASHEDDQUOTE]},
+                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                  q{SLASHEDDQUOTE},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+
+    
+    my $err_at = @{$thisparser->{errors}};
+
+    my $score;
+    my $score_return;
+    my $_tok;
+    my $return = undef;
+    my $_matched=0;
+    my $commit=0;
+    my @item = ();
+    my %item = ();
+    my $repeating =  $_[2];
+    my $_noactions = $_[3];
+    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
+    my $_itempos = $_[5];
+    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
+    my $text;
+    my $lastsep;
+    my $current_match;
+    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/\\\\"/});
+    $expectation->at($_[1]);
+    
+    my $thisline;
+    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
+
+    
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/\\\\"/]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{SLASHEDDQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[0];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{SLASHEDDQUOTE});
+        %item = (__RULE__ => q{SLASHEDDQUOTE});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/\\\\"/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{SLASHEDDQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        undef $lastsep;
+        $expectation->is(q{})->at($text);
+        
+
+        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:\\")/)
+        {
+            $text = $lastsep . $text if defined $lastsep;
+            $expectation->failed();
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+
+            last;
+        }
+        $current_match = substr($text, $-[0], $+[0] - $-[0]);
+        substr($text,0,length($current_match),q{});
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
+                        . $current_match . q{])},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+        push @item, $item{__PATTERN1__}=$current_match;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying action},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{SLASHEDDQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
+
+        $_tok = ($_noactions) ? 0 : do {$return = '"'};
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/\\\\"/]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{SLASHEDDQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    unless ( $_matched || defined($score) )
+    {
+        
+
+        $_[1] = $text;  # NOT SURE THIS IS NEEDED
+        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
+                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                     q{SLASHEDDQUOTE},
+                     $tracelevel)
+                    if defined $::RD_TRACE;
+        return undef;
+    }
+    if (!defined($return) && defined($score))
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
+                      q{SLASHEDDQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $return = $score_return;
+    }
+    splice @{$thisparser->{errors}}, $err_at;
+    $return = $item[$#item] unless defined $return;
+    if (defined $::RD_TRACE)
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
+                      $return . q{])}, "",
+                      q{SLASHEDDQUOTE},
+                      $tracelevel);
+        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
+                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      , q{SLASHEDDQUOTE},
                       $tracelevel)
     }
     $_[1] = $text;
@@ -6764,17 +6627,17 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SCEN
 }
 
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
-sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::INCLUDE
+sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PNAME
 {
 	my $thisparser = $_[0];
 	use vars q{$tracelevel};
 	local $tracelevel = ($tracelevel||0)+1;
 	$ERRORS = 0;
-    my $thisrule = $thisparser->{"rules"}{"INCLUDE"};
+    my $thisrule = $thisparser->{"rules"}{"PNAME"};
 
-    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [INCLUDE]},
+    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PNAME]},
                   Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                  q{INCLUDE},
+                  q{PNAME},
                   $tracelevel)
                     if defined $::RD_TRACE;
 
@@ -6797,7 +6660,7 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::INCLUDE
     my $text;
     my $lastsep;
     my $current_match;
-    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/\\/\\S+\\.scen/, or /[^\\/#]\\S+\\.scen/});
+    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/\\w+/});
     $expectation->at($_[1]);
     
     my $thisline;
@@ -6808,28 +6671,28 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::INCLUDE
     while (!$_matched && !$commit)
     {
         
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/\\/\\S+\\.scen/]},
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/\\w+/]},
                       Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{INCLUDE},
+                      q{PNAME},
                       $tracelevel)
                         if defined $::RD_TRACE;
         my $thisprod = $thisrule->{"prods"}[0];
         $text = $_[1];
         my $_savetext;
-        @item = (q{INCLUDE});
-        %item = (__RULE__ => q{INCLUDE});
+        @item = (q{PNAME});
+        %item = (__RULE__ => q{PNAME});
         my $repcount = 0;
 
 
-        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/\\/\\S+\\.scen/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{INCLUDE},
+        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/\\w+/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PNAME},
                       $tracelevel)
                         if defined $::RD_TRACE;
         undef $lastsep;
         $expectation->is(q{})->at($text);
         
 
-        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:\/\S+\.scen)/)
+        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:\w+)/)
         {
             $text = $lastsep . $text if defined $lastsep;
             $expectation->failed();
@@ -6850,7 +6713,7 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::INCLUDE
 
         Parse::RecDescent::_Runtime::_trace(q{Trying action},
                       Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{INCLUDE},
+                      q{PNAME},
                       $tracelevel)
                         if defined $::RD_TRACE;
         
@@ -6870,93 +6733,9 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::INCLUDE
         $item{__ACTION1__}=$_tok;
         
 
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/\\/\\S+\\.scen/]<<},
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/\\w+/]<<},
                       Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{INCLUDE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/[^\\/#]\\S+\\.scen/]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{INCLUDE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[1];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{INCLUDE});
-        %item = (__RULE__ => q{INCLUDE});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/[^\\/#]\\S+\\.scen/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{INCLUDE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        undef $lastsep;
-        $expectation->is(q{})->at($text);
-        
-
-        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:[^\/#]\S+\.scen)/)
-        {
-            $text = $lastsep . $text if defined $lastsep;
-            $expectation->failed();
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                    if defined $::RD_TRACE;
-
-            last;
-        }
-        $current_match = substr($text, $-[0], $+[0] - $-[0]);
-        substr($text,0,length($current_match),q{});
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
-                        . $current_match . q{])},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                    if defined $::RD_TRACE;
-        push @item, $item{__PATTERN1__}=$current_match;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying action},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{INCLUDE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        
-
-        $_tok = ($_noactions) ? 0 : do {   my $from_file = $arg[0];
-                                                    if (length $from_file) {
-                                                        $return = dirname($from_file) . "/$item[1]";
-                                                    } else {
-                                                        $return = "./$item[1]";
-                                                    }
-                                                };
-        unless (defined $_tok)
-        {
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
-                    if defined $::RD_TRACE;
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
-                      . $_tok . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text))
-                        if defined $::RD_TRACE;
-        push @item, $_tok;
-        $item{__ACTION1__}=$_tok;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/[^\\/#]\\S+\\.scen/]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{INCLUDE},
+                      q{PNAME},
                       $tracelevel)
                         if defined $::RD_TRACE;
 
@@ -6974,7 +6753,7 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::INCLUDE
         $_[1] = $text;  # NOT SURE THIS IS NEEDED
         Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                     q{INCLUDE},
+                     q{PNAME},
                      $tracelevel)
                     if defined $::RD_TRACE;
         return undef;
@@ -6982,7 +6761,7 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::INCLUDE
     if (!defined($return) && defined($score))
     {
         Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
-                      q{INCLUDE},
+                      q{PNAME},
                       $tracelevel)
                         if defined $::RD_TRACE;
         $return = $score_return;
@@ -6993,1089 +6772,12 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::INCLUDE
     {
         Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
                       $return . q{])}, "",
-                      q{INCLUDE},
+                      q{PNAME},
                       $tracelevel);
         Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
                       Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
                       Parse::RecDescent::_Runtime::_tracefirst($text),
-                      , q{INCLUDE},
-                      $tracelevel)
-    }
-    $_[1] = $text;
-    return $return;
-}
-
-# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
-sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PDQUOTE
-{
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
-    my $thisrule = $thisparser->{"rules"}{"PDQUOTE"};
-
-    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PDQUOTE]},
-                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                  q{PDQUOTE},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-
-    
-    my $err_at = @{$thisparser->{errors}};
-
-    my $score;
-    my $score_return;
-    my $_tok;
-    my $return = undef;
-    my $_matched=0;
-    my $commit=0;
-    my @item = ();
-    my %item = ();
-    my $repeating =  $_[2];
-    my $_noactions = $_[3];
-    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
-    my $_itempos = $_[5];
-    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
-    my $text;
-    my $lastsep;
-    my $current_match;
-    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{NOTDQUOTE});
-    $expectation->at($_[1]);
-    
-    my $thisline;
-    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
-
-    
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [NOTDQUOTE SLASHEDDQUOTE PDQUOTE]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{PDQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[0];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{PDQUOTE});
-        %item = (__RULE__ => q{PDQUOTE});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [NOTDQUOTE]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{PDQUOTE},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::NOTDQUOTE($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [NOTDQUOTE]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{PDQUOTE},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [NOTDQUOTE]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PDQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{NOTDQUOTE}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [SLASHEDDQUOTE]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{PDQUOTE},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{SLASHEDDQUOTE})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SLASHEDDQUOTE($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [SLASHEDDQUOTE]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{PDQUOTE},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [SLASHEDDQUOTE]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PDQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{SLASHEDDQUOTE}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [PDQUOTE]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{PDQUOTE},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{PDQUOTE})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PDQUOTE($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [PDQUOTE]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{PDQUOTE},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [PDQUOTE]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PDQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{PDQUOTE}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying action},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PDQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        
-
-        $_tok = ($_noactions) ? 0 : do {$return = $item{NOTDQUOTE}.$item{SLASHEDDQUOTE}.$item{PDQUOTE}};
-        unless (defined $_tok)
-        {
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
-                    if defined $::RD_TRACE;
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
-                      . $_tok . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text))
-                        if defined $::RD_TRACE;
-        push @item, $_tok;
-        $item{__ACTION1__}=$_tok;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [NOTDQUOTE SLASHEDDQUOTE PDQUOTE]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PDQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [NOTDQUOTE]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{PDQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[1];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{PDQUOTE});
-        %item = (__RULE__ => q{PDQUOTE});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [NOTDQUOTE]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{PDQUOTE},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::NOTDQUOTE($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [NOTDQUOTE]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{PDQUOTE},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [NOTDQUOTE]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PDQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{NOTDQUOTE}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [NOTDQUOTE]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PDQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    unless ( $_matched || defined($score) )
-    {
-        
-
-        $_[1] = $text;  # NOT SURE THIS IS NEEDED
-        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
-                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                     q{PDQUOTE},
-                     $tracelevel)
-                    if defined $::RD_TRACE;
-        return undef;
-    }
-    if (!defined($return) && defined($score))
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
-                      q{PDQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $return = $score_return;
-    }
-    splice @{$thisparser->{errors}}, $err_at;
-    $return = $item[$#item] unless defined $return;
-    if (defined $::RD_TRACE)
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
-                      $return . q{])}, "",
-                      q{PDQUOTE},
-                      $tracelevel);
-        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
-                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      , q{PDQUOTE},
-                      $tracelevel)
-    }
-    $_[1] = $text;
-    return $return;
-}
-
-# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
-sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PSQUOTE
-{
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
-    my $thisrule = $thisparser->{"rules"}{"PSQUOTE"};
-
-    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PSQUOTE]},
-                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                  q{PSQUOTE},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-
-    
-    my $err_at = @{$thisparser->{errors}};
-
-    my $score;
-    my $score_return;
-    my $_tok;
-    my $return = undef;
-    my $_matched=0;
-    my $commit=0;
-    my @item = ();
-    my %item = ();
-    my $repeating =  $_[2];
-    my $_noactions = $_[3];
-    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
-    my $_itempos = $_[5];
-    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
-    my $text;
-    my $lastsep;
-    my $current_match;
-    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{NOTSQUOTE});
-    $expectation->at($_[1]);
-    
-    my $thisline;
-    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
-
-    
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [NOTSQUOTE SLASHEDSQUOTE PSQUOTE]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{PSQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[0];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{PSQUOTE});
-        %item = (__RULE__ => q{PSQUOTE});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [NOTSQUOTE]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{PSQUOTE},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::NOTSQUOTE($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [NOTSQUOTE]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{PSQUOTE},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [NOTSQUOTE]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PSQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{NOTSQUOTE}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [SLASHEDSQUOTE]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{PSQUOTE},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{SLASHEDSQUOTE})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SLASHEDSQUOTE($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [SLASHEDSQUOTE]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{PSQUOTE},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [SLASHEDSQUOTE]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PSQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{SLASHEDSQUOTE}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [PSQUOTE]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{PSQUOTE},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{PSQUOTE})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PSQUOTE($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [PSQUOTE]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{PSQUOTE},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [PSQUOTE]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PSQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{PSQUOTE}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying action},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PSQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        
-
-        $_tok = ($_noactions) ? 0 : do {$return = $item{NOTSQUOTE}.$item{SLASHEDSQUOTE}.$item{PSQUOTE}};
-        unless (defined $_tok)
-        {
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
-                    if defined $::RD_TRACE;
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
-                      . $_tok . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text))
-                        if defined $::RD_TRACE;
-        push @item, $_tok;
-        $item{__ACTION1__}=$_tok;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [NOTSQUOTE SLASHEDSQUOTE PSQUOTE]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PSQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [NOTSQUOTE]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{PSQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[1];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{PSQUOTE});
-        %item = (__RULE__ => q{PSQUOTE});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [NOTSQUOTE]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{PSQUOTE},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::NOTSQUOTE($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [NOTSQUOTE]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{PSQUOTE},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [NOTSQUOTE]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PSQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{NOTSQUOTE}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [NOTSQUOTE]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PSQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    unless ( $_matched || defined($score) )
-    {
-        
-
-        $_[1] = $text;  # NOT SURE THIS IS NEEDED
-        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
-                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                     q{PSQUOTE},
-                     $tracelevel)
-                    if defined $::RD_TRACE;
-        return undef;
-    }
-    if (!defined($return) && defined($score))
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
-                      q{PSQUOTE},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $return = $score_return;
-    }
-    splice @{$thisparser->{errors}}, $err_at;
-    $return = $item[$#item] unless defined $return;
-    if (defined $::RD_TRACE)
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
-                      $return . q{])}, "",
-                      q{PSQUOTE},
-                      $tracelevel);
-        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
-                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      , q{PSQUOTE},
-                      $tracelevel)
-    }
-    $_[1] = $text;
-    return $return;
-}
-
-# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
-sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PARAMS
-{
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
-    my $thisrule = $thisparser->{"rules"}{"PARAMS"};
-
-    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PARAMS]},
-                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                  q{PARAMS},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-
-    
-    my $err_at = @{$thisparser->{errors}};
-
-    my $score;
-    my $score_return;
-    my $_tok;
-    my $return = undef;
-    my $_matched=0;
-    my $commit=0;
-    my @item = ();
-    my %item = ();
-    my $repeating =  $_[2];
-    my $_noactions = $_[3];
-    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
-    my $_itempos = $_[5];
-    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
-    my $text;
-    my $lastsep;
-    my $current_match;
-    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{PARAM});
-    $expectation->at($_[1]);
-    
-    my $thisline;
-    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
-
-    
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [PARAM PARAMS]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{PARAMS},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[0];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{PARAMS});
-        %item = (__RULE__ => q{PARAMS});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [PARAM]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{PARAMS},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PARAM($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [PARAM]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{PARAMS},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [PARAM]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PARAMS},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{PARAM}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [PARAMS]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{PARAMS},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{PARAMS})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PARAMS($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [PARAMS]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{PARAMS},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [PARAMS]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PARAMS},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{PARAMS}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying action},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PARAMS},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        
-
-        $_tok = ($_noactions) ? 0 : do {$return = [$item{PARAM}, @{$item{PARAMS}}]};
-        unless (defined $_tok)
-        {
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
-                    if defined $::RD_TRACE;
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
-                      . $_tok . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text))
-                        if defined $::RD_TRACE;
-        push @item, $_tok;
-        $item{__ACTION1__}=$_tok;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [PARAM PARAMS]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PARAMS},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    while (!$_matched && !$commit)
-    {
-        
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [PARAM]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{PARAMS},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[1];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{PARAMS});
-        %item = (__RULE__ => q{PARAMS});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [PARAM]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{PARAMS},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PARAM($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [PARAM]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{PARAMS},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [PARAM]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PARAMS},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{PARAM}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying action},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PARAMS},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        
-
-        $_tok = ($_noactions) ? 0 : do {$return = [$item{PARAM}]};
-        unless (defined $_tok)
-        {
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
-                    if defined $::RD_TRACE;
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
-                      . $_tok . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text))
-                        if defined $::RD_TRACE;
-        push @item, $_tok;
-        $item{__ACTION1__}=$_tok;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [PARAM]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PARAMS},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    unless ( $_matched || defined($score) )
-    {
-        
-
-        $_[1] = $text;  # NOT SURE THIS IS NEEDED
-        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
-                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                     q{PARAMS},
-                     $tracelevel)
-                    if defined $::RD_TRACE;
-        return undef;
-    }
-    if (!defined($return) && defined($score))
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
-                      q{PARAMS},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $return = $score_return;
-    }
-    splice @{$thisparser->{errors}}, $err_at;
-    $return = $item[$#item] unless defined $return;
-    if (defined $::RD_TRACE)
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
-                      $return . q{])}, "",
-                      q{PARAMS},
-                      $tracelevel);
-        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
-                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      , q{PARAMS},
-                      $tracelevel)
-    }
-    $_[1] = $text;
-    return $return;
-}
-
-# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
-sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PARAM
-{
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
-    my $thisrule = $thisparser->{"rules"}{"PARAM"};
-
-    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PARAM]},
-                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                  q{PARAM},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-
-    
-    my $err_at = @{$thisparser->{errors}};
-
-    my $score;
-    my $score_return;
-    my $_tok;
-    my $return = undef;
-    my $_matched=0;
-    my $commit=0;
-    my @item = ();
-    my %item = ();
-    my $repeating =  $_[2];
-    my $_noactions = $_[3];
-    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
-    my $_itempos = $_[5];
-    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
-    my $text;
-    my $lastsep;
-    my $current_match;
-    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{PNAME});
-    $expectation->at($_[1]);
-    
-    my $thisline;
-    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
-
-    
-
-    while (!$_matched && !$commit)
-    {
-        local $skip = defined($skip) ? $skip : $Parse::RecDescent::_Runtime::skip;
-        Parse::RecDescent::_Runtime::_trace(q{Trying production: [PNAME '=' <skip: qr//> PVALUE]},
-                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                      q{PARAM},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        my $thisprod = $thisrule->{"prods"}[0];
-        $text = $_[1];
-        my $_savetext;
-        @item = (q{PARAM});
-        %item = (__RULE__ => q{PARAM});
-        my $repcount = 0;
-
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [PNAME]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{PARAM},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PNAME($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [PNAME]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{PARAM},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [PNAME]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PARAM},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{PNAME}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: ['=']},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PARAM},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        undef $lastsep;
-        $expectation->is(q{'='})->at($text);
-        
-
-        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A\=/)
-        {
-            $text = $lastsep . $text if defined $lastsep;
-            
-            $expectation->failed();
-            Parse::RecDescent::_Runtime::_trace(qq{<<Didn't match terminal>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                            if defined $::RD_TRACE;
-            last;
-        }
-        $current_match = substr($text, $-[0], $+[0] - $-[0]);
-        substr($text,0,length($current_match),q{});
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
-                        . $current_match . q{])},
-                          Parse::RecDescent::_Runtime::_tracefirst($text))
-                            if defined $::RD_TRACE;
-        push @item, $item{__STRING1__}=$current_match;
-        
-
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying directive: [<skip: qr//>]},
-                    Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PARAM},
-                      $tracelevel)
-                        if defined $::RD_TRACE; 
-        $_tok = do { my $oldskip = $skip; $skip= qr//; $oldskip };
-        if (defined($_tok))
-        {
-            Parse::RecDescent::_Runtime::_trace(q{>>Matched directive<< (return value: [}
-                        . $_tok . q{])},
-                        Parse::RecDescent::_Runtime::_tracefirst($text))
-                            if defined $::RD_TRACE;
-        }
-        else
-        {
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match directive>>},
-                        Parse::RecDescent::_Runtime::_tracefirst($text))
-                            if defined $::RD_TRACE;
-        }
-        
-        last unless defined $_tok;
-        push @item, $item{__DIRECTIVE1__}=$_tok;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [PVALUE]},
-                  Parse::RecDescent::_Runtime::_tracefirst($text),
-                  q{PARAM},
-                  $tracelevel)
-                    if defined $::RD_TRACE;
-        if (1) { no strict qw{refs};
-        $expectation->is(q{PVALUE})->at($text);
-        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PVALUE($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
-        {
-            
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [PVALUE]>>},
-                          Parse::RecDescent::_Runtime::_tracefirst($text),
-                          q{PARAM},
-                          $tracelevel)
-                            if defined $::RD_TRACE;
-            $expectation->failed();
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [PVALUE]<< (return value: [}
-                    . $_tok . q{]},
-
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PARAM},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $item{q{PVALUE}} = $_tok;
-        push @item, $_tok;
-        
-        }
-
-        Parse::RecDescent::_Runtime::_trace(q{Trying action},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PARAM},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        
-
-        $_tok = ($_noactions) ? 0 : do {$return = $item{PNAME}.'='.$item{PVALUE}};
-        unless (defined $_tok)
-        {
-            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
-                    if defined $::RD_TRACE;
-            last;
-        }
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
-                      . $_tok . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text))
-                        if defined $::RD_TRACE;
-        push @item, $_tok;
-        $item{__ACTION1__}=$_tok;
-        
-
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [PNAME '=' <skip: qr//> PVALUE]<<},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      q{PARAM},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-
-
-
-        $_matched = 1;
-        last;
-    }
-
-
-    unless ( $_matched || defined($score) )
-    {
-        
-
-        $_[1] = $text;  # NOT SURE THIS IS NEEDED
-        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
-                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
-                     q{PARAM},
-                     $tracelevel)
-                    if defined $::RD_TRACE;
-        return undef;
-    }
-    if (!defined($return) && defined($score))
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
-                      q{PARAM},
-                      $tracelevel)
-                        if defined $::RD_TRACE;
-        $return = $score_return;
-    }
-    splice @{$thisparser->{errors}}, $err_at;
-    $return = $item[$#item] unless defined $return;
-    if (defined $::RD_TRACE)
-    {
-        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
-                      $return . q{])}, "",
-                      q{PARAM},
-                      $tracelevel);
-        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
-                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
-                      Parse::RecDescent::_Runtime::_tracefirst($text),
-                      , q{PARAM},
+                      , q{PNAME},
                       $tracelevel)
     }
     $_[1] = $text;
@@ -8647,547 +7349,1341 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PVALUE
     $_[1] = $text;
     return $return;
 }
+
+# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
+sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PTICKED
+{
+	my $thisparser = $_[0];
+	use vars q{$tracelevel};
+	local $tracelevel = ($tracelevel||0)+1;
+	$ERRORS = 0;
+    my $thisrule = $thisparser->{"rules"}{"PTICKED"};
+
+    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PTICKED]},
+                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                  q{PTICKED},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+
+    
+    my $err_at = @{$thisparser->{errors}};
+
+    my $score;
+    my $score_return;
+    my $_tok;
+    my $return = undef;
+    my $_matched=0;
+    my $commit=0;
+    my @item = ();
+    my %item = ();
+    my $repeating =  $_[2];
+    my $_noactions = $_[3];
+    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
+    my $_itempos = $_[5];
+    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
+    my $text;
+    my $lastsep;
+    my $current_match;
+    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/[^`]+/});
+    $expectation->at($_[1]);
+    
+    my $thisline;
+    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
+
+    
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/[^`]+/]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{PTICKED},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[0];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{PTICKED});
+        %item = (__RULE__ => q{PTICKED});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/[^`]+/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PTICKED},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        undef $lastsep;
+        $expectation->is(q{})->at($text);
+        
+
+        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:[^`]+)/)
+        {
+            $text = $lastsep . $text if defined $lastsep;
+            $expectation->failed();
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+
+            last;
+        }
+        $current_match = substr($text, $-[0], $+[0] - $-[0]);
+        substr($text,0,length($current_match),q{});
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
+                        . $current_match . q{])},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+        push @item, $item{__PATTERN1__}=$current_match;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying action},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PTICKED},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
+
+        $_tok = ($_noactions) ? 0 : do {$return = $item[1]};
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/[^`]+/]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PTICKED},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    unless ( $_matched || defined($score) )
+    {
+        
+
+        $_[1] = $text;  # NOT SURE THIS IS NEEDED
+        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
+                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                     q{PTICKED},
+                     $tracelevel)
+                    if defined $::RD_TRACE;
+        return undef;
+    }
+    if (!defined($return) && defined($score))
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
+                      q{PTICKED},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $return = $score_return;
+    }
+    splice @{$thisparser->{errors}}, $err_at;
+    $return = $item[$#item] unless defined $return;
+    if (defined $::RD_TRACE)
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
+                      $return . q{])}, "",
+                      q{PTICKED},
+                      $tracelevel);
+        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
+                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      , q{PTICKED},
+                      $tracelevel)
+    }
+    $_[1] = $text;
+    return $return;
+}
+
+# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
+sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::EMPTY
+{
+	my $thisparser = $_[0];
+	use vars q{$tracelevel};
+	local $tracelevel = ($tracelevel||0)+1;
+	$ERRORS = 0;
+    my $thisrule = $thisparser->{"rules"}{"EMPTY"};
+
+    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [EMPTY]},
+                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                  q{EMPTY},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+
+    
+    my $err_at = @{$thisparser->{errors}};
+
+    my $score;
+    my $score_return;
+    my $_tok;
+    my $return = undef;
+    my $_matched=0;
+    my $commit=0;
+    my @item = ();
+    my %item = ();
+    my $repeating =  $_[2];
+    my $_noactions = $_[3];
+    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
+    my $_itempos = $_[5];
+    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
+    my $text;
+    my $lastsep;
+    my $current_match;
+    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{//});
+    $expectation->at($_[1]);
+    
+    my $thisline;
+    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
+
+    
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [//]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{EMPTY},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[0];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{EMPTY});
+        %item = (__RULE__ => q{EMPTY});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [//]}, Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{EMPTY},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        undef $lastsep;
+        $expectation->is(q{})->at($text);
+        
+
+        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:)/)
+        {
+            $text = $lastsep . $text if defined $lastsep;
+            $expectation->failed();
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+
+            last;
+        }
+        $current_match = substr($text, $-[0], $+[0] - $-[0]);
+        substr($text,0,length($current_match),q{});
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
+                        . $current_match . q{])},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+        push @item, $item{__PATTERN1__}=$current_match;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [//]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{EMPTY},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    unless ( $_matched || defined($score) )
+    {
+        
+
+        $_[1] = $text;  # NOT SURE THIS IS NEEDED
+        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
+                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                     q{EMPTY},
+                     $tracelevel)
+                    if defined $::RD_TRACE;
+        return undef;
+    }
+    if (!defined($return) && defined($score))
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
+                      q{EMPTY},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $return = $score_return;
+    }
+    splice @{$thisparser->{errors}}, $err_at;
+    $return = $item[$#item] unless defined $return;
+    if (defined $::RD_TRACE)
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
+                      $return . q{])}, "",
+                      q{EMPTY},
+                      $tracelevel);
+        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
+                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      , q{EMPTY},
+                      $tracelevel)
+    }
+    $_[1] = $text;
+    return $return;
+}
+
+# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
+sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PSQUOTE
+{
+	my $thisparser = $_[0];
+	use vars q{$tracelevel};
+	local $tracelevel = ($tracelevel||0)+1;
+	$ERRORS = 0;
+    my $thisrule = $thisparser->{"rules"}{"PSQUOTE"};
+
+    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PSQUOTE]},
+                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                  q{PSQUOTE},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+
+    
+    my $err_at = @{$thisparser->{errors}};
+
+    my $score;
+    my $score_return;
+    my $_tok;
+    my $return = undef;
+    my $_matched=0;
+    my $commit=0;
+    my @item = ();
+    my %item = ();
+    my $repeating =  $_[2];
+    my $_noactions = $_[3];
+    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
+    my $_itempos = $_[5];
+    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
+    my $text;
+    my $lastsep;
+    my $current_match;
+    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{NOTSQUOTE});
+    $expectation->at($_[1]);
+    
+    my $thisline;
+    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
+
+    
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [NOTSQUOTE SLASHEDSQUOTE PSQUOTE]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{PSQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[0];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{PSQUOTE});
+        %item = (__RULE__ => q{PSQUOTE});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [NOTSQUOTE]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{PSQUOTE},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::NOTSQUOTE($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [NOTSQUOTE]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{PSQUOTE},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [NOTSQUOTE]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PSQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{NOTSQUOTE}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [SLASHEDSQUOTE]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{PSQUOTE},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{SLASHEDSQUOTE})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SLASHEDSQUOTE($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [SLASHEDSQUOTE]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{PSQUOTE},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [SLASHEDSQUOTE]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PSQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{SLASHEDSQUOTE}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [PSQUOTE]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{PSQUOTE},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{PSQUOTE})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PSQUOTE($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [PSQUOTE]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{PSQUOTE},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [PSQUOTE]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PSQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{PSQUOTE}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying action},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PSQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
+
+        $_tok = ($_noactions) ? 0 : do {$return = $item{NOTSQUOTE}.$item{SLASHEDSQUOTE}.$item{PSQUOTE}};
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [NOTSQUOTE SLASHEDSQUOTE PSQUOTE]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PSQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [NOTSQUOTE]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{PSQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[1];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{PSQUOTE});
+        %item = (__RULE__ => q{PSQUOTE});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [NOTSQUOTE]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{PSQUOTE},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::NOTSQUOTE($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [NOTSQUOTE]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{PSQUOTE},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [NOTSQUOTE]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PSQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{NOTSQUOTE}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [NOTSQUOTE]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PSQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    unless ( $_matched || defined($score) )
+    {
+        
+
+        $_[1] = $text;  # NOT SURE THIS IS NEEDED
+        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
+                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                     q{PSQUOTE},
+                     $tracelevel)
+                    if defined $::RD_TRACE;
+        return undef;
+    }
+    if (!defined($return) && defined($score))
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
+                      q{PSQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $return = $score_return;
+    }
+    splice @{$thisparser->{errors}}, $err_at;
+    $return = $item[$#item] unless defined $return;
+    if (defined $::RD_TRACE)
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
+                      $return . q{])}, "",
+                      q{PSQUOTE},
+                      $tracelevel);
+        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
+                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      , q{PSQUOTE},
+                      $tracelevel)
+    }
+    $_[1] = $text;
+    return $return;
+}
+
+# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
+sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::startrule
+{
+	my $thisparser = $_[0];
+	use vars q{$tracelevel};
+	local $tracelevel = ($tracelevel||0)+1;
+	$ERRORS = 0;
+    my $thisrule = $thisparser->{"rules"}{"startrule"};
+
+    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [startrule]},
+                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                  q{startrule},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+
+    
+    my $err_at = @{$thisparser->{errors}};
+
+    my $score;
+    my $score_return;
+    my $_tok;
+    my $return = undef;
+    my $_matched=0;
+    my $commit=0;
+    my @item = ();
+    my %item = ();
+    my $repeating =  $_[2];
+    my $_noactions = $_[3];
+    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
+    my $_itempos = $_[5];
+    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
+    my $text;
+    my $lastsep;
+    my $current_match;
+    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{SCEN});
+    $expectation->at($_[1]);
+    
+    my $thisline;
+    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
+
+    
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [SCEN EOF]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{startrule},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[0];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{startrule});
+        %item = (__RULE__ => q{startrule});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [SCEN]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{startrule},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SCEN($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [SCEN]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{startrule},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [SCEN]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{startrule},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{SCEN}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [EOF]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{startrule},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{EOF})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::EOF($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [EOF]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{startrule},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [EOF]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{startrule},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{EOF}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying action},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{startrule},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
+
+        $_tok = ($_noactions) ? 0 : do {$return = $item{SCEN}};
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [SCEN EOF]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{startrule},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    unless ( $_matched || defined($score) )
+    {
+        
+
+        $_[1] = $text;  # NOT SURE THIS IS NEEDED
+        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
+                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                     q{startrule},
+                     $tracelevel)
+                    if defined $::RD_TRACE;
+        return undef;
+    }
+    if (!defined($return) && defined($score))
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
+                      q{startrule},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $return = $score_return;
+    }
+    splice @{$thisparser->{errors}}, $err_at;
+    $return = $item[$#item] unless defined $return;
+    if (defined $::RD_TRACE)
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
+                      $return . q{])}, "",
+                      q{startrule},
+                      $tracelevel);
+        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
+                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      , q{startrule},
+                      $tracelevel)
+    }
+    $_[1] = $text;
+    return $return;
+}
+
+# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
+sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PNOTQUOTED
+{
+	my $thisparser = $_[0];
+	use vars q{$tracelevel};
+	local $tracelevel = ($tracelevel||0)+1;
+	$ERRORS = 0;
+    my $thisrule = $thisparser->{"rules"}{"PNOTQUOTED"};
+
+    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PNOTQUOTED]},
+                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                  q{PNOTQUOTED},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+
+    
+    my $err_at = @{$thisparser->{errors}};
+
+    my $score;
+    my $score_return;
+    my $_tok;
+    my $return = undef;
+    my $_matched=0;
+    my $commit=0;
+    my @item = ();
+    my %item = ();
+    my $repeating =  $_[2];
+    my $_noactions = $_[3];
+    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
+    my $_itempos = $_[5];
+    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
+    my $text;
+    my $lastsep;
+    my $current_match;
+    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/\\S+/, or EMPTY});
+    $expectation->at($_[1]);
+    
+    my $thisline;
+    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
+
+    
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/\\S+/]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{PNOTQUOTED},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[0];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{PNOTQUOTED});
+        %item = (__RULE__ => q{PNOTQUOTED});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/\\S+/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PNOTQUOTED},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        undef $lastsep;
+        $expectation->is(q{})->at($text);
+        
+
+        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:\S+)/)
+        {
+            $text = $lastsep . $text if defined $lastsep;
+            $expectation->failed();
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+
+            last;
+        }
+        $current_match = substr($text, $-[0], $+[0] - $-[0]);
+        substr($text,0,length($current_match),q{});
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
+                        . $current_match . q{])},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+        push @item, $item{__PATTERN1__}=$current_match;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying action},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PNOTQUOTED},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
+
+        $_tok = ($_noactions) ? 0 : do {$return = $item[1]};
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/\\S+/]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PNOTQUOTED},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [EMPTY]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{PNOTQUOTED},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[1];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{PNOTQUOTED});
+        %item = (__RULE__ => q{PNOTQUOTED});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying subrule: [EMPTY]},
+                  Parse::RecDescent::_Runtime::_tracefirst($text),
+                  q{PNOTQUOTED},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+        if (1) { no strict qw{refs};
+        $expectation->is(q{})->at($text);
+        unless (defined ($_tok = Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::EMPTY($thisparser,$text,$repeating,$_noactions,sub { \@arg },undef)))
+        {
+            
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match subrule: [EMPTY]>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text),
+                          q{PNOTQUOTED},
+                          $tracelevel)
+                            if defined $::RD_TRACE;
+            $expectation->failed();
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched subrule: [EMPTY]<< (return value: [}
+                    . $_tok . q{]},
+
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PNOTQUOTED},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $item{q{EMPTY}} = $_tok;
+        push @item, $_tok;
+        
+        }
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying action},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PNOTQUOTED},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
+
+        $_tok = ($_noactions) ? 0 : do {$return = ''};
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [EMPTY]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{PNOTQUOTED},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    unless ( $_matched || defined($score) )
+    {
+        
+
+        $_[1] = $text;  # NOT SURE THIS IS NEEDED
+        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
+                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                     q{PNOTQUOTED},
+                     $tracelevel)
+                    if defined $::RD_TRACE;
+        return undef;
+    }
+    if (!defined($return) && defined($score))
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
+                      q{PNOTQUOTED},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $return = $score_return;
+    }
+    splice @{$thisparser->{errors}}, $err_at;
+    $return = $item[$#item] unless defined $return;
+    if (defined $::RD_TRACE)
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
+                      $return . q{])}, "",
+                      q{PNOTQUOTED},
+                      $tracelevel);
+        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
+                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      , q{PNOTQUOTED},
+                      $tracelevel)
+    }
+    $_[1] = $text;
+    return $return;
+}
+
+# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
+sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SLASHEDSQUOTE
+{
+	my $thisparser = $_[0];
+	use vars q{$tracelevel};
+	local $tracelevel = ($tracelevel||0)+1;
+	$ERRORS = 0;
+    my $thisrule = $thisparser->{"rules"}{"SLASHEDSQUOTE"};
+
+    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [SLASHEDSQUOTE]},
+                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                  q{SLASHEDSQUOTE},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+
+    
+    my $err_at = @{$thisparser->{errors}};
+
+    my $score;
+    my $score_return;
+    my $_tok;
+    my $return = undef;
+    my $_matched=0;
+    my $commit=0;
+    my @item = ();
+    my %item = ();
+    my $repeating =  $_[2];
+    my $_noactions = $_[3];
+    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
+    my $_itempos = $_[5];
+    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
+    my $text;
+    my $lastsep;
+    my $current_match;
+    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/\\\\'/});
+    $expectation->at($_[1]);
+    
+    my $thisline;
+    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
+
+    
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/\\\\'/]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{SLASHEDSQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[0];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{SLASHEDSQUOTE});
+        %item = (__RULE__ => q{SLASHEDSQUOTE});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/\\\\'/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{SLASHEDSQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        undef $lastsep;
+        $expectation->is(q{})->at($text);
+        
+
+        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:\\')/)
+        {
+            $text = $lastsep . $text if defined $lastsep;
+            $expectation->failed();
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+
+            last;
+        }
+        $current_match = substr($text, $-[0], $+[0] - $-[0]);
+        substr($text,0,length($current_match),q{});
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
+                        . $current_match . q{])},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+        push @item, $item{__PATTERN1__}=$current_match;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying action},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{SLASHEDSQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        
+
+        $_tok = ($_noactions) ? 0 : do {$return = "'"};
+        unless (defined $_tok)
+        {
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match action>> (return value: [undef])})
+                    if defined $::RD_TRACE;
+            last;
+        }
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched action<< (return value: [}
+                      . $_tok . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text))
+                        if defined $::RD_TRACE;
+        push @item, $_tok;
+        $item{__ACTION1__}=$_tok;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/\\\\'/]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{SLASHEDSQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    unless ( $_matched || defined($score) )
+    {
+        
+
+        $_[1] = $text;  # NOT SURE THIS IS NEEDED
+        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
+                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                     q{SLASHEDSQUOTE},
+                     $tracelevel)
+                    if defined $::RD_TRACE;
+        return undef;
+    }
+    if (!defined($return) && defined($score))
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
+                      q{SLASHEDSQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $return = $score_return;
+    }
+    splice @{$thisparser->{errors}}, $err_at;
+    $return = $item[$#item] unless defined $return;
+    if (defined $::RD_TRACE)
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
+                      $return . q{])}, "",
+                      q{SLASHEDSQUOTE},
+                      $tracelevel);
+        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
+                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      , q{SLASHEDSQUOTE},
+                      $tracelevel)
+    }
+    $_[1] = $text;
+    return $return;
+}
+
+# ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
+sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::NOTSQUOTE
+{
+	my $thisparser = $_[0];
+	use vars q{$tracelevel};
+	local $tracelevel = ($tracelevel||0)+1;
+	$ERRORS = 0;
+    my $thisrule = $thisparser->{"rules"}{"NOTSQUOTE"};
+
+    Parse::RecDescent::_Runtime::_trace(q{Trying rule: [NOTSQUOTE]},
+                  Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                  q{NOTSQUOTE},
+                  $tracelevel)
+                    if defined $::RD_TRACE;
+
+    
+    my $err_at = @{$thisparser->{errors}};
+
+    my $score;
+    my $score_return;
+    my $_tok;
+    my $return = undef;
+    my $_matched=0;
+    my $commit=0;
+    my @item = ();
+    my %item = ();
+    my $repeating =  $_[2];
+    my $_noactions = $_[3];
+    my @arg =    defined $_[4] ? @{ &{$_[4]} } : ();
+    my $_itempos = $_[5];
+    my %arg =    ($#arg & 01) ? @arg : (@arg, undef);
+    my $text;
+    my $lastsep;
+    my $current_match;
+    my $expectation = new Parse::RecDescent::_Runtime::Expectation(q{/[^']*[^'\\\\]/});
+    $expectation->at($_[1]);
+    
+    my $thisline;
+    tie $thisline, q{Parse::RecDescent::_Runtime::LineCounter}, \$text, $thisparser;
+
+    
+
+    while (!$_matched && !$commit)
+    {
+        
+        Parse::RecDescent::_Runtime::_trace(q{Trying production: [/[^']*[^'\\\\]/]},
+                      Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                      q{NOTSQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        my $thisprod = $thisrule->{"prods"}[0];
+        $text = $_[1];
+        my $_savetext;
+        @item = (q{NOTSQUOTE});
+        %item = (__RULE__ => q{NOTSQUOTE});
+        my $repcount = 0;
+
+
+        Parse::RecDescent::_Runtime::_trace(q{Trying terminal: [/[^']*[^'\\\\]/]}, Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{NOTSQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        undef $lastsep;
+        $expectation->is(q{})->at($text);
+        
+
+        unless ($text =~ s/\A($skip)/$lastsep=$1 and ""/e and   $text =~ m/\A(?:[^']*[^'\\])/)
+        {
+            $text = $lastsep . $text if defined $lastsep;
+            $expectation->failed();
+            Parse::RecDescent::_Runtime::_trace(q{<<Didn't match terminal>>},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+
+            last;
+        }
+        $current_match = substr($text, $-[0], $+[0] - $-[0]);
+        substr($text,0,length($current_match),q{});
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched terminal<< (return value: [}
+                        . $current_match . q{])},
+                          Parse::RecDescent::_Runtime::_tracefirst($text))
+                    if defined $::RD_TRACE;
+        push @item, $item{__PATTERN1__}=$current_match;
+        
+
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched production: [/[^']*[^'\\\\]/]<<},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      q{NOTSQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+
+
+
+        $_matched = 1;
+        last;
+    }
+
+
+    unless ( $_matched || defined($score) )
+    {
+        
+
+        $_[1] = $text;  # NOT SURE THIS IS NEEDED
+        Parse::RecDescent::_Runtime::_trace(q{<<Didn't match rule>>},
+                     Parse::RecDescent::_Runtime::_tracefirst($_[1]),
+                     q{NOTSQUOTE},
+                     $tracelevel)
+                    if defined $::RD_TRACE;
+        return undef;
+    }
+    if (!defined($return) && defined($score))
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Accepted scored production<<}, "",
+                      q{NOTSQUOTE},
+                      $tracelevel)
+                        if defined $::RD_TRACE;
+        $return = $score_return;
+    }
+    splice @{$thisparser->{errors}}, $err_at;
+    $return = $item[$#item] unless defined $return;
+    if (defined $::RD_TRACE)
+    {
+        Parse::RecDescent::_Runtime::_trace(q{>>Matched rule<< (return value: [} .
+                      $return . q{])}, "",
+                      q{NOTSQUOTE},
+                      $tracelevel);
+        Parse::RecDescent::_Runtime::_trace(q{(consumed: [} .
+                      Parse::RecDescent::_Runtime::_tracemax(substr($_[1],0,-length($text))) . q{])},
+                      Parse::RecDescent::_Runtime::_tracefirst($text),
+                      , q{NOTSQUOTE},
+                      $tracelevel)
+    }
+    $_[1] = $text;
+    return $return;
+}
 }
 package Treex::Core::ScenarioParser; sub new { my $self = bless( {
-                 'localvars' => '',
                  'startcode' => '',
+                 'localvars' => '',
+                 '_check' => {
+                               'thisoffset' => '',
+                               'prevcolumn' => '',
+                               'itempos' => '',
+                               'prevline' => '',
+                               'prevoffset' => '',
+                               'thiscolumn' => ''
+                             },
                  'namespace' => 'Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser',
+                 '_AUTOACTION' => undef,
                  'rules' => {
-                              'SPACE' => bless( {
-                                                  'impcount' => 0,
-                                                  'calls' => [],
-                                                  'changed' => 0,
-                                                  'opcount' => 0,
-                                                  'prods' => [
-                                                               bless( {
-                                                                        'number' => 0,
-                                                                        'strcount' => 0,
-                                                                        'dircount' => 0,
-                                                                        'uncommit' => undef,
-                                                                        'error' => undef,
-                                                                        'patcount' => 1,
-                                                                        'actcount' => 1,
-                                                                        'items' => [
-                                                                                     bless( {
-                                                                                              'pattern' => '\\s+',
-                                                                                              'hashname' => '__PATTERN1__',
-                                                                                              'description' => '/\\\\s+/',
-                                                                                              'lookahead' => 0,
-                                                                                              'rdelim' => '/',
-                                                                                              'line' => 67,
-                                                                                              'mod' => '',
-                                                                                              'ldelim' => '/'
-                                                                                            }, 'Parse::RecDescent::_Runtime::Token' ),
-                                                                                     bless( {
-                                                                                              'hashname' => '__ACTION1__',
-                                                                                              'lookahead' => 0,
-                                                                                              'line' => 67,
-                                                                                              'code' => '{$return = $item[1]}'
-                                                                                            }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                   ],
-                                                                        'line' => undef
-                                                                      }, 'Parse::RecDescent::_Runtime::Production' )
-                                                             ],
-                                                  'name' => 'SPACE',
-                                                  'vars' => '',
-                                                  'line' => 67
-                                                }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'EMPTY' => bless( {
-                                                  'impcount' => 0,
-                                                  'calls' => [],
-                                                  'changed' => 0,
-                                                  'opcount' => 0,
-                                                  'prods' => [
-                                                               bless( {
-                                                                        'number' => 0,
-                                                                        'strcount' => 0,
-                                                                        'dircount' => 0,
-                                                                        'uncommit' => undef,
-                                                                        'error' => undef,
-                                                                        'patcount' => 1,
-                                                                        'actcount' => 0,
-                                                                        'items' => [
-                                                                                     bless( {
-                                                                                              'pattern' => '',
-                                                                                              'hashname' => '__PATTERN1__',
-                                                                                              'description' => '//',
-                                                                                              'lookahead' => 0,
-                                                                                              'rdelim' => '/',
-                                                                                              'line' => 68,
-                                                                                              'mod' => '',
-                                                                                              'ldelim' => '/'
-                                                                                            }, 'Parse::RecDescent::_Runtime::Token' )
-                                                                                   ],
-                                                                        'line' => undef
-                                                                      }, 'Parse::RecDescent::_Runtime::Production' )
-                                                             ],
-                                                  'name' => 'EMPTY',
-                                                  'vars' => '',
-                                                  'line' => 68
-                                                }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'PNOTQUOTED' => bless( {
-                                                       'impcount' => 0,
-                                                       'calls' => [
-                                                                    'EMPTY'
-                                                                  ],
-                                                       'changed' => 0,
-                                                       'opcount' => 0,
-                                                       'prods' => [
-                                                                    bless( {
-                                                                             'number' => 0,
-                                                                             'strcount' => 0,
-                                                                             'dircount' => 0,
-                                                                             'uncommit' => undef,
-                                                                             'error' => undef,
-                                                                             'patcount' => 1,
-                                                                             'actcount' => 1,
-                                                                             'items' => [
-                                                                                          bless( {
-                                                                                                   'pattern' => '\\S+',
-                                                                                                   'hashname' => '__PATTERN1__',
-                                                                                                   'description' => '/\\\\S+/',
-                                                                                                   'lookahead' => 0,
-                                                                                                   'rdelim' => '/',
-                                                                                                   'line' => 63,
-                                                                                                   'mod' => '',
-                                                                                                   'ldelim' => '/'
-                                                                                                 }, 'Parse::RecDescent::_Runtime::Token' ),
-                                                                                          bless( {
-                                                                                                   'hashname' => '__ACTION1__',
-                                                                                                   'lookahead' => 0,
-                                                                                                   'line' => 63,
-                                                                                                   'code' => '{$return = $item[1]}'
-                                                                                                 }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                        ],
-                                                                             'line' => undef
-                                                                           }, 'Parse::RecDescent::_Runtime::Production' ),
-                                                                    bless( {
-                                                                             'number' => 1,
-                                                                             'strcount' => 0,
-                                                                             'dircount' => 0,
-                                                                             'uncommit' => undef,
-                                                                             'error' => undef,
-                                                                             'patcount' => 0,
-                                                                             'actcount' => 1,
-                                                                             'items' => [
-                                                                                          bless( {
-                                                                                                   'subrule' => 'EMPTY',
-                                                                                                   'matchrule' => 0,
-                                                                                                   'implicit' => undef,
-                                                                                                   'argcode' => undef,
-                                                                                                   'lookahead' => 0,
-                                                                                                   'line' => 64
-                                                                                                 }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                          bless( {
-                                                                                                   'hashname' => '__ACTION1__',
-                                                                                                   'lookahead' => 0,
-                                                                                                   'line' => 64,
-                                                                                                   'code' => '{$return = \'\'}'
-                                                                                                 }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                        ],
-                                                                             'line' => undef
-                                                                           }, 'Parse::RecDescent::_Runtime::Production' )
-                                                                  ],
-                                                       'name' => 'PNOTQUOTED',
-                                                       'vars' => '',
-                                                       'line' => 63
-                                                     }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'SLASHEDSQUOTE' => bless( {
-                                                          'impcount' => 0,
-                                                          'calls' => [],
-                                                          'changed' => 0,
-                                                          'opcount' => 0,
-                                                          'prods' => [
-                                                                       bless( {
-                                                                                'number' => 0,
-                                                                                'strcount' => 0,
-                                                                                'dircount' => 0,
-                                                                                'uncommit' => undef,
-                                                                                'error' => undef,
-                                                                                'patcount' => 1,
-                                                                                'actcount' => 1,
-                                                                                'items' => [
-                                                                                             bless( {
-                                                                                                      'pattern' => '\\\\\'',
-                                                                                                      'hashname' => '__PATTERN1__',
-                                                                                                      'description' => '/\\\\\\\\\'/',
-                                                                                                      'lookahead' => 0,
-                                                                                                      'rdelim' => '/',
-                                                                                                      'line' => 57,
-                                                                                                      'mod' => '',
-                                                                                                      'ldelim' => '/'
-                                                                                                    }, 'Parse::RecDescent::_Runtime::Token' ),
-                                                                                             bless( {
-                                                                                                      'hashname' => '__ACTION1__',
-                                                                                                      'lookahead' => 0,
-                                                                                                      'line' => 57,
-                                                                                                      'code' => '{$return = "\'"}'
-                                                                                                    }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                           ],
-                                                                                'line' => undef
-                                                                              }, 'Parse::RecDescent::_Runtime::Production' )
-                                                                     ],
-                                                          'name' => 'SLASHEDSQUOTE',
-                                                          'vars' => '',
-                                                          'line' => 57
-                                                        }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'COMMENT' => bless( {
-                                                    'impcount' => 0,
-                                                    'calls' => [],
-                                                    'changed' => 0,
-                                                    'opcount' => 0,
-                                                    'prods' => [
-                                                                 bless( {
-                                                                          'number' => 0,
-                                                                          'strcount' => 0,
-                                                                          'dircount' => 0,
-                                                                          'uncommit' => undef,
-                                                                          'error' => undef,
-                                                                          'patcount' => 1,
-                                                                          'actcount' => 1,
-                                                                          'items' => [
-                                                                                       bless( {
-                                                                                                'pattern' => '#[^\\n]*',
-                                                                                                'hashname' => '__PATTERN1__',
-                                                                                                'description' => '/#[^\\\\n]*/',
-                                                                                                'lookahead' => 0,
-                                                                                                'rdelim' => '/',
-                                                                                                'line' => 66,
-                                                                                                'mod' => '',
-                                                                                                'ldelim' => '/'
-                                                                                              }, 'Parse::RecDescent::_Runtime::Token' ),
-                                                                                       bless( {
-                                                                                                'hashname' => '__ACTION1__',
-                                                                                                'lookahead' => 0,
-                                                                                                'line' => 66,
-                                                                                                'code' => '{$return = \'\'}'
-                                                                                              }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                     ],
-                                                                          'line' => undef
-                                                                        }, 'Parse::RecDescent::_Runtime::Production' )
-                                                               ],
-                                                    'name' => 'COMMENT',
-                                                    'vars' => '',
-                                                    'line' => 66
-                                                  }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'EOF' => bless( {
-                                                'impcount' => 0,
-                                                'calls' => [],
-                                                'changed' => 0,
-                                                'opcount' => 0,
-                                                'prods' => [
-                                                             bless( {
-                                                                      'number' => 0,
-                                                                      'strcount' => 0,
-                                                                      'dircount' => 0,
-                                                                      'uncommit' => undef,
-                                                                      'error' => undef,
-                                                                      'patcount' => 1,
-                                                                      'actcount' => 0,
-                                                                      'items' => [
-                                                                                   bless( {
-                                                                                            'pattern' => '^\\Z',
-                                                                                            'hashname' => '__PATTERN1__',
-                                                                                            'description' => '/^\\\\Z/',
-                                                                                            'lookahead' => 0,
-                                                                                            'rdelim' => '/',
-                                                                                            'line' => 14,
-                                                                                            'mod' => '',
-                                                                                            'ldelim' => '/'
-                                                                                          }, 'Parse::RecDescent::_Runtime::Token' )
-                                                                                 ],
-                                                                      'line' => undef
-                                                                    }, 'Parse::RecDescent::_Runtime::Production' )
-                                                           ],
-                                                'name' => 'EOF',
-                                                'vars' => '',
-                                                'line' => 14
-                                              }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'NOTSQUOTE' => bless( {
-                                                      'impcount' => 0,
-                                                      'calls' => [],
-                                                      'changed' => 0,
-                                                      'opcount' => 0,
-                                                      'prods' => [
-                                                                   bless( {
-                                                                            'number' => 0,
-                                                                            'strcount' => 0,
-                                                                            'dircount' => 0,
-                                                                            'uncommit' => undef,
-                                                                            'error' => undef,
-                                                                            'patcount' => 1,
-                                                                            'actcount' => 0,
-                                                                            'items' => [
-                                                                                         bless( {
-                                                                                                  'pattern' => '[^\']*[^\'\\\\]',
-                                                                                                  'hashname' => '__PATTERN1__',
-                                                                                                  'description' => '/[^\']*[^\'\\\\\\\\]/',
-                                                                                                  'lookahead' => 0,
-                                                                                                  'rdelim' => '/',
-                                                                                                  'line' => 56,
-                                                                                                  'mod' => '',
-                                                                                                  'ldelim' => '/'
-                                                                                                }, 'Parse::RecDescent::_Runtime::Token' )
-                                                                                       ],
-                                                                            'line' => undef
-                                                                          }, 'Parse::RecDescent::_Runtime::Production' )
-                                                                 ],
-                                                      'name' => 'NOTSQUOTE',
-                                                      'vars' => '',
-                                                      'line' => 56
-                                                    }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'TBNAME' => bless( {
-                                                   'impcount' => 0,
-                                                   'calls' => [
-                                                                'BNAME'
-                                                              ],
-                                                   'changed' => 0,
-                                                   'opcount' => 0,
-                                                   'prods' => [
-                                                                bless( {
-                                                                         'number' => 0,
-                                                                         'strcount' => 0,
-                                                                         'dircount' => 0,
-                                                                         'uncommit' => undef,
-                                                                         'error' => undef,
-                                                                         'patcount' => 1,
-                                                                         'actcount' => 1,
-                                                                         'items' => [
-                                                                                      bless( {
-                                                                                               'pattern' => '::',
-                                                                                               'hashname' => '__PATTERN1__',
-                                                                                               'description' => '/::/',
-                                                                                               'lookahead' => 0,
-                                                                                               'rdelim' => '/',
-                                                                                               'line' => 42,
-                                                                                               'mod' => '',
-                                                                                               'ldelim' => '/'
-                                                                                             }, 'Parse::RecDescent::_Runtime::Token' ),
-                                                                                      bless( {
-                                                                                               'subrule' => 'BNAME',
-                                                                                               'matchrule' => 0,
-                                                                                               'implicit' => undef,
-                                                                                               'argcode' => undef,
-                                                                                               'lookahead' => 0,
-                                                                                               'line' => 42
-                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                      bless( {
-                                                                                               'hashname' => '__ACTION1__',
-                                                                                               'lookahead' => 0,
-                                                                                               'line' => 42,
-                                                                                               'code' => '{$return = $item{BNAME}}'
-                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                    ],
-                                                                         'line' => undef
-                                                                       }, 'Parse::RecDescent::_Runtime::Production' ),
-                                                                bless( {
-                                                                         'number' => 1,
-                                                                         'strcount' => 0,
-                                                                         'dircount' => 0,
-                                                                         'uncommit' => undef,
-                                                                         'error' => undef,
-                                                                         'patcount' => 0,
-                                                                         'actcount' => 1,
-                                                                         'items' => [
-                                                                                      bless( {
-                                                                                               'subrule' => 'BNAME',
-                                                                                               'matchrule' => 0,
-                                                                                               'implicit' => undef,
-                                                                                               'argcode' => undef,
-                                                                                               'lookahead' => 0,
-                                                                                               'line' => 43
-                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                      bless( {
-                                                                                               'hashname' => '__ACTION1__',
-                                                                                               'lookahead' => 0,
-                                                                                               'line' => 43,
-                                                                                               'code' => '{$return = "Treex::Block::$item{BNAME}"}'
-                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                    ],
-                                                                         'line' => undef
-                                                                       }, 'Parse::RecDescent::_Runtime::Production' )
-                                                              ],
-                                                   'name' => 'TBNAME',
-                                                   'vars' => '',
-                                                   'line' => 42
-                                                 }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'startrule' => bless( {
-                                                      'impcount' => 0,
-                                                      'calls' => [
-                                                                   'SCEN',
-                                                                   'EOF'
-                                                                 ],
-                                                      'changed' => 0,
-                                                      'opcount' => 0,
-                                                      'prods' => [
-                                                                   bless( {
-                                                                            'number' => 0,
-                                                                            'strcount' => 0,
-                                                                            'dircount' => 0,
-                                                                            'uncommit' => undef,
-                                                                            'error' => undef,
-                                                                            'patcount' => 0,
-                                                                            'actcount' => 1,
-                                                                            'items' => [
-                                                                                         bless( {
-                                                                                                  'subrule' => 'SCEN',
-                                                                                                  'matchrule' => 0,
-                                                                                                  'implicit' => undef,
-                                                                                                  'argcode' => undef,
-                                                                                                  'lookahead' => 0,
-                                                                                                  'line' => 8
-                                                                                                }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                         bless( {
-                                                                                                  'subrule' => 'EOF',
-                                                                                                  'matchrule' => 0,
-                                                                                                  'implicit' => undef,
-                                                                                                  'argcode' => undef,
-                                                                                                  'lookahead' => 0,
-                                                                                                  'line' => 8
-                                                                                                }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                         bless( {
-                                                                                                  'hashname' => '__ACTION1__',
-                                                                                                  'lookahead' => 0,
-                                                                                                  'line' => 8,
-                                                                                                  'code' => '{$return = $item{SCEN}}'
-                                                                                                }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                       ],
-                                                                            'line' => undef
-                                                                          }, 'Parse::RecDescent::_Runtime::Production' )
-                                                                 ],
-                                                      'name' => 'startrule',
-                                                      'vars' => '',
-                                                      'line' => 8
-                                                    }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'LINE' => bless( {
-                                                 'impcount' => 0,
-                                                 'calls' => [
-                                                              'BLOCK',
-                                                              'COMMENT'
-                                                            ],
-                                                 'changed' => 0,
-                                                 'opcount' => 0,
-                                                 'prods' => [
-                                                              bless( {
-                                                                       'number' => 0,
-                                                                       'strcount' => 0,
-                                                                       'dircount' => 0,
-                                                                       'uncommit' => undef,
-                                                                       'error' => undef,
-                                                                       'patcount' => 0,
-                                                                       'actcount' => 1,
-                                                                       'items' => [
-                                                                                    bless( {
-                                                                                             'subrule' => 'BLOCK',
-                                                                                             'matchrule' => 0,
-                                                                                             'implicit' => undef,
-                                                                                             'argcode' => undef,
-                                                                                             'lookahead' => 0,
-                                                                                             'line' => 11
-                                                                                           }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                    bless( {
-                                                                                             'subrule' => 'COMMENT',
-                                                                                             'matchrule' => 0,
-                                                                                             'implicit' => undef,
-                                                                                             'argcode' => undef,
-                                                                                             'lookahead' => 0,
-                                                                                             'line' => 11
-                                                                                           }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                    bless( {
-                                                                                             'hashname' => '__ACTION1__',
-                                                                                             'lookahead' => 0,
-                                                                                             'line' => 11,
-                                                                                             'code' => '{$return = [@{$item{BLOCK}}]}'
-                                                                                           }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                  ],
-                                                                       'line' => undef
-                                                                     }, 'Parse::RecDescent::_Runtime::Production' ),
-                                                              bless( {
-                                                                       'number' => 1,
-                                                                       'strcount' => 0,
-                                                                       'dircount' => 0,
-                                                                       'uncommit' => undef,
-                                                                       'error' => undef,
-                                                                       'patcount' => 0,
-                                                                       'actcount' => 1,
-                                                                       'items' => [
-                                                                                    bless( {
-                                                                                             'subrule' => 'BLOCK',
-                                                                                             'matchrule' => 0,
-                                                                                             'implicit' => undef,
-                                                                                             'argcode' => undef,
-                                                                                             'lookahead' => 0,
-                                                                                             'line' => 12
-                                                                                           }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                    bless( {
-                                                                                             'hashname' => '__ACTION1__',
-                                                                                             'lookahead' => 0,
-                                                                                             'line' => 12,
-                                                                                             'code' => '{$return = [@{$item{BLOCK}}]}'
-                                                                                           }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                  ],
-                                                                       'line' => undef
-                                                                     }, 'Parse::RecDescent::_Runtime::Production' ),
-                                                              bless( {
-                                                                       'number' => 2,
-                                                                       'strcount' => 0,
-                                                                       'dircount' => 0,
-                                                                       'uncommit' => undef,
-                                                                       'error' => undef,
-                                                                       'patcount' => 0,
-                                                                       'actcount' => 1,
-                                                                       'items' => [
-                                                                                    bless( {
-                                                                                             'subrule' => 'COMMENT',
-                                                                                             'matchrule' => 0,
-                                                                                             'implicit' => undef,
-                                                                                             'argcode' => undef,
-                                                                                             'lookahead' => 0,
-                                                                                             'line' => 13
-                                                                                           }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                    bless( {
-                                                                                             'hashname' => '__ACTION1__',
-                                                                                             'lookahead' => 0,
-                                                                                             'line' => 13,
-                                                                                             'code' => '{$return = []}'
-                                                                                           }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                  ],
-                                                                       'line' => undef
-                                                                     }, 'Parse::RecDescent::_Runtime::Production' )
-                                                            ],
-                                                 'name' => 'LINE',
-                                                 'vars' => '',
-                                                 'line' => 11
-                                               }, 'Parse::RecDescent::_Runtime::Rule' ),
                               'BLOCK' => bless( {
-                                                  'impcount' => 0,
-                                                  'calls' => [
-                                                               'INCLUDE',
-                                                               'TBNAME',
-                                                               'PARAMS'
-                                                             ],
                                                   'changed' => 0,
                                                   'opcount' => 0,
                                                   'prods' => [
                                                                bless( {
-                                                                        'number' => 0,
-                                                                        'strcount' => 0,
-                                                                        'dircount' => 0,
-                                                                        'uncommit' => undef,
                                                                         'error' => undef,
+                                                                        'strcount' => 0,
+                                                                        'uncommit' => undef,
+                                                                        'number' => 0,
                                                                         'patcount' => 0,
-                                                                        'actcount' => 1,
+                                                                        'line' => undef,
+                                                                        'dircount' => 0,
                                                                         'items' => [
                                                                                      bless( {
-                                                                                              'subrule' => 'INCLUDE',
                                                                                               'matchrule' => 0,
+                                                                                              'subrule' => 'INCLUDE',
                                                                                               'implicit' => undef,
                                                                                               'argcode' => undef,
-                                                                                              'lookahead' => 0,
-                                                                                              'line' => 15
+                                                                                              'line' => 15,
+                                                                                              'lookahead' => 0
                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
                                                                                      bless( {
-                                                                                              'hashname' => '__ACTION1__',
                                                                                               'lookahead' => 0,
                                                                                               'line' => 15,
                                                                                               'code' => '{
@@ -9198,40 +8694,34 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                     } else {
                                                         $return = undef;
                                                     }
-                                                }'
+                                                }',
+                                                                                              'hashname' => '__ACTION1__'
                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
                                                                                    ],
-                                                                        'line' => undef
+                                                                        'actcount' => 1
                                                                       }, 'Parse::RecDescent::_Runtime::Production' ),
                                                                bless( {
-                                                                        'number' => 1,
-                                                                        'strcount' => 0,
-                                                                        'dircount' => 0,
-                                                                        'uncommit' => undef,
-                                                                        'error' => undef,
-                                                                        'patcount' => 0,
-                                                                        'actcount' => 1,
                                                                         'items' => [
                                                                                      bless( {
-                                                                                              'subrule' => 'TBNAME',
                                                                                               'matchrule' => 0,
+                                                                                              'subrule' => 'TBNAME',
                                                                                               'implicit' => undef,
                                                                                               'argcode' => undef,
-                                                                                              'lookahead' => 0,
-                                                                                              'line' => 24
+                                                                                              'line' => 24,
+                                                                                              'lookahead' => 0
                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
                                                                                      bless( {
-                                                                                              'subrule' => 'PARAMS',
                                                                                               'matchrule' => 0,
+                                                                                              'subrule' => 'PARAMS',
                                                                                               'implicit' => undef,
                                                                                               'argcode' => undef,
-                                                                                              'lookahead' => 0,
-                                                                                              'line' => 24
+                                                                                              'line' => 24,
+                                                                                              'lookahead' => 0
                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
                                                                                      bless( {
                                                                                               'hashname' => '__ACTION1__',
-                                                                                              'lookahead' => 0,
                                                                                               'line' => 24,
+                                                                                              'lookahead' => 0,
                                                                                               'code' => '{$return = [{
                                                         block_name=>$item{TBNAME},
                                                         block_parameters=>$item{PARAMS},
@@ -9239,396 +8729,605 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                 }'
                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
                                                                                    ],
-                                                                        'line' => undef
+                                                                        'actcount' => 1,
+                                                                        'error' => undef,
+                                                                        'strcount' => 0,
+                                                                        'uncommit' => undef,
+                                                                        'number' => 1,
+                                                                        'patcount' => 0,
+                                                                        'line' => undef,
+                                                                        'dircount' => 0
                                                                       }, 'Parse::RecDescent::_Runtime::Production' ),
                                                                bless( {
-                                                                        'number' => 2,
-                                                                        'strcount' => 0,
-                                                                        'dircount' => 0,
-                                                                        'uncommit' => undef,
-                                                                        'error' => undef,
-                                                                        'patcount' => 0,
                                                                         'actcount' => 1,
                                                                         'items' => [
                                                                                      bless( {
-                                                                                              'subrule' => 'TBNAME',
-                                                                                              'matchrule' => 0,
-                                                                                              'implicit' => undef,
-                                                                                              'argcode' => undef,
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 29
+                                                                                              'argcode' => undef,
+                                                                                              'line' => 29,
+                                                                                              'matchrule' => 0,
+                                                                                              'subrule' => 'TBNAME',
+                                                                                              'implicit' => undef
                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
                                                                                      bless( {
-                                                                                              'hashname' => '__ACTION1__',
-                                                                                              'lookahead' => 0,
-                                                                                              'line' => 29,
                                                                                               'code' => '{$return = [{
                                                         block_name=>$item{TBNAME},
                                                         block_parameters=>[],
                                                     }]
-                                                }'
+                                                }',
+                                                                                              'lookahead' => 0,
+                                                                                              'line' => 29,
+                                                                                              'hashname' => '__ACTION1__'
                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
                                                                                    ],
-                                                                        'line' => undef
+                                                                        'dircount' => 0,
+                                                                        'line' => undef,
+                                                                        'number' => 2,
+                                                                        'patcount' => 0,
+                                                                        'strcount' => 0,
+                                                                        'uncommit' => undef,
+                                                                        'error' => undef
                                                                       }, 'Parse::RecDescent::_Runtime::Production' )
                                                              ],
                                                   'name' => 'BLOCK',
+                                                  'calls' => [
+                                                               'INCLUDE',
+                                                               'TBNAME',
+                                                               'PARAMS'
+                                                             ],
+                                                  'impcount' => 0,
                                                   'vars' => '',
                                                   'line' => 15
                                                 }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'PNAME' => bless( {
-                                                  'impcount' => 0,
-                                                  'calls' => [],
-                                                  'changed' => 0,
-                                                  'opcount' => 0,
+                              'SPACE' => bless( {
                                                   'prods' => [
                                                                bless( {
-                                                                        'number' => 0,
-                                                                        'strcount' => 0,
-                                                                        'dircount' => 0,
-                                                                        'uncommit' => undef,
-                                                                        'error' => undef,
-                                                                        'patcount' => 1,
                                                                         'actcount' => 1,
                                                                         'items' => [
                                                                                      bless( {
-                                                                                              'pattern' => '\\w+',
+                                                                                              'description' => '/\\\\s+/',
+                                                                                              'line' => 67,
+                                                                                              'ldelim' => '/',
                                                                                               'hashname' => '__PATTERN1__',
-                                                                                              'description' => '/\\\\w+/',
-                                                                                              'lookahead' => 0,
                                                                                               'rdelim' => '/',
-                                                                                              'line' => 49,
-                                                                                              'mod' => '',
-                                                                                              'ldelim' => '/'
+                                                                                              'pattern' => '\\s+',
+                                                                                              'lookahead' => 0,
+                                                                                              'mod' => ''
                                                                                             }, 'Parse::RecDescent::_Runtime::Token' ),
                                                                                      bless( {
-                                                                                              'hashname' => '__ACTION1__',
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 49,
-                                                                                              'code' => '{$return = $item[1]}'
+                                                                                              'line' => 67,
+                                                                                              'code' => '{$return = $item[1]}',
+                                                                                              'hashname' => '__ACTION1__'
                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
                                                                                    ],
-                                                                        'line' => undef
+                                                                        'dircount' => 0,
+                                                                        'line' => undef,
+                                                                        'number' => 0,
+                                                                        'patcount' => 1,
+                                                                        'strcount' => 0,
+                                                                        'uncommit' => undef,
+                                                                        'error' => undef
                                                                       }, 'Parse::RecDescent::_Runtime::Production' )
                                                              ],
-                                                  'name' => 'PNAME',
+                                                  'name' => 'SPACE',
+                                                  'changed' => 0,
+                                                  'opcount' => 0,
+                                                  'line' => 67,
                                                   'vars' => '',
-                                                  'line' => 49
+                                                  'impcount' => 0,
+                                                  'calls' => []
                                                 }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'PTICKED' => bless( {
-                                                    'impcount' => 0,
-                                                    'calls' => [],
-                                                    'changed' => 0,
-                                                    'opcount' => 0,
+                              'PDQUOTE' => bless( {
+                                                    'name' => 'PDQUOTE',
                                                     'prods' => [
                                                                  bless( {
-                                                                          'number' => 0,
-                                                                          'strcount' => 0,
-                                                                          'dircount' => 0,
-                                                                          'uncommit' => undef,
-                                                                          'error' => undef,
-                                                                          'patcount' => 1,
-                                                                          'actcount' => 1,
                                                                           'items' => [
                                                                                        bless( {
-                                                                                                'pattern' => '[^`]+',
-                                                                                                'hashname' => '__PATTERN1__',
-                                                                                                'description' => '/[^`]+/',
+                                                                                                'argcode' => undef,
                                                                                                 'lookahead' => 0,
-                                                                                                'rdelim' => '/',
-                                                                                                'line' => 65,
-                                                                                                'mod' => '',
-                                                                                                'ldelim' => '/'
-                                                                                              }, 'Parse::RecDescent::_Runtime::Token' ),
+                                                                                                'line' => 58,
+                                                                                                'implicit' => undef,
+                                                                                                'subrule' => 'NOTDQUOTE',
+                                                                                                'matchrule' => 0
+                                                                                              }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                       bless( {
+                                                                                                'subrule' => 'SLASHEDDQUOTE',
+                                                                                                'implicit' => undef,
+                                                                                                'matchrule' => 0,
+                                                                                                'argcode' => undef,
+                                                                                                'line' => 58,
+                                                                                                'lookahead' => 0
+                                                                                              }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                       bless( {
+                                                                                                'lookahead' => 0,
+                                                                                                'argcode' => undef,
+                                                                                                'line' => 58,
+                                                                                                'matchrule' => 0,
+                                                                                                'subrule' => 'PDQUOTE',
+                                                                                                'implicit' => undef
+                                                                                              }, 'Parse::RecDescent::_Runtime::Subrule' ),
                                                                                        bless( {
                                                                                                 'hashname' => '__ACTION1__',
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 65,
-                                                                                                'code' => '{$return = $item[1]}'
+                                                                                                'line' => 58,
+                                                                                                'code' => '{$return = $item{NOTDQUOTE}.$item{SLASHEDDQUOTE}.$item{PDQUOTE}}'
                                                                                               }, 'Parse::RecDescent::_Runtime::Action' )
                                                                                      ],
+                                                                          'actcount' => 1,
+                                                                          'error' => undef,
+                                                                          'strcount' => 0,
+                                                                          'uncommit' => undef,
+                                                                          'number' => 0,
+                                                                          'patcount' => 0,
+                                                                          'dircount' => 0,
                                                                           'line' => undef
+                                                                        }, 'Parse::RecDescent::_Runtime::Production' ),
+                                                                 bless( {
+                                                                          'items' => [
+                                                                                       bless( {
+                                                                                                'lookahead' => 0,
+                                                                                                'argcode' => undef,
+                                                                                                'line' => 59,
+                                                                                                'matchrule' => 0,
+                                                                                                'implicit' => undef,
+                                                                                                'subrule' => 'NOTDQUOTE'
+                                                                                              }, 'Parse::RecDescent::_Runtime::Subrule' )
+                                                                                     ],
+                                                                          'actcount' => 0,
+                                                                          'patcount' => 0,
+                                                                          'number' => 1,
+                                                                          'dircount' => 0,
+                                                                          'line' => undef,
+                                                                          'error' => undef,
+                                                                          'uncommit' => undef,
+                                                                          'strcount' => 0
                                                                         }, 'Parse::RecDescent::_Runtime::Production' )
                                                                ],
-                                                    'name' => 'PTICKED',
+                                                    'opcount' => 0,
+                                                    'changed' => 0,
+                                                    'line' => 58,
                                                     'vars' => '',
-                                                    'line' => 65
+                                                    'calls' => [
+                                                                 'NOTDQUOTE',
+                                                                 'SLASHEDDQUOTE',
+                                                                 'PDQUOTE'
+                                                               ],
+                                                    'impcount' => 0
                                                   }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'SLASHEDDQUOTE' => bless( {
-                                                          'impcount' => 0,
-                                                          'calls' => [],
-                                                          'changed' => 0,
-                                                          'opcount' => 0,
-                                                          'prods' => [
-                                                                       bless( {
-                                                                                'number' => 0,
-                                                                                'strcount' => 0,
-                                                                                'dircount' => 0,
-                                                                                'uncommit' => undef,
-                                                                                'error' => undef,
-                                                                                'patcount' => 1,
-                                                                                'actcount' => 1,
-                                                                                'items' => [
-                                                                                             bless( {
-                                                                                                      'pattern' => '\\\\"',
-                                                                                                      'hashname' => '__PATTERN1__',
-                                                                                                      'description' => '/\\\\\\\\"/',
-                                                                                                      'lookahead' => 0,
-                                                                                                      'rdelim' => '/',
-                                                                                                      'line' => 61,
-                                                                                                      'mod' => '',
-                                                                                                      'ldelim' => '/'
-                                                                                                    }, 'Parse::RecDescent::_Runtime::Token' ),
-                                                                                             bless( {
-                                                                                                      'hashname' => '__ACTION1__',
-                                                                                                      'lookahead' => 0,
-                                                                                                      'line' => 61,
-                                                                                                      'code' => '{$return = \'"\'}'
-                                                                                                    }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                           ],
-                                                                                'line' => undef
-                                                                              }, 'Parse::RecDescent::_Runtime::Production' )
-                                                                     ],
-                                                          'name' => 'SLASHEDDQUOTE',
-                                                          'vars' => '',
-                                                          'line' => 61
-                                                        }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'BNAME' => bless( {
-                                                  'impcount' => 0,
-                                                  'calls' => [
-                                                               'BNAME'
-                                                             ],
-                                                  'changed' => 0,
+                              'PARAM' => bless( {
                                                   'opcount' => 0,
+                                                  'changed' => 0,
+                                                  'name' => 'PARAM',
                                                   'prods' => [
                                                                bless( {
-                                                                        'number' => 0,
-                                                                        'strcount' => 0,
-                                                                        'dircount' => 0,
-                                                                        'uncommit' => undef,
-                                                                        'error' => undef,
-                                                                        'patcount' => 1,
                                                                         'actcount' => 1,
                                                                         'items' => [
                                                                                      bless( {
-                                                                                              'pattern' => '[A-Z]\\w*::',
-                                                                                              'hashname' => '__PATTERN1__',
-                                                                                              'description' => '/[A-Z]\\\\w*::/',
+                                                                                              'subrule' => 'PNAME',
+                                                                                              'implicit' => undef,
+                                                                                              'matchrule' => 0,
+                                                                                              'argcode' => undef,
+                                                                                              'line' => 48,
+                                                                                              'lookahead' => 0
+                                                                                            }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                     bless( {
+                                                                                              'hashname' => '__STRING1__',
+                                                                                              'pattern' => '=',
+                                                                                              'description' => '\'=\'',
                                                                                               'lookahead' => 0,
-                                                                                              'rdelim' => '/',
+                                                                                              'line' => 48
+                                                                                            }, 'Parse::RecDescent::_Runtime::Literal' ),
+                                                                                     bless( {
+                                                                                              'hashname' => '__DIRECTIVE1__',
+                                                                                              'code' => 'my $oldskip = $skip; $skip= qr//; $oldskip',
+                                                                                              'name' => '<skip: qr//>',
+                                                                                              'lookahead' => 0,
+                                                                                              'line' => 48
+                                                                                            }, 'Parse::RecDescent::_Runtime::Directive' ),
+                                                                                     bless( {
+                                                                                              'subrule' => 'PVALUE',
+                                                                                              'implicit' => undef,
+                                                                                              'matchrule' => 0,
+                                                                                              'line' => 48,
+                                                                                              'argcode' => undef,
+                                                                                              'lookahead' => 0
+                                                                                            }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                     bless( {
+                                                                                              'code' => '{$return = $item{PNAME}.\'=\'.$item{PVALUE}}',
+                                                                                              'line' => 48,
+                                                                                              'lookahead' => 0,
+                                                                                              'hashname' => '__ACTION1__'
+                                                                                            }, 'Parse::RecDescent::_Runtime::Action' )
+                                                                                   ],
+                                                                        'line' => undef,
+                                                                        'dircount' => 1,
+                                                                        'patcount' => 0,
+                                                                        'number' => 0,
+                                                                        'uncommit' => undef,
+                                                                        'strcount' => 1,
+                                                                        'error' => undef
+                                                                      }, 'Parse::RecDescent::_Runtime::Production' )
+                                                             ],
+                                                  'vars' => '',
+                                                  'calls' => [
+                                                               'PNAME',
+                                                               'PVALUE'
+                                                             ],
+                                                  'impcount' => 0,
+                                                  'line' => 48
+                                                }, 'Parse::RecDescent::_Runtime::Rule' ),
+                              'EOF' => bless( {
+                                                'changed' => 0,
+                                                'opcount' => 0,
+                                                'prods' => [
+                                                             bless( {
+                                                                      'items' => [
+                                                                                   bless( {
+                                                                                            'hashname' => '__PATTERN1__',
+                                                                                            'ldelim' => '/',
+                                                                                            'line' => 14,
+                                                                                            'description' => '/^\\\\Z/',
+                                                                                            'mod' => '',
+                                                                                            'lookahead' => 0,
+                                                                                            'rdelim' => '/',
+                                                                                            'pattern' => '^\\Z'
+                                                                                          }, 'Parse::RecDescent::_Runtime::Token' )
+                                                                                 ],
+                                                                      'actcount' => 0,
+                                                                      'patcount' => 1,
+                                                                      'number' => 0,
+                                                                      'dircount' => 0,
+                                                                      'line' => undef,
+                                                                      'error' => undef,
+                                                                      'uncommit' => undef,
+                                                                      'strcount' => 0
+                                                                    }, 'Parse::RecDescent::_Runtime::Production' )
+                                                           ],
+                                                'name' => 'EOF',
+                                                'vars' => '',
+                                                'impcount' => 0,
+                                                'calls' => [],
+                                                'line' => 14
+                                              }, 'Parse::RecDescent::_Runtime::Rule' ),
+                              'PARAMS' => bless( {
+                                                   'changed' => 0,
+                                                   'opcount' => 0,
+                                                   'prods' => [
+                                                                bless( {
+                                                                         'error' => undef,
+                                                                         'uncommit' => undef,
+                                                                         'strcount' => 0,
+                                                                         'patcount' => 0,
+                                                                         'number' => 0,
+                                                                         'line' => undef,
+                                                                         'dircount' => 0,
+                                                                         'items' => [
+                                                                                      bless( {
+                                                                                               'argcode' => undef,
+                                                                                               'lookahead' => 0,
+                                                                                               'line' => 46,
+                                                                                               'subrule' => 'PARAM',
+                                                                                               'implicit' => undef,
+                                                                                               'matchrule' => 0
+                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                      bless( {
+                                                                                               'argcode' => undef,
+                                                                                               'lookahead' => 0,
+                                                                                               'line' => 46,
+                                                                                               'subrule' => 'PARAMS',
+                                                                                               'implicit' => undef,
+                                                                                               'matchrule' => 0
+                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                      bless( {
+                                                                                               'code' => '{$return = [$item{PARAM}, @{$item{PARAMS}}]}',
+                                                                                               'line' => 46,
+                                                                                               'lookahead' => 0,
+                                                                                               'hashname' => '__ACTION1__'
+                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
+                                                                                    ],
+                                                                         'actcount' => 1
+                                                                       }, 'Parse::RecDescent::_Runtime::Production' ),
+                                                                bless( {
+                                                                         'items' => [
+                                                                                      bless( {
+                                                                                               'matchrule' => 0,
+                                                                                               'subrule' => 'PARAM',
+                                                                                               'implicit' => undef,
+                                                                                               'argcode' => undef,
+                                                                                               'line' => 47,
+                                                                                               'lookahead' => 0
+                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                      bless( {
+                                                                                               'hashname' => '__ACTION1__',
+                                                                                               'line' => 47,
+                                                                                               'lookahead' => 0,
+                                                                                               'code' => '{$return = [$item{PARAM}]}'
+                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
+                                                                                    ],
+                                                                         'actcount' => 1,
+                                                                         'number' => 1,
+                                                                         'patcount' => 0,
+                                                                         'dircount' => 0,
+                                                                         'line' => undef,
+                                                                         'error' => undef,
+                                                                         'strcount' => 0,
+                                                                         'uncommit' => undef
+                                                                       }, 'Parse::RecDescent::_Runtime::Production' )
+                                                              ],
+                                                   'name' => 'PARAMS',
+                                                   'impcount' => 0,
+                                                   'calls' => [
+                                                                'PARAM',
+                                                                'PARAMS'
+                                                              ],
+                                                   'vars' => '',
+                                                   'line' => 46
+                                                 }, 'Parse::RecDescent::_Runtime::Rule' ),
+                              'COMMENT' => bless( {
+                                                    'impcount' => 0,
+                                                    'calls' => [],
+                                                    'vars' => '',
+                                                    'line' => 66,
+                                                    'opcount' => 0,
+                                                    'changed' => 0,
+                                                    'name' => 'COMMENT',
+                                                    'prods' => [
+                                                                 bless( {
+                                                                          'uncommit' => undef,
+                                                                          'strcount' => 0,
+                                                                          'error' => undef,
+                                                                          'line' => undef,
+                                                                          'dircount' => 0,
+                                                                          'patcount' => 1,
+                                                                          'number' => 0,
+                                                                          'actcount' => 1,
+                                                                          'items' => [
+                                                                                       bless( {
+                                                                                                'lookahead' => 0,
+                                                                                                'rdelim' => '/',
+                                                                                                'pattern' => '#[^\\n]*',
+                                                                                                'mod' => '',
+                                                                                                'line' => 66,
+                                                                                                'description' => '/#[^\\\\n]*/',
+                                                                                                'hashname' => '__PATTERN1__',
+                                                                                                'ldelim' => '/'
+                                                                                              }, 'Parse::RecDescent::_Runtime::Token' ),
+                                                                                       bless( {
+                                                                                                'code' => '{$return = \'\'}',
+                                                                                                'lookahead' => 0,
+                                                                                                'line' => 66,
+                                                                                                'hashname' => '__ACTION1__'
+                                                                                              }, 'Parse::RecDescent::_Runtime::Action' )
+                                                                                     ]
+                                                                        }, 'Parse::RecDescent::_Runtime::Production' )
+                                                               ]
+                                                  }, 'Parse::RecDescent::_Runtime::Rule' ),
+                              'BNAME' => bless( {
+                                                  'prods' => [
+                                                               bless( {
+                                                                        'actcount' => 1,
+                                                                        'items' => [
+                                                                                     bless( {
+                                                                                              'description' => '/[A-Z]\\\\w*::/',
                                                                                               'line' => 44,
-                                                                                              'mod' => '',
-                                                                                              'ldelim' => '/'
+                                                                                              'ldelim' => '/',
+                                                                                              'hashname' => '__PATTERN1__',
+                                                                                              'rdelim' => '/',
+                                                                                              'pattern' => '[A-Z]\\w*::',
+                                                                                              'lookahead' => 0,
+                                                                                              'mod' => ''
                                                                                             }, 'Parse::RecDescent::_Runtime::Token' ),
                                                                                      bless( {
-                                                                                              'subrule' => 'BNAME',
                                                                                               'matchrule' => 0,
+                                                                                              'subrule' => 'BNAME',
                                                                                               'implicit' => undef,
-                                                                                              'argcode' => undef,
                                                                                               'lookahead' => 0,
+                                                                                              'argcode' => undef,
                                                                                               'line' => 44
                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
                                                                                      bless( {
                                                                                               'hashname' => '__ACTION1__',
+                                                                                              'code' => '{$return = $item[1].$item[2]}',
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 44,
-                                                                                              'code' => '{$return = $item[1].$item[2]}'
+                                                                                              'line' => 44
                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
                                                                                    ],
-                                                                        'line' => undef
+                                                                        'line' => undef,
+                                                                        'dircount' => 0,
+                                                                        'patcount' => 1,
+                                                                        'number' => 0,
+                                                                        'uncommit' => undef,
+                                                                        'strcount' => 0,
+                                                                        'error' => undef
                                                                       }, 'Parse::RecDescent::_Runtime::Production' ),
                                                                bless( {
-                                                                        'number' => 1,
                                                                         'strcount' => 0,
-                                                                        'dircount' => 0,
                                                                         'uncommit' => undef,
                                                                         'error' => undef,
+                                                                        'dircount' => 0,
+                                                                        'line' => undef,
+                                                                        'number' => 1,
                                                                         'patcount' => 1,
                                                                         'actcount' => 1,
                                                                         'items' => [
                                                                                      bless( {
-                                                                                              'pattern' => '[A-Z]\\w*',
                                                                                               'hashname' => '__PATTERN1__',
-                                                                                              'description' => '/[A-Z]\\\\w*/',
-                                                                                              'lookahead' => 0,
-                                                                                              'rdelim' => '/',
+                                                                                              'ldelim' => '/',
                                                                                               'line' => 45,
+                                                                                              'description' => '/[A-Z]\\\\w*/',
                                                                                               'mod' => '',
-                                                                                              'ldelim' => '/'
+                                                                                              'lookahead' => 0,
+                                                                                              'pattern' => '[A-Z]\\w*',
+                                                                                              'rdelim' => '/'
                                                                                             }, 'Parse::RecDescent::_Runtime::Token' ),
                                                                                      bless( {
                                                                                               'hashname' => '__ACTION1__',
+                                                                                              'code' => '{$return = $item[1]}',
                                                                                               'lookahead' => 0,
-                                                                                              'line' => 45,
-                                                                                              'code' => '{$return = $item[1]}'
+                                                                                              'line' => 45
                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                   ],
-                                                                        'line' => undef
+                                                                                   ]
                                                                       }, 'Parse::RecDescent::_Runtime::Production' )
                                                              ],
                                                   'name' => 'BNAME',
+                                                  'changed' => 0,
+                                                  'opcount' => 0,
+                                                  'line' => 43,
                                                   'vars' => '',
-                                                  'line' => 43
+                                                  'impcount' => 0,
+                                                  'calls' => [
+                                                               'BNAME'
+                                                             ]
                                                 }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'NOTDQUOTE' => bless( {
-                                                      'impcount' => 0,
-                                                      'calls' => [],
-                                                      'changed' => 0,
-                                                      'opcount' => 0,
-                                                      'prods' => [
-                                                                   bless( {
-                                                                            'number' => 0,
-                                                                            'strcount' => 0,
-                                                                            'dircount' => 0,
-                                                                            'uncommit' => undef,
-                                                                            'error' => undef,
-                                                                            'patcount' => 1,
-                                                                            'actcount' => 0,
-                                                                            'items' => [
-                                                                                         bless( {
-                                                                                                  'pattern' => '[^"]*[^"\\\\]',
-                                                                                                  'hashname' => '__PATTERN1__',
-                                                                                                  'description' => '/[^"]*[^"\\\\\\\\]/',
-                                                                                                  'lookahead' => 0,
-                                                                                                  'rdelim' => '/',
-                                                                                                  'line' => 60,
-                                                                                                  'mod' => '',
-                                                                                                  'ldelim' => '/'
-                                                                                                }, 'Parse::RecDescent::_Runtime::Token' )
-                                                                                       ],
-                                                                            'line' => undef
-                                                                          }, 'Parse::RecDescent::_Runtime::Production' )
-                                                                 ],
-                                                      'name' => 'NOTDQUOTE',
-                                                      'vars' => '',
-                                                      'line' => 60
-                                                    }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'SCEN' => bless( {
-                                                 'impcount' => 0,
+                              'LINE' => bless( {
+                                                 'line' => 11,
+                                                 'vars' => '',
                                                  'calls' => [
-                                                              'LINE',
-                                                              'SCEN'
+                                                              'BLOCK',
+                                                              'COMMENT'
                                                             ],
-                                                 'changed' => 0,
-                                                 'opcount' => 0,
+                                                 'impcount' => 0,
+                                                 'name' => 'LINE',
                                                  'prods' => [
                                                               bless( {
-                                                                       'number' => 0,
-                                                                       'strcount' => 0,
-                                                                       'dircount' => 0,
-                                                                       'uncommit' => undef,
-                                                                       'error' => undef,
                                                                        'patcount' => 0,
-                                                                       'actcount' => 1,
+                                                                       'number' => 0,
+                                                                       'dircount' => 0,
+                                                                       'line' => undef,
+                                                                       'error' => undef,
+                                                                       'uncommit' => undef,
+                                                                       'strcount' => 0,
                                                                        'items' => [
                                                                                     bless( {
-                                                                                             'subrule' => 'LINE',
                                                                                              'matchrule' => 0,
+                                                                                             'subrule' => 'BLOCK',
                                                                                              'implicit' => undef,
                                                                                              'argcode' => undef,
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 9
+                                                                                             'line' => 11
                                                                                            }, 'Parse::RecDescent::_Runtime::Subrule' ),
                                                                                     bless( {
-                                                                                             'subrule' => 'SCEN',
-                                                                                             'matchrule' => 0,
-                                                                                             'implicit' => undef,
-                                                                                             'argcode' => undef,
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 9
+                                                                                             'argcode' => undef,
+                                                                                             'line' => 11,
+                                                                                             'implicit' => undef,
+                                                                                             'subrule' => 'COMMENT',
+                                                                                             'matchrule' => 0
                                                                                            }, 'Parse::RecDescent::_Runtime::Subrule' ),
                                                                                     bless( {
                                                                                              'hashname' => '__ACTION1__',
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 9,
-                                                                                             'code' => '{$return = [@{$item{LINE}},@{$item{SCEN}}]}'
+                                                                                             'line' => 11,
+                                                                                             'code' => '{$return = [@{$item{BLOCK}}]}'
                                                                                            }, 'Parse::RecDescent::_Runtime::Action' )
                                                                                   ],
-                                                                       'line' => undef
+                                                                       'actcount' => 1
                                                                      }, 'Parse::RecDescent::_Runtime::Production' ),
                                                               bless( {
-                                                                       'number' => 1,
-                                                                       'strcount' => 0,
-                                                                       'dircount' => 0,
-                                                                       'uncommit' => undef,
-                                                                       'error' => undef,
                                                                        'patcount' => 0,
-                                                                       'actcount' => 1,
+                                                                       'number' => 1,
+                                                                       'line' => undef,
+                                                                       'dircount' => 0,
+                                                                       'error' => undef,
+                                                                       'uncommit' => undef,
+                                                                       'strcount' => 0,
                                                                        'items' => [
                                                                                     bless( {
-                                                                                             'subrule' => 'LINE',
-                                                                                             'matchrule' => 0,
                                                                                              'implicit' => undef,
+                                                                                             'subrule' => 'BLOCK',
+                                                                                             'matchrule' => 0,
                                                                                              'argcode' => undef,
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 10
+                                                                                             'line' => 12
                                                                                            }, 'Parse::RecDescent::_Runtime::Subrule' ),
                                                                                     bless( {
                                                                                              'hashname' => '__ACTION1__',
+                                                                                             'line' => 12,
                                                                                              'lookahead' => 0,
-                                                                                             'line' => 10,
-                                                                                             'code' => '{$return = [@{$item{LINE}}]}'
+                                                                                             'code' => '{$return = [@{$item{BLOCK}}]}'
                                                                                            }, 'Parse::RecDescent::_Runtime::Action' )
                                                                                   ],
-                                                                       'line' => undef
+                                                                       'actcount' => 1
+                                                                     }, 'Parse::RecDescent::_Runtime::Production' ),
+                                                              bless( {
+                                                                       'items' => [
+                                                                                    bless( {
+                                                                                             'matchrule' => 0,
+                                                                                             'subrule' => 'COMMENT',
+                                                                                             'implicit' => undef,
+                                                                                             'argcode' => undef,
+                                                                                             'lookahead' => 0,
+                                                                                             'line' => 13
+                                                                                           }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                    bless( {
+                                                                                             'hashname' => '__ACTION1__',
+                                                                                             'line' => 13,
+                                                                                             'lookahead' => 0,
+                                                                                             'code' => '{$return = []}'
+                                                                                           }, 'Parse::RecDescent::_Runtime::Action' )
+                                                                                  ],
+                                                                       'actcount' => 1,
+                                                                       'patcount' => 0,
+                                                                       'number' => 2,
+                                                                       'line' => undef,
+                                                                       'dircount' => 0,
+                                                                       'error' => undef,
+                                                                       'uncommit' => undef,
+                                                                       'strcount' => 0
                                                                      }, 'Parse::RecDescent::_Runtime::Production' )
                                                             ],
-                                                 'name' => 'SCEN',
-                                                 'vars' => '',
-                                                 'line' => 9
+                                                 'opcount' => 0,
+                                                 'changed' => 0
                                                }, 'Parse::RecDescent::_Runtime::Rule' ),
                               'INCLUDE' => bless( {
+                                                    'vars' => '',
                                                     'impcount' => 0,
                                                     'calls' => [],
+                                                    'line' => 34,
                                                     'changed' => 0,
                                                     'opcount' => 0,
                                                     'prods' => [
                                                                  bless( {
-                                                                          'number' => 0,
-                                                                          'strcount' => 0,
                                                                           'dircount' => 0,
+                                                                          'line' => undef,
+                                                                          'number' => 0,
+                                                                          'patcount' => 1,
+                                                                          'strcount' => 0,
                                                                           'uncommit' => undef,
                                                                           'error' => undef,
-                                                                          'patcount' => 1,
                                                                           'actcount' => 1,
                                                                           'items' => [
                                                                                        bless( {
-                                                                                                'pattern' => '\\/\\S+\\.scen',
                                                                                                 'hashname' => '__PATTERN1__',
+                                                                                                'ldelim' => '/',
+                                                                                                'line' => 34,
                                                                                                 'description' => '/\\\\/\\\\S+\\\\.scen/',
+                                                                                                'mod' => '',
                                                                                                 'lookahead' => 0,
                                                                                                 'rdelim' => '/',
-                                                                                                'line' => 34,
-                                                                                                'mod' => '',
-                                                                                                'ldelim' => '/'
+                                                                                                'pattern' => '\\/\\S+\\.scen'
                                                                                               }, 'Parse::RecDescent::_Runtime::Token' ),
                                                                                        bless( {
                                                                                                 'hashname' => '__ACTION1__',
-                                                                                                'lookahead' => 0,
                                                                                                 'line' => 34,
+                                                                                                'lookahead' => 0,
                                                                                                 'code' => '{$return = $item[1]}'
                                                                                               }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                     ],
-                                                                          'line' => undef
+                                                                                     ]
                                                                         }, 'Parse::RecDescent::_Runtime::Production' ),
                                                                  bless( {
-                                                                          'number' => 1,
-                                                                          'strcount' => 0,
-                                                                          'dircount' => 0,
-                                                                          'uncommit' => undef,
-                                                                          'error' => undef,
-                                                                          'patcount' => 1,
                                                                           'actcount' => 1,
                                                                           'items' => [
                                                                                        bless( {
-                                                                                                'pattern' => '[^\\/#]\\S+\\.scen',
-                                                                                                'hashname' => '__PATTERN1__',
-                                                                                                'description' => '/[^\\\\/#]\\\\S+\\\\.scen/',
-                                                                                                'lookahead' => 0,
-                                                                                                'rdelim' => '/',
                                                                                                 'line' => 35,
-                                                                                                'mod' => '',
-                                                                                                'ldelim' => '/'
+                                                                                                'description' => '/[^\\\\/#]\\\\S+\\\\.scen/',
+                                                                                                'hashname' => '__PATTERN1__',
+                                                                                                'ldelim' => '/',
+                                                                                                'lookahead' => 0,
+                                                                                                'pattern' => '[^\\/#]\\S+\\.scen',
+                                                                                                'rdelim' => '/',
+                                                                                                'mod' => ''
                                                                                               }, 'Parse::RecDescent::_Runtime::Token' ),
                                                                                        bless( {
                                                                                                 'hashname' => '__ACTION1__',
@@ -9643,132 +9342,566 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                 }'
                                                                                               }, 'Parse::RecDescent::_Runtime::Action' )
                                                                                      ],
-                                                                          'line' => undef
+                                                                          'strcount' => 0,
+                                                                          'uncommit' => undef,
+                                                                          'error' => undef,
+                                                                          'dircount' => 0,
+                                                                          'line' => undef,
+                                                                          'number' => 1,
+                                                                          'patcount' => 1
                                                                         }, 'Parse::RecDescent::_Runtime::Production' )
                                                                ],
-                                                    'name' => 'INCLUDE',
-                                                    'vars' => '',
-                                                    'line' => 34
+                                                    'name' => 'INCLUDE'
                                                   }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'PDQUOTE' => bless( {
-                                                    'impcount' => 0,
-                                                    'calls' => [
-                                                                 'NOTDQUOTE',
-                                                                 'SLASHEDDQUOTE',
-                                                                 'PDQUOTE'
-                                                               ],
+                              'TBNAME' => bless( {
+                                                   'line' => 42,
+                                                   'calls' => [
+                                                                'BNAME'
+                                                              ],
+                                                   'impcount' => 0,
+                                                   'vars' => '',
+                                                   'name' => 'TBNAME',
+                                                   'prods' => [
+                                                                bless( {
+                                                                         'items' => [
+                                                                                      bless( {
+                                                                                               'mod' => '',
+                                                                                               'lookahead' => 0,
+                                                                                               'rdelim' => '/',
+                                                                                               'pattern' => '::',
+                                                                                               'hashname' => '__PATTERN1__',
+                                                                                               'ldelim' => '/',
+                                                                                               'line' => 42,
+                                                                                               'description' => '/::/'
+                                                                                             }, 'Parse::RecDescent::_Runtime::Token' ),
+                                                                                      bless( {
+                                                                                               'lookahead' => 0,
+                                                                                               'argcode' => undef,
+                                                                                               'line' => 42,
+                                                                                               'implicit' => undef,
+                                                                                               'subrule' => 'BNAME',
+                                                                                               'matchrule' => 0
+                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                      bless( {
+                                                                                               'lookahead' => 0,
+                                                                                               'line' => 42,
+                                                                                               'code' => '{$return = $item{BNAME}}',
+                                                                                               'hashname' => '__ACTION1__'
+                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
+                                                                                    ],
+                                                                         'actcount' => 1,
+                                                                         'error' => undef,
+                                                                         'strcount' => 0,
+                                                                         'uncommit' => undef,
+                                                                         'number' => 0,
+                                                                         'patcount' => 1,
+                                                                         'line' => undef,
+                                                                         'dircount' => 0
+                                                                       }, 'Parse::RecDescent::_Runtime::Production' ),
+                                                                bless( {
+                                                                         'dircount' => 0,
+                                                                         'line' => undef,
+                                                                         'number' => 1,
+                                                                         'patcount' => 0,
+                                                                         'strcount' => 0,
+                                                                         'uncommit' => undef,
+                                                                         'error' => undef,
+                                                                         'actcount' => 1,
+                                                                         'items' => [
+                                                                                      bless( {
+                                                                                               'matchrule' => 0,
+                                                                                               'subrule' => 'BNAME',
+                                                                                               'implicit' => undef,
+                                                                                               'argcode' => undef,
+                                                                                               'line' => 43,
+                                                                                               'lookahead' => 0
+                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                      bless( {
+                                                                                               'code' => '{$return = "Treex::Block::$item{BNAME}"}',
+                                                                                               'lookahead' => 0,
+                                                                                               'line' => 43,
+                                                                                               'hashname' => '__ACTION1__'
+                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
+                                                                                    ]
+                                                                       }, 'Parse::RecDescent::_Runtime::Production' )
+                                                              ],
+                                                   'opcount' => 0,
+                                                   'changed' => 0
+                                                 }, 'Parse::RecDescent::_Runtime::Rule' ),
+                              'SLASHEDDQUOTE' => bless( {
+                                                          'vars' => '',
+                                                          'impcount' => 0,
+                                                          'calls' => [],
+                                                          'line' => 61,
+                                                          'changed' => 0,
+                                                          'opcount' => 0,
+                                                          'prods' => [
+                                                                       bless( {
+                                                                                'strcount' => 0,
+                                                                                'uncommit' => undef,
+                                                                                'error' => undef,
+                                                                                'line' => undef,
+                                                                                'dircount' => 0,
+                                                                                'number' => 0,
+                                                                                'patcount' => 1,
+                                                                                'actcount' => 1,
+                                                                                'items' => [
+                                                                                             bless( {
+                                                                                                      'line' => 61,
+                                                                                                      'description' => '/\\\\\\\\"/',
+                                                                                                      'ldelim' => '/',
+                                                                                                      'hashname' => '__PATTERN1__',
+                                                                                                      'lookahead' => 0,
+                                                                                                      'rdelim' => '/',
+                                                                                                      'pattern' => '\\\\"',
+                                                                                                      'mod' => ''
+                                                                                                    }, 'Parse::RecDescent::_Runtime::Token' ),
+                                                                                             bless( {
+                                                                                                      'line' => 61,
+                                                                                                      'lookahead' => 0,
+                                                                                                      'code' => '{$return = \'"\'}',
+                                                                                                      'hashname' => '__ACTION1__'
+                                                                                                    }, 'Parse::RecDescent::_Runtime::Action' )
+                                                                                           ]
+                                                                              }, 'Parse::RecDescent::_Runtime::Production' )
+                                                                     ],
+                                                          'name' => 'SLASHEDDQUOTE'
+                                                        }, 'Parse::RecDescent::_Runtime::Rule' ),
+                              'NOTDQUOTE' => bless( {
+                                                      'line' => 60,
+                                                      'impcount' => 0,
+                                                      'calls' => [],
+                                                      'vars' => '',
+                                                      'prods' => [
+                                                                   bless( {
+                                                                            'actcount' => 0,
+                                                                            'items' => [
+                                                                                         bless( {
+                                                                                                  'description' => '/[^"]*[^"\\\\\\\\]/',
+                                                                                                  'line' => 60,
+                                                                                                  'hashname' => '__PATTERN1__',
+                                                                                                  'ldelim' => '/',
+                                                                                                  'rdelim' => '/',
+                                                                                                  'pattern' => '[^"]*[^"\\\\]',
+                                                                                                  'lookahead' => 0,
+                                                                                                  'mod' => ''
+                                                                                                }, 'Parse::RecDescent::_Runtime::Token' )
+                                                                                       ],
+                                                                            'uncommit' => undef,
+                                                                            'strcount' => 0,
+                                                                            'error' => undef,
+                                                                            'line' => undef,
+                                                                            'dircount' => 0,
+                                                                            'patcount' => 1,
+                                                                            'number' => 0
+                                                                          }, 'Parse::RecDescent::_Runtime::Production' )
+                                                                 ],
+                                                      'name' => 'NOTDQUOTE',
+                                                      'changed' => 0,
+                                                      'opcount' => 0
+                                                    }, 'Parse::RecDescent::_Runtime::Rule' ),
+                              'SCEN' => bless( {
+                                                 'name' => 'SCEN',
+                                                 'prods' => [
+                                                              bless( {
+                                                                       'items' => [
+                                                                                    bless( {
+                                                                                             'implicit' => undef,
+                                                                                             'subrule' => 'LINE',
+                                                                                             'matchrule' => 0,
+                                                                                             'argcode' => undef,
+                                                                                             'line' => 9,
+                                                                                             'lookahead' => 0
+                                                                                           }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                    bless( {
+                                                                                             'matchrule' => 0,
+                                                                                             'implicit' => undef,
+                                                                                             'subrule' => 'SCEN',
+                                                                                             'argcode' => undef,
+                                                                                             'lookahead' => 0,
+                                                                                             'line' => 9
+                                                                                           }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                    bless( {
+                                                                                             'hashname' => '__ACTION1__',
+                                                                                             'code' => '{$return = [@{$item{LINE}},@{$item{SCEN}}]}',
+                                                                                             'line' => 9,
+                                                                                             'lookahead' => 0
+                                                                                           }, 'Parse::RecDescent::_Runtime::Action' )
+                                                                                  ],
+                                                                       'actcount' => 1,
+                                                                       'error' => undef,
+                                                                       'uncommit' => undef,
+                                                                       'strcount' => 0,
+                                                                       'patcount' => 0,
+                                                                       'number' => 0,
+                                                                       'dircount' => 0,
+                                                                       'line' => undef
+                                                                     }, 'Parse::RecDescent::_Runtime::Production' ),
+                                                              bless( {
+                                                                       'actcount' => 1,
+                                                                       'items' => [
+                                                                                    bless( {
+                                                                                             'lookahead' => 0,
+                                                                                             'argcode' => undef,
+                                                                                             'line' => 10,
+                                                                                             'implicit' => undef,
+                                                                                             'subrule' => 'LINE',
+                                                                                             'matchrule' => 0
+                                                                                           }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                    bless( {
+                                                                                             'line' => 10,
+                                                                                             'lookahead' => 0,
+                                                                                             'code' => '{$return = [@{$item{LINE}}]}',
+                                                                                             'hashname' => '__ACTION1__'
+                                                                                           }, 'Parse::RecDescent::_Runtime::Action' )
+                                                                                  ],
+                                                                       'uncommit' => undef,
+                                                                       'strcount' => 0,
+                                                                       'error' => undef,
+                                                                       'line' => undef,
+                                                                       'dircount' => 0,
+                                                                       'patcount' => 0,
+                                                                       'number' => 1
+                                                                     }, 'Parse::RecDescent::_Runtime::Production' )
+                                                            ],
+                                                 'opcount' => 0,
+                                                 'changed' => 0,
+                                                 'line' => 9,
+                                                 'impcount' => 0,
+                                                 'calls' => [
+                                                              'LINE',
+                                                              'SCEN'
+                                                            ],
+                                                 'vars' => ''
+                                               }, 'Parse::RecDescent::_Runtime::Rule' ),
+                              'PNAME' => bless( {
+                                                  'calls' => [],
+                                                  'impcount' => 0,
+                                                  'vars' => '',
+                                                  'line' => 49,
+                                                  'changed' => 0,
+                                                  'opcount' => 0,
+                                                  'prods' => [
+                                                               bless( {
+                                                                        'items' => [
+                                                                                     bless( {
+                                                                                              'rdelim' => '/',
+                                                                                              'pattern' => '\\w+',
+                                                                                              'lookahead' => 0,
+                                                                                              'mod' => '',
+                                                                                              'description' => '/\\\\w+/',
+                                                                                              'line' => 49,
+                                                                                              'ldelim' => '/',
+                                                                                              'hashname' => '__PATTERN1__'
+                                                                                            }, 'Parse::RecDescent::_Runtime::Token' ),
+                                                                                     bless( {
+                                                                                              'hashname' => '__ACTION1__',
+                                                                                              'code' => '{$return = $item[1]}',
+                                                                                              'line' => 49,
+                                                                                              'lookahead' => 0
+                                                                                            }, 'Parse::RecDescent::_Runtime::Action' )
+                                                                                   ],
+                                                                        'actcount' => 1,
+                                                                        'number' => 0,
+                                                                        'patcount' => 1,
+                                                                        'line' => undef,
+                                                                        'dircount' => 0,
+                                                                        'error' => undef,
+                                                                        'strcount' => 0,
+                                                                        'uncommit' => undef
+                                                                      }, 'Parse::RecDescent::_Runtime::Production' )
+                                                             ],
+                                                  'name' => 'PNAME'
+                                                }, 'Parse::RecDescent::_Runtime::Rule' ),
+                              'PVALUE' => bless( {
+                                                   'line' => 50,
+                                                   'calls' => [
+                                                                'PSQUOTE',
+                                                                'PDQUOTE',
+                                                                'PTICKED',
+                                                                'PNOTQUOTED'
+                                                              ],
+                                                   'impcount' => 0,
+                                                   'vars' => '',
+                                                   'name' => 'PVALUE',
+                                                   'prods' => [
+                                                                bless( {
+                                                                         'error' => undef,
+                                                                         'uncommit' => undef,
+                                                                         'strcount' => 0,
+                                                                         'patcount' => 2,
+                                                                         'number' => 0,
+                                                                         'dircount' => 0,
+                                                                         'line' => undef,
+                                                                         'items' => [
+                                                                                      bless( {
+                                                                                               'mod' => '',
+                                                                                               'rdelim' => '/',
+                                                                                               'pattern' => '\'',
+                                                                                               'lookahead' => 0,
+                                                                                               'ldelim' => '/',
+                                                                                               'hashname' => '__PATTERN1__',
+                                                                                               'description' => '/\'/',
+                                                                                               'line' => 50
+                                                                                             }, 'Parse::RecDescent::_Runtime::Token' ),
+                                                                                      bless( {
+                                                                                               'implicit' => undef,
+                                                                                               'subrule' => 'PSQUOTE',
+                                                                                               'matchrule' => 0,
+                                                                                               'argcode' => undef,
+                                                                                               'lookahead' => 0,
+                                                                                               'line' => 50
+                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                      bless( {
+                                                                                               'hashname' => '__PATTERN2__',
+                                                                                               'ldelim' => '/',
+                                                                                               'line' => 50,
+                                                                                               'description' => '/\'/',
+                                                                                               'mod' => '',
+                                                                                               'lookahead' => 0,
+                                                                                               'pattern' => '\'',
+                                                                                               'rdelim' => '/'
+                                                                                             }, 'Parse::RecDescent::_Runtime::Token' ),
+                                                                                      bless( {
+                                                                                               'hashname' => '__ACTION1__',
+                                                                                               'line' => 50,
+                                                                                               'lookahead' => 0,
+                                                                                               'code' => '{$return = $item{PSQUOTE}}'
+                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
+                                                                                    ],
+                                                                         'actcount' => 1
+                                                                       }, 'Parse::RecDescent::_Runtime::Production' ),
+                                                                bless( {
+                                                                         'actcount' => 1,
+                                                                         'items' => [
+                                                                                      bless( {
+                                                                                               'rdelim' => '/',
+                                                                                               'pattern' => '"',
+                                                                                               'lookahead' => 0,
+                                                                                               'mod' => '',
+                                                                                               'description' => '/"/',
+                                                                                               'line' => 51,
+                                                                                               'hashname' => '__PATTERN1__',
+                                                                                               'ldelim' => '/'
+                                                                                             }, 'Parse::RecDescent::_Runtime::Token' ),
+                                                                                      bless( {
+                                                                                               'implicit' => undef,
+                                                                                               'subrule' => 'PDQUOTE',
+                                                                                               'matchrule' => 0,
+                                                                                               'argcode' => undef,
+                                                                                               'line' => 51,
+                                                                                               'lookahead' => 0
+                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                      bless( {
+                                                                                               'ldelim' => '/',
+                                                                                               'hashname' => '__PATTERN2__',
+                                                                                               'description' => '/"/',
+                                                                                               'line' => 51,
+                                                                                               'mod' => '',
+                                                                                               'pattern' => '"',
+                                                                                               'rdelim' => '/',
+                                                                                               'lookahead' => 0
+                                                                                             }, 'Parse::RecDescent::_Runtime::Token' ),
+                                                                                      bless( {
+                                                                                               'code' => '{$return = $item{PDQUOTE}}',
+                                                                                               'lookahead' => 0,
+                                                                                               'line' => 51,
+                                                                                               'hashname' => '__ACTION1__'
+                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
+                                                                                    ],
+                                                                         'line' => undef,
+                                                                         'dircount' => 0,
+                                                                         'patcount' => 2,
+                                                                         'number' => 1,
+                                                                         'uncommit' => undef,
+                                                                         'strcount' => 0,
+                                                                         'error' => undef
+                                                                       }, 'Parse::RecDescent::_Runtime::Production' ),
+                                                                bless( {
+                                                                         'number' => 2,
+                                                                         'patcount' => 2,
+                                                                         'dircount' => 0,
+                                                                         'line' => undef,
+                                                                         'error' => undef,
+                                                                         'strcount' => 0,
+                                                                         'uncommit' => undef,
+                                                                         'items' => [
+                                                                                      bless( {
+                                                                                               'ldelim' => '/',
+                                                                                               'hashname' => '__PATTERN1__',
+                                                                                               'line' => 52,
+                                                                                               'description' => '/`/',
+                                                                                               'mod' => '',
+                                                                                               'lookahead' => 0,
+                                                                                               'rdelim' => '/',
+                                                                                               'pattern' => '`'
+                                                                                             }, 'Parse::RecDescent::_Runtime::Token' ),
+                                                                                      bless( {
+                                                                                               'line' => 52,
+                                                                                               'argcode' => undef,
+                                                                                               'lookahead' => 0,
+                                                                                               'matchrule' => 0,
+                                                                                               'subrule' => 'PTICKED',
+                                                                                               'implicit' => undef
+                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                      bless( {
+                                                                                               'mod' => '',
+                                                                                               'pattern' => '`',
+                                                                                               'rdelim' => '/',
+                                                                                               'lookahead' => 0,
+                                                                                               'hashname' => '__PATTERN2__',
+                                                                                               'ldelim' => '/',
+                                                                                               'description' => '/`/',
+                                                                                               'line' => 52
+                                                                                             }, 'Parse::RecDescent::_Runtime::Token' ),
+                                                                                      bless( {
+                                                                                               'code' => '{$return = $item[1].$item[2].$item[3]}',
+                                                                                               'line' => 52,
+                                                                                               'lookahead' => 0,
+                                                                                               'hashname' => '__ACTION1__'
+                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
+                                                                                    ],
+                                                                         'actcount' => 1
+                                                                       }, 'Parse::RecDescent::_Runtime::Production' ),
+                                                                bless( {
+                                                                         'actcount' => 1,
+                                                                         'items' => [
+                                                                                      bless( {
+                                                                                               'subrule' => 'PNOTQUOTED',
+                                                                                               'implicit' => undef,
+                                                                                               'matchrule' => 0,
+                                                                                               'lookahead' => 0,
+                                                                                               'argcode' => undef,
+                                                                                               'line' => 53
+                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                      bless( {
+                                                                                               'hashname' => '__ACTION1__',
+                                                                                               'code' => '{$return = $item{PNOTQUOTED}}',
+                                                                                               'lookahead' => 0,
+                                                                                               'line' => 53
+                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
+                                                                                    ],
+                                                                         'line' => undef,
+                                                                         'dircount' => 0,
+                                                                         'patcount' => 0,
+                                                                         'number' => 3,
+                                                                         'uncommit' => undef,
+                                                                         'strcount' => 0,
+                                                                         'error' => undef
+                                                                       }, 'Parse::RecDescent::_Runtime::Production' )
+                                                              ],
+                                                   'opcount' => 0,
+                                                   'changed' => 0
+                                                 }, 'Parse::RecDescent::_Runtime::Rule' ),
+                              'PTICKED' => bless( {
                                                     'changed' => 0,
                                                     'opcount' => 0,
                                                     'prods' => [
                                                                  bless( {
+                                                                          'patcount' => 1,
                                                                           'number' => 0,
-                                                                          'strcount' => 0,
+                                                                          'line' => undef,
                                                                           'dircount' => 0,
-                                                                          'uncommit' => undef,
                                                                           'error' => undef,
-                                                                          'patcount' => 0,
-                                                                          'actcount' => 1,
+                                                                          'uncommit' => undef,
+                                                                          'strcount' => 0,
                                                                           'items' => [
                                                                                        bless( {
-                                                                                                'subrule' => 'NOTDQUOTE',
-                                                                                                'matchrule' => 0,
-                                                                                                'implicit' => undef,
-                                                                                                'argcode' => undef,
+                                                                                                'ldelim' => '/',
+                                                                                                'hashname' => '__PATTERN1__',
+                                                                                                'line' => 65,
+                                                                                                'description' => '/[^`]+/',
+                                                                                                'mod' => '',
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 58
-                                                                                              }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                                'pattern' => '[^`]+',
+                                                                                                'rdelim' => '/'
+                                                                                              }, 'Parse::RecDescent::_Runtime::Token' ),
                                                                                        bless( {
-                                                                                                'subrule' => 'SLASHEDDQUOTE',
-                                                                                                'matchrule' => 0,
-                                                                                                'implicit' => undef,
-                                                                                                'argcode' => undef,
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 58
-                                                                                              }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                       bless( {
-                                                                                                'subrule' => 'PDQUOTE',
-                                                                                                'matchrule' => 0,
-                                                                                                'implicit' => undef,
-                                                                                                'argcode' => undef,
-                                                                                                'lookahead' => 0,
-                                                                                                'line' => 58
-                                                                                              }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                       bless( {
-                                                                                                'hashname' => '__ACTION1__',
-                                                                                                'lookahead' => 0,
-                                                                                                'line' => 58,
-                                                                                                'code' => '{$return = $item{NOTDQUOTE}.$item{SLASHEDDQUOTE}.$item{PDQUOTE}}'
+                                                                                                'line' => 65,
+                                                                                                'code' => '{$return = $item[1]}',
+                                                                                                'hashname' => '__ACTION1__'
                                                                                               }, 'Parse::RecDescent::_Runtime::Action' )
                                                                                      ],
-                                                                          'line' => undef
-                                                                        }, 'Parse::RecDescent::_Runtime::Production' ),
-                                                                 bless( {
-                                                                          'number' => 1,
-                                                                          'strcount' => 0,
-                                                                          'dircount' => 0,
-                                                                          'uncommit' => undef,
-                                                                          'error' => undef,
-                                                                          'patcount' => 0,
-                                                                          'actcount' => 0,
-                                                                          'items' => [
-                                                                                       bless( {
-                                                                                                'subrule' => 'NOTDQUOTE',
-                                                                                                'matchrule' => 0,
-                                                                                                'implicit' => undef,
-                                                                                                'argcode' => undef,
-                                                                                                'lookahead' => 0,
-                                                                                                'line' => 59
-                                                                                              }, 'Parse::RecDescent::_Runtime::Subrule' )
-                                                                                     ],
-                                                                          'line' => undef
+                                                                          'actcount' => 1
                                                                         }, 'Parse::RecDescent::_Runtime::Production' )
                                                                ],
-                                                    'name' => 'PDQUOTE',
-                                                    'vars' => '',
-                                                    'line' => 58
-                                                  }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'PSQUOTE' => bless( {
+                                                    'name' => 'PTICKED',
+                                                    'calls' => [],
                                                     'impcount' => 0,
-                                                    'calls' => [
-                                                                 'NOTSQUOTE',
-                                                                 'SLASHEDSQUOTE',
-                                                                 'PSQUOTE'
-                                                               ],
+                                                    'vars' => '',
+                                                    'line' => 65
+                                                  }, 'Parse::RecDescent::_Runtime::Rule' ),
+                              'EMPTY' => bless( {
+                                                  'vars' => '',
+                                                  'calls' => [],
+                                                  'impcount' => 0,
+                                                  'line' => 68,
+                                                  'opcount' => 0,
+                                                  'changed' => 0,
+                                                  'name' => 'EMPTY',
+                                                  'prods' => [
+                                                               bless( {
+                                                                        'number' => 0,
+                                                                        'patcount' => 1,
+                                                                        'line' => undef,
+                                                                        'dircount' => 0,
+                                                                        'error' => undef,
+                                                                        'strcount' => 0,
+                                                                        'uncommit' => undef,
+                                                                        'items' => [
+                                                                                     bless( {
+                                                                                              'mod' => '',
+                                                                                              'rdelim' => '/',
+                                                                                              'pattern' => '',
+                                                                                              'lookahead' => 0,
+                                                                                              'hashname' => '__PATTERN1__',
+                                                                                              'ldelim' => '/',
+                                                                                              'description' => '//',
+                                                                                              'line' => 68
+                                                                                            }, 'Parse::RecDescent::_Runtime::Token' )
+                                                                                   ],
+                                                                        'actcount' => 0
+                                                                      }, 'Parse::RecDescent::_Runtime::Production' )
+                                                             ]
+                                                }, 'Parse::RecDescent::_Runtime::Rule' ),
+                              'PSQUOTE' => bless( {
                                                     'changed' => 0,
                                                     'opcount' => 0,
                                                     'prods' => [
                                                                  bless( {
-                                                                          'number' => 0,
-                                                                          'strcount' => 0,
+                                                                          'line' => undef,
                                                                           'dircount' => 0,
+                                                                          'number' => 0,
+                                                                          'patcount' => 0,
+                                                                          'strcount' => 0,
                                                                           'uncommit' => undef,
                                                                           'error' => undef,
-                                                                          'patcount' => 0,
                                                                           'actcount' => 1,
                                                                           'items' => [
                                                                                        bless( {
+                                                                                                'implicit' => undef,
                                                                                                 'subrule' => 'NOTSQUOTE',
                                                                                                 'matchrule' => 0,
-                                                                                                'implicit' => undef,
+                                                                                                'line' => 54,
                                                                                                 'argcode' => undef,
-                                                                                                'lookahead' => 0,
-                                                                                                'line' => 54
+                                                                                                'lookahead' => 0
                                                                                               }, 'Parse::RecDescent::_Runtime::Subrule' ),
                                                                                        bless( {
                                                                                                 'subrule' => 'SLASHEDSQUOTE',
-                                                                                                'matchrule' => 0,
                                                                                                 'implicit' => undef,
+                                                                                                'matchrule' => 0,
                                                                                                 'argcode' => undef,
-                                                                                                'lookahead' => 0,
-                                                                                                'line' => 54
+                                                                                                'line' => 54,
+                                                                                                'lookahead' => 0
                                                                                               }, 'Parse::RecDescent::_Runtime::Subrule' ),
                                                                                        bless( {
-                                                                                                'subrule' => 'PSQUOTE',
-                                                                                                'matchrule' => 0,
-                                                                                                'implicit' => undef,
                                                                                                 'argcode' => undef,
+                                                                                                'line' => 54,
                                                                                                 'lookahead' => 0,
-                                                                                                'line' => 54
+                                                                                                'subrule' => 'PSQUOTE',
+                                                                                                'implicit' => undef,
+                                                                                                'matchrule' => 0
                                                                                               }, 'Parse::RecDescent::_Runtime::Subrule' ),
                                                                                        bless( {
                                                                                                 'hashname' => '__ACTION1__',
@@ -9776,360 +9909,227 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                                                                                                 'line' => 54,
                                                                                                 'code' => '{$return = $item{NOTSQUOTE}.$item{SLASHEDSQUOTE}.$item{PSQUOTE}}'
                                                                                               }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                     ],
-                                                                          'line' => undef
+                                                                                     ]
                                                                         }, 'Parse::RecDescent::_Runtime::Production' ),
                                                                  bless( {
-                                                                          'number' => 1,
-                                                                          'strcount' => 0,
-                                                                          'dircount' => 0,
-                                                                          'uncommit' => undef,
                                                                           'error' => undef,
+                                                                          'uncommit' => undef,
+                                                                          'strcount' => 0,
                                                                           'patcount' => 0,
-                                                                          'actcount' => 0,
+                                                                          'number' => 1,
+                                                                          'dircount' => 0,
+                                                                          'line' => undef,
                                                                           'items' => [
                                                                                        bless( {
                                                                                                 'subrule' => 'NOTSQUOTE',
-                                                                                                'matchrule' => 0,
                                                                                                 'implicit' => undef,
+                                                                                                'matchrule' => 0,
                                                                                                 'argcode' => undef,
-                                                                                                'lookahead' => 0,
-                                                                                                'line' => 55
+                                                                                                'line' => 55,
+                                                                                                'lookahead' => 0
                                                                                               }, 'Parse::RecDescent::_Runtime::Subrule' )
                                                                                      ],
-                                                                          'line' => undef
+                                                                          'actcount' => 0
                                                                         }, 'Parse::RecDescent::_Runtime::Production' )
                                                                ],
                                                     'name' => 'PSQUOTE',
+                                                    'impcount' => 0,
+                                                    'calls' => [
+                                                                 'NOTSQUOTE',
+                                                                 'SLASHEDSQUOTE',
+                                                                 'PSQUOTE'
+                                                               ],
                                                     'vars' => '',
                                                     'line' => 54
                                                   }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'PARAMS' => bless( {
-                                                   'impcount' => 0,
-                                                   'calls' => [
-                                                                'PARAM',
-                                                                'PARAMS'
-                                                              ],
-                                                   'changed' => 0,
-                                                   'opcount' => 0,
-                                                   'prods' => [
-                                                                bless( {
-                                                                         'number' => 0,
-                                                                         'strcount' => 0,
-                                                                         'dircount' => 0,
-                                                                         'uncommit' => undef,
-                                                                         'error' => undef,
-                                                                         'patcount' => 0,
-                                                                         'actcount' => 1,
-                                                                         'items' => [
-                                                                                      bless( {
-                                                                                               'subrule' => 'PARAM',
-                                                                                               'matchrule' => 0,
-                                                                                               'implicit' => undef,
-                                                                                               'argcode' => undef,
-                                                                                               'lookahead' => 0,
-                                                                                               'line' => 46
-                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                      bless( {
-                                                                                               'subrule' => 'PARAMS',
-                                                                                               'matchrule' => 0,
-                                                                                               'implicit' => undef,
-                                                                                               'argcode' => undef,
-                                                                                               'lookahead' => 0,
-                                                                                               'line' => 46
-                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                      bless( {
-                                                                                               'hashname' => '__ACTION1__',
-                                                                                               'lookahead' => 0,
-                                                                                               'line' => 46,
-                                                                                               'code' => '{$return = [$item{PARAM}, @{$item{PARAMS}}]}'
-                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                    ],
-                                                                         'line' => undef
-                                                                       }, 'Parse::RecDescent::_Runtime::Production' ),
-                                                                bless( {
-                                                                         'number' => 1,
-                                                                         'strcount' => 0,
-                                                                         'dircount' => 0,
-                                                                         'uncommit' => undef,
-                                                                         'error' => undef,
-                                                                         'patcount' => 0,
-                                                                         'actcount' => 1,
-                                                                         'items' => [
-                                                                                      bless( {
-                                                                                               'subrule' => 'PARAM',
-                                                                                               'matchrule' => 0,
-                                                                                               'implicit' => undef,
-                                                                                               'argcode' => undef,
-                                                                                               'lookahead' => 0,
-                                                                                               'line' => 47
-                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                      bless( {
-                                                                                               'hashname' => '__ACTION1__',
-                                                                                               'lookahead' => 0,
-                                                                                               'line' => 47,
-                                                                                               'code' => '{$return = [$item{PARAM}]}'
-                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                    ],
-                                                                         'line' => undef
-                                                                       }, 'Parse::RecDescent::_Runtime::Production' )
-                                                              ],
-                                                   'name' => 'PARAMS',
-                                                   'vars' => '',
-                                                   'line' => 46
-                                                 }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'PARAM' => bless( {
-                                                  'impcount' => 0,
-                                                  'calls' => [
-                                                               'PNAME',
-                                                               'PVALUE'
-                                                             ],
-                                                  'changed' => 0,
-                                                  'opcount' => 0,
-                                                  'prods' => [
-                                                               bless( {
-                                                                        'number' => 0,
-                                                                        'strcount' => 1,
-                                                                        'dircount' => 1,
-                                                                        'uncommit' => undef,
-                                                                        'error' => undef,
-                                                                        'patcount' => 0,
-                                                                        'actcount' => 1,
-                                                                        'items' => [
-                                                                                     bless( {
-                                                                                              'subrule' => 'PNAME',
-                                                                                              'matchrule' => 0,
-                                                                                              'implicit' => undef,
-                                                                                              'argcode' => undef,
-                                                                                              'lookahead' => 0,
-                                                                                              'line' => 48
-                                                                                            }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                     bless( {
-                                                                                              'pattern' => '=',
-                                                                                              'hashname' => '__STRING1__',
-                                                                                              'description' => '\'=\'',
-                                                                                              'lookahead' => 0,
-                                                                                              'line' => 48
-                                                                                            }, 'Parse::RecDescent::_Runtime::Literal' ),
-                                                                                     bless( {
-                                                                                              'hashname' => '__DIRECTIVE1__',
-                                                                                              'name' => '<skip: qr//>',
-                                                                                              'lookahead' => 0,
-                                                                                              'line' => 48,
-                                                                                              'code' => 'my $oldskip = $skip; $skip= qr//; $oldskip'
-                                                                                            }, 'Parse::RecDescent::_Runtime::Directive' ),
-                                                                                     bless( {
-                                                                                              'subrule' => 'PVALUE',
-                                                                                              'matchrule' => 0,
-                                                                                              'implicit' => undef,
-                                                                                              'argcode' => undef,
-                                                                                              'lookahead' => 0,
-                                                                                              'line' => 48
-                                                                                            }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                     bless( {
-                                                                                              'hashname' => '__ACTION1__',
-                                                                                              'lookahead' => 0,
-                                                                                              'line' => 48,
-                                                                                              'code' => '{$return = $item{PNAME}.\'=\'.$item{PVALUE}}'
-                                                                                            }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                   ],
-                                                                        'line' => undef
-                                                                      }, 'Parse::RecDescent::_Runtime::Production' )
-                                                             ],
-                                                  'name' => 'PARAM',
-                                                  'vars' => '',
-                                                  'line' => 48
-                                                }, 'Parse::RecDescent::_Runtime::Rule' ),
-                              'PVALUE' => bless( {
-                                                   'impcount' => 0,
-                                                   'calls' => [
-                                                                'PSQUOTE',
-                                                                'PDQUOTE',
-                                                                'PTICKED',
-                                                                'PNOTQUOTED'
-                                                              ],
-                                                   'changed' => 0,
-                                                   'opcount' => 0,
-                                                   'prods' => [
-                                                                bless( {
-                                                                         'number' => 0,
-                                                                         'strcount' => 0,
-                                                                         'dircount' => 0,
-                                                                         'uncommit' => undef,
-                                                                         'error' => undef,
-                                                                         'patcount' => 2,
-                                                                         'actcount' => 1,
-                                                                         'items' => [
-                                                                                      bless( {
-                                                                                               'pattern' => '\'',
-                                                                                               'hashname' => '__PATTERN1__',
-                                                                                               'description' => '/\'/',
-                                                                                               'lookahead' => 0,
-                                                                                               'rdelim' => '/',
-                                                                                               'line' => 50,
-                                                                                               'mod' => '',
-                                                                                               'ldelim' => '/'
-                                                                                             }, 'Parse::RecDescent::_Runtime::Token' ),
-                                                                                      bless( {
-                                                                                               'subrule' => 'PSQUOTE',
-                                                                                               'matchrule' => 0,
-                                                                                               'implicit' => undef,
-                                                                                               'argcode' => undef,
-                                                                                               'lookahead' => 0,
-                                                                                               'line' => 50
-                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                      bless( {
-                                                                                               'pattern' => '\'',
-                                                                                               'hashname' => '__PATTERN2__',
-                                                                                               'description' => '/\'/',
-                                                                                               'lookahead' => 0,
-                                                                                               'rdelim' => '/',
-                                                                                               'line' => 50,
-                                                                                               'mod' => '',
-                                                                                               'ldelim' => '/'
-                                                                                             }, 'Parse::RecDescent::_Runtime::Token' ),
-                                                                                      bless( {
-                                                                                               'hashname' => '__ACTION1__',
-                                                                                               'lookahead' => 0,
-                                                                                               'line' => 50,
-                                                                                               'code' => '{$return = $item{PSQUOTE}}'
-                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                    ],
-                                                                         'line' => undef
-                                                                       }, 'Parse::RecDescent::_Runtime::Production' ),
-                                                                bless( {
-                                                                         'number' => 1,
-                                                                         'strcount' => 0,
-                                                                         'dircount' => 0,
-                                                                         'uncommit' => undef,
-                                                                         'error' => undef,
-                                                                         'patcount' => 2,
-                                                                         'actcount' => 1,
-                                                                         'items' => [
-                                                                                      bless( {
-                                                                                               'pattern' => '"',
-                                                                                               'hashname' => '__PATTERN1__',
-                                                                                               'description' => '/"/',
-                                                                                               'lookahead' => 0,
-                                                                                               'rdelim' => '/',
-                                                                                               'line' => 51,
-                                                                                               'mod' => '',
-                                                                                               'ldelim' => '/'
-                                                                                             }, 'Parse::RecDescent::_Runtime::Token' ),
-                                                                                      bless( {
-                                                                                               'subrule' => 'PDQUOTE',
-                                                                                               'matchrule' => 0,
-                                                                                               'implicit' => undef,
-                                                                                               'argcode' => undef,
-                                                                                               'lookahead' => 0,
-                                                                                               'line' => 51
-                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                      bless( {
-                                                                                               'pattern' => '"',
-                                                                                               'hashname' => '__PATTERN2__',
-                                                                                               'description' => '/"/',
-                                                                                               'lookahead' => 0,
-                                                                                               'rdelim' => '/',
-                                                                                               'line' => 51,
-                                                                                               'mod' => '',
-                                                                                               'ldelim' => '/'
-                                                                                             }, 'Parse::RecDescent::_Runtime::Token' ),
-                                                                                      bless( {
-                                                                                               'hashname' => '__ACTION1__',
-                                                                                               'lookahead' => 0,
-                                                                                               'line' => 51,
-                                                                                               'code' => '{$return = $item{PDQUOTE}}'
-                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                    ],
-                                                                         'line' => undef
-                                                                       }, 'Parse::RecDescent::_Runtime::Production' ),
-                                                                bless( {
-                                                                         'number' => 2,
-                                                                         'strcount' => 0,
-                                                                         'dircount' => 0,
-                                                                         'uncommit' => undef,
-                                                                         'error' => undef,
-                                                                         'patcount' => 2,
-                                                                         'actcount' => 1,
-                                                                         'items' => [
-                                                                                      bless( {
-                                                                                               'pattern' => '`',
-                                                                                               'hashname' => '__PATTERN1__',
-                                                                                               'description' => '/`/',
-                                                                                               'lookahead' => 0,
-                                                                                               'rdelim' => '/',
-                                                                                               'line' => 52,
-                                                                                               'mod' => '',
-                                                                                               'ldelim' => '/'
-                                                                                             }, 'Parse::RecDescent::_Runtime::Token' ),
-                                                                                      bless( {
-                                                                                               'subrule' => 'PTICKED',
-                                                                                               'matchrule' => 0,
-                                                                                               'implicit' => undef,
-                                                                                               'argcode' => undef,
-                                                                                               'lookahead' => 0,
-                                                                                               'line' => 52
-                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                      bless( {
-                                                                                               'pattern' => '`',
-                                                                                               'hashname' => '__PATTERN2__',
-                                                                                               'description' => '/`/',
-                                                                                               'lookahead' => 0,
-                                                                                               'rdelim' => '/',
-                                                                                               'line' => 52,
-                                                                                               'mod' => '',
-                                                                                               'ldelim' => '/'
-                                                                                             }, 'Parse::RecDescent::_Runtime::Token' ),
-                                                                                      bless( {
-                                                                                               'hashname' => '__ACTION1__',
-                                                                                               'lookahead' => 0,
-                                                                                               'line' => 52,
-                                                                                               'code' => '{$return = $item[1].$item[2].$item[3]}'
-                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                    ],
-                                                                         'line' => undef
-                                                                       }, 'Parse::RecDescent::_Runtime::Production' ),
-                                                                bless( {
-                                                                         'number' => 3,
-                                                                         'strcount' => 0,
-                                                                         'dircount' => 0,
-                                                                         'uncommit' => undef,
-                                                                         'error' => undef,
-                                                                         'patcount' => 0,
-                                                                         'actcount' => 1,
-                                                                         'items' => [
-                                                                                      bless( {
-                                                                                               'subrule' => 'PNOTQUOTED',
-                                                                                               'matchrule' => 0,
-                                                                                               'implicit' => undef,
-                                                                                               'argcode' => undef,
-                                                                                               'lookahead' => 0,
-                                                                                               'line' => 53
-                                                                                             }, 'Parse::RecDescent::_Runtime::Subrule' ),
-                                                                                      bless( {
-                                                                                               'hashname' => '__ACTION1__',
-                                                                                               'lookahead' => 0,
-                                                                                               'line' => 53,
-                                                                                               'code' => '{$return = $item{PNOTQUOTED}}'
-                                                                                             }, 'Parse::RecDescent::_Runtime::Action' )
-                                                                                    ],
-                                                                         'line' => undef
-                                                                       }, 'Parse::RecDescent::_Runtime::Production' )
-                                                              ],
-                                                   'name' => 'PVALUE',
-                                                   'vars' => '',
-                                                   'line' => 50
-                                                 }, 'Parse::RecDescent::_Runtime::Rule' )
+                              'startrule' => bless( {
+                                                      'impcount' => 0,
+                                                      'calls' => [
+                                                                   'SCEN',
+                                                                   'EOF'
+                                                                 ],
+                                                      'vars' => '',
+                                                      'line' => 8,
+                                                      'changed' => 0,
+                                                      'opcount' => 0,
+                                                      'prods' => [
+                                                                   bless( {
+                                                                            'actcount' => 1,
+                                                                            'items' => [
+                                                                                         bless( {
+                                                                                                  'implicit' => undef,
+                                                                                                  'subrule' => 'SCEN',
+                                                                                                  'matchrule' => 0,
+                                                                                                  'lookahead' => 0,
+                                                                                                  'argcode' => undef,
+                                                                                                  'line' => 8
+                                                                                                }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                         bless( {
+                                                                                                  'matchrule' => 0,
+                                                                                                  'implicit' => undef,
+                                                                                                  'subrule' => 'EOF',
+                                                                                                  'line' => 8,
+                                                                                                  'argcode' => undef,
+                                                                                                  'lookahead' => 0
+                                                                                                }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                         bless( {
+                                                                                                  'code' => '{$return = $item{SCEN}}',
+                                                                                                  'line' => 8,
+                                                                                                  'lookahead' => 0,
+                                                                                                  'hashname' => '__ACTION1__'
+                                                                                                }, 'Parse::RecDescent::_Runtime::Action' )
+                                                                                       ],
+                                                                            'dircount' => 0,
+                                                                            'line' => undef,
+                                                                            'patcount' => 0,
+                                                                            'number' => 0,
+                                                                            'uncommit' => undef,
+                                                                            'strcount' => 0,
+                                                                            'error' => undef
+                                                                          }, 'Parse::RecDescent::_Runtime::Production' )
+                                                                 ],
+                                                      'name' => 'startrule'
+                                                    }, 'Parse::RecDescent::_Runtime::Rule' ),
+                              'PNOTQUOTED' => bless( {
+                                                       'prods' => [
+                                                                    bless( {
+                                                                             'patcount' => 1,
+                                                                             'number' => 0,
+                                                                             'line' => undef,
+                                                                             'dircount' => 0,
+                                                                             'error' => undef,
+                                                                             'uncommit' => undef,
+                                                                             'strcount' => 0,
+                                                                             'items' => [
+                                                                                          bless( {
+                                                                                                   'rdelim' => '/',
+                                                                                                   'pattern' => '\\S+',
+                                                                                                   'lookahead' => 0,
+                                                                                                   'mod' => '',
+                                                                                                   'description' => '/\\\\S+/',
+                                                                                                   'line' => 63,
+                                                                                                   'ldelim' => '/',
+                                                                                                   'hashname' => '__PATTERN1__'
+                                                                                                 }, 'Parse::RecDescent::_Runtime::Token' ),
+                                                                                          bless( {
+                                                                                                   'hashname' => '__ACTION1__',
+                                                                                                   'code' => '{$return = $item[1]}',
+                                                                                                   'lookahead' => 0,
+                                                                                                   'line' => 63
+                                                                                                 }, 'Parse::RecDescent::_Runtime::Action' )
+                                                                                        ],
+                                                                             'actcount' => 1
+                                                                           }, 'Parse::RecDescent::_Runtime::Production' ),
+                                                                    bless( {
+                                                                             'actcount' => 1,
+                                                                             'items' => [
+                                                                                          bless( {
+                                                                                                   'implicit' => undef,
+                                                                                                   'subrule' => 'EMPTY',
+                                                                                                   'matchrule' => 0,
+                                                                                                   'line' => 64,
+                                                                                                   'argcode' => undef,
+                                                                                                   'lookahead' => 0
+                                                                                                 }, 'Parse::RecDescent::_Runtime::Subrule' ),
+                                                                                          bless( {
+                                                                                                   'hashname' => '__ACTION1__',
+                                                                                                   'line' => 64,
+                                                                                                   'lookahead' => 0,
+                                                                                                   'code' => '{$return = \'\'}'
+                                                                                                 }, 'Parse::RecDescent::_Runtime::Action' )
+                                                                                        ],
+                                                                             'dircount' => 0,
+                                                                             'line' => undef,
+                                                                             'number' => 1,
+                                                                             'patcount' => 0,
+                                                                             'strcount' => 0,
+                                                                             'uncommit' => undef,
+                                                                             'error' => undef
+                                                                           }, 'Parse::RecDescent::_Runtime::Production' )
+                                                                  ],
+                                                       'name' => 'PNOTQUOTED',
+                                                       'changed' => 0,
+                                                       'opcount' => 0,
+                                                       'line' => 63,
+                                                       'vars' => '',
+                                                       'impcount' => 0,
+                                                       'calls' => [
+                                                                    'EMPTY'
+                                                                  ]
+                                                     }, 'Parse::RecDescent::_Runtime::Rule' ),
+                              'SLASHEDSQUOTE' => bless( {
+                                                          'line' => 57,
+                                                          'calls' => [],
+                                                          'impcount' => 0,
+                                                          'vars' => '',
+                                                          'prods' => [
+                                                                       bless( {
+                                                                                'actcount' => 1,
+                                                                                'items' => [
+                                                                                             bless( {
+                                                                                                      'hashname' => '__PATTERN1__',
+                                                                                                      'ldelim' => '/',
+                                                                                                      'description' => '/\\\\\\\\\'/',
+                                                                                                      'line' => 57,
+                                                                                                      'mod' => '',
+                                                                                                      'rdelim' => '/',
+                                                                                                      'pattern' => '\\\\\'',
+                                                                                                      'lookahead' => 0
+                                                                                                    }, 'Parse::RecDescent::_Runtime::Token' ),
+                                                                                             bless( {
+                                                                                                      'code' => '{$return = "\'"}',
+                                                                                                      'line' => 57,
+                                                                                                      'lookahead' => 0,
+                                                                                                      'hashname' => '__ACTION1__'
+                                                                                                    }, 'Parse::RecDescent::_Runtime::Action' )
+                                                                                           ],
+                                                                                'line' => undef,
+                                                                                'dircount' => 0,
+                                                                                'number' => 0,
+                                                                                'patcount' => 1,
+                                                                                'strcount' => 0,
+                                                                                'uncommit' => undef,
+                                                                                'error' => undef
+                                                                              }, 'Parse::RecDescent::_Runtime::Production' )
+                                                                     ],
+                                                          'name' => 'SLASHEDSQUOTE',
+                                                          'changed' => 0,
+                                                          'opcount' => 0
+                                                        }, 'Parse::RecDescent::_Runtime::Rule' ),
+                              'NOTSQUOTE' => bless( {
+                                                      'impcount' => 0,
+                                                      'calls' => [],
+                                                      'vars' => '',
+                                                      'line' => 56,
+                                                      'changed' => 0,
+                                                      'opcount' => 0,
+                                                      'prods' => [
+                                                                   bless( {
+                                                                            'dircount' => 0,
+                                                                            'line' => undef,
+                                                                            'patcount' => 1,
+                                                                            'number' => 0,
+                                                                            'uncommit' => undef,
+                                                                            'strcount' => 0,
+                                                                            'error' => undef,
+                                                                            'actcount' => 0,
+                                                                            'items' => [
+                                                                                         bless( {
+                                                                                                  'line' => 56,
+                                                                                                  'description' => '/[^\']*[^\'\\\\\\\\]/',
+                                                                                                  'hashname' => '__PATTERN1__',
+                                                                                                  'ldelim' => '/',
+                                                                                                  'lookahead' => 0,
+                                                                                                  'rdelim' => '/',
+                                                                                                  'pattern' => '[^\']*[^\'\\\\]',
+                                                                                                  'mod' => ''
+                                                                                                }, 'Parse::RecDescent::_Runtime::Token' )
+                                                                                       ]
+                                                                          }, 'Parse::RecDescent::_Runtime::Production' )
+                                                                 ],
+                                                      'name' => 'NOTSQUOTE'
+                                                    }, 'Parse::RecDescent::_Runtime::Rule' )
                             },
-                 '_AUTOTREE' => undef,
-                 '_check' => {
-                               'thisoffset' => '',
-                               'itempos' => '',
-                               'prevoffset' => '',
-                               'prevline' => '',
-                               'prevcolumn' => '',
-                               'thiscolumn' => ''
-                             },
-                 '_AUTOACTION' => undef
+                 '_AUTOTREE' => undef
                }, 'Parse::RecDescent::_Runtime' );
 }
