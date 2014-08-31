@@ -1,4 +1,7 @@
 package Treex::Block::W2A::EN::SetIsMemberFromDeprel;
+
+use strict;
+use warnings;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';

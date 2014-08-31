@@ -1,4 +1,7 @@
 package Treex::Block::W2A::TokenizeOnWhitespace;
+
+use strict;
+use warnings;
 use Moose;
 use utf8;
 use Treex::Core::Common;

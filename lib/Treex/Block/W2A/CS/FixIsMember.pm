@@ -1,4 +1,7 @@
 package Treex::Block::W2A::CS::FixIsMember;
+
+use strict;
+use warnings;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -28,6 +31,7 @@ sub process_atree {
             }
         }
     }
+    return;
 }
 
 1;

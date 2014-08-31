@@ -1,4 +1,7 @@
 package Treex::Tool::Segment::RuleBased;
+
+use strict;
+use warnings;
 use utf8;
 use Moose;
 use Treex::Core::Common;

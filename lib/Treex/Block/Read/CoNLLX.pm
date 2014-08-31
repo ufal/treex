@@ -1,4 +1,7 @@
 package Treex::Block::Read::CoNLLX;
+
+use strict;
+use warnings;
 use Moose;
 use Treex::Core::Common;
 use File::Slurp;

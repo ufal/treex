@@ -1,4 +1,7 @@
 package Treex::Block::W2A::EN::FixTagsAfterParse;
+
+use strict;
+use warnings;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource qw(require_file_from_share);

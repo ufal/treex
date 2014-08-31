@@ -1,4 +1,7 @@
 package Treex::Block::Read::AlignedSentences;
+
+use strict;
+use warnings;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseAlignedTextReader';

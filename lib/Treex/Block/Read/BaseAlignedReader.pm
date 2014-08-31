@@ -1,4 +1,7 @@
 package Treex::Block::Read::BaseAlignedReader;
+
+use strict;
+use warnings;
 use Moose;
 use Treex::Core::Common;
 with 'Treex::Core::DocumentReader';

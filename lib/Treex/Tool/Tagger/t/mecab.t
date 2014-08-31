@@ -17,7 +17,7 @@ my $tagger = Treex::Tool::Tagger::MeCab->new();
 
 isa_ok( $tagger, 'Treex::Tool::Tagger::MeCab' );
 
-my $sentence = q(わたしは日本語を話します);
+my $sentence = qw(わたしは日本語を話します);
 my @tokens = $tagger->process_sentence($sentence);
 
 # tokenized sentence: "わたし は 日本語 を 話し ます"

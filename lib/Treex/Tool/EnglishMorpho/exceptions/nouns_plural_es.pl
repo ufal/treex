@@ -10,12 +10,14 @@ sub analyze() {
     foreach (@DATA) {
         print "${_}es\tNNS\t$_\n";
     }
+    return;
 }
 
 sub generate() {
     foreach (@DATA) {
         print "$_\t${_}es\n";
     }
+    return;
 }
 
 if    ( $ARGV[0] eq '-a' ) { analyze(); }

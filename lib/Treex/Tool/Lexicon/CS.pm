@@ -1,11 +1,16 @@
 package Treex::Tool::Lexicon::CS;
+
+use strict;
+use warnings;
 use Treex::Core::Common;
 use utf8;
 use autodie;
 
+use Treex::Core::Resource qw(require_file_from_share);
+
 #TODO: Better way how to make it automatically download.
 my $POSSADJ_FN = 'data/models/lexicon/cs/possessive_adjectives.tsv';
-use Treex::Core::Resource qw(require_file_from_share);
+
 my $possadj_filename = require_file_from_share( $POSSADJ_FN, 'Lexicon::CS' );
 
 my @DICENDI_VERBS =
@@ -27,26 +32,26 @@ sub is_dicendi_verb {
 }
 
 my %NUMBER_FOR_NUMERAL = (
-    nula=>0, jedna=>1, jeden=>1, dva=>2, tři=>3, čtyři=>4, pět=>5,
-    šest=>6, sedm=>7, osm=>8, devět=>9, deset=>10,
-    jedenáct=>11, dvanáct=>12, třináct=>13, čtrnáct=>14, patnáct=>15,
-    šestnáct=>16, sedmnáct=>17, osmnáct=>18, devatenáct=>19,
-    dvacet=>20, třicet=>30, čtyřicet=>40, padesát=>50,
-    šedesát=>60, sedmdesát=>70, osmdesát=>80, devadesát=>90,
-    sto=>100, tisíc=>1_000, milión=>1_000_000, milion=>1_000_000, miliarda=>1_000_000_000,
+    'nula'=>0, 'jedna'=>1, 'jeden'=>1, 'dva'=>2, 'tři'=>3, 'čtyři'=>4, 'pět'=>5,
+    'šest'=>6, 'sedm'=>7, 'osm'=>8, 'devět'=>9, 'deset'=>10,
+    'jedenáct'=>11, 'dvanáct'=>12, 'třináct'=>13, 'čtrnáct'=>14, 'patnáct'=>15,
+    'šestnáct'=>16, 'sedmnáct'=>17, 'osmnáct'=>18, 'devatenáct'=>19,
+    'dvacet'=>20, 'třicet'=>30, 'čtyřicet'=>40, 'padesát'=>50,
+    'šedesát'=>60, 'sedmdesát'=>70, 'osmdesát'=>80, 'devadesát'=>90,
+    'sto'=>100, 'tisíc'=>1_000, 'milión'=>1_000_000, 'milion'=>1_000_000, 'miliarda'=>1_000_000_000,
 
     # fractions
-    půl=>1/2, polovina=>1/2, třetina=> 1/3, čtvrt=>1/4, čtvrtina => 1/4,
-    pětina=>1/5, šestina=>1/6, sedmina=>1/7, osmina=>1/8, devítina => 1/9,
-    desetina => 1/10, jedenáctina => 1/11, dvanáctina => 1/12, třináctina => 1/13,
-    čtrnáctina => 1/14, patnáctina => 1/15, šestnáctina => 1/16, sedmnáctina => 1/17,
-    osmnáctina => 1/18, devatenáctina => 1/19, dvacetina => 1/20,
-    třicetina => 1/30, čtyřicetina => 1/40, padesátina => 1/50, šedesátina => 1/60,
-    sedmdesátina => 1/70, osmdesátina => 1/80, devadesátina => 1/90,
-    setina => 1/100, tisícina => 1/1_000, milióntina => 1/1_000_000, miliontina=>1/1_000_000,
+    'půl'=>1/2, 'polovina'=>1/2, 'třetina'=> 1/3, 'čtvrt'=>1/4, 'čtvrtina' => 1/4,
+    'pětina'=>1/5, 'šestina'=>1/6, 'sedmina'=>1/7, 'osmina'=>1/8, 'devítina' => 1/9,
+    'desetina' => 1/10, 'jedenáctina' => 1/11, 'dvanáctina' => 1/12, 'třináctina' => 1/13,
+    'čtrnáctina' => 1/14, 'patnáctina' => 1/15, 'šestnáctina' => 1/16, 'sedmnáctina' => 1/17,
+    'osmnáctina' => 1/18, 'devatenáctina' => 1/19, 'dvacetina' => 1/20,
+    'třicetina' => 1/30, 'čtyřicetina' => 1/40, 'padesátina' => 1/50, 'šedesátina' => 1/60,
+    'sedmdesátina' => 1/70, 'osmdesátina' => 1/80, 'devadesátina' => 1/90,
+    'setina' => 1/100, 'tisícina' => 1/1_000, 'milióntina' => 1/1_000_000, 'miliontina'=>1/1_000_000,
 
     # other
-    tucet=>12, kopa=>60, veletucet=>144,
+    'tucet'=>12, 'kopa'=>60, 'veletucet'=>144,
     );
 
 my %NUMERAL_FOR_NUMBER = (
@@ -83,8 +88,8 @@ sub numeral_prefix_for_number {
 }
 
 my %NUMBER_OF_MONTH = (
-    leden=>1,    únor=>2,  březen=>3, duben=>4,  květen=>5,    červen=>6,
-    červenec=>7, srpen=>8, září=>9,   říjen=>10, listopad=>11, prosinec=>12,
+    'leden'=>1,    'únor'=>2,  'březen'=>3, 'duben'=>4,  'květen'=>5,    'červen'=>6,
+    'červenec'=>7, 'srpen'=>8, 'září'=>9,   'říjen'=>10, 'listopad'=>11, 'prosinec'=>12,
 );
 
 sub number_of_month {
@@ -94,8 +99,8 @@ sub number_of_month {
 }
 
 my %NUMBER_OF_DAY = (
-    pondělí => 1, úterý => 2, středa => 3, čtvrtek => 4,
-    pátek => 5, sobota => 6, neděle => 7,
+    'pondělí' => 1, 'úterý' => 2, 'středa' => 3, 'čtvrtek' => 4,
+    'pátek' => 5, 'sobota' => 6, 'neděle' => 7,
 );
 
 sub number_of_day {

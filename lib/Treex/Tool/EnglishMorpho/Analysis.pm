@@ -1,4 +1,7 @@
 package Treex::Tool::EnglishMorpho::Analysis;
+
+use strict;
+use warnings;
 use Moose;
 
 use Treex::Core::Log;

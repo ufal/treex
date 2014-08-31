@@ -1,4 +1,7 @@
 package Treex::Block::W2A::EN::FixTags;
+
+use strict;
+use warnings;
 use utf8;
 use Moose;
 use Treex::Core::Common;

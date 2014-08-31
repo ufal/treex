@@ -1,4 +1,7 @@
 package Treex::Block::W2A::TagMorphoDiTa;
+
+use strict;
+use warnings;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Tagger::MorphoDiTa;

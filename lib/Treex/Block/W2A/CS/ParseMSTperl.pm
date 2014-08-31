@@ -1,4 +1,7 @@
 package Treex::Block::W2A::CS::ParseMSTperl;
+
+use strict;
+use warnings;
 use Moose;
 extends 'Treex::Block::W2A::ParseMSTperl';
 

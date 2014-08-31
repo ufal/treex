@@ -34,6 +34,7 @@ sub analyze() {
     foreach (@DATA) {
         print "${_}s\tNNS\t$_\n";
     }
+    return;
 }
 
 sub generate() {
@@ -43,6 +44,7 @@ sub generate() {
         next if /e$/;
         print "$_\t${_}s\n";
     }
+    return;
 }
 
 if    ( $ARGV[0] eq '-a' ) { analyze(); }

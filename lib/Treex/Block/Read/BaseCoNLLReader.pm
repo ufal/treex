@@ -1,5 +1,7 @@
 package Treex::Block::Read::BaseCoNLLReader;
 
+use strict;
+use warnings;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseTextReader';

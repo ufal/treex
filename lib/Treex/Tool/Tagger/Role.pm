@@ -1,4 +1,7 @@
 package Treex::Tool::Tagger::Role;
+
+use strict;
+use warnings;
 use Moose::Role;
 
 requires 'tag_sentence';

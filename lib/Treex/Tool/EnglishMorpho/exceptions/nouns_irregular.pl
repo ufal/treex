@@ -48,6 +48,7 @@ sub analyze() {
         my ( $singular, $plural ) = split( /\s+/, $line );
         print "$plural\tNNS\t$singular\n";
     }
+    return;
 }
 
 sub generate() {
@@ -56,6 +57,7 @@ sub generate() {
         next if $line =~ /#2$/;
         print "$line\n";
     }
+    return;
 }
 
 if    ( $ARGV[0] eq '-a' ) { analyze(); }

@@ -1,4 +1,7 @@
 package Treex::Block::Write::CoNLLX;
+
+use strict;
+use warnings;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';

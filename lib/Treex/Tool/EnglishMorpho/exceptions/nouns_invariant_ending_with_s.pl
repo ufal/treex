@@ -270,6 +270,7 @@ sub analyze() {
     foreach (@DATA) {
         print "$_\tNNS\t$_\n";
     }
+    return;
 }
 
 if ( $ARGV[0] eq '-a' ) { analyze(); }

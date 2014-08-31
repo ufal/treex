@@ -228,6 +228,7 @@ sub print_dump() {
             print "\n";
         }
     }
+    return;
 }
 
 sub analyze() {
@@ -237,6 +238,7 @@ sub analyze() {
             foreach ( split '\|', $forms->{pp} ) { print "$pref$_\tVBN\t$pref$base\n"; }
         }
     }
+    return;
 }
 
 sub all_possible {
@@ -246,6 +248,7 @@ sub all_possible {
             foreach ( split '\|', $forms->{$ps_or_pp} ) { print "$pref$_\n"; }
         }
     }
+    return;
 }
 
 if    ( $ARGV[0] eq '-a' ) { analyze(); }

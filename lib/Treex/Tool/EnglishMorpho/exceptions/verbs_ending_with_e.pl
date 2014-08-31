@@ -120,6 +120,7 @@ sub analyze() {
         if   (/^(.)i$/) { print "$1ying\tVBG\t${_}e\n"; }
         else            { print "${_}ing\tVBG\t${_}e\n"; }
     }
+    return;
 }
 
 if ( $ARGV[0] eq '-a' ) { analyze(); }

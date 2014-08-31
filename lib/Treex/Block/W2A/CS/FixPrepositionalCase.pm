@@ -1,5 +1,7 @@
 package Treex::Block::W2A::CS::FixPrepositionalCase;
 
+use strict;
+use warnings;
 use Moose;
 use Treex::Core::Common;
 

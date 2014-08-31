@@ -1,4 +1,7 @@
 package Treex::Block::W2A::CS::FixAtreeAfterMcD;
+
+use strict;
+use warnings;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -22,7 +25,7 @@ sub process_atree {
     foreach my $i ( 1 .. $#root_children ) {
         $root_children[$i]->set_parent( $root_children[0] );
     }
-
+    return;
 }
 
 1;

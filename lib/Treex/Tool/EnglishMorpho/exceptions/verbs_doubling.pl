@@ -125,6 +125,7 @@ sub analyze() {
         print "${double}ed\tVBN\t$stem\n";
         print "${double}ing\tVBG\t$stem\n";
     }
+    return;
 }
 
 if ( $ARGV[0] eq '-a' ) { analyze(); }

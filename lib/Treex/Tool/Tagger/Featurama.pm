@@ -1,4 +1,7 @@
 package Treex::Tool::Tagger::Featurama;
+
+use strict;
+use warnings;
 use Moose;
 use Moose::Exporter;
 use Carp;

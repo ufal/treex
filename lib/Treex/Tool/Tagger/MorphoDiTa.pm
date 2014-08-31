@@ -1,9 +1,24 @@
 package Treex::Tool::Tagger::MorphoDiTa;
+
+use strict;
+use warnings;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;
-use Ufal::MorphoDiTa;
 with 'Treex::Tool::Tagger::Role';
+
+# This block terminates Tagger::MorphoDiTa and any other dependent modules, if Ufal::MorphoDiTa is not installed
+# We want to include this wrapper into Treex-Unilang package, but remove the hard dependency on Ufal::MorphoDiTa package
+# TODO: solve this problem in a better (more Treex-like) way
+eval {
+    require Ufal::MorphoDiTa;
+    1;
+};
+if (my $dep = $@) {
+    log_warn('missing module: Ufal::MorphoDiTa');
+    exit 0;
+}
+    
 
 # Path to the model data file
 has model => ( is => 'ro', isa => 'Str', required => 1, writer => '_set_model' );

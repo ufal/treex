@@ -1,5 +1,8 @@
 package Treex::Block::W2A::AnalysisWithAlignedTrees;
 
+use strict;
+use warnings;
+
 # TODO: rename once the role of this block is absolutely clear
 # (it is something like things that both LabelMIRA and ParseMSTperl need
 # to work with parallel attributes)

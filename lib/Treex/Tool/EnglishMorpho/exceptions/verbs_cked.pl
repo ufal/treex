@@ -14,6 +14,7 @@ sub analyze() {
         print $_. "ked\tVBN\t" . $_ . "\n";
         print $_. "king\tVBG\t" . $_ . "\n";
     }
+    return;
 }
 
 if ( $ARGV[0] eq '-a' ) { analyze(); }

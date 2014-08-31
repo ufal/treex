@@ -1,4 +1,7 @@
 package Treex::Block::W2A::Tag;
+
+use strict;
+use warnings;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Config;

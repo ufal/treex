@@ -1,4 +1,7 @@
 package Treex::Block::W2A::ResegmentSentences;
+
+use strict;
+use warnings;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';

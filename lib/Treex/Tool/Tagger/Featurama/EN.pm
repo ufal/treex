@@ -1,4 +1,7 @@
 package Treex::Tool::Tagger::Featurama::EN;
+
+use strict;
+use warnings;
 use Moose;
 extends 'Treex::Tool::Tagger::Featurama';
 

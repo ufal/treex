@@ -53,6 +53,7 @@ sub analyze() {
         print "${_}ed\tVBD\t$_\n";
         print "${_}ing\tVBG\t$_\n";
     }
+    return;
 }
 
 if ( $ARGV[0] eq '-a' ) { analyze(); }

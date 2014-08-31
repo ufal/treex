@@ -1,7 +1,9 @@
 package Treex::CS;
+
 use strict;
 use warnings;
 use Treex::Unilang;
+use Ufal::MorphoDiTa;
 
 1;
 
