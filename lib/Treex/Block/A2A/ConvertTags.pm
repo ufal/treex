@@ -23,12 +23,7 @@ sub process_anode {
     if ( $self->output_driver ) {
         my $output_tag;
 
-        if ( $self->output_driver eq 'cs::pdt' ) {    # TODO fix this, so it works normally
-            $output_tag = encode( 'cs::pdt', $f, 1 );
-        }
-        else {
-            $output_tag = encode( $self->output_driver, $f );
-        }
+        $output_tag = encode( $self->output_driver, $f );
 
         if ( $self->overwrite ) {
             $anode->wild->{orig_tag} = $anode->tag;
