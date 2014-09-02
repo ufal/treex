@@ -2,7 +2,7 @@ package Treex::Block::A2T::SK::FixNumerals;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Lexicon::CS::Numerals;
-use tagset::cs::pdt;
+
 
 extends 'Treex::Block::A2T::CS::FixNumerals';
 

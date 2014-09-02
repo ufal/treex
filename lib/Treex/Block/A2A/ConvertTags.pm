@@ -1,8 +1,8 @@
 package Treex::Block::A2A::ConvertTags;
+
 use Moose;
 use Treex::Core::Common;
-use tagset::common;
-use tagset::cs::pdt;
+use Lingua::Interset qw(decode encode);
 
 extends 'Treex::Core::Block';
 
@@ -17,17 +17,17 @@ sub process_anode {
     my ( $self, $anode ) = @_;
     return if ( !defined( $anode->tag ) );
 
-    my $f = tagset::common::decode( $self->input_driver, $anode->tag );
+    my $f = decode( $self->input_driver, $anode->tag );
     $anode->set_iset($f);
 
     if ( $self->output_driver ) {
         my $output_tag;
 
         if ( $self->output_driver eq 'cs::pdt' ) {    # TODO fix this, so it works normally
-            $output_tag = tagset::cs::pdt::encode( $f, 1 );
+            $output_tag = encode( 'cs::pdt', $f, 1 );
         }
         else {
-            $output_tag = tagset::common::encode( $self->output_driver, $f );
+            $output_tag = encode( $self->output_driver, $f );
         }
 
         if ( $self->overwrite ) {
@@ -56,7 +56,7 @@ Treex::Block::A2A::ConvertTags
 
 =head1 DESCRIPTION
 
-Converting tags using DZ Interset.
+Converting tags using Lingua::Interset.
 
 If the C<output_driver> and C<overwrite> parameters are set, 
 the tag value of a-nodes is replaced by the conversion and the original 
