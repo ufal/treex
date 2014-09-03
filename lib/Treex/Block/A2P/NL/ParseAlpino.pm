@@ -31,7 +31,7 @@ __END__
 
 =head1 NAME
 
-Treex::Tool::A2P::NL::Alpino
+Treex::Tool::A2P::NL::ParseAlpino
 
 =head1 DESCRIPTION
 
