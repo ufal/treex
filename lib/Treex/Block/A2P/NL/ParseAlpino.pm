@@ -25,3 +25,24 @@ sub process_document {
 
 1;
 
+__END__
+
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Tool::A2P::NL::Alpino
+
+=head1 DESCRIPTION
+
+Using L<Treex::Tool::PhraseParser::Alpino> to parse Dutch sentences to phrase structure
+trees (the input is assumed to be an a-tree, i.e., already tokenized, but no tagging/lemmatization
+is needed since this is done by Alpino).
+
+=head1 AUTHOR
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
