@@ -147,13 +147,19 @@ sub _convert_mtree {
     foreach my $pml_child ( $pml_node->children ){
                 
         my $treex_anode = $treex_aroot->create_child();
+        my $attr_prefix = '';
         $treex_anode->shift_after_subtree($treex_aroot);
+
+        # M-layer data are hidden within a structure called '#content' in PDT 2.0, but accessible
+        # (only) directly in PDT 3.0. We want to support both versions.
+        if ( $pml_child->attr('#content') ){
+            $attr_prefix = '#content/';
+        }
                         
         foreach my $attr_name (qw(id form lemma tag)) {
-            # Curiously, all m-layer data are hidden within a structure called '#content' 
-            $self->_copy_attr( $pml_child, $treex_anode, "#content/$attr_name", $attr_name );
+            $self->_copy_attr( $pml_child, $treex_anode, $attr_prefix . $attr_name, $attr_name );
         }
-        $self->_copy_attr( $pml_child, $treex_anode, '#content/w/no_space_after', 'no_space_after' );
+        $self->_copy_attr( $pml_child, $treex_anode, $attr_prefix . 'w/no_space_after', 'no_space_after' );
     }
     return;
 }
