@@ -7,15 +7,27 @@ use Treex::PML; # Without this, the following use Treex::PML::Instance generates
 use Treex::PML::Factory;
 use Treex::PML::Instance;
 
-has 't_layer' => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'top_layer' => ( is => 'rw', isa => 'Str', default => 't' );
+
 has '+_layers' => ( builder => '_build_layers', lazy_build => 1 );
-has '+_file_suffix' => ( default => '\.[at](\.gz)?$' );
+has '+_file_suffix' => ( default => '\.[mat](\.gz)?$' );
 
 has language => ( isa => 'Treex::Type::LangCode', is => 'ro', required=>1 );
 
 sub _build_layers {
     my ($self) = @_;
-    return $self->t_layer ? [ 'a', 't' ] : ['a'];
+    if ($self->top_layer eq 'm'){
+        return ['m'];
+    }
+    elsif ($self->top_layer eq 'a'){
+        return ['a'];
+    }
+    elsif ($self->top_layer eq 't'){
+        return ['t', 'a'];
+    }
+    else {
+        log_fatal('The top_layer parameter must be one of "t", "a", "m"');
+    }
 }
 
 override '_load_all_files' => sub {
@@ -52,20 +64,30 @@ override '_create_val_refs' => sub {
 override '_convert_all_trees' => sub {
 
     my ( $self, $pmldoc, $document ) = @_;
+    
+    # get the number of trees (from either a-layer or m-layer)
+    my $trees_count = $pmldoc->{a} // $pmldoc->{m};
+    $trees_count = scalar( $trees_count->trees );   
 
-    foreach my $tree_number ( 0 .. ( $pmldoc->{a}->trees - 1 ) ) {
+    # convert the trees one-by-one
+    foreach my $tree_number ( 0 .. $trees_count - 1 ) {
 
         my $bundle = $document->create_bundle;
         my $zone = $bundle->create_zone( $self->language, $self->selector );
-
-        if ( $pmldoc->{t} ) {
-            my $troot = $zone->create_ttree;
-            $self->_convert_ttree( $pmldoc->{t}->tree($tree_number), $troot, undef );
+        my $aroot = $zone->create_atree();
+        
+        if ( $pmldoc->{m} ) {
+            $self->_convert_mtree( $pmldoc->{m}->tree($tree_number), $aroot );
         }
-
-        my $aroot = $zone->create_atree;
-        $self->_convert_atree( $pmldoc->{a}->tree($tree_number), $aroot );
-
+        else {
+            if ( $pmldoc->{t} ) {
+                my $troot = $zone->create_ttree;
+                $self->_convert_ttree( $pmldoc->{t}->tree($tree_number), $troot, undef );
+            }
+    
+            $self->_convert_atree( $pmldoc->{a}->tree($tree_number), $aroot );
+        }
+    
         $zone->set_sentence( $aroot->get_subtree_string );
     }
 
@@ -75,26 +97,34 @@ override '_convert_all_trees' => sub {
 
 __END__
 
-=head1 Treex::Block::Read::PDT
+=encoding utf-8
 
-Import from PDT 2.0 trees.
+=head1 NAME
 
-=head2 Parameters
+Treex::Block::Read::PDT
 
-=over 4
+=head1 DESCRIPTION
+
+Importing trees from PDT 2.0/2.5/3.0.
+
+=head1 PARAMETERS
+
+=over
 
 =item schema_dir
 
 Must be set to the directory with corresponding PML schemas.
 
-=item t_layer
+=item top_layer
 
-Must be set to 0 if t-layer is not available or is not needed.
+The topmost annotation layer to be converted. Must be set to 't', 'a', or 'm'. Defaults to 't'.
 
 =back
-  
-=cut
 
-# Copyright 2011 Ondrej Dusek
+=head1 AUTHOR
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011,2014 by Institute of Formal and Applied Linguistics, Charles University in Prague

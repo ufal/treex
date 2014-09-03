@@ -18,7 +18,7 @@ has _file_suffix => ( is => 'ro', isa => 'Str', required => 1 );
 has schema_dir => (
     isa           => 'Str',
     is            => 'ro',
-    documentation => 'directory with pml-schemata for PCEDT data',
+    documentation => 'directory with PML-schemata for PCEDT/PDT data',
     required      => 1,
     trigger       => sub { my ( $self, $dir ) = @_; Treex::PML::AddResourcePath($dir); }
 );
@@ -137,6 +137,28 @@ sub _convert_atree {
     return;
 }
 
+
+# Convert an m-tree into a flat a-tree (no afuns/dependencies, just form-lemma-tag).
+sub _convert_mtree {
+    my ( $self, $pml_node, $treex_aroot ) = @_;
+   
+    $self->_copy_attr( $pml_node, $treex_aroot, 'id', 'id' );
+    
+    foreach my $pml_child ( $pml_node->children ){
+                
+        my $treex_anode = $treex_aroot->create_child();
+        $treex_anode->shift_after_subtree($treex_aroot);
+                        
+        foreach my $attr_name (qw(id form lemma tag)) {
+            # Curiously, all m-layer data are hidden within a structure called '#content' 
+            $self->_copy_attr( $pml_child, $treex_anode, "#content/$attr_name", $attr_name );
+        }
+        $self->_copy_attr( $pml_child, $treex_anode, '#content/w/no_space_after', 'no_space_after' );
+    }
+    return;
+}
+
+
 # the actual conversion of all trees from all layers
 sub _convert_all_trees {
     my ($self) = @_;
@@ -180,16 +202,22 @@ sub next_document {
 1;
 __END__
 
-=head1 Treex::Block::Read::BasePMLReader
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Block::Read::BasePMLReader
+
+=head1 DESCRIPTION
 
 Abstract base class for readers importing from PML trees (PDT, PCEDT). 
 
-All derived classes must override the methods C<_convert_all_trees>, C<_create_val_refs>, C<_load_all_files> 
-and the attributes C<_layers> and C<_file_suffix>.
+All derived classes must override the methods C<_convert_all_trees>, C<_create_val_refs>, 
+C<_load_all_files> and the attributes C<_layers> and C<_file_suffix>.
 
-=head2 Parameters
+=head1 PARAMETERS
 
-=over 4
+=over
 
 =item schema_dir
 
@@ -197,8 +225,16 @@ Must be set to the directory with corresponding PML schemas.
 
 =back
   
-=cut
+=head1 AUTHORS
 
-# Copyright 2011 Zdenek Zabokrtsky, Josef Toman, Martin Popel, Ondrej Dusek
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Josef Toman
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011,2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
