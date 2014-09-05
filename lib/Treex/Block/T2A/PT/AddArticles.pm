@@ -29,7 +29,7 @@ sub process_tnode {
         'afun'         => 'AuxA',
     });
     my $iset_def = $def eq 'definite' ? 'def' : 'ind';
-    $article->iset->multiset(pos=>'adj', adjtype=>'art', definiteness=> $iset_def );
+    $article->iset->add(pos=>'adj', adjtype=>'art', definiteness=> $iset_def );
     $article->shift_before_subtree($anode);
     $tnode->add_aux_anodes($article);
     return;
