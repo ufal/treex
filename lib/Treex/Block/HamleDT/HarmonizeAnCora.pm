@@ -55,7 +55,6 @@ sub deprel_to_afun
         my $deprel = $node->conll_deprel();
         my ($parent) = $node->get_eparents();
         my $pos    = $node->get_iset('pos');
-        my $subpos = $node->get_iset('subpos');
         my $ppos   = $parent ? $parent->get_iset('pos') : '';
         my $afun = 'NR';
         # Adjective in leaf node. Could be headed by article! Example:
