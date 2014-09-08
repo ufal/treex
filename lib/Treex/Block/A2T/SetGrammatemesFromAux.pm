@@ -24,6 +24,7 @@ sub process_tnode {
             if (!$tnode->gram_gender){
                 my $gender = $anode->iset->gender || '';
                 $gender =~ s/masc/anim/;
+                $gender =~ s/com/inher/;
                 $tnode->set_gram_gender($gender);
             }
             if (!$tnode->gram_number){
