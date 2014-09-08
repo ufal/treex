@@ -165,12 +165,12 @@ sub get_iset_pairs_list
 }
 
 #------------------------------------------------------------------------------
-# Return the values of all non-empty Interset features.
+# Return the values of all non-empty Interset features (except for the "tagset" feature).
 #------------------------------------------------------------------------------
 sub get_iset_values
 {
     my $self = shift;
-    return map {my $v = $self->get_iset($_); $v ? $v : ()} Lingua::Interset::FeatureStructure::known_features();
+    return map {my $v = $self->get_iset($_); $v ? $v : ()} grep {$_ ne 'tagset'} Lingua::Interset::FeatureStructure::known_features();
 }
 
 
