@@ -7,6 +7,7 @@ extends 'Treex::Core::Block';
 my %tag2sempos = (
     'adj-num'  => 'adj.quant.def',
     'adj-pron' => 'adj.pron.def.demon',
+    'adj-poss' => 'n.pron.def.pers',
     'adj'      => 'adj.denot',
     'n-pron'   => 'n.pron.def.pers',
     'n-num'    => 'n.quant.def',
@@ -102,6 +103,10 @@ sub set_sempos {
     $syntpos =~ s/:.*//;
 
     my $subtype = $anode->is_pronoun ? 'pron' : ( $anode->is_numeral ? 'num' : '' );
+    
+    if ($syntpos eq 'adj' && $anode->match_iset(poss=>'poss', prontype=>'prs')){
+        $subtype = 'poss';
+    }
 
     if ( $tag2sempos{ $syntpos . '-' . $subtype } ) {
         $tnode->set_gram_sempos( $tag2sempos{ $syntpos . '-' . $subtype } );

@@ -138,6 +138,7 @@ sub best_form_of_lemma {
         if ($iset->number eq 'plu'){
             $lemma =~ s/([aeiou])$/$1s/ or
             $lemma = $lemma.'es';
+            $lemma =~ s/iónes$/iones/;
         }
     }
     return $lemma;

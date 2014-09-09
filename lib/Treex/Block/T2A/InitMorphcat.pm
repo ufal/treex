@@ -89,6 +89,11 @@ sub process_tnode {
     # The type of pronoun is not preserved on t-layer, but at least we know it is a pronoun
     if ($t_node->gram_sempos =~ /pron/){
         $a_node->iset->set_prontype('prn');
+        
+        # and we can mark possessive pronouns.
+        if ($t_node->formeme =~ /poss$/){
+            $a_node->iset->set_poss('poss');
+        }
     }
 
     return;

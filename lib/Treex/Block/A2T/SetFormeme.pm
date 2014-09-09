@@ -45,7 +45,7 @@ sub detect_syntpos {
     return $syntpos if $syntpos;
 
     # Rule 3: check for ordinal numerals (e.g. first, první, poprvé).
-    # Sometimes, these can be syntactic advebs (poprvé=first_time), but usualy they are syntactic adjectives.
+    # Sometimes, these can be syntactic adverbs (poprvé=first_time), but usualy they are syntactic adjectives.
     # Ideally, they should have synpos=attr, so they are handled by the rule above, but let's make this robust.
     return 'adj' if $a_node->match_iset( 'pos' => 'num', numtype => 'ord' );
 
@@ -154,6 +154,7 @@ sub formeme_for_adj {
     my $prep        = $self->get_aux_string(@aux_a_nodes);
     
     return "n:$prep+X" if $prep; # adjectives with prepositions are treated as a nominal usage
+    return 'adj:poss'  if $a_node->match_iset(poss=>'poss', prontype=>'prs'); # possesive personal pronouns
     return 'adj:attr'  if $self->below_noun($t_node) || $self->below_adj($t_node);
     return 'n:subj'    if $a_node->afun eq 'Sb'; # adjectives in the subject positions -- nominal usage
     return 'adj:compl' if $self->below_verb($t_node);
