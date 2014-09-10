@@ -22,7 +22,8 @@ has static_model => (
     isa     => 'Str',
     #default => 'tlemma_cer.static.pls.slurp.gz', # By Natalka & Martin & Zdeněk
     #default => 'tlemma_dic_for_treex_cer.static.pls.slurp.gz', # By Natalka
-    default => 'lemma_extracted.bigger.pls.slurp.gz',  # By Karel, the best of these three
+    #default => 'lemma_extracted.bigger.pls.slurp.gz',  # By Karel, the best of these three
+    default => 'lemma_extracted.free_data.pls.slurp.gz',  # By Karel, a bit worse, but we are sure we can redistribute this model.
 );
 
 my $combined_model;
