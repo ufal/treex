@@ -72,7 +72,7 @@ sub _add_aligned_spans {
     # recurse to children
     my $child_no = 0;
     foreach my $tchild ( $tnode->get_children( { ordered => 1 } ) ) {
-        if ( $tchild->t_lemma =~ /(\/)/ ) {
+        if ( $tchild->t_lemma !~ /^[a-zA-Z]+[0-9]*$/ ) { # skip reentrancies
             $self->_add_aligned_spans( $tgt_hash, $tchild, $node_id . '.' . $child_no );
             $child_no++;
         }
