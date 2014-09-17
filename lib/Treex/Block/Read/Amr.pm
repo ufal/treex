@@ -10,6 +10,8 @@ has '_doc' => ( is => 'rw' );
 
 has '_comment_data' => ( is => 'rw', isa => 'HashRef' );
 
+has 'debug' => ( is => 'rw', isa => 'Bool', default => 0 );
+
 sub next_document {
 
     my ($self) = @_;
@@ -205,7 +207,11 @@ sub _next_sentence {
     my $bundle = $self->_doc->create_bundle;
     my $zone   = $bundle->create_zone( $self->language, $self->selector );
     my $ttree  = $zone->create_ttree();
-
+    
+    if ($self->debug){
+        log_info('Creating ' . $ttree->id);
+    }
+    
     my $cur_node = $ttree->create_child( { ord => 1 } );
     $cur_node->wild->{modifier} = 'root';
 
@@ -229,13 +235,13 @@ sub _process_comment_data {
     $ttree->wild->{amr_comment_data} = $self->_comment_data;
 
     # process sentence text
-    my $sent_text = $self->_comment_data->{snt} // $self->_comment_data->{tok};
+    my $sent_text = $self->_comment_data->{snt} // $self->_comment_data->{sentence} // $self->_comment_data->{tok};
     if ($sent_text) {
         $zone->set_sentence($sent_text);
     }
 
     # process surface tokens
-    my $token_text = $self->_comment_data->{tok} // $self->_comment_data->{snt};
+    my $token_text = $self->_comment_data->{tok} // $self->_comment_data->{snt} // $self->_comment_data->{sentence};
     if ($token_text) {
         my $atree = $zone->create_atree();
         foreach my $token ( split /\s+/, $token_text ) {
@@ -248,7 +254,11 @@ sub _process_comment_data {
             $self->_process_alignments( $ttree, $atree, $self->_comment_data->{alignments} );
         }
     }
-
+    
+    if ($self->debug and $sent_text){
+        log_info('Sentence text: ' . $sent_text);
+    }
+    
     $self->_set_comment_data( {} );
     return;
 }
