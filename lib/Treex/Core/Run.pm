@@ -165,8 +165,8 @@ has 'mem' => (
     isa           => 'Str',
     default       => '2G',
     documentation => 'How much memory should be allocated for cluster jobs, default=2G. Requires -p. '
-        . 'Translates to "qsub -hard -l mem_free=$mem -l h_vmem=2*$mem". '
-        . 'Use --mem=0 and --qsub to set your own SGE settings (e.g. act_mem_free).',
+        . 'Translates to "qsub -hard -l mem_free=$mem -l h_vmem=2*$mem -l act_mem_free=$mem". '
+        . 'Use --mem=0 and --qsub to set your own SGE settings (e.g. if act_mem_free is not available).',
 );
 
 has 'name' => (
@@ -881,7 +881,7 @@ sub _run_job_script {
         if ($mem){
             my ($h_vmem, $unit) = ($mem =~ /(\d+)(.*)/);
             $h_vmem = (2*$h_vmem) . $unit;
-            $qsub_opts .= " -hard -l mem_free=$mem -l h_vmem=$h_vmem";
+            $qsub_opts .= " -hard -l mem_free=$mem -l h_vmem=$h_vmem -l act_mem_free=$mem";
         }
         if ($self->qsub){
             $qsub_opts .= ' ' . $self->qsub;
