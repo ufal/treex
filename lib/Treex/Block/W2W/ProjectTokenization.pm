@@ -52,11 +52,11 @@ sub process_zone {
                 lc $new_tok
             );
 
-        if ( $outsentence =~ /$orig_tok/i ) {
+        if ( $outsentence =~ /\Q$orig_tok\E/i ) {
 
             # exact match has highest priority
-            if ( $aligned_sentence =~ /\b($new_tok)\b/ ) {
-                $outsentence =~ s/$orig_tok/$new_tok/i;
+            if ( $aligned_sentence =~ /\b(\Q$new_tok\E)\b/ ) {
+                $outsentence =~ s/\Q$orig_tok\E/$new_tok/i;
                 $fixLogger->logfixBundle(
                     $zone->get_bundle,
                     "Retokenizing '$orig_tok' -> '$new_tok'"
@@ -64,9 +64,9 @@ sub process_zone {
             }
 
             # case-insensitive match: also adopt the casing
-            elsif ( $aligned_sentence =~ /\b($new_tok)\b/i ) {
+            elsif ( $aligned_sentence =~ /\b(\Q$new_tok\E)\b/i ) {
                 my $new = $1;
-                $outsentence =~ s/$orig_tok/$new/i;
+                $outsentence =~ s/\Q$orig_tok\E/$new/i;
                 $fixLogger->logfixBundle(
                     $zone->get_bundle,
                     "Retokenizing '$orig_tok' -> '$new'"
@@ -74,8 +74,8 @@ sub process_zone {
             }
 
             # diacritics-insensitive match
-            elsif ( $al_lc_strip =~ /\b($n_lc_strip)\b/ ) {
-                $outsentence =~ s/$orig_tok/$new_tok/i;
+            elsif ( $al_lc_strip =~ /\b(\Q$n_lc_strip\E)\b/ ) {
+                $outsentence =~ s/\Q$orig_tok\E/$new_tok/i;
                 $fixLogger->logfixBundle(
                     $zone->get_bundle,
                     "Retokenizing '$orig_tok' -> '$new_tok' ($n_lc_strip)"
