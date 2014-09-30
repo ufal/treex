@@ -14,7 +14,7 @@ sub next_document {
     return if !defined $texts_ref;
 
     my %sentences =
-        map { $_ => [ split /\n/, $texts_ref->{$_} ] } keys %{$texts_ref};
+        map { $_ => [ split /\n/, $texts_ref->{$_}, -1 ] } keys %{$texts_ref};
 
     my $n = 0;
     for my $zone_label ( keys %sentences ) {
