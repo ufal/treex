@@ -679,7 +679,7 @@ One of the blocks (usually the first one) must be the document reader (see
 L<Treex::Core::DocumentReader>) that produces the
 documents on which this scenario is applied.
 
-=item $scenario->apply_to_document($treex_doc);
+=item $scenario->apply_to_documents($treex_doc);
 
 Apply this scenario to a L<Treex::Core::Document> instance obtained from elsewhere.
 Please note that C<start()> must be called before the first call to this method and C<end()>
@@ -691,12 +691,12 @@ explicitly.
 =item $scenario->start();
 
 Apply C<process_start()> to all blocks in the scenario.
-This is called automatically by C<run()>, but must be called before C<apply_to_document()>.
+This is called automatically by C<run()>, but must be called before C<apply_to_documents()>.
 
 =item $scenario->end();
 
 Apply C<process_end()> to all blocks in the scenario.
-This is called automatically by C<run()>, but must be called after calls to C<apply_to_document()>.
+This is called automatically by C<run()>, but must be called after calls to C<apply_to_documents()>.
 
 
 =back
