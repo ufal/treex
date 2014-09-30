@@ -11,6 +11,7 @@ has '_stats' => ( is => 'rw', default => sub { {} } );
 
 sub build_language { return log_fatal "Parameter 'language' must be given"; }
 
+
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
@@ -46,3 +47,27 @@ sub _reset_stats {
 }
 
 1;
+
+__END__
+
+=encoding utf-8
+
+=head1 NAME 
+
+Treex::Block::Print::GrammatemesForTgen
+
+=head1 DESCRIPTION
+
+Prints the most common grammatemes found with the given t-lemma & formeme pair (backoff to
+formeme only), to be used for surface realization of the Tgen generator output
+(which currently lacks grammatemes altogether) via the L<Treex::Block::T2T::AssignDefaultGrammatemes>
+block.
+
+=head1 AUTHORS 
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
