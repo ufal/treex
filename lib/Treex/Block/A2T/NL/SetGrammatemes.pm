@@ -1,6 +1,9 @@
 package Treex::Block::A2T::NL::SetGrammatemes;
+
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::Lexicon::NL::ErgativeVerbs;
+
 extends 'Treex::Block::A2T::SetGrammatemes';
 
 # TODO: add all possible verbal group signatures (or some equivalent rules)
@@ -33,7 +36,21 @@ my %SIG2GRAM = (
 override 'set_verbal_grammatemes' => sub {
     my ( $self, $tnode, $anode ) = @_;
 
-    my $gram = $SIG2GRAM{ $self->get_verbal_group_signature( $tnode, $anode ) };
+    my $sig = $self->get_verbal_group_signature( $tnode, $anode );    
+    my $gram = $SIG2GRAM{$sig};
+
+    # distinguishing past tense and passive for "is/was + past participle"
+    if ($sig =~ 'zijn-(finpast|finpres)\+LEX-partpast'){
+        # ergative verbs (can't build passive): past tense
+        $gram = {'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind'};
+        if (Treex::Tool::Lexicon::NL::ErgativeVerbs::is_ergative_verb($tnode->t_lemma)){
+            $gram->{'diathesis'} = 'act';
+        }
+        # other: passive
+        else {
+            $gram->{'diathesis'} = 'pas';
+        }
+    }
 
     if ($gram) {
         while ( my ( $gram_name, $gram_val ) = each %$gram ) {
