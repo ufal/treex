@@ -7,7 +7,7 @@ sub process_tnode {
     my ( $self, $node ) = @_;
     my $lex_a_node = $node->get_lex_anode or return;
     my $old_tlemma = $node->t_lemma;
-    my $new_tlemma;
+    my $new_tlemma = $old_tlemma;
     my @particles;
     my @aux_a_nodes = $node->get_aux_anodes();
 
@@ -19,12 +19,18 @@ sub process_tnode {
     elsif ( $lex_a_node->match_iset( 'prontype' => 'prs' ) ) {
         $new_tlemma = '#PersPron';
     }
-    # separable verbal prefixes
-    elsif ( @particles = grep { $_->afun eq 'AuxV' and ($_->is_preposition or $_->is_adverb) } @aux_a_nodes ) {
-        $new_tlemma = ( join '', map { $_->lemma } @particles ) . $old_tlemma;
+    else {
+        # separable verbal prefixes
+        if ( @particles = grep { $_->afun eq 'AuxV' and ($_->is_preposition or $_->is_adverb) } @aux_a_nodes ) {
+            $new_tlemma = ( join '', map { $_->lemma } @particles ) . $new_tlemma;
+        }
+        # reflexiva tantum
+        if ( @particles = grep { $_->afun eq 'AuxT'} @aux_a_nodes ){
+            $new_tlemma = join('_', map { $_->lemma } @particles ) . '_' . $new_tlemma;
+        }
     }
 
-    if ($new_tlemma) {
+    if ($new_tlemma ne $old_tlemma) {
         $node->set_t_lemma($new_tlemma);
     }
     return;

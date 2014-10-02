@@ -34,6 +34,7 @@ my %iset2gram = (
     'gender=masc' => 'gender=anim', # Czech-specific grammateme mixing animateness and gender
     'gender=fem' => 'gender=fem',
     'gender=neut' => 'gender=neut',
+    'gender=com' => 'gender=inan', # This is a hack, reusing Czech-specific gramateme for other purposes
     
     'negativeness=neg' => 'negation=neg1',
     
