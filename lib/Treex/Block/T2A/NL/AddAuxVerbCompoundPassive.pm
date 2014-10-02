@@ -12,7 +12,7 @@ sub process_tnode {
     return if ( $tnode->voice || $tnode->gram_diathesis || '' ) !~ /^pas/;
     my $anode = $tnode->get_lex_anode() or return;
 
-    # we will move the autosemantic node as in Czech synthesis (see also corresponding block in Czech)
+    # we will move the autosemantic node, same as in Czech synthesis
     my $new_node = $anode->create_child({
         'lemma' => $anode->lemma,
         'form' => $anode->form,
@@ -21,7 +21,7 @@ sub process_tnode {
     });
     $new_node->shift_after_node($anode);
 
-    # $anode is now auxiliary "být" and governs the autosemantic verb
+    # $anode is now auxiliary "worden" or "zijn" and governs the autosemantic verb
     my $aux_lemma = 'worden';
     if ($anode->match_iset('tense' => '^(past|pqp)$')){
         $aux_lemma = 'zijn';
