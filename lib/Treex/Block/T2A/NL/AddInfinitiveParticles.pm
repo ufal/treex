@@ -1,4 +1,4 @@
-package Treex::Block::T2A::EN::AddInfinitiveParticles;
+package Treex::Block::T2A::NL::AddInfinitiveParticles;
 
 use utf8;
 use Moose;
@@ -8,7 +8,7 @@ extends 'Treex::Block::T2A::AddInfinitiveParticles';
 
 override 'works_as_conj' => sub {
     my ($self, $particle) = @_;
-    return not $particle eq 'to';
+    return not $particle eq 'te';
 }; 
 
 1;
@@ -19,13 +19,11 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::T2A::EN::AddInfinitiveParticles
+Treex::Block::T2A::NL::AddInfinitiveParticles
 
 =head1 DESCRIPTION
 
-The particle 'to' is added to English infinitives. Other prepositions
-in constructions such as "It's time for him to go home." are added
-as well.
+Particles 'om-te' and others are added before Dutch infinitives.
 
 =head1 AUTHORS 
 
