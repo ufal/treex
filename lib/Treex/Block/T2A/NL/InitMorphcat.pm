@@ -1,4 +1,5 @@
-package Treex::Block::T2A::PT::InitMorphcat;
+package Treex::Block::T2A::NL::InitMorphcat;
+
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::T2A::InitMorphcat';
@@ -7,21 +8,21 @@ after process_tnode => sub {
     my ( $self, $t_node ) = @_;
     my $a_node = $t_node->get_lex_anode() or return;
 
-    # Interset distinguishes imperfect tense (as a subcategory of past tense) and imperfect aspect.
-    # There is no such distinction on t-layer, so far, but in Portuguese we need to distinguish
-    # "Pretérito Perfeito" from "Pretérito Imperfeito".
-    # TODO: distinguish/guess also "Pretérito Mais que Perfeito" ($anode->iset->set_tense('pqp')).
-    $a_node->iset->set_tense('imp') if $a_node->match_iset(aspect=>'imp', tense=>'past');
+    # Hacking gender: inan => com
+    if ($a_node->match_iset(gender => 'masc', animateness => 'inan')){
+        $a_node->iset->set_gender('com');
+        $a_node->iset->set_animateness('');
+    }
     return;
 };
 
 sub should_fill {
     my ($self, $grammateme, $tnode) = @_;
 
-    # In Portuguese, nouns are not marked with definiteness on the a-layer.
-    # T2A::PT::AddArticles will add an article for this grammateme.
+    # In Dutch, nouns are not marked with definiteness on the a-layer.
+    # T2A::NL::AddArticles will add an article for this grammateme.
     return 0 if $grammateme eq 'definiteness';
-
+    
     return 1;
 }
 
@@ -33,7 +34,7 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::T2A::PT::InitMorphcat
+Treex::Block::T2A::NL::InitMorphcat
 
 =head1 DESCRIPTION
 
@@ -46,6 +47,8 @@ L<Treex::Block::T2A::InitMorphcat>
 =head1 AUTHORS
 
 Martin Popel <popel@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
