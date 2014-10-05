@@ -127,9 +127,6 @@ sub isName {
 sub shift_subtree_before_node {
     my ($self, $subtree_root, $node) = @_;
     
-    # do the shift
-    $subtree_root->shift_before_node($node);
-    
     # try to normalize spaces
     # TODO: I am sure I am reinventing America here -> find a block for that!
     
@@ -138,7 +135,7 @@ sub shift_subtree_before_node {
     my $subtree_rightmost = $subtree_root->get_descendants(
         {add_self => 1, last_only => 1});
     my $subtree_preceding = $subtree_root->get_descendants(
-        {add_self => 1, last_only => 1})->get_prev_node();
+        {add_self => 1, first_only => 1})->get_prev_node();
     # remember the no_space_after ("nsa") values
     my $node_preceding_nsa =
         defined $node_preceding ? $node_preceding->no_space_after : 0;
@@ -154,6 +151,9 @@ sub shift_subtree_before_node {
     }
     $subtree_rightmost->set_no_space_after($node_preceding_nsa);
         
+    # do the shift
+    $subtree_root->shift_before_node($node);
+    
     # ucfirst if beginning of sentence
     my $first = $subtree_root->get_descendants({add_self=>1,first_only=>1});
     if ($first->ord eq '1') {
@@ -172,16 +172,14 @@ sub shift_subtree_after_node {
         $first->set_form(lc($first->form));
     }
 
-    # do the shift
-    $subtree_root->shift_after_node($node);
-    
     # try to normalize spaces
     # TODO: I am sure I am reinventing America here -> find a block for that!
+
     # important nodes
     my $subtree_rightmost = $subtree_root->get_descendants(
         {add_self => 1, last_only => 1});
     my $subtree_preceding = $subtree_root->get_descendants(
-        {add_self => 1, last_only => 1})->get_prev_node();
+        {add_self => 1, first_only => 1})->get_prev_node();
     # remember the no_space_after ("nsa") values
     my $node_nsa = $node->no_space_after;
     my $subtree_rightmost_nsa = $subtree_rightmost->no_space_after;
@@ -193,6 +191,9 @@ sub shift_subtree_after_node {
         $subtree_preceding->set_no_space_after($subtree_rightmost_nsa);
     }
         
+    # do the shift
+    $subtree_root->shift_after_node($node);
+    
     return;
 }
 
