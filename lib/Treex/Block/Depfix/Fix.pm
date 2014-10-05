@@ -140,13 +140,19 @@ sub shift_subtree_before_node {
     my $subtree_preceding = $subtree_root->get_descendants(
         {add_self => 1, last_only => 1})->get_prev_node();
     # remember the no_space_after ("nsa") values
-    my $node_preceding_nsa = eval '$node_preceding->no_space_after' // 0;
+    my $node_preceding_nsa =
+        defined $node_preceding ? $node_preceding->no_space_after : 0;
+    my $subtree_preceding_nsa =
+        defined $subtree_preceding ? $subtree_preceding->no_space_after : 0;
     my $subtree_rightmost_nsa = $subtree_rightmost->no_space_after;
-    my $subtree_preceding_nsa = $subtree_preceding->no_space_after;
     # set the nsa values
-    $node_preceding->set_no_space_after($subtree_preceding_nsa);
+    if (defined $node_preceding) {
+        $node_preceding->set_no_space_after($subtree_preceding_nsa);
+    }
+    if (defined $subtree_preceding) {
+        $subtree_preceding->set_no_space_after($subtree_rightmost_nsa);
+    }
     $subtree_rightmost->set_no_space_after($node_preceding_nsa);
-    $subtree_preceding->set_no_space_after($subtree_rightmost_nsa);
         
     # ucfirst if beginning of sentence
     my $first = $subtree_root->get_descendants({add_self=>1,first_only=>1});
@@ -179,11 +185,13 @@ sub shift_subtree_after_node {
     # remember the no_space_after ("nsa") values
     my $node_nsa = $node->no_space_after;
     my $subtree_rightmost_nsa = $subtree_rightmost->no_space_after;
-    my $subtree_preceding_nsa = eval '$subtree_preceding->no_space_after' // 0;
+    my $subtree_preceding_nsa = defined $subtree_preceding ? $subtree_preceding->no_space_after : 0;
     # set the nsa values
     $node->set_no_space_after($subtree_preceding_nsa);
     $subtree_rightmost->set_no_space_after($node_nsa);
-    $subtree_preceding->set_no_space_after($subtree_rightmost_nsa);
+    if (defined $subtree_preceding) {
+        $subtree_preceding->set_no_space_after($subtree_rightmost_nsa);
+    }
         
     return;
 }
