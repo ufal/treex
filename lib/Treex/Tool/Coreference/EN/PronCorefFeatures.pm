@@ -208,6 +208,9 @@ sub _ante_synt_type {
         return 'prep';
     }
     my $anode = $cand->get_lex_anode;
+    if (!defined $anode) {
+        return 'oth';
+    }
     if ($anode->afun eq 'Sb') {
         return 'sb';
     }
