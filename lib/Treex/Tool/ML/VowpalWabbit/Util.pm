@@ -18,6 +18,53 @@ my $SELF_LABEL = "__SELF__";
 #    }
 #}
 
+# parses one instance in a singleline format
+sub parse_singleline {
+    my ($fh, $args) = @_;
+    my $line = <$fh>;
+    return if (!defined $line);
+    
+    chomp $line;
+    return [] if ($line =~ /^\s*$/);
+
+    my ($data, $comment) = split /\t/, $line;
+    my ($label_str, $feat_str) = split /\|/, $data;
+    my ($label, $tag) = split / /, $label_str;
+    $label = undef if ($label == "");
+    my @feat_list = split / /, $feat_str;
+    # remove a possible namespace id
+    shift @feat_list;
+    if ($args->{split_key_val}) {
+        @feat_list = map {[split /$FEAT_VAL_DELIM/, $_]} @feat_list;
+    }
+
+    return [\@feat_list, $label];
+}
+
+# parses one instance (bundle) in a multiline format
+sub parse_multiline {
+    my ($fh, $args) = @_;
+
+    my $shared_feats;
+    my @cand_feats = ();
+    my @losses = ();
+    while (my $inst = parse_singleline($fh, $args)) {
+        last if (!@$inst);
+        my ($feats, $label) = @$inst;
+        if ($label eq $SHARED_LABEL) {
+            $shared_feats = $feats;
+            next;
+        }
+        push @cand_feats, $feats;
+        next if (!defined $label);
+        # label = loss
+        push @losses, $label;
+    }
+    return if (!@cand_feats);
+    my $all_feats = [ \@cand_feats, $shared_feats ];
+    return [ $all_feats, @losses ? \@losses : undef ];
+}
+
 sub format_multiline {
     my ($feats, $losses) = @_;
 
@@ -29,11 +76,11 @@ sub format_multiline {
         $instance_str .= format_singleline($shared_feats, $SHARED_LABEL);
     }
 
-    my $comment = "";
+    my $tag = "";
     if (defined $losses) {
         my $min_loss = min @$losses;
         my @min_loss_idx = grep {$losses->[$_] == $min_loss} 0 .. $#$losses;
-        $comment = join ",", (map {$_ + 1} @min_loss_idx);
+        $tag = join ",", (map {$_ + 1} @min_loss_idx);
        
         my ($self_cand_idx) = grep {
             my $feat = $cands_feats->[$_][0];
@@ -44,7 +91,7 @@ sub format_multiline {
                 $feat eq $SELF_LABEL.$FEAT_VAL_DELIM."1";
             }
         } 0 .. $#$cands_feats;
-        $comment .= '-' . ($self_cand_idx+1) if (defined $self_cand_idx);
+        $tag .= '-' . ($self_cand_idx+1) if (defined $self_cand_idx);
     }
     
     my $i = 0;
@@ -53,7 +100,7 @@ sub format_multiline {
         if (defined $losses) {
             $label .= ":" . $losses->[$i];
         }
-        $instance_str .= format_singleline($cand_feats, $label, $comment);
+        $instance_str .= format_singleline($cand_feats, $label, $tag);
         $i++;
     }
     $instance_str .= "\n";
@@ -61,7 +108,7 @@ sub format_multiline {
 }
 
 sub format_singleline {
-    my ($feats, $label, $comment) = @_;
+    my ($feats, $label, $tag) = @_;
 
     my @feat_str = map {
         ref($_) eq 'ARRAY' ?
@@ -71,7 +118,7 @@ sub format_singleline {
     @feat_str = map {feat_perl_to_vw($_)} @feat_str;
     my $line = sprintf "%s %s|default %s\n",
         defined $label ? $label : "",
-        defined $comment ? $comment : "",
+        defined $tag ? $tag : "",
         join " ", @feat_str;
 
     return $line;
