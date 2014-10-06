@@ -42,7 +42,7 @@ sub get_aligned_nodes_by_filter {
     my ($edge_nodes, $edge_types) = _edge_filter_out(\@aligned, \@aligned_types, $filter);
     my ($filtered_nodes, $filtered_types) = _node_filter_out($edge_nodes, $edge_types, $filter);
   
-    log_info "[Tool::Align::Utils::get_aligned_nodes_by_filter]\tfiltered: " . join " ", @$filtered_types;
+    log_debug "[Tool::Align::Utils::get_aligned_nodes_by_filter]\tfiltered: " . (join " ", @$filtered_types), 1;
     return ($filtered_nodes, $filtered_types);
 }
 
@@ -51,7 +51,7 @@ sub remove_aligned_nodes_by_filter {
 
     my ($nodes, $types) = get_aligned_nodes_by_filter($node, $filter);
     for (my $i = 0; $i < @$nodes; $i++) {
-        log_info "[Tool::Align::Utils::remove_aligned_nodes_by_filter]\tremoving: " . $types->[$i] . " " . $nodes->[$i]->id;
+        log_debug "[Tool::Align::Utils::remove_aligned_nodes_by_filter]\tremoving: " . $types->[$i] . " " . $nodes->[$i]->id, 1;
         if ($node->is_aligned_to($nodes->[$i], $types->[$i])) {
             $node->delete_aligned_node($nodes->[$i], $types->[$i]);
         }
