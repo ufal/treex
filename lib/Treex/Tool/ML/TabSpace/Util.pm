@@ -42,7 +42,7 @@ sub parse_multiline {
             next;
         }
         # zero loss => positive instance
-        if ($label == 0) {
+        if ($label eq "0") {
             push @pos_ids, $i;
         }
         push @cand_feats, $feats;
@@ -50,7 +50,7 @@ sub parse_multiline {
     }
     return if (!@cand_feats);
     my $all_feats = [ \@cand_feats, $shared_feats ];
-    return [ $all_feats, \@pos_ids ];
+    return [ $all_feats, @pos_ids ? \@pos_ids : undef ];
 }
 
 sub format_singleline {
