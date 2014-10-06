@@ -38,7 +38,7 @@ sub parse_singleline {
         @feat_list = map {[split /$FEAT_VAL_DELIM/, $_]} @feat_list;
     }
 
-    return [\@feat_list, $label];
+    return ([\@feat_list, $label], $comment);
 }
 
 # parses one instance (bundle) in a multiline format
@@ -48,32 +48,37 @@ sub parse_multiline {
     my $shared_feats;
     my @cand_feats = ();
     my @losses = ();
-    while (my $inst = parse_singleline($fh, $args)) {
+    my $shared_comment;
+    my @cand_comments = ();
+    while (my ($inst, $comment) = parse_singleline($fh, $args)) {
         last if (!@$inst);
         my ($feats, $label) = @$inst;
         if ($label eq $SHARED_LABEL) {
             $shared_feats = $feats;
+            $shared_comment = $comment;
             next;
         }
         push @cand_feats, $feats;
+        push @cand_comments, $comment;
         next if (!defined $label);
         # label = loss
         push @losses, $label;
     }
     return if (!@cand_feats);
     my $all_feats = [ \@cand_feats, $shared_feats ];
-    return [ $all_feats, @losses ? \@losses : undef ];
+    return ([ $all_feats, @losses ? \@losses : undef ], [ \@cand_comments, $shared_comment ]);
 }
 
 sub format_multiline {
-    my ($feats, $losses) = @_;
+    my ($feats, $losses, $comments) = @_;
 
     my ($cands_feats, $shared_feats) = @$feats;
+    my ($cand_comments, $shared_comment) = defined $comments ? @$comments : ([], undef);
 
     my $instance_str = "";
 
     if (defined $shared_feats) {
-        $instance_str .= format_singleline($shared_feats, $SHARED_LABEL);
+        $instance_str .= format_singleline($shared_feats, $SHARED_LABEL, undef, $shared_comment);
     }
 
     my $tag = "";
@@ -100,7 +105,7 @@ sub format_multiline {
         if (defined $losses) {
             $label .= ":" . $losses->[$i];
         }
-        $instance_str .= format_singleline($cand_feats, $label, $tag);
+        $instance_str .= format_singleline($cand_feats, $label, $tag, $cand_comments->[$i]);
         $i++;
     }
     $instance_str .= "\n";
@@ -108,7 +113,7 @@ sub format_multiline {
 }
 
 sub format_singleline {
-    my ($feats, $label, $tag) = @_;
+    my ($feats, $label, $tag, $comment) = @_;
 
     my @feat_str = map {
         ref($_) eq 'ARRAY' ?
@@ -116,10 +121,11 @@ sub format_singleline {
             $_;
     } @$feats;
     @feat_str = map {feat_perl_to_vw($_)} @feat_str;
-    my $line = sprintf "%s %s|default %s\n",
+    my $line = sprintf "%s %s|default %s\t%s\n",
         defined $label ? $label : "",
         defined $tag ? $tag : "",
-        join " ", @feat_str;
+        join " ", @feat_str,
+        defined $comment ? $comment : "";
 
     return $line;
 }
@@ -223,6 +229,7 @@ sub feat_perl_to_vw {
     # ":" and "|" is a special char in VW
     $feat =~ s/:/__COL__/g;
     $feat =~ s/\|/__PIPE__/g;
+    $feat =~ s/\t/__TAB__/g;
     #utf8::encode($feat);
     return $feat;
 }
@@ -234,6 +241,7 @@ sub feats_vw_to_perl {
         utf8::decode($feat);
         $feat =~ s/__PIPE__/|/g;
         $feat =~ s/__COL__/:/g;
+        $feat =~ s/__TAB__/\t/g;
     }
     return @feats_no_ns;
 }
