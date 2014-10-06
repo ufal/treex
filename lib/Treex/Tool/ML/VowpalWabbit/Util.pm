@@ -30,14 +30,14 @@ sub parse_singleline {
     my ($data, $comment) = split /\t/, $line;
     my ($label_str, $feat_str) = split /\|/, $data;
     my ($label, $tag) = split / /, $label_str;
-    $label = undef if ($label == "");
+    $label = undef if ($label eq "");
     my @feat_list = split / /, $feat_str;
     # remove a possible namespace id
     shift @feat_list;
     if ($args->{split_key_val}) {
-        @feat_list = map {[split /$FEAT_VAL_DELIM/, $_]} @feat_list;
+        @feat_list = map {[split /$FEAT_VAL_DELIM/, $_, 2]} @feat_list;
     }
-
+    
     return ([\@feat_list, $label], $comment);
 }
 
@@ -62,7 +62,8 @@ sub parse_multiline {
         push @cand_comments, $comment;
         next if (!defined $label);
         # label = loss
-        push @losses, $label;
+        my ($pos, $loss) = split /:/, $label;
+        push @losses, $loss;
     }
     return if (!@cand_feats);
     my $all_feats = [ \@cand_feats, $shared_feats ];
@@ -124,7 +125,7 @@ sub format_singleline {
     my $line = sprintf "%s %s|default %s\t%s\n",
         defined $label ? $label : "",
         defined $tag ? $tag : "",
-        join " ", @feat_str,
+        join(" ", @feat_str),
         defined $comment ? $comment : "";
 
     return $line;
@@ -230,6 +231,7 @@ sub feat_perl_to_vw {
     $feat =~ s/:/__COL__/g;
     $feat =~ s/\|/__PIPE__/g;
     $feat =~ s/\t/__TAB__/g;
+    $feat =~ s/ /__SPACE__/g;
     #utf8::encode($feat);
     return $feat;
 }
@@ -242,6 +244,7 @@ sub feats_vw_to_perl {
         $feat =~ s/__PIPE__/|/g;
         $feat =~ s/__COL__/:/g;
         $feat =~ s/__TAB__/\t/g;
+        $feat =~ s/__SPACE__/ /g;
     }
     return @feats_no_ns;
 }

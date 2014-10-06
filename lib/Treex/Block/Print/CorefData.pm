@@ -88,8 +88,10 @@ sub comments_from_feats {
 sub _comment_for_line {
     my ($feat_list, $type) = @_;
 
-    my %feat_hash = map {split /=/, $_} @$feat_list;
-    my $comment = sprintf "%s %s", $feat_hash{$type."_id"}, $feat_hash{"ali_".$type."_id"} // "";
+    my %feat_hash = map {$_->[0] => $_->[1]} @$feat_list;
+    my $id = $feat_hash{$type."_id"} // "";
+    my $align_id = $feat_hash{"align_".$type."_id"} // "";
+    my $comment = sprintf "%s %s", $id, $align_id;
     return $comment;
 }
 
