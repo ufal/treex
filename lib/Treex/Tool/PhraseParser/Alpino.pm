@@ -40,6 +40,21 @@ sub BUILD {
     return;
 }
 
+sub escape {
+    my ($self, $sent) = @_;
+    
+    $sent =~ s/&/\&amp;/g;
+    $sent =~ s/%/\&perc;/g;
+    return $sent;
+}
+
+sub unescape {
+    my ($self, $tok) = @_;
+    $tok =~ s/&perc;/%/g;
+    $tok =~ s/&amp;/\&/g;
+    return $tok;
+}
+
 sub parse_zones {
     my ( $self, $zones_rf ) = @_;
 
@@ -50,9 +65,10 @@ sub parse_zones {
 
         # Take the (tokenized) sentence
         my @forms = map { $_->form } $zone->get_atree->get_descendants( { ordered => 1 } );
+        my $sent = $self->escape(join( " ", @forms ));
 
         # Have Alpino parse the sentence
-        print $writer join( " ", @forms ) . "\n";
+        print $writer $sent . "\n";        
         my $line = <$reader>;
 
         if ( $line !~ /^<\?xml/ ) {
@@ -82,6 +98,11 @@ sub parse_zones {
             }
         );
         $self->_twig->parse($xml);
+        
+        foreach my $pnode (grep { defined($_->form) } $proot->get_descendants()){
+            $pnode->set_lemma( $self->unescape($pnode->lemma) );
+            $pnode->set_form( $self->unescape($pnode->form) );
+        } 
     }
 
 }
