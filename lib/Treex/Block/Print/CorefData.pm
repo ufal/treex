@@ -106,7 +106,10 @@ sub _copy_coref_from_alignment {
 
     my ($ref_anaph) = Treex::Tool::Align::Utils::aligned_transitively([$tnode], [$align_filter]);
     # no gold t-node counterpart of the anaphor
-    return if (!defined $ref_anaph);
+    if (!defined $ref_anaph) {
+        log_debug "no gold t-node counterpart of the anaphor: " . $tnode->id, 1;
+        return;
+    }
     my $is_gram = 1;
     my @ref_antes = $ref_anaph->get_coref_gram_nodes;
     if (!@ref_antes) {
@@ -114,7 +117,10 @@ sub _copy_coref_from_alignment {
         @ref_antes = $ref_anaph->get_coref_text_nodes;
     }
     # no gold antecedents
-    return if (!@ref_antes);
+    if (!@ref_antes) {
+        log_debug "no gold antecedents" . $tnode->id, 1;
+        return;
+    }
     my @src_antes = Treex::Tool::Align::Utils::aligned_transitively(\@ref_antes, [$align_filter]);
 
     if (!@src_antes) {
@@ -136,7 +142,10 @@ sub _copy_coref_from_alignment {
     # remove a possible anaphor itself
     @src_antes = grep {$_ != $tnode} @src_antes;
     # no aligned src antecedents
-    return if (!@src_antes);
+    if (!@src_antes) {
+        log_debug "no aligned src antecedents" . $tnode->id, 1;
+        return;
+    }
 
     if ($is_gram) {
         $tnode->add_coref_gram_nodes(@src_antes);
