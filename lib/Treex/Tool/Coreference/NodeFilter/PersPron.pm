@@ -86,7 +86,7 @@ sub _is_3rd_pers_cs_t {
     }
     elsif (defined $anode) {
         my $person = substr $anode->tag, 7, 1;
-        $is_3rd_pers = $person eq '3';
+        $is_3rd_pers = ($person ne '1') && ($person ne '2');
     }
     #else {
     #    my $par = $tnode->get_parent;
