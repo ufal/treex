@@ -105,7 +105,7 @@ sub process_tnode {
     my $fe = $self->_feature_extractor;
 
     my @cands = $acs->get_candidates($tnode);
-    my $losses = $self->labeled ? [ is_text_coref($tnode, @cands) ] : undef;
+    my $losses = $self->labeled ? is_text_coref($tnode, @cands) : undef;
 
     if (!$self->labeled || $losses) {
         my $feats = $self->_feature_extractor->create_instances($tnode, \@cands);
@@ -196,9 +196,9 @@ sub is_text_coref {
     my @losses = map {defined $antes_hash{$_->id} ? 0 : 1} @cands;
     if (none {$_ == 0} @losses) {
         log_info "[Print::CorefData]\tan antecedent exists but there is none among the candidates: " . $anaph->get_address;
-        return ();
+        return;
     }
-    return @losses;
+    return \@losses;
 }
 
 
