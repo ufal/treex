@@ -44,6 +44,8 @@ has 'anaphor_as_candidate' => (
     documentation => 'joint anaphoricity determination and antecedent selection',
 );
 
+has 'labeled' => ( is => 'ro', isa => 'Bool', default => 1);
+
 #has '_feature_transformer' => (
 #    is          => 'ro',
 #    required    => 1,
@@ -224,8 +226,8 @@ sub is_text_coref {
 
     my %antes_hash = map {$_->id => $_} @antecs;
 
-    my @relat_idx = grep {defined $antes_hash{$cands[$_]->id}} 0 .. $#cands;
-    return @relat_idx;
+    my @losses = map {defined $antes_hash{$_->id} ? 0 : 1} @cands;
+    return @losses;
 }
 
 before 'process_document' => sub {
@@ -266,11 +268,11 @@ sub process_tnode {
 #        else {
 
         my @cands = $acs->get_candidates($t_node);
-        my @coref_idx = is_text_coref($t_node, @cands);
+        my @losses = $self->labeled ? is_text_coref($t_node, @cands) : ();
 
-        if (@coref_idx) {
+        if (!$self->labeled || @losses) {
             my $feats = $self->_feature_extractor->create_instances($t_node, \@cands);
-            my $instance_str = Treex::Tool::ML::TabSpace::Util::format_multiline($feats, \@coref_idx);
+            my $instance_str = Treex::Tool::ML::TabSpace::Util::format_multiline($feats, \@losses);
 
             print {$self->_file_handle} $instance_str;
         }
