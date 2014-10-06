@@ -10,12 +10,14 @@ my $SELF_LABEL = "__SELF__";
 
 sub _add_default_args {
     my ($args) = @_;
-    if (!defined $args->{parse_feats}) {
-        $args->{parse_feats} = 'single';
+    my $new_args = defined $args ? $args : {};
+    if (!defined $new_args->{parse_feats}) {
+        $new_args->{parse_feats} = 'single';
     }
-    if (!defined $args->{items}) {
-        $args->{items} = ['feats', 'label', 'tag', 'comment'];
+    if (!defined $new_args->{items}) {
+        $new_args->{items} = ['feats', 'label', 'tag', 'comment'];
     }
+    return $new_args;
 }
 
 sub _parse_line {
@@ -49,7 +51,7 @@ sub _parse_line {
 # parses one instance in a singleline format
 sub parse_singleline {
     my ($fh, $args) = @_;
-    _add_default_args($args);
+    $args = _add_default_args($args);
     my ($feats, $label, $tag, $comment) = _parse_line($fh, $args);
     return if (!$feats);
     
@@ -65,7 +67,7 @@ sub parse_singleline {
 # parses one instance (bundle) in a multiline format
 sub parse_multiline {
     my ($fh, $args) = @_;
-    _add_default_args($args);
+    $args = _add_default_args($args);
 
     my $shared_feats;
     my @cand_feats = ();
