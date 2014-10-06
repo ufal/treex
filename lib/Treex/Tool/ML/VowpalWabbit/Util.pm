@@ -10,6 +10,9 @@ my $SELF_LABEL = "__SELF__";
 
 sub _add_default_args {
     my ($args) = @_;
+    if (!defined $args->{parse_feats}) {
+        $args->{parse_feats} = 'single';
+    }
     if (!defined $args->{items}) {
         $args->{items} = ['feats', 'label', 'tag', 'comment'];
     }
@@ -28,14 +31,19 @@ sub _parse_line {
     my ($label_str, $feat_str) = split /\|/, $data;
     my ($label, $tag) = split / /, $label_str;
     $label = undef if ($label eq "");
-    my @feat_list = split / /, $feat_str;
-    # remove a possible namespace id
-    shift @feat_list;
-    if ($args->{split_key_val}) {
-        @feat_list = map {[split /$FEAT_VAL_DELIM/, $_, 2]} @feat_list;
+
+    my $feats = $feat_str;
+    if ($args->{parse_feats} ne "no") {
+        my @feat_list = split / /, $feats;
+        # remove a possible namespace id
+        shift @feat_list;
+        if ($args->{parse_feats} eq "pair") {
+            @feat_list = map {[split /$FEAT_VAL_DELIM/, $_, 2]} @feat_list;
+        }
+        $feats = \@feat_list;
     }
 
-    return (\@feat_list, $label, $tag, $comment);
+    return ($feats, $label, $tag, $comment);
 }
 
 # parses one instance in a singleline format
@@ -138,16 +146,22 @@ sub format_multiline {
 sub format_singleline {
     my ($feats, $label, $tag, $comment) = @_;
 
-    my @feat_str = map {
-        ref($_) eq 'ARRAY' ?
-            $_->[0] .$FEAT_VAL_DELIM. $_->[1] :
-            $_;
-    } @$feats;
-    @feat_str = map {feat_perl_to_vw($_)} @feat_str;
+    my $feat_str;
+    if (ref($feats) eq 'SCALAR') {
+        $feat_str = $feats;
+    }
+    else {
+        my @feats_items = map {
+            ref($_) eq 'ARRAY' ?
+                $_->[0] .$FEAT_VAL_DELIM. $_->[1] :
+                $_;
+        } @$feats;
+        $feat_str = join " ", (map {feat_perl_to_vw($_)} @feats_items);
+    }
     my $line = sprintf "%s %s|default %s\t%s\n",
         defined $label ? $label : "",
         defined $tag ? $tag : "",
-        join(" ", @feat_str),
+        $feat_str,
         defined $comment ? $comment : "";
 
     return $line;
@@ -334,10 +348,14 @@ The possible arguments that can be specified in the C<$args> hashref are:
 A list of items that will be returned by the parser. One can choose from the following items:
 C<feats>, C<label>, C<tag> and C<comment>. A default value is C<['feats', 'label', 'tag', 'comment']>
 
-=item * split_key_val
+=item * parse_feats
 
-If defined, a parser tries to split every feature into a key and a value part using the C<=> char
-as a separator.
+It defines an extent to which features are parsed. Possible values: 
+C<no> (feature list is left as a single string),
+C<single> (individual features are separated by the space char as a delimiter, but no structure is looked for within them), 
+C<pair> (every feature is separated into a key and a value by the C<=> char as a delimiter)
+The value C<single> is default.
+
 =back
 
 =head2 parse_multiline
