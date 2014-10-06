@@ -25,7 +25,7 @@ sub _parse_line {
     return if (!defined $line);
     
     chomp $line;
-    return undef if ($line =~ /^\s*$/);
+    return [] if ($line =~ /^\s*$/);
 
     my ($data, $comment) = split /\t/, $line;
     my ($label_str, $feat_str) = split /\|/, $data;
@@ -51,6 +51,7 @@ sub parse_singleline {
     my ($fh, $args) = @_;
     _add_default_args($args);
     my ($feats, $label, $tag, $comment) = _parse_line($fh, $args);
+    return if (!$feats);
     
     my %items = (
         feats => $feats,
@@ -74,7 +75,7 @@ sub parse_multiline {
     my $shared_comment;
     my @cand_comments = ();
     while (my ($feats, $label, $tag, $comment) = _parse_line($fh, $args)) {
-        last if (!defined $feats);
+        last if (!@$feats);
         if ($label eq $SHARED_LABEL) {
             $shared_feats = $feats;
             $shared_tag = $tag;
