@@ -105,12 +105,12 @@ sub process_tnode {
     my $fe = $self->_feature_extractor;
 
     my @cands = $acs->get_candidates($tnode);
-    my @losses = $self->labeled ? is_text_coref($tnode, @cands) : ();
+    my $losses = $self->labeled ? [ is_text_coref($tnode, @cands) ] : undef;
 
-    if (!$self->labeled || @losses) {
+    if (!$self->labeled || $losses) {
         my $feats = $self->_feature_extractor->create_instances($tnode, \@cands);
         my $comments = comments_from_feats($feats);
-        my $instance_str = Treex::Tool::ML::VowpalWabbit::Util::format_multiline($feats, \@losses, $comments);
+        my $instance_str = Treex::Tool::ML::VowpalWabbit::Util::format_multiline($feats, $losses, $comments);
 
         print {$self->_file_handle} $instance_str;
     }
