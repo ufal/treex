@@ -35,6 +35,7 @@ has 'max_size' => (
 has '_node_selector' => (
     isa => 'Treex::Tool::Context::Sentences',
     is => 'ro',
+    lazy => 1,
     builder => '_build_node_selector',
 );
 
