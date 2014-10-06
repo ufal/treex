@@ -240,6 +240,9 @@ sub _anaph_type {
     my ($self, $anaph) = @_;
 
     my $anode = $anaph->get_lex_anode;
+    if (!defined $anode) {
+        return 'oth';
+    }
     if ($anode->tag eq 'PRP$') {
         return 'poss';
     }
