@@ -54,6 +54,8 @@ override '_build_anaph_cands_filter' => sub {
     my $acf = Treex::Tool::Coreference::NodeFilter::PersPron->new({
         args => {
                 # including reflexive pronouns
+                # both expressed and unexpressed
+                expressed => 0,
             }
     });
     return $acf;
