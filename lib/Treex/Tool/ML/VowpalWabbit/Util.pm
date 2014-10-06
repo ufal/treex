@@ -25,7 +25,7 @@ sub _parse_line {
     return if (!defined $line);
     
     chomp $line;
-    return [] if ($line =~ /^\s*$/);
+    return undef if ($line =~ /^\s*$/);
 
     my ($data, $comment) = split /\t/, $line;
     my ($label_str, $feat_str) = split /\|/, $data;
@@ -87,6 +87,7 @@ sub parse_multiline {
         next if (!defined $label);
         # label = loss
         my ($pos, $loss) = split /:/, $label;
+        next if (!defined $loss);
         push @losses, $loss;
     }
     return if (!@cand_feats);
@@ -118,15 +119,16 @@ sub format_multiline {
         my @min_loss_idx = grep {$losses->[$_] == $min_loss} 0 .. $#$losses;
         $tag = join ",", (map {$_ + 1} @min_loss_idx);
        
-        my ($self_cand_idx) = grep {
-            my $feat = $cands_feats->[$_][0];
-            if (ref($feat) eq 'ARRAY') {
-                $feat->[0] eq $SELF_LABEL;
-            }
-            else {
-                $feat eq $SELF_LABEL.$FEAT_VAL_DELIM."1";
-            }
-        } 0 .. $#$cands_feats;
+        #my ($self_cand_idx) = grep {
+        #    my $feat = $cands_feats->[$_][0];
+        #    if (ref($feat) eq 'ARRAY') {
+        #        $feat->[0] eq $SELF_LABEL;
+        #    }
+        #    else {
+        #        $feat eq $SELF_LABEL.$FEAT_VAL_DELIM."1";
+        #    }
+        #} 0 .. $#$cands_feats;
+        my $self_cand_idx = 0;
         $tag .= '-' . ($self_cand_idx+1) if (defined $self_cand_idx);
     }
     
@@ -147,7 +149,7 @@ sub format_singleline {
     my ($feats, $label, $tag, $comment) = @_;
 
     my $feat_str;
-    if (ref($feats) eq 'SCALAR') {
+    if (!ref($feats)) {
         $feat_str = $feats;
     }
     else {
@@ -156,9 +158,10 @@ sub format_singleline {
                 $_->[0] .$FEAT_VAL_DELIM. $_->[1] :
                 $_;
         } @$feats;
-        $feat_str = join " ", (map {feat_perl_to_vw($_)} @feats_items);
+        $feat_str = "default ";
+        $feat_str .= join " ", (map {feat_perl_to_vw($_)} @feats_items);
     }
-    my $line = sprintf "%s %s|default %s\t%s\n",
+    my $line = sprintf "%s %s|%s\t%s\n",
         defined $label ? $label : "",
         defined $tag ? $tag : "",
         $feat_str,
