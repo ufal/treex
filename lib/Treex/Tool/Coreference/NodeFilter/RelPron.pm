@@ -22,7 +22,7 @@ sub is_relat {
 }
 
 sub _is_relat_cs {
-    my ($tnode) = @_;
+    my ($node, $args) = @_;
 
     if ($node->get_layer eq "a") {
         return _is_relat_cs_a($node, $args);
