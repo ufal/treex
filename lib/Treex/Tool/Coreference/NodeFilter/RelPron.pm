@@ -24,14 +24,33 @@ sub is_relat {
 sub _is_relat_cs {
     my ($tnode) = @_;
 
+    if ($node->get_layer eq "a") {
+        return _is_relat_cs_a($node, $args);
+    }
+    else {
+        return _is_relat_cs_t($node, $args);
+    }
+}
+
+sub _is_relat_cs_t {
+    my ($tnode) = @_;
+
     #my $is_via_indeftype = _is_relat_via_indeftype($tnode);
     #return ($is_via_indeftype ? 1 : 0);
     #if (defined $is_via_indeftype) {
     #    return $is_via_indeftype;
     #}
+    
+    my $anode = $tnode->get_lex_anode;
+    return 0 if !$anode;
+    return _is_relat_cs_a($anode);
+}
 
-    my $has_relat_tag = _is_relat_cs_via_tag($tnode);
-    my $is_relat_lemma = _is_relat_cs_via_lemma($tnode); 
+sub _is_relat_cs_a {
+    my ($anode) = @_;
+
+    my $has_relat_tag = _is_relat_cs_via_tag($anode);
+    my $is_relat_lemma = _is_relat_cs_via_lemma($anode); 
     
     #return $has_relat_tag;
     return $has_relat_tag || $is_relat_lemma;
@@ -63,9 +82,7 @@ sub _is_relat_via_indeftype {
 
 # "kde" and "kdy" are missing since their tags are Dd------
 sub _is_relat_cs_via_tag {
-    my ($tnode) = @_;
-    my $anode = $tnode->get_lex_anode;
-    return 0 if !$anode;
+    my ($anode) = @_;
     
     # 1 = Relative possessive pronoun jehož, jejíž, ... (lit. whose in subordinate relative clause) 
     # 4 = Relative/interrogative pronoun with adjectival declension of both types (soft and hard) (jaký, který, čí, ..., lit. what, which, whose, ...) 
@@ -84,9 +101,7 @@ my %relat_lemmas = map {$_ => 1}
     #qw/co což jak jaký jenž již kam kde kdo kdy kolik který odkud/;
 
 sub _is_relat_cs_via_lemma {
-    my ($tnode) = @_;
-    my $anode = $tnode->get_lex_anode;
-    return 0 if !$anode;
+    my ($anode) = @_;
     return $relat_lemmas{Treex::Tool::Lexicon::CS::truncate_lemma($anode->lemma, 0)}; 
 }
 
