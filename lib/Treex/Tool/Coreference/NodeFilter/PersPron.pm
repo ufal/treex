@@ -88,7 +88,17 @@ sub _is_3rd_pers_cs_t {
         my $person = substr $anode->tag, 7, 1;
         $is_3rd_pers = $person eq '3';
     }
-#    log_info "is_3rd: " . ($is_3rd_pers?1:0) if ($is_3rd_pers);
+    #else {
+    #    my $par = $tnode->get_parent;
+    #    my $apar = $par->get_lex_anode;
+    #    if (defined $apar) {
+    #        my $person = substr $apar->tag, 7, 1;
+    #        if ($person ne "-") {
+    #            $is_3rd_pers = $person eq '3';
+    #        }
+    #    }
+    #}
+    #log_info $tnode->id . "\tis_3rd: " . ($is_3rd_pers?1:0);
 
     # skip non-referential
     my $ok_skip_nonref = 1;
