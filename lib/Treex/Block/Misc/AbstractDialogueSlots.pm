@@ -41,18 +41,22 @@ sub process_zone {
 
     my @anodes = $zone->get_atree()->get_descendants( { ordered => 1 } );
 
-    my @abstrs = split / /, shift @{ $self->abstractions };
+    my @abstrs = split "\t", shift @{ $self->abstractions };
     
     foreach my $abstr (@abstrs) {
-        my ( $slot, $from, $to ) = split /[:-]/, $abstr;
+        my ( $slot, $val, $from, $to ) = ( $abstr =~ /^([^=]*)=("[^"]*"|[^:]+):([0-9]+)-([0-9]+)$/ );
+        
+        # skip slots that shouldn't be abstracted
         if ( $self->slots_set and not defined( $self->slots_set->{$slot} ) ) {
             next;
         }
+        # get t-nodes that reference the slot's span in the a-tree
         my @tnodes = map { $_->get_referencing_nodes('a/lex.rf') } @anodes[ $from .. $to - 1 ];
         if (!@tnodes){            
             log_warn('NO TNODES: ' . $zone->sentence() . ' ' . $zone->get_atree()->id . ' ' . $abstr);
             next;
         }
+        # merge these t-nodes into one node and set its t-lemma to "X-slotname"
         my $top_tnode = $tnodes[ minindex map { $_->get_depth() } @tnodes ];
         my @other_tnodes = grep { $_ != $top_tnode } @tnodes;
         foreach my $other_tnode (@other_tnodes) {
@@ -60,7 +64,7 @@ sub process_zone {
             map { $_->set_parent($top_tnode) } $other_tnode->get_children();
             $other_tnode->remove();            
         }
-        $top_tnode->set_t_lemma( 'X_' . $slot );
+        $top_tnode->set_t_lemma( 'X-' . $slot );
     }
 }
 
@@ -76,7 +80,7 @@ Treex::Block::Misc::AbstractDialogueSlots
 
 =head1 DESCRIPTION
 
-A helper block for Tgen generator for spoken dialogue systems. Given analyzed sentences
+A helper block for the Tgen generator for spoken dialogue systems. Given analyzed sentences
 corresponding to dialogue acts along with token ranges that should be replaced by a default
 placeholder, it removes the t-nodes corresponding to these token ranges and replaces
 them with one placeholder t-node.
