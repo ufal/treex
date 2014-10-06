@@ -9,7 +9,7 @@ with 'Treex::Tool::Coreference::CorefFeatures';
 has 'feat_extractors' => (is => 'ro', isa => 'ArrayRef[Treex::Tool::Coreference::CorefFeatures]', required => 1);
 
 has 'align_lang' => (is => 'ro', isa => 'Treex::Type::LangCode', required => 1);
-has 'align_selector' => (is => 'ro', isa => 'Treex::Type::Selector', required => 1);
+#has 'align_selector' => (is => 'ro', isa => 'Treex::Type::Selector', required => 1);
 has 'align_types' => (is => 'ro', isa => 'ArrayRef[Str]');
 
 has '_align_filter' => (is => 'ro', isa => 'HashRef', builder => '_build_align_filter', lazy => 1);
@@ -21,7 +21,7 @@ sub BUILD {
 
 sub _build_align_filter {
     my ($self) = @_;
-    my $align_filter = {language => $self->align_lang, selector => $self->align_selector};
+    my $align_filter = {language => $self->align_lang};
     if (defined $self->align_types) {
         $align_filter->{rel_types} = $self->align_types;
     }
@@ -74,7 +74,7 @@ sub init_doc_features {
     my ($self, $doc, $lang, $sel) = @_;
     
     foreach my $fe (@{$self->feat_extractors}) {
-        my $fe_feats = $fe->init_doc_features($doc, $self->align_lang, $self->align_selector);
+        my $fe_feats = $fe->init_doc_features($doc, $self->align_lang, $sel);
     }
 }
 
