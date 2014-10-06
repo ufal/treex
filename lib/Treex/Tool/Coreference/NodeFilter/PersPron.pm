@@ -60,6 +60,23 @@ sub _is_3rd_pers_cs {
     }
 }
 
+# processing ternary arguments for binary indicators
+# arg = 0 : does not take the indicator into account
+# arg = 1 : indicator must be true
+# arg = -1 : indicator must be false
+sub ternary_arg {
+    my ($arg, $indicator) = @_;
+    if ($arg > 0) {
+        return $indicator;
+    }
+    elsif ($arg < 0) {
+        return !$indicator;
+    }
+    else {
+        return 1;
+    }
+}
+
 sub _is_3rd_pers_cs_t {
     my ($tnode, $args) = @_;
 
@@ -68,14 +85,10 @@ sub _is_3rd_pers_cs_t {
     }
     
     # return only expressed by default
-    my $expressed = $args->{expressed} // 1;
+    my $arg_expressed = $args->{expressed} // 1;
     my $anode = $tnode->get_lex_anode;
-    if ($expressed > 0) {
-        return 0 if (!defined $anode);
-    }
-    if ($expressed < 0) {
-        return 0 if (defined $anode);
-    }
+    my $expressed = defined $anode;
+    return 0 if !ternary_arg($arg_expressed, $expressed);
     #log_info "_is_3rd_pers_cs_t";
 
     
@@ -108,18 +121,14 @@ sub _is_3rd_pers_cs_t {
     }
 
     # reflexive
-    my $ok_reflexive = 1;
-    if (defined $args->{reflexive}) {
-        my $reflex = is_reflexive($tnode);
-        $ok_reflexive = ($reflex xor !$args->{reflexive});
-#        print STDERR "OK_REFLEXIVE: " . ($ok_reflexive ? 1 : 0) . "\n";
-    }
+    my $arg_reflexive = $args->{reflexive} // 0;
+    my $reflexive = is_reflexive($tnode);
+    return 0 if !ternary_arg($arg_reflexive, $reflexive);
 
     return (
         ($tnode->t_lemma eq '#PersPron') &&  # personal pronoun 
         $is_3rd_pers &&    # third person
         $ok_skip_nonref &&  # referential (if it's set)
-        $ok_reflexive
     );
 }
 
@@ -145,15 +154,10 @@ sub _is_3rd_pers_en_t {
         $args = {};
     }
 
-    # return only expressed by default
-    my $expressed = $args->{expressed} // 1;
+    my $arg_expressed = $args->{expressed} // 1;
     my $anode = $tnode->get_lex_anode;
-    if ($expressed > 0) {
-        return 0 if (!defined $anode);
-    }
-    if ($expressed < 0) {
-        return 0 if (defined $anode);
-    }
+    my $expressed = defined $anode;
+    return 0 if !ternary_arg($arg_expressed, $expressed);
     
     # is in 3rd person
     # by default generated #PersPron with no gram_person set are in 3rd person
@@ -173,18 +177,14 @@ sub _is_3rd_pers_en_t {
     }
 
     # reflexive
-    my $ok_reflexive = 1;
-    if (defined $args->{reflexive}) {
-        my $reflex = is_reflexive($tnode);
-        $ok_reflexive = ($reflex xor !$args->{reflexive});
-#        print STDERR "OK_REFLEXIVE: " . ($ok_reflexive ? 1 : 0) . "\n";
-    }
+    my $arg_reflexive = $args->{reflexive} // 0;
+    my $reflexive = is_reflexive($tnode);
+    return 0 if !ternary_arg($arg_reflexive, $reflexive);
 
     return (
         ($tnode->t_lemma eq '#PersPron') &&  # personal pronoun 
         $is_3rd_pers &&    # third person
         $ok_skip_nonref &&  # referential (if it's set)
-        $ok_reflexive
     );
 }
 
