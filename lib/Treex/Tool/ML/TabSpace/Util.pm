@@ -32,8 +32,7 @@ sub parse_multiline {
 
     my ($shared_feats, $shared_label);
     my @cand_feats = ();
-    my @pos_ids = ();
-    my $i = 0;
+    my @losses = ();
     while (my $inst = parse_singleline($fh, $args)) {
         last if (!@$inst);
         my ($feats, $label) = @$inst;
@@ -41,22 +40,20 @@ sub parse_multiline {
             $shared_feats = $feats;
             next;
         }
-        # zero loss => positive instance
-        if ($label eq "0") {
-            push @pos_ids, $i;
-        }
         push @cand_feats, $feats;
-        $i++;
+        next if ($label eq "");
+        # label = loss
+        push @losses, $label;
     }
     return if (!@cand_feats);
     my $all_feats = [ \@cand_feats, $shared_feats ];
-    return [ $all_feats, @pos_ids ? \@pos_ids : undef ];
+    return [ $all_feats, @losses ? \@losses : undef ];
 }
 
 sub format_singleline {
     my ($feats, $label) = @_;
 
-    my $line = $label . "\t";
+    my $line = ($label // "") . "\t";
     my @feat_str = map {
         if (ref($_) eq 'ARRAY') {
             if (!$REMOVE_UNDEFS || defined $_->[1]) {
@@ -73,7 +70,7 @@ sub format_singleline {
 }
 
 sub format_multiline {
-    my ($feats, $pos_idx) = @_;
+    my ($feats, $losses) = @_;
 
     my ($cands_feats, $shared_feats) = @$feats;
 
@@ -82,13 +79,11 @@ sub format_multiline {
         $instance_str .= format_singleline($shared_feats, $SHARED_LABEL);
     }
 
-    my %pos_idx_hash = map {$_ => 1} @$pos_idx;
-
     my $i = 0;
     foreach my $cand_feats (@$cands_feats) {
-        my $loss = 1;
-        if ($pos_idx_hash{$i}) {
-            $loss = 0;
+        my $loss = undef;
+        if (defined $losses) {
+            $loss = $losses->[$i];
         }
         $instance_str .= format_singleline($cand_feats, $loss);
         $i++;

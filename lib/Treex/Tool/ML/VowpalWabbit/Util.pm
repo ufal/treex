@@ -2,7 +2,7 @@ package Treex::Tool::ML::VowpalWabbit::Util;
 
 use Moose;
 use Treex::Core::Common;
-use List::Util;
+use List::Util qw/min/;
 
 my $SHARED_LABEL = "shared";
 my $FEAT_VAL_DELIM = "=";
@@ -19,7 +19,7 @@ my $SELF_LABEL = "__SELF__";
 #}
 
 sub format_multiline {
-    my ($feats, $pos_idx) = @_;
+    my ($feats, $losses) = @_;
 
     my ($cands_feats, $shared_feats) = @$feats;
 
@@ -29,11 +29,11 @@ sub format_multiline {
         $instance_str .= format_singleline($shared_feats, $SHARED_LABEL);
     }
 
-    my %pos_idx_hash = ();
     my $comment = "";
-    if (defined $pos_idx) {
-        %pos_idx_hash = map {$_ => 1} @$pos_idx;
-        $comment = join ",", (map {$_ + 1} @$pos_idx);
+    if (defined $losses) {
+        my $min_loss = min @$losses;
+        my @min_loss_idx = grep {$losses->[$_] == $min_loss} 0 .. $#$losses;
+        $comment = join ",", (map {$_ + 1} @min_loss_idx);
        
         my ($self_cand_idx) = grep {
             my $feat = $cands_feats->[$_][0];
@@ -50,8 +50,8 @@ sub format_multiline {
     my $i = 0;
     foreach my $cand_feats (@$cands_feats) {
         my $label = $i+1;
-        if (defined $pos_idx) {
-            $label .= ":" . ($pos_idx_hash{$i} ? 0 : 1);
+        if (defined $losses) {
+            $label .= ":" . $losses->[$i];
         }
         $instance_str .= format_singleline($cand_feats, $label, $comment);
         $i++;
