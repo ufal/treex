@@ -59,11 +59,26 @@ sub _is_relat_cs_a {
 }
 
 sub _is_relat_en {
+    my ($node, $args) = @_;
+
+    if ($node->get_layer eq "a") {
+        return _is_relat_en_a($node, $args);
+    }
+    else {
+        return _is_relat_en_t($node, $args);
+    }
+}
+
+sub _is_relat_en_t {
     my ($tnode) = @_;
     #my $is_via_indeftype = _is_relat_via_indeftype($tnode);
     #return $is_via_indeftype ? 1 : 0;
-
     my $anode = $tnode->get_lex_anode();
+    return _is_relat_en_a($anode);
+}
+
+sub _is_relat_en_a {
+    my ($anode) = @_;
     return 0 if (!defined $anode);
     return 1 if ($anode->tag =~ /^W/);
     return 1 if ($anode->tag eq "IN" && $anode->lemma eq "that" && !$anode->get_children());
