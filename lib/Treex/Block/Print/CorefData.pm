@@ -175,7 +175,10 @@ sub is_text_coref {
     my %antes_hash = map {$_->id => $_} @antecs;
 
     my @losses = map {defined $antes_hash{$_->id} ? 0 : 1} @cands;
-    return () if all {$_ == 1} @losses;
+    if (none {$_ == 0} @losses) {
+        log_info "[Print::CorefData]\tan antecedent exists but there is none among the candidates: " . $anaph->get_address;
+        return ();
+    }
     return @losses;
 }
 
