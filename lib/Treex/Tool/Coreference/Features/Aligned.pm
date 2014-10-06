@@ -34,11 +34,11 @@ sub _binary_features {
     my ($ali_anaph_nodes, $ali_anaph_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($anaph, $self->_align_filter);
 # TODO: features based on the errors returned
     return {} if (!@$ali_anaph_nodes);
-    log_info "ANAPH_ALI_TYPES: " . join " ", @$ali_anaph_types;
+    log_info "[Tool::Coreference::Features::Aligned::_binary_features]\tanaphor ali_types: " . join " ", @$ali_anaph_types;
     my ($ali_cand_nodes, $ali_cand_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($cand, $self->_align_filter);
 # TODO: features based on the errors returned
     return {} if (!@$ali_cand_nodes);
-    log_info "CAND_ALI_TYPES: " . join " ", @$ali_cand_types;
+    log_info "[Tool::Coreference::Features::Aligned::_binary_features]\tcand ali_types: " . join " ", @$ali_cand_types;
     
     my %feats = ();
     foreach my $fe (@{$self->feat_extractors}) {
@@ -57,7 +57,7 @@ sub _unary_features {
     my ($ali_nodes, $ali_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($node, $self->_align_filter);
 # TODO: features based on the errors returned
     return {} if (!@$ali_nodes);
-    log_info "ANAPH_TYPES: " . join " ", @$ali_types;
+    log_info "[Tool::Coreference::Features::Aligned::_unary_features]\tanaphor ali_types: " . join " ", @$ali_types;
     
     my %feats = ();
     foreach my $fe (@{$self->feat_extractors}) {
