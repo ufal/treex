@@ -48,17 +48,21 @@ sub parse_multiline {
     my $shared_feats;
     my @cand_feats = ();
     my @losses = ();
+    my $shared_tag;
+    my @cand_tags = ();
     my $shared_comment;
     my @cand_comments = ();
-    while (my ($inst, $comment) = parse_singleline($fh, $args)) {
+    while (my ($inst, $tag, $comment) = parse_singleline($fh, $args)) {
         last if (!@$inst);
         my ($feats, $label) = @$inst;
         if ($label eq $SHARED_LABEL) {
             $shared_feats = $feats;
+            $shared_tag = $tag;
             $shared_comment = $comment;
             next;
         }
         push @cand_feats, $feats;
+        push @cand_tags, $tag;
         push @cand_comments, $comment;
         next if (!defined $label);
         # label = loss
@@ -67,7 +71,7 @@ sub parse_multiline {
     }
     return if (!@cand_feats);
     my $all_feats = [ \@cand_feats, $shared_feats ];
-    return ([ $all_feats, @losses ? \@losses : undef ], [ \@cand_comments, $shared_comment ]);
+    return ([ $all_feats, @losses ? \@losses : undef ], [ \@cand_tags, $shared_tag ] ,[ \@cand_comments, $shared_comment ]);
 }
 
 sub format_multiline {
