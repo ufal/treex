@@ -236,7 +236,7 @@ sub _is_subject {
     if ($par->gram_tense && ($par->gram_tense =~ /^(sim|ant|post)/) || 
         ($par->functor eq 'DENOM')) {
 		
-        my @cands = $par->get_echildren;
+        my @cands = $par->get_echildren({or_topological => 1});
  		my @sb_ids;
 		foreach my $child (@cands) {
 			if (defined $child->gram_sempos && ($child->gram_sempos =~ /^n/)) {

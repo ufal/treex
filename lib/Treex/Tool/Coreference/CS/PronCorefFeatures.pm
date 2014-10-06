@@ -398,7 +398,7 @@ sub count_collocations {
 
             if ($node->gram_sempos && ( $node->gram_sempos =~ /^v/ ) && !$node->is_generated ) {
                 
-                foreach my $child ( $node->get_echildren ) {
+                foreach my $child ( $node->get_echildren({or_topological => 1}) ) {
                     
                     if ( $child->functor && $actants2{ $child->functor } && 
                         $child->gram_sempos && ( $child->gram_sempos =~ /^n\.denot/ )) {
