@@ -8,9 +8,16 @@ my $SHARED_LABEL = "shared";
 my $FEAT_VAL_DELIM = "=";
 my $SELF_LABEL = "__SELF__";
 
-# parses one instance in a singleline format
-sub parse_singleline {
+sub _add_default_args {
+    my ($args) = @_;
+    if (!defined $args->{items}) {
+        $args->{items} = ['feats', 'label', 'tag', 'comment'];
+    }
+}
+
+sub _parse_line {
     my ($fh, $args) = @_;
+    
     my $line = <$fh>;
     return if (!defined $line);
     
@@ -27,13 +34,29 @@ sub parse_singleline {
     if ($args->{split_key_val}) {
         @feat_list = map {[split /$FEAT_VAL_DELIM/, $_, 2]} @feat_list;
     }
+
+    return (\@feat_list, $label, $tag, $comment);
+}
+
+# parses one instance in a singleline format
+sub parse_singleline {
+    my ($fh, $args) = @_;
+    _add_default_args($args);
+    my ($feats, $label, $tag, $comment) = _parse_line($fh, $args);
     
-    return ([\@feat_list, $label], $tag, $comment);
+    my %items = (
+        feats => $feats,
+        label => $label,
+        tag => $tag,
+        comment => $comment
+    );
+    return map {$items{$_}} @{$args->{items}}
 }
 
 # parses one instance (bundle) in a multiline format
 sub parse_multiline {
     my ($fh, $args) = @_;
+    _add_default_args($args);
 
     my $shared_feats;
     my @cand_feats = ();
@@ -42,9 +65,8 @@ sub parse_multiline {
     my @cand_tags = ();
     my $shared_comment;
     my @cand_comments = ();
-    while (my ($inst, $tag, $comment) = parse_singleline($fh, $args)) {
-        last if (!@$inst);
-        my ($feats, $label) = @$inst;
+    while (my ($feats, $label, $tag, $comment) = _parse_line($fh, $args)) {
+        last if (!defined $feats);
         if ($label eq $SHARED_LABEL) {
             $shared_feats = $feats;
             $shared_tag = $tag;
@@ -60,8 +82,14 @@ sub parse_multiline {
         push @losses, $loss;
     }
     return if (!@cand_feats);
-    my $all_feats = [ \@cand_feats, $shared_feats ];
-    return ([ $all_feats, @losses ? \@losses : undef ], [ \@cand_tags, $shared_tag ] ,[ \@cand_comments, $shared_comment ]);
+    
+    my %items = (
+        feats => [ \@cand_feats, $shared_feats ],
+        label => (@losses ? \@losses : undef),
+        tag => [ \@cand_tags, $shared_tag ],
+        comment => [ \@cand_comments, $shared_comment ]
+    );
+    return map {$items{$_}} @{$args->{items}}
 }
 
 sub format_multiline {
@@ -304,7 +332,7 @@ The possible arguments that can be specified in the C<$args> hashref are:
 =item * items
 
 A list of items that will be returned by the parser. One can choose from the following items:
-C<feats>, C<loss>, C<tag> and C<comment>. A default value is C<['feats', 'loss', 'tag', 'comment']>
+C<feats>, C<label>, C<tag> and C<comment>. A default value is C<['feats', 'label', 'tag', 'comment']>
 
 =item * split_key_val
 
