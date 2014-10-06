@@ -2,7 +2,7 @@ package Treex::Block::Print::CorefData;
 
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::ML::TabSpace::Util;
+use Treex::Tool::ML::VowpalWabbit::Util;
 use List::Util;
 
 extends 'Treex::Block::Write::BaseTextWriter';
@@ -77,6 +77,22 @@ before 'process_document' => sub {
     $self->_feature_extractor->init_doc_features( $doc, $self->language, $self->selector );
 };
 
+sub comments_from_feats {
+    my ($feats) = @_;
+    my ($cand_feats, $shared_feats) = @$feats;
+    my @cand_comments = map {_comment_for_line($_, "cand")} @$cand_feats;
+    my $shared_comment = _comment_for_line($shared_feats, "anaph");
+    return [\@cand_comments, $shared_comment];
+}
+
+sub _comment_for_line {
+    my ($feat_list, $type) = @_;
+
+    my %feat_hash = map {split /=/, $_} @$feat_list;
+    my $comment = sprintf "%s %s", $feat_hash{$type."_id"}, $feat_hash{"ali_".$type."_id"} // "";
+    return $comment;
+}
+
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
@@ -91,7 +107,8 @@ sub process_tnode {
 
     if (!$self->labeled || @losses) {
         my $feats = $self->_feature_extractor->create_instances($tnode, \@cands);
-        my $instance_str = Treex::Tool::ML::TabSpace::Util::format_multiline($feats, \@losses);
+        my $comments = comments_from_feats($feats);
+        my $instance_str = Treex::Tool::ML::VowpalWabbit::Util::format_multiline($feats, \@losses, $comments);
 
         print {$self->_file_handle} $instance_str;
     }
