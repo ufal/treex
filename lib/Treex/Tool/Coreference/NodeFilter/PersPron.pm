@@ -128,7 +128,7 @@ sub _is_3rd_pers_cs_t {
     return (
         ($tnode->t_lemma eq '#PersPron') &&  # personal pronoun 
         $is_3rd_pers &&    # third person
-        $ok_skip_nonref &&  # referential (if it's set)
+        $ok_skip_nonref  # referential (if it's set)
     );
 }
 
@@ -184,7 +184,7 @@ sub _is_3rd_pers_en_t {
     return (
         ($tnode->t_lemma eq '#PersPron') &&  # personal pronoun 
         $is_3rd_pers &&    # third person
-        $ok_skip_nonref &&  # referential (if it's set)
+        $ok_skip_nonref  # referential (if it's set)
     );
 }
 
