@@ -43,6 +43,7 @@ override '_build_ante_cands_selector' => sub {
         prev_sents_num => 1,
         anaphor_as_candidate => 1,
         cands_within_czeng_blocks => 1,
+        max_size => 100,
     });
     return $acs;
 };

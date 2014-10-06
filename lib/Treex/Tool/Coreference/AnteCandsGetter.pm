@@ -25,6 +25,13 @@ has 'cands_within_czeng_blocks' => (
     default => 0,
 );
 
+has 'max_size' => (
+    isa => 'Int',
+    is => 'ro',
+    required => 1,
+    default => 0,
+);
+
 has '_node_selector' => (
     isa => 'Treex::Tool::Context::Sentences',
     is => 'ro',
@@ -54,6 +61,10 @@ sub get_candidates {
     my ($self, $anaph) = @_;
 
     my @cands = $self->_select_all_cands($anaph);
+
+    if ($self->max_size && (scalar @cands > $self->max_size)) {
+        @cands = @cands[0 .. $self->max_size-1];
+    }
     
     if ($self->anaphor_as_candidate) {
         unshift @cands, $anaph;
