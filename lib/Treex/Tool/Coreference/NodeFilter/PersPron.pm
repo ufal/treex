@@ -46,18 +46,49 @@ sub is_3rd_pers {
     }
 }
 
+# possible args:
+#   skip_nonref : skip personal pronouns that are labeled as non-referential
+#   reflexive : include reflexive pronouns (default = 1)
 sub _is_3rd_pers_cs {
+    my ($node, $args) = @_;
+
+    if ($node->get_layer eq "a") {
+        return 0;
+    }
+    else {
+        return _is_3rd_pers_cs_t($node, $args);
+    }
+}
+
+sub _is_3rd_pers_cs_t {
     my ($tnode, $args) = @_;
 
     if (!defined $args) {
         $args = {};
     }
     
+    # return only expressed by default
+    my $expressed = $args->{expressed} // 1;
+    my $anode = $tnode->get_lex_anode;
+    if ($expressed > 0) {
+        return 0 if (!defined $anode);
+    }
+    if ($expressed < 0) {
+        return 0 if (defined $anode);
+    }
+    #log_info "_is_3rd_pers_cs_t";
+
+    
     # is in 3rd person
-    my $is_3rd_pers = 0;
+    my $is_3rd_pers = 1;
     if ( defined $tnode->gram_person ) {
         $is_3rd_pers = ($tnode->gram_person eq '3' || $tnode->gram_person eq 'inher');
     }
+    elsif (defined $anode) {
+        my $person = substr $anode->tag, 7, 1;
+        $is_3rd_pers = $person eq '3';
+    }
+#    log_info "is_3rd: " . ($is_3rd_pers?1:0) if ($is_3rd_pers);
 
     # skip non-referential
     my $ok_skip_nonref = 1;
