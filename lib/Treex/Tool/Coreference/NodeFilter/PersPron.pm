@@ -103,15 +103,24 @@ sub _is_3rd_pers_en_t {
     if (!defined $args) {
         $args = {};
     }
+
+    # return only expressed by default
+    my $expressed = $args->{expressed} // 1;
+    my $anode = $tnode->get_lex_anode;
+    if ($expressed > 0) {
+        return 0 if (!defined $anode);
+    }
+    if ($expressed < 0) {
+        return 0 if (defined $anode);
+    }
     
     # is in 3rd person
-    my $is_3rd_pers = 0;
+    # by default generated #PersPron with no gram_person set are in 3rd person
+    my $is_3rd_pers = 1;
     if ( defined $tnode->gram_person ) {
         $is_3rd_pers = ($tnode->gram_person eq '3');
     }
-    else {
-        my $anode = $tnode->get_lex_anode;
-        return 0 if (!defined $anode);
+    elsif (defined $anode) {
         $is_3rd_pers = (defined $THIRD_PERS_PRONS{$anode->lemma});
     }
 
@@ -140,6 +149,11 @@ sub _is_3rd_pers_en_t {
 
 sub _is_3rd_pers_en_a {
     my ($anode, $args) = @_;
+    
+    # return only expressed by default
+    my $expressed = $args->{expressed} // 1;
+    return 0 if ($expressed < 0);
+    
     return defined $THIRD_PERS_PRONS{$anode->lemma};
 }
 
