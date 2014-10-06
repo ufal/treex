@@ -77,7 +77,7 @@ sub parse_multiline {
     my $shared_comment;
     my @cand_comments = ();
     while (my ($feats, $label, $tag, $comment) = _parse_line($fh, $args)) {
-        last if (!@$feats);
+        last if ((ref($feats) eq "ARRAY") && !@$feats);
         if ($label eq $SHARED_LABEL) {
             $shared_feats = $feats;
             $shared_tag = $tag;
