@@ -8,16 +8,6 @@ my $SHARED_LABEL = "shared";
 my $FEAT_VAL_DELIM = "=";
 my $SELF_LABEL = "__SELF__";
 
-#sub format {
-#    my ($x, @args) = @_;
-#    if (ref($x) eq "HASH") {
-#        return _format_singleline($x, @args);
-#    }
-#    elsif (ref($x) eq "ARRAY") {
-#        return _format_multiline($x, @args);
-#    }
-#}
-
 # parses one instance in a singleline format
 sub parse_singleline {
     my ($fh, $args) = @_;
@@ -273,3 +263,73 @@ sub parse_csoaa_ldf {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Treex::Tool::ML::VowpalWabbit::Util
+
+=head1 SYNOPSIS
+
+ use Treex::Tool::ML::VowpalWabbit::Util;
+ 
+ while ( my ($instance, $tag, $comment) = Treex::Tool::ML::VowpalWabbit::Util::parse_multiline(*STDIN, {split_key_val => 1}) ) {
+     my ($feats, $losses) = @$instance;
+     my $format_str = Treex::Tool::ML::VowpalWabbit::Util::format_multiline($feats, $losses, $comment);
+     print $format_str . "\n";
+ }
+ 
+=head1 DESCRIPTION
+
+Parser and formatter for data tables formatted in the style accepted by the Vowpal Wabbit ML tool.
+It can handle both singleline (e.g. for the OAA method) and multiline format (for the CSOAA_LDF method).
+In fact, not all options for this format are supported (e.g. namespaces, multiple costed labels on a single line).
+On the other hand, the tables may be extended by an additional tab-separated column containing comments.
+
+=head1 FUNCTIONS
+
+=head2 @instance_items = parse_singleline($fh, $args)
+
+It parses every single line in a data table coming from a file handle C<$fh> independently.
+This can be used also for parsing into the multiline format, if we do not mind not processing the entire instance at once.
+A parsed instance, which is a list of several items, is returned. A content of the list depends
+on a value of the C<items> argument defined by the C<$args> parameter.
+
+=head3 Arguments
+
+The possible arguments that can be specified in the C<$args> hashref are:
+
+=over
+=item * items
+
+A list of items that will be returned by the parser. One can choose from the following items:
+C<feats>, C<loss>, C<tag> and C<comment>. A default value is C<['feats', 'loss', 'tag', 'comment']>
+
+=item * split_key_val
+
+If defined, a parser tries to split every feature into a key and a value part using the C<=> char
+as a separator.
+=back
+
+=head2 parse_multiline
+
+It parses a data table into multiline instances. These are separated by an empty line.
+
+=head2 format_singleline
+
+Formatter for singleline instances.
+
+=head2 format_multiline
+
+Formatter for multiline instances.
+
+=head1 AUTHOR
+
+Michal Novak <mnovak@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2013-14 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
