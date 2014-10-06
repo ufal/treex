@@ -38,7 +38,7 @@ sub parse_singleline {
         @feat_list = map {[split /$FEAT_VAL_DELIM/, $_, 2]} @feat_list;
     }
     
-    return ([\@feat_list, $label], $comment);
+    return ([\@feat_list, $label], $tag, $comment);
 }
 
 # parses one instance (bundle) in a multiline format
