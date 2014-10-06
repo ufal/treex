@@ -3,7 +3,7 @@ package Treex::Tool::Coreference::Features::Aligned;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Align::Utils;
-use Cache::MemoryCache;
+#use Cache::MemoryCache;
 
 with 'Treex::Tool::Coreference::CorefFeatures';
 
@@ -15,7 +15,7 @@ has 'align_types' => (is => 'ro', isa => 'ArrayRef[Str]');
 
 has '_align_filter' => (is => 'ro', isa => 'HashRef', builder => '_build_align_filter', lazy => 1);
 
-has '_unary_feats_cache' => (is => 'ro', isa => 'Cache::MemoryCache', builder => '_build_unary_feats_cache');
+#has '_unary_feats_cache' => (is => 'ro', isa => 'Cache::MemoryCache', builder => '_build_unary_feats_cache');
 
 sub BUILD {
     my ($self) = @_;
@@ -50,20 +50,20 @@ sub _binary_features {
 
     # check if unary features (with no "align" prefix) are already in the cache
     # if not => filter the alignment feats out of the $set_features
-    my $ali_set_features_anaph = $self->_unary_feats_cache->get($ali_anaph_nodes->[0]->id);
-    my $ali_set_features_cand = $self->_unary_feats_cache->get($ali_cand_nodes->[0]->id);
+    #my $ali_set_features_anaph = $self->_unary_feats_cache->get($ali_anaph_nodes->[0]->id);
+    #my $ali_set_features_cand = $self->_unary_feats_cache->get($ali_cand_nodes->[0]->id);
     my $ali_set_features;
-    if ($ali_set_features_anaph && $ali_set_features_cand) {
-        $ali_set_features = { %$ali_set_features_anaph, %$ali_set_features_cand };
-    }
-    else {
+    #if ($ali_set_features_anaph && $ali_set_features_cand) {
+    #    $ali_set_features = { %$ali_set_features_anaph, %$ali_set_features_cand };
+    #}
+    #else {
         $ali_set_features = {};
         foreach my $key (grep {$_ =~ /^align_/} (keys %$set_features)) {
             my $new_key = $key;
             $new_key =~ s/^align_//;
             $ali_set_features->{$new_key} = $set_features->{$key};
         }
-    }
+    #}
     
     my %feats = ();
     foreach my $fe (@{$self->feat_extractors}) {
@@ -82,15 +82,15 @@ sub _unary_features {
     return {} if (!@$ali_nodes);
     log_debug "[Tool::Coreference::Features::Aligned::_unary_features]\tanaphor ali_types: " . (join " ", @$ali_types), 1;
     
-    my $feats = $self->_unary_feats_cache->get($ali_nodes->[0]->id);
-    if (!$feats) {
-        $feats = {};
+    #my $feats = $self->_unary_feats_cache->get($ali_nodes->[0]->id);
+    #if (!$feats) {
+        my $feats = {};
         foreach my $fe (@{$self->feat_extractors}) {
             my $fe_feats = $fe->_unary_features($ali_nodes->[0], $type);
             $feats = { %$feats, %$fe_feats };
         }
-        $self->_unary_feats_cache->set($ali_nodes->[0]->id, $feats);
-    }
+    #    $self->_unary_feats_cache->set($ali_nodes->[0]->id, $feats);
+    #}
 
     return _add_prefix($feats);
 }
