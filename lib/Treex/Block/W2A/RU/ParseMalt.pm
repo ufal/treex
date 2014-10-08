@@ -2,8 +2,7 @@ package Treex::Block::W2A::RU::ParseMalt;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::W2A::ParseMalt';
-use tagset::common;
-use tagset::cs::pdt;
+use Lingua::Interset qw(decode encode);
 
 has model_name => (is=>'ro', isa=>'Str', default=> 'malt_stacklazy.mco');
 
@@ -34,7 +33,7 @@ before process_atree => sub {
             $anode->iset->set($name, $value);
             $fs->{$name} = $value;
         }
-        my $pdt_tag = tagset::cs::pdt::encode($fs, 1);
+        my $pdt_tag = encode('cs::pdt', $fs, 1);
         $anode->set_conll_pos($pdt_tag);
         $anode->set_conll_cpos(substr($pdt_tag, 0, 1));
     }
