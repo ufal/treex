@@ -91,8 +91,8 @@ them with one placeholder t-node.
 
 =item abstraction_file
 
-Path to the file that contains token ranges to be replaced (ranges in format "slot:beginning-end",
-separated by spaces, one sentence per line).
+Path to the file that contains token ranges to be replaced (ranges in format "slot=value:beginning-end",
+separated by tabs, one sentence per line).
 
 =item slots
 
