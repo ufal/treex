@@ -3,6 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::W2A::ParseMalt';
 use Lingua::Interset qw(decode encode);
+use Lingua::Interset::FeatureStructure;
 
 has model_name => (is=>'ro', isa=>'Str', default=> 'malt_stacklazy.mco');
 
@@ -15,6 +16,7 @@ has '+deprel_attribute' => ( default => 'afun' );
 sub _build_model {
     my ($self) = @_;
     my ($filename) = $self->require_files_from_share('data/models/malt_parser/ru/'.$self->model_name);
+    log_warn "$filename";
     return $filename;
 }
 
@@ -27,11 +29,11 @@ before process_atree => sub {
     my ($self, $aroot) = @_;
     foreach my $anode ($aroot->get_descendants()){
         my @features = split /\|/, $anode->tag;
-        my $fs;
+        my $fs = Lingua::Interset::FeatureStructure->new();
         foreach my $feat (@features){
             my ($name, $value) = split /=/, $feat;
             $anode->iset->set($name, $value);
-            $fs->{$name} = $value;
+            $fs->set($name, $value);
         }
         my $pdt_tag = encode('cs::pdt', $fs, 1);
         $anode->set_conll_pos($pdt_tag);
