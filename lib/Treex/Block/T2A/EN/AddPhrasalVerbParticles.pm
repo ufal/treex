@@ -7,6 +7,7 @@ extends 'Treex::Core::Block';
 sub process_tnode {
 
     my ( $self, $t_node ) = @_;
+    return if ( ($t_node->formeme // '') !~ /^v/ );
     my ( $verb, $particles ) = ( ( $t_node->t_lemma || '' ) =~ /^([^_]+)_(.*)$/ );
 
     # only for verbal nodes with some particles
@@ -16,7 +17,7 @@ sub process_tnode {
     # remove particles from the verbal node
     $a_node->set_lemma($verb);
 
-    foreach my $particle ( split /_/, $particles ) {
+    foreach my $particle ( reverse split /_/, $particles ) {
         my $particle_node = $a_node->create_child(
             {
                 'lemma'        => $particle,
