@@ -107,7 +107,6 @@ override '_postprocess' => sub {
         $anodes->[-1]->set_lemma('zijn');
     }
     
-    # TODO move all auxiliaries except the 1st to the end of the clause ?    
     return;
 };
 

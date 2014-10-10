@@ -21,9 +21,10 @@ my %PERSPRON = (
 
 sub process_anode {
     my ( $self, $anode ) = @_;
+    my $lemma = $anode->lemma or return;
 
     # fix personal pronouns
-    if ( $anode->lemma eq '#PersPron' ) {
+    if ( $lemma eq '#PersPron' ) {
         my ( $num, $pers ) = ( $anode->iset->number // 'sing', $anode->iset->person // '3' );
         my $sig = "$num $pers";
 
@@ -37,8 +38,14 @@ sub process_anode {
     }
 
     # fix negation particle
-    elsif ( $anode->lemma eq '#Neg' ) {
+    elsif ( $lemma eq '#Neg' ) {
         $anode->set_lemma('niet');
+    }
+    
+    # fix compound word lemmas (lower case letters but no upper-case letter follows an underscore)
+    elsif ( $lemma =~ /_\p{Ll}/ and $lemma !~ /_\p{Lu}/){
+        $lemma =~ s/_//g;
+        $anode->set_lemma($lemma);
     }
 }
 

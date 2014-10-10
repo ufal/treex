@@ -15,22 +15,29 @@ sub process_tnode {
     if ( $old_tlemma eq 'niet' ) {
         $new_tlemma = '#Neg';
     }
+
     # personal (and possessive) pronouns
     elsif ( $lex_a_node->match_iset( 'prontype' => 'prs' ) ) {
         $new_tlemma = '#PersPron';
     }
     else {
         # separable verbal prefixes
-        if ( @particles = grep { $_->afun eq 'AuxV' and ($_->is_preposition or $_->is_adverb) } @aux_a_nodes ) {
+        if (@particles = grep {
+                my $part_lemma = $_->lemma;
+                $_->afun eq 'AuxV' and ( $_->is_preposition or $_->is_adverb ) and $new_tlemma !~ /$part_lemma/
+            } @aux_a_nodes
+            )
+        {
             $new_tlemma = ( join '', map { $_->lemma } @particles ) . $new_tlemma;
         }
+
         # reflexiva tantum
-        if ( @particles = grep { $_->afun eq 'AuxT'} @aux_a_nodes ){
-            $new_tlemma = join('_', map { $_->lemma } @particles ) . '_' . $new_tlemma;
+        if ( @particles = grep { $_->afun eq 'AuxT' } @aux_a_nodes ) {
+            $new_tlemma = join( '_', map { $_->lemma } @particles ) . '_' . $new_tlemma;
         }
     }
 
-    if ($new_tlemma ne $old_tlemma) {
+    if ( $new_tlemma ne $old_tlemma ) {
         $node->set_t_lemma($new_tlemma);
     }
     return;

@@ -13,17 +13,21 @@ sub process_tnode {
     my $anode = $tnode->get_lex_anode() or return;
 
     # we will move the autosemantic node, same as in Czech synthesis
-    my $new_node = $anode->create_child({
-        'lemma' => $anode->lemma,
-        'form' => $anode->form,
-        'iset' => $anode->iset,
-        'afun' => 'Obj',
-    });
+    my $new_node = $anode->create_child(
+        {
+            'lemma' => $anode->lemma,
+            'form'  => $anode->form,
+            'afun'  => 'Obj',
+        }
+    );
+    # set the new lexical verb node to past participle (3rd form)
+    $new_node->iset->add('pos' => 'verb', 'verbform' => 'part', 'tense' => 'past');
+    # TODO shift to end of clause
     $new_node->shift_after_node($anode);
 
     # $anode is now auxiliary "worden" or "zijn" and governs the autosemantic verb
     my $aux_lemma = 'worden';
-    if ($anode->match_iset('tense' => '^(past|pqp)$')){
+    if ( $anode->match_iset( 'tense' => '^(past|pqp)$' ) ) {
         $aux_lemma = 'zijn';
     }
     $anode->set_lemma($aux_lemma);
@@ -35,7 +39,6 @@ sub process_tnode {
 
     return;
 }
-
 
 1;
 
