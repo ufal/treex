@@ -10,6 +10,7 @@ sub process_tnode {
     my ( $self, $tnode ) = @_;
 
     return if ( $tnode->voice || $tnode->gram_diathesis || '' ) !~ /^pas/;
+    return if ( $tnode->formeme !~ /^v:.*fin/ );
     my $anode = $tnode->get_lex_anode() or return;
 
     # we will move the autosemantic node, same as in Czech synthesis

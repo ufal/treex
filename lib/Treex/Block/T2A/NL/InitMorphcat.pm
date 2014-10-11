@@ -13,6 +13,10 @@ after process_tnode => sub {
         $a_node->iset->set_gender('com');
         $a_node->iset->set_animateness('');
     }
+    # Past participle attributes -> set verbform=participle
+    if ($t_node->formeme eq 'v:attr' and $a_node->match_iset(voice => 'pass', tense => 'past')){
+        $a_node->iset->set_verbform('part');
+    }
     return;
 };
 
