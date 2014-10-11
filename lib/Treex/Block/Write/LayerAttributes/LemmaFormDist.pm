@@ -175,7 +175,7 @@ sub modify_single {
                 my $tail = substr( $diff, pos $diff );
                 $tail =~ s/([`']|<[^>]*>)//g;
                 my $posnum = length($tail) + length($orig);
-                $orig = $posnum . $orig;                                
+                $orig = $posnum . ':' . length($orig);
             }
             $mid = !$mid ? ( $orig . '-' . $new ) : ( $orig . '-' . $new . ' ' . $mid );
         }
