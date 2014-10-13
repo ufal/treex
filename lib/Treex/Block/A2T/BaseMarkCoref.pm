@@ -114,7 +114,7 @@ sub process_tnode {
         # available (because of filtering and document segmentation)
         my $ranker = $self->_ranker;
         my $ante_idx  = $ranker->pick_winner( $instances );
-        
+
         return if (!defined $ante_idx);
         my $ante = $ante_cands[$ante_idx];
 

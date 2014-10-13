@@ -8,7 +8,7 @@ use Treex::Tool::ML::VowpalWabbit::Util;
 
 with 'Treex::Tool::ML::Ranker';
 
-has 'vw_path' => (is => 'ro', isa => 'Str', required => 1, default => '/net/cluster/TMP/mnovak/tools/vowpal_wabbit/vowpalwabbit/vw');
+has 'vw_path' => (is => 'ro', isa => 'Str', required => 1, default => '/net/cluster/TMP/mnovak/tools/vowpal_wabbit-v7.7-e9f67eca58/vowpalwabbit/vw');
 #has 'vw_path' => (is => 'ro', isa => 'Str', required => 1, default => '/net/work/people/mnovak/tools/x86_64/vowpal_wabbit/vowpalwabbit/vw');
 has '_read_handle'  => ( is => 'rw', isa => 'FileHandle' );
 has '_write_handle' => ( is => 'rw', isa => 'FileHandle' );
@@ -19,7 +19,7 @@ sub BUILD {
     my ($self) = @_;
     
     my $model_path = $self->_locate_model_file($self->model_path, $self);
-    my $command = sprintf "%s -t -i %s -p /dev/stdout -b 20 2> /dev/null", $self->vw_path, $model_path;
+    my $command = sprintf "%s -t -i %s -r /dev/stdout 2> /dev/null", $self->vw_path, $model_path;
 
     my ( $read, $write, $pid ) = ProcessUtils::bipipe($command);
     
@@ -56,7 +56,8 @@ sub rank {
     while (my $line = <$fh>) {
         chomp $line;
         last if ($line =~ /^\s*$/);
-        push @losses, $line;
+        my ($idx, $loss) = split /:/, $line;
+        push @losses, $loss;
     }
     my @scores = map {-$_} @losses;
     return @scores;
