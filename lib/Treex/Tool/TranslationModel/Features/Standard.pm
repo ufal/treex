@@ -1,4 +1,4 @@
-package Treex::Tool::TranslationModel::Features::EN;
+package Treex::Tool::TranslationModel::Features::Standard;
 use strict;
 use warnings;
 

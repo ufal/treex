@@ -2,10 +2,19 @@ package Treex::Block::Print::VectorsForTM;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';
-use Treex::Tool::TranslationModel::Features::EN;
+use Treex::Tool::TranslationModel::Features::Standard;
 use Treex::Tool::Triggers::Features;
 use Treex::Tool::Coreference::ContentWordFilter;
 binmode STDOUT, ':utf8';
+
+has 'trg_lang' => (
+    is => 'ro',
+    isa => 'Treex::Type::LangCode',
+    default => sub { my $self = shift; return $self->language; },
+    lazy => 1,
+    documentation => 'The target language for a translation model. 
+        Parameter "language" should be always set to a language that alignment links in the data come from',
+);
 
 has target_features => (
     is            => 'ro',
@@ -61,53 +70,59 @@ sub _build_feature_extractor {
 }
 
 sub process_tnode {
-    my ( $self, $cs_tnode ) = @_;
-    my ($en_tnodes_rf, $ali_types_rf) = $cs_tnode->get_aligned_nodes();
-    for my $i (0 .. $#{$en_tnodes_rf}) {
+    my ( $self, $ali_src_tnode ) = @_;
+    my ($ali_trg_tnodes_rf, $ali_types_rf) = $ali_src_tnode->get_aligned_nodes();
+    for my $i (0 .. $#{$ali_trg_tnodes_rf}) {
         my $types = $ali_types_rf->[$i];
         if ($types =~ /int|tali/){
-            $self->print_tnode_features($cs_tnode, $en_tnodes_rf->[$i], $types);
+            if ($self->language eq $self->trg_lang) {
+                $self->print_tnode_features($ali_trg_tnodes_rf->[$i], $ali_src_tnode, $types);
+            }
+            else {
+                $self->print_tnode_features($ali_src_tnode, $ali_trg_tnodes_rf->[$i], $types);
+            }
         }
     }
     return;
 }
 
 sub print_tnode_features {
-    my ( $self, $cs_tnode, $en_tnode, $ali_types ) = @_;
-    my $cs_anode = $cs_tnode->get_lex_anode or return;
+    my ( $self, $src_tnode, $trg_tnode, $ali_types ) = @_;
+    my $trg_anode = $trg_tnode->get_lex_anode or return;
 
-    #return if $en_tnode->functor =~ /CONJ|DISJ|ADVS|APPS/;
-    my $en_tlemma = $en_tnode->t_lemma // '';
-    my $cs_tlemma = $cs_tnode->t_lemma // '';
-    return if $en_tlemma !~ /\p{IsL}/ || $cs_tlemma !~ /\p{IsL}/;
+    #return if $src_tnode->functor =~ /CONJ|DISJ|ADVS|APPS/;
+    my $src_tlemma = $src_tnode->t_lemma // '';
+    my $trg_tlemma = $trg_tnode->t_lemma // '';
+    return if $src_tlemma !~ /\p{IsL}/ || $trg_tlemma !~ /\p{IsL}/;
     
-    #return if (!$self->_content_word_filter->is_candidate($en_tnode));
+    #return if (!$self->_content_word_filter->is_candidate($src_tnode));
 
     my $features_rf =
-        Treex::Tool::TranslationModel::Features::EN::features_from_src_tnode( $en_tnode, { encode => 1 } ) or return;
-    my ($cs_mlayer_pos) = ( $cs_anode->tag =~ /^(.)/ );
+        Treex::Tool::TranslationModel::Features::Standard::features_from_src_tnode( $src_tnode, { encode => 1 } ) or return;
+    # TODO this is language (tagset) dependant
+    my ($trg_mlayer_pos) = ( $trg_anode->tag =~ /^(.)/ );
 
     my @add_features = ();
 
     # target-language features
     if ( $self->target_features ) {
-        my ($cs_parent) = $cs_tnode->get_eparents( { or_topological => 1 } );
-        my ($en_parent) = $en_tnode->get_eparents( { or_topological => 1 } );
-        my ($en_parent2) = $cs_parent->get_aligned_nodes_of_type('int');
-        my $edge_aligned = ( $cs_parent->is_root() && $en_parent->is_root() )
-            || ( $en_parent2 && $en_parent2 == $en_parent );
+        my ($trg_parent) = $trg_tnode->get_eparents( { or_topological => 1 } );
+        my ($src_parent) = $src_tnode->get_eparents( { or_topological => 1 } );
+        my ($src_parent2) = $trg_parent->get_aligned_nodes_of_type('int');
+        my $edge_aligned = ( $trg_parent->is_root() && $src_parent->is_root() )
+            || ( $src_parent2 && $src_parent2 == $src_parent );
 
-        if ( $edge_aligned && $cs_parent->is_root() ) {
+        if ( $edge_aligned && $trg_parent->is_root() ) {
             @add_features = qw(TRG_parent_lemma=_ROOT TRG_parent_formeme=_ROOT);
         }
         elsif ($edge_aligned) {
-            push @add_features, 'TRG_parent_lemma=' . $cs_parent->t_lemma;
-            push @add_features, 'TRG_parent_formeme=' . $cs_parent->formeme;
+            push @add_features, 'TRG_parent_lemma=' . $trg_parent->t_lemma;
+            push @add_features, 'TRG_parent_formeme=' . $trg_parent->formeme;
         }
     }
 
     # alignment features
-    my @gdfa_nodes = $cs_tnode->get_aligned_nodes_of_type('gdfa');
+    my @gdfa_nodes = $trg_tnode->get_aligned_nodes_of_type('gdfa');
     if (@gdfa_nodes == 1){
         push @add_features, 'ali_int-gdfa=1';
     }
@@ -119,28 +134,28 @@ sub print_tnode_features {
 
     # domain feature
     if ( $self->czeng_domain ) {
-        if ( my $domain = $cs_tnode->get_bundle()->attr('czeng/domain') ) {
+        if ( my $domain = $trg_tnode->get_bundle()->attr('czeng/domain') ) {
             push @add_features, "domain=$domain";
         }
     }
 
     # triggers
-    if ($self->trigger_features && $self->_content_word_filter->is_candidate($en_tnode)) {
-        my $trig_feats_hash = $self->_feature_extractor->create_lemma_instance($en_tnode);
+    if ($self->trigger_features && $self->_content_word_filter->is_candidate($src_tnode)) {
+        my $trig_feats_hash = $self->_feature_extractor->create_lemma_instance($src_tnode);
         unshift @add_features, keys %$trig_feats_hash;
     }
     
     # ESA
-    if ($self->esa_features && $self->_content_word_filter->is_candidate($en_tnode)) {
-        my $esa_feats_hash = $self->_feature_extractor->create_esa_instance($en_tnode);
+    if ($self->esa_features && $self->_content_word_filter->is_candidate($src_tnode)) {
+        my $esa_feats_hash = $self->_feature_extractor->create_esa_instance($src_tnode);
         unshift @add_features, keys %$esa_feats_hash;
     }
 
     say { $self->_file_handle } join "\t", (
-        lc($en_tlemma),
-        $cs_tlemma . "#" . $cs_mlayer_pos,
-        $en_tnode->formeme,
-        $cs_tnode->formeme,
+        lc($src_tlemma),
+        $trg_tlemma . "#" . $trg_mlayer_pos,
+        $src_tnode->formeme,
+        $trg_tnode->formeme,
         join ' ', @add_features, map {"$_=$features_rf->{$_}"} keys %{$features_rf}
     );
     return;
