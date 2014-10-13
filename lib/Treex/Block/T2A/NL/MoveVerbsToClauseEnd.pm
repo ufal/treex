@@ -24,7 +24,7 @@ sub process_tnode {
     # move infinitives after their subtrees within the same clause (?)
     elsif ( $tnode->formeme =~ /^v:inf/ ) {
         my ($last_in_clause) = $self->get_last_in_clause($anode);
-        my ($last_in_subtree) = $anode->get_descendants( { last_only => 1 } );
+        my ($last_in_subtree) = $anode->get_descendants( { last_only => 1, add_self => 1 } );
         $anode->shift_after_node( $last_in_clause->ord < $last_in_subtree->ord ? $last_in_clause : $last_in_subtree, { without_children => 1 } );
     }
 

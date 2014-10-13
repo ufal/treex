@@ -53,7 +53,7 @@ Treex::Block::T2A::EN::AddPhrasalVerbParticles
 
 =head1 DESCRIPTION
 
-Particles belonging to a phrasal verb are added as separate a-nodes.
+Separable verb prefixes are added as separate a-nodes.
 
 =head1 AUTHORS 
 

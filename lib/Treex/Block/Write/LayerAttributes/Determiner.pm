@@ -41,11 +41,9 @@ __END__
 
 Treex::Block::Write::LayerAttributes::Determiner
 
-=head1 SYNOPSIS
-
-
 =head1 DESCRIPTION
 
+Finds and returns the lemma of the determiner of the current NP, if applicable. 
 
 =head1 AUTHOR
 
