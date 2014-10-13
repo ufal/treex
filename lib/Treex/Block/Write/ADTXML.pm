@@ -40,18 +40,28 @@ sub process_atree {
     my ( $self, $aroot ) = @_;
     $self->_set_node_id(0);
 
-    my $out = "<alpino_adt version=\"1.3\">\n";
+    my $out = '<?xml version="1.0" encoding="UTF-8"?><alpino_adt version="1.3">' . "\n";
     $out .= $self->_process_subtree( $aroot, 0 );
-    $out .= "<\/alpino_adt>\n";
+    $out .= "</alpino_adt>\n";
 
     print { $self->_file_handle } $out;
+}
+
+sub _process_node {
+    my ( $self, $anode ) = @_;
+    $self->_set_node_id(1);
+    my $out = '<?xml version="1.0" encoding="UTF-8"?><alpino_adt version="1.3">' . "\n";
+    $out .= '<node cat="top" id="0" rel="top">' . "\n";
+    $out .= "\t" . $self->_get_node_str( $anode, '--' ) . "\n";
+    $out .= "</node>\n</alpino_adt>\n";
+    return $out;
 }
 
 sub _process_subtree {
     my ( $self, $anode, $indent ) = @_;
 
     # TODO handle this better (no-lemma thrown out unless root)
-    my $lemma    = $anode->lemma // '';                                                                         
+    my $lemma    = $anode->lemma // '';
     my $out      = "\t" x $indent;
     my @prekids  = grep { ( $_->afun // '' ) !~ /Aux[XGK]/ } $anode->get_children( { preceding_only => 1 } );
     my @postkids = grep { ( $_->afun // '' ) !~ /Aux[XGK]/ } $anode->get_children( { following_only => 1 } );
@@ -62,7 +72,7 @@ sub _process_subtree {
         foreach my $akid (@prekids) {
             $out .= $self->_process_subtree( $akid, $indent + 1 );
         }
-        $out .= ( "\t" x ( $indent + 1 ) ) . '<node id="' . $self->_get_id . '" rel="hd" root="' . $lemma . '" />' . "\n";
+        $out .= ( "\t" x ( $indent + 1 ) ) . $self->_get_node_str( $anode, 'hd' ) . "\n";
         foreach my $akid (@postkids) {
             $out .= $self->_process_subtree( $akid, $indent + 1 );
         }
@@ -71,9 +81,22 @@ sub _process_subtree {
 
     # only a terminal node is needed for leaves
     else {
-        $out .= '<node id="' . $self->_get_id . '" rel="' . $self->_get_rel($anode) . '" root="' . $lemma . '"/>' . "\n";
+        $out .= $self->_get_node_str($anode) . "\n";
     }
 
+    return $out;
+}
+
+# Get string of one (terminal) node corresponding to the given a-node
+sub _get_node_str {
+    my ( $self, $anode, $rel, $cat ) = @_;
+    $rel = defined($rel) ? $rel : $self->_get_rel($anode);
+    $cat = defined($cat) ? $cat : 'np';
+
+    my $out = '<node id="' . $self->_get_id . '" rel="' . $rel . '" cat="' . $cat . '" ';
+    $out .= $self->_get_pos($anode);
+    my $lemma = $anode->lemma // '';
+    $out .= ' root="' . $lemma . '" sense="' . $lemma . '" />';
     return $out;
 }
 
@@ -133,6 +156,27 @@ sub _get_rel {
 
     # default if nothing found there
     return '--';
+}
+
+sub _get_pos {
+    my ( $self, $anode ) = @_;
+
+    my %data = ();
+    my $pos  = $anode->iset->pos;
+    $pos = 'comp' if ( $anode->match_iset( 'conjtype' => 'sub' ) );
+    $pos = 'comparative' if ( ( $anode->lemma // '' ) =~ /^(als|dan)$/ and ( $anode->afun // '' ) eq 'AuxP' );
+    $pos = 'det'  if ( $anode->match_iset( 'adjtype' => 'det' ) );
+    $pos = 'pron' if ( $anode->iset->prontype );
+    $pos = 'vg'   if ( $pos eq 'conj' );
+    $pos = 'prep' if ( $pos eq 'adp' );
+    $data{'pos'} = $pos;
+
+    if ( $pos =~ /^(noun|pron)$/ ) {
+        $data{'rnum'} = 'sg' if ( $anode->match_iset( 'number' => 'sing' ) );
+        $data{'rnum'} = 'pl' if ( $anode->match_iset( 'number' => 'plu' ) );
+    }
+
+    return join( ' ', map { $_ . '="' . $data{$_} . '"' } keys %data );
 }
 
 1;
