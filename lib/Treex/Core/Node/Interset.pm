@@ -107,10 +107,10 @@ sub set_iset{
 sub get_iset{
     my ($self, $feature) = @_;
     my $value = $self->get_attr("iset/$feature");
-    # TODO convert arrayref to string, e.g. "fem|neut"
-    # if ( ref($value) eq 'ARRAY' ) {
-    #     $value = join '|', @$value;
-    # }
+    # convert arrayref to string, e.g. "fem|neut"
+    if ( ref($value) eq 'ARRAY' ) {
+        $value = join '|', @$value;
+    }
     return $value if defined $value;
 
     # Check valid feature name only when the feature is missing.
