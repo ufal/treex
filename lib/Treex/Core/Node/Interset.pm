@@ -148,6 +148,26 @@ sub get_iset_structure
     return \%f;
 }
 
+# Just like get_iset_structure, but do not include empty features (saves a lot
+# of space when saving the files).
+sub get_iset_structure_nonempty
+{
+    my $self = shift;
+    my %f;
+    foreach my $feature ( Lingua::Interset::FeatureStructure::known_features() )
+    {
+        my $value = $self->get_iset($feature);
+        next if $value eq '';
+        if ( $value =~ m/\|/ ) {
+            my @values = split( /\|/, $value );
+            $f{$feature} = \@values;
+        } else {
+            $f{$feature} = $value;
+        }
+    }
+    return \%f;
+}
+
 #------------------------------------------------------------------------------
 # Gets the values of all non-empty Interset features and returns a mixed list
 # of features and their values. Useful for displaying features of a node: the
@@ -257,7 +277,7 @@ sub _set_iset_dump {
 sub serialize_iset {
     my ($self) = @_;
     if ( %{ $self->iset } ) {
-        $self->_set_iset_dump( Dumper( $self->iset ) );
+        $self->_set_iset_dump( Dumper( $self->get_iset_structure_nonempty ) );
     }
     else {
         $self->_set_iset_dump(undef);
