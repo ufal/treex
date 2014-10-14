@@ -600,13 +600,13 @@ sub rehang_auxc
         if ($subord_conj->conll_cpos() eq 'KOKOM' && $subord_conj->is_leaf() ||
             $subord_conj->form() eq 'denn' && $subord_conj->is_leaf() && $parent->get_iset('pos') eq 'verb' && $parent->ord()>$subord_conj->ord())
         {
-            $subord_conj->set_iset('pos' => 'conj', 'subpos' => 'sub');
+            $subord_conj->set_iset('pos' => 'conj', 'conjtype' => 'sub');
             $self->set_pdt_tag($subord_conj);
             $subord_conj->set_afun('AuxC');
         }
         # Subordinating conjunctions are attached to the predicate of the subordinate clause.
         # We want them on the path from the parent of the clause to its predicate.
-        if ($subord_conj->afun() eq 'AuxC' && $subord_conj->match_iset('pos' => 'conj', 'subpos' => 'sub') && $subord_conj->is_leaf())
+        if ($subord_conj->afun() eq 'AuxC' && $subord_conj->match_iset('pos' => 'conj', 'conjtype' => 'sub') && $subord_conj->is_leaf())
         {
             # If the parent is conjunct, $subord_conj should govern the whole coordination.
             while($parent->is_member())
