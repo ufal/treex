@@ -51,7 +51,7 @@ sub deprel_to_afun
         my $deprel = $node->conll_deprel();
         my $parent = $node->parent();
         my $pos    = $node->get_iset('pos');
-        my $subpos = $node->get_iset('subpos');
+#        my $subpos = $node->get_iset('subpos'); # feature deprecated
         my $ppos   = $parent ? $parent->get_iset('pos') : '';
         my $afun = 'NR';
         # Adverbial modifier. Typically realized as adverb or prepositional phrase.
@@ -347,7 +347,7 @@ sub distinguish_subordinators_from_prepositions
            ($lemma =~ m/^(that|if|because|while|whether|although|than|though|so|unless|once|whereas|albeit|but|as)$/ ||
             $node->conll_deprel() eq 'VMOD' && $lemma =~ m/^(before|after|since|until|except)$/))
         {
-            $node->set_iset('pos' => 'conj', 'subpos' => 'sub');
+            $node->set_iset('pos' => 'conj', 'conjtype' => 'sub');
             $self->set_pdt_tag($node);
         }
     }
