@@ -106,7 +106,7 @@ sub deprel_to_afun
 
         # adjunct: free modifier of a verb
         # xadjunct: clausal modifier
-        elsif ( $deprel eq 'xadjunct' && $node->match_iset( 'pos' => 'conj', 'subpos' => 'sub' ) )
+        elsif ( $deprel eq 'xadjunct' && $node->match_iset( 'pos' => 'conj', 'conjtype' => 'sub' ) )
         {
             $node->set_afun('AuxC');
         }
@@ -202,7 +202,7 @@ sub deprel_to_afun
             $node->set_afun('CoordArg');
             $node->wild()->{conjunct} = 1;
             # Fix error in data: conjunction labeled as conjunct.
-            if($node->match_iset('pos' => 'conj', 'subpos' => 'coor'))
+            if($node->match_iset('pos' => 'conj', 'conjtype' => 'coor'))
             {
                 my $rn = $node->get_right_neighbor();
                 if($rn && $rn->conll_deprel() eq 'conjarg')
@@ -246,7 +246,7 @@ sub is_auxiliary_particle
 {
     my $self = shift;
     my $node = shift;
-    return $node->match_iset( 'pos' => 'part', 'subpos' => 'aux' );
+    return $node->match_iset( 'pos' => 'part', 'verbtype' => 'aux' );
 }
 
 #------------------------------------------------------------------------------
@@ -334,7 +334,7 @@ sub process_auxiliary_verbs
         # Is this a non-auxiliary verb?
         # Is its parent an auxiliary verb?
         if (
-            $node->match_iset( 'pos' => 'verb', 'subpos' => '!aux', 'verbform' => 'part' )
+            $node->match_iset( 'pos' => 'verb', 'verbtype' => '!aux', 'verbform' => 'part' )
 
             # &&
             # $node->form() eq 'могъл'
@@ -345,7 +345,7 @@ sub process_auxiliary_verbs
                 &&
 
                 # $parent->get_attr('conll_pos') eq 'Vxi'
-                # $parent->match_iset('pos' => 'verb', 'subpos' => 'aux', 'person' => 3, 'number' => 'sing')
+                # $parent->match_iset('pos' => 'verb', 'verbtype' => 'aux', 'person' => 3, 'number' => 'sing')
                 $parent->form() =~ m/^(би(ха)?|бях)$/
                 )
             {
