@@ -53,7 +53,7 @@ sub deprel_to_afun
         my $deprel = $node->conll_deprel();
         my $form   = $node->form();
         my $pos    = $node->get_iset('pos');
-        my $subpos = $node->get_iset('subpos');
+        # my $subpos = $node->get_iset('subpos'); # feature deprecated
         my $parent = $node->parent();
         my $ppos   = $parent->get_iset('pos');
         my $conll_subpos = $node->conll_pos();
