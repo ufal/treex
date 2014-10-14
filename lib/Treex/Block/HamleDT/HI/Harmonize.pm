@@ -170,7 +170,7 @@ sub deprel_to_afun
             ###!!! (such as 'ki' = 'that') and coordinating conjunctions (such as 'aur' = 'and').
             ###!!! Ideally, we would identify all subordinating cases and handle them properly.
             ###!!! Currently we only identify the most frequent case and get away with the adverbial meaning of the relative clause.
-            if($node->parent()->get_iset('subpos') eq 'sub' ||
+            if($node->parent()->get_iset('conjtype') eq 'sub' ||
                $node->parent()->form() eq 'कि') # Interset also does not know it, the tag is "avy" for both types of conjunctions.
             {
                 $node->parent()->set_afun('AuxC');
@@ -192,7 +192,7 @@ sub deprel_to_afun
         if ( $node->get_iset('pos') eq 'prep' ) {
             $afun = 'AuxP';
         }
-        if ( $node->get_iset('subpos') eq 'mod' ) {
+        if ( $node->get_iset('verbtype') eq 'mod' ) {
             $afun = 'AuxV';
         }
 
