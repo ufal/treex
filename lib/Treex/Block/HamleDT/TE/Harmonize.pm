@@ -161,7 +161,7 @@ sub deprel_to_afun
         if ( $node->get_iset('pos') eq 'prep' ) {
             $afun = 'AuxP';
         }
-        if ( $node->get_iset('subpos') eq 'mod' ) {
+        if ( $node->get_iset('verbtype') eq 'mod' ) {
             $afun = 'AuxV';
         }
 
