@@ -49,10 +49,10 @@ sub deprel_to_afun {
         my $conll_cpos = $node->conll_cpos();
         my $conll_pos = $node->conll_pos();
         my $pos = $node->get_iset('pos');
-        my $subpos = $node->get_iset('subpos');
+        # my $subpos = $node->get_iset('subpos'); # feature deprecated
         my $parent = $node->get_parent();
         my $ppos = $parent->get_iset('pos');
-        my $psubpos = $parent->get_iset('subpos');
+        # my $psubpos = $parent->get_iset('subpos'); # feature deprecated
         my @children = $node->get_children({ordered => 1});
 
         my $afun = '';
@@ -65,15 +65,15 @@ sub deprel_to_afun {
             }
             # postposition/particle as a head - but we do not want
             # to assign AuxP now; later we will pass the label to the child
-            elsif ($subpos eq 'post' or $pos eq 'part') {
+            elsif ($node->get_iset('adpostype') eq 'post' or $pos eq 'part') {
                 $afun = 'Pred';
             }
             # coordinating conjunction/particle (Pconj)
-            elsif ($subpos eq 'coor') {
+            elsif ($node->get_iset('conjtype') eq 'coor') {
                 $afun = 'Pred';
                 $node->wild()->{coordinator} = 1;
             }
-            elsif ($subpos eq 'punc') {
+            elsif ($pos eq 'punc') {
                 if ($node->get_iset('punctype') =~ m/^(peri|qest)$/) {
                     $afun = 'AuxK';
                 }
@@ -121,7 +121,7 @@ sub deprel_to_afun {
             #    $node->wild()->{conjunct} = 1;
             #}
             elsif ($ppos eq 'verb') {
-                if ($psubpos eq 'cop') {
+                if ($parent->get_iset('verbtype') eq 'cop') {
                     $afun = 'Pnom';
                 }
                 # just a heuristic
@@ -204,7 +204,7 @@ sub deprel_to_afun {
                 $afun = 'AuxO';
             }
             # coordination marker
-            elsif ($subpos eq 'coor' or $pos eq 'conj') {
+            elsif ($node->get_iset('conjtype') eq 'coor' or $pos eq 'conj') {
                 $afun = 'Coord';
                 $node->wild()->{coordinator} = 1;
                 $parent->wild()->{conjunct} = 1;
@@ -248,7 +248,7 @@ sub deprel_to_afun {
                 $node->wild()->{conjunct} = 1;
             }
             # names
-            elsif ($subpos eq 'prop' and $psubpos eq 'prop') {
+            elsif ($node->get_iset('nountype') eq 'prop' and $parent->get_iset('nountype') eq 'prop') {
                 $afun = 'Atr';
             }
             # date and time
