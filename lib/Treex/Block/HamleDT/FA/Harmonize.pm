@@ -190,7 +190,7 @@ sub deprel_to_afun
             {
                 $afun = 'PrepArg';
             }
-            elsif($ppos eq 'conj' && $parent->get_iset('subpos') eq 'coor')
+            elsif($ppos eq 'conj' && $parent->get_iset('conjtype') eq 'coor')
             {
                 $afun = 'CoordArg';
                 $node->wild()->{conjunct} = 1;
