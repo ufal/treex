@@ -156,7 +156,7 @@ sub deprel_to_afun
         }
 
         # subordinating conjunctions
-        if (($node->get_iset('subpos') eq 'sub')) {
+        if (($node->get_iset('conjtype') eq 'sub')) {
             $afun = 'AuxC';
         }
 
