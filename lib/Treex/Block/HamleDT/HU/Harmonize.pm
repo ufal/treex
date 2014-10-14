@@ -46,7 +46,7 @@ sub deprel_to_afun
         my $deprel = $node->conll_deprel();
         my $parent = $node->parent();
         my $pos    = $node->get_iset('pos');
-        my $subpos = $node->get_iset('subpos');
+        # my $subpos = $node->get_iset('subpos'); # feature deprecated
         my $ppos   = $parent ? $parent->get_iset('pos') : '';
         my $afun = 'NR';
         # Since the documentation says that the following are arguments (not adjuncts), and since they are noun phrases
