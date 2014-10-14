@@ -20,6 +20,8 @@ sub process_start {
 sub process_anode {
     my ($self, $anode) = @_;
 
+    return if $anode->isa('Treex::Core::Node::Deleted');
+    
     my @tokens = split( /\s/,
         $self->tokenizer->tokenize_sentence($anode->form)
     );
