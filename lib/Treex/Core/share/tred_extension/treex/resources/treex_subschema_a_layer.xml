@@ -97,6 +97,7 @@
       </member>  
 
       <member name="wild_dump"><cdata format="any"/></member>
+      <member name="iset_dump"><cdata format="any"/></member>
 
     </structure>
   </type>

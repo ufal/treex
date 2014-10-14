@@ -192,6 +192,9 @@ sub BUILD {
         foreach my $bundlezone ( $bundle->get_all_zones ) {
             foreach my $node ( map { $_->get_descendants( { add_self => 1 } ) } $bundlezone->get_all_trees ) {
                 $node->deserialize_wild;
+                if ( $node->DOES('Treex::Core::Node::Interset') ) {
+                    $node->deserialize_iset;
+                }
             }
         }
     }
@@ -401,7 +404,7 @@ sub get_all_node_ids {
     return ( keys %{ $self->_index } );
 }
 
-# ----------------- ACCESS TO BUNDLES ----------------------
+# -------------------------------------- ACCESS TO BUNDLES ---------------------
 
 sub get_bundles {
     log_fatal('Incorrect number of arguments') if @_ != 1;
@@ -435,7 +438,7 @@ sub create_bundle {
     return $new_bundle;
 }
 
-# -------------- ACCESS TO ZONES ---------------------------------------
+# ----------------------- ACCESS TO ZONES --------------------------------------
 
 sub create_zone {
     my $self = shift;
@@ -503,7 +506,7 @@ sub get_or_create_zone {
     return $fs_zone;
 }
 
-# -------------- LOADING AND SAVING ---------------------------------------
+# -------------------- LOADING AND SAVING --------------------------------------
 
 sub load {
     my $self = shift;
@@ -540,6 +543,9 @@ sub _serialize_all_wild {
         foreach my $bundlezone ( $bundle->get_all_zones ) {
             foreach my $node ( map { $_->get_descendants( { add_self => 1 } ) } $bundlezone->get_all_trees ) {
                 $node->serialize_wild;
+                if ( $node->DOES('Treex::Core::Node::Interset') ) {
+                    $node->serialize_iset;
+                }
             }
         }
     }

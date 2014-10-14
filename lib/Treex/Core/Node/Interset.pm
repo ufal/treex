@@ -7,6 +7,7 @@ use Treex::Core::Log;
 use List::Util qw(first);    # TODO: this wouldn't be needed if there was Treex::Core::Common for roles
 use Lingua::Interset 2.007;
 use Lingua::Interset::FeatureStructure;
+use Data::Dumper;
 
 has iset => (
     # Unfortunatelly, the old interface uses $anode->set_iset('tense', 'past'),
@@ -240,6 +241,40 @@ sub match_iset
 sub list_iset_values {log_fatal 'use Lingua::Interset::FeatureStructure::known_features instead';}
 sub is_known_iset{ log_fatal 'use Lingua::Interset::FeatureStructure::value_valid instead';}
 sub sort_iset_values {log_fatal 'use Lingua::Interset::FeatureStructure::known_features instead';}
+
+sub _iset_dump {
+    my ($self) = @_;
+    return $self->{iset_dump};
+}
+
+sub _set_iset_dump {
+    my ( $self, $value ) = @_;
+
+    $self->{iset_dump} = $value;
+    return;
+}
+
+sub serialize_iset {
+    my ($self) = @_;
+    if ( %{ $self->iset } ) {
+        $self->_set_iset_dump( Dumper( $self->iset ) );
+    }
+    else {
+        $self->_set_iset_dump(undef);
+    }
+    return;
+}
+
+sub deserialize_iset {
+    my ($self) = @_;
+    if ( $self->_iset_dump ) {
+        $self->set_iset( eval "my " . $self->_iset_dump . '; return $VAR1' ); ## no critic (ProhibitStringyEval)
+    }
+    else {
+        $self->set_iset( {} );
+    }
+    return;
+}
 
 1;
 
