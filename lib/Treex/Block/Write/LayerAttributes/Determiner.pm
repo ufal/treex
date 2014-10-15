@@ -10,23 +10,24 @@ sub modify_single {
 
     my ( $self, $anode ) = @_;
 
-    if ($anode->iset->pos eq 'adj'){
-        return '' if ($anode->iset->adjtype);
+    if ( $anode->iset->pos eq 'adj' ) {
+        return '' if ( $anode->iset->adjtype );
     }
-    elsif ($anode->iset->pos eq 'verb'){
-        return '' if (!$anode->match_iset('verbform' => 'part', 'tense' => 'past'));
+    elsif ( $anode->iset->pos eq 'verb' ) {
+        return '' if ( !$anode->match_iset( 'verbform' => 'part', 'tense' => 'past' ) );
     }
     else {
         return '';
-    }    
-    my $art = first {$_->iset->adjtype} $anode->get_children({ordered=>1});
+    }
+    my $art = first { $_->iset->adjtype } $anode->get_children( { ordered => 1 } );
     return $art->lemma if ($art);
-    my ($aparent) = $anode->get_eparents({or_topological=>1});
-    return '' if (!$aparent);
-    $art = first { $_->iset->adjtype } $aparent->get_echildren({or_topological=>1, ordered=>1});
+    my ($aparent) = $anode->get_eparents( { or_topological => 1 } );
+    return '' if ( !$aparent or $aparent->is_root );
+    $art = first { $_->iset->adjtype } $aparent->get_echildren( { or_topological => 1, ordered => 1 } );
     return $art->lemma if ($art);
-    my ($agrandpa) = $aparent->get_eparents({or_topological=>1});
-    $art = first { $_->iset->adjtype } $agrandpa->get_echildren({or_topological=>1, ordered=>1});
+    my ($agrandpa) = $aparent->get_eparents( { or_topological => 1 } );
+    return '' if ( !$agrandpa or $agrandpa->is_root );
+    $art = first { $_->iset->adjtype } $agrandpa->get_echildren( { or_topological => 1, ordered => 1 } );
     return $art->lemma if ($art);
     return '';
 }
