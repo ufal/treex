@@ -1,22 +1,21 @@
 package Treex::Block::Print::GrammatemesForTgen;
 
-
 use Moose;
 use Treex::Core::Common;
 
 extends 'Treex::Block::Write::BaseTextWriter';
-with 'Treex::Block::Print::Overall'; 
+with 'Treex::Block::Print::Overall';
 
 has '_stats' => ( is => 'rw', default => sub { {} } );
 
 sub build_language { return log_fatal "Parameter 'language' must be given"; }
 
-
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
-    my $gram = $tnode->get_attr('gram');
-    my $val = join( '+', map { $_ . '=' . $gram->{$_} } sort keys %$gram );
+    my $gram     = $tnode->get_attr('gram');
+    my $nodetype = $tnode->nodetype;
+    my $val      = "nodetype=$nodetype+" . join( '+', map { $_ . '=' . $gram->{$_} } sort keys %$gram );
 
     $self->_inc( $tnode->t_lemma . " " . $tnode->formeme, $val );
     $self->_inc( $tnode->formeme,                         $val );

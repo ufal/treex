@@ -45,7 +45,13 @@ sub _set_grams {
     
     foreach my $gram (split /\+/, $grams){
         my ($gram_type, $gram_val) = split /=/, $gram;
-        $tnode->set_attr("gram/$gram_type", $gram_val); 
+        
+        if ($gram_type eq 'nodetype'){
+            $tnode->set_nodetype($gram_val);
+        }
+        else {
+            $tnode->set_attr("gram/$gram_type", $gram_val);
+        } 
     }
 }
 
