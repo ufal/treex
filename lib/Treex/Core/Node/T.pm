@@ -166,7 +166,7 @@ sub get_coref_nodes {
     
     # textual coreference in PDT2.0 and 2.5 style
     my @text_nodes = $self->_get_node_list('coref_text.rf');
-    return $self->_process_switches( $arg_ref, (@gram_nodes, @text_nodes) ) if (defined @text_nodes);
+    return $self->_process_switches( $arg_ref, (@gram_nodes, @text_nodes) ) if (@text_nodes);
 
     # textual coreference in PDT3.0 style
     my $pdt30_text_coref_rf = $self->get_attr('coref_text') // [];
@@ -196,7 +196,7 @@ sub get_coref_text_nodes {
 sub _get_pdt30_coref {
     my ($self, $coref_rf, $arg_ref) = @_;
     my $document = $self->get_document;
-    @nodes = map {$document->get_node_by_id( $_->{'target_node.rf'} )} @$coref_rf;
+    my @nodes = map {$document->get_node_by_id( $_->{'target_node.rf'} )} @$coref_rf;
     my @filtered_nodes = $self->_process_switches( $arg_ref, @nodes );
     return @filtered_nodes if (!$arg_ref->{with_types});
     
