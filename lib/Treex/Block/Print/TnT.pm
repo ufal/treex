@@ -1,4 +1,4 @@
-package Treex::Block::Write::TnT;
+package Treex::Block::Print::TnT;
 use Moose;
 use Treex::Core::Common;
 
@@ -20,12 +20,17 @@ sub process_atree {
         }
         elsif ($self->pos_attribute eq 'iset_feat') {
             $pos = $anode->get_iset_conll_feat() || '_';
+            $pos =~ s/tagset=[^|]*\|?//g; # remove the 'tagset' feature
+            $pos =~ s/other=[^|]*\|?//g; # remove the 'other' feature
         }
         elsif ($self->pos_attribute eq 'conll_pos') {
             $pos = $anode->conll_pos() || '_';
         }
         elsif ($self->pos_attribute eq 'conll_cpos') {
             $pos = $anode->conll_cpos() || '_';
+        }
+        elsif ($self->pos_attribute eq 'conll_feat') {
+            $pos = $anode->conll_feat() || '_';
         }
 
         print join("\t",
@@ -42,7 +47,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::Write::ExtractTnT;
+Treex::Block::Print::ExtractTnT;
 
 =head1 DESCRIPTION
 
