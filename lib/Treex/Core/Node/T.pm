@@ -162,8 +162,16 @@ sub get_anodes {
 
 sub get_coref_nodes {
     my ( $self, $arg_ref ) = @_;
-    my @nodes = ( $self->_get_node_list('coref_gram.rf'), $self->_get_node_list('coref_text.rf') );
-    return $self->_process_switches( $arg_ref, @nodes );
+    my @gram_nodes = $self->_get_node_list('coref_gram.rf');
+    
+    # textual coreference in PDT2.0 and 2.5 style
+    my @text_nodes = $self->_get_node_list('coref_text.rf');
+    return $self->_process_switches( $arg_ref, (@gram_nodes, @text_nodes) ) if (defined @text_nodes);
+
+    # textual coreference in PDT3.0 style
+    my $pdt30_text_coref_rf = $self->get_attr('coref_text') // [];
+    my @pdt30_gram_coref = map {{'target_node.rf' => $_, 'type' => undef}} @gram_nodes;
+    return $self->_get_pdt30_coref([@pdt30_gram_coref, @$pdt30_text_coref_rf], $arg_ref);
 }
 
 sub get_coref_gram_nodes {
@@ -173,7 +181,33 @@ sub get_coref_gram_nodes {
 
 sub get_coref_text_nodes {
     my ( $self, $arg_ref ) = @_;
-    return $self->_get_node_list( 'coref_text.rf', $arg_ref );
+    
+    # textual coreference in PDT2.0 and 2.5 style
+    my @nodes = $self->_get_node_list( 'coref_text.rf', $arg_ref );
+    return @nodes if (@nodes);
+    
+    # textual coreference in PDT3.0 style
+    my $pdt30_coref_rf = $self->get_attr('coref_text');
+    #return () if (!$pdt30_coref_rf);
+
+    return $self->_get_node_list($pdt30_coref_rf, $arg_ref);
+}
+
+sub _get_pdt30_coref {
+    my ($self, $coref_rf, $arg_ref) = @_;
+    my $document = $self->get_document;
+    @nodes = map {$document->get_node_by_id( $_->{'target_node.rf'} )} @$coref_rf;
+    my @filtered_nodes = $self->_process_switches( $arg_ref, @nodes );
+    return @filtered_nodes if (!$arg_ref->{with_types});
+    
+    # return both nodes and types (as list references - similar to alignments)
+    my %node_id_to_index = map {$nodes[$_]->id => $_} 0 .. $#nodes;
+    my @types = map {$document->get_node_by_id( $_->{'type'} )} @$coref_rf;
+    my @filtered_types = map {
+        my $idx = $node_id_to_index{$_->id};
+        defined $idx ? $types[$idx] : undef
+    } @filtered_nodes;
+    return (\@filtered_nodes, \@filtered_types);
 }
 
 # it doesn't return a complete chain, just the members which are accessible
