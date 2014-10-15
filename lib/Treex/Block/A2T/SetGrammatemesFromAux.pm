@@ -15,7 +15,7 @@ sub process_tnode {
     return if $tnode->nodetype ne 'complex';
 
     foreach my $anode (@anodes) {
-        if ($anode->iset->adjtype eq 'art'){
+        if ($anode->iset->adjtype =~ /^(art|det)$/ ){
             my $d = $anode->iset->definiteness;
             $tnode->set_gram_definiteness('definite') if $d eq 'def';
             $tnode->set_gram_definiteness('indefinite') if $d eq 'ind';
