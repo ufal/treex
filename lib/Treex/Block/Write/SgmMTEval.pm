@@ -5,36 +5,55 @@ extends 'Treex::Block::Write::BaseTextWriter';
 
 has '_doc_id' => ( is => 'rw', isa => 'Int', default => 1 );
 
+has 'add_header' => ( is => 'ro', isa => 'Str', default => '' );
+
+has 'set_id' => ( is => 'ro', isa => 'Str', default => 'set' );
+
+has 'sys_id' => ( is => 'ro', isa => 'Str', default => '' );
+
 override 'print_header' => sub {
-    my ($self, $doc) = @_;
+    my ( $self, $doc ) = @_;
 
     $self->_set_doc_id(1);
 
-    my $lang = "en";
-    $lang = "cz" if ($self->language eq "cs");
+    my $lang = $self->language;
+    $lang = "cz" if ( $lang eq "cs" );
 
-    my $sysid = "";
-    $sysid = ' sysid="ref"' if ($self->selector eq "ref");
+    my $sysid = $self->sys_id;
+    if ($sysid eq ''){
+        $sysid = '"ref"' if ( $self->selector eq "ref" );
+    }
+    if ($sysid ne ''){
+        $sysid = ' sysid="' . $sysid . '"';
+    }
 
-    print {$self->_file_handle} "<doc docid=\"". $doc->full_filename . "\" genre=\"news\" origlang=\"$lang\"$sysid>\n";
-    print {$self->_file_handle} "<p>\n";
-}; 
+    if ( $self->add_header ne '' ) {
+        print { $self->_file_handle } '<' . $self->add_header .
+            ' setid="' . $self->set_id . '" srclang="any" trglang="' . $lang . '">' . "\n";
+    }
+
+    print { $self->_file_handle } "<doc docid=\"" . $doc->full_filename . "\" genre=\"news\" origlang=\"$lang\"$sysid>\n";
+    print { $self->_file_handle } "<p>\n";
+};
 
 override 'print_footer' => sub {
-    my ($self, $doc) = @_;
+    my ( $self, $doc ) = @_;
 
-    print {$self->_file_handle} "</p>\n";
-    print {$self->_file_handle} "</doc>\n";
+    print { $self->_file_handle } "</p>\n";
+    print { $self->_file_handle } "</doc>\n";
+    if ( $self->add_header ne '' ) {
+        print { $self->_file_handle } '</' . $self->add_header . '>';
+    }
 };
 
 sub process_zone {
-    my ($self, $zone) = @_;
+    my ( $self, $zone ) = @_;
 
-    print {$self->_file_handle} "<seg id=\"" . $self->_doc_id . "\">";
-    print {$self->_file_handle} $zone->sentence;
-    print {$self->_file_handle} "</seg>\n";
+    print { $self->_file_handle } "<seg id=\"" . $self->_doc_id . "\">";
+    print { $self->_file_handle } $zone->sentence;
+    print { $self->_file_handle } "</seg>\n";
 
-    $self->_set_doc_id($self->_doc_id + 1);
+    $self->_set_doc_id( $self->_doc_id + 1 );
 }
 
 1;
@@ -47,44 +66,39 @@ Treex::Block::Write::SgmMTEval
 
 =head1 DESCRIPTION
 
-Generates a sgm format of sentences in a given zone. This is required by "mteval-v11b.pl" - the MT evaluation
-utility.
+Prints sentences from the current zone in a a SGML format required by "mteval-v11b.pl" 
+– the MT evaluation utility.
+
 All sentences within a single document are put inside the same paragraph.
-
-
-=back
 
 =head1 PARAMETERS
 
 =over
 
-=item cols
+=item add_header
 
-Number of columns, either 4 (form, tag, chunk, ne_type => e.g. CoNLL2003
-English data) or 5 (form, lemma, tag, chunk, ne_type => e.g. CoNLL2003 German
-data). Default is 4.
+Add the header tag of the given type, e.g. C<refset> or C<tstset>. If not given, no header tag
+will be included in the output.
 
-=item conll_labels
+=item set_id
 
-If 1, the system prints CoNLL2003 NE type labels, one of PER, LOC, ORG, MISC.
-Default is 0, that is, original labels are printed.
+Add data set identification (defaults to C<set>).
 
-=head1 METHODS
+=item sys_id
 
-=over
-
-=item process_document
-
-Saves the document.
+Add system identification. If this is empty and the current selector is set to C<ref>, the output
+will be C<ref>. 
 
 =back
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Michal Novák <mnovak@ufal.mff.cuni.cz>
 
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2013 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2013-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
