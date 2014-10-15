@@ -20,8 +20,8 @@ sub process_atree {
         }
         elsif ($self->pos_attribute eq 'iset_feat') {
             $pos = $anode->get_iset_conll_feat() || '_';
-            $pos =~ s/tagset=[^|]*\|?//g; # remove the 'tagset' feature
-            $pos =~ s/other=[^|]*\|?//g; # remove the 'other' feature
+            $pos =~ s/\|?tagset=[^|]*//g; # remove the 'tagset' feature
+            $pos =~ s/\|?other=[^|]*//g; # remove the 'other' feature
         }
         elsif ($self->pos_attribute eq 'conll_pos') {
             $pos = $anode->conll_pos() || '_';
