@@ -411,6 +411,7 @@ Remove the specified a-nodes from C<a/aux.rf> (if they are contained in it).
 =item $node->get_coref_nodes()
 
 Return textual and grammatical coreference nodes (from C<coref_gram.rf> and C<coref_text.rf>).
+If the document follows the PDT3.0 annotation style, the same steps as for C<$node->get_coref_text_nodes()> are applied.
 
 =item $node->get_coref_gram_nodes()
 
@@ -418,7 +419,10 @@ Return grammatical coreference nodes (from C<coref_gram.rf>).
 
 =item $node->get_coref_text_nodes()
 
-Return textual coreference nodes (from C<coref_text.rf>).
+Return textual coreference nodes (from C<coref_text.rf> if the document follows the PDT2.0 annotation style).
+If the document follows the PDT3.0 annotation style, the list of nodes is extracted from C<coref_text/target_node.rf>.
+If the C<with_types> parameter is set in C<arg_ref>, two list references are returned: the first one refers to a list of nodes
+extracted from C<coref_text/target_node.rf>, the second one to a list of types from C<coref_text/type>.
 
 =item $node->add_coref_gram_nodes(@nodes)
 
