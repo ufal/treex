@@ -162,6 +162,11 @@ sub get_anodes {
 
 sub get_coref_nodes {
     my ( $self, $arg_ref ) = @_;
+    
+    # process coreference parameters
+    my $with_types = $arg_ref->{with_types};
+    delete $arg_ref->{with_types};
+    
     my @gram_nodes = $self->_get_node_list('coref_gram.rf');
     
     # textual coreference in PDT2.0 and 2.5 style
@@ -170,8 +175,8 @@ sub get_coref_nodes {
 
     # textual coreference in PDT3.0 style
     my $pdt30_text_coref_rf = $self->get_attr('coref_text') // [];
-    my @pdt30_gram_coref = map {{'target_node.rf' => $_, 'type' => undef}} @gram_nodes;
-    return $self->_get_pdt30_coref([@pdt30_gram_coref, @$pdt30_text_coref_rf], $arg_ref);
+    my @pdt30_gram_coref = map {{'target_node.rf' => $_->id, 'type' => undef}} @gram_nodes;
+    return $self->_get_pdt30_coref([@pdt30_gram_coref, @$pdt30_text_coref_rf], $with_types, $arg_ref);
 }
 
 sub get_coref_gram_nodes {
