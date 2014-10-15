@@ -7,6 +7,8 @@ use Treex::Tool::Lexicon::EN::Hypernyms;
 
 extends 'Treex::Core::Block';
 
+has 'grammateme_only' => ( isa => 'Bool', is => 'ro', default => 0 ); 
+
 has 'context_size' => ( isa => 'Int', is => 'ro', default => 7 );
 
 has '_local_context' => ( isa => 'HashRef', is => 'rw', default => sub { {} } );
@@ -24,6 +26,15 @@ sub process_tnode {
     # rule out personal pronouns and generated nodes
     return if ( $tnode->t_lemma =~ /^#/ );    # or ($tnode->functor // '') eq 'RSTR'
     return if ( !$anode );
+    
+    # override rules and use just the gram_definiteness attribute
+    if ( $self->grammateme_only ){
+        if ($tnode->gram_definiteness){
+            my $article_anode = add_article_node( $anode, $tnode->gram_definiteness eq 'definite' ? 'the' : 'a' );
+            $tnode->add_aux_anodes($article_anode);
+        }
+        return;
+    }
 
     # rule out non-nouns
     return if ( ( $tnode->gram_sempos // '' ) !~ /^n/ and ( $anode->lemma // '' ) !~ /^(dozen|thousand|lot|deal)$/ );
@@ -269,7 +280,8 @@ Treex::Block::T2A::EN::AddArticles
 
 Add a-nodes corresponding to articles of nouns.
 
-Using several heuristic rules to determine the article.
+Using several heuristic rules to determine the article. Rules will be overridden
+by the values of the definiteness grammateme if C<grammateme_only> is set to C<1>.
 
 =head1 AUTHORS 
 
