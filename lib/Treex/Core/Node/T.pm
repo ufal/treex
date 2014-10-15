@@ -182,27 +182,31 @@ sub get_coref_gram_nodes {
 sub get_coref_text_nodes {
     my ( $self, $arg_ref ) = @_;
     
+    # process coreference parameters
+    my $with_types = $arg_ref->{with_types};
+    delete $arg_ref->{with_types};
+    
     # textual coreference in PDT2.0 and 2.5 style
     my @nodes = $self->_get_node_list( 'coref_text.rf', $arg_ref );
     return @nodes if (@nodes);
     
     # textual coreference in PDT3.0 style
-    my $pdt30_coref_rf = $self->get_attr('coref_text');
-    #return () if (!$pdt30_coref_rf);
+    my $pdt30_coref_rf = $self->get_attr('coref_text') // [];
 
-    return $self->_get_node_list($pdt30_coref_rf, $arg_ref);
+    return $self->_get_pdt30_coref($pdt30_coref_rf, $with_types, $arg_ref);
 }
 
 sub _get_pdt30_coref {
-    my ($self, $coref_rf, $arg_ref) = @_;
+    my ($self, $coref_rf, $with_types, $arg_ref) = @_;
+    
     my $document = $self->get_document;
     my @nodes = map {$document->get_node_by_id( $_->{'target_node.rf'} )} @$coref_rf;
     my @filtered_nodes = $self->_process_switches( $arg_ref, @nodes );
-    return @filtered_nodes if (!$arg_ref->{with_types});
+    return @filtered_nodes if (!$with_types);
     
     # return both nodes and types (as list references - similar to alignments)
     my %node_id_to_index = map {$nodes[$_]->id => $_} 0 .. $#nodes;
-    my @types = map {$document->get_node_by_id( $_->{'type'} )} @$coref_rf;
+    my @types = map { $_->{'type'} } @$coref_rf;
     my @filtered_types = map {
         my $idx = $node_id_to_index{$_->id};
         defined $idx ? $types[$idx] : undef

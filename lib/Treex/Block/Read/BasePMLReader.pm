@@ -61,7 +61,7 @@ sub _convert_ttree {
             'dispmod', 'iterativeness', 'indeftype', 'person', 'numertype', 'politeness', 'negation', 'typgroup',
         );
         my @list_attribs = (
-            'compl.rf', 'coref_gram.rf', 'a/aux.rf'
+            'compl.rf', 'coref_text.rf', 'coref_text', 'coref_gram.rf', 'a/aux.rf'
         );
 
         $self->_copy_attr( $pml_node, $treex_node, 'deepord', 'ord' );
@@ -79,15 +79,6 @@ sub _convert_ttree {
         }
         foreach my $attr_name (@list_attribs) {
             $self->_copy_list_attr( $pml_node, $treex_node, $attr_name, $attr_name, 1 );
-        }
-
-        my $coref = $pml_node->attr('coref_text');
-        if (defined $coref) {
-            my @coref_ids = map {$_->{'target-node.rf'}} @$coref;
-            $treex_node->set_attr( 'coref_text.rf', \@coref_ids );
-        }
-        else {
-            $self->_copy_list_attr( $pml_node, $treex_node, 'coref_text.rf', 'coref_text.rf', 1 );
         }
 
         my %gram = ();
