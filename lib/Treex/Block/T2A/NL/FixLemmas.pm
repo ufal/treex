@@ -25,14 +25,14 @@ sub process_anode {
 
     # fix personal pronouns
     if ( $lemma eq '#PersPron' ) {
-        my ( $num, $pers ) = ( $anode->iset->number // 'sing', $anode->iset->person // '3' );
+        my ( $num, $pers ) = ( $anode->iset->number || 'sing', $anode->iset->person || '3' );
         my $sig = "$num $pers";
 
         if ( $pers eq '2' ) {
-            $sig .= ' ' . ( $anode->iset->politeness // 'inf' );
+            $sig .= ' ' . ( $anode->iset->politeness || 'inf' );
         }
         if ( $pers eq '3' and $num eq 'sing' ) {
-            $sig .= ' ' . ( $anode->iset->gender // 'neut' );
+            $sig .= ' ' . ( $anode->iset->gender || 'neut' );
         }
         $anode->set_lemma( $PERSPRON{$sig} );
     }
