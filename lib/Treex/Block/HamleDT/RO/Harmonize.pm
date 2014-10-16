@@ -3,7 +3,7 @@ use utf8;
 use Moose;
 use Treex::Core::Common;
 use tagset::ro::rdt;
-use tagset::cs::pdt;
+use Lingua::Interset qw(decode encode);
 extends 'Treex::Core::Block';
 
 has iset_driver =>
@@ -69,7 +69,7 @@ sub process_zone {
     foreach my $node ( $a_root->get_descendants() ) {
         my $f = tagset::ro::rdt::decode( $node->conll_pos );
         $node->set_iset($f);
-        $node->set_tag( tagset::cs::pdt::encode( $f, 1 ) );
+        $node->set_tag( encode('cs::pdt', $node->iset) );
     }
 
     # conll_deprel -> afun
