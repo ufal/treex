@@ -67,7 +67,7 @@ sub deprel_to_afun
         # Convert the labels.
         # Adverbial clause that functions as a modifier (adjunct).
         # Example: a vw ainda n-atil-o tomou qualquer decis-atil-o , porque est-atil-o a analisar/ADVCL as várias hipóteses
-        elsif($deprel eq 'ADVCL')
+        if($deprel eq 'ADVCL')
         {
             $afun = 'Adv';
         }
@@ -410,6 +410,9 @@ sub fix_lemma {
     $node->set_lemma($lemma);
     return;
 }
+
+# Regex for detecting punctuation symbols
+my $PUNCT= q{[\[\](),.;:'?-]};
 
 # The surface sentence cannot be stored in the CoNLL format,
 # so let's try to reconstruct it.

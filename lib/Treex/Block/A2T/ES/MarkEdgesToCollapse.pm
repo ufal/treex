@@ -4,6 +4,15 @@ use Treex::Core::Common;
 extends 'Treex::Block::A2T::MarkEdgesToCollapse';
 
 
+# override tnode_although_aux => sub {
+#     my ( $self, $node ) = @_;
+# 
+#     # AuxY and AuxZ are usually used for rhematizers (which should have their own t-nodes).
+#     # Override: add also AuxG, so brackets and quotes have their t-nodes.
+#     return 1 if $node->afun =~ /^Aux[YZ]/;
+#     return 0;
+# };
+
 override is_aux_to_parent => sub {
     my ( $self, $node ) = @_;
 
