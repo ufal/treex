@@ -5,7 +5,7 @@ use Treex::Core::Common;
 use ProcessUtils;
 
 # Used to parse Alpino output. This is quite ugly, but I want to avoid code duplication
-use Treex::Block::Read::Alpino; 
+use Treex::Block::Read::Alpino;
 
 has '_twig'               => ( is => 'rw' );
 has '_alpino_readhandle'  => ( is => 'rw' );
@@ -17,20 +17,17 @@ sub BUILD {
     my $self      = shift;
     my $tool_path = 'installed_tools/parser/Alpino';
     my $exe_path  = require_file_from_share("$tool_path/bin/Alpino");
-    
-    $tool_path = $exe_path; # get real tool path (not relative to Treex share)
-    $tool_path =~ s/\/bin\/.*//;
-    $ENV{ALPINO_HOME} = $tool_path; # set it as an environment variable to be passed to Alpino
 
-    #TODO this should be done better
-    my $redirect = Treex::Core::Log::get_error_level() eq 'DEBUG' ? '' : '2>/dev/null';
+    $tool_path = $exe_path;    # get real tool path (not relative to Treex share)
+    $tool_path =~ s/\/bin\/.*//;
+    $ENV{ALPINO_HOME} = $tool_path;    # set it as an environment variable to be passed to Alpino
 
     # Force line-buffering of Alpino's output (otherwise it will hang)
     my @command = ( 'stdbuf', '-oL', $exe_path, 'end_hook=xml_dump', '-parse' );
 
-    $SIG{PIPE} = 'IGNORE';    # don't die if parser gets killed
-    my ( $reader, $writer, $pid ) = ProcessUtils::bipipe_noshell( ":encoding(utf-8)", @command );
-    
+    $SIG{PIPE} = 'IGNORE';             # don't die if parser gets killed
+    my ( $reader, $writer, $pid ) = ProcessUtils::verbose_bipipe_noshell( ":encoding(utf-8)", @command );
+
     $self->_set_alpino_readhandle($reader);
     $self->_set_alpino_writehandle($writer);
     $self->_set_alpino_pid($pid);
@@ -41,15 +38,15 @@ sub BUILD {
 }
 
 sub escape {
-    my ($self, $sent) = @_;
-    
+    my ( $self, $sent ) = @_;
+
     $sent =~ s/&/\&amp;/g;
     $sent =~ s/%/\&perc;/g;
     return $sent;
 }
 
 sub unescape {
-    my ($self, $tok) = @_;
+    my ( $self, $tok ) = @_;
     $tok =~ s/&perc;/%/g;
     $tok =~ s/&amp;/\&/g;
     return $tok;
@@ -58,28 +55,15 @@ sub unescape {
 sub parse_zones {
     my ( $self, $zones_rf ) = @_;
 
-    my $writer = $self->_alpino_writehandle;
-    my $reader = $self->_alpino_readhandle;
-
     foreach my $zone (@$zones_rf) {
 
         # Take the (tokenized) sentence
         my @forms = map { $_->form } $zone->get_atree->get_descendants( { ordered => 1 } );
-        my $sent = $self->escape(join( " ", @forms ));
+        my $sent = $self->escape( join( " ", @forms ) );
 
         # Have Alpino parse the sentence
-        print $writer $sent . "\n";        
-        my $line = <$reader>;
-
-        if ( $line !~ /^<\?xml/ ) {
-            log_fatal( 'Unexpected Alpino input: ' . $line );
-        }
-        my $xml = $line;
-        while ( $line and $line !~ /^<\/alpino_ds/ ) {
-            $line = <$reader>;
-            $xml .= $line;
-        }
-
+        my $xml = $self->get_alpino_parse($sent);
+        
         # Create a p-tree out of Alpino's output
         if ( $zone->has_ptree ) {
             $zone->remove_tree('p');
@@ -94,17 +78,48 @@ sub parse_zones {
                     foreach my $node ( $xml->first_child('node')->children('node') ) {
                         Treex::Block::Read::Alpino::create_subtree( $node, $proot );
                     }
-                }
+                    }
             }
         );
         $self->_twig->parse($xml);
+
+        foreach my $pnode ( grep { defined( $_->form ) } $proot->get_descendants() ) {
+            $pnode->set_lemma( $self->unescape( $pnode->lemma ) );
+            $pnode->set_form( $self->unescape( $pnode->form ) );
+        }
         
-        foreach my $pnode (grep { defined($_->form) } $proot->get_descendants()){
-            $pnode->set_lemma( $self->unescape($pnode->lemma) );
-            $pnode->set_form( $self->unescape($pnode->form) );
-        } 
+        Treex::Core::Log::progress();
     }
 
+}
+
+sub get_alpino_parse {
+    
+    my ($self, $sent) = @_;
+
+    my $writer = $self->_alpino_writehandle;
+    my $reader = $self->_alpino_readhandle;
+    
+    # TODO
+    print $writer $sent . "\n";
+    my $line = <$reader>;
+
+    # skip non-xml (stderr/status) lines unless there's an error
+    while ( $line !~ /^<\?xml/ ) {
+        if ( $line !~ /^(\[|Q#[0-9]|hdrug: process|[0-9\.]* m?sec|no cgn tag for|postag not recognized|no with_dt cgn tag rule)/ ) {
+            log_fatal( 'Unexpected Alpino output: ' . $line );
+        }
+        $line = <$reader>;
+    }
+
+    # now parse the XML lines
+    my $xml = $line;
+    while ( $line and $line !~ /^<\/alpino_ds/ ) {
+        $line = <$reader>;
+        $xml .= $line;
+    }
+    
+    return $xml;
 }
 
 1;
