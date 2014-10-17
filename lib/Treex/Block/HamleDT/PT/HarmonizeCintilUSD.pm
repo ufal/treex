@@ -28,6 +28,7 @@ sub process_zone
     $self->attach_final_punctuation_to_root($root);
     $self->restructure_coordination($root);
     $self->raise_prepositions($root);
+    $self->raise_copulas($root);
     # Make sure that all nodes have known afuns.
     $self->check_afuns($root);
 }
@@ -392,7 +393,7 @@ sub raise_copulas
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
-        if($node->afun() eq 'AuxP' && $node->is_leaf() && !$node->is_member())
+        if($node->afun() eq 'Cop' && $node->is_leaf() && !$node->is_member())
         {
             my $parent = $node->parent();
             if(defined($parent))
@@ -400,13 +401,11 @@ sub raise_copulas
                 my $grandparent = $parent->parent();
                 if(defined($grandparent))
                 {
-                    if($grandparent->afun() eq 'AuxP')
-                    {
-                        log_warn('Attaching a preposition under another preposition');
-                    }
                     $node->set_parent($grandparent);
-                    $parent->set_parent($node);
+                    $node->set_afun($parent->afun());
                     $node->set_is_member($parent->is_member());
+                    $parent->set_parent($node);
+                    $parent->set_afun('Pnom');
                     $parent->set_is_member(0);
                 }
             }
