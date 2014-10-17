@@ -27,6 +27,7 @@ sub process_zone
     # Adjust the tree structure.
     $self->attach_final_punctuation_to_root($root);
     $self->restructure_coordination($root);
+    $self->raise_prepositions($root);
     # Make sure that all nodes have known afuns.
     $self->check_afuns($root);
 }
@@ -345,6 +346,76 @@ sub detect_coordination
 
 
 
+#------------------------------------------------------------------------------
+# Finds prepositions (AuxP) attached as leaves to their nouns. Reattaches them
+# to head the nouns.
+#------------------------------------------------------------------------------
+sub raise_prepositions
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        if($node->afun() eq 'AuxP' && $node->is_leaf() && !$node->is_member())
+        {
+            my $parent = $node->parent();
+            if(defined($parent))
+            {
+                my $grandparent = $parent->parent();
+                if(defined($grandparent))
+                {
+                    if($grandparent->afun() eq 'AuxP')
+                    {
+                        log_warn('Attaching a preposition under another preposition');
+                    }
+                    $node->set_parent($grandparent);
+                    $parent->set_parent($node);
+                    $node->set_is_member($parent->is_member());
+                    $parent->set_is_member(0);
+                }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Finds copulas (Cop) attached as leaves to their predicates. Reattaches them
+# to head the predicates.
+#------------------------------------------------------------------------------
+sub raise_copulas
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        if($node->afun() eq 'AuxP' && $node->is_leaf() && !$node->is_member())
+        {
+            my $parent = $node->parent();
+            if(defined($parent))
+            {
+                my $grandparent = $parent->parent();
+                if(defined($grandparent))
+                {
+                    if($grandparent->afun() eq 'AuxP')
+                    {
+                        log_warn('Attaching a preposition under another preposition');
+                    }
+                    $node->set_parent($grandparent);
+                    $parent->set_parent($node);
+                    $node->set_is_member($parent->is_member());
+                    $parent->set_is_member(0);
+                }
+            }
+        }
+    }
+}
+
+
+
 ###################################################################################################
 
 
@@ -445,13 +516,13 @@ sub fill_sentence {
     if ($self->punctuation_spaces_marked){
         $str =~ s{ \s       # single space
                    (\\\*)?  # $1 = optional "\*" means "space before"
-                   ($PUNCT)  # $2 = punctuation
+###!!!                   ($PUNCT)  # $2 = punctuation
                    (\*/)?   # $3 = optiona; "*/" meand "space after"
                    \s       # single space
                 }
                 {($1 ? ' ' : '') . $2 . ($3 ? ' ' : '')}gxe;
     } else {
-        $str =~ s/ ($PUNCT)/$1/g;
+###!!!        $str =~ s/ ($PUNCT)/$1/g;
     }
 
 
