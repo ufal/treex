@@ -108,7 +108,7 @@ sub deprel_to_afun
         # Example: a retirada militar de hebron , os colonatos judeus [CC(colonatos, ,), PARATAXIS(retirada, colonatos)]
         elsif($deprel eq 'CC')
         {
-            $afun = 'AuxX';
+            $afun = 'AuxY';
             $node->wild()->{coordinator} = 1;
         }
         # Clausal complement of a predicate.
