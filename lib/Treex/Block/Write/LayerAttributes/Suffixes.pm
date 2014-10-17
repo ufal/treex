@@ -52,7 +52,7 @@ sub _build_return_values_names {
 sub modify_single {
 
     my ( $self, $str ) = @_;
-
+    
     my @ret;
     foreach my $suf_len ( @{ $self->_lengths_list } ) {
         if ( !defined($str) ) {    # undef yields undef

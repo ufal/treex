@@ -20,10 +20,18 @@ has features_file => ( is => 'ro', isa => 'Str', required => 1 );
 
 has _features_file_data => ( is => 'ro', isa => 'HashRef', builder => '_build_features_file_data', lazy_build => 1 );
 
+has '+modifier_config' => ( builder => '_build_modifier_config', lazy_build => 1 );
+
 sub _build_attributes {
     my ($self) = @_;
     return $self->_features_file_data->{plain_sources};
 }
+
+sub _build_modifier_config {
+    my ($self) = @_;
+    return _parse_modifier_config( $self->_features_file_data->{modifier_config} );
+}
+
 
 sub _build_features_file_data {
     my ($self) = @_;
@@ -36,6 +44,7 @@ sub _build_features_file_data {
         additional    => $cfg->{additional_features},
         plain_labels  => [ map { $_->{label} } @{ $cfg->{features} } ],
         plain_sources => [ map { $_->{source} } @{ $cfg->{features} } ],
+        modifier_config => $cfg->{modifier_config},
     };
     return $feats;
 }

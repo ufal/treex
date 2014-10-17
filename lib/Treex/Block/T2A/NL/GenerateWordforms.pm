@@ -1,30 +1,24 @@
 package Treex::Block::T2A::NL::GenerateWordforms;
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::FormsGenerator::Alpino;
+extends 'Treex::Tool::Flect::FlectBlock';
 
-extends 'Treex::Core::Block';
+has '+model_file' => ( default => 'data/models/flect/model-nl_alpino_tsynth-t318-l1_10_00001-t319-l1_1_001.pickle' );
 
-has '_generator' => ( is => 'rw', builder => '_build_generator' );
-
-sub _build_generator {
-    return Treex::Tool::FormsGenerator::Alpino->new();
-}
-
+has '+features_file' => ( default => 'data/models/flect/model-nl_alpino_tsynth-t318-l1_10_00001-t319-l1_1_001.features.yml' );
 
 
 sub process_atree {
-    my ( $self, $aroot ) = @_;    
+    my ( $self, $aroot ) = @_;
 
-    foreach my $anode ( grep { not defined $_->form } $aroot->get_descendants( { ordered => 1 } ) ){        
-        my $lemma = $anode->lemma // '';
-        my $form = $self->_generator->generate_form($anode);
-        if ($form ne ''){
-            if ($lemma eq lcfirst $lemma){
-                $form = lcfirst $form;    
-            }            
+    my @anodes = $aroot->get_descendants( { ordered => 1 } );
+    
+    my @forms = $self->inflect_nodes(@anodes);
+
+    for ( my $i = 0; $i < @anodes; ++$i ) {
+        if ( not defined( $anodes[$i]->form ) ) {
+            $anodes[$i]->set_form( $forms[$i] );
         }
-        $anode->set_form($form ne '' ? $form : $lemma);
     }
 }
 
@@ -40,7 +34,7 @@ Treex::Block::T2A::NL::GenerateWordforms
 
 =head1 DESCRIPTION
 
-Generating word forms using the Alpino generator.
+Generating word forms using the Flect tool. Contains pre-trained model settings for Dutch.
 
 =head1 AUTHORS 
 

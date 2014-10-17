@@ -34,7 +34,9 @@ sub BUILD {
     my $model    = $self->model_file;
     my $features = '';
     if ( $self->features ) {
-        $features = '\'features\': \'' . join( '|', @{ $self->features } ) . '\', ';
+    	$features = join( '|', @{ $self->features } );
+    	$features =~ s/ /|/g;
+        $features = '\'features\': \'' . $features . '\', ';
     }
     my $add_features = '';
     if ( $self->additional_features ) {
