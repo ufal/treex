@@ -14,6 +14,14 @@ has iset_driver =>
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
+has punctuation_spaces_marked => (
+    is => 'ro',
+    isa => 'Bool',
+    default => 0,
+    documentation => 'Does the input use "*/" and "\*" to mark spaces around punctuation?',
+);
+
+
 #------------------------------------------------------------------------------
 # Reads the Portuguese tree, converts morphosyntactic tags to Interset,
 # converts deprel tags to afuns, transforms tree to adhere to the HamleDT
@@ -24,6 +32,7 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+
     # Adjust the tree structure.
     $self->attach_final_punctuation_to_root($root);
     $self->restructure_coordination($root);
@@ -31,6 +40,31 @@ sub process_zone
     $self->raise_copulas($root);
     # Make sure that all nodes have known afuns.
     $self->check_afuns($root);
+ 
+    # $zone->sentence should contain the (surface, detokenized) sentence string.
+    $self->fill_sentence($root);
+ 
+    # ".*/" -> "." etc.
+    #$self->normalize_punctuation_and_spaces($root);
+
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes) {
+    
+        # Save Interset features to the "tag" attribute,
+        # so we can see them in TrEd (tooltip shows also the categories).
+        $node->set_tag(join ' ', $node->get_iset_values());
+
+        # "em_" -> "em" etc.
+        $self->fix_form($node);
+
+        # Lowercase lemmas etc.
+        $self->fix_lemma($node);
+        
+        # Adverbs (including rhematizers) should not depend on prepositions.
+        #$self->rehang_rhematizers($node);
+    }
+    
+    return;
 }
 
 #------------------------------------------------------------------------------
@@ -424,37 +458,6 @@ sub raise_copulas
 ###################################################################################################
 
 
-
-###!!! Tohle probrat a buď převzít, nebo vyhodit.
-sub process_zone_martin {
-    my ($self, $zone) = @_;
-
-    # Copy the original dependency structure before adjusting it.
-    $self->backup_zone($zone);
-
-    my $root  = $zone->get_atree();
-    my @nodes = $root->get_descendants();
-
-    # $zone->sentence should contain the (surface, detokenized) sentence string.
-    $self->fill_sentence($root);
-
-    # Harmonize tags, forms, lemmas and dependency labels.
-    foreach my $node (@nodes) {
-
-        # "em_" -> "em" etc.
-        $self->fix_form($node);
-
-        $self->fix_lemma($node);
-    }
-
-    # Adverbs (including rhematizers) should not depend on prepositions.
-    foreach my $node (@nodes) {
-        $self->rehang_rhematizers($node);
-    }
-
-    return;
-}
-
 sub fix_form {
     my ($self, $node) = @_;
     my $form = $node->form;
@@ -521,13 +524,13 @@ sub fill_sentence {
     if ($self->punctuation_spaces_marked){
         $str =~ s{ \s       # single space
                    (\\\*)?  # $1 = optional "\*" means "space before"
-###!!!                   ($PUNCT)  # $2 = punctuation
+                   ($PUNCT)  # $2 = punctuation
                    (\*/)?   # $3 = optiona; "*/" meand "space after"
                    \s       # single space
                 }
                 {($1 ? ' ' : '') . $2 . ($3 ? ' ' : '')}gxe;
     } else {
-###!!!        $str =~ s/ ($PUNCT)/$1/g;
+        $str =~ s/ ($PUNCT)/$1/g;
     }
 
 
