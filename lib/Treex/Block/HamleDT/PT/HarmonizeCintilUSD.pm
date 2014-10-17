@@ -24,11 +24,28 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
-    #$self->mark_deficient_clausal_coordination($root);
-    #$self->fix_compound_prepositions($root);
-    #$self->fix_compound_conjunctions($root);
-    #$self->fix_other($root);
+    # Adjust the tree structure.
+    $self->attach_final_punctuation_to_root($root);
+    $self->restructure_coordination($root);
+    # Make sure that all nodes have known afuns.
     $self->check_afuns($root);
+}
+
+#------------------------------------------------------------------------------
+# Different source treebanks may use different attributes to store information
+# needed by Interset drivers to decode the Interset feature values. By default,
+# the CoNLL 2006 fields CPOS, POS and FEAT are concatenated and used as the
+# input tag. If the morphosyntactic information is stored elsewhere (e.g. in
+# the tag attribute), the Harmonize block of the respective treebank should
+# redefine this method. Note that even CoNLL 2009 differs from CoNLL 2006.
+#------------------------------------------------------------------------------
+sub get_input_tag_for_interset
+{
+    my $self = shift;
+    my $node = shift;
+    # According to the guidelines, the original CINTIL uses tags in form PoS#features,
+    # e.g. "CN#mp" (common noun, masculine plural). The old Interset driver in Treex expects this format.
+    return $node->conll_pos() . "\#" . $node->conll_feat();
 }
 
 #------------------------------------------------------------------------------
@@ -60,17 +77,17 @@ sub deprel_to_afun
         {
             $afun = 'Adv';
         }
-        # Apposition. (The examples do not seem similar to what PDT calls apposition.)
-        # Example: uma grande vitória para mim/APPOS [APPOS(vitória, mim)]
-        elsif($deprel eq 'APPOS')
-        {
-            $afun = 'Apposition';
-        }
         # Adjectival modifier of a noun.
         # Example: um computador barato
         elsif($deprel eq 'AMOD')
         {
             $afun = 'Atr';
+        }
+        # Apposition. (The examples do not seem similar to what PDT calls apposition.)
+        # Example: uma grande vitória para mim/APPOS [APPOS(vitória, mim)]
+        elsif($deprel eq 'APPOS')
+        {
+            $afun = 'Apposition';
         }
         # Auxiliary verb. The examples seem to be reversed. In the following, infinitive is attached as AUX to the auxiliary verb "vai":
         # Example: o governo vai hoje assinar/AUX um protocolo
@@ -90,6 +107,7 @@ sub deprel_to_afun
         elsif($deprel eq 'CC')
         {
             $afun = 'AuxX';
+            $node->wild()->{coordinator} = 1;
         }
         # Clausal complement of a predicate.
         # Example: sei que a herança n-atil-o é boa/CCOMP
@@ -104,12 +122,10 @@ sub deprel_to_afun
             $afun = 'Adv';
         }
         # Non-first conjunct is attached to the first conjunct as CONJ.
-        # This is the standard Stanford approach but there is something weird in CINTIL.
-        # The CONJ label always includes a token, sometimes a conjunction (CONJ_E), sometimes something else (CONJ_RECEBERAM).
-        # And the token is not present in the sentence. Was it there and was it consumed by the label?
-        elsif($deprel =~ m/^CONJ_/)
+        elsif($deprel eq 'CONJ')
         {
             $afun = 'CoordArg';
+            $node->wild()->{conjunct} = 1;
         }
         # Copula is attached to the nominal predicate.
         # Example: este computador é/COP barato
@@ -118,8 +134,14 @@ sub deprel_to_afun
             $afun = 'Cop';
         }
         # Clausal subject.
-        # Example: quem n-atil-o ficou satisfeito com o bombardeamento sobre srebrenica foi lord david owen [CSUBJ(lord, satisfeito)] ###!!!???
+        # Example: quem n&atil;o ficou satisfeito com o bombardeamento sobre srebrenica foi lord david owen [CSUBJ(lord, satisfeito)] ###!!!???
         elsif($deprel eq 'CSUBJ')
+        {
+            $afun = 'Sb';
+        }
+        # Clausal subject of a passive verb.
+        ###!!! There are 9 occurrences of CSUBJPASS in the data and they are probably errors. It is assigned to "que" instead of verbs.
+        elsif($deprel eq 'CSUBJPASS')
         {
             $afun = 'Sb';
         }
@@ -167,6 +189,7 @@ sub deprel_to_afun
         }
         # NCMOD ###!!!??? It looks like failed conversion of prepositional phrases.
         # Example: chegam discretamente junto/PREPC a_ a cruz alta [PREPC(chegam, junto); NCMOD(junto, cruz)]
+        ###!!! It does not occur in the corrected data of 2014-10-15.
         elsif($deprel eq 'NCMOD')
         {
             $afun = 'Adv';
@@ -179,6 +202,7 @@ sub deprel_to_afun
         }
         # Noun phrase that functions as an adverbial modifier.
         # Example: o elemento feminino está favorecido esta semana/NPADVMOD
+        ###!!! It does not occur in the corrected data of 2014-10-15.
         elsif($deprel eq 'NPADVMOD')
         {
             $afun = 'Adv';
@@ -191,6 +215,7 @@ sub deprel_to_afun
         }
         # Nominal subject of a passive clause.
         # Example: sabemos que os prémios/NSUBJPASS s-atil-o devidos
+        ###!!! It does not occur in the corrected data of 2014-10-15.
         elsif($deprel eq 'NSUBJPASS')
         {
             $afun = 'Sb';
@@ -199,6 +224,7 @@ sub deprel_to_afun
         # The NUMMOD label is used for numbers expressed as words.
         # Numbers expressed using digits are labeled NUMBER.
         # Example: sete/NUMMOD outros suspeitos
+        ###!!! It does not occur in the corrected data of 2014-10-15.
         elsif($deprel eq 'NUMMOD')
         {
             $afun = 'Atr';
@@ -206,6 +232,7 @@ sub deprel_to_afun
         # Number expressed using digits. It may have the same function as NUMMOD.
         # Example: tinha 39/NUMBER anos
         # Example: desceu de 7,4780 para 7,4411 por cento
+        ###!!! It does not occur in the corrected data of 2014-10-15.
         elsif($deprel eq 'NUMBER')
         {
             $afun = 'Atr';
@@ -230,6 +257,7 @@ sub deprel_to_afun
         }
         # Modifier of a possessive modifier.
         # Example: os seus próprios programas [POSSESSIVE(seus, próprios)]
+        ###!!! It does not occur in the corrected data of 2014-10-15.
         elsif($deprel eq 'POSSESSIVE')
         {
             $afun = 'Atr';
@@ -248,6 +276,7 @@ sub deprel_to_afun
         }
         # PREPC ###!!!??? It looks like failed conversion of prepositional phrases.
         # Example: chegam discretamente junto/PREPC a_ a cruz alta [PREPC(chegam, junto); NCMOD(junto, cruz)]
+        ###!!! It does not occur in the corrected data of 2014-10-15.
         elsif($deprel eq 'PREPC')
         {
             $afun = 'AuxP';
@@ -267,6 +296,7 @@ sub deprel_to_afun
         # Modifier of quantity??? ###!!!
         # Example: entre sete e oito hectares [QUANTMOD(sete, entre)]
         # Example: todos uns quatro computadores [QUANTMOD(quatro, uns)] ... ERROR?
+        ###!!! It does not occur in the corrected data of 2014-10-15.
         elsif($deprel eq 'QUANTMOD')
         {
             $afun = 'AuxP';
@@ -290,17 +320,37 @@ sub deprel_to_afun
     #$self->fix_annotation_errors($root);
 }
 
-has punctuation_spaces_marked => (
-    is => 'ro',
-    isa => 'Bool',
-    default => 1,
-    documentation => 'Does the input use "*/" and "\*" to mark spaces around punctuation?',
-);
 
-# Regex for detecting punctuation symbols
-my $PUNCT= q{[\[\](),.;:'?-]};
 
-sub process_zone {
+#------------------------------------------------------------------------------
+# Detects coordination in the Stanford shape.
+#------------------------------------------------------------------------------
+sub detect_coordination
+{
+    my $self = shift;
+    my $node = shift;
+    my $coordination = shift;
+    my $debug = shift;
+    $coordination->detect_stanford($node);
+    # The caller does not know where to apply recursion because it depends on annotation style.
+    # Return all conjuncts and shared modifiers for the Prague family of styles.
+    # Return non-head conjuncts, private modifiers of the head conjunct and all shared modifiers for the Stanford family of styles.
+    # (Do not return delimiters, i.e. do not return all original children of the node. One of the delimiters will become the new head and then recursion would fall into an endless loop.)
+    # Return orphan conjuncts and all shared and private modifiers for the other styles.
+    my @recurse = grep {$_ != $node} ($coordination->get_conjuncts());
+    push(@recurse, $coordination->get_shared_modifiers());
+    push(@recurse, $coordination->get_private_modifiers($node));
+    return @recurse;
+}
+
+
+
+###################################################################################################
+
+
+
+###!!! Tohle probrat a buď převzít, nebo vyhodit.
+sub process_zone_martin {
     my ($self, $zone) = @_;
 
     # Copy the original dependency structure before adjusting it.
@@ -309,84 +359,23 @@ sub process_zone {
     my $root  = $zone->get_atree();
     my @nodes = $root->get_descendants();
 
-    # ".*/" -> "." etc.
-    $self->normalize_punctuation_and_spaces($root);
-
     # $zone->sentence should contain the (surface, detokenized) sentence string.
     $self->fill_sentence($root);
 
     # Harmonize tags, forms, lemmas and dependency labels.
     foreach my $node (@nodes) {
 
-        # Convert CoNLL POS tags and features to Interset and PDT if possible.
-        $self->convert_tag($node);
-
-        # Save Interset features to the "tag" attribute,
-        # so we can see them in TrEd (tooltip shows also the categories).
-        $node->set_tag(join ' ', $node->get_iset_values());
-
         # "em_" -> "em" etc.
         $self->fix_form($node);
 
         $self->fix_lemma($node);
-
-        # Conversion from dependency relation tags to afuns (analytical function tags)
-        my $afun = $self->guess_afun($node);
-        $node->set_afun($afun || 'NR');
     }
-
-    # See HamleDT::Harmonize for implementation details.
-    $self->attach_final_punctuation_to_root($root);
-
-    # See HamleDT::Harmonize and detect_coordination() for implementation details.
-    $self->restructure_coordination($root);
 
     # Adverbs (including rhematizers) should not depend on prepositions.
     foreach my $node (@nodes) {
         $self->rehang_rhematizers($node);
     }
 
-    return;
-}
-
-# According to the guidelines, the original CINTIL uses tags in form PoS#features,
-# e.g. "CN#mp" (common noun, masculine plural). The Interset driver expects this format.
-sub get_input_tag_for_interset {
-    my ($self, $node) = @_;
-    return $node->conll_pos() . '#' . $node->conll_feat;
-}
-
-sub normalize_punctuation_and_spaces {
-    my ($self, $root) = @_;
-    my $prev_node;
-    foreach my $node ($root->get_descendants({ordered=>1})){
-        my $form = $node->form;
-
-        if (!$self->punctuation_spaces_marked){
-            if ($form =~ /^($PUNCT)$/){
-                if ($form =~ /[(\[]/){
-                    $node->set_no_space_after(1);
-                } else {
-                    $prev_node->set_no_space_after(1) if $prev_node;
-                }
-            }
-        }
-
-        # For punctuation and symbols, the default is no space before and no space after.
-        # "*/" means a space after the token, "\*" means a space before.
-        # Let's delete those marks and set the attribute no_space_after
-        elsif ($form =~ /^(\\\*)?($PUNCT)(\*\/)?$/){
-            $form = $2;
-            my $space_before = $1 ? 1 : 0;
-            my $space_after = $3 ? 1 : 0;
-            $node->set_no_space_after(1) if !$space_after;
-            if (!$space_before){
-                $prev_node->set_no_space_after(1) if $prev_node;
-            }
-            $node->set_form($form);
-        }
-        $prev_node = $node;
-    }
     return;
 }
 
@@ -420,53 +409,6 @@ sub fix_lemma {
     $lemma = lc $lemma if $node->iset->nountype ne 'prop';
     $node->set_lemma($lemma);
     return;
-}
-
-
-sub guess_afun {
-    my ($self, $node) = @_;
-    my $deprel   = $node->conll_deprel();
-    my $pos      = $node->iset->pos;
-
-    if ($deprel eq 'CONJ' && $node->get_parent->conll_deprel eq 'COORD'){
-        $node->wild->{coordinator} = 1;
-        return 'AuxY';
-    }
-
-    if ($deprel eq 'COORD'){
-        $node->wild->{conjunct} = 1;
-        return 'CoordArg';
-    }
-
-    if ($deprel eq 'C') {
-        return 'Adv' if $pos eq 'noun';
-        return 'Obj' if $pos eq 'verb';
-    }
-
-    # Coordinating conjunctions (deprel=CONJ, child_deprel=COORD) are already solved,
-    # so pos=conj means subordinating conjunction.
-    return 'AuxC' if $pos eq 'conj';
-    return 'AuxP' if $pos eq 'adp';
-    return 'Adv' if $pos eq 'adv';
-    return 'AuxX' if $node->lemma eq ',';
-    return 'AuxG' if $pos eq 'punc';
-    return 'AuxA' if $node->iset->adjtype eq 'art'; # articles
-
-    return $CINTIL_DEPREL_TO_AFUN{$node->conll_deprel};
-}
-
-sub detect_coordination {
-    my ($self, $node, $coordination, $debug) = @_;
-    $coordination->detect_moscow($node);
-    # The caller does not know where to apply recursion because it depends on annotation style.
-    # Return all conjuncts and shared modifiers for the Prague family of styles.
-    # Return non-head conjuncts, private modifiers of the head conjunct and all shared modifiers for the Stanford family of styles.
-    # (Do not return delimiters, i.e. do not return all original children of the node. One of the delimiters will become the new head and then recursion would fall into an endless loop.)
-    # Return orphan conjuncts and all shared and private modifiers for the other styles.
-    my @recurse = grep {$_ != $node} ($coordination->get_conjuncts());
-    push(@recurse, $coordination->get_shared_modifiers());
-    push(@recurse, $coordination->get_private_modifiers($node));
-    return @recurse;
 }
 
 # The surface sentence cannot be stored in the CoNLL format,
@@ -539,7 +481,7 @@ sub rehang_rhematizers {
 
 =head1 NAME
 
-Treex::Block::HamleDT::PT::HarmonizeCintil
+Treex::Block::HamleDT::PT::HarmonizeCintilUSD
 
 =head1 DESCRIPTION
 
@@ -550,6 +492,7 @@ to the annotation style of HamleDT/Prague.
 =head1 AUTHOR
 
 Dan Zeman <zeman@ufal.mff.cuni.cz>
+Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
