@@ -489,6 +489,10 @@ sub fix_lemma {
     # Otherwise, lemmas in CINTIL are all-uppercase.
     # Let's lowercase it except for proper names.
     $lemma = lc $lemma if $node->iset->nountype ne 'prop';
+    
+    # CINTIL-USD is buggy and lowercases first character of proper names
+    $lemma = ucfirst $lemma if $node->iset->nountype eq 'prop';
+    
     $node->set_lemma($lemma);
     return;
 }
