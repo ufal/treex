@@ -192,6 +192,9 @@ sub deprel_to_afun
         elsif($deprel eq 'DET')
         {
             $afun = 'Atr';
+            
+            # TODO: shorten once Interset settles whether to use adjtype or prontype for marking articles.
+            $afun = 'AuxA' if $node->iset->adjtype eq 'art' || $node->iset->prontype eq 'art';
         }
         # Direct object of verb. (If there is one object, it is direct. If there are more, one of them is direct and the rest are indirect.)
         # Example: o cliente encomendou um computador/DOBJ barato
