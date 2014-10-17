@@ -11,13 +11,14 @@ sub process_tnode {
 
     # move all auxiliaries; move the finite verb if not in main clause
     if ( $tnode->formeme =~ /^v.*fin$/ and any { $_->afun =~ /^(AuxV|Obj)$/ } $tnode->get_aux_anodes() ) {
-        my @anodes = grep { $_->afun =~ /^(AuxV|Obj)/ } $tnode->get_aux_anodes();
+        my @anodes = grep { $_->afun =~ /^(AuxV|Obj)/ } $tnode->get_aux_anodes( { ordered => 1 } );
         if ( $tnode->formeme ne 'v:fin' ) {
             unshift @anodes, $anode;
         }
         my ($last_in_clause) = $self->get_last_in_clause($anode);
-        foreach my $aaux ( reverse @anodes ) {
+        foreach my $aaux (@anodes) {
             $aaux->shift_after_node( $last_in_clause, { without_children => 1 } );
+            $last_in_clause = $aaux;    # now the last shifted is the last in the clause
         }
     }
 

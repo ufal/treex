@@ -10,7 +10,7 @@ sub process_tnode {
     my ( $self, $tnode ) = @_;
 
     return if ( $tnode->voice || $tnode->gram_diathesis || '' ) !~ /^pas/;
-    return if ( $tnode->formeme !~ /^v:.*fin/ );
+    return if ( $tnode->formeme !~ /^v:.*fin/ ); # TODO check if this is justified !!!
     my $anode = $tnode->get_lex_anode() or return;
 
     # we will move the autosemantic node, same as in Czech synthesis
@@ -21,8 +21,12 @@ sub process_tnode {
             'afun'  => 'Obj',
         }
     );
+
     # set the new lexical verb node to past participle (3rd form)
-    $new_node->iset->add('pos' => 'verb', 'verbform' => 'part', 'tense' => 'past');
+    $new_node->iset->add( 'pos' => 'verb', 'verbform' => 'part', 'tense' => 'past' );
+    # the auxiliary verb is actually in active
+    $anode->iset->set_voice('act');
+
     # TODO shift to end of clause
     $new_node->shift_after_node($anode);
 

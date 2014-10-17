@@ -10,11 +10,12 @@ sub process_tnode {
 
     return if ( ($tnode->formeme // '') !~ /^v/ );
     
-    my ( $prefix, $verb ) = ( ( $tnode->t_lemma || '' ) =~ /^([^_]+)_(.*)$/ );
+    my ( $t_lemma ) = ( $tnode->t_lemma || '' );
+    my ( $prefix, $verb ) = ( $t_lemma =~ /^([^_]+)_(.*)$/ );
 
     # only for verbal nodes with some particles
     return if ( !$prefix );
-    my $anode = $tnode->get_lex_anode() or return;
+    my $anode = first { $_->lemma eq $t_lemma }  $tnode->get_anodes() or return;
         
     # remove prefix from the verbal node lemma and hide it in wild/verbal_prefix
     $anode->set_lemma($verb);
