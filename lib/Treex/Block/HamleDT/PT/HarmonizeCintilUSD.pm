@@ -407,6 +407,12 @@ sub raise_copulas
                     $parent->set_parent($node);
                     $parent->set_afun('Pnom');
                     $parent->set_is_member(0);
+                    # Find subject, if any (it is not forbidden to find even more (non-coordinate), although it would be strange).
+                    my @subjects = grep {$_->get_real_afun() eq 'Sb'} $parent->children();
+                    foreach my $subject (@subjects)
+                    {
+                        $subject->set_parent($node);
+                    }
                 }
             }
         }
