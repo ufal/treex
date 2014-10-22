@@ -10,7 +10,7 @@ sub process_tnode {
     my ($anode) = $tnode->get_lex_anode() or return;
 
     # move all auxiliaries; move the finite verb if not in main clause
-    if ( $tnode->formeme =~ /^v.*fin$/ and any { $_->afun =~ /^(AuxV|Obj)$/ } $tnode->get_aux_anodes() ) {
+    if ( ( $tnode->formeme =~ /^v.*fin$/ and any { $_->afun =~ /^(AuxV|Obj)$/ } $tnode->get_aux_anodes() ) or $tnode->formeme =~ /^v:.+fin/ ) {
         my @anodes = grep { $_->afun =~ /^(AuxV|Obj)/ } $tnode->get_aux_anodes( { ordered => 1 } );
         if ( $tnode->formeme ne 'v:fin' ) {
             unshift @anodes, $anode;
@@ -29,7 +29,6 @@ sub process_tnode {
         $anode->shift_after_node( $last_in_clause->ord < $last_in_subtree->ord ? $last_in_clause : $last_in_subtree, { without_children => 1 } );
     }
 
-    # TODO move finite main clause verb to 2nd position !!!
     return;
 }
 
