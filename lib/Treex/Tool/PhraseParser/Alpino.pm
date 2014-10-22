@@ -12,6 +12,8 @@ has '_alpino_readhandle'  => ( is => 'rw' );
 has '_alpino_writehandle' => ( is => 'rw' );
 has '_alpino_pid'         => ( is => 'rw' );
 
+has 'timeout' => ( isa => 'Int', is => 'ro', default => 60 );
+
 sub BUILD {
 
     my $self      = shift;
@@ -20,12 +22,18 @@ sub BUILD {
 
     $tool_path = $exe_path;    # get real tool path (not relative to Treex share)
     $tool_path =~ s/\/bin\/.*//;
-    $ENV{ALPINO_HOME} = $tool_path;    # set it as an environment variable to be passed to Alpino
+    $ENV{ALPINO_HOME} = $tool_path;    # set base directory as an environment variable to be passed to Alpino
 
-    # Force line-buffering of Alpino's output (otherwise it will hang)
-    my @command = ( 'stdbuf', '-oL', $exe_path, 'end_hook=xml_dump', '-parse' );
+    # Compose Alpino command, forcing line-buffering of Alpino's output (otherwise it will hang)
+    my @command = ( 'stdbuf', '-oL', $exe_path );
+    if ($self->timeout != 0){
+        push @command, 'user_max=' . ($self->timeout * 1000);
+    }
+    push @command, ( 'end_hook=xml_dump', '-parse' );
 
-    $SIG{PIPE} = 'IGNORE';             # don't die if parser gets killed
+    $SIG{PIPE} = 'IGNORE';             # don't die if Alpino gets killed
+    
+    # Capture both Alpino's STDERR and STDOUT
     my ( $reader, $writer, $pid ) = ProcessUtils::verbose_bipipe_noshell( ":encoding(utf-8)", @command );
 
     $self->_set_alpino_readhandle($reader);
@@ -104,9 +112,9 @@ sub get_alpino_parse {
     print $writer $sent . "\n";
     my $line = <$reader>;
 
-    # skip non-xml (stderr/status) lines unless there's an error
+    # skip non-xml (stderr/status) lines unless there's something unexpected
     while ( $line !~ /^<\?xml/ ) {
-        if ( $line !~ /^(\[|Q#[0-9]|hdrug: process|[0-9\.]* m?sec|no cgn tag for|postag not recognized|no with_dt cgn tag rule)/ ) {
+        if ( $line !~ /^(\[|Q#[0-9]|hdrug: process|[0-9\.]* m?sec|no cgn tag for|postag not recognized|no with_dt cgn tag rule|timed out after|timeout\|\[)/ ) {
             log_fatal( 'Unexpected Alpino output: ' . $line );
         }
         $line = <$reader>;
