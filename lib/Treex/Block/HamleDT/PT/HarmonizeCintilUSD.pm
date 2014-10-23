@@ -340,7 +340,35 @@ sub deprel_to_afun
     }
     # Fix known annotation errors. They include coordination, i.e. the tree may now not be valid.
     # We should fix it now, before the superordinate class will perform other tree operations.
-    #$self->fix_annotation_errors($root);
+    $self->fix_annotation_errors($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes a few known annotation errors that appear in the data. Should be called
+# from deprel_to_afun() so that it precedes any tree operations that the
+# superordinate class may want to do.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        my $parent = $node->parent();
+        my @children = $node->children();
+        # The AUX dependency relation should only be used with auxiliary verbs
+        # (ter, haver). For some reason, the input data also use it with
+        # arguments of phasal verbs, e.g. in "A encomenda acabou por chegar.",
+        # there is AUX(acabou, chegar).
+        if($node->afun() eq 'AuxV' && $node->lemma() !~ m/^ter$/i)
+        {
+            log_warn("A node is attached as AUX but its lemma is ".$node->lemma());
+            $node->set_afun('Obj');
+        }
+    }
 }
 
 
