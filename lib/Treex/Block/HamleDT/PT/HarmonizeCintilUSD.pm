@@ -551,7 +551,7 @@ sub fill_sentence
     $str = " $str ";
     # For some strange reason feminine definite singular articles are capitalized in CINTIL.
     $str =~ s/ A / a /g;
-    # Preposition + article contractions, e.g. "de_" + "o" = "do"
+    # Preposition + pronoun/article contractions, e.g. "de_" + "o" = "do"
     $str =~ s/por_ elos/pelos/g;
     $str =~ s/por_ elas/pelas/g;
     $str =~ s/por_ /pel/g; # pelo, pela
@@ -559,8 +559,14 @@ sub fill_sentence
     $str =~ s/a_ a/à/g;    # à, às
     $str =~ s/a_ o/ao/g;   # ao, aos,
     $str =~ s/de_ /d/g;    # do, da, dos, das, dum, duma, duns, dumas, deste, desta,...
+    $str =~ s/com_ mi/comigo/g;
+    $str =~ s/com_ ti/contigo/g;
+    $str =~ s/com_ si/consigo/g;
 
     # TODO: detached clitic, e.g. "dá" + "-se-" + "-lhe" + "o" = "dá-se-lho"
+    $str =~ s/ -(se|lho|las|lo|ia)/-$1/g;
+    # Preposition "de" was separated from the verb "haver" (keeping the hyphen).
+    $str =~ s/ -de/-de/g;
 
     # Punctuation detokenization
     # CINTIL guidelines define special marking for spaces around punctuation "*/" and "\*",
