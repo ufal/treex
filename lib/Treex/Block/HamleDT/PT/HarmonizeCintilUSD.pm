@@ -457,7 +457,7 @@ sub raise_function_words
                 my $grandparent = $parent->parent();
                 if(defined($grandparent))
                 {
-                    if($grandparent->afun() eq 'AuxP')
+                    if(defined($grandparent->afun()) && $grandparent->afun() eq 'AuxP')
                     {
                         log_warn('Attaching a preposition under another preposition');
                     }
