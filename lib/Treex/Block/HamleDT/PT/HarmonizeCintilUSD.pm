@@ -38,8 +38,7 @@ sub process_zone
     # Adjust the tree structure.
     $self->attach_final_punctuation_to_root($root);
     $self->restructure_coordination($root);
-    $self->raise_prepositions($root);
-    $self->raise_copulas($root);
+    $self->raise_function_words($root);
     # Make sure that all nodes have known afuns.
     $self->check_afuns($root);
 
@@ -385,45 +384,14 @@ sub detect_coordination
 
 
 #------------------------------------------------------------------------------
-# Finds prepositions (AuxP) attached as leaves to their nouns. Reattaches them
-# to head the nouns.
+# Finds function words that are attached as leaves and should become heads:
+#   - prepositions (AuxP)
+#   - copula verbs (Cop)
+# Reattaches the nodes as heads of the phrase. If there are both a preposition
+# and a copula in one phrase (e.g. "A encomenda está em_o armazém."), the
+# function proceeds left-to-right, i.e. the copula will govern the preposition.
 #------------------------------------------------------------------------------
-sub raise_prepositions
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants({ordered => 1});
-    foreach my $node (@nodes)
-    {
-        if($node->afun() eq 'AuxP' && $node->is_leaf() && !$node->is_member())
-        {
-            my $parent = $node->parent();
-            if(defined($parent))
-            {
-                my $grandparent = $parent->parent();
-                if(defined($grandparent))
-                {
-                    if($grandparent->afun() eq 'AuxP')
-                    {
-                        log_warn('Attaching a preposition under another preposition');
-                    }
-                    $node->set_parent($grandparent);
-                    $parent->set_parent($node);
-                    $node->set_is_member($parent->is_member());
-                    $parent->set_is_member(0);
-                }
-            }
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Finds copulas (Cop) attached as leaves to their predicates. Reattaches them
-# to head the predicates.
-#------------------------------------------------------------------------------
-sub raise_copulas
+sub raise_function_words
 {
     my $self = shift;
     my $root = shift;
@@ -450,6 +418,25 @@ sub raise_copulas
                     {
                         $subject->set_parent($node);
                     }
+                }
+            }
+        }
+        elsif($node->afun() eq 'AuxP' && $node->is_leaf() && !$node->is_member())
+        {
+            my $parent = $node->parent();
+            if(defined($parent))
+            {
+                my $grandparent = $parent->parent();
+                if(defined($grandparent))
+                {
+                    if($grandparent->afun() eq 'AuxP')
+                    {
+                        log_warn('Attaching a preposition under another preposition');
+                    }
+                    $node->set_parent($grandparent);
+                    $parent->set_parent($node);
+                    $node->set_is_member($parent->is_member());
+                    $parent->set_is_member(0);
                 }
             }
         }
