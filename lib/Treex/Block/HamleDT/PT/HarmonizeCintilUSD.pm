@@ -206,7 +206,9 @@ sub deprel_to_afun
         # Example: vinte/NUMMOD e/MWE dois/MWE computadores
         elsif($deprel eq 'MWE')
         {
-            $afun = 'MWE'; ###!!! Atr?
+            # A head-first phrase with all dependents labeled Atr is the behavior closest to PDT.
+            #$afun = 'MWE'; ###!!! Atr?
+            $afun = 'Atr';
         }
         # NCMOD ###!!!??? It looks like failed conversion of prepositional phrases.
         # Example: chegam discretamente junto/PREPC a_ a cruz alta [PREPC(chegam, junto); NCMOD(junto, cruz)]
