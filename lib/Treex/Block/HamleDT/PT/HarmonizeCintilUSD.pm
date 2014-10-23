@@ -14,12 +14,14 @@ has iset_driver =>
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
-has punctuation_spaces_marked => (
+has punctuation_spaces_marked =>
+(
     is => 'ro',
     isa => 'Bool',
     default => 0,
     documentation => 'Does the input use "*/" and "\*" to mark spaces around punctuation?',
 );
+
 
 
 #------------------------------------------------------------------------------
@@ -40,30 +42,26 @@ sub process_zone
     $self->raise_copulas($root);
     # Make sure that all nodes have known afuns.
     $self->check_afuns($root);
- 
+
     # $zone->sentence should contain the (surface, detokenized) sentence string.
     $self->fill_sentence($root);
- 
+
     # ".*/" -> "." etc.
     #$self->normalize_punctuation_and_spaces($root);
 
     my @nodes = $root->get_descendants();
-    foreach my $node (@nodes) {
-    
+    foreach my $node (@nodes)
+    {
         # Save Interset features to the "tag" attribute,
         # so we can see them in TrEd (tooltip shows also the categories).
         $node->set_tag(join ' ', $node->get_iset_values());
-
         # "em_" -> "em" etc.
         $self->fix_form($node);
-
         # Lowercase lemmas etc.
         $self->fix_lemma($node);
-        
         # Adverbs (including rhematizers) should not depend on prepositions.
         #$self->rehang_rhematizers($node);
     }
-    
     return;
 }
 
@@ -192,7 +190,7 @@ sub deprel_to_afun
         elsif($deprel eq 'DET')
         {
             $afun = 'Atr';
-            
+
             # TODO: shorten once Interset settles whether to use adjtype or prontype for marking articles.
             $afun = 'AuxA' if $node->iset->adjtype eq 'art' || $node->iset->prontype eq 'art';
         }
@@ -458,10 +456,11 @@ sub raise_copulas
 
 
 
-###################################################################################################
-
-
-sub fix_form {
+#------------------------------------------------------------------------------
+# Fixes various problems with input word forms.
+#------------------------------------------------------------------------------
+sub fix_form
+{
     my ($self, $node) = @_;
     my $form = $node->form;
 
@@ -475,7 +474,13 @@ sub fix_form {
     return;
 }
 
-sub fix_lemma {
+
+
+#------------------------------------------------------------------------------
+# Fixes various problems with input lemmas.
+#------------------------------------------------------------------------------
+sub fix_lemma
+{
     my ($self, $node) = @_;
     my $lemma = $node->lemma;
 
@@ -486,35 +491,38 @@ sub fix_lemma {
     # (e.g. AFASTAR,AFASTADO). Let's hope the first is the most probable one and delete the rest.
     $lemma =~ s/(.),.+/$1/;
 
+    ###!!! DZ: Why? A lemma is just an identifier, isn't it?
     # Otherwise, lemmas in CINTIL are all-uppercase.
     # Let's lowercase it except for proper names.
     $lemma = lc $lemma if $node->iset->nountype ne 'prop';
-    
+
     # CINTIL-USD is buggy and lowercases first character of proper names
     $lemma = ucfirst $lemma if $node->iset->nountype eq 'prop';
-    
+
     $node->set_lemma($lemma);
     return;
 }
 
+
+
 # Regex for detecting punctuation symbols
 my $PUNCT= q{[\[\](),.;:'?-]};
 
-# The surface sentence cannot be stored in the CoNLL format,
-# so let's try to reconstruct it.
-# This is not needed for the analysis (in real scenario, surface sentences will be on the input),
-# but it helps when debugging, so the real sentence is shown in TrEd.
-sub fill_sentence {
+#------------------------------------------------------------------------------
+# The surface sentence cannot be stored in the CoNLL format, so let's try to
+# reconstruct it. This is not needed for the analysis (in the real-world
+# scenario, surface sentences will be on the input), but it helps when
+# debugging, so the real sentence is shown in TrEd.
+#------------------------------------------------------------------------------
+sub fill_sentence
+{
     my ($self, $root) = @_;
     my $str = join '', map {$_->form . ($_->no_space_after ? '' : ' ')} $root->get_descendants({ordered=>1});
-
     # Add spaces around the sentence, so we don't need to check for (\s|^) or \b.
     $str = " $str ";
-
     # For some strange reason feminine definite singular articles are capitalized in CINTIL.
     $str =~ s/ A / a /g;
-
-    # Contractions, e.g. "de_" + "o" = "do"
+    # Preposition + article contractions, e.g. "de_" + "o" = "do"
     $str =~ s/por_ elos/pelos/g;
     $str =~ s/por_ elas/pelas/g;
     $str =~ s/por_ /pel/g; # pelo, pela
@@ -528,7 +536,8 @@ sub fill_sentence {
     # Punctuation detokenization
     # CINTIL guidelines define special marking for spaces around punctuation "*/" and "\*",
     # but these are not used in CINTIL-DepBank (in conll format).
-    if ($self->punctuation_spaces_marked){
+    if ($self->punctuation_spaces_marked)
+    {
         $str =~ s{ \s       # single space
                    (\\\*)?  # $1 = optional "\*" means "space before"
                    ($PUNCT)  # $2 = punctuation
@@ -536,35 +545,45 @@ sub fill_sentence {
                    \s       # single space
                 }
                 {($1 ? ' ' : '') . $2 . ($3 ? ' ' : '')}gxe;
-    } else {
+    }
+    else
+    {
         $str =~ s/ ($PUNCT)/$1/g;
     }
-
-
     # Remove the spaces around the sentence
     $str =~ s/(^\s+|\s+$)//g;
-
     # Make sure the first word is capitalized
     $root->get_zone->set_sentence(ucfirst $str);
     return;
 }
 
-# Some adverbs (mostly rhematizers "apenas", "mesmo",...) depend on a preposition ("de", "a") in CINTIL.
-# However, prepositions should have only one child in the HamleDT/Prague style (except for multi-word prepositions).
+
+
+#------------------------------------------------------------------------------
+# Some adverbs (mostly rhematizers "apenas", "mesmo", ...) depend on
+# a preposition ("de", "a") in CINTIL. However, prepositions should have only
+# one child in the HamleDT/Prague style (except for multi-word prepositions).
 # E.g. "A encomenda está mesmo(afun=Adv,parent=em_,newparent=armazém) em_ o armazém . "
 #      "A criança obedece apenas(afun=Adv,parent=a_,newparent=mãe) a_ a mãe ."
-# Should we differentiate the scope of the rhematizer: "The child obeys only the mother" and "The child only obeys the mother"?
-sub rehang_rhematizers {
+# Should we differentiate the scope of the rhematizer:
+# "The child obeys only the mother" and "The child only obeys the mother"?
+#------------------------------------------------------------------------------
+sub rehang_rhematizers
+{
     my ($self, $node) = @_;
     my $parent = $node->get_parent();
-    if ($node->is_adverb && $parent->is_preposition){
+    if ($node->is_adverb && $parent->is_preposition)
+    {
         my $sibling = $parent->get_children({following_only=>1, first_only=>1});
-        if ($sibling && $sibling->is_noun) {
+        if ($sibling && $sibling->is_noun)
+        {
             $node->set_parent($sibling);
         }
     }
     return;
 }
+
+
 
 1;
 
