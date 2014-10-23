@@ -24,7 +24,17 @@ extends 'Treex::Core::Block';
 has '_processed_nodes' => ( isa => 'HashRef', 'is' => 'rw' );
 has '_nodes_to_remove' => ( isa => 'HashRef', 'is' => 'rw' );
 
-my %HEAD_SCORE = ( 'hd' => 6, 'cmp' => 5, 'crd' => 4, 'dlink' => 3, 'rhd' => 2, 'whd' => 1 );
+my %HEAD_SCORE = (
+    'hd'    => 6,
+    'cmp'   => 5,
+    'crd'   => 4,
+    'dlink' => 3, 
+    'rhd'   => 2, # relative clause head
+    'tag'   => 2, # discourse tag "He said that..."
+    'whd'   => 1, # wh-question head
+    'nucl'  => 1, # main clause (against "als"-clause)
+);
+
 
 my %DEPREL_CONV = (
     'su'     => 'Sb',
@@ -109,6 +119,8 @@ sub create_subtree {
     my ( $self, $p_root, $a_root ) = @_;
 
     my @children = sort { ( $HEAD_SCORE{ $b->wild->{rel} } || 0 ) <=> ( $HEAD_SCORE{ $a->wild->{rel} } || 0 ) } grep { !defined $_->form || $_->form !~ /^\*\-/ } $p_root->get_children();
+
+    # log_info( 'CH:' . join( ' ', map { $_->form // $_->phrase . '=' . $_->wild->{rel} } @children ) );
 
     # no coordination head -> insert commas from those attached to sentence root
     if ( $p_root->phrase eq 'conj' and not any { $_->wild->{rel} eq 'crd' } @children ) {
@@ -206,7 +218,7 @@ sub process_zone {
     $self->set_coord_members($a_root);
 
     # post-processing
-    $self->rehang_relative_clauses($a_root);
+    $self->rehang_wh_clauses($a_root); # rehang relative clauses and wh-questions
     $self->mark_subjects($a_root);
     $self->rehang_aux_verbs($a_root);
     $self->fix_mwu($a_root);
@@ -219,18 +231,18 @@ sub set_coord_members {
     }
 }
 
-# Rehang relative clauses so the predicate of the clause governs it, not the WH-word
+# Rehang relative clauses/wh-questions so the predicate of the clause governs it, not the WH-word
 # TODO: coordinated verbs in the clause?
-sub rehang_relative_clauses {
+sub rehang_wh_clauses {
     my ( $self, $a_root ) = @_;
 
-    foreach my $anode ( grep { $_->conll_deprel eq 'rhd' } $a_root->get_descendants() ) {
+    foreach my $anode ( grep { $_->conll_deprel =~ /^(rhd|whd)$/ } $a_root->get_descendants() ) {
         my ($clause) = $anode->get_children();
         my $parent = $anode->get_parent();
         $clause->set_parent($parent);
         $anode->set_parent($clause);
         $anode->set_afun( $anode->is_adverb ? 'Adv' : 'Obj' );
-        $clause->set_afun('Atr');
+        $clause->set_afun( $parent->is_root ? 'Pred' : 'Atr');
         $clause->set_is_member( $anode->is_member );
         $anode->set_is_member(undef);
     }
@@ -280,8 +292,8 @@ sub rehang_aux_verbs {
         if ( any { $_->is_member } @full_verbs ) {
             my ($coap_root) = map { $_->get_parent } first { $_->is_member } @full_verbs;
             my %eq = map { $_ => 1 } @full_verbs;
-            $eq{$_} -= 1 foreach ($coap_root->get_coap_members);
-            return if ( any {$_ != 0} values %eq );
+            $eq{$_} -= 1 foreach ( $coap_root->get_coap_members );
+            return if ( any { $_ != 0 } values %eq );
         }
 
         # find where to rehang (under full verb or its coordination head if more full verbs
@@ -331,7 +343,7 @@ sub fix_mwu {
         my $last_member = pop @$mwu;
 
         # rehang last member under the parent of the whole MWU
-        $last_member->set_parent($mwu_top->get_parent);
+        $last_member->set_parent( $mwu_top->get_parent );
 
         # rehang all MWU members under the last member
         foreach my $mwu_member (@$mwu) {

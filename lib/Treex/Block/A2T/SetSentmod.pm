@@ -36,8 +36,7 @@ sub is_imperative {
     
     # For PDT-like tagset
     return 1 if $a_node->tag =~ /^Vi/;
-    
-    
+        
     # For English:  imperative is an infinitive verb (VB) with no left children
     return 1 if $a_node->tag eq 'VB' && !$a_node->get_children( { preceding_only => 1 } );    
     

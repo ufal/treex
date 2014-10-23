@@ -11,36 +11,45 @@ my $UNBREAKERS = qr{\p{Alpha}|\p{N}+|[IVXLCMDivxlcmd]+| # single letter, numeral
     art|Ass|bijv|Burg|ca|Ch|Chr|co|Co|dec|dhr|dr|Dr|drs|Drs|ds|Ds|enz|etc|fa|Gebr|Gld|
     gr|ha|Heidemij|Inc|Int|ir|jhr|jl|jr|kath|Kon|lib|Mc|mej|mevr|mgr|Mij|
     min|mln|mr|Mr|Ned|nl|nom|nov|nr|Olie|pct|Penn|Ph|plm|pnt|prof|ptn|red|resp|
-    sec|soc|Sr|St|tel|Th|Uitgeversmij|vacatureE|Ver|Wm|zg|zgn|Zn|
+    sec|soc|Sr|St|tel|Th|Uitgeversmij|vacatureE|Ver|Wm|zg|zgn|Zn
 }xi;
 
 override 'tokenize_sentence' => sub {
     my ( $self, $sentence ) = @_;
 
-    # preseve dots in abbreviations by changing them to a weird UTF char
+    log_info($sentence);
+
+    # preseve dots in abbreviations
     my $sent2 = $sentence;
-    while ( $sentence =~ m/(?:^|\s)($UNBREAKERS)\.(?=\P{Alpha})/gi ){
+    my $repls = 0; # count current number of replacements to compensate position (the replacement pattern is 8 chars longer)
+    while ( $sentence =~ m/(?:^|\s)($UNBREAKERS)\.(?!\p{Alpha}|\p{N})/gi ) {
         my $unbr = $1;
-        my $mp = pos $sentence;
-        
-        if ($unbr =~ m/\./){
-            $unbr =~ s/\./·/g;
-            $sent2 = substr($sent2, 0, $mp-length($unbr)-1) . $unbr . '·' . substr($sent2, $mp);
+        my $mp   = pos $sentence;
+
+        if ( $unbr =~ m/\./ ) {
+            $unbr =~ s/\./XXXDOTXXX/g;
+            $sent2 = substr( $sent2, 0, $mp - length($unbr) - 1 + ($repls * 8) ) . $unbr . 'XXXDOTXXX' . substr( $sent2, $mp + ($repls * 8) );
         }
         else {
-            $sent2 = substr($sent2, 0, $mp-1) . '·' . substr($sent2, $mp); 
-        }        
+            $sent2 = substr( $sent2, 0, $mp - 1 + ($repls * 8) ) . 'XXXDOTXXX' . substr( $sent2, $mp + ($repls * 8) );
+        }
+        $repls++;
     }
-    
-    # preserve hyphens in coordinated compounds
-    $sent2 =~ s/(\p{Alpha})-(\s)/$1‑$2/;
-    $sent2 =~ s/(\s)-(\p{Alpha})/$1‑$2/;
 
+    # preserve hyphens in coordinated compounds
+    $sent2 =~ s/(\p{Alpha})-(\s)/$1XXXHYPHXXX$2/;
+    $sent2 =~ s/(\s)-(\p{Alpha})/$1XXXHYPHXXX$2/;
+
+    # preserve apostrophes in some constructions
+    $sent2 =~ s/(^|\s)'([st])(\s|$)/$1XXXAPOXXX$2$3/;    # 's middags, 't meisje
+
+    log_info($sent2);
     $sentence = $self->SUPER::tokenize_sentence($sent2);
 
     # get back the dots and hyphens
-    $sentence =~ s/·/. /g;
-    $sentence =~ s/‑/-/g;
+    $sentence =~ s/XXXDOTXXX/. /g;
+    $sentence =~ s/XXXHYPHXXX/-/g;
+    $sentence =~ s/XXXAPOXXX/'/g;
 
     # clean out extra spaces
     $sentence =~ s/\s+/ /g;
