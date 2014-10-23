@@ -446,6 +446,15 @@ sub raise_function_words
                     {
                         $subject->set_parent($node);
                     }
+                    # Adverbial modifiers that appear before the copula should be attached to the copula.
+                    if($node->ord() < $parent->ord())
+                    {
+                        my @premodifiers = grep {$_->ord() < $node->ord()} $parent->children();
+                        foreach my $premod (@premodifiers)
+                        {
+                            $premod->set_parent($node);
+                        }
+                    }
                 }
             }
         }
