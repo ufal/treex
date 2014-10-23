@@ -190,9 +190,11 @@ sub deprel_to_afun
         elsif($deprel eq 'DET')
         {
             $afun = 'Atr';
-
-            # TODO: shorten once Interset settles whether to use adjtype or prontype for marking articles.
-            $afun = 'AuxA' if $node->iset->adjtype eq 'art' || $node->iset->prontype eq 'art';
+            ###!!! HamleDT 2.0 does not set the AuxA afun. We should do this in a separate block, so that this block produces HamleDT-compliant output.
+            ###!!! However, we only use this block in Portuguese analysis for QTLeap, so we can bias it towards that goal.
+            ###!!! (The blocks that construct t-trees from a-trees need AuxA to distinguish articles from other determiners.
+            ###!!! They hide all a-nodes with Aux* afuns and articles shall be hidden while other determiners shall not.)
+            $afun = 'AuxA' if($node->iset()->is_article());
         }
         # Direct object of verb. (If there is one object, it is direct. If there are more, one of them is direct and the rest are indirect.)
         # Example: o cliente encomendou um computador/DOBJ barato

@@ -4,8 +4,8 @@ use Moose::Role;
 # with Moose >= 2.00, this must be present also in roles
 use MooseX::SemiAffordanceAccessor;
 use Treex::Core::Log;
-use List::Util qw(first);    # TODO: this wouldn't be needed if there was Treex::Core::Common for roles
-use Lingua::Interset 2.007;
+use List::Util qw(first); # TODO: this wouldn't be needed if there was Treex::Core::Common for roles
+use Lingua::Interset 2.018;
 use Lingua::Interset::FeatureStructure;
 use Data::Dumper;
 
@@ -23,6 +23,7 @@ has iset => (
         is_adjective
         is_adposition
         is_adverb
+        is_article
         is_conjunction
         is_coordinator
         is_dual
