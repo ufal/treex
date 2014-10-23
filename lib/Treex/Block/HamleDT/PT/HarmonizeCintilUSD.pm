@@ -83,7 +83,7 @@ sub deprel_to_afun
         my $plemma = $parent->lemma();
         # Convert the labels.
         # Adverbial clause that functions as a modifier (adjunct).
-        # Example: a vw ainda n-atil-o tomou qualquer decis-atil-o , porque est-atil-o a analisar/ADVCL as várias hipóteses
+        # Example: a vw ainda não tomou qualquer decisão , porque estão a analisar/ADVCL as várias hipóteses
         if($deprel eq 'ADVCL')
         {
             $afun = 'Adv';
@@ -127,7 +127,7 @@ sub deprel_to_afun
             $node->wild()->{coordinator} = 1;
         }
         # Clausal complement of a predicate.
-        # Example: sei que a herança n-atil-o é boa/CCOMP
+        # Example: sei que a herança não é boa/CCOMP
         elsif($deprel eq 'CCOMP')
         {
             $afun = 'Obj';
@@ -151,7 +151,7 @@ sub deprel_to_afun
             $afun = 'Cop';
         }
         # Clausal subject.
-        # Example: quem n&atil;o ficou satisfeito com o bombardeamento sobre srebrenica foi lord david owen [CSUBJ(lord, satisfeito)] ###!!!???
+        # Example: quem não ficou satisfeito com o bombardeamento sobre srebrenica foi lord david owen [CSUBJ(lord, satisfeito)] ###!!!???
         elsif($deprel eq 'CSUBJ')
         {
             $afun = 'Sb';
@@ -186,7 +186,7 @@ sub deprel_to_afun
             $afun = 'Obj';
         }
         # Indirect object of verb. (If there is one object, it is direct. If there are more, one of them is direct and the rest are indirect.)
-        # Example: a criança obedece apenas a_ a m-atil-e/IOBJ
+        # Example: a criança obedece apenas a_ a mãe/IOBJ
         elsif($deprel eq 'IOBJ')
         {
             $afun = 'Obj';
@@ -238,7 +238,7 @@ sub deprel_to_afun
             $afun = 'Sb';
         }
         # Nominal subject of a passive clause.
-        # Example: sabemos que os prémios/NSUBJPASS s-atil-o devidos
+        # Example: sabemos que os prémios/NSUBJPASS são devidos
         ###!!! It does not occur in the corrected data of 2014-10-15.
         elsif($deprel eq 'NSUBJPASS')
         {
@@ -465,14 +465,18 @@ sub raise_function_words
 # ->
 # "maior de(afun=AuxC,parent=que) o(afun=AuxC,parent=que) que(deprel=DEP,afun=AuxC,parent=maior) Maria(deprel=Dep,afun=Obj,parent=que)"
 #------------------------------------------------------------------------------
-sub fix_comparative_constructions{
+sub fix_comparative_constructions
+{
     my ($self, $root) = @_;
-    foreach my $node ($root->get_descendants({ordered => 1})){
+    foreach my $node ($root->get_descendants({ordered => 1}))
+    {
         my $parent = $node->get_parent();
-        if ($node->conll_deprel eq 'DEP' && $node->is_conjunction && $parent->conll_deprel eq 'DEP'){
+        if ($node->conll_deprel eq 'DEP' && $node->is_conjunction && $parent->conll_deprel eq 'DEP')
+        {
             my @conjunction_nodes = $node->get_descendants({add_self=>1});
             next if any {!$_->is_conjunction} @conjunction_nodes;
-            foreach my $conj_node (@conjunction_nodes){
+            foreach my $conj_node (@conjunction_nodes)
+            {
                 $conj_node->set_afun('AuxC');
             }
             $parent->set_afun('Obj');
