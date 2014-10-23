@@ -39,7 +39,8 @@ my %iset2gram = (
     'negativeness=neg' => 'negation=neg1',
     
     'number=sing' => 'number=sg',
-    'number=plu' => 'number=pl',
+    'number=plu' => 'number=pl', # TODO: Delete this, Interset 2.018 uses plur instead of plu
+    'number=plur' => 'number=pl',
     'number=dual' => 'number=du',
 
     'numtype=card' => 'numbertype=basic',
