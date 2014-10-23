@@ -39,6 +39,7 @@ sub process_zone
     $self->attach_final_punctuation_to_root($root);
     $self->restructure_coordination($root);
     $self->raise_function_words($root);
+    $self->fix_comparative_constructions($root);
     # Make sure that all nodes have known afuns.
     $self->check_afuns($root);
 
@@ -454,10 +455,34 @@ sub raise_function_words
                     $parent->set_is_member(0);
                 }
             }
-        }
+        }        
     }
+    return:
 }
 
+#------------------------------------------------------------------------------
+# "maior de(afun=AuxY,parent=que) o(afun=AuxY,parent=que) que(deprel=DEP,afun=ExD,parent=Maria) Maria(deprel=Dep,afun=ExD,parent=maior)"
+# ->
+# "maior de(afun=AuxC,parent=que) o(afun=AuxC,parent=que) que(deprel=DEP,afun=AuxC,parent=maior) Maria(deprel=Dep,afun=Obj,parent=que)"
+#------------------------------------------------------------------------------
+sub fix_comparative_constructions{
+    my ($self, $root) = @_;
+    foreach my $node ($root->get_descendants({ordered => 1})){
+        my $parent = $node->get_parent();
+        if ($node->conll_deprel eq 'DEP' && $node->is_conjunction && $parent->conll_deprel eq 'DEP'){
+            my @conjunction_nodes = $node->get_descendants({add_self=>1});
+            next if any {!$_->is_conjunction} @conjunction_nodes;
+            foreach my $conj_node (@conjunction_nodes){
+                $conj_node->set_afun('AuxC');
+            }
+            $parent->set_afun('Obj');
+            $node->set_parent($parent->get_parent());
+            $parent->set_parent($node);
+        }
+    }
+    return;
+}
+        
 
 
 #------------------------------------------------------------------------------
