@@ -65,23 +65,6 @@ sub process_zone
 }
 
 #------------------------------------------------------------------------------
-# Different source treebanks may use different attributes to store information
-# needed by Interset drivers to decode the Interset feature values. By default,
-# the CoNLL 2006 fields CPOS, POS and FEAT are concatenated and used as the
-# input tag. If the morphosyntactic information is stored elsewhere (e.g. in
-# the tag attribute), the Harmonize block of the respective treebank should
-# redefine this method. Note that even CoNLL 2009 differs from CoNLL 2006.
-#------------------------------------------------------------------------------
-sub get_input_tag_for_interset
-{
-    my $self = shift;
-    my $node = shift;
-    # According to the guidelines, the original CINTIL uses tags in form PoS#features,
-    # e.g. "CN#mp" (common noun, masculine plural). The old Interset driver in Treex expects this format.
-    return $node->conll_pos() . "\#" . $node->conll_feat();
-}
-
-#------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
