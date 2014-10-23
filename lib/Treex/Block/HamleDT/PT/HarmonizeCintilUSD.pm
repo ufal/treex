@@ -92,7 +92,17 @@ sub deprel_to_afun
         # Example: muito barato
         elsif($deprel eq 'ADVMOD')
         {
-            $afun = 'Adv';
+            # The negation ("not") is also labeled ADVMOD but we want the afun Neg for it.
+            # Example: Hoje o Manuel não comprou um livro.
+            # Translation: Today Manuel did not buy a book.
+            if(lc($node->form()) eq 'não')
+            {
+                $afun = 'Neg';
+            }
+            else
+            {
+                $afun = 'Adv';
+            }
         }
         # Adjectival modifier of a noun.
         # Example: um computador barato
@@ -220,9 +230,11 @@ sub deprel_to_afun
         }
         # Negation?
         # Example: que nem/NEG sequer devia ter começado [NEG(devia, nem)]
+        # Translation lit.: that not even should have started
+        # Translation: that should not even have started
         elsif($deprel eq 'NEG')
         {
-            $afun = 'Adv';
+            $afun = 'Neg';
         }
         # Noun phrase that functions as an adverbial modifier.
         # Example: o elemento feminino está favorecido esta semana/NPADVMOD
@@ -455,7 +467,7 @@ sub raise_function_words
                     $parent->set_is_member(0);
                 }
             }
-        }        
+        }
     }
     return:
 }
@@ -486,7 +498,7 @@ sub fix_comparative_constructions
     }
     return;
 }
-        
+
 
 
 #------------------------------------------------------------------------------
