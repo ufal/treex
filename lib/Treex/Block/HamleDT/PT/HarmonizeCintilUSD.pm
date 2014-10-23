@@ -365,6 +365,8 @@ sub fix_annotation_errors
         # there is AUX(acabou, chegar).
         if($node->afun() eq 'AuxV' && $node->lemma() !~ m/^ter$/i)
         {
+            log_warn($node->get_address());
+            $self->log_sentence($root);
             log_warn("A node is attached as AUX but its lemma is ".$node->lemma());
             $node->set_afun('Obj');
         }
