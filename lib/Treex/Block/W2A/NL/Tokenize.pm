@@ -17,8 +17,6 @@ my $UNBREAKERS = qr{\p{Alpha}|\p{N}+|[IVXLCMDivxlcmd]+| # single letter, numeral
 override 'tokenize_sentence' => sub {
     my ( $self, $sentence ) = @_;
 
-    log_info($sentence);
-
     # preseve dots in abbreviations
     my $sent2 = $sentence;
     my $repls = 0; # count current number of replacements to compensate position (the replacement pattern is 8 chars longer)
@@ -43,7 +41,6 @@ override 'tokenize_sentence' => sub {
     # preserve apostrophes in some constructions
     $sent2 =~ s/(^|\s)'([st])(\s|$)/$1XXXAPOXXX$2$3/;    # 's middags, 't meisje
 
-    log_info($sent2);
     $sentence = $self->SUPER::tokenize_sentence($sent2);
 
     # get back the dots and hyphens
