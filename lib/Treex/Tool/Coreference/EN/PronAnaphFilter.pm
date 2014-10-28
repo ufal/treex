@@ -18,7 +18,7 @@ sub is_candidate {
         $args->{skip_nonref} = 1;
     }
 
-    return Treex::Tool::Coreference::NodeFilter::PersPron::is_pers($t_node, $args);
+    return Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($t_node, $args);
 }
 
 # TODO doc

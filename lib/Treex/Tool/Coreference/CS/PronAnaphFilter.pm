@@ -9,6 +9,7 @@ with 'Treex::Tool::Coreference::NodeFilter';
 # nodes with the t_lemma #PersPron and third person in gram/person
 sub is_candidate {
     my ($self, $node) = @_;
+    log_warn "Class Treex::Tool::Coreference::CS::PronAnaphFilter is DEPRECATED. Use Treex::Tool::Coreference::NodeFilter::PersPron instead.";
     return ( (defined $node->t_lemma) && ($node->t_lemma eq '#PersPron') 
         && (defined $node->gram_person) && ($node->gram_person eq '3') );
 }
