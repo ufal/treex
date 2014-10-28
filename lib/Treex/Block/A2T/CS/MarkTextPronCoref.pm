@@ -3,13 +3,13 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::A2T::BaseMarkCoref';
 
-use Treex::Tool::Coreference::PerceptronRanker;
+#use Treex::Tool::Coreference::PerceptronRanker;
 #use Treex::Tool::Coreference::RuleBasedRanker;
 #use Treex::Tool::Coreference::ProbDistrRanker;
 use Treex::Tool::ML::VowpalWabbit::Ranker;
 use Treex::Tool::Coreference::CS::PronCorefFeatures;
 use Treex::Tool::Coreference::NounAnteCandsGetter;
-use Treex::Tool::Coreference::CS::PronAnaphFilter;
+use Treex::Tool::Coreference::NodeFilter::PersPron;
 
 has '+model_path' => (
     default => '/home/mnovak/projects/czeng_coref/tmp/ml/run_2014-10-10_16-58-29.cs.mono_all_featset/001.4e224b442c.featset/013.9987f.mlmethod/model/train.pdt.cs.analysed.vw.ranking.model', # the old version of VW doesn't work with Ubuntu 14.04, the model below had to be retrained
@@ -51,7 +51,10 @@ override '_build_ante_cands_selector' => sub {
 
 override '_build_anaph_cands_filter' => sub {
     my ($self) = @_;
-    my $acf = Treex::Tool::Coreference::CS::PronAnaphFilter->new();
+    my $args = {
+        skip_nonref => 1,
+    };
+    my $acf = Treex::Tool::Coreference::NodeFilter::PersPron->new({args => $args});
     return $acf;
 };
 

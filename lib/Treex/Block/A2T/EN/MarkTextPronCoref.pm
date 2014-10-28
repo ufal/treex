@@ -3,21 +3,25 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::A2T::BaseMarkCoref';
 
-use Treex::Tool::Coreference::PerceptronRanker;
+#use Treex::Tool::Coreference::PerceptronRanker;
+use Treex::Tool::ML::VowpalWabbit::Ranker;
 use Treex::Tool::Coreference::EN::PronCorefFeatures;
 use Treex::Tool::Coreference::NounAnteCandsGetter;
-use Treex::Tool::Coreference::EN::PronAnaphFilter;
+use Treex::Tool::Coreference::NodeFilter::PersPron;
 use Treex::Tool::Coreference::Features::Container;
 use Treex::Tool::Coreference::Features::Aligned;
 
 has '+model_path' => (
-    default => 'data/models/coreference/EN/perceptron/text.perspron.analysed',
+#    default => 'data/models/coreference/EN/perceptron/text.perspron.analysed',
+    # $CZENG_COREF/tmp/ml/run_2014-10-24_14-04-16/001.8f801ad5b1.featset/001.134ca.mlmethod/model/train_00-18.pcedt_bi.en.analysed.ali-sup.vw.ranking.model
+    default => 'data/models/coreference/EN/vowpal_wabbit/perspron_3rd.mono_all.analysed.model',
 );
 has 'aligned_feats' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 override '_build_ranker' => sub {
     my ($self) = @_;
-    my $ranker = Treex::Tool::Coreference::PerceptronRanker->new( 
+#    my $ranker = Treex::Tool::Coreference::PerceptronRanker->new( 
+    my $ranker = Treex::Tool::ML::VowpalWabbit::Ranker->new( 
         { model_path => $self->model_path } 
     );
     return $ranker;
@@ -42,7 +46,7 @@ override '_build_feature_extractor' => sub {
         push @container, $aligned_fe;
     }
     
-    my $fe = Treex::Tool::Coreference::Features::Container->({
+    my $fe = Treex::Tool::Coreference::Features::Container->new({
         feat_extractors => \@container,
     });
     return $fe;
@@ -61,7 +65,10 @@ override '_build_ante_cands_selector' => sub {
 
 override '_build_anaph_cands_filter' => sub {
     my ($self) = @_;
-    my $acf = Treex::Tool::Coreference::EN::PronAnaphFilter->new();
+    my $args = {
+        skip_nonref => 1,
+    };
+    my $acf = Treex::Tool::Coreference::NodeFilter::PersPron->new({args => $args});
     return $acf;
 };
 
