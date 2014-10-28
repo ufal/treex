@@ -5,6 +5,8 @@ extends 'Treex::Block::Write::BaseTextWriter';
 
 has '+compress' => (default=>1);
 
+has 'version' => (isa => 'Str', is => 'ro', default => '2.0');
+
 has 'vallex_filename' => ( isa => 'Str', is => 'rw', default => 'vallex.xml' );
 
 sub _build_to {return '.';} # BaseTextWriter defaults to STDOUT
@@ -20,18 +22,28 @@ sub process_document{
     my $print_fn = $w_fn;
     $print_fn =~ s/.w(.gz|)$/.[wamt]$1/;
     log_info "Saving to $print_fn";
+    # all [wamt] files are stored in the same directory - there should be no directory in relative paths
+    $w_fn = $doc->file_stem . $self->_document_extension($doc);
+    
 
     $self->{extension} = '.m';
     $m_fn = $self->_get_filename($doc);
     $m_fh = $self->_open_file_handle($m_fn);
+    $m_fn = $doc->file_stem . $self->_document_extension($doc);
     
     $self->{extension} = '.a';
     $a_fn = $self->_get_filename($doc);
     $a_fh = $self->_open_file_handle($a_fn);
+    $a_fn = $doc->file_stem . $self->_document_extension($doc);
     
     $self->{extension} = '.t';
     $t_fn = $self->_get_filename($doc);
     $t_fh = $self->_open_file_handle($t_fn);
+
+    my $version_flag = "";
+    if ($self->version eq "3.0") {
+        $version_flag = "_30";
+    }
     
     my $doc_id = $doc->file_stem . $doc->file_number;
     my $lang   = $self->language;
@@ -39,7 +51,7 @@ sub process_document{
     print {$w_fh} << "END";
 <?xml version="1.0" encoding="utf-8"?>
 <wdata xmlns="http://ufal.mff.cuni.cz/pdt/pml/">
-<head><schema href="wdata_schema.xml"/></head>
+<head><schema href="wdata$version_flag\_schema.xml"/></head>
 <meta><original_format>treex</original_format></meta>
 <doc id="$doc_id">
 <docmeta/>
@@ -49,7 +61,7 @@ END
 <?xml version="1.0" encoding="utf-8"?>
 <mdata xmlns="http://ufal.mff.cuni.cz/pdt/pml/">
 <head>
-  <schema href="mdata_schema.xml" />
+  <schema href="mdata$version_flag\_schema.xml" />
   <references>
     <reffile id="w" name="wdata" href="$w_fn" />
   </references>
@@ -60,7 +72,7 @@ END
 <?xml version="1.0" encoding="utf-8"?>
 <adata xmlns="http://ufal.mff.cuni.cz/pdt/pml/">
 <head>
-  <schema href="adata_schema.xml" />
+  <schema href="adata$version_flag\_schema.xml" />
   <references>
    <reffile id="m" name="mdata" href="$m_fn" />
    <reffile id="w" name="wdata" href="$w_fn" />
@@ -72,7 +84,7 @@ END
 <?xml version="1.0" encoding="utf-8"?>
 <tdata xmlns="http://ufal.mff.cuni.cz/pdt/pml/">
 <head>
-  <schema href="tdata_schema.xml" />
+  <schema href="tdata$version_flag\_schema.xml" />
   <references>
    <reffile id="a" name="adata" href="$a_fn" />
    <reffile id="v" name="vallex" href="$vallex_name" />
@@ -159,9 +171,30 @@ sub print_tsubtree {
     }
     
     # simple attrs
-    foreach my $attr (qw(coref_special functor nodetype sentmod subfunctor t_lemma tfa val_frame.rf compl.rf coref_gram.rf coref_text.rf)){
+    foreach my $attr (qw(coref_special functor nodetype sentmod subfunctor t_lemma tfa val_frame.rf compl.rf coref_gram.rf)){
         my $val = $self->escape_xml($tnode->get_attr($attr));
         print {$t_fh} "<$attr>$val</$attr>" if defined $val;
+    }
+
+    # coref text
+    my @antes = $tnode->get_coref_text_nodes();
+    if (@antes) {
+        if ($self->version eq "3.0") {
+            print {$t_fh} "<coref_text>";
+            foreach my $ante (@antes) {
+                my $ante_id = $ante->id;
+                print {$t_fh} "<LM><target_node.rf>t-$ante_id</target_node.rf><type>SPEC</type></LM>";
+            }
+            print {$t_fh} "</coref_text>";
+        }
+        else {
+            print {$t_fh} "<coref_text.rf>";
+            foreach my $ante (@antes) {
+                my $ante_id = $ante->id;
+                print {$t_fh} "<LM>t-$ante_id</LM>";
+            }
+            print {$t_fh} "</coref_text.rf>";
+        }
     }
     
     # grammatemes
