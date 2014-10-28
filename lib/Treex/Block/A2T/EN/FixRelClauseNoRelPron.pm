@@ -29,8 +29,12 @@ sub process_tnode {
                 }
             );
             $cor->shift_after_node($t_node);
-            print STDERR "ADDING #COR PAT: " . $cor->get_address . "\n";
-            print STDERR "ADDING SENT: " . $cor->get_zone->sentence . "\n";
+            my $antec = $t_node->get_parent;
+            if ($antec) {
+                $cor->set_deref_attr( 'coref_gram.rf', [$antec] );
+            }
+            #print STDERR "ADDING #COR PAT: " . $cor->get_address . "\n";
+            #print STDERR "ADDING SENT: " . $cor->get_zone->sentence . "\n";
         }
         # TODO: remove this
         else {
