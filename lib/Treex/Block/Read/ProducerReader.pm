@@ -133,7 +133,7 @@ sub BUILD {
                     # Start the server.
                     $reconnect = 0;
                     $_[HEAP]{server} = POE::Wheel::SocketFactory->new(
-                        BindPort     => $Treex::Core::Run::PORT,
+                        BindPort     => $Treex::Core::Parallel::Head::PORT,
                         SuccessEvent => "on_client_accept",
                         FailureEvent => "on_server_error",
                         Filter       => POE::Filter::Reference->new(),
@@ -161,7 +161,7 @@ sub BUILD {
                     # address already used
                     if ( $errnum == 98 ) {
                         $reconnect              = 1;
-                        $Treex::Core::Run::PORT = int( 30000 + rand(32000) );
+                        $Treex::Core::Parallel::Head::PORT = int( 30000 + rand(32000) );
                     }
                     delete $_[HEAP]{server};
                 },
@@ -314,7 +314,7 @@ sub BUILD {
                             else {
                                 $self->_set_total_file_count( $self->_file_count );
 
-                                if ( $Treex::Core::Run::SPECULATIVE_EXECUTION ) {
+                                if ( $Treex::Core::Parallel::Head::SPECULATIVE_EXECUTION ) {
 
                                     my $not_finished = 0;
                                     SUBMITS:
@@ -355,7 +355,6 @@ sub BUILD {
 
                     #log_info($msg);
                     print $fh_log running_time() . "\t" . $msg . "\n";
-
                 },
                 on_client_error => sub {
 
@@ -424,14 +423,14 @@ sub _process_created_files {
         $output_dir = "error";
     }
 
-    my $global_orig_dir = Treex::Core::Run::construct_output_dir_name(
+    my $global_orig_dir = Treex::Core::Parallel::Head::construct_output_dir_name(
         $self->workdir . '/output', $jobid, $self->host, $self->port
     );
     my $global_target_dir = $self->workdir . "/$output_dir/";
 
     my @cmds = ();
 
-    if ($Treex::Core::Run::SPECULATIVE_EXECUTION) {
+    if ($Treex::Core::Parallel::Head::SPECULATIVE_EXECUTION) {
         for my $writer ( @{ $self->writers } ) {
             my $path = $writer->path;
 
@@ -447,7 +446,7 @@ sub _process_created_files {
                 $path =~ s/\/+$//;
             }
 
-            $path = Treex::Core::Run::construct_output_dir_name( $path, $jobid, $self->host, $self->port );
+            $path = Treex::Core::Parallel::Head::construct_output_dir_name( $path, $jobid, $self->host, $self->port );
 
             #log_warn("BEFORE: " . join(", ", glob $path . "/*"));
 

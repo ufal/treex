@@ -79,7 +79,7 @@ sub next_document_for_this_job {
     # print STDERR "DOC: " . $doc . " : " . $self->doc_number . ", JOB: " . $self->jobindex . "\n";
 
     if ( $doc && $self->jobindex ) {
-        Treex::Core::Run::_redirect_output( $self->outdir, $self->doc_number, $self->jobindex );    ## no critic (ProtectPrivateSubs)
+        Treex::Core::Parallel::Node::_redirect_output( $self->outdir, $self->doc_number, $self->jobindex );    ## no critic (ProtectPrivateSubs)
     }
 
     return $doc;
