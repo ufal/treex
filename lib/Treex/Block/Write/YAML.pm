@@ -23,9 +23,10 @@ override '_do_process_document' => sub {
     # convert Treex::PML::whatever arrays/hashes to plain ones)
     utf8::decode($yaml_text);
     $yaml_text =~ s{!!perl/(hash|array):\S+}{}g;
-    $yaml_text =~ s{(^[^:]+:\s*)([0-9]+_[0-9_]+)(\s*(?:,|$))}{$1'$2'$3}mg;    # quote numbers with underscores
+    $yaml_text =~ s{(^[^:]+:\s*)([0-9]+_[0-9_]+)(\s*(?:,|$))}{$1'$2'$3}mg;    # enquote numbers with underscores
     $yaml_text =~ s{: =$}{: '='}mg;                                           # enquote equal signs or PyYAML won't read them
     $yaml_text =~ s{: ''$}{: ""}mg;                                           # always put empty strings in double quotes
+    $yaml_text =~ s{(^[^:]+:\s*)(on|off|yes|no)(\s*(?:,|$))}{$1'$2'$3}mg;     # enquote words that would be considered boolean by PyYAML
     print { $self->_file_handle } $yaml_text;
     return;
 };
