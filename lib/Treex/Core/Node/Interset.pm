@@ -261,16 +261,18 @@ sub serialize_iset {
 
 # Goal: convert multivalues from strings to arrays:
 # e.g. iset/gender = "fem|neut" becomes iset/gender = ["fem", "neut"]
+# TODO: but this breaks ttred which cannot work with arrays,
+# so let's not do that; hopefully this does not break Lingua::Interset...
 sub deserialize_iset {
     my ($self) = @_;
     
     # iset
-    if ($self->iset) {
+    # if ($self->iset) {
         # this looks a bit weird,
         # but it ensures correct deserialization of multivalues,
         # i.e. turning e.g. "fem|neut" into ["fem", "neut"]
         # $self->set_iset($self->iset);
-    }
+    # }
     
     # iset_dump
     # (backward compatibility for files
