@@ -179,8 +179,8 @@ sub _verb {
     }
 
     if ( $t_node->is_clause_head ) {
-        return "v:$subconj+fin" if $subconj;            # podradici veta spojkova
-        return 'v:rc' if $t_node->is_relclause_head;    # podradici veta vztazna
+        return "v:$subconj+fin" if $subconj;            # subordinate clause with a conjunction
+        return 'v:rc' if $t_node->is_relclause_head;    # relative clause
         return 'v:fin';
     }
 
