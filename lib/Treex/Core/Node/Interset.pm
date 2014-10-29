@@ -269,7 +269,7 @@ sub deserialize_iset {
         # this looks a bit weird,
         # but it ensures correct deserialization of multivalues,
         # i.e. turning e.g. "fem|neut" into ["fem", "neut"]
-        $self->set_iset($self->iset);
+        # $self->set_iset($self->iset);
     }
     
     # iset_dump
