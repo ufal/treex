@@ -261,18 +261,19 @@ sub serialize_iset {
 
 # Goal: convert multivalues from strings to arrays:
 # e.g. iset/gender = "fem|neut" becomes iset/gender = ["fem", "neut"]
-# TODO: but this breaks ttred which cannot work with arrays,
-# so let's not do that; hopefully this does not break Lingua::Interset...
 sub deserialize_iset {
     my ($self) = @_;
-    
-    # iset
-    # if ($self->iset) {
-        # this looks a bit weird,
-        # but it ensures correct deserialization of multivalues,
-        # i.e. turning e.g. "fem|neut" into ["fem", "neut"]
-        # $self->set_iset($self->iset);
-    # }
+
+    if (! $Treex::Core::Config::running_in_tred) {
+        # iset
+        # ttred does not like arrayrefs so only unserilaize if not in ttred
+        if ($self->iset) {
+            # this looks a bit weird,
+            # but it ensures correct deserialization of multivalues,
+            # i.e. turning e.g. "fem|neut" into ["fem", "neut"]
+            $self->set_iset($self->iset);
+        }
+    }
     
     # iset_dump
     # (backward compatibility for files
@@ -281,6 +282,10 @@ sub deserialize_iset {
         $self->set_iset( eval "my " . $self->{iset_dump} . '; return $VAR1' ); ## no critic (ProhibitStringyEval)
         # iset_dump is deprecated
         delete $self->{iset_dump};
+        if ($Treex::Core::Config::running_in_tred) {
+            # ttred does not like arrayrefs so serialize back to strings for it
+            $self->serialize_iset();
+        }
     }
 
     return;
