@@ -67,12 +67,21 @@ Readonly my $SERVER_PORT => int( 30000 + rand(32000) );
 # just the renaming code.
 our $SPECULATIVE_EXECUTION = 0;
 
+
+# This variable stores information about the jobs' and documents' statuses 
+# (finished, started, loaded etc.). It is shared with the Server thread in _execute_scenario.
+# The Server thread then provides the information and the main thread just displays the
+# current status. 
 our %sh_job_status;
 %sh_job_status = ( 'info_fatalerror' => 0 );
 
+# This is also shared with the Server thread (probably to know the final port number
+# at which the server started, but this is just a guess – OD)
 our $PORT;
 $PORT = $SERVER_PORT;
 
+# This variable is also shared with the Server thread, but I have no idea what it serves for – OD
+# TODO probably it's obsolete and should be removed
 our $PORT_SET;
 $PORT_SET = 0;
 
@@ -1304,10 +1313,12 @@ sub _execute_scenario {
     $self->_set_number_of_docs( $self->scenario->document_reader->number_of_documents );
     $self->_write_total_doc_number( $self->_number_of_docs );
 
+    # Share status variables with the server thread
     share(%sh_job_status);
     share($PORT);
     share($PORT_SET);
 
+    # Start the server thread to distribute requests for document processing
     my $server_thread = threads->create(
         sub {
             my $producer = Treex::Block::Read::ProducerReader->new(
