@@ -149,26 +149,6 @@ sub get_iset_structure
     return \%f;
 }
 
-# Just like get_iset_structure, but do not include empty features (saves a lot
-# of space when saving the files).
-sub get_iset_structure_nonempty
-{
-    my $self = shift;
-    my %f;
-    foreach my $feature ( Lingua::Interset::FeatureStructure::known_features() )
-    {
-        my $value = $self->get_iset($feature);
-        next if $value eq '';
-        if ( $value =~ m/\|/ ) {
-            my @values = split( /\|/, $value );
-            $f{$feature} = \@values;
-        } else {
-            $f{$feature} = $value;
-        }
-    }
-    return \%f;
-}
-
 #------------------------------------------------------------------------------
 # Gets the values of all non-empty Interset features and returns a mixed list
 # of features and their values. Useful for displaying features of a node: the
@@ -263,37 +243,44 @@ sub list_iset_values {log_fatal 'use Lingua::Interset::FeatureStructure::known_f
 sub is_known_iset{ log_fatal 'use Lingua::Interset::FeatureStructure::value_valid instead';}
 sub sort_iset_values {log_fatal 'use Lingua::Interset::FeatureStructure::known_features instead';}
 
-sub _iset_dump {
-    my ($self) = @_;
-    return $self->{iset_dump};
-}
-
-sub _set_iset_dump {
-    my ( $self, $value ) = @_;
-
-    $self->{iset_dump} = $value;
-    return;
-}
-
+# Goal: convert multivalues from arrays to strings:
+# e.g. iset/gender = ["fem", "neut"] becomes iset/gender = "fem|neut"
+# to enable storing in a PML file.
+# Based on get_iset_pairs_list,
+# but stores the values into 'iset/feature' attributes instead of returning them.
 sub serialize_iset {
     my ($self) = @_;
-    if ( %{ $self->iset } ) {
-        $self->_set_iset_dump( Dumper( $self->get_iset_structure_nonempty ) );
-    }
-    else {
-        $self->_set_iset_dump(undef);
+    foreach my $feature ( Lingua::Interset::FeatureStructure::known_features() ) {
+        my $value = $self->get_iset($feature);
+        unless ( $value eq '' ) {
+            $self->set_attr("iset/$feature", $value);
+        }
     }
     return;
 }
 
+# Goal: convert multivalues from strings to arrays:
+# e.g. iset/gender = "fem|neut" becomes iset/gender = ["fem", "neut"]
 sub deserialize_iset {
     my ($self) = @_;
-    if ( $self->_iset_dump ) {
-        $self->set_iset( eval "my " . $self->_iset_dump . '; return $VAR1' ); ## no critic (ProhibitStringyEval)
+    
+    # iset
+    if ($self->iset) {
+        # this looks a bit weird,
+        # but it ensures correct deserialization of multivalues,
+        # i.e. turning e.g. "fem|neut" into ["fem", "neut"]
+        $self->set_iset($self->iset);
     }
-    else {
-        $self->set_iset( {} );
+    
+    # iset_dump
+    # (backward compatibility for files
+    # created when iset_dump was used to store iset)
+    if ( $self->{iset_dump} ) {
+        $self->set_iset( eval "my " . $self->{iset_dump} . '; return $VAR1' ); ## no critic (ProhibitStringyEval)
+        # iset_dump is deprecated
+        delete $self->{iset_dump};
     }
+
     return;
 }
 
