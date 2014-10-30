@@ -176,7 +176,7 @@ override 'process_document' => sub {
 
     $self->_do_after_process($document);
     
-    $self->_close_file_handle();
+    #$self->_close_file_handle();
 
     return;
 };

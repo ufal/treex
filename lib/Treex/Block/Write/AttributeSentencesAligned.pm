@@ -13,6 +13,8 @@ has '+language' => ( required => 1 );
 
 has 'alignment_language' => ( isa => 'Str', is => 'ro', required => 1 );
 
+has 'alignment_selector' => ( isa => 'Str', is => 'ro', default => '' );
+
 has 'alignment_type' => ( isa => 'Str', is => 'ro', required => 1 );
 
 has 'alignment_is_backwards' => ( isa => 'Bool', is => 'ro', default => "1" );
@@ -35,7 +37,7 @@ sub _process_tree() {
 
         # we need to provide the other direction of the relation
         $alignment_hash = {};
-        my $aligned_root = $tree->get_bundle->get_tree( $self->alignment_language, $self->layer );
+        my $aligned_root = $tree->get_bundle->get_tree( $self->alignment_language, $self->layer, $self->alignment_selector );
         foreach my $aligned_node ( $aligned_root->get_descendants ) {
             my ( $nodes, $types ) = $aligned_node->get_aligned_nodes();
 	    if ($nodes) {
@@ -130,6 +132,10 @@ The primary language. This parameter is required.
 
 The secondary language, which nodes are accesible through
 the C<aligned-&gt;> prefix. This parameter is required.
+
+=item C<alignment_selector>
+
+The selector of the zone of C<alignment_language>. Empty by default.
 
 =item C<alignment_is_backwards>
 
