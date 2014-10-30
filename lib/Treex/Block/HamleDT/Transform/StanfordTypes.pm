@@ -104,7 +104,7 @@ sub process_anode {
         $type = 'neg';
     }
     # determiners
-    elsif ( $anode->match_iset( 'subpos' => '~art|det' ) ) {
+    elsif ( $anode->match_iset( 'prontype' => '~art' ) ) {
         $type = 'det';
     }
 
