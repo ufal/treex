@@ -176,6 +176,8 @@ override 'process_document' => sub {
 
     $self->_do_after_process($document);
     
+    # This is not needed as the current file handle will be closed when opening the next file 
+    # (in _prepare_file_handle) or at the end of the process
     #$self->_close_file_handle();
 
     return;
