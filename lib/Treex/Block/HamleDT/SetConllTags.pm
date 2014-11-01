@@ -31,12 +31,12 @@ sub process_anode {
 
     my $cpos = tagset::google::encode($anode->get_iset_structure);
     $anode->set_conll_cpos($cpos);
-    
+
     my $pos = $cpos;
     # avoid duplicating values
     my %values = ( lc($pos), 1);
     foreach my $feature (@{$self->_features}) {
-        my $value = $anode->get_iset($feature);
+        my $value = $anode->iset()->get_joined($feature);
         if ( $value ne '' && !defined $values{$value} ) {
             $pos .= "_$value";
             $values{$value} = 1;
@@ -49,7 +49,7 @@ sub process_anode {
 
 1;
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::HamleDT::SetConllTags
 
@@ -82,4 +82,3 @@ Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
-

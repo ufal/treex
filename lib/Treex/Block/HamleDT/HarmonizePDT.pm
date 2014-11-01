@@ -48,7 +48,7 @@ sub pdt2hamledt_apposition
             {
                 $old_head->set_afun('AuxX');
             }
-            elsif($old_head->get_iset('pos') eq 'punc')
+            elsif($old_head->is_punctuation())
             {
                 $old_head->set_afun('AuxG');
             }

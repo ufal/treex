@@ -60,7 +60,7 @@ sub deprel_to_afun
             {
                 # In theory there could be more than one verb but we are addressing a single known annotation error here.
                 my $verb = $node->get_right_neighbor();
-                if(defined($verb) && $verb->get_iset('pos') eq 'verb')
+                if(defined($verb) && $verb->is_verb())
                 {
                     $verb->set_parent($node);
                     $verb->set_is_member(1);
@@ -71,7 +71,7 @@ sub deprel_to_afun
             elsif(lc($node->form()) eq 'pa' && $node->parent()->is_root() &&
                   (
                       $node->is_leaf() ||
-                      scalar(@children)==2 && lc($children[0]->form()) eq 'vendar' && $children[1]->get_iset('pos') ne 'verb'
+                      scalar(@children)==2 && lc($children[0]->form()) eq 'vendar' && !$children[1]->is_verb()
                   ))
             {
                 $afun = 'ExD';
@@ -114,7 +114,7 @@ sub change_wrong_puctuation_root
             if ($child->afun() =~ /^Aux[XG]$/ && $child->is_leaf())
             {
                 my $conjunction = $child->get_next_node();
-                if (defined($conjunction) && $conjunction->get_iset('pos') eq 'conj')
+                if (defined($conjunction) && $conjunction->is_conjunction())
                 {
                     $child->set_parent($conjunction);
                 }

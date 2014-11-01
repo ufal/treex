@@ -152,7 +152,7 @@ sub deprel_to_afun
             }
             # Adverbial.
             # su praznile bankovne račune kloniranjem/Atv njihovih kartica = they emptied their bank accounts by cloning their cards
-            elsif($node->get_iset('case') eq 'ins')
+            elsif($node->iset()->case() eq 'ins')
             {
                 $afun = 'Adv';
             }
@@ -362,7 +362,7 @@ sub deprel_to_afun
                     {
                         $afun = 'Pnom';
                     }
-                    elsif($grandparent->get_iset('pos') =~ m/^(noun|adj|num)$/)
+                    elsif($grandparent->iset()->pos() =~ m/^(noun|adj|num)$/)
                     {
                         $afun = 'Atr';
                     }
@@ -388,7 +388,7 @@ sub deprel_to_afun
             # Scheffer ( Jaap/Ap , Hoop/Ap ( de/Oth ) )
             # Elsewhere the morphological tag does not even know that this is a foreign word. It is just unknown word:
             # Osame bin/X/Oth Ladena
-            elsif($node->is_foreign() || $node->get_iset('pos') eq '')
+            elsif($node->is_foreign() || $node->iset()->pos() eq '')
             {
                 $afun = 'Atr';
             }
@@ -539,7 +539,7 @@ sub fix_annotation_errors
         # In this case, the verb "biti" is mistagged as present indicative, instead of infinitive; due to that, the afun was not translated correctly.
         # moraju biti poslani
         # must be sent
-        elsif($node->form() eq 'biti' && !$parent->is_root() && $parent->form() eq 'moraju' && $node->get_iset('mood') eq 'ind')
+        elsif($node->form() eq 'biti' && !$parent->is_root() && $parent->form() eq 'moraju' && $node->iset()->mood() eq 'ind')
         {
             $node->set_iset('verbform' => 'inf', 'mood' => '', 'tense' => '', 'number' => '', 'person' => '');
             $node->set_afun('Obj');

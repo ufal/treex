@@ -79,7 +79,7 @@ sub convert_tags
         # (We can still specify other source attributes in Write::CoNLLX and similar blocks.)
         my $tag = $node->tag(); # now the PDT tag
         $node->set_conll_cpos(substr($tag, 0, 1));
-        $node->set_conll_pos(substr($tag, 0, 2).$node->get_iset('case'));
+        $node->set_conll_pos(substr($tag, 0, 2).$node->iset()->case());
         $node->set_conll_feat($node->get_iset_conll_feat());
     }
 }
@@ -164,7 +164,7 @@ sub fill_in_lemmas
                 $node->set_lemma('<NULL>');
             }
             # If there are other instances than numbers and punctuation, we want to know about them.
-            elsif($node->get_iset('pos') =~ m/^(num|punc)$/)
+            elsif($node->iset()->pos() =~ m/^(num|punc)$/)
             {
                 $node->set_lemma($node->form());
             }
@@ -223,7 +223,7 @@ sub set_default_afun
     {
         # A verb attached directly to root is predicate.
         # There could also be coordination of verbal predicates (possibly nested coordination) but we do not check it at the moment. ###!!!
-        if($node->get_iset('pos') eq 'verb')
+        if($node->is_verb())
         {
             $afun = 'Pred';
         }
@@ -237,7 +237,7 @@ sub set_default_afun
         # Nominal nodes are modified by attributes, verbal nodes by objects or adverbials.
         # (Adverbials are default because there are typically fewer constraints on them.)
         # Again, we do not check whether the parent is a coordination of verbs. ###!!!
-        if($parent->get_iset('pos') eq 'verb')
+        if($parent->is_verb())
         {
             $afun = 'Adv';
         }
@@ -458,7 +458,7 @@ sub attach_final_punctuation_to_root
             foreach my $child ($nodes[$i]->children())
             {
                 $child->set_parent($root);
-                if($child->get_iset('pos') eq 'verb')
+                if($child->is_verb())
                 {
                     $child->set_afun('Pred');
                 }
@@ -490,7 +490,7 @@ sub attach_final_punctuation_to_root
             foreach my $child ($nodes[$i]->children())
             {
                 $child->set_parent($root);
-                if($child->get_iset('pos') eq 'verb')
+                if($child->is_verb())
                 {
                     $child->set_afun('Pred');
                 }

@@ -54,8 +54,8 @@ sub deprel_to_afun
     {
         my $deprel = $node->conll_deprel();
         my ($parent) = $node->get_eparents();
-        my $pos    = $node->get_iset('pos');
-        my $ppos   = $parent ? $parent->get_iset('pos') : '';
+        my $pos    = $node->iset()->pos();
+        my $ppos   = $parent ? $parent->iset()->pos() : '';
         my $afun = 'NR';
         # Adjective in leaf node. Could be headed by article! Example:
         # aquests primers tres mesos
@@ -588,8 +588,8 @@ sub catch_runaway_conjuncts
                                 last;
                             }
                         }
-                        my $pos = $rn->get_iset('pos');
-                        my $ppos = $node->parent()->get_iset('pos');
+                        my $pos = $rn->iset()->pos();
+                        my $ppos = $node->parent()->iset()->pos();
                         if($rn->conll_deprel() eq 'sn' && $node->parent()->conll_deprel() eq 'sn' ||
                         $rn->conll_deprel() eq 'sn' && $ppos eq 'noun' ||
                         $pos eq $ppos ||

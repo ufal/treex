@@ -129,7 +129,7 @@ sub deprel_to_afun
             my @members = grep {$_->is_member()} ($node->children());
             if(scalar(@members)>0)
             {
-                if($node->get_iset('pos') =~ m/^(conj|punc|part|adv)$/)
+                if($node->iset()->pos() =~ m/^(conj|punc|part|adv)$/)
                 {
                     $node->set_afun('Coord');
                 }
@@ -260,7 +260,7 @@ sub fix_undefined_nodes
                 }
             }
             # Other UNDEFINED nodes.
-            elsif($node->parent()->is_root() && $node->get_iset('pos') eq 'verb')
+            elsif($node->parent()->is_root() && $node->is_verb())
             {
                 $node->set_afun('Pred');
             }
@@ -273,11 +273,11 @@ sub fix_undefined_nodes
                 # UNDEFINED nodes that are siblings of XSEG nodes should have been also XSEG nodes.
                 $node->set_afun('Atr');
             }
-            elsif($node->parent()->get_iset('pos') eq 'noun')
+            elsif($node->parent()->is_noun())
             {
                 $node->set_afun('Atr');
             }
-            elsif($node->parent()->get_iset('pos') eq 'verb' && $node->match_iset('pos' => 'noun', 'case' => 'acc'))
+            elsif($node->parent()->is_verb() && $node->match_iset('pos' => 'noun', 'case' => 'acc'))
             {
                 $node->set_afun('Obj');
             }
@@ -316,7 +316,7 @@ sub fix_deficient_sentential_coordination
     if(scalar(@rchildren)>=2)
     {
         my $conjunction = $rchildren[0];
-        if($conjunction->get_iset('pos') =~ m/^(conj|part)$/ && $conjunction->afun() eq 'Coord' && $conjunction->is_leaf())
+        if($conjunction->iset()->pos() =~ m/^(conj|part)$/ && $conjunction->afun() eq 'Coord' && $conjunction->is_leaf())
         {
             my @predicates = grep {$_->afun() eq 'Pred'} (@rchildren);
             if(scalar(@predicates)>=1)
@@ -365,11 +365,11 @@ sub check_coord_membership
                 {
                     $node->set_afun('AuxX');
                 }
-                elsif($node->get_iset('pos') eq 'punc')
+                elsif($node->is_punctuation())
                 {
                     $node->set_afun('AuxG');
                 }
-                elsif($parent->afun() eq 'Coord' && $node->get_iset('pos') =~ m/^(conj|part|adv)$/)
+                elsif($parent->afun() eq 'Coord' && $node->iset()->pos() =~ m/^(conj|part|adv)$/)
                 {
                     $node->set_afun('AuxY');
                 }
@@ -405,7 +405,7 @@ sub check_coord_membership
                     {
                         $node->set_afun('AuxX');
                     }
-                    elsif($node->get_iset('pos') eq 'punc')
+                    elsif($node->iset()->pos() eq 'punc')
                     {
                         $node->set_afun('AuxG');
                     }

@@ -62,7 +62,7 @@ sub deprel_to_afun
             my $parent = $node->parent();
             if(!$parent->is_coap_root())
             {
-                if($parent->get_iset('pos') eq 'conj' || $parent->form() && $parent->form() =~ m/^(ani|,|;|:|-+)$/)
+                if($parent->is_conjunction() || $parent->form() && $parent->form() =~ m/^(ani|,|;|:|-+)$/)
                 {
                     $parent->set_afun('Coord');
                 }
@@ -120,7 +120,7 @@ sub fix_annotation_errors
                 {
                     $node->set_afun('AuxX');
                 }
-                elsif($node->get_iset('pos') eq 'punc')
+                elsif($node->is_punctuation())
                 {
                     $node->set_afun('AuxG');
                 }
@@ -155,7 +155,7 @@ sub fix_annotation_errors
             $node->set_afun('AuxG');
         }
         # Colon at sentence end, subordinate clause attached to it instead of the verb.
-        elsif($node->form() eq 'a' && !$parent->is_root() && $parent->form() eq ':' && !$parent->get_next_node() && !$parent->parent()->is_root() && $parent->parent()->get_iset('pos') eq 'verb')
+        elsif($node->form() eq 'a' && !$parent->is_root() && $parent->form() eq ':' && !$parent->get_next_node() && !$parent->parent()->is_root() && $parent->parent()->is_verb())
         {
             my $verb = $parent->parent();
             $node->set_parent($verb);
@@ -174,8 +174,8 @@ sub guess_afun
     my $self = shift;
     my $node = shift;
     my $parent = $node->parent(); ###!!! eparents? Akorát že ty závisí na správných afunech a rodič zatím taky nemusí mít správný afun.
-    my $pos = $node->get_iset('pos');
-    my $ppos = $parent->get_iset('pos');
+    my $pos = $node->iset()->pos();
+    my $ppos = $parent->iset()->pos();
     my $afun = 'NR';
     if($parent->is_root())
     {
@@ -247,11 +247,11 @@ sub guess_afun
     {
         $afun = 'Atr';
     }
-    elsif($node->get_iset('foreign') eq 'foreign')
+    elsif($node->is_foreign())
     {
         $afun = 'Atr';
     }
-    elsif($ppos eq 'adj' && ($pos eq 'adj' || $node->get_iset('prontype') ne ''))
+    elsif($ppos eq 'adj' && ($pos eq 'adj' || $node->iset()->prontype() ne ''))
     {
         $afun = 'Atr';
     }
@@ -261,7 +261,7 @@ sub guess_afun
     }
     elsif($ppos eq 'verb')
     {
-        my $case = $node->get_iset('case');
+        my $case = $node->iset()->case();
         if($node->form() eq 'nie')
         {
             ###!!! This should be Neg but we should change it in all nodes, not just in those where we guess labels.
