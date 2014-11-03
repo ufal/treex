@@ -5,17 +5,21 @@ extends 'Treex::Block::Write::BaseTextWriter';
 
 has '+language' => ( required => 1 );
 
+has 'tree_ids' => ( isa => 'Bool', is => 'ro', default => 0 );
+
+has 'afuns' => ( isa => 'Bool', is => 'ro', default => 0 );
+
+
 use constant {
         PRINT     => 0,
-        WORD      => 1,
-        CAT       => 2,
-        PARENT    => 3,
-        SONS      => 4,
-        INDEX     => 5,
-        PRINTED   => 6,
-        LEFTMOST  => 7,
-        RIGHTMOST => 8,
-        DEPTH     => 9,
+        ANODE     => 1,
+        PARENT    => 2,
+        SONS      => 3,
+        INDEX     => 4,
+        PRINTED   => 5,
+        LEFTMOST  => 6,
+        RIGHTMOST => 7,
+        DEPTH     => 8,
     };
 
 use constant {
@@ -35,11 +39,11 @@ use constant {
 sub process_atree {
     my ( $self, $atree ) = @_;
 
-    my @tree = ( [(undef) x 10] );
+    # Initialize data structures
+    my @tree = ( [(undef) x 9] );
     $tree[0]->[INDEX] = 0;
     $tree[0]->[PRINT] = "";
-    $tree[0]->[WORD] = "";
-    $tree[0]->[CAT] = "";
+    $tree[0]->[ANODE] = undef;
     $tree[0]->[PARENT] = 0;
     $tree[0]->[SONS] = [];
     $tree[0]->[PRINTED] = 0;
@@ -50,16 +54,15 @@ sub process_atree {
     my @stack;
     push @stack, $tree[0];
 
-    foreach my $node ($atree->get_descendants) {
-        my $index = $node->ord;
-        $tree[$index] = [(undef) x 10];
-        $tree[$index] ->[INDEX] = $index;
-        $tree[$index] ->[LEFTMOST] = $index;
-        $tree[$index] ->[RIGHTMOST] = $index;
+    foreach my $anode ($atree->get_descendants) {
+        my $index = $anode->ord;
+        $tree[$index] = [(undef) x 9];
+        $tree[$index]->[INDEX] = $index;
+        $tree[$index]->[LEFTMOST] = $index;
+        $tree[$index]->[RIGHTMOST] = $index;
         $tree[$index]->[PRINT] = "";
-        $tree[$index]->[WORD] = $node->form;
-        $tree[$index]->[CAT] = $node->tag;
-        $tree[$index]->[PARENT] = $node->get_parent->ord;
+        $tree[$index]->[ANODE] = $anode;
+        $tree[$index]->[PARENT] = $anode->get_parent->ord;
         $tree[$index]->[SONS] = [];
         $tree[$index]->[PRINTED] = 0;
         $tree[$index]->[DEPTH] = 0;
@@ -72,6 +75,7 @@ sub process_atree {
     } 
     fillLeftRightMost($tree[0]);
     
+    # Precompute lines for printing
     while(my $node = pop @stack) {
         my ($top,$bottom) = (0,0);
         my $append=' ';
@@ -96,7 +100,7 @@ sub process_atree {
                 $append = RV if $top;
                 $top=1;
                 if($tree[$idx]->[LEFTMOST] == $tree[$idx]->[RIGHTMOST]){
-                    $append .= H.nodeToString($tree[$idx]);
+                    $append .= H . $self->nodeToString($tree[$idx]->[ANODE]);
                     $tree[$idx]->[PRINTED] = 1;
                 } 
                 push @stack, $tree[$idx]  unless $tree[$idx]->[PRINTED];
@@ -114,7 +118,7 @@ sub process_atree {
                 $append = RV if $bottom;
                 $bottom = 1;
                 if($tree[$idx]->[LEFTMOST] == $tree[$idx]->[RIGHTMOST]){
-                    $append .= H.nodeToString($tree[$idx]);
+                    $append .= H . $self->nodeToString($tree[$idx]->[ANODE]);
                     $tree[$idx]->[PRINTED] = 1;
                 } 
                 push @stack, $tree[$idx] unless $tree[$idx]->[PRINTED];
@@ -124,16 +128,19 @@ sub process_atree {
         }
 
         # printing node      
-        $node->[PRINT] .= ($bottom ? ($top ? LV : LB):($top ? LT : H)) .nodeToString($node);
+        $node->[PRINT] .= ($bottom ? ($top ? LV : LB):($top ? LT : H)) . $self->nodeToString($node->[ANODE]);
         $node->[DEPTH] = length($node->[PRINT]);
 
         # sorting stack to minimize crossing of edges
         @stack = sort {compareNode($a,$b);} @stack; ## TODO convert to heap !!!
     }
 
-    # printing tree  
+    # Print the trees out
+    if ( $self->tree_ids ){
+        print { $self->_file_handle } "\n" . $atree->id . "\n";
+    }  
     for my $node  (@tree) {
-        print "$node->[PRINT]\n" ;  
+        print { $self->_file_handle } "$node->[PRINT]\n" ;  
     }
 }
 
@@ -161,10 +168,27 @@ sub compareNode {
         ;
 }
 
+# Return word form and tag (and optionally afun/deprel)
 sub nodeToString {
-    my $node = shift;
-    return "$node->[WORD]".($node->[CAT] ? "($node->[CAT])":"");
+    my ($self, $anode) = @_;    
+    return '' if (!$anode);  # for roots
+    
+    my $str = $anode->form // '';
+    if ($anode->tag){
+        $str .= '(' . $anode->tag;
+        if ($self->afuns){
+            if ($anode->afun){
+                $str .= '/' . $anode->afun;
+            }
+            else {
+                $str .= '/' . $anode->conll_deprel if $anode->conll_deprel;
+            }
+        }
+        $str .= ')';
+    }
+    return $str;
 }
+
 
 1;
 
@@ -178,12 +202,30 @@ Treex::Block::Write::TreesTXT
 
 Trees written in TXT format.
 
-=head1 AUTHOR
+=head1 PARAMETERS
 
-Matyáš Kopp, David Mareček
+=over
+
+=item tree_ids
+
+If set to 1, print tree (root) ID above each tree.
+
+=item afuns
+
+If set to 1, print Afuns (or CoNLL deprels) along with word forms and tags 
+
+=back
+
+=head1 AUTHORS
+
+Matyáš Kopp
+
+David Mareček <marecek@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
