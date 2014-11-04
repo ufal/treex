@@ -97,14 +97,29 @@ sub create_from_mrg {
     $mrg_string =~ s/-LCB-/\{/g;
     $mrg_string =~ s/-RCB-/\}/g;
 
-    # remove extra outer parenthesis
-    $mrg_string =~ s/^\( (\(.+) \)$/$1/;
-
-    # remove one extra non-terminal (ROOT comes from Stanford, S1 comes from Charniak parser)
-    $mrg_string =~ s/^\( (ROOT|S1) (.+) \)$/$2/g;
+    # mrg string should always start with "( ROOT (" as in the Stanford parser.
+    # The ROOT non-terminal has usually just one child "S",
+    # but sometimes (in parsing or in Brown treebank) it has more children,
+    # so the artificial root non-terminal "ROOT" makes sure it is formally a tree (not a forest).
+    # Charniak parser output starts with "( S1 (".
+    # PennTB trees start with "( (".
+    $mrg_string =~ s/^\( (S1 )?\(/( ROOT (/;
+    
     my @tokens = split / /, $mrg_string;
 
     $self->_parse_mrg_nonterminal( \@tokens );
+    
+    # If there is just one child, we can remove the extra ROOT non-terminal.
+    if ($self->get_children == 1){
+        my ($child) = $self->get_children();
+        foreach my $grandchild ($child->get_children) {
+            $grandchild->set_parent($self);
+        }
+        $self->set_phrase($child->phrase);
+        $self->set_functions($child->functions);
+        $child->remove();
+    }
+
     return;
 }
 
@@ -130,7 +145,8 @@ sub _parse_mrg_nonterminal {
 
     # TODO: handle traces correctly
     # Delete trace indices (e.g. NP-SBJ-10 ... -NONE- *T*-10)
-    @label_components = grep { !/^\d+$/ } @label_components;
+    # Delete suffixes in Brown data, e.g. :"SBJ=1" -> "SBJ", "LOC=2" -> "LOC"
+    @label_components = map {s/=\d+$//;$_} grep { !/^\d+$/ } @label_components;
 
     if (@label_components) {
         $self->set_functions( \@label_components );
