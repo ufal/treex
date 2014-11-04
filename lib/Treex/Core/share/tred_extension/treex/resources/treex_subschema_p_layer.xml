@@ -107,6 +107,9 @@
       <value>CLF</value>
       <value>HLN</value>
       <value>TTL</value>
+      <!--Brown (Switchboard) specific functions-->
+      <value>IMP</value>
+      <value>UNF</value>
     </choice>
   </type>
 
