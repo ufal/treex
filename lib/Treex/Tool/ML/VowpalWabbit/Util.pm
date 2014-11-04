@@ -375,6 +375,51 @@ Formatter for singleline instances.
 =head2 format_multiline
 
 Formatter for multiline instances.
+The Perl script:
+ use Treex::Tool::ML::VowpalWabbit::Util;
+
+ my $feats =
+ [
+    [
+        [
+            ["trg_lemma", "shledat"]
+        ],
+        [
+            ["trg_lemma", "nalezt"]
+        ],
+        [
+            ["trg_lemma", "prohlasit"]
+        ],
+    ],
+    [
+        ["lemma", "find"],
+        ["pos", "v"],
+        ["child_lemma", "solution"],
+    ],
+ ];
+ my $losses = [1, 0, 1];
+ my $comments =
+ [
+    [
+        "id=1",
+        "id=2 # toto je spravne",
+        "id=3",
+    ],
+    "tu nic",
+ ];
+ print Treex::Tool::ML::VowpalWabbit::Util::format_multiline($feats, $losses);
+
+prints out the following:
+
+ shared |default lemma=find pos=v child_lemma=solution	tu nic
+ 1:1 2-1|default trg_lemma=nalezt	id=1
+ 2:0 2-1|default trg_lemma=shledat	id=2 # toto je spravne
+ 3:1 2-1|default trg_lemma=prohlasit	id=3
+
+For the time being, all features are in the "default" namespace. Tags (the part before the "|" symbol) are the same for every candidate in the instance 
+and contain the idx of the candidate with the minimum loss ("2" in this case). The following ("-1") is there only from the historic reasons and can be freely ignored.
+
+Comments (optional parameter) are added as a last column (tab-separated) and must be cut off before running VW on the generated table.
 
 =head1 AUTHOR
 
