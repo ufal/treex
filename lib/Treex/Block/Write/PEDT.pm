@@ -123,9 +123,22 @@ sub print_tsubtree {
     }
     
     # simple attrs
-    foreach my $attr (qw(coref_special functor nodetype sentmod subfunctor t_lemma tfa val_frame.rf compl.rf coref_gram.rf)){
+    foreach my $attr (qw(coref_special functor nodetype sentmod subfunctor t_lemma tfa val_frame.rf)){
         my $val = $self->escape_xml($tnode->get_attr($attr));
         print {$t_fh} "<$attr>$val</$attr>" if defined $val;
+    }
+
+    # list attrs
+    foreach my $attr (qw(compl.rf coref_gram.rf)){
+        my @antes = $tnode->_get_node_list($attr);
+        if (@antes) {
+            print {$t_fh} "<$attr>";
+            foreach my $ante (@antes) {
+                my $ante_id = $ante->id;
+                print {$t_fh} "<LM>t-$ante_id</LM>";
+            }
+            print {$t_fh} "</$attr>";
+        }
     }
 
     # coref text
@@ -201,8 +214,6 @@ Save Treex documents in PDT style PML files.
 =head1 TODO
 
 You can try reimplement this using Treex::PML if you dare.
-
-compl.rf coref_gram.rf coref_text.rf may contain more links (<list ordered="0"><cdata format="PMLREF"/></list>)
 
 is_member should be moved from AuxC/AuxP down (Treex vs. PDT style).
 
