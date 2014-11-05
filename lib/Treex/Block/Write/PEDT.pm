@@ -5,7 +5,9 @@ extends 'Treex::Block::Write::BaseTextWriter';
 
 has '+compress' => (default=>1);
 
-has 'vallex_filename' => ( isa => 'Str', is => 'rw', default => 'vallex.xml' );
+has 'vallex_filename' => ( isa => 'Str', is => 'rw', default => 'engvallex.xml' );
+
+has 'vallex_prefix' => ( isa => 'Str', is => 'rw', default => 'en-v' );
 
 sub _build_to {return '.';} # BaseTextWriter defaults to STDOUT
 
@@ -33,6 +35,7 @@ sub process_document{
     my $doc_id = $doc->file_stem . $doc->file_number;
     my $lang   = $self->language;
     my $vallex_name = $self->vallex_filename;
+    my $vallex_prefix = $self->vallex_prefix;
     print {$a_fh} << "END";
 <?xml version="1.0" encoding="utf-8"?>
 <adata xmlns="http://ufal.mff.cuni.cz/pdt/pml/">
@@ -48,7 +51,7 @@ END
   <schema href="tdata_eng_schema.xml" />
   <references>
    <reffile id="a" name="adata" href="$a_fn" />
-   <reffile id="v" name="vallex" href="$vallex_name" />
+   <reffile id="$vallex_prefix" name="vallex" href="$vallex_name" />
   </references>
 </head>
 <trees>
