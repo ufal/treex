@@ -11,6 +11,21 @@ has _tool => (
     isa => 'Treex::Tool::Phrase2Dep::Pennconverter',
 );
 
+has after_rich_np => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 0,
+    documentation => 'The phrase structure contains rich NP bracketing. '
+        . 'E.g. PennTB pathed with annotation by David Vadas.',
+);
+
+has after_traces => (
+    is            => 'ro',
+    isa           => 'Bool',
+    default       => 0,
+    documentation => 'The phrase structure contains traces and function tags.',
+);
+
 sub BUILD {
     my ( $self, $arg_ref ) = @_;
     $self->_set_tool( Treex::Tool::Phrase2Dep::Pennconverter->new($arg_ref) );
@@ -45,7 +60,13 @@ sub process_zone {
     }
 
     my $mrg_string = $ptree->stringify_as_mrg() . "\n";
-    my ( $parents, $deprels ) = $self->_tool->convert( $mrg_string, 10 );
+    
+    # Pennconverter fails on unknown non-terminals,
+    # including ROOT (produced by Stanford constituency parser).
+    # So let's substitute ROOT with S1.
+    $mrg_string =~ s/^\( *ROOT/( S1/;
+    
+    my ( $parents, $deprels ) = $self->_tool->convert( $mrg_string );
     log_fatal "Wrong number of nodes returned:\n"
         . "MRG_STRING=$mrg_string\n"
         . "PARENTS=" . Dumper($parents)
