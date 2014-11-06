@@ -9,6 +9,7 @@ has 'tree_ids' => ( isa => 'Bool', is => 'ro', default => 0 );
 
 has 'afuns' => ( isa => 'Bool', is => 'ro', default => 0 );
 
+has 'indent' => (isa => 'Int', is => 'ro', default => 1, documentation => 'number of columns for better readability');
 
 use constant {
         PRINT     => 0,
@@ -22,20 +23,32 @@ use constant {
         DEPTH     => 8,
     };
 
-use constant {
-        H  => "\x{2500}",
-        V  => "\x{2502}",
-        LT => "\x{2518}",
-        LB => "\x{2510}",
-        RB => "\x{250C}",
-        RT => "\x{2514}",
-        RV => "\x{251C}",
-        LV => "\x{2524}",
-        HB => "\x{252C}",
-        HT => "\x{2534}",
-        HV => "\x{253C}"
-    };
-    
+my $H  = "\x{2500}"; # ─
+my $V  = "\x{2502}"; # │
+my $LT = "\x{2518}"; # ┘
+my $LB = "\x{2510}"; # ┐
+my $RB = "\x{250C}"; # ┌
+my $RT = "\x{2514}"; # └
+my $RV = "\x{251C}"; # ├
+my $LV = "\x{2524}"; # ┤
+my $HB = "\x{252C}"; # ┬
+my $HT = "\x{2534}"; # ┴
+my $HV = "\x{253C}"; # ┼
+
+sub BUILD {
+    my ($self) = @_;
+    my $indent = $self->indent;
+    if ($indent){
+        for my $line_sign ($H, $LT, $LB, $LV, $HB, $HT, $HV){
+            $line_sign = ('─' x $indent) . $line_sign;
+        }
+        for my $space_sign ($V, $RB, $RT, $RV){
+            $space_sign = (' ' x $indent) . $space_sign;
+        }
+    }
+    return;
+}
+
 sub process_atree {
     my ( $self, $atree ) = @_;
 
@@ -85,7 +98,7 @@ sub process_atree {
         $fillLen=max($fillLen,$tree[$_]->[DEPTH]) for ($minSonOrSelf..$maxSonOrSelf);
         for my $idx ($minSonOrSelf..$maxSonOrSelf) {
             $append = ' ';
-            $append = H if $tree[$idx]->[PRINT] =~ m/[${\(H)}${\(RT)}${\(RB)}${\(RV)}]$/;
+            $append = $H if $tree[$idx]->[PRINT] =~ m/[${H}${RT}${RB}${RV}]$/;
             $tree[$idx]->[PRINT] .= "$append"x($fillLen-length($tree[$idx]->[PRINT])); ## justify to $fillLen
         }
   
@@ -94,13 +107,13 @@ sub process_atree {
         # printing from leftmost son       SYMETRIC
         $append=' ';
         for my $idx ($minSonOrSelf..($node->[INDEX] - 1)) {
-            $append = V  if $top;
+            $append = $V  if $top;
             if($tree[$idx]->[PARENT] == $node->[INDEX]) {
-                $append = RB;
-                $append = RV if $top;
+                $append = $RB;
+                $append = $RV if $top;
                 $top=1;
                 if($tree[$idx]->[LEFTMOST] == $tree[$idx]->[RIGHTMOST]){
-                    $append .= H . $self->nodeToString($tree[$idx]->[ANODE]);
+                    $append .= $H . $self->nodeToString($tree[$idx]->[ANODE]);
                     $tree[$idx]->[PRINTED] = 1;
                 } 
                 push @stack, $tree[$idx]  unless $tree[$idx]->[PRINTED];
@@ -112,13 +125,13 @@ sub process_atree {
         # printing from rightmost son       SYMETRIC
         $append=' ';
         for my $idx (reverse(($node->[INDEX] + 1)..$maxSonOrSelf)) {
-            $append = V  if $bottom;
+            $append = $V  if $bottom;
             if($tree[$idx]->[PARENT] == $node->[INDEX]) {
-                $append = RT;
-                $append = RV if $bottom;
+                $append = $RT;
+                $append = $RV if $bottom;
                 $bottom = 1;
                 if($tree[$idx]->[LEFTMOST] == $tree[$idx]->[RIGHTMOST]){
-                    $append .= H . $self->nodeToString($tree[$idx]->[ANODE]);
+                    $append .= $H . $self->nodeToString($tree[$idx]->[ANODE]);
                     $tree[$idx]->[PRINTED] = 1;
                 } 
                 push @stack, $tree[$idx] unless $tree[$idx]->[PRINTED];
@@ -128,7 +141,7 @@ sub process_atree {
         }
 
         # printing node      
-        $node->[PRINT] .= ($bottom ? ($top ? LV : LB):($top ? LT : H)) . $self->nodeToString($node->[ANODE]);
+        $node->[PRINT] .= ($bottom ? ($top ? $LV : $LB):($top ? $LT : $H)) . $self->nodeToString($node->[ANODE]);
         $node->[DEPTH] = length($node->[PRINT]);
 
         # sorting stack to minimize crossing of edges
@@ -175,6 +188,7 @@ sub nodeToString {
     
     my $str = $anode->form // '';
     if ($anode->tag){
+        #$str .= '(' . ($anode->tag // $anode->conll_pos );
         $str .= '(' . $anode->tag;
         if ($self->afuns){
             if ($anode->afun){
@@ -196,11 +210,49 @@ __END__
 
 =head1 NAME
 
-Treex::Block::Write::TreesTXT
+Treex::Block::Write::TreesTXT - legible dependency trees 
 
+=head1 SYNOPSIS
+
+ # print a.conll in a readable format
+ treex Read::CoNLLX from=a.conll Write::TreexTXT indent=1 tree_ids=1 afuns=1
+ 
 =head1 DESCRIPTION
 
-Trees written in TXT format.
+Trees written in plain text format format.
+
+For example the following conll file (with tabs instead of spaces)
+
+ 1  We         PRP  _ _ _ 2  SBJ
+ 2  gave       VBD  _ _ _ 0  ROOT
+ 3  Kennedy    NNP  _ _ _ 2  IOBJ
+ 4  no         DT   _ _ _ 7  NMOD
+ 5  very       RB   _ _ _ 6  AMOD
+ 6  positive   JJ   _ _ _ 7  NMOD
+ 7  approval   NN   _ _ _ 2  OBJ
+ 8  in         IN   _ _ _ 2  ADV
+ 9  the        DT   _ _ _ 10 NMOD
+ 10 margin     NN   _ _ _ 8  PMOD
+ 11 of         IN   _ _ _ 10 NMOD
+ 12 his        PRP$ _ _ _ 13 NMOD
+ 13 preferment NN   _ _ _ 11 PMOD
+
+will be printed (with indent=1 afuns=1) as
+
+ ─┐
+  │ ┌──We(PRP/SBJ)
+  └─┤gave(VBD/ROOT)
+    ├──Kennedy(NNP/IOBJ)
+    │ ┌──no(DT/NMOD)
+    │ │ ┌──very(RB/AMOD)
+    │ ├─┘positive(JJ/NMOD)
+    ├─┘approval(NN/OBJ)
+    └─┐in(IN/ADV)
+      │ ┌──the(DT/NMOD)
+      └─┤margin(NN/PMOD)
+        └─┐of(IN/NMOD)
+          │ ┌──his(PRP$/NMOD)
+          └─┘preferment(NN/PMOD)
 
 =head1 PARAMETERS
 
@@ -214,6 +266,10 @@ If set to 1, print tree (root) ID above each tree.
 
 If set to 1, print Afuns (or CoNLL deprels) along with word forms and tags 
 
+=item indent
+
+number of characters to indent node depth in the tree for better readability
+
 =back
 
 =head1 AUTHORS
@@ -223,6 +279,8 @@ Matyáš Kopp
 David Mareček <marecek@ufal.mff.cuni.cz>
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
