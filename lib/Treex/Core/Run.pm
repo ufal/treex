@@ -267,14 +267,6 @@ has 'outdir' => (
     documentation => 'Not to be used manually. Dictory for collecting standard and error outputs in parallelized processing.',
 );
 
-has 'workdir' => (
-    is            => 'rw',
-    traits        => ['Getopt'],
-    isa           => 'Str',
-    documentation => 'working directory for temporary files in parallelized processing ' .
-        '(if not specified, directories such as 001-cluster-run, 002-cluster-run etc. are created)',
-);
-
 has 'server' => (
     traits        => ['Getopt'],
     is            => 'ro',
