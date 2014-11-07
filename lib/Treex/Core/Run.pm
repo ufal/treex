@@ -229,6 +229,7 @@ has 'workdir' => (
     is            => 'rw',
     traits        => ['Getopt'],
     isa           => 'Str',
+    default       => './{NNN}-cluster-run-{XXXXX}',
     documentation => 'working directory for temporary files in parallelized processing ' .
         '(if not specified, directories such as 001-cluster-run, 002-cluster-run etc. are created)',
 );

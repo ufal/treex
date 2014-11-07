@@ -257,11 +257,21 @@ sub _create_job_script {
     print $J "stat $started_file 1>&2 > /dev/null;\n";
     print $J "cd $current_dir\n\n";
 
+    # --workdir has to be filtered out from the arguments passed to the jobs
+    my @argv_for_jobs = ();
+    for (my $i = 0; $i < @{ $self->ARGV }; $i++) {
+        if ($self->ARGV->[$i] =~ /^--workdir$/) {
+            $i++;
+        }
+        elsif ($self->ARGV->[$i] !~ /^--workdir=/) {
+            push @argv_for_jobs, $self->ARGV->[$i];
+        }
+    }
     my $opts_and_scen = "";
     if ( $self->_tmp_scenario_file ) {
         my %extra = ();
         map { $extra{$_} = 1 } @{ $self->extra_argv };
-        for my $arg ( @{ $self->ARGV } ) {
+        for my $arg ( @argv_for_jobs ) {
             if ( !$extra{$arg} ) {
                 $opts_and_scen .= " " . _quote_argument($arg);
             }
@@ -269,7 +279,7 @@ sub _create_job_script {
         $opts_and_scen .= " " . _quote_argument( $self->_tmp_scenario_file );
     }
     else {
-        $opts_and_scen .= join ' ', map { _quote_argument($_) } @{ $self->ARGV };
+        $opts_and_scen .= join ' ', map { _quote_argument($_) } @argv_for_jobs;
     }
 
     if ( $self->filenames ) {
@@ -1130,29 +1140,44 @@ sub _execute_scenario {
     log_info( "Execution begin at " . POSIX::strftime( '%Y-%m-%d %H:%M:%S', localtime ) );
 
     # create working directory, if not specified as a command line option
-    if ( not defined $self->workdir ) {
+    my $workdir = $self->workdir;
+    if ($workdir =~ /\{(N+)\}/) {
+        my $counter_pattern = $1;
+        my $counter_len = length $counter_pattern;
         my $counter;
-        my $directory_prefix;
+        my $counter_str;
+        my $dir_wildcard;
         my @existing_dirs;
         do {
             $counter++;
-            $directory_prefix = sprintf "%03d-cluster-run-", $counter;
-
+            $counter_str = sprintf "%0".$counter_len."d", $counter;
+            $dir_wildcard = $self->workdir;
+            $dir_wildcard =~ s/\{$counter_pattern\}/$counter_str/;
+            $workdir = $dir_wildcard;
+            $dir_wildcard =~ s/\{X+\}/*/;
+            
             # TODO There is a strange problem when executing e.g.
             #  for i in `seq 4`; do treex/bin/t/qparallel.t; done
             # where qparallel.t executes treex -p --cleanup ...
             # I don't know the real cause of the bug, but as a workaround
             # you can omit --cleanup or uncomment next line
             # $directory .= sprintf "%03d-cluster-run", rand 1000;
-            #            print STDERR "XXXX tested prefix $directory_prefix:".(join ' ', glob("$directory_prefix*"))."\n";
-            @existing_dirs = bsd_glob "$directory_prefix*";    # separate var because of troubles with glob context
+            #            print STDERR "XXXX tested wildcard $dir_wildcard:".(join ' ', glob("$dir_wildcard"))."\n";
+            @existing_dirs = bsd_glob $dir_wildcard    # separate var because of troubles with glob context
             }
             while (@existing_dirs);
-        my $directory = tempdir "${directory_prefix}XXXXX" or log_fatal($!);
-        $self->set_workdir($directory);
-        log_info "Working directory $directory created";
-
-        #        mkdir $directory or log_fatal $!;
+    }
+    if ($workdir =~ /\{(X+)\}/) {
+        my $rand_pattern = $1;
+        $workdir =~ s/\{$rand_pattern\}/$rand_pattern/;
+        $workdir = tempdir $workdir or log_fatal($!);
+        log_info "Working directory $workdir created";
+        $self->set_workdir($workdir);
+    }
+    elsif (! -e $workdir) {
+        mkdir $workdir or log_fatal($!); 
+        log_info "Working directory $workdir created";
+        $self->set_workdir($workdir);
     }
 
     foreach my $subdir (qw(output scripts status error)) {
