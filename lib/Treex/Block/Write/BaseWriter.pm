@@ -177,8 +177,10 @@ override 'process_document' => sub {
     $self->_do_after_process($document);
     
     # This is not needed as the current file handle will be closed when opening the next file 
-    # (in _prepare_file_handle) or at the end of the process
-    #$self->_close_file_handle();
+    # (in _prepare_file_handle) or at the end of the process.
+    # However, commenting the following line leads to undeterministic errors (e.g. in en2cs)
+    # UNFINISHED JOB e2c-news-dev2009-job001 PRODUCED EPILOG
+    $self->_close_file_handle();
 
     return;
 };
