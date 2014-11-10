@@ -113,14 +113,14 @@ sub next_document {
             }
         }
 
-        elsif ( $arg eq '"' ) {    # NE constant values
+        elsif ( $arg eq '"' ) {    # NE constant values / concept names in quotes
             if ( $state eq 'Quote' && $value ) {    # ending
-                $cur_node->set_t_lemma( '"' . $value . '"' );
+                $self->_fill_lemma( $cur_node, $param, '"' . $value . '"' );
                 $value    = '';
                 $state    = 'Word';
                 $cur_node = $cur_node->get_parent();
             }
-            if ( $state eq 'Param' ) {              # beginning
+            elsif ( $state =~ /^(Param|Word)$/ ) {    # beginning
                 $state = 'Quote';
             }
         }
@@ -207,11 +207,11 @@ sub _next_sentence {
     my $bundle = $self->_doc->create_bundle;
     my $zone   = $bundle->create_zone( $self->language, $self->selector );
     my $ttree  = $zone->create_ttree();
-    
-    if ($self->debug){
-        log_info('Creating ' . $ttree->id);
+
+    if ( $self->debug ) {
+        log_info( 'Creating ' . $ttree->id );
     }
-    
+
     my $cur_node = $ttree->create_child( { ord => 1 } );
     $cur_node->wild->{modifier} = 'root';
 
@@ -254,11 +254,11 @@ sub _process_comment_data {
             $self->_process_alignments( $ttree, $atree, $self->_comment_data->{alignments} );
         }
     }
-    
-    if ($self->debug and $sent_text){
-        log_info('Sentence text: ' . $sent_text);
+
+    if ( $self->debug and $sent_text ) {
+        log_info( 'Sentence text: ' . $sent_text );
     }
-    
+
     $self->_set_comment_data( {} );
     return;
 }
