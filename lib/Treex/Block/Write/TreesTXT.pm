@@ -5,7 +5,11 @@ extends 'Treex::Block::Write::BaseTextWriter';
 
 has '+language' => ( required => 1 );
 
+has 'layer' => ( isa => 'Str', is => 'ro', default => 'a' );
+
 has 'tree_ids' => ( isa => 'Bool', is => 'ro', default => 0 );
+
+has 'sents' => ( isa => 'Bool', is => 'ro', default => 0 );
 
 has 'afuns' => ( isa => 'Bool', is => 'ro', default => 0 );
 
@@ -13,7 +17,7 @@ has 'indent' => (isa => 'Int', is => 'ro', default => 1, documentation => 'numbe
 
 use constant {
         PRINT     => 0,
-        ANODE     => 1,
+        XNODE     => 1,
         PARENT    => 2,
         SONS      => 3,
         INDEX     => 4,
@@ -49,14 +53,29 @@ sub BUILD {
     return;
 }
 
-sub process_atree {
-    my ( $self, $atree ) = @_;
+sub process_zone {
+    my ( $self, $zone ) = @_;
+    
+    if ($self->layer eq 'a'){
+        $self->_process_tree($zone->get_atree);
+    }
+    elsif ($self->layer eq 't'){
+        $self->_process_tree($zone->get_ttree);
+    }
+    else {
+        log_fatal "Invalid layer setting, must be 't' or 'a'!";
+    }
+    return;
+}
+
+sub _process_tree {
+    my ( $self, $xtree ) = @_;
 
     # Initialize data structures
     my @tree = ( [(undef) x 9] );
     $tree[0]->[INDEX] = 0;
     $tree[0]->[PRINT] = "";
-    $tree[0]->[ANODE] = undef;
+    $tree[0]->[XNODE] = undef;
     $tree[0]->[PARENT] = 0;
     $tree[0]->[SONS] = [];
     $tree[0]->[PRINTED] = 0;
@@ -67,15 +86,15 @@ sub process_atree {
     my @stack;
     push @stack, $tree[0];
 
-    foreach my $anode ($atree->get_descendants) {
-        my $index = $anode->ord;
+    foreach my $xnode ($xtree->get_descendants) {
+        my $index = $xnode->ord;
         $tree[$index] = [(undef) x 9];
         $tree[$index]->[INDEX] = $index;
         $tree[$index]->[LEFTMOST] = $index;
         $tree[$index]->[RIGHTMOST] = $index;
         $tree[$index]->[PRINT] = "";
-        $tree[$index]->[ANODE] = $anode;
-        $tree[$index]->[PARENT] = $anode->get_parent->ord;
+        $tree[$index]->[XNODE] = $xnode;
+        $tree[$index]->[PARENT] = $xnode->get_parent->ord;
         $tree[$index]->[SONS] = [];
         $tree[$index]->[PRINTED] = 0;
         $tree[$index]->[DEPTH] = 0;
@@ -113,7 +132,7 @@ sub process_atree {
                 $append = $RV if $top;
                 $top=1;
                 if($tree[$idx]->[LEFTMOST] == $tree[$idx]->[RIGHTMOST]){
-                    $append .= $H . $self->nodeToString($tree[$idx]->[ANODE]);
+                    $append .= $H . $self->nodeToString($tree[$idx]->[XNODE]);
                     $tree[$idx]->[PRINTED] = 1;
                 } 
                 push @stack, $tree[$idx]  unless $tree[$idx]->[PRINTED];
@@ -131,7 +150,7 @@ sub process_atree {
                 $append = $RV if $bottom;
                 $bottom = 1;
                 if($tree[$idx]->[LEFTMOST] == $tree[$idx]->[RIGHTMOST]){
-                    $append .= $H . $self->nodeToString($tree[$idx]->[ANODE]);
+                    $append .= $H . $self->nodeToString($tree[$idx]->[XNODE]);
                     $tree[$idx]->[PRINTED] = 1;
                 } 
                 push @stack, $tree[$idx] unless $tree[$idx]->[PRINTED];
@@ -141,7 +160,7 @@ sub process_atree {
         }
 
         # printing node      
-        $node->[PRINT] .= ($bottom ? ($top ? $LV : $LB):($top ? $LT : $H)) . $self->nodeToString($node->[ANODE]);
+        $node->[PRINT] .= ($bottom ? ($top ? $LV : $LB):($top ? $LT : $H)) . $self->nodeToString($node->[XNODE]);
         $node->[DEPTH] = length($node->[PRINT]);
 
         # sorting stack to minimize crossing of edges
@@ -150,11 +169,15 @@ sub process_atree {
 
     # Print the trees out
     if ( $self->tree_ids ){
-        print { $self->_file_handle } "\n" . $atree->id . "\n";
-    }  
-    for my $node  (@tree) {
+        print { $self->_file_handle } "\n" . $xtree->id . "\n";
+    }
+    if ( $self->sents ){
+        print { $self->_file_handle } $xtree->get_zone->sentence . "\n";
+    }
+    for my $node (@tree) {
         print { $self->_file_handle } "$node->[PRINT]\n" ;  
     }
+    return;
 }
 
 sub fillLeftRightMost {
@@ -167,6 +190,7 @@ sub fillLeftRightMost {
         $node->[LEFTMOST] = min($node->[LEFTMOST] ,$son->[INDEX]);
         $node->[RIGHTMOST] = max($node->[RIGHTMOST] ,$son->[INDEX]);
     }
+    return;
 }
 
 sub compareNode {
@@ -183,22 +207,33 @@ sub compareNode {
 
 # Return word form and tag (and optionally afun/deprel)
 sub nodeToString {
-    my ($self, $anode) = @_;    
-    return '' if (!$anode);  # for roots
+    my ($self, $node) = @_;    
+    return '' if (!$node);  # for roots
     
-    my $str = $anode->form // '';
-    if ($anode->tag){
-        #$str .= '(' . ($anode->tag // $anode->conll_pos );
-        $str .= '(' . $anode->tag;
-        if ($self->afuns){
-            if ($anode->afun){
-                $str .= '/' . $anode->afun;
+    my $str = '';
+    
+    if ($self->layer eq 'a'){
+        $str = $node->form // '';
+        if ($node->tag){
+            #$str .= '(' . ($node->tag // $node->conll_pos );
+            $str .= '(' . $node->tag;
+            if ($self->afuns){
+                if ($node->afun){
+                    $str .= '/' . $node->afun;
+                }
+                else {
+                    $str .= '/' . $node->conll_deprel if $node->conll_deprel;
+                }
             }
-            else {
-                $str .= '/' . $anode->conll_deprel if $anode->conll_deprel;
-            }
+            $str .= ')';
         }
-        $str .= ')';
+    }
+    # t-node
+    elsif ($self->layer eq 't'){
+        $str = $node->t_lemma // '';
+        if ($node->functor or $node->formeme){
+            $str .= '(' . ($node->functor // '') . '/' . ($node->formeme // '') . ')';
+        }
     }
     return $str;
 }
@@ -269,6 +304,15 @@ If set to 1, print Afuns (or CoNLL deprels) along with word forms and tags
 =item indent
 
 number of characters to indent node depth in the tree for better readability
+
+=item sents
+
+If set to 1, print the corresponding sentence on one line above each tree.
+
+=item layer
+
+defaults to `a' (surface dependency trees). If set to `t', the block will print
+t-trees with functors and formemes instead of a-trees.
 
 =back
 
