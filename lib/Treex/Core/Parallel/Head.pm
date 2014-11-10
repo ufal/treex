@@ -1012,8 +1012,18 @@ sub _check_epilog_before_finish {
             qx(stat $epilog_name);
             my $epilog = qx(grep EPILOG $epilog_name);
 
-            # However, now we must check -f again, because the file could be created meanwhile.
             if ($epilog) {
+                
+                # Try waiting for the `.finished' file for one more minute, to compensate for out-of-sync NFS
+                my $finished = $self->_is_job_finished($job_num);
+                
+                for (my $i= 0; $i<12; ++$i){
+                    last if $finished;
+                    sleep 5;
+                    $finished = $self->_is_job_finished($job_num);
+                }
+                next if $finished; # abort the fatal error in case the job finish status appeared in the meantime
+                 
                 log_info "********************** UNFINISHED JOB $job_str PRODUCED EPILOG: ******************";
                 log_info "**** cat $epilog_name\n";
                 system "cat $epilog_name";
