@@ -19,7 +19,7 @@ my %turns = (
 
 my %rules;
 my %spellchanges;
-my $maxlimit = 200000000000000000000000;
+my $maxlimit = 5000000000000000;
 
 
 
@@ -82,8 +82,11 @@ sub process_dictionary {
 
     my ($self, $dict) = @_;
 
+    my %possible_derivation;
+
     foreach my $turn_name (keys %turns) {
 
+    RULE:
         foreach my $rule (map { @{$rules{$_}} } @{$turns{$turn_name}{rules}}) {
 
             print "$turn_name\n$turn_name\tTRYING TO APPLY RULE $rule->{source_pos}? --> $rule->{target_pos}-$rule->{target_suffix}\n";
@@ -97,27 +100,30 @@ sub process_dictionary {
 
                 if ( $source_lexeme->pos eq $rule->{source_pos}  ) {
 
-                  SPELLCHANGE:
-                    foreach my $spellchange_rule ( 0, map { @{$spellchanges{$_}} } @{$turns{$turn_name}{spell}}) {
 
-			my $source_lemma_changed = $source_lemma;
-
-			if ($spellchange_rule) {
-			  my ($source,$target) = ($spellchange_rule->{source},$spellchange_rule->{target});
-			  $source_lemma_changed =~ s/(.)$source/$1$target/ or next SPELLCHANGE;
-			}
-
-			my $start_index = length($source_lemma_changed)-4;
-			if ($start_index < 3) {
-			  $start_index = 3;
-			}
+		  my $start_index = length($source_lemma)-4;
+		  if ($start_index < 3) {
+		    $start_index = 3;
+		  }
 
 
-		      STEM:
-			foreach my $source_lemma_stem ( map {substr($source_lemma_changed,0,$_)}
-							( $start_index .. length($source_lemma_changed ))) {
+		STEM:
+		  foreach my $source_lemma_stem ( map {substr($source_lemma,0,$_)}
+						  ( $start_index .. length($source_lemma ))) {
 
-			    my $target_lemma = $source_lemma_stem . $rule->{target_suffix};
+
+			SPELLCHANGE:
+			  foreach my $spellchange_rule ( 0, map { @{$spellchanges{$_}} } @{$turns{$turn_name}{spell}}) {
+
+			    my $source_lemma_stem_changed = $source_lemma_stem;
+
+			    if ($spellchange_rule) {
+			      my ($source,$target) = ($spellchange_rule->{source},$spellchange_rule->{target});
+			      $source_lemma_stem_changed =~ s/(.)$source/$1$target/ or next SPELLCHANGE;
+			    }
+
+
+			    my $target_lemma = $source_lemma_stem_changed . $rule->{target_suffix};
 			    next if $source_lemma eq $target_lemma;
 
                             my @target_lexemes = grep {$_->pos eq $rule->{target_pos}}
@@ -129,18 +135,57 @@ sub process_dictionary {
                                 if ($spellchange_rule) {
                                     print "(CHANGE: $spellchange_rule->{source} -> $spellchange_rule->{target}) ";
                                 }
+
                                 if ($target_lexeme->source_lexeme and $target_lexeme->source_lexeme eq $source_lexeme) {
                                     print "   (LINK ALREADY PRESENT)";
                                 }
 
-
                                 print "\n";
+
+
+				if (not $target_lexeme->source_lexeme and
+				    # and there's no link in the opposite direction either
+				    not ($source_lexeme->source_lexeme and $source_lexeme->source_lexeme eq $target_lexeme) ) {
+
+				    my $source_lexeme_str = $source_lexeme->lemma."#".$source_lexeme->pos;
+				    my $target_lexeme_str = $target_lexeme->lemma."#".$target_lexeme->pos;
+
+				    my $score = -2*(length($source_lemma) - length($source_lemma_stem));
+				    my $info = " -2*source_suffix:".(length($source_lemma) - length($source_lemma_stem));
+
+				    $score += - length($rule->{target_suffix});
+				    $info .= " - target_suffix:".length($rule->{target_suffix});
+
+				    if ($spellchange_rule) {
+				      $info .= " spell:-2($spellchange_rule->{source}->$spellchange_rule->{target}) ";
+				      $score += -2;
+				    }
+
+
+				    $possible_derivation{$target_lexeme_str}{$source_lexeme_str}{info} = $info;
+				    $possible_derivation{$target_lexeme_str}{$source_lexeme_str}{score} = $score;
+
+				}
+
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+
+    print "\n------------- POSSIBLE DERIVATIONS ---------------- \n";
+
+    foreach my $target_lexeme_str (sort keys %possible_derivation) {
+      print "$target_lexeme_str <--\n";
+      foreach my $source_lexeme_str (sort {$possible_derivation{$target_lexeme_str}{$b}{score}<=>$possible_derivation{$target_lexeme_str}{$a}{score}} keys %{$possible_derivation{$target_lexeme_str}}) {
+
+	print "    $source_lexeme_str  score: $possible_derivation{$target_lexeme_str}{$source_lexeme_str}{score} = $possible_derivation{$target_lexeme_str}{$source_lexeme_str}{info}\n";
+      }
+      print "\n";
+
     }
 
     return $dict;
