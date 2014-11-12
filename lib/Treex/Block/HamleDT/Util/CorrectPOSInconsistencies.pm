@@ -53,8 +53,9 @@ sub process_atree {
             my $old_tag = $anodes[$i]->get_iset_conll_feat();
             $old_tag =~ s/\|?tagset=[^|]*//g; # remove 'tagset' feature
             $old_tag =~ s/\|?other=[^|]*//g; # remove 'other' feature
-            my $msg = $old_tag eq $new_tag ? 'SAME' : 'CHANGED';
-            print join("\t", $msg, $forms[$i], "$old_tag -> $new_tag"), "\n";
+            my $msg = $old_tag eq $new_tag ? 'SAME' : 'DIFF';
+            print join(' ', @forms[0..$i-1], ">>> $forms[$i] <<<", @forms[$i+1..$#forms]), "\n";
+            print join("\t", $msg, $forms[$i], "$old_tag -> $new_tag"), "\n\n";
         }
     }
     for my $j (0..$#anodes) {
