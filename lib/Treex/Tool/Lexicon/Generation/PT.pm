@@ -91,7 +91,7 @@ sub best_form_of_lemma {
         my $person = $iset->person || 3;
         my $forms = $CONJUGATION{$class}{"$mood $tense"};
         return $lemma if !$forms;
-        $person += 3 if $iset->number eq 'plu';
+        $person += 3 if $iset->number eq 'plur';
         my $ending = (split / /, $forms)[$person - 1];
         return $stem.$ending;
     }
@@ -103,7 +103,7 @@ sub best_form_of_lemma {
             $lemma =~ s/ão$/ona/; # grandão -> grandona
             $lemma =~ s/[oe]?$/a/ if $lemma !~ /a$/;
         }
-        if ($iset->number eq 'plu'){
+        if ($iset->number eq 'plur'){
             $lemma =~ s/ão$/ães/ or
             $lemma = $lemma.'s';
         }

@@ -25,7 +25,7 @@ my %gram2iset = (
     'negation=neg1'    => 'negativeness=neg',
     
     'number=sg'        => 'number=sing',
-    'number=pl'        => 'number=plu',
+    'number=pl'        => 'number=plur',
     'number=du'        => 'number=dual',
 
     'numbertype=basic' => 'numtype=card',

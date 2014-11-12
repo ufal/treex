@@ -7,13 +7,13 @@ extends 'Treex::Block::T2A::AddArticles';
 override '_build_article_form' => sub {
     return {
         'definite masc sing' => 'el',
-        'definite masc plu' => 'los',
+        'definite masc plur' => 'los',
         'definite fem sing' => 'la',
-        'definite fem plu' => 'las',
+        'definite fem plur' => 'las',
         'indefinite masc sing' => 'un',
-        'indefinite masc plu' => 'unos',
+        'indefinite masc plur' => 'unos',
         'indefinite fem sing' => 'una',
-        'indefinite fem plu' => 'unas',
+        'indefinite fem plur' => 'unas',
     };
 };
 
