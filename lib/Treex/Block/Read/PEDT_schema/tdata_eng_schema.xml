@@ -1,0 +1,783 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pml_schema xmlns="http://ufal.mff.cuni.cz/pdt/pml/schema/" version="1.1">
+  <revision>1.0.0</revision>
+  <description>English PDT 2.0 tectogrammatic trees</description>
+  <reference name="adata" readas="trees"/>
+
+  <root name="tdata" type="t-tdata.type"/>
+
+  <type name="t-tdata.type">
+    <structure>
+      <member name="meta" required="0" type="t-meta.type"/>
+      <member name="trees" role="#TREES" required="1">
+        <list ordered="1" type="t-root.type"/>
+      </member>
+    </structure>
+  </type>
+
+  <type name="t-meta.type">
+    <structure>
+      <member name="annotation_info" type="t-annotation-info.type"/>
+    </structure>
+  </type>
+
+  <type name="t-annotation-info.type">
+    <structure name="t-annotation-info">
+      <member name="version_info">
+        <cdata format="any"/>
+      </member>
+      <member name="desc">
+        <cdata format="any"/>
+      </member>
+    </structure>
+  </type>
+
+  <type name="t-root.type">
+    <structure role="#NODE" name="t-root">
+      <member as_attribute="1" name="id" role="#ID" required="1">
+        <cdata format="ID"/>
+      </member>
+      <member name="atree.rf">
+        <cdata format="PMLREF"/>
+      </member>
+      <member name="nodetype">
+        <constant>root</constant>
+      </member>
+      <member name="cze_sentence">
+        <cdata format="any"/>
+      </member>
+      <member name="deepord" role="#ORDER" required="0">
+        <cdata format="nonNegativeInteger"/>
+      </member>
+      <member name="children" role="#CHILDNODES">
+        <list ordered="1" type="t-node.type"/>
+      </member>
+	  <member name="offensive" type="bool.type"/>
+	  <member name="annot_comment">
+	      <list ordered="0" type="comment.type"/>
+      </member>
+	  <member name="anot_error" type="t-anot_error.type" />
+    </structure>
+  </type>
+
+  <type name="t-node.type">
+    <structure role="#NODE" name="t-node">
+      <member as_attribute="1" name="id" role="#ID" required="1">
+        <cdata format="ID"/>
+      </member>
+      <member name="a" type="t-a.type"/>
+      <member name="compar.rf">
+        <list ordered="0">
+          <cdata format="PMLREF"/>
+        </list>
+      </member>
+      <member name="compl.rf">
+        <list ordered="0">
+          <cdata format="PMLREF"/>
+        </list>
+      </member>
+	  <member name="bridging">
+		  <list ordered="1" type="bridging-link.type"/>
+	  </member>	  
+	  <member name="coref_text">
+		<list ordered="0" type="coref_text-link.type">
+		</list>
+	</member>
+	<member name="anaph_str_comment">
+		<list ordered="0" type="anaph_str_comment.type">
+		</list>
+	</member>
+      <member name="coref_text.rf">
+        <list ordered="0">
+          <cdata format="PMLREF"/>
+        </list>
+      </member>
+      <member name="coref_gram.rf">
+        <list ordered="0">
+          <cdata format="PMLREF"/>
+        </list>
+      </member>
+	  <member name="coref_special" type="coref_special.type"/>
+	  <member name="pcedt" type="t-pcedt.type"/>
+      <member name="val_frame.rf">
+        <alt>
+          <cdata format="PMLREF"/>
+        </alt>
+      </member>
+	  <member name="nombank_data"><cdata format="any" /></member>
+      <member name="nodetype" required="0" type="t-nodetype.type"/>
+      <member name="is_generated" type="bool.type"/>
+      <member name="t_lemma" required="1">
+        <cdata format="any"/>
+      </member>
+      <member name="functor" required="0">
+        <alt type="func.type"/>
+      </member>
+      <member name="subfunctor" type="t-subfunctor.type"/>
+      <member name="is_member" type="bool.type"/>
+      <member name="is_name_of_person" type="bool.type"/>
+	  <member name="is_name" type="bool.type"/>
+	  <member name="bbn_tag" type="bbn_tag.type"/>
+	  <member name="highlite" type="bool.type"/>
+	  <member name="anot_error" type="t-anot_error.type" />
+      <member name="quot">
+        <list ordered="0">
+          <structure>
+            <member name="type" required="1" type="t-type.type"/>
+            <member name="set_id" required="1">
+              <cdata format="any"/>
+            </member>
+          </structure>
+        </list>
+      </member>
+	  <member name="functor_change">
+		  <list ordered="1">
+			  <cdata format="any"/>
+		  </list>
+	  </member>
+      <member name="is_dsp_root" type="bool.type"/>
+      <member name="sentmod" type="t-sentmod.type"/>
+      <member name="gram" type="t-gram.type"/>
+      <member name="formeme"><cdata format="any"/></member>
+      <member name="tfa" type="t-tfa.type"/>
+      <member name="is_parenthesis" type="bool.type"/>
+      <member name="is_state" type="bool.type"/>
+      <member name="deepord" role="#ORDER" required="1">
+        <cdata format="nonNegativeInteger"/>
+      </member>
+      <member name="children" role="#CHILDNODES">
+        <list ordered="1" type="t-node.type"/>
+      </member>
+      <member name="annot_comment">
+	      <list ordered="0" type="comment.type"/>
+	  </member>	  
+    </structure>
+  </type>
+
+  <type name="t-anot_error.type">
+    <list ordered="0">
+	  <cdata format="any"/>
+	</list>
+  </type>
+
+  <type name="t-tfa.type">
+    <choice>
+      <value>t</value>
+      <value>f</value>
+      <value>c</value>
+    </choice>
+  </type>
+  <type name="coref_text-link.type">
+	<structure>
+	  <member name="target-node.rf">
+		  <cdata format="PMLREF"/>
+	  </member>
+	  <member name="informal-type">
+		  <choice>
+			  <value>SPEC</value>
+			  <value>GEN</value>
+		  </choice>
+	  </member>
+	  <member name="comment">
+		  <cdata format="any"/>
+	  </member>
+	  <member name="str_comment">
+		  <list ordered="0" type="anaph_str_comment.type">
+		  </list>
+	  </member>
+	  <member name="src">
+		  <cdata format="any"/>
+	  </member>
+	</structure>
+  </type>
+  <type name="bridging-link.type">
+	  <structure>
+		<member name="target-node.rf">
+			<cdata format="PMLREF"/>
+		</member>
+		<member name="informal-type">
+			<choice>
+				<value>CONTRAST</value>
+				<value>SUB_SET</value>
+				<value>SET_SUB</value>
+				<value>PART_WHOLE</value>
+				<value>WHOLE_PART</value>
+				<value>FUNCT_P</value>
+				<value>P_FUNCT</value>
+				<value>REST</value>
+				<value>ANAF</value>
+			 </choice>
+		</member>
+		<member name="comment">
+			<cdata format="any"/>
+		</member>
+		<member name="str_comment">
+			<list ordered="0" type="anaph_str_comment.type">
+			</list>
+		</member>
+		<member name="src">
+			<cdata format="any"/>
+		</member>
+	</structure>
+  </type>
+  <type name="t-gram.type">
+    <structure>
+      <member name="sempos" required="0" type="t-sempos.type"/>
+      <member name="gender" type="t-gender.type"/>
+      <member name="number" type="t-number.type"/>
+      <member name="degcmp" type="t-degcmp.type"/>
+      <member name="verbmod" type="t-verbmod.type"/>
+      <member name="deontmod" type="t-deontmod.type"/>
+      <member name="tense" type="t-tense.type"/>
+      <member name="aspect" type="t-aspect.type"/>
+      <member name="resultative" type="t-resultative.type"/>
+      <member name="dispmod" type="t-dispmod.type"/>
+      <member name="iterativeness" type="t-iterativeness.type"/>
+      <member name="indeftype" type="t-indeftype.type"/>
+      <member name="person" type="t-person.type"/>
+      <member name="numertype" type="t-numertype.type"/>
+      <member name="politeness" type="t-politeness.type"/>
+      <member name="negation" type="t-negation.type"/>
+    </structure>
+  </type>
+
+  <type name="t-pcedt.type">
+	<structure>
+		<member name="cz_translation" required="0">
+			<cdata format="any"/>
+		</member>
+		<member name="translation_type" required="0">
+			<cdata format="any"/>
+		</member>
+		<member name="pattern" required="0">
+			<cdata format="nonNegativeInteger"/>
+		</member>
+		<member name="pattern_mode" required="0" type="pcedt-pattern_mode.type"/>
+		<member name="alt_pattern" required="0">
+			<list ordered="0" type="pcedt-alt_pattern.type"/>
+		</member>
+	</structure>
+  </type>
+
+  <type name="pcedt-pattern_mode.type">
+	<choice>
+		<value>f</value>
+		<value>a</value>
+		<value>u</value>
+		<value>x</value>
+	</choice>
+  </type>
+
+  <type name="pcedt-alt_pattern.type">
+	  <structure>
+		  <member name="pattern" required="0">
+			  <cdata format="nonNegativeInteger"/>
+		  </member>
+		  <member name="pattern_mode" required="0" type="pcedt-pattern_mode.type"/>
+	  </structure>
+  </type>
+
+  <type name="anaph_str_comment.type">
+	  <structure>
+		  <member name="name">
+			  <choice>
+				  <value>AMBIG</value>
+				  <value>OTHER</value>
+			  </choice>
+		  </member>
+		  <member name="comment">
+			  <cdata format="any"/>
+		  </member>
+	  </structure>
+  </type>
+  <type name="t-negation.type">
+    <choice>
+      <value>neg0</value>
+      <value>neg1</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-politeness.type">
+    <choice>
+      <value>polite</value>
+      <value>basic</value>
+      <value>inher</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-numertype.type">
+    <choice>
+      <value>basic</value>
+      <value>set</value>
+      <value>kind</value>
+      <value>ord</value>
+      <value>frac</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-person.type">
+    <choice>
+      <value>1</value>
+      <value>2</value>
+      <value>3</value>
+      <value>inher</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-indeftype.type">
+    <choice>
+      <value>relat</value>
+      <value>indef1</value>
+      <value>indef2</value>
+      <value>indef3</value>
+      <value>indef4</value>
+      <value>indef5</value>
+      <value>indef6</value>
+      <value>inter</value>
+      <value>negat</value>
+      <value>total1</value>
+      <value>total2</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-iterativeness.type">
+    <choice>
+      <value>it1</value>
+      <value>it0</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-dispmod.type">
+    <choice>
+      <value>disp3</value>
+      <value>disp2</value>
+      <value>disp1</value>
+      <value>disp0</value>
+      <value>nr</value>
+      <value>nil</value>
+    </choice>
+  </type>
+
+  <type name="t-resultative.type">
+    <choice>
+      <value>res1</value>
+      <value>res0</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-aspect.type">
+    <choice>
+      <value>proc</value>
+      <value>cpl</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-tense.type">
+    <choice>
+      <value>sim</value>
+      <value>ant</value>
+      <value>post</value>
+      <value>nr</value>
+      <value>nil</value>
+    </choice>
+  </type>
+
+  <type name="t-deontmod.type">
+    <choice>
+      <value>deb</value>
+      <value>hrt</value>
+      <value>vol</value>
+      <value>poss</value>
+      <value>perm</value>
+      <value>fac</value>
+      <value>decl</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-verbmod.type">
+    <choice>
+      <value>ind</value>
+      <value>imp</value>
+      <value>cdn</value>
+      <value>nr</value>
+      <value>nil</value>
+    </choice>
+  </type>
+
+  <type name="t-degcmp.type">
+    <choice>
+      <value>pos</value>
+      <value>comp</value>
+      <value>acomp</value>
+      <value>sup</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-number.type">
+    <choice>
+      <value>sg</value>
+      <value>pl</value>
+      <value>inher</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-gender.type">
+    <choice>
+      <value>anim</value>
+      <value>inan</value>
+      <value>fem</value>
+      <value>neut</value>
+      <value>inher</value>
+      <value>nr</value>
+    </choice>
+  </type>
+  <type name="t-sempos.type">
+    <choice>
+      <value>n.denot</value>
+      <value>n.denot.neg</value>
+      <value>n.pron.def.demon</value>
+      <value>n.pron.def.pers</value>
+      <value>n.pron.indef</value>
+      <value>n.quant.def</value>
+      <value>adj.denot</value>
+      <value>adj.pron.def.demon</value>
+      <value>adj.pron.indef</value>
+      <value>adj.quant.def</value>
+      <value>adj.quant.indef</value>
+      <value>adj.quant.grad</value>
+      <value>adv.denot.grad.nneg</value>
+      <value>adv.denot.ngrad.nneg</value>
+      <value>adv.denot.grad.neg</value>
+      <value>adv.denot.ngrad.neg</value>
+      <value>adv.pron.def</value>
+      <value>adv.pron.indef</value>
+      <value>v</value>
+      <value>???</value>
+    </choice>
+  </type>
+
+  <type name="t-sentmod.type">
+    <choice>
+      <value>enunc</value>
+      <value>excl</value>
+      <value>desid</value>
+      <value>imper</value>
+      <value>inter</value>
+    </choice>
+  </type>
+
+  <type name="t-type.type">
+    <choice>
+      <value>citation</value>
+      <value>dsp</value>
+      <value>meta</value>
+      <value>other</value>
+      <value>title</value>
+    </choice>
+  </type>
+
+  <type name="t-subfunctor.type">
+    <choice>
+      <value>above</value>
+      <value>abstr</value>
+      <value>across</value>
+      <value>after</value>
+      <value>agst</value>
+      <value>along</value>
+      <value>approx</value>
+      <value>around</value>
+      <value>basic</value>
+      <value>before</value>
+      <value>begin</value>
+      <value>behind</value>
+      <value>below</value>
+      <value>betw</value>
+      <value>circ</value>
+      <value>elsew</value>
+      <value>end</value>
+      <value>ext</value>
+      <value>flow</value>
+      <value>front</value>
+      <value>incl</value>
+      <value>in</value>
+      <value>less</value>
+      <value>mid</value>
+      <value>more</value>
+      <value>near</value>
+      <value>opp</value>
+      <value>target</value>
+      <value>than</value>
+      <value>to</value>
+      <value>wout</value>
+      <value>wrt</value>
+      <value>nr</value>
+    </choice>
+  </type>
+
+  <type name="t-nodetype.type">
+    <choice>
+      <value>atom</value>
+      <value>coap</value>
+      <value>complex</value>
+      <value>dphr</value>
+      <value>fphr</value>
+      <value>list</value>
+      <value>qcomplex</value>
+    </choice>
+  </type>
+
+  <type name="t-a.type">
+    <structure>
+      <member name="lex.rf">
+        <cdata format="PMLREF"/>
+      </member>
+      <member name="aux.rf">
+        <list ordered="0">
+          <cdata format="PMLREF"/>
+        </list>
+      </member>
+    </structure>
+  </type>
+
+  <type name="coref_special.type">
+    <choice>
+      <value>segm</value>
+      <value>exoph</value>
+    </choice>
+  </type>
+
+  <type name="func.type">
+    <choice>
+      <value>ACT</value>
+      <value>AUTH</value>
+      <value>PAT</value>
+      <value>ADDR</value>
+      <value>EFF</value>
+      <value>ORIG</value>
+      <value>ACMP</value>
+      <value>ADVS</value>
+      <value>AIM</value>
+      <value>APP</value>
+      <value>APPS</value>
+      <value>ATT</value>
+      <value>BEN</value>
+      <value>CAUS</value>
+      <value>CNCS</value>
+      <value>CM</value>
+      <value>COMPL</value>
+      <value>CONJ</value>
+      <value>COND</value>
+      <value>CONFR</value>
+      <value>CONTRA</value>
+      <value>CONTRD</value>
+      <value>CPHR</value>
+      <value>CPR</value>
+      <value>CRIT</value>
+      <value>CSQ</value>
+      <value>DENOM</value>
+      <value>DIFF</value>
+      <value>DIR1</value>
+      <value>DIR2</value>
+      <value>DIR3</value>
+      <value>DISJ</value>
+      <value>DPHR</value>
+      <value>DESCR</value>
+      <value>EXT</value>
+      <value>FPHR</value>
+      <value>GRAD</value>
+      <value>HER</value>
+      <value>ID</value>
+      <value>INTF</value>
+      <value>INTT</value>
+      <value>LOC</value>
+      <value>MANN</value>
+      <value>MAT</value>
+      <value>MEANS</value>
+      <value>MOD</value>
+      <value>NE</value>
+      <value>OPER</value>
+      <value>PAR</value>
+      <value>PARTL</value>
+      <value>PREC</value>
+      <value>PRED</value>
+      <value>REAS</value>
+      <value>REG</value>
+      <value>RESL</value>
+      <value>RESTR</value>
+      <value>RHEM</value>
+      <value>RSTR</value>
+      <value>SUBS</value>
+      <value>TFHL</value>
+      <value>TFRWH</value>
+      <value>THL</value>
+      <value>THO</value>
+      <value>TOWH</value>
+      <value>TPAR</value>
+      <value>TSIN</value>
+      <value>TTILL</value>
+      <value>TWHEN</value>
+      <value>VOCAT</value>
+      <value>SM</value>
+      <value>???</value>
+    </choice>
+  </type>
+
+  <type name="bool.type">
+    <choice>
+      <value>0</value>
+      <value>1</value>
+    </choice>
+  </type>
+
+  <type name="comment.type">
+	  <structure>
+		  <member name="type" required="1">
+			  <choice>
+				  <value>Sentence segmentation</value>
+				  <value>Word segmentation</value>
+				  <value>Typo</value>
+				  <value>Structure</value>
+				  <value>Functor</value>
+				  <value>T-lemma</value>
+				  <value>M-lemma</value>
+				  <value>Wrong m-tag</value>
+				  <value>Engvallex: new lemma</value>
+				  <value>Engvallex: new frame</value>
+				  <value>Engvallex: bad frame</value>
+				  <value>Coref</value>
+				  <value>Coref structure</value>
+				  <value>Aux right</value>
+				  <value>Nominalisation</value>
+				  <value>CPA</value>
+				  <value>TFA</value>
+				  <value>TFA_log</value>
+				  <value>Other</value>
+				  <value>Hyphen_NP</value>
+			  </choice>
+		  </member>
+		  <member name="text"><cdata format="any" /></member>
+	  </structure>
+  </type>
+
+  <type name="bbn_tag.type">
+    <choice>
+      <value>ANIMAL</value>
+      <value>CARDINAL</value>
+      <value>CONTACT_INFO:ADDRESS</value>
+      <value>CONTACT_INFO:OTHER</value>
+      <value>CONTACT_INFO:PHONE</value>
+      <value>DATE</value>
+      <value>DATE:AGE</value>
+      <value>DATE:DATE</value>
+      <value>DATE:DURATION</value>
+      <value>DATE:OTHER</value>
+      <value>DISEASE</value>
+      <value>EVENT:HURRICANE</value>
+      <value>EVENT:OTHER</value>
+      <value>EVENT:WAR</value>
+      <value>FAC:AIRPORT</value>
+      <value>FAC:ATTRACTION</value>
+      <value>FAC:BRIDGE</value>
+      <value>FAC:BUILDING</value>
+      <value>FAC:HIGHWAY_STREET</value>
+      <value>FAC:HOTEL</value>
+      <value>FAC:OTHER</value>
+      <value>FAC_DESC:AIRPORT</value>
+      <value>FAC_DESC:ATTRACTION</value>
+      <value>FAC_DESC:BRIDGE</value>
+      <value>FAC_DESC:BUILDING</value>
+      <value>FAC_DESC:HIGHWAY_STREET</value>
+      <value>FAC_DESC:OTHER</value>
+      <value>FAC_DESC:STREET_HIGHWAY</value>
+      <value>GAME</value>
+      <value>GPE:CITY</value>
+      <value>GPE:COUNTRY</value>
+      <value>GPE:OTHER</value>
+      <value>GPE:STATE_PROVINCE</value>
+      <value>GPE_DESC:CITY</value>
+      <value>GPE_DESC:COUNTRY</value>
+      <value>GPE_DESC:OTHER</value>
+      <value>GPE_DESC:STATE_PROVINCE</value>
+      <value>LANGUAGE</value>
+      <value>LAW</value>
+      <value>LOCATION</value>
+      <value>LOCATION:BORDER</value>
+      <value>LOCATION:CITY</value>
+      <value>LOCATION:CONTINENT</value>
+      <value>LOCATION:LAKE_SEA_OCEAN</value>
+      <value>LOCATION:OTHER</value>
+      <value>LOCATION:REGION</value>
+      <value>LOCATION:RIVER</value>
+      <value>MONEY</value>
+      <value>NORP:NATIONALITY</value>
+      <value>NORP:OTHER</value>
+      <value>NORP:POLITICAL</value>
+      <value>NORP:RELIGION</value>
+      <value>ORDINAL</value>
+      <value>ORGANIZATION:CITY</value>
+      <value>ORGANIZATION:CORPORATION</value>
+      <value>ORGANIZATION:EDUCATIONAL</value>
+      <value>ORGANIZATION:GOVERNMENT</value>
+      <value>ORGANIZATION:HOSPITAL</value>
+      <value>ORGANIZATION:HOTEL</value>
+      <value>ORGANIZATION:MUSEUM</value>
+      <value>ORGANIZATION:OTHER</value>
+      <value>ORGANIZATION:POLITICAL</value>
+      <value>ORGANIZATION:RELIGIOUS</value>
+      <value>ORGANIZATION:STATE_PROVINCE</value>
+      <value>ORG_DESC:CORPORATION</value>
+      <value>ORG_DESC:EDUCATIONAL</value>
+      <value>ORG_DESC:GOVERNMENT</value>
+      <value>ORG_DESC:HOSPITAL</value>
+      <value>ORG_DESC:HOTEL</value>
+      <value>ORG_DESC:MUSEUM</value>
+      <value>ORG_DESC:OTHER</value>
+      <value>ORG_DESC:POLITICAL</value>
+      <value>ORG_DESC:RELIGIOUS</value>
+      <value>PERCENT</value>
+      <value>PERSON</value>
+	  <value>PER_DESC</value>
+      <value>PLANT</value>
+      <value>PRODCUT:OTHER</value>
+      <value>PRODUCT:DRUG</value>
+      <value>PRODUCT:FOOD</value>
+      <value>PRODUCT:OTHER</value>
+      <value>PRODUCT:VEHICLE</value>
+      <value>PRODUCT:WEAPON</value>
+      <value>PRODUCT_DESC:OTHER</value>
+      <value>PRODUCT_DESC:VEHICLE</value>
+      <value>PRODUCT_DESC:WEAPON</value>
+      <value>QUANTITY:1D</value>
+      <value>QUANTITY:2D</value>
+      <value>QUANTITY:3D</value>
+      <value>QUANTITY:ENERGY</value>
+      <value>QUANTITY:OTHER</value>
+      <value>QUANTITY:SPEED</value>
+      <value>QUANTITY:TEMPERATURE</value>
+      <value>QUANTITY:WEIGHT</value>
+      <value>SUBSTANCE:CHEMICAL</value>
+      <value>SUBSTANCE:DRUG</value>
+      <value>SUBSTANCE:FOOD</value>
+      <value>SUBSTANCE:NUCLEAR</value>
+      <value>SUBSTANCE:OTHER</value>
+      <value>TIME</value>
+      <value>WORK_OF_ART:BOOK</value>
+      <value>WORK_OF_ART:OTHER</value>
+      <value>WORK_OF_ART:PAINTING</value>
+      <value>WORK_OF_ART:PLAY</value>
+      <value>WORK_OF_ART:SONG</value>
+    </choice>
+  </type>
+
+</pml_schema>

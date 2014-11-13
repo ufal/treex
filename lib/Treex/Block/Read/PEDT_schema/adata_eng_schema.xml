@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pml_schema
+  xmlns="http://ufal.mff.cuni.cz/pdt/pml/schema/"
+  version="1.1">
+  <revision>1.0.1</revision>
+  <description>English PDT analytical trees</description>
+
+  <root name="adata" type="a-adata.type"/>
+
+  <type name="a-adata.type">
+    <structure>
+      <member name="meta" required="0" type="a-meta.type"/>
+      <member name="trees" role="#TREES" required="1">
+	<list type="a-root.type" ordered="1"/>
+      </member>
+    </structure>
+  </type>
+
+  <type name="a-meta.type">
+    <structure>
+      <member name="annotation_info">
+	<structure name="a-annotation-info">
+	  <member name="version_info"><cdata format="any"/></member>
+	  <member name="desc"><cdata format="any"/></member>
+	</structure>
+      </member>
+    </structure>
+  </type>
+
+  <type name="a-root.type">
+    <structure role="#NODE" name="a-root">
+      <member name="id" role="#ID" as_attribute="1" required="1"><cdata format="ID"/></member>
+      <member name="s.rf"><cdata format="PMLREF"/></member>
+      <member name="afun"><constant>AuxS</constant></member>
+      <member name="ord" role="#ORDER" required="1"><cdata format="nonNegativeInteger"/></member>
+      <member name="children" role="#CHILDNODES">
+	<list type="a-node.type" ordered="1"/>
+      </member>
+      <member name="ptree.rf"> <!-- pridano na navrh Jirky -->
+         <cdata format="PMLREF"/>
+      </member>
+    </structure>
+  </type>
+
+  <type name="a-node.type">
+    <structure role="#NODE" name="a-node">
+      <member name="id" role="#ID" as_attribute="1" required="1"><cdata format="ID"/></member>
+      <member name="m" type="m-node.type"/>
+      <member name="afun" type="a-afun.type"/>
+      <member name="is_member" type="bool.type"/>
+	  <member type="bool.type" name="is_parenthesis_root"/>
+	  <member name="bbn_tag" type="bbn_tag.type"/>
+      <member name="coref_text.rf">
+        <list ordered="0">
+          <cdata format="PMLREF"/>
+        </list>
+      </member>
+      <member name="functions">
+        <list type="p-function.type" ordered="0"/>
+      </member>
+      <member name="ord" role="#ORDER" required="1"><cdata format="nonNegativeInteger"/></member>
+      <member name="children" role="#CHILDNODES">
+			<list type="a-node.type" ordered="1"/>
+		</member>
+	  <member name="annot_comment">
+		  <list ordered="0" type="comment.type"/>
+	  </member>
+      <member name="p" type="a-p.type"/>  <!-- pridano na navrh Jirky -->
+    </structure>
+  </type>
+  
+  <type name="a-p.type"> <!-- pridano na navrh Jirky -->
+    <structure>
+       <member name="terminal.rf">
+         <cdata format="PMLREF"/>
+       </member>
+       <member name="nonterminals.rf">
+          <list ordered="0">
+             <cdata format="PMLREF"/>
+          </list>
+       </member>
+    </structure>
+  </type>
+
+  <type name="a-afun.type">
+    <choice>
+      <value>Pred</value>
+      <value>Pnom</value>
+      <value>AuxV</value>
+      <value>Sb</value>
+      <value>Obj</value>
+      <value>Atr</value>
+      <value>Adv</value>
+      <value>AtrAdv</value>
+      <value>AdvAtr</value>
+      <value>Coord</value>
+      <value>AtrObj</value>
+      <value>ObjAtr</value>
+      <value>AtrAtr</value>
+      <value>AuxT</value>
+      <value>AuxR</value>
+      <value>AuxP</value>
+      <value>Apos</value>
+      <value>ExD</value>
+      <value>AuxC</value>
+      <value>Atv</value>
+      <value>AtvV</value>
+      <value>AuxO</value>
+      <value>AuxZ</value>
+      <value>AuxY</value>
+      <value>AuxG</value>
+      <value>AuxK</value>
+	  <value>AuxX</value>
+	  <value>AuxA</value>
+	  <value>Neg</value>
+	  <value>NR</value>
+    </choice>
+  </type>
+
+  <type name="p-function.type">
+    <choice>
+      <value>ADV</value>
+      <value>NOM</value>
+      <value>DTV</value>
+      <value>LGS</value>
+      <value>PRD</value>
+      <value>PUT</value>
+      <value>SBJ</value>
+      <value>TPC</value>
+      <value>VOC</value>
+      <value>BNF</value>
+      <value>DIR</value>
+      <value>EXT</value>
+      <value>LOC</value>
+      <value>MNR</value>
+      <value>PRP</value>
+      <value>TMP</value>
+      <value>CLR</value>
+      <value>CLF</value>
+      <value>HLN</value>
+      <value>TTL</value>
+    </choice>
+  </type>
+
+  <type name="m-node.type">
+    <structure name="m-node">
+      <member name="id" as_attribute="1" role="#ID"><cdata format="ID"/></member>
+      <member name="src.rf"><cdata format="PMLREF"/></member>
+      <member name="form_change" type="m-form_change.type"/>
+      <member name="form" required="1"><cdata format="any"/></member>
+      <member name="lemma" required="1"><cdata format="any"/></member>
+      <member name="tag" type="m-tag.type"/>
+  <!-- EF - added 1.6.2012 -->
+      <member name="alt_tag" type="m-alt_tag.type"/>
+	  <member name="w" required="1">
+			<list type="w-node.type" ordered="1"/>
+		</member>
+    </structure>
+  </type>
+
+  <type name="m-form_change.type">
+    <choice>
+      <value>ctcd</value>
+      <value>spell</value>
+      <value>insert</value>
+      <value>num_normalization</value>
+    </choice>
+  </type>
+
+  <type name="m-tag.type">
+	  <choice>
+		  <value>CC</value>
+		  <value>CD</value>
+		  <value>DT</value>
+		  <value>EX</value>
+		  <value>FW</value>
+		  <value>IN</value>
+		  <value>JJ</value>
+		  <value>JJR</value>
+		  <value>JJS</value>
+		  <value>LS</value>
+		  <value>MD</value>
+		  <value>NN</value>
+		  <value>NNP</value>
+		  <value>NNPS</value>
+		  <value>NNS</value>
+		  <value>PDT</value>
+		  <value>POS</value>
+		  <value>PRP</value>
+		  <value>PRP$</value>
+		  <value>RB</value>
+		  <value>RBR</value>
+		  <value>RBS</value>
+		  <value>RP</value>
+		  <value>SYM</value>
+		  <value>TO</value>
+		  <value>UH</value>
+		  <value>VB</value>
+		  <value>VBD</value>
+		  <value>VBG</value>
+		  <value>VBN</value>
+		  <value>VBP</value>
+		  <value>VBZ</value>
+		  <value>WDT</value>
+		  <value>WP</value>
+		  <value>WP$</value>
+		  <value>WRB</value>
+		  <value>``</value>
+		  <value>,</value>
+		  <value>:</value>
+		  <value>.</value>
+		  <value>''</value>
+		  <value>$</value>
+		  <value>#</value>
+		  <value>-LRB-</value>
+		  <value>-RRB-</value>
+		  <value>-NONE-</value>
+	  </choice>
+  </type>
+  <!-- EF - added 1.6.2012 -->
+  <type name="m-alt_tag.type">
+	 <choice>
+		  <value>VBGJJ</value>
+		  <value>VBNJJ</value>
+	  </choice>
+  </type>
+
+  <type name="w-node.type">
+    <structure name="w-node">
+      <member name="id" as_attribute="1" role="#ID"><cdata format="ID"/></member>
+      <member name="token" required="1"><cdata format="any"/></member>
+      <member name="no_space_after" type="bool.type"/>
+    </structure>
+  </type>
+
+  <type name="bool.type">
+    <choice>
+      <value>0</value>
+      <value>1</value>
+    </choice>
+  </type>
+
+  <type name="comment.type">
+	  <structure>
+		  <member name="type" required="1">
+			  <choice>
+				  <value>Hyphen_NP</value>
+				  <value>Word segmentation</value>
+				  <value>Other</value>
+			  </choice>
+		  </member>
+		  <member name="text">
+			  <cdata format="any" />
+		  </member>
+	  </structure>
+  </type>
+
+  <type name="bbn_tag.type">
+    <choice>
+      <value>ANIMAL</value>
+      <value>CARDINAL</value>
+      <value>CONTACT_INFO:ADDRESS</value>
+      <value>CONTACT_INFO:OTHER</value>
+      <value>CONTACT_INFO:PHONE</value>
+      <value>DATE</value>
+      <value>DATE:AGE</value>
+      <value>DATE:DATE</value>
+      <value>DATE:DURATION</value>
+      <value>DATE:OTHER</value>
+      <value>DISEASE</value>
+      <value>EVENT:HURRICANE</value>
+      <value>EVENT:OTHER</value>
+      <value>EVENT:WAR</value>
+      <value>FAC:AIRPORT</value>
+      <value>FAC:ATTRACTION</value>
+      <value>FAC:BRIDGE</value>
+      <value>FAC:BUILDING</value>
+      <value>FAC:HIGHWAY_STREET</value>
+      <value>FAC:HOTEL</value>
+      <value>FAC:OTHER</value>
+      <value>FAC_DESC:AIRPORT</value>
+      <value>FAC_DESC:ATTRACTION</value>
+      <value>FAC_DESC:BRIDGE</value>
+      <value>FAC_DESC:BUILDING</value>
+      <value>FAC_DESC:HIGHWAY_STREET</value>
+      <value>FAC_DESC:OTHER</value>
+      <value>FAC_DESC:STREET_HIGHWAY</value>
+      <value>GAME</value>
+      <value>GPE:CITY</value>
+      <value>GPE:COUNTRY</value>
+      <value>GPE:OTHER</value>
+      <value>GPE:STATE_PROVINCE</value>
+      <value>GPE_DESC:CITY</value>
+      <value>GPE_DESC:COUNTRY</value>
+      <value>GPE_DESC:OTHER</value>
+      <value>GPE_DESC:STATE_PROVINCE</value>
+      <value>LANGUAGE</value>
+      <value>LAW</value>
+      <value>LOCATION</value>
+      <value>LOCATION:BORDER</value>
+      <value>LOCATION:CITY</value>
+      <value>LOCATION:CONTINENT</value>
+      <value>LOCATION:LAKE_SEA_OCEAN</value>
+      <value>LOCATION:OTHER</value>
+      <value>LOCATION:REGION</value>
+      <value>LOCATION:RIVER</value>
+      <value>MONEY</value>
+      <value>NORP:NATIONALITY</value>
+      <value>NORP:OTHER</value>
+      <value>NORP:POLITICAL</value>
+      <value>NORP:RELIGION</value>
+      <value>ORDINAL</value>
+      <value>ORGANIZATION:CITY</value>
+      <value>ORGANIZATION:CORPORATION</value>
+      <value>ORGANIZATION:EDUCATIONAL</value>
+      <value>ORGANIZATION:GOVERNMENT</value>
+      <value>ORGANIZATION:HOSPITAL</value>
+      <value>ORGANIZATION:HOTEL</value>
+      <value>ORGANIZATION:MUSEUM</value>
+      <value>ORGANIZATION:OTHER</value>
+      <value>ORGANIZATION:POLITICAL</value>
+      <value>ORGANIZATION:RELIGIOUS</value>
+      <value>ORGANIZATION:STATE_PROVINCE</value>
+      <value>ORG_DESC:CORPORATION</value>
+      <value>ORG_DESC:EDUCATIONAL</value>
+      <value>ORG_DESC:GOVERNMENT</value>
+      <value>ORG_DESC:HOSPITAL</value>
+      <value>ORG_DESC:HOTEL</value>
+      <value>ORG_DESC:MUSEUM</value>
+      <value>ORG_DESC:OTHER</value>
+      <value>ORG_DESC:POLITICAL</value>
+      <value>ORG_DESC:RELIGIOUS</value>
+      <value>PERCENT</value>
+      <value>PERSON</value>
+      <value>PER_DESC</value>
+      <value>PLANT</value>
+      <value>PRODCUT:OTHER</value>
+      <value>PRODUCT:DRUG</value>
+      <value>PRODUCT:FOOD</value>
+      <value>PRODUCT:OTHER</value>
+      <value>PRODUCT:VEHICLE</value>
+      <value>PRODUCT:WEAPON</value>
+      <value>PRODUCT_DESC:OTHER</value>
+      <value>PRODUCT_DESC:VEHICLE</value>
+      <value>PRODUCT_DESC:WEAPON</value>
+      <value>QUANTITY:1D</value>
+      <value>QUANTITY:2D</value>
+      <value>QUANTITY:3D</value>
+      <value>QUANTITY:ENERGY</value>
+      <value>QUANTITY:OTHER</value>
+      <value>QUANTITY:SPEED</value>
+      <value>QUANTITY:TEMPERATURE</value>
+      <value>QUANTITY:WEIGHT</value>
+      <value>SUBSTANCE:CHEMICAL</value>
+      <value>SUBSTANCE:DRUG</value>
+      <value>SUBSTANCE:FOOD</value>
+      <value>SUBSTANCE:NUCLEAR</value>
+      <value>SUBSTANCE:OTHER</value>
+      <value>TIME</value>
+      <value>WORK_OF_ART:BOOK</value>
+      <value>WORK_OF_ART:OTHER</value>
+      <value>WORK_OF_ART:PAINTING</value>
+      <value>WORK_OF_ART:PLAY</value>
+      <value>WORK_OF_ART:SONG</value>
+    </choice>
+  </type>
+
+</pml_schema>
