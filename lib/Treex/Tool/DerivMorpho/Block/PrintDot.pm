@@ -9,7 +9,9 @@ my $node_counter;
 sub process_dictionary {
     my ($self,$dict) = @_;
 
-    my @lemmas = split /\s/, "prohlásit rozlehlý zahlcovat povaha obhajovat průměr věčný vyšroubovat ponížit políbit bobr pivovar nepřátelský hrnek vysmrkat předstírat básník hudba venkov církev";#$ENV{LEMMAS}; ### TODO: troubles with encoding
+#    my @lemmas = split /\s/, "prohlásit rozlehlý zahlcovat povaha obhajovat průměr věčný vyšroubovat ponížit políbit bobr pivovar nepřátelský hrnek vysmrkat předstírat básník hudba venkov církev vymést kontakt";#$ENV{LEMMAS}; ### TODO: troubles with encoding
+
+    my @lemmas = split /\s/, "vymést kontakt vystřihnout dosáhnout";
 
     foreach my $lemma (@lemmas) {
 
