@@ -6,10 +6,39 @@ extends 'Treex::Block::Read::BasePMLReader';
 use Treex::PML::Factory;
 use Treex::PML::Instance;
 
-has '+_layers' => ( default => sub { [ 'a', 't', 'p' ] } );
 has '+_file_suffix' => ( default => '\.[atp]\.gz$' );
-
 has language => ( isa => 'Treex::Type::LangCode', is => 'ro', default => 'en' );
+
+has p_layer => ( isa => 'Bool', is => 'ro', default => 1, documentation=> 'Do we have phrase-structure trees? Should we load *.p.gz files?');
+
+has '+_layers' => ( builder => '_build_layers', lazy_build => 1 );
+sub _build_layers {
+    my ($self) = @_;
+    if ($self->p_layer){
+        return [ 'a', 't', 'p' ];
+    }
+    else{
+        return ['a', 't'];
+    }
+}
+
+has '+schema_dir' => ( builder => '_build_schema_dir', lazy_build => 0 );
+sub _build_schema_dir
+{
+    # Compute the path to the PML schemas relative to this block.
+    # TODO this solution is taken from Read::PADT, but it is not suitable for CPAN.
+    my $rootpath = $INC{'Treex/Block/Read/PEDT.pm'};
+    $rootpath =~ s-/PEDT\.pm$--;
+    my $relpath = 'PEDT_schema';
+    my $fullpath = "$rootpath/$relpath";
+    if(-d $fullpath)
+    {
+        log_info("Adding $fullpath to Treex::PML resource paths.");
+        Treex::PML::AddResourcePath($fullpath);
+        return $fullpath;
+    }
+}
+
 
 override '_load_all_files' => sub {
 
@@ -58,13 +87,15 @@ override '_convert_all_trees' => sub {
         my $aroot = $zone->create_atree;
         $self->_convert_atree( $pmldoc->{a}->tree($tree_number), $aroot );
 
-        my $proot = $zone->create_ptree;
-        $self->_convert_ptree( $pmldoc->{p}->tree($tree_number), $proot );
+        if ($self->p_layer){
+            my $proot = $zone->create_ptree;
+            $self->_convert_ptree( $pmldoc->{p}->tree($tree_number), $proot );
 
-        foreach my $p_node ( $proot, $proot->get_descendants ) {
-            my $type = $p_node->get_pml_type_name();
-            $type =~ s/p-(.*)\.type/$1/;
-            $p_node->{'#name'} = $type;
+            foreach my $p_node ( $proot, $proot->get_descendants ) {
+                my $type = $p_node->get_pml_type_name();
+                $type =~ s/p-(.*)\.type/$1/;
+                $p_node->{'#name'} = $type;
+            }
         }
 
       $zone->set_sentence( $aroot->get_subtree_string );
@@ -134,6 +165,6 @@ Must be set to the directory with corresponding PML schemas.
   
 =cut
 
-# Copyright 2011 Josef Toman
+# Copyright 2011-2014 Josef Toman, Martin Popel
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
