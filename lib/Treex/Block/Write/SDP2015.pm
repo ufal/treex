@@ -53,6 +53,25 @@ sub process_zone
     foreach my $tnode (@tnodes)
     {
         my $anode = $tnode->get_lex_anode();
+        if(!defined($anode))
+        {
+            # Sometimes there is no direct link from a generated t-node to an a-node,
+            # but there is a coreference link to another t-node, which is realized on surface.
+            # Then we want to use the coreferenced a-node for both the t-nodes.
+            # Example (wsj_0062.treex.gz#4): "Garbage made its debut with the promise to give consumers..."
+            # T-tree (partial): ACT(made, Garbage); PAT(promise, give); ACT(give, #PersPron)-coref->(Garbage)
+            # We want to deduce: ACT(give, Garbage)
+            my @coref_tnodes = $tnode->get_coref_nodes();
+            # We are only interested in nodes that are in the same sentence.
+            @coref_tnodes = grep {$_->get_root() == $troot} @coref_tnodes;
+            # We are only interested in nodes that are realized on surface.
+            my @coref_anodes = grep {defined($_)} map {$_->get_lex_anode()} @coref_tnodes;
+            ###!!! We do not know how to choose one of several coreference targets. We will pick the first one.
+            if(@coref_anodes)
+            {
+                $anode = $coref_anodes[0];
+            }
+        }
         if(defined($anode))
         {
             # Occasionally a token is re-tokenized on the t-layer and there are several t-nodes corresponding to one a-node.
@@ -104,13 +123,14 @@ sub process_zone
                     {
                         # Dependencies whose labels end with '*' are projected from generated t-nodes. They often (always?) cause cycles.
                         ###!!! A few cycles cannot be caught this way. They also involve two t-nodes for the same a-node but the generated node is the upper one here.
-                        ###!!! So we will not find the cycle if we start at the generated copy. If we start at the original copy, we will arrive at the generated one and thus detect the cycle.
+                        ###!!! So we will not find the cycle if we start at the generated node. If we start at the original node, we will arrive at the generated one and thus detect the cycle.
                         ###!!! Should we look for a cycle whenever a node has more than one parent?
                         if($self->find_cycle(\@matrix, $i))
                         {
                             # Remove the dependency brought in by the generated t-node. That should remove the cycle.
-                            ###!!! This approach disconnects two components of the graph. It would be better to proceed as if the generated node had no surface realization.
-                            ###!!! We have such cases too, and we solve them by skipping the bad node and attaching its descendants to its ancestors.
+                            # Note: I forgot that I used this approach and at the 2014-07-31 meeting in my office, I told Stephan and Jan that I was removing the node, not the edge
+                            # (acting as if the generated node had no surface representation – we have such cases too, and we solve them by skipping the bad node and attaching its descendants to its ancestors).
+                            # We agreed that we should remove an edge instead. And now I realize that it actually is what the algorithm already does.
                             $matrix[$i][$j] = undef;
                         }
                     }
@@ -189,14 +209,22 @@ sub get_lemma
         # There are two or more t-nodes linked to one a-node. Two model cases:
         # 1. Retokenized a-nodes such as "1/2" --> "1", "#Slash", "2".
         # 2. Doubled or multiplied nodes to cover ellipsis, e.g. "yield" --> "yield", "yield".
+        # 3. Generated nodes "#Cor" that are the source point of coreference leading to the lexical node.
         # In case 1, we want to see the lemmas of all t-nodes involved.
         # In case 2, we want just one copy of the lemma.
+        # In case 3, we do not want to see "#Cor" in the lemma.
         my @lemmas = map {$self->decode_characters($_->t_lemma())} (@tnodes);
-        if(grep {$_ ne $lemmas[0]} (@lemmas))
+        my @coreflemmas = grep {$_ =~ m/^\#/} (@lemmas);
+        my @noncoreflemmas = grep {$_ !~ m/^\#/} (@lemmas);
+        if(scalar(@coreflemmas) && scalar(@noncoreflemmas)) # case 3
         {
-            $lemma = join('_', map {$self->decode_characters($_->t_lemma())} (@tnodes));
+            $lemma = join('_', @noncoreflemmas);
         }
-        else
+        elsif(grep {$_ ne $lemmas[0]} (@lemmas)) # case 1
+        {
+            $lemma = join('_', @lemmas);
+        }
+        else # case 2
         {
             $lemma = $lemmas[0];
         }
