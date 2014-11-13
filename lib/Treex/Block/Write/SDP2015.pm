@@ -783,7 +783,8 @@ similar to CoNLL, i.e. one token/node per line, tab-separated values on the
 line, sentences/trees terminated by a blank line.
 
 The format is described here:
-http://alt.qcri.org/semeval2014/task8/index.php?id=data-and-tools
+L<http://alt.qcri.org/semeval2015/task18/index.php?id=data-and-tools>
+L<http://alt.qcri.org/semeval2014/task8/index.php?id=data-and-tools>
 
 Sample usage:
 
