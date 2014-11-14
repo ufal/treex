@@ -1173,7 +1173,7 @@ sub _execute_scenario {
             # you can omit --cleanup or uncomment next line
             # $directory .= sprintf "%03d-cluster-run", rand 1000;
             #            print STDERR "XXXX tested wildcard $dir_wildcard:".(join ' ', glob("$dir_wildcard"))."\n";
-            @existing_dirs = bsd_glob $dir_wildcard    # separate var because of troubles with glob context
+            @existing_dirs = grep {-d $_} bsd_glob "$dir_wildcard";    # separate var because of troubles with glob context
             }
             while (@existing_dirs);
     }
