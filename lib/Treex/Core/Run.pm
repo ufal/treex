@@ -230,8 +230,11 @@ has 'workdir' => (
     traits        => ['Getopt'],
     isa           => 'Str',
     default       => './{NNN}-cluster-run-{XXXXX}',
-    documentation => 'working directory for temporary files in parallelized processing ' .
-        '(if not specified, directories such as 001-cluster-run, 002-cluster-run etc. are created)',
+    documentation => 'working directory for temporary files in parallelized processing; ' .
+        'one can create automatic directories by using patterns: ' .
+        '{NNN} is replaced by an ordinal number with so many leading zeros to have length of the number of Ns, ' .
+        '{XXXX} is replaced by a random string, whose length is the same as the number of Xs (min. 4). ' .
+        'If not specified, directories such as 001-cluster-run, 002-cluster-run etc. are created',
 );
 
 has 'sge_job_numbers' => (
