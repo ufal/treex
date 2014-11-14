@@ -17,6 +17,7 @@ extends 'Treex::Core::Block';
 #  the no_space_after attribute of a-tree nodes.
 
 has debug => ( isa => 'Bool', is => 'ro', required => 0, default => 1 );
+has lxsuite_key => ( isa => 'Str', is => 'ro', required => 1 );
 has num_tokenized_sents => ( isa => 'Int', is => 'rw', required => 0, default => 0 );
 has [qw( _reader _writer _pid )] => ( is => 'rw' );
 
@@ -26,9 +27,13 @@ sub tokenize_sentence {
     my $sentence_num = $self->num_tokenized_sents + 1;
     print STDERR "PT::Tokenize in [$sentence_num]: ".$sentence."\n"
         if $self->debug;
-    print {$self->_writer} $sentence."\n";
+    print {$self->_writer} $sentence."\n\n";
     my $reader = $self->_reader;
     my $tokenized = <$reader>;
+    while (!$tokenized) { # discard empty lines
+        $tokenized = <$reader>;
+    }
+
     die "Failed to read from LX-Suite tokenizer, better to kill oneself."
         if !defined $tokenized;
     print STDERR "PT::Tokenize out[$sentence_num]: ".$tokenized."\n"
@@ -55,7 +60,7 @@ sub process_zone {
         # create new a-node
         $a_root->create_child(
             form           => $token,
-            no_space_after => 1,
+            no_space_after => 0,
             ord            => $i + 1,
         );
     }
@@ -65,15 +70,12 @@ sub process_zone {
 
 sub BUILD {
     my $self = shift;
-    my $tarball = require_file_from_share( 
-        "installed_tools/LX-Suite.tar.gz",
+    my $client = require_file_from_share(
+        "installed_tools/lxsuite_client.sh",
         ref( $self ),
     );
-    my $dir = dirname($tarball);
-    `test $dir/LX-Suite/run-Suite.sh -nt $tarball || tar xzf $tarball -C $dir`;
-    
-    my $cmd = "$dir/LX-Suite/run-Suite.sh tokenizer";
-    # start LX-Suite
+    my $key = $self->lxsuite_key;
+    my $cmd = "$client $key plain:tokenizer:plain";
     my ( $reader, $writer, $pid ) =
         Treex::Tool::ProcessUtils::bipipe($cmd, ':encoding(utf-8)');
     $self->_set_reader( $reader );
