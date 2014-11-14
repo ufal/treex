@@ -31,6 +31,15 @@ elsif ( $action eq "stop" ) {
 elsif ( $action eq "check" ){
     Treex::Tool::Memcached::Memcached::contains(@ARGV);
 }
+elsif ( $action eq "hostname" ){
+    my $hostname = Treex::Tool::Memcached::Memcached::get_memcached_hostname();
+    if ($hostname) {
+        print "$hostname\n";
+        exit 0;
+    } else {
+        exit 1;
+    }
+}
 else {
     help();
 }
@@ -123,6 +132,9 @@ USAGE
 ./memcached.pl check file key
     Returns whether the given key has been loaded from the given file/namespace.
 
+./memcached.pl hostname
+    Returns the hostname if running. Returns nothing and exits with status 1 if not.
+
 DOC
 
     return;
@@ -144,6 +156,7 @@ memcached.pl
     ./memcached.pl check data-file key
     ./memcached.pl stats
     ./memcached.pl stop
+    ./memcached.pl hostname
 
 =head1 DESCRIPTION
 
