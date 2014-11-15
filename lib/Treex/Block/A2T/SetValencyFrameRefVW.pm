@@ -47,9 +47,6 @@ sub process_ttree {
 
     my ( $self, $troot ) = @_;
 
-    my $sent_id = $troot->get_document->file_stem . $troot->get_document->file_number . '##' . $troot->id;
-    $sent_id =~ s/[-_]root$//;
-
     # apply sempos filter
     my $sempos_filter = $self->sempos_filter;
     my @tnodes        = grep {
@@ -63,7 +60,7 @@ sub process_ttree {
 
         $tnodes[$i]->set_val_frame_rf();    # force-undef the valency frame beforhand to enable predicting 1st frame
 
-        my ( $feat_str, $frame_id ) = $self->_valframe_feats->get_feats_and_class( $tnodes[$i], $sent_id, $tnodes[$i]->ord );
+        my ( $feat_str, $frame_id ) = $self->_valframe_feats->get_feats_and_class( $tnodes[$i] );
         $frame_id = $frame_id // '';        # TODO fix this better ?
 
         $tnodes[$i]->wild->{val_frame_set} = 'VALLEX-1st';

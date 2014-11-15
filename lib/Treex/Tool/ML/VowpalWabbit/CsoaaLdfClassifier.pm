@@ -1,4 +1,4 @@
-package Treex::Tool::ML::VowpalWabbit::Classifier;
+package Treex::Tool::ML::VowpalWabbit::CsoaaLdfClassifier;
 
 use Moose;
 use ProcessUtils;

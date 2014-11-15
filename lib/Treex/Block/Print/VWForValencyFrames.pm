@@ -57,6 +57,7 @@ sub process_ttree {
 }
 
 # Return all features as a VW string + the correct class (or undef, if not available)
+# tag each class with its label + optionally sentence/word id, if they are set
 sub get_feats_and_class {
     my ( $self, $tnode, $sent_id, $word_id ) = @_;
 
@@ -78,15 +79,19 @@ sub get_feats_and_class {
     $feats = [ grep { $_ !~ /^(val_frame\.rf|parent|number_of_senses)[=:]/ } @$feats ];
 
     # prepare instance tag
-    my $inst_id = $sent_id . '-' . $word_id;
-    $inst_id =~ s/##.*-s/-s/;
+    my $inst_id = '';
+    if ($sent_id and $word_id){
+        my $inst_id = $sent_id . '-' . $word_id;
+        $inst_id =~ s/##.*-s/-s/;
+        $inst_id .= '=';
+    }
 
     # format for the output
     my $feat_str = 'shared |S ' . join( ' ', @$feats ) . "\n";
 
     for ( my $i = 0; $i < @$classes; ++$i ) {
         my $cost = '';
-        my $tag  = '\'' . $inst_id . '=' . $classes->[$i];
+        my $tag  = '\'' . $inst_id . $classes->[$i];
         if ($class) {
             $cost = ':' . ( $classes->[$i] eq $class ? 0 : 1 );
             if ( $classes->[$i] eq $class ) {
