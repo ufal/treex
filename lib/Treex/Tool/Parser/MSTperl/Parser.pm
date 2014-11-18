@@ -24,11 +24,15 @@ has model => (
 sub BUILD {
     my ($self) = @_;
 
-    $self->model(
-        Treex::Tool::Parser::MSTperl::ModelUnlabelled->new(
-            config => $self->config,
+    if ($self->config->baseline_parse) {
+        return;
+    } else {
+        $self->model(
+            Treex::Tool::Parser::MSTperl::ModelUnlabelled->new(
+                config => $self->config,
             )
-    );
+        );
+    }
 
     return;
 }
@@ -38,7 +42,11 @@ sub load_model {
     # (Str $filename)
     my ( $self, $filename ) = @_;
 
-    return $self->model->load($filename);
+    if ($self->config->baseline_parse) {
+        return;
+    } else {
+        return $self->model->load($filename);
+    }
 }
 
 sub parse_sentence {
@@ -48,7 +56,6 @@ sub parse_sentence {
 
     # parse sentence (does not modify $sentence)
     my $sentence_parsed = $self->parse_sentence_internal($sentence);
-
     return $sentence_parsed->toParentOrdsArray();
 }
 
@@ -57,13 +64,58 @@ sub parse_sentence_internal {
     # (Treex::Tool::Parser::MSTperl::Sentence $sentence)
     my ( $self, $sentence ) = @_;
 
+    # copy the sentence (do not modify $sentence directly)
+    my $sentence_working_copy = $sentence->copy_nonparsed();
+
+    my $edges;
+    if ($self->config->baseline_parse) {
+        $edges = $self->parse_sentence_baseline($sentence_working_copy);
+    } else {
+        $edges = $self->parse_sentence_full($sentence_working_copy);
+    }
+
+    #results
+    if ( $self->config->DEBUG >= 2 ) { print "RESULTS (parent -> child):\n"; }
+    foreach my $edge ( @$edges ) {
+        my ( $parent, $child ) = @$edge;
+        $sentence_working_copy->setChildParent( $child, $parent );
+
+        if ( $self->config->DEBUG >= 2 ) {
+            print "$parent -> $child\n";
+        }
+    }
+
+    return $sentence_working_copy;
+}
+
+sub parse_sentence_baseline {
+    my ($self, $sentence) = @_;
+
+    my @edges = ();
+    my $sentence_length = $sentence->len();
+
+    if ( $self->config->baseline_parse_type eq 'right-branching' ) {
+        for (my $ord = 1; $ord <= $sentence_length; $ord++) {
+            push @edges, [$ord-1, $ord];
+        }
+    } elsif ( $self->config->baseline_parse_type eq 'left-branching' ) {
+        for (my $ord = 1; $ord < $sentence_length; $ord++) {
+            push @edges, [$ord+1, $ord];
+        }
+        push @edges, [0, $sentence_length];
+    }
+
+    return \@edges;
+}
+
+sub parse_sentence_full {
+    my ($self, $sentence_working_copy) = @_;
+
     if ( !$self->model ) {
         croak "MSTperl parser error: There is no model for unlabelled parsing!";
     }
 
-    # copy the sentence (do not modify $sentence directly)
-    my $sentence_working_copy = $sentence->copy_nonparsed();
-    my $sentence_length       = $sentence_working_copy->len();
+    my $sentence_length = $sentence_working_copy->len();
 
     my $graph = Graph->new(
         vertices => [ ( 0 .. $sentence_length ) ]
@@ -118,19 +170,7 @@ sub parse_sentence_internal {
 
     my $msts = $graph->MST_ChuLiuEdmonds($graph);
 
-    if ( $self->config->DEBUG >= 2 ) { print "RESULTS (parent -> child):\n"; }
-
-    #results
-    foreach my $edge ( $msts->edges ) {
-        my ( $parent, $child ) = @$edge;
-        $sentence_working_copy->setChildParent( $child, $parent );
-
-        if ( $self->config->DEBUG >= 2 ) {
-            print "$parent -> $child\n";
-        }
-    }
-
-    return $sentence_working_copy;
+    return $msts->edges;
 }
 
 1;

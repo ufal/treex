@@ -450,6 +450,18 @@ has 'cprob_buckets' => (
     default => undef,
 );
 
+has 'baseline_parse' => (
+    is      => 'rw',
+    isa     => 'Bool',
+    default => 0,
+);
+
+has 'baseline_parse_type' => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => 'left-branching',
+);
+
 # METHODS
 
 sub BUILD {
@@ -510,6 +522,8 @@ sub BUILD {
             'VITERBI_STATES_NUM_THRESHOLD',
             'EM_EPSILON',
             'EM_heldout_data_at',
+            'baseline_parse',
+            'baseline_parse_type',
         );
 
         # name => required?
@@ -612,7 +626,7 @@ sub BUILD {
 
         if (!$self->unlabelledFeaturesControl
             && !$self->labelledFeaturesControl
-
+            && !$self->baseline_parse
             #             && !$self->imlabelledFeaturesControl
             )
         {
