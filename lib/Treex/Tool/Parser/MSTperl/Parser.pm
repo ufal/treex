@@ -170,7 +170,8 @@ sub parse_sentence_full {
 
     my $msts = $graph->MST_ChuLiuEdmonds($graph);
 
-    return $msts->edges;
+    my @edges = $msts->edges;
+    return \@edges;
 }
 
 1;
