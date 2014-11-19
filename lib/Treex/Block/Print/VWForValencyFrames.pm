@@ -81,7 +81,7 @@ sub get_feats_and_class {
     # prepare instance tag
     my $inst_id = '';
     if ($sent_id and $word_id){
-        my $inst_id = $sent_id . '-' . $word_id;
+        $inst_id = $sent_id . '-' . $word_id;
         $inst_id =~ s/##.*-s/-s/;
         $inst_id .= '=';
     }
