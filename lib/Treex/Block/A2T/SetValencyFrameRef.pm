@@ -56,11 +56,16 @@ sub process_ttree {
         $sempos =~ s/\..*//;
 
         my $t_lemma = $tnode->t_lemma;
-        $t_lemma =~ s/_/ /g;
-
+        
         my ($frame) = Treex::Tool::Vallex::ValencyFrame::get_frames_for_lemma(
             $self->valency_dict_name, $self->language, $t_lemma, $sempos
         );
+        if (!$frame){
+            $t_lemma =~ s/_/ /g; # Czech Vallex uses spaces, English uses underscores
+            $frame = Treex::Tool::Vallex::ValencyFrame::get_frames_for_lemma(
+                $self->valency_dict_name, $self->language, $t_lemma, $sempos
+            );
+        }
         next if ( !$frame );
 
         $tnode->set_val_frame_rf( $self->valency_dict_prefix . $frame->id );

@@ -108,11 +108,16 @@ sub get_feats_and_class {
 sub _get_classes {
     my ( $self, $tnode ) = @_;
     
-    my $lemma = lc $tnode->t_lemma; # TODO how is it with spaces/underscores?
+    my $lemma = lc $tnode->t_lemma;
     my $sempos = $tnode->gram_sempos // 'v'; # sempos: default to verbs, use just 1st part
     $sempos =~ s/\..*//;
     
+    # Try using both underscores and spaces to find the valency frame
     my (@frames) = Treex::Tool::Vallex::ValencyFrame::get_frames_for_lemma( $self->valency_dict_name, $self->language, $lemma, $sempos );
+    if (!@frames and $lemma =~ /_/){
+        $lemma =~ s/_/ /g;
+        @frames = Treex::Tool::Vallex::ValencyFrame::get_frames_for_lemma( $self->valency_dict_name, $self->language, $lemma, $sempos );
+    }
     my @frame_ids = map { $self->valency_dict_prefix . $_->id } @frames;
     return $tnode->val_frame_rf, \@frame_ids;
 }

@@ -61,7 +61,7 @@ sub process_ttree {
         $tnodes[$i]->set_val_frame_rf();    # force-undef the valency frame beforhand to enable predicting 1st frame
 
         my ( $feat_str, $frame_id ) = $self->_valframe_feats->get_feats_and_class( $tnodes[$i] );
-        $frame_id = $frame_id // '';        # TODO fix this better ?
+        $frame_id = $frame_id // '';
 
         $tnodes[$i]->wild->{val_frame_set} = 'VALLEX-1st';
         if ($feat_str) {
@@ -72,7 +72,7 @@ sub process_ttree {
             }
         }
 
-        if ( $frame_id !~ /#/ and $self->valency_dict_prefix ) {
+        if ( $frame_id ne '' and $frame_id !~ /#/ and $self->valency_dict_prefix ) {
             $frame_id = $self->valency_dict_prefix . $frame_id;
         }
         $tnodes[$i]->set_val_frame_rf($frame_id);
