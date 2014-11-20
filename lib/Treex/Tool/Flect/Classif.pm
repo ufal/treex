@@ -21,7 +21,7 @@ sub BUILD {
     $file =~ s/\/[^\/]*$//;
     if ( !-d $file . '/flect' ) {
         log_warn('Flect not installed. Trying to download from GitHub...');
-        system("git clone git\@github.com:UFAL-DSG/flect.git $file/flect") == 0 || die('Could not install Flect');
+        system("git clone https://github.com/UFAL-DSG/flect.git $file/flect") == 0 || die('Could not install Flect');
     }
 
     $self->_set_python( Treex::Tool::Python::RunFunc->new() );
