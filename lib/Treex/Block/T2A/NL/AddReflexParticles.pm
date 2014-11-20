@@ -49,12 +49,9 @@ sub process_tnode {
             'form'          => $form,
             'afun'          => $afun,
             'morphcat/pos'  => '!',
-            'iset/pos'      => 'noun',
-            'iset/prontype' => 'prs',
-            'iset/reflex'   => 'reflex',
-            'iset/person'   => $person,
         }
     );
+    $ref_node->iset->add('pos' => 'noun', 'prontype' => 'prs', 'reflex' => 'reflex', 'person' => $person);
     $tnode->add_aux_anodes($ref_node);
 
     # approximate ordering at the 2nd position

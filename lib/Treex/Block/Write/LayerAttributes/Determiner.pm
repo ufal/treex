@@ -10,8 +10,9 @@ sub modify_single {
 
     my ( $self, $anode ) = @_;
 
+    # only include regular adjectives and past participles 
     if ( $anode->iset->pos eq 'adj' ) {
-        return '' if ( $anode->iset->adjtype );
+        return '' if ( $anode->iset->adjtype || $anode->iset->prontype );
     }
     elsif ( $anode->iset->pos eq 'verb' ) {
         return '' if ( !$anode->match_iset( 'verbform' => 'part', 'tense' => 'past' ) );
@@ -19,15 +20,15 @@ sub modify_single {
     else {
         return '';
     }
-    my $art = first { $_->iset->adjtype } $anode->get_children( { ordered => 1 } );
+    my $art = first { $_->iset->adjtype || $_->iset->prontype } $anode->get_children( { ordered => 1 } );
     return $art->lemma if ($art);
     my ($aparent) = $anode->get_eparents( { or_topological => 1 } );
     return '' if ( !$aparent or $aparent->is_root );
-    $art = first { $_->iset->adjtype } $aparent->get_echildren( { or_topological => 1, ordered => 1 } );
+    $art = first { $_->iset->adjtype || $_->iset->prontype } $aparent->get_echildren( { or_topological => 1, ordered => 1 } );
     return $art->lemma if ($art);
     my ($agrandpa) = $aparent->get_eparents( { or_topological => 1 } );
     return '' if ( !$agrandpa or $agrandpa->is_root );
-    $art = first { $_->iset->adjtype } $agrandpa->get_echildren( { or_topological => 1, ordered => 1 } );
+    $art = first { $_->iset->adjtype || $_->iset->prontype } $agrandpa->get_echildren( { or_topological => 1, ordered => 1 } );
     return $art->lemma if ($art);
     return '';
 }

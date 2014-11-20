@@ -165,7 +165,7 @@ sub _get_pos {
     my $pos  = $anode->iset->pos;
     $pos = 'comp' if ( $anode->match_iset( 'conjtype' => 'sub' ) );
     $pos = 'comparative' if ( ( $anode->lemma // '' ) =~ /^(als|dan)$/ and ( $anode->afun // '' ) eq 'AuxP' );
-    $pos = 'det'  if ( $anode->match_iset( 'adjtype' => 'det' ) );
+    $pos = 'det'  if ( $anode->match_iset( 'prontype' => 'art' ) );
     $pos = 'pron' if ( $anode->iset->prontype );
     $pos = 'vg'   if ( $pos eq 'conj' );
     $pos = 'prep' if ( $pos eq 'adp' );

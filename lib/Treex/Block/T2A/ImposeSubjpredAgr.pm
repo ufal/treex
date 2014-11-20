@@ -20,7 +20,7 @@ sub process_tnode {
     }
 
     my $number = $a_subj->iset->number || 'sing';
-    $number = 'plu' if $a_subj->is_member();
+    $number = 'plur' if $a_subj->is_member();
     $a_vfin->iset->set_number($number);
 
     my $person = $a_subj->iset->person || '3';

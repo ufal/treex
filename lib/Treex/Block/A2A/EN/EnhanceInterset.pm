@@ -8,7 +8,7 @@ sub process_anode {
     my ($self, $anode) = @_;
     
     # fill in definiteness for determiners
-    if ($anode->match_iset('adjtype' => 'det')){
+    if ($anode->match_iset('prontype' => 'art')){
         if ($anode->lemma eq 'the'){
             $anode->iset->set_definiteness('def');
         }
