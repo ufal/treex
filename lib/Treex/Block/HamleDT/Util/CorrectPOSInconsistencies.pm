@@ -11,7 +11,8 @@ use autodie;
 use open qw( :std :utf8 );
 
 my %variation_trigrams;
-my @correct_tags;
+my %seen_nucleus_tags;
+my @tagger_tags;
 
 sub process_start {
     my $self = shift;
@@ -21,6 +22,10 @@ sub process_start {
         chomp $line;
         my ($nucleus, $tags, $tc, $trigram, $rest) = split "\t", $line, 5;
         $variation_trigrams{$trigram} = 1;
+        my @nucleus_tags = split /\//, $tags;
+        for my $nucleus_tag (@nucleus_tags) {
+            $seen_nucleus_tags{$trigram}{$nucleus_tag} = 1;
+        }
     }
     close $TRIGRAMS;
 
@@ -34,7 +39,7 @@ sub process_start {
                 $tag = $1;
             }
         }
-        push @correct_tags, $tag;
+        push @tagger_tags, $tag;
     }
     close $CORPUS;
 }
@@ -49,17 +54,25 @@ sub process_atree {
     for my $i (1..$#anodes-1) {
         my $trigram = join ' ', @forms[$i-1..$i+1];
         if (defined $variation_trigrams{$trigram}) {
-            my $new_tag = $correct_tags[$i];
+            my $tagger_tag = $tagger_tags[$i];
             my $old_tag = $anodes[$i]->get_iset_conll_feat();
             $old_tag =~ s/\|?tagset=[^|]*//g; # remove 'tagset' feature
             $old_tag =~ s/\|?other=[^|]*//g; # remove 'other' feature
-            my $msg = $old_tag eq $new_tag ? 'SAME' : 'DIFF';
+            my $new_tag = $tagger_tag;
+            my $msg;
+            if ( $seen_nucleus_tags{$trigram}{$tagger_tag} ) {
+                $msg = $old_tag eq $new_tag ? 'SAME' : 'DIFF';
+            }
+            else {
+                $msg = 'INAPLICCABLE';
+            }
+            print $a_root->to_string(), "\n";
             print join(' ', @forms[0..$i-1], ">>> $forms[$i] <<<", @forms[$i+1..$#forms]), "\n";
             print join("\t", $msg, $forms[$i], "$old_tag -> $new_tag"), "\n\n";
         }
     }
     for my $j (0..$#anodes) {
-        shift @correct_tags;
+        shift @tagger_tags;
     }
 }
 
