@@ -21,6 +21,7 @@ loaf	loaves
 louse	lice
 man men
 money	monies
+moose   moose
 mouse	mice
 no.	nos.
 ox	oxen

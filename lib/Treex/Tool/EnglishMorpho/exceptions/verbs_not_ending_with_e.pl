@@ -39,6 +39,7 @@ my @OTHER = qw(
     bequeath
     bias
     blossom
+    bottom
     bring
     catalog
     channel
