@@ -80,32 +80,37 @@ sub parse_sentence {
     my @bun_heads;      # we mark for each bunsetsu, which node should act as a parent for its "child-bunsetsu"
     my $current_token = 0;
     my $verb_token = 0; # when we find a verb inside bunsetsu, following tokens from that bunsetsu should be dependent on it
+
+    my $bun = 0;
+    my $parent = 0;
     while ( $line !~ "EOS") {
 
-        # if for some reason cabocha fails, throw an exception
         log_fatal("Unitialized line (perhaps Cabocha was not initialized correctly).") if (!defined $line);        
 
         next if $line =~ /^#|EOS/;  # skip uninteresting lines
 
-        # Cabocha output example: "* 0 5D 0/1 1.062087 "
-        # We need to extract only bunsetsu number and number of its parent
         if ( $line =~ /^\*/ ) {
+            $verb_token = 0;
             $line =~ s{^\*\s+}{}; 
-            (my $bun, my $parent) = split / /, $line;
+            ($bun, $parent) = split / /, $line;
             $bun_heads[ $bun ] = $current_token;
             $parent =~ s{D}{};
-            $parents[ $current_token ] = $parent * -1; # since we still do not know which node in treex representation corresponds to the parent bunsetsu we note it with its negative value
-            $parents[ $current_token ] = 0 if( $parent == -1 ); # set parent of the "root"
+
+            # since we still do not know which node in treex representation corresponds to the parent bunsetsu we note it with its negative value
+            $parents[ $current_token ] = $parent * -1; 
+
+            # set the parent of the "root"
+            $parents[ $current_token ] = 0 if( $parent == -1 ); 
         }
         
         # Japanese is head-final language, so (most of the times) inside bunsetsu, every token is dependent on the following token
-        # only verb endings should be dependent on the verb (which is preceeding token
-        # other exceptions are handled after parsing
+        # exceptions should be handled after parsing
         else {
             if ( !defined $parents[ $current_token ] ) {
               if($verb_token == 0) {
                 $parents[ $current_token ] = $parents[ $current_token - 1];
                 $parents[ $current_token - 1] = $current_token;  
+                $bun_heads[ $bun ] = $current_token;
               }
               else {
                 $parents[ $current_token ] = $verb_token;
@@ -113,7 +118,7 @@ sub parse_sentence {
             }
 
             # if the current token is verb, the following tokens should be its children
-            $verb_token = $current_token if ($line =~ /動詞/);
+            $verb_token = $current_token if ($line =~ /\t動詞/ && $line !~ /接尾/);
 
             $current_token++;
         }
@@ -121,7 +126,6 @@ sub parse_sentence {
     } 
 
     # now we fix the parents of each bunsetsu so they point at their correct treex representants (the parents with negative value)
-
     my $i = 0;
     while ( defined $parents[ $i ] ) {
         if ( $parents[ $i ] < 0 ) {
