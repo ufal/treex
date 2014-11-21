@@ -404,7 +404,7 @@ sub get_all_node_ids {
     return ( keys %{ $self->_index } );
 }
 
-# -------------------------------------- ACCESS TO BUNDLES ---------------------
+# -------------------------------------- ACCESS TO BUNDLES -------------------
 
 sub get_bundles {
     log_fatal('Incorrect number of arguments') if @_ != 1;
@@ -438,7 +438,7 @@ sub create_bundle {
     return $new_bundle;
 }
 
-# ----------------------- ACCESS TO ZONES --------------------------------------
+# ----------------------- ACCESS TO ZONES ------------------------------------
 
 sub create_zone {
     my $self = shift;
@@ -506,7 +506,7 @@ sub get_or_create_zone {
     return $fs_zone;
 }
 
-# -------------------- LOADING AND SAVING --------------------------------------
+# -------------------- LOADING AND SAVING ------------------------------------
 
 sub load {
     my $self = shift;
@@ -630,6 +630,10 @@ A document consists of a sequence of bundles, mirroring a sequence
 of natural language sentences (typically, but not necessarily,
 originating from the same text). Attributes (attribute-value pairs)
 can be attached to a document as a whole.
+
+Note that the references from the bundles to the containing document are weak,
+so make sure you always keep a reference to the document in scope to prevent
+the contents of the document from being garbage-collected.
 
 =head1 ATTRIBUTES
 
