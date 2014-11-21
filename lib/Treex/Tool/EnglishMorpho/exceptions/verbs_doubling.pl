@@ -10,7 +10,7 @@ my @DATA = qw(
     airdrop appal blackleg bobsled bur chum confab counterplot curet dib
     backdrop backfil backflip backlog backpedal backslap backstab bag
     balfun ballot ban bar barbel bareleg barrel bat bayonet becom bed
-    bedevil bedwet beenhop befit befog beg beget begin bejewel bemedal
+    bedevil bedwet beenhop befit befog beg beget begin bejewel belly-flop bemedal
     benefit benum beset besot bestir bet betassel bevel bewig bib bid
     billet bin bip bit bitmap blab blag blam blan blat blim blip blob
     bloodlet blot blub blur bob bodypop bog booby-trap boobytrap booksel

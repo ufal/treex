@@ -3,12 +3,21 @@
 # Here are listed only those verbs not ending with "e"
 # which are NOT COVERED by RULES in Lemmatizer.pm !
 
+=pod
+
+
+
+
+=cut
+
+
 my @AMERICAN = qw(
     cancel
     equal
     label
     level
     model
+    remodel
     signal
     total
     travel
@@ -22,24 +31,59 @@ my @BRITISH = qw(
 
 my @OTHER = qw(
     accustom
+    aid
+    backpedal
+    barrel
     bath
+    bedevil
+    bequeath
     bias
     blossom
     bring
+    catalog
+    channel
+    clang
     cling
+    counsel
     echo
+    embargo
     fling
     focus
+    funnel
+    imperil
+    libel
+    mouth
     murmur
+    overhang
     parallel
+    pedal
     pilot
     profit
+    pummel
+    pyramid
+    quarrel
+    ravel
     reach
+    refocus
+    relabel
+    rendezvous
+    revel
+    rival
+    shrivel
     smooth
+    snivel
+    spiral
     spring
+    sting
     string
     swing
+    swivel
+    tango
+    torpedo
     unearth
+    unravel
+    veto
+    wrong
 );
 
 

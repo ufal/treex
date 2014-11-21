@@ -4,9 +4,10 @@
 # which are NOT COVERED by RULES in Lemmatizer.pm !
 
 my @DATA = qw(
+    accrete
+    ache
     adhere
     adore
-    ache
     age
     analyse
     atone
@@ -17,7 +18,9 @@ my @DATA = qw(
     cane
     centre
     cite
+    clone
     cohere
+    collapse
     commune
     compere
     compete
@@ -31,6 +34,7 @@ my @DATA = qw(
     create
     delete
     delineate
+    dethrone
     die
     dope
     drape
@@ -40,8 +44,11 @@ my @DATA = qw(
     enthrone
     escape
     excite
+    expedite
     expunge
+    extradite
     eye
+    finesse
     forte
     gangrene
     gape
@@ -59,14 +66,18 @@ my @DATA = qw(
     intervene
     intone
     invite
+    lambaste
     landscape
+    license
     lie
     lope
     lunge
     manoeuvre
+    misroute
     mope
     nauseate
     normalise
+    obsolete
     outmanoeuvre
     overawe
     paste
@@ -83,10 +94,14 @@ my @DATA = qw(
     range
     rape
     recite
+    re-create
+    reignite
+    reroute
     reshape
     reunite
     revere
     rope
+    route
     scrape
     secrete
     sellotape
@@ -99,16 +114,18 @@ my @DATA = qw(
     snore
     stone
     supervene
-    taste
     tape
+    taste
     telephone
     tie
     tone
     tune
     unite
-    waste
+    vie
     wane
+    waste
     wipe
+    zone
 );
 
 sub analyze() {
