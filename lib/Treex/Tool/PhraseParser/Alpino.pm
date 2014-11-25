@@ -48,15 +48,17 @@ sub BUILD {
 sub escape {
     my ( $self, $sent ) = @_;
 
-    $sent =~ s/&/\&amp;/g;
-    $sent =~ s/%/\&perc;/g;
+    $sent =~ s/\\/\\\\/g;
+    $sent =~ s/%/\\%/g;
+    $sent =~ s/\[/\\[/g;
+    $sent =~ s/\]/\\]/g;
     return $sent;
 }
 
 sub unescape {
     my ( $self, $tok ) = @_;
-    $tok =~ s/&perc;/%/g;
-    $tok =~ s/&amp;/\&/g;
+    $tok =~ s/\\%/%/g;
+    $tok =~ s/\\\\/\\/g;
     return $tok;
 }
 
