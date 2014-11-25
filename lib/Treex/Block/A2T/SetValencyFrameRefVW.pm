@@ -20,6 +20,10 @@ has 'model_file' => ( is => 'ro', isa => 'Str', required => 1 );
 
 has 'features_file' => ( is => 'ro', isa => 'Str', required => 1 );
 
+has 'vallex_mapping_file' => ( is => 'ro', isa => 'Str', default => '' );
+
+has 'vallex_mapping_by_lemma' => ( is => 'ro', isa => 'Bool', default => 0 );
+
 has '_valframe_feats' => ( is => 'rw' );
 
 has '_classif' => ( is => 'rw' );
@@ -33,9 +37,11 @@ sub process_start {
 
     my $valframe_feats = Treex::Block::Print::VWForValencyFrames->new(
         {
-            language          => $self->language,
-            features_file     => $self->features_file,
-            valency_dict_name => $self->valency_dict_name,
+            language            => $self->language,
+            features_file       => $self->features_file,
+            valency_dict_name   => $self->valency_dict_name,
+            vallex_mapping_file => $self->vallex_mapping_file,
+            vallex_mapping_by_lemma => $self->vallex_mapping_by_lemma,
         }
     );
     $self->_set_valframe_feats($valframe_feats);

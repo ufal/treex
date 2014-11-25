@@ -154,6 +154,7 @@ sub get_features_vw {
     return \@feats;
 }
 
+
 sub _vw_escape {
     my ($str) = @_;
     $str = '' if ( not defined $str );

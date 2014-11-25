@@ -19,6 +19,12 @@ has 'features_file' => ( is => 'ro', isa => 'Str', required => 1 );
 
 has '_feat_extract' => ( is => 'rw', default => 0 );
 
+has 'vallex_mapping_file' => ( is => 'ro', isa => 'Str', default => '' );
+
+has 'vallex_mapping_by_lemma' => ( is => 'ro', isa => 'Bool', default => 0 );
+
+has '_vallex_mapping' => ( is => 'ro', isa => 'Maybe[HashRef]', lazy_build => 1, builder => '_build_vallex_mapping' );
+
 #
 #
 #
@@ -27,6 +33,35 @@ sub BUILD {
     my ($self) = @_;
 
     $self->_set_feat_extract( Treex::Tool::FeatureExtract->new( { features_file => $self->features_file } ) );
+}
+
+sub _build_vallex_mapping {
+
+    my ($self) = @_;
+    return undef if ( not $self->vallex_mapping_file );
+    
+    my $mapping_file = $self->vallex_mapping_file;
+    if ( !-f $mapping_file ) {
+        $mapping_file = Treex::Core::Resource::require_file_from_share( $mapping_file, ref($self) );
+    }
+    if ( !-f $mapping_file ) {
+        log_fatal 'File ' . $mapping_file . ' does not exist.';
+    }
+    
+    my %mapping = ();
+    my $prefix = $self->valency_dict_prefix // '';    
+    open( my $fh, '<:utf8', $mapping_file );
+    while (my $line = <$fh>){
+        chomp $line;
+        my ($frame_id, $lemma) = split /\t/, $line;
+        
+        if (!defined($mapping{$lemma}) ) {
+            $mapping{$lemma} = [];
+        }
+        push @{$mapping{$lemma}}, $prefix . $frame_id;
+    }
+    close($fh);
+    return \%mapping;
 }
 
 sub process_ttree {
@@ -74,6 +109,19 @@ sub get_feats_and_class {
 
     # get all features, formatted for VW
     my $feats = $self->_feat_extract->get_features_vw($tnode);
+    
+    # check Vallex mapping for the aligned t-lemma 
+    my %vallex_mapped = ();
+    my $mapping_suffix = '';
+    if ($self->_vallex_mapping){
+        my $aligned_lemma = $self->_feat_extract->_get_data($tnode, 'aligned->t_lemma');
+        if (defined($self->_vallex_mapping->{$aligned_lemma})){            
+            %vallex_mapped = map { $_ => 1 } @{ $self->_vallex_mapping->{$aligned_lemma} };
+        }
+        if ($self->vallex_mapping_by_lemma){
+            $mapping_suffix = '_' . $tnode->t_lemma;
+        }
+    }
 
     # TODO make this filtering better somehow
     $feats = [ grep { $_ !~ /^(val_frame\.rf|parent|number_of_senses)[=:]/ } @$feats ];
@@ -98,7 +146,11 @@ sub get_feats_and_class {
                 $tag .= '--correct';
             }
         }
-        $feat_str .= ( $i + 1 ) . $cost . ' ' . $tag . ' |T val_frame_rf=' . $classes->[$i] . "\n";
+        $feat_str .= ( $i + 1 ) . $cost . ' ' . $tag;        
+        if ($vallex_mapped{$classes->[$i]}){
+            $feat_str .= ' |M vallex_mapping' . $mapping_suffix;
+        }
+        $feat_str .= ' |T val_frame_rf=' . $classes->[$i] . "\n";
     }
     $feat_str .= "\n";
     return ( $feat_str, $class // $classes->[0] ); # return feature string output + correct or first class
