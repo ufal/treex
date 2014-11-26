@@ -68,6 +68,6 @@ while True:
         except Exception, e:
             cmd = re.sub(r'[^\n]+\n$', '', cmd)
             _, _, tb = sys.exc_info()
-            print >> sys.stderr, '\n\nCommand:', '\n', cmd, '\nException:\n', str(type(e)), ':', e, '\n\n', ''.join(traceback.format_tb(tb))
+            print >> stderr, '\n\nCommand:', '\n', cmd, '\nException:\n', str(type(e)), ':', e, '\n\n', ''.join(traceback.format_tb(tb))
             pass
         cmd = ''
