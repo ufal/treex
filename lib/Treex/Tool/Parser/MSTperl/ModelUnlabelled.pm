@@ -21,6 +21,14 @@ sub BUILD {
     return;
 }
 
+use List::Util "sum";
+
+override '_build_sum' => sub {
+    my ($self) = @_;
+
+    return sum $self->weigths->values;
+};
+
 # STORING AND LOADING
 
 sub get_data_to_store {

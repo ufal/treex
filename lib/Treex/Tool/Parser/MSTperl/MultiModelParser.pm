@@ -52,9 +52,11 @@ override 'parse_sentence_full' => sub {
                 ->get_all_features($edge);
 
             # HERE THE MODEL COMBINATION HAPPENS
-            # ATM only simple sum
+            # sum of feature weights;
+            # each model gets its weights divided by the sum of all of the
+            # weights in the model for normalization
             my $score = sum (
-                map { $_->score_features($features) } @{$self->model}
+                map { $_->score_features($features)/$_->sum } @{$self->model}
             );
 
             # only progress and/or debug info

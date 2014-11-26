@@ -20,6 +20,16 @@ has 'featuresControl' => (
     is  => 'rw',
 );
 
+# sum of all feature weights
+# to be used for normalizing
+has sum => ( is => 'rw', isa => 'Num', lazy => 1, builder => '_build_sum' );
+
+sub _build_sum {
+    my ($self) = @_;
+
+    return 0;
+}
+
 # called after preprocessing training data, before entering the MIRA phase
 sub prepare_for_mira {
 
