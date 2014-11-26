@@ -19,22 +19,15 @@ has config => (
 has model => (
     isa => 'Maybe[Treex::Tool::Parser::MSTperl::ModelUnlabelled]',
     is  => 'rw',
+    lazy => 1,
+    builder => '_build_model',
 );
 
-sub BUILD {
+sub _build_model {
     my ($self) = @_;
 
-    if ($self->config->baseline_parse) {
-        return;
-    } else {
-        $self->model(
-            Treex::Tool::Parser::MSTperl::ModelUnlabelled->new(
-                config => $self->config,
-            )
-        );
-    }
-
-    return;
+    return Treex::Tool::Parser::MSTperl::ModelUnlabelled
+        ->new(config => $self->config);
 }
 
 sub load_model {
