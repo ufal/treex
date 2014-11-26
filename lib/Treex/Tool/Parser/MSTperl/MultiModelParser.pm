@@ -25,7 +25,7 @@ override 'load_model' => sub {
 override 'parse_sentence_full' => sub {
     my ($self, $sentence_working_copy) = @_;
 
-    if ( !$self->model ) {
+    if ( @{$self->model} == 0 ) {
         croak "MSTperl parser error: There is no model for unlabelled parsing!";
     }
 
@@ -50,7 +50,9 @@ override 'parse_sentence_full' => sub {
 
             my $features = $self->config->unlabelledFeaturesControl
                 ->get_all_features($edge);
-            
+
+            # HERE THE MODEL COMBINATION HAPPENS
+            # ATM only simple sum
             my $score = sum (
                 map { $_->score_features($features) } @{$self->model}
             );
@@ -105,9 +107,18 @@ __END__
 =head1 NAME
 
 Treex::Tool::Parser::MSTperl::MultiModelParser -- extension of
-Treex::Tool::Parser::MSTperl::Parser that combines multiple models.
+L<Treex::Tool::Parser::MSTperl::Parser> that combines multiple models.
 
 To be used for multisource delexicalized parser transfer.
+
+Note: this parser cannot be used for training! Train the individual models using 
+L<Treex::Tool::Parser::MSTperl::Parser> and then combine them using the
+MultiModelParser.
+
+At the moment, the models are required to have identical configuration, because
+it is not only a configuration of the model but also of the parser -- and this
+parser does support having multiple models, but does not support having multiple
+configurations!
 
 =head1 AUTHORS
 
