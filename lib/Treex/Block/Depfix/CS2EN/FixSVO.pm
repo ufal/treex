@@ -35,6 +35,8 @@ sub fix {
 
 Treex::Block::Depfix::CS2EN::FixSVO -- reorder the English sentence so that it has the subject-object-verb ordering.
 
+TODO: There is/are; questions.
+
 =head1 AUTHOR
 
 Rudolf Rosa <rosa@ufal.mff.cuni.cz>
