@@ -23,6 +23,8 @@ has model => (
     builder => '_build_model',
 );
 
+my $total_spanning_tree_weight = 0;
+
 sub _build_model {
     my ($self) = @_;
 
@@ -164,7 +166,29 @@ sub parse_sentence_full {
     my $msts = $graph->MST_ChuLiuEdmonds($graph);
 
     my @edges = $msts->edges;
+
+    # only progress and/or debug info
+    if ( $self->config->DEBUG >= 1 ) {
+        my $spanning_tree_weight = 0;
+        foreach my $edge (@edges) {
+            $spanning_tree_weight += $graph->get_edge_weight(@$edge);
+        }
+        $total_spanning_tree_weight += $spanning_tree_weight;
+        # print "SPANNING TREE WEIGHT: $spanning_tree_weight\n";
+    }
+
     return \@edges;
+}
+
+sub DEMOLISH {
+    my ($self) = @_;
+
+    # only progress and/or debug info
+    if ( $self->config->DEBUG >= 1 ) {
+        print "TOTAL SPANNING TREE WEIGHT: $total_spanning_tree_weight\n";
+    }
+
+    return ;
 }
 
 1;
