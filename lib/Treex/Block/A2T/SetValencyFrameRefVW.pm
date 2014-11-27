@@ -24,6 +24,8 @@ has 'vallex_mapping_file' => ( is => 'ro', isa => 'Str', default => '' );
 
 has 'vallex_mapping_by_lemma' => ( is => 'ro', isa => 'Bool', default => 0 );
 
+has 'restrict_frames_file' => ( is => 'ro', isa => 'Str', default => '' );
+
 has '_valframe_feats' => ( is => 'rw' );
 
 has '_classif' => ( is => 'rw' );
@@ -37,11 +39,13 @@ sub process_start {
 
     my $valframe_feats = Treex::Block::Print::VWForValencyFrames->new(
         {
-            language            => $self->language,
-            features_file       => $self->features_file,
-            valency_dict_name   => $self->valency_dict_name,
-            vallex_mapping_file => $self->vallex_mapping_file,
+            language                => $self->language,
+            features_file           => $self->features_file,
+            valency_dict_name       => $self->valency_dict_name,
+            valency_dict_prefix     => $self->valency_dict_prefix,
+            vallex_mapping_file     => $self->vallex_mapping_file,
             vallex_mapping_by_lemma => $self->vallex_mapping_by_lemma,
+            restrict_frames_file    => $self->restrict_frames_file,
         }
     );
     $self->_set_valframe_feats($valframe_feats);
@@ -78,8 +82,9 @@ sub process_ttree {
             }
         }
 
-        if ( $frame_id ne '' and $frame_id !~ /#/ and $self->valency_dict_prefix ) {
-            $frame_id = $self->valency_dict_prefix . $frame_id;
+        if ( $frame_id ne '' ) {
+            $frame_id =~ s/.*#//; # remove any possible previous prefix
+            $frame_id = $self->valency_dict_prefix . $frame_id; # add our set-up prefix
         }
         $tnodes[$i]->set_val_frame_rf($frame_id);
     }

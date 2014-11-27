@@ -71,7 +71,9 @@ sub _convert_formeme {
 
     if ( $linear ne '' ) {
         my $conversion = _get_conversion_table($language);
-        return split / /, $conversion->{$linear};
+        if ( defined $conversion->{$linear} ){
+            return split / /, $conversion->{$linear};
+        }
     }
     return ('???');
 }
