@@ -56,7 +56,7 @@ sub _build_vallex_mapping {
     my ($self) = @_;
     return undef if ( not $self->vallex_mapping_file );
 
-    my $mapping_file = self->_get_file( $self->vallex_mapping_file );
+    my $mapping_file = $self->_get_file( $self->vallex_mapping_file );
 
     my %mapping = ();
     my $prefix = $self->valency_dict_prefix // '';
