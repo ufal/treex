@@ -1,4 +1,5 @@
 package Treex::Core::Log;
+
 use strict;
 use warnings;
 

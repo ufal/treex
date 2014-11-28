@@ -1,4 +1,5 @@
 package Treex::Block::Write::Treex;
+
 use Moose;
 use Treex::Core::Common;
 use File::Path;

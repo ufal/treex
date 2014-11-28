@@ -1,4 +1,5 @@
 package Treex::Block::Read::BaseReader;
+
 use Moose;
 use Treex::Core::Common;
 use File::Slurp;
@@ -60,7 +61,7 @@ sub BUILD {
         my $eval_string = '$filename =~ s' . $regex . ';1;';
         for my $input_filename (@$filenames_ref){
             my $filename = $input_filename;
-            eval $eval_string or log_fatal "Failed to eval $eval_string";
+            eval { $eval_string } or log_fatal "Failed to eval $eval_string";
             if (! -s $filename){
                 push @filtered_filenames, $input_filename;
                 #say "not finished: $input_filename -> $filename";

@@ -152,7 +152,7 @@ sub _get_filename {
     
     if (defined $self->substitute){
         my $eval_string = '$filename =~ s' . $self->substitute . ';1;';
-        eval $eval_string or log_fatal "Failed to eval $eval_string";
+        eval { $eval_string } or log_fatal "Failed to eval $eval_string";
         my ($fn, $directories) = fileparse($filename, $self->_document_extension($document));
         $directories =~ s{/$}{};
         $document->set_path($directories);
@@ -184,7 +184,11 @@ override 'process_document' => sub {
     # treex Read::Treex from=@my.list Write::Sentences to=out.txt
     # As a workaround I decided to close the handle only in "treex -p".
     # Martin Popel 2014
-    $self->_close_file_handle() if $self->scenario->runner->jobindex;
+    ###
+    # For some reason the scenario->runner was not defined in some cases, so
+    # we test it too
+    # Dusan Varis 2014
+    $self->_close_file_handle() if ($self->scenario->runner && $self->scenario->runner->jobindex);
     # or if $self->scenario->runner->isa("Treex::Core::Parallel::Node")?
 
     return;
@@ -195,6 +199,8 @@ sub _do_process_document
     my ($self, $document) = @_;
 
      $self->Treex::Core::Block::process_document($document);
+
+    return;
 }
 
 sub _do_before_process {
@@ -283,10 +289,10 @@ sub _open_file_handle {
         $opn = "| bzip2 > '$filename'";
     }
     else {
-        $opn = ">$filename";
+        $opn = "$filename";
     }
     mkpath( dirname($filename) );
-    open $hdl, $opn;    # we use autodie here
+    open ( $hdl,'>', $opn );    # we use autodie here
     $hdl->autoflush(1);
     return $hdl;
 }

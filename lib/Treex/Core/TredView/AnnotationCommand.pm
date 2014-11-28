@@ -13,6 +13,7 @@ sub run {
         print "in AnnotationCommand2\n";
         $node->set_conll_deprel($argument);
     }
+    return;
 }
 
 1;

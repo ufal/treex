@@ -1,4 +1,5 @@
 package Treex::Block::Util::SetGlobal;
+
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';

@@ -1,4 +1,5 @@
 package Treex::Core::DocumentReader::ZoneReader;
+
 use Moose;
 use Treex::Core::Common;
 use autodie;

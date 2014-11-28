@@ -1,4 +1,5 @@
 package Treex::Core;
+
 use strict;
 use warnings;
 use Treex::Core::Document;

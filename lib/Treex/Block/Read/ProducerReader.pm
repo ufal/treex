@@ -1,4 +1,5 @@
 package Treex::Block::Read::ProducerReader;
+
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Log;
@@ -399,6 +400,7 @@ sub _mark_as_finished {
     }
 
     $self->status->{"___FINISHED___"} = 1;
+    return;
 }
 
 sub next_document {
@@ -411,6 +413,7 @@ sub number_of_documents {
 
 sub DESTROY {
     my $self = shift;
+    return;
 }
 
 sub _process_created_files {
@@ -496,7 +499,8 @@ sub _process_created_files {
     }
 
     # log_warn("TARGET DIR: " . join(", ", glob $global_target_dir . "/*"));
-
+    
+    return;
 }
 
 1;

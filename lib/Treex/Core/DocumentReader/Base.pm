@@ -1,4 +1,5 @@
 package Treex::Core::DocumentReader::Base;
+
 use Moose;
 use Treex::Core::Common;
 with 'Treex::Core::DocumentReader';

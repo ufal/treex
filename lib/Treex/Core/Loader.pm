@@ -10,7 +10,7 @@ use Treex::Core::Log;
 
 our @EXPORT_OK = qw(class_to_path load_module search_module);
 
-sub class_to_path { join '.', join('/', split /::|'/, shift), 'pm' }
+sub class_to_path { return join '.', join('/', split /::|'/, shift),'pm'; }
 
 sub load_module {
   my ($module) = @_;
@@ -38,7 +38,7 @@ sub search_module {
 
     # List "*.pm" files in directory
     opendir(my $dir, $path);
-    for my $file (grep /\.pm$/, readdir $dir) {
+    for my $file (grep { /\.pm$/ } readdir $dir) {
       next if -d catfile splitdir($path), $file;
       my $class = "${ns}::" . fileparse $file, qr/\.pm/;
       push @modules, $class unless $found{$class}++;

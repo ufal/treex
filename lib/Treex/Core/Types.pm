@@ -1,4 +1,5 @@
 package Treex::Core::Types;
+
 use strict;
 use warnings;
 use utf8;

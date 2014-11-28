@@ -1,4 +1,5 @@
 package Treex::Core::CacheBlock;
+
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;

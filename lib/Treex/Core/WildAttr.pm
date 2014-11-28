@@ -1,4 +1,5 @@
 package Treex::Core::WildAttr;
+
 use Moose::Role;
 
 use Treex::Core::Log;

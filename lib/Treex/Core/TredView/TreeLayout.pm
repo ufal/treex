@@ -76,7 +76,7 @@ sub load_layouts {
     $self->{_layouts_loaded} = 1;
 
     my $filename = TredMacro::FindMacroDir('treex') . '/.layouts.cfg';
-    open my $CFG, '<:utf8', $filename or return;
+    open my $CFG, '<:encoding(utf-8)', $filename or return;
 
     while (<$CFG>) {
         chomp;
@@ -105,7 +105,7 @@ sub save_layouts {
     return unless ref(TredMacro::GUI()) eq 'TrEd::Window';
 
     my $filename = TredMacro::FindMacroDir('treex') . '/.layouts.cfg';
-    open my $CFG, '>:utf8', $filename or die $!;
+    open my $CFG, '>:encoding(utf-8)', $filename or die $!;
 
     while ( my ( $label, $cols ) = each %{ $self->_layouts } ) {
         my %coords = ();

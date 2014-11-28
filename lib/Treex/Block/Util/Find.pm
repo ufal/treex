@@ -1,4 +1,5 @@
 package Treex::Block::Util::Find;
+
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Util::Eval';
@@ -67,7 +68,7 @@ sub process_zone {
 
 sub _check_errors {
     my ($self, $code) = @_;
-    return if !$@ or $self->on_error eq 'ignore';
+    return if !$@ || $self->on_error eq 'ignore';
     my $msg = "While evaluating '$code' got error: $@";
     log_fatal $msg if $self->on_error eq 'fatal';
     log_warn $msg;

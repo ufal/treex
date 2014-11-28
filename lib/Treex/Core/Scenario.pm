@@ -1,4 +1,5 @@
 package Treex::Core::Scenario;
+
 use Moose;
 use Treex::Core::Common;
 use File::Basename;

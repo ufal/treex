@@ -1,4 +1,5 @@
 package Treex::Core::Run;
+
 use 5.008;
 
 use Moose;

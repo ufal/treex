@@ -1,4 +1,5 @@
 package Treex::Core::Block;
+
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;

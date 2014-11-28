@@ -1,4 +1,5 @@
 package Treex::Tool::Probe;
+
 use Treex::Core::Common;
 
 use strict;

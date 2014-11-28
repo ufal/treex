@@ -1,4 +1,5 @@
 package Treex::Core::Files;
+
 use Moose;
 use MooseX::SemiAffordanceAccessor 0.09;
 use Treex::Core::Log;

@@ -1,4 +1,5 @@
 package Treex::Block::Util::ChangeDocumentPath;
+
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -22,7 +23,12 @@ sub process_document {
     if (defined $self->pathre) {
         my $p = $document->path;
         my $pathre = $self->pathre;
-        eval "\$p =~ s$pathre;";
+  
+       # eval "\$p =~ s$pathre;"; 
+        $pathre =~ s{^\/(.*)\/$}{$1};
+        my ($old, $new) = split /\//, $pathre;
+        $p =~ s{$old}{$new};
+ 
         $document->set_path($p);
     }
 

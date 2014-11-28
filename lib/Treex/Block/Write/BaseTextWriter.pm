@@ -1,4 +1,5 @@
 package Treex::Block::Write::BaseTextWriter;
+
 use Moose;
 use Treex::Core::Common;
 use autodie;

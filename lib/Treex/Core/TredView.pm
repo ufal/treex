@@ -375,8 +375,8 @@ sub precompute_tree_depths {
 
 sub node_release_hook {
     my ($self, $node, $target, $mod) = @_;
-    my @roots = map $_->get_root, $node, $target;
-    my @zones = map $_->get_zone, $node, $target;
+    my @roots = map { $_->get_root } $node, $target;
+    my @zones = map { $_->get_zone } $node, $target;
 
     if ($self->show_alignment
         and
@@ -812,7 +812,7 @@ sub toggle_tree_wrapping {
     my $signature = $self->_tree_type_signature($node);
     $self->tree_type_to_wrap->{$signature} = not $self->tree_type_to_wrap->{$signature};
     print "Toggle wrapping of trees of type: $signature\n";
-
+    return;
 }
 
 sub _tree_type_signature {
@@ -826,6 +826,7 @@ sub run_annotation_command {
     my ( $self, $command, $node ) = @_;
     Treex::Core::TredView::AnnotationCommand::run( $command, $node );
     $self->recompute_visualization($node->get_bundle);
+    return;
 }
 
 

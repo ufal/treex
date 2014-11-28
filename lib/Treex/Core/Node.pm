@@ -934,6 +934,7 @@ sub descendants {
 # TODO: How to do this in an elegant way?
 # Unless we find a better way, we must disable two perlcritics
 package Treex::Core::Node::Removed;    ## no critic (ProhibitMultiplePackages)
+
 use Treex::Core::Log;
 
 sub AUTOLOAD {                         ## no critic (ProhibitAutoloading)

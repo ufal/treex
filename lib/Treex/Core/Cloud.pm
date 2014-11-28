@@ -79,7 +79,7 @@ sub create_from_node
         my $smod = $self->_get_smod();
         foreach my $child (@{$private_modifiers})
         {
-            my $ccloud = new Treex::Core::Cloud;
+            my $ccloud = Treex::Core::Cloud->new;
             $ccloud->create_from_node($child);
             $ccloud->_set_parent($self);
             push(@{$smod}, $ccloud);
@@ -91,7 +91,7 @@ sub create_from_node
         $afun = '' if(!defined($afun));
         if($afun eq 'Coord')
         {
-            my $coordination = new Treex::Core::Coordination;
+            my $coordination = Treex::Core::Coordination->new;
             $coordination->detect_prague($node);
             $self->create_from_coordination($coordination);
         }
@@ -103,13 +103,14 @@ sub create_from_node
             my $smod = $self->_get_smod();
             foreach my $child ($node->children())
             {
-                my $ccloud = new Treex::Core::Cloud;
+                my $ccloud = Treex::Core::Cloud->new;
                 $ccloud->create_from_node($child);
                 $ccloud->_set_parent($self);
                 push(@{$smod}, $ccloud);
             }
         }
     }
+    return;
 }
 
 
@@ -128,7 +129,7 @@ sub create_from_coordination
     my $smod = $self->_get_smod();
     foreach my $modifier ($coordination->get_shared_modifiers())
     {
-        my $ccloud = new Treex::Core::Cloud;
+        my $ccloud = Treex::Core::Cloud->new;
         $ccloud->create_from_node($modifier);
         $ccloud->_set_parent($self);
         push(@{$smod}, $ccloud);
@@ -143,7 +144,7 @@ sub create_from_coordination
     foreach my $participant (@{$participants})
     {
         my $node = $participant->{node};
-        my $ccloud = new Treex::Core::Cloud;
+        my $ccloud = Treex::Core::Cloud->new;
         if($participant->{type} eq 'delimiter')
         {
             $ccloud->create_from_node($node, 1, $participant->{pmod});
@@ -154,6 +155,7 @@ sub create_from_coordination
         }
         $participant->{cloud} = $ccloud;
     }
+    return;
 }
 
 
@@ -173,7 +175,7 @@ sub disconnect_from_parent
         # Moose will not allow _set_parent(undef) because undef is not of class Treex::Core::Cloud.
         # We will create a dummy object instead. Parent will have the only reference to it and Perl will be able to discard it.
         # I am sure that there must be a better way to do this but I don't know how.
-        $self->_set_parent(new Treex::Core::Cloud);
+        $self->_set_parent(Treex::Core::Cloud->new);
         my $opsmod = $parent->_get_smod();
         my $found = 0;
         for(my $i = 0; $i<=$#{$opsmod}; $i++)
@@ -207,7 +209,7 @@ sub destroy_children
     foreach my $child (@{$smod})
     {
         $child->destroy_children();
-        $child->_set_parent(new Treex::Core::Cloud); # disconnect from me
+        $child->_set_parent(Treex::Core::Cloud->new); # disconnect from me
     }
     splice(@{$smod});
     if($self->type() eq 'coordination')
@@ -219,6 +221,7 @@ sub destroy_children
             delete($participant->{cloud});
         }
     }
+    return;
 }
 
 
@@ -293,6 +296,7 @@ sub set_parent
         $coordination->set_parent($pcloud->_get_node());
         $coordination->shape_prague();
     }
+    return;
 }
 
 
@@ -314,6 +318,7 @@ sub set_afun
         $coordination->set_afun($afun);
         $coordination->shape_prague();
     }
+    return;
 }
 
 

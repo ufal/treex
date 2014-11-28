@@ -1,4 +1,5 @@
 package Treex::Core::Common;
+
 use strict;
 use warnings;
 use 5.010;

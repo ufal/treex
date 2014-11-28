@@ -218,6 +218,7 @@ sub add_shared_modifier
     my $smod = $self->_get_smod();
     $self->check_that_node_is_new($node, $participants, $smod);
     push(@{$smod}, $node);
+    return;
 }
 
 
@@ -506,6 +507,7 @@ sub detect_prague
             $self->add_shared_modifier($child);
         }
     }
+    return;
 }
 
 
@@ -679,6 +681,7 @@ sub detect_alpino
     # Even though the Alpino style belongs to the Prague family, it does not seem to take the opportunity to distinguish shared modifiers.
     # There are frequent non-projective dependents of the first conjunct that appear in the sentence after the last conjunct.
     $self->reconsider_distant_private_modifiers();
+    return;
 }
 
 
@@ -1540,7 +1543,7 @@ sub skip_commas
     my $node = shift;
     my $direction = shift; # left | right
     my $punctuation = shift; # ref to array; store skipped punctuation here
-    return undef if(!defined($node));
+    return if(!defined($node));
     if ($node->is_punctuation() && $node->form() !~ m/^[\"\.\!\?]$/)
     {
         push(@{$punctuation}, $node);
@@ -1579,6 +1582,7 @@ sub reconsider_distant_private_modifiers
             $self->change_private_modifier_to_shared($po, $conjuncts[0]);
         }
     }
+    return;
 }
 
 
@@ -1635,6 +1639,7 @@ sub capture_commas
             $self->add_delimiter($descendants[$i][0], 1);
         }
     }
+    return;
 }
 
 

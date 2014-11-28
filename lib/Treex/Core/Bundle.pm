@@ -269,7 +269,7 @@ sub get_attr {
 # ------- other -------------
 
 sub following {
-    Treex::Core::Node::following(@_);
+    return Treex::Core::Node::following(@_);
 }
 
 __PACKAGE__->meta->make_immutable;

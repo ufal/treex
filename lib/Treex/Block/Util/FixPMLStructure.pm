@@ -1,4 +1,5 @@
 package Treex::Block::Util::FixPMLStructure;
+
 use Treex::Core::Common;
 use Moose;
 extends 'Treex::Core::Block';
@@ -37,6 +38,7 @@ sub process_document {
             }
         }
     }
+    return;
 }
 
 1;

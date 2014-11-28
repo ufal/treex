@@ -1,4 +1,5 @@
 package Treex::Block::Write::Sentences;
+
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';

@@ -1,4 +1,5 @@
 package Treex::Core::DocumentReader;
+
 use Moose::Role;
 
 # with Moose >= 2.00, this must be present also in roles
