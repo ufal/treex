@@ -22,12 +22,14 @@ has 'featuresControl' => (
 
 # sum of all feature weights
 # to be used for normalizing
-has sum => ( is => 'rw', isa => 'Num', lazy => 1, builder => '_build_sum' );
+# TODO: if this proves useful, normalize all features immediately,
+# either after loaing the model or even immediately after training the model
+has normalization => ( is => 'rw', isa => 'Num', lazy => 1, builder => '_build_normalization' );
 
-sub _build_sum {
+sub _build_normalization {
     my ($self) = @_;
 
-    return 0;
+    return 1;
 }
 
 # called after preprocessing training data, before entering the MIRA phase

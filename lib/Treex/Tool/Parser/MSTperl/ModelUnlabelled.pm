@@ -23,10 +23,10 @@ sub BUILD {
 
 use List::Util "sum";
 
-override '_build_sum' => sub {
+override '_build_normalization' => sub {
     my ($self) = @_;
-
-    return sum $self->weigths->values;
+    
+    return sum( map {abs} values(%{$self->weights}) );
 };
 
 # STORING AND LOADING
