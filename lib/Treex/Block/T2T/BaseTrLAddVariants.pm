@@ -214,7 +214,7 @@ sub process_tnode {
 }
 
 sub process_translations {
-    my @translations = @_;
+    my ($self, @translations) = @_;
     
     # when lowercased models are used, then PoS tags should be uppercased
     @translations = map {

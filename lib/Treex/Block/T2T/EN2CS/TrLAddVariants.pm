@@ -93,7 +93,7 @@ override 'get_required_share_files' => {
 };
 
 override 'process_translations' => sub {
-    my @translations = @_;
+    my ($self, @translations) = @_;
     super();
     
     # !!! hack: odstraneni nekonzistentnich hesel typu 'prorok#A', ktera se objevila
