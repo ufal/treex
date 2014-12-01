@@ -12,7 +12,9 @@ sub process_tnode {
     # only heads of finite clauses with no subordinating conjunction
     if ( $tnode->formeme eq 'v:fin' and $tnode->get_clause_root() eq $tnode ) {
         # find 1st child of this clause
-        my ($first) = $anode->get_clause_root()->get_children( { ordered => 1 } );
+        my ($first) = $anode->get_clause_root()->get_echildren( { ordered => 1 } );
+
+        return if (!defined $first);
 
         # 1st position: imperative, question (except after a dependent clause)
         if ($first->clause_number == $anode->clause_number and ($tnode->sentmod // '') =~ /^(imper|inter)$/){
