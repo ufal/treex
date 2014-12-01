@@ -6,6 +6,13 @@ has '+model_dir' => ( default => 'data/models/translation/en2cs' );
 has '+discr_model' => ( default => 'formeme_czeng09.maxent.compact.pls.slurp.gz' );
 has '+static_model' => ( default => 'formeme_czeng09.static.pls.slurp.gz' );
 
+# TODO: get rid of several versions of formemes -> just retrain the formeme TM
+has maxent_features_version => (
+    is      => 'ro',
+    isa     => 'DataVersion',
+    default => '0.9'
+);
+
 override 'can_be_translated_as' => {
     my ( $self, $src_tnode, $src_formeme, $trg_formeme ) = @_;
     my $res = super();
@@ -16,6 +23,11 @@ override 'can_be_translated_as' => {
     return 0 if $src_formeme eq 'n:obj' && $trg_formeme eq 'n:1' && $src_p_lemma ne 'be';
     return 0 if $src_formeme eq 'n:obj' && $trg_formeme eq 'n:2' && $src_lemma =~ /^wh/;
     return 1;
+};
+
+override 'features_from_src_tnode' => sub {
+    my ($self, $src_tnode) = @_;
+    return TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode($src_tnode, $self->maxent_features_version);
 };
 
 1;

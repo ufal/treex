@@ -172,7 +172,7 @@ sub process_tnode {
         @translations = $self->process_translations(@translations);
 
         if ( $self->max_variants && @translations > $self->max_variants ) {
-            splice @translations, $max_variants;
+            splice @translations, $self->max_variants;
         }
 
         if (@translations) {

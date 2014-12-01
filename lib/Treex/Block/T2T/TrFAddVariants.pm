@@ -26,12 +26,6 @@ with 'Treex::Block::T2T::TrUseMemcachedModel';
 
 enum 'DataVersion' => [ '0.9', '1.0' ];
 
-has maxent_features_version => (
-    is      => 'ro',
-    isa     => 'DataVersion',
-    default => '0.9'
-);
-
 has discr_type => (
     is      => 'ro',
     isa     => 'Str',
@@ -124,6 +118,12 @@ sub process_start
     return;
 }
 
+# this wrapper is here just because the en2cs version uses another feature extractor
+sub features_from_src_tnode {
+    my ($self, $src_tnode) = @_;
+    return Treex::Tool::TranslationModel::Features::Standard::features_from_src_tnode($src_tnode);
+}
+
 sub process_tnode {
     my ( $self, $trg_tnode ) = @_;
 
@@ -134,9 +134,7 @@ sub process_tnode {
     my $src_tnode = $trg_tnode->src_tnode;
     return if !$src_tnode;
 
-    log_fatal "Features in the 0.* format no longer supported" if ($self->maxent_features_version =~ /^0\./);
-
-    my $features_hash_rf = Treex::Tool::TranslationModel::Features::Standard::features_from_src_tnode( $src_tnode );
+    my $features_hash_rf = $self->features_from_src_tnode( $src_tnode );
 
     my $features_array_rf = [
         map           {"$_=$features_hash_rf->{$_}"}
@@ -151,7 +149,7 @@ sub process_tnode {
 
     # If the formeme is not translated and contains some function word,
     # try to translate it with only one (or no) function word.
-    if ( !@translations && $en_formeme =~ /^(.+):(.+)\+([^\+]+)$/ ) {
+    if ( !@translations && $src_formeme =~ /^(.+):(.+)\+([^\+]+)$/ ) {
         my $sempos = $1;
         my @fwords = split( /\_/, $2 );
         my $rest   = $3;
