@@ -1,4 +1,4 @@
-package Treex::Block::W2A::JA::RehangParticles;
+package Treex::Block::W2A::JA::RehangParticleChildren;
 
 use strict;
 use warnings;
@@ -25,8 +25,8 @@ sub process_atree {
 sub fix_subtree {
     my ($a_node) = @_;
 
-    if ( should_switch_with_parent($a_node) ) {
-        switch_with_parent($a_node);
+    if ( should_move($a_node) ) {
+        move_downwards($a_node);
     }
     $is_processed{$a_node} = 1;
  
@@ -38,32 +38,32 @@ sub fix_subtree {
     return;
 }
 
-sub should_switch_with_parent {
+sub should_move {
     my ($a_node) = @_;
-    my $tag = $a_node->tag;
-    return 0 if $tag !~ /^Joshi/;
-
+    my $next = $a_node->get_next_node();
     my $parent = $a_node->get_parent();
+
     return 0 if $parent->is_root();
+    # particle can be a parent only when it is directly behind its child
+    return 0 if $parent->tag !~ /^Joshi/ || $parent == $next;
 
-    # case particles should not depend on the preceeding nodes
-    return 0 if ($tag !~ /Kakujoshi/ || $parent->ord > $a_node->ord);
-
-    # conjunctions are handled in other block
-    # return 0 if ($tag =~ /^Joshi-SetsuzokuJoshi/ || $tag =~ /^Joshi-Heiritsujoshi/ || $tag =~ /^Setsuzokushi/);
-
-    # we do not want to move adverbial particles
-    # return 0 if $tag =~ /FukuJoshi/;
+    # if the parent is a coordination particle, we do nothing
+    return 0 if ( $parent->tag =~ /SetsuzokuJoshi/ || $parent->tag =~ /Heiritsujoshi/ );
 
     return 1;
 }
 
-sub switch_with_parent {
+sub move_downwards {
     my ($a_node) = @_;
     my $parent = $a_node->get_parent();
-    my $granpa = $parent->get_parent();
-    $a_node->set_parent($granpa);
-    $parent->set_parent($a_node);
+    my $new_parent = $parent->get_prev_node();
+
+    # the new parent should not be a particle
+    while ($new_parent->tag =~ /^Joshi/) { 
+      $new_parent = $new_parent->get_prev_node();
+    }
+    
+    $a_node->set_parent($new_parent);
 
     return;
 }
@@ -78,12 +78,16 @@ __END__
 
 =head1 NAME
 
-Treex::Block::W2A::JA::RehangParticles - Modifies position of the remaining particles within an a-tree. 
+Treex::Block::W2A::JA::RehangParticleChildren - Modifies position of tokens which are wrongly dependent on the particles. 
 
 =head1 DESCRIPTION
 
 Modifies the topology of trees parsed by JDEPP parser.
-Blocks W2A::JA::RehangConjunctions and W2A::JA::RehangCopulas should be applied first. This block rehangs rest of the particles so they have position similar to prepositions.
+Blocks W2A::JA::RehangConjunctions and W2A::JA::RehangCopulas should be applied
+first. This block rehangs tokens which should not be dependent on any particles.If a node is dependent on a particle which is not directly following the node,
+its parent is set to a child of that particle.
+Therefore only the coordination particles should have more than one child.
+
 
 =head1 AUTHOR
 

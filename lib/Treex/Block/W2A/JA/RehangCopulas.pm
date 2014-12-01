@@ -46,9 +46,13 @@ sub fix_subtree {
 sub should_switch_with_parent {
     my ($a_node) = @_;
     my $tag = $a_node->tag;
+    my $form = $a_node->form;
     my $lemma = $a_node->lemma;
     return 0 if $tag !~ /^Jodōshi/;
     
+    # at the moment we have no idea how to process なの, which is tokenized into two separate tokens and な is lemmatized as だ, but we do not think it is form of a copula
+    return 0 if $form eq "な";
+
     return 0 if ( $lemma ne "です" && $lemma ne "だ" && $lemma ) ;
 
     my $parent = $a_node->get_parent();
