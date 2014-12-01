@@ -65,6 +65,9 @@ sub unescape {
 sub parse_zones {
     my ( $self, $zones_rf ) = @_;
 
+    my $prev_outsent = "";
+    my $prev_insent = "";
+    
     foreach my $zone (@$zones_rf) {
 
         # Take the (tokenized) sentence
@@ -72,8 +75,20 @@ sub parse_zones {
         my $sent = $self->escape( join( " ", @forms ) );
 
         # Have Alpino parse the sentence
+        #print STDERR "FIRST:\t$sent\n";
         my $xml = $self->get_alpino_parse($sent);
-        
+        my $outsent = $xml;
+        $outsent =~ s|^.*<sentence>(.*)</sentence>.*$|$1|sm;
+        #print STDERR "XML1:\n$outsent\n\n";
+        while (($outsent eq $prev_outsent) && ($sent ne $prev_insent)) {
+            $xml = $self->get_alpino_parse($sent);
+            $outsent = $xml;
+            $outsent =~ s|^.*<sentence>(.*)</sentence>.*$|$1|sm;
+            #print STDERR "XML2:\n$outsent\n\n";
+        }
+        $prev_outsent = $outsent;
+        $prev_insent = $sent;
+
         # Create a p-tree out of Alpino's output
         if ( $zone->has_ptree ) {
             $zone->remove_tree('p');
