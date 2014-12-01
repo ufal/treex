@@ -205,9 +205,12 @@ sub _get_pdt30_coref {
     my ($self, $coref_rf, $with_types, $arg_ref) = @_;
     
     my $document = $self->get_document;
-    # get_node_by_id() will fatally fail if target is not defined!
-    my @targetrfs = grep {defined($_)} map {$_->{'target_node.rf'}} @{$coref_rf};
-    my @nodes = map {$document->get_node_by_id($_)} @targetrfs;
+    
+    my @nodes = map {$document->get_node_by_id( $_->{'target_node.rf'} )} @$coref_rf;
+    ## get_node_by_id() will fatally fail if target is not defined!
+    #my @targetrfs = grep {defined($_)} map {$_->{'target_node.rf'}} @{$coref_rf};
+    #my @nodes = map {$document->get_node_by_id($_)} @targetrfs;
+    
     my @filtered_nodes = $self->_process_switches( $arg_ref, @nodes );
     return @filtered_nodes if (!$with_types);
     
