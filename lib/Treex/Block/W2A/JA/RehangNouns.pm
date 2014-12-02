@@ -1,4 +1,4 @@
-package Treex::Block::W2A::JA::RehangParticles;
+package Treex::Block::W2A::JA::RehangNouns;
 
 use strict;
 use warnings;
@@ -6,11 +6,9 @@ use warnings;
 use Moose;
 use Treex::Core::Common;
 use Encode;
+
 extends 'Treex::Core::Block';
 
-# While recursively depth-first-traversing the tree
-# we sometimes rehang already processed parent node as a child node.
-# But we don't want to process such nodes again.
 my %is_processed;
 
 sub process_atree {
@@ -29,26 +27,24 @@ sub fix_subtree {
         switch_with_parent($a_node);
     }
     $is_processed{$a_node} = 1;
-
+ 
     foreach my $child ( $a_node->get_children() ) {
         next if $is_processed{$child};
         fix_subtree($child);
     }
-
     return;
 }
 
 sub should_switch_with_parent {
     my ($a_node) = @_;
     my $tag = $a_node->tag;
-    return 0 if $tag !~ /^Joshi/;
+    return 0 if ($tag !~ /^Meishi/);
 
     my $parent = $a_node->get_parent();
     return 0 if $parent->is_root();
 
-    # case particles should not depend on the preceeding nodes (Kakujoshi)
-    # same probably applies for conjunction articles SetsuzokuJoshi
-    return 0 if ( ($tag !~ /Kakujoshi/ && $tag !~ /SetsuzokuJoshi/ ) || $parent->ord > $a_node->ord);
+    # given the head-final nature of the Japanese language verbs preceeding the noun (in the sense of the word order) should be dependent on the noun and not vice versa, because they are most likely its modifiers
+    return 0 if ($parent->tag !~ /^Dōshi/ || $parent->ord > $a_node->ord);
 
     return 1;
 }
@@ -63,7 +59,6 @@ sub switch_with_parent {
     return;
 }
 
-
 1;
 
 __END__
@@ -74,15 +69,13 @@ __END__
 
 =head1 NAME
 
-Treex::Block::W2A::JA::RehangParticles - Modifies position of the remaining particles within an a-tree. 
+Treex::Block::W2A::JA::RehangAuxVerbs - Modifies the position of nouns and their verb modifiers within an a-tree.
+E.g. "調べた" "ホテル"
 
 =head1 DESCRIPTION
 
-Modifies the topology of trees parsed by JDEPP parser.
-
-Modifies the position of some case particles if they are depending on a preceeding node.
-
-Since this block finishes the after-parsing modifications of the a-tree, it should be aplied last.
+Verbs (Dōshi) which are preceeding a noun should never be its parent. This error is caused by wrong bunsetsu "clustering" during parsing phase.
+This block takes care of that.
 
 =head1 AUTHOR
 

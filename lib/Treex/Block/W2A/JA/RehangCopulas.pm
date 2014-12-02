@@ -31,7 +31,7 @@ sub fix_subtree {
     my ($a_node) = @_;
     my $lemma = $a_node->lemma;
 
-    if ( should_switch_with_parent($a_node) ) {
+    while ( should_switch_with_parent($a_node) ) {
         switch_with_parent($a_node);
     }
     $is_processed{$a_node} = 1;
@@ -60,6 +60,9 @@ sub should_switch_with_parent {
 
     # we only switch copula, if their parent is a non-verb (otherwise they really are just auxiliary verbs, e.g formal past negation ありません "でし"  た).
     return 0 if $parent->tag() =~ /^Dōshi/;
+
+    # if the parent is conjunctive particle, we do not switch
+    return 0 if $parent->tag() =~ /SetsuzokuJoshi/;
 
     return 1;
 }
