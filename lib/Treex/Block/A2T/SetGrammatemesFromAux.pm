@@ -32,7 +32,7 @@ sub process_tnode {
             if (!$tnode->gram_number){
                 my $number = $anode->iset->number || '';
                 $number =~ s/sing/sg/;
-                $number =~ s/plu/pl/;
+                $number =~ s/plur/pl/;
                 $tnode->set_gram_number($number);
             }
         }
