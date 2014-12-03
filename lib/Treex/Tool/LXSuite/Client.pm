@@ -6,7 +6,6 @@ use Treex::Tool::ProcessUtils;
 use File::Basename;
 
 
-has debug => ( isa => 'Bool', is => 'ro', required => 0, default => 0 );
 has lxsuite_host => ( isa => 'Str', is => 'ro', required => 0, default => "localhost" );
 has lxsuite_port => ( isa => 'Int', is => 'ro', required => 0, default => 10000 );
 has lxsuite_key => ( isa => 'Str', is => 'ro', required => 1 );
@@ -30,6 +29,7 @@ sub read {
         my $pid = $self->_pid;
         log_fatal "Failed to read from lxsuite_client.py (pid=$pid).";
     }
+    chomp $line;
     log_debug "Read: $line";
     return $line;
 }
