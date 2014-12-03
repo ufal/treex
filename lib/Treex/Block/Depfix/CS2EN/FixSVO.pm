@@ -10,7 +10,10 @@ sub fix {
     if (!$parent->is_root
         && $parent->tag =~ /^V/
         && defined $al_child
+        && $child->tag =~ /^NN/
     ) {
+        # TODO: last node (or any node) is not question mark...
+        # && $child->get_root()
 
         if ( $child->follows($parent) && $al_child->afun eq 'Sb' ) {
             # VS -> SV
