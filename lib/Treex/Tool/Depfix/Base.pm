@@ -86,16 +86,21 @@ sub test {
             $good++;
             if ( $prediction eq $baseline_prediction ) {
                 $true_negative++;
+                log_info "MLFix TRUENEG $prediction";
             } else {
                 $true_positive++;
+                log_info "MLFix TRUEPOS $baseline_prediction -> $prediction";
             }
         } else {
             if ( $prediction eq $baseline_prediction ) {
                 $false_negative++;
+                log_info "MLFix FALSENEG $baseline_prediction !-> $true";
             } elsif ( $true eq $baseline_prediction ) {
                 $false_positive++;
+                log_info "MLFix FALSEPOS $baseline_prediction -> $prediction";
             } else {
                 $wrong_positive++;
+                log_info "MLFix WRONGPOS $baseline_prediction -> $prediction !-> $true";
             }
         }
         $all++;

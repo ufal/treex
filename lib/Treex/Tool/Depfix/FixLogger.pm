@@ -50,15 +50,22 @@ sub _get_edge_info() {
             ignore_incorrect_tree_structure => 1
         });
         if ( $parent->is_root ) {
-            return $child->form . '[' . $child->tag . ']';
+            return $self->_get_node_info($child);
         } elsif ( $parent->precedes($child) ) {
-            return $parent->form . '[' . $parent->tag . '] '
-                . $child->form . '[' . $child->tag . ']';
+            return $self->_get_node_info($parent) . ' '
+                . $self->_get_node_info($child);
         } else {
-            return $child->form . '[' . $child->tag . '] '
-                . $parent->form . '[' . $parent->tag . ']';
+            return $self->_get_node_info($child) . ' '
+                . $self->_get_node_info($parent);
         }
     }
+}
+
+sub _get_node_info {
+    my ($self, $node) = @_;
+
+    return $node->form . '[' . $node->tag . ']' . $node->afun;
+    #return $node->form . '[' . $node->tag . ']';
 }
 
 1;
