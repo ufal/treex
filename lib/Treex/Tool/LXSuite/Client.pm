@@ -17,15 +17,19 @@ has [qw( _reader _writer _pid )] => ( is => 'rw' );
 sub write {
     my $self = shift;
     my $line = shift;
-    my $writer = $self->writer;
+    my $writer = $self->_writer;
     log_debug "Write: $line";
     print $writer $line;
 }
 
 sub read {
     my $self = shift;
-    my $reader = $self->reader;
+    my $reader = $self->_reader;
     my $line = <$reader>;
+    if (!defined $line) {
+        my $pid = $self->_pid;
+        log_fatal "Failed to read from lxsuite_client.py (pid=$pid).";
+    }
     log_debug "Read: $line";
     return $line;
 }

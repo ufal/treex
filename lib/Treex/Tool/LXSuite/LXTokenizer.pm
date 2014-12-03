@@ -2,24 +2,18 @@ package Treex::Tool::LXSuite::LXTokenizer;
 use Moose;
 extends 'Treex::Tool::LXSuite::Client';
 
-has '+lxsuite_mode' => (
-    isa => 'Str', is => 'ro',
-    default => 'plain:tokenizer:plain'
-);
-has [qw( _reader _writer _pid )] => ( is => 'rw' );
+has '+lxsuite_mode' => (default => 'plain:tokenizer:plain');
 
-sub tokenize_sentence {
+sub tokenize {
     my ( $self, $sentence ) = @_;
-    print STDERR "LXTokenizer in: ".$sentence."\n" if $self->debug;
-    print {$self->_writer} $sentence."\n\n";
-    my $reader = $self->_reader;
-    my $tokenized = <$reader>;
-    while ($tokenized =~ /^\s*$/) { # discard empty lines
-        $tokenized = <$reader>;
-    }
+    $sentence =~ s/^\s+$//;
+    return '' if $sentence eq '';
 
-    die "Failed to read from LX-Suite tokenizer, better to kill oneself." if !defined $tokenized;
-    print STDERR "LXTokenizer out: ".$tokenized."\n" if $self->debug;
+    $self->write("$sentence\n\n");
+    my $tokenized = $self->read();
+    while ($tokenized =~ /^\s*$/) { # discard empty lines
+        $tokenized = $self->read();
+    }
     return $tokenized;
 }
 
@@ -34,7 +28,7 @@ Treex::Tool::Tagger::LXTokenizer
 =head1 SYNOPSIS
 
 my $tokenizer = Treex::Tool::LXSuite::LXTokenizer->new();
-my $tokens = $tagger->tokenize_sentence($sentence);
+my $tokens = $tagger->tokenize($sentence);
 
 =head1 AUTHORS
 
