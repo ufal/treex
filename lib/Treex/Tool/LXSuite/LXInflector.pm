@@ -1,4 +1,4 @@
-package Treex::Tool::LXSuite::LXInflector
+package Treex::Tool::LXSuite::LXInflector;
 use Moose;
 extends 'Treex::Tool::LXSuite::Client';
 
@@ -7,8 +7,7 @@ has '+lxsuite_mode' => (default => 'inflector');
 sub inflect {
     my ( $self, $lemma, $pos, $gender, $number ) = @_;
     $self->write("$lemma,$pos,$gender,$number\n");
-    $result = $self->read();
-    return $result;
+    return $self->read();
 }
 
 1;
