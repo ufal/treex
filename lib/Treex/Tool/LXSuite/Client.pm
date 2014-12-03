@@ -7,14 +7,28 @@ use File::Basename;
 
 
 has debug => ( isa => 'Bool', is => 'ro', required => 0, default => 0 );
-#has lxsuite_host => ( isa => 'Str', is => 'ro', required => 0, default => "194.117.45.198" );
-#has lxsuite_host => ( isa => 'Str', is => 'ro', required => 0, default => "194.117.45.194" );
 has lxsuite_host => ( isa => 'Str', is => 'ro', required => 0, default => "localhost" );
 has lxsuite_port => ( isa => 'Int', is => 'ro', required => 0, default => 10000 );
 has lxsuite_key => ( isa => 'Str', is => 'ro', required => 1 );
 has lxsuite_mode => ( isa => 'Str', is => 'ro', required => 1 );
 has [qw( _reader _writer _pid )] => ( is => 'rw' );
 
+
+sub write {
+    my $self = shift;
+    my $line = shift;
+    my $writer = $self->writer;
+    log_debug "Write: $line";
+    print $writer $line;
+}
+
+sub read {
+    my $self = shift;
+    my $reader = $self->reader;
+    my $line = <$reader>;
+    log_debug "Read: $line";
+    return $line;
+}
 
 sub BUILD {
     my $self = shift;
@@ -29,6 +43,7 @@ sub BUILD {
     $self->_set_reader( $reader );
     $self->_set_writer( $writer );
     $self->_set_pid( $pid );
+    log_debug "Launching lxsuite_host=$host lxsuite_port:$port lxsuite_mode:$mode pid=$pid";
 }
 
 sub DEMOLISH {
