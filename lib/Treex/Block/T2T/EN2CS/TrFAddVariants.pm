@@ -13,7 +13,7 @@ has maxent_features_version => (
     default => '0.9'
 );
 
-override 'can_be_translated_as' => {
+override 'can_be_translated_as' => sub {
     my ( $self, $src_tnode, $src_formeme, $trg_formeme ) = @_;
     my $res = super();
     return 0 if (!$res);

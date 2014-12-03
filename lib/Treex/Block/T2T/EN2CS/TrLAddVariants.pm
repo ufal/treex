@@ -84,7 +84,7 @@ override 'process_start' => sub {
 };
 
 # Require the needed models and set the absolute paths to the respective attributes
-override 'get_required_share_files' => {
+override 'get_required_share_files' => sub {
     my ($self) = @_;
 
     my @files = super();
