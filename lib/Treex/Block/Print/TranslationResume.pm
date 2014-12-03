@@ -27,7 +27,7 @@ override '_do_process_document' => sub {
     foreach my $bundle ( $document->get_bundles ) {
         $position++;
         my $ref_zone = $bundle->get_zone( $self->reference_language, $self->reference_selector );
-        push @src, $bundle->get_zone( $self->source_language, $self->source_selector )->sentence;
+        push @src, $bundle->get_zone( $self->source_language, $self->source_selector )->sentence // '';
         push @ref, $ref_zone ? $ref_zone->sentence : '';
         push @tst, $bundle->get_zone( $self->language, $self->selector )->sentence;
 
