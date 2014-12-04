@@ -4,12 +4,24 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 use Treex::Tool::Lexicon::Generation::PT;
-my $generator = Treex::Tool::Lexicon::Generation::PT->new();
+
+
+has lxsuite_key => ( isa => 'Str', is => 'ro', required => 1 );
+has lxsuite_host => ( isa => 'Str', is => 'ro', required => 1 );
+has lxsuite_port => ( isa => 'Int', is => 'ro', required => 1 );
+has generator => ( is => 'rw' );
+
 
 sub process_anode {
     my ( $self, $anode ) = @_;
-    $anode->set_form($generator->best_form_of_lemma($anode->lemma, $anode->iset));
+    return if defined $anode->form;
+    $anode->set_form($self->generator->best_form_of_lemma($anode->lemma, $anode->iset));
     return;
+}
+
+sub BUILD {
+    my ( $self, $argsref ) = @_;
+	$self->set_generator(Treex::Tool::Lexicon::Generation::PT->new($argsref));
 }
 
 1;
