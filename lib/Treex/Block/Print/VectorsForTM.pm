@@ -99,8 +99,17 @@ sub print_tnode_features {
 
     my $features_rf =
         Treex::Tool::TranslationModel::Features::Standard::features_from_src_tnode( $src_tnode, { encode => 1 } ) or return;
-    # TODO this is language (tagset) dependant
-    my ($trg_mlayer_pos) = ( $trg_anode->tag =~ /^(.)/ );
+    
+    # TODO the tag is language dependent
+    # Czech uses the first position of the tag
+    # other languages use the whole tag
+    # TODO this should be changed to the Interset POS
+    my $trg_mlayer_pos;
+    if ($self->language eq 'cs') {
+        ($trg_mlayer_pos) = ( $trg_anode->tag =~ /^(.)/ );
+    } else {
+        $trg_mlayer_pos = $trg_anode->tag;
+    }
 
     my @add_features = ();
 
