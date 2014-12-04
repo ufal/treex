@@ -20,6 +20,7 @@ sub process_anode {
             $tag =~ s{助詞類接続}{JoshiRuiSetsuzoku};
             $tag =~ s{引用文字列}{InYōmojiretsu};
             $tag =~ s{形容詞接続}{KeiyōshiSetsuzoku};
+            $tag =~ s{助動詞語幹}{JodōshiGokan};
             $tag =~ s{接続詞的}{SetsuzokushiTeki};
             $tag =~ s{副詞可能}{FukushiKanō};
             $tag =~ s{固有名詞}{Koyūmeishi};
@@ -47,6 +48,7 @@ sub process_anode {
             $tag =~ s{数接続}{SūSetsuzoku};
             $tag =~ s{括弧閉}{Kakko閉};
             $tag =~ s{括弧開}{KakkoHiraki};
+            $tag =~ s{助数詞}{Josūshi};
             $tag =~ s{記号}{Kigō};
             $tag =~ s{動詞}{Dōshi};
             $tag =~ s{接尾}{Setsubi};
@@ -61,17 +63,15 @@ sub process_anode {
             $tag =~ s{句点}{Kuten};
             $tag =~ s{空白}{Kūhaku};
             $tag =~ s{読点}{Tōten};
-            $tag =~ s{数}{Kazu};
             $tag =~ s{地域}{Chiiki};
-            $tag =~ s{国}{Kuni};
-            $tag =~ s{姓}{Sei};
             $tag =~ s{連語}{Rengo};
             $tag =~ s{組織}{Soshiki};
             $tag =~ s{人名}{Jinmei};
-            $tag =~ s{助動詞語幹}{JodōshiGokan};
-            $tag =~ s{助数詞}{Josūshi};
             $tag =~ s{縮約}{Shukuyaku};
             $tag =~ s{引用}{In'yō};
+            $tag =~ s{数}{Kazu};
+            $tag =~ s{国}{Kuni};
+            $tag =~ s{姓}{Sei};
 
     $anode->set_tag($tag);
 
