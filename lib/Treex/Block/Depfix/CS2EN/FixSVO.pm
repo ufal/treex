@@ -7,14 +7,15 @@ extends 'Treex::Block::Depfix::CS2EN::Fix';
 sub fix {
     my ( $self, $child, $parent, $al_child, $al_parent ) = @_;
 
+    my $t_sent_root = $child->get_zone->get_ttree->get_children(
+        { first_only => 1 } ) or return;
+
     if (!$parent->is_root
         && $parent->tag =~ /^V/
         && defined $al_child
         && $child->tag =~ /^NN/
+        && $t_sent_root->sentmod eq 'enunc'
     ) {
-        # TODO: last node (or any node) is not question mark...
-        # && $child->get_root()
-
         if ( $child->follows($parent) && $al_child->afun eq 'Sb' ) {
             # VS -> SV
             $self->logfix1($child, "move Sb before verb");
