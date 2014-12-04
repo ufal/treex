@@ -102,13 +102,12 @@ sub print_tnode_features {
     
     # TODO the tag is language dependent
     # Czech uses the first position of the tag
-    # other languages use the whole tag
-    # TODO this should be changed to the Interset POS
+    # other languages use the Interset tag
     my $trg_mlayer_pos;
     if ($self->language eq 'cs') {
         ($trg_mlayer_pos) = ( $trg_anode->tag =~ /^(.)/ );
     } else {
-        $trg_mlayer_pos = $trg_anode->tag;
+        $trg_mlayer_pos = $trg_anode->iset->pos // "";
     }
 
     my @add_features = ();
