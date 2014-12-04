@@ -131,6 +131,8 @@ PARAMETERS:
 - from - input file, each line in the format
   path:sent_id<TAB>first_alignment<TAB>second_alignment<TAB>third_alignment<TAB>...
 
+    a-tree_cs_s25<TAB>1-2 5-7 4-3
+
 - inputcols - names of particular alignments separated by '_'. Two special
   names are used to indicate columns with GIZA++ alignment score: 'therescore'
   and 'backscore' for a-b and b-a, resp. For example

@@ -15,6 +15,8 @@ has 'keep_if_no_other' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 has 'preserve_type' => ( is => 'ro', isa => 'Bool', default => 1 );
 
+has align_type => ( is => 'rw', isa => 'Str', default => 'align_forward' );
+
 sub process_zone {
     my ( $self, $zone ) = @_;
     my @nodes = $zone->get_tree( $self->layer )->get_descendants( { ordered => 1 } );
@@ -30,7 +32,7 @@ sub process_zone {
 
             my ($zs) = $y->get_aligned_nodes();
             foreach my $z ( @{$zs} ) {
-                $x->add_aligned_node( $z, $self->preserve_type ? $ytype : 'align_forward' );
+                $x->add_aligned_node( $z, $self->preserve_type ? $ytype : $self->align_type );
             }
 
             if ( $self->overwrite && ( ( $zs && scalar( @{$zs} ) ) || !$self->keep_if_no_other ) ) {
