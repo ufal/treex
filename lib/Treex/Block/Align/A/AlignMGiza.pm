@@ -18,20 +18,19 @@ has tmp_dir => ( isa => 'Str', is => 'ro', default => '/mnt/h/tmp' );
 has cpu_cores => ( isa => 'Int', is => 'rw', default => '-1' ); # -1 means autodetect
 has model => ( isa => 'Str', is => 'rw', default => "$ENV{TMT_ROOT}/share/data/models/mgiza/en-cs" );
 has model_from_share => ( isa => 'Str', is => 'ro' );
+has mgizadir => ( is => 'rw', isa => 'Str', default => "$ENV{TMT_ROOT}/share/installed_tools/mgizapp/install" );
 
-my $mgizadir = "$ENV{TMT_ROOT}/share/installed_tools/mgizapp/install";
-
-my $mkcls = "$mgizadir/bin/mkcls";
-my $mgiza = "$mgizadir/bin/mgiza";
-my $snt2cooc = "$mgizadir/bin/snt2cooc";
-my $symal = "$mgizadir/bin/symal";
-my $merge = "$mgizadir/scripts/merge_alignment.py";
+my $mkcls = $self->mgizadir . '/bin/mkcls';
+my $mgiza = $self->mgizadir . '/bin/mgiza';
+my $snt2cooc = $self->mgizadir . '/bin/snt2cooc';
+my $symal = $self->mgizadir . '/bin/symal';
+my $merge = $self->mgizadir . '/scripts/merge_alignment.py';
 
 my $mytmpdir;
 my @parsed_dir_or_sym;
 
 use Config;
-log_fatal "$mgizadir contains binaries compiled for 'x86_64-linux' but you are using '$Config{archname}'." if $Config{archname} ne 'x86_64-linux';
+#log_fatal $self->mgizadir . "contains binaries compiled for 'x86_64-linux' but you are using '$Config{archname}'." if $Config{archname} ne 'x86_64-linux';
 
 sub process_document {
     my ( $self, $document ) = @_; 
