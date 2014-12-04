@@ -41,7 +41,7 @@ sub process_tnode {
             my $forms_string = join ' ', (
                 map { $_->form } $tnode->get_anodes( { ordered => 1 } ) );
             my $tense_string = join ',', keys %$tense;
-            log_info "$forms_string: $tense_string";
+            log_debug "$forms_string: $tense_string";
         }
     }
     
