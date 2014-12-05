@@ -131,7 +131,7 @@ sub get_alpino_parse {
 
     # skip non-xml (stderr/status) lines unless there's something unexpected
     while ( $line !~ /^<\?xml/ ) {
-        if ( $line !~ /^(\[|Q#[0-9]|hdrug: process|[0-9\.]* m?sec|no cgn tag for|postag not recognized|no with_dt cgn tag rule|timed out after|second phase failed|timeout\|\[)/ ) {
+        if ( $line !~ /^(\[|Q#[0-9]|hdrug: process|[0-9\.]* m?sec|(error: )?no cgn tag for|postag not recognized|warning: |no with_dt cgn tag rule|timed out after|second phase failed|timeout\|\[)/ ) {
             log_fatal( 'Unexpected Alpino output: ' . $line );
         }
         $line = <$reader>;
