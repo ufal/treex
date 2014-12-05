@@ -100,7 +100,8 @@ override 'set_verbal_grammatemes' => sub {
         }
     }
     else {
-        log_warn("No grammatemes found for verbal group signature `$sig'.");
+        my $id = $tnode->id . ' -- ' . join(' ', map { lc $_->form } grep { $_->is_verb } $tnode->get_anodes( { ordered => 1 } ) );
+        log_warn( "No grammatemes found for verbal group signature `$sig': $id");
     }
     return 1;
 };

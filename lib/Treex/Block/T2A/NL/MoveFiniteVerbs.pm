@@ -14,6 +14,7 @@ sub process_tnode {
         # find 1st child of this clause
         my ($first) = $anode->get_clause_root()->get_echildren( { ordered => 1 } );
 
+        # if there is only the verb in the clause, there's nowhere to move it :-)
         return if (!defined $first);
 
         # 1st position: imperative, question (except after a dependent clause)
