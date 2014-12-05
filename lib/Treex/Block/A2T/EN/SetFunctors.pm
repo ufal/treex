@@ -50,6 +50,7 @@ my %aux2functor = (
     "under"   => "LOC",
     "near"    => "LOC",
     "through" => "DIR2",
+    "over"    => "DIR2",
     "after"   => "TWHEN",
 );
 
@@ -137,7 +138,7 @@ sub assign_functors {
         elsif (
             $lex_a_node->tag =~ /^(N.+|WP|PRP|WDT)$/
             and ($a_parent->tag // '')
-            =~ /^V/
+            =~ /^(V|MD)/
             and $lex_a_node->ord < $a_parent->ord
             )
         {
