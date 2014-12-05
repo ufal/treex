@@ -24,8 +24,8 @@ sub process_tnode {
     $neg_node->shift_after_node($a_node);
     $t_node->add_aux_anodes($neg_node);
 
-    # if the current main verbal node is not auxiliary, shift it and put an auxiliary 'do' in its place
-    return if ( ( $a_node->afun || '' ) eq 'AuxV' );
+    # if the current main verbal node is not auxiliary (or not `be'), shift it and put an auxiliary 'do' in its place
+    return if ( ( $a_node->afun || '' ) eq 'AuxV' or $a_node->lemma eq 'be' );
 
     # this is where the main verb wil go (in infinitive)
     my $new_node = $a_node->create_child(
