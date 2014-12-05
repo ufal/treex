@@ -20,14 +20,14 @@ my %PERSPRON = (
     'sing 3 com poss'  => 'zijn',
     'sing 3 neut'      => 'het',
     'sing 3 neut poss' => 'zijn',
-    'plu 1'            => 'wij',
-    'plu 1 poss'       => 'ons',
-    'plu 2 inf'        => 'jullie',
-    'plu 2 inf poss'   => 'jullie',
-    'plu 2 pol'        => 'u',
-    'plu 2 pol poss'   => 'uw',
-    'plu 3'            => 'zij',
-    'plu 3 poss'       => 'hun',
+    'plur 1'            => 'wij',
+    'plur 1 poss'       => 'ons',
+    'plur 2 inf'        => 'jullie',
+    'plur 2 inf poss'   => 'jullie',
+    'plur 2 pol'        => 'u',
+    'plur 2 pol poss'   => 'uw',
+    'plur 3'            => 'zij',
+    'plur 3 poss'       => 'hun',
 );
 
 sub process_anode {
