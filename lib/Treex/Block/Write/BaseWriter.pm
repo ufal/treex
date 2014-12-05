@@ -290,10 +290,10 @@ sub _open_file_handle {
         $opn = "| bzip2 > '$filename'";
     }
     else {
-        $opn = "$filename";
+        $opn = ">$filename";
     }
     mkpath( dirname($filename) );
-    open ( $hdl,'>', $opn );    # we use autodie here
+    open ( $hdl, $opn );    # we use autodie here
     $hdl->autoflush(1);
     return $hdl;
 }
