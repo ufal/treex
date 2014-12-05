@@ -6,8 +6,13 @@ extends 'Treex::Core::Block';
 
 sub process_anode {
     my ($self, $anode) = @_;
+
+    # fix articles
+    if ($anode->lemma =~ /^(a|the)$/ and $anode->tag eq 'DT'){
+        $anode->set_iset('prontype' => 'art');
+    }
     
-    # fill in definiteness for determiners
+    # fill in definiteness for articles
     if ($anode->match_iset('prontype' => 'art')){
         if ($anode->lemma eq 'the'){
             $anode->iset->set_definiteness('def');
