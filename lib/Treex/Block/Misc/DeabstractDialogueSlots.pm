@@ -8,13 +8,10 @@ extends 'Treex::Core::Block';
 
 has 'abstraction_file' => ( isa => 'Str', is => 'rw', required => 1 );
 
-has 'abstractions' => ( isa => 'ArrayRef', is => 'rw', default => sub { [] } );
+has '_abstractions' => ( isa => 'ArrayRef', is => 'rw', default => sub { [] } );
 
-# Taken from http://www.perlmonks.org/?node_id=1070950
-sub minindex {
-    my @x = @_;
-    reduce { $x[$a] < $x[$b] ? $a : $b } 0 .. $#_;
-}
+has 'xs_instead' => ( isa => 'Bool', is => 'rw', default => 0 );
+
 
 sub process_start {
     my ($self) = @_;
@@ -22,7 +19,7 @@ sub process_start {
     open( my $fh, '<:utf8', ( $self->abstraction_file ) );
     while ( my $line = <$fh> ) {
         chomp $line;
-        push @{ $self->abstractions }, $line;
+        push @{ $self->_abstractions }, $line;
     }
     close($fh);
 }
@@ -31,7 +28,7 @@ sub _get_next_abstraction {
     my ($self) = @_;
     my %abstr_set = ();
 
-    foreach my $abstr ( split /\t/, shift @{ $self->abstractions } ) {
+    foreach my $abstr ( split /\t/, shift @{ $self->_abstractions } ) {
         my ( $slot, $value ) = ( $abstr =~ /^([^=]*)=("[^"]*"|[^:]+):[0-9]+-[0-9]+$/ );
         if ( not defined( $abstr_set{$slot} ) ) {
             $abstr_set{$slot} = [];
@@ -47,11 +44,14 @@ sub process_ttree {
     
     foreach my $tnode ( grep { $_->t_lemma =~ /^X-[a-z]+$/ } $troot->get_descendants( { ordered => 1 } ) ) {
         my ($slot) = ( $tnode->t_lemma =~ /^X-(.*)$/ );
-        my $value = shift @{ $abstr->{$slot} };
-        push @{ $abstr->{$slot} }, $value;
-        $value =~ s/^"//;
-        $value =~ s/"$//;
-        $value =~ s/ /_/g;
+        my $value = 'X';
+        if (!$self->xs_instead){
+            $value = shift @{ $abstr->{$slot} };
+            push @{ $abstr->{$slot} }, $value;
+            $value =~ s/^"//;
+            $value =~ s/"$//;
+            $value =~ s/ /_/g;
+        }
         $tnode->set_t_lemma($value);
     }
 
@@ -80,6 +80,10 @@ the individual dialogue slots.
 
 Path to the file that contains token ranges to be replaced (ranges in format "slot:beginning-end",
 separated by spaces, one sentence per line).
+
+=item xs_instead
+
+Replace all the de-abstracted names with a generic 'X' instead of the actual value.
 
 =back
 
