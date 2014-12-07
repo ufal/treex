@@ -76,12 +76,12 @@ __END__
 
 =head1 NAME
 
-Treex::Block::W2A::JA::RehangAuxVerbs - Modifies the position of auxiliary verbs within an a-tree.
+Treex::Block::W2A::JA::RehangAuxVerbs - Modifies the position of auxiliary (non-independent) verbs within an a-tree.
 
 =head1 DESCRIPTION
 
-Verbs (Dōshi) with tag Dōshi-HiJiritsu (non-independent) should be
-dependent on independent verbs (tag Dōshi-Jiritsu) and "suffix" verbs (tag Dōshi-Setsubi) and not vice versa.
+Verbs (Dōshi) with tag Dōshi-Jiritsu (independent) should be dependent
+on the non-independent verbs (tag Dōshi-HiJiritsu), which are similar to english modal verbs. 
 This block takes care of that.
 
 ---
@@ -89,7 +89,6 @@ This block takes care of that.
 Suggested order of applying Rehang* blocks:
 W2A::JA::RehangAuxVerbs
 W2A::JA::RehangCopulas
-W2A::JA::RehangConjunctions
 W2A::JA::RehangParticles
 
 =head1 AUTHOR

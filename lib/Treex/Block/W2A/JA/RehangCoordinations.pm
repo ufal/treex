@@ -28,16 +28,16 @@ sub process_atree {
 sub fix_subtree {
     my ($a_node) = @_;
 
-    if ( should_switch_with_parent($a_node) ) {
-        switch_with_parent($a_node);
-    }
-    $is_processed{$a_node} = 1;
- 
     foreach my $child ( $a_node->get_children() ) {
         next if $is_processed{$child};
         fix_subtree($child);
     }
 
+    if ( should_switch_with_parent($a_node) ) {
+        switch_with_parent($a_node);
+    }
+    $is_processed{$a_node} = 1;
+ 
     return;
 }
 
@@ -57,38 +57,33 @@ sub switch_with_parent {
 
     # there should be two possible coordinations patterns:
     # 1) <token1> PARTICLE <token2> (... PARTICLE <tokenN>) <case_particle/modifier/copula>:
-    if (!$parent->is_root()) {
+    # <token1> -> PARTICLE -> <token2>
+    if ( $parent->tag !~ /Heiritsujoshi/ ) {
       my $granpa = $parent->get_parent();
       my $parent_tag = $parent->tag;
       $parent_tag =~ s/-.*//;
 
+      my $is_coord = 0;
       foreach my $child ( $a_node->get_children() ) {
-
-        # in this case, the particle should only have only one child, it should have same base tag as the parent
-        if ( $child->tag =~ /$parent_tag/ ) {
+        if ($child->tag =~ /$parent_tag/) {
           $child->set_is_member(1);
-          $parent->set_is_member(1);
-          $a_node->set_parent($granpa);
-          $parent->set_parent($a_node);
-          last;
+          $is_coord = 1;
         }
-      
       }
+      if ($is_coord) {
+        $parent->set_is_member(1);
+        $a_node->set_parent($granpa);
+        $parent->set_parent($a_node);
+      }
+
+      return; 
     }
 
-
-    # 2) <token1> PARTICLE <token2> PARTICLE ...
-    # we can also get this pattern after the rehanging of 1)
+    # 2) <token1> PARTICLE1 <token2> PARTICLE2...
+    # <token1> -> PARTICLE -> PARTICLE <- <token2>
     foreach my $child ( $a_node->get_children() ) {
-    
-      # if a child node is also coordination particle, we rehang its children to its parent
-      if ( $child->tag =~ /Heiritsujoshi/ ) {
-        foreach my $grandchild ( $child->get_children() ) {
-          $grandchild->set_parent($a_node);
-          $grandchild->set_is_member(1) if $grandchild->tag !~ /Heiritsujoshi/;
-        }
-      }
-
+      $child->set_parent($parent);
+      $child->set_is_member(1) if $child->tag !~ /Heiritsujoshi/;
     }
 
     return;
