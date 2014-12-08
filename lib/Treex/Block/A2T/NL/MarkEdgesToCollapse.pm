@@ -69,7 +69,12 @@ override is_aux_to_parent => sub {
     my $base_result = super();
     return $base_result if defined $base_result;
 
-    # TODO: standalone (existential) "er"? 
+    # standalone (existential) "er"
+    if ( lc $node->form eq 'er' ){
+        my ($eparent) = $node->get_eparents();
+        return 1 if $eparent->is_verb(); # formal subject
+        return 0; # eraan, ermee etc.
+    }  
 
     # Analytical comparative and superlative
     if ( lc($node->form) =~ /^(meer|meest)$/ ) {
