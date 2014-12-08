@@ -8,22 +8,22 @@ extends 'Treex::Block::T2A::AddArticles';
 override '_build_article_form' => sub {
     return {
         'definite masc sing' => 'de',
-        'definite masc plu' => 'de',
+        'definite masc plur' => 'de',
         'definite fem sing' => 'de',
-        'definite fem plu' => 'de',
+        'definite fem plur' => 'de',
         'definite com sing' => 'de',
-        'definite com plu' => 'de',
+        'definite com plur' => 'de',
         'definite neut sing' => 'het',
-        'definite neut plu' => 'de',
-        'definite  plu' => 'de', # gender is actually irrelevant in plural
+        'definite neut plur' => 'de',
+        'definite  plur' => 'de', # gender is actually irrelevant in plurral
         'indefinite masc sing' => 'een',
-        'indefinite masc plu' => '',
+        'indefinite masc plur' => '',
         'indefinite fem sing' => 'een',
-        'indefinite fem plu' => '',
+        'indefinite fem plur' => '',
         'indefinite com sing' => 'een',
-        'indefinite com plu' => '',
+        'indefinite com plur' => '',
         'indefinite neut sing' => 'een',
-        'indefinite neut plu' => '',
+        'indefinite neut plur' => '',
     };
 };
 
