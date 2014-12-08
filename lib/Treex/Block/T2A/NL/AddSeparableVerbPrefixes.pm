@@ -18,7 +18,7 @@ sub process_tnode {
     my ( $prefix, $verb ) = ( ( $tnode->t_lemma || '' ) =~ /^([^_]+)_(.*)$/ );
 
     # only for verbal nodes with some particles
-    return if ( !$prefix );
+    return if ( !$prefix or $prefix eq 'zich' );
     my $anode = $tnode->get_lex_anode() or return;
         
     # remove prefix from the verbal node
