@@ -3,6 +3,7 @@ package Treex::Block::Write::CoNLLU;
 use strict;
 use warnings;
 use Moose;
+use Lingua::Interset qw(encode);
 use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';
 
@@ -10,7 +11,6 @@ my %FALLBACK_FOR = ( 'pos' => 'tag', 'deprel' => 'afun', );
 
 has '+language'                        => ( required => 1 );
 has 'deprel_attribute'                 => ( is       => 'rw', isa => 'Str', default => 'autodetect' );
-has 'pos_attribute'                    => ( is       => 'rw', isa => 'Str', default => 'autodetect' );
 has 'is_member_within_afun'            => ( is       => 'rw', isa => 'Bool', default => 0 );
 has 'is_shared_modifier_within_afun'   => ( is       => 'rw', isa => 'Bool', default => 0 );
 has 'is_coord_conjunction_within_afun' => ( is       => 'rw', isa => 'Bool', default => 0 );
@@ -28,8 +28,16 @@ sub process_atree
     return if rand() > $self->randomly_select_sentences_ratio;
     foreach my $node ($tree->get_descendants({ ordered => 1 }))
     {
+        my $ord = $node->ord();
+        my $form = $node->form();
+        my $lemma = $node->lemma();
+        my $tag = $node->tag();
+        my $isetfs = $node->iset();
+        my $upos_features = encode('mul::uposf', $isetfs);
+        my ($upos, $feat) = split(/\t/, $upos_features);
+        my $pord = $node->get_parent()->ord();
         # 'conll/' will be prefixed if needed; see get_attribute().
-        my ($lemma, $pos, $deprel) = map {$self->get_attribute($node, $_)} ('lemma', 'pos', 'deprel');
+        my $deprel = $self->get_attribute($node, 'deprel');
         # Append suffices to afuns.
         ###!!! We will want to remove this in future. The dependency labels we output will have to conform to the Universal Dependencies standard.
         my $suffix = '';
@@ -37,21 +45,9 @@ sub process_atree
         $suffix .= 'S' if $self->is_shared_modifier_within_afun   && $node->is_shared_modifier;
         $suffix .= 'C' if $self->is_coord_conjunction_within_afun && $node->wild->{is_coord_conjunction};
         $deprel .= "_$suffix" if $suffix;
-
-        my $feat;
-        if ( $self->feat_attribute eq 'conll/feat' && defined $node->conll_feat() ) {
-            $feat = $node->conll_feat();
-        }
-        elsif ( $self->feat_attribute eq 'iset' && $node->get_iset_pairs_list() ) {
-            $feat = $node->get_iset_conll_feat();
-        }
-        else {
-            $feat = '_';
-        }
-        my $p_ord = $node->get_parent()->ord();
         # CoNLL-U columns: ID, FORM, LEMMA, CPOSTAG=UPOS, POSTAG=corpus-specific, FEATS, HEAD, DEPREL, DEPS(additional), MISC
         # Make sure that values are not empty and that they do not contain spaces.
-        my @values = ($node->ord(), $node->form(), $lemma, $cpos, $pos, $feat, $p_ord, $deprel, '_', '_');
+        my @values = ($ord, $form, $lemma, $upos, $tag, $feat, $pord, $deprel, '_', '_');
         @values = map
         {
             my $x = $_ // '_';
@@ -115,14 +111,6 @@ sub get_attribute
     return defined($value) ? $value : '_';
 }
 
-
-
-###!!! TADY BUDE KONVERZE INTERSETU DO UPOS!
-sub get_coarse_grained_tag {
-    my ( $self, $tag ) = @_;
-    return substr $tag, 0, 2;
-}
-
 1;
 
 __END__
@@ -154,28 +142,15 @@ The name of attribute which will be printed into the 8th column (dependency rela
 Default is C<autodetect> which tries first C<conll/deprel>
 and if it is not defined then C<afun>.
 
-=item pos_attribute
-
-The name of attribute which will be printed into the 5th column (part-of-speech tag).
-Default is C<autodetect> which tries first C<conll/pos>
-and if it is not defined then C<tag>.
-
-=item feat_attribute
-
-The name of attribute which will be printed into the 6th column (features).
-Default is C<_> which means that an underscore will be printed instead of the features.
-Possible values are C<conll/feat> and C<iset>.
-
-
 =back
 
 =head1 METHODS
 
 =over
 
-=item process_document
+=item process_atree
 
-Saves the document.
+Saves (prints) the CoNLL-U representation of one sentence (one dependency tree).
 
 =back
 
