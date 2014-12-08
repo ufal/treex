@@ -36,6 +36,7 @@ sub process_atree
         my $upos_features = encode('mul::uposf', $isetfs);
         my ($upos, $feat) = split(/\t/, $upos_features);
         my $pord = $node->get_parent()->ord();
+        my $misc = $node->no_space_after() ? 'SpaceAfter=No' : '_';
         # 'conll/' will be prefixed if needed; see get_attribute().
         my $deprel = $self->get_attribute($node, 'deprel');
         # Append suffices to afuns.
@@ -47,7 +48,7 @@ sub process_atree
         $deprel .= "_$suffix" if $suffix;
         # CoNLL-U columns: ID, FORM, LEMMA, CPOSTAG=UPOS, POSTAG=corpus-specific, FEATS, HEAD, DEPREL, DEPS(additional), MISC
         # Make sure that values are not empty and that they do not contain spaces.
-        my @values = ($ord, $form, $lemma, $upos, $tag, $feat, $pord, $deprel, '_', '_');
+        my @values = ($ord, $form, $lemma, $upos, $tag, $feat, $pord, $deprel, '_', $misc);
         @values = map
         {
             my $x = $_ // '_';
