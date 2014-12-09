@@ -70,6 +70,17 @@ sub get_clause_descendants {
     return ( @clause_children, map { $_->get_clause_descendants() } @clause_children );
 }
 
+# A variant of the previous, using effective children instead of children.
+sub get_clause_edescendants {
+    log_fatal 'Incorrect number of arguments' if @_ != 1;
+    my $self = shift;
+
+    my @clause_children = grep { !$_->get_attr('is_clause_head') } $self->get_echildren();
+    # we can use normal get_clause_descendants here, using echildren would no longer make any difference
+    return ( @clause_children, map { $_->get_clause_descendants() } @clause_children );
+}
+
+
 1;
 
 __END__
@@ -119,6 +130,10 @@ Note that it may give different results than C<get_clause_root>.
 
 Returns those descendants which are in the same clause as C<$node>.
 The current implementation is based on the attribute C<is_clause_head>.
+
+=item my @nodes = $node->get_clause_edescendants();
+
+Same as previous, but using the effective children relation.
 
 =item my @nodes = $node->get_clause_nodes();
 
