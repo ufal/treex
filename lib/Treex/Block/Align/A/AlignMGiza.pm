@@ -20,12 +20,6 @@ has model => ( isa => 'Str', is => 'rw', default => "$ENV{TMT_ROOT}/share/data/m
 has model_from_share => ( isa => 'Str', is => 'ro' );
 has mgizadir => ( is => 'rw', isa => 'Str', default => "$ENV{TMT_ROOT}/share/installed_tools/mgizapp/install" );
 
-my $mkcls = $self->mgizadir . '/bin/mkcls';
-my $mgiza = $self->mgizadir . '/bin/mgiza';
-my $snt2cooc = $self->mgizadir . '/bin/snt2cooc';
-my $symal = $self->mgizadir . '/bin/symal';
-my $merge = $self->mgizadir . '/scripts/merge_alignment.py';
-
 my $mytmpdir;
 my @parsed_dir_or_sym;
 
@@ -242,6 +236,7 @@ sub _run_mgiza {
 
     # prepare coocurrence file
     my $cooc_file = "$mytmpdir/$a-$b.cooc";
+    my $snt2cooc = $self->mgizadir . '/bin/snt2cooc';
     _safesystem( "$snt2cooc $cooc_file $mytmpdir/vcb-$a $mytmpdir/vcb-$b $corpus" );
 
     # generate options for MGiza
@@ -270,9 +265,11 @@ sub _run_mgiza {
     map { $options_str .= " -$_ $mgiza_options{$_}" } sort keys %mgiza_options;
 
     # run mgiza
+    my $mgiza = $self->mgizadir . '/bin/mgiza';
     _safesystem( "$mgiza " . $self->model . "/a-b.gizacfg $options_str" );
 
     # merge alignment parts
+    my $merge = $self->mgizadir . '/scripts/merge_alignment.py';
     _safesystem( "$merge $mytmpdir/$a-$b.A3.final.part* > $mytmpdir/$a-$b.A3.final" );
 
     # remove alignment parts
@@ -398,6 +395,7 @@ sub _run_symal {
 
     # run symal
     log_info "Running symal for symmetrization '$sym'";
+    my $symal = $self->mgizadir . '/bin/symal';
     _safesystem( "$symal $symal_args < $symal_infile > $symal_outfile" );
 
     # read its output and store it in Treex
