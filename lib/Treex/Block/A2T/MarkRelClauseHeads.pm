@@ -18,7 +18,7 @@ sub is_relclause_head {
 
     # Usually wh-pronouns are children of the verb, but sometimes...
     # "licenses, the validity(parent=expire) of which(tparent=validity) will expire"
-    return any { $self->is_relative_pronoun($_) } $t_node->get_clause_descendants();
+    return any { $self->is_relative_pronoun($_) } $t_node->get_clause_edescendants();
 }
 
 sub is_relative_pronoun {
