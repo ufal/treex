@@ -223,7 +223,8 @@ has 'qsub' => (
     isa           => 'Str',
     default       => '',
     documentation => 'Additional parameters passed to qsub. Requires -p. '
-        . 'See --priority and --mem. You can use e.g. --qsub="-q *@p*,*@s*" to use just machines p* and s*.',
+. 'See --priority and --mem. You can use e.g. --qsub="-q *@p*,*@s*" to use just machines p* and s*. '
+. 'Or e.g. --qsub="-q *@!(twi*|pan*)" to skip twi* and pan* machines.',
 );
 
 has 'workdir' => (
