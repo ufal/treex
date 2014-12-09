@@ -13,6 +13,7 @@ sub process_tnode {
     # only for verbal nodes with some particles
     return if ( !$particles );
     my $a_node = $t_node->get_lex_anode() or return;
+    my $last_conj = undef; # remember this in case there are more `conjunctions' so as not to reverse order
 
     foreach my $particle ( split /_/, $particles ) {
         
@@ -28,10 +29,18 @@ sub process_tnode {
         );
 
         if ( not $works_as_conj ){
-        $particle_node->shift_before_node($a_node);
+            $particle_node->shift_before_node($a_node);
+            $particle_node->iset->add( pos => 'part', parttype => 'inf' );
         }
         else {
-            $particle_node->shift_before_subtree($a_node);
+            if ($last_conj){
+                $particle_node->shift_after_node($last_conj);
+            }
+            else {
+                $particle_node->shift_before_subtree($a_node);
+            }
+            $last_conj = $particle_node;
+            $particle_node->iset->add( pos => 'conj', conjtype => 'sub' );
         }
         $t_node->add_aux_anodes($particle_node);
     }

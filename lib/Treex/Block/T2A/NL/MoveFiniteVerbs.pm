@@ -20,7 +20,8 @@ sub process_tnode {
         # coordinated clauses with non-member 1st effective child: avoid skipping coordination parts 
         # for other members than the 1st, move to the beginning of their own coordination part
         if ( $first->get_parent() != $anode and $anode->is_member and $first->clause_number != $anode->clause_number ){
-            ($first) = $anode->get_clause_root()->get_children( { ordered => 1 } ); 
+            ($first) = $anode->get_clause_root()->get_children( { ordered => 1 } );
+            return if (!defined $first); # again, if there is only the verb, do nothing 
             $anode->shift_before_subtree( $first, { without_children => 1 } );            
         }
         # 1st position: imperative, question (except after a dependent clause)
