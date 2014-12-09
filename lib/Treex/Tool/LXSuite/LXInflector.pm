@@ -5,8 +5,8 @@ extends 'Treex::Tool::LXSuite::Client';
 has '+lxsuite_mode' => (default => 'inflector');
 
 sub inflect {
-    my ( $self, $lemma, $pos, $gender, $number ) = @_;
-    $self->write("$lemma,$pos,$gender,$number\n");
+    my ( $self, $lemma, $pos, $gender, $number,$superlative,$diminutive ) = @_;
+    $self->write("$lemma,$pos,$gender,$number,$superlative,$diminutive\n");
     return $self->read();
 }
 
