@@ -54,6 +54,7 @@ my %DEPREL_CONV = (
     'crd'    => 'Coord',
     'app'    => 'Atr',     # 'hoofstad Luxembourg[app]', 'heer Sleiffer[app]', 'opus 93[app]' etc.
     'se'     => 'AuxT',
+    'hdf'    => 'AuxP',    # closing element of a circumposition
 );
 
 # convert original deprels (stored as conll_deprel) to PDT-style afuns
@@ -83,9 +84,7 @@ sub convert_deprel {
             $afun = 'AuxG' if ( !$afun );
         }
         elsif ( $deprel eq 'mwp' ) {
-
-            # set AuxP for multi-word prepositions, avoid other multi-word units
-            $afun = 'AuxP' if ( $node->is_preposition or ( ( $node->parent->conll_deprel // '' ) eq 'mwp' and ( $node->parent->afun // '' ) eq 'AuxP' ) );
+            $afun = 'AuxP' if ( $node->is_preposition ); 
             $afun = 'AuxA' if ( !$afun and $node->match_iset( 'prontype' => 'art' ) );
             $afun = 'NR' if ( !$afun );
         }
@@ -335,6 +334,19 @@ sub fix_mwu {
 
     # process each MWU separately
     foreach my $mwu ( values %mwus ) {
+        
+        my $sig = join('_', map { _get_mwu_part_type($_) } @$mwu );        
+        
+        # skip MWUs that should not be rehanged
+        next if (scalar(@$mwu) == 2 and $sig =~ /(adp|subord)_(adj|noun|adv|verb)/);
+        
+        # set afun := AuxP for MW prepositions (adp + noun + adp, adp + noun + adv with er/daar-)
+        if ($sig =~ /^adp_noun_adp$/){
+            map { $_->set_afun('AuxP') } @$mwu;         
+        }
+        elsif ($sig =~ /^adp_noun_adv$/ and $mwu->[-1]->lemma =~ /^(er|daar)/){
+            $mwu->[1]->set_afun('AuxP');
+        }
 
         # find out which mwu member hangs the highest
         my ($mwu_top) = sort { $a->get_depth() <=> $b->get_depth() } @$mwu;
@@ -355,7 +367,18 @@ sub fix_mwu {
             $mwu_child->set_parent($last_member);
         }
     }
+}
 
+sub _get_mwu_part_type {
+    my ($anode) = @_;
+    return 'art' if $anode->is_article;
+    return 'adp' if $anode->is_adposition;
+    return 'noun' if $anode->is_noun;
+    return 'adv' if $anode->is_adverb;
+    return 'adj' if $anode->is_adjective;
+    return 'verb' if $anode->is_verb;
+    return 'subord' if $anode->is_subordinator;
+    return 'other';
 }
 
 1;
