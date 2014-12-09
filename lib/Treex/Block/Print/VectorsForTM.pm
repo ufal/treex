@@ -104,7 +104,7 @@ sub print_tnode_features {
     # Czech uses the first position of the tag
     # other languages use the Interset tag
     my $trg_mlayer_pos;
-    if ($self->trg_lang eq 'cs') {
+    if ($trg_anode->language eq 'cs') {
         ($trg_mlayer_pos) = ( $trg_anode->tag =~ /^(.)/ );
     } else {
         $trg_mlayer_pos = $trg_anode->iset->pos // "";
