@@ -1,7 +1,7 @@
 package Treex::Block::A2T::NL::SetFormeme;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block::A2T::EN::SetFormeme';
+extends 'Treex::Block::A2T::SetFormeme';
 
 override 'detect_syntpos' => sub {
 
@@ -9,7 +9,7 @@ override 'detect_syntpos' => sub {
     my $a_node = $t_node->get_lex_anode();
 
     # coap nodes must have empty syntpos
-    return '' if ( $t_node->nodetype ne 'complex' ) && $t_node->t_lemma !~ m/^(%|°|#(Percnt|Deg))/;
+    return 'x' if ( $t_node->nodetype ne 'complex' ) && ( $t_node->t_lemma || '' ) !~ m/^(%|°|#(Percnt|Deg))/;
 
     # let's assume generated nodes are (pro)nouns
     return 'n' if ( !$a_node );
@@ -39,7 +39,7 @@ override 'detect_syntpos' => sub {
 };
 
 # semantic nouns
-override '_noun' => sub {
+override 'formeme_for_noun' => sub {
 
     my ( $self, $t_node, $a_node ) = @_;
     return 'n:poss' if $a_node->match_iset( 'poss' => 'poss' );
@@ -69,7 +69,7 @@ override '_noun' => sub {
 };
 
 # semantic adjectives
-override '_adj' => sub {
+override 'formeme_for_adj' => sub {
     my ( $self, $t_node, $a_node ) = @_;
 
     my $prep = $self->get_aux_string( $t_node->get_aux_anodes( { ordered => 1 } ) );
@@ -84,7 +84,7 @@ override '_adj' => sub {
 };
 
 # semantic verbs
-override '_verb' => sub {
+override 'formeme_for_verb' => sub {
     my ( $self, $t_node, $a_node ) = @_;
 
     my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
@@ -145,8 +145,6 @@ The attribute C<formeme> of Dutch t-nodes is filled with
 a value which describes the morphosyntactic form of the given
 node in the original sentence. Values such as C<v:fin> (finite verb),
 C<n:for+X> (prepositional group), or C<n:subj> are used.
-
-TODO: This is based on the English block. Possibly create an independent base class?
 
 =head1 AUTHORS
 
