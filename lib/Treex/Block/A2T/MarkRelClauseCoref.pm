@@ -8,6 +8,8 @@ sub process_tnode {
 
     return if ( !$self->is_relative_word($t_node) );
 
+    # get_clause_ehead (effective head of a clause) is needed for coordinated relative clauses, e.g.
+    # "a man who(parent=and, eparents={sleeps,eats}) sleeps and eats"
     my $t_relclause_head = $t_node->get_clause_ehead();
 
     # Antecedent is the parent of relative clause head.

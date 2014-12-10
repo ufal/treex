@@ -16,8 +16,11 @@ sub is_relclause_head {
     my ( $self, $t_node ) = @_;
     return 0 if !$t_node->is_clause_head;
 
-    # Usually wh-pronouns are children of the verb, but sometimes...
+    # Usually, wh-pronouns are children of the verb, but sometimes...
     # "licenses, the validity(parent=expire) of which(tparent=validity) will expire"
+    # The wh-pronoun may also be a shared subject of a coordinated verbs,
+    # thus we need to use get_clause_edescendants(), instead of get_clause_descendants()
+    # "a man who(parent=and, eparents={sleeps,eats}) sleeps(is_clause_head=1) and eats(is_clause_head=1)"
     return any { $self->is_relative_pronoun($_) } $t_node->get_clause_edescendants();
 }
 
