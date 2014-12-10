@@ -177,9 +177,10 @@ sub process_tnode {
 
         if (@translations) {
 
-            if ( $translations[0]->{label} =~ /(.+)#(.)/ ) {
+            # should be /^(.+)#(.+)$/
+            if ( $translations[0]->{label} =~ /^(.+)#(.*)$/ ) {
                 $trg_tnode->set_t_lemma($1);
-                $trg_tnode->set_attr( 'mlayer_pos', $2 );
+                $trg_tnode->set_attr( 'mlayer_pos', $2 ne "" ? $2 : "x" );
             }
             else {
                 log_fatal "Unexpected form of label: " . $translations[0]->{label};
@@ -195,9 +196,9 @@ sub process_tnode {
             $trg_tnode->set_attr(
                 'translation_model/t_lemma_variants',
                 [   map {
-                        $_->{label} =~ /(.+)#(.)/ or log_fatal "Unexpected form of label: $_->{label}";
+                        $_->{label} =~ /(.+)#(.*)/ or log_fatal "Unexpected form of label: $_->{label}";
                         {   't_lemma' => $1,
-                            'pos'     => $2,
+                            'pos'     => $2 ne "" ? $2 : "x",
                             'origin'  => $_->{source},
                             'logprob' => ProbUtils::Normalize::prob2binlog( $_->{prob} ),
                             'feat_weights' => $_->{feat_weights},
