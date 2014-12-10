@@ -30,7 +30,11 @@ sub _get_segmenter {
     my $specific = "Treex::Tool::Segment::${lang}::RuleBased";
     my $fallback = "Treex::Tool::Segment::RuleBased";
     foreach my $class ( $specific, $fallback ) {
-        my $segmenter = eval "use $class; $class->new()"; ##no critic (BuiltinFunctions::ProhibitStringyEval) We want to use it, it is simpler and we check result
+        my $segmenter;
+        {
+            local $SIG{"__DIE__"};
+            $segmenter = eval "use $class; $class->new()"; ##no critic (BuiltinFunctions::ProhibitStringyEval) We want to use it, it is simpler and we check result
+        }
         if ($segmenter) {
             $self->segmenters->{$lang} = $segmenter;
             return $segmenter;
