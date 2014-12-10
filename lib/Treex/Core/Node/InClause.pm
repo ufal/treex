@@ -137,6 +137,11 @@ Returns the head node of a clause.
 This implementation is based on the attribute C<is_clause_head>.
 Note that it may give different results than C<get_clause_root>.
 
+=item $clause_head_node = $node->get_clause_ehead();
+
+Returns the (first) effective head node of a clause. 
+Same as previous, but based on the effective parent relation.
+
 =item my @nodes = $node->get_clause_descendants();
 
 Returns those descendants which are in the same clause as C<$node>.
