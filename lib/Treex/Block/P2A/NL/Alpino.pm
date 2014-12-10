@@ -28,13 +28,12 @@ my %HEAD_SCORE = (
     'hd'    => 6,
     'cmp'   => 5,
     'crd'   => 4,
-    'dlink' => 3, 
-    'rhd'   => 2, # relative clause head
-    'tag'   => 2, # discourse tag "He said that..."
-    'whd'   => 1, # wh-question head
-    'nucl'  => 1, # main clause (against "als"-clause)
+    'dlink' => 3,
+    'rhd'   => 2,    # relative clause head
+    'tag'   => 2,    # discourse tag "He said that..."
+    'whd'   => 1,    # wh-question head
+    'nucl'  => 1,    # main clause (against "als"-clause)
 );
-
 
 my %DEPREL_CONV = (
     'su'     => 'Sb',
@@ -84,9 +83,9 @@ sub convert_deprel {
             $afun = 'AuxG' if ( !$afun );
         }
         elsif ( $deprel eq 'mwp' ) {
-            $afun = 'AuxP' if ( $node->is_preposition ); 
+            $afun = 'AuxP' if ( $node->is_preposition );
             $afun = 'AuxA' if ( !$afun and $node->match_iset( 'prontype' => 'art' ) );
-            $afun = 'NR' if ( !$afun );
+            $afun = 'NR'   if ( !$afun );
         }
         elsif ( $deprel eq 'svp' ) {
             $afun = 'AuxV' if ( $node->is_preposition or $node->is_adverb );
@@ -110,26 +109,25 @@ sub convert_pos {
 # given a non-terminal, return the word-order value of the leftmost terminal node governed by it
 sub _leftmost_terminal_ord {
     my ($p_node) = @_;
-    my @desc = grep { defined($_->form) and defined($_->wild->{pord}) } $p_node->get_descendants( { add_self => 1 } );
+    my @desc = grep { defined( $_->form ) and defined( $_->wild->{pord} ) } $p_node->get_descendants( { add_self => 1 } );
     return min( map { $_->wild->{pord} } @desc );
 }
 
 sub create_subtree {
 
     my ( $self, $p_root, $a_root ) = @_;
-    
+
     my @children = sort { ( $HEAD_SCORE{ $b->wild->{rel} } || 0 ) <=> ( $HEAD_SCORE{ $a->wild->{rel} } || 0 ) } grep { !defined $_->form || $_->form !~ /^\*\-/ } $p_root->get_children();
 
     # log_info( 'CH:' . join( ' ', map { $_->form // $_->phrase . '=' . $_->wild->{rel} } @children ) );
 
     # no coordination head -> insert commas from those attached to sentence root
     if ( $p_root->phrase eq 'conj' and not any { $_->wild->{rel} eq 'crd' } @children ) {
-        
         # find a punctuation node just before the last coordination member
         my ($last_child) = sort { _leftmost_terminal_ord($b) <=> _leftmost_terminal_ord($a) } @children;
         my $needed_ord = _leftmost_terminal_ord($last_child) - 1;
         my ($punct_node) = grep { ( $_->wild->{pord} // -1 ) == $needed_ord } $p_root->get_root()->get_children();
-        
+
         # punctuation node has been found -- use it as the coordination head
         if ($punct_node) {
             $punct_node->wild->{rel} = 'crd';
@@ -147,7 +145,7 @@ sub create_subtree {
 
     my $head = $children[0];
     foreach my $child (@children) {
-        
+
         my $new_node;
         if ( $child == $head ) {
             $new_node = $a_root;
@@ -161,7 +159,7 @@ sub create_subtree {
         elsif ( defined $child->phrase ) {    # the node is nonterminal
             $self->create_subtree( $child, $new_node );
         }
-    }    
+    }
 }
 
 # fill newly created node with attributes from source
@@ -186,7 +184,7 @@ sub process_zone {
     my ( $self, $zone ) = @_;
     my $p_root = $zone->get_ptree;
     my $a_root = $zone->create_atree();
-    
+
     $self->_set_processed_nodes( {} );
     $self->_set_nodes_to_remove( {} );
     foreach my $child ( $p_root->get_children() ) {
@@ -218,7 +216,7 @@ sub process_zone {
     $self->set_coord_members($a_root);
 
     # post-processing
-    $self->rehang_wh_clauses($a_root); # rehang relative clauses and wh-questions
+    $self->rehang_wh_clauses($a_root);    # rehang relative clauses and wh-questions
     $self->mark_subjects($a_root);
     $self->rehang_aux_verbs($a_root);
     $self->fix_mwu($a_root);
@@ -241,8 +239,8 @@ sub rehang_wh_clauses {
         my $parent = $anode->get_parent();
         $clause->set_parent($parent);
         $anode->set_parent($clause);
-        $anode->set_afun( $anode->is_adverb ? 'Adv' : 'Obj' );
-        $clause->set_afun( $parent->is_root ? 'Pred' : 'Atr');
+        $anode->set_afun( $anode->is_adverb ? 'Adv'  : 'Obj' );
+        $clause->set_afun( $parent->is_root ? 'Pred' : 'Atr' );
         $clause->set_is_member( $anode->is_member );
         $anode->set_is_member(undef);
     }
@@ -335,17 +333,17 @@ sub fix_mwu {
 
     # process each MWU separately
     foreach my $mwu ( values %mwus ) {
-        
-        my $sig = join('_', map { _get_mwu_part_type($_) } @$mwu );        
-        
+
+        my $sig = join( '_', map { _get_mwu_part_type($_) } @$mwu );
+
         # skip MWUs that should not be rehanged
-        next if (scalar(@$mwu) == 2 and $sig =~ /(adp|subord)_(adj|noun|adv|verb)/);
-        
+        next if ( scalar(@$mwu) == 2 and $sig =~ /(adp|subord)_(adj|noun|adv|verb)/ );
+
         # set afun := AuxP for MW prepositions (adp + noun + adp, adp + noun + adv with er/daar-)
-        if ($sig =~ /^adp_noun_adp$/){
-            map { $_->set_afun('AuxP') } @$mwu;         
+        if ( $sig =~ /^adp_noun_adp$/ ) {
+            map { $_->set_afun('AuxP') } @$mwu;
         }
-        elsif ($sig =~ /^adp_noun_adv$/ and $mwu->[-1]->lemma =~ /^(er|daar)/){
+        elsif ( $sig =~ /^adp_noun_adv$/ and $mwu->[-1]->lemma =~ /^(er|daar)/ ) {
             $mwu->[1]->set_afun('AuxP');
         }
 
@@ -372,12 +370,12 @@ sub fix_mwu {
 
 sub _get_mwu_part_type {
     my ($anode) = @_;
-    return 'art' if $anode->is_article;
-    return 'adp' if $anode->is_adposition;
-    return 'noun' if $anode->is_noun;
-    return 'adv' if $anode->is_adverb;
-    return 'adj' if $anode->is_adjective;
-    return 'verb' if $anode->is_verb;
+    return 'art'    if $anode->is_article;
+    return 'adp'    if $anode->is_adposition;
+    return 'noun'   if $anode->is_noun;
+    return 'adv'    if $anode->is_adverb;
+    return 'adj'    if $anode->is_adjective;
+    return 'verb'   if $anode->is_verb;
     return 'subord' if $anode->is_subordinator;
     return 'other';
 }
