@@ -15,8 +15,8 @@ sub process_tnode {
     # Antecedent is the parent of relative clause head.
     # (In other words, the relative clause modifies the antecedent.)
     my ($t_antec) = $t_relclause_head->get_eparents( { or_topological => 1 } );
-    log_info('T-ANTEC: ' . $t_antec->id . ' ' . $t_antec->t_lemma . ' / ' . $t_node->t_lemma );
     return if !$t_antec || $t_antec->is_root();
+    log_info('T-ANTEC: ' . $t_antec->id . ' ' . $t_antec->t_lemma . ' / ' . $t_node->t_lemma );
 
     if ( $self->is_allowed_antecedent($t_antec) ) {
         $t_node->set_deref_attr( 'coref_gram.rf', [$t_antec] );
