@@ -34,7 +34,7 @@ sub process_tnode {
             'morphcat/pos' => '!',
         }
     );
-    $prefix_anode->iset->add( 'pos' => 'adp', 'adpostype' => 'prep' );
+    $prefix_anode->iset->add( 'pos' => 'part', 'parttype' => 'vbp' );
     $prefix_anode->shift_after_node($anode);        
     $tnode->add_aux_anodes($prefix_anode);
 
