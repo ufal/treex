@@ -110,25 +110,26 @@ sub convert_pos {
 # given a non-terminal, return the word-order value of the leftmost terminal node governed by it
 sub _leftmost_terminal_ord {
     my ($p_node) = @_;
-    return min( map { $_->wild->{pord} } grep { $_->form and $_->wild->{pord} } $p_node->get_descendants( { add_self => 1 } ) );
+    my @desc = grep { defined($_->form) and defined($_->wild->{pord}) } $p_node->get_descendants( { add_self => 1 } );
+    return min( map { $_->wild->{pord} } @desc );
 }
 
 sub create_subtree {
 
     my ( $self, $p_root, $a_root ) = @_;
-
+    
     my @children = sort { ( $HEAD_SCORE{ $b->wild->{rel} } || 0 ) <=> ( $HEAD_SCORE{ $a->wild->{rel} } || 0 ) } grep { !defined $_->form || $_->form !~ /^\*\-/ } $p_root->get_children();
 
     # log_info( 'CH:' . join( ' ', map { $_->form // $_->phrase . '=' . $_->wild->{rel} } @children ) );
 
     # no coordination head -> insert commas from those attached to sentence root
     if ( $p_root->phrase eq 'conj' and not any { $_->wild->{rel} eq 'crd' } @children ) {
-
+        
         # find a punctuation node just before the last coordination member
         my ($last_child) = sort { _leftmost_terminal_ord($b) <=> _leftmost_terminal_ord($a) } @children;
         my $needed_ord = _leftmost_terminal_ord($last_child) - 1;
         my ($punct_node) = grep { ( $_->wild->{pord} // -1 ) == $needed_ord } $p_root->get_root()->get_children();
-
+        
         # punctuation node has been found -- use it as the coordination head
         if ($punct_node) {
             $punct_node->wild->{rel} = 'crd';
@@ -146,6 +147,7 @@ sub create_subtree {
 
     my $head = $children[0];
     foreach my $child (@children) {
+        
         my $new_node;
         if ( $child == $head ) {
             $new_node = $a_root;
@@ -159,8 +161,7 @@ sub create_subtree {
         elsif ( defined $child->phrase ) {    # the node is nonterminal
             $self->create_subtree( $child, $new_node );
         }
-    }
-
+    }    
 }
 
 # fill newly created node with attributes from source
@@ -185,7 +186,7 @@ sub process_zone {
     my ( $self, $zone ) = @_;
     my $p_root = $zone->get_ptree;
     my $a_root = $zone->create_atree();
-
+    
     $self->_set_processed_nodes( {} );
     $self->_set_nodes_to_remove( {} );
     foreach my $child ( $p_root->get_children() ) {
