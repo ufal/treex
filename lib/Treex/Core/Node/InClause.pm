@@ -61,6 +61,17 @@ sub get_clause_head {
     return $node;
 }
 
+sub get_clause_ehead {
+    log_fatal 'Incorrect number of arguments' if @_ != 1;
+    my $self = shift;
+    return $self if ( $self->is_clause_head );
+    my ($node) = $self->get_eparents( { or_topological => 1 } );
+    while ( !$node->is_clause_head && $node->get_parent() ) {
+        $node = $node->get_parent();
+    }
+    return $node;
+}
+
 # Alternative API could be: $node->get_descendants({within_clause=>1});
 sub get_clause_descendants {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
@@ -76,10 +87,10 @@ sub get_clause_edescendants {
     my $self = shift;
 
     my @clause_children = grep { !$_->get_attr('is_clause_head') } $self->get_echildren();
+
     # we can use normal get_clause_descendants here, using echildren would no longer make any difference
     return ( @clause_children, map { $_->get_clause_descendants() } @clause_children );
 }
-
 
 1;
 

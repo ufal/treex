@@ -8,11 +8,12 @@ sub process_tnode {
 
     return if ( !$self->is_relative_word($t_node) );
 
-    my $t_relclause_head = $t_node->get_clause_head();
+    my $t_relclause_head = $t_node->get_clause_ehead();
 
     # Antecedent is the parent of relative clause head.
     # (In other words, the relative clause modifies the antecedent.)
-    my $t_antec = $t_relclause_head->get_parent();
+    my ($t_antec) = $t_relclause_head->get_eparents( { or_topological => 1 } );
+    log_info('T-ANTEC: ' . $t_antec->id . ' ' . $t_antec->t_lemma . ' / ' . $t_node->t_lemma );
     return if !$t_antec || $t_antec->is_root();
 
     if ( $self->is_allowed_antecedent($t_antec) ) {
