@@ -40,6 +40,17 @@ has _file_number => (
     documentation => 'Number of n-tuples of input files loaded so far.',
 );
 
+has skip_finished => (
+    isa           => 'Str',
+    is            => 'ro',
+    documentation => 'Skip input files for which a matching non-empty output file exists '
+        . '(presumably created by a previous unfinished Treex run). '
+        . 'This parameter specifies a regex substitution how to derive the output filename from the input filename. '
+        . 'It is parallel to the parameter substitute={indir}{outdir} in writers. '
+        . 'However, you need to take care of filename extensions too, '
+        . 'e.g. if converting conll to treex, you should use skip_finished={indir/(.+).conll$}{outdir/$1.treex.gz}',
+);
+
 #BUILD is needed for processing generic arguments - now only shortcuts of type langcode_selector
 sub BUILD {
     my ( $self, $args ) = @_;
@@ -60,6 +71,26 @@ sub BUILD {
         }
         elsif ( $arg =~ /selector|language|scenario/ ) { }
         else                                           { log_warn "$arg is not a zone label (e.g. en_src)"; }
+    }
+    if (my $regex = $self->skip_finished){
+        foreach my $zone (keys %{$self->_filenames}) {
+            my $filenames_ref = $self->_filenames->{$zone}->filenames;
+            my @filtered_filenames;
+            my $eval_string = '$filename =~ s' . $regex . '; 1;';
+            for my $input_filename (@$filenames_ref){
+                my $filename = $input_filename;
+                eval $eval_string or log_fatal "Failed to eval $eval_string";  ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
+                if (! -s $filename){
+                    push @filtered_filenames, $input_filename;
+                    #say "not finished: $input_filename -> $filename";
+                } #else {say "finished: $input_filename -> $filename";}
+            }
+            $self->_filenames->{$zone} = Treex::Core::Files->new({filenames => \@filtered_filenames});
+            my $input_number = @$filenames_ref;
+            my $filtered_number = @filtered_filenames;
+            my $finished_number = $input_number - $filtered_number;
+            log_info "$finished_number files out of $input_number were finished, reading only the remaining $filtered_number.";
+        }
     }
     return;
 }
