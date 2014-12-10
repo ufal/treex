@@ -108,8 +108,8 @@ sub get_afun {
 
     return 'Pnom' if ( $eparent->follows($node) && ( $eparent->lemma eq "です" || $eparent->lemma eq "だ" ) );
 
-    ### TODO: Do we set correct Afun for the words creating compound predicate with "する" ("suru")?
-    return 'Pnom' if $eparent->follows($node) && $eparent->lemma eq "する";
+    # According to HamleDT JA training data it shloud be Obj
+    return 'Obj' if $eparent->follows($node) && $eparent->lemma eq "する";
 
     return 'Adv' if $tag =~ /^Fukushi/;
 
@@ -128,6 +128,9 @@ sub get_afun {
     my $form = $node->form;
     return 'AuxK' if $form =~ /[?!]/;
     return 'AuxX' if $form =~ /[,、]/;
+
+    # Honorifix prefixes ("o-", "go-") should probably be AuxO
+    return '' if $tag =~ /^SettōShi/;
 
     # Any other punctuation
     # TODO: include every possible example

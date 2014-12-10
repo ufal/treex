@@ -36,6 +36,10 @@ sub fix_subtree {
     if ( should_switch_with_parent($a_node) ) {
         switch_with_parent($a_node);
     }
+
+    # sometimes not all coordinates have attribute is_member set correctly
+    fix_is_member($a_node);
+
     $is_processed{$a_node} = 1;
  
     return;
@@ -45,6 +49,10 @@ sub should_switch_with_parent {
     my ($a_node) = @_;
     my $tag = $a_node->tag;
     my $form = $a_node->form;
+
+    my $parent = $a_node->get_parent();
+    return 0 if $parent->is_root();
+
     return 0 if $tag !~ /Heiritsujoshi/;
 
     return 1;
@@ -87,6 +95,19 @@ sub switch_with_parent {
     }
 
     return;
+}
+
+sub fix_is_member() {
+  my ($a_node) = @_;
+  return if $a_node->tag !~ /Heiritsujoshi/;
+
+  foreach my $child ($a_node->get_children()) {
+    if ($child->tag !~ /^Joshi/) {
+      $child->set_is_member(1);
+    }
+  }
+
+  return;
 }
 
 1;

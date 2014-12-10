@@ -79,7 +79,7 @@ sub parse_sentence {
 
     my @bun_heads;      # we mark for each bunsetsu, which node should act as a parent for its "child-bunsetsu"
     my $current_token = 0;
-    my $verb_token = 0; # when we find a verb inside bunsetsu, following tokens from that bunsetsu should be dependent on it
+    my $verb_token = -1; # when we find a verb inside bunsetsu, following tokens from that bunsetsu should be dependent on it
 
     my $bun = 0;
     my $parent = 0;
@@ -90,10 +90,10 @@ sub parse_sentence {
         next if $line =~ /^#|EOS/;  # skip uninteresting lines
 
         if ( $line =~ /^\*/ ) {
-            $verb_token = 0;
+            $verb_token = -1;
             $line =~ s{^\*\s+}{}; 
             ($bun, $parent) = split / /, $line;
-            $bun_heads[ $bun ] = $current_token;
+            $bun_heads[ $bun ] = $current_token + 1;
             $parent =~ s{D}{};
 
             # since we still do not know which node in treex representation corresponds to the parent bunsetsu we note it with its negative value
@@ -106,19 +106,18 @@ sub parse_sentence {
         # Japanese is head-final language, so (most of the times) inside bunsetsu, every token is dependent on the following token
         # exceptions should be handled after parsing
         else {
-            if ( !defined $parents[ $current_token ] ) {
-              if($verb_token == 0) {
+            if ( !(defined $parents[ $current_token ] ) ) {
+              if($verb_token < 0) {
                 $parents[ $current_token ] = $parents[ $current_token - 1];
-                $parents[ $current_token - 1] = $current_token;  
-                $bun_heads[ $bun ] = $current_token;
+                $parents[ $current_token - 1] = $current_token + 1;  
+                $bun_heads[ $bun ] = $current_token + 1;
               }
               else {
                 $parents[ $current_token ] = $verb_token;
               }
             }
-
             # if the current token is verb, the following tokens should be its children
-            $verb_token = $current_token if ($line =~ /\t動詞/ && $line !~ /接尾/);
+            $verb_token = ($current_token + 1) if ($line =~ /\t動詞/ && $line !~ /接尾/);
 
             $current_token++;
         }
@@ -132,10 +131,10 @@ sub parse_sentence {
             # based on the bunsetsu numbering, we assign real parent node
             my $parent = $bun_heads[ $parents[ $i ] * -1 ];
             $parents[ $i ] = $parent;
-        } 
-        $i++;   
+        }
+        $i++;  
     }
-    
+
     return \@parents;
 
 }

@@ -54,7 +54,7 @@ sub parse_chunk {
     foreach my $a_node (@a_nodes) {
         my $parent_index = shift @$parents_rf;
         if ($parent_index) {
-            my $parent = $a_nodes[ $parent_index ];
+            my $parent = $a_nodes[ $parent_index - 1];
             $a_node->set_parent($parent);
         }
         else {

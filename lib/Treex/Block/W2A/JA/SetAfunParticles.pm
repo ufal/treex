@@ -30,16 +30,24 @@ sub is_coord {
 
 sub get_Particle_afun {
     my ($node) = @_;
+    my $tag = $node->tag;
+    my $lemma = $node->lemma;
 
     # we treat adverbial particles same way as adverbs
-    return 'Adv' if $node->tag =~ /-FukuJoshi-/;
+    return 'Adv' if $tag =~ /-FukuJoshi-/;
 
-    return 'AuxC' if $node->tag =~ /SetsuzokuJoshi/;
+    return 'AuxC' if $tag =~ /SetsuzokuJoshi/;
+
+    # According to HamleDT, the interrogative particles should be AuxO
+    return 'AuxO' if ( $tag =~ /FukuJoshi／Heiritsujoshi／Shūjoshi/ && scalar ($node->get_children()) == 0); 
+
+    # Coordinationg particles that are not the head of the coordination get AuxY
+    return 'AuxY' if $tag =~ /Heiritsujoshi/;
 
     # we need to set different Afun for "て" particle (for now we treat it like aux verb)
     #return 'AuxV' if ( $node->form eq "て" && $node->tag =~ /Setsuzoku/ ) ;
 
-    return 'AuxP' if $node->tag =~ /^Joshi/ ;
+    return 'AuxP' if $tag =~ /^Joshi/;
 
     return;
 }
