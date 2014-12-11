@@ -91,7 +91,7 @@ sub _process_subtree {
 sub _get_node_str {
     my ( $self, $anode, $rel, $cat ) = @_;
     $rel = defined($rel) ? $rel : $self->_get_rel($anode);
-    $cat = defined($cat) ? $cat : 'np';
+    $cat = defined($cat) ? $cat : '--';
 
     my $out = '<node id="' . $self->_get_id . '" rel="' . $rel . '" cat="' . $cat . '" ';
     $out .= $self->_get_pos($anode);
@@ -167,13 +167,29 @@ sub _get_pos {
     $pos = 'comparative' if ( ( $anode->lemma // '' ) =~ /^(als|dan)$/ and ( $anode->afun // '' ) eq 'AuxP' );
     $pos = 'det'  if ( $anode->match_iset( 'prontype' => 'art' ) );
     $pos = 'pron' if ( $anode->iset->prontype );
-    $pos = 'vg'   if ( $pos eq 'conj' );
+    $pos = 'vg'   if ( $pos eq 'conj' || ( $anode->afun // '' ) =~ /^(Coord|Apos)$/ );
     $pos = 'prep' if ( $pos eq 'adp' );
     $data{'pos'} = $pos;
 
     if ( $pos =~ /^(noun|pron)$/ ) {
         $data{'rnum'} = 'sg' if ( $anode->match_iset( 'number' => 'sing' ) );
         $data{'rnum'} = 'pl' if ( $anode->match_iset( 'number' => 'plu' ) );
+    }
+    if ( $pos eq 'pron' ) {
+        $data{'refl'} = 'refl' if ( $anode->match_iset( 'reflex' => 'reflexive' ) );
+        $data{'per'}  = 'fir'  if ( $anode->match_iset( 'person' => '1' ) );
+        $data{'per'}  = 'je'   if ( $anode->match_iset( 'person' => '2' ) );
+        $data{'per'}  = 'thi'  if ( $anode->match_iset( 'person' => '3' ) );
+        $data{'per'}  = 'u'    if ( $anode->match_iset( 'person' => '2', 'politeness' => 'pol' ) );
+    }
+    if ( $pos eq 'verb' and $anode->match_iset( 'verbform' => 'fin' ) ) {
+        $data{'tense'} = 'present' if ( $anode->match_iset( 'tense' => 'pres' ) );
+        $data{'tense'} = 'past'    if ( $anode->match_iset( 'tense' => 'past' ) );
+    }
+    if ( $pos eq 'adj' ) {
+        $data{'aform'} = 'base'   if ( $anode->match_iset( 'degree' => 'pos' ) );
+        $data{'aform'} = 'compar' if ( $anode->match_iset( 'degree' => 'comp' ) );
+        $data{'aform'} = 'super'  if ( $anode->match_iset( 'degree' => 'sup' ) );
     }
 
     return join( ' ', map { $_ . '="' . $data{$_} . '"' } keys %data );
