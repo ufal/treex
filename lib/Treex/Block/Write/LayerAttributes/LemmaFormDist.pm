@@ -95,8 +95,10 @@ sub _build_dist {
 sub _get_diff {
     my ( $self, $s, $t ) = @_;
     return $self->_cache->{ $s . ' ' . $t } if ( defined( $self->_cache->{ $s . ' ' . $t } ) );
+    $s =~ s/\\/\\\\/g;
+    $t =~ s/\\/\\\\/g;
     $s =~ s/'/\\'/g;
-    $t =~ s/'/\\'/g;
+    $t =~ s/'/\\'/g;    
     my $diff = $self->_dist->command("print string_distances.merged_diff('$s','$t', match, gap)\n");
     $self->_cache->{ $s . ' ' . $t } = $diff;
     return $diff;
