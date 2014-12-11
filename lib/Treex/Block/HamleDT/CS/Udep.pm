@@ -23,6 +23,7 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+    $self->restructure_coordination_stanford($root);
     $self->afun_to_udeprel($root);
 }
 
@@ -86,11 +87,18 @@ sub afun_to_udeprel
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $udep = 'dep';
         my $afun = $node->afun();
+        my $udep = 'dep/'.$afun;
         my $parent = $node->parent();
+        # Predicate or ExD child of the root:
+        # It is labeled root, regardless of whether the afun is Pred or ExD.
+        ###!!! TODO: But beware of coordination!
+        if($parent->is_root())
+        {
+            $udep = 'root';
+        }
         # Subject: nsubj, nsubjpass, csubj, csubjpass
-        if($afun eq 'Sb')
+        elsif($afun eq 'Sb')
         {
             # Is the parent a passive verb?
             ###!!! This will not catch reflexive passives. TODO: Catch them.
@@ -151,6 +159,63 @@ sub afun_to_udeprel
         $node->set_conll_deprel($udep);
     }
 }
+
+
+
+#------------------------------------------------------------------------------
+# Restructures coordinations to the Stanford style. We cannot use the methods
+# inherited from HarmonizePDT because they always produce Prague style.
+#------------------------------------------------------------------------------
+sub restructure_coordination_stanford
+{
+    my $self  = shift;
+    my $root  = shift;
+    my $debug = shift;
+    # Wait with debugging until the problematic sentence:
+    #my $debug = $self->sentence_contains($root, 'Spürst du das');
+    log_info('DEBUG ON') if ($debug);
+    $self->shape_coordination_recursively_stanford( $root, $debug );
+}
+
+
+
+#------------------------------------------------------------------------------
+# Recursively search for coordinations and solve them immediately, i.e. don't
+# collect all first. Use the Coordination object.
+#------------------------------------------------------------------------------
+sub shape_coordination_recursively_stanford
+{
+    my $self  = shift;
+    my $root  = shift;
+    my $debug = shift;
+    my $coordination = new Treex::Core::Coordination;
+    # We can use the inherited method detect_coordination(). It detects the
+    # Prague style because it expects it in the input tree, but we also expect
+    # this style after the initial harmonization to HamleDT/Prague.
+    my @recursion = $self->detect_coordination($root, $coordination, $debug);
+    if(scalar($coordination->get_conjuncts())>0)
+    {
+        log_info('COORDINATION FOUND') if ($debug);
+        # We have found coordination! Solve it right away.
+        $coordination->shape_stanford();
+        # Call recursively on all descendants. (The exact recursive set depends on annotation style.
+        # We got it from detect_coordination().)
+        foreach my $node (@recursion)
+        {
+            $self->shape_coordination_recursively_stanford($node, $debug);
+        }
+    }
+    # Call recursively on all children if no coordination detected now.
+    else
+    {
+        foreach my $child ($root->children())
+        {
+            $self->shape_coordination_recursively_stanford($child, $debug);
+        }
+    }
+}
+
+
 
 1;
 

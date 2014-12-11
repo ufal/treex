@@ -1388,6 +1388,75 @@ sub detect_stanford
 
 
 #------------------------------------------------------------------------------
+# Sets and labels parent-child relations between nodes so that they reflect the
+# roles of the nodes in coordination. Uses Stanford (Universal Dependencies)
+# style. Fills labels in the afun attribute, even though the required labels
+# are not defined in the Treex XML schema. Returns the head node.
+#------------------------------------------------------------------------------
+sub shape_stanford
+{
+    my $self = shift;
+    # There is no guarantee that we obtained ordered lists of members and delimiters.
+    # They may have been added during tree traversal, which is not ordered linearly.
+    my @conjuncts = sort {$a->ord() <=> $b->ord()} $self->get_conjuncts();
+    my @delimiters = $self->get_delimiters();
+    my @shared_modifiers = $self->get_shared_modifiers();
+    if ( scalar(@conjuncts)==0 )
+    {
+        # Give the user at least some pointer to the tree.
+        log_warn($self->parent()) if(defined($self->parent()));
+        log_fatal('Trying to shape an empty coordination (no conjuncts).');
+    }
+    # Select the first conjunct as the new root.
+    my $croot = shift(@conjuncts);
+    # Attach the new root to the parent of the coordination.
+    $croot->set_parent($self->parent());
+    $croot->set_afun($self->afun());
+    $croot->set_is_member($self->is_member());
+    # Attach all coordination members to the new root.
+    foreach my $conjunct ( @conjuncts )
+    {
+        $conjunct->set_parent($croot);
+        $conjunct->set_afun('conj');
+        # The is_member attribute is not necessary in the Stanford style, non-first conjuncts will be recognized by the 'conj' dependency relation.
+        # But we will set it anyway.
+        $conjunct->set_is_member(1);
+    }
+    # Attach all delimiters to the new root.
+    # We need the $symbol attribute, thus we cannot use @delimiters.
+    my @otherdelim = grep {$_->{type} eq 'delimiter' && $_->{node}!=$croot} (@{$self->_get_participants()});
+    foreach my $delimrec ( @otherdelim )
+    {
+        my $delimiter = $delimrec->{node};
+        my $symbol = $delimrec->{symbol};
+        $delimiter->set_parent($croot);
+        $delimiter->set_is_member(0);
+        if ($symbol)
+        {
+            $delimiter->set_afun('punct');
+        }
+        else
+        {
+            $delimiter->set_afun('cc');
+            # Martin's transformations might also need the flag whether a node is coordinating conjunction.
+            $delimiter->wild()->{is_coord_conjunction} = 1;
+        }
+    }
+    # Attach all shared modifiers to the new root.
+    foreach my $modifier ( @shared_modifiers )
+    {
+        $modifier->set_parent($croot);
+        $modifier->set_is_member(0);
+        # This is much more important in the Stanford style than in the Prague style:
+        # Distinguish shared modifiers of the coordination from private modifiers of the first conjunct.
+        $modifier->set_is_shared_modifier(1);
+    }
+    return $croot;
+}
+
+
+
+#------------------------------------------------------------------------------
 # Detects coordination structure according to current annotation (dependency
 # links between nodes and labels of the relations). Expects Tesnière style as
 # it is found in the Szeged treebank. Nested coordination is not expected and
