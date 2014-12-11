@@ -20,6 +20,7 @@ has iset => (
     handles => [qw(
         is_noun
         is_abbreviation
+        is_active
         is_adjective
         is_adposition
         is_adverb
@@ -35,6 +36,7 @@ has iset => (
         is_numeral
         is_participle
         is_particle
+        is_passive
         is_past
         is_possessive
         is_plural
@@ -274,7 +276,7 @@ sub deserialize_iset {
             $self->set_iset($self->iset);
         }
     }
-    
+
     # iset_dump
     # (backward compatibility for files
     # created when iset_dump was used to store iset)
