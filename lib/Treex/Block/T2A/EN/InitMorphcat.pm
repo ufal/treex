@@ -4,6 +4,7 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 my %M_GENDER_FOR = (
+    anim => 'M',
     masc => 'M',
     fem  => 'F',
     neut => 'N',
