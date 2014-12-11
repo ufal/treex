@@ -107,7 +107,7 @@ sub print_tnode_features {
     if ($trg_anode->language eq 'cs') {
         ($trg_mlayer_pos) = ( $trg_anode->tag =~ /^(.)/ );
     } else {
-        $trg_mlayer_pos = $trg_anode->iset->pos // "";
+        $trg_mlayer_pos = $trg_anode->iset->pos || "x";
     }
 
     my @add_features = ();
