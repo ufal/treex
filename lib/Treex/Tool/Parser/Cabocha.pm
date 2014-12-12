@@ -77,7 +77,7 @@ sub parse_sentence {
     # Cabocha does not separate verbs from "modals" into 2 separate phrases, we want to take care of this in this block too
     # e.g. "買っておきました" -> "買って" "おきました"
 
-    my @bun_heads;      # we mark for each bunsetsu, which node should act as a parent for its "child-bunsetsu"
+    my %bun_heads;      # we mark for each bunsetsu, which node should act as a parent for its "child-bunsetsu"
     my $current_token = 0;
     my $verb_token = -1; # when we find a verb inside bunsetsu, following tokens from that bunsetsu should be dependent on it
 
@@ -93,7 +93,7 @@ sub parse_sentence {
             $verb_token = -1;
             $line =~ s{^\*\s+}{}; 
             ($bun, $parent) = split / /, $line;
-            $bun_heads[ $bun ] = $current_token + 1;
+            $bun_heads{ $bun } = $current_token + 1;
             $parent =~ s{D}{};
 
             # since we still do not know which node in treex representation corresponds to the parent bunsetsu we note it with its negative value
@@ -110,9 +110,18 @@ sub parse_sentence {
               if($verb_token < 0) {
                 $parents[ $current_token ] = $parents[ $current_token - 1];
                 $parents[ $current_token - 1] = $current_token + 1;  
-                $bun_heads[ $bun ] = $current_token + 1;
+                $bun_heads{ $bun } = $current_token + 1;
+              }
+              # if there is a noun following a verb within bunsetsu, we "split" the bunsetsu
+              elsif ($line =~ /\t名詞,非自立/) {
+                $bun = $bun + 0.5;
+                $bun_heads{ $bun } = $current_token + 1;
+                $parents[ $current_token ] = $parents[ $current_token - 1];
+                $parents[ $current_token - 1] = $bun * -1;
+                $verb_token = -1;
               }
               else {
+                # Only auxiliaries follow verbs most of the times
                 $parents[ $current_token ] = $verb_token;
               }
             }
@@ -129,12 +138,12 @@ sub parse_sentence {
     while ( defined $parents[ $i ] ) {
         if ( $parents[ $i ] < 0 ) {
             # based on the bunsetsu numbering, we assign real parent node
-            my $parent = $bun_heads[ $parents[ $i ] * -1 ];
+            my $parent = $bun_heads{ $parents[ $i ] * -1 };
             $parents[ $i ] = $parent;
         }
         $i++;  
     }
-
+    
     return \@parents;
 
 }

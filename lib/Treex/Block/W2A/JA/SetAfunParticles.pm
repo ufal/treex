@@ -39,13 +39,10 @@ sub get_Particle_afun {
     return 'AuxC' if $tag =~ /SetsuzokuJoshi/;
 
     # According to HamleDT, the interrogative particles should be AuxO
-    return 'AuxO' if ( $tag =~ /FukuJoshi／Heiritsujoshi／Shūjoshi/ && scalar ($node->get_children()) == 0); 
+    return 'AuxO' if ( $tag =~ /Shūjoshi/ && scalar ($node->get_children()) == 0); 
 
     # Coordinationg particles that are not the head of the coordination get AuxY
     return 'AuxY' if $tag =~ /Heiritsujoshi/;
-
-    # we need to set different Afun for "て" particle (for now we treat it like aux verb)
-    #return 'AuxV' if ( $node->form eq "て" && $node->tag =~ /Setsuzoku/ ) ;
 
     return 'AuxP' if $tag =~ /^Joshi/;
 

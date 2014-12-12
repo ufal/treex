@@ -3,6 +3,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+my $COPULA_REGEX = qr/^(です|だ)$/;
+
 sub process_atree {
     my ( $self, $a_root ) = @_;
 
@@ -30,7 +32,7 @@ sub get_afun_for_subroot {
     return 'AuxK' if $subroot->form =~ /^[.?!]$/;
     
     # we set Pred Afun to Copulas and verbs
-    return 'Pred' if ( $lemma eq "です" || $lemma eq "だ" || $tag =~ /^Dōshi/) ;
+    return 'Pred' if ( $lemma =~ $COPULA_REGEX || $tag =~ /^Dōshi/) ;
     return 'ExD';
 }
 
@@ -62,23 +64,47 @@ sub find_subjects_of {
     # Mark all auxiliary verbs
     my @children = $node->get_echildren( { ordered => 1 });
     foreach my $auxV ( grep { is_aux_verb( $_, $node ) } @children ) {
-      $auxV->set_afun('AuxV');
+
+      # "nai" (ない) and "n" (ん) are marked as Neg
+      if ( $auxV->lemma eq "ない" || $auxV->lemma eq "ん" ) {
+         $auxV->set_afun('Neg');
+      }
+      
+      # we do not treat copula as an aux. verb
+      elsif ( $auxV->lemma !~ $COPULA_REGEX ) {
+        $auxV->set_afun('AuxV');
+      }
+      
     }
 
     # Only verbs and copulas can have Sb
-    return if !( $lemma eq "です" || $lemma eq "だ" || $tag =~ /^Dōshi/);
+    return if !( $lemma =~ $COPULA_REGEX || $tag =~ /^Dōshi/);
 
-    # find subject, which should be indicated by "が" particle
+    # find subject, which should be indicated by "ga" (が) particle
     # if there are more, we take the one with highest Ord
     my @sb_indicators = grep { $_->lemma eq "が"} @children ;
     if ( !@sb_indicators ) {
-    	# other possibility is that the topic indicated by "は" is subject
+    	# other possibility is that the topic indicated by "wa" (は) is subject
     	@sb_indicators = grep { $_->lemma eq "は"} @children ; 
     }  
        
     if ( @sb_indicators ) {
       my $indicator = pop @sb_indicators;
       @subjects = $indicator->get_echildren();
+
+      # in some cases the subject is not a child but a grandchild of the indicator, e.g. kohan(Afun='Sb', parent='nado') nado(tag='Joshi', parent='wa') wa
+      # according to the verbmobil parsing, this is possible
+      if (scalar (grep {$_->tag =~ /^Joshi/} @subjects) > 0) {
+        my @old_subjects = @subjects;
+        @subjects = ();
+
+        # in this case there should not be more than one member in the array but we use foreach just in case there were some mistakes during creation of the a-tree
+        foreach my $sub (@old_subjects) {
+          push @subjects, $sub->get_echildren();
+        }
+
+      }
+
     }
 
     return @subjects;
@@ -90,8 +116,8 @@ sub is_aux_verb {
     my $tag = $node->tag;
     my $ep_tag = $eparent->tag;
 
-    # We mark all Jodōshi except Copulas as auxiliary
-    return 1 if ( $tag =~ /^Jodōshi/ && $lemma ne "です" && $lemma ne "だ" );
+    # We mark all Jodōshi as auxiliary (predicative Copulas should not have predicate parent)
+    return 1 if ( $tag =~ /^Jodōshi/ );
 
     return 0;
 }
@@ -106,7 +132,7 @@ sub get_afun {
     my $afun = $node->afun;
     return $afun if $afun;
 
-    return 'Pnom' if ( $eparent->follows($node) && ( $eparent->lemma eq "です" || $eparent->lemma eq "だ" ) );
+    return 'Pnom' if ( $eparent->follows($node) && $eparent->lemma =~ $COPULA_REGEX );
 
     # According to HamleDT JA training data it shloud be Obj
     return 'Obj' if $eparent->follows($node) && $eparent->lemma eq "する";
@@ -120,7 +146,6 @@ sub get_afun {
     # "te"-<verb> form 
     return 'Obj' if ( $tag =~ /^Dōshi/ && $eparent->lemma eq "て" && $granpa->tag =~ /Dōshi-HiJiritsu/ );
 
-
     # Punctuation
     # AuxK = terminal punctuation of a sentence
     # AuxG = other graphic symbols
@@ -130,33 +155,67 @@ sub get_afun {
     return 'AuxX' if $form =~ /[,、]/;
 
     # Honorifix prefixes ("o-", "go-") should probably be AuxO
-    return '' if $tag =~ /^SettōShi/;
+    return 'AuxO' if $tag =~ /^SettōShi/;
 
     # Any other punctuation
     # TODO: include every possible example
     return 'AuxG' if  $form =~ /[「」『』（）]/;
 
-    # Negation 
-    return 'Neg' if ($lemma eq 'ない' || $lemma eq 'ん');
+    # Nouns/Nominals/Adjectives under binding particle as Obj
+    return 'Obj' if ( $tag =~ /^(Meishi|Keiyōshi|Keiyōdōshi)/ && $eparent->tag =~ /^Joshi-Keijoshi/);
 
-    # Nouns/Verbs/Nominals/Adjectives/Numerals as Atr
+    # Nouns/Verbs/Nominals/Adjectives under a noun as Atr
     return 'Atr' if ( $tag =~ /^(Meishi|Dōshi|Keiyōshi|Keiyōdōshi)/ && $eparent->tag =~ /^Meishi/);
 
+    # Nouns/Nominals/Adjectives under a Adjective/Nominal as Adv
+    return 'Adv' if ( $tag =~ /^(Meishi|Keiyōshi|Keiyōdōshi)/ && $eparent->tag =~ /^(Keiyōshi|Keiyōdōshi)/);   
+
+    # Nouns/Verbs/Nominals/Adjectives under verb as Obj
+    return 'Obj' if ( $tag =~ /^(Meishi|Dōshi|Keiyōshi|Keiyōdōshi)/ && $eparent->tag =~ /^Dōshi/);
+
+    # Nouns/Nominals/Adjectives followed by adverbial particle as Adv
+    return 'Adv' if ( $tag =~ /^(Meishi|Keiyōshi|Keiyōdōshi)/ && $eparent->tag =~ /FukuJoshi/ );
+
     # Nouns/Nominals/Adjectives/Verbs under postposition/subord.conjunction
-    if ( $tag =~ /^(Meishi|Dōshi)/ && $eparent->afun =~ /Aux[PC]/ && $granpa) {
+    if ( $tag =~ /^(Meishi|Keiyōshi|Keiyōdōshi|Dōshi)/ && $eparent->afun =~ /Aux[PC]/ && $granpa) {
       my $granpa_tag   = $granpa->tag   || '_root';
+      my $granpa_lemma = $granpa->lemma || '_root';
+
       return 'Adv' if ( $tag =~ /^Dōshi/ && $granpa_tag =~ /^Dōshi/ );
+      return 'Pnom' if $granpa_lemma  =~ $COPULA_REGEX;
       return 'Obj' if $granpa_tag =~ /^Dōshi/;
       return 'Atr' if $granpa_tag =~ /^Meishi/;
+      return 'Adv' if $granpa_tag =~ /^(Keiyōshi|Keiyōdōshi)/;
+     
+      # if we have "<noun>(parent='ni') ni(parent='wa') wa(tag='Joshi-Keijoshi')"
+      return 'Obj' if $granpa_tag =~ /^Joshi-Keijoshi/;
     }
 
-    # TODO: Japanese "determiners" (kore, sore...)
-    #    -  Do we need to detect them?
+    # Copula (same as verb)
+    if ( $tag =~ /^Jodōshi/ && $lemma =~ $COPULA_REGEX ) {      
+      return 'Atr' if $eparent->tag =~ /^Meishi/;
+      return 'Obj' if $eparent->tag =~ /^Dōshi/;
+      
+      if ( $eparent->afun =~ /Aux[PC]/ && $granpa ) {
+        my $granpa_tag   = $granpa->tag   || '_root';
+        my $granpa_lemma = $granpa->lemma || '_root';
 
-    ### TODO: How to handle Japanese topics? Perhaps as objects?
+        return 'Adv' if $granpa_lemma  =~ $COPULA_REGEX;
+        return 'Adv' if $granpa_tag =~ /^Dōshi/;
+        return 'Atr' if $granpa_tag =~ /^Meishi/;
+        return 'Adv' if $granpa_tag =~ /^(Keiyōshi|Keiyōdōshi)/;
+      }
+      
+    }
+
+    # Adnominal as Atr
+    return 'Atr' if $tag =~ /^Rentaishi/;
+
+    # If no value was assigned to a nouns we return ExD (but it should not probably happen)
+    return 'ExD' if $tag =~ /^(Meishi|Dōshi)/;
 
     # And the rest - we don't know
-    # TODO: Is this really all we need?
+    # TODO: Is this really all we can do?
     return 'NR';
 }
 
