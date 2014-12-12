@@ -15,6 +15,8 @@ has iset_driver =>
                      'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
 );
 
+
+
 #------------------------------------------------------------------------------
 # Reads the Czech tree and transforms it to adhere to the HamleDT guidelines.
 #------------------------------------------------------------------------------
@@ -24,8 +26,11 @@ sub process_zone
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
     $self->restructure_coordination_stanford($root);
+    $self->push_prep_sub_down($root);
     $self->afun_to_udeprel($root);
 }
+
+
 
 #------------------------------------------------------------------------------
 # Different source treebanks may use different attributes to store information
@@ -41,6 +46,8 @@ sub get_input_tag_for_interset
     my $node   = shift;
     return $node->tag();
 }
+
+
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
@@ -76,6 +83,8 @@ sub deprel_to_afun
     # In HamleDT (and in Treex in general), is_member is set directly at the child of the coordination head (preposition or not).
     $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($root->get_zone());
 }
+
+
 
 #------------------------------------------------------------------------------
 # Convert analytical functions to universal dependency relations.
@@ -148,11 +157,19 @@ sub afun_to_udeprel
         elsif($afun eq 'AuxV')
         {
             $udep = $parent->is_passive() ? 'auxpass' : 'aux';
+            # Side effect: We also want to modify Interset. The PDT tagset does not distinguish auxiliary verbs but UPOS does.
+            $node->iset()->set('verbtype', 'aux');
         }
         # Punctuation
         elsif($afun =~ m/^Aux[XGK]$/)
         {
             $udep = 'punct';
+        }
+        # Previous transformation of coordination to the Stanford style caused that afuns of some nodes
+        # actually are already universal dependency relations.
+        elsif($afun =~ m/^(conj|cc|punct|case|mark)$/)
+        {
+            $udep = $afun;
         }
         # We may want to dedicate a new node attribute to the universal dependency relation label.
         # At present, conll/deprel is good enough and afun cannot be used because its value range is fixed.
@@ -211,6 +228,50 @@ sub shape_coordination_recursively_stanford
         foreach my $child ($root->children())
         {
             $self->shape_coordination_recursively_stanford($child, $debug);
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Reattach prepositions as dependents of their noun phrases.
+# Reattach subordinating conjunctions as dependents of their clauses.
+# Assumption: Coordination has already been converted to Stanford style.
+#------------------------------------------------------------------------------
+sub push_prep_sub_down
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->afun() =~ m/^Aux[PC]$/)
+        {
+            # In the prototypical case, the node has just one child and it will swap positions with the child.
+            ###!!! TODO: If the child is also Aux[PC], we should process the chain recursively.
+            ###!!! TODO: First solve multi-word prepositions and all occurrences of leaf prepositions / subordinators.
+            ###!!! TODO: Are there any prepositions with two or more arguments attached directly to them?
+            ###!!! TODO: A preposition may have multiple children, one is its argument and the rest is Stanford coordination:
+            ###!!!       ve městě a na vsi ... PrepArg(ve, městě), cc(ve, a), conj(ve, na), PrepArg(na, vsi)
+            ###!!! TODO: On the other hand, if the argument of the preposition is coordination, the preposition should become a shared modifier of the coordination.
+            ###!!! TODO: A preposition or subordinating conjunction may also have multiple children if there is punctuation.
+            my @children = $node->get_children();
+            if(scalar(@children)==1)
+            {
+                my $preposition = $node;
+                my $noun = $children[0];
+                $noun->set_parent($preposition->parent());
+                $preposition->set_parent($noun);
+                if($preposition->afun() eq 'AuxP')
+                {
+                    $preposition->set_afun('case');
+                }
+                else # AuxC
+                {
+                    $preposition->set_afun('mark');
+                }
+            }
         }
     }
 }
