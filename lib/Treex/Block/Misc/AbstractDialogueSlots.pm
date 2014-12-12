@@ -6,18 +6,23 @@ use List::Util 'reduce';
 
 extends 'Treex::Core::Block';
 
-has 'abstraction_file' => ( isa => 'Str', is => 'rw', required => 1 );
+has 'abstraction_file' => ( isa => 'Str', is => 'ro', required => 1 );
 
-has 'abstractions' => ( isa => 'ArrayRef', is => 'rw', default => sub { [] } );
+has '_abstractions' => ( isa => 'ArrayRef', is => 'rw', default => sub { [] } );
 
-has 'slots' => ( isa => 'Str', is => 'rw', required => 1 );
+has 'slots' => ( isa => 'Str', is => 'ro', required => 1 );
 
-has 'slots_set' => (
+has '_slots_set' => (
     isa     => 'HashRef',
     is      => 'rw',
     lazy    => 1,
-    default => sub { my %h = map { $_ => 1 } split /[, ]+/, $_[0]->slots; return \%h },
+    default => sub {
+        my %h = map { $_ => 1 } split /[, ]+/, $_[0]->slots;
+        return \%h;
+    },
 );
+
+has 'x_only' => ( isa => 'Bool', is => 'ro', default => 0 );
 
 # Taken from http://www.perlmonks.org/?node_id=1070950
 sub minindex {
@@ -31,7 +36,7 @@ sub process_start {
     open( my $fh, '<:utf8', ( $self->abstraction_file ) );
     while ( my $line = <$fh> ) {
         chomp $line;
-        push @{ $self->abstractions }, $line;
+        push @{ $self->_abstractions }, $line;
     }
     close($fh);
 }
@@ -41,28 +46,35 @@ sub process_zone {
 
     my @anodes = $zone->get_atree()->get_descendants( { ordered => 1 } );
 
-    my @abstrs = split "\t", shift @{ $self->abstractions };
-    
+    my @abstrs = split "\t", shift @{ $self->_abstractions };
+
     foreach my $abstr (@abstrs) {
         my ( $slot, $val, $from, $to ) = ( $abstr =~ /^([^=]*)=("[^"]*"|[^:]+):([0-9]+)-([0-9]+)$/ );
-        
+
         # skip slots that shouldn't be abstracted
-        if ( $self->slots_set and not defined( $self->slots_set->{$slot} ) ) {
+        if ( $self->_slots_set and not defined( $self->_slots_set->{$slot} ) ) {
             next;
         }
+
         # get t-nodes that reference the slot's span in the a-tree
         my @tnodes = map { $_->get_referencing_nodes('a/lex.rf') } @anodes[ $from .. $to - 1 ];
-        if (!@tnodes){            
-            log_warn('NO TNODES: ' . $zone->sentence() . ' ' . $zone->get_atree()->id . ' ' . $abstr);
+        if ( !@tnodes ) {
+            log_warn( 'NO TNODES: ' . $zone->sentence() . ' ' . $zone->get_atree()->id . ' ' . $abstr );
             next;
         }
+        
+        # if x_only is true, only abstract the slots that are actually abstracted in the sentence text
+        if ( $self->x_only and (@tnodes > 1 or $tnodes[0]->t_lemma ne 'X') ){
+            next;
+        } 
+
         # merge these t-nodes into one node and set its t-lemma to "X-slotname"
         my $top_tnode = $tnodes[ minindex map { $_->get_depth() } @tnodes ];
         my @other_tnodes = grep { $_ != $top_tnode } @tnodes;
         foreach my $other_tnode (@other_tnodes) {
             $top_tnode->add_aux_anodes( $other_tnode->get_anodes() );
             map { $_->set_parent($top_tnode) } $other_tnode->get_children();
-            $other_tnode->remove();            
+            $other_tnode->remove();
         }
         $top_tnode->set_t_lemma( 'X-' . $slot );
     }
@@ -98,6 +110,10 @@ separated by tabs, one sentence per line).
 
 Slots that should be affected by the replacing (some slots, e.g., with a small amount of values,
 may be left out). 
+
+=item x_only
+
+Only replace slots that correspond to single t-nodes with the t-lemma 'X'.
 
 =back
 
