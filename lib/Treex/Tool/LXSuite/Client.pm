@@ -15,10 +15,10 @@ has [qw( _reader _writer _pid )] => ( is => 'rw' );
 
 sub write {
     my $self = shift;
-    my $line = shift;
+    my $line = shift // "";
     my $writer = $self->_writer;
-    log_debug "Write: $line";
-    print $writer $line;
+    log_debug($self->lxsuite_mode." <<< $line", 1);
+    say $writer $line;
 }
 
 sub read {
@@ -30,7 +30,7 @@ sub read {
         log_fatal "Failed to read from lxsuite_client.py (pid=$pid).";
     }
     chomp $line;
-    log_debug "Read: $line";
+    log_debug($self->lxsuite_mode." >>> $line", 1);
     return $line;
 }
 
@@ -47,7 +47,7 @@ sub BUILD {
     $self->_set_reader( $reader );
     $self->_set_writer( $writer );
     $self->_set_pid( $pid );
-    log_debug "Launching lxsuite_host=$host lxsuite_port:$port lxsuite_mode:$mode pid=$pid";
+    log_debug("Launching lxsuite_host=$host lxsuite_port:$port lxsuite_mode:$mode pid=$pid", 1);
 }
 
 sub DEMOLISH {

@@ -1,56 +1,51 @@
 package Treex::Tool::Parser::LXParser;
 use Moose;
+use Treex::Core::Log;
+
 extends 'Treex::Tool::LXSuite::Client';
 with 'Treex::Tool::Parser::Role';
 
-has '+lxsuite_mode' => (
+has 'lxsuite_mode' => (
     isa => 'Str', is => 'ro',
-    default => 'conll.pos:parser:conll.usd'
+    default => 'conll.pos:parser:conll.lx'
 );
 
-sub parse {
-    return 
-}
-
 sub parse_sentence {
-    my ( $self, $forms, $lemmas, $pos, $subpos, $features ) = @_;
-
-    my $reader = $self->_reader;
-    my $writer = $self->_writer;
+    my ( $self, $forms, $lemmas, $cpostags, $postags, $feats ) = @_;
 
     my $cnt = scalar @$forms;
-
-    # write input
+    $self->write();
+    $self->write();
     for ( my $i = 0; $i < $cnt; $i++ ) {
-        my $form = $$forms[$i];
-        print $writer ($i+1) . "\t$form\t$$lemmas[$i]\t$$pos[$i]\t$$subpos[$i]\t$$features[$i]\t_\t_\t_\t_\n";
+        $self->write(($i+1) . "\t$$forms[$i]\t$$lemmas[$i]\t$$cpostags[$i]\t$$postags[$i]\t$$feats[$i]\t_\t_\t_\t_");
     }
-    print $writer "\n";
+    $self->write();
+    $self->write();
 
     # read output
     my @parents = ();
-    my @afuns = ();
-
-    my $line = <$reader>;
-    die "LXParser has died" if !defined $line;
-    chomp $line;
-    while ($line eq "") { # skip blanks
-        $line = <$reader>;
-        die "LXParser has died" if !defined $line;
-        chomp $line;
+    my @deprels = ();
+    
+    log_debug("$cnt to read", 1);
+    my $line = $self->read();
+    while ($line eq '') {
+        $line = $self->read();
     }
-
     while ( $cnt > 0 ) {
-        my @items = split( /\t/, $line );
-        push @parents, $items[6];
-        push @afuns, $items[7];
-        $line = <$reader>; # read blank line
-        die "LXParser has died" if !defined $line;
-        chomp $line;
-        $cnt--;
+        if ($line ne '') {
+            $cnt--;
+            my ($tokid, $form, $lemma, $cpostag, $postag, $feat, $parent, $deprel, $pparent, $pdeprel) = split(/\t/, $line);
+            push @parents, $parent;
+            push @deprels, $deprel;
+            
+        } else {
+            log_fatal "Unexpected empty line";
+        }
+        log_debug("$cnt to read", 1);
+        $line = $self->read();
     }
 
-    return ( \@parents, \@afuns );
+    return ( \@parents, \@deprels );
 }
 
 1;

@@ -80,7 +80,9 @@ MODE is one of:
         Portuguese verb conjugator.
 
     inflector
-        Portuguese nominal and adjective inflector (input format: word,category,gender,number).
+        Portuguese nominal and adjective inflector.
+        Input format:
+          word,category,gender,number,<boolean>superlative,<boolean>diminutive
 
     help
         Shows this information.

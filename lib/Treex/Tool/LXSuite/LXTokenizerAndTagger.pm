@@ -14,7 +14,8 @@ sub tokenize_and_tag {
     my $cpostags = [];
     my $feats    = [];
 
-    $self->write("$sentence\n\n");
+    $self->write($sentence);
+    $self->write();
     # Create a-nodes and detect the no_space_after attribute.
     my $line = $self->read();
     while ($line ne '') {

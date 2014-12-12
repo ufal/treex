@@ -7,10 +7,12 @@ use Treex::Tool::Parser::LXParser;
 
 has _parser => ( isa => 'Treex::Tool::Parser::LXParser', is => 'ro',
     required => 1, builder => '_build_parser', lazy=>1 );
-has debug => ( isa => 'Bool', is => 'ro', required => 0, default => 0 );
+
 has lxsuite_host => ( isa => 'Str', is => 'ro', required => 1);
 has lxsuite_port => ( isa => 'Int', is => 'ro', required => 1);
-has lxsuite_key => ( isa => 'Str', is => 'ro', required => 1 );
+has lxsuite_key  => ( isa => 'Str', is => 'ro', required => 1 );
+has lxsuite_mode => ( isa => 'Str', is => 'ro', required => 0,
+                      default => 'conll.pos:parser:conll.lx');
 
 sub BUILD {
     my ($self, $arg_ref) = @_;
@@ -23,7 +25,7 @@ sub _build_parser {
         lxsuite_key => $self->lxsuite_key,
         lxsuite_host => $self->lxsuite_host,
         lxsuite_port => $self->lxsuite_port,
-        debug => $self->debug
+        lxsuite_mode => $self->lxsuite_mode
     });
 }
 
@@ -31,27 +33,25 @@ sub parse_chunk {
     my ( $self, @a_nodes ) = @_;
 
     # get factors
-    my @forms    = map { $_->form } @a_nodes;
-    my @lemmas   = map { $_->lemma || '_' } @a_nodes;
-    my @pos      = map { $_->conll_pos || '_' } @a_nodes;
-    my @cpos     = map { $_->conll_cpos || '_' } @a_nodes;
-    my @features = map { $_->conll_feat || '_' } @a_nodes;
+    my @forms  = map { $_->form } @a_nodes;
+    my @lemmas = map { $_->lemma || '_' } @a_nodes;
+    my @pos    = map { $_->conll_pos || '_' } @a_nodes;
+    my @cpos   = map { $_->conll_cpos || '_' } @a_nodes;
+    my @feats  = map { $_->conll_feat || '_' } @a_nodes;
 
     # parse sentence
-    my ( $parents_rf, $deprel_rf ) = $self->_parser->parse_sentence( \@forms, \@lemmas, \@cpos, \@pos, \@features );
+    my ( $parents_rf, $deprel_rf ) = $self->_parser->parse_sentence( \@forms, \@lemmas, \@cpos, \@pos, \@feats );
 
     # build a-tree
     my @roots = ();
     foreach my $a_node (@a_nodes) {
         my $deprel = shift @$deprel_rf;
-        my $parent_index = shift @$parents_rf;
+        my $parent = shift @$parents_rf;
 
         $a_node->set_conll_deprel($deprel);
-        if ($parent_index) {
-            my $parent = $a_nodes[ $parent_index - 1 ];
-            $a_node->set_parent($parent);
-        }
-        else {
+        if ($parent) {
+            $a_node->set_parent($a_nodes[ $parent - 1 ]);
+        } else {
             push @roots, $a_node;
         }
     }
