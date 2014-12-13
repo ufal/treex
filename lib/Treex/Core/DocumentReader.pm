@@ -101,6 +101,16 @@ sub restart {
     return;
 }
 
+
+# Readers usually do not need any share files,
+# but all blocks should implement this method
+# and readers do not extend Treex::Core::Block.
+sub get_required_share_files {
+    my ($self) = @_;
+    return ();
+}
+
+
 1;
 
 __END__

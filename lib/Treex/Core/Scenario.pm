@@ -275,13 +275,10 @@ sub get_required_files {
     my @required_files;
     foreach my $block_item (@block_items) {
         my $block = $self->_load_block($block_item);
-        # TODO: probably HACK
-        if ( $block->meta->has_method("get_required_share_files") ) {
-            push @required_files,
-                map {
+        push @required_files,
+            map {
                 $block_item->{block_name} . "\t" . $_;
-                } $block->get_required_share_files();
-        }
+            } $block->get_required_share_files();
     }
     return @required_files;
 }
