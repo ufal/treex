@@ -243,7 +243,7 @@ This block doesn't change already filled afun values, except for the C<Sb> afun.
 
 =head1 AUTHOR
 
-Dušan Variš <dvaris@seznam.cz>
+Dušan Variš <varis@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

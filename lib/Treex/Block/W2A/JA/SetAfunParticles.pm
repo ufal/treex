@@ -53,6 +53,8 @@ sub get_Particle_afun {
 
 __END__
 
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Block::W2A::JA::SetAfunParticles
@@ -60,11 +62,19 @@ Treex::Block::W2A::JA::SetAfunParticles
 =head1 DECRIPTION
 
 Fills afun attributes for particles.
-C<Coord> (coordinating conjunctions), C<AuxC> (subordinating conjunctions), C<Adv> (Adverbial particles) C<AuxP> (and the rest).
-This block doesn't change already filled afun values 
+C<Coord> (coordinating conjunctions), C<AuxC> (subordinating conjunctions), C<Adv> (adverbial particles), C<AuxY> (coordinating conjunctions, which are not Coord), C<AuxO> (interrogatives), C<AuxP> (and the rest).
+This block doesn't change already filled afun values.
 
-=head1 AUTHORS
+=head1 AUTHOR
 
-Dusan Varis
+Dušan Variš <varis@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+=cut
 
 

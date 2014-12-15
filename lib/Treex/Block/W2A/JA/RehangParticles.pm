@@ -86,7 +86,7 @@ Since this block finishes the after-parsing modifications of the a-tree, it shou
 
 =head1 AUTHOR
 
-Dušan Variš <dvaris@seznam.cz>
+Dušan Variš <varis@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

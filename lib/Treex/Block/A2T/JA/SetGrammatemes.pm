@@ -11,10 +11,8 @@ Readonly my $DEBUG => 0;
 # We take first two tag levels so we can distinguish between nouns, numerals and pronouns
 Readonly my %SUB_FOR_TAG => (
   'Keiyōshi-Jiritsu'          => \&_adj,
-  #setsubi?
   'Keiyōshi-HiJiritsu'        => \&_adj,
   'Dōshi-Jiritsu'             => \&_verb,
-  #setsubi?
   'Dōshi-HiJiritsu'           => \&_verb,
   'Fukushi-Ippan'             => \&_adv,
   'Fukushi-JoshiRuiSetsuzoku' => \&_adv,
@@ -89,10 +87,13 @@ sub _noun {
   my ( $tnode, $tag, $form ) = @_;
   $tnode->set_gram_sempos('n.denot');
   
-  # Japanese words do not explicitly express gramatical number (since this knowledge can be extracted from the context), but we would like to set it anyway
+  # Japanese nouns do not explicitly express gramatical number (this knowledge is usually extracted from the context), but we would like to set it anyway
   # as a default, we set number to 'sg'
   my $number = 'sg';
   # TODO: depending on the context, set the number correctly
+
+  # Japanese nouns do not express gramatical gender
+  # TODO: figure out how to get this information anyway?
 
   # we use only simple heuristic now
   $number = 'pl' if (_has_numeral_child($tnode));
@@ -114,8 +115,8 @@ sub _adj {
   $tnode->set_gram_sempos('adj.denot');
   $tnode->set_gram_negation('neg0');
 
+  # Japanese adjectives are non-gradable
   $tnode->set_gram_degcmp('pos');
-  # TODO: can we do something about setting gram/degcmp?
 
   return;
 }
@@ -124,13 +125,14 @@ sub _adj {
 sub _adv {
   my ( $tnode, $tag, $form ) = @_;
   
-  # all Japanese adverbs should be impossible to negate, however there are adverbs used only with negative predicate
-  # TODO: is that really correct?
-  $tnode->set_gram_sempos('adv.denot.grad.nneg'); 
+  # All Japanese adverbs cannot be negated
+  # Japanese adverbs are non-gradable
+  # TODO: Is that really correct?
+  $tnode->set_gram_sempos('adv.denot.ngrad.nneg'); 
   $tnode->set_gram_negation('neg0');
 
-  $tnode->set_gram_degcmp('pos');
-  # TODO: degcmp - similar situation as in _adj
+  # Japanese adverbs are non-gradable
+  # $tnode->set_gram_degcmp('pos');
 
   return;
 }
@@ -139,6 +141,7 @@ sub _adv {
 sub _pron {
 
   ### TODO ###
+  # List all possible pronouns and through matching assign correct values
 
   return;
 }
@@ -151,7 +154,7 @@ sub _number {
   # TODO: this is probably not always correct
   $tnode->set_gram_sempos("$sempos.quant.def");
 
-  # We propably do not distinguish number of numerals
+  # We propably cannot distinguish number of numerals
   $tnode->set_gram_number('sg');
 
   return;
