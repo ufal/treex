@@ -3,9 +3,10 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Tool::Flect::FlectBlock';
 
-has '+model_file' => ( default => 'data/models/flect/model-en_pcedt20_tsynth-t328-l1_1_0001.pickle' );
+has '+model_file' => ( default => 'data/models/flect/model-en_pcedt20_tsynth-t275-l1_1_001.pickle' );
 
-has '+features_file' => ( default => 'data/models/flect/model-en_pcedt20_tsynth-t328.features.yml' );
+has '+features_file' => ( default => 'data/models/flect/model-en_pcedt20_tsynth-t275-l1_1_001.features.yml' );
+
 
 sub process_atree {
     my ( $self, $aroot ) = @_;
