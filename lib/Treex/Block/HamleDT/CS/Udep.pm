@@ -76,6 +76,10 @@ sub remove_features_from_lemmas
         # other: US, PVP, Prix, Rapaport, Tour
         'm' => 'oth'
     );
+    # The terminology (field) tags are not used consistently.
+    # We could propose a new Interset feature to preserve them (at present it is possible to mix them with name types but I do not like it)
+    # but in the current state of the annotation it is probably better to drop them completely.
+    # _;[HULjgcybuwpzo]
     my %termtags =
     (
         # chemistry: H: CO, ftalát, pyrolyzát, adenozintrifosfát, CFC
@@ -95,6 +99,7 @@ sub remove_features_from_lemmas
     foreach my $node (@nodes)
     {
         my $lemma = $node->lemma();
+        my $iset = $node->iset();
         # Verb lemmas encode aspect.
         # Aspect is a lexical feature in Czech but it can still be encoded in Interset and not in the lemma.
         if($lemma =~ s/_:T_:W// || $lemma =~ s/_:W_:T//)
@@ -104,11 +109,22 @@ sub remove_features_from_lemmas
         }
         elsif($lemma =~ s/_:T//)
         {
-            $node->iset()->set('aspect', 'imp');
+            $iset->set('aspect', 'imp');
         }
         elsif($lemma =~ s/_:W//)
         {
-            $node->iset()->set('aspect', 'perf');
+            $iset->set('aspect', 'perf');
+        }
+        # Move the abbreviation feature from the lemma to the Interset features.
+        # It is probably not necessary because the same information is also encoded in the morphological tag.
+        if($lemma =~ s/_:B//)
+        {
+            $iset->set('abbr', 'abbr');
+        }
+        # Move the foreign feature from the lemma to the Interset features.
+        if($lemma =~ s/_,t//)
+        {
+            $iset->set('foreign', 'foreign');
         }
         # Term categories encode (among others) types of named entities.
         # Můžou se vyskytnout dvě kategorie za sebou.
@@ -125,18 +141,20 @@ sub remove_features_from_lemmas
                 $nametypes{$nt}++;
             }
         }
+        # Drop the other term categories because they are used inconsistently (see above).
+        $lemma =~ s/_;[HULjgcybuwpzo]//g;
         my @nametypes = sort(keys(%nametypes));
         if(@nametypes)
         {
-            $node->iset()->set('nametype', join('|', @nametypes));
+            $iset->set('nametype', join('|', @nametypes));
             if($node->is_noun())
             {
-                $node->iset()->set('nountype', 'prop');
+                $iset->set('nountype', 'prop');
             }
         }
         elsif($node->is_noun() && !$node->is_pronoun())
         {
-            $node->iset()->set('nountype', 'com');
+            $iset->set('nountype', 'com');
         }
         $node->set_lemma($lemma);
     }
