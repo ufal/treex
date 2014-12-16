@@ -76,7 +76,7 @@ sub inflect_nodes {
 
 sub _escape {
     my ($list) = @_;
-    return map { $_ = '' if ( not defined $_ ); $_ =~ s/'/\\'/g; $_ } @$list;
+    return map { $_ = '' if ( not defined $_ ); $_ =~ s/\\/\\\\/g; $_ =~ s/'/\\'/g; $_ } @$list;
 }
 
 1;
