@@ -96,7 +96,7 @@ sub process_tnode {
         }
 
         # infinitives, gerunds
-        if ( $t_node->formeme =~ /v.*\+inf/ ) {
+        if ( $t_node->formeme =~ /v:(.+\+)?inf/ ) {
             $a_node->set_morphcat_subpos('f');
             $a_node->set_conll_pos('VB');
         }

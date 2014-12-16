@@ -16,6 +16,7 @@ my %PERSPRON = (
     'S 3 F poss' => 'her',
     'S 3 N'      => 'it',
     'S 3 N poss' => 'its',
+    'S 3 .'      => 'one',
     'P 1'        => 'we',
     'P 1 poss'   => 'our',
     'P 2'        => 'you',
