@@ -48,7 +48,7 @@ sub should_move {
     return 0 if $parent->tag !~ /^Joshi/ || $parent == $next;
 
     # if the parent is a coordination particle, we do nothing
-    return 0 if ( $parent->tag =~ /SetsuzokuJoshi/ || $parent->tag =~ /Heiritsujoshi/ );
+    return 0 if  $parent->tag =~ /Heiritsujoshi/;
 
     return 1;
 }

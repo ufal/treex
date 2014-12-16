@@ -1,6 +1,7 @@
 package Treex::Block::A2T::JA::FixTlemmas;
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::Lexicon::JA;
 extends 'Treex::Core::Block';
 
 sub process_tnode {
@@ -14,8 +15,9 @@ sub process_tnode {
   } 
   elsif ( $lex_a_node->tag =~ /^Meishi-Daimeishi/ ) {
 
-    # TODO: we want only personal and possesive pronouns to be substituted but not e.g. "koko", kochira", etc.
-    $new_tlemma = '#PersPron';
+    if ( Treex::Tool::Lexicon::JA::is_pers_pron($old_tlemma) ) {
+      $new_tlemma = '#PersPron';
+    }
   }
 
   if ($new_tlemma) {

@@ -5,9 +5,10 @@ extends 'Treex::Core::Block';
 
 sub process_anode {
   my ( $self, $a_node ) = @_;
+  my $lemma = $a_node->lemma;
   
   # Find every word "n" (ん) and "nai" (ない)
-  return if $a_node->lemma =~ /^(ん|ない)$/;
+  return if $lemma !~ /^(ん|ない)$/;
 
   # Skip nodes that are already marked to be collapsed to parent.
   # Without this check we could rarely create a t-node with no lex a-node.

@@ -1,4 +1,4 @@
-package Treex::Block::A2T::Ja::MarkPassives;
+package Treex::Block::A2T::JA::MarkPassives;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -11,7 +11,7 @@ sub process_tnode {
   my @aux_a_nodes = $t_node->get_aux_anodes();
 
   # passive is indicated by auxiliary wordform "reru" (れる) or "rareru" (られる)
-  if ( $lex_a_node->tag =~ /^Dōshi/ && grep { $_->lemma =~ /^(れる|られる)$/) } @aux_a_nodes ) {
+  if ( $lex_a_node->tag =~ /^Dōshi/ && grep { $_->lemma =~ /^(れる|られる)$/ } @aux_a_nodes ) {
     
     $t_node->set_is_passive(1);
     $t_node->set_gram_diathesis('pas');
