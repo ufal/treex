@@ -43,11 +43,7 @@ sub process_zone
     my $troot = $zone->get_tree('t');
     my $aroot = $zone->get_tree('a');
     # Print sentence identifier.
-    # We assume that the input file comes from the PTB and is named according to PTB naming conventions.
-    # Bundle->get_position() is not efficient (see comment there) so we may consider simply counting the sentences using an attribute of this block.
-    my $ptb_section_file = $zone->get_document()->file_stem();
-    $ptb_section_file =~ s/^wsj_//i;
-    printf {$self->_file_handle()} ("#2%s%03d\n", $ptb_section_file, $zone->get_bundle()->get_position()+1);
+    print {$self->_file_handle()} ($self->get_sentence_id($zone), "\n");
     # Compute correspondences between t-nodes and a-nodes.
     my @tnodes = $troot->get_descendants({ordered => 1});
     foreach my $tnode (@tnodes)
@@ -184,6 +180,40 @@ sub process_zone
     }
     # Every sentence must be terminated by a blank line.
     print {$self->_file_handle()} ("\n");
+}
+
+
+
+#------------------------------------------------------------------------------
+# Construct sentence number according to Stephan's convention.
+#------------------------------------------------------------------------------
+sub get_sentence_id
+{
+    my $self = shift;
+    my $zone = shift;
+    my $sid = 0;
+    # Option 1: The input file comes from the Penn Treebank / Wall Street Journal
+    # and is named according to the PTB naming conventions.
+    # Bundle->get_position() is not efficient (see comment there) so we may consider simply counting the sentences using an attribute of this block.
+    my $isentence = $zone->get_bundle()->get_position()+1;
+    my $ptb_section_file = $zone->get_document()->file_stem();
+    if($ptb_section_file =~ s/^wsj_//i)
+    {
+        $sid = sprintf("2%s%03d", $ptb_section_file, $isentence);
+    }
+    # Option 2: The input file comes from the Brown Corpus.
+    elsif($ptb_section_file =~ s/^c([a-r])(\d\d)//)
+    {
+        my $genre = $1;
+        my $ifile = $2;
+        my $igenre = ord($genre)-ord('a');
+        $sid = sprintf("4%02d%02d%03d", $igenre, $ifile, $isentence);
+    }
+    else
+    {
+        log_warn("File name '$ptb_section_file' does not follow expected patterns, cannot construct sentence identifier");
+    }
+    return $sid;
 }
 
 

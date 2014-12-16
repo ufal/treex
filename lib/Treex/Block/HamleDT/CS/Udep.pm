@@ -25,6 +25,7 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+    $self->remove_features_from_lemmas($root);
     $self->restructure_coordination_stanford($root);
     $self->push_prep_sub_down($root);
     $self->afun_to_udeprel($root);
@@ -45,6 +46,100 @@ sub get_input_tag_for_interset
     my $self   = shift;
     my $node   = shift;
     return $node->tag();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Lemmas in PDT often contain codes of additional features. Move at least some
+# of these features elsewhere.
+#------------------------------------------------------------------------------
+sub remove_features_from_lemmas
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    my %nametags =
+    (
+        # given name: Jan, Jiří, Václav, Petr, Josef
+        'Y' => 'giv',
+        # family name: Klaus, Havel, Němec, Jelcin, Svoboda
+        'S' => 'sur',
+        # nationality: Němec, Čech, Srb, Američan, Slovák
+        'E' => 'nat',
+        # location: Praha, ČR, Evropa, Německo, Brno
+        'G' => 'geo',
+        # organization: ODS, OSN, Sparta, ODA, Slavia
+        'K' => 'com',
+        # product: LN, Mercedes, Tatra, PC, MF
+        'R' => 'pro',
+        # other: US, PVP, Prix, Rapaport, Tour
+        'm' => 'oth'
+    );
+    my %termtags =
+    (
+        # chemistry: H: CO, ftalát, pyrolyzát, adenozintrifosfát, CFC
+        # medicine: U: AIDS, HIV, neschopnost, antibiotikum, EEG
+        # natural sciences: L: HIV, neem, Homo, Buthidae, čipmank
+        # justice: j: Sb, neschopnost
+        # technology in general: g: ABS
+        # computers and electronics: c: SPT, CD, Microsoft, MS, ROM
+        # hobby, leisure, traveling: y: CD, CNN, MTV, DP, CHKO
+        # economy, finance: b: dolar, ČNB, DEM, DPH, MF
+        # culture, education, arts, other sciences: u: CD, AV, MK, MŠMT, proměnná
+        # sports: w: MS, NHL, ME, Cup, UEFA
+        # politics, government, military: p: ODS, ODA, ČSSD, EU, ČSL
+        # ecology, environment: z: MŽP, CHKO
+        # color indication: o: červený, infračervený, fialový, červeno
+    );
+    foreach my $node (@nodes)
+    {
+        my $lemma = $node->lemma();
+        # Verb lemmas encode aspect.
+        # Aspect is a lexical feature in Czech but it can still be encoded in Interset and not in the lemma.
+        if($lemma =~ s/_:T_:W// || $lemma =~ s/_:W_:T//)
+        {
+            # Do nothing. The verb can have any of the two aspects so it does not make sense to say anything about it.
+            # (But there are also many verbs that do not have any information about their aspect, probably due to incomplete lexicon.)
+        }
+        elsif($lemma =~ s/_:T//)
+        {
+            $node->iset()->set('aspect', 'imp');
+        }
+        elsif($lemma =~ s/_:W//)
+        {
+            $node->iset()->set('aspect', 'perf');
+        }
+        # Term categories encode (among others) types of named entities.
+        # Můžou se vyskytnout dvě kategorie za sebou.
+        # JVC_;K_;R (buď továrna, nebo výrobek)
+        # Poldi_;Y_;K
+        # Kladno_;G_;K
+        my %nametypes;
+        while($lemma =~ s/_;([YSEGKRm])//)
+        {
+            my $tag = $1;
+            my $nt = $nametags{$tag};
+            if(defined($nt))
+            {
+                $nametypes{$nt}++;
+            }
+        }
+        my @nametypes = sort(keys(%nametypes));
+        if(@nametypes)
+        {
+            $node->iset()->set('nametype', join('|', @nametypes));
+            if($node->is_noun())
+            {
+                $node->iset()->set('nountype', 'prop');
+            }
+        }
+        elsif($node->is_noun() && !$node->is_pronoun())
+        {
+            $node->iset()->set('nountype', 'com');
+        }
+        $node->set_lemma($lemma);
+    }
 }
 
 
