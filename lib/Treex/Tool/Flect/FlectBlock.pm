@@ -32,7 +32,6 @@ sub _build_modifier_config {
     return _parse_modifier_config( $self->_features_file_data->{modifier_config} );
 }
 
-
 sub _build_features_file_data {
     my ($self) = @_;
     return {} if ( not $self->features_file );
@@ -41,9 +40,9 @@ sub _build_features_file_data {
     $cfg = $cfg->[0];
 
     my $feats = {
-        additional    => $cfg->{additional_features},
-        plain_labels  => [ map { $_->{label} } @{ $cfg->{features} } ],
-        plain_sources => [ map { $_->{source} } @{ $cfg->{features} } ],
+        additional      => $cfg->{additional_features},
+        plain_labels    => [ map { $_->{label} } @{ $cfg->{features} } ],
+        plain_sources   => [ map { $_->{source} } @{ $cfg->{features} } ],
         modifier_config => $cfg->{modifier_config},
     };
     return $feats;
@@ -67,6 +66,8 @@ sub process_start {
 
 sub inflect_nodes {
     my ( $self, @nodes ) = @_;
+
+    return if ( !@nodes );    # skip empty sentences
 
     my @data = map { join( '|', _escape( $self->_get_info_list($_) ) ) } @nodes;
 
