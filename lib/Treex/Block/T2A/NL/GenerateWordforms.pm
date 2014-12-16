@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Tool::Flect::FlectBlock';
 
-has '+model_file' => ( default => 'data/models/flect/model-nl_alpino_tsynth-t322-l1_10_00001-t323-l1_10_00001.pickle' );
+has '+model_file' => ( default => 'data/models/flect/model-nl_alpino_tsynth-t329-l1_10_00001-t330-l1_10_00001.pickle' );
 
 has '+features_file' => ( default => 'data/models/flect/model-nl_alpino_tsynth-t322-t323.features.yml' );
 

@@ -9,24 +9,33 @@ after process_tnode => sub {
     my $a_node = $t_node->get_lex_anode() or return;
 
     # Hacking gender: inan => com
-    if ($a_node->match_iset(gender => 'masc', animateness => 'inan')){
+    if ( $a_node->match_iset( gender => 'masc', animateness => 'inan' ) ) {
         $a_node->iset->set_gender('com');
         $a_node->iset->set_animateness('');
     }
+
     # Past/present participle attributes -> set verbform=participle
-    if ($t_node->formeme eq 'v:attr'){
+    if ( $t_node->formeme eq 'v:attr' ) {
         $a_node->iset->set_verbform('part');
+    }
+    # Finite forms (this will remain with the conjugated verb)
+    elsif ( $t_node->formeme =~ /^v:.*(fin|rc)$/ ) {
+        $a_node->iset->set_verbform('fin');
+    }
+    # inifinitves
+    elsif ( $t_node->formeme =~ /^v:.*inf$/ ){
+        $a_node->iset->set_verbform('inf');
     }
     return;
 };
 
 sub should_fill {
-    my ($self, $grammateme, $tnode) = @_;
+    my ( $self, $grammateme, $tnode ) = @_;
 
     # In Dutch, nouns are not marked with definiteness on the a-layer.
     # T2A::NL::AddArticles will add an article for this grammateme.
     return 0 if $grammateme eq 'definiteness';
-    
+
     return 1;
 }
 
