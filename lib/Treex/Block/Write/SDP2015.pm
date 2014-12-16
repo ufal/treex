@@ -43,7 +43,7 @@ sub process_zone
     my $troot = $zone->get_tree('t');
     my $aroot = $zone->get_tree('a');
     # Print sentence identifier.
-    print {$self->_file_handle()} ($self->get_sentence_id($zone), "\n");
+    print {$self->_file_handle()} ("\#", $self->get_sentence_id($zone), "\n");
     # Compute correspondences between t-nodes and a-nodes.
     my @tnodes = $troot->get_descendants({ordered => 1});
     foreach my $tnode (@tnodes)
