@@ -69,5 +69,5 @@ while True:
             cmd = re.sub(r'[^\n]+\n$', '', cmd)
             _, _, tb = sys.exc_info()
             print >> stderr, '\n\nCommand:', '\n', cmd, '\nException:\n', str(type(e)), ':', e, '\n\n', ''.join(traceback.format_tb(tb))
-            pass
+            raise e
         cmd = ''

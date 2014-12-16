@@ -22,7 +22,6 @@ sub BUILD {
     $file .= '/execute.py';
             
     log_info('Running Python slave process');
-    $SIG{PIPE} = 'IGNORE';    # don't die if Python gets killed       
     my ( $read, $write, $pid ) = ProcessUtils::bipipe('python ' . $file);
 
     $read->autoflush();
@@ -47,10 +46,18 @@ sub command {
     $self->_write_handle->flush();
     
     my $fh = $self->_read_handle;
+    my $ended = 0;
     while (my $line = <$fh>) {
         $line =~ s/\r?\n$/\n/;
-        last if ($line eq "<<<<END>>>>\n");
+        if ($line eq "<<<<END>>>>\n"){
+            $ended = 1;
+            last;
+        }
         $output .= $line;
+    }
+    
+    if (!$ended){
+        log_fatal('Python slave process closed output prematurely (see above for error messages).');
     }
 
     $output =~ s/\n$// if ($output =~ /^[^\n]*\n$/);
