@@ -91,7 +91,7 @@ sub decide_article {
         $article = '';
 
         # 'a' when modified by an adjective
-        if ( grep { $_->gram_sempos =~ /^adj/ } $tnode->get_descendants() ) {
+        if ( grep { ( $_->gram_sempos // '' ) =~ /^adj/ } $tnode->get_descendants() ) {
             $article = 'a';
             $rule    = 'uncountable/with adj';
         }
