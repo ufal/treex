@@ -20,12 +20,15 @@ sub process_tnode {
         # maintain SVO order
         my @subjects = _grep_formeme( 'n:subj',     \@children );
         my @objects  = _grep_formeme( 'n:obj[12]?', \@children );
+        
+        # skip questions and orders, for now (TODO fix them)
+        return if ($tnode->sentmod ne 'enunc');
 
         foreach my $subject ( reverse @subjects ) {
-            $subject->shift_before_node($tnode) if ( !$subject->precedes($tnode) );
+            $self->shift_before_node($subject, $tnode) if ( !$subject->precedes($tnode) );
         }
         foreach my $object (@objects) {
-            $object->shift_after_node($tnode) if ( $object->precedes($tnode) );
+            $self->shift_after_node($object, $tnode) if ( $object->precedes($tnode) );
         }
 
         # at most one element preceding the subject
@@ -35,7 +38,7 @@ sub process_tnode {
 
         shift @prec_nosubj;
         foreach my $nosubj (@prec_nosubj) {
-            $nosubj->shift_after_node($last_obj);
+            $self->shift_after_node($nosubj, $last_obj);
         }
     }
     return;
@@ -51,6 +54,30 @@ sub _grep_formeme {
             or
             ( $_->is_coap_root and any { $_->formeme =~ /^$formeme$/ } $_->get_echildren( { or_topological => 1 } ) )
     } @$nodes_rf;
+}
+
+
+# Moving t-nodes and a-nodes in parallel
+sub shift_after_node {
+    my ($self, $tnode_move, $tnode_dst) = @_;
+    my $anode_move = $tnode_move->get_lex_anode();
+    my $anode_dst = $tnode_dst->get_lex_anode();
+    
+    $tnode_move->shift_after_node($tnode_dst);
+    if ($anode_move and $anode_dst){
+        $anode_move->shift_after_node($anode_dst);
+    }
+}
+
+sub shift_before_node {
+    my ($self, $tnode_move, $tnode_dst) = @_;
+    my $anode_move = $tnode_move->get_lex_anode();
+    my $anode_dst = $tnode_dst->get_lex_anode();
+    
+    $tnode_move->shift_before_node($tnode_dst);
+    if ($anode_move and $anode_dst){
+        $anode_move->shift_before_node($anode_dst);
+    }
 }
 
 1;
