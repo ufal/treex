@@ -121,6 +121,9 @@ sub remove_features_from_lemmas
         {
             $iset->set('abbr', 'abbr');
         }
+        # According to the documentation in http://ufal.mff.cuni.cz/techrep/tr27.pdf, lemmas may also encode the part of speech:
+        # _:[NAJZMVDPCIFQX]
+        # However, none of these codes actually appears in PDT 3.0 data.
         # Move the foreign feature from the lemma to the Interset features.
         if($lemma =~ s/_,t//)
         {
