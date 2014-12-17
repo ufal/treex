@@ -185,7 +185,8 @@ sub process_zone
 
 
 #------------------------------------------------------------------------------
-# Construct sentence number according to Stephan's convention.
+# Construct sentence number according to Stephan's convention. The result
+# should be a numeric string.
 #------------------------------------------------------------------------------
 sub get_sentence_id
 {
@@ -208,6 +209,16 @@ sub get_sentence_id
         my $ifile = $2;
         my $igenre = ord($genre)-ord('a');
         $sid = sprintf("4%02d%02d%03d", $igenre, $ifile, $isentence);
+    }
+    # Option 3: The input file comes from the Prague Dependency Treebank.
+    elsif($ptb_section_file =~ m/^(cmpr|lnd?|mf)(9\d)(\d+)_(\d+)$/)
+    {
+        my $source = $1;
+        my $year = $2;
+        my $issue = $3;
+        my $ifile = $4;
+        my $isource = $source eq 'cmpr' ? 0 : $source =~ m/^ln/ ? 1 : 2;
+        $sid = sprintf("1%d%d%04d%03d", $isource, $year, $issue, $ifile);
     }
     else
     {
