@@ -50,7 +50,6 @@ sub process_tnode {
 
         my $number = $t_node->gram_number || '';
         $a_node->set_morphcat_number( $M_NUMBER_FOR{$number} // '.' );
-
         $a_node->set_conll_pos( $number eq 'pl' ? 'NNS' : 'NN' );
 
         # pronouns
@@ -58,16 +57,28 @@ sub process_tnode {
             $a_node->set_morphcat_pos('P');
             $a_node->set_morphcat_subpos('P');
 
-            my $gender = $t_node->gram_gender // '';
+            my $gender = $t_node->gram_gender || '.';
+            my $person = $t_node->gram_person || '.';
+
+            # get attributes from coreference, if needed
+            if ( my ($t_antec) = $t_node->get_coref_gram_nodes() ) {
+                $gender = $gender eq 'inher' ? ( $t_antec->gram_gender || '.' ) : '.';
+                $person = $person eq 'inher' ? ( $t_antec->gram_person || '.' ) : '.';
+                if ( $number eq 'inher' and $t_antec->gram_number ) {
+                    $a_node->set_morphcat_number( $M_NUMBER_FOR{ $t_antec->gram_number } );
+                }
+            }            
             $a_node->set_morphcat_gender( $M_GENDER_FOR{$gender} // '.' );
-            $a_node->set_morphcat_person( $t_node->gram_person   // '.' );
+            $a_node->set_morphcat_person( $person ne 'inher' ? $person : '.' );
             $a_node->set_conll_pos('PRP');
-            
-            if ($t_node->formeme eq 'n:poss'){ # possessive pronouns
+
+            # possessive pronouns
+            if ( $t_node->formeme eq 'n:poss' ) {
                 $a_node->set_morphcat_subpos('S');
                 $a_node->set_conll_pos('PRP$');
             }
         }
+
     }
 
     # verbs
