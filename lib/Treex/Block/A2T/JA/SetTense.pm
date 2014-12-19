@@ -8,17 +8,27 @@ my %aux2flags = (
   'ます'    => ['pol'],   # polite imperfective
   'た'      => ['perf'],  # plain perfective
   'ない'    => ['neg'],   # plain negative imperfective
+  'ん'      => ['neg'],   # negative
   'たら'    => ['past', 'cdn'],  # past conditional
-  'う'      => ['hrt'],   # volitional, presumptive, hortative
+  'う'      => [],        # volitional, presumptive, hortative
   'れる'    => ['pass'],  # passive
   'られる'  => ['pass'],  # passive (or potential)
-  'せる'    => ['perm'],        # causative (letting or making someone do something)
-  'させる'  => ['perm'],        # causative (letting or making someone do something)
+  'せる'    => [],        # causative (letting or making someone do something)
+  'させる'  => [],        # causative (letting or making someone do something)
   'ば'      => ['cdn'],   # conditional
   'て'      => [],        # gerundive (te-form)
   'な'      => ['neg'],   # prohibitive
-  'たい'    => ['vol'],   # volitional (wishing)
+  'たい'    => [],        # volitional (wishing)
   # interrogative
+);
+
+# We mark the value of deontmod into the hash
+# SetGrammateme will be the one to set the deontmod grammateme  
+my %aux2deontmod = (
+  'う'      => 'hrt',     # volitional, presumptive, hortative
+  'せる'    => 'perm',    # causative (letting or making someone do something)
+  'させる'  => 'perm',    # causative (letting or making someone do something)
+  'たい'    => 'vol',     # volitional (wishing)
 );
 
 sub process_tnode {
@@ -33,22 +43,28 @@ sub process_tnode {
     my @flags = ();
     my %tense = ();
 
-    # 1. collect flags
+    # 1. collect flags & set deontmod value in the tense hash
     foreach my $aux (@anodes) {
-      push @flags, $aux2flags{$aux->lemma};
+      my $flag_ref = $aux2flags{$aux->lemma};
+      if ( $flag_ref ) {
+        push @flags, @$flag_ref;
+      }
+
+      $tense{'deontmod'} = $aux2deontmod{$aux->lemma};
+
     }
 
     # 2. if flag "past" is not set, we assume present tense (which we take as a default for Japanese non-past tense)
-    if ( any { $_ eq 'past' } @flags ) {
+    if ( scalar @flags > 0 && !( any { $_ eq 'past' } @flags ) ) {
       push @flags, 'pres';
     }
 
-    # 3. fill the tense has
+    # 3. fill the tense hash
     foreach my $flag (@flags) {
       $tense{$flag} = 1;
     }
 
-    # 4. set the tense of the t-node
+    # 5. set the tense of the t-node
     $tnode->wild->{tense} = \%tense;
 
     # TODO: copula (probably just politeness)
@@ -78,6 +94,8 @@ sub get_anodes {
 1;
 
 __END__
+
+=encoding utf-8
 
 =head1 NAME 
 
@@ -126,7 +144,7 @@ Resolve copula, adjectives (form with or without copula).
 In the used tokenization, imperative cannot be detected from auxiliary nodes, but we can probably
 detect it from the verb stem.
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Dušan Variš <varis@ufal.mff.cuni.cz>
 

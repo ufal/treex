@@ -42,7 +42,7 @@ Treex::Block::A2T::JA::FixTlemmas
 The attribute C<t_lemma> is corrected in specific cases: personal pronouns are represented
 by #PersPron, etc.
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Dušan Variš <varis@ufal.mff.cuni.cz>
 

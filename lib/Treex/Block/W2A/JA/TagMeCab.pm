@@ -8,6 +8,8 @@ use Encode;
 use Treex::Core::Common;
 use Treex::Tool::Tagger::MeCab;
 
+use Lingua::Interset::Tagset::JA::Ipadic;
+
 extends 'Treex::Core::Block';
 
 has _form_corrections => (
@@ -52,8 +54,6 @@ sub process_zone {
 
     my $result = "";
 
-    my $debug = "";
-    
     my ( @tokens ) = $self->tagger->process_sentence( $sentence );
 
     # modifies the output format of MeCab wrapper
@@ -99,8 +99,6 @@ sub process_zone {
 
             my $lemma = $3;
 
-            $debug .= "$form   $tag;    ";
- 
             if ( $sentence =~ s/^\Q$form\E// ) {
 
                 # check if there is space after word
@@ -113,20 +111,28 @@ sub process_zone {
                 $sentence =~ s{$space_start}{};
 		
                 # and create node under root
-                $a_root->create_child(
+                my $a_node = $a_root->create_child(
                     form           => $form,
                     tag            => $tag,
                     lemma          => $lemma,
                     no_space_after => $no_space_after,
                     ord            => $ord++,
                 );
+
+                $tag =~ s/\-\*//g;
+
+                # we also create an interset structure attribute
+                my $driver = Lingua::Interset::Tagset::JA::Ipadic->new();
+                my $features = $driver->decode("$tag");
+                $a_node->set_iset($features);                
+
             }
             else {
-                log_fatal("Mismatch between tagged word and original sentence: Tagged: $form; $debug.  Original: $sentence.");
+                log_fatal("Mismatch between tagged word and original sentence: Tagged: $form; Original: $sentence.");
             }
         }
         else {
-            log_fatal("Incorrect output format from MeCab: $tag_pair debug: $debug");
+            log_fatal("Incorrect output format from MeCab: $tag_pair");
         }
 
     }
@@ -148,12 +154,24 @@ Treex::Block::W2A::JA::TagMeCab
 =head1 DESCRIPTION
 
 Each sentence is tokenized and tagged using C<MeCab> (Ipadic POS tags).
+
 Ipadic tagset uses hierarchical tags. There are four levels of hierarchy,
-each level is separated by "-". Empty kategories are marked as "*".
+each level is separated by "-".
+Empty categories are marked as "*".
 Tags are in kanji, in the future they should be replaced by Romanized tags or their abbreviations (other japanese treex modules should be modified accordingly).
+
+Interset feature structure for each node is also filled in this block.
 
 =head1 SEE ALSO
 
 L<MeCab Home Page|http://mecab.googlecode.com/svn/trunk/mecab/doc/index.html>
 
-=cut
+=head1 AUTHORS
+
+Dušan Variš <varis@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

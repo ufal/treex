@@ -35,7 +35,7 @@ my $twig = XML::Twig->new();
 
 foreach my $fl_filename (@fl_files) {
     log_info("Loading file list from $fl_filename");
-    open my $LIST,'<:utf8',$fl_filename or die $!;
+    open my $LIST,'<:encoding(UTF-8)',$fl_filename or die $!;
 
     my $output_file_stem = $fl_filename;
     $output_file_stem =~ s/\.(fl|lst|txt)$//;
@@ -91,7 +91,7 @@ foreach my $fl_filename (@fl_files) {
                     $output_index_per_filelist++;
                     my $output_file_name = $output_file_stem."-".sprintf("%04d",$output_index_per_filelist).".treex.gz";
                     log_info("Creating $output_file_name");
-                    open $output_file_handle, ">:gzip:utf8",$output_file_name;
+                    open $output_file_handle, ">:gzip:encoding(UTF-8)",$output_file_name;
                     print $output_file_handle $TREEX_DOC_HEADER;
                 }
 
@@ -137,7 +137,7 @@ sub load_treex_file_content {
     my ($filename) = @_;
     log_info("Loading $filename");
     if ($filename =~ /\.gz/) {
-        open my $TREEX_DOC, "gunzip -c $filename|" or die $!;
+        open (my $TREEX_DOC, '<', "gunzip -c $filename|") or die $!;
         my $content;
         while (<$TREEX_DOC>){
             $content .= $_;
