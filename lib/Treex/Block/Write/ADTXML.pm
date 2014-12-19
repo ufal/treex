@@ -11,7 +11,6 @@ has '_node_id' => ( isa => 'Int', is => 'rw' );
 
 has 'sent_ids' => ( isa => 'Bool', is => 'ro', default => 0 );
 
-
 # Simple conversion of Afuns to ADT relations (see _get_rel() for more)
 my %AFUN2REL = (
     'Pred'  => '--',
@@ -26,7 +25,7 @@ my %AFUN2REL = (
     'Apos'  => '',         # - " - ?? quite weird
     'AuxT'  => 'se',
     'AuxR'  => 'se',       # (not used)
-    'AuxP'  => 'mod',       # pc/hd
+    'AuxP'  => 'mod',      # pc/hd
     'AuxC'  => 'cmp',
     'AuxO'  => '',         # (not used)
     'AuxA'  => 'det',
@@ -44,7 +43,7 @@ sub process_atree {
     $self->_set_node_id(0);
 
     my $out = '<?xml version="1.0" encoding="UTF-8"?><alpino_adt version="1.3">' . "\n";
-    if ( $self->sent_ids ){
+    if ( $self->sent_ids ) {
         $out .= "<!-- " . $aroot->id . " -->" . "\n";
     }
     $out .= $self->_process_subtree( $aroot, 0 );
@@ -78,7 +77,7 @@ sub _process_subtree {
         foreach my $akid (@prekids) {
             $out .= $self->_process_subtree( $akid, $indent + 1 );
         }
-        if (!$anode->is_root){   
+        if ( !$anode->is_root ) {
             my $rel = $anode->is_coap_root ? 'crd' : 'hd';
             $out .= ( "\t" x ( $indent + 1 ) ) . $self->_get_node_str( $anode, $rel ) . "\n";
         }
@@ -103,7 +102,7 @@ sub _get_node_str {
     $cat = defined($cat) ? $cat : '';
 
     my $out = '<node id="' . $self->_get_id . '" rel="' . $rel . '" ';
-    $out .= 'cat="' . $cat . '" ' if ($cat ne '');
+    $out .= 'cat="' . $cat . '" ' if ( $cat ne '' );
     $out .= $self->_get_pos($anode);
     my $lemma = $anode->lemma // '';
     $out .= ' sense="' . $lemma . '" />';
@@ -124,32 +123,32 @@ sub _get_rel {
     my ( $self, $anode ) = @_;
     my ($tnode) = $anode->get_referencing_nodes('a/lex.rf');
     my $afun = $anode->afun // '';
-    
+
     # technical root + top node
-    if ( $anode->is_root ){
+    if ( $anode->is_root ) {
         return 'top';
     }
-    if ( $anode->get_parent->is_root ){
+    if ( $anode->get_parent->is_root ) {
         return '--';
     }
-    my ($aparent) = $anode->get_eparents({or_topological=>1});
+    my ($aparent) = $anode->get_eparents( { or_topological => 1 } );
 
     # conjuncts
     if ( $anode->is_member ) {
         return 'cnj';
     }
-    
+
     # possessives
-    if ( $anode->match_iset( 'prontype' => '~pr[ns]', 'poss' => 'poss' ) ){
+    if ( $anode->match_iset( 'prontype' => '~pr[ns]', 'poss' => 'poss' ) ) {
         return 'det';
     }
 
     # objects
     if ($tnode) {
         if ( my ($objtype) = $tnode->formeme =~ /n:(obj.*)/ ) {
-            
-            if ($aparent->lemma eq 'zijn' and $aparent->is_verb){
-                return 'predc';  # copula "to be" has a special label
+
+            if ( $aparent->lemma eq 'zijn' and $aparent->is_verb ) {
+                return 'predc';    # copula "to be" has a special label
             }
             return $objtype eq 'obj2' ? 'obj2' : 'obj1';
         }
@@ -160,13 +159,13 @@ sub _get_rel {
             return 'mod';
         }
     }
-    
+
     # prepositional phrases
-    if ( ( $aparent->afun // '' ) eq 'AuxP' ){
-        return 'obj1';  # dependent NP has 'obj1' 
+    if ( ( $aparent->afun // '' ) eq 'AuxP' ) {
+        return 'obj1';    # dependent NP has 'obj1'
     }
-    if ( $afun eq 'AuxP' and $aparent->is_verb ){
-        return 'pc';  # verbal complements have 'pc', otherwise it will default to 'mod'
+    if ( $afun eq 'AuxP' and $aparent->is_verb ) {
+        return 'pc';      # verbal complements have 'pc', otherwise it will default to 'mod'
     }
 
     # verbs
@@ -174,8 +173,8 @@ sub _get_rel {
         if ( grep { $_->iset->pos eq 'verb' } $anode->get_eparents( { or_topological => 1 } ) ) {
             return 'vc';
         }
-        if ( $aparent->is_noun and $anode->iset->verbform eq 'part' ){
-            return 'mod';  # participles as adjectival noun modifiers
+        if ( $aparent->is_noun and $anode->iset->verbform eq 'part' ) {
+            return 'mod';    # participles as adjectival noun modifiers
         }
         return 'body';
     }
@@ -194,17 +193,17 @@ sub _get_pos {
     my ( $self, $anode ) = @_;
 
     my %data = ();
-    
+
     # part-of-speech
-    my $pos  = $anode->iset->pos;
+    my $pos = $anode->iset->pos;
     $pos = 'comp' if ( $anode->match_iset( 'conjtype' => 'sub' ) );
     $pos = 'comparative' if ( ( $anode->lemma // '' ) =~ /^(als|dan)$/ and ( $anode->afun // '' ) eq 'AuxP' );
-    $pos = 'pron' if ( $anode->iset->prontype );
-    $pos = 'det'  if ( $anode->iset->prontype eq 'art' or $anode->iset->poss eq 'poss' );
-    $pos = 'adv' if ( $anode->iset->prontype and ( $anode->lemma // '' ) eq 'er' );
-    $pos = 'vg'   if ( $pos eq 'conj' || ( $anode->afun // '' ) =~ /^(Coord|Apos)$/ );
-    $pos = 'prep' if ( $pos eq 'adp' );
-    $pos = 'name' if ( $anode->iset->nountype eq 'prop' );
+    $pos = 'pron'        if ( $anode->iset->prontype );
+    $pos = 'det'         if ( $anode->iset->prontype eq 'art' or $anode->iset->poss eq 'poss' );
+    $pos = 'adv'         if ( $anode->iset->prontype and ( $anode->lemma // '' ) eq 'er' );
+    $pos = 'vg'          if ( $pos eq 'conj' || ( $anode->afun // '' ) =~ /^(Coord|Apos)$/ );
+    $pos = 'prep'        if ( $pos eq 'adp' );
+    $pos = 'name'        if ( $anode->iset->nountype eq 'prop' );
     $data{'pos'} = $pos;
 
     # morphology
@@ -212,7 +211,7 @@ sub _get_pos {
         $data{'rnum'} = 'sg' if ( $anode->match_iset( 'number' => 'sing' ) );
         $data{'rnum'} = 'pl' if ( $anode->match_iset( 'number' => 'plu' ) );
     }
-    if ( $pos eq 'pron' or ( $pos eq 'det' and $anode->iset->poss eq 'poss') ) {
+    if ( $pos eq 'pron' or ( $pos eq 'det' and $anode->iset->poss eq 'poss' ) ) {
         $data{'refl'} = 'refl' if ( $anode->match_iset( 'reflex' => 'reflexive' ) );
         $data{'per'}  = 'fir'  if ( $anode->match_iset( 'person' => '1' ) );
         $data{'per'}  = 'je'   if ( $anode->match_iset( 'person' => '2' ) );
@@ -229,8 +228,43 @@ sub _get_pos {
         $data{'aform'} = 'super'  if ( $anode->match_iset( 'degree' => 'sup' ) );
     }
 
-    return join( ' ', map { $_ . '="' . $data{$_} . '"' }  sort { $a cmp $b } keys %data );
+    return join( ' ', map { $_ . '="' . $data{$_} . '"' } sort { $a cmp $b } keys %data );
 }
 
 1;
 
+__END__
+
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Block::Write::ADTXML
+
+=head1 DESCRIPTION
+
+A writer for ADT (Abstract Dependency Trees) XML format used by the Alpino generator.
+
+It requires an a-tree and a t-tree, based on them it converts the dependency relations, POS,
+and morphology (roughly) into the format required by Alpino.
+
+This is a work-in-progress, many issues are yet to be resolved.
+
+=head1 PARAMETERS
+
+=over
+
+=item sent_ids
+
+Include commentaries with sentence IDs on the output (for easier debugging).
+
+=back
+
+=head1 AUTHORS
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
