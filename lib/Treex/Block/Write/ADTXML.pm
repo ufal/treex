@@ -9,6 +9,9 @@ has '+language' => ( required => 1 );
 
 has '_node_id' => ( isa => 'Int', is => 'rw' );
 
+has 'sent_ids' => ( isa => 'Bool', is => 'ro', default => 0 );
+
+
 # Simple conversion of Afuns to ADT relations (see _get_rel() for more)
 my %AFUN2REL = (
     'Pred'  => '--',
@@ -23,7 +26,7 @@ my %AFUN2REL = (
     'Apos'  => '',         # - " - ?? quite weird
     'AuxT'  => 'se',
     'AuxR'  => 'se',       # (not used)
-    'AuxP'  => 'pc',       # pc/hd
+    'AuxP'  => 'mod',       # pc/hd
     'AuxC'  => 'cmp',
     'AuxO'  => '',         # (not used)
     'AuxA'  => 'det',
@@ -41,6 +44,9 @@ sub process_atree {
     $self->_set_node_id(0);
 
     my $out = '<?xml version="1.0" encoding="UTF-8"?><alpino_adt version="1.3">' . "\n";
+    if ( $self->sent_ids ){
+        $out .= "<!-- " . $aroot->id . " -->" . "\n";
+    }
     $out .= $self->_process_subtree( $aroot, 0 );
     $out .= "</alpino_adt>\n";
 
@@ -72,7 +78,10 @@ sub _process_subtree {
         foreach my $akid (@prekids) {
             $out .= $self->_process_subtree( $akid, $indent + 1 );
         }
-        $out .= ( "\t" x ( $indent + 1 ) ) . $self->_get_node_str( $anode, 'hd' ) . "\n";
+        if (!$anode->is_root){   
+            my $rel = $anode->is_coap_root ? 'crd' : 'hd';
+            $out .= ( "\t" x ( $indent + 1 ) ) . $self->_get_node_str( $anode, $rel ) . "\n";
+        }
         foreach my $akid (@postkids) {
             $out .= $self->_process_subtree( $akid, $indent + 1 );
         }
@@ -91,12 +100,14 @@ sub _process_subtree {
 sub _get_node_str {
     my ( $self, $anode, $rel, $cat ) = @_;
     $rel = defined($rel) ? $rel : $self->_get_rel($anode);
-    $cat = defined($cat) ? $cat : '--';
+    $cat = defined($cat) ? $cat : '';
 
-    my $out = '<node id="' . $self->_get_id . '" rel="' . $rel . '" cat="' . $cat . '" ';
+    my $out = '<node id="' . $self->_get_id . '" rel="' . $rel . '" ';
+    $out .= 'cat="' . $cat . '" ' if ($cat ne '');
     $out .= $self->_get_pos($anode);
     my $lemma = $anode->lemma // '';
-    $out .= ' root="' . $lemma . '" sense="' . $lemma . '" />';
+    $out .= ' sense="' . $lemma . '" />';
+
     return $out;
 }
 
@@ -113,21 +124,33 @@ sub _get_rel {
     my ( $self, $anode ) = @_;
     my ($tnode) = $anode->get_referencing_nodes('a/lex.rf');
     my $afun = $anode->afun // '';
+    
+    # technical root + top node
+    if ( $anode->is_root ){
+        return 'top';
+    }
+    if ( $anode->get_parent->is_root ){
+        return '--';
+    }
+    my ($aparent) = $anode->get_eparents({or_topological=>1});
 
     # conjuncts
     if ( $anode->is_member ) {
-        return 'crd';
+        return 'cnj';
     }
-
-    # conjunctions: behave as if using a child of them
-    if ( $afun =~ /^(Apos|Coord)$/ ) {
-        my ($achild) = $anode->get_children();
-        $anode = $achild // $anode;
+    
+    # possessives
+    if ( $anode->match_iset( 'prontype' => '~pr[ns]', 'poss' => 'poss' ) ){
+        return 'det';
     }
 
     # objects
     if ($tnode) {
         if ( my ($objtype) = $tnode->formeme =~ /n:(obj.*)/ ) {
+            
+            if ($aparent->lemma eq 'zijn' and $aparent->is_verb){
+                return 'predc';  # copula "to be" has a special label
+            }
             return $objtype eq 'obj2' ? 'obj2' : 'obj1';
         }
         if ( $tnode->formeme =~ /n:.*+X/ ) {
@@ -137,14 +160,22 @@ sub _get_rel {
             return 'mod';
         }
     }
+    
+    # prepositional phrases
+    if ( ( $aparent->afun // '' ) eq 'AuxP' ){
+        return 'obj1';  # dependent NP has 'obj1' 
+    }
+    if ( $afun eq 'AuxP' and $aparent->is_verb ){
+        return 'pc';  # verbal complements have 'pc', otherwise it will default to 'mod'
+    }
 
     # verbs
     if ( $afun eq 'AuxV' or $anode->iset->pos eq 'verb' ) {
         if ( grep { $_->iset->pos eq 'verb' } $anode->get_eparents( { or_topological => 1 } ) ) {
             return 'vc';
         }
-        elsif ( $anode->get_parent->is_root ) {
-            return '--';
+        if ( $aparent->is_noun and $anode->iset->verbform eq 'part' ){
+            return 'mod';  # participles as adjectival noun modifiers
         }
         return 'body';
     }
@@ -155,27 +186,33 @@ sub _get_rel {
     }
 
     # default if nothing found there
-    return '--';
+    return 'mod';
 }
 
+# Get part of speech and morphology information for a node
 sub _get_pos {
     my ( $self, $anode ) = @_;
 
     my %data = ();
+    
+    # part-of-speech
     my $pos  = $anode->iset->pos;
     $pos = 'comp' if ( $anode->match_iset( 'conjtype' => 'sub' ) );
     $pos = 'comparative' if ( ( $anode->lemma // '' ) =~ /^(als|dan)$/ and ( $anode->afun // '' ) eq 'AuxP' );
-    $pos = 'det'  if ( $anode->match_iset( 'prontype' => 'art' ) );
     $pos = 'pron' if ( $anode->iset->prontype );
+    $pos = 'det'  if ( $anode->iset->prontype eq 'art' or $anode->iset->poss eq 'poss' );
+    $pos = 'adv' if ( $anode->iset->prontype and ( $anode->lemma // '' ) eq 'er' );
     $pos = 'vg'   if ( $pos eq 'conj' || ( $anode->afun // '' ) =~ /^(Coord|Apos)$/ );
     $pos = 'prep' if ( $pos eq 'adp' );
+    $pos = 'name' if ( $anode->iset->nountype eq 'prop' );
     $data{'pos'} = $pos;
 
-    if ( $pos =~ /^(noun|pron)$/ ) {
+    # morphology
+    if ( $pos =~ /^(noun|pron|name)$/ ) {
         $data{'rnum'} = 'sg' if ( $anode->match_iset( 'number' => 'sing' ) );
         $data{'rnum'} = 'pl' if ( $anode->match_iset( 'number' => 'plu' ) );
     }
-    if ( $pos eq 'pron' ) {
+    if ( $pos eq 'pron' or ( $pos eq 'det' and $anode->iset->poss eq 'poss') ) {
         $data{'refl'} = 'refl' if ( $anode->match_iset( 'reflex' => 'reflexive' ) );
         $data{'per'}  = 'fir'  if ( $anode->match_iset( 'person' => '1' ) );
         $data{'per'}  = 'je'   if ( $anode->match_iset( 'person' => '2' ) );
@@ -192,7 +229,7 @@ sub _get_pos {
         $data{'aform'} = 'super'  if ( $anode->match_iset( 'degree' => 'sup' ) );
     }
 
-    return join( ' ', map { $_ . '="' . $data{$_} . '"' } keys %data );
+    return join( ' ', map { $_ . '="' . $data{$_} . '"' }  sort { $a cmp $b } keys %data );
 }
 
 1;
