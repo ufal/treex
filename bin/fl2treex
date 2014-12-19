@@ -137,7 +137,7 @@ sub load_treex_file_content {
     my ($filename) = @_;
     log_info("Loading $filename");
     if ($filename =~ /\.gz/) {
-        open (my $TREEX_DOC, '<', "gunzip -c $filename|") or die $!;
+        open my $TREEX_DOC, "gunzip -c $filename|" or die $!;
         my $content;
         while (<$TREEX_DOC>){
             $content .= $_;
