@@ -17,26 +17,34 @@ sub process_tnode {
     # finite clauses
     if ( $tnode->formeme =~ /v:*.fin/ ) {
 
-        # maintain SVO order
-        my @subjects = _grep_formeme( 'n:subj',     \@children );
-        my @objects  = _grep_formeme( 'n:obj[12]?', \@children );
-
         # skip questions and orders, for now (TODO fix them)
         return if ( ( $tnode->sentmod // '' ) ne 'enunc' );
 
+        # Maintain SVO order: move subjects and objects 
+        my @subjects = _grep_formeme( 'n:subj',     \@children );
+        my @objects  = _grep_formeme( 'n:obj[12]?', \@children );
+
+        # Bla bla bla, said Mr. Brown is not SVO, but keep it
+        if ( ( $tnode->t_lemma // '' ) ne 'say' ){
         foreach my $subject ( reverse @subjects ) {
             $self->shift_before_node( $subject, $tnode ) if ( !$subject->precedes($tnode) );
         }
-        foreach my $object (@objects) {
-            $self->shift_after_node( $object, $tnode ) if ( $object->precedes($tnode) );
+        }
+        my $last_before_obj = ( !@subjects or $subjects[-1]->precedes($tnode) ) ? $tnode : $subjects[-1];
+        foreach my $object ( reverse @objects ) {
+            $self->shift_after_node( $object, $last_before_obj ) if ( $object->precedes($last_before_obj) );
         }
 
-        # at most one element preceding the subject
+        # Let at most one element precede the subject
         my @prec = grep { $_->precedes($tnode) } @children;
         my @prec_nosubj = _grep_formeme( '(?!(n:subj)).*', \@prec );
         my $last_obj = @objects ? $objects[-1] : $tnode;
-
-        shift @prec_nosubj;
+        
+        my $first_nosubj = shift @prec_nosubj;
+        # Allow two introductory elements in exceptional cases
+        if ( $first_nosubj and $first_nosubj->is_leaf and ( ($first_nosubj->t_lemma // '') =~ /^(then|further|and)$/ ) ){
+            shift @prec_nosubj;
+        }
         foreach my $nosubj (@prec_nosubj) {
             $self->shift_after_node( $nosubj, $last_obj );
         }
