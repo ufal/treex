@@ -27,8 +27,8 @@ sub process_tnode {
     # the auxiliary verb is actually in active
     $anode->iset->set_voice('act');
 
-    # TODO shift to end of clause
     $new_node->shift_after_node($anode);
+    $new_node->wild->{lex_verb} = 1;  # mark the lexical verb for future reference
 
     # $anode is now auxiliary "worden" or "zijn" and governs the autosemantic verb
     my $aux_lemma = 'worden';

@@ -7,7 +7,9 @@ extends 'Treex::Block::Write::BaseTextWriter';
 
 has '+language' => ( required => 1 );
 
-has '_node_id' => ( isa => 'Int', is => 'rw' );
+# consecutive IDs for nodes and for coindexing
+has '_node_id'   => ( isa => 'Int',     is => 'rw' );
+has '_index_ids' => ( isa => 'HashRef', is => 'rw' );
 
 has 'sent_ids' => ( isa => 'Bool', is => 'ro', default => 0 );
 
@@ -41,6 +43,7 @@ my %AFUN2REL = (
 sub process_atree {
     my ( $self, $aroot ) = @_;
     $self->_set_node_id(0);
+    $self->_set_index_ids( {} );
 
     my $out = '<?xml version="1.0" encoding="UTF-8"?><alpino_adt version="1.3">' . "\n";
     if ( $self->sent_ids ) {
@@ -71,14 +74,17 @@ sub _process_subtree {
     my @prekids  = grep { ( $_->afun // '' ) !~ /Aux[XGK]/ } $anode->get_children( { preceding_only => 1 } );
     my @postkids = grep { ( $_->afun // '' ) !~ /Aux[XGK]/ } $anode->get_children( { following_only => 1 } );
 
-    # for each node with kids, create a nonterminal, then recurse + create terminal (with relation 'hd')
+    # for each node with kids, create a nonterminal, then recurse + create terminal
     if ( @prekids or @postkids ) {
         $out .= '<node id="' . $self->_get_id . '" rel="' . $self->_get_rel($anode) . '">' . "\n";
         foreach my $akid (@prekids) {
             $out .= $self->_process_subtree( $akid, $indent + 1 );
         }
         if ( !$anode->is_root ) {
-            my $rel = $anode->is_coap_root ? 'crd' : 'hd';
+            # the terminal usually has rel="hd", with a few exceptions, dealing with them here
+            my $rel = 'hd';
+            $rel = 'crd' if ( $anode->is_coap_root );
+            $rel = 'cmp' if ( $lemma =~ /^(om|te)$/ and ( $anode->afun // '' ) =~ /^Aux[VC]$/ );
             $out .= ( "\t" x ( $indent + 1 ) ) . $self->_get_node_str( $anode, $rel ) . "\n";
         }
         foreach my $akid (@postkids) {
@@ -101,12 +107,20 @@ sub _get_node_str {
     $rel = defined($rel) ? $rel : $self->_get_rel($anode);
     $cat = defined($cat) ? $cat : '';
 
-    my $out = '<node id="' . $self->_get_id . '" rel="' . $rel . '" ';
-    $out .= 'cat="' . $cat . '" ' if ( $cat ne '' );
-    $out .= $self->_get_pos($anode);
-    my $lemma = $anode->lemma // '';
-    $out .= ' sense="' . $lemma . '" />';
+    my $id  = $self->_get_id();
+    my $out = '<node id="' . $id . '" rel="' . $rel . '"';
+    $out .= ' cat="' . $cat . '" ' if ( $cat ne '' );
 
+    if ( $anode->wild->{coindex} ) {
+        $out .= ' index="' . $self->_get_index_id( $anode->wild->{coindex} ) . '"';
+    }
+    if ( ( $anode->lemma // '' ) ne '' ) {
+        $out .= ' ' . $self->_get_pos($anode);
+        my $lemma = $anode->lemma // '';
+        $out .= ' sense="' . $lemma . '"';
+    }
+
+    $out .= ' />';
     return $out;
 }
 
@@ -116,6 +130,14 @@ sub _get_id {
     my $id = $self->_node_id;
     $self->_set_node_id( $id + 1 );
     return $id;
+}
+
+sub _get_index_id {
+    my ( $self, $id ) = @_;
+    if ( !defined $self->_index_ids->{$id} ) {
+        $self->_index_ids->{$id} = scalar( keys %{ $self->_index_ids } ) + 1;
+    }
+    return $self->_index_ids->{$id};
 }
 
 # Convert formemes + afuns into ADT relations
@@ -176,7 +198,16 @@ sub _get_rel {
         if ( $aparent->is_noun and $anode->iset->verbform eq 'part' ) {
             return 'mod';    # participles as adjectival noun modifiers
         }
+        if ( ( $anode->lemma // '' ) eq 'te' and ( $aparent->lemma // '' ) ne 'om' ) {
+            return 'vc';
+        }
         return 'body';
+    }
+    
+    # om in om-te + infinitive
+    if ( $afun eq 'AuxC' and ( $anode->lemma // '' ) eq 'om' ){
+        my $achild_te = first { ( $_->lemma // '' ) eq 'te' and ( $_->afun // '' ) eq 'AuxV' } $anode->get_children();
+        return 'vc' if ($achild_te);
     }
 
     # default: use the conversion table

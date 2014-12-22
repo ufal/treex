@@ -104,7 +104,7 @@ override '_postprocess' => sub {
 
     # change the past tense auxiliary: hebben/zijn
     if ( $verbforms_str =~ /hebben$/ and Treex::Tool::Lexicon::NL::ErgativeVerbs::is_ergative_verb($anodes->[-1]->lemma) ){
-        $anodes->[-1]->set_lemma('zijn');
+        $anodes->[-2]->set_lemma('zijn');
     }
     
     return;

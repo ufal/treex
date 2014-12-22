@@ -11,8 +11,7 @@ has 'gram2form' => ( isa => 'HashRef', is => 'ro', lazy => 1, builder => '_build
 # Override this in derived classes
 sub _build_gram2form { return {} }
 
-sub _postprocess { return }
-
+sub _postprocess {return}
 
 sub process_tnode {
 
@@ -40,7 +39,7 @@ sub process_tnode {
     $anode->set_afun('AuxV');
 
     my $created_lex = 0;
-    my @anodes = ();
+    my @anodes      = ();
 
     # add the rest (including the original verb) as "auxiliary" nodes
     foreach my $verbform ( $lex_lemma, reverse @verbforms ) {
@@ -64,12 +63,16 @@ sub process_tnode {
         else {
             $new_node->set_morphcat_pos('V');
             $new_node->set_afun('Obj');
+            # mark the lexical verb for future reference (if not already marked by AddAuxVerbCompoundPassive)
+            if ( !grep { $_->wild->{lex_verb} } $tnode->get_aux_anodes() ) {
+                $new_node->wild->{lex_verb} = 1;
+            }
             $created_lex = 1;
         }
     }
-    
+
     unshift @anodes, $anode;
-    $self->_postprocess($verbforms_str, \@anodes);
+    $self->_postprocess( $verbforms_str, \@anodes );
 
     return;
 }
