@@ -76,20 +76,29 @@ sub _process_subtree {
 
     # for each node with kids, create a nonterminal, then recurse + create terminal
     if ( @prekids or @postkids ) {
-        $out .= '<node id="' . $self->_get_id . '" rel="' . $self->_get_rel($anode) . '">' . "\n";
+        # open the nonterminal, add phrase coindexing for relative clauses
+        $out .= '<node id="' . $self->_get_id . '" rel="' . $self->_get_rel($anode) . '"'; 
+        if ( $anode->wild->{coindex_phrase} ){
+            $out .= ' index="' . $self->_get_index_id( $anode->wild->{coindex_phrase} ) . '"';
+        }
+        $out .= '>' . "\n";
+        # recurse into kids (1)
         foreach my $akid (@prekids) {
             $out .= $self->_process_subtree( $akid, $indent + 1 );
         }
-        if ( !$anode->is_root ) {
+        # create the terminal for the head node (except for root and formal relative clause heads)
+        if ( !$anode->is_root and !$anode->wild->{is_whd_head} and !$anode->wild->{is_rhd_head} ) {
             # the terminal usually has rel="hd", with a few exceptions, dealing with them here
             my $rel = 'hd';
             $rel = 'crd' if ( $anode->is_coap_root );
             $rel = 'cmp' if ( $lemma =~ /^(om|te)$/ and ( $anode->afun // '' ) =~ /^Aux[VC]$/ );
             $out .= ( "\t" x ( $indent + 1 ) ) . $self->_get_node_str( $anode, $rel ) . "\n";
         }
+        # recurse into kids (2)
         foreach my $akid (@postkids) {
             $out .= $self->_process_subtree( $akid, $indent + 1 );
         }
+        # close the nonterminal
         $out .= "\t" x $indent . "</node>\n";
     }
 
@@ -153,6 +162,24 @@ sub _get_rel {
     if ( $anode->get_parent->is_root ) {
         return '--';
     }
+
+    # relative clauses
+    if ( $anode->wild->{is_whd_body} ) {
+        return 'body';
+    }
+    if ( $anode->wild->{is_whd_head} ){
+        return 'vc';
+    }
+    if ( $anode->wild->{is_rhd_head} ){
+        return 'mod';
+    }
+    if ( $anode->get_parent->wild->{is_whd_head} ) {
+        return 'whd';
+    }
+    if ( $anode->get_parent->wild->{is_rhd_head} ) {
+        return 'rhd';
+    }
+
     my ($aparent) = $anode->get_eparents( { or_topological => 1 } );
 
     # conjuncts
@@ -160,8 +187,11 @@ sub _get_rel {
         return 'cnj';
     }
 
-    # possessives
+    # possessives, welk
     if ( $anode->match_iset( 'prontype' => '~pr[ns]', 'poss' => 'poss' ) ) {
+        return 'det';
+    }
+    if ( $anode->iset->prontype and ($anode->lemma // '') =~ /^welke?$/ ){
         return 'det';
     }
 
@@ -231,6 +261,7 @@ sub _get_pos {
     $pos = 'comparative' if ( ( $anode->lemma // '' ) =~ /^(als|dan)$/ and ( $anode->afun // '' ) eq 'AuxP' );
     $pos = 'pron'        if ( $anode->iset->prontype );
     $pos = 'det'         if ( $anode->iset->prontype eq 'art' or $anode->iset->poss eq 'poss' );
+    $pos = 'det'         if ( $anode->iset->prontype and ( $anode->lemma // '' ) =~ /^welke?$/ );
     $pos = 'adv'         if ( $anode->iset->prontype and ( $anode->lemma // '' ) eq 'er' );
     $pos = 'vg'          if ( $pos eq 'conj' || ( $anode->afun // '' ) =~ /^(Coord|Apos)$/ );
     $pos = 'prep'        if ( $pos eq 'adp' );

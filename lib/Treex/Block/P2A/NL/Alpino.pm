@@ -32,6 +32,7 @@ my %HEAD_SCORE = (
     'rhd'   => 2,    # relative clause head
     'tag'   => 2,    # discourse tag "He said that..."
     'whd'   => 1,    # wh-question head
+    'rhd'   => 1,
     'nucl'  => 1,    # main clause (against "als"-clause)
 );
 
@@ -159,6 +160,11 @@ sub create_subtree {
         elsif ( defined $child->phrase ) {    # the node is nonterminal
             $self->create_subtree( $child, $new_node );
         }
+        
+        # override deprel for questions with prepositional phrases `Op wie wacht je?'
+        if ($p_root->wild->{rel} eq 'whd' and $child->wild->{rel} eq 'hd'){
+            $new_node->set_conll_deprel('whd');
+        }
     }
 }
 
@@ -235,11 +241,12 @@ sub rehang_wh_clauses {
     my ( $self, $a_root ) = @_;
 
     foreach my $anode ( grep { $_->conll_deprel =~ /^(rhd|whd)$/ } $a_root->get_descendants() ) {
-        my ($clause) = $anode->get_children();
+        my ($clause) = grep { $_->conll_deprel eq 'hd' } $anode->get_children();
+        next if (!$clause);
         my $parent = $anode->get_parent();
         $clause->set_parent($parent);
         $anode->set_parent($clause);
-        $anode->set_afun( $anode->is_adverb ? 'Adv'  : 'Obj' );
+        $anode->set_afun(  $anode->is_preposition ? 'AuxP' : ( $anode->is_adverb ? 'Adv'  : 'Obj' ) );
         $clause->set_afun( $parent->is_root ? 'Pred' : 'Atr' );
         $clause->set_is_member( $anode->is_member );
         $anode->set_is_member(undef);
