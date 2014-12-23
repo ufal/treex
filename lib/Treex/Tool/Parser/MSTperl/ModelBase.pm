@@ -26,6 +26,8 @@ has 'featuresControl' => (
 # either after loaing the model or even immediately after training the model
 has normalization => ( is => 'rw', isa => 'Num', lazy => 1, builder => '_build_normalization' );
 
+has weight => ( is => 'rw', isa => 'Num', default => 1 );
+
 sub _build_normalization {
     my ($self) = @_;
 

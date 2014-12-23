@@ -14,10 +14,11 @@ override '_build_model' => sub {
 };
 
 override 'load_model' => sub {
-    my ( $self, $filename ) = @_;
+    my ( $self, $filename, $weight ) = @_;
 
+    $weight = 1 if !defined $weight;
     my $model = Treex::Tool::Parser::MSTperl::ModelUnlabelled
-        ->new(config => $self->config);
+        ->new(config => $self->config, weight => $weight);
     push @{$self->model}, $model;
     return $model->load($filename);
 };
@@ -56,9 +57,13 @@ override 'parse_sentence_full' => sub {
             # each model gets its weights divided by the sum of all of the
             # weights in the model for normalization
             my $score = sum (
-                map { $_->score_features($features)/$_->normalization } @{$self->model}
-                #map { $_->score_features($features) } @{$self->model}
+                map {
+                    $_->score_features($features)
+                    * $_->weight
+                    / $_->normalization
+                } @{$self->model}
             );
+                #map { $_->score_features($features) } @{$self->model}
 
             # only progress and/or debug info
             if ( $self->config->DEBUG >= 2 ) {
