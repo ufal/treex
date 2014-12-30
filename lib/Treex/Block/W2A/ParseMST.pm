@@ -104,7 +104,7 @@ sub parse_chunk {
         }
     }
 
-    my ( $parents_rf, $deprel_rf, $matrix_rf ) = $self->_parser->parse_sentence( \@words, \@tags);
+    my ( $parents_rf, $deprel_rf, $matrix_rf ) = $self->_parser->parse_sentence( \@words, undef, \@tags);
 
     my @scores;
     if ($matrix_rf) {

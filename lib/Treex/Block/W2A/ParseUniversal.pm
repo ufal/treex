@@ -31,14 +31,15 @@ sub process_atree {
     my @forms   = map { $_->form } @nodes;
     my @lemmas  = map { $_->lemma } @nodes;
     my @tags    = map { $_->tag } @nodes;
-    my @parents = $self->_parser->parse_sentence( \@forms, \@lemmas, \@tags );
+    my ($parents_rf, $afuns_rf) = $self->_parser->parse_sentence( \@forms, \@lemmas, \@tags );
 
     # root-note has ord=0 and should be indexed at $nodes[0]
     unshift @nodes, $atree;
 
     # set parents
     foreach my $i ( 1 .. $#nodes ) {
-        $nodes[$i]->set_parent( $nodes[ $parents[ $i - 1 ] ] );
+        $nodes[$i]->set_parent( $nodes[ $parents_rf->[ $i - 1 ] ] );
+        $nodes[$i]->set_afun( $afuns_rf->[ $i - 1 ] ) if $afuns_rf;
     }
     return;
 }

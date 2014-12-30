@@ -11,13 +11,13 @@ sub parse_sentence {
     my @sentence;
 
     for ( my $i = 0; $i < @{$wordforms_rf}; $i++ ) {
-        $sentence[$i]{"form"}   = $wordforms_rf->[$i];
-        $sentence[$i]{"tag"}    = $tags_rf->[$i];
-        $sentence[$i]{"parent"} = -1;
+        $sentence[$i]{form}   = $wordforms_rf->[$i];
+        $sentence[$i]{tag}    = $tags_rf->[$i];
+        $sentence[$i]{parent} = -1;
     }
     @parents = my_parse_sentence( \@sentence );
 
-    return @parents;
+    return (\@parents, undef);
 }
 
 # brief                     Searches for the next word with specified POS from specified position in the sentence

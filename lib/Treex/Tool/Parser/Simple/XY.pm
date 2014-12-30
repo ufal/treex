@@ -14,12 +14,13 @@ with 'Treex::Tool::Parser::Role';
 # pre-defined interface:
 sub parse_sentence {
     my ( $self, $wordforms_rf, $lemmas_rf, $tags_rf ) = @_;
-    my @parents;
+    my (@parents, @afuns);
 
-    # delete the following line and fill your code
+    # delete the following two linea and fill your code
     @parents = map {0} @$wordforms_rf;
-
-    return @parents;
+    @afuns   = map {'NR'} @$wordforms_rf;
+    
+    return (\@parents, \@afuns);
 }
 
 1;
@@ -37,9 +38,9 @@ Parser::Simple::XY - Perl module for tagging ???fill_your_language???.
   my @words  = qw(Yesterday I went to the cinema);
   my @lemmas = qw(yesterday I go to the cinema);
   my @tags = qw(R P V P D N); 
-  my @parents = $parser->parse_sentence(\@words,\@lemmas,\@tags);
+  my ($parents_rf, $afuns_rf) = $parser->parse_sentence(\@words,\@lemmas,\@tags);
   while (@words) {
-      print shift @words,"\t",shift @parents,"\n";
+      print shift @words,"\t",shift @$parents_rf,"\n";
   }
 
 =head1 COPYRIGHT AND LICENCE

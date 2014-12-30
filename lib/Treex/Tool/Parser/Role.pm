@@ -21,6 +21,12 @@ Treex::Tool::Parser::Role - role for dependency parsers
 
 =head2 my ($parent_ords_rf, $afuns_rf) = $parser->parse_sentence(\@forms, \@lemmas, \@tags);
 
+References to arrays of word forms, lemmas, and morphological tags are given as arguments.
+Particular parser may not need the lemmas and/or tags.
+
+References to arrays of parent indices (0 stands for artifical root) and analytical functions (deprels) are returned.
+For unlabeled parsing, C<$afuns_rf> is C<undef>.
+
 =head1 COPYRIGHT AND LICENCE
 
 Copyright 2011 Martin Popel

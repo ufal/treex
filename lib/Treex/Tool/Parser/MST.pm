@@ -72,17 +72,19 @@ sub initialize {
     # The following test must be done because of the lazy loading of the model
     my @test_forms = qw(This is a test sentence .);
     my @test_tags  = qw(X X X X X X);
-    $self->parse_sentence( \@test_forms, \@test_tags );
+    $self->parse_sentence( \@test_forms, undef, \@test_tags );
 
     push @all_javas, $self;
 
     return;
 }
 
-sub parse_sentence { shift->process(@_) }
+sub parse_sentence {
+    my ($self, $forms, $lemmas, $tags) = @_;
+    return $self->process($forms, $tags); 
+}
 
 sub process {
-
     my ( $self, $forms_rf, $tags_rf ) = @_;
 
     if ( ref($forms_rf) ne "ARRAY" or ref($tags_rf) ne "ARRAY" ) {
@@ -286,7 +288,7 @@ Treex::Tool::Parser::MST
                                               order => 2,
                                               decodetype => 'non-proj'});
 
- my ($parents_rf,$afuns_rf) = $parser->parse_sentence(\@wordforms,\@tags);
+ my ($parents_rf,$afuns_rf) = $parser->parse_sentence(\@wordforms, undef, \@tags);
 
  for my $i (0..$#wordforms) {
    print $i + 1 . ": wordform=$wordforms[$i]\tparent=$parents_rf->[$i]\tafun=$afuns_rf->[$i]\n";
@@ -302,7 +304,7 @@ Treex::Tool::Parser::MST
                                               order => 2,
                                               decodetype => 'non-proj',
                                                version => $v});
- my ($parents_rf,$afuns_rf, $conf_rf) = $parser->parse_sentence(\@wordforms,\@tags);
+ my ($parents_rf,$afuns_rf, $conf_rf) = $parser->parse_sentence(\@wordforms,undef, \@tags);
 
  for my $i (0..$#wordforms) {
      print $i + 1 . ": wordform=$wordforms[$i]\tparent=$parents_rf->[$i]\tafun=$afuns_rf->[$i]\tconf=$conf_rf->[$i]\n";
@@ -346,14 +348,14 @@ If the 'version' is '0.5.0', the parser returns confidence scores (probability l
 
 =over 4
 
-=item  my ($parents_rf,$afuns_rf) = $parser->parse_sentence(\@wordforms,\@tags);
+=item  my ($parents_rf,$afuns_rf) = $parser->parse_sentence(\@wordforms, \@lemmas, \@tags);
 
-References to arrays of word forms and morphological tags are given
-as arguments. References to arrays of parent indices (0 stands for artifical root)
-and analytical functions are returned.
+References to arrays of word forms, lemmas, and morphological tags are given as arguments.
+Currently, the lemmas are not used (but we follow the interface of L<Treex::Tool::Parser::Role>).
+References to arrays of parent indices (0 stands for artifical root) and analytical functions are returned.
 
 
-=item  my ($parents_rf,$afuns_rf, $conf_rf) = $parser->parse_sentence(\@wordforms,\@tags);
+=item  my ($parents_rf,$afuns_rf, $conf_rf) = $parser->parse_sentence(\@wordforms, \@lemmas, \@tags);
 
 Returns reference to confidence score for each edges in addition to parents and afuns of a given sentence. The constructor must have been initiated with '0.5.0' for the 'version' parameter.
 
