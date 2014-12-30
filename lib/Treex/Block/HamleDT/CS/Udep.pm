@@ -130,7 +130,7 @@ sub remove_features_from_lemmas
             $iset->set('foreign', 'foreign');
         }
         # Term categories encode (among others) types of named entities.
-        # Můžou se vyskytnout dvě kategorie za sebou.
+        # There may be two categories at one lemma.
         # JVC_;K_;R (buď továrna, nebo výrobek)
         # Poldi_;Y_;K
         # Kladno_;G_;K
