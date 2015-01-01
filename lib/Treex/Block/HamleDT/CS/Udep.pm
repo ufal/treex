@@ -28,7 +28,9 @@ sub process_zone
     $self->remove_features_from_lemmas($root);
     $self->restructure_coordination_stanford($root);
     $self->push_prep_sub_down($root);
+    $self->push_copulas_down($root);
     $self->afun_to_udeprel($root);
+    $self->attach_final_punctuation_to_predicate($root);
 }
 
 
@@ -262,6 +264,12 @@ sub afun_to_udeprel
             ###!!! Can an Adv depend on an AuxP or AuxC?
             $udep = $node->is_verb() ? 'advcl' : $node->is_noun() ? 'nmod' : 'advmod';
         }
+        # Copula has been reattached under the nominal predicate, which was originally Pnom.
+        # The Cop afun does not occur in PDT; it is a result of the reattachment.
+        elsif($afun eq 'Cop')
+        {
+            $udep = 'cop';
+        }
         # Attribute of a noun: amod, nummod, nmod, acl
         elsif($afun eq 'Atr')
         {
@@ -269,12 +277,39 @@ sub afun_to_udeprel
             ###!!! TODO: personal names, foreign phrases and named entities
             $udep = $node->is_numeral() ? 'nummod' : $node->is_adjective() ? 'amod' : $node->is_verb() ? 'acl' : 'nmod';
         }
+        # Verbal attribute is analyzed as secondary predication.
+        ###!!! TODO: distinguish core arguments (xcomp) from non-core arguments and adjuncts (acl/advcl).
+        elsif($afun =~ m/^AtvV?$/)
+        {
+            $udep = 'xcomp';
+        }
         # Auxiliary verb "být" ("to be"): aux, auxpass
         elsif($afun eq 'AuxV')
         {
             $udep = $parent->is_passive() ? 'auxpass' : 'aux';
             # Side effect: We also want to modify Interset. The PDT tagset does not distinguish auxiliary verbs but UPOS does.
             $node->iset()->set('verbtype', 'aux');
+        }
+        # Reflexive pronoun "se", "si" with mandatorily reflexive verbs.
+        elsif($afun eq 'AuxT')
+        {
+            $udep = 'mwe:reflex';
+        }
+        # AuxZ: intensifier
+        elsif($afun eq 'AuxZ')
+        {
+            $udep = 'advmod:auxz'; ###!!! TODO: A better name?
+        }
+        # AuxY: Additional conjunction in coordination ... it has been relabeled during processing of coordinations.
+        # AuxY: "jako" attached to Atv ... case
+        elsif($afun eq 'AuxY')
+        {
+            $udep = 'case';
+        }
+        # Apposition
+        elsif($afun eq 'Apposition')
+        {
+            $udep = 'appos';
         }
         # Punctuation
         elsif($afun =~ m/^Aux[XGK]$/)
@@ -290,6 +325,9 @@ sub afun_to_udeprel
         # We may want to dedicate a new node attribute to the universal dependency relation label.
         # At present, conll/deprel is good enough and afun cannot be used because its value range is fixed.
         $node->set_conll_deprel($udep);
+        # Remove the value of afun. It does not make sense in the restructured tree.
+        # In addition, empty afun will make the value of conll/deprel visible in Tred.
+        $node->set_afun(undef);
     }
 }
 
@@ -373,12 +411,18 @@ sub push_prep_sub_down
             ###!!! TODO: On the other hand, if the argument of the preposition is coordination, the preposition should become a shared modifier of the coordination.
             ###!!! TODO: A preposition or subordinating conjunction may also have multiple children if there is punctuation.
             my @children = $node->get_children();
-            if(scalar(@children)==1)
+            my @punct_children = grep {$_->is_punctuation()} @children;
+            my @non_punct_children = grep {!$_->is_punctuation()} @children;
+            if(scalar(@non_punct_children)==1)
             {
                 my $preposition = $node;
-                my $noun = $children[0];
+                my $noun = $non_punct_children[0];
                 $noun->set_parent($preposition->parent());
                 $preposition->set_parent($noun);
+                foreach my $punct_child (@punct_children)
+                {
+                    $punct_child->set_parent($noun);
+                }
                 if($preposition->afun() eq 'AuxP')
                 {
                     $preposition->set_afun('case');
@@ -388,6 +432,68 @@ sub push_prep_sub_down
                     $preposition->set_afun('mark');
                 }
             }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Reattach copulas as dependents of their nominal predicates.
+# Assumption: Coordination has already been converted to Stanford style.
+#------------------------------------------------------------------------------
+sub push_copulas_down
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->afun() eq 'Pnom')
+        {
+            my $pnom = $node;
+            my $copula = $node->parent();
+            my $grandparent = $copula->parent();
+            if(defined($grandparent))
+            {
+                $pnom->set_parent($grandparent);
+                $pnom->set_afun($copula->afun());
+                # All other children of the copula will be reattached to the nominal predicate.
+                # The copula will become a leaf.
+                my @children = $copula->children();
+                foreach my $child (@children)
+                {
+                    $child->set_parent($pnom);
+                }
+                $copula->set_parent($pnom);
+                $copula->set_afun('Cop');
+                $copula->set_conll_deprel('cop');
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Reattach sentence-final punctuation to the main predicate.
+# Assumption: Coordination has already been converted to Stanford style, thus
+# any punctuation node attached directly to the root does not head coordination.
+#------------------------------------------------------------------------------
+sub attach_final_punctuation_to_predicate
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->children();
+    my @pnodes = grep {$_->is_punctuation()} @nodes;
+    my @npnodes = grep {!$_->is_punctuation()} @nodes;
+    if(@npnodes)
+    {
+        my $predicate = $npnodes[-1];
+        foreach my $pnode (@pnodes)
+        {
+            $pnode->set_parent($predicate);
+            $pnode->set_conll_deprel('punct');
         }
     }
 }
