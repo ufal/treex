@@ -211,6 +211,9 @@ sub _get_rel {
             return 'mod';
         }
     }
+    elsif ( $afun eq 'Obj' and $aparent->is_verb and $aparent->lemma eq 'zijn' ){
+        return 'predc'; # copulas with co-indexed ADT nodes that have no t-node
+    }
 
     # prepositional phrases
     if ( ( $aparent->afun // '' ) eq 'AuxP' ) {
