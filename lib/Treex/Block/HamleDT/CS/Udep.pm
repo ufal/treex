@@ -215,7 +215,7 @@ sub afun_to_udeprel
     foreach my $node (@nodes)
     {
         my $afun = $node->afun();
-        my $udep = 'dep/'.$afun;
+        my $udep = 'dep:'.$afun;
         my $parent = $node->parent();
         # Predicate or ExD child of the root:
         # It is labeled root, regardless of whether the afun is Pred or ExD.
@@ -315,6 +315,11 @@ sub afun_to_udeprel
         elsif($afun =~ m/^Aux[XGK]$/)
         {
             $udep = 'punct';
+        }
+        ###!!! TODO: ExD with chains of orphans should be stanfordized!
+        elsif($afun eq 'ExD')
+        {
+            $udep = 'dep';
         }
         # Previous transformation of coordination to the Stanford style caused that afuns of some nodes
         # actually are already universal dependency relations.
