@@ -295,6 +295,11 @@ sub afun_to_udeprel
         {
             $udep = 'mwe:reflex';
         }
+        # Reflexive pronoun "se", "si" used for reflexive passive.
+        elsif($afun eq 'AuxR')
+        {
+            $udep = 'auxpass:reflex';
+        }
         # AuxZ: intensifier
         elsif($afun eq 'AuxZ')
         {
