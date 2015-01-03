@@ -18,7 +18,7 @@ sub BUILD {
                 },
                 move_with_parent => sub {
                     my ($node) = @_;
-                    return $node->afun ~= /^Aux[YC]$/;
+                    return $node->afun =~ /^Aux[YC]$/;
                 },
                 move_with_child => sub {1},
             }
