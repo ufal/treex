@@ -14,11 +14,11 @@ sub BUILD {
                 subscription     => $self->subscription,
                 nodes_to_reverse => sub {
                     my ( $child, $parent ) = @_;
-                    return ( $parent->afun eq 'AuxC' );
+                    return ( $parent->afun eq 'AuxC' && $child->afun !~ /^Aux/);
                 },
                 move_with_parent => sub {
                     my ($node) = @_;
-                    return $node->afun eq 'AuxY';
+                    return $node->afun ~= /^Aux[YC]$/;
                 },
                 move_with_child => sub {1},
             }
