@@ -25,8 +25,18 @@ sub process_atree
     my $self = shift;
     my $tree = shift;
     # if only random sentences are printed
-    return if rand() > $self->randomly_select_sentences_ratio;
-    foreach my $node ($tree->get_descendants({ ordered => 1 }))
+    return if(rand() > $self->randomly_select_sentences_ratio());
+    my @nodes = $tree->get_descendants({ordered => 1});
+    # Empty sentences are not allowed.
+    return if(scalar(@nodes)==0);
+    # Print sentence ID as a comment before the sentence.
+    # Example: "a-cmpr9406-001-p2s1" is the ID of the a-tree of the first training sentence of PDT, "Třikrát rychlejší než slovo".
+    # The sentence comes from the file "cmpr9406_001.a.gz".
+    # We could also figure out the file name stem this way:
+    # my $file = $tree->get_zone()->get_document()->file_stem();
+    # But it would not make sense in all situations to output it as another comment. We will not always be reading the PDT.
+    print {$self->_file_handle()} ("\# sent_id ", $tree->id(), "\n");
+    foreach my $node (@nodes)
     {
         my $ord = $node->ord();
         my $form = $node->form();
