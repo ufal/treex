@@ -317,6 +317,11 @@ sub afun_to_udeprel
         {
             $udep = 'case';
         }
+        # AuxO: redundant "to" or "si" ("co to znamená pátý postulát dokázat").
+        elsif($afun eq 'AuxO')
+        {
+            $udep = 'discourse';
+        }
         # Apposition
         elsif($afun eq 'Apposition')
         {
