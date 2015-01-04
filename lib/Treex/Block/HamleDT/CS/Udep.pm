@@ -444,28 +444,20 @@ sub push_prep_sub_down
             ###!!!       ve městě a na vsi ... PrepArg(ve, městě), cc(ve, a), conj(ve, na), PrepArg(na, vsi)
             ###!!! TODO: On the other hand, if the argument of the preposition is coordination, the preposition should become a shared modifier of the coordination.
             ###!!! TODO: A preposition or subordinating conjunction may also have multiple children if there is punctuation.
-            my @children = $node->get_children();
-            my @punct_children = grep {$_->is_punctuation()} @children;
-            my @non_punct_children = grep {!$_->is_punctuation()} @children;
-            if(scalar(@non_punct_children)==1)
+            my @children = $self->get_children_of_auxp($node);
+            if(scalar(@children)>0)
             {
-                my $preposition = $node;
-                my $noun = $non_punct_children[0];
-                $noun->set_parent($preposition->parent());
-                $preposition->set_parent($noun);
-                foreach my $punct_child (@punct_children)
+                my $noun = shift(@children);
+                $noun->set_parent($node->parent());
+                $node->set_parent($noun);
+                foreach my $child (@children)
                 {
-                    $punct_child->set_parent($noun);
-                }
-                if($preposition->afun() eq 'AuxP')
-                {
-                    $preposition->set_afun('case');
-                }
-                else # AuxC
-                {
-                    $preposition->set_afun('mark');
+                    $child->set_parent($noun);
                 }
             }
+            # Even if the conjunction is already a leaf (which should not happen), it cannot keep the AuxC label.
+            $node->set_afun('case');
+            $node->set_conll_deprel('case');
         }
         elsif($node->afun() eq 'AuxC')
         {
@@ -485,6 +477,49 @@ sub push_prep_sub_down
             $node->set_conll_deprel('mark');
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Identifies the main child of a preposition in the Prague style.
+# There is typically just one child: the head of a noun phrase.
+# But it is not guaranteed.
+#
+# The method returns the list of all children and the main child is the first
+# member of the list, regardless of word order.
+#------------------------------------------------------------------------------
+sub get_children_of_auxp
+{
+    my $self = shift;
+    my $preposition = shift; # afun = AuxP
+    my @children = $preposition->get_children({ordered => 1});
+    return @children if(scalar(@children) <= 1);
+    # If there are nouns (including pronouns), find the first noun.
+    # Note: If coordination has been restructured (recommended!), coordination of noun phrases is represented by a noun, not by a coordinating conjunction.
+    for(my $i = 0; $i<=$#children; $i++)
+    {
+        if($children[$i]->is_noun())
+        {
+            my $head = $children[$i];
+            splice(@children, $i, 1);
+            return ($head, @children);
+        }
+    }
+    # There are no nouns. Find the first non-punctuation node.
+    for(my $i = 0; $i<=$#children; $i++)
+    {
+        if(!$children[$i]->is_punctuation())
+        {
+            my $head = $children[$i];
+            splice(@children, $i, 1);
+            return ($head, @children);
+        }
+    }
+    # There is only punctuation. (This is weird. Has coordination been restructured first?)
+    # We have to return something, so let's return the first node.
+    # (We could also look for the first node to the right of the conjunction, but then we would have to take care for the possibility that all children are to the left.)
+    return @children;
 }
 
 
