@@ -224,6 +224,12 @@ sub afun_to_udeprel
         {
             $udep = 'root';
         }
+        # Predicate: If the node is not the main predicate of the sentence and it has the Pred afun,
+        # then it is probably the main predicate of a parenthetical expression.
+        elsif($afun eq 'Pred')
+        {
+            $udep = 'parataxis';
+        }
         # Subject: nsubj, nsubjpass, csubj, csubjpass
         elsif($afun eq 'Sb')
         {
