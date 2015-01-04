@@ -459,7 +459,8 @@ sub shape_coordination_stanford
     }
     # After processing my children, some of them may have ceased to be my children and some new children may have appeared.
     # This is the result of restructuring a child coordination.
-    @children = $node->children();
+    # Get the new list of children. In addition, we now require that the list is ordered (we have to identify the first conjunct).
+    @children = $node->get_children({ordered => 1});
     # We have a coordination if the current node's afun is Coord.
     if($node->afun() eq 'Coord')
     {
