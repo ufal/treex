@@ -356,7 +356,8 @@ sub restructure_coordination_stanford
     #my $debug = $self->sentence_contains($root, 'Spürst du das');
     log_info('DEBUG ON') if ($debug);
     #$self->shape_coordination_recursively_stanford( $root, $debug );
-    $self->shape_coordination_cloud_stanford($root);
+    #$self->shape_coordination_cloud_stanford($root);
+    $self->shape_coordination_stanford($root);
 }
 
 
@@ -419,6 +420,10 @@ sub shape_coordination_cloud_stanford_recursive
     my $self = shift;
     my $cloud = shift;
     # Recursively process children first, then process the current cloud.
+    ###!!! Jenže to nefunguje. Když je dítětem koordinace a já ji přeskládám, tak ji najednou nereprezentuje spojka,
+    ###!!! ale první člen. Ale Cloud o tom neví a nadřazená koordinace taky ne. Takže až budu převěšovat nadřazenou
+    ###!!! koordinaci, ona chytne spojku a bude si myslet, že přesouvá vnořenou koordinaci, ale zatím pouze vytrhne
+    ###!!! spojku z vnořené koordinace, ve které už mezitím spojka visela jako list.
     # Recursion that traverses the whole tree means that we go to both participants and modifiers.
     my @participants = $cloud->get_participants();
     my @modifiers = $cloud->get_shared_modifiers();
@@ -434,6 +439,78 @@ sub shape_coordination_cloud_stanford_recursive
         ###!!! or other methods that will reshape the coordination in the Prague style.
         my $coordination = $cloud->_get_coordination();
         $coordination->shape_stanford();
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Converts coordination from the Prague style to the Stanford style.
+#------------------------------------------------------------------------------
+sub shape_coordination_stanford
+{
+    my $self = shift;
+    my $node = shift;
+    # Proceed bottom-up. First process children, then the current node.
+    my @children = $node->children();
+    foreach my $child (@children)
+    {
+        $self->shape_coordination_stanford($child);
+    }
+    # After processing my children, some of them may have ceased to be my children and some new children may have appeared.
+    # This is the result of restructuring a child coordination.
+    @children = $node->children();
+    # We have a coordination if the current node's afun is Coord.
+    if($node->afun() eq 'Coord')
+    {
+        # If we are a nested coordination, remember it. We will have to set is_member for the new head.
+        my $current_coord_is_member = 0;
+        if($node->is_member())
+        {
+            $current_coord_is_member = 1;
+            $node->set_is_member(0);
+        }
+        # Get conjuncts.
+        my @conjuncts = grep {$_->is_member()} @children;
+        my @dependents = grep {!$_->is_member()} @children;
+        if(scalar(@conjuncts)==0)
+        {
+            log_warn('Coordination without conjuncts');
+            # There must not be any node labeled Coord and having no is_member children.
+            $node->set_afun('AuxY');
+        }
+        else
+        {
+            # Set the first conjunct as the new head.
+            # Its afun should be already OK. It should not be a nested Coord because we processed the children first.
+            my $head = shift(@conjuncts);
+            $head->set_parent($node->parent());
+            $head->set_is_member($current_coord_is_member);
+            # Re-attach the current node and all its children to the new head.
+            # Mark conjuncts using the UD relation conj.
+            foreach my $conjunct (@conjuncts)
+            {
+                $conjunct->set_parent($head);
+                $conjunct->set_afun('conj');
+                $conjunct->set_conll_deprel('conj');
+                # Clear the is_member flag for all conjuncts. It only made sense in the Prague style.
+                $conjunct->set_is_member(0);
+            }
+            foreach my $dependent (@dependents, $node)
+            {
+                $dependent->set_parent($head);
+                if($dependent->is_punctuation())
+                {
+                    $dependent->set_afun('punct');
+                    $dependent->set_conll_deprel('punct');
+                }
+                elsif($dependent->afun() =~ m/^(Coord|AuxY)$/)
+                {
+                    $dependent->set_afun('cc');
+                    $dependent->set_conll_deprel('cc');
+                }
+            }
+        }
     }
 }
 
