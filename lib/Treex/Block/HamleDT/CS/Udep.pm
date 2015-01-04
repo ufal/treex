@@ -26,7 +26,7 @@ sub process_zone
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
     $self->remove_features_from_lemmas($root);
-    $self->restructure_coordination_stanford($root);
+    $self->shape_coordination_stanford($root);
     $self->push_prep_sub_down($root);
     $self->push_copulas_down($root);
     $self->afun_to_udeprel($root);
@@ -338,107 +338,6 @@ sub afun_to_udeprel
         # Remove the value of afun. It does not make sense in the restructured tree.
         # In addition, empty afun will make the value of conll/deprel visible in Tred.
         $node->set_afun(undef);
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Restructures coordinations to the Stanford style. We cannot use the methods
-# inherited from HarmonizePDT because they always produce Prague style.
-#------------------------------------------------------------------------------
-sub restructure_coordination_stanford
-{
-    my $self  = shift;
-    my $root  = shift;
-    my $debug = shift;
-    # Wait with debugging until the problematic sentence:
-    #my $debug = $self->sentence_contains($root, 'Spürst du das');
-    log_info('DEBUG ON') if ($debug);
-    #$self->shape_coordination_recursively_stanford( $root, $debug );
-    #$self->shape_coordination_cloud_stanford($root);
-    $self->shape_coordination_stanford($root);
-}
-
-
-
-#------------------------------------------------------------------------------
-# Recursively search for coordinations and solve them immediately, i.e. don't
-# collect all first. Use the Coordination object.
-#------------------------------------------------------------------------------
-sub shape_coordination_recursively_stanford
-{
-    my $self  = shift;
-    my $root  = shift;
-    my $debug = shift;
-    my $coordination = new Treex::Core::Coordination;
-    # We can use the inherited method detect_coordination(). It detects the
-    # Prague style because it expects it in the input tree, but we also expect
-    # this style after the initial harmonization to HamleDT/Prague.
-    my @recursion = $self->detect_coordination($root, $coordination, $debug);
-    if(scalar($coordination->get_conjuncts())>0)
-    {
-        log_info('COORDINATION FOUND') if ($debug);
-        # We have found coordination! Solve it right away.
-        $coordination->shape_stanford();
-        # Call recursively on all descendants. (The exact recursive set depends on annotation style.
-        # We got it from detect_coordination().)
-        foreach my $node (@recursion)
-        {
-            $self->shape_coordination_recursively_stanford($node, $debug);
-        }
-    }
-    # Call recursively on all children if no coordination detected now.
-    else
-    {
-        foreach my $child ($root->children())
-        {
-            $self->shape_coordination_recursively_stanford($child, $debug);
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Converts coordination from the Prague style to the Stanford style.
-#------------------------------------------------------------------------------
-sub shape_coordination_cloud_stanford
-{
-    my $self = shift;
-    my $root = shift;
-    # Convert the tree of nodes to tree of clouds, i.e. build the parallel structure.
-    my $cloud = new Treex::Core::Cloud;
-    # This method assumes that coordination is in the Prague style.
-    $cloud->create_from_node($root);
-    # Traverse the tree of clouds.
-    $self->shape_coordination_cloud_stanford_recursive($cloud);
-    $cloud->destroy_children();
-}
-sub shape_coordination_cloud_stanford_recursive
-{
-    my $self = shift;
-    my $cloud = shift;
-    # Recursively process children first, then process the current cloud.
-    ###!!! Jenže to nefunguje. Když je dítětem koordinace a já ji přeskládám, tak ji najednou nereprezentuje spojka,
-    ###!!! ale první člen. Ale Cloud o tom neví a nadřazená koordinace taky ne. Takže až budu převěšovat nadřazenou
-    ###!!! koordinaci, ona chytne spojku a bude si myslet, že přesouvá vnořenou koordinaci, ale zatím pouze vytrhne
-    ###!!! spojku z vnořené koordinace, ve které už mezitím spojka visela jako list.
-    # Recursion that traverses the whole tree means that we go to both participants and modifiers.
-    my @participants = $cloud->get_participants();
-    my @modifiers = $cloud->get_shared_modifiers();
-    foreach my $child (@participants, @modifiers)
-    {
-        $self->shape_coordination_cloud_stanford_recursive($child);
-    }
-    # Process the current cloud.
-    if($cloud->is_coordination())
-    {
-        ###!!! Warning: The Cloud class assumes that coordination is always shaped in the Prague style.
-        ###!!! We can restructure the coordination now but we cannot subsequently call $cloud->set_afun()
-        ###!!! or other methods that will reshape the coordination in the Prague style.
-        my $coordination = $cloud->_get_coordination();
-        $coordination->shape_stanford();
     }
 }
 
