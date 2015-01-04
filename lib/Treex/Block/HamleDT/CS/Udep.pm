@@ -434,7 +434,7 @@ sub push_prep_sub_down
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        if($node->afun() =~ m/^Aux[PC]$/)
+        if($node->afun() eq 'AuxP')
         {
             # In the prototypical case, the node has just one child and it will swap positions with the child.
             ###!!! TODO: If the child is also Aux[PC], we should process the chain recursively.
@@ -467,7 +467,69 @@ sub push_prep_sub_down
                 }
             }
         }
+        elsif($node->afun() eq 'AuxC')
+        {
+            my @children = $self->get_children_of_auxc($node);
+            if(scalar(@children)>0)
+            {
+                my $verb = shift(@children);
+                $verb->set_parent($node->parent());
+                $node->set_parent($verb);
+                foreach my $child (@children)
+                {
+                    $child->set_parent($verb);
+                }
+            }
+            # Even if the conjunction is already a leaf (which should not happen), it cannot keep the AuxC label.
+            $node->set_afun('mark');
+            $node->set_conll_deprel('mark');
+        }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Identifies the main child of a subordinating conjunction in the Prague style.
+# There are typically just two children: a comma and the predicate of the
+# subordinate clause. But it is not guaranteed.
+#
+# The method returns the list of all children and the main child is the first
+# member of the list, regardless of word order.
+#------------------------------------------------------------------------------
+sub get_children_of_auxc
+{
+    my $self = shift;
+    my $conjunction = shift; # afun = AuxC
+    my @children = $conjunction->get_children({ordered => 1});
+    return @children if(scalar(@children) <= 1);
+    # If there are verbs, find the first verb.
+    # Note: If coordination has been restructured (recommended!), coordination of subordinated clauses is represented by a verb, not by a coordinating conjunction.
+    for(my $i = 0; $i<=$#children; $i++)
+    {
+        if($children[$i]->is_verb())
+        {
+            my $head = $children[$i];
+            splice(@children, $i, 1);
+            return ($head, @children);
+        }
+    }
+    # There are no verbs. Find the first non-punctuation node.
+    for(my $i = 0; $i<=$#children; $i++)
+    {
+        if(!$children[$i]->is_punctuation())
+        {
+            my $head = $children[$i];
+            splice(@children, $i, 1);
+            return ($head, @children);
+        }
+    }
+    # There is only punctuation. (This is weird. Has coordination been restructured first?)
+    # We have to return something, so let's return the second node.
+    # (We could also look for the first node to the right of the conjunction, but then we would have to take care for the possibility that all children are to the left.)
+    my $head = $children[1];
+    splice(@children, 1, 1);
+    return ($head, @children);
 }
 
 
