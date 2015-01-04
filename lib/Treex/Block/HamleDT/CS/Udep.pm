@@ -355,7 +355,8 @@ sub restructure_coordination_stanford
     # Wait with debugging until the problematic sentence:
     #my $debug = $self->sentence_contains($root, 'Spürst du das');
     log_info('DEBUG ON') if ($debug);
-    $self->shape_coordination_recursively_stanford( $root, $debug );
+    #$self->shape_coordination_recursively_stanford( $root, $debug );
+    $self->shape_coordination_cloud_stanford($root);
 }
 
 
@@ -393,6 +394,46 @@ sub shape_coordination_recursively_stanford
         {
             $self->shape_coordination_recursively_stanford($child, $debug);
         }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Converts coordination from the Prague style to the Stanford style.
+#------------------------------------------------------------------------------
+sub shape_coordination_cloud_stanford
+{
+    my $self = shift;
+    my $root = shift;
+    # Convert the tree of nodes to tree of clouds, i.e. build the parallel structure.
+    my $cloud = new Treex::Core::Cloud;
+    # This method assumes that coordination is in the Prague style.
+    $cloud->create_from_node($root);
+    # Traverse the tree of clouds.
+    $self->shape_coordination_cloud_stanford_recursive($cloud);
+    $cloud->destroy_children();
+}
+sub shape_coordination_cloud_stanford_recursive
+{
+    my $self = shift;
+    my $cloud = shift;
+    # Recursively process children first, then process the current cloud.
+    # Recursion that traverses the whole tree means that we go to both participants and modifiers.
+    my @participants = $cloud->get_participants();
+    my @modifiers = $cloud->get_shared_modifiers();
+    foreach my $child (@participants, @modifiers)
+    {
+        $self->shape_coordination_cloud_stanford_recursive($child);
+    }
+    # Process the current cloud.
+    if($cloud->is_coordination())
+    {
+        ###!!! Warning: The Cloud class assumes that coordination is always shaped in the Prague style.
+        ###!!! We can restructure the coordination now but we cannot subsequently call $cloud->set_afun()
+        ###!!! or other methods that will reshape the coordination in the Prague style.
+        my $coordination = $cloud->_get_coordination();
+        $coordination->shape_stanford();
     }
 }
 

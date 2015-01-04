@@ -302,6 +302,17 @@ sub set_parent
 
 
 #------------------------------------------------------------------------------
+# Returns non-zero if this cloud is coordination.
+#------------------------------------------------------------------------------
+sub is_coordination
+{
+    my $self = shift;
+    return $self->type() eq 'coordination';
+}
+
+
+
+#------------------------------------------------------------------------------
 # Sets the afun of the cloud. It describes its relation to the parent cloud.
 #------------------------------------------------------------------------------
 sub set_afun
