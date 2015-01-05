@@ -103,6 +103,11 @@ sub set_sempos {
 
     my $syntpos = $tnode->formeme || '';
     $syntpos =~ s/:.*//;
+    
+    if ( $syntpos eq 'n' && $anode->is_adjective ){   # adjectives in nominal usage stay adjectives
+        log_info('SEMPOS N->ADJ: ' . $anode->id . ' ' . $anode->lemma); 
+        $syntpos = 'adj';
+    }
 
     my $subtype = $anode->is_pronoun ? 'pron' : ( $anode->is_numeral ? 'num' : '' );
     

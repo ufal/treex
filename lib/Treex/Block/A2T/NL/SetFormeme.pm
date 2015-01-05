@@ -23,7 +23,7 @@ override 'detect_syntpos' => sub {
     # nouns, adjectives in predicative and substantival positions
     return 'n' if ( $a_node->is_noun );
     return 'n' if ( $a_node->match_iset( 'pos' => 'verb', 'synpos' => 'subst' ) );
-    return 'n' if ( $a_node->match_iset( 'pos' => 'adj', 'synpos' => '~(subst|pred)' ) );
+    return 'n' if ( $a_node->match_iset( 'pos' => 'adj', 'synpos' => 'subst' ) );
 
     # verbs (including attributive)
     return 'v' if ( $a_node->is_verb );
