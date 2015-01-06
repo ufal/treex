@@ -28,6 +28,10 @@ sub process_atree
     my $tree = shift;
     # if only random sentences are printed
     return if(rand() > $self->randomly_select_sentences_ratio());
+    # We require that the token ids make an unbroken sequence, starting at 1.
+    # Unfortunately, this is not guaranteed in the general case.
+    # So we have to re-index the nodes ourselves.
+    $tree->_normalize_node_ordering();
     my @nodes = $tree->get_descendants({ordered => 1});
     # Empty sentences are not allowed.
     return if(scalar(@nodes)==0);

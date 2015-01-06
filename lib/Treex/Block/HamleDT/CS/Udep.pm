@@ -674,7 +674,7 @@ sub fix_determiners
                 #  půl tuctu jich (half dozen of them) (genitive construction; the words agree in case because tuctu is incidentially also genitive, but they do not agree in number; in addition, "jich" is a non-possessive personal pronoun which should never become det)
                 #  firmy All - Impex (foreign determiner All; it cannot agree in case because it does not have case)
                 #  děvy samy (girls themselves) (the words agree in case but the afun is Atv, not Atr, thus we should not get through the 'amod' constraint above)
-                if(!$parent->is_noun() ||
+                if(!($parent->is_noun() || $parent->is_adjective()) ||
                    $node->conll_deprel() ne 'amod' ||
                    $parent->iset()->case() ne $node->iset()->case() ||
                    $parent->iset()->number() ne $node->iset()->number())
