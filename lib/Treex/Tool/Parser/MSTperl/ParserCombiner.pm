@@ -1,4 +1,4 @@
-package Treex::Tool::Parser::MSTperl::Parser;
+package Treex::Tool::Parser::MSTperl::ParserCombiner;
 
 use Moose;
 use Carp;
