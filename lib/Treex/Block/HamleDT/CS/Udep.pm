@@ -655,7 +655,7 @@ sub fix_determiners
         if($node->is_adjective() && $node->is_pronoun())
         {
             my $parent = $node->parent();
-            if(!$parent->is_root() && $node->conll_deprel() eq 'amod')
+            if(!$parent->is_root())
             {
                 # The common pattern is that the parent is a noun (or pronoun) and that it follows the determiner.
                 #  possessive: můj pes (my dog)
@@ -675,6 +675,7 @@ sub fix_determiners
                 #  firmy All - Impex (foreign determiner All; it cannot agree in case because it does not have case)
                 #  děvy samy (girls themselves) (the words agree in case but the afun is Atv, not Atr, thus we should not get through the 'amod' constraint above)
                 if(!$parent->is_noun() ||
+                   $node->conll_deprel() ne 'amod' ||
                    $parent->iset()->case() ne $node->iset()->case() ||
                    $parent->iset()->number() ne $node->iset()->number())
                 {
