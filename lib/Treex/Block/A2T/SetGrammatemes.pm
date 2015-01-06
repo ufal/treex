@@ -105,7 +105,6 @@ sub set_sempos {
     $syntpos =~ s/:.*//;
     
     if ( $syntpos eq 'n' && $anode->is_adjective ){   # adjectives in nominal usage stay adjectives
-        log_info('SEMPOS N->ADJ: ' . $anode->id . ' ' . $anode->lemma); 
         $syntpos = 'adj';
     }
 
