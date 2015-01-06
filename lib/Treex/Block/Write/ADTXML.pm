@@ -162,6 +162,10 @@ sub _get_rel {
     if ( $anode->get_parent->is_root ) {
         return '--';
     }
+    
+    if ( $anode->wild->{adt_rel} ){
+        return $anode->wild->{adt_rel};  # overrides e.g. for formal subjects
+    }
 
     # relative clauses
     if ( $anode->wild->{is_whd_body} ) {
@@ -209,6 +213,9 @@ sub _get_rel {
         }
         if ( $tnode->formeme =~ /^(adj:attr|n:poss)$/ ) {
             return 'mod';
+        }
+        if ( $tnode->formeme eq 'adj:compl' ){
+            return $aparent->lemma eq 'zijn' ? 'predc' : 'obj1';
         }
     }
     elsif ( $afun eq 'Obj' and $aparent->is_verb and $aparent->lemma eq 'zijn' ){
