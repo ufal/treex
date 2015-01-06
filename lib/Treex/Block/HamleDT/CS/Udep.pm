@@ -680,7 +680,7 @@ sub fix_determiners
                    $parent->iset()->number() ne $node->iset()->number())
                 {
                     # Change DET to PRON by changing Interset part of speech from adj to noun.
-                    $parent->iset()->set('pos', 'noun');
+                    $node->iset()->set('pos', 'noun');
                 }
                 # If we confirm that the node is DET, we should change its deprel from amod to det.
                 else
