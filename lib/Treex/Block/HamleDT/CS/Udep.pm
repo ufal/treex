@@ -31,6 +31,7 @@ sub process_zone
     $self->push_copulas_down($root);
     $self->afun_to_udeprel($root);
     $self->attach_final_punctuation_to_predicate($root);
+    $self->fix_determiners($root);
 }
 
 
@@ -630,6 +631,62 @@ sub attach_final_punctuation_to_predicate
         {
             $pnode->set_parent($predicate);
             $pnode->set_conll_deprel('punct');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Changes some determiners to pronouns, based on syntactic annotation.
+# The Interset driver of the PDT tagset divides pronouns to pronouns and
+# determiners. It knows that some pronouns are capable of acting as determiners
+# nevertheless, they can still be used as pronouns (replacing a noun phrase
+# instead of modifying it). This method tries to figure out whether the word
+# actually modifies a noun phrase as an adjective.
+#------------------------------------------------------------------------------
+sub fix_determiners
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->is_adjective() && $node->is_pronoun())
+        {
+            my $parent = $node->parent();
+            if(!$parent->is_root() && $node->conll_deprel() eq 'amod')
+            {
+                # The common pattern is that the parent is a noun (or pronoun) and that it follows the determiner.
+                #  possessive: můj pes (my dog)
+                #  demonstrative: ten pes (that dog)
+                #  interrogative: který pes (which dog)
+                #  indefinite: nějaký pes (some dog)
+                #  total: každý pes (every dog)
+                #  negative: žádný pes (no dog)
+                # Sometimes the determiner can follow the noun, instead of preceding it.
+                #  v Německu samém (in Germany itself)
+                #  té naší (the our)
+                #  to vše (that all)
+                #  nás všechny (us all)
+                # But we want to rule out genitive constructions where one genitive pronoun post-modifies a noun phrase.
+                #  nabídka všech (offer of all) (genitive construction; the words do not agree in case)
+                #  půl tuctu jich (half dozen of them) (genitive construction; the words agree in case because tuctu is incidentially also genitive, but they do not agree in number; in addition, "jich" is a non-possessive personal pronoun which should never become det)
+                #  firmy All - Impex (foreign determiner All; it cannot agree in case because it does not have case)
+                #  děvy samy (girls themselves) (the words agree in case but the afun is Atv, not Atr, thus we should not get through the 'amod' constraint above)
+                if(!$parent->is_noun() ||
+                   $parent->iset()->case() ne $node->iset()->case() ||
+                   $parent->iset()->number() ne $node->iset()->number())
+                {
+                    # Change DET to PRON by changing Interset part of speech from adj to noun.
+                    $parent->iset()->set('pos', 'noun');
+                }
+                # If we confirm that the node is DET, we should change its deprel from amod to det.
+                else
+                {
+                    $node->set_conll_deprel('det');
+                }
+            }
         }
     }
 }
