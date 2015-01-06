@@ -23,11 +23,35 @@ sub BUILD {
 
 use List::Util "sum";
 
-override '_build_normalization' => sub {
+# normalize feature weights
+# so that sum(w) = 0
+# and sum(abs(w)) = 1
+sub normalize {
     my ($self) = @_;
     
-    return sum( map {abs} values(%{$self->weights}) );
-};
+    my @values = values(%{$self->weights});
+    my $count = scalar( @values );
+    my $sum = sum( @values );
+
+    # subtract fair share of sum
+    # so that the new weights sum to 0
+    my $subtrahend = $sum/$count;
+    foreach my $key (keys %{$self->weights}) {
+        $self->weights->{$key} = $self->weights->{$key} - $subtrahend; 
+    }
+    
+    @values = values(%{$self->weights});
+    my $abssum = sum( map {abs} @values );
+
+    # divide by the average absolute weight
+    # so that the new average absolute weight is 1
+    my $divisor = $abssum/$count;
+    foreach my $key (keys %{$self->weights}) {
+        $self->weights->{$key} = $self->weights->{$key} / $divisor;
+    }
+
+    return 1;
+}
 
 # STORING AND LOADING
 

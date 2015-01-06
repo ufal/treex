@@ -6,7 +6,9 @@ use utf8;
 use FindBin;
 FindBin::again();
 
-use Test::More tests => 46;
+use Test::More tests => 54;
+
+use List::Util "sum";
 
 binmode STDIN,  ':encoding(utf8)';
 binmode STDOUT, ':encoding(utf8)';
@@ -23,6 +25,7 @@ BEGIN {
     use_ok('Treex::Tool::Parser::MSTperl::ModelAdditional');
     use_ok('Treex::Tool::Parser::MSTperl::Node');
     use_ok('Treex::Tool::Parser::MSTperl::Parser');
+    use_ok('Treex::Tool::Parser::MSTperl::MultiModelParser');
     use_ok('Treex::Tool::Parser::MSTperl::Labeller');
     use_ok('Treex::Tool::Parser::MSTperl::Reader');
     use_ok('Treex::Tool::Parser::MSTperl::RootNode');
@@ -99,7 +102,15 @@ my $parser = new_ok(
     "initialize Parser,"
 );
 
-ok( $parser->load_model($unlabelled_model_file), "load model" );
+ok( my $model = $parser->load_model($unlabelled_model_file), "load model" );
+
+note("unnormalized feature weights sum to " . sum(values %{$model->weights}) );
+
+note("unnormalized feature weights abs avg to "
+    . (
+        sum( map {abs} values(%{$model->weights}) )
+        / scalar( values(%{$model->weights}) )
+    ) );
 
 my $total_words  = 0;
 my $total_errors = 0;
@@ -125,11 +136,6 @@ foreach my $correct_sentence ( @{$test_data} ) {
 is( $total_words, 47, 'testing on 47 words' );
 note('no of errors on 47 words: ' . $total_errors);
 
-# version with bug in learning (before rev. 6899)
-#is( $total_errors, 27, 'returns on the given data 27 errors' );
-# version without the bug (corrected in rev. 6899)
-# is( $total_errors, 20, 'returns on the given data 20 errors' );
-
 my $writer = new_ok(
     'Treex::Tool::Parser::MSTperl::Writer' => [ config => $config ],
     "initialize Writer,"
@@ -138,6 +144,50 @@ my $writer = new_ok(
 ok( $writer->write_tsv( $test_file . '.out', [@sentences] ), "write out file" );
 
 unlink $test_file . '.out';
+
+
+note('multimodel parser');
+
+my $multiparser = new_ok(
+    'Treex::Tool::Parser::MSTperl::MultiModelParser' => [ config => $config ],
+    "initialize MultiModelParser",
+);
+
+ok( $model = $multiparser->load_model($unlabelled_model_file), "load model" );
+
+cmp_ok( abs( sum(values %{$model->weights}) ), '<', 0.001,
+    "feature weights normalized to sum to 0" );
+
+cmp_ok( abs( 1 -
+            sum( map {abs} values(%{$model->weights}) )
+            / scalar(values(%{$model->weights}) )
+        ), '<', '0.001',
+    "feature weights normalized to abs sum to 1" );
+
+$total_words  = 0;
+$total_errors = 0;
+foreach my $correct_sentence ( @{$test_data} ) {
+
+    #parse
+    ok(
+        my $test_sentence =
+            $multiparser->parse_sentence_internal($correct_sentence),
+        'parse sentence'
+    );
+    push @sentences, $test_sentence;
+    my $sentenceLength = $test_sentence->len();
+    my $errorCount     = $test_sentence->count_errors_attachement(
+        $correct_sentence
+    );
+
+    $total_words  += $sentenceLength;
+    $total_errors += $errorCount;
+}
+
+note('no of errors on 47 words: ' . $total_errors);
+
+
+
 
 unlink $unlabelled_model_file;
 

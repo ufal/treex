@@ -40,7 +40,8 @@ sub load_model {
     if ($self->config->baseline_parse) {
         return;
     } else {
-        return $self->model->load($filename);
+        $self->model->load($filename);
+        return $self->model;
     }
 }
 

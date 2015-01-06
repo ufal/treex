@@ -20,7 +20,9 @@ override 'load_model' => sub {
     my $model = Treex::Tool::Parser::MSTperl::ModelUnlabelled
         ->new(config => $self->config, weight => $weight);
     push @{$self->model}, $model;
-    return $model->load($filename);
+    $model->load($filename);
+    $model->normalize();
+    return $model;
 };
 
 override 'parse_sentence_full' => sub {
@@ -53,14 +55,10 @@ override 'parse_sentence_full' => sub {
                 ->get_all_features($edge);
 
             # HERE THE MODEL COMBINATION HAPPENS
-            # sum of feature weights;
-            # each model gets its weights divided by the sum of all of the
-            # weights in the model for normalization
+            # sum of feature weights
             my $score = sum (
                 map {
-                    $_->score_features($features)
-                    * $_->weight
-                    / $_->normalization
+                    $_->score_features($features) * $_->weight
                 } @{$self->model}
             );
                 #map { $_->score_features($features) } @{$self->model}
