@@ -26,6 +26,16 @@ sub process_anode {
     if ( $anode->lemma eq 'one' and $anode->tag eq 'PRP' ) {
         $anode->set_iset( 'person' => 3, 'number' => 'sing' );
     }
+    
+    # distinguish attributive vs. nominal usage of relative pronouns "which" and alike (needed for SetFormeme)
+    if ( $anode->tag eq 'WDT' ){
+        if ( $anode->afun =~ /^(Sb|Obj)$/ ){
+            $anode->iset->set_synpos('subst');
+        }
+        elsif ( $anode->afun eq 'Atr' ){
+            $anode->iset->set_synpos('attr');
+        }
+    }
     return;
 }
 
@@ -49,6 +59,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2014-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

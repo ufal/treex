@@ -74,9 +74,9 @@ sub detect_formeme {
     my $a_node = $t_node->get_lex_anode();
     return $self->formeme_for_drop($t_node) if !$a_node;
     
-    # Adjectives in subject and object positions are considered nominal usage
+    # Adjectives in subject positions are considered nominal usage
     # Note that this depends on the definitions of afuns and formemems for each language. Feel free to override.
-    if ($syntpos eq 'adj' && $a_node->afun =~ /^(Sb|Obj)$/){
+    if ($syntpos eq 'adj' && $a_node->afun eq 'Sb'){
         $syntpos = 'n';
     }
     
