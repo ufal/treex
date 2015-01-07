@@ -26,6 +26,18 @@ after process_tnode => sub {
     elsif ( $t_node->formeme =~ /^v:.*inf$/ ){
         $a_node->iset->set_verbform('inf');
     }
+    
+    # comparative 'als', 'dan'
+    if ( $t_node->formeme eq 'x' and $t_node->t_lemma =~ /^(als|dan)$/ ){
+        $a_node->iset->set_pos('conj');
+        $a_node->iset->set_conjtype('comp');
+    }
+    
+    # conjunction as rhematizers (PREC)
+    if ( $t_node->formeme eq 'x' and $t_node->t_lemma =~ /^(en|maar|of)$/ and not $t_node->get_children() ){
+        $a_node->iset->set_pos('conj');
+        $a_node->iset->set_conjtype('coor');
+    }
     return;
 };
 

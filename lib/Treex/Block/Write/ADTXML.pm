@@ -89,7 +89,7 @@ sub _process_subtree {
         # create the terminal for the head node (except for root and formal relative clause heads)
         if ( !$anode->is_root and !$anode->wild->{is_whd_head} and !$anode->wild->{is_rhd_head} ) {
             # the terminal usually has rel="hd", with a few exceptions, dealing with them here
-            my $rel = 'hd';
+            my $rel = $anode->wild->{adt_rel} // 'hd';
             $rel = 'crd' if ( $anode->is_coap_root );
             $rel = 'cmp' if ( $lemma =~ /^(om|te)$/ and ( $anode->afun // '' ) =~ /^Aux[VC]$/ );
             $out .= ( "\t" x ( $indent + 1 ) ) . $self->_get_node_str( $anode, $rel ) . "\n";

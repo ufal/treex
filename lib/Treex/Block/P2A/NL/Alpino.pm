@@ -85,6 +85,7 @@ sub convert_deprel {
         }
         elsif ( $deprel eq 'mwp' ) {
             $afun = 'AuxP' if ( $node->is_preposition );
+            $afun = 'AuxC' if ( $node->is_conjunction );
             $afun = 'AuxA' if ( !$afun and $node->match_iset( 'prontype' => 'art' ) );
             $afun = 'NR'   if ( !$afun );
         }
@@ -124,6 +125,7 @@ sub create_subtree {
 
     # no coordination head -> insert commas from those attached to sentence root
     if ( $p_root->phrase eq 'conj' and not any { $_->wild->{rel} eq 'crd' } @children ) {
+
         # find a punctuation node just before the last coordination member
         my ($last_child) = sort { _leftmost_terminal_ord($b) <=> _leftmost_terminal_ord($a) } @children;
         my $needed_ord = _leftmost_terminal_ord($last_child) - 1;
@@ -160,9 +162,9 @@ sub create_subtree {
         elsif ( defined $child->phrase ) {    # the node is nonterminal
             $self->create_subtree( $child, $new_node );
         }
-        
+
         # override deprel for questions with prepositional phrases `Op wie wacht je?'
-        if ($p_root->wild->{rel} eq 'whd' and $child->wild->{rel} eq 'hd'){
+        if ( $p_root->wild->{rel} eq 'whd' and $child->wild->{rel} eq 'hd' ) {
             $new_node->set_conll_deprel('whd');
         }
     }
@@ -226,6 +228,7 @@ sub process_zone {
     $self->mark_subjects($a_root);
     $self->rehang_aux_verbs($a_root);
     $self->fix_mwu($a_root);
+    $self->rehang_prec($a_root);
 }
 
 sub set_coord_members {
@@ -242,11 +245,11 @@ sub rehang_wh_clauses {
 
     foreach my $anode ( grep { $_->conll_deprel =~ /^(rhd|whd)$/ } $a_root->get_descendants() ) {
         my ($clause) = grep { $_->conll_deprel eq 'hd' } $anode->get_children();
-        next if (!$clause);
+        next if ( !$clause );
         my $parent = $anode->get_parent();
         $clause->set_parent($parent);
         $anode->set_parent($clause);
-        $anode->set_afun(  $anode->is_preposition ? 'AuxP' : ( $anode->is_adverb ? 'Adv'  : 'Obj' ) );
+        $anode->set_afun( $anode->is_preposition ? 'AuxP' : ( $anode->is_adverb ? 'Adv' : 'Obj' ) );
         $clause->set_afun( $parent->is_root ? 'Pred' : 'Atr' );
         $clause->set_is_member( $anode->is_member );
         $anode->set_is_member(undef);
@@ -387,6 +390,17 @@ sub _get_mwu_part_type {
     return 'other';
 }
 
+sub rehang_prec {
+    my ( $self, $aroot ) = @_;
+
+    foreach my $prec ( grep { $_->match_iset( 'pos' => 'conj', 'conjtype' => 'coor' ) and scalar( $_->get_children() ) == 1 } $aroot->get_children() ) {
+        my ($child) = $prec->get_children();
+        $child->set_parent( $prec->get_parent() );
+        $prec->set_parent($child);
+        $prec->set_afun('AuxY');
+    }
+}
+
 1;
 __END__
 
@@ -408,6 +422,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2014-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

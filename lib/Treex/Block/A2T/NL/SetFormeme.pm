@@ -33,6 +33,9 @@ override 'detect_syntpos' => sub {
 
     # adverbs, adverbial adjectives
     return 'adv' if ( $a_node->is_adverb or $a_node->match_iset( 'synpos' => 'adv' ) );
+    
+    # coordinating conjunctions (to be given the functor PREC), subordinating conjunctions "dan", "als"
+    return 'x' if ( $a_node->is_conjunction );
 
     # default to noun
     return 'n';

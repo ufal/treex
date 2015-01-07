@@ -46,6 +46,10 @@ Treex::Block::T2A::NL::FixFormalSubjectsAlpinoStyle
 
 =head1 DESCRIPTION
 
+Fix formal subjects of infinitive clauses, e.g., "Het[sup] is goed om[su] te gaan."
+
+Will mark the formal subject and the "real" subject -- the head of the infinitive
+clause -- with the ADT relations they should receive (in the "adt_rel" wild attribute). 
 
 =head1 AUTHORS
 

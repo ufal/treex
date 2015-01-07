@@ -47,6 +47,7 @@ override '_build_formeme2functor' => sub {
 override '_build_afun2functor' => sub {
     return {
         'Apos' => 'APPS',
+        'AuxY' => 'PREC',
     };
 };
 
