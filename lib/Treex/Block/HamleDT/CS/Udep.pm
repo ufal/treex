@@ -32,6 +32,7 @@ sub process_zone
     $self->afun_to_udeprel($root);
     $self->attach_final_punctuation_to_predicate($root);
     $self->fix_determiners($root);
+    $self->classify_adverbial_numerals($root);
 }
 
 
