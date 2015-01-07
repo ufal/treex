@@ -280,9 +280,25 @@ sub afun_to_udeprel
         # Attribute of a noun: amod, nummod, nmod, acl
         elsif($afun eq 'Atr')
         {
-            # Cardinal number is nummod, ordinal number is amod. It should not be a problem because Interset should categorize ordinals as special types of adjectives.
             ###!!! TODO: personal names, foreign phrases and named entities
-            $udep = $node->is_numeral() ? 'nummod' : $node->is_adjective() ? 'amod' : $node->is_verb() ? 'acl' : 'nmod';
+            # Cardinal number is nummod, ordinal number is amod. It should not be a problem because Interset should categorize ordinals as special types of adjectives.
+            # But we cannot use the is_numeral() method because it returns true if pos=num or if numtype is not empty.
+            # We also want to exclude pronominal numerals (kolik, tolik, mnoho, málo). These should be det.
+            if($node->iset()->pos() eq 'num')
+            {
+                if($node->iset()->prontype() eq '')
+                {
+                    $udep = 'nummod'; ###!!! TODO: Should we create a special deprel for those numerals that would govern nouns in PDT? I think yes!
+                }
+                else
+                {
+                    $udep = 'det:nummod';
+                }
+            }
+            else
+            {
+                $udep = $node->is_adjective() ? 'amod' : $node->is_verb() ? 'acl' : 'nmod';
+            }
         }
         # Verbal attribute is analyzed as secondary predication.
         ###!!! TODO: distinguish core arguments (xcomp) from non-core arguments and adjuncts (acl/advcl).
@@ -687,6 +703,31 @@ sub fix_determiners
                 {
                     $node->set_conll_deprel('det');
                 }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Separates multiplicative numerals (jednou, dvakrát, třikrát) and adverbial
+# ordinal numerals (poprvé, podruhé, potřetí). They have the same tag in the
+# PDT tagset and the Interset decoder cannot distinguish them because it does
+# not see the word forms.
+#------------------------------------------------------------------------------
+sub classify_adverbial_numerals
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->iset()->numtype() eq 'mult')
+        {
+            if($node->form() =~ m/^po.*[éí]$/i)
+            {
+                $node->iset()->set('numtype', 'ord');
             }
         }
     }
