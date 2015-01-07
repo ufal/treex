@@ -15,7 +15,6 @@ sub process_tnode {
     my $anode = $tnode->get_lex_anode() or return;
     my $aparent = $anode->get_parent();
     return if ( $aparent->is_root or !$aparent->get_parent->is_root() );
-    log_info('HERE' . $anode->id);
 
     $anode->set_parent( $aparent->get_parent() );
     $aparent->set_parent($anode);

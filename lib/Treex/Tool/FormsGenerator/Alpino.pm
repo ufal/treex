@@ -43,20 +43,36 @@ sub _build_adtxml {
     return Treex::Block::Write::ADTXML->new();
 }
 
-sub generate_form {
-    my ( $self, $anode ) = @_;
+sub _generate_from_adtxml {
+    my ( $self, $xml ) = @_;
 
     my $writer = $self->_alpino_writehandle;
     my $reader = $self->_alpino_readhandle;
 
-    my $xml = $self->_adtxml->_process_node($anode);
     $xml =~ s/[\t\n]//g;
-    log_info($xml);
+    print STDERR $xml . "\n";
     print $writer $xml, "\n";
     my $line = <$reader>;
     chomp $line;
-    $line =~ s/ \.$//;
     return $line;
+}
+
+# Try to inflect a single word
+sub generate_form {
+    my ($self, $anode) = @_;
+    
+    my $xml = $self->_adtxml->_process_node($anode);
+    my $res = $self->_generate_from_adtxml($xml);
+    $res =~ s/ \.$//;
+    return $res;
+}
+
+# Try to generate a whole sentence
+sub generate_sentence {
+    my ($self, $atree) = @_;
+    
+    my $xml = $self->_adtxml->_process_tree($atree);    
+    return $self->_generate_from_adtxml($xml);
 }
 
 1;
@@ -67,12 +83,12 @@ __END__
 
 =head1 NAME
 
-Treex::Tool::PhraseParser::Alpino
+Treex::Tool::FormsGenerator::Alpino
 
 =head1 DESCRIPTION
 
-A Treex bipipe wrapper for the Dutch Alpino parser. Uses L<Treex::Block::Read::Alpino>
-to convert the parser output.
+A Treex bipipe wrapper for the Dutch Alpino generator. Uses L<Treex::Block::Write::ADTXML>
+to prepare input.
 
 =head1 NOTES
 

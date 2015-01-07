@@ -1,4 +1,4 @@
-package Treex::Block::T2A::NL::GenerateWordforms;
+package Treex::Block::T2A::NL::GenerateWordformsAlpino;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::FormsGenerator::Alpino;
@@ -36,7 +36,7 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::T2A::NL::GenerateWordforms
+Treex::Block::T2A::NL::GenerateWordformsAlpino
 
 =head1 DESCRIPTION
 

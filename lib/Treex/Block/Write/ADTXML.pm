@@ -41,7 +41,14 @@ my %AFUN2REL = (
 );
 
 sub process_atree {
+    my ( $self, $aroot ) = @_;    
+    print { $self->_file_handle } $self->_process_tree($aroot);
+}
+
+
+sub _process_tree {
     my ( $self, $aroot ) = @_;
+
     $self->_set_node_id(0);
     $self->_set_index_ids( {} );
 
@@ -51,9 +58,9 @@ sub process_atree {
     }
     $out .= $self->_process_subtree( $aroot, 0 );
     $out .= "</alpino_adt>\n";
-
-    print { $self->_file_handle } $out;
+    return $out;
 }
+
 
 sub _process_node {
     my ( $self, $anode ) = @_;
@@ -64,6 +71,7 @@ sub _process_node {
     $out .= "</node>\n</alpino_adt>\n";
     return $out;
 }
+
 
 sub _process_subtree {
     my ( $self, $anode, $indent ) = @_;
@@ -199,7 +207,7 @@ sub _get_rel {
         return 'det';
     }
 
-    # objects
+    # objects, attributes -- distinguished based on formeme
     if ($tnode) {
         if ( my ($objtype) = $tnode->formeme =~ /n:(obj.*)/ ) {
 
@@ -211,7 +219,10 @@ sub _get_rel {
         if ( $tnode->formeme =~ /n:.*+X/ ) {
             return 'obj1';
         }
-        if ( $tnode->formeme =~ /^(adj:attr|n:poss)$/ ) {
+        if ( $tnode->formeme =~ /^(adj:attr|n:poss)$/ ) {            
+            if ($tnode->formeme eq 'adj:attr' and $anode->is_numeral ){  # attributive numerals
+                return 'det';
+            }
             return 'mod';
         }
         if ( $tnode->formeme eq 'adj:compl' ){
@@ -249,7 +260,7 @@ sub _get_rel {
         my $achild_te = first { ( $_->lemma // '' ) eq 'te' and ( $_->afun // '' ) eq 'AuxV' } $anode->get_children();
         return 'vc' if ($achild_te);
     }
-
+    
     # default: use the conversion table
     if ( $AFUN2REL{$afun} ) {
         return $AFUN2REL{$afun};
