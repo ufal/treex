@@ -32,7 +32,8 @@ sub process_zone
     $self->afun_to_udeprel($root);
     $self->attach_final_punctuation_to_predicate($root);
     $self->fix_determiners($root);
-    $self->classify_adverbial_numerals($root);
+    $self->classify_numerals($root);
+    $self->restructure_compound_numerals($root);
 }
 
 
@@ -712,23 +713,106 @@ sub fix_determiners
 
 
 #------------------------------------------------------------------------------
-# Separates multiplicative numerals (jednou, dvakrát, třikrát) and adverbial
-# ordinal numerals (poprvé, podruhé, potřetí). They have the same tag in the
-# PDT tagset and the Interset decoder cannot distinguish them because it does
-# not see the word forms.
+# Splits numeral types that have the same tag in the PDT tagset and the
+# Interset decoder cannot distinguish them because it does not see the word
+# forms.
 #------------------------------------------------------------------------------
-sub classify_adverbial_numerals
+sub classify_numerals
 {
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        if($node->iset()->numtype() eq 'mult')
+        my $iset = $node->iset();
+        # Separate multiplicative numerals (jednou, dvakrát, třikrát) and
+        # adverbial ordinal numerals (poprvé, podruhé, potřetí).
+        if($iset->numtype() eq 'mult')
         {
+            # poprvé, podruhé, počtvrté, popáté, ..., popadesáté, posté
+            # potřetí, potisící
             if($node->form() =~ m/^po.*[éí]$/i)
             {
-                $node->iset()->set('numtype', 'ord');
+                $iset->set('numtype', 'ord');
+            }
+        }
+        # Separate generic numerals
+        # for number of kinds (obojí, dvojí, trojí, čtverý, paterý) and
+        # for number of sets (oboje, dvoje, troje, čtvery, patery).
+        elsif($iset->numtype() eq 'gen')
+        {
+            if($iset->variant() eq '1')
+            {
+                $iset->set('numtype', 'sets');
+            }
+        }
+        # Separate agreeing adjectival indefinite numeral "nejeden" (lit. "not one" = "more than one")
+        # from indefinite/demonstrative adjectival ordinal numerals (několikátý, tolikátý).
+        elsif($node->is_adjective() && $iset->contains('numtype', 'ord') && $node->lemma() eq 'nejeden')
+        {
+            $iset->add('pos' => 'num', 'numtype' => 'card', 'prontype' => 'ind');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Identifies multi-word numerals and organizes them in chains.
+#------------------------------------------------------------------------------
+sub restructure_compound_numerals
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    # We are looking for sequences of numerals where every two adjacent words
+    # are connected with a dependency. The direction of the dependency does not
+    # matter. If a numeral is tagged as noun (this could happen to "sto",
+    # "tisíc", "milión", "miliarda"), the chain will not include them.
+    for(my $i = 0; $i < $#nodes; $i++)
+    {
+        if($nodes[$i]->iset()->contains('numtype', 'card'))
+        {
+            my $chain_found = 0;
+            for(my $j = $i+1; $j <= $#nodes; $j++)
+            {
+                if($nodes[$j]->iset()->contains('numtype', 'card') &&
+                   ($nodes[$j]->parent() == $nodes[$j-1] || $nodes[$j-1]->parent() == $nodes[$j]))
+                {
+                    $chain_found = $j-$i;
+                }
+                else
+                {
+                    last;
+                }
+            }
+            if($chain_found)
+            {
+                # Figure out the attachment of the whole chain to the outside world.
+                my $minord = $nodes[$i]->ord();
+                my $maxord = $nodes[$i+$chain_found]->ord();
+                my $parent;
+                my $deprel;
+                # Incremental reshaping could create temporary cycles and Treex would not allow that.
+                # Therefore first attach all participants to the root, then draw the links between them.
+                for(my $j = $i; $j <= $i+$chain_found; $j++)
+                {
+                    my $old_parent_ord = $nodes[$j]->parent()->ord();
+                    if($old_parent_ord < $minord || $old_parent_ord > $maxord)
+                    {
+                        $parent = $nodes[$j]->parent();
+                        $deprel = $nodes[$j]->conll_deprel();
+                    }
+                    $nodes[$j]->set_parent($root);
+                }
+                for(my $j = $i; $j < $i+$chain_found; $j++)
+                {
+                    $nodes[$j]->set_parent($nodes[$j+1]);
+                    $nodes[$j]->set_conll_deprel('compound');
+                }
+                $nodes[$i+$chain_found]->set_parent($parent);
+                $nodes[$i+$chain_found]->set_conll_deprel($deprel);
+                $i += $chain_found;
             }
         }
     }
