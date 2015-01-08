@@ -64,11 +64,18 @@ sub process_tnode {
     return if $t_node->nodetype ne 'complex';
 
     # Part-of-speech
-    my $syntpos = $t_node->formeme;
-    $syntpos =~ s/:.*//;
-    my $pos = $syntpos2pos{$syntpos};
-    $pos = 'num' if ( ( $t_node->gram_sempos // '' ) =~ /quant/ );
-    $a_node->iset->set_pos($pos) if $pos;
+    # Use mlayer_pos, if available, otherwise try sempos or syntpos from formeme
+    my $mlayer_pos = $t_node->get_attr('mlayer_pos');
+    if ( defined( $mlayer_pos ) and $mlayer_pos !~ /^[xX]$/ ){
+        $a_node->iset->set_pos( $mlayer_pos );
+    }
+    else {
+        my $syntpos = $t_node->formeme;
+        $syntpos =~ s/:.*//;
+        my $pos = $syntpos2pos{$syntpos};
+        $pos = 'num' if ( ( $t_node->gram_sempos // '' ) =~ /quant/ );
+        $a_node->iset->set_pos($pos) if $pos;
+    }
 
     # Grammatemes -> Interset features
     my $grammatemes_rf = $t_node->get_attr('gram') or return;
