@@ -852,6 +852,8 @@ sub push_numerals_down
             {
                 $noun->set_parent($number->parent());
                 $noun->set_conll_deprel($number->conll_deprel());
+                $number->set_parent($noun);
+                $number->set_conll_deprel($number->prontype() eq '' ? 'nummod:gov' : 'det:nummod:gov');
                 # All children of the number, except for parts of compound number, must be re-attached to the noun because they modify the whole phrase.
                 my @children = grep {$_->conll_deprel() ne 'compound'} $number->children();
                 foreach my $child (@children)
