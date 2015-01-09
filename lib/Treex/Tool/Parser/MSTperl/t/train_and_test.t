@@ -50,6 +50,7 @@ my $config = new_ok(
     'Treex::Tool::Parser::MSTperl::Config' => [
         config_file => $config_file,
         DEBUG => 0,
+        normalization_type => 'minavg_divabsavg',
     ],
     "process config file,"
 );

@@ -462,6 +462,12 @@ has 'baseline_parse_type' => (
     default => 'left-branching',
 );
 
+has 'normalization_type' => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => 'divabssum',
+);
+
 # METHODS
 
 sub BUILD {
@@ -524,6 +530,7 @@ sub BUILD {
             'EM_heldout_data_at',
             'baseline_parse',
             'baseline_parse_type',
+            'normalization_type',
         );
 
         # name => required?

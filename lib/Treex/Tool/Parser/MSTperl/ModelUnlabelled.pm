@@ -33,24 +33,46 @@ sub normalize {
     
     my @values = values(%{$self->weights});
     my $count = scalar( @values );
-#     my $sum = sum( @values );
-# 
-#     # subtract fair share of sum
-#     # so that the new weights sum to 0
-#     my $subtrahend = $sum/$count;
-#     foreach my $key (keys %{$self->weights}) {
-#         $self->weights->{$key} = $self->weights->{$key} - $subtrahend; 
-#     }
-#     
-#     @values = values(%{$self->weights});
+    my $sum = sum( @values );
     my $abssum = sum( map {abs} @values );
 
-    # divide by the average absolute weight
-    # so that the new average absolute weight is 1
-#    my $divisor = $abssum/$count;
-    my $divisor = $abssum;
-    foreach my $key (keys %{$self->weights}) {
-        $self->weights->{$key} = $self->weights->{$key} / $divisor;
+    if ($self->config->normalization_type eq 'divabssum') {
+        # divide by the sum of absolute weights
+        # so that the new sum of absolute weights is 1
+        my $divisor = $abssum;
+        foreach my $key (keys %{$self->weights}) {
+            $self->weights->{$key} = $self->weights->{$key} / $divisor;
+        }
+    } elsif ($self->config->normalization_type eq 'divabsavg') {
+        # divide by the average absolute weight
+        # so that the new average absolute weight is 1
+        my $divisor = $abssum/$count;
+        foreach my $key (keys %{$self->weights}) {
+            $self->weights->{$key} = $self->weights->{$key} / $divisor;
+        }
+    } elsif ($self->config->normalization_type eq 'minavg') {
+        # subtract fair share of sum
+        # so that the new weights sum to 0
+        my $subtrahend = $sum/$count;
+        foreach my $key (keys %{$self->weights}) {
+            $self->weights->{$key} = $self->weights->{$key} - $subtrahend; 
+        }
+    } elsif ($self->config->normalization_type eq 'minavg_divabsavg') {
+        # subtract fair share of sum
+        # so that the new weights sum to 0
+        my $subtrahend = $sum/$count;
+        foreach my $key (keys %{$self->weights}) {
+            $self->weights->{$key} = $self->weights->{$key} - $subtrahend; 
+        }
+
+        @values = values(%{$self->weights});
+        $abssum = sum( map {abs} @values );
+        # divide by the average absolute weight
+        # so that the new average absolute weight is 1
+        my $divisor = $abssum/$count;
+        foreach my $key (keys %{$self->weights}) {
+            $self->weights->{$key} = $self->weights->{$key} / $divisor;
+        }
     }
 
     return 1;
