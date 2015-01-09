@@ -34,6 +34,7 @@ sub process_zone
     $self->fix_determiners($root);
     $self->classify_numerals($root);
     $self->restructure_compound_numerals($root);
+    $self->push_numerals_down($root);
 }
 
 
@@ -805,6 +806,13 @@ sub restructure_compound_numerals
                     }
                     $nodes[$j]->set_parent($root);
                 }
+                # Collect all outside children of the numeral nodes.
+                # Later we will attach them to the head numeral.
+                my @children;
+                for(my $j = $i; $j <= $i+$chain_found; $j++)
+                {
+                    push(@children, $nodes[$j]->children());
+                }
                 for(my $j = $i; $j < $i+$chain_found; $j++)
                 {
                     $nodes[$j]->set_parent($nodes[$j+1]);
@@ -812,7 +820,44 @@ sub restructure_compound_numerals
                 }
                 $nodes[$i+$chain_found]->set_parent($parent);
                 $nodes[$i+$chain_found]->set_conll_deprel($deprel);
+                foreach my $child (@children)
+                {
+                    $child->set_parent($nodes[$i+$chain_found]);
+                }
                 $i += $chain_found;
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Makes sure that numerals modify counted nouns, not vice versa. (In PDT, both
+# directions are possible under certain circumstances.)
+#------------------------------------------------------------------------------
+sub push_numerals_down
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        # Look for genitive nouns and pronouns attached to a preposition.
+        if($node->is_noun() && $node->iset()->case() eq 'gen')
+        {
+            my $noun = $node;
+            my $number = $node->parent();
+            if($number->is_cardinal())
+            {
+                $noun->set_parent($number->parent());
+                $noun->set_conll_deprel($number->conll_deprel());
+                # All children of the number, except for parts of compound number, must be re-attached to the noun because they modify the whole phrase.
+                my @children = grep {$_->conll_deprel() ne 'compound'} $number->children();
+                foreach my $child (@children)
+                {
+                    $child->set_parent($noun);
+                }
             }
         }
     }
