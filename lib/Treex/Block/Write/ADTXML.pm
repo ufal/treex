@@ -95,7 +95,7 @@ sub _process_subtree {
             $out .= $self->_process_subtree( $akid, $indent + 1 );
         }
         # create the terminal for the head node (except for root and formal relative clause heads)
-        if ( !$anode->is_root and !$anode->wild->{is_whd_head} and !$anode->wild->{is_rhd_head} ) {
+        if ( !$anode->is_root and !$anode->wild->{is_rhd_head} ) {
             # the terminal usually has rel="hd", with a few exceptions, dealing with them here
             my $rel = $anode->wild->{adt_rel} // 'hd';
             $rel = 'crd' if ( $anode->is_coap_root );
@@ -172,24 +172,7 @@ sub _get_rel {
     }
     
     if ( $anode->wild->{adt_rel} ){
-        return $anode->wild->{adt_rel};  # overrides e.g. for formal subjects
-    }
-
-    # relative clauses
-    if ( $anode->wild->{is_whd_body} ) {
-        return 'body';
-    }
-    if ( $anode->wild->{is_whd_head} ){
-        return 'vc';
-    }
-    if ( $anode->wild->{is_rhd_head} ){
-        return 'mod';
-    }
-    if ( $anode->get_parent->wild->{is_whd_head} ) {
-        return 'whd';
-    }
-    if ( $anode->get_parent->wild->{is_rhd_head} ) {
-        return 'rhd';
+        return $anode->wild->{adt_rel};  # overrides e.g. for formal subjects, relative clauses etc.
     }
 
     my ($aparent) = $anode->get_eparents( { or_topological => 1 } );
@@ -243,14 +226,14 @@ sub _get_rel {
 
     # verbs
     if ( $afun eq 'AuxV' or $anode->iset->pos eq 'verb' ) {
-        if ( grep { $_->iset->pos eq 'verb' } $anode->get_eparents( { or_topological => 1 } ) ) {
-            return 'vc';
+        if ( $aparent->iset->pos eq 'verb' ) {
+            return 'vc';     # lexical/auxiliary verbs depending on auxiliaries
         }
         if ( $aparent->is_noun and $anode->iset->verbform eq 'part' ) {
             return 'mod';    # participles as adjectival noun modifiers
         }
         if ( ( $anode->lemma // '' ) eq 'te' and ( $aparent->lemma // '' ) ne 'om' ) {
-            return 'vc';
+            return 'vc';     # te (heading an infinitive)
         }
         return 'body';
     }
@@ -304,6 +287,9 @@ sub _get_pos {
     if ( $pos eq 'verb' and $anode->match_iset( 'verbform' => 'fin' ) ) {
         $data{'tense'} = 'present' if ( $anode->match_iset( 'tense' => 'pres' ) );
         $data{'tense'} = 'past'    if ( $anode->match_iset( 'tense' => 'past' ) );
+        if ( ( $anode->lemma // '' ) eq 'zullen' and $anode->match_iset( 'tense' => 'pres', 'mood' => 'cnd' ) ){
+            $data{'tense'} = 'past'; # "zou"
+        }
     }
     if ( $pos eq 'adj' ) {
         $data{'aform'} = 'base'   if ( $anode->match_iset( 'degree' => 'pos' ) );

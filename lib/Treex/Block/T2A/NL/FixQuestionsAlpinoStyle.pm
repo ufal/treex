@@ -27,13 +27,17 @@ sub process_tnode {
     $anode->set_parent($arhd_formal);
 
     # distinguish (indirect) questions and relative clauses: questions are below roots and verbs
+    # & pre-assign appropriate ADT relation labels
     if ( $aparent->is_root || $aparent->is_verb ) {
-        $arhd_formal->wild->{is_whd_head} = 1;
+        $arhd_formal->wild->{adt_rel} = 'vc';
+        $arpron_head->wild->{adt_rel} = 'whd';
+        $anode->wild->{adt_rel} = 'body';
     }
     else {
-        $arhd_formal->wild->{is_rhd_head} = 1;
+        $arhd_formal->wild->{adt_rel} = 'mod';
+        $arpron_head->wild->{adt_rel} = 'rhd';
     }
-    $anode->wild->{is_whd_body} = 1;
+    $arhd_formal->wild->{is_rhd_head} = 1;  # mark the formal head so that it is skipped in ADTXML
 
     # create a coindexing node in the original place of the relative pronoun phrase
     # if the relative pronoun is a longer phrase (has more nodes), coindex with the whole phrase
@@ -60,6 +64,8 @@ Treex::Block::T2A::NL::FixQuestionsAlpinoStyle
 
 =head1 DESCRIPTION
 
+Fixing questions and relative clauses for Alpino generator: adding formal "rhd"/"whd" nodes,
+marking subject coindexing.
 
 =head1 AUTHORS
 
