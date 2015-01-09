@@ -25,6 +25,7 @@ has iset => (
         is_adposition
         is_adverb
         is_article
+        is_cardinal
         is_conjunction
         is_coordinator
         is_dual
