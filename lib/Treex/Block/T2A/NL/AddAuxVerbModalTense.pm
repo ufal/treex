@@ -94,12 +94,14 @@ override '_build_gram2form' => sub {
 override '_postprocess' => sub {
     my ( $self, $verbforms_str, $anodes ) = @_;
     
-    # change the lexical verb form: past participle / infinitive    
+    # mark everything as infinitives (except the 1st auxiliary)
+    foreach my $anode (@$anodes[1.. $#$anodes]){
+        $anode->iset->add('pos' => 'verb', 'verbform' => 'inf');
+    }
+    
+    # change the lexical verb form to past participle where needed    
     if ( $verbforms_str =~ /hebben$/ ) {
         $anodes->[-1]->iset->add('pos' => 'verb', 'verbform' => 'part', 'tense' => 'past');
-    }
-    else {
-        $anodes->[-1]->iset->add('pos' => 'verb', 'verbform' => 'inf');
     }
 
     # change the past tense auxiliary: hebben/zijn
