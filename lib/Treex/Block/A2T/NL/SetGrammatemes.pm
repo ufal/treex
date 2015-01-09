@@ -18,13 +18,13 @@ my %SIG2GRAM = (
 
     # present/past with modals
     'moeten-finpres+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'hrt',  'verbmod' => 'ind' },
-    'moeten-finpast+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'hrt',  'verbmod' => 'ind' },
+    'moeten-finpast+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'hrt',  'verbmod' => 'ind' },
     'kunnen-finpres+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'poss', 'verbmod' => 'ind' },
-    'kunnen-finpast+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'poss', 'verbmod' => 'ind' },
+    'kunnen-finpast+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'poss', 'verbmod' => 'ind' },
     'mogen-finpres+LEX-inf'  => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'perm', 'verbmod' => 'ind' },
-    'mogen-finpast+LEX-inf'  => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'perm', 'verbmod' => 'ind' },
+    'mogen-finpast+LEX-inf'  => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'perm', 'verbmod' => 'ind' },
     'willen-finpres+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'vol',  'verbmod' => 'ind' },
-    'willen-finpast+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'vol',  'verbmod' => 'ind' },
+    'willen-finpast+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'vol',  'verbmod' => 'ind' },
 
     # future / conditional active
     'zullen-finpres+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'post', 'deontmod' => 'decl', 'verbmod' => 'ind' },
