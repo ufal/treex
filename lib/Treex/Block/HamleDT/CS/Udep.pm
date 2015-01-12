@@ -851,9 +851,12 @@ sub push_numerals_down
             if($number->is_cardinal())
             {
                 $noun->set_parent($number->parent());
-                $noun->set_conll_deprel($number->conll_deprel());
+                # If the number was already attached as nummod, it does not tell us anything but we do not want to keep nummod for the noun head.
+                my $deprel = $number->conll_deprel();
+                $deprel = 'nmod' if($deprel eq 'nummod');
+                $noun->set_conll_deprel($deprel);
                 $number->set_parent($noun);
-                $number->set_conll_deprel($number->prontype() eq '' ? 'nummod:gov' : 'det:nummod:gov');
+                $number->set_conll_deprel($number->iset()->prontype() eq '' ? 'nummod:gov' : 'det:nummodgov');
                 # All children of the number, except for parts of compound number, must be re-attached to the noun because they modify the whole phrase.
                 my @children = grep {$_->conll_deprel() ne 'compound'} $number->children();
                 foreach my $child (@children)
