@@ -36,6 +36,7 @@ sub process_zone
     $self->classify_numerals($root);
     $self->restructure_compound_numerals($root);
     $self->push_numerals_down($root);
+    $self->split_fused_words($root);
 }
 
 
@@ -934,6 +935,74 @@ sub push_numerals_down
                 }
             }
         }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Splits fused subordinating conjunction + conditional auxiliary to two nodes:
+# abych, abys, aby, abychom, abyste
+# kdybych, kdybys, kdyby, kdybychom, kdybyste
+# Note: In theory there are other fused words that should be split (udělals,
+# tos, sis, ses, cos, tys, žes, proň, oň, naň) but they do not appear in the
+# PDT 3.0 data.
+#------------------------------------------------------------------------------
+sub split_fused_words
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        # Remember the index of the token.
+        # When splitting occurs, we will have to re-index nodes with new integers but we will want to use the original indices when printing the CoNLL-U file.
+        my $ord = $node->ord();
+        $node->wild()->{decord} = $ord;
+        if($node->form() =~ m/^(a|kdy)(bych|bys|by|bychom|byste)$/i)
+        {
+            my $w1 = $1;
+            my $w2 = $2;
+            $w1 =~ s/^(a)$/$1by/i;
+            $w1 =~ s/^(kdy)$/$1ž/i;
+            my $parent = $node->parent();
+            my $n1 = $parent->create_child();
+            my $n2 = $parent->create_child();
+            $n1->wild()->{'fused_token.rf'} = $node->id();
+            $n1->wild()->{decord} = $ord+0.1;
+            $n1->set_form($w1);
+            $n1->set_lemma(lc($w1));
+            $n1->set_tag('J,-------------');
+            $n1->iset()->add('pos' => 'conj', 'conjtype' => 'sub');
+            $n1->set_conll_deprel('mark');
+            $n2->wild()->{'fused_token.rf'} = $node->id();
+            $n2->wild()->{decord} = $ord+0.2;
+            $n2->set_form($w2);
+            $n2->set_lemma('být');
+            my $person = $w2 =~ m/^(bych|bychom)$/i ? '1' : $w2 =~ m/^(bys|byste)$/i ? '2' : '-';
+            my $number = $w2 =~ m/^(bych|bys)$/i ? 'S' : $w2 =~ m/^(bychom|byste)$/i ? 'P' : '-';
+            my $tag = 'Vc-'.$number.'---'.$person.'-------';
+            $n2->set_tag($tag);
+            $n2->iset()->add('pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'cnd');
+            $person = '3' if($person eq '-');
+            $n2->iset()->add('person' => $person);
+            if($number eq 'S')
+            {
+                $n2->iset()->add('number' => 'sing');
+            }
+            elsif($number eq 'P')
+            {
+                $n2->iset()->add('number' => 'plur');
+            }
+            $n2->set_conll_deprel('aux');
+        }
+    }
+    # Normalize word ordering.
+    @nodes = sort {$a->wild()->{decord} <=> $b->wild()->{decord}} ($root->get_descendants({ordered => 0}));
+    my $i = 1;
+    foreach my $node (@nodes)
+    {
+        $node->_set_ord($i++);
     }
 }
 
