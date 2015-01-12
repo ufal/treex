@@ -73,6 +73,15 @@ sub normalize {
         foreach my $key (keys %{$self->weights}) {
             $self->weights->{$key} = $self->weights->{$key} / $divisor;
         }
+    } elsif ($self->config->normalization_type eq 'divabsmed') {
+        # divide by the median absolute weight
+        # so that the new median absolute weight is 1
+        my @absweightssorted = sort( map {abs} @values );
+        my $median = $absweightssorted[$count/2];
+        my $divisor = $median;
+        foreach my $key (keys %{$self->weights}) {
+            $self->weights->{$key} = $self->weights->{$key} / $divisor;
+        }
     }
 
     return 1;
