@@ -27,6 +27,7 @@ sub process_zone
     my $root = $self->SUPER::process_zone($zone);
     $self->remove_features_from_lemmas($root);
     $self->shape_coordination_stanford($root);
+    $self->restructure_compound_prepositions($root);
     $self->push_prep_sub_down($root);
     $self->push_copulas_down($root);
     $self->afun_to_udeprel($root);
@@ -219,7 +220,10 @@ sub afun_to_udeprel
     foreach my $node (@nodes)
     {
         my $afun = $node->afun();
-        my $udep = 'dep:'.$afun;
+        # If there were transformations that already set the deprel, take it into account.
+        # Otherwise derive a default deprel from the afun.
+        my $udep = $node->conll_deprel();
+        $udep = 'dep:'.$afun if(!defined($udep));
         my $parent = $node->parent();
         # Predicate or ExD child of the root:
         # It is labeled root, regardless of whether the afun is Pred or ExD.
@@ -448,6 +452,67 @@ sub shape_coordination_stanford
 
 
 #------------------------------------------------------------------------------
+# Identifies multi-word prepositions and organizes them in chains.
+#------------------------------------------------------------------------------
+sub restructure_compound_prepositions
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    # Example multi-word preposition: na rozdíl od (in contrast to).
+    # Original annotation: "od" is head, "na" and "rozdíl" depend on it. All three labeled "AuxP". The noun is attached to "od".
+    # Desired annotation: "na" is head, "rozdíl" and "od" depend on it, labeled "mwe". "na" is attached to the noun and labeled "case".
+    # Most compound prepositions consist of three nodes, some consist of two but we will not apriori restrict the number of nodes.
+    for(my $i = 0; $i < $#nodes; $i++)
+    {
+        my $iord = $nodes[$i]->ord();
+        # We cannot identify parts of compound preposition using the POS tag because some parts are nouns.
+        # We must use the original dependency label (analytical function) because it has not yet been converted.
+        if($nodes[$i]->afun() eq 'AuxP' && $nodes[$i]->is_leaf())
+        {
+            my $parent = $nodes[$i]->parent();
+            my $pord = $parent->ord();
+            if($pord > $iord && $parent->afun() eq 'AuxP')
+            {
+                my $found = 1;
+                my @mwe;
+                # We seem to have found a multi-word preposition. Make sure that all nodes between child and parent comply.
+                for(my $j = $i+1; $nodes[$j] != $parent; $j++)
+                {
+                    if($nodes[$j]->afun() ne 'AuxP' || !$nodes[$j]->is_leaf() || $nodes[$j]->parent() != $parent)
+                    {
+                        $found = 0;
+                        last;
+                    }
+                    push(@mwe, $nodes[$j]);
+                }
+                if($found)
+                {
+                    push(@mwe, $parent);
+                    $nodes[$i]->set_parent($parent->parent());
+                    foreach my $n (@mwe)
+                    {
+                        $n->set_parent($nodes[$i]);
+                        $n->set_afun('');
+                        $n->set_conll_deprel('mwe');
+                    }
+                    # Re-attach all other children of the original head to the new head.
+                    # There should be at least one child (the noun) and possibly also some punctuation etc.
+                    my @children = $parent->children();
+                    foreach my $child (@children)
+                    {
+                        $child->set_parent($nodes[$i]);
+                    }
+                    $i += scalar(@mwe)-1;
+                }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Reattach prepositions as dependents of their noun phrases.
 # Reattach subordinating conjunctions as dependents of their clauses.
 # Assumption: Coordination has already been converted to Stanford style.
@@ -477,7 +542,10 @@ sub push_prep_sub_down
                 $node->set_parent($noun);
                 foreach my $child (@children)
                 {
-                    $child->set_parent($noun);
+                    unless(defined($child->conll_deprel()) && $child->conll_deprel() eq 'mwe')
+                    {
+                        $child->set_parent($noun);
+                    }
                 }
             }
             # Even if the conjunction is already a leaf (which should not happen), it cannot keep the AuxC label.
@@ -521,17 +589,18 @@ sub get_children_of_auxp
     my @children = $preposition->get_children({ordered => 1});
     return @children if(scalar(@children) <= 1);
     # If there are nouns (including pronouns), find the first noun.
+    # Skip nouns attached as "mwe", these are part of multi-word preposition (e.g. "na rozdíl od" = "in contrast to").
     # Note: If coordination has been restructured (recommended!), coordination of noun phrases is represented by a noun, not by a coordinating conjunction.
     for(my $i = 0; $i<=$#children; $i++)
     {
-        if($children[$i]->is_noun())
+        if($children[$i]->is_noun() && !(defined($children[$i]->conll_deprel()) && $children[$i]->conll_deprel() eq 'mwe'))
         {
             my $head = $children[$i];
             splice(@children, $i, 1);
             return ($head, @children);
         }
     }
-    # There are no nouns. Find the first non-punctuation node.
+    # There are no suitable nouns. Find the first non-punctuation node.
     for(my $i = 0; $i<=$#children; $i++)
     {
         if(!$children[$i]->is_punctuation())
