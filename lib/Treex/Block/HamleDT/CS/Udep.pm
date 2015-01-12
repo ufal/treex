@@ -959,13 +959,13 @@ sub split_fused_words
         # When splitting occurs, we will have to re-index nodes with new integers but we will want to use the original indices when printing the CoNLL-U file.
         my $ord = $node->ord();
         $node->wild()->{decord} = $ord;
+        my $parent = $node->parent();
         if($node->form() =~ m/^(a|kdy)(bych|bys|by|bychom|byste)$/i)
         {
             my $w1 = $1;
             my $w2 = $2;
             $w1 =~ s/^(a)$/$1by/i;
             $w1 =~ s/^(kdy)$/$1ž/i;
-            my $parent = $node->parent();
             my $n1 = $parent->create_child();
             my $n2 = $parent->create_child();
             $n1->wild()->{'fused_token.rf'} = $node->id();
@@ -995,6 +995,40 @@ sub split_fused_words
                 $n2->iset()->add('number' => 'plur');
             }
             $n2->set_conll_deprel('aux');
+            # We do not expect any children but since it is not guaranteed, let's make sure they are moved to $n1.
+            my @children = $node->children();
+            foreach my $child (@children)
+            {
+                $child->set_parent($n1);
+            }
+        }
+        elsif($node->form() =~ m/^(.+)(ť)$/i && $node->iset()->verbtype() eq 'verbconj')
+        {
+            my $w1 = $1;
+            my $w2 = $2;
+            my $n1 = $parent->create_child();
+            my $n2 = $n1->create_child();
+            $n1->wild()->{'fused_token.rf'} = $node->id();
+            $n1->wild()->{decord} = $ord+0.1;
+            $n1->set_form($w1);
+            $n1->set_lemma($node->lemma());
+            $n1->set_tag($node->tag());
+            my $iset_hash = $node->iset()->get_hash();
+            delete($iset_hash->{verbtype});
+            $n1->iset()->set_hash($iset_hash);
+            $n1->set_conll_deprel($node->conll_deprel());
+            $n2->wild()->{'fused_token.rf'} = $node->id();
+            $n2->wild()->{decord} = $ord+0.2;
+            $n2->set_form($w2);
+            $n2->set_lemma('neboť');
+            $n2->set_tag('J^-------------');
+            $n2->iset()->add('pos' => 'conj', 'conjtype' => 'coor');
+            $n2->set_conll_deprel('cc');
+            my @children = $node->children();
+            foreach my $child (@children)
+            {
+                $child->set_parent($n1);
+            }
         }
     }
     # Normalize word ordering.
