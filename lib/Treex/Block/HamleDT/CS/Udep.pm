@@ -974,7 +974,15 @@ sub split_fused_words
             $n1->set_lemma(lc($w1));
             $n1->set_tag('J,-------------');
             $n1->iset()->add('pos' => 'conj', 'conjtype' => 'sub');
-            $n1->set_conll_deprel('mark');
+            # The parent should not be root but it may happen if something in the previous transformations got amiss.
+            if($parent->is_root())
+            {
+                $n1->set_conll_deprel('root');
+            }
+            else
+            {
+                $n1->set_conll_deprel('mark');
+            }
             $n2->wild()->{'fused_token.rf'} = $node->id();
             $n2->wild()->{decord} = $ord+0.2;
             $n2->set_form($w2);
@@ -1000,6 +1008,11 @@ sub split_fused_words
             foreach my $child (@children)
             {
                 $child->set_parent($n1);
+                # The second node is conditional auxiliary and it should depend on the participle of the content verb.
+                if(($parent->is_root() || !$parent->is_participle()) && $child->is_participle())
+                {
+                    $n2->set_parent($child);
+                }
             }
         }
         elsif($node->form() =~ m/^(.+)(ť)$/i && $node->iset()->verbtype() eq 'verbconj')
