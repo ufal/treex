@@ -31,6 +31,21 @@ has 'parser_jar' => (
     writer  => '_set_parser_jar'
     );
 
+# TODO: ixa-pipe-pos-1.2.0.jar and IXA-EHU-srl-1.0.jar have the following model names somewhere hardcoded as the default
+#       so changing these parameters won't change the model used
+has 'tagger_model' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => $INST_DIR . '/models/spa/CoNLL2009-ST-Spanish-ALL.anna-3.3.morphtagger.model',
+);
+has 'parser_model' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => $INST_DIR . '/models/spa/CoNLL2009-ST-Spanish-ALL.anna-3.3.parser.model',
+);
+
+
+
 # Memory allowed to the tagger
 has 'parser_memory' => ( is => 'ro', isa => 'Str', default => '2500m' );
 
@@ -45,8 +60,10 @@ sub BUILD {
     
     log_info( "Loading " . $self->tagger_jar);
     $self->_set_tagger_jar( Treex::Core::Resource::require_file_from_share( $self->tagger_jar ) );
+    Treex::Core::Resource::require_file_from_share( $self->tagger_model );
     log_info( "Loading " . $self->parser_jar);
     $self->_set_parser_jar( Treex::Core::Resource::require_file_from_share( $self->parser_jar ) );
+    Treex::Core::Resource::require_file_from_share( $self->parser_model );
 
     my ($fh, $filename) = File::Temp::tempfile(OPEN => 0);
 
