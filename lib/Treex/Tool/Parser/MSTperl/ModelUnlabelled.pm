@@ -82,6 +82,14 @@ sub normalize {
         foreach my $key (keys %{$self->weights}) {
             $self->weights->{$key} = $self->weights->{$key} / $divisor;
         }
+    } elsif ($self->config->normalization_type eq 'divstddev') {
+        # divide by the standard deviation of weights
+        my $avg = $sum/$count;
+        my $var = 1/$count * sum( map {$_*$_} @values ) - $avg*$avg;
+        my $divisor = sqrt $var;
+        foreach my $key (keys %{$self->weights}) {
+            $self->weights->{$key} = $self->weights->{$key} / $divisor;
+        }
     }
 
     return 1;
