@@ -34,11 +34,8 @@ override 'parse_sentence_full' => sub {
 
     my $sentence_length = $sentence_working_copy->len();
 
-    my $graph = Graph->new(
-        vertices => [ ( 0 .. $sentence_length ) ]
-    );
-    my @weighted_edges;
-    if ( $self->config->DEBUG >= 2 ) { print "EDGES (parent -> child):\n"; }
+    # first, get the model scores
+    my %scores = ();
     foreach my $child ( @{ $sentence_working_copy->nodes } ) {
         foreach my $parent ( @{ $sentence_working_copy->nodes_with_root } ) {
             if ( $child == $parent ) {
@@ -54,44 +51,42 @@ override 'parse_sentence_full' => sub {
             my $features = $self->config->unlabelledFeaturesControl
                 ->get_all_features($edge);
 
+            foreach my $model (@{$self->model} ) {
+                $scores{$model}->{$parent->ord}->{$child->ord} =
+                    $model->score_features($features)
+            }
+        }
+    }
+
+    # next, normalize them
+    my %normalization = ();
+    foreach my $model (@{$self->model} ) {
+        $normalization{$model} = 1;
+    }
+
+    # finally, score the edges
+    my $graph = Graph->new(
+        vertices => [ ( 0 .. $sentence_length ) ]
+    );
+    foreach my $child ( @{ $sentence_working_copy->nodes } ) {
+        foreach my $parent ( @{ $sentence_working_copy->nodes_with_root } ) {
+            if ( $child == $parent ) {
+                next;
+            }
+
             # HERE THE MODEL COMBINATION HAPPENS
             # sum of feature weights
-            my $score = sum (
-                map {
-                    $_->score_features($features) * $_->weight
-                } @{$self->model}
-            );
-                #map { $_->score_features($features) } @{$self->model}
-
-            # only progress and/or debug info
-            if ( $self->config->DEBUG >= 2 ) {
-                print $parent->ord . ' ' . $parent->fields->[1] .
-                    ' -> ' . $child->ord . ' ' . $child->fields->[1] .
-                    ' score: ' . $score . "\n";
-                print $parent->ord .
-                    ' -> ' . $child->ord .
-                    ' score: ' . $score . "\n";
-                foreach my $feature ( @{$features} ) {
-                    print $feature . ", ";
-                }
-                print "\n";
-                print "\n";
+            my $score = 0;
+            foreach my $model (@{$self->model} ) {
+                $score += $scores{$model}->{$parent->ord}->{$child->ord}
+                    * $normalization{$model} * $model->weight;
             }
 
             # MaxST needed but MinST is computed
             #  -> need to normalize score as -$score
-            push @weighted_edges, ( $parent->ord, $child->ord, -$score );
+            $graph->add_weighted_edge($parent->ord, $child->ord, -$score);
         }
     }
-
-    # only progress and/or debug info
-    if ( $self->config->DEBUG >= 2 ) {
-        print "GRAPH:\n";
-        print join " ", @weighted_edges;
-        print "\n";
-    }
-
-    $graph->add_weighted_edges(@weighted_edges);
 
     my $msts = $graph->MST_ChuLiuEdmonds($graph);
 
