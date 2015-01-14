@@ -62,7 +62,7 @@ has _urls => ( is => 'rw' );
 sub _mark_urls {
     my ( $self, $sentence ) = @_;
     my @urls;
-    while ( $sentence =~ s/(\W)((http:\/\/)?([\w\-]+\.)+(com|cz|de|es|eu|fr|hu|it|sk))(\W)/$1 XXXURLXXX $6/ ) { ## no critic (RegularExpressions::ProhibitComplexRegexes) this is not complex
+    while ( $sentence =~ s/(\W)((http(s)?:\/\/)?([\w\-]+\.)+(com|org|net|cz|de|es|eu|pt|fr|hu|it|sk))(\W)/$1 XXXURLXXX $7/ ) { ## no critic (RegularExpressions::ProhibitComplexRegexes) this is not complex
         push @urls, $2;
     }
     $self->_set_urls( \@urls );
