@@ -27,7 +27,8 @@ sub process_atree {
 
     # if only random sentences are printed
     return if rand() > $self->randomly_select_sentences_ratio;
-
+    # Many tools will consider the CoNLL-X file invalid if node indices do not form a contiguous sequence of integers from 1.
+    $atree->_normalize_node_ordering();
     foreach my $anode ( $atree->get_descendants( { ordered => 1 } ) ) {
         my ( $lemma, $pos, $cpos, $deprel ) =
             map { $self->get_attribute( $anode, $_ ) }
