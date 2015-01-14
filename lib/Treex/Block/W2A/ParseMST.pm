@@ -68,7 +68,8 @@ sub BUILD {
 
 sub process_start {
     my ($self)  = @_;
-    my ($model) = $self->require_files_from_share( $self->model_dir . '/' . $self->model );
+    my $model_dir_file = $self->model_dir . '/' . $self->model;
+    my ($model) = ($model_dir_file =~ m-^/- && -f $model_dir_file) ? $model_dir_file : $self->require_files_from_share( $model_dir_file );
     my $services = Treex::Core::Config->use_services; # this is here only for testing
     my $key = "$model-$services";
 
