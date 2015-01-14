@@ -4,8 +4,9 @@ use Treex::Core::Common;
 use Treex::Core::Resource;
 use File::Java;
 use File::Temp qw/ tempdir /;
-use IO::Handle;
 use ProcessUtils;
+use IPC::Open3;
+use autodie;
 
 Readonly my $INST_DIR => 'installed_tools/ixa-pipe';
 
@@ -18,10 +19,17 @@ has 'tagger_jar' => (
     isa     => 'Str',
     default => $INST_DIR . '/ixa-pipe-pos-1.2.0.jar',
     writer  => '_set_tagger_jar'
-    );
+);
 
 # Memory allowed to the tagger
 has 'tagger_memory' => ( is => 'ro', isa => 'Str', default => '512m' );
+
+has 'tagger_model' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => $INST_DIR . '/models/spa/CoNLL2009-ST-Spanish-ALL.anna-3.3.morphtagger.model',
+);
+
 
 # ixa-pipe tagger main JAR
 has 'parser_jar' => (
@@ -31,26 +39,18 @@ has 'parser_jar' => (
     writer  => '_set_parser_jar'
     );
 
-# TODO: ixa-pipe-pos-1.2.0.jar and IXA-EHU-srl-1.0.jar have the following model names somewhere hardcoded as the default
-#       so changing these parameters won't change the model used
-has 'tagger_model' => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => $INST_DIR . '/models/spa/CoNLL2009-ST-Spanish-ALL.anna-3.3.morphtagger.model',
-);
+# Memory allowed to the tagger
+has 'parser_memory' => ( is => 'ro', isa => 'Str', default => '2000m' );
+
+# TODO: IXA-EHU-srl-1.0.jar has the following model name somewhere hardcoded
+#       so changing this parameter won't change the model used
 has 'parser_model' => (
     is      => 'ro',
     isa     => 'Str',
     default => $INST_DIR . '/models/spa/CoNLL2009-ST-Spanish-ALL.anna-3.3.parser.model',
 );
 
-
-
-# Memory allowed to the tagger
-has 'parser_memory' => ( is => 'ro', isa => 'Str', default => '2500m' );
-
 # tagger slave application controls (bipipe handles, application PID)
-has '_conll_filename' => ( is => 'rw', isa => 'Str' );
 has '_read_handle'    => ( is => 'rw', isa => 'FileHandle' );
 has '_write_handle'   => ( is => 'rw', isa => 'FileHandle' );
 has '_java_pid'       => ( is => 'rw', isa => 'Int' );
@@ -64,140 +64,81 @@ sub BUILD {
     log_info( "Loading " . $self->parser_jar);
     $self->_set_parser_jar( Treex::Core::Resource::require_file_from_share( $self->parser_jar ) );
     Treex::Core::Resource::require_file_from_share( $self->parser_model );
-
-    my ($fh, $filename) = File::Temp::tempfile(OPEN => 0);
-
-    my $tagger  = File::Java->path_arg( $self->tagger_jar );
-    my $parser  = File::Java->path_arg( $self->parser_jar );
-    my $command = 'java' . ' -Xmx' . $self->tagger_memory
-        . ' -jar ' . $tagger . ' tag 2> /dev/null'
-        . ' | java ' . ' -Xmx' . $self->parser_memory
-    	. ' -jar ' . $parser . ' -l es -o only-deps --conll ' . $filename
-        . ' 2> /dev/null ';    # suppress the rather verbose tagger output
-    # my $command = 'java' . ' -Xmx' . $self->tagger_memory
-    #     . ' -jar ' . $tagger . ' tag'
-    #     . ' | java ' . ' -Xmx' . $self->parser_memory
-    # 	. ' -jar ' . $parser . ' -l es -o only-deps --conll ' . $filename;
-
-    log_info( "Running " . $command );
-
-    $SIG{PIPE} = 'IGNORE';     # don't die if tagger gets killed
-    my ( $read, $write, $pid ) = ProcessUtils::bipipe($command);
-
-    $self->_set_conll_filename($filename);
-    $self->_set_read_handle($read);
-    $self->_set_write_handle($write);
-    $self->_set_java_pid($pid);
-
+    
+    # Unfortunatelly, IXA-EHU-srl needs to be executed again for each document
+    # (which takes about 43 seconds for loading the models), because it does not support streaming.
+    # We could pre-load the models now with
+    # $self->launch();
+    # but it is more straightforward to run launch() always from parse_document().
     return;
 }
 
 sub launch {
-    my $self = shift;
-    
-    close( $self->_write_handle ) if $self->_write_handle;
-    close( $self->_read_handle ) if $self->_read_handle;
-    ProcessUtils::safewaitpid( $self->_java_pid );
-
-    my $filename = $self->_conll_filename;
+    my ($self) = @_;
     my $tagger  = File::Java->path_arg( $self->tagger_jar );
     my $parser  = File::Java->path_arg( $self->parser_jar );
-    my $command = 'java' . ' -Xmx' . $self->tagger_memory
-        . ' -jar ' . $tagger . ' tag 2> /dev/null'
-        . ' | java ' . ' -Xmx' . $self->parser_memory
-    	. ' -jar ' . $parser . ' -l es -o only-deps --conll ' . $filename
-        . ' 2> /dev/null ';    # suppress the rather verbose tagger output
-    # my $command = 'java' . ' -Xmx' . $self->tagger_memory
-    #     . ' -jar ' . $tagger . ' tag'
-    #     . ' | java ' . ' -Xmx' . $self->parser_memory
-    # 	. ' -jar ' . $parser . ' -l es -o only-deps --conll ' . $filename;
-    log_info( "Running " . $command );
+    my $command = 'java -Xmx' . $self->tagger_memory
+        . " -jar $tagger tag 2>/dev/null" # suppress the rather verbose tagger output
+        . ' | java -Xmx' . $self->parser_memory
+        . " -jar $parser -l es -o only-deps"
+        # IXA-EHU-srl always outputs NAF XML to stdout.
+        # Let's discard this XML output, and redirect the CoNLL to stdout (via /dev/fd/3)
+        . ' --conll /dev/fd/3 3>&1 1>/dev/null';
+    log_info "Running $command";
 
     $SIG{PIPE} = 'IGNORE';     # don't die if tagger gets killed
+    #my ( $read, $write, $pid ) = ProcessUtils::verbose_bipipe($command);
     my ( $read, $write, $pid ) = ProcessUtils::bipipe($command);
 
     $self->_set_read_handle($read);
     $self->_set_write_handle($write);
     $self->_set_java_pid($pid);
-
     return;
 }
 
-sub conll_handle {
-    my $self = shift;
-
-    my $fh;
-    open ($fh, $self->_conll_filename);
-    my $tmp_reader = new IO::Handle;
-    $tmp_reader->fdopen($fh, 'r');
-    $tmp_reader->autoflush(1);
-    binmode($tmp_reader, ":utf8");
-
-    return $tmp_reader;
-}
 
 sub scape_xml {
-    my $self=shift;
-    my $text=shift;
+    my ($self, $text) = @_;
 
-    $text =~ s/&/&amp;/;
-    $text =~ s/"/&quot;/;
-    $text =~ s/'/&apos;/;
-    $text =~ s/</&lt;/;
-    $text =~ s/>/&gt;/;
+    $text =~ s/&/&amp;/g;
+    $text =~ s/"/&quot;/g;
+    $text =~ s/'/&apos;/g;
+    $text =~ s/</&lt;/g;
+    $text =~ s/>/&gt;/g;
 
     return $text;
-}
-
-sub DEMOLISH {
-    my ($self) = @_;
-    
-    # Close the tagger application
-    close( $self->_write_handle ) if $self->_write_handle;
-    close( $self->_read_handle ) if $self->_read_handle;
-    ProcessUtils::safewaitpid( $self->_java_pid );
-
-    unlink ($self->_conll_filename);
-
-    return;
 }
 
 sub parse_document {
     my ( $self, $sentences_rf ) = @_;
     my @sentences = @$sentences_rf;
 
+    $self->launch();
+    
     print { $self->_write_handle } "<NAF xml:lang='es' version='2.0'><text>\n";
-    #print STDERR "<NAF xml:lang='es' version='2.0'><text>\n";
     my $sent=1;
     my $tid=1;
     foreach my $s (@sentences) {
-    	my @tokens = split(/ /, $s);
-    	foreach my $t (@tokens) {
-    	    print  { $self->_write_handle } "<wf id='$tid' sent='$sent'>" . $self->scape_xml($t) . "</wf>\n";
-    	    #print  STDERR "<wf id='$tid' sent='$sent'>" . $self->scape_xml($t) . "</wf>\n";
-    	    $tid++;
-    	}
-    	$sent++;
+        my @tokens = split(/ /, $s);
+        foreach my $t (@tokens) {
+            print  { $self->_write_handle } "<wf id='$tid' sent='$sent'>" . $self->scape_xml($t) . "</wf>\n";
+            $tid++;
+        }
+        $sent++;
     }
     print { $self->_write_handle } "</text></NAF>\n";
-    #print STDERR "</text></NAF>\n";
-    close ( $self->_write_handle );
-
+    close $self->_write_handle; # This is needed, so IXA starts parsing
+    
     # read the result
+    my @output;
     my $read = $self->_read_handle;
     while (<$read>) {
-	#print STDERR $_;
+        push @output, $_;
     }
-
-    my @output;
-    $read = $self->conll_handle();
-    while (<$read>) {
-	push @output, $_;
-    }
-
-    close ( $read );
-
-    return join ( "", @output );
+    close $self->_read_handle;
+    ProcessUtils::safewaitpid( $self->_java_pid );
+    
+    return join '', @output;
 }
 
 1;
@@ -224,7 +165,7 @@ Amount of memory for the Java VM running the ixa-pipe tagger executable (default
 
 =item parser_memory
 
-Amount of memory for the Java VM running the ixa-pipe parser executable (default: 2500m).
+Amount of memory for the Java VM running the ixa-pipe parser executable (default: 2000m).
 
 =back
 
@@ -241,6 +182,8 @@ Returns a list of tags for tokenized input.
 =head1 AUTHOR
 
 Gorka Labaka <gorka.labaka@ehu.es>
+
+Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

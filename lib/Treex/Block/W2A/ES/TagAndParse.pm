@@ -26,38 +26,35 @@ sub process_document {
     my @trees = split(/\n\n/, $output);
 
     if ($#trees != $#atrees) {
-	log_warn( "Different number of sentences in output." );
-	log_warn( "input: " . scalar @atrees . " output: " . scalar @trees );
-	#log_warn( $output );
-	#return;
+        log_warn( "Different number of sentences in output." );
+        log_fatal( "input: " . scalar @atrees . " output: " . scalar @trees . "\n$output" );
     }
 
     for (my $i=0; $i<=$#atrees; $i++) {
-	my @nodes = split( "\n", $trees[$i] );
-	my @anodes = $atrees[$i]->get_descendants({ordered=>1});
-	    
-	if ($#nodes != $#anodes) {
-	    log_warn( "Different number of tokens in output." );
-	    log_warn( "input nodes: " . scalar @anodes . " output nodes: " . scalar @nodes );
-	    splice @trees, $1, 0, "-\n" if ($#trees < $#atrees);
-	    next;
-	}
+        my @nodes = split( "\n", $trees[$i] );
+        my @anodes = $atrees[$i]->get_descendants({ordered=>1});
+        
+        if ($#nodes != $#anodes) {
+            log_warn( "Different number of tokens in output." );
+            log_warn( "input nodes: " . scalar @anodes . " output nodes: " . scalar @nodes );
+            splice @trees, $1, 0, "-\n" if ($#trees < $#atrees);
+            next;
+        }
 
-	foreach my $j (0..$#anodes) {
-	    my ( $id, $form, $lemma, $plemma, $postag, $ppos, $pfeats, $feats, $head, $phead, $deprel, $pdeprel, $fillpred, $pred, @apreds ) = split( /\s+/, $nodes[$j] );
-	    $anodes[$j]->set_form($form);
-	    $anodes[$j]->set_lemma($lemma);
-	    $anodes[$j]->set_tag($postag);
-	    $anodes[$j]->set_conll_cpos($postag);
-	    $anodes[$j]->set_conll_pos($postag);
-	    $anodes[$j]->set_conll_feat($feats);
-	    $anodes[$j]->set_conll_deprel($deprel);
+        foreach my $j (0..$#anodes) {
+            my ( $id, $form, $lemma, $plemma, $postag, $ppos, $pfeats, $feats, $head, $phead, $deprel, $pdeprel, $fillpred, $pred, @apreds ) = split( /\s+/, $nodes[$j] );
+            $anodes[$j]->set_form($form);
+            $anodes[$j]->set_lemma($lemma);
+            $anodes[$j]->set_tag($postag);
+            $anodes[$j]->set_conll_cpos($postag);
+            $anodes[$j]->set_conll_pos($postag);
+            $anodes[$j]->set_conll_feat($feats);
+            $anodes[$j]->set_conll_deprel($deprel);
 
-	    $anodes[$j]->set_parent( $anodes[ ($head -1) ] ) if ($head > 0);
-	}
+            $anodes[$j]->set_parent( $anodes[ ($head -1) ] ) if ($head > 0);
+        }
     }
 
-    $self->_parser->launch();
     return 1;
 }
 
@@ -66,8 +63,8 @@ sub process_atree {
 
     my $text;
     foreach my $anode ($atree->get_descendants({ordered=>1})){
-	$text .= " " if defined $text;
-	$text .= $anode->form;
+        $text .= " " if defined $text;
+        $text .= $anode->form;
     }
     push @sentences, $text;
     push @atrees, $atree;
