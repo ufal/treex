@@ -288,7 +288,6 @@ sub afun_to_udeprel
         # Attribute of a noun: amod, nummod, nmod, acl
         elsif($afun eq 'Atr')
         {
-            ###!!! TODO: personal names, foreign phrases and named entities
             # Cardinal number is nummod, ordinal number is amod. It should not be a problem because Interset should categorize ordinals as special types of adjectives.
             # But we cannot use the is_numeral() method because it returns true if pos=num or if numtype is not empty.
             # We also want to exclude pronominal numerals (kolik, tolik, mnoho, málo). These should be det.
@@ -296,12 +295,23 @@ sub afun_to_udeprel
             {
                 if($node->iset()->prontype() eq '')
                 {
-                    $udep = 'nummod'; ###!!! TODO: Should we create a special deprel for those numerals that would govern nouns in PDT? I think yes!
+                    # If we later push the numeral down, we will label it nummod:gov.
+                    $udep = 'nummod';
                 }
                 else
                 {
+                    # If we later push the quantifier down, we will label it det:numgov.
                     $udep = 'det:nummod';
                 }
+            }
+            elsif($node->iset()->nametype() =~ m/(giv|sur|prs)/ &&
+                  $parent->iset()->nametype() =~ m/(giv|sur|prs)/)
+            {
+                $udep = 'name';
+            }
+            elsif($node->is_foreign() && $parent->is_foreign())
+            {
+                $udep = 'foreign';
             }
             else
             {
@@ -324,17 +334,35 @@ sub afun_to_udeprel
         # Reflexive pronoun "se", "si" with mandatorily reflexive verbs.
         elsif($afun eq 'AuxT')
         {
-            $udep = 'mwe:reflex';
+            $udep = 'compound:reflex';
         }
         # Reflexive pronoun "se", "si" used for reflexive passive.
         elsif($afun eq 'AuxR')
         {
             $udep = 'auxpass:reflex';
         }
-        # AuxZ: intensifier
+        # AuxZ: intensifier or negation
         elsif($afun eq 'AuxZ')
         {
-            $udep = 'advmod:auxz'; ###!!! TODO: A better name?
+            # Negation is mostly done using bound prefix ne-.
+            # If it is a separate word ("ne už personálním, ale organizačním"; "potřeboval čtyřnohého a ne dvounohého přítele), it is labeled AuxZ.
+            if($node->lemma() eq 'ne')
+            {
+                $udep = 'neg';
+            }
+            # AuxZ is an emphasizing word (“especially on Monday”).
+            # It also occurs with numbers (“jen čtyři firmy”, “jen několik procent”).
+            # The word "jen" ("only") is not necessarily a restriction. It rather emphasizes that the number is a restriction.
+            # On the tectogrammatical layer these words often get the functor RHEM (rhematizer / rematizátor = něco, co vytváří réma, fokus).
+            # But this is not a 1-1 mapping.
+            # https://ufal.mff.cuni.cz/pdt2.0/doc/manuals/en/t-layer/html/ch10s06.html
+            # https://ufal.mff.cuni.cz/pdt2.0/doc/manuals/en/t-layer/html/ch07s07s05.html
+            # Most frequent lemmas with AuxZ: i (4775 výskytů), jen, až, pouze, ani, už, již, ještě, také, především (689 výskytů)
+            # Most frequent t-lemmas with RHEM: #Neg (7589 výskytů), i, jen, také, už, již, ani, až, pouze, například (500 výskytů)
+            else
+            {
+                $udep = 'advmod:emph';
+            }
         }
         # AuxY: Additional conjunction in coordination ... it has been relabeled during processing of coordinations.
         # AuxY: "jako" attached to Atv ... case
@@ -360,7 +388,15 @@ sub afun_to_udeprel
         ###!!! TODO: ExD with chains of orphans should be stanfordized!
         elsif($afun eq 'ExD')
         {
-            $udep = 'dep';
+            # Some ExD are vocatives.
+            if($node->iset()->case() eq 'voc')
+            {
+                $udep = 'vocative';
+            }
+            else
+            {
+                $udep = 'dep';
+            }
         }
         # Previous transformation of coordination to the Stanford style caused that afuns of some nodes
         # actually are already universal dependency relations.
@@ -764,7 +800,7 @@ sub fix_determiners
                 #  firmy All - Impex (foreign determiner All; it cannot agree in case because it does not have case)
                 #  děvy samy (girls themselves) (the words agree in case but the afun is Atv, not Atr, thus we should not get through the 'amod' constraint above)
                 if(!($parent->is_noun() || $parent->is_adjective()) ||
-                   $node->conll_deprel() ne 'amod' ||
+                   $node->conll_deprel() !~ m/^(amod|det)$/ ||
                    $parent->iset()->case() ne $node->iset()->case() ||
                    $parent->iset()->number() ne $node->iset()->number())
                 {
@@ -926,7 +962,7 @@ sub push_numerals_down
                 $deprel = 'nmod' if($deprel eq 'nummod');
                 $noun->set_conll_deprel($deprel);
                 $number->set_parent($noun);
-                $number->set_conll_deprel($number->iset()->prontype() eq '' ? 'nummod:gov' : 'det:nummodgov');
+                $number->set_conll_deprel($number->iset()->prontype() eq '' ? 'nummod:gov' : 'det:numgov');
                 # All children of the number, except for parts of compound number, must be re-attached to the noun because they modify the whole phrase.
                 my @children = grep {$_->conll_deprel() ne 'compound'} $number->children();
                 foreach my $child (@children)
