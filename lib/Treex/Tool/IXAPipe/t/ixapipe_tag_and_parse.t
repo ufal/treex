@@ -5,9 +5,6 @@ use warnings;
 use Treex::Tool::IXAPipe::TagAndParse;
 use Test::More;
 
-my $tagger_parser = Treex::Tool::IXAPipe::TagAndParse->new();
-isa_ok( $tagger_parser, 'Treex::Tool::IXAPipe::TagAndParse', 'tool instantiated' );
-
 my @sentences   = ('No hay señal wifi .', 'Imprimir PDF .');
 my @expected_conll = (<<'END',
 1 No    no    no    r r _ postype=negative                                                     2 2 mod      mod      _ _
@@ -22,17 +19,19 @@ END
 3 .        .        .        f f _ punct=period                             1 1 f        f        _ _
 END
 );
+s/ +/\t/g foreach @expected_conll;
+
+plan tests => 3 + 2*@sentences;
+
+my $tagger_parser = Treex::Tool::IXAPipe::TagAndParse->new();
+isa_ok( $tagger_parser, 'Treex::Tool::IXAPipe::TagAndParse', 'tool instantiated' );
+
 
 my $conll_output = $tagger_parser->parse_document( \@sentences );
 my @conll_trees = split /\n\n/, $conll_output;
-
 is(scalar @conll_trees, scalar @expected_conll, 'Same number of sentences on output');
-
-foreach my $tree (@conll_trees){
-    my $sent = shift @sentences;
-    my $expected = shift @expected_conll;
-    $expected =~ s/ +/\t/g;
-    is("$tree\n", $expected, "Sentence '$sent'");
+foreach my $i (0..$#sentences){
+    is( "$conll_trees[$i]\n", $expected_conll[$i], "Sentence '$sentences[$i]'");
 }
 
 # Treex::Tool::IXAPipe::TagAndParse kills the java process after each parse_document() call,
@@ -41,12 +40,6 @@ foreach my $tree (@conll_trees){
 $conll_output = $tagger_parser->parse_document( \@sentences );
 @conll_trees = split /\n\n/, $conll_output;
 is(scalar @conll_trees, scalar @expected_conll, '2nd try: Same number of sentences on output');
-foreach my $tree (@conll_trees){
-    my $sent = shift @sentences;
-    my $expected = shift @expected_conll;
-    $expected =~ s/ +/\t/g;
-    is("$tree\n", $expected, "2nd try: Sentence '$sent'");
+foreach my $i (0..$#sentences){
+    is( "$conll_trees[$i]\n", $expected_conll[$i], "2nd try: Sentence '$sentences[$i]'");
 }
-
-
-done_testing();
