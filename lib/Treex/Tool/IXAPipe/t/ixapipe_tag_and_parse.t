@@ -35,4 +35,18 @@ foreach my $tree (@conll_trees){
     is("$tree\n", $expected, "Sentence '$sent'");
 }
 
+# Treex::Tool::IXAPipe::TagAndParse kills the java process after each parse_document() call,
+# so let's check whether it can process another "document".
+
+$conll_output = $tagger_parser->parse_document( \@sentences );
+@conll_trees = split /\n\n/, $conll_output;
+is(scalar @conll_trees, scalar @expected_conll, '2nd try: Same number of sentences on output');
+foreach my $tree (@conll_trees){
+    my $sent = shift @sentences;
+    my $expected = shift @expected_conll;
+    $expected =~ s/ +/\t/g;
+    is("$tree\n", $expected, "2nd try: Sentence '$sent'");
+}
+
+
 done_testing();
