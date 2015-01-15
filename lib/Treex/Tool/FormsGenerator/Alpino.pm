@@ -27,7 +27,7 @@ sub BUILD {
     my $redirect = Treex::Core::Log::get_error_level() eq 'DEBUG' ? '' : '2>/dev/null';
 
     # Force line-buffering of Alpino's output (otherwise it will hang)
-    my @command = ( 'stdbuf', '-oL', $exe_path, 'end_hook=print_generated_sentence', '-generate' );
+    my @command = ( 'stdbuf', '-oL', $exe_path, 'user_max=90000', 'end_hook=print_generated_sentence', '-generate' );
 
     $SIG{PIPE} = 'IGNORE';    # don't die if parser gets killed
     my ( $reader, $writer, $pid ) = ProcessUtils::bipipe_noshell( ":encoding(utf-8)", @command );
@@ -50,7 +50,7 @@ sub _generate_from_adtxml {
     my $reader = $self->_alpino_readhandle;
 
     $xml =~ s/[\t\n]//g;
-    print STDERR $xml . "\n";
+    # print STDERR $xml . "\n";
     print $writer $xml, "\n";
     my $line = <$reader>;
     chomp $line;
