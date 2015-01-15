@@ -18,17 +18,22 @@ override 'tokenize_sentence' => sub {
     $sentence =~ s/$/ /;
     $sentence =~ s/^/ /;
 
+    # The following characters (double-characters) are separated everywhere and cannot be used inside URLs.
+    # It is quite common than an URL is enclosed in quotes
+    # and URI::Find::Schemeless does not recognize such URLs, so we need to separate it first.
+    $sentence =~ s/(["<>{}“”«»–|—„‚‘]|\[|\]|``|\'\'|‘‘|\^)/ $1 /g;
+
     # detect web sites and email addresses and protect them from tokenization
     $sentence = $self->_mark_urls($sentence);
 
-    # the following characters (double-characters) are separated everywhere
-    $sentence =~ s/(;|!|<|>|\{|\}|\[|\]|\(|\)|\?|\#|\$|£|\%|\&|``|\'\'|‘‘|"|“|”|«|»|--|–|—|„|‚|‘|\*|\^|\|)/ $1 /g; ## no critic (RegularExpressions::ProhibitComplexRegexes) this is not complex
+    # the following characters (double-characters) are separated everywhere (except inside URLs)
+    $sentence =~ s/([;!()?#\$£%&*]|--)/ $1 /g;
 
     # short hyphen is separated if it is followed or preceeded by non-alphanuneric character and is not a part of --, or a unary minus
     $sentence =~ s/([^\-\w])\-([^\-0-9])/$1 - $2/g;
     $sentence =~ s/([0-9]\s+)\-([0-9])/$1 - $2/g; # preceded by a number - not a unary minus
     $sentence =~ s/([^\-])\-([^\-\w])/$1 - $2/g;
-    
+
     # plus is separated everywhere, except at the end of a word (separated by a space) and as unary plus
     $sentence =~ s/(\w)\+(\w)/$1 + $2/g;
     $sentence =~ s/([0-9]\s*)\+([0-9])/$1 + $2/g;
