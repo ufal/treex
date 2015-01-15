@@ -51,6 +51,8 @@ my $config = new_ok(
         config_file => $config_file,
         DEBUG => 0,
         normalization_type => 'minavg_divabsavg',
+        #normalization_type => 'inddivabssum',
+        #normalization_type => 'inddivsumabs',
     ],
     "process config file,"
 );

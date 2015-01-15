@@ -52,7 +52,7 @@ override 'parse_sentence_full' => sub {
                 ->get_all_features($edge);
 
             foreach my $model (@{$self->model} ) {
-                $scores{$model}->{$parent->ord . '_' . $child->ord} =
+                $scores{$model}->{$child->ord}->{$parent->ord} =
                     $model->score_features($features)
             }
         }
@@ -63,13 +63,17 @@ override 'parse_sentence_full' => sub {
     use List::Util "sum";
     foreach my $model (@{$self->model} ) {
         if ($self->config->normalization_type eq 'inddivsumabs') {
-            $normalization{$model} = 1 / sum(
-                map {abs} values(%{$scores{$model}}) );
+            $normalization{$model} = 1 / sum( map {
+                    sum (map {abs} values %{$scores{$model}->{$_}})
+                } keys(%{$scores{$model}}) );
         } elsif ($self->config->normalization_type eq 'inddivabssum') {
-            $normalization{$model} = 1 / abs( sum values(%{$scores{$model}}) );
+            $normalization{$model} = 1 / abs( sum(
+                    map { sum values %{$scores{$model}->{$_}} } keys(%{$scores{$model}})
+                ) );
         } else {
             $normalization{$model} = 1;
         }
+        # TODO try to use a running sum average
     }
 
     # finally, score the edges
@@ -86,7 +90,7 @@ override 'parse_sentence_full' => sub {
             # sum of feature weights
             my $score = 0;
             foreach my $model (@{$self->model} ) {
-                $score += $scores{$model}->{$parent->ord . '_' . $child->ord}
+                $score += $scores{$model}->{$child->ord}->{$parent->ord}
                     * $normalization{$model} * $model->weight;
             }
 
