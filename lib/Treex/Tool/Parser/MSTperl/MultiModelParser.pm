@@ -59,6 +59,7 @@ override 'parse_sentence_full' => sub {
     }
 
     # next, normalize them
+    # TODO: also try to use a running sum average for ind*
     my %normalization = ();
     use List::Util "sum";
     foreach my $model (@{$self->model} ) {
@@ -70,10 +71,28 @@ override 'parse_sentence_full' => sub {
             $normalization{$model} = 1 / abs( sum(
                     map { sum values %{$scores{$model}->{$_}} } keys(%{$scores{$model}})
                 ) );
-        } else {
-            $normalization{$model} = 1;
+        } elsif ($self->config->normalization_type eq 'childdivabssum') {
+            foreach my $child ( @{ $sentence_working_copy->nodes } ) {
+                $normalization{$model}->{$child->ord} = 1 / abs( sum(
+                    values %{$scores{$model}->{$child->ord}}
+                ) );
+            }
+        } elsif ($self->config->normalization_type eq 'childdivsumabs') {
+            foreach my $child ( @{ $sentence_working_copy->nodes } ) {
+                $normalization{$model}->{$child->ord} = 1 / sum( map {abs} (
+                    values %{$scores{$model}->{$child->ord}}
+                ) );
+            }
+        } elsif ($self->config->normalization_type eq 'childdivstddev') {
+            foreach my $child ( @{ $sentence_working_copy->nodes } ) {
+                my $sum = sum( values %{$scores{$model}->{$child->ord}} );
+                my $avg = $sum/$sentence_length;
+                my $var = 1/$sentence_length
+                    * sum( map {$_*$_} (values %{$scores{$model}->{$child->ord}}))
+                    - $avg*$avg;
+                $normalization{$model}->{$child->ord} = 1 / sqrt($var);
+            }
         }
-        # TODO try to use a running sum average
     }
 
     # finally, score the edges
@@ -89,9 +108,24 @@ override 'parse_sentence_full' => sub {
             # HERE THE MODEL COMBINATION HAPPENS
             # sum of feature weights
             my $score = 0;
-            foreach my $model (@{$self->model} ) {
-                $score += $scores{$model}->{$child->ord}->{$parent->ord}
+            # model-based individual normalization
+            if ( $self->config->normalization_type =~ /^ind/) {
+                foreach my $model (@{$self->model} ) {
+                    $score += $scores{$model}->{$child->ord}->{$parent->ord}
                     * $normalization{$model} * $model->weight;
+                }
+            # model- and child-based individual normalization
+            } elsif ( $self->config->normalization_type =~ /^child/) {
+                foreach my $model (@{$self->model} ) {
+                    $score += $scores{$model}->{$child->ord}->{$parent->ord}
+                    * $normalization{$model}->{$child->ord} * $model->weight;
+                }
+            # some other non-individual normalization, not happening here
+            } else {
+                foreach my $model (@{$self->model} ) {
+                    $score += $scores{$model}->{$child->ord}->{$parent->ord}
+                    * $model->weight;
+                }
             }
 
             # MaxST needed but MinST is computed
