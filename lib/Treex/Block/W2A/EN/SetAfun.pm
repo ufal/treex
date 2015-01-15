@@ -222,7 +222,7 @@ sub get_afun {
     # AuxG = other graphic symbols
     # AuxX = comma (not serving as Coord)
     my $form = $node->form;
-    return 'AuxK' if $form =~ /[?!]/;
+    return 'AuxK' if $form =~ /^[?!]+$/;
     return 'AuxX' if $form eq ',';
 
     # any punctuation, including ``, -LRB-, -RRB-, but excluding % wrongly assigned to the Unicode punctuation category

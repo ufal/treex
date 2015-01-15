@@ -56,23 +56,25 @@ override 'tokenize_sentence' => sub {
     return $sentence;
 };
 
-has _urls => ( is => 'rw' );
+use URI::Find::Schemeless;
+my @urls;
+my $finder = URI::Find::Schemeless->new(sub {
+    my ($uri, $orig_uri) = @_;
+    push @urls, $orig_uri;
+    return 'XXXURLXXX';
+});
 
 # internally marks URLs, so they won't be splitted
 sub _mark_urls {
     my ( $self, $sentence ) = @_;
-    my @urls;
-    while ( $sentence =~ s/(\W)((http(s)?:\/\/)?([\w\-]+\.)+(com|org|net|cz|de|es|eu|pt|fr|hu|it|sk))(\W)/$1 XXXURLXXX $7/ ) { ## no critic (RegularExpressions::ProhibitComplexRegexes) this is not complex
-        push @urls, $2;
-    }
-    $self->_set_urls( \@urls );
+    @urls = ();
+    $finder->find(\$sentence);
     return $sentence;
 }
 
 # pushes bask URLs, marked by C<_mark_urls>
 sub _restore_urls {
     my ( $self, $sentence ) = @_;
-    my @urls = @{ $self->_urls };
     while (@urls) {
         my $url = shift @urls;
         $sentence =~ s/XXXURLXXX/$url/;
