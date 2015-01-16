@@ -4,6 +4,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+with 'Treex::Block::T2A::NL::CoindexNodes';
+
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
@@ -42,7 +44,7 @@ sub process_tnode {
 
             my $afun = ( ( $tnode->gram_diathesis // '' ) eq 'pas' ? 'Obj' : 'Sb' );
             $asubj = $achild;
-            $acoindex = $self->_add_coindex_node( $amain_verb, $asubj, $afun );
+            $acoindex = $self->add_coindex_node( $amain_verb, $asubj, $afun );
         }
 
         # move children (other than own Aux's)
@@ -63,35 +65,13 @@ sub process_tnode {
         $aaux_hier->set_parent( $aprev_top->get_parent() );
         $aprev_top->set_parent($aaux_hier);
       
-        my $acoindex = $self->_add_coindex_node( $aaux_hier, $asubj, 'Sb' );
+        my $acoindex = $self->add_coindex_node( $aaux_hier, $asubj, 'Sb' );
         $acoindex->shift_before_subtree($aaux_hier);
       
         $aprev_top = $aaux_hier;
     }
 
     return;
-}
-
-sub _add_coindex_node {
-    my ( $self, $averb, $asubj, $afun ) = @_;
-
-    my $acoindex = $averb->create_child(
-        {   'lemma'         => '',
-            'form'          => '',
-            'afun'          => $afun,
-            'clause_number' => $averb->clause_number
-        }
-    );
-    $acoindex->wild->{coindex} = $asubj->id;
-
-    # coindex with the subject leaf node or its "whole phrase" node
-    if ( !$asubj->is_leaf ) {
-        $asubj->wild->{coindex_phrase} = $asubj->id;
-    }
-    else {
-        $asubj->wild->{coindex} = $asubj->id;
-    }
-    return $acoindex;
 }
 
 1;
