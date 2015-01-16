@@ -81,7 +81,7 @@ sub initialize {
 
 sub parse_sentence {
     my ($self, $forms, $lemmas, $tags) = @_;
-    return $self->process($forms, $tags); 
+    return $self->process($forms, $tags);
 }
 
 sub process {
@@ -91,15 +91,34 @@ sub process {
         log_fatal('Both arguments must be array references.');
     }
 
-    if ( $#{$forms_rf} != $#{$tags_rf} or @$forms_rf == 0 ) {
+    if ( $#{$forms_rf} != $#{$tags_rf} or scalar(@{$forms_rf}) == 0 ) {
         log_warn "FORMS: @$forms_rf\n";
         log_warn "TAGS:  @$tags_rf\n";
         log_fatal('Both arguments must be references to nonempty arrays of equal length.');
     }
 
-    if ( my @ret = grep { $_ =~ /^\s+$/ } ( @{$forms_rf}, @{$tags_rf} ) ) {
-        log_debug("@ret");
-        log_fatal('Elements of argument arrays must not be empty and must not contain white-space characters');
+    if ( any { !defined($_) || $_ eq '' || $_ =~ /\s/ } ( @{$forms_rf}, @{$tags_rf} ) ) {
+        my @forms;
+        for(my $i = 0; $i<=$#{$forms_rf}; $i++) {
+            if(!defined($forms_rf->[$i])) {
+                push(@forms, $i.':***UNDEF***');
+            }
+            else {
+                push(@forms, $i.":'".$forms_rf->[$i]."'");
+            }
+        }
+        my @tags;
+        for(my $i = 0; $i<=$#{$tags_rf}; $i++) {
+            if(!defined($tags_rf->[$i])) {
+                push(@tags, $i.':***UNDEF***');
+            }
+            else {
+                push(@tags, $i.":'".$tags_rf->[$i]."'");
+            }
+        }
+        log_warn('Forms: '.join(' ', @forms));
+        log_warn('Tags:  '.join(' ', @tags));
+        log_fatal('Elements of argument arrays must not be undefined or empty and must not contain white-space characters');
     }
 
     if ( @{$tags_rf} == 1 ) {
@@ -260,7 +279,7 @@ END {
     foreach my $java (@all_javas) {
         close( $java->{writer} );
         close( $java->{reader} );
-        kill(9, $java->{pid}); #Needed on Windows 
+        kill(9, $java->{pid}); #Needed on Windows
         ProcessUtils::safewaitpid( $java->{pid} );
     }
 }
