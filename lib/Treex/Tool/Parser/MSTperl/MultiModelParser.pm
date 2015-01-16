@@ -61,36 +61,78 @@ override 'parse_sentence_full' => sub {
     # next, normalize them
     # TODO: also try to use a running sum average for ind*
     my %normalization = ();
-    use List::Util "sum";
+    use List::Util qw(sum max min);
     foreach my $model (@{$self->model} ) {
+        
+        # model-based individual normalization
+        # (stores dividents to %normalization)
         if ($self->config->normalization_type eq 'inddivsumabs') {
-            $normalization{$model} = 1 / sum( map {
+            # -> sum abs(w) = 1
+            $normalization{$model} = sum( map {
                     sum (map {abs} values %{$scores{$model}->{$_}})
                 } keys(%{$scores{$model}}) );
         } elsif ($self->config->normalization_type eq 'inddivabssum') {
-            $normalization{$model} = 1 / abs( sum(
+            # -> abs sum(w) = 1
+            $normalization{$model} = abs( sum(
                     map { sum values %{$scores{$model}->{$_}} } keys(%{$scores{$model}})
                 ) );
+
+        # other  individual normalization
         } elsif ($self->config->normalization_type eq 'childdivabssum') {
+            # -> abs sum(w) = 1
             foreach my $child ( @{ $sentence_working_copy->nodes } ) {
-                $normalization{$model}->{$child->ord} = 1 / abs( sum(
+                # compute normalization
+                my $norm = abs( sum(
                     values %{$scores{$model}->{$child->ord}}
                 ) );
+                # apply normalization
+                foreach my $parent ( @{ $sentence_working_copy->nodes_with_root } ) {
+                    next if ($child->ord == $parent->ord);
+                    $scores{$model}->{$child->ord}->{$parent->ord} /= $norm;
+                }
             }
         } elsif ($self->config->normalization_type eq 'childdivsumabs') {
+            # -> sum abs(w) = 1
             foreach my $child ( @{ $sentence_working_copy->nodes } ) {
-                $normalization{$model}->{$child->ord} = 1 / sum( map {abs} (
+                # compute normalization
+                my $norm = sum( map {abs} (
                     values %{$scores{$model}->{$child->ord}}
                 ) );
+                # apply normalization
+                foreach my $parent ( @{ $sentence_working_copy->nodes_with_root } ) {
+                    next if ($child->ord == $parent->ord);
+                    $scores{$model}->{$child->ord}->{$parent->ord} /= $norm;
+                }
             }
         } elsif ($self->config->normalization_type eq 'childdivstddev') {
+            # -> standard deviation = 1
             foreach my $child ( @{ $sentence_working_copy->nodes } ) {
-                my $sum = sum( values %{$scores{$model}->{$child->ord}} );
-                my $avg = $sum/$sentence_length;
-                my $var = 1/$sentence_length
-                    * sum( map {$_*$_} (values %{$scores{$model}->{$child->ord}}))
-                    - $avg*$avg;
-                $normalization{$model}->{$child->ord} = 1 / sqrt($var);
+                # compute normalization
+                my $avg = sum( values %{$scores{$model}->{$child->ord}} ) / $sentence_length;
+                my $norm = sqrt(
+                    1/$sentence_length
+                    * sum( map {$_*$_} (values %{$scores{$model}->{$child->ord}}) )
+                    - $avg*$avg
+                ) || 1; # avoid 0 -- will be dividing by it
+                # apply normalization
+                foreach my $parent ( @{ $sentence_working_copy->nodes_with_root } ) {
+                    next if ($child->ord == $parent->ord);
+                    $scores{$model}->{$child->ord}->{$parent->ord} /= $norm;
+                }
+            }
+        } elsif ($self->config->normalization_type eq 'childminmax') {
+            # -> min = 0, max = 1
+            foreach my $child ( @{ $sentence_working_copy->nodes } ) {
+                # compute normalization
+                my $min = min( values %{$scores{$model}->{$child->ord}} );
+                my $max = max( values %{$scores{$model}->{$child->ord}} );
+                # apply normalization
+                foreach my $parent ( @{ $sentence_working_copy->nodes_with_root } ) {
+                    next if ($child->ord == $parent->ord);
+                    $scores{$model}->{$child->ord}->{$parent->ord}
+                        = ($scores{$model}->{$child->ord}->{$parent->ord} - $min)
+                        / ($max - $min);
+                }
             }
         }
     }
@@ -101,9 +143,7 @@ override 'parse_sentence_full' => sub {
     );
     foreach my $child ( @{ $sentence_working_copy->nodes } ) {
         foreach my $parent ( @{ $sentence_working_copy->nodes_with_root } ) {
-            if ( $child == $parent ) {
-                next;
-            }
+            next if ($child->ord == $parent->ord);
 
             # HERE THE MODEL COMBINATION HAPPENS
             # sum of feature weights
@@ -112,15 +152,9 @@ override 'parse_sentence_full' => sub {
             if ( $self->config->normalization_type =~ /^ind/) {
                 foreach my $model (@{$self->model} ) {
                     $score += $scores{$model}->{$child->ord}->{$parent->ord}
-                    * $normalization{$model} * $model->weight;
+                    / $normalization{$model} * $model->weight;
                 }
-            # model- and child-based individual normalization
-            } elsif ( $self->config->normalization_type =~ /^child/) {
-                foreach my $model (@{$self->model} ) {
-                    $score += $scores{$model}->{$child->ord}->{$parent->ord}
-                    * $normalization{$model}->{$child->ord} * $model->weight;
-                }
-            # some other non-individual normalization, not happening here
+            # some other normalization, not happening here
             } else {
                 foreach my $model (@{$self->model} ) {
                     $score += $scores{$model}->{$child->ord}->{$parent->ord}
