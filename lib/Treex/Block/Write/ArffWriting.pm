@@ -56,6 +56,7 @@ has '_config_file_data' => ( isa => 'HashRef', is => 'rw', builder => '_build_co
 # Were the ARFF file headers already printed ?
 has '_headers_printed' => ( is => 'ro', isa => 'Bool', writer => '_set_headers_printed', default => 0 );
 
+
 #
 # METHODS
 #
@@ -94,6 +95,9 @@ sub _build_config_file_data {
     log_fatal( 'Cannot read configuration file ' . $file_name ) if ( !$cfg );
 
     $cfg = $cfg->[0];
+    if (!defined($cfg->{attributes}) and defined($cfg->{features})){
+        $cfg->{attributes} = $cfg->{features}; # accepting both 'features' and 'attributes' key
+    }
     my @sources = map { $_->{source} } @{ $cfg->{attributes} };
     my %labels  = map { $_->{source} => $_->{label} ? [ split( /[\s,]+/, $_->{label} ) ] : undef } @{ $cfg->{attributes} };
     my %types   = map { $_->{source} => $_->{type} ? [ split( /[\s,]+/, $_->{type} ) ] : undef } @{ $cfg->{attributes} };
