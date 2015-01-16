@@ -67,6 +67,7 @@ sub convert_deprel {
     $afun = 'AuxP' if ( $node->is_adposition and $deprel ne 'svp' );   
     
     if ( !$afun ) {
+        # obj1 defaults to 'Obj' but we need a special treatment for prepositional phrases
         if ( $deprel eq 'obj1' ){
             my $parent = $node->get_parent();
             if ( $parent and $parent->is_adposition ){
@@ -78,26 +79,32 @@ sub convert_deprel {
             }
             $afun = 'Obj' if ( !$afun );
         }
+        # attributes (or adverbials)
         elsif ( $deprel eq 'mod' ) {
-            $afun = 'Atr' if ( $node->is_adjective );
+            my $parent = $node->get_parent();
+            $afun = 'Atr' if ( $parent and $parent->is_noun or $parent->is_adjective );
             $afun = 'Neg' if ( $node->lemma eq 'niet' );
             $afun = 'Adv' if ( !$afun );
         }
+        # AuxA is much narrower than Alpino's det 
         elsif ( $deprel eq 'det' ) {
             $afun = $node->match_iset( 'prontype' => 'art' ) ? 'AuxA' : 'Atr';
         }
+        # This is everything hanging under the root
         elsif ( $deprel eq '--' ) {
             $afun = 'Pred' if ( $node->is_verb );
             $afun = 'AuxK' if ( $node->lemma =~ /[\.!?]/ );
             $afun = 'AuxX' if ( $node->lemma eq ',' );
             $afun = 'AuxG' if ( !$afun );
         }
+        # multi-word names have no sense of Afuns internally
         elsif ( $deprel eq 'mwp' ) {
             $afun = 'AuxP' if ( $node->is_adposition );
             $afun = 'AuxC' if ( $node->is_conjunction );
             $afun = 'AuxA' if ( !$afun and $node->match_iset( 'prontype' => 'art' ) );
             $afun = 'NR'   if ( !$afun );
         }
+        # separable verbal parts
         elsif ( $deprel eq 'svp' ) {
             $afun = 'AuxV' if ( $node->is_adposition or $node->is_adverb );
             $afun = 'Obj' if ( !$afun );
