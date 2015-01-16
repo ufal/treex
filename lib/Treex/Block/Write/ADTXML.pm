@@ -203,6 +203,12 @@ sub _get_rel {
             }
             return $objtype eq 'obj2' ? 'obj2' : 'obj1';
         }
+        if ( $tnode->formeme eq 'n:predc' ){
+            return 'predc';
+        }
+        if ( $tnode->formeme eq 'n:adv' ){
+            return 'mod';
+        }
         if ( $tnode->formeme =~ /n:.*+X/ ) {
             return 'obj1';
         }
@@ -269,7 +275,7 @@ sub _get_pos {
     $pos = 'comparative' if ( ( $anode->lemma // '' ) =~ /^(als|dan)$/ and ( $anode->afun // '' ) eq 'AuxP' );
     $pos = 'pron'        if ( $anode->iset->prontype );
     $pos = 'det'         if ( $anode->iset->prontype eq 'art' or $anode->iset->poss eq 'poss' );
-    $pos = 'det'         if ( $anode->iset->prontype and ( $anode->lemma // '' ) =~ /^welke?$/ );
+    $pos = 'det'         if ( $anode->iset->prontype and ( $anode->lemma // '' ) =~ /^(deze|die|d[ai]t|welke?)$/ );
     $pos = 'adv'         if ( $anode->iset->prontype and ( $anode->lemma // '' ) eq 'er' );
     $pos = 'vg'          if ( $pos eq 'conj' || ( $anode->afun // '' ) =~ /^(Coord|Apos)$/ );
     $pos = 'prep'        if ( $pos eq 'adp' );

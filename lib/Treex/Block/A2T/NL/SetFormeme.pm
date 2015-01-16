@@ -33,7 +33,7 @@ override 'detect_syntpos' => sub {
 
     # adverbs, adverbial adjectives
     return 'adv' if ( $a_node->is_adverb or $a_node->match_iset( 'synpos' => 'adv' ) );
-    
+
     # coordinating conjunctions (to be given the functor PREC), subordinating conjunctions "dan", "als"
     return 'x' if ( $a_node->is_conjunction );
 
@@ -55,11 +55,10 @@ override 'formeme_for_noun' => sub {
 
         my $afun = $a_node->afun;
 
-        # TODO: same as English, should fix afuns though
-        return 'n:adv'  if $afun eq 'Adv';
-        return 'n:subj' if $afun eq 'Sb';
-
-        # word-order guesses wouldn't work, afuns use them anyway in the P2A::NL::Alpino block
+        return 'n:adv'   if $afun eq 'Adv';
+        return 'n:subj'  if $afun eq 'Sb';
+        return 'n:predc' if $afun eq 'Pnom';
+        return 'n:obj2'  if ( ( $a_node->conll_deprel // '' ) eq 'obj2' );
         return 'n:obj';
     }
     if ( $self->below_noun($t_node) or $self->below_adj($t_node) ) {
@@ -78,10 +77,21 @@ override 'formeme_for_adj' => sub {
     my $prep = $self->get_aux_string( $t_node->get_aux_anodes( { ordered => 1 } ) );
     my $afun = $a_node->afun;
 
-    return "n:$prep+X" if $prep;                                                     # adjectives with prepositions are treated as a nominal usage
+    # adjectives with prepositions are treated as a nominal usage
+    return "n:$prep+X" if $prep;                                                     
+
     return 'adj:attr'  if $self->below_noun($t_node) || $self->below_adj($t_node);
-    return 'n:subj'    if $afun eq 'Sb';                                             # adjectives in the subject positions -- nominal usage
-    return 'adj:compl' if $self->below_verb($t_node);
+
+    # adjectives in the subject/predicative positions -- nominal usage
+    return 'n:subj'    if $afun eq 'Sb';                                             
+    return 'n:predc'   if $afun eq 'Pnom';
+
+    if ( $self->below_verb($t_node) ) {
+        # adjectives used as adverbs: "hij rent snel(adj)" = "he runs quickly(adv)"
+        return 'adv' if ( $afun eq 'Adv' or $a_node->match_iset( synpos => 'adv' ) );
+
+        return 'adj:compl';
+    }
 
     return 'adj:';
 };
