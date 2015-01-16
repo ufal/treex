@@ -126,12 +126,13 @@ override 'parse_sentence_full' => sub {
                 # compute normalization
                 my $min = min( values %{$scores{$model}->{$child->ord}} );
                 my $max = max( values %{$scores{$model}->{$child->ord}} );
+                my $divby = ($max - $min) || 1;
                 # apply normalization
                 foreach my $parent ( @{ $sentence_working_copy->nodes_with_root } ) {
                     next if ($child->ord == $parent->ord);
                     $scores{$model}->{$child->ord}->{$parent->ord}
                         = ($scores{$model}->{$child->ord}->{$parent->ord} - $min)
-                        / ($max - $min);
+                        / $divby;
                 }
             }
         }
