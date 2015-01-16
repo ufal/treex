@@ -26,8 +26,8 @@ has '_nodes_to_remove' => ( isa => 'HashRef', 'is' => 'rw' );
 
 my %HEAD_SCORE = (
     'hd'    => 6,
-    'cmp'   => 5,
     'crd'   => 4,
+    'cmp'   => 5,
     'dlink' => 3,
     'rhd'   => 2,    # relative clause head
     'tag'   => 2,    # discourse tag "He said that..."
@@ -39,7 +39,6 @@ my %HEAD_SCORE = (
 my %DEPREL_CONV = (
     'su'     => 'Sb',
     'sup'    => 'Sb',
-    'obj1'   => 'Obj',
     'pobj1'  => 'Obj',
     'se'     => 'Obj',     # reflexive
     'obj2'   => 'Obj',
@@ -63,34 +62,44 @@ sub convert_deprel {
 
     my $deprel = $node->conll_deprel // '';
     my $afun = $DEPREL_CONV{$deprel};
+
+    # override Afun for prepositions, except in separable verbal prefixes
+    $afun = 'AuxP' if ( $node->is_adposition and $deprel ne 'svp' );   
+    
     if ( !$afun ) {
-        if ( $deprel eq 'mod' ) {
+        if ( $deprel eq 'obj1' ){
+            my $parent = $node->get_parent();
+            if ( $parent and $parent->is_adposition ){
+                my $grandpa = $parent->get_parent();
+                if ( ( $parent->conll_deprel // '' ) eq 'mod' ){
+                    $afun = 'Atr' if ( $grandpa and ( $grandpa->is_noun or $grandpa->is_adjective ) );
+                    $afun = 'Adv' if ( !$afun );
+                }
+            }
+            $afun = 'Obj' if ( !$afun );
+        }
+        elsif ( $deprel eq 'mod' ) {
             $afun = 'Atr' if ( $node->is_adjective );
             $afun = 'Neg' if ( $node->lemma eq 'niet' );
             $afun = 'Adv' if ( !$afun );
-        }
-        elsif ( $deprel eq 'hd' ) {
-            $afun = 'Atr' if ( $node->match_iset( 'synpos' => 'attr' ) );
-            $afun = 'Pred' if ( $node->is_verb and $node->parent->is_root );
-            $afun = 'AuxP' if ( $node->is_preposition );
-            $afun = 'Obj'  if ( !$afun );                                      # subject is selected later
         }
         elsif ( $deprel eq 'det' ) {
             $afun = $node->match_iset( 'prontype' => 'art' ) ? 'AuxA' : 'Atr';
         }
         elsif ( $deprel eq '--' ) {
+            $afun = 'Pred' if ( $node->is_verb );
             $afun = 'AuxK' if ( $node->lemma =~ /[\.!?]/ );
             $afun = 'AuxX' if ( $node->lemma eq ',' );
             $afun = 'AuxG' if ( !$afun );
         }
         elsif ( $deprel eq 'mwp' ) {
-            $afun = 'AuxP' if ( $node->is_preposition );
+            $afun = 'AuxP' if ( $node->is_adposition );
             $afun = 'AuxC' if ( $node->is_conjunction );
             $afun = 'AuxA' if ( !$afun and $node->match_iset( 'prontype' => 'art' ) );
             $afun = 'NR'   if ( !$afun );
         }
         elsif ( $deprel eq 'svp' ) {
-            $afun = 'AuxV' if ( $node->is_preposition or $node->is_adverb );
+            $afun = 'AuxV' if ( $node->is_adposition or $node->is_adverb );
             $afun = 'Obj' if ( !$afun );
         }
         else {
@@ -146,8 +155,14 @@ sub create_subtree {
         }
     }
 
+    # process the node: fill the attributes or recurse into subtrees
     my $head = $children[0];
     foreach my $child (@children) {
+
+        # give the deprel of the whole phrase to its head, so that we don't lose this information
+        if ( $child->wild->{rel} eq 'hd' ) {
+            $child->wild->{rel} = $p_root->wild->{rel};
+        }
 
         my $new_node;
         if ( $child == $head ) {
@@ -156,6 +171,7 @@ sub create_subtree {
         else {
             $new_node = $a_root->create_child();
         }
+        
         if ( defined $child->form ) {    # the node is terminal
             $self->fill_attribs( $child, $new_node );
         }
@@ -163,10 +179,6 @@ sub create_subtree {
             $self->create_subtree( $child, $new_node );
         }
 
-        # override deprel for questions with prepositional phrases `Op wie wacht je?'
-        if ( $p_root->wild->{rel} eq 'whd' and $child->wild->{rel} eq 'hd' ) {
-            $new_node->set_conll_deprel('whd');
-        }
     }
 }
 
@@ -225,7 +237,6 @@ sub process_zone {
 
     # post-processing
     $self->rehang_wh_clauses($a_root);    # rehang relative clauses and wh-questions
-    $self->mark_subjects($a_root);
     $self->rehang_aux_verbs($a_root);
     $self->fix_mwu($a_root);
     $self->rehang_prec($a_root);
@@ -244,7 +255,7 @@ sub rehang_wh_clauses {
     my ( $self, $a_root ) = @_;
 
     foreach my $anode ( grep { $_->conll_deprel =~ /^(rhd|whd)$/ } $a_root->get_descendants() ) {
-        my ($clause) = grep { $_->conll_deprel eq 'hd' } $anode->get_children();
+        my ($clause) = grep { $_->conll_deprel eq 'body' } $anode->get_children();
         next if ( !$clause );
         my $parent = $anode->get_parent();
         $clause->set_parent($parent);
@@ -257,32 +268,6 @@ sub rehang_wh_clauses {
     return;
 }
 
-# Set the afun 'Sb' for the first plain noun group in nominative or non-marked case
-# TODO: check for congruency in number
-sub mark_subjects {
-    my ( $self, $a_root ) = @_;
-
-    foreach my $a_verb ( grep { $_->match_iset( 'verbform' => 'fin' ) } $a_root->get_descendants() ) {
-        my @objects = grep { $_->is_noun or $_->match_iset( 'synpos' => 'subst' ) } $a_verb->get_echildren( { ordered => 1, or_topological => 1 } );
-
-        # skip clauses where subjects are already marked
-        next if ( any { $_->afun eq 'Sb' } @objects );
-
-        # look for explicite nominatives
-        my $first_nom = first { $_->match_iset( 'case' => 'nom' ) } @objects;
-        if ($first_nom) {
-            $first_nom->set_afun('Sb');
-            next;
-        }
-
-        # look for first noun with unmarked case
-        my $first_unmarked = first { !$_->get_iset('case') } @objects;
-        if ($first_unmarked) {
-            $first_unmarked->set_afun('Sb');
-        }
-    }
-    return;
-}
 
 # Rehang auxiliaries under main verb: zullen (+infinitive), worden hebben zijn (+participle)
 # TODO: other combinations (gaan+inf, zijn+inf)?
