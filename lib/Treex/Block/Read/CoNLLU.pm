@@ -41,7 +41,7 @@ sub next_document {
         LINE:
         foreach my $line (@lines) {
             next LINE if $line =~ /^\s*$/;
-            if ($line =~ /^#/){
+            if ($line =~ s/^#//){
                 $comment .= "$line\n";
                 next LINE;
             }
