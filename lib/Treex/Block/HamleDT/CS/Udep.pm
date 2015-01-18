@@ -27,16 +27,18 @@ sub process_zone
     my $root = $self->SUPER::process_zone($zone);
     $self->remove_features_from_lemmas($root);
     $self->shape_coordination_stanford($root);
+    $self->fix_determiners($root);
     $self->restructure_compound_prepositions($root);
     $self->push_prep_sub_down($root);
     $self->push_copulas_down($root);
     $self->afun_to_udeprel($root);
     $self->attach_final_punctuation_to_predicate($root);
-    $self->fix_determiners($root);
     $self->classify_numerals($root);
     $self->restructure_compound_numerals($root);
     $self->push_numerals_down($root);
     $self->split_fused_words($root);
+    # Sanity checks.
+    $self->check_determiners($root);
 }
 
 
@@ -313,9 +315,21 @@ sub afun_to_udeprel
             {
                 $udep = 'foreign';
             }
+            elsif($node->is_adjective() && $node->is_pronoun())
+            {
+                $udep = 'det';
+            }
+            elsif($node->is_adjective())
+            {
+                $udep = 'amod';
+            }
+            elsif($node->is_verb())
+            {
+                $udep = 'acl';
+            }
             else
             {
-                $udep = $node->is_adjective() ? 'amod' : $node->is_verb() ? 'acl' : 'nmod';
+                $udep = 'nmod';
             }
         }
         # Verbal attribute is analyzed as secondary predication.
@@ -769,6 +783,9 @@ sub attach_final_punctuation_to_predicate
 # nevertheless, they can still be used as pronouns (replacing a noun phrase
 # instead of modifying it). This method tries to figure out whether the word
 # actually modifies a noun phrase as an adjective.
+#
+# Coordination must have been converted before calling this method, because we
+# do not search for effective parent (e.g. in "některého žáka či žákyni").
 #------------------------------------------------------------------------------
 sub fix_determiners
 {
@@ -799,22 +816,46 @@ sub fix_determiners
                 #  půl tuctu jich (half dozen of them) (genitive construction; the words agree in case because tuctu is incidentially also genitive, but they do not agree in number; in addition, "jich" is a non-possessive personal pronoun which should never become det)
                 #  firmy All - Impex (foreign determiner All; it cannot agree in case because it does not have case)
                 #  děvy samy (girls themselves) (the words agree in case but the afun is Atv, not Atr, thus we should not get through the 'amod' constraint above)
-                if(!($parent->is_noun() || $parent->is_adjective()) ||
-                   $node->conll_deprel() !~ m/^(amod|det)$/ ||
-                   $parent->iset()->case() ne $node->iset()->case() ||
-                   $parent->iset()->number() ne $node->iset()->number())
+                my $change = 0; # do not change DET to PRON
+                # The tree has not changed from the Prague style except for coordination. Nominal predicates still depend on copulas.
+                # If it does not modify a noun (adjective, pronoun), it is not a determiner.
+                $change = 1 if(!$parent->is_noun() && !$parent->is_adjective());
+                # If they do not agree, it is not a determiner.
+                $change = 1 if(!$self->agree($node, $parent, 'case'));
+                if($change)
                 {
                     # Change DET to PRON by changing Interset part of speech from adj to noun.
                     $node->iset()->set('pos', 'noun');
                 }
-                # If we confirm that the node is DET, we should change its deprel from amod to det.
-                else
-                {
-                    $node->set_conll_deprel('det');
-                }
             }
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Checks agreement between two nodes in one Interset feature. An empty value
+# agrees with everything (because it can be interpreted as "any value").
+#------------------------------------------------------------------------------
+sub agree
+{
+    my $self = shift;
+    my $node1 = shift;
+    my $node2 = shift;
+    my $feature = shift;
+    my $i1 = $node1->iset();
+    my $i2 = $node2->iset();
+    return 1 if($i1->get($feature) eq '' || $i2->get($feature) eq '');
+    return 1 if($i1->get_joined($feature) eq $i2->get_joined($feature));
+    # If one or both the nodes have multiple values of the feature and their
+    # intersection is not empty, take it as agreement.
+    my @v1 = $i1->get_list($feature);
+    foreach my $v1 (@v1)
+    {
+        return 1 if($i2->contains($feature, $v1));
+    }
+    return 0;
 }
 
 
@@ -1086,6 +1127,47 @@ sub split_fused_words
     foreach my $node (@nodes)
     {
         $node->_set_ord($i++);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Sanity check: everything that is tagged DET must be attached as det.
+#------------------------------------------------------------------------------
+sub check_determiners
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $form = defined($node->form()) ? $node->form() : '';
+        my $pform = defined($node->parent()->form()) ? $node->parent()->form() : '';
+        my $npform;
+        if($node->parent()->ord() < $node->ord())
+        {
+            $npform = "($pform) $form";
+        }
+        else
+        {
+            $npform = "$form ($pform)";
+        }
+        # Determiner is a pronominal adjective.
+        if($node->is_adjective() && $node->is_pronoun())
+        {
+            if($node->conll_deprel() ne 'det')
+            {
+                log_warn($npform.' is tagged DET but is not attached as det but as '.$node->conll_deprel());
+            }
+        }
+        elsif($node->conll_deprel() eq 'det')
+        {
+            if(!$node->is_adjective() || !$node->is_pronoun())
+            {
+                log_warn($npform.' is attached as det but is not tagged DET');
+            }
+        }
     }
 }
 
