@@ -190,10 +190,20 @@ sub BUILD {
     foreach my $bundle ( $self->get_bundles ) {
         $bundle->deserialize_wild;
         foreach my $bundlezone ( $bundle->get_all_zones ) {
-            foreach my $node ( map { $_->get_descendants( { add_self => 1 } ) } $bundlezone->get_all_trees ) {
-                $node->deserialize_wild;
-                if ( $node->DOES('Treex::Core::Node::Interset') ) {
-                    $node->deserialize_iset;
+            foreach my $tree ( $bundlezone->get_all_trees ){
+                my $ordered = $tree->type->get_structure_name =~ /[at]-(root|node)/ ? 1 : 0;
+                my $correct_ord = 0;
+                my @nodes = $tree->get_descendants( { add_self => 1, ($ordered ? (ordered => 1) : ()) } );
+                foreach my $node (@nodes){
+                    # normalize ord, so there are no gaps
+                    if ($ordered){
+                        $node->_set_ord($correct_ord);
+                        $correct_ord++;
+                    }
+                    $node->deserialize_wild;
+                    if ( $node->DOES('Treex::Core::Node::Interset') ) {
+                        $node->deserialize_iset;
+                    }
                 }
             }
         }
