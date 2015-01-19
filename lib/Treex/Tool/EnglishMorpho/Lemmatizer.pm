@@ -12,7 +12,7 @@ has 'exceptions_filename' => (
     is       => 'ro',
     init_arg => undef,
     default  => sub {
-        return require_file_from_share('/data/models/lemmatizer/en/exceptions2014_11_21.tsv');
+        return require_file_from_share('data/models/lemmatizer/en/exceptions2014_11_21.tsv');
     },
 );
 
@@ -20,7 +20,7 @@ has 'negation_filename' => (
     is       => 'ro',
     init_arg => undef,
     default  => sub {
-        return require_file_from_share('/data/models/lemmatizer/en/negation');
+        return require_file_from_share('data/models/lemmatizer/en/negation');
     },
 );
 

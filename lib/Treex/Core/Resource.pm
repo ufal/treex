@@ -18,12 +18,25 @@ use vars qw(@EXPORT_OK);
 @EXPORT_OK = qw(require_file_from_share);
 
 sub require_file_from_share {
-    my ( $rel_path_to_file, $who_wants_it, $make_executable ) = @_;
+    my ( $path_to_file, $who_wants_it, $make_executable ) = @_;
+    
+    # The following three cases are handled first
+    #   ./relative_path
+    #   ../relative_path
+    #   /absolute_path
+    # These files are not searched within Treex Share.
+    if ($path_to_file =~ m|^[.]{0,2}/|) {
+        log_debug("Looking for absolute or relative path $path_to_file\n");
+        return $path_to_file if -e $path_to_file;
+        my $file = File::Spec->rel2abs($path_to_file);
+        log_fatal "Cannot find '$path_to_file'.\nNote that it starts with '/' or '.', so it is not search for within Treex Share.\nFile '$file' does not exist.\n";
+    }
+
     my $writable;    #will store first writable directory found
     SEARCH:
     foreach my $resource_dir ( Treex::Core::Config->resource_path() ) {
         next if (!$resource_dir);
-        my $file = File::Spec->catfile( $resource_dir, $rel_path_to_file );
+        my $file = File::Spec->catfile( $resource_dir, $path_to_file );
         log_debug("Trying $file\n");
         if ( -e $file ) {
             log_debug("Found $file\n");
@@ -40,13 +53,13 @@ sub require_file_from_share {
         }
     }
     $who_wants_it = defined $who_wants_it ? " by $who_wants_it" : '';
-    log_info("Shared file '$rel_path_to_file' is missing$who_wants_it.");
+    log_info("Shared file '$path_to_file' is missing$who_wants_it.");
     log_fatal("Cannot find writable directory for downloading from share") if !defined $writable;
 
-    my $url = Treex::Core::Config->share_url() . "/$rel_path_to_file";
+    my $url = Treex::Core::Config->share_url() . "/$path_to_file";
     log_info("Trying to download $url");
 
-    my $file = "$writable/$rel_path_to_file";
+    my $file = "$writable/$path_to_file";
 
     # first ensure that the directory exists
     my $directory = $file;
@@ -87,19 +100,24 @@ Treex::Core::Resource - Access to shared resources
 =head1 SYNOPSIS
 
 use Treex::Core::Resource qw(require_file_from_share);
-my $path = require_file_from_share('relative/path/to/file');
+my $path = require_file_from_share('relative/path/to/file/within/Treex/Share');
 open my $MODEL, '<', $path or log_fatal($!);
+
+# or
+my $path = require_file_from_share('./relative/path/from/the/current/directory');
+my $path = require_file_from_share('/absolute/path');
 
 =head1 DESCRIPTION
 
 This module provides access to shared resources (e.g. models). First it tries to locate it on local computer.
-If not found, download from server (L<http://ufallab.ms.mff.cuni.cz/>)
+If not found, download from server (L<http://ufallab.ms.mff.cuni.cz/>).
+If the path starts with "." or "/" it is searched in the local file system (and not in Treex Share).
 
 =head1 SUBROUTINES
 
 =over
 
-=item require_file_from_share($rel_path_to_file, $who_wants_it, $make_executable)
+=item require_file_from_share($path_to_file, $who_wants_it, $make_executable)
 
 Try to locate file in local resource paths, if not found, try to download it and stores it to first writable path.
 Obtains paths from L<Treex::Core::Config->resource_path()|Treex::Core::Config/resource_path>
@@ -113,8 +131,10 @@ Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
 Tomáš Kraut <kraut@ufal.mff.cuni.cz>
 
+Martin Popel <popel@ufal.mff.cuni.cz>
+
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011,2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
