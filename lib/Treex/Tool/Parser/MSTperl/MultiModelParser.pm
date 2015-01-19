@@ -135,6 +135,36 @@ override 'parse_sentence_full' => sub {
                         / $divby;
                 }
             }
+        } elsif ($self->config->normalization_type eq 'childminmax2') {
+            # -> min = 0, max = 1, ^2
+            foreach my $child ( @{ $sentence_working_copy->nodes } ) {
+                # compute normalization
+                my $min = min( values %{$scores{$model}->{$child->ord}} );
+                my $max = max( values %{$scores{$model}->{$child->ord}} );
+                my $divby = ($max - $min)*($max - $min) || 1;
+                # apply normalization
+                foreach my $parent ( @{ $sentence_working_copy->nodes_with_root } ) {
+                    next if ($child->ord == $parent->ord);
+                    $scores{$model}->{$child->ord}->{$parent->ord}
+                        = ($scores{$model}->{$child->ord}->{$parent->ord} - $min)
+                        / $divby;
+                }
+            }
+        } elsif ($self->config->normalization_type eq 'childminmax3') {
+            # -> min = 0, max = 1, ^3
+            foreach my $child ( @{ $sentence_working_copy->nodes } ) {
+                # compute normalization
+                my $min = min( values %{$scores{$model}->{$child->ord}} );
+                my $max = max( values %{$scores{$model}->{$child->ord}} );
+                my $divby = ($max - $min)**3 || 1;
+                # apply normalization
+                foreach my $parent ( @{ $sentence_working_copy->nodes_with_root } ) {
+                    next if ($child->ord == $parent->ord);
+                    $scores{$model}->{$child->ord}->{$parent->ord}
+                        = ($scores{$model}->{$child->ord}->{$parent->ord} - $min)
+                        / $divby;
+                }
+            }
         }
     }
 
