@@ -97,7 +97,7 @@ sub process {
         log_fatal('Both arguments must be references to nonempty arrays of equal length.');
     }
 
-    if ( any { !defined($_) || $_ eq '' || $_ =~ /\s/ } ( @{$forms_rf}, @{$tags_rf} ) ) {
+    if ( any { !defined($_) || $_ =~ /^\s*$/ } ( @{$forms_rf}, @{$tags_rf} ) ) {
         my @forms;
         for(my $i = 0; $i<=$#{$forms_rf}; $i++) {
             if(!defined($forms_rf->[$i])) {
@@ -118,7 +118,7 @@ sub process {
         }
         log_warn('Forms: '.join(' ', @forms));
         log_warn('Tags:  '.join(' ', @tags));
-        log_fatal('Elements of argument arrays must not be undefined or empty and must not contain white-space characters');
+        log_fatal('Forms and tags must not be undefined or empty or white-space only');
     }
 
     if ( @{$tags_rf} == 1 ) {
