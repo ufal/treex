@@ -5,13 +5,20 @@ use Treex::Core::Log;
 
 ##### zapracovani dat od Magdy z emailu z 12.3., puvodni nazev souboru: vymazat_s_hvezdickou_ostatni_do_databaze
 
+has file => (
+    is            => 'ro',
+    isa           => 'Str',
+    documentation => q(file name to store),
+);
 
 sub process_dictionary {
 
     my ($self, $dict) = @_;
 
-    open my $R, '<:utf8', $self->my_directory."manual.RevertDerivationDirection.txt" or log_fatal($!);
-    log_info("Loading manually annotated instances");
+    my $filename = $self->file ||  $self->my_directory."manual.RevertDerivationDirection.txt";
+
+    open my $R, '<:utf8', $filename or log_fatal($!);
+    log_info("Loading manually annotated instances from $filename");
 
 
   LINE:

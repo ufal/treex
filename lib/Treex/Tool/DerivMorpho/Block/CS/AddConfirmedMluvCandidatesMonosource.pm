@@ -6,11 +6,18 @@ use Treex::Core::Log;
 ##### zapracovani dat od Magdy z emailu z 12.3., puvodni nazev souboru: vymazat_s_hvezdickou_ostatni_do_databaze
 
 
+has file => (
+    is            => 'ro',
+    isa           => 'Str',
+    documentation => q(file name to load),
+);
+
+
 sub process_dictionary {
 
     my ($self, $dict) = @_;
 
-    open my $R, '<:utf8', $self->my_directory."manual.AddConfirmedMluvCandidatesMonosource.txt" or log_fatal($!);
+    open my $R, '<:utf8', ($self->file || $self->my_directory."manual.AddConfirmedMluvCandidatesMonosource.txt") or log_fatal($!);
     my %allowed_rules;
     log_info("Loading manually annotated instances");
     my ($source_pos,$source_suffix,$target_pos,$target_suffix);
@@ -50,7 +57,7 @@ sub process_dictionary {
                         source_lexeme => $source_lexeme,
                         derived_lexeme => $target_lexeme,
                         deriv_type => $source_pos.'2'.$target_pos,
-                        derivation_creator => $self->signature,
+                        derivation_creator => $self->signature.($self->file||""),
                     });
                 }
             }
@@ -71,3 +78,5 @@ sub _create_if_nonexistent {
     return $candidates[0]; # TODO: muze jich byt vic? a hlavne: kdyz se nenajde nic, mel by se vytvorit
 
 }
+
+1;

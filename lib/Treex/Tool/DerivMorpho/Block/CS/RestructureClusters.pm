@@ -4,11 +4,27 @@ extends 'Treex::Tool::DerivMorpho::Block';
 use Treex::Core::Log;
 
 
+has file => (
+    is            => 'ro',
+    isa           => 'Str',
+    documentation => q(file name to load),
+);
+
+
 sub process_dictionary {
 
     my ($self, $dict) = @_;
 
-    foreach my $filename (glob $self->my_directory."manual.RestructureClusters/predelat*") {
+    my @files;
+    if ($self->file) {
+	@files = ($self->file);
+    }
+    else {
+	glob $self->my_directory."manual.RestructureClusters/predelat*";
+    }
+
+
+    foreach my $filename (@files) {
 
         open my $R, '<:utf8', $filename or log_fatal($!);
         log_info("Loading cluster structures from $filename");
@@ -102,7 +118,7 @@ sub process_dictionary {
                                    source_lexeme => $source_lexeme,
                                    derived_lexeme => $target_lexeme,
                                    deriv_type => $source_pos.'2'.$target_pos,
-                                   derivation_creator => $self->signature,
+                                   derivation_creator => $self->signature.($self->file||""),
                                });
                             }
                         }
