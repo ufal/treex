@@ -133,7 +133,6 @@ sub _build_loaded_blocks {
         log_info("Loading block $block_item->{block_name} $params ($i/$block_count)");
         my $new_block = $self->_load_block($block_item);
 
-        log_debug( $block_item->{block_name} );
         if ( $new_block->does('Treex::Core::DocumentReader') ) {
             log_fatal("Only one DocumentReader per scenario is permitted ($block_item->{block_name})")
                 if $self->_has_document_reader;
