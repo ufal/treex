@@ -15,7 +15,7 @@ use Treex::Tool::TranslationModel::Features::Standard;
 has model_dir => (
     is            => 'ro',
     isa           => 'Str',
-    default       => '.',
+    default       => '',
     documentation => 'Base directory for all models'
 );
 
@@ -99,13 +99,12 @@ sub get_required_share_files {
     my @files;
 
     if ( $self->discr_weight > 0 ) {
-        push @files, $self->model_dir . '/' . $self->discr_model;
+        push @files, $self->model_dir ? $self->model_dir . '/' . $self->discr_model :  $self->discr_model;
     }
-    push @files, $self->model_dir . '/' . $self->static_model;
+    push @files, $self->model_dir ?  $self->model_dir . '/' . $self->static_model : $self->static_model;
 
     return @files;
 }
-
 
 # Retrieve the target language formeme or lemma and return them as additional features
 sub get_parent_trg_features {

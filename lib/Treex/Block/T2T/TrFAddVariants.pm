@@ -16,7 +16,7 @@ use Treex::Tool::TranslationModel::Features::Standard;
 has model_dir => (
     is            => 'ro',
     isa           => 'Str',
-    default       => '.',
+    default       => '',
     documentation => 'Base directory for all models'
 );
 
@@ -42,7 +42,7 @@ has discr_weight => (
 has discr_model => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'formeme_czeng09.maxent.compact.pls.slurp.gz',    # 'tlemma_czeng09.maxent.10k.para.pls.gz'
+    default => 'formeme_czeng09.maxent.compact.pls.slurp.gz',
 );
 
 has static_weight => (
@@ -88,9 +88,9 @@ sub get_required_share_files {
     my @files;
 
     if ( $self->discr_weight > 0 ) {
-        push @files, $self->model_dir . '/' . $self->discr_model;
+        push @files, $self->model_dir ? $self->model_dir . '/' . $self->discr_model :  $self->discr_model;
     }
-    push @files, $self->model_dir . '/' . $self->static_model;
+    push @files, $self->model_dir ?  $self->model_dir . '/' . $self->static_model : $self->static_model;
 
     return @files;
 }

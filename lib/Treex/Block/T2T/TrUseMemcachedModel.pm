@@ -14,7 +14,7 @@ sub load_model {
 
     my ( $self, $model, $path, $memcached ) = @_;
 
-    $path = $self->model_dir . '/' . $path;
+    $path = $self->model_dir ?  $self->model_dir . '/' . $path : $path;
 
     if ($memcached) {
         $model = TranslationModel::Memcached::Model->new( { 'model' => $model, 'file' => $path } );

@@ -88,7 +88,7 @@ override 'get_required_share_files' => sub {
     my ($self) = @_;
 
     my @files = super();
-    push @files, $self->model_dir . '/' . $self->human_model;
+    push @files, $self->model_dir ? $self->model_dir . '/' . $self->human_model : $self->human_model;
     return @files;
 };
 
