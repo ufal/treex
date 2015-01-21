@@ -64,21 +64,23 @@ sub convert_deprel {
     my $afun = $DEPREL_CONV{$deprel};
 
     # override Afun for prepositions, except in separable verbal prefixes
-    $afun = 'AuxP' if ( $node->is_adposition and $deprel ne 'svp' );   
-    
+    $afun = 'AuxP' if ( $node->is_adposition and $deprel ne 'svp' );
+
     if ( !$afun ) {
+
         # obj1 defaults to 'Obj' but we need a special treatment for prepositional phrases
-        if ( $deprel eq 'obj1' ){
+        if ( $deprel eq 'obj1' ) {
             my $parent = $node->get_parent();
-            if ( $parent and $parent->is_adposition ){
+            if ( $parent and $parent->is_adposition ) {
                 my $grandpa = $parent->get_parent();
-                if ( ( $parent->conll_deprel // '' ) eq 'mod' ){
+                if ( ( $parent->conll_deprel // '' ) eq 'mod' ) {
                     $afun = 'Atr' if ( $grandpa and ( $grandpa->is_noun or $grandpa->is_adjective ) );
                     $afun = 'Adv' if ( !$afun );
                 }
             }
             $afun = 'Obj' if ( !$afun );
         }
+
         # attributes (or adverbials)
         elsif ( $deprel eq 'mod' ) {
             my $parent = $node->get_parent();
@@ -86,10 +88,12 @@ sub convert_deprel {
             $afun = 'Neg' if ( $node->lemma eq 'niet' );
             $afun = 'Adv' if ( !$afun );
         }
-        # AuxA is much narrower than Alpino's det 
+
+        # AuxA is much narrower than Alpino's det
         elsif ( $deprel eq 'det' ) {
             $afun = $node->match_iset( 'prontype' => 'art' ) ? 'AuxA' : 'Atr';
         }
+
         # This is everything hanging under the root
         elsif ( $deprel eq '--' ) {
             $afun = 'Pred' if ( $node->is_verb );
@@ -97,6 +101,7 @@ sub convert_deprel {
             $afun = 'AuxX' if ( $node->lemma eq ',' );
             $afun = 'AuxG' if ( !$afun );
         }
+
         # multi-word names have no sense of Afuns internally
         elsif ( $deprel eq 'mwp' ) {
             $afun = 'AuxP' if ( $node->is_adposition );
@@ -104,6 +109,7 @@ sub convert_deprel {
             $afun = 'AuxA' if ( !$afun and $node->match_iset( 'prontype' => 'art' ) );
             $afun = 'NR'   if ( !$afun );
         }
+
         # separable verbal parts
         elsif ( $deprel eq 'svp' ) {
             $afun = 'AuxV' if ( $node->is_adposition or $node->is_adverb );
@@ -178,7 +184,7 @@ sub create_subtree {
         else {
             $new_node = $a_root->create_child();
         }
-        
+
         if ( defined $child->form ) {    # the node is terminal
             $self->fill_attribs( $child, $new_node );
         }
@@ -267,14 +273,29 @@ sub rehang_wh_clauses {
         my $parent = $anode->get_parent();
         $clause->set_parent($parent);
         $anode->set_parent($clause);
-        $anode->set_afun( $anode->is_preposition ? 'AuxP' : ( $anode->is_adverb ? 'Adv' : 'Obj' ) );
-        $clause->set_afun( $parent->is_root ? 'Pred' : 'Atr' );
         $clause->set_is_member( $anode->is_member );
         $anode->set_is_member(undef);
+        $clause->set_afun( $parent->is_root ? 'Pred' : 'Atr' );
+
+        # find the function of the relative pronoun in the clause by finding a coindex node
+        # and looking at its Alpino relation (currently only used to find subjects)  
+        my $head_rel = '';
+        if ( $anode->get_terminal_pnode() ){
+            my ($pindex) = first { $_->index } ( $anode->get_terminal_pnode(), $anode->get_nonterminal_pnodes() );
+            if ($pindex){
+                my ($pcoindex) = first { ($_->form // '') eq ('*-' . $pindex->index) } $anode->get_terminal_pnode()->get_root->get_descendants();
+                $head_rel = $pcoindex->wild->{rel};                
+            }
+        }
+        if ($head_rel eq 'su'){
+            $anode->set_afun('Sb');
+        }
+        else {
+            $anode->set_afun( $anode->is_preposition ? 'AuxP' : ( $anode->is_adverb ? 'Adv' : 'Obj' ) );
+        }
     }
     return;
 }
-
 
 # Rehang auxiliaries under main verb: zullen (+infinitive), worden hebben zijn (+participle)
 # TODO: other combinations (gaan+inf, zijn+inf)?

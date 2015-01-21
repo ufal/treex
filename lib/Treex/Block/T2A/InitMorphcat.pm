@@ -66,8 +66,8 @@ sub process_tnode {
     # Part-of-speech
     # Use mlayer_pos, if available, otherwise try sempos or syntpos from formeme
     my $mlayer_pos = $t_node->get_attr('mlayer_pos');
-    if ( defined( $mlayer_pos ) and $mlayer_pos !~ /^[xX]$/ ){
-        $a_node->iset->set_pos( $mlayer_pos );
+    if ( defined($mlayer_pos) and $mlayer_pos !~ /^[xX]$/ ) {
+        $a_node->iset->set_pos($mlayer_pos);
     }
     else {
         my $syntpos = $t_node->formeme;
@@ -79,12 +79,7 @@ sub process_tnode {
 
     # Grammatemes -> Interset features
     my $grammatemes_rf = $t_node->get_attr('gram') or return;
-    while ( my ( $name, $value ) = each %{$grammatemes_rf} ) {
-        if ( defined $value && $self->should_fill( $name, $t_node ) && ( my $iset_rule = $gram2iset{"$name=$value"} ) ) {
-            my ( $i_name, $i_value ) = split /=/, $iset_rule;
-            $a_node->set_iset( $i_name, $i_value );
-        }
-    }
+    $self->fill_iset_from_gram( $t_node, $a_node, $grammatemes_rf );
 
     # Czech-specific relict: grammateme gender contains info about animateness (only for masculine)
     # So far, gram_gender="anim" is used instead of gram_gender="masc", so we cannot induce animateness from this value.
@@ -102,12 +97,33 @@ sub process_tnode {
             $a_node->iset->set_poss('poss');
         }
     }
+    
+    # Fill grammatemes through coref_gram.rf for reflexive pronouns
+    if ( $t_node->t_lemma eq '#PersPron' and ( my ($t_antec) = $t_node->get_coref_gram_nodes() ) ){
+        while ( $t_antec->get_coref_gram_nodes() ){
+            ($t_antec) = $t_antec->get_coref_gram_nodes();  # go to the beginng of the coreference chain
+        }
+        my $antec_gram = $t_antec->get_attr('gram') or return; 
+        $self->fill_iset_from_gram( $t_node, $a_node, $antec_gram );
+        $a_node->iset->set_reflex('reflex');    
+    }
 
     return;
 }
 
 sub should_fill {
     return 1;
+}
+
+sub fill_iset_from_gram {
+    my ( $self, $t_node, $a_node, $grammatemes_rf ) = @_;
+
+    while ( my ( $name, $value ) = each %{$grammatemes_rf} ) {
+        if ( defined $value && $self->should_fill( $name, $t_node ) && ( my $iset_rule = $gram2iset{"$name=$value"} ) ) {
+            my ( $i_name, $i_value ) = split /=/, $iset_rule;
+            $a_node->set_iset( $i_name, $i_value );
+        }
+    }
 }
 
 1;
