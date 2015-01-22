@@ -78,15 +78,16 @@ override 'formeme_for_adj' => sub {
     my $afun = $a_node->afun;
 
     # adjectives with prepositions are treated as a nominal usage
-    return "n:$prep+X" if $prep;                                                     
+    return "n:$prep+X" if $prep;
 
-    return 'adj:attr'  if $self->below_noun($t_node) || $self->below_adj($t_node);
+    return 'adj:attr' if $self->below_noun($t_node) || $self->below_adj($t_node);
 
     # adjectives in the subject/predicative positions -- nominal usage
-    return 'n:subj'    if $afun eq 'Sb';                                             
-    return 'n:predc'   if $afun eq 'Pnom';
+    return 'n:subj'  if $afun eq 'Sb';
+    return 'n:predc' if $afun eq 'Pnom';
 
     if ( $self->below_verb($t_node) ) {
+
         # adjectives used as adverbs: "hij rent snel(adj)" = "he runs quickly(adv)"
         return 'adv' if ( $afun eq 'Adv' or $a_node->match_iset( synpos => 'adv' ) );
 
@@ -113,6 +114,7 @@ override 'formeme_for_verb' => sub {
     if ( $first_verbform->match_iset( 'verbform' => 'part', 'tense' => 'pres' ) ) {
         return "v:$subconj+ger" if $subconj;
         return 'v:attr' if $self->below_noun($t_node);
+        return 'n:predc' if $first_verbform->afun eq 'Pnom';
         return 'v:ger';
     }
 
@@ -124,6 +126,7 @@ override 'formeme_for_verb' => sub {
 
     if ( $first_verbform->match_iset( 'verbform' => 'part', 'tense' => 'past' ) ) {
         return "v:$subconj+fin" if $subconj;
+        return 'n:predc' if $first_verbform->afun eq 'Pnom';
         return 'v:attr';
     }
 

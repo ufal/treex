@@ -52,11 +52,12 @@ sub process_tnode {
             $achild->set_parent($amain_verb);
         }
     }
-    return if (!$asubj);
     
-    # shift the coindex node to the beginning of the main verb's subtree
+    # if we've created a coindex node, shift it to the beginning of the main verb's subtree
     # (we can do this only now since the subtree has just been moved from the 1st auxiliary)
-    $acoindex->shift_before_subtree($amain_verb);
+    if ( $acoindex ){
+        $acoindex->shift_before_subtree($amain_verb);
+    }
 
     # hierarchical ordering & coindexing nodes for the "middle part" of the verbal complex
     # (i.e. everything between the lexical verb and the 1st auxiliary)
@@ -65,8 +66,10 @@ sub process_tnode {
         $aaux_hier->set_parent( $aprev_top->get_parent() );
         $aprev_top->set_parent($aaux_hier);
       
-        my $acoindex = $self->add_coindex_node( $aaux_hier, $asubj, 'Sb' );
-        $acoindex->shift_before_subtree($aaux_hier);
+        if ( $asubj ){  # skip coindexing if we hadn't found a subject
+            my $acoindex = $self->add_coindex_node( $aaux_hier, $asubj, 'Sb' );
+            $acoindex->shift_before_subtree($aaux_hier);
+        }
       
         $aprev_top = $aaux_hier;
     }
@@ -95,6 +98,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2014-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

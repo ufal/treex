@@ -23,7 +23,7 @@ override tnode_although_aux => sub {
 
     # keep comparative prepositions, same as English
     return 1 if $node->lemma =~ /^(dan|als)$/
-            && any { $_->afun eq 'AuxP' } $node->get_children();
+        && any { $_->afun eq 'AuxP' } $node->get_children();
 
     # The current translation expects quotes as self-standing t-nodes.
     return 1 if !$self->quotes && $node->form =~ /^["'`„“”‚‘’]+$/;
@@ -33,15 +33,22 @@ override tnode_although_aux => sub {
 sub _is_infinitive {
     my ( $self, $modal, $infinitive ) = @_;
 
-    # Infinitives cannot precede modals, cannot work as subjects
-    return 0 if $infinitive->precedes($modal) or $infinitive->afun eq 'Sb';
+    # Infinitives cannot work as subjects
+    return 0 if ( $infinitive->afun eq 'Sb' );
+
+    # Infinitives cannot precede modals, unless they are shifted to the end of the clause
+    # and precede the infinitive directly (but for an auxiliary verb)
+    if ( $infinitive->precedes($modal) ) {
+        my @between = $modal->get_nodes_between($infinitive);
+        return 0 if ( @between > 1 or ( @between and $between[0]->afun ne 'AuxV' ) );
+    }
 
     # $infinitive (or one of its descendants) must be an infinitive (same as in English)
-    # Je moet gaan. Dit moet worden gedaan. 
-    return 1 if $infinitive->match_iset('verbform' => 'inf');
-    return 1 if $infinitive->match_iset('verbform' => 'part') 
-            && any { $self->_is_infinitive( $modal, $_ ) }
-               grep { $_->edge_to_collapse } $infinitive->get_children();
+    # Je moet gaan. Dit moet worden gedaan.
+    return 1 if $infinitive->match_iset( 'verbform' => 'inf' );
+    return 1 if $infinitive->match_iset( 'verbform' => 'part' )
+        && any { $self->_is_infinitive( $modal, $_ ) }
+    grep { $_->edge_to_collapse } $infinitive->get_children();
 
     return 0;
 }
@@ -55,9 +62,10 @@ override is_modal => sub {
 
     # "Standard" modals
     return 1 if $modal->lemma =~ /^(kunnen|moeten|mogen|willen|zullen)$/;
-    
+
     # TODO: verbs that behave the same but we don't have grammateme values
     # - gaan, blijven, komen +te (maybe more)
+    # TODO: hoeven
 
     return 0;
 };
@@ -70,14 +78,14 @@ override is_aux_to_parent => sub {
     return $base_result if defined $base_result;
 
     # standalone (existential) "er"
-    if ( lc $node->form eq 'er' ){
+    if ( lc $node->form eq 'er' ) {
         my ($eparent) = $node->get_eparents();
-        return 1 if $eparent->is_verb(); # formal subject
-        return 0; # eraan, ermee etc.
-    }  
+        return 1 if $eparent->is_verb();    # formal subject
+        return 0;                           # eraan, ermee etc.
+    }
 
     # Analytical comparative and superlative
-    if ( lc($node->form) =~ /^(meer|meest)$/ ) {
+    if ( lc( $node->form ) =~ /^(meer|meest)$/ ) {
         my ($eparent) = $node->get_eparents();
         return 0 if $eparent->is_root();
         return 1 && $eparent->is_adverb() or $eparent->is_conjunction();
@@ -98,7 +106,7 @@ override solve_multi_lex => sub {
 
         # For preps the 'real' child is a noun, and for conjs a verb or noun (see English)
         my $wanted_pos = $node->afun eq 'AuxP' ? 'noun' : '(verb|noun)';
-        return if $self->try_rule( sub { $_[0]->match_iset('pos' => $wanted_pos) }, \@adepts );
+        return if $self->try_rule( sub { $_[0]->match_iset( 'pos' => $wanted_pos ) }, \@adepts );
 
         # If no previous heuristic helped, choose the leftmost child.
         return if $self->try_rule( sub { $_[0] == $adepts[0] }, \@adepts );

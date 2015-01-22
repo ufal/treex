@@ -278,16 +278,16 @@ sub rehang_wh_clauses {
         $clause->set_afun( $parent->is_root ? 'Pred' : 'Atr' );
 
         # find the function of the relative pronoun in the clause by finding a coindex node
-        # and looking at its Alpino relation (currently only used to find subjects)  
+        # and looking at its Alpino relation (currently only used to find subjects)
         my $head_rel = '';
-        if ( $anode->get_terminal_pnode() ){
+        if ( $anode->get_terminal_pnode() ) {
             my ($pindex) = first { $_->index } ( $anode->get_terminal_pnode(), $anode->get_nonterminal_pnodes() );
-            if ($pindex){
-                my ($pcoindex) = first { ($_->form // '') eq ('*-' . $pindex->index) } $anode->get_terminal_pnode()->get_root->get_descendants();
-                $head_rel = $pcoindex->wild->{rel};                
+            if ($pindex) {
+                my ($pcoindex) = first { ( $_->form // '' ) eq ( '*-' . $pindex->index ) } $anode->get_terminal_pnode()->get_root->get_descendants();
+                $head_rel = $pcoindex->wild->{rel};
             }
         }
-        if ($head_rel eq 'su'){
+        if ( $head_rel eq 'su' ) {
             $anode->set_afun('Sb');
         }
         else {
@@ -305,8 +305,7 @@ sub rehang_aux_verbs {
     foreach my $aux_verb ( grep { $_->lemma =~ /^(zullen|worden|hebben|zijn)$/ } $a_root->get_descendants( { ordered => 1 } ) ) {
 
         # find full verbs hanging on the auxiliary
-        my $full_verbform = $aux_verb->lemma eq 'zullen' ? 'inf' : 'part';
-        my @full_verbs = grep { $_->match_iset( 'verbform' => $full_verbform ) } $aux_verb->get_echildren( { or_topological => 1 } );
+        my @full_verbs = grep { $self->_is_full_verb_to_aux( $_, $aux_verb ) } $aux_verb->get_echildren( { or_topological => 1 } );
         my $verb_head;
 
         # avoid coordinations where some members are full verbs and some aren't
@@ -337,6 +336,28 @@ sub rehang_aux_verbs {
         }
     }
     return;
+}
+
+sub _is_full_verb_to_aux {
+    my ( $self, $afull_verb, $aaux_verb ) = @_;
+
+    # regular cases
+    my $full_verbform = $aaux_verb->lemma eq 'zullen' ? 'inf' : 'part';
+    return 0 if ( $afull_verb->conll_deprel =~ /^(su|predc)$/ );
+    return 1 if ( $afull_verb->match_iset( 'verbform' => $full_verbform ) );
+
+    # vervangende infinitief (Ersatzinfinitiv, substituting participle for infinitive)
+    # the main verb must be a 'vc' and carry a further (te+)infinitive
+    if ((   $afull_verb->lemma =~ /^(moeten|kunnen|willen|hoeven|laten|zien|horen|weten|zitten)$/
+            and $aaux_verb->lemma eq 'hebben'
+        )
+        or ( $afull_verb->lemma eq 'gaan' and $aaux_verb->lemma eq 'zijn' )
+        )
+    {
+        return 0 if ( $afull_verb->conll_deprel ne 'vc' );
+        return 1 if ( any { $_->conll_deprel =~ /^(vc|cmp)$/ } $afull_verb->get_echildren( { or_topological => 1 } ) );
+    }
+    return 0;
 }
 
 # Heuristics for fixing multi-word units: rehanging everything under the last part of the MWU

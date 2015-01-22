@@ -17,46 +17,62 @@ my %SIG2GRAM = (
     'LEX-inf'      => { 'diathesis' => 'act', 'tense' => 'nil', 'deontmod' => 'decl', 'verbmod' => 'nil' },
 
     # present/past with modals
-    'moeten-finpres+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'hrt',  'verbmod' => 'ind' },
-    'moeten-finpast+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'hrt',  'verbmod' => 'ind' },
-    'kunnen-finpres+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'poss', 'verbmod' => 'ind' },
-    'kunnen-finpast+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'poss', 'verbmod' => 'ind' },
-    'mogen-finpres+LEX-inf'  => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'perm', 'verbmod' => 'ind' },
-    'mogen-finpast+LEX-inf'  => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'perm', 'verbmod' => 'ind' },
-    'willen-finpres+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'vol',  'verbmod' => 'ind' },
-    'willen-finpast+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'vol',  'verbmod' => 'ind' },
+    'moeten-finpres+LEX-inf'            => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'hrt',  'verbmod' => 'ind' },
+    'moeten-finpast+LEX-inf'            => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'hrt',  'verbmod' => 'ind' },
+    'hebben-finpres+moeten-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'hrt',  'verbmod' => 'ind' },
+    'hebben-finpast+moeten-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'hrt',  'verbmod' => 'ind' },
+    'kunnen-finpres+LEX-inf'            => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'poss', 'verbmod' => 'ind' },
+    'kunnen-finpast+LEX-inf'            => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'poss', 'verbmod' => 'ind' },
+    'hebben-finpres+kunnen-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'poss', 'verbmod' => 'ind' },
+    'hebben-finpast+kunnen-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'poss', 'verbmod' => 'ind' },
+    'mogen-finpres+LEX-inf'             => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'perm', 'verbmod' => 'ind' },
+    'mogen-finpast+LEX-inf'             => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'perm', 'verbmod' => 'ind' },
+    'hebben-finpres+mogen-inf+LEX-inf'  => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'perm', 'verbmod' => 'ind' },
+    'hebben-finpast+mogen-inf+LEX-inf'  => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'perm', 'verbmod' => 'ind' },
+    'willen-finpres+LEX-inf'            => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'vol',  'verbmod' => 'ind' },
+    'willen-finpast+LEX-inf'            => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'vol',  'verbmod' => 'ind' },
+    'hebben-finpres+willen-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'vol',  'verbmod' => 'ind' },
+    'hebben-finpast+willen-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'vol',  'verbmod' => 'ind' },
 
     # future / conditional active
     'zullen-finpres+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'post', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'zullen-finpast+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
 
-    # past (heb gemaakt, had gemaakt)
+    # past (heb gemaakt, had gemaakt, verwangende infinitief -- heb laten, had laten, is gaan, was gaan)
     'hebben-finpres+LEX-partpast' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'hebben-finpast+LEX-partpast' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'hebben-finpres+LEX-inf'      => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'hebben-finpast+LEX-inf'      => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'zijn-finpres+LEX-inf'        => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'zijn-finpast+LEX-inf'        => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
 
     # passive
     'worden-finpres+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'worden-finpast+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'worden-inf+LEX-partpast'     => { 'diathesis' => 'pas', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'zijn-finpres+LEX-partpast'   => { 'diathesis' => 'pas', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'zijn-finpast+LEX-partpast'   => { 'diathesis' => 'pas', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'zijn-inf+LEX-partpast'       => { 'diathesis' => 'pas', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
 
     # future/conditional with modals
     'zullen-finpres+moeten-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'post', 'deontmod' => 'hrt',  'verbmod' => 'ind' },
     'zullen-finpres+willen-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'post', 'deontmod' => 'vol',  'verbmod' => 'ind' },
     'zullen-finpres+kunnen-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'post', 'deontmod' => 'poss', 'verbmod' => 'ind' },
     'zullen-finpres+mogen-inf+LEX-inf'  => { 'diathesis' => 'act', 'tense' => 'post', 'deontmod' => 'perm', 'verbmod' => 'ind' },
-    'zullen-finpast+moeten-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'hrt',  'verbmod' => 'cdn' },
-    'zullen-finpast+willen-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'vol',  'verbmod' => 'cdn' },
-    'zullen-finpast+kunnen-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'poss', 'verbmod' => 'cdn' },
-    'zullen-finpast+mogen-inf+LEX-inf'  => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'perm', 'verbmod' => 'cdn' },
-    
+    'zullen-finpast+moeten-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'hrt',  'verbmod' => 'cdn' },
+    'zullen-finpast+willen-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'vol',  'verbmod' => 'cdn' },
+    'zullen-finpast+kunnen-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'poss', 'verbmod' => 'cdn' },
+    'zullen-finpast+mogen-inf+LEX-inf'  => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'perm', 'verbmod' => 'cdn' },
+
     # future/conditional with modals+passive
-    'zullen-finpres+moeten-inf+worden-inf+LEX-partpast'  => { 'diathesis' => 'pas', 'tense' => 'post', 'deontmod' => 'hrt',  'verbmod' => 'ind' },
-    'zullen-finpres+willen-inf+worden-inf+LEX-partpast'  => { 'diathesis' => 'pas', 'tense' => 'post', 'deontmod' => 'vol',  'verbmod' => 'ind' },
-    'zullen-finpres+kunnen-inf+worden-inf+LEX-partpast'  => { 'diathesis' => 'pas', 'tense' => 'post', 'deontmod' => 'poss', 'verbmod' => 'ind' },
-    'zullen-finpres+mogen-inf+worden-inf+LEX-partpast'  =>  { 'diathesis' => 'pas', 'tense' => 'post', 'deontmod' => 'perm', 'verbmod' => 'ind' },
-    'zullen-finpast+moeten-inf+worden-inf+LEX-partpast'  => { 'diathesis' => 'pas', 'tense' => 'sim', 'deontmod' => 'hrt',  'verbmod' => 'cdn' },
-    'zullen-finpast+willen-inf+worden-inf+LEX-partpast'  => { 'diathesis' => 'pas', 'tense' => 'sim', 'deontmod' => 'vol',  'verbmod' => 'cdn' },
-    'zullen-finpast+kunnen-inf+worden-inf+LEX-partpast'  => { 'diathesis' => 'pas', 'tense' => 'sim', 'deontmod' => 'poss', 'verbmod' => 'cdn' },
-    'zullen-finpast+mogen-inf+worden-inf+LEX-partpast'  =>  { 'diathesis' => 'pas', 'tense' => 'sim', 'deontmod' => 'perm', 'verbmod' => 'cdn' },
+    'zullen-finpres+moeten-inf+worden-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'post', 'deontmod' => 'hrt',  'verbmod' => 'ind' },
+    'zullen-finpres+willen-inf+worden-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'post', 'deontmod' => 'vol',  'verbmod' => 'ind' },
+    'zullen-finpres+kunnen-inf+worden-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'post', 'deontmod' => 'poss', 'verbmod' => 'ind' },
+    'zullen-finpres+mogen-inf+worden-inf+LEX-partpast'  => { 'diathesis' => 'pas', 'tense' => 'post', 'deontmod' => 'perm', 'verbmod' => 'ind' },
+    'zullen-finpast+moeten-inf+worden-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'hrt',  'verbmod' => 'cdn' },
+    'zullen-finpast+willen-inf+worden-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'vol',  'verbmod' => 'cdn' },
+    'zullen-finpast+kunnen-inf+worden-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'poss', 'verbmod' => 'cdn' },
+    'zullen-finpast+mogen-inf+worden-inf+LEX-partpast'  => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'perm', 'verbmod' => 'cdn' },
 
     # passive with modals
     'moeten-finpres+worden-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim', 'deontmod' => 'hrt',  'verbmod' => 'ind' },
@@ -67,6 +83,17 @@ my %SIG2GRAM = (
     'mogen-finpast+worden-inf+LEX-partpast'  => { 'diathesis' => 'pas', 'tense' => 'ant', 'deontmod' => 'perm', 'verbmod' => 'ind' },
     'willen-finpres+worden-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim', 'deontmod' => 'vol',  'verbmod' => 'ind' },
     'willen-finpast+worden-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'ant', 'deontmod' => 'vol',  'verbmod' => 'ind' },
+
+    # modals + past passive (or active) infinitives
+    # NB: we actually can't handle this properly, the past tense of the infinitive gets lost!
+    'moeten-finpres+zijn-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim', 'deontmod' => 'hrt',  'verbmod' => 'ind' },
+    'moeten-finpast+zijn-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'ant', 'deontmod' => 'hrt',  'verbmod' => 'ind' },
+    'kunnen-finpres+zijn-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim', 'deontmod' => 'poss', 'verbmod' => 'ind' },
+    'kunnen-finpast+zijn-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'ant', 'deontmod' => 'poss', 'verbmod' => 'ind' },
+    'mogen-finpres+zijn-inf+LEX-partpast'  => { 'diathesis' => 'pas', 'tense' => 'sim', 'deontmod' => 'perm', 'verbmod' => 'ind' },
+    'mogen-finpast+zijn-inf+LEX-partpast'  => { 'diathesis' => 'pas', 'tense' => 'ant', 'deontmod' => 'perm', 'verbmod' => 'ind' },
+    'willen-finpres+zijn-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim', 'deontmod' => 'vol',  'verbmod' => 'ind' },
+    'willen-finpast+zijn-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'ant', 'deontmod' => 'vol',  'verbmod' => 'ind' },
 
     # future / conditional passive
     'zullen-finpres+worden-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'post', 'deontmod' => 'decl', 'verbmod' => 'ind' },
@@ -80,18 +107,9 @@ override 'set_verbal_grammatemes' => sub {
     my $gram = $SIG2GRAM{$sig};
 
     # distinguishing past tense and passive for "is/was + past participle"
-    if ( $sig =~ 'zijn-(finpast|finpres)\+LEX-partpast' ) {
-
-        # ergative verbs (can't build passive): past tense
-        $gram = { 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' };
-        if ( Treex::Tool::Lexicon::NL::ErgativeVerbs::is_ergative_verb( $tnode->t_lemma ) ) {
-            $gram->{'diathesis'} = 'act';
-        }
-
-        # other: passive
-        else {
-            $gram->{'diathesis'} = 'pas';
-        }
+    # overriding the default past passive by past active for verbs that use "zijn" as past auxiliary
+    if ( $sig =~ 'zijn-(finpast|finpres|inf)\+LEX-partpast' and Treex::Tool::Lexicon::NL::ErgativeVerbs::is_ergative_verb( $tnode->t_lemma ) ) {
+        $gram->{'diathesis'} = 'act';
     }
 
     if ($gram) {
@@ -100,8 +118,8 @@ override 'set_verbal_grammatemes' => sub {
         }
     }
     else {
-        my $id = $tnode->id . ' -- ' . join(' ', map { lc $_->form } grep { $_->is_verb } $tnode->get_anodes( { ordered => 1 } ) );
-        log_warn( "No grammatemes found for verbal group signature `$sig': $id");
+        my $id = $tnode->id . ' -- ' . join( ' ', map { lc $_->form } grep { $_->is_verb } $tnode->get_anodes( { ordered => 1 } ) );
+        log_warn("No grammatemes found for verbal group signature `$sig': $id");
     }
     return 1;
 };
@@ -114,23 +132,29 @@ sub get_form_signature {
 # returns de-lexicalized signature of all verb forms in the verbal group (to be mapped to grammatemes)
 sub get_verbal_group_signature {
     my ( $self, $tnode, $lex_anode ) = @_;
+
+    # get all verb forms and normalize their order
+    my @averbs = sort { _verb_priority($b) <=> _verb_priority($a) } grep { $_->is_verb } $tnode->get_anodes( { ordered => 1 } );
+
     my @sig = ();
-    foreach my $anode ( grep { $_->is_verb } $tnode->get_anodes( { ordered => 1 } ) ) {
+    foreach my $anode (@averbs) {
 
         # de-lexicalize
         my $lemma = $anode == $lex_anode ? 'LEX' : $anode->lemma;
-
-        # put finite verb first at all times (handle word order change in some embedded clauses)
-        if ( $anode->match_iset( 'verbform' => 'fin' ) ) {
-            unshift @sig, $lemma . '-' . $self->get_form_signature($anode);
-        }
-        else {
-            push @sig, $lemma . '-' . $self->get_form_signature($anode);
-        }
+        push @sig, $lemma . '-' . $self->get_form_signature($anode);
     }
 
     #log_info( join( ' ', map { $_->form } $tnode->get_anodes( { ordered => 1 } ) ) . ' -- ' . join( '+', @sig ) );
     return join( '+', @sig );
+}
+
+# Normalized verbal order for signatures: finites > modal infinitives > infinitives > participles
+sub _verb_priority {
+    my ($anode) = @_;
+    return 4 if ( $anode->match_iset( 'verbform' => 'fin' ) );
+    return 3 if ( $anode->match_iset( 'verbform' => 'inf' ) and $anode->lemma =~ /(kunnen|moeten|willen|mogen)/ );
+    return 2 if ( $anode->match_iset( 'verbform' => 'inf' ) );
+    return 1;
 }
 
 1;
