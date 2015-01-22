@@ -30,7 +30,7 @@ MODE is one of:
 
     chunker:OUT
         Runs only the chunker, which tries to detect where each
-         sentence ends and the next begins, trying to undo 
+         sentence ends and the next begins, trying to undo
          linebreaks that were inserted within sentences (usually
          called "word wrapping").
          Each paragraph should be delimited at the input by an
@@ -54,13 +54,13 @@ MODE is one of:
         IN/OUT is either "plain" or "ctags" (see FORMATS below).
 
     IN:tagger_parser:OUT
-        Runs PoS tagger and dependency parser. Assumes text has been sentence-chunked
-         and tokenized.
+        Runs PoS tagger and dependency parser. Assumes text has been
+         sentence-chunked and tokenized.
         IN is either "plain" or "ctags" (see FORMATS below).
         OUT is either "conll.lx", "conll.usd" or "lxtriples" (see FORMATS below).
 
     IN:tagger:OUT
-        Runs PoS tagger. Assumes text has been sentence-chunked 
+        Runs PoS tagger. Assumes text has been sentence-chunked
          and tokenized.
         IN is either "plain" or "ctags" (see FORMATS below).
         OUT is either "plain", "ctags" or "conll.pos" (see FORMATS below).
@@ -70,6 +70,12 @@ MODE is one of:
          sentence-chunked, tokenized and PoS-tagged.
         IN is either "plain", "ctags" or "conll.pos" (see FORMATS below).
         OUT is either "conll.lx", "conll.usd" or "lxtriples" (see FORMATS below).
+
+    IN:ner:OUT
+        Finds Named Entities in the text. Assumes text has been
+         sentence-chunked, tokenized and PoS-tagged.
+        IN is "ctags" (see FORMATS below).
+        OUT is "ctags.ner" (see FORMATS below).
 
     IN:to:OUT
         Converts IN format to OUT format.
@@ -90,11 +96,12 @@ MODE is one of:
 FORMATS
     Use "plain" when the input/output text is plain text.
     Use "ctags" when the input/output text is marked with chunk
+    Use "ctags.ner" when you want the Named Entities in ctags format.
      tags (<p></p> and <s>/</s>).
     Use "conll.pos" when you want the tagged text in CoNLL tabular format.
-    Use "conll.lx" when you want the parsed text in CoNLL tabular format 
+    Use "conll.lx" when you want the parsed text in CoNLL tabular format
       using LX dependency relations.
-    Use "conll.usd" when you want the parsed text in CoNLL tabular format 
+    Use "conll.usd" when you want the parsed text in CoNLL tabular format
       using Stanford dependency relations.
     Use "lxtriples" when you want the parsed text in the LX triples format
       (using LX dependency relations).
@@ -109,12 +116,16 @@ mode_regex = (
     "chunker_tokenizer:(?:plain|ctags)|"
     "chunker_tokenizer_tagger:(?:plain|ctags|conll.pos)|"
     "chunker_tokenizer_tagger_parser:(?:conll.(?:lx|usd)|lxtriples)|"
+    "chunker_tokenizer_tagger_ner:ctags.ner|"
     "(?:ctags|plain):tokenizer_tagger_parser:(?:conll.(?:lx|usd)|lxtriples)|"
+    "(?:ctags|plain):tokenizer_tagger_ner:ctags.ner|"
     "(?:ctags|plain):tokenizer_tagger:(?:plain|ctags|conll.pos)|"
     "(?:ctags|plain):tokenizer:(?:plain|ctags)|"
     "(?:ctags|plain):tagger_parser:(?:conll.(?:lx|usd)|lxtriples)|"
+    "(?:ctags|plain):tagger_ner:ctags.ner|"
     "(?:ctags|plain):tagger:(?:plain|ctags|conll.pos)|"
     "(?:ctags|plain|conll.pos):parser:(?:conll.(?:lx|usd)|lxtriples)|"
+    "ctags:ner:ctags.ner|"
     "(?:conll.lx|lxtriples):to:conll.usd|"
     "conll.lx:to:lxtriples|"
     "ctags:to:conll.pos|"
