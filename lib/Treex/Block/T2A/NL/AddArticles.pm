@@ -7,26 +7,33 @@ extends 'Treex::Block::T2A::AddArticles';
 
 override '_build_article_form' => sub {
     return {
-        'definite masc sing' => 'de',
-        'definite masc plur' => 'de',
-        'definite fem sing' => 'de',
-        'definite fem plur' => 'de',
-        'definite com sing' => 'de',
-        'definite com plur' => 'de',
-        'definite neut sing' => 'het',
-        'definite neut plur' => 'de',
-        'definite  plur' => 'de', # gender is actually irrelevant in plural
+        'definite masc sing'   => 'de',
+        'definite masc plur'   => 'de',
+        'definite fem sing'    => 'de',
+        'definite fem plur'    => 'de',
+        'definite com sing'    => 'de',
+        'definite com plur'    => 'de',
+        'definite neut sing'   => 'het',
+        'definite neut plur'   => 'de',
+        'definite  plur'       => 'de',    # gender is actually irrelevant in plural
         'indefinite masc sing' => 'een',
         'indefinite masc plur' => '',
-        'indefinite fem sing' => 'een',
-        'indefinite fem plur' => '',
-        'indefinite com sing' => 'een',
-        'indefinite com plur' => '',
+        'indefinite fem sing'  => 'een',
+        'indefinite fem plur'  => '',
+        'indefinite com sing'  => 'een',
+        'indefinite com plur'  => '',
         'indefinite neut sing' => 'een',
         'indefinite neut plur' => '',
     };
 };
 
+override 'can_have_article' => sub {
+    my ( $self, $tnode, $anode ) = @_;
+
+    # no articles possible/needed for geen, enig and alike
+    return 0 if ( $anode->is_pronoun and ( $tnode->gram_definiteness // '' ) eq 'indefinite' );
+    return 1;
+};
 
 1;
 

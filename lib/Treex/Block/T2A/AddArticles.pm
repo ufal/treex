@@ -4,7 +4,6 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-
 has 'article_form' => ( isa => 'HashRef', is => 'ro', lazy_build => 1, builder => '_build_article_form' );
 
 # To be overridden for each language
@@ -12,22 +11,33 @@ sub _build_article_form { return {} }
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
-    my $anode  = $tnode->get_lex_anode() or return;
-    my $def    = $tnode->gram_definiteness or return;
+    my $anode = $tnode->get_lex_anode()   or return;
+    my $def   = $tnode->gram_definiteness or return;
+
+    return if ( not $self->can_have_article( $tnode, $anode ) );
+
     my $gender = $anode->iset->gender // '';
     my $number = $anode->iset->number // '';
-    my $form   = $self->article_form->{"$def $gender $number"} or return;
- 
-    my $article = $anode->create_child({
-        'lemma'        => $form,
-        'form'         => $form,
-        'afun'         => 'AuxA',
-    });
+    my $form = $self->article_form->{"$def $gender $number"} or return;
+
+    my $article = $anode->create_child(
+        {
+            'lemma' => $form,
+            'form'  => $form,
+            'afun'  => 'AuxA',
+        }
+    );
     my $iset_def = $def eq 'definite' ? 'def' : 'ind';
-    $article->iset->add(pos=>'adj', prontype=>'art', definiteness=> $iset_def );
+    $article->iset->add( pos => 'adj', prontype => 'art', definiteness => $iset_def );
     $article->shift_before_subtree($anode);
     $tnode->add_aux_anodes($article);
     return;
+}
+
+
+# To be overridden for each language
+sub can_have_article {
+    return 1;
 }
 
 1;
