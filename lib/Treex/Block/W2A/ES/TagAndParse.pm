@@ -62,12 +62,28 @@ sub process_atree {
     my ( $self, $atree ) = @_;
 
     my $text;
-    foreach my $anode ($atree->get_descendants({ordered=>1})){
-        $text .= " " if defined $text;
-        $text .= $anode->form;
+
+    my @anodes = $atree->get_descendants({ordered=>1});
+    my $tooLong = (@anodes >= 100 || @anodes == 0); ## Parser discards sentences longer than 100 tokens. Don't send them to avoid different number of sentences in output.
+
+    foreach my $anode (@anodes){
+	if ($tooLong) {
+            $anode->set_lemma($anode->form);
+            $anode->set_tag("x");
+	    $anode->set_conll_pos("");
+	    $anode->set_conll_feat("");
+	    $anode->set_conll_deprel("");
+	}
+	else {
+	    $text .= " " if defined $text;
+	    $text .= $anode->form;
+	}
     }
-    push @sentences, $text;
-    push @atrees, $atree;
+
+    if (!$tooLong) {
+	push @sentences, $text;
+	push @atrees, $atree;
+    }
 }
 
 1;

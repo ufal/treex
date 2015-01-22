@@ -13,7 +13,9 @@ override 'postprocess' => sub {
     if ($a_punct->form eq '?' || $a_punct->form eq '!'){
 
 	my $punct_mark = ($a_punct->form eq '!') ? '¡' : '¿';
+
 	my $aroot = $a_punct->get_parent();;
+	my $first_node = $aroot->get_root()->get_descendants( { first_only => 1 } );
 
 	my $punct = $aroot->create_child(
 	    {   'form'          => $punct_mark,
@@ -25,8 +27,7 @@ override 'postprocess' => sub {
 	);
 	$punct->iset->set_pos('punc');
 
-	my $first_node = $aroot->get_zone()->get_ttree()->get_descendants( { first_only => 1 } );
-        $punct->shift_before_node($first_node->get_lex_anode());
+        $punct->shift_before_node($first_node);
     }
 
     return;

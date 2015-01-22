@@ -22,7 +22,7 @@ my %SIG2GRAM = (
     'ser-finpastind+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'ant',  'deontmod' => 'decl', 'verbmod' => 'ind' },
     'ser-finfutind+LEX-partpast'  => { 'diathesis' => 'pas', 'tense' => 'post', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'ser-finpressub+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'imp' }, ## common error of the analyzer
-    'ser-fincnd+LEX-partpast'     => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cnd' },
+    'ser-fincnd+LEX-partpast'     => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
     'ser-finimp+LEX-partpast'     => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'imp' },
 
     # past forms with auxiliaries

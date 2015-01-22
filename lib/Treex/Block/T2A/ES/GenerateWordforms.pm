@@ -1,15 +1,25 @@
 package Treex::Block::T2A::ES::GenerateWordforms;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
+extends 'Treex::Tool::Flect::FlectBlock';
 
-use Treex::Tool::Lexicon::Generation::ES;
-my $generator = Treex::Tool::Lexicon::Generation::ES->new();
+has '+model_file' => ( default => 'data/models/flect/model-es.pickle.gz');
 
-sub process_anode {
-    my ( $self, $anode ) = @_;
-    $anode->set_form($generator->best_form_of_lemma($anode->lemma, $anode->iset));
-    return;
+has '+features_file' => ( default => 'data/models/flect/model-es.features.yml' );
+
+
+sub process_atree {
+    my ( $self, $aroot ) = @_;
+
+    my @anodes = $aroot->get_descendants( { ordered => 1 } );
+    
+    my @forms = $self->inflect_nodes(@anodes);
+
+    for ( my $i = 0; $i < @anodes; ++$i ) {
+        if ( not defined( $anodes[$i]->form ) ) {
+            $anodes[$i]->set_form( $forms[$i] );
+        }
+    }
 }
 
 1;
@@ -24,14 +34,11 @@ Treex::Block::T2A::ES::GenerateWordforms
 
 =head1 DESCRIPTION
 
-just a draft of Spanish verbal conjugation
-(placeholder for the real morphological module by LX-Center)
-based on http://en.wikipedia.org/wiki/Spanish_verb_conjugation
-
+Generating word forms using the Flect tool. Contains pre-trained model settings for Spanish.
 
 =head1 AUTHORS 
 
-Martin Popel <popel@ufal.mff.cuni.cz>
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
