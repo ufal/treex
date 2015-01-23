@@ -3282,10 +3282,12 @@ $::RD_WARN = 3;
 
 }
 package Treex::Core::ScenarioParser;
+
 { my $ERRORS;
 
 
 package Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser;
+
 use strict;
 use vars qw($skip $AUTOLOAD  );
 @Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::ISA = ();
