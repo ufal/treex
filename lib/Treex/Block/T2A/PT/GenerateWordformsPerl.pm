@@ -1,14 +1,10 @@
-package Treex::Block::T2A::PT::GenerateWordforms;
+package Treex::Block::T2A::PT::GenerateWordformsPerl;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 use Treex::Tool::Lexicon::Generation::PT;
 
-
-has lxsuite_key => ( isa => 'Str', is => 'ro', required => 1 );
-has lxsuite_host => ( isa => 'Str', is => 'ro', required => 1 );
-has lxsuite_port => ( isa => 'Int', is => 'ro', required => 1 );
 has generator => ( is => 'rw' );
 
 
@@ -32,16 +28,19 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::T2A::PT::GenerateWordforms - client for LX-Center
+Treex::Block::T2A::PT::GenerateWordformsPerl - simple pure-Perl implementation
 
 =head1 DESCRIPTION
 
-Portuguese verbal conjugation and noun declination.
-This block is just a client for a remote LX-Center server.
+just a draft of Portuguese verbal conjugation
+based on http://en.wikipedia.org/wiki/Portuguese_verb_conjugation
+
+(placeholder for T2A::PT::GenerateWordforms the real morphological module by LX-Center)
+
 
 =head1 AUTHORS
 
-João Rodrigues
+Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
