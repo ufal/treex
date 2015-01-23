@@ -20,8 +20,6 @@ has 'randomly_select_sentences_ratio'  => ( is       => 'rw', isa => 'Num',  def
 has _was => ( is => 'rw', default => sub{{}} );
 
 has '+extension' => ( default => '.conllu' );
-has 'last_file_stem' => ( is => 'rw', isa => 'Str', default => '' );
-has 'sent_in_file'   => ( is => 'rw', isa => 'Int', default => 0 );
 
 sub process_atree
 {
@@ -36,37 +34,19 @@ sub process_atree
     my @nodes = $tree->get_descendants({ordered => 1});
     # Empty sentences are not allowed.
     return if(scalar(@nodes)==0);
-    
-   # Print the original CoNLL-U comment if present
-    my $comment = $tree->get_bundle->wild->{comment};
-    if ($comment) {
-        chomp $comment;
-        $comment =~ s/\n/\n#/g;
-        say {$self->_file_handle()} '#'.$comment;
-    }
-
-    
     # Print sentence ID as a comment before the sentence.
     # Example: "a-cmpr9406-001-p2s1" is the ID of the a-tree of the first training sentence of PDT, "Třikrát rychlejší než slovo".
-    # The sentence comes from the file "cmpr9406_001.a.gz".
-    # We could also figure out the file name stem this way:
-    # my $file = $tree->get_zone()->get_document()->file_stem();
-    # It would not make sense in all situations to output it as another comment. We will not always be reading the PDT.
-    # However, it is very useful for debugging purposes to be able to find the original representation (including number of the sentence in the file).
-    if ($self->print_id){
+    if ($self->print_id)
+    {
         print {$self->_file_handle()} ("\# sent_id ", $tree->id(), "\n");
-        my $file_stem = $tree->get_zone()->get_document()->file_stem();
-        if($file_stem eq $self->last_file_stem())
-        {
-            $self->set_sent_in_file($self->sent_in_file() + 1);
-        }
-        else
-        {
-            $self->set_last_file_stem($file_stem);
-            $self->set_sent_in_file(1);
-        }
-        my $sent_in_file = $self->sent_in_file();
-        print {$self->_file_handle()} ("\# orig_file_sentence $file_stem\#$sent_in_file\n");
+    }
+    # Print the original CoNLL-U comments for this sentence if present.
+    my $comment = $tree->get_bundle->wild->{comment};
+    if ($comment)
+    {
+        chomp $comment;
+        $comment =~ s/\n/\n# /g;
+        say {$self->_file_handle()} '# '.$comment;
     }
     foreach my $node (@nodes)
     {

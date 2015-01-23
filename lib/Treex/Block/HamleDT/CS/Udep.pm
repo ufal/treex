@@ -14,6 +14,8 @@ has iset_driver =>
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
                      'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
 );
+has 'last_file_stem' => ( is => 'rw', isa => 'Str', default => '' );
+has 'sent_in_file'   => ( is => 'rw', isa => 'Int', default => 0 );
 
 
 
@@ -24,6 +26,35 @@ sub process_zone
 {
     my $self = shift;
     my $zone = shift;
+    # Add the name of the original PDT file and the number of the sentence inside
+    # the file as a comment that will be written in the CoNLL-U format.
+    # (In any case, Write::CoNLLU will print the sentence id. But this additional
+    # information is also very useful for debugging, and it is only available for
+    # PDT, hence it is prepared here.)
+    my $bundle = $zone->get_bundle();
+    my $file_stem = $bundle->get_document()->file_stem();
+    if($file_stem eq $self->last_file_stem())
+    {
+        $self->set_sent_in_file($self->sent_in_file() + 1);
+    }
+    else
+    {
+        $self->set_last_file_stem($file_stem);
+        $self->set_sent_in_file(1);
+    }
+    my $sent_in_file = $self->sent_in_file();
+    my $comment = "orig_file_sentence $file_stem\#$sent_in_file";
+    my @comments;
+    if(defined($bundle->wild()->{comment}))
+    {
+        @comments = split(/\n/, $bundle->wild()->{comment});
+    }
+    unless(any {$_ eq $comment} (@comments))
+    {
+        push(@comments, $comment);
+        $bundle->wild()->{comment} = join("\n", @comments);
+    }
+    # Now the harmonization proper.
     my $root = $self->SUPER::process_zone($zone);
     $self->remove_features_from_lemmas($root);
     $self->shape_coordination_stanford($root);

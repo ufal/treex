@@ -25,7 +25,7 @@ sub next_document {
     my $document = $self->new_document();
     foreach my $tree ( split /\n\s*\n/, $text ) {
         my @lines  = split( /\n/, $tree );
-                
+
         # Skip empty sentences (if any sentence is empty at all,
         # typically it is the first or the last one because of superfluous empty lines).
         next unless(@lines);
@@ -41,7 +41,7 @@ sub next_document {
         LINE:
         foreach my $line (@lines) {
             next LINE if $line =~ /^\s*$/;
-            if ($line =~ s/^#//){
+            if ($line =~ s/^#\s*//){
                 $comment .= "$line\n";
                 next LINE;
             }
@@ -55,8 +55,8 @@ sub next_document {
             } elsif ($id > $printed_up_to){
                 $sentence .= $form if defined $form;
                 $sentence .= ' ' if $misc !~ /SpaceAfter=No/;
-            }           
-            
+            }
+
             my $newnode = $aroot->create_child();
             $newnode->shift_after_subtree($aroot);
             $newnode->set_form($form);
@@ -75,7 +75,7 @@ sub next_document {
                     $name = $UFEAT2INTERSET{$name} || $name;
                     $value = $name if $value eq 'yes';
                     $value =~ s/,/|/g;
-                    
+
                     # TODO: support http://universaldependencies.github.io/docs/u/overview/feat-layers.html
                     try {
                         $newnode->iset->set($name, $value);
@@ -93,7 +93,7 @@ sub next_document {
             if ($deps && $deps ne '_'){
                 $newnode->wild->{deps} = $deps;
             }
-            
+
             push @nodes,   $newnode;
             push @parents, $head;
         }
