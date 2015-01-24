@@ -11,10 +11,6 @@ my %FALLBACK_FOR = ( 'pos' => 'tag', 'deprel' => 'afun', );
 
 has '+language'                        => ( required => 1 );
 has 'print_id'                         => ( is       => 'ro', isa => 'Bool', default => 1, documentation => 'print sent_id and orig_file_sentence in CoNLL-U comment before each sentence' );
-has 'deprel_attribute'                 => ( is       => 'rw', isa => 'Str', default => 'autodetect' );
-has 'is_member_within_afun'            => ( is       => 'rw', isa => 'Bool', default => 0 );
-has 'is_shared_modifier_within_afun'   => ( is       => 'rw', isa => 'Bool', default => 0 );
-has 'is_coord_conjunction_within_afun' => ( is       => 'rw', isa => 'Bool', default => 0 );
 has 'randomly_select_sentences_ratio'  => ( is       => 'rw', isa => 'Num',  default => 1 );
 
 has _was => ( is => 'rw', default => sub{{}} );
@@ -62,15 +58,10 @@ sub process_atree
         my ($upos, $feat) = split(/\t/, $upos_features);
         my $pord = $node->get_parent()->ord();
         my $misc = $node->no_space_after() ? 'SpaceAfter=No' : '_';
-        # 'conll/' will be prefixed if needed; see get_attribute().
-        my $deprel = $self->get_attribute($node, 'deprel');
-        # Append suffices to afuns.
-        ###!!! We will want to remove this in future. The dependency labels we output will have to conform to the Universal Dependencies standard.
-        my $suffix = '';
-        $suffix .= 'M' if $self->is_member_within_afun            && $node->is_member;
-        $suffix .= 'S' if $self->is_shared_modifier_within_afun   && $node->is_shared_modifier;
-        $suffix .= 'C' if $self->is_coord_conjunction_within_afun && $node->wild->{is_coord_conjunction};
-        $deprel .= "_$suffix" if $suffix;
+        ###!!! In future we will probably dedicate a new attribute called simply 'deprel'.
+        ###!!! Not 'afun' because it is a weird name and it is too closely bound to PDT.
+        ###!!! And not 'conll/deprel' because the 'conll/*' attributes are something extra, and one could think they are optional.
+        my $deprel = $node->conll_deprel();
         # CoNLL-U columns: ID, FORM, LEMMA, CPOSTAG=UPOS, POSTAG=corpus-specific, FEATS, HEAD, DEPREL, DEPS(additional), MISC
         # Make sure that values are not empty and that they do not contain spaces.
         my @values = ($ord, $form, $lemma, $upos, $tag, $feat, $pord, $deprel, '_', $misc);
@@ -92,53 +83,6 @@ sub process_atree
     }
     print { $self->_file_handle() } "\n" if($tree->get_descendants());
     return;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Maps Treex attributes to CoNLL-U columns. The mapping is parameterizable in
-# some cases.
-#------------------------------------------------------------------------------
-sub get_attribute
-{
-    my $self = shift;
-    my $node = shift;
-    my $name = shift;
-    my $from = $self->{ $name . '_attribute' } || $name;    # TODO don't expect blessed hashref
-    my $value;
-    if ($from eq 'autodetect')
-    {
-        my $before = $self->_was->{$name};
-        if (!defined($before))
-        {
-            $value = $node->get_attr("conll/$name");
-            if (defined($value))
-            {
-                $self->_was->{$name} = "conll/$name";
-            }
-            else
-            {
-                my $fallback = $FALLBACK_FOR{$name} or log_fatal("No fallback for attribute $name");
-                $value = $node->get_attr($fallback);
-                $self->_was->{$name} = $fallback;
-            }
-        }
-        else
-        {
-            $value = $node->get_attr($before);
-            if (!defined($value) && $before =~ /^conll/)
-            {
-                my $id = $node->get_address();
-                log_warn("Attribute $before not defined in $id but non-empty values did appear previously. Consider Write::CoNLLU with the parameter ${name}_attribute != autodetect.");
-            }
-        }
-    }
-    else
-    {
-        $value = $node->get_attr($from);
-    }
-    return defined($value) ? $value : '_';
 }
 
 1;
@@ -165,12 +109,6 @@ Output encoding. C<utf8> by default.
 =item to
 
 The name of the output file, STDOUT by default.
-
-=item deprel_attribute
-
-The name of attribute which will be printed into the 8th column (dependency relation).
-Default is C<autodetect> which tries first C<conll/deprel>
-and if it is not defined then C<afun>.
 
 =back
 
