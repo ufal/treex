@@ -41,8 +41,13 @@ sub next_document {
         LINE:
         foreach my $line (@lines) {
             next LINE if $line =~ /^\s*$/;
-            if ($line =~ s/^#\s*//){
-                $comment .= "$line\n";
+            if ($line =~ s/^#\s*//) {
+                if ($line =~ m/sent_id\s+(.*)/) {
+                    $aroot->set_id( $1 );
+                }
+                else {
+                    $comment .= "$line\n";
+                }
                 next LINE;
             }
             my ( $id, $form, $lemma, $cpostag, $postag, $feats, $head, $deprel, $deps, $misc, $rest ) = split( /\s/, $line );
