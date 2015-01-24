@@ -8,15 +8,6 @@ use File::Slurp;
 use Try::Tiny;
 extends 'Treex::Block::Read::BaseCoNLLReader';
 
-my %UFEAT2INTERSET = (
-    animacy => 'animateness',
-    negative => 'negativeness',
-    definite => 'definiteness',
-    adptype => 'adpostype',
-    'number[psor]' => 'possnumber',
-    'gender[psor]' => 'possgender',
-);
-
 sub next_document {
     my ($self) = @_;
     my $text = $self->next_document_text();
@@ -73,21 +64,8 @@ sub next_document {
             $newnode->set_conll_deprel($deprel);
 
             $newnode->iset->set_upos($cpostag);
-            if ($feats ne '_'){
-                foreach my $feature (split /\|/, $feats){
-                    # TODO: So far, Interset uses lowercase version of Universal Features
-                    my ($name, $value) = map {lc} split /=/, $feature;
-                    $name = $UFEAT2INTERSET{$name} || $name;
-                    $value = $name if $value eq 'yes';
-                    $value =~ s/,/|/g;
-
-                    # TODO: support http://universaldependencies.github.io/docs/u/overview/feat-layers.html
-                    try {
-                        $newnode->iset->set($name, $value);
-                    } catch {
-                        log_warn "ignoring Interset error: $_";
-                    }
-                }
+            if ($feats ne '_') {
+                $newnode->iset->add_ufeatures(split(/\|/, $feats));
             }
             if ($misc && $misc =~ s/SpaceAfter=No//){
                 $newnode->set_no_space_after(1);
