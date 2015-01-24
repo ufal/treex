@@ -28,6 +28,11 @@ sub next_document {
         my @nodes   = ($aroot);
         my $sentence;
         my $printed_up_to = 0;
+        # Information about the current fused token (see below).
+        my $fufrom;
+        my $futo;
+        my $fuform;
+        my @funodes = ();
 
         LINE:
         foreach my $line (@lines) {
@@ -41,29 +46,60 @@ sub next_document {
                 }
                 next LINE;
             }
-            my ( $id, $form, $lemma, $cpostag, $postag, $feats, $head, $deprel, $deps, $misc, $rest ) = split( /\s/, $line );
+            my ( $id, $form, $lemma, $upos, $postag, $feats, $head, $deprel, $deps, $misc, $rest ) = split( /\s/, $line );
             log_warn "Extra columns: '$rest'" if $rest;
-            if ($id =~ /(\d+)-(\d+)/){
+
+            # There may be fused tokens consisting of multiple syntactic words (= nodes). For example (German):
+            # 2-3   zum   _     _
+            # 2     zu    zu    ADP
+            # 3     dem   der   DET
+            if ($id =~ /(\d+)-(\d+)/) {
+                $fufrom = $1;
+                $futo = $2;
+                $fuform = $form;
                 $printed_up_to = $2;
                 $sentence .= $form if defined $form;
                 $sentence .= ' ' if $misc !~ /SpaceAfter=No/;
                 next LINE;
-            } elsif ($id > $printed_up_to){
+            } elsif ($id > $printed_up_to) {
                 $sentence .= $form if defined $form;
                 $sentence .= ' ' if $misc !~ /SpaceAfter=No/;
             }
 
             my $newnode = $aroot->create_child();
+            if (defined($futo)) {
+                if ($id <= $futo) {
+                    push(@funodes, $newnode);
+                }
+                if ($id >= $futo) {
+                    if (scalar(@funodes) >= 2) {
+                        for (my $i = 0; $i <= $#funodes; $i++) {
+                            my $fn = $funodes[$i];
+                            ###!!! Later we will want to make these attributes normal (not wild).
+                            $fn->wild->{fused_form} = $fuform;
+                            $fn->wild->{fused_start} = $funodes[0];
+                            $fn->wild->{fused_end} = $funodes[-1];
+                            $fn->wild->{fused} = ($i == 0) ? 'start' : ($i == $#funodes) ? 'end' : 'middle';
+                        }
+                    } else {
+                        log_warn "Fused token $fufrom-$futo $fuform was announced but less than 2 nodes were found";
+                    }
+                    $fufrom = undef;
+                    $futo = undef;
+                    $fuform = undef;
+                    splice(@funodes);
+                }
+            }
             $newnode->shift_after_subtree($aroot);
             $newnode->set_form($form);
             $newnode->set_lemma($lemma);
             $newnode->set_tag($postag);
-            $newnode->set_conll_cpos($cpostag);
+            $newnode->set_conll_cpos($upos);
             $newnode->set_conll_pos($postag);
             $newnode->set_conll_feat($feats);
             $newnode->set_conll_deprel($deprel);
 
-            $newnode->iset->set_upos($cpostag);
+            $newnode->iset->set_upos($upos);
             if ($feats ne '_') {
                 $newnode->iset->add_ufeatures(split(/\|/, $feats));
             }
@@ -136,7 +172,8 @@ L<Treex::Core::Bundle>
 
 =head1 AUTHOR
 
-Martin Popel <popel@ufal.mff.cuni.cz>
+Martin Popel <popel@ufal.mff.cuni.cz>,
+Daniel Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

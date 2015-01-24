@@ -27,10 +27,6 @@ sub process_atree
     my $tree = shift;
     # if only random sentences are printed
     return if(rand() > $self->randomly_select_sentences_ratio());
-    # We require that the token ids make an unbroken sequence, starting at 1.
-    # Unfortunately, this is not guaranteed in the general case.
-    # So we have to re-index the nodes ourselves.
-    $self->_normalize_node_ordering($tree);
     my @nodes = $tree->get_descendants({ordered => 1});
     # Empty sentences are not allowed.
     return if(scalar(@nodes)==0);
@@ -50,18 +46,24 @@ sub process_atree
     }
     foreach my $node (@nodes)
     {
-        my $ord = $node->wild()->{outord};
-        my $range = $ord =~ m/-/;
+        my $fused = $node->wild()->{fused};
+        if(defined($fused) && $fused eq 'start')
+        {
+            my $range = $node->wild()->{fused_start}->ord().'-'.$node->wild()->{fused_end}->ord();
+            my $form = $node->wild()->{fused_form};
+            print { $self->_file_handle() } ("$range\t$form\t_\t_\t_\t_\t_\t_\t_\t_\n");
+        }
+        my $ord = $node->ord();
         my $form = $node->form();
-        my $lemma = $range ? '_' : $node->lemma();
-        my $tag = $range ? '_' : $node->tag();
+        my $lemma = $node->lemma();
+        my $tag = $node->tag();
         my $isetfs = $node->iset();
-        my $upos_features = $range ? "_\t_" : encode('mul::uposf', $isetfs);
+        my $upos_features = encode('mul::uposf', $isetfs);
         my ($upos, $feat) = split(/\t/, $upos_features);
-        my $pord = $range ? '_' : $node->get_parent()->wild()->{outord};
+        my $pord = $node->get_parent()->ord();
         my $misc = $node->no_space_after() ? 'SpaceAfter=No' : '_';
         # 'conll/' will be prefixed if needed; see get_attribute().
-        my $deprel = $range ? '_' : $self->get_attribute($node, 'deprel');
+        my $deprel = $self->get_attribute($node, 'deprel');
         # Append suffices to afuns.
         ###!!! We will want to remove this in future. The dependency labels we output will have to conform to the Universal Dependencies standard.
         my $suffix = '';
@@ -90,87 +92,6 @@ sub process_atree
     }
     print { $self->_file_handle() } "\n" if($tree->get_descendants());
     return;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Looks for tokens split to multiple syntactic words and adjusts the ID (ord)
-# value accordingly. At present this information is stored among the wild
-# attributes.
-#------------------------------------------------------------------------------
-sub _normalize_node_ordering
-{
-    my $self = shift;
-    my $tree = shift;
-    # The ord attribute is useless if there are split fused tokens.
-    # The 'decord' wild attribute may has decimal values for artificial nodes for token parts.
-    # Make sure that all nodes have the 'decord' value.
-    my @nodes = $tree->get_descendants();
-    foreach my $node (@nodes)
-    {
-        if(!defined($node->wild()->{decord}))
-        {
-            $node->wild()->{decord} = $node->ord();
-        }
-    }
-    @nodes = sort {$a->wild()->{decord} <=> $b->wild()->{decord}} (@nodes);
-    # Make sure that
-    # - the first node is indexed by the integer 1
-    # - the step between any two adjacent integers is 1
-    # - the step between any two adjacent decimal, or an integer followed by a decimal, is 0.1
-    # - if a decimal is followed by an integer, it is the next available integer
-    ###!!! We assume that any fused token is split to a maximum of 9 syntactic words, i.e. decimals 2.10 or 2.11 will never occur!
-    $tree->wild()->{decord} = 0;
-    $tree->wild()->{outord} = 0; # needed as parent ord
-    my $last_int = 0;
-    my $last_dec = 0.0;
-    my $last_out = 0;
-    my $last_int_node;
-    foreach my $node (@nodes)
-    {
-        my $decord = $node->wild()->{decord};
-        my $outord;
-        if($decord =~ m/^(\d+)\.(\d+)$/)
-        {
-            if($last_int==0)
-            {
-                # This error is fatal. It is not clear what we should print out.
-                log_fatal("Decimally indexed syntactic word without any preceding surface token");
-            }
-            if($last_dec =~ m/\.9$/)
-            {
-                log_fatal("We cannot currently process more than 9 syntactic words fused into one token");
-            }
-            $decord = $last_dec + 0.1;
-            # If this is X.1, we should actually steal the outord from the previous (surface) token.
-            if($decord =~ m/\.1$/)
-            {
-                $outord = $last_out;
-                $last_int_node->wild()->{outord} = "$outord-$outord";
-            }
-            else
-            {
-                $outord = $last_out + 1;
-                $last_int_node->wild()->{outord} =~ s/-\d+$/-$outord/;
-            }
-            # Update memory for the next loop.
-            $last_dec = $decord;
-            $last_out = $outord;
-        }
-        else # this is integer
-        {
-            $decord = $last_int + 1;
-            $outord = $last_out + 1;
-            # Update memory for the next loop.
-            $last_int = $decord;
-            $last_dec = $decord.'.0';
-            $last_out = $outord;
-            $last_int_node = $node;
-        }
-        $node->wild()->{decord} = $decord;
-        $node->wild()->{outord} = $outord;
-    }
 }
 
 
