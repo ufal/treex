@@ -75,10 +75,6 @@ sub process_atree
             $x
         }
         (@values);
-        ###!!! It is still not guaranteed that features output by Interset are sorted alphabetically.
-        ###!!! Interset uses a sorting approach where uppercase letters come before lowercase:
-        ###!!! Case=Gen|NumForm=Word|NumType=Card|NumValue=1,2,3|Number=Plur
-        $values[5] = join('|', sort {lc($a) cmp lc($b)} (split(/\|/, $values[5])));
         print { $self->_file_handle() } join("\t", @values)."\n";
     }
     print { $self->_file_handle() } "\n" if($tree->get_descendants());
