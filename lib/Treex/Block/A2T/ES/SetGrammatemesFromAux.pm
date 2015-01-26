@@ -8,6 +8,11 @@ sub check_anode {
     if ($anode->lemma eq 'más'){
         $tnode->set_gram_degcmp('comp');
     }
+
+    if ($anode->lemma eq 'no'){
+        $tnode->set_gram_negation('neg1');
+    }
+
     return;
 }
 

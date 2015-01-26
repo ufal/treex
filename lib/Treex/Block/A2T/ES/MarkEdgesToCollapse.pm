@@ -31,6 +31,18 @@ override is_aux_to_parent => sub {
         return 0 if $eparent->is_root();
         return 1 if $eparent->is_adjective || $eparent->is_adverb;
     }
+    
+    # Negation
+    if ( $node->lemma eq 'no' ) {
+        my ($eparent) = $node->get_eparents();
+        return 1 if !$eparent->is_root && ($eparent->is_verb || $eparent->is_adjective || $eparent->is_adverb);
+        
+        # If the negative particle is not collapsed, it will become a t-node
+        # and it should not have gram/negation=neg1 to prevent doubling the particle in synthesis.
+        # So let's delete also the Interset negativeness feature.
+        $node->iset->set_negativeness('');
+        return 0;
+    }
 
     return 0;
 };
