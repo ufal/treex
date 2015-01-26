@@ -220,7 +220,10 @@ sub _get_rel {
         }
         if ( $tnode->formeme eq 'adj:compl' ) {
             return $aparent->lemma eq 'zijn' ? 'predc' : 'obj1';
-        }
+        }        
+        if ( $tnode->formeme eq 'n:attr' and ( $anode->n_node xor $aparent->n_node ) ){
+            return '{app,mod}';
+        }       
     }
     elsif ( $afun eq 'Obj' and $aparent->is_verb and $aparent->lemma eq 'zijn' ) {
         return 'predc';                                                      # copulas with co-indexed ADT nodes that have no t-node
@@ -253,7 +256,7 @@ sub _get_rel {
         my $achild_te = first { ( $_->lemma // '' ) eq 'te' and ( $_->afun // '' ) eq 'AuxV' } $anode->get_children();
         return 'vc' if ($achild_te);
     }
-
+        
     # default: use the conversion table
     if ( $AFUN2REL{$afun} ) {
         return $AFUN2REL{$afun};
