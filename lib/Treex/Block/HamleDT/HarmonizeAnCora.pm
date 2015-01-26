@@ -8,11 +8,14 @@ sub process_zone
 {
     my $self = shift;
     my $zone = shift;
+    
+    # call backup_zone($zone), convert_tags($root) and deprel_to_afun($root)
     my $root = $self->SUPER::process_zone($zone);
+    
     $self->attach_final_punctuation_to_root($root);
     $self->restructure_coordination($root);
-    # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
-    # and with special care at places where prepositions and coordinations interact.
+    # Shifting afuns at adpositions and subordinating conjunctions must be done after coordinations are solved
+    # and with special care at places where adpositions and coordinations interact.
     $self->process_prep_sub_arg_cloud($root);
     $self->raise_subordinating_conjunctions($root);
     $self->lift_noun_phrases($root);
@@ -327,7 +330,7 @@ sub deprel_to_afun
         # Preposition leaf attached to a verb. Example: de, com, a, segons, a_punt_de
         # per mirar de conèixer les circumstàncies
         # to try to meet the circumstances
-        elsif($deprel eq 'prep')
+        elsif($deprel eq 'adp')
         {
             ###!!! We will want to restructure this.
             $afun = 'AuxP';
@@ -371,7 +374,7 @@ sub deprel_to_afun
                 $afun = 'Adv'; ###!!! or 'Obj'
             }
         }
-        # Preposition leaf. See also "prep". Example:
+        # Preposition leaf. See also "adp". Example:
         # les respostes que s'ha de donar
         # the answers to be given
         # LIT.: the answers that are of giving
@@ -400,7 +403,7 @@ sub deprel_to_afun
         # TREE: comencem/sentence ( Quan/conj , abans/cc , ,/f , millor/sa , ./f )
         elsif($deprel eq 'sa')
         {
-            if($ppos eq 'prep')
+            if($ppos eq 'adp')
             {
                 $afun = 'PrepArg';
             }
@@ -431,7 +434,7 @@ sub deprel_to_afun
         # Some of the cases where it depends on a noun resemble apposition.
         elsif($deprel eq 'sn')
         {
-            if($ppos eq 'prep')
+            if($ppos eq 'adp')
             {
                 $afun = 'PrepArg';
             }
@@ -456,7 +459,7 @@ sub deprel_to_afun
         elsif($deprel eq 'sp')
         {
             # We do not want to assign AuxP now. That will be achieved by swapping afuns later.
-            # Now we have to figure out the relation of the prepositional phrase to its parent.
+            # Now we have to figure out the relation of the adpositional phrase to its parent.
             if($ppos =~ m/^(noun|adj|num)$/)
             {
                 # adj example: propietària de les mines
@@ -469,14 +472,14 @@ sub deprel_to_afun
             }
             elsif($ppos eq 'verb')
             {
-                # Observed with a variety of other prepositions, e.g.: com_a, al_marge_de, sobre, per, en.
+                # Observed with a variety of other adpositions, e.g.: com_a, al_marge_de, sobre, per, en.
                 $afun = 'Adv';
             }
             elsif($ppos eq 'adv')
             {
                 $afun = 'Adv';
             }
-            elsif($ppos eq 'prep')
+            elsif($ppos eq 'adp')
             {
                 # Example: per a quatre veterinaris gironins
                 $afun = 'PrepArg';
