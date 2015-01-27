@@ -309,7 +309,10 @@ sub _try_process_layer {
         # process_ptree should be executed also on the root node (usually the S phrase)
         my @opts = $layer eq 'p' ? ( { add_self => 1 } ) : ();
         foreach my $node ( $tree->get_descendants(@opts) ) {
-            ##$self->process_anode($node, $bundleNo);
+            # Skip nodes deleted by previous process_Xnode() call.
+            next if ref $node eq 'Treex::Core::Node::Deleted';
+
+            #$self->process_anode($node, $bundleNo);
             $m->execute( $self, $node, $bundleNo );
         }
         return 1;
