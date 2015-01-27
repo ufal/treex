@@ -19,13 +19,16 @@ sub process_zone {
 
     $sentence =~ s/ +/ /g;
     $sentence =~ s/ ([!,.?:;])/$1/g;
-    $sentence =~ s/(["”’])\./\.$1/g;
     $sentence =~ s/ ([’”])/$1/g;
     $sentence =~ s/([‘“]) /$1/g;
 
     $sentence =~ s/ ?([\.,]) ?([’”"])/$1$2/g;    # spaces around punctuation
 
     $sentence =~ s/ -- / – /g;
+
+    # no space (or even commas) inside parentheses
+    $sentence =~ s/,?\(,? ?/\(/g;
+    $sentence =~ s/ ?,? ?\)/\)/g;
 
 
     # (The whole sentence is in parenthesis).
@@ -34,8 +37,6 @@ sub process_zone {
         $sentence =~ s/\)\./.)/;
     }
     
-    # HACKS:
-
     $zone->set_sentence($sentence);
     return;
 }
@@ -58,12 +59,12 @@ Handling Spanish contractions (e.g. "de" + "o" = "do").
 
 =head1 AUTHOR
 
-Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+Gorka Labaka
 
-Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2008-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2014-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
