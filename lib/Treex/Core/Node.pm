@@ -235,14 +235,29 @@ sub get_zone {
 }
 
 sub remove {
-    log_fatal 'Incorrect number of arguments' if @_ != 1;
-    my $self = shift;
+    my ($self, $arg_ref) = @_;
     if ( $self->is_root ) {
         log_fatal 'Tree root cannot be removed using $root->remove().'
             . ' Use $zone->remove_tree($layer) instead';
     }
     my $root     = $self->get_root();
     my $document = $self->get_document();
+    
+    my @children = $self->get_children();
+    if (@children){
+        my $what_to_do = 'remove';
+        if ($arg_ref && $arg_ref->{children}){
+            $what_to_do = $arg_ref->{children};
+        }
+        if ($what_to_do =~ /^rehang/){
+            foreach my $child (@children){
+                $child->set_parent($self->get_parent);
+            }
+        }
+        if ($what_to_do =~ /warn$/){
+            log_warn $self->get_address . " is being removed by remove({children=>$what_to_do}), but it has (unexpected) children";
+        }
+    }
 
     # Remove the subtree from the document's indexing table
     my @to_remove = ( $self, $self->get_descendants );
@@ -1115,11 +1130,19 @@ Returns the parent node, or C<undef> if there is none (if C<$node> itself is the
 
 Makes C<$node> a child of C<$parent_node>.
 
-=item $node->remove();
+=item $node->remove({children=>remove});
 
-Deletes a node and the subtree rooted by the given node.
+Deletes a node.
 Node identifier is removed from the document indexing table.
 The removed node cannot be further used.
+
+Optional argument C<children> in C<$arg_ref> can specify
+what to do with children (and all descendants,
+i.e. the subtree rooted by the given node) if present:
+C<remove>, C<remove_warn>, C<rehang>, C<rehang_warn>.
+The default is C<remove> -- remove recursively.
+C<rehang> means reattach the children of C<$node> to the parent of C<$node>.
+The C<_warn> variants will in addition produce a warning.
 
 =item my $root_node = $node->get_root();
 
