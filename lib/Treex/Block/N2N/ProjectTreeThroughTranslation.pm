@@ -34,19 +34,13 @@ sub project_nsubtree {
         my @tnodes = map { $_->get_referencing_nodes('src_tnode.rf') } @tnodes_src;
         my %tnodes_hash = map { $_->id => 1 } @tnodes;
 
-        # getting target a-nodes:
-        # - always adding lexical anode and Aux[VTR] anodes
-        # - adding AuxP and AuxC anodes only if the parent of the t-node is also within the NE
+        # getting target a-nodes: always add lexical node, use heuristics for auxiliaries
         my @anodes = ();
         foreach my $tnode (@tnodes) {
             push @anodes, $tnode->get_lex_anode();
             my @aauxs = $tnode->get_aux_anodes();
-            foreach my $aaux (@aauxs) {
-                my $afun = $aaux->afun // '';
-                my $tparent = $tnode->get_parent();
-                if ( $afun =~ /Aux[VTR]/ or ( $afun =~ /^Aux[CP]$/ and $tnodes_hash{ $tparent->id } ) ) {
-                    push @anodes, $aaux;
-                }
+            foreach my $aaux (@aauxs) {                
+                push @anodes, $aaux if ( $self->should_include_aux( $tnode, $aaux, \%tnodes_hash ) );
             }
         }
 
@@ -76,8 +70,29 @@ sub project_nsubtree {
     return;
 }
 
-1;
 
+# Check if the given aux a-node should be included in the n-tree
+sub should_include_aux {
+    my ($self, $tnode, $aaux, $tnodes_hash ) = @_;
+    
+    my $afun = $aaux->afun // '';
+    # always add Aux[VTR] anodes
+    return 1 if ( $afun =~ /Aux[VTR]/ );
+    
+    if ( $afun =~ /Aux[CP]/ ){
+        # add Aux[CP] anodes if the parent of the t-node is also within the NE...
+        my $tparent = $tnode->get_parent();
+        return 1 if ( $tnodes_hash->{$tparent->id} );
+        
+        # ...or if they are a part of the t-lemma + hanging under the lexical a-node
+        my $form = $aaux->form // '';
+        my $anode = $tnode->get_lex_anode();        
+        return 1 if ( $aaux->get_parent() == $anode and $tnode->t_lemma =~ /(_|^)$form(_|$)/ );
+    }
+    return 0;
+}
+
+1;
 
 __END__
 

@@ -98,7 +98,7 @@ sub _process_subtree {
         if ( !$anode->is_root and !$anode->wild->{is_rhd_head} ) {
 
             # the terminal usually has rel="hd", with a few exceptions, dealing with them here
-            my $rel = $anode->wild->{adt_rel} // 'hd';
+            my $rel = $anode->wild->{adt_rel} // $anode->wild->{adt_trel} // 'hd';
             $rel = 'crd' if ( $anode->is_coap_root );
             $rel = 'cmp' if ( ( $anode->afun // '' ) eq 'AuxC' );                                  # TODO check for clause root ??
             $rel = 'cmp' if ( $lemma =~ /^(om|te)$/ and ( $anode->afun // '' ) =~ /^Aux[VC]$/ );
@@ -203,10 +203,10 @@ sub _get_rel {
             }
             return $objtype eq 'obj2' ? 'obj2' : 'obj1';
         }
-        if ( $tnode->formeme eq 'n:predc' ){
+        if ( $tnode->formeme eq 'n:predc' ) {
             return 'predc';
         }
-        if ( $tnode->formeme eq 'n:adv' ){
+        if ( $tnode->formeme eq 'n:adv' ) {
             return 'mod';
         }
         if ( $tnode->formeme =~ /n:.*+X/ ) {
@@ -220,33 +220,33 @@ sub _get_rel {
         }
         if ( $tnode->formeme eq 'adj:compl' ) {
             return $aparent->lemma eq 'zijn' ? 'predc' : 'obj1';
-        }        
-        if ( $tnode->formeme eq 'n:attr' and ( $anode->n_node xor $aparent->n_node ) ){
+        }
+        if ( $tnode->formeme eq 'n:attr' and ( $anode->n_node xor $aparent->n_node ) ) {
             return '{app,mod}';
-        }       
+        }
     }
     elsif ( $afun eq 'Obj' and $aparent->is_verb and $aparent->lemma eq 'zijn' ) {
-        return 'predc';                                                      # copulas with co-indexed ADT nodes that have no t-node
+        return 'predc';    # copulas with co-indexed ADT nodes that have no t-node
     }
 
     # prepositional phrases
     if ( ( $aparent->afun // '' ) eq 'AuxP' ) {
-        return 'obj1';                                                       # dependent NP has 'obj1'
+        return 'obj1';     # dependent NP has 'obj1'
     }
     if ( $afun eq 'AuxP' and $aparent->is_verb ) {
-        return 'pc';                                                         # verbal complements have 'pc', otherwise it will default to 'mod'
+        return 'pc';       # verbal complements have 'pc', otherwise it will default to 'mod'
     }
 
     # verbs
     if ( $afun eq 'AuxV' or $anode->iset->pos eq 'verb' ) {
         if ( $aparent->iset->pos eq 'verb' ) {
-            return 'vc';                                                     # lexical/auxiliary verbs depending on auxiliaries
+            return 'vc';    # lexical/auxiliary verbs depending on auxiliaries
         }
         if ( $aparent->is_noun and $anode->iset->verbform eq 'part' ) {
-            return 'mod';                                                    # participles as adjectival noun modifiers
+            return 'mod';    # participles as adjectival noun modifiers
         }
         if ( ( $anode->lemma // '' ) eq 'te' and ( $aparent->lemma // '' ) ne 'om' ) {
-            return 'vc';                                                     # te (heading an infinitive)
+            return 'vc';     # te (heading an infinitive)
         }
         return 'body';
     }
@@ -256,7 +256,7 @@ sub _get_rel {
         my $achild_te = first { ( $_->lemma // '' ) eq 'te' and ( $_->afun // '' ) eq 'AuxV' } $anode->get_children();
         return 'vc' if ($achild_te);
     }
-        
+
     # default: use the conversion table
     if ( $AFUN2REL{$afun} ) {
         return $AFUN2REL{$afun};
@@ -284,6 +284,7 @@ sub _get_pos {
     $pos = 'prep'        if ( $pos eq 'adp' );
     $pos = 'name'        if ( $anode->iset->nountype eq 'prop' );
     $pos = 'comp'        if ( ( $anode->lemma // '' ) eq 'te' and ( $anode->afun // '' ) eq 'AuxV' );
+    $pos = 'name'        if ( $anode->n_node );
     $data{'pos'} = $pos;
 
     # morphology
