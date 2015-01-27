@@ -13,6 +13,7 @@ my %CONJUGATION = (
         'sub pres' => 'e es e emos éis en',
         'sub imp'  => 'ase ases ase ásemos aseis asen',
         'sub fut'  => 'are ares are áremos areis aren',
+        'imp '     => '- a e emos ad en',
     },
     er => {
         'ind pres' => 'o es e emos eis en',
@@ -24,6 +25,7 @@ my %CONJUGATION = (
         'sub pres' => 'a as a amos áis an',
         'sub imp'  => 'iese ieses iese iésemos ieseis iesen',
         'sub fut'  => 'iere ieres iere iéremos iereis ieren',
+        'imp '     => '- e a amos ed an',
     },
     ir => {
         'ind pres' => 'o es e imos ís en',
@@ -35,17 +37,18 @@ my %CONJUGATION = (
         'sub pres' => 'a as a amos áis an',
         'sub imp'  => 'iese ieses iese iésemos ieseis iesen',
         'sub fut'  => 'iere ieres iere iéremos iereis ieren',
+        'imp '     => '- e a amos id an',
     },
-    verb_ser => {
-        'ind pres' => 'soy eres es somos sois son',
-        'ind imp'  => 'era eras era éramos erais eran',
-        'ind past' => 'fui fuiste fue fuimos fuistes fuiron',
+    verb_conocer => {
+        'ind pres' => 'conozco conoces conoce conocemos conocéis conocen',
+        'ind imp'  => 'conocía conicías conocía conocíamos conocíais conocían',
+        'ind past' => 'conocí conociste conoció conocimos conocisteis conocieron',
         #'ind pqp'  => '',
-        'ind fut'  => 'seré serás será seremos seréis serán',
-        'cond '    => 'sería serías sería seríamos seríais serían',
-        'sub pres' => 'sea seas sea seamos seáis sean',
-        'sub imp'  => 'fuese fueses fuese fuésemos fueseis fuesen',
-        'sub fut'  => 'fuere fueres fuere fuéremos fuereis fueren',
+        'ind fut'  => 'conoceré conocerás conocerá conoceremos conoceréis conocerán',
+        'cond '    => 'conocería conocerías conocería conoceríamos conoceríais conocerían',
+        'sub pres' => 'conozca conozcas conozca conozcamos caonozcáis conozcan',
+        'sub imp'  => 'conociese conocieses conociese conociésemos conocieseis conociesen',
+        'sub fut'  => 'conociere conocieres coniciere conociéremos conocieseis conocieren',
     },
     verb_estar => {
         'ind pres' => 'estoy estás está estamos estáis están',
@@ -59,7 +62,7 @@ my %CONJUGATION = (
         'sub fut'  => 'estuviere estuvieres estuviere estuvieremos estuviereis estuvieren',
     },
     verb_haber => {
-	'ind pres' => 'he has ha hemos habéis han',
+        'ind pres' => 'he has ha hemos habéis han',
         'ind imp'  => 'había habías había habíamos habíais habían',
         'ind past' => 'hube hubiste hubo hubimos hubisteis hubieron',
         #'ind pqp'  => '',
@@ -68,17 +71,6 @@ my %CONJUGATION = (
         'sub pres' => 'haya hayas haya hayamos hayáis hayan',
         'sub imp'  => 'hubiese hubieses hubiese hubiésemos hubieseis hubiesen',
         'sub fut'  => 'hubiere hubieres hubiese hubiéremos hubiereis hubieren',
-    },
-    verb_tener => {
-	'ind pres' => 'tengo tienes tiene tenemos tenéis tienen',
-        'ind imp'  => 'tenía tenías tenía teníamos teníais tenían',
-        'ind past' => 'tuve tuviste tuvo tuvimos tuvisteis tuvieron',
-        #'ind pqp'  => '',
-        'ind fut'  => 'tendré tendrás tendrá tendremos tendréis tendrán',
-        'cond '    => 'tendría tendrías tendría tendríamos tendríais tendrían',
-        'sub pres' => 'tenga tengas tenga tengamos tengáis tengan',
-        'sub imp'  => 'tuviese tuvieses tuviese tuviésemos tuvieseis tuviesen',
-        'sub fut'  => 'tuviere tuvieres tuviere tuvieremos tuviereis tuvieren',
     },
     verb_ir => {
         'ind pres' => 'voy vas va vamos vais van',
@@ -91,29 +83,51 @@ my %CONJUGATION = (
         'sub imp'  => 'fuese fueses fuese fuésemos fueseis fuesen',
         'sub fut'  => 'fuere fueres fuere fuéremos fuereis fueren',
     },
-    verb_conocer => {
-	'ind pres' => 'conozco conoces conoce conocemos conocéis conocen',
-        'ind imp'  => 'conocía conicías conocía conocíamos conocíais conocían',
-        'ind past' => 'conocí conociste conoció conocimos conocisteis conocieron',
+    verb_ser => {
+        'ind pres' => 'soy eres es somos sois son',
+        'ind imp'  => 'era eras era éramos erais eran',
+        'ind past' => 'fui fuiste fue fuimos fuistes fuiron',
         #'ind pqp'  => '',
-        'ind fut'  => 'conoceré conocerás conocerá conoceremos conoceréis conocerán',
-        'cond '    => 'conocería conocerías conocería conoceríamos conoceríais conocerían',
-        'sub pres' => 'conozca conozcas conozca conozcamos caonozcáis conozcan',
-        'sub imp'  => 'conociese conocieses conociese conociésemos conocieseis conociesen',
-        'sub fut'  => 'conociere conocieres coniciere conociéremos conocieseis conocieren',
-    }
+        'ind fut'  => 'seré serás será seremos seréis serán',
+        'cond '    => 'sería serías sería seríamos seríais serían',
+        'sub pres' => 'sea seas sea seamos seáis sean',
+        'sub imp'  => 'fuese fueses fuese fuésemos fueseis fuesen',
+        'sub fut'  => 'fuere fueres fuere fuéremos fuereis fueren',
+    },
+    verb_tener => {
+        'ind pres' => 'tengo tienes tiene tenemos tenéis tienen',
+        'ind imp'  => 'tenía tenías tenía teníamos teníais tenían',
+        'ind past' => 'tuve tuviste tuvo tuvimos tuvisteis tuvieron',
+        #'ind pqp'  => '',
+        'ind fut'  => 'tendré tendrás tendrá tendremos tendréis tendrán',
+        'cond '    => 'tendría tendrías tendría tendríamos tendríais tendrían',
+        'sub pres' => 'tenga tengas tenga tengamos tengáis tengan',
+        'sub imp'  => 'tuviese tuvieses tuviese tuviésemos tuvieseis tuviesen',
+        'sub fut'  => 'tuviere tuvieres tuviere tuvieremos tuviereis tuvieren',
+    },
+    verb_venir => {
+        'ind pres' => 'vengo vienes viene venimos venís vienen',
+        'ind imp'  => 'venía venías venía veníamos veníais venían',
+        'ind past' => 'vine viniste vino vinimos vinisteis vinieron',
+        #'ind pqp'  => '',
+        'ind fut'  => 'vendré vendrás vendrá vendremos vendréis vendrán',
+        'cond '    => 'vendría vendrías vendría vendríamos vendríais vendrían',
+        'sub pres' => 'venga vengas venga vengamos vengáis vengan',
+        'sub imp'  => 'viniese vinieses viniese viniésemos vinieseis viniesen',
+        'sub fut'  => 'viniere vinieres viniere viniéremos viniereis vinieren',
+        'imp '     => '- ve vaya vayamos id vayan',
+    },
 );
-
-
 
 sub best_form_of_lemma {
     my ( $self, $lemma, $iset ) = @_;
+    return $lemma if !$self->should_inflect($lemma, $iset);
     my $pos = $iset->pos;
     if ($pos eq 'verb'){
         my ($stem, $class) = ('', '');
 
         # check irregular verbs first
-        if ($lemma =~ /^(ser|estar|haber|tener|ir|conocer)$/){
+        if ($lemma =~ /^(conocer|estar|haber|ir|ser|tener|venir)$/){
             $class = "verb_$lemma";
         } else {
             ($stem, $class) = ($lemma =~ /^(.+)(ar|er|ir)$/);
@@ -122,6 +136,7 @@ sub best_form_of_lemma {
         my $mood = $iset->mood;
         my $tense = $iset->tense;
         my $person = $iset->person || 3;
+        $tense = '' if $mood eq 'imp'; # tense is irrelevant for imperative
         my $forms = $CONJUGATION{$class}{"$mood $tense"};
         return $lemma if !$forms;
         $person += 3 if $iset->number eq 'plur';
@@ -136,12 +151,17 @@ sub best_form_of_lemma {
             $lemma =~ s/[oe]?$/a/ if $lemma !~ /a$/;
         }
         if ($iset->number eq 'plur'){
-            $lemma =~ s/([aeiou])$/$1s/ or
-            $lemma = $lemma.'es';
+            $lemma =~ s/([aeiou])$/$1s/ or $lemma =~ /s$/ or $lemma .= 'es';
             $lemma =~ s/iónes$/iones/;
         }
     }
     return $lemma;
+}
+
+sub should_inflect {
+    my ( $self, $lemma, $iset ) = @_;
+    return 0 if any {$lemma eq $_} qw(wifi web ip);
+    return 1;
 }
 
 1;
