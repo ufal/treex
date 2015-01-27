@@ -4,14 +4,20 @@ use Treex::Core::Common;
 extends 'Treex::Block::A2T::MarkEdgesToCollapse';
 
 
-# override tnode_although_aux => sub {
-#     my ( $self, $node ) = @_;
-# 
-#     # AuxY and AuxZ are usually used for rhematizers (which should have their own t-nodes).
-#     # Override: add also AuxG, so brackets and quotes have their t-nodes.
-#     return 1 if $node->afun =~ /^Aux[YZ]/;
-#     return 0;
-# };
+override tnode_although_aux => sub {
+    my ( $self, $node ) = @_;
+    
+    # Opening questionmark '¿' has afun=AuxG, but we want to hide it on t-layer,
+    # i.e. make it an exception from the following rule
+    return 0 if $node->lemma eq '¿';
+
+    # AuxY and AuxZ are usually used for rhematizers (which should have their own t-nodes).
+    # AuxG = graphic symbols (dot not serving as terminal punct, colon etc.)
+    # These are quite hard to translate unless left as t-nodes.
+    # Paired round brackets, parentheses and question marks will be solved later.
+    return 1 if $node->afun =~ /^Aux[YZG]/;
+    return 0;
+};
 
 override is_aux_to_parent => sub {
     my ( $self, $node ) = @_;
