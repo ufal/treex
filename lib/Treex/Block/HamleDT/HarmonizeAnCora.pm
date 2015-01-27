@@ -4,6 +4,8 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::HamleDT::Harmonize';
 
+has auxk_to_root => (is=>'ro', isa=>'Bool', default=>1, documentation=>'attach final punctuation to the technical root' );
+
 sub process_zone
 {
     my $self = shift;
@@ -12,7 +14,9 @@ sub process_zone
     # call backup_zone($zone), convert_tags($root) and deprel_to_afun($root)
     my $root = $self->SUPER::process_zone($zone);
     
-    $self->attach_final_punctuation_to_root($root);
+    if ($self->auxk_to_root){
+        $self->attach_final_punctuation_to_root($root);
+    }
     $self->restructure_coordination($root);
     # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
     # and with special care at places where prepositions and coordinations interact.
