@@ -13,8 +13,11 @@ sub process_zone {
 
     # Spanish contractions, e.g. "de_" + "el" = "del"
     $sentence =~ s/\b(de|a) el\b/$1l/g;    # del, al
+    
+    # "y" before words beginning with "i" or "hi" => "e"
+    $sentence =~ s/ y (h?i)/ e $1/g;
 
-    # TODO: detached  clitic, e.g. "da" + "-se-" + "-lo" = "dá-se-lo"
+    # TODO: detached clitic, e.g. "da" + "-se-" + "-lo" = "dá-se-lo"
 
 
     $sentence =~ s/ +/ /g;
