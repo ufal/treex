@@ -18,9 +18,14 @@ after process_tnode => sub {
 sub should_fill {
     my ($self, $grammateme, $tnode) = @_;
 
-    # In Portuguese, nouns are not marked with definiteness on the a-layer.
+    # In Spanish, nouns are not marked with definiteness on the a-layer.
     # T2A::ES::AddArticles will add an article for this grammateme.
     return 0 if $grammateme eq 'definiteness';
+    
+    # Spanish negation is mostly added as a separate word "no" by T2A::AddNegationParticle.
+    # Flect-based T2A::ES::GenerateWordforms would be confused by extra Interset "negativeness" feature with verbs.
+    # TODO some adjectives may be negated with prefixes "in", "im",...
+    return 0 if $grammateme eq 'negation';
 
     return 1;
 }

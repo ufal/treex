@@ -14,7 +14,7 @@ sub process_tnode {
     my $particle = $self->particle_for($t_node);
     return if !defined $particle;
 
-    # create the particle node
+    # create the particle node, place it before the $node
     my $neg_node = $a_node->create_child(
         {
             'lemma'        => $particle,
@@ -24,9 +24,8 @@ sub process_tnode {
         }
     );
     $neg_node->shift_before_node($a_node);
-    
     $t_node->add_aux_anodes($neg_node);
-
+    
     return;
 }
 
