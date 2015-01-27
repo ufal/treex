@@ -39,6 +39,7 @@ sub filter_anodes {
     my $anodes_str = join ",", (map {$_->id} @filtered_a);
     push @$errors, "WH_PRON_ANODE=$anodes_str";
     #print STDERR "FILTER_ANODES: " . $filtered_a[0]->get_address . "\n" if (@filtered_a);
+    print STDERR "A-NODE-WH-PRONOUN\t" . $tnode->get_address() . "\n";
     return @filtered_t;
 }
 
@@ -50,6 +51,7 @@ sub filter_self {
         return;
     }
     #print STDERR "FILTER_SELF: " . $filtered[0]->get_address . "\n" if (@filtered);
+    print STDERR "SELF-PRONOUN\t" . $tnode->get_address() . "\n";
     return @filtered;
 }
 
@@ -57,12 +59,20 @@ sub filter_eparents {
     my ($aligned, $tnode, $errors) = @_;
 
     my @refer_to_grandpar_tnodes = grep {_is_coref_gram_to_grandpar($_)} @$aligned;
-    return @refer_to_grandpar_tnodes if (@refer_to_grandpar_tnodes);
+    
+    if (@refer_to_grandpar_tnodes) {
+        print STDERR "PARENTS-COREF-FUNCTOR_1\t" . $tnode->get_address() . "\n";
+        return @refer_to_grandpar_tnodes;
+    }
 
     my @functor_tnodes = Treex::Tool::Align::Robust::Common::filter_by_functor($aligned, $tnode->functor, $errors);
 
     if (!@functor_tnodes) {
-        return filter_by_coref($aligned, $errors);
+        my @res = filter_by_coref($aligned, $errors);
+        if (@res) {
+            print STDERR "PARENTS-COREF-FUNCTOR_3\t" . $tnode->get_address() . "\n";
+        }
+        return @res;
     }
     my @filtered_functor_tnodes = grep {
         Treex::Tool::Coreference::NodeFilter::RelPron::is_relat($_) || 
@@ -70,8 +80,13 @@ sub filter_eparents {
     } @functor_tnodes;
     if (!@filtered_functor_tnodes) {
         push @$errors, "BAD_EN_REF_FUNCTOR_TNODE";
-        return filter_by_coref($aligned, $errors);
+        my @res = filter_by_coref($aligned, $errors);
+        if (@res) {
+            print STDERR "PARENTS-COREF-FUNCTOR_3\t" . $tnode->get_address() . "\n";
+        }
+        return @res;
     }
+    print STDERR "PARENTS-COREF-FUNCTOR_2\t" . $tnode->get_address() . "\n";
     return @filtered_functor_tnodes;
 }
 
@@ -97,6 +112,7 @@ sub filter_siblings {
    
     if (defined $par->functor && $par->functor eq "APPS") {
         push @$errors, "APPOS_SIBLINGS";
+        print STDERR "SIBLINGS-FUNCTOR_APPOS\t" . $tnode->get_address() . "\n";
         return $par;
     }
     my $formeme = $par->formeme;
@@ -108,21 +124,32 @@ sub filter_siblings {
         push @$errors, "ALIGN=ANTE";
         my $child_info = join " ", map {$_->functor . "." . $_->formeme} @$aligned;
         push @$errors, "N $child_info";
+        print STDERR "SIBLINGS-FUNCTOR_N-UNDIRECT\t" . $tnode->get_address() . "\n";
         return $par;
     }
     if ($formeme =~ /^v/) {
         my @refer_to_grandpar_tnodes = grep {_is_coref_gram_to_grandpar($_)} $par->get_children;
-        return @refer_to_grandpar_tnodes if (@refer_to_grandpar_tnodes);
+        if (@refer_to_grandpar_tnodes) {
+            print STDERR "SIBLINGS-FUNCTOR_1\t" . $tnode->get_address() . "\n";
+            return @refer_to_grandpar_tnodes;
+        }
 
         my ($relat_child) = grep {Treex::Tool::Coreference::NodeFilter::RelPron::is_relat($_)} $par->get_children();
-        return $relat_child if (defined $relat_child);
+        if (defined $relat_child) {
+            print STDERR "SIBLINGS-FUNCTOR_2\t" . $tnode->get_address() . "\n";
+            return $relat_child;
+        }
         
         my @cor_children = grep {$_->t_lemma eq "#Cor"} $par->get_children();
-        return $cor_children[0] if (@cor_children == 1);
+        if (@cor_children == 1) {
+            print STDERR "SIBLINGS-FUNCTOR_3\t" . $tnode->get_address() . "\n";
+            return $cor_children[0];
+        }
 
         push @$errors, "ALIGN=ANTE";
         my $child_info = join " ", map {$_->functor . "." . $_->formeme} @$aligned;
         push @$errors, "V $child_info";
+        print STDERR "SIBLINGS-FUNCTOR_V-UNDIRECT\t" . $tnode->get_address() . "\n";
         return $par;
     }
     push @$errors, "BADFORMEME_EN_REF_PAR";
@@ -147,12 +174,14 @@ sub filter_appos {
     my @appos = grep {defined $_->functor && $_->functor eq "APPS"} @pars;
     if (@appos) {
         push @$errors, "APPOS_DIRECT";
+        print STDERR "SELF-SIBLINGS-APPS-EMPVERB_APPOS\t" . $tnode->get_address() . "\n";
         return $appos[0];
     }
     if (@emp_verb) {
         my $emp_verb_par = $emp_verb[0]->get_parent;
         if (defined $emp_verb_par->functor && $emp_verb_par->functor eq "APPS") {
             push @$errors, "APPOS_EMPVERB";
+            print STDERR "SELF-SIBLINGS-APPS-EMPVERB_APPOS-EMPVERB\t" . $tnode->get_address() . "\n";
             return $emp_verb_par;
         }
         if (defined $emp_verb_par->formeme && $emp_verb_par->formeme =~ /^([nv])/) {
@@ -160,6 +189,7 @@ sub filter_appos {
         
             push @$errors, "ALIGN=ANTE";
             push @$errors, $pos. " " .$emp_verb[0]->functor. "." .$emp_verb[0]->formeme;
+            print STDERR "SELF-SIBLINGS-APPS-EMPVERB_UNDIRECT-NV-EMPVERB\t" . $tnode->get_address() . "\n";
             return $emp_verb_par;
         }
         push @$errors, "EMPVERB_BAD_FORMEME";
