@@ -18,7 +18,7 @@ sub process_tnode {
         formeme => $self->formeme_for_dropped_subj,
         nodetype => 'complex',
         'gram/sempos' => 'n.pron.def.pers',
-        set_is_generated => 1,
+        is_generated => 1,
     });
     $new_node->shift_before_node($t_node);
     $self->fill_grammatemes($new_node);

@@ -171,7 +171,8 @@ sub formeme_for_verb {
     my $subconj = $self->get_subconj_string($first_verbform, @aux_a_nodes);
 
     # Infinitives
-    if ( $a_node->iset->verbform eq 'inf' ) {        
+    # Modal verb (finite) a-node plus infinitive content verb a-node => finite verb t-node
+    if ( $a_node->is_infinitive && !any{$_->is_finite_verb} @aux_a_nodes) {        
         return "v:$subconj+inf" if $subconj; # this includes the particle 'to'
         return 'v:inf';
     }
