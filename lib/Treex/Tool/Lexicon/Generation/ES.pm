@@ -15,7 +15,7 @@ my %CONJUGATION = (
         'imp '     => '- a e emos ad en',
     },
     er => {
-        'ind pres' => 'o es e emos eis en',
+        'ind pres' => 'o es e emos éis en',
         'ind imp'  => 'ía ías ía íamos íais ían',
         'ind past' => 'í iste ió imos isteis ieron',
         'ind fut'  => 'eré erás erá eremos eréis erán',
@@ -80,6 +80,16 @@ my %CONJUGATION = (
         'sub imp'  => 'fuese fueses fuese fuésemos fueseis fuesen',
         'sub fut'  => 'fuere fueres fuere fuéremos fuereis fueren',
         'imp '     => '- ve vaya vayamos id vayan',
+    },
+    verb_poder => {
+        'ind pres' => 'puedo puedes puede podemos podéis pueden',
+        'ind past' => 'pude pudiste pudo pudimos pudisteis pudieron',
+        'ind fut'  => 'podré podrás podrá podremos podréis podrán',
+        'cond '    => 'podría podrías podría podríamos podríais rían',
+        'sub pres' => 'pueda puedas pueda podamos podáis puedan',
+        'sub imp'  => 'pudiera pudieras pudiera pudiéramos pudierais pudieran',
+        'sub fut'  => 'pudiere pudieres pudiere pudiéremos pudiereis pudieren',
+        'imp '     => '- puede pueda podamos poded puedan',
     },
     verb_ser => {
         'ind pres' => 'soy eres es somos sois son',
