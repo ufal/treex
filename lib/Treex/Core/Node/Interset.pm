@@ -18,27 +18,42 @@ has iset => (
     lazy_build => 1,
     #builder => '_build_iset',
     handles => [qw(
+        matches
+        upos
+        set_upos
         is_noun
         is_abbreviation
         is_active
         is_adjective
         is_adposition
         is_adverb
+        is_affirmative
         is_article
         is_cardinal
+        is_common_gender
+        is_comparative
+        is_conditional
         is_conjunction
         is_coordinator
         is_dual
+        is_feminine
         is_finite_verb
         is_foreign
+        is_gerund
         is_hyph
         is_infinitive
         is_interjection
+        is_masculine
+        is_modal
+        is_negative
+        is_neuter
         is_numeral
+        is_ordinal
         is_participle
         is_particle
         is_passive
         is_past
+        is_personal_pronoun
         is_possessive
         is_plural
         is_pronoun
@@ -47,11 +62,16 @@ has iset => (
         is_reflexive
         is_singular
         is_subordinator
+        is_superlative
+        is_supine
+        is_symbol
         is_transgressive
         is_typo
         is_verb
         is_wh
     )],
+   # Note that we cannot export $anode->iset->is_auxiliary as it would clash with the existing $anode->is_auxiliary.
+
 );
 
 sub _build_iset {
