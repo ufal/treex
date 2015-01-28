@@ -15,9 +15,7 @@ sub process_tnode {
     return if $tnode->nodetype ne 'complex';
 
     foreach my $anode (@anodes) {
-        # TODO: delete the adjtype condition
-        # adjtype is deprecated in Interset, but prontype cannot have value "det"
-        if ($anode->iset->adjtype =~ /^(art|det)$/ || $anode->iset->prontype eq 'art'){
+        if ($anode->is_article){
             my $d = $anode->iset->definiteness;
             $tnode->set_gram_definiteness('definite') if $d eq 'def';
             $tnode->set_gram_definiteness('indefinite') if $d eq 'ind';
