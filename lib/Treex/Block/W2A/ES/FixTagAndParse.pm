@@ -6,8 +6,7 @@ extends 'Treex::Core::Block';
 sub process_anode {
     my ($self, $anode) = @_;
     my $lemma = $anode->lemma;
-    #my $parent = $anode->get_parent();
-    
+
     # "luces estén encendidas(lemma=encendidas -> encendido)"
     if ($anode->matches(pos=>'adj', verbform=>'part')){
         $lemma =~ s/s$// if $anode->is_plural;
@@ -15,7 +14,9 @@ sub process_anode {
         $lemma .= 'o' if $lemma !~ /o$/;
         $anode->set_lemma($lemma);
     }
-    
+
+    # Some subjects should be actually objects
+    $self->fix_false_subject($anode);  
     
     #=== The following are issues of HamleDT::ES::Harmonize rather than W2A::ES::TagAndParse
     if ($lemma eq 'uno' && $anode->conll_deprel eq 'spec'){
@@ -27,6 +28,22 @@ sub process_anode {
     }
     
     $anode->set_tag(join ' ', $anode->get_iset_values);
+    return;
+}
+
+sub fix_false_subject {
+    my ($self, $anode) = @_;
+    return if !$anode->is_verb;
+    my @children = $anode->get_echildren({or_topological=>1});
+    my $subject_child = first {$_->afun eq 'Sb'} @children;
+    return if !$subject_child;
+    
+    my $is_first_person_verb = $anode->iset->person eq '1' ? 1 : 0;
+    $is_first_person_verb = 1 if $anode->is_infinitive && any {$_->iset->person eq '1' && $_->afun eq 'AuxV'} @children;
+    
+    if ($is_first_person_verb && $subject_child->iset->person ne '1'){
+        $subject_child->set_afun('Obj');
+    }
     return;
 }
 
