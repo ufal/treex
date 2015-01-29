@@ -43,16 +43,7 @@ sub process_anode {
 
     # Some subjects should be actually objects
     $self->fix_false_subject($anode);  
-    
-    #=== The following are issues of HamleDT::ES::Harmonize rather than W2A::ES::TagAndParse
-    if ($lemma eq 'uno' && $anode->conll_deprel eq 'spec'){
-        $anode->iset->set_prontype('art');
-    }
-    if ($anode->is_article){
-        $anode->set_afun('AuxA');
-        $anode->iset->set_definiteness($lemma eq 'el' ? 'def' : 'ind');
-    }
-    
+   
     $anode->set_tag(join ' ', $anode->get_iset_values);
     return;
 }

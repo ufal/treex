@@ -63,6 +63,7 @@ sub deprel_to_afun
         my ($parent) = $node->get_eparents();
         my $pos    = $node->iset()->pos();
         my $ppos   = $parent ? $parent->iset()->pos() : '';
+        my $lemma  = $node->lemma;
         my $afun = 'NR';
         # Adjective in leaf node. Could be headed by article! Example:
         # aquests primers tres mesos
@@ -92,12 +93,12 @@ sub deprel_to_afun
         # See also "conj" and "coord".
         elsif($deprel eq 'c')
         {
-            if($node->lemma() eq 'com' && scalar($node->get_children())==1 && $ppos eq 'verb')
+            if($lemma eq 'com' && scalar($node->get_children())==1 && $ppos eq 'verb')
             {
                 $afun = 'AuxC';
                 ###!!! We would like to assign $node->get_children()[0]->set_afun('Adv'). But we should not do it at this moment because the child may be processed by deprel_to_afun() later.
             }
-            elsif($node->lemma() eq 'que' && scalar($node->get_children())==0 && $ppos =~ m/^(adv|conj)$/)
+            elsif($lemma eq 'que' && scalar($node->get_children())==0 && $ppos =~ m/^(adv|conj)$/)
             {
                 # Example: més que suficients
                 # more than sufficient
@@ -470,7 +471,7 @@ sub deprel_to_afun
                 # num example: una de cada tres pessetes
                 $afun = 'Atr';
             }
-            elsif($ppos eq 'verb' && $node->lemma() =~ m/^(a|al|d'|de|del)$/i)
+            elsif($ppos eq 'verb' && $lemma =~ m/^(a|al|d'|de|del)$/i)
             {
                 $afun = 'Obj';
             }
@@ -502,6 +503,10 @@ sub deprel_to_afun
         elsif($deprel eq 'spec')
         {
             $afun = 'Atr';
+            if ($lemma eq 'uno'){
+                $node->iset->set_prontype('art');
+                $afun = 'AuxA';
+            }
         }
         # Subject, including inserted empty nodes (Catalan is pro-drop language) and relative pronouns in subordinate clauses.
         elsif($deprel eq 'suj')
@@ -540,6 +545,11 @@ sub deprel_to_afun
             $afun = 'DetArg';
         }
         $node->set_afun($afun);
+        
+        if ($node->is_article){
+            $node->set_afun('AuxA');
+            $node->iset->set_definiteness($lemma eq 'el' ? 'def' : 'ind');
+        }
     }
     # Improve analytical functions for processing of coordinations.
     $self->catch_runaway_conjuncts($root);
