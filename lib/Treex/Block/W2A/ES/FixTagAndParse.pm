@@ -6,6 +6,21 @@ extends 'Treex::Core::Block';
 sub process_anode {
     my ($self, $anode) = @_;
     my $lemma = $anode->lemma;
+    
+    # There is no such lemma as "compruebe"
+    $lemma = 'comprobar' if $lemma eq 'compruebe';
+    if ($lemma eq 'comprobar' && lc $anode->form eq 'compruebe'){        
+        # 3rd person singular indicative present would be "comprueba", this must be an error
+        if ($anode->matches(mood=>'ind', number=>'sing', person=>'3', tense=>'pres')){
+            $anode->iset->set_mood('imp');
+        }
+    }
+    
+    # Subjunctive in the main clause is suspicious.
+    # Very often the same form can be also an imperative, which is more probable.
+    if ($anode->parent->is_root && $anode->matches(mood=>'sub', tense=>'pres', number=>'sing', person=>'3')){
+        $anode->iset->set_mood('imp');
+    }
 
     # "luces estén encendidas(lemma=encendidas -> encendido)"
     if ($anode->matches(pos=>'adj', verbform=>'part')){

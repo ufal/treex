@@ -124,6 +124,8 @@ my %CONJUGATION = (
 
 my @IRREGULAR_VERBS = map {/^verb_(.+)/ ? $1 : ()} keys %CONJUGATION;
 
+my @DIPHTHONGIZING_VERBS = qw(comprobar encontrar);
+
 sub best_form_of_lemma {
     my ( $self, $lemma, $iset ) = @_;
     return $lemma if !$self->should_inflect($lemma, $iset);
@@ -154,6 +156,25 @@ sub best_form_of_lemma {
         }
         return $lemma if !$ending;
         
+        # Diphthongization
+        # In stems of some verbs, "e"=>"ie" and "o"=>"ue",
+        # but only in imperative, present indicative and present subjunctive.
+        # First and second person in plural is regular.
+        # The change takes place only in the last syllable of the stem.
+        # E.g. comprobar => {
+        #  'ind pres' => 'compruebo compruebas comprueba . . comprueban',
+        #  'sub pres' => 'compruebe compruebes compruebe . . comprueben',
+        #  'imp '     => '-         comprueba  compruebe . . comprueben', }
+        # Note that there are other kinds of diphthongization in Spanish
+        # which still need to be handled via @IRREGULAR_VERBS.
+        if ((any {$_ eq $lemma} @DIPHTHONGIZING_VERBS)
+           && ($mood eq 'imp' || ($mood =~ /ind|sub/ && $tense eq 'pres'))
+           && ($person ne '4' && $person ne '5')
+        ){
+            $stem =~ s/e([^aeiou]{1,3})$/ie$1/ or
+            $stem =~ s/o([^aeiou]{1,3})$/ue$1/;
+        }
+        
         # Spanish orthographical changes
         if ($ending =~ /^[eéi]/ && $lemma =~ /([czg]|gu)ar$/){
             $stem =~ s/c$/qu/ or
@@ -177,7 +198,7 @@ sub best_form_of_lemma {
             $lemma =~ s/[oe]?$/a/ if $lemma !~ /a$/;
         }
         if ($iset->number eq 'plur'){
-            $lemma =~ s/([aeiou])$/$1s/ or $lemma =~ /s$/ or $lemma .= 'es';
+            $lemma =~ s/([aeiouú])$/$1s/ or $lemma =~ /s$/ or $lemma .= 'es';
             $lemma =~ s/iónes$/iones/;
             $lemma =~ s/zes$/ces/;
         }
