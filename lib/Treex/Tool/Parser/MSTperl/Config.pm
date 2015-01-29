@@ -468,6 +468,11 @@ has 'normalization_type' => (
     default => 'divabssum',
 );
 
+# By default tries to load everything immediately.
+# If set to 1, will let the invoker call load() whenever appropriate.
+# Designed for fixing filenames from the outside.
+has lazyload => ( is => 'rw', isa => 'Bool', default => 0 );
+
 # METHODS
 
 sub BUILD {
@@ -571,32 +576,6 @@ sub BUILD {
                         => $self->use_edge_features_cache,
                     )
             );
-
-            if ( $self->use_pmi ) {
-                my $pmi_model = Treex::Tool::Parser::MSTperl::ModelAdditional->new(
-                    config       => $self,
-                    model_file   => $self->pmi_model_file,
-                    model_format => $self->pmi_model_format,
-                    buckets      => $self->pmi_buckets,
-                );
-                my $result = $pmi_model->load();
-                if ($result) {
-                    $self->unlabelledFeaturesControl->pmi_model($pmi_model);
-                }
-            }
-
-            if ( $self->use_cprob ) {
-                my $cprob_model = Treex::Tool::Parser::MSTperl::ModelAdditional->new(
-                    config       => $self,
-                    model_file   => $self->cprob_model_file,
-                    model_format => $self->cprob_model_format,
-                    buckets      => $self->cprob_buckets,
-                );
-                my $result = $cprob_model->load();
-                if ($result) {
-                    $self->unlabelledFeaturesControl->cprob_model($cprob_model);
-                }
-            }
         }
 
         # labeller features
@@ -640,10 +619,46 @@ sub BUILD {
             croak "MSTperl config file error: No features set!";
         }
 
+        if ( !$self->lazyload ) {
+            $self->load();
+        }
+
     }
 
     if ( $self->DEBUG >= 1 ) {
         print "Done." . "\n";
+    }
+
+    return;
+}
+
+sub load {
+    my ($self) = @_;
+
+    if ( $self->use_pmi ) {
+        my $pmi_model = Treex::Tool::Parser::MSTperl::ModelAdditional->new(
+            config       => $self,
+            model_file   => $self->pmi_model_file,
+            model_format => $self->pmi_model_format,
+            buckets      => $self->pmi_buckets,
+        );
+        my $result = $pmi_model->load();
+        if ($result) {
+            $self->unlabelledFeaturesControl->pmi_model($pmi_model);
+        }
+    }
+
+    if ( $self->use_cprob ) {
+        my $cprob_model = Treex::Tool::Parser::MSTperl::ModelAdditional->new(
+            config       => $self,
+            model_file   => $self->cprob_model_file,
+            model_format => $self->cprob_model_format,
+            buckets      => $self->cprob_buckets,
+        );
+        my $result = $cprob_model->load();
+        if ($result) {
+            $self->unlabelledFeaturesControl->cprob_model($cprob_model);
+        }
     }
 
     return;

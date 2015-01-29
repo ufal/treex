@@ -49,6 +49,12 @@ has parser => (
     lazy     => 1,
 );
 
+has 'additional_model_from_share' => (
+    is      => 'ro',
+    isa     => 'Bool',
+    default => '1',
+);
+
 sub _build_parser {
     my ($self) = @_;
 
@@ -64,7 +70,8 @@ sub _build_parser {
     my $config = Treex::Tool::Parser::MSTperl::Config->new(
         config_file => $config_file,
         training    => 0,
-	DEBUG => 0,
+        DEBUG => 0,
+        lazyload => 1,
     );
 
     my $parser = Treex::Tool::Parser::MSTperl::Parser->new(
@@ -87,6 +94,22 @@ sub _build_parser {
     );
     log_info "Loading MSTperl::Parser model $model_file";
     $parser->load_model($model_file);
+
+    if ( $self->additional_model_from_share ) {
+        if ( $config->use_pmi) {
+            my $filename = $self->model_dir  . '/' . $config->pmi_model_file;
+            my $loaded_filename = require_file_from_share( $filename, ref($self) );
+            $config->pmi_model_file($loaded_filename);
+        }
+        if ( $config->use_cprob) {
+            my $filename = $self->model_dir  . '/' . $config->cprob_model_file;
+            my $loaded_filename = require_file_from_share( $filename, ref($self) );
+            $config->cprob_model_file($loaded_filename);
+        }
+    }
+
+    # filenames in config have been changed -- can now load
+    $config->load();
 
     return $parser;
 }
