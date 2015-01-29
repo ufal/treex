@@ -7,8 +7,26 @@ sub process_anode {
     my ($self, $anode) = @_;
     my $lemma = $anode->lemma;
     
+    # == Fix lemma
     # There is no such lemma as "compruebe"
-    $lemma = 'comprobar' if $lemma eq 'compruebe';
+    if ($lemma eq 'compruebe'){
+        $lemma = 'comprobar';
+        if ($anode->is_noun){
+            $anode->iset->add(pos=>'verb', gender=>'', nountype=>'', person=>'3', mood=>'imp');
+        }
+    };
+    $lemma = 'parar' if $lemma eq 'paran';
+
+    # "luces estén encendidas(lemma=encendidas -> encendido)"
+    if ($anode->matches(pos=>'adj', verbform=>'part')){
+        $lemma =~ s/s$// if $anode->is_plural;
+        $lemma =~ s/a$// if $anode->is_feminine;
+        $lemma .= 'o' if $lemma !~ /o$/;
+    }
+    $anode->set_lemma($lemma);
+    
+    # == Fix iset
+    
     if ($lemma eq 'comprobar' && lc $anode->form eq 'compruebe'){        
         # 3rd person singular indicative present would be "comprueba", this must be an error
         if ($anode->matches(mood=>'ind', number=>'sing', person=>'3', tense=>'pres')){
@@ -22,13 +40,6 @@ sub process_anode {
         $anode->iset->set_mood('imp');
     }
 
-    # "luces estén encendidas(lemma=encendidas -> encendido)"
-    if ($anode->matches(pos=>'adj', verbform=>'part')){
-        $lemma =~ s/s$// if $anode->is_plural;
-        $lemma =~ s/a$// if $anode->is_feminine;
-        $lemma .= 'o' if $lemma !~ /o$/;
-        $anode->set_lemma($lemma);
-    }
 
     # Some subjects should be actually objects
     $self->fix_false_subject($anode);  
