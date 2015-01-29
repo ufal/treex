@@ -95,10 +95,10 @@ sub _process_subtree {
         }
 
         # create the terminal for the head node (except for root and formal relative clause heads)
-        if ( !$anode->is_root and !$anode->wild->{is_rhd_head} ) {
+        if ( !$anode->is_root and !$anode->wild->{is_formal_head} ) {
 
             # the terminal usually has rel="hd", with a few exceptions, dealing with them here
-            my $rel = $anode->wild->{adt_rel} // $anode->wild->{adt_trel} // 'hd';
+            my $rel = $anode->wild->{adt_rel} // 'hd';
             $rel = 'crd' if ( $anode->is_coap_root );
             $rel = 'cmp' if ( ( $anode->afun // '' ) eq 'AuxC' );                                  # TODO check for clause root ??
             $rel = 'cmp' if ( $lemma =~ /^(om|te)$/ and ( $anode->afun // '' ) =~ /^Aux[VC]$/ );

@@ -6,7 +6,6 @@ use List::Util 'reduce';
 
 extends 'Treex::Core::Block';
 
-
 # Taken from http://www.perlmonks.org/?node_id=1070950
 sub minindex {
     my @x = @_;
@@ -14,27 +13,62 @@ sub minindex {
 }
 
 sub process_nnode {
-    my ($self, $nnode) = @_;
-    # only do this for the outermost n-nodes (assume the references are fixed)    
-    return if (!$nnode->get_parent->is_root);
-    
+    my ( $self, $nnode ) = @_;
+
+    # only do this for the outermost n-nodes (assume the references are fixed)
+    return if ( !$nnode->get_parent->is_root );
+
     # get all a-nodes and find one that will be used as the head of the NE structure
     my @anodes = $nnode->get_anodes();
-    my $atop = $anodes[ minindex map { $_->get_depth() } @anodes ];
+    return if ( @anodes <= 1 );
 
-    # rehang all other a-nodes and their children under this head node, set their relation to "mwp"
-    foreach my $anode (grep { $_ != $atop } @anodes){
-        $anode->set_parent($atop);
-        $anode->wild->{adt_rel} = 'mwp';
-        foreach my $achild ($anode->get_children()){
-            $achild->set_parent($atop);
-        }        
+    my $atop = $anodes[ minindex map { $_->get_depth() } @anodes ];
+    my $aparent = $atop->get_parent();
+
+    # create a new formal MWU head
+    my $amwu_root = $aparent->create_child(
+        {
+            lemma         => '',
+            form          => '',
+            afun          => $atop->afun,
+            clause_number => $atop->clause_number,
+        }
+    );
+    $amwu_root->wild->{adt_rel} = $atop->wild->{adt_rel};
+    $amwu_root->shift_after_node($atop);
+    $amwu_root->wild->{is_formal_head} = 1;
+
+    # link to the formal head from n-layer and t-layer to ensure correct ADTXML output
+    $nnode->set_anodes( @anodes, $amwu_root );
+    my ($tnode) = ( $atop->get_referencing_nodes('a/lex.rf'), $atop->get_referencing_nodes('a/aux.rf') );
+    if ($tnode) {
+        $tnode->set_lex_anode($amwu_root);
+        $tnode->add_aux_anodes($atop);
     }
-    
-    # the terminal of the topmost node should also have rel="mwp" (but only the terminal
-    # and only if the NE is composed of more than one node)
-    if (@anodes > 1){
-        $atop->wild->{adt_trel} = 'mwp';
+
+    # rehang all a-nodes under the formal head node and set their ADT relation to "mwp"
+    my $non_mwu_children = 0;
+
+    foreach my $anode (@anodes) {
+        $anode->set_parent($amwu_root);
+        $anode->wild->{adt_rel} = 'mwp';
+
+        # check for any children that are not part of the current MWU, rehang them under
+        # the formal head node (and remember that we have found some)
+        foreach my $achild ( $anode->get_children() ) {
+            if ( not grep { $_ == $achild } @anodes ) {
+                $non_mwu_children = 1;
+                $achild->set_parent($amwu_root);
+            }
+        }
+    }
+
+    # if we found any children that are not part of the current MWU, hang the rest of
+    # the MWU under its top node (to make one more depth level in ADTXML)
+    if ($non_mwu_children) {
+        foreach my $anode ( grep { $_ != $atop } @anodes ) {
+            $anode->set_parent($atop);
+        }
     }
 }
 

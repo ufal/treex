@@ -39,7 +39,7 @@ sub process_tnode {
         $arhd_formal->wild->{adt_rel} = 'mod';
         $arpron_head->wild->{adt_rel} = 'rhd';
     }
-    $arhd_formal->wild->{is_rhd_head} = 1;  # mark the formal head so that it is skipped in ADTXML
+    $arhd_formal->wild->{is_formal_head} = 1;  # mark the formal head so that it is skipped in ADTXML
 
     # create a coindexing node in the original place of the relative pronoun phrase
     my $acoindex = $self->add_coindex_node( $anode, $arpron_head, ( $arpron_head->afun // 'Obj' ) );
