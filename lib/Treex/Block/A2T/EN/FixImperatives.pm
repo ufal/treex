@@ -6,7 +6,8 @@ extends 'Treex::Core::Block';
 sub process_ttree {
     my ( $self, $t_root ) = @_;
 
-    foreach my $tnode ( grep { $_->formeme eq "v:fin" } $t_root->get_echildren ) {
+
+    foreach my $tnode ( grep { $_->gram_sempos eq "v" } $t_root->get_descendants ) {
         my $anode = $tnode->get_lex_anode;
 
         next if ( $tnode->sentmod || '' ) eq 'inter';
@@ -17,6 +18,9 @@ sub process_ttree {
         next if $anode->lemma eq 'be' and $anode->tag eq 'VBP';
         # rule out expressions with modals and auxiliaries or infinitives 
         next if grep { $_->tag     =~ /^(MD|VB[DZ]|TO)$/ } $tnode->get_aux_anodes; 
+        # imperatives do not usually take subordinate conjunctions
+        # -- but still from data it seems that they do more often than not
+        # next if grep { $_->afun    eq 'AuxC' } $tnode->get_aux_anodes; 
         next if grep { $_->formeme eq "n:subj" } $tnode->get_echildren;
 
         $tnode->set_gram_verbmod('imp');
