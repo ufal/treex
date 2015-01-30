@@ -330,7 +330,11 @@ sub deprel_to_afun
         # where it was explained
         elsif($deprel eq 'pass')
         {
-            $afun = 'AuxR';
+            #$afun = 'AuxR';
+            # It is not clear whether Spanish deprel=pass (e.g. lemma=se) should have afun=AuxR or afun=Obj
+            # see https://ufal.mff.cuni.cz/pdt2.0/doc/manuals/en/a-layer/html/ch03s06x25.html#sereflex-3
+            # Currently, the synthesis cannot add nodes with reflexive/passive lemma=se afun=AuxR, so I prefer afun=Obj.
+            $afun = 'Obj';
         }
         # Preposition leaf attached to a verb. Example: de, com, a, segons, a_punt_de
         # per mirar de conèixer les circumstàncies
