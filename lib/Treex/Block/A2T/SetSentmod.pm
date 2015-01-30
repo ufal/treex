@@ -52,7 +52,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2T::SetSentmod - fill sentence modality (question, imerative)
+Treex::Block::A2T::SetSentmod - fill sentence modality (question, imperative)
 
 =head1 DESCRIPTION
 

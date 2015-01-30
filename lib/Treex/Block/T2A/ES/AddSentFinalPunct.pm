@@ -3,30 +3,24 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::T2A::AddSentFinalPunct';
 
-has '+open_punct' => ( default => '[‚„\']' );
-
-has '+close_punct' => ( default => '[‘“\']' );
-
 override 'postprocess' => sub {
     my ( $self, $a_punct ) = @_;
 
     if ($a_punct->form eq '?' || $a_punct->form eq '!'){
 
-	my $punct_mark = ($a_punct->form eq '!') ? '¡' : '¿';
+        my $punct_mark = ($a_punct->form eq '!') ? '¡' : '¿';
 
-	my $aroot = $a_punct->get_parent();;
-	my $first_node = $aroot->get_root()->get_descendants( { first_only => 1 } );
+        my $aroot = $a_punct->get_parent();;
+        my $first_node = $aroot->get_root()->get_descendants( { first_only => 1 } );
 
-	my $punct = $aroot->create_child(
-	    {   'form'          => $punct_mark,
-		'lemma'         => $punct_mark,
-		'afun'          => 'AuxK',
-		'morphcat/pos'  => 'Z',
-		'clause_number' => 0,
-	    }
-	);
-	$punct->iset->set_pos('punc');
-
+        my $punct = $aroot->create_child(
+        {   'form'          => $punct_mark,
+            'lemma'         => $punct_mark,
+            'afun'          => 'AuxK',
+            'morphcat/pos'  => 'Z',
+            'clause_number' => 0,
+        });
+        $punct->iset->set_pos('punc');
         $punct->shift_before_node($first_node);
     }
 
