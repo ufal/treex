@@ -10,7 +10,11 @@ sub process_ttree {
         my $anode = $tnode->get_lex_anode;
 
         next if ( $tnode->sentmod || '' ) eq 'inter';
-        next if not $anode or $anode->tag ne "VB";
+        # technically, imperatives should be VB, not VBP,
+        # but the tagger often gets this wrong...
+        next if not $anode or $anode->tag !~ /^VBP?$/;
+        # ...except for 'be' where forms of VB and VBP are distinct
+        next if $anode->lemma eq 'be' and $anode->tag eq 'VBP';
         # rule out expressions with modals and auxiliaries or infinitives 
         next if grep { $_->tag     =~ /^(MD|VB[DZ]|TO)$/ } $tnode->get_aux_anodes; 
         next if grep { $_->formeme eq "n:subj" } $tnode->get_echildren;
