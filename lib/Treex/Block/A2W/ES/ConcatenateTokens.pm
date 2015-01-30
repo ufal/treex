@@ -21,9 +21,8 @@ sub process_zone {
 
 
     $sentence =~ s/ +/ /g;
-    $sentence =~ s/ ([!,.?:;])/$1/g;
-    $sentence =~ s/ ([’”])/$1/g;
-    $sentence =~ s/([‘“]) /$1/g;
+    $sentence =~ s/ ([’”!,.?:;])/$1/g;
+    $sentence =~ s/([‘“¿¡]) /$1/g;
 
     $sentence =~ s/ ?([\.,]) ?([’”"])/$1$2/g;    # spaces around punctuation
 
