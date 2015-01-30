@@ -35,13 +35,14 @@ sub process_anode {
     #       comprobar  compruebe                                                       comprueba
     #       acceder    acceda                                                          accede
     # etc.
-    if ($anode->matches(mood=>'ind', number=>'sing', person=>'3', tense=>'pres')){
+    #if ($anode->matches(mood=>'ind', number=>'sing', person=>'3', tense=>'pres')){
+    if ($anode->is_verb){
         my $expected_form = $generator->best_form_of_lemma($lemma, $anode->iset);
         if ($expected_form ne lc $anode->form){
             my $imperative_form = $generator->best_form_of_lemma($lemma, $imperative_iset);
             # in our dataset imperative is more probable than subjunctive
             if ($imperative_form eq lc $anode->form){
-                $anode->iset->set_mood('imp');
+                $anode->iset->set_hash($imperative_iset);
             }
         }           
     }

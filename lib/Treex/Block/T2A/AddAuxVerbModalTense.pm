@@ -14,9 +14,8 @@ sub _build_gram2form { return {} }
 sub _postprocess {return}
 
 sub process_tnode {
-
     my ( $self, $tnode ) = @_;
-    my ( $verbmod, $tense, $deontmod ) = ( $tnode->gram_verbmod, $tnode->gram_tense, $tnode->gram_deontmod // '' );
+    my ( $verbmod, $tense, $deontmod ) = ( $tnode->gram_verbmod // '', $tnode->gram_tense // '', $tnode->gram_deontmod // '' );
 
     # return if the node is not a verb
     return if ( !$verbmod );

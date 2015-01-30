@@ -131,6 +131,7 @@ sub best_form_of_lemma {
     return $lemma if !$self->should_inflect($lemma, $iset);
     my $pos = $iset->pos;
     if ($pos eq 'verb'){
+        return $lemma if $iset->is_infinitive;
         my ($stem, $class) = ('', '');
 
         # check irregular verbs first

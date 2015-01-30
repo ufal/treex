@@ -44,13 +44,17 @@ sub solve_grammatemes {
         my $node_gram = $node->get_attr("gram/$grammateme") or next;
         my $noun_gram = $noun->get_attr("gram/$grammateme");
         if (!$noun_gram){
-
-            # Fill the missing grammateme of the noun
-            # except for 3rd person (which is implied).
-            if ($self->if_loss eq 'fill' && $node_gram ne '3'){
-                $noun->set_attr("gram/$grammateme", $node_gram);
+            if (($noun->formeme||'') =~ /^n/){
+                # Fill the missing grammateme of the noun
+                # except for 3rd person (which is implied).
+                if ($self->if_loss eq 'fill' && $node_gram ne '3'){
+                    $noun->set_attr("gram/$grammateme", $node_gram);
+                }
+                $node->set_attr("gram/$grammateme", undef);
+            } else {
+                # TODO What to do if the $noun is not actually a noun?
+                # Safest option here seems to be "ignore" (even if if_loss eq "fill").
             }
-            $node->set_attr("gram/$grammateme", undef);
         }
         elsif ($node_gram eq $noun_gram){
             $node->set_attr("gram/$grammateme", undef);
