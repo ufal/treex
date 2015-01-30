@@ -199,7 +199,9 @@ sub best_form_of_lemma {
         }
         if ($iset->number eq 'plur'){
             $lemma =~ s/([aeiouú])$/$1s/ or $lemma =~ /s$/ or $lemma .= 'es';
-            $lemma =~ s/iónes$/iones/;
+            $lemma =~ s/ó(n[ea]s)$/o$1/;
+            $lemma =~ s/í(n[ea]s)$/i$1/;
+            $lemma =~ s/^(est?)es$/$1os/;
             $lemma =~ s/zes$/ces/;
         }
     }

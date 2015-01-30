@@ -32,6 +32,7 @@ my %gram2iset = (
     'numbertype=ord'   => 'numtype=ord',
     'numbertype=frac'  => 'numtype=frac',
     'numbertype=kind'  => 'numtype=gen',
+    'numbertype=set'   => 'numtype=sets',
 
     'person=1' => 'person=1',
     'person=2' => 'person=2',
