@@ -26,6 +26,12 @@ sub process_anode {
     $anode->set_lemma($lemma);
     
     # == Fix iset
+    if ($lemma eq 'hacer' && lc $anode->form eq 'haga'){        
+        # 3rd person singular indicative present would be "hace", this must be an error
+        if ($anode->matches(mood=>'ind', number=>'sing', person=>'3', tense=>'pres')){
+            $anode->iset->set_mood('imp');
+        }
+    }
     
     if ($lemma eq 'comprobar' && lc $anode->form eq 'compruebe'){        
         # 3rd person singular indicative present would be "comprueba", this must be an error
