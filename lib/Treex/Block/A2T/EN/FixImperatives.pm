@@ -25,6 +25,7 @@ sub process_ttree {
 
         $tnode->set_gram_verbmod('imp');
         $tnode->set_sentmod('imper');
+        $tnode->set_formeme('v:fin');
 
         my $perspron = $tnode->create_child;
         $perspron->shift_before_node($tnode);
