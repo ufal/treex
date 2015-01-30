@@ -409,6 +409,12 @@ sub fix_mwu {
         foreach my $mwu_child ( $mwu_top->get_children ) {
             $mwu_child->set_parent($last_member);
         }
+
+        # try to detect the relation of the whole MWU to its parent, assign it to the new topmost member
+        my $mwu_rel = $mwu_top->get_terminal_pnode->get_parent->wild->{rel};
+        $last_member->set_afun('Sb') if ( $mwu_rel eq 'su' );
+        $last_member->set_afun('Pnom') if ( $mwu_rel eq 'predc' );
+        $last_member->set_afun('Obj') if ( $mwu_rel =~ /^obj[12]$/ );
     }
 }
 
