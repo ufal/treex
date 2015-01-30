@@ -3,6 +3,10 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+use Treex::Tool::Lexicon::Generation::ES;
+my $generator = Treex::Tool::Lexicon::Generation::ES->new();
+my $imperative_iset = Lingua::Interset::FeatureStructure->new({pos=> 'verb', number=>'sing', mood=>'imp', person=>3});
+
 sub process_anode {
     my ($self, $anode) = @_;
     my $lemma = $anode->lemma;
@@ -26,18 +30,20 @@ sub process_anode {
     $anode->set_lemma($lemma);
     
     # == Fix iset
-    if ($lemma eq 'hacer' && lc $anode->form eq 'haga'){        
-        # 3rd person singular indicative present would be "hace", this must be an error
-        if ($anode->matches(mood=>'ind', number=>'sing', person=>'3', tense=>'pres')){
-            $anode->iset->set_mood('imp');
-        }
-    }
     
-    if ($lemma eq 'comprobar' && lc $anode->form eq 'compruebe'){        
-        # 3rd person singular indicative present would be "comprueba", this must be an error
-        if ($anode->matches(mood=>'ind', number=>'sing', person=>'3', tense=>'pres')){
-            $anode->iset->set_mood('imp');
-        }
+    # lemma=hacer form=haga iset: ind sing 3 pres must be an error ($expected_form is "hace")
+    #       comprobar  compruebe                                                       comprueba
+    #       acceder    acceda                                                          accede
+    # etc.
+    if ($anode->matches(mood=>'ind', number=>'sing', person=>'3', tense=>'pres')){
+        my $expected_form = $generator->best_form_of_lemma($lemma, $anode->iset);
+        if ($expected_form ne lc $anode->form){
+            my $imperative_form = $generator->best_form_of_lemma($lemma, $imperative_iset);
+            # in our dataset imperative is more probable than subjunctive
+            if ($imperative_form eq lc $anode->form){
+                $anode->iset->set_mood('imp');
+            }
+        }           
     }
     
     # Subjunctive in the main clause is suspicious.
