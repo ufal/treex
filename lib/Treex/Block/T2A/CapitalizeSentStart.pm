@@ -4,7 +4,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-has 'opening_punct' => ( isa => 'Str', is => 'ro', default => '({[‚„«‹|*"\'“' );
+has 'opening_punct' => ( isa => 'Str', is => 'ro', default => '({[‚„«‹|*"\'“¿¡' );
 has 'skip_dsp_nodes' => ( isa=>'Bool', is=>'ro', default=>0);
 
 sub process_zone {
@@ -22,7 +22,8 @@ sub process_zone {
 
     # Technical root should have just one child unless something (parsing) went wrong.
     # Anyway, we want to capitalize the very first word in the sentence.
-    my $first_root = $a_root->get_children( { first_only => 1 } );
+    # Spanish has opening question mark "¿", which may be hanged under the technical root
+    my $first_root = first {$_->lemma !~ /^[$opening_punct]+$/} $a_root->get_children( { ordered => 1 } );
 
     foreach my $a_sent_root ( grep {defined} ( $first_root, @dsp_aroots ) ) {
         my ($first_word) =
