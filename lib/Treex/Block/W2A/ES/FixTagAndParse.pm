@@ -11,6 +11,21 @@ sub process_anode {
     my ($self, $anode) = @_;
     my $lemma = $anode->lemma;
     
+    # == Fix dependency structutre
+    if ($anode->form eq '¿'){
+        my $right_mark = $anode->get_siblings({last_only=>1});
+        if ($right_mark->form ne '?'){
+            $right_mark = first {$_->form eq '?' && $_->follows($anode)} $anode->get_root->get_descendants({ordered=>1}) or return;
+            if ($anode->follows($anode->get_parent)){
+                $anode->set_parent($right_mark->get_parent());
+            } else {
+                $right_mark->set_parent($anode->get_parent());
+            }
+        }
+        # TODO if ($anode->follows($anode->get_parent) or $anode->get_siblings({preceding_only=>1})){ }
+    }
+    
+    
     # == Fix lemma
     # There is no such lemma as "compruebe"
     if ($lemma eq 'compruebe'){

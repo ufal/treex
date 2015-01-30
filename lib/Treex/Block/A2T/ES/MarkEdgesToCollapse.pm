@@ -7,9 +7,9 @@ extends 'Treex::Block::A2T::MarkEdgesToCollapse';
 override tnode_although_aux => sub {
     my ( $self, $node ) = @_;
     
-    # Opening questionmark '¿' has afun=AuxG, but we want to hide it on t-layer,
+    # Questionmark '¿' has afun=AuxG, but we want to hide it on t-layer,
     # i.e. make it an exception from the following rule
-    return 0 if $node->lemma eq '¿';
+    return 0 if $node->lemma eq '¿' || $node->lemma eq '?';
 
     # AuxY and AuxZ are usually used for rhematizers (which should have their own t-nodes).
     # AuxG = graphic symbols (dot not serving as terminal punct, colon etc.)
