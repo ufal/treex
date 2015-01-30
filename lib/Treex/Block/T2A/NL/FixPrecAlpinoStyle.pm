@@ -18,7 +18,7 @@ sub process_tnode {
 
     $anode->set_parent( $aparent->get_parent() );
     $aparent->set_parent($anode);
-    $aparent->wild->{adt_rel} = 'nucl';
+    $aparent->wild->{adt_phrase_rel} = 'nucl';
     $anode->wild->{adt_rel}   = 'dlink';
 
     return;

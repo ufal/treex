@@ -168,16 +168,12 @@ sub _get_rel {
     my $afun = $anode->afun // '';
 
     # technical root + top node
-    if ( $anode->is_root ) {
-        return 'top';
-    }
-    if ( $anode->get_parent->is_root ) {
-        return '--';
-    }
-
-    if ( $anode->wild->{adt_rel} ) {
-        return $anode->wild->{adt_rel};    # overrides e.g. for formal subjects, relative clauses etc.
-    }
+    return 'top' if ( $anode->is_root );
+    return '--' if ( $anode->get_parent->is_root );
+    
+    # relation label overrides (just for phrases & for both)
+    return $anode->wild->{adt_phrase_rel} if ( $anode->wild->{adt_phrase_rel} );
+    return $anode->wild->{adt_rel} if ( $anode->wild->{adt_rel} );
 
     my ($aparent) = $anode->get_eparents( { or_topological => 1 } );
 
