@@ -2,8 +2,8 @@ package Treex::Block::W2A::CS::LabelMIRA;
 use Moose;
 extends 'Treex::Block::W2A::LabelMIRA';
 
-has 'model_name' => ( is => 'ro', isa => 'Str', default => 'alg16_5_p1' );
-has 'model_dir' => ( is => 'ro', isa => 'Str', default => "data/models/mst_perl_parser/cs" );
+has 'model_name' => ( is => 'ro', isa => 'Str', default => 'alg16_5_p1' ); # best: pdt_best
+has 'model_dir' => ( is => 'ro', isa => 'Str', default => "data/models/parser/mst_perl/cs" );
 
 has 'alignment_language' => ( isa => 'Str', is => 'ro', default => 'en' );
 has 'alignment_is_backwards' => ( isa => 'Bool', is => 'ro', default => '1' );
@@ -36,6 +36,10 @@ Treex::Block::W2A::CS::LabelMIRA
 Mira labeller adjusted to labelling Czech sentences.
 Just a lightweight wrapper for
 L<Treex::Block::W2A::LabelMIRA> which is the labeller itself.
+
+Uses a rather small and simple model, which is good only for testing and toy
+examples.
+Use e.g. C<model_name=pdt_best> to get good results.
 
 =head1 AUTHORS
 

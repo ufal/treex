@@ -3,7 +3,7 @@ use Moose;
 extends 'Treex::Block::W2A::LabelMIRA';
 
 has 'model_name' => ( is => 'ro', isa => 'Str', default => 'alg16_5_p1' );
-has 'model_dir' => ( is => 'ro', isa => 'Str', default => "data/models/mst_perl_parser/en" );
+has 'model_dir' => ( is => 'ro', isa => 'Str', default => "data/models/parser/mst_perl/en" );
 
 has 'alignment_language' => ( isa => 'Str', is => 'ro', default => 'cs' );
 has 'alignment_is_backwards' => ( isa => 'Bool', is => 'ro', default => '0' );

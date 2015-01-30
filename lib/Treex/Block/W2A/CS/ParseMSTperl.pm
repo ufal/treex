@@ -5,7 +5,7 @@ use warnings;
 use Moose;
 extends 'Treex::Block::W2A::ParseMSTperl';
 
-has 'model_name' => ( is => 'ro', isa => 'Str', default => 'pdt_form_small' ); #pdt_dz_wf_3 was here, but I cannot find such a model in share
+has 'model_name' => ( is => 'ro', isa => 'Str', default => 'pdt_form_small' ); #best: pdt_best
 has 'model_dir' => ( is => 'ro', isa => 'Str', default => "data/models/parser/mst_perl/cs" );
 
 has 'alignment_language' => ( isa => 'Str', is => 'ro', default => 'en' );

@@ -29,7 +29,7 @@ has 'model_name' => (
 has 'model_dir' => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'data/models/mst_perl_parser/en',
+    default => 'data/models/parser/mst_perl/en',
 );
 
 has labeller => (
