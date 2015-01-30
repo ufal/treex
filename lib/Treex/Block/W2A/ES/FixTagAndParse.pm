@@ -5,7 +5,7 @@ extends 'Treex::Core::Block';
 
 use Treex::Tool::Lexicon::Generation::ES;
 my $generator = Treex::Tool::Lexicon::Generation::ES->new();
-my $imperative_iset = Lingua::Interset::FeatureStructure->new({pos=> 'verb', number=>'sing', mood=>'imp', person=>3});
+my $imperative_iset = Lingua::Interset::FeatureStructure->new({pos=> 'verb', verbform=>'fin', number=>'sing', mood=>'imp', person=>3});
 
 sub process_anode {
     my ($self, $anode) = @_;
