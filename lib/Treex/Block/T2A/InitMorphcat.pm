@@ -71,9 +71,11 @@ sub process_tnode {
         $a_node->iset->set_pos($mlayer_pos);
     }
     else {
+        # TODO: this should be probably made with sempos anyway??
         my $syntpos = $t_node->formeme;
         $syntpos =~ s/:.*//;
         my $pos = $syntpos2pos{$syntpos};
+        $pos = 'adj' if ( ( $t_node->gram_sempos // '' ) =~ /adj/ );
         $pos = 'num' if ( ( $t_node->gram_sempos // '' ) =~ /quant/ );
         $a_node->iset->set_pos($pos) if $pos;
     }
@@ -87,15 +89,17 @@ sub process_tnode {
     my $gender = $t_node->gram_gender || '';
     if ( $gender eq 'inan' ) {
         $a_node->iset->set_animateness('inan');
-    }
+    }    
 
     # The type of pronoun is not preserved on t-layer, but at least we know it is a pronoun
     if ( ( $t_node->gram_sempos // '' ) =~ /pron/ ) {
         $a_node->iset->set_prontype('prn');
 
-        # and we can mark possessive pronouns.
+        # and we can mark possessive pronouns + move their "gender" value into possgender where it belongs
         if ( $t_node->formeme =~ /poss$/ ) {
             $a_node->iset->set_poss('poss');
+            $a_node->iset->set_possgender( $a_node->iset->gender );
+            $a_node->iset->set_gender('');
         }
     }
     
@@ -118,7 +122,7 @@ sub should_fill {
 
 sub fill_iset_from_gram {
     my ( $self, $t_node, $a_node, $grammatemes_rf ) = @_;
-
+    
     while ( my ( $name, $value ) = each %{$grammatemes_rf} ) {
         if ( defined $value && $self->should_fill( $name, $t_node ) && ( my $iset_rule = $gram2iset{"$name=$value"} ) ) {
             my ( $i_name, $i_value ) = split /=/, $iset_rule;

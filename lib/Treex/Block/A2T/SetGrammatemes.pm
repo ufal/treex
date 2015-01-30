@@ -36,6 +36,12 @@ my %iset2gram = (
     'gender=neut' => 'gender=neut',
     'gender=com' => 'gender=inan', # This is a hack, reusing Czech-specific gramateme for other purposes
     
+    # possessive adjectives (overriding the adjectival gender)
+    'possgender=masc' => 'gender=anim',
+    'possgender=fem' => 'gender=fem',
+    'possgender=neut' => 'gender=neut',
+    'possgender=com' => 'gender=inan',
+    
     'negativeness=neg' => 'negation=neg1',
     
     'number=sing' => 'number=sg',

@@ -47,10 +47,13 @@ sub process_anode {
         if ( $pers eq '3' and $anode->iset->reflex and not $anode->iset->poss ){
             $sig .= ' reflex';
         }
-        if ( $pers eq '3' and $num eq 'sing' and not $anode->iset->reflex ) {
+        if ( $pers eq '3' and $num eq 'sing' and not $anode->iset->reflex and not $anode->iset->poss ) {
             $sig .= ' ' . ( $anode->iset->gender || 'neut' );
         }
         if ( $anode->iset->poss ) {
+            if ( $pers eq '3' and $num eq 'sing' ){
+                $sig .= ' ' . ( $anode->iset->possgender || 'neut' );
+            }
             $sig .= ' poss';
         }
         $anode->set_lemma( $PERSPRON{$sig} );

@@ -13,6 +13,12 @@ sub process_anode {
             $anode->set_iset( 'synpos' => 'adv' );
         }
     }
+    
+    # add gender for 3rd person possessive pronouns; we only know for sure if it's feminine
+    # (others default to "zijn" anyway)
+    if ( $anode->match_iset('prontype' => 'prs', 'poss' => 'poss') and $anode->lemma eq 'haar' ){
+        $anode->set_iset('possgender' => 'fem');
+    }
 
     return;
 }
