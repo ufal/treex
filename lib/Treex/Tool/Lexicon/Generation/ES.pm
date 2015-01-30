@@ -41,6 +41,14 @@ my %CONJUGATION = (
         'sub pres' => 'conozca conozcas conozca conozcamos conozcáis conozcan',
         'imp '     => '- conoce conozca conozcamos conoced conozcan',
     },
+    verb_conseguir => {
+        'ind pres' => 'consigo consigues consigue . . consiguen',
+        'ind past' => '. . consiguió . . consiguieron',
+        'sub pres' => 'consiga consigas consiga consigamos consigáis consigan',
+        'sub fut'  => 'consigiere consigieres consigiere consigiéremos consigiereis consigieren',
+        'imp '     => '- consigue consiga consigamos . consigan',
+    },
+
     verb_estar => {
         'ind pres' => 'estoy estás está estamos estáis están',
         'ind past' => 'estuve estuviste estuvo estuvimos estubviteis estuvieron',
