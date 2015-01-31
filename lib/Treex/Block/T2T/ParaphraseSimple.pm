@@ -99,7 +99,7 @@ sub process_tnode {
                 # nouns may have different gender
                 my $lex_anode = $tnode->get_lex_anode;
                 if ( defined $lex_anode && $lex_anode->tag  =~ /^N/) {
-                    $tnode->set_gram_gender('');
+                    $tnode->set_gram_gender(undef);
                 }
                 $tnode->wild->{orig_lemma} = $orig_lemma;
                 log_info "Paraphrasing $orig_lemma -> $mt_lemma";
