@@ -16,7 +16,6 @@ sub process_zone {
     my $aroot          = $zone->get_atree();
     my @anodes         = $aroot->get_descendants( { ordered => 1 } );
     my @clause_numbers = map { $_->clause_number } @anodes;
-    ##my @afuns          = map { $_->afun || '' } @anodes;
     my @lemmas = map { lc( $_->lemma || '' ) } @anodes;
     push @lemmas, 'dummy';
 
@@ -33,7 +32,7 @@ sub process_zone {
         # However, on some boundaries the comma is not needed/allowed:
 
         # left or right token is a punctuation (e.g. three dots)
-        next if any { $_ =~ /^[,:;.?!-]/ } @lemmas[ $i, $i + 1 ];
+        next if any { $_ =~ /^[,:;.?!¿¡-]/ } @lemmas[ $i, $i + 1 ];
 
         # left token is an opening quote or bracket
         next if $lemmas[$i] =~ /$open_punct/ || $lemmas[$i] eq '(';
