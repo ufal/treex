@@ -6,9 +6,22 @@ extends 'Treex::Block::T2A::AddSentmodPunct';
 override 'postprocess' => sub {
     my ( $self, $a_punct, $tnode, $is_main ) = @_;
     
-    if ($a_punct->form eq '?' || $a_punct->form eq '!'){
+    # In QTLeap EN->ES translation many sentences have sentmod=imper
+    # (because the main verb was imperative in English)
+    # but in most (all I have seen) cases exclamation marks should not be added.
+    # TODO: So when should "¡" and "!" be added?
+    if ($a_punct->form eq '!'){
+        if ($is_main){
+            $a_punct->set_form('.');
+            $a_punct->set_lemma('.');
+        } else {
+            $a_punct->remove();
+        }
+    }
+    
+    elsif ($a_punct->form eq '?'){
         my $a_parent = $a_punct->get_parent();
-        my $punct_mark = ($a_punct->form eq '!') ? '¡' : '¿';
+        my $punct_mark = '¿';
 
         my $punct = $a_parent->create_child(
         {   'form'          => $punct_mark,
