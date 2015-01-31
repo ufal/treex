@@ -132,7 +132,7 @@ my %CONJUGATION = (
 
 my @IRREGULAR_VERBS = map {/^verb_(.+)/ ? $1 : ()} keys %CONJUGATION;
 
-my @DIPHTHONGIZING_VERBS = qw(comprobar encontrar);
+my @DIPHTHONGIZING_VERBS = qw(comprobar encontrar mostrar querer);
 
 sub best_form_of_lemma {
     my ( $self, $lemma, $iset ) = @_;
@@ -212,6 +212,7 @@ sub best_form_of_lemma {
             $lemma =~ s/í(n[ea]s)$/i$1/;
             $lemma =~ s/^(est?)es$/$1os/;
             $lemma =~ s/zes$/ces/;
+            $lemma =~ s/^driveres$/drivers/;
         }
     }
     return $lemma;
@@ -229,7 +230,7 @@ sub should_adjective_end_with_a{
 
 sub should_inflect {
     my ( $self, $lemma, $iset ) = @_;
-    return 0 if any {$lemma eq $_} qw(wifi web ip se);
+    return 0 if any {$lemma eq $_} qw(wifi web ip se que);
     return 1;
 }
 
