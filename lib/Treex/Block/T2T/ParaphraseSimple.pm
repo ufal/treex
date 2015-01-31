@@ -15,7 +15,7 @@ has paraphrases_file => (
     is => 'ro',
     isa => 'Str',
     required => 1,
-    documentation => 'filename of a file with space-separated single-lemma paraphrases, one pair of lemmas per line',
+    documentation => 'filename of a file with tab-separated single-lemma paraphrases, one pair of lemmas per line',
 );
 
 has paraphrases => (
@@ -27,6 +27,7 @@ has paraphrases => (
 has mt_language => ( is  => 'rw', isa => 'Str', lazy_build => 1 );
 
 my %seen_in_mt;
+my %seen_only_in_mt;
 
 sub _build_mt_language {
     my ($self) = @_;
@@ -36,18 +37,17 @@ sub _build_mt_language {
 sub process_start {
     my ($self) = @_;
 
-
     # Only one paraphrase for each lemma is supported now.
-    # TODO: support $para{$lemma} = [$para1, $para2, $para3]
     # TODO: support multiword paraphrase and formeme paraphrases
     # TODO: support paraphrases applicable only in a given (tree) context
     open my $F, '<:utf8', $self->paraphrases_file;
     my %para;
     while (<$F>){
         chomp;
-        my ($lemma1, $lemma2) = split;
-        $para{$lemma1} = $lemma2;
-        $para{$lemma2} = $lemma1; # suppose symmetry
+        next unless $_;
+        my ($lemma1, $lemma2) = split /\t/;
+        $para{$lemma1}->{$lemma2} = 1;
+        $para{$lemma2}->{$lemma1} = 1; # suppose symmetry
     }
     close $F;
     $self->set_paraphrases(\%para);
@@ -58,13 +58,30 @@ sub process_bundle {
     
     # What t-lemmas are seen in this sentence in the MT-output?
     %seen_in_mt = ();
-    my $mt_zone = $bundle->get_zone($self->mt_language, $self->mt_selector);
-    my $mt_ttree = $mt_zone->get_ttree();
-    my @mt_tnodes = $mt_ttree->get_descendants();
-    for my $mt_tnode (@mt_tnodes) {
-        $seen_in_mt{$mt_tnode->t_lemma}++;
+    {
+        my $mt_zone = $bundle->get_zone(
+            $self->mt_language, $self->mt_selector);
+        my $mt_ttree = $mt_zone->get_ttree();
+        my @mt_tnodes = $mt_ttree->get_descendants();
+        for my $mt_tnode (@mt_tnodes) {
+            $seen_in_mt{$mt_tnode->t_lemma}++;
+        }
     }
     
+    # What t-lemmas are seen in this sentence ONLY in the MT-output?
+    %seen_only_in_mt = %seen_in_mt;
+    {
+        my $ref_zone = $bundle->get_zone(
+            $self->language, $self->selector);
+        my $ref_ttree = $ref_zone->get_ttree();
+        my @ref_tnodes = $ref_ttree->get_descendants();
+        for my $ref_tnode (@ref_tnodes) {
+            if ( defined $seen_in_mt{$ref_tnode->t_lemma} ) {
+                delete $seen_in_mt{$ref_tnode->t_lemma};
+            }
+        }
+    }
+
     # Let Treex::Core::Block call process_tnode on each t-node of the reference zone
     $self->SUPER::process_bundle($bundle, $bundleNo);
     return;
@@ -73,14 +90,23 @@ sub process_bundle {
 sub process_tnode {
     my ( $self, $tnode ) = @_;
     my $orig_lemma = $tnode->t_lemma();
-    my $para_lemma = $self->paraphrases->{$orig_lemma};
 
-    # debug print
-    #say(($seen_in_mt{$para_lemma} ?  'will' : 'will not') .  " apply: $orig_lemma -> $para_lemma " . $tnode->id) if defined $para_lemma;
-    if (defined $para_lemma && $seen_in_mt{$para_lemma}){
-        $tnode->set_t_lemma($para_lemma);
-        $tnode->wild->{orig_lemma} = $orig_lemma;
+    if ( !$seen_in_mt{$orig_lemma} ) {
+        # let's try to paraphrase
+        foreach my $mt_lemma (keys %seen_only_in_mt) {
+            if ( $self->paraphrases->{$orig_lemma}->{$mt_lemma} ) {
+                $tnode->set_t_lemma($mt_lemma);
+                # nouns may have different gender
+                my $lex_anode = $tnode->get_lex_anode;
+                if ( defined $lex_anode && $lex_anode->tag  =~ /^N/) {
+                    $tnode->set_gram_gender('');
+                }
+                $tnode->wild->{orig_lemma} = $orig_lemma;
+                log_info "Paraphrasing $orig_lemma -> $mt_lemma";
+            }
+        }
     }
+
     return;
 }
 
@@ -107,6 +133,7 @@ Output: modified reference translation t-tree
 =head1 AUTHOR
 
 Martin Popel <popel@ufal.mff.cuni.cz>
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
