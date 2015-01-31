@@ -7,15 +7,15 @@ sub process_ttree {
     my ( $self, $t_root ) = @_;
 
 
-    foreach my $tnode ( grep { $_->gram_sempos eq "v" } $t_root->get_descendants ) {
+    foreach my $tnode ( grep { ($_->gram_sempos || '') eq "v" } $t_root->get_descendants ) {
         my $anode = $tnode->get_lex_anode;
 
         next if ( $tnode->sentmod || '' ) eq 'inter';
         # technically, imperatives should be VB, not VBP,
         # but the tagger often gets this wrong...
         next if not $anode or $anode->tag !~ /^VBP?$/;
-        # ...except for 'be' where forms of VB and VBP are distinct
-        next if $anode->lemma eq 'be' and $anode->tag eq 'VBP';
+        # but still, the form and lemma of an imperative should be equal
+        next if lc($anode->form) ne lc($anode->lemma);
         # rule out expressions with modals and auxiliaries or infinitives 
         next if grep { $_->tag     =~ /^(MD|VB[DZ]|TO)$/ } $tnode->get_aux_anodes; 
         # imperatives do not usually take subordinate conjunctions
