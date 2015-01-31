@@ -12,6 +12,7 @@ my %LEMMA_TO_FUNCTOR = (
     o => 'DISJ',
     u => 'DISJ',
     mas => 'ADVS',
+    ni => 'DISJ',
 );
 
 sub get_coap_functor {
