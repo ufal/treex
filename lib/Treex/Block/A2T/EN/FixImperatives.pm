@@ -14,7 +14,7 @@ sub process_ttree {
         # technically, imperatives should be VB, not VBP,
         # but the tagger often gets this wrong...
         next if not $anode or $anode->tag !~ /^VBP?$/;
-        # but still, the form and lemma of an imperative should be equal
+        # but still, the form and lemma of an imperative should be equal 
         next if lc($anode->form) ne lc($anode->lemma);
         # rule out expressions with modals and auxiliaries or infinitives 
         next if grep { $_->tag     =~ /^(MD|VB[DZ]|TO)$/ } $tnode->get_aux_anodes; 
