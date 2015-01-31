@@ -151,31 +151,11 @@ sub _get_filename {
     }
     
     if (defined $self->substitute){
-
-        my $regex = $self->substitute;
-        my $delimiter = ",";
-        my $lc = ($regex =~ /i$/);
-
-        # regex can have format {<old>}{<new>}
-        if ( $regex =~ /^{(.*)}{(.*)}i?$/ ) {
-          $regex =~ s/^{(.*)}{(.*)}i?$/$1,$2/;
-        }
-        # otherwise regex should have format /<original>/<replacement>/, where "/" is delimiter of a choice
-        else {
-          
-          $delimiter = substr($regex, 0, 1);
-          $regex =~ s/^\Q$delimiter\E(.*)\Q$delimiter\E$/$1/;
-        }
-
-        my @old_new_regex = split /\Q$delimiter\E/, $regex;
-        log_fatal "Incorrect form of regex $self->substitute" if (scalar @old_new_regex != 2);
-
-        $filename =~ s/$old_new_regex[0]/$old_new_regex[1]/i if $lc;
-        $filename =~ s/$old_new_regex[0]/$old_new_regex[1]/ if !$lc;
-
-        # we want to avoid this
-        #my $eval_string = '$filename =~ s' . $self->substitute . ';1;';
-        #eval $eval_string or log_fatal "Failed to eval $eval_string";
+        my $eval_string = '$filename =~ s' . $self->substitute . ';1;';
+        eval $eval_string or log_fatal "Failed to eval $eval_string"; ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
+        # An alternative implementation without stringy eval is commented below (see r14228),
+        # but it cannot handle $1 in rexex, e.g.
+        # Write::Treex substitute='{(.+)-(.+)}{$2-$1}
 
         my ($fn, $directories) = fileparse($filename, $self->_document_extension($document));
         $directories =~ s{/$}{};
@@ -185,6 +165,27 @@ sub _get_filename {
 
     return $filename;
 }
+
+# my $regex = $self->substitute;
+# my $delimiter = ",";
+# my $lc = ($regex =~ /i$/);
+# 
+# # regex can have format {<old>}{<new>}
+# if ( $regex =~ /^{(.*)}{(.*)}i?$/ ) {
+#     $regex =~ s/^{(.*)}{(.*)}i?$/$1,$2/;
+# }
+# # otherwise regex should have format /<original>/<replacement>/, where "/" is delimiter of a choice
+# else {         
+#     $delimiter = substr($regex, 0, 1);
+#     $regex =~ s/^\Q$delimiter\E(.*)\Q$delimiter\E$/$1/;
+# }
+# 
+# my @old_new_regex = split /\Q$delimiter\E/, $regex;
+# log_fatal "Incorrect form of regex $self->substitute" if (scalar @old_new_regex != 2);
+# $filename =~ s/$old_new_regex[0]/$old_new_regex[1]/i if $lc;
+# $filename =~ s/$old_new_regex[0]/$old_new_regex[1]/ if !$lc;
+
+
 
 # Default process_document method for all Writer blocks. 
 override 'process_document' => sub {
