@@ -7,8 +7,12 @@ has 'override_distance_limit' => ( isa => 'HashRef', is => 'rw', default => sub 
 
 has 'base_distance_limit' => ( isa => 'Int', is => 'rw', default => 8 );
 
-sub process_tnode {
+sub distance_limit_for {
+    my ($self, $auxCP_anode, $coap_tnode) = @_;
+    return $self->override_distance_limit->{ $auxCP_anode->lemma } // $self->base_distance_limit;
+}
 
+sub process_tnode {
     my ( $self, $tnode ) = @_;
 
     # Only work on coordination nodes
@@ -27,7 +31,7 @@ sub process_tnode {
     my $first_auxCP_node = shift @auxCP_nodes;
     my $afun             = $first_auxCP_node->afun;
     my $prev_ord         = $first_auxCP_node->ord;
-    my $limit            = $self->override_distance_limit->{ $first_auxCP_node->lemma } // $self->base_distance_limit;
+    my $limit            = $self->distance_limit_for($first_auxCP_node, $tnode);
 
     foreach my $anode (@auxCP_nodes) {
         my $ord = $anode->ord;
