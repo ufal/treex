@@ -14,12 +14,12 @@ sub process_anode {
     # == Fix dependency structutre
     if ($anode->form eq '¿'){
         my $right_mark = $anode->get_siblings({last_only=>1});
-        if ($right_mark->form ne '?'){
+        if (!$right_mark || $right_mark->form ne '?'){
             $right_mark = first {$_->form eq '?' && $_->follows($anode)} $anode->get_root->get_descendants({ordered=>1}) or return;
             if ($anode->follows($anode->get_parent)){
-                $anode->set_parent($right_mark->get_parent());
+                $anode->set_parent($right_mark->get_parent()) if !$right_mark->is_descendant_of($anode);;
             } else {
-                $right_mark->set_parent($anode->get_parent());
+                $right_mark->set_parent($anode->get_parent()) if !$anode->is_descendant_of($right_mark);
             }
         }
         # TODO if ($anode->follows($anode->get_parent) or $anode->get_siblings({preceding_only=>1})){ }
