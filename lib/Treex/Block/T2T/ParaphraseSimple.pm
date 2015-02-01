@@ -37,7 +37,6 @@ sub _build_mt_language {
 sub process_start {
     my ($self) = @_;
 
-    # Only one paraphrase for each lemma is supported now.
     # TODO: support multiword paraphrase and formeme paraphrases
     # TODO: support paraphrases applicable only in a given (tree) context
     open my $F, '<:utf8', $self->paraphrases_file;
@@ -76,8 +75,8 @@ sub process_bundle {
         my $ref_ttree = $ref_zone->get_ttree();
         my @ref_tnodes = $ref_ttree->get_descendants();
         for my $ref_tnode (@ref_tnodes) {
-            if ( defined $seen_in_mt{$ref_tnode->t_lemma} ) {
-                delete $seen_in_mt{$ref_tnode->t_lemma};
+            if ( defined $seen_only_in_mt{$ref_tnode->t_lemma} ) {
+                delete $seen_only_in_mt{$ref_tnode->t_lemma};
             }
         }
     }
@@ -103,6 +102,7 @@ sub process_tnode {
                 }
                 $tnode->wild->{orig_lemma} = $orig_lemma;
                 log_info "Paraphrasing $orig_lemma -> $mt_lemma";
+                last;
             }
         }
     }
@@ -122,13 +122,25 @@ Treex::Block::T2T::ParaphraseSimple - change lemmas in references to resemble MT
 
 =head1 USAGE
 
- T2T::ParaphraseSimple paraphrases_file='my/file.txt' mt_selector=tectomt selector=reference language=cs
+ T2T::ParaphraseSimple paraphrases_file='my/file.tsv' mt_selector=tectomt selector=reference language=cs
 
 =head1 DESCRIPTION
 
 Input: t-trees of reference translation and machine translation
-Input: file with single-lemma paraphrases (synonyms)
+Input: file with single-lemma paraphrases (synonyms),
+in the format:
+t_lemma1[tab]t_lemma2
+(we assume symmetry, i.e. each entry allows paraphrasing each of the two lemmas
+with the other one).
 Output: modified reference translation t-tree
+
+For each t_lemma that appears in reference but does not appear in MT,
+we try to find a t_lemma that appears in the MT but not in reference
+and that is an allowed paraphrase of the original t_lemma
+as specified by the paraphrase file.
+If we find such a t_lemma, we set it as the new t_lemma;
+if the lexnode is a noun, we also undefine the gender grammateme
+(to be filled later by AddNounGender block).
 
 =head1 AUTHOR
 
