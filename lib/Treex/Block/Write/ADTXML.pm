@@ -13,33 +13,6 @@ has '_index_ids' => ( isa => 'HashRef', is => 'rw' );
 
 has 'sent_ids' => ( isa => 'Bool', is => 'ro', default => 0 );
 
-# Simple conversion of Afuns to ADT relations (see _get_rel() for more)
-my %AFUN2REL = (
-    'Pred'  => '--',
-    'Sb'    => 'su',
-    'Obj'   => 'obj1',     # obj1, obj2, pc, ld
-    'Adv'   => 'mod',      # mod
-    'Atv'   => 'predm',    # predm
-    'Atr'   => 'mod',      # mod
-    'Pnom'  => 'predc',    # predc
-    'AuxV'  => 'vc',       # (will actually work well for us when Aux is on top :-)), use vc
-    'Coord' => '',         # use child's labels; give them crd
-    'Apos'  => '',         # - " - ?? quite weird
-    'AuxT'  => 'se',
-    'AuxR'  => 'se',       # (not used)
-    'AuxP'  => 'mod',      # pc/hd
-    'AuxC'  => 'mod',
-    'AuxO'  => '',         # (not used)
-    'AuxA'  => 'det',
-    'AuxZ'  => 'mod',
-    'AuxX'  => '',         # (leave out)
-    'AuxG'  => '',         # (leave out)
-    'AuxY'  => 'mod',
-    'AuxS'  => '',         # (leave out)
-    'AuxK'  => '',         # (leave out)
-    'ExD'   => 'mod',
-);
-
 sub process_atree {
     my ( $self, $aroot ) = @_;
     print { $self->_file_handle } $self->_process_tree($aroot);
@@ -83,7 +56,7 @@ sub _process_subtree {
     if ( @prekids or @postkids ) {
 
         # open the nonterminal, add phrase coindexing for relative clauses
-        $out .= '<node id="' . $self->_get_id . '" rel="' . $self->_get_rel($anode) . '"';
+        $out .= '<node id="' . $self->_get_id . '" rel="' . $anode->wild->{adt_phrase_rel} . '"';
         if ( $anode->wild->{coindex_phrase} ) {
             $out .= ' index="' . $self->_get_index_id( $anode->wild->{coindex_phrase} ) . '"';
         }
@@ -96,13 +69,8 @@ sub _process_subtree {
 
         # create the terminal for the head node (except for root and formal relative clause heads)
         if ( !$anode->is_root and !$anode->wild->{is_formal_head} ) {
-
-            # the terminal usually has rel="hd", with a few exceptions, dealing with them here
-            my $rel = $anode->wild->{adt_rel} // 'hd';
-            $rel = 'crd' if ( $anode->is_coap_root );
-            $rel = 'cmp' if ( ( $anode->afun // '' ) eq 'AuxC' );                                  # TODO check for clause root ??
-            $rel = 'cmp' if ( $lemma =~ /^(om|te)$/ and ( $anode->afun // '' ) =~ /^Aux[VC]$/ );
-            $out .= ( "\t" x ( $indent + 1 ) ) . $self->_get_node_str( $anode, $rel ) . "\n";
+            $out .= ( "\t" x ( $indent + 1 ) );
+            $out .= $self->_get_node_str( $anode, $anode->wild->{adt_term_rel} ) . "\n";
         }
 
         # recurse into kids (2)
@@ -116,7 +84,7 @@ sub _process_subtree {
 
     # only a terminal node is needed for leaves
     else {
-        $out .= $self->_get_node_str($anode) . "\n";
+        $out .= $self->_get_node_str( $anode, $anode->wild->{adt_phrase_rel} ) . "\n";
     }
 
     return $out;
@@ -125,7 +93,6 @@ sub _process_subtree {
 # Get string of one (terminal) node corresponding to the given a-node
 sub _get_node_str {
     my ( $self, $anode, $rel, $cat ) = @_;
-    $rel = defined($rel) ? $rel : $self->_get_rel($anode);
     $cat = defined($cat) ? $cat : '';
 
     my $id  = $self->_get_id();
@@ -159,107 +126,6 @@ sub _get_index_id {
         $self->_index_ids->{$id} = scalar( keys %{ $self->_index_ids } ) + 1;
     }
     return $self->_index_ids->{$id};
-}
-
-# Convert formemes + afuns into ADT relations
-sub _get_rel {
-    my ( $self, $anode ) = @_;
-    my ($tnode) = $anode->get_referencing_nodes('a/lex.rf');
-    my $afun = $anode->afun // '';
-
-    # technical root + top node
-    return 'top' if ( $anode->is_root );
-    return '--' if ( $anode->get_parent->is_root );
-    
-    # relation label overrides (just for phrases & for both)
-    return $anode->wild->{adt_phrase_rel} if ( $anode->wild->{adt_phrase_rel} );
-    return $anode->wild->{adt_rel} if ( $anode->wild->{adt_rel} );
-
-    my ($aparent) = $anode->get_eparents( { or_topological => 1 } );
-
-    # conjuncts
-    if ( $anode->is_member ) {
-        return 'cnj';
-    }
-
-    # possessives, welk
-    if ( $anode->match_iset( 'prontype' => '~pr[ns]', 'poss' => 'poss' ) ) {
-        return 'det';
-    }
-    if ( $anode->iset->prontype and ( $anode->lemma // '' ) =~ /^welke?$/ ) {
-        return 'det';
-    }
-
-    # objects, attributes -- distinguished based on formeme
-    if ($tnode) {
-        if ( my ($objtype) = $tnode->formeme =~ /n:(obj.*)/ ) {
-
-            if ( $aparent->lemma eq 'zijn' and $aparent->is_verb ) {
-                return 'predc';    # copula "to be" has a special label
-            }
-            return $objtype eq 'obj2' ? 'obj2' : 'obj1';
-        }
-        if ( $tnode->formeme eq 'n:predc' ) {
-            return 'predc';
-        }
-        if ( $tnode->formeme eq 'n:adv' ) {
-            return 'mod';
-        }
-        if ( $tnode->formeme =~ /n:.*+X/ ) {
-            return 'obj1';
-        }
-        if ( $tnode->formeme =~ /^(adj:attr|n:poss)$/ ) {
-            if ( $tnode->formeme eq 'adj:attr' and $anode->is_numeral ) {    # attributive numerals
-                return 'det';
-            }
-            return 'mod';
-        }
-        if ( $tnode->formeme eq 'adj:compl' ) {
-            return $aparent->lemma eq 'zijn' ? 'predc' : 'obj1';
-        }
-        if ( $tnode->formeme eq 'n:attr' and ( $anode->n_node xor $aparent->n_node ) ) {
-            return '{app,mod}';
-        }
-    }
-    elsif ( $afun eq 'Obj' and $aparent->is_verb and $aparent->lemma eq 'zijn' ) {
-        return 'predc';    # copulas with co-indexed ADT nodes that have no t-node
-    }
-
-    # prepositional phrases
-    if ( ( $aparent->afun // '' ) eq 'AuxP' ) {
-        return 'obj1';     # dependent NP has 'obj1'
-    }
-    if ( $afun eq 'AuxP' and $aparent->is_verb ) {
-        return 'pc';       # verbal complements have 'pc', otherwise it will default to 'mod'
-    }
-
-    # verbs
-    if ( $afun eq 'AuxV' or $anode->iset->pos eq 'verb' ) {
-        if ( $aparent->iset->pos eq 'verb' ) {
-            return 'vc';    # lexical/auxiliary verbs depending on auxiliaries
-        }
-        if ( $aparent->is_noun and $anode->iset->verbform eq 'part' ) {
-            return 'mod';    # participles as adjectival noun modifiers
-        }
-        if ( ( $anode->lemma // '' ) eq 'te' and ( $aparent->lemma // '' ) ne 'om' ) {
-            return 'vc';     # te (heading an infinitive)
-        }
-        return 'body';
-    }
-
-    # om in om-te + infinitive
-    if ( $afun eq 'AuxC' and ( $anode->lemma // '' ) eq 'om' ) {
-        my $achild_te = first { ( $_->lemma // '' ) eq 'te' and ( $_->afun // '' ) eq 'AuxV' } $anode->get_children();
-        return 'vc' if ($achild_te);
-    }
-
-    # default: use the conversion table
-    if ( $AFUN2REL{$afun} ) {
-        return $AFUN2REL{$afun};
-    }
-
-    # default if nothing found there
-    return 'mod';
 }
 
 # Get part of speech and morphology information for a node
@@ -325,8 +191,8 @@ Treex::Block::Write::ADTXML
 
 A writer for ADT (Abstract Dependency Trees) XML format used by the Alpino generator.
 
-It requires an a-tree and a t-tree, based on them it converts the dependency relations, POS,
-and morphology (roughly) into the format required by Alpino.
+The a-tree must be converted beforehand to an Alpino-ADT-like format so that the output
+is actually readable by Alpino (see C<A2T::NL::Alpino::*>).
 
 This is a work-in-progress, many issues are yet to be resolved.
 
@@ -346,5 +212,5 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2014-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

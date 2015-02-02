@@ -34,7 +34,7 @@ sub process_nnode {
             clause_number => $atop->clause_number,
         }
     );
-    $amwu_root->wild->{adt_rel} = $atop->wild->{adt_rel};
+    $amwu_root->wild->{adt_phrase_rel} = $atop->wild->{adt_phrase_rel};
     $amwu_root->shift_after_node($atop);
     $amwu_root->wild->{is_formal_head} = 1;
 
@@ -46,12 +46,13 @@ sub process_nnode {
         $tnode->add_aux_anodes($atop);
     }
 
-    # rehang all a-nodes under the formal head node and set their ADT relation to "mwp"
+    # rehang all a-nodes under the formal head node and set their ADT (terminal and non-terminal) relation to "mwp"
     my $non_mwu_children = 0;
 
     foreach my $anode (@anodes) {
         $anode->set_parent($amwu_root);
-        $anode->wild->{adt_rel} = 'mwp';
+        $anode->wild->{adt_phrase_rel} = 'mwp';
+        $anode->wild->{adt_term_rel}   = 'mwp';
 
         # check for any children that are not part of the current MWU, rehang them under
         # the formal head node (and remember that we have found some)
@@ -84,7 +85,8 @@ Treex::Block::T2A::NL::FixNamedEntitiesAlpinoStyle
 
 =head1 DESCRIPTION
 
-Flattening multi-word named entities and pre-setting their Alpino relation (C<wild->{adt_rel}>)
+Flattening multi-word named entities and pre-setting their Alpino relation 
+(both C<wild-&gt;{adt_phrase_rel}> and C<wild-&gt;{adt_term_rel}>).
 to "mwp".
 
 =head1 AUTHORS

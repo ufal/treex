@@ -19,7 +19,7 @@ sub process_tnode {
     $anode->set_parent( $aparent->get_parent() );
     $aparent->set_parent($anode);
     $aparent->wild->{adt_phrase_rel} = 'nucl';
-    $anode->wild->{adt_rel}   = 'dlink';
+    $anode->wild->{adt_term_rel}   = 'dlink';
 
     return;
 }
@@ -40,7 +40,7 @@ This rehangs the PREC/AuxY conjuctions (en, maar, of) that begin a sentence,
 linking to previous text.
 
 After the rehanging, these conjunctions will function as sentence roots
-and will contain prepared "adt_rel" labels for "nucl" and "dlink". 
+and will contain prepared "adt_phrase_rel" and "adt_term_rel" labels for "nucl" and "dlink". 
 
 =head1 AUTHORS
 

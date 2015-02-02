@@ -20,8 +20,8 @@ sub process_tnode {
     my $ainf_clause = first { $_->lemma eq 'om' } $tinf_clause->get_anodes( { ordered => 1 } );
     return if ( !$ainf_clause );
 
-    $ainf_clause->wild->{adt_rel} = 'su';
-    $aformal_subj->wild->{adt_rel} = 'sup';
+    $ainf_clause->wild->{adt_phrase_rel} = 'su';
+    $aformal_subj->wild->{adt_phrase_rel} = 'sup';
 
     return;
 }
@@ -49,7 +49,7 @@ Treex::Block::T2A::NL::FixFormalSubjectsAlpinoStyle
 Fix formal subjects of infinitive clauses, e.g., "Het[sup] is goed om[su] te gaan."
 
 Will mark the formal subject and the "real" subject -- the head of the infinitive
-clause -- with the ADT relations they should receive (in the "adt_rel" wild attribute). 
+clause -- with the ADT relations they should receive (in the "adt_phrase_rel" wild attribute). 
 
 =head1 AUTHORS
 
