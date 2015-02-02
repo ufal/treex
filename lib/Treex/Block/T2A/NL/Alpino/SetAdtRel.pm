@@ -45,7 +45,7 @@ sub process_atree {
     return;
 }
 
-# the terminal usually has rel="hd", with a few exceptions, dealing with them here
+# The terminal usually has rel="hd", with a few exceptions, dealing with them here
 sub _get_term_rel {
     my ( $self, $anode ) = @_;
     my $rel = 'hd';
@@ -57,8 +57,7 @@ sub _get_term_rel {
 
 # Convert formemes + afuns into ADT relations
 sub _get_phrase_rel {
-    my ( $self, $anode ) = @_;
-    my ($tnode) = $anode->get_referencing_nodes('a/lex.rf');
+    my ( $self, $anode ) = @_;    
     my $afun = $anode->afun // '';
 
     # technical root + top node
@@ -68,9 +67,7 @@ sub _get_phrase_rel {
     my ($aparent) = $anode->get_eparents( { or_topological => 1 } );
 
     # conjuncts
-    if ( $anode->is_member ) {
-        return 'cnj';
-    }
+    return 'cnj' if ( $anode->is_member );
 
     # possessives, welk
     if ( $anode->match_iset( 'prontype' => '~pr[ns]', 'poss' => 'poss' ) ) {
@@ -80,39 +77,36 @@ sub _get_phrase_rel {
         return 'det';
     }
 
-    # objects, attributes -- distinguished based on formeme
-    if ($tnode) {
-        if ( my ($objtype) = $tnode->formeme =~ /n:(obj.*)/ ) {
+    # objects, attributes, verbal subjects -- distinguished based on formeme
+    my ($formeme) = $self->_get_formeme($anode);
+    if ( my ($objtype) = $formeme =~ /n:(obj.*)/ ) {
 
-            if ( $aparent->lemma eq 'zijn' and $aparent->is_verb ) {
-                return 'predc';    # copula "to be" has a special label
-            }
-            return $objtype eq 'obj2' ? 'obj2' : 'obj1';
+        if ( $aparent->lemma eq 'zijn' and $aparent->is_verb ) {
+            return 'predc';    # copula "to be" has a special label
         }
-        if ( $tnode->formeme eq 'n:predc' ) {
-            return 'predc';
-        }
-        if ( $tnode->formeme eq 'n:adv' ) {
-            return 'mod';
-        }
-        if ( $tnode->formeme =~ /n:.*+X/ ) {
-            return 'obj1';
-        }
-        if ( $tnode->formeme =~ /^(adj:attr|n:poss)$/ ) {
-            if ( $tnode->formeme eq 'adj:attr' and $anode->is_numeral ) {    # attributive numerals
-                return 'det';
-            }
-            return 'mod';
-        }
-        if ( $tnode->formeme eq 'adj:compl' ) {
-            return $aparent->lemma eq 'zijn' ? 'predc' : 'obj1';
-        }
-        if ( $tnode->formeme eq 'n:attr' and ( $anode->n_node xor $aparent->n_node ) ) {
-            return '{app,mod}';
-        }
+        return $objtype eq 'obj2' ? 'obj2' : 'obj1';
     }
-    elsif ( $afun eq 'Obj' and $aparent->is_verb and $aparent->lemma eq 'zijn' ) {
-        return 'predc';    # copulas with co-indexed ADT nodes that have no t-node
+    return 'predc' if ( $formeme =~ /^[nv]:predc/ );
+    return 'su' if ( $formeme =~ /^v:subj:/ );
+    return 'vc' if ( $formeme =~ /^v:obj:/ );
+    return 'mod' if ( $formeme eq 'n:adv' ); 
+    
+    if ( $formeme =~ /^(adj:attr|n:poss)$/ ) {
+        if ( $formeme eq 'adj:attr' and $anode->is_numeral ) {    # attributive numerals
+            return 'det';
+        }
+        return 'mod';
+    }
+    if ( $formeme eq 'adj:compl' ) {
+        return $aparent->lemma eq 'zijn' ? 'predc' : 'obj1';
+    }
+    if ( $formeme eq 'n:attr' and ( $anode->n_node xor $aparent->n_node ) ) {
+        return '{app,mod}';
+    }
+    
+    # copulas with co-indexed ADT nodes that have no t-node
+    if ( $afun eq 'Obj' and $aparent->is_verb and $aparent->lemma eq 'zijn' ) {
+        return 'predc';
     }
 
     # prepositional phrases
@@ -152,6 +146,17 @@ sub _get_phrase_rel {
     return 'mod';
 }
 
+# "If the a-node is the topmost a-node belonging to its t-node, return the t-nodes formeme, return '' otherwise"
+# I.e. return the formeme for a lex. anode or the topmost conjunction/preposition heading a lex. anode
+sub _get_formeme {
+    my ( $self, $anode ) = @_;
+    my ($tnode) = ( $anode->get_referencing_nodes('a/lex.rf'), $anode->get_referencing_nodes('a/aux.rf') );
+    return '' if (!$tnode);
+    my ($top_anode) = sort { $a->get_depth() <=> $b->get_depth() } $tnode->get_anodes();
+    return ( $tnode->formeme // '' ) if ($top_anode == $anode);
+    return '';
+}
+
 1;
 
 __END__
@@ -164,6 +169,8 @@ Treex::Block::T2A::NL::Alpino::SetAdtRel
 
 =head1 DESCRIPTION
 
+Setting the ADT non-terminal and terminal relations based on context, afuns, parts-of-speech, 
+and formemes.
 
 =head1 AUTHORS
 

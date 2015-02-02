@@ -10,7 +10,7 @@ sub process_tnode {
     my ( $self, $tnode ) = @_;
 
     # we look for a infinitive verb that hangs under another, finite verb
-    return if ( $tnode->formeme !~ /^v:(te\+)?inf$/ );
+    return if ( $tnode->formeme !~ /^v(:obj)?:(te\+)?inf$/ );
     my ($tparent) = $tnode->get_eparents( { or_topological => 1 } );
     return if ( !$tparent or $tparent->formeme !~ /^v:.*fin$/ );
 

@@ -21,8 +21,7 @@ override 'detect_syntpos' => sub {
     return 'adj' if ( $a_node->is_numeral and $a_node->match_iset( 'synpos' => 'attr' ) );
 
     # nouns, adjectives in predicative and substantival positions
-    return 'n' if ( $a_node->is_noun );
-    return 'n' if ( $a_node->match_iset( 'pos' => 'verb', 'synpos' => 'subst' ) );
+    return 'n' if ( $a_node->is_noun );    
     return 'n' if ( $a_node->match_iset( 'pos' => 'adj', 'synpos' => 'subst' ) );
 
     # verbs (including attributive)
@@ -105,34 +104,41 @@ override 'formeme_for_verb' => sub {
     my $first_verbform = ( first { $_->is_verb && !$self->is_prep_or_conj($_) } $t_node->get_anodes( { ordered => 1 } ) ) || $a_node;
 
     my $subconj = $self->get_subconj_string( $first_verbform, @aux_a_nodes );
+    my $afun = '';
+    
+    if ( $self->below_verb($t_node) ){
+        $afun = ':subj' if ( $first_verbform->afun eq 'Sb' );
+        $afun = ':predc' if ( $first_verbform->afun eq 'Pnom' );
+        $afun = ':obj' if ( $first_verbform->afun eq 'Obj' );
+    }    
 
     if ( $first_verbform->match_iset( 'verbform' => 'inf' ) ) {
-        return "v:$subconj+inf" if ($subconj);
-        return 'v:inf';
+        return "v$afun:$subconj+inf" if ($subconj);
+        return "v$afun:inf";
     }
 
     if ( $first_verbform->match_iset( 'verbform' => 'part', 'tense' => 'pres' ) ) {
-        return "v:$subconj+ger" if $subconj;
+        return "v$afun:$subconj+ger" if $subconj;
         return 'v:attr' if $self->below_noun($t_node);
-        return 'n:predc' if $first_verbform->afun eq 'Pnom';
-        return 'v:ger';
+        return 'n:predc' if $afun eq ':predc';
+        return "v$afun:ger";
     }
 
     if ( $t_node->is_clause_head ) {
-        return "v:$subconj+fin" if $subconj;
+        return "v$afun:$subconj+fin" if $subconj;
         return 'v:rc' if $t_node->is_relclause_head;
-        return 'v:fin';
+        return "v$afun:fin";
     }
 
     if ( $first_verbform->match_iset( 'verbform' => 'part', 'tense' => 'past' ) ) {
-        return "v:$subconj+fin" if $subconj;
-        return 'n:predc' if $first_verbform->afun eq 'Pnom';
-        return 'v:attr';
+        return "v$afun:$subconj+fin" if $subconj;
+        return 'n:predc' if $afun eq ':predc';
+        return "v$afun:attr";
     }
 
     # default to finite forms
-    return "v:$subconj+fin" if $subconj;
-    return 'v:fin';
+    return "v$afun:$subconj+fin" if $subconj;
+    return "v$afun:fin";
 };
 
 override 'is_prep_or_conj' => sub {

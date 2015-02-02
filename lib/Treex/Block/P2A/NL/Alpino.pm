@@ -253,6 +253,8 @@ sub process_zone {
     $self->rehang_aux_verbs($a_root);
     $self->fix_mwu($a_root);
     $self->rehang_prec($a_root);
+
+    $self->mark_clausal_afuns($a_root);
 }
 
 sub set_coord_members {
@@ -412,9 +414,9 @@ sub fix_mwu {
 
         # try to detect the relation of the whole MWU to its parent, assign it to the new topmost member
         my $mwu_rel = $mwu_top->get_terminal_pnode->get_parent->wild->{rel};
-        $last_member->set_afun('Sb') if ( $mwu_rel eq 'su' );
+        $last_member->set_afun('Sb')   if ( $mwu_rel eq 'su' );
         $last_member->set_afun('Pnom') if ( $mwu_rel eq 'predc' );
-        $last_member->set_afun('Obj') if ( $mwu_rel =~ /^obj[12]$/ );
+        $last_member->set_afun('Obj')  if ( $mwu_rel =~ /^obj[12]$/ );
     }
 }
 
@@ -430,6 +432,7 @@ sub _get_mwu_part_type {
     return 'other';
 }
 
+# Rehang "en, of, maar" heading the whole sentence under the main verb (will be PREC on t-layer)
 sub rehang_prec {
     my ( $self, $aroot ) = @_;
 
@@ -438,6 +441,19 @@ sub rehang_prec {
         $child->set_parent( $prec->get_parent() );
         $prec->set_parent($child);
         $prec->set_afun('AuxY');
+    }
+}
+
+# Mark afuns in clauses with subordinate conjunctions (according to the relation of the clause's nonterminal)
+sub mark_clausal_afuns {
+    my ( $self, $aroot ) = @_;
+
+    foreach my $verb ( grep { $_->is_verb and ( $_->afun // '' ) eq 'NR' and ( $_->get_parent()->afun // '' ) eq 'AuxC' } $aroot->get_descendants() ) {
+        my $conj = $verb->get_parent();
+        my $rel  = $conj->get_terminal_pnode->get_parent->wild->{rel};
+        $verb->set_afun('Sb')   if ( $rel eq 'su' );
+        $verb->set_afun('Obj')  if ( $rel eq 'vc' );
+        $verb->set_afun('Pnom') if ( $rel eq 'predc' );
     }
 }
 
