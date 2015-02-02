@@ -1,4 +1,4 @@
-package Treex::Block::T2A::NL::FixFormalSubjectsAlpinoStyle;
+package Treex::Block::T2A::NL::Alpino::FixFormalSubjects;
 
 use Moose;
 use Treex::Core::Common;
@@ -42,7 +42,7 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::T2A::NL::FixFormalSubjectsAlpinoStyle
+Treex::Block::T2A::NL::Alpino::FixFormalSubjects
 
 =head1 DESCRIPTION
 

@@ -1,4 +1,4 @@
-package Treex::Block::T2A::NL::CoindexNodes;
+package Treex::Block::T2A::NL::Alpino::CoindexNodes;
 
 use Moose::Role;
 
@@ -40,7 +40,7 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::T2A::NL::CoindexNodes
+Treex::Block::T2A::NL::Alpino::CoindexNodes
 
 =head1 DESCRIPTION
 

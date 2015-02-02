@@ -1,10 +1,10 @@
-package Treex::Block::T2A::NL::FixAuxVerbsAlpinoStyle;
+package Treex::Block::T2A::NL::Alpino::FixAuxVerbs;
 
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-with 'Treex::Block::T2A::NL::CoindexNodes';
+with 'Treex::Block::T2A::NL::Alpino::CoindexNodes';
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
@@ -85,7 +85,7 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::T2A::NL::FixAuxVerbsAlpinoStyle
+Treex::Block::T2A::NL::Alpino::FixAuxVerbs
 
 =head1 DESCRIPTION
 

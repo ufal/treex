@@ -1,4 +1,4 @@
-package Treex::Block::T2A::NL::FixPrecAlpinoStyle;
+package Treex::Block::T2A::NL::Alpino::FixPrec;
 
 use Moose;
 use Treex::Core::Common;
@@ -32,7 +32,7 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::T2A::NL::FixPrecAlpinoStyle
+Treex::Block::T2A::NL::Alpino::FixPrec
 
 =head1 DESCRIPTION
 

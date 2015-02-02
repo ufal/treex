@@ -1,10 +1,10 @@
-package Treex::Block::T2A::NL::FixCoindexSubjectsAlpinoStyle;
+package Treex::Block::T2A::NL::Alpino::AddCoindexSubjects;
 
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-with 'Treex::Block::T2A::NL::CoindexNodes';
+with 'Treex::Block::T2A::NL::Alpino::CoindexNodes';
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
@@ -44,7 +44,7 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::T2A::NL::FixCoindexSubjectsAlpinoStyle
+Treex::Block::T2A::NL::Alpino::AddCoindexSubjects
 
 =head1 DESCRIPTION
 

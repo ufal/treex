@@ -1,4 +1,4 @@
-package Treex::Block::T2A::NL::FixInfinitiveParticlesAlpinoStyle;
+package Treex::Block::T2A::NL::Alpino::FixInfinitiveParticles;
 
 use Moose;
 use Treex::Core::Common;
@@ -40,7 +40,7 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::T2A::NL::FixInfinitiveParticlesAlpinoStyle
+Treex::Block::T2A::NL::Alpino::FixInfinitiveParticles
 
 =head1 DESCRIPTION
 

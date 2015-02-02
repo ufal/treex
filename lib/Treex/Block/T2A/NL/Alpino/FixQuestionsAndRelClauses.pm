@@ -1,10 +1,10 @@
-package Treex::Block::T2A::NL::FixQuestionsAlpinoStyle;
+package Treex::Block::T2A::NL::Alpino::FixQuestionsAndRelClauses;
 
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-with 'Treex::Block::T2A::NL::CoindexNodes';
+with 'Treex::Block::T2A::NL::Alpino::CoindexNodes';
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
@@ -55,7 +55,7 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::T2A::NL::FixQuestionsAlpinoStyle
+Treex::Block::T2A::NL::Alpino::FixQuestionsAndRelClauses
 
 =head1 DESCRIPTION
 

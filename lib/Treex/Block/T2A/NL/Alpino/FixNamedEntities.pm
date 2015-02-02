@@ -1,4 +1,4 @@
-package Treex::Block::T2A::NL::FixNamedEntitiesAlpinoStyle;
+package Treex::Block::T2A::NL::Alpino::FixNamedEntities;
 
 use Moose;
 use Treex::Core::Common;
@@ -81,7 +81,7 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::T2A::NL::FixNamedEntitiesAlpinoStyle
+Treex::Block::T2A::NL::Alpino::FixNamedEntities
 
 =head1 DESCRIPTION
 
