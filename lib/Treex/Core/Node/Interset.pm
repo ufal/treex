@@ -114,7 +114,7 @@ sub is_preposition {my $self = shift; return $self->iset->pos =~ /^(prep|adp)$/;
 # Now: {case=>'gen', pos=>'noun', gender=>''} which is equivalent to
 #      {case=>'gen', pos=>'noun'}
 #------------------------------------------------------------------------------
-sub set_iset{
+method set_iset => sub {
     my $self = shift;
     my @assignments;
     if ( ref( $_[0] ) =~ /(HASH|Lingua::Interset::FeatureStructure)/ ) {
@@ -125,8 +125,8 @@ sub set_iset{
         log_fatal "Odd parameters for 'set_iset'" if @_%2;
         @assignments = @_;;
     }
-    return $self->iset->add(@assignments);
-}
+    return $self->$interset_attribute->add(@assignments);
+};
 
 #------------------------------------------------------------------------------
 # Gets the value of an Interset feature. Makes sure that the result is never
@@ -137,9 +137,9 @@ sub set_iset{
 # returns just a string with vertical bars as delimiters. The caller can use
 # a split() function to get an array, or call get_iset_structure() instead.
 #------------------------------------------------------------------------------
-sub get_iset{
+method get_iset => sub {
     my ($self, $feature) = @_;
-    my $value = $self->get_attr("iset/$feature");
+    my $value = $self->get_attr("$interset_attribute/$feature");
     # convert arrayref to string, e.g. "fem|neut"
     if ( ref($value) eq 'ARRAY' ) {
         $value = join '|', @$value;
@@ -158,7 +158,7 @@ sub get_iset{
 
     # Return empty string instead of undef.
     return '';
-}
+};
 
 #------------------------------------------------------------------------------
 # Gets the values of all Interset features and returns a hash. Any multivalues
@@ -280,30 +280,30 @@ sub sort_iset_values {log_fatal 'use Lingua::Interset::FeatureStructure::known_f
 # to enable storing in a PML file.
 # Based on get_iset_pairs_list,
 # but stores the values into 'iset/feature' attributes instead of returning them.
-sub serialize_iset {
+method serialize_iset => sub {
     my ($self) = @_;
     foreach my $feature ( Lingua::Interset::FeatureStructure::known_features() ) {
         my $value = $self->get_iset($feature);
         unless ( $value eq '' ) {
-            $self->set_attr("iset/$feature", $value);
+            $self->set_attr("$interset_attribute/$feature", $value);
         }
     }
     return;
-}
+};
 
 # Goal: convert multivalues from strings to arrays:
 # e.g. iset/gender = "fem|neut" becomes iset/gender = ["fem", "neut"]
-sub deserialize_iset {
+method deserialize_iset => sub {
     my ($self) = @_;
 
     if (! $Treex::Core::Config::running_in_tred) {
         # iset
         # ttred does not like arrayrefs so only unserilaize if not in ttred
-        if ($self->iset) {
+        if ($self->$interset_attribute) {
             # this looks a bit weird,
             # but it ensures correct deserialization of multivalues,
             # i.e. turning e.g. "fem|neut" into ["fem", "neut"]
-            $self->set_iset($self->iset);
+            $self->set_iset($self->$interset_attribute);
         }
     }
 
@@ -321,7 +321,7 @@ sub deserialize_iset {
     }
 
     return;
-}
+};
 
 
 }; # end of "role {"
