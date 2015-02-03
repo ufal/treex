@@ -8,7 +8,7 @@ with 'Treex::Block::T2A::NL::Alpino::CoindexNodes';
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
-    return if ( $tnode->formeme ne 'v:rc' );
+    return if ( $tnode->formeme !~ /^v:(rc|indq)/ );
 
     # find the relative pronoun (or wh-) phrase
     my $anode = $tnode->get_lex_anode() or return;
@@ -28,9 +28,9 @@ sub process_tnode {
     $arpron_head->set_parent($arhd_formal);
     $anode->set_parent($arhd_formal);
 
-    # distinguish (indirect) questions and relative clauses: questions are below roots and verbs
+    # distinguish (indirect) questions and relative clauses
     # & pre-assign appropriate ADT relation labels
-    if ( $aparent->is_root || $aparent->is_verb ) {
+    if ( $tnode->formeme eq 'v:indq' ) {
         $arhd_formal->wild->{adt_phrase_rel} = 'vc';
         $arpron_head->wild->{adt_phrase_rel} = 'whd';
         $anode->wild->{adt_phrase_rel} = 'body';

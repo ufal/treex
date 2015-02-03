@@ -73,6 +73,7 @@ sub generate_sentence {
     
     my $xml = $self->_adtxml->_process_tree($atree);    
     return $self->_generate_from_adtxml($xml);
+    Treex::Core::Log::progress();
 }
 
 1;

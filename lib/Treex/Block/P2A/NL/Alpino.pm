@@ -277,7 +277,15 @@ sub rehang_wh_clauses {
         $anode->set_parent($clause);
         $clause->set_is_member( $anode->is_member );
         $anode->set_is_member(undef);
-        $clause->set_afun( $parent->is_root ? 'Pred' : 'Atr' );
+        
+        # distinguishing questions, indirect questions, and relative clauses by afun (Pred/Adv/Atr)
+        # this is needed to set formemes correctly
+        if ( $parent->is_root ){
+            $clause->set_afun( 'Pred' );
+        }
+        else {
+            $clause->set_afun( $anode->conll_deprel eq 'whd' ? 'Adv' : 'Atr' );
+        }
 
         # find the function of the relative pronoun in the clause by finding a coindex node
         # and looking at its Alpino relation (currently only used to find subjects)

@@ -3,6 +3,7 @@ package Treex::Block::A2T::NL::SetGrammatemes;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Lexicon::NL::ErgativeVerbs;
+use Treex::Tool::Lexicon::NL::VerbformOrder qw(normalized_verbforms);
 
 extends 'Treex::Block::A2T::SetGrammatemes';
 
@@ -134,7 +135,7 @@ sub get_verbal_group_signature {
     my ( $self, $tnode, $lex_anode ) = @_;
 
     # get all verb forms and normalize their order
-    my @averbs = sort { _verb_priority($b) <=> _verb_priority($a) } grep { $_->is_verb } $tnode->get_anodes( { ordered => 1 } );
+    my @averbs = Treex::Tool::Lexicon::NL::VerbformOrder::normalized_verbforms($tnode);
 
     my @sig = ();
     foreach my $anode (@averbs) {
@@ -148,14 +149,6 @@ sub get_verbal_group_signature {
     return join( '+', @sig );
 }
 
-# Normalized verbal order for signatures: finites > modal infinitives > infinitives > participles
-sub _verb_priority {
-    my ($anode) = @_;
-    return 4 if ( $anode->match_iset( 'verbform' => 'fin' ) );
-    return 3 if ( $anode->match_iset( 'verbform' => 'inf' ) and $anode->lemma =~ /(kunnen|moeten|willen|mogen)/ );
-    return 2 if ( $anode->match_iset( 'verbform' => 'inf' ) );
-    return 1;
-}
 
 1;
 

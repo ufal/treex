@@ -3,6 +3,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::A2T::SetFormeme';
 
+use Treex::Tool::Lexicon::NL::VerbformOrder qw(normalized_verbforms);
+
 override 'detect_syntpos' => sub {
 
     my ( $self, $t_node ) = @_;
@@ -101,15 +103,18 @@ override 'formeme_for_verb' => sub {
     my ( $self, $t_node, $a_node ) = @_;
 
     my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
-    my $first_verbform = ( first { $_->is_verb && !$self->is_prep_or_conj($_) } $t_node->get_anodes( { ordered => 1 } ) ) || $a_node;
+    my @verbforms = grep { !$self->is_prep_or_conj($_) } Treex::Tool::Lexicon::NL::VerbformOrder::normalized_verbforms($t_node);
+    push @verbforms, $a_node if (!@verbforms);
+    my ($first_verbform) = @verbforms;
+    my ($top_verbform) = sort { $a->get_depth <=> $b->get_depth } @verbforms;
 
     my $subconj = $self->get_subconj_string( $first_verbform, @aux_a_nodes );
     my $afun = '';
     
     if ( $self->below_verb($t_node) ){
-        $afun = ':subj' if ( $first_verbform->afun eq 'Sb' );
-        $afun = ':predc' if ( $first_verbform->afun eq 'Pnom' );
-        $afun = ':obj' if ( $first_verbform->afun eq 'Obj' );
+        $afun = ':subj' if ( $top_verbform->afun eq 'Sb' );
+        $afun = ':predc' if ( $top_verbform->afun eq 'Pnom' );
+        $afun = ':obj' if ( $top_verbform->afun eq 'Obj' );
     }    
 
     if ( $first_verbform->match_iset( 'verbform' => 'inf' ) ) {
@@ -126,7 +131,9 @@ override 'formeme_for_verb' => sub {
 
     if ( $t_node->is_clause_head ) {
         return "v$afun:$subconj+fin" if $subconj;
-        return 'v:rc' if $t_node->is_relclause_head;
+        if ( $t_node->is_relclause_head ){
+            return $top_verbform->afun eq 'Atr' ? 'v:rc' : 'v:indq';
+        }
         return "v$afun:fin";
     }
 
