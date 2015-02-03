@@ -8,7 +8,7 @@ extends 'Treex::Core::Node';
 with 'Treex::Core::Node::Ordered';
 with 'Treex::Core::Node::InClause';
 with 'Treex::Core::Node::EffectiveRelations';
-with 'Treex::Core::Node::Interset';
+with 'Treex::Core::Node::Interset' => { interset_attribute => 'iset' };
 
 # Original w-layer and m-layer attributes
 has [qw(form lemma tag no_space_after)] => ( is => 'rw' );

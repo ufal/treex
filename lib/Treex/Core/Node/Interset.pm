@@ -1,22 +1,30 @@
 package Treex::Core::Node::Interset;
-use Moose::Role;
+use MooseX::Role::Parameterized;
 
-# with Moose >= 2.00, this must be present also in roles
-use MooseX::SemiAffordanceAccessor;
+parameter interset_attribute => (
+  isa      => 'Str',
+  default  => 'iset',
+);
+
 use Treex::Core::Log;
 use List::Util qw(first); # TODO: this wouldn't be needed if there was Treex::Core::Common for roles
 use Lingua::Interset 2.018;
 use Lingua::Interset::FeatureStructure;
 use Data::Dumper;
 
-has iset => (
+# "role" is a semi-keyword imported from MooseX::Role::Parameterized
+role {
+my $role_parameters = shift;
+my $interset_attribute = $role_parameters->interset_attribute;
+  
+has $interset_attribute => (
     # Unfortunatelly, the old interface uses $anode->set_iset('tense', 'past'),
     # so set_iset cannot be used as a setter for the whole structure
     # $anode->set_iset(Lingua::Interset::FeatureStructure->new(tense=>'past'))
     is => 'ro',
     isa => 'Lingua::Interset::FeatureStructure',
     lazy_build => 1,
-    #builder => '_build_iset',
+    #builder => "_build_$interset_attribute",
     handles => [qw(
         matches
         upos
@@ -51,7 +59,6 @@ has iset => (
         is_ordinal
         is_participle
         is_particle
-        is_passive
         is_past
         is_personal_pronoun
         is_possessive
@@ -70,13 +77,15 @@ has iset => (
         is_verb
         is_wh
     )],
-   # Note that we cannot export $anode->iset->is_auxiliary as it would clash with the existing $anode->is_auxiliary.
+   # Note that we cannot export 
+   # $anode->iset->is_auxiliary as it would clash with the existing $anode->is_auxiliary
+   # $tnode->dset->is_passive as it would clash with the existing $tnode->is_passive
 
 );
 
-sub _build_iset {
+method "_build_$interset_attribute" => sub {
     return Lingua::Interset::FeatureStructure->new();
-}
+};
 
 # Interset 1.0 legacy method (works with both Interset 1.0 and 2.0 feature structures)
 sub is_preposition {my $self = shift; return $self->iset->pos =~ /^(prep|adp)$/;}
@@ -313,6 +322,9 @@ sub deserialize_iset {
 
     return;
 }
+
+
+}; # end of "role {"
 
 1;
 

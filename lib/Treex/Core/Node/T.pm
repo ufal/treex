@@ -8,6 +8,7 @@ extends 'Treex::Core::Node';
 with 'Treex::Core::Node::Ordered';
 with 'Treex::Core::Node::InClause';
 with 'Treex::Core::Node::EffectiveRelations';
+with 'Treex::Core::Node::Interset' => { interset_attribute => 'dset' };
 
 # t-layer attributes
 has [
