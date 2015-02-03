@@ -41,6 +41,10 @@ sub process_tnode {
             }
             $last_conj = $particle_node;
             $particle_node->iset->add( pos => 'conj', conjtype => 'sub' );
+            $particle_node->set_parent( $a_node->get_parent );
+            $particle_node->set_is_member( $a_node->is_member );
+            $a_node->set_is_member();
+            $a_node->set_parent( $particle_node );
         }
         $t_node->add_aux_anodes($particle_node);
     }

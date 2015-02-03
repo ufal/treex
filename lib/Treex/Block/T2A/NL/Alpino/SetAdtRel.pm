@@ -57,17 +57,25 @@ sub _get_term_rel {
 
 # Convert formemes + afuns into ADT relations
 sub _get_phrase_rel {
-    my ( $self, $anode ) = @_;    
+    my ( $self, $anode, $ignore_coord ) = @_;    
     my $afun = $anode->afun // '';
 
     # technical root + top node
     return 'top' if ( $anode->is_root );
     return '--'  if ( $anode->get_parent->is_root );
 
-    my ($aparent) = $anode->get_eparents( { or_topological => 1 } );
+    # conjuncts: just return 'cnj' or do as-if without coordination (used for coord heads, see below) 
+    return 'cnj' if ( $anode->is_member and not $ignore_coord );
+    
+    # coordination heads (try one of the conjuncts, ignoring the coord)
+    if ( $anode->is_coap_root ){
+        my ($first_conjunct) = grep { $_->is_member } $anode->get_children();
+        if ($first_conjunct){
+            return $self->_get_phrase_rel($first_conjunct, 1);
+        }
+    }
 
-    # conjuncts
-    return 'cnj' if ( $anode->is_member );
+    my ($aparent) = $anode->get_eparents( { or_topological => 1 } );
 
     # possessives, welk
     if ( $anode->match_iset( 'prontype' => '~pr[ns]', 'poss' => 'poss' ) ) {
@@ -118,7 +126,7 @@ sub _get_phrase_rel {
     }
 
     # verbs
-    if ( $afun eq 'AuxV' or $anode->iset->pos eq 'verb' ) {
+    if ( $afun eq 'AuxV' or $anode->is_verb ) {
         if ( $aparent->iset->pos eq 'verb' ) {
             return 'vc';    # lexical/auxiliary verbs depending on auxiliaries
         }

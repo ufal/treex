@@ -18,18 +18,9 @@ sub process_tnode {
     # swap the verb and the particle "te"
     $aaux_te->set_parent( $amain_verb->get_parent() );
     $amain_verb->set_parent($aaux_te);
+    $aaux_te->set_is_member( $amain_verb->is_member );
+    $amain_verb->set_is_member();
 
-    # put the particle "om" even above "te", if applicable
-    my $aaux_om = first { $_->lemma eq 'om' } $tnode->get_aux_anodes();
-    return if !$aaux_om;
-    
-    $aaux_om->set_parent( $aaux_te->get_parent() );
-    $aaux_te->set_parent($aaux_om);    
-
-    # hang all other particles below "om", if applicable
-    foreach my $aauxc ( grep { $_->afun eq 'AuxC' and $_ != $aaux_om } $tnode->get_aux_anodes() ) {
-        $aauxc->set_parent($aaux_om);
-    }
 }
 
 1;
@@ -53,7 +44,7 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2014-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
