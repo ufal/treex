@@ -8,7 +8,8 @@ with 'Treex::Block::T2A::NL::Alpino::CoindexNodes';
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
-    return if ( $tnode->formeme !~ /^v:(rc|indq)/ );
+    # TODO coordinated questions
+    return if ( $tnode->formeme !~ /^v:(rc|indq)/ and ( $tnode->formeme ne 'v:fin' or ( $tnode->sentmod // '' ) ne 'inter' ) );
 
     # find the relative pronoun (or wh-) phrase
     my $anode = $tnode->get_lex_anode() or return;
@@ -20,6 +21,7 @@ sub process_tnode {
         }
     }
     return if ( !$arpron_head );
+    $arpron_head->shift_before_subtree($anode);
     
     # create a new "rhd" node (formal head of the relative clause), hang the relative pronoun and the rest of the clause under it as two siblings
     my $aparent = $anode->get_parent();
@@ -28,13 +30,11 @@ sub process_tnode {
     $arpron_head->set_parent($arhd_formal);
     $anode->set_parent($arhd_formal);
 
-    # distinguish (indirect) questions and relative clauses
-    # & pre-assign appropriate ADT relation labels
-    if ( $tnode->formeme eq 'v:indq' ) {
-        $arhd_formal->wild->{adt_phrase_rel} = 'vc';
+    # distinguish questions and relative clauses & pre-assign appropriate ADT relation labels
+    if ( $tnode->formeme =~ /^v:(indq|fin)/ ) {
+        $arhd_formal->wild->{adt_phrase_rel} = $arhd_formal->get_parent->is_root ? '--' : 'vc';
         $arpron_head->wild->{adt_phrase_rel} = 'whd';
         $anode->wild->{adt_phrase_rel} = 'body';
-        $anode->wild->{adt_term_rel} = 'body';
     }
     else {
         $arhd_formal->wild->{adt_phrase_rel} = 'mod';
@@ -42,8 +42,12 @@ sub process_tnode {
     }
     $arhd_formal->wild->{is_formal_head} = 1;  # mark the formal head so that it is skipped in ADTXML
 
+	# set Afun (subject would have already been marked, so we can assume that it's an object in other cases)
+    if (!$arpron_head->afun){
+    	$arpron_head->set_afun( $arpron_head->lemma =~ /^(hoe|waneer|hoeveel)$/ ? 'Adv' : 'Obj' );
+    }
     # create a coindexing node in the original place of the relative pronoun phrase
-    my $acoindex = $self->add_coindex_node( $anode, $arpron_head, ( $arpron_head->afun // 'Obj' ) );
+    my $acoindex = $self->add_coindex_node( $anode, $arpron_head, $arpron_head->afun );
     $acoindex->shift_before_subtree($anode);
 }
 

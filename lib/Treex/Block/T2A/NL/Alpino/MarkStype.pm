@@ -31,7 +31,7 @@ sub _get_stype {
 	my ($self, $tvfin, $sentmod) = @_;
 	
 	return 'declarative' if ($sentmod eq 'enunc');
-	return 'imparative' if ($sentmod eq 'imper');
+	return 'imparative' if ($sentmod eq 'imper');  # ("imp*a*rative" is not a typo)
 	
 	if ($sentmod eq 'inter'){
 		return 'whquestion' if any { $_->t_lemma =~ /^(waar|wie|wat|hoe|welke?|wiens|wiens|hoeveel|wanneer|waarom)$/ } $tvfin->get_clause_descendants();
