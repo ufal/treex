@@ -15,7 +15,7 @@ sub process_tnode {
     my $anode = $tnode->get_lex_anode() or return;
     my $arpron_head;
     foreach my $achild ( $anode->get_children() ) {
-        if ( any { ( $_->lemma // '' ) =~ /^(die|dat|wie|wiens|wat|welke?|wanneer|hoe|hetgeen)$/ and ( $_->afun // '') !~ /^Aux/ } $achild->get_descendants( { add_self => 1 } ) ) {
+        if ( any { ( $_->lemma // '' ) =~ /^(die|dat|wie|wiens|wat|welke?|wanneer|hoeveel|hoe|hetgeen)$/ and ( $_->afun // '') !~ /^Aux/ } $achild->get_descendants( { add_self => 1 } ) ) {
             $arpron_head = $achild;
             last;
         }
