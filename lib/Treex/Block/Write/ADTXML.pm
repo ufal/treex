@@ -102,6 +102,9 @@ sub _get_node_str {
     if ( $anode->wild->{coindex} ) {
         $out .= ' index="' . $self->_get_index_id( $anode->wild->{coindex} ) . '"';
     }
+    if ( $anode->wild->{stype} ) {
+        $out .= ' stype="' . $anode->wild->{stype} . '"';
+    }
     if ( ( $anode->lemma // '' ) ne '' ) {
         $out .= ' ' . $self->_get_pos($anode);
         my $lemma = $anode->lemma // '';
