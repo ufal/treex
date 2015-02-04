@@ -8,8 +8,13 @@ extends 'Treex::Block::A2T::SetSentmod';
 override 'is_imperative' => sub {
     my ($self, $anode) = @_;
     
-    # imperative is a finite verb with no left children in the same clause
-    return 1 if $anode->match_iset('pos' => 'verb', 'verbform' => 'fin') and not grep { not $_->is_clause_head } $anode->get_children( { preceding_only => 1 } );    
+    # imperative is a finite verb
+    # that has no left children in the same clause and no subject
+    if ( $anode->match_iset('pos' => 'verb', 'verbform' => 'fin') ){
+        return 0 if (grep { not $_->is_clause_head } $anode->get_children( { preceding_only => 1 } ));
+        return 0 if (grep { $_->afun eq 'Sb' } $anode->get_children());
+        return 1;
+    }
     
     return 0;
 };
