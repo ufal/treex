@@ -13,16 +13,12 @@ sub process_ttree {
     
     # Questions
     my $a_root = $t_root->get_zone()->get_atree();
-    my ($last_token, @toks) = reverse $a_root->get_descendants( { ordered => 1 } );
-    if (@toks && $last_token->afun eq 'AuxG'){
-        $last_token = shift @toks;
-    }
-    if ($last_token && $last_token->form eq '?'){
+    if ($self->is_question($a_root)){
         $sentmod = 'inter';
     }
 
     # The head of the main clause is imperative => the whole sentence is imper.
-    if ($self->is_imperative($a_root->get_children( { first_only => 1 } ))){
+    elsif ($self->is_imperative($a_root)){
         $sentmod = 'imper';
     }
     
@@ -30,9 +26,25 @@ sub process_ttree {
     return;
 }
 
-# Example implementation
+# Example implementation: using "?" at the end of the sentence to detect the question
+sub is_question {
+    my ($self, $a_root) = @_;
+    my ($last_token, @toks) = reverse $a_root->get_descendants( { ordered => 1 } );
+    if (@toks && $last_token->afun eq 'AuxG'){
+        $last_token = shift @toks;
+    }
+    if ($last_token && $last_token->form eq '?'){
+        return 1;
+    }
+    return 0;
+}
+
+# Example implementation: works for Czech and English
 sub is_imperative {
-    my ($self, $a_node) = @_;
+    my ($self, $a_root) = @_;
+
+    # Use only the first child
+    my $a_node = $a_root->get_children( { first_only => 1 } ); 
     
     # For PDT-like tagset
     return 1 if $a_node->tag =~ /^Vi/;
