@@ -117,7 +117,7 @@ sub _process_tree {
         $fillLen=max($fillLen,$tree[$_]->[DEPTH]) for ($minSonOrSelf..$maxSonOrSelf);
         for my $idx ($minSonOrSelf..$maxSonOrSelf) {
             $append = ' ';
-            $append = $H if $tree[$idx]->[PRINT] =~ m/[${H}${RT}${RB}${RV}]$/;
+            $append = '─' if $tree[$idx]->[PRINT] =~ m/[${H}${RT}${RB}${RV}]$/;
             $tree[$idx]->[PRINT] .= "$append"x($fillLen-length($tree[$idx]->[PRINT])); ## justify to $fillLen
         }
   
