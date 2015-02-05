@@ -16,7 +16,7 @@ override 'is_question' => sub {
     # and Y/N questions: no left children, but a subject to the right
     if ( $anode->match_iset( 'pos' => 'verb', 'verbform' => 'fin' ) ) {
 
-        my @left_children = grep { $self->is_clause_head($_) } $anode->get_children( { preceding_only => 1 } );
+        my @left_children = grep { not $self->is_clause_head($_) } $anode->get_children( { preceding_only => 1 } );
 
         # no question can have more than 1 left child (except subordinate clauses)
         return 0 if ( @left_children > 1 );
@@ -28,7 +28,7 @@ override 'is_question' => sub {
         }
 
         # if it has no left children, it must have a subject to be a Y/N question
-        return 1 if ( any { $_->afun eq 'Sb' } $anode->get_children() );
+        return 1 if ( any { $_->afun eq 'Sb' } $anode->get_children() );        
     }
     return 0;
 };
