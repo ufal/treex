@@ -18,6 +18,15 @@ sub _build_mt_language {
     return $self->language;
 }
 
+# TODO: also for PrahpraseSimple
+sub sl {
+    my ($lemma) = @_;
+
+    $lemma =~ s/[-_].+$//;    # ???
+
+    return $lemma;
+}
+
 sub process_bundle {
     my ($self, $bundle, $bundleNo) = @_;
     
@@ -29,7 +38,7 @@ sub process_bundle {
         my $ref_atree = $ref_zone->get_atree();
         my @ref_anodes = $ref_atree->get_descendants();
         for my $ref_anode (@ref_anodes) {
-            $ref_count{$ref_anode->lemma}++;
+            $ref_count{sl($ref_anode->lemma)}++;
         }
     }
     
@@ -41,7 +50,7 @@ sub process_bundle {
         my $mt_atree = $mt_zone->get_atree();
         my @mt_anodes = $mt_atree->get_descendants();
         for my $mt_anode (@mt_anodes) {
-            my $lemma = $mt_anode->lemma;
+            my $lemma = sl($mt_anode->lemma);
             if (defined $ref_count{$lemma} && $ref_count{$lemma} == 1) {
                 # once in reference
                 if (!defined $mt_ord{$lemma}) {
@@ -93,7 +102,7 @@ sub subtree_mt_ord_recursive {
     }
     
     # me
-    my $my_mt_ord = $mt_ord->{$anode->lemma};
+    my $my_mt_ord = $mt_ord->{sl($anode->lemma)};
     if (defined $my_mt_ord && $my_mt_ord != -1) {
         $mt_ord_count += 1;
         $mt_ord_sum += $my_mt_ord;
@@ -109,11 +118,12 @@ sub subtree_mt_ord_recursive {
 sub process_anode {
     my ( $self, $anode ) = @_;
     
-    my @children = $anode->get_children({ordered => 1});
+    my @children = $anode->get_children({ordered => 1, add_self => 1});
     {
         my @children_with_mt_ord = grep {$_->wild->{mt_ord_count} > 0} @children;
         return if @children_with_mt_ord < 2;
     }
+    my $before = join ' ', map { $_->lemma } @children;
     
     # compute average MT ords of child subtrees
     my %id2avgmtord = ();
@@ -128,6 +138,7 @@ sub process_anode {
             
             # add a small bit to prefer keeping the original order in case of ties
             $id2avgmtord{$child->id} = $avgmtord + $child->ord/1000;
+            # log_info $child->lemma . ": " . $id2avgmtord{$child->id};
         }
     }
     
@@ -136,10 +147,25 @@ sub process_anode {
         my @ids_sorted = sort {$id2avgmtord{$a} <=> $id2avgmtord{$b}} (keys %id2avgmtord);
         my $document = $anode->get_document;
         my $prev_node = $document->get_node_by_id(shift @ids_sorted);
-        for my $id (@ids_sorted) {
-            my $this_node = $document->get_node_by_id($id);
-            $this_node->shift_after_subtree($prev_node);
+        for my $this_node (map { $document->get_node_by_id($_) } @ids_sorted) {
+            if ($this_node->id eq $anode->id) {
+                # shifting the parent
+                $this_node->shift_after_subtree($prev_node, {without_children => 1});
+            } elsif ($prev_node->id eq $anode->id) {
+                # shifting after the parent
+                $this_node->shift_after_node($prev_node);
+            } else {
+                # child nodes
+                $this_node->shift_after_subtree($prev_node);
+            }
             $prev_node = $this_node;
+        }
+    }
+
+    {
+        my $after = join ' ', map { $_->lemma } $anode->get_children({ordered => 1, add_self => 1});
+        if ($before ne $after) {
+            log_info "Reordering $before -> $after";
         }
     }
     
