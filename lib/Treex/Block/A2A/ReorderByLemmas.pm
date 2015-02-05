@@ -136,7 +136,7 @@ sub process_anode {
         my @ids_sorted = sort {$id2avgmtord{$a} <=> $id2avgmtord{$b}} (keys %id2avgmtord);
         my $document = $anode->get_document;
         my $prev_node = $document->get_node_by_id(shift @ids_sorted);
-        for $id (@ids_sorted) {
+        for my $id (@ids_sorted) {
             my $this_node = $document->get_node_by_id($id);
             $this_node->shift_after_subtree($prev_node);
             $prev_node = $this_node;
