@@ -12,7 +12,7 @@ sub process_tnode {
     # we look for a infinitive verb that hangs under another, finite verb
     return if ( $tnode->formeme !~ /^v(:obj)?:(te\+)?inf$/ );
     my ($tparent) = $tnode->get_eparents( { or_topological => 1 } );
-    return if ( !$tparent or $tparent->formeme !~ /^v:.*fin$/ );
+    return if ( !$tparent or $tparent->is_root or $tparent->formeme !~ /^v:.*fin$/ );
 
     # there must not already be a subject under the infinitive verb
     my ($tsubj) = grep { $_->formeme eq 'n:subj' } $tnode->get_echildren( { or_topological => 1 } );
@@ -34,7 +34,6 @@ sub process_tnode {
 
     return;
 }
-
 
 1;
 
