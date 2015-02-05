@@ -126,6 +126,7 @@ sub process_anode {
     my $before = join ' ', map { $_->lemma } @children;
     
     # compute average MT ords of child subtrees
+    # TODO for $anode probably do not look at subtree but only at the node itself
     my %id2avgmtord = ();
     {
         my $avgmtord = 0;
