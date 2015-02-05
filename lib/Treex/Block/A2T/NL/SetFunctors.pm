@@ -73,7 +73,6 @@ override '_build_lemma2functor' => sub {
         'zonet'         => 'RHEM',
         'toch'          => 'RHEM',
         'slechts'       => 'RHEM',
-        'even'          => 'RHEM',
         'zelfs'         => 'RHEM',
         'bijna'         => 'EXT',
         'ook'           => 'RHEM',
@@ -145,6 +144,12 @@ override 'try_rules' => sub {
             return 'PAT';
         }
         return 'ACT';
+    }
+    
+    # "even" as particle and comparison operator
+    if ( $tnode->t_lemma eq 'even' ){        
+        return 'RSTR' if ($tnode->get_children());
+        return 'RHEM';
     }
     return;
 };

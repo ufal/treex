@@ -57,21 +57,21 @@ sub _get_term_rel {
 
 # Convert formemes + afuns into ADT relations
 sub _get_phrase_rel {
-    my ( $self, $anode, $ignore_coord ) = @_;    
+    my ( $self, $anode, $ignore_coord ) = @_;
     my $afun = $anode->afun // '';
 
     # technical root + top node
     return 'top' if ( $anode->is_root );
     return '--'  if ( $anode->get_parent->is_root );
 
-    # conjuncts: just return 'cnj' or do as-if without coordination (used for coord heads, see below) 
+    # conjuncts: just return 'cnj' or do as-if without coordination (used for coord heads, see below)
     return 'cnj' if ( $anode->is_member and not $ignore_coord );
-    
+
     # coordination heads (try one of the conjuncts, ignoring the coord)
-    if ( $anode->is_coap_root ){
+    if ( $anode->is_coap_root ) {
         my ($first_conjunct) = grep { $_->is_member } $anode->get_children();
-        if ($first_conjunct){
-            return $self->_get_phrase_rel($first_conjunct, 1);
+        if ($first_conjunct) {
+            return $self->_get_phrase_rel( $first_conjunct, 1 );
         }
     }
 
@@ -95,10 +95,10 @@ sub _get_phrase_rel {
         return $objtype eq 'obj2' ? 'obj2' : 'obj1';
     }
     return 'predc' if ( $formeme =~ /^[nv]:predc/ );
-    return 'su' if ( $formeme =~ /^v:subj:/ );
-    return 'vc' if ( $formeme =~ /^v:obj:/ );
-    return 'mod' if ( $formeme eq 'n:adv' ); 
-    
+    return 'su'    if ( $formeme =~ /^v:subj:/ );
+    return 'vc'    if ( $formeme =~ /^v:obj:/ );
+    return 'mod' if ( $formeme eq 'n:adv' );
+
     if ( $formeme =~ /^(adj:attr|n:poss)$/ ) {
         if ( $formeme eq 'adj:attr' and $anode->is_numeral ) {    # attributive numerals
             return 'det';
@@ -111,18 +111,33 @@ sub _get_phrase_rel {
     if ( $formeme eq 'n:attr' and ( $anode->n_node xor $aparent->n_node ) ) {
         return '{app,mod}';
     }
-    
+
     # copulas with co-indexed ADT nodes that have no t-node
     if ( $afun eq 'Obj' and $aparent->is_verb and $aparent->lemma eq 'zijn' ) {
         return 'predc';
     }
 
+    # comparison particles
+    if ( $afun eq 'AuxP' and ( $anode->lemma // '' ) =~ /^(dan|als)$/ ) {
+        if ( $aparent->is_adjective or $aparent->lemma =~ /^(even|zo)$/ ) {
+            return 'obcomp';
+        }
+    }
+
+    # children of comparison particles
+    if ( ( $aparent->afun // '' ) eq 'AuxP' and ( $aparent->lemma // '' ) =~ /^(dan|als)$/ ) {
+        my ($agrandpa) = $aparent->get_eparents( { or_topological => 1 } );
+        if ( $agrandpa->is_adjective or $agrandpa->lemma =~ /^(even|zo)$/ ) {
+            return 'body';
+        }
+    }
+
     # prepositional phrases
     if ( ( $aparent->afun // '' ) eq 'AuxP' ) {
-        return 'obj1';     # dependent NP has 'obj1'
+        return 'obj1';    # dependent NP has 'obj1'
     }
     if ( $afun eq 'AuxP' and $aparent->is_verb ) {
-        return 'pc';       # verbal complements have 'pc', otherwise it will default to 'mod'
+        return 'pc';      # verbal complements have 'pc', otherwise it will default to 'mod'
     }
 
     # verbs
@@ -159,9 +174,9 @@ sub _get_phrase_rel {
 sub _get_formeme {
     my ( $self, $anode ) = @_;
     my ($tnode) = ( $anode->get_referencing_nodes('a/lex.rf'), $anode->get_referencing_nodes('a/aux.rf') );
-    return '' if (!$tnode);
+    return '' if ( !$tnode );
     my ($top_anode) = sort { $a->get_depth() <=> $b->get_depth() } $tnode->get_anodes();
-    return ( $tnode->formeme // '' ) if ($top_anode == $anode);
+    return ( $tnode->formeme // '' ) if ( $top_anode == $anode );
     return '';
 }
 
