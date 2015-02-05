@@ -11,27 +11,32 @@ extends 'Treex::Block::A2T::SetGrammatemes';
 my %SIG2GRAM = (
 
     # simple (synthetic) forms: present, past, participles, infinitive
+    'LEX-finsub'   => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'cdn' },
     'LEX-finpres'  => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-finpast'  => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-partpres' => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-inf'      => { 'diathesis' => 'act', 'tense' => 'nil', 'deontmod' => 'decl', 'verbmod' => 'nil' },
 
-    # present/past with modals
+    # present/past/infinitives with modals
     'moeten-finpres+LEX-inf'            => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'hrt',  'verbmod' => 'ind' },
     'moeten-finpast+LEX-inf'            => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'hrt',  'verbmod' => 'ind' },
+    'moeten-inf+LEX-inf'                => { 'diathesis' => 'act', 'tense' => 'nil', 'deontmod' => 'hrt',  'verbmod' => 'nil' },
     'hebben-finpres+moeten-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'hrt',  'verbmod' => 'ind' },
     'hebben-finpast+moeten-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'hrt',  'verbmod' => 'ind' },
     'kunnen-finpres+LEX-inf'            => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'poss', 'verbmod' => 'ind' },
     'kunnen-finpast+LEX-inf'            => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'poss', 'verbmod' => 'ind' },
+    'kunnen-inf+LEX-inf'                => { 'diathesis' => 'act', 'tense' => 'nil', 'deontmod' => 'poss', 'verbmod' => 'nil' },
     'hebben-finpres+kunnen-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'poss', 'verbmod' => 'ind' },
     'hebben-finpast+kunnen-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'poss', 'verbmod' => 'ind' },
     'mogen-finpres+LEX-inf'             => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'perm', 'verbmod' => 'ind' },
     'mogen-finpast+LEX-inf'             => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'perm', 'verbmod' => 'ind' },
+    'mogen-inf+LEX-inf'                 => { 'diathesis' => 'act', 'tense' => 'nil', 'deontmod' => 'perm', 'verbmod' => 'nil' },
     'hebben-finpres+mogen-inf+LEX-inf'  => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'perm', 'verbmod' => 'ind' },
     'hebben-finpast+mogen-inf+LEX-inf'  => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'perm', 'verbmod' => 'ind' },
     'willen-finpres+LEX-inf'            => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'vol',  'verbmod' => 'ind' },
     'willen-finpast+LEX-inf'            => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'vol',  'verbmod' => 'ind' },
+    'willen-inf+LEX-inf'                => { 'diathesis' => 'act', 'tense' => 'nil', 'deontmod' => 'vol',  'verbmod' => 'nil' },
     'hebben-finpres+willen-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'vol',  'verbmod' => 'ind' },
     'hebben-finpast+willen-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'vol',  'verbmod' => 'ind' },
 
@@ -127,7 +132,7 @@ override 'set_verbal_grammatemes' => sub {
 
 sub get_form_signature {
     my ( $self, $anode ) = @_;
-    return $anode->get_iset('verbform') . $anode->get_iset('tense');
+    return $anode->iset->verbform . $anode->iset->tense . $anode->iset->mood;
 }
 
 # returns de-lexicalized signature of all verb forms in the verbal group (to be mapped to grammatemes)
@@ -148,7 +153,6 @@ sub get_verbal_group_signature {
     #log_info( join( ' ', map { $_->form } $tnode->get_anodes( { ordered => 1 } ) ) . ' -- ' . join( '+', @sig ) );
     return join( '+', @sig );
 }
-
 
 1;
 
