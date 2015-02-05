@@ -127,7 +127,7 @@ sub _get_phrase_rel {
     # children of comparison particles
     if ( ( $aparent->afun // '' ) eq 'AuxP' and ( $aparent->lemma // '' ) =~ /^(dan|als)$/ ) {
         my ($agrandpa) = $aparent->get_eparents( { or_topological => 1 } );
-        if ( $agrandpa->is_adjective or $agrandpa->lemma =~ /^(even|zo)$/ ) {
+        if ( $agrandpa->is_adjective or ( $agrandpa->lemma // '' ) =~ /^(even|zo)$/ ) {
             return 'body';
         }
     }
@@ -142,7 +142,7 @@ sub _get_phrase_rel {
 
     # verbs
     if ( $afun eq 'AuxV' or $anode->is_verb ) {
-        if ( $aparent->iset->pos eq 'verb' ) {
+        if ( $aparent->is_verb ) {
             return 'vc';    # lexical/auxiliary verbs depending on auxiliaries
         }
         if ( $aparent->is_noun and $anode->iset->verbform eq 'part' ) {
@@ -150,6 +150,9 @@ sub _get_phrase_rel {
         }
         if ( ( $anode->lemma // '' ) eq 'te' and ( $aparent->lemma // '' ) ne 'om' ) {
             return 'vc';     # te (heading an infinitive)
+        }
+        if ( $aparent->is_noun and $anode->iset->verbform eq 'inf' ){
+            return 'app';    # a weird case, barely can be anything else
         }
         return 'body';
     }
