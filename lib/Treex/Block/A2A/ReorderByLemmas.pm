@@ -109,27 +109,39 @@ sub subtree_mt_ord_recursive {
 sub process_anode {
     my ( $self, $anode ) = @_;
     
-    my @children = $tnode->get_children({ordered => 1});
+    my @children = $anode->get_children({ordered => 1});
     {
         my @children_with_mt_ord = grep {$_->wild->{mt_ord_count} > 0} @children;
         return if @children_with_mt_ord < 2;
     }
     
-    my %ord2mtord = ();
-    my $mtord = 0;
-    for my $child (@children) {
-        if ($child->wild->{mt_ord_count} > 0) {
-            $mtord = $child->wild->{mt_ord_count};
+    # compute average MT ords of child subtrees
+    my %id2avgmtord = ();
+    {
+        my $avgmtord = 0;
+        for my $child (@children) {
+            if ($child->wild->{mt_ord_count} > 0) {
+                $avgmtord = $child->wild->{mt_ord_sum} / $child->wild->{mt_ord_count};
+            }
+            # else keep value from previous interation:
+            # keep the current node together with its left sibling
+            
+            # add a small bit to prefer keeping the original order in case of ties
+            $id2avgmtord{$child->id} = $avgmtord + $child->ord/1000;
         }
-        # else keep value from previous interation
-        
-        # add a small bit to prefer keeping the original order
-        $ord2mtord{$child->ord} = $mtord + $child->ord/1000;
     }
     
     # reorder by average mt_ords of the subtrees
-        
-        TODO
+    {
+        my @ids_sorted = sort {$id2avgmtord{$a} <=> $id2avgmtord{$b}} (keys %id2avgmtord);
+        my $document = $anode->get_document;
+        my $prev_node = $document->get_node_by_id(shift @ids_sorted);
+        for $id (@ids_sorted) {
+            my $this_node = $document->get_node_by_id($id);
+            $this_node->shift_after_subtree($prev_node);
+            $prev_node = $this_node;
+        }
+    }
     
     return;
 }
