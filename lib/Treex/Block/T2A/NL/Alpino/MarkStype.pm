@@ -12,11 +12,11 @@ sub process_tnode {
     # looking for the main verb of the sentence
     return if ( !$tnode->get_parent->is_root );
     
-    my @tvfins = grep { $tnode->formeme =~ /^v.*(fin|rc)$/ } ($tnode->is_coap_root ? ($tnode) : $tnode->get_coap_members() );
+    my @tvfins = grep { $_->formeme =~ /^v.*(fin|rc)$/ } ($tnode->is_coap_root ? $tnode->get_coap_members() : ($tnode) );
 
 	foreach my $tvfin (@tvfins){
 	    # get the finite verb
-	    my ($top_anode) = Treex::Tool::Lexicon::NL::VerbformOrder::normalized_verbforms($tnode);
+	    my ($top_anode) = Treex::Tool::Lexicon::NL::VerbformOrder::normalized_verbforms($tvfin);
 	    next if ( !$top_anode or !$top_anode->match_iset( 'verbform' => 'fin' ) );
 	    
 		# mark its sentence type according to the sentmod attribute
