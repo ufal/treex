@@ -377,7 +377,7 @@ sub fix_aan_het {
 
     foreach my $a_aan ( grep { $_->lemma eq 'aan' and $_->conll_deprel eq 'mwp' } $a_root->get_descendants( { ordered => 1 } ) ) {
         my ( $a_het, $a_verb ) = $a_aan->get_children( { ordered => 1 } );
-        next if ( $a_het->lemma ne 'het' or $a_het->conll_deprel ne 'mwp' );
+        next if ( !$a_het or !$a_verb or  $a_het->lemma ne 'het' or $a_het->conll_deprel ne 'mwp' );
         next if ( !$a_verb->is_verb );
 
         my ($a_aux) = $a_aan->get_parent();
