@@ -26,13 +26,13 @@ sub BUILD {
 
     # Compose Alpino command, forcing line-buffering of Alpino's output (otherwise it will hang)
     my @command = ( 'stdbuf', '-oL', $exe_path );
-    if ($self->timeout != 0){
-        push @command, 'user_max=' . ($self->timeout * 1000);
+    if ( $self->timeout != 0 ) {
+        push @command, 'user_max=' . ( $self->timeout * 1000 );
     }
     push @command, ( 'end_hook=xml_dump', '-parse' );
 
     $SIG{PIPE} = 'IGNORE';             # don't die if Alpino gets killed
-    
+
     # Capture both Alpino's STDERR and STDOUT
     my ( $reader, $writer, $pid ) = ProcessUtils::verbose_bipipe_noshell( ":encoding(utf-8)", @command );
 
@@ -66,65 +66,74 @@ sub parse_zones {
     my ( $self, $zones_rf ) = @_;
 
     my $prev_outsent = "";
-    my $prev_insent = "";
-    
+    my $prev_insent  = "";
+
     foreach my $zone (@$zones_rf) {
 
-        # Take the (tokenized) sentence
+        # Take the (tokenized) sentence, escape it
         my @forms = map { $_->form } $zone->get_atree->get_descendants( { ordered => 1 } );
         my $sent = $self->escape( join( " ", @forms ) );
 
-        # Have Alpino parse the sentence
+        # Have Alpino parse the sentence (the parse will be undefined if the sentence is empty)
         #print STDERR "FIRST:\t$sent\n";
         my $xml = $self->get_alpino_parse($sent);
-        my $outsent = $xml;
-        $outsent =~ s|^.*<sentence>(.*)</sentence>.*$|$1|sm;
-        #print STDERR "XML1:\n$outsent\n\n";
-        while (($outsent eq $prev_outsent) && ($sent ne $prev_insent)) {
-            $xml = $self->get_alpino_parse($sent);
-            $outsent = $xml;
-            $outsent =~ s|^.*<sentence>(.*)</sentence>.*$|$1|sm;
-            #print STDERR "XML2:\n$outsent\n\n";
-        }
-        $prev_outsent = $outsent;
-        $prev_insent = $sent;
 
-        # Create a p-tree out of Alpino's output
+        if ($xml) {
+            my $outsent = $xml;
+            $outsent =~ s|^.*<sentence>(.*)</sentence>.*$|$1|sm;
+            #print STDERR "XML1:\n$outsent\n\n";
+            while ( ( $outsent eq $prev_outsent ) && ( $sent ne $prev_insent ) ) {
+                $xml     = $self->get_alpino_parse($sent);
+                $outsent = $xml;
+                $outsent =~ s|^.*<sentence>(.*)</sentence>.*$|$1|sm;
+                #print STDERR "XML2:\n$outsent\n\n";
+            }
+            $prev_outsent = $outsent;
+            $prev_insent  = $sent;
+        }
+
+        # Create a p-tree out of Alpino's output (the tree will stay empty if the sentence is empty)
         if ( $zone->has_ptree ) {
             $zone->remove_tree('p');
         }
         my $proot = $zone->create_ptree;
-        $self->_twig->setTwigRoots(
-            {
-                alpino_ds => sub {
-                    my ( $twig, $xml ) = @_;
-                    $twig->purge;
-                    $proot->set_phrase('top');
-                    foreach my $node ( $xml->first_child('node')->children('node') ) {
-                        Treex::Block::Read::Alpino::create_subtree( $node, $proot );
-                    }
-                    }
-            }
-        );
-        $self->_twig->parse($xml);
 
+        if ($xml) {
+            $self->_twig->setTwigRoots(
+                {
+                    alpino_ds => sub {
+                        my ( $twig, $xml ) = @_;
+                        $twig->purge;
+                        $proot->set_phrase('top');
+                        foreach my $node ( $xml->first_child('node')->children('node') ) {
+                            Treex::Block::Read::Alpino::create_subtree( $node, $proot );
+                        }
+                        }
+                }
+            );
+            $self->_twig->parse($xml);
+        }
+
+        # Unescape the output
         foreach my $pnode ( grep { defined( $_->form ) } $proot->get_descendants() ) {
             $pnode->set_lemma( $self->unescape( $pnode->lemma ) );
             $pnode->set_form( $self->unescape( $pnode->form ) );
         }
-        
+
         Treex::Core::Log::progress();
     }
 
 }
 
 sub get_alpino_parse {
-    
-    my ($self, $sent) = @_;
+
+    my ( $self, $sent ) = @_;
+
+    return if ( !defined($sent) or $sent eq '' );
 
     my $writer = $self->_alpino_writehandle;
     my $reader = $self->_alpino_readhandle;
-    
+
     # TODO
     print $writer $sent . "\n";
     my $line = <$reader>;
@@ -143,7 +152,7 @@ sub get_alpino_parse {
         $line = <$reader>;
         $xml .= $line;
     }
-    
+
     return $xml;
 }
 
