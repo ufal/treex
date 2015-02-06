@@ -4,6 +4,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+use Treex::Tool::Lexicon::NL::Pronouns;
 use Treex::Tool::Lexicon::NL::VerbformOrder;
 
 sub process_tnode {
@@ -34,7 +35,7 @@ sub _get_stype {
 	return 'imparative' if ($sentmod eq 'imper');  # ("imp*a*rative" is not a typo)
 	
 	if ($sentmod eq 'inter'){
-		return 'whquestion' if any { $_->t_lemma =~ /^(waar|wie|wat|hoe|welke?|wiens|wiens|hoeveel|wanneer|waarom)$/ } $tvfin->get_clause_descendants();
+		return 'whquestion' if any { Treex::Tool::Lexicon::NL::Pronouns::is_wh_pronoun( $_->t_lemma ) } $tvfin->get_clause_descendants();
 		return 'ynquestion';		
 	}
 	

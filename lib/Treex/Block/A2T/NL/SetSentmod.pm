@@ -1,6 +1,7 @@
 package Treex::Block::A2T::NL::SetSentmod;
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::Lexicon::NL::Pronouns;
 
 extends 'Treex::Block::A2T::SetSentmod';
 
@@ -23,7 +24,7 @@ override 'is_question' => sub {
 
         # if it has 1 left child, it must contain a wh-word to be a WH-question
         if (@left_children) {
-            return 1 if ( any { $_->lemma =~ /^(wie|wiens|wat|welke?|wanneer|hoeveel|hoe)$/; } $left_children[0]->get_descendants( { add_self => 1 } ) );
+            return 1 if ( any { Treex::Tool::Lexicon::NL::Pronouns::is_wh_pronoun( $_->lemma ) } $left_children[0]->get_descendants( { add_self => 1 } ) );
             return 0;
         }
 

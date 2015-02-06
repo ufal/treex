@@ -2,6 +2,7 @@ package Treex::Block::A2A::NL::EnhanceInterset;
 
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::Lexicon::NL::Pronouns;
 extends 'Treex::Core::Block';
 
 sub process_anode {
@@ -19,6 +20,11 @@ sub process_anode {
     if ( $anode->match_iset('prontype' => 'prs', 'poss' => 'poss') and $anode->lemma eq 'haar' ){
         $anode->set_iset('possgender' => 'fem');
     }
+    
+    # mark relative pronominal adverbs with "waar-" with prontype = 'rel'
+    if ( !$anode->iset->prontype and Treex::Tool::Lexicon::NL::Pronouns::is_relative_pronoun( $anode->lemma ) ){
+        $anode->set_iset('prontype' => 'rel');
+    } 
 
     return;
 }

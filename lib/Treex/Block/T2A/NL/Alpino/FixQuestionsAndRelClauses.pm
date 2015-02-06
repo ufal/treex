@@ -2,6 +2,8 @@ package Treex::Block::T2A::NL::Alpino::FixQuestionsAndRelClauses;
 
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::Lexicon::NL::Pronouns;
+
 extends 'Treex::Core::Block';
 
 with 'Treex::Block::T2A::NL::Alpino::CoindexNodes';
@@ -15,7 +17,7 @@ sub process_tnode {
     my $anode = $tnode->get_lex_anode() or return;
     my $arpron_head;
     foreach my $achild ( $anode->get_children() ) {
-        if ( any { ( $_->lemma // '' ) =~ /^(die|dat|wie|wiens|wat|welke?|wanneer|hoeveel|hoe|hetgeen)$/ and ( $_->afun // '') !~ /^Aux/ } $achild->get_descendants( { add_self => 1 } ) ) {
+        if ( any { Treex::Tool::Lexicon::NL::Pronouns::is_relative_pronoun( $_->lemma // '' ) and ( $_->afun // '') !~ /^Aux/ } $achild->get_descendants( { add_self => 1 } ) ) {
             $arpron_head = $achild;
             last;
         }
