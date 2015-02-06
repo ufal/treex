@@ -59,6 +59,10 @@ my %SIG2GRAM = (
     'zijn-finpres+LEX-partpast'   => { 'diathesis' => 'pas', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'zijn-finpast+LEX-partpast'   => { 'diathesis' => 'pas', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'zijn-inf+LEX-partpast'       => { 'diathesis' => 'pas', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    
+    # aan-het-progressive (Ik ben aan het programmeren)
+    'zijn-finpres+aan-+het-+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'zijn-finpast+aan-+het-+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
 
     # future/conditional with modals
     'zullen-finpres+moeten-inf+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'post', 'deontmod' => 'hrt',  'verbmod' => 'ind' },

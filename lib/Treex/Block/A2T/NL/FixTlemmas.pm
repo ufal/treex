@@ -21,13 +21,13 @@ sub process_tnode {
         $new_tlemma = '#PersPron';
     }
     else {
+
         # separable verbal prefixes
-        if (@particles = grep {
-                my $part_lemma = $_->lemma;
-                $_->afun eq 'AuxV' and ( $_->is_preposition or $_->is_adverb ) and $new_tlemma !~ /$part_lemma/
-            } @aux_a_nodes
-            )
-        {
+        if ( @particles = grep { $_->afun eq 'AuxV' and ( $_->is_preposition or $_->is_adverb ) } @aux_a_nodes ) {
+            # ignore those already included in the lemma
+            @particles = grep { my $part_lemma = $_->lemma; $new_tlemma !~ /$part_lemma/ } @particles;
+            # ignore "aan" from "aan-het"-progressive tense
+            @particles = grep { !$_->wild->{is_aan_het} } @particles; 
             $new_tlemma = ( join '', map { $_->lemma } @particles ) . $new_tlemma;
         }
 

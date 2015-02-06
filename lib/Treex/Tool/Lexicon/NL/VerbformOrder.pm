@@ -4,21 +4,19 @@ use utf8;
 use strict;
 use warnings;
 
-
 # Normalized verbal order for signatures: finites > modal infinitives > infinitives > participles
 sub verbform_priority {
     my ($anode) = @_;
-    return 4 if ( $anode->match_iset( 'verbform' => 'fin' ) );
+    return 5 if ( $anode->match_iset( 'verbform' => 'fin' ) );
+    return 4 if ( $anode->wild->{is_aan_het} );
     return 3 if ( $anode->match_iset( 'verbform' => 'inf' ) and $anode->lemma =~ /(kunnen|moeten|willen|mogen)/ );
     return 2 if ( $anode->match_iset( 'verbform' => 'inf' ) );
     return 1;
 }
 
-
-
 sub normalized_verbforms {
     my ($tnode) = @_;
-    my @anodes = sort { verbform_priority($b) <=> verbform_priority($a) } grep { $_->is_verb } $tnode->get_anodes( { ordered => 1 } );
+    my @anodes = sort { verbform_priority($b) <=> verbform_priority($a) } grep { $_->is_verb || $_->wild->{is_aan_het} } $tnode->get_anodes( { ordered => 1 } );
     return @anodes;
 }
 

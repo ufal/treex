@@ -251,6 +251,7 @@ sub process_zone {
     # post-processing
     $self->rehang_wh_clauses($a_root);    # rehang relative clauses and wh-questions
     $self->rehang_aux_verbs($a_root);
+    $self->fix_aan_het($a_root);
     $self->fix_mwu($a_root);
     $self->rehang_prec($a_root);
 
@@ -277,11 +278,11 @@ sub rehang_wh_clauses {
         $anode->set_parent($clause);
         $clause->set_is_member( $anode->is_member );
         $anode->set_is_member(undef);
-        
+
         # distinguishing questions, indirect questions, and relative clauses by afun (Pred/Adv/Atr)
         # this is needed to set formemes correctly
-        if ( $parent->is_root ){
-            $clause->set_afun( 'Pred' );
+        if ( $parent->is_root ) {
+            $clause->set_afun('Pred');
         }
         else {
             $clause->set_afun( $anode->conll_deprel eq 'whd' ? 'Adv' : 'Atr' );
@@ -370,6 +371,34 @@ sub _is_full_verb_to_aux {
     return 0;
 }
 
+# Rehang the auxilaries in "aan-het"-progressive verbal phrases (Ik ben aan het programmeren = I am programming)
+sub fix_aan_het {
+    my ( $self, $a_root ) = @_;
+
+    foreach my $a_aan ( grep { $_->lemma eq 'aan' and $_->conll_deprel eq 'mwp' } $a_root->get_descendants( { ordered => 1 } ) ) {
+        my ( $a_het, $a_verb ) = $a_aan->get_children( { ordered => 1 } );
+        next if ( $a_het->lemma ne 'het' or $a_het->conll_deprel ne 'mwp' );
+        next if ( !$a_verb->is_verb );
+
+        my ($a_aux) = $a_aan->get_parent();
+        next if ( ( $a_aux->lemma // '' ) ne 'zijn' );
+
+        $a_verb->set_parent( $a_aux->get_parent() );
+        $a_aux->set_parent($a_verb);
+        map { $_->set_parent($a_verb) } $a_aux->get_children();
+        $a_het->set_parent($a_verb);
+
+        $a_verb->set_afun( $a_aux->afun );
+        $a_verb->set_is_member( $a_aux->is_member );
+        $a_aux->set_is_member();
+        $a_aux->set_afun('AuxV');
+        $a_aan->set_afun('AuxV');
+        $a_het->set_afun('AuxV');
+        $a_aan->wild->{is_aan_het} = 1;
+        $a_het->wild->{is_aan_het} = 1;
+    }
+}
+
 # Heuristics for fixing multi-word units: rehanging everything under the last part of the MWU
 sub fix_mwu {
     my ( $self, $a_root ) = @_;
@@ -391,7 +420,7 @@ sub fix_mwu {
         my $sig = join( '_', map { _get_mwu_part_type($_) } @$mwu );
 
         # skip MWUs that should not be rehanged
-        next if ( scalar(@$mwu) == 2 and $sig =~ /(adp|subord)_(adj|noun|adv|verb)/ );
+        next if ( scalar(@$mwu) == 2 and $sig =~ /(adp|subord)_(adj|art|noun|adv|verb)/ );
 
         # set afun := AuxP for MW prepositions (adp + noun + adp, adp + noun + adv with er/daar-)
         if ( $sig =~ /^adp_noun_adp$/ ) {
@@ -424,7 +453,7 @@ sub fix_mwu {
         my $mwu_rel = $mwu_top->get_terminal_pnode->get_parent->wild->{rel};
         $last_member->set_afun('Sb')   if ( $mwu_rel eq 'su' );
         $last_member->set_afun('Pnom') if ( $mwu_rel eq 'predc' );
-        $last_member->set_afun('Obj')  if ( $mwu_rel =~ /^obj[12]$/ );
+        $last_member->set_afun('Obj') if ( $mwu_rel =~ /^obj[12]$/ );
     }
 }
 
