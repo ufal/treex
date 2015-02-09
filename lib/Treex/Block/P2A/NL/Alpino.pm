@@ -5,21 +5,7 @@ use utf8;
 
 use tagset::nl::cgn;
 
-#use Treex::Block::HamleDT::NL::Harmonize;
-
 extends 'Treex::Core::Block';
-
-#has '_harmonizer' => ( isa => 'Treex::Block::HamleDT::NL::Harmonize',
-#'is' => 'ro',
-#lazy_build => 1,
-#builder => '_build_harmonizer',
-#reader => '_harmonizer',
-#);
-
-#sub _build_harmonizer {
-#my ($self) = @_;
-#return Treex::Block::HamleDT::NL::Harmonize->new();
-#}
 
 has '_processed_nodes' => ( isa => 'HashRef', 'is' => 'rw' );
 has '_nodes_to_remove' => ( isa => 'HashRef', 'is' => 'rw' );
@@ -202,6 +188,9 @@ sub fill_attribs {
     $new_node->set_terminal_pnode($source);
     $new_node->set_form( $source->form );
     $new_node->set_lemma( $source->lemma );
+    if ( ( $source->wild->{graad} // '' ) eq 'dim' ) {    # preserve diminutives in lemma
+        $new_node->set_lemma( $source->lemma . '_DIM' );
+    }
     $new_node->set_tag( $source->tag );
     $new_node->set_attr( 'ord', $source->wild->{pord} );
     $new_node->set_conll_deprel( $source->wild->{rel} );
@@ -377,7 +366,7 @@ sub fix_aan_het {
 
     foreach my $a_aan ( grep { $_->lemma eq 'aan' and $_->conll_deprel eq 'mwp' } $a_root->get_descendants( { ordered => 1 } ) ) {
         my ( $a_het, $a_verb ) = $a_aan->get_children( { ordered => 1 } );
-        next if ( !$a_het or !$a_verb or  $a_het->lemma ne 'het' or $a_het->conll_deprel ne 'mwp' );
+        next if ( !$a_het or !$a_verb or $a_het->lemma ne 'het' or $a_het->conll_deprel ne 'mwp' );
         next if ( !$a_verb->is_verb );
 
         my ($a_aux) = $a_aan->get_parent();
@@ -453,7 +442,7 @@ sub fix_mwu {
         my $mwu_rel = $mwu_top->get_terminal_pnode->get_parent->wild->{rel};
         $last_member->set_afun('Sb')   if ( $mwu_rel eq 'su' );
         $last_member->set_afun('Pnom') if ( $mwu_rel eq 'predc' );
-        $last_member->set_afun('Obj') if ( $mwu_rel =~ /^obj[12]$/ );
+        $last_member->set_afun('Obj')  if ( $mwu_rel =~ /^obj[12]$/ );
     }
 }
 
