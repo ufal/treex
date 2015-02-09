@@ -4,7 +4,7 @@ use Treex::Core::Common;
 extends 'Treex::Block::T2A::AddPrepos';
 
 # In Portuguese, it seems adverbs may have prepositions as well (e.g. "tot dan toe").
-has '+formeme_prep_regexp' => ( default => '^(?:n|adj|adv):(.+)[+]' );
+has '+formeme_prep_regexp' => ( default => '^(?:n|adj|adv|v(?::(?:predc|subj|obj))?):(.+)\+(?!fin|inf)' );
 
 override 'postprocess' => sub {
     my ( $self, $tnode, $anode, $prep_forms_string, $prep_nodes ) = @_;

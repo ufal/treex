@@ -8,17 +8,19 @@ extends 'Treex::Core::Block';
 sub process_tnode {
 
     my ( $self, $t_node ) = @_;
-    my ($particles) = ( ( $t_node->formeme || '' ) =~ /^v:([^+]*)\+inf$/ );
+    my ($particles) = $self->get_particle_forms( $t_node->formeme // '' );
 
     # only for verbal nodes with some particles
     return if ( !$particles );
     my $a_node = $t_node->get_lex_anode() or return;
-    my $last_conj = undef; # remember this in case there are more `conjunctions' so as not to reverse order
+
+    # remember this in case there are more `conjunctions' so as not to reverse order
+    my $last_conj = undef;
 
     foreach my $particle ( split /_/, $particles ) {
-        
+
         my $works_as_conj = $self->works_as_conj($particle);
-        
+
         my $particle_node = $a_node->create_child(
             {
                 'lemma'        => $particle,
@@ -28,12 +30,12 @@ sub process_tnode {
             }
         );
 
-        if ( not $works_as_conj ){
+        if ( not $works_as_conj ) {
             $particle_node->shift_before_node($a_node);
             $particle_node->iset->add( pos => 'part', parttype => 'inf' );
         }
         else {
-            if ($last_conj){
+            if ($last_conj) {
                 $particle_node->shift_after_node($last_conj);
             }
             else {
@@ -44,7 +46,7 @@ sub process_tnode {
             $particle_node->set_parent( $a_node->get_parent );
             $particle_node->set_is_member( $a_node->is_member );
             $a_node->set_is_member();
-            $a_node->set_parent( $particle_node );
+            $a_node->set_parent($particle_node);
         }
         $t_node->add_aux_anodes($particle_node);
     }
@@ -52,11 +54,17 @@ sub process_tnode {
     return;
 }
 
-
 # This should be overridden for different languages (for particles that don't go straight
 # before the infinitive, but rather before the whole clause)
 sub works_as_conj {
     return 0;
+}
+
+# Extract all particles from the formeme
+sub get_particle_forms {
+    my ( $self, $formeme ) = @_;
+    my ($particles) = ( $formeme =~ /^v:([^+]*)\+inf$/ );
+    return $particles;
 }
 
 1;

@@ -11,6 +11,13 @@ override 'works_as_conj' => sub {
     return not $particle eq 'te';
 }; 
 
+override 'get_particle_forms' => sub {
+    my ( $self, $formeme ) = @_;
+    $formeme =~ s/^v:(predc|subj|obj)/v/;
+    my ($subconj_forms) = ( $formeme =~ /^v:(.+)\+inf/ );
+    return $subconj_forms;
+};
+
 1;
 
 __END__
