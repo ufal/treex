@@ -108,11 +108,22 @@ sub _get_node_str {
     if ( ( $anode->lemma // '' ) ne '' ) {
         $out .= ' ' . $self->_get_pos($anode);
         my $lemma = $anode->lemma // '';
-        $out .= ' sense="' . $lemma . '"';
+        $out .= ' sense="' . $self->_xml_escape( $lemma ) . '"';
     }
 
     $out .= ' />';
     return $out;
+}
+
+# Escape XML special characters
+sub _xml_escape {
+    my ($self, $text) = @_;
+    $text =~ s/&/\&amp;/g;
+    $text =~ s/"/\&quot;/g;
+    $text =~ s/'/\&apos;/g;
+    $text =~ s/</\&lt;/g;
+    $text =~ s/>/\&gt;/g;
+    return $text;
 }
 
 # Get consecutive numbers for nodes
