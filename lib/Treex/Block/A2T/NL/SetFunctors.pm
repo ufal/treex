@@ -94,6 +94,8 @@ override '_build_lemma2functor' => sub {
         'hoofdzakelijk' => 'EXT',
         'erg'           => 'EXT',
         'behoorlijk'    => 'EXT',
+        'ja'            => 'PARTL',
+        'nee'           => 'PARTL',
     };
 };
 
@@ -145,10 +147,10 @@ override 'try_rules' => sub {
         }
         return 'ACT';
     }
-    
+
     # "even" as particle and comparison operator
-    if ( $tnode->t_lemma eq 'even' ){        
-        return 'RSTR' if ($tnode->get_children());
+    if ( $tnode->t_lemma eq 'even' ) {
+        return 'RSTR' if ( $tnode->get_children() );
         return 'RHEM';
     }
     return;

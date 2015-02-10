@@ -8,7 +8,7 @@ sub process_tnode {
     my ( $self, $tnode ) = @_;
 
     # only apply to the non-coordination nodes with "en", "maar", "of" that have no children
-    return if ( $tnode->formeme ne 'x' or $tnode->t_lemma !~ /^(en|maar|of)$/ or $tnode->is_coap_root );
+    return if ( $tnode->formeme ne 'x' or $tnode->t_lemma !~ /^(ja|nee|en|maar|of)$/ or $tnode->is_coap_root );
     return if ( $tnode->get_children() );
 
     # require exactly 2nd depth level
@@ -19,7 +19,7 @@ sub process_tnode {
     $anode->set_parent( $aparent->get_parent() );
     $aparent->set_parent($anode);
     $aparent->wild->{adt_phrase_rel} = 'nucl';
-    $anode->wild->{adt_term_rel}   = 'dlink';
+    $anode->wild->{adt_term_rel}   = ( $anode->lemma =~ /^(ja|nee)$/ ? 'tag' : 'dlink' );
 
     return;
 }
@@ -36,11 +36,11 @@ Treex::Block::T2A::NL::Alpino::FixPrec
 
 =head1 DESCRIPTION
 
-This rehangs the PREC/AuxY conjuctions (en, maar, of) that begin a sentence,
-linking to previous text.
+This rehangs the PREC/AuxY conjuctions linking to previous text (en, maar, of)
+and PARTL/ExD sentence-like interjections (ja, nee) that begin a sentence.
 
-After the rehanging, these conjunctions will function as sentence roots
-and will contain prepared "adt_phrase_rel" and "adt_term_rel" labels for "nucl" and "dlink". 
+After the rehanging, these conjunctions/interjections will function as sentence roots
+and will contain prepared "adt_phrase_rel" and "adt_term_rel" labels for "nucl" and "dlink"/"tag". 
 
 =head1 AUTHORS
 

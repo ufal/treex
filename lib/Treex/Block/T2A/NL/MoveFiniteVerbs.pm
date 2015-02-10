@@ -11,8 +11,8 @@ sub process_tnode {
 
     # only heads of finite clauses with no subordinating conjunction
     if ( $tnode->formeme eq 'v:fin' and $tnode->get_clause_root() eq $tnode ) {
-        # find 1st child of this clause
-        my ($first) = $anode->get_clause_root()->get_echildren( { ordered => 1 } );        
+        # find 1st child of this clause, skippng "ja" and "nee"
+        my ($first) = grep { $_->lemma !~ /^(ja|nee)$/ } $anode->get_clause_root()->get_echildren( { ordered => 1 } );        
 
         # if there is only the verb in the clause, there's nowhere to move it :-)
         return if (!defined $first);
