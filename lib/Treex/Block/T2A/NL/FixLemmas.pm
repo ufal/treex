@@ -63,15 +63,6 @@ sub process_anode {
     elsif ( $lemma eq '#Neg' ) {
         $anode->set_lemma('niet');
     }
-
-    # fix compound word lemmas (lower case letters but no upper-case letter follows an underscore)
-    elsif ( $lemma =~ /_\p{Ll}/ and $lemma !~ /_\p{Lu}/ ) {
-        $lemma =~ s/ing_/ings/g;          # verzekering_maatschappij -> verzekeringsmaatschappij
-        $lemma =~ s/beroep_/beroeps/g;    # beroep_ethiek -> beroepsethiek
-        $lemma =~ s/verkeer_/verkeers/g;
-        $lemma =~ s/_//g;
-        $anode->set_lemma($lemma);
-    }
 }
 
 1;
