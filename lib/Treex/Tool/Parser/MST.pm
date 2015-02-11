@@ -3,8 +3,8 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Core::Config;
 use Treex::Core::Resource;
-use ProcessUtils;
-use DowngradeUTF8forISO2;
+use Treex::Tool::ProcessUtils;
+use Treex::Tool::Transliteration::DowngradeUTF8forISO2;
 
 with 'Treex::Tool::Parser::Role';
 with 'Treex::Service::Role'
@@ -136,8 +136,8 @@ sub process {
         $writer = $self->{writer};
         $reader = $self->{reader};
         log_fatal("Treex::Tool::Parser::MST: unexpected status") if ( !defined $reader || !defined $writer );
-        print $writer DowngradeUTF8forISO2::downgrade_utf8_for_iso2( join( "\t", @$forms_rf ) ) . "\n";
-        print $writer DowngradeUTF8forISO2::downgrade_utf8_for_iso2( join( "\t", @$tags_rf ) ) . "\n";
+        print $writer Treex::Tool::Transliteration::DowngradeUTF8forISO2::downgrade_utf8_for_iso2( join( "\t", @$forms_rf ) ) . "\n";
+        print $writer Treex::Tool::Transliteration::DowngradeUTF8forISO2::downgrade_utf8_for_iso2( join( "\t", @$tags_rf ) ) . "\n";
 
         #        print $writer join( "\t", @$forms_rf ) . "\n";
         #        print $writer join( "\t", @$tags_rf ) . "\n";
@@ -219,9 +219,9 @@ sub process {
         # We deliberately approximate e.g. curly quotes with plain ones, the final
         # encoding of the pipes is not relevant, see the constructor (new) above.
         print $writer
-            DowngradeUTF8forISO2::downgrade_utf8_for_iso2( join( "\t", @$forms_rf ) ) . "\n";
+            Treex::Tool::Transliteration::DowngradeUTF8forISO2::downgrade_utf8_for_iso2( join( "\t", @$forms_rf ) ) . "\n";
         print $writer
-            DowngradeUTF8forISO2::downgrade_utf8_for_iso2( join( "\t", @$tags_rf ) ) . "\n";
+            Treex::Tool::Transliteration::DowngradeUTF8forISO2::downgrade_utf8_for_iso2( join( "\t", @$tags_rf ) ) . "\n";
 
         $_ = <$reader>;
         if ( !defined $_ ) {

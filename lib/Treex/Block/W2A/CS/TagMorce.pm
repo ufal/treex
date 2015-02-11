@@ -6,7 +6,7 @@ extends 'Treex::Core::Block';
 has _tagger => ( is => 'rw' );
 
 use Morce::Czech;
-use DowngradeUTF8forISO2;
+use Treex::Tool::Transliteration::DowngradeUTF8forISO2;
 
 sub BUILD {
     my ($self) = @_;
@@ -27,7 +27,7 @@ sub process_atree {
     my ( $self, $atree ) = @_;
 
     my @a_nodes = $atree->get_descendants( { ordered => 1 } );
-    my @forms = map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) } @a_nodes;
+    my @forms = map { Treex::Tool::Transliteration::DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) } @a_nodes;
 
     my (@prefs, @sufs); # if needed, strip parts of words for tagging, store them and return to lemmas
 

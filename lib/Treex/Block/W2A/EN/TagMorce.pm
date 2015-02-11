@@ -7,7 +7,7 @@ has _tagger => ( is => 'rw' );
 has _n_tagged => ( is => 'rw' );
 
 use Morce::English;
-use DowngradeUTF8forISO2;
+use Treex::Tool::Transliteration::DowngradeUTF8forISO2;
 
 sub BUILD {
     my ($self) = @_;
@@ -49,7 +49,7 @@ sub process_atree {
     my @a_nodes = $atree->get_descendants( { ordered => 1 } );
     my @forms =
         map { substr( $_, -45, 45 ) }                                       # avoid words > 45 chars; Morce segfaults
-        map { DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) }
+        map { Treex::Tool::Transliteration::DowngradeUTF8forISO2::downgrade_utf8_for_iso2( $_->form ) }
         @a_nodes;
 
     # get tags
