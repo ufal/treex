@@ -37,7 +37,7 @@ has lm_dir => (
 
 use Treex::Tool::Algorithm::TreeViterbi;
 use Treex::Tool::Lexicon::CS;
-use LanguageModel::TreeLM;
+use Treex::Tool::LM::TreeLM;
 
 sub BUILD {
     my ($self) = @_;
@@ -53,7 +53,7 @@ sub process_start
     my ( $lm_fn1, $lm_fn2, $lm_ids ) = $self->require_files_from_share( "$lm_rel_path/c_LgFdLd.pls.gz", "$lm_rel_path/c_PgFdLd.pls.gz", "$lm_rel_path/lemma_id.pls.gz" );
     my $lm_abs_path = $lm_fn1;
     $lm_abs_path =~ s/c_LgFdLd.pls.gz//;
-    MyTreeViterbiState->set_tree_model( LanguageModel::TreeLM->new( { dir => $lm_abs_path } ) );
+    MyTreeViterbiState->set_tree_model( Treex::Tool::LM::TreeLM->new( { dir => $lm_abs_path } ) );
     MyTreeViterbiState->set_lm_weight( $self->lm_weight );
     MyTreeViterbiState->set_formeme_weight( $self->formeme_weight );
     MyTreeViterbiState->set_backward_weight( $self->backward_weight );
@@ -177,7 +177,7 @@ sub is_compatible {
         return 0;
     }
 
-    return LanguageModel::TreeLM::is_pos_and_formeme_compatible( $l_v->{'pos'}, $f_v->{formeme} )
+    return Treex::Tool::LM::TreeLM::is_pos_and_formeme_compatible( $l_v->{'pos'}, $f_v->{formeme} )
 }
 
 #-------------------------------------------------------------
@@ -190,7 +190,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Tool::Algorithm::TreeViterbiState';
 
-use LanguageModel::Lemma;
+use Treex::Tool::LM::Lemma;
 
 has [qw(lemma_v formeme_v)] => ( is => 'rw' );
 
@@ -200,7 +200,7 @@ sub set_lm_weight       { return $lm_weight       = $_[1]; }
 sub set_formeme_weight  { return $formeme_weight  = $_[1]; }
 sub set_backward_weight { return $backward_weight = $_[1]; }
 sub set_tree_model      { return $tree_model      = $_[1]; }
-sub set_lemma_id_file { return  LanguageModel::Lemma::init( $_[1] ); }
+sub set_lemma_id_file { return  Treex::Tool::LM::Lemma::init( $_[1] ); }
 
 sub lemma {
     my ($self) = @_;
@@ -235,8 +235,8 @@ sub get_logprob {
 sub get_logprob_given_parent {
     my ( $self, $state ) = @_;
     my $my_formeme   = $self->formeme;
-    my $my_lemma     = LanguageModel::Lemma->new( $self->lemma, $self->pos );
-    my $parent_lemma = LanguageModel::Lemma->new( $state->lemma, $state->pos );
+    my $my_lemma     = Treex::Tool::LM::Lemma->new( $self->lemma, $self->pos );
+    my $parent_lemma = Treex::Tool::LM::Lemma->new( $state->lemma, $state->pos );
 
     my $logprob = $tree_model->get_logprob_LdFd_given_Lg( $my_lemma, $my_formeme, $parent_lemma );
     return $lm_weight * $logprob;
