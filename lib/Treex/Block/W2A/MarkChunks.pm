@@ -26,10 +26,10 @@ sub process_atree {
     for my $i ( 0 .. $#a_nodes ) {
         my $form = $a_nodes[$i]->form;
 
-        if ( $form eq '(' ) {
+        if ( $form =~ /^(\(|\[|-LRB-)$/ ) {
             push @buffer, { begin => $i, type => 'parenthesis' };
         }
-        elsif ( $form eq ')' && $buffer[-1]{type} eq 'parenthesis' ) {
+        elsif ( $form =~ /^(\)|\]|-RRB-)$/ && $buffer[-1]{type} eq 'parenthesis' ) {
             my $top = pop @buffer;
             $self->mark_chunk( 'par', @a_nodes[ $top->{begin} .. $i ] );
         }
@@ -68,7 +68,7 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 =item Treex::Block::W2A::MarkChunks
 
