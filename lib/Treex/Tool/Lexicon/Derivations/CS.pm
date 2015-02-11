@@ -3,7 +3,7 @@ use Treex::Core::Common;
 use utf8;
 
 binmode STDOUT, ":utf8";
-use LanguageModel::MorphoLM;
+use Treex::Tool::LM::MorphoLM;
 
 my $morphoLM;    # will be loaded upon first use (see adj2adv and verb2adj)
 
@@ -41,7 +41,7 @@ foreach my $type ( keys %pregenerated_pairs_filename ) {
 
 sub adj2adv {
     my $adj_tlemma = shift;
-    $morphoLM = LanguageModel::MorphoLM->new() if ( !$morphoLM );
+    $morphoLM = Treex::Tool::LM::MorphoLM->new() if ( !$morphoLM );
 
     if ((   $adj_tlemma    =~ s/([sc]k)ý$/$1y/
             or $adj_tlemma =~ s/([ntv])[íý]$/$1ě/
@@ -62,7 +62,7 @@ sub adj2adv {
 
 sub verb2adj {
     my $verb_tlemma = shift;
-    $morphoLM = LanguageModel::MorphoLM->new() if ( !$morphoLM );
+    $morphoLM = Treex::Tool::LM::MorphoLM->new() if ( !$morphoLM );
 
     my @seen_adj = keys %{ $derivation{verb2adj}{$verb_tlemma} };
 

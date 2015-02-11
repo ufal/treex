@@ -2,7 +2,7 @@ package Treex::Tool::Lexicon::Generation::RU;
 
 use Treex::Core::Common;
 use utf8;
-use LanguageModel::FormInfo;
+use Treex::Tool::LM::FormInfo;
 use Class::Std;
 
 use PerlIO::gzip;
@@ -59,7 +59,7 @@ sub forms_of_lemma {
             #replacing incorrect latin c to cyrillic "es" ( U+0063 -> U+0441 )
             $form =~ s/\x{0063}/\x{0441}/g;
 
-            my $form_info = LanguageModel::FormInfo->new(
+            my $form_info = Treex::Tool::LM::FormInfo->new(
                 {
                     form   => $form,
                     lemma  => $lemma,

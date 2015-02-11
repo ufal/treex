@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use LanguageModel::MorphoLM;
+use Treex::Tool::LM::MorphoLM;
 my $morphoLM;
 
 sub BUILD {
@@ -15,7 +15,7 @@ sub BUILD {
 sub process_start {
     my $self = shift;
 
-    $morphoLM = LanguageModel::MorphoLM->new();
+    $morphoLM = Treex::Tool::LM::MorphoLM->new();
 
     $self->SUPER::process_start();
 
@@ -63,7 +63,7 @@ __END__
 
 If a finite verb t-node should be in passive voice, all verb variants that
 cannot be passivized are removed (prior to variant selection).
-'Passivizability' is decided according to C<LanguageModel::MorphoLM>
+'Passivizability' is decided according to C<Treex::Tool::LM::MorphoLM>
 which is trained on SYN corpus.
 (Using passivizability according to morphological generator leads to overgeneration).
 

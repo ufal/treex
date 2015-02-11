@@ -2,7 +2,7 @@ package Treex::Tool::Lexicon::Generation::CS;
 use Moose;
 use Treex::Core::Common;
 use Ufal::MorphoDiTa;
-use LanguageModel::FormInfo;
+use Treex::Tool::LM::FormInfo;
 use Treex::Tool::Lexicon::CS::Prefixes;
 use Treex::Core::Resource;
 
@@ -63,7 +63,7 @@ sub forms_of_lemma {
         my $pdt_lemma = $lemma_forms->{lemma};
         for (my $i = 0; $i < $lemma_forms->{forms}->size(); $i++) {
             my $form_object = $lemma_forms->{forms}->get($i);
-            my $form_info = LanguageModel::FormInfo->new(
+            my $form_info = Treex::Tool::LM::FormInfo->new(
                 {
                     form   => $form_object->{form},
                     lemma  => $pdt_lemma,
@@ -80,7 +80,7 @@ sub forms_of_lemma {
         my ( $origin, $forms_tags ) = $self->_guess_forms($lemma);
         foreach my $form_tag ( split /\|/, ( $forms_tags || '' ) ) {
             my ( $form, $tag ) = split /\t/, $form_tag;
-            my $form_info = LanguageModel::FormInfo->new(
+            my $form_info = Treex::Tool::LM::FormInfo->new(
                 {
                     form   => $form,
                     lemma  => $lemma,
@@ -143,7 +143,7 @@ sub _score_tag {
 }
 
 # Note that this actually returns a random form (because the forms are not sorted).
-# This method makes it just easy to fallback from LanguageModel::MorphoLM to this class.
+# This method makes it just easy to fallback from Treex::Tool::LM::MorphoLM to this class.
 sub best_form_of_lemma {
     my ( $self, $lemma, $tag_regex ) = @_;
     my ($form_info) = $self->forms_of_lemma( $lemma, { tag_regex => $tag_regex, limit=>1 } );

@@ -4,8 +4,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 use Treex::Tool::Lexicon::Generation::CS;
-use LanguageModel::MorphoLM;
-use LanguageModel::FormInfo;
+use Treex::Tool::LM::MorphoLM;
+use Treex::Tool::LM::FormInfo;
 
 has morphoLM  => ( is => 'rw' );
 has generator => ( is => 'rw' );
@@ -18,7 +18,7 @@ sub BUILD {
 
 sub process_start {
     my ($self) = @_;
-    $self->set_morphoLM( LanguageModel::MorphoLM->new() );
+    $self->set_morphoLM( Treex::Tool::LM::MorphoLM->new() );
     $self->set_generator( Treex::Tool::Lexicon::Generation::CS->new() );
     return;
 }

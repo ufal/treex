@@ -46,7 +46,7 @@ my $WEIGHTS;
 my (@s_label, @s_parent, @s_children, @t_label, @t_origin, @covered_by);
 
 
-use LanguageModel::Lemma;
+use Treex::Tool::LM::Lemma;
 my $ALL = '<ALL>';
 my ($cLgFdLd, $cPgFdLd);
 
@@ -85,7 +85,7 @@ sub process_start {
     my $dir = $ENV{TMT_ROOT}.'/share/data/models/language/'. $self->lm_dir;
     $cLgFdLd = _load_plsgz( $dir . '/c_LgFdLd.pls.gz' );
     $cPgFdLd = _load_plsgz( $dir . '/c_PgFdLd.pls.gz' );
-    LanguageModel::Lemma::init("$dir/lemma_id.pls.gz");
+    Treex::Tool::LM::Lemma::init("$dir/lemma_id.pls.gz");
     return;
 }
 
@@ -289,7 +289,7 @@ sub bottom_lm {
 sub lemma_id {
     my $lemma = shift;
     $lemma =~ s/#(.)$/ $1/;
-    return LanguageModel::Lemma->new($lemma);
+    return Treex::Tool::LM::Lemma->new($lemma);
 }
 
 sub lm_context {

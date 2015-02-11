@@ -11,7 +11,7 @@ my $changed = 0;
 my $total = 0;
 my $unable_to_generate = 0;
 
-use LanguageModel::MorphoLM;
+use Treex::Tool::LM::MorphoLM;
 use Treex::Tool::Lexicon::Generation::CS;
 
 my ($generator, $morphoLM);
@@ -19,7 +19,7 @@ my ($generator, $morphoLM);
 sub process_start {
     my $self  = shift;
     $generator = Treex::Tool::Lexicon::Generation::CS->new();
-    $morphoLM = LanguageModel::MorphoLM->new();
+    $morphoLM = Treex::Tool::LM::MorphoLM->new();
 
     return;
 }

@@ -4,7 +4,7 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Tool::Depfix::FormGenerator';
 
-use LanguageModel::MorphoLM;
+use Treex::Tool::LM::MorphoLM;
 use Treex::Tool::Lexicon::Generation::CS;
 use Treex::Tool::Depfix::CS::NumberSwitcher;
 
@@ -14,7 +14,7 @@ sub BUILD {
     my $self = shift;
 
     $generator = Treex::Tool::Lexicon::Generation::CS->new();
-    $morphoLM  = LanguageModel::MorphoLM->new();
+    $morphoLM  = Treex::Tool::LM::MorphoLM->new();
     $numberSwitcher = Treex::Tool::Depfix::CS::NumberSwitcher->new(
         generator => $self
     );

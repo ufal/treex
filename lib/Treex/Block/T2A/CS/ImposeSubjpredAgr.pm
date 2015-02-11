@@ -2,7 +2,7 @@ package Treex::Block::T2A::CS::ImposeSubjpredAgr;
 use utf8;
 use Moose;
 use Treex::Core::Common;
-use LanguageModel::MorphoLM;
+use Treex::Tool::LM::MorphoLM;
 
 extends 'Treex::Core::Block';
 
@@ -10,7 +10,7 @@ has '_morpho_lm' => ( is => 'rw' );
 
 sub process_start {
     my ($self) = @_;
-    $self->_set_morpho_lm( LanguageModel::MorphoLM->new() );
+    $self->_set_morpho_lm( Treex::Tool::LM::MorphoLM->new() );
 }
 
 sub process_ttree {

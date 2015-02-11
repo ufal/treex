@@ -1,14 +1,14 @@
 package Treex::Block::A2N::CS::NormalizeNames;
 use Moose;
 use Treex::Core::Common;
-use LanguageModel::MorphoLM;
+use Treex::Tool::LM::MorphoLM;
 use Treex::Tool::Lexicon::Generation::CS;
 extends 'Treex::Core::Block';
 
 my ( $morphoLM, $generator );
 sub process_start {
     my $self = shift;
-    $morphoLM  = LanguageModel::MorphoLM->new();
+    $morphoLM  = Treex::Tool::LM::MorphoLM->new();
     $generator = Treex::Tool::Lexicon::Generation::CS->new();
     $self->SUPER::process_start();
     return;
