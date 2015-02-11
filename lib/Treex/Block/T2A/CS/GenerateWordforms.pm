@@ -16,7 +16,7 @@ sub get_required_share_files {
 #use Smart::Comments;
 
 use Treex::Tool::Lexicon::Generation::CS;
-use LanguageModel::MorphoLM;
+use Treex::Tool::LM::MorphoLM;
 
 my ( $morphoLM, $generator );
 
@@ -29,7 +29,7 @@ sub BUILD {
 sub process_start {
     my $self = shift;
 
-    $morphoLM  = LanguageModel::MorphoLM->new();
+    $morphoLM  = Treex::Tool::LM::MorphoLM->new();
     $generator = Treex::Tool::Lexicon::Generation::CS->new();
 
     $self->SUPER::process_start();
@@ -71,13 +71,13 @@ sub _generate_word_form {
     my $lemma  = $a_node->lemma;
 
     # digits, abbreviations etc. are not attempted to be inflected
-    return LanguageModel::FormInfo->new( { form => $lemma, lemma => $lemma, tag => 'C=-------------' } )
+    return Treex::Tool::LM::FormInfo->new( { form => $lemma, lemma => $lemma, tag => 'C=-------------' } )
         if $lemma =~ /^[\d,\.\ ]+$/ or $lemma =~ /^[A-Z]+$/;
-    return LanguageModel::FormInfo->new( { form => 'ne', lemma => 'ne', tag => 'TT-------------' } )
+    return Treex::Tool::LM::FormInfo->new( { form => 'ne', lemma => 'ne', tag => 'TT-------------' } )
         if $lemma eq '#Neg';
 
     # "tři/čtyři sta" not "stě" (forms "sta" and "stě" differ only in the 15th position of tag)
-    return LanguageModel::FormInfo->new( { form => 'sta', lemma => 'sto-2`100', tag => 'NNNP4-----A----', count => 0 } )
+    return Treex::Tool::LM::FormInfo->new( { form => 'sta', lemma => 'sto-2`100', tag => 'NNNP4-----A----', count => 0 } )
         if $lemma eq 'sto' && $a_node->get_attr('morphcat/case') eq '4'
             && any {
                 my $number = Treex::Tool::Lexicon::CS::number_for( $_->lemma );
@@ -138,7 +138,7 @@ sub _generate_word_form {
     log_debug( "LEMM: $lemma\t$tag_regex\t$lemma\tttred " . $a_node->get_address() . " &", 1 );
 
     $lemma =~ s/(..t)-\d$/$1/;    # removing suffices distinguishing homonymous lemmas (stat-2)
-    return LanguageModel::FormInfo->new( { form => $lemma, lemma => $lemma, tag => 'X@-------------', count => 0 } );
+    return Treex::Tool::LM::FormInfo->new( { form => $lemma, lemma => $lemma, tag => 'X@-------------', count => 0 } );
 }
 
 # relax regexp requirements: avoid pieces that cannot be satisfied for the given lemma anyway
@@ -302,9 +302,9 @@ Quite usually there is an underspecified tag, for example we do not know the gen
 of a verb. If there are more Czech forms of the given lemma which are compatible
 with the (underspecified) tag then the most frequent form is choosen.
 
-Forms and their frequencies are taken from C<LanguageModel::MorphoLM>.
+Forms and their frequencies are taken from C<Treex::Tool::LM::MorphoLM>.
 C<CzechMorpho> interface to Jan Hajic's morphology is now used only as a fallback
-when there are no compatible forms in C<LanguageModel::MorphoLM>.
+when there are no compatible forms in C<Treex::Tool::LM::MorphoLM>.
 
 The resulting form and its corresponding tag are stored in the node attributes
 C<form> and C<tag>.
