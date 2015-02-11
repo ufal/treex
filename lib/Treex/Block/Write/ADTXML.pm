@@ -108,7 +108,7 @@ sub _get_node_str {
     if ( ( $anode->lemma // '' ) ne '' ) {
         $out .= ' ' . $self->_get_pos($anode);
         my $lemma = $anode->lemma // '';
-        $out .= ' sense="' . $self->_xml_escape( $lemma ) . '"';
+        $out .= ' sense="' . $self->_xml_escape($lemma) . '"';
     }
 
     $out .= ' />';
@@ -117,7 +117,7 @@ sub _get_node_str {
 
 # Escape XML special characters
 sub _xml_escape {
-    my ($self, $text) = @_;
+    my ( $self, $text ) = @_;
     $text =~ s/&/\&amp;/g;
     $text =~ s/"/\&quot;/g;
     $text =~ s/'/\&apos;/g;
@@ -151,16 +151,17 @@ sub _get_pos {
     # part-of-speech
     my $pos = $anode->iset->pos;
     $pos = 'comp' if ( $anode->match_iset( 'conjtype' => 'sub' ) );
-    $pos = 'comparative' if ( ( $anode->lemma // '' ) =~ /^(als|dan)$/ and ( $anode->afun // '' ) eq 'AuxP' );
-    $pos = 'pron'        if ( $anode->iset->prontype );
-    $pos = 'det'         if ( $anode->iset->prontype eq 'art' or $anode->iset->poss eq 'poss' );
-    $pos = 'det'         if ( $anode->iset->prontype and ( $anode->lemma // '' ) =~ /^(deze|die|d[ai]t|welke?)$/ );
-    $pos = 'adv'         if ( $anode->iset->prontype and ( $anode->lemma // '' ) eq 'er' );
-    $pos = 'vg'          if ( $pos eq 'conj' || ( $anode->afun // '' ) =~ /^(Coord|Apos)$/ );
-    $pos = 'prep'        if ( $pos eq 'adp' );
-    $pos = 'name'        if ( $anode->iset->nountype eq 'prop' );
-    $pos = 'comp'        if ( ( $anode->lemma // '' ) eq 'te' and ( $anode->afun // '' ) eq 'AuxV' );
-    $pos = 'name'        if ( $anode->n_node );
+    $pos = 'comparative'           if ( ( $anode->lemma // '' ) =~ /^(als|dan)$/ and ( $anode->afun // '' ) eq 'AuxP' );
+    $pos = 'pron'                  if ( $anode->iset->prontype );
+    $pos = 'det'                   if ( $anode->iset->prontype eq 'art' or $anode->iset->poss eq 'poss' );
+    $pos = 'det'                   if ( $anode->iset->prontype and ( $anode->lemma // '' ) =~ /^(deze|die|d[ai]t|welke?)$/ );
+    $pos = 'adv'                   if ( $anode->iset->prontype and ( $anode->lemma // '' ) eq 'er' );
+    $pos = 'vg'                    if ( $pos eq 'conj' || ( $anode->afun // '' ) =~ /^(Coord|Apos)$/ );
+    $pos = 'prep'                  if ( $pos eq 'adp' );
+    $pos = 'name'                  if ( $anode->iset->nountype eq 'prop' );
+    $pos = 'comp'                  if ( ( $anode->lemma // '' ) eq 'te' and ( $anode->afun // '' ) eq 'AuxV' );
+    $pos = 'name'                  if ( $anode->n_node );
+    $pos = $anode->wild->{adt_pos} if ( $anode->wild->{adt_pos} );
     $data{'pos'} = $pos;
 
     # morphology

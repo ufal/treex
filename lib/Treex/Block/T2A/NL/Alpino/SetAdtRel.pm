@@ -136,6 +136,9 @@ sub _get_phrase_rel {
     if ( ( $aparent->afun // '' ) eq 'AuxP' ) {
         return 'obj1';    # dependent NP has 'obj1'
     }
+    if ( ( $anode->wild->{adt_pos} // '' ) eq 'fixed' and $aparent->is_verb ){
+        return 'svp';     # parts of light verb constructions
+    }
     if ( $afun eq 'AuxP' and $aparent->is_verb ) {
         return 'pc';      # verbal complements have 'pc', otherwise it will default to 'mod'
     }
