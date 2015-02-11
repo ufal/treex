@@ -61,9 +61,8 @@ sub project_nsubtree {
     # Return if we're at the root (we don't need to copy references and normalized names)
     return if ( $nnode->is_root );
 
-    # Now take the referred nodes from all my children, build a normalized name based on them
     my @anodes = uniq map { $_->get_anodes } $nnode->get_children();
-    @anodes = sort { $_->ord <=> $_->ord } @anodes;
+    @anodes = sort { $a->ord <=> $b->ord } @anodes;
     $nnode->set_anodes(@anodes);
     $nnode->set_normalized_name( join ' ', map { $_->form // $_->lemma // '' } @anodes );
 
