@@ -458,15 +458,20 @@ sub _get_mwu_part_type {
     return 'other';
 }
 
-# Rehang "en, of, maar" heading the whole sentence under the main verb (will be PREC on t-layer)
+# Rehang "ja, nee, en, of, maar" heading the whole sentence under the main verb 
+# (will be PREC/PARTL on t-layer)
 sub rehang_prec {
     my ( $self, $aroot ) = @_;
 
-    foreach my $prec ( grep { $_->match_iset( 'pos' => 'conj', 'conjtype' => 'coor' ) and scalar( $_->get_children() ) == 1 } $aroot->get_children() ) {
+    # go through things hanging under root with one child only
+    foreach my $prec ( grep { scalar( $_->get_children() ) == 1 } $aroot->get_children() ) {
+
+        # select just interjections and coordinating conjunctions
+        next if ( !$prec->is_coordinator and !$prec->is_interjection );
         my ($child) = $prec->get_children();
         $child->set_parent( $prec->get_parent() );
         $prec->set_parent($child);
-        $prec->set_afun('AuxY');
+        $prec->set_afun( $prec->is_coordinator ? 'AuxY' : 'ExD' );
     }
 }
 
