@@ -85,8 +85,9 @@ sub process_bundle {
 
 # MT ords of reference subtrees;
 # for each node, store into wild:
+# mt_ord = my MT ord
 # mt_ord_sum = sum of MT ords of subtree nodes
-# mt_ord_count = number of subtree nodes that have a definet MT ord
+# mt_ord_count = number of subtree nodes that have a defined MT ord
 sub subtree_mt_ord_recursive {
     my ( $self, $anode, $mt_ord ) = @_;
 
@@ -106,6 +107,9 @@ sub subtree_mt_ord_recursive {
     if (defined $my_mt_ord && $my_mt_ord != -1) {
         $mt_ord_count += 1;
         $mt_ord_sum += $my_mt_ord;
+        $anode->wild->{mt_ord} = $my_mt_ord;
+    } else {
+        $anode->wild->{mt_ord} = -1;
     }
 
     # store
@@ -116,43 +120,46 @@ sub subtree_mt_ord_recursive {
 }
 
 sub process_anode {
-    my ( $self, $anode ) = @_;
-    
-    my @children = $anode->get_children({ordered => 1, add_self => 1});
-    {
-        my @children_with_mt_ord = grep {$_->wild->{mt_ord_count} > 0} @children;
-        return if @children_with_mt_ord < 2;
-    }
+    my ( $self, $parent ) = @_;
+
+    # (actually children and parent)
+    my @children = $parent->get_children({ordered => 1, add_self => 1});
     my $before = join ' ', map { $_->lemma } @children;
     
     # compute average MT ords of child subtrees
-    # TODO for $anode probably do not look at subtree but only at the node itself
     my %id2avgmtord = ();
     {
         my $avgmtord = 0;
-        for my $child (@children) {
-            if ($child->wild->{mt_ord_count} > 0) {
-                $avgmtord = $child->wild->{mt_ord_sum} / $child->wild->{mt_ord_count};
+        for my $anode (@children) {
+            if ($anode->id eq $parent->id) {
+                # the parent
+                if ($anode->wild->{mt_ord} > 0) {
+                    # use only the mt ord of the parent, not of the subtree
+                    $avgmtord = $anode->wild->{mt_ord};
+                }
+            } elsif ($anode->wild->{mt_ord_count} > 0) {
+                # a child with defined subtree mt ord
+                $avgmtord = $anode->wild->{mt_ord_sum} / $anode->wild->{mt_ord_count};
             }
-            # else keep value from previous interation:
-            # keep the current node together with its left sibling
+            # else undefined mt ord:
+            # keep value from previous interation
+            # to keep the current node together with its left sibling
             
             # add a small bit to prefer keeping the original order in case of ties
-            $id2avgmtord{$child->id} = $avgmtord + $child->ord/1000;
-            # log_info $child->lemma . ": " . $id2avgmtord{$child->id};
+            $id2avgmtord{$anode->id} = $avgmtord + $anode->ord/1000;
         }
     }
     
     # reorder by average mt_ords of the subtrees
     {
         my @ids_sorted = sort {$id2avgmtord{$a} <=> $id2avgmtord{$b}} (keys %id2avgmtord);
-        my $document = $anode->get_document;
+        my $document = $parent->get_document;
         my $prev_node = $document->get_node_by_id(shift @ids_sorted);
         for my $this_node (map { $document->get_node_by_id($_) } @ids_sorted) {
-            if ($this_node->id eq $anode->id) {
+            if ($this_node->id eq $parent->id) {
                 # shifting the parent
                 $this_node->shift_after_subtree($prev_node, {without_children => 1});
-            } elsif ($prev_node->id eq $anode->id) {
+            } elsif ($prev_node->id eq $parent->id) {
                 # shifting after the parent
                 $this_node->shift_after_node($prev_node);
             } else {
@@ -164,7 +171,7 @@ sub process_anode {
     }
 
     {
-        my $after = join ' ', map { $_->lemma } $anode->get_children({ordered => 1, add_self => 1});
+        my $after = join ' ', map { $_->lemma } $parent->get_children({ordered => 1, add_self => 1});
         if ($before ne $after) {
             log_info "Reordering $before -> $after";
         }
