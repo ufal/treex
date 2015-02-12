@@ -9,13 +9,12 @@ sub process_tnode {
     # finite inter clause head
     if ( !$tnode->is_coap_root
         && $tnode->formeme =~ /v:*.fin/
-        && $tnode->sentmod eq 'inter'
+        && ($tnode->sentmod // '') eq 'inter'
     ) {
 
-        #my ($subject) =
         my @subjects =
             map { $_->get_lex_anode() }
-            grep { $_->t_lemma !~ /^wh(at|ich|om?|ere|en|y)|how$/ }
+            grep { ($_->t_lemma // '') !~ /^wh(at|ich|om?|ere|en|y)|how$/ }
             _grep_formeme( 'n:subj', $tnode->get_children({ ordered => 1 }) );
         my ($first_anode) = $tnode->get_anodes();
 
@@ -23,9 +22,6 @@ sub process_tnode {
         foreach my $subject ( reverse @subjects ) {
             $subject->shift_after_node($first_anode);
         }
-        #if (defined $subject) {
-        #    $subject->shift_after_node($first_anode);
-        #}
     
     }
 
