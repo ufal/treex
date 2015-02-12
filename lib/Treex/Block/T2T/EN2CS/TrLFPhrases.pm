@@ -4,7 +4,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use ProbUtils::Normalize;
+use Treex::Tool::ML::NormalizeProb;
 
 # TODO: it is taking the place of... #make use of
 Readonly my $CHILD_PARENT_TO_ONE_NODE => {
@@ -148,7 +148,7 @@ sub process_tnode {
     my $one_node_variants = $CHILD_PARENT_TO_ONE_NODE->{ $lemma . '_' . $p_lemma };
     if ($one_node_variants) {
         my @variants = split /\|/, $one_node_variants;
-        my $uniform_logprob = ProbUtils::Normalize::prob2binlog( 1 / @variants );
+        my $uniform_logprob = Treex::Tool::ML::NormalizeProb::prob2binlog( 1 / @variants );
         $cs_parent->set_attr(
             'translation_model/t_lemma_variants',
             [   map {

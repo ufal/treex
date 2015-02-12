@@ -3,14 +3,14 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use ProbUtils::Normalize;
+use Treex::Tool::ML::NormalizeProb;
 use Moose::Util::TypeConstraints;
 
-use TranslationModel::Factory;
-use TranslationModel::Static::Model;
+use Treex::Tool::TranslationModel::Factory;
+use Treex::Tool::TranslationModel::Static::Model;
 
 #TODO: Fix this
-use TranslationModel::MaxEnt::FeatureExt::EN2CS;
+use Treex::Tool::TranslationModel::MaxEnt::FeatureExt::EN2CS;
 
 has model_dir => (
     is            => 'ro',
@@ -58,8 +58,8 @@ has allow_fake_formemes => (
 
 has '_model_factory' => (
     is => 'ro',
-    isa => 'TranslationModel::Factory',
-    default => sub { return TranslationModel::Factory->new(); },
+    isa => 'Treex::Tool::TranslationModel::Factory',
+    default => sub { return Treex::Tool::TranslationModel::Factory->new(); },
 );
 
 # Require the needed models
@@ -88,7 +88,7 @@ sub process_start {
     # Let's turn off memcached for now.
     my $use_memcached = 0; #Treex::Tool::Memcached::Memcached::get_memcached_hostname();
 
-    $static_model = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
+    $static_model = $self->load_model( Treex::Tool::TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
 
     return;
 }
@@ -104,8 +104,8 @@ sub process_tnode {
     my $ja_tnode = $cs_tnode->src_tnode;
     return if !$ja_tnode;
     
-    my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode( $ja_tnode, $self->maxent_features_version );
-    #my $features_hash_rf2 = undef;    #TranslationModel::NaiveBayes::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->nb_version );
+    my $features_hash_rf = Treex::Tool::TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode( $ja_tnode, $self->maxent_features_version );
+    #my $features_hash_rf2 = undef;    #Treex::Tool::TranslationModel::NaiveBayes::FeatureExt::EN2CS::features_from_src_tnode( $en_tnode, $self->nb_version );
     
     my $features_array_rf = [
         map           {"$_=$features_hash_rf->{$_}"}
@@ -155,7 +155,7 @@ sub process_tnode {
            'translation_model/formeme_variants',
            [   map {
                    {   'formeme' => $_->{label},
-                       'logprob' => ProbUtils::Normalize::prob2binlog( $_->{prob} ),
+                       'logprob' => Treex::Tool::ML::NormalizeProb::prob2binlog( $_->{prob} ),
                        'origin'  => $_->{source},
                    }
                    }

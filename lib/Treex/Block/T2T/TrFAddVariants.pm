@@ -3,13 +3,13 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use ProbUtils::Normalize;
+use Treex::Tool::ML::NormalizeProb;
 use Moose::Util::TypeConstraints;
 
-use TranslationModel::Factory;
-use TranslationModel::Static::Model;
+use Treex::Tool::TranslationModel::Factory;
+use Treex::Tool::TranslationModel::Static::Model;
 
-use TranslationModel::Combined::Interpolated;
+use Treex::Tool::TranslationModel::Combined::Interpolated;
 
 use Treex::Tool::TranslationModel::Features::Standard;
 
@@ -76,8 +76,8 @@ has _model => ( is => 'rw' );
 
 has '_model_factory' => (
     is => 'ro',
-    isa => 'TranslationModel::Factory',
-    default => sub { return TranslationModel::Factory->new(); },
+    isa => 'Treex::Tool::TranslationModel::Factory',
+    default => sub { return Treex::Tool::TranslationModel::Factory->new(); },
 );
 
 
@@ -110,10 +110,10 @@ sub process_start
         push( @interpolated_sequence, { model => $discr_model, weight => $self->discr_weight } );
     }
 
-    my $static_model = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
+    my $static_model = $self->load_model( Treex::Tool::TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
     push( @interpolated_sequence, { model => $static_model, weight => $self->static_weight } );
 
-    $self->_set_model( TranslationModel::Combined::Interpolated->new( { models => \@interpolated_sequence } ) );
+    $self->_set_model( Treex::Tool::TranslationModel::Combined::Interpolated->new( { models => \@interpolated_sequence } ) );
 
     return;
 }
@@ -178,7 +178,7 @@ sub process_tnode {
             'translation_model/formeme_variants',
             [   map {
                     {   'formeme' => $_->{label},
-                        'logprob' => ProbUtils::Normalize::prob2binlog( $_->{prob} ),
+                        'logprob' => Treex::Tool::ML::NormalizeProb::prob2binlog( $_->{prob} ),
                         'origin'  => $_->{source},
                     }
                     }

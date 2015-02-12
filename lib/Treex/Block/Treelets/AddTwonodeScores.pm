@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Tool::TranslationModel::TwoNode;
 use List::Pairwise qw(mapp);
-use ProbUtils::Normalize;
+use Treex::Tool::ML::NormalizeProb;
 extends 'Treex::Core::Block';
 
 has model_dir => (

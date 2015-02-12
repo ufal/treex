@@ -4,7 +4,7 @@ use Moose::Role;
 use Treex::Core::Log;
 
 use Treex::Tool::Memcached::Memcached;
-use TranslationModel::Memcached::Model;
+use Treex::Tool::TranslationModel::Memcached::Model;
 
 requires 'model_dir';
 
@@ -17,7 +17,7 @@ sub load_model {
     $path = $self->model_dir ?  $self->model_dir . '/' . $path : $path;
 
     if ($memcached) {
-        $model = TranslationModel::Memcached::Model->new( { 'model' => $model, 'file' => $path } );
+        $model = Treex::Tool::TranslationModel::Memcached::Model->new( { 'model' => $model, 'file' => $path } );
     }
     else {
         $model->load( Treex::Core::Resource::require_file_from_share($path) );

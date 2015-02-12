@@ -5,21 +5,23 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 use Treex::Tool::Lexicon::CS;
-use EnglishMorpho::Lemmatizer;
-use Tagger::TnT;
+use Treex::Tool::EnglishMorpho::Lemmatizer;
+use Treex::Tool::Tagger::TnT;
 
 my $tagger;
 
-use TranslationModel::Static::Model;
-use TranslationModel::Derivative::EN2CS::Deverbal_adjectives;
-use TranslationModel::Derivative::EN2CS::Deadjectival_adverbs;
-use TranslationModel::Derivative::EN2CS::Nouns_to_adjectives;
-use ProbUtils::Normalize;
+use Treex::Tool::TranslationModel::Static::Model;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Deverbal_adjectives;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Deadjectival_adverbs;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Nouns_to_adjectives;
+use Treex::Tool::ML::NormalizeProb;
 
 my $MODEL_STATIC = 'data/models/translation/en2cs/tlemma_czeng09.static.pls.slurp.gz';
 my ( $static_model, $deverbadj_model, $deadjadv_model, $noun2adj_model );
 
 sub get_required_share_files { return $MODEL_STATIC; }
+
+my $lemmatizer = Treex::Tool::EnglishMorpho::Lemmatizer->new();
 
 sub BUILD {
 
@@ -27,13 +29,13 @@ sub BUILD {
 }
 
 sub process_start {
-    $static_model = TranslationModel::Static::Model->new();
+    $static_model = Treex::Tool::TranslationModel::Static::Model->new();
     $static_model->load( Treex::Core::Resource::require_file_from_share($MODEL_STATIC) );
-    $deverbadj_model = TranslationModel::Derivative::EN2CS::Deverbal_adjectives->new( { base_model => $static_model } );
-    $deadjadv_model = TranslationModel::Derivative::EN2CS::Deadjectival_adverbs->new( { base_model => $static_model } );
-    $noun2adj_model = TranslationModel::Derivative::EN2CS::Nouns_to_adjectives->new( { base_model => $static_model } );
+    $deverbadj_model = Treex::Tool::TranslationModel::Derivative::EN2CS::Deverbal_adjectives->new( { base_model => $static_model } );
+    $deadjadv_model = Treex::Tool::TranslationModel::Derivative::EN2CS::Deadjectival_adverbs->new( { base_model => $static_model } );
+    $noun2adj_model = Treex::Tool::TranslationModel::Derivative::EN2CS::Nouns_to_adjectives->new( { base_model => $static_model } );
 
-    $tagger = Tagger::TnT->new;
+    $tagger = Treex::Tool::Tagger::TnT->new({model=>'data/models/tagger/tnt/en/wsj', tntargs=>''});
     return;
 }
 
@@ -49,7 +51,7 @@ sub process_tnode {
 
     # Try to translate it as two or more t-nodes.
     my @forms = split( /\-/, $node->t_lemma );
-    my @tags = @{ $tagger->analyze( \@forms ) };
+    my @tags = @{ $tagger->tag_sentence( \@forms ) };
 
     SUBWORD:
     while (@forms) {
@@ -59,7 +61,7 @@ sub process_tnode {
         # prepositions and determiners (that are not at the end of the compound) are not translated
         next SUBWORD if $tag =~ /^(IN|TO|DT)$/ && @forms;
 
-        my ($lemma) = EnglishMorpho::Lemmatizer::lemmatize( $form, $tag );
+        my ($lemma) = $lemmatizer->lemmatize( $form, $tag );
 
         my @translations = (
             $static_model->get_translations( lc($lemma) ),
@@ -83,7 +85,7 @@ sub process_tnode {
                     't_lemma'          => $1,
                     'pos'              => $2,
                     'origin'           => $tr->{source},
-                    'logprob'          => ProbUtils::Normalize::prob2binlog( $tr->{prob} ),
+                    'logprob'          => Treex::Tool::ML::NormalizeProb::prob2binlog( $tr->{prob} ),
                     'backward_logprob' => -1,
                 };
             }

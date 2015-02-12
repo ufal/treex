@@ -3,8 +3,8 @@ use Moose;
 use Treex::Core::Common;
 
 use Treex::Tool::Memcached::Memcached;
-use TranslationModel::Static::Model;
-use TranslationModel::Combined::Interpolated;
+use Treex::Tool::TranslationModel::Static::Model;
+use Treex::Tool::TranslationModel::Combined::Interpolated;
 
 extends 'Treex::Block::T2T::BaseTrLAddVariants';
 
@@ -22,10 +22,10 @@ override 'process_start' => sub {
         push( @interpolated_sequence, { model => $discr_model, weight => $self->discr_weight } );
     }
     
-    my $static_model   = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
+    my $static_model   = $self->load_model( Treex::Tool::TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
     push( @interpolated_sequence, { model => $static_model, weight => $self->static_weight } );
 
-    $self->_set_model( TranslationModel::Combined::Interpolated->new( { models => \@interpolated_sequence } ) );
+    $self->_set_model( Treex::Tool::TranslationModel::Combined::Interpolated->new( { models => \@interpolated_sequence } ) );
     
     return;
 };

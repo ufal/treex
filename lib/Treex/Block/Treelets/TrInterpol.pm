@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Tool::TranslationModel::TwoNode;
 use List::Pairwise qw(mapp);
-use ProbUtils::Normalize;
+use Treex::Tool::ML::NormalizeProb;
 extends 'Treex::Core::Block';
 
 has model_dir => (
@@ -68,7 +68,7 @@ sub process_ttree {
                 't_lemma' => $l,
                 'pos'     => $1,
                 'origin'  => $origin,
-                'logprob' => ProbUtils::Normalize::prob2binlog($score / $lsum),
+                'logprob' => Treex::Tool::ML::NormalizeProb::prob2binlog($score / $lsum),
             };
         }
         if (@lvar){
@@ -84,7 +84,7 @@ sub process_ttree {
             push @fvar, {
                 'formeme' => $formeme,
                 'origin'  => $origin,
-                'logprob' => ProbUtils::Normalize::prob2binlog($score / $fsum),
+                'logprob' => Treex::Tool::ML::NormalizeProb::prob2binlog($score / $fsum),
             };
         }
         if (@fvar){

@@ -54,7 +54,7 @@ __END__
 =item Treex::Block::T2T::EN2CS::TrNumbers
 
 Rules for translating English numbers to Czech, e.g. decimal point -> decimal comma.
-An alternative to TranslationModel::Derivative::EN2CS::Numbers
+An alternative to Treex::Tool::TranslationModel::Derivative::EN2CS::Numbers
 
 =back
 

@@ -24,7 +24,7 @@ Readonly my $MODEL_FILE => 'data/models/tecto_transfer/en2cs/prob_Ftd_given_Fsd_
 # Load more detailed model (describing valency of a parent lemma).
 # For example for English parent lemma "wait" and (its child) formeme "for+X"
 # the most probable Czech formeme is "na+4".
-use TranslationDict::Universal;
+use Treex::Tool::TranslationModel::Static::Universal;
 has _val_dict => ( is => 'rw' );
 
 sub get_required_share_files { 
@@ -34,7 +34,7 @@ sub get_required_share_files {
 sub BUILD {
     my $self = shift;
     my $model_file = Treex::Core::Resource::require_file_from_share( $MODEL_FILE, 'TrFRerank' );
-    $self->_set_val_dict( TranslationDict::Universal->new( { file => $model_file } ) );
+    $self->_set_val_dict( Treex::Tool::TranslationModel::Static::Universal->new( { file => $model_file } ) );
 }
 
 sub process_tnode {

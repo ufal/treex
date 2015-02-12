@@ -117,7 +117,7 @@ USAGE
     Loads model [file] to memcached.
     If file is already loaded, it does nothing.
     ./memcached.pl load \
-        TranslationModel::ML::Model 'model_type maxent' \
+        Treex::Tool::TranslationModel::ML::Model 'model_type maxent' \
         ...../tlemma_czeng12.maxent.10000.100.2_1.pls.gz
 
 ./memcached.pl process file

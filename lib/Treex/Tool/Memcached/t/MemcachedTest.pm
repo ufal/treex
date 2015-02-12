@@ -5,7 +5,7 @@ use warnings;
 
 use File::Basename;
 
-our $MODEL_PACKAGE = 'TranslationModel::ML::Model';
+our $MODEL_PACKAGE = 'Treex::Tool::TranslationModel::ML::Model';
 our $MODEL_PARAMS = '"model_type maxent"';
 our $MODEL_DIR = $ENV{'TMT_ROOT'} . '/share/data/models/translation/en2cs/';
 our $MODEL_BIG = $MODEL_DIR . 'tlemma_czeng12.maxent.10000.100.2_1/';

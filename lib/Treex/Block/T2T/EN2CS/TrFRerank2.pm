@@ -35,8 +35,9 @@ has max_variants => (
 has model => (
     is      => 'ro',
     isa     => 'Str',
-    default => '',
+    default => 'formeme_rerank_czeng10-new.taliP-1_2.0-100-5-0.03-0.static.pls.gz',
 );
+#formeme_rerank_czeng10-new.taliP-1_2.0-5-5-0.03-0.static.pls.gz
 
 # The actual model object
 has _model => ( is => 'rw' );
@@ -57,7 +58,7 @@ sub process_start {
     
     my $use_memcached = 0; # memcached slows the translation too much in this case; the models aren't big anyway 
     
-    $self->_set_model( $self->load_model( TranslationModel::Static::Model->new(), $self->model, $use_memcached ) );
+    $self->_set_model( $self->load_model( Treex::Tool::TranslationModel::Static::Model->new(), $self->model, $use_memcached ) );
     return;
 }
 

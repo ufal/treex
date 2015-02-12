@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 use AI::MaxEntropy;
 use AI::MaxEntropy::Model;
-use ProbUtils::Normalize;
+use Treex::Tool::ML::NormalizeProb;
 with 'Treex::Block::Filter::CzEng::Classifier';
 
 my ( $maxent, $model );
@@ -32,7 +32,7 @@ sub score
 {
     my $ok_score = $model->score( $_[1] => "ok" );
     my $x_score = $model->score( $_[1] => "x" );
-    return ( ProbUtils::Normalize::logscores2probs( $ok_score, $x_score ) )[ 0 ];
+    return ( Treex::Tool::ML::NormalizeProb::logscores2probs( $ok_score, $x_score ) )[ 0 ];
 }
 
 sub load

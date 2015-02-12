@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use TranslationModel::Static::Model;
+use Treex::Tool::TranslationModel::Static::Model;
 
 my $MODEL_STATIC = 'data/models/translation/en2cs/jointLF_czeng09.static.pls.slurp.gz';
 
@@ -15,7 +15,7 @@ sub get_required_share_files {
 
 sub process_start {
     my $self = shift;
-    $model = TranslationModel::Static::Model->new();
+    $model = Treex::Tool::TranslationModel::Static::Model->new();
     $model->load( Treex::Core::Resource::require_file_from_share($MODEL_STATIC) );
 
     return;

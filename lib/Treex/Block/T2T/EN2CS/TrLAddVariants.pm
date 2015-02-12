@@ -4,20 +4,20 @@ use Treex::Core::Common;
 
 extends 'Treex::Block::T2T::BaseTrLAddVariants';
 
-use TranslationModel::Static::Model;
+use Treex::Tool::TranslationModel::Static::Model;
 
-use TranslationModel::Derivative::EN2CS::Numbers;
-use TranslationModel::Derivative::EN2CS::Hyphen_compounds;
-use TranslationModel::Derivative::EN2CS::Deverbal_adjectives;
-use TranslationModel::Derivative::EN2CS::Deadjectival_adverbs;
-use TranslationModel::Derivative::EN2CS::Nouns_to_adjectives;
-use TranslationModel::Derivative::EN2CS::Verbs_to_nouns;
-use TranslationModel::Derivative::EN2CS::Prefixes;
-use TranslationModel::Derivative::EN2CS::Suffixes;
-use TranslationModel::Derivative::EN2CS::Transliterate;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Numbers;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Hyphen_compounds;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Deverbal_adjectives;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Deadjectival_adverbs;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Nouns_to_adjectives;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Verbs_to_nouns;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Prefixes;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Suffixes;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Transliterate;
 
-use TranslationModel::Combined::Backoff;
-use TranslationModel::Combined::Interpolated;
+use Treex::Tool::TranslationModel::Combined::Backoff;
+use Treex::Tool::TranslationModel::Combined::Interpolated;
 
 use Treex::Tool::Lexicon::CS;    # jen docasne, kvuli vylouceni nekonzistentnich tlemmat jako prorok#A
 
@@ -44,19 +44,19 @@ override 'process_start' => sub {
         my $discr_model = $self->load_model( $self->_model_factory->create_model($self->discr_type), $self->discr_model, $use_memcached );
         push( @interpolated_sequence, { model => $discr_model, weight => $self->discr_weight } );
     }
-    my $static_model   = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
-    my $humanlex_model = $self->load_model( TranslationModel::Static::Model->new(), $self->human_model,  0 );
+    my $static_model   = $self->load_model( Treex::Tool::TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
+    my $humanlex_model = $self->load_model( Treex::Tool::TranslationModel::Static::Model->new(), $self->human_model,  0 );
 
-    my $deverbadj_model = TranslationModel::Derivative::EN2CS::Deverbal_adjectives->new( { base_model => $static_model } );
-    my $deadjadv_model = TranslationModel::Derivative::EN2CS::Deadjectival_adverbs->new( { base_model => $static_model } );
-    my $noun2adj_model = TranslationModel::Derivative::EN2CS::Nouns_to_adjectives->new( { base_model => $static_model } );
-    my $verb2noun_model = TranslationModel::Derivative::EN2CS::Verbs_to_nouns->new( { base_model => $static_model } );
-    my $numbers_model = TranslationModel::Derivative::EN2CS::Numbers->new( { base_model => 'not needed' } );
-    my $compounds_model = TranslationModel::Derivative::EN2CS::Hyphen_compounds->new( { base_model => 'not needed', noun2adj_model => $noun2adj_model } );
-    my $prefixes_model = TranslationModel::Derivative::EN2CS::Prefixes->new( { base_model => $static_model } );
-    my $suffixes_model = TranslationModel::Derivative::EN2CS::Suffixes->new( { base_model => 'not needed' } );
-    my $translit_model = TranslationModel::Derivative::EN2CS::Transliterate->new( { base_model => 'not needed' } );
-    my $static_translit = TranslationModel::Combined::Backoff->new( { models => [ $static_model, $translit_model ] } );
+    my $deverbadj_model = Treex::Tool::TranslationModel::Derivative::EN2CS::Deverbal_adjectives->new( { base_model => $static_model } );
+    my $deadjadv_model = Treex::Tool::TranslationModel::Derivative::EN2CS::Deadjectival_adverbs->new( { base_model => $static_model } );
+    my $noun2adj_model = Treex::Tool::TranslationModel::Derivative::EN2CS::Nouns_to_adjectives->new( { base_model => $static_model } );
+    my $verb2noun_model = Treex::Tool::TranslationModel::Derivative::EN2CS::Verbs_to_nouns->new( { base_model => $static_model } );
+    my $numbers_model = Treex::Tool::TranslationModel::Derivative::EN2CS::Numbers->new( { base_model => 'not needed' } );
+    my $compounds_model = Treex::Tool::TranslationModel::Derivative::EN2CS::Hyphen_compounds->new( { base_model => 'not needed', noun2adj_model => $noun2adj_model } );
+    my $prefixes_model = Treex::Tool::TranslationModel::Derivative::EN2CS::Prefixes->new( { base_model => $static_model } );
+    my $suffixes_model = Treex::Tool::TranslationModel::Derivative::EN2CS::Suffixes->new( { base_model => 'not needed' } );
+    my $translit_model = Treex::Tool::TranslationModel::Derivative::EN2CS::Transliterate->new( { base_model => 'not needed' } );
+    my $static_translit = Treex::Tool::TranslationModel::Combined::Backoff->new( { models => [ $static_model, $translit_model ] } );
 
     # make interpolated model
     push(
@@ -73,12 +73,12 @@ override 'process_start' => sub {
         { model => $suffixes_model,  weight => 0.1 },
     );
 
-    #my $interpolated_model = TranslationModel::Combined::Interpolated->new( { models => \@interpolated_sequence } );
+    #my $interpolated_model = Treex::Tool::TranslationModel::Combined::Interpolated->new( { models => \@interpolated_sequence } );
     #$combined_model = $interpolated_model;
-    $self->_set_model( TranslationModel::Combined::Interpolated->new( { models => \@interpolated_sequence } ) );
+    $self->_set_model( Treex::Tool::TranslationModel::Combined::Interpolated->new( { models => \@interpolated_sequence } ) );
 
     #my @backoff_sequence = ( $interpolated_model, @derivative_models );
-    #my $combined_model = TranslationModel::Combined::Backoff->new( { models => \@backoff_sequence } );
+    #my $combined_model = Treex::Tool::TranslationModel::Combined::Backoff->new( { models => \@backoff_sequence } );
 
     return;
 };

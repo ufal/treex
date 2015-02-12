@@ -5,14 +5,14 @@ use Treex::Core::Resource;
 
 extends 'Treex::Core::Block';
 
-use ProbUtils::Normalize;
+use Treex::Tool::ML::NormalizeProb;
 use Moose::Util::TypeConstraints;
 
-use TranslationModel::Factory;
-use TranslationModel::Static::Model;
+use Treex::Tool::TranslationModel::Factory;
+use Treex::Tool::TranslationModel::Static::Model;
 
 #TODO: Probably fix this
-use TranslationModel::MaxEnt::FeatureExt::EN2CS;
+use Treex::Tool::TranslationModel::MaxEnt::FeatureExt::EN2CS;
 
 has model_dir => (
     is            => 'ro',
@@ -53,8 +53,8 @@ has [qw(trg_lemmas trg_formemes)] => (
 
 has '_model_factory' => (
     is => 'ro',
-    isa => 'TranslationModel::Factory',
-    default => sub { return TranslationModel::Factory->new(); },
+    isa => 'Treex::Tool::TranslationModel::Factory',
+    default => sub { return Treex::Tool::TranslationModel::Factory->new(); },
 );
 
 my ( $static_model, $max_variants );
@@ -72,7 +72,7 @@ sub process_start {
     # Let's turn off memcached for now.
     my $use_memcached = 0;#Treex::Tool::Memcached::Memcached::get_memcached_hostname();
 
-    $static_model   = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
+    $static_model   = $self->load_model( Treex::Tool::TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
 
     return;
 }
@@ -118,7 +118,7 @@ sub process_tnode {
 
     if ( my $ja_tnode = $cs_tnode->src_tnode ) {
 
-        my $features_hash_rf = TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode( $ja_tnode, $self->maxent_features_version );
+        my $features_hash_rf = Treex::Tool::TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode( $ja_tnode, $self->maxent_features_version );
 
         #$features_hash_rf->{domain} = $self->domain if $self->domain;
 
@@ -180,7 +180,7 @@ sub process_tnode {
                         {   't_lemma' => $1,
                             #'pos'     => $2,
                             'origin'  => $_->{source},
-                            'logprob' => ProbUtils::Normalize::prob2binlog( $_->{prob} ),
+                            'logprob' => Treex::Tool::ML::NormalizeProb::prob2binlog( $_->{prob} ),
                             'feat_weights' => $_->{feat_weights},
 
                             # 'backward_logprob' => _logprob( $_->{en_given_cs}, ),

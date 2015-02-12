@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';
 
-use TranslationModel::Static::Model;
+use Treex::Tool::TranslationModel::Static::Model;
 use Treex::Block::Treelets::SrcFeatures;
 
 has model_dir => (
@@ -40,7 +40,7 @@ sub load_model {
 sub process_start {
     my ($self) = @_;
     $self->SUPER::process_start();
-    $static = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model );
+    $static = $self->load_model( Treex::Tool::TranslationModel::Static::Model->new(), $self->static_model );
     $src_feature_extractor = Treex::Block::Treelets::SrcFeatures->new();
     $src_feature_extractor->_set_static($static);
     return;

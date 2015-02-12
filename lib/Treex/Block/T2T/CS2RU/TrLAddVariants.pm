@@ -4,11 +4,11 @@ use Treex::Core::Common;
 use Treex::Core::Resource;
 extends 'Treex::Core::Block';
 
-use TranslationModel::Static::Model;
-use TranslationModel::Combined::Backoff;
-use TranslationModel::Derivative::CS2RU::Transliterate;
-use TranslationModel::Derivative::CS2RU::ReflexiveSja;
-use ProbUtils::Normalize;
+use Treex::Tool::TranslationModel::Static::Model;
+use Treex::Tool::TranslationModel::Combined::Backoff;
+use Treex::Tool::TranslationModel::Derivative::CS2RU::Transliterate;
+use Treex::Tool::TranslationModel::Derivative::CS2RU::ReflexiveSja;
+use Treex::Tool::ML::NormalizeProb;
 
 has model_dir => (
     is            => 'ro',
@@ -38,10 +38,10 @@ sub load_model {
 sub process_start {
     my ($self) = @_;
     $self->SUPER::process_start();
-    my $static = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model );
-    my $reflexive = TranslationModel::Derivative::CS2RU::ReflexiveSja->new( { base_model => $static } );
-    my $translit = TranslationModel::Derivative::CS2RU::Transliterate->new( { base_model => 'not needed' } );
-    $combined_model = TranslationModel::Combined::Backoff->new( { models => [ $static, $reflexive, $translit ] } );
+    my $static = $self->load_model( Treex::Tool::TranslationModel::Static::Model->new(), $self->static_model );
+    my $reflexive = Treex::Tool::TranslationModel::Derivative::CS2RU::ReflexiveSja->new( { base_model => $static } );
+    my $translit = Treex::Tool::TranslationModel::Derivative::CS2RU::Transliterate->new( { base_model => 'not needed' } );
+    $combined_model = Treex::Tool::TranslationModel::Combined::Backoff->new( { models => [ $static, $reflexive, $translit ] } );
     return;
 }
 
@@ -76,7 +76,7 @@ sub process_tnode {
                 [   map {
                         {   't_lemma' => $_->{label},
                             'origin'  => $_->{source},
-                            'logprob' => ProbUtils::Normalize::prob2binlog( $_->{prob} ),
+                            'logprob' => Treex::Tool::ML::NormalizeProb::prob2binlog( $_->{prob} ),
                         }
                         } @translations
                 ]

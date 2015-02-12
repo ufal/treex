@@ -325,16 +325,16 @@ sub get_class_from_filename {
     my $required_file = shift;
 
     if ( $required_file =~ /maxent/ ) {
-        return ('TranslationModel::ML::Model', 'model_type maxent' );
+        return ('Treex::Tool::TranslationModel::ML::Model', 'model_type maxent' );
     }
     elsif ( $required_file =~ /vw/ ) {
-        return ('TranslationModel::ML::Model', 'model_type vw' );
+        return ('Treex::Tool::TranslationModel::ML::Model', 'model_type vw' );
     }
     elsif ( $required_file =~ /\.nb\./ ) {
-        return ('TranslationModel::NaiveBayes::Model', '');
+        return ('Treex::Tool::TranslationModel::NaiveBayes::Model', '');
     }
     elsif ( $required_file =~ /\.static\./ ) {
-        return ('TranslationModel::Static::Model', '');
+        return ('Treex::Tool::TranslationModel::Static::Model', '');
     }
 
     return;

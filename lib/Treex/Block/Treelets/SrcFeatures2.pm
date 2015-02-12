@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use TranslationModel::Static::Model;
+use Treex::Tool::TranslationModel::Static::Model;
 
 # TODO
 # has substitute_pnom => (
@@ -45,7 +45,7 @@ sub load_model {
 sub process_start {
     my ($self) = @_;
     $self->SUPER::process_start();
-    $static = $self->load_model( TranslationModel::Static::Model->new(), $self->static_model );
+    $static = $self->load_model( Treex::Tool::TranslationModel::Static::Model->new(), $self->static_model );
     return;
 }
 

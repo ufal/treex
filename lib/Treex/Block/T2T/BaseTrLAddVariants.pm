@@ -5,10 +5,10 @@ use Treex::Core::Resource;
 
 extends 'Treex::Core::Block';
 
-use ProbUtils::Normalize;
+use Treex::Tool::ML::NormalizeProb;
 use Moose::Util::TypeConstraints;
 
-use TranslationModel::Factory;
+use Treex::Tool::TranslationModel::Factory;
 
 use Treex::Tool::TranslationModel::Features::Standard;
 
@@ -69,8 +69,8 @@ has domain => (
 
 has '_model_factory' => (
     is => 'ro',
-    isa => 'TranslationModel::Factory',
-    default => sub { return TranslationModel::Factory->new(); },
+    isa => 'Treex::Tool::TranslationModel::Factory',
+    default => sub { return Treex::Tool::TranslationModel::Factory->new(); },
 );
 
 has max_variants => (
@@ -199,7 +199,7 @@ sub process_tnode {
                         {   't_lemma' => $1,
                             'pos'     => $2 ne "" ? $2 : "x",
                             'origin'  => $_->{source},
-                            'logprob' => ProbUtils::Normalize::prob2binlog( $_->{prob} ),
+                            'logprob' => Treex::Tool::ML::NormalizeProb::prob2binlog( $_->{prob} ),
                             'feat_weights' => $_->{feat_weights},
 
                             # 'backward_logprob' => _logprob( $_->{en_given_cs}, ),

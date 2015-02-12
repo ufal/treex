@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 use utf8;
 
-use TranslationModel::Static::Model;
+use Treex::Tool::TranslationModel::Static::Model;
 use Treex::Core::Resource;
 use Data::Dumper;
 
@@ -14,7 +14,7 @@ sub BUILD {
     my ($self) = @_;
 
     if (!defined $model) {
-        $model = TranslationModel::Static::Model->new();
+        $model = Treex::Tool::TranslationModel::Static::Model->new();
         $model->load(
             Treex::Core::Resource::require_file_from_share($model_file));
     }

@@ -1,6 +1,6 @@
 package Treex::Block::T2T::EN2CS::TrFAddVariants;
 use Moose;
-use TranslationModel::MaxEnt::FeatureExt::EN2CS;
+use Treex::Tool::TranslationModel::MaxEnt::FeatureExt::EN2CS;
 extends 'Treex::Block::T2T::TrFAddVariants';
 
 has '+model_dir' => ( default => 'data/models/translation/en2cs' );
@@ -28,7 +28,7 @@ override 'can_be_translated_as' => sub {
 
 override 'features_from_src_tnode' => sub {
     my ($self, $src_tnode) = @_;
-    return TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode($src_tnode, $self->maxent_features_version);
+    return Treex::Tool::TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode($src_tnode, $self->maxent_features_version);
 };
 
 1;
