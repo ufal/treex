@@ -1,4 +1,4 @@
-package Treex::Block::T2T::EN2CS::TrLFTreeViterbi;
+package Treex::Block::T2T::SelectCompatibleTlemmaFormeme;
 
 use Moose;
 use Treex::Core::Common;
@@ -14,10 +14,10 @@ sub process_tnode {
         my $found = 0;
         foreach my $tm_formeme (@$tm_formemes) {
             if ( $self->compatible( $tm_lemma->{pos}, $tm_formeme->{formeme} ) ) {
-                $tnode->set_t_lemma( $tm_lemma->t_lemma );
-                $tnode->set_t_lemma_origin( $tm_lemma->origin . '|1st-compatible' );
-                $tnode->set_formeme( $tm_formeme->formeme );
-                $tnode->set_formeme_origin( $tm_formeme->origin . '|1st-compatible' );
+                $tnode->set_t_lemma( $tm_lemma->{t_lemma} );
+                $tnode->set_t_lemma_origin( $tm_lemma->{origin} . '|1st-compatible' );
+                $tnode->set_formeme( $tm_formeme->{formeme} );
+                $tnode->set_formeme_origin( $tm_formeme->{origin} . '|1st-compatible' );
                 $found = 1;
                 last;
             }
@@ -26,21 +26,19 @@ sub process_tnode {
     }
 }
 
-
 sub compatible {
-    my ($self, $pos, $formeme) = @_;
-    
-    return 1 if ($pos eq 'verb' and $formeme =~ /^v/);
-    return 1 if ($pos =~ /^(noun|adj|num)$/ and $formeme =~ /^n/);
-    return 1 if ($pos =~ /^(adj|num)$/ and $formeme =~ /^adj/);
-    return 1 if ($pos eq 'adv' and $formeme =~ /^adv/);
-    return 1 if ($pos =~ /^(conj|part|int|punc|sym)$/ and $formeme eq 'x' );
-    
+    my ( $self, $pos, $formeme ) = @_;
+
+    return 1 if ( $pos eq 'verb'                       and $formeme =~ /^v/ );
+    return 1 if ( $pos =~ /^(noun|adj|num)$/           and $formeme =~ /^n/ );
+    return 1 if ( $pos =~ /^(adj|num)$/                and $formeme =~ /^adj/ );
+    return 1 if ( $pos eq 'adv'                        and $formeme =~ /^adv/ );
+    return 1 if ( $pos =~ /^(conj|part|int|punc|sym)$/ and $formeme eq 'x' );
+
     return 0;
 }
 
 1;
-
 
 __END__
 
