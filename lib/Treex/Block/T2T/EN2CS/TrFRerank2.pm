@@ -32,12 +32,13 @@ has max_variants => (
 );
 
 # The model file name
+# TODO There are many other formeme_rerank* models in the share, which may give better results.
+# This one was chosen randomly.
 has model => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'formeme_rerank_czeng10-new.taliP-1_2.0-100-5-0.03-0.static.pls.gz',
+    default => 'formeme_rerank_czeng10-new.taliP-1_2.0-5-5-0.03-0.static.pls.gz',
 );
-#formeme_rerank_czeng10-new.taliP-1_2.0-5-5-0.03-0.static.pls.gz
 
 # The actual model object
 has _model => ( is => 'rw' );
