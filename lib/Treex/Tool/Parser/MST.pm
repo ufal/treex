@@ -62,7 +62,7 @@ sub initialize {
     # encoding given as arg 2 to server.PerlParser.
     $SIG{PIPE} = 'IGNORE';                                   # don't die if parser gets killed
     my ( $reader, $writer, $pid )
-        = ProcessUtils::bipipe_noshell( ":encoding(iso-8859-2)", @command );
+        = Treex::Tool::ProcessUtils::bipipe_noshell( ":encoding(iso-8859-2)", @command );
 
 
     $self->{reader} = $reader;
