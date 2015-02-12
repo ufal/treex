@@ -29,6 +29,52 @@ sub bipipe {
     return ( $reader, $writer, $pid );
 }
 
+# Open a bipipe and set binmode. Command line arguments are passed in @_ 
+# This is useful on Windows because the returned $pid would be "windows cmd (shell) pid" otherwise, 
+# not pid of the executed program, which we need to kill at the end (on Windows).     
+sub bipipe_noshell {
+
+    my $binmode = shift;
+    #$binmode param is mandatory in this case
+    #$binmode = ":utf8" if !defined $binmode;
+    
+    my $cmd = "@_";
+
+    my $reader;
+    my $writer;
+    my $pid = open2( $reader, $writer, @_ );
+    log_fatal "Failed to open bipipe to: $cmd" if !$pid;
+    $writer->autoflush(1);
+    $reader->autoflush(1);
+
+    binmode( $reader, $binmode );
+    binmode( $writer, $binmode );
+
+    return ( $reader, $writer, $pid );
+}
+
+# Bipipe that reads both the child's STDOUT and the child's STDERR
+# (fix for Windows as with bipipe_noshell). 
+sub verbose_bipipe_noshell {
+
+    my ($binmode, @cmd) = @_;
+
+    my $reader;
+    my $writer;
+    
+    # open3: if err stream is false, connects it to output.
+    my $pid = open3( $writer, $reader, 0 , @cmd );
+    log_fatal "Failed to open verbose_bipipe to: @cmd" if !$pid;
+
+    $writer->autoflush(1);
+    $reader->autoflush(1);
+    binmode( $reader, $binmode );
+    binmode( $writer, $binmode );
+
+    return ( $reader, $writer, $pid );
+}
+
+
 # Open a tripipe and set binmode to utf8.
 sub verbose_bipipe {
     my $cmd     = shift;
