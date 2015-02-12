@@ -54,11 +54,12 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::T2A::EN::AddAuxVerbInter
+Treex::Block::T2A::EN::AddAuxVerbThereIs
 
 =head1 DESCRIPTION
 
-Add the auxiliary 'do' for interrogative verbs.
+Add the auxiliary 'be' for 'there' if it is marked as a verb
+(expletive 'there is').
 
 =head1 AUTHORS 
 
