@@ -5,10 +5,16 @@ use strict;
 
 use Data::Dumper;
 
-use Test::More tests => 20;
+use Test::More;
 use Test::Deep;
 
 BEGIN {
+    if (!$ENV{AUTHOR_TESTING}){
+        Test::More::plan( skip_all => 'these tests require export AUTHOR_TESTING=1' )
+    } else {
+        Test::More::plan( tests => 20 );
+    }
+
     use_ok( 'Treex::Tool::TranslationModel::Static::RelFreq::Learner' );
     use_ok( 'Treex::Tool::TranslationModel::Static::Model' );
 }
