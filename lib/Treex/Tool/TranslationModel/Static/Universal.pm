@@ -289,7 +289,7 @@ Loads a dictionary from a gzipped Perl Storable file
 (L<http://search.cpan.org/perldoc?Storable>).
 
 
-=item my $dict = Treex::Tool::TranslationModel::Static::Universal->new({file=E>"$path_to/file.tsv", ...})
+=item my $dict = Treex::Tool::TranslationModel::Static::Universal->new({file=>"$path_to/file.tsv", ...})
 
 Loads a dictionary from a *.tsv files. This form of constructor is used mainly
 for building new *pls.gz file (by subsequent L<save_to_storable> method call).  
@@ -300,7 +300,7 @@ For example:
 
  my $dict = Treex::Tool::TranslationModel::Static::Universal->new({
      file    => "$path_to/file.tsv",
-     columns => [qw(main_key value prob)]     
+     columns => [qw(main_key value prob)]
  });
 
 This is the minimalistic dictionary structure (no aux keys), so columns
