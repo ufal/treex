@@ -17,38 +17,63 @@ sub process_tnode {
     # finite clauses
     if ( $tnode->formeme =~ /v:*.fin/ ) {
 
-        # skip questions and orders, for now (TODO fix them)
-        return if ( ( $tnode->sentmod // '' ) ne 'enunc' );
+        # skip orders, for now (TODO fix them)
+        return if ( ( $tnode->sentmod // '' ) !~ /enunc|inter/ );
 
         # Maintain SVO order: move subjects and objects 
         my @subjects = _grep_formeme( 'n:subj',     \@children );
         my @objects  = _grep_formeme( 'n:obj[12]?', \@children );
 
-        # Bla bla bla, said Mr. Brown is not SVO, but keep it
-        if ( ( $tnode->t_lemma // '' ) ne 'say' ){
-        foreach my $subject ( reverse @subjects ) {
-            $self->shift_before_node( $subject, $tnode ) if ( !$subject->precedes($tnode) );
-        }
-        }
-        my $last_before_obj = ( !@subjects or $subjects[-1]->precedes($tnode) ) ? $tnode : $subjects[-1];
-        foreach my $object ( reverse @objects ) {
-            $self->shift_after_node( $object, $last_before_obj ) if ( $object->precedes($last_before_obj) );
-        }
+        if ($tnode->sentmod eq 'enunc') {
+            # Bla bla bla, said Mr. Brown is not SVO, but keep it
+            if ( ( $tnode->t_lemma // '' ) ne 'say' ){
+                foreach my $subject ( reverse @subjects ) {
+                    $self->shift_before_node( $subject, $tnode ) if ( !$subject->precedes($tnode) );
+                }
+            }
+            my $last_before_obj = ( !@subjects or $subjects[-1]->precedes($tnode) ) ? $tnode : $subjects[-1];
+            foreach my $object ( reverse @objects ) {
+                $self->shift_after_node( $object, $last_before_obj ) if ( $object->precedes($last_before_obj) );
+            }
 
-        # Let at most one element precede the subject
-        my @prec = grep { $_->precedes($tnode) } @children;
-        my @prec_nosubj = _grep_formeme( '(?!(n:subj)).*', \@prec );
-        my $last_obj = @objects ? $objects[-1] : $tnode;
-        
-        my $first_nosubj = shift @prec_nosubj;
-        # Allow two introductory elements in exceptional cases
-        if ( $first_nosubj and $first_nosubj->is_leaf and ( ($first_nosubj->t_lemma // '') =~ /^(then|further|and)$/ ) ){
-            shift @prec_nosubj;
-        }
-        foreach my $nosubj (@prec_nosubj) {
-            $self->shift_after_node( $nosubj, $last_obj );
+            # Let at most one element precede the subject
+            my @prec = grep { $_->precedes($tnode) } @children;
+            my @prec_nosubj = _grep_formeme( '(?!(n:subj)).*', \@prec );
+            my $last_obj = @objects ? $objects[-1] : $tnode;
+
+            my $first_nosubj = shift @prec_nosubj;
+            # Allow two introductory elements in exceptional cases
+            if ( $first_nosubj and $first_nosubj->is_leaf and ( ($first_nosubj->t_lemma // '') =~ /^(then|further|and)$/ ) ){
+                shift @prec_nosubj;
+            }
+            foreach my $nosubj (@prec_nosubj) {
+                $self->shift_after_node( $nosubj, $last_obj );
+            }
+        } elsif ($tnode->sentmod eq 'inter') {
+            # objects
+            foreach my $object ( reverse @objects ) {
+                $self->shift_after_node( $object, $tnode ) if ( $object->precedes($tnode) );
+            }
+            # subjects
+            # (later moved again in SbAuxvReorder)
+            foreach my $subject ( reverse @subjects ) {
+                $self->shift_after_node( $subject, $tnode );
+            }
+            # Let at most one element precede the verb
+            my @prec = grep { $_->precedes($tnode) } @children;
+            shift @prec;
+            my $last_obj = @objects ? $objects[-1] : $tnode;
+            foreach my $wrongprec (reverse @prec) {
+                $self->shift_after_node( $wrongprec, $last_obj );
+            }
+            # wh*
+            my @whs = grep { $_->t_lemma =~ /^wh(at|ich|om?|ere|en|y)|how$/ } @children;
+            foreach my $wh (@whs) {
+                $self->shift_before_node( $wh, $tnode );
+            }
         }
     }
+    
     return;
 }
 
