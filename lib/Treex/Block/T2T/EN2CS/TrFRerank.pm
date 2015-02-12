@@ -19,7 +19,7 @@ has max_variants => (
         . ' Default value is 0 which means - do not throw away any variants.',
 );
 
-Readonly my $MODEL_FILE => 'data/models/tecto_transfer/en2cs/prob_Ftd_given_Fsd_Lsg.pls.gz';
+Readonly my $MODEL_FILE => 'data/models/tecto_transfer/en2cs/prob_Ftd_given_Fsd_Lsg_treex_tool.pls.gz';
 
 # Load more detailed model (describing valency of a parent lemma).
 # For example for English parent lemma "wait" and (its child) formeme "for+X"
