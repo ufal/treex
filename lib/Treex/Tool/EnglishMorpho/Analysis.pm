@@ -106,7 +106,7 @@ sub get_possible_tags {    ## no critic (Subroutines::ProhibitExcessComplexity) 
     # 1. check my_dict for closed-class words. If yes, this is the last step.
     my $dict_tags = $self->my_dict->{$lowerform};
     if ($dict_tags){
-        @possible = reverse sort keys %{$dict_tags};
+        @possible = keys %{$dict_tags};
         if ( $lowerform ne $wordform ) {
             push @possible, qw(NNP);
         }
@@ -116,7 +116,7 @@ sub get_possible_tags {    ## no critic (Subroutines::ProhibitExcessComplexity) 
     # 2a. check big_dict
     $dict_tags = $self->big_dict->{$lowerform};
     if ($dict_tags){
-        @possible = reverse sort keys %{$dict_tags};
+        @possible = keys %{$dict_tags};
         if ( $lowerform ne $wordform ) {
             push @possible, qw(NNP NNPS);
         }
@@ -127,27 +127,17 @@ sub get_possible_tags {    ## no critic (Subroutines::ProhibitExcessComplexity) 
         push @possible, qw(FW JJ NN NNS RB);
 
         # comparative
-        if (( $lowerform =~ /er$/ )
-            or ( $lowerform =~ /er-/ )
-            or
-            ( $lowerform =~ /more-/ ) or ( $lowerform =~ /less-/ )
-            )
-        {
+        if ($lowerform =~ /er($|-)|^more-|^less-/) {
             push @possible, qw(JJR RBR);
         }    
         
         # superlative
-        if (( $lowerform =~ /est$/ )
-            or ( $lowerform =~ /est-/ )
-            or
-            ( $lowerform =~ /most-/ ) or ( $lowerform =~ /least-/ )
-            )
-        {
+        if ($lowerform =~ /est($|-)|^most-|^least/) {
             push @possible, qw(JJS RBS);
         }    
         
         # -ing form
-        if ( ( $lowerform =~ /ing$/ ) or ( $lowerform =~ /[^aeiouy]in$/ ) ) {
+        if ( $lowerform =~ /ing$|[^aeiouy]in$/ ) {
             push @possible, qw(VBG);
         }
         
@@ -174,7 +164,7 @@ sub get_possible_tags {    ## no critic (Subroutines::ProhibitExcessComplexity) 
         }
         
         # numbers
-        if ( ( $lowerform =~ /[-0-9]+/ ) or ( $lowerform =~ /^[ixvcmd\.]+$/ ) ) {
+        if ( $lowerform =~ /[-0-9]+/ or $lowerform =~ /^[ixvcmd\.]+$/ ) {
             push @possible, qw(CD);
         }
     }
