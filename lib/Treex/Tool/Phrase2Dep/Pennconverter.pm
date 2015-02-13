@@ -2,7 +2,6 @@ package Treex::Tool::Phrase2Dep::Pennconverter;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::ProcessUtils;
-use File::Java;
 
 has after_rich_np => (
     is            => 'ro',
@@ -46,8 +45,7 @@ sub BUILD {
     #  -splitSmallClauses=false -name=false     -suffix=false"
     $options .= ' -conll2007';
 
-    my $javabin = File::Java->javabin();
-    my $command = "$javabin -jar $jar $options 2>/dev/null";
+    my $command = "java -jar $jar $options 2>/dev/null";
     my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::bipipe($command);
     $self->_set_reader($reader);
     $self->_set_writer($writer);

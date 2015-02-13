@@ -3,7 +3,6 @@ package Treex::Tool::ML::MLProcessPiped;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;
-use File::Java;
 use Treex::Tool::IO::Arff;
 use Treex::Tool::ProcessUtils;
 
@@ -70,7 +69,7 @@ sub BUILD {
     $self->_set_model( Treex::Core::Resource::require_file_from_share( $self->model ) );
     
     # run ML-Process, loading the model
-    my $mlprocess = File::Java->path_arg( $self->ml_process_jar );
+    my $mlprocess = $self->ml_process_jar;
     my @params =  
         ('java', '-Xmx' . $self->memory,
         '-cp', $mlprocess, 'en_deep.mlprocess.simple.Simple',

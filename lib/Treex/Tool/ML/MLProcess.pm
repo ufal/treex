@@ -3,7 +3,6 @@ package Treex::Tool::ML::MLProcess;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;
-use File::Java;
 use File::Temp ();
 use Treex::Tool::IO::Arff;
 use autodie;
@@ -95,7 +94,7 @@ sub run {
     $self->_write_file_contents( $plan_file, $plan );
 
     # run the ml-process
-    my $mlprocess = File::Java->path_arg( $self->ml_process_jar );
+    my $mlprocess = $self->ml_process_jar;
     my $command   = 'java '
         . ' -Xmx' . $self->memory
         . ' -jar ' . $mlprocess

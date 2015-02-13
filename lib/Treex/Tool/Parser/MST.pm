@@ -37,7 +37,6 @@ sub initialize {
 	my @command;
 
     # TODO all paths/dirs have to be formatted according to platform
-    # $model = File::Java->path_arg( $model );
 	if ($self->version eq '0.4.3b') {
 	    @command    = ('java'
 	        , "-Xmx" . $self->memory

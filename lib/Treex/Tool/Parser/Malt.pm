@@ -3,7 +3,6 @@ use Moose;
 use Treex::Core::Common;
 
 use Treex::Tool::ProcessUtils;
-use File::Java;
 use File::Temp qw /tempdir/;
 
 has model      => ( isa => 'Str', is => 'rw', required => 1);

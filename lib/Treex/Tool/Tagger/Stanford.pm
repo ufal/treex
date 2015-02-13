@@ -2,7 +2,6 @@ package Treex::Tool::Tagger::Stanford;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;
-use File::Java;
 use Treex::Tool::ProcessUtils;
 with 'Treex::Tool::Tagger::Role';
 
@@ -37,9 +36,9 @@ sub BUILD {
     $self->_set_stanford_tagger_jar( Treex::Core::Resource::require_file_from_share( $self->stanford_tagger_jar ) );
     $self->_set_model( Treex::Core::Resource::require_file_from_share( $self->model ) );
 
-    my $tagger  = File::Java->path_arg( $self->stanford_tagger_jar );
-    my $command = 'java ' . ' -Xmx' . $self->memory
-        . ' -cp ' . $tagger . ' edu.stanford.nlp.tagger.maxent.MaxentTagger '
+    my $tagger  = $self->stanford_tagger_jar;
+    my $command = 'java -Xmx' . $self->memory
+        . " -cp $tagger edu.stanford.nlp.tagger.maxent.MaxentTagger "
         . ' -model ' . $self->model
         . ' -textFile  STDIN '
         . ' -tokenize false '

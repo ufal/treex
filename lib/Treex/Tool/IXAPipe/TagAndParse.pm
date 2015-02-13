@@ -2,7 +2,6 @@ package Treex::Tool::IXAPipe::TagAndParse;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;
-use File::Java;
 use File::Temp qw/ tempdir /;
 use Treex::Tool::ProcessUtils;
 use IPC::Open3;
@@ -75,8 +74,8 @@ sub BUILD {
 
 sub launch {
     my ($self) = @_;
-    my $tagger  = File::Java->path_arg( $self->tagger_jar );
-    my $parser  = File::Java->path_arg( $self->parser_jar );
+    my $tagger  = $self->tagger_jar;
+    my $parser  = $self->parser_jar;
     my $command = 'java -Xmx' . $self->tagger_memory
         . " -jar $tagger tag 2>/dev/null" # suppress the rather verbose tagger output
         . ' | java -Xmx' . $self->parser_memory
