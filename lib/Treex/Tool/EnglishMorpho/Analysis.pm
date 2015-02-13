@@ -84,88 +84,95 @@ sub get_possible_tags {    ## no critic (Subroutines::ProhibitExcessComplexity) 
     my $self      = shift;
     my $wordform  = shift;
     my $lowerform = lc($wordform);
-
-    my %muj_slovnik    = %{ $self->my_dict };
-    my %big_slovnik    = %{ $self->big_dict };
-    my %past_slovesa   = %{ $self->preterites };
-    my %partic_slovesa = %{ $self->participles };
-
     my @possible;
 
-    if ( exists $muj_slovnik{$lowerform} ) {
-        foreach my $tag ( keys %{ $muj_slovnik{$lowerform} } ) {
-            push @possible, $tag;
-        }
+    # 1. check my_dict for closed-class words. If yes, this is the last step.
+    my $dict_tags = $self->my_dict->{$lowerform};
+    if ($dict_tags){
+        @possible = reverse sort keys %{$dict_tags};
         if ( $lowerform ne $wordform ) {
             push @possible, qw(NNP);
         }
+        return @possible;
     }
-    else {    # neni ve slovniku uzavrenych trid
-        if ( exists $big_slovnik{$lowerform} ) {
-            foreach my $tag ( keys %{ $big_slovnik{$lowerform} } ) {
-                push @possible, $tag;
-            }
-            if ( $lowerform ne $wordform ) {
-                push @possible, qw(NNP NNPS);
-            }
+    
+    # 2a. check big_dict
+    $dict_tags = $self->big_dict->{$lowerform};
+    if ($dict_tags){
+        @possible = reverse sort keys %{$dict_tags};
+        if ( $lowerform ne $wordform ) {
+            push @possible, qw(NNP NNPS);
+        }
+    } 
+    
+    # 2b apply morpho guesses, recall is more important than precision
+    else {
+        push @possible, qw(FW JJ NN NNS RB);
+
+        # comparative
+        if (( $lowerform =~ /er$/ )
+            or ( $lowerform =~ /er-/ )
+            or
+            ( $lowerform =~ /more-/ ) or ( $lowerform =~ /less-/ )
+            )
+        {
+            push @possible, qw(JJR RBR);
+        }    
+        
+        # superlative
+        if (( $lowerform =~ /est$/ )
+            or ( $lowerform =~ /est-/ )
+            or
+            ( $lowerform =~ /most-/ ) or ( $lowerform =~ /least-/ )
+            )
+        {
+            push @possible, qw(JJS RBS);
+        }    
+        
+        # -ing form
+        if ( ( $lowerform =~ /ing$/ ) or ( $lowerform =~ /[^aeiouy]in$/ ) ) {
+            push @possible, qw(VBG);
+        }
+        
+        # third person
+        if ( $lowerform =~ /[^s]s$/ ) {
+            push @possible, qw(VBZ);
         }
         else {
-            push @possible, qw(FW JJ NN NNS RB);
-
-            if (( $lowerform =~ /er$/ )
-                or ( $lowerform =~ /er-/ )
-                or
-                ( $lowerform =~ /more-/ ) or ( $lowerform =~ /less-/ )
-                )
-            {
-                push @possible, qw(JJR RBR);
-
-            }    # comparative
-            if (( $lowerform =~ /est$/ )
-                or ( $lowerform =~ /est-/ )
-                or
-                ( $lowerform =~ /most-/ ) or ( $lowerform =~ /least-/ )
-                )
-            {
-                push @possible, qw(JJS RBS);
-            }    # superlative
-            if ( ( $lowerform =~ /ing$/ ) or ( $lowerform =~ /[^aeiouy]in$/ ) ) {
-                push @possible, qw(VBG);
-            }
-            if ( $lowerform =~ /[^s]s$/ ) {
-                push @possible, qw(VBZ);
-            }    # 3. os
-            else {
-                push @possible, qw(VB VBP);
-            }    # non-3. os
-
-            if ( $lowerform ne $wordform ) {
-                push @possible, qw(NNP NNPS);
-            }
-            elsif ( $lowerform =~ /^[0-9']/ ) {
-                push @possible, qw(NNP);
-            }
-            if (( $lowerform =~ /[^a-zA-Z0-9]+/ )
-                or
-                ( $lowerform =~ /^&.*;$/ )
-                )
-            {
-                push @possible, qw(SYM);
-            }
-            if ( ( $lowerform =~ /[-0-9]+/ ) or ( $lowerform =~ /^[ixvcmd\.]+$/ ) ) {
-                push @possible, qw(CD);
-            }
+            push @possible, qw(VB VBP);
         }
-        if ( exists $past_slovesa{$lowerform} ) {
-            push @possible, qw(VBD);
+        
+        # capital-letter (proper nouns and adjactives)
+        if ( $lowerform ne $wordform ) {
+            push @possible, qw(NNP NNPS);
+        }    
+        elsif ( $lowerform =~ /^[0-9']/ ) {
+            push @possible, qw(NNP);
         }
-        if ( exists $partic_slovesa{$lowerform} ) {
-            push @possible, qw(VBN);
+        
+        #  symbols
+        if ($lowerform =~ /[^a-zA-Z0-9]+/ or $lowerform =~ /^&.*;$/ )
+        {
+            push @possible, qw(SYM);
         }
-        if ( $lowerform =~ /ed$/ ) {
-            push @possible, qw(VBD VBN);
+        
+        # numbers
+        if ( ( $lowerform =~ /[-0-9]+/ ) or ( $lowerform =~ /^[ixvcmd\.]+$/ ) ) {
+            push @possible, qw(CD);
         }
     }
+    
+    # 3. check irregular verbs
+    if ( $self->preterites->{$lowerform} ) {
+        push @possible, qw(VBD);
+    }
+    if ( $self->participles->{$lowerform} ) {
+        push @possible, qw(VBN);
+    }
+    if ( $lowerform =~ /ed$/ ) {
+        push @possible, qw(VBD VBN);
+    }
+
     return @possible;
 }
 
