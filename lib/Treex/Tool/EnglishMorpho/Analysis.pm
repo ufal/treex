@@ -24,6 +24,23 @@ has 'data_dir' => (
     default => 'data/models/morpho_analysis/en',
 );
 
+sub BUILD {
+    my ($self) = @_;
+    
+    # Force the lazy-built parameters to be loaded.
+    # This should not be needed, but for some strange reasons it is.
+    # Without this Morce::English tags "But" as IN instead of CC.
+    # echo "But" | treex -Len -t W2A::EN::TagMorce Write::CoNLLX
+    # There is some black magic behind, because in both cases
+    # (with this pre-loading and without),
+    # get_possible_tags('But') returns the same list of possible tags.
+    $self->my_dict;
+    $self->big_dict;
+    $self->preterites;
+    $self->participles;
+    return;
+}
+
 # --------- initialization ---------
 
 sub _build_my_dict {
