@@ -1,91 +1,57 @@
 package Treex::Block::W2A::CS::ParseMST;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
+extends 'Treex::Block::W2A::ParseMST';
 
 use Treex::Tool::Parser::MST;
 
-has model_dir => ( is => 'ro', isa => 'Str', default => "$ENV{TMT_ROOT}/share/data/models/mst_parser/cs" );
-has model     => ( is => 'ro', isa => 'Str', default => 'pdt2_non-proj_ord2_0.05.model' );
-has robust => (is=> 'ro', isa=>'Bool', default=>0, documentation=>'try to recover from MST failures by paring 2 more times and returning flat tree at least' );
+has '+model_dir' => ( default => 'data/models/mst_parser/cs' );
+has '+model'     => ( default => 'pdt2_non-proj_ord2_0.05.model' );
+has '+shorten_czech_tags' => ( default => 1 );
+has '+deprel_attribute'   => ( default => 'afun' );
 
+#has '+detect_attributes_from_deprel' => ( default=>0);
 
-my $parser;
+my %MEMORY_FOR_MODEL = (
+    'pdt2_non-proj_ord2_0.05.model' => '1000m',
+    'default'                       => '2000m',
+);
 
-sub BUILD {
+# override
+sub _build_memory {
     my ($self) = @_;
-    $parser = Treex::Tool::Parser::MST->new(
-        {
-            model      => $self->model_dir . '/' . $self->model,
-            decodetype => 'non-proj',
-            order      => 2,
-            memory     => '1000m',
-            robust     => $self->robust,
-        }
-    );
-    return;
-}
-
-sub get_short_tag {
-    my ( $self, $full_tag ) = @_;
-    my ( $p1, $p2, $p5 ) = $full_tag =~ /(.)(.)..(.)/;
-    return $p1 . $p2 if $p5 eq '-';
-    return $p1 . $p5;
-}
-
-sub process_atree {
-    my ( $self, $a_root ) = @_;
-
-    my @a_nodes = $a_root->get_descendants( { ordered => 1 } );
-
-    # delete old topology
-    foreach my $a_node (@a_nodes) {
-        $a_node->set_parent($a_root);
-    }
-
-    my @words      = map { $_->form } @a_nodes;
-    my @tags       = map { $_->tag } @a_nodes;
-    my @short_tags = map { $self->get_short_tag($_) } @tags;
-
-    my ( $parents_rf, $deprel_rf, $matrix_rf ) = $parser->parse_sentence( \@words, \@short_tags );
-
-    foreach my $a_node (@a_nodes) {
-
-        my $deprel = shift @$deprel_rf;
-        $a_node->set_afun($deprel);
-
-        if ($matrix_rf) {
-            my $scores = shift @$matrix_rf;
-            $a_node->set_attr( 'mst_scores', join( " ", @$scores ) );
-        }
-
-        my $parent_index = shift @$parents_rf;
-        if ($parent_index) {
-            my $parent = $a_nodes[ $parent_index - 1 ];
-            $a_node->set_parent($parent);
-        }
-    }
-    return;
+    return $MEMORY_FOR_MODEL{ $self->model } || $MEMORY_FOR_MODEL{default};
 }
 
 1;
 
 __END__
- 
+
 =head1 NAME
 
 Treex::Block::W2A::CS::ParseMST
 
-=head1 DESCRIPTION
+=head1 DECRIPTION
 
-Reparse Czech analytical trees using McDonald's MST parser.
+MST parser (maximum spanning tree dependency parser by R. McDonald)
+is used to determine the topology of a-layer trees and I<deprel> edge labels.
 
-=head1 AUTHOR
+=head1 SEE ALSO
 
-David Mareček <marecek@ufal.mff.cuni.cz>
+L<Treex::Block::W2A::ParseMST>
+
+L<Treex::Block::W2A::BaseChunkParser> base clase (see the C<reparse> parameter)
+
+L<Treex::Block::W2A::MarkChunks> this block can be used before parsing
+to improve the performance by marking chunks (phrases)
+that are supposed to form a (dependency) subtree
+
+=head1 AUTHORS
+
+Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
