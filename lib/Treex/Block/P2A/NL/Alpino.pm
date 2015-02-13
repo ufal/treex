@@ -3,12 +3,14 @@ use Moose;
 use Treex::Core::Common;
 use utf8;
 
-use tagset::nl::cgn;
+use Lingua::Interset::Tagset::NL::Cgn;
 
 extends 'Treex::Core::Block';
 
-has '_processed_nodes' => ( isa => 'HashRef', 'is' => 'rw' );
-has '_nodes_to_remove' => ( isa => 'HashRef', 'is' => 'rw' );
+has '_processed_nodes' => ( isa => 'HashRef', is => 'rw' );
+has '_nodes_to_remove' => ( isa => 'HashRef', is => 'rw' );
+
+has '_iset_driver' => ( is => 'ro', builder => '_build_iset_driver', lazy_build => 1 );
 
 my %HEAD_SCORE = (
     'hd'    => 6,
@@ -41,6 +43,10 @@ my %DEPREL_CONV = (
     'se'     => 'AuxT',
     'hdf'    => 'AuxP',    # closing element of a circumposition
 );
+
+sub _build_iset_driver {
+    return Lingua::Interset::Tagset::NL::Cgn->new();
+}
 
 # convert original deprels (stored as conll_deprel) to PDT-style afuns
 sub convert_deprel {
@@ -111,8 +117,7 @@ sub convert_deprel {
 sub convert_pos {
     my ( $self, $node, $postag ) = @_;
 
-    # convert to Interset (TODO would need CoNLL encoding capability to set CoNLL POS+feat)
-    my $iset = tagset::nl::cgn::decode($postag);
+    my $iset = $self->_iset_driver->decode($postag);
     $node->set_iset($iset);
 }
 

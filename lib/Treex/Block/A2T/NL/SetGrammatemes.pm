@@ -12,6 +12,7 @@ my %SIG2GRAM = (
 
     # simple (synthetic) forms: present, past, participles, infinitive
     'LEX-finsub'   => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'cdn' },
+    'LEX-finimp'   => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'imp' },
     'LEX-finpres'  => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-finpast'  => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-partpres' => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'ind' },
@@ -136,7 +137,12 @@ override 'set_verbal_grammatemes' => sub {
 
 sub get_form_signature {
     my ( $self, $anode ) = @_;
-    return $anode->iset->verbform . $anode->iset->tense . $anode->iset->mood;
+    # ignoring indicative and imperative mood (using just tense)
+    # NB: ambiguous imperatives are detected later, now they will get verbmod=ind
+    my $mood = $anode->iset->mood // '';
+    $mood =~ s/^(imp\|)?ind(\|imp)?$//;
+    
+    return $anode->iset->verbform . $anode->iset->tense . $mood;
 }
 
 # returns de-lexicalized signature of all verb forms in the verbal group (to be mapped to grammatemes)

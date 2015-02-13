@@ -18,22 +18,26 @@ override 'detect_syntpos' => sub {
 
     my $tag = $a_node->tag;
 
-    # adjective-like pronouns and numerals
-    return 'adj' if ( $a_node->match_iset( 'prontype' => '~(dem|rel|int|ind)', 'synpos' => 'attr' ) );
-    return 'adj' if ( $a_node->is_numeral and $a_node->match_iset( 'synpos' => 'attr' ) );
+    # possessives, adjectives in predicative and substantival positions
+    return 'n' if ( $a_node->match_iset( 'poss' => 'poss' ) );
+    return 'n' if ( $a_node->match_iset( 'pos' => 'adj', 'position' => 'nom' ) );
+    return 'n' if ( $a_node->match_iset( 'pos' => 'adj', 'position' => 'free' ) and $a_node->afun =~ /^(Pnom|Obj)$/ );
 
-    # nouns, adjectives in predicative and substantival positions
+    # adverbial usage of adjectives
+    return 'adv' if ( $a_node->match_iset( 'pos' => 'adj', 'position' => 'free' ) );
+    
+    # other adjectives, adjective-like pronouns and numerals    
+    return 'adj' if ( $a_node->is_adjective );
+    return 'adj' if ( $a_node->match_iset( 'pos' => 'num', 'position' => 'prenom' ) ); 
+
+    # nouns, nominal pronoouns and numerals
     return 'n' if ( $a_node->is_noun );    
-    return 'n' if ( $a_node->match_iset( 'pos' => 'adj', 'synpos' => 'subst' ) );
 
     # verbs (including attributive)
     return 'v' if ( $a_node->is_verb );
 
-    # attributive adjectives
-    return 'adj' if ( $a_node->is_adjective or $a_node->match_iset( 'synpos' => 'attr' ) );
-
-    # adverbs, adverbial adjectives
-    return 'adv' if ( $a_node->is_adverb or $a_node->match_iset( 'synpos' => 'adv' ) );
+    # adverbs, adverbial pronouns pronouns
+    return 'adv' if ( $a_node->is_adverb );
 
     # coordinating conjunctions (to be given the functor PREC), subordinating conjunctions "dan", "als"
     # "ja", "nee" as tags
@@ -91,8 +95,8 @@ override 'formeme_for_adj' => sub {
     if ( $self->below_verb($t_node) ) {
 
         # adjectives used as adverbs: "hij rent snel(adj)" = "he runs quickly(adv)"
-        return 'adv' if ( $afun eq 'Adv' or $a_node->match_iset( synpos => 'adv' ) );
-
+        return 'adv' if ( $afun eq 'Adv' or ( $a_node->match_iset( 'position' => 'free' ) and $afun ne 'Obj' ) );
+        
         return 'adj:compl';
     }
 

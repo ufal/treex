@@ -7,13 +7,6 @@ extends 'Treex::Core::Block';
 
 sub process_anode {
     my ( $self, $anode ) = @_;
-
-    # adjectives -- fix predicative vs. adverbial usage (marked always adverbial from Interset)
-    if ( $anode->match_iset( 'pos' => 'adj', 'synpos' => 'pred' ) ) {
-        if ( $anode->afun !~ /^(Pnom|Obj)$/ ) {
-            $anode->set_iset( 'synpos' => 'adv' );
-        }
-    }
     
     # add gender for 3rd person possessive pronouns; we only know for sure if it's feminine
     # (others default to "zijn" anyway)
