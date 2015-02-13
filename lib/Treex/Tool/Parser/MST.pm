@@ -280,7 +280,7 @@ END {
         close( $java->{writer} );
         close( $java->{reader} );
         kill(9, $java->{pid}); #Needed on Windows
-        ProcessUtils::safewaitpid( $java->{pid} );
+        Treex::Tool::ProcessUtils::safewaitpid( $java->{pid} );
     }
 }
 
