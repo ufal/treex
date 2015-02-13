@@ -1,7 +1,7 @@
 package Treex::Tool::FSM::Foma;
 
 use Moose;
-use ProcessUtils;
+use Treex::Tool::ProcessUtils;
 use Treex::Core::Common;
 
 # Foma main executable
@@ -35,7 +35,7 @@ sub BUILD {
     }
 
     # start Foma
-    my ( $read, $write, $pid ) = ProcessUtils::bipipe($command);
+    my ( $read, $write, $pid ) = Treex::Tool::ProcessUtils::bipipe($command);
 
     $self->_set_write($write);
     $self->_set_read($read);

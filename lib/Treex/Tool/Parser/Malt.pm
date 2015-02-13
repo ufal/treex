@@ -2,7 +2,7 @@ package Treex::Tool::Parser::Malt;
 use Moose;
 use Treex::Core::Common;
 
-use ProcessUtils;
+use Treex::Tool::ProcessUtils;
 use File::Java;
 use File::Temp qw /tempdir/;
 
@@ -38,7 +38,7 @@ sub BUILD {
     my $command = "cd $workdir; java -Xmx".$self->memory." -jar $bindir/malt.jar -c $model_name";
 
     # start MaltParser
-    ( $reader, $writer, $pid ) = ProcessUtils::bipipe( $command );
+    ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::bipipe( $command );
     $self->{mpreader} = $reader;
     $self->{mpwriter} = $writer;
     $self->{mppid}    = $pid;

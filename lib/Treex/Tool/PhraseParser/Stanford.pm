@@ -2,7 +2,7 @@ package Treex::Tool::PhraseParser::Stanford;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Tool::PhraseParser::Common';
-use ProcessUtils;
+use Treex::Tool::ProcessUtils;
 
 has use_tags => ( isa => 'Bool', is => 'rw', default => 0, );
 has memory => ( isa => 'Str', is => 'rw', ); # default => '2G' 
@@ -19,7 +19,7 @@ sub run_parser {
 	$command .= " -tagSeparator /" if $self->use_tags;
 	$command .= " wsjPCFG.ser.gz $tmpdir/input.txt > $tmpdir/output.txt 2>$tmpdir/stderr.txt";
 	#print "$command\n";
-    ProcessUtils::safesystem($command);
+    Treex::Tool::ProcessUtils::safesystem($command);
     return;
 }
 

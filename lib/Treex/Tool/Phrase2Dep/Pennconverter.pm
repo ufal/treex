@@ -1,7 +1,7 @@
 package Treex::Tool::Phrase2Dep::Pennconverter;
 use Moose;
 use Treex::Core::Common;
-use ProcessUtils;
+use Treex::Tool::ProcessUtils;
 use File::Java;
 
 has after_rich_np => (
@@ -48,7 +48,7 @@ sub BUILD {
 
     my $javabin = File::Java->javabin();
     my $command = "$javabin -jar $jar $options 2>/dev/null";
-    my ( $reader, $writer, $pid ) = ProcessUtils::bipipe($command);
+    my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::bipipe($command);
     $self->_set_reader($reader);
     $self->_set_writer($writer);
     $self->_set_pid($pid);
@@ -77,7 +77,7 @@ sub DEMOLISH {
     my ($self) = @_;
     close( $self->_writer );
     close( $self->_reader );
-    ProcessUtils::safewaitpid( $self->_pid );
+    Treex::Tool::ProcessUtils::safewaitpid( $self->_pid );
     return;
 }
 

@@ -2,7 +2,7 @@ package Treex::Tool::Python::RunFunc;
 
 use Moose;
 use Treex::Core::Common;
-use ProcessUtils;
+use Treex::Tool::ProcessUtils;
 use IO::Handle;
 
 
@@ -22,7 +22,7 @@ sub BUILD {
     $file .= '/execute.py';
             
     log_info('Running Python slave process');
-    my ( $read, $write, $pid ) = ProcessUtils::bipipe('python ' . $file);
+    my ( $read, $write, $pid ) = Treex::Tool::ProcessUtils::bipipe('python ' . $file);
 
     $read->autoflush();
     $write->autoflush();    

@@ -5,7 +5,7 @@ use Treex::Core::Common;
 use Treex::Core::Resource;
 use File::Java;
 use Treex::Tool::IO::Arff;
-use ProcessUtils;
+use Treex::Tool::ProcessUtils;
 
 # The base directory for the ML-Process tool
 Readonly my $ML_PROCESS_BASEDIR => 'installed_tools/ml-process/';
@@ -88,7 +88,7 @@ sub BUILD {
     log_info( "Running @params");
 
     $SIG{PIPE} = 'IGNORE';    # don't die if ML-Process gets killed
-    my ( $read, $write, $pid ) = ProcessUtils::bipipe_noshell(":utf8", @params);
+    my ( $read, $write, $pid ) = Treex::Tool::ProcessUtils::bipipe_noshell(":utf8", @params);
 
     $self->_set_read_handle($read);
     $self->_set_write_handle($write);
@@ -115,7 +115,7 @@ sub DEMOLISH {
     close( $self->_write_handle );
     close( $self->_read_handle );
     kill(9, $self->_java_pid); #Needed on Windows
-    ProcessUtils::safewaitpid( $self->_java_pid );
+    Treex::Tool::ProcessUtils::safewaitpid( $self->_java_pid );
     return;
 }
 
@@ -192,7 +192,7 @@ Treex::Tool::ML::MLProcessPiped
 A wrapper for the ML-Process "Simple" WEKA wrapper, which provides various machine learning
 classifiers. 
 
-It uses L<ProcessUtils::Bipipe> to establish a piped connection (all models are loaded on startup), 
+It uses L<Treex::Tool::ProcessUtils::Bipipe> to establish a piped connection (all models are loaded on startup), 
 then feeds given ARFF data lines to the ML-Process executable and retrieves its output.
 
 The ML-Process JAR file, along with all needed dependencies, must be installed in the Treex shared

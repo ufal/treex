@@ -2,7 +2,7 @@ package Treex::Tool::PhraseParser::Alpino;
 
 use Moose;
 use Treex::Core::Common;
-use ProcessUtils;
+use Treex::Tool::ProcessUtils;
 
 # Used to parse Alpino output. This is quite ugly, but I want to avoid code duplication
 use Treex::Block::Read::Alpino;
@@ -34,7 +34,7 @@ sub BUILD {
     $SIG{PIPE} = 'IGNORE';             # don't die if Alpino gets killed
 
     # Capture both Alpino's STDERR and STDOUT
-    my ( $reader, $writer, $pid ) = ProcessUtils::verbose_bipipe_noshell( ":encoding(utf-8)", @command );
+    my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::verbose_bipipe_noshell( ":encoding(utf-8)", @command );
 
     $self->_set_alpino_readhandle($reader);
     $self->_set_alpino_writehandle($writer);

@@ -1,7 +1,7 @@
 package Treex::Tool::Parser::Fanse;
 use Moose;
 use Treex::Core::Common;
-use ProcessUtils;
+use Treex::Tool::ProcessUtils;
 
 my $TOOL_DIR = "$ENV{TMT_ROOT}/share/installed_tools/parser/fanseparser";
 my $JAR      = 'fanseparser-0.2.2.jar';
@@ -26,7 +26,7 @@ sub BUILD {
     $cmd .= " -parsemodel $TOOL_DIR/parseModel.gz";
     $cmd .= " -sreader tratz.parse.io.TokenizingSentenceReader";
     $cmd .= " -swriter tratz.parse.io.DefaultSentenceWriter";
-    my ( $reader, $writer, $pid ) = ProcessUtils::bipipe($cmd);
+    my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::bipipe($cmd);
     $self->_set_reader($reader);
     $self->_set_writer($writer);
     $self->_set_pid($pid);

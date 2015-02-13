@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 use File::Temp;
 use File::Slurp;
-use ProcessUtils;
+use Treex::Tool::ProcessUtils;
 
 has language => ( isa => 'Str', is => 'rw', required => 1, default => 'en', );
 has tmpdir => ( isa => 'Str', is => 'rw' );
@@ -34,7 +34,7 @@ sub run_converter {
     $command .= " -treeFile $tmpdir/input.txt >$tmpdir/output.txt 2>$tmpdir/stderr.txt";
 #     $command .= " -filter";
 
-    ProcessUtils::safesystem($command);
+    Treex::Tool::ProcessUtils::safesystem($command);
     return;
 }
 

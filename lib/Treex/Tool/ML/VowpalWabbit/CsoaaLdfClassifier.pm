@@ -1,7 +1,7 @@
 package Treex::Tool::ML::VowpalWabbit::CsoaaLdfClassifier;
 
 use Moose;
-use ProcessUtils;
+use Treex::Tool::ProcessUtils;
 use Treex::Core::Common;
 use Treex::Core::Resource qw(require_file_from_share);
 
@@ -19,7 +19,7 @@ sub BUILD {
     my $model_path = $self->_locate_model_file( $self->model_path, $self );
     my $command = sprintf "%s -t -i %s -p /dev/stdout 2> /dev/null", $self->vw_path, $model_path;
 
-    my ( $read, $write, $pid ) = ProcessUtils::bipipe($command);
+    my ( $read, $write, $pid ) = Treex::Tool::ProcessUtils::bipipe($command);
 
     $read->autoflush();
     $write->autoflush();

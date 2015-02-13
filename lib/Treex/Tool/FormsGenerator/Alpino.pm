@@ -2,7 +2,7 @@ package Treex::Tool::FormsGenerator::Alpino;
 
 use Moose;
 use Treex::Core::Common;
-use ProcessUtils;
+use Treex::Tool::ProcessUtils;
 
 use Treex::Block::Write::ADTXML; 
 
@@ -30,7 +30,7 @@ sub BUILD {
     my @command = ( 'stdbuf', '-oL', $exe_path, 'user_max=90000', 'end_hook=print_generated_sentence', '-generate' );
 
     $SIG{PIPE} = 'IGNORE';    # don't die if parser gets killed
-    my ( $reader, $writer, $pid ) = ProcessUtils::bipipe_noshell( ":encoding(utf-8)", @command );
+    my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::bipipe_noshell( ":encoding(utf-8)", @command );
     
     $self->_set_alpino_readhandle($reader);
     $self->_set_alpino_writehandle($writer);

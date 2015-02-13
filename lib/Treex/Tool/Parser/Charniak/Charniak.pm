@@ -3,7 +3,7 @@ use Moose;
 use MooseX::FollowPBP;
 use Treex::Core::Log;
 use Treex::Tool::Parser::Charniak::Node;
-use ProcessUtils;
+use Treex::Tool::ProcessUtils;
 use IPC::Open2;
 use IPC::Open3;
 use IO::Handle;
@@ -23,7 +23,7 @@ sub BUILD {
     $tmp_file = "$bindir/temporary-$rand.txt";
     my $runparser_command = "sh parse.sh $tmp_file";
 
-    my ( $reader, $writer, $pid ) = ProcessUtils::bipipe("cd $bindir; $runparser_command ");
+    my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::bipipe("cd $bindir; $runparser_command ");
     $self->{tntreader} = $reader;
     $self->{tntwriter} = $writer;
     $self->{tntpid}    = $pid;

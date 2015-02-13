@@ -2,7 +2,7 @@ package Treex::Tool::PhraseParser::Charniak;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Tool::PhraseParser::Common';
-use ProcessUtils;
+use Treex::Tool::ProcessUtils;
 
 sub prepare_parser_input {
     my ( $self, $zones_rf ) = @_;
@@ -23,7 +23,7 @@ sub run_parser {
     my $tmpdir  = $self->tmpdir;
     my $bindir  = "$ENV{TMT_ROOT}/share/installed_tools/reranking-parser";
     my $command = "cd $bindir; sh parse.sh $tmpdir/input.txt > $tmpdir/output.txt 2>$tmpdir/stderr.txt";
-    ProcessUtils::safesystem($command);
+    Treex::Tool::ProcessUtils::safesystem($command);
 }
 
 1;

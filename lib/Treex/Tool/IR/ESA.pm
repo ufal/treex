@@ -3,7 +3,7 @@ package Treex::Tool::IR::ESA;
 use Moose;
 use Treex::Core::Common;
 
-use ProcessUtils;
+use Treex::Tool::ProcessUtils;
 use IPC::Open3;
 use List::Util qw/min/;
 
@@ -40,7 +40,7 @@ sub BUILD {
 
     #IPC::Open3::open3($javain_h, $javaout_h, \*JAVAERR, $java_cmd);
     my $pid;
-    ($javaout_h, $javain_h, $pid) = ProcessUtils::bipipe($java_cmd);
+    ($javaout_h, $javain_h, $pid) = Treex::Tool::ProcessUtils::bipipe($java_cmd);
     
     my $esa_line = <$javaout_h>;
     if ($esa_line !~ /READY/) {

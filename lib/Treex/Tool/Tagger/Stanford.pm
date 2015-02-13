@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;
 use File::Java;
-use ProcessUtils;
+use Treex::Tool::ProcessUtils;
 with 'Treex::Tool::Tagger::Role';
 
 Readonly my $INST_DIR => 'installed_tools/tagger/stanford/';
@@ -48,7 +48,7 @@ sub BUILD {
     log_info( "Running " . $command );
 
     $SIG{PIPE} = 'IGNORE';     # don't die if tagger gets killed
-    my ( $read, $write, $pid ) = ProcessUtils::bipipe($command);
+    my ( $read, $write, $pid ) = Treex::Tool::ProcessUtils::bipipe($command);
 
     $self->_set_read_handle($read);
     $self->_set_write_handle($write);
@@ -69,7 +69,7 @@ sub DEMOLISH {
     # Close the tagger application
     close( $self->_write_handle ) if $self->_write_handle;
     close( $self->_read_handle ) if $self->_read_handle;
-    ProcessUtils::safewaitpid( $self->_java_pid );
+    Treex::Tool::ProcessUtils::safewaitpid( $self->_java_pid );
     return;
 }
 
