@@ -119,7 +119,10 @@ sub parse_chunk {
             $a_node->set_is_member(0);
             $a_node->set_is_shared_modifier(0);
             $a_node->wild->{is_coord_conjunction} = 0;
-            if ( $deprel =~ /_(M?S?C?)$/ ) {
+            if ( $deprel =~ s/_(Co|Ap)$// ) { # style used in W2A::CS::ParseMSTAdapted
+                $a_node->set_is_member(1);
+            }
+            elsif ( $deprel =~ /_(M?S?C?)$/ ) { # style used in HamleDT parsing experiments
                 my $suffix = $1;
                 $a_node->set_is_member( $suffix          =~ /M/ ? 1 : 0 );
                 $a_node->set_is_shared_modifier( $suffix =~ /S/ ? 1 : 0 );

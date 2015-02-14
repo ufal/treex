@@ -1,79 +1,64 @@
 package Treex::Block::W2A::CS::ParseMSTAdapted;
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::Parser::MST::Czech;
+extends 'Treex::Block::W2A::ParseMST';
 
-extends 'Treex::Core::Block';
+use Treex::Tool::Parser::MST;
 
-has 'model'        => ( is => 'rw', isa => 'Str' );
-has 'model_memory' => ( is => 'rw', isa => 'Str' );
+has '+version'     =>  ( default => '0.4.3b-AdaptedCzech');
+has '+model_dir' => ( default => 'data/models/mst_parser/cs' );
+has '+model'     => ( default => 'pdt20_train_autTag_golden_latin2_pruned_0.02.model' );
+has '+shorten_czech_tags' => ( default => 1 );
+has '+deprel_attribute'   => ( default => 'afun' );
+has '+detect_attributes_from_deprel' => ( default=>1 );
 
-my $parser;
+my %MEMORY_FOR_MODEL = (
+    'pdt20_train_autTag_golden_latin2_pruned_0.00.model' => '1800m',
+    'pdt20_train_autTag_golden_latin2_pruned_0.02.model' => '1400m',
+    'pdt20_train_autTag_golden_latin2_pruned_0.10.model' => '540m',
+    'pdt_zeman_train_noM_worsened_morced.model'          => '10g',
+    'default'                                            => '2000m',
+);
 
-sub process_start {
-
+# override
+sub _build_memory {
     my ($self) = @_;
-
-    my $arg_ref = {};
-    if ( $self->model ) {
-        $arg_ref->{'model'} = $self->model;
-    }
-    if ( $self->model_memory ) {
-        $arg_ref->{'model_memory'} = $self->model_memory;
-    }
-
-    unless ($parser) {
-        $parser = Treex::Tool::Parser::MST::Czech->new($arg_ref);
-        $parser->initialize;
-    }
-
-    return;
-}
-
-sub process_atree {
-    my ( $self, $a_root ) = @_;
-
-    my @a_nodes = $a_root->get_descendants( { ordered => 1 } );
-
-    # delete old topology
-    foreach my $a_node (@a_nodes) {
-        $a_node->set_parent($a_root);
-    }
-
-    my @words = map { $_->form } @a_nodes;
-    my @tags  = map { $_->tag } @a_nodes;
-
-    my ( $parents_rf, $afuns_rf ) = $parser->parse_sentence( \@words, \@tags );
-
-    unshift @a_nodes, $a_root;
-
-    foreach my $ord ( 1 .. $#a_nodes ) {
-        my $parent_ord = shift @$parents_rf;
-        my $afun       = shift @$afuns_rf;
-        if ( $afun =~ s/_.+// ) {
-            $a_nodes[$ord]->set_is_member(1);
-        }
-        $a_nodes[$ord]->set_parent( $a_nodes[$parent_ord] );
-        $a_nodes[$ord]->set_afun($afun);
-    }
+    return $MEMORY_FOR_MODEL{ $self->model } || $MEMORY_FOR_MODEL{default};
 }
 
 1;
 
 __END__
 
-=over
+=head1 NAME
 
-=item Treex::Block::W2A::CS::ParseMSTAdapted
+Treex::Block::W2A::CS::ParseMSTAdapted
 
-Parses analytical trees using McDonald's MST parser adapted by Zdenek Zabokrtsky and Vaclav Novak.
+=head1 DECRIPTION
 
-=back
+MST parser (maximum spanning tree dependency parser by R. McDonald)
+adapted by Zdenek Zabokrtsky and Vaclav Novak for Czech
+is used to determine the topology of a-layer trees and I<deprel> edge labels.
 
-=cut
+=head1 SEE ALSO
+
+L<Treex::Block::W2A::ParseMST>
+
+L<Treex::Block::W2A::BaseChunkParser> base clase (see the C<reparse> parameter)
+
+L<Treex::Block::W2A::MarkChunks> this block can be used before parsing
+to improve the performance by marking chunks (phrases)
+that are supposed to form a (dependency) subtree
+
+=head1 AUTHORS
+
+David Mareček <marecek@ufal.mff.cuni.cz>
+
+Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by David Marecek
+Copyright © 2011-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
-This library is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+

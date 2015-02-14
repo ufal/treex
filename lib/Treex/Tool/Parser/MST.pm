@@ -16,8 +16,8 @@ has order      => ( isa => 'Int',  is => 'rw', default  => 2 );
 has decodetype => ( isa => 'Str',  is => 'rw', default  => 'non-proj' );
 has robust     => ( isa => 'Bool', is => 'ro', default  => 0 );
 
-# other possible values: '0.5.0'
-has version		=>	(isa => 'Str', is => 'ro', default => '0.4.3b');
+# other possible values: '0.5.0', '0.4.3b-AdaptedCzech'
+has version    => (isa => 'Str', is => 'ro', default => '0.4.3b');
 
 my @all_javas;    # PIDs of java processes
 
@@ -34,27 +34,32 @@ sub initialize {
     my $model = $self->model;
     log_fatal "$model model for MST does not exist." if !-f $model;
 
-	my @command;
+    my @command;
 
     # TODO all paths/dirs have to be formatted according to platform
-	if ($self->version eq '0.4.3b') {
-	    @command    = ('java'
-	        , "-Xmx" . $self->memory
-	        , "-cp", $cp, "mstparser.DependencyParser", "test"
-	        , "order:" . $self->order
-	        , "decode-type:" . $self->decodetype
-	        , "server-mode:true", "print-scores:true", "model-name:$model", $redirect);
-	}
-	elsif ($self->version eq '0.5.0') {
-	    @command    = ('java'
-	        , "-Xmx" . $self->memory
-	        , "-cp", $cp, "mstparser.DependencyParser", "test"
-	        , "order:" . $self->order
-	        , "decode-type:" . $self->decodetype
-#	        , "server-mode:true", "confidence-estimation:'KDFix*0.05*50', "model-name:$model", "format:MST", $redirect);
-	        , "server-mode:true", "model-name:$model", "format:MST", $redirect);
-	}
-
+    if ($self->version eq '0.4.3b') {
+        @command    = ('java'
+            , "-Xmx" . $self->memory
+            , "-cp", $cp, "mstparser.DependencyParser", "test"
+            , "order:" . $self->order
+            , "decode-type:" . $self->decodetype
+            , "server-mode:true", "print-scores:true", "model-name:$model", $redirect);
+    }
+    elsif ($self->version eq '0.5.0') {
+        @command    = ('java'
+            , "-Xmx" . $self->memory
+            , "-cp", $cp, "mstparser.DependencyParser", "test"
+            , "order:" . $self->order
+            , "decode-type:" . $self->decodetype
+#           , "server-mode:true", "confidence-estimation:'KDFix*0.05*50', "model-name:$model", "format:MST", $redirect);
+            , "server-mode:true", "model-name:$model", "format:MST", $redirect);
+    }
+    elsif ($self->version eq '0.4.3b-AdaptedCzech') {
+        @command = ('java'
+            , '-Xmx' . $self->memory 
+            , '-cp', $cp, 'server.PerlParser'
+            , $model, 'iso-8859-2');
+    }
 
     # We communicate with the parser in ISO-8859-2. In principle, any encoding is
     # fine (e.g. utf8, as long as the binmode of bipipe corresponds to the
@@ -70,7 +75,7 @@ sub initialize {
 
     # The following test must be done because of the lazy loading of the model
     my @test_forms = qw(This is a test sentence .);
-    my @test_tags  = qw(X X X X X X);
+    my @test_tags  = qw(N1) x 6;
     $self->parse_sentence( \@test_forms, undef, \@test_tags );
 
     push @all_javas, $self;
@@ -154,17 +159,21 @@ sub process {
             }
         }
         else {
-            $_ = <$reader>;    # forms
-            $_ = <$reader>;    # pos
-            $_ = <$reader>;    # afuns
-            log_fatal("Treex::Tool::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
-            chomp;
-            @afuns = split /\t/;
-            @afuns = map { s/^.*no-type.*$/Atr/; $_ } @afuns;
-            $_     = <$reader>;                                 # parents
-            log_fatal("Treex::Tool::Parser::MST wrote unexpected number of lines") if ( !defined $_ );
-            chomp;
-            @parents = split /\t/;
+            my ($afuns_string, $parents_string);
+            if ($self->version eq '0.4.3b-AdaptedCzech'){
+                chomp ($parents_string = <$reader>);
+                chomp ($afuns_string   = <$reader>);
+            } else {
+                <$reader>;    # forms
+                <$reader>;    # pos
+                chomp ($afuns_string   = <$reader>);
+                chomp ($parents_string = <$reader>);
+            }
+            
+            log_fatal "Treex::Tool::Parser::MST wrote unexpected number of lines" if !defined $afuns_string || !defined $parents_string;
+            @afuns = map { s/^.*no-type.*$/Atr/; $_ } split /\t/, $afuns_string;
+            @parents = split /\t/, $parents_string;
+
             if ($self->version eq '0.4.3b') {
 	            $_       = <$reader>;                               # blank line after a valid parse
 	            $_       = <$reader>;                               # scoreMatrix
@@ -193,6 +202,7 @@ sub process {
         }
         return ( \@parents, \@afuns, \@matrix ) if $self->version eq '0.4.3b';
         return ( \@parents, \@afuns, \@conf_scores ) if $self->version eq '0.5.0';
+        return ( \@parents, \@afuns);
     }
 
     # OBO'S ROBUST VARIANT
