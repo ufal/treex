@@ -172,8 +172,8 @@ which does tokenization and tagging in one step.
 
 We can try another tagger which is better suited for the modularity idea.
 Note that C<W2A::TagTreeTagger> was not released on CPAN yet
-(it is a wrapper for a binary of L<TreeTagger|http://www.ims.uni-stuttgart.de/projekte/corplex/TreeTagger>),
-and to use Featurama tagger you must first install it as described in L<the Installation Guide|Treex::Tutorial::Install/6. Install Featurama tagger>.
+(it is a wrapper for a binary of L<TreeTagger|http://www.ims.uni-stuttgart.de/projekte/corplex/TreeTagger>)
+and for C<W2A::EN::TagMorphoDiTa> you need to have installed L<Ufal::MorphoDiTa> from CPAN.
 
  echo "Mr. Brown, we'll start tagging." |\
   treex -Len Read::Sentences\
@@ -185,13 +185,13 @@ and to use Featurama tagger you must first install it as described in L<the Inst
 Now, the third column contains lemmas, but the tags are not from the standard PennTB tagset.
 As a result, also the lemmas for proper nouns are lowercased
 (because L<W2A::EN::Lemmatize|Treex::Block::W2A::EN::Lemmatize> expect I<NNP> tag for proper nouns).
-For English and Czech, Treex offers a pre-trained model for a high-quality L<Featurama|http://featurama.sourceforge.net/> tagger.
+For English and Czech, Treex offers a pre-trained model for a high-quality L<MorphoDiTa|http://ufal.cz/morphodita> tagger.
 For many other languages, there are pre-trained TreeTagger models.
 
  echo "Mr. Brown, we'll start tagging." |\
   treex -Len Read::Sentences\
              W2A::EN::Tokenize\
-             W2A::EN::TagFeaturama\
+             W2A::EN::TagMorphoDiTa\
              W2A::EN::Lemmatize\
              Write::CoNLLX
 
@@ -204,10 +204,7 @@ For many other languages, there are pre-trained TreeTagger models.
  echo "Je suis desolée" |\
   treex -Lfr Read::Sentences W2A::Tokenize W2A::TagTreeTagger Write::CoNLLX
  echo "Bohužel jsem tento tutorial nedokončil." |\
-  treex -Lcs Read::Sentences W2A::CS::Tokenize W2A::CS::TagFeaturama Write::CoNLLX
-
-If you suceeded to install Morče tagger, you can substitute C<W2A::EN::TagFeaturama>
-with C<W2A::EN::TagMorce>.
+  treex -Lcs Read::Sentences W2A::CS::Tokenize W2A::CS::TagMorphoDiTa lemmatize=1 Write::CoNLLX
 
 =head2 Bonus Task 2
 

@@ -34,13 +34,19 @@ there is a risk that your previously installed local Perl environment will be in
  # If it fails and the build.log contains "looking for -lxml2... no",
  # you are probably missing libxml2 header files (or the whole libxml2).
  # On Ubuntu/Debian you can install it with
- # sudo apt-get install libxml2-dev zlib1g-dev
+ #  sudo apt-get install libxml2-dev zlib1g-dev
+ # Few more possibly problematic modules
+ cpanm -n PerlIO::Util
+ cpanm Moose
+ moose-outdated | cpanm
+ # and finally the Treex::Core and its dependencies
  cpanm Treex::Core # this may take about 10 minutes
  treex -h          # just to check if it was installed correctly
 
 =item 3. Install Treex modules for processing English
 
  cpanm Treex::EN
+ cpanm Lingua::Interset URI::Find Cache::LRU
 
 =item 4. Install TrEd tree viewer and editor (optional)
 
@@ -63,20 +69,14 @@ C<sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev libpng12-dev pat
  SVN_TRUNK=https://svn.ms.mff.cuni.cz/svn/tectomt_devel/trunk
  # password is "public"
  svn --username public co $SVN_TRUNK/treex ~/treex
- svn --username public co $SVN_TRUNK/libs/other ~/treex/oldlib
  # Add the following lines to your ~/.bashrc
  export PATH="$HOME/treex/bin:$PATH"
- export PERL5LIB="$HOME/treex/lib:$HOME/treex/oldlib:$PERL5LIB"
+ export PERL5LIB="$HOME/treex/lib:$PERL5LIB"
  export TMT_ROOT=$HOME/.treex
 
-=item 6. Install Featurama tagger (optional)
+=item 6. Install MorphoDiTa tagger and NameTag NER (optional)
 
- wget http://ufal.mff.cuni.cz/treex/featurama-1.0modified.tar.gz
- tar -zxf featurama-1.0modified.tar.gz
- pushd featurama-1.0
- ./configure --prefix=$HOME/perl5 --enable-perl && make && make install
- popd
-
+ cpanm Ufal::MorphoDiTa Ufal::NameTag
 
 =back
 
@@ -148,7 +148,7 @@ C<sudo cpanm --installdeps Treex::Core>, but otherwise follow this local Perl se
 
 =back
 
-Download and install localy two useful tools (Perl modules) – C<cpanm> and C<local::lib>:
+Download and install locally two useful tools (Perl modules) – C<cpanm> and C<local::lib>:
 
  wget -O- http://cpanmin.us | perl - -l ~/perl5 App::cpanminus local::lib
 
@@ -202,8 +202,14 @@ You can check for the packages with C<< LANG=C dpkg-query -s libxml2-dev zlib1g-
 On other systems (e.g. RPM based), try to find similarly named packages (libxml2-devel),
 or look at L<http://xmlsoft.org>.
 
-After successfully installing C<XML::LibXML>,
-the installation of L<Treex::Core> should be smooth
+There are few other possibly problematic modules.
+C<PerlIO::Util> has known (and reported)
+
+ cpanm -n PerlIO::Util
+ cpanm Moose
+ moose-outdated | cpanm
+
+Now, the installation of L<Treex::Core> should be smooth
 (but it takes more than 8 minutes if no dependencies were installed before):
 
  cpanm Treex::Core
@@ -230,6 +236,7 @@ which contains only modules specific to English. It is dependent on C<Treex-Unil
 so both the distributions can be installed by:
 
  cpanm Treex::EN
+ cpanm Lingua::Interset
 
 =head1 4. Install TrEd
 
