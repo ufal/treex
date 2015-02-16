@@ -7,26 +7,16 @@ sub process_ttree {
     my ( $self, $t_root ) = @_;
 
 
-    foreach my $tnode ( grep { ($_->gram_sempos || '') eq "v" } $t_root->get_descendants ) {
+    foreach my $tnode ( grep { ( $_->sentmod // '' ) eq 'imper' } $t_root->get_descendants ) {
+
         my $anode = $tnode->get_lex_anode;
-
-        next if ( $tnode->sentmod || '' ) eq 'inter';
-        # technically, imperatives should be VB, not VBP,
-        # but the tagger often gets this wrong...
-        next if not $anode or $anode->tag !~ /^VBP?$/;
-        # but still, the form and lemma of an imperative should be equal 
-        next if lc($anode->form) ne lc($anode->lemma);
-        # rule out expressions with modals and auxiliaries or infinitives 
-        next if grep { $_->tag     =~ /^(MD|VB[DZ]|TO)$/ } $tnode->get_aux_anodes; 
-        # imperatives do not usually take subordinate conjunctions
-        # -- but still from data it seems that they do more often than not
-        # next if grep { $_->afun    eq 'AuxC' } $tnode->get_aux_anodes; 
-        next if grep { $_->formeme eq "n:subj" } $tnode->get_echildren;
-
+        
+        # Fixing grammatemes + formeme (it's not an infinitive)
         $tnode->set_gram_verbmod('imp');
-        $tnode->set_sentmod('imper');
+        $tnode->set_gram_tense('nil');
         $tnode->set_formeme('v:fin');
 
+        # Adding a #PersPron node (2nd person, pl.)
         my $perspron = $tnode->create_child;
         $perspron->shift_before_node($tnode);
 
@@ -37,7 +27,7 @@ sub process_ttree {
         $perspron->set_formeme('n:subj');    # !!! elided?
         $perspron->set_nodetype('complex');
         $perspron->set_gram_sempos('n.pron.def.pers');
-        $perspron->set_gram_number('pl');    # default: vykani
+        $perspron->set_gram_number('pl');
         $perspron->set_gram_gender('anim');
         $perspron->set_gram_person('2');
 
@@ -48,17 +38,38 @@ sub process_ttree {
 
 1;
 
-=over
+__END__
 
-=item Treex::Block::A2T::EN::FixImperatives
+=encoding utf-8
 
-Imperatives are recognized (at least some of), and provided with
-a new PersPron node and corrected gram/verbmod value.
+=head1 NAME
 
-=back
+Treex::Block::A2T::EN::FixImperatives
 
-=cut
+=head1 DESCRIPTION
 
-# Copyright 2010 Zdenek Zabokrtsky
+Fixing grammatemes and adding a new generated #PersPron subject node
+for imperative clauses.
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+The L<Treex::Block::A2T::SetGrammatemes> block currently treats imperatives
+as normal indicative verbs, so this block fixes the grammatemes (C<verbmod=imp>, 
+C<tense=nil>). 
+
+Formeme is also changed to C<v:fin>.  
+
+=head1 SEE ALSO
+
+L<Treex::Block::A2T::SetSentmod>
+L<Treex::Block::A2T::EN::SetSentmod>
+
+=head1 AUTHORS
+
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
+
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
+
+Ondřej Dušek <popel@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2010-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague

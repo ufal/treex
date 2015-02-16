@@ -44,7 +44,7 @@ sub is_aspect_ok {
         if (
         ( $node->gram_tense || '' ) eq 'sim'
         and ( $node->gram_deontmod || '' ) eq 'decl'
-        and ( $node->gram_verbmod || '' ) ne 'cdn'
+        and ( $node->gram_verbmod || '' ) !~ /^(cdn|imp)$/
         and ( $node->is_passive   || '' ) ne '1'
         and ( $node->functor      || '' ) ne 'COND'
         );

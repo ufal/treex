@@ -6,12 +6,10 @@ use Treex::Tool::Lexicon::NL::Pronouns;
 extends 'Treex::Block::A2T::SetSentmod';
 
 override 'is_question' => sub {
-    my ( $self, $aroot ) = @_;
+    my ( $self, $tnode, $anode ) = @_;
 
     # The default detection using the question mark is accepted, but we go on to detect questions without it
     return 1 if super();
-
-    my $anode = $self->get_first_clause_head($aroot);
 
     # Detecting WH-questions: 1 left child which contains a wh-word
     # and Y/N questions: no left children, but a subject to the right
@@ -35,8 +33,7 @@ override 'is_question' => sub {
 };
 
 override 'is_imperative' => sub {
-    my ( $self, $aroot ) = @_;
-    my $anode = $self->get_first_clause_head($aroot);
+    my ( $self, $tnode, $anode ) = @_;
 
     # Imperative is a finite verb that has no left children in the same clause and no subject
     if ( $anode->match_iset( 'pos' => 'verb', 'verbform' => 'fin' ) ) {
@@ -50,16 +47,6 @@ override 'is_imperative' => sub {
     return 0;
 };
 
-sub get_first_clause_head {
-    my ( $self, $aroot ) = @_;
-    my $anode = $aroot->get_children( { first_only => 1 } );
-
-    if ( $anode->is_coap_root ) {
-        my ($amember) = grep { $self->is_clause_head($_) } $anode->get_coap_members();
-        return $amember if ($amember);
-    }
-    return $anode;
-}
 
 sub is_clause_head {
     my ( $self, $anode ) = @_;

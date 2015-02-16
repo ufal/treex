@@ -310,6 +310,7 @@ sub _verb {
             $tnode->set_gram_tense('ant');
         }
         else {
+            # ignores imperatives – fixed later in FixImperatives
             $tnode->set_gram_tense('sim'); 
         }
     }

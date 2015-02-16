@@ -40,6 +40,12 @@ override 'is_clause_head' => sub {
         #    return 1 if is_possible_subject($child);
         #}
     }
+    
+    # Present with no modals, prepositions etc., are likely to be finite imperatives
+    # TODO: how about no auxiliaries? Can imperatives ever have them?
+    if ( $lex_a_node->tag =~ /^VBP?$/ and not grep { $_->tag =~ /^(MD|VB[DZ]|TO)$/ and $_->precedes($lex_a_node) } @anodes ){
+        return 1;
+    }
 
     # Otherwise: non-finite
     return 0;
