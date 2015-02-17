@@ -99,7 +99,11 @@ sub apply_contextual_rules {
         my ( $num, $precontext ) = _get_context( $text, ( pos $text ), $1 );
 
         if ( $precontext !~ m/(?:$CARDINAL_INDIC)$/i ) {
+            my $pos = pos $text;
             $text = _unbreak_at( $text, ( pos $text ) );
+            # pos($text) must be set here as $text is re-initialized on previous line,
+            # which resets pos $text to 0 on some architectures (noticed on Ubuntu in Hyper-V)
+            pos($text) = $pos;
         }
     }
 
