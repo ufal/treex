@@ -10,36 +10,32 @@ use Treex::Tool::Lexicon::NL::VerbformOrder;
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
-    # looking for the main verb of the sentence
-    return if ( !$tnode->get_parent->is_root );
-    
-    my @tvfins = grep { $_->formeme =~ /^v.*(fin|rc)$/ } ($tnode->is_coap_root ? $tnode->get_coap_members() : ($tnode) );
+    # looking for the main verb of the clause
+    return if ( !$tnode->is_clause_head );
 
-	foreach my $tvfin (@tvfins){
-	    # get the finite verb
-	    my ($top_anode) = Treex::Tool::Lexicon::NL::VerbformOrder::normalized_verbforms($tvfin);
-	    next if ( !$top_anode or !$top_anode->match_iset( 'verbform' => 'fin' ) );
-	    
-		# mark its sentence type according to the sentmod attribute
-		my $stype = $self->_get_stype($tvfin, ($tnode->sentmod // ''));
-		if ($stype){
-			$top_anode->wild->{stype} = $stype;
-		}
-	}
+    # get the finite verb
+    my ($top_anode) = Treex::Tool::Lexicon::NL::VerbformOrder::normalized_verbforms($tnode);
+    next if ( !$top_anode or !$top_anode->match_iset( 'verbform' => 'fin' ) );
+
+    # mark its sentence type according to the sentmod attribute
+    my $stype = $self->_get_stype( $tnode, ( $tnode->sentmod // '' ) );
+    if ($stype) {
+        $top_anode->wild->{stype} = $stype;
+    }
 }
 
 sub _get_stype {
-	my ($self, $tvfin, $sentmod) = @_;
-	
-	return 'declarative' if ($sentmod eq 'enunc');
-	return 'imparative' if ($sentmod eq 'imper');  # ("imp*a*rative" is not a typo)
-	
-	if ($sentmod eq 'inter'){
-		return 'whquestion' if any { Treex::Tool::Lexicon::NL::Pronouns::is_wh_pronoun( $_->t_lemma ) } $tvfin->get_clause_descendants();
-		return 'ynquestion';		
-	}
-	
-	return; # we don't know
+    my ( $self, $tvfin, $sentmod ) = @_;
+
+    return 'declarative' if ( $sentmod eq 'enunc' );
+    return 'imparative'  if ( $sentmod eq 'imper' );    # ("imp*a*rative" is not a typo)
+
+    if ( $sentmod eq 'inter' ) {
+        return 'whquestion' if any { Treex::Tool::Lexicon::NL::Pronouns::is_wh_pronoun( $_->t_lemma ) } $tvfin->get_clause_descendants();
+        return 'ynquestion';
+    }
+
+    return;                                             # we don't know
 }
 
 1;

@@ -6,15 +6,21 @@ extends 'Treex::Core::Block';
 
 sub process_ttree {
     my ( $self, $t_root ) = @_;
+    
+    # get all clause heads
     my @to_process = grep { $_->is_clause_head } $t_root->get_descendants();
+    
+    # fallback to 1st child of the t-tree (if there are any nodes at all)
     if ( !@to_process ) {
-        push @to_process, ( $t_root->get_children( { first_only => 1 } ) );
+        my $t_first = $t_root->get_children( { first_only => 1 } ) or return;
+        push @to_process, $t_first;
     }
+
     foreach my $t_clause (@to_process) {
 
         # Default is the normal indicative mood
         my $sentmod = 'enunc';
-
+        
         my $a_clause = $t_clause->get_lex_anode();
         if ($a_clause) {
 
