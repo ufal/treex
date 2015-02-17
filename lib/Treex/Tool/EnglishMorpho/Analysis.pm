@@ -161,6 +161,9 @@ sub get_possible_tags {    ## no critic (Subroutines::ProhibitExcessComplexity) 
         if ($lowerform =~ /[^a-zA-Z0-9]+/ or $lowerform =~ /^&.*;$/ )
         {
             push @possible, qw(SYM);
+#            if ($lowerform =~ /^[^a-zA-Z0-9]+$/){ # variant: make only symbols possible
+#                @possible = ('SYM', ':', ',');
+#            }
         }
         
         # numbers
