@@ -15,7 +15,7 @@ sub process_tnode {
 
     # get the finite verb
     my ($top_anode) = Treex::Tool::Lexicon::NL::VerbformOrder::normalized_verbforms($tnode);
-    next if ( !$top_anode or !$top_anode->match_iset( 'verbform' => 'fin' ) );
+    return if ( !$top_anode or !$top_anode->match_iset( 'verbform' => 'fin' ) );
 
     # mark its sentence type according to the sentmod attribute
     my $stype = $self->_get_stype( $tnode, ( $tnode->sentmod // '' ) );
