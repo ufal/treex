@@ -95,7 +95,7 @@ Treex::Block::A2T::NL::SetSentmod - fill sentence modality (question, imperative
 
 =head1 DESCRIPTION
 
-
+Detecting questions and imperatives in Dutch, based on the presence/position of the subject.
 
 =head1 AUTHOR
 
