@@ -16,7 +16,7 @@ has '_ne_forms' => ( is => 'ro', isa => 'HashRef[Str]', builder => '_build_ne_fo
 has 'wiki_titles_path' => ( is => 'ro', isa => 'Str', default => 'data/models/ne_lemma_fix/cswiki.titles.txt.gz');
 has '_wiki_titles' => ( is => 'ro', isa => 'Tree::Trie', builder => '_build_wiki_titles', lazy => 1);
 
-sub BUILD {
+sub process_start {
     my ($self) = @_;
     $self->_ne_forms;
     $self->_wiki_titles;
@@ -28,6 +28,7 @@ sub _build_ne_forms {
     my $ne_forms = {};
 
     my $path = require_file_from_share($self->ne_forms_path);
+    log_info "Loading a list of NE forms from '$path'";
     open my $forms_fh, "<:gzip:utf8", $path or die $!;
     while (<$forms_fh>) {
         chomp $_;
@@ -46,6 +47,7 @@ sub _build_wiki_titles {
     my $wt_trie = Tree::Trie->new();
 
     my $path = require_file_from_share($self->wiki_titles_path);
+    log_info "Loading a list of Wikipedia titles from '$path'";
     open my $wt_fh, "<:gzip:utf8", $path;
     while (<$wt_fh>) {
         chomp $_;
