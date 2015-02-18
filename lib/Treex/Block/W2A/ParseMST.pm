@@ -122,6 +122,9 @@ sub parse_chunk {
             if ( $deprel =~ s/_(Co|Ap)$// ) { # style used in W2A::CS::ParseMSTAdapted
                 $a_node->set_is_member(1);
             }
+            elsif ( $deprel =~ s/_Pa$// ) { # style used in W2A::CS::ParseMSTAdapted
+                $a_node->set_attr( 'is_parenthesis_root', 1 );
+            }
             elsif ( $deprel =~ /_(M?S?C?)$/ ) { # style used in HamleDT parsing experiments
                 my $suffix = $1;
                 $a_node->set_is_member( $suffix          =~ /M/ ? 1 : 0 );
