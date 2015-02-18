@@ -5,12 +5,13 @@ use Treex::Core::Common;
 
 use PerlIO::gzip;
 use Tree::Trie;
-use Text::Levenshtein qw/distance/;
+#use Text::Levenshtein qw/distance/;
+use Text::Brew;
 use List::Util qw/min/;
 
 extends 'Treex::Core::Block';
 
-has 'ne_forms_path' => ( is => 'ro', isa => 'Str', default => 'data/models/ne_lemma_fix/cswiki.ne_forms.freq.txt.gz');
+has 'ne_forms_path' => ( is => 'ro', isa => 'Str', default => 'data/models/ne_lemma_fix/cswiki.forms.freq.txt.gz');
 has '_ne_forms' => ( is => 'ro', isa => 'HashRef[Str]', builder => '_build_ne_forms', lazy => 1);
 
 has 'wiki_titles_path' => ( is => 'ro', isa => 'Str', default => 'data/models/ne_lemma_fix/cswiki.titles.txt.gz');
@@ -78,7 +79,29 @@ sub _build_wiki_titles {
 sub is_change_minor {
     my ($self, $old_word, $new_word, $dist) = @_;
 
-    return ($dist / length($old_word)) < $self->suffix_change_threshold;
+    #return ($dist / length($old_word)) < $self->suffix_change_threshold;
+    return ($dist < 3);
+}
+
+sub distance {
+    my ($str1, $str2) = @_;
+
+    my ($dist, $edits) = Text::Brew::distance($str1, $str2);
+    
+    my $match_penalty = 1;
+    my $weighted_dist = 0;
+    foreach my $edit (reverse @$edits) {
+        if ($edit eq 'INITIAL') {
+            next;
+        }
+        elsif ($edit ne 'MATCH') {
+            $weighted_dist += $match_penalty;
+        }
+        else {
+            $match_penalty *= 2;
+        }
+    }
+    return $weighted_dist;
 }
 
 sub process_anode {
@@ -97,16 +120,16 @@ sub process_anode {
     log_info "LEMMA NOT FOUND: ".$anode->lemma;
 
     my $lc_form = lc($anode->form);
+    log_info "LC_FORM: $lc_form";
     
     my $wt = $self->_wiki_titles;
     $wt->deepsearch('prefix');
     my $longest_prefix = $wt->lookup($lc_form);
-    return if (length($longest_prefix) == 0);
+    return if (!$longest_prefix);
     log_info "LONGEST_PREFIX: $longest_prefix";
     
     my @possible_words = $wt->lookup($longest_prefix);
-    log_info "POSSIBLE_WORDS: " . Dumper(@possible_words);
-    my @distances = distance($lc_form, @possible_words);
+    my @distances = map {distance($lc_form, $_)} @possible_words;
 
     my $min_dist = min @distances;
     log_info "MIN_DIST: $min_dist";
@@ -117,6 +140,7 @@ sub process_anode {
 
     #if (defined $new_lemma) {
     my $new_lemma = $self->_ne_forms->{$new_lc_lemma};
+    return if (!defined $new_lemma);
     log_info "NEW LEMMA: $new_lemma";
     $anode->set_lemma($new_lemma);
     #}
