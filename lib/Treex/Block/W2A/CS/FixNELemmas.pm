@@ -115,13 +115,16 @@ sub process_anode {
     return if (!$anode->wild->{lemma_guessed});
     log_info "LEMMA GUESSED: ".$anode->lemma;
 
-    # fix only those nodes, whose lemma cannot be found in the list
+    # fix only those nodes, whose guessed lemma cannot be found in the list
     return if ($self->_ne_forms->{lc($anode->lemma)});
     log_info "LEMMA NOT FOUND: ".$anode->lemma;
-
+    
     my $lc_form = lc($anode->form);
     log_info "LC_FORM: $lc_form";
-    
+
+    # fix only those whose form can be found in the list
+    return if (!$self->_ne_forms->{$lc_form});
+
     my $wt = $self->_wiki_titles;
     $wt->deepsearch('prefix');
     my $longest_prefix = $wt->lookup($lc_form);
