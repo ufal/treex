@@ -42,6 +42,23 @@ sub _build_tagger {
     return Treex::Tool::Tagger::MorphoDiTa->new($self->_args);
 }
 
+after 'process_atree' => sub {
+    my ($self, $atree) = @_;
+    
+    my @nodes = $atree->get_descendants({ordered=>1});
+
+    # It is legal to have a tree with no nodes (e.g. for non 1-1 aligned sentences),
+    # so just skip such sentences (and do not log_fatal if no lemmas are found).
+    return if !@nodes;
+
+    my $forms_rf = [map { $_->form } @nodes];
+
+    my $guessed = $self->tagger->is_guessed($forms_rf);
+    for (my $i = 0; $i < @nodes; $i++) {
+        $nodes[$i]->wild->{lemma_guessed} = $guessed->[$i];
+    }
+};
+
 1;
 
 

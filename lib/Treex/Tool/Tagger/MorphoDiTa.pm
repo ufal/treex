@@ -54,7 +54,16 @@ sub tag_sentence {
         push @tags, $tag_and_lemma->{tag};
         push @lemmas, $tag_and_lemma->{lemma};
     }
+    
     return (\@tags, \@lemmas);
+}
+
+sub is_guessed {
+    my ($self, $tokens_rf) = @_;
+    my $tagged_lemmas = Ufal::MorphoDiTa::TaggedLemmas->new();
+    my $morpho = $self->_tagger->getMorpho();
+    my @guessed = map {$morpho->analyze($_, $Ufal::MorphoDiTa::Morpho::GUESSER, $tagged_lemmas)} @$tokens_rf;
+    return \@guessed;
 }
 
 1;
