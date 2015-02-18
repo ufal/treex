@@ -62,7 +62,7 @@ sub process_tnode {
     # hierarchical ordering & coindexing nodes for the "middle part" of the verbal complex
     # (i.e. everything between the lexical verb and the 1st auxiliary)
     my $aprev_top = $amain_verb;
-    foreach my $aaux_hier ( reverse grep { $_->afun =~ /^(AuxV|Obj)$/ && $_ != $amain_verb } $tnode->get_aux_anodes( { ordered => 1 } ) ) {
+    foreach my $aaux_hier ( reverse grep { $_->afun =~ /^(AuxV|Obj)$/ && $_->lemma ne 'te' && $_ != $amain_verb } $tnode->get_aux_anodes( { ordered => 1 } ) ) {        
         $aaux_hier->set_parent( $aprev_top->get_parent() );
         $aprev_top->set_parent($aaux_hier);
       
