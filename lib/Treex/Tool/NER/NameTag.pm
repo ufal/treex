@@ -3,6 +3,7 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;
 use Ufal::NameTag;
+with 'Treex::Tool::NER::Role';
 
 # Path to the model data file
 has model => ( is => 'ro', isa => 'Str', required => 1, writer => '_set_model' );
