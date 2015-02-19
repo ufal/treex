@@ -37,3 +37,25 @@ sub process_tnode {
 }
 
 1;
+
+__END__
+
+=encoding utf-8
+
+=head1 NAME 
+
+Treex::Block::T2T::EN2NL::AddNounGender
+
+=head1 DESCRIPTION
+
+Adding noun gender according to a lexicon derived from Alpino.
+
+=head1 AUTHORS
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
