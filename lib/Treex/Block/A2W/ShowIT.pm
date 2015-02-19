@@ -19,6 +19,7 @@ sub process_zone {
     my $re_tst_sentence = reconstruct_entities($zone->sentence, $entities_ref);
     $zone->set_sentence($re_tst_sentence);
 
+    print STDERR "Original snt: ",  $bundle->wild->{original_sentence},"\n";
     print STDERR "New tst snt: $re_tst_sentence\n";
     return;
 }
@@ -27,18 +28,31 @@ sub reconstruct_entities {
   my $in_sentence = shift;
   my $entites_ref = shift;
   my $out_sentence = $in_sentence;
-  print STDERR "Replacing sent:$in_sentence\n";
+  print STDERR "Replacing sent: $in_sentence\n";
   foreach my $cmd (@{$entites_ref->{'commands'}}){
     print STDERR "Before $cmd: $in_sentence\n";
     $in_sentence =~ s/xxxCMDxxx/$cmd/i;
     print STDERR "After: $in_sentence\n";
   }
-  return $in_sentence;
-  foreach my $entity (@{$entites_ref->{'entities'}}){
-    print STDERR "Before $entity: $in_sentence\n";
-    $in_sentence =~ s/xxxNExxx/$entity/i;
-    print STDERR "After: $in_sentence\n";
+  if (defined($entites_ref->{'entities'})){
+    foreach my $entity (@{$entites_ref->{'entities'}}){
+      print STDERR "Before $entity: $in_sentence\n";
+      $in_sentence =~ s/xxxNExxx/$entity/i;
+      print STDERR "After: $in_sentence\n";
+    }
   }
+  if (defined($entites_ref->{'urls'})){
+    print STDERR "Restoring URLs:\n";
+    foreach my $entity (@{$entites_ref->{'urls'}}){
+      print STDERR "Before $entity: $in_sentence\n";
+      $in_sentence =~ s/xxxURLxxx/$entity/i;
+      print STDERR "After: $in_sentence\n";
+    }
+  }
+  $in_sentence =~ s/\s+/ /g;
+  $in_sentence =~ s/^ *//g;
+  $in_sentence =~ s/ *$//g;
+  return $in_sentence;
 }
 
 1;
@@ -49,7 +63,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::W2A::EN::HideIT - show entites hidden from tokenizer
+Treex::Block::A2W::ShowIT - show entites hidden from tokenizer
 
 =head1 DESCRIPTION
 

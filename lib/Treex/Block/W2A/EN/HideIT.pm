@@ -6,9 +6,12 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+my @urls;
+
 sub process_zone {
     my ($self, $zone) = @_;
-    my ($changed_sentence, $entities_ref) = substitute_entities($zone->sentence);
+    my ($changed_sentence, $entities_ref) = $self->substitute_entities($zone->sentence);
+    $zone->get_bundle()->wild->{original_sentence} = $zone->sentence;
     #print STDERR "New snt: $changed_sentence\n";
     $zone->set_sentence($changed_sentence);
     $zone->get_bundle()->wild->{entities} = $entities_ref;
@@ -17,10 +20,12 @@ sub process_zone {
 }
 
 sub substitute_entities {
-  my $sentence = shift;
+  my ($self, $sentence) = @_;
+  #my $sentence = shift;
   my $new_sentence = $sentence;
   my @entities;
   my @commands;
+  @urls = ();
   $sentence = lcfirst($sentence);
   $sentence =~ s/$/ /;
   $sentence =~ s/^/ /;
@@ -38,20 +43,35 @@ sub substitute_entities {
   foreach my $quote (@$quotes){
     my $start = $quote->{start};
     my $end = $quote->{end};
-    while($sentence =~ s/($start[A-Za-z][^$end]+$end)/xxxCMDxxx/){
+    while($sentence =~ s/($start[a-z][^$end]+$end)/xxxCMDxxx/){
       push(@commands, $1);
       print STDERR "Cmd: $1\n";
     }  
   }
+  #$sentence = $self->_mark_urls($sentence);
   $sentence =~ s/^\s+//;
   $sentence = ucfirst($sentence);
-  return ($sentence, {entities=> \@entities, commands=> \@commands});
-  
-  print STDERR "Collecting entites...\n";
-  while($sentence =~ s/(["<>{}“”«»–|—„‚‘\s]|\[|\]|``|\'\'|‘‘|\^)([A-Z][a-z]+)/$1xxxNExxx/){
-    push(@entities, $2);
-    print STDERR "Entity: $2\n";
-  }  
+  #print STDERR "Collecting entites...\n";
+  #while($sentence =~ s/(["<>{}“”«»–|—„‚‘\s]|\[|\]|``|\'\'|‘‘|\^)([A-Z][a-z]+)/$1xxxNExxx/){
+    #push(@entities, $2);
+    #print STDERR "Entity: $2\n";
+  #}  
+  return ($sentence, {entities=> \@entities, commands=> \@commands, urls => \@urls});
+}
+
+
+use URI::Find::Schemeless;
+my $finderUrl = URI::Find::Schemeless->new(sub {
+    my ($uri, $orig_uri) = @_;
+    push @urls, $orig_uri;
+    print STDERR "Finded url: $orig_uri\n";
+    return 'XXXURLXXX';
+});
+
+sub _mark_urls {
+    my ( $self, $sentence ) = @_;
+    $finderUrl->find(\$sentence);
+    return $sentence;
 }
 1;
 
