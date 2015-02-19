@@ -4,7 +4,7 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Tool::ProcessUtils;
 
-use Treex::Block::Write::ADTXML; 
+use Treex::Block::Write::ADTXML;
 
 has '_twig'               => ( is => 'rw' );
 has '_alpino_readhandle'  => ( is => 'rw' );
@@ -18,10 +18,10 @@ sub BUILD {
     my $self      = shift;
     my $tool_path = 'installed_tools/parser/Alpino';
     my $exe_path  = require_file_from_share("$tool_path/bin/Alpino");
-    
-    $tool_path = $exe_path; # get real tool path (not relative to Treex share)
+
+    $tool_path = $exe_path;    # get real tool path (not relative to Treex share)
     $tool_path =~ s/\/bin\/.*//;
-    $ENV{ALPINO_HOME} = $tool_path; # set it as an environment variable to be passed to Alpino
+    $ENV{ALPINO_HOME} = $tool_path;    # set it as an environment variable to be passed to Alpino
 
     #TODO this should be done better
     my $redirect = Treex::Core::Log::get_error_level() eq 'DEBUG' ? '' : '2>/dev/null';
@@ -29,9 +29,9 @@ sub BUILD {
     # Force line-buffering of Alpino's output (otherwise it will hang)
     my @command = ( 'stdbuf', '-oL', $exe_path, 'user_max=90000', 'end_hook=print_generated_sentence', '-generate' );
 
-    $SIG{PIPE} = 'IGNORE';    # don't die if parser gets killed
-    my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::bipipe_noshell( ":encoding(utf-8)", @command );
-    
+    $SIG{PIPE} = 'IGNORE';             # don't die if parser gets killed
+    my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::verbose_bipipe_noshell( ":encoding(utf-8)", @command );
+
     $self->_set_alpino_readhandle($reader);
     $self->_set_alpino_writehandle($writer);
     $self->_set_alpino_pid($pid);
@@ -50,17 +50,39 @@ sub _generate_from_adtxml {
     my $reader = $self->_alpino_readhandle;
 
     $xml =~ s/[\t\n]//g;
-    # print STDERR $xml . "\n";
     print $writer $xml, "\n";
-    my $line = <$reader>;
-    chomp $line;
-    return $line;
+    my $line      = <$reader>;
+    my $last_line = '';
+    my $sent      = '';
+
+    while ( !$sent ) {
+        chomp $line;
+
+        # this indicates that generation has finished
+        if ( $line =~ /^G#undefined\|/ ) {
+            $sent = $last_line;
+            last;
+        }
+        # this means that an error has probably occurred
+        elsif ( $line =~ /^K#undefined\|/ ){
+            log_warn('K-undef occurred, last line: ' . $last_line);
+            last;
+        }
+        # this error message occurs when the input is an empty tree
+        elsif ( $line =~ /^Neither root nor sense attribute specified in ADT/ ) {
+            last;
+        }
+        
+        $last_line = $line;
+        $line      = <$reader>;
+    }
+    return $sent;
 }
 
 # Try to inflect a single word
 sub generate_form {
-    my ($self, $anode) = @_;
-    
+    my ( $self, $anode ) = @_;
+
     my $xml = $self->_adtxml->_process_node($anode);
     my $res = $self->_generate_from_adtxml($xml);
     $res =~ s/ \.$//;
@@ -69,9 +91,9 @@ sub generate_form {
 
 # Try to generate a whole sentence
 sub generate_sentence {
-    my ($self, $atree) = @_;
-    
-    my $xml = $self->_adtxml->_process_tree($atree);    
+    my ( $self, $atree ) = @_;
+
+    my $xml = $self->_adtxml->_process_tree($atree);
     return $self->_generate_from_adtxml($xml);
     Treex::Core::Log::progress();
 }
