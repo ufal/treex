@@ -14,10 +14,15 @@ sub process_anode {
         $anode->set_iset('possgender' => 'fem');
     }
     
+    # add politenes to 2nd person possessive pronouns
+    if ( $anode->is_pronoun and $anode->lemma eq 'u' ){
+        $anode->set_iset('politeness' => 'pol');
+    }
+    
     # mark relative pronominal adverbs with "waar-" with prontype = 'rel'
     if ( !$anode->iset->prontype and Treex::Tool::Lexicon::NL::Pronouns::is_relative_pronoun( $anode->lemma ) ){
         $anode->set_iset('prontype' => 'rel');
-    } 
+    }    
 
     return;
 }
