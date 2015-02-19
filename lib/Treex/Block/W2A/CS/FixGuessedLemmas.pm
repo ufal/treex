@@ -14,7 +14,7 @@ extends 'Treex::Core::Block';
 has 'forms_list_path' => ( is => 'ro', isa => 'Str', default => 'data/models/ne_lemma_fix/cswiki.forms.freq.txt.gz');
 has '_forms_list' => ( is => 'ro', isa => 'HashRef[Str]', builder => '_build_forms_list', lazy => 1);
 
-has 'lemmas_list_path' => ( is => 'ro', isa => 'Str', default => 'data/models/ne_lemma_fix/cswiki.titles.txt.gz');
+has 'lemmas_list_path' => ( is => 'ro', isa => 'Str', default => 'data/models/ne_lemma_fix/cswiki.lemmas.list.txt.gz');
 has '_lemmas_list' => ( is => 'ro', isa => 'Tree::Trie', builder => '_build_lemmas_list', lazy => 1);
 
 #has 'suffix_change_threshold' => ( is => 'ro', isa => 'Num', default => 0.3 );
