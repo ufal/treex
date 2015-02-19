@@ -13,6 +13,8 @@ has '_index_ids' => ( isa => 'HashRef', is => 'rw' );
 
 has 'sent_ids' => ( isa => 'Bool', is => 'ro', default => 0 );
 
+has 'prettyprint' => ( isa => 'Bool', is => 'ro', default => 1 );
+
 sub process_atree {
     my ( $self, $aroot ) = @_;
     print { $self->_file_handle } $self->_process_tree($aroot);
@@ -30,6 +32,10 @@ sub _process_tree {
     }
     $out .= $self->_process_subtree( $aroot, 0 );
     $out .= "</alpino_adt>\n";
+    if ( !$self->prettyprint ) {
+        $out =~ s/[\t\r\n]//g;
+        $out .= "\n";
+    }
     return $out;
 }
 
@@ -40,6 +46,10 @@ sub _process_node {
     $out .= '<node cat="top" id="0" rel="top">' . "\n";
     $out .= "\t" . $self->_get_node_str( $anode, '--' ) . "\n";
     $out .= "</node>\n</alpino_adt>\n";
+    if ( !$self->prettyprint ) {
+        $out =~ s/[\t\r\n]//g;
+        $out .= "\n";
+    }
     return $out;
 }
 
@@ -218,6 +228,10 @@ This is a work-in-progress, many issues are yet to be resolved.
 =item sent_ids
 
 Include commentaries with sentence IDs on the output (for easier debugging).
+
+=item prettyprint
+
+Prettyprinting of the output for human readability (default=1).
 
 =back
 

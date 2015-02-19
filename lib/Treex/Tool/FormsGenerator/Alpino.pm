@@ -40,7 +40,7 @@ sub BUILD {
 }
 
 sub _build_adtxml {
-    return Treex::Block::Write::ADTXML->new();
+    return Treex::Block::Write::ADTXML->new( { prettyprint => 0 } );
 }
 
 sub _generate_from_adtxml {
@@ -49,8 +49,7 @@ sub _generate_from_adtxml {
     my $writer = $self->_alpino_writehandle;
     my $reader = $self->_alpino_readhandle;
 
-    $xml =~ s/[\t\n]//g;
-    print $writer $xml, "\n";
+    print $writer $xml;
     my $line      = <$reader>;
     my $last_line = '';
     my $sent      = '';
@@ -63,16 +62,13 @@ sub _generate_from_adtxml {
             $sent = $last_line;
             last;
         }
+
         # this means that an error has probably occurred
-        elsif ( $line =~ /^K#undefined\|/ ){
-            log_warn('K-undef occurred, last line: ' . $last_line);
+        elsif ( $line =~ /^K#undefined\|/ ) {
+            log_warn( 'K-undef occurred, last line: ' . $last_line );
             last;
         }
-        # this error message occurs when the input is an empty tree
-        elsif ( $line =~ /^Neither root nor sense attribute specified in ADT/ ) {
-            last;
-        }
-        
+
         $last_line = $line;
         $line      = <$reader>;
     }
