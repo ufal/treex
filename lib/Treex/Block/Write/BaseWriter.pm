@@ -161,6 +161,7 @@ sub _get_filename {
         $directories =~ s{/$}{};
         $document->set_path($directories);
         $document->set_file_stem($fn);
+        $document->set_file_number('');
     }
 
     return $filename;
