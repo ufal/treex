@@ -49,7 +49,7 @@ sub process_tnode {
 
     # For all t-nodes with no gender ...
     # (named entities have gender already filled)
-    return if defined $tnode->gram_gender;
+    return if ($tnode->gram_gender);
     my $gender  = $self->get_noun_gender( $tnode );
     if ( defined $gender ) {
         $tnode->set_gram_gender( $gender_tag2grammateme{$gender} );

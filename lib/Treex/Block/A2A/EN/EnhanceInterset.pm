@@ -17,7 +17,7 @@ sub process_anode {
         if ( $anode->lemma eq 'the' ) {
             $anode->iset->set_definiteness('def');
         }
-        elsif ( $anode->lemma eq 'a' ) {
+        elsif ( $anode->lemma =~ /^an?$/ ) {
             $anode->iset->set_definiteness('ind');
         }
     }
