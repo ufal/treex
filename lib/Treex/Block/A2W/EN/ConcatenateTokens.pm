@@ -35,7 +35,8 @@ sub process_zone {
     }
     
     # English clitics
-    $sentence =~ s/(\p{Alpha}+) (\'(ll|ve|re|[dsm])|n\'t)/$1$2/g;    
+    $sentence =~ s/(\p{Alpha}+) (\'(ll|ve|re|[dsm])|n\'t)/$1$2/g;
+    $sentence =~ s/can not/cannot/g;
 
     $zone->set_sentence($sentence);
     return;
