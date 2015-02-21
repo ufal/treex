@@ -1,6 +1,7 @@
 package Treex::Block::T2A::EN::AddArticles;
 use utf8;
 use Moose;
+use Moose::Util::TypeConstraints;
 use Treex::Core::Common;
 use Treex::Tool::Lexicon::EN::Countability;
 use Treex::Tool::Lexicon::EN::Hypernyms;
@@ -11,11 +12,23 @@ has 'grammateme_only' => ( isa => 'Bool', is => 'ro', default => 0 );
 
 has 'context_size' => ( isa => 'Int', is => 'ro', default => 7 );
 
+enum DiscourseBreaks => [qw/ document sentence /];
+has 'clear_context_after' => ( isa => 'DiscourseBreaks', is => 'ro', default => 'document' );
+
 has '_local_context' => ( isa => 'HashRef', is => 'rw', default => sub { {} } );
 
 after 'process_document' => sub {
     my ($self) = @_;
-    $self->_set_local_context( {} );    # clear local context after document
+    if ($self->clear_context_after eq 'document') {
+        $self->_set_local_context( {} );    # clear local context after document
+    }
+};
+
+after 'process_bundle' => sub {
+    my ($self) = @_;
+    if ($self->clear_context_after eq 'sentence') {
+        $self->_set_local_context( {} );    # clear local context after each sentence
+    }
 };
 
 sub process_tnode {
