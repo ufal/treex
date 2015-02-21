@@ -43,6 +43,21 @@ sub process_tnode {
     return;
 }
 
+sub replace_some_with_indef {
+    my ($self, $tnode, $countability) = @_;
+
+    return if ($countability && $countability ne 'countable');
+    return if (!defined $tnode->gram_number || $tnode->gram_number ne 'sg');
+    my ($some_tnode) = grep {$_->t_lemma eq 'some'} $tnode->get_children;
+    return if (!defined $some_tnode);
+
+    my $some_anode = $some_tnode->get_lex_anode;
+
+    $some_tnode->remove({children=>'rehang'});
+    $some_anode->remove({children=>'rehang'});
+    $tnode->set_gram_definiteness('indefinite');
+}
+
 sub decide_article {
     my ( $self, $tnode, $anode ) = @_;
     my $lemma  = $anode->lemma           // '';
@@ -51,6 +66,8 @@ sub decide_article {
     my $article      = '';
     my $rule         = '?';
 
+    $self->replace_some_with_indef( $tnode, $countability );
+    
     #
     # fixed rules
     #
