@@ -78,15 +78,25 @@ sub process_zone {
 
     foreach my $entity (@$entities_rf) {
         my @entity_anodes = @anodes[$entity->{start} .. $entity->{end}];
-                  
+        my $type = $self->convert_to_treex_ne_type($entity->{type});
+        
         my $n_node = $n_root->create_child(
-            ne_type => $entity->{type},
-            normalized_name => $self->guess_normalized_name(\@entity_anodes, $entity->{type}),
+            ne_type => $type,
+            normalized_name => $self->guess_normalized_name(\@entity_anodes, $type),
         );
         $n_node->set_anodes(@entity_anodes);
     }
 
     return;
+}
+
+sub convert_to_treex_ne_type {
+    my ($self, $orig_type) = @_;
+    return 'p_' if $orig_type =~ /^PER(SON)?$/;
+    return 'g_' if $orig_type =~ /^LOC(ATION)?$/;
+    return 'i_' if $orig_type =~ /^ORG(ANIZATION)?$/;
+    return 'o_' if $orig_type eq 'MISC';
+    return $orig_type;
 }
 
 sub guess_normalized_name {
