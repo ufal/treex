@@ -6,8 +6,6 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-my @urls;
-
 sub process_zone {
     my ($self, $zone) = @_;
     my ($changed_sentence, $entities_ref) = $self->substitute_entities($zone->sentence);
@@ -25,7 +23,7 @@ sub substitute_entities {
   my $new_sentence = $sentence;
   my @entities;
   my @commands;
-  @urls = ();
+  my @urls;
   $sentence = lcfirst($sentence);
   $sentence =~ s/$/ /;
   $sentence =~ s/^/ /;
@@ -48,14 +46,22 @@ sub substitute_entities {
       print STDERR "Cmd: $1\n";
     }  
   }
-  #$sentence = $self->_mark_urls($sentence);
+  $sentence = $self->_mark_urls($sentence);
+  while($sentence =~ s/(<IT type="url">.*?<\/IT>)/xxxURLxxx/){
+    push(@urls, $1);
+    #print STDERR "Entity: $2\n";
+  }
   $sentence =~ s/^\s+//;
   $sentence = ucfirst($sentence);
   #print STDERR "Collecting entites...\n";
   #while($sentence =~ s/(["<>{}“”«»–|—„‚‘\s]|\[|\]|``|\'\'|‘‘|\^)([A-Z][a-z]+)/$1xxxNExxx/){
     #push(@entities, $2);
     #print STDERR "Entity: $2\n";
-  #}  
+  #}
+  if (scalar @urls > 0){
+    print STDERR "In $sentence:\nFound urls:", join("\t", @urls), "\n";  
+    #die;
+  }
   return ($sentence, {entities=> \@entities, commands=> \@commands, urls => \@urls});
 }
 
@@ -63,9 +69,7 @@ sub substitute_entities {
 use URI::Find::Schemeless;
 my $finderUrl = URI::Find::Schemeless->new(sub {
     my ($uri, $orig_uri) = @_;
-    push @urls, $orig_uri;
-    print STDERR "Finded url: $orig_uri\n";
-    return 'XXXURLXXX';
+    return '<IT type="url">' . $orig_uri . '</IT>';
 });
 
 sub _mark_urls {

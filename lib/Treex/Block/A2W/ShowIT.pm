@@ -29,12 +29,16 @@ sub reconstruct_entities {
   my $entites_ref = shift;
   my $out_sentence = $in_sentence;
   print STDERR "Replacing sent: $in_sentence\n";
-  foreach my $cmd (@{$entites_ref->{'commands'}}){
-    print STDERR "Before $cmd: $in_sentence\n";
-    $in_sentence =~ s/xxxCMDxxx/$cmd/i;
-    print STDERR "After: $in_sentence\n";
+  if (defined($entites_ref->{'commands'})){
+    print STDERR "Restoring commands:\n";
+    foreach my $cmd (@{$entites_ref->{'commands'}}){
+      print STDERR "Before $cmd: $in_sentence\n";
+      $in_sentence =~ s/xxxCMDxxx/$cmd/i;
+      print STDERR "After: $in_sentence\n";
+    }
   }
   if (defined($entites_ref->{'entities'})){
+    print STDERR "Restoring entites:\n";
     foreach my $entity (@{$entites_ref->{'entities'}}){
       print STDERR "Before $entity: $in_sentence\n";
       $in_sentence =~ s/xxxNExxx/$entity/i;
@@ -45,7 +49,12 @@ sub reconstruct_entities {
     print STDERR "Restoring URLs:\n";
     foreach my $entity (@{$entites_ref->{'urls'}}){
       print STDERR "Before $entity: $in_sentence\n";
-      $in_sentence =~ s/xxxURLxxx/$entity/i;
+      $entity =~ m/<IT type="url">(.*?)<\/IT>/;
+      my $originalUrl = $1;
+      if (!$1){
+        print STDERR "No url in $entity\n";
+      }
+      $in_sentence =~ s/xxxURLxxx/$originalUrl/i;
       print STDERR "After: $in_sentence\n";
     }
   }
