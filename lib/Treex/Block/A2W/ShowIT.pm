@@ -6,11 +6,15 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+has source_selector => (is => 'ro', default=>'src');
+
 sub process_zone {
     my ($self, $zone) = @_;
     my $bundle = $zone->get_bundle();
     my $entities_ref = $bundle->wild->{entities};
-    my $src_zone = $bundle->get_zone('en', 'src');
+    #my $src_zone = $bundle->get_zone('en', 'src');
+    my $src_zone = first {$_->selector eq $self->source_selector} $bundle->get_all_zones();
+    log_fatal 'No zone with selector '. $self->source_selector if !$src_zone;
     
     my $re_tst_sentence = reconstruct_entities($zone->sentence, $entities_ref);
     $zone->set_sentence($re_tst_sentence);
