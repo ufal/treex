@@ -59,7 +59,7 @@ sub process_anode {
         $anode->set_lemma( $PERSPRON{$sig} );
     }
 
-    # fix negation particle
+    # fix negation particle (needed for backward compatibility only)
     elsif ( $lemma eq '#Neg' ) {
         $anode->set_lemma('niet');
     }

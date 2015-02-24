@@ -38,12 +38,13 @@ sub process_anode {
             my ( $mwu_cand_str, $mwu_pos ) = split /\|/, $mwu_cand;
 
             # skip some types of MWUs that are apparently not needed
-            next if ( $mwu_pos =~ /^(with_dt|conj)$/ );
+            next if ( $mwu_pos =~ /^(with_dt|conj|complementizer)$/ );
             $mwu_pos = $MWU_POS_MAPPING{$mwu_pos} // $mwu_pos;
 
             # try to find the rest of the MWU
             my $anodes = $self->detect_mwu( $mwu_cand_str, $anode );
             if ($anodes) {
+
                 # create the MWU structure if we are successful
                 log_info( 'Detected MWU: ' . $mwu_cand_str . ' ' . $mwu_pos . ' ' . join( ' ', map { $_->id } @$anodes ) );
                 my $amwu_root = $self->create_mwu(@$anodes);
@@ -62,8 +63,9 @@ sub detect_mwu {
     my ( $self, $cand_str, $anode ) = @_;
 
     my %cand_lemmas = ();
-    map { $cand_lemmas{$_} = ( $cand_lemmas{$_} // 0 ) + 1 } split( / /, $cand_str );
-    my $cand_len     = scalar( split( / /, $cand_str ) );
+    my @cand_lemmas_arr = split / /, $cand_str;
+    map { $cand_lemmas{$_} = ( $cand_lemmas{$_} // 0 ) + 1 } @cand_lemmas_arr;
+    my $cand_len     = scalar( @cand_lemmas_arr );
     my @anodes       = ($anode);
     my %found_lemmas = ();
     my @afound       = ();
@@ -80,7 +82,18 @@ sub detect_mwu {
             push @anodes, $acur->get_children();
         }
     }
-    return \@afound if ( scalar(@afound) == $cand_len );
+
+    # check if they are right after one another, check if they are in the same order as the candidate
+    if ( scalar(@afound) == $cand_len ) {
+        @afound = sort { $a->ord <=> $b->ord } @afound;        
+        for ( my $i = 0; $i < @afound - 1; ++$i ) {
+            return if ( $afound[$i]->ord + 1 != $afound[ $i + 1 ]->ord );
+            return if ( $afound[$i]->lemma ne $cand_lemmas_arr[$i] );
+        }
+        return \@afound;
+    }
+
+    # return \@afound if ( scalar(@afound) == $cand_len );
     return;
 }
 

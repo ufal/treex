@@ -26,6 +26,7 @@ sub process_tnode {
     $neg_node->shift_before_node($a_node);
     $t_node->add_aux_anodes($neg_node);
     
+    $self->postprocess($t_node, $a_node, $neg_node);
     return;
 }
 
@@ -38,6 +39,11 @@ sub particle_for {
     
     # "no" is suitable e.g. for Spanish
     return 'no';
+}
+
+# to be overriden by language-specific method
+sub postprocess {
+    return;
 }
 
 1;

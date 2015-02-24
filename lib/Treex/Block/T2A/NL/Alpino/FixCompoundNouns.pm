@@ -12,7 +12,7 @@ sub process_anode {
 
     my $compound_children = $self->find_compound_children($anode);
     return if ( @$compound_children <= 1 );
-    
+
     $self->create_mwu(@$compound_children);
 }
 
@@ -24,13 +24,26 @@ sub find_compound_children {
 
     while (@to_process) {
         my $acur = shift @to_process;
+
         next if ( $acur->n_node or ( $acur->wild->{adt_term_rel} // '' ) eq 'mwp' );
+        next if ( !$acur->is_noun or $acur->is_pronoun or $acur->lemma =~ /^(soort)$/ );
+
         my ($tcur) = $acur->get_referencing_nodes('a/lex.rf');
-        next if ( !$tcur or ( $acur != $anode and ( $tcur->formeme ne 'n:attr' or $acur->ord > $acur->get_parent()->ord ) ) );
-        push @found, $acur;
+        next if ( !$tcur );
+        next if ( $acur != $anode and ( $tcur->formeme ne 'n:attr' or $acur->ord > $acur->get_parent()->ord ) );
+
+        push @found,      $acur;
         push @to_process, $acur->get_children();
     }
-    return \@found;
+
+    # take just the part that is directly after one another
+    @found = sort { $a->ord <=> $b->ord } @found;
+    my @res = ();
+    for ( my $i = @found - 1; $i > 0; --$i ) {
+        unshift @res, $found[$i];
+        last if ( $found[ $i - 1 ]->ord + 1 != $found[$i]->ord );
+    }
+    return \@res;
 }
 
 1;
