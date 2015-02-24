@@ -73,6 +73,10 @@ my $finder = URI::Find::Schemeless->new(sub {
 sub _mark_urls {
     my ( $self, $sentence ) = @_;
     @urls = ();
+    # URI::Find::Schemeless cannot detect URLs which are not preceded by a space (or beggining of string).
+    # Various types of brackets were already separated, but it is possible to find e.g. "go to:http://mysite.com"
+    # without the space after colon (or comma, or other word). Let's detect such URLs as well.
+    $sentence =~ s|(?<!\s)(https?://|www\.)| $1|g;
     $finder->find(\$sentence);
     return $sentence;
 }
