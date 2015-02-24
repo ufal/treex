@@ -14,13 +14,13 @@ sub process_zone {
     
     my $re_src_sentence = reconstruct_entities($src_zone->sentence, $entities_ref);
     $src_zone->set_sentence($re_src_sentence);
-    print STDERR "New src snt: $re_src_sentence\n";
+    log_debug "New src snt: $re_src_sentence\n";
 
     my $re_tst_sentence = reconstruct_entities($zone->sentence, $entities_ref);
     $zone->set_sentence($re_tst_sentence);
 
-    print STDERR "Original snt: ",  $bundle->wild->{original_sentence},"\n";
-    print STDERR "New tst snt: $re_tst_sentence\n";
+    log_debug "Original snt: ",  $bundle->wild->{original_sentence},"\n";
+    log_debug "New tst snt: $re_tst_sentence\n";
     return;
 }
 
@@ -28,34 +28,34 @@ sub reconstruct_entities {
   my $in_sentence = shift;
   my $entites_ref = shift;
   my $out_sentence = $in_sentence;
-  print STDERR "Replacing sent: $in_sentence\n";
+  log_debug "Replacing sent: $in_sentence\n";
   if (defined($entites_ref->{'commands'})){
-    print STDERR "Restoring commands:\n";
+    log_debug "Restoring commands:\n";
     foreach my $cmd (@{$entites_ref->{'commands'}}){
-      print STDERR "Before $cmd: $in_sentence\n";
+      log_debug "Before $cmd: $in_sentence\n";
       $in_sentence =~ s/xxxCMDxxx/$cmd/i;
-      print STDERR "After: $in_sentence\n";
+      log_debug "After: $in_sentence\n";
     }
   }
   if (defined($entites_ref->{'entities'})){
-    print STDERR "Restoring entites:\n";
+    log_debug "Restoring entites:\n";
     foreach my $entity (@{$entites_ref->{'entities'}}){
-      print STDERR "Before $entity: $in_sentence\n";
+      log_debug "Before $entity: $in_sentence\n";
       $in_sentence =~ s/xxxNExxx/$entity/i;
-      print STDERR "After: $in_sentence\n";
+      log_debug "After: $in_sentence\n";
     }
   }
   if (defined($entites_ref->{'urls'})){
-    print STDERR "Restoring URLs:\n";
+    log_debug "Restoring URLs:\n";
     foreach my $entity (@{$entites_ref->{'urls'}}){
-      print STDERR "Before $entity: $in_sentence\n";
+      log_debug "Before $entity: $in_sentence\n";
       $entity =~ m/<IT type=".*?">(.*?)<\/IT>/;
       my $originalUrl = $1;
       if (!$1){
-        print STDERR "No url in $entity\n";
+        log_debug "No url in $entity\n";
       }
       $in_sentence =~ s/xxxURLxxx/$originalUrl/i;
-      print STDERR "After: $in_sentence\n";
+      log_debug "After: $in_sentence\n";
     }
   }
   $in_sentence =~ s/\s+/ /g;
