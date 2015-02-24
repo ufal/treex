@@ -49,7 +49,7 @@ sub reconstruct_entities {
     print STDERR "Restoring URLs:\n";
     foreach my $entity (@{$entites_ref->{'urls'}}){
       print STDERR "Before $entity: $in_sentence\n";
-      $entity =~ m/<IT type="url">(.*?)<\/IT>/;
+      $entity =~ m/<IT type=".*?">(.*?)<\/IT>/;
       my $originalUrl = $1;
       if (!$1){
         print STDERR "No url in $entity\n";

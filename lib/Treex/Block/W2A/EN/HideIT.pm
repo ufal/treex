@@ -42,12 +42,13 @@ sub substitute_entities {
     my $start = $quote->{start};
     my $end = $quote->{end};
     while($sentence =~ s/($start[a-z][^$end]+$end)/xxxCMDxxx/){
-      push(@commands, $1);
-      print STDERR "Cmd: $1\n";
+      my $cmdString = $1;
+      push(@commands, $cmdString);
+      print STDERR "Cmd: $cmdString\n";
     }  
   }
   $sentence = $self->_mark_urls($sentence);
-  while($sentence =~ s/(<IT type="url">.*?<\/IT>)/xxxURLxxx/){
+  while($sentence =~ s/(<IT type=".*?">.*?<\/IT>)/xxxURLxxx/){
     push(@urls, $1);
     #print STDERR "Entity: $2\n";
   }
@@ -65,16 +66,21 @@ sub substitute_entities {
   return ($sentence, {entities=> \@entities, commands=> \@commands, urls => \@urls});
 }
 
-
 use URI::Find::Schemeless;
 my $finderUrl = URI::Find::Schemeless->new(sub {
     my ($uri, $orig_uri) = @_;
     return '<IT type="url">' . $orig_uri . '</IT>';
 });
 
+use Email::Find;
+my $finderMail = Email::Find->new(sub {
+    my ($mail, $orig_mail) = @_;
+    return '<IT type="mail">' . $orig_mail . '</IT>';
+});
 sub _mark_urls {
     my ( $self, $sentence ) = @_;
     $finderUrl->find(\$sentence);
+    $finderMail->find(\$sentence);
     return $sentence;
 }
 1;
