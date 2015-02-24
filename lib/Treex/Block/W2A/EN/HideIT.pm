@@ -10,10 +10,10 @@ sub process_zone {
     my ($self, $zone) = @_;
     my ($changed_sentence, $entities_ref) = $self->substitute_entities($zone->sentence);
     $zone->get_bundle()->wild->{original_sentence} = $zone->sentence;
-    #print STDERR "New snt: $changed_sentence\n";
+    #log_debug "New snt: $changed_sentence\n";
     $zone->set_sentence($changed_sentence);
     $zone->get_bundle()->wild->{entities} = $entities_ref;
-    print STDERR "Ents for $changed_sentence:\n", join (", ", @{$entities_ref->{'entities'}}), "\n";
+    log_debug "Ents for $changed_sentence:\n", join (", ", @{$entities_ref->{'entities'}}), "\n";
     return;
 }
 
@@ -37,30 +37,30 @@ sub substitute_entities {
     {start => '‚', end =>'‘'},    
     {start => '``', end =>'``'}
   ];
-  print STDERR "Collecting cmds...\n";  
+  log_debug "Collecting cmds...\n";  
   foreach my $quote (@$quotes){
     my $start = $quote->{start};
     my $end = $quote->{end};
     while($sentence =~ s/($start[a-z][^$end]+$end)/xxxCMDxxx/){
       my $cmdString = $1;
       push(@commands, $cmdString);
-      print STDERR "Cmd: $cmdString\n";
+      log_debug "Cmd: $cmdString\n";
     }  
   }
   $sentence = $self->_mark_urls($sentence);
   while($sentence =~ s/(<IT type=".*?">.*?<\/IT>)/xxxURLxxx/){
     push(@urls, $1);
-    #print STDERR "Entity: $2\n";
+    #log_debug "Entity: $2\n";
   }
   $sentence =~ s/^\s+//;
   $sentence = ucfirst($sentence);
-  #print STDERR "Collecting entites...\n";
+  #log_debug "Collecting entites...\n";
   #while($sentence =~ s/(["<>{}“”«»–|—„‚‘\s]|\[|\]|``|\'\'|‘‘|\^)([A-Z][a-z]+)/$1xxxNExxx/){
     #push(@entities, $2);
-    #print STDERR "Entity: $2\n";
+    #log_debug "Entity: $2\n";
   #}
   if (scalar @urls > 0){
-    print STDERR "In $sentence:\nFound urls:", join("\t", @urls), "\n";  
+    log_debug "In $sentence:\nFound urls:", join("\t", @urls), "\n";  
     #die;
   }
   return ($sentence, {entities=> \@entities, commands=> \@commands, urls => \@urls});
