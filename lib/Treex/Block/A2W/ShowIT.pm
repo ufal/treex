@@ -6,22 +6,25 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-has source_selector => (is => 'ro', default=>'src');
-
 sub process_zone {
     my ($self, $zone) = @_;
     my $bundle = $zone->get_bundle();
     my $entities_ref = $bundle->wild->{entities};
-    #my $src_zone = $bundle->get_zone('en', 'src');
-    my $src_zone = first {$_->selector eq $self->source_selector} $bundle->get_all_zones();
-    log_fatal 'No zone with selector '. $self->source_selector if !$src_zone;
+    my $src_zone = $bundle->get_zone('en', 'src');
     
     my $re_tst_sentence = reconstruct_entities($zone->sentence, $entities_ref);
+    $re_tst_sentence = fix_quotes($re_tst_sentence);
     $zone->set_sentence($re_tst_sentence);
 
     $src_zone->set_sentence($bundle->wild->{original_sentence}) if $bundle->wild->{original_sentence};
     log_debug "New tst snt: $re_tst_sentence\n";
     return;
+}
+
+sub fix_quotes {
+  my $sentence = shift;
+  $sentence =~ s/“([^”]+?)”/„$1“/ig;
+  return $sentence;      
 }
 
 sub reconstruct_entities {
@@ -42,6 +45,14 @@ sub reconstruct_entities {
     foreach my $entity (@{$entites_ref->{'entities'}}){
       log_debug "Before $entity: $in_sentence\n";
       $in_sentence =~ s/xxxNExxx/$entity/i;
+      log_debug "After: $in_sentence\n";
+    }
+  }  
+  if (defined($entites_ref->{'mails'})){
+    log_debug "Restoring mails:\n";
+    foreach my $entity (@{$entites_ref->{'mails'}}){
+      log_debug "Before $entity: $in_sentence\n";
+      $in_sentence =~ s/xxxMAILxxx/$entity/i;
       log_debug "After: $in_sentence\n";
     }
   }

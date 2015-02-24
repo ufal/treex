@@ -24,9 +24,12 @@ sub substitute_entities {
   my @entities;
   my @commands;
   my @urls;
+  my @mails;
   $sentence = lcfirst($sentence);
   $sentence =~ s/$/ /;
   $sentence =~ s/^/ /;
+  #Http(s) fix
+  #$sentence =~ s|(?<!\s)(https?://)| $1|g
   #$sentence =~ s/(["<>{}“”«»–|—„‚‘]|\[|\]|``|\'\'|‘‘|\^)/ $1 /g;
   my $quotes = [
     {start => '"', end =>'"'}, 
@@ -41,8 +44,8 @@ sub substitute_entities {
   foreach my $quote (@$quotes){
     my $start = $quote->{start};
     my $end = $quote->{end};
-    while($sentence =~ s/($start[a-z][^$end]+$end)/xxxCMDxxx/){
-      my $cmdString = $1;
+    while($sentence =~ s/($start)([a-z][^$end<]+?)([$end|<])/$1XXXCMDXXX$3/){
+      my $cmdString = $2;
       push(@commands, $cmdString);
       log_debug "Cmd: $cmdString\n";
     }  
@@ -51,6 +54,12 @@ sub substitute_entities {
   while($sentence =~ s/(<IT type=".*?">.*?<\/IT>)/xxxURLxxx/){
     push(@urls, $1);
     #log_debug "Entity: $2\n";
+  }
+  while($sentence =~  s/([\w0-9._%+-]+@[^\s]+?)(\s)/xxxMAILxxx$2/){
+  # This wold be more strict regexp for emails
+  #s/([\w0-9._%+-]+@[^.]+\.[[:alpha:]]{2,4})(\s)/xxxMAILxxx$2/){
+    push(@mails, $1);
+    #log_debug "Mail: $1\n";
   }
   $sentence =~ s/^\s+//;
   $sentence = ucfirst($sentence);
@@ -63,7 +72,7 @@ sub substitute_entities {
     log_debug "In $sentence:\nFound urls:", join("\t", @urls), "\n";  
     #die;
   }
-  return ($sentence, {entities=> \@entities, commands=> \@commands, urls => \@urls});
+  return ($sentence, {entities=> \@entities, commands=> \@commands, urls => \@urls, mails => \@mails});
 }
 
 use URI::Find::Schemeless;
@@ -80,7 +89,7 @@ my $finderMail = Email::Find->new(sub {
 sub _mark_urls {
     my ( $self, $sentence ) = @_;
     $finderUrl->find(\$sentence);
-    $finderMail->find(\$sentence);
+    #$finderMail->find(\$sentence);
     return $sentence;
 }
 1;
