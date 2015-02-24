@@ -22,6 +22,8 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{Ms.}        => 'slečna|N',
     q{Obama}      => 'Obama|N',
     q{von}        => 'von|X',
+    q{Wi-Fi}      => 'Wi-Fi|X',
+    q{WiFi}       => 'WiFi|X',
 );
 
 sub process_tnode {
@@ -90,6 +92,11 @@ sub get_lemma_and_pos {
     # "As follows from ..." -> "Jak vyplývá z ..."
     if ( $en_tlemma eq 'follow' ) {
         return 'vyplývat|V' if any { $_->formeme =~ /from/ } $en_tnode->get_children( { following_only => 1 } );
+    }
+    
+    # Imperative "go" in IT instructions is "přejděte" rather than "pojďte".
+    if ( $en_tlemma eq 'go' && $en_tnode->gram_verbmod eq 'imp'){
+        return 'přejít|V';
     }
 
     # If no rules match, get_lemma_and_pos has not succeeded.
