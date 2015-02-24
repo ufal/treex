@@ -12,14 +12,10 @@ sub process_zone {
     my $entities_ref = $bundle->wild->{entities};
     my $src_zone = $bundle->get_zone('en', 'src');
     
-    my $re_src_sentence = reconstruct_entities($src_zone->sentence, $entities_ref);
-    $src_zone->set_sentence($re_src_sentence);
-    log_debug "New src snt: $re_src_sentence\n";
-
     my $re_tst_sentence = reconstruct_entities($zone->sentence, $entities_ref);
     $zone->set_sentence($re_tst_sentence);
 
-    log_debug "Original snt: ",  $bundle->wild->{original_sentence},"\n";
+    $src_zone->set_sentence($bundle->wild->{original_sentence}) if $bundle->wild->{original_sentence};
     log_debug "New tst snt: $re_tst_sentence\n";
     return;
 }
