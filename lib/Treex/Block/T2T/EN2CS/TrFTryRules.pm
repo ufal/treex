@@ -70,13 +70,8 @@ sub formeme_for_tnode {
     my ( $en_tlemma, $en_formeme ) = $en_tnode->get_attrs(qw(t_lemma formeme));
     return 'n:v+4' if $en_tlemma =~ /^(sun|mon|tues|wednes|thurs|fri|satur)day$/i && $en_formeme eq 'n:on+X';
     return 'n:v+6' if $en_tlemma eq 'abroad' && $en_formeme eq 'adv:';
-
-    return 'n:2' if $en_formeme eq 'n:poss'
-            and $en_tlemma ne '#PersPron'
-            and (
-                $en_tnode->get_children
-                or ( $en_tnode->gram_number || "" ) eq "pl"
-            );
+    return 'adj:poss' if $en_tlemma eq '#PersPron' && $en_formeme eq 'n:poss';
+    return 'n:2' if $en_formeme eq 'n:poss' && ($en_tnode->get_children || ( $en_tnode->gram_number || '' ) eq 'pl');
 
     #    return 'n:attr' if $en_tnode->get_parent->is_name_of_person && Treex::Tool::Lexicon::EN::PersonalRoles::is_personal_role($en_tlemma) && $en_formeme eq 'n:attr';
 
