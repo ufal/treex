@@ -11,13 +11,8 @@ sub process_tnode {
     my @particles;
     my @aux_a_nodes = $node->get_aux_anodes();
 
-    # negation particle
-    if ( $old_tlemma eq 'niet' ) {
-        $new_tlemma = '#Neg';
-    }
-
     # personal (and possessive) pronouns
-    elsif ( $lex_a_node->match_iset( 'prontype' => 'prs' ) ) {
+    if ( $lex_a_node->match_iset( 'prontype' => 'prs' ) ) {
         $new_tlemma = '#PersPron';
     }
     else {

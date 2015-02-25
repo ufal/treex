@@ -90,6 +90,12 @@ override is_aux_to_parent => sub {
         return 0 if $eparent->is_root();
         return 1 && $eparent->is_adverb() or $eparent->is_conjunction();
     }
+    
+    # negation particle 'niet'
+    if ( lc( $node->form ) eq 'niet' ){
+        my ($eparent) = $node->get_eparents();
+        return 1 if !$eparent->is_root && ($eparent->is_verb || $eparent->is_adjective || $eparent->is_adverb);
+    }
 
     return 0;
 };
