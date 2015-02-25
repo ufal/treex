@@ -35,3 +35,29 @@ override 'postprocess' => sub {
 };
 
 1;
+
+__END__
+
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Block::T2A::NL::AddNegationParticle
+
+=head1 DESCRIPTION
+
+A Dutch-specific addition to L<Treex::Block::T2A::AddNegationParticle>,
+which sets the lemma of the particle to "niet", excluding adverbs and adjectives
+that already contain the negation. 
+
+Also, it moves the particle after any verb and its direct objects and subject. 
+
+=head1 AUTHOR
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
