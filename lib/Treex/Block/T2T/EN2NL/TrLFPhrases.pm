@@ -11,6 +11,8 @@ my %CHILD_PARENT_TO_ONE_NODE = (
     'sure|adj:compl make'  => 'controleren|verb',
     'output|n:attr device' => 'uitvoer_apparaat|noun',
     'email|n:attr client' => 'email_programma|noun',
+    'security|n:attr reason' => 'veiligheid_reden|noun',
+    'business|n:attr environment' => 'onderneming_klimaat|noun', 
 );
 
 # one English t-lemma + syntpos --> Dutch child (t-lemma, formeme, mlayer_pos) + parent (t-lemma, mlayer_pos)
@@ -24,6 +26,8 @@ sub process_ttree {
     foreach my $tnode ( $troot->get_descendants( { ordered => 1 } ) ) {
         $self->try_2to1($tnode);
     }
+
+# (This does not work well, and Alpino has a hack for that)
 #    foreach my $tnode ( $troot->get_descendants( { ordered => 1 } ) ) {
 #        $self->try_1to2($tnode);
 #    }
@@ -40,6 +44,7 @@ sub try_2to1 {
 
     if ( !$parent->is_root and $parent->t_lemma_origin ne 'rule-TrLFPhrases' ) {
 
+# (This does not work well, and Alpino has a hack for that)
 #        # need to -> moeten
 #        if ( $src_parent->t_lemma eq 'need' and $src_parent->formeme =~ /v:.*fin/ and $src_tnode->formeme eq 'v:to+inf' and $tnode->formeme =~ /^v/ ) {
 #
