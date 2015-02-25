@@ -22,19 +22,18 @@ has is_clause_head => (
 sub get_clause_root {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self      = shift;
-    my $my_number = $self->get_attr('clause_number');
-    log_warn( 'Attribute clause_number not defined in ' . $self->get_attr('id') )
-        if !defined $my_number;
+    my $my_number = $self->clause_number;
+    log_warn( 'Attribute clause_number not defined in ' . $self->id ) if !defined $my_number;
     return $self if !$my_number;
 
     my $highest = $self;
     my $parent  = $self->get_parent();
-    while ( $parent && ( $parent->get_attr('clause_number') || 0 ) == $my_number ) {
+    while ( $parent && ( $parent->clause_number || 0 ) == $my_number ) {
         $highest = $parent;
         $parent  = $parent->get_parent();
     }
-    if ( $parent && !$highest->get_attr('is_member') && $parent->is_coap_root() ) {
-        my $eff_parent = first { $_->get_attr('is_member') && ( $_->get_attr('clause_number') || 0 ) == $my_number } $parent->get_children();
+    if ( $parent && !$highest->is_member && $parent->is_coap_root() ) {
+        my $eff_parent = first { $_->is_member && ( $_->clause_number || 0 ) == $my_number } $parent->get_children();
         return $eff_parent if $eff_parent;
     }
     return $highest;
@@ -46,8 +45,8 @@ sub get_clause_nodes {
     my $self        = shift;
     my $root        = $self->get_root();
     my @descendants = $root->get_descendants( { ordered => 1 } );
-    my $my_number   = $self->get_attr('clause_number');
-    return grep { ( $_->get_attr('clause_number') || '' ) eq $my_number } @descendants;
+    my $my_number   = $self->clause_number;
+    return grep { ( $_->clause_number || '' ) eq $my_number } @descendants;
 }
 
 # TODO: same purpose as get_clause_root but instead of clause_number uses is_clause_head
@@ -55,7 +54,7 @@ sub get_clause_head {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self = shift;
     my $node = $self;
-    while ( !$node->get_attr('is_clause_head') && $node->get_parent() ) {
+    while ( !$node->is_clause_head && $node->get_parent() ) {
         $node = $node->get_parent();
     }
     return $node;
@@ -64,7 +63,7 @@ sub get_clause_head {
 sub get_clause_ehead {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self = shift;
-    return $self if ( $self->is_clause_head );
+    return $self if $self->is_clause_head;
     my ($node) = $self->get_eparents( { or_topological => 1 } );
     while ( !$node->is_clause_head && $node->get_parent() ) {
         $node = $node->get_parent();
@@ -77,7 +76,7 @@ sub get_clause_descendants {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self = shift;
 
-    my @clause_children = grep { !$_->get_attr('is_clause_head') } $self->get_children();
+    my @clause_children = grep { !$_->is_clause_head } $self->get_children();
     return ( @clause_children, map { $_->get_clause_descendants() } @clause_children );
 }
 
@@ -86,7 +85,7 @@ sub get_clause_edescendants {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self = shift;
 
-    my @clause_children = grep { !$_->get_attr('is_clause_head') } $self->get_echildren();
+    my @clause_children = grep { !$_->is_clause_head } $self->get_echildren();
 
     # we can use normal get_clause_descendants here, using echildren would no longer make any difference
     return ( @clause_children, map { $_->get_clause_descendants() } @clause_children );

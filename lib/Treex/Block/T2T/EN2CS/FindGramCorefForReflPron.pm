@@ -6,70 +6,63 @@ extends 'Treex::Core::Block';
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
-    if ( $tnode->t_lemma eq "#PersPron" and $tnode->formeme !~ /1/ ) {
+    # Focus on personal pronouns which are not in nominative case.
+    return if $tnode->t_lemma ne '#PersPron';
+    return if $tnode->formeme =~ /1/;
+    my $perspron = $tnode;
+    
+    # Don't add gram coref where text coref is already detected.
+    # T2T::EN2CS::TurnTextCorefToGramCoref will change the type later.
+    # "They are angry if you steal their[text_coref=They] cars."
+    # We don't want to make "their" correferent with "you".
+    #return if $perspron->get_coref_text_nodes();
+    
+    my $clause_head = $perspron->get_clause_head() or return;
 
-        my $perspron = $tnode;
-
-        my $clause_head;
-        my $parent = $perspron->get_parent;
-        climb: while ( not( $parent->is_root ) ) {    # climbing up to the nearest clause head
-            if ( $parent->is_clause_head ) {
-                $clause_head = $parent;
-                last climb;
-            }
-            $parent = $parent->get_parent
-        }
-
-        if ($clause_head) {
-
-            #	print STDERR "  Success2\n";
-            my ($subject) = grep { ( $_->formeme || "" ) =~ /1/ } $clause_head->get_children;    # !!! s efektivnimi to bude tezsi
-            if ($subject) {
-
-                #	  print STDERR "    Success3\n";
-                my $antec_number = $subject->gram_number;
-                my $pron_number  = $perspron->gram_number;
-                my $antec_gender = $subject->gram_gender;
-                my $pron_gender  = $perspron->gram_gender;
-
-                #	  print "Pron: $pron_number $pron_gender    Antec: $antec_number $antec_gender\n";
-
-                if ((   not defined $antec_gender
-                        or not defined $pron_gender
-                        or $pron_gender eq $antec_gender
-                        or ( $pron_gender =~ /inan|anim/ and $antec_gender =~ /inan|anim/ )
-                    )    # voln
-                    and
-                    (   not defined $antec_number
-                        or not defined $pron_number
-                        or $pron_number eq $antec_number
-                    )    # volnejsi podminka na shodu, na zivotnosti zatim nezalezi
-                    )
-                {
-
-                    #	    print STDERR "Antecedent nalezen: \n";
-                    #	    print STDERR $perspron->id."\n";
-                    $perspron->set_attr( 'coref_gram.rf', [ $subject->id ] );
-                }
-            }
-        }
+    # TODO: Should we use get_echildren here?
+    my $subject = first { ( $_->formeme || '' ) =~ /1/ } $clause_head->get_children();
+    return if !$subject;
+    if (all {$self->agree_in($_, $perspron, $subject)} qw(gender number)){
+        $perspron->add_coref_gram_nodes($subject);
     }
+ 
+    return;
+}
+
+sub agree_in {
+    my ($self, $category, $perspron, $antec) = @_;
+    my $pron_cat  = $perspron->get_attr("gram/$category");
+    my $antec_cat = $antec->get_attr("gram/$category");
+    return 1 if !defined $pron_cat || !defined $antec_cat;
+    return 1 if $pron_cat eq $antec_cat;
+    return 1 if $category eq 'gender' && all {$_ =~ /inan|anim/} ($pron_cat, $antec_cat);
+    return 0;
 }
 
 1;
 
-=over
+__END__
 
-=item Treex::Block::T2T::EN2CS::FindGramCorefForReflPron
+=encoding utf-8
+
+=head1 NAME 
+
+Treex::Block::T2T::EN2CS::FindGramCorefForReflPron
+
+=head1 DESCRIPTION
 
 Make co-reference links from personal pronouns to their antecedents,
 if the latter ones are in subject position. This is neccessary because
 of Czech pronoun 'reflexivization' (subclass of grammatical coreference).
 
-=back
+=head1 AUTHORS
 
-=cut
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-# Copyright 2008 Zdenek Zabokrtsky
+Martin Popel <popel@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2008,2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
