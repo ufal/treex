@@ -17,12 +17,12 @@ sub process_tnode {
     # We don't want to make "their" correferent with "you".
     #return if $perspron->get_coref_text_nodes();
     
-    my $clause_head = $perspron->get_clause_head() or return;
+    my $clause_head = $perspron->get_clause_ehead() or return;
 
     # TODO: Should we use get_echildren here?
-    my $subject = first { ( $_->formeme || '' ) =~ /1/ } $clause_head->get_children();
+    my $subject = first { ( $_->formeme || '' ) =~ /1/ } $clause_head->get_echildren();
     return if !$subject;
-    if (all {$self->agree_in($_, $perspron, $subject)} qw(gender number)){
+    if (all {$self->agree_in($_, $perspron, $subject)} qw(gender number person)){
         $perspron->add_coref_gram_nodes($subject);
     }
  
@@ -31,9 +31,10 @@ sub process_tnode {
 
 sub agree_in {
     my ($self, $category, $perspron, $antec) = @_;
-    my $pron_cat  = $perspron->get_attr("gram/$category");
-    my $antec_cat = $antec->get_attr("gram/$category");
-    return 1 if !defined $pron_cat || !defined $antec_cat;
+    my $pron_cat  = $perspron->get_attr("gram/$category") || '';
+    my $antec_cat = $antec->get_attr("gram/$category") || '';
+    return 0 if $category eq 'person' && !$antec_cat && $pron_cat =~ /1|2/;
+    return 1 if !$pron_cat || !$antec_cat;
     return 1 if $pron_cat eq $antec_cat;
     return 1 if $category eq 'gender' && all {$_ =~ /inan|anim/} ($pron_cat, $antec_cat);
     return 0;
