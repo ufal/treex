@@ -99,7 +99,9 @@ sub find_subjects_of {
     return $left_nouns[-1] if @left_nouns;
 
     # "'It is reversed', said Peter."
-    if ( any { $_->tag =~ /^(V|MD)/ && $_->get_children() } @left_echildren ) {
+    # "If you apply this rule, make sure to exclude imperatives/non-dicendi verbs."
+    if ( Treex::Tool::Lexicon::EN::is_dicendi_verb($node->lemma)
+        && (any { $_->tag =~ /^(V|MD)/ && $_->get_children() } @left_echildren)) {
         my $noun = first { $_->tag =~ $NOUN_REGEX } @echildren;
         return $noun if $noun;
     }

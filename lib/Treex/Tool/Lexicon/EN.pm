@@ -6,7 +6,7 @@ use utf8;
 my @DICENDI_VERBS =
     qw(accuse acknowledge add admit affirm agree allege announce answer
     anticipate argue appear ask assert assure beg believe bet boast brag
-    burst_out certify claim clarify comment conclude confess confide contend
+    burst_out certify claim clarify comment conclude confess confide consider contend
     convey cry declare deny describe disclose doubt elaborate enlarge estimate
     exclaim explain explicate falter fear feel forecast foretell guarantee hint
     hope imagine insist justify know maintain mean mention mumble murmur mutter
