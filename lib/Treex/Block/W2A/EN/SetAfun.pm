@@ -12,15 +12,15 @@ sub process_atree {
     # (Rarely, there can be more terminal punctuations.!)
     # (There may be more heads and this is in case of coordinations.)
     foreach my $subroot ( $a_root->get_echildren() ) {
-        $subroot->set_afun( get_afun_for_subroot($subroot) );
-        process_subtree($subroot);
+        $subroot->set_afun( $self->get_afun_for_subroot($subroot) );
+        $self->process_subtree($subroot);
     }
 
     return 1;
 }
 
 sub get_afun_for_subroot {
-    my ($subroot) = @_;
+    my ($self, $subroot) = @_;
 
     my $afun = $subroot->afun;
     return $afun if $afun;
@@ -35,16 +35,16 @@ sub get_afun_for_subroot {
 my $NOUN_REGEX = qr/^(NN|PRP|WP|CD$|WDT$|\$)/;
 
 sub process_subtree {
-    my ($node) = @_;
-    foreach my $subject ( find_subjects_of($node) ) {
+    my ($self, $node) = @_;
+    foreach my $subject ( $self->find_subjects_of($node) ) {
         $subject->set_afun('Sb');
     }
 
     foreach my $child ( $node->get_echildren() ) {
         if ( !$child->afun ) {
-            $child->set_afun( get_afun($child) );
+            $child->set_afun( $self->get_afun($child) );
         }
-        process_subtree($child);
+        $self->process_subtree($child);
     }
     return;
 }
@@ -55,14 +55,23 @@ sub process_subtree {
 # The first step (marking AuxV) is done here,
 # because it is needed for finding subjects.
 sub find_subjects_of {
-    my ($node) = @_;
+    my ($self, $node) = @_;
     my $tag = $node->tag;
 
     # Only verbs can have subjects (and auxiliary verb children)
     return if $tag !~ /^(V|MD)/;
-
-    # Mark all auxiliary verbs
+    
+    # For coordinated verbs, only the first verb should detect shared subjects.
+    # "Build a house and make a tea!"
+    # Here, "house" should be a private dependent of "build",
+    # but parsers may annotate it as a shared dependent, i.e. effective child of "make".
+    # Still, we don't want to mark "house" as subject.
     my @echildren = $node->get_echildren( { ordered => 1 } );
+    if ($node->is_member && any {$_->tag =~ /^(V|MD)/ && $_->precedes($node)} map{$_->get_echildren()} $node->get_eparents()){
+        @echildren = grep {$_->is_descendant_of($node)} @echildren;
+    }
+
+    # Mark all auxiliary verbs    
     my @left_echildren = grep { $_->precedes($node) } @echildren;
     foreach my $auxV ( grep { is_aux_verb( $_, $node ) } @left_echildren ) {
         $auxV->set_afun('AuxV');
@@ -100,7 +109,10 @@ sub find_subjects_of {
 
     # "'It is reversed', said Peter."
     # "If you apply this rule, make sure to exclude imperatives/non-dicendi verbs."
-    if ( Treex::Tool::Lexicon::EN::is_dicendi_verb($node->lemma)
+    # There are many possibly-dicendi verbs, but they should be in 3rd person or past form,
+    # while imperatives have the same form as lemma.
+    if ( $node->lemma ne lc($node->form)
+        && Treex::Tool::Lexicon::EN::is_dicendi_verb($node->lemma) 
         && (any { $_->tag =~ /^(V|MD)/ && $_->get_children() } @left_echildren)) {
         my $noun = first { $_->tag =~ $NOUN_REGEX } @echildren;
         return $noun if $noun;
@@ -210,7 +222,7 @@ sub before_been {
 
 # Handle remaining afuns, i.e. all except Aux[CPV] and Sb.
 sub get_afun {
-    my ($node) = @_;
+    my ($self, $node) = @_;
     my $tag = $node->tag;
 
     # Possesive 's
