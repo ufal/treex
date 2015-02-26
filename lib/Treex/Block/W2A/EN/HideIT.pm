@@ -25,6 +25,8 @@ sub substitute_entities {
   my @commands;
   my @urls;
   my @mails;
+  my %wpaths;
+  my %upaths;
   $sentence = lcfirst($sentence);
   $sentence =~ s/$/ /;
   $sentence =~ s/^/ /;
@@ -61,6 +63,47 @@ sub substitute_entities {
     push(@mails, $1);
     #log_debug "Mail: $1\n";
   }
+  #while($sentence =~  s/(\s)([~|\/]{1,2}[^\/]+?\/[^\/]+\/?)(\s)/$1xxxUPATHxxx$3/){
+    #push(@upaths, $2);
+    #log_debug "Mail: $1\n";
+  #}
+  my @possible_paths = $sentence =~ /\s([~|\/]{1,2}[^\/]+?\/[^\/]+\/[^\s]+)\s/g;
+  my $count = 1;
+  foreach my $posible_path (@possible_paths){
+    if (not (scalar split (/\s/, $posible_path) > scalar split (/\\/, $posible_path))) {
+      my $replace = "xxxUPATH" . $count . "xxx";
+      $sentence =~ s/$posible_path/$replace/;
+      $upaths{$replace} = $posible_path;
+      $count++;
+    }
+  }
+  #while($sentence =~  /(\s)([A-Z]?:?\\?\\[^\\]+\\?)(\s)/){
+    #my $possible_path = $2;
+    #if (scalar split "\s" $possible_path > )
+    #push(@wpaths, $2);
+    #log_debug "Mail: $1\n";
+  #}
+  @possible_paths = $sentence =~ /\s([A-Z]?:?\\?\\[^\\]+?\\[^\\]+?\\[^\s])\s/g;
+  $count = 1;
+  foreach my $posible_path (@possible_paths){
+    if (not (scalar split (/\s/, $posible_path) > scalar split (/\\/, $posible_path))) {
+      my $replace = "xxxWPATH" . $count . "xxx";
+      $sentence =~ s/$posible_path/$replace/;
+      $wpaths{$replace} = $posible_path;
+      $count++;
+    }
+  }
+  my %files;
+  my @possible_filenames = $sentence =~ /\s([A-Za-z0-9_\-\.]+\.\w{3})\s/g;
+  my $count = 1;
+  foreach my $posible_file (@possible_filenames){
+    if (length $posible_file > 4) {
+      my $replace = "xxxPFILENAME" . $count . "xxx";
+      $sentence =~ s/$posible_file/$replace/;
+      $files{$replace} = $posible_file;
+      $count++;
+    }
+  }
   $sentence =~ s/^\s+//;
   $sentence = ucfirst($sentence);
   #log_debug "Collecting entites...\n";
@@ -72,7 +115,7 @@ sub substitute_entities {
     log_debug "In $sentence:\nFound urls:", join("\t", @urls), "\n";  
     #die;
   }
-  return ($sentence, {entities=> \@entities, commands=> \@commands, urls => \@urls, mails => \@mails});
+  return ($sentence, {entities=> \@entities, commands=> \@commands, urls => \@urls, mails => \@mails, upaths => \%upaths, wpaths => \%wpaths, files => \%files});
 }
 
 use URI::Find::Schemeless;
