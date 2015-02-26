@@ -4,7 +4,7 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;
 
-use Algorithm::AhoCorasick qw/find_all/;
+use Algorithm::AhoCorasick::SearchMachine;
 use List::MoreUtils qw/none/;
 
 extends 'Treex::Core::Block';
@@ -12,8 +12,12 @@ extends 'Treex::Core::Block';
 has 'phrase_list_path' => ( is => 'ro', isa => 'Str', default => 'data/models/gazeteer/en.app_labels.gaz.gz');
 has '_phrase_list' => ( is => 'ro', 'isa' => 'HashRef[HashRef]', builder => '_build_phrase_list', lazy => 1);
 
+has '_search_state_machine' => ( is => 'ro', isa => 'Algorithm::AhoCorasick::SearchMachine', builder => '_build_search_state_machine', lazy => 1);
+
 sub _build_phrase_list {
     my ($self) = @_;
+
+    log_info "Loading the English gazeteer list...";
 
     my $path = require_file_from_share($self->phrase_list_path);
     open my $fh, "<:gzip:utf8", $path;
@@ -24,34 +28,53 @@ sub _build_phrase_list {
         chomp $line;
         my ($id, $phrase) = split /\t/, $line;
 
-        if (!defined $phrase_list->{lc($phrase)}) {
+        if ($phrase && !defined $phrase_list->{lc($phrase)}) {
             my $hash = {id => $id, orig => $phrase};
             $phrase_list->{lc($phrase)} = $hash;
+            print STDERR "EMPTY: $id $phrase\n" if (!$phrase);
         }
     }
+    close $fh;
+
+    log_info "Gazeteer list created.";
 
     return $phrase_list;
+}
+
+sub _build_search_state_machine {
+    my ($self) = @_;
+
+    log_info "Building a state machine for searching...";
+    
+    my @items = keys %{$self->_phrase_list};
+    print STDERR "Length: " . scalar @items . "\n";
+    my $machine = Algorithm::AhoCorasick::SearchMachine->new(@items);
+
+    return $machine;
 }
 
 sub process_start {
     my ($self) = @_;
     $self->_phrase_list;
+    $self->_search_state_machine;
 }
 
 sub process_atree {
     my ( $self, $atree ) = @_;
     my @anodes = $atree->get_children( {ordered => 1} );
 
+    log_info "Processing sentence.";
+
     # find matches
     my $tokenized_sent = join " ", map {lc($_->form)} @anodes;
-    my $matches = find_all(lc($tokenized_sent), keys $self->_phrase_list);
-    return if (!$matches);
+    #my $matches = find_all(lc($tokenized_sent), keys $self->_phrase_list);
+    #return if (!$matches);
 
     # associate the matches to anodes
-    my $entity_cands = _select_anodes_to_matches(\@anodes, $matches);
+    #my $entity_cands = _select_anodes_to_matches(\@anodes, $matches);
 
     # assess which candidates are likely to be entity phrases and return only the mutually exclusive ones
-    my $entites = _resolve_entities($entity_cands);
+    #my $entites = _resolve_entities($entity_cands);
     
     # transform the a-tree
     #TODO
@@ -104,7 +127,7 @@ sub _resolve_entities {
         my $cand = $entity_cands->[$idx];
         if (none {$covered_anode{$_}} @$cand) {
             push @resolved_entities, $cand;
-            $covered_anode->{$_->id} = 1 foreach (@$cand);
+            $covered_anode{$_->id} = 1 foreach (@$cand);
         }
     }
 
