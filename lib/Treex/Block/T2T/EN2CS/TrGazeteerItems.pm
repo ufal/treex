@@ -1,4 +1,4 @@
-package Treex::T2T::EN2CS::TrGazeteerItems;
+package Treex::Block::T2T::EN2CS::TrGazeteerItems;
 use utf8;
 use Moose;
 use Treex::Core::Common;
@@ -6,7 +6,7 @@ use Treex::Core::Resource;
 
 extends 'Treex::Core::Block';
 
-has 'gazeteer_path' => ( is => 'ro', isa => 'Str', default => 'data/models/gazeteer/en.app_labels.gaz.gz' );
+has 'gazeteer_path' => ( is => 'ro', isa => 'Str', default => 'data/models/gazeteer/cs.app_labels.gaz.gz' );
 has '_gazeteer_hash' => ( is => 'ro', isa => 'HashRef[Str]', builder => '_build_gazeteer_hash', lazy => 1 );
 
 sub _build_gazeteer_hash {
@@ -57,8 +57,6 @@ sub process_tnode {
         log_warn "Gazetteer in " . $self->gazeteer_path . " does not contain the following id: " . $id;
     }
 }
-
-
 
 1;
 
