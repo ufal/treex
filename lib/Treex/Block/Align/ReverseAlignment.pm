@@ -13,16 +13,26 @@ has 'overwrite' => ( is => 'ro', isa => 'Bool', default => 1 );
 
 has 'align_type' => ( is => 'ro', isa => 'Str', default => 'reverse_alignment' );
 
+has 'reverse_align_type' => ( is => 'ro', isa => 'Bool', default => 0 );
+
 sub process_zone {
     my ( $self, $zone ) = @_;
     my @nodes = $zone->get_tree( $self->layer )->get_descendants( { ordered => 1 } );
 
-    foreach my $x (@nodes){
-
-        my ($ys) = $x->get_aligned_nodes();
-        foreach my $y (@{$ys}){
-            $y->add_aligned_node($x, $self->align_type);
-        } 
+    foreach my $x (@nodes) {
+		my ( $n_rf, $t_rf ) = $x->get_aligned_nodes();
+		my $iterator = List::MoreUtils::each_arrayref( $n_rf, $t_rf );
+	    while ( my ( $node, $type ) = $iterator->() ) {
+            if ($self->reverse_align_type) {
+    	    	$type =~ s/left/oldleft/g;
+    	    	$type =~ s/right/oldright/g;
+    	    	$type =~ s/oldleft/right/g;
+    	    	$type =~ s/oldright/left/g;
+            } else {
+                $type = $self->align_type;
+            }
+	        $node->add_aligned_node($x, $type);
+	    }
     }
 }
 
@@ -32,7 +42,7 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::Align::ReverseAlignment
 
@@ -61,6 +71,8 @@ Toggle overwrite current alignment links (default: 1).
 =head1 AUTHOR
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+Luís Gomes <luis.gomes@di.fc.ul.pt> (reverse type of alignments: left<=>right)
 
 =head1 COPYRIGHT AND LICENSE
 
