@@ -97,6 +97,16 @@ sub find_subjects_of {
         map { is_aux_or_modal_upwards($_) ? $_->get_children() : $_ }
         @left_echildren;
 
+    # According to PennTB guidelines, VB should be used only for infinitives, imperatives and subjunctives.
+    # So it is very rare that a VB verb has a subject (mostly in subjunctives, e.g. "God bless America!" or "It is vital that we vote.").
+    # Unfortunately, taggers often use VB instead of VBP (with modals and other auxiliaries),
+    # so there are many more cases where VB-tagged verb should have a subject.
+    # Let's just try to exclude some imperatives (which won't be later recognized as imperatives if subject is present).
+    if ($tag eq 'VB' && !any{is_aux_or_modal_upwards($_)} @left_echildren){
+        @left_nouns = grep {$_->tag =~ /NNP?S/ || $_->lemma eq 'who'} @left_nouns;
+        return if !@left_nouns;
+    }
+        
     my @subjects = _select_subjects(@left_nouns);
     return @subjects if @subjects;
 
