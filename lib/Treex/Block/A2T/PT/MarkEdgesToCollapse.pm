@@ -1,8 +1,11 @@
 package Treex::Block::A2T::PT::MarkEdgesToCollapse;
 use Moose;
 use Treex::Core::Common;
+use LX::Data::PT;
 extends 'Treex::Block::A2T::MarkEdgesToCollapse';
 
+
+my $regexp = "^(".(join "|",@LX::Data::PT::ObliqueInherentVerbs).")\$";
 
 override is_aux_to_parent => sub {
     my ( $self, $node ) = @_;
@@ -23,8 +26,44 @@ override is_aux_to_parent => sub {
         return 1 if $eparent->is_adjective || $eparent->is_adverb;
     }
 
+  
+    my $a_parent = $node->parent;
+    if($a_parent and $node->lemma eq 'se' and $a_parent->lemma =~  /$regexp/){
+        return 1;
+
+    }
+
+    if($a_parent and $node->lemma eq 'não' and $a_parent->iset->pos eq "verb") {
+        return 1;
+    }
+
     return 0;
 };
+
+
+#TODO: treatment of modal verbs postponed
+
+#override is_modal => sub {
+#    my ( $self, $modal, $infinitive ) = @_;
+
+    # Check if $infinitive is the lexical verb with which the modal should merge.
+#    return 0 if !$self->_is_infinitive( $modal, $infinitive );
+    
+#    return 1 if $modal->lemma =~ /^(poder|querer|dever)$/;
+
+#    return 0;
+#};
+
+#sub _is_infinitive {
+#    my ( $self, $modal, $infinitive ) = @_;
+#    return 1 if $infinitive->iset->verbform eq "inf";
+#    return 0;
+#}
+
+
+
+
+
 
 1;
 
@@ -53,6 +92,8 @@ and it is derived from L<Treex::Block::A2T::MarkEdgesToCollapse>.
 =head1 AUTHORS
 
 Martin Popel <popel@ufal.mff.cuni.cz>
+
+Zdeněk Žabokrtský <zaborktsky@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

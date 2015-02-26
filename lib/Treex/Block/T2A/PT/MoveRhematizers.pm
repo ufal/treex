@@ -4,9 +4,40 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+#Andreia:
+#1) Ordem de palavras (em PT::Moverhematizers):
+#    sempre que aparece os todos -> passar para todos os
+#
+#os : adj art def
+#todos : adj prn mas plu
+
 sub process_anode {
     my ( $self, $rhematizer ) = @_;
+
+    my @pronouns = ("todos","todas");
+    my @articles = ("os","as");
+
+    my $lemma = $rhematizer->lemma;
+    if($lemma =~ /^tod[oa]s$/i){
+
+        my $article = $rhematizer->get_left_neighbor();
+        my $article_lemma = undef;
+
+        if(defined $article){
+            $article_lemma = $article->lemma;
+        }
+
+        if(defined $article_lemma){
+            if("@articles" =~ /$article_lemma/){
+                my $first_ord = $rhematizer->get_attr("ord");
+                $rhematizer->shift_before_node($article);
+            }
+        }
+        
+    }
+
     return if !$rhematizer->is_adverb;
+
     my $noun = $rhematizer->get_parent;
     return if !$noun->is_noun;
     my $article = $noun->get_children({preceding_only=>1, first_only=>1});
@@ -51,6 +82,8 @@ to
 =head1 AUTHORS
 
 Martin Popel <popel@ufal.mff.cuni.cz>
+
+João A. Rodrigues <jrodrigues@di.fc.ul.pt>
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -357,7 +357,6 @@ sub deprel_to_afun
 }
 
 
-
 #------------------------------------------------------------------------------
 # Fixes a few known annotation errors that appear in the data. Should be called
 # from deprel_to_afun() so that it precedes any tree operations that the
@@ -376,7 +375,7 @@ sub fix_annotation_errors
         # (ter, haver). For some reason, the input data also use it with
         # arguments of phasal verbs, e.g. in "A encomenda acabou por chegar.",
         # there is AUX(acabou, chegar).
-        if($node->afun() eq 'AuxV' && $node->lemma() !~ m/^ter$/i)
+        if($node->afun() eq 'AuxV' && $node->lemma() !~ m/^(ter|haver)$/i) #|ser|poder|dever|ir|vir|estar|ficar|continuar)$/i)
         {
             log_warn($node->get_address());
             $self->log_sentence($root);
@@ -660,7 +659,10 @@ to the annotation style of HamleDT/Prague.
 =head1 AUTHOR
 
 Dan Zeman <zeman@ufal.mff.cuni.cz>
+
 Martin Popel <popel@ufal.mff.cuni.cz>
+
+Zdeněk Žabokrtský <zaborktsky@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
