@@ -15,11 +15,21 @@ sub process_anode {
         $clause_number = 0;
     }
 
-    my $left_par = add_parenthesis_node( $anode, '(', $clause_number );
-    $left_par->shift_before_subtree($anode);
+    # see Treex::Block::A2T::MarkParentheses, where I set $tnode->wild->{is_rightangle_bracket}
+    my ($tnode) = $anode->get_referencing_nodes('a/lex.rf');
+    if ($tnode and $tnode->src_tnode->wild->{is_rightangle_bracket} ) {
+        my $left_par = add_parenthesis_node( $anode, '[', $clause_number );
+        $left_par->shift_before_subtree($anode);
 
-    my $right_par = add_parenthesis_node( $anode, ')', $clause_number );
-    $right_par->shift_after_subtree($anode);
+        my $right_par = add_parenthesis_node( $anode, ']', $clause_number );
+        $right_par->shift_after_subtree($anode);
+    } else {
+        my $left_par = add_parenthesis_node( $anode, '(', $clause_number );
+        $left_par->shift_before_subtree($anode);
+
+        my $right_par = add_parenthesis_node( $anode, ')', $clause_number );
+        $right_par->shift_after_subtree($anode);
+    }
 
     return;
 }
@@ -38,17 +48,31 @@ sub add_parenthesis_node {
 
 1;
 
-=over
+=encoding utf-8
 
-=item Treex::Block::T2A::AddParentheses
+=head1 NAME
+
+Treex::Block::T2A::AddParentheses
+
+=head1 DESCRIPTION
 
 Add a pair of parenthesis a-nodes, accordingly
 to t-node's C<is_parenthesis> attribute.
 
-=back
+Add a pair of right angle bracket is_rightangle_bracket
 
-=cut
+=head1 AUTHORS
 
-# Copyright 2008-2009 Zdenek Zabokrtsky, Martin Popel
+Martin Popel <popel@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Zdeněk Žabokrtský <zaborktsky@ufal.mff.cuni.cz>
+
+Luís Gomes <luis.gomes@di.fc.ul.pt>, <luismsgomes@gmail.com>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2014 by NLX Group, Universidade de Lisboa
+
+Copyright © 2008 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
