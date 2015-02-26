@@ -36,6 +36,20 @@ sub process_anode {
     };
     $lemma = 'parar' if $lemma eq 'paran';
 
+    if ($lemma eq "mismos" || $lemma eq "mismas") {
+	$lemma="mismo";
+    }
+
+    if ($lemma eq "al" && $anode->iset->pos eq "adp") {
+	$lemma = "a";
+	$anode->iset->add(definiteness=>'def', prontype=>'art');
+    }
+
+    if ($lemma eq "del" && $anode->iset->pos eq "adp") {
+	$lemma = "de";
+	$anode->iset->add(definiteness=>'def', prontype=>'art');
+    }
+
     # "luces estén encendidas(lemma=encendidas -> encendido)"
     if ($anode->matches(pos=>'adj', verbform=>'part')){
         $lemma =~ s/s$// if $anode->is_plural;

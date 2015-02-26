@@ -310,19 +310,22 @@ sub _run_job_script {
     }
     else {
         my $mem       = $self->mem;
-        my $qsub_opts = '-cwd -e error/ -S /bin/bash';
+        my $qsub_opts = '';
+        #my $qsub_opts = '-cwd -e error/ -S /bin/bash';
         if ($mem){
             my ($h_vmem, $unit) = ($mem =~ /(\d+)(.*)/);
             $h_vmem = (2*$h_vmem) . $unit;
-            $qsub_opts .= " -hard -l mem_free=$mem -l h_vmem=$h_vmem -l act_mem_free=$mem";
+            $qsub_opts .= " -l mem_free=$mem -l h_vmem=$h_vmem -l act_mem_free=$mem";
+            #$qsub_opts .= " -hard -l mem_free=$mem -l h_vmem=$h_vmem -l act_mem_free=$mem";
         }
         if ($self->qsub){
             $qsub_opts .= ' ' . $self->qsub;
         }
-        $qsub_opts .= ' -p ' . $self->priority;
+        #$qsub_opts .= ' -p ' . $self->priority;
         $qsub_opts .= ' -N ' . $self->name . '-job' . sprintf( "%03d", $jobnumber ) . '.sh ' if $self->name;
 
-        open my $QSUB, "cd $workdir && qsub -v TREEX_PARALLEL=1 $qsub_opts $script_filename |" or log_fatal $!;    ## no critic (ProhibitTwoArgOpen)
+        #open my $QSUB, "cd $workdir && qsub -v TREEX_PARALLEL=1 $qsub_opts $script_filename |" or log_fatal $!;    ## no critic (ProhibitTwoArgOpen)
+        open my $QSUB, "cd $workdir && TREEX_PARALLEL=1 qsub $qsub_opts $script_filename |" or log_fatal $!;    ## no critic (ProhibitTwoArgOpen)
 
         my $firstline = <$QSUB>;
         close $QSUB;

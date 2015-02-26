@@ -1,4 +1,4 @@
-package Treex::Block::A2W::ES::ConcatenateTokens;
+package Treex::Block::A2W::EU::ConcatenateTokens;
 use utf8;
 use Moose;
 use Treex::Core::Common;
@@ -13,27 +13,19 @@ sub process_zone {
 
     # Spanish contractions, e.g. "de_" + "el" = "del"
     $sentence =~ s/\b(de|a) el\b/$1l/g;    # del, al
-    
-    # "y" before words beginning with "i" or "hi" => "e"
-    $sentence =~ s/ y (h?i)/ e $1/g;
 
-    # "o" before words beginning with "o" or "ho" => "u"
-    $sentence =~ s/ o (h?o)/ u $1/g;
-
-    # TODO: detached clitic, e.g. "da" + "-se-" + "-lo" = "dá-se-lo"
+    # TODO: detached  clitic, e.g. "da" + "-se-" + "-lo" = "dá-se-lo"
 
 
     $sentence =~ s/ +/ /g;
-    $sentence =~ s/ ([’”!,.?:;])/$1/g;
-    $sentence =~ s/([‘“¿¡]) /$1/g;
+    $sentence =~ s/ ([!,.?:;])/$1/g;
+    $sentence =~ s/(["”’])\./\.$1/g;
+    $sentence =~ s/ ([’”])/$1/g;
+    $sentence =~ s/([‘“]) /$1/g;
 
     $sentence =~ s/ ?([\.,]) ?([’”"])/$1$2/g;    # spaces around punctuation
 
     $sentence =~ s/ -- / – /g;
-
-    # no space (or even commas) inside parentheses
-    $sentence =~ s/,?\(,? ?/\(/g;
-    $sentence =~ s/ ?,? ?\)/\)/g;
 
 
     # (The whole sentence is in parenthesis).
@@ -42,6 +34,8 @@ sub process_zone {
         $sentence =~ s/\)\./.)/;
     }
     
+    # HACKS:
+
     $zone->set_sentence($sentence);
     return;
 }
@@ -54,7 +48,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2W::ES::ConcatenateTokens
+Treex::Block::A2W::EU::ConcatenateTokens
 
 =head1 DESCRIPTION
 
@@ -64,12 +58,12 @@ Handling Spanish contractions (e.g. "de" + "o" = "do").
 
 =head1 AUTHOR
 
-Gorka Labaka
+Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
-Martin Popel <popel@ufal.mff.cuni.cz>
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2014-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2008-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

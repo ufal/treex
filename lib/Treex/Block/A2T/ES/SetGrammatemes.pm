@@ -8,59 +8,77 @@ extends 'Treex::Block::A2T::SetGrammatemes';
 # TODO: add all possible verbal group signatures (or some equivalent rules)
 my %SIG2GRAM = (
     # simple (synthetic) forms: present, past, participles, infinitive
-    'LEX-inf'     => { 'diathesis' => 'act', 'tense' => 'nil',  'deontmod' => 'decl', 'verbmod' => 'nil' },
+    'LEX-inf'        => { 'diathesis' => 'act', 'tense' => 'nil',  'deontmod' => 'decl', 'verbmod' => 'nil' },
     'LEX-finpresind' => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-finpastind' => { 'diathesis' => 'act', 'tense' => 'ant',  'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-finfutind'  => { 'diathesis' => 'act', 'tense' => 'post', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-finpressub' => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'imp' }, ## common error of the analyzer
-    'LEX-fincnd'     => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
+    'LEX-finpresimp' => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'imp' },
     'LEX-finimp'     => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'imp' },
+    'LEX-fincnd'     => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
+
+    # past forms with auxiliaries
+    'haber-finpresind+LEX-partpast' => { 'diathesis' => 'act', 'tense' => 'sim', 'aspect' => 'cpl', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'haber-finpastind+LEX-partpast' => { 'diathesis' => 'act', 'tense' => 'ant', 'aspect' => 'cpl', 'deontmod' => 'decl', 'verbmod' => 'ind' },
 
     # passive
-    'ser-inf+LEX-partpast'     => { 'diathesis' => 'pas', 'tense' => 'nil',  'deontmod' => 'decl', 'verbmod' => 'nil' },
+    'ser-inf+LEX-partpast'        => { 'diathesis' => 'pas', 'tense' => 'nil',  'deontmod' => 'decl', 'verbmod' => 'nil' },
     'ser-finpresind+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'ind' },
     'ser-finpastind+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'ant',  'deontmod' => 'decl', 'verbmod' => 'ind' },
     'ser-finfutind+LEX-partpast'  => { 'diathesis' => 'pas', 'tense' => 'post', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'ser-finpressub+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'imp' }, ## common error of the analyzer
-    'ser-fincnd+LEX-partpast'     => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
+    'ser-finpresimp+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'imp' },
     'ser-finimp+LEX-partpast'     => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'imp' },
+    'ser-fincnd+LEX-partpast'     => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
 
-    # past forms with auxiliaries
-    'haber-finpresind+LEX-partpast' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
-    'haber-finpastind+LEX-partpast' => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
-
-    'haber-finpresind+ser-partpast+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
-    'haber-finpastind+ser-partpast+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'haber-finpresind+ser-partpast+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim', 'aspect' => 'cpl', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'haber-finpastind+ser-partpast+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'ant', 'aspect' => 'cpl', 'deontmod' => 'decl', 'verbmod' => 'ind' },
 
     # modals (poder)
     'poder-finpresind+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'poss', 'verbmod' => 'ind' },
     'poder-finpastind+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant',  'deontmod' => 'poss', 'verbmod' => 'ind' },
     'poder-finfutind+LEX-inf'  => { 'diathesis' => 'act', 'tense' => 'post', 'deontmod' => 'poss', 'verbmod' => 'ind' },
     'poder-finpressub+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'poss', 'verbmod' => 'imp' }, ## common error of the analyzer
-    'poder-fincnd+LEX-inf'     => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'poss', 'verbmod' => 'cdn' },
+    'poder-finpresimp+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'poss', 'verbmod' => 'imp' },
     'poder-finimp+LEX-inf'     => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'poss', 'verbmod' => 'imp' },
+    'poder-fincnd+LEX-inf'     => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'poss', 'verbmod' => 'cdn' },
+
+    'haber-finpresind+poder-partpast+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim', 'aspect' => 'cpl',  'deontmod' => 'poss', 'verbmod' => 'ind' },
+    'haber-finpastind+poder-partpast+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'aspect' => 'cpl',  'deontmod' => 'poss', 'verbmod' => 'ind' },
 
     'poder-finpresind+ser-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'poss', 'verbmod' => 'ind' },
     'poder-finpastind+ser-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'ant',  'deontmod' => 'poss', 'verbmod' => 'ind' },
     'poder-finfutind+ser-inf+LEX-partpast'  => { 'diathesis' => 'pas', 'tense' => 'post', 'deontmod' => 'poss', 'verbmod' => 'ind' },
     'poder-finpressub+ser-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'poss', 'verbmod' => 'imp' }, ## common error of the analyzer
-    'poder-fincnd+ser-inf+LEX-partpast'     => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'poss', 'verbmod' => 'cdn' },
+    'poder-finpresimp+ser-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'poss', 'verbmod' => 'imp' },
     'poder-finimp+ser-inf+LEX-partpast'     => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'poss', 'verbmod' => 'imp' },
+    'poder-fincnd+ser-inf+LEX-partpast'     => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'poss', 'verbmod' => 'cdn' },
+
+    'haber-finpresind+poder-partpast+ser-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim', 'aspect' => 'cpl',  'deontmod' => 'poss', 'verbmod' => 'ind' },
+    'haber-finpastind+poder-partpast+ser-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'ant', 'aspect' => 'cpl',  'deontmod' => 'poss', 'verbmod' => 'ind' },
 
     # modals (deber)
     'deber-finpresind+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'deb',  'verbmod' => 'ind' },
     'deber-finpastind+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant',  'deontmod' => 'deb',  'verbmod' => 'ind' },
     'deber-finfutind+LEX-inf'  => { 'diathesis' => 'act', 'tense' => 'post', 'deontmod' => 'deb',  'verbmod' => 'ind' },
     'deber-finpressub+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'deb',  'verbmod' => 'imp' }, ## common error of the analyzer
-    'deber-fincnd+LEX-inf'     => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'deb',  'verbmod' => 'cdn' },
+    'deber-finpresimp+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'deb',  'verbmod' => 'imp' },
     'deber-finimp+LEX-inf'     => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'deb',  'verbmod' => 'imp' },
+    'deber-fincnd+LEX-inf'     => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'deb',  'verbmod' => 'cdn' },
+
+    'haber-finpresind+deber-partpast+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'sim', 'aspect' => 'cpl',  'deontmod' => 'deb',  'verbmod' => 'ind' },
+    'haber-finpastind+deber-partpast+LEX-inf' => { 'diathesis' => 'act', 'tense' => 'ant', 'aspect' => 'cpl',  'deontmod' => 'deb',  'verbmod' => 'ind' },
 
     'deber-finpresind+ser-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'deb',  'verbmod' => 'ind' },
     'deber-finpastind+ser-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'ant',  'deontmod' => 'deb',  'verbmod' => 'ind' },
     'deber-finfutind+ser-inf+LEX-partpast'  => { 'diathesis' => 'pas', 'tense' => 'post', 'deontmod' => 'deb',  'verbmod' => 'ind' },
     'deber-finpressub+ser-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'deb',  'verbmod' => 'imp' }, ## common error of the analyzer
-    'deber-fincnd+ser-inf+LEX-partpast'     => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'deb',  'verbmod' => 'cdn' },
+    'deber-finpresimp+ser-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'deb',  'verbmod' => 'imp' },
     'deber-finimp+ser-inf+LEX-partpast'     => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'deb',  'verbmod' => 'imp' },
+    'deber-fincnd+ser-inf+LEX-partpast'     => { 'diathesis' => 'pas', 'tense' => 'sim',  'deontmod' => 'deb',  'verbmod' => 'cdn' },
+
+    'haber-finpresind+deber-partpast+ser-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'sim', 'aspect' => 'cpl',  'deontmod' => 'deb',  'verbmod' => 'ind' },
+    'haber-finpastind+deber-partpast+ser-inf+LEX-partpast' => { 'diathesis' => 'pas', 'tense' => 'ant', 'aspect' => 'cpl',  'deontmod' => 'deb',  'verbmod' => 'ind' },
 );
 
 override 'set_verbal_grammatemes' => sub {

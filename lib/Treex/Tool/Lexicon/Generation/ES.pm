@@ -230,7 +230,7 @@ sub should_adjective_end_with_a{
 
 sub should_inflect {
     my ( $self, $lemma, $iset ) = @_;
-    return 0 if any {$lemma eq $_} qw(wifi web ip se que);
+    return 0 if any {$lemma eq $_} qw(wifi web ip se que caché);
     return 1;
 }
 

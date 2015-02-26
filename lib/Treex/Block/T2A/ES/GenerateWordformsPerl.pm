@@ -11,8 +11,8 @@ has generator => ( is => 'rw' );
 sub process_anode {
     my ( $self, $anode ) = @_;
     return if defined $anode->form;
-    $anode->set_form($self->generator->best_form_of_lemma($anode->lemma, $anode->iset));
-    return;
+    my $form=$anode->set_form($self->generator->best_form_of_lemma($anode->lemma, $anode->iset));
+    return $form;
 }
 
 sub BUILD {
