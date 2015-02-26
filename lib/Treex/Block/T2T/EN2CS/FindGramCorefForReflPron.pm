@@ -14,9 +14,12 @@ sub process_tnode {
     # Don't add gram coref where text coref is already detected.
     # T2T::EN2CS::TurnTextCorefToGramCoref will change the type later.
     # "They are angry if you steal their[text_coref=They] cars."
-    # We don't want to make "their" correferent with "you".
+    # We don't want to make "their" coreferent with "you".
     #return if $perspron->get_coref_text_nodes();
-    
+    # Unfortunatelly, the quality of current English text coref
+    # (using A2T::EN::FindTextCoref) is low, so it is better to ignore it.
+    # BTW: after adding check for agreement in person, "their" cannot be coreferent with "you".
+
     my $clause_head = $perspron->get_clause_ehead() or return;
 
     # TODO: Should we use get_echildren here?
