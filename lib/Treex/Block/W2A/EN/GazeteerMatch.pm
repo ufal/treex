@@ -4,14 +4,13 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;
 
-use Algorithm::AhoCorasick::SearchMachine;
 use List::MoreUtils qw/none all/;
+use List::Util qw/sum/;
 
 extends 'Treex::Core::Block';
 
 has 'phrase_list_path' => ( is => 'ro', isa => 'Str', default => 'data/models/gazeteer/en.app_labels.gaz.gz');
 #has 'phrase_list_path' => ( is => 'ro', isa => 'Str', default => 'data/models/gazeteer/skuska.gaz.gz');
-#has '_phrase_list' => ( is => 'ro', 'isa' => 'HashRef[HashRef]', builder => '_build_phrase_list', lazy => 1);
 
 has '_searchine' => ( is => 'ro', isa => 'HashRef', builder => '_build_searchine', lazy => 1);
 
@@ -171,15 +170,25 @@ sub _score_match {
     my ($match) = @_;
 
     my @anodes = @{$match->[2]};
-
     my @forms = map {$_->form} @anodes;
-    my $all_start_capital = (all {$_ =~ /^\p{IsUpper}/} @forms) ? 1 : 0;
-    my $no_first = (all {$_->ord > 1} @anodes) ? 1 : 0;
 
-    my $score = ($all_start_capital && $no_first) ? scalar(@forms) : 0;
+    my $full_str = join " ", @forms;
+    
+    my $full_str_score = ($full_str eq $match->[1]) ? 2 : 0;
 
+    my $non_alpha_penalty = ($full_str !~ /[a-zA-Z]/) ? -100 : 0;
+
+    my $first_starts_capital = ($forms[0] =~ /^\p{IsUpper}/) ? 10 : -10;
+    my $entity_starts_capital = ($match->[1] =~ /^\p{IsUpper}/) ? 10 : -50;
+
+    my $all_start_capital = (all {$_ =~ /^\p{IsUpper}/} @forms) ? 1 : -1;
+    my $no_first = (all {$_->ord > 1} @anodes) ? 1 : -50;
+
+    my @scores = ( $full_str_score, $non_alpha_penalty, $all_start_capital, 
+        $no_first, $first_starts_capital, $entity_starts_capital );
+    my $score = (sum @scores) * (scalar @anodes);
+    
     return $score;
-
 }
 
 
