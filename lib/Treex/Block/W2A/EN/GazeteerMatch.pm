@@ -184,8 +184,10 @@ sub _score_match {
     my $all_start_capital = (all {$_ =~ /^\p{IsUpper}/} @forms) ? 1 : -1;
     my $no_first = (all {$_->ord > 1} @anodes) ? 1 : -50;
 
+    my $last_menu = ($forms[$#forms] eq "menu") ? -50 : 0;
+
     my @scores = ( $full_str_score, $non_alpha_penalty, $all_start_capital, 
-        $no_first, $first_starts_capital, $entity_starts_capital );
+        $no_first, $first_starts_capital, $entity_starts_capital, $last_menu );
     my $score = (sum @scores) * (scalar @anodes);
     
     return $score;
