@@ -14,18 +14,20 @@ sub tokenize_and_tag {
     my $cpostags = [];
     my $feats    = [];
 
-    $self->write($sentence);
-    $self->write();
-    # Create a-nodes and detect the no_space_after attribute.
-    my $line = $self->read();
-    while ($line ne '') {
-        my ($id, $form, $lemma, $postag, $cpostag, $feat) = split(/\t/, $line);
-         push @$forms,    $form;
-         push @$lemmas,   $lemma;
-         push @$postags,  $postag;
-         push @$cpostags, $cpostag;
-         push @$feats,    $feat;
-         $line = $self->read();
+    if ( $sentence !~ /^\s*$/ ) { # if sentence has non-space characters
+        $self->write($sentence);
+        $self->write();
+        # Create a-nodes and detect the no_space_after attribute.
+        my $line = $self->read();
+        while ($line ne '') {
+            my ($id, $form, $lemma, $postag, $cpostag, $feat) = split(/\t/, $line);
+             push @$forms,    $form;
+             push @$lemmas,   $lemma;
+             push @$postags,  $postag;
+             push @$cpostags, $cpostag;
+             push @$feats,    $feat;
+             $line = $self->read();
+        }
     }
     return ($forms, $lemmas, $postags, $cpostags, $feats);
 }
@@ -34,7 +36,7 @@ sub tokenize_and_tag {
 
 __END__
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Tool::LXSuite::LXTokenizerAndTagger
 

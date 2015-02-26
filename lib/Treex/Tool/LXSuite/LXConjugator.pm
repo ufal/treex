@@ -6,7 +6,7 @@ has '+lxsuite_mode' => (default => 'conjugator');
 
 sub conjugate {
     my ( $self, $lemma, $form, $person, $number ) = @_;
-    $self->write("$lemma#$form-$person$number\n");
+    $self->write("$lemma#$form-$person$number");
     return $self->read();
 }
 
