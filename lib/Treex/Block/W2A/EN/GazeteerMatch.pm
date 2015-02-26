@@ -1,4 +1,4 @@
-package Treex::Block::W2A::GazeteerMatch;
+package Treex::Block::W2A::EN::GazeteerMatch;
 use utf8;
 use Moose;
 use Treex::Core::Common;
@@ -53,8 +53,8 @@ sub process_atree {
     # assess which candidates are likely to be entity phrases and return only the mutually exclusive ones
     my $entities = _resolve_entities($matches);
 
-    $Data::Dumper::Maxdepth = 2;
-    log_info Dumper($entities);
+    #$Data::Dumper::Maxdepth = 2;
+    #log_info Dumper($entities);
 
     # transform the a-tree
     foreach my $entity (@$entities) {
@@ -192,7 +192,7 @@ __END__
 
 =head1 NAME
 
-=item Treex::Block::W2A::GazeteerMatch
+=item Treex::Block::W2A::EN::GazeteerMatch
 
 =head1 DESCRIPTION
 
