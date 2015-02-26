@@ -9,7 +9,7 @@ use List::MoreUtils qw/none/;
 
 extends 'Treex::Core::Block';
 
-has 'phrase_list_path' => ( is => 'ro', isa => 'Str', default => 'TODO');
+has 'phrase_list_path' => ( is => 'ro', isa => 'Str', default => 'data/models/gazeteer/en.app_labels.gaz.gz');
 has '_phrase_list' => ( is => 'ro', 'isa' => 'HashRef[HashRef]', builder => '_build_phrase_list', lazy => 1);
 
 sub _build_phrase_list {
