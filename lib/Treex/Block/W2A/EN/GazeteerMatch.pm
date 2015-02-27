@@ -9,7 +9,7 @@ use List::Util qw/sum/;
 
 extends 'Treex::Core::Block';
 
-has 'phrase_list_path' => ( is => 'ro', isa => 'Str', default => 'data/models/gazeteer/en.app_labels.gaz.gz');
+has 'phrase_list_path' => ( is => 'ro', isa => 'Str', default => 'data/models/gazeteer/en.app_labels.v2.gaz.gz');
 # idx removed: libreoffice_16090, libreoffice_16123, libreoffice_73656
 
 #has 'phrase_list_path' => ( is => 'ro', isa => 'Str', default => 'data/models/gazeteer/skuska.gaz.gz');
