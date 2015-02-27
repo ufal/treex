@@ -5,23 +5,54 @@ extends 'Treex::Block::A2T::SetFormeme';
 
 # semantic adjectives
 override 'get_aux_string' => sub {
-    my $self = shift;
-    my @preps_and_conjs = grep { $self->is_prep_or_conj($_) } @_;
-    return join '_', map { lc $_->lemma } @preps_and_conjs;
+    my ( $self, @anodes ) = @_;
+    my $aux_string = join '_', map { lc $_->iset->case } @anodes;
+
+    $aux_string=~ s/^_+//;
+    $aux_string=~ s/_+$//;
+    $aux_string=~ s/_+/_/;
+
+    return $aux_string;
 };
 
+override 'formeme_for_adv' => sub {
+    my ($self, $t_node, $a_node) = @_;
+
+    # E.g. in Portuguese, it seems that adverbs may have prepositions,
+    # e.g. "por(afun=AuxP) ali(afun=Adv,parent=por)"
+    # Let's handle it here. If needed it is easy to override this method to return always 'adv'.
+    my @a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
+    push @a_nodes, $a_node;
+    my $prep = $self->get_aux_string(@a_nodes);
+    return "adv:$prep+X" if $prep;
+    return 'adv';
+};
+
+override 'formeme_for_noun' => sub {
+    my ($self, $t_node, $a_node) = @_;
+
+    # noun with a preposition (or postposition)
+    my @a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
+    push @a_nodes, $a_node;
+    my $prep = $self->get_aux_string(@a_nodes);
+    return "n:$prep+X" if $prep;
+
+    return super();
+};
 
 override 'formeme_for_adj' => sub {
-    my ( $self, $t_node, $a_node ) = @_;
+    my ($self, $t_node, $a_node) = @_;
 
-    my $formeme = super();
+    my @a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
+    push @a_nodes, $a_node;
+    my $prep = $self->get_aux_string(@a_nodes);
 
-    my ($eff_parent) = $t_node->get_eparents() or return $formeme;
-    if ($formeme eq "adj:attr" && $t_node->ord() < $eff_parent->ord()) {
-	$formeme = "adj:left-attr";
-    }
-
-    return $formeme;
+    return "n:$prep+X" if $prep; # adjectives with prepositions are treated as a nominal usage
+    return 'adj:poss'  if $a_node->match_iset(poss=>'poss', prontype=>'prs'); # possesive personal pronouns
+    return 'adj:attr'  if $self->below_noun($t_node) || $self->below_adj($t_node);
+    return 'n:subj'    if $a_node->afun eq 'Sb'; # adjectives in the subject positions -- nominal usage
+    return 'adj:compl' if $self->below_verb($t_node);
+    return 'adj:';
 };
 
 1;

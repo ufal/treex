@@ -30,7 +30,10 @@ override is_aux_to_parent => sub {
     # Negation
     if ( $node->lemma eq 'ez' ) {
         my ($eparent) = $node->get_eparents();
-        return 1 if !$eparent->is_root && ($eparent->is_verb || $eparent->is_adjective || $eparent->is_adverb);
+	if (!$eparent->is_root && ($eparent->is_verb || $eparent->is_adjective || $eparent->is_adverb)) {
+	    $eparent->iset->set_negativeness('neg');
+	    return 1;
+	}
         
         # If the negative particle is not collapsed, it will become a t-node
         # and it should not have gram/negation=neg1 to prevent doubling the particle in synthesis.

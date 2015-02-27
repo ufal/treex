@@ -18,40 +18,40 @@ my %SIG2GRAM = (
 
     ## da
     'LEX-finpresind'        => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'ind' },
+    ## dagokien
+    'LEX-finpressub'        => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'ind' }, ## error in the analysis. Present + relative marker
     ## zen
     'LEX-finpastind'        => { 'diathesis' => 'act', 'tense' => 'ant',  'deontmod' => 'decl', 'verbmod' => 'ind' },
     ## luke
     'LEX-finprescnd'        => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
-    ## litzateke
-    'LEX-finpastcnd'        => { 'diathesis' => 'act', 'tense' => 'ant',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
     ## liteke???
     'LEX-finpastpot'        => { 'diathesis' => 'act', 'tense' => 'ant',  'deontmod' => 'poss', 'verbmod' => 'ind' },
 
     ### etortzen da -> present
-    'LEX-+izan-finpresind'  => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'ind' },
-    'LEX-+izan-presind'     => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'ind' },
-    'LEX-+ukan-finpresind'  => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'ind' },
-    'LEX-+ukan-presind'     => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'LEX-+izan-finpresind'     => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'LEX-+izan-presind'        => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'LEX-+ukan-finpresind'     => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'LEX-+ukan-presind'        => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-imp+izan-finpresind'  => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-imp+izan-presind'     => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-imp+ukan-finpresind'  => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-imp+ukan-presind'     => { 'diathesis' => 'act', 'tense' => 'sim', 'deontmod' => 'decl', 'verbmod' => 'ind' },
 
     ### etortzen zen -> past, progresive?
-    'LEX-+izan-finpastind'  => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
-    'LEX-+izan-pastind'     => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
-    'LEX-+ukan-finpastind'  => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
-    'LEX-+ukan-pastind'     => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'LEX-+izan-finpastind'     => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'LEX-+izan-pastind'        => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'LEX-+ukan-finpastind'     => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'LEX-+ukan-pastind'        => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-imp+izan-finpastind'  => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-imp+izan-pastind'     => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-imp+ukan-finpastind'  => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-imp+ukan-pastind'     => { 'diathesis' => 'act', 'tense' => 'ant', 'deontmod' => 'decl', 'verbmod' => 'ind' },
 
     ### etorri da -> past, perfective
-    'LEX-perf+izan-finpresind'  => { 'diathesis' => 'act', 'tense' => 'ant', 'aspect' => 'cpl',  'deontmod' => 'decl', 'verbmod' => 'ind' },
-    'LEX-perf+izan-presind'     => { 'diathesis' => 'act', 'tense' => 'ant', 'aspect' => 'cpl',  'deontmod' => 'decl', 'verbmod' => 'ind' },
-    'LEX-perf+ukan-finpresind'  => { 'diathesis' => 'act', 'tense' => 'ant', 'aspect' => 'cpl',  'deontmod' => 'decl', 'verbmod' => 'ind' },
-    'LEX-perf+ukan-presind'     => { 'diathesis' => 'act', 'tense' => 'ant', 'aspect' => 'cpl',  'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'LEX-perf+izan-finpresind'  => { 'diathesis' => 'act', 'tense' => 'ant',  'deontmod' => 'decl', 'verbmod' => 'ind', 'aspect' => 'cpl' },
+    'LEX-perf+izan-presind'     => { 'diathesis' => 'act', 'tense' => 'ant',  'deontmod' => 'decl', 'verbmod' => 'ind', 'aspect' => 'cpl' },
+    'LEX-perf+ukan-finpresind'  => { 'diathesis' => 'act', 'tense' => 'ant',  'deontmod' => 'decl', 'verbmod' => 'ind', 'aspect' => 'cpl' },
+    'LEX-perf+ukan-presind'     => { 'diathesis' => 'act', 'tense' => 'ant',  'deontmod' => 'decl', 'verbmod' => 'ind', 'aspect' => 'cpl' },
 
     ### etorri zen -> past
     'LEX-perf+izan-finpastind'  => { 'diathesis' => 'act', 'tense' => 'ant',  'deontmod' => 'decl', 'verbmod' => 'ind' },
@@ -67,22 +67,22 @@ my %SIG2GRAM = (
 
     ### etorriko da -> future
     'LEX-pro+izan-finpresind'      => { 'diathesis' => 'act', 'tense' => 'post',  'deontmod' => 'decl', 'verbmod' => 'ind' },
-    'LEX-pro+izan-presind'      => { 'diathesis' => 'act', 'tense' => 'post',  'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'LEX-pro+izan-presind'         => { 'diathesis' => 'act', 'tense' => 'post',  'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-pro+ukan-finpresind'      => { 'diathesis' => 'act', 'tense' => 'post',  'deontmod' => 'decl', 'verbmod' => 'ind' },
-    'LEX-pro+ukan-presind'      => { 'diathesis' => 'act', 'tense' => 'post',  'deontmod' => 'decl', 'verbmod' => 'ind' },
-    'LEX-part+izan-presind'     => { 'diathesis' => 'act', 'tense' => 'post',  'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'LEX-pro+ukan-presind'         => { 'diathesis' => 'act', 'tense' => 'post',  'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'LEX-part+izan-presind'        => { 'diathesis' => 'act', 'tense' => 'post',  'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-part+izan-finpresind'     => { 'diathesis' => 'act', 'tense' => 'post',  'deontmod' => 'decl', 'verbmod' => 'ind' },
     'LEX-part+ukan-finpresind'     => { 'diathesis' => 'act', 'tense' => 'post',  'deontmod' => 'decl', 'verbmod' => 'ind' },
-    'LEX-part+ukan-presind'     => { 'diathesis' => 'act', 'tense' => 'post',  'deontmod' => 'decl', 'verbmod' => 'ind' },
+    'LEX-part+ukan-presind'        => { 'diathesis' => 'act', 'tense' => 'post',  'deontmod' => 'decl', 'verbmod' => 'ind' },
 
     ### etorriko zen -> conditional
-    'LEX-pro+izan-pastind'      => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
+    'LEX-pro+izan-pastind'         => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
     'LEX-pro+izan-finpastind'      => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
-    'LEX-pro+ukan-pastind'      => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
+    'LEX-pro+ukan-pastind'         => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
     'LEX-pro+ukan-finpastind'      => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
-    'LEX-part+izan-pastind'     => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
+    'LEX-part+izan-pastind'        => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
     'LEX-part+izan-finpastind'     => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
-    'LEX-part+ukan-pastind'     => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
+    'LEX-part+ukan-pastind'        => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
     'LEX-part+ukan-finpastind'     => { 'diathesis' => 'act', 'tense' => 'sim',  'deontmod' => 'decl', 'verbmod' => 'cdn' },
 
     ### etorriko litzateke -> conditional
