@@ -27,6 +27,7 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{ok}         => 'OK|X',
     q{sm}         => 'SMS|X',
     q{Start}      => 'Start|X',
+    q{Windows}    => 'Windows|X',
     q{right-click}=> 'pravým tlačítkem myši klikněte|V',
 );
 
@@ -108,16 +109,14 @@ sub get_lemma_and_pos {
         return 'potom|A';
     }
     
-    if ( $en_tlemma eq 'press' && $en_tnode->gram_verbmod eq 'imp'){
-        return 'stisknout|V';
+    # imperatives
+    if (($en_tnode->gram_verbmod || '') eq 'imp'){
+        return 'stisknout|V' if $en_tlemma eq 'press';
+        return 'kliknout|V'  if $en_tlemma eq 'click';    
+        return 'přihlásit|V' if $en_tlemma eq 'access' && any {$_->t_lemma =~ /^(profile|account)$/} $en_tnode->get_echildren();
+        return 'vstoupit|V'  if $en_tlemma eq 'access';
     }
-    if ( $en_tlemma eq 'click' && $en_tnode->gram_verbmod eq 'imp'){
-        return 'kliknout|V';
-    }
-    if ( $en_tlemma eq 'access' && $en_tnode->gram_verbmod eq 'imp'){
-        return 'přihlásit|V' if any {$_->t_lemma =~ /^(profile|account)$/} $en_tnode->get_echildren();
-        return 'vstoupit|V';
-    }
+
     if ( $en_tlemma eq 'email'){
         return 'e-mailový|A' if ($en_tnode->get_parent->formeme ||'') =~ /^n:/;
         return 'e-mail|N';
