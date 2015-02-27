@@ -6,7 +6,7 @@ use Treex::Core::Resource;
 
 extends 'Treex::Core::Block';
 
-has 'gazeteer_path' => ( is => 'ro', isa => 'Str', default => 'data/models/gazeteer/cs.app_labels.v2.gaz.gz' );
+has 'gazeteer_path' => ( is => 'ro', isa => 'Str', default => 'data/models/gazeteer/cs.app_labels.v3.gaz.gz' );
 # idx removed: libreoffice_16090, libreoffice_16123, libreoffice_73656
 has '_gazeteer_hash' => ( is => 'ro', isa => 'HashRef[Str]', builder => '_build_gazeteer_hash', lazy => 1 );
 
