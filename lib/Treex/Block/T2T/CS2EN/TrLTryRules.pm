@@ -31,6 +31,17 @@ sub get_lemma_and_pos {
     my ( $self, $src_tnode, $trg_tnode ) = @_;
     my ( $src_tlemma, $src_formeme ) = $src_tnode->get_attrs(qw(t_lemma formeme));
 
+    my $src_anode = $src_tnode->get_lex_anode();
+    if ($src_anode) {
+        return 'Skype|NNP' if $src_anode->form =~ /^skyp[eu]m?$/;
+        
+        # TODO not all reflexive pronouns should be deleted (but must in Batch1q yes).
+        if ($src_anode->lemma =~ /^s[ei]_/){
+            $trg_tnode->remove({children=>'rehang'});
+            return;
+        }
+    }
+    
     # Don't translate other t-lemma substitutes (like #PersPron, #Cor, #QCor, #Rcp)
     return $src_tlemma if $src_tlemma =~ /^#/;
 
@@ -38,10 +49,6 @@ sub get_lemma_and_pos {
     my $lemma_and_pos = $QUICKFIX_TRANSLATION_OF{$src_tlemma};
     return $lemma_and_pos if $lemma_and_pos;
 
-    my $src_anode = $src_tnode->get_lex_anode();
-    return 'Skype|NNP' if $src_anode && $src_anode->form =~ /^skyp[eu]m?$/;
-    
-    
     # If no rules match, get_lemma_and_pos has not succeeded.
     return undef;
 }
