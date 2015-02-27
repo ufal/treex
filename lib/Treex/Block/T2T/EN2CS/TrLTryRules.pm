@@ -26,6 +26,7 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{WiFi}       => 'WiFi|X',
     q{ok}         => 'OK|X',
     q{sm}         => 'SMS|X',
+    q{Start}      => 'Start|X',
     q{right-click}=> 'pravým tlačítkem myši klikněte|V',
 );
 
@@ -33,7 +34,7 @@ sub process_tnode {
     my ( $self, $cs_tnode ) = @_;
 
     # Skip nodes that were already translated by other rules
-    return if $cs_tnode->t_lemma_origin !~ /^clone/;
+    return if $cs_tnode->t_lemma_origin !~ /^(clone|lookup)/;
 
     my $en_tnode = $cs_tnode->src_tnode or return;
     my $lemma_and_pos = $self->get_lemma_and_pos( $en_tnode, $cs_tnode );
@@ -109,6 +110,17 @@ sub get_lemma_and_pos {
     
     if ( $en_tlemma eq 'press' && $en_tnode->gram_verbmod eq 'imp'){
         return 'stisknout|V';
+    }
+    if ( $en_tlemma eq 'click' && $en_tnode->gram_verbmod eq 'imp'){
+        return 'kliknout|V';
+    }
+    if ( $en_tlemma eq 'access' && $en_tnode->gram_verbmod eq 'imp'){
+        return 'přihlásit|V' if any {$_->t_lemma =~ /^(profile|account)$/} $en_tnode->get_echildren();
+        return 'vstoupit|V';
+    }
+    if ( $en_tlemma eq 'email'){
+        return 'e-mailový|A' if ($en_tnode->get_parent->formeme ||'') =~ /^n:/;
+        return 'e-mail|N';
     }
 
     # If no rules match, get_lemma_and_pos has not succeeded.
