@@ -17,8 +17,8 @@ sub process_tnode {
     return if (!defined $alex->wild->{gazeteer_entity_id});
 
     $tnode->wild->{gazeteer_entity_id} = $alex->wild->{gazeteer_entity_id};
-    my $new_tlemma = $alex->wild->{matched_item};
-    $tnode->wild->{matched_item} = $new_tlemma;
+    $tnode->wild->{matched_item} = $alex->wild->{matched_item};
+    my $new_tlemma = join " ", @{$alex->wild->{matched_item}};
     $new_tlemma =~ s/\s+/_/g;
     $tnode->set_t_lemma($new_tlemma);
 }

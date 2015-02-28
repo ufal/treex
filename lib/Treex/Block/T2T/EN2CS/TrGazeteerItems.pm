@@ -44,19 +44,33 @@ sub process_tnode {
 
     my $src_tnode = $tnode->src_tnode;
 
-    my $id = $src_tnode->wild->{gazeteer_entity_id};
-    return if (!defined $id);
+    my $id_list = $src_tnode->wild->{gazeteer_entity_id};
+    my $phrase_list = $src_tnode->wild->{matched_item};
+    return if (!defined $id_list);
 
-    my $translated_phrase = $self->_gazeteer_hash->{$id};
-    if (defined $translated_phrase) {
-        $tnode->set_t_lemma($translated_phrase);
-        $tnode->set_t_lemma_origin('lookup-TrGazeteerItems');
-        $tnode->wild->{gazeteer_entity_id} = $id;
+    my @translated_phrases = ();
+
+    for (my $i = 0; $i < @$id_list; $i++) {
+        my $id = $id_list->[$i];
+        my $phrase = $phrase_list->[$i]; 
+        my $translated_phrase;
+        if ($id eq "__PUNCT__") {
+            $translated_phrase = $phrase;
+        }
+        else {
+            $translated_phrase = $self->_gazeteer_hash->{$id};
+        }
+        if (!defined $translated_phrase) {
+            # this should not happen
+            log_warn "Gazetteer in " . $self->gazeteer_path . " does not contain the following id: " . $id;
+        }
+        push @translated_phrases, $translated_phrase;
     }
-    else {
-        # this should not happen
-        log_warn "Gazetteer in " . $self->gazeteer_path . " does not contain the following id: " . $id;
-    }
+    
+    $tnode->wild->{gazeteer_entity_id} = $id_list;
+    $tnode->wild->{matched_item} = \@translated_phrases;
+    $tnode->set_t_lemma(join " ", @translated_phrases);
+    $tnode->set_t_lemma_origin('lookup-TrGazeteerItems');
 }
 
 1;

@@ -65,6 +65,10 @@ sub _get_tag {
     return 'RB' if $tag eq 'EX'
             && join( '', map { $_->form } $node->get_root->get_descendants( { ordered => 1 } ) ) =~ /^There.?$/;
 
+    
+    # the enities found by a gazeteer list considered being proper nouns
+    return 'NNP' if (defined $node->wild->{gazeteer_entity_id});
+
     return;
 }
 

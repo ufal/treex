@@ -54,21 +54,17 @@ sub process_atree {
     # assess which candidates are likely to be entity phrases and return only the mutually exclusive ones
     my $entities = _resolve_entities($matches);
 
+
     #$Data::Dumper::Maxdepth = 2;
     #log_info Dumper($entities);
 
     # transform the a-tree
-    foreach my $entity (@$entities) {
-        my @anodes = sort {$a->ord <=> $b->ord} @{$entity->[2]};
-        my $new_anode = $atree->create_child({
-            form => 'item',
-        });
-        $new_anode->wild->{gazeteer_entity_id} = $entity->[0];
-        $new_anode->wild->{matched_item} = $entity->[1];
+    my $entity_anodes = _collapse_entity_anodes($atree, $entities);
+    
+    my $collapsed_entities = _collapse_neighboring_entities($entity_anodes);
+    
+    $entity_anodes = _collapse_entity_anodes($atree, $collapsed_entities);
 
-        $new_anode->shift_before_node($anodes[0]);
-        $_->remove() foreach (@anodes);
-    }
 }
 
 my $INFO_LABEL = "__INFO__";
@@ -193,6 +189,87 @@ sub _score_match {
     my $score = (sum @scores) * (scalar @anodes);
     
     return $score;
+}
+
+sub _collapse_neighboring_entities {
+    my ($entity_anodes) = @_;
+
+    my %covered_anodes = ();
+
+    my @collapsed_entities = ();
+
+    foreach my $anode (@$entity_anodes) {
+        my $id = $anode->wild->{gazeteer_entity_id};
+        my $phrase = $anode->wild->{matched_item};
+        
+        next if (defined $covered_anodes{$anode->id});
+
+        $covered_anodes{$anode->id} = 1;
+    
+        my @consec_ids = ( $id );
+        my @consec_phrases = ( $phrase );
+        my @consec_anodes = ( $anode );
+
+        my $prev_anode = $anode->get_prev_node;
+        while (defined $prev_anode && (defined $prev_anode->wild->{gazeteer_entity_id} || $prev_anode->form =~ /^[>,(){}\[\]]$/)) {
+            if (defined $prev_anode->wild->{gazeteer_entity_id}) {
+                unshift @consec_ids, $prev_anode->wild->{gazeteer_entity_id};
+                unshift @consec_phrases, $prev_anode->wild->{matched_item};
+            }
+            else {
+                unshift @consec_ids, "__PUNCT__";
+                unshift @consec_phrases, $prev_anode->form;
+            }
+            unshift @consec_anodes, $prev_anode;
+            $covered_anodes{$prev_anode->id} = 1;
+            $prev_anode = $prev_anode->get_prev_node;
+        }
+        my $next_anode = $anode->get_next_node;
+        while (defined $next_anode && (defined $next_anode->wild->{gazeteer_entity_id} || $next_anode->form =~ /^[>,(){}\[\]]$/)) {
+            if (defined $next_anode->wild->{gazeteer_entity_id}) {
+                push @consec_ids, $next_anode->wild->{gazeteer_entity_id};
+                push @consec_phrases, $next_anode->wild->{matched_item};
+            }
+            else {
+                push @consec_ids, "__PUNCT__";
+                push @consec_phrases, $next_anode->form;
+            }
+            push @consec_anodes, $next_anode;
+            $covered_anodes{$next_anode->id} = 1;
+            $next_anode = $next_anode->get_next_node;
+        }
+
+        push @collapsed_entities, [\@consec_ids, \@consec_phrases, \@consec_anodes];
+    }
+
+    return \@collapsed_entities;
+}
+
+sub _collapse_entity_anodes {
+    my ($atree, $entities) = @_;
+
+    my @entity_anodes = ();
+
+    foreach my $entity (@$entities) {
+        my @anodes = sort {$a->ord <=> $b->ord} @{$entity->[2]};
+        my $new_anode = $atree->create_child({
+            form => 'item',
+        });
+        $new_anode->wild->{gazeteer_entity_id} = $entity->[0];
+        $new_anode->wild->{matched_item} = $entity->[1];
+
+        $new_anode->shift_before_node($anodes[0]);
+        push @entity_anodes, $new_anode;
+        $_->remove() foreach (@anodes);
+#        my $node_before = $new_anode->get_prev_node;
+#        if (defined $node_before && ($node_before->form !~ /^the$|^a$|^an$/)) {
+#            my $the_anode = $atree->create_child({
+#                form => 'the',
+#            });
+#            $the_anode->shift_before_node($new_anode);
+#        }
+    }
+    return \@entity_anodes;
 }
 
 
