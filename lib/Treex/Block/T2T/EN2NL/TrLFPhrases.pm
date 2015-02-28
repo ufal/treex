@@ -113,7 +113,7 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::T2T::EN2NL::AddNounGender
+Treex::Block::T2T::EN2NL::TrLFPhrases
 
 =head1 DESCRIPTION
 

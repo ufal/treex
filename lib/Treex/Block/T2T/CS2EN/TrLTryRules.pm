@@ -8,6 +8,14 @@ extends 'Treex::Core::Block';
 Readonly my %QUICKFIX_TRANSLATION_OF => (
     #q{skype}      => 'Skype|NNP',
     #q{Skype}      => 'Skype|NNP',
+    'opakovač'     => 'repeater|noun',
+    'plocha'       => 'desktop|noun', # TODO QTLeap-specific
+    'nabootovat'   => 'boot|verb',
+    'kontrolka'    => 'light|noun', # TODO QTLeap-specific
+    'hacknutý'     => 'hacked|adj',
+    'připojit_se'  => 'connect|verb', # TODO QTLeap-specific    
+    'naskenovat'   => 'scan|verb',
+    'nascanovat'   => 'scan|verb',
 );
 
 sub process_tnode {

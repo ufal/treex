@@ -9,15 +9,15 @@ sub process_tnode {
 
     # avoid coordinations
     return if ( $tnode->is_coap_root );
-
+    
     # avoid leaves
     my @children = $tnode->get_children( { ordered => 1 } );
     return if ( !@children );
-
+    
     # finite clauses
     if ( $tnode->formeme =~ /v:*.fin/ ) {
 
-        # skip orders, for now (TODO fix them)
+        # skip imperatives, for now (TODO fix them)
         return if ( ( $tnode->sentmod // '' ) !~ /enunc|inter/ );
 
         # Maintain SVO order: move subjects and objects 
@@ -72,6 +72,18 @@ sub process_tnode {
                 $self->shift_before_node( $wh, $tnode );
             }
         }
+    }
+    # infinitives
+    elsif ( $tnode->formeme eq 'v:to+inf' ){
+        
+        log_info('INF: ' . $tnode->id );
+        
+        # move objects after infinitives
+        my @objects  = _grep_formeme( 'n:obj[12]?', \@children );
+        foreach my $object ( reverse @objects ) {
+            $self->shift_after_node( $object, $tnode ) if ( $object->precedes($tnode) );
+        }
+        
     }
     
     return;

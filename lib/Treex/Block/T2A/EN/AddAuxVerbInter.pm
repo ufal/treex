@@ -9,13 +9,22 @@ sub process_tnode {
     my ( $self, $t_node ) = @_;
 
     # select only interogative verbs
-    return if (
-        ($t_node->formeme // '') !~ /^v.*fin/
-        || ($t_node->sentmod // '') ne 'inter'
+    return
+        if (
+        ( $t_node->formeme // '' ) !~ /^v.*fin/
+        || ( $t_node->sentmod // '' ) ne 'inter'
         || $t_node->t_lemma eq 'there'
-    );
-    
+        );
+
     my $a_node = $t_node->get_lex_anode() or return;
+
+    # How have I to do -> How should I do
+    if ( $t_node->gram_deontmod eq 'hrt' and $a_node->lemma eq 'have' ) {
+        my $a_to = first { $_->lemma eq 'to' } reverse $t_node->get_aux_anodes( { ordered => 1 } ) or return;
+        $a_node->set_lemma('should');
+        $a_node->set_form('should');
+        $a_to->remove();
+    }
 
     # if the current main verbal node is not auxiliary (or not `be'), shift it and put an auxiliary 'do' in its place
     return if ( ( $a_node->afun // '' ) eq 'AuxV' or $a_node->lemma eq 'be' );
