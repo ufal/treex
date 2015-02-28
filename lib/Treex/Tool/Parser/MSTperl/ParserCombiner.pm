@@ -84,6 +84,7 @@ sub parse_sentence_full {
             my $child_ord = $child->ord;
             my $parent_ord = $child->parentOrd;
             # MaxST needed but MinST is computed -> need to use weight as -weight
+            # (the meaning is -= 1*weight)
             $graph->set_edge_weight( $parent_ord, $child_ord, 
                 $graph->get_edge_weight($parent_ord, $child_ord) - $weight );
         }

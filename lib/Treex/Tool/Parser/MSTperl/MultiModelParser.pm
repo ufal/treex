@@ -25,6 +25,17 @@ override 'load_model' => sub {
     return $model;
 };
 
+sub load_model_posfact {
+    my ( $self, $filename, $weights ) = @_;
+
+    my $model = Treex::Tool::Parser::MSTperl::ModelUnlabelled
+        ->new(config => $self->config, posweights => $weights);
+    push @{$self->model}, $model;
+    $model->load($filename);
+    $model->normalize();
+    return $model;
+}
+
 override 'parse_sentence_full' => sub {
     my ($self, $sentence_working_copy) = @_;
 
@@ -186,6 +197,11 @@ override 'parse_sentence_full' => sub {
                     / $normalization{$model} * $model->weight;
                 }
             # some other normalization, not happening here
+            } elsif ($self->config->posfact_field != -1) {
+                foreach my $model (@{$self->model} ) {
+                    $score += $scores{$model}->{$child->ord}->{$parent->ord}
+                    * ($model->posweights->{$child->fields->[$self->config->posfact_field]});
+                }
             } else {
                 foreach my $model (@{$self->model} ) {
                     $score += $scores{$model}->{$child->ord}->{$parent->ord}

@@ -468,6 +468,12 @@ has 'normalization_type' => (
     default => 'divabssum',
 );
 
+has 'posfact_field' => (
+    is      => 'rw',
+    isa     => 'Num',
+    default => -1,
+);
+
 # By default tries to load everything immediately.
 # If set to 1, will let the invoker call load() whenever appropriate.
 # Designed for fixing filenames from the outside.
