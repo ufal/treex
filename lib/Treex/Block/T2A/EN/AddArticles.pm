@@ -230,7 +230,7 @@ sub decide_article {
 sub _has_determiner {
     my ($tnode) = @_;
     my @d = grep {
-        $_->t_lemma =~ /^(some|this|those|that|these)$/
+        $_->t_lemma =~ /^(some|this|those|that|these|which|what|whose|one)$/
             or ( $_->gram_sempos // '' ) =~ /^(adj.pron.def.pers|n.pron.indef|adj.pron.def.demon)$/
             or $_->formeme eq 'n:poss'
     } $tnode->get_echildren();
@@ -263,6 +263,12 @@ sub _has_relative_clause {
 
 sub _is_restricted_somehow {
     my ($tnode) = @_;
+    
+    # unique identification: "the same/left/right/bottom..."
+    return 1 if ( grep { $_->t_lemma =~ /^(same|left|right|top|bottom|first|second|third|last)$/ } $tnode->get_echildren() );
+    
+    # superlatives: "the best, the greatest..."
+    return 1 if ( grep { ( $_->gram_sempos // '' ) =~ /^adj.denot/ and ( $_->gram_degcmp // '' ) eq 'sup' } $tnode->get_echildren() );
 
     # TODO this won't probably work
     return scalar( grep { $_->functor eq 'LOC' } $tnode->get_children() );

@@ -9,13 +9,29 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     #q{skype}      => 'Skype|NNP',
     #q{Skype}      => 'Skype|NNP',
     'opakovač'     => 'repeater|noun',
-    'plocha'       => 'desktop|noun', # TODO QTLeap-specific
     'nabootovat'   => 'boot|verb',
-    'kontrolka'    => 'light|noun', # TODO QTLeap-specific
     'hacknutý'     => 'hacked|adj',
-    'připojit_se'  => 'connect|verb', # TODO QTLeap-specific    
     'naskenovat'   => 'scan|verb',
     'nascanovat'   => 'scan|verb',
+    'odmrazit'     => 'unfreeze|verb',
+    'čeština'      => 'Czech|noun',
+    'virální'      => 'viral|adj',
+    'lajkování'    => 'liking|noun',
+    'DNS'          => 'DNS|noun',
+    
+
+    # TODO: the following is QTLeap-specific -- it should not be used elsewhere
+    'písmo'        => 'font|noun',   
+    'připojit_se'  => 'connect|verb',    
+    'kontrolka'    => 'light|noun',
+    'plocha'       => 'desktop|noun',
+    'vstup'        => 'input|noun',
+    'mezera'       => 'space|noun',
+    'prohlížení'   => 'browsing|noun',
+    'prohlížeč'    => 'browser|noun',
+    'cookies'      => 'cookies|noun',
+    'doplněk'      => 'add-on|noun',
+    'rozšíření'    => 'add-on|noun',    
 );
 
 sub process_tnode {

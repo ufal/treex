@@ -76,8 +76,6 @@ sub process_tnode {
     # infinitives
     elsif ( $tnode->formeme eq 'v:to+inf' ){
         
-        log_info('INF: ' . $tnode->id );
-        
         # move objects after infinitives
         my @objects  = _grep_formeme( 'n:obj[12]?', \@children );
         foreach my $object ( reverse @objects ) {
@@ -145,7 +143,9 @@ Impose a few basic word ordering rules of English.
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
+
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2014-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
