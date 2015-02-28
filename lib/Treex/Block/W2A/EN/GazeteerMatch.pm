@@ -211,7 +211,7 @@ sub _collapse_neighboring_entities {
         my @consec_anodes = ( $anode );
 
         my $prev_anode = $anode->get_prev_node;
-        while (defined $prev_anode && (defined $prev_anode->wild->{gazeteer_entity_id} || $prev_anode->form =~ /^[>,(){}\[\]]$/)) {
+        while (defined $prev_anode && (defined $prev_anode->wild->{gazeteer_entity_id} || $prev_anode->form =~ /^[>]$/)) {
             if (defined $prev_anode->wild->{gazeteer_entity_id}) {
                 unshift @consec_ids, $prev_anode->wild->{gazeteer_entity_id};
                 unshift @consec_phrases, $prev_anode->wild->{matched_item};
@@ -225,7 +225,7 @@ sub _collapse_neighboring_entities {
             $prev_anode = $prev_anode->get_prev_node;
         }
         my $next_anode = $anode->get_next_node;
-        while (defined $next_anode && (defined $next_anode->wild->{gazeteer_entity_id} || $next_anode->form =~ /^[>,(){}\[\]]$/)) {
+        while (defined $next_anode && (defined $next_anode->wild->{gazeteer_entity_id} || $next_anode->form =~ /^[>]$/)) {
             if (defined $next_anode->wild->{gazeteer_entity_id}) {
                 push @consec_ids, $next_anode->wild->{gazeteer_entity_id};
                 push @consec_phrases, $next_anode->wild->{matched_item};
