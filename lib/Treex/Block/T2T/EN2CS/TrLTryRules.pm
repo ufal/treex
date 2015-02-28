@@ -24,6 +24,7 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{von}        => 'von|X',
     q{Wi-Fi}      => 'Wi-Fi|X',
     q{WiFi}       => 'WiFi|X',
+    q{wi-fi}       => 'Wi-Fi|X',
     q{ok}         => 'OK|X',
     q{sm}         => 'SMS|X',
     q{Start}      => 'Start|X',
