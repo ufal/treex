@@ -101,7 +101,7 @@ sub get_lemma_and_pos {
     }
     
     # Imperative "go" in IT instructions is "přejděte" rather than "pojďte".
-    if ( $en_tlemma eq 'go' && $en_tnode->gram_verbmod eq 'imp'){
+    if ( $en_tlemma eq 'go' && defined $en_tnode->gram_verbmod){
         return 'přejít|V';
     }
     
