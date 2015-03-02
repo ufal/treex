@@ -7,38 +7,23 @@ use Treex::Tool::ProcessUtils;
 # Used to parse Alpino output. This is quite ugly, but I want to avoid code duplication
 use Treex::Block::Read::Alpino;
 
-has '_twig'               => ( is => 'rw' );
-has '_alpino_readhandle'  => ( is => 'rw' );
-has '_alpino_writehandle' => ( is => 'rw' );
-has '_alpino_pid'         => ( is => 'rw' );
+with 'Treex::Tool::Alpino::Run';
+
+has '_twig' => ( is => 'rw' );
 
 has 'timeout' => ( isa => 'Int', is => 'ro', default => 60 );
 
 sub BUILD {
 
-    my $self      = shift;
-    my $tool_path = 'installed_tools/parser/Alpino';
-    my $exe_path  = require_file_from_share("$tool_path/bin/Alpino");
+    my $self = shift;
 
-    $tool_path = $exe_path;    # get real tool path (not relative to Treex share)
-    $tool_path =~ s/\/bin\/.*//;
-    $ENV{ALPINO_HOME} = $tool_path;    # set base directory as an environment variable to be passed to Alpino
-
-    # Compose Alpino command, forcing line-buffering of Alpino's output (otherwise it will hang)
-    my @command = ( 'stdbuf', '-oL', $exe_path );
+    my @args = ();
     if ( $self->timeout != 0 ) {
-        push @command, 'user_max=' . ( $self->timeout * 1000 );
+        push @args, 'user_max=' . ( $self->timeout * 1000 );
     }
-    push @command, ( 'end_hook=xml_dump', '-parse' );
+    push @args, ( 'end_hook=xml_dump', '-parse' );
 
-    $SIG{PIPE} = 'IGNORE';             # don't die if Alpino gets killed
-
-    # Capture both Alpino's STDERR and STDOUT
-    my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::verbose_bipipe_noshell( ":encoding(utf-8)", @command );
-
-    $self->_set_alpino_readhandle($reader);
-    $self->_set_alpino_writehandle($writer);
-    $self->_set_alpino_pid($pid);
+    $self->_start_alpino(@args);
 
     $self->_set_twig( XML::Twig::->new() );
 
@@ -81,11 +66,13 @@ sub parse_zones {
         if ($xml) {
             my $outsent = $xml;
             $outsent =~ s|^.*<sentence>(.*)</sentence>.*$|$1|sm;
+
             #print STDERR "XML1:\n$outsent\n\n";
             while ( ( $outsent eq $prev_outsent ) && ( $sent ne $prev_insent ) ) {
                 $xml     = $self->get_alpino_parse($sent);
                 $outsent = $xml;
                 $outsent =~ s|^.*<sentence>(.*)</sentence>.*$|$1|sm;
+
                 #print STDERR "XML2:\n$outsent\n\n";
             }
             $prev_outsent = $outsent;

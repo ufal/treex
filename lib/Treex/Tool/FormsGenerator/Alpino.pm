@@ -6,35 +6,15 @@ use Treex::Tool::ProcessUtils;
 
 use Treex::Block::Write::ADTXML;
 
-has '_twig'               => ( is => 'rw' );
-has '_alpino_readhandle'  => ( is => 'rw' );
-has '_alpino_writehandle' => ( is => 'rw' );
-has '_alpino_pid'         => ( is => 'rw' );
+with 'Treex::Tool::Alpino::Run';
 
 has '_adtxml' => ( is => 'rw', builder => '_build_adtxml', lazy_build => 1 );
 
 sub BUILD {
 
-    my $self      = shift;
-    my $tool_path = 'installed_tools/parser/Alpino';
-    my $exe_path  = require_file_from_share("$tool_path/bin/Alpino");
+    my $self = shift;
 
-    $tool_path = $exe_path;    # get real tool path (not relative to Treex share)
-    $tool_path =~ s/\/bin\/.*//;
-    $ENV{ALPINO_HOME} = $tool_path;    # set it as an environment variable to be passed to Alpino
-
-    #TODO this should be done better
-    my $redirect = Treex::Core::Log::get_error_level() eq 'DEBUG' ? '' : '2>/dev/null';
-
-    # Force line-buffering of Alpino's output (otherwise it will hang)
-    my @command = ( 'stdbuf', '-oL', $exe_path, 'user_max=90000', 'end_hook=print_generated_sentence', '-generate' );
-
-    $SIG{PIPE} = 'IGNORE';             # don't die if parser gets killed
-    my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::verbose_bipipe_noshell( ":encoding(utf-8)", @command );
-
-    $self->_set_alpino_readhandle($reader);
-    $self->_set_alpino_writehandle($writer);
-    $self->_set_alpino_pid($pid);
+    $self->_start_alpino( 'user_max=90000', 'end_hook=print_generated_sentence', '-generate' );
 
     return;
 }

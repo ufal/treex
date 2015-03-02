@@ -18,7 +18,7 @@ use vars qw(@EXPORT_OK);
 @EXPORT_OK = qw(require_file_from_share);
 
 sub require_file_from_share {
-    my ( $path_to_file, $who_wants_it, $make_executable ) = @_;
+    my ( $path_to_file, $who_wants_it, $make_executable, $skip_download ) = @_;
     
     # The following three cases are handled first
     #   ./relative_path
@@ -29,7 +29,7 @@ sub require_file_from_share {
         log_debug("Looking for absolute or relative path $path_to_file\n");
         return $path_to_file if -e $path_to_file;
         my $file = File::Spec->rel2abs($path_to_file);
-        log_fatal "Cannot find '$path_to_file'.\nNote that it starts with '/' or '.', so it is not search for within Treex Share.\nFile '$file' does not exist.\n";
+        log_fatal "Cannot find '$path_to_file'.\nNote that it starts with '/' or '.', so it is not searched for within Treex Share.\nFile '$file' does not exist.\n";
     }
 
     my $writable;    #will store first writable directory found
@@ -56,15 +56,21 @@ sub require_file_from_share {
     log_info("Shared file '$path_to_file' is missing$who_wants_it.");
     log_fatal("Cannot find writable directory for downloading from share") if !defined $writable;
 
-    my $url = Treex::Core::Config->share_url() . "/$path_to_file";
-    log_info("Trying to download $url");
-
     my $file = "$writable/$path_to_file";
 
     # first ensure that the directory exists
     my $directory = $file;
     $directory =~ s/[^\/]*$//;
     File::Path::mkpath($directory);
+    
+    # skip download, just return the path, the caller block will handle the download itself
+    if ($skip_download){
+        log_warn("File $file does not exist, auto-download skipped.");
+        return $file;
+    }
+
+    my $url = Treex::Core::Config->share_url() . "/$path_to_file";
+    log_info("Trying to download $url");
 
     # downloading the file using LWP::Simple
     my $response_code = getstore( $url, $file );
@@ -117,11 +123,17 @@ If the path starts with "." or "/" it is searched in the local file system (and 
 
 =over
 
-=item require_file_from_share($path_to_file, $who_wants_it, $make_executable)
+=item require_file_from_share($path_to_file, $who_wants_it, $make_executable, $skip_download)
 
 Try to locate file in local resource paths, if not found, try to download it and stores it to first writable path.
 Obtains paths from L<Treex::Core::Config->resource_path()|Treex::Core::Config/resource_path>
 Returns path to file.
+
+If C<$make_executable> is true, execute rights are set on the downloaded file.
+
+If C<$skip_download> is true, automatic download is skipped and only the path tho the file or the first
+writable path is returned. The caller block must check the existence of the file and handle the download
+itself (useful for downloading and unpacking of larger archives).  
 
 =back
 
