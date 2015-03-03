@@ -10,7 +10,7 @@ has 'sent_in_file'   => ( is => 'rw', isa => 'Int', default => 0 );
 
 
 #------------------------------------------------------------------------------
-# Reads the Czech tree and transforms it to adhere to the HamleDT guidelines.
+# Reads a Prague-style tree and transforms it to Universal Dependencies.
 #------------------------------------------------------------------------------
 sub process_zone
 {
@@ -47,12 +47,12 @@ sub process_zone
     my $root = $zone->get_atree();
     $self->exchange_tags($root);
     $self->shape_coordination_stanford($root);
-    $self->fix_determiners($root);
     $self->restructure_compound_prepositions($root);
     $self->push_prep_sub_down($root);
     $self->push_copulas_down($root);
     $self->afun_to_udeprel($root);
     $self->attach_final_punctuation_to_predicate($root);
+    $self->fix_determiners($root);
     $self->classify_numerals($root);
     $self->restructure_compound_numerals($root);
     $self->push_numerals_down($root);
@@ -657,6 +657,7 @@ sub attach_final_punctuation_to_predicate
 #
 # Coordination must have been converted before calling this method, because we
 # do not search for effective parent (e.g. in "některého žáka či žákyni").
+# Dependency relation labels must have been converted to UD labels.
 #------------------------------------------------------------------------------
 sub fix_determiners
 {
@@ -668,6 +669,7 @@ sub fix_determiners
         if($node->is_adjective() && $node->is_pronoun())
         {
             my $parent = $node->parent();
+            my $change = 0; # do not change DET to PRON
             if(!$parent->is_root())
             {
                 # The common pattern is that the parent is a noun (or pronoun) and that it follows the determiner.
@@ -687,17 +689,36 @@ sub fix_determiners
                 #  půl tuctu jich (half dozen of them) (genitive construction; the words agree in case because tuctu is incidentially also genitive, but they do not agree in number; in addition, "jich" is a non-possessive personal pronoun which should never become det)
                 #  firmy All - Impex (foreign determiner All; it cannot agree in case because it does not have case)
                 #  děvy samy (girls themselves) (the words agree in case but the afun is Atv, not Atr, thus we should not get through the 'amod' constraint above)
-                my $change = 0; # do not change DET to PRON
                 # The tree has not changed from the Prague style except for coordination. Nominal predicates still depend on copulas.
                 # If it does not modify a noun (adjective, pronoun), it is not a determiner.
                 $change = 1 if(!$parent->is_noun() && !$parent->is_adjective());
                 # If they do not agree, it is not a determiner.
                 $change = 1 if(!$self->agree($node, $parent, 'case'));
-                if($change)
+                # The following Czech pronouns are never used as determiners:
+                # - personal (not possessive) pronouns, including non-possessive reflexives
+                # - *kdo, *co, nic
+                if($node->iset()->prontype() eq 'prs' && !$node->is_possessive() || $node->form() =~ m/(kdo|co|^nic)$/)
                 {
-                    # Change DET to PRON by changing Interset part of speech from adj to noun.
-                    $node->iset()->set('pos', 'noun');
+                    $change = 1;
                 }
+                # If it is attached vie one of the following relations, it is a pronoun, not a determiner.
+                ###!!! We include 'conj' because conjuncts are more often than not pronouns and we do not want to implement the correct treatment of coordinations.
+                ###!!! Nevertheless it is possible that determiners are coordinated: "ochutnala můj i tvůj oběd".
+                if($node->conll_deprel() =~ m/^(nsubj|dobj|iobj|advmod|appos|conj|discourse)$/)
+                {
+                    $change = 1;
+                }
+            }
+            else
+            {
+                # Neither pronoun nor determiner normally depend directly on the root.
+                # They do so only in the case of ellipsis. Then we will call them pronouns, not determiners (usually it is their verbal head what has been deleted).
+                $change = 1;
+            }
+            if($change)
+            {
+                # Change DET to PRON by changing Interset part of speech from adj to noun.
+                $node->iset()->set('pos', 'noun');
             }
         }
     }
