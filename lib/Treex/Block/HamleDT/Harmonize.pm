@@ -33,9 +33,6 @@ sub process_zone
 {
     my $self   = shift;
     my $zone   = shift;
-
-    # Copy the original dependency structure before adjusting it.
-    $self->backup_zone($zone);
     my $root = $zone->get_atree();
 
     # Convert CoNLL POS tags and features to Interset and PDT if possible.
@@ -47,19 +44,6 @@ sub process_zone
 
     # The return value can be used by the overriding methods of subclasses.
     return $root;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Copies the original zone so that the user can compare the original and the
-# restructured tree in TTred.
-#------------------------------------------------------------------------------
-sub backup_zone
-{
-    my $self  = shift;
-    my $zone0 = shift;
-    return $zone0->copy('orig');
 }
 
 

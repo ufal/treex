@@ -1,8 +1,8 @@
-package Treex::Block::HamleDT::CS::Udep;
+package Treex::Block::HamleDT::Udep;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-extends 'Treex::Block::HamleDT::HarmonizePDT';
+extends 'Treex::Core::Block';
 
 has iset_driver =>
 (
@@ -55,10 +55,10 @@ sub process_zone
         $bundle->wild()->{comment} = join("\n", @comments);
     }
     # Now the harmonization proper.
-    my $root = $self->SUPER::process_zone($zone);
-    $self->remove_features_from_lemmas($root);
+    my $root = $zone->get_atree();
+###!!!    $self->remove_features_from_lemmas($root);
     $self->shape_coordination_stanford($root);
-    $self->fix_determiners($root);
+###!!!    $self->fix_determiners($root);
     $self->restructure_compound_prepositions($root);
     $self->push_prep_sub_down($root);
     $self->push_copulas_down($root);
@@ -67,7 +67,7 @@ sub process_zone
     $self->classify_numerals($root);
     $self->restructure_compound_numerals($root);
     $self->push_numerals_down($root);
-    $self->split_fused_words($root);
+###!!!    $self->split_fused_words($root);
     # Sanity checks.
     $self->check_determiners($root);
 }
@@ -1258,9 +1258,9 @@ sub check_determiners
 
 =over
 
-=item Treex::Block::HamleDT::CS::Udep
+=item Treex::Block::HamleDT::Udep
 
-Converts PDT (Prague Dependency Treebank) analytical trees to the Universal
+Converts dependency trees from the HamleDT/Prague style to the Universal
 Dependencies. This block is experimental. In the future, it may be split into
 smaller blocks, moved elsewhere in the inheritance hierarchy or otherwise
 rewritten. It is also possible (actually quite likely) that the current
@@ -1271,6 +1271,6 @@ which will become our new default central annotation style.
 
 =cut
 
-# Copyright 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2014, 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
