@@ -19,9 +19,14 @@ my %THIRD_PERS_PRONS = map {$_ => 1} qw/
     it its itself
     they them their theirs themselves
 /;
-my %PERS_PRONS_REFLEX = map {$_ => 1} qw/
-    myself yourself himself herself itself ourselves yourselves themselves
-/;
+my %PERS_PRONS_REFLEX = (
+    en => { map {$_ => 1} qw/
+            myself yourself himself herself itself ourselves yourselves themselves
+          /},
+    cs => { map {$_ => 1} qw/
+            se svůj
+          /},
+);
 
 has 'args' => (is => "ro", isa => "HashRef", default => sub {{}});
 
@@ -201,11 +206,14 @@ sub _is_3rd_pers_en_a {
 sub is_reflexive {
     my ($tnode) = @_;
     my $reflex = $tnode->get_attr('is_reflexive');
+    return $reflex if (defined $reflex);
     my $anode = $tnode->get_lex_anode;
     return 0 if (!defined $anode);
-    if (!defined $reflex && $tnode->language eq "en") {
-        $reflex = $PERS_PRONS_REFLEX{$anode->lemma};
+    my $lemma = $anode->lemma;
+    if ($tnode->language eq "cs") {
+        $lemma = Treex::Tool::Lexicon::CS::truncate_lemma($lemma, 1);
     }
+    $reflex = $PERS_PRONS_REFLEX{$tnode->language}{$lemma};
     return $reflex;
 }
 
