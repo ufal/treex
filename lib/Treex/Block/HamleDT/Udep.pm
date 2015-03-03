@@ -898,8 +898,8 @@ sub check_determiners
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $form = defined($node->form()) ? $node->form() : '';
-        my $pform = defined($node->parent()->form()) ? $node->parent()->form() : '';
+        my $form = defined($node->form()) ? $node->form() : '<EMPTY>';
+        my $pform = $node->parent()->is_root() ? '<ROOT>' : defined($node->parent()->form()) ? $node->parent()->form() : '<EMPTY>';
         my $npform;
         if($node->parent()->ord() < $node->ord())
         {
