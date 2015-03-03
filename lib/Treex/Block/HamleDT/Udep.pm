@@ -4,16 +4,6 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Core::Block';
 
-has iset_driver =>
-(
-    is            => 'ro',
-    isa           => 'Str',
-    required      => 1,
-    default       => 'cs::pdt',
-    documentation => 'Which interset driver should be used to decode tags in this treebank? '.
-                     'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
-                     'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
-);
 has 'last_file_stem' => ( is => 'rw', isa => 'Str', default => '' );
 has 'sent_in_file'   => ( is => 'rw', isa => 'Int', default => 0 );
 
@@ -26,11 +16,10 @@ sub process_zone
 {
     my $self = shift;
     my $zone = shift;
-    # Add the name of the original PDT file and the number of the sentence inside
+    # Add the name of the input file and the number of the sentence inside
     # the file as a comment that will be written in the CoNLL-U format.
     # (In any case, Write::CoNLLU will print the sentence id. But this additional
-    # information is also very useful for debugging, and it is only available for
-    # PDT, hence it is prepared here.)
+    # information is also very useful for debugging, as it ensures a user can find the sentence in Tred.)
     my $bundle = $zone->get_bundle();
     my $file_stem = $bundle->get_document()->file_stem();
     if($file_stem eq $self->last_file_stem())
@@ -56,9 +45,10 @@ sub process_zone
     }
     # Now the harmonization proper.
     my $root = $zone->get_atree();
+    $self->exchange_tags($root);
 ###!!!    $self->remove_features_from_lemmas($root);
     $self->shape_coordination_stanford($root);
-###!!!    $self->fix_determiners($root);
+    $self->fix_determiners($root);
     $self->restructure_compound_prepositions($root);
     $self->push_prep_sub_down($root);
     $self->push_copulas_down($root);
@@ -75,18 +65,22 @@ sub process_zone
 
 
 #------------------------------------------------------------------------------
-# Different source treebanks may use different attributes to store information
-# needed by Interset drivers to decode the Interset feature values. By default,
-# the CoNLL 2006 fields CPOS, POS and FEAT are concatenated and used as the
-# input tag. If the morphosyntactic information is stored elsewhere (e.g. in
-# the tag attribute), the Harmonize block of the respective treebank should
-# redefine this method. Note that even CoNLL 2009 differs from CoNLL 2006.
+# Replaces the tag from the original corpus by the corresponding Universal POS
+# tag; saves the original tag in conll/pos instead. This would be done also in
+# Write::CoNLLU. But even if we write Treex and view it in Tred, we want the UD
+# tree to display the UPOS tags.
 #------------------------------------------------------------------------------
-sub get_input_tag_for_interset
+sub exchange_tags
 {
-    my $self   = shift;
-    my $node   = shift;
-    return $node->tag();
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $original_tag = $node->tag();
+        $node->set_tag($node->iset()->get_upos());
+        $node->set_conll_pos($original_tag);
+    }
 }
 
 
