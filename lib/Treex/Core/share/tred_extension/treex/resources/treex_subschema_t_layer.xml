@@ -91,6 +91,9 @@
       <!--  References -->
       <member name="compl.rf"><list ordered="0"><cdata format="PMLREF"/></list></member>
       <member name="coref_text.rf"><list ordered="0"><cdata format="PMLREF"/></list></member>
+      <member name="coref_text" required="0">
+        <list ordered="0" type="t-coref_text-link.type"/>
+      </member>
       <member name="coref_gram.rf"><list ordered="0"><cdata format="PMLREF"/></list></member>
       <member name="coref_special" type="coref_special.type"/>
       <member name="pcedt" type="t-pcedt.type"/>
@@ -200,6 +203,19 @@
       </structure>
   </type>
 
+  <type name="t-coref_text-link.type">
+    <structure>
+      <member name="target_node.rf" required="1">
+        <cdata format="PMLREF"/></member>
+      <member name="type" required="0">
+        <choice>
+          <value>SPEC</value>
+          <value>GEN</value>
+        </choice>
+      </member>
+    </structure>
+  </type>
+  
   <type name="t-pcedt_coref.type">
       <structure>
           <member name="annot_comment">
