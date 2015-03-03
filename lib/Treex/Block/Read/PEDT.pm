@@ -139,7 +139,13 @@ sub _convert_ptree {
     }
 
     foreach my $pml_child ( $pml_node->children ) {
-        my $treex_child = $treex_node->create_child();
+        my $treex_child;
+        if ($pml_child->attr('#name') eq 'nonterminal') {
+            $treex_child = $treex_node->create_nonterminal_child();
+        }
+        else {
+            $treex_child = $treex_node->create_terminal_child();
+        }
         $self->_convert_ptree( $pml_child, $treex_child );
     }
     return;
