@@ -41,6 +41,14 @@ has is_one_doc_per_file => (
 
 has _file_numbers => ( is => 'rw', default => sub { {} } );
 
+has _file_number_width => (
+    is => 'rw',
+    isa => 'Int',
+    default => 3,
+    documentation => 'The number of digits for numbered filenames.  '
+        . 'The default (3) will create filenames with three digits as "001.treex.gz".'
+);
+
 has skip_finished => (
     isa           => 'Str',
     is            => 'ro',
@@ -62,10 +70,10 @@ sub BUILD {
 
         for my $input_filename (@$filenames_ref){
             my $filename = $input_filename;
-            
+
             # see r14228 for an alternative implementation (without stringy eval) which cannot handle $1 in rexex
             eval $eval_string or log_fatal "Failed to eval $eval_string"; ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
-            
+
             if (! -s $filename){
                 push @filtered_filenames, $input_filename;
                 #say "not finished: $input_filename -> $filename";
@@ -122,7 +130,8 @@ sub new_document {
     else {
         my $num = $self->_file_numbers->{$file};
         $self->_file_numbers->{$file} = ++$num;
-        $args{file_number} = sprintf "%03d", $num;
+        my $fmt = "%0".$self->_file_number_width."d";
+        $args{file_number} = sprintf $fmt, $num;
     }
 
     if ( defined $load_from ) {
