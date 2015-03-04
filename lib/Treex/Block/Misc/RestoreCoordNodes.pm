@@ -9,6 +9,7 @@ sub process_tnode {
 
     # TODO add more conjunctions, but now it's ok for me
     return if ( $tnode->formeme ne 'x' or $tnode->t_lemma !~ /^(and|or|but|yet)$/ );
+    $tnode->set_functor('CONJ'); # needed for is_coap_root
 
     # first, check for adjacent children of the same formeme and only fix is_member
     my @children = $tnode->get_children( { ordered => 1 } );
