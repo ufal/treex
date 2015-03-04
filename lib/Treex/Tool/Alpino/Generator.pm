@@ -36,6 +36,7 @@ sub _generate_from_adtxml {
 
     while ( !$sent ) {
         chomp $line;
+        log_info 'ALPINO: ' . $line;
 
         # this indicates that generation has finished
         if ( $line =~ /^G#undefined\|/ ) {
@@ -43,9 +44,9 @@ sub _generate_from_adtxml {
             last;
         }
 
-        # this means that an error has probably occurred
+        # this means that an error has occurred
         elsif ( $line =~ /^K#undefined\|/ ) {
-            log_warn( 'K-undef occurred, last line: ' . $last_line );
+            log_warn( 'Alpino returned K-undef, last line: ' . $last_line );
             last;
         }
 
@@ -71,7 +72,6 @@ sub generate_sentence {
 
     my $xml = $self->_adtxml->_process_tree($atree);
     return $self->_generate_from_adtxml($xml);
-    Treex::Core::Log::progress();
 }
 
 1;
