@@ -2,7 +2,7 @@ package Treex::Block::A2P::NL::ParseAlpino;
 
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::PhraseParser::Alpino;
+use Treex::Tool::Alpino::Parser;
 
 extends 'Treex::Core::Block';
 

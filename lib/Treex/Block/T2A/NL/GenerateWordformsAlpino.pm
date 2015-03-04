@@ -1,7 +1,7 @@
 package Treex::Block::T2A::NL::GenerateWordformsAlpino;
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::FormsGenerator::Alpino;
+use Treex::Tool::Alpino::Generator;
 
 extends 'Treex::Core::Block';
 
