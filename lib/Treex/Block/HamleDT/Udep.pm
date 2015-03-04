@@ -186,7 +186,7 @@ sub afun_to_udeprel
             {
                 $udep = 'foreign';
             }
-            elsif($node->is_adjective() && $node->is_pronoun())
+            elsif($node->is_adjective() && $node->is_pronoun() && $self->agree($node, $parent, 'case'))
             {
                 $udep = 'det';
             }
@@ -697,14 +697,24 @@ sub fix_determiners
                 # The following Czech pronouns are never used as determiners:
                 # - personal (not possessive) pronouns, including non-possessive reflexives
                 # - *kdo, *co, nic
-                if($node->iset()->prontype() eq 'prs' && !$node->is_possessive() || $node->form() =~ m/(kdo|co|^nic)$/)
+                # - "to" in the compound conjunction "a to"
+                if($node->iset()->prontype() eq 'prs' && !$node->is_possessive() ||
+                   $node->form() =~ m/(kdo|co|^nic)$/i)
                 {
                     $change = 1;
                 }
-                # If it is attached vie one of the following relations, it is a pronoun, not a determiner.
+                elsif(uc($node->form()) eq 'to')
+                {
+                    my @children = $node->children();
+                    if(any {uc($_->form()) eq 'a'} @children)
+                    {
+                        $change = 1;
+                    }
+                }
+                # If it is attached via one of the following relations, it is a pronoun, not a determiner.
                 ###!!! We include 'conj' because conjuncts are more often than not pronouns and we do not want to implement the correct treatment of coordinations.
                 ###!!! Nevertheless it is possible that determiners are coordinated: "ochutnala můj i tvůj oběd".
-                if($node->conll_deprel() =~ m/^(nsubj|dobj|iobj|advmod|appos|conj|discourse)$/)
+                if($node->conll_deprel() =~ m/^(nsubj|dobj|iobj|xcomp|advmod|case|appos|conj|cc|discourse|parataxis|foreign|dep)$/)
                 {
                     $change = 1;
                 }
