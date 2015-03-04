@@ -703,10 +703,10 @@ sub fix_determiners
                 {
                     $change = 1;
                 }
-                elsif(uc($node->form()) eq 'to')
+                elsif(lc($node->form()) eq 'to')
                 {
                     my @children = $node->children();
-                    if(any {uc($_->form()) eq 'a'} @children)
+                    if(any {lc($_->form()) eq 'a'} @children)
                     {
                         $change = 1;
                     }
