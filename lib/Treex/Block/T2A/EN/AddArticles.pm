@@ -271,7 +271,7 @@ sub _is_restricted_somehow {
     return 1 if ( grep { ( $_->gram_sempos // '' ) =~ /^adj.denot/ and ( $_->gram_degcmp // '' ) eq 'sup' } $tnode->get_echildren() );
 
     # TODO this won't probably work
-    return scalar( grep { $_->functor eq 'LOC' } $tnode->get_children() );
+    return scalar( grep { ( $_->functor // '' ) eq 'LOC' } $tnode->get_children() );
 }
 
 sub add_article_node {

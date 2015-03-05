@@ -6,10 +6,14 @@ extends 'Treex::Block::T2A::AddArticles';
 
 override '_build_article_form' => sub {
     return {
+        'definite  sing' => 'el',
+        'definite  plur' => 'los',
         'definite masc sing' => 'el',
         'definite masc plur' => 'los',
         'definite fem sing' => 'la',
         'definite fem plur' => 'las',
+        'indefinite  sing' => 'un',
+        'indefinite  plur' => 'unos',
         'indefinite masc sing' => 'un',
         'indefinite masc plur' => 'unos',
         'indefinite fem sing' => 'una',
