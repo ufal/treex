@@ -57,6 +57,12 @@
 
       <!-- former a-layer attributes -->
       <member name="ord" role="#ORDER" required="1"><cdata format="nonNegativeInteger"/></member>
+      <!-- Since we started working with the Universal Dependencies, deprel became our main attribute for the dependency relation label.
+           Its usage is not restricted to UD though. It is just a general label. UD restrictions apply only if it is used in the UD context.
+           In contrast, afun is a special case of deprel, useful only for the Prague-style trees. Its value range is pre-determined and
+           some values imply specific treatment of the trees even in the Treex API.
+           Finally, conll/deprel is a predecessor of deprel. Its name refers to one particular file format, CoNLL-X. It is deprecated. -->
+      <member name="deprel"><cdata format="any"/></member>
       <member name="afun" type="afun.type" />
       <member name="is_member" type="bool.type"/>
 
