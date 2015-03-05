@@ -94,6 +94,7 @@ sub afun_to_udeprel
     foreach my $node (@nodes)
     {
         my $afun = $node->afun();
+        $afun = '' if(!defined($afun));
         # If there were transformations that already set the deprel, take it into account.
         # Otherwise derive a default deprel from the afun.
         my $udep = $node->conll_deprel();
@@ -374,7 +375,8 @@ sub shape_coordination_stanford
 
 
 #------------------------------------------------------------------------------
-# Identifies multi-word prepositions and organizes them in chains.
+# Identifies multi-word prepositions and restructures them according to the UD
+# guidelines.
 #------------------------------------------------------------------------------
 sub restructure_compound_prepositions
 {
@@ -390,18 +392,18 @@ sub restructure_compound_prepositions
         my $iord = $nodes[$i]->ord();
         # We cannot identify parts of compound preposition using the POS tag because some parts are nouns.
         # We must use the original dependency label (analytical function) because it has not yet been converted.
-        if($nodes[$i]->afun() eq 'AuxP' && $nodes[$i]->is_leaf())
+        if(defined($nodes[$i]->afun()) && $nodes[$i]->afun() eq 'AuxP' && $nodes[$i]->is_leaf())
         {
             my $parent = $nodes[$i]->parent();
             my $pord = $parent->ord();
-            if($pord > $iord && $parent->afun() eq 'AuxP')
+            if($pord > $iord && defined($parent->afun()) && $parent->afun() eq 'AuxP')
             {
                 my $found = 1;
                 my @mwe;
                 # We seem to have found a multi-word preposition. Make sure that all nodes between child and parent comply.
                 for(my $j = $i+1; $nodes[$j] != $parent; $j++)
                 {
-                    if($nodes[$j]->afun() ne 'AuxP' || !$nodes[$j]->is_leaf() || $nodes[$j]->parent() != $parent)
+                    if(!defined($nodes[$j]->afun()) || $nodes[$j]->afun() ne 'AuxP' || !$nodes[$j]->is_leaf() || $nodes[$j]->parent() != $parent)
                     {
                         $found = 0;
                         last;
@@ -410,12 +412,14 @@ sub restructure_compound_prepositions
                 }
                 if($found)
                 {
-                    push(@mwe, $parent);
+                    # $nodes[$i] is the first token of the MWE and the new head.
+                    # @mwe contains the internal tokens of the MWE, usually just one middle token.
+                    # $parent is the last token of the MWE and the old head.
                     $nodes[$i]->set_parent($parent->parent());
-                    foreach my $n (@mwe)
+                    foreach my $n (@mwe, $parent)
                     {
                         $n->set_parent($nodes[$i]);
-                        $n->set_afun('');
+                        $n->set_afun(undef);
                         $n->set_conll_deprel('mwe');
                     }
                     # Re-attach all other children of the original head to the new head.
@@ -425,7 +429,8 @@ sub restructure_compound_prepositions
                     {
                         $child->set_parent($nodes[$i]);
                     }
-                    $i += scalar(@mwe)-1;
+                    # Move index to the last word of the MWE, i.e. to the old $parent.
+                    $i += scalar(@mwe)+1;
                 }
             }
         }
@@ -446,7 +451,9 @@ sub push_prep_sub_down
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        if($node->afun() eq 'AuxP')
+        my $afun = $node->afun();
+        $afun = '' if(!defined($afun));
+        if($afun eq 'AuxP')
         {
             # In the prototypical case, the node has just one child and it will swap positions with the child.
             ###!!! TODO: If the child is also Aux[PC], we should process the chain recursively.
@@ -474,7 +481,7 @@ sub push_prep_sub_down
             $node->set_afun('case');
             $node->set_conll_deprel('case');
         }
-        elsif($node->afun() eq 'AuxC')
+        elsif($afun eq 'AuxC')
         {
             my @children = $self->get_children_of_auxc($node);
             if(scalar(@children)>0)
@@ -596,7 +603,9 @@ sub push_copulas_down
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        if($node->afun() eq 'Pnom')
+        my $afun = $node->afun();
+        $afun = '' if(!defined($afun));
+        if($afun eq 'Pnom')
         {
             my $pnom = $node;
             my $copula = $node->parent();
