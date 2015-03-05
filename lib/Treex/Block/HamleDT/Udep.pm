@@ -48,8 +48,8 @@ sub process_zone
     $self->exchange_tags($root);
     $self->shape_coordination_stanford($root);
     $self->restructure_compound_prepositions($root);
-    $self->push_prep_sub_down($root);
-    $self->push_copulas_down($root);
+#    $self->push_prep_sub_down($root);
+#    $self->push_copulas_down($root);
     $self->afun_to_udeprel($root);
     $self->attach_final_punctuation_to_predicate($root);
     $self->fix_determiners($root);
