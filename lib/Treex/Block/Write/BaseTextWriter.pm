@@ -42,7 +42,7 @@ sub _build_to {
 
     my ($self) = @_;
 
-    if ( !defined( $self->path ) && !defined( $self->file_stem ) ) {
+    if ( !defined( $self->path ) && !defined( $self->file_stem ) && !defined( $self->substitute ) ) {
         return '-';
     }
     return;
