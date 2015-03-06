@@ -14,6 +14,7 @@ with 'Treex::Core::Node::Interset' => { interset_attribute => 'iset' };
 has [qw(form lemma tag no_space_after)] => ( is => 'rw' );
 
 # Original a-layer attributes
+# (Only afun and is_parenthesis_root originate from PDT, the rest was added in Treex).
 has [
     qw(deprel afun is_parenthesis_root edge_to_collapse is_auxiliary translit gloss)
 ] => ( is => 'rw' );
