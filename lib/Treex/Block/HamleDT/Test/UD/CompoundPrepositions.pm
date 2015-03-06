@@ -40,8 +40,8 @@ sub process_atree
         my $trigram = join(' ', map {lc($_->form())} (@nodes[$i..($i+2)]));
         if($trigram =~ m/^${cpre}e?$/)
         {
-            if($nodes[$i+1]->parent() == $nodes[$i] && $nodes[$i+1]->conll_deprel() eq 'mwe' &&
-               $nodes[$i+2]->parent() == $nodes[$i] && $nodes[$i+2]->conll_deprel() eq 'mwe')
+            if($nodes[$i+1]->parent() == $nodes[$i] && $nodes[$i+1]->deprel() eq 'mwe' &&
+               $nodes[$i+2]->parent() == $nodes[$i] && $nodes[$i+2]->deprel() eq 'mwe')
             {
                 $self->praise($nodes[$i]);
             }

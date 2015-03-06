@@ -8,7 +8,7 @@ sub process_anode
     my $self = shift;
     my $node = shift;
     my $iset  = $node->iset();
-    my $deprel = $node->conll_deprel();
+    my $deprel = $node->deprel();
     $deprel = '' if(!defined($deprel));
     if ($iset->upos() eq 'DET' && $deprel ne 'det')
     {

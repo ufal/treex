@@ -210,7 +210,7 @@ sub _anode_labels {
         $line1 .= $self->_colors->get( 'error', 1 ) . $node->lemma;
     }
 
-    my $edge_label = $node->afun || $node->conll_deprel;
+    my $edge_label = $node->deprel || $node->afun || $node->conll_deprel;
     my $color = $edge_label && $edge_label ne 'NR' ? $self->_colors->get( 'afun', 1 ) : $self->_colors->get( 'error', 1 );
     my $line2 = $color . ( $edge_label || '!!' );
     if ( $node->is_member ) {

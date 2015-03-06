@@ -58,6 +58,14 @@ sub process_zone
     $self->push_numerals_down($root);
     # Sanity checks.
     $self->check_determiners($root);
+    ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
+    ###!!! Copy them to conll/deprel (which is displayed) until we make Tred know deprel.
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        $node->set_conll_deprel($node->deprel());
+        $node->set_afun(undef); # just in case... (should be done already)
+    }
 }
 
 
@@ -97,7 +105,7 @@ sub afun_to_udeprel
         $afun = '' if(!defined($afun));
         # If there were transformations that already set the deprel, take it into account.
         # Otherwise derive a default deprel from the afun.
-        my $udep = $node->conll_deprel();
+        my $udep = $node->deprel();
         $udep = 'dep:'.$afun if(!defined($udep));
         my $parent = $node->parent();
         # Predicate or ExD child of the root:
@@ -292,7 +300,7 @@ sub afun_to_udeprel
         }
         # We may want to dedicate a new node attribute to the universal dependency relation label.
         # At present, conll/deprel is good enough and afun cannot be used because its value range is fixed.
-        $node->set_conll_deprel($udep);
+        $node->set_deprel($udep);
         # Remove the value of afun. It does not make sense in the restructured tree.
         # In addition, empty afun will make the value of conll/deprel visible in Tred.
         $node->set_afun(undef);
@@ -350,7 +358,7 @@ sub shape_coordination_stanford
             {
                 $conjunct->set_parent($head);
                 $conjunct->set_afun('conj');
-                $conjunct->set_conll_deprel('conj');
+                $conjunct->set_deprel('conj');
                 # Clear the is_member flag for all conjuncts. It only made sense in the Prague style.
                 $conjunct->set_is_member(0);
             }
@@ -360,12 +368,12 @@ sub shape_coordination_stanford
                 if($dependent->is_punctuation())
                 {
                     $dependent->set_afun('punct');
-                    $dependent->set_conll_deprel('punct');
+                    $dependent->set_deprel('punct');
                 }
                 elsif($dependent->afun() =~ m/^(Coord|AuxY)$/)
                 {
                     $dependent->set_afun('cc');
-                    $dependent->set_conll_deprel('cc');
+                    $dependent->set_deprel('cc');
                 }
             }
         }
@@ -420,7 +428,7 @@ sub restructure_compound_prepositions
                     {
                         $n->set_parent($nodes[$i]);
                         $n->set_afun(undef);
-                        $n->set_conll_deprel('mwe');
+                        $n->set_deprel('mwe');
                     }
                     # Re-attach all other children of the original head to the new head.
                     # There should be at least one child (the noun) and possibly also some punctuation etc.
@@ -471,7 +479,7 @@ sub push_prep_sub_down
                 $node->set_parent($noun);
                 foreach my $child (@children)
                 {
-                    unless(defined($child->conll_deprel()) && $child->conll_deprel() eq 'mwe')
+                    unless(defined($child->deprel()) && $child->deprel() eq 'mwe')
                     {
                         $child->set_parent($noun);
                     }
@@ -479,7 +487,7 @@ sub push_prep_sub_down
             }
             # Even if the conjunction is already a leaf (which should not happen), it cannot keep the AuxC label.
             $node->set_afun('case');
-            $node->set_conll_deprel('case');
+            $node->set_deprel('case');
         }
         elsif($afun eq 'AuxC')
         {
@@ -496,7 +504,7 @@ sub push_prep_sub_down
             }
             # Even if the conjunction is already a leaf (which should not happen), it cannot keep the AuxC label.
             $node->set_afun('mark');
-            $node->set_conll_deprel('mark');
+            $node->set_deprel('mark');
         }
     }
 }
@@ -522,7 +530,7 @@ sub get_children_of_auxp
     # Note: If coordination has been restructured (recommended!), coordination of noun phrases is represented by a noun, not by a coordinating conjunction.
     for(my $i = 0; $i<=$#children; $i++)
     {
-        if($children[$i]->is_noun() && !(defined($children[$i]->conll_deprel()) && $children[$i]->conll_deprel() eq 'mwe'))
+        if($children[$i]->is_noun() && !(defined($children[$i]->deprel()) && $children[$i]->deprel() eq 'mwe'))
         {
             my $head = $children[$i];
             splice(@children, $i, 1);
@@ -623,7 +631,7 @@ sub push_copulas_down
                 }
                 $copula->set_parent($pnom);
                 $copula->set_afun('Cop');
-                $copula->set_conll_deprel('cop');
+                $copula->set_deprel('cop');
             }
         }
     }
@@ -649,7 +657,7 @@ sub attach_final_punctuation_to_predicate
         foreach my $pnode (@pnodes)
         {
             $pnode->set_parent($predicate);
-            $pnode->set_conll_deprel('punct');
+            $pnode->set_deprel('punct');
         }
     }
 }
@@ -723,7 +731,7 @@ sub fix_determiners
                 # If it is attached via one of the following relations, it is a pronoun, not a determiner.
                 ###!!! We include 'conj' because conjuncts are more often than not pronouns and we do not want to implement the correct treatment of coordinations.
                 ###!!! Nevertheless it is possible that determiners are coordinated: "ochutnala můj i tvůj oběd".
-                if($node->conll_deprel() =~ m/^(nsubj|dobj|iobj|xcomp|advmod|case|appos|conj|cc|discourse|parataxis|foreign|dep)$/)
+                if($node->deprel() =~ m/^(nsubj|dobj|iobj|xcomp|advmod|case|appos|conj|cc|discourse|parataxis|foreign|dep)$/)
                 {
                     $change = 1;
                 }
@@ -860,7 +868,7 @@ sub restructure_compound_numerals
                     if($old_parent_ord < $minord || $old_parent_ord > $maxord)
                     {
                         $parent = $nodes[$j]->parent();
-                        $deprel = $nodes[$j]->conll_deprel();
+                        $deprel = $nodes[$j]->deprel();
                     }
                     $nodes[$j]->set_parent($root);
                 }
@@ -874,10 +882,10 @@ sub restructure_compound_numerals
                 for(my $j = $i; $j < $i+$chain_found; $j++)
                 {
                     $nodes[$j]->set_parent($nodes[$j+1]);
-                    $nodes[$j]->set_conll_deprel('compound');
+                    $nodes[$j]->set_deprel('compound');
                 }
                 $nodes[$i+$chain_found]->set_parent($parent);
-                $nodes[$i+$chain_found]->set_conll_deprel($deprel);
+                $nodes[$i+$chain_found]->set_deprel($deprel);
                 foreach my $child (@children)
                 {
                     $child->set_parent($nodes[$i+$chain_found]);
@@ -910,13 +918,13 @@ sub push_numerals_down
             {
                 $noun->set_parent($number->parent());
                 # If the number was already attached as nummod, it does not tell us anything but we do not want to keep nummod for the noun head.
-                my $deprel = $number->conll_deprel();
+                my $deprel = $number->deprel();
                 $deprel = 'nmod' if($deprel eq 'nummod');
-                $noun->set_conll_deprel($deprel);
+                $noun->set_deprel($deprel);
                 $number->set_parent($noun);
-                $number->set_conll_deprel($number->iset()->prontype() eq '' ? 'nummod:gov' : 'det:numgov');
+                $number->set_deprel($number->iset()->prontype() eq '' ? 'nummod:gov' : 'det:numgov');
                 # All children of the number, except for parts of compound number, must be re-attached to the noun because they modify the whole phrase.
-                my @children = grep {$_->conll_deprel() ne 'compound'} $number->children();
+                my @children = grep {$_->deprel() ne 'compound'} $number->children();
                 foreach my $child (@children)
                 {
                     $child->set_parent($noun);
@@ -952,12 +960,12 @@ sub check_determiners
         # Determiner is a pronominal adjective.
         if($node->is_adjective() && $node->is_pronoun())
         {
-            if($node->conll_deprel() ne 'det')
+            if($node->deprel() ne 'det')
             {
-                log_warn($npform.' is tagged DET but is not attached as det but as '.$node->conll_deprel());
+                log_warn($npform.' is tagged DET but is not attached as det but as '.$node->deprel());
             }
         }
-        elsif($node->conll_deprel() eq 'det')
+        elsif($node->deprel() eq 'det')
         {
             if(!$node->is_adjective() || !$node->is_pronoun())
             {
