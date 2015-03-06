@@ -63,7 +63,7 @@ sub reconstruct_entities {
   foreach my $block (qw (upaths wpaths files)){
     if (defined($entites_ref->{$block})){
       log_debug "Restoring paths:\n";
-      foreach my $entity_key (keys $entites_ref->{$block}){
+      foreach my $entity_key (keys %{$entites_ref->{$block}}){
         my $upath = $entites_ref->{$block}{$entity_key};
         log_debug "Before $upath: $in_sentence\n";
         $in_sentence =~ s/$entity_key/$upath/i;
@@ -74,7 +74,7 @@ sub reconstruct_entities {
 
   #if (defined($entites_ref->{'wpaths'})){
     #log_debug "Restoring paths:\n";
-    #foreach my $entity_key (keys $entites_ref->{'wpaths'}){
+    #foreach my $entity_key (keys %{$entites_ref->{'wpaths'})}{
       #my $wpath = $entites_ref->{'wpaths'}{$entity_key};
       #log_debug "Before $wpath: $in_sentence\n";
       #$in_sentence =~ s/$entity_key/$wpath/i;
