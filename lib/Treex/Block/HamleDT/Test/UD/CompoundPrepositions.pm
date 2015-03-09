@@ -54,6 +54,20 @@ sub process_atree
     }
 }
 
+# We should not identify Czech compound prepositions using a list because sometimes an expression from the list is not annotated as a compound preposition in PDT.
+# But at least we should check that the mwe-labeled relations have the expected tree structure.
+sub check_mwe_structure
+{
+    # A contiguous sequence (word-order-based) of nodes labeled 'mwe' all belong to one multi-word expression.
+    # We assume that a MWE is always contiguous and that two or more consecutive MWEs are excluded.
+    # (This rule may be abandoned in the future if we find counterexamples.)
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    my @mwe_nodes = grep {$_->deprel() eq 'mwe'} (@nodes);
+    ###!!! Rozdělit!
+}
+
 
 
 1;
