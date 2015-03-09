@@ -48,8 +48,8 @@ sub process_zone
     $self->exchange_tags($root);
     $self->shape_coordination_stanford($root);
     $self->restructure_compound_prepositions($root);
-#    $self->push_prep_sub_down($root);
-#    $self->push_copulas_down($root);
+    $self->push_prep_sub_down($root);
+    $self->push_copulas_down($root);
     $self->afun_to_udeprel($root);
     $self->attach_final_punctuation_to_predicate($root);
     $self->fix_determiners($root);
@@ -537,19 +537,20 @@ sub get_children_of_auxp
             return ($head, @children);
         }
     }
-    # There are no suitable nouns. Find the first non-punctuation node.
+    # There are no suitable nouns. Find the first non-punctuation, non-mwe node.
     for(my $i = 0; $i<=$#children; $i++)
     {
-        if(!$children[$i]->is_punctuation())
+        if(!$children[$i]->is_punctuation() && !(defined($children[$i]->deprel()) && $children[$i]->deprel() eq 'mwe'))
         {
             my $head = $children[$i];
             splice(@children, $i, 1);
             return ($head, @children);
         }
     }
-    # There is only punctuation. (This is weird. Has coordination been restructured first?)
+    # There is only punctuation and/or mwe children. (This is weird. Has coordination been restructured first?)
     # We have to return something, so let's return the first node.
     # (We could also look for the first node to the right of the conjunction, but then we would have to take care for the possibility that all children are to the left.)
+    log_warn("Argument of preposition not found. All children are either labeled 'mwe' or they are punctuation nodes.");
     return @children;
 }
 
