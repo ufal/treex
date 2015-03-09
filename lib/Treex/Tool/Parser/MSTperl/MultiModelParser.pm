@@ -2,7 +2,7 @@ package Treex::Tool::Parser::MSTperl::MultiModelParser;
 use Moose;
 use Carp;
 extends 'Treex::Tool::Parser::MSTperl::Parser';
-use List::Util "sum";
+use List::Util qw(sum max min);
 
 has '+model' => (
     isa => 'Maybe[ArrayRef[Treex::Tool::Parser::MSTperl::ModelUnlabelled]]',
@@ -72,7 +72,6 @@ override 'parse_sentence_full' => sub {
     # next, normalize them
     # TODO: also try to use a running sum average for ind*
     my %normalization = ();
-    use List::Util qw(sum max min);
     foreach my $model (@{$self->model} ) {
         
         # model-based individual normalization
@@ -190,19 +189,32 @@ override 'parse_sentence_full' => sub {
             # HERE THE MODEL COMBINATION HAPPENS
             # sum of feature weights
             my $score = 0;
-            # model-based individual normalization
             if ( $self->config->normalization_type =~ /^ind/) {
+                # model-based individual normalization
                 foreach my $model (@{$self->model} ) {
                     $score += $scores{$model}->{$child->ord}->{$parent->ord}
                     / $normalization{$model} * $model->weight;
                 }
-            # some other normalization, not happening here
             } elsif ($self->config->posfact_field != -1) {
+                # POS-factorization
+                my $pos = $child->fields->[$self->config->posfact_field];
+                # normalization
+                my $divby = 1;
+                if ( $self->config->posfact_normalization_type eq 'divsum' ) {
+                    $divby = sum( map { $_->posweights->{$pos} } @{$self->model} );
+                } elsif ( $self->config->posfact_normalization_type eq 'divmax' ) {
+                    $divby = max( map { $_->posweights->{$pos} } @{$self->model} );
+                }
+                # compute edge score
                 foreach my $model (@{$self->model} ) {
                     $score += $scores{$model}->{$child->ord}->{$parent->ord}
-                    * ($model->posweights->{$child->fields->[$self->config->posfact_field]});
+                    * $model->posweights->{$pos} / $divby;
                 }
+                # now does not allow combining individual normalization with
+                # POS-factorization (but individual normalization seems not to
+                # be the best thing anyway, and is not currently used)
             } else {
+                # the basic version with no funny bussiness
                 foreach my $model (@{$self->model} ) {
                     $score += $scores{$model}->{$child->ord}->{$parent->ord}
                     * $model->weight;

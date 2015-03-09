@@ -22,6 +22,7 @@ has 'featuresControl' => (
 
 has weight => ( is => 'rw', isa => 'Num', default => 1 );
 
+# pos => weight
 has posweights => ( is => 'rw', isa => 'HashRef', default => sub { {} } ); 
 
 # called after preprocessing training data, before entering the MIRA phase

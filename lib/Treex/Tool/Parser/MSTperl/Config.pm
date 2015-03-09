@@ -474,6 +474,12 @@ has 'posfact_field' => (
     default => -1,
 );
 
+has 'posfact_normalization_type' => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => 'nonorm',
+);
+
 # By default tries to load everything immediately.
 # If set to 1, will let the invoker call load() whenever appropriate.
 # Designed for fixing filenames from the outside.
@@ -542,6 +548,8 @@ sub BUILD {
             'baseline_parse',
             'baseline_parse_type',
             'normalization_type',
+            'posfact_field',
+            'posfact_normalization_type',
         );
 
         # name => required?
