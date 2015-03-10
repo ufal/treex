@@ -5,67 +5,48 @@ extends 'Treex::Block::Test::BaseTester';
 
 sub process_atree
 {
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants({'ordered' => 1});
-    my @cplist =
-    (
-        'na rozdíl od',
-        'v souvislosti s',
-        'bez ohledu na',
-        've srovnání s',
-        'v souladu s',
-        's ohledem na',
-        'v porovnání s',
-        've vztahu k',
-        've spolupráci s',
-        'v čele s',
-        'v závislosti na',
-        'v rozporu s',
-        've spojení s',
-        've shodě s',
-        's přihlédnutím k',
-        'se zřetelem k',
-        'v poměru k',
-        's přihlédnutím na',
-        'v protikladu k',
-        'v souhlasu s',
-        'v soulad s',
-        've spojitosti s'
-    );
-    my $cpre = '('.join('|', @cplist).')';
-    for(my $i = 0; $i <= $#nodes-2; $i++)
-    {
-        # Czech "na rozdíl od" is a compound preposition. The first token should be head, the second and the third token should depend on it as mwe.
-        my $trigram = join(' ', map {lc($_->form())} (@nodes[$i..($i+2)]));
-        if($trigram =~ m/^${cpre}e?$/)
-        {
-            if($nodes[$i+1]->parent() == $nodes[$i] && $nodes[$i+1]->deprel() eq 'mwe' &&
-               $nodes[$i+2]->parent() == $nodes[$i] && $nodes[$i+2]->deprel() eq 'mwe')
-            {
-                $self->praise($nodes[$i]);
-            }
-            else
-            {
-                $self->complain($nodes[$i], $trigram);
-            }
-            $i += 2;
-        }
-    }
-}
-
-# We should not identify Czech compound prepositions using a list because sometimes an expression from the list is not annotated as a compound preposition in PDT.
-# But at least we should check that the mwe-labeled relations have the expected tree structure.
-sub check_mwe_structure
-{
+    # We should not identify Czech compound prepositions using a list because sometimes an expression from the list is not annotated as a compound preposition in PDT.
+    # But at least we should check that the mwe-labeled relations have the expected tree structure.
     # A contiguous sequence (word-order-based) of nodes labeled 'mwe' all belong to one multi-word expression.
     # We assume that a MWE is always contiguous and that two or more consecutive MWEs are excluded.
     # (This rule may be abandoned in the future if we find counterexamples.)
     my $self = shift;
     my $root = shift;
-    my @nodes = $root->get_descendants();
+    my @nodes = $root->get_descendants({'ordered' => 1});
     my @mwe_nodes = grep {$_->deprel() eq 'mwe'} (@nodes);
-    ###!!! Rozdělit!
+    my @mwe_groups;
+    my $igroup = 0;
+    my $last_ord;
+    # Split the list of mwe nodes into individual mwe groups.
+    foreach my $node (@mwe_nodes)
+    {
+        my $ord = $node->ord();
+        $igroup++ if(defined($last_ord) && $ord-$last_ord > 1);
+        push(@{$mwe_groups[$igroup]}, $node);
+        $last_ord = $ord;
+    }
+    # Check each group.
+    foreach my $group (@mwe_groups)
+    {
+        # All nodes in the group must have the same parent and the parent must lie immediately before the group.
+        # (Because the parent is the first word of the multi-word expression.)
+        my $parent = $group->[0]->parent();
+        if($group->[0]->ord() - $parent->ord() != 1)
+        {
+            $self->complain($group->[0], 'The parent does not immediately precede the first node labeled mwe');
+        }
+        else
+        {
+            for(my $i = 1; $i<=$#{$group}; $i++)
+            {
+                if($group->[$i]->parent() != $parent)
+                {
+                    $self->complain($group->[$i], 'All mwe nodes in one group must have the same parent');
+                    last;
+                }
+            }
+        }
+    }
 }
 
 
