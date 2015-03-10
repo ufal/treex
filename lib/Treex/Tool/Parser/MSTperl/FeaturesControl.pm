@@ -567,6 +567,7 @@ my %simple_feature_sub_references = (
     'G.label'           => \&{feature_grandparent_label},
     'g.label'           => \&{feature_grandchildren_label},
     'distance'          => \&{feature_distance},
+    'udistance'         => \&{feature_unsigned_distance},
     'G.distance'        => \&{feature_grandparent_distance},
     'attdir'            => \&{feature_attachement_direction},
     'G.attdir'          => \&{feature_grandparent_attachement_direction},    # grandparent to child
@@ -636,6 +637,12 @@ sub feature_distance {
     return $self->feature_distance_generic( $edge->parent, $edge->child );
 }
 
+sub feature_unsigned_distance {
+    my ( $self, $edge ) = @_;
+
+    return $self->feature_distance_generic( $edge->parent, $edge->child, 1 );
+}
+
 sub feature_grandparent_distance {
     my ( $self, $edge ) = @_;
 
@@ -648,9 +655,12 @@ sub feature_grandparent_distance {
 }
 
 sub feature_distance_generic {
-    my ( $self, $node1, $node2 ) = @_;
+    my ( $self, $node1, $node2, $abs ) = @_;
 
     my $distance = $node1->ord - $node2->ord;
+    if ($abs && $distance < 0) {
+        $distance = -$distance;
+    }
 
     my $bucket = $self->config->distance2bucket->{$distance};
     if ( defined $bucket ) {
