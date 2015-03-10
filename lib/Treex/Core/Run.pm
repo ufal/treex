@@ -542,7 +542,7 @@ sub treex {
             require Treex::Core::Parallel::Node;
             $runner = Treex::Core::Parallel::Node->new_with_options( \%args );
         }
-        elsif (any { $_ =~ /^(--parallel|-p)$/ } @$arguments){
+        elsif (any { $_ =~ /^(--parallel|-p|-pj\d+)$/ } @$arguments){
             require Treex::Core::Parallel::Head;
             $runner = Treex::Core::Parallel::Head->new_with_options( \%args );
         }
