@@ -150,7 +150,7 @@ override 'process_tnode' => sub {
     my $verbforms_str = $self->gram2form->{$aspect}->{$verbmod}->{$tense}->{$deontmod};
     return if ( !$verbforms_str );
 
-    my $transitive = is_transitive($tnode);
+    my $transitive = $self->is_transitive($tnode);
 
     # find the original anode
     my $anode = $tnode->get_lex_anode() or return;
@@ -177,8 +177,15 @@ override 'process_tnode' => sub {
 	next if ($lemma =~ /^LEX/ && ($lex_lemma eq 'izan' || $lex_lemma eq 'ukan'));
 
         my $new_node = $anode->create_child();
-        $new_node->shift_after_node($anode);
         $new_node->reset_morphcat();
+
+	if ($tnode->gram_negation eq "neg1") {
+	    $new_node->shift_after_node($anode);
+	}
+	else {
+	    $new_node->shift_before_node($anode);
+	}
+
 
         $tnode->add_aux_anodes($new_node);
         unshift @anodes, $new_node;
@@ -196,8 +203,8 @@ override 'process_tnode' => sub {
 	    $new_node->set_lemma($lex_lemma);
             $new_node->set_morphcat_pos('V');
             $new_node->set_afun('Obj');
-	    $new_node->iset->add( 'pos' => 'verb');
-	    $new_node->iset->add( 'verbform' => 'part', 'aspect' => $asp ) if ($asp);
+	    $new_node->iset->add('pos' => 'verb');
+	    $new_node->iset->add('verbform' => 'part', 'aspect' => $asp ) if ($asp);
 
             # mark the lexical verb for future reference (if not already marked by AddAuxVerbCompoundPassive)
             if ( !grep { $_->wild->{lex_verb} } $tnode->get_aux_anodes() ) {
@@ -214,6 +221,10 @@ override 'process_tnode' => sub {
 };
 
 sub is_transitive {
+    my ($self, $tnode) = @_;
+
+    return 1 if ( any { $_->formeme =~ /^n:erg/ } $tnode->get_children() );
+
     return 0;
 }
 
