@@ -52,10 +52,10 @@ sub process_zone
     $self->push_copulas_down($root);
     $self->afun_to_udeprel($root);
     $self->attach_final_punctuation_to_predicate($root);
-    $self->fix_determiners($root);
     $self->classify_numerals($root);
     $self->restructure_compound_numerals($root);
     $self->push_numerals_down($root);
+    $self->fix_determiners($root);
     # Sanity checks.
     $self->check_determiners($root);
     ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
@@ -761,6 +761,12 @@ sub fix_determiners
                 }
             } # if pos=adj or something + adj
         } # if is pronoun
+        # Pronominal numerals (quantifiers) "kolik", "mnoho" etc. are not determiners if they are not used together with a counted noun.
+        # They may be used e.g. as an object: "Kolik to stojí?" = "How-much it costs?"
+        ###!!! Numerals must have been pushed down first!
+        elsif($node->is_numeral() && $node->is_pronoun())
+        {
+        }
     }
 }
 
@@ -922,7 +928,7 @@ sub push_numerals_down
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        # Look for genitive nouns and pronouns attached to a preposition.
+        # Look for genitive nouns and pronouns attached to a numeral.
         if($node->is_noun() && $node->iset()->case() eq 'gen')
         {
             my $noun = $node;
