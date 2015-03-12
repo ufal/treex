@@ -17,7 +17,10 @@ sub process_anode {
 
     # see Treex::Block::A2T::MarkParentheses, where I set $tnode->wild->{is_rightangle_bracket}
     my ($tnode) = $anode->get_referencing_nodes('a/lex.rf');
-    if ($tnode and $tnode->src_tnode->wild->{is_rightangle_bracket} ) {
+    # TODO: T2A should never rely on anything from the source!!!
+    # The information from is_rightangle_bracket should be transferred in T2T
+    # blocks!!!
+    if (defined $tnode and defined $tnode->src_tnode and $tnode->src_tnode->wild->{is_rightangle_bracket} ) {
         my $left_par = add_parenthesis_node( $anode, '[', $clause_number );
         $left_par->shift_before_subtree($anode);
 
