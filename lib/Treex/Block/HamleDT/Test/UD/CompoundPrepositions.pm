@@ -13,7 +13,7 @@ sub process_atree
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants({'ordered' => 1});
-    my @mwe_nodes = grep {$_->deprel() eq 'mwe'} (@nodes);
+    my @mwe_nodes = grep {my $d = $_->deprel(); defined($d) && $d eq 'mwe'} (@nodes);
     my @mwe_groups;
     my $igroup = 0;
     my $last_ord;

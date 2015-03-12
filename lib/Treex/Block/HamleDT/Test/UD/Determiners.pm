@@ -10,13 +10,13 @@ sub process_anode
     my $iset  = $node->iset();
     my $deprel = $node->deprel();
     $deprel = '' if(!defined($deprel));
-    if ($iset->upos() eq 'DET' && $deprel ne 'det')
+    if ($iset->upos() eq 'DET' && $deprel !~ m/^det(:numgov|:nummod)?$/)
     {
-        $self->complain($node, $node->form());
+        $self->complain($node, $node->form().' '.$iset->upos().' '.$deprel);
     }
-    elsif ($deprel eq 'det' && $iset->upos() ne 'DET')
+    elsif ($deprel =~ m/^det(:numgov|:nummod)?$/ && $iset->upos() ne 'DET')
     {
-        $self->complain($node, $node->form());
+        $self->complain($node, $node->form().' '.$iset->upos().' '.$deprel);
     }
     else
     {
