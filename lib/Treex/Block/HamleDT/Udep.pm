@@ -814,7 +814,7 @@ sub push_numerals_down
                 $noun->set_parent($number->parent());
                 # If the number was already attached as nummod, it does not tell us anything but we do not want to keep nummod for the noun head.
                 my $deprel = $number->deprel();
-                $deprel = 'nmod' if($deprel eq 'nummod');
+                $deprel = 'nmod' if($deprel =~ m/^(nummod|det:nummod)$/);
                 $noun->set_deprel($deprel);
                 $number->set_parent($noun);
                 $number->set_deprel($number->iset()->prontype() eq '' ? 'nummod:gov' : 'det:numgov');
