@@ -63,12 +63,14 @@ sub _build_vallex_mapping {
     open( my $fh, '<:utf8', $mapping_file );
     while ( my $line = <$fh> ) {
         chomp $line;
-        my ( $frame_id, $lemma ) = split /\t/, $line;
-
-        if ( !defined( $mapping{$lemma} ) ) {
-            $mapping{$lemma} = [];
-        }
-        push @{ $mapping{$lemma} }, $prefix . $frame_id;
+        my ( $frame_id, $lemma, $score ) = split /\t/, $line;
+        $score //= 1;
+        $mapping{$lemma}{$prefix.$frame_id} = $score;
+        
+#         if ( !defined( $mapping{$lemma} ) ) {
+#             $mapping{$lemma} = [];
+#         }
+#         push @{ $mapping{$lemma} }, $prefix . $frame_id;
     }
     close($fh);
     return \%mapping;
@@ -146,7 +148,8 @@ sub get_feats_and_class {
     if ( $self->_vallex_mapping ) {
         my $aligned_lemma = $self->_feat_extract->_get_data( $tnode, 'aligned->t_lemma' );
         if ( defined( $self->_vallex_mapping->{$aligned_lemma} ) ) {
-            %vallex_mapped = map { $_ => 1 } @{ $self->_vallex_mapping->{$aligned_lemma} };
+            #%vallex_mapped = map { $_ => 1 } @{ $self->_vallex_mapping->{$aligned_lemma} };
+            %vallex_mapped = %{ $self->_vallex_mapping->{$aligned_lemma} };
         }
         if ( $self->vallex_mapping_by_lemma ) {
             $mapping_suffix = '_' . $tnode->t_lemma;
@@ -177,8 +180,11 @@ sub get_feats_and_class {
             }
         }
         $feat_str .= ( $i + 1 ) . $cost . ' ' . $tag;
-        if ( $vallex_mapped{ $classes->[$i] } ) {
+        my $mapped_score = $vallex_mapped{ $classes->[$i] };
+        if ( $mapped_score ) {
             $feat_str .= ' |M vallex_mapping' . $mapping_suffix;
+            # The following line adds not only the binary feature mapping yes/no, but also the $mapped_score
+            #$feat_str .= " |M vallex_mapping$mapping_suffix map_prob:$mapped_score";
         }
         $feat_str .= ' |T val_frame_rf=' . $classes->[$i] . "\n";
     }
