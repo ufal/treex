@@ -7,8 +7,6 @@ use Lingua::Interset qw(encode);
 use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';
 
-my %FALLBACK_FOR = ( 'pos' => 'tag', 'deprel' => 'afun', );
-
 has '+language'                        => ( required => 1 );
 has 'print_id'                         => ( is       => 'ro', isa => 'Bool', default => 1, documentation => 'print sent_id and orig_file_sentence in CoNLL-U comment before each sentence' );
 has 'randomly_select_sentences_ratio'  => ( is       => 'rw', isa => 'Num',  default => 1 );
@@ -58,10 +56,7 @@ sub process_atree
         my ($upos, $feat) = split(/\t/, $upos_features);
         my $pord = $node->get_parent()->ord();
         my $misc = $node->no_space_after() ? 'SpaceAfter=No' : '_';
-        ###!!! In future we will probably dedicate a new attribute called simply 'deprel'.
-        ###!!! Not 'afun' because it is a weird name and it is too closely bound to PDT.
-        ###!!! And not 'conll/deprel' because the 'conll/*' attributes are something extra, and one could think they are optional.
-        my $deprel = $node->conll_deprel();
+        my $deprel = $node->deprel();
         # CoNLL-U columns: ID, FORM, LEMMA, CPOSTAG=UPOS, POSTAG=corpus-specific, FEATS, HEAD, DEPREL, DEPS(additional), MISC
         # Make sure that values are not empty and that they do not contain spaces.
         my @values = ($ord, $form, $lemma, $upos, $tag, $feat, $pord, $deprel, '_', $misc);
