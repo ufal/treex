@@ -63,6 +63,11 @@ sub process_zone
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
+        my $upos = $node->iset()->upos();
+        my $ufeat = join('|', $node->iset()->get_ufeatures());
+        $node->set_tag($upos);
+        $node->set_conll_cpos($upos);
+        $node->set_conll_feat($ufeat);
         $node->set_conll_deprel($node->deprel());
         $node->set_afun(undef); # just in case... (should be done already)
     }
@@ -197,6 +202,10 @@ sub afun_to_udeprel
             }
             elsif($node->is_adjective() && $node->is_pronoun() && $self->agree($node, $parent, 'case'))
             {
+                # Warning: In Czech and some other languages the tagset does not distinguish determiners from pronouns.
+                # The distinction is done during Interset decoding, using heuristics.
+                # It is not final at this place. Later in the fix_determiners() method we may decide to change DET back to PRON.
+                # In such case, we will also change det to nmod.
                 $udep = 'det';
             }
             elsif($node->is_adjective())
@@ -909,6 +918,8 @@ sub fix_determiners
                 {
                     # Change DET to PRON by changing Interset part of speech from adj to noun.
                     $node->iset()->set('pos', 'noun');
+                    # The current deprel is probably det but that is not compatible with the word being tagged PRON. Change the deprel as well.
+                    $node->set_deprel('nmod');
                 }
                 else
                 {
@@ -983,16 +994,17 @@ sub check_determiners
             $npform = "$form ($pform)";
         }
         # Determiner is a pronominal adjective.
-        if($node->is_adjective() && $node->is_pronoun())
+        my $iset = $node->iset();
+        if($iset->upos() eq 'DET')
         {
-            if($node->deprel() ne 'det')
+            if($node->deprel() !~ m/^det(:numgov|:nummod)?$/)
             {
                 log_warn($npform.' is tagged DET but is not attached as det but as '.$node->deprel());
             }
         }
         elsif($node->deprel() eq 'det')
         {
-            if(!$node->is_adjective() || !$node->is_pronoun())
+            if($iset->upos() ne 'DET')
             {
                 log_warn($npform.' is attached as det but is not tagged DET');
             }
