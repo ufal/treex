@@ -26,15 +26,16 @@ my $validation_sub;
 # Quick alternative for MooseX::Params::Validate::pos_validated_list
 sub pos_validated_list {
     my $args_ref = shift;
+    my @args = @{$args_ref};
     my $i        = 0;
     while ( ref $_[0] eq 'HASH' ) {
         my $spec = shift;
         if ( defined $spec->{default} ) {
-            $args_ref->[$i] //= $spec->{default};
+            $args[$i] //= $spec->{default};
         }
         $i++;
     }
-    return @{$args_ref};
+    return @args;
 }
 
 # Choose which variant to use according to $Treex::Core::Config::params_validate
