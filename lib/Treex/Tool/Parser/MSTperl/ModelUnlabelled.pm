@@ -24,10 +24,6 @@ sub BUILD {
 use List::Util "sum";
 
 # normalize feature weights
-# so that sum(w) = 0
-# and sum(abs(w)) = 1
-# TODO: works worse, so reverting back to ensuring only
-# sum(abs(w)) = 1
 sub normalize {
     my ($self) = @_;
     
@@ -40,6 +36,14 @@ sub normalize {
         # divide by the sum of absolute weights
         # so that the new sum of absolute weights is 1
         my $divisor = $abssum;
+        foreach my $key (keys %{$self->weights}) {
+            $self->weights->{$key} = $self->weights->{$key} / $divisor;
+        }
+    } elsif ($self->config->normalization_type eq 'divstddev') {
+        # divide by the standard deviation of weights
+        my $avg = $sum/$count;
+        my $var = 1/$count * sum( map {$_*$_} @values ) - $avg*$avg;
+        my $divisor = sqrt $var;
         foreach my $key (keys %{$self->weights}) {
             $self->weights->{$key} = $self->weights->{$key} / $divisor;
         }
@@ -79,14 +83,6 @@ sub normalize {
         my @absweightssorted = sort( map {abs} @values );
         my $median = $absweightssorted[$count/2];
         my $divisor = $median;
-        foreach my $key (keys %{$self->weights}) {
-            $self->weights->{$key} = $self->weights->{$key} / $divisor;
-        }
-    } elsif ($self->config->normalization_type eq 'divstddev') {
-        # divide by the standard deviation of weights
-        my $avg = $sum/$count;
-        my $var = 1/$count * sum( map {$_*$_} @values ) - $avg*$avg;
-        my $divisor = sqrt $var;
         foreach my $key (keys %{$self->weights}) {
             $self->weights->{$key} = $self->weights->{$key} / $divisor;
         }
@@ -178,13 +174,14 @@ sub load_data_tsv {
 
 # FEATURE WEIGHTS
 
+# TODO: support for POS-factorized weight
 sub score_edge {
 
     # (Treex::Tool::Parser::MSTperl::Edge $edge)
     my ( $self, $edge ) = @_;
 
     my $features_rf = $self->featuresControl->get_all_features($edge);
-    return $self->score_features($features_rf);
+    return $self->score_features($features_rf) * $self->weight;
 }
 
 sub score_sentence {
@@ -305,6 +302,14 @@ A hash reference containing weights of all features. This is the actual model.
 =item my $edge_score = $model->score_edge($edge);
 
 Counts the score of an edge by summing up weights of all of its features.
+
+This method, unlike other scoring methods, returns the score weighted by the model weight
+(which is 1 by default, so this only matters in multimodel experiments).
+One day, all methods will return the weighted score, if the weight normalization schemes
+end up making it possible (now online weights normalization needs to get
+the feature weights before weighting by model weight).
+At the moment, does not support POS factorization
+(to be added once normalization of POS-factorized model weights has been solved).
 
 =item my $sentence_score = $model->score_sentence($sentence)
 

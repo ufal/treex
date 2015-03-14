@@ -20,8 +20,10 @@ has 'featuresControl' => (
     is  => 'rw',
 );
 
+# weight of the whole model (for multimodel parsing)
 has weight => ( is => 'rw', isa => 'Num', default => 1 );
 
+# weight of the whole model, factorized by child pos (for multimodel parsing)
 # pos => weight
 has posweights => ( is => 'rw', isa => 'HashRef', default => sub { {} } ); 
 
