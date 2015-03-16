@@ -22,14 +22,7 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{Ms.}        => 'slečna|N',
     q{Obama}      => 'Obama|N',
     q{von}        => 'von|X',
-    q{Wi-Fi}      => 'Wi-Fi|X',
-    q{WiFi}       => 'WiFi|X',
-    q{wi-fi}       => 'Wi-Fi|X',
     q{ok}         => 'OK|X',
-    q{sm}         => 'SMS|X',
-    q{Start}      => 'Start|X',
-    q{Windows}    => 'Windows|X',
-    q{right-click}=> 'pravým tlačítkem myši klikněte|V',
 );
 
 sub process_tnode {
@@ -99,28 +92,10 @@ sub get_lemma_and_pos {
     if ( $en_tlemma eq 'follow' ) {
         return 'vyplývat|V' if any { $_->formeme =~ /from/ } $en_tnode->get_children( { following_only => 1 } );
     }
-    
-    # Imperative "go" in IT instructions is "přejděte" rather than "pojďte".
-    if ( $en_tlemma eq 'go' && defined $en_tnode->gram_verbmod){
-        return 'přejít|V';
-    }
-    
+   
     # Next on the beginning of a sentence, under the main verb.
     if ( $en_tlemma eq 'next' && $en_tnode->ord == 1 && $en_tnode->get_depth == 2){
         return 'potom|A';
-    }
-    
-    # imperatives
-    if (($en_tnode->gram_verbmod || '') eq 'imp'){
-        return 'stisknout|V' if $en_tlemma eq 'press';
-        return 'kliknout|V'  if $en_tlemma eq 'click';    
-        return 'přihlásit|V' if $en_tlemma eq 'access' && any {$_->t_lemma =~ /^(profile|account)$/} $en_tnode->get_echildren();
-        return 'vstoupit|V'  if $en_tlemma eq 'access';
-    }
-
-    if ( $en_tlemma eq 'email'){
-        return 'e-mailový|A' if ($en_tnode->get_parent->formeme ||'') =~ /^n:/;
-        return 'e-mail|N';
     }
 
     # If no rules match, get_lemma_and_pos has not succeeded.
