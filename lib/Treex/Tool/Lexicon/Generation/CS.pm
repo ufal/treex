@@ -27,8 +27,9 @@ sub _build_tool {
     return $tool;
 }
 
-# Shared global variable
+# Shared global variables
 my $lemmas_forms = Ufal::MorphoDiTa::TaggedLemmasForms->new();
+my $tagged_lemmas = Ufal::MorphoDiTa::TaggedLemmas->new();
 
 sub BUILD {
     my ($self) = @_;
@@ -178,6 +179,18 @@ sub _guess_forms_of_prefixed {
     return join '|', map { $prefix . $_->get_form() . "\t" . $_->get_tag() } @forms;
 }
 
+sub analyze_form {
+    my ($self, $form, $use_guesser) = @_;
+    $use_guesser = $use_guesser ? $Ufal::MorphoDiTa::Morpho::GUESSER : $Ufal::MorphoDiTa::Morpho::NO_GUESSER;
+    $self->tool->analyze($form, $use_guesser, $tagged_lemmas);
+    my @analyzes;
+    for my $i (0 .. $tagged_lemmas->size()-1){
+          my $tagged_lemma = $tagged_lemmas->get($i);
+          push @analyzes, {tag=>$tagged_lemma->{tag}, lemma=>$tagged_lemma->{lemma}};
+    }
+    return @analyzes;
+}
+
 1;
 
 __END__
@@ -191,6 +204,7 @@ Treex::Tool::Lexicon::Generation::CS
  use Treex::Tool::Lexicon::Generation::CS;
  my $generator = Treex::Tool::Lexicon::Generation::CS->new();
  
+ ### SYNTHESIS
  my @forms = $generator->forms_of_lemma('moci');
  foreach my $form_info (@forms){
      print join("\t", $form_info->get_form(), $form_info->get_tag()), "\n";
@@ -208,11 +222,22 @@ Treex::Tool::Lexicon::Generation::CS
  foreach my $form_info (@forms){
      print $form_info->to_string(), "\n";
  }
+ 
+ ### ANALYZIS
+ my @analyzes = $generator->analyze_form('stane');
+ my $use_guesser = 1;
+ foreach my $an (@analyzes, $use_guesser) {
+     print "$an->{tag} $an->{lemma}\n";
+ }
 
 =head1 DESCRIPTION
 
 Wrapper for state-of-the-art Czech morphological analyzer and synthesizer MorphoDiTa
 by Milan Straka and Jana Straková.
+
+=head1 TODO
+
+rename this module, as it now offers not only synthesis, but also analyzis
 
 =head1 AUTHOR
 
