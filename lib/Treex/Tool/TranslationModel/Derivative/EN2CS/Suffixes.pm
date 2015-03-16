@@ -4,8 +4,8 @@ use Class::Std;
 use utf8;
 use base qw(Treex::Tool::TranslationModel::Derivative::Common);
 
-use CzechMorpho;
-my $analyzer = CzechMorpho::Analyzer->new();
+use Treex::Tool::Lexicon::Generation::CS;
+my $analyzer = Treex::Tool::Lexicon::Generation::CS->new();
 
 my %ENSUFFIX_TO_CSSUFFIX = (
     qw(ise)   => [qw(izovat)],
@@ -34,7 +34,7 @@ sub get_translations {
             foreach my $cs_suffix ( @{ $ENSUFFIX_TO_CSSUFFIX{$en_suffix} } ) {
                 my $cs_tlemma = $input_label;
                 $cs_tlemma =~ s/$en_suffix$/$cs_suffix/;
-                my @analyses = grep { $_->{tag} =~ /^[NADV]/ } $analyzer->analyze($cs_tlemma);
+                my @analyses = grep { $_->{tag} =~ /^[NADV]/ } $analyzer->analyze_form($cs_tlemma);
                 if (@analyses) {
                     my $pos = substr( $analyses[0]->{tag}, 0, 1 );
                     push @translations, { prob   => 0.001,

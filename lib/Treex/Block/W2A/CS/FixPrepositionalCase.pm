@@ -5,11 +5,11 @@ use warnings;
 use Moose;
 use Treex::Core::Common;
 
-use CzechMorpho;
+use Treex::Tool::Lexicon::Generation::CS;
 
 extends 'Treex::Core::Block';
 
-has '_analyzer' => ( is => 'rw', isa => 'Object', lazy => 1, default => sub { CzechMorpho::Analyzer->new() } );
+has '_analyzer' => ( is => 'rw', isa => 'Object', lazy => 1, default => sub { Treex::Tool::Lexicon::Generation::CS->new() } );
 
 sub process_anode {
 
@@ -90,7 +90,7 @@ sub _get_possible_cases {
     my $tags   = {};
     my $lemmas = {};
 
-    my @analyses = $self->_analyzer->analyze($form);
+    my @analyses = $self->_analyzer->analyze_form($form);
 
     foreach my $analysis (@analyses) {
 
