@@ -5,8 +5,7 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 use Treex::Tool::Lexicon::CS;
-use Treex::Tool::EnglishMorpho::Lemmatizer;
-use Treex::Tool::Tagger::TnT;
+use Treex::Tool::Tagger::MorphoDiTa;
 
 my $tagger;
 
@@ -21,13 +20,6 @@ my ( $static_model, $deverbadj_model, $deadjadv_model, $noun2adj_model );
 
 sub get_required_share_files { return $MODEL_STATIC; }
 
-my $lemmatizer = Treex::Tool::EnglishMorpho::Lemmatizer->new();
-
-sub BUILD {
-
-    return;
-}
-
 sub process_start {
     $static_model = Treex::Tool::TranslationModel::Static::Model->new();
     $static_model->load( Treex::Core::Resource::require_file_from_share($MODEL_STATIC) );
@@ -35,7 +27,7 @@ sub process_start {
     $deadjadv_model = Treex::Tool::TranslationModel::Derivative::EN2CS::Deadjectival_adverbs->new( { base_model => $static_model } );
     $noun2adj_model = Treex::Tool::TranslationModel::Derivative::EN2CS::Nouns_to_adjectives->new( { base_model => $static_model } );
 
-    $tagger = Treex::Tool::Tagger::TnT->new({model=>'data/models/tagger/tnt/en/wsj', tntargs=>''});
+    $tagger = Treex::Tool::Tagger::MorphoDiTa->new( model => 'data/models/morphodita/en/english-morphium-wsj-140407.tagger' );
     return;
 }
 
@@ -51,17 +43,16 @@ sub process_tnode {
 
     # Try to translate it as two or more t-nodes.
     my @forms = split( /\-/, $node->t_lemma );
-    my @tags = @{ $tagger->tag_sentence( \@forms ) };
+    my ($tags, $lemmas) = $tagger->tag_sentence( \@forms );
 
     SUBWORD:
     while (@forms) {
         my $form = shift @forms;
-        my $tag  = shift @tags;
+        my $tag  = shift @$tags;
+        my $lemma = shift @$lemmas;
 
         # prepositions and determiners (that are not at the end of the compound) are not translated
         next SUBWORD if $tag =~ /^(IN|TO|DT)$/ && @forms;
-
-        my ($lemma) = $lemmatizer->lemmatize( $form, $tag );
 
         my @translations = (
             $static_model->get_translations( lc($lemma) ),
