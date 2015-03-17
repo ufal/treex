@@ -168,9 +168,8 @@ sub split_fused_token
         $nnw->{fused_ord} = $ord.'.'.($i+1);
         ###!!! Later we will want to make these attributes normal (not wild).
         $nnw->{fused_form} = $fused_node->form();
-        ###!!! Adding these results in the "Out of memory" error.
-        #$nnw->{fused_start} = $new_nodes[0];
-        #$nnw->{fused_end} = $new_nodes[-1];
+        $nnw->{fused_start} = $new_nodes[0]->ord();
+        $nnw->{fused_end} = $new_nodes[-1]->ord();
         $nnw->{fused} = ($i == 0) ? 'start' : ($i == $#new_nodes) ? 'end' : 'middle';
     }
     # Delete the fused node.

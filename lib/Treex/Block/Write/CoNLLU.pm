@@ -43,7 +43,17 @@ sub process_atree
         my $fused = $node->wild()->{fused};
         if(defined($fused) && $fused eq 'start')
         {
-            my $range = $node->wild()->{fused_start}->ord().'-'.$node->wild()->{fused_end}->ord();
+            my $first_fused_node_ord = $node->wild()->{fused_start};
+            my $last_fused_node_ord = $node->wild()->{fused_end};
+            my $range = '0-0';
+            if(defined($first_fused_node_ord) && defined($last_fused_node_ord))
+            {
+                $range = "$first_fused_node_ord-$last_fused_node_ord";
+            }
+            else
+            {
+                log_warn("Cannot determine the span of a fused token");
+            }
             my $form = $node->wild()->{fused_form};
             print { $self->_file_handle() } ("$range\t$form\t_\t_\t_\t_\t_\t_\t_\t_\n");
         }
