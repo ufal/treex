@@ -88,6 +88,13 @@ sub pdt2hamledt_apposition
             $old_head->set_parent($first_ap);
         }
         $old_head->set_afun($old_head->form eq ',' ? 'AuxX' : 'AuxG');
+        # Reattach children of the comma, such as a second comma etc.
+        my $new_parent = $old_head->parent();
+        @children = $old_head->get_children();
+        foreach my $child (@children)
+        {
+            $child->set_parent($new_parent);
+        }
         # Reattach possible AuxG (dashes or right brackets) under the last member of apposition.
         my @auxg = grep {!$_->is_member && $_->afun eq 'AuxG'} @children;
         if (@other_ap)
