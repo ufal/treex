@@ -21,31 +21,46 @@ if (my $dep = $@) {
     
 
 # Path to the model data file
-has model => ( is => 'ro', isa => 'Str', required => 1, writer => '_set_model' );
+has model => ( is => 'ro', isa => 'Str', required => 1 );
+has _model_absolute_path => ( is => 'ro', isa => 'Str', lazy_build => 1 );
+
+sub _build__model_absolute_path {
+    my ($self) = @_;
+    return Treex::Core::Resource::require_file_from_share($self->model);
+}
 
 # Instance of Ufal::MorphoDiTa::Tagger
-has '_tagger' => ( is=> 'rw');
+has tool  => (is=>'ro', lazy_build=>1);
+
+# tool can be shared by more instances (if the dictionary file is the same)
+my %TOOL_FOR_PATH;
+sub _build_tool {
+    my ($self) = @_;
+    my $path = $self->_model_absolute_path;
+    my $tool = $TOOL_FOR_PATH{$path};
+    return $tool if $tool;
+    log_info("Loading Ufal::MorphoDiTa::Tagger with model '$path'");
+    $tool = Ufal::MorphoDiTa::Tagger::load($path)
+        or log_fatal("Cannot load Ufal::MorphoDiTa::Tagger with model from file '$path'");
+    $TOOL_FOR_PATH{$path} = $tool;
+    return $tool;
+}
 
 sub BUILD {
-    my ( $self, $arg_ref ) = @_;
-    my $model_file = Treex::Core::Resource::require_file_from_share($self->model);
-    $self->_set_model($model_file);
-    log_info("Loading Ufal::MorphoDiTa tagger with model '$model_file'");
-    my $tagger = Ufal::MorphoDiTa::Tagger::load($model_file)
-        or log_fatal("Cannot load Ufal::MorphoDiTa::Tagger with model from file '$model_file'");
-    #log_info('Done.');
-    $self->_set_tagger($tagger);
+    my ($self) = @_;
+    # The tool is lazy_build, so load it now
+    $self->tool;
     return;
 }
 
 sub tag_sentence {
     my ( $self, $tokens_rf ) = @_;
-    my $forms  = Ufal::MorphoDiTa::Forms->new();
+    my $forms = Ufal::MorphoDiTa::Forms->new();
     $forms->push($_) for @$tokens_rf;
 
     # The main work. Tags and lemmas will be saved to $tagged_lemmas.
     my $tagged_lemmas = Ufal::MorphoDiTa::TaggedLemmas->new();
-    $self->_tagger->tag($forms, $tagged_lemmas);
+    $self->tool->tag($forms, $tagged_lemmas);
 
     # Extract the result into @tags and @lemmas.
     my (@tags, @lemmas);
@@ -61,7 +76,7 @@ sub tag_sentence {
 sub is_guessed {
     my ($self, $tokens_rf) = @_;
     my $tagged_lemmas = Ufal::MorphoDiTa::TaggedLemmas->new();
-    my $morpho = $self->_tagger->getMorpho();
+    my $morpho = $self->tool->getMorpho();
     my @guessed = map {$morpho->analyze($_, $Ufal::MorphoDiTa::Morpho::GUESSER, $tagged_lemmas)} @$tokens_rf;
     return \@guessed;
 }
@@ -95,7 +110,8 @@ by Milan Straka and Jana Straková.
 
 =item model
 
-Path to the model file within Treex share.
+Path to the model file within Treex share
+(or relative path starting with "./" or absolute path starting with "/").
 
 =back
 
@@ -121,6 +137,6 @@ Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2014-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
