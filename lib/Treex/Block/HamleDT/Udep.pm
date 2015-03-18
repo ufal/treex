@@ -296,6 +296,11 @@ sub afun_to_udeprel
             {
                 $udep = 'vocative';
             }
+            # Punctuation should always be labeled punct, even in ellipsis.
+            elsif($node->is_punctuation())
+            {
+                $udep = 'punct';
+            }
             else
             {
                 $udep = 'dep';

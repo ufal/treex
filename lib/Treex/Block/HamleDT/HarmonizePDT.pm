@@ -87,7 +87,8 @@ sub pdt2hamledt_apposition
         {
             $old_head->set_parent($first_ap);
         }
-        $old_head->set_afun($old_head->form eq ',' ? 'AuxX' : 'AuxG');
+        # Most of the apposition heads in PDT are punctuation nodes. But some of them are not, e.g. the joining expression "to je" ("that is").
+        $old_head->set_afun($old_head->form eq ',' ? 'AuxX' : $old_head->is_punctuation() ? 'AuxG' : 'AuxY');
         # Reattach children of the comma, such as a second comma etc.
         my $new_parent = $old_head->parent();
         @children = $old_head->get_children();
