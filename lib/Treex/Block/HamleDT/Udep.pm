@@ -50,6 +50,8 @@ sub process_zone
     $self->shape_coordination_stanford($root);
     $self->restructure_compound_prepositions($root);
     $self->push_prep_sub_down($root);
+    # Some of the top colons are analyzed as copulas. Do this before the copula processing reshapes the scene.
+    $self->colon_pred_to_apposition($root);
     $self->push_copulas_down($root);
     $self->afun_to_udeprel($root);
     $self->attach_final_punctuation_to_predicate($root);
@@ -57,7 +59,6 @@ sub process_zone
     $self->restructure_compound_numerals($root);
     $self->push_numerals_down($root);
     $self->fix_determiners($root);
-    $self->colon_pred_to_apposition($root);
     # Sanity checks.
     $self->check_determiners($root);
     ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
@@ -117,6 +118,21 @@ sub fix_symbols
             if($node->form() =~ m/^[\$%\+]$/)
             {
                 $node->iset()->set('pos', 'sym');
+                if($node->afun() eq 'AuxG')
+                {
+                    $node->set_afun('AuxY');
+                    $node->set_deprel('cc');
+                }
+            }
+        }
+        # The letter 'x' sometimes substitutes the multiplication symbol '×'.
+        elsif($node->form() eq 'x' && $node->is_conjunction())
+        {
+            $node->iset()->set('pos', 'sym');
+            if($node->afun() eq 'AuxG')
+            {
+                $node->set_afun('AuxY');
+                $node->set_deprel('cc');
             }
         }
     }
@@ -312,7 +328,32 @@ sub afun_to_udeprel
             $udep = 'appos';
         }
         # Punctuation
-        elsif($afun =~ m/^Aux[XGK]$/)
+        elsif($afun eq 'AuxG')
+        {
+            # AuxG is intended for graphical symbols other than comma and the sentence-terminating punctuation.
+            # It is mostly assigned to punctuation but sometimes to symbols (% $ + x) or even alphanumeric tokens (1 2 3).
+            # The 'punct' deprel should be used only for punctuation.
+            if($node->is_punctuation())
+            {
+                $udep = 'punct';
+            }
+            else
+            {
+                # We do not really know what the label should be in this case.
+                # For mathematical operators (+ - x /) it should be probably 'cc'.
+                # (But we cannot distinguish minus from hyphen, so with '-' we will not get here. Same for '/'.)
+                # For % and $ it could be any label used with noun phrases.
+                if($node->form() =~ m/^[+x]$/)
+                {
+                    $udep = 'cc';
+                }
+                else
+                {
+                    $udep = 'nmod'; ###!!! or nsubj or dobj or whatever
+                }
+            }
+        }
+        elsif($afun =~ m/^Aux[XK]$/)
         {
             if(!$node->is_punctuation())
             {
@@ -643,6 +684,64 @@ sub get_children_of_auxc
     my $head = $children[1];
     splice(@children, 1, 1);
     return ($head, @children);
+}
+
+
+
+#------------------------------------------------------------------------------
+# The colon is sometimes treated as a substitute for the main predicate in the
+# PDT (usually the hypothetical predicate would equal to "is").
+# Example: "Veletrh GOLF 94 München: 2. – 4. 9." ("GOLF 94 fair Munich:
+# September 2 – 9")
+# We will make the first part the main constituent, and attach the second part
+# as apposition. In some cases the colon is analyzed as copula (and the second
+# part is a nominal predicate) so we want to do this before copulas are
+# processed. Otherwise the scene will be reshaped and we will not recognize it.
+#------------------------------------------------------------------------------
+sub colon_pred_to_apposition
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @rchildren = $root->get_children({'ordered' => 1});
+    if(scalar(@rchildren) >= 1 && $rchildren[0]->form() eq ':' && !$rchildren[0]->is_leaf())
+    {
+        # Make the first child of the colon the new top node.
+        my $colon = shift(@rchildren);
+        my @colchildren = $colon->get_children({'ordered' => 1});
+        my $newtop = shift(@colchildren);
+        $newtop->set_parent($root);
+        $newtop->set_deprel('root');
+        # The dependency between the new top node and the colon will now be reversed.
+        # If it still has afun (afun_to_deprel has not been done yet), we must change Pred to something less explosive.
+        $colon->set_parent($newtop);
+        $colon->set_deprel('punct');
+        $colon->set_afun('AuxG') if(defined($colon->afun()));
+        # All other children of the colon (if any; probably just one other child) will be attached to the new top node as apposition.
+        foreach my $child (@colchildren)
+        {
+            $child->set_parent($newtop);
+            if($child->is_punctuation())
+            {
+                $child->set_deprel('punct');
+            }
+            else
+            {
+                $child->set_deprel('appos');
+            }
+        }
+        # There may be other top nodes (children of the root).
+        # The sentence-final punctuation would normally be (re)attached to the main verb but it did not work here because we had a colon instead of a verb.
+        # Thus we should now reattach the punctuation node to the new top node.
+        ###!!! Only do this if there are no other top nodes. Otherwise we would have to investigate whether they are also punctuation
+        ###!!! (then they should probably be attached to the new top node) or regular words (then the final punctuation should be
+        ###!!! attached to them instead of to what we call "the new top node" here; otherwise we would introduce a non-projectivity).
+        if(scalar(@rchildren) == 1 && $rchildren[0]->is_punctuation())
+        {
+            my $finalpunct = $rchildren[0];
+            $finalpunct->set_parent($newtop);
+            $finalpunct->set_deprel('punct');
+        }
+    }
 }
 
 
@@ -1045,53 +1144,6 @@ sub check_determiners
             {
                 log_warn($npform.' is attached as det but is not tagged DET');
             }
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# The colon is sometimes treated as a substitute for the main predicate in the
-# PDT (usually the hypothetical predicate would equal to "is").
-# Example: "Veletrh GOLF 94 München: 2. – 4. 9." ("GOLF 94 fair Munich:
-# September 2 – 9")
-# We will make the first part the main constituent, and attach the second part
-# as apposition.
-#------------------------------------------------------------------------------
-sub colon_pred_to_apposition
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @rchildren = $root->get_children({'ordered' => 1});
-    if(scalar(@rchildren) >= 1 && $rchildren[0]->form() eq ':' && !$rchildren[0]->is_leaf())
-    {
-        # Make the first child of the colon the new top node.
-        my $colon = shift(@rchildren);
-        my @colchildren = $colon->get_children({'ordered' => 1});
-        my $newtop = shift(@colchildren);
-        $newtop->set_parent($root);
-        $newtop->set_deprel('root');
-        # The dependency between the new top node and the colon will now be reversed.
-        $colon->set_parent($newtop);
-        $colon->set_deprel('punct');
-        # All other children of the colon (if any; probably just one other child) will be attached to the new top node as apposition.
-        foreach my $child (@colchildren)
-        {
-            $child->set_parent($newtop);
-            $child->set_deprel('appos');
-        }
-        # There may be other top nodes (children of the root).
-        # The sentence-final punctuation would normally be (re)attached to the main verb but it did not work here because we had a colon instead of a verb.
-        # Thus we should now reattach the punctuation node to the new top node.
-        ###!!! Only do this if there are no other top nodes. Otherwise we would have to investigate whether they are also punctuation
-        ###!!! (then they should probably be attached to the new top node) or regular words (then the final punctuation should be
-        ###!!! attached to them instead of to what we call "the new top node" here; otherwise we would introduce a non-projectivity).
-        if(scalar(@rchildren) == 1 && $rchildren[0]->is_punctuation())
-        {
-            my $finalpunct = $rchildren[0];
-            $finalpunct->set_parent($newtop);
-            $finalpunct->set_deprel('punct');
         }
     }
 }
