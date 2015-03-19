@@ -47,6 +47,7 @@ sub process_zone
     my $root = $zone->get_atree();
     $self->exchange_tags($root);
     $self->fix_symbols($root);
+    $self->fix_annotation_errors($root);
     $self->shape_coordination_stanford($root);
     $self->restructure_compound_prepositions($root);
     $self->push_prep_sub_down($root);
@@ -1176,6 +1177,35 @@ sub check_determiners
             {
                 log_warn($npform.' is attached as det but is not tagged DET');
             }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes annotation errors. In the Czech PDT, abbreviations are sometimes
+# confused with prepositions. For example, "s.r.o." ("společnost s ručením
+# omezeným" = "Ltd.") is tokenized as "s . r . o ." and both "s" and "o" could
+# also be prepositions. Sometimes it happens that morphological analysis is
+# correct (abbreviated NOUN resp. ADJ) but syntactic analysis is not (the
+# incoming edge is labeled AuxP).
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $form = $node->form();
+        my $afun = $node->afun();
+        if($form =~ m/^[so]$/i && !$node->is_adposition() && $afun eq 'AuxP')
+        {
+            # We do not know what the correct afun would be. There is a chance it would be Apposition or Atr but it is not guaranteed.
+            # On the other hand, any of the two, even if incorrect, is much better than AuxP, which would trigger various transformations,
+            # inappropriate in this context.
+            $node->set_afun('Atr');
         }
     }
 }
