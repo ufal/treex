@@ -115,7 +115,7 @@ sub fix_symbols
             # Note that some characters cannot be decided in this simple way.
             # For example, '-' is either punctuation (hyphen) or symbol (minus)
             # but we cannot tell them apart automatically if we do not understand the sentence.
-            if($node->form() =~ m/^[\$%\+]$/)
+            if($node->form() =~ m/^[\$%\+=]$/)
             {
                 $node->iset()->set('pos', 'sym');
                 if($node->afun() eq 'AuxG')
@@ -163,6 +163,11 @@ sub afun_to_udeprel
         if($parent->is_root())
         {
             $udep = 'root';
+        }
+        # Punctuation is always 'punct' unless it depends directly on the root (which should happen only if there is just one node and the root).
+        elsif($node->is_punctuation())
+        {
+            $udep = 'punct';
         }
         # Predicate: If the node is not the main predicate of the sentence and it has the Pred afun,
         # then it is probably the main predicate of a parenthetical expression.
@@ -327,7 +332,8 @@ sub afun_to_udeprel
         {
             $udep = 'appos';
         }
-        # Punctuation
+        # Punctuation ###!!! Since we now label all punctuation (decided by Interset) as punct,
+                      ###!!! here we only get non-punctuation labeled (by mistake?) AuxG, AuxX or AuxK. What to do with this???
         elsif($afun eq 'AuxG')
         {
             # AuxG is intended for graphical symbols other than comma and the sentence-terminating punctuation.
@@ -444,8 +450,16 @@ sub shape_coordination_stanford
             foreach my $conjunct (@conjuncts)
             {
                 $conjunct->set_parent($head);
-                $conjunct->set_afun('conj');
-                $conjunct->set_deprel('conj');
+                if($conjunct->is_punctuation())
+                {
+                    $conjunct->set_afun('punct');
+                    $conjunct->set_deprel('punct');
+                }
+                else
+                {
+                    $conjunct->set_afun('conj');
+                    $conjunct->set_deprel('conj');
+                }
                 # Clear the is_member flag for all conjuncts. It only made sense in the Prague style.
                 $conjunct->set_is_member(0);
             }
