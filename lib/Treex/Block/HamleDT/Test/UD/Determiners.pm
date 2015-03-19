@@ -18,10 +18,6 @@ sub process_anode
     {
         $self->complain($node, $node->form().' '.$iset->upos().' '.$deprel);
     }
-    else
-    {
-        $self->praise($node);
-    }
 }
 
 1;
@@ -42,4 +38,3 @@ heuristics are.
 
 # Copyright 2015 Dan Zeman
 # This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
-

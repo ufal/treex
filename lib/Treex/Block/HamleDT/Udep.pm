@@ -135,6 +135,17 @@ sub fix_symbols
                 $node->set_deprel('cc');
             }
         }
+        # Slash '/' can be punctuation or mathematical symbol.
+        # It is difficult to tell automatically but we will make it a symbol if it is not leaf (and does not head coordination).
+        elsif($node->form() eq '/' && !$node->is_leaf() && !$node->is_coap_root())
+        {
+            $node->iset()->set('pos', 'sym');
+            if($node->afun() eq 'AuxG')
+            {
+                $node->set_afun('AuxY');
+                $node->set_deprel('cc');
+            }
+        }
     }
 }
 
@@ -562,15 +573,22 @@ sub push_prep_sub_down
     {
         my $afun = $node->afun();
         $afun = '' if(!defined($afun));
+        next unless($afun =~ m/^Aux[PC]$/);
         if($afun eq 'AuxP')
         {
             # In the prototypical case, the node has just one child and it will swap positions with the child.
+            # Known exceptions:
+            # - Punctuation children should be attached to the noun and labeled 'punct'.
+            # - If this is the first word of a multi-word preposition, all children labeled 'mwe' should be left untouched.
+            #   (Multi-word prepositions have been solved prior to coming here.)
+            # - If this is the first conjunct in a coordination of prepositional phrases, all 'cc' and 'conj' children should be attached to the noun.
+            #   (Coordinations have been transformed prior to coming here.)
+            # - If this is a non-first conjunct, it already has the label 'conj'. It will now be re-attached and re-labeled 'case'.
+            #   However, the noun should get the 'conj' label and forget its afun (which was hopefully identical to the afun of the first conjunct).
+            ###!!! TODO: Decide what to do if this is an orphan conjunct and its afun is 'ExD'.
+            ###!!! TODO: Decide what to do in case of a chain of AuxP and AuxC nodes. It is rare (if possible at all) in Czech but it occurred in some languages.
             ###!!! TODO: If the child is also Aux[PC], we should process the chain recursively.
-            ###!!! TODO: First solve multi-word prepositions and all occurrences of leaf prepositions / subordinators.
             ###!!! TODO: Are there any prepositions with two or more arguments attached directly to them?
-            ###!!! TODO: A preposition may have multiple children, one is its argument and the rest is Stanford coordination:
-            ###!!!       ve městě a na vsi ... PrepArg(ve, městě), cc(ve, a), conj(ve, na), PrepArg(na, vsi)
-            ###!!! TODO: On the other hand, if the argument of the preposition is coordination, the preposition should become a shared modifier of the coordination.
             ###!!! TODO: A preposition or subordinating conjunction may also have multiple children if there is punctuation.
             my @children = $self->get_children_of_auxp($node);
             if(scalar(@children)>0)

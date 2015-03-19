@@ -55,6 +55,8 @@ sub get_real_afun
     if ( $afun =~ m/^Aux[PC]$/ )
     {
         my @children = $self->children();
+        # Exclude punctuation children (afun-wise, not POS-tag-wise: we do not want to exclude coordination heads).
+        @children = grep {$_->afun() !~ m/^Aux[XGK]$/} (@children);
         my $n        = scalar(@children);
         if ( $n < 1 )
         {
@@ -116,6 +118,8 @@ sub set_real_afun
     if ( $afun =~ m/^Aux[PC]$/ )
     {
         my @children = $self->children();
+        # Exclude punctuation children (afun-wise, not POS-tag-wise: we do not want to exclude coordination heads).
+        @children = grep {$_->afun() !~ m/^Aux[XGK]$/} (@children);
         my $n        = scalar(@children);
         if ( $n < 1 )
         {

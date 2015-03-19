@@ -3,28 +3,34 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
 
-sub process_anode
+sub process_atree
 {
     my $self = shift;
-    my $node = shift;
-    my $iset  = $node->iset();
-    my $deprel = $node->deprel();
-    $deprel = '' if(!defined($deprel));
-    if ($iset->upos() eq 'PUNCT' && $deprel ne 'punct')
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    # There are "sentences" that consist entirely of punctuation.
+    # In that case they are allowed to depend directly on the root and the label will be 'root', not 'punct'.
+    my @punctnodes = grep {$_->is_punctuation()} (@nodes);
+    unless(scalar(@punctnodes) == scalar(@nodes))
     {
-        $self->complain($node, $node->form().' '.$iset->upos().' '.$deprel);
-    }
-    elsif ($deprel eq 'punct' && $iset->upos() ne 'PUNCT')
-    {
-        $self->complain($node, $node->form().' '.$iset->upos().' '.$deprel);
-    }
-    elsif ($deprel eq 'punct' && !$node->is_leaf())
-    {
-        $self->complain($node, $node->form().' should be leaf');
-    }
-    else
-    {
-        $self->praise($node);
+        foreach my $node (@nodes)
+        {
+            my $iset  = $node->iset();
+            my $deprel = $node->deprel();
+            $deprel = '' if(!defined($deprel));
+            if ($iset->upos() eq 'PUNCT' && $deprel ne 'punct')
+            {
+                $self->complain($node, $node->form().' '.$iset->upos().' '.$deprel);
+            }
+            elsif ($deprel eq 'punct' && $iset->upos() ne 'PUNCT')
+            {
+                $self->complain($node, $node->form().' '.$iset->upos().' '.$deprel);
+            }
+            elsif ($deprel eq 'punct' && !$node->is_leaf())
+            {
+                $self->complain($node, $node->form().' should be leaf');
+            }
+        }
     }
 }
 
