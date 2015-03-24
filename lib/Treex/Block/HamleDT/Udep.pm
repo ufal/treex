@@ -125,20 +125,26 @@ sub fix_symbols
                     $node->set_deprel('cc');
                 }
             }
+            # Slash '/' can be punctuation or mathematical symbol.
+            # It is difficult to tell automatically but we will make it a symbol if it is not leaf (and does not head coordination).
+            elsif($node->form() eq '/' && !$node->is_leaf() && !$node->is_coap_root())
+            {
+                $node->iset()->set('pos', 'sym');
+                if($node->afun() eq 'AuxG')
+                {
+                    $node->set_afun('AuxY');
+                    $node->set_deprel('cc');
+                }
+                my $parent = $node->parent();
+                my @children = $node->children();
+                foreach my $child (@children)
+                {
+                    $child->set_parent($parent);
+                }
+            }
         }
         # The letter 'x' sometimes substitutes the multiplication symbol '×'.
         elsif($node->form() eq 'x' && $node->is_conjunction())
-        {
-            $node->iset()->set('pos', 'sym');
-            if($node->afun() eq 'AuxG')
-            {
-                $node->set_afun('AuxY');
-                $node->set_deprel('cc');
-            }
-        }
-        # Slash '/' can be punctuation or mathematical symbol.
-        # It is difficult to tell automatically but we will make it a symbol if it is not leaf (and does not head coordination).
-        elsif($node->form() eq '/' && !$node->is_leaf() && !$node->is_coap_root())
         {
             $node->iset()->set('pos', 'sym');
             if($node->afun() eq 'AuxG')
@@ -591,40 +597,45 @@ sub push_prep_sub_down
             ###!!! TODO: If the child is also Aux[PC], we should process the chain recursively.
             ###!!! TODO: Are there any prepositions with two or more arguments attached directly to them?
             ###!!! TODO: A preposition or subordinating conjunction may also have multiple children if there is punctuation.
-            my @children = $self->get_children_of_auxp($node);
-            if(scalar(@children)>0)
+            my $children = $self->get_auxpc_children($node);
+            my $n = scalar(@{$children->{args}});
+            if($n != 1)
             {
-                my $noun = shift(@children);
-                $noun->set_parent($node->parent());
-                $node->set_parent($noun);
-                foreach my $child (@children)
+                my $form = $node->form();
+                my $phrase = join(' ', map {$_->form().'/'.$_->afun()} ($node->get_children({'add_self' => 1, 'ordered' => 1})));
+                if($n == 0)
                 {
-                    unless(defined($child->deprel()) && $child->deprel() eq 'mwe')
-                    {
-                        $child->set_parent($noun);
-                    }
+                    log_warn("Cannot find argument of '$afun' node '$form': '$phrase'.");
+                }
+                else
+                {
+                    log_warn("'$afun' node '$form' has more than one possible arguments: '$phrase'.");
                 }
             }
-            # Even if the conjunction is already a leaf (which should not happen), it cannot keep the AuxC label.
-            $node->set_afun('case');
-            $node->set_deprel('case');
-        }
-        elsif($afun eq 'AuxC')
-        {
-            my @children = $self->get_children_of_auxc($node);
-            if(scalar(@children)>0)
+            if($n > 0)
             {
-                my $verb = shift(@children);
-                $verb->set_parent($node->parent());
-                $node->set_parent($verb);
-                foreach my $child (@children)
+                my $head = shift(@{$children->{args}});
+                $head->set_parent($node->parent());
+                $node->set_parent($head);
+                # Attach punctuation, conjunctions and conjuncts to the new head.
+                # If there are other arguments and other children, attach them to the new head, too.
+                # Leave mwe nodes where they are.
+                foreach my $child (@{$children->{pc}}, @{$children->{auxz}}, @{$children->{args}}, @{$children->{other}})
                 {
-                    $child->set_parent($verb);
+                    $child->set_parent($head);
+                }
+                # If the Aux[PC] node was a non-first conjunct, the new head must now take over.
+                my $deprel = $node->deprel();
+                if(defined($deprel) && $deprel eq 'conj')
+                {
+                    $head->set_deprel('conj');
                 }
             }
+            # Even if the adposition is already a leaf (which should not happen), it cannot keep the AuxP label.
             # Even if the conjunction is already a leaf (which should not happen), it cannot keep the AuxC label.
-            $node->set_afun('mark');
-            $node->set_deprel('mark');
+            my $deprel = $afun eq 'AuxP' ? 'case' : 'mark';
+            $node->set_afun($deprel);
+            $node->set_deprel($deprel);
         }
     }
 }
@@ -632,91 +643,60 @@ sub push_prep_sub_down
 
 
 #------------------------------------------------------------------------------
-# Identifies the main child of a preposition in the Prague style.
-# There is typically just one child: the head of a noun phrase.
-# But it is not guaranteed.
-#
-# The method returns the list of all children and the main child is the first
-# member of the list, regardless of word order.
+# Sorts out children of an AuxP/AuxC node w.r.t. their future attachment.
 #------------------------------------------------------------------------------
-sub get_children_of_auxp
+sub get_auxpc_children
 {
     my $self = shift;
-    my $preposition = shift; # afun = AuxP
-    my @children = $preposition->get_children({ordered => 1});
-    return @children if(scalar(@children) <= 1);
-    # If there are nouns (including pronouns), find the first noun.
-    # Skip nouns attached as "mwe", these are part of multi-word preposition (e.g. "na rozdíl od" = "in contrast to").
-    # Note: If coordination has been restructured (recommended!), coordination of noun phrases is represented by a noun, not by a coordinating conjunction.
-    for(my $i = 0; $i<=$#children; $i++)
+    my $auxnode = shift;
+    my $auxafun = $auxnode->afun();
+    my @children = $auxnode->get_children({ordered => 1});
+    # Punctuation, conjunctions and conjuncts should be re-attached to the new head.
+    my @pc;
+    # Non-first words of a multi-word preposition should remain attached to the old head (the auxnode).
+    my @mwe;
+    # Emphasizing words. They should depend on the argument of the preposition but sometimes they depend on the preposition.
+    my @auxz;
+    # The argument of an adposition (and the new head) is typically a noun or pronoun.
+    # The argument of a subordinating conjunction (and the new head) is typically a verb.
+    # There should be just one argument but the children are ordered an in case of more than one arguments we will pick the first one.
+    my @args;
+    my @other;
+    foreach my $child (@children)
     {
-        if($children[$i]->is_noun() && !(defined($children[$i]->deprel()) && $children[$i]->deprel() eq 'mwe'))
+        # We assume that the 'cc', 'conj' and 'mwe' deprels are already in place.
+        # For punctuation this is not guaranteed because the general conversion of all afuns has not been run yet.
+        my $deprel = $child->deprel();
+        $deprel = '' if(!defined($deprel));
+        if($child->is_punctuation())
         {
-            my $head = $children[$i];
-            splice(@children, $i, 1);
-            return ($head, @children);
+            $deprel = 'punct';
+            $child->set_deprel('punct');
+        }
+        if($deprel =~ m/^(punct|cc|conj)$/)
+        {
+            push(@pc, $child);
+        }
+        elsif($deprel eq 'mwe')
+        {
+            push(@mwe, $child);
+        }
+        elsif($child->afun() eq 'AuxZ')
+        {
+            push(@auxz, $child);
+        }
+        # Adverb: "o dost"
+        elsif($auxafun eq 'AuxP' && ($child->is_noun() || $child->is_adjective() || $child->is_numeral() || $child->is_adverb() || $child->is_symbol()) ||
+              $auxafun eq 'AuxC' && $child->is_verb())
+        {
+            push(@args, $child);
+        }
+        else
+        {
+            push(@other, $child);
         }
     }
-    # There are no suitable nouns. Find the first non-punctuation, non-mwe node.
-    for(my $i = 0; $i<=$#children; $i++)
-    {
-        if(!$children[$i]->is_punctuation() && !(defined($children[$i]->deprel()) && $children[$i]->deprel() eq 'mwe'))
-        {
-            my $head = $children[$i];
-            splice(@children, $i, 1);
-            return ($head, @children);
-        }
-    }
-    # There is only punctuation and/or mwe children. (This is weird. Has coordination been restructured first?)
-    # We have to return something, so let's return the first node.
-    # (We could also look for the first node to the right of the conjunction, but then we would have to take care for the possibility that all children are to the left.)
-    log_warn("Argument of preposition not found. All children are either labeled 'mwe' or they are punctuation nodes.");
-    return @children;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Identifies the main child of a subordinating conjunction in the Prague style.
-# There are typically just two children: a comma and the predicate of the
-# subordinate clause. But it is not guaranteed.
-#
-# The method returns the list of all children and the main child is the first
-# member of the list, regardless of word order.
-#------------------------------------------------------------------------------
-sub get_children_of_auxc
-{
-    my $self = shift;
-    my $conjunction = shift; # afun = AuxC
-    my @children = $conjunction->get_children({ordered => 1});
-    return @children if(scalar(@children) <= 1);
-    # If there are verbs, find the first verb.
-    # Note: If coordination has been restructured (recommended!), coordination of subordinated clauses is represented by a verb, not by a coordinating conjunction.
-    for(my $i = 0; $i<=$#children; $i++)
-    {
-        if($children[$i]->is_verb())
-        {
-            my $head = $children[$i];
-            splice(@children, $i, 1);
-            return ($head, @children);
-        }
-    }
-    # There are no verbs. Find the first non-punctuation node.
-    for(my $i = 0; $i<=$#children; $i++)
-    {
-        if(!$children[$i]->is_punctuation())
-        {
-            my $head = $children[$i];
-            splice(@children, $i, 1);
-            return ($head, @children);
-        }
-    }
-    # There is only punctuation. (This is weird. Has coordination been restructured first?)
-    # We have to return something, so let's return the second node.
-    # (We could also look for the first node to the right of the conjunction, but then we would have to take care for the possibility that all children are to the left.)
-    my $head = $children[1];
-    splice(@children, 1, 1);
-    return ($head, @children);
+    return {'pc' => \@pc, 'mwe' => \@mwe, 'auxz' => \@auxz, 'args' => \@args, 'other' => \@other};
 }
 
 
@@ -739,40 +719,44 @@ sub colon_pred_to_apposition
     if(scalar(@rchildren) >= 1 && $rchildren[0]->form() eq ':' && !$rchildren[0]->is_leaf())
     {
         # Make the first child of the colon the new top node.
+        # We want a non-punctuation child. If there are only punctuation children, do not do anything.
         my $colon = shift(@rchildren);
         my @colchildren = $colon->get_children({'ordered' => 1});
-        my $newtop = shift(@colchildren);
-        $newtop->set_parent($root);
-        $newtop->set_deprel('root');
-        # The dependency between the new top node and the colon will now be reversed.
-        # If it still has afun (afun_to_deprel has not been done yet), we must change Pred to something less explosive.
-        $colon->set_parent($newtop);
-        $colon->set_deprel('punct');
-        $colon->set_afun('AuxG') if(defined($colon->afun()));
-        # All other children of the colon (if any; probably just one other child) will be attached to the new top node as apposition.
-        foreach my $child (@colchildren)
+        my @npcolchildren = grep {!$_->is_punctuation()} (@colchildren);
+        my @pcolchildren = grep {$_->is_punctuation()} (@colchildren);
+        if(scalar(@npcolchildren)>=1)
         {
-            $child->set_parent($newtop);
-            if($child->is_punctuation())
+            my $newtop = shift(@npcolchildren);
+            $newtop->set_parent($root);
+            $newtop->set_deprel('root');
+            # The dependency between the new top node and the colon will now be reversed.
+            # If it still has afun (afun_to_deprel has not been done yet), we must change Pred to something less explosive.
+            $colon->set_parent($newtop);
+            $colon->set_deprel('punct');
+            $colon->set_afun('AuxG') if(defined($colon->afun()));
+            # All other children of the colon (if any; probably just one other child) will be attached to the new top node as apposition.
+            foreach my $child (@npcolchildren)
             {
-                $child->set_deprel('punct');
-            }
-            else
-            {
+                $child->set_parent($newtop);
                 $child->set_deprel('appos');
             }
-        }
-        # There may be other top nodes (children of the root).
-        # The sentence-final punctuation would normally be (re)attached to the main verb but it did not work here because we had a colon instead of a verb.
-        # Thus we should now reattach the punctuation node to the new top node.
-        ###!!! Only do this if there are no other top nodes. Otherwise we would have to investigate whether they are also punctuation
-        ###!!! (then they should probably be attached to the new top node) or regular words (then the final punctuation should be
-        ###!!! attached to them instead of to what we call "the new top node" here; otherwise we would introduce a non-projectivity).
-        if(scalar(@rchildren) == 1 && $rchildren[0]->is_punctuation())
-        {
-            my $finalpunct = $rchildren[0];
-            $finalpunct->set_parent($newtop);
-            $finalpunct->set_deprel('punct');
+            foreach my $child (@pcolchildren)
+            {
+                $child->set_parent($newtop);
+                $child->set_deprel('punct');
+            }
+            # There may be other top nodes (children of the root).
+            # The sentence-final punctuation would normally be (re)attached to the main verb but it did not work here because we had a colon instead of a verb.
+            # Thus we should now reattach the punctuation node to the new top node.
+            ###!!! Only do this if there are no other top nodes. Otherwise we would have to investigate whether they are also punctuation
+            ###!!! (then they should probably be attached to the new top node) or regular words (then the final punctuation should be
+            ###!!! attached to them instead of to what we call "the new top node" here; otherwise we would introduce a non-projectivity).
+            if(scalar(@rchildren) == 1 && $rchildren[0]->is_punctuation())
+            {
+                my $finalpunct = $rchildren[0];
+                $finalpunct->set_parent($newtop);
+                $finalpunct->set_deprel('punct');
+            }
         }
     }
 }

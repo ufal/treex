@@ -28,7 +28,13 @@ sub process_atree
             }
             elsif ($deprel eq 'punct' && !$node->is_leaf())
             {
-                $self->complain($node, $node->form().' should be leaf');
+                # Exception: '(!)' ... the brackets depend on the exclamation mark.
+                # (But we do not allow just one bracket. Then it should be attached elsewhere.)
+                my @children = $node->get_children({'ordered' => 1});
+                unless(scalar(@children)==2 && $children[0]->form() eq '(' && $children[1]->form() eq ')')
+                {
+                    $self->complain($node, $node->form().' should be leaf');
+                }
             }
         }
     }
