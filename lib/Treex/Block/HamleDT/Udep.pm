@@ -48,13 +48,13 @@ sub process_zone
     $self->exchange_tags($root);
     $self->fix_symbols($root);
     $self->fix_annotation_errors($root);
+    $self->afun_to_udeprel($root);
     $self->shape_coordination_stanford($root);
     $self->restructure_compound_prepositions($root);
     $self->push_prep_sub_down($root);
     # Some of the top colons are analyzed as copulas. Do this before the copula processing reshapes the scene.
     $self->colon_pred_to_apposition($root);
     $self->push_copulas_down($root);
-    $self->afun_to_udeprel($root);
     $self->attach_final_punctuation_to_predicate($root);
     $self->classify_numerals($root);
     $self->restructure_compound_numerals($root);
@@ -160,6 +160,8 @@ sub fix_symbols
 
 #------------------------------------------------------------------------------
 # Convert analytical functions to universal dependency relations.
+# This new version (2015-03-25) is meant to act before any structural changes,
+# even before coordination gets reshaped.
 #------------------------------------------------------------------------------
 sub afun_to_udeprel
 {
@@ -170,28 +172,62 @@ sub afun_to_udeprel
     {
         my $afun = $node->afun();
         $afun = '' if(!defined($afun));
-        # If there were transformations that already set the deprel, take it into account.
-        # Otherwise derive a default deprel from the afun.
-        my $udep = $node->deprel();
-        $udep = 'dep:'.$afun if(!defined($udep));
+        my $deprel;
         my $parent = $node->parent();
-        # Predicate or ExD child of the root:
-        # It is labeled root, regardless of whether the afun is Pred or ExD.
-        ###!!! TODO: But beware of coordination!
+        # The top nodes (children of the root) must be labeled 'root'.
+        # We will now extend the label in cases where we may later need to distinguish the original afun.
         if($parent->is_root())
         {
-            $udep = 'root';
+            if($afun =~ m/^(Coord|AuxP|AuxC|AuxK|ExD)$/)
+            {
+                $deprel = 'root:'.lc($afun);
+            }
+            else # $afun should be 'Pred'
+            {
+                $deprel = 'root';
+            }
         }
         # Punctuation is always 'punct' unless it depends directly on the root (which should happen only if there is just one node and the root).
+        # We will temporarily extend the label if it heads coordination so that the coordination can later be reshaped properly.
         elsif($node->is_punctuation())
         {
-            $udep = 'punct';
+            if($afun eq 'Coord')
+            {
+                $deprel = 'punct:coord';
+            }
+            else
+            {
+                $deprel = 'punct';
+            }
+        }
+        # Coord marks the conjunction that heads a coordination.
+        # (Punctuation heading coordination has been processed earlier and temporarily labeled 'punct:coord'.)
+        # Coordinations will be later restructured and the conjunction will be attached as 'cc'.
+        elsif($afun eq 'Coord')
+        {
+            $deprel = 'cc:coord';
+        }
+        # AuxP marks a preposition. There are two possibilities:
+        # 1. It heads a prepositional phrase. The relation of the phrase to its parent is marked at the argument of the preposition.
+        # 2. It is a leaf, attached to another preposition, forming a multi-word preposition. (In this case the word can be even a noun.)
+        # Prepositional phrases will be later restructured. In the situation 1, the preposition will be attached to its argument as 'case'.
+        # In the situation 2, the first word in the multi-word prepositon will become the head and all other parts will be attached to it as 'mwe'.
+        elsif($afun eq 'AuxP')
+        {
+            $deprel = 'case:auxp';
+        }
+        # AuxC marks a subordinating conjunction that heads a subordinate clause.
+        # It will be later restructured and the conjunction will be attached to the subordinate predicate as 'mark'.
+        elsif($afun eq 'AuxC')
+        {
+            $deprel = 'mark:auxc';
         }
         # Predicate: If the node is not the main predicate of the sentence and it has the Pred afun,
         # then it is probably the main predicate of a parenthetical expression.
+        # Exception: predicates of coordinate main clauses. This must be solved after coordinations have been reshaped. ###!!! TODO
         elsif($afun eq 'Pred')
         {
-            $udep = 'parataxis';
+            $deprel = 'parataxis';
         }
         # Subject: nsubj, nsubjpass, csubj, csubjpass
         elsif($afun eq 'Sb')
@@ -201,12 +237,12 @@ sub afun_to_udeprel
             if($parent->iset()->is_passive())
             {
                 # If this is a verb (including infinitive) then it is a clausal subject.
-                $udep = $node->is_verb() ? 'csubjpass' : 'nsubjpass';
+                $deprel = $node->is_verb() ? 'csubjpass' : 'nsubjpass';
             }
             else # Parent is not passive.
             {
                 # If this is a verb (including infinitive) then it is a clausal subject.
-                $udep = $node->is_verb() ? 'csubj' : 'nsubj';
+                $deprel = $node->is_verb() ? 'csubj' : 'nsubj';
             }
         }
         # Object: dobj, iobj, ccomp, xcomp
@@ -219,7 +255,7 @@ sub afun_to_udeprel
             # If this is an infinitive then it is an xcomp (controlled clausal complement).
             # If this is a verb form other than infinitive then it is a ccomp.
             ###!!! TODO: But if the infinitive is part of periphrastic future, then it is ccomp, not xcomp!
-            $udep = $node->is_verb() ? ($node->is_infinitive() ? 'xcomp' : 'ccomp') : 'dobj';
+            $deprel = $node->is_verb() ? ($node->is_infinitive() ? 'xcomp' : 'ccomp') : 'dobj';
         }
         # Adverbial modifier: advmod, nmod, advcl
         # Note: UD also distinguishes the relation neg. In Czech, most negation is done using bound morphemes.
@@ -229,15 +265,7 @@ sub afun_to_udeprel
         # AuxZ words are mostly adverbs, coordinating conjunctions and particles. Other parts of speech are extremely rare.
         elsif($afun eq 'Adv')
         {
-            ###!!! TODO: Important question: Did we restructure prepositional phrases before entering this method?
-            ###!!! Can an Adv depend on an AuxP or AuxC?
-            $udep = $node->is_verb() ? 'advcl' : $node->is_noun() ? 'nmod' : 'advmod';
-        }
-        # Copula has been reattached under the nominal predicate, which was originally Pnom.
-        # The Cop afun does not occur in PDT; it is a result of the reattachment.
-        elsif($afun eq 'Cop')
-        {
-            $udep = 'cop';
+            $deprel = $node->is_verb() ? 'advcl' : $node->is_noun() ? 'nmod' : 'advmod';
         }
         # Attribute of a noun: amod, nummod, nmod, acl
         elsif($afun eq 'Atr')
@@ -250,22 +278,22 @@ sub afun_to_udeprel
                 if($node->iset()->prontype() eq '')
                 {
                     # If we later push the numeral down, we will label it nummod:gov.
-                    $udep = 'nummod';
+                    $deprel = 'nummod';
                 }
                 else
                 {
                     # If we later push the quantifier down, we will label it det:numgov.
-                    $udep = 'det:nummod';
+                    $deprel = 'det:nummod';
                 }
             }
             elsif($node->iset()->nametype() =~ m/(giv|sur|prs)/ &&
                   $parent->iset()->nametype() =~ m/(giv|sur|prs)/)
             {
-                $udep = 'name';
+                $deprel = 'name';
             }
             elsif($node->is_foreign() && $parent->is_foreign())
             {
-                $udep = 'foreign';
+                $deprel = 'foreign';
             }
             elsif($node->is_adjective() && $node->is_pronoun() && $self->agree($node, $parent, 'case'))
             {
@@ -273,43 +301,43 @@ sub afun_to_udeprel
                 # The distinction is done during Interset decoding, using heuristics.
                 # It is not final at this place. Later in the fix_determiners() method we may decide to change DET back to PRON.
                 # In such case, we will also change det to nmod.
-                $udep = 'det';
+                $deprel = 'det';
             }
             elsif($node->is_adjective())
             {
-                $udep = 'amod';
+                $deprel = 'amod';
             }
             elsif($node->is_verb())
             {
-                $udep = 'acl';
+                $deprel = 'acl';
             }
             else
             {
-                $udep = 'nmod';
+                $deprel = 'nmod';
             }
         }
         # Verbal attribute is analyzed as secondary predication.
         ###!!! TODO: distinguish core arguments (xcomp) from non-core arguments and adjuncts (acl/advcl).
         elsif($afun =~ m/^AtvV?$/)
         {
-            $udep = 'xcomp';
+            $deprel = 'xcomp';
         }
         # Auxiliary verb "být" ("to be"): aux, auxpass
         elsif($afun eq 'AuxV')
         {
-            $udep = $parent->iset()->is_passive() ? 'auxpass' : 'aux';
+            $deprel = $parent->iset()->is_passive() ? 'auxpass' : 'aux';
             # Side effect: We also want to modify Interset. The PDT tagset does not distinguish auxiliary verbs but UPOS does.
             $node->iset()->set('verbtype', 'aux');
         }
-        # Reflexive pronoun "se", "si" with mandatorily reflexive verbs.
+        # Reflexive pronoun "se", "si" with inherently reflexive verbs.
         elsif($afun eq 'AuxT')
         {
-            $udep = 'compound:reflex';
+            $deprel = 'compound:reflex';
         }
         # Reflexive pronoun "se", "si" used for reflexive passive.
         elsif($afun eq 'AuxR')
         {
-            $udep = 'auxpass:reflex';
+            $deprel = 'auxpass:reflex';
         }
         # AuxZ: intensifier or negation
         elsif($afun eq 'AuxZ')
@@ -318,7 +346,7 @@ sub afun_to_udeprel
             # If it is a separate word ("ne už personálním, ale organizačním"; "potřeboval čtyřnohého a ne dvounohého přítele), it is labeled AuxZ.
             if($node->lemma() eq 'ne')
             {
-                $udep = 'neg';
+                $deprel = 'neg';
             }
             # AuxZ is an emphasizing word (“especially on Monday”).
             # It also occurs with numbers (“jen čtyři firmy”, “jen několik procent”).
@@ -331,59 +359,59 @@ sub afun_to_udeprel
             # Most frequent t-lemmas with RHEM: #Neg (7589 výskytů), i, jen, také, už, již, ani, až, pouze, například (500 výskytů)
             else
             {
-                $udep = 'advmod:emph';
+                $deprel = 'advmod:emph';
             }
         }
-        # AuxY: Additional conjunction in coordination ... it has been relabeled during processing of coordinations.
+        # AuxY: Additional conjunction in coordination ... cc
         # AuxY: "jako" attached to Atv ... case
         elsif($afun eq 'AuxY')
         {
-            $udep = 'case';
+            if(lc($node->form()) eq 'jako' && $parent->afun() eq 'Atv')
+            {
+                $deprel = 'case';
+            }
+            else
+            {
+                $deprel = 'cc';
+            }
         }
         # AuxO: redundant "to" or "si" ("co to znamená pátý postulát dokázat").
         elsif($afun eq 'AuxO')
         {
-            $udep = 'discourse';
+            $deprel = 'discourse';
         }
         # Apposition
         elsif($afun eq 'Apposition')
         {
-            $udep = 'appos';
+            $deprel = 'appos';
         }
-        # Punctuation ###!!! Since we now label all punctuation (decided by Interset) as punct,
-                      ###!!! here we only get non-punctuation labeled (by mistake?) AuxG, AuxX or AuxK. What to do with this???
+        # Punctuation
+        ###!!! Since we now label all punctuation (decided by Interset) as punct,
+        ###!!! here we only get non-punctuation labeled (by mistake?) AuxG, AuxX or AuxK. What to do with this???
         elsif($afun eq 'AuxG')
         {
             # AuxG is intended for graphical symbols other than comma and the sentence-terminating punctuation.
             # It is mostly assigned to punctuation but sometimes to symbols (% $ + x) or even alphanumeric tokens (1 2 3).
             # The 'punct' deprel should be used only for punctuation.
-            if($node->is_punctuation())
+            # We do not really know what the label should be in this case.
+            # For mathematical operators (+ - x /) it should be probably 'cc'.
+            # (But we cannot distinguish minus from hyphen, so with '-' we will not get here. Same for '/'.)
+            # For % and $ it could be any label used with noun phrases.
+            if($node->form() =~ m/^[+x]$/)
             {
-                $udep = 'punct';
+                $deprel = 'cc';
             }
             else
             {
-                # We do not really know what the label should be in this case.
-                # For mathematical operators (+ - x /) it should be probably 'cc'.
-                # (But we cannot distinguish minus from hyphen, so with '-' we will not get here. Same for '/'.)
-                # For % and $ it could be any label used with noun phrases.
-                if($node->form() =~ m/^[+x]$/)
-                {
-                    $udep = 'cc';
-                }
-                else
-                {
-                    $udep = 'nmod'; ###!!! or nsubj or dobj or whatever
-                }
+                $deprel = 'nmod'; ###!!! or nsubj or dobj or whatever
             }
         }
         elsif($afun =~ m/^Aux[XK]$/)
         {
-            if(!$node->is_punctuation())
-            {
-                log_warn("Node '".$node->form()."' has afun '$afun' but it is not punctuation.");
-            }
-            $udep = 'punct';
+            # AuxX is reserved for commas.
+            # AuxK is used for sentence-terminating punctuation, usually a period, an exclamation mark or a question mark.
+            log_warn("Node '".$node->form()."' has afun '$afun' but it is not punctuation.");
+            $deprel = 'punct';
         }
         ###!!! TODO: ExD with chains of orphans should be stanfordized!
         elsif($afun eq 'ExD')
@@ -391,30 +419,20 @@ sub afun_to_udeprel
             # Some ExD are vocatives.
             if($node->iset()->case() eq 'voc')
             {
-                $udep = 'vocative';
-            }
-            # Punctuation should always be labeled punct, even in ellipsis.
-            elsif($node->is_punctuation())
-            {
-                $udep = 'punct';
+                $deprel = 'vocative';
             }
             else
             {
-                $udep = 'dep';
+                $deprel = 'dep';
             }
         }
-        # Previous transformation of coordination to the Stanford style caused that afuns of some nodes
-        # actually are already universal dependency relations.
-        elsif($afun =~ m/^(conj|cc|punct|case|mark)$/)
+        # Set up a fallback so that $deprel is always defined.
+        else
         {
-            $udep = $afun;
+            $deprel = 'dep:'.$afun;
         }
-        # We may want to dedicate a new node attribute to the universal dependency relation label.
-        # At present, conll/deprel is good enough and afun cannot be used because its value range is fixed.
-        $node->set_deprel($udep);
-        # Remove the value of afun. It does not make sense in the restructured tree.
-        # In addition, empty afun will make the value of conll/deprel visible in Tred.
-        $node->set_afun(undef);
+        # Save the universal dependency relation label with the node.
+        $node->set_deprel($deprel);
     }
 }
 
@@ -437,8 +455,9 @@ sub shape_coordination_stanford
     # This is the result of restructuring a child coordination.
     # Get the new list of children. In addition, we now require that the list is ordered (we have to identify the first conjunct).
     @children = $node->get_children({ordered => 1});
-    # We have a coordination if the current node's afun is Coord.
-    if($node->afun() eq 'Coord')
+    # We have a coordination if the current node's afun is Coord, i.e. deprel is 'cc:coord', 'punct:coord' or 'root:coord'.
+    my $deprel = $node->deprel();
+    if($deprel =~ m/:coord/)
     {
         # If we are a nested coordination, remember it. We will have to set is_member for the new head.
         my $current_coord_is_member = 0;
@@ -453,13 +472,14 @@ sub shape_coordination_stanford
         if(scalar(@conjuncts)==0)
         {
             log_warn('Coordination without conjuncts');
-            # There must not be any node labeled Coord and having no is_member children.
-            $node->set_afun('AuxY');
+            # There must not be any node labeled ':coord' and lacking is_member children.
+            $deprel =~ s/:coord//;
+            $node->set_deprel($deprel);
         }
         else
         {
             # Set the first conjunct as the new head.
-            # Its afun should be already OK. It should not be a nested Coord because we processed the children first.
+            # Its deprel should be already OK. It should not be a nested coordination because we processed the children first.
             my $head = shift(@conjuncts);
             $head->set_parent($node->parent());
             $head->set_is_member($current_coord_is_member);
@@ -468,33 +488,22 @@ sub shape_coordination_stanford
             foreach my $conjunct (@conjuncts)
             {
                 $conjunct->set_parent($head);
-                if($conjunct->is_punctuation())
-                {
-                    $conjunct->set_afun('punct');
-                    $conjunct->set_deprel('punct');
-                }
-                else
-                {
-                    $conjunct->set_afun('conj');
-                    $conjunct->set_deprel('conj');
-                }
+                $conjunct->set_deprel('conj');
                 # Clear the is_member flag for all conjuncts. It only made sense in the Prague style.
                 $conjunct->set_is_member(0);
             }
-            foreach my $dependent (@dependents, $node)
+            foreach my $dependent (@dependents)
             {
                 $dependent->set_parent($head);
-                if($dependent->is_punctuation())
-                {
-                    $dependent->set_afun('punct');
-                    $dependent->set_deprel('punct');
-                }
-                elsif($dependent->afun() =~ m/^(Coord|AuxY)$/)
-                {
-                    $dependent->set_afun('cc');
-                    $dependent->set_deprel('cc');
-                }
             }
+            $node->set_parent($head);
+            $deprel =~ s/:coord//;
+            if($deprel eq 'root')
+            {
+                $head->set_deprel('root');
+                $deprel = $node->is_punctuation() ? 'punct' : 'cc';
+            }
+            $node->set_deprel($deprel);
         }
     }
 }
@@ -518,19 +527,19 @@ sub restructure_compound_prepositions
     {
         my $iord = $nodes[$i]->ord();
         # We cannot identify parts of compound preposition using the POS tag because some parts are nouns.
-        # We must use the original dependency label (analytical function) because it has not yet been converted.
-        if(defined($nodes[$i]->afun()) && $nodes[$i]->afun() eq 'AuxP' && $nodes[$i]->is_leaf())
+        # We must use the original dependency label.
+        if($nodes[$i]->deprel() =~ m/:auxp/ && $nodes[$i]->is_leaf())
         {
             my $parent = $nodes[$i]->parent();
             my $pord = $parent->ord();
-            if($pord > $iord && defined($parent->afun()) && $parent->afun() eq 'AuxP')
+            if($pord > $iord && $parent->deprel() eq 'case:auxp')
             {
                 my $found = 1;
                 my @mwe;
                 # We seem to have found a multi-word preposition. Make sure that all nodes between child and parent comply.
                 for(my $j = $i+1; $nodes[$j] != $parent; $j++)
                 {
-                    if(!defined($nodes[$j]->afun()) || $nodes[$j]->afun() ne 'AuxP' || !$nodes[$j]->is_leaf() || $nodes[$j]->parent() != $parent)
+                    if($nodes[$j]->deprel() !~ m/:auxp/ || !$nodes[$j]->is_leaf() || $nodes[$j]->parent() != $parent)
                     {
                         $found = 0;
                         last;
@@ -546,7 +555,6 @@ sub restructure_compound_prepositions
                     foreach my $n (@mwe, $parent)
                     {
                         $n->set_parent($nodes[$i]);
-                        $n->set_afun(undef);
                         $n->set_deprel('mwe');
                     }
                     # Re-attach all other children of the original head to the new head.
@@ -578,10 +586,9 @@ sub push_prep_sub_down
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $afun = $node->afun();
-        $afun = '' if(!defined($afun));
-        next unless($afun =~ m/^Aux[PC]$/);
-        if($afun eq 'AuxP')
+        my $deprel = $node->deprel();
+        next unless($deprel =~ m/:aux[pc]/);
+        if($deprel =~ m/:auxp/)
         {
             # In the prototypical case, the node has just one child and it will swap positions with the child.
             # Known exceptions:
@@ -625,15 +632,14 @@ sub push_prep_sub_down
                     $child->set_parent($head);
                 }
                 # If the Aux[PC] node was a non-first conjunct, the new head must now take over.
-                my $deprel = $node->deprel();
-                if(defined($deprel) && $deprel eq 'conj')
+                if($deprel eq 'conj')
                 {
                     $head->set_deprel('conj');
                 }
             }
             # Even if the adposition is already a leaf (which should not happen), it cannot keep the AuxP label.
             # Even if the conjunction is already a leaf (which should not happen), it cannot keep the AuxC label.
-            my $deprel = $afun eq 'AuxP' ? 'case' : 'mark';
+            $deprel =~ s/:aux[pc]//;
             $node->set_afun($deprel);
             $node->set_deprel($deprel);
         }
@@ -665,14 +671,7 @@ sub get_auxpc_children
     foreach my $child (@children)
     {
         # We assume that the 'cc', 'conj' and 'mwe' deprels are already in place.
-        # For punctuation this is not guaranteed because the general conversion of all afuns has not been run yet.
         my $deprel = $child->deprel();
-        $deprel = '' if(!defined($deprel));
-        if($child->is_punctuation())
-        {
-            $deprel = 'punct';
-            $child->set_deprel('punct');
-        }
         if($deprel =~ m/^(punct|cc|conj)$/)
         {
             push(@pc, $child);
@@ -681,7 +680,7 @@ sub get_auxpc_children
         {
             push(@mwe, $child);
         }
-        elsif($child->afun() eq 'AuxZ')
+        elsif($deprel =~ m/^(advmod:emph|neg)$/)
         {
             push(@auxz, $child);
         }
@@ -733,7 +732,6 @@ sub colon_pred_to_apposition
             # If it still has afun (afun_to_deprel has not been done yet), we must change Pred to something less explosive.
             $colon->set_parent($newtop);
             $colon->set_deprel('punct');
-            $colon->set_afun('AuxG') if(defined($colon->afun()));
             # All other children of the colon (if any; probably just one other child) will be attached to the new top node as apposition.
             foreach my $child (@npcolchildren)
             {
@@ -774,9 +772,8 @@ sub push_copulas_down
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $afun = $node->afun();
-        $afun = '' if(!defined($afun));
-        if($afun eq 'Pnom')
+        my $deprel = $node->deprel();
+        if($deprel eq 'dep:pnom')
         {
             my $pnom = $node;
             my $copula = $node->parent();
@@ -784,7 +781,7 @@ sub push_copulas_down
             if(defined($grandparent))
             {
                 $pnom->set_parent($grandparent);
-                $pnom->set_afun($copula->afun());
+                $pnom->set_deprel($copula->deprel());
                 # All other children of the copula will be reattached to the nominal predicate.
                 # The copula will become a leaf.
                 my @children = $copula->children();
@@ -793,7 +790,6 @@ sub push_copulas_down
                     $child->set_parent($pnom);
                 }
                 $copula->set_parent($pnom);
-                $copula->set_afun('Cop');
                 $copula->set_deprel('cop');
             }
         }
