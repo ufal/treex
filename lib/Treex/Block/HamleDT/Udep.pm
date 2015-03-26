@@ -451,6 +451,7 @@ sub shape_coordination_stanford
     {
         $self->shape_coordination_stanford($child);
     }
+    return if($node->is_root());
     # After processing my children, some of them may have ceased to be my children and some new children may have appeared.
     # This is the result of restructuring a child coordination.
     # Get the new list of children. In addition, we now require that the list is ordered (we have to identify the first conjunct).
@@ -612,11 +613,11 @@ sub push_prep_sub_down
                 my $phrase = join(' ', map {$_->form().'/'.$_->afun()} ($node->get_children({'add_self' => 1, 'ordered' => 1})));
                 if($n == 0)
                 {
-                    log_warn("Cannot find argument of '$afun' node '$form': '$phrase'.");
+                    log_warn("Cannot find argument of '$deprel' node '$form': '$phrase'.");
                 }
                 else
                 {
-                    log_warn("'$afun' node '$form' has more than one possible arguments: '$phrase'.");
+                    log_warn("'$deprel' node '$form' has more than one possible arguments: '$phrase'.");
                 }
             }
             if($n > 0)
