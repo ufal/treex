@@ -27,7 +27,7 @@ sub process_atree
                 my $dir = $node->ord() - $parent->ord();
                 if($deprel =~ m/^(mwe|conj)$/)
                 {
-                    $ok = $dir < 0; # parent is to the left from the adposition
+                    $ok = $dir > 0; # parent is to the left from the adposition
                 }
                 else
                 {
