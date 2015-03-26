@@ -60,6 +60,7 @@ sub process_zone
     $self->restructure_compound_numerals($root);
     $self->push_numerals_down($root);
     $self->fix_determiners($root);
+    $self->relabel_top_nodes($root);
     # Sanity checks.
     $self->check_determiners($root);
     ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
@@ -429,7 +430,7 @@ sub afun_to_udeprel
         # Set up a fallback so that $deprel is always defined.
         else
         {
-            $deprel = 'dep:'.$afun;
+            $deprel = 'dep:'.lc($afun);
         }
         # Save the universal dependency relation label with the node.
         $node->set_deprel($deprel);
@@ -489,7 +490,17 @@ sub shape_coordination_stanford
             foreach my $conjunct (@conjuncts)
             {
                 $conjunct->set_parent($head);
-                $conjunct->set_deprel('conj');
+                # If the conjunct is an adposition (AuxP) or subordinating conjunction (AuxC), we must preserve the information for later transformations.
+                if($conjunct->deprel() =~ m/:(aux[pc])/)
+                {
+                    $conjunct->set_deprel('conj:'.$1);
+                }
+                # Even punctuation is sometimes conjunct (an orphan conjunct with the 'ExD' afun).
+                # But we want it to be labeled 'punct' instead of 'conj'.
+                elsif($conjunct->deprel() ne 'punct')
+                {
+                    $conjunct->set_deprel('conj');
+                }
                 # Clear the is_member flag for all conjuncts. It only made sense in the Prague style.
                 $conjunct->set_is_member(0);
             }
@@ -589,61 +600,62 @@ sub push_prep_sub_down
     {
         my $deprel = $node->deprel();
         next unless($deprel =~ m/:aux[pc]/);
-        if($deprel =~ m/:auxp/)
+        # In the prototypical case, the node has just one child and it will swap positions with the child.
+        # Known exceptions:
+        # - Punctuation children should be attached to the noun and labeled 'punct'.
+        # - If this is the first word of a multi-word preposition, all children labeled 'mwe' should be left untouched.
+        #   (Multi-word prepositions have been solved prior to coming here.)
+        # - If this is the first conjunct in a coordination of prepositional phrases, all 'cc' and 'conj' children should be attached to the noun.
+        #   (Coordinations have been transformed prior to coming here.)
+        # - If this is a non-first conjunct, it already has the label 'conj'. It will now be re-attached and re-labeled 'case'.
+        #   However, the noun should get the 'conj' label and forget its afun (which was hopefully identical to the afun of the first conjunct).
+        ###!!! TODO: Decide what to do if this is an orphan conjunct and its afun is 'ExD'.
+        ###!!! TODO: Decide what to do in case of a chain of AuxP and AuxC nodes. It is rare (if possible at all) in Czech but it occurred in some languages.
+        ###!!! TODO: If the child is also Aux[PC], we should process the chain recursively.
+        ###!!! TODO: Are there any prepositions with two or more arguments attached directly to them?
+        ###!!! TODO: A preposition or subordinating conjunction may also have multiple children if there is punctuation.
+        my $children = $self->get_auxpc_children($node);
+        my $n = scalar(@{$children->{args}});
+        if($n != 1)
         {
-            # In the prototypical case, the node has just one child and it will swap positions with the child.
-            # Known exceptions:
-            # - Punctuation children should be attached to the noun and labeled 'punct'.
-            # - If this is the first word of a multi-word preposition, all children labeled 'mwe' should be left untouched.
-            #   (Multi-word prepositions have been solved prior to coming here.)
-            # - If this is the first conjunct in a coordination of prepositional phrases, all 'cc' and 'conj' children should be attached to the noun.
-            #   (Coordinations have been transformed prior to coming here.)
-            # - If this is a non-first conjunct, it already has the label 'conj'. It will now be re-attached and re-labeled 'case'.
-            #   However, the noun should get the 'conj' label and forget its afun (which was hopefully identical to the afun of the first conjunct).
-            ###!!! TODO: Decide what to do if this is an orphan conjunct and its afun is 'ExD'.
-            ###!!! TODO: Decide what to do in case of a chain of AuxP and AuxC nodes. It is rare (if possible at all) in Czech but it occurred in some languages.
-            ###!!! TODO: If the child is also Aux[PC], we should process the chain recursively.
-            ###!!! TODO: Are there any prepositions with two or more arguments attached directly to them?
-            ###!!! TODO: A preposition or subordinating conjunction may also have multiple children if there is punctuation.
-            my $children = $self->get_auxpc_children($node);
-            my $n = scalar(@{$children->{args}});
-            if($n != 1)
+            my $form = $node->form();
+            my $phrase = join(' ', map {$_->form().'/'.$_->afun()} ($node->get_children({'add_self' => 1, 'ordered' => 1})));
+            if($n == 0)
             {
-                my $form = $node->form();
-                my $phrase = join(' ', map {$_->form().'/'.$_->afun()} ($node->get_children({'add_self' => 1, 'ordered' => 1})));
-                if($n == 0)
-                {
-                    log_warn("Cannot find argument of '$deprel' node '$form': '$phrase'.");
-                }
-                else
-                {
-                    log_warn("'$deprel' node '$form' has more than one possible arguments: '$phrase'.");
-                }
+                log_warn("Cannot find argument of '$deprel' node '$form': '$phrase'.");
             }
-            if($n > 0)
+            else
             {
-                my $head = shift(@{$children->{args}});
-                $head->set_parent($node->parent());
-                $node->set_parent($head);
-                # Attach punctuation, conjunctions and conjuncts to the new head.
-                # If there are other arguments and other children, attach them to the new head, too.
-                # Leave mwe nodes where they are.
-                foreach my $child (@{$children->{pc}}, @{$children->{auxz}}, @{$children->{args}}, @{$children->{other}})
-                {
-                    $child->set_parent($head);
-                }
-                # If the Aux[PC] node was a non-first conjunct, the new head must now take over.
-                if($deprel eq 'conj')
-                {
-                    $head->set_deprel('conj');
-                }
+                log_warn("'$deprel' node '$form' has more than one possible arguments: '$phrase'.");
             }
-            # Even if the adposition is already a leaf (which should not happen), it cannot keep the AuxP label.
-            # Even if the conjunction is already a leaf (which should not happen), it cannot keep the AuxC label.
-            $deprel =~ s/:aux[pc]//;
-            $node->set_afun($deprel);
-            $node->set_deprel($deprel);
         }
+        if($n > 0)
+        {
+            my $head = shift(@{$children->{args}});
+            $head->set_parent($node->parent());
+            $node->set_parent($head);
+            # Attach punctuation, conjunctions and conjuncts to the new head.
+            # If there are other arguments and other children, attach them to the new head, too.
+            # Leave mwe nodes where they are.
+            foreach my $child (@{$children->{pc}}, @{$children->{auxz}}, @{$children->{args}}, @{$children->{other}})
+            {
+                $child->set_parent($head);
+            }
+            # If the Aux[PC] node was a top node, the new head must now take over.
+            if($deprel =~ m/^root:/)
+            {
+                $head->set_deprel('root');
+            }
+            # If the Aux[PC] node was a non-first conjunct, the new head must now take over.
+            elsif($deprel =~ m/^conj:/)
+            {
+                $head->set_deprel('conj');
+            }
+        }
+        # Even if the adposition is already a leaf (which should not happen), it cannot keep the AuxP label.
+        # Even if the conjunction is already a leaf (which should not happen), it cannot keep the AuxC label.
+        $deprel = $deprel =~ m/:auxp/ ? 'case' : 'mark';
+        $node->set_deprel($deprel);
     }
 }
 
@@ -1069,7 +1081,7 @@ sub fix_determiners
                     # Change DET to PRON by changing Interset part of speech from adj to noun.
                     $node->iset()->set('pos', 'noun');
                     # The current deprel is probably det but that is not compatible with the word being tagged PRON. Change the deprel as well.
-                    $node->set_deprel('nmod');
+                    $node->set_deprel('nmod') if($node->deprel() eq 'det');
                 }
                 else
                 {
@@ -1187,6 +1199,30 @@ sub fix_annotation_errors
             # On the other hand, any of the two, even if incorrect, is much better than AuxP, which would trigger various transformations,
             # inappropriate in this context.
             $node->set_afun('Atr');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# The top nodes (children of root) in incomplete sentences were temporarily
+# labeled 'root:exd' to save the information during transformations. Now it
+# must be reduced to 'root' because 'root:exd' is not a valid universal
+# dependency relation.
+#------------------------------------------------------------------------------
+sub relabel_top_nodes
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @topnodes = $root->children();
+    foreach my $node (@topnodes)
+    {
+        # We might relabel it regardless what the previous label was.
+        # But at present we only relabel 'root:exd' to see whether there are other possible issues.
+        if($node->deprel() eq 'root:exd')
+        {
+            $node->set_deprel('root');
         }
     }
 }
