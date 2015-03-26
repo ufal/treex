@@ -29,6 +29,10 @@ sub process_atree
                 {
                     $ok = $dir > 0; # parent is to the left from the adposition
                 }
+                elsif($deprel eq 'case')
+                {
+                    $ok = $dir < 0 && lc($node->form()) eq 'jako';
+                }
                 else
                 {
                     $ok = $deprel eq 'mark';
