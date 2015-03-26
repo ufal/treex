@@ -1221,7 +1221,7 @@ sub relabel_top_nodes
         # We might relabel it regardless what the previous label was.
         # But at present we only relabel 'root:exd' (incomplete sentences) and 'root:auxk' (sentences with punctuation only)
         # to see whether there are other possible issues.
-        if($node->deprel() eq 'root:(exd|auxk)')
+        if($node->deprel() =~ m/^root:(exd|auxk)$/)
         {
             $node->set_deprel('root');
         }
