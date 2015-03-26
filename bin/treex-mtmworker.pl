@@ -32,7 +32,7 @@ STDOUT->autoflush(1);
 #
 
 my $max_input_length = 100000;
-my $host             = "localhost";
+my $host             = "0.0.0.0";
 my $port             = 0;
 my $socket_port      = 0;
 
