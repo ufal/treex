@@ -1,4 +1,4 @@
-package Treex::Block::HamleDT::Test::UD::Prepositions;
+package Treex::Block::HamleDT::Test::UD::Adpositions;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
@@ -46,7 +46,7 @@ sub process_atree
 
 =over
 
-=item Treex::Block::HamleDT::Test::UD::Prepositions
+=item Treex::Block::HamleDT::Test::UD::Adpositions
 
 A preposition normally depends on a following node (usually noun) and the relation is 'case'.
 It may also depend on a preceding node as 'mwe' or 'conj'.
