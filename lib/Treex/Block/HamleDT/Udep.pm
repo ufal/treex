@@ -422,6 +422,11 @@ sub afun_to_udeprel
             {
                 $deprel = 'vocative';
             }
+            # Some ExD are properties or quantities compared to.
+            elsif($parent->lemma() =~ m/^(jako|než)$/)
+            {
+                $deprel = 'advcl';
+            }
             else
             {
                 $deprel = 'dep';
@@ -623,6 +628,9 @@ sub push_prep_sub_down
             if($n == 0)
             {
                 log_warn("Cannot find argument of '$deprel' node '$form': '$phrase'.");
+                # Try to requalify other children (if any) as arguments.
+                $children->{args} = $children->{other};
+                delete($children->{other});
             }
             else
             {
@@ -698,7 +706,8 @@ sub get_auxpc_children
             push(@auxz, $child);
         }
         # Adverb: "o dost"
-        elsif($auxafun eq 'AuxP' && ($child->is_noun() || $child->is_adjective() || $child->is_numeral() || $child->is_adverb() || $child->is_symbol()) ||
+        elsif($auxnode->lemma() =~ m/^(jako|než)$/ && ($child->is_verb() || $child->is_noun() || $child->is_adjective() || $child->is_numeral() || $child->is_adverb() || $child->is_symbol()) ||
+              $auxafun eq 'AuxP' && ($child->is_noun() || $child->is_adjective() || $child->is_numeral() || $child->is_adverb() || $child->is_symbol()) ||
               $auxafun eq 'AuxC' && $child->is_verb())
         {
             push(@args, $child);
