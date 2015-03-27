@@ -16,6 +16,10 @@ sub process_atree
         if($node->is_adposition())
         {
             my $ok = $node->is_leaf();
+            if(!$ok)
+            {
+                $ok = !any {$_->deprel() !~ m/^(mwe|conj|cc)$/} ($node->children());
+            }
             my $parent = $node->parent();
             my $deprel = $node->deprel();
             if($parent->is_root())
