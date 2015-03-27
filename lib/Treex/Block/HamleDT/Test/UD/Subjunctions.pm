@@ -20,22 +20,25 @@ sub process_atree
             my $deprel = $node->deprel();
             if($parent->is_root())
             {
-                $ok = $deprel eq 'root';
+                $ok = $ok && $deprel eq 'root';
             }
             else
             {
                 my $dir = $node->ord() - $parent->ord();
+                my $form = $node->form();
                 if($deprel eq 'conj')
                 {
-                    $ok = $dir > 0; # parent is to the left from the adposition
+                    $ok = $ok && $dir > 0; # parent is to the left from the adposition
                 }
-                elsif($deprel eq 'case')
+                elsif($deprel eq 'advmod')
                 {
-                    $ok = $dir < 0 && lc($node->form()) eq 'jako';
+                    $ok = $ok && lc($form) eq 'pøièemž';
                 }
                 else
                 {
-                    $ok = $deprel eq 'mark';
+                    # It is not so rare that certain conjunctions are judged by dictionary as subordinating
+                    # but they are actually used as coordinating. So we must allow 'cc', too.
+                    $ok = $ok && $deprel =~ m/^(mark|cc)$/;
                 }
             }
             if(!$ok)

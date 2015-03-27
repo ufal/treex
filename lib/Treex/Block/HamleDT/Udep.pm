@@ -364,12 +364,12 @@ sub afun_to_udeprel
             }
         }
         # AuxY: Additional conjunction in coordination ... cc
-        # AuxY: "jako" attached to Atv ... case
+        # AuxY: Subordinating conjunction "jako" ("as") attached to Atv or AtvV, or even Obj (of verbal adjectives) ... mark
         elsif($afun eq 'AuxY')
         {
-            if(lc($node->form()) eq 'jako' && $parent->afun() eq 'Atv')
+            if(lc($node->form()) eq 'jako')
             {
-                $deprel = 'case';
+                $deprel = 'mark';
             }
             else
             {

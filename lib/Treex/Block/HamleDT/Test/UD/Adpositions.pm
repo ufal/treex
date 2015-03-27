@@ -20,18 +20,18 @@ sub process_atree
             my $deprel = $node->deprel();
             if($parent->is_root())
             {
-                $ok = $deprel eq 'root';
+                $ok = $ok && $deprel eq 'root';
             }
             else
             {
                 my $dir = $node->ord() - $parent->ord();
                 if($deprel =~ m/^(mwe|conj)$/)
                 {
-                    $ok = $dir > 0; # parent is to the left from the adposition
+                    $ok = $ok && $dir > 0; # parent is to the left from the adposition
                 }
                 else
                 {
-                    $ok = $deprel eq 'case';
+                    $ok = $ok && $deprel eq 'case';
                 }
             }
             if(!$ok)
