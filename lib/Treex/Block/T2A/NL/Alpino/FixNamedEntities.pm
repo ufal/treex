@@ -7,6 +7,8 @@ extends 'Treex::Core::Block';
 with 'Treex::Block::T2A::NL::Alpino::MWUs';
 
 
+has '+if_missing_tree' => ( default => 'warn' );
+
 sub process_nnode {
     my ( $self, $nnode ) = @_;
 
