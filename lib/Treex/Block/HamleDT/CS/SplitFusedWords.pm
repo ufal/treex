@@ -80,10 +80,10 @@ sub split_fused_words
             my @new_nodes = $self->split_fused_token
             (
                 $node,
-                {'form' => $w1, 'lemma'  => lc($w1), 'tag' => 'J,-------------',
+                {'form' => $w1, 'lemma'  => lc($w1), 'tag' => 'SCONJ', 'conll_pos' => 'J,-------------',
                                 'iset'   => {'pos' => 'conj', 'conjtype' => 'sub'},
                                 'deprel' => 'mark'},
-                {'form' => $w2, 'lemma'  => 'být',   'tag' => 'Vc-'.$nchar.'---'.$pchar.'-------',
+                {'form' => $w2, 'lemma'  => 'být',   'tag' => 'AUX',   'conll_pos' => 'Vc-'.$nchar.'---'.$pchar.'-------',
                                 'iset'   => {'pos' => 'verb', 'verbtype' => 'aux', 'verbform' => 'fin', 'mood' => 'cnd', 'number' => $number, 'person' => $person},
                                 'deprel' => 'aux'}
             );
@@ -106,10 +106,10 @@ sub split_fused_words
             my @new_nodes = $self->split_fused_token
             (
                 $node,
-                {'form' => $w1, 'lemma'  => $node->lemma(), 'tag' => $node->tag(),
+                {'form' => $w1, 'lemma'  => $node->lemma(), 'tag' => $node->tag(), 'conll_pos' => 'Vt-S---3P-NA--2',
                                 'iset'   => $iset_hash,
                                 'deprel' => $node->conll_deprel()},
-                {'form' => $w2, 'lemma'  => 'neboť', 'tag' => 'J^-------------',
+                {'form' => $w2, 'lemma'  => 'neboť',        'tag' => 'CONJ',       'conll_pos' => 'J^-------------',
                                 'iset'   => {'pos' => 'conj', 'conjtype' => 'coor'},
                                 'deprel' => 'cc'}
             );
@@ -137,15 +137,24 @@ sub split_fused_token
         my $node = $parent->create_child();
         $node->set_form($nn->{form});
         $node->set_lemma($nn->{lemma});
+        # Assuming that we are splitting fused words for Universal Dependencies, and after the Udep harmonization block,
+        # we have to use the node attributes in the same fashion as the Udep harmonization does.
+        # The 'tag' attribute should contain the universal POS tag, and the 'conll/pos' attribute should contain the treebank-specific tag.
         $node->set_tag($nn->{tag});
+        $node->set_conll_cpos($nn->{tag});
+        $node->set_conll_pos($nn->{conll_pos});
         $node->iset()->set_hash($nn->{iset});
+        my $ufeat = join('|', $node->iset()->get_ufeatures());
+        $node->set_conll_feat($ufeat);
         # The parent should not be root but it may happen if something in the previous transformations got amiss.
         if($parent->is_root())
         {
+            $node->set_deprel('root');
             $node->set_conll_deprel('root');
         }
         else
         {
+            $node->set_deprel($nn->{deprel});
             $node->set_conll_deprel($nn->{deprel});
         }
         push(@new_nodes, $node);
