@@ -62,6 +62,7 @@ sub process_zone
     $self->fix_determiners($root);
     $self->relabel_top_nodes($root);
     $self->relabel_subordinate_clauses($root);
+    $self->relabel_appos_name($root);
     # Sanity checks.
     $self->check_determiners($root);
     ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
@@ -1294,6 +1295,32 @@ sub relabel_subordinate_clauses
             else
             {
                 $node->set_deprel('advcl');
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# In the Croatian SETimes corpus, given name of a person depends on the family
+# name, and the relation is labeled as apposition. Change the label to 'name'.
+#------------------------------------------------------------------------------
+sub relabel_appos_name
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $deprel = $node->deprel();
+        if($deprel eq 'appos')
+        {
+            my $parent = $node->parent();
+            next if($parent->is_root());
+            if($node->is_proper_noun() && $parent->is_proper_noun() && $self->agree($node, $parent, 'case'))
+            {
+                $node->set_deprel('name');
             }
         }
     }
