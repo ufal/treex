@@ -97,7 +97,9 @@ sub exchange_tags
     {
         my $original_tag = $node->tag();
         $node->set_tag($node->iset()->get_upos());
-        $node->set_conll_pos($original_tag);
+        ###!!! Do not do this now! If we were converting via Prague, the $original_tag now contains a PDT-style tag.
+        ###!!! On the other hand, already the Prague harmonization stored the really original tag in conll/pos.
+        #$node->set_conll_pos($original_tag);
     }
 }
 

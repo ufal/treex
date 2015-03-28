@@ -60,7 +60,15 @@ sub process_atree
         my $ord = $node->ord();
         my $form = $node->form();
         my $lemma = $node->lemma();
-        my $tag = $node->tag();
+        # We want to write the original, corpus-specific POS tag in the POSTAG column.
+        # It is not always clear where we should find it.
+        # At present I take conll/pos because that is where the original tag survives the
+        # HamleDT harmonization process (orig -> prague -> ud). If it is not defined,
+        # I take tag as back-off.
+        ###!!! It would be better to use a block parameter to let the user specify what tag we should use.
+        ###!!! Much in the same fashion as the attributes in Write::CoNLLX are selected.
+        my $tag = $node->conll_pos();
+        $tag = $node->tag() if(!defined($tag) || $tag eq '');
         my $isetfs = $node->iset();
         my $upos_features = encode('mul::uposf', $isetfs);
         my ($upos, $feat) = split(/\t/, $upos_features);

@@ -57,13 +57,27 @@ sub convert_tags
     my $root   = shift;
     foreach my $node ( $root->get_descendants() )
     {
+        # We will want to save the original tag (or a part thereof) in conll/pos.
+        my $origtag = $self->get_input_tag_for_interset($node);
+        # 3 fields probably means CPOS-POS-FEAT
+        # 2 fields probably means CPOS-POS
+        my @fields = split(/\t/, $origtag);
+        if(scalar(@fields)>=2)
+        {
+            $origtag = $fields[1];
+            if(defined($fields[2]) && $fields[2] ne '_' && length($fields[2])<30)
+            {
+                $origtag .= '|'.$fields[2];
+            }
+        }
+        # Now that we have a copy of the original tag, we can convert it.
         $self->convert_tag( $node );
         $self->set_pdt_tag( $node );
         # For the case we later access the CoNLL attributes, reset them as well.
         # (We can still specify other source attributes in Write::CoNLLX and similar blocks.)
         my $tag = $node->tag(); # now the PDT tag
         $node->set_conll_cpos(substr($tag, 0, 1));
-        $node->set_conll_pos(substr($tag, 0, 2).$node->iset()->case());
+        $node->set_conll_pos($origtag);
         $node->set_conll_feat($node->get_iset_conll_feat());
     }
 }
