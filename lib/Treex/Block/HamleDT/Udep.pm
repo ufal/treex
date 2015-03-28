@@ -61,6 +61,7 @@ sub process_zone
     $self->push_numerals_down($root);
     $self->fix_determiners($root);
     $self->relabel_top_nodes($root);
+    $self->relabel_subordinate_clauses($root);
     # Sanity checks.
     $self->check_determiners($root);
     ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
@@ -1233,6 +1234,67 @@ sub relabel_top_nodes
         if($node->deprel() =~ m/^root:(exd|auxk)$/)
         {
             $node->set_deprel('root');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Relabel subordinate clauses. In the Croatian SETimes corpus, their predicates
+# are labeled 'Pred', which translates as 'parataxis'. But we want to
+# distinguish the various types of subordinate clauses instead.
+#------------------------------------------------------------------------------
+sub relabel_subordinate_clauses
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $deprel = $node->deprel();
+        if($deprel eq 'parataxis')
+        {
+            my $parent = $node->parent();
+            next if($parent->is_root());
+            my @marks = grep {$_->deprel() eq 'mark'} ($node->children());
+            # We do not know what to do when there is no mark. Perhaps it is indeed a parataxis?
+            next if(scalar(@marks)==0);
+            # Relative clauses modify a noun. They substitute for an adjective.
+            if($parent->is_noun())
+            {
+                $node->set_deprel('acl');
+                foreach my $mark (@marks)
+                {
+                    # The Croatian treebank analyzes both subordinating conjunctions and relative pronouns
+                    # the same way. We want to separate them again. Pronouns should not be labeled 'mark'.
+                    # They probably fill a slot in the frame of the subordinate verb: 'nsubj', 'dobj' etc.
+                    if($mark->is_pronoun() && $mark->is_noun())
+                    {
+                        my $case = $mark->iset()->case();
+                        if($case eq 'nom' || $case eq '')
+                        {
+                            $mark->set_deprel('nsubj');
+                        }
+                        else
+                        {
+                            $mark->set_deprel('dobj');
+                        }
+                    }
+                }
+            }
+            # Complement clauses depend on a verb that requires them as argument.
+            # Examples: he says that..., he believes that..., he hopes that...
+            elsif(any {$_->lemma() eq 'da'} (@marks))
+            {
+                $node->set_deprel('ccomp');
+            }
+            # Adverbial phrases modify a verb. They substitute for an adverb.
+            # Example: ... if he passes the exam.
+            else
+            {
+                $node->set_deprel('advcl');
+            }
         }
     }
 }

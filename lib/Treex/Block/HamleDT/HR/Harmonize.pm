@@ -497,6 +497,14 @@ sub fix_annotation_errors
     {
         my $parent = $node->parent();
         my @children = $node->children();
+        # Not distinguishing conjuncts from shared modifiers in coordination is
+        # rather a feature of the annotation style than an annotation error.
+        # Nevertheless we want to fix it here, before the superordinate class
+        # tries to restructure coordination.
+        if($node->afun() eq 'Coord')
+        {
+            $self->identify_conjuncts($node);
+        }
         # u suprotnom = otherwise
         if($node->form() eq 'suprotnom' && $parent->lemma() eq 'u' &&
            $node->afun() eq 'Oth' && $parent->afun() eq 'Adv')
