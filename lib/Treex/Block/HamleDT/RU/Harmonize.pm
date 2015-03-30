@@ -26,7 +26,6 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone( $zone );
-    $self->tag_to_pos($root);
     # Adjust the tree structure.
     $self->restructure_coordination($root);
     # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
@@ -50,23 +49,6 @@ sub get_input_tag_for_interset
     my $self   = shift;
     my $node   = shift;
     return $node->tag();
-}
-
-
-
-#------------------------------------------------------------------------------
-# Syntagrus does not come in the CoNLL file format and thus it lacks some of
-# the CoNLL node attributes. This function takes the already converted tag
-# and copies it to conll/pos.
-#------------------------------------------------------------------------------
-sub tag_to_pos
-{
-    my $self = shift;
-    my $root = shift;
-    foreach my $node ( $root->get_descendants() )
-    {
-        $node->set_conll_pos($node->tag());
-    }
 }
 
 
