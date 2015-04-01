@@ -21,18 +21,20 @@ sub process_zone {
 
     foreach my $x (@nodes) {
 		my ( $n_rf, $t_rf ) = $x->get_aligned_nodes();
-		my $iterator = List::MoreUtils::each_arrayref( $n_rf, $t_rf );
-	    while ( my ( $node, $type ) = $iterator->() ) {
-            if ($self->reverse_align_type) {
-    	    	$type =~ s/left/oldleft/g;
-    	    	$type =~ s/right/oldright/g;
-    	    	$type =~ s/oldleft/right/g;
-    	    	$type =~ s/oldright/left/g;
-            } else {
-                $type = $self->align_type;
+        if ($self->reverse_align_type and $t_rf) {
+            my $iterator = List::MoreUtils::each_arrayref( $n_rf, $t_rf );
+            while ( my ( $y, $type ) = $iterator->() ) {
+                $type =~ s/left/oldleft/g;
+                $type =~ s/right/oldright/g;
+                $type =~ s/oldleft/right/g;
+                $type =~ s/oldright/left/g;
+                $y->add_aligned_node($x, $type);
             }
-	        $node->add_aligned_node($x, $type);
-	    }
+        } else {
+            foreach my $y (@{$n_rf}) {
+                $y->add_aligned_node($x, $self->align_type);
+            }
+        }
     }
 }
 
