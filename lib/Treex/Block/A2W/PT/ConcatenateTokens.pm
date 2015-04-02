@@ -37,9 +37,11 @@ sub process_zone {
     if ( $sentence =~ /^\(/ ) {
         $sentence =~ s/\)\./.)/;
     }
-    
+
     # HACKS:
     $sentence =~ s/muito muito/muito, muito/g;
+    $sentence =~ s/``\s*/“/g;
+    $sentence =~ s/\s*''/”/g;
 
     $zone->set_sentence($sentence);
     return;
