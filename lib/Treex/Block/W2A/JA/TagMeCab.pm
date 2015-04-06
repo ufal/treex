@@ -83,7 +83,7 @@ sub process_zone {
     # create a-tree
     my $a_root    = $zone->create_atree();
     my $tag_regex = qr{
-        <([^\-]+\-[^\-]+\-[^\-]+\-[^\-]+)> #<tag>
+        <([^\-\<\>]+\-[^\-\<\>]+\-[^\-\<\>]+\-[^\-\<\>]+)> #<tag>
         ([^<]+) #form
         </\1>   #</tag>
         (.+)    #lemma
@@ -128,7 +128,7 @@ sub process_zone {
 
             }
             else {
-                log_fatal("Mismatch between tagged word and original sentence: Tagged: $form; Original: $sentence.");
+                log_fatal("Mismatch between tagged word and original sentence: Tagged: <$form> Original: <$sentence>");
             }
         }
         else {
