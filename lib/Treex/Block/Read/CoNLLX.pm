@@ -7,6 +7,10 @@ use Treex::Core::Common;
 use File::Slurp;
 extends 'Treex::Block::Read::BaseCoNLLReader';
 
+has feat_is_iset => ( is => 'rw', isa => 'Bool', default => 0 );
+
+has deprel_is_afun => ( is => 'rw', isa => 'Bool', default => 0 );
+
 sub next_document {
     my ($self) = @_;
     my $text = $self->next_document_text();
@@ -35,7 +39,13 @@ sub next_document {
             $newnode->set_conll_cpos($cpos);
             $newnode->set_conll_pos($pos);
             $newnode->set_conll_feat($feat);
+            if ( $self->feat_is_iset ) {
+                $newnode->set_iset_conll_feat($feat);
+            }
             $newnode->set_conll_deprel($deprel);
+            if ( $self->deprel_is_afun ) {
+                $newnode->set_afun($deprel);
+            }
             $sentence .= "$form " if(defined($form));
             push @nodes,   $newnode;
             push @parents, $head;
@@ -78,6 +88,19 @@ space or comma separated list of filenames
 =item lines_per_doc
 
 number of sentences (!) per document
+
+=item feat_is_iset
+
+C<1> if the features field is a serialization of Interset
+(e.g. C<pos=adj|prontype=dem|number=plu|case=dat|person=3>)
+to read it directly into the Interset represenation for each node.
+C<0> by default.
+
+=item deprel_is_afun
+
+C<1> if the deprel field is an afun (e.g. C<Sb>, C<Obj>, C<Pnom>)
+to read it directly into the C<afun> field for each node.
+C<0> by default.
 
 =back
 

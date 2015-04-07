@@ -234,6 +234,23 @@ sub get_iset_conll_feat
 }
 
 #------------------------------------------------------------------------------
+# The inverse of get_iset_pairs_list -- takes a feat string which is the
+# result of calling get_iset_pairs_list, and sets Interset feature values
+# according to that string.
+#------------------------------------------------------------------------------
+sub set_iset_conll_feat
+{
+    my ($self, $feat_string) = @_;
+    my @pairs = split /\|/, $feat_string;
+    foreach my $pair (@pairs) {
+        $pair =~ s/;/|/g;
+        my ($feature, $value) = split /=/, $pair;
+        $self->set_iset($feature, $value);
+    }
+    return;
+}
+
+#------------------------------------------------------------------------------
 # Tests multiple Interset features simultaneously. Input is a list of feature-
 # value pairs, return value is 1 if the node matches all these values. This
 # function is an abbreviation for a series of get_iset() calls in an if
