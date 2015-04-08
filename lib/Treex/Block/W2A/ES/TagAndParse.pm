@@ -1,10 +1,10 @@
 package Treex::Block::W2A::ES::TagAndParse;
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::IXAPipe::TagAndParse;
+use Treex::Tool::IXAPipe::ES::TagAndParse;
 extends 'Treex::Core::Block';
 
-has _parser => ( isa => 'Treex::Tool::IXAPipe::TagAndParse',
+has _parser => ( isa => 'Treex::Tool::IXAPipe::ES::TagAndParse',
     is => 'ro', builder => '_build_parser');
 
 my (@sentences, @atrees);
@@ -12,7 +12,7 @@ my (@sentences, @atrees);
 sub _build_parser {
     my $self = shift;
 
-    return Treex::Tool::IXAPipe::TagAndParse->new();
+    return Treex::Tool::IXAPipe::ES::TagAndParse->new();
 }
 
 sub process_document {

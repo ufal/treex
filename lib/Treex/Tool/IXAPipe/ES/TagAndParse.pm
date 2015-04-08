@@ -2,9 +2,8 @@ package Treex::Tool::IXAPipe::ES::TagAndParse;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;
-use File::Java;
 use File::Temp qw/ tempdir /;
-use ProcessUtils;
+use Treex::Tool::ProcessUtils;
 use IPC::Open3;
 use autodie;
 
@@ -75,8 +74,8 @@ sub BUILD {
 
 sub launch {
     my ($self) = @_;
-    my $tagger  = File::Java->path_arg( $self->tagger_jar );
-    my $parser  = File::Java->path_arg( $self->parser_jar );
+    my $tagger  = $self->tagger_jar;
+    my $parser  = $self->parser_jar;
     my $command = 'java -Xmx' . $self->tagger_memory
         . " -jar $tagger tag 2>/dev/null" # suppress the rather verbose tagger output
         . ' | java -Xmx' . $self->parser_memory
@@ -87,8 +86,8 @@ sub launch {
     log_info "Running $command";
 
     $SIG{PIPE} = 'IGNORE';     # don't die if tagger gets killed
-    #my ( $read, $write, $pid ) = ProcessUtils::verbose_bipipe($command);
-    my ( $read, $write, $pid ) = ProcessUtils::bipipe($command);
+    #my ( $read, $write, $pid ) = Treex::Tool::ProcessUtils::verbose_bipipe($command);
+    my ( $read, $write, $pid ) = Treex::Tool::ProcessUtils::bipipe($command);
 
     $self->_set_read_handle($read);
     $self->_set_write_handle($write);
@@ -136,7 +135,7 @@ sub parse_document {
         push @output, $_;
     }
     close $self->_read_handle;
-    ProcessUtils::safewaitpid( $self->_java_pid );
+    Treex::Tool::ProcessUtils::safewaitpid( $self->_java_pid );
     
     return join '', @output;
 }
