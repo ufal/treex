@@ -4,21 +4,21 @@ use Treex::Core::Common;
 use Treex::Tool::IXAPipe::ES::TagAndParse;
 extends 'Treex::Core::Block';
 
-has _parser => ( isa => 'Treex::Tool::IXAPipe::ES::TagAndParse',
-    is => 'ro', builder => '_build_parser');
-
 has tagger_memory => ( is => 'ro', isa => 'Str', default => '512m' );
 has parser_memory => ( is => 'ro', isa => 'Str', default => '2000m' );
 
+has _parser => ( is => 'rw', isa => 'Treex::Tool::IXAPipe::ES::TagAndParse');
+
 my (@sentences, @atrees);
 
-sub _build_parser {
-    my $self = shift;
-
-    return Treex::Tool::IXAPipe::ES::TagAndParse->new({
-        tagger_memory => $self->tagger_memory,
-        parser_memory => $self->parser_memory,
-    });
+sub BUILD {
+  my ($self) = @_;
+  my $parser = Treex::Tool::IXAPipe::ES::TagAndParse->new({
+      tagger_memory => $self->tagger_memory,
+      parser_memory => $self->parser_memory,
+  });
+  $self->_set_parser($parser);
+  return;
 }
 
 sub process_document {
