@@ -7,12 +7,18 @@ extends 'Treex::Core::Block';
 has _parser => ( isa => 'Treex::Tool::IXAPipe::ES::TagAndParse',
     is => 'ro', builder => '_build_parser');
 
+has tagger_memory => ( is => 'ro', isa => 'Str', default => '512m' );
+has parser_memory => ( is => 'ro', isa => 'Str', default => '2000m' );
+
 my (@sentences, @atrees);
 
 sub _build_parser {
     my $self = shift;
 
-    return Treex::Tool::IXAPipe::ES::TagAndParse->new();
+    return Treex::Tool::IXAPipe::ES::TagAndParse->new({
+        tagger_memory => $self->tagger_memory,
+        parser_memory => $self->parser_memory,
+    });
 }
 
 sub process_document {
