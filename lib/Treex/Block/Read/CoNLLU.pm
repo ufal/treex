@@ -77,8 +77,9 @@ sub next_document {
                             my $fn = $funodes[$i];
                             ###!!! Later we will want to make these attributes normal (not wild).
                             $fn->wild->{fused_form} = $fuform;
-                            $fn->wild->{fused_start} = $funodes[0];
-                            $fn->wild->{fused_end} = $funodes[-1];
+                            ###!!! The following two lines caused Out of Memory! We should use references instead.
+                            #$fn->wild->{fused_start} = $funodes[0];
+                            #$fn->wild->{fused_end} = $funodes[-1];
                             $fn->wild->{fused} = ($i == 0) ? 'start' : ($i == $#funodes) ? 'end' : 'middle';
                         }
                     } else {
@@ -93,10 +94,12 @@ sub next_document {
             $newnode->shift_after_subtree($aroot);
             $newnode->set_form($form);
             $newnode->set_lemma($lemma);
-            $newnode->set_tag($postag);
+            # Tred and PML-TQ should preferably display upos as the main tag of the node.
+            $newnode->set_tag($upos);
             $newnode->set_conll_cpos($upos);
             $newnode->set_conll_pos($postag);
             $newnode->set_conll_feat($feats);
+            $newnode->set_deprel($deprel);
             $newnode->set_conll_deprel($deprel);
 
             $newnode->iset->set_upos($upos);
