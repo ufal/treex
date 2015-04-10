@@ -2,7 +2,6 @@ package Treex::Block::HamleDT::PL::Harmonize;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-use tagset::pl::ipipan;
 extends 'Treex::Block::HamleDT::Harmonize';
 
 has iset_driver =>
@@ -10,7 +9,7 @@ has iset_driver =>
     is            => 'ro',
     isa           => 'Str',
     required      => 1,
-    default       => 'pl::conll2009',
+    default       => 'pl::ipipan',
     documentation => 'Which interset driver should be used to decode tags in this treebank? '.
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
                      'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
@@ -32,17 +31,17 @@ my $debug = 0;
 #   (in particular for the sentence-level coordination with no 'pred' deprel)
 # - test -> solve remaining problems
 #------------------------------------------------------------------------------
-sub process_zone {
+sub process_zone
+{
     my $self   = shift;
     my $zone   = shift;
 
-    my $a_root = $self->SUPER::process_zone($zone);
-#    $self->process_args($a_root);
-    $self->attach_final_punctuation_to_root($a_root);
-    $self->restructure_coordination($a_root, $debug);
-    $self->process_prep_sub_arg_cloud($a_root);
-#    $self->check_afuns($a_root);
-
+    my $root = $self->SUPER::process_zone($zone);
+#    $self->process_args($root);
+    $self->attach_final_punctuation_to_root($root);
+    $self->restructure_coordination($root, $debug);
+    $self->process_prep_sub_arg_cloud($root);
+    $self->check_afuns($root);
 }
 
 #------------------------------------------------------------------------------
@@ -59,8 +58,9 @@ sub get_input_tag_for_interset
     my $node   = shift;
     my $conll_pos  = $node->conll_pos();
     my $conll_feat = $node->conll_feat();
-    # CoNLL 2009 uses only two columns.
-    return "$conll_pos\t$conll_feat";
+    # Compose a tag string in the form expected by the pl::ipipan Interset driver.
+    $conll_feat =~ s/\|/:/g;
+    return "$conll_pos:$conll_feat";
 }
 
 
@@ -134,7 +134,7 @@ sub deprel_to_afun {
                 $node->set_afun('Adv');
             }
             # parent is a noun -> Atr
-            elsif ($parent->get_iset('pos') eq 'noun') {
+            elsif ($parent->is_noun()) {
                 $node->set_afun('Atr');
             }
             # otherwise -> NR
@@ -145,23 +145,23 @@ sub deprel_to_afun {
         # complement
         elsif ($deprel eq 'comp') {
             # parent is a preposition -> PrepArg - solved by a separate subroutine
-            if ($parent->conll_pos eq 'prep') {
+            if ($parent->is_adposition()) {
                 $node->set_afun('PrepArg');
 #                $node->set_afun('NR');
             }
             # parent is a numeral -> NumArg - solved by a separate subroutine
-            elsif ($parent->conll_pos eq 'num') {
+            elsif ($parent->is_numeral()) {
 #                $node->set_afun('NumArg');
                 $node->set_afun('NR');
             }
             # parent is a noun -> Atr
-            elsif ($parent->conll_pos eq 'subst') {
+            elsif ($parent->is_noun()) {
                 $node->set_afun('Atr');
             }
             # parent is a verb
-            elsif ($parent->get_iset('pos') eq 'verb') {
+            elsif ($parent->is_verb()) {
                 # node is an adverb -> Adv
-                if ($node->get_iset('pos') eq 'adv') {
+                if ($node->is_adverb()) {
                     $node->set_afun('Adv');
                 }
                 # node is an adjective -> Atv
@@ -230,17 +230,17 @@ sub deprel_to_afun {
         # similar to comp
         # TODO
         elsif ($deprel eq 'comp_inf' or $deprel eq 'comp_fin') {
-            if ($parent->conll_pos eq 'prep') {
+            if ($parent->is_adposition()) {
                 $node->set_afun('PrepArg');
             }
-            elsif ($parent->conll_pos eq 'subst') {
+            elsif ($parent->is_noun()) {
                 $node->set_afun('Atr');
             }
-            elsif ($parent->get_iset('pos') eq 'verb') {
-                if ($node->get_iset('pos') eq 'adv') {
+            elsif ($parent->is_verb()) {
+                if ($node->is_adverb()) {
                     $node->set_afun('Adv');
                 }
-                elsif ($node->get_iset('pos') eq 'adj') {
+                elsif ($node->is_adjective()) {
                     $node->set_afun('Atv');
                 }
                 else {
@@ -415,12 +415,14 @@ sub detect_coordination {
 =item Treex::Block::HamleDT::PL::Harmonize
 
 Converts trees coming from Polish Dependency Treebank via the CoNLL-X format to the style of
-the Prague Dependency Treebank. Converts tags and restructures the tree.
+the HamleDT/Prague. Converts tags and restructures the tree.
 
 =back
 
 =cut
 
-# Copyright 2013 Jan Masek <honza.masek@gmail.com>
+# Copyright 2013 Jan Mašek <honza.masek@gmail.com>
+
+# Copyright 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

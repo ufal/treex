@@ -10,9 +10,9 @@ sub process_atree
     my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
-        if($node->deprel() eq 'parataxis')
+        if($node->is_comparative())
         {
-            #$self->complain($node, $node->form());
+            $self->complain($node, $node->form());
         }
     }
 }
