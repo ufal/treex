@@ -5,6 +5,8 @@ use Treex::Tool::LM::MorphoLM;
 use Treex::Tool::Lexicon::Generation::CS;
 extends 'Treex::Core::Block';
 
+has '+if_missing_tree' => (default=>'ignore');
+
 my ( $morphoLM, $generator );
 sub process_start {
     my $self = shift;
