@@ -25,6 +25,9 @@ sub next_document {
         my $bundle  = $document->create_bundle();
         my $zone    = $bundle->create_zone( $self->language, $self->selector );
         my $aroot   = $zone->create_atree();
+        if ( $self->deprel_is_afun ) {
+            $aroot->set_afun('AuxS');
+        }
         my @parents = (0);
         my @nodes   = ($aroot);
         my $sentence;
@@ -44,6 +47,10 @@ sub next_document {
             }
             $newnode->set_conll_deprel($deprel);
             if ( $self->deprel_is_afun ) {
+                if ( $deprel =~ /_M$/ ) {
+                    $newnode->set_is_member(1);
+                    $deprel =~ s/_M$//;
+                }
                 $newnode->set_afun($deprel);
             }
             $sentence .= "$form " if(defined($form));
@@ -98,8 +105,9 @@ C<0> by default.
 
 =item deprel_is_afun
 
-C<1> if the deprel field is an afun (e.g. C<Sb>, C<Obj>, C<Pnom>)
-to read it directly into the C<afun> field for each node.
+C<1> if the deprel field is an afun (e.g. C<Sb>, C<Obj_M>, C<Pnom>)
+to read it directly into the C<afun> field for each node
+(also strips C<_M> and sets C<is_member> to C<1>).
 C<0> by default.
 
 =back
