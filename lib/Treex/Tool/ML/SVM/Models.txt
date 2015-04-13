@@ -1,4 +1,0 @@
-Tuned-1a.model = pos, quartile, sentence length
-Tuned-1b.model = pos, previous pos, quartile, sentence length
-Tuned-1b.model = pos, previous pos, previous previous pos, quartile, sentence length
-Tuned-2a.model = pos, previous pos, previous previous pos, quartile, sentence length, agree with charniak, agree with stanford, agree with mst, agree with malt, agree with zpar
