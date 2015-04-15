@@ -6,8 +6,6 @@ use String::Util qw(trim);
 
 extends 'Treex::Block::Write::BaseTextWriter';
 
-has '+language' => ( required => 1 );
-
 has '+extension' => ( default => '.NAF' );
 
 my %blocks = (
@@ -188,35 +186,23 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::Write::SemEval2010
+Treex::Block::Write::NAF - writer for NLP Annotation Format
 
 =head1 DESCRIPTION
 
+For details about the format see
 
-=head1 PARAMETERS
+L<http://www.newsreader-project.eu/files/2013/01/techreport.pdf>
 
-=over
+L<https://github.com/newsreader/NAF>
 
-=item C<language>
-
-This parameter is required.
-
-=item C<to>
-
-Optional: the name of the output file, STDOUT by default.
-
-=item C<encoding>
-
-Optional: the output encoding, C<utf8> by default.
-
-=back
 
 =head1 AUTHOR
 
-Michal Novák <mnovak@ufal.mff.cuni.cz>
+Roman Sudarikov <sudarikov@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2013 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
