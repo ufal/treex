@@ -1,9 +1,11 @@
 package Treex::Block::T2T::FormemeTLemmaAgreement;
 use Moose;
 use Treex::Core::Common;
+
 extends 'Treex::Core::Block';
 
 has fun => ( isa => 'Str', is => 'ro', required => 1 );
+
 
 sub agree {
     my ( $self, $pos, $formeme ) = @_;
@@ -16,6 +18,7 @@ sub agree {
 
     return 0;
 }
+
 
 sub compute_score {
     my ( $self, $logpa, $logpb ) = @_;
@@ -57,6 +60,7 @@ sub process_tnode {
     my $t_lemma_origin;
     my $formeme;
     my $formeme_origin;
+    my $mlayer_pos;
 
     my $best_score = 0+"-inf";
 
@@ -64,6 +68,14 @@ sub process_tnode {
     my $formeme_variants_rf = $tnode->get_attr('translation_model/formeme_variants');
 
     my $num_alts = 0;
+
+    # if there are no variants, use the one variant given by rules
+    if (!$t_lemma_variants_rf or !@$t_lemma_variants_rf){
+        $t_lemma_variants_rf = [ {t_lemma => $tnode->t_lemma, pos => ($tnode->get_attr('mlayer_pos') // 'X'), logprob => 0.0} ];
+    }
+    if (!$formeme_variants_rf or !@$formeme_variants_rf){
+        $formeme_variants_rf = [ {formeme => $tnode->formeme, logprob => 0.0} ];
+    }
 
     foreach my $t_lemma_variant (@$t_lemma_variants_rf) {
         foreach my $formeme_variant (@$formeme_variants_rf) {
@@ -80,6 +92,7 @@ sub process_tnode {
                     $t_lemma_origin = $t_lemma_variant->{origin};
                     $formeme = $formeme_variant->{formeme};
                     $formeme_origin = $formeme_variant->{origin};
+                    $mlayer_pos = $t_lemma_variant->{mlayer_pos};
                 }
             }
         }
@@ -88,22 +101,27 @@ sub process_tnode {
     my $before = $tnode->t_lemma."/".($tnode->formeme // "");
 
     if (!$num_alts) {
-        print STDERR "T2T::FormemeTLemmaAgreement: didn't find a congruous pair; keeping $before\n";
+        my $str = '';
+        foreach my $t_lemma_variant (@$t_lemma_variants_rf){
+            $str .= $t_lemma_variant->{t_lemma} . '#' . $t_lemma_variant->{pos} . "\n";
+        }
+        foreach my $formeme_variant (@$formeme_variants_rf){
+            $str .= $formeme_variant->{formeme} . "\n";
+        }
+        log_warn("T2T::FormemeTLemmaAgreement: didn't find a congruous pair; keeping $before\n$str");
         return;
     }
 
     my $after = $t_lemma."/".$formeme;
 
     if ($before ne $after) {
-        print STDERR "T2T::FormemeTLemmaAgreement: $before ==> $after  [$num_alts alternatives]\n";
+        log_warn("T2T::FormemeTLemmaAgreement: $before ==> $after  [$num_alts alternatives]");
+        $tnode->set_attr('t_lemma', $t_lemma );
+        $tnode->set_attr('t_lemma_origin', $t_lemma_origin );
+        $tnode->set_attr('formeme', $formeme );
+        $tnode->set_attr('formeme_origin', $formeme_origin );
+        $tnode->set_attr('mlayer_pos', $mlayer_pos );
     }
-
-    $tnode->set_attr('t_lemma', $t_lemma );
-    $tnode->set_attr('t_lemma_origin', $t_lemma_origin );
-    $tnode->set_attr('formeme', $formeme );
-    $tnode->set_attr('formeme_origin', $formeme_origin );
-    my $a_node = $tnode->get_lex_anode() or return;
-    $a_node->set_attr('lemma', $t_lemma );
 
     return;
 }
