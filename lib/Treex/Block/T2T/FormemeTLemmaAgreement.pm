@@ -21,36 +21,67 @@ sub agree {
 
 
 sub compute_score {
-    my ( $self, $logpa, $logpb ) = @_;
+    my ( $self, $logpa, $nnda, $logpb, $nndb) = @_;
+    my $score = undef;
 
-    if ($self->fun eq "AM-Log-P") {
+    if ($self->fun =~ /^AM-Log-P/) {
         # arithmetic mean of log probabilities
         # a(log(P(a),log(P(b))) = (log(P(a) + log(P(b))) / 2
-        return ($logpa + $logpb) / 2;
-    } elsif ($self->fun eq "Log-AM-P") {
+        $score = ($logpa + $logpb) / 2;
+    } elsif ($self->fun =~ /^Log-AM-P/) {
         # log of arithmetic mean of probabilities
         # log(a(P(a), P(b))) = log((P(a) + P(b)) / 2)
         #                    = log(P(a) + P(b)) - log(2)
-        return log(exp($logpa) + exp($logpb)) - log(2);
-    } elsif ($self->fun eq "Log-GM-P") {
+        $score = log(exp($logpa) + exp($logpb)) - log(2);
+    } elsif ($self->fun =~ /^Log-GM-P/) {
         # log of geometric mean of probabilities
         # log(g(P(a), P(b))) = log(sqrt(P(a) * P(b)))
         #                    = log(sqrt(exp(log(P(a)) + log(P(b)))))
-        return log(sqrt(exp($logpa + $logpb)));
-    } elsif ($self->fun eq "GM-Log-P") {
+        $score = log(sqrt(exp($logpa + $logpb)));
+    } elsif ($self->fun =~ /^GM-Log-P/) {
         # geometric mean of log probabilities
-        return -sqrt($logpa * $logpb);
-    } elsif ($self->fun eq "Log-HM-P") {
+        $score = -sqrt($logpa * $logpb);
+    } elsif ($self->fun =~ /^Log-HM-P/) {
         # log of harmonic mean of probabilities
         # log(h(P(a), P(b))) = log(2 * P(a) * P(b) / (P(a) + P(b)))
         #                    = log(2) + log(P(a)) + log(P(b)) - log(P(a) + P(b))
-        return log(2) + $logpa + $logpb - log(exp($logpa) + exp($logpb));
-    } elsif ($self->fun eq "HM-Log-P") {
+        $score = log(2) + $logpa + $logpb - log(exp($logpa) + exp($logpb));
+    } elsif ($self->fun =~ /^HM-Log-P/) {
+        return 0 if $logpa == 0 or $logpb == 0;
         # harmonic mean of log probabilities
-        return 2 * $logpa * $logpb / ($logpa + $logpb);
+        $score = 2 * $logpa * $logpb / ($logpa + $logpb);
     } else {
         die "invalid function name: ".$self->fun;
     }
+
+    if ($self->fun =~ /-W$/) {
+        my $wa = $logpa < 0 ? $nnda/-$logpa : 1;
+        my $wb = $logpb < 0 ? $nndb/-$logpb : 1;
+        $score = $score * $wa * $wb;
+    }
+    return $score;
+}
+
+sub update_nnd {
+    my ( $self, $variants_rf ) = @_;
+    my $prev_logprob = undef;
+    foreach my $variant (@$variants_rf) {
+        if (defined $prev_logprob) {
+            my $distance_to_prev = abs($variant->{logprob} - $prev_logprob);
+            $variant->{nnd} = $distance_to_prev if ($distance_to_prev < $variant->{nnd});
+        }
+        $prev_logprob = $variant->{logprob};
+    }
+}
+
+sub compute_distance_to_nearest_neighbour {
+    my ( $self, $variants_rf ) = @_;
+
+    foreach my $variant (@$variants_rf) {
+        $variant->{nnd} = $variant->{logprob};
+    }
+    $self->update_nnd($variants_rf);
+    $self->update_nnd([reverse @$variants_rf]);
 }
 
 sub process_tnode {
@@ -76,6 +107,7 @@ sub process_tnode {
     if (!$formeme_variants_rf or !@$formeme_variants_rf){
         $formeme_variants_rf = [ {formeme => $tnode->formeme, logprob => 0.0} ];
     }
+    $self->compute_distance_to_nearest_neighbour($t_lemma_variants_rf);
 
     foreach my $t_lemma_variant (@$t_lemma_variants_rf) {
         foreach my $formeme_variant (@$formeme_variants_rf) {
@@ -83,8 +115,12 @@ sub process_tnode {
                              $formeme_variant->{formeme})) {
                 my $t_lemma_logprob = $t_lemma_variant->{logprob};
                 my $formeme_logprob = $formeme_variant->{logprob};
+                my $t_lemma_nnd = $t_lemma_variant->{nnd};
+                my $formeme_nnd = $formeme_variant->{nnd};
                 my $score = $self->compute_score($t_lemma_logprob,
-                                                 $formeme_logprob);
+                                                 $t_lemma_nnd,
+                                                 $formeme_logprob,
+                                                 $formeme_nnd);
                 ++$num_alts;
                 if ($score > $best_score) {
                     $best_score = $score;
