@@ -20,18 +20,18 @@ override 'detect_syntpos' => sub {
 
     # possessives, adjectives in predicative and substantival positions
     return 'n' if ( $a_node->match_iset( 'poss' => 'poss' ) );
-    return 'n' if ( $a_node->match_iset( 'pos' => 'adj', 'position' => 'nom' ) );
-    return 'n' if ( $a_node->match_iset( 'pos' => 'adj', 'position' => 'free' ) and $a_node->afun =~ /^(Pnom|Obj)$/ );
+    return 'n' if ( $a_node->match_iset( 'pos'  => 'adj', 'position' => 'nom' ) );
+    return 'n' if ( $a_node->match_iset( 'pos'  => 'adj', 'position' => 'free' ) and $a_node->afun =~ /^(Pnom|Obj)$/ );
 
     # adverbial usage of adjectives
     return 'adv' if ( $a_node->match_iset( 'pos' => 'adj', 'position' => 'free' ) );
-    
-    # other adjectives, adjective-like pronouns and numerals    
+
+    # other adjectives, adjective-like pronouns and numerals
     return 'adj' if ( $a_node->is_adjective );
-    return 'adj' if ( $a_node->match_iset( 'pos' => 'num', 'position' => 'prenom' ) ); 
+    return 'adj' if ( $a_node->match_iset( 'pos' => 'num', 'position' => 'prenom' ) );
 
     # nouns, nominal pronoouns and numerals
-    return 'n' if ( $a_node->is_noun );    
+    return 'n' if ( $a_node->is_noun );
 
     # verbs (including attributive)
     return 'v' if ( $a_node->is_verb );
@@ -96,7 +96,7 @@ override 'formeme_for_adj' => sub {
 
         # adjectives used as adverbs: "hij rent snel(adj)" = "he runs quickly(adv)"
         return 'adv' if ( $afun eq 'Adv' or ( $a_node->match_iset( 'position' => 'free' ) and $afun ne 'Obj' ) );
-        
+
         return 'adj:compl';
     }
 
@@ -109,18 +109,18 @@ override 'formeme_for_verb' => sub {
 
     my @aux_a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
     my @verbforms = grep { !$self->is_prep_or_conj($_) } Treex::Tool::Lexicon::NL::VerbformOrder::normalized_verbforms($t_node);
-    push @verbforms, $a_node if (!@verbforms);
+    push @verbforms, $a_node if ( !@verbforms );
     my ($first_verbform) = @verbforms;
     my ($top_verbform) = sort { $a->get_depth <=> $b->get_depth } @verbforms;
 
     my $subconj = $self->get_subconj_string( $first_verbform, @aux_a_nodes );
     my $afun = '';
-    
-    if ( $self->below_verb($t_node) ){
-        $afun = ':subj' if ( $top_verbform->afun eq 'Sb' );
+
+    if ( $self->below_verb($t_node) ) {
+        $afun = ':subj'  if ( $top_verbform->afun eq 'Sb' );
         $afun = ':predc' if ( $top_verbform->afun eq 'Pnom' );
-        $afun = ':obj' if ( $top_verbform->afun eq 'Obj' );
-    }    
+        $afun = ':obj'   if ( $top_verbform->afun eq 'Obj' );
+    }
 
     if ( $first_verbform->match_iset( 'verbform' => 'inf' ) ) {
         return "v$afun:$subconj+inf" if ($subconj);
@@ -129,15 +129,18 @@ override 'formeme_for_verb' => sub {
 
     if ( $first_verbform->match_iset( 'verbform' => 'part', 'tense' => 'pres' ) ) {
         return "v$afun:$subconj+ger" if $subconj;
-        return 'v:attr' if $self->below_noun($t_node);
-        return 'n:predc' if $afun eq ':predc';
+        return 'v:attr'              if $self->below_noun($t_node);
+        return 'n:predc'             if $afun eq ':predc';
         return "v$afun:ger";
     }
 
     if ( $t_node->is_clause_head ) {
         return "v$afun:$subconj+fin" if $subconj;
-        if ( $t_node->is_relclause_head ){
-            return $top_verbform->afun eq 'Atr' ? 'v:rc' : 'v:indq';
+        if ( $t_node->is_relclause_head ) {
+            my ($tpar) = $t_node->get_eparents( { or_topological => 1 } );
+            if ( !$tpar->is_root ) {
+                return $top_verbform->afun eq 'Atr' ? 'v:rc' : 'v:indq';
+            }
         }
         return "v$afun:fin";
     }
