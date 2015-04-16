@@ -30,8 +30,7 @@ around 'BUILDARGS' => sub {
         }
         else {                                                # linearize forms -> build formemes
             $params->{'forms'} = {};
-            foreach my $form ( $xml->getElementsByTagName('form') ) {
-
+            foreach my $form ( $xml->getElementsByTagName('form') ) {            
                 my @form_list = _convert_formeme( $params->{language}, $form );
                 map { $params->{'forms'}->{$_} = 1; } @form_list;
             }
@@ -57,7 +56,7 @@ sub forms_list {
 sub to_string {
     my ($self, $params) = @_;
     my $ret = ( $self->oblig ? '' : '(' ) . $self->functor;
-    if ($params and $params->{formemes}){
+    if (!$params or $params->{formemes}){
         $ret .= '[' . join( ', ', keys %{ $self->forms } ) . ']';
     }
     $ret .= ( $self->oblig ? '' : ')' );
@@ -81,12 +80,13 @@ sub _convert_formeme {
 sub _get_conversion_table {
 
     my ($language) = @_;
-
+    
     if ( !Treex::Tool::Vallex::FrameElement->_loaded_conversion->{$language} ) {
-
-        my $file = __FILE__;
-        $file =~ s/\/[^\/]*$//;
-        $file .= '/' . uc($language) . '/forms.txt';
+    
+        my $file = Treex::Core::Resource::require_file_from_share(
+            "data/resources/vallex/$language/forms.txt",
+            "Treex::Tool::Vallex::FrameElement"
+        );
         my $conversion = {};
 
         open( my $fh, '<:utf8', $file );
@@ -214,6 +214,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
