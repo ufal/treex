@@ -95,7 +95,7 @@ sub substitute_entities {
   }
   my %files;
   my @possible_filenames = $sentence =~ /\s([A-Za-z0-9_\-\.]+\.\w{3})\s/g;
-  my $count = 1;
+  $count = 1;
   foreach my $posible_file (@possible_filenames){
     if (length $posible_file > 4) {
       my $replace = "xxxPFILENAME" . $count . "xxx";
