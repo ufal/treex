@@ -1,4 +1,4 @@
-package Treex::Block::T2A::BG::MoveDefinitness;
+package Treex::Block::T2A::BG::MoveDefiniteness;
 use utf8;
 use Moose;
 use Treex::Core::Common;
