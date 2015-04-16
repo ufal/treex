@@ -4,14 +4,17 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+with 'Treex::Block::T2A::EN::WordOrderTools';
+
 sub process_tnode {
 
     my ( $self, $tnode ) = @_;
     return if ( !$tnode->is_clause_head() );
 
-    # avoid questions, avoid leaves, avoid punctuation, avoid single words
+    # avoid questions, avoid leaves, avoid punctuation, avoid single words, avoid wh-phrases
     my ($tfirst) = $tnode->get_echildren( { first_only => 1 } );
     return if ( !$tfirst or ( !$tfirst->get_children() and $tfirst->formeme !~ /\+/ ) );
+    return if ( _is_wh_word( $tnode, $tfirst ) );
 
     # find the subject, proceed only if it is not the first child
     my ($tsubj) = first {
