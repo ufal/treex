@@ -33,8 +33,25 @@ sub _build_nums_hash {
     my ( $self ) = @_;
     
     # split and convert to 0-base
-    my @nums = split /[,\s]+/, $self->nums; 
-    my %hash = map { ($_-1) => 1 } @nums;
+    my @nums = split /[,\s]+/, $self->nums;
+    my %hash = ();
+    foreach my $num (@nums){
+        if ($num =~ /^([0-9]*)-([0-9]+)$/){
+            my ($from, $to) = ($1, $2);
+            if ($from > $to){
+                log_fatal("Invalid number range $num.");
+            } 
+            for (my $i = $from; $i <= $to; ++$i){
+                $hash{$i - 1} = 1;
+            }
+        }
+        elsif ($num =~ /^[0-9]+/) {
+            $hash{$num - 1} = 1;
+        }
+        else {
+            log_fatal("Invalid number format $num.");
+        }
+    }
     return \%hash;  
 }
 
@@ -50,9 +67,9 @@ Treex::Block::Filter::SentenceNumber
 
 =head1 SYNOPSIS
 
- # Leave only first three bundles in the document
- Filter::SentenceNumber nums=1,2,3
- 
+ # Leave only first three bundles and the fifth one in the document
+ Filter::SentenceNumber nums=1-3,5
+  
  # Delete the first and the third bundle
  Filter::SentenceNumber nums=1,3 invert=1
  
@@ -67,6 +84,7 @@ Filters out only specified sentences (useful for creating example files and simi
 =item C<nums>
 
 Comma-separated list of sentence numbers (starting from 1) which should be retained by the filter.
+
 
 =item C<invert>
 
