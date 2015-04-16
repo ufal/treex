@@ -116,16 +116,15 @@ override 'set_verbal_grammatemes' => sub {
 
     my $sig = $self->get_verbal_group_signature( $tnode, $anode );
     my $gram = $SIG2GRAM{$sig};
-
-    # distinguishing past tense and passive for "is/was + past participle"
-    # overriding the default past passive by past active for verbs that use "zijn" as past auxiliary
-    if ( $sig =~ 'zijn-(finpast|finpres|inf)\+LEX-partpast' and Treex::Tool::Lexicon::NL::ErgativeVerbs::is_ergative_verb( $tnode->t_lemma ) ) {
-        $gram->{'diathesis'} = 'act';
-    }
-
+    
     if ($gram) {
         while ( my ( $gram_name, $gram_val ) = each %$gram ) {
             $tnode->set_attr( 'gram/' . $gram_name, $gram_val );
+        }
+        # distinguishing past tense and passive for "is/was + past participle"
+        # overriding the default past passive by past active for verbs that use "zijn" as past auxiliary
+        if ( $sig =~ 'zijn-(finpast|finpres|inf)\+LEX-partpast' and Treex::Tool::Lexicon::NL::ErgativeVerbs::is_ergative_verb( $tnode->t_lemma ) ) {
+            $tnode->set_gram_diathesis('act');
         }
     }
     else {
