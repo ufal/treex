@@ -35,6 +35,9 @@ sub next_document {
             $newnode->set_conll_pos($postag);
             $newnode->set_conll_feat($feats);
             $newnode->set_conll_deprel($deprel);
+            if ($fillpred ne '_'){ # save CoNLL predicate ID to wild attribute
+                $newnode->wild->{conll_pred} = $pred;
+            }
             $sentence .= "$form ";
             push @nodes,   $newnode;
             push @parents, $head;
