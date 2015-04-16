@@ -47,8 +47,8 @@ sub compute_score {
         #                    = log(2) + log(P(a)) + log(P(b)) - log(P(a) + P(b))
         $score = log(2) + $logpa + $logpb - log(exp($logpa) + exp($logpb));
     } elsif ($self->fun =~ /^HM-Log-P/) {
-        return 0 if $logpa == 0 or $logpb == 0;
-        # harmonic mean of log probabilities
+        # harmonic mean of log probabilities + edge cases
+        return 0 if ($logpa == 0 or $logpb == 0);        
         $score = 2 * $logpa * $logpb / ($logpa + $logpb);
     } else {
         die "invalid function name: ".$self->fun;
@@ -108,6 +108,7 @@ sub process_tnode {
         $formeme_variants_rf = [ {formeme => $tnode->formeme, logprob => 0.0} ];
     }
     $self->compute_distance_to_nearest_neighbour($t_lemma_variants_rf);
+    $self->compute_distance_to_nearest_neighbour($formeme_variants_rf);
 
     foreach my $t_lemma_variant (@$t_lemma_variants_rf) {
         foreach my $formeme_variant (@$formeme_variants_rf) {
