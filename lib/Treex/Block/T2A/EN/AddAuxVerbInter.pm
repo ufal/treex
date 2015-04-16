@@ -11,7 +11,7 @@ sub process_tnode {
     # select only interogative verbs
     return
         if (
-        ( $t_node->formeme // '' ) !~ /^v.*fin/
+        ( $t_node->formeme // '' ) !~ /^v.*(fin|rc)$/
         || ( $t_node->sentmod // '' ) ne 'inter'
         || $t_node->t_lemma eq 'there'
         );
@@ -25,9 +25,9 @@ sub process_tnode {
         $a_node->set_form('should');
         $a_to->remove();
     }
-
-    # if the current main verbal node is not auxiliary (or not `be'), shift it and put an auxiliary 'do' in its place
-    return if ( ( $a_node->afun // '' ) eq 'AuxV' or $a_node->lemma eq 'be' );
+    
+    # if the current main verbal node is not auxiliary (or not `be' or modal), shift it and put an auxiliary 'do' in its place
+    return if ( ( $a_node->afun // '' ) eq 'AuxV' or $a_node->lemma =~ /^(be|may|might|can|could|must|will|shall|should)$/ );
 
     # this is where the main verb will go (in infinitive)
     my $new_node = $a_node->create_child(
