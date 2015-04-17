@@ -13,6 +13,11 @@ sub process_anode {
         && $parent->conll_cpos ne 'ADP'
     ) {
 
+        # dive through conjunctions
+        # while ( $parent->conll_cpos eq 'CONJ' && !$parent->parent->is_root ) {
+        #     $parent = $parent->parent;
+        # }
+
         $anode->set_parent($parent->parent);
         $parent->set_parent($anode);
 
