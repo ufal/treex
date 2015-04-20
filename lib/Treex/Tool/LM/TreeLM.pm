@@ -1,9 +1,9 @@
 package Treex::Tool::LM::TreeLM;
+use Moose;
 use Treex::Core::Common;
-use utf8;
+use Treex::Core::Resource;
 use autodie;
 
-use Class::Std;
 use Readonly;
 use Storable;
 use List::Util qw(sum);
@@ -12,32 +12,29 @@ use Scalar::Util qw(weaken);
 Readonly my $LOG2 => log(2);
 my $ALL = '<ALL>';
 Readonly my $USAGE       => 'my $model =Treex::Tool::LM::TreeLM->new({dir=>"path/to/models/"});';
-Readonly my $DEFAULT_DIR => $ENV{TMT_ROOT} . '/share/data/models/language/cs/';
 
 #TODO: use attributes so each instance can have its own models
 # Each instance of this class has its model...
-my %model_of : ATTR;
+has model => (is=>'rw');
 
 # ...but those models are shared across all instances if loaded from the same file name
 my %loaded_models;
 
 # Directory of a model is a readonly attribute
-my %dir_of : ATTR( :init_arg<dir> :get<dir> );
+has dir => (is=>'rw', default => 'data/models/language/cs/');
 
 sub log2 { return log( $_[0] ) / $LOG2; }
 
 my ( $cLgFdLd, $cPgFdLd );
 
 sub BUILD {
-    log_fatal('Incorrect number of arguments') if @_ != 3;
-    my ( $self, $id, $arg_ref ) = @_;
-    my $dir = $arg_ref->{'dir'} || $DEFAULT_DIR;
+    my ( $self, $arg_ref ) = @_;
+    my $dir = $self->dir;
     log_fatal("Dir '$dir' not accesible.\n$USAGE") if !-d $dir;
-    $dir_of{$id} = $dir;
 
     log_info("Loading tree language models from '$dir'...");
-    $cLgFdLd = _load_plsgz( $dir . 'c_LgFdLd.pls.gz' );
-    $cPgFdLd = _load_plsgz( $dir . 'c_PgFdLd.pls.gz' );
+    $cLgFdLd = _load_plsgz( Treex::Core::Resource::require_file_from_share($dir . 'c_LgFdLd.pls.gz') );
+    $cPgFdLd = _load_plsgz( Treex::Core::Resource::require_file_from_share($dir . 'c_PgFdLd.pls.gz') );
 
     # If this model has been loaded before, just reuse it
     #return if defined( $model_of{$id} = $loaded_models{$filename} );
