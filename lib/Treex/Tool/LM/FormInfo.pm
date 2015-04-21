@@ -1,27 +1,37 @@
 package Treex::Tool::LM::FormInfo;
-
+#use Moo;
 use strict;
 use warnings;
-use utf8;
 
-use Class::Std;
-
-my %tag_of : ATTR( :name<tag> );
-my %lemma_of : ATTR( :name<lemma> );
-my %form_of : ATTR( :name<form> );
-my %count_of : ATTR( :name<count> :default<0>);
-my %origin_of : ATTR( :name<origin> :default<> );
-
-sub to_string : STRINGIFY {
-    my ($self) = @_;
-    my $id = ident $self;
-    return join "\t",
-        'form: ' . $form_of{$id},
-        'tag: ' . $tag_of{$id},
-        'lemma: ' . $lemma_of{$id},
-        $count_of{$id} ? 'count:' . $count_of{$id} : '',
-        $origin_of{$id} ? 'origin:' . $origin_of{$id} : '';
+sub new {
+    my ( $class, $hashref ) = @_;
+    return bless $hashref, $class;
 }
+
+sub get_tag {return $_[0]->{tag};}
+sub get_lemma {return $_[0]->{lemma};}
+sub get_form {return $_[0]->{form};}
+sub get_count {return $_[0]->{count} || 0;}
+sub get_origin {return $_[0]->{origin} // '';}
+
+sub set_tag {$_[0]->{tag} = $_[1];}
+sub set_lemma {$_[0]->{lemma} = $_[1];}
+sub set_form {$_[0]->{form} = $_[1];}
+sub set_count {$_[0]->{count} = $_[1];}
+sub set_origin {$_[0]->{origin} = $_[1];}
+
+
+sub to_string {
+    my ($self) = @_;
+    return join "\t",
+        'form: ' . $self->{form},
+        'tag: ' . $self->{tag},
+        'lemma: ' . $self->{lemma},
+        $self->{count} ? 'count:' . $self->{count} : '',
+        $self->{origin} ? 'origin:' . $self->{origin} : '';
+}
+
+use overload '""' => \&to_string;
 
 1;
 
