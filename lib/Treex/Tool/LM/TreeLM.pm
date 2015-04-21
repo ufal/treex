@@ -3,8 +3,6 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;
 use autodie;
-
-use Readonly;
 use Storable;
 use List::Util qw(sum);
 use Scalar::Util qw(weaken);

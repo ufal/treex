@@ -1,43 +1,34 @@
 package Treex::Tool::LM::MorphoLM;
+use Moose;
 use Treex::Core::Common;
-use utf8;
-use English qw( -no_match_vars );
-
 use Treex::Tool::LM::FormInfo;
-use Class::Std;
-use Readonly;
 use Storable;
 use PerlIO::gzip;
-use Treex::Core::Common;
-
-#use Smart::Comments;
-
-Readonly my $DEFAULT_MODEL_FILENAME => 'data/models/language/cs/syn.pls.gz';
-
-#Readonly my $DEFAULT_MODEL_FILENAME => 'data/models/language/cs/syn_mincount10.pls.gz';
-
-
+use autodie;
 
 # Each instance of this class has its model...
-my %model_of : ATTR;
+has model => (is=>'rw');
+
+#has file => (is=>'rw', default => 'data/models/language/cs/syn_mincount10.pls.gz');
+has file => (is=>'rw', default => 'data/models/language/cs/syn.pls.gz');
 
 # ...but those models are shared across all instances if loaded from the same file name
 my %loaded_models;
 
 sub BUILD {
-    my ( $self, $id, $arg_ref ) = @_;
-    my $filename = $arg_ref->{'file'} // Treex::Core::Resource::require_file_from_share( $DEFAULT_MODEL_FILENAME, 'Treex::Tool::LM::MorphoLM' );
+    my ( $self, $arg_ref ) = @_;
+    my $filename = Treex::Core::Resource::require_file_from_share( $self->file, 'Treex::Tool::LM::MorphoLM' );
     my $model_ref = $loaded_models{$filename};
     if ( not defined $model_ref ) {
         log_info("Loading morpho model from '$filename' ...");
         log_fatal("Could not read morpho model: '$filename'.") if ( !-r $filename );
-        open my $IN, '<:gzip', $filename or log_fatal($OS_ERROR);
+        open my $IN, '<:gzip', $filename;
         $model_ref = Storable::fd_retrieve($IN);
         log_fatal("Could not parse perl storable model: '$filename'.") if ( !defined $model_ref );
-        close $IN or log_fatal($OS_ERROR);
+        close $IN;
         $loaded_models{$filename} = $model_ref;
     }
-    $model_of{$id} = $model_ref;
+    $self->set_model($model_ref);
     return;
 }
 
@@ -49,11 +40,9 @@ sub forms_of_lemma {
     my $min_count = $arg_ref->{min_count}        || 0;
     my $lc_lemma  = $arg_ref->{lowercased_lemma} || 0;
     my $tc_forms = $arg_ref->{truecase_forms} // 1;
-    #### Treex::Tool::LM::MorphoLM::forms_of_lemma(): $lemma
-    #### $arg_ref
 
     $tag_regex = qr{$tag_regex};    #compile regex
-    my $model_ref = $model_of{ ident $self};
+    my $model_ref = $self->model;
     my $found     = 0;
     my @forms;
     my @all_forms = @{ $model_ref->{$lemma} || [] };
@@ -79,8 +68,7 @@ sub forms_of_lemma {
 
         my $form_info = Treex::Tool::LM::FormInfo->new( { form => $form, lemma => $pdt_lemma, tag => $tag, count => $count } );
         push @forms, $form_info;
-        #### found: $form_info_ref
-        last if $limit and ( ++$found >= $limit );
+        last if $limit && ( ++$found >= $limit );
     }
     return @forms;
 }
