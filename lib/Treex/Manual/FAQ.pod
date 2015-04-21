@@ -125,7 +125,7 @@ head2 Using C<ttred>
 
 =head3 What does the name C<ttred> mean?
 
-B<TrEd> is a I<tree editor> developed by Petr Pajas - see L<http://ufal.mff.cuni.cz/~pajas/tred>.
+B<TrEd> is a I<tree editor> developed by Petr Pajas - see L<http://ufal.mff.cuni.cz/tred>.
 C<ttred> is Treex-modified TrEd capable of showing C<*.treex> files.
 Actually, it is a just light-weight wrapper which executes C<tred>
 with a path to the pre-installed Treex extension.
