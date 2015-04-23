@@ -78,9 +78,10 @@ sub process_tnode {
         }
 
         # Move 1st wh-word element to the beginning of relative clauses and wh-questions
+        # (skipping quotes and similar)
         if ( $tnode->formeme eq 'v:rc' or $tnode->sentmod eq 'inter' ) {
             my ($clause_start) =
-                grep { $_->clause_number == $tnode->clause_number }
+                grep { $_->clause_number == $tnode->clause_number and $_->t_lemma !~ /["'<>()]/ }
                 $tnode->get_descendants( { add_self => 1, ordered => 1 } );
 
             my ($first_wh) = _find_wh_words( $tnode, \@children );
