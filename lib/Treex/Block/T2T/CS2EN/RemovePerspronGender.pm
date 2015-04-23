@@ -5,6 +5,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+has 'remove_guessed_gender' => ( isa => 'Bool', is => 'ro', default => 0 );
+
 sub process_tnode {
     my ( $self, $t_node ) = @_;
 
@@ -18,8 +20,10 @@ sub process_tnode {
 
     if ( !@coref ) {
 
+        return if ( !$self->remove_guessed_gender );
+
         # even without antecedent: generated subjects -- remove gender if 'anim' was just guessed
-        # TODO: this is good for QTLeap, but bad for news !!
+        # good for IT domain (where things are concerned), not that good for news (where mostly persons are concerned)
         if ( ( $t_src->formeme // '' ) eq 'drop' and ( $t_src->wild->{'aux_gram/gender'} // '' ) eq 'anim/inan/fem/neut' ) {
             $t_node->set_gram_gender('nr');
         }
@@ -56,11 +60,21 @@ Treex::Block::T2T::CS2EN::RemovePerspronGender
 Removing Czech genders of C<#PersPron>s that do not refer to persons. They
 will default to neuter gender "it" in English.
 
-This rule aims mainly for precision -- the antecedent must be set, and it must
+This rule aims mainly for precision -- the antecedent must be set, and it must be
 a noun, not a personal named entity (and C<is_name_of_person> must be false).
 
-TODO: For QTLeap, it is good to also remove guessed gender of generated subjects,
-but this is bad for the news domain. 
+=head1 PARAMETERS
+
+=over
+
+=item remove_guessed_gender
+
+A boolean indicating whether to remove gender that was simply guessed (without any
+coreference links, mainly with generated subjects).
+For the IT domain (i.e., text concerning things, not persons), it is good to remove guessed gender,
+but this is sometimes bad for the news domain.
+
+=back
 
 =head1 AUTHORS 
 
