@@ -10,6 +10,8 @@ sub fix {
     my $t_sent_root = $child->get_zone->get_ttree->get_children(
         { first_only => 1 } ) or return;
 
+    # TODO: There is Sb
+
     if (!$parent->is_root
         && $parent->tag =~ /^V/
         && defined $al_child
