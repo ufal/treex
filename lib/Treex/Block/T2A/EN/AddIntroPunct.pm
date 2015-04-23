@@ -12,7 +12,7 @@ sub process_tnode {
     return if ( !$tnode->is_clause_head() );
 
     # avoid questions, avoid leaves, avoid punctuation, avoid single words, avoid wh-phrases
-    my ($tfirst) = $tnode->get_echildren( { first_only => 1 } );
+    my ($tfirst) = $tnode->get_echildren( { first_only => 1, or_topological => 1 } );
     return if ( !$tfirst or ( !$tfirst->get_children() and $tfirst->formeme !~ /\+/ ) );
     return if ( _is_wh_word( $tnode, $tfirst ) );
 
@@ -21,7 +21,7 @@ sub process_tnode {
         my $a = $_->get_lex_anode();
         $a and ( $a->afun // '' ) eq 'Sb';
     }
-    $tnode->get_echildren( { ordered => 1 } );
+    $tnode->get_echildren( { or_topological => 1, ordered => 1 } );
 
     return if ( !$tsubj or $tsubj == $tfirst );
 

@@ -85,7 +85,7 @@ sub get_clause_edescendants {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self = shift;
 
-    my @clause_children = grep { !$_->is_clause_head } $self->get_echildren();
+    my @clause_children = grep { !$_->is_clause_head } $self->get_echildren({or_topological=>1});
 
     # we can use normal get_clause_descendants here, using echildren would no longer make any difference
     return ( @clause_children, map { $_->get_clause_descendants() } @clause_children );

@@ -9,7 +9,7 @@ sub process_tnode {
     my ( $self, $tnode ) = @_;
     return if ( !$tnode->is_clause_head() );
 
-    my (@tphrases) = $tnode->get_echildren( { following_only => 1 } );
+    my (@tphrases) = $tnode->get_echildren( { following_only => 1, or_topological => 1 } );
     my $first_tphrase = shift @tphrases;
 
     foreach my $tphrase (@tphrases) {
