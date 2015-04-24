@@ -9,7 +9,24 @@ extends 'Treex::Core::Block';
 # two Czech words, child t-lemma + formeme & parent t-lemma --> one English t-lemma + mlayer_pos
 my %CHILD_PARENT_TO_ONE_NODE = (
     'nástroj|n:2 panel'  => 'toolbar|noun',
+    'zavděk|adv vzít'    => 'accept|verb',
+    'černý|adj:attr hora' => 'Montenegro|noun',
 );
+
+# one Czech word into two English words
+my %ONE_NODE_TO_CHILD_PARENT = (
+    'premiér|n' => 'minister|noun prime|adj:attr|adj',
+    'premiérka|n' => 'minister|noun prime|adj:attr|adj',
+    'vysokoškolák|n' => 'student|noun university|n:attr|noun',
+    'vysokoškolačka|n' => 'student|noun university|n:attr|noun',
+    'Česko|n' => 'Republic|noun Czech|adj:attr|adj',
+    'sportovat|v' => 'play|verb sports|n:obj|noun',
+    'kurzistka|n' => 'participant|noun course|n:attr|noun', 
+    'kurzista|n' => 'participant|noun course|n:attr|noun',
+    'trenčkot|n' => 'coat|noun trench|n:attr|noun',         
+);
+
+
 
 sub process_ttree {
     my ( $self, $troot ) = @_;
@@ -18,9 +35,9 @@ sub process_ttree {
         $self->try_2to1($tnode);
     }
 
-#    foreach my $tnode ( $troot->get_descendants( { ordered => 1 } ) ) {
-#        $self->try_1to2($tnode);
-#    }
+    foreach my $tnode ( $troot->get_descendants( { ordered => 1 } ) ) {
+        $self->try_1to2($tnode);
+    }
     return;
 }
 
@@ -51,6 +68,42 @@ sub try_2to1 {
     }
     return;
 }
+
+sub try_1to2 {
+    my ( $self, $tnode ) = @_;
+    return if ( $tnode->t_lemma_origin eq 'rule-TrLFPhrases' );
+    my $src_tnode = $tnode->src_tnode() or return 0;
+    my $src_formeme_pos = $src_tnode->formeme;
+    $src_formeme_pos =~ s/:.*//;
+
+    my $id = $src_tnode->t_lemma . '|' . $src_formeme_pos;
+    
+    if ( my $translation = $ONE_NODE_TO_CHILD_PARENT{$id} ) {
+        my ( $node_info, $child_info ) = split / /, $translation;
+
+        my ( $t_lemma, $formeme, $mlayer_pos ) = split /\|/, $child_info;
+        my $child = $tnode->create_child(
+            {
+                t_lemma        => $t_lemma,
+                formeme        => $formeme,
+                mlayer_pos     => $mlayer_pos,
+                t_lemma_origin => 'rule-TrLFPhrases',
+                formeme_origin => 'rule-TrLFPhrases',
+                clause_number  => $tnode->clause_number,
+                nodetype       => 'complex',
+            }
+        );
+        $child->shift_after_node($tnode);
+
+        ( $t_lemma, $mlayer_pos ) = split /\|/, $node_info;
+        $tnode->set_t_lemma($t_lemma);
+        $tnode->set_attr( 'mlayer_pos', $mlayer_pos );
+        $tnode->set_t_lemma_origin('rule-TrLFPhrases');
+        return;
+    }
+    return;
+}
+
 
 
 1;
