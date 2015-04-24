@@ -138,5 +138,6 @@ Martin Popel <popel@ufal.mff.cuni.cz>
 =head1 COPYRIGHT AND LICENSE
 
 Copyright © 2014-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+The development of this resource is partly funded by the European Commision, project QTLeap FP7-ICT-2013.4.1-610516 L<http://qtleap.eu>
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
