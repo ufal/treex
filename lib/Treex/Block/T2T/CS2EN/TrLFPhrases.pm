@@ -8,35 +8,32 @@ extends 'Treex::Core::Block';
 
 # two Czech words, child t-lemma + formeme & parent t-lemma --> one English t-lemma + mlayer_pos
 my %CHILD_PARENT_TO_ONE_NODE = (
-    'nástroj|n:2 panel'  => 'toolbar|noun',
-    'zavděk|adv vzít'    => 'accept|verb',
+    'nástroj|n:2 panel'    => 'toolbar|noun',
+    'zavděk|adv vzít'     => 'accept|verb',
     'černý|adj:attr hora' => 'Montenegro|noun',
 );
 
 # one Czech word into two English words
 my %ONE_NODE_TO_CHILD_PARENT = (
-    'premiér|n' => 'minister|noun prime|adj:attr|adj',
-    'premiérka|n' => 'minister|noun prime|adj:attr|adj',
-    'vysokoškolák|n' => 'student|noun university|n:attr|noun',
+    'premiér|n'         => 'minister|noun prime|adj:attr|adj',
+    'premiérka|n'       => 'minister|noun prime|adj:attr|adj',
+    'vysokoškolák|n'   => 'student|noun university|n:attr|noun',
     'vysokoškolačka|n' => 'student|noun university|n:attr|noun',
-    'Česko|n' => 'Republic|noun Czech|adj:attr|adj',
-    'kurzistka|n' => 'participant|noun course|n:attr|noun', 
-    'kurzista|n' => 'participant|noun course|n:attr|noun',
-    'trenčkot|n' => 'coat|noun trench|n:attr|noun',
-    'dalajláma|n' => 'Lama|noun Dalai|n:attr|noun', 
-    'Dalajláma|n' => 'Lama|noun Dalai|n:attr|noun', 
-
+    'Česko|n'           => 'Republic|noun Czech|adj:attr|adj',
+    'kurzistka|n'        => 'participant|noun course|n:attr|noun',
+    'kurzista|n'         => 'participant|noun course|n:attr|noun',
+    'trenčkot|n'        => 'coat|noun trench|n:attr|noun',
+    'dalajláma|n'       => 'Lama|noun Dalai|n:attr|noun',
+    'Dalajláma|n'       => 'Lama|noun Dalai|n:attr|noun',
 
     'sportovat|v' => 'play|verb sports|n:obj|noun',
-    'snídat|v' => 'have|verb breakfast|n:obj|noun',    
-    'obědvat|v' => 'have|verb lunch|n:obj|noun',    
+    'snídat|v'   => 'have|verb breakfast|n:obj|noun',
+    'obědvat|v'  => 'have|verb lunch|n:obj|noun',
     'večeřet|v' => 'have|verb dinner|n:obj|noun',
-    'svačit|v' => 'have|verb snack|n:obj|noun',
-    'stačit|v' => 'be|verb enough|adv|adv',
+    'svačit|v'   => 'have|verb snack|n:obj|noun',
+    'stačit|v'   => 'be|verb enough|adv|adv',
     'jednat_se|v' => 'be|verb this|n:subj|noun',
 );
-
-
 
 sub process_ttree {
     my ( $self, $troot ) = @_;
@@ -87,10 +84,10 @@ sub try_1to2 {
     $src_formeme_pos =~ s/:.*//;
 
     my $id = $src_tnode->t_lemma . '|' . $src_formeme_pos;
-    
+
     if ( my $translation = $ONE_NODE_TO_CHILD_PARENT{$id} ) {
         my ( $node_info, $child_info ) = split / /, $translation;
-        
+
         # create the child node
         my ( $t_lemma, $formeme, $mlayer_pos ) = split /\|/, $child_info;
         my $child = $tnode->create_child(
@@ -104,18 +101,18 @@ sub try_1to2 {
                 nodetype       => 'complex',
             }
         );
-        
+
         # modify the parent node
         ( $t_lemma, $mlayer_pos ) = split /\|/, $node_info;
         $tnode->set_t_lemma($t_lemma);
         $tnode->set_attr( 'mlayer_pos', $mlayer_pos );
         $tnode->set_t_lemma_origin('rule-TrLFPhrases');
-        
+
         # fix formeme for the parent: select most probable compatible one
         $self->select_compatible_formeme($tnode);
-        
-        # fixing word order: assuming noun groups and light verbs 
-        if ( $mlayer_pos eq 'verb' and $formeme ne 'n:subj' ){
+
+        # fixing word order: assuming noun groups and light verbs
+        if ( $mlayer_pos eq 'verb' and $formeme ne 'n:subj' ) {
             $child->shift_after_node($tnode);
         }
         else {
@@ -126,9 +123,8 @@ sub try_1to2 {
     return;
 }
 
-
 sub select_compatible_formeme {
-    my ($self, $tnode) = @_;  
+    my ( $self, $tnode ) = @_;
     my $tm_formemes = $tnode->get_attr('translation_model/formeme_variants');
 
     foreach my $tm_formeme (@$tm_formemes) {
@@ -139,9 +135,8 @@ sub select_compatible_formeme {
             last;
         }
     }
-    return;    
+    return;
 }
-
 
 sub is_compatible {
     my ( $self, $pos, $formeme ) = @_;
