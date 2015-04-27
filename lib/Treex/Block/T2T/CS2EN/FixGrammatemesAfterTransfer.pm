@@ -10,8 +10,14 @@ sub process_tnode {
 
     my ( $self, $t_node ) = @_;
     my $t_src = $t_node->src_tnode or return;
+    
+    $self->_fix_valid_grammatemes( $t_node, $t_src );
 
     $self->_fix_negation( $t_node, $t_src );
+
+    $self->_fix_number( $t_node, $t_src );
+    
+    $self->_fix_degcmp( $t_node, $t_src );
 
     return;
 }
@@ -24,19 +30,19 @@ sub _fix_negation {
     my $cs_tlemma = $cs_t_node->t_lemma;
 
     # removing negation, where it is lexicalized in English but morphological in Czech
-    if (( $en_tlemma    =~ /^absen/    and $cs_tlemma =~ /^pří/ )
-        or ( $en_tlemma =~ /^recent/   and $cs_tlemma =~ /^dáv/ )
-        or ( $en_tlemma =~ /^necess/   and $cs_tlemma =~ /^zbytn/ )
-        or ( $en_tlemma =~ /^ill/      and $cs_tlemma =~ /^moc/ )
-        or ( $en_tlemma =~ /^near/     and $cs_tlemma =~ /^dalek/ )
-        or ( $en_tlemma =~ /^innoc/    and $cs_tlemma =~ /^vin/ )
-        or ( $en_tlemma =~ /^danger/   and $cs_tlemma =~ /^bezp/ )
-        or ( $en_tlemma =~ /^risk/     and $cs_tlemma =~ /^bezp/ )
-        or ( $en_tlemma =~ /^disadv/   and $cs_tlemma =~ /^výh/ )
-        or ( $en_tlemma =~ /^annoy/    and $cs_tlemma =~ /^příj/ )
-        or ( $en_tlemma =~ /^harmless/ and $cs_tlemma =~ /^škod/ )
-        or ( $en_tlemma =~ /^disgust/  and $cs_tlemma =~ /^chutn/ )
-        or ( $en_tlemma =~ /^idle/     and $cs_tlemma =~ /^čin/ )
+    if (( $en_tlemma =~ /^absen/        and $cs_tlemma =~ /^pří/ )
+        or ( $en_tlemma =~ /^recent/    and $cs_tlemma =~ /^dáv/ )
+        or ( $en_tlemma =~ /^necess/    and $cs_tlemma =~ /^zbytn/ )
+        or ( $en_tlemma =~ /^ill/       and $cs_tlemma =~ /^moc/ )
+        or ( $en_tlemma =~ /^near/      and $cs_tlemma =~ /^dalek/ )
+        or ( $en_tlemma =~ /^innoc/     and $cs_tlemma =~ /^vin/ )
+        or ( $en_tlemma =~ /^danger/    and $cs_tlemma =~ /^bezp/ )
+        or ( $en_tlemma =~ /^risk/      and $cs_tlemma =~ /^bezp/ )
+        or ( $en_tlemma =~ /^disadv/    and $cs_tlemma =~ /^výh/ )
+        or ( $en_tlemma =~ /^annoy/     and $cs_tlemma =~ /^příj/ )
+        or ( $en_tlemma =~ /^harmless/  and $cs_tlemma =~ /^škod/ )
+        or ( $en_tlemma =~ /^disgust/   and $cs_tlemma =~ /^chutn/ )
+        or ( $en_tlemma =~ /^idle/      and $cs_tlemma =~ /^čin/ )
         or ( $en_tlemma eq 'regardless' and $cs_tlemma =~ /^závisl/ )
         or ( $cs_tlemma eq 'dbalý' )
         or ( $en_tlemma =~ /^fail/           and $cs_tlemma =~ /^zdař/ )
@@ -72,6 +78,7 @@ sub _fix_negation {
         or ( $en_tlemma =~ /^minor/          and $cs_tlemma =~ /^(zletil)/ )
         or ( $en_tlemma =~ /^([jJ]unk|spam)/ and $cs_tlemma =~ /^vyžáda/ )
         or ( $en_tlemma =~ /^false/          and $cs_tlemma =~ /^správn/ )
+        or ( $en_tlemma eq 'selfless'        and $cs_tlemma =~ /^zištn/ )
 
         # or ( $en_tlemma =~ /^irritat/      and $cs_tlemma =~ /^z?příjem/ )
         )
@@ -89,6 +96,89 @@ sub _fix_negation {
     return;
 }
 
+sub _fix_number {
+
+    my ( $self, $en_t_node, $cs_t_node ) = @_;
+
+    my $en_tlemma = $en_t_node->t_lemma;
+    my $cs_tlemma = $cs_t_node->t_lemma;
+
+    if ( ( $en_tlemma eq 'pasta' and $cs_tlemma eq 'těstovina' ) )
+    {
+        $en_t_node->set_gram_number('sg');
+    }
+    
+    if ( $en_tlemma =~ /^(fish|sheep|information)$/ ){
+        $en_t_node->set_gram_number('sg');
+    }
+
+    return;
+}
+
+
+# TODO make this language independent
+sub _fix_valid_grammatemes {
+
+    my ( $self, $t_node, $src_t_node ) = @_;
+
+    my $formeme = $t_node->formeme;
+    my $src_formeme = $src_t_node->formeme;
+
+    if ( $formeme !~ /^v/ ) {
+        $t_node->set_voice(undef);
+        $t_node->set_is_passive(undef);
+    }
+
+    # Target nouns
+    if ( $formeme =~ /^n/ and $src_formeme !~ /^(n|drop|adj:poss)/ ) {
+        #$t_node->set_gram_sempos('n.denot');
+        $t_node->set_gram_number('sg') if ($t_node->gram_number || '') ne 'pl';
+        # we're keeping degcmp since it hurts with some NNPs such as High Court
+        foreach my $gram (qw(diathesis verbmod deontmod tense aspect resultative dispmod iterativeness person)) {
+            $t_node->set_attr( "gram/$gram", undef );
+        }
+    }
+
+    # Source verbs, target adjectives or adverbs
+    # TODO correcting nouns -> adjectives, adverbs causes problems; adding degcmp, too
+    if ( $formeme =~ /^ad[jv]/ and $src_formeme =~ /^v/ ) {
+
+        $t_node->set_gram_sempos( $formeme =~ /^adj/ ? 'adj.denot' : 'adv.denot.grad.neg' );
+
+        foreach my $gram (qw(diathesis verbmod deontmod tense aspect resultative dispmod iterativeness person)) {
+            $t_node->set_attr( "gram/$gram", undef );
+        }
+    }
+
+    # Delete all grammatemes for 'x'
+    if ( $formeme eq 'x' && $src_formeme ne 'x' ) {
+        $t_node->set_attr( "gram", undef );
+    }
+    return;
+}
+
+
+sub _fix_degcmp {
+
+    my ( $self, $t_node, $src_t_node ) = @_;
+
+    my $en_tlemma = $t_node->t_lemma;
+    my $cs_tlemma = $src_t_node->t_lemma;
+
+    if (( $en_tlemma =~ /^previous/ and $cs_tlemma =~ /^dřív/ )
+        or ( $en_tlemma =~ /^farther/ and $cs_tlemma =~ /^dalek/ )
+        or ( $en_tlemma =~ /^first/ and $cs_tlemma =~ /^brz/ )
+        or ( $en_tlemma eq 'top' and $cs_tlemma eq 'dobrý' )
+        or ( $en_tlemma eq 'elderly' and $cs_tlemma eq 'starý' ) 
+        )
+    {
+        $t_node->set_gram_degcmp('pos');
+    }
+
+    return;
+}
+
+
 1;
 
 __END__
@@ -102,9 +192,6 @@ Treex::Block::T2T::CS2EN::FixGrammatemesAfterTransfer
 =head1 DESCRIPTION
 
 Handle necessary changes in grammatemes after transfer.
-
-Currently, only negation handling is implemented (adding/removing negation
-based on Czech and English lemmas).
 
 =head1 AUTHORS 
 
