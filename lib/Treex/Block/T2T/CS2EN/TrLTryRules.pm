@@ -66,6 +66,11 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     'zpestřit'        => 'liven_up|verb',
     'nasázet'         => 'place|verb',
     'solidnost'  => 'solidity|noun',
+    'vytěžování' => 'exploiting|noun',
+    'předivo' => 'fabric|noun',
+    'zaujatost' => 'bias|noun',
+    'umisťující' => 'placing|adj',
+    'skórovat' => 'score|verb',
 
     # TODO: the following is QTLeap-specific -- it should not be used elsewhere
     'písmo'        => 'font|noun',
