@@ -41,9 +41,15 @@ sub process_tnode {
         return;
     }
 
-    # nouns / pronouns
+    # nouns / pronouns / cardinal numerals
     my $sempos = $t_node->gram_sempos // '';
     if ( $sempos =~ /^n/ ) {
+
+        if ( $sempos =~ /quant/ and $self->is_cardinal($t_node) ) {
+            $a_node->set_morphcat_pos('C');
+            $a_node->set_conll_pos('CD');
+            return;
+        }
 
         $a_node->set_morphcat_pos('N');
         $a_node->set_morphcat_subpos('N');
@@ -67,7 +73,7 @@ sub process_tnode {
                 if ( $number eq 'inher' and $t_antec->gram_number ) {
                     $a_node->set_morphcat_number( $M_NUMBER_FOR{ $t_antec->gram_number } );
                 }
-            }            
+            }
             $a_node->set_morphcat_gender( $M_GENDER_FOR{$gender} // '.' );
             $a_node->set_morphcat_person( $person ne 'inher' ? $person : '.' );
             $a_node->set_conll_pos('PRP');
@@ -78,7 +84,6 @@ sub process_tnode {
                 $a_node->set_conll_pos('PRP$');
             }
         }
-
     }
 
     # verbs
@@ -141,6 +146,15 @@ sub process_tnode {
     return;
 }
 
+# return true for everything that is used as a number (not inflected)
+# exclude "thousands", "billions" etc. without a specific number
+sub is_cardinal {
+    my ( $self, $t_node ) = @_;
+    return 1 if ( $t_node->t_lemma !~ /^(hunderd|thousand|million|billion|trillion)$/ );
+    return 1 if ( any { $_->gram_sempos =~ /quant/ } $t_node->get_echildren( { or_topological => 1 } ) );
+    return 0;
+}
+
 1;
 
 __END__
@@ -165,6 +179,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2013-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2013-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
