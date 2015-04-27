@@ -6,32 +6,84 @@ extends 'Treex::Core::Block';
 
 #TODO These hacks should be removed from here and added to the translation dictionary
 Readonly my %QUICKFIX_TRANSLATION_OF => (
+
     #q{skype}      => 'Skype|NNP',
     #q{Skype}      => 'Skype|NNP',
-    'opakovač'     => 'repeater|noun',
-    'nabootovat'   => 'boot|verb',
-    'hacknutý'     => 'hacked|adj',
-    'naskenovat'   => 'scan|verb',
-    'nascanovat'   => 'scan|verb',
-    'odmrazit'     => 'unfreeze|verb',
-    'čeština'      => 'Czech|noun',
-    'virální'      => 'viral|adj',
-    'lajkování'    => 'liking|noun',
-    'DNS'          => 'DNS|noun',
-    
+    'opakovač'        => 'repeater|noun',
+    'nabootovat'       => 'boot|verb',
+    'hacknutý'        => 'hacked|adj',
+    'naskenovat'       => 'scan|verb',
+    'nascanovat'       => 'scan|verb',
+    'odmrazit'         => 'unfreeze|verb',
+    'čeština'        => 'Czech|noun',
+    'virální'        => 'viral|adj',
+    'lajkování'      => 'liking|noun',
+    'DNS'              => 'DNS|noun',
+    'rebélie'         => 'rebellion|noun',
+    'umírněný'      => 'moderate|adj',
+    'umírnění'      => 'moderation|noun',
+    'Libyjec'          => 'Libyan|noun',
+    'Aláh'            => 'Allah|noun',
+    'vyhánění'      => 'expelling|noun',
+    'odpadat'          => 'fall_off|verb',
+    'zištný'         => 'selfless|adj',
+    'šaria'           => 'Sharia|noun',
+    'dluhopisový'     => 'debit|noun',
+    'eurozóna'        => 'Eurozone|noun',
+    'mezikvartálně'  => 'between_quarters|adj',
+    'mezičtvrtletně' => 'between_quarters|adj',
+    'přepočtený'    => 'recalculated|adj',
+    '10letý'          => '10-year|adj',
+    'uhájit'          => 'defend|verb',
+    'šampionát'      => 'championship|noun',
+    'postupový'       => 'progress|adj',
+    'černohorec'      => 'Montenegrin|noun',
+    'smolař'          => 'underdog|noun',
+    'půlící'        => 'mid-field|adj',
+    'precizně'        => 'precisely|adv',
+    'provolávat'      => 'proclaim|verb',
+    'Isfahánský'     => 'Isfahan|adj',
+    'Isfahán'         => 'Isfahan|noun',
+    'uzenina'          => 'sausage|noun',
+    'příklon'        => 'tendency|noun',
+    'markantní'       => 'significant|adj',
+    'stylista'         => 'stylist|noun',
+    'našlapaný'      => 'packed|adj',
+    'zjemnit'          => 'soften|verb',
+    'obleček'         => 'cloth|noun',
+    'nastajlovat'      => 'style|verb',
+    'manažerka'       => 'manager|noun',
+    'klipsa'           => 'clip-on|noun',
+    'podlepit'         => 'underlay|verb',
+    'focení'          => 'photoshoot|noun',
+    'vyslechnout_si'   => 'hear|verb',
+    'vyslechnout'      => 'hear|verb',
+    'šichta'          => 'work|noun',
+    'závodění'      => 'racing|noun',
+    'proběhnout se'   => 'run|verb',
+    'arkádový'       => 'arcade|adj',
+    'světoborný'     => 'world-shattering|adj',
+    'zpestřit'        => 'liven_up|verb',
+    'nasázet'         => 'place|verb',
+    'solidnost'  => 'solidity|noun',
+    'vytěžování' => 'exploiting|noun',
+    'předivo' => 'fabric|noun',
+    'zaujatost' => 'bias|noun',
+    'umisťující' => 'placing|adj',
+    'skórovat' => 'score|verb',
 
     # TODO: the following is QTLeap-specific -- it should not be used elsewhere
-    'písmo'        => 'font|noun',   
-    'připojit_se'  => 'connect|verb',    
-    'kontrolka'    => 'light|noun',
-    'plocha'       => 'desktop|noun',
-    'vstup'        => 'input|noun',
-    'mezera'       => 'space|noun',
-    'prohlížení'   => 'browsing|noun',
-    'prohlížeč'    => 'browser|noun',
-    'cookies'      => 'cookies|noun',
+    'písmo'        => 'font|noun',
+    'připojit_se'  => 'connect|verb',
+    'kontrolka'     => 'light|noun',
+    'plocha'        => 'desktop|noun',
+    'vstup'         => 'input|noun',
+    'mezera'        => 'space|noun',
+    'prohlížení' => 'browsing|noun',
+    'prohlížeč'  => 'browser|noun',
+    'cookies'       => 'cookies|noun',
     'doplněk'      => 'add-on|noun',
-    'rozšíření'    => 'add-on|noun',    
+    'rozšíření' => 'add-on|noun',
 );
 
 sub process_tnode {
@@ -58,14 +110,14 @@ sub get_lemma_and_pos {
     my $src_anode = $src_tnode->get_lex_anode();
     if ($src_anode) {
         return 'Skype|NNP' if $src_anode->form =~ /^skyp[eu]m?$/;
-        
+
         # TODO not all reflexive pronouns should be deleted (but must in Batch1q yes).
-        if ($src_anode->lemma =~ /^s[ei]_/){
-            $trg_tnode->remove({children=>'rehang'});
+        if ( $src_anode->lemma =~ /^s[ei]_/ ) {
+            $trg_tnode->remove( { children => 'rehang' } );
             return;
         }
     }
-    
+
     # Don't translate other t-lemma substitutes (like #PersPron, #Cor, #QCor, #Rcp)
     return $src_tlemma if $src_tlemma =~ /^#/;
 
