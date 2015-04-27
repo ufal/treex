@@ -23,7 +23,7 @@ override 'is_apposition' => sub {
         return 1 if ( Treex::Tool::Lexicon::EN::Hypernyms::is_country( $tnode->t_lemma ) );
 
         # Seems like named entities (cities etc.) have capitalized lemmas
-        return 1 if ( $tnode->t_lemma eq ucfirst( $tnode->t_lemma ) );
+        return 1 if $tnode->t_lemma =~ /^\p{Upper}/;
 
         # "John, my best friend"
         return 1 if ( $tnode->get_children() );
