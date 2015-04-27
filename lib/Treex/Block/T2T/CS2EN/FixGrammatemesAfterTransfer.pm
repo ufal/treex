@@ -108,7 +108,7 @@ sub _fix_number {
         $en_t_node->set_gram_number('sg');
     }
     
-    if ( $en_tlemma =~ /^(fish|sheep|information)$/ ){
+    if ( $en_tlemma =~ /^(fish|sheep|information|percent)$/ ){
         $en_t_node->set_gram_number('sg');
     }
 
