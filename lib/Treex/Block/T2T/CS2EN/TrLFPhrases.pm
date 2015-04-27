@@ -20,10 +20,20 @@ my %ONE_NODE_TO_CHILD_PARENT = (
     'vysokoškolák|n' => 'student|noun university|n:attr|noun',
     'vysokoškolačka|n' => 'student|noun university|n:attr|noun',
     'Česko|n' => 'Republic|noun Czech|adj:attr|adj',
-    'sportovat|v' => 'play|verb sports|n:obj|noun',
     'kurzistka|n' => 'participant|noun course|n:attr|noun', 
     'kurzista|n' => 'participant|noun course|n:attr|noun',
-    'trenčkot|n' => 'coat|noun trench|n:attr|noun',         
+    'trenčkot|n' => 'coat|noun trench|n:attr|noun',
+    'dalajláma|n' => 'Lama|noun Dalai|n:attr|noun', 
+    'Dalajláma|n' => 'Lama|noun Dalai|n:attr|noun', 
+
+
+    'sportovat|v' => 'play|verb sports|n:obj|noun',
+    'snídat|v' => 'have|verb breakfast|n:obj|noun',    
+    'obědvat|v' => 'have|verb lunch|n:obj|noun',    
+    'večeřet|v' => 'have|verb dinner|n:obj|noun',
+    'svačit|v' => 'have|verb snack|n:obj|noun',
+    'stačit|v' => 'be|verb enough|adv|adv',
+    'jednat_se|v' => 'be|verb this|n:subj|noun',
 );
 
 
@@ -80,7 +90,8 @@ sub try_1to2 {
     
     if ( my $translation = $ONE_NODE_TO_CHILD_PARENT{$id} ) {
         my ( $node_info, $child_info ) = split / /, $translation;
-
+        
+        # create the child node
         my ( $t_lemma, $formeme, $mlayer_pos ) = split /\|/, $child_info;
         my $child = $tnode->create_child(
             {
@@ -93,18 +104,56 @@ sub try_1to2 {
                 nodetype       => 'complex',
             }
         );
-        $child->shift_after_node($tnode);
-
+        
+        # modify the parent node
         ( $t_lemma, $mlayer_pos ) = split /\|/, $node_info;
         $tnode->set_t_lemma($t_lemma);
         $tnode->set_attr( 'mlayer_pos', $mlayer_pos );
         $tnode->set_t_lemma_origin('rule-TrLFPhrases');
+        
+        # fix formeme for the parent: select most probable compatible one
+        $self->select_compatible_formeme($tnode);
+        
+        # fixing word order: assuming noun groups and light verbs 
+        if ( $mlayer_pos eq 'verb' and $formeme ne 'n:subj' ){
+            $child->shift_after_node($tnode);
+        }
+        else {
+            $child->shift_before_node($tnode);
+        }
         return;
     }
     return;
 }
 
 
+sub select_compatible_formeme {
+    my ($self, $tnode) = @_;  
+    my $tm_formemes = $tnode->get_attr('translation_model/formeme_variants');
+
+    foreach my $tm_formeme (@$tm_formemes) {
+        if ( $self->is_compatible( $tnode->get_attr('mlayer_pos'), $tm_formeme->{formeme} ) ) {
+
+            $tnode->set_formeme( $tm_formeme->{formeme} );
+            $tnode->set_formeme_origin( $tm_formeme->{origin} . '|1st-compatible' );
+            last;
+        }
+    }
+    return;    
+}
+
+
+sub is_compatible {
+    my ( $self, $pos, $formeme ) = @_;
+
+    return 1 if ( $pos eq 'verb'                       and $formeme =~ /^v/ );
+    return 1 if ( $pos =~ /^(noun|adj|num)$/           and $formeme =~ /^n/ );
+    return 1 if ( $pos =~ /^(adj|num)$/                and $formeme =~ /^adj/ );
+    return 1 if ( $pos eq 'adv'                        and $formeme =~ /^adv/ );
+    return 1 if ( $pos =~ /^(conj|part|int|punc|sym)$/ and $formeme eq 'x' );
+
+    return 0;
+}
 
 1;
 
