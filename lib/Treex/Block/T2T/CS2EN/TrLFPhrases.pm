@@ -8,9 +8,12 @@ extends 'Treex::Core::Block';
 
 # two Czech words, child t-lemma + formeme & parent t-lemma --> one English t-lemma + mlayer_pos
 my %CHILD_PARENT_TO_ONE_NODE = (
-    'nástroj|n:2 panel'    => 'toolbar|noun',
-    'zavděk|adv vzít'     => 'accept|verb',
-    'černý|adj:attr hora' => 'Montenegro|noun',
+    'nástroj|n:2 panel'     => 'toolbar|noun',
+    'zavděk|adv vzít'      => 'accept|verb',
+    'černý|adj:attr hora'  => 'Montenegro|noun',
+    'soudní|adj:attr dvůr' => 'court|noun',
+    'jízdní|adj:attr kolo' => 'bicycle|noun',
+
 );
 
 # one Czech word into two English words
@@ -25,6 +28,9 @@ my %ONE_NODE_TO_CHILD_PARENT = (
     'trenčkot|n'        => 'coat|noun trench|n:attr|noun',
     'dalajláma|n'       => 'Lama|noun Dalai|n:attr|noun',
     'Dalajláma|n'       => 'Lama|noun Dalai|n:attr|noun',
+    'kinosál|n'         => 'hall|noun cinema|n:attr|noun',
+    'spáleniště|n'    => 'area|noun burnt|adj:attr|adj',
+    'plovárna|n'        => 'pool|noun swimming|adj:attr|adj',
 
     'sportovat|v' => 'play|verb sports|n:obj|noun',
     'snídat|v'   => 'have|verb breakfast|n:obj|noun',
