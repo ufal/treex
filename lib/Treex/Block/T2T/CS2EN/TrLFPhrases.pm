@@ -13,7 +13,7 @@ my %CHILD_PARENT_TO_ONE_NODE = (
     'černý|adj:attr hora'  => 'Montenegro|noun',
     'soudní|adj:attr dvůr' => 'court|noun',
     'jízdní|adj:attr kolo' => 'bicycle|noun',
-
+    'co|n:7 daleko' => 'increasingly|adv',
 );
 
 # one Czech word into two English words

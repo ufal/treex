@@ -167,6 +167,7 @@ sub _fix_degcmp {
 
     if (( $en_tlemma =~ /^previous/ and $cs_tlemma =~ /^dřív/ )
         or ( $en_tlemma =~ /^farther/ and $cs_tlemma =~ /^dalek/ )
+        or ( $en_tlemma eq 'increasingly' and $cs_tlemma eq 'daleko' )
         or ( $en_tlemma =~ /^first/ and $cs_tlemma =~ /^brz/ )
         or ( $en_tlemma eq 'top' and $cs_tlemma eq 'dobrý' )
         or ( $en_tlemma eq 'elderly' and $cs_tlemma eq 'starý' ) 
