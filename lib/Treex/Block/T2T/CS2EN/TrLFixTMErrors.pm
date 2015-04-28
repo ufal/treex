@@ -8,9 +8,10 @@ extends 'Treex::Core::Block';
 
 sub process_tnode {
     my ( $self, $t_node ) = @_;
+    my $src_t_node = $t_node->src_tnode or return;
 
     # mít -> #PersPron (because of Czech pro-drop pronouns, the English pronoun aligns with the Czech verb :-( ) 
-    if ( $t_node->t_lemma eq '#PersPron' and $t_node->src_tnode->t_lemma eq 'mít' ) {
+    if ( $t_node->t_lemma eq '#PersPron' and $src_t_node->t_lemma eq 'mít' ) {
         $t_node->set_t_lemma('have');
         $t_node->set_attr( 'mlayer_pos', 'verb' );
         $t_node->set_t_lemma_origin('rule-TrLFixTMErrors');
@@ -19,11 +20,27 @@ sub process_tnode {
     }
     
     # i -> and
-    if ( $t_node->t_lemma eq 'and' and $t_node->src_tnode->t_lemma eq 'i' and $t_node->functor eq 'RHEM' ){
+    if ( $t_node->t_lemma eq 'and' and $src_t_node->t_lemma eq 'i' and $t_node->functor eq 'RHEM' ){
         $t_node->set_t_lemma('also');
         $t_node->set_attr( 'mlayer_pos', 'adv' );
         $t_node->set_t_lemma_origin('rule-TrLFixTMErrors');
         
+        $self->select_compatible_formeme($t_node);
+    }
+
+    # nikdo -> no one    
+    if ( $t_node->t_lemma =~ /^(no|one)$/ and $src_t_node->t_lemma eq 'nikdo' ){
+        $t_node->set_t_lemma('no_one');
+        $t_node->set_attr( 'mlayer_pos', 'noun' );
+        $t_node->set_t_lemma_origin('rule-TrLFixTMErrors');
+        $self->select_compatible_formeme($t_node);
+    }
+
+    # nijak -> in no way    
+    if ( $t_node->t_lemma =~ /^(no|way)$/ and $src_t_node->t_lemma eq 'nijak' ){
+        $t_node->set_t_lemma('in_no_way');
+        $t_node->set_attr( 'mlayer_pos', 'adv' );
+        $t_node->set_t_lemma_origin('rule-TrLFixTMErrors');
         $self->select_compatible_formeme($t_node);
     }
 
