@@ -7,6 +7,7 @@ extends 'Treex::Core::Block';
 
 Readonly my %RULE_TRANSL => (
     'drop'       => 'n:subj',  # pro-dropped Czech personal pronouns are always expressed in English
+    'n:podle+2'  => 'n:according_to+X', # instead of n:attr or n:accord_to+X
 );
 
 sub process_tnode {
