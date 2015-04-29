@@ -32,7 +32,7 @@ has 'backward_weight' => (
 has lm_dir => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'en.czeng_third',
+    default => 'en.czeng',
 );
 
 use Treex::Tool::Algorithm::TreeViterbi;
