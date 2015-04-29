@@ -40,6 +40,11 @@ with 'Treex::Core::WildAttr';
 Readonly my $_SWITCHES_REGEX => qr/^(ordered|add_self|(preceding|following|first|last)_only)$/x;
 my $CHECK_FOR_CYCLES = 1;
 
+our $LOG_NEW = 0;
+our $LOG_EDITS = 0;
+# tip: you can use Util::Eval doc='$Treex::Core::Node::LOG_EDITS=1;' in your scenario
+# Note that most attributes are not set by set_attr. See TODO below.
+
 has _zone => (
     is       => 'rw',
     writer   => '_set_zone',
@@ -88,6 +93,16 @@ sub _index_my_id {
     my $self = shift;
     $self->get_document->index_node_by_id( $self->id, $self );
     return;
+}
+
+sub _caller_signature {
+    my $level = 1;
+    my ($package, $filename, $line) = caller;
+    while ($package =~ /^Treex::Core/){
+        ($package, $filename, $line) = caller $level++;
+    }
+    $package =~ s/^Treex::Block:://;
+    return "$package#$line";
 }
 
 # ---- access to attributes ----
@@ -154,6 +169,18 @@ sub set_attr {
             my @new_ids = map { $_->{'counterpart.rf'} } @$attr_value;
             $document->index_backref( $attr_name, $self->id, \@new_ids );
         }
+    }
+
+    # TODO: most attributes are set by Moose setters,
+    # e.g. $anode->set_form("Hi") does not call set_attr.
+    # We would need to redefine all the setter to fill wild->{edited_by}.
+    if ($LOG_EDITS){
+        my $signature = $self->wild->{edited_by};
+        if ($signature) {$signature .= "\n";}
+        else {$signature = '';}
+        my $a_value = $attr_value // 'undef';
+        $signature .= "$attr_name=$a_value ". $self->_caller_signature();
+        $self->wild->{edited_by} = $signature;
     }
 
     #simple attributes can be accessed directly
@@ -427,6 +454,11 @@ sub create_child {
 #    $self->set_type_by_name( $fs_file->metaData('schema'), $type );
 
     $new_node->fix_pml_type();
+
+    # Remember which module (Treex block) and line number in its source code are responsible for creating this node.
+    if ($LOG_NEW){
+        $new_node->wild->{created_by} = $self->_caller_signature();
+    }
 
     return $new_node;
 }

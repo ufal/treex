@@ -71,6 +71,18 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     'zaujatost' => 'bias|noun',
     'umisťující' => 'placing|adj',
     'skórovat' => 'score|verb',
+    'chátrat' => 'decay|verb',
+    'památkový' => 'monument|adj',
+    'vrýt'  => 'engrave|verb',
+    'napadrť' => 'to_smithereens|adv',
+    'pepřový' => 'pepper|adj',
+    'hantýrka' => 'jargon|noun',
+    'snadnost' => 'ease|noun',
+    'iránský' => 'Iranian|adj',
+    'voluntaristický' => 'voluntary|adj',
+    'sběratelka' => 'collector|noun',
+    'sběratel' => 'collector|noun',
+    
 
     # TODO: the following is QTLeap-specific -- it should not be used elsewhere
     'písmo'        => 'font|noun',
