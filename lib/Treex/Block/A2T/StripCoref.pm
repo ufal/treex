@@ -3,24 +3,24 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-has 'type' => (
-    is          => 'ro',
-    isa         => enum( [qw/gram text all/] ),
-    required    => 1,
-    default     => 'all',
-);
+has 'persist' => ( is => 'ro', isa => enum([qw/none gram text expressed/]), default => 'none' );
 
 sub process_tnode {
-    my ( $self, $node ) = @_;
+    my ( $self, $tnode ) = @_;
 
-    my $type = $self->type;
-    
-    if ($type eq 'all') {
-        $node->set_attr( 'coref_gram.rf', undef );
-        $node->set_attr( 'coref_text.rf', undef );
+    if ($self->persist eq 'expressed') {
+        return if (!$tnode->is_generated);
+    }
+
+    if ($self->persist eq 'text') {
+        $tnode->set_attr( 'coref_gram.rf', undef );
+    }
+    elsif ($self->persist eq 'gram') {
+        $tnode->set_attr( 'coref_text.rf', undef );
     }
     else {
-        $node->set_attr( "coref_$type.rf", undef );
+        $tnode->set_attr( 'coref_gram.rf', undef );
+        $tnode->set_attr( 'coref_text.rf', undef );
     }
 }
 
@@ -38,5 +38,5 @@ testing the coreference resolving.
 
 =cut
 
-# Copyright 2011 Michal Novak
+# Copyright 2011, 2015 Michal Novak
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
