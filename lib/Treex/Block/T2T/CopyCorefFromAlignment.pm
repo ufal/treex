@@ -4,6 +4,8 @@ use Moose;
 use Treex::Core::Common;
 use 5.010;    # operator //
 
+use List::MoreUtils qw/any/;
+
 use Treex::Tool::Align::Utils;
 
 extends 'Treex::Core::Block';
@@ -35,39 +37,38 @@ sub _add_coref_nodes {
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
-    my @antecs = $self->_get_coref_nodes($tnode);
+    #my @antecs = $self->_get_coref_nodes($tnode);
+
+
+    my @antecs = $self->get_coref_text_nodes();
+    my $type = "text";
+    if (!@antecs) {
+        @antecs = $self->get_coref_gram_nodes();
+        $type = "gram";
+    }
     # nothing to do if no antecedent
-    return if (@antecs == 0);
+    return if (!@antecs);
     
     my $align_filter = {rel_types => ['monolingual']};
-    my @aligned_anaphs = Treex::Tool::Align::Utils::aligned_transitively([$tnode], [$align_filter]);
+    
+    # get aligned antedents
     my @aligned_antecs = Treex::Tool::Align::Utils::aligned_transitively(\@antecs, [$align_filter]);
+    while (!@aligned_antecs && !any {$_->functor =~ /APPS|CONJ/} @antecs) {
+        @antecs = map {$_->get_coref_nodes} @antecs;
+        @aligned_antecs = Treex::Tool::Align::Utils::aligned_transitively(\@antecs, [$align_filter]);
+    }
+    # an apposition or CONJ coordination root has no counterpart -> find it for its children
+    if (!@aligned_antecs) {
+        my @apps_conj_antecs = grep {$_->functor =~ /APPS|CONJ/} @antecs;
+        my @antec_children = map {$_->children} @apps_conj_antecs;
+        @aligned_antecs = Treex::Tool::Align::Utils::aligned_transitively(\@antec_children, [$align_filter]);
+    }
 
+    # project all links for every anaphor's counterpart
+    my @aligned_anaphs = Treex::Tool::Align::Utils::aligned_transitively([$tnode], [$align_filter]);
     foreach my $source ( @aligned_anaphs ) {
         if (!defined $source) {
-            print STDERR Dumper(\@aligned_anaphs);
-        }
-        if ( @aligned_antecs == 0 ) {
-            my $antec = $antecs[0];
-            if ( $antec->functor =~ /APPS|CONJ/ ) {
-                my @antec_children = $antec->children;
-                push @aligned_antecs, $antec_children[0]->get_aligned_nodes_of_type('monolingual');
-#                 print $aligned_antecs[0]->get_address . "\n";
-            }
-            else {
-#             elsif ( defined $antec->is_generated ) {
-                foreach my $prev_antec ( $antec->get_coref_chain ) {
-                    my @aligned_nodes = $prev_antec->get_aligned_nodes_of_type('monolingual');
-                    if ( @aligned_nodes != 0 ) {
-                        push @aligned_antecs, @aligned_nodes;
-#                         print $aligned_antecs[0]->get_address . "\n";
-                        last;
-                    }
-                }
-            }
-#             else {
-#                 print $source->get_address . "\n";
-#             }
+            log_warn "A list of aligned anaphors contains an undefined value. Source anaphor: " . $tnode->id;
         }
 
         # remove a possibly inserted 'anaph' itself from the list of its antecedents
@@ -84,7 +85,12 @@ Treex::Block::T2T::CopyCorefFromAlignment
 
 =head1 DESCRIPTION
 
-TODO
+This blocks projects coreference links through a monolingual alignment. No need to select a target zone, 
+it is defined by the monolingual alignment.
+
+If an antecedent has ho counterpart, it proceeds back in the coreference chain until any countepart of one
+of the antecedents is found. The only exception is, if the antecedent is a apposition or CONJ coordination
+root. Then, the counterparts of its children are pronounced the antecedent's counterpart.
 
 =head1 AUTHOR
 
@@ -92,6 +98,6 @@ Michal Novák <mnovak@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011, 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
