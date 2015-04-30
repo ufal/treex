@@ -71,8 +71,8 @@ Treex::Block::T2T::CopyCorefFromAlignment
 
 =head1 DESCRIPTION
 
-This blocks projects coreference links through a monolingual alignment. No need to select a target zone, 
-it is defined by the monolingual alignment.
+This blocks projects coreference links from the current zone to a zone specified by monolingual alignment.
+Thus, there is no need to specify a target zone explicitely.
 
 If an antecedent has ho counterpart, it proceeds back in the coreference chain until any countepart of one
 of the antecedents is found. The only exception is, if the antecedent is a apposition or CONJ coordination
