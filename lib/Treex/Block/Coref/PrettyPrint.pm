@@ -13,6 +13,8 @@ has '_sents_active_for' => ( is => 'rw', isa => 'HashRef', default => sub{{}} );
 sub _coref_format {
     my ($sents, $anaph_id) = @_;
 
+    my $is_correct = 0;
+
     my @words = ();
     foreach my $ttree (@$sents) {
         foreach my $tnode ($ttree->get_descendants({ordered => 1})) {
@@ -25,6 +27,7 @@ sub _coref_format {
             }
             if ($tnode->wild->{coref_diag}{sys_ante_for}{$anaph_id} && $tnode->wild->{coref_diag}{key_ante_for}{$anaph_id}) {
                 push @colors, "green";
+                $is_correct = 1;
             }
             elsif ($tnode->wild->{coref_diag}{key_ante_for}{$anaph_id}) {
                 push @colors, "cyan";
@@ -41,7 +44,9 @@ sub _coref_format {
             push @words, $word;
         }
     }
-    return join " ", @words;
+    my $str = $is_correct ? "OK:\t" : "ERR:\t";
+    $str .= join " ", @words;
+    return $str;
 }
 
 sub process_ttree {
