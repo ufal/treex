@@ -48,7 +48,7 @@ sub process_tnode {
     else {
         @mention_nodes = $tnode->get_descendants({ordered => 1, add_self => 1});
     }
-    return if (!@mention_anodes);
+    return if (!@mention_nodes);
     
     # the beginning of the mention
     push @{$mention_nodes[0]->wild->{coref_mention_start}}, $entity_idx;
