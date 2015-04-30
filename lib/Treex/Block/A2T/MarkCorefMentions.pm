@@ -7,6 +7,7 @@ use Treex::Tool::Coreference::Utils;
 extends 'Treex::Core::Block';
 
 has 'layer' => ( is => 'ro', isa => enum([qw/a t/]), default => 'a' );
+has 'only_heads' => ( is => 'ro', isa => 'Bool', default => 1 );
 
 has '_entities' => ( is => 'rw', isa => 'HashRef[Int]', default => sub {{}} );
 
@@ -43,10 +44,20 @@ sub process_tnode {
 # TODO what about discarding relative clauses
     if ($self->layer eq 'a') {
         my $alex = $tnode->get_lex_anode();
-        @mention_nodes = $alex ? $alex->get_descendants({ordered => 1, add_self => 1}) : ();
+        if ($self->only_heads) {
+            @mention_nodes = ( $alex );
+        }
+        else {
+            @mention_nodes = $alex ? $alex->get_descendants({ordered => 1, add_self => 1}) : ();
+        }
     }
     else {
-        @mention_nodes = $tnode->get_descendants({ordered => 1, add_self => 1});
+        if ($self->only_heads) {
+            @mention_nodes = ( $tnode );
+        }
+        else {
+            @mention_nodes = $tnode->get_descendants({ordered => 1, add_self => 1});
+        }
     }
     return if (!@mention_nodes);
     
