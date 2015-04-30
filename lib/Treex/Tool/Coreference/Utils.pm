@@ -28,7 +28,19 @@ sub get_coreference_entities {
     # individual coreference chains correspond to weakly connected
     # components in the coreference graph 
     my @chains = $coref_graph->weakly_connected_components;
-    return @chains;
+
+    my @sorted_chains;
+    foreach my $chain (@chains) {
+        if (defined $chain->[0]->wild->{doc_ord}) {
+            my @sorted_chain = sort {$a->wild->{doc_ord} <=> $b->wild->{doc_ord}} @$chain;
+            push @sorted_chains, \@sorted_chain;
+        }
+        else {
+            push @sorted_chains, $chain;
+        }
+    }
+
+    return @sorted_chains;
 }
 
 1;
