@@ -8,6 +8,7 @@ extends 'Treex::Core::Block';
 
 has 'layer' => ( is => 'ro', isa => enum([qw/a t/]), default => 'a' );
 has 'only_heads' => ( is => 'ro', isa => 'Bool', default => 1 );
+has 'clear' => ( is => 'ro', isa => 'Bool', default => 1 );
 
 has '_entities' => ( is => 'rw', isa => 'HashRef[Int]', default => sub {{}} );
 
@@ -22,6 +23,17 @@ has '_entities' => ( is => 'rw', isa => 'HashRef[Int]', default => sub {{}} );
 
 before 'process_document' => sub {
     my ($self, $doc) = @_;
+
+    if ($self->clear) {
+        my @trees = map { $_->get_tree($self->language, $self->layer, $self->selector) } $doc->get_bundles;
+        foreach my $tree (@trees) {
+            foreach my $node ($tree->get_descendants) {
+                delete $node->wild->{coref_mention_start};
+                delete $node->wild->{coref_mention_end};
+            }
+        }
+    }
+
     my @ttrees = map { $_->get_tree($self->language,'t',$self->selector) } $doc->get_bundles;
     my @chains = Treex::Tool::Coreference::Utils::get_coreference_entities(@ttrees);
     my $entity_idx = 1;
@@ -35,7 +47,7 @@ before 'process_document' => sub {
 
 sub process_tnode {
     my ($self, $tnode) = @_;
-
+    
 #    return if (!_is_coref_text_mention($tnode));
     my $entity_idx = $self->_entities->{$tnode->id};
     return if (!defined $entity_idx);
