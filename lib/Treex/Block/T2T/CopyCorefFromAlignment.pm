@@ -15,6 +15,27 @@ sub process_tnode {
 
     #my @antecs = $self->_get_coref_nodes($tnode);
 
+    my $align_filter = {rel_types => ['monolingual']};
+    my @aligned_anaphs = Treex::Tool::Align::Utils::aligned_transitively([$tnode], [$align_filter]);
+
+    # project coref diagnostics first
+    my $coref_diag = $tnode->wild->{coref_diag};
+    if (defined $coref_diag) {
+        foreach my $aligned_anaph (@aligned_anaphs) {
+            foreach my $key (keys %$coref_diag) {
+                if ($key eq "cand_for") {
+                    my @cands = map {$tnode->get_document->get_node_by_id($_)} keys %{$coref_diag->{$key}};
+                    my @aligned_cands = Treex::Tool::Align::Utils::aligned_transitively(\@cands, [$align_filter]);
+                    my %ali_cands_hash = map {$_->id => 1} @aligned_cands;
+                    $aligned_anaph->wild->{coref_diag}{$key} = \%ali_cands_hash;
+                }
+                else {
+                    $aligned_anaph->wild->{coref_diag}{$key} = $coref_diag->{$key};
+                }
+
+            }
+        }
+    }
 
     my @antecs = $tnode->get_coref_text_nodes();
     my $type = "text";
@@ -25,7 +46,6 @@ sub process_tnode {
     # nothing to do if no antecedent
     return if (!@antecs);
     
-    my $align_filter = {rel_types => ['monolingual']};
     
     # get aligned antedents
     my @aligned_antecs = Treex::Tool::Align::Utils::aligned_transitively(\@antecs, [$align_filter]);
@@ -46,7 +66,6 @@ sub process_tnode {
     }
 
     # project all links for every anaphor's counterpart
-    my @aligned_anaphs = Treex::Tool::Align::Utils::aligned_transitively([$tnode], [$align_filter]);
     foreach my $source ( @aligned_anaphs ) {
         if (!defined $source) {
             log_warn "A list of aligned anaphors contains an undefined value. Source anaphor: " . $tnode->id;
