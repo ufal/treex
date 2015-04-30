@@ -32,7 +32,8 @@ sub _coref_format {
                 push @colors, "red";
             }
 
-            my $word = $tnode->t_lemma;
+            my $anode = $tnode->get_lex_anode;
+            my $word = defined $anode ? $anode->form : $tnode->t_lemma;
             if (@colors) {
                 $word = color(join " ", @colors) . $word . color("reset");
             }
