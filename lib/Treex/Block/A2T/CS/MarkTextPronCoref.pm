@@ -53,7 +53,11 @@ override '_build_ante_cands_selector' => sub {
 override '_build_anaph_cands_filter' => sub {
     my ($self) = @_;
     my $args = {
-        skip_nonref => 1,
+        #skip_nonref => 1,
+        # both expressed and unexpressed
+        expressed => 0,
+        # including reflexive pronouns
+        reflexive => 0,
     };
     my $acf = Treex::Tool::Coreference::NodeFilter::PersPron->new({args => $args});
     return $acf;
