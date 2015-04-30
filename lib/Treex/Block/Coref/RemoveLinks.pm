@@ -3,20 +3,20 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-has 'persist' => ( is => 'ro', isa => enum([qw/none gram text expressed/]), default => 'none' );
+has 'type' => ( is => 'ro', isa => enum([qw/all gram text/]), default => 'all' );
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
-    if ($self->persist eq 'expressed') {
-        return if (!$tnode->is_generated);
-    }
+#    if ($self->type eq 'expressed') {
+#        return if ($tnode->is_generated);
+#    }
 
-    if ($self->persist eq 'text') {
-        $tnode->set_attr( 'coref_gram.rf', undef );
-    }
-    elsif ($self->persist eq 'gram') {
+    if ($self->type eq 'text') {
         $tnode->set_attr( 'coref_text.rf', undef );
+    }
+    elsif ($self->type eq 'gram') {
+        $tnode->set_attr( 'coref_gram.rf', undef );
     }
     else {
         $tnode->set_attr( 'coref_gram.rf', undef );
