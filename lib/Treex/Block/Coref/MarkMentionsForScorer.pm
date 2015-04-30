@@ -1,4 +1,4 @@
-package Treex::Block::A2T::MarkCorefMentions;
+package Treex::Block::Coref::MarkMentionsForScorer;
 use Moose;
 use Treex::Core::Common;
 
@@ -88,14 +88,14 @@ __END__
 
 =head1 NAME
 
-Treex::Block::A2T::MarkCorefMentions
+Treex::Block::Coref::MarkMentionsForScorer
 
 =head1 DESCRIPTION
 
-This block determines the coreference mentions by setting the wild attributes
+This block marks the coreference mentions by setting the wild attributes
 "coref_mention_start" and "coref_mention_end".
 
-This block usually precedes Treex::Block::Write::SemEval2010, which prints out
+This block is usually followed by Treex::Block::Write::SemEval2010, which prints out
 the data in the format consumed by CoNLL coreference resolution scorer.
 
 =head1 PARAMETERS
