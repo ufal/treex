@@ -10,40 +10,16 @@ use Treex::Tool::Align::Utils;
 
 extends 'Treex::Core::Block';
 
-has 'type' => (
-    is          => 'ro',
-    isa         => enum( [qw/gram text/] ),
-    required    => 1,
-    default     => 'text',
-);
-
-sub _get_coref_nodes {
-    my ($self, $node) = @_;
-
-    my $method = $node->meta->find_method_by_name(
-            'get_coref_'.$self->type.'_nodes');
-    my @nodes = $method->execute( $node );
-    return @nodes;
-}
-
-sub _add_coref_nodes {
-    my ($self, $node, @antec) = @_;
-
-    my $method = $node->meta->find_method_by_name(
-            'add_coref_'.$self->type.'_nodes');
-    $method->execute( $node, @antec );
-}
-
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
     #my @antecs = $self->_get_coref_nodes($tnode);
 
 
-    my @antecs = $self->get_coref_text_nodes();
+    my @antecs = $tnode->get_coref_text_nodes();
     my $type = "text";
     if (!@antecs) {
-        @antecs = $self->get_coref_gram_nodes();
+        @antecs = $tnode->get_coref_gram_nodes();
         $type = "gram";
     }
     # nothing to do if no antecedent
@@ -53,10 +29,15 @@ sub process_tnode {
     
     # get aligned antedents
     my @aligned_antecs = Treex::Tool::Align::Utils::aligned_transitively(\@antecs, [$align_filter]);
-    while (!@aligned_antecs && !any {$_->functor =~ /APPS|CONJ/} @antecs) {
+    while (@antecs && !@aligned_antecs && !any {$_->functor =~ /APPS|CONJ/} @antecs) {
         @antecs = map {$_->get_coref_nodes} @antecs;
+        #print STDERR $tnode->id . "\n";
+        #print STDERR join " ", map {$_ ? $_->id : "undef"} @antecs;
+        #print STDERR "\n";
         @aligned_antecs = Treex::Tool::Align::Utils::aligned_transitively(\@antecs, [$align_filter]);
     }
+    # nothing to do if no antecedent
+    return if (!@antecs);
     # an apposition or CONJ coordination root has no counterpart -> find it for its children
     if (!@aligned_antecs) {
         my @apps_conj_antecs = grep {$_->functor =~ /APPS|CONJ/} @antecs;
@@ -73,7 +54,12 @@ sub process_tnode {
 
         # remove a possibly inserted 'anaph' itself from the list of its antecedents
         @aligned_antecs = grep {$_ != $source} @aligned_antecs;
-        $self->_add_coref_nodes( $source, @aligned_antecs );
+        if ($type eq "gram") {
+            $source->add_coref_gram_nodes(@aligned_antecs);
+        }
+        else {
+            $source->add_coref_text_nodes(@aligned_antecs);
+        }
     }
 }
 
