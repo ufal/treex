@@ -150,7 +150,7 @@ CoNLL coreference resolution scorer (http://conll.cemantix.org/2012/software.htm
 One can decide, if the data is printed from the a-layer or from the t-layer.
 
 Note that this block requires the wild attributes "coref_mention_start" and "coref_mention_end"
-already been set. It can be ensured by running Treex::Block::A2T::MarkCorefMentions.
+already been set. It can be ensured by running Treex::Block::Coref::MarkMentionsForScorer.
 
 =head1 PARAMETERS
 
