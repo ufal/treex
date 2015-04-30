@@ -12,9 +12,7 @@ use Treex::Tool::Coreference::NounAnteCandsGetter;
 use Treex::Tool::Coreference::NodeFilter::PersPron;
 
 has '+model_path' => (
-#    default => '/home/mnovak/projects/czeng_coref/tmp/ml/run_2014-10-10_16-58-29.cs.mono_all_featset/001.4e224b442c.featset/013.9987f.mlmethod/model/train.pdt.cs.analysed.vw.ranking.model', # the old version of VW doesn't work with Ubuntu 14.04, the model below had to be retrained
-default => '/home/mnovak/projects/czeng_coref/tmp/ml/run_2015-04-21_11-24-40_28543.cs_train-test_original_single-valued_genders/003.fcc2aaeffe.featset/004.6d48c.mlmethod/model/0001.0016.vw.ranking.model',
-default => '/home/mnovak/projects/czeng_coref/tmp/ml/run_2015-04-21_14-22-21_4058.cs_train-test_new_multi-valued_genders/003.fcc2aaeffe.featset/004.6d48c.mlmethod/model/train.pdt.cs.analysed.vw.ranking.model',
+    default => '/home/mnovak/projects/czeng_coref/tmp/ml/run_2014-10-10_16-58-29.cs.mono_all_featset/001.4e224b442c.featset/013.9987f.mlmethod/model/train.pdt.cs.analysed.vw.ranking.model', # the old version of VW doesn't work with Ubuntu 14.04, the model below had to be retrained
 #    default => '/home/mnovak/projects/czeng_coref/tmp/ml/tte_feats_2013-11-17_13-35-54/4e224b442c/model/pdt.cs.analysed.vw.ranking.8411a.model',
 #    default => 'data/models/coreference/CS/perceptron/text.perspron.analysed',
 #    default => 'data/models/coreference/CS/gibbs/text.perspron.analysed',
