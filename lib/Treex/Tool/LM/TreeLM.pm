@@ -70,7 +70,7 @@ sub get_prob_LdFd_given_Lg {
     # Also conjunctions (J) were discarded when training.
     # So there should be uniform distribution???
     # No check for Interset-style PoS
-    if (length $Pd == 1 && $Pd !~ /[NAPCVDIT]/){
+    if (length $Pd <= 1 && $Pd !~ /[NAPCVDIT]/){
         print STDERR "result=0.001 (Pd !~ /[NAPCVDIT]/)\n" if $verbose;
         return 0.001;
     }
