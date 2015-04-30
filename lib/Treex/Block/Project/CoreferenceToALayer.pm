@@ -6,6 +6,8 @@ use Treex::Tool::Coreference::Utils;
 
 extends 'Treex::Core::Block';
 
+has 'layer' => ( is => 'ro', isa => enum([qw/a t/]), default => 'a' );
+
 has '_entities' => ( is => 'rw', isa => 'HashRef[Int]', default => sub {{}} );
 
 # project only nodes that are not anaphors of grammatical coreference
@@ -15,17 +17,6 @@ sub _is_coref_text_mention {
     my @is_text_anaph = $tnode->get_coref_text_nodes();
     my @is_gram_anaph = $tnode->get_coref_gram_nodes();
     return ((@is_ante || @is_text_anaph) && !@is_gram_anaph);
-}
-
-# this could be parametrized to discard relative clauses from mentions
-sub _get_mention_anodes {
-    my ($tnode) = @_;
-
-    my $alex = $tnode->get_lex_anode();
-    return () if (!defined $alex);
-
-    my @mention_anodes = $alex->get_descendants({ordered => 1, add_self => 1});
-    return @mention_anodes;
 }
 
 before 'process_document' => sub {
@@ -45,16 +36,24 @@ sub process_tnode {
     my ($self, $tnode) = @_;
 
     return if (!_is_coref_text_mention($tnode));
-
-    my @mention_anodes = _get_mention_anodes($tnode);
-    return if (!@mention_anodes);
-    
     my $entity_idx = $self->_entities->{$tnode->id};
 
+    
+    my @mention_nodes;
+# TODO what about discarding relative clauses
+    if ($self->layer eq 'a') {
+        my $alex = $tnode->get_lex_anode();
+        @mention_nodes = $alex ? $alex->get_descendants({ordered => 1, add_self => 1}) : ();
+    }
+    else {
+        @mention_nodes = $tnode->get_descendants({ordered => 1, add_self => 1});
+    }
+    return if (!@mention_anodes);
+    
     # the beginning of the mention
-    push @{$mention_anodes[0]->wild->{coref_mention_start}}, $entity_idx;
+    push @{$mention_nodes[0]->wild->{coref_mention_start}}, $entity_idx;
     # the end of the mention
-    push @{$mention_anodes[-1]->wild->{coref_mention_end}}, $entity_idx;
+    push @{$mention_nodes[-1]->wild->{coref_mention_end}}, $entity_idx;
 }
 
 1;
@@ -69,7 +68,21 @@ Treex::Block::Project::CoreferenceToALayer
 
 =head1 DESCRIPTION
 
-Project coreference links from the t-layer onto the a-layer to get the 'mention' representation traditionally used in English CR.
+This block determines the coreference mentions by setting the wild attributes
+"coref_mention_start" and "coref_mention_end".
+
+This block usually precedes Treex::Block::Write::SemEval2010, which prints out
+the data in the format consumed by CoNLL coreference resolution scorer.
+
+=head1 PARAMETERS
+
+=over
+
+=item C<layer>
+
+Which layer is taken as a basis (default "a").
+
+=back
 
 =head1 AUTHOR
 
@@ -77,6 +90,6 @@ Michal Novák <mnovak@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2013 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2013, 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
