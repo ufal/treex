@@ -16,11 +16,13 @@ has 'layer' => ( is => 'ro', isa => enum([qw/a t/]), default => 'a' );
 
 override 'print_header' => sub {
     my ($self, $doc) = @_;
-    print {$self->_file_handle} "#begin document " . $doc->full_filename . "\n";
+    my $doc_name = $doc->file_stem;
+    print {$self->_file_handle} "#begin document " . $doc_name . "\n";
 };
 override 'print_footer' => sub {
     my ($self, $doc) = @_;
-    print {$self->_file_handle} "#end document " . $doc->full_filename . "\n";
+    my $doc_name = $doc->file_stem;
+    print {$self->_file_handle} "#end document " . $doc_name . "\n";
 };
 
 sub process_zone {
