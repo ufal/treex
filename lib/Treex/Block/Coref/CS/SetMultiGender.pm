@@ -16,7 +16,7 @@ my $GENDER_LABEL = {
     X => "anim/inan/fem/neut",
     Y => "anim/inan",
     Z => "anim/inan/neut",
-}
+};
 
 sub process_tnode {
     my ($self, $tnode) = @_;
@@ -35,7 +35,7 @@ sub process_tnode {
             if ($anode->tag =~ /^PS...(.)/) {
                 $gender = $GENDER_LABEL->{$1} // "anim/inan/fem/neut";
             }
-            elsif ($anode->tag =~ /^P.(.)/ {
+            elsif ($anode->tag =~ /^P.(.)/) {
                 $gender = $GENDER_LABEL->{$1} // "anim/inan/fem/neut";
             }
             else {
