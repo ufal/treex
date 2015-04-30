@@ -1,4 +1,4 @@
-package Treex::Block::Project::CoreferenceToALayer;
+package Treex::Block::A2T::MarkCorefMentions;
 use Moose;
 use Treex::Core::Common;
 
@@ -64,7 +64,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::Project::CoreferenceToALayer
+Treex::Block::A2T::MarkCorefMentions
 
 =head1 DESCRIPTION
 
