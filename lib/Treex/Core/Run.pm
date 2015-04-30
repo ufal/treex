@@ -454,12 +454,9 @@ sub _execute_scenario {
     return;
 }
 
-
-sub _init_scenario
-{
-    my $self = shift;
-
-    # Parameters can contain whitespaces that should be preserved
+# Parameters can contain whitespaces that should be preserved
+sub _construct_scenario_string_with_quoted_whitespace {
+    my ($self) = @_;
     my @arguments;
     foreach my $arg ( @{ $self->extra_argv } ) {
         if ( $arg =~ /(\S+)=(.*\s.*)$/ ) {
@@ -471,7 +468,13 @@ sub _init_scenario
             push @arguments, $arg;
         }
     }
-    my $scen_str = join ' ', @arguments;
+    return join ' ', @arguments;
+}
+
+sub _init_scenario {
+    my ($self) = @_;
+
+    my $scen_str = $self->_construct_scenario_string_with_quoted_whitespace();
 
     # some command line options are just shortcuts for blocks; the blocks are added to the scenario now
     if ( $self->filenames ) {
