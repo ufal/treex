@@ -1,9 +1,5 @@
 package Treex::Tool::Coreference::NodeFilter::PersPron;
 
-########################################################
-######## TODO: replace relat_cs with pers_cs ###########
-########################################################
-
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Lexicon::CS;
