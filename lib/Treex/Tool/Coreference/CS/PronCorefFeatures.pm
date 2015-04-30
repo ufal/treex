@@ -210,16 +210,16 @@ override '_unary_features' => sub {
 
     if ($type eq 'cand') {
         ( $coref_features->{c_cand_gen}, $coref_features->{c_cand_num} ) = _get_cand_gennum( $node );
-        print STDERR "UNDEF: " . $node->get_address ."\n" if (!defined $coref_features->{c_cand_gen});
+        #print STDERR "UNDEF: " . $node->get_address ."\n" if (!defined $coref_features->{c_cand_gen});
         for my $gen (qw/anim inan fem neut/) {
-            $coref_features->{'c_cand_gen_'.$gen} = ($coref_features->{c_cand_gen} =~ /$gen/) || 0;
+            $coref_features->{'c_cand_gen_'.$gen} = (defined $coref_features->{c_cand_gen} && $coref_features->{c_cand_gen} =~ /$gen/) || 0;
         }
     }
     else {
         $coref_features->{c_anaph_gen} = $node->wild->{'multi_gram/gender'} // $node->gram_gender;
         $coref_features->{c_anaph_num} = $node->gram_number;
         for my $gen (qw/anim inan fem neut/) {
-            $coref_features->{'c_anaph_gen_'.$gen} = ($coref_features->{c_anaph_gen} =~ /$gen/) || 0;
+            $coref_features->{'c_anaph_gen_'.$gen} = (defined $coref_features->{c_cand_gen} && $coref_features->{c_anaph_gen} =~ /$gen/) || 0;
         }
     }
 
