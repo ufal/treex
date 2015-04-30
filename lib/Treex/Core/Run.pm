@@ -322,9 +322,8 @@ sub _execute {
 
     if ( $self->dump_scenario || $self->dump_required_files ) {
 
-        # TODO: execute_locally does the same work as the following line in a more safe ways
-        # (If someone wants to run treex -d My::Block my_scen.scen)
-        my $scen_str = join ' ', @{ $self->extra_argv };
+        # If someone wants to run treex -d My::Block my_scen.scen
+        my $scen_str = $self->_construct_scenario_string_with_quoted_whitespace();
         $self->set_scenario( Treex::Core::Scenario->new( scenario_string => $scen_str, runner => $self ) );
 
         # TODO: Do it properly - perhaps, add a Scenario option to not load all the blocks.
