@@ -104,7 +104,7 @@ sub _extract_data {
         $pos = defined $lex_anode ? $lex_anode->tag : $NOT_SET;
         $deprel = $node->functor;
     }
-    $id = $node->ord;
+    $id = $node->wild->{doc_ord} // $node->ord;
     $head = !$node->is_root ? $node->get_parent->ord : 0;
     $coref = _create_coref_str($node) || $NOT_SET;
 
