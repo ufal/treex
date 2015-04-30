@@ -12,13 +12,13 @@ has 'only_heads' => ( is => 'ro', isa => 'Bool', default => 1 );
 has '_entities' => ( is => 'rw', isa => 'HashRef[Int]', default => sub {{}} );
 
 # project only nodes that are not anaphors of grammatical coreference
-sub _is_coref_text_mention {
-    my ($tnode) = @_;
-    my @is_ante = ($tnode->get_referencing_nodes('coref_gram.rf'), $tnode->get_referencing_nodes('coref_text.rf'));
-    my @is_text_anaph = $tnode->get_coref_text_nodes();
-    my @is_gram_anaph = $tnode->get_coref_gram_nodes();
-    return ((@is_ante || @is_text_anaph) && !@is_gram_anaph);
-}
+#sub _is_coref_text_mention {
+#    my ($tnode) = @_;
+#    my @is_ante = ($tnode->get_referencing_nodes('coref_gram.rf'), $tnode->get_referencing_nodes('coref_text.rf'));
+#    my @is_text_anaph = $tnode->get_coref_text_nodes();
+#    my @is_gram_anaph = $tnode->get_coref_gram_nodes();
+#    return ((@is_ante || @is_text_anaph) && !@is_gram_anaph);
+#}
 
 before 'process_document' => sub {
     my ($self, $doc) = @_;
@@ -36,8 +36,9 @@ before 'process_document' => sub {
 sub process_tnode {
     my ($self, $tnode) = @_;
 
-    return if (!_is_coref_text_mention($tnode));
+#    return if (!_is_coref_text_mention($tnode));
     my $entity_idx = $self->_entities->{$tnode->id};
+    return if (!defined $entity_idx);
 
     
     my @mention_nodes;
