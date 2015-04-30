@@ -12,11 +12,7 @@ use Treex::Tool::Coreference::NounAnteCandsGetter;
 use Treex::Tool::Coreference::NodeFilter::PersPron;
 
 has '+model_path' => (
-    # this model does not works with VW 7.7 but not 7.10
-    default => '/home/mnovak/projects/czeng_coref/tmp/ml/run_2014-10-10_16-58-29.cs.mono_all_featset/001.4e224b442c.featset/013.9987f.mlmethod/model/train.pdt.cs.analysed.vw.ranking.model', # the old version of VW doesn't work with Ubuntu 14.04, the model below had to be retrained
-#    default => '/home/mnovak/projects/czeng_coref/tmp/ml/tte_feats_2013-11-17_13-35-54/4e224b442c/model/pdt.cs.analysed.vw.ranking.8411a.model',
-#    default => 'data/models/coreference/CS/perceptron/text.perspron.analysed',
-#    default => 'data/models/coreference/CS/gibbs/text.perspron.analysed',
+    default => 'data/models/coreference/CS/vw/perspron.2015-04-29.train.pdt.cs.vw.ranking.model',
 );
 
 override '_build_ranker' => sub {
