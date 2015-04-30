@@ -1,4 +1,4 @@
-package Treex::Block::A2T::StripCoref;
+package Treex::Block::Coref::RemoveLinks;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -29,7 +29,7 @@ __END__
 
 =over
 
-=item Treex::Block::A2T::StripCoref
+=item Treex::Block::Coref::RemoveLinks
 
 Removes coreference links from tectogrammatical trees. For a purpose of
 testing the coreference resolving.
