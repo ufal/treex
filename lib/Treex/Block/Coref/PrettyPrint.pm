@@ -7,6 +7,7 @@ use Treex::Tool::Coreference::Utils;
 
 extends 'Treex::Block::Write::BaseTextWriter';
 
+has '+extension' => ( default => '.txt' );
 has '_sents_active_for' => ( is => 'rw', isa => 'HashRef', default => sub{{}} );
 
 sub _coref_format {
@@ -98,6 +99,8 @@ __END__
 Treex::Block::Coref::PrettyPrint
 
 =head1 DESCRIPTION
+
+This module is used to pretty print the results of coreference resolution.
 
 =head1 AUTHOR
 
