@@ -9,7 +9,7 @@ sub process_tnode {
     my $anode = $tnode->get_lex_anode();
 
     # select only possessive nouns
-    if ( ( $tnode->gram_sempos // '' ) !~ /^n/ or $tnode->formeme ne 'n:poss' or $tnode->t_lemma eq '#PersPron' ) {
+    if ( ( $tnode->gram_sempos // '' ) !~ /^n/ or $tnode->formeme ne 'n:poss' or $tnode->t_lemma =~ /^(#PersPron|whose)/ ) {
         return;
     }
     my $form = '\'s';

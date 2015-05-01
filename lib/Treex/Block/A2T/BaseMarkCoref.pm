@@ -18,6 +18,8 @@ has 'anaphor_as_candidate' => (
     documentation => 'joint anaphoricity determination and antecedent selection',
 );
 
+has 'diagnostics' => ( is => 'ro', isa => 'Bool', default => 0);
+
 # TODO  the best would be to pick among several rankers and corresponding models
 has '_ranker' => (
     is          => 'ro',
@@ -98,6 +100,11 @@ sub process_tnode {
     if ( $self->_anaph_cands_filter->is_candidate( $t_node ) ) {
 
         my @ante_cands = $self->_ante_cands_selector->get_candidates( $t_node );
+
+        if ($self->diagnostics) {
+            $t_node->wild->{coref_diag}{is_anaph} = 1;
+            $_->wild->{coref_diag}{cand_for}{$t_node->id} = 1 foreach (@ante_cands);
+        }
 
 # DEBUG
 #        my $debug = 0;

@@ -9,40 +9,26 @@ use Treex::Tool::Parser::MSTperl::Sentence;
 use Graph 0.94;
 use Graph::ChuLiuEdmonds 0.05;    #returns MINIMUM spanning tree
 
-# TODO: support for weights (needs to know the number of parses to combine)
-# has weights => ( is => 'rw', isa => 'ArrayRef[Num]', lazy => 1, builder => '_build_weights' );
-
-# sub _build_weights {
-#     my ($self) = @_;
-# 
-#     my $weights = [];
-#     foreach my $parser (@{$self->parsers}) {
-#         push @$weights, 1;
-#     }
-# 
-#     return $weights;
-# }
-
 sub parse_sentence {
 
     # (Array[Treex::Tool::Parser::MSTperl::Sentence] $sentence_parses)
-    my ( $self, $sentence_parses ) = @_;
+    my ( $self, $sentence_parses, $weights ) = @_;
 
     # parse sentence (does not modify $sentence)
-    my $sentence_parsed = $self->parse_sentences_internal($sentence_parses);
+    my $sentence_parsed = $self->parse_sentences_internal($sentence_parses, $weights);
     return $sentence_parsed->toParentOrdsArray();
 }
 
 sub parse_sentence_internal {
 
     # (Array[Treex::Tool::Parser::MSTperl::Sentence] $sentence_parses)
-    my ( $self, $sentence_parses ) = @_;
+    my ( $self, $sentence_parses, $weights ) = @_;
 
     # copy the sentence (do not modify $sentence directly)
     my $sentence_working_copy = $sentence_parses->[0]->copy_nonparsed();
 
     # run the actual metaparsing
-    my $edges = $self->parse_sentence_full($sentence_working_copy, $sentence_parses);
+    my $edges = $self->parse_sentence_full($sentence_working_copy, $sentence_parses, $weights);
 
     #results
     foreach my $edge ( @$edges ) {
@@ -56,9 +42,11 @@ sub parse_sentence_internal {
 # name kept for simílarity with MSTperl::Parser
 # even though there is no other way of parsing the sentence than "full"
 sub parse_sentence_full {
-    my ($self, $sentence_working_copy, $sentence_parses) = @_;
+    my ($self, $sentence_working_copy, $sentence_parses, $weights_ar) = @_;
 
     my $sentence_length = $sentence_working_copy->len();
+
+    my @weights = defined $weights_ar ? @$weights_ar : (1) x scalar(@$sentence_parses);
 
     # initialize a complete graph
     my $graph = Graph->new(
@@ -76,11 +64,9 @@ sub parse_sentence_full {
 
     # run the parsers
     # add up the parses into edge weights in $graph
-#     use List::MoreUtils qw( each_array );
-#     my $it = each_array( @{$sentence_parses}, @{$self->weights} );
-#     while ( my ($sentence_parse, $weight) = $it->() ) {
-    my $weight = 1;
-    foreach my $sentence_parse (@$sentence_parses) {
+    use List::MoreUtils qw( each_array );
+    my $it = each_array( @{$sentence_parses}, @weights );
+    while ( my ($sentence_parse, $weight) = $it->() ) {
         foreach my $child (@{$sentence_parse->nodes}) {
             my $child_ord = $child->ord;
             my $parent_ord = $child->parentOrd;

@@ -1,6 +1,7 @@
 package Treex::Block::Write::SemEval2010;
 
 use Moose;
+use Moose::Util::TypeConstraints;
 use Treex::Core::Common;
 
 extends 'Treex::Block::Write::BaseTextWriter';
@@ -11,18 +12,35 @@ has '+language' => ( required => 1 );
 
 has '+extension' => ( default => '.conll' );
 
+has 'layer' => ( is => 'ro', isa => enum([qw/a t/]), default => 'a' );
+
 override 'print_header' => sub {
     my ($self, $doc) = @_;
-    print {$self->_file_handle} "#begin document " . $doc->full_filename . "\n";
+    my $doc_name = $doc->file_stem;
+    print {$self->_file_handle} "#begin document " . $doc_name . "\n";
 };
 override 'print_footer' => sub {
     my ($self, $doc) = @_;
-    print {$self->_file_handle} "#end document " . $doc->full_filename . "\n";
+    my $doc_name = $doc->file_stem;
+    print {$self->_file_handle} "#end document " . $doc_name . "\n";
 };
 
-sub process_atree {
-    my ($self, $atree) = @_;
-    my @nodes = $atree->get_descendants({ordered => 1});
+sub process_zone {
+    my ($self, $zone) = @_;
+
+    my $tree;
+    if ($self->layer eq "a") {
+        $tree = $zone->get_atree;
+    }
+    else {
+        $tree = $zone->get_ttree;
+    }
+    $self->_process_tree($tree);
+}
+
+sub _process_tree {
+    my ($self, $tree) = @_;
+    my @nodes = $tree->get_descendants({ordered => 1});
 
     my @data = map {_extract_data($_)} @nodes;
    
@@ -31,10 +49,10 @@ sub process_atree {
 }
 
 sub _create_coref_str {
-    my ($anode) = @_;
+    my ($node) = @_;
 
-    my @start = defined $anode->wild->{coref_mention_start} ? sort {$a <=> $b} @{$anode->wild->{coref_mention_start}} : ();
-    my @end = defined $anode->wild->{coref_mention_end} ? sort {$a <=> $b} @{$anode->wild->{coref_mention_end}} : ();
+    my @start = defined $node->wild->{coref_mention_start} ? sort {$a <=> $b} @{$node->wild->{coref_mention_start}} : ();
+    my @end = defined $node->wild->{coref_mention_end} ? sort {$a <=> $b} @{$node->wild->{coref_mention_end}} : ();
     
     my @strs = ();
 
@@ -69,23 +87,41 @@ sub _create_coref_str {
 }
 
 sub _extract_data {
-    my ($anode) = @_;
+    my ($node) = @_;
 
-    my $parent_ord = !$anode->is_root ? $anode->get_parent->ord : 0;
-    my $coref = _create_coref_str($anode) || $NOT_SET;
+    my ($id, $token, $lemma, $pos, $head, $deprel, $coref);
+
+    # printing out the a-layer
+    if ($node->get_layer eq "a") {
+        $token = $node->form;
+        $lemma = $node->lemma;
+        $pos = $node->tag;
+        $deprel = $node->afun;
+    }
+    # printing out the t-layer
+    else {
+        my $lex_anode = $node->get_lex_anode;
+        $token = defined $lex_anode ? $lex_anode->form : $NOT_SET;
+        $lemma = $node->t_lemma;
+        $pos = defined $lex_anode ? $lex_anode->tag : $NOT_SET;
+        $deprel = $node->functor;
+    }
+    $id = $node->wild->{doc_ord} // $node->ord;
+    $head = !$node->is_root ? $node->get_parent->ord : 0;
+    $coref = _create_coref_str($node) || $NOT_SET;
 
     my @cols = (
-        $anode->ord,        # Col 1     ID: word identifiers in the sentence
-        $anode->form,       # Col 2     TOKEN: word forms
-        $anode->lemma,      # Col 3     LEMMA: word lemmas (gold standard manual annotation)
+        $id,                # Col 1     ID: word identifiers in the sentence
+        $token,             # Col 2     TOKEN: word forms
+        $lemma,             # Col 3     LEMMA: word lemmas (gold standard manual annotation)
         $NOT_SET,           # Col 4     PLEMMA: word lemmas predicted by an automatic analyzer
-        $anode->tag,        # Col 5     POS: coarse part of speech
+        $pos,               # Col 5     POS: coarse part of speech
         $NOT_SET,           # Col 6     PPOS same as 5 but predicted by an automatic analyzer
         $NOT_SET,           # Col 7     FEAT: morphological features (part of speech type, number, gender, case, tense, aspect, degree of comparison, etc., separated by the character "|")
         $NOT_SET,           # Col 8     PFEAT: same as 7 but predicted by an automatic analyzer
-        $parent_ord,        # Col 9     HEAD: for each word, the ID of the syntactic head ('0' if the word is the root of the tree)
+        $head,              # Col 9     HEAD: for each word, the ID of the syntactic head ('0' if the word is the root of the tree)
         $NOT_SET,           # Col 10    PHEAD: same as 9 but predicted by an automatic analyzer 
-        $anode->afun,       # Col 11    DEPREL: dependency relation labels corresponding to the dependencies  described in 9
+        $deprel,            # Col 11    DEPREL: dependency relation labels corresponding to the dependencies  described in 9
         $NOT_SET,           # Col 12    PDEPREL: same as 11 but predicted by an automatic analyzer
         $NOT_SET,           # Col 13    NE: named entities
         $NOT_SET,           # Col 14    PNE: same as 13 but predicted by a named entity recognizer
@@ -110,10 +146,21 @@ Treex::Block::Write::SemEval2010
 
 =head1 DESCRIPTION
 
+Printing out the data in the SemEval2010 format, which is an input format for the official
+CoNLL coreference resolution scorer (http://conll.cemantix.org/2012/software.html).
+
+One can decide, if the data is printed from the a-layer or from the t-layer.
+
+Note that this block requires the wild attributes "coref_mention_start" and "coref_mention_end"
+already been set. It can be ensured by running Treex::Block::Coref::MarkMentionsForScorer.
 
 =head1 PARAMETERS
 
 =over
+
+=item C<layer>
+
+Which layer is taken as a basis (default "a").
 
 =item C<language>
 
@@ -135,6 +182,6 @@ Michal Novák <mnovak@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2013 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2013, 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

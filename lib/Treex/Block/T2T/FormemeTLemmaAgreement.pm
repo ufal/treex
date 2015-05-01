@@ -152,11 +152,10 @@ sub process_tnode {
     my $after = $t_lemma."/".$formeme;
 
     if ($before ne $after) {
-        log_warn("T2T::FormemeTLemmaAgreement: $before ==> $after  [$num_alts alternatives]");
         $tnode->set_attr('t_lemma', $t_lemma );
-        $tnode->set_attr('t_lemma_origin', $t_lemma_origin );
+        $tnode->set_attr('t_lemma_origin', $t_lemma_origin . "--FormemeTLemmaAgreement $before -> $after");
         $tnode->set_attr('formeme', $formeme );
-        $tnode->set_attr('formeme_origin', $formeme_origin );
+        $tnode->set_attr('formeme_origin', $formeme_origin . "--FormemeTLemmaAgreement $before -> $after");
         $tnode->set_attr('mlayer_pos', $mlayer_pos );
     }
 

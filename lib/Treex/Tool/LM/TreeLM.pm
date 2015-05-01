@@ -69,7 +69,8 @@ sub get_prob_LdFd_given_Lg {
     # This TreeLM is trained on t-nodes, so no POS =~ /[RZX]/.
     # Also conjunctions (J) were discarded when training.
     # So there should be uniform distribution???
-    if ($Pd !~ /[NAPCVDIT]/){
+    # No check for Interset-style PoS
+    if (length $Pd <= 1 && $Pd !~ /[NAPCVDIT]/){
         print STDERR "result=0.001 (Pd !~ /[NAPCVDIT]/)\n" if $verbose;
         return 0.001;
     }
@@ -121,6 +122,7 @@ sub get_prob_LdFd_given_Lg {
 
 sub _check {
     my ( $l_pos, $formeme ) = @_;
+    return 1 if length $l_pos > 1; # No check for Interset-style pos
     return is_pos_and_formeme_compatible( $l_pos, $formeme ) ? 1 : 0.00001;
 }
 

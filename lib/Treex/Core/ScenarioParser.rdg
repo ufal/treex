@@ -21,6 +21,31 @@ BLOCK:      INCLUDE                             {
                                                         $return = undef;
                                                     }
                                                 }
+BLOCK:      SCENMODULE PARAMS                   {
+                                                    my $modulename = $item{SCENMODULE};
+                                                    eval "use $modulename; 1;" or die "Can't use $modulename !\n$@\n";
+                                                    my %params = map {my ($name,$value) = split /=/, $_, 2; ($name, $value)} @{$item{PARAMS}};
+                                                    my $scenmod = $modulename->new(\%params);
+                                                    my $string = $scenmod->get_scenario_string();
+                                                    my $result = $thisparser->startrule( $string, 0, '' );
+                                                    if (defined $result and ref $result eq 'ARRAY') {
+                                                        $return = [@$result];
+                                                    } else {
+                                                        $return = undef;
+                                                    }
+                                                }
+BLOCK:      SCENMODULE                          {
+                                                    my $modulename = $item{SCENMODULE};
+                                                    eval "use $modulename; 1;" or die "Can't use $modulename !\n$@\n";
+                                                    my $scenmod = $modulename->new();
+                                                    my $string = $scenmod->get_scenario_string();
+                                                    my $result = $thisparser->startrule( $string, 0, '' );
+                                                    if (defined $result and ref $result eq 'ARRAY') {
+                                                        $return = [@$result];
+                                                    } else {
+                                                        $return = undef;
+                                                    }
+                                                }
 BLOCK:      TBNAME PARAMS                       {$return = [{
                                                         block_name=>$item{TBNAME},
                                                         block_parameters=>$item{PARAMS},
@@ -31,8 +56,9 @@ BLOCK:      TBNAME                              {$return = [{
                                                         block_parameters=>[],
                                                     }]
                                                 }
+SCENMODULE: /Scen::/ BNAME                      { $return = "Treex::Scen::$item{BNAME}"}
 INCLUDE:    /\/\S+\.scen/                       {$return = $item[1]}
-INCLUDE:    /[^\/#]\S+\.scen/                    {   my $from_file = $arg[0];
+INCLUDE:    /[^\/#]\S+\.scen/                   {   my $from_file = $arg[0];
                                                     if (length $from_file) {
                                                         $return = dirname($from_file) . "/$item[1]";
                                                     } else {

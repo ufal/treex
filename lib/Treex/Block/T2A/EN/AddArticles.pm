@@ -230,7 +230,7 @@ sub decide_article {
 sub _has_determiner {
     my ($tnode) = @_;
     my @d = grep {
-        $_->t_lemma =~ /^(some|this|those|that|these|which|what|whose|one)$/
+        $_->t_lemma =~ /^(some|this|those|that|these|which|what|whose|one|no|any|no_one|nobody|nothing|none)$/
             or ( $_->gram_sempos // '' ) =~ /^(adj.pron.def.pers|n.pron.indef|adj.pron.def.demon)$/
             or $_->formeme eq 'n:poss'
     } $tnode->get_echildren();

@@ -1,4 +1,4 @@
-package Treex::Block::A2T::RearrangeCorefLinks;
+package Treex::Block::Coref::RearrangeLinks;
 use Moose;
 use Treex::Core::Common;
 
@@ -67,15 +67,23 @@ sub process_document {
 
 =head1 NAME
 
-Treex::Block::A2T::RearrangeCorefLinks
+Treex::Block::A2T::RearrangeLinks
 
 =head1 DESCRIPTION
 
-# TODO
+This block rearrange the coreference links so that they form a chain.
+The only exceptions may be cataphors, which then points to some entity
+within the chain but nothing refers to them.
 
 =head1 ATTRIBUTES
 
-# TODO
+=over
+
+=item retain_cataphora
+
+If enabled, cataphors are removed from the rearranging.
+
+=back
 
 =head1 AUTHORS
 
@@ -83,6 +91,6 @@ Michal Novák <mnovak@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011, 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
