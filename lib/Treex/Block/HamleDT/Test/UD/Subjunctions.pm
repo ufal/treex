@@ -32,7 +32,7 @@ sub process_atree
                 }
                 elsif($deprel eq 'advmod')
                 {
-                    $ok = $ok && lc($form) eq 'p¯iËemû';
+                    $ok = $ok && lc($form) eq 'p≈ôiƒçem≈æ';
                 }
                 else
                 {
