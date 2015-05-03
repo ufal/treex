@@ -108,12 +108,20 @@ sub process_sentence
         {
             my $parent = $nodes_by_id{$parent_id};
             my $child = $nodes_by_id{$child_id};
-            $child->set_parent($parent);
-            $child->set_deprel($relation);
+            # Check for cycles.
+            if($parent == $child || $parent->is_descendant_of($child))
+            {
+                log_warn("Cannot create dependency $parent_id --$relation--> $child_id: cycle");
+            }
+            else
+            {
+                $child->set_parent($parent);
+                $child->set_deprel($relation);
+            }
         }
         else
         {
-            log_warn("Cannot create dependency $parent_id --- $relation ---> $child_id");
+            log_warn("Cannot create dependency $parent_id --$relation--> $child_id: unknown node id");
         }
     }
 }
