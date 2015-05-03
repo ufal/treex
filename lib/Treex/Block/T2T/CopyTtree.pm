@@ -13,7 +13,7 @@ my @ATTRS_TO_COPY = qw(ord t_lemma functor formeme is_member nodetype is_generat
     voice sentmod tfa gram/sempos gram/gender gram/number gram/degcmp
     gram/verbmod gram/deontmod gram/tense gram/aspect gram/resultative
     gram/dispmod gram/iterativeness gram/indeftype gram/person gram/numertype
-    gram/politeness gram/negation gram/definiteness gram/diathesis);
+    gram/politeness gram/negation gram/definiteness gram/diathesis clause_number);
 
 sub _build_source_selector {
     my ($self) = @_;
