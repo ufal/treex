@@ -98,12 +98,14 @@ sub project {
     }
 
     # unaligned aux
+    my $last_following = undef;
     foreach my $anode (values %aux) {
         my $src_new_anode = $src_lex->create_child();
         if ($anode->precedes($lex)) {
-            $src_new_anode->shift_before_subtree($src_lex);
+            $src_new_anode->shift_before_node($src_lex);
         } else {
-            $src_new_anode->shift_after_subtree($src_lex);
+            $src_new_anode->shift_after_node($last_following // $src_lex);
+            $last_following = $src_new_anode;
         }
         $changed += $self->change($src_new_anode, $anode);
     }
