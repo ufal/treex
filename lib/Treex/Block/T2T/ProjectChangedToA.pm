@@ -27,7 +27,6 @@ sub process_tnode {
     my ($self, $tnode) = @_;
 
     if ($tnode->wild->{changed}) {
-        log_info $tnode;
         $self->project($tnode);
     }
 
@@ -68,7 +67,7 @@ sub project {
 
     # parent
     my ($eparent) = $lex->get_eparents();
-    my ($src_eparent) = $src_lex->get_eparents();
+    my ($src_eparent) = $src_lex->get_eparents(); # TODO src_lex = coap root
     if (defined $aux{$eparent->id}) {
         if (defined $src_aux{$src_eparent->id}) {
             # match
@@ -88,8 +87,8 @@ sub project {
         delete $aux{$eparent->id};
     } elsif (defined $src_aux{$src_eparent->id}) {
         # surplus parent
-        $src_eparent->remove({children => 'rehang'});
         delete $src_aux{$src_eparent->id};
+        $src_eparent->remove({children => 'rehang'});
     }
 
     # unaligned src aux
@@ -128,7 +127,9 @@ sub change {
 
     my $changed = 0;
     
-    if ( $anode->lemma ne $src_anode->lemma || $anode->tag ne $src_anode->tag ) {
+    if ( ($anode->lemma // '') ne ($src_anode->lemma // '')
+        || ($anode->tag // '') ne ($src_anode->tag // '')
+    ) {
         $changed = 1;
         $src_anode->set_lemma($anode->lemma);
         $src_anode->set_form($anode->form);
