@@ -81,6 +81,8 @@ sub _generate_word_form {
     my $lemma  = $a_node->lemma;
 
     # digits, abbreviations etc. are not attempted to be inflected
+    return Treex::Tool::LM::FormInfo->new( { form => $lemma, lemma => $lemma, tag => 'Z:-------------' } )
+        if $lemma =~ /^\p{Punct}+$/;
     return Treex::Tool::LM::FormInfo->new( { form => $lemma, lemma => $lemma, tag => 'C=-------------' } )
         if $lemma =~ /^[\d,\.\ ]+$/ or $lemma =~ /^[A-Z]+$/;
     return Treex::Tool::LM::FormInfo->new( { form => 'ne', lemma => 'ne', tag => 'TT-------------' } )
