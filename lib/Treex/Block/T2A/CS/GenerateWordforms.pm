@@ -44,15 +44,24 @@ my @CATEGORIES = qw(pos subpos gender number case possgender possnumber
 
 sub process_anode {
     my ( $self, $a_node ) = @_;
-    if ( _should_generate($a_node) ) {
-        my $form = _generate_word_form($a_node);
 
+    # always generate the form, but warn only if we plan to actually use it
+    my $should_generate = _should_generate($a_node);
+    my $dont_warn = !$should_generate;
+    my $form = _generate_word_form($a_node, $dont_warn);
+    
+    # each node will have a form
+    if ( $should_generate ) {
         $a_node->set_form( $form->get_form() );
-        $a_node->set_tag( $form->get_tag() );
     }
     elsif ( !defined $a_node->form ) {
         $a_node->set_form( $a_node->lemma );
     }
+
+    # even if we did not use the generated form, we still want to set the tag,
+    # so that each node has the full triplet form-lemma-tag
+    $a_node->set_tag($form->get_tag) unless defined $a_node->tag;
+
     return;
 }
 
@@ -68,6 +77,7 @@ sub _should_generate {
 
 sub _generate_word_form {
     my $a_node = shift;
+    my $dont_warn = shift;
     my $lemma  = $a_node->lemma;
 
     # digits, abbreviations etc. are not attempted to be inflected
@@ -90,7 +100,7 @@ sub _generate_word_form {
         $a_node->set_attr( 'morphcat/gender', '.' );
     }
 
-    my ( $tag_regex, $partial_regexps_ref ) = _get_tag_regex($a_node);
+    my ( $tag_regex, $partial_regexps_ref ) = _get_tag_regex($a_node, $dont_warn);
 
     # resolving spurious nouns-adjectives like 'nadřízený' - try lemma 'nadřízená'
     if ($a_node->get_attr('morphcat/pos') eq 'N'
@@ -205,6 +215,7 @@ sub _form_after_tag_relaxing {
 
 sub _get_tag_regex {
     my $a_node = shift;
+    my $dont_warn = shift;
     my %morphcat;
     my ( $lemma, $id ) = $a_node->get_attrs( 'lemma', 'id' );
 
@@ -212,7 +223,7 @@ sub _get_tag_regex {
     foreach my $category (@CATEGORIES) {
         $morphcat{$category} = $a_node->get_attr("morphcat/$category");
         if ( !defined $morphcat{$category} ) {
-            log_warn("Morphcat '$category' undef with lemma=$lemma id=$id");
+            log_warn("Morphcat '$category' undef with lemma=$lemma id=$id") unless $dont_warn;
             $morphcat{$category} = '.';
         }
     }
