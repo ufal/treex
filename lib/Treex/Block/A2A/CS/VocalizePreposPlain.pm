@@ -2,6 +2,7 @@ package Treex::Block::A2A::CS::VocalizePreposPlain;
 use utf8;
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::Lexicon::CS;
 extends 'Treex::Block::T2A::CS::VocalizePrepos';
 
 sub process_atree {
@@ -13,7 +14,9 @@ sub process_atree {
     foreach my $i ( 0 .. $#anodes - 1 ) {
         if ( $anodes[$i]->tag =~ /^R/ ) {
             my $vocalized = Treex::Block::T2A::CS::VocalizePrepos::vocalize(
-                $anodes[$i]->lemma, $anodes[ $i + 1 ]->form);
+                Treex::Tool::Lexicon::CS::truncate_lemma($anodes[$i]->lemma, 1),
+                $anodes[ $i + 1 ]->form
+            );
             $anodes[$i]->set_form($vocalized);
         }
     }
