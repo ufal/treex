@@ -144,10 +144,12 @@ sub change {
     # For some reason I get sometimes 15-letter tags
     # and sometimes 16-letter tags (16th position = aspect).
     # Also, the lemmas are in various styles, so I trim them all.
-    if ( Treex::Tool::Lexicon::CS::truncate_lemma($anode->lemma, 1)
-        ne Treex::Tool::Lexicon::CS::truncate_lemma($src_anode->lemma, 1)
-        || substr($anode->tag, 0, 15) ne substr($src_anode->tag, 0, 15)
-    ) {
+    my $lemma_changed
+        = Treex::Tool::Lexicon::CS::truncate_lemma($anode->lemma, 1)
+        ne Treex::Tool::Lexicon::CS::truncate_lemma($src_anode->lemma, 1);
+    my $tag_changed = $anode->tag !~ /^X@/
+        && substr($anode->tag, 0, 15) ne substr($src_anode->tag, 0, 15);
+    if ($lemma_changed || $tag_changed) {
         $changed = 1;
         $src_anode->set_lemma($anode->lemma);
         $src_anode->set_form($anode->form);
