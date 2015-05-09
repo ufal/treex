@@ -35,10 +35,6 @@ sub split_fused_words
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
-        # Remember the index of the token.
-        # When splitting occurs, we will have to re-index nodes with new integers but we will want to use the original indices when printing the CoNLL-U file.
-        my $ord = $node->ord();
-        $node->wild()->{decord} = $ord;
         my $parent = $node->parent();
         if($node->form() =~ m/^(a|kdy)(bych|bys|by|bychom|byste)$/i)
         {
@@ -128,9 +124,9 @@ sub split_fused_token
 {
     my $self = shift;
     my $fused_node = shift;
+    my @new_node_descriptions = @_; # array of hash references
     my $parent = $fused_node->parent();
     my $root = $fused_node->get_root();
-    my @new_node_descriptions = @_; # array of hash references
     my @new_nodes;
     foreach my $nn (@new_node_descriptions)
     {
@@ -150,12 +146,10 @@ sub split_fused_token
         if($parent->is_root())
         {
             $node->set_deprel('root');
-            $node->set_conll_deprel('root');
         }
         else
         {
             $node->set_deprel($nn->{deprel});
-            $node->set_conll_deprel($nn->{deprel});
         }
         push(@new_nodes, $node);
     }
@@ -165,7 +159,7 @@ sub split_fused_token
     {
         $child->set_parent($new_nodes[0]);
     }
-    # Save information about the group in every new node.
+    # Take care about node ordering.
     my $ord = $fused_node->ord();
     for(my $i = 0; $i <= $#new_nodes; $i++)
     {
@@ -175,20 +169,38 @@ sub split_fused_token
         # But we cannot set ord to a decimal number. Type control will not allow it. So we will use a wild attribute.
         $nn->_set_ord($ord);
         $nnw->{fused_ord} = $ord.'.'.($i+1);
-        ###!!! Later we will want to make these attributes normal (not wild).
-        $nnw->{fused_form} = $fused_node->form();
-        $nnw->{fused_start} = $new_nodes[0]->ord();
-        $nnw->{fused_end} = $new_nodes[-1]->ord();
-        $nnw->{fused} = ($i == 0) ? 'start' : ($i == $#new_nodes) ? 'end' : 'middle';
     }
-    # Delete the fused node.
+    # Remember the fused form and delete the fused node so that we can sort the nodes that are going to survive.
+    my $fused_form = $fused_node->form();
     $fused_node->remove();
     # Recompute node ordering so that all ords in the tree are integers again.
-    my @nodes = sort {my $r = $a->ord() <=> $b->ord(); unless($r) {$r = $a->wild->{fused_ord} <=> $b->wild->{fused_ord}} $r} $root->get_descendants({ordered => 0});
+    my @nodes = sort
+    {
+        my $result = $a->ord() <=> $b->ord();
+        unless($result)
+        {
+            $result = $a->wild->{fused_ord} <=> $b->wild->{fused_ord}
+        }
+        $result;
+    }
+    ($root->get_descendants({ordered => 0}));
     for(my $i = 0; $i<=$#nodes; $i++)
     {
         $nodes[$i]->_set_ord($i+1);
-        delete($nodes[$i]->wild->{fused_ord});
+        delete($nodes[$i]->wild()->{fused_ord});
+    }
+    # Now that all nodes have their ord correct (we need to refer to the ords now),
+    # save information about the group in every new node.
+    my $fsord = $new_nodes[0]->ord();
+    my $feord = $new_nodes[-1]->ord();
+    for(my $i = 0; $i <= $#new_nodes; $i++)
+    {
+        my $nnw = $new_nodes[$i]->wild();
+        ###!!! Later we will want to make these attributes normal (not wild).
+        $nnw->{fused_form} = $fused_form;
+        $nnw->{fused_start} = $fsord;
+        $nnw->{fused_end} = $feord;
+        $nnw->{fused} = ($i == 0) ? 'start' : ($i == $#new_nodes) ? 'end' : 'middle';
     }
     return @new_nodes;
 }
