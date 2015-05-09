@@ -89,6 +89,7 @@ sub split_fused_words
                 if(($parent->is_root() || !$parent->is_participle()) && $child->is_participle())
                 {
                     $new_nodes[1]->set_parent($child);
+                    $new_nodes[1]->set_deprel('aux');
                     last;
                 }
             }
@@ -110,6 +111,7 @@ sub split_fused_words
                                 'deprel' => 'cc'}
             );
             $new_nodes[1]->set_parent($new_nodes[0]);
+            $new_nodes[1]->set_deprel('cc');
         }
     }
 }
