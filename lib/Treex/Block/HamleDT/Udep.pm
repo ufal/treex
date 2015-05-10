@@ -631,11 +631,15 @@ sub push_prep_sub_down
             my $phrase = join(' ', map {$_->lemma().'/'.$_->afun().'/'.$_->deprel()} ($node->get_children({'add_self' => 1, 'ordered' => 1})));
             if($n == 0)
             {
-                log_warn("Cannot find argument of '$deprel' node '$form': '$phrase'.");
                 # Try to requalify other children (if any) as arguments.
                 $children->{args} = $children->{other};
                 $n = scalar(@{$children->{args}});
                 delete($children->{other});
+                # Warn the user if we still have not found an argument.
+                if($n == 0)
+                {
+                    log_warn("Cannot find argument of '$deprel' node '$form': '$phrase'.");
+                }
             }
             else
             {
