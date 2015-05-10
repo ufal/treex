@@ -74,7 +74,31 @@ sub process_atree
         my $upos_features = encode('mul::uposf', $isetfs);
         my ($upos, $feat) = split(/\t/, $upos_features);
         my $pord = $node->get_parent()->ord();
-        my $misc = $node->no_space_after() ? 'SpaceAfter=No' : '_';
+        my @misc;
+        if($node->no_space_after())
+        {
+            push(@misc, 'SpaceAfter=No');
+        }
+        ###!!! Czech-specific wild attributes that have been cut off the lemma.
+        ###!!! In the future we will want to make them normal attributes.
+        if(exists($wild->{lid}) && defined($wild->{lid}))
+        {
+            push(@misc, "LId=$lemma-$wild->{lid}");
+        }
+        if(exists($wild->{lgloss}) && defined($wild->{lgloss}) && ref($wild->{lgloss}) eq 'ARRAY' && scalar(@{$wild->{lgloss}}) > 0)
+        {
+            my $lgloss = join(',', @{$wild->{lgloss}});
+            push(@misc, "LGloss=$lgloss");
+        }
+        if(exists($wild->{lderiv}) && defined($wild->{lderiv}))
+        {
+            push(@misc, "LDeriv=$wild->{lderiv}");
+        }
+        if(exists($wild->{lnumvalue}) && defined($wild->{lnumvalue}))
+        {
+            push(@misc, "LNumValue=$wild->{lnumvalue}");
+        }
+        my $misc = scalar(@misc)>0 ? join('|', @misc) : '_';
         my $deprel = $node->deprel();
         # CoNLL-U columns: ID, FORM, LEMMA, CPOSTAG=UPOS, POSTAG=corpus-specific, FEATS, HEAD, DEPREL, DEPS(additional), MISC
         # Make sure that values are not empty and that they do not contain spaces.

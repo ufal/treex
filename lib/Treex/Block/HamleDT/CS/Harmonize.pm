@@ -157,6 +157,56 @@ sub remove_features_from_lemmas
         {
             $iset->set('nountype', 'com');
         }
+        # Numeric value after lemmas of numeral words.
+        # Example: třikrát`3
+        my $wild = $node->wild();
+        if($lemma =~ s/\`(\d+)//)
+        {
+            $wild->{lnumvalue} = $1;
+        }
+        # An optional numeric suffix helps distinguish homonyms.
+        # Example: jen-1 (particle) vs. jen-2 (noun, Japanese currency)
+        if($lemma =~ s/-(\d+)//)
+        {
+            $wild->{lid} = $1;
+        }
+        # Lemma comments help explain the meaning of the lemma.
+        # They are especially useful for homonyms, foreign words and abbreviations; but they may appear everywhere.
+        # A typical comment is a synonym or other explaining text in Czech.
+        # Example: jen-1_^(pouze)
+        # Unfortunately there are instances where the '^' character is missing. Let's capture them as well.
+        # Example: správně_(*1ý)
+        while($lemma =~ s/_\^?(\(.*?\))//)
+        {
+            my $comment = $1;
+            # There is a special class of comments that encode how this lemma was derived from another lemma.
+            # Example: uváděný_^(*2t)
+            if($comment =~ m/^\(\*(\d*)(.*)\)$/)
+            {
+                my $nrm = $1;
+                my $add = $2;
+                if(defined($nrm) && $nrm > 0)
+                {
+                    # Remove the specified number of trailing characters.
+                    my $lderiv = $lemma;
+                    $lderiv =~ s/.{$nrm}$//;
+                    # Append the original suffix.
+                    $lderiv .= $add if(defined($add));
+                    if($lderiv eq $lemma)
+                    {
+                        log_warn("Lemma $lemma, derivation comment $comment, no change");
+                    }
+                    else
+                    {
+                        $wild->{lderiv} = $lderiv;
+                    }
+                }
+            }
+            else # normal comment in plain Czech
+            {
+                push(@{$wild->{lgloss}}, $comment);
+            }
+        }
         $node->set_lemma($lemma);
     }
 }
