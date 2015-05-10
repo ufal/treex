@@ -1,162 +1,36 @@
 package Treex::Block::T2T::CS2CS::ProjectChangedToA;
 use Moose;
-extends 'Treex::Core::Block';
+extends 'Treex::Block::T2T::ProjectChangedToA';
 use Treex::Core::Common;
 use Treex::Tool::Lexicon::CS;
 use utf8;
 
-has alignment_type => ( is => 'rw', isa => 'Str', default => 'monolingual' );
+sub is_punct {
+    my ($self, $anode) = @_;
 
-sub process_ttree {
-    my ($self, $troot) = @_;
-
-    # super(); # does not work, dont know why
-    
-    foreach my $tnode ($troot->get_descendants()) {
-        $self->process_tnode($tnode);
-    }
-
-    foreach my $tnode ($troot->get_descendants()) {
-        delete $tnode->wild->{changed};
-        delete $tnode->wild->{processed};
-    }
-
-    return;
+    return ($anode->tag =~ /^Z/);
 }
 
-sub process_tnode {
-    my ($self, $tnode) = @_;
+sub tag_defined {
+    my ($self, $anode) = @_;
 
-    if ($tnode->wild->{changed}) {
-        $self->project($tnode);
-    }
-
-    return ;
+    return ($anode->tag !~ /^X@/);
 }
 
-sub project {
-    my ($self, $tnode) = @_;
+sub lemmas_eq {
+    my ($self, $anode1, $anode2) = @_;
 
-    if ( $tnode->wild->{processed} || $tnode->is_root() ) {
-        return;
-    }
-
-    my $changed = 0;
-    
-    my $src_tnode = $tnode->src_tnode() // return;
-
-    # lex node
-    my $lex = $tnode->get_lex_anode() // return;
-    return if $lex->tag =~ /^Z/;
-    my $src_lex = $src_tnode->get_lex_anode() // return;
-
-    $changed += $self->change($src_lex, $lex);
-
-    # aux nodes
-    my %aux = map { ($_->id, $_) } grep { $_->tag !~ /^Z/ } $tnode->get_aux_anodes();
-    # my %aux = map { ($_->id, $_) } $tnode->get_aux_anodes();
-    my %src_aux = map { ($_->id, $_) } grep { $_->tag !~ /^Z/ } $src_tnode->get_aux_anodes();
-    # my %src_aux = map { ($_->id, $_) } $src_tnode->get_aux_anodes();
-    
-    # aligned aux
-    foreach my $id (keys %aux) {
-        my $anode = $aux{$id};
-        my ($src_anode) = $anode->get_aligned_nodes_of_type($self->alignment_type);
-        if (defined $src_anode && defined $src_aux{$src_anode->id}) {
-            $changed += $self->change($src_anode, $anode);
-            delete $src_aux{$src_anode->id};
-            delete $aux{$id};
-        }
-    }
-
-    # parent
-    my ($eparent) = $lex->get_eparents();
-    my ($src_eparent) = $src_lex->get_eparents(); # TODO src_lex = coap root
-    if (defined $aux{$eparent->id}) {
-        if (defined $src_aux{$src_eparent->id}) {
-            # match
-            $changed += $self->change($src_eparent, $eparent);
-            delete $src_aux{$src_eparent->id};
-        } else {
-            # missing parent
-            my $src_new_parent = $src_lex->parent->create_child(
-                lemma => $eparent->lemma,
-                form => $eparent->form,
-                tag => $eparent->tag,
-            );
-            if ($eparent->precedes($lex)) {
-                $src_new_parent->shift_before_subtree($src_lex);
-            } else {
-                $src_new_parent->shift_after_subtree($src_lex);
-            }
-            $src_lex->set_parent($src_new_parent);
-            $changed++;
-        }
-        delete $aux{$eparent->id};
-    } elsif (defined $src_aux{$src_eparent->id}) {
-        # surplus parent
-        delete $src_aux{$src_eparent->id};
-        $src_eparent->remove({children => 'rehang'});
-    }
-
-    # unaligned src aux
-    foreach my $src_anode (values %src_aux) {
-        $src_anode->remove({children => 'rehang'});
-        $changed += 1;
-    }
-
-    # unaligned aux
-    my $last_following = undef;
-    foreach my $anode (values %aux) {
-        my $src_new_anode = $src_lex->create_child(
-            lemma => $anode->lemma,
-            form => $anode->form,
-            tag => $anode->tag,
-        );
-        if ($anode->precedes($lex)) {
-            $src_new_anode->shift_before_node($src_lex);
-        } else {
-            $src_new_anode->shift_after_node($last_following // $src_lex);
-            $last_following = $src_new_anode;
-        }
-        $changed++;
-    }
-
-    $tnode->wild->{processed} = 1;
-
-    # recurse
-    if ($changed) {
-        # recurse to parents and children
-        my @nodes = ($tnode->get_eparents(), $tnode->get_echildren());
-        foreach my $node (@nodes) {
-            $self->project($node);
-        }
-    }
-
-    return $changed;
+    # The lemmas come in various styles, so I trim them all.
+    return ( Treex::Tool::Lexicon::CS::truncate_lemma($anode1->lemma, 1)
+          eq Treex::Tool::Lexicon::CS::truncate_lemma($anode2->lemma, 1) );
 }
 
-sub change {
-    my ($self, $src_anode, $anode) = @_;
+sub tags_eq {
+    my ($self, $anode1, $anode2) = @_;
 
-    my $changed = 0;
-
-    # For some reason I get sometimes 15-letter tags
-    # and sometimes 16-letter tags (16th position = aspect).
-    # Also, the lemmas are in various styles, so I trim them all.
-    my $lemma_changed
-        = Treex::Tool::Lexicon::CS::truncate_lemma($anode->lemma, 1)
-        ne Treex::Tool::Lexicon::CS::truncate_lemma($src_anode->lemma, 1);
-    my $tag_changed = $anode->tag !~ /^X@/
-        && substr($anode->tag, 0, 15) ne substr($src_anode->tag, 0, 15);
-    if ($lemma_changed || $tag_changed) {
-        $changed = 1;
-        $src_anode->set_lemma($anode->lemma);
-        $src_anode->set_form($anode->form);
-        $src_anode->set_tag($anode->tag);
-    }
-
-    return $changed;
+    # I get sometimes 15-letter tags (PDT)
+    # and sometimes 16-letter tags (ČNK, 16th position = aspect).
+    return ( substr($anode1->tag, 0, 15) eq substr($anode2->tag, 0, 15) );
 }
 
 1;
