@@ -166,9 +166,10 @@ sub remove_features_from_lemmas
         }
         # An optional numeric suffix helps distinguish homonyms.
         # Example: jen-1 (particle) vs. jen-2 (noun, Japanese currency)
-        if($lemma =~ s/-(\d+)//)
+        # There must be at least one character before the suffix. Otherwise we would be eating tokens that are negative numbers.
+        if($lemma =~ s/(.)-(\d+)/$1/)
         {
-            $wild->{lid} = $1;
+            $wild->{lid} = $2;
         }
         # Lemma comments help explain the meaning of the lemma.
         # They are especially useful for homonyms, foreign words and abbreviations; but they may appear everywhere.

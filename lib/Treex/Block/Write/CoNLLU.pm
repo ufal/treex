@@ -83,7 +83,14 @@ sub process_atree
         ###!!! In the future we will want to make them normal attributes.
         if(exists($wild->{lid}) && defined($wild->{lid}))
         {
-            push(@misc, "LId=$lemma-$wild->{lid}");
+            if(defined($lemma))
+            {
+                push(@misc, "LId=$lemma-$wild->{lid}");
+            }
+            else
+            {
+                log_warn("UNDEFINED LEMMA: $ord $form $wild->{lid}");
+            }
         }
         if(exists($wild->{lgloss}) && defined($wild->{lgloss}) && ref($wild->{lgloss}) eq 'ARRAY' && scalar(@{$wild->{lgloss}}) > 0)
         {
