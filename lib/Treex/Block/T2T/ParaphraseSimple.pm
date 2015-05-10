@@ -101,6 +101,7 @@ sub process_tnode {
                     $tnode->set_gram_gender(undef);
                 }
                 $tnode->wild->{orig_lemma} = $orig_lemma;
+                $tnode->wild->{changed} = 1;
                 log_info "Paraphrasing $orig_lemma -> $mt_lemma";
                 last;
             }
