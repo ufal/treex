@@ -153,7 +153,7 @@ sub format_singleline {
 
     my $feat_str;
     if (!ref($feats)) {
-        $feat_str = $feats;
+        $feat_str = feat_perl_to_vw($feats, 1);
     }
     else {
         my @feats_items = map {
@@ -268,12 +268,14 @@ sub format_singleline {
 #}
 
 sub feat_perl_to_vw {
-    my ($feat) = @_;
+    my ($feat, $on_featstr) = @_;
     # ":" and "|" is a special char in VW
     $feat =~ s/:/__COL__/g;
     $feat =~ s/\|/__PIPE__/g;
     $feat =~ s/\t/__TAB__/g;
-    $feat =~ s/ /__SPACE__/g;
+    if (!$on_featstr) {
+        $feat =~ s/ /__SPACE__/g;
+    }
     #utf8::encode($feat);
     return $feat;
 }
