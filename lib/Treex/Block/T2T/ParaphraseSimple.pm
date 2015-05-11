@@ -95,18 +95,23 @@ sub process_tnode {
         foreach my $mt_lemma (keys %seen_only_in_mt) {
             if ( $self->paraphrases->{$orig_lemma}->{$mt_lemma} ) {
                 $tnode->set_t_lemma($mt_lemma);
-                # nouns may have different gender
-                my $lex_anode = $tnode->get_lex_anode;
-                if ( defined $lex_anode && $lex_anode->tag  =~ /^N/) {
-                    $tnode->set_gram_gender(undef);
-                }
                 $tnode->wild->{orig_lemma} = $orig_lemma;
+                $self->postprocess_changed_node($tnode);
                 $tnode->wild->{changed} = 1;
                 log_info "Paraphrasing $orig_lemma -> $mt_lemma";
                 last;
             }
         }
     }
+
+    return;
+}
+
+sub postprocess_changed_node {
+    my ($self, $tnode) = @_;
+
+    # nothing done by default
+    # to be filled in language-specific blocks if needed
 
     return;
 }
@@ -139,9 +144,7 @@ For each t_lemma that appears in reference but does not appear in MT,
 we try to find a t_lemma that appears in the MT but not in reference
 and that is an allowed paraphrase of the original t_lemma
 as specified by the paraphrase file.
-If we find such a t_lemma, we set it as the new t_lemma;
-if the lexnode is a noun, we also undefine the gender grammateme
-(to be filled later by AddNounGender block).
+If we find such a t_lemma, we set it as the new t_lemma.
 
 =head1 AUTHOR
 
