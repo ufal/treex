@@ -52,67 +52,43 @@ sub process_zone {
     log_fatal(qq{There's already atree in zone}) if $zone->has_atree();
     log_debug("Processing sentence: $sentence"); 
 
-    my $result = "";
-
     my ( @tokens ) = $self->tagger->process_sentence( $sentence );
 
-    # modifies the output format of MeCab wrapper
+
+	# create a-tree
+	my $a_root = $zone->create_atree();
+	my $ord = 1;
+
+    # modify output of MeCab and create a-node for each sentence token
     foreach my $token ( @tokens ) {
     	my @features = split /\t/, $token;
+
         my $wordform = $features[0];
-
-        my $bTag = $features[1].'-'.$features[2].'-'.$features[3].'-'.$features[4];
+        my $tag = $features[1].'-'.$features[2].'-'.$features[3].'-'.$features[4];
         my $lemma = $features[7];      
+		$lemma = $wordform if $lemma =~ m/\*/;
 
-    	if ($bTag !~ "BOS" && $bTag !~ "空白") {
-            
-            $lemma = $wordform if $lemma =~ m/\*/;
-            $bTag =~ s{^(.+)$}{<$1>};
-            my $eTag = $bTag;
-            $eTag =~ s{<}{</};
+		# handle "special" tokens that MeCab produces sometimes
+    	next if ($tag =~ /BOS/ || $tag =~ "空白");
 
-	    $result .= ' '.$bTag.$wordform.$eTag.$lemma;
-            
-    	}
-    }
-    $result =~ s{^\s+}{};
-
-    # split on whitespace, tags nor tokens doesn't contain spaces
-    my @tagged = split /\s+/,  $result;
-
-    # create a-tree
-    my $a_root    = $zone->create_atree();
-    my $tag_regex = qr{
-        <([^\-\<\>]+\-[^\-\<\>]+\-[^\-\<\>]+\-[^\-\<\>]+)> #<tag>
-        ([^<]+) #form
-        </\1>   #</tag>
-        (.+)    #lemma
-        }x;
-    my $space_start = qr{^\s+};
-    my $ord         = 1;
-    foreach my $tag_pair (@tagged) {
-        if ( $tag_pair =~ $tag_regex ) {
-            my $form = $2;
-            
-            my $tag = $1; 
-            $tag =~ s{^<(\w+)>.$}{$1};
-
-            my $lemma = $3;
-
-            if ( $sentence =~ s/^\Q$form\E// ) {
-
-                # check if there is space after word
+		# create a-node
+		if ( $sentence =~ s/^\Q$wordform\E// ) {
+				my $space_start = qr{^\s+};
+	
+				# check if there is space after word
                 my $no_space_after = $sentence =~ m/$space_start/ ? 0 : 1;
                 if ( $sentence eq q{} ) {
                     $no_space_after = 0;
                 }
 
                 # delete it
-                $sentence =~ s{$space_start}{};
-		
+                $sentence =~ s/$space_start//;
+
+				log_debug("Creating a-node for: $wordform");
+
                 # and create node under root
                 my $a_node = $a_root->create_child(
-                    form           => $form,
+                    form           => $wordform,
                     tag            => $tag,
                     lemma          => $lemma,
                     no_space_after => $no_space_after,
@@ -124,18 +100,14 @@ sub process_zone {
                 # we also create an interset structure attribute
                 my $driver = Lingua::Interset::Tagset::JA::Ipadic->new();
                 my $features = $driver->decode("$tag");
-                $a_node->set_iset($features);                
-
-            }
-            else {
-                log_fatal("Mismatch between tagged word and original sentence: Tagged: <$form> Original: <$sentence>");
-            }
-        }
-        else {
-            log_fatal("Incorrect output format from MeCab: $tag_pair");
+                $a_node->set_iset($features);
+		}	
+		else {
+        	log_fatal("Mismatch between tagged word and original sentence: Tagged word: \"$wordform\" Sentence: \"$sentence\"");
         }
 
     }
+
     return 1;
 }
 
