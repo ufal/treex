@@ -121,7 +121,7 @@ sub _execute_scenario {
     local $SIG{'ABRT'}    = \&term;
     local $SIG{'SEGV'}    = \&term;
     local $SIG{'KILL'}    = \&term;
-    local $SIG{'__DIE__'} = sub { term(); log_fatal( $_[0] ); die( $_[0] ); };
+    local $SIG{'__DIE__'} = sub { return if $^S; term(); log_fatal( $_[0] ); die( $_[0] ); };
 
     mkdir $self->outdir;
     my $outdir = $self->_get_tmp_outdir( $self->outdir, $self->jobindex );
