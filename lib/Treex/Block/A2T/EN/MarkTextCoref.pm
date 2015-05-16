@@ -14,12 +14,12 @@ sub _build_pipeline {
 
     # must be here to access the inline class Lingua::StanfordCoreNLP::Pipeline
     Inline->init();
-    my $pipeline = new Lingua::StanfordCoreNLP::Pipeline(0);
+    my $pipeline = new Lingua::StanfordCoreNLP::Pipeline;
     my $props = $pipeline->getProperties();
     $props->put('annotators', 'tokenize, ssplit, pos, lemma, ner, parse, dcoref');
-    #$props->put('tokenize.whitespace', 'true');
+    $props->put('tokenize.whitespace', 'true');
     #$props->put('tokenize.options', 'americanize=false');
-    $props->put('tokenize.options', 'ptb3Escaping=false');
+    #$props->put('tokenize.options', 'ptb3Escaping=false');
     $pipeline->setProperties($props);
     #print STDERR "BUILDING CORENLP PIPELINE\n";
     
@@ -138,22 +138,34 @@ sub _normalize_token {
     return $w2;
 }
 
+#sub process_start {
+#    my ($self) = @_;
+#    $self->_pipeline;
+#}
+
 sub process_document {
     my ($self, $doc) = @_;
 
     # TODO test on documents consisting of independent segments (e.g. CzEng)
     my @zones = map {$_->get_zone($self->language, $self->selector)} $doc->get_bundles;
 
-    my $result = $self->_pipeline->process(join "\n", map {$_->sentence} @zones);
+    my $result;
+    eval {
+        $result = $self->_pipeline->process(join "\n", map {$_->sentence} @zones);
+    };
+    if ($@){
+        log_warn "Skipping document " . $doc->full_filename() . " due to: $@";
+        return;
+    }
     
     # collect coreference links and create a grid of mentions indexed by (sent_idx X word_idx) in order to process it sequentially
     my @coref_links = ();
     my %word_grid = ();
-    for my $sentence (@{$result->toArray}) {
+    for my $sentence (@{$result->toArray()}) {
         #if ($doc->full_filename eq "data/dev.pcedt/wsj_2008") {
         #    print STDERR $sentence->getIDString . ": ". $sentence->getSentence . "\n";
         #}
-        for my $coref (@{$sentence->getCoreferences->toArray}) {
+        for my $coref (@{$sentence->getCoreferences->toArray()}) {
             my $coref_info = {
                 src_sent => $coref->getSourceSentence,
                 src_idx => $coref->getSourceHead,
@@ -168,7 +180,7 @@ sub process_document {
 
     my @our_anodes = map {[$_->get_atree->get_descendants({ordered=>1})]} @zones;
     my @our_tokens = map {[map {_normalize_token($_->form)} @$_]} @our_anodes;
-    my @stanford_tokens = map {[map {_normalize_token($_->getWord)} @{$_->getTokens->toArray}]} @{$result->toArray};
+    my @stanford_tokens = map {[map {_normalize_token($_->getWord())} @{$_->getTokens->toArray()}]} @{$result->toArray()};
     my $token_align = align_arrays(\@stanford_tokens, \@our_tokens);
     #print STDERR Dumper($token_align);
 
