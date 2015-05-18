@@ -8,6 +8,8 @@ use Treex::Tool::Tagger::MElt;
 
 extends 'Treex::Block::W2A::Tag';
 
+has '+lemmatize' => (default => 1);
+
 sub _build_tagger {
     my ($self) = @_;
     return Treex::Tool::Tagger::MElt->new();
