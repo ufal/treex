@@ -628,13 +628,18 @@ sub push_prep_sub_down
         if($n != 1)
         {
             my $form = $node->form();
-            my $phrase = join(' ', map {$_->form().'/'.$_->afun()} ($node->get_children({'add_self' => 1, 'ordered' => 1})));
+            my $phrase = join(' ', map {$_->lemma().'/'.$_->afun().'/'.$_->deprel()} ($node->get_children({'add_self' => 1, 'ordered' => 1})));
             if($n == 0)
             {
-                log_warn("Cannot find argument of '$deprel' node '$form': '$phrase'.");
                 # Try to requalify other children (if any) as arguments.
                 $children->{args} = $children->{other};
+                $n = scalar(@{$children->{args}});
                 delete($children->{other});
+                # Warn the user if we still have not found an argument.
+                if($n == 0)
+                {
+                    log_warn("Cannot find argument of '$deprel' node '$form': '$phrase'.");
+                }
             }
             else
             {
@@ -680,6 +685,7 @@ sub get_auxpc_children
 {
     my $self = shift;
     my $auxnode = shift;
+    my $auxlemma = $auxnode->lemma();
     my $auxafun = $auxnode->afun();
     my @children = $auxnode->get_children({ordered => 1});
     # Punctuation, conjunctions and conjuncts should be re-attached to the new head.
@@ -690,7 +696,8 @@ sub get_auxpc_children
     my @auxz;
     # The argument of an adposition (and the new head) is typically a noun or pronoun.
     # The argument of a subordinating conjunction (and the new head) is typically a verb.
-    # There should be just one argument but the children are ordered an in case of more than one arguments we will pick the first one.
+    # There should be just one argument but the children are ordered an in case of more than one argument
+    # we will pick the first one.
     my @args;
     my @other;
     foreach my $child (@children)
@@ -709,9 +716,12 @@ sub get_auxpc_children
         {
             push(@auxz, $child);
         }
-        # Adverb: "o dost"
-        elsif($auxnode->lemma() =~ m/^(jako|než)$/ && ($child->is_verb() || $child->is_noun() || $child->is_adjective() || $child->is_numeral() || $child->is_adverb() || $child->is_symbol()) ||
-              $auxafun eq 'AuxP' && ($child->is_noun() || $child->is_adjective() || $child->is_numeral() || $child->is_adverb() || $child->is_symbol()) ||
+        elsif($auxlemma =~ m/^(jako|než-2)$/ &&
+                ($child->is_verb() || $child->is_noun() || $child->is_adjective() || $child->is_numeral() ||
+                 $child->is_adverb() || $child->is_symbol()) ||
+              $auxafun eq 'AuxP' &&
+                ($child->is_noun() || $child->is_adjective() || $child->is_numeral() || $child->is_adverb() ||
+                 $child->is_symbol()) || # Adverb: "o dost"
               $auxafun eq 'AuxC' && $child->is_verb())
         {
             push(@args, $child);

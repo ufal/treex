@@ -1,24 +1,9 @@
-package Treex::Block::A2A::CS::VocalizePrepos;
+package Treex::Block::A2A::CS::VocalizePreposPlain;
 use utf8;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Lexicon::CS;
 extends 'Treex::Block::T2A::CS::VocalizePrepos';
-
-use Treex::Tool::Depfix::CS::FixLogger;
-
-
-my $fixLogger;
-
-sub process_start {
-    my $self = shift;
-    
-    $fixLogger = Treex::Tool::Depfix::CS::FixLogger->new({
-        language => $self->language,
-    });
-
-    return;
-}
 
 sub process_atree {
     my ( $self, $a_root ) = @_;
@@ -32,15 +17,26 @@ sub process_atree {
                 Treex::Tool::Lexicon::CS::truncate_lemma($anodes[$i]->lemma, 1),
                 $anodes[ $i + 1 ]->form
             );
-            if ($anodes[$i]->form ne $vocalized) {
-                $fixLogger->logfix1($anodes[$i], "VocalizePrepos");
-                $anodes[$i]->set_form($vocalized);
-                $fixLogger->logfix2($anodes[$i]);
-            }
+            $anodes[$i]->set_form($vocalized);
         }
     }
     return;
 }
 
 1;
+
+=over
+
+=item Treex::Block::A2A::CS::VocalizePreposPlain
+
+Vocalizes prepositions k,s,v,and z where neccessary.
+Only the attribute C<form> is changed.
+
+Extension of L<Treex::Block::T2A::CS::VocalizePrepos>, but using tag instead of morphcat.
+
+Just like L<Treex::Block::A2A::CS::VocalizePrepos>, but without the Depfix logging stuff.
+
+=back
+
+=cut
 

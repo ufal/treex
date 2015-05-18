@@ -30,9 +30,16 @@ sub process_atree
                 {
                     $ok = $ok && $dir > 0; # parent is to the left from the adposition
                 }
+                # Some Czech words are tagged as subordinating conjunctions although in fact they function
+                # as relative adverbs.
                 elsif($deprel eq 'advmod')
                 {
-                    $ok = $ok && lc($form) eq 'p�i�em�';
+                    $ok = $ok && lc($form) =~ m/^(jak|přičemž|dokud|zato)$/;
+                }
+                # AuxO = discourse: ", komu že odkáže svou říši"
+                elsif($deprel eq 'discourse')
+                {
+                    $ok = $ok && lc($form) eq 'že';
                 }
                 else
                 {
