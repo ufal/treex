@@ -65,11 +65,14 @@ sub node_style {
 
 sub _anode_style {
     my ( $self, $node ) = @_;
+    my $linestyle = $node->wild->{changed} ? '#{Line-width:5}' : '';
+    $linestyle .= '#{Line-width:5}' if $node->wild->{joined};
+    $linestyle .= '#{Line-fill:#ff0000}' if $node->wild->{unchangeable};
     if ( $node->clause_number ) {
         my $clr = $self->_colors->get_clause_color( $node->clause_number );
-        return '#{Oval-fill:' . $clr . '}' . '#{Line-fill:' . $clr . '}';
+        return '#{Oval-fill:' . $clr . '}' . '#{Line-fill:' . $clr . '}' . $linestyle;
     }
-    return '#{Oval-fill:' . $self->_colors->get('anode') . '}';
+    return '#{Oval-fill:' . $self->_colors->get('anode') . '}' . $linestyle;
 }
 
 sub _tnode_style {
