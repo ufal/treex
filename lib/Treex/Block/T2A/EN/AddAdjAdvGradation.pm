@@ -16,7 +16,8 @@ sub process_tnode {
     return if ( $t_node->formeme !~ /^(adj|adv)/ );
     
     # return for adjectives with -er, -est
-    return if ( $t_node->t_lemma !~ /([ae]nt|ful|.less|.[ia]ble|ous|ish|ing|some|ual|(?<!ear)ly|^often|^open)$/ );
+    return if ( $t_node->t_lemma !~ /([ae]nt|ful|.less|.[ia]ble|ous|ish|ing|some|ual|ly|^often|^open)$/ );
+    return if ( $t_node->t_lemma =~ /^(ear|dead)ly$/ ); 
 
     my $a_node = $t_node->get_lex_anode() or return;
     
