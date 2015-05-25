@@ -40,6 +40,12 @@ sub process_bundle {
         for my $ref_anode (@ref_anodes) {
             $ref_count{sl($ref_anode->lemma)}++;
         }
+        
+        # lowercase first node unless its lemma is capitalized
+        my $first_node = $ref_anodes[0];
+        if (lcfirst($first_node->lemma) eq $first_node->lemma) {
+            $first_node->set_form(lc($first_node->form));
+        }
     }
     
     # MT ord of lemmas
