@@ -98,24 +98,28 @@ __END__
 
 =head1 NAME
 
-Treex::Tool::Parser::MSTperl::ParserCombiner --
-a metaparser that runs multiple parsers and combines the resulting parse trees
-into one found as the Maximum Spanning Tree
+Treex::Tool::Parser::MSTperl::ParsedSentencesCombiner --
+a metaparser that combines several parse trees
+into one using a Maximum Spanning Tree algortihm.
 
 =head1 METHODS
 
 =over 4
 
-=item $parser->parse_sentence($sentence_parses);
+=item $parser->parse_sentence($sentence_parses_ar [,$weights_ar]);
 
-Combines parses of a sentence (instances of L<Treex::Tool::Parser::MSTperl::Sentence>)
-using the CHu-Liu-Edmonds MST algorithm.
+Combines parses of a sentence 
+(array ref of instances of L<Treex::Tool::Parser::MSTperl::Sentence>)
+using the Chu-Liu-Edmonds MST algorithm.
+Can also perform a weighted combination, if C<$weights_ar> is specified;
+it must be a reference to an array of numbers
+of the same length as C$sentence_parses_ar>.
 Returns an array of parent ords.
 
-=item $parser->parse_sentence_internal($sentence_parses);
+=item $parser->parse_sentence_internal($sentence, $sentence_parses_ar [,$weights_ar]);
 
 The internal method that does the combination.
-Returns an instance of L<Treex::Tool::Parser::MSTperl::Sentence>.
+Directly modifies C<$sentence> (and returns it).
 
 =back
 
