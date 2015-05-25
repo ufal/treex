@@ -36,7 +36,7 @@ sub process_bundle {
         my $ref_zone = $bundle->get_zone(
             $self->language, $self->selector);
         my $ref_atree = $ref_zone->get_atree();
-        my @ref_anodes = $ref_atree->get_descendants();
+        my @ref_anodes = $ref_atree->get_descendants({ordered => 1});
         for my $ref_anode (@ref_anodes) {
             $ref_count{sl($ref_anode->lemma)}++;
         }
