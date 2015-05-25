@@ -7,7 +7,7 @@ extends 'Treex::Core::Block';
 
 sub process_anode {
     my ( $self, $anode ) = @_;
-
+    
     # add gender for 3rd person possessive pronouns; we only know for sure if it's feminine
     # (others default to "zijn" anyway)
     if ( $anode->match_iset( 'prontype' => 'prs', 'poss' => 'poss' ) and $anode->lemma eq 'haar' ) {
@@ -44,10 +44,10 @@ sub process_anode {
 sub _find_subject {
     my ( $self, $anode ) = @_;
 
-    while ( not $anode->parent->is_root ) {
+    while ( $anode and not $anode->is_root() and not $anode->get_parent()->is_root ) {
 
         # go up until you find a verb, then try to find a subject under it
-        while ( not $anode->parent->is_root and not $anode->is_verb ) {
+        while ( not $anode->get_parent()->is_root and not $anode->is_verb ) {
             ($anode) = $anode->get_eparents( { or_topological => 1 } );
         }
         my $subj = first { $_->afun eq 'Sb' } $anode->get_echildren( { or_topological => 1 } );
