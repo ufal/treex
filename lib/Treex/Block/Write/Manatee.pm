@@ -29,8 +29,7 @@ sub process_atree {
         my ( $lemma, $pos, $deprel ) =
             map { $self->get_attribute( $anode, $_ ) }
             (qw(lemma pos deprel));        
-		
-		# convert lemma to the basic form
+    		# convert lemma to the basic form
 		my $truncated_lemma = Treex::Tool::Lexicon::CS::truncate_lemma( $lemma, 1 );
 		
         # append suffices to afuns
@@ -39,9 +38,21 @@ sub process_atree {
         $suffix .= 'S' if $self->is_shared_modifier_within_afun   && $anode->is_shared_modifier;
         $suffix .= 'C' if $self->is_coord_conjunction_within_afun && $anode->wild->{is_coord_conjunction};
         $deprel .= "_$suffix" if $suffix;
-                
+        my ($eparent) = $anode->get_eparents({or_topological=>1});
+        my $ep_form = $eparent->form;
+        my $ep_tag = $eparent->tag;
+        my $ep_afun = $eparent->afun;
+        my $e_parent_full_lemma = $eparent->lemma;
+        my $ep_lemma = Treex::Tool::Lexicon::CS::truncate_lemma( $e_parent_full_lemma, 1 );    
+        my $p_ord = $anode->get_parent->ord;
+        my $p_form = $anode->get_parent->form;
+        no warnings 'uninitialized';
+        my $p_full_lemma = $anode->get_parent->lemma;
+        my $p_lemma =  Treex::Tool::Lexicon::CS::truncate_lemma( $p_full_lemma, 1 );#TODO if parent is a root
+        my $p_pos = $anode->get_parent->tag;#TODO set tag for parent of root to 'root'
+        my $p_afun = $anode->get_parent->afun;
         # Make sure that values are not empty and that they do not contain spaces.
-        my @values = ($anode->form, $truncated_lemma, $pos, $deprel);
+        my @values = ($anode->form, $truncated_lemma, $pos, $deprel, $p_form, $p_lemma, $p_pos, $p_afun, $ep_form, $ep_lemma, $ep_tag, $ep_afun);
         @values = map
         {
             my $x = $_ // '_';
@@ -64,23 +75,28 @@ sub get_attribute {
     return defined $value ? $value : '_';
 }
 
+#override 'print_header' => sub {
+#        my ($self, $document) = @_;
+#    print { $self->_file_handle } "<doc>\n";
+#};
+
 override 'process_bundle' => sub {
 	my ($self, $bundle) = @_;	
-	my $position = $bundle->get_position()+1;
-    print { $self->_file_handle } "<s id=\"" . $position . "\">\n";
+	#my $position = $bundle->get_position()+1;
+    print { $self->_file_handle } "<s>\n";# id=\"" . $position . "\">\n";
     $self->SUPER::process_bundle($bundle);    
     print { $self->_file_handle } "</s>\n";
 };
 
-override 'print_header' => sub {
-	my ($self, $document) = @_;	
-    print { $self->_file_handle } "<doc id=\"" . $document->file_stem . "\">\n";         
-};
+#override 'print_header' => sub {
+#	my ($self, $document) = @_;	
+#    print { $self->_file_handle } "<doc id=\"" . $document->file_stem . "\">\n";         
+#};
 
-override 'print_footer' => sub {
-	my ($self, $document) = @_;	
-    print { $self->_file_handle } "</doc>\n";    
-};
+#override 'print_footer' => sub {
+#	my ($self, $document) = @_;	
+#    print { $self->_file_handle } "</doc>\n";    
+#};
 
 1;
 
