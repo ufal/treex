@@ -60,7 +60,12 @@ sub process_tnode {
 
         my $src_tlemma = $src_tnode->t_lemma;
         my @translations = $combined_model->get_translations( lc($src_tlemma), $features_array_rf );
-
+        if (!@translations){
+            @translations = $combined_model->get_translations( ucfirst($src_tlemma), $features_array_rf );
+        }
+        if (!@translations){
+            @translations = $combined_model->get_translations( uc($src_tlemma), $features_array_rf );
+        }
         if (@translations) {
             $tnode->set_t_lemma( $translations[0]->{label} );
 
@@ -83,6 +88,7 @@ sub process_tnode {
             );
         }
     }
+    
 
     return;
 }
