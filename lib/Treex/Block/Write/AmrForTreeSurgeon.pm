@@ -6,6 +6,8 @@ extends 'Treex::Block::Write::Amr';
 # Returns the t-node's lemma/label
 sub _get_lemma {
     my ( $self, $tnode ) = @_;
+    
+    return undef if ( !defined $tnode->t_lemma );
     my @data = ( $tnode->t_lemma );
 
     # skip NE generated nodes

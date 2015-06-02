@@ -33,7 +33,7 @@ sub _print_ttree {
     my ( $self, $tamr_top ) = @_;
 
     # print the AMR graph
-    my $tamr_top_lemma = ( $tamr_top->t_lemma // 'a99/and' );    # add fake lemma 'and' to tech. root
+    my $tamr_top_lemma = ( $self->_get_lemma( $tamr_top ) // 'a99/and' );    # add fake lemma 'and' to tech. root
     $tamr_top_lemma =~ s/\// \/ /;
     print { $self->_file_handle } '(', $tamr_top_lemma;
     foreach my $child ( $tamr_top->get_children( { ordered => 1 } ) ) {
