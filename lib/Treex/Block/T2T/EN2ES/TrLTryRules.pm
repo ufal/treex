@@ -51,7 +51,7 @@ sub get_lemma_and_pos {
 	my ($person, $number) = $src_tnode->get_attrs(qw(gram/person gram/number));
 	if ($src_tlemma =~ /^#PersPron/ && $person eq '2') {
 	    
-	    $trg_tnode->set_attr( 'gram/number', 'sing' );
+	    $trg_tnode->set_attr( 'gram/number', 'sg' );
 	    $trg_tnode->set_attr( 'gram/person', '3' );
 	}
 
