@@ -19,7 +19,7 @@ sub BUILD {
 sub process_start {
     my ($self) = @_;
     $self->set_morphoLM( Treex::Tool::LM::MorphoLM->new({file => 'data/models/language/es/model.es.gz'}) );
-    $self->set_generator( Treex::Tool::Lexicon::Generation::ES_Generation->new() );
+    $self->set_generator( Treex::Tool::Lexicon::Generation::ES_Morphology->new() );
     return;
 }
 
