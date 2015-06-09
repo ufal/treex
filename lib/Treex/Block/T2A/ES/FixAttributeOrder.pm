@@ -13,7 +13,10 @@ sub process_tnode {
 
     my $parent = $tnode->get_parent;
     ### Most adjectives should be also reordered, need to distinguiss which of them
-    if (( $tnode->formeme || "" ) =~ /^n:de\+X/ and
+    #$tnode->gram_sempos
+    if (( ($tnode->formeme || "" ) =~ /^n:de\+X/ or 
+	  (($tnode->formeme || "" ) =~ /^adj:attr$/ and ($tnode->gram_sempos || "") !~ /^n.pron.indef$/ )
+	) and
 	(( $parent->functor || "" ) !~ /^(CONJ|COORD)$/ ) and
 	(( $parent->formeme || "" ) =~ /^n:/ ) and
 	$tnode->precedes($parent)) {
