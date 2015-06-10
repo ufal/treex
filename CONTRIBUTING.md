@@ -29,6 +29,10 @@ Thank you for taking the time to contribute and reading these guidelines.
 * **Add your name** to the list of authors at the end of each Perl file (in POD).
   You can omit this only in case of tiny changes (e.g. fixing typos in comments).
   If possible add your email.
+  The list of authors serves three purposes:
+  1. Who was "involved" and possibly who could provide more details about the code?
+  2. Who should I ask before refactoring the code?
+  3. credit/acknowledgement (but `git blame` provides more details)
 * When creating a new file by copying another file (e.g. adapting an English module for your language):
   * If you make bigger changes in the code or if the code is simple enough,
     you **can delete the original list of authors**.
