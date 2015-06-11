@@ -8,7 +8,8 @@ sub postprocess_changed_node {
     my ($self, $tnode) = @_;
 
     # nouns may have different gender
-    if ( defined $tnode->gram_sempos && $tnode->gram_sempos =~ /^n\.denot/) {
+    # (to be filled later by AddNounGender block).
+    if ( defined $tnode->gram_sempos && $tnode->gram_sempos =~ /^n\.(denot|quant)/) {
         $tnode->set_gram_gender(undef);
     }
 
@@ -38,6 +39,7 @@ Treex::Block::T2T::CS2CS::ParaphraseSimple - change lemmas in references to rese
  Util::SetGlobal selector=gen 
  T2T::CopyTtree source_selector= 
  T2T::ParaphraseSimple paraphrases_file='my/file.tsv' mt_selector=tectomt selector=reference language=cs
+ T2T::EN2CS::AddNounGender
  Scen::Synthesis::CS
  Align::A::MonolingualGreedy to_selector=
  T2T::CS2CS::ProjectChangedToA 

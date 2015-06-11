@@ -36,9 +36,15 @@ sub process_bundle {
         my $ref_zone = $bundle->get_zone(
             $self->language, $self->selector);
         my $ref_atree = $ref_zone->get_atree();
-        my @ref_anodes = $ref_atree->get_descendants();
+        my @ref_anodes = $ref_atree->get_descendants({ordered => 1});
         for my $ref_anode (@ref_anodes) {
             $ref_count{sl($ref_anode->lemma)}++;
+        }
+        
+        # lowercase first node unless its lemma is capitalized
+        my $first_node = $ref_anodes[0];
+        if (lcfirst($first_node->lemma) eq $first_node->lemma) {
+            $first_node->set_form(lc($first_node->form));
         }
     }
     

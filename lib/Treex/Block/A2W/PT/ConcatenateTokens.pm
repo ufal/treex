@@ -14,7 +14,7 @@ sub process_zone {
     # Portuguese contractions, e.g. "de_" + "o" = "do"
     $sentence =~ s/\bpor ([oa]s?)\b/pel$1/g; # pelo, pela, pelos, pelas
     $sentence =~ s/\ba a(s?)\b/à$1/g;    # à, às
-    $sentence =~ s/\ba (os?)/a$1/g;   # ao, aos
+    $sentence =~ s/\ba (os?) /a$1/g;   # ao, aos
     $sentence =~ s/\bem ([oa]s?|um|uma|uns|umas)\b/n$1/g;    # no, na, nos, nas, num, numa, nuns, numas
     $sentence =~ s/\bde ([oa]s?|um|uma|uns|umas|este|esta)\b/d$1/g;    # do, da, dos, das, dum, duma, duns, dumas, deste, desta,...
 

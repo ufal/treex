@@ -54,6 +54,12 @@ sub process_tnode {
                 $gender =~ s/com/inher/;
                 $tnode->set_gram_gender($gender) if $gender;
             }
+            if (!$tnode->gram_number){
+                my $number = $anode->iset->number || '';
+                $number =~ s/sing/sg/;
+                $number =~ s/plur/pl/;
+                $tnode->set_gram_number($number);
+            }
         }
         $self->check_anode($tnode, $anode);
     }

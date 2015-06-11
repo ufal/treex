@@ -38,7 +38,8 @@ override 'process_start' => sub {
 
     my @interpolated_sequence = ();
 
-    my $use_memcached = Treex::Tool::Memcached::Memcached::get_memcached_hostname();
+    my $use_memcached =  $self->scenario && $self->scenario->runner && $self->scenario->runner->cache && Treex::Tool::Memcached::Memcached::get_memcached_hostname();
+
 
     if ( $self->discr_weight > 0 ) {
         my $discr_model = $self->load_model( $self->_model_factory->create_model($self->discr_type), $self->discr_model, $use_memcached );

@@ -151,7 +151,7 @@ sub change {
 sub is_punct {
     my ($self, $anode) = @_;
 
-    return ($anode->iset->is_punct);
+    return ($anode->iset->is_punctuation);
 }
 
 sub tag_defined {
