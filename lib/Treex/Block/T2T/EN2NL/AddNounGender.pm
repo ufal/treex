@@ -29,6 +29,11 @@ sub process_tnode {
     return if ( !$tnode->gram_sempos =~ /^n/ or $tnode->gram_gender or !$tnode->t_lemma );
 
     my $gender = $self->_genders->{ $tnode->t_lemma };
+    if ( !$gender and $tnode->t_lemma =~ /_/ ) {
+        my $last_part = $tnode->t_lemma;
+        $last_part =~ s/.*_//;
+        $gender = $self->_genders->{$last_part};
+    }
     if ($gender) {
         $gender = $GENDER_MAPPING{$gender} or return;
         $tnode->set_gram_gender($gender);
