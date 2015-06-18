@@ -1,0 +1,12 @@
+language: "perl"
+perl:
+  - "5.18"
+
+#before_install:
+#    - sudo apt-get libxml2-dev zlib1g-dev
+#    - cpanm Test::Pod # optional dependency
+
+install:
+    - cpanm -v --installdeps --notest --mirror http://cpan.mirrors.travis-ci.org Treex::Core
+
+script: "prove -r lib/Treex/Core"
