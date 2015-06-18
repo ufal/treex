@@ -27,10 +27,11 @@ sub BUILD {
     # Unfortunately, java itself dies with no clear message if used with older version.
     if ($self->jar =~ /2015-01-30/){
         my $three_lines = `java -version 2>&1`;
-        my ($java_version) = ($three_lines =~ /java version "([\d.]+)/);
+        my ($java_version) = ($three_lines =~ /java version "(\d+.\d+)/);
         log_fatal "Could not detect Java version, make sure it is installed.\njava -version\n$three_lines" if !defined $java_version;
         log_fatal "Java 1.8 or higher is required to run Stanford NER\n".
-                   $self->jar . "\nbut your version is $java_version\n$three_lines";
+                   $self->jar . "\nbut your version is $java_version\n$three_lines"
+            if $java_version < 1.8;
     }
     
     # download the jar and the model if necessary
