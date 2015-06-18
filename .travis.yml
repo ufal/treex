@@ -7,6 +7,6 @@ perl:
 #    - cpanm Test::Pod # optional dependency
 
 install:
-    - cpanm -v --installdeps --notest --mirror http://cpan.mirrors.travis-ci.org Treex::Core
+    - cpanm -v --installdeps --notest Treex::Core
 
-script: "prove -r lib/Treex/Core"
+script: "prove -Ilib -r lib/Treex/Core"
