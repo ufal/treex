@@ -63,14 +63,14 @@ has 'error_level' => (
 has 'lang' => (
     traits        => ['Getopt'],
     cmd_aliases   => [ 'language', 'L' ],
-    is            => 'rw', isa => 'Treex::Type::LangCode',
+    is            => 'rw', isa => 'Str',
     documentation => q{shortcut for adding "Util::SetGlobal language=xy" at the beginning of the scenario},
 );
 
 has 'selector' => (
     traits        => ['Getopt'],
     cmd_aliases   => 'S',
-    is            => 'rw', isa => 'Treex::Type::Selector',
+    is            => 'rw', isa => 'Str',
     documentation => q{shortcut for adding "Util::SetGlobal selector=xy" at the beginning of the scenario},
 );
 

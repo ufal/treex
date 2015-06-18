@@ -51,7 +51,7 @@ sub _sort_chain {
     }
 }
 
-sub process_document {
+sub process_document_one_zone_at_time {
     my ($self, $doc) = @_;
 
     my @ttrees = map { $_->get_tree($self->language,'t',$self->selector) } $doc->get_bundles;
@@ -60,8 +60,15 @@ sub process_document {
     foreach my $chain (@chains) {
         $self->_sort_chain( $chain );
     }
-
+    return;
 }
+
+sub process_document {
+    my ($self, $doc) = @_;
+    $self->_apply_function_on_each_zone($doc, \&process_document_one_zone_at_time, $self, $doc);
+    return;
+}
+
 
 1;
 
