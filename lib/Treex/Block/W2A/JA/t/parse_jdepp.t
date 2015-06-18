@@ -13,6 +13,7 @@ BEGIN { use_ok('Treex::Block::W2A::JA::ParseJDEPP') };
 
 require_ok('Treex::Block::W2A::JA::ParseJDEPP');
 
+Treex::Core::Log::log_set_error_level('WARN');
 my $block = Treex::Block::W2A::JA::ParseJDEPP->new();
 
 $block->process_start();
