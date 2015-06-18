@@ -226,13 +226,7 @@ Treex::Block::Coref::EN::ResolveStanfordCoreNLP
 
 =head1 DESCRIPTION
 
-Pronoun coreference resolver for English using Stanford CoreNLP resolver.
-
-Settings:
-* English personal pronoun filtering of anaphor
-* candidates for the antecedent are nouns from current (prior to anaphor) and previous sentence
-* English pronoun coreference feature extractor
-* using a model trained by a perceptron ranker
+Coreference resolver for English wrapping Stanford CoreNLP resolver.
 
 =head1 AUTHORS
 
@@ -240,6 +234,6 @@ Michal Novák <mnovak@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2013-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
