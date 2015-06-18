@@ -1,4 +1,4 @@
-package Treex::Block::A2T::EN::MarkTextCoref;
+package Treex::Block::Coref::EN::ResolveStanfordCoreNLP;
 use Moose;
 use utf8;
 use Treex::Core::Common;
@@ -222,11 +222,12 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::A2T::EN::MarkTextPronCoref
+Treex::Block::Coref::EN::ResolveStanfordCoreNLP
 
 =head1 DESCRIPTION
 
-Pronoun coreference resolver for English.
+Pronoun coreference resolver for English using Stanford CoreNLP resolver.
+
 Settings:
 * English personal pronoun filtering of anaphor
 * candidates for the antecedent are nouns from current (prior to anaphor) and previous sentence
@@ -239,6 +240,6 @@ Michal Novák <mnovak@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
