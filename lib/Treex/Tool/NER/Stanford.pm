@@ -23,12 +23,22 @@ my @all_javas;
 sub BUILD {
     my ( $self, $arg_ref ) = @_;
 
+    # New Stanford NER needs Java 1.8 or higher
+    # Unfortunately, java itself dies with no clear message if used with older version.
+    if ($self->jar =~ /2015-01-30/){
+        my $three_lines = `java -version 2>&1`;
+        my ($java_version) = ($three_lines =~ /java version "([\d.]+)/);
+        log_fatal "Could not detect Java version, make sure it is installed.\njava -version\n$three_lines" if !defined $java_version;
+        log_fatal "Java 1.8 or higher is required to run Stanford NER\n".
+                   $self->jar . "\nbut your version is $java_version\n$three_lines";
+    }
+    
     # download the jar and the model if necessary
     my $jar   = Treex::Core::Resource::require_file_from_share($self->jar); 
     my $model = Treex::Core::Resource::require_file_from_share($self->model); 
     my $out_redirect = $self->debug ? '' : '2>/dev/null';
     # newer versions of Stanford NER
-    my $in_redirect = $self->jar =~ /2008-05-07/ ? '-textFile /dev/stdin' : '-readStdin';
+    my $in_redirect = $self->jar =~ /2008-05-07/ ? '-textFile STDIN' : '-readStdin';
     my $model_memory = $self->memory;
 
     my $tempdir = tempdir( DIR => Treex::Core::Config->tmp_dir() , CLEANUP => !$self->debug );
