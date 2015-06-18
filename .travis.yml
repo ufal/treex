@@ -7,6 +7,9 @@ perl:
 #    - cpanm Test::Pod # optional dependency
 
 install:
-    - cpanm -v --installdeps --notest Treex::Core
+    - cpanm --installdeps --notest Treex::Core
+    - cpanm Ufal::MorphoDiTa Ufal::NameTag Lingua::Interset
+    - cpanm URI::Find::Schemeless PerlIO::gzip Text::Iconv AI::MaxEntropy Cache::Memcached Email::Find XML::Twig String::Util String::Diff List::Pairwise MooseX::Role::AttributeOverride YAML::Tiny Graph Tree::Trie Text::Brew
 
-script: "prove -Ilib -r lib/Treex/Core"
+script:
+    - "prove -Ilib -r lib/Treex/Core"
