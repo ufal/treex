@@ -8,11 +8,14 @@ perl:
 
 install:
     - cpanm --installdeps --notest Treex::Core
-    - cpanm --notest URI::Find::Schemeless PerlIO::gzip Text::Iconv AI::MaxEntropy Cache::Memcached Email::Find XML::Twig String::Util String::Diff List::Pairwise MooseX::Role::AttributeOverride YAML::Tiny Graph Tree::Trie Text::Brew
+    - cpanm --notest URI::Find::Schemeless PerlIO::gzip Text::Iconv AI::MaxEntropy Cache::Memcached Email::Find XML::Twig String::Util String::Diff List::Pairwise MooseX::Role::AttributeOverride YAML::Tiny Graph Tree::Trie Text::Brew App::whichpm
     - cpanm Lingua::Interset
 
 script:
     - "prove -Ilib -r lib/Treex/Core"
 
 after_success:
+    - cpanm -v Ufal::MorphoDiTa # just for debugging
+
+after_failure:
     - cpanm -v Ufal::MorphoDiTa # just for debugging
