@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/ufal/treex.svg?branch=master)](https://travis-ci.org/ufal/treex)
 # Treex
 
 Treex is a highly modular NLP framework implemented in the Perl programming language.
