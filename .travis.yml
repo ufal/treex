@@ -1,6 +1,7 @@
 language: "perl"
 perl:
   - "5.18"
+  - 5.20
 
 #before_install:
 #    - sudo apt-get libxml2-dev zlib1g-dev
@@ -14,7 +15,7 @@ script:
     - "prove -Ilib -r lib/Treex/Core"
 
 after_success:
-    - echo $CXX
+    - echo $CC
     - clang --version
     - g++ --version
     - cpanm -v Ufal::MorphoDiTa # just for debugging
@@ -24,6 +25,8 @@ after_success:
     - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90
     - g++ --version
     - cpanm -v Ufal::MorphoDiTa
+    - CC=g++ cpanm -v Ufal::MorphoDiTa
+    - CC=clang cpanm -v Ufal::MorphoDiTa
 
 after_failure:
     - cpanm -v Ufal::MorphoDiTa # just for debugging
