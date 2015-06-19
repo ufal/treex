@@ -13,10 +13,11 @@ before_install:
 
 env:
     - PERL5LIB=lib/
+    - PATH=bin/:$PATH
+
 install:
     - cpanm --installdeps --notest Treex::Core
     - echo $PATH
-    - which treex
     #- cpanm --notest URI::Find::Schemeless PerlIO::gzip Text::Iconv AI::MaxEntropy Cache::Memcached Email::Find XML::Twig String::Util String::Diff List::Pairwise MooseX::Role::AttributeOverride YAML::Tiny Graph Tree::Trie Text::Brew App::whichpm
     #- cpanm Lingua::Interset
     #- CC=clang cpanm Ufal::MorphoDiTa Ufal::NameTag
@@ -24,6 +25,7 @@ install:
 
 script:
     - CC=clang cpanm Ufal::NameTag
+    - which treex
     #- prove -r lib/Treex/Core
     #- lib/Treex/Tool/Tagger/t/morphodita.t
     #- lib/Treex/Tool/NER/t/nametag_en.t
