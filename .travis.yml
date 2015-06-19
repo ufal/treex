@@ -2,7 +2,10 @@ language: "perl"
 perl:
   - "5.20"
   - "5.18"
+  - "5.16"
+  - "5.14"
   - "5.12"
+  - "5.10"
 
 before_install:
 #    - sudo apt-get libxml2-dev zlib1g-dev
@@ -13,19 +16,22 @@ before_install:
 
 env:
     - PERL5LIB=lib/
-    - PATH=bin/:$PATH
 
 install:
     - cpanm --installdeps --notest Treex::Core
-    - echo $PATH
     #- cpanm --notest URI::Find::Schemeless PerlIO::gzip Text::Iconv AI::MaxEntropy Cache::Memcached Email::Find XML::Twig String::Util String::Diff List::Pairwise MooseX::Role::AttributeOverride YAML::Tiny Graph Tree::Trie Text::Brew App::whichpm
     #- cpanm Lingua::Interset
     #- CC=clang cpanm Ufal::MorphoDiTa Ufal::NameTag
     #- CC=g++-4.8 cpanm -v Ufal::NameTag
 
 script:
-    - CC=clang cpanm Ufal::NameTag
+    - CC=clang cpanm -v Ufal::NameTag
+    - echo $PATH
     - which treex
+    - PATH=`pwd`/bin:$PATH
+    - echo $PATH
+    - which treex
+    - treex -h
     #- prove -r lib/Treex/Core
     #- lib/Treex/Tool/Tagger/t/morphodita.t
     #- lib/Treex/Tool/NER/t/nametag_en.t
