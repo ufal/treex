@@ -1,10 +1,17 @@
 language: "perl"
 perl:
   - "5.18"
-  - 5.20
 
 #before_install:
 #    - sudo apt-get libxml2-dev zlib1g-dev
+#    - clang --version
+#    - g++ --version
+#    - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+#    - sudo apt-get update -qq
+#    - sudo apt-get install -qq gcc-4.8 g++-4.8
+#    - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90
+#    - g++ --version
+#    - CC=g++ cpanm -v Ufal::MorphoDiTa
 
 install:
     - cpanm --installdeps --notest Treex::Core
@@ -12,21 +19,8 @@ install:
     - cpanm Lingua::Interset
 
 script:
-    - "prove -Ilib -r lib/Treex/Core"
+    - #"prove -Ilib -r lib/Treex/Core"
 
 after_success:
-    - echo $CC
-    - clang --version
-    - g++ --version
-    - cpanm -v Ufal::MorphoDiTa # just for debugging
-    - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-    - sudo apt-get update -qq
-    - sudo apt-get install -qq gcc-4.8 g++-4.8
-    - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90
-    - g++ --version
-    - cpanm -v Ufal::MorphoDiTa
-    - CC=g++ cpanm -v Ufal::MorphoDiTa
     - CC=clang cpanm -v Ufal::MorphoDiTa
-
-after_failure:
-    - cpanm -v Ufal::MorphoDiTa # just for debugging
+    - lib/Treex/Tool/Tagger/t/morphodita.t 
