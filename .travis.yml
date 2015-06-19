@@ -4,31 +4,20 @@ perl:
 
 #before_install:
 #    - sudo apt-get libxml2-dev zlib1g-dev
-#    - clang --version
-#    - g++ --version
 #    - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 #    - sudo apt-get update -qq
 #    - sudo apt-get install -qq gcc-4.8 g++-4.8
-#    - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90
-#    - g++ --version
-#    - CC=g++ cpanm -v Ufal::MorphoDiTa
+#    - CC=g++-4.8 cpanm -v Ufal::MorphoDiTa
 
+env:
+    - PERL5LIB=lib/
 install:
     - cpanm --installdeps --notest Treex::Core
     - cpanm --notest URI::Find::Schemeless PerlIO::gzip Text::Iconv AI::MaxEntropy Cache::Memcached Email::Find XML::Twig String::Util String::Diff List::Pairwise MooseX::Role::AttributeOverride YAML::Tiny Graph Tree::Trie Text::Brew App::whichpm
     - cpanm Lingua::Interset
-    - echo $PERL5LIB
+    - CC=clang cpanm Ufal::MorphoDiTa Ufal::NameTag
 
-env:
-    - PERL5LIB=lib/
 script:
-    - #"prove -Ilib -r lib/Treex/Core"
-
-after_success:
-    #- CC=clang cpanm -v Ufal::MorphoDiTa
-    - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-    - sudo apt-get update -qq
-    - sudo apt-get install -qq gcc-4.8 g++-4.8
-    - CC=g++-4.8 cpanm -v Ufal::MorphoDiTa
-    - echo $PERL5LIB
-    - lib/Treex/Tool/Tagger/t/morphodita.t 
+    - prove -r lib/Treex/Core
+    - lib/Treex/Tool/Tagger/t/morphodita.t
+    - lib/Treex/Tool/NER/t/nametag_en.t
