@@ -5,7 +5,7 @@ use Treex::Core::Common;
 use Lingua::StanfordCoreNLP;
 use Text::Unidecode;
 
-extends 'Treex::Core::Block';
+extends 'Treex::Block::Coref::ResolveFromRawText';
 
 has '_pipeline' => ( is => 'ro', builder => '_build_pipeline');
 
@@ -26,109 +26,6 @@ sub _build_pipeline {
     return $pipeline;
 }
 
-sub _is_prefix {
-    my ($s1, $s2) = @_;
-
-    return undef if (!defined $s1 || !defined $s2);
-    #print STDERR "$s1 $s2\n";
-    my $is_prefix;
-    if (length($s1) > length($s2)) {
-        $is_prefix = ($s1 =~ /^\Q$s2/);
-    }
-    else {
-        $is_prefix = ($s2 =~ /^\Q$s1/);
-    }
-    return $is_prefix;
-}
-
-sub _is_superfluous {
-    my ($str1, $str2) = @_;
-    
-    # TODO can be changed to check whether it's a suffix of a previous word
-    return 1 if ($str1 eq '.');
-    return -1 if ($str2 eq '.');
-    return 0 if ($str1 eq "labor" && $str2 eq "labour");
-    return 0 if ($str1 eq "-LRB-" && $str2 eq "(");
-    return 0 if ($str1 eq "-RRB-" && $str2 eq ")");
-    return 0 if ($str1 eq "theater" && $str2 eq "theatre");
-    return 0 if ($str1 eq "labeled" && $str2 eq "labelled");
-    return 0 if ($str1 eq "meager" && $str2 eq "meagre");
-    #log_warn "Neither '$str1' nor '$str2' are superflous.";
-    #log_fatal "Luxembourg-based" if ($str1 eq "Luxembourg-based" || $str2 eq "Luxembourg-based");
-    return 0;
-}
-
-sub align_arrays {
-    my ($a1, $a2) = @_;
-
-    #print STDERR Dumper($a1, $a2);
-
-    my %align = ();
-
-    my $i1 = 0; my $i2 = 0;
-    my $j1 = 0; my $j2 = 0;
-    #my $l_offset = length($a1->[$i1][$j1]) - length($a2->[$i2][$j2]);
-    my $l_offset = 0;
-    #my $l1 = 0; my $l2 = 0;
-    #print STDERR scalar @$a1 . "\n";
-    #print STDERR scalar @$a2 . "\n";
-    while (($i1 < scalar @$a1) && ($i2 < scalar @$a2)) {
-        #print STDERR Dumper($a1->[$i1], $a2->[$i2]);
-        while (($j1 < @{$a1->[$i1]}) && ($j2 < @{$a2->[$i2]})) {
-
-            my $s1 = $a1->[$i1][$j1];
-            my $s2 = $a2->[$i2][$j2];
-            if ($l_offset == 0 && !_is_prefix($s1, $s2)) {
-                my $superfl = _is_superfluous($s1, $s2);
-                if ($superfl > 0) {
-                    $j1++;
-                    next;
-                }
-                elsif ($superfl < 0) {
-                    $j2++;
-                    next;
-                }
-                else {
-                    # TODO: HACK
-                    $l_offset -= length($s1) - length($s2);
-                }
-            }
-
-            $l_offset += length($s1) - length($s2);
-            if ($l_offset) {
-                #print STDERR "$i1:$j1 -> $i2:$j2\t($l_offset)\t$s1 $s2\n";
-            }
-            $align{$i1.",".$j1} = $i2.",".$j2 if (!defined $align{$i1.",".$j1});
-            
-            if ($l_offset < 0) {
-                $l_offset += length($s2);
-                $j1++;
-            }
-            elsif ($l_offset > 0) {
-                $l_offset -= length($s1);
-                $j2++;
-            }
-            else {
-                $j1++; $j2++;
-            }
-            #print STDERR Dumper(\%align);
-            #print STDERR ($j1 < @{$a1->[$i1]}) ? 1 : 0;
-            #print STDERR ($j2 < @{$a2->[$i2]}) ? 1 : 0;
-            #print STDERR ($l_offset != 0) ? 1 : 0;
-            #print STDERR "\n";
-            #exit if ($j1 > 50 || $j2 > 50);
-        }
-        if ($j1 >= @{$a1->[$i1]}) {
-            $i1++; $j1 = 0;
-        }
-        if ($j2 >= @{$a2->[$i2]}) {
-            $i2++; $j2 = 0;
-        }
-        #my $line = <STDIN>;
-    }
-
-    return \%align;
-}
 
 sub _normalize_token {
     my ($w) = @_;
@@ -146,12 +43,11 @@ sub _normalize_token {
 sub process_document {
     my ($self, $doc) = @_;
 
-    # TODO test on documents consisting of independent segments (e.g. CzEng)
-    my @zones = map {$_->get_zone($self->language, $self->selector)} $doc->get_bundles;
+    my $raw_text = $self->_prepare_raw_text($doc);
 
     my $result;
     eval {
-        $result = $self->_pipeline->process(join "\n", map {$_->sentence} @zones);
+        $result = $self->_pipeline->process($raw_text);
     };
     if ($@){
         log_warn "Skipping document " . $doc->full_filename() . " due to: $@";
@@ -178,10 +74,11 @@ sub process_document {
         }
     }
 
-    my @our_anodes = map {[$_->get_atree->get_descendants({ordered=>1})]} @zones;
+    my @atrees = map {$_->get_tree($self->language, 'a', $self->selector)} $doc->get_bundles;
+    my @our_anodes = map {[$_->get_descendants({ordered=>1})]} @atrees;
     my @our_tokens = map {[map {_normalize_token($_->form)} @$_]} @our_anodes;
     my @stanford_tokens = map {[map {_normalize_token($_->getWord())} @{$_->getTokens->toArray()}]} @{$result->toArray()};
-    my $token_align = align_arrays(\@stanford_tokens, \@our_tokens);
+    my $token_align = $self->_align_arrays(\@stanford_tokens, \@our_tokens);
     #print STDERR Dumper($token_align);
 
 
