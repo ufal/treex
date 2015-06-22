@@ -23,7 +23,7 @@ sub next_document_text {
     elsif ( $filename =~ /.gz$/ ) {
         open my $fh, "gunzip -c $filename |";
         $text = read_file( $fh, binmode => 'encoding(utf8)', err_mode => 'log_fatal' );
-        utf8::decode($text);  # this is weird, but must be done
+        utf8::decode($text);    # this is weird, but must be done
         close $fh;
     }
     else {
@@ -74,7 +74,18 @@ sub deserialize_tree {
 
             # hang them all under root for now
             foreach my $yaml_node ( @{ $yaml_data->{nodes} } ) {
-                my ($node) = $root->create_child();
+                my $node;
+                if ( $layer eq 'p' ) {
+                    if ( defined( $yaml_node->{phrase} ) ) {
+                        $node = $root->create_nonterminal_child();
+                    }
+                    else {
+                        $node = $root->create_terminal_child();
+                    }
+                }
+                else {
+                    $node = $root->create_child();
+                }
                 $self->deserialize_node( $node, $layer, $yaml_node );
             }
             next;
