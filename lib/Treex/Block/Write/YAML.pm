@@ -63,17 +63,19 @@ Readonly my $ATTR => {
             sentmod is_parenthesis is_passive is_generated
             is_relclause_head is_name_of_person voice
             t_lemma_origin formeme_origin is_infin is_member
-            clause_number is_clause_head is_reflexive mlayer_pos)
+            clause_number is_clause_head is_reflexive mlayer_pos
+            src_tnode.rf wild)
     ],
     a => [
         qw(id ord form lemma tag afun no_space_after
             s_parenthesis_root edge_to_collapse is_auxiliary
-            p_terminal.rf is_member clause_number is_clause_head)
+            p_terminal.rf is_member clause_number is_clause_head
+            wild)
     ],
-    n => [qw(id ne_type normalized_name a.rf)],
+    n => [qw(id ne_type normalized_name a.rf wild)],
     p => [
         qw(id is_head index coindex edgelabel form lemma
-            tag phrase functions)
+            tag phrase functions wild)
     ],
 };
 
