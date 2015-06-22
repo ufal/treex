@@ -23,6 +23,7 @@ my ($count, $d) = split / /, $first;
 while (<>) {
     chomp;
     my ($word, @vec) = split / /;
+    $word =~ tr/:| /;!_/;
     my $f = 1;
     my @fs = map { 'f' . ($f++) . ':' . ($_) } @vec[0 .. ($d-1)];
     tsvsay($word, @fs);
