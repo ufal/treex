@@ -29,6 +29,8 @@ sub process_tnode {
     return if ( !$tnode->gram_sempos =~ /^n/ or $tnode->gram_gender or !$tnode->t_lemma );
 
     my $gender = $self->_genders->{ $tnode->t_lemma };
+
+    # gender for compound nouns not found in the dictionary: try just the last part of the compound
     if ( !$gender and $tnode->t_lemma =~ /_/ ) {
         my $last_part = $tnode->t_lemma;
         $last_part =~ s/.*_//;
