@@ -140,8 +140,9 @@ Treex::Block::Read::CoNLLU - read CoNLL-U format.
 
 =head1 DESCRIPTION
 
-Document reader for CoNLL-U format for Universal Dependencies
-(L<http://universaldependencies.github.io/docs/format.html>).
+Document reader for CoNLL-U format for Universal Dependencies.
+
+See L<http://universaldependencies.github.io/docs/format.html>.
 
 =head1 ATTRIBUTES
 
