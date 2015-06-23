@@ -68,7 +68,6 @@ sub locate_mention_head {
     ($end_s, $end_w) = split /,/, $align->{"$end_s,$end_w"};
 
     my $start_anode = $anodes->[$start_s][$start_w];
-    print STDERR "START ANODE: $start_s $start_w " . $start_anode->form . "\n";
     my ($start_tnode) = (
         $start_anode->get_referencing_nodes('a/lex.rf'),
         $start_anode->get_referencing_nodes('a/aux.rf')
