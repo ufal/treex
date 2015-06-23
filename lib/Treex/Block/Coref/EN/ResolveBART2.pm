@@ -4,11 +4,9 @@ use utf8;
 use Treex::Core::Common;
 
 use Treex::Tool::ProcessUtils;
+use File::Temp;
 
 extends 'Treex::Block::Coref::ResolveFromRawText';
-
-has 'command' => ( is => 'ro', isa => 'Str', 
-    default => 'cd /net/cluster/TMP/mnovak/tools/BART-2.0; java -Xmx1024m -classpath "src:dist/BART.jar:libs2/*" elkfed.webdemo.Demo');
 
 sub process_document_one_zone_at_time {
     my ($self, $doc) = @_;
@@ -20,7 +18,11 @@ sub process_document_one_zone_at_time {
         $tokenized_text .= $sent . "\n";
     }
 
-    my $command = $self->command;
+    my $dir = File::Temp->newdir("/COMP.TMP/bart.tmpdir.XXXXX");
+    print STDERR "TMP_DIR: $dir\n";
+    my $command = "cd $dir;";
+    my $cp = join ":", map {'/net/cluster/TMP/mnovak/tools/BART-2.0/' . $_} ("src", "dist/BART.jar", "libs2/*");
+    $command .= " java -Xmx1024m -classpath \"$cp\" -Delkfed.rootDir='/net/cluster/TMP/mnovak/tools/BART-2.0' elkfed.webdemo.Demo";
 
     my ( $read, $write, $pid ) = Treex::Tool::ProcessUtils::bipipe($command);
     
@@ -50,7 +52,9 @@ sub process_document_one_zone_at_time {
         while (my $anaph = locate_mention_head(shift @$chain, $align, \@all_nodes)) {
             print STDERR "ANAPH: " . $anaph->t_lemma . " " . $anaph->id . "\n";
             print STDERR "ANTE: " . $ante->t_lemma . " " . $ante->id . "\n";
-            $anaph->add_coref_text_nodes($ante);
+            if (defined $ante && defined $anaph && !$ante->is_root && !$anaph->is_root) {
+                $anaph->add_coref_text_nodes($ante);
+            }
             $ante = $anaph;
         }
     }
