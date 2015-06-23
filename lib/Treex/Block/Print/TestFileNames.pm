@@ -5,6 +5,7 @@ extends 'Treex::Block::Write::BaseTextWriter';
 
 sub build_language { return log_fatal "Parameter 'language' must be given"; }
 
+has dev => ( is => 'ro', isa => 'Bool', default => 0, documentation => 'Should we also suggest development data set? Default: only training/test.' );
 has _stat => ( is => 'ro', default => sub { {} } );
 
 sub process_anode
@@ -23,22 +24,46 @@ sub process_end
     my $stat = $self->_stat();
     my @files = sort(keys(%{$stat}));
     my $n = 0;
+    my $ndev = 0;
     my $ntest = 0;
     my $nfiles = @files;
+    my $ndevfiles = 0;
     my $ntestfiles = 0;
     foreach my $file (@files)
     {
         my $nfile = $stat->{$file};
-        if($ntest*10<$n)
+        if($self->need_more_dev($ndev, $n))
         {
-            print("$file\t$nfile\n");
+            print("DEVFILE\t$file\t$nfile\n");
+            $ndev += $nfile;
+            $ndevfiles++;
+        }
+        elsif($self->need_more_test($ntest, $n))
+        {
+            print("TESTFILE\t$file\t$nfile\n");
             $ntest += $nfile;
             $ntestfiles++;
         }
         $n += $nfile;
     }
-    printf("TOTAL $nfiles files, TEST $ntestfiles files (%d %%)\n", $ntestfiles/$nfiles*100) if($nfiles);
-    printf("TOTAL $n tokens, TEST $ntest tokens (%d %%)\n", $ntest/$n*100) if($n);
+    printf("TOTAL $nfiles files, DEV $ndevfiles files (%d %%), TEST $ntestfiles files (%d %%)\n", $ndevfiles/$nfiles*100, $ntestfiles/$nfiles*100) if($nfiles);
+    printf("TOTAL $n tokens, DEV $ndev tokens (%d %%), TEST $ntest tokens (%d %%)\n", $ndev/$n*100, $ntest/$n*100) if($n);
+}
+
+sub need_more_dev
+{
+    my $self = shift;
+    my $ndev = shift; # total dev tokens so far
+    my $n = shift; # total tokens so far
+    return $self->dev() && ($ndev * 10 < $n);
+}
+
+sub need_more_test
+{
+    my $self = shift;
+    my $ntest = shift; # total test tokens so far
+    my $n = shift; # total tokens so far
+    return $ntest * 10 < $n;
 }
 
 1;
