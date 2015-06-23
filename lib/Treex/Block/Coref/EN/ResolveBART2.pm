@@ -19,7 +19,6 @@ sub process_document_one_zone_at_time {
     }
 
     my $dir = File::Temp->newdir("/COMP.TMP/bart.tmpdir.XXXXX");
-    print STDERR "TMP_DIR: $dir\n";
     my $command = "cd $dir;";
     my $cp = join ":", map {'/net/cluster/TMP/mnovak/tools/BART-2.0/' . $_} ("src", "dist/BART.jar", "libs2/*");
     $command .= " java -Xmx1024m -classpath \"$cp\" -Delkfed.rootDir='/net/cluster/TMP/mnovak/tools/BART-2.0' elkfed.webdemo.Demo";
@@ -30,7 +29,6 @@ sub process_document_one_zone_at_time {
     close( $write );
 
     my @xml_lines = <$read>;
-    print join "\n", @xml_lines;
     close( $read );
     Treex::Tool::ProcessUtils::safewaitpid( $pid );
 
@@ -41,17 +39,14 @@ sub process_document_one_zone_at_time {
 
     my $align = $self->_align_arrays($sents, \@all_forms);
 
-    log_info Dumper($sents);
-    log_info Dumper($corefs);
-    log_info Dumper($align);
+    #log_info Dumper($sents);
+    #log_info Dumper($corefs);
+    #log_info Dumper($align);
 
     for my $entity_id (keys %$corefs) {
         my $chain = $corefs->{$entity_id};
-        #print "ENTITY_ID: $entity_id\n";
         my $ante = locate_mention_head(shift @$chain, $align, \@all_nodes);
         while (my $anaph = locate_mention_head(shift @$chain, $align, \@all_nodes)) {
-            print STDERR "ANAPH: " . $anaph->t_lemma . " " . $anaph->id . "\n";
-            print STDERR "ANTE: " . $ante->t_lemma . " " . $ante->id . "\n";
             if (defined $ante && defined $anaph && !$ante->is_root && !$anaph->is_root) {
                 $anaph->add_coref_text_nodes($ante);
             }
