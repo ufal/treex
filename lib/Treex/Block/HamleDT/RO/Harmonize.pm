@@ -2,7 +2,6 @@ package Treex::Block::HamleDT::RO::Harmonize;
 use utf8;
 use Moose;
 use Treex::Core::Common;
-use tagset::ro::rdt;
 use Lingua::Interset qw(decode encode);
 extends 'Treex::Core::Block';
 
@@ -56,18 +55,17 @@ my %RDT_DEPREL_TO_AFUN = (
 
 sub process_zone {
     my ( $self, $zone ) = @_;
-    $zone->copy('orig');
     my $a_root = $zone->get_atree();
 
     # We need to fix orig tree between backup and convert_tags,
-    # so we cannot used SUPER::process_zone
+    # so we cannot use SUPER::process_zone
     foreach my $node ( $a_root->get_descendants() ) {
         $self->fix_errors($node);
     }
 
     # conll_pos -> iset && tag (PDT-style tag)
     foreach my $node ( $a_root->get_descendants() ) {
-        my $f = tagset::ro::rdt::decode( $node->conll_pos );
+        my $f = decode('ro::rdt', $node->conll_pos);
         $node->set_iset($f);
         $node->set_tag( encode('cs::pdt', $node->iset) );
     }
