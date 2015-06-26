@@ -89,12 +89,16 @@ sub print_tnode_features {
     # Features from the local tree (and word-order) context this node
     my $src_context_feats = $src_feature_extractor->features_of_tnode($en_tnode);
 
+    # For w2v embeddings
+    my $my_form = $self->anode_form($en_tnode);
+    my $parent_form = $self->anode_form($en_tnode->get_parent);
+        
 
     my @translations = map {$_->[0]} sort {$b->[1] <=> $a->[1]} map {[$_, $self->prescore($variants->{$_})]} keys %{$variants};
     splice @translations, $self->max_variants if @translations > $self->max_variants;
     
     # VW LDF (label-dependent features) format output
-    print { $self->_file_handle() } "shared |S $src_context_feats\n";
+    print { $self->_file_handle() } "shared |M $my_form |P $parent_form |S $src_context_feats\n";
     my ($i);
     #while ( my ($variant, $variant_static_score) = each %{$submodel}){
     for my $variant (@translations) {
@@ -104,10 +108,11 @@ sub print_tnode_features {
 
         # Target-partial features
         # Default for t_lemma="#PersPron" (dropped)
-        my $variant_pos = ($variant =~ /#(.)$/) ? $1 : 'X';
+        #my $variant_pos = ($variant =~ /#(.)$/) ? $1 : 'X';
         # Todo: add verbal aspect
 
-        print { $self->_file_handle() } "$i:$cost _$variant|T $en_tlemma^$variant |P $en_tlemma^$en_formeme^$variant_pos\n";
+        #print { $self->_file_handle() } "$i:$cost _$variant|T $en_tlemma^$variant |P $en_tlemma^$en_formeme^$variant_pos\n";
+        print { $self->_file_handle() } "$i:$cost _$variant|T $en_tlemma^$variant\n";
     }
     print { $self->_file_handle() } "\n";
     return;
@@ -143,6 +148,17 @@ sub lemma {
     return $lemma;
 }
 
+sub anode_form {
+    my ($self, $tnode) = @_;
+    my $anode = $tnode->get_lex_anode or return '';
+    my $form = $anode->form;
+    $form =~ s/\d\d/##/g;
+    $form =~ s/##\d/###/g;
+    $form =~ s/([^#])-/$1_/g;
+    $form =~ tr/:| /;!_/;
+    return $form;
+}
+
 1;
 
 __END__
@@ -155,7 +171,7 @@ Treex::Block::Treelets::ExtractVW2 - extract translation training vectors for VW
 
 =head1 DESCRIPTION
 
-Extract translation training vectors for Vowbal Wabbit in the csoaa_ldf=mc format.
+Extract translation training vectors for Vowpal Wabbit in the csoaa_ldf=mc format.
 
 =head1 AUTHOR
 
