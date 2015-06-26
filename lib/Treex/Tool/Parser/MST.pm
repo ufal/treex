@@ -161,13 +161,22 @@ sub process {
         else {
             my ($afuns_string, $parents_string);
             if ($self->version eq '0.4.3b-AdaptedCzech'){
-                chomp ($parents_string = <$reader>);
-                chomp ($afuns_string   = <$reader>);
+
+                $parents_string = <$reader>;
+                $parents_string =~ s/\R$//;
+
+                $afuns_string = <$reader>;
+                $afuns_string =~ s/\R$//;
+                
             } else {
                 <$reader>;    # forms
                 <$reader>;    # pos
-                chomp ($afuns_string   = <$reader>);
-                chomp ($parents_string = <$reader>);
+                
+                $afuns_string = <$reader>;
+                $afuns_string =~ s/\R$//;
+
+                $parents_string = <$reader>;
+                $parents_string =~ s/\R$//;
             }
             
             log_fatal "Treex::Tool::Parser::MST wrote unexpected number of lines" if !defined $afuns_string || !defined $parents_string;
