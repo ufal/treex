@@ -112,7 +112,7 @@ sub print_tnode_features {
         # Todo: add verbal aspect
 
         #print { $self->_file_handle() } "$i:$cost _$variant|T $en_tlemma^$variant |P $en_tlemma^$en_formeme^$variant_pos\n";
-        print { $self->_file_handle() } "$i:$cost _$variant|T $en_tlemma^$variant\n";
+        print { $self->_file_handle() } "$i:$cost _$variant|T $en_tlemma^$variant |V $variant\n";
     }
     print { $self->_file_handle() } "\n";
     return;
