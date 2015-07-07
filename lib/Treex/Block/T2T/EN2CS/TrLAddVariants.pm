@@ -2,7 +2,7 @@ package Treex::Block::T2T::EN2CS::TrLAddVariants;
 use Moose;
 use Treex::Core::Common;
 
-extends 'Treex::Block::T2T::BaseTrLAddVariants';
+extends 'Treex::Block::T2T::TrLAddVariants';
 
 use Treex::Tool::TranslationModel::Static::Model;
 
@@ -31,21 +31,11 @@ has human_model => (
     default => 'tlemma_humanlex.static.pls.slurp.gz',
 );
 
-override 'process_start' => sub {
-    my $self = shift;
-
-    super();
+override 'load_models_static' => sub {
+    my ($self, $static_model) = @_;
 
     my @interpolated_sequence = ();
 
-    my $use_memcached =  $self->scenario && $self->scenario->runner && $self->scenario->runner->cache && Treex::Tool::Memcached::Memcached::get_memcached_hostname();
-
-
-    if ( $self->discr_weight > 0 ) {
-        my $discr_model = $self->load_model( $self->_model_factory->create_model($self->discr_type), $self->discr_model, $use_memcached );
-        push( @interpolated_sequence, { model => $discr_model, weight => $self->discr_weight } );
-    }
-    my $static_model   = $self->load_model( Treex::Tool::TranslationModel::Static::Model->new(), $self->static_model, $use_memcached );
     my $humanlex_model = $self->load_model( Treex::Tool::TranslationModel::Static::Model->new(), $self->human_model,  0 );
 
     my $deverbadj_model = Treex::Tool::TranslationModel::Derivative::EN2CS::Deverbal_adjectives->new( { base_model => $static_model } );
@@ -57,12 +47,9 @@ override 'process_start' => sub {
     my $prefixes_model = Treex::Tool::TranslationModel::Derivative::EN2CS::Prefixes->new( { base_model => $static_model } );
     my $suffixes_model = Treex::Tool::TranslationModel::Derivative::EN2CS::Suffixes->new( { base_model => 'not needed' } );
     my $translit_model = Treex::Tool::TranslationModel::Derivative::EN2CS::Transliterate->new( { base_model => 'not needed' } );
-    my $static_translit = Treex::Tool::TranslationModel::Combined::Backoff->new( { models => [ $static_model, $translit_model ] } );
 
     # make interpolated model
-    push(
-        @interpolated_sequence,
-        { model => $static_translit, weight => $self->static_weight },
+    push( @interpolated_sequence,
         { model => $humanlex_model,  weight => 0.1 },
         { model => $deverbadj_model, weight => 0.1 },
         { model => $deadjadv_model,  weight => 0.1 },
@@ -73,15 +60,13 @@ override 'process_start' => sub {
         { model => $prefixes_model,  weight => 0.1 },
         { model => $suffixes_model,  weight => 0.1 },
     );
+    
+    if ($self->static_weight > 0) {
+        my $static_translit = Treex::Tool::TranslationModel::Combined::Backoff->new( { models => [ $static_model, $translit_model ] } );
+        push @interpolated_sequence, { model => $static_translit, weight => $self->static_weight };
+    }
 
-    #my $interpolated_model = Treex::Tool::TranslationModel::Combined::Interpolated->new( { models => \@interpolated_sequence } );
-    #$combined_model = $interpolated_model;
-    $self->_set_model( Treex::Tool::TranslationModel::Combined::Interpolated->new( { models => \@interpolated_sequence } ) );
-
-    #my @backoff_sequence = ( $interpolated_model, @derivative_models );
-    #my $combined_model = Treex::Tool::TranslationModel::Combined::Backoff->new( { models => \@backoff_sequence } );
-
-    return;
+    return @interpolated_sequence;
 };
 
 # Require the needed models and set the absolute paths to the respective attributes

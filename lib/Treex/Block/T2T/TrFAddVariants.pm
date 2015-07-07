@@ -26,7 +26,7 @@ has static_weight => (
     is            => 'ro',
     isa           => 'Num',
     default       => 1.0,
-    documentation => 'Weight of the Static model (the model won\'t be loaded if the weight is zero).'
+    documentation => 'Weight of the Static model (NB: the model will be loaded even if the weight is zero).'
 );
 
 has static_model => (

@@ -101,7 +101,7 @@ sub get_required_share_files {
     my @files;
 
     foreach my $model (@{$self->_models}) {
-        if ($model->{weight} > 0) {
+        if ($model->{weight} > 0 || $model->{type} eq 'static') {
             push @files,
                 $self->model_dir
                 ? $self->model_dir . '/' . $model->{filename}
@@ -124,9 +124,7 @@ sub process_start
     my $use_memcached = $self->scenario && $self->scenario->runner && $self->scenario->runner->cache && Treex::Tool::Memcached::Memcached::get_memcached_hostname();
 
     foreach my $model (@{$self->_models}) {
-        if ($model->{weight} > 0) {
-            # TODO this switch would not be necessary if ModelFactory could
-            # also create a static model
+        if ($model->{weight} > 0 || $model->{type} eq 'static') {
             my $model_class = $model->{type} eq 'static'
                 ? Treex::Tool::TranslationModel::Static::Model->new()
                 : $self->_model_factory->create_model($model->{type})
