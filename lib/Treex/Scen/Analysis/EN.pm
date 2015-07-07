@@ -113,6 +113,12 @@ This scenario starts with tokenization, so sentence segmentation must be perform
 It covers: tokenization, tagging (Morce), lemmatization, NER (NameTag),
 dependency parsing (MST) and tectogrammatical analysis.
 
+Note that Morce tagger cannot be instantiated twice -- therefore,
+this scenario cannot be invoked more than once in one call to Treex.
+If this is a problem for you, you either have to use separate calls to Treex,
+writing out your data to disk and then reading them back between the calls,
+or use MorphoDiTa instead of Morce.
+
 =head1 PARAMETERS
 
 currently none
