@@ -305,6 +305,11 @@ sub process_auxiliary_particles
 
                     # Treat the particle as a subordinating conjunction.
                     $node->set_afun('AuxC');
+                    # "да" needs to be marked as an infinitive in order to collapse modal+да constructions
+                    # (да is a kind of infinitive particle, but the verb it precedes does not need to be infinitive).
+                    # We cannot do this inside Interset driver because tag "Tx" can be also "ще",
+                    # which definitely should not be marked as an infinitive.
+                    $node->iset->set_verbform('inf');
                 }
                 else    # šte
                 {
@@ -313,6 +318,17 @@ sub process_auxiliary_particles
             }
         }
     }
+}
+
+
+#------------------------------------------------------------------------------
+# Modal verbs are not marked in BulTreeBank, so we need to detect them based on lemmas.
+#------------------------------------------------------------------------------
+sub is_modal {
+    my ($self, $node) = @_;
+    # TODO: add the rest of BG modals
+    return 1 if $node->lemma =~ /^(трябва|трябва)(\_.*)?$/;
+	return 0;
 }
 
 #------------------------------------------------------------------------------
@@ -330,6 +346,10 @@ sub process_auxiliary_verbs
     # Search for nodes to lift.
     foreach my $node (@nodes)
     {
+
+        if ($self->is_modal($node)){
+            $node->iset->set_verbtype('mod');
+        }
 
         # Is this a non-auxiliary verb?
         # Is its parent an auxiliary verb?
