@@ -99,6 +99,18 @@ sub parse_sentence_baseline {
             push @edges, [$ord+1, $ord];
         }
         push @edges, [0, $sentence_length];
+    } elsif ( $self->config->baseline_parse_type eq 'random' ) {
+        my @weighted_edges;
+        for (my $child = 1; $child < $sentence_length; $child++) {
+            for (my $parent = 0; $parent < $sentence_length; $parent++) {
+                next if ($child == $parent);
+                push @weighted_edges, ( $parent, $child, rand );
+            }
+        }
+        my $graph = Graph->new( vertices => [ ( 0 .. $sentence_length ) ]);
+        $graph->add_weighted_edges(@weighted_edges);
+        my $msts = $graph->MST_ChuLiuEdmonds($graph);
+        @edges = $msts->edges;
     }
 
     return \@edges;

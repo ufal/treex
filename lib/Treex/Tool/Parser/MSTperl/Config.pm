@@ -456,6 +456,7 @@ has 'baseline_parse' => (
     default => 0,
 );
 
+# left-branching, right-branching, random
 has 'baseline_parse_type' => (
     is      => 'rw',
     isa     => 'Str',
