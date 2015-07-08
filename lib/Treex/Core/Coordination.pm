@@ -462,7 +462,7 @@ sub detect_prague
 {
     my $self = shift;
     my $node = shift; # suspected root node of coordination
-    return unless($node->afun() eq 'Coord');
+    return if ($node->afun||'') ne 'Coord';
     $self->set_parent($node->parent());
     $self->set_is_member($node->is_member());
     $self->set_afun('ExD'); # for the case that all conjuncts are ExD
