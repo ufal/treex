@@ -25,6 +25,22 @@ sub process_zone
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
     $self->check_afuns($root);
+    foreach my $node ($root->get_descendants){
+        $self->fix_iset($node);
+    }
+    return;
+}
+
+sub fix_iset {
+    my ($self, $node) = @_;
+    my $lemma = $node->lemma;
+    if ($lemma eq 'qui'){
+        $node->iset->set_prontype('rel');
+    }
+    if ($node->is_verb && $lemma =~ /^(possum|debeo|volo|nolo|malo|soleo|intendo)$/){
+        $node->iset->set_verbtype('mod');
+    }
+    return;
 }
 
 #------------------------------------------------------------------------------
