@@ -1,37 +1,7 @@
 package Treex::Block::T2T::TrFAddVariantsInterpol;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
-
-use Treex::Tool::ML::NormalizeProb;
-use Moose::Util::TypeConstraints;
-
-use Treex::Tool::TranslationModel::Factory;
-use Treex::Tool::TranslationModel::Static::Model;
-
-use Treex::Tool::TranslationModel::Combined::Interpolated;
-
-use Treex::Tool::TranslationModel::Features::Standard;
-
-has model_dir => (
-    is            => 'ro',
-    isa           => 'Str',
-    default       => '',
-    documentation => 'Base directory for all models'
-);
-
-# This role supports loading models to Memcached. 
-# It requires model_dir to be implemented, so it muse be consumed after model_dir has been defined.
-with 'Treex::Block::T2T::TrUseMemcachedModel';
-
-enum 'DataVersion' => [ '0.9', '1.0' ];
-
-has max_variants => (
-    is            => 'ro',
-    isa           => 'Int',
-    default       => 0,
-    documentation => 'How many variants to store for each node. 0 means all.',
-);
+extends 'Treex::Block::T2T::TrBaseAddVariantsInterpol';
 
 has allow_fake_formemes => (
     is            => 'ro',
@@ -39,105 +9,6 @@ has allow_fake_formemes => (
     default       => 0,
     documentation => 'Allow formemes like "???".',
 );
-
-has models => ( is => 'rw', isa => 'Str', default => 'maxent 0.5 formeme_czeng09.maxent.compact.pls.slurp.gz static 1.0 formeme_czeng09.static.pls.slurp.gz' );
-
-has _models => (
-    is => 'rw',
-    isa => 'ArrayRef',
-    lazy => 1,
-    builder => '_build_models',
-);
-
-#     default => sub {
-#         return [
-#             {
-#                 type => 'maxent',
-#                 weight => 0.5,
-#                 filename => 'formeme_czeng09.maxent.compact.pls.slurp.gz',
-#             },
-#             {
-#                 type => 'static',
-#                 weight => 1.0,
-#                 filename => 'formeme_czeng09.static.pls.slurp.gz',
-#             },
-#         ];
-#     }
-# );
-
-sub _build_models {
-    my ($self) = @_;
-
-    my @models = split / /, $self->models;
-    my $models_ar = [];
-
-    while (@models > 0) {
-        my $type = shift @models;
-        my $weight = shift @models;
-        my $filename = shift @models;
-        push @$models_ar, {
-            type => $type,
-            weight => $weight,
-            filename => $filename,
-        };
-    }
-
-    return $models_ar;
-}
-
-has _model => ( is => 'rw' );
-
-has '_model_factory' => (
-    is => 'ro',
-    isa => 'Treex::Tool::TranslationModel::Factory',
-    default => sub { return Treex::Tool::TranslationModel::Factory->new(); },
-);
-
-
-# Require the needed models
-sub get_required_share_files {
-
-    my ($self) = @_;
-    my @files;
-
-    foreach my $model (@{$self->_models}) {
-        if ($model->{weight} > 0 || $model->{type} eq 'static') {
-            push @files,
-                $self->model_dir
-                ? $self->model_dir . '/' . $model->{filename}
-                :  $model->{filename}
-            ;
-        }
-    }
-
-    return @files;
-}
-
-sub process_start
-{
-    my $self = shift;
-
-    $self->SUPER::process_start();
-
-    my @interpolated_sequence = ();
-
-    my $use_memcached = $self->scenario && $self->scenario->runner && $self->scenario->runner->cache && Treex::Tool::Memcached::Memcached::get_memcached_hostname();
-
-    foreach my $model (@{$self->_models}) {
-        if ($model->{weight} > 0 || $model->{type} eq 'static') {
-            my $model_class = $model->{type} eq 'static'
-                ? Treex::Tool::TranslationModel::Static::Model->new()
-                : $self->_model_factory->create_model($model->{type})
-            ;
-            my $loaded_model = $self->load_model( $model_class, $model->{filename}, $use_memcached );
-            push( @interpolated_sequence, { model => $loaded_model, weight => $model->{weight} } );
-        }
-    }
-
-    $self->_set_model( Treex::Tool::TranslationModel::Combined::Interpolated->new( { models => \@interpolated_sequence } ) );
-
-    return;
-}
 
 # this wrapper is here just because the en2cs version uses another feature extractor
 sub features_from_src_tnode {

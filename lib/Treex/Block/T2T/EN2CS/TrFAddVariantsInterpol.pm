@@ -8,11 +8,7 @@ has '+model_dir' => ( default => 'data/models/translation/en2cs' );
 has '+models' => ( default => 'maxent 0.5 formeme_czeng09.maxent.compact.pls.slurp.gz static 1.0 formeme_czeng09.static.pls.slurp.gz' );
 
 # TODO: get rid of several versions of formemes -> just retrain the formeme TM
-has maxent_features_version => (
-    is      => 'ro',
-    isa     => 'DataVersion',
-    default => '0.9'
-);
+has '+maxent_features_version' => ( default => '0.9' );
 
 override 'can_be_translated_as' => sub {
     my ( $self, $src_tnode, $src_formeme, $trg_formeme ) = @_;

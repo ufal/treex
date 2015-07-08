@@ -1,35 +1,9 @@
 package Treex::Block::T2T::EN2CS::TrFAddVariants;
 use Moose;
-use Treex::Tool::TranslationModel::MaxEnt::FeatureExt::EN2CS;
-extends 'Treex::Block::T2T::TrFAddVariants';
+extends 'Treex::Block::T2T::TrFAddVariants', 'Treex::Block::T2T::EN2CS::TrFAddVariantsInterpol';
 
-has '+model_dir' => ( default => 'data/models/translation/en2cs' );
 has '+discr_model' => ( default => 'formeme_czeng09.maxent.compact.pls.slurp.gz' );
 has '+static_model' => ( default => 'formeme_czeng09.static.pls.slurp.gz' );
-
-# TODO: get rid of several versions of formemes -> just retrain the formeme TM
-has maxent_features_version => (
-    is      => 'ro',
-    isa     => 'DataVersion',
-    default => '0.9'
-);
-
-override 'can_be_translated_as' => sub {
-    my ( $self, $src_tnode, $src_formeme, $trg_formeme ) = @_;
-    my $res = super();
-    return 0 if (!$res);
-    my $src_lemma = $src_tnode->t_lemma;
-    my $src_p_lemma = $src_tnode->get_parent()->t_lemma || '_root';
-    return 0 if $src_formeme eq 'n:with+X' && $trg_formeme =~ /^n:(1|u.2)$/;
-    return 0 if $src_formeme eq 'n:obj' && $trg_formeme eq 'n:1' && $src_p_lemma ne 'be';
-    return 0 if $src_formeme eq 'n:obj' && $trg_formeme eq 'n:2' && $src_lemma =~ /^wh/;
-    return 1;
-};
-
-override 'features_from_src_tnode' => sub {
-    my ($self, $src_tnode) = @_;
-    return Treex::Tool::TranslationModel::MaxEnt::FeatureExt::EN2CS::features_from_src_tnode($src_tnode, $self->maxent_features_version);
-};
 
 1;
 
@@ -61,8 +35,10 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 Michal Novák <mnovak@ufal.mff.cuni.cz>
 
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
+
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2009-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2009-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
