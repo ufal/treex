@@ -40,6 +40,7 @@ sub process_zone
 
     # Conversion from dependency relation tags to afuns (analytical function tags) must be done always
     # and it is almost always treebank-specific (only a few treebanks use the same tagset as the PDT).
+    $root->set_afun('AuxS');
     $self->deprel_to_afun($root);
 
     # The return value can be used by the overriding methods of subclasses.
@@ -307,7 +308,7 @@ sub process_prep_sub_arg_cloud
     my $self = shift;
     my $root = shift;
     # Convert the tree of nodes to tree of clouds, i.e. build the parallel structure.
-    my $cloud = new Treex::Core::Cloud;
+    my $cloud = Treex::Core::Cloud->new();
     $cloud->create_from_node($root);
     # Traverse the tree of clouds.
     $self->process_prep_sub_arg_cloud_recursive($cloud);
