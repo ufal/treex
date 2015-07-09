@@ -26,6 +26,9 @@ sub check_anode {
     if ($deontmod){
         $tnode->set_gram_deontmod($deontmod);
     }
+    if ($anode->lemma eq 'ще'){
+        $tnode->set_gram_tense('post');
+    }
     return;
 }
 
