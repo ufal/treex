@@ -254,25 +254,22 @@ sub is_auxiliary_particle
 # auxiliary particles. (There may be other children having the 'comp' deprel;
 # these children are complements to the particle-verb pair.)
 #------------------------------------------------------------------------------
-sub get_leftmost_verbal_child
-{
-    my $self         = shift;
-    my $node         = shift;
-    my @children     = $node->children();
-    my @verbchildren = grep { $_->get_iset('pos') eq 'verb' && $_->conll_deprel() eq 'comp' } (@children);
-    if (@verbchildren)
-    {
-        return $verbchildren[0];
-    }
-    return undef;
+sub get_leftmost_verbal_child {
+    my ($self, $node) = @_;
+    return first {$_->is_verb && $_->conll_deprel eq 'comp'} $node->get_children({ordered=>1});
 }
 
 #------------------------------------------------------------------------------
 # There are two auxiliary particles in BulTreeBank:
-# 'da' is an infinitival marker;
-# 'šte' is used to construct the future tense.
+# 'да' is an infinitival* marker;
+# 'ще' is used to construct the future tense.
 # Both originally govern an infinitive verb clause.
 # Both will be treated as subordinating conjunctions in Czech.
+# *) Modern Bulgarian has no infinitive, да+[conjugated verb in present tense] is used instead.
+#   There are also constructions, in which the following verb form is in past tense, then it can be considered
+#   as an optative, since it expresses some wishes. For example, 'Да бях по-млад' -> 'If I was younger... [but I am not]'.
+#   Also, in some cases да can also be a subordinator: Чакам да дойдеш -> 'I wait [wanting] you to come / čekám abys přišel.
+#   Then we might say it is subjunctive.
 #------------------------------------------------------------------------------
 sub process_auxiliary_particles
 {
@@ -306,12 +303,12 @@ sub process_auxiliary_particles
                     # Treat the particle as a subordinating conjunction.
                     $node->set_afun('AuxC');
                     # "да" needs to be marked as an infinitive in order to collapse modal+да constructions
-                    # (да is a kind of infinitive particle, but the verb it precedes does not need to be infinitive).
+                    # (да is a kind of infinitive particle, but the verb it precedes is fully conjugated).
                     # We cannot do this inside Interset driver because tag "Tx" can be also "ще",
-                    # which definitely should not be marked as an infinitive.
+                    # which should not be marked as an infinitive.
                     $node->iset->set_verbform('inf');
                 }
-                else    # šte
+                else    # ще
                 {
                     $self->lift_node( $head, 'AuxV' );
                 }
@@ -327,7 +324,7 @@ sub process_auxiliary_particles
 sub is_modal {
     my ($self, $node) = @_;
     # TODO: add the rest of BG modals
-    return 1 if $node->lemma =~ /^(трябва|трябва)(\_.*)?$/;
+    return 1 if $node->lemma =~ /^(трябва|мога)(\_.*)?$/;
 	return 0;
 }
 
