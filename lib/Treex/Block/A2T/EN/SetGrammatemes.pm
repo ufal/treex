@@ -21,7 +21,7 @@ Readonly my %SUB_FOR_TAG => (
     RB => \&_adv, RBR => \&_adv, RBS => \&_adv,
 );
 
-# modal verb -> gramm/deontmod mapping
+# modal verb -> gram/deontmod mapping
 Readonly my %DEONTMOD_FOR_LEMMA => (
     'must'   => 'deb',
     'should' => 'hrt',
