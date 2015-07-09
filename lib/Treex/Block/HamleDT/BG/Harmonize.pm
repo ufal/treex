@@ -256,7 +256,7 @@ sub is_auxiliary_particle
 #------------------------------------------------------------------------------
 sub get_leftmost_verbal_child {
     my ($self, $node) = @_;
-    return first {$_->is_verb && $_->conll_deprel eq 'comp'} $node->get_children({ordered=>1});
+    return first {$_->match_iset(pos=>'verb', verbtype=>'!aux') && $_->conll_deprel eq 'comp'} $node->get_children({ordered=>1});
 }
 
 #------------------------------------------------------------------------------
@@ -270,51 +270,47 @@ sub get_leftmost_verbal_child {
 #   as an optative, since it expresses some wishes. For example, 'Да бях по-млад' -> 'If I was younger... [but I am not]'.
 #   Also, in some cases да can also be a subordinator: Чакам да дойдеш -> 'I wait [wanting] you to come / čekám abys přišel.
 #   Then we might say it is subjunctive.
+# Passive constructions such as "тя(parent=да) трябва да(parent=трябва) е(parent=да) изписана(parent=да)"
+# should be transformed to "тя(parent=изписана) трябва да(parent=трябва,afun=AuxC) е(parent=изписана,afun=AuxV) изписана(parent=да)"
+# See https://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s03.html#prstapas_rozliseni_stavu_a_pasiva_
 #------------------------------------------------------------------------------
-sub process_auxiliary_particles
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        if ( $self->is_auxiliary_particle($node) )
-        {
+sub process_auxiliary_particles {
+    my ($self, $root) = @_;
+    foreach my $node ($root->get_descendants()) {
+        next if !$self->is_auxiliary_particle($node);
 
-            # Consider the first verbal child of the particle the clausal head.
-            my $head = $self->get_leftmost_verbal_child($node);
-            if ( defined($head) )
-            {
-                my @children = $node->children();
+        # Consider the first verbal child of the particle the clausal head.
+        my $head = $self->get_leftmost_verbal_child($node);
+        next if !$head;
 
-                # Reattach all other children to the new head.
-                foreach my $child (@children)
-                {
-                    unless ( $child == $head )
-                    {
-                        $child->set_parent($head);
-                    }
-                }
+        my @children = $node->children();
 
-                # Experiment: different treatment of 'da' and 'šte'.
-                if ( $node->form() eq 'да' )
-                {
-
-                    # Treat the particle as a subordinating conjunction.
-                    $node->set_afun('AuxC');
-                    # "да" needs to be marked as an infinitive in order to collapse modal+да constructions
-                    # (да is a kind of infinitive particle, but the verb it precedes is fully conjugated).
-                    # We cannot do this inside Interset driver because tag "Tx" can be also "ще",
-                    # which should not be marked as an infinitive.
-                    $node->iset->set_verbform('inf');
-                }
-                else    # ще
-                {
-                    $self->lift_node( $head, 'AuxV' );
+        # Reattach all other children to the new head.
+        # Mark auxiliary "е" in passive constructions as AuxV
+        foreach my $child (@children) {
+            if ( $child != $head ) {
+                $child->set_parent($head);
+                if ($child->iset->verbtype eq 'aux'){
+                    $child->set_afun('AuxV');
                 }
             }
         }
+
+        # Experiment: different treatment of 'da' and 'šte'.
+        if ( $node->form() eq 'да' ) {
+
+            # Treat the particle as a subordinating conjunction.
+            $node->set_afun('AuxC');
+            # "да" needs to be marked as an infinitive in order to collapse modal+да constructions
+            # (да is a kind of infinitive particle, but the verb it precedes is fully conjugated).
+            # We cannot do this inside Interset driver because tag "Tx" can be also "ще",
+            # which should not be marked as an infinitive.
+            $node->iset->set_verbform('inf');
+        } else {   # ще
+            $self->lift_node( $head, 'AuxV' );
+        }
     }
+    return;
 }
 
 
