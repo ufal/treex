@@ -12,10 +12,7 @@ use Treex::Tool::TranslationModel::Static::Model;
 use Treex::Tool::TranslationModel::Combined::Interpolated;
 use Treex::Tool::TranslationModel::Features::Standard;
 
-# TODO this line maybe unnecessary?
-# use Treex::Tool::Memcached::Memcached;
-
-has model_dir => (
+# s model_dir => (
     is            => 'ro',
     isa           => 'Str',
     default       => '',
