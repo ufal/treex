@@ -125,6 +125,7 @@ override 'process_start' => sub {
     my $static_isset = 0;
     foreach my $model (@{$self->_models}) {
         if ( $model->{type} eq 'static') {
+            # always load the static model
             my $static_model = $self->load_model( Treex::Tool::TranslationModel::Static::Model->new(),
                 $model->{filename}, $use_memcached );
             # 1st static is special, it can be used to create multiple static models
@@ -133,17 +134,20 @@ override 'process_start' => sub {
             if ( @static_models > 0 ) {
                 # some models loaded instead of $static_model
                 push @interpolated_sequence, @static_models;
-            } else {
+                $static_isset = 1;
+            } elsif ( $model->{weight} > 0 ) {
                 # no models loaded, use $static_model
                 push @interpolated_sequence, { model => $static_model, weight => $model->{weight} };
+                $static_isset = 1;
             }
-            $static_isset = 1;
+            # else no static models at the moment
         } elsif ($model->{weight} > 0) {
+            # load non-static model only if w > 0
             my $nonstatic_model = $self->load_model( $self->_model_factory->create_model($model->{type}),
                 $model->{filename}, $use_memcached );
             push @interpolated_sequence, { model => $nonstatic_model, weight => $model->{weight} };
         }
-        # else non-static with w=0 => don't load
+        # else non-static with w = 0 => don't load
     }
 
     $self->_set_model( Treex::Tool::TranslationModel::Combined::Interpolated->new(
