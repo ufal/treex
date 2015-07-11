@@ -102,8 +102,7 @@ sub get_required_share_files {
     my @files;
     foreach my $model (@{$self->_models}) {
         if ($model->{weight} > 0 || $model->{type} eq 'static') {
-            my $file = $self->model_dir ? $self->model_dir . '/'  : '';
-            $file .= $model->{filename};
+            my $file = $self->model_dir ? $self->model_dir . '/' . $model->{filename} : $model->{filename};
             push @files, $file;
         }
     }

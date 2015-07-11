@@ -2,37 +2,27 @@ package Treex::Block::T2T::EN2CS::TrLAddVariants;
 use Moose;
 use Treex::Core::Common;
 
-extends 'Treex::Block::T2T::TrLAddVariants', 'Treex::Block::T2T::EN2CS::TrLAddVariantsInterpol';
+extends 'Treex::Block::T2T::EN2CS::TrLAddVariantsInterpol';
+with 'Treex::Block::T2T::TrAddVariantsRole';
 
 has '+discr_model' => ( default => 'tlemma_czeng12.maxent.10000.100.2_1.compact.pls.gz' );
+has '+discr_weight' => ( default => 1.0 );
+
 has '+static_model' => ( default => 'tlemma_czeng09.static.pls.slurp.gz' );
+has '+static_weight' => ( default => 0.5 );
 
-has human_model => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => 'tlemma_humanlex.static.pls.slurp.gz',
-);
+# EN2CS adds a human static model:
 
-override '_build_models' => sub {
-    my ($self) = @_;
+has human_model => ( is => 'ro', isa => 'Str', default => 'tlemma_humanlex.static.pls.slurp.gz' );
 
-    return [
-        {
-            type => $self->discr_type,
-            weight => $self->discr_weight,
-            filename => $self->discr_model,
-        },
-        {
-            type => 'static',
-            weight => $self->static_weight,
-            filename => $self->static_model,
-        },
-        {
-            type => 'static',
-            weight => 0.1,
-            filename => $self->human_model,
-        },
-    ];
+around '_build_models' => sub {
+    my ($super, $self) = @_;
+
+    my $result = $self->$super();
+    my $human = {type => 'static', weight => 0.1, filename => $self->human_model};
+    push @$result, $human;
+
+    return $result;
 };
 
 1;

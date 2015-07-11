@@ -1,9 +1,14 @@
 package Treex::Block::T2T::EN2CS::TrFAddVariants;
 use Moose;
-extends 'Treex::Block::T2T::TrFAddVariants', 'Treex::Block::T2T::EN2CS::TrFAddVariantsInterpol';
+use Treex::Core::Common;
+extends 'Treex::Block::T2T::EN2CS::TrFAddVariantsInterpol';
+with 'Treex::Block::T2T::TrAddVariantsRole'; 
 
 has '+discr_model' => ( default => 'formeme_czeng09.maxent.compact.pls.slurp.gz' );
+has '+discr_weight' => ( default => 0.5 );
+
 has '+static_model' => ( default => 'formeme_czeng09.static.pls.slurp.gz' );
+has '+static_weight' => ( default => 1.0 );
 
 1;
 

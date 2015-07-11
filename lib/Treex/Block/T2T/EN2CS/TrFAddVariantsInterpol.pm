@@ -1,10 +1,10 @@
 package Treex::Block::T2T::EN2CS::TrFAddVariantsInterpol;
 use Moose;
+use Treex::Core::Common;
 use Treex::Tool::TranslationModel::MaxEnt::FeatureExt::EN2CS;
 extends 'Treex::Block::T2T::TrFAddVariantsInterpol';
 
 has '+model_dir' => ( default => 'data/models/translation/en2cs' );
-
 has '+models' => ( default => 'maxent 0.5 formeme_czeng09.maxent.compact.pls.slurp.gz static 1.0 formeme_czeng09.static.pls.slurp.gz' );
 
 # TODO: get rid of several versions of formemes -> just retrain the formeme TM

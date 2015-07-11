@@ -1,7 +1,8 @@
 package Treex::Block::T2T::TrLAddVariants;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block::T2T::TrLAddVariantsInterpol', 'Treex::Block::T2T::TrBaseAddVariants';
+extends 'Treex::Block::T2T::TrLAddVariantsInterpol';
+with 'Treex::Block::T2T::TrAddVariantsRole';
 
 has '+discr_weight' => ( default => 1.0 );
 has '+static_weight' => ( default => 0.5 );

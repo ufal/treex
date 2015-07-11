@@ -1,7 +1,6 @@
-package Treex::Block::T2T::TrBaseAddVariants;
-use Moose;
-use Treex::Core::Common;
-extends 'Treex::Block::T2T::TrBaseAddVariantsInterpol';
+package Treex::Block::T2T::TrAddVariantsRole;
+use Moose::Role;
+requires '_build_models';
 
 has discr_type => (
     is      => 'ro',
@@ -56,21 +55,7 @@ __END__
 
 =head1 NAME
 
-Treex::Block::T2T::TrBaseAddVariants -- abstract class, add translation variants from translation models (language-independent)
-
-=head1 DESCRIPTION
-
-This block uses a combination of translation models to predict log-probabilities of translation
-variants.
-
-The available models are Maximum Entropy (using L<AI::MaxEnt>) and Static (based on simple corpus counts).
-
-Using L<Treex::Tool::Memcached::Memcached> models is enabled via the 
-L<Treex::Block::T2T::TrUseMemcachedModel> role.  
-
-See the 'documentation' parameter of the individual attributes for details on various options.
-
-=back
+Treex::Block::T2T::TrAddVariantsRole -- add support for setting the models by using the parameters static_model, static_weight, discr_model, discr_type, discr_weight
 
 =head1 AUTHOR
 

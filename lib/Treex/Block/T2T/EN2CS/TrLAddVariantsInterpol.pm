@@ -4,7 +4,21 @@ use Treex::Core::Common;
 
 extends 'Treex::Block::T2T::TrLAddVariantsInterpol';
 
+has '+model_dir' => ( default => 'data/models/translation/en2cs' );
 has '+models' => ( default => 'maxent 1.0 tlemma_czeng12.maxent.10000.100.2_1.compact.pls.gz static 0.5 tlemma_czeng09.static.pls.slurp.gz static 0.1 tlemma_humanlex.static.pls.slurp.gz' );
+
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Numbers;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Hyphen_compounds;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Deverbal_adjectives;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Deadjectival_adverbs;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Nouns_to_adjectives;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Verbs_to_nouns;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Prefixes;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Suffixes;
+use Treex::Tool::TranslationModel::Derivative::EN2CS::Transliterate;
+use Treex::Tool::TranslationModel::Combined::Backoff;
+
+use Treex::Tool::Lexicon::CS;    # jen docasne, kvuli vylouceni nekonzistentnich tlemmat jako prorok#A
 
 override 'load_models_static' => sub {
     my ($self, $static_model, $static_weight) = @_;
