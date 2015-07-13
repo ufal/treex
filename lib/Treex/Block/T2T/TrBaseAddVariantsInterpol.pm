@@ -12,7 +12,7 @@ use Treex::Tool::TranslationModel::Static::Model;
 use Treex::Tool::TranslationModel::Combined::Interpolated;
 use Treex::Tool::TranslationModel::Features::Standard;
 
-# s model_dir => (
+has model_dir => (
     is            => 'ro',
     isa           => 'Str',
     default       => '',
