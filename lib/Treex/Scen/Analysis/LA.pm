@@ -2,10 +2,18 @@ package Treex::Scen::Analysis::LA;
 use Moose;
 use Treex::Core::Common;
 
-my $FULL = <<'END';
-# a-trees harmonization
-HamleDT::LA::HarmonizeIT
+has harmonize_from_conll => (is=>'ro', isa=>'Bool', default=>0, documentation=>'Expect Index Thomisticus conll files on the input.');
 
+#has shorten_ids =>
+# TODO add blocks
+# Optionally, backup original IDs to a wild attribute
+#Util::Eval anode='$.wild->{origid}=$.id;'
+#
+# Make IDs shorter and without escape sequences (original ids were e.g a-004.4SN.DS13QU1.AR2CRA-2.8-4.11-6W1)
+# Util::Eval anode='$.set_id($.generate_new_id)'
+
+
+my $A2T_SCEN = <<'END';
 # t-layer
 A2T::LA::MarkEdgesToCollapse
 A2T::BuildTtree
@@ -27,7 +35,15 @@ A2T::LA::SetGrammatemes
 END
 
 sub get_scenario_string {
-    return $FULL;
+    my ($self) = @_;
+
+    my $scen = '';
+    if ($self->harmonize_from_conll) {
+        $scen .= 'HamleDT::LA::HarmonizeIT ';
+    }
+
+    $scen .= $A2T_SCEN;
+    return $scen;
 }
 
 1;
@@ -44,9 +60,11 @@ Treex::Scen::Analysis::LA - Latin tectogrammatical analysis (from parsed a-trees
 =head1 SYNOPSIS
 
  # From command line
- treex -Lla Read::CoNLLX from=index_thomisticus.conll Scen::Analysis::LA Write::Treex to=my.treex.gz
+ treex -Lla Read::CoNLLX from=index_thomisticus.conll \
+   Scen::Analysis::LA harmonize_from_conll=1 \
+   Write::Treex to=my.treex.gz
  
- treex --dump_scenario Scen::Analysis::LA
+ treex --dump_scenario Scen::Analysis::LA harmonize_from_conll=1
 
 =head1 DESCRIPTION
 
@@ -55,7 +73,9 @@ so parsed Index-Thomisticus-style a-trees are expected on the input.
 
 =head1 PARAMETERS
 
-currently none
+=head3 harmonize_from_conll
+expect Index Thomisticus conll files on the input.
+and add block C<HamleDT::LA::HarmonizeIT> to the beginning of the scenario.
 
 =head1 AUTHORS
 
