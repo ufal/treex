@@ -38,6 +38,9 @@ sub BUILD {
     $self->_python->command("import sys\nsys.path.append(b'$tv_path')");
     $self->_python->command("import tree_viterbi");
 
+    # load the transition matrix
+    $self->_python->command("tree_viterbi.state.init_TM('$tv_path/transmat.mtx')");
+
     # initialize ADTXML writer (print only one-per-line, store ADT IDs in nodes)
     $self->_set_adtxml_writer( Treex::Block::Write::ADTXML->new( { prettyprint => 0, store_node_ids => 1 } ) );
 }
