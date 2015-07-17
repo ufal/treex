@@ -12,7 +12,7 @@ has domain => (
 has hmtm => (
      is => 'ro',
      isa => 'Bool',
-     default => 1,
+     default => 0,
      documentation => 'Apply HMTM (TreeViterbi) with TreeLM reranking',
 );
 
@@ -40,33 +40,30 @@ sub get_scenario_string {
     'Util::SetGlobal language=en selector=tst',
     'T2T::CopyTtree source_language=cs source_selector=src',
     'T2T::CS2EN::TrFTryRules',
-    #'T2T::CS2EN::TrFAddVariants model_dir= static_model=data/models/translation/cs2en/20141209_formeme.static.gz discr_model=data/models/translation/cs2en/20141209_formeme.maxent.gz',
     "T2T::CS2EN::TrFAddVariantsInterpol model_dir=
         models='static 1.0 $TM_DIR/20141209_formeme.static.gz
                 maxent 0.5 $TM_DIR/20141209_formeme.maxent.gz'",
     'T2T::CS2EN::TrLTryRules',
-    #'T2T::CS2EN::TrLAddVariants model_dir= static_model=data/models/translation/cs2en/20141209_lemma.static.gz discr_model=data/models/translation/cs2en/20141209_lemma.maxent.gz',
     "T2T::CS2EN::TrLAddVariantsInterpol model_dir=
         models='static 0.5 $TM_DIR/20141209_lemma.static.gz
                 maxent 1.0 $TM_DIR/20141209_lemma.maxent.gz'",
     'T2T::EN2CS::CutVariants max_lemma_variants=7 max_formeme_variants=7',
-    'T2T::FormemeTLemmaAgreement fun=Log-HM-P',
+    #'T2T::FormemeTLemmaAgreement fun=Log-HM-P',
     $self->hmtm ? 'T2T::RehangToEffParents' : (),
     $self->hmtm ? 'T2T::CS2EN::TrLFTreeViterbi' : (), #lm_weight=0.2 formeme_weight=0.9 backward_weight=0.0 lm_dir=en.czeng
     $self->hmtm ? 'T2T::RehangToOrigParents' : (),
     'T2T::CS2EN::TrLFixTMErrors',
     'T2T::CS2EN::TrLFPhrases',
     'T2T::CS2EN::RemovePerspronGender' . ($self->domain eq 'IT' ? ' remove_guessed_gender=1' : ''),
-    'T2T::CS2EN::FixForeignNames', # TODO test if it helps
-    'T2T::CS2EN::RemoveInfinitiveSubjects', # TODO test if it helps
+    #'T2T::CS2EN::FixForeignNames', # TODO test if it helps
+    #'T2T::CS2EN::RemoveInfinitiveSubjects', # TODO test if it helps
     'T2T::SetClauseNumber',
-    #T2T::CS2EN::RearrangeNounCompounds -- hurts
-    #T2T::CS2EN::DeleteSuperfluousNodes -- hurts
+    'T2T::CS2EN::RearrangeNounCompounds', # -- hurts
+    'T2T::CS2EN::DeleteSuperfluousNodes', #-- hurts
     'T2T::CS2EN::FixGrammatemesAfterTransfer',
-    'T2T::CS2EN::FixDoubleNegative', # TODO test if it helps
+    #'T2T::CS2EN::FixDoubleNegative', # TODO test if it helps
     ;
     return $scen;
-
 }
 
 1;
@@ -94,7 +91,7 @@ The output (translated English t-trees) will be in zone en_tst.
 
 =head1 PARAMETERS
 
-currently none
+TODO
 
 =head1 SEE ALSO
 
