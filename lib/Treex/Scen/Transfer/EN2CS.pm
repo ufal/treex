@@ -2,62 +2,104 @@ package Treex::Scen::Transfer::EN2CS;
 use Moose;
 use Treex::Core::Common;
 
-my $FULL = <<'END';
-Util::SetGlobal language=cs selector=tst
-T2T::CopyTtree source_language=en source_selector=src
-T2T::EN2CS::TrLFPhrases
-T2T::EN2CS::DeleteSuperfluousTnodes
-T2T::EN2CS::TrFTryRules
-T2T::EN2CS::TrFAddVariants maxent_features_version=0.9 # default is discr_model=formeme_czeng09.maxent.compact.pls.slurp.gz discr_type=maxent
-T2T::EN2CS::TrFRerank2
-T2T::EN2CS::TrLTryRules
-T2T::EN2CS::TrLPersPronIt
-T2T::EN2CS::TrLPersPronRefl
-T2T::EN2CS::TrLHackNNP
-T2T::EN2CS::TrLAddVariants # default is discr_model=tlemma_czeng12.maxent.10000.100.2_1.compact.pls.gz discr_type=maxent
-T2T::EN2CS::TrLFNumeralsByRules
-T2T::EN2CS::TrLFilterAspect
-T2T::EN2CS::TransformPassiveConstructions
-T2T::EN2CS::PrunePersonalNameVariants
-T2T::EN2CS::RemoveUnpassivizableVariants
-T2T::EN2CS::TrLFCompounds
-T2T::EN2CS::CutVariants lemma_prob_sum=0.5 formeme_prob_sum=0.9 max_lemma_variants=7 max_formeme_variants=7
-T2T::RehangToEffParents
-T2T::EN2CS::TrLFTreeViterbi # default is lm_weight=0.2 formeme_weight=0.9 backward_weight=0.0 lm_dir=cs.wmt2007-2012
-T2T::RehangToOrigParents
-T2T::EN2CS::CutVariants max_lemma_variants=3 max_formeme_variants=3
-T2T::EN2CS::FixTransferChoices
-T2T::EN2CS::ReplaceVerbWithAdj
-T2T::EN2CS::DeletePossPronBeforeVlastni
-T2T::EN2CS::TrLFemaleSurnames
-T2T::EN2CS::AddNounGender
-T2T::EN2CS::MarkNewRelClauses
-T2T::EN2CS::AddRelpronBelowRc
-T2T::EN2CS::ChangeCorToPersPron
-T2T::EN2CS::AddPersPronBelowVfin
-T2T::EN2CS::AddVerbAspect
-T2T::EN2CS::FixDateTime
-T2T::EN2CS::FixGrammatemesAfterTransfer
-T2T::EN2CS::FixNegation
-T2T::EN2CS::MoveAdjsBeforeNouns
-T2T::EN2CS::MoveGenitivesRight
-T2T::EN2CS::MoveRelClauseRight
-T2T::EN2CS::MoveDicendiCloserToDsp
-T2T::EN2CS::MovePersPronNextToVerb
-T2T::EN2CS::MoveEnoughBeforeAdj
-T2T::EN2CS::MoveJesteBeforeVerb
-T2T::EN2CS::FixMoney
-T2T::EN2CS::FindGramCorefForReflPron
-T2T::EN2CS::NeutPersPronGenderFromAntec
-T2T::EN2CS::ValencyRelatedRules
-T2T::SetClauseNumber
-T2T::EN2CS::TurnTextCorefToGramCoref
-T2T::EN2CS::FixAdjComplAgreement
+has domain => (
+     is => 'ro',
+     isa => enum( [qw(general IT)] ),
+     default => 'general',
+     documentation => 'domain of the input texts',
+);
 
-END
+has hmtm => (
+     is => 'ro',
+     isa => 'Bool',
+     default => 1,
+     documentation => 'Apply HMTM (TreeViterbi) with TreeLM reranking',
+);
+
+has gazetteer => (
+     is => 'ro',
+     isa => 'Bool',
+     default => undef,
+     documentation => 'Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo T2T::EN2CS::TrGazeteerItems',
+);
+
+sub BUILD {
+    my ($self) = @_;
+    if ($self->domain eq 'IT' && !defined $self->gazetteer){
+        $self->{gazetteer} = 1;
+    }
+    return;
+}
 
 sub get_scenario_string {
-    return $FULL;
+    my ($self) = @_;
+    
+    my $TM_DIR= 'data/models/translation/en2cs';
+    
+    my $scen = join "\n",
+    'Util::SetGlobal language=cs selector=tst',
+    'T2T::CopyTtree source_language=en source_selector=src',
+    'T2T::EN2CS::TrLFPhrases',
+    'T2T::EN2CS::DeleteSuperfluousTnodes',
+    $self->gazetteer eq 'IT' ? 'T2T::EN2CS::TrGazeteerItems' : (),
+    'T2T::EN2CS::TrFTryRules',
+    #T2T::EN2CS::TrFAddVariants maxent_features_version=0.9 # default is discr_model=formeme_czeng09.maxent.compact.pls.slurp.gz discr_type=maxent
+    "T2T::EN2CS::TrFAddVariantsInterpol model_dir= maxent_features_version=0.9
+        models='static 1.0 $TM_DIR/formeme_czeng09.static.pls.slurp.gz
+                maxent 0.5 $TM_DIR/formeme_czeng09.maxent.compact.pls.slurp.gz'",
+    'T2T::EN2CS::TrFRerank2',
+    'T2T::EN2CS::TrLTryRules',
+    $self->domain eq 'IT' ? 'T2T::EN2CS::TrL_ITdomain' : (),
+    'T2T::EN2CS::TrLPersPronIt',
+    'T2T::EN2CS::TrLPersPronRefl',
+    'T2T::EN2CS::TrLHackNNP',
+    #T2T::EN2CS::TrLAddVariants # default is discr_model=tlemma_czeng12.maxent.10000.100.2_1.compact.pls.gz discr_type=maxent
+    #T2T::EN2CS::TrLAddVariants model_dir= static_model=__TLEMMA_STATIC_TM__ discr_model=__TLEMMA_MAXENT_TM__ human_model=data/models/translation/en2cs/tlemma_humanlex.static.pls.slurp.gz
+    "T2T::EN2CS::TrLAddVariantsInterpol model_dir=
+        models='static 0.5 $TM_DIR/tlemma_czeng09.static.pls.slurp.gz
+                maxent 1.0 $TM_DIR/tlemma_czeng12.maxent.10000.100.2_1.compact.pls.gz
+                static 0.1 $TM_DIR/tlemma_humanlex.static.pls.slurp.gz'",
+    'T2T::EN2CS::TrLFNumeralsByRules',
+    'T2T::EN2CS::TrLFilterAspect',
+    'T2T::EN2CS::TransformPassiveConstructions',
+    'T2T::EN2CS::PrunePersonalNameVariants',
+    'T2T::EN2CS::RemoveUnpassivizableVariants',
+    'T2T::EN2CS::TrLFCompounds',
+    $self->hmtm ? 'T2T::EN2CS::CutVariants lemma_prob_sum=0.5 formeme_prob_sum=0.9 max_lemma_variants=7 max_formeme_variants=7' : (),
+    $self->hmtm ? 'T2T::RehangToEffParents' : (),
+    $self->hmtm ? 'T2T::EN2CS::TrLFTreeViterbi' : (), #lm_weight=0.2 formeme_weight=0.9 backward_weight=0.0 lm_dir=cs.wmt2007-2012
+    $self->hmtm ? 'T2T::RehangToOrigParents' : (),
+    'T2T::EN2CS::CutVariants max_lemma_variants=3 max_formeme_variants=3',
+    'T2T::EN2CS::FixTransferChoices',
+    'T2T::EN2CS::ReplaceVerbWithAdj',
+    'T2T::EN2CS::DeletePossPronBeforeVlastni',
+    'T2T::EN2CS::TrLFemaleSurnames',
+    'T2T::EN2CS::AddNounGender',
+    'T2T::EN2CS::MarkNewRelClauses',
+    'T2T::EN2CS::AddRelpronBelowRc',
+    'T2T::EN2CS::ChangeCorToPersPron',
+    'T2T::EN2CS::AddPersPronBelowVfin',
+    'T2T::EN2CS::AddVerbAspect',
+    'T2T::EN2CS::FixDateTime',
+    'T2T::EN2CS::FixGrammatemesAfterTransfer',
+    'T2T::EN2CS::FixNegation',
+    'T2T::EN2CS::MoveAdjsBeforeNouns',
+    'T2T::EN2CS::MoveGenitivesRight',
+    'T2T::EN2CS::MoveRelClauseRight',
+    'T2T::EN2CS::MoveDicendiCloserToDsp',
+    'T2T::EN2CS::MovePersPronNextToVerb',
+    'T2T::EN2CS::MoveEnoughBeforeAdj',
+    'T2T::EN2CS::MoveJesteBeforeVerb',
+    'T2T::EN2CS::MoveNounAttrAfterNouns',
+    'T2T::EN2CS::FixMoney',
+    'T2T::EN2CS::FindGramCorefForReflPron',
+    'T2T::EN2CS::NeutPersPronGenderFromAntec',
+    'T2T::EN2CS::ValencyRelatedRules',
+    'T2T::SetClauseNumber',
+    'T2T::EN2CS::TurnTextCorefToGramCoref',
+    'T2T::EN2CS::FixAdjComplAgreement',
+    ;
+    return $scen;
 }
 
 1;
