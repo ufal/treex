@@ -53,12 +53,12 @@ sub get_scenario_string {
     my $scen = join "\n",
     'Util::SetGlobal language=en selector=src',
     $self->resegment ? 'W2A::ResegmentSentences' : (),
-    $self->hideIT eq 'IT' ? 'W2A::EN::HideIT' : (),
+    $self->hideIT ? 'W2A::EN::HideIT' : (),
     "Scen::Analysis::EN domain=$domain gazetteer=$gazetteer",
     "Scen::Transfer::EN2CS domain=$domain gazetteer=$gazetteer",
     'Util::SetGlobal language=cs selector=tst',
     "Scen::Synthesis::CS domain=$domain",
-    $self->hideIT eq 'IT' ? 'A2W::ShowIT' : (),
+    $self->hideIT ? 'A2W::ShowIT' : (),
     ;
     return $scen;
 }
