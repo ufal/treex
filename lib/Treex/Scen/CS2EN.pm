@@ -8,12 +8,67 @@ Scen::Analysis::CS
 Scen::Transfer::CS2EN
 Util::SetGlobal language=en selector=tst
 Scen::Synthesis::EN
-
 END
 
-sub get_scenario_string {
-    return $FULL;
+has domain => (
+     is => 'ro',
+     isa => enum( [qw(general IT)] ),
+     default => 'general',
+     documentation => 'domain of the input texts',
+);
+
+has resegment => (
+     is => 'ro',
+     isa => 'Bool',
+     default => 0,
+     documentation => 'Use W2A::ResegmentSentences',
+);
+
+has hideIT => (
+     is => 'ro',
+     isa => 'Bool',
+     default => undef,
+     documentation => 'Use W2A::EN::HideIT and A2W::ShowIT, default=1 iff domain=IT',
+);
+
+has gazetteer => (
+     is => 'ro',
+     isa => 'Bool',
+     default => undef,
+     documentation => 'Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo T2T::EN2CS::TrGazeteerItems, default=1 iff domain=IT',
+);
+
+
+sub BUILD {
+    my ($self) = @_;
+    if (!defined $self->hideIT){
+        $self->{hideIT} = $self->domain eq 'IT' ? 1 : 0;
+    }
+    if (!defined $self->gazetteer){
+        $self->{gazetteer} = $self->domain eq 'IT' ? 1 : 0;
+    }
+    return;
 }
+
+
+sub get_scenario_string {
+    my ($self) = @_;
+    my $domain = $self->domain;
+    my $gazetteer = $self->gazetteer;
+
+    my $scen = join "\n",
+    'Util::SetGlobal language=cs selector=src',
+    $self->resegment ? 'W2A::ResegmentSentences' : (),
+    #$self->hideIT ? 'W2A::EN::HideIT' : (),
+    "Scen::Analysis::CS domain=$domain gazetteer=$gazetteer",
+    "Scen::Transfer::CS2EN domain=$domain gazetteer=$gazetteer",
+    'Util::SetGlobal language=en selector=tst',
+    "Scen::Synthesis::EN domain=$domain",
+    #$self->hideIT ? 'A2W::ShowIT' : (),
+    ;
+    return $scen;
+}
+
 
 1;
 
@@ -47,7 +102,11 @@ start the scenario with
 
 =head1 PARAMETERS
 
-currently none
+=head2 domain (general, IT)
+
+=head2 resegment
+
+Use W2A::ResegmentSentences
 
 =head1 AUTHORS
 

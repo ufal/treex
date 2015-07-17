@@ -2,91 +2,111 @@ package Treex::Scen::Analysis::CS;
 use Moose;
 use Treex::Core::Common;
 
-# Note that scenarios can be parametrized.
-# Usage is simple:
-# treex Read::Sentences Scen::Analysis::CS memory=autodetect ner=0 Write::Treex
+has domain => (
+     is => 'ro',
+     isa => enum( [qw(general IT)] ),
+     default => 'general',
+     documentation => 'domain of the input texts',
+);
 
-# TODO Add parameters e.g.
-# has memory => (
-#     is => 'ro',
-#     isa => enum( [qw(small 1G 2G autodetect)] ),
-#     default => '2G',
-#     documentation => 'Choose suitable scenario (and model for MST parser) depending on the available memory',
-# );
-# has ner => (
-#     is => 'ro',
-#     isa => 'Bool',
-#     default => 1,
-#     documentation => 'Do Named Entity Recognition (using A2N::CS::NameTag)',
-# );
+has tagger => (
+     is => 'ro',
+     isa => enum( [qw(MorphoDiTa Featurama Morce)] ),
+     default => 'MorphoDiTa',
+     documentation => 'Which PoS tagger to use',
+);
 
-# TODO Add smart sentence segmenter
-# which will do nothing if the text is already segmented.
-# Perhaps add W2A::CS::Segment if_segmented=skip.
-# This way we could use both
-# treex Read::Sentences Scen::Analysis::CS
-# treex Read::Text Scen::Analysis::CS
+has ner => (
+     is => 'ro',
+     isa => enum( [qw(NameTag simple none)] ),
+     default => 'NameTag',
+     documentation => 'Which Named Entity Recognizer to use',
+);
 
-my $FULL = <<'END';
-# m-layer
-W2A::CS::Tokenize
-W2A::CS::TagMorphoDiTa lemmatize=1
-W2A::CS::FixMorphoErrors
+has functors => (
+     is => 'ro',
+     isa => enum( [qw(MLProcess simple)] ),
+     default => 'MLProcess',
+     documentation => 'Which analyzer of functors to use',
+);
 
-# n-layer
-A2N::CS::NameTag
-A2N::CS::NormalizeNames
+#TODO
+has gazetteer => (
+     is => 'ro',
+     isa => 'Bool',
+     default => undef,
+     documentation => 'Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo T2T::EN2CS::TrGazeteerItems',
+);
 
-# a-layer
-W2A::CS::ParseMSTAdapted
-W2A::CS::FixAtreeAfterMcD
-W2A::CS::FixIsMember
-W2A::CS::FixPrepositionalCase
-W2A::CS::FixReflexiveTantum
-W2A::CS::FixReflexivePronouns
 
-# t-layer
-A2T::CS::MarkEdgesToCollapse expletives=0
-A2T::BuildTtree
-A2T::RehangUnaryCoordConj
-A2T::SetIsMember
-A2T::CS::SetCoapFunctors
-A2T::FixIsMember
-A2T::MarkParentheses
-A2T::MoveAuxFromCoordToMembers
-A2T::CS::MarkClauseHeads
-A2T::CS::MarkRelClauseHeads
-A2T::CS::MarkRelClauseCoref
-#A2T::DeleteChildlessPunctuation We want quotes as t-nodes
-A2T::CS::FixTlemmas
-A2T::CS::FixNumerals
-A2T::SetNodetype
-A2T::CS::SetFormeme use_version=2 fix_prep=0
-A2T::CS::SetDiathesis
-A2T::CS::SetFunctors memory=2g
-
-# There are some problems with ML-Process, so let's skip it
-#A2T::CS::SetFunctors
-#A2T::SetNodetype
-A2T::CS::SetMissingFunctors
-A2T::SetNodetype
-
-A2T::FixAtomicNodes
-A2T::CS::SetGrammatemes
-A2T::SetSentmod
-A2T::CS::MarkReflexivePassiveGen
-A2T::CS::FixNonthirdPersSubj
-A2T::CS::AddPersPron
-T2T::SetClauseNumber
-A2T::CS::MarkReflpronCoref
-A2T::SetDocOrds
-A2T::CS::MarkTextPronCoref
-Coref::RearrangeLinks retain_cataphora=1
-
-END
+sub BUILD {
+    my ($self) = @_;
+    if ($self->domain eq 'IT' && !defined $self->gazetteer){
+        $self->{gazetteer} = 1;
+    }
+    return;
+}
 
 sub get_scenario_string {
-    return $FULL;
+    my ($self) = @_;
+
+    my $scen = join "\n",
+    'W2A::CS::Tokenize',
+    $self->tagger eq 'MorphoDiTa' ? 'W2A::CS::TagMorphoDiTa lemmatize=1' : (),
+    $self->tagger eq 'Featurama'  ? 'W2A::CS::TagFeaturama lemmatize=1' : (),
+    $self->tagger eq 'Morce'      ? 'W2A::CS::TagMorce lemmatize=1' : (),
+    'W2A::CS::FixMorphoErrors',
+
+    'W2A::CS::FixGuessedLemmas', ###############
+
+    # n-layer
+    $self->ner eq 'NameTag' ? 'A2N::CS::NameTag' : (),
+    $self->ner eq 'simple' ? 'A2N::CS::SimpleRuleNER' : (),
+    'A2N::CS::NormalizeNames',
+
+    # a-layer
+    'W2A::CS::ParseMSTAdapted',
+    'W2A::CS::FixAtreeAfterMcD',
+    'W2A::CS::FixIsMember',
+    'W2A::CS::FixPrepositionalCase',
+    'W2A::CS::FixReflexiveTantum',
+    'W2A::CS::FixReflexivePronouns',
+
+    # t-layer
+    'A2T::CS::MarkEdgesToCollapse', ####expletives=0
+    'A2T::BuildTtree',
+    'A2T::RehangUnaryCoordConj',
+    'A2T::SetIsMember',
+    'A2T::CS::SetCoapFunctors',
+    'A2T::FixIsMember',
+    'A2T::MarkParentheses',
+    'A2T::MoveAuxFromCoordToMembers',
+    'A2T::CS::MarkClauseHeads',
+    'A2T::CS::MarkRelClauseHeads',
+    'A2T::CS::MarkRelClauseCoref',
+    #A2T::DeleteChildlessPunctuation We want quotes as t-nodes
+    'A2T::CS::FixTlemmas',
+    'A2T::CS::FixNumerals',
+    'A2T::SetNodetype',
+    'A2T::CS::SetFormeme use_version=2 fix_prep=0',
+    'A2T::CS::SetDiathesis',
+    $self->functors eq 'MLProcess' ? 'A2T::CS::SetFunctors memory=2g' : (),
+    'A2T::CS::SetMissingFunctors',
+    'A2T::SetNodetype',
+    'A2T::FixAtomicNodes',
+    'A2T::CS::SetGrammatemes',
+    'A2T::SetSentmod',
+    'A2T::CS::MarkReflexivePassiveGen',
+    'A2T::CS::FixNonthirdPersSubj',
+    'A2T::CS::AddPersPron',
+    'T2T::SetClauseNumber',
+    'A2T::CS::MarkReflpronCoref',
+    'A2T::SetDocOrds',
+    'A2T::CS::MarkTextPronCoref',
+    'Coref::RearrangeLinks retain_cataphora=1',
+    ;
+
+    return $scen;
 }
 
 1;
@@ -115,7 +135,7 @@ dependency parsing (MST) and tectogrammatical analysis.
 
 =head1 PARAMETERS
 
-currently none
+TODO
 
 =head1 AUTHORS
 
