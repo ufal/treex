@@ -32,13 +32,11 @@ has gazetteer => (
 
 sub BUILD {
     my ($self) = @_;
-    if ($self->domain eq 'IT'){
-        if (!defined $self->hideIT){
-            $self->{hideIT} = 1;
-        }
-        if (!defined $self->gazetteer){
-            $self->{gazetteer} = 0; # Blocks aren't defined yet
-        }        
+    if (!defined $self->hideIT){
+        $self->{hideIT} = $self->domain eq 'IT' ? 1 : 0;
+    }
+    if (!defined $self->gazetteer){ # Blocks aren't defined yet
+        $self->{gazetteer} = $self->domain eq 'IT' ? 1 : 0;
     }
     return;
 }
