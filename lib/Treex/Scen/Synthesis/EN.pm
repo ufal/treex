@@ -12,7 +12,7 @@ has domain => (
 sub get_scenario_string {
     my ($self) = @_;
     my $scen = join "\n",
-    #'T2A::DeleteGeneratedNodes', # TODO: is this needed?
+    'T2A::DeleteGeneratedNodes',
     'T2A::CopyTtree',
     'T2A::EN::InitMorphcat',
     'T2A::EN::MarkSubject',

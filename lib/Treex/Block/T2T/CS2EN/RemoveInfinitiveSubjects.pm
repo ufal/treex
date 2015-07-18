@@ -12,6 +12,9 @@ sub process_tnode {
     # only solve infinitive verbs
     return if ( $t_node->formeme !~ /^v.*inf$/ );
     
+    # TODO: Sometimes (raising/control) the subject should not be deleted:
+    # Očekáváme, že přinese změnu -> We expect HIM to bring about a change.
+    
     foreach my $subj (grep { $_->t_lemma eq '#PersPron' and $_->formeme eq 'n:subj' } $t_node->get_children()){
         $subj->remove();
     }

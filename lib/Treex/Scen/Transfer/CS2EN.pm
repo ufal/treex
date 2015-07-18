@@ -9,6 +9,13 @@ has domain => (
      documentation => 'domain of the input texts',
 );
 
+has tm_adaptation => (
+     is => 'ro',
+     isa => enum( [qw(auto no interpol)] ),
+     default => 'auto',
+     documentation => 'domain adaptation of Translation Models to IT domain',
+);
+
 has hmtm => (
      is => 'ro',
      isa => 'Bool',
@@ -28,25 +35,35 @@ sub BUILD {
     if (!defined $self->gazetteer){
         $self->{gazetteer} = $self->domain eq 'IT' ? 1 : 0;
     }
+    if ($self->tm_adaptation eq 'auto'){
+        $self->{tm_adaptation} = $self->domain eq 'IT' ? 'interpol' : 'no';
+    }
     return;
 }
 
 sub get_scenario_string {
     my ($self) = @_;
 
-    my $TM_DIR= 'data/models/translation/cs2en';
+    my $IT_LEMMA_MODELS = '';
+    my $IT_FORMEME_MODELS = '';
+    if ($self->tm_adaptation eq 'interpol'){
+        $IT_LEMMA_MODELS = "static 0.5 IT/batch1q-lemma.static.gz\n      maxent 1.0 IT/batch1q-lemma.maxent.gz";
+        $IT_FORMEME_MODELS = "static 1.0 IT/batch1q-formeme.static.gz\n      maxent 0.5 IT/batch1q-formeme.maxent.gz";
+    }
 
     my $scen = join "\n",
     'Util::SetGlobal language=en selector=tst',
     'T2T::CopyTtree source_language=cs source_selector=src',
     'T2T::CS2EN::TrFTryRules',
-    "T2T::CS2EN::TrFAddVariantsInterpol model_dir=
-        models='static 1.0 $TM_DIR/20141209_formeme.static.gz
-                maxent 0.5 $TM_DIR/20141209_formeme.maxent.gz'",
+    "T2T::CS2EN::TrFAddVariantsInterpol model_dir=data/models/translation/cs2en models='
+      static 1.0 20141209_formeme.static.gz
+      maxent 0.5 20141209_formeme.maxent.gz
+      $IT_FORMEME_MODELS'",
     'T2T::CS2EN::TrLTryRules',
-    "T2T::CS2EN::TrLAddVariantsInterpol model_dir=
-        models='static 0.5 $TM_DIR/20141209_lemma.static.gz
-                maxent 1.0 $TM_DIR/20141209_lemma.maxent.gz'",
+    "T2T::CS2EN::TrLAddVariantsInterpol model_dir=data/models/translation/cs2en models='
+      static 0.5 20141209_lemma.static.gz
+      maxent 1.0 20141209_lemma.maxent.gz
+      $IT_LEMMA_MODELS'",
     'T2T::EN2CS::CutVariants max_lemma_variants=7 max_formeme_variants=7',
     #'T2T::FormemeTLemmaAgreement fun=Log-HM-P',
     $self->hmtm ? 'T2T::RehangToEffParents' : (),
@@ -55,13 +72,13 @@ sub get_scenario_string {
     'T2T::CS2EN::TrLFixTMErrors',
     'T2T::CS2EN::TrLFPhrases',
     'T2T::CS2EN::RemovePerspronGender' . ($self->domain eq 'IT' ? ' remove_guessed_gender=1' : ''),
-    #'T2T::CS2EN::FixForeignNames', # TODO test if it helps
-    #'T2T::CS2EN::RemoveInfinitiveSubjects', # TODO test if it helps
+    'T2T::CS2EN::FixForeignNames',
+    'T2T::CS2EN::RemoveInfinitiveSubjects',
     'T2T::SetClauseNumber',
-    'T2T::CS2EN::RearrangeNounCompounds', # -- hurts
-    'T2T::CS2EN::DeleteSuperfluousNodes', #-- hurts
+    $self->domain eq 'IT' ? 'T2T::CS2EN::RearrangeNounCompounds' : (), # this block helps in IT domain and hurts in general, but maybe it can be improved to help (or at least not hurt) everywhere
+    $self->domain eq 'IT' ? 'T2T::CS2EN::DeleteSuperfluousNodes' : (), # deletes word "application" and "system" with NE, this rarely influences non-IT domain
     'T2T::CS2EN::FixGrammatemesAfterTransfer',
-    #'T2T::CS2EN::FixDoubleNegative', # TODO test if it helps
+    'T2T::CS2EN::FixDoubleNegative',
     ;
     return $scen;
 }
