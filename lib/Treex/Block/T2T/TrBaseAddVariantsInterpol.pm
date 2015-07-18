@@ -66,7 +66,7 @@ has _models => (
 sub _build_models {
     my ($self) = @_;
 
-    my @models = split / +/, $self->models;
+    my @models = split /\s+/, $self->models;
     my $models_ar = [];
 
     while (@models > 0) {
