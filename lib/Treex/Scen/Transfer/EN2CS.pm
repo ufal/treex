@@ -41,7 +41,7 @@ sub get_scenario_string {
     'T2T::CopyTtree source_language=en source_selector=src',
     'T2T::EN2CS::TrLFPhrases',
     'T2T::EN2CS::DeleteSuperfluousTnodes',
-    $self->gazetteer eq 'IT' ? 'T2T::EN2CS::TrGazeteerItems' : (),
+    $self->gazetteer ? 'T2T::EN2CS::TrGazeteerItems' : (),
     'T2T::EN2CS::TrFTryRules',
     #T2T::EN2CS::TrFAddVariants maxent_features_version=0.9 # default is discr_model=formeme_czeng09.maxent.compact.pls.slurp.gz discr_type=maxent
     "T2T::EN2CS::TrFAddVariantsInterpol model_dir= maxent_features_version=0.9
