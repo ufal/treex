@@ -18,8 +18,8 @@ has gazetteer => (
 
 sub BUILD {
     my ($self) = @_;
-    if ($self->domain eq 'IT' && !defined $self->gazetteer){
-        $self->{gazetteer} = 1;
+    if (!defined $self->gazetteer){
+        $self->{gazetteer} = $self->domain eq 'IT' ? 1 : 0;
     }
     return;
 }
