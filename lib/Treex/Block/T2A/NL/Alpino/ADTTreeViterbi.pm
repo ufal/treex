@@ -53,7 +53,7 @@ sub process_atree {
     chomp $adtxml;
     
     # run Tree Viterbi on the ADT XML, get the result 
-    my $out = $self->_python->command("print \"\\t\".join(tree_viterbi.run('$adtxml'))");
+    my $out = $self->_python->command("print \"\\t\".join(tree_viterbi.run(u'$adtxml')).encode('utf8')");
 
     # create a mapping (dictionary): ADT ID -> node (for faster lookup)
     my %adt_id_to_node;
