@@ -20,14 +20,14 @@ around BUILDARGS => sub
     my $attr = $class->$orig(@_);
     # Build the hash.
     my %hash;
-    if($attr->{keep_iset}==0)
-    {
-        # Do nothing. The hash will be empty.
-    }
-    elsif($attr->{keep_iset}==1)
+    if(!defined($attr->{keep_iset}) || $attr->{keep_iset}==1)
     {
         # All Interset features will be kept.
         # We will not touch the current data so we do not need the hash.
+    }
+    elsif($attr->{keep_iset}==0)
+    {
+        # Do nothing. The hash will be empty.
     }
     else
     {
