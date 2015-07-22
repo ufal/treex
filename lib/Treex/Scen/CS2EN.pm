@@ -1,14 +1,7 @@
 package Treex::Scen::CS2EN;
 use Moose;
 use Treex::Core::Common;
-
-my $FULL = <<'END';
-Util::SetGlobal language=cs selector=src
-Scen::Analysis::CS
-Scen::Transfer::CS2EN
-Util::SetGlobal language=en selector=tst
-Scen::Synthesis::EN
-END
+with 'Treex::Core::RememberArgs';
 
 has domain => (
      is => 'ro',
@@ -31,39 +24,27 @@ has hideIT => (
      documentation => 'Use W2A::EN::HideIT and A2W::ShowIT, default=1 iff domain=IT',
 );
 
-has gazetteer => (
-     is => 'ro',
-     isa => 'Bool',
-     default => undef,
-     documentation => 'Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo T2T::EN2CS::TrGazeteerItems, default=1 iff domain=IT',
-);
-
-
 sub BUILD {
     my ($self) = @_;
+
     if (!defined $self->hideIT){
         $self->{hideIT} = $self->domain eq 'IT' ? 1 : 0;
-    }
-    if (!defined $self->gazetteer){
-        $self->{gazetteer} = $self->domain eq 'IT' ? 1 : 0;
     }
     return;
 }
 
-
 sub get_scenario_string {
     my ($self) = @_;
-    my $domain = $self->domain;
-    my $gazetteer = $self->gazetteer;
+    my $params = $self->args_str;
 
     my $scen = join "\n",
     'Util::SetGlobal language=cs selector=src',
     $self->resegment ? 'W2A::ResegmentSentences' : (),
     #$self->hideIT ? 'W2A::EN::HideIT' : (),
-    "Scen::Analysis::CS domain=$domain gazetteer=$gazetteer",
-    "Scen::Transfer::CS2EN domain=$domain gazetteer=$gazetteer",
+    "Scen::Analysis::CS $params",
+    "Scen::Transfer::CS2EN $params",
     'Util::SetGlobal language=en selector=tst',
-    "Scen::Synthesis::EN domain=$domain",
+    "Scen::Synthesis::EN $params",
     #$self->hideIT ? 'A2W::ShowIT' : (),
     ;
     return $scen;

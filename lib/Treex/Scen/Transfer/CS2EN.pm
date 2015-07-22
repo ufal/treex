@@ -11,7 +11,7 @@ has domain => (
 
 has tm_adaptation => (
      is => 'ro',
-     isa => enum( [qw(auto no interpol)] ),
+     isa => enum( [qw(auto no 0 interpol)] ),
      default => 'auto',
      documentation => 'domain adaptation of Translation Models to IT domain',
 );

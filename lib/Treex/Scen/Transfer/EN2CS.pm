@@ -9,18 +9,18 @@ has domain => (
      documentation => 'domain of the input texts',
 );
 
+has tm_adaptation => (
+     is => 'ro',
+     isa => enum( [qw(auto no 0 interpol)] ),
+     default => 'auto',
+     documentation => 'domain adaptation of Translation Models to IT domain',
+);
+
 has hmtm => (
      is => 'ro',
      isa => 'Bool',
      default => 1,
      documentation => 'Apply HMTM (TreeViterbi) with TreeLM reranking',
-);
-
-has tm_adaptation => (
-     is => 'ro',
-     isa => enum( [qw(auto no interpol)] ),
-     default => 'auto',
-     documentation => 'domain adaptation of Translation Models to IT domain',
 );
 
 has gazetteer => (
