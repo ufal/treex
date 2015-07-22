@@ -16,6 +16,13 @@ has hmtm => (
      documentation => 'Apply HMTM (TreeViterbi) with TreeLM reranking',
 );
 
+has tm_adaptation => (
+     is => 'ro',
+     isa => enum( [qw(auto no interpol)] ),
+     default => 'auto',
+     documentation => 'domain adaptation of Translation Models to IT domain',
+);
+
 has gazetteer => (
      is => 'ro',
      isa => 'Bool',
@@ -28,14 +35,22 @@ sub BUILD {
     if (!defined $self->gazetteer){
         $self->{gazetteer} = $self->domain eq 'IT' ? 1 : 0;
     }
+    if ($self->tm_adaptation eq 'auto'){
+        $self->{tm_adaptation} = $self->domain eq 'IT' ? 'interpol' : 'no';
+    }
     return;
 }
 
 sub get_scenario_string {
     my ($self) = @_;
     
-    my $TM_DIR= 'data/models/translation/en2cs';
-    
+    my $IT_LEMMA_MODELS = '';
+    my $IT_FORMEME_MODELS = '';
+    if ($self->tm_adaptation eq 'interpol'){
+        $IT_LEMMA_MODELS = "static 0.5 IT/batch1a-lemma.static.gz\n      maxent 1.0 IT/batch1a-lemma.maxent.gz";
+        $IT_FORMEME_MODELS = "static 1.0 IT/batch1a-formeme.static.gz\n      maxent 0.5 IT/batch1a-formeme.maxent.gz";
+    }
+
     my $scen = join "\n",
     'Util::SetGlobal language=cs selector=tst',
     'T2T::CopyTtree source_language=en source_selector=src',
@@ -43,22 +58,21 @@ sub get_scenario_string {
     'T2T::EN2CS::DeleteSuperfluousTnodes',
     $self->gazetteer ? 'T2T::EN2CS::TrGazeteerItems' : (),
     'T2T::EN2CS::TrFTryRules',
-    #T2T::EN2CS::TrFAddVariants maxent_features_version=0.9 # default is discr_model=formeme_czeng09.maxent.compact.pls.slurp.gz discr_type=maxent
-    "T2T::EN2CS::TrFAddVariantsInterpol model_dir= maxent_features_version=0.9
-        models='static 1.0 $TM_DIR/formeme_czeng09.static.pls.slurp.gz
-                maxent 0.5 $TM_DIR/formeme_czeng09.maxent.compact.pls.slurp.gz'",
+    "T2T::EN2CS::TrFAddVariantsInterpol model_dir=data/models/translation/en2cs maxent_features_version=0.9 models='
+      static 1.0 formeme_czeng09.static.pls.slurp.gz
+      maxent 0.5 formeme_czeng09.maxent.compact.pls.slurp.gz
+      $IT_FORMEME_MODELS'",
     'T2T::EN2CS::TrFRerank2',
     'T2T::EN2CS::TrLTryRules',
     $self->domain eq 'IT' ? 'T2T::EN2CS::TrL_ITdomain' : (),
     'T2T::EN2CS::TrLPersPronIt',
     'T2T::EN2CS::TrLPersPronRefl',
     'T2T::EN2CS::TrLHackNNP',
-    #T2T::EN2CS::TrLAddVariants # default is discr_model=tlemma_czeng12.maxent.10000.100.2_1.compact.pls.gz discr_type=maxent
-    #T2T::EN2CS::TrLAddVariants model_dir= static_model=__TLEMMA_STATIC_TM__ discr_model=__TLEMMA_MAXENT_TM__ human_model=data/models/translation/en2cs/tlemma_humanlex.static.pls.slurp.gz
-    "T2T::EN2CS::TrLAddVariantsInterpol model_dir=
-        models='static 0.5 $TM_DIR/tlemma_czeng09.static.pls.slurp.gz
-                maxent 1.0 $TM_DIR/tlemma_czeng12.maxent.10000.100.2_1.compact.pls.gz
-                static 0.1 $TM_DIR/tlemma_humanlex.static.pls.slurp.gz'",
+    "T2T::EN2CS::TrLAddVariantsInterpol model_dir=data/models/translation/en2cs models='
+      static 0.5 tlemma_czeng09.static.pls.slurp.gz
+      maxent 1.0 tlemma_czeng12.maxent.10000.100.2_1.compact.pls.gz
+      static 0.1 tlemma_humanlex.static.pls.slurp.gz
+      $IT_LEMMA_MODELS'",
     'T2T::EN2CS::TrLFNumeralsByRules',
     'T2T::EN2CS::TrLFilterAspect',
     'T2T::EN2CS::TransformPassiveConstructions',
