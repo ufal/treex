@@ -21,18 +21,17 @@ has hideIT => (
      is => 'ro',
      isa => 'Bool',
      default => undef,
-     documentation => 'Use W2A::EN::HideIT and A2W::ShowIT, default=1 iff domain=IT',
+     documentation => 'Use W2A::HideIT and A2W::ShowIT, default=1 iff domain=IT',
 );
 
 sub BUILD {
-    my ($self, $args) = @_;
+    my ($self) = @_;
 
     if (!defined $self->hideIT){
         $self->{hideIT} = $self->domain eq 'IT' ? 1 : 0;
     }
     return;
 }
-
 
 sub get_scenario_string {
     my ($self) = @_;
@@ -41,7 +40,7 @@ sub get_scenario_string {
     my $scen = join "\n",
     'Util::SetGlobal language=en selector=src',
     $self->resegment ? 'W2A::ResegmentSentences' : (),
-    $self->hideIT ? 'W2A::EN::HideIT' : (),
+    $self->hideIT ? 'W2A::HideIT' : (),
     "Scen::Analysis::EN $params",
     "Scen::Transfer::EN2CS $params",
     'Util::SetGlobal language=cs selector=tst',
@@ -93,7 +92,7 @@ Use W2A::ResegmentSentences
 
 =head2 hideIT
 
-Use W2A::EN::HideIT and A2W::ShowIT,
+Use W2A::HideIT and A2W::ShowIT,
 default=1 iff domain=IT
 
 =head2 gazetteer

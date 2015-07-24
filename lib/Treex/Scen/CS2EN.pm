@@ -21,7 +21,7 @@ has hideIT => (
      is => 'ro',
      isa => 'Bool',
      default => undef,
-     documentation => 'Use W2A::EN::HideIT and A2W::ShowIT, default=1 iff domain=IT',
+     documentation => 'Use W2A::HideIT and A2W::ShowIT, default=1 iff domain=IT',
 );
 
 sub BUILD {
@@ -40,16 +40,15 @@ sub get_scenario_string {
     my $scen = join "\n",
     'Util::SetGlobal language=cs selector=src',
     $self->resegment ? 'W2A::ResegmentSentences' : (),
-    #$self->hideIT ? 'W2A::EN::HideIT' : (),
+    $self->hideIT ? 'W2A::HideIT' : (),
     "Scen::Analysis::CS $params",
     "Scen::Transfer::CS2EN $params",
     'Util::SetGlobal language=en selector=tst',
     "Scen::Synthesis::EN $params",
-    #$self->hideIT ? 'A2W::ShowIT' : (),
+    $self->hideIT ? 'A2W::ShowIT' : (),
     ;
     return $scen;
 }
-
 
 1;
 
