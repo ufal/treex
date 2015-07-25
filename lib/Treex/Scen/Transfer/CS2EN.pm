@@ -30,6 +30,13 @@ has gazetteer => (
      documentation => 'Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo T2T::EN2CS::TrGazeteerItems',
 );
 
+has fl_agreement => (
+     is => 'ro',
+     isa => 'Str', #enum( [qw(0 Log-HM-P AM-Log-P ...)] ),
+     default => '0',
+     documentation => 'Use T2T::FormemeTLemmaAgreement with a specified function as parameter (Log-HM-P, AM-Log-P,...)',
+);
+
 sub BUILD {
     my ($self) = @_;
     if (!defined $self->gazetteer){
@@ -65,7 +72,7 @@ sub get_scenario_string {
       maxent 1.0 20141209_lemma.maxent.gz
       $IT_LEMMA_MODELS'",
     'T2T::EN2CS::CutVariants max_lemma_variants=7 max_formeme_variants=7',
-    #'T2T::FormemeTLemmaAgreement fun=Log-HM-P',
+    $self->fl_agreement ? 'T2T::FormemeTLemmaAgreement fun='.$self->fl_agreement : (),
     $self->hmtm ? 'T2T::RehangToEffParents' : (),
     $self->hmtm ? 'T2T::CS2EN::TrLFTreeViterbi' : (), #lm_weight=0.2 formeme_weight=0.9 backward_weight=0.0 lm_dir=en.czeng
     $self->hmtm ? 'T2T::RehangToOrigParents' : (),
