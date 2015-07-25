@@ -41,7 +41,7 @@ sub get_scenario_string {
     'Util::SetGlobal language=en selector=src',
     $self->resegment ? 'W2A::ResegmentSentences' : (),
     $self->hideIT ? 'W2A::HideIT' : (),
-    "Scen::Analysis::EN $params",
+    "Scen::Analysis::EN $params gazetteer=0",
     "Scen::Transfer::EN2NL $params",
     'Util::SetGlobal language=nl selector=tst',
     "Scen::Synthesis::NL $params",
