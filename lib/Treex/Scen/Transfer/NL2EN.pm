@@ -64,11 +64,11 @@ sub get_scenario_string {
     'Util::SetGlobal language=en selector=tst',
     'T2T::CopyTtree source_language=nl source_selector=src',
     "T2T::TrFAddVariantsInterpol model_dir=$TM_DIR models='
-      static 1.0 20150220_formeme.static.gz
+      static 1.0 20150725_formeme.static.min_2.minpc_1.gz
       maxent 0.5 20150220_formeme.maxent.gz
       $IT_FORMEME_MODELS'",
     "T2T::TrLAddVariantsInterpol model_dir=$TM_DIR models='
-      static 0.5 20150220_tlemma.static.gz
+      static 0.5 20150725_tlemma.static.min_2.minpc_1.gz
       maxent 1.0 20150220_tlemma.maxent.gz
       $IT_LEMMA_MODELS'",
     $self->fl_agreement ? 'T2T::FormemeTLemmaAgreement fun='.$self->fl_agreement : (),
