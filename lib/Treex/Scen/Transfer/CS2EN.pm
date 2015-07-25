@@ -63,12 +63,12 @@ sub get_scenario_string {
     'T2T::CopyTtree source_language=cs source_selector=src',
     'T2T::CS2EN::TrFTryRules',
     "T2T::CS2EN::TrFAddVariantsInterpol model_dir=data/models/translation/cs2en models='
-      static 1.0 20141209_formeme.static.gz
+      static 1.0 20150724_formeme.static.min_2.minpc_1.gz
       maxent 0.5 20141209_formeme.maxent.gz
       $IT_FORMEME_MODELS'",
     'T2T::CS2EN::TrLTryRules',
     "T2T::CS2EN::TrLAddVariantsInterpol model_dir=data/models/translation/cs2en models='
-      static 0.5 20141209_lemma.static.gz
+      static 0.5 20150724_lemma.static.min_2.minpc_1.gz
       maxent 1.0 20141209_lemma.maxent.gz
       $IT_LEMMA_MODELS'",
     'T2T::EN2CS::CutVariants max_lemma_variants=7 max_formeme_variants=7',
