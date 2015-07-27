@@ -33,9 +33,9 @@ has hmtm => (
 
 has fl_agreement => (
      is => 'ro',
-     isa => 'Str', #enum( [qw(0 Log-HM-P AM-Log-P ...)] ),
+     isa => enum( [qw(0 AM-P GM-P HM-P GM-Log-P HM-Log-P)] ),
      default => '0',
-     documentation => 'Use T2T::FormemeTLemmaAgreement with a specified function as parameter (Log-HM-P, AM-Log-P,...)',
+     documentation => 'Use T2T::FormemeTLemmaAgreement with a specified function as parameter',
 );
 
 sub BUILD {

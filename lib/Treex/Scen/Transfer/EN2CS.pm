@@ -30,6 +30,13 @@ has gazetteer => (
      documentation => 'Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo T2T::EN2CS::TrGazeteerItems',
 );
 
+has fl_agreement => (
+     is => 'ro',
+     isa => enum( [qw(0 AM-P GM-P HM-P GM-Log-P HM-Log-P)] ),
+     default => '0',
+     documentation => 'Use T2T::FormemeTLemmaAgreement with a specified function as parameter',
+);
+
 sub BUILD {
     my ($self) = @_;
     if (!defined $self->gazetteer){
@@ -79,6 +86,7 @@ sub get_scenario_string {
     'T2T::EN2CS::PrunePersonalNameVariants',
     'T2T::EN2CS::RemoveUnpassivizableVariants',
     'T2T::EN2CS::TrLFCompounds',
+    $self->fl_agreement ? 'T2T::FormemeTLemmaAgreement fun='.$self->fl_agreement : (),
     $self->hmtm ? 'T2T::EN2CS::CutVariants lemma_prob_sum=0.5 formeme_prob_sum=0.9 max_lemma_variants=7 max_formeme_variants=7' : (),
     $self->hmtm ? 'T2T::RehangToEffParents' : (),
     $self->hmtm ? 'T2T::EN2CS::TrLFTreeViterbi' : (), #lm_weight=0.2 formeme_weight=0.9 backward_weight=0.0 lm_dir=cs.wmt2007-2012
