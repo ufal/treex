@@ -86,8 +86,8 @@ sub get_scenario_string {
     'T2T::EN2CS::PrunePersonalNameVariants',
     'T2T::EN2CS::RemoveUnpassivizableVariants',
     'T2T::EN2CS::TrLFCompounds',
-    $self->fl_agreement ? 'T2T::FormemeTLemmaAgreement fun='.$self->fl_agreement : (),
-    $self->hmtm ? 'T2T::EN2CS::CutVariants lemma_prob_sum=0.5 formeme_prob_sum=0.9 max_lemma_variants=7 max_formeme_variants=7' : (),
+    'T2T::EN2CS::CutVariants lemma_prob_sum=0.5 formeme_prob_sum=0.9 max_lemma_variants=7 max_formeme_variants=7',
+    $self->fl_agreement ? 'T2T::CS2CS::FormemeTLemmaAgreement fun='.$self->fl_agreement : (),
     $self->hmtm ? 'T2T::RehangToEffParents' : (),
     $self->hmtm ? 'T2T::EN2CS::TrLFTreeViterbi' : (), #lm_weight=0.2 formeme_weight=0.9 backward_weight=0.0 lm_dir=cs.wmt2007-2012
     $self->hmtm ? 'T2T::RehangToOrigParents' : (),
