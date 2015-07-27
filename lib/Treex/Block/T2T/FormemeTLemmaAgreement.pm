@@ -25,27 +25,29 @@ sub compute_score {
     my ( $self, $logA, $nndA, $logB, $nndB) = @_;
     my $score = undef;
 
-    # Let A = prob(translation_A)
-    # and B = prob(translation_B)
-    # "X ~= Y" means "optimizing X is equivalent to optimizing Y" (we can ignore monotonic transformations)
+    # $logA and $logB are 2-based logarithms of the probabilities:
+    # A = prob(translation_A)
+    # B = prob(translation_B)
+    my $A = 2**$logA;
+    my $B = 2**$logB;
 
+    # "X ~= Y" means "optimizing X is equivalent to optimizing Y" (we can ignore monotonic transformations)
     if ($self->fun =~ /^AM-P/) {
         # arithmetic mean of probabilities, AM(A,B) = (A+B)/2 ~= A + B
-        $score = exp($logA) + exp($logB);
+        $score = $A + $B;
     } elsif ($self->fun =~ /^(GM-P|AM-Log-P)/) {
-        # geometric mean of probabilities, GM(A,B) = sqrt(A * B) = sqrt(exp(logA+logB)) ~= logA+logB
+        # geometric mean of probabilities, GM(A,B) = sqrt(A * B) ~= A*B = 2**(logA + logB) ~= logA + logB
         $score = $logA + $logB;
     } elsif ($self->fun =~ /^GM-Log-P/) {
-        # geometric mean of log probabilities, GM-log(A,B) = sqrt(log(A) * log(B)) ~= log(A) * log(B)
+        # geometric mean of log probabilities, GM-log(A,B) = sqrt(logA * logB) ~= logA * logB
         # However, geometric mean of two negative numbers is positive
         # and the best $score is the highest one, so we need to take *negative* geometric mean of log probabilities.
         $score = - $logA * $logB;
     } elsif ($self->fun =~ /^HM-P/) {
-        # harmonic mean of probabilities,  HM(A,B) = 2 * A * B / (A+B) ~= log(A) + log(B) - log(A+B)
-        # $score = exp($logA) * exp($logB) / (exp($logA) + exp($logB));
-        $score = $logA + $logB - log(exp($logA) + exp($logB));
+        # harmonic mean of probabilities,  HM(A,B) = 2 * A * B / (A+B) ~= A*B/(A+B)
+        $score = $A*$B / ($A+$B);
     } elsif ($self->fun =~ /^HM-Log-P/) {
-        # harmonic mean of log probabilities + edge cases, HM-log(A,B) = 2 * log(A) * log(B) / (log(A) + log(B))
+        # harmonic mean of log probabilities + edge cases, HM-log(A,B) = 2 * logA * logB / (logA + logB)
         return 0 if ($logA == 0 or $logB == 0);
         $score = $logA * $logB / ($logA + $logB);
     } else {
