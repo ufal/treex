@@ -15,6 +15,7 @@ sub agree {
     return 1 if ( $pos =~ /^(adj|num)$/                and $formeme =~ /^adj/ );
     return 1 if ( $pos eq 'adv'                        and $formeme =~ /^adv/ );
     return 1 if ( $pos =~ /^(conj|part|int|punc|sym)$/ and $formeme eq 'x' );
+    return 1 if $pos eq 'X';
 
     return 0;
 }
