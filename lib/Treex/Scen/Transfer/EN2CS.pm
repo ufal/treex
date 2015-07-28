@@ -65,6 +65,8 @@ sub get_scenario_string {
     'T2T::EN2CS::DeleteSuperfluousTnodes',
     $self->gazetteer ? 'T2T::EN2CS::TrGazeteerItems' : (),
     'T2T::EN2CS::TrFTryRules',
+    #TODO the old CzEng 0.9 static models (both formeme and tlemma) proved to be better than the new ones (min_instances=2, min_per_class=1) with maxent_features_version=1.0
+      #static 1.0 20150726_formeme.static.min_2.minpc_1.gz
     "T2T::EN2CS::TrFAddVariantsInterpol model_dir=data/models/translation/en2cs maxent_features_version=0.9 models='
       static 1.0 formeme_czeng09.static.pls.slurp.gz
       maxent 0.5 formeme_czeng09.maxent.compact.pls.slurp.gz
@@ -75,6 +77,7 @@ sub get_scenario_string {
     'T2T::EN2CS::TrLPersPronIt',
     'T2T::EN2CS::TrLPersPronRefl',
     'T2T::EN2CS::TrLHackNNP',
+      #static 0.5 20150726_tlemma.static.min_2.minpc_1.gz
     "T2T::EN2CS::TrLAddVariantsInterpol model_dir=data/models/translation/en2cs models='
       static 0.5 tlemma_czeng09.static.pls.slurp.gz
       maxent 1.0 tlemma_czeng12.maxent.10000.100.2_1.compact.pls.gz
