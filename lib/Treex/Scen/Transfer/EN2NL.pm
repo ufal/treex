@@ -66,12 +66,17 @@ sub get_scenario_string {
     'Util::SetGlobal language=nl selector=tst',
     'T2T::CopyTtree source_language=en source_selector=src',
     #$self->gazetteer ? 'T2T::EN2NL::TrGazeteerItems' : (),
+
+    #TODO the original static models (min_instances=100, min_per_class=5) perform better than the new ones (min_instances=2, min_per_class=1)
+    # it should be inspected
+      #static 1.0 20150725_formeme.static.min_2.minpc_1.gz
     "T2T::TrFAddVariantsInterpol model_dir=$TM_DIR models='
-      static 1.0 20150725_formeme.static.min_2.minpc_1.gz
+      static 1.0 20150217_formeme.static.gz
       maxent 0.5 20150217_formeme.maxent.gz
       $IT_FORMEME_MODELS'",
+      #static 0.5 20150725_tlemma.static.min_2.minpc_1.gz
     "T2T::TrLAddVariantsInterpol model_dir=$TM_DIR models='
-      static 0.5 20150725_tlemma.static.min_2.minpc_1.gz
+      static 0.5 20150217_tlemma.static.gz
       maxent 1.0 20150217_tlemma.maxent.gz
       $IT_LEMMA_MODELS'",
     $self->fl_agreement ? 'T2T::FormemeTLemmaAgreement fun='.$self->fl_agreement : (),
