@@ -66,11 +66,11 @@ sub get_scenario_string {
     'T2T::CopyTtree source_language=es source_selector=src',
     #$self->gazetteer eq 'IT' ? 'T2T::ES2EN::TrGazeteerItems' : (),
     "T2T::TrFAddVariantsInterpol model_dir=$TM_DIR models='
-      static 1.0 Pilot1_formeme.static.gz
+      static 1.0 20150728_formeme.static.min_2.minpc_1.gz
       maxent 0.5 Pilot1_formeme.maxent.gz
       $IT_FORMEME_MODELS'",
     "T2T::TrLAddVariantsInterpol model_dir=$TM_DIR models='
-      static 0.5 Pilot1_tlemma.static.gz
+      static 0.5 20150728_tlemma.static.min_2.minpc_1.gz
       maxent 1.0 Pilot1_tlemma.maxent.gz
       $IT_LEMMA_MODELS'",
     $self->fl_agreement ? 'T2T::FormemeTLemmaAgreement fun='.$self->fl_agreement : (),
