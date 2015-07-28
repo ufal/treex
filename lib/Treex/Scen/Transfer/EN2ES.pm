@@ -20,8 +20,8 @@ has hmtm => (
 has gazetteer => (
      is => 'ro',
      isa => 'Bool',
-     default => undef,
-     documentation => 'Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo T2T::EN2ES::TrGazeteerItems',
+     default => 0,
+     documentation => 'Use T2T::EN2ES::TrGazeteerItems, default=0',
 );
 
 has fl_agreement => (
@@ -33,9 +33,6 @@ has fl_agreement => (
 
 sub BUILD {
     my ($self) = @_;
-    if (!defined $self->gazetteer){
-        $self->{gazetteer} = $self->domain eq 'IT' ? 1 : 0;
-    }
     return;
 }
 

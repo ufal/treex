@@ -12,17 +12,9 @@ has domain => (
 has gazetteer => (
      is => 'ro',
      isa => 'Bool',
-     default => undef,
-     documentation => 'Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo',
+     default => 0,
+     documentation => 'Use W2A::NL::GazeteerMatch A2T::ProjectGazeteerInfo, default=0',
 );
-
-sub BUILD {
-    my ($self) = @_;
-    if (!defined $self->gazetteer){
-        $self->{gazetteer} = $self->domain eq 'IT' ? 1 : 0;
-    }
-    return;
-}
 
 sub get_scenario_string {
     my ($self) = @_;
@@ -43,7 +35,7 @@ sub get_scenario_string {
     'A2T::FixIsMember',
     'A2T::MarkParentheses',
     'A2T::MoveAuxFromCoordToMembers',
-    #$self->gazetteer eq 'IT' ? 'A2T::ProjectGazeteerInfo' : (),
+    #$self->gazetteer ? 'A2T::ProjectGazeteerInfo' : (),
     'A2T::MarkClauseHeads',
     'A2T::MarkRelClauseHeads',
     'A2T::MarkRelClauseCoref',
@@ -91,7 +83,7 @@ It covers: tokenization, tagging and dependency parsing (Alpino) and tectogramma
 
 =head2 domain (general, IT)
 
-=head2 gazetteers
+=head2 gazetteer
 
 Use W2A::NL::GazeteerMatch A2T::ProjectGazeteerInfo
 Note that for translation T2T::NL2XX::TrGazeteerItems Block is needed to translate identified items
