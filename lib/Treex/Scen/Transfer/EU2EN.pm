@@ -19,8 +19,8 @@ has hmtm => (
 has gazetteer => (
      is => 'ro',
      isa => 'Bool',
-     default => undef,
-     documentation => 'T2T::EU2EN::TrGazeteerItems',
+     default => 0,
+     documentation => 'Use T2T::EU2EN::TrGazeteerItems, default=0',
 );
 
 has fl_agreement => (
@@ -32,9 +32,6 @@ has fl_agreement => (
 
 sub BUILD {
     my ($self) = @_;
-    if (!defined $self->gazetteer){
-        $self->{gazetteer} = $self->domain eq 'IT' ? 1 : 0;
-    }
     return;
 }
 
@@ -47,7 +44,7 @@ sub get_scenario_string {
     my $scen = join "\n",
     'Util::SetGlobal language=en selector=tst',
     'T2T::CopyTtree source_language=eu source_selector=src',
-    #$self->gazetteer eq 'IT' ? 'T2T::EU2EN::TrGazeteerItems' : (),
+    #$self->gazetteer ? 'T2T::EU2EN::TrGazeteerItems' : (),
     "T2T::TrFAddVariants static_model=$TM_DIR/Pilot1_formeme.static.gz discr_model=$TM_DIR/Pilot1_formeme.maxent.gz",
     "T2T::TrLAddVariants static_model=$TM_DIR/Pilot1_tlemma.static.gz discr_model=$TM_DIR/Pilot1_tlemma.maxent.gz",
     $self->fl_agreement ? 'T2T::FormemeTLemmaAgreement fun='.$self->fl_agreement : (),

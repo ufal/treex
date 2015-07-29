@@ -33,8 +33,8 @@ has functors => (
 has gazetteer => (
      is => 'ro',
      isa => 'Bool',
-     default => undef,
-     documentation => 'Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo T2T::EN2CS::TrGazeteerItems',
+     default => 0,
+     documentation => 'Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo, default=0',
 );
 
 # TODO Add parameter
@@ -51,14 +51,6 @@ has gazetteer => (
 # This way we could use both
 # treex Read::Sentences Scen::Analysis::EN
 # treex Read::Text Scen::Analysis::EN
-
-sub BUILD {
-    my ($self) = @_;
-    if ($self->domain eq 'IT' && !defined $self->gazetteer){
-        $self->{gazetteer} = 1;
-    }
-    return;
-}
 
 sub get_scenario_string {
     my ($self) = @_;

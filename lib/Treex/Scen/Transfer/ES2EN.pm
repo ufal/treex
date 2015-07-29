@@ -26,8 +26,8 @@ has hmtm => (
 has gazetteer => (
      is => 'ro',
      isa => 'Bool',
-     default => undef,
-     documentation => 'T2T::ES2EN::TrGazeteerItems',
+     default => 0,
+     documentation => 'Use T2T::ES2EN::TrGazeteerItems, default=0',
 );
 
 has fl_agreement => (
@@ -39,9 +39,6 @@ has fl_agreement => (
 
 sub BUILD {
     my ($self) = @_;
-    if (!defined $self->gazetteer){
-        $self->{gazetteer} = $self->domain eq 'IT' ? 1 : 0;
-    }
     if ($self->tm_adaptation eq 'auto'){
         $self->{tm_adaptation} = $self->domain eq 'IT' ? 'interpol' : 'no';
     }
@@ -64,7 +61,7 @@ sub get_scenario_string {
     my $scen = join "\n",
     'Util::SetGlobal language=en selector=tst',
     'T2T::CopyTtree source_language=es source_selector=src',
-    #$self->gazetteer eq 'IT' ? 'T2T::ES2EN::TrGazeteerItems' : (),
+    #$self->gazetteer ? 'T2T::ES2EN::TrGazeteerItems' : (),
     "T2T::TrFAddVariantsInterpol model_dir=$TM_DIR models='
       static 1.0 20150728_formeme.static.min_2.minpc_1.gz
       maxent 0.5 Pilot1_formeme.maxent.gz

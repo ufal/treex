@@ -24,11 +24,21 @@ has hideIT => (
      documentation => 'Use W2A::HideIT and A2W::ShowIT, default=1 iff domain=IT',
 );
 
+has gazetteer => (
+     is => 'ro',
+     isa => 'Bool',
+     default => undef,
+     documentation => 'Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo T2T::EN2CS::TrGazeteerItems, default=1 iff domain=IT',
+);
+
 sub BUILD {
     my ($self) = @_;
 
     if (!defined $self->hideIT){
         $self->{hideIT} = $self->domain eq 'IT' ? 1 : 0;
+    }
+    if (!defined $self->gazetteer){
+        $self->{gazetteer} = $self->domain eq 'IT' ? 1 : 0;
     }
     return;
 }
