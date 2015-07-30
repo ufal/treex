@@ -69,7 +69,7 @@ sub get_scenario_string {
       static 0.5 20150724_lemma.static.min_2.minpc_1.gz
       maxent 1.0 20141209_lemma.maxent.gz
       $IT_LEMMA_MODELS'",
-    'T2T::EN2CS::CutVariants max_lemma_variants=7 max_formeme_variants=7',
+    'T2T::CutVariants max_lemma_variants=7 max_formeme_variants=7',
     $self->fl_agreement ? 'T2T::FormemeTLemmaAgreement fun='.$self->fl_agreement : (),
     $self->hmtm ? 'T2T::RehangToEffParents' : (),
     $self->hmtm ? 'T2T::CS2EN::TrLFTreeViterbi' : (), #lm_weight=0.2 formeme_weight=0.9 backward_weight=0.0 lm_dir=en.czeng
