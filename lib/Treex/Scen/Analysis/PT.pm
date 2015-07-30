@@ -19,8 +19,8 @@ has gazetteer => (
 has lxsuite_key => (
     is => 'ro',
     isa => 'Str',
-    required => 1,
-    documentation => 'Secret password to access Portuguese servers. See D2.3',
+    default => 'nlx.qtleap.13417612987549387402',
+    documentation => 'Secret password to access Portuguese servers',
 );
 
 has lxsuite_host => (
@@ -97,14 +97,13 @@ Treex::Scen::Analysis::PT - Portuguese tectogrammatical analysis
 =head1 SYNOPSIS
 
  # From command line
- treex -Lpt Read::Sentences from=my.txt Scen::Analysis::PT lxsuite_key=$SECRET_PASSWORD Write::Treex to=my.treex.gz
+ treex -Lpt Read::Sentences from=my.txt Scen::Analysis::PT Write::Treex to=my.treex.gz
  
  treex --dump_scenario Scen::Analysis::PT
 
 =head1 DESCRIPTION
 
-This scenario needs to run "LX-Suite" tools on remote server
-and you need to know the secret lxsuite_key.
+This scenario needs to run "LX-Suite" tools on remote server.
 
 TODO: describe the scenario
 
