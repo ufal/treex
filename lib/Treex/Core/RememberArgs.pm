@@ -24,6 +24,19 @@ after BUILD => sub {
     my ($self, $args) = @_;
     $self->_set_args($args);
     my $str = '';
+
+    # The method which consumes this role may implement
+    # its BUILD where a default values of some attributes
+    # are set. Let's put back these values into $args.
+    foreach my $key (keys %{$self}) {
+        next if $key =~ /^args(_str)?$/;
+        my $value = $self->{$key};
+        next if !defined $value;
+        next if ref $value;
+        $args->{$key} = $value;
+    }
+
+    # Prepare a single-quoted string representation of all args.
     while (my ($key, $value) = each %{$args}){
         if ($value =~ /\s/){
             $value =~ s/'/\\'/g;
