@@ -40,6 +40,10 @@ sub BUILD {
     if (!defined $self->gazetteer){
         $self->{gazetteer} = $self->domain eq 'IT' ? 1 : 0;
     }
+    if ($self->gazetteer) {
+        $self->{src_lang} = "en";
+        $self->{trg_lang} = "cs";
+    }
     return;
 }
 

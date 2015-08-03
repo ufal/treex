@@ -1,4 +1,4 @@
-package Treex::Block::T2T::EN2CS::TrGazeteerItems;
+package Treex::Block::T2T::TrGazeteerItems;
 use utf8;
 use Moose;
 use Treex::Core::Common;
@@ -6,16 +6,45 @@ use Treex::Core::Resource;
 
 extends 'Treex::Core::Block';
 
-has 'gazeteer_path' => ( is => 'ro', isa => 'Str', default => 'data/models/gazeteer/cs.app_labels.v3.gaz.gz' );
+has 'src_lang' => ( is => 'ro', isa => 'Str' );
+
+has 'phrase_list_path' => ( is => 'ro', isa => 'Str', default => 'data/models/gazeteer/cs.app_labels.v3.gaz.gz' );
 # idx removed: libreoffice_16090, libreoffice_16123, libreoffice_73656
 has '_gazeteer_hash' => ( is => 'ro', isa => 'HashRef[Str]', builder => '_build_gazeteer_hash', lazy => 1 );
+
+my %OTHERLANG_PHRASE_LIST_PATHS = (
+    'cs' => 'data/models/gazeteer/cs_en/20150227_003.IT.cs_en.cs.gaz.gz',
+    'es' => 'data/models/gazeteer/es_en/20150730_001.IT.es_en.es.gaz.gz',
+    'eu' => 'data/models/gazeteer/eu_en/20150730_001.IT.eu_en.eu.gaz.gz',
+    'nl' => 'data/models/gazeteer/nl_en/20150630_003.IT.nl_en.nl.gaz.gz',
+    'pt' => 'data/models/gazeteer/pt_en/20150730_001.IT.pt_en.pt.gaz.gz',
+);
+my %EN_PHRASE_LIST_PATHS = (
+    'cs' => 'data/models/gazeteer/cs_en/20150227_003.IT.cs_en.en.gaz.gz',
+    'es' => 'data/models/gazeteer/es_en/20150730_001.IT.es_en.en.gaz.gz',
+    'eu' => 'data/models/gazeteer/eu_en/20150730_001.IT.eu_en.en.gaz.gz',
+    'nl' => 'data/models/gazeteer/nl_en/20150630_003.IT.nl_en.en.gaz.gz',
+    'pt' => 'data/models/gazeteer/pt_en/20150730_001.IT.pt_en.en.gaz.gz',
+);
+
+sub BUILD {
+    my ($self) = @_;
+    if (!defined $self->phrase_list_path && defined $self->src_lang) {
+        if ($self->src_lang eq "en") {
+            $self->{phrase_list_path} = $OTHERLANG_PHRASE_LIST_PATHS{$self->language};
+        }
+        else {
+            $self->{phrase_list_path} = $EN_PHRASE_LIST_PATHS{$self->src_lang};
+        }
+    }
+}
 
 sub _build_gazeteer_hash {
     my ($self) = @_;
 
-    log_info "Loading the Czech gazeteer list...";
+    log_info "Loading the target phrase list from ".$self->phrase_list_path." ...";
 
-    my $path = require_file_from_share($self->gazeteer_path);
+    my $path = require_file_from_share($self->phrase_list_path);
     open my $fh, "<:gzip:utf8", $path;
 
     my $hash = {};
@@ -62,7 +91,7 @@ sub process_tnode {
         }
         if (!defined $translated_phrase) {
             # this should not happen
-            log_warn "Gazetteer in " . $self->gazeteer_path . " does not contain the following id: " . $id;
+            log_warn "Gazetteer in " . $self->phrase_list_path . " does not contain the following id: " . $id;
         }
         push @translated_phrases, $translated_phrase;
     }
@@ -81,7 +110,7 @@ __END__
 
 =head1 NAME
 
-=item Treex::T2T::EN2CS::TrGazeteerItems
+=item Treex::T2T::TrGazeteerItems
 
 =head1 DESCRIPTION
 

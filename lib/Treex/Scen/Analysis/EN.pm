@@ -59,7 +59,7 @@ sub get_scenario_string {
     'W2A::EN::Tokenize',
     'W2A::EN::NormalizeForms',
     'W2A::EN::FixTokenization',
-    $self->gazetteer ? 'W2A::EN::GazeteerMatch' : (),
+    $self->gazetteer && defined $self->trg_lang ? 'W2A::EN::GazeteerMatch trg_lang='.$self->trg_lang : (),
     $self->tagger eq 'Morce' ? 'W2A::EN::TagMorce' : (),
     $self->tagger eq 'MorphoDiTa' ? 'W2A::EN::TagMorphoDiTa' : (),
     'W2A::EN::FixTags',
