@@ -37,6 +37,13 @@ has fl_agreement => (
      documentation => 'Use T2T::FormemeTLemmaAgreement with a specified function as parameter',
 );
 
+# TODO gazetteers should work without any dependance on source language here
+has src_lang => (
+    is => 'ro',
+    isa => 'Str',
+    documentation => 'Gazetteers are defined for language pairs. Both source and target languages must be specified.',
+);
+
 sub BUILD {
     my ($self) = @_;
     if ($self->tm_adaptation eq 'auto'){
@@ -60,7 +67,7 @@ sub get_scenario_string {
     'T2T::CopyTtree source_language=en source_selector=src',
     'T2T::EN2CS::TrLFPhrases',
     'T2T::EN2CS::DeleteSuperfluousTnodes',
-    $self->gazetteer ? 'T2T::EN2CS::TrGazeteerItems src_lang='.$self->src_lang : (),
+    $self->gazetteer ? 'T2T::TrGazeteerItems src_lang='.$self->src_lang : (),
     'T2T::EN2CS::TrFTryRules',
     #TODO the old CzEng 0.9 static models (both formeme and tlemma) proved to be better than the new ones (min_instances=2, min_per_class=1) with maxent_features_version=1.0
       #static 1.0 20150726_formeme.static.min_2.minpc_1.gz

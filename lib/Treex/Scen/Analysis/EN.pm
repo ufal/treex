@@ -37,6 +37,13 @@ has gazetteer => (
      documentation => 'Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo, default=0',
 );
 
+# TODO gazetteers should work without any dependance on target language
+has trg_lang => (
+    is => 'ro',
+    isa => 'Str',
+    documentation => 'Gazetteers are defined for language pairs. Both source and target languages must be specified.',
+);
+
 # TODO Add parameter
 # has memory => (
 #     is => 'ro',
