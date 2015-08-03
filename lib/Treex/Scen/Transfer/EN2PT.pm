@@ -57,6 +57,13 @@ has lxsuite_port => (
     default => '10000',
 );
 
+# TODO gazetteers should work without any dependance on source language here
+has src_lang => (
+    is => 'ro',
+    isa => 'Str',
+    documentation => 'Gazetteers are defined for language pairs. Both source and target languages must be specified.',
+);
+
 sub BUILD {
     my ($self) = @_;
     if ($self->tm_adaptation eq 'auto'){
@@ -83,7 +90,7 @@ sub get_scenario_string {
     'Util::SetGlobal lxsuite_key=' . $self->lxsuite_key,
     'Util::SetGlobal language=pt selector=tst',
     'T2T::CopyTtree source_language=en source_selector=src',
-    $self->gazetteer ? 'T2T::EN2PT::TrGazeteerItems' : (),
+    $self->gazetteer ? 'T2T::TrGazeteerItems src_lang='.$self->src_lang : (),
     #'T2T::EN2PT::TrLTryRules',
     "T2T::TrFAddVariantsInterpol model_dir=$TM_DIR models='
       static 1.0 formeme.static.model.20150119.gz
