@@ -8,7 +8,7 @@ extends 'Treex::Core::Block';
 
 has 'src_lang' => ( is => 'ro', isa => 'Str' );
 
-has 'phrase_list_path' => ( is => 'ro', isa => 'Str', default => 'data/models/gazeteer/cs.app_labels.v3.gaz.gz' );
+has 'phrase_list_path' => ( is => 'ro', isa => 'Str' );
 # idx removed: libreoffice_16090, libreoffice_16123, libreoffice_73656
 has '_gazeteer_hash' => ( is => 'ro', isa => 'HashRef[Str]', builder => '_build_gazeteer_hash', lazy => 1 );
 
