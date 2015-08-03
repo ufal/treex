@@ -24,11 +24,25 @@ has hideIT => (
      documentation => 'Use W2A::HideIT and A2W::ShowIT, default=1 iff domain=IT',
 );
 
+has gazetteer => (
+     is => 'ro',
+     isa => 'Bool',
+     default => undef,
+     documentation => 'Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo T2T::TrGazeteerItems, default=1 iff domain=IT',
+);
+
 sub BUILD {
     my ($self) = @_;
 
     if (!defined $self->hideIT){
         $self->{hideIT} = $self->domain eq 'IT' ? 1 : 0;
+    }
+    if (!defined $self->gazetteer){
+        $self->{gazetteer} = $self->domain eq 'IT' ? 1 : 0;
+    }
+    if ($self->gazetteer) {
+        $self->{src_lang} = "en";
+        $self->{trg_lang} = "nl";
     }
     return;
 }
@@ -41,7 +55,7 @@ sub get_scenario_string {
     'Util::SetGlobal language=en selector=src',
     $self->resegment ? 'W2A::ResegmentSentences' : (),
     $self->hideIT ? 'W2A::HideIT' : (),
-    "Scen::Analysis::EN $params gazetteer=0",
+    "Scen::Analysis::EN $params",
     "Scen::Transfer::EN2NL $params",
     'Util::SetGlobal language=nl selector=tst',
     "Scen::Synthesis::NL $params",
