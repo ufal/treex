@@ -49,6 +49,7 @@ sub process_document_one_zone_at_time {
         while (my $anaph = locate_mention_head(shift @$chain, $align, \@all_nodes)) {
             if (defined $ante && defined $anaph && !$ante->is_root && !$anaph->is_root) {
                 $anaph->add_coref_text_nodes($ante);
+                # print STDERR "ANAPH: " . $anaph->t_lemma . "\n";
             }
             $ante = $anaph;
         }

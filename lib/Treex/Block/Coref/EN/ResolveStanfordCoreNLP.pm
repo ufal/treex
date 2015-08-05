@@ -108,6 +108,7 @@ sub process_document {
         #print "ADDING COREF: " . $anaph_tnode->id . " -> " . $ante_tnode->id . "\n";
         if (defined $anaph_tnode && defined $ante_tnode && ($anaph_tnode != $ante_tnode)) {
             $anaph_tnode->add_coref_text_nodes($ante_tnode);
+            #print STDERR "ANAPH: " . $anaph_tnode->t_lemma . "\n";
         }
     }
 }
