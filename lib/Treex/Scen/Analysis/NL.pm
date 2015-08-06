@@ -39,7 +39,7 @@ sub get_scenario_string {
     'A2T::MarkClauseHeads',
     'A2T::MarkRelClauseHeads',
     'A2T::MarkRelClauseCoref',
-    'A2T::DeleteChildlessPunctuation',
+    #'A2T::DeleteChildlessPunctuation',  # we want quotes as t-nodes
     'A2T::NL::FixTlemmas',
     'A2T::NL::FixMultiwordSurnames',
     'A2T::SetNodetype',
