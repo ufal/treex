@@ -321,6 +321,12 @@ sub afun_to_udeprel
                 $deprel = 'nmod';
             }
         }
+        # AuxA is not an official afun used in HamleDT 2.0. Nevertheless it has been introduced in some (not all)
+        # languages by people who want to use the resulting data in TectoMT. It marks articles attached to nouns.
+        elsif($afun eq 'AuxA')
+        {
+            $deprel = 'det';
+        }
         # Verbal attribute is analyzed as secondary predication.
         ###!!! TODO: distinguish core arguments (xcomp) from non-core arguments and adjuncts (acl/advcl).
         elsif($afun =~ m/^AtvV?$/)
