@@ -159,13 +159,11 @@ sub deprel_to_afun
             if ($parent->is_adposition())
             {
                 $node->set_afun('PrepArg');
-#                $node->set_afun('NR');
             }
-            # parent is a numeral -> NumArg - solved by a separate subroutine
+            # parent is a numeral -> Atr (counted noun in genitive is governed by the numeral, like in Czech)
             elsif ($parent->is_numeral())
             {
-#                $node->set_afun('NumArg');
-                $node->set_afun('NR');
+                $node->set_afun('Atr');
             }
             # parent is a noun -> Atr
             elsif ($parent->is_noun())
