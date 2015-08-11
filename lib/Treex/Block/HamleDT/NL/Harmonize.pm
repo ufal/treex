@@ -212,7 +212,7 @@ sub deprel_to_afun
         # Both may appear attached to a preposition, which requires special treatment.
         elsif ( $deprel =~ m/^p?obj1$/ )
         {
-            if ( $ppos eq 'prep' )
+            if ( $ppos eq 'adp' )
             {
                 $afun = 'PrepArg';
             }

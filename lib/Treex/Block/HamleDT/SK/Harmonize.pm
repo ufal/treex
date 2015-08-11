@@ -223,7 +223,7 @@ sub guess_afun
         }
     }
     # Preposition is always AuxP. The real function is tagged at its argument.
-    elsif($pos eq 'prep')
+    elsif($pos eq 'adp')
     {
         $afun = 'AuxP';
     }

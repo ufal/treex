@@ -253,7 +253,7 @@ sub fix_auxp
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        if($node->get_iset('pos') eq 'prep' && scalar($node->children())>=1)
+        if($node->is_adposition() && scalar($node->children())>=1)
         {
             # There is no reason for prepositions to receive AuxY.
             # AuxY is meant for "other adverbs and particles, i.e. those that cannot be included elsewhere".
@@ -278,14 +278,14 @@ sub fix_auxp
         # Example 2:
         # "bi-al-qurbi" (with nearness) "min" (from) "qaryati" (village) = near the village
         # Original annotation: "min" is the head. "bi", "al-qurbi" and "qaryati" are attached to it (AuxY/RR, AuxY/NN, AtrAdv/NN).
-        if($node->get_iset('pos') eq 'prep' && $node->afun() eq 'AuxY' && scalar($node->children())==0)
+        if($node->is_adposition() && $node->afun() eq 'AuxY' && scalar($node->children())==0)
         {
             my $parent = $node->parent();
             if($parent)
             {
                 my @children = $parent->children();
                 # bihasabi
-                if($parent->get_iset('pos') eq 'prep' && $parent->afun() eq 'AuxP' && scalar(@children)==2 && $node->ord()>$parent->ord())
+                if($parent->is_adposition() && $parent->afun() eq 'AuxP' && scalar(@children)==2 && $node->ord()>$parent->ord())
                 {
                     foreach my $child (@children)
                     {
@@ -297,7 +297,7 @@ sub fix_auxp
                     $node->set_afun('AuxP');
                 }
                 # min chilála (during)
-                elsif($parent->get_iset('pos') eq 'prep' && $parent->afun() eq 'AuxP' && scalar(@children)==2 && $node->ord()<$parent->ord())
+                elsif($parent->is_adposition() && $parent->afun() eq 'AuxP' && scalar(@children)==2 && $node->ord()<$parent->ord())
                 {
                     $node->set_parent($parent->parent());
                     $node->set_afun('AuxP');
@@ -309,7 +309,7 @@ sub fix_auxp
                     }
                 }
                 # bilqurbi min
-                elsif($parent->get_iset('pos') eq 'prep' && $parent->afun() eq 'AuxP' && scalar(@children)==3 && $children[1]->afun() eq 'AuxY' && $parent->ord()==$node->ord()+2 && $children[2]->ord()==$parent->ord()+1)
+                elsif($parent->is_adposition() && $parent->afun() eq 'AuxP' && scalar(@children)==3 && $children[1]->afun() eq 'AuxY' && $parent->ord()==$node->ord()+2 && $children[2]->ord()==$parent->ord()+1)
                 {
                     $children[1]->set_parent($node);
                     $children[1]->set_afun('AuxP');

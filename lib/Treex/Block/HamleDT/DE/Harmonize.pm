@@ -452,7 +452,7 @@ sub process_tiger_prepositional_phrases
     my $root = shift;
     foreach my $node ( $root->get_descendants( { 'ordered' => 1 } ) )
     {
-        if ( $node->get_iset('pos') eq 'prep' )
+        if ( $node->is_adposition() )
         {
             my @prepchildren = $node->children();
             my $preparg;

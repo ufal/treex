@@ -16,6 +16,8 @@ has iset_driver =>
                      'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
 );
 
+
+
 #------------------------------------------------------------------------------
 # Reads the Swedish tree, converts morphosyntactic tags to the PDT tagset,
 # converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
@@ -37,10 +39,6 @@ sub process_zone
     $self->validate_coap($root);
 }
 
-
-my %pos2afun = (
-    prep => 'AuxP',
-);
 
 
 #------------------------------------------------------------------------------
