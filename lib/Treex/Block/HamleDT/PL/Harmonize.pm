@@ -69,41 +69,6 @@ sub get_input_tag_for_interset
 
 
 
-# ### TODO ### - currently not used
-# # http://zil.ipipan.waw.pl/FunkcjeZaleznosciowe
-# # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
-# my %deprel2afun = (# "arguments"
-#                  comp         => '',         # "complement" - adjectival/adverbial/nominal/prepositional; -> Atv/Adv/Atr/from_preposition
-#                  comp_fin     => '',         # "clausal complement"; -> Atv?/Adv/Atr/Obj?/Subj?
-# 		   comp_inf     => '',         # "infinitival complement"; -> Adv/Atr/Obj?/Subj?
-# 		   obj          => 'Obj',      # "object"
-# 		   obj_th       => 'Obj',      # "dative object"
-# 		   pd           => '',         # "predicative complement"; -> 'Pnom' if the parent is the verb "to be", otherwise 'Obj'
-# 		   subj         => 'Sb',       # "subject"
-# 		   # "non-arguments"
-# 		   adjunct      => '',         # any modifier; -> Adv/Atr/...
-# 		   app          => 'Apposition',     # "apposition" ### second part depends on the first part (unlike in PDT, but same as in HamleDT (?))
-# 		   complm       => 'AuxC',     # "complementizer" - introduces a complement clause (but is a child of its predicate, not a parent as in PDT)
-# 		   mwe          => 'AuxY',     # "multi-word expression"
-# 		   pred         => 'Pred',     # "predicate"
-# 		   punct        => '',         # "punctuation marker"; -> AuxX/AuxG/AuxK
-# 		   abbrev_punct => 'AuxG',     # "abbreviation mareker"
-# 		   # "non-arguments (morphologicaly motivated)"
-# 		   aglt         => 'AuxV',     # "mobile inflection" - verbal enclitic marked for number, person and gender
-# 		   aux          => 'AuxV',     # "auxiliary"
-# 		   cond         => 'AuxV',     # "conditional clitic"
-# 		   imp          => 'AuxV',     # "imperative marker"
-# 		   neg          => 'AuxZ',     # "negation marker"; ### AuxV
-# 		   refl         => '',         # "reflexive marker"; -> AuxR/AuxT
-# 		   # "coordination"
-# 		   conjunct     => '',         # "coordinated conjunct"; is_member = 1, afun from the conjunction
-# 		   coord        => 'Coord',    # "coordinating conjunction"
-# 		   coord_punct  => '',         # "punctuation conjunction"; ->AuxX/AuxG
-# 		   pre_coord    => 'AuxY',     # "pre-conjunction" - first, dependent part of a two-part correlative conjunction
-# 		   # other
-# 		   ne           => '',         # named entity
-#    );
-
 #------------------------------------------------------------------------------
 # Try to convert dependency relation tags to analytical functions.
 # http://zil.ipipan.waw.pl/FunkcjeZaleznosciowe
@@ -121,18 +86,8 @@ sub deprel_to_afun
     my @nodes  = $root->get_descendants();
     for my $node (@nodes)
     {
-	my $deprel = $node->conll_deprel;
-	my $parent = $node->get_parent();
-
-# 	if ( $deprel2afun{$deprel} ) {
-#             $node->set_afun( $deprel2afun{$deprel} );
-#         }
-#         else {
-#             $node->set_afun('NR');
-#         }
-
-        # the deprels are sorted by their frequency in the data
-
+    	my $deprel = $node->conll_deprel;
+    	my $parent = $node->get_parent();
         # adjunct - 'a non-subcategorised dependent with the modifying function'
         if ($deprel eq 'adjunct')
         {
@@ -145,6 +100,20 @@ sub deprel_to_afun
             elsif ($parent->is_noun())
             {
                 $node->set_afun('Atr');
+            }
+            # If the parent is a coordinating conjunction, the adjunct modifies the entire coordination.
+            # We have to examine the part of speech of the conjuncts.
+            elsif ($parent->is_coordinator() || $parent->is_punctuation())
+            {
+                my @conjuncts = grep {$_->conll_deprel() eq 'conjunct'} $parent->children();
+                if (any {$_->is_noun()} @conjuncts)
+                {
+                    $node->set_afun('Atr');
+                }
+                else
+                {
+                    $node->set_afun('Adv');
+                }
             }
             # otherwise -> NR
             else
@@ -208,8 +177,6 @@ sub deprel_to_afun
         }
         # comp_inf ... infinitival complement
         # comp_fin ... clausal complement
-        # similar to comp
-        # TODO
         elsif ($deprel =~ m/^comp_(inf|fin)$/)
         {
             if ($parent->is_adposition())
@@ -237,7 +204,8 @@ sub deprel_to_afun
             }
             else
             {
-                $node->set_afun('NR');
+                # Infinitive complements are usually labeled Obj in the Prague treebanks.
+                $node->set_afun('Obj');
             }
         }
         # punct ... punctuation marker
