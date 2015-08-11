@@ -69,41 +69,6 @@ sub get_input_tag_for_interset
 
 
 
-# ### TODO ### - currently not used
-# # http://zil.ipipan.waw.pl/FunkcjeZaleznosciowe
-# # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
-# my %deprel2afun = (# "arguments"
-#                  comp         => '',         # "complement" - adjectival/adverbial/nominal/prepositional; -> Atv/Adv/Atr/from_preposition
-#                  comp_fin     => '',         # "clausal complement"; -> Atv?/Adv/Atr/Obj?/Subj?
-# 		   comp_inf     => '',         # "infinitival complement"; -> Adv/Atr/Obj?/Subj?
-# 		   obj          => 'Obj',      # "object"
-# 		   obj_th       => 'Obj',      # "dative object"
-# 		   pd           => '',         # "predicative complement"; -> 'Pnom' if the parent is the verb "to be", otherwise 'Obj'
-# 		   subj         => 'Sb',       # "subject"
-# 		   # "non-arguments"
-# 		   adjunct      => '',         # any modifier; -> Adv/Atr/...
-# 		   app          => 'Apposition',     # "apposition" ### second part depends on the first part (unlike in PDT, but same as in HamleDT (?))
-# 		   complm       => 'AuxC',     # "complementizer" - introduces a complement clause (but is a child of its predicate, not a parent as in PDT)
-# 		   mwe          => 'AuxY',     # "multi-word expression"
-# 		   pred         => 'Pred',     # "predicate"
-# 		   punct        => '',         # "punctuation marker"; -> AuxX/AuxG/AuxK
-# 		   abbrev_punct => 'AuxG',     # "abbreviation mareker"
-# 		   # "non-arguments (morphologicaly motivated)"
-# 		   aglt         => 'AuxV',     # "mobile inflection" - verbal enclitic marked for number, person and gender
-# 		   aux          => 'AuxV',     # "auxiliary"
-# 		   cond         => 'AuxV',     # "conditional clitic"
-# 		   imp          => 'AuxV',     # "imperative marker"
-# 		   neg          => 'AuxZ',     # "negation marker"; ### AuxV
-# 		   refl         => '',         # "reflexive marker"; -> AuxR/AuxT
-# 		   # "coordination"
-# 		   conjunct     => '',         # "coordinated conjunct"; is_member = 1, afun from the conjunction
-# 		   coord        => 'Coord',    # "coordinating conjunction"
-# 		   coord_punct  => '',         # "punctuation conjunction"; ->AuxX/AuxG
-# 		   pre_coord    => 'AuxY',     # "pre-conjunction" - first, dependent part of a two-part correlative conjunction
-# 		   # other
-# 		   ne           => '',         # named entity
-#    );
-
 #------------------------------------------------------------------------------
 # Try to convert dependency relation tags to analytical functions.
 # http://zil.ipipan.waw.pl/FunkcjeZaleznosciowe
@@ -121,30 +86,44 @@ sub deprel_to_afun
     my @nodes  = $root->get_descendants();
     for my $node (@nodes)
     {
-	my $deprel = $node->conll_deprel;
-	my $parent = $node->get_parent();
-
-# 	if ( $deprel2afun{$deprel} ) {
-#             $node->set_afun( $deprel2afun{$deprel} );
-#         }
-#         else {
-#             $node->set_afun('NR');
-#         }
-
-        # the deprels are sorted by their frequency in the data
-
+    	my $deprel = $node->conll_deprel;
+    	my $parent = $node->get_parent();
         # adjunct - 'a non-subcategorised dependent with the modifying function'
         if ($deprel eq 'adjunct')
         {
             # parent is a verb, an adjective or an adverb -> Adv
-            if ($parent->get_iset('pos') =~ m/^(verb)|(adj)|(adv)$/ )
+            # particle, e.g. "dopiero" = "only"
+            ###!!! TODO: Restructure this!
+            ###!!! "dopiero po przyjeździe" = "only after arrival" is analyzed as adjunct(dopiero, po); comp(po, przyjeździe)
+            ###!!! but we want to get AuxP(po, przyjeździe); AuxZ(przyjeździe, dopiero).
+            if ($parent->iset()->pos() =~ m/^(verb|adj|adv|part)$/)
             {
                 $node->set_afun('Adv');
             }
             # parent is a noun -> Atr
-            elsif ($parent->is_noun())
+            elsif ($parent->is_noun() || $parent->is_numeral())
             {
                 $node->set_afun('Atr');
+            }
+            ###!!! Node and parent are prepositions. Example: "diety od 1500 do 2000 złotych"; adjunct(diety, od); comp(od, 1500); adjunct(od, do); comp(do, 2000).
+            ###!!! We may want to restructure structures like this one.
+            elsif ($parent->is_adposition())
+            {
+                $node->set_afun('Atr');
+            }
+            # If the parent is a coordinating conjunction, the adjunct modifies the entire coordination.
+            # We have to examine the part of speech of the conjuncts.
+            elsif ($parent->is_coordinator() || $parent->is_punctuation())
+            {
+                my @conjuncts = grep {$_->conll_deprel() eq 'conjunct'} $parent->children();
+                if (any {$_->is_noun()} @conjuncts)
+                {
+                    $node->set_afun('Atr');
+                }
+                else
+                {
+                    $node->set_afun('Adv');
+                }
             }
             # otherwise -> NR
             else
@@ -171,26 +150,39 @@ sub deprel_to_afun
                 $node->set_afun('Atr');
             }
             # parent is a verb
-            elsif ($parent->is_verb())
+            # or adjective (especially deverbative: "zakończony")
+            elsif ($parent->is_verb() || $parent->is_adjective())
             {
+                # If the node is a coordinating conjunction, we must inspect the part of speech of its conjuncts.
+                my $posnode = $node;
+                if($node->is_coordinator() || $node->is_punctuation())
+                {
+                    my @conjuncts = grep {$_->conll_deprel() eq 'conjunct'} $node->children();
+                    if(@conjuncts)
+                    {
+                        $posnode = $conjuncts[0];
+                    }
+                }
                 # node is an adverb -> Adv
-                if ($node->is_adverb())
+                if ($posnode->is_adverb())
                 {
                     $node->set_afun('Adv');
                 }
                 # node is an adjective -> Atv
-                elsif ($node->get_iset('pos') eq 'adj')
+                elsif ($posnode->get_iset('pos') eq 'adj')
                 {
                     $node->set_afun('Atv');
                 }
                 # node is a syntactic noun -> Obj
-                elsif ($node->is_noun() or $node->conll_pos =~ m/(inf)|(ger)|(num)/)
+                ###!!! The reflexive pronoun "się" is (sometimes or always?) tagged "qub", i.e. particle. We may want to fix the part of speech as well.
+                # Example: Jakiś czas mierzyli się wzrokiem. (For some time they measured each other.)
+                elsif ($posnode->is_noun() or $posnode->conll_pos =~ m/(inf)|(ger)|(num)/ or $posnode->form() =~ m/^się$/i)
                 {
                     $node->set_afun('Obj');
                 }
                 # node is a preposition and for the moment it should hold the function of the whole prepositional phrase (which will later be propagated to the argument of the preposition)
                 # this should work the same way as noun phrases -> Obj
-                elsif ($node->is_adposition())
+                elsif ($posnode->is_adposition())
                 {
                     $node->set_afun('Obj');
                 }
@@ -208,8 +200,6 @@ sub deprel_to_afun
         }
         # comp_inf ... infinitival complement
         # comp_fin ... clausal complement
-        # similar to comp
-        # TODO
         elsif ($deprel =~ m/^comp_(inf|fin)$/)
         {
             if ($parent->is_adposition())
@@ -237,7 +227,8 @@ sub deprel_to_afun
             }
             else
             {
-                $node->set_afun('NR');
+                # Infinitive complements are usually labeled Obj in the Prague treebanks.
+                $node->set_afun('Obj');
             }
         }
         # punct ... punctuation marker
