@@ -17,6 +17,8 @@ has iset_driver =>
 
 my $debug = 0;
 
+
+
 #------------------------------------------------------------------------------
 # Reads the Polish tree, converts morphosyntactic tags to the PDT tagset,
 # converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
@@ -44,6 +46,8 @@ sub process_zone
     $self->check_afuns($root);
 }
 
+
+
 #------------------------------------------------------------------------------
 # Different source treebanks may use different attributes to store information
 # needed by Interset drivers to decode the Interset feature values. By default,
@@ -62,6 +66,7 @@ sub get_input_tag_for_interset
     $conll_feat =~ s/\|/:/g;
     return "$conll_pos:$conll_feat";
 }
+
 
 
 # ### TODO ### - currently not used
@@ -109,12 +114,13 @@ sub get_input_tag_for_interset
 # (twice 'interp' instead of 'punct' and once 'ne_' instead of 'ne')
 # ### TODO ### - add comments to the individual conditions
 #------------------------------------------------------------------------------
-sub deprel_to_afun {
+sub deprel_to_afun
+{
     my $self   = shift;
     my $root   = shift;
     my @nodes  = $root->get_descendants();
-
-    for my $node (@nodes) {
+    for my $node (@nodes)
+    {
 	my $deprel = $node->conll_deprel;
 	my $parent = $node->get_parent();
 
@@ -128,82 +134,142 @@ sub deprel_to_afun {
         # the deprels are sorted by their frequency in the data
 
         # adjunct - 'a non-subcategorised dependent with the modifying function'
-        if ($deprel eq 'adjunct') {
+        if ($deprel eq 'adjunct')
+        {
             # parent is a verb, an adjective or an adverb -> Adv
-            if ($parent->get_iset('pos') =~ m/^(verb)|(adj)|(adv)$/ ) {
+            if ($parent->get_iset('pos') =~ m/^(verb)|(adj)|(adv)$/ )
+            {
                 $node->set_afun('Adv');
             }
             # parent is a noun -> Atr
-            elsif ($parent->is_noun()) {
+            elsif ($parent->is_noun())
+            {
                 $node->set_afun('Atr');
             }
             # otherwise -> NR
-            else {
+            else
+            {
                 $node->set_afun('NR');
             }
         }
         # complement
-        elsif ($deprel eq 'comp') {
+        elsif ($deprel eq 'comp')
+        {
             # parent is a preposition -> PrepArg - solved by a separate subroutine
-            if ($parent->is_adposition()) {
+            if ($parent->is_adposition())
+            {
                 $node->set_afun('PrepArg');
 #                $node->set_afun('NR');
             }
             # parent is a numeral -> NumArg - solved by a separate subroutine
-            elsif ($parent->is_numeral()) {
+            elsif ($parent->is_numeral())
+            {
 #                $node->set_afun('NumArg');
                 $node->set_afun('NR');
             }
             # parent is a noun -> Atr
-            elsif ($parent->is_noun()) {
+            elsif ($parent->is_noun())
+            {
                 $node->set_afun('Atr');
             }
             # parent is a verb
-            elsif ($parent->is_verb()) {
+            elsif ($parent->is_verb())
+            {
                 # node is an adverb -> Adv
-                if ($node->is_adverb()) {
+                if ($node->is_adverb())
+                {
                     $node->set_afun('Adv');
                 }
                 # node is an adjective -> Atv
-                elsif ($node->get_iset('pos') eq 'adj') {
+                elsif ($node->get_iset('pos') eq 'adj')
+                {
                     $node->set_afun('Atv');
                 }
                 # node is a syntactic noun -> Obj
-                elsif ($node->get_iset('pos') eq 'noun' or $node->conll_pos =~ m/(inf)|(ger)|(num)/) {
-                    $node->set_afun('Obj')
+                elsif ($node->is_noun() or $node->conll_pos =~ m/(inf)|(ger)|(num)/)
+                {
+                    $node->set_afun('Obj');
+                }
+                # node is a preposition and for the moment it should hold the function of the whole prepositional phrase (which will later be propagated to the argument of the preposition)
+                # this should work the same way as noun phrases -> Obj
+                elsif ($node->is_adposition())
+                {
+                    $node->set_afun('Obj');
                 }
                 # otherwise -> NR
-                else {
+                else
+                {
                     $node->set_afun('NR');
                 }
             }
             # otherwise -> NR
-            else {
+            else
+            {
+                $node->set_afun('NR');
+            }
+        }
+        # comp_inf ... infinitival complement
+        # comp_fin ... clausal complement
+        # similar to comp
+        # TODO
+        elsif ($deprel =~ m/^comp_(inf|fin)$/)
+        {
+            if ($parent->is_adposition())
+            {
+                $node->set_afun('PrepArg');
+            }
+            elsif ($parent->is_noun())
+            {
+                $node->set_afun('Atr');
+            }
+            elsif ($parent->is_verb() || $parent->is_adjective())
+            {
+                if ($node->is_adverb())
+                {
+                    $node->set_afun('Adv');
+                }
+                elsif ($node->is_adjective())
+                {
+                    $node->set_afun('Atv');
+                }
+                else
+                {
+                    $node->set_afun('Obj')
+                }
+            }
+            else
+            {
                 $node->set_afun('NR');
             }
         }
         # punct ... punctuation marker
-        elsif ($deprel eq 'punct') {
+        elsif ($deprel eq 'punct')
+        {
             # comma gets AuxX
-            if ($node->form eq ',') {
+            if ($node->form eq ',')
+            {
                 $node->set_afun('AuxX');
             }
             # all other symbols get AuxG
-            else {
+            else
+            {
                 $node->set_afun('AuxG');
             }
             # AuxK is assigned later in attach_final_punctuation_to_root()
         }
         # pred ... predicate
-        elsif ($deprel eq 'pred') {
+        elsif ($deprel eq 'pred')
+        {
             $node->set_afun('Pred');
         }
         # subj ... subject
-        elsif ($deprel eq 'subj') {
+        elsif ($deprel eq 'subj')
+        {
             $node->set_afun('Sb');
         }
         # conjunct
-        elsif ($deprel eq 'conjunct') {
+        elsif ($deprel eq 'conjunct')
+        {
             # node is a coordination argument - solved in a separate subroutine
             $node->set_afun('CoordArg');
             # node is a conjunct
@@ -213,136 +279,116 @@ sub deprel_to_afun {
         }
         # obj ... object
         # obj_th ... dative object
-        elsif ($deprel =~ m/^obj/) { # 'obj' and 'obj_th'
+        elsif ($deprel =~ m/^obj/)
+        { # 'obj' and 'obj_th'
             $node->set_afun('Obj');
         }
         # refl ... reflexive marker
         # TODO: how to decide between AuxT and Obj?
-        elsif ($deprel eq 'refl') {
+        elsif ($deprel eq 'refl')
+        {
             $node->set_afun('AuxT');
         }
         # neg ... negation marker
-        elsif ($deprel eq 'neg') {
-            $node->set_afun('AuxZ');
-        }
-        # comp_inf ... infinitival complement
-        # comp_fin ... clausal complement
-        # similar to comp
-        # TODO
-        elsif ($deprel eq 'comp_inf' or $deprel eq 'comp_fin') {
-            if ($parent->is_adposition()) {
-                $node->set_afun('PrepArg');
-            }
-            elsif ($parent->is_noun()) {
-                $node->set_afun('Atr');
-            }
-            elsif ($parent->is_verb()) {
-                if ($node->is_adverb()) {
-                    $node->set_afun('Adv');
-                }
-                elsif ($node->is_adjective()) {
-                    $node->set_afun('Atv');
-                }
-                else {
-                    $node->set_afun('Obj')
-                }
-            }
-            else {
-                $node->set_afun('NR');
-            }
+        elsif ($deprel eq 'neg')
+        {
+            $node->set_afun('Neg');
         }
         # pd ... predicative complement
-        elsif ($deprel eq 'pd') {
+        elsif ($deprel eq 'pd')
+        {
             $node->set_afun('Pnom');
         }
         # ne ... named entity
-        elsif ($deprel eq 'ne') {
+        elsif ($deprel eq 'ne')
+        {
             $node->set_afun('Atr');
             # ### TODO ### interpunkce by mela dostat AuxG; struktura! - hlava by mela byt nejpravejsi uzel
         }
         # complm ... complementizer
-        elsif ($deprel eq 'complm') {
+        elsif ($deprel eq 'complm')
+        {
             $node->set_afun('AuxP');
         }
         # aglt ... mobile inflection
-        elsif ($deprel eq 'aglt') {
+        elsif ($deprel eq 'aglt')
+        {
             $node->set_afun('AuxV');
         }
         # aux ... auxiliary
-        elsif ($deprel eq 'aux') {
+        elsif ($deprel eq 'aux')
+        {
             $node->set_afun('AuxV');
         }
         # mwe ... multi-word expression
-        elsif ($deprel eq 'mwe') {
+        elsif ($deprel eq 'mwe')
+        {
             $node->set_afun('AuxY');
         }
         # coord_punct ... punctuation conjunction
-        elsif ($deprel eq 'coord_punct') {
+        elsif ($deprel eq 'coord_punct')
+        {
             $node->wild()->{'coordinator'} = 1;
-            if ($node->form eq ',') {
+            if ($node->form eq ',')
+            {
                 $node->set_afun('AuxX');
             }
-            else {
+            else
+            {
                 $node->set_afun('AuxG');
             }
         }
         # app .. apposition
         # dependent on the first part of the apposition
-        elsif ($deprel eq 'app') {
+        elsif ($deprel eq 'app')
+        {
             $node->set_afun('Apposition');
         }
         # coord ... coordinating conjunction
         # coordinates two sentences (in other cases, the conjunction bears the relation to its parent)
-        elsif ($deprel eq 'coord') {
+        elsif ($deprel eq 'coord')
+        {
             $node->wild()->{'coordinator'} = 1;
             $node->set_afun('Pred');
         }
         # abbrev_punct ... abbreviation marker
-        elsif ($deprel eq 'abbrev_punct') {
+        elsif ($deprel eq 'abbrev_punct')
+        {
             $node->set_afun('AuxG');
         }
         # cond ... conditional clitic
-        elsif ($deprel eq 'cond') {
+        elsif ($deprel eq 'cond')
+        {
             $node->set_afun('AuxV');
         }
         # imp ... imperative marker
-        elsif ($deprel eq 'imp') {
+        elsif ($deprel eq 'imp')
+        {
             $node->set_afun('AuxV');
         }
         # pre_coord ... pre-conjunction; first part of a correlative conjunction
-        elsif ($deprel eq 'pre_coord') {
+        elsif ($deprel eq 'pre_coord')
+        {
             $node->set_afun('AuxY');
         }
-        else {
+        else
+        {
             $node->set_afun('NR');
         }
     }
-
     # Make sure that all nodes now have their afuns.
-    for my $node (@nodes) {
+    for my $node (@nodes)
+    {
         my $afun = $node->afun();
-        if ( !$afun ) {
+        if ( !$afun )
+        {
             $self->log_sentence($root);
-
             # If the following log is warn, we will be waiting for tons of warnings until we can look at the actual data.
             # If it is fatal however, the current tree will not be saved and we only will be able to examine the original tree.
             log_fatal( "Missing afun for node " . $node->form() . "/" . $node->tag() . "/" . $node->conll_deprel() );
         }
     }
 }
-
-
-# sub process_args {
-#     my $self = shift;
-#     my $root = shift;
-#     my @nodes = $root->get_descendants();
-#     my @coord_args = grep {$_->wild()->{'conjunct'}} @nodes;
-
-#     for my $coord_arg (@coord_args) {
-#         my $parent = $coord_arg->get_parent();
-#         $coord_arg->set_afun($parent->afun());
-#     }
-# }
 
 
 
