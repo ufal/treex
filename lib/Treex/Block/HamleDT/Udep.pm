@@ -183,7 +183,14 @@ sub afun_to_udeprel
         # We will now extend the label in cases where we may later need to distinguish the original afun.
         if($parent->is_root())
         {
-            if($afun =~ m/^(Coord|AuxP|AuxC|AuxK|ExD)$/)
+            # In verbless elliptic sentences the conjunction has no child (except for punctuation). It will remain attached as root.
+            # Example (sk): A ak áno, tak načo? = And if so, then why?
+            my @non_arg_children = grep {$_->afun() !~ m/^Aux[XGKY]$/} ($node->children());
+            if($afun eq 'AuxC' && scalar(@non_arg_children)==0)
+            {
+                $deprel = 'root';
+            }
+            elsif($afun =~ m/^(Coord|AuxP|AuxC|AuxK|ExD)$/)
             {
                 $deprel = 'root:'.lc($afun);
             }
@@ -372,6 +379,11 @@ sub afun_to_udeprel
             {
                 $deprel = 'advmod:emph';
             }
+        }
+        # Neg: used in Prague-style harmonization of some treebanks (e.g. Romanian) for negation (elsewhere it may be AuxZ or Adv).
+        elsif($afun eq 'Neg')
+        {
+            $deprel = 'neg';
         }
         # AuxY: Additional conjunction in coordination ... cc
         # AuxY: Subordinating conjunction "jako" ("as") attached to Atv or AtvV, or even Obj (of verbal adjectives) ... mark
@@ -691,7 +703,7 @@ sub get_auxpc_children
 {
     my $self = shift;
     my $auxnode = shift;
-    my $auxlemma = $auxnode->lemma();
+    my $auxlemma = $auxnode->lemma(); $auxlemma = '' if(!defined($auxlemma));
     my $auxafun = $auxnode->afun();
     my @children = $auxnode->get_children({ordered => 1});
     # Punctuation, conjunctions and conjuncts should be re-attached to the new head.

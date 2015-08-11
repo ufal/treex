@@ -15,6 +15,8 @@ has iset_driver =>
                      'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
 );
 
+
+
 #------------------------------------------------------------------------------
 # Reads the Arabic tree, converts morphosyntactic tags to the PDT tagset,
 # converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
@@ -28,6 +30,8 @@ sub process_zone
     $self->fix_coap_ismember($root);
     $self->fix_auxp($root);
 }
+
+
 
 #------------------------------------------------------------------------------
 # Different source treebanks may use different attributes to store information
@@ -43,6 +47,8 @@ sub get_input_tag_for_interset
     my $node   = shift;
     return $node->tag();
 }
+
+
 
 #------------------------------------------------------------------------------
 # Adjusts analytical functions (syntactic tags). This method is called
@@ -101,7 +107,40 @@ sub deprel_to_afun
         $afun =~ s/\|.*//;
         $node->set_afun($afun || 'NR');
     }
+    # Fix known annotation errors.
+    # We should fix it now, before the superordinate class will perform other tree operations.
+    $self->fix_annotation_errors($root);
 }
+
+
+
+#------------------------------------------------------------------------------
+# Fixes a few known annotation errors that appear in the data. Should be called
+# from deprel_to_afun() so that it precedes any tree operations that the
+# superordinate class may want to do.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    # wa/conj/AuxY anna/conj/AuxC hu/pron/AuxY ./punc/AuxK
+    # AuxY(anna, hu); all the others are attached directly to the root.
+    # The correct Prague-style annotation would be:
+    # "hu" must be ExD. It is effectively the root word because its AuxC parent is ignored, and it is not a verb.
+    # "wa" is either attached as AuxY to "hu", or (more like the Czech trees) it is the root word marked Coord, and "anna" is attached to it as AuxC and is_member.
+    if(scalar(@nodes) == 4 &&
+       $nodes[0]->is_conjunction() && $nodes[1]->is_conjunction() && $nodes[2]->is_pronoun() && $nodes[3]->is_punctuation() &&
+       $nodes[0]->parent()->is_root() && $nodes[1]->parent()->is_root() && $nodes[2]->parent() == $nodes[1] && $nodes[3]->parent()->is_root() &&
+       $nodes[0]->afun() eq 'AuxY' && $nodes[1]->afun() eq 'AuxC' && $nodes[3]->afun() eq 'AuxK')
+    {
+        $nodes[0]->set_afun('Coord');
+        $nodes[1]->set_parent($nodes[0]);
+        $nodes[2]->set_afun('ExD');
+    }
+}
+
+
 
 #------------------------------------------------------------------------------
 # Repairs annotation of coordinations and appositions. The current PADT data
@@ -201,6 +240,8 @@ sub fix_coap_ismember
     }
 }
 
+
+
 #------------------------------------------------------------------------------
 # Reconsiders syntactic tags of prepositions. Most of them should have AuxP and
 # those that don't should have a good reason.
@@ -285,6 +326,8 @@ sub fix_auxp
         }
     }
 }
+
+
 
 1;
 
