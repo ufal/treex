@@ -77,7 +77,6 @@ sub get_input_tag_for_interset
 # aux comp comp_fin comp_inf complm cond conjunct coord coord_punct imp mwe ne
 #  neg obj obj_th pd pre_coord pred punct refl subj; not including errors
 # (twice 'interp' instead of 'punct' and once 'ne_' instead of 'ne')
-# ### TODO ### - add comments to the individual conditions
 #------------------------------------------------------------------------------
 sub deprel_to_afun
 {
@@ -86,72 +85,86 @@ sub deprel_to_afun
     my @nodes  = $root->get_descendants();
     for my $node (@nodes)
     {
-    	my $deprel = $node->conll_deprel;
-    	my $parent = $node->get_parent();
+        my $deprel = $node->conll_deprel;
+        my $parent = $node->get_parent();
+        # If the parent is a coordinating conjunction, the node modifies the entire coordination
+        # and we have to examine the effective parents: the conjuncts.
+        my $eparent = $parent;
+        if ($parent->is_coordinator() || $parent->is_punctuation())
+        {
+            my @conjuncts = grep {$_->conll_deprel() eq 'conjunct'} $parent->children();
+            if (@conjuncts)
+            {
+                ###!!! At the moment we ignore the possibility of a nested coordination, i.e. $conjunct[0] is again a conjunction.
+                ###!!! We also ignore that the conjuncts may not all be the same part of speech.
+                $eparent = $conjuncts[0];
+            }
+        }
+        # pred ... predicate
+        if ($deprel eq 'pred')
+        {
+            $node->set_afun('Pred');
+        }
+        # subj ... subject
+        elsif ($deprel eq 'subj')
+        {
+            $node->set_afun('Sb');
+        }
         # adjunct - 'a non-subcategorised dependent with the modifying function'
-        if ($deprel eq 'adjunct')
+        elsif ($deprel eq 'adjunct')
         {
             # parent is a verb, an adjective or an adverb -> Adv
             # particle, e.g. "dopiero" = "only"
             ###!!! TODO: Restructure this!
             ###!!! "dopiero po przyjeździe" = "only after arrival" is analyzed as adjunct(dopiero, po); comp(po, przyjeździe)
             ###!!! but we want to get AuxP(po, przyjeździe); AuxZ(przyjeździe, dopiero).
-            if ($parent->iset()->pos() =~ m/^(verb|adj|adv|part)$/)
+            if ($eparent->iset()->pos() =~ m/^(verb|adj|adv|part)$/)
             {
                 $node->set_afun('Adv');
             }
             # parent is a noun -> Atr
-            elsif ($parent->is_noun() || $parent->is_numeral())
+            elsif ($eparent->is_noun() || $eparent->is_numeral())
             {
                 $node->set_afun('Atr');
             }
             ###!!! Node and parent are prepositions. Example: "diety od 1500 do 2000 złotych"; adjunct(diety, od); comp(od, 1500); adjunct(od, do); comp(do, 2000).
             ###!!! We may want to restructure structures like this one.
-            elsif ($parent->is_adposition())
+            elsif ($eparent->is_adposition())
             {
                 $node->set_afun('Atr');
             }
-            # If the parent is a coordinating conjunction, the adjunct modifies the entire coordination.
-            # We have to examine the part of speech of the conjuncts.
-            elsif ($parent->is_coordinator() || $parent->is_punctuation())
-            {
-                my @conjuncts = grep {$_->conll_deprel() eq 'conjunct'} $parent->children();
-                if (any {$_->is_noun()} @conjuncts)
-                {
-                    $node->set_afun('Atr');
-                }
-                else
-                {
-                    $node->set_afun('Adv');
-                }
-            }
-            # otherwise -> NR
+            # unknown part of speech of the parent, e.g. abbreviation (could be both noun and verb; all examples I have seen were nouns though)
             else
             {
-                $node->set_afun('NR');
+                $node->set_afun('Atr');
             }
         }
         # complement
         elsif ($deprel eq 'comp')
         {
             # parent is a preposition -> PrepArg - solved by a separate subroutine
-            if ($parent->is_adposition())
+            if ($eparent->is_adposition())
             {
                 $node->set_afun('PrepArg');
             }
+            # parent is a subordinating conjunction -> SubArg - solved by a separate subroutine
+            elsif ($eparent->is_subordinator())
+            {
+                $node->set_afun('SubArg');
+            }
             # parent is a numeral -> Atr (counted noun in genitive is governed by the numeral, like in Czech)
-            elsif ($parent->is_numeral())
+            elsif ($eparent->is_numeral())
             {
                 $node->set_afun('Atr');
             }
             # parent is a noun -> Atr
-            elsif ($parent->is_noun())
+            elsif ($eparent->is_noun())
             {
                 $node->set_afun('Atr');
             }
             # parent is a verb
             # or adjective (especially deverbative: "zakończony")
-            elsif ($parent->is_verb() || $parent->is_adjective())
+            elsif ($eparent->is_verb() || $eparent->is_adjective())
             {
                 # If the node is a coordinating conjunction, we must inspect the part of speech of its conjuncts.
                 my $posnode = $node;
@@ -169,7 +182,7 @@ sub deprel_to_afun
                     $node->set_afun('Adv');
                 }
                 # node is an adjective -> Atv
-                elsif ($posnode->get_iset('pos') eq 'adj')
+                elsif ($posnode->is_adjective() || $posnode->is_participle())
                 {
                     $node->set_afun('Atv');
                 }
@@ -186,31 +199,37 @@ sub deprel_to_afun
                 {
                     $node->set_afun('Obj');
                 }
-                # otherwise -> NR
+                # otherwise -> Atr
                 else
                 {
-                    $node->set_afun('NR');
+                    $node->set_afun('Atr');
                 }
+            }
+            # parent is an adverb
+            # Example: odpowiednio do tego (in accord with that); comp(odpowiednio, do); comp(do, tego)
+            elsif ($eparent->is_adverb())
+            {
+                $node->set_afun('Adv');
             }
             # otherwise -> NR
             else
             {
-                $node->set_afun('NR');
+                $node->set_afun('Atr');
             }
         }
         # comp_inf ... infinitival complement
         # comp_fin ... clausal complement
         elsif ($deprel =~ m/^comp_(inf|fin)$/)
         {
-            if ($parent->is_adposition())
+            if ($eparent->is_adposition())
             {
                 $node->set_afun('PrepArg');
             }
-            elsif ($parent->is_noun())
+            elsif ($eparent->is_noun())
             {
                 $node->set_afun('Atr');
             }
-            elsif ($parent->is_verb() || $parent->is_adjective())
+            elsif ($eparent->is_verb() || $eparent->is_adjective())
             {
                 if ($node->is_adverb())
                 {
@@ -230,41 +249,6 @@ sub deprel_to_afun
                 # Infinitive complements are usually labeled Obj in the Prague treebanks.
                 $node->set_afun('Obj');
             }
-        }
-        # punct ... punctuation marker
-        elsif ($deprel eq 'punct')
-        {
-            # comma gets AuxX
-            if ($node->form eq ',')
-            {
-                $node->set_afun('AuxX');
-            }
-            # all other symbols get AuxG
-            else
-            {
-                $node->set_afun('AuxG');
-            }
-            # AuxK is assigned later in attach_final_punctuation_to_root()
-        }
-        # pred ... predicate
-        elsif ($deprel eq 'pred')
-        {
-            $node->set_afun('Pred');
-        }
-        # subj ... subject
-        elsif ($deprel eq 'subj')
-        {
-            $node->set_afun('Sb');
-        }
-        # conjunct
-        elsif ($deprel eq 'conjunct')
-        {
-            # node is a coordination argument - solved in a separate subroutine
-            $node->set_afun('CoordArg');
-            # node is a conjunct
-            $node->wild()->{'conjunct'} = 1;
-            # parent must be a coordinator (does it?)
-            $parent->wild()->{'coordinator'} = 1;
         }
         # obj ... object
         # obj_th ... dative object
@@ -289,10 +273,20 @@ sub deprel_to_afun
             $node->set_afun('Pnom');
         }
         # ne ... named entity
-        elsif ($deprel eq 'ne')
+        # ne_ ... one occurence – a typo?
+        elsif ($deprel =~ m/^ne_?$/)
         {
             $node->set_afun('Atr');
             # ### TODO ### interpunkce by mela dostat AuxG; struktura! - hlava by mela byt nejpravejsi uzel
+        }
+        # mwe ... multi-word expression
+        # It occurs in compound prepositions (adverb + simple preposition) as the second element (preposition):
+        # zgodnie z projektem ... XXX(PARENT, zgodnie); mwe(zgodnie, z); comp(zgodnie, projektem)
+        # In PDT, such constructions are annotated using AuxP:
+        # AuxP(PARENT, zgodnie); AuxP(zgodnie, z); XXX(zgodnie, projektem)
+        elsif ($deprel eq 'mwe')
+        {
+            $node->set_afun('AuxP');
         }
         # complm ... complementizer
         elsif ($deprel eq 'complm')
@@ -309,12 +303,23 @@ sub deprel_to_afun
         {
             $node->set_afun('AuxV');
         }
-        # mwe ... multi-word expression
-        elsif ($deprel eq 'mwe')
+        # app .. apposition
+        # dependent on the first part of the apposition
+        elsif ($deprel eq 'app')
         {
-            $node->set_afun('AuxY');
+            $node->set_afun('Apposition');
         }
-        # coord_punct ... punctuation conjunction
+        # coord ... coordinating conjunction
+        # This label occurs only with top-level coordinations (coordinate predicates / clauses).
+        # In other cases, the label of the coordination head reflects the coordination's relation to its parent.
+        elsif ($deprel eq 'coord')
+        {
+            $node->wild()->{'coordinator'} = 1;
+            $node->set_afun('Pred');
+        }
+        # coord_punct ... punctuation instead of coordinating conjunction
+        # As with coord, this label normally (except for one error) occurs only with top-level coordinations.
+        # It is used for the punctuation symbol that serves as the coordination head; additional commas with three and more conjuncts are labeled just "punct".
         elsif ($deprel eq 'coord_punct')
         {
             $node->wild()->{'coordinator'} = 1;
@@ -326,19 +331,44 @@ sub deprel_to_afun
             {
                 $node->set_afun('AuxG');
             }
+            # There is one error where this is not a top-level coordination, but it is a nested coordination, i.e. this node is a coordinator and a conjunct at the same time.
+            ###!!! IT DOES NOT WORK AT THE MOMENT! Either we are calling it in a wrong context, or there is a problem with the detect_coordination() function.
+            ###!!! Thus I am turning it off and temporarily leaving 5 untranslated deprels in the data.
+            if (0 && !$parent->is_root() && any {$_->conll_deprel() eq 'conjunct'} ($parent->children()))
+            {
+                $node->set_afun('CoordArg');
+                $node->wild()->{'conjunct'} = 1;
+            }
         }
-        # app .. apposition
-        # dependent on the first part of the apposition
-        elsif ($deprel eq 'app')
+        # conjunct
+        elsif ($deprel eq 'conjunct')
         {
-            $node->set_afun('Apposition');
+            # node is a coordination argument - solved in a separate subroutine
+            $node->set_afun('CoordArg');
+            # node is a conjunct
+            $node->wild()->{'conjunct'} = 1;
+            # parent must be a coordinator (does it?)
+            $parent->wild()->{'coordinator'} = 1;
         }
-        # coord ... coordinating conjunction
-        # coordinates two sentences (in other cases, the conjunction bears the relation to its parent)
-        elsif ($deprel eq 'coord')
+        # pre_coord ... pre-conjunction; first part of a correlative conjunction (such as English "either ... or")
+        elsif ($deprel eq 'pre_coord')
         {
-            $node->wild()->{'coordinator'} = 1;
-            $node->set_afun('Pred');
+            $node->set_afun('AuxY');
+        }
+        # punct ... punctuation marker
+        elsif ($deprel eq 'punct')
+        {
+            # comma gets AuxX
+            if ($node->form eq ',')
+            {
+                $node->set_afun('AuxX');
+            }
+            # all other symbols get AuxG
+            else
+            {
+                $node->set_afun('AuxG');
+            }
+            # AuxK is assigned later in attach_final_punctuation_to_root()
         }
         # abbrev_punct ... abbreviation marker
         elsif ($deprel eq 'abbrev_punct')
@@ -354,11 +384,6 @@ sub deprel_to_afun
         elsif ($deprel eq 'imp')
         {
             $node->set_afun('AuxV');
-        }
-        # pre_coord ... pre-conjunction; first part of a correlative conjunction
-        elsif ($deprel eq 'pre_coord')
-        {
-            $node->set_afun('AuxY');
         }
         else
         {
@@ -383,65 +408,29 @@ sub deprel_to_afun
 
 #------------------------------------------------------------------------------
 # Detects coordination structure according to current annotation (dependency
-# links between nodes and labels of the relations). Expects the Polish style
-# of the Prague family(?) - the head of the coordination bears the label of the
-# relation between the coordination and its parent. The afuns of conjuncts just
-# mark them as conjuncts; the shared modifiers are distinguished by having
-# a different afun. The method assumes that nothing has been normalized yet.
-# Expects the coordinators and conjuncts to have the respective attribute in
-# wild()
-# ### TODO ### - check/correct; might be better to move into the PL::Harmonize?
+# links between nodes and labels of the relations). Expects the Prague family
+# in the Alpino style (head label marks relation between coordination and its
+# parent; conjunct labels only say that they are conjuncts).
+# The method assumes that nothing has been normalized yet.
+# Expects the coordinators and conjuncts to have the respective wild attribute.
 #------------------------------------------------------------------------------
-#------------------------------------------------------------------------------
-# Detects coordination in the shape we expect to find it in the Polish
-# treebank.
-#------------------------------------------------------------------------------
-# sub detect_coordination {
-#     my $self = shift;
-#     my $node = shift;
-#     my $coordination = shift;
-#     my $debug = shift;
-#     $self->detect_polish($coordination, $node);
-#     # The caller does not know where to apply recursion because it depends on annotation style.
-#     # Return all conjuncts and shared modifiers for the Prague family of styles.
-#     # Return orphan conjuncts and all shared and private modifiers for the other styles.
-#     my @recurse = $coordination->get_conjuncts();
-#     push(@recurse, $coordination->get_shared_modifiers());
-#     return @recurse;
-# }
-
-sub detect_coordination {
+sub detect_coordination
+{
     my $self = shift;
-    my $node = shift;  # suspected root node of coordination
+    my $node = shift;
     my $coordination = shift;
     my $debug = shift;
-    log_fatal("Missing node") unless (defined($node));
-    my @children = $node->children();
-    my @conjuncts = grep {$_->wild()->{'conjunct'}} (@children);
-    return unless (@conjuncts);
-    $coordination->set_parent($node->parent());
-    $coordination->add_delimiter($node, $node->get_iset('pos') eq 'punc');
-    $coordination->set_afun($node->afun());
-    for my $child (@children) {
-        if ($child->wild()->{'conjunct'}) {
-            my $orphan = 0;
-            $coordination->add_conjunct($child, $orphan);
-        }
-        elsif ($child->wild()->{'coordinator'}) {
-            my $symbol = 1;
-            $coordination->add_delimiter($child, $symbol);
-        }
-        else {
-            $coordination->add_shared_modifier($child);
-        }
-    }
+    $coordination->detect_alpino($node);
+    $coordination->capture_commas();
+    # The caller does not know where to apply recursion because it depends on annotation style.
+    # Return all conjuncts and shared modifiers for the Prague family of styles.
+    # Return orphan conjuncts and all shared and private modifiers for the other styles.
     my @recurse = $coordination->get_conjuncts();
     push(@recurse, $coordination->get_shared_modifiers());
     return @recurse;
 }
 
 
-### NOT FINISHED - WORK IN PROGRESS ###
 
 1;
 
