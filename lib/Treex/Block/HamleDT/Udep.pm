@@ -52,6 +52,7 @@ sub process_zone
     $self->shape_coordination_stanford($root);
     $self->restructure_compound_prepositions($root);
     $self->push_prep_sub_down($root);
+    $self->change_case_to_mark_under_verb($root);
     # Some of the top colons are analyzed as copulas. Do this before the copula processing reshapes the scene.
     $self->colon_pred_to_apposition($root);
     $self->push_copulas_down($root);
@@ -362,7 +363,9 @@ sub afun_to_udeprel
         {
             # Negation is mostly done using bound prefix ne-.
             # If it is a separate word ("ne už personálním, ale organizačním"; "potřeboval čtyřnohého a ne dvounohého přítele), it is labeled AuxZ.
-            if($node->lemma() eq 'ne')
+            ###!!! This is specific to Czech!
+            my $lemma = $node->lemma();
+            if(defined($lemma) && $lemma eq 'ne')
             {
                 $deprel = 'neg';
             }
@@ -445,7 +448,8 @@ sub afun_to_udeprel
                 $deprel = 'vocative';
             }
             # Some ExD are properties or quantities compared to.
-            elsif($parent->lemma() =~ m/^(jako|než)$/)
+            ###!!! This is specific to Czech!
+            elsif(defined($parent->lemma()) && $parent->lemma() =~ m/^(jako|než)$/)
             {
                 $deprel = 'advcl';
             }
@@ -646,7 +650,7 @@ sub push_prep_sub_down
         if($n != 1)
         {
             my $form = $node->form();
-            my $phrase = join(' ', map {$_->lemma().'/'.$_->afun().'/'.$_->deprel()} ($node->get_children({'add_self' => 1, 'ordered' => 1})));
+            my $phrase = join(' ', map {my $l = $_->lemma(); $l = '_' unless(defined($l)); $l.'/'.$_->afun().'/'.$_->deprel()} ($node->get_children({'add_self' => 1, 'ordered' => 1})));
             if($n == 0)
             {
                 # Try to requalify other children (if any) as arguments.
@@ -689,8 +693,16 @@ sub push_prep_sub_down
         }
         # Even if the adposition is already a leaf (which should not happen), it cannot keep the AuxP label.
         # Even if the conjunction is already a leaf (which should not happen), it cannot keep the AuxC label.
-        $deprel = $deprel =~ m/:auxp/ ? ($node->parent()->is_verb() ? 'mark' : 'case') : 'mark';
-        $node->set_deprel($deprel);
+        if($node->parent()->is_verb())
+        {
+            # Both subordinating conjunctions and prepositions are labeled 'mark' when their argument is a verb.
+            $node->set_deprel('mark');
+        }
+        else
+        {
+            $deprel = $deprel =~ m/:auxp/ ? 'case' : 'mark';
+            $node->set_deprel($deprel);
+        }
     }
 }
 
@@ -750,6 +762,28 @@ sub get_auxpc_children
         }
     }
     return {'pc' => \@pc, 'mwe' => \@mwe, 'auxz' => \@auxz, 'args' => \@args, 'other' => \@other};
+}
+
+
+
+#------------------------------------------------------------------------------
+# Makes sure that a preposition attached to a verb is labeled 'mark' and not
+# 'case'. It is difficult to enforce during restructuring of Aux[PC] phrases
+# because there are things like coordinations of AuxP-AuxC chains, so it is not
+# immediately apparent that the final head will be a verb.
+#------------------------------------------------------------------------------
+sub change_case_to_mark_under_verb
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'case' && $node->parent()->is_verb())
+        {
+            $node->set_deprel('mark');
+        }
+    }
 }
 
 
