@@ -125,20 +125,6 @@ sub deprel_to_afun
                     $node->set_afun('Adv');
                 }
             }
-            # If the parent is a coordinating conjunction, the adjunct modifies the entire coordination.
-            # We have to examine the part of speech of the conjuncts.
-            elsif ($parent->is_coordinator() || $parent->is_punctuation())
-            {
-                my @conjuncts = grep {$_->conll_deprel() eq 'conjunct'} $parent->children();
-                if (any {$_->is_noun()} @conjuncts)
-                {
-                    $node->set_afun('Atr');
-                }
-                else
-                {
-                    $node->set_afun('Adv');
-                }
-            }
             # otherwise -> NR
             else
             {
