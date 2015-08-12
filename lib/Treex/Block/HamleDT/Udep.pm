@@ -226,7 +226,7 @@ sub afun_to_udeprel
         # In the situation 2, the first word in the multi-word prepositon will become the head and all other parts will be attached to it as 'mwe'.
         elsif($afun eq 'AuxP')
         {
-            $deprel = 'case:auxp';
+            $deprel = $parent->is_verb() ? 'mark:auxp' : 'case:auxp';
         }
         # AuxC marks a subordinating conjunction that heads a subordinate clause.
         # It will be later restructured and the conjunction will be attached to the subordinate predicate as 'mark'.
@@ -571,7 +571,7 @@ sub restructure_compound_prepositions
         {
             my $parent = $nodes[$i]->parent();
             my $pord = $parent->ord();
-            if($pord > $iord && $parent->deprel() eq 'case:auxp')
+            if($pord > $iord && $parent->deprel() =~ m/^(case|mark):auxp$/)
             {
                 my $found = 1;
                 my @mwe;
@@ -689,7 +689,7 @@ sub push_prep_sub_down
         }
         # Even if the adposition is already a leaf (which should not happen), it cannot keep the AuxP label.
         # Even if the conjunction is already a leaf (which should not happen), it cannot keep the AuxC label.
-        $deprel = $deprel =~ m/:auxp/ ? 'case' : 'mark';
+        $deprel = $deprel =~ m/:auxp/ ? ($node->parent()->is_verb() ? 'mark' : 'case') : 'mark';
         $node->set_deprel($deprel);
     }
 }
