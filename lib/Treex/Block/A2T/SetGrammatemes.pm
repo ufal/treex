@@ -19,31 +19,31 @@ my %tag2sempos = (
 my %iset2gram = (
     'aspect=imp' => 'aspect=proc',
     'aspect=perf' => 'aspect=cpl',
-    
+
     'definiteness=def' => 'definiteness=definite',
     'definiteness=ind' => 'definiteness=indefinite',
     'definiteness=red' => 'definiteness=reduced',
-    
+
     'degree=pos' => 'degcmp=pos',
     'degree=comp' => 'degcmp=comp',
     'degree=sup' => 'degcmp=sup',
     'degree=abs' => 'degcmp=sup',
-    
+
     'voice=pass' => 'diathesis=pas',
-    
+
     'gender=masc' => 'gender=anim', # Czech-specific grammateme mixing animateness and gender
     'gender=fem' => 'gender=fem',
     'gender=neut' => 'gender=neut',
     'gender=com' => 'gender=inan', # This is a hack, reusing Czech-specific gramateme for other purposes
-    
+
     # possessive adjectives (overriding the adjectival gender)
     'possgender=masc' => 'gender=anim',
     'possgender=fem' => 'gender=fem',
     'possgender=neut' => 'gender=neut',
     'possgender=com' => 'gender=inan',
-    
+
     'negativeness=neg' => 'negation=neg1',
-    
+
     'number=sing' => 'number=sg',
     'number=plu' => 'number=pl', # TODO: Delete this, Interset 2.018 uses plur instead of plu
     'number=plur' => 'number=pl',
@@ -57,10 +57,10 @@ my %iset2gram = (
     'person=1' => 'person=1',
     'person=2' => 'person=2',
     'person=3' => 'person=3',
-    
+
     'politeness=inf' => 'politeness=basic',
     'politeness=pol' => 'politeness=polite',
-    
+
     'tense=past' => 'tense=ant',
     'tense=pres' => 'tense=sim',
     'tense=fut' => 'tense=post',
@@ -68,7 +68,7 @@ my %iset2gram = (
     'tense=imp' => 'tense=ant',
     'tense=pqp' => 'tense=ant',
     'tense=nar' => 'tense=ant',
-    
+
     'mood=ind' => 'verbmod=ind',
     'mood=imp' => 'verbmod=imp',
     'mood=cnd' => 'verbmod=cdn',
@@ -81,7 +81,7 @@ sub process_tnode {
     return if ( $tnode->nodetype ne 'complex' or !$anode );
 
     $self->set_sempos( $tnode, $anode );
-    
+
     $self->set_grammatemes_from_iset( $tnode, $anode );
 
     if ( ( $tnode->gram_sempos // '' ) eq 'v' ) {
@@ -109,13 +109,13 @@ sub set_sempos {
 
     my $syntpos = $tnode->formeme || '';
     $syntpos =~ s/:.*//;
-    
+
     if ( $syntpos eq 'n' && $anode->is_adjective ){   # adjectives in nominal usage stay adjectives
         $syntpos = 'adj';
     }
 
     my $subtype = $anode->is_pronoun ? 'pron' : ( $anode->is_numeral ? 'num' : '' );
-    
+
     if ($syntpos eq 'adj' && $anode->match_iset(poss=>'poss', prontype=>'prs')){
         $subtype = 'poss';
     }
@@ -130,6 +130,10 @@ sub set_sempos {
 }
 
 sub set_verbal_grammatemes {
+    my ($self, $tnode, $anode) = @_;
+    if (!$tnode->gram_verbmod) {$tnode->set_gram_verbmod('ind');}
+    if (!$tnode->gram_tense) {$tnode->set_gram_tense('sim');}
+    return;
 }
 
 1;
@@ -144,7 +148,7 @@ Treex::Block::A2T::SetGrammatemes
 
 =head1 DESCRIPTION
 
-A very basic, language-independent grammateme setting block for t-nodes. 
+A very basic, language-independent grammateme setting block for t-nodes.
 Grammatemes are set based on the Interset features (and formeme)
 of the corresponding lexical a-node.
 

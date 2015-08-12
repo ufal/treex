@@ -95,11 +95,16 @@ sub process_tnode {
     if ( ( $t_node->gram_sempos // '' ) =~ /pron/ ) {
         $a_node->iset->set_prontype('prn');
 
-        # and we can mark possessive pronouns + move their "gender" value into possgender where it belongs
+        # and we can mark possessive pronouns + move their "gender" and "number" values
+        # into possgender and possnumber where they belong
         if ( $t_node->formeme =~ /poss$/ ) {
             $a_node->iset->set_poss('poss');
             $a_node->iset->set_possgender( $a_node->iset->gender );
             $a_node->iset->set_gender('');
+            $a_node->iset->set_possnumber( $a_node->iset->number );
+            $a_node->iset->set_number('');
+            $a_node->iset->set_possperson( $a_node->iset->person );
+            $a_node->iset->set_person('');
         }
     }
     

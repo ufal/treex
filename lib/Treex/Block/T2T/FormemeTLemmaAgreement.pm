@@ -15,48 +15,48 @@ sub agree {
     return 1 if ( $pos =~ /^(adj|num)$/                and $formeme =~ /^adj/ );
     return 1 if ( $pos eq 'adv'                        and $formeme =~ /^adv/ );
     return 1 if ( $pos =~ /^(conj|part|int|punc|sym)$/ and $formeme eq 'x' );
+    return 1 if $pos eq 'X';
 
     return 0;
 }
 
 
 sub compute_score {
-    my ( $self, $logpa, $nnda, $logpb, $nndb) = @_;
+    my ( $self, $logA, $nndA, $logB, $nndB) = @_;
     my $score = undef;
 
-    if ($self->fun =~ /^AM-Log-P/) {
-        # arithmetic mean of log probabilities
-        # a(log(P(a),log(P(b))) = (log(P(a) + log(P(b))) / 2
-        $score = ($logpa + $logpb) / 2;
-    } elsif ($self->fun =~ /^Log-AM-P/) {
-        # log of arithmetic mean of probabilities
-        # log(a(P(a), P(b))) = log((P(a) + P(b)) / 2)
-        #                    = log(P(a) + P(b)) - log(2)
-        $score = log(exp($logpa) + exp($logpb)) - log(2);
-    } elsif ($self->fun =~ /^Log-GM-P/) {
-        # log of geometric mean of probabilities
-        # log(g(P(a), P(b))) = log(sqrt(P(a) * P(b)))
-        #                    = log(sqrt(exp(log(P(a)) + log(P(b)))))
-        $score = log(sqrt(exp($logpa + $logpb)));
+    # $logA and $logB are 2-based logarithms of the probabilities:
+    # A = prob(translation_A)
+    # B = prob(translation_B)
+    my $A = 2**$logA;
+    my $B = 2**$logB;
+
+    # "X ~= Y" means "optimizing X is equivalent to optimizing Y" (we can ignore monotonic transformations)
+    if ($self->fun =~ /^AM-P/) {
+        # arithmetic mean of probabilities, AM(A,B) = (A+B)/2 ~= A + B
+        $score = $A + $B;
+    } elsif ($self->fun =~ /^(GM-P|AM-Log-P)/) {
+        # geometric mean of probabilities, GM(A,B) = sqrt(A * B) ~= A*B = 2**(logA + logB) ~= logA + logB
+        $score = $logA + $logB;
     } elsif ($self->fun =~ /^GM-Log-P/) {
-        # geometric mean of log probabilities
-        $score = -sqrt($logpa * $logpb);
-    } elsif ($self->fun =~ /^Log-HM-P/) {
-        # log of harmonic mean of probabilities
-        # log(h(P(a), P(b))) = log(2 * P(a) * P(b) / (P(a) + P(b)))
-        #                    = log(2) + log(P(a)) + log(P(b)) - log(P(a) + P(b))
-        $score = log(2) + $logpa + $logpb - log(exp($logpa) + exp($logpb));
+        # geometric mean of log probabilities, GM-log(A,B) = sqrt(logA * logB) ~= logA * logB
+        # However, geometric mean of two negative numbers is positive
+        # and the best $score is the highest one, so we need to take *negative* geometric mean of log probabilities.
+        $score = - $logA * $logB;
+    } elsif ($self->fun =~ /^HM-P/) {
+        # harmonic mean of probabilities,  HM(A,B) = 2 * A * B / (A+B) ~= A*B/(A+B)
+        $score = $A*$B / ($A+$B);
     } elsif ($self->fun =~ /^HM-Log-P/) {
-        # harmonic mean of log probabilities + edge cases
-        return 0 if ($logpa == 0 or $logpb == 0);        
-        $score = 2 * $logpa * $logpb / ($logpa + $logpb);
+        # harmonic mean of log probabilities + edge cases, HM-log(A,B) = 2 * logA * logB / (logA + logB)
+        return 0 if ($logA == 0 or $logB == 0);
+        $score = $logA * $logB / ($logA + $logB);
     } else {
         die "invalid function name: ".$self->fun;
     }
 
     if ($self->fun =~ /-W$/) {
-        my $wa = $logpa < 0 ? $nnda/-$logpa : 1;
-        my $wb = $logpb < 0 ? $nndb/-$logpb : 1;
+        my $wa = $logA < 0 ? $nndA/-$logA : 1;
+        my $wb = $logB < 0 ? $nndB/-$logB : 1;
         $score = $score * $wa * $wb;
     }
     return $score;
@@ -126,9 +126,9 @@ sub process_tnode {
                 if ($score > $best_score) {
                     $best_score = $score;
                     $t_lemma = $t_lemma_variant->{t_lemma};
-                    $t_lemma_origin = $t_lemma_variant->{origin};
+                    $t_lemma_origin = $t_lemma_variant->{origin} // '';
                     $formeme = $formeme_variant->{formeme};
-                    $formeme_origin = $formeme_variant->{origin};
+                    $formeme_origin = $formeme_variant->{origin} // '';
                     $mlayer_pos = $t_lemma_variant->{mlayer_pos};
                 }
             }
@@ -152,10 +152,10 @@ sub process_tnode {
     my $after = $t_lemma."/".$formeme;
 
     if ($before ne $after) {
-        $tnode->set_attr('t_lemma', $t_lemma );
-        $tnode->set_attr('t_lemma_origin', $t_lemma_origin . "--FormemeTLemmaAgreement $before -> $after");
-        $tnode->set_attr('formeme', $formeme );
-        $tnode->set_attr('formeme_origin', $formeme_origin . "--FormemeTLemmaAgreement $before -> $after");
+        $tnode->set_t_lemma($t_lemma);
+        $tnode->set_t_lemma_origin($t_lemma_origin . "--FormemeTLemmaAgreement $before -> $after");
+        $tnode->set_formeme($formeme);
+        $tnode->set_formeme_origin($formeme_origin . "--FormemeTLemmaAgreement $before -> $after");
         $tnode->set_attr('mlayer_pos', $mlayer_pos );
     }
 
@@ -176,6 +176,17 @@ Treex::Block::T2T::FormemeTLemmaAgreement
 =head1 DESCRIPTION
 
 Select congruous t_lemma-formeme pairs.
+
+=head1 PARAMETERS
+
+=head2 fun
+
+Which function should be used to combine the formeme and t-lemma probabilities into one score.
+The possibilities are C<AM-P>, C<GM-P>, C<HM-P> (arithmetic, geometric and harmonic mean, respectively),
+and  C<HM-Log-P>, C<GM-Log-P> (harmonic/geometric mean of logarithms of probabilities).
+(Note that optimizing C<AM-Log-P> is equivalent to optimizing C<GM-P>, so C<AM-Log-P> is missing in the list above.)
+
+All functions have a variant with C<-W> suffix, check the source code for its meaning.
 
 =head1 AUTHORS
 

@@ -15,6 +15,8 @@ has 'sent_ids' => ( isa => 'Bool', is => 'ro', default => 0 );
 
 has 'prettyprint' => ( isa => 'Bool', is => 'ro', default => 1 );
 
+has 'store_node_ids' => ( isa => 'Bool', is => 'ro', default => 0 );
+
 sub process_atree {
     my ( $self, $aroot ) = @_;
     print { $self->_file_handle } $self->_process_tree($aroot);
@@ -105,7 +107,10 @@ sub _get_node_str {
     my ( $self, $anode, $rel, $cat ) = @_;
     $cat = defined($cat) ? $cat : '';
 
-    my $id  = $self->_get_id();
+    my $id = $self->_get_id();
+    if ( $self->store_node_ids ) {    # store node IDs if required by ADT Tree Viterbi
+        $anode->{adt_id} = $id;
+    }
     my $out = '<node id="' . $id . '" rel="' . $rel . '"';
     $out .= ' cat="' . $cat . '" ' if ( $cat ne '' );
 

@@ -12,7 +12,8 @@ my %CHILD_PARENT_TO_ONE_NODE = (
     'output|n:attr device' => 'uitvoer_apparaat|noun',
     'email|n:attr client' => 'email_programma|noun',
     'security|n:attr reason' => 'veiligheid_reden|noun',
-    'business|n:attr environment' => 'onderneming_klimaat|noun', 
+    'business|n:attr environment' => 'onderneming_klimaat|noun',
+    'mouse|n:attr button' => 'muis_knop|noun',
 );
 
 # one English t-lemma + syntpos --> Dutch child (t-lemma, formeme, mlayer_pos) + parent (t-lemma, mlayer_pos)

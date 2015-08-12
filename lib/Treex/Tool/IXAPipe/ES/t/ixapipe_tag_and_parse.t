@@ -2,7 +2,7 @@
 use utf8;
 use strict;
 use warnings;
-use Treex::Tool::IXAPipe::TagAndParse;
+use Treex::Tool::IXAPipe::ES::TagAndParse;
 use Test::More;
 
 my @sentences   = ('No hay señal wifi .', 'Imprimir PDF .');
@@ -23,8 +23,8 @@ s/ +/\t/g foreach @expected_conll;
 
 plan tests => 3 + 2*@sentences;
 
-my $tagger_parser = Treex::Tool::IXAPipe::TagAndParse->new();
-isa_ok( $tagger_parser, 'Treex::Tool::IXAPipe::TagAndParse', 'tool instantiated' );
+my $tagger_parser = Treex::Tool::IXAPipe::ES::TagAndParse->new();
+isa_ok( $tagger_parser, 'Treex::Tool::IXAPipe::ES::TagAndParse', 'tool instantiated' );
 
 
 my $conll_output = $tagger_parser->parse_document( \@sentences );

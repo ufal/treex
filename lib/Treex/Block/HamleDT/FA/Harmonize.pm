@@ -186,7 +186,7 @@ sub deprel_to_afun
         #     Common use: relation between coordinating conjunction and the following (non-head) word (noun, adjective, adverb or preposition).
         elsif ( $deprel =~ m/^(PREDEP|POSDEP)$/ )
         {
-            if($ppos eq 'prep')
+            if($ppos eq 'adp')
             {
                 $afun = 'PrepArg';
             }

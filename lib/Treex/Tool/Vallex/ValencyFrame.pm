@@ -233,6 +233,7 @@ sub to_string {
         $ret .= ' (' . ($self->note // '') . ')';
     } 
     $ret .= ': ' . join( ' ', map { $_->to_string($params) } @{ $self->elements } );
+    $ret =~ s/\n/ /g;  # remove newlines to avoid problems in further processing
     return $ret;
 }
 

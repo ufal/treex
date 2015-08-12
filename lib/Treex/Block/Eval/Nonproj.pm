@@ -51,8 +51,9 @@ sub process_bundle
 #------------------------------------------------------------------------------
 # Prints out statistics.
 #------------------------------------------------------------------------------
-END
+sub process_end
 {
+    my $self = shift;
     my @zones = sort(keys(%n_nonproj));
     if(@zones)
     {
@@ -83,7 +84,12 @@ order) the node and its parent, that is not contained in the subtree rooted by t
 
 =back
 
-=cut
+=head1 AUTHOR
 
-# Copyright 2011 Daniel Zeman
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Dan Zeman <zeman@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011, 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

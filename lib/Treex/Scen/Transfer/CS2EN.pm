@@ -2,33 +2,90 @@ package Treex::Scen::Transfer::CS2EN;
 use Moose;
 use Treex::Core::Common;
 
-my $FULL = <<'END';
-Util::SetGlobal language=en selector=tst
-T2T::CopyTtree source_language=cs source_selector=src
-T2T::CS2EN::TrFTryRules
-T2T::CS2EN::TrFAddVariants model_dir= static_model=data/models/translation/cs2en/20141209_formeme.static.gz discr_model=data/models/translation/cs2en/20141209_formeme.maxent.gz
-T2T::CS2EN::TrLTryRules
-T2T::CS2EN::TrLAddVariants model_dir= static_model=data/models/translation/cs2en/20141209_lemma.static.gz discr_model=data/models/translation/cs2en/20141209_lemma.maxent.gz
-T2T::EN2CS::CutVariants max_lemma_variants=7 max_formeme_variants=7
-T2T::FormemeTLemmaAgreement fun=Log-HM-P
-#T2T::RehangToEffParents
-#T2T::CS2EN::TrLFTreeViterbi #lm_weight=0.2 formeme_weight=0.9 backward_weight=0.0 lm_dir=en.czeng
-#T2T::RehangToOrigParents
-T2T::CS2EN::TrLFixTMErrors
-T2T::CS2EN::TrLFPhrases
-T2T::CS2EN::RemovePerspronGender
-T2T::CS2EN::FixForeignNames
-T2T::CS2EN::RemoveInfinitiveSubjects
-T2T::SetClauseNumber
-#T2T::CS2EN::RearrangeNounCompounds -- hurts
-#T2T::CS2EN::DeleteSuperfluousNodes -- hurts
-T2T::CS2EN::FixGrammatemesAfterTransfer
-T2T::CS2EN::FixDoubleNegative
+has domain => (
+     is => 'ro',
+     isa => enum( [qw(general IT)] ),
+     default => 'general',
+     documentation => 'domain of the input texts',
+);
 
-END
+has tm_adaptation => (
+     is => 'ro',
+     isa => enum( [qw(auto no 0 interpol)] ),
+     default => 'auto',
+     documentation => 'domain adaptation of Translation Models to IT domain',
+);
+
+has hmtm => (
+     is => 'ro',
+     isa => 'Bool',
+     default => 0,
+     documentation => 'Apply HMTM (TreeViterbi) with TreeLM reranking',
+);
+
+# TODO
+has gazetteer => (
+     is => 'ro',
+     isa => 'Bool',
+     default => 0,
+     documentation => 'Use T2T::CS2EN::TrGazeteerItems, default=0',
+);
+
+has fl_agreement => (
+     is => 'ro',
+     isa => enum( [qw(0 AM-P GM-P HM-P GM-Log-P HM-Log-P)] ),
+     default => '0',
+     documentation => 'Use T2T::FormemeTLemmaAgreement with a specified function as parameter',
+);
+
+sub BUILD {
+    my ($self) = @_;
+    if ($self->tm_adaptation eq 'auto'){
+        $self->{tm_adaptation} = $self->domain eq 'IT' ? 'interpol' : 'no';
+    }
+    return;
+}
 
 sub get_scenario_string {
-    return $FULL;
+    my ($self) = @_;
+
+    my $IT_LEMMA_MODELS = '';
+    my $IT_FORMEME_MODELS = '';
+    if ($self->tm_adaptation eq 'interpol'){
+        $IT_LEMMA_MODELS = "static 0.5 IT/batch1q-lemma.static.gz\n      maxent 1.0 IT/batch1q-lemma.maxent.gz";
+        $IT_FORMEME_MODELS = "static 1.0 IT/batch1q-formeme.static.gz\n      maxent 0.5 IT/batch1q-formeme.maxent.gz";
+    }
+
+    my $scen = join "\n",
+    'Util::SetGlobal language=en selector=tst',
+    'T2T::CopyTtree source_language=cs source_selector=src',
+    'T2T::CS2EN::TrFTryRules',
+    "T2T::CS2EN::TrFAddVariantsInterpol model_dir=data/models/translation/cs2en models='
+      static 1.0 20150724_formeme.static.min_2.minpc_1.gz
+      maxent 0.5 20141209_formeme.maxent.gz
+      $IT_FORMEME_MODELS'",
+    'T2T::CS2EN::TrLTryRules',
+    "T2T::CS2EN::TrLAddVariantsInterpol model_dir=data/models/translation/cs2en models='
+      static 0.5 20150724_lemma.static.min_2.minpc_1.gz
+      maxent 1.0 20141209_lemma.maxent.gz
+      $IT_LEMMA_MODELS'",
+    'T2T::CutVariants max_lemma_variants=7 max_formeme_variants=7',
+    $self->fl_agreement ? 'T2T::FormemeTLemmaAgreement fun='.$self->fl_agreement : (),
+    $self->hmtm ? 'T2T::RehangToEffParents' : (),
+    $self->hmtm ? 'T2T::CS2EN::TrLFTreeViterbi' : (), #lm_weight=0.2 formeme_weight=0.9 backward_weight=0.0 lm_dir=en.czeng
+    $self->hmtm ? 'T2T::RehangToOrigParents' : (),
+    'T2T::CS2EN::TrLFixTMErrors',
+    'T2T::CS2EN::TrLFPhrases',
+    'T2T::CS2EN::RemovePerspronGender' . ($self->domain eq 'IT' ? ' remove_guessed_gender=1' : ''),
+    'T2T::CS2EN::FixForeignNames',
+    'T2T::CS2EN::RemoveInfinitiveSubjects',
+    'T2T::SetClauseNumber',
+    $self->domain eq 'IT' ? 'T2T::CS2EN::RearrangeNounCompounds' : (), # this block helps in IT domain and hurts in general, but maybe it can be improved to help (or at least not hurt) everywhere
+    $self->domain eq 'IT' ? 'T2T::CS2EN::DeleteSuperfluousNodes' : (), # deletes word "application" and "system" with NE, this rarely influences non-IT domain
+    'T2T::CS2EN::FixGrammatemesAfterTransfer',
+    'T2T::CS2EN::FixDoubleNegative',
+    ;
+    return $scen;
 }
 
 1;
@@ -56,7 +113,7 @@ The output (translated English t-trees) will be in zone en_tst.
 
 =head1 PARAMETERS
 
-currently none
+TODO
 
 =head1 SEE ALSO
 

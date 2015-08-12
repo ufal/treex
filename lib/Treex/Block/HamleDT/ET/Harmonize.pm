@@ -23,8 +23,6 @@ sub process_zone
 {
     my $self   = shift;
     my $zone   = shift;
-    # Copy the original dependency structure before adjusting it.
-    $self->backup_zone($zone);
     my $root = $zone->get_atree();
     tiger2pdt($root);
     # Convert Estonian POS tags and features to Interset and PDT if possible.
@@ -33,19 +31,6 @@ sub process_zone
     $self->attach_final_punctuation_to_root($root);
     return $root;
 } # process_zone
-
-#------------------------------------------------------------------------------
-# Copies the original zone so that the user can compare the original and the
-# restructured tree in TTred.
-#------------------------------------------------------------------------------
-sub backup_zone
-{
-    my $self  = shift;
-    my $zone0 = shift;
-    my $zone1 = $zone0->copy('orig');
-    $zone0->remove_tree('p');
-    return $zone1;
-}
 
 #------------------------------------------------------------------------------
 # Different source treebanks may use different attributes to store information

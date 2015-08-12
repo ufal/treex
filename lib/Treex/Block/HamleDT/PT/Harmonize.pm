@@ -414,7 +414,7 @@ sub deprel_to_afun
             {
                 $afun = 'Adv';
             }
-            elsif($ppos eq 'prep')
+            elsif($ppos eq 'adp')
             {
                 $afun = 'PrepArg';
             }

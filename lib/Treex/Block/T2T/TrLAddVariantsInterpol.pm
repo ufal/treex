@@ -1,57 +1,7 @@
-package Treex::Block::T2T::BaseTrLAddVariants;
+package Treex::Block::T2T::TrLAddVariantsInterpol;
 use Moose;
 use Treex::Core::Common;
-use Treex::Core::Resource;
-
-extends 'Treex::Core::Block';
-
-use Treex::Tool::ML::NormalizeProb;
-use Moose::Util::TypeConstraints;
-
-use Treex::Tool::TranslationModel::Factory;
-
-use Treex::Tool::TranslationModel::Features::Standard;
-
-has model_dir => (
-    is            => 'ro',
-    isa           => 'Str',
-    default       => '',
-    documentation => 'Base directory for all models'
-);
-
-# This role supports loading models to Memcached. 
-# It requires model_dir to be implemented, so it muse be consumed after model_dir has been defined.
-with 'Treex::Block::T2T::TrUseMemcachedModel';
-
-has discr_type => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => 'maxent',
-);
-
-has discr_weight => (
-    is            => 'ro',
-    isa           => 'Num',
-    default       => 1.0,
-    documentation => 'Weight of the discriminative model (the model won\'t be loaded if the weight is zero).'
-);
-
-has static_weight => (
-    is            => 'ro',
-    isa           => 'Num',
-    default       => 0.5,
-    documentation => 'Weight of the Static model (NB: the model will be loaded even if the weight is zero).'
-);
-
-has discr_model => (
-    is      => 'ro',
-    isa     => 'Str',
-);
-
-has static_model => (
-    is      => 'ro',
-    isa     => 'Str',
-);
+extends 'Treex::Block::T2T::TrBaseAddVariantsInterpol';
 
 has [qw(trg_lemmas trg_formemes)] => (
     is            => 'ro',
@@ -66,45 +16,6 @@ has domain => (
     default       => '0',
     documentation => 'add the (CzEng) domain feature (default=0). Set to 0 to deactivate.',
 );
-
-has '_model_factory' => (
-    is => 'ro',
-    isa => 'Treex::Tool::TranslationModel::Factory',
-    default => sub { return Treex::Tool::TranslationModel::Factory->new(); },
-);
-
-has max_variants => (
-    is            => 'ro',
-    isa           => 'Int',
-    default       => 0,
-    documentation => 'How many variants to store for each node. 0 means all.',
-);
-
-has _model => ( is => 'rw' );
-
-# TODO to be removed
-
-enum 'DataVersion' => [ '0.9', '1.0' ];
-
-has maxent_features_version => (
-    is      => 'ro',
-    isa     => 'DataVersion',
-    default => '1.0'
-);
-
-# Require the needed models and set the absolute paths to the respective attributes
-sub get_required_share_files {
-
-    my ($self) = @_;
-    my @files;
-
-    if ( $self->discr_weight > 0 ) {
-        push @files, $self->model_dir ? $self->model_dir . '/' . $self->discr_model :  $self->discr_model;
-    }
-    push @files, $self->model_dir ?  $self->model_dir . '/' . $self->static_model : $self->static_model;
-
-    return @files;
-}
 
 # Retrieve the target language formeme or lemma and return them as additional features
 sub get_parent_trg_features {
@@ -234,19 +145,20 @@ __END__
 
 =head1 NAME
 
-Treex::Block::T2T::BaseTrLAddVariants -- add t-lemma translation variants from translation models (the abstract base class)
+Treex::Block::T2T::TrLAddVariants -- add t-lemma translation variants from translation models (language-independent)
 
 =head1 DESCRIPTION
 
-This abstract block uses a combination of translation models to predict log-probabilities of t-lemma translation
-variants. This block should not be used in scenarios directly, use its subclasses instead.
+Adding t-lemma translation variants. The selection of variants
+is based on the discriminative and the dictionary (static) models.
+
+This block uses a combination of translation models to predict log-probabilities of t-lemma translation
+variants.
 
 The available models are Maximum Entropy (using L<AI::MaxEnt>), Static (based on simple corpus counts).
 
 Using L<Treex::Tool::Memcached::Memcached> models is enabled via the 
 L<Treex::Block::T2T::TrUseMemcachedModel> role.  
-
-See the 'documentation' parameter of the individual attributes for details on various options.
 
 =back
 
@@ -264,8 +176,10 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 Michal Novák <mnovak@ufal.mff.cuni.cz>
 
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
+
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2010-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2010-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

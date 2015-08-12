@@ -3,6 +3,18 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::A2T::SetGrammatemesFromAux';
 
+# modal verb -> gram/deontmod mapping
+Readonly my %DEONTMOD_FOR_LEMMA => (
+    'трябва'   => 'deb',
+    'мога'   => 'poss',
+    # TODO
+    #'should' => 'hrt',
+    #'want'   => 'vol',
+    #'may'    => 'perm',
+    #'might'  => 'perm',
+    #'be_able_to' => 'fac',
+);
+
 sub check_anode {
     my ($self, $tnode, $anode) = @_;
 
@@ -10,6 +22,13 @@ sub check_anode {
         $tnode->set_gram_negation('neg1');
     }
 
+    my $deontmod = $DEONTMOD_FOR_LEMMA{$anode->lemma};
+    if ($deontmod){
+        $tnode->set_gram_deontmod($deontmod);
+    }
+    if ($anode->lemma eq 'ще'){
+        $tnode->set_gram_tense('post');
+    }
     return;
 }
 

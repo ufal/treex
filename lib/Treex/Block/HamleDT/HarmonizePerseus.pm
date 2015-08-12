@@ -13,6 +13,7 @@ my %agdt2pdt =
     'COORD'     => 'Coord',
     'OBJ'       => 'Obj',
     'OCOMP'     => 'Obj', ###!!!
+    'OComp'     => 'Obj', ###!!! same as OCOMP; Index Thomisticus does not use all-capitals
     'PNOM'      => 'Pnom',
     'PRED'      => 'Pred',
     'SBJ'       => 'Sb',
@@ -60,15 +61,15 @@ sub deprel_to_afun
         # The _CO suffix signals conjuncts.
         # The _AP suffix signals members of apposition.
         # We will later reshape appositions but the routine will expect is_member set.
-        if($afun =~ s/_(CO|AP)$//)
+        if($afun =~ s/_(CO|AP)$//i)
         {
             $node->set_is_member(1);
             # There are nodes that have both _AP and _CO but we have no means of representing that.
             # Remove the other suffix if present.
-            $afun =~ s/_(CO|AP)$//;
+            $afun =~ s/_(CO|AP)$//i;
         }
         # Convert the _PA suffix to the is_parenthesis_root flag.
-        if($afun =~ s/_PA$//)
+        if($afun =~ s/_PA$//i)
         {
             $node->set_is_parenthesis_root(1);
         }
@@ -91,12 +92,12 @@ sub deprel_to_afun
             # this node should be Coord and the conjuncts should get ExD.
             # However, we still cannot set afun=ExD for the conjuncts.
             # This would involve traversing also AuxP nodes and nested Coord, so we need to have all Coords in place first.
-            if($afun =~ m/^COORD/)
+            if($afun =~ m/^COORD/i)
             {
                 $node->set_afun('Coord');
                 $node->wild()->{'ExD conjuncts'} = 1;
             }
-            elsif($afun =~ m/^APOS/)
+            elsif($afun =~ m/^APOS/i)
             {
                 $node->set_afun('Apos');
                 $node->wild()->{'ExD conjuncts'} = 1;

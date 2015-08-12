@@ -19,27 +19,44 @@ sub process_atree {
     for ( my $i = 0; $i < @anodes; ++$i ) {
 
         my ($tnode)    = $anodes[$i]->get_referencing_nodes('a/lex.rf');
-        my ($taligned) = $tnode ? $tnode->get_aligned_nodes_of_type('.*') : undef;
+        my ($tgold) = $tnode ? $tnode->get_aligned_nodes_of_type('alignsame') : undef;
+        my ($tali) = $tnode ? $tnode->get_aligned_nodes_of_type('copy') : undef;
 
+        # we have alignment predicted -> gold, with at least one of them having valency frame set
         if ($tnode
-            and $taligned
+            and $tgold
             and ( ( $tnode->gram_sempos // '' ) eq 'v' )
-            and ( $tnode->val_frame_rf or $taligned->val_frame_rf )
+            and ( $tnode->val_frame_rf or $tgold->val_frame_rf )
             )
         {
+            # get sentence text, with lex. anode of current verb highlighted
             my $sent_text  = '';
             for ( my $j = 0; $j < @anodes; ++$j ) {
                 $sent_text .= ' ' . ( $i != $j ? $anodes[$j]->form : '-->' . $anodes[$j]->form . '<--' );
             }
-            chomp $sent_text;
+            $sent_text =~ s/^\s*//;
+            $sent_text =~ s/\s*\r?\n?$//;
+            
+            # get aligned (other language) sentence text, with aligned anode highlighted
+            my $ali_sent_text = '';
+            if ($tali){
+                my ($aali) = $tali->get_anodes();
+                if ($aali){
+                    foreach my $ali_anode ( $aali->get_root->get_descendants({ordered=>1}) ){
+                        $ali_sent_text .= ' ' .  ( $ali_anode != $aali ? $ali_anode->form : '-->' . $ali_anode->form . '<--' );
+                    }
+                }
+            }
+            $ali_sent_text =~ s/^\s*//;
+            $ali_sent_text =~ s/\s*\r?\n?$//;
 
             my $pred_frame = $self->_get_frame($tnode);
-            my $gold_frame = $self->_get_frame($taligned);
+            my $gold_frame = $self->_get_frame($tgold);
             print { $self->_file_handle } $tnode->t_lemma, "\t",
-                ( ( $tnode->val_frame_rf // '' ) eq ( $taligned->val_frame_rf // '' ) ? '*' : '!' ), "\t",
+                ( ( $tnode->val_frame_rf // '' ) eq ( $tgold->val_frame_rf // '' ) ? '*' : '!' ), "\t",
                 ( $pred_frame ? $pred_frame->to_string({formemes=>0, id=>1, note=>1}) : '---' ), "\t",
                 ( $gold_frame ? $gold_frame->to_string({formemes=>0, id=>1, note=>1}) : '---' ), "\t",
-                $sent_id, "\t", $sent_text, "\n";
+                $sent_id, "\t", $sent_text, "\t", $ali_sent_text, "\n";
         }
     }
 }
@@ -76,9 +93,10 @@ Output format, tab-separated on one line:
 * t-lemma
 * '*' for correctly assigned, '!' for errors
 * predicted valency frame
-* golden valency frame (alignment links must lead from predicted to golden data)
+* golden valency frame (alignment links of type 'alignsame' must lead from predicted to golden data)
 * sentence id (document file stem + bundle id)
-* sentence text, with the word in question marked with '--> <--' 
+* sentence text, with the word in question marked with '--> <--'
+* aligned sentence text, with aligned word marked with '--> <--' (if applicable)
 
 If there are more verbal valency frames set in the sentence, this will produce output for
 each one of them, i.e. the same sentence will appear multiple times on the output.
@@ -89,6 +107,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2014-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

@@ -38,7 +38,14 @@ sub process_anode {
 
     # fix personal pronouns
     if ( $lemma eq '#PersPron' ) {
-        my ( $num, $pers ) = ( $anode->iset->number || 'sing', $anode->iset->person || '3' );
+        # get number, person, gender (provide defaults)
+        my ( $num, $pers, $gen ) = ( $anode->iset->number || 'sing', $anode->iset->person || '3', $anode->iset->gender || 'neut' );
+        if ( $anode->iset->poss ) {  # override values for possessives
+            $num = $anode->iset->possnumber || $num;
+            $pers = $anode->iset->possperson || $pers;
+            $gen = $anode->iset->possgender || $gen;
+        }
+        # build a signature based on needed categories
         my $sig = "$num $pers";
 
         if ( $pers eq '2' ) {
@@ -47,13 +54,10 @@ sub process_anode {
         if ( $pers eq '3' and $anode->iset->reflex and not $anode->iset->poss ){
             $sig .= ' reflex';
         }
-        if ( $pers eq '3' and $num eq 'sing' and not $anode->iset->reflex and not $anode->iset->poss ) {
-            $sig .= ' ' . ( $anode->iset->gender || 'neut' );
+        if ( $pers eq '3' and $num eq 'sing' and not $anode->iset->reflex ) {
+            $sig .= ' ' . $gen;
         }
         if ( $anode->iset->poss ) {
-            if ( $pers eq '3' and $num eq 'sing' ){
-                $sig .= ' ' . ( $anode->iset->possgender || 'neut' );
-            }
             $sig .= ' poss';
         }
         $anode->set_lemma( $PERSPRON{$sig} );

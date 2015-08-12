@@ -63,17 +63,19 @@ Readonly my $ATTR => {
             sentmod is_parenthesis is_passive is_generated
             is_relclause_head is_name_of_person voice
             t_lemma_origin formeme_origin is_infin is_member
-            clause_number is_clause_head is_reflexive mlayer_pos)
+            clause_number is_clause_head is_reflexive mlayer_pos
+            src_tnode.rf wild)
     ],
     a => [
         qw(id ord form lemma tag afun no_space_after
             s_parenthesis_root edge_to_collapse is_auxiliary
-            p_terminal.rf is_member clause_number is_clause_head)
+            p_terminal.rf is_member clause_number is_clause_head
+            iset wild)
     ],
-    n => [qw(id ne_type normalized_name a.rf)],
+    n => [qw(id ne_type normalized_name a.rf wild)],
     p => [
         qw(id is_head index coindex edgelabel form lemma
-            tag phrase functions)
+            tag phrase functions wild)
     ],
 };
 
@@ -105,6 +107,18 @@ sub serialize_node {
     # save all attributes with defined values
     foreach my $attr ( @{ $ATTR->{$layer} } ) {
         my $value = $node->get_attr($attr);
+
+        if ($attr eq 'iset'){ # exclude empty Interset values
+            foreach my $key (keys %$value){
+                delete $value->{$key} if ( $value->{$key} eq '' );
+            }
+        }
+        if ($attr eq 'gram'){ # do not write empty grammateme values
+            foreach my $key (keys %$value){
+                delete $value->{$key} if ( !defined($value->{$key}) );
+            }
+        }
+
         $data{$attr} = $value if ( defined($value) );
     }
     $data{parent_id} = $node->get_parent()->id;

@@ -85,12 +85,18 @@ sub _build_anaph_cands_filter {
     return log_fatal "method _build_anaph_cands_filter must be overriden in " . ref($self);
 }
 
-
-before 'process_document' => sub {
+sub process_document_one_zone_at_time {
     my ($self, $doc) = @_;
-
     $self->_feature_extractor->init_doc_features( $doc, $self->language, $self->selector );
-};
+    $self->SUPER::process_document($doc);
+    return;
+}
+
+sub process_document {
+    my ($self, $doc) = @_;
+    $self->_apply_function_on_each_zone($doc, \&process_document_one_zone_at_time, $self, $doc);
+    return;
+}
 
 sub process_tnode {
     my ( $self, $t_node ) = @_;

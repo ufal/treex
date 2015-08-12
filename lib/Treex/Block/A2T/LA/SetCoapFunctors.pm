@@ -7,12 +7,14 @@ extends 'Treex::Core::Block';
 # Possible coordination functors are ADVS CONFR CONJ CONTRA CSQ DISJ GRAD REAS OPER
 # see http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/en/t-layer/html/ch07s12s01.html
 # According to guess_functor, functor=CONJ is the default for afun=Coord,
-# so there is no need to list "et, sive, nec, neque".
+# so there is no need to list "et, nec, neque".
 my %FUNCTOR_FOR_COORD_LEMMA = (
     sed   => 'ADVS',
     autem => 'ADVS',
     vel   => 'DISJ', # inclusive or
     aut   => 'DISJ', # exclusive or (oops, FGD does not distinguish or and xor)
+    sive  => 'DISJ', # on the other hand; but if; or; sive..sive = either..or
+    seu   => 'DISJ', # newer version of "sive"
 );
 
 sub process_tnode {
@@ -56,6 +58,6 @@ Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2012,2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

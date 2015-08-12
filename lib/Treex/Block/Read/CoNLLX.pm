@@ -84,6 +84,8 @@ Sentences are separated with blank line.
 The sentences are stored into L<bundles|Treex::Core::Bundle> in the
 L<document|Treex::Core::Document>.
 
+See L<http://ilk.uvt.nl/conll/#dataformat>.
+
 =head1 ATTRIBUTES
 
 =over

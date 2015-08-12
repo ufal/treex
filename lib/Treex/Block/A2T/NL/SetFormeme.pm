@@ -43,6 +43,9 @@ override 'detect_syntpos' => sub {
     # "ja", "nee" as tags
     return 'x' if ( $a_node->is_conjunction || $a_node->is_interjection );
 
+    # punctuation if kept on t-layer (quotation marks)
+    return 'x' if ( $a_node->is_punctuation );
+
     # default to noun
     return 'n';
 };

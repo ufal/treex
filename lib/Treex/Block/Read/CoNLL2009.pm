@@ -70,6 +70,8 @@ Sentences are separated with blank line.
 The sentences are stored into L<bundles|Treex::Core::Bundle> in the
 L<document|Treex::Core::Document>.
 
+See L<https://ufal.mff.cuni.cz/conll2009-st/task-description.html#Dataformat>.
+
 =head1 ATTRIBUTES
 
 =over

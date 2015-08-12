@@ -1,6 +1,7 @@
 {
 use File::Slurp;
 use File::Basename;
+use Treex::Core::Log;
 ## no critic (Miscellanea::ProhibitUnrestrictedNoCritic)
 ## no critic Generated code follows
 no warnings;
@@ -31,7 +32,7 @@ BLOCK:      SCENMODULE PARAMS                   {
                                                     if (defined $result and ref $result eq 'ARRAY') {
                                                         $return = [@$result];
                                                     } else {
-                                                        $return = undef;
+                                                        log_fatal "Syntax error in '$modulename' scenario:\n<BEGIN SCENARIO>\n$string\n<END SCENARIO>";
                                                     }
                                                 }
 BLOCK:      SCENMODULE                          {
@@ -43,7 +44,7 @@ BLOCK:      SCENMODULE                          {
                                                     if (defined $result and ref $result eq 'ARRAY') {
                                                         $return = [@$result];
                                                     } else {
-                                                        $return = undef;
+                                                        log_fatal "Syntax error in '$modulename' scenario:\n<BEGIN SCENARIO>\n$string\n<END SCENARIO>";
                                                     }
                                                 }
 BLOCK:      TBNAME PARAMS                       {$return = [{

@@ -222,6 +222,42 @@ sub process_document {
     return 1;
 }
 
+sub _apply_function_on_each_zone {
+    my ($self, $doc, $function, @function_params) = @_;
+    my %zones;
+
+    # When using "all", we must collect the zones used in the whole document.
+    if ($self->language eq 'all' || $self->selector eq 'all'){
+        foreach my $bundle ($doc->get_bundles){
+            foreach my $zone ($bundle->get_all_zones()){
+                $zones{$zone->get_label()} = 1;
+            }
+        }
+    }
+    # Otherwise, we can make a Cartesian product of lang(uage)s and sel(ector)s
+    else {
+        foreach my $lang (keys %{$self->_is_language_selected}){
+            foreach my $sel (keys %{$self->_is_selector_selected}){
+                $zones{$lang . '_' . $sel} = 1;
+            }
+        }
+    }
+
+    my $orig_language = $self->language;
+    my $orig_selector = $self->selector;
+    foreach my $label (keys %zones){
+        my ($lang, $sel) = split /_/, $label;
+
+        # pretend this block was called with only this one language and selector
+        $self->{language} = $lang;
+        $self->{selector} = $sel;
+        $function->(@function_params);
+    }
+    $self->{language} = $orig_language;
+    $self->{selector} = $orig_selector;
+    return;
+}
+
 sub process_bundle {
     my ( $self, $bundle, $bundleNo ) = @_;
     if ($self->report_progress){

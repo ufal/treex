@@ -10,7 +10,7 @@ sub process_anode
     my $pos  = $node->get_iset('pos');
     my $afun = $node->afun();
     $afun = '' if(!defined($afun));
-    if ($pos eq 'prep') {
+    if ($pos eq 'adp') {
         if ($afun ne 'AuxP') {
             # Germanic languages use specific prepositions to mark infinitives (en:to, de:zu, nl:te, da:at, sv:att).
             # Such preposition governs the infinitive instead of a noun and should be labeled AuxC instead of AuxP.
