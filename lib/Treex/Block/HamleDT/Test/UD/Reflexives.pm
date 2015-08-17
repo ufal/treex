@@ -15,7 +15,7 @@ sub process_atree
         # This block checks whether we succeeded in separating them again.
         if($node->deprel() eq 'compound:reflex' && !$node->is_reflexive())
         {
-            $self->complain($node, $node->form().' '.$deprel);
+            $self->complain($node, $node->form().' '.$node->deprel());
         }
     }
 }
