@@ -154,7 +154,7 @@ sub deprel_to_afun
         # Negation (usually of adjective or verb): 'nicht'.
         elsif ( $deprel eq 'NG' )
         {
-            $afun = 'Adv';
+            $afun = 'Neg';
         }
 
         # Measure argument of adjective.
