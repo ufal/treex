@@ -12,7 +12,7 @@ sub process_atree
     {
         if($node->deprel() eq 'neg')
         {
-            $self->complain($node, $node->form());
+            #$self->complain($node, $node->form());
         }
     }
 }
