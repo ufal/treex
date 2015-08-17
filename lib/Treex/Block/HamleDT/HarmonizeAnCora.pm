@@ -10,10 +10,10 @@ sub process_zone
 {
     my $self = shift;
     my $zone = shift;
-    
+
     # call backup_zone($zone), convert_tags($root) and deprel_to_afun($root)
     my $root = $self->SUPER::process_zone($zone);
-    
+
     if ($self->auxk_to_root){
         $self->attach_final_punctuation_to_root($root);
     }
@@ -270,7 +270,14 @@ sub deprel_to_afun
         # not, also, only, already, either
         elsif($deprel eq 'mod')
         {
-            $afun = 'Adv';
+            if($node->form() =~ m/^no$/i)
+            {
+                $afun = 'Neg';
+            }
+            else
+            {
+                $afun = 'Adv';
+            }
         }
         # Reflexive pronoun.
         # es, s', hi, -se, se
@@ -304,7 +311,7 @@ sub deprel_to_afun
         # undesirable person
         elsif($deprel eq 'neg')
         {
-            $afun = 'Adv';
+            $afun = 'Neg';
         }
         # Pronoun leaf. Example:
         # el mateix Borrell
@@ -549,7 +556,7 @@ sub deprel_to_afun
             $afun = 'DetArg';
         }
         $node->set_afun($afun);
-        
+
         if ($node->is_article){
             $node->set_afun('AuxA');
             $node->iset->set_definiteness($lemma eq 'el' ? 'def' : 'ind');
