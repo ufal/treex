@@ -1,0 +1,33 @@
+Revision history of the Treex-Parser-MSTPerl distribution:
+
+VERSION      DATE
+    - TODO
+
+0.11949      2014-04-05
+    - updating ArrayRef[] and similar to work under new Perl
+
+0.11336      2013-12-04
+    - removing new Perl version dependency
+
+0.11319      2013-11-28
+    - setting minimum required version
+
+0.11306      2013-11-24
+    - updated POD a little
+
+0.11299      2013-11-24
+    - safer file path handling & more detailed error reporting
+
+0.09731      2012-11-27
+    - adding advanced capabilities (parallel features, large-scale data features)
+
+0.08055      2012-02-07
+    - labeller now works
+
+0.07298      2011-11-15
+    - the first release at CPAN
+
+
+For detailed log of changes see
+https://svn.ms.mff.cuni.cz/projects/tectomt_devel/log/trunk/treex/lib/Treex/Tool/Parser/MSTperl
+(Use 'public' username and same password)

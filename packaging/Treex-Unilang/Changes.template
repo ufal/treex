@@ -1,0 +1,23 @@
+Revision history of the Treex-Unilang distribution:
+
+0.08170       2012-02-16
+    - added Featurama tagger
+
+0.08056       2012-02-07
+    - use new version of MSTperl parser and Treex::Core
+
+0.07297       2011-11-15
+    - added Read::CoNLLX and Write::CoNLLX
+    - added MSTperl parser
+
+0.07194       2011-11-07
+    - added dependency on current version of Treex::Core
+
+0.07191       2011-11-06
+    - first non-dev release
+
+0.06903_1     2011-10-03
+
+    - the first release at CPAN
+
+For detailed log of changes see https://svn.ms.mff.cuni.cz/projects/tectomt_devel/timeline (Use 'public' username and same password)

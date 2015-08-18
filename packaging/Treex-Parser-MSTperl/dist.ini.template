@@ -1,0 +1,39 @@
+name    = Treex-Parser-MSTperl
+version = VERSION_WILL_COME_HERE
+author  = Rudolf rosa <rosa@ufal.mff.cuni.cz>
+license = Perl_5
+copyright_holder = Institute of Formal and Applied Linguistics, Charles University in Prague
+
+; the default value of main_module is the same file,
+; but as noticed in the Dist::Zilla doc, this may change.
+main_module = lib/Treex/Tool/Parser/MSTperl.pm
+
+[@Basic]
+
+[@TestingMania]
+critic_config = perlcritic.rc
+add = PodSpellingTests
+skip = EOLTests
+
+[AutoPrereqs]
+
+[PruneCruft]
+
+[PruneFiles]
+match     = ^dummy[0-9]*\.treex
+match     = ^paratest[0-9]*\.treex
+match     = .*\.tmp
+match     = MANIFEST.SKIP
+match     = Changes.template
+match     = dist.ini
+match     = export.tmp
+match     = postprocess_POD.pl
+match     = ^test\.(out|err|mix)
+
+[PkgVersion]
+[PodVersion]
+
+;[PodWeaver]
+;config = weaver.ini
+[TestRelease] ; extract archive and run tests before releasing the dist
+

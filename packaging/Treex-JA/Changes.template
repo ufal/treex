@@ -1,0 +1,23 @@
+Revision history of the Treex-EN distribution:
+
+0.08171       2012-02-16
+    - added Featurama tagger
+
+0.08057       2012-02-07
+    - MSTperl parser was updated
+
+0.07297       2011-11-15
+    - added MSTperl parser
+
+0.07194       2011-11-07
+    - added dependency on current version of Treex::Unilang
+
+0.07191       2011-11-06
+    - first non-dev release
+
+0.06903_1     2011-10-03 
+
+    - the first release at CPAN
+    - contain English analysis up to tagger
+
+For detailed log of changes see https://svn.ms.mff.cuni.cz/projects/tectomt_devel/timeline (Use 'public' username and same password)
