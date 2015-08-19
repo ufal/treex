@@ -9,13 +9,27 @@ use Treex::Core::Node;
 
 
 
-has parent =>
+has 'parent' =>
 (
     is       => 'rw',
     isa      => 'Treex::Core::Phrase',
     writer   => '_set_parent',
     reader   => 'parent'
 );
+
+
+
+#------------------------------------------------------------------------------
+# Returns the head node of the phrase. For terminal phrases this should just
+# return their node attribute. For nonterminal phrases this should return the
+# node of their head child. This is an abstract method that must be defined in
+# every derived class.
+#------------------------------------------------------------------------------
+sub node
+{
+    my $self = shift;
+    confess("The node() method is not implemented");
+}
 
 
 
@@ -101,6 +115,8 @@ sub destroy_children
 }
 
 
+
+__PACKAGE__->meta->make_immutable();
 
 1;
 

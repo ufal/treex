@@ -11,7 +11,7 @@ extends 'Treex::Core::Phrase';
 
 
 
-has node =>
+has 'node' =>
 (
     is       => 'ro',
     isa      => 'Treex::Core::Node',
@@ -19,6 +19,8 @@ has node =>
 );
 
 
+
+__PACKAGE__->meta->make_immutable();
 
 1;
 
@@ -31,6 +33,17 @@ has node =>
 =head1 NAME
 
 Treex::Core::Phrase::Term
+
+=head1 SYNOPSIS
+
+  use Treex::Core::Document;
+  use Treex::Core::Phrase::Term;
+
+  my $document = new Treex::Core::Document;
+  my $bundle   = $document->create_bundle();
+  my $zone     = $bundle->create_zone('en');
+  my $root     = $zone->create_atree();
+  my $phrase   = new Treex::Core::Phrase::Term ('node' => $root);
 
 =head1 DESCRIPTION
 

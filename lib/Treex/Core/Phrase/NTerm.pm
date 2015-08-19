@@ -11,14 +11,28 @@ extends 'Treex::Core::Phrase';
 
 
 
-has children =>
+has 'head' =>
 (
     is       => 'rw',
-    isa      => 'Array[Treex::Core::Node]',
+    isa      => 'Treex::Core::Phrase',
     required => 1
 );
 
 
+
+#------------------------------------------------------------------------------
+# Returns the head node of the phrase. For nonterminal phrases this recursively
+# returns head node of their head child.
+#------------------------------------------------------------------------------
+sub node
+{
+    my $self = shift;
+    return $self->head()->node();
+}
+
+
+
+__PACKAGE__->meta->make_immutable();
 
 1;
 
@@ -32,6 +46,20 @@ has children =>
 
 Treex::Core::Phrase::NTerm
 
+=head1 SYNOPSIS
+
+  use Treex::Core::Document;
+  use Treex::Core::Phrase::Term;
+  use Treex::Core::Phrase::NTerm;
+
+  my $document = new Treex::Core::Document;
+  my $bundle   = $document->create_bundle();
+  my $zone     = $bundle->create_zone('en');
+  my $root     = $zone->create_atree();
+  my $node     = $root->create_child();
+  my $tphrase  = new Treex::Core::Phrase::Term ('node' => $node);
+  my $ntphrase = new Treex::Core::Phrase::NTerm ('head' => $tphrase);
+
 =head1 DESCRIPTION
 
 C<NTerm> is a nonterminal C<Phrase>. It contains (refers to) one or more child
@@ -42,10 +70,10 @@ See L<Treex::Core::Phrase> for more details.
 
 =over
 
-=item children
+=item head
 
-Array of (references to) C<Phrase> objects that are children of this phrase,
-i.e. they are subphrases.
+A sub-C<Phrase> of this phrase that is at the moment considered the head phrase (in the sense of dependency syntax).
+Head is a special case of child (sub-) phrase. The (one) head must always exist; other children are optional.
 
 =back
 
