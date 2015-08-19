@@ -7,7 +7,7 @@ use Moose;
 use Treex::Core::Log;
 use Treex::Core::Node;
 
-extends Treex::Core::Phrase;
+extends 'Treex::Core::Phrase';
 
 
 
