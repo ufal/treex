@@ -35,6 +35,7 @@ sub node
 
 #------------------------------------------------------------------------------
 # Wraps a node (and its subtree, if any) in a phrase.
+###!!! This should be a static function rather than a method, shouldn't it?
 #------------------------------------------------------------------------------
 sub build_phrase
 {
@@ -44,15 +45,14 @@ sub build_phrase
     my $phrase = new Treex::Core::Phrase::Term('node' => $node);
     if(@nchildren)
     {
-        my @pchildren = ($phrase);
+        # Create a new nonterminal phrase and make the current terminal phrase its head child.
+        $phrase = new Treex::Core::Phrase::NTerm('head' => $phrase);
         foreach my $nchild (@nchildren)
         {
             my $pchild = $self->build_phrase($nchild);
-            push(@pchildren, $pchild);
+            ###!!! Nebo raději udělat _add_child() neveřejné a jako hlavní metodu dát set_parent() u dítěte, stejně jako je to u závislostních stromů?
+            $phrase->add_child($pchild);
         }
-        ###!!! Případně by se dala zkonstruovat s jedním dítětem (tím terminálem) a ostatní děti pak vkládat v cyklu nějakou metodou add_child().
-        ###!!! Nebo raději udělat _add_child() neveřejné a jako hlavní metodu dát set_parent() u dítěte, stejně jako je to u závislostních stromů?
-        $phrase = new Treex::Core::Phrase::NTerm('children' => \@pchildren);
     }
     return $phrase;
 }

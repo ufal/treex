@@ -18,6 +18,13 @@ has 'head' =>
     required => 1
 );
 
+has 'nonhead_children' =>
+(
+    is       => 'ro',
+    isa      => 'ArrayRef[Treex::Core::Phrase]',
+    default  => sub { [] }
+);
+
 
 
 #------------------------------------------------------------------------------
@@ -28,6 +35,21 @@ sub node
 {
     my $self = shift;
     return $self->head()->node();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Adds a child phrase (subphrase). By default, the new child will not be head,
+# it will be an ordinary modifier.
+###!!! We should also make sure that every child knows how to reach its parent!
+#------------------------------------------------------------------------------
+sub add_child
+{
+    my $self = shift;
+    my $new_child = shift; # Treex::Core::Phrase
+    my $nhc = $self->nonhead_children();
+    push(@{$nhc}, $new_child);
 }
 
 
