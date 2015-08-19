@@ -9,19 +9,6 @@ use Treex::Core::Node;
 
 
 
-# type = terminal: simple wrapper around a Node object
-# type = nonterminal: does not own directly a Node object; has one or more (usually at least two) nested Phrase objects (subphrases)
-# type = adpositional: special case of nonterminal; two special subphrases: 1. function word (preposition); 2. its complement (noun phrase); other subphr., if any, are shared modifiers of the two (of the whole phrase)
-# type = coordination: special case of nonterminal: subphrases are conjuncts, delimiters and shared modifiers
-###!!! I am not sure whether I want to have the type as attribute here. Quite likely there will be derived Moose classes anyway.
-has type =>
-(
-    is       => 'rw',
-    isa      => 'Str',
-    writer   => '_set_type',
-    reader   => 'type'
-);
-
 has parent =>
 (
     is       => 'rw',
@@ -29,6 +16,32 @@ has parent =>
     writer   => '_set_parent',
     reader   => 'parent'
 );
+
+
+
+#------------------------------------------------------------------------------
+# Wraps a node (and its subtree, if any) in a phrase.
+#------------------------------------------------------------------------------
+sub build_phrase
+{
+    my $self = shift;
+    my $node = shift; # Treex::Core::Node
+    my @nchildren = $node->children();
+    my $phrase = new Treex::Core::Phrase::Term('node' => $node);
+    if(@nchildren)
+    {
+        my @pchildren = ($phrase);
+        foreach my $nchild (@nchildren)
+        {
+            my $pchild = $self->build_phrase($nchild);
+            push(@pchildren, $pchild);
+        }
+        ###!!! Případně by se dala zkonstruovat s jedním dítětem (tím terminálem) a ostatní děti pak vkládat v cyklu nějakou metodou add_child().
+        ###!!! Nebo raději udělat _add_child() neveřejné a jako hlavní metodu dát set_parent() u dítěte, stejně jako je to u závislostních stromů?
+        $phrase = new Treex::Core::Phrase::NTerm('children' => \@pchildren);
+    }
+    return $phrase;
+}
 
 
 
