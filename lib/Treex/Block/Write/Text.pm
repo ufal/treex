@@ -19,6 +19,10 @@ override '_do_process_document' => sub {
 
 __END__
 
+=pod
+
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Block::Write::Text

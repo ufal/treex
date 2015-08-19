@@ -4,13 +4,13 @@ include ../common.mk
 
 ALLDIRS=${READ_T} ${WRITE_T} ${TOOL} #bin, core & util are created automatically
 
-MODULES := ${BIN} \
-           ${CORE} \
+MODULES := ${CORE} \
            ${UTIL} \
+		   $(addprefix ${BIN}/, treex ttred) \
            $(addprefix ${TOOL}/, Probe.pm) \
            $(addprefix ${LIB}/, Treex.pm) \
            $(addprefix ${TREEX}/, Core.pm) \
-           $(addprefix ${READ}/, Text.pm Treex.pm Sentences.pm BaseReader.pm BaseTextReader.pm ConsumerReader.pm ProducerReader.pm) \
+           $(addprefix ${READ}/, Text.pm Treex.pm Sentences.pm BaseReader.pm BaseTextReader.pm) \
            $(addprefix ${READ_T}/, base.t) \
            $(addprefix ${WRITE}/, Text.pm Treex.pm Sentences.pm BaseWriter.pm BaseTextWriter.pm)
 

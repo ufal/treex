@@ -28,6 +28,10 @@ sub cur_node {
 
 __END__
 
+=pod
+
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::TredView::Common - Common methods related to TredView

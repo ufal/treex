@@ -174,6 +174,10 @@ coerce 'Treex::Core::Files'
 
 __END__
 
+=pod
+
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::Files - helper class for iterating over filenames

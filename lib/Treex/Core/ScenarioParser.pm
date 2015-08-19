@@ -288,7 +288,7 @@ eval 'undef &' . $namespace . '::' . $self->{"name"} unless $parser->{saving};
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub ' . $namespace . '::' . $self->{"name"} .  '
 {
-	my $thisparser = $_[0];
+    my $thisparser = $_[0];
 	use vars q{$tracelevel};
 	local $tracelevel = ($tracelevel||0)+1;
 	$ERRORS = 0;
@@ -3281,7 +3281,9 @@ $::RD_WARN = 3;
 1;
 
 }
+
 package Treex::Core::ScenarioParser;
+
 { my $ERRORS;
 
 
@@ -10670,3 +10672,4 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                  'localvars' => ''
                }, 'Parse::RecDescent::_Runtime' );
 }
+

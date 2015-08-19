@@ -107,6 +107,10 @@ sub get_clause_color {
 
 __END__
 
+=pod
+
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::TredView::Colors - List of colors used in TrEd

@@ -66,6 +66,7 @@ all: clean build test
 # Using "make SVN=0" you can just copy the modules from your local repository (instead of "exporting" from git),
 # so you can check dzil test before commiting.
 # note: 'svn export' still works only because the git repo is on GitHub
+# TODO: rather then svn export, use git status in case of SVN=1 and require commit of modified files (or something like that)
 export.tmp:
 	mkdir -p ${ALLDIRS}
 	for module in $(MODULES) ; do\
@@ -73,10 +74,13 @@ export.tmp:
           [[ $(SVN) == 1 ]] && svn export $(SVN_TREEX_BASE)/$$module $$module || \
                                cp -r ../../$$module $$module; \
 	done
+	rm -rf lib/Treex/Core/Parallel # we don't want to release blocks for parallel runs
 	rm -f lib/Treex/Core/Service.pm lib/Treex/Core/t/service.t # not ready for distribution
-	rm -f lib/Treex/Core/Node/Interset.pm # not ready for distribution
+	rm -f lib/Treex/Core/CacheBlock.pm lib/Treex/Core/Cloud.pm lib/Treex/Core/Coordinations.pm lib/Treex/Core/Loader.pm
+	rm -f lib/Treex/Block/Read/ConsumerReader.pm lib/Treex/Block/Read/ProducerReader.pm # client-server blocks
 	rm -f lib/Treex/Block/Util/PMLTQ.pm	# dependent on Tred::Config (do we need them in the distro?)
 	rm -f lib/Treex/Block/Util/PMLTQMark.pm # dependent on Tred::Config (do we need them in the distro?)
+	rm -f lib/Treex/Block/Util/FixPMLStructure.pm
 	if [ -d lib/Treex/Core/share ]; then \
 		mv -f lib/Treex/Core/share .; \
 		find share -name '.svn' -exec rm -rf {} \; ;\

@@ -48,6 +48,10 @@ sub next_document_text {
 
 __END__
 
+=pod
+
+=encoding utf-8
+
 =for Pod::Coverage BUILD
 
 =head1 NAME
