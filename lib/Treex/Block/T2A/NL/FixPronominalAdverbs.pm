@@ -15,7 +15,7 @@ sub process_anode {
     return if ( ( $parent->afun // '' ) ne 'AuxP' );
 
     $anode->set_parent( $parent->get_parent() );
-    my $lemma = $anode->lemma . $parent->lemma;
+    $lemma = $anode->lemma . $parent->lemma;
     $lemma =~ s/met$/mee/;
     $anode->set_lemma( $lemma );
 
