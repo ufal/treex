@@ -41,15 +41,57 @@ sub node
 
 #------------------------------------------------------------------------------
 # Adds a child phrase (subphrase). By default, the new child will not be head,
-# it will be an ordinary modifier.
-###!!! We should also make sure that every child knows how to reach its parent!
+# it will be an ordinary modifier. This is a private method that should be
+# called only from the public method Phrase::set_parent().
 #------------------------------------------------------------------------------
-sub add_child
+sub _add_child
 {
     my $self = shift;
     my $new_child = shift; # Treex::Core::Phrase
+    # If we are called correctly from Phrase::set_parent(), then the child already knows about us.
+    if(!defined($new_child) || !defined($new_child->parent()) || $new_child->parent() != $self)
+    {
+        confess("The child must point to the parent first. This private method must be called only from Phrase::set_parent()");
+    }
     my $nhc = $self->nonhead_children();
     push(@{$nhc}, $new_child);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Removes a child phrase (subphrase). Only non-head children can be removed
+# this way. If the head is to be removed, it must be first replaced by another
+# child; or the whole nonterminal phrase must be destroyed. This is a private
+# method that should be called only from the public method Phrase::set_parent().
+#------------------------------------------------------------------------------
+sub _remove_child
+{
+    my $self = shift;
+    my $child = shift; # Treex::Core::Phrase
+    if(!defined($child) || !defined($child->parent()) || $child->parent() != $self)
+    {
+        confess("The child does not think I'm its parent");
+    }
+    if($child == $self->head())
+    {
+        confess("Cannot remove the head child");
+    }
+    my $nhc = $self->nonhead_children();
+    my $found = 0;
+    for(my $i = 0; $i <= $#{$nhc}; $i++)
+    {
+        if($nhc->[$i] == $child)
+        {
+            $found = 1;
+            splice(@{$nhc}, $i, 1);
+            last;
+        }
+    }
+    if(!$found)
+    {
+        confess("Could not find the phrase among my non-head children");
+    }
 }
 
 

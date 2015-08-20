@@ -12,10 +12,37 @@ use Treex::Core::Node;
 has 'parent' =>
 (
     is       => 'rw',
-    isa      => 'Treex::Core::Phrase',
+    isa      => 'Maybe[Treex::Core::Phrase]',
     writer   => '_set_parent',
-    reader   => 'parent'
+    reader   => 'parent',
+    default  => undef
 );
+
+
+
+#------------------------------------------------------------------------------
+# Sets a new parent for this phrase. Unlike the bare setter _set_parent(),
+# this public method also takes care of the reverse links from the parent to
+# the children.
+#------------------------------------------------------------------------------
+sub set_parent
+{
+    my $self = shift;
+    my $new_parent = shift; # Treex::Core::Phrase::NTerm or undef
+    my $old_parent = $self->parent();
+    # Say the old parent good bye.
+    if(defined($old_parent))
+    {
+        $old_parent->_remove_child($self);
+    }
+    # Set the new parent before we call its _add_child() method so that it can verify it has been called from here.
+    $self->_set_parent($new_parent);
+    # Say the new parent hello.
+    if(defined($new_parent))
+    {
+        $new_parent->_add_child($self);
+    }
+}
 
 
 
@@ -29,63 +56,6 @@ sub node
 {
     my $self = shift;
     confess("The node() method is not implemented");
-}
-
-
-
-#------------------------------------------------------------------------------
-# Disconnects a phrase from its parent phrase. Discards the link from child to
-# parent and removes the link to the child from the list of modifiers kept
-# with the parent. We must do this manually to prevent memory leaks. Perl
-# garbage collection will not work because of cyclic references.
-#------------------------------------------------------------------------------
-sub disconnect_from_parent
-{
-    my $self = shift;
-    my $parent = $self->parent();
-    if(defined($parent))
-    {
-        # Moose will not allow _set_parent(undef) because undef is not of class Treex::Core::Phrase. ###!!! a co Maybe deklarace?
-        # We will create a dummy object instead. Parent will have the only reference to it and Perl will be able to discard it.
-        # I am sure that there must be a better way to do this but I don't know how.
-        $self->_set_parent(Treex::Core::Phrase->new);
-        my $opsmod = $parent->_get_smod();
-        my $found = 0;
-        for(my $i = 0; $i<=$#{$opsmod}; $i++)
-        {
-            if($opsmod->[$i]==$self)
-            {
-                splice(@{$opsmod}, $i, 1);
-                $found = 1;
-                last;
-            }
-        }
-        if(!$found)
-        {
-            log_fatal('Parent phrase does not know me as its shared modifier.');
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Manual cleanup top-down: destroy my descendants. Disconnect them from me
-# manually (Perl garbage collector would not work with cyclic references).
-# (DZ: I tried to monitor memory usage with and without this cleanup and I did
-# not observe any difference. But I am leaving it here, just in case.)
-#------------------------------------------------------------------------------
-sub destroy_children
-{
-    my $self = shift;
-    my $smod = $self->_get_smod();
-    foreach my $child (@{$smod})
-    {
-        $child->destroy_children();
-        $child->_set_parent(Treex::Core::Phrase->new); # disconnect from me
-    }
-    splice(@{$smod});
-    return;
 }
 
 
@@ -149,6 +119,18 @@ If the phrase is the head of its parent phrase, its deprel is identical to the d
 Otherwise, the deprel represents the dependency relation between the phrase and the head of its parent.
 
 =head1 METHODS
+
+=over
+
+=item $phrase->set_parent ($nonterminal_phrase);
+
+Sets a new parent for this phrase. The parent phrase must be a L<nonterminal|Treex::Core::Phrase::NTerm>.
+This phrase will become its new I<non-head> child.
+The new parent may also be undefined, which means that the current phrase will
+be disconnected from the phrase structure (but it will keeep its own children,
+if any).
+
+=back
 
 =head1 AUTHORS
 
