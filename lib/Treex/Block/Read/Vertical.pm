@@ -66,6 +66,7 @@ sub next_document
         my $zone    = $bundle->create_zone( $self->language, $self->selector );
         my $root    = $zone->create_atree();
         my @forms;
+        my $ord = 0;
         foreach my $token (@tokens)
         {
             $token =~ s/^\s+//;
@@ -73,7 +74,9 @@ sub next_document
             my ($form, $tag, $lemma) = split(/\s+/, $token);
             if(defined($form))
             {
+                $ord++;
                 my $node = $root->create_child();
+                $node->_set_ord($ord);
                 $node->set_form($form);
                 $node->set_tag($tag) if(defined($tag));
                 $node->set_lemma($lemma) if(defined($lemma));
