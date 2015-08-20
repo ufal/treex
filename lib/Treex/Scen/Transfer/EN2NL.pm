@@ -83,6 +83,7 @@ sub get_scenario_string {
     'T2T::EN2NL::TrLFPhrases',
     'T2T::EN2NL::FixCompounds',
     'T2T::EN2NL::AddNounGender',
+    'T2T::EN2NL::TrLFFixTMErrors',
     ;
 
     return $scen;
