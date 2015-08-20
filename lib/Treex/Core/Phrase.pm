@@ -34,32 +34,6 @@ sub node
 
 
 #------------------------------------------------------------------------------
-# Wraps a node (and its subtree, if any) in a phrase.
-###!!! This should be a static function rather than a method, shouldn't it?
-#------------------------------------------------------------------------------
-sub build_phrase
-{
-    my $self = shift;
-    my $node = shift; # Treex::Core::Node
-    my @nchildren = $node->children();
-    my $phrase = new Treex::Core::Phrase::Term('node' => $node);
-    if(@nchildren)
-    {
-        # Create a new nonterminal phrase and make the current terminal phrase its head child.
-        $phrase = new Treex::Core::Phrase::NTerm('head' => $phrase);
-        foreach my $nchild (@nchildren)
-        {
-            my $pchild = $self->build_phrase($nchild);
-            ###!!! Nebo raději udělat _add_child() neveřejné a jako hlavní metodu dát set_parent() u dítěte, stejně jako je to u závislostních stromů?
-            $phrase->add_child($pchild);
-        }
-    }
-    return $phrase;
-}
-
-
-
-#------------------------------------------------------------------------------
 # Disconnects a phrase from its parent phrase. Discards the link from child to
 # parent and removes the link to the child from the list of modifiers kept
 # with the parent. We must do this manually to prevent memory leaks. Perl
