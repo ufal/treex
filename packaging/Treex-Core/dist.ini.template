@@ -8,13 +8,19 @@ copyright_holder = Institute of Formal and Applied Linguistics, Charles Universi
 ; but as noticed in the Dist::Zilla doc, this may change.
 main_module = lib/Treex/Core.pm
 
-[@Basic]
+[Git::Check]
+allow_dirty = dist.ini
+allow_dirty = README
+changelog = Changes      ; this is the default
+build_warnings = 0       ; this is the default
+untracked_files = warn    ; default value (can also be "warn" or "ignore")
 
-[@TestingMania]
-disable = Test::EOL
-critic_config = perlcritic.rc
-add = PodSpellingTests
-skip = EOLTests
+[Git::Tag]
+tag_format  = %N_%v
+
+[Git::Push]
+
+[@Basic]
 
 [AutoPrereqs]
 skip = ^TrEd::EngValLex::Data$
@@ -24,7 +30,8 @@ skip = ^Treex::Tool::PMLTQ
 skip = ^TrEd
 ;skip = ^Tree_Query
 ;skip = ^Treex::Tool::DerivMorpho
-;skip = ^Treex::Tool::Memcached
+skip = ^Treex::Tool::Memcached
+skip = ^Treex::Core::CacheBlock$
 
 [PruneCruft]
 
@@ -41,6 +48,12 @@ match     = ^test\.(out|err|mix)
 
 [PkgVersion]
 [PodVersion]
+
+[@TestingMania]
+disable = Test::EOL
+critic_config = perlcritic.rc
+add = PodSpellingTests
+skip = EOLTests
 
 ;[PodWeaver]
 ;config = weaver.ini

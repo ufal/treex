@@ -1361,7 +1361,6 @@ sub detect_stanford
     foreach my $conjunct (@conjuncts)
     {
         my $orphan = 0;
-        my $nontop = 1;
         my @partmodifiers = $conjunct->children();
         $self->add_conjunct($conjunct, $orphan, @partmodifiers);
     }
@@ -1399,7 +1398,6 @@ sub shape_stanford
     # There is no guarantee that we obtained ordered lists of members and delimiters.
     # They may have been added during tree traversal, which is not ordered linearly.
     my @conjuncts = sort {$a->ord() <=> $b->ord()} $self->get_conjuncts();
-    my @delimiters = $self->get_delimiters();
     my @shared_modifiers = $self->get_shared_modifiers();
     if ( scalar(@conjuncts)==0 )
     {

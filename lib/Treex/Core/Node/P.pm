@@ -147,9 +147,9 @@ sub _parse_mrg_nonterminal {
     # Delete trace indices (e.g. NP-SBJ-10 ... -NONE- *T*-10)
     # Delete suffixes in Brown data, e.g. :"SBJ=1" -> "SBJ", "LOC=2" -> "LOC"
     @label_components = grep { !/^\d+$/ } @label_components;
-	foreach my $comp (@label_components) {
-		$comp =~ s/=\d+$//;
-	}
+    foreach my $comp (@label_components) {
+        $comp =~ s/=\d+$//;
+    }
 
     if (@label_components) {
         $self->set_functions( \@label_components );

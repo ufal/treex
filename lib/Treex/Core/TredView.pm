@@ -203,7 +203,6 @@ sub get_nodelist_hook {
         }
         my %hide;
         foreach my $node ( grep { $_->isa('Treex::Core::Node::A') } @nodes ) {
-            my $parent = $node->get_parent;
             if ( defined $node->clause_number and $root{$node} ne $node ) {
                 $hide{$node} = 1;
             }
