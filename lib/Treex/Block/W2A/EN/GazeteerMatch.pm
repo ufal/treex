@@ -6,7 +6,7 @@ extends 'Treex::Block::W2A::GazeteerMatch';
 has 'trg_lang' => (is => 'ro', isa => 'Str');
 
 my %PHRASE_LIST_PATHS = (
-    'cs' => 'data/models/gazeteer/cs_en/20150227_003.IT.cs_en.en.gaz.gz',
+    'cs' => 'data/models/gazeteer/cs_en/20150821_005.IT.cs_en.en.gaz.gz',
     'es' => 'data/models/gazeteer/es_en/20150730_001.IT.es_en.en.gaz.gz',
     'eu' => 'data/models/gazeteer/eu_en/20150730_001.IT.eu_en.en.gaz.gz',
     'nl' => 'data/models/gazeteer/nl_en/20150630_003.IT.nl_en.en.gaz.gz',

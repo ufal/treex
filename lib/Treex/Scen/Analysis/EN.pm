@@ -32,8 +32,8 @@ has functors => (
 
 has gazetteer => (
      is => 'ro',
-     isa => 'Bool',
-     default => 0,
+     isa => 'Str',
+     default => '0',
      documentation => 'Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo, default=0',
 );
 
@@ -66,7 +66,7 @@ sub get_scenario_string {
     'W2A::EN::Tokenize',
     'W2A::EN::NormalizeForms',
     'W2A::EN::FixTokenization',
-    $self->gazetteer && defined $self->trg_lang ? 'W2A::EN::GazeteerMatch trg_lang='.$self->trg_lang : (),
+    $self->gazetteer && defined $self->trg_lang ? 'W2A::EN::GazeteerMatch trg_lang='.$self->trg_lang.' filter_id_prefixes="'.$self->gazetteer.'"' : (),
     $self->tagger eq 'Morce' ? 'W2A::EN::TagMorce' : (),
     $self->tagger eq 'MorphoDiTa' ? 'W2A::EN::TagMorphoDiTa' : (),
     'W2A::EN::FixTags',

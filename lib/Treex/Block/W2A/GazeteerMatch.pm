@@ -12,7 +12,8 @@ extends 'Treex::Core::Block';
 has 'phrase_list_path' => ( is => 'ro', isa => 'Str' );
 # idx removed: libreoffice_16090, libreoffice_16123, libreoffice_73656
 
-#has 'phrase_list_path' => ( is => 'ro', isa => 'Str', default => 'data/models/gazeteer/skuska.gaz.gz');
+has 'filter_id_prefixes' => ( is => 'ro', isa => 'Str', default => 'all' );
+
 
 has '_trie' => ( is => 'ro', isa => 'HashRef', builder => '_build_trie', lazy => 1);
 
@@ -26,12 +27,17 @@ sub _build_trie {
     open my $fh, "<:gzip:utf8", $path;
 
     my $trie = {};
+    my $filter_id_prefixes = $self->filter_id_prefixes ne 'all' ?
+        join "|", map {"(" . $_ . ")"} (split /,/, $self->filter_id_prefixes) :
+        undef;
 
     while (my $line = <$fh>) {
         chomp $line;
         my ($id, @phrase_rest) = split /\t/, $line;
-        my $phrase = join " ", @phrase_rest;
 
+        next if (defined $filter_id_prefixes && $id !~ /^$filter_id_prefixes/);
+
+        my $phrase = join " ", @phrase_rest;
         _insert_phrase_to_trie($trie, $phrase, $id);
     }
     close $fh;
@@ -334,6 +340,18 @@ in the C<matched_item> wild attribute.
 
 Note that it might be handy to alter the POS tag of the gazetteer entity found by this block later
 after POS tagging and before parsing.
+
+=head1 PARAMETERS
+
+=head2 phrase_list_path
+
+Path to a list of phrases to be matched.
+
+=head2 filter_id_prefixes
+
+One can limit the range of phrases a trie is filled with by setting the string which has to match with 
+the prefix of phrase identifiers. A special (and default) value 'all' determines that no filtering is 
+performed. More than one value can be specified, delimited by a comma.
 
 =head1 AUTHORS
 

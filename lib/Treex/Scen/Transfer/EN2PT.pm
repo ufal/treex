@@ -26,9 +26,9 @@ has hmtm => (
 
 has gazetteer => (
      is => 'ro',
-     isa => 'Bool',
-     default => 0,
-     documentation => 'Use T2T::EN2PT::TrGazeteerItems, default=0',
+     isa => 'Str',
+     default => '0',
+     documentation => 'Use T2T::TrGazeteerItems, default=0',
 );
 
 has fl_agreement => (
