@@ -15,7 +15,9 @@ has 'head' =>
 (
     is       => 'rw',
     isa      => 'Treex::Core::Phrase',
-    required => 1
+    required => 1,
+    writer   => '_set_head',
+    reader   => 'head'
 );
 
 has 'nonhead_children' =>
@@ -47,6 +49,27 @@ sub deprel
 {
     my $self = shift;
     return $self->head()->deprel();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Sets a new head child for this phrase. The new head must be already a child
+# of this phrase. The old head will become an ordinary non-head child.
+#------------------------------------------------------------------------------
+sub set_head
+{
+    my $self = shift;
+    my $new_head = shift; # Treex::Core::Phrase
+    my $old_head = $self->head();
+    return if ($new_head == $old_head);
+    # Remove the new head from the list of non-head children.
+    # (The method will also verify that it is defined and is my child.)
+    $self->_remove_child($new_head);
+    # Add the old head to the list of non-head children.
+    $self->_add_child($old_head);
+    # Finally, set the new head, using the private bare setter.
+    $self->_set_head($new_head);
 }
 
 
@@ -150,6 +173,17 @@ See L<Treex::Core::Phrase> for more details.
 
 A sub-C<Phrase> of this phrase that is at the moment considered the head phrase (in the sense of dependency syntax).
 Head is a special case of child (sub-) phrase. The (one) head must always exist; other children are optional.
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item $phrase->set_head ($child_phrase);
+
+Sets a new head child for this phrase. The new head must be already a child
+of this phrase. The old head will become an ordinary non-head child.
 
 =back
 
