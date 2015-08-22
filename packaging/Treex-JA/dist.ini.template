@@ -1,0 +1,43 @@
+name    = Treex-JA
+version = VERSION_WILL_COME_HERE 
+author  = Dušan Variš <dvaris@seznam.cz>
+license = Perl_5
+copyright_holder = Institute of Formal and Applied Linguistics, Charles University in Prague
+
+main_module = lib/Treex/JA.pm
+
+[@Basic]
+
+;[CompileTests]
+[@TestingMania]
+critic_config = perlcritic.rc
+;add = PodSpellingTests
+;skip = EOLTests
+
+
+; Plugins to gather files.
+[AutoPrereqs]  ; looks for use and require statements to figure out prerequisities
+
+[PruneCruft]   ; excludes auxiliary files that should not be distributed
+
+[PruneFiles]
+match     = ^dummy[0-9]*\.treex
+match     = ^paratest[0-9]*\.treex
+match     = .*\.tmp
+match     = MANIFEST.SKIP
+match     = Changes.template
+match     = dist.ini
+match     = export.tmp
+match     = postprocess_POD.pl
+match     = ^test\.(out|err|mix)
+
+; Plugins to modify the (distributed copies of the) files.
+[PkgVersion]
+[PodVersion] 
+
+;[PodWeaver]     ; resturctures and completes the POD documentation
+;config = weaver.ini
+
+[TestRelease] ; extract archive and run tests before releasing the dist
+
+

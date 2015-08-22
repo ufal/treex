@@ -77,6 +77,11 @@ sub deprel_to_afun
         {
             $node->set_afun('Atr');
         }
+        # negation (can be either AuxY or AuxZ in the input)
+        if ($node->afun() =~ m/^Aux[YZ]$/ && $node->form() =~ m/^nie$/i)
+        {
+            $node->set_afun('Neg');
+        }
     }
     # Now the above conversion could be trigerred at new places.
     # (But we have to do it above as well, otherwise the correction of coordination inconsistencies would be less successful.)

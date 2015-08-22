@@ -1,0 +1,243 @@
+## This is a configuration file for Perl::Critic module and it's CLI perlcritic for use with Treex.
+## (Default settings are commented out with one hash.)
+
+##***************************************************************
+##--- Global settings for all policies
+# severity = 5
+severity = 4
+# force = 0
+# only = 0
+# profile-strictness = warn
+# color = 0
+color = 1
+# pager = 
+# top = 0
+# verbose = 4
+## let's display the policy name by default
+verbose = 8
+# include = 
+# exclude = 
+# single-policy = 
+# theme = 
+theme = core
+## Start with core policies included with Perl::Critic. Some other themes are quite strange.
+
+##***************************************************************
+##--- In Treex we don't adopt some policies, so don't load them.
+
+## Always use the `/m' modifier with regular expressions. Recommended in PBP (page 237).
+[-RegularExpressions::RequireLineBoundaryMatching]
+# set_themes                         = core cosmetic pbp
+# add_themes                         =
+# severity                           = 2
+# maximum_violations_per_document    = no_limit
+## REASON:
+## I agree with Conway's reasoning, but with opposite conclusion,
+## because most folks I know are used to Perl regexs (when programing in Perl) rather than awk's one.
+
+## Always use the `/s' modifier with regular expressions. Recommended in PBP (page 240).
+[-RegularExpressions::RequireDotMatchAnything]
+# set_themes                         = core cosmetic pbp
+# add_themes                         =
+# severity                           = 2
+# maximum_violations_per_document    = no_limit
+## REASON:
+## Same as above
+
+## Put source-control keywords in every file. Revision Control System keywords are recommended in PBP (page 441).
+[-Miscellanea::RequireRcsKeywords]
+# set_themes                         = core cosmetic pbp
+# add_themes                         =
+# severity                           = 2
+# maximum_violations_per_document    = no_limit
+
+# The keywords to require in all files.
+# keywords = 
+## REASON:
+## We don't use such keywords (in comments like "# $Revision: 2721 $") in TectoMT svn repository at the moment.
+
+## Organize your POD into the customary sections.
+[-Documentation::RequirePodSections]
+# set_themes                         = core maintenance pbp
+# add_themes                         =
+# severity                           = 2
+# maximum_violations_per_document    = no_limit
+
+## The sections to require for modules (separated by qr/\s* [|] \s*/xms).
+# lib_sections = 
+
+## The sections to require for programs (separated by qr/\s* [|] \s*/xms).
+# script_sections = 
+
+## The origin of sections to use.
+## Valid values: book, book_first_edition, module_starter_pbp, module_starter_pbp_0_0_3.
+# source = book_first_edition
+
+## The spelling of sections to use.
+## Valid values: en_AU, en_US.
+# language = 
+## REASON:
+## We do not want such sections in blocks.
+## TODO: write another policy for validating PODs in blocks.
+
+## Give every module a `$VERSION' number.
+[-Modules::RequireVersionVar]
+# set_themes                         = core pbp readability
+# add_themes                         =
+# severity                           = 2
+# maximum_violations_per_document    = no_limit
+## REASON:
+## We do not want any versions in blocks.
+
+
+## Always unpack `@_' first.
+[-Subroutines::RequireArgUnpacking]
+# set_themes                         = core maintenance pbp
+# add_themes                         =
+# severity                           = 4
+# maximum_violations_per_document    = no_limit
+
+## The number of statements to allow without unpacking.
+## Minimum value 0. No maximum.
+# short_subroutine_statements = 0
+## REASON:
+## Actual implementation of this otherwise honourable policy has errors.
+## It critiques checking size of @_ recommended in PBP (page 184) such as
+## croak 'Incorrect number of arguments' if @_ != 3;
+## TODO Is there bug in RequireArgUnpacking::_is_size_check()?
+
+## String eval should be avoided except for
+## eval "use $my_module; 1;";
+## For details, see Perl::Critic::Policy::Lax::ProhibitStringyEval::ExceptForRequire
+[BuiltinFunctions::ProhibitStringyEval]
+# set_themes                         = bugs core pbp
+# add_themes                         =
+# severity                           = 5
+# maximum_violations_per_document    = no_limit
+
+# Allow eval of "use" and "require" strings.
+# allow_includes = 0
+allow_includes = 1
+
+##***************************************************************
+##--- Default severities of some policies are too high for TectoMT purposes.
+
+## Always use the `/x' modifier with regular expressions.
+[RegularExpressions::RequireExtendedFormatting]
+# set_themes                         = core maintenance pbp
+# add_themes                         =
+# severity                           = 3
+severity = 2
+# maximum_violations_per_document    = no_limit
+
+## The number of characters that a regular expression must contain before this policy will complain.
+## Minimum value 0. No maximum.
+# minimum_regex_length_to_complain_about = 0
+minimum_regex_length_to_complain_about = 5
+
+## Should regexes that only contain whitespace and word characters be complained about?.
+# strict = 0
+
+
+## Close filehandles as soon as possible after opening them.
+[InputOutput::RequireBriefOpen]
+# set_themes                         = core maintenance pbp
+# add_themes                         =
+# severity                           = 4
+severity = 3
+# maximum_violations_per_document    = no_limit
+
+# The maximum number of lines between an open() and a close().
+# Minimum value 1. No maximum.
+# lines = 9
+lines = 40
+
+
+# Write `q{}' instead of `'''.
+[ValuesAndExpressions::ProhibitEmptyQuotes]
+# set_themes                         = core cosmetic pbp
+# add_themes                         =
+# severity                           = 2
+severity = 1
+# maximum_violations_per_document    = no_limit
+
+##***************************************************************
+##--- Default severities of some policies are too low for TectoMT purposes.
+
+## Use spaces instead of tabs.
+[CodeLayout::ProhibitHardTabs]
+# set_themes                         = core cosmetic
+# add_themes                         =
+# severity                           = 3
+# maximum_violations_per_document    = no_limit
+
+## Allow hard tabs before first non-whitespace character.
+# allow_leading_tabs = 1
+allow_leading_tabs = 0
+## REASON:
+## We do not want hard tabs anywhere
+
+## Don't use whitespace at the end of lines.
+[CodeLayout::ProhibitTrailingWhitespace]
+# set_themes                         = core maintenance
+# add_themes                         =
+# severity                           = 1
+severity = 3
+# maximum_violations_per_document    = no_limit
+
+[Documentation::PodSpelling]
+# severity = 1
+severity = 2
+# spell_command = aspell list
+spell_command = aspell -d en list
+# stop_words = 
+stop_words = TectoMT
+##TODO PodSpelling mi nejak nefunguje
+
+## Must run code through perltidy.
+[CodeLayout::RequireTidyCode]
+# set_themes                         = core cosmetic pbp
+# add_themes                         =
+# severity                           = 1
+severity = 2
+# maximum_violations_per_document    = no_limit
+
+## The Perl::Tidy configuration file to use, if any.
+# perltidyrc = 
+## TODO: perltidyrc = $TMT_ROOT/tests/perlcritic/perltidyrc_for_TectoMT.ini
+
+
+## Write `if($condition){ do_something() }' instead of `do_something() if $condition'.
+[-ControlStructures::ProhibitPostfixControls]
+# set_themes                         = core cosmetic pbp
+# add_themes                         =
+# severity                           = 2
+severity = 3
+# maximum_violations_per_document    = no_limit
+
+## The permitted postfix controls.
+## Valid values: for, foreach, if, unless, until, while.
+# allow = 
+
+## The exempt flow control functions.
+# flowcontrol = carp cluck confess croak die exit goto warn
+flowcontrol = carp cluck confess croak die exit goto warn log_fatal log_warn log_info log_debug return
+
+## Perlcritic isn't compatible in these two options with Dist::Zilla & Moose at once
+[-TestingAndDebugging::RequireUseStrict]
+equivalent_modules = Moose Treex::Core::Common
+[-TestingAndDebugging::RequireUseWarnings]
+equivalent_modules = Moose Treex::Core::Common
+
+[Subroutines::RequireFinalReturn]
+terminal_funcs = log_fatal
+
+
+# at least temporarily, esp. because of conditioning pos_validate...
+[-Variables::ProhibitPackageVars]
+
+
+[Subroutines::ProhibitUnusedPrivateSubroutines]
+# allow builders for Moose private attributes
+private_name_regex = _(?!build_)\w
+

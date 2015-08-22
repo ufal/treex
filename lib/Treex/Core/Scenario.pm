@@ -586,7 +586,6 @@ sub restart {
 
 __END__
 
-
 =for Pod::Coverage BUILD
 
 =encoding utf-8
@@ -599,6 +598,7 @@ Treex::Core::Scenario - a larger Treex processing unit, composed of blocks
 
  use Treex::Core;
 
+ my $doc1, $doc2;
  my $scenario = Treex::Core::Scenario->new(from_file => 'myscenario.scen' );
  $scenario->run;
 

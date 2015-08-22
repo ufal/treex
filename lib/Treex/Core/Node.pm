@@ -313,7 +313,7 @@ sub remove {
 
 # Return all nodes that have a reference of the given type (e.g. 'alignment', 'a/lex.rf') to this node
 sub get_referencing_nodes {
-	my ( $self, $type, $lang, $sel ) = @_;
+    my ( $self, $type, $lang, $sel ) = @_;
     my $doc  = $self->get_document;
     my $refs = $doc->get_references_to_id( $self->id );
     return if ( !$refs || !$refs->{$type} );

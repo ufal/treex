@@ -84,6 +84,10 @@ sub check_tree {
 
 __END__
 
+=pod
+
+=encoding utf-8
+
 =for Pod::Coverage check_tree
 
 =head1 NAME

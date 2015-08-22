@@ -349,9 +349,32 @@ sub afun_to_udeprel
             $node->iset()->set('verbtype', 'aux');
         }
         # Reflexive pronoun "se", "si" with inherently reflexive verbs.
+        # Unfortunately, previous harmonization to the Prague style abused the AuxT label to also cover Germanic verbal particles and other compound-like stuff with verbs.
+        # We have to test for reflexivity if we want to output compound:reflex!
         elsif($afun eq 'AuxT')
         {
-            $deprel = 'compound:reflex';
+            # This appears in Slavic languages, although in theory it could be used in some Romance and Germanic languages as well.
+            # It actually also appears in Dutch (but we mixed it with verbal particles there).
+            # Most Dutch pronouns used with this label are tagged as reflexive but a few are not.
+            if($node->is_reflexive() || $node->is_pronoun())
+            {
+                $deprel = 'compound:reflex';
+            }
+            # The Tamil afun CC (compound) has also been converted to AuxT. 11 out of 12 occurrences are tagged as verbs.
+            elsif($node->is_verb())
+            {
+                $deprel = 'compound';
+            }
+            # Germanic verbal particles can be tagged as various parts of speech, including adpositions. Hence we cannot distinguish them from
+            # preposition between finite verb and infinitive, which appears in Portuguese. Examples: continua a manter; deixa de ser
+            # en: 1181 PART, 28 ADP, 28 ADV, 3 ADJ; 27 different lemmas: 418 up, 261 out, 141 off...
+            # de: 4002 PART; 138 different lemmas: 528 an, 423 aus, 350 ab...
+            # nl: 1097 ADV, 460 PRON, 397 X, 176 ADJ, 157 NOUN, 99 ADP, 42 VERB, 9 SCONJ; 368 different lemmas: 402 zich, 178 uit, 167 op, 112 aan...
+            # pt: 587 ADP, 53 SCONJ, 1 ADV; 5 different lemmas: 432 a, 114 de, 56 que, 38 por, 1 para
+            else
+            {
+                $deprel = 'compound:prt';
+            }
         }
         # Reflexive pronoun "se", "si" used for reflexive passive.
         elsif($afun eq 'AuxR')

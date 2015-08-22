@@ -1,4 +1,5 @@
 package Treex::Block::Read::Treex;
+
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseReader';
@@ -51,6 +52,10 @@ sub next_document {
 1;
 
 __END__
+
+=pod
+
+=encoding utf-8
 
 =head1 NAME
 

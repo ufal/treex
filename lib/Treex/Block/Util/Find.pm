@@ -79,6 +79,10 @@ sub _check_errors {
 
 __END__
 
+=pod
+
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Block::Util::Find - Finding nodes based on criteria specified by parameters

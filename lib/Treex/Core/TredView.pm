@@ -870,6 +870,10 @@ sub node_click_hook {
 
 __END__
 
+=pod
+
+=encoding utf-8
+
 =for Pod::Coverage precompute_visualization
 
 =head1 NAME

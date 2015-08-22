@@ -24,7 +24,29 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+    $self->fix_negation($root);
     $self->check_afuns($root);
+}
+
+#------------------------------------------------------------------------------
+# Tries to separate negation from all the AuxZ modifiers.
+#------------------------------------------------------------------------------
+sub fix_negation
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->afun() eq 'AuxZ')
+        {
+            # I believe that the following function as negative particles in Latin.
+            if($node->form() =~ m/^(non|ne)$/i)
+            {
+                $node->set_afun('Neg');
+            }
+        }
+    }
 }
 
 #------------------------------------------------------------------------------

@@ -170,6 +170,10 @@ after 'restart' => sub {
 
 __END__
 
+=pod
+
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Block::Read::BaseReader - abstract ancestor for document readers

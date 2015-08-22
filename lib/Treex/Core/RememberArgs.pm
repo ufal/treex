@@ -1,4 +1,5 @@
 package Treex::Core::RememberArgs;
+
 use Moose::Role;
 
 has args => (

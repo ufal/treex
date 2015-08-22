@@ -189,6 +189,10 @@ sub deprel_to_afun
             {
                 $afun = 'Atr';
             }
+            elsif ($node->form() =~ m/^niet$/i)
+            {
+                $afun = 'Neg';
+            }
             else
             {
                 $afun = 'Adv';
