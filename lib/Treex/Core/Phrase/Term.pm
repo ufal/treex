@@ -18,6 +18,34 @@ has 'node' =>
     required => 1
 );
 
+has 'deprel' =>
+(
+    is       => 'ro',
+    isa      => 'Str',
+    required => 1
+);
+
+
+
+#------------------------------------------------------------------------------
+# This block will be called before object construction. It will copy the deprel
+# attribute from the node (unless it has been supplied by the caller
+# separately). Then it will pass all the attributes to the constructor.
+#------------------------------------------------------------------------------
+around BUILDARGS => sub
+{
+    my $orig = shift;
+    my $class = shift;
+    # Call the default BUILDARGS in Moose::Object. It will take care of distinguishing between a hash reference and a plain hash.
+    my $attr = $class->$orig(@_);
+    # Add deprel only if it has not been supplied separately.
+    if(!defined($attr->{deprel}) && defined($attr->{node}))
+    {
+        $attr->{deprel} = $attr->{node}->deprel();
+    }
+    return $attr;
+};
+
 
 
 __PACKAGE__->meta->make_immutable();
@@ -58,6 +86,21 @@ See L<Treex::Core::Phrase> for more details.
 =item node
 
 Refers to the C<Node> wrapped in this terminal phrase.
+
+=item deprel
+
+Any label describing the type of the dependency relation between this phrase
+(its node) and the governing phrase (node of the first ancestor phrase where
+this one does not act as head). This label is typically taken from the
+underlying node when the phrase is built, but it may be translated or modified
+and it is not kept synchronized with the underlying dependency tree during
+transformations of the phrase structure. Nevertheless it is assumed that once
+the transformations are done, the final dependency relations will be projected
+back to the dependency tree.
+
+The C<deprel> attribute can also be supplied separately when creating the
+C<Phrase::Term>. If it is not supplied, it will be copied from the C<Node>
+to which the C<node> attribute refers.
 
 =back
 

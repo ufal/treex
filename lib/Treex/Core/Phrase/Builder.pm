@@ -27,8 +27,7 @@ sub build
         foreach my $nchild (@nchildren)
         {
             my $pchild = $self->build_phrase($nchild);
-            ###!!! Nebo raději udělat _add_child() neveřejné a jako hlavní metodu dát set_parent() u dítěte, stejně jako je to u závislostních stromů?
-            $phrase->add_child($pchild);
+            $pchild->set_parent($phrase);
         }
     }
     return $phrase;

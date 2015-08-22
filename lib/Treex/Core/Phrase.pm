@@ -60,6 +60,24 @@ sub node
 
 
 
+#------------------------------------------------------------------------------
+# Returns the type of the dependency relation of the phrase to the governing
+# phrase. This is an abstract method that must be defined in every derived
+# class. When the phrase structure is built around a dependency tree, the
+# relations will be probably taken from (or based on) the deprels of the
+# underlying nodes. When the phrase tree is transformed to the desired style,
+# the relations may be modified; at the end, they can be projected to the
+# dependency tree again. A general nonterminal phrase typically has the same
+# deprel as its head child. Terminal phrases store deprels as attributes.
+#------------------------------------------------------------------------------
+sub deprel
+{
+    my $self = shift;
+    confess("The deprel() method is not implemented");
+}
+
+
+
 __PACKAGE__->meta->make_immutable();
 
 1;
@@ -129,6 +147,24 @@ This phrase will become its new I<non-head> child.
 The new parent may also be undefined, which means that the current phrase will
 be disconnected from the phrase structure (but it will keeep its own children,
 if any).
+
+=item my $node = $phrase->node();
+
+Returns the head node of the phrase. For terminal phrases this should just
+return their node attribute. For nonterminal phrases this should return the
+node of their head child. This is an abstract method that must be defined in
+every derived class.
+
+=item my $deprel = $phrase->deprel();
+
+Returns the type of the dependency relation of the phrase to the governing
+phrase. This is an abstract method that must be defined in every derived
+class. When the phrase structure is built around a dependency tree, the
+relations will be probably taken from (or based on) the deprels of the
+underlying nodes. When the phrase tree is transformed to the desired style,
+the relations may be modified; at the end, they can be projected to the
+dependency tree again. A general nonterminal phrase typically has the same
+deprel as its head child. Terminal phrases store deprels as attributes.
 
 =back
 

@@ -40,6 +40,18 @@ sub node
 
 
 #------------------------------------------------------------------------------
+# Returns the type of the dependency relation of the phrase to the governing
+# phrase. A general nonterminal phrase has the same deprel as its head child.
+#------------------------------------------------------------------------------
+sub deprel
+{
+    my $self = shift;
+    return $self->head()->deprel();
+}
+
+
+
+#------------------------------------------------------------------------------
 # Adds a child phrase (subphrase). By default, the new child will not be head,
 # it will be an ordinary modifier. This is a private method that should be
 # called only from the public method Phrase::set_parent().
