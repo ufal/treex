@@ -13,6 +13,7 @@ T2A::ImposeAttrAgr
 # *** Adding function words (articles, prepositions, auxiliary verbs, etc.)
 T2A::NL::AddFormalSubject
 T2A::NL::AddPrepos
+T2A::NL::FixPronominalAdverbs
 T2A::NL::AddSubconjs
 T2A::NL::AddInfinitiveParticles
 T2A::NL::AddReflexParticles

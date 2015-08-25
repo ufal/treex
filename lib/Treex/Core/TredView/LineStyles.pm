@@ -40,6 +40,10 @@ sub dash_style {
 
 __END__
 
+=pod
+
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::TredView::LineStyles - List of line styles used in TrEd

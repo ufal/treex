@@ -26,6 +26,10 @@ sub next_document {
 
 __END__
 
+=pod
+
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Block::Read::Sentences

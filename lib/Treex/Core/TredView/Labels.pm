@@ -367,6 +367,10 @@ sub _pnode_labels {
 
 __END__
 
+=pod
+
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::TredView::Labels - Labels of tree nodes in Tred

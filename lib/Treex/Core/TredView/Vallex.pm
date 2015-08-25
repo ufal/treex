@@ -232,6 +232,10 @@ sub _OpenValFrameList_En {
 
 __END__
 
+=pod
+
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::TredView::Vallex - Browsing valency lexicons

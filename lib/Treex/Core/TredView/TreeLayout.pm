@@ -433,6 +433,10 @@ sub conf_dialog {
 
 __END__
 
+=pod
+
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::TredView::TreeLayout - Layout of trees in Tred

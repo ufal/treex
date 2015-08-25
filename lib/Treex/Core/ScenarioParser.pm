@@ -288,10 +288,10 @@ eval 'undef &' . $namespace . '::' . $self->{"name"} unless $parser->{saving};
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub ' . $namespace . '::' . $self->{"name"} .  '
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"' . $self->{"name"} . '"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [' . $self->{"name"} . ']},
@@ -3281,7 +3281,9 @@ $::RD_WARN = 3;
 1;
 
 }
+
 package Treex::Core::ScenarioParser;
+
 { my $ERRORS;
 
 
@@ -3316,10 +3318,10 @@ push @Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::ISA, 'Parse::Rec
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PNOTQUOTED
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"PNOTQUOTED"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PNOTQUOTED]},
@@ -3555,10 +3557,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PNOTQUOTED
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PARAMS
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"PARAMS"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PARAMS]},
@@ -3827,10 +3829,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PARAMS
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PARAM
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"PARAM"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PARAM]},
@@ -4072,10 +4074,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PARAM
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::LINE
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"LINE"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [LINE]},
@@ -4425,10 +4427,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::LINE
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::EMPTY
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"EMPTY"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [EMPTY]},
@@ -4561,10 +4563,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::EMPTY
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::BNAME
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"BNAME"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [BNAME]},
@@ -4827,10 +4829,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::BNAME
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SLASHEDDQUOTE
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"SLASHEDDQUOTE"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [SLASHEDDQUOTE]},
@@ -4985,10 +4987,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SLASHEDDQUOTE
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::NOTDQUOTE
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"NOTDQUOTE"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [NOTDQUOTE]},
@@ -5121,10 +5123,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::NOTDQUOTE
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::NOTSQUOTE
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"NOTSQUOTE"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [NOTSQUOTE]},
@@ -5257,10 +5259,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::NOTSQUOTE
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::INCLUDE
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"INCLUDE"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [INCLUDE]},
@@ -5499,10 +5501,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::INCLUDE
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::EOF
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"EOF"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [EOF]},
@@ -5635,10 +5637,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::EOF
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PTICKED
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"PTICKED"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PTICKED]},
@@ -5793,10 +5795,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PTICKED
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SPACE
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"SPACE"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [SPACE]},
@@ -5951,10 +5953,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SPACE
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::TBNAME
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"TBNAME"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [TBNAME]},
@@ -6220,10 +6222,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::TBNAME
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::BLOCK
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"BLOCK"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [BLOCK]},
@@ -6804,10 +6806,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::BLOCK
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::COMMENT
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"COMMENT"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [COMMENT]},
@@ -6962,10 +6964,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::COMMENT
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::startrule
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"startrule"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [startrule]},
@@ -7153,10 +7155,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::startrule
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SCEN
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"SCEN"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [SCEN]},
@@ -7425,10 +7427,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SCEN
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SCENMODULE
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"SCENMODULE"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [SCENMODULE]},
@@ -7613,10 +7615,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SCENMODULE
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PVALUE
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"PVALUE"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PVALUE]},
@@ -8179,10 +8181,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PVALUE
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PSQUOTE
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"PSQUOTE"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PSQUOTE]},
@@ -8459,10 +8461,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PSQUOTE
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SLASHEDSQUOTE
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"SLASHEDSQUOTE"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [SLASHEDSQUOTE]},
@@ -8617,10 +8619,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::SLASHEDSQUOTE
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PNAME
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"PNAME"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PNAME]},
@@ -8775,10 +8777,10 @@ sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PNAME
 # ARGS ARE: ($parser, $text; $repeating, $_noactions, \@args, $_itempos)
 sub Parse::RecDescent::_Runtime::Treex::Core::ScenarioParser::PDQUOTE
 {
-	my $thisparser = $_[0];
-	use vars q{$tracelevel};
-	local $tracelevel = ($tracelevel||0)+1;
-	$ERRORS = 0;
+    my $thisparser = $_[0];
+    use vars q{$tracelevel};
+    local $tracelevel = ($tracelevel||0)+1;
+    $ERRORS = 0;
     my $thisrule = $thisparser->{"rules"}{"PDQUOTE"};
 
     Parse::RecDescent::_Runtime::_trace(q{Trying rule: [PDQUOTE]},
@@ -10670,3 +10672,4 @@ package Treex::Core::ScenarioParser; sub new { my $self = bless( {
                  'localvars' => ''
                }, 'Parse::RecDescent::_Runtime' );
 }
+

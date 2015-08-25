@@ -600,7 +600,7 @@ It returns the name of the block module.
 
 If a block requires some files to be present in the shared part of Treex,
 their list (with relative paths starting in
-L<Treex::Core::Config->share_dir|Treex::Core::Config/share_dir>) can be
+L<Treex::Core::Config-E<gt>share_dir|Treex::Core::Config/share_dir>) can be
 specified by redefining by this method. By default, an empty list is returned.
 Presence of the files is automatically checked in the block constructor. If
 some of the required file is missing, the constructor tries to download it

@@ -130,7 +130,14 @@ sub deprel_to_afun
         # APOSTMOD: Adjective post-modifier by another adjective: pirahän-e abi-je asemani = shirt-EZAFE blue-EZAFE sky = a sky blue shirt.
         elsif ( $deprel =~ m/^(ADVC|ADV|AJADV|AJUCL|PARCL|NADV|ADJADV|APREMOD|APOSTMOD)$/ )
         {
-            $afun = 'Adv';
+            if($node->form() =~ m/^(نه|غیر)$/)
+            {
+                $afun = 'Neg';
+            }
+            else
+            {
+                $afun = 'Adv';
+            }
         }
         # PROG: Auxiliary forming the progressive tense.
         # Example:     daštäm           miräštäm

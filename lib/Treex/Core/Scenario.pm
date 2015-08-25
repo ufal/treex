@@ -372,10 +372,7 @@ sub _run_with_cache {
         my $skip_to            = 0;
         my $process            = 0;
         my $skip_from          = 0;
-        my $skip_from_last     = 0;
         my $from_hash          = "";
-        my $from_hash_last     = "";
-        my $initial_hash       = $document->get_hash();
         my $document_last_hash = "";
         foreach my $block ( @{ $self->loaded_blocks } ) {
             $block_number++;
@@ -586,7 +583,6 @@ sub restart {
 
 __END__
 
-
 =for Pod::Coverage BUILD
 
 =encoding utf-8
@@ -599,6 +595,7 @@ Treex::Core::Scenario - a larger Treex processing unit, composed of blocks
 
  use Treex::Core;
 
+ my $doc1, $doc2;
  my $scenario = Treex::Core::Scenario->new(from_file => 'myscenario.scen' );
  $scenario->run;
 

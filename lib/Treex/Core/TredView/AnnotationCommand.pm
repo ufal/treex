@@ -1,5 +1,6 @@
 package Treex::Core::TredView::AnnotationCommand;
 
+use strict;
 use Treex::Core::Log;
 
 sub run {
@@ -19,6 +20,10 @@ sub run {
 1;
 
 __END__
+
+=pod
+
+=encoding utf-8
 
 =head1 NAME
 

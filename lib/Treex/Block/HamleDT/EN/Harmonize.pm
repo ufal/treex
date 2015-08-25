@@ -246,7 +246,7 @@ sub deprel_to_afun
         {
             if($node->form() =~ m/^n[o']t$/i)
             {
-                $afun = 'Adv';
+                $afun = 'Neg';
             }
             # We must not toggle on coordinating conjunction!
             # That is most likely a coordination of VMOD conjuncts, whose part of speech could be anything!

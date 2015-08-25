@@ -218,7 +218,7 @@ sub deprel_to_afun
             $afun = 'Atr';
         }
         elsif ( $deprel eq "lwg__neg" ) {
-            $afun = 'Adv';
+            $afun = 'Neg';
         }
         # Postpositions are like prepositions in other languages.
         elsif ( $deprel eq 'lwg__psp' )

@@ -101,7 +101,7 @@ sub next_document_text {
 
     my $text = '';
     LINE:
-    for my $line ( 1 .. $self->lines_per_doc ) {
+    for ( 1 .. $self->lines_per_doc ) {
         while ( eof($FH) ) {
             $FH = $self->next_filehandle();
             if ( !$FH ) {
@@ -117,3 +117,4 @@ sub next_document_text {
 }
 
 1;
+
