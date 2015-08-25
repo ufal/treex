@@ -11,11 +11,30 @@ extends 'Treex::Core::Block';
 
 has 'phrase_list_path' => ( is => 'ro', isa => 'Str' );
 # idx removed: libreoffice_16090, libreoffice_16123, libreoffice_73656
+has 'trg_lang' => (is => 'ro', isa => 'Str');
 
 has 'filter_id_prefixes' => ( is => 'ro', isa => 'Str', default => 'all' );
 
 
 has '_trie' => ( is => 'ro', isa => 'HashRef', builder => '_build_trie', lazy => 1);
+
+my %PHRASE_LIST_PATHS = (
+    'en' => {
+        'cs' => 'data/models/gazeteer/cs_en/20150821_005.IT.cs_en.cs.gaz.gz',
+        'es' => 'data/models/gazeteer/es_en/20150730_001.IT.es_en.es.gaz.gz',
+        'eu' => 'data/models/gazeteer/eu_en/20150730_001.IT.eu_en.eu.gaz.gz',
+        'nl' => 'data/models/gazeteer/nl_en/20150630_003.IT.nl_en.nl.gaz.gz',
+        'pt' => 'data/models/gazeteer/pt_en/20150730_001.IT.pt_en.pt.gaz.gz',
+    },
+);
+
+sub BUILD {
+    my ($self) = @_;
+    if (!defined $self->phrase_list_path && defined $self->trg_lang) {
+        $self->{phrase_list_path} = $PHRASE_LIST_PATHS{$self->trg_lang}{$self->language};
+    }
+    return;
+}
 
 sub _build_trie {
     my ($self) = @_;
@@ -259,7 +278,7 @@ sub get_delimiter_regex {
 
 sub get_entity_replacement_form {
     my ($self) = @_;
-    return 'item';
+    return 'Menu';
 }
 
 sub _collapse_entity_anodes {

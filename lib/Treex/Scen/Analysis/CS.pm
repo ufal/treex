@@ -30,20 +30,26 @@ has functors => (
      documentation => 'Which analyzer of functors to use',
 );
 
-#TODO
 has gazetteer => (
      is => 'ro',
-     isa => 'Bool',
-     default => 0,
-     documentation => 'Use W2A::CS::GazeteerMatch A2T::ProjectGazeteerInfo, default=0',
+     isa => 'Str',
+     default => '0',
+     documentation => 'Use W2A::GazeteerMatch A2T::ProjectGazeteerInfo, default=0',
 );
 
+# TODO gazetteers should work without any dependance on target language
+has trg_lang => (
+    is => 'ro',
+    isa => 'Str',
+    documentation => 'Gazetteers are defined for language pairs. Both source and target languages must be specified.',
+);
 
 sub get_scenario_string {
     my ($self) = @_;
 
     my $scen = join "\n",
     'W2A::CS::Tokenize',
+    $self->gazetteer && defined $self->trg_lang ? 'W2A::GazeteerMatch trg_lang='.$self->trg_lang.' filter_id_prefixes="'.$self->gazetteer.'"' : (),
     $self->tagger eq 'MorphoDiTa' ? 'W2A::CS::TagMorphoDiTa lemmatize=1' : (),
     $self->tagger eq 'Featurama'  ? 'W2A::CS::TagFeaturama lemmatize=1' : (),
     $self->tagger eq 'Morce'      ? 'W2A::CS::TagMorce lemmatize=1' : (),
@@ -77,6 +83,7 @@ sub get_scenario_string {
     'A2T::CS::MarkRelClauseHeads',
     'A2T::CS::MarkRelClauseCoref',
     #A2T::DeleteChildlessPunctuation We want quotes as t-nodes
+    $self->gazetteer ? 'A2T::ProjectGazeteerInfo' : (),
     'A2T::CS::FixTlemmas',
     'A2T::CS::FixNumerals',
     'A2T::SetNodetype',
