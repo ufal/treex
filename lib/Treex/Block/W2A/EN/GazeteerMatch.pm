@@ -5,10 +5,10 @@ extends 'Treex::Block::W2A::GazeteerMatch';
 
 my %PHRASE_LIST_PATHS = (
     'cs' => 'data/models/gazeteer/cs_en/20150821_005.IT.cs_en.en.gaz.gz',
-    'es' => 'data/models/gazeteer/es_en/20150730_001.IT.es_en.en.gaz.gz',
-    'eu' => 'data/models/gazeteer/eu_en/20150730_001.IT.eu_en.en.gaz.gz',
-    'nl' => 'data/models/gazeteer/nl_en/20150630_003.IT.nl_en.en.gaz.gz',
-    'pt' => 'data/models/gazeteer/pt_en/20150730_001.IT.pt_en.en.gaz.gz',
+    'es' => 'data/models/gazeteer/es_en/20150821_002.IT.es_en.en.gaz.gz',
+    'eu' => 'data/models/gazeteer/eu_en/20150821_002.IT.eu_en.en.gaz.gz',
+    'nl' => 'data/models/gazeteer/nl_en/20150821_004.IT.nl_en.en.gaz.gz',
+    'pt' => 'data/models/gazeteer/pt_en/20150821_002.IT.pt_en.en.gaz.gz',
 );
 
 sub BUILD {
