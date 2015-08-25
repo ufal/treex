@@ -11,9 +11,16 @@ has domain => (
 
 has gazetteer => (
      is => 'ro',
-     isa => 'Bool',
-     default => 0,
-     documentation => 'Use W2A::PT::GazeteerMatch A2T::ProjectGazeteerInfo, default=0',
+     isa => 'Str',
+     default => '0',
+     documentation => 'Use W2A::GazeteerMatch A2T::ProjectGazeteerInfo, default=0',
+);
+
+# TODO gazetteers should work without any dependance on target language
+has trg_lang => (
+    is => 'ro',
+    isa => 'Str',
+    documentation => 'Gazetteers are defined for language pairs. Both source and target languages must be specified.',
 );
 
 has lxsuite_key => (
@@ -43,6 +50,7 @@ sub get_scenario_string {
     'Util::SetGlobal lxsuite_key=' . $self->lxsuite_key,
     'W2A::ResegmentSentences',
     'W2A::PT::TokenizeAndTag',
+    $self->gazetteer && defined $self->trg_lang ? 'W2A::GazeteerMatch trg_lang='.$self->trg_lang.' filter_id_prefixes="'.$self->gazetteer.'"' : (),
     'W2A::PT::FixTags',
     'W2A::NormalizeForms',
     'W2A::MarkChunks min_quotes=3',
@@ -59,6 +67,7 @@ sub get_scenario_string {
     'A2T::FixIsMember',
     'A2T::MarkParentheses',
     'A2T::MoveAuxFromCoordToMembers',
+    $self->gazetteer ? 'A2T::ProjectGazeteerInfo' : (),
     'A2T::MarkClauseHeads',
     'A2T::MarkRelClauseHeads',
     'A2T::MarkRelClauseCoref',
@@ -111,15 +120,14 @@ TODO: describe the scenario
 
 =head2 domain (general, IT)
 
-TODO
-
 =head2 gazetteer
 
-TODO
+Use W2A::GazeteerMatch A2T::ProjectGazeteerInfo
 
 =head1 AUTHORS
 
 Martin Popel <popel@ufal.mff.cuni.cz>
+Michal Novák <mnovak@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -26,9 +26,9 @@ has hideIT => (
 
 has gazetteer => (
      is => 'ro',
-     isa => 'Bool',
+     isa => 'Str',
      default => undef,
-     documentation => 'Use W2A::PT::GazeteerMatch A2T::ProjectGazeteerInfo T2T::PT2EN::TrGazeteerItems, default=1 iff domain=IT',
+     documentation => 'Use W2A::GazeteerMatch A2T::ProjectGazeteerInfo T2T::TrGazeteerItems, default=1 if domain=IT',
 );
 
 sub BUILD {
@@ -38,7 +38,11 @@ sub BUILD {
         $self->{hideIT} = $self->domain eq 'IT' ? 1 : 0;
     }
     if (!defined $self->gazetteer){
-        $self->{gazetteer} = $self->domain eq 'IT' ? 1 : 0;
+        $self->{gazetteer} = $self->domain eq 'IT' ? 'all' : '0';
+    }
+    if ($self->gazetteer) {
+        $self->{src_lang} = "pt";
+        $self->{trg_lang} = "en";
     }
     return;
 }
@@ -100,7 +104,7 @@ Use W2A::ResegmentSentences
 
 =head2 gazetteer
 
-Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo T2T::EN2PT::TrGazeteerItems
+Use W2A::GazeteerMatch A2T::ProjectGazeteerInfo T2T::TrGazeteerItems
 default=1 iff domain=IT
 
 =head1 AUTHORS
