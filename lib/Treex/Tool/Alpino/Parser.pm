@@ -1,4 +1,4 @@
-package Treex::Tool::PhraseParser::Alpino;
+package Treex::Tool::Alpino::Parser;
 
 use Moose;
 use Treex::Core::Common;

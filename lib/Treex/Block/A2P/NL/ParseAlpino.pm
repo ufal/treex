@@ -12,7 +12,7 @@ has _parser => ( is => 'rw' );
 
 sub BUILD {
     my ($self) = @_;
-    $self->_set_parser( Treex::Tool::PhraseParser::Alpino->new() );
+    $self->_set_parser( Treex::Tool::Alpino::Parser->new() );
     return;
 }
 
