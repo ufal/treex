@@ -27,7 +27,6 @@ has hideIT => (
 has gazetteer => (
      is => 'ro',
      isa => 'Str',
-     default => undef,
      documentation => 'Use W2A::GazeteerMatch A2T::ProjectGazeteerInfo T2T::TrGazeteerItems, default=1 if domain=IT',
 );
 
