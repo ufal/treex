@@ -494,21 +494,21 @@ sub mark_clausal_afuns {
 }
 
 # Fix quotation marks -- rehang them under the node where they belong (highest node between them)
+# TODO: review&simplify the code, check nested quotations
 sub fix_quotes {
-
     my ( $self, $aroot ) = @_;
     my @anodes = $aroot->get_descendants( { 'ordered' => 1 } );
 
-    for ( my $i = 0; $i < @anodes; ++$i ) {
+    for my $i (0 .. $#anodes) {
 
         if ( $anodes[$i]->form =~ m/^[„“”‚‘’'`"]+$/ and $anodes[$i]->parent == $aroot ) {
 
             # try to find the pairing quote and the highest node between the quotes
-            my $hi_node = $i < @anodes - 1 ? $anodes[ $i + 1 ] : $anodes[ $i - 1 ];
+            my $hi_node = $i < $#anodes ? $anodes[ $i + 1 ] : $anodes[ $i - 1 ];
             my $hi_node_depth = $hi_node->get_depth();
-            my $j;
+            my $j = 0;
 
-            for ( $j = $i + 1; $j < @anodes; ++$j ) {
+            for $j ($i+1 .. $#anodes) {
 
                 if ( $anodes[$j]->form =~ m/^[„“”‚‘’'`"]+$/ ) {
                     last;
@@ -521,13 +521,20 @@ sub fix_quotes {
 
             # move the quote under the highest node in between the quotes (or between the quote
             # and end-of-sentence)
+            if ($hi_node->is_descendant_of($anodes[$i])){
+                $hi_node->set_parent($aroot); # prevent cycles
+            }
             $anodes[$i]->set_parent($hi_node);
-            if ( $j < @anodes ) {
+            if ( $j && $anodes[$j]->form =~ m/^[„“”‚‘’'`"]+$/) {
+                if ($hi_node->is_descendant_of($anodes[$j])){
+                    $hi_node->set_parent($anodes[$j]->get_parent());
+                }
                 $anodes[$j]->set_parent($hi_node);
             }
 
         }
     }
+    return;
 }
 
 1;
