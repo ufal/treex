@@ -183,26 +183,6 @@ sub get_iset_structure
 }
 
 #------------------------------------------------------------------------------
-# Gets the values of all non-empty Interset features and returns a mixed list
-# of features and their values. Useful for displaying features of a node: the
-# features are ordered according to their default order in Interset.
-#------------------------------------------------------------------------------
-sub get_iset_pairs_list
-{
-    my $self = shift;
-    my @list;
-    foreach my $feature ( Lingua::Interset::FeatureStructure::known_features() )
-    {
-        my $value = $self->get_iset($feature);
-        unless ( $value eq '' )
-        {
-            push( @list, $feature, $value );
-        }
-    }
-    return @list;
-}
-
-#------------------------------------------------------------------------------
 # Return the values of all non-empty Interset features (except for the "tagset" and "other" features).
 #------------------------------------------------------------------------------
 sub get_iset_values
@@ -212,8 +192,8 @@ sub get_iset_values
 }
 
 #------------------------------------------------------------------------------
-# The inverse of get_iset_pairs_list -- takes a feat string which is the
-# result of calling get_iset_pairs_list, and sets Interset feature values
+# The inverse of iset->as_string_conllx -- takes a feat string which is the
+# result of calling iset->as_string_conllx, and sets Interset feature values
 # according to that string.
 #------------------------------------------------------------------------------
 sub set_iset_conll_feat
@@ -273,8 +253,6 @@ sub sort_iset_values {log_fatal 'use Lingua::Interset::FeatureStructure::known_f
 # Goal: convert multivalues from arrays to strings:
 # e.g. iset/gender = ["fem", "neut"] becomes iset/gender = "fem|neut"
 # to enable storing in a PML file.
-# Based on get_iset_pairs_list,
-# but stores the values into 'iset/feature' attributes instead of returning them.
 method serialize_iset => sub {
     my ($self) = @_;
     foreach my $feature ( Lingua::Interset::FeatureStructure::known_features() ) {

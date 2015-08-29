@@ -89,7 +89,7 @@ sub get_feat
     {
         $feat = $node->conll_feat();
     }
-    elsif($source =~ m/^i(nter)?set/i && $node->get_iset_pairs_list())
+    elsif($source =~ m/^i(nter)?set/i)
     {
         $feat = $node->iset()->as_string_conllx();
     }
