@@ -9,7 +9,7 @@ parameter interset_attribute => (
 
 use Treex::Core::Log;
 use List::Util qw(first); # TODO: this wouldn't be needed if there was Treex::Core::Common for roles
-use Lingua::Interset 2.018;
+use Lingua::Interset 2.047;
 use Lingua::Interset::FeatureStructure;
 use Data::Dumper;
 
@@ -209,29 +209,6 @@ sub get_iset_values
 {
     my $self = shift;
     return map {my $v = $self->get_iset($_); $v ? $v : ()} grep {$_ !~ 'tagset|other'} Lingua::Interset::FeatureStructure::known_features();
-}
-
-
-#------------------------------------------------------------------------------
-# Returns list of non-empty Interset features and their values as one string
-# suitable for the FEAT column in the CoNLL format. Besides Write::CoNLLX, this
-# method should be called also from other blocks that work with the CoNLL
-# format, such as W2A::ParseMalt.
-#------------------------------------------------------------------------------
-sub get_iset_conll_feat
-{
-    my $self = shift;
-    my @list = $self->get_iset_pairs_list();
-    my @pairs;
-    for(my $i = 0; $i<=$#list; $i += 2)
-    {
-        my $pair = "$list[$i]=$list[$i+1]";
-        # Interset values might contain vertical bars if there are disjunctions of values.
-        # Change them to something else because vertical bars will be used to separate pairs in the FEAT string.
-        $pair =~ s/\|/;/g;
-        push(@pairs, $pair);
-    }
-    return join('|', @pairs);
 }
 
 #------------------------------------------------------------------------------

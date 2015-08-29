@@ -91,7 +91,7 @@ sub get_feat
     }
     elsif($source =~ m/^i(nter)?set/i && $node->get_iset_pairs_list())
     {
-        $feat = $node->get_iset_conll_feat();
+        $feat = $node->iset()->as_string_conllx();
     }
     else
     {
