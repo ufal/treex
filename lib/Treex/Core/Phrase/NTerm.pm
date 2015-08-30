@@ -7,7 +7,7 @@ use Moose;
 use Treex::Core::Log;
 use Treex::Core::Node;
 
-extends 'Treex::Core::Phrase';
+extends 'Treex::Core::Phrase::BasNTerm';
 
 
 
@@ -19,37 +19,6 @@ has 'head' =>
     writer   => '_set_head',
     reader   => 'head'
 );
-
-has 'nonhead_children' =>
-(
-    is       => 'ro',
-    isa      => 'ArrayRef[Treex::Core::Phrase]',
-    default  => sub { [] }
-);
-
-
-
-#------------------------------------------------------------------------------
-# Returns the head node of the phrase. For nonterminal phrases this recursively
-# returns head node of their head child.
-#------------------------------------------------------------------------------
-sub node
-{
-    my $self = shift;
-    return $self->head()->node();
-}
-
-
-
-#------------------------------------------------------------------------------
-# Returns the type of the dependency relation of the phrase to the governing
-# phrase. A general nonterminal phrase has the same deprel as its head child.
-#------------------------------------------------------------------------------
-sub deprel
-{
-    my $self = shift;
-    return $self->head()->deprel();
-}
 
 
 
@@ -70,63 +39,6 @@ sub set_head
     $self->_add_child($old_head);
     # Finally, set the new head, using the private bare setter.
     $self->_set_head($new_head);
-}
-
-
-
-#------------------------------------------------------------------------------
-# Adds a child phrase (subphrase). By default, the new child will not be head,
-# it will be an ordinary modifier. This is a private method that should be
-# called only from the public method Phrase::set_parent().
-#------------------------------------------------------------------------------
-sub _add_child
-{
-    my $self = shift;
-    my $new_child = shift; # Treex::Core::Phrase
-    # If we are called correctly from Phrase::set_parent(), then the child already knows about us.
-    if(!defined($new_child) || !defined($new_child->parent()) || $new_child->parent() != $self)
-    {
-        confess("The child must point to the parent first. This private method must be called only from Phrase::set_parent()");
-    }
-    my $nhc = $self->nonhead_children();
-    push(@{$nhc}, $new_child);
-}
-
-
-
-#------------------------------------------------------------------------------
-# Removes a child phrase (subphrase). Only non-head children can be removed
-# this way. If the head is to be removed, it must be first replaced by another
-# child; or the whole nonterminal phrase must be destroyed. This is a private
-# method that should be called only from the public method Phrase::set_parent().
-#------------------------------------------------------------------------------
-sub _remove_child
-{
-    my $self = shift;
-    my $child = shift; # Treex::Core::Phrase
-    if(!defined($child) || !defined($child->parent()) || $child->parent() != $self)
-    {
-        confess("The child does not think I'm its parent");
-    }
-    if($child == $self->head())
-    {
-        confess("Cannot remove the head child");
-    }
-    my $nhc = $self->nonhead_children();
-    my $found = 0;
-    for(my $i = 0; $i <= $#{$nhc}; $i++)
-    {
-        if($nhc->[$i] == $child)
-        {
-            $found = 1;
-            splice(@{$nhc}, $i, 1);
-            last;
-        }
-    }
-    if(!$found)
-    {
-        confess("Could not find the phrase among my non-head children");
-    }
 }
 
 

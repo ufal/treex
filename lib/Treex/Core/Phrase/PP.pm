@@ -10,15 +10,37 @@ extends 'Treex::Core::Phrase::NTerm';
 
 
 
-has 'head' =>
+has 'prep' =>
 (
     is       => 'rw',
     isa      => 'Treex::Core::Phrase',
     required => 1,
-    writer   => '_set_head',
-    reader   => 'head'
+    writer   => '_set_prep',
+    reader   => 'prep'
 );
 
+has 'arg' =>
+(
+    is       => 'rw',
+    isa      => 'Treex::Core::Phrase',
+    required => 1,
+    writer   => '_set_arg',
+    reader   => 'arg'
+);
+
+has 'prep_is_head' =>
+(
+    is       => 'rw',
+    isa      => 'Bool',
+    required => 1
+);
+
+###!!! Tohle zdědíme od NTerm, pokud tedy zůstaneme odvozeni od ní.
+###!!! Taky bychom mohli přidat třídu BaseNTerm, která poskytne všechno, co teď
+###!!! poskytuje NTerm, akorát nebude mít atribut head. Bude požadovat, aby
+###!!! všechny odvozené třídy definovaly metodu head(), přičemž u NTermu to bude
+###!!! rovnou getter atributu, zatímco tady sáhneme podle potřeby pro předložku
+###!!! či argument.
 has 'nonhead_children' =>
 (
     is       => 'ro',
