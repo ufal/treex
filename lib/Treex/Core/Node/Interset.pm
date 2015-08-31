@@ -172,7 +172,7 @@ sub get_iset_structure
 {
     my $self = shift;
     my %f;
-    foreach my $feature ( $self->iset()->get_nonempty_features() )
+    foreach my $feature ( $self->$interset_attribute->get_nonempty_features() )
     {
         $f{$feature} = $self->get_iset($feature);
         if ( $f{$feature} =~ m/\|/ )
@@ -192,7 +192,7 @@ sub get_iset_structure
 sub get_iset_values
 {
     my $self = shift;
-    return map {$self->get_iset($_)} grep {$_ !~ 'tagset|other'} $self->iset()->get_nonempty_features();
+    return map {$self->get_iset($_)} grep {$_ !~ 'tagset|other'} $self->$interset_attribute->get_nonempty_features();
 }
 
 
@@ -258,7 +258,7 @@ sub match_iset
 # to enable storing in a PML file.
 method serialize_iset => sub {
     my ($self) = @_;
-    foreach my $feature ( $self->iset()->get_nonempty_features() ) {
+    foreach my $feature ( $self->$interset_attribute->get_nonempty_features() ) {
         my $value = $self->get_iset($feature);
         unless ( $value eq '' ) {
             $self->set_attr("$interset_attribute/$feature", $value);
