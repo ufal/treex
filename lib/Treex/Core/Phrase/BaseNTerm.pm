@@ -11,6 +11,8 @@ extends 'Treex::Core::Phrase';
 
 
 
+###!!! Should we rename them 'dependents'?
+###!!! Phrase::PP has one more child that is not in this array and is not the head.
 has 'nonhead_children' =>
 (
     is       => 'ro',
@@ -92,6 +94,10 @@ sub _remove_child
     }
     if($child == $self->head())
     {
+        ###!!! Special cases of nonterminals may have children that are neither
+        ###!!! plain modifiers (they are not stored in nonhead_children) nor
+        ###!!! heads (in PP, there is preposition and argument, only one of them
+        ###!!! is head). We should do something to check and report these as well.
         confess("Cannot remove the head child");
     }
     my $nhc = $self->nonhead_children();
@@ -127,45 +133,27 @@ __PACKAGE__->meta->make_immutable();
 
 Treex::Core::Phrase::BaseNTerm
 
-=head1 SYNOPSIS
-
-  use Treex::Core::Document;
-  use Treex::Core::Phrase::Term;
-  use Treex::Core::Phrase::NTerm;
-
-  my $document = new Treex::Core::Document;
-  my $bundle   = $document->create_bundle();
-  my $zone     = $bundle->create_zone('en');
-  my $root     = $zone->create_atree();
-  my $node     = $root->create_child();
-  my $tphrase  = new Treex::Core::Phrase::Term ('node' => $node);
-  my $ntphrase = new Treex::Core::Phrase::NTerm ('head' => $tphrase);
-
 =head1 DESCRIPTION
 
-C<NTerm> is a nonterminal C<Phrase>. It contains (refers to) one or more child
-C<Phrase>s.
-See L<Treex::Core::Phrase> for more details.
+C<BaseNTerm> is an abstract class that defines the basic interface of
+nonterminal phrases. The general nonterminal phrase, C<NTerm>, is derived from
+C<BaseNTerm>. So are some special cases of nonterminals, such as C<PP>.
+(They cannot be derived from C<NTerm> because they implement certain parts
+of the interface differently.)
 
-=head1 ATTRIBUTES
+See also L<Treex::Core::Phrase> and L<Treex::Core::Phrase::NTerm>.
+
+=head1 METHODS
 
 =over
 
 =item head
 
 A sub-C<Phrase> of this phrase that is at the moment considered the head phrase (in the sense of dependency syntax).
-Head is a special case of child (sub-) phrase. The (one) head must always exist; other children are optional.
-
-=back
-
-=head1 METHODS
-
-=over
-
-=item $phrase->set_head ($child_phrase);
-
-Sets a new head child for this phrase. The new head must be already a child
-of this phrase. The old head will become an ordinary non-head child.
+A general C<NTerm> phrase just has a C<head> attribute.
+Special cases of nonterminals may have multiple children with special behavior,
+and they may choose which one of these children shall be head under the current
+annotation style.
 
 =back
 

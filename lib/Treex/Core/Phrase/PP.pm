@@ -6,7 +6,7 @@ use namespace::autoclean;
 use Moose;
 use Treex::Core::Log;
 
-extends 'Treex::Core::Phrase::NTerm';
+extends 'Treex::Core::Phrase::BaseNTerm';
 
 
 
@@ -35,62 +35,16 @@ has 'prep_is_head' =>
     required => 1
 );
 
-###!!! Tohle zdědíme od NTerm, pokud tedy zůstaneme odvozeni od ní.
-###!!! Taky bychom mohli přidat třídu BaseNTerm, která poskytne všechno, co teď
-###!!! poskytuje NTerm, akorát nebude mít atribut head. Bude požadovat, aby
-###!!! všechny odvozené třídy definovaly metodu head(), přičemž u NTermu to bude
-###!!! rovnou getter atributu, zatímco tady sáhneme podle potřeby pro předložku
-###!!! či argument.
-has 'nonhead_children' =>
-(
-    is       => 'ro',
-    isa      => 'ArrayRef[Treex::Core::Phrase]',
-    default  => sub { [] }
-);
-
 
 
 #------------------------------------------------------------------------------
-# Returns the head node of the phrase. For nonterminal phrases this recursively
-# returns head node of their head child.
+# Returns the head child of the phrase. Depending on the current preference,
+# it is either the preposition or its argument.
 #------------------------------------------------------------------------------
-sub node
+sub head
 {
     my $self = shift;
-    return $self->head()->node();
-}
-
-
-
-#------------------------------------------------------------------------------
-# Returns the type of the dependency relation of the phrase to the governing
-# phrase. A general nonterminal phrase has the same deprel as its head child.
-#------------------------------------------------------------------------------
-sub deprel
-{
-    my $self = shift;
-    return $self->head()->deprel();
-}
-
-
-
-#------------------------------------------------------------------------------
-# Sets a new head child for this phrase. The new head must be already a child
-# of this phrase. The old head will become an ordinary non-head child.
-#------------------------------------------------------------------------------
-sub set_head
-{
-    my $self = shift;
-    my $new_head = shift; # Treex::Core::Phrase
-    my $old_head = $self->head();
-    return if ($new_head == $old_head);
-    # Remove the new head from the list of non-head children.
-    # (The method will also verify that it is defined and is my child.)
-    $self->_remove_child($new_head);
-    # Add the old head to the list of non-head children.
-    $self->_add_child($old_head);
-    # Finally, set the new head, using the private bare setter.
-    $self->_set_head($new_head);
+    return $self->prep_is_head() ? $self->prep() : $self->arg();
 }
 
 
@@ -114,7 +68,7 @@ Treex::Core::Phrase::PP
   use Treex::Core::Document;
   use Treex::Core::Phrase::Term;
   use Treex::Core::Phrase::NTerm;
-
+  #################################!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TODO
   my $document = new Treex::Core::Document;
   my $bundle   = $document->create_bundle();
   my $zone     = $bundle->create_zone('en');
@@ -138,13 +92,41 @@ is indeed one of these two, and not any other child). Depending on the
 preferred annotation style, we can pick the preposition or the argument as the
 current head.
 
-It is questionable whether this phrase should actually be considered an
-extension of C<Phrase::NTerm>. Because we would have to override the C<head>
-attribute. Here it is not an attribute, merely a function. But we need two new
-attributes, C<preposition> and C<argument>. These should be separated from the
-ordinary children in the same fashion as C<head> is separated from the other
-children of C<Phrase::NTerm>. We may also need an attribute for the current
-head style (whether C<head()> should return the preposition or the argument).
+=head1 ATTRIBUTES
+
+=over
+
+=item prep
+
+A sub-C<Phrase> of this phrase that contains the preposition (or another
+function word if this is not a true prepositional phrase).
+
+=item arg
+
+A sub-C<Phrase> (typically a noun phrase) of this phrase that contains the
+argument of the preposition (or of the other function word if this is not
+a true prepositional phrase).
+
+=item prep_is_head
+
+Boolean attribute that defines the currently preferred annotation style.
+C<True> means that the preposition is considered the head of the phrase.
+C<False> means that the argument is the head.
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item head
+
+A sub-C<Phrase> of this phrase that is at the moment considered the head phrase
+(in the sense of dependency syntax).
+Depending on the current preference, it is either the preposition or its
+argument.
+
+=back
 
 =head1 AUTHORS
 
