@@ -1,8 +1,9 @@
-package Treex::Tool::PhraseParser::Alpino;
+package Treex::Tool::Alpino::Parser;
 
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::ProcessUtils;
+use Treex::Tool::Align::MonolingualGreedy;
 
 # Used to parse Alpino output. This is quite ugly, but I want to avoid code duplication
 use Treex::Block::Read::Alpino;
@@ -10,6 +11,8 @@ use Treex::Block::Read::Alpino;
 with 'Treex::Tool::Alpino::Run';
 
 has '_twig' => ( is => 'rw' );
+
+has '_greedy_align' => ( is => 'rw' );
 
 has 'timeout' => ( isa => 'Int', is => 'ro', default => 60 );
 
@@ -26,6 +29,7 @@ sub BUILD {
     $self->_start_alpino(@args);
 
     $self->_set_twig( XML::Twig::->new() );
+    $self->_set_greedy_align( Treex::Tool::Align::MonolingualGreedy->new() );
 
     return;
 }
@@ -106,6 +110,9 @@ sub parse_zones {
             $pnode->set_lemma( $self->unescape( $pnode->lemma ) );
             $pnode->set_form( $self->unescape( $pnode->form ) );
         }
+       
+        # Fix wild attributes 
+        $self->project_wild_attrs($zone);
     }
 
 }
@@ -138,6 +145,36 @@ sub get_alpino_parse {
     }
 
     return $xml;
+}
+
+# Try to copy wild attributes from the original a-tree to the parsed p-tree
+sub project_wild_attrs {
+    my ($self, $zone) = @_;
+
+    # use monolingual greedy alignment between Alpino's terminals and the original tokens
+    # In most cases, it should be 1:1
+    my @pterms_ord = sort { $a->wild->{pord} <=> $b->wild->{pord} } grep { defined $_->form and defined $_->wild->{pord} } $zone->get_ptree->get_descendants();
+    my @anodes = $zone->get_atree->get_descendants( { ordered => 1 } );
+    my $ali_args = {
+        hforms  => [ map { $_->form } @pterms_ord ],
+        rforms  => [ map { $_->form } @anodes ],
+        htags   => [ map { "" } @pterms_ord ],
+        rtags   => [ map { "" } @anodes ],
+    };
+    my $ali = $self->_greedy_align->align_sentence($ali_args);
+
+    # copy attributes using the alignment where it exists
+    for (my $i = 0; $i < @$ali; ++$i){
+        next if $ali->[$i] == -1;
+        my $trg_pterm = $pterms_ord[$i];
+        my $src_anode = $anodes[$ali->[$i]];
+
+        foreach my $attr ( keys %{ $src_anode->wild } ) {
+            next if defined $trg_pterm->wild->{$attr};  # do not overwrite Alpino-set attributes
+            $trg_pterm->wild->{$attr} = $src_anode->wild->{$attr};
+        }
+    }
+
 }
 
 1;

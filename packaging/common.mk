@@ -10,9 +10,9 @@ ifdef TESTING
 else
     VERSION_SUFFIX=
 endif
-#VERSION=`svn info .| grep Revision | perl -ne 's/(\d+)//;printf("0.%05d%s", $$1, "${VERSION_SUFFIX}")'`
-VERSION=0.00001
 DATE=`date +%F`
+VER_DATE=`date +%Y%m%d`
+VERSION=1.${VER_DATE}${VERSION_SUFFIX}
 
 LIB=lib
 TREEX=${LIB}/Treex
@@ -55,7 +55,7 @@ LEXICON=$(TOOLS)/Lexicon
 
 PREFIX=${TREEX}
 
-SVN=0
+GIT=0
 
 .PHONY: clean rebuild refresh
 
@@ -63,21 +63,21 @@ default: build
 
 all: clean build test
 
-# Using "make SVN=0" you can just copy the modules from your local repository (instead of "exporting" from git),
+# Using "make GIT=0" you can just copy the modules from your local repository (instead of "exporting" from git),
 # so you can check dzil test before commiting.
-# note: 'svn export' still works only because the git repo is on GitHub
-# TODO: rather then svn export, use git status in case of SVN=1 and require commit of modified files (or something like that)
 export.tmp:
 	mkdir -p ${ALLDIRS}
+	## TODO: improve this part
+	# since "packaging" is part of the repo, we don't need to clone
+	[[ $(GIT) == 1 ]] && git pull; \
 	for module in $(MODULES) ; do\
-		echo $$module; \
-          [[ $(SVN) == 1 ]] && svn export $(SVN_TREEX_BASE)/$$module $$module || \
-                               cp -r ../../$$module $$module; \
+       echo $$module; \
+          [[ $(GIT) == 1 ]] && (git status | grep "modified:.*$$module" > /dev/null || exit 2); \
+		  cp -r ../../$$module $$module; \
 	done
+	## ODOT
 	rm -rf lib/Treex/Core/Parallel # we don't want to release blocks for parallel runs
 	rm -f lib/Treex/Core/Service.pm lib/Treex/Core/t/service.t # not ready for distribution
-	rm -f lib/Treex/Core/CacheBlock.pm lib/Treex/Core/Cloud.pm lib/Treex/Core/Coordinations.pm lib/Treex/Core/Loader.pm
-	rm -f lib/Treex/Block/Read/ConsumerReader.pm lib/Treex/Block/Read/ProducerReader.pm # client-server blocks
 	rm -f lib/Treex/Block/Util/PMLTQ.pm	# dependent on Tred::Config (do we need them in the distro?)
 	rm -f lib/Treex/Block/Util/PMLTQMark.pm # dependent on Tred::Config (do we need them in the distro?)
 	rm -f lib/Treex/Block/Util/FixPMLStructure.pm
