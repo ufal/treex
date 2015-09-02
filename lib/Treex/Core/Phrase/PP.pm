@@ -49,6 +49,30 @@ sub head
 
 
 
+#------------------------------------------------------------------------------
+# Returns the non-head children of the phrase, i.e. the dependents plus either
+# the preposition or the argument (whichever is currently not the head).
+#------------------------------------------------------------------------------
+sub nonhead_children
+{
+    my $self = shift;
+    return (($self->prep_is_head() ? $self->arg() : $self->prep()), $self->dependents());
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the children of the phrase that are not dependents, i.e. both the
+# preposition and the argument.
+#------------------------------------------------------------------------------
+sub core_children
+{
+    my $self = shift;
+    return ($self->prep(), $self->arg());
+}
+
+
+
 __PACKAGE__->meta->make_immutable();
 
 1;
@@ -67,15 +91,19 @@ Treex::Core::Phrase::PP
 
   use Treex::Core::Document;
   use Treex::Core::Phrase::Term;
-  use Treex::Core::Phrase::NTerm;
-  #################################!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! TODO
+  use Treex::Core::Phrase::PP;
+
   my $document = new Treex::Core::Document;
   my $bundle   = $document->create_bundle();
   my $zone     = $bundle->create_zone('en');
   my $root     = $zone->create_atree();
-  my $node     = $root->create_child();
-  my $tphrase  = new Treex::Core::Phrase::Term ('node' => $node);
-  my $ntphrase = new Treex::Core::Phrase::NTerm ('head' => $tphrase);
+  my $prep     = $root->create_child();
+  my $noun     = $prep->create_child();
+  $prep->set_deprel('AuxP');
+  $noun->set_deprel('Adv');
+  my $prepphr  = new Treex::Core::Phrase::Term ('node' => $prep);
+  my $argphr   = new Treex::Core::Phrase::Term ('node' => $noun);
+  my $pphrase  = new Treex::Core::Phrase::PP ('prep' => $prepphr, 'arg' => $argphr, 'prep_is_head' => 1);
 
 =head1 DESCRIPTION
 
@@ -125,6 +153,16 @@ A sub-C<Phrase> of this phrase that is at the moment considered the head phrase
 (in the sense of dependency syntax).
 Depending on the current preference, it is either the preposition or its
 argument.
+
+=item nonhead_children
+
+Returns the non-head children of the phrase, i.e. the dependents plus either
+the preposition or the argument (whichever is currently not the head).
+
+=item core_children
+
+Returns the children of the phrase that are not dependents, i.e. both the
+preposition and the argument.
 
 =back
 

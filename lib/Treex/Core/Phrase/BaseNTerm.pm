@@ -11,9 +11,7 @@ extends 'Treex::Core::Phrase';
 
 
 
-###!!! Should we rename them 'dependents'?
-###!!! Phrase::PP has one more child that is not in this array and is not the head.
-has 'nonhead_children' =>
+has 'dependents' =>
 (
     is       => 'ro',
     isa      => 'ArrayRef[Treex::Core::Phrase]',
@@ -30,6 +28,32 @@ sub head
 {
     my $self = shift;
     confess("The head() method is not implemented");
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the non-head children of the phrase. By default these are the
+# dependents. However, in special nonterminal phrases there may be children
+# that are neither head nor dependents.
+#------------------------------------------------------------------------------
+sub nonhead_children
+{
+    my $self = shift;
+    return $self->dependents();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the children of the phrase that are not dependents. By default this
+# is just the head child. However, in special nonterminal phrases there may be
+# other children that have a special status but are not the current head.
+#------------------------------------------------------------------------------
+sub core_children
+{
+    my $self = shift;
+    return ($self->head());
 }
 
 
@@ -72,7 +96,7 @@ sub _add_child
     {
         confess("The child must point to the parent first. This private method must be called only from Phrase::set_parent()");
     }
-    my $nhc = $self->nonhead_children();
+    my $nhc = $self->dependents();
     push(@{$nhc}, $new_child);
 }
 
@@ -92,15 +116,11 @@ sub _remove_child
     {
         confess("The child does not think I'm its parent");
     }
-    if($child == $self->head())
+    if(any {$_ == $child} ($self->core_children()))
     {
-        ###!!! Special cases of nonterminals may have children that are neither
-        ###!!! plain modifiers (they are not stored in nonhead_children) nor
-        ###!!! heads (in PP, there is preposition and argument, only one of them
-        ###!!! is head). We should do something to check and report these as well.
-        confess("Cannot remove the head child");
+        confess("Cannot remove the head child or any other core child");
     }
-    my $nhc = $self->nonhead_children();
+    my $nhc = $self->dependents();
     my $found = 0;
     for(my $i = 0; $i <= $#{$nhc}; $i++)
     {
@@ -143,6 +163,19 @@ of the interface differently.)
 
 See also L<Treex::Core::Phrase> and L<Treex::Core::Phrase::NTerm>.
 
+=head1 ATTRIBUTES
+
+=over
+
+=item dependents
+
+Array of sub-C<Phrase>s (children) of this phrase that do not belong to the
+core of the phrase. By default the core contains only the head child. However,
+some specialized subclasses may define a larger core where two or more
+children have a special status, but only one of them can be the head.
+
+=back
+
 =head1 METHODS
 
 =over
@@ -154,6 +187,18 @@ A general C<NTerm> phrase just has a C<head> attribute.
 Special cases of nonterminals may have multiple children with special behavior,
 and they may choose which one of these children shall be head under the current
 annotation style.
+
+=item nonhead_children
+
+Returns the non-head children of the phrase. By default these are the
+dependents. However, in special nonterminal phrases there may be children
+that are neither head nor dependents.
+
+=item core_children
+
+Returns the children of the phrase that are not dependents. By default this
+is just the head child. However, in specialized nonterminal phrases there may be
+other children that have a special status but are not the current head.
 
 =back
 
