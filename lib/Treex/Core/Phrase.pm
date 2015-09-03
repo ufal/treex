@@ -23,7 +23,7 @@ has 'parent' =>
 #------------------------------------------------------------------------------
 # Sets a new parent for this phrase. Unlike the bare setter _set_parent(),
 # this public method also takes care of the reverse links from the parent to
-# the children.
+# the children. The method returns the old parent, if any.
 #------------------------------------------------------------------------------
 sub set_parent
 {
@@ -42,6 +42,7 @@ sub set_parent
     {
         $new_parent->_add_child($self);
     }
+    return $old_parent;
 }
 
 
@@ -147,6 +148,7 @@ This phrase will become its new I<non-head> child.
 The new parent may also be undefined, which means that the current phrase will
 be disconnected from the phrase structure (but it will keeep its own children,
 if any).
+The method returns the old parent.
 
 =item my $node = $phrase->node();
 

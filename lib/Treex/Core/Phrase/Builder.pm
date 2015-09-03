@@ -35,6 +35,77 @@ sub build
 
 
 
+#------------------------------------------------------------------------------
+# Examines a nonterminal phrase in the Prague style. If it recognizes
+# a prepositional phrase, transforms the general nonterminal to PP.
+#------------------------------------------------------------------------------
+sub detect_prague_pp
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase::NTerm
+    # If this is the Prague style then the preposition (if any) must be the head and the deprel of the phrase must be AuxP.
+    if($phrase->deprel() eq 'AuxP')
+    {
+        my @dependents = $phrase->dependents();
+        my @mwauxp;
+        my @punc;
+        my @candidates;
+        # Classify dependents of the preposition.
+        foreach my $d (@dependents)
+        {
+            # AuxP attached to AuxP means multi-word preposition.
+            ###!!! We should also check that all words of a MWE are adjacent!
+            if($d->deprel() eq 'AuxP')
+            {
+                push(@mwauxp, $d);
+            }
+            # Punctuation should never represent an argument of a preposition (provided we have solved any coordinations on lower levels).
+            elsif($d->node()->is_punctuation())
+            {
+                push(@punc, $d);
+            }
+            # All other dependents are candidates for the argument.
+            else
+            {
+                push(@candidates, $d);
+            }
+        }
+        # If there are no argument candidates, we cannot create a prepositional phrase.
+        my $n = scalar(@candidates);
+        if($n == 0)
+        {
+            return $phrase;
+        }
+        # Now it is clear that we have a prepositional phrase. A new PP will be created
+        # and the old input NTerm will be either reattached or destroyed.
+        # First make sure that it is no longer attached to its original parent.
+        ###!!! What if $phrase is the head of its parent? Or another core child if the parent is a specialized nonterminal?
+        ###!!! Then we cannot just detach it!
+        ###!!! In order to keep the parent in a correct state at any time, the
+        ###!!! parent should provide a method swap_child() or something, that
+        ###!!! would replace a child phrase by another phrase even if it is a core child.
+        my $parent = $phrase->set_parent(undef);
+        # If there are two or more argument candidates, we have to select the best one.
+        # There may be more sophisticated approaches but let's just take the first one for the moment.
+        ###!!! We should make sure that we have an ordered list and that we know whether we expect prepositions or postpositions.
+        ###!!! Then we should pick the first candidate after (resp. before) the preposition (resp. postposition).
+        # If this is a multi-word preposition, keep the input phrase. After reattaching punctuation and other dependents it will contain only the parts of the MWE.
+        # Otherwise take just the head Term phrase, and the NTerm will be later destroyed (because it is no longer attached to its parent and it will lose its children).
+        my $preposition = (scalar(@mwauxp) > 0) ? $phrase : $phrase->head();
+        my $argument = shift(@candidates);
+        ###!!! Will the creation of the PP automatically detach the preposition and the argument from their original parent phrase?
+        my $pp = new Treex::Core::Phrase::PP('prep' => $preposition, 'arg' => $argument, 'prep_is_head' => 1);
+        foreach my $d (@candidates, @punc)
+        {
+            $d->set_parent($pp);
+        }
+    }
+    # Return the input NTerm phrase if no PP has been detected.
+    return $phrase;
+}
+
+
+
 __PACKAGE__->meta->make_immutable();
 
 1;
