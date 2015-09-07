@@ -24,7 +24,29 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+    $self->fix_negation($root);
     $self->check_afuns($root);
+}
+
+#------------------------------------------------------------------------------
+# Tries to separate negation from all the AuxZ modifiers.
+#------------------------------------------------------------------------------
+sub fix_negation
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->afun() eq 'AuxZ')
+        {
+            # I believe that the following function as negative particles in Latin.
+            if($node->form() =~ m/^(non|ne)$/i)
+            {
+                $node->set_afun('Neg');
+            }
+        }
+    }
 }
 
 #------------------------------------------------------------------------------
@@ -117,6 +139,37 @@ sub fix_annotation_errors
             {
                 $node->set_afun('AuxY');
                 $node->set_is_member(undef);
+            }
+        }
+        # nisi si me iudicas curare
+        # unless you care to judge me
+        # "nisi si" = "unless"; "except if"
+        elsif($node->form() =~ m/^si$/i && $node->parent()->form() =~ m/^nisi$/i && $node->afun() eq 'AuxY' && scalar($node->children())==1)
+        {
+            $node->set_afun('AuxC');
+        }
+        # Sed narra mihi, Gai, rogo, Fortunata quare non recumbit
+        # But do tell me, Gaius, I ask, why is Fortunata not at dinner
+        # "sed" ("but") is attached as a leaf/AuxC to the root.
+        elsif($node->form() =~ m/^sed$/i && $node->parent()->is_root() && $node->afun() eq 'AuxC' && $node->is_leaf())
+        {
+            my $rsibling = $node->get_right_neighbor();
+            if($rsibling->afun() eq 'Coord')
+            {
+                $node->set_parent($rsibling);
+                $node->set_afun('AuxY');
+                $node->set_is_member(0);
+            }
+        }
+        # in pace vero quod beneficiis magis quam metu imperium agitabant et ...
+        # were discussing the government of the truth that is in peace, kindness rather than by fear, and ...
+        # "quod" = "because" (the most frequent translation)
+        elsif($node->form() =~ m/^quod$/i && $node->parent()->is_root() && $node->afun() eq 'AuxC' && $node->is_leaf())
+        {
+            my $rsibling = $node->get_right_neighbor();
+            if($rsibling->afun() eq 'Coord')
+            {
+                $rsibling->set_parent($node);
             }
         }
     }

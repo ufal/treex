@@ -133,6 +133,10 @@ sub process_zone {
 
 __END__
 
+=pod
+
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Block::Util::Eval - Special block for evaluating code given by parameters.

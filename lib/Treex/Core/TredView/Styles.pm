@@ -280,6 +280,10 @@ sub draw_arrows {
 
 __END__
 
+=pod
+
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Core::TredView::Styles - Styling of trees in Tred (how they look)

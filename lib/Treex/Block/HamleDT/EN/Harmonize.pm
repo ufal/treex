@@ -69,7 +69,7 @@ sub deprel_to_afun
             # Special case: about 25 %
             # TREE: % ( about/NMOD ( 25/AMOD ) )
             # Here it is a prepositional phrase and we want it to be treated as such.
-            if($ppos eq 'prep')
+            if($ppos eq 'adp')
             {
                 $afun = 'PrepArg';
             }
@@ -246,11 +246,11 @@ sub deprel_to_afun
         {
             if($node->form() =~ m/^n[o']t$/i)
             {
-                $afun = 'Adv';
+                $afun = 'Neg';
             }
             # We must not toggle on coordinating conjunction!
             # That is most likely a coordination of VMOD conjuncts, whose part of speech could be anything!
-            elsif($node->is_subordinator() || $node->is_preposition())
+            elsif($node->is_subordinator() || $node->is_adposition())
             {
                 $afun = 'AuxC';
             }
@@ -343,7 +343,7 @@ sub distinguish_subordinators_from_prepositions
         # We cannot be sure with the following lemmas (all of them occurred with the VMOD deprel tag) so we do not change them:
         # for, after, since, before, until, in, with, at, like, from, by, on, except, of, out, about, over, worth, lest, without, during, under, 'til
         my $lemma = $node->lemma();
-        if($node->get_iset('pos') eq 'prep' &&
+        if($node->is_adposition() &&
            ($lemma =~ m/^(that|if|because|while|whether|although|than|though|so|unless|once|whereas|albeit|but|as)$/ ||
             $node->conll_deprel() eq 'VMOD' && $lemma =~ m/^(before|after|since|until|except)$/))
         {

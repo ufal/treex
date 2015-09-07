@@ -66,7 +66,9 @@ has _models => (
 sub _build_models {
     my ($self) = @_;
 
-    my @models = split / +/, $self->models;
+    # Allow anywhitespace (newlines, spaces) separating the models
+    # and also an initial whitespace (which results in empty first item returned by split).
+    my @models = grep {$_ ne ''} split /\s+/, $self->models;
     my $models_ar = [];
 
     while (@models > 0) {

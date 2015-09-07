@@ -109,7 +109,7 @@ sub process_anode {
     }
 
     # adpositions (some adpositions are AuxC and should stay mark)
-    elsif ( $anode->match_iset( 'pos' => '~prep' ) &&
+    elsif ( $anode->match_iset( 'pos' => '~adp' ) &&
         $type ne 'mark'
     ) {
        $type = $self->AuxP($anode); 
@@ -209,7 +209,7 @@ sub AuxP {
     # compound preps
     my $parent = $anode->get_parent();
     if ( defined $parent &&
-        ($parent->match_iset('pos', '~prep') || $parent->afun eq 'AuxP')
+        ($parent->match_iset('pos', '~adp') || $parent->afun eq 'AuxP')
     ) {
         # compound preps: the "auxiliaries" are thought to be parts of a
         # multi word expression

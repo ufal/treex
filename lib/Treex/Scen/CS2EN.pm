@@ -1,18 +1,63 @@
 package Treex::Scen::CS2EN;
 use Moose;
 use Treex::Core::Common;
+with 'Treex::Core::RememberArgs';
 
-my $FULL = <<'END';
-Util::SetGlobal language=cs selector=src
-Scen::Analysis::CS
-Scen::Transfer::CS2EN
-Util::SetGlobal language=en selector=tst
-Scen::Synthesis::EN
+has domain => (
+     is => 'ro',
+     isa => enum( [qw(general IT)] ),
+     default => 'general',
+     documentation => 'domain of the input texts',
+);
 
-END
+has resegment => (
+     is => 'ro',
+     isa => 'Bool',
+     default => 0,
+     documentation => 'Use W2A::ResegmentSentences',
+);
+
+has hideIT => (
+     is => 'ro',
+     isa => 'Bool',
+     default => undef,
+     documentation => 'Use W2A::HideIT and A2W::ShowIT, default=1 iff domain=IT',
+);
+
+has gazetteer => (
+     is => 'ro',
+     isa => 'Bool',
+     default => undef,
+     documentation => 'Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo T2T::EN2CS::TrGazeteerItems, default=1 iff domain=IT',
+);
+
+sub BUILD {
+    my ($self) = @_;
+
+    if (!defined $self->hideIT){
+        $self->{hideIT} = $self->domain eq 'IT' ? 1 : 0;
+    }
+    if (!defined $self->gazetteer){
+        $self->{gazetteer} = $self->domain eq 'IT' ? 1 : 0;
+    }
+    return;
+}
 
 sub get_scenario_string {
-    return $FULL;
+    my ($self) = @_;
+    my $params = $self->args_str;
+
+    my $scen = join "\n",
+    'Util::SetGlobal language=cs selector=src',
+    $self->resegment ? 'W2A::ResegmentSentences' : (),
+    $self->hideIT ? 'W2A::HideIT' : (),
+    "Scen::Analysis::CS $params",
+    "Scen::Transfer::CS2EN $params",
+    'Util::SetGlobal language=en selector=tst',
+    "Scen::Synthesis::EN $params",
+    $self->hideIT ? 'A2W::ShowIT' : (),
+    ;
+    return $scen;
 }
 
 1;
@@ -47,7 +92,16 @@ start the scenario with
 
 =head1 PARAMETERS
 
-currently none
+=head2 domain (general, IT)
+
+=head2 resegment
+
+Use W2A::ResegmentSentences
+
+=head2 gazetteer
+
+Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo T2T::EN2CS::TrGazeteerItems
+default=1 iff domain=IT
 
 =head1 AUTHORS
 

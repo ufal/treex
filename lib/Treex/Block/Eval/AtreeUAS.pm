@@ -8,10 +8,10 @@ has '+language' 				=> ( required => 1 );
 has 'eval_is_member' 			=> ( is => 'ro', isa => 'Bool', default => 0 );
 has 'eval_is_shared_modifier' 	=> ( is => 'ro', isa => 'Bool', default => 0 );
 
-# evaluate punctuations 
+# evaluate punctuations
 has 'eval_punc' 				=> ( is => 'ro', isa => 'Bool', default => 1 );
 # sentences with size 'sen_len' will not be evaluated
-has 'sen_len' 					=> ( is => 'ro', isa => 'Int', default => -1 ); 
+has 'sen_len' 					=> ( is => 'ro', isa => 'Int', default => -1 );
 
 has sample_size => (
     is => 'ro',
@@ -31,6 +31,7 @@ sub process_bundle {
 	my @ref_afuns;
 	my @ref_is_member;
 	my @ref_is_shared_modifier;
+    my @ref_deprels;
 	
 	my @compared_zones;
 	
@@ -39,7 +40,7 @@ sub process_bundle {
 		@compared_zones = grep { $_ ne $ref_zone && $_->language eq $self->language } $bundle->get_all_zones();    	
 	}	
 	else {
-		my $ref_zone_orig = $bundle->get_zone( $self->language, $self->selector ); 
+		my $ref_zone_orig = $bundle->get_zone( $self->language, $self->selector );
 		$ref_zone = $self->clone_atree_with_no_punc($ref_zone_orig);
 				
 		my @compared_zones_orig = grep { ($_ ne $ref_zone_orig) && ($_ ne $ref_zone)  && $_->language eq $self->language } $bundle->get_all_zones();
@@ -50,6 +51,7 @@ sub process_bundle {
    	@ref_afuns = map { defined($_->afun) ? $_->afun : defined($_->conll_deprel) ? $_->conll_deprel : '' } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
    	@ref_is_member = map { $_->is_member ? 1 : 0 } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
    	@ref_is_shared_modifier = map { $_->is_shared_modifier ? 1 : 0 } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
+    @ref_deprels = map { defined($_->deprel()) ? $_->deprel() : '' } $ref_zone->get_atree->get_descendants( { ordered => 1 } );
 
 	if (($self->sen_len == -1) || (scalar(@ref_parents) <= $self->sen_len) ) {
 	    $self->_set_number_of_nodes($self->_number_of_nodes + @ref_parents);	
@@ -58,6 +60,7 @@ sub process_bundle {
 	        my @afuns = map { defined($_->afun) ? $_->afun : defined($_->conll_deprel) ? $_->conll_deprel : '' } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
 	        my @is_member = map { $_->is_member ? 1 : 0 } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
 	        my @is_shared_modifier = map { $_->is_shared_modifier ? 1 : 0 } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
+            my @deprels = map { defined($_->deprel()) ? $_->deprel() : '' } $compared_zone->get_atree->get_descendants( { ordered => 1 } );
 	
 	        if ( @parents != @ref_parents ) {
 	            log_fatal 'There must be the same number of nodes in compared trees';
@@ -75,14 +78,17 @@ sub process_bundle {
 	            my $eqa = $afuns[$i] eq $ref_afuns[$i];
 	            my $eqm = $is_member[$i] == $ref_is_member[$i];
 	            my $eqs = $is_shared_modifier[$i] == $ref_is_shared_modifier[$i];
+                my $eqd = $deprels[$i] eq $ref_deprels[$i];
 	            $self->_same_as_ref->{'UASp('.$label.','.$ref_label.')'}++ if($eqp);
 	            $self->_same_as_ref->{'UASpm('.$label.','.$ref_label.')'}++ if($eqp && $eqm);
 	            $self->_same_as_ref->{'UASps('.$label.','.$ref_label.')'}++ if($eqp && $eqs);
 	            $self->_same_as_ref->{'UASpms('.$label.','.$ref_label.')'}++ if($eqp && $eqm && $eqs);
+                $self->_same_as_ref->{'UASd('.$label.','.$ref_label.')'}++ if($eqp);
 	            $self->_same_as_ref->{'LASp('.$label.','.$ref_label.')'}++ if($eqp && $eqa);
 	            $self->_same_as_ref->{'LASpm('.$label.','.$ref_label.')'}++ if($eqp && $eqa && $eqm);
 	            $self->_same_as_ref->{'LASps('.$label.','.$ref_label.')'}++ if($eqp && $eqa && $eqs);
 	            $self->_same_as_ref->{'LASpms('.$label.','.$ref_label.')'}++ if($eqp && $eqa && $eqm && $eqs);
+                $self->_same_as_ref->{'LASd('.$label.','.$ref_label.')'}++ if($eqp && $eqd);
 	            # Depending on block parameters, one of the above values is also "the" UAS required by the caller.
 	            # For the sake of compatibility, we will output it only with the label, without extras.
 	            if ( $eqp &&
@@ -98,13 +104,13 @@ sub process_bundle {
 	        $self->print_stats();
 	    }		
 	}
-	    
+	
     # remove cloned 'no punc' zones
     if (!$self->eval_punc) {
     	$bundle->remove_zone($ref_zone->language, $ref_zone->selector);
     	map{$bundle->remove_zone($_->language, $_->selector)}@compared_zones;
     }
-    
+
     return;
 }
 
@@ -136,7 +142,7 @@ sub clone_atree_with_no_punc {
 				foreach my $c (@children) {
 					$c->set_parent($p);
 				}
-			} 
+			}
 			$n->remove();
 		}
 	}

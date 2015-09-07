@@ -1,0 +1,43 @@
+Revision history of the Treex-Core distribution:
+
+0.08663     2012-04-07
+
+    - previous changes released as stable version
+
+0.08633_1     2012-04-05
+
+    - standalone version of Parse::RecDescent used
+
+0.08157     2012-02-15
+
+    - bugfixes
+
+0.08051     2012-02-07
+
+    - new backend (storable based) available 
+    - huge amount of bugfixes and improvements
+
+0.07191     2011-04-06
+
+    - change in configuration
+    - several minor improvements
+
+0.06903_1   2011-10-03
+
+    - POD improved
+    - lot of minor changes
+
+0.06571     2011-09-01
+
+    - correction of runtime tests
+    - minor changes
+
+0.06442     2011-08-22
+
+    - bugfixes, separation of scenario parsing
+
+0.05221     2011-04-01
+
+    - the first release at CPAN
+
+For detailed log of changes see https://svn.ms.mff.cuni.cz/projects/tectomt_devel/timeline (Use 'public' username and same password)

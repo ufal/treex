@@ -1,0 +1,41 @@
+name    = Treex-EN
+version = VERSION_WILL_COME_HERE
+author  = Treex team <treex@ufal.mff.cuni.cz>
+license = Perl_5
+copyright_holder = Institute of Formal and Applied Linguistics, Charles University in Prague
+
+; TODO - which module will be main?
+main_module = lib/Treex/EN.pm 
+
+[@Basic]
+
+;[CompileTests]
+[@TestingMania]
+critic_config = perlcritic.rc
+;add = PodSpellingTests
+;skip = EOLTests
+
+[AutoPrereqs]
+skip    = ^Featurama::Perc$
+skip    = ^Ufal::MorphoDiTa$      ;Module needs G++ 4.7 or higher (or clang 3.2) but other taggers can be used without this prerequisite
+
+[PruneCruft]
+
+[PruneFiles]
+match     = ^dummy[0-9]*\.treex
+match     = ^paratest[0-9]*\.treex
+match     = .*\.tmp
+match     = MANIFEST.SKIP
+match     = Changes.template
+match     = dist.ini
+match     = export.tmp
+match     = postprocess_POD.pl
+match     = ^test\.(out|err|mix)
+
+[PkgVersion]
+[PodVersion]
+
+;[PodWeaver]
+;config = weaver.ini
+[TestRelease] ; extract archive and run tests before releasing the dist
+

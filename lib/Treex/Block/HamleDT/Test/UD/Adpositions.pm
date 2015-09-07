@@ -13,6 +13,14 @@ sub process_atree
         # A preposition normally depends on a following node (usually noun) and the relation is 'case'.
         # It may also depend on a preceding node as 'mwe' or 'conj'.
         # In case of ellipsis (incomplete sentence), it may depend on the root as 'root'.
+        # In some languages the borderline between adpositions and subordinating conjunctions is fuzzy.
+        # If a preposition is attached to a verb, it is treated as a subordinating conjunction and the relation is labeled 'mark'
+        # (example [en]: "after kidnapping him"; note that English gerunds are tagged VERB, not NOUN).
+        # Some prepositions in Germanic languages may function as verbal particles (or separable verb prefixes). They are tagged ADP but their relation to the verb is labeled 'compound:prt'.
+        # Examples:
+        # [en]: up, out, off, down, on
+        # [da]: op, siden, ud, af, sammen
+        # [sv]: ut, till, upp, in, med
         if($node->is_adposition())
         {
             my $ok = $node->is_leaf();
@@ -32,6 +40,10 @@ sub process_atree
                 if($deprel =~ m/^(mwe|conj)$/)
                 {
                     $ok = $ok && $dir > 0; # parent is to the left from the adposition
+                }
+                elsif($parent->is_verb())
+                {
+                    $ok = $ok && $deprel =~ m/^(mark|compound:prt)$/;
                 }
                 else
                 {

@@ -66,7 +66,14 @@ sub deprel_to_afun
         # só, ainda, não, apenas, também
         elsif($deprel eq '>P')
         {
-            $afun = 'AuxZ';
+            if($node->form() =~ m/^não$/i)
+            {
+                $afun = 'Neg';
+            }
+            else
+            {
+                $afun = 'AuxZ';
+            }
         }
         # Left dependent of subordinating conjunction.
         # Typically attached to the predicate of the subordinate clause (instead of to the conjunction)
@@ -109,7 +116,14 @@ sub deprel_to_afun
         # The ADVS variant is not documented. Adverbial somehow related to a subject?
         elsif($deprel =~ m/^ADV[LOS]$/)
         {
-            $afun = 'Adv';
+            if($node->form() =~ m/^não$/i)
+            {
+                $afun = 'Neg';
+            }
+            else
+            {
+                $afun = 'Adv';
+            }
         }
         # Apposition. Typically a noun phrase modifying another noun.
         elsif($deprel eq 'APP')
@@ -414,7 +428,7 @@ sub deprel_to_afun
             {
                 $afun = 'Adv';
             }
-            elsif($ppos eq 'prep')
+            elsif($ppos eq 'adp')
             {
                 $afun = 'PrepArg';
             }

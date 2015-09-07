@@ -110,7 +110,7 @@ sub nobj_to_afun
     # The noun within a prepositional phrase is also tagged 'nobj'.
     # "som" (as) tagged as particle may act as a preposition (Example: som/TT/pobj undskyldning/NN/nobj)
     # "heriblandt" (including) tagged as adverb may act as a preposition (Example: heriblandt/Db/mod Lvov/NN/nobj)
-    elsif ($ppos eq 'prep' || lc( $parent->form() ) =~ m/^(.*som|heriblandt)$/)
+    elsif ($ppos eq 'adp' || lc( $parent->form() ) =~ m/^(.*som|heriblandt)$/)
     {
         $afun = 'PrepArg';
     }
@@ -232,7 +232,7 @@ sub deprel_to_afun
             {
                 $node->set_afun('SubArg');
             }
-            elsif ( $ppos eq 'prep' )
+            elsif ( $ppos eq 'adp' )
             {
                 $node->set_afun('PrepArg');
             }
@@ -282,7 +282,7 @@ sub deprel_to_afun
             # When the relative pronoun is governed by a preposition in DDT the predicate is also attached to the preposition.
             # Example (train/003.treex#108):
             # , i/nobj hvilken/nobj grad/nobj Folketinget/subj er/rel indblandet/vobj (to what degree the Folketing is involved)
-            elsif ( $ppos eq 'prep' )
+            elsif ( $ppos eq 'adp' )
             {
                 ###!!! We should investigate whether the clause modifies a noun (Atr) or a verb (Adv or Obj).
                 ###!!! We should also later restructure this part.
@@ -340,7 +340,7 @@ sub deprel_to_afun
             # fra X til Y (from X to Y; "til" is pobj of "fra")
             # If the first preposition governs the second one (like here), the parent (first prep) already has got afun
             # which we can copy to the child. Note that we probably later want to reattach the child to its grandparent, too.
-            elsif ( $ppos eq 'prep' )
+            elsif ( $ppos eq 'adp' )
             {
                 $node->set_afun( $parent->afun() );
             }
@@ -364,7 +364,7 @@ sub deprel_to_afun
             {
                 $node->set_afun('SubArg');
             }
-            elsif ( $ppos eq 'prep' )
+            elsif ( $ppos eq 'adp' )
             {
                 $node->set_afun('PrepArg');
             }

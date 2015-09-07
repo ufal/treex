@@ -87,7 +87,7 @@ sub deprel_to_afun
             my $parnode = $node->get_parent();
             if (defined $parnode) {
                 my $parpos = $parnode->get_iset('pos');
-                if ($parpos eq 'prep') {
+                if ($parpos eq 'adp') {
                     $afun = 'Atr';
                 }
                 else {
@@ -151,7 +151,7 @@ sub deprel_to_afun
         $afun = 'Sb' if ($deprel eq 'SUBJECT');
         $afun = 'Atr' if ($deprel eq 'VOCATIVE');
 
-        if (($node->get_iset('pos') eq 'prep')) {
+        if ($node->is_adposition()) {
             $afun = 'AuxP';
         }
 

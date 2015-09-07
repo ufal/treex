@@ -24,23 +24,52 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
-    $self->check_afuns($root);
-    foreach my $node ($root->get_descendants){
+    foreach my $node ($root->get_descendants)
+    {
         $self->fix_iset($node);
+    }
+    $self->fix_negation($root);
+    $self->check_afuns($root);
+    return;
+}
+
+#------------------------------------------------------------------------------
+# Adds Interset features that could not be derived from the input tagset.
+#------------------------------------------------------------------------------
+sub fix_iset
+{
+    my ($self, $node) = @_;
+    my $lemma = $node->lemma;
+    if ($lemma eq 'qui')
+    {
+        $node->iset->set_prontype('rel');
+    }
+    if ($node->is_verb && $lemma =~ /^(possum|debeo|volo|nolo|malo|soleo|intendo)$/)
+    {
+        $node->iset->set_verbtype('mod');
     }
     return;
 }
 
-sub fix_iset {
-    my ($self, $node) = @_;
-    my $lemma = $node->lemma;
-    if ($lemma eq 'qui'){
-        $node->iset->set_prontype('rel');
+#------------------------------------------------------------------------------
+# Tries to separate negation from all the AuxZ modifiers.
+#------------------------------------------------------------------------------
+sub fix_negation
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->afun() eq 'AuxZ')
+        {
+            # I believe that the following function as negative particles in Latin.
+            if($node->form() =~ m/^(non|ne)$/i)
+            {
+                $node->set_afun('Neg');
+            }
+        }
     }
-    if ($node->is_verb && $lemma =~ /^(possum|debeo|volo|nolo|malo|soleo|intendo)$/){
-        $node->iset->set_verbtype('mod');
-    }
-    return;
 }
 
 #------------------------------------------------------------------------------

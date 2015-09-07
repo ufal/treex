@@ -126,7 +126,7 @@ If the path starts with "." or "/" it is searched in the local file system (and 
 =item require_file_from_share($path_to_file, $who_wants_it, $make_executable, $skip_download)
 
 Try to locate file in local resource paths, if not found, try to download it and stores it to first writable path.
-Obtains paths from L<Treex::Core::Config->resource_path()|Treex::Core::Config/resource_path>
+Obtains paths from L<Treex::Core::Config-E<gt>resource_path()|Treex::Core::Config/resource_path>
 Returns path to file.
 
 If C<$make_executable> is true, execute rights are set on the downloaded file.

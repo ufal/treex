@@ -146,7 +146,7 @@ sub best_form_of_lemma {
         if (any {$lemma eq $_} @IRREGULAR_VERBS){
             $class = "verb_$lemma";
         } else {
-            ($stem, $class) = ($lemma =~ /^(.+)(ar|er|ir)$/);
+            ($stem, $class) = ($lemma =~ /^(.*)(ar|er|ir)$/);
         }
         return $lemma if !$class;
         my $mood = $iset->mood;
@@ -159,7 +159,7 @@ sub best_form_of_lemma {
         
         # Regular forms of irregular verbs do not need to be specified
         if ((!$ending || $ending eq '.') && $class =~ /^verb/){
-            ($stem, $class) = ($lemma =~ /^(.+)(ar|er|ir)$/);
+            ($stem, $class) = ($lemma =~ /^(.*)(ar|er|ir)$/);
             $forms = $CONJUGATION{$class}{"$mood $tense"} || '';
             $ending = (split / /, $forms)[$person - 1];
         }

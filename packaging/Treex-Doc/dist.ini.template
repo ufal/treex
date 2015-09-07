@@ -1,0 +1,32 @@
+name    = Treex-Doc
+version = VERSION_WILL_COME_HERE
+author  = Treex team <treex@ufal.mff.cuni.cz>
+license = Perl_5
+copyright_holder = Institute of Formal and Applied Linguistics, Charles University in Prague
+
+; TODO - which module will be main?
+main_module = lib/Treex/Tutorial.pod 
+
+[@Basic]
+
+[AutoPrereqs]
+
+[PruneCruft]
+
+[PruneFiles]
+match     = ^dummy[0-9]*\.treex
+match     = ^paratest[0-9]*\.treex
+match     = .*\.tmp
+match     = MANIFEST.SKIP
+match     = Changes.template
+match     = dist.ini
+match     = export.tmp
+match     = postprocess_POD.pl
+match     = ^test\.(out|err|mix)
+match     = generate_html.sh
+
+[PkgVersion]
+
+[PodVersion]
+
+

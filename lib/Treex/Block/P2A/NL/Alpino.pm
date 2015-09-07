@@ -248,8 +248,8 @@ sub process_zone {
     $self->fix_aan_het($a_root);
     $self->fix_mwu($a_root);
     $self->rehang_prec($a_root);
-
     $self->mark_clausal_afuns($a_root);
+    $self->fix_quotes($a_root);
 }
 
 sub set_coord_members {
@@ -463,7 +463,7 @@ sub _get_mwu_part_type {
     return 'other';
 }
 
-# Rehang "ja, nee, en, of, maar" heading the whole sentence under the main verb 
+# Rehang "ja, nee, en, of, maar" heading the whole sentence under the main verb
 # (will be PREC/PARTL on t-layer)
 sub rehang_prec {
     my ( $self, $aroot ) = @_;
@@ -491,6 +491,50 @@ sub mark_clausal_afuns {
         $verb->set_afun('Obj')  if ( $rel eq 'vc' );
         $verb->set_afun('Pnom') if ( $rel eq 'predc' );
     }
+}
+
+# Fix quotation marks -- rehang them under the node where they belong (highest node between them)
+# TODO: review&simplify the code, check nested quotations
+sub fix_quotes {
+    my ( $self, $aroot ) = @_;
+    my @anodes = $aroot->get_descendants( { 'ordered' => 1 } );
+
+    for my $i (0 .. $#anodes) {
+
+        if ( $anodes[$i]->form =~ m/^[„“”‚‘’'`"]+$/ and $anodes[$i]->parent == $aroot ) {
+
+            # try to find the pairing quote and the highest node between the quotes
+            my $hi_node = $i < $#anodes ? $anodes[ $i + 1 ] : $anodes[ $i - 1 ];
+            my $hi_node_depth = $hi_node->get_depth();
+            my $j = 0;
+
+            for $j ($i+1 .. $#anodes) {
+
+                if ( $anodes[$j]->form =~ m/^[„“”‚‘’'`"]+$/ ) {
+                    last;
+                }
+                if ( $anodes[$j]->get_depth() < $hi_node_depth ) {
+                    $hi_node       = $anodes[$j];
+                    $hi_node_depth = $hi_node->get_depth();
+                }
+            }
+
+            # move the quote under the highest node in between the quotes (or between the quote
+            # and end-of-sentence)
+            if ($hi_node->is_descendant_of($anodes[$i])){
+                $hi_node->set_parent($aroot); # prevent cycles
+            }
+            $anodes[$i]->set_parent($hi_node);
+            if ( $j && $anodes[$j]->form =~ m/^[„“”‚‘’'`"]+$/) {
+                if ($hi_node->is_descendant_of($anodes[$j])){
+                    $hi_node->set_parent($anodes[$j]->get_parent());
+                }
+                $anodes[$j]->set_parent($hi_node);
+            }
+
+        }
+    }
+    return;
 }
 
 1;

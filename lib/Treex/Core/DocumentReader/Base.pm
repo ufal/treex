@@ -99,7 +99,7 @@ sub new_document {
         foreach my $zone ( @{ $self->zones } ) {
             my $filename = $zone->current_filename;
             ( $volume, $dirs, $file ) = File::Spec->splitpath($filename);
-            my ( $name, $extension ) = $file =~ /([^.]+)(\..+)?/;
+            my ( $name ) = $file =~ /([^.]+)(\..+)?/;
             my $zonelabel = $zone->zone_label;
             my $lang      = $zone->language;
             my $sele      = $zone->selector;
@@ -214,3 +214,4 @@ sub fill_bundle_zone {
 }
 
 1;
+

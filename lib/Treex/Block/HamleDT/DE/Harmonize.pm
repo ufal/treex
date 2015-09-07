@@ -154,7 +154,7 @@ sub deprel_to_afun
         # Negation (usually of adjective or verb): 'nicht'.
         elsif ( $deprel eq 'NG' )
         {
-            $afun = 'Adv';
+            $afun = 'Neg';
         }
 
         # Measure argument of adjective.
@@ -166,12 +166,24 @@ sub deprel_to_afun
             $afun = 'Adv';
         }
 
-        # Modifier. In NPs only focus particles are annotated as modifiers.
+        # Modifier.
+        # In VPs, we can translate it as adverbial modifier (Adv).
+        # In NPs, there are two different classes of subphrases that are labeled MO:
+        # 1. modifying prepositional phrase (usually after the modified noun) should become Atr.
+        # 2. focus particles (AuxZ).
         elsif ( $deprel eq 'MO' )
         {
             if ( $ppos =~ m/^(noun|adj|num)$/ )
             {
-                $afun = 'AuxZ';
+                # Is this a prepositional phrase?
+                if ( $pos eq 'adp' && scalar($node->children()) > 0 )
+                {
+                    $afun = 'Atr';
+                }
+                else
+                {
+                    $afun = 'AuxZ';
+                }
             }
             else
             {
@@ -452,7 +464,7 @@ sub process_tiger_prepositional_phrases
     my $root = shift;
     foreach my $node ( $root->get_descendants( { 'ordered' => 1 } ) )
     {
-        if ( $node->get_iset('pos') eq 'prep' )
+        if ( $node->is_adposition() )
         {
             my @prepchildren = $node->children();
             my $preparg;

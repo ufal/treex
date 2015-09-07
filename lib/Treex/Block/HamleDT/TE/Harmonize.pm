@@ -177,7 +177,7 @@ sub deprel_to_afun
         }
 
         # Some information from POS
-        if ( $node->get_iset('pos') eq 'prep' ) {
+        if ( $node->is_adposition() ) {
             $afun = 'AuxP';
         }
         if ( $node->get_iset('verbtype') eq 'mod' ) {

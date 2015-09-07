@@ -189,7 +189,7 @@ sub deprel_to_afun
         }
 
         # Some information from POS
-        if ( $node->get_iset('pos') eq 'prep' ) {
+        if ( $node->is_adposition() ) {
             $afun = 'AuxP';
         }
         if ( $node->get_iset('verbtype') eq 'mod' ) {
@@ -218,7 +218,7 @@ sub deprel_to_afun
             $afun = 'Atr';
         }
         elsif ( $deprel eq "lwg__neg" ) {
-            $afun = 'Adv';
+            $afun = 'Neg';
         }
         # Postpositions are like prepositions in other languages.
         elsif ( $deprel eq 'lwg__psp' )

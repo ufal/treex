@@ -87,7 +87,7 @@ sub deprel_to_afun
         # снизим налоги/1-компл даже в/4-компл два раза
         # 5-компл (5-kompl) is the fifth complement of a verb.
         # There is only one occurrence in the corpus:
-        # кто-то провел по/4-компл векам тончайшей кисточкой/5-компл 
+        # кто-то провел по/4-компл векам тончайшей кисточкой/5-компл
         elsif ($deprel =~ m/^[1-5]-компл$/)
         {
             $afun = 'Obj';
@@ -376,7 +376,14 @@ sub deprel_to_afun
         # огранич (ogranič) is adverbial modifier indicating scope; includes the negative particle.
         elsif ($deprel eq 'огранич')
         {
-            $afun = 'Adv';
+            if($node->form() =~ m/^не$/i)
+            {
+                $afun = 'Neg';
+            }
+            else
+            {
+                $afun = 'Adv';
+            }
         }
         # оп-аппоз (op-appoz) is another subclass of apposition (probably with hyphen, now invisible?)
         # телеведущий Том Брокоу самый высокооплачиваемый тележурналист/оп-аппоз

@@ -206,7 +206,7 @@ sub set_afun {
         convert_subordinator($achild);
 
     } elsif ($func =~ /^[AV]neg$/) {
-        $afun = 'AuxZ';
+        $afun = 'Neg';
 
     } elsif (grep $_ eq $func, qw/Vmod Vaux Vph/) {
         $afun = 'AuxV';

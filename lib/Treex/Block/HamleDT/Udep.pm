@@ -52,6 +52,7 @@ sub process_zone
     $self->shape_coordination_stanford($root);
     $self->restructure_compound_prepositions($root);
     $self->push_prep_sub_down($root);
+    $self->change_case_to_mark_under_verb($root);
     # Some of the top colons are analyzed as copulas. Do this before the copula processing reshapes the scene.
     $self->colon_pred_to_apposition($root);
     $self->push_copulas_down($root);
@@ -183,7 +184,14 @@ sub afun_to_udeprel
         # We will now extend the label in cases where we may later need to distinguish the original afun.
         if($parent->is_root())
         {
-            if($afun =~ m/^(Coord|AuxP|AuxC|AuxK|ExD)$/)
+            # In verbless elliptic sentences the conjunction has no child (except for punctuation). It will remain attached as root.
+            # Example (sk): A ak áno, tak načo? = And if so, then why?
+            my @non_arg_children = grep {$_->afun() !~ m/^Aux[XGKY]$/} ($node->children());
+            if($afun eq 'AuxC' && scalar(@non_arg_children)==0)
+            {
+                $deprel = 'root';
+            }
+            elsif($afun =~ m/^(Coord|AuxP|AuxC|AuxK|ExD)$/)
             {
                 $deprel = 'root:'.lc($afun);
             }
@@ -219,7 +227,7 @@ sub afun_to_udeprel
         # In the situation 2, the first word in the multi-word prepositon will become the head and all other parts will be attached to it as 'mwe'.
         elsif($afun eq 'AuxP')
         {
-            $deprel = 'case:auxp';
+            $deprel = $parent->is_verb() ? 'mark:auxp' : 'case:auxp';
         }
         # AuxC marks a subordinating conjunction that heads a subordinate clause.
         # It will be later restructured and the conjunction will be attached to the subordinate predicate as 'mark'.
@@ -321,6 +329,12 @@ sub afun_to_udeprel
                 $deprel = 'nmod';
             }
         }
+        # AuxA is not an official afun used in HamleDT 2.0. Nevertheless it has been introduced in some (not all)
+        # languages by people who want to use the resulting data in TectoMT. It marks articles attached to nouns.
+        elsif($afun eq 'AuxA')
+        {
+            $deprel = 'det';
+        }
         # Verbal attribute is analyzed as secondary predication.
         ###!!! TODO: distinguish core arguments (xcomp) from non-core arguments and adjuncts (acl/advcl).
         elsif($afun =~ m/^AtvV?$/)
@@ -335,9 +349,32 @@ sub afun_to_udeprel
             $node->iset()->set('verbtype', 'aux');
         }
         # Reflexive pronoun "se", "si" with inherently reflexive verbs.
+        # Unfortunately, previous harmonization to the Prague style abused the AuxT label to also cover Germanic verbal particles and other compound-like stuff with verbs.
+        # We have to test for reflexivity if we want to output compound:reflex!
         elsif($afun eq 'AuxT')
         {
-            $deprel = 'compound:reflex';
+            # This appears in Slavic languages, although in theory it could be used in some Romance and Germanic languages as well.
+            # It actually also appears in Dutch (but we mixed it with verbal particles there).
+            # Most Dutch pronouns used with this label are tagged as reflexive but a few are not.
+            if($node->is_reflexive() || $node->is_pronoun())
+            {
+                $deprel = 'compound:reflex';
+            }
+            # The Tamil afun CC (compound) has also been converted to AuxT. 11 out of 12 occurrences are tagged as verbs.
+            elsif($node->is_verb())
+            {
+                $deprel = 'compound';
+            }
+            # Germanic verbal particles can be tagged as various parts of speech, including adpositions. Hence we cannot distinguish them from
+            # preposition between finite verb and infinitive, which appears in Portuguese. Examples: continua a manter; deixa de ser
+            # en: 1181 PART, 28 ADP, 28 ADV, 3 ADJ; 27 different lemmas: 418 up, 261 out, 141 off...
+            # de: 4002 PART; 138 different lemmas: 528 an, 423 aus, 350 ab...
+            # nl: 1097 ADV, 460 PRON, 397 X, 176 ADJ, 157 NOUN, 99 ADP, 42 VERB, 9 SCONJ; 368 different lemmas: 402 zich, 178 uit, 167 op, 112 aan...
+            # pt: 587 ADP, 53 SCONJ, 1 ADV; 5 different lemmas: 432 a, 114 de, 56 que, 38 por, 1 para
+            else
+            {
+                $deprel = 'compound:prt';
+            }
         }
         # Reflexive pronoun "se", "si" used for reflexive passive.
         elsif($afun eq 'AuxR')
@@ -349,7 +386,9 @@ sub afun_to_udeprel
         {
             # Negation is mostly done using bound prefix ne-.
             # If it is a separate word ("ne už personálním, ale organizačním"; "potřeboval čtyřnohého a ne dvounohého přítele), it is labeled AuxZ.
-            if($node->lemma() eq 'ne')
+            ###!!! This is specific to Czech!
+            my $lemma = $node->lemma();
+            if(defined($lemma) && $lemma eq 'ne')
             {
                 $deprel = 'neg';
             }
@@ -366,6 +405,11 @@ sub afun_to_udeprel
             {
                 $deprel = 'advmod:emph';
             }
+        }
+        # Neg: used in Prague-style harmonization of some treebanks (e.g. Romanian) for negation (elsewhere it may be AuxZ or Adv).
+        elsif($afun eq 'Neg')
+        {
+            $deprel = 'neg';
         }
         # AuxY: Additional conjunction in coordination ... cc
         # AuxY: Subordinating conjunction "jako" ("as") attached to Atv or AtvV, or even Obj (of verbal adjectives) ... mark
@@ -427,7 +471,8 @@ sub afun_to_udeprel
                 $deprel = 'vocative';
             }
             # Some ExD are properties or quantities compared to.
-            elsif($parent->lemma() =~ m/^(jako|než)$/)
+            ###!!! This is specific to Czech!
+            elsif(defined($parent->lemma()) && $parent->lemma() =~ m/^(jako|než)$/)
             {
                 $deprel = 'advcl';
             }
@@ -553,7 +598,7 @@ sub restructure_compound_prepositions
         {
             my $parent = $nodes[$i]->parent();
             my $pord = $parent->ord();
-            if($pord > $iord && $parent->deprel() eq 'case:auxp')
+            if($pord > $iord && $parent->deprel() =~ m/^(case|mark):auxp$/)
             {
                 my $found = 1;
                 my @mwe;
@@ -628,7 +673,7 @@ sub push_prep_sub_down
         if($n != 1)
         {
             my $form = $node->form();
-            my $phrase = join(' ', map {$_->lemma().'/'.$_->afun().'/'.$_->deprel()} ($node->get_children({'add_self' => 1, 'ordered' => 1})));
+            my $phrase = join(' ', map {my $l = $_->lemma(); $l = '_' unless(defined($l)); $l.'/'.$_->afun().'/'.$_->deprel()} ($node->get_children({'add_self' => 1, 'ordered' => 1})));
             if($n == 0)
             {
                 # Try to requalify other children (if any) as arguments.
@@ -671,8 +716,16 @@ sub push_prep_sub_down
         }
         # Even if the adposition is already a leaf (which should not happen), it cannot keep the AuxP label.
         # Even if the conjunction is already a leaf (which should not happen), it cannot keep the AuxC label.
-        $deprel = $deprel =~ m/:auxp/ ? 'case' : 'mark';
-        $node->set_deprel($deprel);
+        if($node->parent()->is_verb())
+        {
+            # Both subordinating conjunctions and prepositions are labeled 'mark' when their argument is a verb.
+            $node->set_deprel('mark');
+        }
+        else
+        {
+            $deprel = $deprel =~ m/:auxp/ ? 'case' : 'mark';
+            $node->set_deprel($deprel);
+        }
     }
 }
 
@@ -685,7 +738,7 @@ sub get_auxpc_children
 {
     my $self = shift;
     my $auxnode = shift;
-    my $auxlemma = $auxnode->lemma();
+    my $auxlemma = $auxnode->lemma(); $auxlemma = '' if(!defined($auxlemma));
     my $auxafun = $auxnode->afun();
     my @children = $auxnode->get_children({ordered => 1});
     # Punctuation, conjunctions and conjuncts should be re-attached to the new head.
@@ -732,6 +785,28 @@ sub get_auxpc_children
         }
     }
     return {'pc' => \@pc, 'mwe' => \@mwe, 'auxz' => \@auxz, 'args' => \@args, 'other' => \@other};
+}
+
+
+
+#------------------------------------------------------------------------------
+# Makes sure that a preposition attached to a verb is labeled 'mark' and not
+# 'case'. It is difficult to enforce during restructuring of Aux[PC] phrases
+# because there are things like coordinations of AuxP-AuxC chains, so it is not
+# immediately apparent that the final head will be a verb.
+#------------------------------------------------------------------------------
+sub change_case_to_mark_under_verb
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'case' && $node->parent()->is_verb())
+        {
+            $node->set_deprel('mark');
+        }
+    }
 }
 
 
@@ -1032,6 +1107,11 @@ sub fix_determiners
 {
     my $self  = shift;
     my $root  = shift;
+    ###!!! Do not do anything for Maltese. There is no tree structure we could
+    ###!!! rely on. This is definitely not the best place to turn this off, we
+    ###!!! need a more general solution! But right now a quick hack is needed.
+    return if($self->language() eq 'mt');
+    ###!!!
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
