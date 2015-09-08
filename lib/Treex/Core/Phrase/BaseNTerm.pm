@@ -18,6 +18,21 @@ has 'dependents' =>
     default  => sub { [] }
 );
 
+has 'dead' =>
+(
+    is       => 'rw',
+    isa      => 'Bool',
+    writer   => '_set_dead',
+    reader   => 'dead',
+    default  => 0,
+    documentation => 'Most non-terminal phrases cannot exist without children. '.
+        'If we want to change the class of a non-terminal phrase, we construct '.
+        'an object of the new class and move the children there from the old '.
+        'one. But the old object will not be physically destroyed until it '.
+        'gets out of scope. So we will mark it as “dead”. If anyone tries to '.
+        'use the dead object, an exception will be thrown.'
+);
+
 
 
 #------------------------------------------------------------------------------
@@ -40,6 +55,7 @@ sub head
 sub nonhead_children
 {
     my $self = shift;
+    confess('Dead') if($self->dead());
     return $self->dependents();
 }
 
@@ -53,6 +69,7 @@ sub nonhead_children
 sub core_children
 {
     my $self = shift;
+    confess('Dead') if($self->dead());
     return ($self->head());
 }
 
@@ -65,6 +82,7 @@ sub core_children
 sub node
 {
     my $self = shift;
+    confess('Dead') if($self->dead());
     return $self->head()->node();
 }
 
@@ -77,6 +95,7 @@ sub node
 sub deprel
 {
     my $self = shift;
+    confess('Dead') if($self->dead());
     return $self->head()->deprel();
 }
 
@@ -91,6 +110,7 @@ sub _add_child
 {
     my $self = shift;
     my $new_child = shift; # Treex::Core::Phrase
+    confess('Dead') if($self->dead());
     # If we are called correctly from Phrase::set_parent(), then the child already knows about us.
     if(!defined($new_child) || !defined($new_child->parent()) || $new_child->parent() != $self)
     {
@@ -112,6 +132,7 @@ sub _remove_child
 {
     my $self = shift;
     my $child = shift; # Treex::Core::Phrase
+    confess('Dead') if($self->dead());
     if(!defined($child) || !defined($child->parent()) || $child->parent() != $self)
     {
         confess("The child does not think I'm its parent");
@@ -173,6 +194,15 @@ Array of sub-C<Phrase>s (children) of this phrase that do not belong to the
 core of the phrase. By default the core contains only the head child. However,
 some specialized subclasses may define a larger core where two or more
 children have a special status, but only one of them can be the head.
+
+=item dead
+
+Most non-terminal phrases cannot exist without children.
+If we want to change the class of a non-terminal phrase, we construct
+an object of the new class and move the children there from the old
+one. But the old object will not be physically destroyed until it
+gets out of scope. So we will mark it as “dead”. If anyone tries to
+use the dead object, an exception will be thrown.
 
 =back
 
