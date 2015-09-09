@@ -11,11 +11,13 @@ extends 'Treex::Core::Phrase';
 
 
 
-has 'dependents' =>
+has '_dependents_ref' =>
 (
     is       => 'ro',
     isa      => 'ArrayRef[Treex::Core::Phrase]',
-    default  => sub { [] }
+    default  => sub { [] },
+    documentation => 'The public should not access directly the array reference. '.
+        'They may use the public method dependents() to get the list.'
 );
 
 has 'dead' =>
@@ -48,7 +50,22 @@ sub head
 
 
 #------------------------------------------------------------------------------
-# Returns the non-head children of the phrase. By default these are the
+# Returns the list of dependents of the phrase. The only difference from the
+# getter _dependents_ref() is that the getter returns a reference to the array
+# of dependents, while this method returns a list of dependents, hence it is
+# more similar to the other methods that return lists of children.
+#------------------------------------------------------------------------------
+sub dependents
+{
+    my $self = shift;
+    confess('Dead') if($self->dead());
+    return @{$self->_dependents_ref()};
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of non-head children of the phrase. By default these are the
 # dependents. However, in special nonterminal phrases there may be children
 # that are neither head nor dependents.
 #------------------------------------------------------------------------------
@@ -62,15 +79,29 @@ sub nonhead_children
 
 
 #------------------------------------------------------------------------------
-# Returns the children of the phrase that are not dependents. By default this
-# is just the head child. However, in special nonterminal phrases there may be
-# other children that have a special status but are not the current head.
+# Returns the list of the children of the phrase that are not dependents. By
+# default this is just the head child. However, in special nonterminal phrases
+# there may be other children that have a special status but are not the
+# current head.
 #------------------------------------------------------------------------------
 sub core_children
 {
     my $self = shift;
     confess('Dead') if($self->dead());
     return ($self->head());
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of all children of the phrase, i.e. core children and
+# dependents.
+#------------------------------------------------------------------------------
+sub children
+{
+    my $self = shift;
+    confess('Dead') if($self->dead());
+    return ($self->core_children(), $self->dependents());
 }
 
 
@@ -116,7 +147,7 @@ sub _add_child
     {
         confess("The child must point to the parent first. This private method must be called only from Phrase::set_parent()");
     }
-    my $nhc = $self->dependents();
+    my $nhc = $self->_dependents_ref();
     push(@{$nhc}, $new_child);
 }
 
@@ -141,7 +172,7 @@ sub _remove_child
     {
         confess("Cannot remove the head child or any other core child");
     }
-    my $nhc = $self->dependents();
+    my $nhc = $self->_dependents_ref();
     my $found = 0;
     for(my $i = 0; $i <= $#{$nhc}; $i++)
     {
@@ -156,6 +187,119 @@ sub _remove_child
     {
         confess("Could not find the phrase among my non-head children");
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Common validation for replace_child() and replace_core_child(). May throw
+# exceptions.
+#------------------------------------------------------------------------------
+sub _check_old_new_child
+{
+    my $self = shift;
+    my $old_child = shift; # Treex::Core::Phrase
+    my $new_child = shift; # Treex::Core::Phrase
+    confess('Dead') if($self->dead());
+    if(!defined($old_child) || !defined($old_child->parent()) || $old_child->parent() != $self)
+    {
+        confess("The child to be replaced does not think I'm its parent");
+    }
+    if(!defined($new_child))
+    {
+        confess("The replacement child is not defined");
+    }
+    if(defined($new_child->parent()))
+    {
+        if($new_child->parent() == $self)
+        {
+            confess("The replacement already is my child");
+        }
+        else
+        {
+            confess("The replacement child already has a parent");
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Replaces a child by another phrase. This method will work with any child,
+# including the core children. The core children cannot be undefined but if we
+# immediately replace them by a new child, the phrase will remain valid.
+#------------------------------------------------------------------------------
+sub replace_child
+{
+    my $self = shift;
+    my $old_child = shift; # Treex::Core::Phrase
+    my $new_child = shift; # Treex::Core::Phrase
+    confess('Dead') if($self->dead());
+    $self->_check_old_new_child($old_child, $new_child);
+    # If the child is dependent, we can do it here. If it is a core child,
+    # we need a subclass to decide what to do.
+    my $nhc = $self->_dependents_ref();
+    for(my $i = 0; $i <= $#{$nhc}; $i++)
+    {
+        if($nhc->[$i] == $old_child)
+        {
+            splice(@{$nhc}, $i, 1, $new_child);
+            $old_child->_set_parent(undef);
+            $new_child->_set_parent($self);
+            return;
+        }
+    }
+    # If we are here, we did not find the old child among the dependents.
+    # Thus it has to be a core child.
+    $self->replace_core_child($old_child, $new_child);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Replaces a core child by another phrase. This is an abstract method that must
+# be defined in every derived class.
+#------------------------------------------------------------------------------
+sub replace_core_child
+{
+    my $self = shift;
+    confess("The replace_core_child() method is not implemented");
+}
+
+
+
+#------------------------------------------------------------------------------
+# Detaches all children (including core children) and then marks itself as dead
+# so that it cannot be used any more. This method should be called when we want
+# to replace a non-terminal phrase by a new phrase of a different class. The
+# method will not detach the dying phrase from its parent! That could kill the
+# parent too (if the dying phrase is a core child) but we probably want the
+# parent to survive and to replace the dying child by a new phrase we create.
+# However, it is the caller's responsibility to modify the parent immediately.
+#------------------------------------------------------------------------------
+sub detach_children_and_die
+{
+    my $self = shift;
+    # Visit all children and tell them they have no parent now. We cannot use
+    # the public method set_parent() because it will call our method _remove_child()
+    # and that only works for non-core children. (Besides, we want to destroy
+    # our links to children all at once. The _remove_child() method would be
+    # unnecessarily slow for that purpose, as it works with only one child and
+    # has to find it first.) Thus we will directly modify the one-way link via
+    # _set_parent().
+    my @children = $self->children();
+    foreach my $child (@children)
+    {
+        $child->_set_parent(undef);
+    }
+    # Remove the references leading from this phrase to its dependents.
+    splice(@{$self->_dependents_ref()});
+    # We cannot remove the references to the core children because we do not
+    # know how many core children there are and how they are accessed, and
+    # they cannot be undefined anyway. However, we will mark this phrase as
+    # dead, so it cannot be used until it is physically destroyed by Perl.
+    $self->_set_dead(1);
+    return @children;
 }
 
 
@@ -188,9 +332,9 @@ See also L<Treex::Core::Phrase> and L<Treex::Core::Phrase::NTerm>.
 
 =over
 
-=item dependents
+=item _dependents_ref
 
-Array of sub-C<Phrase>s (children) of this phrase that do not belong to the
+Reference to array of sub-C<Phrase>s (children) of this phrase that do not belong to the
 core of the phrase. By default the core contains only the head child. However,
 some specialized subclasses may define a larger core where two or more
 children have a special status, but only one of them can be the head.
@@ -218,17 +362,62 @@ Special cases of nonterminals may have multiple children with special behavior,
 and they may choose which one of these children shall be head under the current
 annotation style.
 
+=item dependents
+
+Returns the list of dependents of the phrase. The only difference from the
+getter C<_dependents_ref()> is that the getter returns a reference to the array
+of dependents, while this method returns a list of dependents. Hence this method is
+more similar to the other methods that return lists of children.
+
 =item nonhead_children
 
-Returns the non-head children of the phrase. By default these are the
+Returns the list of non-head children of the phrase. By default these are the
 dependents. However, in special nonterminal phrases there may be children
 that are neither head nor dependents.
 
 =item core_children
 
-Returns the children of the phrase that are not dependents. By default this
+Returns the list of the children of the phrase that are not dependents. By default this
 is just the head child. However, in specialized nonterminal phrases there may be
 other children that have a special status but are not the current head.
+
+=item children
+
+Returns the list of all children of the phrase, i.e. core children and
+dependents.
+
+=item replace_child
+
+  $nonterminal->replace_child ($old_child, $new_child);
+
+Replaces a child by another phrase. This method will work with any child,
+including the core children. The core children cannot be undefined but if we
+immediately replace them by a new child, the phrase will remain valid.
+
+=item replace_core_child
+
+Same as C<replace_child()> but used with core children only. If we know that we
+are replacing a core child, it is more efficient to call directly this method.
+If we do not know what type of child we have, we can call the more general
+C<replace_child()> and it will decide.
+
+C<BaseNTerm::replace_core_child()> is an abstract method that must be defined
+in every derived class.
+
+=item detach_children_and_die
+
+  my $parent = $phrase->parent();
+  my $replacement = new Treex::Core::Phrase::PP (...);
+  my @children = $phrase->detach_children_and_die();
+  $parent->replace_child ($phrase, $replacement);
+
+Detaches all children (including core children) and then marks itself as dead
+so that it cannot be used any more. This method should be called when we want
+to replace a non-terminal phrase by a new phrase of a different class. The
+method will not detach the dying phrase from its parent! That could kill the
+parent too (if the dying phrase is a core child) but we probably want the
+parent to survive and to replace the dying child by a new phrase we create.
+However, it is the caller's responsibility to modify the parent immediately.
 
 =back
 

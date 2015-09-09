@@ -51,6 +51,7 @@ has 'conjunct_head' =>
 sub head
 {
     my $self = shift;
+    confess('Dead') if($self->dead());
     return $self->prep_is_head() ? $self->prep() : $self->arg();
 }
 
@@ -63,6 +64,7 @@ sub head
 sub nonhead_children
 {
     my $self = shift;
+    confess('Dead') if($self->dead());
     return (($self->prep_is_head() ? $self->arg() : $self->prep()), $self->dependents());
 }
 
@@ -75,7 +77,38 @@ sub nonhead_children
 sub core_children
 {
     my $self = shift;
+    confess('Dead') if($self->dead());
     return ($self->prep(), $self->arg());
+}
+
+
+
+#------------------------------------------------------------------------------
+# Replaces one of the core children (preposition or argument) by another
+# phrase. This is used when we want to transform the child to a different class
+# of phrase. The replacement must not have a parent yet.
+#------------------------------------------------------------------------------
+sub replace_core_child
+{
+    my $self = shift;
+    my $old_child = shift; # Treex::Core::Phrase
+    my $new_child = shift; # Treex::Core::Phrase
+    confess('Dead') if($self->dead());
+    $self->_check_old_new_child($old_child, $new_child);
+    $old_child->_set_parent(undef);
+    $new_child->_set_parent($self);
+    if($old_child == $self->prep())
+    {
+        $self->_set_prep($new_child);
+    }
+    elsif($old_child == $self->arg())
+    {
+        $self->_set_arg($new_child);
+    }
+    else
+    {
+        confess("The replacement child is not in my core");
+    }
 }
 
 

@@ -30,6 +30,7 @@ sub set_head
 {
     my $self = shift;
     my $new_head = shift; # Treex::Core::Phrase
+    confess('Dead') if($self->dead());
     my $old_head = $self->head();
     return if ($new_head == $old_head);
     # Remove the new head from the list of non-head children.
@@ -39,6 +40,30 @@ sub set_head
     $self->_add_child($old_head);
     # Finally, set the new head, using the private bare setter.
     $self->_set_head($new_head);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Replaces the head by another phrase. This is used when we want to transform
+# the head to a different class of phrases. The replacement must not have a
+# parent yet.
+#------------------------------------------------------------------------------
+sub replace_core_child
+{
+    my $self = shift;
+    my $old_child = shift; # Treex::Core::Phrase
+    my $new_child = shift; # Treex::Core::Phrase
+    confess('Dead') if($self->dead());
+    $self->_check_old_new_child($old_child, $new_child);
+    # We have not checked yet whether the old child is the head.
+    if($old_child != $self->head())
+    {
+        confess("The replacement child is not my head");
+    }
+    $old_child->_set_parent(undef);
+    $new_child->_set_parent($self);
+    $self->_set_head($new_child);
 }
 
 
@@ -96,6 +121,12 @@ Head is a special case of child (sub-) phrase. The (one) head must always exist;
 
 Sets a new head child for this phrase. The new head must be already a child
 of this phrase. The old head will become an ordinary non-head child.
+
+=item $phrase->replace_core_child ($old_head, $new_head);
+
+Replaces the head by another phrase. This is used when we want to transform
+the head to a different class of phrases. The replacement must not have a
+parent yet.
 
 =back
 

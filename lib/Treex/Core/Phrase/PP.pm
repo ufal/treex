@@ -44,31 +44,64 @@ has 'prep_is_head' =>
 sub head
 {
     my $self = shift;
+    confess('Dead') if($self->dead());
     return $self->prep_is_head() ? $self->prep() : $self->arg();
 }
 
 
 
 #------------------------------------------------------------------------------
-# Returns the non-head children of the phrase, i.e. the dependents plus either
-# the preposition or the argument (whichever is currently not the head).
+# Returns the list of non-head children of the phrase, i.e. the dependents plus
+# either the preposition or the argument (whichever is currently not the head).
 #------------------------------------------------------------------------------
 sub nonhead_children
 {
     my $self = shift;
+    confess('Dead') if($self->dead());
     return (($self->prep_is_head() ? $self->arg() : $self->prep()), $self->dependents());
 }
 
 
 
 #------------------------------------------------------------------------------
-# Returns the children of the phrase that are not dependents, i.e. both the
-# preposition and the argument.
+# Returns the list of the children of the phrase that are not dependents, i.e.
+# both the preposition and the argument.
 #------------------------------------------------------------------------------
 sub core_children
 {
     my $self = shift;
+    confess('Dead') if($self->dead());
     return ($self->prep(), $self->arg());
+}
+
+
+
+#------------------------------------------------------------------------------
+# Replaces one of the core children (preposition or argument) by another
+# phrase. This is used when we want to transform the child to a different class
+# of phrase. The replacement must not have a parent yet.
+#------------------------------------------------------------------------------
+sub replace_core_child
+{
+    my $self = shift;
+    my $old_child = shift; # Treex::Core::Phrase
+    my $new_child = shift; # Treex::Core::Phrase
+    confess('Dead') if($self->dead());
+    $self->_check_old_new_child($old_child, $new_child);
+    $old_child->_set_parent(undef);
+    $new_child->_set_parent($self);
+    if($old_child == $self->prep())
+    {
+        $self->_set_prep($new_child);
+    }
+    elsif($old_child == $self->arg())
+    {
+        $self->_set_arg($new_child);
+    }
+    else
+    {
+        confess("The replacement child is not in my core");
+    }
 }
 
 
@@ -156,13 +189,19 @@ argument.
 
 =item nonhead_children
 
-Returns the non-head children of the phrase, i.e. the dependents plus either
+Returns the list of non-head children of the phrase, i.e. the dependents plus either
 the preposition or the argument (whichever is currently not the head).
 
 =item core_children
 
-Returns the children of the phrase that are not dependents, i.e. both the
+Returns the list of the children of the phrase that are not dependents, i.e. both the
 preposition and the argument.
+
+=item replace_core_child
+
+Replaces one of the core children (preposition or argument) by another
+phrase. This is used when we want to transform the child to a different class
+of phrase. The replacement must not have a parent yet.
 
 =back
 
