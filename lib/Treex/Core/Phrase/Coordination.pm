@@ -84,6 +84,23 @@ sub core_children
 
 
 #------------------------------------------------------------------------------
+# After the object is constructed, this block makes sure that the core children
+# refer back to it as their parent.
+#------------------------------------------------------------------------------
+BUILD
+{
+    my $self = shift;
+    if(defined($self->prep()->parent()) || defined($self->arg()->parent()))
+    {
+        confess("The core child already has another parent");
+    }
+    $self->prep()->_set_parent($self);
+    $self->arg()->_set_parent($self);
+}
+
+
+
+#------------------------------------------------------------------------------
 # Replaces one of the core children (preposition or argument) by another
 # phrase. This is used when we want to transform the child to a different class
 # of phrase. The replacement must not have a parent yet.

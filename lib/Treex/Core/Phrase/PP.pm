@@ -38,6 +38,23 @@ has 'prep_is_head' =>
 
 
 #------------------------------------------------------------------------------
+# After the object is constructed, this block makes sure that the core children
+# refer back to it as their parent.
+#------------------------------------------------------------------------------
+BUILD
+{
+    my $self = shift;
+    if(defined($self->prep()->parent()) || defined($self->arg()->parent()))
+    {
+        confess("The core child already has another parent");
+    }
+    $self->prep()->_set_parent($self);
+    $self->arg()->_set_parent($self);
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the head child of the phrase. Depending on the current preference,
 # it is either the preposition or its argument.
 #------------------------------------------------------------------------------

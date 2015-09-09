@@ -23,6 +23,22 @@ has 'head' =>
 
 
 #------------------------------------------------------------------------------
+# After the object is constructed, this block makes sure that the head refers
+# back to it as its parent.
+#------------------------------------------------------------------------------
+BUILD
+{
+    my $self = shift;
+    if(defined($self->head()->parent()))
+    {
+        confess("The head already has another parent");
+    }
+    $self->head()->_set_parent($self);
+}
+
+
+
+#------------------------------------------------------------------------------
 # Sets a new head child for this phrase. The new head must be already a child
 # of this phrase. The old head will become an ordinary non-head child.
 #------------------------------------------------------------------------------

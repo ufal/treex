@@ -77,28 +77,32 @@ sub detect_prague_pp
             return $phrase;
         }
         # Now it is clear that we have a prepositional phrase. A new PP will be created
-        # and the old input NTerm will be either reattached or destroyed.
-        # First make sure that it is no longer attached to its original parent.
-        ###!!! What if $phrase is the head of its parent? Or another core child if the parent is a specialized nonterminal?
-        ###!!! Then we cannot just detach it!
-        ###!!! In order to keep the parent in a correct state at any time, the
-        ###!!! parent should provide a method swap_child() or something, that
-        ###!!! would replace a child phrase by another phrase even if it is a core child.
-        my $parent = $phrase->set_parent(undef);
+        # and the old input NTerm will be destroyed.
+        my $preposition = $phrase->head();
         # If there are two or more argument candidates, we have to select the best one.
         # There may be more sophisticated approaches but let's just take the first one for the moment.
         ###!!! We should make sure that we have an ordered list and that we know whether we expect prepositions or postpositions.
         ###!!! Then we should pick the first candidate after (resp. before) the preposition (resp. postposition).
-        # If this is a multi-word preposition, keep the input phrase. After reattaching punctuation and other dependents it will contain only the parts of the MWE.
-        # Otherwise take just the head Term phrase, and the NTerm will be later destroyed (because it is no longer attached to its parent and it will lose its children).
-        my $preposition = (scalar(@mwauxp) > 0) ? $phrase : $phrase->head();
         my $argument = shift(@candidates);
-        ###!!! Will the creation of the PP automatically detach the preposition and the argument from their original parent phrase?
+        my $parent = $phrase->parent();
+        $phrase->detach_children_and_die();
+        # If the preposition consists of multiple nodes, group them in a new NTerm first.
+        # The main prepositional node has already been detached from its original parent so it can be used as the head elsewhere.
+        if(scalar(@mwauxp) > 0)
+        {
+           $preposition = new Treex::Core::Phrase::NTerm('head' => $preposition);
+           foreach my $mwp (@mwauxp)
+           {
+               $mwp->set_parent($preposition);
+           }
+        }
         my $pp = new Treex::Core::Phrase::PP('prep' => $preposition, 'arg' => $argument, 'prep_is_head' => 1);
         foreach my $d (@candidates, @punc)
         {
             $d->set_parent($pp);
         }
+        $parent->replace_child($phrase, $pp);
+        return $pp;
     }
     # Return the input NTerm phrase if no PP has been detected.
     return $phrase;
