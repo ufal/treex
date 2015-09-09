@@ -29,6 +29,9 @@ sub build
             my $pchild = $self->build_phrase($nchild);
             $pchild->set_parent($phrase);
         }
+        # The following line is the only part (so far) that assumes one particular
+        # annotation style.
+        $phrase = $self->detect_prague_pp($phrase);
     }
     return $phrase;
 }
@@ -46,7 +49,7 @@ sub detect_prague_pp
     # If this is the Prague style then the preposition (if any) must be the head and the deprel of the phrase must be AuxP.
     if($phrase->deprel() eq 'AuxP')
     {
-        my @dependents = $phrase->dependents();
+        my @dependents = $phrase->dependents('ordered' => 1);
         my @mwauxp;
         my @punc;
         my @candidates;
@@ -81,8 +84,8 @@ sub detect_prague_pp
         my $preposition = $phrase->head();
         # If there are two or more argument candidates, we have to select the best one.
         # There may be more sophisticated approaches but let's just take the first one for the moment.
-        ###!!! We should make sure that we have an ordered list and that we know whether we expect prepositions or postpositions.
-        ###!!! Then we should pick the first candidate after (resp. before) the preposition (resp. postposition).
+        ###!!! This should work reasonably well for languages that have mostly prepositions.
+        ###!!! If we know that there are mostly postpositions, we may prefer to take the last candidate.
         my $argument = shift(@candidates);
         my $parent = $phrase->parent();
         $phrase->detach_children_and_die();
@@ -101,7 +104,12 @@ sub detect_prague_pp
         {
             $d->set_parent($pp);
         }
-        $parent->replace_child($phrase, $pp);
+        # If the original phrase already had a parent, we must make sure that
+        # the parent is aware of the reincarnation we have made.
+        if(defined($parent))
+        {
+            $parent->replace_child($phrase, $pp);
+        }
         return $pp;
     }
     # Return the input NTerm phrase if no PP has been detected.
@@ -130,6 +138,21 @@ A C<Builder> provides methods to construct a phrase structure tree around
 a dependency tree. It takes a C<Node> and returns a C<Phrase>.
 
 =head1 METHODS
+
+=over
+
+=item build
+
+Wraps a node (and its subtree, if any) in a phrase.
+
+=item detect_prague_pp
+
+Examines a nonterminal phrase in the Prague style. If it recognizes
+a prepositional phrase, transforms the general nonterminal to PP.
+Returns the resulting phrase (if nothing has been changed, returns
+the original phrase).
+
+=back
 
 =head1 AUTHORS
 
