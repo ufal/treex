@@ -50,6 +50,44 @@ sub head
 
 
 #------------------------------------------------------------------------------
+# Figures out whether an ordered list of children is required. Allows both hash
+# and non-hash notations, i.e.
+#   my @c = $p->dependents({'ordered' => 1});
+#   my @c = $p->dependents('ordered' => 1);
+#   my @c = $p->dependents('ordered');
+#------------------------------------------------------------------------------
+sub _order_required
+{
+    my @parray = @_;
+    return 0 unless(@parray);
+    return $parray[0]->{ordered} if(ref($parray[0]) eq 'HASH');
+    my %phash = @_;
+    if(exists($phash{ordered}))
+    {
+        # To accommodate the $p->dependents('ordered') calling style, even undefined value will count as true.
+        if(defined($phash{ordered}) && $phash{ordered}==0)
+        {
+            return 0;
+        }
+        return 1;
+    }
+    return 0;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Sorts a list of phrases according to the word order of their head nodes.
+#------------------------------------------------------------------------------
+sub order_phrases
+{
+    my $self = shift;
+    return sort {$a->ord() <=> $b->ord()} (@_);
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the list of dependents of the phrase. The only difference from the
 # getter _dependents_ref() is that the getter returns a reference to the array
 # of dependents, while this method returns a list of dependents, hence it is
@@ -59,7 +97,8 @@ sub dependents
 {
     my $self = shift;
     confess('Dead') if($self->dead());
-    return @{$self->_dependents_ref()};
+    my @dependents = @{$self->_dependents_ref()};
+    return _order_required(@_) ? $self->order_phrases(@dependents) : @dependents;
 }
 
 
@@ -73,7 +112,7 @@ sub nonhead_children
 {
     my $self = shift;
     confess('Dead') if($self->dead());
-    return $self->dependents();
+    return $self->dependents(@_);
 }
 
 
@@ -101,7 +140,8 @@ sub children
 {
     my $self = shift;
     confess('Dead') if($self->dead());
-    return ($self->core_children(), $self->dependents());
+    my @children = ($self->core_children(), $self->dependents());
+    return _order_required(@_) ? $self->order_phrases(@children) : @children;
 }
 
 
@@ -385,6 +425,17 @@ other children that have a special status but are not the current head.
 
 Returns the list of all children of the phrase, i.e. core children and
 dependents.
+
+=item order_phrases
+
+Sorts a list of phrases according to the word order of their head nodes.
+All methods that return lists of children (C<dependents()>, C<nonhead_children()>,
+C<core_children()>, C<children()>) can be asked to sort the list using this
+method. The following calling styles are possible:
+
+  my @ordered_children = $phrase->children({'ordered' => 1});
+  my @ordered_children = $phrase->children('ordered' => 1);
+  my @ordered_children = $phrase->children('ordered');
 
 =item replace_child
 

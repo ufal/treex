@@ -79,6 +79,19 @@ sub deprel
 
 
 
+#------------------------------------------------------------------------------
+# Returns the node's ord attribute. This means that nodes that do not implement
+# the Ordered role cannot be wrapped in phrases. We sometimes need to order
+# child phrases according to the word order of their head nodes.
+#------------------------------------------------------------------------------
+sub ord
+{
+    my $self = shift;
+    return $self->node()->ord();
+}
+
+
+
 __PACKAGE__->meta->make_immutable();
 
 1;
@@ -167,6 +180,12 @@ underlying nodes. When the phrase tree is transformed to the desired style,
 the relations may be modified; at the end, they can be projected to the
 dependency tree again. A general nonterminal phrase typically has the same
 deprel as its head child. Terminal phrases store deprels as attributes.
+
+=item my $ord = $phrase->ord();
+
+Returns the head node's ord attribute. This means that nodes that do not implement
+the L<Treex::Core::Node::Ordered|Ordered> role cannot be wrapped in phrases. We sometimes need to order
+child phrases according to the word order of their head nodes.
 
 =back
 

@@ -58,27 +58,29 @@ sub head
 
 
 #------------------------------------------------------------------------------
-# Returns the non-head children of the phrase, i.e. the dependents plus either
-# the preposition or the argument (whichever is currently not the head).
+# Returns the list of non-head children of the phrase, i.e. the dependents plus
+# either the preposition or the argument (whichever is currently not the head).
 #------------------------------------------------------------------------------
 sub nonhead_children
 {
     my $self = shift;
     confess('Dead') if($self->dead());
-    return (($self->prep_is_head() ? $self->arg() : $self->prep()), $self->dependents());
+    my @children = (($self->prep_is_head() ? $self->arg() : $self->prep()), $self->dependents());
+    return _order_required(@_) ? $self->order_phrases(@children) : @children;
 }
 
 
 
 #------------------------------------------------------------------------------
-# Returns the children of the phrase that are not dependents, i.e. both the
-# preposition and the argument.
+# Returns the list of the children of the phrase that are not dependents, i.e.
+# both the preposition and the argument.
 #------------------------------------------------------------------------------
 sub core_children
 {
     my $self = shift;
     confess('Dead') if($self->dead());
-    return ($self->prep(), $self->arg());
+    my @children = ($self->prep(), $self->arg());
+    return _order_required(@_) ? $self->order_phrases(@children) : @children;
 }
 
 
