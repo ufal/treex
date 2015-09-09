@@ -4,7 +4,7 @@ package Treex::Tutorial::ReadersAndWriters;
 
 =head1 NAME
 
-Treex::Tutorial::ReadersAndWriters - reading/writing from/to different file formats
+Treex::Tutorial::ReadersAndWriters - Reading/writing from/to different file formats
 
 
 =head1 FORMATS

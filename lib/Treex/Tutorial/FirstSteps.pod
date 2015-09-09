@@ -106,7 +106,7 @@ C<W2A::EN::Segment> is a descendant of the C<W2A::Segment> base class.
 
 =item Where can I find blocks' source code?
 
-The blocks are actually Perl modules and if you followed L<Tutorial::Install>
+The blocks are actually Perl modules and if you followed L<Treex::Tutorial::Install>
 you can find them in F<~/perl5/lib/perl5/Treex/Block/>.
 Generally, you can find the real location of perl module with C<perldoc -l>.
 The full name of the C<W2A::EN::Segment> module is actually
@@ -279,6 +279,46 @@ Finally, there is another shortcut, that allows you to modify treex files in sit
  treex -s -Len W2A::EN::Lemmatize -- my.treex.gz
  # check that lemmas were added
  treex -Len -q Write::CoNLLX -- my.treex.gz
+
+=head1 CREATING SCENARIOS
+
+We already know what scenario is, however there are many methods how to pass the desired scenario to the Treex.
+So far, we just passed a pipeline of blocks we wanted to apply to our documents to the command line interface:
+
+ echo "John loves Mary" |\
+ treex -Len Read::Sentences\
+ W2A::EN::Tokenize\
+ W2A::TagTreeTagger\
+ W2A::EN::Lemmatize\
+ Write::CoNLLX
+
+With larger scenarios, this input method can be quite annoying (e.g. when you want to modify previously executed scenario).
+However, you can store the pipeline of blocks into a separate file (usually with .scen suffix, see F<scenarios/tagging_en_1.scen>) and substitute the blocks with that file:
+
+ echo "John loves Mary" |\
+ treex -Len Read::Sentences\
+ data/tagging_en_1.scen\
+ Write::CoNLLX
+
+It is also possible to include other scenario files in the scenarios, simply insert its the relative path into the (in this case, tagging_en_1.scen) file:
+
+ ...
+ # You can also insert comments like this into the .scen files
+ W2A::EN::Tokenize
+ W2A::TagTreeTagger
+ W2A::EN::Lemmatize
+
+ # call "some_additional_blocks.scen" in the same directory
+ some_additional_blocks.scen
+ ...
+
+This way you can write scenarios which are easier to read.
+It is recommended to exclude the readers/writers from the scenario files, because you may want to use different readers/writers depending on the currently processed files.
+
+The above method still have some drawbacks.
+For example, when you are writing a description for your scenario, you can only use comments.
+Also, you might want to give the user a choice of a tagger in the F<data/tagging_en_1.scen> depending on the input parameters.
+For those (and other) reasons, treex supports scenarios in the format of a Perl module. For more information, see L<Treex::Tutorial::Scen>.
 
 =head1 NEXT TASKS
 

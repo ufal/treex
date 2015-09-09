@@ -64,11 +64,9 @@ C<sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev libpng12-dev pat
  source ~/tred/bin/init_tred_environment
  ttred # run TrEd with Treex extension
 
-=item 5. Download the newest version of the whole Treex from SVN repository (optional)
+=item 5. Download the newest version of the whole Treex from GIT repository (optional)
 
- SVN_TRUNK=https://svn.ms.mff.cuni.cz/svn/tectomt_devel/trunk
- # password is "public"
- svn --username public co $SVN_TRUNK/treex ~/treex
+ git clone https://github.com/ufal/treex.git ~/treex
  # Add the following lines to your ~/.bashrc
  export PATH="$HOME/treex/bin:$PATH"
  export PERL5LIB="$HOME/treex/lib:$PERL5LIB"
@@ -236,7 +234,7 @@ which contains only modules specific to English. It is dependent on C<Treex-Unil
 so both the distributions can be installed by:
 
  cpanm Treex::EN
- cpanm Lingua::Interset
+ cpanm Lingua::Interset URI::Find Cache::LRU
 
 =head1 4. Install TrEd
 
@@ -279,41 +277,29 @@ Finally, you can run TrEd with the Treex extension enabled:
 
  ttred
 
-=head1 5. Download Treex from SVN repository
+=head1 5. Download Treex from GIT repository
 
 Some Treex modules are not mature enough to be released on CPAN.
 You may also want to test the newest Treex version or commit your own code to the repository.
-So let's create your local checkout of Treex in F<~/treex>.
+So let's create your local clone of Treex in F<~/treex>.
 
- SVN_TRUNK=https://svn.ms.mff.cuni.cz/svn/tectomt_devel/trunk
- # password is "public"
- svn --username public co $SVN_TRUNK/treex ~/treex
+ git clone https://github.com/ufal/treex.git ~/treex
 
-Currently, some code still uses several older modules which are not converted to Treex yet.
-Let's download these modules to F<~/treex/oldlib>
-(yes, this results in one checkout inside another checkout, but that is a usual practice).
-
- svn --username public co $SVN_TRUNK/libs/other ~/treex/oldlib
-
-Finally, you need to include the path to the downloaded modules in your C<$PERL5LIB>.
-Add the following lines I<to the end> of your F<~/.bashrc>:
+You need to include the path to the downloaded modules in your $PERL5LIB. Add the following lines to the end of your ~/.bashrc:
 
  export PATH="$HOME/treex/bin:$PATH"
  export PERL5LIB="$HOME/treex/lib:$HOME/treex/oldlib:$PERL5LIB"
  export TMT_ROOT=$HOME/.treex
 
-It is important that these lines follow C<eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib`> in your F<~/.bashrc>,
-so a SVN module is preferred over a CPAN modules of the same name.
-To apply the setting for the current bash session, type the three export commands or start a new session.
-You can check it with:
+It is important that these lines follow eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib` in your ~/.bashrc, so a GIT module is preferred over a CPAN modules of the same name. To apply the setting for the current bash session, type the three export commands or start a new session. You can check it with:
 
  echo $PERL5LIB  # ~/treex/lib should precede ~/perl5/...
  treex -v        # should print "Treex version: DEV from..."
 
-Now you can use Perl modules that were not installed from CPAN (but were downloaded from SVN).
+Now you can use Perl modules that were not installed from CPAN (but were downloaded from GIT).
 Some of the modules may have dependencies that you do not have (installed).
 When you load such a module (e.g. by running C<treex>) it will fail
-with an error message like 
+with an error message like
 C<Can't locate Acme/Time/Baby.pm in @INC (@INC contains:...>
 You can install the missing dependencies (Acme::Time::Baby in this imaginary example) simply with
 
@@ -333,29 +319,36 @@ but they are XS-based (involve compiling C code), so you cannot just download th
 In the same way, you can install C<CzechMorpho> and C<Morce-Czech>
 (in this order because the latter depends on the former).
 
-=head1 6. Install Featurama tagger
+=head1 6. Install MorphoDiTa tagger and NameTag NER (optional)
 
-L<Featurama|http://featurama.sourceforge.net/> is a library implementing averaged perceptron algorithm.
-This library is necessary for running C<Treex::Tool::Tagger::Featurama::EN>.
-It is written in C and uses SWIG as a connection with Perl.
-You may check if you have SWIG already installed on your computer.
+L<MorphoDiTa|http://ufal.mff.cuni.cz/morphodita> is an open-source tool for morphological analysis of natural language texts.
+Currently there is a Perl module, C<Ufal::MorphoDiTa>, available on CPAN providing bindings to the MorphoDiTa library.
+This module is necessary for running C<Treex::Tool::Tagger::MorphoDiTa> and consequently C<Treex::Block::W2A::EN::TagMorphoDiTa>.
 
- swig -version
+To compile the module, C++11 compiler is needed, either g++ 4.7 or newer, alternatively clang 3.2 or newer.
+You may check if you have the required compiler installed on your computer.
 
-When not installed install it. On Ubuntu/Debian etc. use this command:
+ g++ --version
+ # Or alternatively ...
+ clang --version
 
- sudo apt-get install swig
+When not installed, install it. On Ubuntu/Debian etc. use this command:
 
-Use modified Featurama which can handle new version of SWIG. (If you have older version of SWIG, but newer than 1.3.17 download it from L<Sourceforge|http://sourceforge.net/projects/featurama/files/latest/download>.)
+ sudo apt-get install g++ 
 
- wget http://ufal.mff.cuni.cz/treex/featurama-1.0modified.tar.gz
- tar -zxf featurama-1.0modified.tar.gz
+When the installed compiler version is too old, upgrade it. On Ubuntu/Debian etc. use this command:
 
-After you downloaded and unpacked the package, compile it and install.
+ sudo apt-get upgrade g++
 
- pushd featurama-1.0
- ./configure --prefix=$HOME/perl5 --enable-perl && make && make install
- popd
+Finally, you can install the module:
+
+ cpanm Ufal::MorphoDiTa
+
+
+Another useful tool is L<Ufal::NameTag|http://ufal.mff.cuni.cz/nametag>, a tool for named entity recognition.
+It should have similar prerequisities as Ufal::MorphoDiTa, so if you followed the previous steps, just install the module.
+
+ cpanm Ufal::NameTag
 
 =head1 Uninstall
 
