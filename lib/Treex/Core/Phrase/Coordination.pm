@@ -63,13 +63,15 @@ sub BUILD
         confess("There must be at least one conjunct");
     }
     # Make sure that all core children refer to me as their parent.
-    ###!!!prep ne!
-    if(defined($self->prep()->parent()) || defined($self->arg()->parent()))
+    my @children = $self->core_children();
+    foreach my $child (@children)
     {
-        confess("The core child already has another parent");
+        if(defined($child->parent()))
+        {
+            confess("The core child already has another parent");
+        }
+        $child->_set_parent($self);
     }
-    $self->prep()->_set_parent($self);
-    $self->arg()->_set_parent($self);
 }
 
 
