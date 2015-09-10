@@ -36,6 +36,11 @@ sub process_atree
     }
     if($before ne $after)
     {
+        unless($self->debug())
+        {
+            log_info("BEFORE: $before");
+            log_info("AFTER:  $after");
+        }
         log_fatal("Round-trip dependencies-phrases-dependencies does not match.");
     }
 }
