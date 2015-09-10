@@ -48,6 +48,18 @@ around BUILDARGS => sub
 
 
 
+#------------------------------------------------------------------------------
+# Tells whether this phrase is terminal. We could probably use the Moose's
+# methods to query the class name but this will be more convenient.
+#------------------------------------------------------------------------------
+sub is_terminal
+{
+    my $self = shift;
+    return 1;
+}
+
+
+
 __PACKAGE__->meta->make_immutable();
 
 1;

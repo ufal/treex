@@ -38,6 +38,18 @@ has 'dead' =>
 
 
 #------------------------------------------------------------------------------
+# Tells whether this phrase is terminal. We could probably use the Moose's
+# methods to query the class name but this will be more convenient.
+#------------------------------------------------------------------------------
+sub is_terminal
+{
+    my $self = shift;
+    return 0;
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the head child of the phrase. This is an abstract method that must be
 # defined in every derived class.
 #------------------------------------------------------------------------------

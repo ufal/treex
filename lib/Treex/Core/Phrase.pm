@@ -48,6 +48,18 @@ sub set_parent
 
 
 #------------------------------------------------------------------------------
+# Tells whether this phrase is terminal. We could probably use the Moose's
+# methods to query the class name but this will be more convenient.
+#------------------------------------------------------------------------------
+sub is_terminal
+{
+    my $self = shift;
+    confess("The is_terminal() method is not implemented");
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the head node of the phrase. For terminal phrases this should just
 # return their node attribute. For nonterminal phrases this should return the
 # node of their head child. This is an abstract method that must be defined in
@@ -162,6 +174,11 @@ The new parent may also be undefined, which means that the current phrase will
 be disconnected from the phrase structure (but it will keeep its own children,
 if any).
 The method returns the old parent.
+
+=item my $ist = $phrase->is_terminal();
+
+Tells whether this phrase is terminal, that is, it does not have children
+(subphrases).
 
 =item my $node = $phrase->node();
 
