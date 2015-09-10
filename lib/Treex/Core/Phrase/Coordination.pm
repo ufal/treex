@@ -10,28 +10,33 @@ extends 'Treex::Core::Phrase::BaseNTerm';
 
 
 
-###!!! There must be at least one conjunct but we cannot check this by simply making this attribute required.
-has 'conjuncts' =>
-(
-    is       => 'ro',
-    isa      => 'ArrayRef[Treex::Core::Phrase]',
-    default  => sub { [] }
-);
-
-has 'coordinators' =>
+has '_conjuncts_ref' =>
 (
     is       => 'ro',
     isa      => 'ArrayRef[Treex::Core::Phrase]',
     default  => sub { [] },
-    documentation => 'Coordinating conjunctions and similarly working words but not punctuation.'
+    documentation => 'The public should not access directly the array reference. '.
+        'They may use the public method conjuncts() to get the list.'
 );
 
-has 'punctuation' =>
+has '_coordinators_ref' =>
 (
     is       => 'ro',
     isa      => 'ArrayRef[Treex::Core::Phrase]',
     default  => sub { [] },
-    documentation => 'Punctuation between conjuncts.'
+    documentation => 'Coordinating conjunctions and similarly working words but not punctuation. '.
+        'The public should not access directly the array reference. '.
+        'They may use the public method coordinators() to get the list.'
+);
+
+has '_punctuation_ref' =>
+(
+    is       => 'ro',
+    isa      => 'ArrayRef[Treex::Core::Phrase]',
+    default  => sub { [] },
+    documentation => 'Punctuation between conjuncts. '.
+        'The public should not access directly the array reference. '.
+        'They may use the public method punctuation() to get the list.'
 );
 
 has 'conjunct_head' =>
@@ -53,6 +58,11 @@ sub BUILD
 {
     my $self = shift;
     # Check that there is at least one conjunct.
+    if(scalar(@{$self->conjuncts()})==0)
+    {
+        confess("There must be at least one conjunct");
+    }
+    # Make sure that all core children refer to me as their parent.
     ###!!!prep ne!
     if(defined($self->prep()->parent()) || defined($self->arg()->parent()))
     {
@@ -60,6 +70,54 @@ sub BUILD
     }
     $self->prep()->_set_parent($self);
     $self->arg()->_set_parent($self);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of conjuncts in the coordination. The only difference from
+# the getter _conjuncts_ref() is that the getter returns a reference to the
+# array of conjuncts, while this method returns a list of conjuncts, hence it
+# is more similar to the other methods that return lists of children.
+#------------------------------------------------------------------------------
+sub conjuncts
+{
+    my $self = shift;
+    confess('Dead') if($self->dead());
+    my @conjuncts = @{$self->_conjuncts_ref()};
+    return $self->_order_required(@_) ? $self->order_phrases(@conjuncts) : @conjuncts;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of coordinators. The only difference from the getter
+# _coordinators_ref() is that the getter returns a reference to the array of
+# coordinators, while this method returns a list, hence it is more similar to
+# the other methods that return lists of children.
+#------------------------------------------------------------------------------
+sub coordinators
+{
+    my $self = shift;
+    confess('Dead') if($self->dead());
+    my @coordinators = @{$self->_coordinators_ref()};
+    return $self->_order_required(@_) ? $self->order_phrases(@coordinators) : @coordinators;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of punctuation symbols between conjuncts. The only
+# difference from the getter _punctuation_ref() is that the getter returns a
+# reference to the array, while this method returns a list, hence it is more
+# similar to the other methods that return lists of children.
+#------------------------------------------------------------------------------
+sub punctuation
+{
+    my $self = shift;
+    confess('Dead') if($self->dead());
+    my @punctuation = @{$self->_punctuation_ref()};
+    return $self->_order_required(@_) ? $self->order_phrases(@punctuation) : @punctuation;
 }
 
 
@@ -79,13 +137,14 @@ sub head
 
 #------------------------------------------------------------------------------
 # Returns the list of non-head children of the phrase, i.e. the dependents plus
-# either the preposition or the argument (whichever is currently not the head).
+# all core children except the one that currently serves as the head.
 #------------------------------------------------------------------------------
 sub nonhead_children
 {
     my $self = shift;
     confess('Dead') if($self->dead());
-    my @children = (($self->prep_is_head() ? $self->arg() : $self->prep()), $self->dependents());
+    my $head = $self->head();
+    my @children = grep {$_ != $head} ($self->children());
     return _order_required(@_) ? $self->order_phrases(@children) : @children;
 }
 
@@ -93,13 +152,13 @@ sub nonhead_children
 
 #------------------------------------------------------------------------------
 # Returns the list of the children of the phrase that are not dependents, i.e.
-# both the preposition and the argument.
+# all conjuncts, coordinators and punctuation.
 #------------------------------------------------------------------------------
 sub core_children
 {
     my $self = shift;
     confess('Dead') if($self->dead());
-    my @children = ($self->prep(), $self->arg());
+    my @children = ($self->conjuncts(), $self->coordinators(), $self->punctuation());
     return _order_required(@_) ? $self->order_phrases(@children) : @children;
 }
 
@@ -186,22 +245,25 @@ current head.
 
 =over
 
-=item prep
+=item _conjuncts_ref
 
-A sub-C<Phrase> of this phrase that contains the preposition (or another
-function word if this is not a true prepositional phrase).
+Reference to array of sub-C<Phrase>s (children) that are coordinated in this
+phrase. The conjuncts are counted among the I<core children> of C<Coordination>.
+Every C<Coordination> must always have at least one conjunct.
 
-=item arg
+=item _coordinators_ref
 
-A sub-C<Phrase> (typically a noun phrase) of this phrase that contains the
-argument of the preposition (or of the other function word if this is not
-a true prepositional phrase).
+Reference to array of sub-C<Phrase>s (children) that act as coordinating conjunctions
+and that are words, not punctuation.
+The coordinators are counted among the I<core children> of C<Coordination>.
+However, their presence is not required.
 
-=item prep_is_head
+=item _punctuation_ref
 
-Boolean attribute that defines the currently preferred annotation style.
-C<True> means that the preposition is considered the head of the phrase.
-C<False> means that the argument is the head.
+Reference to array of sub-C<Phrase>s (children) that contain punctuation between
+conjuncts.
+The punctuation phrases are counted among the I<core children> of C<Coordination>.
+However, their presence is not required.
 
 =back
 
@@ -216,15 +278,38 @@ A sub-C<Phrase> of this phrase that is at the moment considered the head phrase
 Depending on the current preference, it is either the preposition or its
 argument.
 
+=item conjuncts
+
+Returns the list of conjuncts. The only difference from the
+getter C<_conjuncts_ref()> is that the getter returns a reference to the array
+of conjuncts, while this method returns a list of conjuncts. Hence this method is
+more similar to the other methods that return lists of children.
+
+=item coordinators
+
+Returns the list of coordinating conjunctions (but not punctuation).
+The only difference from the
+getter C<_coordinators_ref()> is that the getter returns a reference to array,
+while this method returns a list. Hence this method is
+more similar to the other methods that return lists of children.
+
+=item punctuation
+
+Returns the list of punctuation symbols between conjuncts.
+The only difference from the
+getter C<_punctuation_ref()> is that the getter returns a reference to array,
+while this method returns a list. Hence this method is
+more similar to the other methods that return lists of children.
+
 =item nonhead_children
 
-Returns the non-head children of the phrase, i.e. the dependents plus either
-the preposition or the argument (whichever is currently not the head).
+Returns the list of non-head children of the phrase, i.e. the dependents plus
+all core children except the one that currently serves as the head.
 
 =item core_children
 
-Returns the children of the phrase that are not dependents, i.e. both the
-preposition and the argument.
+Returns the list of the children of the phrase that are not dependents, i.e.
+all conjuncts, coordinators and punctuation.
 
 =back
 
