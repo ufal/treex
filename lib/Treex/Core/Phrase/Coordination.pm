@@ -45,6 +45,26 @@ has 'conjunct_head' =>
 
 
 #------------------------------------------------------------------------------
+# After the object is constructed, this block makes sure that the core children
+# refer back to it as their parent. Also, at least one conjunct is required and
+# making the conjuncts parametr required is not enough to enforce that.
+#------------------------------------------------------------------------------
+BUILD
+{
+    my $self = shift;
+    # Check that there is at least one conjunct.
+    ###!!!prep ne!
+    if(defined($self->prep()->parent()) || defined($self->arg()->parent()))
+    {
+        confess("The core child already has another parent");
+    }
+    $self->prep()->_set_parent($self);
+    $self->arg()->_set_parent($self);
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the head child of the phrase. Depending on the current preference,
 # it is either the preposition or its argument.
 #------------------------------------------------------------------------------
@@ -81,23 +101,6 @@ sub core_children
     confess('Dead') if($self->dead());
     my @children = ($self->prep(), $self->arg());
     return _order_required(@_) ? $self->order_phrases(@children) : @children;
-}
-
-
-
-#------------------------------------------------------------------------------
-# After the object is constructed, this block makes sure that the core children
-# refer back to it as their parent.
-#------------------------------------------------------------------------------
-BUILD
-{
-    my $self = shift;
-    if(defined($self->prep()->parent()) || defined($self->arg()->parent()))
-    {
-        confess("The core child already has another parent");
-    }
-    $self->prep()->_set_parent($self);
-    $self->arg()->_set_parent($self);
 }
 
 
