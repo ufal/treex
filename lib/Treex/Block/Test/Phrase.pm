@@ -42,7 +42,7 @@ sub tree_to_string
     {
         my $n = $_;
         my $p = $n->parent();
-        my $d = $n->deprel();
+        my $d = defined($n->deprel()) ? $n->deprel() : 'NR';
         my $no = $n->ord();
         my $po = $p->ord();
         my $nf = $n->form();
