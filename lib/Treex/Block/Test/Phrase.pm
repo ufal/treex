@@ -7,6 +7,15 @@ extends 'Treex::Block::Test::BaseTester';
 
 
 
+has 'debug' =>
+(
+    is       => 'ro',
+    isa      => 'Bool',
+    default  => 0
+);
+
+
+
 #------------------------------------------------------------------------------
 # Converts a dependency tree to phrase-structure tree and back. We should get
 # the same structure.
@@ -20,10 +29,13 @@ sub process_atree
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
     my $after = $self->tree_to_string($root);
-    if($before ne $after)
+    if($self->debug())
     {
         log_info("BEFORE: $before");
-        log_info("AFTER:  $after");
+        log_info("AFTER:  $after\n");
+    }
+    if($before ne $after)
+    {
         log_fatal("Round-trip dependencies-phrases-dependencies does not match.");
     }
 }
@@ -47,7 +59,7 @@ sub tree_to_string
         my $p = $n->parent();
         my $po = $p->ord();
         my $pf = $p->is_root() ? 'ROOT' : $p->form();
-        my $d = defined($n->deprel()) ? $n->deprel() : 'NR';
+        my $d = defined($n->deprel()) ? $n->deprel() : defined($n->afun()) ? $n->afun() : defined($n->conll_deprel()) ? $n->conll_deprel() : 'NR';
         "$d($pf-$po, $nf-$no)"
     }
     (@nodes);
