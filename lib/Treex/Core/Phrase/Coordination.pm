@@ -39,12 +39,17 @@ has '_punctuation_ref' =>
         'They may use the public method punctuation() to get the list.'
 );
 
-has 'conjunct_head' =>
+has 'head_rule' =>
 (
     is       => 'rw',
-    isa      => 'Bool',
+    isa      => 'Str',
     required => 1,
-    documentation => 'False means that if there is a coordinator or punctuation delimiter, one of them is head. If not, then a conjunct is selected anyway.'
+    default  => 'first_conjunct',
+    documentation =>
+        'first_conjunct ..... first conjunct is the head (there is always at least one conjunct); '.
+        'last_coordinator ... last coordinating conjunction, if any, is the head; '.
+        '                     last punctuation is head in asyndetic coordination; '.
+        '                     if there are neither conjunctions nor punctuation, the first conjunct is the head.'
 );
 
 
@@ -132,7 +137,33 @@ sub head
 {
     my $self = shift;
     confess('Dead') if($self->dead());
-    return $self->prep_is_head() ? $self->prep() : $self->arg();
+    my $rule = $self->head_rule();
+    if($rule eq 'first_conjunct')
+    {
+        # There is always at least one conjunct.
+        return ($self->conjuncts())[0];
+    }
+    elsif($rule eq 'last_coordinator')
+    {
+        # It is not guaranteed that there are coordinators or punctuation.
+        my @coordinators = $self->coordinators('ordered' => 1);
+        if(scalar(@coordinators) > 0)
+        {
+            return $coordinators[-1];
+        }
+        # No coordinators found. What about punctuation?
+        my @punctuation = $self->punctuation('ordered' => 1);
+        if(scalar(@punctuation) > 0)
+        {
+            return $punctuation[-1];
+        }
+        # No delimiters found. We have to pick a conjunct, whether we like it or not.
+        return ($self->conjuncts())[0];
+    }
+    else
+    {
+        confess("Unknown head rule '$rule'");
+    }
 }
 
 
@@ -267,6 +298,16 @@ conjuncts.
 The punctuation phrases are counted among the I<core children> of C<Coordination>.
 However, their presence is not required.
 
+=item head_rule
+
+A string that says how the head of the coordination should be selected.
+C<first_conjunct> means that the first conjunct is the head (there is always at
+least one conjunct).
+C<last_coordinator> means that the last coordinating conjunction, if any, is
+the head; in asyndetic coordination (no conjunctions) the last punctuation
+symbol is the head; if there are neither conjunctions nor punctuation, the
+first conjunct is the head.
+
 =back
 
 =head1 METHODS
@@ -276,9 +317,7 @@ However, their presence is not required.
 =item head
 
 A sub-C<Phrase> of this phrase that is at the moment considered the head phrase
-(in the sense of dependency syntax).
-Depending on the current preference, it is either the preposition or its
-argument.
+(in the sense of dependency syntax). It depends on the current C<head_rule>.
 
 =item conjuncts
 
