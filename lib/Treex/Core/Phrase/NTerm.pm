@@ -5,9 +5,8 @@ use namespace::autoclean;
 
 use Moose;
 use Treex::Core::Log;
-use Treex::Core::Node;
 
-extends 'Treex::Core::Phrase::BasNTerm';
+extends 'Treex::Core::Phrase::BaseNTerm';
 
 
 

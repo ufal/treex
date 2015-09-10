@@ -41,7 +41,23 @@ around BUILDARGS => sub
     # Add deprel only if it has not been supplied separately.
     if(!defined($attr->{deprel}) && defined($attr->{node}))
     {
-        $attr->{deprel} = $attr->{node}->deprel();
+        my $node = $attr->{node};
+        if(defined($node->deprel()))
+        {
+            $attr->{deprel} = $node->deprel();
+        }
+        elsif(defined($node->afun()))
+        {
+            $attr->{deprel} = $node->afun();
+        }
+        elsif(defined($node->conll_deprel()))
+        {
+            $attr->{deprel} = $node->conll_deprel();
+        }
+        else
+        {
+            $attr->{deprel} = 'NR';
+        }
     }
     return $attr;
 };
@@ -69,7 +85,6 @@ sub is_terminal
 sub project_dependencies
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
     my $node = $self->node();
     unless($node->is_root())
     {

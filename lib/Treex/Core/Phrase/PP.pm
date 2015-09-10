@@ -76,7 +76,7 @@ sub nonhead_children
     my $self = shift;
     confess('Dead') if($self->dead());
     my @children = (($self->prep_is_head() ? $self->arg() : $self->prep()), $self->dependents());
-    return _order_required(@_) ? $self->order_phrases(@children) : @children;
+    return $self->_order_required(@_) ? $self->order_phrases(@children) : @children;
 }
 
 
@@ -90,7 +90,7 @@ sub core_children
     my $self = shift;
     confess('Dead') if($self->dead());
     my @children = ($self->prep(), $self->arg());
-    return _order_required(@_) ? $self->order_phrases(@children) : @children;
+    return $self->_order_required(@_) ? $self->order_phrases(@children) : @children;
 }
 
 

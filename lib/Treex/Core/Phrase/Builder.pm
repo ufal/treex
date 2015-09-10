@@ -8,6 +8,7 @@ use Treex::Core::Log;
 use Treex::Core::Node;
 use Treex::Core::Phrase::Term;
 use Treex::Core::Phrase::NTerm;
+use Treex::Core::Phrase::PP;
 
 
 
@@ -26,7 +27,7 @@ sub build
         $phrase = new Treex::Core::Phrase::NTerm('head' => $phrase);
         foreach my $nchild (@nchildren)
         {
-            my $pchild = $self->build_phrase($nchild);
+            my $pchild = $self->build($nchild);
             $pchild->set_parent($phrase);
         }
         # The following line is the only part (so far) that assumes one particular

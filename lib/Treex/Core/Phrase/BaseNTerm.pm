@@ -5,7 +5,6 @@ use namespace::autoclean;
 
 use Moose;
 use Treex::Core::Log;
-use Treex::Core::Node;
 
 extends 'Treex::Core::Phrase';
 
@@ -70,6 +69,7 @@ sub head
 #------------------------------------------------------------------------------
 sub _order_required
 {
+    my $self = shift;
     my @parray = @_;
     return 0 unless(@parray);
     return $parray[0]->{ordered} if(ref($parray[0]) eq 'HASH');
@@ -110,7 +110,7 @@ sub dependents
     my $self = shift;
     confess('Dead') if($self->dead());
     my @dependents = @{$self->_dependents_ref()};
-    return _order_required(@_) ? $self->order_phrases(@dependents) : @dependents;
+    return $self->_order_required(@_) ? $self->order_phrases(@dependents) : @dependents;
 }
 
 
@@ -153,7 +153,7 @@ sub children
     my $self = shift;
     confess('Dead') if($self->dead());
     my @children = ($self->core_children(), $self->dependents());
-    return _order_required(@_) ? $self->order_phrases(@children) : @children;
+    return $self->_order_required(@_) ? $self->order_phrases(@children) : @children;
 }
 
 

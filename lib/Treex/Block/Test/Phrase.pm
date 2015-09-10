@@ -22,8 +22,9 @@ sub process_atree
     my $after = $self->tree_to_string($root);
     if($before ne $after)
     {
-        log_info("BEFORE: $before\n".
-                 "AFTER:  $after\n");
+        log_info("BEFORE: $before");
+        log_info("AFTER:  $after");
+        log_fatal("Round-trip dependencies-phrases-dependencies does not match.");
     }
 }
 
@@ -41,12 +42,12 @@ sub tree_to_string
     my @dependencies = map
     {
         my $n = $_;
-        my $p = $n->parent();
-        my $d = defined($n->deprel()) ? $n->deprel() : 'NR';
         my $no = $n->ord();
-        my $po = $p->ord();
         my $nf = $n->form();
-        my $pf = $p->form();
+        my $p = $n->parent();
+        my $po = $p->ord();
+        my $pf = $p->is_root() ? 'ROOT' : $p->form();
+        my $d = defined($n->deprel()) ? $n->deprel() : 'NR';
         "$d($pf-$po, $nf-$no)"
     }
     (@nodes);
