@@ -15,11 +15,42 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
+    my $before = $self->tree_to_string($root);
     my $builder = new Treex::Core::Phrase::Builder;
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
-    ###!!! And now we should check that the projected dependency tree does not
-    ###!!! differ from the original.
+    my $after = $self->tree_to_string($root);
+    if($before ne $after)
+    {
+        log_info("BEFORE: $before\n".
+                 "AFTER:  $after\n");
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Serializes a tree to a string of dependencies (similar to the Stanford
+# format).
+#------------------------------------------------------------------------------
+sub tree_to_string
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    my @dependencies = map
+    {
+        my $n = $_;
+        my $p = $n->parent();
+        my $d = $n->deprel();
+        my $no = $n->ord();
+        my $po = $p->ord();
+        my $nf = $n->form();
+        my $pf = $p->form();
+        "$d($pf-$po, $nf-$no)"
+    }
+    (@nodes);
+    return join(' ', map {$_->form()} (@nodes))."\t".join('; ', @dependencies);
 }
 
 
