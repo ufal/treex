@@ -368,10 +368,7 @@ sub project_dependencies
     my @children = $self->children();
     foreach my $child (@children)
     {
-        unless($child->is_terminal())
-        {
-            $child->project_dependencies();
-        }
+        $child->project_dependencies();
     }
     my $head_node = $self->node();
     my @dependents = $self->nonhead_children();

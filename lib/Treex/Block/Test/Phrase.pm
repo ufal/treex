@@ -17,7 +17,9 @@ sub process_atree
     my $root = shift;
     my $builder = new Treex::Core::Phrase::Builder;
     my $phrase = $builder->build($root);
-    $phrase->project_dependencies(); ###!!! Neměly by tedy tuhle metodu mít i terminály, abychom tady nemuseli hlídat, jestli máme neterminál?
+    $phrase->project_dependencies();
+    ###!!! And now we should check that the projected dependency tree does not
+    ###!!! differ from the original.
 }
 
 

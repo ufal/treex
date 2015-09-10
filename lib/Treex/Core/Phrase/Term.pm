@@ -60,6 +60,26 @@ sub is_terminal
 
 
 
+#------------------------------------------------------------------------------
+# Projects dependencies between the head and the dependents back to the
+# underlying dependency structure. There is not much to do in the terminal
+# phrase as it does not have any dependents. However, we will attach all nodes
+# to the root, to prevent temporary cycles during the tree construction.
+#------------------------------------------------------------------------------
+sub project_dependencies
+{
+    my $self = shift;
+    confess('Dead') if($self->dead());
+    my $node = $self->node();
+    unless($node->is_root())
+    {
+        my $root = $node->get_root();
+        $node->set_parent($root);
+    }
+}
+
+
+
 __PACKAGE__->meta->make_immutable();
 
 1;
@@ -113,6 +133,13 @@ back to the dependency tree.
 The C<deprel> attribute can also be supplied separately when creating the
 C<Phrase::Term>. If it is not supplied, it will be copied from the C<Node>
 to which the C<node> attribute refers.
+
+=item project_dependencies
+
+Projects dependencies between the head and the dependents back to the
+underlying dependency structure. There is not much to do in the terminal
+phrase as it does not have any dependents. However, we will attach all nodes
+to the root, to prevent temporary cycles during the tree construction.
 
 =back
 
