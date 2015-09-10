@@ -1,11 +1,12 @@
 package Treex::Tutorial::FirstSteps;
 
+# TODO: opravit linky, aby ukazovali do CPANu (az budou bloky released)
+
 =encoding utf8
 
 =head1 NAME
 
 Treex::Tutorial::FirstSteps - First steps after installing Treex
-
 
 =head1 SHORT INTRODUCTION
 
@@ -18,6 +19,12 @@ application, e.g. machine translation or preprocessing of a parallel treebank.
 
 Treex applications can be executed from Perl.
 However, usually they are executed using the command line interface C<treex>.
+
+=head2 Other Sources
+
+For more specific tutorials, feel free to browse L<Treex::Tutorial::|https://github.com/ufal/treex/tree/master/lib/Treex/Tutorial> directory.
+
+You might also want to read this L<presentation|ufal.mff.cuni.cz/~popel/treex.pdf> about Treex framework.
 
 =head1 HELLO WORLD
 

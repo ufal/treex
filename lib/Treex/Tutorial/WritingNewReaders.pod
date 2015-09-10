@@ -2,6 +2,8 @@ package Treex::Tutorial::WritingNewReaders;
 
 =pod
 
+=encoding utf8
+
 =head1 NAME
 
 Treex::Tutorial::WritingNewReaders - Guidelines for writing your own Treex reader/writer blocks.

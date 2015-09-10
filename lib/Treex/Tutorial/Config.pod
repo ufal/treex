@@ -2,6 +2,8 @@ package Treex::Tutorial::Config;
 
 =pod
 
+=encoding utf8
+
 =head1 NAME
 
 Treex::Tutorial::Config - Configuring Treex
