@@ -356,6 +356,35 @@ sub detach_children_and_die
 
 
 
+#------------------------------------------------------------------------------
+# Projects dependencies between the head and the dependents back to the
+# underlying dependency structure.
+#------------------------------------------------------------------------------
+sub project_dependencies
+{
+    my $self = shift;
+    confess('Dead') if($self->dead());
+    # Recursion first, we work bottom-up.
+    my @children = $self->children();
+    foreach my $child (@children)
+    {
+        unless($child->is_terminal())
+        {
+            $child->project_dependencies();
+        }
+    }
+    my $head_node = $self->node();
+    my @dependents = $self->nonhead_children();
+    foreach my $dependent (@dependents)
+    {
+        my $dep_node = $dependent->node();
+        $dep_node->set_parent($head_node);
+        ###!!! What about deprel, afun, is_member etc.?
+    }
+}
+
+
+
 __PACKAGE__->meta->make_immutable();
 
 1;
@@ -481,6 +510,11 @@ method will not detach the dying phrase from its parent! That could kill the
 parent too (if the dying phrase is a core child) but we probably want the
 parent to survive and to replace the dying child by a new phrase we create.
 However, it is the caller's responsibility to modify the parent immediately.
+
+=item project_dependencies
+
+Recursively projects dependencies between the head and the dependents back to the
+underlying dependency structure.
 
 =back
 
