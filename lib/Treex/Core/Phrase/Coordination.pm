@@ -49,7 +49,7 @@ has 'conjunct_head' =>
 # refer back to it as their parent. Also, at least one conjunct is required and
 # making the conjuncts parametr required is not enough to enforce that.
 #------------------------------------------------------------------------------
-BUILD
+sub BUILD
 {
     my $self = shift;
     # Check that there is at least one conjunct.

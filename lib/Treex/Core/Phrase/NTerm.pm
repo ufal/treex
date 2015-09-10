@@ -26,7 +26,7 @@ has 'head' =>
 # After the object is constructed, this block makes sure that the head refers
 # back to it as its parent.
 #------------------------------------------------------------------------------
-BUILD
+sub BUILD
 {
     my $self = shift;
     if(defined($self->head()->parent()))

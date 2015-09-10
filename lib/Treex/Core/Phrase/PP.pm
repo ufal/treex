@@ -41,7 +41,7 @@ has 'prep_is_head' =>
 # After the object is constructed, this block makes sure that the core children
 # refer back to it as their parent.
 #------------------------------------------------------------------------------
-BUILD
+sub BUILD
 {
     my $self = shift;
     if(defined($self->prep()->parent()) || defined($self->arg()->parent()))
