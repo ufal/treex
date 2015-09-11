@@ -55,6 +55,34 @@ has 'head_rule' =>
 
 
 #------------------------------------------------------------------------------
+# This block will be called before object construction. It will modify and
+# complete attribute list if needed. Then it will pass all the attributes to
+# the constructor.
+#------------------------------------------------------------------------------
+around BUILDARGS => sub
+{
+    my $orig = shift;
+    my $class = shift;
+    # Call the default BUILDARGS in Moose::Object. It will take care of distinguishing between a hash reference and a plain hash.
+    my $attr = $class->$orig(@_);
+    if(defined($attr->{conjuncts}) && ref($attr->{conjuncts}) eq 'ARRAY')
+    {
+        $attr->{_conjuncts_ref} = $attr->{conjuncts};
+    }
+    if(defined($attr->{coordinators}) && ref($attr->{coordinators}) eq 'ARRAY')
+    {
+        $attr->{_coordinators_ref} = $attr->{coordinators};
+    }
+    if(defined($attr->{punctuation}) && ref($attr->{punctuation}) eq 'ARRAY')
+    {
+        $attr->{_punctuation_ref} = $attr->{punctuation};
+    }
+    return $attr;
+};
+
+
+
+#------------------------------------------------------------------------------
 # After the object is constructed, this block makes sure that the core children
 # refer back to it as their parent. Also, at least one conjunct is required and
 # making the conjuncts parametr required is not enough to enforce that.
@@ -262,40 +290,38 @@ __PACKAGE__->meta->make_immutable();
 
 =head1 NAME
 
-Treex::Core::Phrase::PP
+Treex::Core::Phrase::Coordination
 
 =head1 SYNOPSIS
 
   use Treex::Core::Document;
   use Treex::Core::Phrase::Term;
-  use Treex::Core::Phrase::PP;
+  use Treex::Core::Phrase::Coordination;
 
   my $document = new Treex::Core::Document;
   my $bundle   = $document->create_bundle();
   my $zone     = $bundle->create_zone('en');
   my $root     = $zone->create_atree();
-  my $prep     = $root->create_child();
-  my $noun     = $prep->create_child();
-  $prep->set_deprel('AuxP');
-  $noun->set_deprel('Adv');
-  my $prepphr  = new Treex::Core::Phrase::Term ('node' => $prep);
-  my $argphr   = new Treex::Core::Phrase::Term ('node' => $noun);
-  my $pphrase  = new Treex::Core::Phrase::PP ('prep' => $prepphr, 'arg' => $argphr, 'prep_is_head' => 1);
+  my $coord    = $root->create_child();
+  my $conj1    = $coord->create_child();
+  my $conj2    = $coord->create_child();
+  $coord->set_deprel('Coord');
+  $conj1->set_deprel('Pred_M');
+  $conj2->set_deprel('Pred_M');
+  my $coordphr = new Treex::Core::Phrase::Term ('node' => $coord);
+  my $conj1phr = new Treex::Core::Phrase::Term ('node' => $conj1);
+  my $conj2phr = new Treex::Core::Phrase::Term ('node' => $conj2);
+  my $cphrase  = new Treex::Core::Phrase::Coordination ('conjuncts' => [$conj1phr, $conj2phr], 'coordinators' => [$coordphr], 'head_rule' => 'last_coordinator');
 
 =head1 DESCRIPTION
 
-C<Phrase::PP> (standing for I<prepositional phrase>) is a special case of
-C<Phrase::NTerm>. The model example is a preposition (possibly compound) and
-its argument (typically a noun phrase), plus possible dependents of the whole,
-such as emphasizers or punctuation. However, it can be also used for
-subordinating conjunctions plus relative clauses, or for any pair of a function
-word and its (one) argument.
-
-While we know the two key children (let's call them the preposition and the
-argument), we do not take for fixed which one of them is the head (but the head
-is indeed one of these two, and not any other child). Depending on the
-preferred annotation style, we can pick the preposition or the argument as the
-current head.
+C<Treex::Core::Phrase::Coordination> is a special case of
+C<Treex::Core::Phrase::NTerm>. It does not have a fixed head but it has a head
+rule that specifies how the head child should be determined if needed. On the
+other hand, there are several sets of core children that are not ordinary
+dependents. They are conjuncts (i.e. the phrases that are coordinated),
+coordinators (coordinating conjunctions and similar words) and
+conjunct-delimiting punctuation.
 
 =head1 ATTRIBUTES
 
