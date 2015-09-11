@@ -119,7 +119,7 @@ sub replace_core_child
     }
     else
     {
-        confess("The replacement child is not in my core");
+        confess("The child to be replaced is not in my core");
     }
 }
 

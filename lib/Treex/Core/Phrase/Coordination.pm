@@ -198,9 +198,9 @@ sub core_children
 
 
 #------------------------------------------------------------------------------
-# Replaces one of the core children (preposition or argument) by another
-# phrase. This is used when we want to transform the child to a different class
-# of phrase. The replacement must not have a parent yet.
+# Replaces one of the core children (conjunct, coordinator or punctuation) by
+# another phrase. This is used when we want to transform the child to a
+# different class of phrase. The replacement must not have a parent yet.
 #------------------------------------------------------------------------------
 sub replace_core_child
 {
@@ -211,18 +211,41 @@ sub replace_core_child
     $self->_check_old_new_child($old_child, $new_child);
     $old_child->_set_parent(undef);
     $new_child->_set_parent($self);
-    if($old_child == $self->prep())
+    # Find out what type of core child this is (in which array we have it).
+    my $ar = $self->_conjuncts_ref();
+    my $imax = $#{$ar};
+    for(my $i = 0; $i <= $imax; $i++)
     {
-        $self->_set_prep($new_child);
+        if($ar->[$i] == $old_child)
+        {
+            splice(@{$ar}, $i, 1, $new_child);
+            return;
+        }
     }
-    elsif($old_child == $self->arg())
+    # Not found among conjuncts. Try coordinators.
+    $ar = $self->_coordinators_ref();
+    $imax = $#{$ar};
+    for(my $i = 0; $i <= $imax; $i++)
     {
-        $self->_set_arg($new_child);
+        if($ar->[$i] == $old_child)
+        {
+            splice(@{$ar}, $i, 1, $new_child);
+            return;
+        }
     }
-    else
+    # Not found among coordinators. Try punctuation.
+    $ar = $self->_punctuation_ref();
+    $imax = $#{$ar};
+    for(my $i = 0; $i <= $imax; $i++)
     {
-        confess("The replacement child is not in my core");
+        if($ar->[$i] == $old_child)
+        {
+            splice(@{$ar}, $i, 1, $new_child);
+            return;
+        }
     }
+    # We should not ever get here.
+    confess("The child to be replaced is not in my core");
 }
 
 
