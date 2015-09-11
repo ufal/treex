@@ -9,6 +9,7 @@ use Treex::Core::Node;
 use Treex::Core::Phrase::Term;
 use Treex::Core::Phrase::NTerm;
 use Treex::Core::Phrase::PP;
+use Treex::Core::Phrase::Coordination;
 
 
 
@@ -114,6 +115,92 @@ sub detect_prague_pp
         return $pp;
     }
     # Return the input NTerm phrase if no PP has been detected.
+    return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Examines a nonterminal phrase in the Prague style. If it recognizes
+# a coordination, transforms the general nonterminal to Coordination.
+#------------------------------------------------------------------------------
+sub detect_prague_coordination
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase::NTerm
+    # If this is the Prague style then the head is either coordinating conjunction or punctuation and its deprel is Coord.
+    if($phrase->deprel() eq 'Coord')
+    {
+        my @dependents = $phrase->dependents('ordered' => 1);
+        my @conjuncts;
+        my @coordinators;
+        my @punctuation;
+        my @sdependents;
+        # Classify dependents.
+        my ($cmin, $cmax);
+        foreach my $d (@dependents)
+        {
+            # Elsewhere in Treex the Prague-style trees use afuns instead of
+            # deprels, and conjuncts have an additional attribute is_member.
+            # We try to make everything less Prague-dependent and work only
+            # with deprel, with no constraints put on the deprel values. Here
+            # we assume that both afun and is_member have been combined in
+            # deprel; is_member marked by a '_M' suffix.
+            if($d->deprel() =~ m/_M$/)
+            {
+                push(@conjuncts, $d);
+                $cmin = $d->ord() if(!defined($cmin));
+                $cmax = $d->ord();
+            }
+            # Additional coordinating conjunctions (except the head) are not
+            # labeled by a dedicated deprel. They are labeled AuxY but other
+            # words in the tree may get this label too.
+            elsif($d->deprel() eq 'AuxY')
+            {
+                push(@coordinators, $d);
+            }
+            # Punctuation is attached as AuxX (commas) or AuxG (everything
+            # else). We will ignore punctuation labeled Coord or Appos because
+            # it heads a nested coordination or apposition, hence it is either
+            # a conjunct (Coord_M, Appos_M) or a shared dependent (without _M).
+            elsif($d->deprel() =~ m/^Aux[XG]$/)
+            {
+                push(@punctuation, $d);
+            }
+            # The rest are dependents shared by all the conjuncts.
+            else
+            {
+                push(@sdependents, $d);
+            }
+        }
+        # Punctuation can be considered a conjunct delimiter only if it occurs
+        # between conjuncts.
+        my @inpunct  = grep {my $o = $_->ord(); $o > $cmin && $o < $cmax;} (@punctuation);
+        my @outpunct = grep {my $o = $_->ord(); $o < $cmin || $o > $cmax;} (@punctuation);
+        # If there are no conjuncts, we cannot create a coordination.
+        my $n = scalar(@conjuncts);
+        if($n == 0)
+        {
+            return $phrase;
+        }
+        # Now it is clear that we have a coordination. A new Coordination phrase will be created
+        # and the old input NTerm will be destroyed.
+        my $parent = $phrase->parent();
+        $phrase->detach_children_and_die();
+        my $coordination = new Treex::Core::Phrase::Coordination('conjuncts' => \@conjuncts, 'coordinators' => \@coordinators, 'punctuation' => \@inpunct, 'head_rule' => 'last_coordinator');
+        foreach my $d (@sdependents, @outpunct)
+        {
+            $d->set_parent($coordination);
+        }
+        # If the original phrase already had a parent, we must make sure that
+        # the parent is aware of the reincarnation we have made.
+        if(defined($parent))
+        {
+            $parent->replace_child($phrase, $coordination);
+        }
+        return $coordination;
+    }
+    # Return the input NTerm phrase if no Coordination has been detected.
     return $phrase;
 }
 
