@@ -32,6 +32,7 @@ skip = ^TrEd
 ;skip = ^Treex::Tool::DerivMorpho
 skip = ^Treex::Tool::Memcached
 skip = ^Treex::Core::CacheBlock$
+skip = ^Treex::Core::Parallel
 
 [PruneCruft]
 

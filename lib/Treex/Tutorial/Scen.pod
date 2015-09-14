@@ -1,0 +1,102 @@
+package Treex::Tutorial::Scen;
+
+=pod
+
+=encoding utf8
+
+=head1 NAME
+
+Treex::Tutorial::Scen - Treex::Scen:: scenario syntax and guidelines
+
+=head1 INTRODUCTION
+
+Aside from the old scenario (.scen) files with the following syntax:
+
+ ...
+ # Some comment
+ W2A::Block1
+ A2T::Block2 # Some other comment
+ ...
+
+Treex scenarios can now be represented as a separate Perl "Treex::Scen::" packages. This gives the user larger expressive power when creating various Treex scenarios:
+
+=item Introducing parameters. The scenario can now be modifiing simply by passing defined scenario parameters.
+
+=item Support of POD-style of documentation. The scenarios functionality can now be described in a well-aranged manner.
+
+=item The scenario itself is now a Perl package. The scenarios can now easily be uploaded on CPAN.
+
+=head1 MODULE STRUCTURE
+
+You can write your scenario module in any way you find comfortable. There are only a few things your module must contain to become a Treex-readable scenario.
+
+Your module should have a Treex::Scen:: prefix. You should also include these modules:
+
+ package Treex::Scen::MyScenario;
+ use Moose;
+ use Treex::Core::Common;
+ with 'Treex::Core::RememberArgs';
+
+Another thing you should not forget is a BUILD subroutine (which can be empty):
+
+ sub BUILD {
+    my ($self) = @_;
+
+    # Initialize your scenario
+
+    return;
+ }
+
+Finally, in order to be able to communicate with Treex, the module must contain C<get_scenario_string> method:
+
+ sub get_scenario_string {
+    my ($self) = @_;
+    my $scen = "";
+
+	# Add desired treex blocks to the $scen
+
+    return $scen;
+ }
+
+The method should return a string, which follows the syntax of the ".scen" files
+.
+For example the following scenario
+
+ W2A::Tokenize
+ W2A::TagTreeTagger
+ W2A::Lemmatize
+
+can be created in the following manner (of course you can use your own method):
+
+ my $scen = join "\n",
+ 'W2A::Tokenize',
+ 'W2A::TagTreeTagger',
+ 'W2A::Lemmatize',
+ ;
+
+Of course instead of treex blocks, you can list another Treex::Scen:: module in the $scen string.
+
+Additionally, thanks to the C<Treex::Core::RememberArgs> role we can define arguments for our scenario:
+
+ has example_argument => (
+     is => 'ro',
+     isa => enum( [qw(value1 value2)] ),
+     default => 'value1',
+     documentation => 'example of an argument definition',
+ );
+
+You can then modify C<get_scenario_string> method to return a slightly different string depending on the value of the "example_argument".
+The argument can then be specified like this:
+
+ treex Scen::MyScenario example_argument=value2
+
+=head1 AUTHOR
+
+Dušan Variš <varis@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
