@@ -5,6 +5,7 @@ extends 'Treex::Core::Block';
 
 sub process_tnode {
     my ( $self, $t_node ) = @_;
+    $self->preprocess($t_node);
     my $subconj_forms_str = $self->get_subconj_forms($t_node->formeme);
     return if (!$subconj_forms_str);
 
@@ -52,6 +53,11 @@ sub process_tnode {
 
     $self->postprocess( $t_node, $a_node, \@subconj_nodes );
 
+    return;
+}
+
+sub preprocess {
+    my ($t_node) = @_;
     return;
 }
 

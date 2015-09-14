@@ -15,7 +15,7 @@ sub process_tnode {
     ### Most adjectives should be also reordered, need to distinguiss which of them
     #$tnode->gram_sempos
     if (( ($tnode->formeme || "" ) =~ /^n:de\+X/ or 
-	  (($tnode->formeme || "" ) =~ /^adj:attr$/ and ($tnode->gram_sempos || "") !~ /^n.pron.indef$/ )
+	  (($tnode->formeme || "" ) =~ /^adj:attr$/ and ($tnode->gram_sempos || "") !~ /^n.pron.indef|n.quant.def$/ )
 	) and
 	(( $parent->functor || "" ) !~ /^(CONJ|COORD)$/ ) and
 	(( $parent->formeme || "" ) =~ /^n:/ ) and

@@ -17,7 +17,7 @@ sub process_atree {
     # but Spanish verbs have no inflection for gender (as far as I know).
     # Unfortunatelly, Flect gets easily confused by extra features.
     foreach my $anode (@anodes) {
-        if ($anode->is_verb){
+        if ($anode->get_iset('pos') eq 'verb'){#is_verb){
             my $reduced_tag = $anode->tag;
             $reduced_tag =~ s/ (masc|fem)//;
             $reduced_tag =~ s/verb sing 3 ind pres/verb sing 3 fin ind pres/;

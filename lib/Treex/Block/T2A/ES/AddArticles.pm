@@ -21,6 +21,19 @@ override '_build_article_form' => sub {
     };
 };
 
+#artikulua eduki dezakeen edo ez erabakitzen da. sempos n.pron baldin bada edo 'más' bada ezin da.
+override 'can_have_article' => sub {
+    my ( $self, $tnode , $anode) = @_;
+
+    my @children = $tnode->get_children();
+    foreach my $child (@children)
+    {
+	if (($child->gram_sempos || "") =~ /^n\.pron\./ || $child->t_lemma eq 'más')
+	{ return 0; }
+    }
+    return 1;
+
+};
 
 1;
 

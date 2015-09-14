@@ -6,18 +6,28 @@ extends 'Treex::Core::Block';
 
 sub process_anode {
     my ( $self, $rhematizer ) = @_;
-    return if !$rhematizer->is_adverb;
-    my $noun = $rhematizer->get_parent;
-    return if !$noun->is_noun;
-    my $article = $noun->get_children({preceding_only=>1, first_only=>1});
-    my $preposition = $noun->get_parent();
-    my $start_of_scope;
-    if ($article && $article->iset->adjtype eq 'art'){
-        $start_of_scope = $article;
+
+    my @articles = ("la", "el", "las", "los");
+
+    my $lemma = $rhematizer->lemma;
+    if($lemma =~ /^tod[oa]s?$/i){
+
+        my $article = $rhematizer->get_left_neighbor();
+        my $article_lemma = undef;
+
+        if(defined $article){
+            $article_lemma = $article->lemma;
+        }
+
+        if(defined $article_lemma){
+            if("@articles" =~ /$article_lemma/){
+                my $first_ord = $rhematizer->get_attr("ord");
+                $rhematizer->shift_before_node($article);
+            }
+        }
+        
     }
-    if ($start_of_scope){
-        $rhematizer->shift_before_node($start_of_scope);
-    }
+
     return;
 }
 
@@ -29,25 +39,15 @@ __END__
 
 =head1 NAME
 
-Treex::Block::T2A::ES::MoveRhematizers - shift rhematizers before articles
+Treex::Block::T2A::ES::MoveRhematizers - shift rhematizers before articles and prepositions
 
 =head1 DESCRIPTION
 
-The article should go before the whoule noun phrase, except for some rhematizers (apenas, mesmo).
-
-For example, we want to change:
-
- "A criança obedece a_ a apenas mãe"
- "A encomenda está em_ o mesmo armazém .
-
-to
-
- "A criança obedece apenas a_ a mãe"
- "A encomenda está mesmo em_ o armazém .
+The article should go before the whoule noun phrase, except for some rhematizers (todos, todas).
 
 =head1 AUTHORS
 
-Martin Popel <popel@ufal.mff.cuni.cz>
+Gorka Labaka <gorka.labaka@ehu.eus>
 
 =head1 COPYRIGHT AND LICENSE
 
