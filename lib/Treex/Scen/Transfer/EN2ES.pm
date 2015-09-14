@@ -62,6 +62,8 @@ sub get_scenario_string {
     'T2T::CopyTtree source_language=en source_selector=src',
     #$self->gazetteer ? 'T2T::EN2ES::TrGazeteerItems' : (),
     'T2T::EN2ES::TrLTryRules',
+    $self->domain eq 'IT' ? 'T2T::TrLApplyTbxDictionary tbx=data/dictionaries/MicrosoftTermCollection.es.tbx tbx_src_id=en-US tbx_trg_id=es-es analysis=data/dictionaries/MicrosoftTermCollection.es.streex analysis_src_language=en analysis_src_selector=src analysis_trg_language=es analysis_trg_selector=trg src_blacklist=data/dictionaries/MicrosoftTermCollection.en-es.src.blacklist.txt' : (),
+
     "T2T::TrFAddVariantsInterpol model_dir=$TM_DIR models='
       static 1.0 Pilot1_formeme.static.gz
       maxent 0.5 Pilot1_formeme.maxent.gz
@@ -72,6 +74,7 @@ sub get_scenario_string {
       $IT_LEMMA_MODELS'",
     $self->fl_agreement ? 'T2T::FormemeTLemmaAgreement fun='.$self->fl_agreement : (),
     'Util::DefinedAttr tnode=t_lemma,formeme message="after simple transfer"',
+
     #$self->domain eq 'IT' ? 'T2T::EN2ES::TrL_ITdomain' : (),
     'T2T::SetClauseNumber',
     ;
