@@ -65,15 +65,18 @@ sub build
 
 
 #------------------------------------------------------------------------------
-# Examines a nonterminal phrase in the Prague style. If it recognizes
-# a prepositional phrase, transforms the general nonterminal to PP.
+# Examines a nonterminal phrase in the Prague style (with analytical functions
+# converted to dependency relation labels based on Universal Dependencies).
+# If it recognizes a prepositional phrase, transforms the general NTerm to PP.
 #------------------------------------------------------------------------------
 sub detect_prague_pp
 {
     my $self = shift;
     my $phrase = shift; # Treex::Core::Phrase::NTerm
-    # If this is the Prague style then the preposition (if any) must be the head and the deprel of the phrase must be AuxP.
-    if($phrase->deprel() eq 'AuxP')
+    # If this is the Prague style then the preposition (if any) must be the head.
+    # The deprel is already partially converted to UD, so it should be something:auxp
+    # (case:auxp, mark:auxp, root:auxp); see HamleDT::Udep->afun_to_udeprel().
+    if($phrase->deprel() =~ m/auxp/i)
     {
         my @dependents = $phrase->dependents('ordered' => 1);
         my @mwauxp;
@@ -84,7 +87,7 @@ sub detect_prague_pp
         {
             # AuxP attached to AuxP means multi-word preposition.
             ###!!! We should also check that all words of a MWE are adjacent!
-            if($d->deprel() eq 'AuxP')
+            if($d->deprel() =~ m/auxp/i)
             {
                 push(@mwauxp, $d);
             }
@@ -145,15 +148,19 @@ sub detect_prague_pp
 
 
 #------------------------------------------------------------------------------
-# Examines a nonterminal phrase in the Prague style. If it recognizes
-# a coordination, transforms the general nonterminal to Coordination.
+# Examines a nonterminal phrase in the Prague style (with analytical functions
+# converted to dependency relation labels based on Universal Dependencies). If
+# it recognizes a coordination, transforms the general NTerm to Coordination.
 #------------------------------------------------------------------------------
 sub detect_prague_coordination
 {
     my $self = shift;
     my $phrase = shift; # Treex::Core::Phrase::NTerm
-    # If this is the Prague style then the head is either coordinating conjunction or punctuation and its deprel is Coord.
-    if($phrase->deprel() eq 'Coord')
+    # If this is the Prague style then the head is either coordinating conjunction or punctuation.
+     and its deprel is Coord.
+    # The deprel is already partially converted to UD, so it should be something:coord
+    # (cc:coord, punct:coord, root:coord); see HamleDT::Udep->afun_to_udeprel().
+    if($phrase->deprel() =~ m/coord/i)
     {
         my @dependents = $phrase->dependents('ordered' => 1);
         my @conjuncts;
