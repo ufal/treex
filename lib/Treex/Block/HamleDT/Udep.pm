@@ -57,7 +57,6 @@ sub process_zone
     my $src_selector = $root->selector();
     my $tgt_language = $src_language;
     my $tgt_selector = 'backup';
-    my $bundle = $src_root->get_bundle();
     my $tgt_zone = $bundle->get_or_create_zone($tgt_language, $tgt_selector);
     my $tgt_root = $tgt_zone->create_atree();
     $root->copy_atree($tgt_root);
