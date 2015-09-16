@@ -96,6 +96,9 @@ sub project_dependencies
         my $root = $node->get_root();
         $node->set_parent($root);
     }
+    # Reset the is_member flag.
+    # If we are converting to the Prague style, the flag will be set again where needed.
+    $node->set_is_member(0);
 }
 
 

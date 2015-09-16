@@ -81,19 +81,19 @@ sub process_zone
     $phrase->project_dependencies();
     ###!!! Compare the trees before and after the transformation.
     my $after0 = $root->get_subtree_dependency_string();
-    my $after1 = $tgt_root->get_subtree_dependency_string();
     my $after0brat = $root->get_subtree_dependency_string(1);
+    my $after1 = $tgt_root->get_subtree_dependency_string();
     my $after1brat = $tgt_root->get_subtree_dependency_string(1);
     if($after0 ne $after1)
     {
-        log_info("BEFORE:  $before1");
-        log_info("AFTER 0: $after0");
-        log_info("AFTER 1: $after1");
+        log_info("BEFORE:    $before1");
+        log_info("AFTER OLD: $after0");
+        log_info("AFTER NEW: $after1");
         # The tree code for Brat may span too many lines and we will not see it if it is printed directly to the terminal.
         # Warning! This code attempts to create or modify a file in the current working folder on the disk!
         if(open(BAD, ">bad_trees.brat"))
         {
-            print BAD ("BEFORE:\n\n$before1brat\nAFTER 0:\n\n$after0brat\nAFTER 1:\n\n$after1brat\n");
+            print BAD ("BEFORE:\n\n$before1brat\nAFTER OLD:\n\n$after0brat\nAFTER NEW:\n\n$after1brat\n");
             close(BAD);
         }
         log_fatal("Regression test failed.");

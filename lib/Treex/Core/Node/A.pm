@@ -310,6 +310,17 @@ sub get_subtree_dependency_string
         my $po = $p->ord()+$offset;
         my $pf = $p->is_root() ? 'ROOT' : $p->form();
         my $d = defined($n->deprel()) ? $n->deprel() : defined($n->afun()) ? $n->afun() : defined($n->conll_deprel()) ? $n->conll_deprel() : 'NR';
+        if($n->is_member())
+        {
+            if(defined($n->deprel()))
+            {
+                $d .= ':member';
+            }
+            else
+            {
+                $d .= '_M';
+            }
+        }
         "$d($pf-$po, $nf-$no)"
     }
     (@nodes);
