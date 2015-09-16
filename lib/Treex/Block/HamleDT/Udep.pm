@@ -93,7 +93,7 @@ sub process_zone
         # Warning! This code attempts to create or modify a file in the current working folder on the disk!
         if(open(BAD, ">bad_trees.brat"))
         {
-            print BAD ("BEFORE:\n$before1brat\nAFTER 0:\n$after0brat\nAFTER 1:\n$after1brat\n");
+            print BAD ("BEFORE:\n\n$before1brat\nAFTER 0:\n\n$after0brat\nAFTER 1:\n\n$after1brat\n");
             close(BAD);
         }
         log_fatal("Regression test failed.");

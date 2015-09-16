@@ -296,13 +296,26 @@ sub project_dependencies
     # We also have to change selected deprels. It depends on the current head rule.
     if($self->head_rule() eq 'first_conjunct')
     {
+        # If the first conjunct has a deprel other than 'dep', and another conjunct has 'dep',
+        # then the other conjunct is an orphan caused by ellipsis. We currently keep the 'dep'
+        # relation for orphans and do not label them 'conj'.
+        ###!!! This is specific to the conversion from the Prague style to Universal Dependencies.
+        ###!!! It should be solved elsewhere. Even orphans are not the main business of coordinations.
+        my $dep_means_orphan = $self->deprel() ne 'dep';
         my @conjuncts = $self->conjuncts('ordered' => 1);
         shift(@conjuncts);
         foreach my $c (@conjuncts)
         {
             my $conj_node = $c->node();
             $conj_node->set_parent($head_node);
-            $conj_node->set_deprel('conj');
+            if($dep_means_orphan && $c->deprel() eq 'dep')
+            {
+                $conj_node->set_deprel('dep');
+            }
+            else
+            {
+                $conj_node->set_deprel('conj');
+            }
         }
         my @coordinators = $self->coordinators();
         foreach my $c (@coordinators)
