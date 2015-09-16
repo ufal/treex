@@ -20,7 +20,7 @@ has 'node' =>
 
 has 'deprel' =>
 (
-    is       => 'ro',
+    is       => 'rw',
     isa      => 'Str',
     required => 1
 );
