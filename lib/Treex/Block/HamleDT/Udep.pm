@@ -68,9 +68,6 @@ sub process_zone
     {
         log_info("BEFORE 0: $before0");
         log_info("BEFORE 1: $before1");
-        # The tree code for Brat may span too many lines and we will not see it if it is printed directly to the terminal!
-        # Maybe we should print it to a file?
-        print STDERR ("$before0brat\n$before1brat\n");
         log_fatal("Copy of tree does not match the original.");
     }
     # Back to the harmonization.
@@ -92,9 +89,13 @@ sub process_zone
         log_info("BEFORE:  $before1");
         log_info("AFTER 0: $after0");
         log_info("AFTER 1: $after1");
-        # The tree code for Brat may span too many lines and we will not see it if it is printed directly to the terminal!
-        # Maybe we should print it to a file?
-        print STDERR ("BEFORE:\n$before1brat\nAFTER 0:\n$after0brat\nAFTER 1:\n$after1brat\n");
+        # The tree code for Brat may span too many lines and we will not see it if it is printed directly to the terminal.
+        # Warning! This code attempts to create or modify a file in the current working folder on the disk!
+        if(open(BAD, ">bad_trees.brat"))
+        {
+            print BAD ("BEFORE:\n$before1brat\nAFTER 0:\n$after0brat\nAFTER 1:\n$after1brat\n");
+            close(BAD);
+        }
         log_fatal("Regression test failed.");
     }
     # Some of the top colons are analyzed as copulas. Do this before the copula processing reshapes the scene.
