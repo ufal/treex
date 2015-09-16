@@ -4,6 +4,7 @@ use utf8;
 use namespace::autoclean;
 
 use Moose;
+use MooseX::SemiAffordanceAccessor; # attribute x is written using set_x($value) and read using x()
 use Treex::Core::Log;
 use Treex::Core::Node;
 
