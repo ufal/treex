@@ -157,7 +157,6 @@ sub detect_prague_coordination
     my $self = shift;
     my $phrase = shift; # Treex::Core::Phrase::NTerm
     # If this is the Prague style then the head is either coordinating conjunction or punctuation.
-     and its deprel is Coord.
     # The deprel is already partially converted to UD, so it should be something:coord
     # (cc:coord, punct:coord, root:coord); see HamleDT::Udep->afun_to_udeprel().
     if($phrase->deprel() =~ m/coord/i)
