@@ -298,20 +298,33 @@ sub get_subtree_string {
 sub get_subtree_dependency_string
 {
     my $self = shift;
+    my $for_brat = shift; # Do we want a format that spans multiple lines but can be easily visualized in Brat?
     my @nodes = $self->get_descendants({'ordered' => 1});
+    my $offset = $for_brat ? 1 : 0;
     my @dependencies = map
     {
         my $n = $_;
-        my $no = $n->ord();
+        my $no = $n->ord()+$offset;
         my $nf = $n->form();
         my $p = $n->parent();
-        my $po = $p->ord();
+        my $po = $p->ord()+$offset;
         my $pf = $p->is_root() ? 'ROOT' : $p->form();
         my $d = defined($n->deprel()) ? $n->deprel() : defined($n->afun()) ? $n->afun() : defined($n->conll_deprel()) ? $n->conll_deprel() : 'NR';
         "$d($pf-$po, $nf-$no)"
     }
     (@nodes);
-    return join(' ', map {$_->form()} (@nodes))."\t".join('; ', @dependencies);
+    my $sentence = join(' ', map {$_->form()} (@nodes));
+    if($for_brat)
+    {
+        $sentence = "ROOT $sentence";
+        my $tree = join("\n", @dependencies);
+        return "~~~ sdparse\n$sentence\n$tree\n~~~\n";
+    }
+    else
+    {
+        my $tree = join('; ', @dependencies);
+        return "$sentence\t$tree";
+    }
 }
 
 #----------- CoNLL attributes -------------
