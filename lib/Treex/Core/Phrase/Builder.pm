@@ -68,6 +68,7 @@ sub build
 # Examines a nonterminal phrase in the Prague style (with analytical functions
 # converted to dependency relation labels based on Universal Dependencies).
 # If it recognizes a prepositional phrase, transforms the general NTerm to PP.
+# A subordinate clause headed by AuxC is also treated as PP.
 #------------------------------------------------------------------------------
 sub detect_prague_pp
 {
@@ -76,7 +77,7 @@ sub detect_prague_pp
     # If this is the Prague style then the preposition (if any) must be the head.
     # The deprel is already partially converted to UD, so it should be something:auxp
     # (case:auxp, mark:auxp, root:auxp); see HamleDT::Udep->afun_to_udeprel().
-    if($phrase->deprel() =~ m/auxp/i)
+    if($phrase->deprel() =~ m/aux[pc]/i)
     {
         my @dependents = $phrase->dependents('ordered' => 1);
         my @mwauxp;
@@ -86,8 +87,10 @@ sub detect_prague_pp
         foreach my $d (@dependents)
         {
             # AuxP attached to AuxP means multi-word preposition.
+            # The dependent should be a leaf, otherwise we may have a recursive structure.
+            # But we are working bottom-up. If there is a recursive AuxP-AuxP-arg structure, the inner part has already been processed and its head deprel is no longer AuxP.
             ###!!! We should also check that all words of a MWE are adjacent!
-            if($d->deprel() =~ m/auxp/i)
+            if($d->deprel() =~ m/aux[pc]/i)
             {
                 push(@mwauxp, $d);
             }
