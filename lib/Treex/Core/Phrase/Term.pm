@@ -50,10 +50,6 @@ around BUILDARGS => sub
         elsif(defined($node->afun()))
         {
             $attr->{deprel} = $node->afun();
-            if($node->is_member())
-            {
-                $attr->{deprel} .= '_M';
-            }
         }
         elsif(defined($node->conll_deprel()))
         {
@@ -62,6 +58,10 @@ around BUILDARGS => sub
         else
         {
             $attr->{deprel} = 'NR';
+        }
+        if($node->is_member())
+        {
+            $attr->{deprel} .= ':member';
         }
     }
     return $attr;

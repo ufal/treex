@@ -182,8 +182,8 @@ sub detect_prague_coordination
             # We try to make everything less Prague-dependent and work only
             # with deprel, with no constraints put on the deprel values. Here
             # we assume that both afun and is_member have been combined in
-            # deprel; is_member marked by a '_M' suffix.
-            if($d->deprel() =~ m/_M$/)
+            # deprel; is_member marked by a ':member' suffix.
+            if($d->deprel() =~ m/:member$/)
             {
                 push(@conjuncts, $d);
                 $cmin = $d->ord() if(!defined($cmin));
