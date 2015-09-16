@@ -188,7 +188,9 @@ sub detect_prague_coordination
         # Now it is clear that we have a coordination. A new Coordination phrase will be created
         # and the old input NTerm will be destroyed.
         my $parent = $phrase->parent();
+        my $old_head = $phrase->head();
         $phrase->detach_children_and_die();
+        push(@coordinators, $old_head);
         my $coordination = new Treex::Core::Phrase::Coordination('conjuncts' => \@conjuncts, 'coordinators' => \@coordinators, 'punctuation' => \@inpunct, 'head_rule' => 'last_coordinator');
         foreach my $d (@sdependents, @outpunct)
         {
