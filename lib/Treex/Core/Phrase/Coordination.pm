@@ -278,6 +278,68 @@ sub replace_core_child
 
 
 
+#------------------------------------------------------------------------------
+# Projects dependencies between the head and the dependents back to the
+# underlying dependency structure.
+#------------------------------------------------------------------------------
+sub project_dependencies
+{
+    my $self = shift;
+    confess('Dead') if($self->dead());
+    # Recursion first, we work bottom-up.
+    my @children = $self->children();
+    foreach my $child (@children)
+    {
+        $child->project_dependencies();
+    }
+    my $head_node = $self->node();
+    # We also have to change selected deprels. It depends on the current head rule.
+    if($self->head_rule() eq 'first_conjunct')
+    {
+        my @conjuncts = $self->conjuncts('ordered' => 1);
+        shift(@conjuncts);
+        foreach my $c (@conjuncts)
+        {
+            my $conj_node = $c->node();
+            $conj_node->set_parent($head_node);
+            $conj_node->set_deprel('conj');
+        }
+        my @coordinators = $self->coordinators();
+        foreach my $c (@coordinators)
+        {
+            my $coor_node = $c->node();
+            $coor_node->set_parent($head_node);
+            $coor_node->set_deprel('cc');
+        }
+        my @punctuation = $self->punctuation();
+        foreach my $p (@punctuation)
+        {
+            my $punct_node = $p->node();
+            $punct_node->set_parent($head_node);
+            $punct_node->set_deprel('punct');
+        }
+        my @dependents = $self->dependents();
+        foreach my $d (@dependents)
+        {
+            my $dep_node = $d->node();
+            $dep_node->set_parent($head_node);
+            $dep_node->set_deprel($d->deprel());
+        }
+    }
+    else ###!!! This is probably not correct, as it does not assume any particular coordination style.
+    {
+        my @dependents = $self->nonhead_children();
+        foreach my $dependent (@dependents)
+        {
+            my $dep_node = $dependent->node();
+            $dep_node->set_parent($head_node);
+            $dep_node->set_deprel($dependent->deprel());
+        }
+    }
+}
+
+
+
 __PACKAGE__->meta->make_immutable();
 
 1;
@@ -400,6 +462,13 @@ all core children except the one that currently serves as the head.
 
 Returns the list of the children of the phrase that are not dependents, i.e.
 all conjuncts, coordinators and punctuation.
+
+=item project_dependencies
+
+Projects dependencies between the head and the dependents back to the
+underlying dependency structure.
+For coordinations the behavior depends on the currently selected head rule:
+certain deprels may have to be adjusted.
 
 =back
 
