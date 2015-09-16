@@ -24,11 +24,11 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
-    my $before = $self->tree_to_string($root);
+    my $before = $root->get_subtree_dependency_string();
     my $builder = new Treex::Core::Phrase::Builder;
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
-    my $after = $self->tree_to_string($root);
+    my $after = $root->get_subtree_dependency_string();
     if($self->debug())
     {
         log_info("BEFORE: $before");
@@ -43,32 +43,6 @@ sub process_atree
         }
         log_fatal("Round-trip dependencies-phrases-dependencies does not match.");
     }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Serializes a tree to a string of dependencies (similar to the Stanford
-# format).
-#------------------------------------------------------------------------------
-sub tree_to_string
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants({'ordered' => 1});
-    my @dependencies = map
-    {
-        my $n = $_;
-        my $no = $n->ord();
-        my $nf = $n->form();
-        my $p = $n->parent();
-        my $po = $p->ord();
-        my $pf = $p->is_root() ? 'ROOT' : $p->form();
-        my $d = defined($n->deprel()) ? $n->deprel() : defined($n->afun()) ? $n->afun() : defined($n->conll_deprel()) ? $n->conll_deprel() : 'NR';
-        "$d($pf-$po, $nf-$no)"
-    }
-    (@nodes);
-    return join(' ', map {$_->form()} (@nodes))."\t".join('; ', @dependencies);
 }
 
 
