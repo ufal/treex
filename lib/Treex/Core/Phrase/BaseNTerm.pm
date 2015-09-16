@@ -376,7 +376,7 @@ sub project_dependencies
     {
         my $dep_node = $dependent->node();
         $dep_node->set_parent($head_node);
-        ###!!! What about deprel, afun, is_member etc.?
+        $dep_node->set_deprel($dependent->deprel());
     }
 }
 
