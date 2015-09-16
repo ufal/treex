@@ -68,7 +68,7 @@ sub process_zone
     $self->push_prep_sub_down($root);
     $self->change_case_to_mark_under_verb($root);
     ###!!! New implementation: transform prepositions and coordination via phrases.
-    my $builder = new Treex::Core::Phrase::Builder;
+    my $builder = new Treex::Core::Phrase::Builder ('prep_is_head' => 0, 'coordination_head_rule' => 'first_conjunct');
     my $phrase = $builder->build($tgt_root);
     $phrase->project_dependencies();
     ###!!! Compare the trees before and after the transformation.

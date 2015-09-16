@@ -13,6 +13,28 @@ use Treex::Core::Phrase::Coordination;
 
 
 
+has 'prep_is_head' =>
+(
+    is       => 'ro',
+    isa      => 'Bool',
+    required => 1,
+    default  => 0,
+    documentation =>
+        'See Treex::Core::Phrase::PP, prep_is_head attribute.'
+);
+
+has 'coordination_head_rule' =>
+(
+    is       => 'ro',
+    isa      => 'Str',
+    required => 1,
+    default  => 'first_conjunct',
+    documentation =>
+        'See Treex::Core::Phrase::Coordination, head_rule attribute.'
+);
+
+
+
 #------------------------------------------------------------------------------
 # Wraps a node (and its subtree, if any) in a phrase.
 #------------------------------------------------------------------------------
@@ -103,7 +125,7 @@ sub detect_prague_pp
                $mwp->set_parent($preposition);
            }
         }
-        my $pp = new Treex::Core::Phrase::PP('prep' => $preposition, 'arg' => $argument, 'prep_is_head' => 1);
+        my $pp = new Treex::Core::Phrase::PP('prep' => $preposition, 'arg' => $argument, 'prep_is_head' => $self->prep_is_head());
         foreach my $d (@candidates, @punc)
         {
             $d->set_parent($pp);
@@ -191,7 +213,7 @@ sub detect_prague_coordination
         my $old_head = $phrase->head();
         $phrase->detach_children_and_die();
         push(@coordinators, $old_head);
-        my $coordination = new Treex::Core::Phrase::Coordination('conjuncts' => \@conjuncts, 'coordinators' => \@coordinators, 'punctuation' => \@inpunct, 'head_rule' => 'last_coordinator');
+        my $coordination = new Treex::Core::Phrase::Coordination('conjuncts' => \@conjuncts, 'coordinators' => \@coordinators, 'punctuation' => \@inpunct, 'head_rule' => $self->coordination_head_rule());
         foreach my $d (@sdependents, @outpunct)
         {
             $d->set_parent($coordination);
