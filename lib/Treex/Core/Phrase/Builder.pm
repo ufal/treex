@@ -111,6 +111,7 @@ sub detect_prague_pp
         # Now it is clear that we have a prepositional phrase. A new PP will be created
         # and the old input NTerm will be destroyed.
         my $preposition = $phrase->head();
+        $preposition->set_deprel('case'); ###!!! TODO: sometimes it will be mark. And sometimes we need the whole thing to become root, but it will not be stored at the preposition.
         # If there are two or more argument candidates, we have to select the best one.
         # There may be more sophisticated approaches but let's just take the first one for the moment.
         ###!!! This should work reasonably well for languages that have mostly prepositions.
