@@ -91,7 +91,7 @@ sub BUILD
 {
     my $self = shift;
     # Check that there is at least one conjunct.
-    if(scalar(@{$self->conjuncts()})==0)
+    if(scalar($self->conjuncts())==0)
     {
         confess("There must be at least one conjunct");
     }
