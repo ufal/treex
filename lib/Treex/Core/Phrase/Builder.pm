@@ -168,6 +168,16 @@ sub detect_prague_coordination
     # (cc:coord, punct:coord, root:coord); see HamleDT::Udep->afun_to_udeprel().
     if($phrase->deprel() =~ m/coord/i)
     {
+        # If the whole coordination must have the deprel root because it is
+        # attached to the root node, it has now the deprel 'root:coord'.
+        # Remember that we must modify the head deprel later.
+        ###!!! Coordination should not have to care about this! It would be
+        ###!!! better to define a new special type of nonterminal phrase,
+        ###!!! Phrase::Root. It would have one core child (head) but it would
+        ###!!! always give the child the deprel root. And in the UD style it
+        ###!!! might also ensure that there is only one root child and no
+        ###!!! dependents.
+        my $root_deprel_override = $phrase->deprel() =~ m/^root/i;
         my @dependents = $phrase->dependents('ordered' => 1);
         my @conjuncts;
         my @coordinators;
@@ -233,6 +243,12 @@ sub detect_prague_coordination
             'punctuation' => \@inpunct,
             'head_rule' => $self->coordination_head_rule()
         );
+        # If the whole coordination shall have the deprel 'root', assign it now
+        # to the head child.
+        if($root_deprel_override)
+        {
+            $coordination->set_deprel('root');
+        }
         # Remove the ':member' part from the deprels of the conjuncts. Keep the
         # main deprels as these may not necessarily be the same for all conjuncts.
         # Do not assign 'conj' as the deprel of the non-head conjuncts. That will
