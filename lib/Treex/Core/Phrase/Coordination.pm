@@ -206,7 +206,7 @@ sub nonhead_children
     confess('Dead') if($self->dead());
     my $head = $self->head();
     my @children = grep {$_ != $head} ($self->children());
-    return _order_required(@_) ? $self->order_phrases(@children) : @children;
+    return $self->_order_required(@_) ? $self->order_phrases(@children) : @children;
 }
 
 
