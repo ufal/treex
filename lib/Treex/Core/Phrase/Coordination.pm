@@ -220,7 +220,7 @@ sub core_children
     my $self = shift;
     confess('Dead') if($self->dead());
     my @children = ($self->conjuncts(), $self->coordinators(), $self->punctuation());
-    return _order_required(@_) ? $self->order_phrases(@children) : @children;
+    return $self->_order_required(@_) ? $self->order_phrases(@children) : @children;
 }
 
 
