@@ -185,6 +185,21 @@ sub deprel
 
 
 #------------------------------------------------------------------------------
+# Sets a new type of the dependency relation of the phrase to the governing
+# phrase. For nonterminal phrases the label is propagated to one (or several)
+# of their children. It is not propagated to the underlying dependency tree
+# (the project_dependencies() method would have to be called to achieve that).
+#------------------------------------------------------------------------------
+sub set_deprel
+{
+    my $self = shift;
+    confess('Dead') if($self->dead());
+    $self->head()->set_deprel(@_);
+}
+
+
+
+#------------------------------------------------------------------------------
 # Adds a child phrase (subphrase). By default, the new child will not be head,
 # it will be an ordinary modifier. This is a private method that should be
 # called only from the public method Phrase::set_parent().
@@ -474,6 +489,18 @@ method. The following calling styles are possible:
   my @ordered_children = $phrase->children({'ordered' => 1});
   my @ordered_children = $phrase->children('ordered' => 1);
   my @ordered_children = $phrase->children('ordered');
+
+=item deprel
+
+Returns the type of the dependency relation of the phrase to the governing
+phrase. A general nonterminal phrase has the same deprel as its head child.
+
+=item set_deprel
+
+Sets a new type of the dependency relation of the phrase to the governing
+phrase. For nonterminal phrases the label is propagated to one (or several)
+of their children. It is not propagated to the underlying dependency tree
+(the C<project_dependencies()> method would have to be called to achieve that).
 
 =item replace_child
 

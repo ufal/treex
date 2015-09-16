@@ -125,6 +125,23 @@ sub deprel
 
 
 #------------------------------------------------------------------------------
+# Sets a new type of the dependency relation of the phrase to the governing
+# phrase. For PPs the label is propagated to one of the core children.
+# Depending on the current preference it is either the preposition or the
+# argument. This is not necessarily the same child that is the current head.
+# The label is not propagated to the underlying dependency tree
+# (the project_dependencies() method would have to be called to achieve that).
+#------------------------------------------------------------------------------
+sub set_deprel
+{
+    my $self = shift;
+    confess('Dead') if($self->dead());
+    $self->deprel_at_prep() ? $self->prep()->set_deprel(@_) : $self->arg()->set_deprel(@_);
+}
+
+
+
+#------------------------------------------------------------------------------
 # Replaces one of the core children (preposition or argument) by another
 # phrase. This is used when we want to transform the child to a different class
 # of phrase. The replacement must not have a parent yet.
@@ -260,6 +277,15 @@ the argument. This is not necessarily the same child that is the current
 head. For example, in the Prague annotation style, the preposition is head
 but its deprel is always C<AuxP> while the real deprel of the whole phrase is
 stored at the argument.
+
+=item set_deprel
+
+Sets a new type of the dependency relation of the phrase to the governing
+phrase. For PPs the label is propagated to one of the core children.
+Depending on the current preference it is either the preposition or the
+argument. This is not necessarily the same child that is the current head.
+The label is not propagated to the underlying dependency tree
+(the project_dependencies() method would have to be called to achieve that).
 
 =item replace_core_child
 
