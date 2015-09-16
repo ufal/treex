@@ -239,7 +239,14 @@ sub detect_prague_coordination
         my $parent = $phrase->parent();
         my $old_head = $phrase->head();
         $phrase->detach_children_and_die();
-        push(@coordinators, $old_head);
+        if($old_head->deprel() =~ m/^punct/i)
+        {
+            push(@punctuation, $old_head);
+        }
+        else
+        {
+            push(@coordinators, $old_head);
+        }
         my $coordination = new Treex::Core::Phrase::Coordination
         (
             'conjuncts' => \@conjuncts,

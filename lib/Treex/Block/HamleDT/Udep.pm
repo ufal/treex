@@ -94,7 +94,7 @@ sub process_zone
         log_info("AFTER 1: $after1");
         # The tree code for Brat may span too many lines and we will not see it if it is printed directly to the terminal!
         # Maybe we should print it to a file?
-        print STDERR ("$before1brat\n$after0brat\n$after1brat\n");
+        print STDERR ("BEFORE:\n$before1brat\nAFTER 0:\n$after0brat\nAFTER 1:\n$after1brat\n");
         log_fatal("Regression test failed.");
     }
     # Some of the top colons are analyzed as copulas. Do this before the copula processing reshapes the scene.
