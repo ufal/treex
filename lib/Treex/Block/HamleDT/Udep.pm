@@ -49,10 +49,31 @@ sub process_zone
     $self->fix_symbols($root);
     $self->fix_annotation_errors($root);
     $self->afun_to_udeprel($root);
+    ###!!!
+    # Backup the tree before applying any structural transformations.
+    # This is a temporary debugging measure: we want to make sure that the new implementation does not introduce errors.
+    my $before = $root->get_subtree_dependency_string();
+    my $src_language = $root->language();
+    my $src_selector = $root->selector();
+    my $tgt_language = $src_language;
+    my $tgt_selector = 'backup';
+    my $bundle = $src_root->get_bundle();
+    my $tgt_zone = $bundle->get_or_create_zone($tgt_language, $tgt_selector);
+    my $tgt_root = $tgt_zone->create_atree();
+    $root->copy_atree($tgt_root);
+    # Back to the harmonization.
     $self->shape_coordination_stanford($root);
     $self->restructure_compound_prepositions($root);
     $self->push_prep_sub_down($root);
     $self->change_case_to_mark_under_verb($root);
+    ###!!! Compare the trees before and after the transformation.
+    my $after = $root->get_subtree_dependency_string();
+    if($before ne $after)
+    {
+        log_info("BEFORE: $before");
+        log_info("AFTER:  $after");
+        log_fatal("Round-trip dependencies-phrases-dependencies does not match.");
+    }
     # Some of the top colons are analyzed as copulas. Do this before the copula processing reshapes the scene.
     $self->colon_pred_to_apposition($root);
     $self->push_copulas_down($root);
