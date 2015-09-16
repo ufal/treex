@@ -35,6 +35,17 @@ has 'prep_is_head' =>
     required => 1
 );
 
+has 'deprel_at_prep' =>
+(
+    is       => 'rw',
+    isa      => 'Bool',
+    required => 1,
+    documentation =>
+        'Where (at what core child) is the label of the relation between this '.
+        'phrase and its parent? It is either at the preposition or at the '.
+        'argument, regardless which of them is the head.'
+);
+
 
 
 #------------------------------------------------------------------------------
@@ -91,6 +102,24 @@ sub core_children
     confess('Dead') if($self->dead());
     my @children = ($self->prep(), $self->arg());
     return $self->_order_required(@_) ? $self->order_phrases(@children) : @children;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the type of the dependency relation of the phrase to the governing
+# phrase. A prepositional phrase has the same deprel as one of its core
+# children. Depending on the current preference it is either the preposition or
+# the argument. This is not necessarily the same child that is the current
+# head. For example, in the Prague annotation style, the preposition is head
+# but its deprel is always 'AuxP' while the real deprel of the whole phrase is
+# stored at the argument.
+#------------------------------------------------------------------------------
+sub deprel
+{
+    my $self = shift;
+    confess('Dead') if($self->dead());
+    return $self->deprel_at_prep() ? $self->prep()->deprel() : $self->arg()->deprel();
 }
 
 
@@ -193,6 +222,12 @@ Boolean attribute that defines the currently preferred annotation style.
 C<True> means that the preposition is considered the head of the phrase.
 C<False> means that the argument is the head.
 
+=item deprel_at_prep
+
+Where (at what core child) is the label of the relation between this phrase and
+its parent? It is either at the preposition or at the argument, regardless
+which of them is the head.
+
 =back
 
 =head1 METHODS
@@ -215,6 +250,16 @@ the preposition or the argument (whichever is currently not the head).
 
 Returns the list of the children of the phrase that are not dependents, i.e. both the
 preposition and the argument.
+
+=item deprel
+
+Returns the type of the dependency relation of the phrase to the governing
+phrase. A prepositional phrase has the same deprel as one of its core
+children. Depending on the current preference it is either the preposition or
+the argument. This is not necessarily the same child that is the current
+head. For example, in the Prague annotation style, the preposition is head
+but its deprel is always C<AuxP> while the real deprel of the whole phrase is
+stored at the argument.
 
 =item replace_core_child
 

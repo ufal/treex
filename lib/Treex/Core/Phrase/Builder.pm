@@ -128,7 +128,13 @@ sub detect_prague_pp
                $mwp->set_parent($preposition);
            }
         }
-        my $pp = new Treex::Core::Phrase::PP('prep' => $preposition, 'arg' => $argument, 'prep_is_head' => $self->prep_is_head());
+        my $pp = new Treex::Core::Phrase::PP
+        (
+            'prep'           => $preposition,
+            'arg'            => $argument,
+            'prep_is_head'   => $self->prep_is_head(),
+            'deprel_at_prep' => 0
+        );
         foreach my $d (@candidates, @punc)
         {
             $d->set_parent($pp);
