@@ -226,7 +226,24 @@ sub detect_prague_coordination
         my $old_head = $phrase->head();
         $phrase->detach_children_and_die();
         push(@coordinators, $old_head);
-        my $coordination = new Treex::Core::Phrase::Coordination('conjuncts' => \@conjuncts, 'coordinators' => \@coordinators, 'punctuation' => \@inpunct, 'head_rule' => $self->coordination_head_rule());
+        my $coordination = new Treex::Core::Phrase::Coordination
+        (
+            'conjuncts' => \@conjuncts,
+            'coordinators' => \@coordinators,
+            'punctuation' => \@inpunct,
+            'head_rule' => $self->coordination_head_rule()
+        );
+        # Remove the ':member' part from the deprels of the conjuncts. Keep the
+        # main deprels as these may not necessarily be the same for all conjuncts.
+        # Do not assign 'conj' as the deprel of the non-head conjuncts. That will
+        # be set during back-projection to the dependency tree, based on the
+        # annotation style that will be selected at that time.
+        foreach my $c (@conjuncts)
+        {
+            my $deprel = $c->deprel();
+            $deprel =~ s/:member$//;
+            $c->set_deprel($deprel);
+        }
         foreach my $d (@sdependents, @outpunct)
         {
             $d->set_parent($coordination);
