@@ -31,9 +31,11 @@ sub build
             my $pchild = $self->build($nchild);
             $pchild->set_parent($phrase);
         }
-        # The following line is the only part (so far) that assumes one particular
-        # annotation style.
+        # The following is the only part (so far) that assumes one particular
+        # annotation style. In future we will want to parameterize the Builder
+        # by properties of the expected input style.
         $phrase = $self->detect_prague_pp($phrase);
+        $phrase = $self->detect_prague_coordination($phrase);
     }
     return $phrase;
 }
