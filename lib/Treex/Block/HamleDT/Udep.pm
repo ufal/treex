@@ -1,7 +1,8 @@
 package Treex::Block::HamleDT::Udep;
+use utf8;
 use Moose;
 use Treex::Core::Common;
-use utf8;
+use Treex::Core::Phrase::Builder;
 extends 'Treex::Core::Block';
 
 has 'last_file_stem' => ( is => 'rw', isa => 'Str', default => '' );
@@ -52,7 +53,7 @@ sub process_zone
     ###!!!
     # Backup the tree before applying any structural transformations.
     # This is a temporary debugging measure: we want to make sure that the new implementation does not introduce errors.
-    my $before = $root->get_subtree_dependency_string();
+    my $before0 = $root->get_subtree_dependency_string();
     my $src_language = $root->language();
     my $src_selector = $root->selector();
     my $tgt_language = $src_language;
@@ -60,18 +61,26 @@ sub process_zone
     my $tgt_zone = $bundle->get_or_create_zone($tgt_language, $tgt_selector);
     my $tgt_root = $tgt_zone->create_atree();
     $root->copy_atree($tgt_root);
+    my $before1 = $tgt_root->get_subtree_dependency_string();
     # Back to the harmonization.
     $self->shape_coordination_stanford($root);
     $self->restructure_compound_prepositions($root);
     $self->push_prep_sub_down($root);
     $self->change_case_to_mark_under_verb($root);
+    ###!!! New implementation: transform prepositions and coordination via phrases.
+    my $builder = new Treex::Core::Phrase::Builder;
+    my $phrase = $builder->build($tgt_root);
+    $phrase->project_dependencies();
     ###!!! Compare the trees before and after the transformation.
-    my $after = $root->get_subtree_dependency_string();
-    if($before ne $after)
+    my $after0 = $root->get_subtree_dependency_string();
+    my $after1 = $tgt_root->get_subtree_dependency_string();
+    if($before0 ne $before1 || $after0 ne $after1)
     {
-        log_info("BEFORE: $before");
-        log_info("AFTER:  $after");
-        log_fatal("Round-trip dependencies-phrases-dependencies does not match.");
+        log_info("BEFORE 0: $before0");
+        log_info("BEFORE 1: $before1");
+        log_info("AFTER  0: $after0");
+        log_info("AFTER  1: $after1");
+        log_fatal("Regression test failed.");
     }
     # Some of the top colons are analyzed as copulas. Do this before the copula processing reshapes the scene.
     $self->colon_pred_to_apposition($root);
