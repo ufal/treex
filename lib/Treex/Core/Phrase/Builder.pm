@@ -77,8 +77,9 @@ sub detect_prague_pp
     # If this is the Prague style then the preposition (if any) must be the head.
     # The deprel is already partially converted to UD, so it should be something:auxp
     # (case:auxp, mark:auxp, root:auxp); see HamleDT::Udep->afun_to_udeprel().
-    if($phrase->deprel() =~ m/aux[pc]/i)
+    if($phrase->deprel() =~ m/^(case|mark|root):aux[pc]/i)
     {
+        my $target_deprel = $1;
         my @dependents = $phrase->dependents('ordered' => 1);
         my @mwauxp;
         my @punc;
@@ -114,7 +115,7 @@ sub detect_prague_pp
         # Now it is clear that we have a prepositional phrase. A new PP will be created
         # and the old input NTerm will be destroyed.
         my $preposition = $phrase->head();
-        $preposition->set_deprel('case'); ###!!! TODO: sometimes it will be mark. And sometimes we need the whole thing to become root, but it will not be stored at the preposition.
+        $preposition->set_deprel($target_deprel); ###!!! Usually case or mark. And sometimes we need the whole thing to become root, but it will not be stored at the preposition.
         # If there are two or more argument candidates, we have to select the best one.
         # There may be more sophisticated approaches but let's just take the first one for the moment.
         ###!!! This should work reasonably well for languages that have mostly prepositions.
