@@ -64,6 +64,15 @@ sub process_zone
     $root->copy_atree($tgt_root);
     my $before1 = $tgt_root->get_subtree_dependency_string();
     my $before1brat = $tgt_root->get_subtree_dependency_string(1);
+    if($before0 ne $before1)
+    {
+        log_info("BEFORE 0: $before0");
+        log_info("BEFORE 1: $before1");
+        # The tree code for Brat may span too many lines and we will not see it if it is printed directly to the terminal!
+        # Maybe we should print it to a file?
+        print STDERR ("$before0brat\n$before1brat\n");
+        log_fatal("Copy of tree does not match the original.");
+    }
     # Back to the harmonization.
     $self->shape_coordination_stanford($root);
     $self->restructure_compound_prepositions($root);
@@ -78,15 +87,14 @@ sub process_zone
     my $after1 = $tgt_root->get_subtree_dependency_string();
     my $after0brat = $root->get_subtree_dependency_string(1);
     my $after1brat = $tgt_root->get_subtree_dependency_string(1);
-    if($before0 ne $before1 || $after0 ne $after1)
+    if($after0 ne $after1)
     {
-        log_info("BEFORE 0: $before0");
-        log_info("BEFORE 1: $before1");
-        log_info("AFTER  0: $after0");
-        log_info("AFTER  1: $after1");
+        log_info("BEFORE:  $before1");
+        log_info("AFTER 0: $after0");
+        log_info("AFTER 1: $after1");
         # The tree code for Brat may span too many lines and we will not see it if it is printed directly to the terminal!
         # Maybe we should print it to a file?
-        print STDERR ("$before0brat\n$before1brat\n$after0brat\n$after1brat\n");
+        print STDERR ("$before1brat\n$after0brat\n$after1brat\n");
         log_fatal("Regression test failed.");
     }
     # Some of the top colons are analyzed as copulas. Do this before the copula processing reshapes the scene.
