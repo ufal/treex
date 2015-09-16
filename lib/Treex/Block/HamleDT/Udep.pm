@@ -256,7 +256,7 @@ sub afun_to_udeprel
         # In the situation 2, the first word in the multi-word prepositon will become the head and all other parts will be attached to it as 'mwe'.
         elsif($afun eq 'AuxP')
         {
-            $deprel = $parent->is_verb() ? 'mark:auxp' : 'case:auxp';
+            $deprel = 'case:auxp';
         }
         # AuxC marks a subordinating conjunction that heads a subordinate clause.
         # It will be later restructured and the conjunction will be attached to the subordinate predicate as 'mark'.
