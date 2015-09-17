@@ -146,11 +146,16 @@ sub detect_prague_pp
         # The main prepositional node has already been detached from its original parent so it can be used as the head elsewhere.
         if(scalar(@mwauxp) > 0)
         {
-           $preposition = new Treex::Core::Phrase::NTerm('head' => $preposition);
-           foreach my $mwp (@mwauxp)
-           {
-               $mwp->set_parent($preposition);
-           }
+            # The leftmost node of the MWE will be its head.
+            @mwauxp = sort {$a->node()->ord() <=> $b->node()->ord()} (@mwauxp, $preposition);
+            my $prepdeprel = $preposition->deprel();
+            $preposition = new Treex::Core::Phrase::NTerm('head' => shift(@mwauxp));
+            $preposition->set_deprel($prepdeprel);
+            foreach my $mwp (@mwauxp)
+            {
+                $mwp->set_parent($preposition);
+                $mwp->set_deprel('mwe');
+            }
         }
         my $pp = new Treex::Core::Phrase::PP
         (
