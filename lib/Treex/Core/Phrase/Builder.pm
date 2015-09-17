@@ -208,18 +208,21 @@ sub detect_prague_coordination
                 $cmin = $d->ord() if(!defined($cmin));
                 $cmax = $d->ord();
             }
-            # Additional coordinating conjunctions (except the head) are not
-            # labeled by a dedicated deprel. They are labeled AuxY but other
-            # words in the tree may get this label too.
-            elsif($d->deprel() eq 'AuxY')
+            # Additional coordinating conjunctions (except the head).
+            # In PDT they are labeled AuxY but other words in the tree may get
+            # this label too. During label conversion it is converted to cc.
+            elsif($d->deprel() eq 'cc')
             {
                 push(@coordinators, $d);
             }
-            # Punctuation is attached as AuxX (commas) or AuxG (everything
-            # else). We will ignore punctuation labeled Coord or Appos because
-            # it heads a nested coordination or apposition, hence it is either
-            # a conjunct (Coord_M, Appos_M) or a shared dependent (without _M).
-            elsif($d->deprel() =~ m/^Aux[XG]$/)
+            # Punctuation (except the head).
+            # In PDT it is labeled AuxX (commas) or AuxG (everything else).
+            # During label conversion both are converted to punct.
+            # Some punctuation may have headed a nested coordination or
+            # apposition (playing either a conjunct or a shared dependent) but
+            # it should have been processed by now, as we are proceeding
+            # bottom-up.
+            elsif($d->deprel() eq 'punct')
             {
                 push(@punctuation, $d);
             }
@@ -245,7 +248,7 @@ sub detect_prague_coordination
         my $member = $phrase->is_member();
         my $old_head = $phrase->head();
         $phrase->detach_children_and_die();
-        if($old_head->deprel() =~ m/^punct/i)
+        if($deprel eq 'punct')
         {
             push(@punctuation, $old_head);
         }
