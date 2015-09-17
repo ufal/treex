@@ -175,8 +175,14 @@ sub detect_prague_coordination
     # If this is the Prague style then the head is either coordinating conjunction or punctuation.
     # The deprel is already partially converted to UD, so it should be something:coord
     # (cc:coord, punct:coord, root:coord); see HamleDT::Udep->afun_to_udeprel().
-    if($phrase->deprel() =~ m/coord/i)
+    if($phrase->deprel() =~ m/:coord/i)
     {
+        # Remove the ':coord' part from the deprel. Even if we do not find any
+        # conjunct and cannot construct coordination, the label cannot remain
+        # in the data.
+        my $deprel = $phrase->deprel();
+        $deprel =~ s/:coord//i;
+        $phrase->set_deprel($deprel);
         # If the whole coordination must have the deprel root because it is
         # attached to the root node, it has now the deprel 'root:coord'.
         # Remember that we must modify the head deprel later.
