@@ -308,7 +308,11 @@ sub project_dependencies
         {
             my $conj_node = $c->node();
             $conj_node->set_parent($head_node);
-            if($dep_means_orphan && $c->deprel() eq 'dep')
+            ###!!! The old implementation of Udep did not care about the ExD orphans.
+            ###!!! Thus we will turn this off at least until we successfully pass regression tests
+            ###!!! and fully deploy the new implementation.
+            if(0 && ###!!!
+               $dep_means_orphan && $c->deprel() eq 'dep')
             {
                 $conj_node->set_deprel('dep');
             }

@@ -4,7 +4,6 @@ use utf8;
 use namespace::autoclean;
 
 use Moose;
-use MooseX::SemiAffordanceAccessor; # attribute x is written using set_x($value) and read using x()
 use Treex::Core::Log;
 use Treex::Core::Node;
 
@@ -39,31 +38,34 @@ around BUILDARGS => sub
     my $class = shift;
     # Call the default BUILDARGS in Moose::Object. It will take care of distinguishing between a hash reference and a plain hash.
     my $attr = $class->$orig(@_);
-    # Add deprel only if it has not been supplied separately.
-    if(!defined($attr->{deprel}) && defined($attr->{node}))
+    if(defined($attr->{node}))
     {
         my $node = $attr->{node};
-        if(defined($node->deprel()))
+        # Add deprel only if it has not been supplied separately.
+        if(!defined($attr->{deprel}))
         {
-            $attr->{deprel} = $node->deprel();
+            if(defined($node->deprel()))
+            {
+                $attr->{deprel} = $node->deprel();
+            }
+            elsif(defined($node->afun()))
+            {
+                $attr->{deprel} = $node->afun();
+            }
+            elsif(defined($node->conll_deprel()))
+            {
+                $attr->{deprel} = $node->conll_deprel();
+            }
+            else
+            {
+                $attr->{deprel} = 'NR';
+            }
         }
-        elsif(defined($node->afun()))
+        # Copy the initial value of is_member from the node to the phrase.
+        if(!defined($attr->{is_member}) && $node->is_member())
         {
-            $attr->{deprel} = $node->afun();
+            $attr->{is_member} = 1;
         }
-        elsif(defined($node->conll_deprel()))
-        {
-            $attr->{deprel} = $node->conll_deprel();
-        }
-        else
-        {
-            $attr->{deprel} = 'NR';
-        }
-    }
-    # Copy the initial value of is_member from the node to the phrase.
-    if($node->is_member())
-    {
-        $attr->{is_member} = 1;
     }
     return $attr;
 };
