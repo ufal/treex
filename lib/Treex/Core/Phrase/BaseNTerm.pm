@@ -4,6 +4,7 @@ use utf8;
 use namespace::autoclean;
 
 use Moose;
+use List::MoreUtils qw(any);
 use Treex::Core::Log;
 
 extends 'Treex::Core::Phrase';
