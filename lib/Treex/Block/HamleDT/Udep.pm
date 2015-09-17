@@ -85,7 +85,18 @@ sub process_zone
     my $after0brat = $root->get_subtree_dependency_string(1);
     my $after1 = $tgt_root->get_subtree_dependency_string();
     my $after1brat = $tgt_root->get_subtree_dependency_string(1);
-    if($after0 ne $after1)
+    ###!!! Skip sentences where the new implementation actually fixes an error of the old one.
+    my @skip_sentences =
+    (
+        'Ale v každém případě podstatně vyšší , než při hodnocení " od boku " .',
+        'Pro zajímavost - v naší republice je 18 procent lidí neschopných pro jakoukoliv efektivní práci .',
+        'Asi tak , jako když potřebujete rychle taxík a vezmete jej , i když je drahý .',
+        'V koupelové pěně , s trochou hudby , případně magazínem v ruce a skleničkou vína .',
+        'Ale o kolik ?',
+        'Pokud bylo sjednáno pouze ubytování , bez dalšího zaopatření , pak se sazby zdvojnásobují a mohou v krajním případě dosáhnout i 100 % .',
+    );
+    my $skip = '^('.join('|', @skip_sentences).')';
+    if($after0 ne $after1 && $after1 !~ m/$skip/)
     {
         log_info("BEFORE:    $before1");
         log_info("AFTER OLD: $after0");
@@ -463,7 +474,15 @@ sub afun_to_udeprel
         {
             if(lc($node->form()) eq 'jako')
             {
-                $deprel = 'mark';
+                if(lc($parent->form()) eq 'když')
+                {
+                    # Since "když" is probably also mark:auxc, this will make "jako když" a multi-word conjunction.
+                    $deprel = 'mark:auxc';
+                }
+                else
+                {
+                    $deprel = 'mark';
+                }
             }
             else
             {
