@@ -138,7 +138,27 @@ sub detect_prague_pp
         # There may be more sophisticated approaches but let's just take the first one for the moment.
         ###!!! This should work reasonably well for languages that have mostly prepositions.
         ###!!! If we know that there are mostly postpositions, we may prefer to take the last candidate.
-        my $argument = shift(@candidates);
+        # Emphasizers (AuxZ or advmod:emph) preceding the preposition should be
+        # attached to the argument rather than the preposition. However,
+        # occasionally they are attached to the preposition, as in [cs]:
+        # , přinejmenším pokud jde o platy
+        # , at-least if are-concerned about salaries
+        # ("pokud" is the AuxC and the original head, "přinejmenším" should be
+        # attached to the verb "jde" but it is attached to "pokud", thus
+        # "pokud" has two children. We want the verb "jde" to become the
+        # argument.)
+        my @ecandidates = grep {$_->deprel() eq 'advmod:emph'} (@candidates);
+        my @ocandidates = grep {$_->deprel() ne 'advmod:emph'} (@candidates);
+        my $argument;
+        if(scalar(@ocandidates)>0)
+        {
+            $argument = shift(@ocandidates);
+            @candidates = (@ecandidates, @ocandidates);
+        }
+        else
+        {
+            $argument = shift(@candidates);
+        }
         my $parent = $phrase->parent();
         my $member = $phrase->is_member();
         $phrase->detach_children_and_die();
