@@ -318,14 +318,14 @@ sub get_referencing_nodes {
     my $refs = $doc->get_references_to_id( $self->id );
     return if ( !$refs || !$refs->{$type} );
     if ((defined $lang) && (defined $sel)) {
-    	my @ref_filtered_by_tree;
-    	if ($sel eq q() ) {
-    		@ref_filtered_by_tree = grep { /(a|t)\_tree\-$lang\-.+/; }@{ $refs->{$type} };    		
-    	}
-    	else {
-    		@ref_filtered_by_tree = grep { /(a|t)\_tree\-$lang\_$sel\-.+/; }@{ $refs->{$type} };
-    	}
-		return map { $doc->get_node_by_id($_) } @ref_filtered_by_tree;
+        my @ref_filtered_by_tree;
+        if ($sel eq q() ) {
+            @ref_filtered_by_tree = grep { /(a|t)\_tree\-$lang\-.+/; }@{ $refs->{$type} };            
+        }
+        else {
+            @ref_filtered_by_tree = grep { /(a|t)\_tree\-$lang\_$sel\-.+/; }@{ $refs->{$type} };
+        }
+        return map { $doc->get_node_by_id($_) } @ref_filtered_by_tree;
     }
     return map { $doc->get_node_by_id($_) } @{ $refs->{$type} };
 }
@@ -341,7 +341,6 @@ sub remove_reference {
         my $links = $self->get_attr('alignment');
 
         if ($links) {
-            my $document = $self->get_document;
             $self->set_attr( 'alignment', [ grep { $_->{'counterpart.rf'} ne $id } @{$links} ] );
         }
     }
@@ -701,14 +700,14 @@ sub get_aligned_nodes_by_tree {
     if ($links_rf) {
         my $document = $self->get_document;
         foreach my $l_rf (@{$links_rf}) {
-        	if ($l_rf->{'counterpart.rf'} =~ /^(a|t)_tree-$lang(_$selector)?-.+$/) {
-        		my $n = $document->get_node_by_id( $l_rf->{'counterpart.rf'} );
-        		my $t = $l_rf->{'type'};
-        		push @nodes, $n;
-        		push @types, $t;
-        	}
+            if ($l_rf->{'counterpart.rf'} =~ /^(a|t)_tree-$lang(_$selector)?-.+$/) {
+                my $n = $document->get_node_by_id( $l_rf->{'counterpart.rf'} );
+                my $t = $l_rf->{'type'};
+                push @nodes, $n;
+                push @types, $t;
+            }
         }
-        return ( \@nodes, \@types ) if 	scalar(@nodes) > 0 ;	
+        return ( \@nodes, \@types ) if     scalar(@nodes) > 0 ;    
     }
     return ( undef, undef );
 }
@@ -718,10 +717,10 @@ sub get_aligned_nodes_of_type {
     my @nodes;
     my ( $n_rf, $t_rf );
     if ((defined $lang) && (defined $selector)) {
-    	( $n_rf, $t_rf ) = $self->get_aligned_nodes_by_tree($lang, $selector);
+        ( $n_rf, $t_rf ) = $self->get_aligned_nodes_by_tree($lang, $selector);
     }
     else {
-    	( $n_rf, $t_rf ) = $self->get_aligned_nodes();	
+        ( $n_rf, $t_rf ) = $self->get_aligned_nodes();    
     }    
     return if !$n_rf;
     my $iterator = List::MoreUtils::each_arrayref( $n_rf, $t_rf );

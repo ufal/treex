@@ -1172,6 +1172,11 @@ sub fix_determiners
 {
     my $self  = shift;
     my $root  = shift;
+    ###!!! Do not do anything for Maltese. There is no tree structure we could
+    ###!!! rely on. This is definitely not the best place to turn this off, we
+    ###!!! need a more general solution! But right now a quick hack is needed.
+    return if($self->language() eq 'mt');
+    ###!!!
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {

@@ -1,4 +1,5 @@
 package Treex::Core::Node::Interset;
+
 use MooseX::Role::Parameterized;
 
 parameter interset_attribute => (

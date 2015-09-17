@@ -2,12 +2,12 @@ SHELL=bash
 
 include ../common.mk
 
-ALLDIRS=${READ_T} ${WRITE_T} ${TOOL} #bin, core & util are created automatically
+ALLDIRS=${READ_T} ${WRITE_T} ${TOOLS} ${BIN} #bin, core & util are created automatically
 
 MODULES := ${CORE} \
            ${UTIL} \
 		   $(addprefix ${BIN}/, treex ttred) \
-           $(addprefix ${TOOL}/, Probe.pm) \
+           $(addprefix ${TOOLS}/, Probe.pm) \
            $(addprefix ${LIB}/, Treex.pm) \
            $(addprefix ${TREEX}/, Core.pm) \
            $(addprefix ${READ}/, Text.pm Treex.pm Sentences.pm BaseReader.pm BaseTextReader.pm) \

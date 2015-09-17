@@ -372,10 +372,7 @@ sub _run_with_cache {
         my $skip_to            = 0;
         my $process            = 0;
         my $skip_from          = 0;
-        my $skip_from_last     = 0;
         my $from_hash          = "";
-        my $from_hash_last     = "";
-        my $initial_hash       = $document->get_hash();
         my $document_last_hash = "";
         foreach my $block ( @{ $self->loaded_blocks } ) {
             $block_number++;
