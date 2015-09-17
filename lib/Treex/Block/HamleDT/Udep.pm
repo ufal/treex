@@ -1,5 +1,6 @@
 package Treex::Block::HamleDT::Udep;
 use utf8;
+use open ':utf8';
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Phrase::Builder;

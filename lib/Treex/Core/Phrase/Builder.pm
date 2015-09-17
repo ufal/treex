@@ -232,10 +232,6 @@ sub detect_prague_coordination
                 push(@sdependents, $d);
             }
         }
-        # Punctuation can be considered a conjunct delimiter only if it occurs
-        # between conjuncts.
-        my @inpunct  = grep {my $o = $_->ord(); $o > $cmin && $o < $cmax;} (@punctuation);
-        my @outpunct = grep {my $o = $_->ord(); $o < $cmin || $o > $cmax;} (@punctuation);
         # If there are no conjuncts, we cannot create a coordination.
         my $n = scalar(@conjuncts);
         if($n == 0)
@@ -248,7 +244,7 @@ sub detect_prague_coordination
         my $member = $phrase->is_member();
         my $old_head = $phrase->head();
         $phrase->detach_children_and_die();
-        if($deprel eq 'punct')
+        if($deprel eq 'punct' || ($deprel eq 'root' && $old_head->node()->is_punctuation()))
         {
             push(@punctuation, $old_head);
         }
@@ -256,6 +252,10 @@ sub detect_prague_coordination
         {
             push(@coordinators, $old_head);
         }
+        # Punctuation can be considered a conjunct delimiter only if it occurs
+        # between conjuncts.
+        my @inpunct  = grep {my $o = $_->ord(); $o > $cmin && $o < $cmax;} (@punctuation);
+        my @outpunct = grep {my $o = $_->ord(); $o < $cmin || $o > $cmax;} (@punctuation);
         my $coordination = new Treex::Core::Phrase::Coordination
         (
             'conjuncts'    => \@conjuncts,
