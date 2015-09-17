@@ -61,6 +61,7 @@ sub build
         # by properties of the expected input style.
         $phrase = $self->detect_prague_pp($phrase);
         $phrase = $self->detect_prague_coordination($phrase);
+        $phrase = $self->detect_root_phrase($phrase);
     }
     return $phrase;
 }
@@ -345,6 +346,48 @@ sub detect_prague_coordination
 
 
 
+#------------------------------------------------------------------------------
+# Checks whether the head node of a phrase is the artificial root of the
+# dependency tree. If so, then it makes sure that there is only one dependent
+# and its deprel is "root" (there is a consensus in Universal Dependencies that
+# there should be always just one node attached to the artificial root and
+# labeled "root"). If there were multiple dependents, the leftmost will be kept
+# and the others will be made its dependents (and grandchildren of the
+# artificial root node).
+#------------------------------------------------------------------------------
+sub detect_root_phrase
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase::NTerm
+    if($phrase->node()->is_root())
+    {
+        my @dependents = $phrase->dependents('ordered' => 1);
+        # The artificial root node cannot have more than one child.
+        if(scalar(@dependents)>1)
+        {
+            my $leftmost = shift(@dependents);
+            $leftmost->set_parent(undef);
+            # Create a new nonterminal phrase with the leftmost dependent as head and the others as dependents.
+            my $subphrase = new Treex::Core::Phrase::NTerm('head' => $leftmost);
+            foreach my $d (@dependents)
+            {
+                $d->set_parent($subphrase);
+            }
+            $subphrase->set_parent($phrase);
+            @dependents = ($subphrase);
+        }
+        # The child of the artificial root node is always attached with the label "root".
+        if(scalar(@dependents)>0)
+        {
+            $dependents[0]->set_deprel('root');
+        }
+    }
+    # Return the modified phrase as with all detect methods.
+    return $phrase;
+}
+
+
+
 __PACKAGE__->meta->make_immutable();
 
 1;
@@ -378,6 +421,22 @@ Examines a nonterminal phrase in the Prague style. If it recognizes
 a prepositional phrase, transforms the general nonterminal to PP.
 Returns the resulting phrase (if nothing has been changed, returns
 the original phrase).
+
+=item detect_prague_coordination
+
+Examines a nonterminal phrase in the Prague style (with analytical functions
+converted to dependency relation labels based on Universal Dependencies). If
+it recognizes a coordination, transforms the general NTerm to Coordination.
+
+=item detect_root_phrase
+
+Checks whether the head node of a phrase is the artificial root of the
+dependency tree. If so, then it makes sure that there is only one dependent
+and its deprel is "root" (there is a consensus in Universal Dependencies that
+there should be always just one node attached to the artificial root and
+labeled "root"). If there were multiple dependents, the leftmost will be kept
+and the others will be made its dependents (and grandchildren of the
+artificial root node).
 
 =back
 
