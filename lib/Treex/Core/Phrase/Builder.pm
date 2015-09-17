@@ -141,14 +141,18 @@ sub detect_prague_pp
         # Emphasizers (AuxZ or advmod:emph) preceding the preposition should be
         # attached to the argument rather than the preposition. However,
         # occasionally they are attached to the preposition, as in [cs]:
-        # , přinejmenším pokud jde o platy
-        # , at-least if are-concerned about salaries
+        #   , přinejmenším pokud jde o platy
+        #   , at-least if are-concerned about salaries
         # ("pokud" is the AuxC and the original head, "přinejmenším" should be
         # attached to the verb "jde" but it is attached to "pokud", thus
         # "pokud" has two children. We want the verb "jde" to become the
         # argument.)
-        my @ecandidates = grep {$_->deprel() eq 'advmod:emph'} (@candidates);
-        my @ocandidates = grep {$_->deprel() ne 'advmod:emph'} (@candidates);
+        # Similarly [cs]:
+        #   třeba v tom
+        #   for-example in the-fact
+        # In this case, "třeba" is attached to "v" as AuxY (cc), not as AuxZ (advmod:emph).
+        my @ecandidates = grep {$_->deprel() =~ m/^(advmod:emph|cc)$/} (@candidates);
+        my @ocandidates = grep {$_->deprel() !~ m/^(advmod:emph|cc)$/} (@candidates);
         my $argument;
         if(scalar(@ocandidates)>0)
         {
