@@ -18,6 +18,13 @@ has 'parent' =>
     default  => undef
 );
 
+has 'is_member' =>
+(
+    is            => 'rw',
+    isa           => 'Bool',
+    documentation => 'Is this phrase a member of a coordination (i.e. conjunct) or apposition?',
+);
+
 
 
 #------------------------------------------------------------------------------
@@ -174,6 +181,45 @@ meaning even for the C<Phrase> objects. They help recognize special types of non
 such as coordinations.
 If the phrase is the head of its parent phrase, its deprel is identical to the deprel of its parent.
 Otherwise, the deprel represents the dependency relation between the phrase and the head of its parent.
+
+=head1 ATTRIBUTES
+
+=over
+
+=item parent
+
+Refers to the parent C<Phrase>, if any.
+
+=item is_member
+
+Is this phrase member of a paratactic structure such as coordination (where
+members are known as conjuncts) or apposition? We need this attribute because
+of the Prague-style dependency trees. We need it only during the building phase
+of the phrase tree.
+
+We could encode this attribute in C<deprel> but it would not be practical
+because it acts independently of C<deprel>. Unlike C<deprel>, C<is_member> is
+less tied to the underlying nodes; it is really an attribute of the whole
+phrase. If we decide to change the C<deprel> of the phrase (which is propagated
+to selected core children), we do not necessarily want to change C<is_member>
+too. And we do not want to decode C<is_member> from C<deprel>, shuffle and
+encode elsewhere again.
+
+When a terminal phrase is created around a C<Node>, it takes its C<is_member>
+value from the node. When the phrase receives a parent, the C<is_member> flag
+will be typically moved to the parent (and erased at the child). However, this
+does not happen automatically and the C<Builder> has to do that when desired.
+Similarly, when the type of the phrase is changed (e.g. a new C<Phrase::PP> is
+created, the contents of the old C<Phrase::NTerm> is moved to it and the old
+phrase is destroyed), the surrounding code should make sure that the
+C<is_member> flag is carried over, too. Finally, the value will be used when
+a C<Phrase::Coordination> is recognized. At that point the C<is_member> flag
+can be erased for all newly identified conjuncts because now they can be
+recognized without the flag. However, if the C<Phrase::Coordination> itself (or its
+C<Phrase::NTerm> predecessor) is a member of a larger paratactic structure, then it
+must keep the flag for its parent to see and use.
+
+=back
 
 =head1 METHODS
 

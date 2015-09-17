@@ -59,10 +59,11 @@ around BUILDARGS => sub
         {
             $attr->{deprel} = 'NR';
         }
-        if($node->is_member())
-        {
-            $attr->{deprel} .= ':member';
-        }
+    }
+    # Copy the initial value of is_member from the node to the phrase.
+    if($node->is_member())
+    {
+        $attr->{is_member} = 1;
     }
     return $attr;
 };

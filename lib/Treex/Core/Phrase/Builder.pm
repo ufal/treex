@@ -46,8 +46,11 @@ sub build
     my $phrase = new Treex::Core::Phrase::Term('node' => $node);
     if(@nchildren)
     {
+        # Move the is_member flag to the parent phrase.
+        my $member = $phrase->is_member();
+        $phrase->set_is_member(0);
         # Create a new nonterminal phrase and make the current terminal phrase its head child.
-        $phrase = new Treex::Core::Phrase::NTerm('head' => $phrase);
+        $phrase = new Treex::Core::Phrase::NTerm('head' => $phrase, 'is_member' => $member);
         foreach my $nchild (@nchildren)
         {
             my $pchild = $self->build($nchild);
@@ -122,6 +125,7 @@ sub detect_prague_pp
         ###!!! If we know that there are mostly postpositions, we may prefer to take the last candidate.
         my $argument = shift(@candidates);
         my $parent = $phrase->parent();
+        my $member = $phrase->is_member();
         $phrase->detach_children_and_die();
         # If the preposition consists of multiple nodes, group them in a new NTerm first.
         # The main prepositional node has already been detached from its original parent so it can be used as the head elsewhere.
@@ -138,7 +142,8 @@ sub detect_prague_pp
             'prep'           => $preposition,
             'arg'            => $argument,
             'prep_is_head'   => $self->prep_is_head(),
-            'deprel_at_prep' => 0
+            'deprel_at_prep' => 0,
+            'is_member'      => $member
         );
         foreach my $d (@candidates, @punc)
         {
@@ -191,13 +196,7 @@ sub detect_prague_coordination
         my ($cmin, $cmax);
         foreach my $d (@dependents)
         {
-            # Elsewhere in Treex the Prague-style trees use afuns instead of
-            # deprels, and conjuncts have an additional attribute is_member.
-            # We try to make everything less Prague-dependent and work only
-            # with deprel, with no constraints put on the deprel values. Here
-            # we assume that both afun and is_member have been combined in
-            # deprel; is_member marked by a ':member' suffix.
-            if($d->deprel() =~ m/:member$/)
+            if($d->is_member())
             {
                 push(@conjuncts, $d);
                 $cmin = $d->ord() if(!defined($cmin));
@@ -237,6 +236,7 @@ sub detect_prague_coordination
         # Now it is clear that we have a coordination. A new Coordination phrase will be created
         # and the old input NTerm will be destroyed.
         my $parent = $phrase->parent();
+        my $member = $phrase->is_member();
         my $old_head = $phrase->head();
         $phrase->detach_children_and_die();
         if($old_head->deprel() =~ m/^punct/i)
@@ -249,10 +249,11 @@ sub detect_prague_coordination
         }
         my $coordination = new Treex::Core::Phrase::Coordination
         (
-            'conjuncts' => \@conjuncts,
+            'conjuncts'    => \@conjuncts,
             'coordinators' => \@coordinators,
-            'punctuation' => \@inpunct,
-            'head_rule' => $self->coordination_head_rule()
+            'punctuation'  => \@inpunct,
+            'head_rule'    => $self->coordination_head_rule(),
+            'is_member'    => $member
         );
         # If the whole coordination shall have the deprel 'root', assign it now
         # to the head child.
@@ -260,16 +261,14 @@ sub detect_prague_coordination
         {
             $coordination->set_deprel('root');
         }
-        # Remove the ':member' part from the deprels of the conjuncts. Keep the
-        # main deprels as these may not necessarily be the same for all conjuncts.
+        # Remove the is_member flag from the conjuncts. It will be no longer
+        # needed as we now know what are the conjuncts.
         # Do not assign 'conj' as the deprel of the non-head conjuncts. That will
         # be set during back-projection to the dependency tree, based on the
         # annotation style that will be selected at that time.
         foreach my $c (@conjuncts)
         {
-            my $deprel = $c->deprel();
-            $deprel =~ s/:member$//;
-            $c->set_deprel($deprel);
+            $c->set_is_member(0);
         }
         foreach my $d (@sdependents, @outpunct)
         {
