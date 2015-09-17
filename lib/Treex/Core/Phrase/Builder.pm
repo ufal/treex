@@ -80,9 +80,10 @@ sub detect_prague_pp
     # If this is the Prague style then the preposition (if any) must be the head.
     # The deprel is already partially converted to UD, so it should be something:auxp
     # (case:auxp, mark:auxp, root:auxp); see HamleDT::Udep->afun_to_udeprel().
-    if($phrase->deprel() =~ m/^(case|mark|root):aux[pc]/i)
+    if($phrase->deprel() =~ m/^(case|mark|root):(aux[pc])/i)
     {
         my $target_deprel = $1;
+        my $source_deprel = $2; # if target_deprel is root we will need this to decide whether the function word shall be case or mark
         my @dependents = $phrase->dependents('ordered' => 1);
         my @mwauxp;
         my @punc;
@@ -118,7 +119,21 @@ sub detect_prague_pp
         # Now it is clear that we have a prepositional phrase. A new PP will be created
         # and the old input NTerm will be destroyed.
         my $preposition = $phrase->head();
-        $preposition->set_deprel($target_deprel); ###!!! Usually case or mark. And sometimes we need the whole thing to become root, but it will not be stored at the preposition.
+        if($target_deprel eq 'root')
+        {
+            if($source_deprel eq 'auxp')
+            {
+                $preposition->set_deprel('case');
+            }
+            else
+            {
+                $preposition->set_deprel('mark');
+            }
+        }
+        else
+        {
+            $preposition->set_deprel($target_deprel);
+        }
         # If there are two or more argument candidates, we have to select the best one.
         # There may be more sophisticated approaches but let's just take the first one for the moment.
         ###!!! This should work reasonably well for languages that have mostly prepositions.
@@ -148,6 +163,10 @@ sub detect_prague_pp
         foreach my $d (@candidates, @punc)
         {
             $d->set_parent($pp);
+        }
+        if($target_deprel eq 'root')
+        {
+            $pp->set_deprel('root');
         }
         # If the original phrase already had a parent, we must make sure that
         # the parent is aware of the reincarnation we have made.
