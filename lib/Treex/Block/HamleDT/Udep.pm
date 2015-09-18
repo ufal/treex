@@ -243,25 +243,9 @@ sub afun_to_udeprel
         my $deprel;
         my $parent = $node->parent();
         # The top nodes (children of the root) must be labeled 'root'.
-        # We will now extend the label in cases where we may later need to distinguish the original afun.
-        if($parent->is_root())
-        {
-            # In verbless elliptic sentences the conjunction has no child (except for punctuation). It will remain attached as root.
-            # Example (sk): A ak áno, tak načo? = And if so, then why?
-            my @non_arg_children = grep {$_->afun() !~ m/^Aux[XGKY]$/} ($node->children());
-            if($afun eq 'AuxC' && scalar(@non_arg_children)==0)
-            {
-                $deprel = 'root';
-            }
-            elsif($afun =~ m/^(Coord|AuxP|AuxC|AuxK|ExD)$/)
-            {
-                $deprel = 'root:'.lc($afun);
-            }
-            else # $afun should be 'Pred'
-            {
-                $deprel = 'root';
-            }
-        }
+        # However, this will be solved elsewhere (and tree transformations may
+        # result in a different node being attached to the root), so we will
+        # now treat the labels as if nothing were attached to the root.
         # Punctuation is always 'punct' unless it depends directly on the root (which should happen only if there is just one node and the root).
         # We will temporarily extend the label if it heads coordination so that the coordination can later be reshaped properly.
         elsif($node->is_punctuation())
