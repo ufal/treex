@@ -185,11 +185,11 @@ sub detect_prague_pp
         }
         my $pp = new Treex::Core::Phrase::PP
         (
-            'prep'           => $preposition,
-            'arg'            => $argument,
-            'prep_is_head'   => $self->prep_is_head(),
-            'deprel_at_prep' => 0,
-            'is_member'      => $member
+            'fun'           => $preposition,
+            'arg'           => $argument,
+            'fun_is_head'   => $self->prep_is_head(),
+            'deprel_at_fun' => 0,
+            'is_member'     => $member
         );
         foreach my $d (@candidates, @punc)
         {
