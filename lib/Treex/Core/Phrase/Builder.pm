@@ -486,6 +486,11 @@ sub detect_root_phrase
             foreach my $d (@dependents)
             {
                 $d->set_parent($subphrase);
+                # Solve the sentence-final punctuation at the same time.
+                if($d->deprel() eq 'root:auxk')
+                {
+                    $d->set_deprel('punct');
+                }
             }
             $subphrase->set_parent($phrase);
             @dependents = ($subphrase);
