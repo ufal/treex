@@ -89,36 +89,7 @@ sub process_zone
     );
     my $phrase = $builder->build($tgt_root);
     $phrase->project_dependencies();
-    ###!!! Compare the trees before and after the transformation.
-    my $after0 = $root->get_subtree_dependency_string();
-    my $after0brat = $root->get_subtree_dependency_string(1);
-    my $after1 = $tgt_root->get_subtree_dependency_string();
-    my $after1brat = $tgt_root->get_subtree_dependency_string(1);
-    ###!!! Skip sentences where the new implementation actually fixes an error of the old one.
-    my @skip_sentences =
-    (
-        'Ale v každém případě podstatně vyšší , než při hodnocení " od boku " .',
-        'Pro zajímavost - v naší republice je 18 procent lidí neschopných pro jakoukoliv efektivní práci .',
-        'Asi tak , jako když potřebujete rychle taxík a vezmete jej , i když je drahý .',
-        'V koupelové pěně , s trochou hudby , případně magazínem v ruce a skleničkou vína .',
-        'Ale o kolik ?',
-        'Pokud bylo sjednáno pouze ubytování , bez dalšího zaopatření , pak se sazby zdvojnásobují a mohou v krajním případě dosáhnout i 100 % .',
-    );
-    my $skip = '^('.join('|', @skip_sentences).')';
-    if($after0 ne $after1 && $after1 !~ m/$skip/)
-    {
-        log_info("BEFORE:    $before1");
-        log_info("AFTER OLD: $after0");
-        log_info("AFTER NEW: $after1");
-        # The tree code for Brat may span too many lines and we will not see it if it is printed directly to the terminal.
-        # Warning! This code attempts to create or modify a file in the current working folder on the disk!
-        if(open(BAD, ">bad_trees.brat"))
-        {
-            print BAD ("BEFORE:\n\n$before1brat\nAFTER OLD:\n\n$after0brat\nAFTER NEW:\n\n$after1brat\n");
-            close(BAD);
-        }
-        log_fatal("Regression test failed.");
-    }
+    ###!!! The rest is the old implementation. Perhaps there are other bits that we could move to the phrase builder?
     $self->classify_numerals($root);
     $self->restructure_compound_numerals($root);
     $self->push_numerals_down($root);
