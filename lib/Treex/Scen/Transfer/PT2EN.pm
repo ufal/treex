@@ -23,12 +23,11 @@ has hmtm => (
      documentation => 'Apply HMTM (TreeViterbi) with TreeLM reranking',
 );
 
-# TODO
 has gazetteer => (
      is => 'ro',
-     isa => 'Bool',
-     default => 0,
-     documentation => 'Use T2T::PT2EN::TrGazeteerItems, default=0',
+     isa => 'Str',
+     default => '0',
+     documentation => 'Use T2T::TrGazeteerItems, default=0',
 );
 
 has fl_agreement => (
@@ -36,6 +35,13 @@ has fl_agreement => (
      isa => enum( [qw(0 AM-P GM-P HM-P GM-Log-P HM-Log-P)] ),
      default => '0',
      documentation => 'Use T2T::FormemeTLemmaAgreement with a specified function as parameter',
+);
+
+# TODO gazetteers should work without any dependance on source language here
+has src_lang => (
+    is => 'ro',
+    isa => 'Str',
+    documentation => 'Gazetteers are defined for language pairs. Both source and target languages must be specified.',
 );
 
 sub BUILD {
@@ -61,6 +67,7 @@ sub get_scenario_string {
     'Util::SetGlobal language=en selector=tst',
     'T2T::CopyTtree source_language=pt source_selector=src',
     #'T2T::PT2EN::TrFTryRules',
+    $self->gazetteer ? 'T2T::TrGazeteerItems src_lang='.$self->src_lang : (),
     "T2T::TrFAddVariantsInterpol model_dir=data/models/translation/pt2en models='
       static 1.0 formeme.static.model.20150119.gz
       maxent 0.5 formeme.maxent.model.20150119.gz

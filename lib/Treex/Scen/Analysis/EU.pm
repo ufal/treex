@@ -11,9 +11,16 @@ has domain => (
 
 has gazetteer => (
      is => 'ro',
-     isa => 'Bool',
-     default => 0,
-     documentation => 'Use W2A::EU::GazeteerMatch A2T::ProjectGazeteerInfo, default=0',
+     isa => 'Str',
+     default => '0',
+     documentation => 'Use W2A::GazeteerMatch A2T::ProjectGazeteerInfo, default=0',
+);
+
+# TODO gazetteers should work without any dependance on target language
+has trg_lang => (
+    is => 'ro',
+    isa => 'Str',
+    documentation => 'Gazetteers are defined for language pairs. Both source and target languages must be specified.',
 );
 
 sub get_scenario_string {
@@ -21,7 +28,7 @@ sub get_scenario_string {
 
     my $scen = join "\n",
     'W2A::Tokenize',
-    #$self->gazetteer ? 'W2A::ES::GazeteerMatch' : ();
+    $self->gazetteer && defined $self->trg_lang ? 'W2A::GazeteerMatch trg_lang='.$self->trg_lang.' filter_id_prefixes="'.$self->gazetteer.'"' : (),
     'W2A::EU::TagAndParse',
     'HamleDT::EU::Harmonize',
     'W2A::EU::FixTagAndParse',
@@ -35,7 +42,7 @@ sub get_scenario_string {
     'A2T::HideParentheses',
     'A2T::EU::SetSentmod',
     'A2T::MoveAuxFromCoordToMembers',
-    #$self->gazetteer ? 'A2T::ProjectGazeteerInfo' : (),
+    $self->gazetteer ? 'A2T::ProjectGazeteerInfo' : (),
     'A2T::MarkClauseHeads',
     'A2T::MarkRelClauseHeads',
     'A2T::MarkRelClauseCoref ',
@@ -82,12 +89,12 @@ It covers: tokenization, tagging and dependency parsing (ixa-pipes-eu) and tecto
 
 =head2 gazetteer
 
-Use W2A::EU::GazeteerMatch A2T::ProjectGazeteerInfo
-Note that for translation T2T::EU2XX::TrGazeteerItems Block is needed to translate identified items
+Use W2A::GazeteerMatch A2T::ProjectGazeteerInfo
 
 =head1 AUTHORS
 
 Gorka Labaka <gorka.labaka@ehu.eus>
+Michal Novák <mnovak@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
