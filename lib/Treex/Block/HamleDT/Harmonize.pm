@@ -79,7 +79,7 @@ sub convert_tags
         my $tag = $node->tag(); # now the PDT tag
         $node->set_conll_cpos(substr($tag, 0, 1));
         $node->set_conll_pos($origtag);
-        $node->set_conll_feat($node->get_iset_conll_feat());
+        $node->set_conll_feat($node->iset()->as_string_conllx());
     }
 }
 

@@ -45,8 +45,8 @@ sub process_atree {
         if ( $self->feat_attribute eq 'conll/feat' && defined $anode->conll_feat() ) {
             $feat = $anode->conll_feat();
         }
-        elsif ( $self->feat_attribute eq 'iset' && $anode->get_iset_pairs_list() ) {
-            $feat = $anode->get_iset_conll_feat();
+        elsif ( $self->feat_attribute eq 'iset' ) {
+            $feat = $anode->iset()->as_string_conllx();
         }
         else {
             $feat = '_';

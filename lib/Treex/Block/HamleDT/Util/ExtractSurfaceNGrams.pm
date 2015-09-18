@@ -4,26 +4,6 @@ use Treex::Core::Common;
 
 extends 'Treex::Core::Block';
 
-# sub process_atree {
-#     my $self = shift;
-#     my $a_root = shift;
-#     my $language = $a_root->get_zone->language();
-#     $a_root->get_address() =~ m/(^.*)##/;
-#     my $file = $1;
-#     my (@forms, @IDs, @iset_feats);
-#     my @nodes = sort { $a->ord() <=> $b->ord() }
-#                        $a_root->get_descendants();
-#     for my $node ( @nodes ) {
-#         push @forms, $node->form();
-#         push @IDs, $node->get_attr('id');
-#         push @iset_feats, $node->get_iset_conll_feat() || 'pos=X';
-#     }
-#     print join("\t",
-#                $language, $file, join(' ',@forms), join(' ',@IDs),
-#                join(' ',@iset_feats),
-#            ), "\n";
-# }
-
 sub process_atree {
     my $self = shift;
     my $a_root = shift;
@@ -33,7 +13,7 @@ sub process_atree {
         my $ord = $anode->ord() || '_';
         my $form = $anode->form() || '_';
         my $id = $anode->get_id();
-        my $iset_feats = $anode->get_iset_conll_feat() || '_';
+        my $iset_feats = $anode->iset()->as_string_conllx();
         my $p_ord = $anode->get_parent()->ord() || '_';
         print join("\t",
                    $language, $ord, $form, $iset_feats, $p_ord, $fn, $id
