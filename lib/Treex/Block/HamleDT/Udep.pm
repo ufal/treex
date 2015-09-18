@@ -75,7 +75,9 @@ sub process_zone
     $self->shape_coordination_stanford($root);
     $self->restructure_compound_prepositions($root);
     $self->push_prep_sub_down($root);
-    $self->change_case_to_mark_under_verb($root);
+    $self->change_case_to_mark_under_verb($root); ###!!! Tohle není ve frázovém builderu podchyceno! Akorát se to neprojevuje na češtině.
+    # Some of the top colons are analyzed as copulas. Do this before the copula processing reshapes the scene.
+    $self->colon_pred_to_apposition($root);
     ###!!! New implementation: transform prepositions and coordination via phrases.
     my $builder = new Treex::Core::Phrase::Builder ('prep_is_head' => 0, 'coordination_head_rule' => 'first_conjunct');
     my $phrase = $builder->build($tgt_root);
@@ -110,8 +112,6 @@ sub process_zone
         }
         log_fatal("Regression test failed.");
     }
-    # Some of the top colons are analyzed as copulas. Do this before the copula processing reshapes the scene.
-    $self->colon_pred_to_apposition($root);
     $self->push_copulas_down($root);
     $self->attach_final_punctuation_to_predicate($root);
     $self->classify_numerals($root);

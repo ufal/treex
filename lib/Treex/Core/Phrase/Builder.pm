@@ -61,6 +61,7 @@ sub build
         # by properties of the expected input style.
         $phrase = $self->detect_prague_pp($phrase);
         $phrase = $self->detect_prague_coordination($phrase);
+        $phrase = $self->detect_colon_predicate($phrase);
         $phrase = $self->detect_root_phrase($phrase);
     }
     return $phrase;
@@ -347,6 +348,50 @@ sub detect_prague_coordination
 
 
 #------------------------------------------------------------------------------
+# The colon is sometimes treated as a substitute for the main predicate in the
+# PDT (usually the hypothetical predicate would equal to "is").
+# Example: "Veletrh GOLF 94 München: 2. – 4. 9." ("GOLF 94 fair Munich:
+# September 2 – 9")
+# We will make the first part the main constituent, and attach the second part
+# as apposition. In some cases the colon is analyzed as copula (and the second
+# part is a nominal predicate) so we want to do this before copulas are
+# processed. Otherwise the scene will be reshaped and we will not recognize it.
+#------------------------------------------------------------------------------
+sub detect_colon_predicate
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase::NTerm
+    my $deprel = $phrase->deprel();
+    my $node = $phrase->node();
+    ###!!! Should we test that we are dealing with Phrase::NTerm and not e.g. with Phrase::Coordination?
+    if(defined($node->parent()) && $node->parent()->is_root() && $node->form() eq ':')
+    {
+        my @dependents = $phrase->dependents('ordered' => 1);
+        # Make the first child of the colon the new top node.
+        # We want a non-punctuation child. If there are only punctuation children, do not do anything.
+        my @npunct = grep {!$_->node()->is_punctuation()} (@dependents);
+        my @punct  = grep { $_->node()->is_punctuation()} (@dependents);
+        if(scalar(@npunct)>=1)
+        {
+            my $old_head = $phrase->head();
+            my $new_head = shift(@npunct);
+            $phrase->set_head($new_head);
+            $phrase->set_deprel($deprel);
+            $old_head->set_deprel('punct');
+            # All other children of the colon (if any; probably just one other child) will be attached to the new head as apposition.
+            foreach my $d (@npunct)
+            {
+                $d->set_deprel('appos');
+            }
+        }
+    }
+    # Return the modified phrase as with all detect methods.
+    return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
 # Checks whether the head node of a phrase is the artificial root of the
 # dependency tree. If so, then it makes sure that there is only one dependent
 # and its deprel is "root" (there is a consensus in Universal Dependencies that
@@ -427,6 +472,20 @@ the original phrase).
 Examines a nonterminal phrase in the Prague style (with analytical functions
 converted to dependency relation labels based on Universal Dependencies). If
 it recognizes a coordination, transforms the general NTerm to Coordination.
+
+=item detect_colon_predicate
+
+The colon is sometimes treated as a substitute for the main predicate in PDT
+(usually the hypothetical predicate would equal to I<is>).
+
+Example:
+I<Veletrh GOLF 94 München: 2. – 4. 9.>
+(“GOLF 94 fair Munich: September 2 – 9”)
+
+We will make the first part the main constituent, and attach the second part
+as apposition. In some cases the colon is analyzed as copula (and the second
+part is a nominal predicate) so we want to do this before copulas are
+processed. Otherwise the scene will be reshaped and we will not recognize it.
 
 =item detect_root_phrase
 
