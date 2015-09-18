@@ -94,11 +94,10 @@ sub detect_prague_pp
     my $phrase = shift; # Treex::Core::Phrase::NTerm
     # If this is the Prague style then the preposition (if any) must be the head.
     # The deprel is already partially converted to UD, so it should be something:auxp
-    # (case:auxp, mark:auxp, root:auxp); see HamleDT::Udep->afun_to_udeprel().
-    if($phrase->deprel() =~ m/^(case|mark|root):(aux[pc])/i)
+    # (case:auxp, mark:auxp); see HamleDT::Udep->afun_to_udeprel().
+    if($phrase->deprel() =~ m/^(case|mark):(aux[pc])/i)
     {
         my $target_deprel = $1;
-        my $source_deprel = $2; # if target_deprel is root we will need this to decide whether the function word shall be case or mark
         my @dependents = $phrase->dependents('ordered' => 1);
         my @mwauxp;
         my @punc;
@@ -134,21 +133,7 @@ sub detect_prague_pp
         # Now it is clear that we have a prepositional phrase. A new PP will be created
         # and the old input NTerm will be destroyed.
         my $preposition = $phrase->head();
-        if($target_deprel eq 'root')
-        {
-            if($source_deprel eq 'auxp')
-            {
-                $preposition->set_deprel('case');
-            }
-            else
-            {
-                $preposition->set_deprel('mark');
-            }
-        }
-        else
-        {
-            $preposition->set_deprel($target_deprel);
-        }
+        $preposition->set_deprel($target_deprel);
         # If there are two or more argument candidates, we have to select the best one.
         # There may be more sophisticated approaches but let's just take the first one for the moment.
         ###!!! This should work reasonably well for languages that have mostly prepositions.
@@ -207,10 +192,6 @@ sub detect_prague_pp
         foreach my $d (@candidates, @punc)
         {
             $d->set_parent($pp);
-        }
-        if($target_deprel eq 'root')
-        {
-            $pp->set_deprel('root');
         }
         # If the original phrase already had a parent, we must make sure that
         # the parent is aware of the reincarnation we have made.
@@ -293,7 +274,7 @@ sub detect_prague_coordination
     my $phrase = shift; # Treex::Core::Phrase::NTerm
     # If this is the Prague style then the head is either coordinating conjunction or punctuation.
     # The deprel is already partially converted to UD, so it should be something:coord
-    # (cc:coord, punct:coord, root:coord); see HamleDT::Udep->afun_to_udeprel().
+    # (cc:coord, punct:coord); see HamleDT::Udep->afun_to_udeprel().
     if($phrase->deprel() =~ m/:coord/i)
     {
         # Remove the ':coord' part from the deprel. Even if we do not find any
@@ -302,16 +283,6 @@ sub detect_prague_coordination
         my $deprel = $phrase->deprel();
         $deprel =~ s/:coord//i;
         $phrase->set_deprel($deprel);
-        # If the whole coordination must have the deprel root because it is
-        # attached to the root node, it has now the deprel 'root:coord'.
-        # Remember that we must modify the head deprel later.
-        ###!!! Coordination should not have to care about this! It would be
-        ###!!! better to define a new special type of nonterminal phrase,
-        ###!!! Phrase::Root. It would have one core child (head) but it would
-        ###!!! always give the child the deprel root. And in the UD style it
-        ###!!! might also ensure that there is only one root child and no
-        ###!!! dependents.
-        my $root_deprel_override = $phrase->deprel() =~ m/^root/i;
         my @dependents = $phrase->dependents('ordered' => 1);
         my @conjuncts;
         my @coordinators;
@@ -363,7 +334,7 @@ sub detect_prague_coordination
         my $member = $phrase->is_member();
         my $old_head = $phrase->head();
         $phrase->detach_children_and_die();
-        if($deprel eq 'punct' || ($deprel eq 'root' && $old_head->node()->is_punctuation()))
+        if($deprel eq 'punct')
         {
             push(@punctuation, $old_head);
         }
@@ -383,12 +354,6 @@ sub detect_prague_coordination
             'head_rule'    => $self->coordination_head_rule(),
             'is_member'    => $member
         );
-        # If the whole coordination shall have the deprel 'root', assign it now
-        # to the head child.
-        if($root_deprel_override)
-        {
-            $coordination->set_deprel('root');
-        }
         # Remove the is_member flag from the conjuncts. It will be no longer
         # needed as we now know what are the conjuncts.
         # Do not assign 'conj' as the deprel of the non-head conjuncts. That will
