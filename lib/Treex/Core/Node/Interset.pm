@@ -89,7 +89,10 @@ method "_build_$interset_attribute" => sub {
 };
 
 # Interset 1.0 legacy method (works with both Interset 1.0 and 2.0 feature structures)
-sub is_preposition {my $self = shift; return $self->iset->pos =~ /^(prep|adp)$/;}
+method is_preposition => sub {
+    my $self = shift;
+    return $self->iset->pos =~ /^(prep|adp)$/;
+};
 
 
 
@@ -168,8 +171,7 @@ method get_iset => sub {
 # (such as "fem|neut") will be converted to arrays referenced from the hash
 # (same as the result of decode() functions in Interset tagset drivers).
 #------------------------------------------------------------------------------
-sub get_iset_structure
-{
+method get_iset_structure => sub {
     my $self = shift;
     my %f;
     foreach my $feature ( $self->$interset_attribute->get_nonempty_features() )
@@ -182,28 +184,22 @@ sub get_iset_structure
         }
     }
     return \%f;
-}
-
-
+};
 
 #------------------------------------------------------------------------------
 # Return the values of all non-empty Interset features (except for the "tagset" and "other" features).
 #------------------------------------------------------------------------------
-sub get_iset_values
-{
+method get_iset_values => sub {
     my $self = shift;
     return map {$self->get_iset($_)} grep {$_ !~ 'tagset|other'} $self->$interset_attribute->get_nonempty_features();
-}
-
-
+};
 
 #------------------------------------------------------------------------------
 # The inverse of iset->as_string_conllx -- takes a feat string which is the
 # result of calling iset->as_string_conllx, and sets Interset feature values
 # according to that string.
 #------------------------------------------------------------------------------
-sub set_iset_conll_feat
-{
+method set_iset_conll_feat => sub {
     my ($self, $feat_string) = @_;
     my @pairs = split /\|/, $feat_string;
     foreach my $pair (@pairs) {
@@ -212,9 +208,7 @@ sub set_iset_conll_feat
         $self->set_iset($feature, $value);
     }
     return;
-}
-
-
+};
 
 #------------------------------------------------------------------------------
 # Tests multiple Interset features simultaneously. Input is a list of feature-
@@ -224,8 +218,7 @@ sub set_iset_conll_feat
 #
 # if($node->match_iset('pos' => 'noun', 'gender' => 'masc')) { ... }
 #------------------------------------------------------------------------------
-sub match_iset
-{
+method match_iset => sub {
     my $self = shift;
     my @req  = @_;
     for ( my $i = 0; $i <= $#req; $i += 2 )
@@ -249,9 +242,7 @@ sub match_iset
         }
     }
     return 1;
-}
-
-
+};
 
 # Goal: convert multivalues from arrays to strings:
 # e.g. iset/gender = ["fem", "neut"] becomes iset/gender = "fem|neut"
