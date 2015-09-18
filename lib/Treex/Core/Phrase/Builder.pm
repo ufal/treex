@@ -20,7 +20,19 @@ has 'prep_is_head' =>
     required => 1,
     default  => 0,
     documentation =>
-        'See Treex::Core::Phrase::PP, prep_is_head attribute.'
+        'Should preposition and subordinating conjunction head its phrase? '.
+        'See Treex::Core::Phrase::PP, fun_is_head attribute.'
+);
+
+has 'cop_is_head' =>
+(
+    is       => 'ro',
+    isa      => 'Bool',
+    required => 1,
+    default  => 0,
+    documentation =>
+        'Should copula head its phrase? '.
+        'See Treex::Core::Phrase::PP, fun_is_head attribute.'
 );
 
 has 'coordination_head_rule' =>
@@ -60,6 +72,7 @@ sub build
         # annotation style. In future we will want to parameterize the Builder
         # by properties of the expected input style.
         $phrase = $self->detect_prague_pp($phrase);
+        $phrase = $self->detect_prague_copula($phrase);
         $phrase = $self->detect_prague_coordination($phrase);
         $phrase = $self->detect_colon_predicate($phrase);
         $phrase = $self->detect_root_phrase($phrase);
@@ -198,6 +211,62 @@ sub detect_prague_pp
         if($target_deprel eq 'root')
         {
             $pp->set_deprel('root');
+        }
+        # If the original phrase already had a parent, we must make sure that
+        # the parent is aware of the reincarnation we have made.
+        if(defined($parent))
+        {
+            $parent->replace_child($phrase, $pp);
+        }
+        return $pp;
+    }
+    # Return the input NTerm phrase if no PP has been detected.
+    return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Examines a nonterminal phrase in the Prague style (with analytical functions
+# converted to dependency relation labels based on Universal Dependencies).
+# If it recognizes a copula construction, transforms the general NTerm to PP.
+#------------------------------------------------------------------------------
+sub detect_prague_copula
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase::NTerm
+    # If this is the Prague style then the copula (if any) must be the head.
+    # The deprel is already partially converted to UD, so there should be a child
+    # labeled dep:pnom; see HamleDT::Udep->afun_to_udeprel().
+    my @pnom = grep {$_->deprel() =~ m/pnom/i} ($phrase->dependents('ordered' => 1));
+    if(scalar(@pnom)>=1)
+    {
+        # Now it is clear that we have a nominal predicate with copula.
+        # A new PP will be created and the old input NTerm will be destroyed.
+        my $copula = $phrase->head();
+        # There should not be more than one nominal predicate but it is not guaranteed.
+        # It is not clear what to do in such cases; we will pick the first one.
+        # Note that the nominal predicate can also be seen as the argument of the copula,
+        # and we will denote it as $argument here, which is the terminology inside Phrase::PP.
+        my $argument = shift(@pnom);
+        my @dependents = grep {$_ != $copula && $_ != $argument} ($phrase->children());
+        my $parent = $phrase->parent();
+        my $deprel = $phrase->deprel();
+        my $member = $phrase->is_member();
+        $phrase->detach_children_and_die();
+        my $pp = new Treex::Core::Phrase::PP
+        (
+            'fun'           => $copula,
+            'arg'           => $argument,
+            'fun_is_head'   => $self->cop_is_head(),
+            'deprel_at_fun' => 0,
+            'is_member'     => $member
+        );
+        $copula->set_deprel('cop');
+        $pp->set_deprel($deprel);
+        foreach my $d (@dependents)
+        {
+            $d->set_parent($pp);
         }
         # If the original phrase already had a parent, we must make sure that
         # the parent is aware of the reincarnation we have made.
