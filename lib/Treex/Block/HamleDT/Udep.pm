@@ -248,7 +248,7 @@ sub afun_to_udeprel
         # now treat the labels as if nothing were attached to the root.
         # Punctuation is always 'punct' unless it depends directly on the root (which should happen only if there is just one node and the root).
         # We will temporarily extend the label if it heads coordination so that the coordination can later be reshaped properly.
-        elsif($node->is_punctuation())
+        if($node->is_punctuation())
         {
             if($afun eq 'Coord')
             {
