@@ -55,7 +55,7 @@ sub process_atree {
         my $trigram = join ' ', @forms[$i-1..$i+1];
         if (defined $variation_trigrams{$trigram}) {
             my $tagger_tag = $tagger_tags[$i];
-            my $old_tag = $anodes[$i]->get_iset_conll_feat();
+            my $old_tag = $anodes[$i]->iset()->as_string_conllx();
             $old_tag =~ s/\|?tagset=[^|]*//g; # remove 'tagset' feature
             $old_tag =~ s/\|?other=[^|]*//g; # remove 'other' feature
             my $new_tag = $tagger_tag;
