@@ -444,7 +444,19 @@ sub detect_root_phrase
         # The artificial root node cannot have more than one child.
         if(scalar(@dependents)>1)
         {
-            my $leftmost = shift(@dependents);
+            # Avoid punctuation as the head if possible.
+            my @punct = grep {$_->node()->is_punctuation()} (@dependents);
+            my @npunct = grep {!$_->node()->is_punctuation()} (@dependents);
+            my $leftmost;
+            if(@npunct)
+            {
+                $leftmost = shift(@npunct);
+                @dependents = (@npunct, @punct);
+            }
+            else
+            {
+                $leftmost = shift(@dependents);
+            }
             $leftmost->set_parent(undef);
             # Create a new nonterminal phrase with the leftmost dependent as head and the others as dependents.
             my $subphrase = new Treex::Core::Phrase::NTerm('head' => $leftmost);
