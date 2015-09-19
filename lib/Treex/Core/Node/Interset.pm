@@ -17,7 +17,7 @@ use Data::Dumper;
 role {
 my $role_parameters = shift;
 my $interset_attribute = $role_parameters->interset_attribute;
-  
+
 has $interset_attribute => (
     # Unfortunatelly, the old interface uses $anode->set_iset('tense', 'past'),
     # so set_iset cannot be used as a setter for the whole structure
@@ -78,7 +78,7 @@ has $interset_attribute => (
         is_verb
         is_wh
     )],
-   # Note that we cannot export 
+   # Note that we cannot export
    # $anode->iset->is_auxiliary as it would clash with the existing $anode->is_auxiliary
    # $tnode->dset->is_passive as it would clash with the existing $tnode->is_passive
 
@@ -168,13 +168,14 @@ method get_iset => sub {
 # (such as "fem|neut") will be converted to arrays referenced from the hash
 # (same as the result of decode() functions in Interset tagset drivers).
 #------------------------------------------------------------------------------
-sub get_iset_structure
+method get_iset_structure => sub
 {
     my $self = shift;
+    my $iset = $self->$interset_attribute; # iset or dset
     my %f;
-    foreach my $feature ( $self->$interset_attribute->get_nonempty_features() )
+    foreach my $feature ( $iset->get_nonempty_features() )
     {
-        $f{$feature} = $self->get_iset($feature);
+        $f{$feature} = $iset->get_joined($feature);
         if ( $f{$feature} =~ m/\|/ )
         {
             my @values = split( /\|/, $f{$feature} );
@@ -182,18 +183,18 @@ sub get_iset_structure
         }
     }
     return \%f;
-}
+};
 
 
 
 #------------------------------------------------------------------------------
 # Return the values of all non-empty Interset features (except for the "tagset" and "other" features).
 #------------------------------------------------------------------------------
-sub get_iset_values
+method get_iset_values => sub
 {
     my $self = shift;
     return map {$self->get_iset($_)} grep {$_ !~ 'tagset|other'} $self->$interset_attribute->get_nonempty_features();
-}
+};
 
 
 
