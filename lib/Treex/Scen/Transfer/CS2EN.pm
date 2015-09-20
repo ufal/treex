@@ -58,8 +58,10 @@ sub get_scenario_string {
     my $IT_LEMMA_MODELS = '';
     my $IT_FORMEME_MODELS = '';
     if ($self->tm_adaptation eq 'interpol'){
-        $IT_LEMMA_MODELS = "static 0.5 IT/batch1q-lemma.static.gz\n      maxent 1.0 IT/batch1q-lemma.maxent.gz";
+        $IT_LEMMA_MODELS = "static 0.5 IT/batch1q-lemma.static.gz\n      maxent 1.0 IT/batch1q-lemma.maxent.gz
+                            static 0.5 IT/batch1a-lemma.static.gz\n      maxent 1.0 IT/batch1a-lemma.maxent.gz";
         $IT_FORMEME_MODELS = "static 1.0 IT/batch1q-formeme.static.gz\n      maxent 0.5 IT/batch1q-formeme.maxent.gz";
+                            #  static 1.0 IT/batch1a-formeme.static.gz\n      maxent 0.5 IT/batch1a-formeme.maxent.gz";
     }
 
     my $scen = join "\n",
