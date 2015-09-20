@@ -476,7 +476,7 @@ sub detect_prague_copula
                 }
             }
         }
-        my @dependents = grep {$_ != $argument} ($phrase->children());
+        my @dependents = grep {$_ != $argument} ($phrase->dependents());
         my $parent = $phrase->parent();
         my $deprel = $phrase->deprel();
         my $member = $phrase->is_member();
