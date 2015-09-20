@@ -289,6 +289,10 @@ sub detect_prague_pp
         my $n = scalar(@candidates);
         if($n == 0)
         {
+            # The ':auxp' or ':auxc' in deprel marked unprocessed prepositions and subordinating conjunctions.
+            # Now that this one has been visited (even if we did not find the expected configuration) we must
+            # remove this extension so that only known labels appear in the output.
+            $phrase->set_deprel($target_deprel);
             return $phrase;
         }
         # Now it is clear that we have a prepositional phrase. A new PP will be created
