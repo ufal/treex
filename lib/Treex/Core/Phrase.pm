@@ -38,6 +38,10 @@ sub set_parent
     log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
     my $self = shift;
     my $new_parent = shift; # Treex::Core::Phrase::NTerm or undef
+    if(defined($new_parent) && $new_parent->depends_on($self))
+    {
+        log_fatal('Cannot set parent phrase because it would create a cycle');
+    }
     my $old_parent = $self->parent();
     # Say the old parent good bye.
     if(defined($old_parent))
@@ -52,6 +56,21 @@ sub set_parent
         $new_parent->_add_child($self);
     }
     return $old_parent;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Tests whether this phrase depends on another phrase via the parent links.
+# This method is used to prevent cycles when setting a new parent.
+#------------------------------------------------------------------------------
+sub depends_on
+{
+    log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
+    my $self = shift;
+    my $on_phrase = shift; # Treex::Core::Phrase
+    my $parent = $self->parent();
+    return defined($parent) ? $parent->depends_on($on_phrase) : 0;
 }
 
 
@@ -235,6 +254,11 @@ The new parent may also be undefined, which means that the current phrase will
 be disconnected from the phrase structure (but it will keeep its own children,
 if any).
 The method returns the old parent.
+
+=item if( $phrase->depends_on ($another_phrase) ) {...}
+
+Tests whether this phrase depends on another phrase via the parent links.
+This method is used to prevent cycles when setting a new parent.
 
 =item my $ist = $phrase->is_terminal();
 
