@@ -396,6 +396,11 @@ sub detect_prague_copula
     my @pnom = grep {$_->deprel() =~ m/pnom/i} ($phrase->dependents('ordered' => 1));
     if(scalar(@pnom)>=1)
     {
+        ###!!! We are not currently prepared for Coordination of copulas etc.
+        if($phrase->type() ne 'NTerm')
+        {
+            log_fatal('Cannot process copula-pnom if the phrase has already been converted to '.$phrase->type());
+        }
         # Now it is clear that we have a nominal predicate with copula.
         # A new PP will be created and the old input NTerm will be destroyed.
         my $copula = $phrase->head();
