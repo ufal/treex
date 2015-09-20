@@ -3,8 +3,6 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use FileUtils;
-
 has to_language => ( isa => 'Str', is => 'ro', required => 1 );
 has to_selector => ( isa => 'Str', is => 'ro', default  => '' );
 has from        => ( isa => 'Str', is => 'ro', required => 1 );
@@ -18,10 +16,10 @@ my @sym;
 sub BUILD {
     my ($self) = @_;
 
-    *ALIGNMENT_FILE = FileUtils::my_open( $self->from );
+    *ALIGNMENT_FILE = my_open( $self->from );
 
     #    if ($self->skipped) {
-    #        *SKIPPED = FileUtils::my_open( $SKIPPED );
+    #        *SKIPPED = my_open( $SKIPPED );
     #        while (<SKIPPED>) {
     #            chomp;
     #            $skipped{$_} = 1;
@@ -30,6 +28,30 @@ sub BUILD {
     #    }
     return;
 }
+
+sub my_open {
+    my $f = shift;
+    die "Not found: $f" if !-e $f;
+
+    my $opn;
+    my $hdl;
+    my $ft = `file $f`;
+
+    # file might not recognize some files!
+    if ( $f =~ /\.gz$/ || $ft =~ /gzip compressed data/ ) {
+        $opn = "zcat $f |";
+    }
+    elsif ( $f =~ /\.bz2$/ || $ft =~ /bzip2 compressed data/ ) {
+        $opn = "bzcat $f |";
+    }
+    else {
+        $opn = "$f";
+    }
+    open $hdl, $opn or die "Can't open '$opn': $!";
+    binmode $hdl, ":utf8";
+    return $hdl;
+}
+
 
 sub process_atree {
     my ( $self, $a_root ) = @_;

@@ -3,7 +3,6 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use FileUtils;
 use File::Temp;
 
 has from_language => ( isa => 'Str', is => 'ro', required => 1 );
