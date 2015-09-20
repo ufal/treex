@@ -62,12 +62,14 @@ sub substitute_entities {
     #push(@upaths, $2);
     #log_debug "Mail: $1\n";
   #}
-  my @possible_paths = $sentence =~ /\s([~|\/]{1,2}[^\/]+?\/[^\/]+\/[^\s]+)\s/g;
+
+  # Unix paths
+  my @possible_paths = $sentence =~ /\s([~|\/]{1,2}[^\/]+?\/[^\/]+\/[^\s()]+)[\s()]/g;
   my $count = 1;
   foreach my $posible_path (@possible_paths){
     if (not (scalar split (/\s/, $posible_path) > scalar split (/\\/, $posible_path))) {
       my $replace = "xxxUPATH" . $count . "xxx";
-      $sentence =~ s/$posible_path/$replace/;
+      $sentence =~ s/\Q$posible_path\E/$replace/;
       $upaths{$replace} = $posible_path;
       $count++;
     }
@@ -78,12 +80,14 @@ sub substitute_entities {
     #push(@wpaths, $2);
     #log_debug "Mail: $1\n";
   #}
-  @possible_paths = $sentence =~ /\s([A-Z]?:?\\?\\[^\\]+?\\[^\\]+?\\[^\s])\s/g;
+
+  # Windows paths
+  @possible_paths = $sentence =~ /\s([A-Z]?:?\\?\\[^\\]+?\\[^\\]+?\\[^\s()])[\s()]/g;
   $count = 1;
   foreach my $posible_path (@possible_paths){
     if (not (scalar split (/\s/, $posible_path) > scalar split (/\\/, $posible_path))) {
       my $replace = "xxxWPATH" . $count . "xxx";
-      $sentence =~ s/$posible_path/$replace/;
+      $sentence =~ s/\Q$posible_path\E/$replace/;
       $wpaths{$replace} = $posible_path;
       $count++;
     }
