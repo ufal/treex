@@ -331,9 +331,20 @@ sub detect_prague_coordination
         {
             if($d->is_member())
             {
-                push(@conjuncts, $d);
-                $cmin = $d->ord() if(!defined($cmin));
-                $cmax = $d->ord();
+                # Occasionally punctuation is labeled as conjunct (not nested coordination,
+                # that should be solved by now, but an orphan leaf node after ellipsis).
+                # We want to make it normal punctuation instead.
+                if($d->node()->is_punctuation() && $d->node()->is_leaf())
+                {
+                    $d->set_is_member(0);
+                    push(@punctuation, $d);
+                }
+                else
+                {
+                    push(@conjuncts, $d);
+                    $cmin = $d->ord() if(!defined($cmin));
+                    $cmax = $d->ord();
+                }
             }
             # Additional coordinating conjunctions (except the head).
             # In PDT they are labeled AuxY but other words in the tree may get
