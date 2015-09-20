@@ -183,7 +183,8 @@ sub as_string
     my @dependents = $self->dependents('ordered' => 1);
     my $deps = join(', ', map {$_->as_string()} (@dependents));
     $deps = 'DEPS '.$deps if($deps);
-    return "(PP $fun $arg $deps)";
+    my $subtree = join(' ', ($fun, $arg, $deps));
+    return "(PP $subtree)";
 }
 
 

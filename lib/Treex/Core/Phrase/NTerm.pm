@@ -94,7 +94,8 @@ sub as_string
     my @dependents = $self->dependents('ordered' => 1);
     my $deps = join(', ', map {$_->as_string()} (@dependents));
     $deps = 'DEPS '.$deps if($deps);
-    return "(NT $head $deps)";
+    my $subtree = join(' ', ($head, $deps));
+    return "(NT $subtree)";
 }
 
 

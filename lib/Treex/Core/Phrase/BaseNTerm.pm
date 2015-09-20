@@ -420,7 +420,8 @@ sub as_string
     my @dependents = $self->dependents('ordered' => 1);
     my $deps = join(', ', map {$_->as_string()} (@dependents));
     $deps = 'DEPS '.$deps if($deps);
-    return "(BNT $core $deps)";
+    my $subtree = join(' ', ($core, $deps));
+    return "(BNT $subtree)";
 }
 
 

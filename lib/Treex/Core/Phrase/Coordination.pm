@@ -367,13 +367,16 @@ sub as_string
     my @conjuncts = $self->conjuncts('ordered' => 1);
     my $conj = 'CONJ '.join(', ', map {$_->as_string()} (@conjuncts));
     my @coordinators = $self->coordinators('ordered' => 1);
-    my $coor = 'COOR '.join(', ', map {$_->as_string()} (@coordinators));
+    my $coor = join(', ', map {$_->as_string()} (@coordinators));
+    $coor = 'COOR '.$coor if($coor);
     my @punctuation = $self->punctuation('ordered' => 1);
-    my $punc = 'PUNC '.join(', ', map {$_->as_string()} (@punctuation));
+    my $punc = join(', ', map {$_->as_string()} (@punctuation));
+    $punc = 'PUNC '.$punc if($punc);
     my @dependents = $self->dependents('ordered' => 1);
     my $deps = join(', ', map {$_->as_string()} (@dependents));
     $deps = 'DEPS '.$deps if($deps);
-    return "(CC $conj $coor $punc $deps)";
+    my $subtree = join(' ', ($conj, $coor, $punc, $deps));
+    return "(CO $subtree)";
 }
 
 
