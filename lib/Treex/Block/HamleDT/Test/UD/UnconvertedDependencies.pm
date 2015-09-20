@@ -1,14 +1,31 @@
 package Treex::Block::HamleDT::Test::UD::UnconvertedDependencies;
 use Moose;
+use List::MoreUtils qw(any);
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
+
+my @relations =
+(
+    # 40 universal dependency relations
+    'nsubj', 'nsubjpass', 'dobj', 'iobj', 'csubj', 'csubjpass', 'ccomp', 'xcomp',
+    'nmod', 'advmod', 'advcl', 'neg',
+    'vocative', 'discourse', 'expl', 'aux', 'auxpass', 'cop', 'mark',
+    'appos', 'amod', 'det', 'nummod', 'acl', 'case',
+    'compound', 'mwe', 'name', 'goeswith', 'foreign',
+    'conj', 'cc', 'punct',
+    'list', 'dislocated', 'parataxis', 'remnant', 'reparandum',
+    'root', 'dep',
+    # additional language-specific relations
+    'advmod:emph', 'auxpass:reflex', 'det:numgov', 'det:nummod', 'nummod:gov', 'compound:reflex', 'compound:prt',
+);
 
 sub process_anode
 {
     my $self = shift;
     my $node = shift;
     my $deprel = $node->deprel();
-    if($deprel =~ m/^dep:.*$/)
+    #if($deprel =~ m/^dep:.*$/)
+    unless(any {$_ eq $deprel} (@relations))
     {
         $self->complain($node, $deprel);
     }
