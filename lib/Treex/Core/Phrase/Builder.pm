@@ -90,17 +90,24 @@ sub detect_special_constructions
 {
     my $self = shift;
     my $phrase = shift;
-    # Despite the fact that we work bottom-up, the order of these detection
-    # methods matters. There may be multiple special constructions on the same
-    # level of the tree. For example: We see a phrase labeled Coord (coordination),
-    # hence we do not see a prepositional phrase (the label would have to be AuxP
-    # instead of Coord). However, after processing the coordination the phrase
-    # will get a new label and it may well be AuxP.
-    $phrase = $self->detect_prague_coordination($phrase);
-    $phrase = $self->detect_prague_pp($phrase);
-    $phrase = $self->detect_colon_predicate($phrase);
-    $phrase = $self->detect_prague_copula($phrase);
-    $phrase = $self->detect_root_phrase($phrase);
+    # The root node must not participate in any specialized construction.
+    unless($self->node()->is_root())
+    {
+        # Despite the fact that we work bottom-up, the order of these detection
+        # methods matters. There may be multiple special constructions on the same
+        # level of the tree. For example: We see a phrase labeled Coord (coordination),
+        # hence we do not see a prepositional phrase (the label would have to be AuxP
+        # instead of Coord). However, after processing the coordination the phrase
+        # will get a new label and it may well be AuxP.
+        $phrase = $self->detect_prague_coordination($phrase);
+        $phrase = $self->detect_prague_pp($phrase);
+        $phrase = $self->detect_colon_predicate($phrase);
+        $phrase = $self->detect_prague_copula($phrase);
+    }
+    else
+    {
+        $phrase = $self->detect_root_phrase($phrase);
+    }
     # Return the resulting phrase. It may be different from the input phrase.
     return $phrase;
 }
