@@ -13,11 +13,14 @@ sub process_atree
         # A subordinating conjunction normally depends on a following node (usually verb) and the relation is 'mark'.
         # It may also depend on a preceding node as 'conj'.
         # In case of ellipsis (incomplete sentence), it may depend on the root as 'root'.
+        # There are also multiword subordinators: [cs] "i když" (even though/if), "jako když" (as if).
         if($node->is_subordinator())
         {
-            my $ok = $node->is_leaf();
             my $parent = $node->parent();
             my $deprel = $node->deprel();
+            # In some cases the subordinating conjunction can have children.
+            my @forbidden_children = grep {$node->deprel() !~ m/^(mwe)$/} ($node->children());
+            my $ok = scalar(@forbidden_children)==0 || $parent->is_root();
             if($parent->is_root())
             {
                 $ok = $ok && $deprel eq 'root';
@@ -26,9 +29,9 @@ sub process_atree
             {
                 my $dir = $node->ord() - $parent->ord();
                 my $form = $node->form();
-                if($deprel eq 'conj')
+                if($deprel =~ m/^(conj|mwe)$/)
                 {
-                    $ok = $ok && $dir > 0; # parent is to the left from the adposition
+                    $ok = $ok && $dir > 0; # parent is to the left from the subordinating conjunction
                 }
                 # Some Czech words are tagged as subordinating conjunctions although in fact they function
                 # as relative adverbs.
