@@ -171,6 +171,23 @@ sub replace_core_child
 
 
 
+#------------------------------------------------------------------------------
+# Returns a textual representation of the phrase and all subphrases. Useful for
+# debugging.
+#------------------------------------------------------------------------------
+sub as_string
+{
+    my $self = shift;
+    my $fun = 'FUN '.$self->fun()->as_string();
+    my $arg = 'ARG '.$self->arg()->as_string();
+    my @dependents = $self->dependents('ordered' => 1);
+    my $deps = join(', ', map {$_->as_string()} (@dependents));
+    $deps = 'DEPS '.$deps if($deps);
+    return "(PP $fun $arg $deps)";
+}
+
+
+
 __PACKAGE__->meta->make_immutable();
 
 1;
@@ -292,6 +309,11 @@ The label is not propagated to the underlying dependency tree
 Replaces one of the core children (function word or argument) by another
 phrase. This is used when we want to transform the child to a different class
 of phrase. The replacement must not have a parent yet.
+
+=item as_string
+
+Returns a textual representation of the phrase and all subphrases. Useful for
+debugging.
 
 =back
 
