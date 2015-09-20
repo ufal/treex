@@ -56,7 +56,7 @@ sub is_terminal
 sub head
 {
     my $self = shift;
-    confess("The head() method is not implemented");
+    log_fatal("The head() method is not implemented");
 }
 
 
@@ -109,7 +109,7 @@ sub order_phrases
 sub dependents
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     my @dependents = @{$self->_dependents_ref()};
     return $self->_order_required(@_) ? $self->order_phrases(@dependents) : @dependents;
 }
@@ -124,7 +124,7 @@ sub dependents
 sub nonhead_children
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     return $self->dependents(@_);
 }
 
@@ -139,7 +139,7 @@ sub nonhead_children
 sub core_children
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     return ($self->head());
 }
 
@@ -152,7 +152,7 @@ sub core_children
 sub children
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     my @children = ($self->core_children(), $self->dependents());
     return $self->_order_required(@_) ? $self->order_phrases(@children) : @children;
 }
@@ -166,7 +166,7 @@ sub children
 sub node
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     return $self->head()->node();
 }
 
@@ -179,7 +179,7 @@ sub node
 sub deprel
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     return $self->head()->deprel();
 }
 
@@ -194,7 +194,7 @@ sub deprel
 sub set_deprel
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     $self->head()->set_deprel(@_);
 }
 
@@ -207,13 +207,14 @@ sub set_deprel
 #------------------------------------------------------------------------------
 sub _add_child
 {
+    log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
     my $self = shift;
     my $new_child = shift; # Treex::Core::Phrase
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     # If we are called correctly from Phrase::set_parent(), then the child already knows about us.
     if(!defined($new_child) || !defined($new_child->parent()) || $new_child->parent() != $self)
     {
-        confess("The child must point to the parent first. This private method must be called only from Phrase::set_parent()");
+        log_fatal("The child must point to the parent first. This private method must be called only from Phrase::set_parent()");
     }
     my $nhc = $self->_dependents_ref();
     push(@{$nhc}, $new_child);
@@ -229,16 +230,17 @@ sub _add_child
 #------------------------------------------------------------------------------
 sub _remove_child
 {
+    log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
     my $self = shift;
     my $child = shift; # Treex::Core::Phrase
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     if(!defined($child) || !defined($child->parent()) || $child->parent() != $self)
     {
-        confess("The child does not think I'm its parent");
+        log_fatal("The child does not think I'm its parent");
     }
     if(any {$_ == $child} ($self->core_children()))
     {
-        confess("Cannot remove the head child or any other core child");
+        log_fatal("Cannot remove the head child or any other core child");
     }
     my $nhc = $self->_dependents_ref();
     my $found = 0;
@@ -253,7 +255,7 @@ sub _remove_child
     }
     if(!$found)
     {
-        confess("Could not find the phrase among my non-head children");
+        log_fatal("Could not find the phrase among my non-head children");
     }
 }
 
@@ -268,24 +270,24 @@ sub _check_old_new_child
     my $self = shift;
     my $old_child = shift; # Treex::Core::Phrase
     my $new_child = shift; # Treex::Core::Phrase
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     if(!defined($old_child) || !defined($old_child->parent()) || $old_child->parent() != $self)
     {
-        confess("The child to be replaced does not think I'm its parent");
+        log_fatal("The child to be replaced does not think I'm its parent");
     }
     if(!defined($new_child))
     {
-        confess("The replacement child is not defined");
+        log_fatal("The replacement child is not defined");
     }
     if(defined($new_child->parent()))
     {
         if($new_child->parent() == $self)
         {
-            confess("The replacement already is my child");
+            log_fatal("The replacement already is my child");
         }
         else
         {
-            confess("The replacement child already has a parent");
+            log_fatal("The replacement child already has a parent");
         }
     }
 }
@@ -302,7 +304,7 @@ sub replace_child
     my $self = shift;
     my $old_child = shift; # Treex::Core::Phrase
     my $new_child = shift; # Treex::Core::Phrase
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     $self->_check_old_new_child($old_child, $new_child);
     # If the child is dependent, we can do it here. If it is a core child,
     # we need a subclass to decide what to do.
@@ -331,7 +333,7 @@ sub replace_child
 sub replace_core_child
 {
     my $self = shift;
-    confess("The replace_core_child() method is not implemented");
+    log_fatal("The replace_core_child() method is not implemented");
 }
 
 
@@ -379,7 +381,7 @@ sub detach_children_and_die
 sub project_dependencies
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     # Recursion first, we work bottom-up.
     my @children = $self->children();
     foreach my $child (@children)

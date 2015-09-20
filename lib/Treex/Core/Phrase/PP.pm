@@ -57,7 +57,7 @@ sub BUILD
     my $self = shift;
     if(defined($self->fun()->parent()) || defined($self->arg()->parent()))
     {
-        confess("The core child already has another parent");
+        log_fatal("The core child already has another parent");
     }
     $self->fun()->_set_parent($self);
     $self->arg()->_set_parent($self);
@@ -72,7 +72,7 @@ sub BUILD
 sub head
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     return $self->fun_is_head() ? $self->fun() : $self->arg();
 }
 
@@ -85,7 +85,7 @@ sub head
 sub nonhead_children
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     my @children = (($self->fun_is_head() ? $self->arg() : $self->fun()), $self->dependents());
     return $self->_order_required(@_) ? $self->order_phrases(@children) : @children;
 }
@@ -99,7 +99,7 @@ sub nonhead_children
 sub core_children
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     my @children = ($self->fun(), $self->arg());
     return $self->_order_required(@_) ? $self->order_phrases(@children) : @children;
 }
@@ -118,7 +118,7 @@ sub core_children
 sub deprel
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     return $self->deprel_at_fun() ? $self->fun()->deprel() : $self->arg()->deprel();
 }
 
@@ -135,7 +135,7 @@ sub deprel
 sub set_deprel
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     $self->deprel_at_fun() ? $self->fun()->set_deprel(@_) : $self->arg()->set_deprel(@_);
 }
 
@@ -151,7 +151,7 @@ sub replace_core_child
     my $self = shift;
     my $old_child = shift; # Treex::Core::Phrase
     my $new_child = shift; # Treex::Core::Phrase
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     $self->_check_old_new_child($old_child, $new_child);
     $old_child->_set_parent(undef);
     $new_child->_set_parent($self);
@@ -165,7 +165,7 @@ sub replace_core_child
     }
     else
     {
-        confess("The child to be replaced is not in my core");
+        log_fatal("The child to be replaced is not in my core");
     }
 }
 

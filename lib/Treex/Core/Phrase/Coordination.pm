@@ -93,7 +93,7 @@ sub BUILD
     # Check that there is at least one conjunct.
     if(scalar($self->conjuncts())==0)
     {
-        confess("There must be at least one conjunct");
+        log_fatal("There must be at least one conjunct");
     }
     # Make sure that all core children refer to me as their parent.
     my @children = $self->core_children();
@@ -101,7 +101,7 @@ sub BUILD
     {
         if(defined($child->parent()))
         {
-            confess("The core child already has another parent");
+            log_fatal("The core child already has another parent");
         }
         $child->_set_parent($self);
     }
@@ -118,7 +118,7 @@ sub BUILD
 sub conjuncts
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     my @conjuncts = @{$self->_conjuncts_ref()};
     return $self->_order_required(@_) ? $self->order_phrases(@conjuncts) : @conjuncts;
 }
@@ -134,7 +134,7 @@ sub conjuncts
 sub coordinators
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     my @coordinators = @{$self->_coordinators_ref()};
     return $self->_order_required(@_) ? $self->order_phrases(@coordinators) : @coordinators;
 }
@@ -150,7 +150,7 @@ sub coordinators
 sub punctuation
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     my @punctuation = @{$self->_punctuation_ref()};
     return $self->_order_required(@_) ? $self->order_phrases(@punctuation) : @punctuation;
 }
@@ -164,7 +164,7 @@ sub punctuation
 sub head
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     my $rule = $self->head_rule();
     if($rule eq 'first_conjunct')
     {
@@ -190,7 +190,7 @@ sub head
     }
     else
     {
-        confess("Unknown head rule '$rule'");
+        log_fatal("Unknown head rule '$rule'");
     }
 }
 
@@ -203,7 +203,7 @@ sub head
 sub nonhead_children
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     my $head = $self->head();
     my @children = grep {$_ != $head} ($self->children());
     return $self->_order_required(@_) ? $self->order_phrases(@children) : @children;
@@ -218,7 +218,7 @@ sub nonhead_children
 sub core_children
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     my @children = ($self->conjuncts(), $self->coordinators(), $self->punctuation());
     return $self->_order_required(@_) ? $self->order_phrases(@children) : @children;
 }
@@ -235,7 +235,7 @@ sub replace_core_child
     my $self = shift;
     my $old_child = shift; # Treex::Core::Phrase
     my $new_child = shift; # Treex::Core::Phrase
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     $self->_check_old_new_child($old_child, $new_child);
     $old_child->_set_parent(undef);
     $new_child->_set_parent($self);
@@ -273,7 +273,7 @@ sub replace_core_child
         }
     }
     # We should not ever get here.
-    confess("The child to be replaced is not in my core");
+    log_fatal("The child to be replaced is not in my core");
 }
 
 
@@ -285,7 +285,7 @@ sub replace_core_child
 sub project_dependencies
 {
     my $self = shift;
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     # Recursion first, we work bottom-up.
     my @children = $self->children();
     foreach my $child (@children)

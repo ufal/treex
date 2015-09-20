@@ -35,6 +35,7 @@ has 'is_member' =>
 #------------------------------------------------------------------------------
 sub set_parent
 {
+    log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
     my $self = shift;
     my $new_parent = shift; # Treex::Core::Phrase::NTerm or undef
     my $old_parent = $self->parent();
@@ -62,7 +63,7 @@ sub set_parent
 sub is_terminal
 {
     my $self = shift;
-    confess("The is_terminal() method is not implemented");
+    log_fatal("The is_terminal() method is not implemented");
 }
 
 
@@ -76,7 +77,7 @@ sub is_terminal
 sub node
 {
     my $self = shift;
-    confess("The node() method is not implemented");
+    log_fatal("The node() method is not implemented");
 }
 
 
@@ -94,7 +95,7 @@ sub node
 sub deprel
 {
     my $self = shift;
-    confess("The deprel() method is not implemented");
+    log_fatal("The deprel() method is not implemented");
 }
 
 
@@ -120,7 +121,7 @@ sub ord
 sub project_dependencies
 {
     my $self = shift;
-    confess("The project_dependencies() method is not implemented");
+    log_fatal("The project_dependencies() method is not implemented");
 }
 
 

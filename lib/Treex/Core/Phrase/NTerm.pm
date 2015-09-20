@@ -30,7 +30,7 @@ sub BUILD
     my $self = shift;
     if(defined($self->head()->parent()))
     {
-        confess("The head already has another parent");
+        log_fatal("The head already has another parent");
     }
     $self->head()->_set_parent($self);
 }
@@ -45,7 +45,7 @@ sub set_head
 {
     my $self = shift;
     my $new_head = shift; # Treex::Core::Phrase
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     my $old_head = $self->head();
     return if ($new_head == $old_head);
     # Remove the new head from the list of non-head children.
@@ -69,12 +69,12 @@ sub replace_core_child
     my $self = shift;
     my $old_child = shift; # Treex::Core::Phrase
     my $new_child = shift; # Treex::Core::Phrase
-    confess('Dead') if($self->dead());
+    log_fatal('Dead') if($self->dead());
     $self->_check_old_new_child($old_child, $new_child);
     # We have not checked yet whether the old child is the head.
     if($old_child != $self->head())
     {
-        confess("The replacement child is not my head");
+        log_fatal("The replacement child is not my head");
     }
     $old_child->_set_parent(undef);
     $new_child->_set_parent($self);
