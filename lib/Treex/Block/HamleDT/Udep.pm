@@ -880,6 +880,7 @@ sub fix_annotation_errors
     foreach my $node (@nodes)
     {
         my $form = $node->form();
+        my $pos  = $node->iset()->pos();
         my $afun = $node->afun();
         if($form =~ m/^[so]$/i && !$node->is_adposition() && $afun eq 'AuxP')
         {
@@ -887,6 +888,12 @@ sub fix_annotation_errors
             # On the other hand, any of the two, even if incorrect, is much better than AuxP, which would trigger various transformations,
             # inappropriate in this context.
             $node->set_afun('Atr');
+        }
+        # Fix unknown tags of punctuation. If the part of speech is unknown and the form consists only of punctuation characters,
+        # set the part of speech to PUNCT. This occurs in the Ancient Greek Dependency Treebank.
+        elsif($pos eq '' && $form =~ m/^\pP+$/)
+        {
+            $node->iset()->set_pos('punc');
         }
     }
 }
