@@ -394,7 +394,11 @@ sub project_dependencies
     {
         my $dep_node = $dependent->node();
         ###!!! DEBUG
-        log_info('Going to attach '.$dep_node->form().' to '.$head_node->form());
+        my $dform = defined($dep_node->form()) ? $dep_node->form() : '_';
+        my $dord = $dep_node->ord();
+        my $hform = defined($head_node->form()) ? $head_node->form() : '_';
+        my $hord = $head_node->ord();
+        log_info("Going to attach $dform-$dord to $hform-$hord");
         log_info('Current phrase: '.$self->as_string());
         ###!!!
         $dep_node->set_parent($head_node);
