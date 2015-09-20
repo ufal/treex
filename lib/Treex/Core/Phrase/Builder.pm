@@ -68,15 +68,39 @@ sub build
             my $pchild = $self->build($nchild);
             $pchild->set_parent($phrase);
         }
-        # The following is the only part (so far) that assumes one particular
-        # annotation style. In future we will want to parameterize the Builder
-        # by properties of the expected input style.
-        $phrase = $self->detect_prague_pp($phrase);
-        $phrase = $self->detect_prague_copula($phrase);
-        $phrase = $self->detect_prague_coordination($phrase);
-        $phrase = $self->detect_colon_predicate($phrase);
-        $phrase = $self->detect_root_phrase($phrase);
+        # Now look at the new nonterminal phrase whether it corresponds to any special construction.
+        # This may include tree transformations and even construction of a new nonterminal of a special
+        # class (we will get the new phrase as the result and the old one will be discarded).
+        $phrase = $self->detect_special_constructions($phrase);
     }
+    return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Examines a nonterminal phrase and tries to recognize certain special phrase
+# types. This part will be different for different builders. It depends both on
+# the expected input style and the desired output style. This method is always
+# called after a new nonterminal phrase is built. It can be defined as empty if
+# the builder does not do anything special.
+#------------------------------------------------------------------------------
+sub detect_special_constructions
+{
+    my $self = shift;
+    my $phrase = shift;
+    # Despite the fact that we work bottom-up, the order of these detection
+    # methods matters. There may be multiple special constructions on the same
+    # level of the tree. For example: We see a phrase labeled Coord (coordination),
+    # hence we do not see a prepositional phrase (the label would have to be AuxP
+    # instead of Coord). However, after processing the coordination the phrase
+    # will get a new label and it may well be AuxP.
+    $phrase = $self->detect_prague_coordination($phrase);
+    $phrase = $self->detect_prague_pp($phrase);
+    $phrase = $self->detect_colon_predicate($phrase);
+    $phrase = $self->detect_prague_copula($phrase);
+    $phrase = $self->detect_root_phrase($phrase);
+    # Return the resulting phrase. It may be different from the input phrase.
     return $phrase;
 }
 
@@ -132,6 +156,19 @@ sub detect_prague_pp
         }
         # Now it is clear that we have a prepositional phrase. A new PP will be created
         # and the old input NTerm will be destroyed.
+        ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # Takhle to být nemůže! Co když je aktuální fráze mezitím koordinace?
+        # U té si nemůžu jen tak vzít hlavu (což navíc vůbec nemusí být ta
+        # předložka)! V podstatě jí mám akorát odebrat dependenty a z toho
+        # zbytku rovnou udělat předložku. To by asi mohl být standardní postup,
+        # abych nemusel zkoumat původní typ fráze. U obyčejného neterminálu to
+        # holt povede k tomu, že přidám zbytečně jedno patro, kde kolem
+        # předložky bude neterminální fráze, která bude mít pouze hlavu a žádné
+        # závislé členy. No a pokud je už vstupní fráze předložkovou frází
+        # (tj. nějaká rekurzivní struktura), tak na její předložku a argument
+        # nebudu sahat? Jenže vnořenou předložku můžu očekávat spíš v jejím
+        # argumentu než mezi jejími rozvitími, sakra!
+        ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         my $preposition = $phrase->head();
         $preposition->set_deprel($target_deprel);
         # If there are two or more argument candidates, we have to select the best one.
