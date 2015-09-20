@@ -591,6 +591,12 @@ sub detect_root_phrase
                 {
                     $d->set_deprel('punct');
                 }
+                # If a Pnom was attached directly to the root (e.g. in Arabic), it did not go through the copula inversion
+                # and its deprel is still dep:pnom. Change it to something compatible with Universal Dependencies.
+                if($d->deprel() eq 'dep:pnom')
+                {
+                    $d->set_deprel('parataxis');
+                }
             }
             $subphrase->set_parent($phrase);
             @dependents = ($subphrase);
