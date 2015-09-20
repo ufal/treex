@@ -40,6 +40,7 @@ sub set_parent
     my $new_parent = shift; # Treex::Core::Phrase::NTerm or undef
     if(defined($new_parent) && $new_parent->depends_on($self))
     {
+        log_info($self->as_string());
         log_fatal('Cannot set parent phrase because it would create a cycle');
     }
     my $old_parent = $self->parent();
@@ -141,6 +142,19 @@ sub project_dependencies
 {
     my $self = shift;
     log_fatal("The project_dependencies() method is not implemented");
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns a textual representation of the phrase and all subphrases. Useful for
+# debugging. This is an abstract method that must be implemented in the derived
+# classes.
+#------------------------------------------------------------------------------
+sub as_string
+{
+    my $self = shift;
+    log_fatal("The as_string() method is not implemented");
 }
 
 
@@ -293,6 +307,11 @@ child phrases according to the word order of their head nodes.
 
 Recursively projects dependencies between the head and the dependents back to the
 underlying dependency structure.
+
+=item my $phrase_string = $phrase->as_string();
+
+Returns a textual representation of the phrase and all subphrases. Useful for
+debugging.
 
 =back
 

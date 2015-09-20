@@ -106,6 +106,25 @@ sub project_dependencies
 
 
 
+#------------------------------------------------------------------------------
+# Returns a textual representation of the phrase and all subphrases. Useful for
+# debugging.
+#------------------------------------------------------------------------------
+sub as_string
+{
+    my $self = shift;
+    my $node = $self->node();
+    my $form = '_';
+    if($node->is_root())
+    {
+        $form = 'ROOT';
+    }
+    my $ord = $node->ord();
+    return "[ $form-$ord ]";
+}
+
+
+
 __PACKAGE__->meta->make_immutable();
 
 1;
@@ -166,6 +185,11 @@ Projects dependencies between the head and the dependents back to the
 underlying dependency structure. There is not much to do in the terminal
 phrase as it does not have any dependents. However, we will attach all nodes
 to the root, to prevent temporary cycles during the tree construction.
+
+=item as_string
+
+Returns a textual representation of the phrase and all subphrases. Useful for
+debugging.
 
 =back
 

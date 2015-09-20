@@ -393,9 +393,29 @@ sub project_dependencies
     foreach my $dependent (@dependents)
     {
         my $dep_node = $dependent->node();
+        ###!!! DEBUG
+        log_info('Going to attach '.$dep_node->form().' to '.$head_node->form());
+        log_info('Current phrase: '.$self->as_string());
+        ###!!!
         $dep_node->set_parent($head_node);
         $dep_node->set_deprel($dependent->deprel());
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns a textual representation of the phrase and all subphrases. Useful for
+# debugging.
+#------------------------------------------------------------------------------
+sub as_string
+{
+    my $self = shift;
+    my @core_children = $self->core_children('ordered' => 1);
+    my $core = join(', ', map {$_->as_string()} (@core_children));
+    my @dependents = $self->dependents('ordered' => 1);
+    my $deps = join(', ', map {$_->as_string()} (@dependents));
+    return "(BNT CORE $core DEPS $deps )";
 }
 
 
@@ -542,6 +562,11 @@ However, it is the caller's responsibility to modify the parent immediately.
 
 Recursively projects dependencies between the head and the dependents back to the
 underlying dependency structure.
+
+=item as_string
+
+Returns a textual representation of the phrase and all subphrases. Useful for
+debugging.
 
 =back
 
