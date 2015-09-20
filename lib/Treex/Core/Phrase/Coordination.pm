@@ -357,6 +357,27 @@ sub project_dependencies
 
 
 
+#------------------------------------------------------------------------------
+# Returns a textual representation of the phrase and all subphrases. Useful for
+# debugging.
+#------------------------------------------------------------------------------
+sub as_string
+{
+    my $self = shift;
+    my @conjuncts = $self->conjuncts('ordered' => 1);
+    my $conj = 'CONJ '.join(', ', map {$_->as_string()} (@conjuncts));
+    my @coordinators = $self->coordinators('ordered' => 1);
+    my $coor = 'COOR '.join(', ', map {$_->as_string()} (@coordinators));
+    my @punctuation = $self->punctuation('ordered' => 1);
+    my $punc = 'PUNC '.join(', ', map {$_->as_string()} (@punctuation));
+    my @dependents = $self->dependents('ordered' => 1);
+    my $deps = join(', ', map {$_->as_string()} (@dependents));
+    $deps = 'DEPS '.$deps if($deps);
+    return "(CC $conj $coor $punc $deps)";
+}
+
+
+
 __PACKAGE__->meta->make_immutable();
 
 1;
@@ -486,6 +507,11 @@ Projects dependencies between the head and the dependents back to the
 underlying dependency structure.
 For coordinations the behavior depends on the currently selected head rule:
 certain deprels may have to be adjusted.
+
+=item as_string
+
+Returns a textual representation of the phrase and all subphrases. Useful for
+debugging.
 
 =back
 

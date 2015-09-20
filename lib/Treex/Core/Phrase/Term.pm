@@ -124,7 +124,8 @@ sub as_string
         $form = $node->form();
     }
     my $ord = $node->ord();
-    return "[ $form-$ord ]";
+    my $deprel = defined($self->deprel()) ? '-'.$self->deprel() : '';
+    return "[ $form-$ord$deprel ]";
 }
 
 
