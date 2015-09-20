@@ -412,10 +412,11 @@ sub as_string
 {
     my $self = shift;
     my @core_children = $self->core_children('ordered' => 1);
-    my $core = join(', ', map {$_->as_string()} (@core_children));
+    my $core = 'CORE '.join(', ', map {$_->as_string()} (@core_children));
     my @dependents = $self->dependents('ordered' => 1);
     my $deps = join(', ', map {$_->as_string()} (@dependents));
-    return "(BNT CORE $core DEPS $deps )";
+    $deps = 'DEPS '.$deps if($deps);
+    return "(BNT $core $deps)";
 }
 
 
