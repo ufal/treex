@@ -91,7 +91,7 @@ sub detect_special_constructions
     my $self = shift;
     my $phrase = shift;
     # The root node must not participate in any specialized construction.
-    unless($self->node()->is_root())
+    unless($phrase->node()->is_root())
     {
         # Despite the fact that we work bottom-up, the order of these detection
         # methods matters. There may be multiple special constructions on the same
