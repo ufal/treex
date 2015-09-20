@@ -396,15 +396,14 @@ sub detect_prague_copula
     my @pnom = grep {$_->deprel() =~ m/pnom/i} ($phrase->dependents('ordered' => 1));
     if(scalar(@pnom)>=1)
     {
-        ###!!! We are not currently prepared for Coordination of copulas etc.
-        if(!$phrase->isa('Treex::Core::Phrase::NTerm'))
-        {
-            my $type = blessed($phrase);
-            log_fatal("Cannot process copula-pnom if the phrase has already been converted to $type");
-        }
         # Now it is clear that we have a nominal predicate with copula.
-        # A new PP will be created and the old input NTerm will be destroyed.
-        my $copula = $phrase->head();
+        # If this is currently an ordinary NTerm phrase, its head is the copula.
+        # However, it is also possible that we have a special phrase such as coordination.
+        # Then we cannot just take the head. The whole core of the phrase is the copula.
+        # (For coordinate copulas, consider "he is and always was the best goalkeeper".)
+        # Therefore we will remove the dependents and keep the core phrase as the copula.
+        # For ordinary NTerm phrases this will add one unnecessary (but harmless) layer around the head.
+        my $copula = $phrase;
         # Note that the nominal predicate can also be seen as the argument of the copula,
         # and we will denote it as $argument here, which is the terminology inside Phrase::PP.
         my $argument;
@@ -477,11 +476,12 @@ sub detect_prague_copula
                 }
             }
         }
-        my @dependents = grep {$_ != $copula && $_ != $argument} ($phrase->children());
+        my @dependents = grep {$_ != $argument} ($phrase->children());
         my $parent = $phrase->parent();
         my $deprel = $phrase->deprel();
         my $member = $phrase->is_member();
-        $phrase->detach_children_and_die();
+        $copula->set_parent(undef);
+        $argument->set_parent(undef);
         my $pp = new Treex::Core::Phrase::PP
         (
             'fun'           => $copula,
@@ -492,15 +492,10 @@ sub detect_prague_copula
         );
         $copula->set_deprel('cop');
         $pp->set_deprel($deprel);
+        $pp->set_parent($parent);
         foreach my $d (@dependents)
         {
             $d->set_parent($pp);
-        }
-        # If the original phrase already had a parent, we must make sure that
-        # the parent is aware of the reincarnation we have made.
-        if(defined($parent))
-        {
-            $parent->replace_child($phrase, $pp);
         }
         return $pp;
     }
