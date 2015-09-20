@@ -29,19 +29,6 @@ has 'is_member' =>
 
 
 #------------------------------------------------------------------------------
-# Returns the type of the phrase (based on its class or package name).
-#------------------------------------------------------------------------------
-sub type
-{
-    my $self = shift;
-    my $type = blessed($self);
-    $type =~ s/^Treex::Core::Phrase:://;
-    return $type;
-}
-
-
-
-#------------------------------------------------------------------------------
 # Sets a new parent for this phrase. Unlike the bare setter _set_parent(),
 # this public method also takes care of the reverse links from the parent to
 # the children. The method returns the old parent, if any.
@@ -272,11 +259,6 @@ must keep the flag for its parent to see and use.
 =head1 METHODS
 
 =over
-
-=item $phrase->type()
-
-Returns the type of the phrase (based on its class or package name).
-For example, C<Treex::Core::Phrase::Term> returns C<'Term'>.
 
 =item $phrase->set_parent ($nonterminal_phrase);
 

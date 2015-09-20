@@ -397,9 +397,10 @@ sub detect_prague_copula
     if(scalar(@pnom)>=1)
     {
         ###!!! We are not currently prepared for Coordination of copulas etc.
-        if($phrase->type() ne 'NTerm')
+        if(!$phrase->isa('Treex::Core::Phrase::NTerm'))
         {
-            log_fatal('Cannot process copula-pnom if the phrase has already been converted to '.$phrase->type());
+            my $type = blessed($phrase);
+            log_fatal("Cannot process copula-pnom if the phrase has already been converted to $type");
         }
         # Now it is clear that we have a nominal predicate with copula.
         # A new PP will be created and the old input NTerm will be destroyed.
