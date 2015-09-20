@@ -119,6 +119,10 @@ sub as_string
     {
         $form = 'ROOT';
     }
+    elsif(defined($node->form()))
+    {
+        $form = $node->form();
+    }
     my $ord = $node->ord();
     return "[ $form-$ord ]";
 }
