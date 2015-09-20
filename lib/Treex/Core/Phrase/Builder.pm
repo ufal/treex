@@ -108,6 +108,135 @@ sub detect_special_constructions
 
 #------------------------------------------------------------------------------
 # Examines a nonterminal phrase in the Prague style (with analytical functions
+# converted to dependency relation labels based on Universal Dependencies). If
+# it recognizes a coordination, transforms the general NTerm to Coordination.
+#------------------------------------------------------------------------------
+sub detect_prague_coordination
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase::NTerm
+    # If this is the Prague style then the head is either coordinating conjunction or punctuation.
+    # The deprel is already partially converted to UD, so it should be something:coord
+    # (cc:coord, punct:coord); see HamleDT::Udep->afun_to_udeprel().
+    if($phrase->deprel() =~ m/:coord/i)
+    {
+        # Remove the ':coord' part from the deprel. Even if we do not find any
+        # conjunct and cannot construct coordination, the label cannot remain
+        # in the data.
+        my $deprel = $phrase->deprel();
+        $deprel =~ s/:coord//i;
+        $phrase->set_deprel($deprel);
+        my @dependents = $phrase->dependents('ordered' => 1);
+        my @conjuncts;
+        my @coordinators;
+        my @punctuation;
+        my @sdependents;
+        # Classify dependents.
+        my ($cmin, $cmax);
+        foreach my $d (@dependents)
+        {
+            if($d->is_member())
+            {
+                # Occasionally punctuation is labeled as conjunct (not nested coordination,
+                # that should be solved by now, but an orphan leaf node after ellipsis).
+                # We want to make it normal punctuation instead.
+                if($d->node()->is_punctuation() && $d->node()->is_leaf())
+                {
+                    $d->set_is_member(0);
+                    push(@punctuation, $d);
+                }
+                else
+                {
+                    push(@conjuncts, $d);
+                    $cmin = $d->ord() if(!defined($cmin));
+                    $cmax = $d->ord();
+                }
+            }
+            # Additional coordinating conjunctions (except the head).
+            # In PDT they are labeled AuxY but other words in the tree may get
+            # this label too. During label conversion it is converted to cc.
+            elsif($d->deprel() eq 'cc')
+            {
+                push(@coordinators, $d);
+            }
+            # Punctuation (except the head).
+            # In PDT it is labeled AuxX (commas) or AuxG (everything else).
+            # During label conversion both are converted to punct.
+            # Some punctuation may have headed a nested coordination or
+            # apposition (playing either a conjunct or a shared dependent) but
+            # it should have been processed by now, as we are proceeding
+            # bottom-up.
+            elsif($d->deprel() eq 'punct')
+            {
+                push(@punctuation, $d);
+            }
+            # The rest are dependents shared by all the conjuncts.
+            else
+            {
+                push(@sdependents, $d);
+            }
+        }
+        # If there are no conjuncts, we cannot create a coordination.
+        my $n = scalar(@conjuncts);
+        if($n == 0)
+        {
+            return $phrase;
+        }
+        # Now it is clear that we have a coordination. A new Coordination phrase will be created
+        # and the old input NTerm will be destroyed.
+        my $parent = $phrase->parent();
+        my $member = $phrase->is_member();
+        my $old_head = $phrase->head();
+        $phrase->detach_children_and_die();
+        if($deprel eq 'punct')
+        {
+            push(@punctuation, $old_head);
+        }
+        else
+        {
+            push(@coordinators, $old_head);
+        }
+        # Punctuation can be considered a conjunct delimiter only if it occurs
+        # between conjuncts.
+        my @inpunct  = grep {my $o = $_->ord(); $o > $cmin && $o < $cmax;} (@punctuation);
+        my @outpunct = grep {my $o = $_->ord(); $o < $cmin || $o > $cmax;} (@punctuation);
+        my $coordination = new Treex::Core::Phrase::Coordination
+        (
+            'conjuncts'    => \@conjuncts,
+            'coordinators' => \@coordinators,
+            'punctuation'  => \@inpunct,
+            'head_rule'    => $self->coordination_head_rule(),
+            'is_member'    => $member
+        );
+        # Remove the is_member flag from the conjuncts. It will be no longer
+        # needed as we now know what are the conjuncts.
+        # Do not assign 'conj' as the deprel of the non-head conjuncts. That will
+        # be set during back-projection to the dependency tree, based on the
+        # annotation style that will be selected at that time.
+        foreach my $c (@conjuncts)
+        {
+            $c->set_is_member(0);
+        }
+        foreach my $d (@sdependents, @outpunct)
+        {
+            $d->set_parent($coordination);
+        }
+        # If the original phrase already had a parent, we must make sure that
+        # the parent is aware of the reincarnation we have made.
+        if(defined($parent))
+        {
+            $parent->replace_child($phrase, $coordination);
+        }
+        return $coordination;
+    }
+    # Return the input NTerm phrase if no Coordination has been detected.
+    return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Examines a nonterminal phrase in the Prague style (with analytical functions
 # converted to dependency relation labels based on Universal Dependencies).
 # If it recognizes a prepositional phrase, transforms the general NTerm to PP.
 # A subordinate clause headed by AuxC is also treated as PP.
@@ -262,11 +391,78 @@ sub detect_prague_copula
         # Now it is clear that we have a nominal predicate with copula.
         # A new PP will be created and the old input NTerm will be destroyed.
         my $copula = $phrase->head();
-        # There should not be more than one nominal predicate but it is not guaranteed.
-        # It is not clear what to do in such cases; we will pick the first one.
         # Note that the nominal predicate can also be seen as the argument of the copula,
         # and we will denote it as $argument here, which is the terminology inside Phrase::PP.
-        my $argument = shift(@pnom);
+        my $argument;
+        # There should not be more than one nominal predicate but it is not guaranteed.
+        # There are about 40 sentences even in PDT; all of them are annotation errors.
+        # We will try to identify the most probable predicate; but note that these
+        # heuristics may be language-dependent.
+        if(scalar(@pnom)==1)
+        {
+            $argument = shift(@pnom);
+        }
+        else
+        {
+            # Look for an adjective in nominative (or without case marking).
+            my @selection = grep {$_->node()->is_adjective() && $_->node()->iset()->case() =~ m/^(nom)?$/} (@pnom);
+            if(@selection)
+            {
+                $argument = shift(@selection);
+            }
+            else
+            {
+                # Look for a participle.
+                @selection = grep {$_->node()->is_participle()} (@pnom);
+                if(@selection)
+                {
+                    $argument = shift(@selection);
+                }
+                else
+                {
+                    # Look for a noun.
+                    # (Specific for Czech: the noun will usually be in nominative or instrumental.
+                    # But it can also be in genitive (transformed phrases with counted nouns).)
+                    # We will not check the case here as the benefit is negligible.
+                    # However, we will take the last noun, not the first one. A frequent annotation
+                    # error is that the subject is labeled as Pnom, and the configuration where
+                    # subject precedes predicate is more likely.
+                    @selection = grep {$_->node()->is_noun()} (@pnom);
+                    if(@selection)
+                    {
+                        $argument = pop(@selection);
+                    }
+                    else
+                    {
+                        # No typical nominal predicates found. Take the last candidate.
+                        $argument = pop(@pnom);
+                    }
+                }
+            }
+            # The unselected candidates must receive a dependency relation label (at the moment they only have 'dep:pnom').
+            my $subject_exists = any {$_->deprel() =~ m/subj/i} ($phrase->dependents());
+            foreach my $x (@pnom)
+            {
+                unless($x == $argument)
+                {
+                    if($x->node()->is_noun() || $x->node()->is_adjective() || $x->node()->is_numeral() || $x->node()->is_participle())
+                    {
+                        if($subject_exists)
+                        {
+                            $x->set_deprel('nmod');
+                        }
+                        else
+                        {
+                            $x->set_deprel('nsubj');
+                        }
+                    }
+                    else
+                    {
+                        $x->set_deprel('advmod');
+                    }
+                }
+            }
+        }
         my @dependents = grep {$_ != $copula && $_ != $argument} ($phrase->children());
         my $parent = $phrase->parent();
         my $deprel = $phrase->deprel();
@@ -295,135 +491,6 @@ sub detect_prague_copula
         return $pp;
     }
     # Return the input NTerm phrase if no PP has been detected.
-    return $phrase;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Examines a nonterminal phrase in the Prague style (with analytical functions
-# converted to dependency relation labels based on Universal Dependencies). If
-# it recognizes a coordination, transforms the general NTerm to Coordination.
-#------------------------------------------------------------------------------
-sub detect_prague_coordination
-{
-    my $self = shift;
-    my $phrase = shift; # Treex::Core::Phrase::NTerm
-    # If this is the Prague style then the head is either coordinating conjunction or punctuation.
-    # The deprel is already partially converted to UD, so it should be something:coord
-    # (cc:coord, punct:coord); see HamleDT::Udep->afun_to_udeprel().
-    if($phrase->deprel() =~ m/:coord/i)
-    {
-        # Remove the ':coord' part from the deprel. Even if we do not find any
-        # conjunct and cannot construct coordination, the label cannot remain
-        # in the data.
-        my $deprel = $phrase->deprel();
-        $deprel =~ s/:coord//i;
-        $phrase->set_deprel($deprel);
-        my @dependents = $phrase->dependents('ordered' => 1);
-        my @conjuncts;
-        my @coordinators;
-        my @punctuation;
-        my @sdependents;
-        # Classify dependents.
-        my ($cmin, $cmax);
-        foreach my $d (@dependents)
-        {
-            if($d->is_member())
-            {
-                # Occasionally punctuation is labeled as conjunct (not nested coordination,
-                # that should be solved by now, but an orphan leaf node after ellipsis).
-                # We want to make it normal punctuation instead.
-                if($d->node()->is_punctuation() && $d->node()->is_leaf())
-                {
-                    $d->set_is_member(0);
-                    push(@punctuation, $d);
-                }
-                else
-                {
-                    push(@conjuncts, $d);
-                    $cmin = $d->ord() if(!defined($cmin));
-                    $cmax = $d->ord();
-                }
-            }
-            # Additional coordinating conjunctions (except the head).
-            # In PDT they are labeled AuxY but other words in the tree may get
-            # this label too. During label conversion it is converted to cc.
-            elsif($d->deprel() eq 'cc')
-            {
-                push(@coordinators, $d);
-            }
-            # Punctuation (except the head).
-            # In PDT it is labeled AuxX (commas) or AuxG (everything else).
-            # During label conversion both are converted to punct.
-            # Some punctuation may have headed a nested coordination or
-            # apposition (playing either a conjunct or a shared dependent) but
-            # it should have been processed by now, as we are proceeding
-            # bottom-up.
-            elsif($d->deprel() eq 'punct')
-            {
-                push(@punctuation, $d);
-            }
-            # The rest are dependents shared by all the conjuncts.
-            else
-            {
-                push(@sdependents, $d);
-            }
-        }
-        # If there are no conjuncts, we cannot create a coordination.
-        my $n = scalar(@conjuncts);
-        if($n == 0)
-        {
-            return $phrase;
-        }
-        # Now it is clear that we have a coordination. A new Coordination phrase will be created
-        # and the old input NTerm will be destroyed.
-        my $parent = $phrase->parent();
-        my $member = $phrase->is_member();
-        my $old_head = $phrase->head();
-        $phrase->detach_children_and_die();
-        if($deprel eq 'punct')
-        {
-            push(@punctuation, $old_head);
-        }
-        else
-        {
-            push(@coordinators, $old_head);
-        }
-        # Punctuation can be considered a conjunct delimiter only if it occurs
-        # between conjuncts.
-        my @inpunct  = grep {my $o = $_->ord(); $o > $cmin && $o < $cmax;} (@punctuation);
-        my @outpunct = grep {my $o = $_->ord(); $o < $cmin || $o > $cmax;} (@punctuation);
-        my $coordination = new Treex::Core::Phrase::Coordination
-        (
-            'conjuncts'    => \@conjuncts,
-            'coordinators' => \@coordinators,
-            'punctuation'  => \@inpunct,
-            'head_rule'    => $self->coordination_head_rule(),
-            'is_member'    => $member
-        );
-        # Remove the is_member flag from the conjuncts. It will be no longer
-        # needed as we now know what are the conjuncts.
-        # Do not assign 'conj' as the deprel of the non-head conjuncts. That will
-        # be set during back-projection to the dependency tree, based on the
-        # annotation style that will be selected at that time.
-        foreach my $c (@conjuncts)
-        {
-            $c->set_is_member(0);
-        }
-        foreach my $d (@sdependents, @outpunct)
-        {
-            $d->set_parent($coordination);
-        }
-        # If the original phrase already had a parent, we must make sure that
-        # the parent is aware of the reincarnation we have made.
-        if(defined($parent))
-        {
-            $parent->replace_child($phrase, $coordination);
-        }
-        return $coordination;
-    }
-    # Return the input NTerm phrase if no Coordination has been detected.
     return $phrase;
 }
 
