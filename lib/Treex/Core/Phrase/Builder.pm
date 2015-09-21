@@ -69,11 +69,13 @@ sub build
             my $pchild = $self->build($nchild);
             $pchild->set_parent($phrase);
         }
-        # Now look at the new nonterminal phrase whether it corresponds to any special construction.
-        # This may include tree transformations and even construction of a new nonterminal of a special
-        # class (we will get the new phrase as the result and the old one will be discarded).
-        $phrase = $self->detect_special_constructions($phrase);
     }
+    # Now look at the new phrase whether it corresponds to any special construction.
+    # This may include tree transformations and even construction of a new nonterminal of a special
+    # class (we will get the new phrase as the result and the old one will be discarded).
+    # We can only inspect and modify the current phrase and its children.
+    # Nevertheless, we still have to include terminal phrases because we may have to change their deprels.
+    $phrase = $self->detect_special_constructions($phrase);
     return $phrase;
 }
 
