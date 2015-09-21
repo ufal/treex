@@ -25,7 +25,7 @@ my $tphrase  = new Treex::Core::Phrase::Term ('node' => $node);
 my $tprep    = new Treex::Core::Phrase::Term ('node' => $prep);
 my $tdep1    = new Treex::Core::Phrase::Term ('node' => $dep1);
 my $ntphrase = new Treex::Core::Phrase::NTerm ('head' => $tphrase);
-my $pphrase  = new Treex::Core::Phrase::PP ('fun' => $tprep, 'arg' => $ntphrase, 'fun_is_head' => 0);
+my $pphrase  = new Treex::Core::Phrase::PP ('fun' => $tprep, 'arg' => $ntphrase, 'fun_is_head' => 0, 'deprel_at_fun' => 0);
 $tdep1->set_parent($ntphrase);
 isa_ok($tphrase->node(),  'Treex::Core::Node');
 isa_ok($ntphrase->node(), 'Treex::Core::Node');
