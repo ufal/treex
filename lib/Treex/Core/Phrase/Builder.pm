@@ -270,12 +270,13 @@ sub detect_prague_pp
             return $phrase;
         }
         # We are working bottom-up, thus the current phrase does not have a parent yet and we do not have to take care of the parent link.
-        # We have to port the is_member flag though.
+        # We have to detach the argument though, and we have to port the is_member flag.
         my $member = $phrase->is_member();
         $phrase->set_is_member(0);
         # Now it is clear that we have a prepositional phrase.
         # The preposition ($c->{fun}) is the current phrase but we have to detach the dependents and only keep the core.
         $c->{fun}->set_deprel($target_deprel);
+        $c->{arg}->set_parent(undef);
         # If the preposition consists of multiple nodes, group them in a new NTerm first.
         # The main prepositional node has already been detached from its original parent so it can be used as the head elsewhere.
         if(scalar(@{$c->{mwe}}) > 0)
