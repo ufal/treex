@@ -259,35 +259,9 @@ sub detect_prague_pp
     if($phrase->deprel() =~ m/^(case|mark):(aux[pc])/i)
     {
         my $target_deprel = $1;
-        my @dependents = $phrase->dependents('ordered' => 1);
-        my @mwauxp;
-        my @punc;
-        my @candidates;
-        # Classify dependents of the preposition.
-        foreach my $d (@dependents)
-        {
-            # AuxP attached to AuxP means multi-word preposition.
-            # The dependent should be a leaf, otherwise we may have a recursive structure.
-            # But we are working bottom-up. If there is a recursive AuxP-AuxP-arg structure, the inner part has already been processed and its head deprel is no longer AuxP.
-            ###!!! We should also check that all words of a MWE are adjacent!
-            if($d->deprel() =~ m/aux[pc]/i)
-            {
-                push(@mwauxp, $d);
-            }
-            # Punctuation should never represent an argument of a preposition (provided we have solved any coordinations on lower levels).
-            elsif($d->node()->is_punctuation())
-            {
-                push(@punc, $d);
-            }
-            # All other dependents are candidates for the argument.
-            else
-            {
-                push(@candidates, $d);
-            }
-        }
+        my $c = $self->classify_prague_pp_subphrases($phrase);
         # If there are no argument candidates, we cannot create a prepositional phrase.
-        my $n = scalar(@candidates);
-        if($n == 0)
+        if(!defined($c))
         {
             # The ':auxp' or ':auxc' in deprel marked unprocessed prepositions and subordinating conjunctions.
             # Now that this one has been visited (even if we did not find the expected configuration) we must
@@ -295,92 +269,130 @@ sub detect_prague_pp
             $phrase->set_deprel($target_deprel);
             return $phrase;
         }
-        # Now it is clear that we have a prepositional phrase. A new PP will be created
-        # and the old input NTerm will be destroyed.
-        ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # Takhle to být nemůže! Co když je aktuální fráze mezitím koordinace?
-        # U té si nemůžu jen tak vzít hlavu (což navíc vůbec nemusí být ta
-        # předložka)! V podstatě jí mám akorát odebrat dependenty a z toho
-        # zbytku rovnou udělat předložku. To by asi mohl být standardní postup,
-        # abych nemusel zkoumat původní typ fráze. U obyčejného neterminálu to
-        # holt povede k tomu, že přidám zbytečně jedno patro, kde kolem
-        # předložky bude neterminální fráze, která bude mít pouze hlavu a žádné
-        # závislé členy. No a pokud je už vstupní fráze předložkovou frází
-        # (tj. nějaká rekurzivní struktura), tak na její předložku a argument
-        # nebudu sahat? Jenže vnořenou předložku můžu očekávat spíš v jejím
-        # argumentu než mezi jejími rozvitími, sakra!
-        ###!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        my $preposition = $phrase->head();
-        $preposition->set_deprel($target_deprel);
-        # If there are two or more argument candidates, we have to select the best one.
-        # There may be more sophisticated approaches but let's just take the first one for the moment.
-        ###!!! This should work reasonably well for languages that have mostly prepositions.
-        ###!!! If we know that there are mostly postpositions, we may prefer to take the last candidate.
-        # Emphasizers (AuxZ or advmod:emph) preceding the preposition should be
-        # attached to the argument rather than the preposition. However,
-        # occasionally they are attached to the preposition, as in [cs]:
-        #   , přinejmenším pokud jde o platy
-        #   , at-least if are-concerned about salaries
-        # ("pokud" is the AuxC and the original head, "přinejmenším" should be
-        # attached to the verb "jde" but it is attached to "pokud", thus
-        # "pokud" has two children. We want the verb "jde" to become the
-        # argument.)
-        # Similarly [cs]:
-        #   třeba v tom
-        #   for-example in the-fact
-        # In this case, "třeba" is attached to "v" as AuxY (cc), not as AuxZ (advmod:emph).
-        my @ecandidates = grep {$_->deprel() =~ m/^(advmod:emph|cc)$/} (@candidates);
-        my @ocandidates = grep {$_->deprel() !~ m/^(advmod:emph|cc)$/} (@candidates);
-        my $argument;
-        if(scalar(@ocandidates)>0)
-        {
-            $argument = shift(@ocandidates);
-            @candidates = (@ecandidates, @ocandidates);
-        }
-        else
-        {
-            $argument = shift(@candidates);
-        }
-        my $parent = $phrase->parent();
+        # We are working bottom-up, thus the current phrase does not have a parent yet and we do not have to take care of the parent link.
+        # We have to port the is_member flag though.
         my $member = $phrase->is_member();
-        $phrase->detach_children_and_die();
+        $phrase->set_is_member(0);
+        # Now it is clear that we have a prepositional phrase.
+        # The preposition ($c->{fun}) is the current phrase but we have to detach the dependents and only keep the core.
+        $c->{fun}->set_deprel($target_deprel);
         # If the preposition consists of multiple nodes, group them in a new NTerm first.
         # The main prepositional node has already been detached from its original parent so it can be used as the head elsewhere.
-        if(scalar(@mwauxp) > 0)
+        if(scalar(@{$c->{mwe}}) > 0)
         {
             # The leftmost node of the MWE will be its head.
-            @mwauxp = sort {$a->node()->ord() <=> $b->node()->ord()} (@mwauxp, $preposition);
-            my $prepdeprel = $preposition->deprel();
-            $preposition = new Treex::Core::Phrase::NTerm('head' => shift(@mwauxp));
-            $preposition->set_deprel($prepdeprel);
-            foreach my $mwp (@mwauxp)
+            my @mwe = sort {$a->node()->ord() <=> $b->node()->ord()} (@{$c->{mwe}}, $c->{fun});
+            $c->{fun} = new Treex::Core::Phrase::NTerm('head' => shift(@mwe));
+            $c->{fun}->set_deprel($target_deprel);
+            foreach my $mwp (@mwe)
             {
-                $mwp->set_parent($preposition);
+                $mwp->set_parent($c->{fun});
                 $mwp->set_deprel('mwe');
             }
         }
         my $pp = new Treex::Core::Phrase::PP
         (
-            'fun'           => $preposition,
-            'arg'           => $argument,
+            'fun'           => $c->{fun},
+            'arg'           => $c->{arg},
             'fun_is_head'   => $self->prep_is_head(),
             'deprel_at_fun' => 0,
             'is_member'     => $member
         );
-        foreach my $d (@candidates, @punc)
+        foreach my $d (@{$c->{dep}})
         {
             $d->set_parent($pp);
-        }
-        # If the original phrase already had a parent, we must make sure that
-        # the parent is aware of the reincarnation we have made.
-        if(defined($parent))
-        {
-            $parent->replace_child($phrase, $pp);
         }
         return $pp;
     }
     # Return the input NTerm phrase if no PP has been detected.
     return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Takes a phrase that seems to be a prepositional phrase headed by the
+# preposition. Classifies the children of the phrase: finds the preposition,
+# the argument and the other dependents. Returns undef if it cannot find the
+# argument: that means that this is not a PP! Otherwise returns a reference to
+# a hash with preposition, argument and dependents. This method does not modify
+# anything in the structure.
+#------------------------------------------------------------------------------
+sub classify_prague_pp_subphrases
+{
+    my $self = shift;
+    my $phrase = shift; # the input phrase that seems to be a prepositional phrase headed by the preposition
+    my @dependents = $phrase->dependents('ordered' => 1);
+    my @mwauxp;
+    my @punc;
+    my @candidates;
+    # Classify dependents of the preposition.
+    foreach my $d (@dependents)
+    {
+        # Case attached to case (or mark to mark, or even mark to case or case to mark) means a multi-word preposition (conjunction).
+        # The leaves used to be labeled AuxP (AuxC) and later case:auxp (mark:auxc). But we are working bottom-up. We have visited
+        # the dependents, we were unable to construct a PP (because they have no children) but we removed the :aux[pc] from the label.
+        if($d->deprel() =~ m/(case|mark)/i)
+        {
+            push(@mwauxp, $d);
+        }
+        # Punctuation should never represent an argument of a preposition (provided we have solved any coordinations on lower levels).
+        elsif($d->node()->is_punctuation())
+        {
+            push(@punc, $d);
+        }
+        # All other dependents are candidates for the argument.
+        else
+        {
+            push(@candidates, $d);
+        }
+    }
+    # If there are no argument candidates, we cannot create a prepositional phrase.
+    my $n = scalar(@candidates);
+    if($n == 0)
+    {
+        return undef;
+    }
+    # Now it is clear that we have a prepositional phrase.
+    # If this is currently an ordinary NTerm phrase, its head is the preposition (or subordinating conjunction).
+    # However, it is also possible that we have a special phrase such as coordination.
+    # Then we cannot just take the head. The whole core of the phrase is the preposition.
+    # (For coordinate prepositions, consider "the box may be on or under the table".)
+    # Therefore we will return the whole phrase as the preposition (the caller will later remove its dependents and keep the core).
+    # For ordinary NTerm phrases this will add one unnecessary (but harmless) layer around the head.
+    my $preposition = $phrase;
+    # If there are two or more argument candidates, we have to select the best one.
+    # There may be more sophisticated approaches but let's just take the first one for the moment.
+    # Emphasizers (AuxZ or advmod:emph) preceding the preposition should be attached to the argument
+    # rather than the preposition. However, occasionally they are attached to the preposition, as in [cs]:
+    #   , přinejmenším pokud jde o platy
+    #   , at-least if are-concerned about salaries
+    # ("pokud" is the AuxC and the original head, "přinejmenším" should be attached to the verb "jde" but it is
+    # attached to "pokud", thus "pokud" has two children. We want the verb "jde" to become the argument.)
+    # Similarly [cs]:
+    #   třeba v tom
+    #   for-example in the-fact
+    # In this case, "třeba" is attached to "v" as AuxY (cc), not as AuxZ (advmod:emph).
+    my @ecandidates = grep {$_->deprel() =~ m/^(advmod:emph|cc)$/} (@candidates);
+    my @ocandidates = grep {$_->deprel() !~ m/^(advmod:emph|cc)$/} (@candidates);
+    my $argument;
+    if(scalar(@ocandidates)>0)
+    {
+        $argument = shift(@ocandidates);
+        @candidates = (@ecandidates, @ocandidates);
+    }
+    else
+    {
+        $argument = shift(@candidates);
+    }
+    my %classification =
+    (
+        'fun' => $preposition,
+        'mwe' => \@mwauxp,
+        'arg' => $argument,
+        'dep' => [@candidates, @punc]
+    );
+    return \%classification;
 }
 
 
