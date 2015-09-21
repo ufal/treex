@@ -62,6 +62,20 @@ sub set_parent
 
 
 #------------------------------------------------------------------------------
+# Returns the list of dependents of the phrase. This is an abstract method that
+# must be implemented in every derived class. Nonterminal phrases have a list
+# of dependents (possible empty) as their attribute. Terminal phrases return an
+# empty list by definition.
+#------------------------------------------------------------------------------
+sub dependents
+{
+    my $self = shift;
+    log_fatal("The dependents() method is not implemented");
+}
+
+
+
+#------------------------------------------------------------------------------
 # Tests whether this phrase depends on another phrase via the parent links.
 # This method is used to prevent cycles when setting a new parent.
 #------------------------------------------------------------------------------
@@ -268,6 +282,13 @@ The new parent may also be undefined, which means that the current phrase will
 be disconnected from the phrase structure (but it will keeep its own children,
 if any).
 The method returns the old parent.
+
+=item my @dependents = $phrase->dependents();
+
+Returns the list of dependents of the phrase. This is an abstract method that
+must be implemented in every derived class. Nonterminal phrases have a list
+of dependents (possible empty) as their attribute. Terminal phrases return an
+empty list by definition.
 
 =item if( $phrase->depends_on ($another_phrase) ) {...}
 
