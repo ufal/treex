@@ -38,7 +38,7 @@ sub set_parent
     log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
     my $self = shift;
     my $new_parent = shift; # Treex::Core::Phrase::NTerm or undef
-    if(defined($new_parent) && $new_parent->depends_on($self))
+    if(defined($new_parent) && $new_parent->is_descendant_of($self))
     {
         log_info($self->as_string());
         log_fatal('Cannot set parent phrase because it would create a cycle');
@@ -79,13 +79,18 @@ sub dependents
 # Tests whether this phrase depends on another phrase via the parent links.
 # This method is used to prevent cycles when setting a new parent.
 #------------------------------------------------------------------------------
-sub depends_on
+sub is_descendant_of
 {
     log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
     my $self = shift;
     my $on_phrase = shift; # Treex::Core::Phrase
     my $parent = $self->parent();
-    return defined($parent) ? $parent->depends_on($on_phrase) : 0;
+    while(defined($parent))
+    {
+        return 1 if($parent == $on_phrase);
+        $parent = $parent->parent();
+    }
+    return 0;
 }
 
 
@@ -290,7 +295,7 @@ must be implemented in every derived class. Nonterminal phrases have a list
 of dependents (possible empty) as their attribute. Terminal phrases return an
 empty list by definition.
 
-=item if( $phrase->depends_on ($another_phrase) ) {...}
+=item if( $phrase->is_descendant_of ($another_phrase) ) {...}
 
 Tests whether this phrase depends on another phrase via the parent links.
 This method is used to prevent cycles when setting a new parent.
