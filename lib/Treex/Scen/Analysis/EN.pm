@@ -32,9 +32,16 @@ has functors => (
 
 has gazetteer => (
      is => 'ro',
-     isa => 'Bool',
-     default => 0,
+     isa => 'Str',
+     default => '0',
      documentation => 'Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo, default=0',
+);
+
+# TODO gazetteers should work without any dependance on target language
+has trg_lang => (
+    is => 'ro',
+    isa => 'Str',
+    documentation => 'Gazetteers are defined for language pairs. Both source and target languages must be specified.',
 );
 
 # TODO Add parameter
@@ -59,7 +66,7 @@ sub get_scenario_string {
     'W2A::EN::Tokenize',
     'W2A::EN::NormalizeForms',
     'W2A::EN::FixTokenization',
-    $self->gazetteer ? 'W2A::EN::GazeteerMatch' : (),
+    $self->gazetteer && defined $self->trg_lang ? 'W2A::EN::GazeteerMatch trg_lang='.$self->trg_lang.' filter_id_prefixes="'.$self->gazetteer.'"' : (),
     $self->tagger eq 'Morce' ? 'W2A::EN::TagMorce' : (),
     $self->tagger eq 'MorphoDiTa' ? 'W2A::EN::TagMorphoDiTa' : (),
     'W2A::EN::FixTags',

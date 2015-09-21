@@ -23,12 +23,11 @@ has hmtm => (
      documentation => 'Apply HMTM (TreeViterbi) with TreeLM reranking',
 );
 
-# TODO
 has gazetteer => (
      is => 'ro',
-     isa => 'Bool',
-     default => 0,
-     documentation => 'Use T2T::CS2EN::TrGazeteerItems, default=0',
+     isa => 'Str',
+     default => '0',
+     documentation => 'Use T2T::TrGazeteerItems, default=0',
 );
 
 has fl_agreement => (
@@ -36,6 +35,13 @@ has fl_agreement => (
      isa => enum( [qw(0 AM-P GM-P HM-P GM-Log-P HM-Log-P)] ),
      default => '0',
      documentation => 'Use T2T::FormemeTLemmaAgreement with a specified function as parameter',
+);
+
+# TODO gazetteers should work without any dependance on source language here
+has src_lang => (
+    is => 'ro',
+    isa => 'Str',
+    documentation => 'Gazetteers are defined for language pairs. Both source and target languages must be specified.',
 );
 
 sub BUILD {
@@ -52,14 +58,17 @@ sub get_scenario_string {
     my $IT_LEMMA_MODELS = '';
     my $IT_FORMEME_MODELS = '';
     if ($self->tm_adaptation eq 'interpol'){
-        $IT_LEMMA_MODELS = "static 0.5 IT/batch1q-lemma.static.gz\n      maxent 1.0 IT/batch1q-lemma.maxent.gz";
+        $IT_LEMMA_MODELS = "static 0.5 IT/batch1q-lemma.static.gz\n      maxent 1.0 IT/batch1q-lemma.maxent.gz
+                            static 0.5 IT/batch1a-lemma.static.gz\n      maxent 1.0 IT/batch1a-lemma.maxent.gz";
         $IT_FORMEME_MODELS = "static 1.0 IT/batch1q-formeme.static.gz\n      maxent 0.5 IT/batch1q-formeme.maxent.gz";
+                            #  static 1.0 IT/batch1a-formeme.static.gz\n      maxent 0.5 IT/batch1a-formeme.maxent.gz";
     }
 
     my $scen = join "\n",
     'Util::SetGlobal language=en selector=tst',
     'T2T::CopyTtree source_language=cs source_selector=src',
     'T2T::CS2EN::TrFTryRules',
+    $self->gazetteer ? 'T2T::TrGazeteerItems src_lang='.$self->src_lang : (),
     "T2T::CS2EN::TrFAddVariantsInterpol model_dir=data/models/translation/cs2en models='
       static 1.0 20150724_formeme.static.min_2.minpc_1.gz
       maxent 0.5 20141209_formeme.maxent.gz

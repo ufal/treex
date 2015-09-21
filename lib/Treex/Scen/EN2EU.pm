@@ -24,11 +24,24 @@ has hideIT => (
      documentation => 'Use W2A::HideIT and A2W::ShowIT, default=1 iff domain=IT',
 );
 
+has gazetteer => (
+     is => 'ro',
+     isa => 'Str',
+     documentation => 'Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo T2T::TrGazeteerItems, default=all if domain=IT',
+);
+
 sub BUILD {
     my ($self) = @_;
 
     if (!defined $self->hideIT){
         $self->{hideIT} = $self->domain eq 'IT' ? 1 : 0;
+    }
+    if (!defined $self->gazetteer){
+        $self->{gazetteer} = $self->domain eq 'IT' ? 'all' : '0';
+    }
+    if ($self->gazetteer) {
+        $self->{src_lang} = "en";
+        $self->{trg_lang} = "eu";
     }
     return;
 }
@@ -95,8 +108,14 @@ default=1 iff domain=IT
 
 =head2 gazetteer
 
-Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo T2T::EN2EU::TrGazeteerItems
-default=1 iff domain=IT
+Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo T2T::TrGazeteerItems
+One can specify the sources which should be used as gazetteers.
+Values: 
+    'all' - use all sources contained in the gazetteers
+    '0' - do not use gazetteers
+    'libreoffice' - use only gazetteers extracted from the Libre Office localization
+    'libreoffice,vlc' - use gazetteers extracted from the Libre Office and VLC localization
+If 'domain=IT', 'all' is set by default.
 
 =head1 AUTHORS
 

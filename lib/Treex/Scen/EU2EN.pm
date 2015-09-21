@@ -24,11 +24,24 @@ has hideIT => (
      documentation => 'Use W2A::HideIT and A2W::ShowIT, default=1 iff domain=IT',
 );
 
+has gazetteer => (
+     is => 'ro',
+     isa => 'Str',
+     documentation => 'Use W2A::GazeteerMatch A2T::ProjectGazeteerInfo T2T::TrGazeteerItems, default=all if domain=IT',
+);
+
 sub BUILD {
     my ($self) = @_;
 
     if (!defined $self->hideIT){
         $self->{hideIT} = $self->domain eq 'IT' ? 1 : 0;
+    }
+    if (!defined $self->gazetteer){
+        $self->{gazetteer} = $self->domain eq 'IT' ? 'all' : '0';
+    }
+    if ($self->gazetteer) {
+        $self->{src_lang} = "eu";
+        $self->{trg_lang} = "en";
     }
     return;
 }
@@ -95,7 +108,7 @@ default=1 iff domain=IT
 
 =head2 gazetteer
 
-Use W2A::EU::GazeteerMatch A2T::ProjectGazeteerInfo T2T::EU2EN::TrGazeteerItems
+Use W2A::GazeteerMatch A2T::ProjectGazeteerInfo T2T::TrGazeteerItems
 default=1 iff domain=IT
 
 =head1 AUTHORS

@@ -3,7 +3,6 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-use FileUtils;
 use File::Temp;
 
 use Treex::Core::Resource qw(require_file_from_share);
