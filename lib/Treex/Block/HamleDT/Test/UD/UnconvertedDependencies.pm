@@ -16,7 +16,9 @@ my @relations =
     'list', 'dislocated', 'parataxis', 'remnant', 'reparandum',
     'root', 'dep',
     # additional language-specific relations
-    'advmod:emph', 'auxpass:reflex', 'det:numgov', 'det:nummod', 'nummod:gov', 'compound:reflex', 'compound:prt',
+    'acl:relcl', 'advmod:emph',
+    'det:pdt', 'det:numgov', 'det:nummod', 'nummod:gov',
+    'compound:reflex', 'auxpass:reflex', 'compound:prt',
 );
 
 sub process_anode
