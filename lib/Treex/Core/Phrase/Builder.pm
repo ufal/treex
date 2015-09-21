@@ -283,7 +283,9 @@ sub detect_prague_pp
         {
             # The leftmost node of the MWE will be its head.
             my @mwe = sort {$a->node()->ord() <=> $b->node()->ord()} (@{$c->{mwe}}, $c->{fun});
-            $c->{fun} = new Treex::Core::Phrase::NTerm('head' => shift(@mwe));
+            my $head = shift(@mwe);
+            $head->set_parent(undef);
+            $c->{fun} = new Treex::Core::Phrase::NTerm('head' => $head);
             $c->{fun}->set_deprel($target_deprel);
             foreach my $mwp (@mwe)
             {
