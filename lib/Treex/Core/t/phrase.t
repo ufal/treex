@@ -10,6 +10,7 @@ BEGIN
     use_ok('Treex::Core::Phrase');
     use_ok('Treex::Core::Phrase::Term');
     use_ok('Treex::Core::Phrase::NTerm');
+    use_ok('Treex::Core::Phrase::PP');
 }
 use Treex::Core::Document;
 
