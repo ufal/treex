@@ -140,7 +140,8 @@ sub core_children
 {
     my $self = shift;
     log_fatal('Dead') if($self->dead());
-    return ($self->head());
+    my @children = ($self->head());
+    return @children;
 }
 
 
