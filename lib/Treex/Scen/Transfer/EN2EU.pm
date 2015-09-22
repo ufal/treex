@@ -19,9 +19,9 @@ has hmtm => (
 
 has gazetteer => (
      is => 'ro',
-     isa => 'Bool',
-     default => 0,
-     documentation => 'Use T2T::EN2EU::TrGazeteerItems, default=0',
+     isa => 'Str',
+     default => '0',
+     documentation => 'Use T2T::TrGazeteerItems, default=0',
 );
 
 has fl_agreement => (
@@ -30,6 +30,14 @@ has fl_agreement => (
      default => '0',
      documentation => 'Use T2T::FormemeTLemmaAgreement with a specified function as parameter',
 );
+
+# TODO gazetteers should work without any dependance on source language here
+has src_lang => (
+    is => 'ro',
+    isa => 'Str',
+    documentation => 'Gazetteers are defined for language pairs. Both source and target languages must be specified.',
+);
+
 
 sub BUILD {
     my ($self) = @_;
@@ -45,7 +53,7 @@ sub get_scenario_string {
     my $scen = join "\n",
     'Util::SetGlobal language=eu selector=tst',
     'T2T::CopyTtree source_language=en source_selector=src',
-    #$self->gazetteer eq 'IT' ? 'T2T::EN2EU::TrGazeteerItems' : (),
+    $self->gazetteer ? 'T2T::TrGazeteerItems src_lang='.$self->src_lang : (),
     'T2T::EN2EU::TrLTryRules',
 
     $self->domain eq 'IT' ? 'T2T::TrLApplyTbxDictionary tbx=data/dictionaries/MicrosoftTermCollection.eu.tbx tbx_src_id=en-US tbx_trg_id=eu-es analysis=@data/dictionaries/MicrosoftTermCollection.eu.filelist analysis_src_language=en analysis_src_selector=src analysis_trg_language=eu analysis_trg_selector=trg src_blacklist=data/dictionaries/MicrosoftTermCollection.en-eu.src.blacklist.txt' : (),

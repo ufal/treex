@@ -24,18 +24,25 @@ has hmtm => (
      documentation => 'Apply HMTM (TreeViterbi) with TreeLM reranking',
 );
 
-#has gazetteer => (
-#     is => 'ro',
-#     isa => 'Bool',
-#     default => 0,
-#     documentation => 'Use T2T::EN2NL::TrGazeteerItems, default=0',
-#);
+has gazetteer => (
+     is => 'ro',
+     isa => 'Str',
+     default => '0',
+     documentation => 'Use T2T::TrGazeteerItems, default=0',
+);
 
 has fl_agreement => (
      is => 'ro',
      isa => enum( [qw(0 AM-P GM-P HM-P GM-Log-P HM-Log-P)] ),
      default => '0',
      documentation => 'Use T2T::FormemeTLemmaAgreement with a specified function as parameter',
+);
+
+# TODO gazetteers should work without any dependance on source language here
+has src_lang => (
+    is => 'ro',
+    isa => 'Str',
+    documentation => 'Gazetteers are defined for language pairs. Both source and target languages must be specified.',
 );
 
 sub BUILD {
@@ -62,7 +69,7 @@ sub get_scenario_string {
     my $scen = join "\n",
     'Util::SetGlobal language=nl selector=tst',
     'T2T::CopyTtree source_language=en source_selector=src',
-    #$self->gazetteer ? 'T2T::EN2NL::TrGazeteerItems' : (),
+    $self->gazetteer ? 'T2T::TrGazeteerItems src_lang='.$self->src_lang : (),
 
     #TODO the original static models (min_instances=100, min_per_class=5) perform better than the new ones (min_instances=2, min_per_class=1)
     # it should be inspected

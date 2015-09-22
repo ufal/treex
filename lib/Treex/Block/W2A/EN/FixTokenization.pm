@@ -30,8 +30,10 @@ sub process_atree {
     my $max_length = 3;
     push @forms, map {'dummy'} ( 1 .. $max_length );
 
+    # NB: do not rewrite this cycle to foreach, $i is also changed inside the cycle
+    # (whenever a match is found)
     TOKEN:
-    foreach my $i ( 0 .. $#nodes - 1 ) {
+    for (my $i = 0;  $i < $#nodes; ++$i ) {
 
         # No more needed with SEnglishW_to_SEnglishM::Tokenization
         # "10 th" -> "10th" (one token is better for parser and transfer)
