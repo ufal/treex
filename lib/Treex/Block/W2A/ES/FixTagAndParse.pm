@@ -137,8 +137,8 @@ sub process_anode {
 		    #lema eta etiketako lehen bi hizkiak konparatu
 		    my $katea1 = $analizes[$i-1]->{lemma} . ' ' . substr($analizes[$i-1]->{tag},0,2);
 		    my $katea2 = $analizes[$i]->{lemma} . ' ' . substr($analizes[$i]->{tag},0,2);
-		    $hirugarren1 = substr($analizes[$i-1]->{tag},2,1);
-		    $hirugarren2 = substr($analizes[$i]->{tag},2,1);
+		    $hirugarren1 = substr($analizes[$i-1]->{tag},2,1) if ($analizes[0]->{tag} =~ /^V.+/);
+		    $hirugarren2 = substr($analizes[$i]->{tag},2,1) if ($analizes[0]->{tag} =~ /^V.+/);
 		    if ($katea1 ne $katea2)
 		    {
 			$berdina = 0;
