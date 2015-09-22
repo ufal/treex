@@ -7,47 +7,51 @@ sub process_tnode {
     my ( $self, $tnode ) = @_;
 
     #comer_se, quedar_se motako aditzetan dagokion hitza gehitzen da, "me, se, te, nos..."
-    if ($tnode->t_lemma =~ /.+_se$/)
+    if ($tnode->t_lemma =~ /^(.+)_se$/)
     {
+	my $lemma = $1;
         my $anode = $tnode->get_lex_anode() or return;
-	my $num;
-	my $pers;
+	$anode->set_lemma($lemma);
+
+	my $num = "sg";
+	my $pers = "3";
 	my @children = $tnode->get_children();
 	foreach my $child (@children)
 	{
 	    if ($child->formeme =~ /n:subj/)
 	    {
-		$num = ($child->gram_number || "");
-		$pers = ($child->gram_person || "");
+		$num = ($child->gram_number || "sg");
+		$pers = ($child->gram_person || "3");
 		last;
 	    }
 	}
-	if ($pers eq "")
-	{ $pers = '3'; }
 
-	my $lemma;
+	my $form;
 	if ($num eq 'sg')
 	{
-	    if ($pers eq '1') { $lemma = 'me'; }
-	    if ($pers eq '2') { $lemma = 'te'; }
-	    if ($pers eq '3') { $lemma = 'se'; }
+	    if ($pers eq '1') { $form = 'me'; }
+	    if ($pers eq '2') { $form = 'te'; }
+	    if ($pers eq '3') { $form = 'se'; }
 	}
 	elsif ($num eq 'pl')
 	{
-	    if ($pers eq '1') { $lemma = 'nos'; }
-	    if ($pers eq '2') { $lemma = 'os'; }
-	    if ($pers eq '3') { $lemma = 'se'; }
+	    if ($pers eq '1') { $form = 'nos'; }
+	    if ($pers eq '2') { $form = 'os'; }
+	    if ($pers eq '3') { $form = 'se'; }
 	}
 
         my $child = $anode->create_child({
-	    afun => 'Obj',
-	    form => $lemma,
-            lemma => $lemma
+	    'afun' => 'Obj',
+	    'form' => $form,
+            'lemma' => $form
         });
-	$child->set_iset(person => $pers,
-			 pos => 'noun',
-			 prontype => 'prn',);
-        $child->shift_before_node($anode);
+	$child->iset->add('person' => $pers,
+			  'pos' => 'noun',
+			  'prontype' => 'prn');
+        $child->shift_before_node($anode);	
+	$tnode->add_aux_anodes($child);
+
+	print STDERR "AddReflexive: " . $tnode->t_lemma . " ($lemma + $form): $num - $pers\n";
     }
     return;
 };

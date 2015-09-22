@@ -48,7 +48,7 @@ sub get_scenario_string {
     'A2T::FixAtomicNodes',
     'A2T::MarkReflpronCoref',
     'A2T::ES::FixReflexiveVerbs',
-    'A2T::ES::FixTlemmas',
+#    'A2T::ES::FixTlemmas',
     ;
 
     return $scen;
