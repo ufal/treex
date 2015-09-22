@@ -9,7 +9,7 @@ parameter interset_attribute => (
 
 use Treex::Core::Log;
 use List::Util qw(first); # TODO: this wouldn't be needed if there was Treex::Core::Common for roles
-use Lingua::Interset 2.018;
+use Lingua::Interset 2.047;
 use Lingua::Interset::FeatureStructure;
 use Data::Dumper;
 
@@ -17,7 +17,7 @@ use Data::Dumper;
 role {
 my $role_parameters = shift;
 my $interset_attribute = $role_parameters->interset_attribute;
-  
+
 has $interset_attribute => (
     # Unfortunatelly, the old interface uses $anode->set_iset('tense', 'past'),
     # so set_iset cannot be used as a setter for the whole structure
@@ -78,7 +78,7 @@ has $interset_attribute => (
         is_verb
         is_wh
     )],
-   # Note that we cannot export 
+   # Note that we cannot export
    # $anode->iset->is_auxiliary as it would clash with the existing $anode->is_auxiliary
    # $tnode->dset->is_passive as it would clash with the existing $tnode->is_passive
 
@@ -89,7 +89,12 @@ method "_build_$interset_attribute" => sub {
 };
 
 # Interset 1.0 legacy method (works with both Interset 1.0 and 2.0 feature structures)
-sub is_preposition {my $self = shift; return $self->iset->pos =~ /^(prep|adp)$/;}
+method is_preposition => sub {
+    my $self = shift;
+    return $self->iset->pos =~ /^(prep|adp)$/;
+};
+
+
 
 #------------------------------------------------------------------------------
 # Takes the Interset feature structure as a hash reference (as output by an
@@ -129,6 +134,8 @@ method set_iset => sub {
     return $self->$interset_attribute->add(@assignments);
 };
 
+
+
 #------------------------------------------------------------------------------
 # Gets the value of an Interset feature. Makes sure that the result is never
 # undefined so the use/strict/warnings creature keeps quiet. It returns undef
@@ -148,31 +155,30 @@ method get_iset => sub {
     return $value if defined $value;
 
     # Check valid feature name only when the feature is missing.
-    # TODO: Lingua::Interset::FeatureStructure::set should check for valid feature names.
-    if (!Lingua::Interset::FeatureStructure::feature_valid($feature)){
-
-        # TODO: convert all Treex code to Interset 2.0, so the next line is not needed.
-        #if ($feature ne 'subpos'){
-            log_warn("Querying unknown Interset feature $feature");
-        #}
+    # TODO: convert all Treex code to Interset 2.0, so that no checking is needed.
+    if (!Lingua::Interset::FeatureStructure::feature_valid($feature)) {
+        log_warn("Querying unknown Interset feature $feature");
     }
 
     # Return empty string instead of undef.
     return '';
 };
 
+
+
 #------------------------------------------------------------------------------
 # Gets the values of all Interset features and returns a hash. Any multivalues
 # (such as "fem|neut") will be converted to arrays referenced from the hash
 # (same as the result of decode() functions in Interset tagset drivers).
 #------------------------------------------------------------------------------
-sub get_iset_structure
+method get_iset_structure => sub
 {
     my $self = shift;
+    my $iset = $self->$interset_attribute; # iset or dset
     my %f;
-    foreach my $feature ( Lingua::Interset::FeatureStructure::known_features() )
+    foreach my $feature ( $iset->get_nonempty_features() )
     {
-        $f{$feature} = $self->get_iset($feature);
+        $f{$feature} = $iset->get_joined($feature);
         if ( $f{$feature} =~ m/\|/ )
         {
             my @values = split( /\|/, $f{$feature} );
@@ -180,67 +186,23 @@ sub get_iset_structure
         }
     }
     return \%f;
-}
-
-#------------------------------------------------------------------------------
-# Gets the values of all non-empty Interset features and returns a mixed list
-# of features and their values. Useful for displaying features of a node: the
-# features are ordered according to their default order in Interset.
-#------------------------------------------------------------------------------
-sub get_iset_pairs_list
-{
-    my $self = shift;
-    my @list;
-    foreach my $feature ( Lingua::Interset::FeatureStructure::known_features() )
-    {
-        my $value = $self->get_iset($feature);
-        unless ( $value eq '' )
-        {
-            push( @list, $feature, $value );
-        }
-    }
-    return @list;
-}
+};
 
 #------------------------------------------------------------------------------
 # Return the values of all non-empty Interset features (except for the "tagset" and "other" features).
 #------------------------------------------------------------------------------
-sub get_iset_values
+method get_iset_values => sub
 {
     my $self = shift;
-    return map {my $v = $self->get_iset($_); $v ? $v : ()} grep {$_ !~ 'tagset|other'} Lingua::Interset::FeatureStructure::known_features();
-}
-
-
-#------------------------------------------------------------------------------
-# Returns list of non-empty Interset features and their values as one string
-# suitable for the FEAT column in the CoNLL format. Besides Write::CoNLLX, this
-# method should be called also from other blocks that work with the CoNLL
-# format, such as W2A::ParseMalt.
-#------------------------------------------------------------------------------
-sub get_iset_conll_feat
-{
-    my $self = shift;
-    my @list = $self->get_iset_pairs_list();
-    my @pairs;
-    for(my $i = 0; $i<=$#list; $i += 2)
-    {
-        my $pair = "$list[$i]=$list[$i+1]";
-        # Interset values might contain vertical bars if there are disjunctions of values.
-        # Change them to something else because vertical bars will be used to separate pairs in the FEAT string.
-        $pair =~ s/\|/;/g;
-        push(@pairs, $pair);
-    }
-    return join('|', @pairs);
-}
+    return map {$self->get_iset($_)} grep {$_ !~ 'tagset|other'} $self->$interset_attribute->get_nonempty_features();
+};
 
 #------------------------------------------------------------------------------
-# The inverse of get_iset_pairs_list -- takes a feat string which is the
-# result of calling get_iset_pairs_list, and sets Interset feature values
+# The inverse of iset->as_string_conllx -- takes a feat string which is the
+# result of calling iset->as_string_conllx, and sets Interset feature values
 # according to that string.
 #------------------------------------------------------------------------------
-sub set_iset_conll_feat
-{
+method set_iset_conll_feat => sub {
     my ($self, $feat_string) = @_;
     my @pairs = split /\|/, $feat_string;
     foreach my $pair (@pairs) {
@@ -249,7 +211,7 @@ sub set_iset_conll_feat
         $self->set_iset($feature, $value);
     }
     return;
-}
+};
 
 #------------------------------------------------------------------------------
 # Tests multiple Interset features simultaneously. Input is a list of feature-
@@ -259,8 +221,7 @@ sub set_iset_conll_feat
 #
 # if($node->match_iset('pos' => 'noun', 'gender' => 'masc')) { ... }
 #------------------------------------------------------------------------------
-sub match_iset
-{
+method match_iset => sub {
     my $self = shift;
     my @req  = @_;
     for ( my $i = 0; $i <= $#req; $i += 2 )
@@ -284,23 +245,14 @@ sub match_iset
         }
     }
     return 1;
-}
-
-
-# Methods should not be mixed with (public) functions in one API.
-# Moose roles should provide only methods (no functions).
-sub list_iset_values {log_fatal 'use Lingua::Interset::FeatureStructure::known_features instead';}
-sub is_known_iset{ log_fatal 'use Lingua::Interset::FeatureStructure::value_valid instead';}
-sub sort_iset_values {log_fatal 'use Lingua::Interset::FeatureStructure::known_features instead';}
+};
 
 # Goal: convert multivalues from arrays to strings:
 # e.g. iset/gender = ["fem", "neut"] becomes iset/gender = "fem|neut"
 # to enable storing in a PML file.
-# Based on get_iset_pairs_list,
-# but stores the values into 'iset/feature' attributes instead of returning them.
 method serialize_iset => sub {
     my ($self) = @_;
-    foreach my $feature ( Lingua::Interset::FeatureStructure::known_features() ) {
+    foreach my $feature ( $self->$interset_attribute->get_nonempty_features() ) {
         my $value = $self->get_iset($feature);
         unless ( $value eq '' ) {
             $self->set_attr("$interset_attribute/$feature", $value);
@@ -308,6 +260,8 @@ method serialize_iset => sub {
     }
     return;
 };
+
+
 
 # Goal: convert multivalues from strings to arrays:
 # e.g. iset/gender = "fem|neut" becomes iset/gender = ["fem", "neut"]
@@ -394,6 +348,6 @@ Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011, 2013, 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011, 2013, 2014, 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

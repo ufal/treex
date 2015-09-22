@@ -25,9 +25,9 @@ has hmtm => (
 
 has gazetteer => (
      is => 'ro',
-     isa => 'Bool',
-     default => 0,
-     documentation => 'Use T2T::EN2ES::TrGazeteerItems, default=0',
+     isa => 'Str',
+     default => '0',
+     documentation => 'Use T2T::TrGazeteerItems, default=0',
 );
 
 has fl_agreement => (
@@ -35,6 +35,13 @@ has fl_agreement => (
      isa => enum( [qw(0 AM-P GM-P HM-P GM-Log-P HM-Log-P)] ),
      default => '0',
      documentation => 'Use T2T::FormemeTLemmaAgreement with a specified function as parameter',
+);
+
+# TODO gazetteers should work without any dependance on source language here
+has src_lang => (
+    is => 'ro',
+    isa => 'Str',
+    documentation => 'Gazetteers are defined for language pairs. Both source and target languages must be specified.',
 );
 
 sub BUILD {
@@ -60,7 +67,7 @@ sub get_scenario_string {
     my $scen = join "\n",
     'Util::SetGlobal language=es selector=tst',
     'T2T::CopyTtree source_language=en source_selector=src',
-    #$self->gazetteer ? 'T2T::EN2ES::TrGazeteerItems' : (),
+    $self->gazetteer ? 'T2T::TrGazeteerItems src_lang='.$self->src_lang : (),
     'T2T::EN2ES::TrLTryRules',
     "T2T::TrFAddVariantsInterpol model_dir=$TM_DIR models='
       static 1.0 Pilot1_formeme.static.gz

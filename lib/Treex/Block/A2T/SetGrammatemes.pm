@@ -93,14 +93,17 @@ sub process_tnode {
 
 sub set_grammatemes_from_iset {
     my ( $self, $tnode, $anode ) = @_;
-    mapp {
-        my ($name, $value) = ($a, $b);
+    my $isethash = $anode->iset()->get_hash();
+    foreach my $name (keys(%{$isethash}))
+    {
+        # Use get() instead of taking the value directly from the hash. We want to avoid arrayref values!
+        my $value = $anode->iset()->get($name);
         $value =~ s/\|.*//; # just first alternative
         if (my $gram = $iset2gram{"$name=$value"}){
             my ($g_name, $g_value) = split /=/, $gram;
             $tnode->set_attr("gram/$g_name", $g_value);
         }
-    } $anode->get_iset_pairs_list();
+    }
     return;
 }
 
