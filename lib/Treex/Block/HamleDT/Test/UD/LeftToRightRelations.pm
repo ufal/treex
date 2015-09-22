@@ -1,4 +1,4 @@
-package Treex::Block::HamleDT::Test::UD::ConjLeftToRight;
+package Treex::Block::HamleDT::Test::UD::LeftToRightRelations;
 use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Common;
@@ -9,12 +9,12 @@ sub process_anode
     my $self = shift;
     my $node = shift;
     my $deprel = $node->deprel();
-    if($deprel eq 'conj')
+    if($deprel =~ m/^(conj|mwe|name)$/)
     {
         my $parent = $node->parent();
         if(!defined($parent) || $parent->ord() >= $node->ord())
         {
-            $self->complain($node, 'conj must always go from left to right');
+            $self->complain($node, 'conj|mwe|name must always go from left to right');
         }
     }
 }
@@ -23,9 +23,9 @@ sub process_anode
 
 =over
 
-=item Treex::Block::HamleDT::Test::UD::ConjLeftToRight
+=item Treex::Block::HamleDT::Test::UD::LeftToRightRelations
 
-The relation C<conj> must always be left-to-right (head-initial).
+The relations C<conj>, C<mwe> and C<name> must always be left-to-right (head-initial).
 
 =back
 
