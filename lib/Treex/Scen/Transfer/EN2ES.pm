@@ -81,6 +81,8 @@ sub get_scenario_string {
     'Util::DefinedAttr tnode=t_lemma,formeme message="after simple transfer"',
     #$self->domain eq 'IT' ? 'T2T::EN2ES::TrL_ITdomain' : (),
     'T2T::SetClauseNumber',
+    'T2T::EN2ES::FixThereIs',
+    'T2T::EN2ES::FixDefinitiveness',
     ;
 
     return $scen;

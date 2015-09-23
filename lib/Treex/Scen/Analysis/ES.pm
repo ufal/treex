@@ -32,7 +32,7 @@ sub get_scenario_string {
     'W2A::ES::TagAndParse',
     'HamleDT::ES::Harmonize',
     'W2A::ES::FixTagAndParse',
-    'W2A::FixQuotes',
+    'W2A::ES::FixMultiwordPrepAndConj',
     'A2T::ES::MarkEdgesToCollapse',
     'A2T::BuildTtree',
     'A2T::RehangUnaryCoordConj',
@@ -47,14 +47,15 @@ sub get_scenario_string {
     'A2T::MarkRelClauseHeads',
     'A2T::MarkRelClauseCoref',
     'A2T::SetNodetype',
-    'A2T::SetFormeme', 
+    'A2T::ES::SetFormeme',
     'A2T::ES::SetGrammatemes',
     'A2T::ES::SetGrammatemesFromAux',
     'A2T::AddPersPronSb',
     'A2T::MinimizeGrammatemes',
-    'A2T::SetNodetype',
     'A2T::FixAtomicNodes',
     'A2T::MarkReflpronCoref',
+    'A2T::ES::FixReflexiveVerbs',
+#    'A2T::ES::FixTlemmas',
     ;
 
     return $scen;

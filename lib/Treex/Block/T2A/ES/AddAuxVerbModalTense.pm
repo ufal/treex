@@ -9,130 +9,14 @@ extends 'Treex::Block::T2A::AddAuxVerbModalTense';
 override '_build_gram2form' => sub {
 
     return {
-	'' => {
-	    'ind' => {
-		'sim' => {
-		    ''        => '',
-		    'decl'    => '',
-		    'poss'    => 'poder',
-		    'deb'     => 'deber',
-		},
-		'ant' => {
-		    ''        => '',
-		    'decl'    => '',
-		    'poss'    => 'poder',
-		    'deb'     => 'deber',
-		},
-		'post' => {
-		    ''     => '',
-		    'decl' => '',
-		    'poss' => 'poder',
-		    'deb'  => 'deber',
-		},
-	    },
-	    'cdn' => {
-		'sim' => {
-		    ''        => '',
-		    'decl'    => '',
-		    'poss'    => 'poder',
-		    'deb'     => 'deber',
-		},
-		'ant' => {
-		    ''        => '',
-		    'decl'    => '',
-		    'poss'    => 'poder',
-		    'deb'     => 'deber',
-		},
-		'post' => {
-		    ''     => '',
-		    'decl' => '',
-		    'poss' => 'poder',
-		    'deb'  => 'deber',
-		},
-	    },
-	    'imp' => {
-		'sim' => {
-		    ''        => '',
-		    'decl'    => '',
-		    'poss'    => 'poder',
-		    'deb'     => 'deber',
-		},
-		'ant' => {
-		    ''        => '',
-		    'decl'    => '',
-		    'poss'    => 'poder',
-		    'deb'     => 'deber',
-		},
-		'post' => {
-		    ''     => '',
-		    'decl' => '',
-		    'poss' => 'poder',
-		    'deb'  => 'deber',
-		},
-	    },
-	},
-	'cpl' => {
-	    'ind' => {
-		'sim' => {
-		    ''        => 'haber',
-		    'decl'    => 'haber',
-		    'poss'    => 'haber podido',
-		    'deb'     => 'haber debido',
-		},
-		'ant' => {
-		    ''        => 'haber',
-		    'decl'    => 'haber',
-		    'poss'    => 'haber podido',
-		    'deb'     => 'haber debido',
-		},
-		'post' => {
-		    ''     => 'haber',
-		    'decl' => 'haber',
-		    'poss' => 'haber podido',
-		    'deb'  => 'haber debido',
-		},
-	    },
-	    'cdn' => {
-		'sim' => {
-		    ''        => 'haber',
-		    'decl'    => 'haber',
-		    'poss'    => 'haber podido',
-		    'deb'     => 'haber debido',
-		},
-		'ant' => {
-		    ''        => 'haber',
-		    'decl'    => 'haber',
-		    'poss'    => 'haber podido',
-		    'deb'     => 'haber debido',
-		},
-		'post' => {
-		    ''     => 'haber',
-		    'decl' => 'haber',
-		    'poss' => 'haber podido',
-		    'deb'  => 'haber debido',
-		},
-	    },
-	    'imp' => {
-		'sim' => {
-		    ''        => 'haber',
-		    'decl'    => 'haber',
-		    'poss'    => 'haber podido',
-		    'deb'     => 'haber debido',
-		},
-		'ant' => {
-		    ''        => 'haber',
-		    'decl'    => 'haber',
-		    'poss'    => 'haber podido',
-		    'deb'     => 'haber debido',
-		},
-		'post' => {
-		    ''     => 'haber',
-		    'decl' => 'haber',
-		    'poss' => 'haber podido',
-		    'deb'  => 'haber debido',
-		},
-	    },
-	},
+	''        => '',
+	'decl'    => '',
+	'poss'    => 'poder',
+	'vol'     => 'querer',
+	'deb'     => 'deber',
+	'hrt'     => 'deber',
+	'fac'     => 'poder',
+	'perm'    => 'poder',
     };
 };
 
@@ -143,11 +27,11 @@ override 'process_tnode' => sub {
     # return if the node is not a verb
     return if ( !$verbmod );
 
-    # find the auxiliary appropriate verbal expression for this combination of verbal modality, tense, and deontic modality
+    # find the auxiliary appropriate verbal expression for each deontic modality
     # do nothing if we find nothing
     # TODO this should handle epistemic modality somehow. The expressions are in the array, but are ignored.
-    return if ( !$self->gram2form->{$aspect} or !$self->gram2form->{$aspect}->{$verbmod} or !$self->gram2form->{$aspect}->{$verbmod}->{$tense} or !$self->gram2form->{$aspect}->{$verbmod}->{$tense}->{$deontmod});
-    my $verbforms_str = $self->gram2form->{$aspect}->{$verbmod}->{$tense}->{$deontmod};
+    return if ( !$self->gram2form->{$deontmod} );
+    my $verbforms_str = $self->gram2form->{$deontmod};
     return if ( !$verbforms_str );
 
     # find the original anode
@@ -183,23 +67,16 @@ override 'process_tnode' => sub {
 
         # creating a new node for the lexical verb
         else {
-            $new_node->set_morphcat_pos('V');
-            $new_node->set_afun('Obj');
+            $new_node->set_morphcat_pos('!');
+            $new_node->set_afun('AuxV');
+	    $new_node->set_form($verbform);
+	    $new_node->iset->add( 'pos' => 'verb', 'verbform' => 'inf');
             # mark the lexical verb for future reference (if not already marked by AddAuxVerbCompoundPassive)
             if ( !grep { $_->wild->{lex_verb} } $tnode->get_aux_anodes() ) {
                 $new_node->wild->{lex_verb} = 1;
             }
             $created_lex = 1;
         }
-    }
-
-
-
-    unshift @anodes, $anode;
-    if (defined $anodes[1] and $anodes[0]->lemma eq "haber"
-	and defined $anodes[1]->lemma) {
-	$anodes[1]->iset->add( 'pos' => 'verb', 'verbform' => 'part', 'tense' => 'past' );
-	$anodes[1]->set_form(undef);
     }
 
     $self->_postprocess( $verbforms_str, \@anodes );
@@ -223,7 +100,7 @@ Add auxiliary expression for combined modality and tense.
 
 =head1 AUTHORS 
 
-Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+Gorka Labaka <gorka.labaka@ehu.eus>
 
 =head1 COPYRIGHT AND LICENSE
 
