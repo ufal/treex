@@ -91,7 +91,7 @@ sub build
 sub detect_special_constructions
 {
     my $self = shift;
-    my $phrase = shift;
+    my $phrase = shift; # Treex::Core::Phrase
     # The root node must not participate in any specialized construction.
     unless($phrase->node()->is_root())
     {
@@ -105,6 +105,7 @@ sub detect_special_constructions
         $phrase = $self->detect_prague_pp($phrase);
         $phrase = $self->detect_colon_predicate($phrase);
         $phrase = $self->detect_prague_copula($phrase);
+        $phrase = $self->detect_name_phrase($phrase);
     }
     else
     {
@@ -124,7 +125,7 @@ sub detect_special_constructions
 sub detect_prague_coordination
 {
     my $self = shift;
-    my $phrase = shift; # Treex::Core::Phrase::NTerm
+    my $phrase = shift; # Treex::Core::Phrase
     # If this is the Prague style then the head is either coordinating conjunction or punctuation.
     # The deprel is already partially converted to UD, so it should be something:coord
     # (cc:coord, punct:coord); see HamleDT::Udep->afun_to_udeprel().
@@ -254,7 +255,7 @@ sub detect_prague_coordination
 sub detect_prague_pp
 {
     my $self = shift;
-    my $phrase = shift; # Treex::Core::Phrase::NTerm
+    my $phrase = shift; # Treex::Core::Phrase
     # If this is the Prague style then the preposition (if any) must be the head.
     # The deprel is already partially converted to UD, so it should be something:auxp
     # (case:auxp, mark:auxp); see HamleDT::Udep->afun_to_udeprel().
@@ -410,7 +411,7 @@ sub classify_prague_pp_subphrases
 sub detect_prague_copula
 {
     my $self = shift;
-    my $phrase = shift; # Treex::Core::Phrase::NTerm
+    my $phrase = shift; # Treex::Core::Phrase
     # If this is the Prague style then the copula (if any) must be the head.
     # The deprel is already partially converted to UD, so there should be a child
     # labeled dep:pnom; see HamleDT::Udep->afun_to_udeprel().
@@ -520,7 +521,70 @@ sub detect_prague_copula
         }
         return $pp;
     }
-    # Return the input NTerm phrase if no PP has been detected.
+    # Return the input phrase if no PP has been detected.
+    return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Looks for name phrases, i.e. two or more proper nouns connected by the name
+# relation. Makes sure that the leftmost name is the head (usually the opposite
+# to PDT where family names are heads and given names are dependents). The
+# method currently does not search for nested name phrases (which, if they
+# they exist, we might want to merge with the current level).
+#------------------------------------------------------------------------------
+sub detect_name_phrase
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    # Are there any non-core children attached as name?
+    my @dependents = $phrase->dependents();
+    my @name = grep {$_->deprel() eq 'name'} (@dependents);
+    if(scalar(@name)>=1)
+    {
+        my @nonname = grep {$_->deprel() ne 'name'} (@dependents);
+        # If there are name children, then the current phrase is a name, too.
+        # Detach the dependents first, so that we can put the current phrase on the same level with the other names.
+        foreach my $d (@dependents)
+        {
+            $d->set_parent(undef);
+        }
+        my $deprel = $phrase->deprel();
+        my $member = $phrase->is_member();
+        $phrase->set_is_member(0);
+        # Add the current phrase (without dependents) to the names and order them.
+        push(@name, $phrase);
+        @name = sort {$a->ord() <=> $b->ord()} (@name);
+        # Create a new nonterminal phrase for the name only.
+        # (In the future we may also want to create a new subclass of nonterminal
+        # phrases specifically for head-first multi-word segments. But it is not
+        # necessary for transformations to work, so let's keep this for now.)
+        my $namephrase = new Treex::Core::Phrase::NTerm('head' => shift(@name));
+        foreach my $n (@name)
+        {
+            $n->set_parent($namephrase);
+            $n->set_deprel('name');
+            $n->set_is_member(0);
+        }
+        # Create a new nonterminal phrase that will group the name phrase with
+        # the original non-name dependents, if any.
+        if(scalar(@nonname)>=1)
+        {
+            $phrase = new Treex::Core::Phrase::NTerm('head' => $namephrase);
+            foreach my $d (@nonname)
+            {
+                $d->set_parent($phrase);
+                $d->set_is_member(0);
+            }
+        }
+        else
+        {
+            $phrase = $namephrase;
+        }
+        $phrase->set_deprel($deprel);
+        $phrase->set_is_member($member);
+    }
     return $phrase;
 }
 
@@ -674,6 +738,14 @@ the original phrase).
 Examines a nonterminal phrase in the Prague style (with analytical functions
 converted to dependency relation labels based on Universal Dependencies). If
 it recognizes a coordination, transforms the general NTerm to Coordination.
+
+=item detect_name_phrase
+
+Looks for name phrases, i.e. two or more proper nouns connected by the name
+relation. Makes sure that the leftmost name is the head (usually the opposite
+to PDT where family names are heads and given names are dependents). The
+method currently does not search for nested name phrases (which, if they
+they exist, we might want to merge with the current level).
 
 =item detect_colon_predicate
 
