@@ -69,6 +69,9 @@ sub get_scenario_string {
     'Util::SetGlobal language=en selector=tst',
     'T2T::CopyTtree source_language=es source_selector=src',
     $self->gazetteer ? 'T2T::TrGazeteerItems src_lang='.$self->src_lang : (),
+
+    $self->domain eq 'IT' ? 'T2T::TrLApplyTbxDictionary tbx=data/dictionaries/MicrosoftTermCollection.es.tbx tbx_src_id=es-es tbx_trg_id=en-US analysis=data/dictionaries/MicrosoftTermCollection.es.streex analysis_src_language=es analysis_src_selector=trg analysis_trg_language=en analysis_trg_selector=src src_blacklist=data/dictionaries/MicrosoftTermCollection.es-en.src.blacklist.txt trg_blacklist=data/dictionaries/MicrosoftTermCollection.es-en.trg.blacklist.txt' : (),
+
     "T2T::TrFAddVariantsInterpol model_dir=$TM_DIR models='
       static 1.0 20150728_formeme.static.min_2.minpc_1.gz
       maxent 0.5 Pilot1_formeme.maxent.gz
