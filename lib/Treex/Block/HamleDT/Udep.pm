@@ -51,6 +51,7 @@ sub process_zone
     $self->fix_symbols($root);
     $self->fix_annotation_errors($root);
     $self->afun_to_udeprel($root);
+    $self->relabel_appos_name($root);
     # The most difficult part is detection of coordination, prepositional and
     # similar phrases and their interaction. It will be done bottom-up using
     # a tree of phrases that will be then projected back to dependencies, in
@@ -75,7 +76,6 @@ sub process_zone
     $self->fix_determiners($root);
     $self->relabel_top_nodes($root);
     $self->relabel_subordinate_clauses($root);
-    $self->relabel_appos_name($root);
     # Sanity checks.
     $self->check_determiners($root);
     ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
@@ -492,6 +492,33 @@ sub afun_to_udeprel
         }
         # Save the universal dependency relation label with the node.
         $node->set_deprel($deprel);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# In the Croatian SETimes corpus, given name of a person depends on the family
+# name, and the relation is labeled as apposition. Change the label to 'name'.
+# This should be done before we start structural transformations.
+#------------------------------------------------------------------------------
+sub relabel_appos_name
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $deprel = $node->deprel();
+        if($deprel eq 'appos')
+        {
+            my $parent = $node->parent();
+            next if($parent->is_root());
+            if($node->is_proper_noun() && $parent->is_proper_noun() && $self->agree($node, $parent, 'case'))
+            {
+                $node->set_deprel('name');
+            }
+        }
     }
 }
 
@@ -979,32 +1006,6 @@ sub relabel_subordinate_clauses
             else
             {
                 $node->set_deprel('advcl');
-            }
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# In the Croatian SETimes corpus, given name of a person depends on the family
-# name, and the relation is labeled as apposition. Change the label to 'name'.
-#------------------------------------------------------------------------------
-sub relabel_appos_name
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $deprel = $node->deprel();
-        if($deprel eq 'appos')
-        {
-            my $parent = $node->parent();
-            next if($parent->is_root());
-            if($node->is_proper_noun() && $parent->is_proper_noun() && $self->agree($node, $parent, 'case'))
-            {
-                $node->set_deprel('name');
             }
         }
     }
