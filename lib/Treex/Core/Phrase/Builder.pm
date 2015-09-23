@@ -106,6 +106,7 @@ sub detect_special_constructions
         $phrase = $self->detect_colon_predicate($phrase);
         $phrase = $self->detect_prague_copula($phrase);
         $phrase = $self->detect_name_phrase($phrase);
+        $phrase = $self->detect_compound_numeral($phrase);
     }
     else
     {
@@ -581,6 +582,63 @@ sub detect_name_phrase
         else
         {
             $phrase = $namephrase;
+        }
+        $phrase->set_deprel($deprel);
+        $phrase->set_is_member($member);
+    }
+    return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Looks for compound numeral phrases, i.e. two or more cardinal numerals
+# connected by the nummod relation. Changes the relation to compound. This
+# method does not care whether the relation goes left-to-right or right-to-left
+# and whether there are nested compounds (or a multi-level compound).
+#------------------------------------------------------------------------------
+sub detect_compound_numeral
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    # Is the head a cardinal numeral and are there non-core children that are
+    # cardinal numerals?
+    my @dependents = $phrase->dependents();
+    my @cnum = grep {$_->node()->iset()->contains('numtype', 'card')} (@dependents);
+    if($phrase->node()->iset()->contains('numtype', 'card') && scalar(@cnum)>=1)
+    {
+        my @rest = grep {!$_->node()->iset()->contains('numtype', 'card')} (@dependents);
+        # The current phrase is a number, too.
+        # Detach the dependents first, so that we can put the current phrase on the same level with the other names.
+        foreach my $d (@dependents)
+        {
+            $d->set_parent(undef);
+        }
+        my $deprel = $phrase->deprel();
+        my $member = $phrase->is_member();
+        $phrase->set_is_member(0);
+        # Create a new nonterminal phrase for the compound numeral only.
+        my $cnumphrase = new Treex::Core::Phrase::NTerm('head' => $phrase);
+        foreach my $n (@cnum)
+        {
+            $n->set_parent($cnumphrase);
+            $n->set_deprel('compound');
+            $n->set_is_member(0);
+        }
+        # Create a new nonterminal phrase that will group the numeral phrase with
+        # the original non-numeral dependents, if any.
+        if(scalar(@rest)>=1)
+        {
+            $phrase = new Treex::Core::Phrase::NTerm('head' => $cnumphrase);
+            foreach my $d (@rest)
+            {
+                $d->set_parent($phrase);
+                $d->set_is_member(0);
+            }
+        }
+        else
+        {
+            $phrase = $cnumphrase;
         }
         $phrase->set_deprel($deprel);
         $phrase->set_is_member($member);

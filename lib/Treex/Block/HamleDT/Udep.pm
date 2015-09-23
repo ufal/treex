@@ -591,6 +591,10 @@ sub classify_numerals
 
 
 
+###!!! Tohle asi půjde smazat, až budeme mít ekvivalent v Phrase::Builder.
+###!!! Zatím to tak úplně ekvivalent není, protože nevyzvedáváme všechna
+###!!! rozvití, která nejsou součástí složené číslovky, nahoru ke kořenové
+###!!! číslovce.
 #------------------------------------------------------------------------------
 # Identifies multi-word numerals and organizes them in chains.
 #------------------------------------------------------------------------------
