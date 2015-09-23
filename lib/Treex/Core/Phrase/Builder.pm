@@ -107,6 +107,7 @@ sub detect_special_constructions
         $phrase = $self->detect_prague_copula($phrase);
         $phrase = $self->detect_name_phrase($phrase);
         $phrase = $self->detect_compound_numeral($phrase);
+        $phrase = $self->detect_counted_noun_in_genitive($phrase);
     }
     else
     {
@@ -604,10 +605,10 @@ sub detect_compound_numeral
     # Is the head a cardinal numeral and are there non-core children that are
     # cardinal numerals?
     my @dependents = $phrase->dependents();
-    my @cnum = grep {$_->node()->iset()->contains('numtype', 'card')} (@dependents);
-    if($phrase->node()->iset()->contains('numtype', 'card') && scalar(@cnum)>=1)
+    my @cnum = grep {$_->node()->is_cardinal()} (@dependents);
+    if($phrase->node()->is_cardinal() && scalar(@cnum)>=1)
     {
-        my @rest = grep {!$_->node()->iset()->contains('numtype', 'card')} (@dependents);
+        my @rest = grep {!$_->node()->is_cardinal()} (@dependents);
         # The current phrase is a number, too.
         # Detach the dependents first, so that we can put the current phrase on the same level with the other names.
         foreach my $d (@dependents)
@@ -640,6 +641,57 @@ sub detect_compound_numeral
         {
             $phrase = $cnumphrase;
         }
+        $phrase->set_deprel($deprel);
+        $phrase->set_is_member($member);
+    }
+    return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Makes sure that numerals modify counted nouns, not vice versa. (In PDT, both
+# directions are possible under certain circumstances.)
+#------------------------------------------------------------------------------
+sub detect_counted_noun_in_genitive
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    # Is the head a cardinal numeral and are there non-core children that are
+    # nominals (nouns or pronouns) in genitive?
+    my @dependents = $phrase->dependents('ordered' => 1);
+    my @gen = grep {$_->node()->is_noun() && $_->node()->iset()->case() eq 'gen'} (@dependents);
+    if($phrase->node()->is_cardinal() && scalar(@gen)>=1)
+    {
+        # We do not expect more than one genitive noun phrase. If we encounter them,
+        # we will just take the first one and treat the others as normal dependents.
+        my $counted_noun = shift(@gen);
+        my @rest = grep {!$_->node()->is_noun() || $_->node()->iset()->case() ne 'gen'} (@dependents);
+        push(@rest, @gen) if(@gen);
+        # We may not be able to just set the counted noun as the new head. If it is a Coordination, there are other rules for finding the head.
+        ###!!! Maybe we should extend the set_head() method to special nonterminals? It would create an extra NTerm phrase, move the dependents
+        ###!!! there and set the core as its head? That's what we will do here anyway, and it has been needed repeatedly.
+        # Detach the dependents first, so that we can put the current phrase on the same level with the other names.
+        # Compound numerals should have been detected first so that by now they are safely encapsulated in their own nonterminal (which is our head child).
+        foreach my $d (@dependents)
+        {
+            $d->set_parent(undef);
+        }
+        my $deprel = $phrase->deprel();
+        my $member = $phrase->is_member();
+        $phrase->set_is_member(0);
+        # Create a new nonterminal phrase with the counted noun as the head.
+        my $ntphrase = new Treex::Core::Phrase::NTerm('head' => $counted_noun);
+        foreach my $d (@rest)
+        {
+            $d->set_parent($ntphrase);
+            $d->set_is_member(0);
+        }
+        # Attach the numeral also as a dependent to the new phrase.
+        $phrase->set_parent($ntphrase);
+        $phrase->set_deprel($phrase->node()->iset()->prontype() eq '' ? 'nummod:gov' : 'det:numgov');
+        $phrase->set_is_member(0);
+        $phrase = $ntphrase;
         $phrase->set_deprel($deprel);
         $phrase->set_is_member($member);
     }

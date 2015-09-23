@@ -72,7 +72,6 @@ sub process_zone
     $self->change_case_to_mark_under_verb($root);
     $self->classify_numerals($root);
     $self->restructure_compound_numerals($root);
-    $self->push_numerals_down($root);
     $self->fix_determiners($root);
     $self->relabel_top_nodes($root);
     $self->relabel_subordinate_clauses($root);
@@ -662,44 +661,6 @@ sub restructure_compound_numerals
                     $child->set_parent($nodes[$i+$chain_found]);
                 }
                 $i += $chain_found;
-            }
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Makes sure that numerals modify counted nouns, not vice versa. (In PDT, both
-# directions are possible under certain circumstances.)
-#------------------------------------------------------------------------------
-sub push_numerals_down
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        # Look for genitive nouns and pronouns attached to a numeral.
-        if($node->is_noun() && $node->iset()->case() eq 'gen')
-        {
-            my $noun = $node;
-            my $number = $node->parent();
-            if($number->is_cardinal())
-            {
-                $noun->set_parent($number->parent());
-                # If the number was already attached as nummod, it does not tell us anything but we do not want to keep nummod for the noun head.
-                my $deprel = $number->deprel();
-                $deprel = 'nmod' if($deprel =~ m/^(nummod|det:nummod)$/);
-                $noun->set_deprel($deprel);
-                $number->set_parent($noun);
-                $number->set_deprel($number->iset()->prontype() eq '' ? 'nummod:gov' : 'det:numgov');
-                # All children of the number, except for parts of compound number, must be re-attached to the noun because they modify the whole phrase.
-                my @children = grep {$_->deprel() ne 'compound'} $number->children();
-                foreach my $child (@children)
-                {
-                    $child->set_parent($noun);
-                }
             }
         }
     }
