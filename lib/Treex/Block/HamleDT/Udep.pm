@@ -73,7 +73,6 @@ sub process_zone
     $self->classify_numerals($root);
     $self->restructure_compound_numerals($root);
     $self->fix_determiners($root);
-    $self->relabel_top_nodes($root);
     $self->relabel_subordinate_clauses($root);
     # Sanity checks.
     $self->check_determiners($root);
@@ -886,31 +885,6 @@ sub fix_annotation_errors
         elsif($pos eq '' && $form =~ m/^\pP+$/)
         {
             $node->iset()->set_pos('punc');
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# The top nodes (children of root) in incomplete sentences were temporarily
-# labeled 'root:exd' to save the information during transformations. Now it
-# must be reduced to 'root' because 'root:exd' is not a valid universal
-# dependency relation.
-#------------------------------------------------------------------------------
-sub relabel_top_nodes
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @topnodes = $root->children();
-    foreach my $node (@topnodes)
-    {
-        # We might relabel it regardless what the previous label was.
-        # But at present we only relabel 'root:exd' (incomplete sentences) and 'root:auxk' (sentences with punctuation only)
-        # to see whether there are other possible issues.
-        if($node->deprel() =~ m/^root:(exd|auxk)$/)
-        {
-            $node->set_deprel('root');
         }
     }
 }
