@@ -59,7 +59,6 @@ sub process_anode {
     ####Forma eta lema berdina dutenetan, ahal bada, lema eta ezaugarriak zuzendu egiten dira
 
     my @analizes = $self->generator2->analyze_form($anode->form);
-    my @zerrenda = $anode->get_iset_pairs_list();
     my $posZahar = $anode->get_iset('pos');
 
     my $aldatua=0;
