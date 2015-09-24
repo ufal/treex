@@ -1,7 +1,9 @@
 package Treex::Block::HamleDT::Udep;
+use utf8;
+use open ':utf8';
 use Moose;
 use Treex::Core::Common;
-use utf8;
+use Treex::Core::Phrase::Builder;
 extends 'Treex::Core::Block';
 
 has 'last_file_stem' => ( is => 'rw', isa => 'Str', default => '' );
@@ -49,21 +51,29 @@ sub process_zone
     $self->fix_symbols($root);
     $self->fix_annotation_errors($root);
     $self->afun_to_udeprel($root);
-    $self->shape_coordination_stanford($root);
-    $self->restructure_compound_prepositions($root);
-    $self->push_prep_sub_down($root);
+    $self->relabel_appos_name($root);
+    # The most difficult part is detection of coordination, prepositional and
+    # similar phrases and their interaction. It will be done bottom-up using
+    # a tree of phrases that will be then projected back to dependencies, in
+    # accord with the desired annotation style. See Phrase::Builder for more
+    # details on how the source tree is decomposed. The construction parameters
+    # below say how should the resulting dependency tree look like. The code
+    # of the builder knows how the INPUT tree looks like (including the deprels
+    # already converted from Prague to the UD set).
+    my $builder = new Treex::Core::Phrase::Builder
+    (
+        'prep_is_head'           => 0,
+        'cop_is_head'            => 0,
+        'coordination_head_rule' => 'first_conjunct'
+    );
+    my $phrase = $builder->build($root);
+    $phrase->project_dependencies();
+    ###!!! The rest is the old implementation. Perhaps there are other bits that we could move to the phrase builder?
     $self->change_case_to_mark_under_verb($root);
-    # Some of the top colons are analyzed as copulas. Do this before the copula processing reshapes the scene.
-    $self->colon_pred_to_apposition($root);
-    $self->push_copulas_down($root);
-    $self->attach_final_punctuation_to_predicate($root);
     $self->classify_numerals($root);
     $self->restructure_compound_numerals($root);
-    $self->push_numerals_down($root);
     $self->fix_determiners($root);
-    $self->relabel_top_nodes($root);
     $self->relabel_subordinate_clauses($root);
-    $self->relabel_appos_name($root);
     # Sanity checks.
     $self->check_determiners($root);
     ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
@@ -181,28 +191,12 @@ sub afun_to_udeprel
         my $deprel;
         my $parent = $node->parent();
         # The top nodes (children of the root) must be labeled 'root'.
-        # We will now extend the label in cases where we may later need to distinguish the original afun.
-        if($parent->is_root())
-        {
-            # In verbless elliptic sentences the conjunction has no child (except for punctuation). It will remain attached as root.
-            # Example (sk): A ak áno, tak načo? = And if so, then why?
-            my @non_arg_children = grep {$_->afun() !~ m/^Aux[XGKY]$/} ($node->children());
-            if($afun eq 'AuxC' && scalar(@non_arg_children)==0)
-            {
-                $deprel = 'root';
-            }
-            elsif($afun =~ m/^(Coord|AuxP|AuxC|AuxK|ExD)$/)
-            {
-                $deprel = 'root:'.lc($afun);
-            }
-            else # $afun should be 'Pred'
-            {
-                $deprel = 'root';
-            }
-        }
+        # However, this will be solved elsewhere (and tree transformations may
+        # result in a different node being attached to the root), so we will
+        # now treat the labels as if nothing were attached to the root.
         # Punctuation is always 'punct' unless it depends directly on the root (which should happen only if there is just one node and the root).
         # We will temporarily extend the label if it heads coordination so that the coordination can later be reshaped properly.
-        elsif($node->is_punctuation())
+        if($node->is_punctuation())
         {
             if($afun eq 'Coord')
             {
@@ -227,7 +221,7 @@ sub afun_to_udeprel
         # In the situation 2, the first word in the multi-word prepositon will become the head and all other parts will be attached to it as 'mwe'.
         elsif($afun eq 'AuxP')
         {
-            $deprel = $parent->is_verb() ? 'mark:auxp' : 'case:auxp';
+            $deprel = 'case:auxp';
         }
         # AuxC marks a subordinating conjunction that heads a subordinate clause.
         # It will be later restructured and the conjunction will be attached to the subordinate predicate as 'mark'.
@@ -417,7 +411,15 @@ sub afun_to_udeprel
         {
             if(lc($node->form()) eq 'jako')
             {
-                $deprel = 'mark';
+                if(lc($parent->form()) eq 'když')
+                {
+                    # Since "když" is probably also mark:auxc, this will make "jako když" a multi-word conjunction.
+                    $deprel = 'mark:auxc';
+                }
+                else
+                {
+                    $deprel = 'mark';
+                }
             }
             else
             {
@@ -494,297 +496,28 @@ sub afun_to_udeprel
 
 
 #------------------------------------------------------------------------------
-# Converts coordination from the Prague style to the Stanford style.
+# In the Croatian SETimes corpus, given name of a person depends on the family
+# name, and the relation is labeled as apposition. Change the label to 'name'.
+# This should be done before we start structural transformations.
 #------------------------------------------------------------------------------
-sub shape_coordination_stanford
+sub relabel_appos_name
 {
     my $self = shift;
-    my $node = shift;
-    # Proceed bottom-up. First process children, then the current node.
-    my @children = $node->children();
-    foreach my $child (@children)
-    {
-        $self->shape_coordination_stanford($child);
-    }
-    return if($node->is_root());
-    # After processing my children, some of them may have ceased to be my children and some new children may have appeared.
-    # This is the result of restructuring a child coordination.
-    # Get the new list of children. In addition, we now require that the list is ordered (we have to identify the first conjunct).
-    @children = $node->get_children({ordered => 1});
-    # We have a coordination if the current node's afun is Coord, i.e. deprel is 'cc:coord', 'punct:coord' or 'root:coord'.
-    my $deprel = $node->deprel();
-    if($deprel =~ m/:coord/)
-    {
-        # If we are a nested coordination, remember it. We will have to set is_member for the new head.
-        my $current_coord_is_member = 0;
-        if($node->is_member())
-        {
-            $current_coord_is_member = 1;
-            $node->set_is_member(0);
-        }
-        # Get conjuncts.
-        my @conjuncts = grep {$_->is_member()} @children;
-        my @dependents = grep {!$_->is_member()} @children;
-        if(scalar(@conjuncts)==0)
-        {
-            log_warn('Coordination without conjuncts');
-            # There must not be any node labeled ':coord' and lacking is_member children.
-            $deprel =~ s/:coord//;
-            $node->set_deprel($deprel);
-        }
-        else
-        {
-            # Set the first conjunct as the new head.
-            # Its deprel should be already OK. It should not be a nested coordination because we processed the children first.
-            my $head = shift(@conjuncts);
-            $head->set_parent($node->parent());
-            $head->set_is_member($current_coord_is_member);
-            # Re-attach the current node and all its children to the new head.
-            # Mark conjuncts using the UD relation conj.
-            foreach my $conjunct (@conjuncts)
-            {
-                $conjunct->set_parent($head);
-                # If the conjunct is an adposition (AuxP) or subordinating conjunction (AuxC), we must preserve the information for later transformations.
-                if($conjunct->deprel() =~ m/:(aux[pc])/)
-                {
-                    $conjunct->set_deprel('conj:'.$1);
-                }
-                # Even punctuation is sometimes conjunct (an orphan conjunct with the 'ExD' afun).
-                # But we want it to be labeled 'punct' instead of 'conj'.
-                elsif($conjunct->deprel() ne 'punct')
-                {
-                    $conjunct->set_deprel('conj');
-                }
-                # Clear the is_member flag for all conjuncts. It only made sense in the Prague style.
-                $conjunct->set_is_member(0);
-            }
-            foreach my $dependent (@dependents)
-            {
-                $dependent->set_parent($head);
-            }
-            $node->set_parent($head);
-            $deprel =~ s/:coord//;
-            if($deprel eq 'root')
-            {
-                $head->set_deprel('root');
-                $deprel = $node->is_punctuation() ? 'punct' : 'cc';
-            }
-            $node->set_deprel($deprel);
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Identifies multi-word prepositions and restructures them according to the UD
-# guidelines.
-#------------------------------------------------------------------------------
-sub restructure_compound_prepositions
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants({ordered => 1});
-    # Example multi-word preposition: na rozdíl od (in contrast to).
-    # Original annotation: "od" is head, "na" and "rozdíl" depend on it. All three labeled "AuxP". The noun is attached to "od".
-    # Desired annotation: "na" is head, "rozdíl" and "od" depend on it, labeled "mwe". "na" is attached to the noun and labeled "case".
-    # Most compound prepositions consist of three nodes, some consist of two but we will not apriori restrict the number of nodes.
-    for(my $i = 0; $i < $#nodes; $i++)
-    {
-        my $iord = $nodes[$i]->ord();
-        # We cannot identify parts of compound preposition using the POS tag because some parts are nouns.
-        # We must use the original dependency label.
-        if($nodes[$i]->deprel() =~ m/:auxp/ && $nodes[$i]->is_leaf())
-        {
-            my $parent = $nodes[$i]->parent();
-            my $pord = $parent->ord();
-            if($pord > $iord && $parent->deprel() =~ m/^(case|mark):auxp$/)
-            {
-                my $found = 1;
-                my @mwe;
-                # We seem to have found a multi-word preposition. Make sure that all nodes between child and parent comply.
-                for(my $j = $i+1; $nodes[$j] != $parent; $j++)
-                {
-                    if($nodes[$j]->deprel() !~ m/:auxp/ || !$nodes[$j]->is_leaf() || $nodes[$j]->parent() != $parent)
-                    {
-                        $found = 0;
-                        last;
-                    }
-                    push(@mwe, $nodes[$j]);
-                }
-                if($found)
-                {
-                    # $nodes[$i] is the first token of the MWE and the new head.
-                    # @mwe contains the internal tokens of the MWE, usually just one middle token.
-                    # $parent is the last token of the MWE and the old head.
-                    $nodes[$i]->set_parent($parent->parent());
-                    foreach my $n (@mwe, $parent)
-                    {
-                        $n->set_parent($nodes[$i]);
-                        $n->set_deprel('mwe');
-                    }
-                    # Re-attach all other children of the original head to the new head.
-                    # There should be at least one child (the noun) and possibly also some punctuation etc.
-                    my @children = $parent->children();
-                    foreach my $child (@children)
-                    {
-                        $child->set_parent($nodes[$i]);
-                    }
-                    # Move index to the last word of the MWE, i.e. to the old $parent.
-                    $i += scalar(@mwe)+1;
-                }
-            }
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Reattach prepositions as dependents of their noun phrases.
-# Reattach subordinating conjunctions as dependents of their clauses.
-# Assumption: Coordination has already been converted to Stanford style.
-#------------------------------------------------------------------------------
-sub push_prep_sub_down
-{
-    my $self  = shift;
-    my $root  = shift;
+    my $root = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
         my $deprel = $node->deprel();
-        next unless($deprel =~ m/:aux[pc]/);
-        # In the prototypical case, the node has just one child and it will swap positions with the child.
-        # Known exceptions:
-        # - Punctuation children should be attached to the noun and labeled 'punct'.
-        # - If this is the first word of a multi-word preposition, all children labeled 'mwe' should be left untouched.
-        #   (Multi-word prepositions have been solved prior to coming here.)
-        # - If this is the first conjunct in a coordination of prepositional phrases, all 'cc' and 'conj' children should be attached to the noun.
-        #   (Coordinations have been transformed prior to coming here.)
-        # - If this is a non-first conjunct, it already has the label 'conj'. It will now be re-attached and re-labeled 'case'.
-        #   However, the noun should get the 'conj' label and forget its afun (which was hopefully identical to the afun of the first conjunct).
-        ###!!! TODO: Decide what to do if this is an orphan conjunct and its afun is 'ExD'.
-        ###!!! TODO: Decide what to do in case of a chain of AuxP and AuxC nodes. It is rare (if possible at all) in Czech but it occurred in some languages.
-        ###!!! TODO: If the child is also Aux[PC], we should process the chain recursively.
-        ###!!! TODO: Are there any prepositions with two or more arguments attached directly to them?
-        ###!!! TODO: A preposition or subordinating conjunction may also have multiple children if there is punctuation.
-        my $children = $self->get_auxpc_children($node);
-        my $n = scalar(@{$children->{args}});
-        if($n != 1)
+        if($deprel eq 'appos')
         {
-            my $form = $node->form();
-            my $phrase = join(' ', map {my $l = $_->lemma(); $l = '_' unless(defined($l)); $l.'/'.$_->afun().'/'.$_->deprel()} ($node->get_children({'add_self' => 1, 'ordered' => 1})));
-            if($n == 0)
+            my $parent = $node->parent();
+            next if($parent->is_root());
+            if($node->is_proper_noun() && $parent->is_proper_noun() && $self->agree($node, $parent, 'case'))
             {
-                # Try to requalify other children (if any) as arguments.
-                $children->{args} = $children->{other};
-                $n = scalar(@{$children->{args}});
-                delete($children->{other});
-                # Warn the user if we still have not found an argument.
-                if($n == 0)
-                {
-                    log_warn("Cannot find argument of '$deprel' node '$form': '$phrase'.");
-                }
+                $node->set_deprel('name');
             }
-            else
-            {
-                log_warn("'$deprel' node '$form' has more than one possible arguments: '$phrase'.");
-            }
-        }
-        if($n > 0)
-        {
-            my $head = shift(@{$children->{args}});
-            $head->set_parent($node->parent());
-            $node->set_parent($head);
-            # Attach punctuation, conjunctions and conjuncts to the new head.
-            # If there are other arguments and other children, attach them to the new head, too.
-            # Leave mwe nodes where they are.
-            foreach my $child (@{$children->{pc}}, @{$children->{auxz}}, @{$children->{args}}, @{$children->{other}})
-            {
-                $child->set_parent($head);
-            }
-            # If the Aux[PC] node was a top node, the new head must now take over.
-            if($deprel =~ m/^root:/)
-            {
-                $head->set_deprel('root');
-            }
-            # If the Aux[PC] node was a non-first conjunct, the new head must now take over.
-            elsif($deprel =~ m/^conj:/)
-            {
-                $head->set_deprel('conj');
-            }
-        }
-        # Even if the adposition is already a leaf (which should not happen), it cannot keep the AuxP label.
-        # Even if the conjunction is already a leaf (which should not happen), it cannot keep the AuxC label.
-        if($node->parent()->is_verb())
-        {
-            # Both subordinating conjunctions and prepositions are labeled 'mark' when their argument is a verb.
-            $node->set_deprel('mark');
-        }
-        else
-        {
-            $deprel = $deprel =~ m/:auxp/ ? 'case' : 'mark';
-            $node->set_deprel($deprel);
         }
     }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Sorts out children of an AuxP/AuxC node w.r.t. their future attachment.
-#------------------------------------------------------------------------------
-sub get_auxpc_children
-{
-    my $self = shift;
-    my $auxnode = shift;
-    my $auxlemma = $auxnode->lemma(); $auxlemma = '' if(!defined($auxlemma));
-    my $auxafun = $auxnode->afun();
-    my @children = $auxnode->get_children({ordered => 1});
-    # Punctuation, conjunctions and conjuncts should be re-attached to the new head.
-    my @pc;
-    # Non-first words of a multi-word preposition should remain attached to the old head (the auxnode).
-    my @mwe;
-    # Emphasizing words. They should depend on the argument of the preposition but sometimes they depend on the preposition.
-    my @auxz;
-    # The argument of an adposition (and the new head) is typically a noun or pronoun.
-    # The argument of a subordinating conjunction (and the new head) is typically a verb.
-    # There should be just one argument but the children are ordered an in case of more than one argument
-    # we will pick the first one.
-    my @args;
-    my @other;
-    foreach my $child (@children)
-    {
-        # We assume that the 'cc', 'conj' and 'mwe' deprels are already in place.
-        my $deprel = $child->deprel();
-        if($deprel =~ m/^(punct|cc|conj)$/)
-        {
-            push(@pc, $child);
-        }
-        elsif($deprel eq 'mwe')
-        {
-            push(@mwe, $child);
-        }
-        elsif($deprel =~ m/^(advmod:emph|neg)$/)
-        {
-            push(@auxz, $child);
-        }
-        elsif($auxlemma =~ m/^(jako|než-2)$/ &&
-                ($child->is_verb() || $child->is_noun() || $child->is_adjective() || $child->is_numeral() ||
-                 $child->is_adverb() || $child->is_symbol()) ||
-              $auxafun eq 'AuxP' &&
-                ($child->is_noun() || $child->is_adjective() || $child->is_numeral() || $child->is_adverb() ||
-                 $child->is_symbol()) || # Adverb: "o dost"
-              $auxafun eq 'AuxC' && $child->is_verb())
-        {
-            push(@args, $child);
-        }
-        else
-        {
-            push(@other, $child);
-        }
-    }
-    return {'pc' => \@pc, 'mwe' => \@mwe, 'auxz' => \@auxz, 'args' => \@args, 'other' => \@other};
 }
 
 
@@ -805,129 +538,6 @@ sub change_case_to_mark_under_verb
         if($node->deprel() eq 'case' && $node->parent()->is_verb())
         {
             $node->set_deprel('mark');
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# The colon is sometimes treated as a substitute for the main predicate in the
-# PDT (usually the hypothetical predicate would equal to "is").
-# Example: "Veletrh GOLF 94 München: 2. – 4. 9." ("GOLF 94 fair Munich:
-# September 2 – 9")
-# We will make the first part the main constituent, and attach the second part
-# as apposition. In some cases the colon is analyzed as copula (and the second
-# part is a nominal predicate) so we want to do this before copulas are
-# processed. Otherwise the scene will be reshaped and we will not recognize it.
-#------------------------------------------------------------------------------
-sub colon_pred_to_apposition
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @rchildren = $root->get_children({'ordered' => 1});
-    if(scalar(@rchildren) >= 1 && $rchildren[0]->form() eq ':' && !$rchildren[0]->is_leaf())
-    {
-        # Make the first child of the colon the new top node.
-        # We want a non-punctuation child. If there are only punctuation children, do not do anything.
-        my $colon = shift(@rchildren);
-        my @colchildren = $colon->get_children({'ordered' => 1});
-        my @npcolchildren = grep {!$_->is_punctuation()} (@colchildren);
-        my @pcolchildren = grep {$_->is_punctuation()} (@colchildren);
-        if(scalar(@npcolchildren)>=1)
-        {
-            my $newtop = shift(@npcolchildren);
-            $newtop->set_parent($root);
-            $newtop->set_deprel('root');
-            # The dependency between the new top node and the colon will now be reversed.
-            # If it still has afun (afun_to_deprel has not been done yet), we must change Pred to something less explosive.
-            $colon->set_parent($newtop);
-            $colon->set_deprel('punct');
-            # All other children of the colon (if any; probably just one other child) will be attached to the new top node as apposition.
-            foreach my $child (@npcolchildren)
-            {
-                $child->set_parent($newtop);
-                $child->set_deprel('appos');
-            }
-            foreach my $child (@pcolchildren)
-            {
-                $child->set_parent($newtop);
-                $child->set_deprel('punct');
-            }
-            # There may be other top nodes (children of the root).
-            # The sentence-final punctuation would normally be (re)attached to the main verb but it did not work here because we had a colon instead of a verb.
-            # Thus we should now reattach the punctuation node to the new top node.
-            ###!!! Only do this if there are no other top nodes. Otherwise we would have to investigate whether they are also punctuation
-            ###!!! (then they should probably be attached to the new top node) or regular words (then the final punctuation should be
-            ###!!! attached to them instead of to what we call "the new top node" here; otherwise we would introduce a non-projectivity).
-            if(scalar(@rchildren) == 1 && $rchildren[0]->is_punctuation())
-            {
-                my $finalpunct = $rchildren[0];
-                $finalpunct->set_parent($newtop);
-                $finalpunct->set_deprel('punct');
-            }
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Reattach copulas as dependents of their nominal predicates.
-# Assumption: Coordination has already been converted to Stanford style.
-#------------------------------------------------------------------------------
-sub push_copulas_down
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $deprel = $node->deprel();
-        if($deprel eq 'dep:pnom')
-        {
-            my $pnom = $node;
-            my $copula = $node->parent();
-            my $grandparent = $copula->parent();
-            if(defined($grandparent))
-            {
-                $pnom->set_parent($grandparent);
-                $pnom->set_deprel($copula->deprel());
-                # All other children of the copula will be reattached to the nominal predicate.
-                # The copula will become a leaf.
-                my @children = $copula->children();
-                foreach my $child (@children)
-                {
-                    $child->set_parent($pnom);
-                }
-                $copula->set_parent($pnom);
-                $copula->set_deprel('cop');
-            }
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Reattach sentence-final punctuation to the main predicate.
-# Assumption: Coordination has already been converted to Stanford style, thus
-# any punctuation node attached directly to the root does not head coordination.
-#------------------------------------------------------------------------------
-sub attach_final_punctuation_to_predicate
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->children();
-    my @pnodes = grep {$_->is_punctuation()} @nodes;
-    my @npnodes = grep {!$_->is_punctuation()} @nodes;
-    if(@npnodes)
-    {
-        my $predicate = $npnodes[-1];
-        foreach my $pnode (@pnodes)
-        {
-            $pnode->set_parent($predicate);
-            $pnode->set_deprel('punct');
         }
     }
 }
@@ -979,6 +589,10 @@ sub classify_numerals
 
 
 
+###!!! Tohle asi půjde smazat, až budeme mít ekvivalent v Phrase::Builder.
+###!!! Zatím to tak úplně ekvivalent není, protože nevyzvedáváme všechna
+###!!! rozvití, která nejsou součástí složené číslovky, nahoru ke kořenové
+###!!! číslovce.
 #------------------------------------------------------------------------------
 # Identifies multi-word numerals and organizes them in chains.
 #------------------------------------------------------------------------------
@@ -1046,44 +660,6 @@ sub restructure_compound_numerals
                     $child->set_parent($nodes[$i+$chain_found]);
                 }
                 $i += $chain_found;
-            }
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Makes sure that numerals modify counted nouns, not vice versa. (In PDT, both
-# directions are possible under certain circumstances.)
-#------------------------------------------------------------------------------
-sub push_numerals_down
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        # Look for genitive nouns and pronouns attached to a numeral.
-        if($node->is_noun() && $node->iset()->case() eq 'gen')
-        {
-            my $noun = $node;
-            my $number = $node->parent();
-            if($number->is_cardinal())
-            {
-                $noun->set_parent($number->parent());
-                # If the number was already attached as nummod, it does not tell us anything but we do not want to keep nummod for the noun head.
-                my $deprel = $number->deprel();
-                $deprel = 'nmod' if($deprel =~ m/^(nummod|det:nummod)$/);
-                $noun->set_deprel($deprel);
-                $number->set_parent($noun);
-                $number->set_deprel($number->iset()->prontype() eq '' ? 'nummod:gov' : 'det:numgov');
-                # All children of the number, except for parts of compound number, must be re-attached to the noun because they modify the whole phrase.
-                my @children = grep {$_->deprel() ne 'compound'} $number->children();
-                foreach my $child (@children)
-                {
-                    $child->set_parent($noun);
-                }
             }
         }
     }
@@ -1295,6 +871,7 @@ sub fix_annotation_errors
     foreach my $node (@nodes)
     {
         my $form = $node->form();
+        my $pos  = $node->iset()->pos();
         my $afun = $node->afun();
         if($form =~ m/^[so]$/i && !$node->is_adposition() && $afun eq 'AuxP')
         {
@@ -1303,30 +880,11 @@ sub fix_annotation_errors
             # inappropriate in this context.
             $node->set_afun('Atr');
         }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# The top nodes (children of root) in incomplete sentences were temporarily
-# labeled 'root:exd' to save the information during transformations. Now it
-# must be reduced to 'root' because 'root:exd' is not a valid universal
-# dependency relation.
-#------------------------------------------------------------------------------
-sub relabel_top_nodes
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @topnodes = $root->children();
-    foreach my $node (@topnodes)
-    {
-        # We might relabel it regardless what the previous label was.
-        # But at present we only relabel 'root:exd' (incomplete sentences) and 'root:auxk' (sentences with punctuation only)
-        # to see whether there are other possible issues.
-        if($node->deprel() =~ m/^root:(exd|auxk)$/)
+        # Fix unknown tags of punctuation. If the part of speech is unknown and the form consists only of punctuation characters,
+        # set the part of speech to PUNCT. This occurs in the Ancient Greek Dependency Treebank.
+        elsif($pos eq '' && $form =~ m/^\pP+$/)
         {
-            $node->set_deprel('root');
+            $node->iset()->set_pos('punc');
         }
     }
 }
@@ -1387,32 +945,6 @@ sub relabel_subordinate_clauses
             else
             {
                 $node->set_deprel('advcl');
-            }
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# In the Croatian SETimes corpus, given name of a person depends on the family
-# name, and the relation is labeled as apposition. Change the label to 'name'.
-#------------------------------------------------------------------------------
-sub relabel_appos_name
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $deprel = $node->deprel();
-        if($deprel eq 'appos')
-        {
-            my $parent = $node->parent();
-            next if($parent->is_root());
-            if($node->is_proper_noun() && $parent->is_proper_noun() && $self->agree($node, $parent, 'case'))
-            {
-                $node->set_deprel('name');
             }
         }
     }

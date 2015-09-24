@@ -5,7 +5,7 @@ use Treex::Core::Common;
 # This is an alternative to A2A::CopyAtree and should supersede it.
 # This block
 # - interprets language as "source language" and needs specified to_language (similarly for selectors)
-# - when no language si specified, it copies all languages found (to the new selector)
+# - when no language is specified, it copies all languages found (to the new selector)
 # - supports the new feature of multiple languages, e.g. A2A::BackupTree language=en,cs
 
 extends 'Treex::Core::Block';
@@ -30,7 +30,7 @@ sub process_atree {
 
     my $to_language = $self->to_language || $src_language;
     my $to_selector = $self->to_selector;
-    
+
     # Create $to_root (root node of the target a-tree).
     # Note that create_atree() will log_fatal if such tree already exists.
     my $bundle  = $src_root->get_bundle();
@@ -39,7 +39,7 @@ sub process_atree {
 
     # The main work is implemented in Treex::Core::Node::A
     $src_root->copy_atree($to_root);
-    
+
     if ($self->align){
         my @src_nodes = $src_root->get_descendants( { ordered => 1 } );
         my @to_nodes  = $to_root->get_descendants( { ordered => 1 } );
@@ -47,14 +47,14 @@ sub process_atree {
             $to_nodes[$i]->add_aligned_node( $src_nodes[$i], 'copy' );
         }
     }
-    
+
     if ( $self->flatten ) {
         foreach my $node ( $to_root->get_descendants ) {
             $node->set_parent($to_root);
             $node->set_is_member();
         }
     }
-    
+
     if ( $self->keep_alignment_links) {
     	my @src_nodes = $src_root->get_descendants( { ordered => 1 } );
     	my @to_nodes  = $to_root->get_descendants( { ordered => 1 } );
@@ -83,7 +83,7 @@ sub process_atree {
     		}
 		}    	
     }
-    
+
     return;
 }
 
@@ -101,9 +101,9 @@ Treex::Block::A2A::BackupTree - copy a-tree to another zone
 
   # Copy the "current" zone to another selector (language is the same)
   A2A::BackupTree to_selector=my_backup
-  
+
   # Copy English a-trees to Czech (target selector is empty if not specified)
-  A2A::BackupTree language=en to_language=cs  
+  A2A::BackupTree language=en to_language=cs
 
 =head1 DESCRIPTION
 
@@ -138,8 +138,8 @@ If this parameter is set, the target trees are aligned to the source ones.
 
 =item C<keep_alignment_links>
 
-If this parameter is set, both incoming and outgoing alignments are preserved in the 
-new a-tree (to_selector). 
+If this parameter is set, both incoming and outgoing alignments are preserved in the
+new a-tree (to_selector).
 
 =back
 

@@ -172,7 +172,7 @@ sub set_real_afun
 }
 
 #------------------------------------------------------------------------------
-# Recursively copy children from myself to another node.
+# Recursively copy attributes and children from myself to another node.
 # This function is specific to the A layer because it contains the list of
 # attributes. If we could figure out the list automatically, the function would
 # become general enough to reside directly in Node.pm.
@@ -185,19 +185,16 @@ sub copy_atree
     my $self   = shift;
     my $target = shift;
 
-    # Why is this here ? the attributes of the root node are NOT copied, are they ??
-    $target->set_wild( Storable::dclone( $self->wild ) );
+    # Copy all attributes of the original node to the new one.
+    # We do this for all the nodes including the ‘root’ (which may actually be
+    # an ordinary node if we are copying a subtree).
+    $self->copy_attributes($target);
 
     my @children0 = $self->get_children( { ordered => 1 } );
     foreach my $child0 (@children0)
     {
-
         # Create a copy of the child node.
         my $child1 = $target->create_child();
-
-        # Copy all attributes of the original node to the new one
-        $child0->copy_attributes($child1);
-
         # Call recursively on the subtrees of the children.
         $child0->copy_atree($child1);
     }
@@ -205,27 +202,28 @@ sub copy_atree
     return;
 }
 
-sub copy_attributes {
+#------------------------------------------------------------------------------
+# Copies values of all attributes from one node to another. The only difference
+# between the two nodes afterwards should be their ids.
+#------------------------------------------------------------------------------
+sub copy_attributes
+{
     my ( $self, $other ) = @_;
-
     # We should copy all attributes that the node has but it is not easy to figure out which these are.
     # TODO: As a workaround, we list the attributes here directly.
     foreach my $attribute (
-        'form', 'lemma', 'tag', 'no_space_after', 'ord', 'afun', 'is_member', 'is_parenthesis_root',
+        'form', 'lemma', 'tag', 'no_space_after', 'ord', 'deprel', 'afun', 'is_member', 'is_parenthesis_root',
         'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat', 'is_shared_modifier', 'morphcat',
         )
     {
         my $value = $self->get_attr($attribute);
         $other->set_attr( $attribute, $value );
     }
-
     # copy values of interset features
     my $f = $self->get_iset_structure();
     $other->set_iset($f);
-
     # deep copy of wild attributes
     $other->set_wild( Storable::dclone( $self->wild ) );
-
     return;
 }
 
@@ -290,6 +288,54 @@ sub reset_morphcat {
 sub get_subtree_string {
     my ($self) = @_;
     return join '', map { defined( $_->form ) ? ( $_->form . ( $_->no_space_after ? '' : ' ' ) ) : '' } $self->get_descendants( { ordered => 1 } );
+}
+
+#------------------------------------------------------------------------------
+# Serializes a tree to a string of dependencies (similar to the Stanford
+# dependency format). Useful for debugging (quick comparison of two tree
+# structures and an info string for the error message at the same time).
+#------------------------------------------------------------------------------
+sub get_subtree_dependency_string
+{
+    my $self = shift;
+    my $for_brat = shift; # Do we want a format that spans multiple lines but can be easily visualized in Brat?
+    my @nodes = $self->get_descendants({'ordered' => 1});
+    my $offset = $for_brat ? 1 : 0;
+    my @dependencies = map
+    {
+        my $n = $_;
+        my $no = $n->ord()+$offset;
+        my $nf = $n->form();
+        my $p = $n->parent();
+        my $po = $p->ord()+$offset;
+        my $pf = $p->is_root() ? 'ROOT' : $p->form();
+        my $d = defined($n->deprel()) ? $n->deprel() : defined($n->afun()) ? $n->afun() : defined($n->conll_deprel()) ? $n->conll_deprel() : 'NR';
+        if($n->is_member())
+        {
+            if(defined($n->deprel()))
+            {
+                $d .= ':member';
+            }
+            else
+            {
+                $d .= '_M';
+            }
+        }
+        "$d($pf-$po, $nf-$no)"
+    }
+    (@nodes);
+    my $sentence = join(' ', map {$_->form()} (@nodes));
+    if($for_brat)
+    {
+        $sentence = "ROOT $sentence";
+        my $tree = join("\n", @dependencies);
+        return "~~~ sdparse\n$sentence\n$tree\n~~~\n";
+    }
+    else
+    {
+        my $tree = join('; ', @dependencies);
+        return "$sentence\t$tree";
+    }
 }
 
 #----------- CoNLL attributes -------------
