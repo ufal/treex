@@ -13,6 +13,7 @@ has 'phrase_list_path' => ( is => 'ro', isa => 'Str' );
 has '_gazeteer_hash' => ( is => 'ro', isa => 'HashRef[Str]', builder => '_build_gazeteer_hash', lazy => 1 );
 
 my %OTHERLANG_PHRASE_LIST_PATHS = (
+    #'cs' => 'data/models/gazeteer/cs_en/toy.cs_en.cs.gaz.gz',
     'cs' => 'data/models/gazeteer/cs_en/20150821_005.IT.cs_en.cs.gaz.gz',
     'es' => 'data/models/gazeteer/es_en/20150821_002.IT.es_en.es.gaz.gz',
     'eu' => 'data/models/gazeteer/eu_en/20150821_002.IT.eu_en.eu.gaz.gz',

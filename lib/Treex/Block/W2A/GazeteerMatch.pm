@@ -170,8 +170,14 @@ sub _match_phrases_in_atree {
 
 sub _resolve_entities {
     my ($self, $matches) = @_;
+    
+    #$Data::Dumper::Maxdepth = 2;
+    #log_info Dumper($matches);
 
     my @scores = map {$self->score_match($_)} @$matches;
+
+    #log_info Dumper(\@scores);
+
     my @accepted_idx = grep {$scores[$_] > 0} 0 .. $#scores;
     
     my @sorted_idx = sort {$scores[$b] <=> $scores[$a]} @accepted_idx;
@@ -185,6 +191,8 @@ sub _resolve_entities {
             $covered_anode{$_->id} = 1 foreach (@{$cand->[2]});
         }
     }
+    
+    log_info Dumper(\@resolved_entities);
 
     return \@resolved_entities;
 }
