@@ -122,8 +122,6 @@ sub process_zone {
     my ( $self, $zone ) = @_;
     my $a_root   = $zone->get_atree();
 
-    $a_root->get_descendants( { ordered => 1 } );
-
     my $last_node;
     foreach my $node ( $a_root->get_descendants({ ordered => 1 }) ) {
 
@@ -134,7 +132,7 @@ sub process_zone {
                 my $first_form = $last_node->form;
                 $first_form =~ s/_//g;
 
-                my $contraction = $CONTRACTION{(lc $first_form) . " " . (lc $node->form)};
+                my $contraction = $CONTRACTION{(lc $first_form) . ' ' . (lc $node->form)};
 
                 if(defined $contraction){
 
@@ -145,8 +143,8 @@ sub process_zone {
                         $last_node->set_form($contraction);
                     }
 
-                    $node->set_form(undef);
-                    $node->set_lemma(undef);
+                    $node->set_form('');
+                    $node->set_lemma('');
 
                 }
             }
@@ -154,6 +152,7 @@ sub process_zone {
 
         $last_node = $node;
     }
+    return;
 }
 
 
