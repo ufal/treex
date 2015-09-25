@@ -115,46 +115,25 @@ my %CONTRACTION = (
     'lhe os' => 'lhos',
     'lhe a' => 'lha',
     'lhe as' => 'lhas',
-
 );
 
-sub process_zone {
-    my ( $self, $zone ) = @_;
-    my $a_root   = $zone->get_atree();
+sub process_atree {
+    my ( $self, $a_root ) = @_;
 
-    my $last_node;
-    foreach my $node ( $a_root->get_descendants({ ordered => 1 }) ) {
-
-        if(defined $last_node){
-            #TODO: Check this regular expression
-            if( $last_node->form =~ /^[[:alpha:]]+$/){
-
-                my $first_form = $last_node->form;
-                $first_form =~ s/_//g;
-
-                my $contraction = $CONTRACTION{(lc $first_form) . ' ' . (lc $node->form)};
-
-                if(defined $contraction){
-
-                    if(ucfirst($first_form) eq $first_form){
-                        $last_node->set_form(ucfirst($contraction));
-                    }
-                    else{
-                        $last_node->set_form($contraction);
-                    }
-
-                    $node->set_form('');
-                    $node->set_lemma('');
-
-                }
-            }
-        }
-
-        $last_node = $node;
+    my @anodes = $a_root->get_descendants({ ordered => 1 });
+    my $i = -1;
+    while ($i < $#anodes-1) {
+        $i++;
+        my $bigram = $anodes[$i]->form . ' ' . $anodes[$i+1]->form;
+        $bigram =~ s/_//g;
+        my $contraction = $CONTRACTION{lc $bigram};
+        next if !defined $contraction;
+        $anodes[$i]->set_form($bigram =~ /^\p{Upper}/ ? ucfirst($contraction) : $contraction);
+        $anodes[$i+1]->remove({children=>'rehang'});
+        $i++;
     }
     return;
 }
-
 
 1;
 
@@ -173,6 +152,8 @@ Contracts the portuguese prepositions.
 =head1 AUTHORS
 
 João A. Rodrigues <jrodrigues@di.fc.ul.pt>
+
+Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
