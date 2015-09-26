@@ -18,7 +18,7 @@ my @relations =
     # additional language-specific relations
     'acl:relcl', 'advmod:emph',
     'det:pdt', 'det:numgov', 'det:nummod', 'nummod:gov',
-    'compound:reflex', 'auxpass:reflex', 'compound:prt',
+    'auxpass:reflex', 'compound:prt',
 );
 
 sub process_anode
