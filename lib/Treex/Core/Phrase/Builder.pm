@@ -514,7 +514,16 @@ sub detect_prague_copula
             'deprel_at_fun' => 0,
             'is_member'     => $member
         );
-        $copula->set_deprel('cop');
+        # Copula is sometimes represented by a punctuation sign (dash, colon) instead of the verb "to be".
+        # Punctuation should not be attached as cop.
+        if($copula->node()->is_punctuation())
+        {
+            $copula->set_deprel('punct');
+        }
+        else
+        {
+            $copula->set_deprel('cop');
+        }
         $pp->set_deprel($deprel);
         $pp->set_parent($parent);
         foreach my $d (@dependents)
