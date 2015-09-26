@@ -71,7 +71,6 @@ sub process_zone
     ###!!! The rest is the old implementation. Perhaps there are other bits that we could move to the phrase builder?
     $self->change_case_to_mark_under_verb($root);
     $self->classify_numerals($root);
-    $self->restructure_compound_numerals($root);
     $self->fix_determiners($root);
     $self->relabel_subordinate_clauses($root);
     # Sanity checks.
@@ -583,84 +582,6 @@ sub classify_numerals
         elsif($node->is_adjective() && $iset->contains('numtype', 'ord') && $node->lemma() eq 'nejeden')
         {
             $iset->add('pos' => 'num', 'numtype' => 'card', 'prontype' => 'ind');
-        }
-    }
-}
-
-
-
-###!!! Tohle asi půjde smazat, až budeme mít ekvivalent v Phrase::Builder.
-###!!! Zatím to tak úplně ekvivalent není, protože nevyzvedáváme všechna
-###!!! rozvití, která nejsou součástí složené číslovky, nahoru ke kořenové
-###!!! číslovce.
-#------------------------------------------------------------------------------
-# Identifies multi-word numerals and organizes them in chains.
-#------------------------------------------------------------------------------
-sub restructure_compound_numerals
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants({ordered => 1});
-    # We are looking for sequences of numerals where every two adjacent words
-    # are connected with a dependency. The direction of the dependency does not
-    # matter. If a numeral is tagged as noun (this could happen to "sto",
-    # "tisíc", "milión", "miliarda"), the chain will not include them.
-    for(my $i = 0; $i < $#nodes; $i++)
-    {
-        if($nodes[$i]->iset()->contains('numtype', 'card'))
-        {
-            my $chain_found = 0;
-            for(my $j = $i+1; $j <= $#nodes; $j++)
-            {
-                if($nodes[$j]->iset()->contains('numtype', 'card') &&
-                   ($nodes[$j]->parent() == $nodes[$j-1] || $nodes[$j-1]->parent() == $nodes[$j]))
-                {
-                    $chain_found = $j-$i;
-                }
-                else
-                {
-                    last;
-                }
-            }
-            if($chain_found)
-            {
-                # Figure out the attachment of the whole chain to the outside world.
-                my $minord = $nodes[$i]->ord();
-                my $maxord = $nodes[$i+$chain_found]->ord();
-                my $parent;
-                my $deprel;
-                # Incremental reshaping could create temporary cycles and Treex would not allow that.
-                # Therefore first attach all participants to the root, then draw the links between them.
-                for(my $j = $i; $j <= $i+$chain_found; $j++)
-                {
-                    my $old_parent_ord = $nodes[$j]->parent()->ord();
-                    if($old_parent_ord < $minord || $old_parent_ord > $maxord)
-                    {
-                        $parent = $nodes[$j]->parent();
-                        $deprel = $nodes[$j]->deprel();
-                    }
-                    $nodes[$j]->set_parent($root);
-                }
-                # Collect all outside children of the numeral nodes.
-                # Later we will attach them to the head numeral.
-                my @children;
-                for(my $j = $i; $j <= $i+$chain_found; $j++)
-                {
-                    push(@children, $nodes[$j]->children());
-                }
-                for(my $j = $i; $j < $i+$chain_found; $j++)
-                {
-                    $nodes[$j]->set_parent($nodes[$j+1]);
-                    $nodes[$j]->set_deprel('compound');
-                }
-                $nodes[$i+$chain_found]->set_parent($parent);
-                $nodes[$i+$chain_found]->set_deprel($deprel);
-                foreach my $child (@children)
-                {
-                    $child->set_parent($nodes[$i+$chain_found]);
-                }
-                $i += $chain_found;
-            }
         }
     }
 }
