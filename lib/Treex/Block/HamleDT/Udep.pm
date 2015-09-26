@@ -566,15 +566,15 @@ sub fix_jak_znamo
             $n0->set_deprel('mark');
             $n1->set_deprel('advcl') if(!defined($n1->deprel()) || $n1->deprel() eq 'dep');
             # If the expression is delimited by commas, the commas should be attached to "známo".
-            if($i>0 && defined($nodes[$i-1]->form()) && $nodes[$i-1]->form() =~ m/^[-,]$/)
+            if($i>0 && $nodes[$i-1]->parent() == $n1->parent() && defined($nodes[$i-1]->form()) && $nodes[$i-1]->form() =~ m/^[-,]$/)
             {
                 $nodes[$i-1]->set_parent($n1);
                 $nodes[$i-1]->set_deprel('punct');
             }
-            if($i<$#nodes-1 && defined($nodes[$i+2]->form()) && $nodes[$i+2]->form() =~ m/^[-,]$/)
+            if($i+2<=$#nodes && $nodes[$i+2]->parent() == $n1->parent() && defined($nodes[$i+2]->form()) && $nodes[$i+2]->form() =~ m/^[-,]$/)
             {
-                $nodes[$i-1]->set_parent($n1);
-                $nodes[$i-1]->set_deprel('punct');
+                $nodes[$i+2]->set_parent($n1);
+                $nodes[$i+2]->set_deprel('punct');
             }
         }
     }
