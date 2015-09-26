@@ -71,6 +71,7 @@ sub process_zone
     ###!!! The rest is the old implementation. Perhaps there are other bits that we could move to the phrase builder?
     $self->change_case_to_mark_under_verb($root);
     $self->fix_jak_znamo($root);
+    $self->fix_jako_kdyby($root);
     $self->classify_numerals($root);
     $self->fix_determiners($root);
     $self->relabel_subordinate_clauses($root);
@@ -575,6 +576,40 @@ sub fix_jak_znamo
             {
                 $nodes[$i+2]->set_parent($n1);
                 $nodes[$i+2]->set_deprel('punct');
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Czech "jako kdyby" ("as if") can be considered a multi-word expression.
+# In UD, "kdyby" is treated as a fusion of "když+by", hence we have "jako když
+# by". Both "když" and "by" are attached to "jako" but this is an example where
+# we actually want to attach each part to a different parent: "když" to "jako"
+# (mwe), and "by" (aux) to the verb parent of "jako".
+#------------------------------------------------------------------------------
+sub fix_jako_kdyby
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    for(my $i = 0; $i+2 <= $#nodes; $i++)
+    {
+        my $n0 = $nodes[$i];
+        my $n1 = $nodes[$i+1];
+        my $n2 = $nodes[$i+2];
+        if(defined($n0->form()) && lc($n0->form()) eq 'jako' &&
+           defined($n1->form()) && lc($n1->form()) eq 'když' &&
+           defined($n2->form()) && lc($n2->form()) =~ m/^by(ch|s|chom|ste)?$/ &&
+           $n1->parent() == $n0 && $n2->parent() == $n0)
+        {
+            my $verb = $n0->parent();
+            if(!$verb->is_root() && $verb->is_verb())
+            {
+                $n2->set_parent($verb);
+                $n2->set_deprel('aux');
             }
         }
     }
