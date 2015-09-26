@@ -4,19 +4,19 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;
 
+use Treex::Tool::Gazetteer::Engine;
+
 use List::MoreUtils qw/none all/;
 use List::Util qw/sum/;
 
 extends 'Treex::Core::Block';
 
 has 'phrase_list_path' => ( is => 'ro', isa => 'Str' );
+has 'filter_id_prefixes' => ( is => 'ro', isa => 'Str', default => 'all' );
 # idx removed: libreoffice_16090, libreoffice_16123, libreoffice_73656
 has 'trg_lang' => (is => 'ro', isa => 'Str');
 
-has 'filter_id_prefixes' => ( is => 'ro', isa => 'Str', default => 'all' );
-
-
-has '_trie' => ( is => 'ro', isa => 'HashRef', builder => '_build_trie', lazy => 1);
+has '_trie' => ( is => 'ro', isa => 'Treex::Tool::Gazetteer::Engine', builder => '_build_trie', lazy => 1);
 
 my %PHRASE_LIST_PATHS = (
     'en' => {
@@ -38,31 +38,11 @@ sub BUILD {
 
 sub _build_trie {
     my ($self) = @_;
-
-    log_info "Loading the phrase list...";
-    log_info "Building a trie for searching...";
-
-    my $path = require_file_from_share($self->phrase_list_path);
-    open my $fh, "<:gzip:utf8", $path;
-
-    my $trie = {};
-    my $filter_id_prefixes = $self->filter_id_prefixes ne 'all' ?
-        join "|", map {"(" . $_ . ")"} (split /,/, $self->filter_id_prefixes) :
-        undef;
-
-    while (my $line = <$fh>) {
-        chomp $line;
-        my ($id, @phrase_rest) = split /\t/, $line;
-
-        next if (defined $filter_id_prefixes && $id !~ /^$filter_id_prefixes/);
-
-        my $phrase = join " ", @phrase_rest;
-        _insert_phrase_to_trie($trie, $phrase, $id);
-    }
-    close $fh;
-
-    #log_info Dumper($trie);
-
+    my $trie = Treex::Tool::Gazetteer::Engine->new({ 
+        is_src => 1,
+        path => $self->phrase_list_path,
+        filter_id_prefixes => $self->filter_id_prefixes 
+    });
     return $trie;
 }
 
@@ -74,7 +54,7 @@ sub process_start {
 sub process_atree {
     my ( $self, $atree ) = @_;
 
-    my $matches = $self->_match_phrases_in_atree($atree, $self->_trie);
+    my $matches = $self->_trie->match_phrases_in_atree($atree);
     
     # assess which candidates are likely to be entity phrases and return only the mutually exclusive ones
     my $entities = $self->_resolve_entities($matches);
@@ -92,81 +72,6 @@ sub process_atree {
 
 }
 
-my $INFO_LABEL = "__INFO__";
-
-sub _insert_phrase_to_trie {
-    my ($trie, $phrase, $id) = @_;
-
-    #my $debug = 0;
-    #if ($id eq "libreoffice_25826") {
-    #    $debug = 1;
-    #}
-
-    return if ($phrase =~ /^\s*$/);
-
-    my @words = map {lc($_)} (split / +/, $phrase);
-    my $next_word = shift @words;
-    while (defined $next_word && defined $trie->{$next_word}) {
-        #log_info "NEXT_WORD_GET: " . $next_word if ($debug);
-        $trie = $trie->{$next_word};
-        $next_word = shift @words;
-    }
-
-    # there is a tail of remaining words
-    if (defined $next_word) {
-        my $suffix_hash = {};
-        while ($next_word) {
-            #log_info "NEXT_WORD_SET: " . $next_word if ($debug);
-            $trie->{$next_word} = {}; 
-            $trie = $trie->{$next_word};
-            $next_word = shift @words;
-        }
-        my $info = [$id, $phrase];
-        $trie->{$INFO_LABEL} = $info;
-    }
-    # all words are indexed in a trie
-    else {
-        my $info = $trie->{$INFO_LABEL};
-        if (!defined $info) {
-            $info = [$id, $phrase];
-            $trie->{$INFO_LABEL} = $info;
-        }
-        # else: this phrase is already stored - skip it
-    }
-}
-
-sub _match_phrases_in_atree {
-    my ($self, $atree, $trie) = @_;
-    
-    my @anodes = $atree->get_children( {ordered => 1} );
-
-    my @matches = ();
-    my @unproc_trie_nodes = ();
-    my @unproc_anodes = ();
-
-    foreach my $anode (@anodes) {
-        unshift @unproc_trie_nodes, $trie;
-
-        my $word = lc($anode->form);
-
-        @unproc_trie_nodes = map {$_->{$word}} @unproc_trie_nodes;
-        my @found = map {defined $_ ? 1 : 0} @unproc_trie_nodes;
-        unshift @unproc_anodes, [];
-        @unproc_anodes = grep {defined $_} 
-            map { if ($found[$_]) {
-                    [ @{$unproc_anodes[$_]}, $anode ] 
-                  } else {
-                    undef;
-                  }
-                } 0 .. $#unproc_anodes;
-        @unproc_trie_nodes = grep {defined $_} @unproc_trie_nodes;
-
-        my @new_matches = map {[@{$unproc_trie_nodes[$_]->{$INFO_LABEL}}, $unproc_anodes[$_]]} 
-            grep {defined $unproc_trie_nodes[$_]->{$INFO_LABEL}} 0 .. $#unproc_trie_nodes;
-        push @matches, @new_matches;
-    }
-    return \@matches;
-}
 
 sub _resolve_entities {
     my ($self, $matches) = @_;

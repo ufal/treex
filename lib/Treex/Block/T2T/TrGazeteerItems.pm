@@ -4,13 +4,15 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;
 
+use Treex::Tool::Gazetteer::Engine;
+
 extends 'Treex::Core::Block';
 
 has 'src_lang' => ( is => 'ro', isa => 'Str' );
 
 has 'phrase_list_path' => ( is => 'ro', isa => 'Str' );
 # idx removed: libreoffice_16090, libreoffice_16123, libreoffice_73656
-has '_gazeteer_hash' => ( is => 'ro', isa => 'HashRef[Str]', builder => '_build_gazeteer_hash', lazy => 1 );
+has '_gazeteer_hash' => ( is => 'ro', isa => 'Treex::Tool::Gazetteer::Engine', builder => '_build_gazeteer_hash', lazy => 1 );
 
 my %OTHERLANG_PHRASE_LIST_PATHS = (
     #'cs' => 'data/models/gazeteer/cs_en/toy.cs_en.cs.gaz.gz',
@@ -42,25 +44,7 @@ sub BUILD {
 
 sub _build_gazeteer_hash {
     my ($self) = @_;
-
-    log_info "Loading the target phrase list from ".$self->phrase_list_path." ...";
-
-    my $path = require_file_from_share($self->phrase_list_path);
-    open my $fh, "<:gzip:utf8", $path;
-
-    my $hash = {};
-
-    while (my $line = <$fh>) {
-        chomp $line;
-        my ($id, @phrase_rest) = split /\t/, $line;
-        my $phrase = join " ", @phrase_rest;
-
-        $hash->{$id} = $phrase;
-    }
-    close $fh;
-
-    #log_info Dumper($searchine);
-
+    my $hash = Treex::Tool::Gazetteer::Engine->new({ is_src => 0, path => $self->phrase_list_path });
     return $hash;
 }
 
@@ -88,7 +72,7 @@ sub process_tnode {
             $translated_phrase = $phrase;
         }
         else {
-            $translated_phrase = $self->_gazeteer_hash->{$id};
+            $translated_phrase = $self->_gazeteer_hash->get_phrase_by_id($id);
         }
         if (!defined $translated_phrase) {
             # this should not happen
