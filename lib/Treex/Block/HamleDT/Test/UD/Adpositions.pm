@@ -23,13 +23,15 @@ sub process_atree
         # [sv]: ut, till, upp, in, med
         if($node->is_adposition())
         {
+            my $parent = $node->parent();
+            my $deprel = $node->deprel();
+            # Do not test adpositions in foreign text, they have their own rules for attachment.
+            next if($deprel eq 'foreign');
             my $ok = $node->is_leaf();
             if(!$ok)
             {
                 $ok = !any {$_->deprel() !~ m/^(mwe|conj|cc)$/} ($node->children());
             }
-            my $parent = $node->parent();
-            my $deprel = $node->deprel();
             if($parent->is_root())
             {
                 $ok = $ok && $deprel eq 'root';
