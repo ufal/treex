@@ -108,6 +108,7 @@ sub detect_special_constructions
         $phrase = $self->detect_name_phrase($phrase);
         $phrase = $self->detect_compound_numeral($phrase);
         $phrase = $self->detect_counted_noun_in_genitive($phrase);
+        $phrase = $self->detect_indirect_object($phrase);
     }
     else
     {
@@ -730,6 +731,81 @@ sub detect_counted_noun_in_genitive
         }
     }
     return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# The Prague treebanks do not distinguish direct and indirect objects. There is
+# only one object relation, Obj. In Universal Dependencies we have to select
+# one object of each verb as the main one (dobj), the others should be labeled
+# as indirect (iobj). There is no easy way of doing this, but we can use a few
+# heuristics to solve at least some cases.
+#------------------------------------------------------------------------------
+sub detect_indirect_object
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    # Only look for objects under verbs.
+    if($phrase->node()->is_verb())
+    {
+        my @dependents = $phrase->dependents();
+        # If there is a clausal complement (ccomp or xcomp), we assume that it
+        # takes the role of the direct object. Any other object will be labeled
+        # as indirect.
+        if(any {$_->deprel() =~ m/^[cx]comp$/} (@dependents))
+        {
+            foreach my $d (@dependents)
+            {
+                if($d->deprel() eq 'dobj')
+                {
+                    $d->set_deprel('iobj');
+                }
+            }
+        }
+        # If there is an accusative object without preposition, all other objects are indirect.
+        elsif(any {$_->deprel() eq 'dobj' && $self->get_phrase_case($_) eq 'acc'} (@dependents))
+        {
+            foreach my $d (@dependents)
+            {
+                if($d->deprel() eq 'dobj' && $self->get_phrase_case($d) ne 'acc')
+                {
+                    $d->set_deprel('iobj');
+                }
+            }
+        }
+    }
+    return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Figures out the generalized case of a phrase, consisting of word forms of any
+# children with the 'case' relation, and the value of the morphological case of
+# the head word.
+#------------------------------------------------------------------------------
+sub get_phrase_case
+{
+    my $self = shift;
+    my $phrase = shift;
+    my $case = '';
+    my $node = $phrase->node();
+    # Prepositions may also have the case feature but in their case it is valency, i.e. the required case of their nominal argument.
+    unless($node->is_adposition())
+    {
+        # Does the phrase have any children (probably core children) attached as case?
+        my @children = $phrase->children();
+        my @case_forms = map {$_->node()->form()} (grep {$_->deprel() eq 'case'} (@children));
+        # Does the head node have the case feature?
+        my $head_case = $node->iset()->case();
+        push(@case_forms, $head_case) unless($head_case eq '');
+        if(@case_forms)
+        {
+            $case = join('+', @case_forms);
+        }
+    }
+    return $case;
 }
 
 
