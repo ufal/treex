@@ -70,6 +70,7 @@ sub process_zone
     $phrase->project_dependencies();
     ###!!! The rest is the old implementation. Perhaps there are other bits that we could move to the phrase builder?
     $self->change_case_to_mark_under_verb($root);
+    $self->fix_jak_znamo($root);
     $self->classify_numerals($root);
     $self->fix_determiners($root);
     $self->relabel_subordinate_clauses($root);
@@ -544,6 +545,44 @@ sub change_case_to_mark_under_verb
 
 
 #------------------------------------------------------------------------------
+# The two Czech words "jak známo" ("as known") are attached as ExD siblings in
+# the Prague style because there is missing copula. However, in UD the nominal
+# predicate "známo" is the head.
+#------------------------------------------------------------------------------
+sub fix_jak_znamo
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    for(my $i = 0; $i<$#nodes; $i++)
+    {
+        my $n0 = $nodes[$i];
+        my $n1 = $nodes[$i+1];
+        if(defined($n0->form()) && lc($n0->form()) eq 'jak' &&
+           defined($n1->form()) && lc($n1->form()) eq 'známo' &&
+           $n0->parent() == $n1->parent())
+        {
+            $n0->set_parent($n1);
+            $n0->set_deprel('mark');
+            $n1->set_deprel('advcl') if(!defined($n1->deprel()) || $n1->deprel() eq 'dep');
+            # If the expression is delimited by commas, the commas should be attached to "známo".
+            if($i>0 && defined($nodes[$i-1]->form()) && $nodes[$i-1]->form() =~ m/^[-,]$/)
+            {
+                $nodes[$i-1]->set_parent($n1);
+                $nodes[$i-1]->set_deprel('punct');
+            }
+            if($i<$#nodes-1 && defined($nodes[$i+2]->form()) && $nodes[$i+2]->form() =~ m/^[-,]$/)
+            {
+                $nodes[$i-1]->set_parent($n1);
+                $nodes[$i-1]->set_deprel('punct');
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Splits numeral types that have the same tag in the PDT tagset and the
 # Interset decoder cannot distinguish them because it does not see the word
 # forms.
@@ -806,6 +845,15 @@ sub fix_annotation_errors
         elsif($pos eq '' && $form =~ m/^\pP+$/)
         {
             $node->iset()->set_pos('punc');
+        }
+        # Czech "jakmile" is always tagged SCONJ (although one could also argue that it is a relative adverb of time).
+        # In 55 cases it is attached as AuxC and in 1 case as Adv; but this 1 case is not different, it is an error.
+        # Changing Adv to AuxC would normally also involve moving the conjunction between the subordinate predicate and
+        # its parent, but we do not need to do that because our target style is UD and there both AuxC (mark) and Adv (advmod)
+        # will be attached as children of the subordinate predicate.
+        elsif(lc($form) eq 'jakmile' && $pos eq 'conj' && $afun eq 'Adv')
+        {
+            $node->set_afun('AuxC');
         }
     }
 }
