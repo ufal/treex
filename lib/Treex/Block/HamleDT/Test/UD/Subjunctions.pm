@@ -21,7 +21,7 @@ sub process_atree
             # Do not test subordinators in foreign text, they have their own rules for attachment.
             next if($deprel eq 'foreign');
             # In some cases the subordinating conjunction can have children.
-            my @forbidden_children = grep {$node->deprel() !~ m/^(mwe)$/} ($node->children());
+            my @forbidden_children = grep {$_->deprel() !~ m/^(mwe)$/} ($node->children());
             my $ok = scalar(@forbidden_children)==0 || $parent->is_root();
             if($parent->is_root())
             {

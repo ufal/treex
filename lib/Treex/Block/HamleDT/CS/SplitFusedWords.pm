@@ -8,7 +8,8 @@ extends 'Treex::Core::Block';
 
 #------------------------------------------------------------------------------
 # Splits certain tokens to syntactic words according to the guidelines of the
-# Universal Dependencies.
+# Universal Dependencies. This block should be called after the tree has been
+# converted to UD, not before!
 #------------------------------------------------------------------------------
 sub process_zone
 {
@@ -16,6 +17,7 @@ sub process_zone
     my $zone = shift;
     my $root = $zone->get_atree();
     $self->split_fused_words($root);
+    $self->fix_jako_kdyby($root);
 }
 
 
@@ -209,6 +211,41 @@ sub split_fused_token
 
 
 
+#------------------------------------------------------------------------------
+# Czech "jako kdyby" ("as if") can be considered a multi-word expression.
+# In UD, "kdyby" is treated as a fusion of "když+by", hence we have "jako když
+# by". Both "když" and "by" are attached to "jako" but this is an example where
+# we actually want to attach each part to a different parent: "když" to "jako"
+# (mwe), and "by" (aux) to the verb parent of "jako".
+#------------------------------------------------------------------------------
+sub fix_jako_kdyby
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    for(my $i = 0; $i+2 <= $#nodes; $i++)
+    {
+        my $n0 = $nodes[$i];
+        my $n1 = $nodes[$i+1];
+        my $n2 = $nodes[$i+2];
+        if(defined($n0->form()) && lc($n0->form()) eq 'jako' &&
+           defined($n1->form()) && lc($n1->form()) eq 'když' &&
+           defined($n2->form()) && $n2->form() =~ m/^by(ch|s|chom|ste)?$/i &&
+           $n1->parent() == $n0 && $n2->parent() == $n0)
+        {
+            my $verb = $n0->parent();
+            if(!$verb->is_root() && $verb->is_verb())
+            {
+                $n2->set_parent($verb);
+                $n2->set_deprel('aux');
+            }
+            $n1->set_deprel('mwe');
+        }
+    }
+}
+
+
+
 1;
 
 =over
@@ -217,6 +254,10 @@ sub split_fused_token
 
 Splits certain tokens to syntactic words according to the guidelines of the
 Universal Dependencies.
+
+This block should be called after the tree has been converted to Universal
+Dependencies so that the tags and dependency relation labels are from the UD
+set.
 
 =back
 
