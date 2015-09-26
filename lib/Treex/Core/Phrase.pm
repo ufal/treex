@@ -76,6 +76,20 @@ sub dependents
 
 
 #------------------------------------------------------------------------------
+# Returns the list of children of the phrase. This is an abstract method that
+# must be implemented in every derived class. Nonterminal phrases distinguish
+# between core children and dependents, and this method should return both.
+# Terminal phrases return an empty list by definition.
+#------------------------------------------------------------------------------
+sub children
+{
+    my $self = shift;
+    log_fatal("The children() method is not implemented");
+}
+
+
+
+#------------------------------------------------------------------------------
 # Tests whether this phrase depends on another phrase via the parent links.
 # This method is used to prevent cycles when setting a new parent.
 #------------------------------------------------------------------------------
@@ -294,6 +308,13 @@ Returns the list of dependents of the phrase. This is an abstract method that
 must be implemented in every derived class. Nonterminal phrases have a list
 of dependents (possible empty) as their attribute. Terminal phrases return an
 empty list by definition.
+
+=item my @children = $phrase->children();
+
+Returns the list of children of the phrase. This is an abstract method that
+must be implemented in every derived class. Nonterminal phrases distinguish
+between core children and dependents, and this method should return both.
+Terminal phrases return an empty list by definition.
 
 =item if( $phrase->is_descendant_of ($another_phrase) ) {...}
 

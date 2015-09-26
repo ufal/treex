@@ -97,6 +97,18 @@ sub dependents
 
 
 #------------------------------------------------------------------------------
+# Returns the list of children of the phrase. Terminal phrases return an empty
+# list by definition.
+#------------------------------------------------------------------------------
+sub children
+{
+    my $self = shift;
+    return ();
+}
+
+
+
+#------------------------------------------------------------------------------
 # Projects dependencies between the head and the dependents back to the
 # underlying dependency structure. There is not much to do in the terminal
 # phrase as it does not have any dependents. However, we will attach all nodes
@@ -199,6 +211,11 @@ to which the C<node> attribute refers.
 =item dependents
 
 Returns the list of dependents of the phrase. Terminal phrases return an
+empty list by definition.
+
+=item children
+
+Returns the list of children of the phrase. Terminal phrases return an
 empty list by definition.
 
 =item project_dependencies

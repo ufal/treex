@@ -605,10 +605,10 @@ sub detect_compound_numeral
     # Is the head a cardinal numeral and are there non-core children that are
     # cardinal numerals?
     my @dependents = $phrase->dependents();
-    my @cnum = grep {$_->node()->is_cardinal()} (@dependents);
-    if($phrase->node()->is_cardinal() && scalar(@cnum)>=1)
+    my @cnum = grep {$_->node()->is_cardinal() && $_->node()->iset()->prontype() eq ''} (@dependents);
+    if($phrase->node()->is_cardinal() && $phrase->node()->iset()->prontype() eq '' && scalar(@cnum)>=1)
     {
-        my @rest = grep {!$_->node()->is_cardinal()} (@dependents);
+        my @rest = grep {!$_->node()->is_cardinal() || $_->node()->iset()->prontype() ne ''} (@dependents);
         # The current phrase is a number, too.
         # Detach the dependents first, so that we can put the current phrase on the same level with the other names.
         foreach my $d (@dependents)
@@ -658,42 +658,67 @@ sub detect_counted_noun_in_genitive
     my $self = shift;
     my $phrase = shift; # Treex::Core::Phrase
     # Is the head a cardinal numeral and are there non-core children that are
-    # nominals (nouns or pronouns) in genitive?
-    my @dependents = $phrase->dependents('ordered' => 1);
-    my @gen = grep {$_->node()->is_noun() && $_->node()->iset()->case() eq 'gen'} (@dependents);
-    if($phrase->node()->is_cardinal() && scalar(@gen)>=1)
+    # nominals (nouns or pronouns) in genitive? Do not count genitives with
+    # adpositions (e.g. [cs] "5 ze 100 obyvatel", "5 per 100 inhabitants").
+    if($phrase->node()->is_cardinal())
     {
-        # We do not expect more than one genitive noun phrase. If we encounter them,
-        # we will just take the first one and treat the others as normal dependents.
-        my $counted_noun = shift(@gen);
-        my @rest = grep {!$_->node()->is_noun() || $_->node()->iset()->case() ne 'gen'} (@dependents);
-        push(@rest, @gen) if(@gen);
-        # We may not be able to just set the counted noun as the new head. If it is a Coordination, there are other rules for finding the head.
-        ###!!! Maybe we should extend the set_head() method to special nonterminals? It would create an extra NTerm phrase, move the dependents
-        ###!!! there and set the core as its head? That's what we will do here anyway, and it has been needed repeatedly.
-        # Detach the dependents first, so that we can put the current phrase on the same level with the other names.
-        # Compound numerals should have been detected first so that by now they are safely encapsulated in their own nonterminal (which is our head child).
+        my @dependents = $phrase->dependents('ordered' => 1);
+        my @gen;
+        my @rest;
+        # Find counted noun in genitive.
         foreach my $d (@dependents)
         {
-            $d->set_parent(undef);
+            my $ok = $d->node()->is_noun() && $d->node()->iset()->case() eq 'gen';
+            if($ok)
+            {
+                my @dchildren = $d->children();
+                $ok = $ok && !any {$_->node()->is_adposition()} (@dchildren);
+                $ok = $ok && $d->deprel() ne 'appos';
+            }
+            if($ok)
+            {
+                push(@gen, $d);
+            }
+            else
+            {
+                push(@rest, $d);
+            }
         }
-        my $deprel = $phrase->deprel();
-        my $member = $phrase->is_member();
-        $phrase->set_is_member(0);
-        # Create a new nonterminal phrase with the counted noun as the head.
-        my $ntphrase = new Treex::Core::Phrase::NTerm('head' => $counted_noun);
-        foreach my $d (@rest)
+        if(scalar(@gen)>=1)
         {
-            $d->set_parent($ntphrase);
-            $d->set_is_member(0);
+            # We do not expect more than one genitive noun phrase. If we encounter them,
+            # we will just take the first one and treat the others as normal dependents.
+            my $counted_noun = shift(@gen);
+            push(@rest, @gen) if(@gen);
+            # We may not be able to just set the counted noun as the new head. If it is a Coordination, there are other rules for finding the head.
+            ###!!! Maybe we should extend the set_head() method to special nonterminals? It would create an extra NTerm phrase, move the dependents
+            ###!!! there and set the core as its head? That's what we will do here anyway, and it has been needed repeatedly.
+            # Detach the counted noun but not the other dependents. If there is anything else attached directly to the numeral,
+            # it should probably stay there. Example [cs]: "ze 128 křesel jich 94 připadne..." "jich" is the counted nominal, "94" is the number
+            # and "ze 128 křesel" ("out of 128 seats") modifies the number, not the nominal.
+            # Unfortunately there are also counterexamples and from the original Prague annotation we cannot decide what modifies the numeral and what the counted noun.
+            # If the noun is "procent" or "kilometrů", then it is quite likely that the modifier should be attached to the nominal ("31.5 kilometru od pobřeží").
+            $counted_noun->set_parent(undef);
+            my $deprel = $phrase->deprel();
+            my $member = $phrase->is_member();
+            $phrase->set_is_member(0);
+            # If the deprel convertor returned nummod or its relatives, it means that the whole phrase (numeral+nominal)
+            # originally modified another nominal as Atr. Since the counted noun is now going to head the phrase, we
+            # have to change the deprel to nmod. We would not change the deprel if it was nsubj, dobj, appos etc.
+            if($deprel =~ m/^(nummod|nummod:gov|det:nummod|det:numgov)$/)
+            {
+                $deprel = 'nmod';
+            }
+            # Create a new nonterminal phrase with the counted noun as the head.
+            my $ntphrase = new Treex::Core::Phrase::NTerm('head' => $counted_noun);
+            # Attach the numeral also as a dependent to the new phrase.
+            $phrase->set_parent($ntphrase);
+            $phrase->set_deprel($phrase->node()->iset()->prontype() eq '' ? 'nummod:gov' : 'det:numgov');
+            $phrase->set_is_member(0);
+            $phrase = $ntphrase;
+            $phrase->set_deprel($deprel);
+            $phrase->set_is_member($member);
         }
-        # Attach the numeral also as a dependent to the new phrase.
-        $phrase->set_parent($ntphrase);
-        $phrase->set_deprel($phrase->node()->iset()->prontype() eq '' ? 'nummod:gov' : 'det:numgov');
-        $phrase->set_is_member(0);
-        $phrase = $ntphrase;
-        $phrase->set_deprel($deprel);
-        $phrase->set_is_member($member);
     }
     return $phrase;
 }
