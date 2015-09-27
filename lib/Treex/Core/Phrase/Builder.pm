@@ -109,6 +109,7 @@ sub detect_special_constructions
         $phrase = $self->detect_compound_numeral($phrase);
         $phrase = $self->detect_counted_noun_in_genitive($phrase);
         $phrase = $self->detect_indirect_object($phrase);
+        $phrase = $self->detect_controlled_verb($phrase);
     }
     else
     {
@@ -773,6 +774,36 @@ sub detect_indirect_object
                     $d->set_deprel('iobj');
                 }
             }
+        }
+    }
+    return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Clausal complements should be labeled ccomp or xcomp, whereas xcomp is
+# reserved for controlled verbs whose subject is inherited from the controlling
+# verb. This means (at least in some languages) that the controlled verb is in
+# infinitive. However, we have to check that the infinitive form is not caused
+# by the periphrastic future tense (cs: "bude následovat"). In such cases the
+# whole verb group (auxiliary + main verb) is actually finite and uncontrolled.
+# They have their own subject independent of the governing verb (cs: "Ti
+# odhadují, že po uvolnění cen nebude následovat jejich okamžitý vzestup.")
+#------------------------------------------------------------------------------
+sub detect_controlled_verb
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    # Only look for clausal complements headed by verbs.
+    # We assume that ccomp has been initially changed to xcomp wherever infinitive was seen,
+    # so now we only check that the infinitive is genuine.
+    if($phrase->node()->is_infinitive() && $phrase->deprel() eq 'xcomp')
+    {
+        my @dependents = $phrase->dependents();
+        if(any {$_->deprel() eq 'aux' && $_->node()->iset()->tense() eq 'fut'} (@dependents))
+        {
+            $phrase->set_deprel('ccomp');
         }
     }
     return $phrase;
