@@ -110,6 +110,7 @@ sub detect_special_constructions
         $phrase = $self->detect_counted_noun_in_genitive($phrase);
         $phrase = $self->detect_indirect_object($phrase);
         $phrase = $self->detect_controlled_verb($phrase);
+        $phrase = $self->detect_controlled_subject($phrase);
     }
     else
     {
@@ -804,6 +805,45 @@ sub detect_controlled_verb
         if(any {$_->deprel() eq 'aux' && $_->node()->iset()->tense() eq 'fut'} (@dependents))
         {
             $phrase->set_deprel('ccomp');
+        }
+    }
+    return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Infinitives controlled by other verbs (xcomp) cannot have their own subject.
+# The subject must be attached directly to the controlling verb. This rule
+# holds even in the Prague treebanks but it is occasionally violated due to
+# annotation errors. This method tries to detect such instances and fix them.
+# It must not be called before xcomp labels are fixed (see detect_controlled_
+# verb() above)!
+#------------------------------------------------------------------------------
+sub detect_controlled_subject
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    # Look for controlling verb that does not have its own overt subject.
+    if($phrase->node()->is_verb())
+    {
+        my @dependents = $phrase->dependents();
+        my @controlled_infinitives = grep {$_->deprel() eq 'xcomp' && $_->node()->is_infinitive()} (@dependents);
+        my $has_subject = any {$_->deprel() =~ m/^[nc]subj(pass)?(:|$)/} (@dependents);
+        if(scalar(@controlled_infinitives)>0 && !$has_subject)
+        {
+            # It is not clear what we should do if there is more than one infinitive and they are not in coordination.
+            # We assume that there should be just one and we will take the first one if there are more.
+            # If there is a coordination of infinitives, we can only fix the error if they share one subject.
+            # If the subject(s) is (are) attached as private dependents of the conjuncts, we will not fix them.
+            my $infinitive = shift(@controlled_infinitives);
+            my @subjects = grep {$_->deprel() =~ m/^[nc]subj(pass)?(:|$)/} ($infinitive->dependents());
+            if(scalar(@subjects)>0)
+            {
+                # Again, more than one subject (uncoordinate) does not make sense. Let's take the first one.
+                my $subject = shift(@subjects);
+                $subject->set_parent($phrase);
+            }
         }
     }
     return $phrase;
