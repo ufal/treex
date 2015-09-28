@@ -7,6 +7,18 @@ copyright_holder = Institute of Formal and Applied Linguistics, Charles Universi
 ; TODO - which module will be main?
 main_module = lib/Treex/Tutorial.pod 
 
+[Git::Check]
+allow_dirty = dist.ini
+allow_dirty = README
+changelog = Changes      ; this is the default
+build_warnings = 0       ; this is the default
+untracked_files = warn    ; default value (can also be "warn" or "ignore")
+
+[Git::Tag]
+tag_format  = %N_%v
+
+[Git::Push]
+
 [@Basic]
 
 [AutoPrereqs]

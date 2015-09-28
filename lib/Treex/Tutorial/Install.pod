@@ -366,6 +366,8 @@ You can also delete the added lines from F<~/.bashrc>
 
 Martin Popel <popel@ufal.mff.cuni.cz>
 
+Dušan Variš <varis@ufal.mff.cuni.cz>
+
 =head1 COPYRIGHT AND LICENSE
 
 Copyright © 2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
