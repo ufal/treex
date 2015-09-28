@@ -3,7 +3,7 @@ use utf8;
 use open ':utf8';
 use Moose;
 use Treex::Core::Common;
-use Treex::Core::Phrase::Builder;
+use Treex::Tool::PhraseBuilder;
 extends 'Treex::Core::Block';
 
 has 'last_file_stem' => ( is => 'rw', isa => 'Str', default => '' );
@@ -60,7 +60,7 @@ sub process_zone
     # below say how should the resulting dependency tree look like. The code
     # of the builder knows how the INPUT tree looks like (including the deprels
     # already converted from Prague to the UD set).
-    my $builder = new Treex::Core::Phrase::Builder
+    my $builder = new Treex::Tool::PhraseBuilder
     (
         'prep_is_head'           => 0,
         'cop_is_head'            => 0,
@@ -68,7 +68,6 @@ sub process_zone
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
-    ###!!! The rest is the old implementation. Perhaps there are other bits that we could move to the phrase builder?
     $self->change_case_to_mark_under_verb($root);
     $self->fix_jak_znamo($root);
     $self->classify_numerals($root);
@@ -344,7 +343,7 @@ sub afun_to_udeprel
         }
         # Reflexive pronoun "se", "si" with inherently reflexive verbs.
         # Unfortunately, previous harmonization to the Prague style abused the AuxT label to also cover Germanic verbal particles and other compound-like stuff with verbs.
-        # We have to test for reflexivity if we want to output compound:reflex!
+        # We have to test for reflexivity if we want to output expl!
         elsif($afun eq 'AuxT')
         {
             # This appears in Slavic languages, although in theory it could be used in some Romance and Germanic languages as well.
@@ -352,7 +351,7 @@ sub afun_to_udeprel
             # Most Dutch pronouns used with this label are tagged as reflexive but a few are not.
             if($node->is_reflexive() || $node->is_pronoun())
             {
-                $deprel = 'compound:reflex';
+                $deprel = 'expl';
             }
             # The Tamil afun CC (compound) has also been converted to AuxT. 11 out of 12 occurrences are tagged as verbs.
             elsif($node->is_verb())
@@ -854,6 +853,13 @@ sub fix_annotation_errors
         elsif(lc($form) eq 'jakmile' && $pos eq 'conj' && $afun eq 'Adv')
         {
             $node->set_afun('AuxC');
+        }
+        # In the Czech PDT, there is one occurrence of English "Devil ' s Hole", with the dependency AuxT(Devil, s).
+        # Since "s" is not a reflexive pronoun, the convertor would convert the AuxT to compound:prt, which is not allowed in Czech.
+        # Make it Atr instead. It will be converted to foreign.
+        elsif($form eq 's' && $node->afun() eq 'AuxT' && $node->parent()->form() eq 'Devil')
+        {
+            $node->set_afun('Atr');
         }
     }
 }
