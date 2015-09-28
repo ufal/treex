@@ -68,7 +68,6 @@ sub process_zone
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
-    ###!!! The rest is the old implementation. Perhaps there are other bits that we could move to the phrase builder?
     $self->change_case_to_mark_under_verb($root);
     $self->fix_jak_znamo($root);
     $self->classify_numerals($root);
@@ -854,6 +853,13 @@ sub fix_annotation_errors
         elsif(lc($form) eq 'jakmile' && $pos eq 'conj' && $afun eq 'Adv')
         {
             $node->set_afun('AuxC');
+        }
+        # In the Czech PDT, there is one occurrence of English "Devil ' s Hole", with the dependency AuxT(Devil, s).
+        # Since "s" is not a reflexive pronoun, the convertor would convert the AuxT to compound:prt, which is not allowed in Czech.
+        # Make it Atr instead. It will be converted to foreign.
+        elsif($form eq 's' && $node->afun() eq 'AuxT' && $node->parent()->form() eq 'Devil')
+        {
+            $node->set_afun('Atr');
         }
     }
 }
