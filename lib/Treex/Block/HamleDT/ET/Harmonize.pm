@@ -237,10 +237,9 @@ sub set_afun {
     } elsif (grep $_ eq $func, qw/UTT REP T/) {
         $afun = 'ExD';
 
-    # verbal particle (similar to preposition in English phrasal
-    # verbs). AuxV was used.
+    # verbal particle (similar to preposition in English phrasal verbs).
     } elsif ('Vpart' eq $func) {
-        $afun = 'AuxV';
+        $afun = 'AuxT';
         log_warn("Vpart under non-verb\t" . $achild->get_address)
             unless $ahead->tag =~ /^v/;
 
