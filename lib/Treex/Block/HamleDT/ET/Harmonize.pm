@@ -177,7 +177,7 @@ sub set_afun {
     } elsif ('A' eq $func) {
         # The subordinating conjunctions "kui" (when), "nagu" (as) and "et" (so that)
         # are sometimes attached as "A" but we do not want to label them "Adv".
-        if($achild->tag eq 'conj-s')
+        if($achild->tag =~ m/conj-s/)
         {
             $afun = 'AuxC';
         }
