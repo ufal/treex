@@ -4,6 +4,7 @@ use Treex::Core::Common;
 
 my $FULL = <<'END';
 T2T::SetClauseNumber
+T2A::EU::FixOrder
 T2A::CopyTtree
 T2A::MarkSubject
 T2A::InitMorphcat

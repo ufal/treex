@@ -6,6 +6,7 @@ extends 'Treex::Core::Block';
 
 #TODO These hacks should be removed from here and added to the translation dictionary
 Readonly my %QUICKFIX_TRANSLATION_OF => (
+     'tap'                => 'sakatu|verb',
 #    'software'           => 'programa|noun',
 );
 

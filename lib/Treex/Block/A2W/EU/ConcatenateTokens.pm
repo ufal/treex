@@ -11,12 +11,6 @@ sub process_zone {
         map { $_->form || '' }
         $a_root->get_descendants( { ordered => 1 } );
 
-    # Spanish contractions, e.g. "de_" + "el" = "del"
-    $sentence =~ s/\b(de|a) el\b/$1l/g;    # del, al
-
-    # TODO: detached  clitic, e.g. "da" + "-se-" + "-lo" = "dá-se-lo"
-
-
     $sentence =~ s/ +/ /g;
     $sentence =~ s/ ([!,.?:;])/$1/g;
     $sentence =~ s/(["”’])\./\.$1/g;
@@ -27,6 +21,7 @@ sub process_zone {
 
     $sentence =~ s/ -- / – /g;
 
+    $sentence =~ s/_/ /g;                            # this shouldn't happen
 
     # (The whole sentence is in parenthesis).
     # (The whole sentence is in parenthesis.)
@@ -35,6 +30,8 @@ sub process_zone {
     }
     
     # HACKS:
+    $sentence =~ s/`` ?/"/g;
+    $sentence =~ s/ ?''/"/g;
 
     $zone->set_sentence($sentence);
     return;
