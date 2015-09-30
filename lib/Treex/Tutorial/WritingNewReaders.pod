@@ -8,7 +8,9 @@ package Treex::Tutorial::WritingNewReaders;
 
 Treex::Tutorial::WritingNewReaders - Guidelines for writing your own Treex reader/writer blocks.
 
-=head1 TODO
+=head1 EXAMPLES
+
+TODO
 
 =head1 AUTHOR
 

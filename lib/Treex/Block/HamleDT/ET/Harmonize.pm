@@ -175,7 +175,16 @@ sub set_afun {
         }
 
     } elsif ('A' eq $func) {
-        $afun = 'Adv';
+        # The subordinating conjunctions "kui" (when), "nagu" (as) and "et" (so that)
+        # are sometimes attached as "A" but we do not want to label them "Adv".
+        if($achild->tag =~ m/conj-s/)
+        {
+            $afun = 'AuxC';
+        }
+        else
+        {
+            $afun = 'Adv';
+        }
 
     # not sure about this one (??)
     } elsif ('DA' eq $func) {
@@ -237,10 +246,9 @@ sub set_afun {
     } elsif (grep $_ eq $func, qw/UTT REP T/) {
         $afun = 'ExD';
 
-    # verbal particle (similar to preposition in English phrasal
-    # verbs). AuxV was used.
+    # verbal particle (similar to preposition in English phrasal verbs).
     } elsif ('Vpart' eq $func) {
-        $afun = 'AuxV';
+        $afun = 'AuxT';
         log_warn("Vpart under non-verb\t" . $achild->get_address)
             unless $ahead->tag =~ /^v/;
 
