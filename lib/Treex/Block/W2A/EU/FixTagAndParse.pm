@@ -7,19 +7,60 @@ my $imperative_iset = Lingua::Interset::FeatureStructure->new({pos=> 'verb', ver
 
 sub process_anode {
     my ($self, $anode) = @_;
+    my $form = $anode->form;
     my $lemma = $anode->lemma;
     
     # == Fix dependency structutre
-   
     
     # == Fix lemma
     $lemma = "ukan" if ($lemma eq "*edun");
     $lemma = "edin" if ($lemma eq "*edin");
     $lemma = "ezan" if ($lemma eq "*ezan");
 
+    # hyphen separated inflection
+    if (lc($form) eq lc($lemma) && $lemma =~ s/-e?ko$//) {
+	$anode->set_iset('case'=>'gen');
+	$anode->set_afun('Obj');
+    }
+
+    if ($form eq $lemma && $lemma =~ s/-r?en$//) {
+	$anode->set_iset('case'=>'gen');
+	$anode->set_afun('Obj');
+    }
+
+    if (lc($form) eq lc($lemma) && $lemma =~ s/-a?n$//) {
+	$anode->set_iset('case'=>'loc');
+	$anode->set_afun('Obj');
+    }
+
+    if (lc($form) eq lc($lemma) && $lemma =~ s/-e?ra$//) {
+	$anode->set_iset('case'=>'all');
+	$anode->set_afun('Obj');
+    }
+
+    if (lc($form) eq lc($lemma) && $lemma =~ s/-e?k$//) {
+	$anode->set_iset('case'=>'erg');
+	$anode->set_afun('Obj');
+    }
+
+    if (lc($form) eq lc($lemma) && $lemma =~ s/-a$//) {
+	$anode->set_iset('case'=>'abs');
+	$anode->set_afun('Obj');
+    }
+
+    if (lc($form) eq lc($lemma) && $lemma =~ s/-a?ri$//) {
+	$anode->set_iset('case'=>'dat');
+	$anode->set_afun('Obj');
+    }
+
+
     $anode->set_lemma($lemma);
     
     # == Fix iset
+    if ($lemma eq "bat") {
+	$anode->set_iset('pos'=>'adj', 'prontype'=>'art', 'definiteness'=>'ind', 'number'=>'sing');
+	$anode->set_afun('AuxA');
+    }
 
     # Some subjects should be actually objects
     $self->fix_false_subject($anode);  
