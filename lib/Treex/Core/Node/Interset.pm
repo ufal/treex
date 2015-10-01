@@ -9,7 +9,7 @@ parameter interset_attribute => (
 
 use Treex::Core::Log;
 use List::Util qw(first); # TODO: this wouldn't be needed if there was Treex::Core::Common for roles
-use Lingua::Interset 2.047;
+use Lingua::Interset 2.050;
 use Lingua::Interset::FeatureStructure;
 use Data::Dumper;
 
