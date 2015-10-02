@@ -203,6 +203,10 @@ sub fix_node {
         #   "Which(parent=failed) students failed?"
         if ( $p_tag =~ /^(V|MD)/ && $node->precedes($parent) ) {
             if ( $ord == 1 && $grandpa->is_root() && $last_form eq '?' && $next_tag =~ /^N/ ) {
+                # Very rare case: "WHich(parent=watch) BBC(parent=WHich) do you watch?" 
+                if ($next_node->parent == $node){
+                    $next_node->set_parent($parent);
+                }
                 $node->set_parent($next_node);
             }
             return;
