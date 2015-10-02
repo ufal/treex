@@ -97,7 +97,7 @@ sub _resolve_entities {
         }
     }
     
-    log_info Dumper(\@resolved_entities);
+    #log_info Dumper(\@resolved_entities);
 
     return \@resolved_entities;
 }
