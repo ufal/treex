@@ -250,7 +250,7 @@ Main feature: sentences are chunked, there are dependencies between chunks, not 
 This block creates a-tree nodes for both chunks and tokens; tokens are children of their chunks.
 One may later want to collapse chunks and have only nodes for tokens. That would require at least figuring out chunk heads.
 Lemmas (if present at all) are hidden somewhere in the conll_feat attribute. Their exact format may vary across corpora
-so we do not attempt to identify them and move them to the lemma attribute.
+so we do not attempt to identify them and to move them to the lemma attribute.
 
 =head1 ATTRIBUTES
 

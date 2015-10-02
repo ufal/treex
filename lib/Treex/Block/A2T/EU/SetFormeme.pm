@@ -23,8 +23,9 @@ override 'formeme_for_adv' => sub {
     # Let's handle it here. If needed it is easy to override this method to return always 'adv'.
     my @a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
     push @a_nodes, $a_node;
+    push @a_nodes, grep {$_->afun eq "Atr"} $a_node->get_children();
     my $prep = $self->get_aux_string(@a_nodes);
-    return "adv:$prep+X" if $prep;
+    return "adv:$prep+X" if ($prep && $a_node->afun ne "Atr");
     return 'adv';
 };
 
@@ -34,8 +35,9 @@ override 'formeme_for_noun' => sub {
     # noun with a preposition (or postposition)
     my @a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
     push @a_nodes, $a_node;
+    push @a_nodes, grep {$_->afun eq "Atr"} $a_node->get_children();
     my $prep = $self->get_aux_string(@a_nodes);
-    return "n:$prep+X" if $prep;
+    return "n:$prep+X" if ($prep && $a_node->afun ne "Atr");
 
     return super();
 };
@@ -45,9 +47,10 @@ override 'formeme_for_adj' => sub {
 
     my @a_nodes = $t_node->get_aux_anodes( { ordered => 1 } );
     push @a_nodes, $a_node;
+    push @a_nodes, grep {$_->afun eq "Atr"} $a_node->get_children();
     my $prep = $self->get_aux_string(@a_nodes);
 
-    return "n:$prep+X" if $prep; # adjectives with prepositions are treated as a nominal usage
+    return "n:$prep+X" if ($prep && $a_node->afun ne "Atr"); # adjectives with prepositions are treated as a nominal usage
     return 'adj:poss'  if $a_node->match_iset(poss=>'poss', prontype=>'prs'); # possesive personal pronouns
     return 'adj:attr'  if $self->below_noun($t_node) || $self->below_adj($t_node);
     return 'n:subj'    if $a_node->afun eq 'Sb'; # adjectives in the subject positions -- nominal usage
