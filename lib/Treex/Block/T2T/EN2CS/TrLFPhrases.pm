@@ -7,20 +7,22 @@ extends 'Treex::Core::Block';
 use Treex::Tool::ML::NormalizeProb;
 
 # TODO: it is taking the place of... #make use of
+# CP means "child parent" (surface word order), PC means "parent child".
 Readonly my $CHILD_PARENT_TO_ONE_NODE => {
-    prime_minister => 'premiér#N',
-    Dalai_Lama     => 'dalajláma#N',
-    use_make       => 'použít#V|využít#V|používat#V|využívat#V',
-    sure_make      => 'ujistit_se#V|zkontrolovat#V',
-    place_take     => 'konat_se#V|proběhnout#V|probíhat#V',
-    happy_make     => 'potěšit#V|těšit#V',
-    ready_get      => 'připravit_se#V|připravit#V',
-    this_time      => 'tentokrát#D',
-    that_time      => 'tehdy#D',
-    first_time     => 'poprvé#D',
-    second_time    => 'podruhé#D',
-    third_time     => 'potřetí#D',
-    last_time      => 'naposledy#D',
+    prime_minister_CP => 'premiér#N',
+    Dalai_Lama_CP     => 'dalajláma#N',
+    make_use_PC       => 'použít#V|využít#V|používat#V|využívat#V',
+    make_sure_PC      => 'ujistit_se#V|zkontrolovat#V',
+    take_place_PC     => 'konat_se#V|proběhnout#V|probíhat#V',
+    make_happy_PC     => 'potěšit#V|těšit#V',
+    get_ready_PC      => 'připravit_se#V|připravit#V',
+    this_time_CP      => 'tentokrát#D',
+    that_time_CP      => 'tehdy#D',
+    first_time_CP     => 'poprvé#D',
+    second_time_CP    => 'podruhé#D',
+    third_time_CP     => 'potřetí#D',
+    last_time_CP      => 'naposledy#D',
+    right_click_CP    => 'pravým tlačítkem myši klikněte#V',
 };
 
 sub process_ttree {
@@ -147,7 +149,8 @@ sub process_tnode {
     }
 
     # Two English t-nodes, child and parent, translates to one Czech t-node
-    my $one_node_variants = $CHILD_PARENT_TO_ONE_NODE->{ $lemma . '_' . $p_lemma };
+    my $key = $en_parent->precedes($en_tnode) ? $p_lemma . '_' . $lemma . '_PC' : $lemma . '_' . $p_lemma . '_CP';
+    my $one_node_variants = $CHILD_PARENT_TO_ONE_NODE->{$key};
     if ($one_node_variants) {
         my @variants = split /\|/, $one_node_variants;
         my $uniform_logprob = Treex::Tool::ML::NormalizeProb::prob2binlog( 1 / @variants );
