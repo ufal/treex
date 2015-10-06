@@ -56,7 +56,8 @@ sub _extract_class {
     my ($self, $match, $trg_sent) = @_;
     my $id = $match->[0];
     my $trg_phrase = $self->_trg_gazetteer_hash->get_phrase_by_id($id);
-    return ($trg_sent =~ /((^)|( ))\Q$trg_phrase\E[.,?!: ]/) ? 1 : 0;
+    #return ($trg_sent =~ /((^)|( ))\Q$trg_phrase\E[.,?!: ]/) ? 1 : 0;
+    return ($trg_sent =~ /((^)|( ))\Q$trg_phrase\E[.,?!: ]/) ? 1 : 2;
 }
 
 sub _extract_feats {
