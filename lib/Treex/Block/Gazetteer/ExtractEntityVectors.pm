@@ -45,7 +45,7 @@ sub process_bundle {
     foreach my $match (@$matches) {
         my $class = $self->_extract_class($match, $trg_zone->sentence);
         my $feats = $self->_extract_feats($match);
-        my $comment = $match->[1] . "; " . $trg_zone->sentence;
+        my $comment = $match->[1] . "; " . $src_zone->sentence . "; ". $trg_zone->sentence;
 
         my $str = Treex::Tool::ML::VowpalWabbit::Util::format_singleline($feats, $class, $class, $comment);
         print {$self->_file_handle} $str;
