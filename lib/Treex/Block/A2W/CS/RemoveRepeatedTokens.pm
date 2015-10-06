@@ -17,6 +17,7 @@ sub process_zone {
         if ($i == 0
             or $tokens[$i] =~ /^\s+$/
             or lc( $tokens[$i] ) ne $prev_nonempty
+            or $prev_nonempty =~ /^xxx.+xxx$/i #xxxURLxxx created by W2A::HideIT
             )
         {
             $reduced_sentence .= $tokens[$i];
