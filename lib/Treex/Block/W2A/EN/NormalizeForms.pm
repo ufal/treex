@@ -19,12 +19,9 @@ sub process_anode {
         }
     }
 
-    $form =~ s/’/'/g;
-    $form =~ s/"/''/g;
-    $form =~ s/“/``/g;
-    $form =~ s/”/''/g;
-    $form =~ s/«/``/g;
-    $form =~ s/»/''/g;
+    $form =~ s/[’´]/'/g;
+    $form =~ s/["”»]/''/g;
+    $form =~ s/[“«]/``/g;
     $form =~ s/—/--/g;
 
     $anode->set_form($form);
