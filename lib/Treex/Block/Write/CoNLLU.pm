@@ -90,6 +90,11 @@ sub process_atree
         {
             push(@misc, 'SpaceAfter=No');
         }
+        # If transliteration of the word form to Latin (or another) alphabet is available, put it in the MISC column.
+        if(defined($node->translit()))
+        {
+            push(@misc, 'Translit='.$node->translit());
+        }
         ###!!! Czech-specific wild attributes that have been cut off the lemma.
         ###!!! In the future we will want to make them normal attributes.
         if(exists($wild->{lid}) && defined($wild->{lid}))

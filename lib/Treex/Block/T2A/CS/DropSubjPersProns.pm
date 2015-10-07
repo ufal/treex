@@ -7,18 +7,6 @@ extends 'Treex::Core::Block';
 sub process_tnode {
     my ( $self, $t_node ) = @_;
 
-    #my $src_tnode = $t_node->src_tnode;
-    #my $src_anode = defined $src_tnode ? $src_tnode->get_lex_anode() : undef;
-    #my $is_it = ($src_tnode && ($src_tnode->t_lemma eq "#PersPron") && $src_anode && ($src_anode->lemma eq "it")) ? 1 : 0;
-    #print STDERR "IS_IT: $is_it\n";
-
-    # We want to drop only subjects that are not coordinated ("he or she")
-    #my $undroppable = $t_node->formeme !~ /(:1|^drop)$/;
-    #if ($is_it && ($undroppable || $t_node->is_member)) {
-    #    print STDERR "IT_TRANSL_RULE:\t" . $src_tnode->get_address . "\tt\n";
-    #}
-    #return if $undroppable;
-    
     return if $t_node->formeme !~ /(:1|^drop)$/;
     return if $t_node->is_member;
 
@@ -30,15 +18,7 @@ sub process_tnode {
     my $lemma   = $t_node->t_lemma;
     if ( $lemma eq 'ten' && $p_lemma !~ /^(být|znamenat)$/ ) {
         drop($t_node);
-        #if ($is_it) {
-        #    print STDERR "IT_TRANSL_RULE:\t" . $src_tnode->get_address . "\tn\n";
-        #}
     }
-    #else {
-    #    if ($is_it) {
-    #        print STDERR "IT_TRANSL_RULE:\t" . $src_tnode->get_address . "\tt\n";
-    #    }
-    #}
 
     # Now we are interested only in personal pronouns
     return if $lemma ne '#PersPron';
@@ -71,17 +51,9 @@ sub drop {
         return;
     }
 
-    # This is no more needed with backrefs.
-    # Moreover, using set_attr for *.rf attributes is now forbidden.
-    #$t_node->set_attr( 'a/lex.rf', undef );
-
-    # rehang PersPron's children (theoretically there should be none, but ...)
-    foreach my $a_child ( $a_node->get_children() ) {
-        $a_child->set_parent( $a_node->get_parent() );
-    }
-
     # delete the a-node
-    $a_node->remove();
+    # rehang PersPron's children (theoretically there should be none, but ...)
+    $a_node->remove({children => 'rehang'});
 }
 
 1;

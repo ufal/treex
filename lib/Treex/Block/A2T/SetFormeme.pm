@@ -28,6 +28,7 @@ my %INTERSET_TO_SYNTPOS = (
     adj  => 'adj',
     adv  => 'adv',
     verb => 'v',
+    int => 'x',
 );
 
 sub detect_syntpos {

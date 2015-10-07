@@ -136,6 +136,8 @@ override '_build_gram2form' => sub {
     };
 };
 
+my @synthetic = ('egon');
+
 override 'process_tnode' => sub {
     my ( $self, $tnode ) = @_;
     my ( $verbmod, $tense, $deontmod, $aspect ) = ( $tnode->gram_verbmod // '', $tnode->gram_tense // '', $tnode->gram_deontmod // '', $tnode->gram_aspect // '');
@@ -149,6 +151,8 @@ override 'process_tnode' => sub {
     return if ( !$self->gram2form->{$aspect} or !$self->gram2form->{$aspect}->{$verbmod} or !$self->gram2form->{$aspect}->{$verbmod}->{$tense} or !$self->gram2form->{$aspect}->{$verbmod}->{$tense}->{$deontmod});
     my $verbforms_str = $self->gram2form->{$aspect}->{$verbmod}->{$tense}->{$deontmod};
     return if ( !$verbforms_str );
+
+    return if ( $deontmod eq 'decl' && grep {$tnode->t_lemma eq $_} @synthetic);
 
     my $transitive = $self->is_transitive($tnode);
 

@@ -72,10 +72,16 @@ sub deprel_to_afun
         # PADT defines some afuns that were not defined in PDT.
         # PredE = existential predicate
         # PredC = conjunction as the clause's head
-        # PredP = preposition as the clause's head
-        if ( $afun =~ m/^Pred[ECP]$/ )
+        if ( $afun =~ m/^Pred[EC]$/ )
         {
             $afun = 'Pred';
+        }
+
+        # PredP = preposition as the clause's head
+        # (It is a prepositional phrase in the position of a nominal predicate. In other languages there would be a copula but Arabic does not use overt copulas.)
+        elsif ( $afun eq 'PredP' )
+        {
+            $afun = 'AuxP';
         }
 
         # Ante = anteposition
@@ -85,10 +91,36 @@ sub deprel_to_afun
         }
 
         # AuxE = emphasizing expression
-        # AuxM = modifying expression
-        elsif ( $afun =~ m/^Aux[EM]$/ )
+        elsif ( $afun eq 'AuxE' )
         {
             $afun = 'AuxZ';
+        }
+
+        # AuxM = modifying expression
+        elsif ( $afun eq 'AuxM' )
+        {
+            # Some instances are prepositional phrases. The AuxM label appears at the preposition instead of AuxP.
+            # Similarly to prepositions the real afun of the whole phrase is at the child of the preposition: Sb, Obj, Pnom etc.
+            if ( $node->is_adposition() )
+            {
+                $afun = 'AuxP';
+            }
+            # AuxM is also used with negative particles لَا (lā), لَم (lam) and لَن (lan).
+            elsif ( $node->is_particle() && $node->form() =~ m/^لَ?[امن]/ )
+            {
+                $afun = 'Neg';
+            }
+            # AuxM is also used with future particles سَ (sa) and سَوفَ (sawfa).
+            elsif ( $node->is_particle() && $node->form() =~ m/^سَ?(وفَ?)$/ )
+            {
+                $afun = 'AuxV';
+            }
+            ###!!! TODO: Explore the rest!
+            # Some of them will also act as Neg or AuxV, e.g. لَيسَ (laysa) is negation but it is also a verb ("be not").
+            else
+            {
+                $afun = 'AuxV';
+            }
         }
 
         # _ = excessive token esp. due to a typo

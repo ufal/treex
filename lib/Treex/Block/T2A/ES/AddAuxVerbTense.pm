@@ -24,14 +24,13 @@ sub process_tnode {
 	{
 	    my $child = $anode->create_child({
 		'clause_number' => $anode->clause_number,
-		'lemma' => $anode->lemma,
-		'iset/pos' => 'verb',
-		'iset/verbform' => 'ger'
+		'lemma' => $anode->lemma
 					     });
 	    $anode->set_lemma('estar');
 	    $child->reset_morphcat();
 	    $child->set_morphcat_pos('V');
 	    $child->set_afun('AuxV');
+	    $child->set_iset('pos' => 'verb', 'verbform' => 'ger');
 	    $child->shift_after_node($anode);
 	    $tnode->add_aux_anodes($child);
 	    
@@ -41,14 +40,12 @@ sub process_tnode {
 	{
 	    my $child = $anode->create_child({
 		'clause_number' => $anode->clause_number,
-		'lemma' => $anode->lemma,
-		'iset/pos' => 'verb',
-		'iset/verbform' => 'part',
-		'iset/tense' => 'past'
+		'lemma' => $anode->lemma		
 					     });
 	    $anode->set_lemma('haber');
 	    $child->reset_morphcat();
 	    $child->set_morphcat_pos('V');
+	    $child->set_iset('pos' => 'verb', 'verbform' => 'part', 'tense' => 'past');
 	    $child->set_afun('AuxV');
 	    $child->shift_after_node($anode);
 	    $tnode->add_aux_anodes($child);

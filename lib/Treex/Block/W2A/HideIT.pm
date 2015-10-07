@@ -41,8 +41,16 @@ sub substitute_entities {
   foreach my $quote (@$quotes){
     my $start = $quote->{start};
     my $end = $quote->{end};
-    while($sentence =~ s/($start)([a-z][^$end<]+?)([$end|<])/$1XXXCMDXXX$3/){
-      my $cmdString = $2;
+	# Very crude heuristics:
+	# 1. Anything between quotes which starts with lowercase is considered a command.
+	# 2. Commands may contain <name of the folder> parts, which should be translated,
+	#    i.e. we don't want to include them in the command to be hidden.
+	#    Currently, we stop the command before first "<" (and don't mark the rest of the command).
+	# 3. We require a space (or start of string) before the opening quote.
+	#    This is to exclude sentences with two contractions,
+	#    e.g. "Don't mark it if you aren't sure." should not end as "Don'XXXCMDXXX't sure."
+    while($sentence =~ s/(^| )($start)([a-z][^$end<]+?)($end|<)/$1$2XXXCMDXXX$4/){
+      my $cmdString = $3;
       push(@commands, $cmdString);
       log_debug "Cmd: $cmdString\n";
     }  

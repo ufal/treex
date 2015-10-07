@@ -3,7 +3,7 @@ use utf8;
 use open ':utf8';
 use Moose;
 use Treex::Core::Common;
-use Treex::Core::Phrase::Builder;
+use Treex::Tool::PhraseBuilder;
 extends 'Treex::Core::Block';
 
 has 'last_file_stem' => ( is => 'rw', isa => 'Str', default => '' );
@@ -60,7 +60,7 @@ sub process_zone
     # below say how should the resulting dependency tree look like. The code
     # of the builder knows how the INPUT tree looks like (including the deprels
     # already converted from Prague to the UD set).
-    my $builder = new Treex::Core::Phrase::Builder
+    my $builder = new Treex::Tool::PhraseBuilder
     (
         'prep_is_head'           => 0,
         'cop_is_head'            => 0,
@@ -68,10 +68,9 @@ sub process_zone
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
-    ###!!! The rest is the old implementation. Perhaps there are other bits that we could move to the phrase builder?
     $self->change_case_to_mark_under_verb($root);
+    $self->fix_jak_znamo($root);
     $self->classify_numerals($root);
-    $self->restructure_compound_numerals($root);
     $self->fix_determiners($root);
     $self->relabel_subordinate_clauses($root);
     # Sanity checks.
@@ -344,7 +343,7 @@ sub afun_to_udeprel
         }
         # Reflexive pronoun "se", "si" with inherently reflexive verbs.
         # Unfortunately, previous harmonization to the Prague style abused the AuxT label to also cover Germanic verbal particles and other compound-like stuff with verbs.
-        # We have to test for reflexivity if we want to output compound:reflex!
+        # We have to test for reflexivity if we want to output expl!
         elsif($afun eq 'AuxT')
         {
             # This appears in Slavic languages, although in theory it could be used in some Romance and Germanic languages as well.
@@ -352,7 +351,7 @@ sub afun_to_udeprel
             # Most Dutch pronouns used with this label are tagged as reflexive but a few are not.
             if($node->is_reflexive() || $node->is_pronoun())
             {
-                $deprel = 'compound:reflex';
+                $deprel = 'expl';
             }
             # The Tamil afun CC (compound) has also been converted to AuxT. 11 out of 12 occurrences are tagged as verbs.
             elsif($node->is_verb())
@@ -411,7 +410,7 @@ sub afun_to_udeprel
         {
             if(lc($node->form()) eq 'jako')
             {
-                if(lc($parent->form()) eq 'když')
+                if(defined($parent->form()) && lc($parent->form()) eq 'když')
                 {
                     # Since "když" is probably also mark:auxc, this will make "jako když" a multi-word conjunction.
                     $deprel = 'mark:auxc';
@@ -545,6 +544,44 @@ sub change_case_to_mark_under_verb
 
 
 #------------------------------------------------------------------------------
+# The two Czech words "jak známo" ("as known") are attached as ExD siblings in
+# the Prague style because there is missing copula. However, in UD the nominal
+# predicate "známo" is the head.
+#------------------------------------------------------------------------------
+sub fix_jak_znamo
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    for(my $i = 0; $i<$#nodes; $i++)
+    {
+        my $n0 = $nodes[$i];
+        my $n1 = $nodes[$i+1];
+        if(defined($n0->form()) && lc($n0->form()) eq 'jak' &&
+           defined($n1->form()) && lc($n1->form()) eq 'známo' &&
+           $n0->parent() == $n1->parent())
+        {
+            $n0->set_parent($n1);
+            $n0->set_deprel('mark');
+            $n1->set_deprel('advcl') if(!defined($n1->deprel()) || $n1->deprel() eq 'dep');
+            # If the expression is delimited by commas, the commas should be attached to "známo".
+            if($i>0 && $nodes[$i-1]->parent() == $n1->parent() && defined($nodes[$i-1]->form()) && $nodes[$i-1]->form() =~ m/^[-,]$/)
+            {
+                $nodes[$i-1]->set_parent($n1);
+                $nodes[$i-1]->set_deprel('punct');
+            }
+            if($i+2<=$#nodes && $nodes[$i+2]->parent() == $n1->parent() && defined($nodes[$i+2]->form()) && $nodes[$i+2]->form() =~ m/^[-,]$/)
+            {
+                $nodes[$i+2]->set_parent($n1);
+                $nodes[$i+2]->set_deprel('punct');
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Splits numeral types that have the same tag in the PDT tagset and the
 # Interset decoder cannot distinguish them because it does not see the word
 # forms.
@@ -583,84 +620,6 @@ sub classify_numerals
         elsif($node->is_adjective() && $iset->contains('numtype', 'ord') && $node->lemma() eq 'nejeden')
         {
             $iset->add('pos' => 'num', 'numtype' => 'card', 'prontype' => 'ind');
-        }
-    }
-}
-
-
-
-###!!! Tohle asi půjde smazat, až budeme mít ekvivalent v Phrase::Builder.
-###!!! Zatím to tak úplně ekvivalent není, protože nevyzvedáváme všechna
-###!!! rozvití, která nejsou součástí složené číslovky, nahoru ke kořenové
-###!!! číslovce.
-#------------------------------------------------------------------------------
-# Identifies multi-word numerals and organizes them in chains.
-#------------------------------------------------------------------------------
-sub restructure_compound_numerals
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants({ordered => 1});
-    # We are looking for sequences of numerals where every two adjacent words
-    # are connected with a dependency. The direction of the dependency does not
-    # matter. If a numeral is tagged as noun (this could happen to "sto",
-    # "tisíc", "milión", "miliarda"), the chain will not include them.
-    for(my $i = 0; $i < $#nodes; $i++)
-    {
-        if($nodes[$i]->iset()->contains('numtype', 'card'))
-        {
-            my $chain_found = 0;
-            for(my $j = $i+1; $j <= $#nodes; $j++)
-            {
-                if($nodes[$j]->iset()->contains('numtype', 'card') &&
-                   ($nodes[$j]->parent() == $nodes[$j-1] || $nodes[$j-1]->parent() == $nodes[$j]))
-                {
-                    $chain_found = $j-$i;
-                }
-                else
-                {
-                    last;
-                }
-            }
-            if($chain_found)
-            {
-                # Figure out the attachment of the whole chain to the outside world.
-                my $minord = $nodes[$i]->ord();
-                my $maxord = $nodes[$i+$chain_found]->ord();
-                my $parent;
-                my $deprel;
-                # Incremental reshaping could create temporary cycles and Treex would not allow that.
-                # Therefore first attach all participants to the root, then draw the links between them.
-                for(my $j = $i; $j <= $i+$chain_found; $j++)
-                {
-                    my $old_parent_ord = $nodes[$j]->parent()->ord();
-                    if($old_parent_ord < $minord || $old_parent_ord > $maxord)
-                    {
-                        $parent = $nodes[$j]->parent();
-                        $deprel = $nodes[$j]->deprel();
-                    }
-                    $nodes[$j]->set_parent($root);
-                }
-                # Collect all outside children of the numeral nodes.
-                # Later we will attach them to the head numeral.
-                my @children;
-                for(my $j = $i; $j <= $i+$chain_found; $j++)
-                {
-                    push(@children, $nodes[$j]->children());
-                }
-                for(my $j = $i; $j < $i+$chain_found; $j++)
-                {
-                    $nodes[$j]->set_parent($nodes[$j+1]);
-                    $nodes[$j]->set_deprel('compound');
-                }
-                $nodes[$i+$chain_found]->set_parent($parent);
-                $nodes[$i+$chain_found]->set_deprel($deprel);
-                foreach my $child (@children)
-                {
-                    $child->set_parent($nodes[$i+$chain_found]);
-                }
-                $i += $chain_found;
-            }
         }
     }
 }
@@ -885,6 +844,22 @@ sub fix_annotation_errors
         elsif($pos eq '' && $form =~ m/^\pP+$/)
         {
             $node->iset()->set_pos('punc');
+        }
+        # Czech "jakmile" is always tagged SCONJ (although one could also argue that it is a relative adverb of time).
+        # In 55 cases it is attached as AuxC and in 1 case as Adv; but this 1 case is not different, it is an error.
+        # Changing Adv to AuxC would normally also involve moving the conjunction between the subordinate predicate and
+        # its parent, but we do not need to do that because our target style is UD and there both AuxC (mark) and Adv (advmod)
+        # will be attached as children of the subordinate predicate.
+        elsif(lc($form) eq 'jakmile' && $pos eq 'conj' && $afun eq 'Adv')
+        {
+            $node->set_afun('AuxC');
+        }
+        # In the Czech PDT, there is one occurrence of English "Devil ' s Hole", with the dependency AuxT(Devil, s).
+        # Since "s" is not a reflexive pronoun, the convertor would convert the AuxT to compound:prt, which is not allowed in Czech.
+        # Make it Atr instead. It will be converted to foreign.
+        elsif($form eq 's' && $node->afun() eq 'AuxT' && $node->parent()->form() eq 'Devil')
+        {
+            $node->set_afun('Atr');
         }
     }
 }

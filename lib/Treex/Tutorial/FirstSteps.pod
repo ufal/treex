@@ -24,7 +24,7 @@ However, usually they are executed using the command line interface C<treex>.
 
 For more specific tutorials, feel free to browse L<Treex::Tutorial::|https://github.com/ufal/treex/tree/master/lib/Treex/Tutorial> directory.
 
-You might also want to read this L<presentation|ufal.mff.cuni.cz/~popel/treex.pdf> about Treex framework.
+You might also want to read this L<presentation|https://ufal.mff.cuni.cz/~popel/treex.pdf> about Treex framework.
 
 =head1 HELLO WORLD
 
@@ -82,7 +82,7 @@ There are readers and writers for various other formats than plain text
 (e.g. HTML, CoNLL, PennTB MRG, PDT PML), so you can use it for format
 conversions (see L<Treex::Tutorial::ReadersAndWriters>).
 You can also create you own readers and writers for new formats
-(see L<Treex::Tutorial::WritingNewReaders>).
+(see L<Treex::Tutorial::WritingNewReaders).
 
 For simplicity, we'll continue to use plain text format
 in this tutorial chapter, but we'll try to do something slightly more interesting. 
