@@ -23,6 +23,7 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{Obama}      => 'Obama|N',
     q{von}        => 'von|X',
     q{ok}         => 'OK|X',
+    q{yes}        => 'ano|X',
 );
 
 sub process_tnode {
