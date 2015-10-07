@@ -5,6 +5,7 @@ use Treex::Core::Common;
 use Treex::Core::Resource;
 
 use Treex::Tool::Gazetteer::Engine;
+use Treex::Tool::Gazetteer::Features;
 use Treex::Tool::ML::VowpalWabbit::Util;
 
 extends 'Treex::Block::Write::BaseTextWriter';
@@ -44,7 +45,7 @@ sub process_bundle {
 
     foreach my $match (@$matches) {
         my $class = $self->_extract_class($match, $trg_zone->sentence);
-        my $feats = $self->_extract_feats($match);
+        my $feats = Treex::Tool::Gazetteer::Features::extract_feats($match);
         my $comment = $match->[1] . "; " . $src_zone->sentence . "; ". $trg_zone->sentence;
 
         my $str = Treex::Tool::ML::VowpalWabbit::Util::format_singleline($feats, $class, $class, $comment);
@@ -60,39 +61,6 @@ sub _extract_class {
     return ($trg_sent =~ /((^)|( ))\Q$trg_phrase\E[.,?!: ]/) ? 1 : 2;
 }
 
-sub _extract_feats {
-    my ($self, $match) = @_;
-
-    my @feats = ();
-
-    my @anodes = @{$match->[2]};
-    my @forms = map {$_->form} @anodes;
-
-    my $full_str = join " ", @forms;
-    
-    my $full_str_eq = ($full_str eq $match->[1]) ? 1 : 0;
-    push @feats, ['full_str_eq', $full_str_eq];
-
-    my $non_alpha = ($full_str !~ /[a-zA-Z]/) ? 1 : 0;
-    push @feats, ['full_str_non_alpha', $non_alpha];
-
-    my $first_starts_capital = ($forms[0] =~ /^\p{IsUpper}/) ? 1 : 0;
-    push @feats, ['first_starts_capital', $first_starts_capital];
-    
-    my $entity_starts_capital = ($match->[1] =~ /^\p{IsUpper}/) ? 1 : 0;
-    push @feats, ['entity_starts_capital', $entity_starts_capital];
-
-    my $all_start_capital = (all {$_ =~ /^\p{IsUpper}/} @forms) ? 1 : 0;
-    push @feats, ['all_start_capital', $all_start_capital];
-    
-    my $no_first = (all {$_->ord > 1} @anodes) ? 1 : 0;
-    push @feats, ['no_first', $no_first];
-
-    my $last_menu = ($forms[$#forms] eq "menu") ? 1 : 0;
-    push @feats, ['last_menu', $last_menu];
-
-    return \@feats;
-}
 
 1;
 
