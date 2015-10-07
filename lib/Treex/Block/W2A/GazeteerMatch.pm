@@ -20,7 +20,7 @@ has '_trie' => ( is => 'ro', isa => 'Treex::Tool::Gazetteer::Engine', builder =>
 
 my %PHRASE_LIST_PATHS = (
     'en' => {
-        'cs' => 'data/models/gazeteer/cs_en/20150926_006.IT.cs_en.cs.gaz.gz',
+        'cs' => 'data/models/gazeteer/cs_en/20151007_006.IT.cs_en.cs.gaz.gz',
         'es' => 'data/models/gazeteer/es_en/20150821_002.IT.es_en.es.gaz.gz',
         'eu' => 'data/models/gazeteer/eu_en/20150821_002.IT.eu_en.eu.gaz.gz',
         'nl' => 'data/models/gazeteer/nl_en/20150821_004.IT.nl_en.nl.gaz.gz',
