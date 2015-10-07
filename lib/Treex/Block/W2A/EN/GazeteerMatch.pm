@@ -13,7 +13,7 @@ has '_model' => ( is => 'ro', isa => 'Treex::Tool::ML::VowpalWabbit::Classifier'
 
 my %PHRASE_LIST_PATHS = (
     #'cs' => 'data/models/gazeteer/cs_en/toy.cs_en.en.gaz.gz',
-    'cs' => 'data/models/gazeteer/cs_en/20151007_006.IT.cs_en.en.gaz.gz',
+    'cs' => 'data/models/gazeteer/cs_en/20150821_005.IT.cs_en.en.gaz.gz',
     'es' => 'data/models/gazeteer/es_en/20150821_002.IT.es_en.en.gaz.gz',
     'eu' => 'data/models/gazeteer/eu_en/20150821_002.IT.eu_en.en.gaz.gz',
     'nl' => 'data/models/gazeteer/nl_en/20150821_004.IT.nl_en.en.gaz.gz',
@@ -45,31 +45,31 @@ override 'get_entity_replacement_form' => sub {
     return 'item';
 };
 
-override 'score_match' => sub {
-    my ($self, $match) = @_;
-
-    my $feats = Treex::Tool::Gazetteer::Features::extract_feats($match);
-    my $class = $self->_model->predict($feats);
-
-    #print STDERR "GazEntRec: " . $match->[1] . " => " . $class . "\n";
-
-    # 1 = entity / 2 = no entity
-    return $class == 1 ? 1 : 0;
-};
-
-#around 'score_match' => sub {
-#    my ($orig, $self, $match) = @_;
+#override 'score_match' => sub {
+#    my ($self, $match) = @_;
 #
-#    my $score = $self->$orig($match);
+#    my $feats = Treex::Tool::Gazetteer::Features::extract_feats($match);
+#    my $class = $self->_model->predict($feats);
 #
-#    my @anodes = @{$match->[2]};
-#    my @forms = map {$_->form} @anodes;
+#    #print STDERR "GazEntRec: " . $match->[1] . " => " . $class . "\n";
 #
-#    my $last_menu = ($forms[$#forms] eq "menu") ? -50 : 0;
-#    $score += $last_menu * (scalar @anodes);
-#    
-#    return $score;
+#    # 1 = entity / 2 = no entity
+#    return $class == 1 ? 1 : 0;
 #};
+
+around 'score_match' => sub {
+    my ($orig, $self, $match) = @_;
+
+    my $score = $self->$orig($match);
+
+    my @anodes = @{$match->[2]};
+    my @forms = map {$_->form} @anodes;
+
+    my $last_menu = ($forms[$#forms] eq "menu") ? -50 : 0;
+    $score += $last_menu * (scalar @anodes);
+    
+    return $score;
+};
 
 1;
 
