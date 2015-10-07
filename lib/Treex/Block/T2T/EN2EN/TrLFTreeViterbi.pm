@@ -1,4 +1,4 @@
-package Treex::Block::T2T::CS2EN::TrLFTreeViterbi;
+package Treex::Block::T2T::EN2EN::TrLFTreeViterbi;
 use utf8;
 use Moose;
 use Treex::Core::Common;
@@ -36,7 +36,6 @@ has lm_dir => (
 );
 
 use Treex::Tool::Algorithm::TreeViterbi;
-use Treex::Tool::Lexicon::CS;
 use Treex::Tool::LM::TreeLM;
 
 sub BUILD {
@@ -148,34 +147,6 @@ sub get_states_of {
 }
 
 ## Compatibility of lemma (its pos) and formeme (its semantic pos), and some other constraints
-#sub is_compatible {
-#    my ( $l_v, $f_v, $node ) = @_;
-#
-#    # constraints required by possessive forms
-#    if (( $l_v->{'pos'} || '' ) eq 'N'    #TODO Why is pos undefined?
-#        and $f_v->{formeme} eq "n:poss"
-#        and (
-#            $node->get_children
-#            or not Treex::Tool::Lexicon::CS::get_poss_adj( $l_v->{t_lemma} )
-#            or ( $node->gram_number || "" ) eq "pl"
-#        )
-#        )
-#    {
-#
-#        #        print "Incompatible: $l_v->{t_lemma}\n";
-#        return 0;
-#    }
-#
-#    # genitives are allowed only below a very limited set of verbs in Czech
-#    if ( $f_v->{formeme} eq "n:2" and ( $node->get_parent->get_attr('mlayer_pos') || "" ) eq "V" ) {
-#
-#        #        print "Avoiding genitive below ".$node->get_parent->t_lemma."\n";
-#        return 0;
-#    }
-#
-#    return Treex::Tool::LM::TreeLM::is_pos_and_formeme_compatible( $l_v->{'pos'}, $f_v->{formeme} )
-#}
-
 sub is_compatible {
     my ( $pos, $formeme, $tnode ) = @_;
 
@@ -254,15 +225,34 @@ sub get_logprob_given_parent {
 
 __END__
 
-=over
+=encoding utf-8
 
-=item Treex::Block::T2T::EN2CS::TrLFTreeViterbi
+=head1 NAME
 
-Apply Tree-Viterbi algorithm to find optimal choices of formemes and lemmas.
+Treex::Scen::Transfer::EN2EN::TrLFTreeViterbi
 
-=back
+=head1 DESCRIPTION
 
-=cut
+Tree Viterbi for optimal choices of formemes and lemmas (for English).
 
-# Copyright 2009 Martin Popel
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Do not forget to use C<T2T::RehangToEffParents> and C<T2T::RehangToOrigParents> as pre- and
+post-processing steps.
+
+To make Viterbi computation tractable, use the following before applying this block:
+C<T2T::CutVariants max_lemma_variants=7 max_formeme_variants=7>.
+
+=head1 PARAMETERS
+
+lm_dir, lm_weight, formeme_weight, backward_weight
+
+=head1 AUTHORS
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2009-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
