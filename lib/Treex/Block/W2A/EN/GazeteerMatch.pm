@@ -1,7 +1,15 @@
 package Treex::Block::W2A::EN::GazeteerMatch;
 use Moose;
+use Treex::Core::Common;
+
+use Treex::Tool::Gazetteer::Features;
+use Treex::Tool::ML::VowpalWabbit::Classifier;
 
 extends 'Treex::Block::W2A::GazeteerMatch';
+
+has 'model_path' => ( is => 'ro', isa => 'Str', default => 'data/models/gazeteer/entity_recognition/en.en_cs.v1.model');
+# TODO should implement the Treex::Tool::ML::Classifier interface
+has '_model' => ( is => 'ro', isa => 'Treex::Tool::ML::VowpalWabbit::Classifier', builder => '_build_model', lazy => 1 );
 
 my %PHRASE_LIST_PATHS = (
     #'cs' => 'data/models/gazeteer/cs_en/toy.cs_en.en.gaz.gz',
@@ -20,24 +28,48 @@ sub BUILD {
     return;
 }
 
+sub _build_model {
+    my ($self) = @_;
+    log_info "Loading a model for gazetteer entity recognition from " . $self->model_path . "...";
+    return Treex::Tool::ML::VowpalWabbit::Classifier->new({ model_path => $self->model_path });
+}
+
+override 'process_start' => sub {
+    my ($self) = @_;
+    super();
+    $self->_model;
+};
+
 override 'get_entity_replacement_form' => sub {
     my ($self) = @_;
     return 'item';
 };
 
-around 'score_match' => sub {
-    my ($orig, $self, $match) = @_;
+override 'score_match' => sub {
+    my ($self, $match) = @_;
 
-    my $score = $self->$orig($match);
+    my $feats = Treex::Tool::Gazetteer::Features::extract_feats($match);
+    my $class = $self->_model->predict($feats);
 
-    my @anodes = @{$match->[2]};
-    my @forms = map {$_->form} @anodes;
+    #print STDERR "GazEntRec: " . $match->[1] . " => " . $class . "\n";
 
-    my $last_menu = ($forms[$#forms] eq "menu") ? -50 : 0;
-    $score += $last_menu * (scalar @anodes);
-    
-    return $score;
+    # 1 = entity / 2 = no entity
+    return $class == 1 ? 1 : 0;
 };
+
+#around 'score_match' => sub {
+#    my ($orig, $self, $match) = @_;
+#
+#    my $score = $self->$orig($match);
+#
+#    my @anodes = @{$match->[2]};
+#    my @forms = map {$_->form} @anodes;
+#
+#    my $last_menu = ($forms[$#forms] eq "menu") ? -50 : 0;
+#    $score += $last_menu * (scalar @anodes);
+#    
+#    return $score;
+#};
 
 1;
 
