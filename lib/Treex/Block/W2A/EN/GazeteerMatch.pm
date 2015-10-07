@@ -57,19 +57,6 @@ override 'get_entity_replacement_form' => sub {
 #    return $class == 1 ? 1 : 0;
 #};
 
-around 'score_match' => sub {
-    my ($orig, $self, $match) = @_;
-
-    my $score = $self->$orig($match);
-
-    my @anodes = @{$match->[2]};
-    my @forms = map {$_->form} @anodes;
-
-    my $last_menu = ($forms[$#forms] eq "menu") ? -50 : 0;
-    $score += $last_menu * (scalar @anodes);
-    
-    return $score;
-};
 
 1;
 
