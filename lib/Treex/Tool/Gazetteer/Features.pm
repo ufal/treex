@@ -35,6 +35,8 @@ sub extract_feats {
     my $last_menu = ($forms[$#forms] eq "menu") ? 1 : 0;
     push @feats, ['last_menu', $last_menu];
 
+    push @feats, ['anode_count', scalar @anodes];
+
     return \@feats;
 }
 

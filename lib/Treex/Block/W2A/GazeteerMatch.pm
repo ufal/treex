@@ -5,6 +5,8 @@ use Treex::Core::Common;
 use Treex::Core::Resource;
 
 use Treex::Tool::Gazetteer::Engine;
+use Treex::Tool::Gazetteer::Features;
+use Treex::Tool::Gazetteer::RuleBasedScorer;
 
 use List::MoreUtils qw/none all/;
 use List::Util qw/sum/;
@@ -105,26 +107,8 @@ sub _resolve_entities {
 sub score_match {
     my ($self, $match) = @_;
 
-    my @anodes = @{$match->[2]};
-    my @forms = map {$_->form} @anodes;
-
-    my $full_str = join " ", @forms;
-    
-    my $full_str_score = ($full_str eq $match->[1]) ? 2 : 0;
-
-    my $non_alpha_penalty = ($full_str !~ /[a-zA-Z]/) ? -100 : 0;
-
-    my $first_starts_capital = ($forms[0] =~ /^\p{IsUpper}/) ? 10 : -10;
-    my $entity_starts_capital = ($match->[1] =~ /^\p{IsUpper}/) ? 10 : -50;
-
-    my $all_start_capital = (all {$_ =~ /^\p{IsUpper}/} @forms) ? 1 : -1;
-    my $no_first = (all {$_->ord > 1} @anodes) ? 1 : -50;
-
-    my $last_menu = ($forms[$#forms] eq "menu") ? -50 : 0;
-
-    my @scores = ( $full_str_score, $non_alpha_penalty, $all_start_capital, 
-        $no_first, $first_starts_capital, $entity_starts_capital, $last_menu );
-    my $score = (sum @scores) * (scalar @anodes);
+    my $feats = Treex::Tool::Gazetteer::Features::extract_feats($match);
+    my $score = Treex::Tool::Gazetteer::RuleBasedScorer::score($feats);
     
     return $score;
 }
