@@ -22,7 +22,6 @@ sub process_zone {
 
     # TODO: detached clitic, e.g. "da" + "-se-" + "-lo" = "dá-se-lo"
 
-
     $sentence =~ s/ +/ /g;
     $sentence =~ s/ ([’”!,.?:;])/$1/g;
     $sentence =~ s/([‘“¿¡]) /$1/g;
@@ -30,6 +29,8 @@ sub process_zone {
     $sentence =~ s/ ?([\.,]) ?([’”"])/$1$2/g;    # spaces around punctuation
 
     $sentence =~ s/ -- / – /g;
+
+    $sentence =~ s/_/ /g;                            # this shouldn't happen
 
     # no space (or even commas) inside parentheses
     $sentence =~ s/,?\(,? ?/\(/g;
@@ -42,6 +43,10 @@ sub process_zone {
         $sentence =~ s/\)\./.)/;
     }
     
+    # HACKS:
+    $sentence =~ s/`` ?/"/g;
+    $sentence =~ s/ ?''/"/g;
+
     $zone->set_sentence($sentence);
     return;
 }

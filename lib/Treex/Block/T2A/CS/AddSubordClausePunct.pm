@@ -65,6 +65,20 @@ override 'postprocess_sentence' => sub {
         }
     }
 
+    # Add comma after "Ano" ("Yes") at the beginning of sentence.
+    # Maybe "ano" should be marked as is_clause_head, but I am not sure and this solution is easier.
+    if (@anodes>2 && $anodes[0]->lemma eq 'ano' && $anodes[1]->lemma !~ /^[[:punct:]]$/) {
+        my $comma = $anodes[0]->create_child(
+            {   'form'          => ',',
+                'lemma'         => ',',
+                'afun'          => 'AuxX',
+                'morphcat/pos'  => 'Z',
+                'clause_number' => 0,
+            }
+        );
+        $comma->shift_after_node($anodes[0]);
+    }
+
     return;
 };
 

@@ -4,9 +4,9 @@ use List::MoreUtils qw(any);
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
 
+# 40 universal dependency relations
 my @relations =
 (
-    # 40 universal dependency relations
     'nsubj', 'nsubjpass', 'dobj', 'iobj', 'csubj', 'csubjpass', 'ccomp', 'xcomp',
     'nmod', 'advmod', 'advcl', 'neg',
     'vocative', 'discourse', 'expl', 'aux', 'auxpass', 'cop', 'mark',
@@ -14,11 +14,22 @@ my @relations =
     'compound', 'mwe', 'name', 'goeswith', 'foreign',
     'conj', 'cc', 'punct',
     'list', 'dislocated', 'parataxis', 'remnant', 'reparandum',
-    'root', 'dep',
-    # additional language-specific relations
-    'acl:relcl', 'advmod:emph',
-    'det:pdt', 'det:numgov', 'det:nummod', 'nummod:gov',
-    'compound:reflex', 'auxpass:reflex', 'compound:prt',
+    'root', 'dep'
+);
+
+# additional language-specific relations
+my %lspecrel =
+(
+    'ar'  => ['advmod:emph'],
+    'cs'  => ['advmod:emph', 'auxpass:reflex', 'det:numgov', 'det:nummod', 'nummod:gov'],
+    'es'  => ['acl:relcl'],
+    'et'  => ['advmod:emph', 'compound:prt', 'nummod:gov'],
+    'grc' => ['advmod:emph'],
+    'la'  => ['advmod:emph', 'auxpass:reflex'],
+    'nl'  => ['compound:prt'],
+    'pt'  => ['advmod:emph'],
+    'ta'  => ['advmod:emph', 'compound:prt'],
+    'xx'  => ['acl:relcl', 'det:pdt', 'compound:prt'],
 );
 
 sub process_anode
@@ -26,8 +37,21 @@ sub process_anode
     my $self = shift;
     my $node = shift;
     my $deprel = $node->deprel();
+    # The tests are usually run for many languages at once, and the block parameter language is not set.
+    # Let's ask the zone instead.
+    my $language = $node->get_zone()->language();
+    my @lspecrel;
+    if(exists($lspecrel{$language}))
+    {
+        @lspecrel = @{$lspecrel{$language}};
+    }
+    else
+    {
+        @lspecrel = @{$lspecrel{xx}};
+    }
+    my @allrel = (@relations, @lspecrel);
     #if($deprel =~ m/^dep:.*$/)
-    unless(any {$_ eq $deprel} (@relations))
+    unless(any {$_ eq $deprel} (@allrel))
     {
         $self->complain($node, $deprel);
     }

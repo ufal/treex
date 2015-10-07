@@ -8,10 +8,9 @@ package Treex::Tutorial::Config;
 
 Treex::Tutorial::Config - Configuring Treex
 
-
 =head1 EXAMPLES
 
-TODO?
+TODO
 
 =head1 SEE ALSO
 

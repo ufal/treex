@@ -20,11 +20,15 @@ Aside from the old scenario (.scen) files with the following syntax:
 
 Treex scenarios can now be represented as a separate Perl "Treex::Scen::" packages. This gives the user larger expressive power when creating various Treex scenarios:
 
+=over
+
 =item Introducing parameters. The scenario can now be modifiing simply by passing defined scenario parameters.
 
 =item Support of POD-style of documentation. The scenarios functionality can now be described in a well-aranged manner.
 
 =item The scenario itself is now a Perl package. The scenarios can now easily be uploaded on CPAN.
+
+=back
 
 =head1 MODULE STRUCTURE
 

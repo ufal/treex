@@ -87,13 +87,16 @@ Treex::Scen::EN2CS - English-to-Czech TectoMT translation
 
 This scenario expects input English text segmented to sentences and stored in zone en_src.
 
-If the input is not segmented to sentences, use C<W2A::EN::Segment> block first.
-If it is segmented, but some segments contain more (linguistic) sentences
-and moreover you want to store also the reference translations in the treex files,
-start the scenario with
+If the input is not segmented to sentences, use C<W2A::EN::Segment> block first:
 
-  Read::AlignedSentences en_src=sample-en.txt cs_ref=sample-cs.txt
-  W2A::ResegmentSentences
+ cat en.txt | treex -Len -Ssrc W2A::EN::Segment Scen::EN2CS Write::Sentences > cs.txt
+
+If it is segmented, but some segments contain more (linguistic) sentences
+and moreover you want to store also the reference translations in the treex files, use:
+
+  treex Read::AlignedSentences en_src=sample-en.txt cs_ref=sample-cs.txt \
+        Scen::EN2CS resegment=1 \
+        Write::Treex to=sample.treex.gz
 
 =head1 PARAMETERS
 

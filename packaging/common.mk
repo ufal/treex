@@ -12,7 +12,7 @@ else
 endif
 DATE=`date +%F`
 VER_DATE=`date +%Y%m%d`
-VERSION=1.${VER_DATE}${VERSION_SUFFIX}
+VERSION=2.${VER_DATE}${VERSION_SUFFIX}
 
 LIB=lib
 TREEX=${LIB}/Treex

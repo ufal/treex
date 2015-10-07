@@ -14,11 +14,11 @@ override 'tokenize_sentence' => sub {
     $sentence =~ s/^(.*)$/ $1 /;
 
     # it's, I'm, we'd, we're, you'll, I've, Peter's
-    $sentence =~ s/([\'’])(s|m|d|ll|re|ve|S|M|D|LL|RE|VE)\s/ $1$2 /g;
+    $sentence =~ s/([\'’´])(s|m|d|ll|re|ve|S|M|D|LL|RE|VE)\s/ $1$2 /g;
 
     # don't
-    $sentence =~ s/(n[\'’]t\s)/ $1 /g;
-    $sentence =~ s/(N[\'’]T\s)/ $1 /g;
+    $sentence =~ s/(n[\'’´]t\s)/ $1 /g;
+    $sentence =~ s/(N[\'’´]T\s)/ $1 /g;
 
     # cannot, wanna ...
     $sentence =~ s/ ([Cc])annot / $1an not /g;
