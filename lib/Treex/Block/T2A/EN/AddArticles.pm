@@ -21,11 +21,20 @@ override '_get_article_key' => sub {
     return "$definiteness $number";
 };
 
+my $PRONOUN = qr{
+    \#PersPron|
+    th(is|[oe]se|at)|
+    wh(at|ich|o(m|se)?)(ever)?|
+    (any|every|some|no)(body|one|thing)|each|n?either|(no[_ ])?one|
+    both|many|several|
+    all|any|most|none|some
+}xi;
+
 override 'can_have_article' => sub {
     my ( $self, $tnode, $anode ) = @_;
 
     # no articles possible/needed for indefinite pronouns
-    return 0 if ( $anode->is_pronoun and ( $tnode->gram_definiteness // '' ) eq 'indefinite' );
+    return 0 if ( $tnode->t_lemma =~ /^($PRONOUN)$/ );
     return 1;
 };
 
