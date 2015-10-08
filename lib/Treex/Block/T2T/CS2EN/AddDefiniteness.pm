@@ -17,14 +17,14 @@ has '_local_context' => ( isa => 'HashRef', is => 'rw', default => sub { {} } );
 
 after 'process_document' => sub {
     my ($self) = @_;
-    if ($self->clear_context_after eq 'document') {
+    if ( $self->clear_context_after eq 'document' ) {
         $self->_set_local_context( {} );    # clear local context after document
     }
 };
 
 after 'process_bundle' => sub {
     my ($self) = @_;
-    if ($self->clear_context_after eq 'sentence') {
+    if ( $self->clear_context_after eq 'sentence' ) {
         $self->_set_local_context( {} );    # clear local context after each sentence
     }
 };
@@ -35,30 +35,30 @@ sub process_tnode {
 
     # rule out personal pronouns and generated nodes
     return if ( $tnode->t_lemma =~ /^#/ );    # or ($tnode->functor // '') eq 'RSTR'
-    
+
     # rule out non-nouns
     return if ( ( $tnode->gram_sempos // '' ) !~ /^n/ and ( $tnode->t_lemma // '' ) !~ /^(dozen|thousand|lot|deal)$/ );
 
-    $self->decide_article( $tnode );
+    $self->decide_article($tnode);
     return;
 }
 
 sub replace_some_with_indef {
-    my ($self, $tnode, $countability) = @_;
+    my ( $self, $tnode, $countability ) = @_;
 
-    return 0 if ($countability && $countability ne 'countable');
-    return 0 if (!defined $tnode->gram_number || $tnode->gram_number ne 'sg');
-    my ($some_tnode) = grep {$_->t_lemma eq 'some'} $tnode->get_children;
-    return 0 if (!defined $some_tnode);
+    return 0 if ( $countability && $countability ne 'countable' );
+    return 0 if ( !defined $tnode->gram_number || $tnode->gram_number ne 'sg' );
+    my ($some_tnode) = grep { $_->t_lemma eq 'some' } $tnode->get_children;
+    return 0 if ( !defined $some_tnode );
 
-    $some_tnode->remove({children=>'rehang'});
+    $some_tnode->remove( { children => 'rehang' } );
     $tnode->set_gram_definiteness('indefinite');
     return 1;
 }
 
 sub decide_article {
     my ( $self, $tnode ) = @_;
-    my $lemma  = $tnode->t_lemma // '';
+    my $lemma  = $tnode->t_lemma     // '';
     my $number = $tnode->gram_number // 'sg';
     my $countability = Treex::Tool::Lexicon::EN::Countability::countability($lemma);
     my $article      = '';
@@ -68,9 +68,13 @@ sub decide_article {
     # fixed rules
     #
 
-    if ( $self->replace_some_with_indef( $tnode, $countability ) ){
+    if ( $self->replace_some_with_indef( $tnode, $countability ) ) {
         $article = 'a';
-        $rule = 'replace_some_with_indef';
+        $rule    = 'replace_some_with_indef';
+    }
+    elsif ( _is_pronoun($tnode) ) {
+        $article = '';
+        $rule    = 'is_pronoun';
     }
     elsif ( _has_determiner($tnode) ) {
         $article = '';
@@ -193,18 +197,18 @@ sub decide_article {
         $article = '';
         $rule    = 'default';
     }
-    
+
     #
     # create the node and add it to context, if possible
     #
     if ($article) {
-        $tnode->set_gram_definiteness($article eq 'the' ? 'definite' : 'indefinite');
+        $tnode->set_gram_definiteness( $article eq 'the' ? 'definite' : 'indefinite' );
     }
-    log_info($tnode->t_lemma . ' ' . $rule . ' ' . $article);
-    $tnode->wild->{article_rule} = $rule;  # store the rule for debugging purposes
+    log_info( $tnode->t_lemma . ' ' . $rule . ' ' . $article );
+    $tnode->wild->{article_rule} = $rule;    # store the rule for debugging purposes
 
     # rough simulation of 7 salient items in consciousness, should be synsetid and not lemma
-    if ( $article eq 'a' or ( $rule =~ /(determiner|relative)/ and $countability eq 'countable' ) ){
+    if ( $article eq 'a' or ( $rule =~ /(determiner|relative)/ and $countability eq 'countable' ) ) {
         $self->_add_to_local_context($lemma);
     }
 }
@@ -228,7 +232,9 @@ sub _is_noun_premodifier {
 sub _is_topic {
     my ($tnode) = @_;
 
-    # TODO this won't probably work very well (we don't have deepord / TFA here)
+    # Here we take advantage of the source (Czech) word order – it works better than when used 
+    # after reordering the sentence for English
+    # N.B.: The issue is much more complex, this is an over-simplification. 
     my $verb = $tnode->get_clause_head();
     return $tnode->precedes($verb);
 }
@@ -245,10 +251,10 @@ sub _has_relative_clause {
 
 sub _is_restricted_somehow {
     my ($tnode) = @_;
-    
+
     # unique identification: "the same/left/right/bottom..."
     return 1 if ( grep { $_->t_lemma =~ /^(same|left|right|top|bottom|first|second|third|last)$/ } $tnode->get_echildren() );
-    
+
     # superlatives: "the best, the greatest..."
     return 1 if ( grep { ( $_->gram_sempos // '' ) =~ /^adj.denot/ and ( $_->gram_degcmp // '' ) eq 'sup' } $tnode->get_echildren() );
 
@@ -256,6 +262,20 @@ sub _is_restricted_somehow {
     return scalar( grep { ( $_->functor // '' ) eq 'LOC' } $tnode->get_children() );
 }
 
+my $PRONOUN = qr{
+    #PersPron
+    th(is|[oe]se|at)|
+    wh(at|ich|o(m|se)?)(ever)?|
+    (any|every|some|no)(body|one|thing)|each|n?either|(no[_ ])?one|
+    both|few|many|several|
+    all|any|most|none|some
+}xi;
+
+sub _is_pronoun {
+    my ($tnode) = @_;
+
+    return 1 if $tnode->t_lemma =~ /^($PRONOUN)$/;
+}
 
 sub _add_to_local_context {
     my ( $self, $lemma ) = @_;
@@ -281,10 +301,10 @@ Treex::Block::T2A::EN::AddArticles
 
 =head1 DESCRIPTION
 
-Add a-nodes corresponding to articles of nouns.
+Set definiteness in English t-nodes resulting from translated Czech t-nodes (which do
+not have definiteness filled-in).
 
-Using several heuristic rules to determine the article. Rules will be overridden
-by the values of the definiteness grammateme if C<grammateme_only> is set to C<1>.
+Using several heuristic rules to determine definiteness.
 
 =head1 AUTHORS 
 
@@ -294,5 +314,5 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2008-2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2008-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
