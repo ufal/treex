@@ -23,7 +23,7 @@ sub get_scenario_string {
     'T2A::EN::AddInfinitiveParticles',
     'T2A::EN::AddPhrasalVerbParticles',
     'T2A::EN::AddPossessiveMarkers',
-    'T2A::EN::AddArticles' . ($self->domain eq 'IT' ? ' clear_context_after=sentence' : ''), # TODO: this has nothing to do with IT domain
+    'T2A::EN::AddArticles',
     'T2A::EN::AddAuxVerbCompoundPassive',
     'T2A::EN::AddAuxVerbModalTense',
     'T2A::EN::AddAuxVerbInter',
