@@ -94,9 +94,18 @@ sub decide_article {
     }
     elsif ( $countability eq 'countable' && $number eq 'sg' ) {
 
-        # John was President, Karl became Pope, Hey Doctor, come closer.
-        $article = $lemma eq ucfirst($lemma) ? '' : _is_topic($tnode) ? 'the' : 'a';
-        $rule = 'countable and singular';
+        if ( _is_name($tnode) ) {
+            $article = '';
+            $rule    = 'countable and singular name';
+        }
+        elsif ( _is_topic($tnode) ) {
+            $article = 'the';
+            $rule    = 'countable and singular topic';
+        }
+        else {
+            $article = 'a';
+            $rule    = 'countable and singular focus';
+        }
     }
     elsif ( $countability eq 'countable' && $number eq 'pl' ) {
         $article = '';
@@ -182,7 +191,7 @@ sub decide_article {
     #
     # probability rules below this point:
     #
-    elsif ( $tnode->is_name_of_person or $lemma eq ucfirst($lemma) ) {
+    elsif ( _is_name($tnode) ) {
 
         # Other names that above we want without the article
         $article = '';
@@ -232,9 +241,9 @@ sub _is_noun_premodifier {
 sub _is_topic {
     my ($tnode) = @_;
 
-    # Here we take advantage of the source (Czech) word order – it works better than when used 
+    # Here we take advantage of the source (Czech) word order – it works better than when used
     # after reordering the sentence for English
-    # N.B.: The issue is much more complex, this is an over-simplification. 
+    # N.B.: The issue is much more complex, this is an over-simplification.
     my $verb = $tnode->get_clause_head();
     return $tnode->precedes($verb);
 }
@@ -263,7 +272,7 @@ sub _is_restricted_somehow {
 }
 
 my $PRONOUN = qr{
-    #PersPron
+    \#PersPron|
     th(is|[oe]se|at)|
     wh(at|ich|o(m|se)?)(ever)?|
     (any|every|some|no)(body|one|thing)|each|n?either|(no[_ ])?one|
@@ -275,6 +284,17 @@ sub _is_pronoun {
     my ($tnode) = @_;
 
     return 1 if $tnode->t_lemma =~ /^($PRONOUN)$/;
+}
+
+sub _is_name {
+    my ($tnode) = @_;
+
+    # skip product names that work like regular nouns (TODO add more)
+    return 0 if ( $tnode->t_lemma =~ /^(iPad|iPhone|iPod)$/ );
+    return 1 if $tnode->is_name_of_person;
+    return 1 if ( $tnode->src_tnode and $tnode->src_tnode->get_n_node() );
+    return 1 if $tnode->t_lemma eq ucfirst( $tnode->t_lemma );
+    return 0;
 }
 
 sub _add_to_local_context {
