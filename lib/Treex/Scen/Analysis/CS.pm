@@ -60,6 +60,7 @@ sub get_scenario_string {
     # n-layer
     $self->ner eq 'NameTag' ? 'A2N::CS::NameTag' : (),
     $self->ner eq 'simple' ? 'A2N::CS::SimpleRuleNER' : (),
+    $self->domain eq 'IT' ? 'A2N::CS::FixNERforIT' : (),
     'A2N::CS::NormalizeNames',
 
     # a-layer
