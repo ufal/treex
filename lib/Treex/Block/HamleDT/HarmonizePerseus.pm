@@ -36,6 +36,7 @@ sub process_zone
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
     $self->remove_id_from_lemmas($root);
+    $self->detect_proper_nouns($root);
     $self->fix_deficient_sentential_coordination($root);
     $self->fix_undefined_nodes($root);
     ###!!! TODO: grc trees sometimes have conjunct1, coordination, conjunct2 as siblings. We should fix it, but meanwhile we just delete afun=Coord from the coordination.
@@ -63,6 +64,35 @@ sub remove_id_from_lemmas
         {
             $node->wild()->{lid} = $2;
             $node->set_lemma($lemma);
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# The Perseus tagsets do not distinguish proper nouns. Mark nouns as proper if
+# their lemma is capitalized.
+#------------------------------------------------------------------------------
+sub detect_proper_nouns
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $iset = $node->iset();
+        my $lemma = $node->lemma();
+        if($iset->is_noun() && !$iset->is_pronoun())
+        {
+            if($lemma =~ m/^\p{Lu}/)
+            {
+                $iset->set('nountype', 'prop');
+            }
+            elsif($iset->nountype() eq '')
+            {
+                $iset->set('nountype', 'com');
+            }
         }
     }
 }
