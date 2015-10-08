@@ -75,7 +75,7 @@ sub _insert_phrase_to_trie {
     # there is a tail of remaining words
     if (defined $next_word) {
         my $suffix_hash = {};
-        while ($next_word) {
+        while (defined $next_word) {
             #log_info "NEXT_WORD_SET: " . $next_word if ($debug);
             $trie->{$next_word} = {}; 
             $trie = $trie->{$next_word};
