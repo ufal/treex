@@ -199,7 +199,7 @@ sub fix_lemma_capitalization {
         my $l_letter = substr $lemma, $i, 1;
         my $f_letter = substr $form,  $i, 1;
 
-        last if ( lc $l_letter != lc $f_letter );
+        last if ( lc $l_letter ne lc $f_letter );
         $new_lemma .= $f_letter;
     }
     $new_lemma .= substr $lemma, $i;
