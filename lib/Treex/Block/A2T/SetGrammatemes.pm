@@ -49,6 +49,10 @@ my %iset2gram = (
     'number=plur' => 'number=pl',
     'number=dual' => 'number=du',
 
+    # possessive adjectives (overriding the adjectival number)
+    'possnumber=sing' => 'number=sg',
+    'possnumber=plur' => 'number=pl',
+
     'numtype=card' => 'numbertype=basic',
     'numtype=ord' => 'numbertype=ord',
     'numtype=frac' => 'numbertype=frac',

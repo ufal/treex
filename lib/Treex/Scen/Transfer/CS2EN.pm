@@ -103,6 +103,7 @@ sub get_scenario_string {
     $self->domain eq 'IT' ? 'T2T::CS2EN::DeleteSuperfluousNodes' : (), # deletes word "application" and "system" with NE, this rarely influences non-IT domain
     'T2T::CS2EN::FixGrammatemesAfterTransfer',
     'T2T::CS2EN::FixDoubleNegative',
+    'T2T::CS2EN::AddDefiniteness' . ( $self->domain eq 'IT' ? ' clear_context_after=sentence' : '' ),    # TODO: this has nothing to do with IT domain
     ;
     return $scen;
 }
