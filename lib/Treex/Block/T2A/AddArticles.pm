@@ -9,6 +9,15 @@ has 'article_form' => ( isa => 'HashRef', is => 'ro', lazy_build => 1, builder =
 # To be overridden for each language
 sub _build_article_form { return {} }
 
+# Getting article key (that will identify it in the article_form table)
+sub _get_article_key {
+    my ( $self, $anode, $definiteness ) = @_;
+
+    my $gender = $anode->iset->gender // '';
+    my $number = $anode->iset->number // '';
+    return "$definiteness $gender $number";
+}
+
 sub process_tnode {
     my ( $self, $tnode ) = @_;
     my $anode = $tnode->get_lex_anode()   or return;
@@ -16,9 +25,7 @@ sub process_tnode {
 
     return if ( not $self->can_have_article( $tnode, $anode ) );
 
-    my $gender = $anode->iset->gender // '';
-    my $number = $anode->iset->number // '';
-    my $form = $self->article_form->{"$def $gender $number"} or return;
+    my $form = $self->article_form->{ $self->_get_article_key( $anode, $def ) } or return;
 
     my $article = $anode->create_child(
         {
@@ -33,7 +40,6 @@ sub process_tnode {
     $tnode->add_aux_anodes($article);
     return;
 }
-
 
 # To be overridden for each language
 sub can_have_article {
