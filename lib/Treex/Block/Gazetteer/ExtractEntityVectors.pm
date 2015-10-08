@@ -45,10 +45,11 @@ sub process_bundle {
 
     foreach my $match (@$matches) {
         my $class = $self->_extract_class($match, $trg_zone->sentence);
+        my $fscored_class = 1;
         my $feats = Treex::Tool::Gazetteer::Features::extract_feats($match);
         my $comment = $match->[1] . "; " . $src_zone->sentence . "; ". $trg_zone->sentence;
 
-        my $str = Treex::Tool::ML::VowpalWabbit::Util::format_singleline($feats, $class, $class, $comment);
+        my $str = Treex::Tool::ML::VowpalWabbit::Util::format_singleline($feats, $class, "$class-$fscored_class", $comment);
         print {$self->_file_handle} $str;
     }
 }
