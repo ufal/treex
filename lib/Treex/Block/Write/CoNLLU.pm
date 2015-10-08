@@ -95,8 +95,9 @@ sub process_atree
         {
             push(@misc, 'Translit='.$node->translit());
         }
-        ###!!! Czech-specific wild attributes that have been cut off the lemma.
+        ###!!! (Czech)-specific wild attributes that have been cut off the lemma.
         ###!!! In the future we will want to make them normal attributes.
+        ###!!! Note: the {lid} attribute is now also collected for other treebanks, e.g. AGDT and LDT.
         if(exists($wild->{lid}) && defined($wild->{lid}))
         {
             if(defined($lemma))
