@@ -4,6 +4,8 @@ use Treex::Core::Common;
 use utf8;
 extends 'Treex::Block::HamleDT::HarmonizePDT';
 
+
+
 my %agdt2pdt =
 (
     'ADV'       => 'Adv',
@@ -22,6 +24,8 @@ my %agdt2pdt =
     'XSEG'      => 'Atr' ###!!! Should we add XSeg to the set of HamleDT labels?
 );
 
+
+
 #------------------------------------------------------------------------------
 # Reads the Greek or Latin trees, decodes morphosyntactic tags and transforms
 # the trees to adhere to HamleDT guidelines.
@@ -31,12 +35,39 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+    $self->remove_id_from_lemmas($root);
     $self->fix_deficient_sentential_coordination($root);
     $self->fix_undefined_nodes($root);
     ###!!! TODO: grc trees sometimes have conjunct1, coordination, conjunct2 as siblings. We should fix it, but meanwhile we just delete afun=Coord from the coordination.
     $self->check_coord_membership($root);
     return $root;
 }
+
+
+
+#------------------------------------------------------------------------------
+# Most lemmas contain numeric sense identifier. Remove the identifier from the
+# lemma so that the lemma is only the base form of the word. Store the
+# identifier in a wild attribute so that it can be output if desired.
+#------------------------------------------------------------------------------
+sub remove_id_from_lemmas
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $form = $node->form();
+        my $lemma = $node->lemma();
+        if($form !~ m/\d$/ && $lemma =~ s/(\D)(\d+)/$1/)
+        {
+            $node->wild()->{lid} = $2;
+            $node->set_lemma($lemma);
+        }
+    }
+}
+
+
 
 #------------------------------------------------------------------------------
 # Convert dependency relation tags to analytical functions.
@@ -181,6 +212,8 @@ sub deprel_to_afun
     $self->fix_annotation_errors($root);
 }
 
+
+
 #------------------------------------------------------------------------------
 # Searches for the head of coordination or apposition in AGDT. Adapted from
 # Pdt2TreexIsMemberConversion by Zdeněk Žabokrtský (but different because of
@@ -205,6 +238,8 @@ sub _climb_up_below_coap
         return _climb_up_below_coap($node->parent());
     }
 }
+
+
 
 #------------------------------------------------------------------------------
 # A few punctuation nodes (commas and dashes) are attached non-projectively to
@@ -290,6 +325,8 @@ sub fix_undefined_nodes
     }
 }
 
+
+
 #------------------------------------------------------------------------------
 # Deficient sentential coordination: coordinating conjunction at or near the
 # beginning of the sentence, connects the main predicate with the predicate of
@@ -337,6 +374,8 @@ sub fix_deficient_sentential_coordination
         }
     }
 }
+
+
 
 #------------------------------------------------------------------------------
 # Catches possible annotation inconsistencies. If there are no conjuncts under
@@ -419,6 +458,8 @@ sub check_coord_membership
         }
     }
 }
+
+
 
 1;
 
