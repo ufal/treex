@@ -211,6 +211,8 @@ sub process_tnode {
     return;
 }
 
+# Try translating one English node into two Czech nodes (according
+# to dictionary ONE_NODE_TO_CHILD_PARENT, see above)
 sub try_1to2 {
     my ($self, $cs_tnode, $en_tnode) = @_;
 
