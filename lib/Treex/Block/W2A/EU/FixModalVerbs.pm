@@ -11,7 +11,7 @@ sub process_anode {
 
     if (grep {$anode->lemma eq $_} @MODAL) {
 	my $parent = $anode->get_parent();
-	next if ($parent->is_root);
+	return 1 if ($parent->is_root);
 
 	my @children = grep {$_->is_verb} $anode->get_children();
 	if ($#children >= 0) {

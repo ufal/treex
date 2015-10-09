@@ -19,7 +19,7 @@ has tm_adaptation => (
 has hmtm => (
      is => 'ro',
      isa => 'Bool',
-     default => 0,
+     default => 1,
      documentation => 'Apply HMTM (TreeViterbi) with TreeLM reranking',
 );
 
