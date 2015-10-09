@@ -120,7 +120,7 @@ sub get_scenario_string {
     $self->hmtm ? "T2T::EN2EN::TrLFTreeViterbi $HMTM_PARAMS" : (),
     $self->hmtm ? 'T2T::RehangToOrigParents' : (),
     'Util::DefinedAttr tnode=t_lemma,formeme message="after simple transfer"',
-    #'T2T::FixGrammatemesAfterTransfer',
+    'T2T::FixGrammatemesAfterTransfer',
     'T2T::SetClauseNumber',
     ;
     return $scen;
