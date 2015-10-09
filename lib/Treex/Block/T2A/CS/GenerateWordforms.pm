@@ -135,6 +135,10 @@ sub _generate_word_form {
     }
     return $form_info if $form_info;
 
+    # if the lemma contains underscores, don't try the capitalization trick below
+    my $oov = Treex::Tool::LM::FormInfo->new( { form => $lemma, lemma => $lemma, tag => 'X@-------------', count => 0 } );
+    return $oov if $lemma =~ /_/;
+
     # (HACK) try capitalized lemma
     my $capitalized_lemma = ucfirst $lemma;
     $form = $morphoLM->best_form_of_lemma( $capitalized_lemma, $tag_regex );
@@ -150,7 +154,7 @@ sub _generate_word_form {
     log_debug( "LEMM: $lemma\t$tag_regex\t$lemma\tttred " . $a_node->get_address() . " &", 1 );
 
     $lemma =~ s/(..t)-\d$/$1/;    # removing suffices distinguishing homonymous lemmas (stat-2)
-    return Treex::Tool::LM::FormInfo->new( { form => $lemma, lemma => $lemma, tag => 'X@-------------', count => 0 } );
+    return $oov;
 }
 
 # relax regexp requirements: avoid pieces that cannot be satisfied for the given lemma anyway
