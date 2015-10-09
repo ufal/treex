@@ -26,6 +26,9 @@ sub score {
         $value = $value >= 1 ? 1 : 0;
         $score += $weights->{$key}->[$value];
     }
+    #if ($feat_hash{all_capital}) {
+    #    $score += $feat_hash{full_str_eq} ? 10 : -50;
+    #}
     my $anode_count = $feat_hash{anode_count} // 1;
 
     return $score * $anode_count;

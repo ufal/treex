@@ -35,6 +35,10 @@ sub extract_feats {
     my $last_menu = ($forms[$#forms] eq "menu") ? 1 : 0;
     push @feats, ['last_menu', $last_menu];
 
+    my $all_capital = 
+        (($match->[1] !~ /\p{IsLower}/) || (all {$_ !~ /\p{IsLower}/} @forms)) ? 1 : 0;
+    push @feats, ['all_capital', $all_capital];
+
     my $context_size = 3;
     my $next_node = $anodes[$#anodes]->get_next_node;
     my $prev_node = $anodes[0]->get_prev_node;

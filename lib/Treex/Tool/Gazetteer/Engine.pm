@@ -64,7 +64,8 @@ sub _insert_phrase_to_trie {
 
     return if ($phrase =~ /^\s*$/);
 
-    my @words = map {lc($_)} (split / +/, $phrase);
+    #my @words = map {lc($_)} (split / +/, $phrase);
+    my @words = split / +/, $phrase;
     my $next_word = shift @words;
     while (defined $next_word && defined $trie->{$next_word}) {
         #log_info "NEXT_WORD_GET: " . $next_word if ($debug);
@@ -131,7 +132,8 @@ sub match_phrases_in_atree {
     foreach my $anode (@anodes) {
         unshift @unproc_trie_nodes, $self->_trie;
 
-        my $word = lc($anode->form);
+        #my $word = lc($anode->form);
+        my $word = $anode->form;
 
         @unproc_trie_nodes = map {$_->{$word}} @unproc_trie_nodes;
         my @found = map {defined $_ ? 1 : 0} @unproc_trie_nodes;
