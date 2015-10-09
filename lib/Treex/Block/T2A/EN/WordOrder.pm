@@ -18,7 +18,7 @@ sub process_tnode {
     return if ( !@children );
 
     # finite clauses
-    if ( $tnode->formeme =~ /v:*.(fin|rc)/ ) {
+    if ( $tnode->formeme =~ /v:.*(fin|rc)/ ) {
 
         # skip imperatives, for now (TODO fix them)
         return if ( ( $tnode->sentmod // '' ) !~ /enunc|inter/ );

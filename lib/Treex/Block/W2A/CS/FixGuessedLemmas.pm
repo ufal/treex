@@ -5,17 +5,18 @@ use Treex::Core::Common;
 
 use PerlIO::gzip;
 use Tree::Trie;
+
 #use Text::Levenshtein qw/distance/;
 use Text::Brew;
 use List::Util qw/min/;
 
 extends 'Treex::Core::Block';
 
-has 'forms_list_path' => ( is => 'ro', isa => 'Str', default => 'data/models/ne_lemma_fix/cswiki.forms.freq.txt.gz');
-has '_forms_list' => ( is => 'ro', isa => 'HashRef[Str]', builder => '_build_forms_list', lazy => 1);
+has 'forms_list_path' => ( is => 'ro', isa => 'Str', default => 'data/models/ne_lemma_fix/cswiki.forms.freq.txt.gz' );
+has '_forms_list' => ( is => 'ro', isa => 'HashRef[Str]', builder => '_build_forms_list', lazy => 1 );
 
-has 'lemmas_list_path' => ( is => 'ro', isa => 'Str', default => 'data/models/ne_lemma_fix/cswiki.lemmas.list.txt.gz');
-has '_lemmas_list' => ( is => 'ro', isa => 'Tree::Trie', builder => '_build_lemmas_list', lazy => 1);
+has 'lemmas_list_path' => ( is => 'ro', isa => 'Str', default => 'data/models/ne_lemma_fix/cswiki.lemmas.list.txt.gz' );
+has '_lemmas_list' => ( is => 'ro', isa => 'Tree::Trie', builder => '_build_lemmas_list', lazy => 1 );
 
 #has 'suffix_change_threshold' => ( is => 'ro', isa => 'Num', default => 0.3 );
 
@@ -30,30 +31,30 @@ sub _build_forms_list {
 
     my $forms_freq = {};
 
-    my $path = require_file_from_share($self->forms_list_path);
+    my $path = require_file_from_share( $self->forms_list_path );
     log_info "Loading a list of forms not contained in the MorphoDiTa dictionary from '$path'";
     open my $forms_fh, "<:gzip:utf8", $path or die $!;
     while (<$forms_fh>) {
         chomp $_;
         $_ =~ s/^\s*//;
         $_ =~ s/\s*$//;
-        my ($count, $form) = split /\s+/, $_;
-        my $cap_hash = $forms_freq->{lc($form)};
-        if (defined $cap_hash) {
+        my ( $count, $form ) = split /\s+/, $_;
+        my $cap_hash = $forms_freq->{ lc($form) };
+        if ( defined $cap_hash ) {
             $cap_hash->{$form} = $count;
         }
         else {
-            $cap_hash = {};
-            $cap_hash->{$form} = $count;
-            $forms_freq->{lc($form)} = $cap_hash; 
+            $cap_hash                  = {};
+            $cap_hash->{$form}         = $count;
+            $forms_freq->{ lc($form) } = $cap_hash;
         }
     }
     close $forms_fh;
 
     my $forms_list = {};
-    foreach my $key (keys %$forms_freq) {
+    foreach my $key ( keys %$forms_freq ) {
         my $cap_hash = $forms_freq->{$key};
-        my ($max_key) = sort {$cap_hash->{$b} <=> $cap_hash->{$a}} keys %$cap_hash;
+        my ($max_key) = sort { $cap_hash->{$b} <=> $cap_hash->{$a} } keys %$cap_hash;
         $forms_list->{$key} = $max_key;
     }
 
@@ -65,36 +66,36 @@ sub _build_lemmas_list {
 
     my $ll_trie = Tree::Trie->new();
 
-    my $path = require_file_from_share($self->lemmas_list_path);
+    my $path = require_file_from_share( $self->lemmas_list_path );
     log_info "Loading a list of lemmas not contained in the MorphoDiTa dictionary from '$path'";
     open my $ll_fh, "<:gzip:utf8", $path;
     while (<$ll_fh>) {
         chomp $_;
-        $ll_trie->add(lc($_));
+        $ll_trie->add( lc($_) );
     }
     close $ll_fh;
     return $ll_trie;
 }
 
 sub is_change_minor {
-    my ($self, $old_word, $new_word, $dist) = @_;
+    my ( $self, $old_word, $new_word, $dist ) = @_;
 
     #return ($dist / length($old_word)) < $self->suffix_change_threshold;
-    return ($dist < 3);
+    return ( $dist < 3 );
 }
 
 sub distance {
-    my ($str1, $str2) = @_;
+    my ( $str1, $str2 ) = @_;
 
-    my ($dist, $edits) = Text::Brew::distance($str1, $str2);
-    
+    my ( $dist, $edits ) = Text::Brew::distance( $str1, $str2 );
+
     my $match_penalty = 1;
     my $weighted_dist = 0;
-    foreach my $edit (reverse @$edits) {
-        if ($edit eq 'INITIAL') {
+    foreach my $edit ( reverse @$edits ) {
+        if ( $edit eq 'INITIAL' ) {
             next;
         }
-        elsif ($edit ne 'MATCH') {
+        elsif ( $edit ne 'MATCH' ) {
             $weighted_dist += $match_penalty;
         }
         else {
@@ -112,41 +113,100 @@ sub process_anode {
     #return if (lc($anode->form) eq $anode->form);
 
     # fix only those guessed by a lemmatizer
-    return if (!$anode->wild->{lemma_guessed});
-#    log_info "LEMMA GUESSED: ".$anode->lemma;
+    return if ( !$anode->wild->{lemma_guessed} );
 
-    # fix only those nodes, whose guessed lemma cannot be found in the list
-    return if ($self->_forms_list->{lc($anode->lemma)});
-#    log_info "LEMMA NOT FOUND: ".$anode->lemma;
-    
-    my $lc_form = lc($anode->form);
-#    log_info "LC_FORM: $lc_form";
+    #    log_info "LEMMA GUESSED: ".$anode->lemma;
+
+    # fix only nodes whose guessed lemma cannot be found in the list
+    if ( not $self->_forms_list->{ lc( $anode->lemma ) } ) {
+        return if $self->fix_lemma_using_list($anode);
+    }
+
+    # try rules for fixing lemmas
+    return if $self->fix_lemma_using_rules($anode);
+
+    # for lemmas not fixed, try to keep the lemma capitalization as it is in the word
+    if ( $anode->form =~ /\p{Lu}/ and $anode->form =~ /\p{Ll}/ and $anode->lemma !~ /\p{Lu}/ and $anode->ord > 1 ) {
+        $self->fix_lemma_capitalization($anode);
+    }
+}
+
+# Trying to fix a lemma using a list from Wikipedia, return status (1: fixed, 0: left untouched)
+sub fix_lemma_using_list {
+
+    my ( $self, $anode ) = @_;
+
+    #    log_info "LEMMA NOT FOUND: ".$anode->lemma;
+
+    my $lc_form = lc( $anode->form );
+
+    #    log_info "LC_FORM: $lc_form";
 
     # fix only those whose form can be found in the list
-    return if (!$self->_forms_list->{$lc_form});
+    return 0 if ( !$self->_forms_list->{$lc_form} );
 
     my $wt = $self->_lemmas_list;
     $wt->deepsearch('prefix');
     my $longest_prefix = $wt->lookup($lc_form);
-    return if (!$longest_prefix);
-#    log_info "LONGEST_PREFIX: $longest_prefix";
-    
+    return 0 if ( !$longest_prefix );
+
+    #    log_info "LONGEST_PREFIX: $longest_prefix";
+
     my @possible_words = $wt->lookup($longest_prefix);
-    my @distances = map {distance($lc_form, $_)} @possible_words;
+    my @distances = map { distance( $lc_form, $_ ) } @possible_words;
 
     my $min_dist = min @distances;
-#    log_info "MIN_DIST: $min_dist";
-    my ($new_lc_lemma) = @possible_words[(grep {$distances[$_] == $min_dist} 0 .. $#distances)];
-#    log_info "NEW LC LEMMA: $new_lc_lemma";
 
-    return if (!$self->is_change_minor($lc_form, $new_lc_lemma, $min_dist));
+    #    log_info "MIN_DIST: $min_dist";
+    my ($new_lc_lemma) = @possible_words[ ( grep { $distances[$_] == $min_dist } 0 .. $#distances ) ];
+
+    #    log_info "NEW LC LEMMA: $new_lc_lemma";
+
+    return 0 if ( !$self->is_change_minor( $lc_form, $new_lc_lemma, $min_dist ) );
 
     #if (defined $new_lemma) {
     my $new_lemma = $self->_forms_list->{$new_lc_lemma};
-    return if (!defined $new_lemma);
-#    log_info "NEW LEMMA: $new_lemma";
+    return 0 if ( !defined $new_lemma );
+
+    #    log_info "NEW LEMMA: $new_lemma";
     $anode->set_lemma($new_lemma);
+    $anode->wild->{ne_lemma_fix} = 1;
+
     #}
+    return 1;
+}
+
+sub fix_lemma_using_rules {
+    my ( $self, $anode ) = @_;
+
+    my $form = $anode->form;
+    if ( $form =~ /^iPad(u|em|y|ů|ech)$/ ) {
+        $anode->set_lemma('iPad');
+        return 1;
+    }
+    return 0;
+}
+
+sub fix_lemma_capitalization {
+    my ( $self, $anode ) = @_;
+
+    my $lemma     = $anode->lemma;
+    my $form      = $anode->form;
+    my $new_lemma = '';
+    my $i         = 0;
+
+    for ( ; $i < min( length($lemma), length($form) ); ++$i ) {
+        my $l_letter = substr $lemma, $i, 1;
+        my $f_letter = substr $form,  $i, 1;
+
+        last if ( lc $l_letter ne lc $f_letter );
+        $new_lemma .= $f_letter;
+    }
+    $new_lemma .= substr $lemma, $i;
+    $anode->set_lemma($new_lemma);
+    $anode->wild->{lemma_cap_fix} = 1;
+
+    return;
 }
 
 1;

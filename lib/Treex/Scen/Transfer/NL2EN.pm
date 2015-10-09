@@ -23,6 +23,13 @@ has hmtm => (
      documentation => 'Apply HMTM (TreeViterbi) with TreeLM reranking',
 );
 
+has lm_dir => (
+    is => 'ro',
+    isa => 'Str',
+    default => 'auto',
+    documentation => 'HTMT Tree LM directory (default chosen based on domain)',
+);
+
 has gazetteer => (
      is => 'ro',
      isa => 'Str',
@@ -48,6 +55,9 @@ sub BUILD {
     my ($self) = @_;
     if ($self->tm_adaptation eq 'auto'){
         $self->{tm_adaptation} = $self->domain eq 'IT' ? 'interpol' : 'no';
+    }
+    if ($self->lm_dir eq 'auto'){
+        $self->{lm_dir} = $self->domain eq 'IT' ? 'en.superuser' : 'en.czeng';
     }
     return;
 }
@@ -76,7 +86,11 @@ sub get_scenario_string {
       static 0.5 20150725_tlemma.static.min_2.minpc_1.gz
       maxent 1.0 20150220_tlemma.maxent.gz
       $IT_LEMMA_MODELS'",
+    'T2T::CutVariants max_lemma_variants=7 max_formeme_variants=7',
     $self->fl_agreement ? 'T2T::FormemeTLemmaAgreement fun='.$self->fl_agreement : (),
+    $self->hmtm ? 'T2T::RehangToEffParents' : (),
+    $self->hmtm ? 'T2T::EN2EN::TrLFTreeViterbi lm_dir=' . $self->lm_dir : (), #lm_weight=0.2 formeme_weight=0.9 backward_weight=0.0 lm_dir=en.czeng
+    $self->hmtm ? 'T2T::RehangToOrigParents' : (),
     'Util::DefinedAttr tnode=t_lemma,formeme message="after simple transfer"',
     'T2T::SetClauseNumber',
     ;
@@ -117,7 +131,10 @@ L<Treex::Scen::NL2EN> -- end-to-end translation scenario
 =head1 AUTHORS
 
 Martin Popel <popel@ufal.mff.cuni.cz>
+
 Michal Novák <mnovak@ufal.mff.cuni.cz>
+
+Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
