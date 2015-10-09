@@ -17,6 +17,7 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{mbp}        => 'Mb/s|X',
     q{10.04}      => '10.04|X',
     q{ruler}      => 'pravítko|N',
+    q{shell}      => 'shell|N',
     q{right-click}=> 'pravým tlačítkem myši klikněte|V',
 );
 

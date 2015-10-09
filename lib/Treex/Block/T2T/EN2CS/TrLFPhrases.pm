@@ -182,6 +182,13 @@ sub process_tnode {
         $cs_parent->set_t_lemma_origin('rule-TrLFPhrases');
     }
 
+    if ( $en_tnode->t_lemma eq '/_off' && $en_tnode->formeme eq 'n:on+X'){
+        $cs_tnode->set_t_lemma('zapnutí/vypnutí');
+        $cs_tnode->set_formeme('x');
+        $cs_tnode->set_t_lemma_origin('rule-TrLFPhrases');
+        $cs_tnode->set_formeme_origin('rule-TrLFPhrases');
+    }
+
     # Two English t-nodes, child and parent, translates to one Czech t-node
     my $key = $en_parent->precedes($en_tnode) ? $p_lemma . '_' . $lemma . '_PC' : $lemma . '_' . $p_lemma . '_CP';
     my $one_node_variants = $CHILD_PARENT_TO_ONE_NODE->{$key};
