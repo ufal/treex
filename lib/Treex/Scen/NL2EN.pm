@@ -37,7 +37,7 @@ sub BUILD {
         $self->{hideIT} = $self->domain eq 'IT' ? 1 : 0;
     }
     if (!defined $self->gazetteer){
-        $self->{gazetteer} = $self->domain eq 'IT' ? 'all' : '0';
+        $self->{gazetteer} = $self->domain eq 'IT' ? '0' : '0';
     }
     if ($self->gazetteer) {
         $self->{src_lang} = "nl";
