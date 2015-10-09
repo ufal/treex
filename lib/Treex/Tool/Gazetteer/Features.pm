@@ -35,6 +35,22 @@ sub extract_feats {
     my $last_menu = ($forms[$#forms] eq "menu") ? 1 : 0;
     push @feats, ['last_menu', $last_menu];
 
+    my $context_size = 3;
+    my $next_node = $anodes[$#anodes]->get_next_node;
+    my $prev_node = $anodes[0]->get_prev_node;
+    for (my $i=0; $i<$context_size; $i++) {
+        if (defined $next_node) {
+            push @feats, ['next_form', $next_node->form];
+            push @feats, ['next_form_'.($i+1), $next_node->form];
+            $next_node = $next_node->get_next_node;
+        }
+        if (defined $prev_node) {
+            push @feats, ['prev_form', $prev_node->form];
+            push @feats, ['prev_form_'.($i+1), $prev_node->form];
+            $prev_node = $prev_node->get_prev_node;
+        }
+    }
+
     push @feats, ['anode_count', scalar @anodes];
 
     return \@feats;
