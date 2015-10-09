@@ -23,7 +23,16 @@ Readonly my $CHILD_PARENT_TO_ONE_NODE => {
     third_time_CP     => 'potřetí#D',
     last_time_CP      => 'naposledy#D',
     right_click_CP    => 'pravým tlačítkem myši klikněte#V',
+    check_mark_CP     => 'zaškrtnutí#N',
 };
+
+# one English t-lemma + syntpos --> Czech child (t-lemma, formeme, mlayer_pos) + parent (t-lemma, mlayer_pos)
+# (given in requested word order)
+my %ONE_NODE_TO_CHILD_PARENT = (
+    'toolbar|n' => 'panel|N nástrojů|x|X',
+    'website|n' => 'webový|adj:attr|A stránka|N',
+);
+
 
 sub process_ttree {
     my ( $self, $cs_troot ) = @_;
@@ -196,8 +205,52 @@ sub process_tnode {
         }
         $cs_tnode->remove();
     }
+
+    $self->try_1to2($cs_tnode, $en_tnode);
+
     return;
 }
+
+sub try_1to2 {
+    my ($self, $cs_tnode, $en_tnode) = @_;
+
+    my $id = $en_tnode->t_lemma . '|' . $en_tnode->formeme;
+    $id =~ s/:.*$//;
+    if ( my $translation = $ONE_NODE_TO_CHILD_PARENT{$id} ) {
+        my ( $child_info, $node_info ) = split / /, $translation;
+        my $swap_order = 0;
+        if ( $node_info =~ /^.*\|.*\|.*$/ ){
+            $swap_order = 1;
+            ( $child_info, $node_info ) = ( $node_info, $child_info );
+        }
+
+        my ( $t_lemma, $formeme, $mlayer_pos ) = split /\|/, $child_info;
+        my $child = $cs_tnode->create_child(
+            {
+                t_lemma        => $t_lemma,
+                formeme        => $formeme,
+                mlayer_pos     => $mlayer_pos,
+                t_lemma_origin => 'rule-TrLFPhrases',
+                formeme_origin => 'rule-TrLFPhrases',
+                clause_number  => $cs_tnode->clause_number,
+                nodetype       => 'complex',                
+            }
+        );
+        $child->set_src_tnode($en_tnode);
+        if ($swap_order){
+            $child->shift_after_node($cs_tnode);
+        }
+        else {
+            $child->shift_before_node($cs_tnode);
+        }
+
+        ( $t_lemma, $mlayer_pos ) = split /\|/, $node_info;
+        $cs_tnode->set_t_lemma($t_lemma);
+        $cs_tnode->set_attr( 'mlayer_pos', $mlayer_pos );
+        $cs_tnode->set_t_lemma_origin('rule-TrLFPhrases');
+    }
+}
+
 
 1;
 
