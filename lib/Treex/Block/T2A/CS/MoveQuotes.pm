@@ -17,7 +17,7 @@ sub process_tnode {
     my $en_a_parent = $en_a_quote->get_parent();
     return if $en_a_parent->is_root;
     my ($en_a_gparent) = $en_a_parent->get_eparents( { or_topological => 1 } );
-    return if $en_a_gparent->precedes($en_a_quote) && ( $en_a_gparent->afun || '' ) =~ /^Aux[CP]/;
+    return if $en_a_gparent->precedes($en_a_quote) && ( ( $en_a_gparent->afun || '' ) =~ /^Aux[CP]/ or $en_a_gparent->lemma eq 'click' );
     my $a_quote  = $tnode->get_lex_anode() or return;
     my $a_parent = $a_quote->get_parent();
     return if $a_parent->is_root();
