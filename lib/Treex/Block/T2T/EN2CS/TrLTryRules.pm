@@ -24,6 +24,7 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{von}        => 'von|X',
     q{ok}         => 'OK|X',
     q{yes}        => 'ano|X',
+    q{alpha-numeric} => 'alfanumerický|A',
 );
 
 sub process_tnode {
