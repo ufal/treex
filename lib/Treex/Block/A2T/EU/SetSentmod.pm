@@ -2,30 +2,31 @@ package Treex::Block::A2T::EU::SetSentmod;
 use Moose;
 use Treex::Core::Common;
 
-extends 'Treex::Core::Block';
+extends 'Treex::Block::A2T::SetSentmod';
 
-sub process_tnode {
-    my ($self, $tnode) = @_;
-    
-    my $sentmod;
-    #my $anode = $tnode->get_lex_anode();
-    #if ($anode && $anode->is_verb){
-        my @aux_anodes = $tnode->get_aux_anodes();
-        if (any {$_->form =~ /^[?]$/} @aux_anodes){
-            $sentmod = 'inter';
-        } elsif (any {$_->form =~ /^[!]$/} @aux_anodes){
-            $sentmod = 'imper';
-        }
-    #}
-    
-    # The main verb should have sentmod filled. Default is the normal indicative mood.
-    if (!$sentmod && $tnode->get_parent()->is_root()){
-        $sentmod = 'enunc';
+override 'is_question' => sub {
+    my ( $self, $t_node, $a_node ) = @_;
+    my ($t_parent) = $t_node->get_eparents( { or_topological => 1 } );
+    return 0 if ( !$t_parent->is_root );
+    return 0 if any { $_->is_clause_head and $t_node->precedes($_) } $t_parent->get_echildren();
+
+    my $a_root = $t_parent->get_zone->get_atree();
+    return 0 if ( !$a_root );
+
+    my ( $last_token, @toks ) = reverse $a_root->get_descendants( { ordered => 1 } );
+
+    foreach my $t (@toks) {
+	return 1 if ($t->lemma =~ /^(ba|al)$/);
     }
-    
-    $tnode->set_sentmod($sentmod) if $sentmod;
-    return;
-}
+
+    if ( @toks && $last_token->afun eq 'AuxG' ) {
+        $last_token = shift @toks;
+    }
+    if ( $last_token && $last_token->form eq '?' ) {
+        return 1;
+    }
+    return 0;
+};
 
 
 1;

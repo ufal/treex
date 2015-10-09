@@ -42,7 +42,41 @@ override is_aux_to_parent => sub {
         return 0;
     }
 
+
+    # Questions
+    if ($node->lemma eq 'al' || $node->lemma eq 'ba') {
+	my ($eparent) = $node->get_eparents();
+	if (!$eparent->is_root && ($eparent->is_verb)) {
+	    return 1;
+	}
+    }
+
     return 0;
+};
+
+override is_parent_aux_to_me => sub {
+    my ( $self, $node ) = @_;
+    
+    my $parent = $node->get_parent();
+    return 0 if !$parent || $parent->is_auxiliary == 1 || $self->tnode_although_aux($parent);
+
+    return 1 if ($node->is_verb() && $node->iset->verbform eq "" 
+		 && $parent->lemma =~ /^(izan|ukan)$/);
+
+    # AuxP = preposition, AuxC = subord. conjunction
+    # Aux[CP] node usually has just one child (noun under AuxP, verb under AuxC).
+    # The lower nodes of multiword Aux[CP] (Aux[CP] under Aux[CP])
+    # are marked already by the method is_aux_to_parent (which is checked first).
+    # If Aux[CP] node has two or more non-aux children, we mark all of them here,
+    # but solve_multi_lex is executed afterwards and it should choose just one.
+    return 1 if $parent->afun =~ /Aux[CP]/;
+
+    # modal verbs (including coordinated lexical verbs sharing one modal verb)
+    # If $node->is_coap_root then $_ are the possible lexical verbs (conjuncts).
+    # Otherwise, $node->get_coap_members() == ($node) == ($_).
+    return 1 if any { $self->is_modal( $parent, $_ ) } $node->get_coap_members();
+
+    return undef;
 };
 
 1;

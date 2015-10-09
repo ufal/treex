@@ -183,7 +183,7 @@ override 'process_tnode' => sub {
         my $new_node = $anode->create_child();
         $new_node->reset_morphcat();
 
-	if ($tnode->gram_negation eq "neg1") {
+	if (($tnode->gram_negation || "") eq "neg1") {
 	    $new_node->shift_after_node($anode);
 	}
 	else {

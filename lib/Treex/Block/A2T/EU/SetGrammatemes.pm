@@ -107,6 +107,7 @@ override 'set_verbal_grammatemes' => sub {
         my $id = $tnode->id . ' -- ' . join(' ', map { lc $_->form } grep { $_->is_verb } $tnode->get_anodes( { ordered => 1 } ) );
         log_warn( "No grammatemes found for verbal group signature `$sig': $id");
     }
+
     return 1;
 };
 
@@ -128,7 +129,7 @@ sub get_verbal_group_signature {
         if ( $anode == $lex_anode ) {
             unshift @sig, $lemma . '-' . $self->get_form_signature($anode);
         }
-        else {
+        elsif ($anode->lemma !~ /^(ba|al)$/) {
             push @sig, $lemma . '-' . $self->get_form_signature($anode);
         }
     }

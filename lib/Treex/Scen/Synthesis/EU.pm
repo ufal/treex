@@ -10,6 +10,7 @@ T2A::MarkSubject
 T2A::InitMorphcat
 T2A::ImposeSubjpredAgr
 T2A::ImposeAttrAgr
+T2A::EU::AddArticles
 T2A::AddSubconjs
 T2A::EU::AddAuxVerbModalTense
 T2A::EU::AddNegationParticle
@@ -18,7 +19,7 @@ T2A::AddCoordPunct
 T2A::ProjectClauseNumber
 T2A::AddParentheses
 T2A::AddSentFinalPunct
-T2A::AddSubordClausePunct
+T2A::EU::AddSubordClausePunct
 Util::Eval anode='$.set_tag(join "+", $.get_iset_values())'
 T2A::EU::GenerateWordforms
 T2A::DeleteSuperfluousAuxCP
