@@ -149,7 +149,17 @@ sub match_phrases_in_atree {
             grep {defined $unproc_trie_nodes[$_]->{$INFO_LABEL}} 0 .. $#unproc_trie_nodes;
         push @matches, @new_matches;
     }
+
+    @matches = _filter_matches(@matches);
+
     return \@matches;
+}
+
+sub _filter_matches {
+    my (@matches) = @_;
+    @matches = grep {$_->[2][0]->form =~ /^\p{Lu}/} @matches;
+    @matches = grep {$_->[2][0]->ord > 1} @matches;
+    return @matches;
 }
 
 sub get_phrase_by_id {
