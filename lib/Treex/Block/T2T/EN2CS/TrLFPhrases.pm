@@ -27,6 +27,7 @@ Readonly my $CHILD_PARENT_TO_ONE_NODE => {
 
 sub process_ttree {
     my ( $self, $cs_troot ) = @_;
+
     my @cs_tnodes = $cs_troot->get_descendants( { ordered => 1 } );
 
     # Hack for "That is," -> "Jinými slovy"
@@ -82,8 +83,8 @@ sub process_tnode {
 
         # "this year" -> "letos"
         if ( $p_formeme =~ /^n:(adv|than.X)$/ ) {
-            my $l = $lemma eq 'this' ? 'letos' : 'vloni';
-            my $f = $p_formeme =~ /adv/ ? 'adv:' : 'n:než+X';
+            my $l = $lemma eq 'this'    ? 'letos' : 'vloni';
+            my $f = $p_formeme =~ /adv/ ? 'adv:'  : 'n:než+X';
             $cs_parent->set_attr( 'mlayer_pos', 'D' );
             $cs_parent->set_t_lemma($l);
             $cs_parent->set_formeme($f);
@@ -146,6 +147,20 @@ sub process_tnode {
 
         $child->set_formeme('n:2');
         $child->set_formeme_origin('rule-TrLFPhrases');
+    }
+
+    # "where it says" -> "kde se píše"
+    # this is probably QTLeap-specific, but "it says" should not occur anywhere else
+    if (    $en_tnode->t_lemma eq 'say'
+        and $en_tnode->gram_diathesis eq 'act' 
+        and $en_tnode->gram_tense eq 'sim'
+        and any { $_->t_lemma eq '#PersPron' && $_->formeme eq 'n:subj' && $_->gram_gender eq 'neut' && $_->gram_number eq 'sg' } $en_tnode->get_echildren
+        )
+    {
+        $cs_tnode->set_t_lemma('psát');
+        $cs_tnode->set_gram_diathesis('deagent');
+        $cs_tnode->set_voice('reflexive_diathesis');
+        $cs_tnode->set_t_lemma_origin('rule-TrLFPhrases');
     }
 
     # Two English t-nodes, child and parent, translates to one Czech t-node
