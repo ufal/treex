@@ -25,16 +25,28 @@ sub process_tnode {
 
     # In some copula constructions, the word "to" is needed instead of a personal pronoun
     # "He was a man who..." = "Byl to muž, který..."
+    # "It is possible." = "Je to možné."
+    # BUT
+    # "He was a man" = "Byl (to???) muž."
+    # "It is possible that he lies." = "Je (to???) možné, že lže."
+    # "It is possible to lie." = "Je možné lhát."
+    # Unfortunately, sometimes the parsing is wrong and
+    # "že lže" is not a child of "možné", but a sibling
+
     if ( $p_lemma eq 'být' ) {
         my $real_subj = first { $_->formeme =~ /:1$/ } $parent->get_children( { following_only => 1 } );
-        if ( $real_subj && any { $_->formeme eq 'v:rc' } $real_subj->get_children() ) {
-            my $a_node = $t_node->get_lex_anode();
-            $a_node->set_lemma('ten');
-            $a_node->set_attr( 'morphcat/gender', 'N' );
-            $a_node->set_attr( 'morphcat/subpos', 'D' );
-            $a_node->set_attr( 'morphcat/person', '-' );
-            $a_node->shift_after_node( $a_node->get_parent() );
-            return;
+        if ($real_subj){
+            my $noun_with_rc = $real_subj->formeme eq 'n:1' && any { $_->formeme eq 'v:rc' } $real_subj->get_children();
+            my $adj_no_children = $real_subj->formeme eq 'adj:1' && !$real_subj->get_children({following_only=>1}) && !$real_subj->get_siblings({following_only=>1}); #&& !$t_node->get_coref_chain()
+            if ($noun_with_rc || $adj_no_children) {
+                my $a_node = $t_node->get_lex_anode();
+                $a_node->set_lemma('ten');
+                $a_node->set_attr( 'morphcat/gender', 'N' );
+                $a_node->set_attr( 'morphcat/subpos', 'D' );
+                $a_node->set_attr( 'morphcat/person', '-' );
+                $a_node->shift_after_node( $a_node->get_parent() );
+                return;
+            }
         }
     }
 
