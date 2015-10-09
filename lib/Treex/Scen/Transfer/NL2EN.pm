@@ -30,6 +30,27 @@ has lm_dir => (
     documentation => 'HTMT Tree LM directory (default chosen based on domain)',
 );
 
+has lm_weight => (
+    is            => 'ro',
+    isa           => 'Num',
+    default       => 0.2,
+    documentation => 'Weight of tree language model (or transition) logprobs.',
+);
+
+has formeme_weight => (
+    is            => 'ro',
+    isa           => 'Num',
+    default       => 1.5,
+    documentation => 'Weight of the Tree LM formeme forward logprobs.',
+);
+
+has backward_weight => (
+    is            => 'ro',
+    isa           => 'Num',
+    default       => 0,
+    documentation => 'Weight of the Tree LM backward lemma logprobs (1-forward)'
+);
+
 has gazetteer => (
      is => 'ro',
      isa => 'Str',
@@ -73,6 +94,13 @@ sub get_scenario_string {
         $IT_LEMMA_MODELS = "static 0.5 IT/20150725_batch1q-tlemma.static.gz\n      maxent 1.0 IT/20150725_batch1q-tlemma.maxent.gz";
         $IT_FORMEME_MODELS = "static 1.0 IT/20150725_batch1q-formeme.static.gz\n      maxent 0.5 IT/20150725_batch1q-formeme.maxent.gz";
     }
+    my $HMTM_PARAMS = '';
+    if ($self->hmtm){
+        $HMTM_PARAMS = 'lm_dir=' . $self->lm_dir 
+                . ' lm_weight=' . $self->lm_weight 
+                . ' formeme_weight=' . $self->formeme_weight 
+                . ' backward_weight=' . $self->backward_weight;
+    }
 
     my $scen = join "\n",
     'Util::SetGlobal language=en selector=tst',
@@ -89,9 +117,10 @@ sub get_scenario_string {
     'T2T::CutVariants max_lemma_variants=7 max_formeme_variants=7',
     $self->fl_agreement ? 'T2T::FormemeTLemmaAgreement fun='.$self->fl_agreement : (),
     $self->hmtm ? 'T2T::RehangToEffParents' : (),
-    $self->hmtm ? 'T2T::EN2EN::TrLFTreeViterbi lm_dir=' . $self->lm_dir : (), #lm_weight=0.2 formeme_weight=0.9 backward_weight=0.0 lm_dir=en.czeng
+    $self->hmtm ? "T2T::EN2EN::TrLFTreeViterbi $HMTM_PARAMS" : (),
     $self->hmtm ? 'T2T::RehangToOrigParents' : (),
     'Util::DefinedAttr tnode=t_lemma,formeme message="after simple transfer"',
+    'T2T::FixGrammatemesAfterTransfer',
     'T2T::SetClauseNumber',
     ;
     return $scen;

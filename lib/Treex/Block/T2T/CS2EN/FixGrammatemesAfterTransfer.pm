@@ -4,25 +4,9 @@ use utf8;
 use Moose;
 use Treex::Core::Common;
 
-extends 'Treex::Core::Block';
+extends 'Treex::Block::T2T::FixGrammatemesAfterTransfer';
 
-sub process_tnode {
-
-    my ( $self, $t_node ) = @_;
-    my $t_src = $t_node->src_tnode or return;
-    
-    $self->_fix_valid_grammatemes( $t_node, $t_src );
-
-    $self->_fix_negation( $t_node, $t_src );
-
-    $self->_fix_number( $t_node, $t_src );
-    
-    $self->_fix_degcmp( $t_node, $t_src );
-
-    return;
-}
-
-sub _fix_negation {
+override '_fix_negation' => sub {
 
     my ( $self, $en_t_node, $cs_t_node ) = @_;
 
@@ -94,9 +78,9 @@ sub _fix_negation {
     }
 
     return;
-}
+};
 
-sub _fix_number {
+override '_fix_number' => sub {
 
     my ( $self, $en_t_node, $cs_t_node ) = @_;
 
@@ -113,52 +97,9 @@ sub _fix_number {
     }
 
     return;
-}
+};
 
-
-# TODO make this language independent
-sub _fix_valid_grammatemes {
-
-    my ( $self, $t_node, $src_t_node ) = @_;
-
-    my $formeme = $t_node->formeme;
-    my $src_formeme = $src_t_node->formeme;
-
-    if ( $formeme !~ /^v/ ) {
-        $t_node->set_voice(undef);
-        $t_node->set_is_passive(undef);
-    }
-
-    # Target nouns
-    if ( $formeme =~ /^n/ and $src_formeme !~ /^(n|drop|adj:poss)/ ) {
-        #$t_node->set_gram_sempos('n.denot');
-        $t_node->set_gram_number('sg') if ($t_node->gram_number || '') ne 'pl';
-        # we're keeping degcmp since it hurts with some NNPs such as High Court
-        foreach my $gram (qw(diathesis verbmod deontmod tense aspect resultative dispmod iterativeness person)) {
-            $t_node->set_attr( "gram/$gram", undef );
-        }
-    }
-
-    # Source verbs, target adjectives or adverbs
-    # TODO correcting nouns -> adjectives, adverbs causes problems; adding degcmp, too
-    if ( $formeme =~ /^ad[jv]/ and $src_formeme =~ /^v/ ) {
-
-        $t_node->set_gram_sempos( $formeme =~ /^adj/ ? 'adj.denot' : 'adv.denot.grad.neg' );
-
-        foreach my $gram (qw(diathesis verbmod deontmod tense aspect resultative dispmod iterativeness person)) {
-            $t_node->set_attr( "gram/$gram", undef );
-        }
-    }
-
-    # Delete all grammatemes for 'x'
-    if ( $formeme eq 'x' && $src_formeme ne 'x' ) {
-        $t_node->set_attr( "gram", undef );
-    }
-    return;
-}
-
-
-sub _fix_degcmp {
+override '_fix_degcmp' => sub {
 
     my ( $self, $t_node, $src_t_node ) = @_;
 
@@ -177,7 +118,7 @@ sub _fix_degcmp {
     }
 
     return;
-}
+};
 
 
 1;
