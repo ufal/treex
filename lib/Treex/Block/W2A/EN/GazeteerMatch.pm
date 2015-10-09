@@ -7,9 +7,9 @@ use Treex::Tool::ML::VowpalWabbit::Classifier;
 
 extends 'Treex::Block::W2A::GazeteerMatch';
 
-has 'model_path' => ( is => 'ro', isa => 'Str', default => 'data/models/gazeteer/entity_recognition/en.en_cs.v1.model');
+#has 'model_path' => ( is => 'ro', isa => 'Str', default => 'data/models/gazeteer/entity_recognition/en.en_cs.v2-next_prev_forms.model');
 # TODO should implement the Treex::Tool::ML::Classifier interface
-has '_model' => ( is => 'ro', isa => 'Treex::Tool::ML::VowpalWabbit::Classifier', builder => '_build_model', lazy => 1 );
+#has '_model' => ( is => 'ro', isa => 'Treex::Tool::ML::VowpalWabbit::Classifier', builder => '_build_model', lazy => 1 );
 
 my %PHRASE_LIST_PATHS = (
     #'cs' => 'data/models/gazeteer/cs_en/toy.cs_en.en.gaz.gz',
@@ -28,17 +28,17 @@ sub BUILD {
     return;
 }
 
-sub _build_model {
-    my ($self) = @_;
-    log_info "Loading a model for gazetteer entity recognition from " . $self->model_path . "...";
-    return Treex::Tool::ML::VowpalWabbit::Classifier->new({ model_path => $self->model_path });
-}
+#sub _build_model {
+#    my ($self) = @_;
+#    log_info "Loading a model for gazetteer entity recognition from " . $self->model_path . "...";
+#    return Treex::Tool::ML::VowpalWabbit::Classifier->new({ model_path => $self->model_path });
+#}
 
-override 'process_start' => sub {
-    my ($self) = @_;
-    super();
-    $self->_model;
-};
+#override 'process_start' => sub {
+#    my ($self) = @_;
+#    super();
+#    $self->_model;
+#};
 
 override 'get_entity_replacement_form' => sub {
     my ($self) = @_;
@@ -54,7 +54,7 @@ override 'get_entity_replacement_form' => sub {
 #    #print STDERR "GazEntRec: " . $match->[1] . " => " . $class . "\n";
 #
 #    # 1 = entity / 2 = no entity
-#    return $class == 1 ? 1 : 0;
+#    return ($class == 1 ? 1 : -1) * scalar @{$match->[2]};
 #};
 
 
