@@ -34,6 +34,7 @@ sub process_zone {
     # and with special care at places where prepositions and coordinations interact.
     $self->process_prep_sub_arg_cloud($root);
     $self->fix_naar_toe($root);
+    $self->fix_als($root);
     $self->lift_commas($root);
     ###!!! Tyhle dvě funkce se sice chvályhodně snaží omezit rozpadlé stromy, kde na kořeni visí několik podstromů,
     ###!!! ale dělají to zřejmě blbě, což se mimo jiné projevuje i na zhoršených výsledcích testů, ale zahlédl jsem
@@ -328,6 +329,42 @@ sub deprel_to_afun
             log_warn('We do not expect a node to be conjunct and coordination at the same time.');
         }
     }
+    $self->fix_annotation_errors($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes a few known annotation errors that appear in the data. Should be called
+# from deprel_to_afun() so that it precedes any tree operations that the
+# superordinate class may want to do.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    for(my $i = 0; $i<=$#nodes; $i++)
+    {
+        my $node = $nodes[$i];
+        my $parent = $node->parent();
+        my @children = $node->children();
+        if($node->form() eq '!!!' && $node->is_verb())
+        {
+            $node->iset()->set('pos' => 'punc');
+        }
+        # het diertje, een_maand_of vier oud, bezweek
+        # the animal, four months old, died
+        # The numeric part (een_maand_of vier) is attached to the previous comma, which is a bug.
+        elsif(defined($parent) && defined($parent->form()) && defined($node->form()) &&
+           $parent->form() eq ',' && $node->form() eq 'vier' &&
+           $i<$#nodes && defined($nodes[$i+1]->form()) && $nodes[$i+1]->form() eq 'oud' &&
+           !$nodes[$i+1]->is_descendant_of($node))
+        {
+            $node->set_parent($nodes[$i+1]);
+            $parent->set_parent($nodes[$i+1]);
+        }
+    }
 }
 
 
@@ -614,6 +651,33 @@ sub fix_naar_toe
                 # Naar will keep its current afun. Is_member should be shifted but we do not expect it to be set here.
                 $node->set_is_member($naar->is_member());
                 $naar->set_is_member(0);
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# The subordinating conjunction "als" ("as") should have the label AuxC or
+# AuxP but it often does not.
+#------------------------------------------------------------------------------
+sub fix_als
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if(lc($node->form()) eq 'als' && $node->is_subordinator())
+        {
+            my $parent = $node->parent();
+            my @children = $node->children();
+            if(defined($parent) && scalar(@children)==1 &&
+               $node->afun() !~ m/^(Aux[PC]|Coord)$/ && $children[0]->afun() eq 'Obj')
+            {
+                $children[0]->set_afun($node->afun());
+                $node->set_afun($children[0]->is_verb() ? 'AuxC' : 'AuxP');
             }
         }
     }
