@@ -27,7 +27,7 @@ my %lspecrel =
     'grc' => ['advmod:emph'],
     'la'  => ['advmod:emph', 'auxpass:reflex'],
     'nl'  => ['compound:prt'],
-    'pt'  => ['advmod:emph'],
+    'pt'  => ['advmod:emph', 'auxpass:reflex'],
     'ta'  => ['advmod:emph', 'compound:prt'],
     'xx'  => ['acl:relcl', 'det:pdt', 'compound:prt'],
 );
