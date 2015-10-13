@@ -37,9 +37,8 @@ sub process_zone
 {
     my $self   = shift;
     my $zone   = shift;
-
     my $root = $self->SUPER::process_zone($zone);
-#    $self->process_args($root);
+    $self->fix_morphology($root);
     $self->attach_final_punctuation_to_root($root);
     $self->restructure_coordination($root, $debug);
     $self->process_prep_sub_arg_cloud($root);
@@ -65,6 +64,33 @@ sub get_input_tag_for_interset
     # Compose a tag string in the form expected by the pl::ipipan Interset driver.
     $conll_feat =~ s/\|/:/g;
     return "$conll_pos:$conll_feat";
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes tags and features for words for which the Polish tagset is too coarse
+# grained.
+#------------------------------------------------------------------------------
+sub fix_morphology
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $form = $node->form();
+        my $iset = $node->iset();
+        # The correct form is 'się' but due to typos in the corpus we have to
+        # look for 'sie' and 'sia' as well.
+        if(defined($form) && $form =~ m/^si[ęea]$/i && $node->is_particle())
+        {
+            $iset->add('pos' => 'noun', 'prontype' => 'prs', 'reflex' => 'reflex');
+            $iset->set('typo' => 'typo') if($form =~ m/^si[ea]$/i);
+        }
+        # Adjust the tag to the modified values of Interset.
+        $self->set_pdt_tag($node);
+    }
 }
 
 
@@ -337,7 +363,13 @@ sub deprel_to_afun
         elsif ($deprel eq 'coord_punct')
         {
             $node->wild()->{'coordinator'} = 1;
-            if ($node->form eq ',')
+            if ($parent->is_root())
+            {
+                # This afun will be transfered to the conjuncts when coordination is processed.
+                # We do not want the conjuncts to get 'AuxX'!
+                $node->set_afun('Pred');
+            }
+            elsif ($node->form eq ',')
             {
                 $node->set_afun('AuxX');
             }
