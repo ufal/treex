@@ -18,7 +18,7 @@ my %FUNCTOR_FOR_AFUN = (
 
 my %FUNCTOR_FOR_LEMMA = (
     'non latina vox' => 'FPHR',
-    meuus       => 'APP',
+    meus       => 'APP',
     tuus        => 'APP',
     suus        => 'APP',
     noster      => 'APP',
