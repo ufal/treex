@@ -966,7 +966,7 @@ sub _check_job_errors {
         my $error_file = $workdir . "/status/" . sprintf( "job%03d", $fatal_job ) . "." . $fatal_doc . ".stderr";
         if ( $fatal_doc =~ /[0-9]+/ ) {
             $error_file = $workdir . "/output/" . sprintf( "doc%07d", $fatal_doc ) . ".stderr";
-            if ( !-d $error_file ) {
+            if ( !-f $error_file ) {
                 $error_file = $workdir . "/error/" . sprintf( "doc%07d", $fatal_doc ) . ".stderr";
             }
         }
