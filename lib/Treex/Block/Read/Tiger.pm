@@ -2,14 +2,10 @@ package Treex::Block::Read::Tiger;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseReader';
+with 'Treex::Block::Read::BaseSplitterRole';
+
 use Moose::Util qw(apply_all_roles);
 use XML::Twig;
-
-has bundles_per_doc => (
-    is      => 'ro',
-    isa     => 'Int',
-    default => 0,
-);
 
 has language => ( isa => 'Treex::Type::LangCode', is => 'ro', required => 1 );
 
@@ -21,14 +17,9 @@ has _twig => (
 
 sub BUILD {
     my ($self) = @_;
-    if ( $self->bundles_per_doc ) {
-        $self->set_is_one_doc_per_file(0);
-    }
     $self->_set_twig( XML::Twig::->new() );
     return;
 }
-
-
 
 #------------------------------------------------------------------------------
 # Returns the span (two numeric positions) of a symbol. Assumes that all

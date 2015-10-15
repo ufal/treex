@@ -2,6 +2,7 @@ package Treex::Block::Read::CdtTag;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseReader';
+with 'Treex::Block::Read::BaseSplitterRole';
 
 use XML::Twig;
 
