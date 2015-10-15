@@ -133,7 +133,10 @@ sub process_atree {
 
 sub print_asubtree {
     my ($self, $anode) = @_;
-    my ($id, $afun, $ord) = $anode->get_attrs(qw(id afun ord), {undefs=>'?'});
+    my ($id, $afun, $ord) = $anode->get_attrs(qw(id afun ord));
+    $id = 'missingID-'.rand(1000000) if !defined $id;
+    $afun = '???' if !defined $afun;
+    $ord = 0 if !defined $ord;
     print {$a_fh} "<LM id='a-$id'><m.rf>m#m-$id</m.rf><afun>$afun</afun><ord>$ord</ord>";
     print {$a_fh} '<is_member>1</is_member>' if $anode->is_member;
     print {$a_fh} '<is_parenthesis_root>1</is_parenthesis_root>' if $anode->is_parenthesis_root;
