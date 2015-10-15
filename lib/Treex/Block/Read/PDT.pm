@@ -14,6 +14,18 @@ has '+_file_suffix' => ( default => '\.[mat](\.gz)?$' );
 
 has language => ( isa => 'Treex::Type::LangCode', is => 'ro', required=>1 );
 
+has '+schema_dir' => ( required=>0, builder => '_build_schema_dir',);
+
+sub _build_schema_dir {
+    my ($self) = @_;
+    my $path = __FILE__;
+    $path =~ s/[^\/]+$//;
+    $path .= '/PDT_schema';
+    log_fatal "Cannot find schema in $path, please specify schema_dir explicitly" if !-d $path;
+    Treex::PML::AddResourcePath($path);
+    return $path;
+}
+
 sub _build_layers {
     my ($self) = @_;
     if ($self->top_layer eq 'm'){
