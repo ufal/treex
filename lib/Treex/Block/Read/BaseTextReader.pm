@@ -21,6 +21,9 @@ sub BUILD {
     if ( $self->lines_per_doc ) {
         $self->set_is_one_doc_per_file(0);
     }
+    if ($self->encoding ne 'utf8'){
+        $self->from->set_encoding($self->encoding);
+    }
     return;
 }
 

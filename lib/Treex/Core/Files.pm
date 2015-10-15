@@ -31,7 +31,7 @@ has current_filehandle => (
 
 has encoding => (
     isa => 'Str',
-    is => 'ro',
+    is => 'rw',
     default  => 'utf8',
 );
 
