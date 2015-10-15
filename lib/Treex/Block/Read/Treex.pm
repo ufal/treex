@@ -1,52 +1,21 @@
 package Treex::Block::Read::Treex;
-
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseReader';
-
-has bundles_per_doc => ( isa => 'Int', is => 'ro', default => 0, documentation => 'Split the original treex file into more documents. The deafult is 0 (do not split).' );
-
-has _buffer_doc => (is=> 'rw');
-
-sub BUILD {
-    my ($self) = @_;
-    if ( $self->bundles_per_doc ) {
-        $self->set_is_one_doc_per_file(0);
-    }
-    return;
-}
+with 'Treex::Block::Read::BaseSplitterRole';
 
 sub next_document {
     my ($self, $filename) = @_;
 
-    my $doc = $self->_buffer_doc;
-
-    if (!$doc) {
-        if ( ! $filename ) {
-            $filename = $self->next_filename();
-        }
-
-        # No more documents in the queue
-        return if ! $filename;
-
-        # load the document from file using Treex::Core::Document->new({filename=>$filename}) which uses Treex::PML
-        $doc = $self->new_document($filename);
+    if ( ! $filename ) {
+        $filename = $self->next_filename();
     }
 
-    if ($self->bundles_per_doc) {
-        my $bundles_ref = $doc->treeList();
-        if (  @$bundles_ref > $self->bundles_per_doc) {
-            my $new_doc = $self->new_document();
-            my @moving_bundles = splice @$bundles_ref, $self->bundles_per_doc;
-            # TODO fix references (delete coreference links) going across new doc boundaries
-            push @{$new_doc->treeList()}, @moving_bundles;
-            $self->_set_buffer_doc($new_doc);
-        } else {
-            $self->_set_buffer_doc(undef);
-        }
-    }
+    # No more documents in the queue
+    return if ! $filename;
 
-    return $doc;
+    # load the document from file using Treex::Core::Document->new({filename=>$filename}) which uses Treex::PML
+    return $self->new_document($filename);
 }
 
 1;
