@@ -35,7 +35,7 @@ sub _unary_features {
 
     my $feats = {};
 
-    $feats->{id} = $node->get_address;
+    #$feats->{id} = $node->get_address;
     $feats->{t_lemma} = $node->t_lemma;
     $feats->{functor} = $node->functor;
 
