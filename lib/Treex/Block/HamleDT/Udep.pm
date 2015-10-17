@@ -731,7 +731,8 @@ sub fix_determiners
             # Pronominal numerals (quantifiers) "kolik", "mnoho" etc. are not determiners if they are not used together with a counted noun.
             # They may be used e.g. as an object: "Kolik to stojí?" = "How-much it costs?"
             # Important: We assume that the high-value numerals have been pushed down first.
-            elsif($node->is_numeral())
+            # But beware: some numerals are adverbs and not pronouns (e.g. Portuguese "mais").
+            elsif($node->is_numeral() && !$node->is_adverb())
             {
                 if($node->deprel() !~ m/^det(:numgov|:nummod)?$/)
                 {
