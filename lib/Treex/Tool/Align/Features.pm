@@ -55,11 +55,14 @@ sub _unary_features {
 sub _binary_features {
     my ($self, $set_features, $node1, $node2, $node2_ord) = @_;
 
-    my $feats = $set_features;
+    my $feats = { %$set_features };
 
     $self->_add_align_features($feats, $node1, $node2);
     $self->_add_gram_features($feats, $node1, $node2);
     $self->_add_comb_features($feats, $node1, $node2);
+
+    # the unary feats must be removed
+    delete @$feats{keys %$set_features};
 
     return $feats;
 }
