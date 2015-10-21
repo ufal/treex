@@ -39,7 +39,7 @@ sub _start_alpino {
             log_fatal( 'Could not get a list of Alpino versions from ' . $ALPINO_WEB ) if ( !$listing );
 
             # This will find the last link to Alpino-something on the website, we assume it's the latest
-            my ($last_version) = ( $listing =~ m/^.*(<a[^>]*href="Alpino-[^"]*)"/s );
+            my ($last_version) = ( $listing =~ m/^.*(<a[^>]*href="Alpino-x86_64-Linux-[^"]*)"/s );
             $last_version =~ s/<a[^>]*href="//;
             log_fatal( 'Could not find a reference to an Alpino version on ' . $ALPINO_WEB ) if ( !$last_version );
 
