@@ -92,8 +92,7 @@ to prepare input.
 =head1 NOTES
 
 Probably works on Linux only (due to the usage of the C<stdbuf> command to prevent buffering
-of Alpino's output). No checks or automatic downloads are done for the rest of the Alpino 
-distribution, just for the main executable.
+of Alpino's output), but Alpino distributed binaries are Linux-only anyway. 
 
 =head1 AUTHOR
 
