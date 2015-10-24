@@ -2,6 +2,7 @@ package Treex::Block::HamleDT::HI::FixUD;
 use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Common;
+use Lingua::Interset qw(decode);
 use utf8;
 extends 'Treex::Core::Block';
 
@@ -33,9 +34,33 @@ sub fix_features
         # Discard features with empty values.
         my @shakfeatures = grep {!m/-(any)?$/} (split(/\|/, $shakfeatures));
         # Some features will be preserved in the MISC field.
-        my @miscfeatures = map {s/^(.)/\u$1/; s/-/=/; $_} (grep {m/^(chunkId|chunkType|stype|vib|tam)-/} (@shakfeatures));
+        my @miscfeatures;
+        my @morfeatures;
+        my $cat = '_';
+        foreach my $feature (@shakfeatures)
+        {
+            if($feature =~ m/^(chunkId|chunkType|stype|vib|tam)-/)
+            {
+                push(@miscfeatures, $feature);
+            }
+            elsif($feature =~ m/^cat-(.*)$/)
+            {
+                $cat = $1;
+            }
+            else
+            {
+                push(@morfeatures, $feature);
+            }
+        }
         ###!!! We do not check the previous contents of MISC because we know that in this particular data it is empty.
-        $node->wild()->{misc} = join('|', @miscfeatures);
+        $node->wild()->{misc} = join('|', map {s/^(.)/\u$1/; s/-/=/; $_} (@miscfeatures));
+        # Convert the remaining features to Interset.
+        # The driver hi::conll also expects the Hyderabad CPOS tag, which we now have in the POS column.
+        my $conll_pos = $node->conll_pos();
+        my $conll_feat = scalar(@morfeatures)>0 ? join('|', @morfeatures) : '_';
+        my $src_tag = "$conll_pos\t$cat\t$conll_feat";
+        my $f = decode('hi::conll', $src_tag);
+        $node->set_iset($f);
     }
 }
 
@@ -52,7 +77,10 @@ sub regenerate_upos
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        $node->set_tag($node->iset()->get_upos());
+        my $tag0 = $node->tag();
+        my $tag1 = $node->iset()->get_upos();
+        log_warn("Changing tag from $tag0 to $tag1") if($tag1 ne $tag0);
+        $node->set_tag($tag1);
     }
 }
 
