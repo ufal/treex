@@ -72,7 +72,7 @@ sub fix_features
             unless($tag1 eq 'X')
             {
                 log_warn("Interset would change the tag from $tag0 to $tag1") if($tag1 ne $tag0);
-                unshift(@miscfeatures, "AltTag=$tag1");
+                unshift(@miscfeatures, "AltTag=$tag0-$tag1");
             }
         }
         $node->set_iset($f);
