@@ -124,14 +124,17 @@ method set_iset => sub {
     my $self = shift;
     my @assignments;
     if ( ref( $_[0] ) =~ /(HASH|Lingua::Interset::FeatureStructure)/ ) {
-        @assignments = %{$_[0]};
+        # We cannot interpret the hash/object as a set of assignments for add() as below.
+        # Lingua::Interset::FeatureStructure may contain private attributes that are not features.
+        # Using merge_hash_hard() is safer because it only takes known features from the hash and ignores the rest.
+        return $self->$interset_attribute->merge_hash_hard($_[0]);
     }
     else {
         log_fatal "No parameters for 'set_iset'" if @_ == 0;
         log_fatal "Odd parameters for 'set_iset'" if @_%2;
         @assignments = @_;;
+        return $self->$interset_attribute->add(@assignments);
     }
-    return $self->$interset_attribute->add(@assignments);
 };
 
 
