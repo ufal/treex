@@ -11,7 +11,32 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
+    $self->fix_features($root);
     $self->regenerate_upos($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Features are stored in conll/feat and their format is not compatible with
+# Universal Dependencies.
+#------------------------------------------------------------------------------
+sub fix_features
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $shakfeatures = $node->conll_feat();
+        $shakfeatures = '' if(!defined($shakfeatures) || $shakfeatures eq '_');
+        # Discard features with empty values.
+        my @shakfeatures = grep {!m/-(any)?$/} (split(/\|/, $shakfeatures));
+        # Some features will be preserved in the MISC field.
+        my @miscfeatures = map {s/^(.)/\u$1/; s/-/=/; $_} (grep {m/^(chunkId|chunkType|stype|vib|tam)-/} (@shakfeatures));
+        ###!!! We do not check the previous contents of MISC because we know that in this particular data it is empty.
+        $node->wild()->{misc} = join('|', @miscfeatures);
+    }
 }
 
 
