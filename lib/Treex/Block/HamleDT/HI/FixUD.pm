@@ -78,6 +78,11 @@ sub fix_features
             {
                 unshift(@miscfeatures, "AltTag=$tag0-$tag1");
             }
+            # Only replace the original tag if it is an error.
+            if($tag0 !~ m/^(NOUN|PROPN|PRON|ADJ|DET|NUM|VERB|AUX|ADV|ADP|CONJ|SCONJ|PART|INTJ|SYM|PUNCT|X)$/)
+            {
+                $node->set_tag($tag1);
+            }
         }
         $node->set_iset($f);
         ###!!! We do not check the previous contents of MISC because we know that in this particular data it is empty.
@@ -89,18 +94,31 @@ sub fix_features
 
 #------------------------------------------------------------------------------
 # There is one case where a node depends on the root but its deprel is not
-# 'root'.
+# 'root', or it does not depend on the root and its deprel is 'root'.
 #------------------------------------------------------------------------------
 sub fix_root
 {
     my $self = shift;
     my $root = shift;
-    my @nodes = $root->children();
+    my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        if($node->deprel() ne 'root')
+        if($node->parent()->is_root() && $node->deprel() ne 'root')
         {
             $node->set_deprel('root');
+        }
+        elsif(!$node->parent()->is_root() && $node->deprel() eq 'root')
+        {
+            # The only occurrence I saw was a number attached to another number.
+            # But let's do it a bit more general.
+            if($node->is_numeral())
+            {
+                $node->set_deprel('nummod');
+            }
+            else
+            {
+                $node->set_deprel('dep');
+            }
         }
     }
 }
