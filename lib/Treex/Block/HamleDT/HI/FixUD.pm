@@ -40,6 +40,8 @@ sub fix_features
         {
             if($feature =~ m/^(chunkId|chunkType|stype)-/)
             {
+                $feature =~ s/^(.)/\u$1/;
+                $feature =~ s/-/=/;
                 push(@miscfeatures, $feature);
             }
             elsif($feature =~ m/^cat-(.*)$/)
@@ -49,6 +51,8 @@ sub fix_features
             elsif($feature =~ m/^(vib|tam)-/)
             {
                 push(@morfeatures, $feature);
+                $feature =~ s/^(.)/\u$1/;
+                $feature =~ s/-/=/;
                 push(@miscfeatures, $feature);
             }
             else
@@ -77,7 +81,7 @@ sub fix_features
         }
         $node->set_iset($f);
         ###!!! We do not check the previous contents of MISC because we know that in this particular data it is empty.
-        $node->wild()->{misc} = join('|', map {s/^(.)/\u$1/; s/-/=/; $_} (@miscfeatures));
+        $node->wild()->{misc} = join('|', @miscfeatures);
     }
 }
 
