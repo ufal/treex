@@ -56,8 +56,6 @@ sub fix_features
                 push(@morfeatures, $feature);
             }
         }
-        ###!!! We do not check the previous contents of MISC because we know that in this particular data it is empty.
-        $node->wild()->{misc} = join('|', map {s/^(.)/\u$1/; s/-/=/; $_} (@miscfeatures));
         # Convert the remaining features to Interset.
         # The driver hi::conll also expects the Hyderabad CPOS tag, which we now have in the POS column.
         my $conll_pos = $node->conll_pos();
@@ -68,8 +66,13 @@ sub fix_features
         # Changed features may cause a change of UPOS but it is probably not desirable. Or is it?
         my $tag0 = $node->tag();
         my $tag1 = $node->iset()->get_upos();
-        log_warn("Changing tag from $tag0 to $tag1") if($tag1 ne $tag0);
-        $node->set_tag($tag1);
+        if($tag1 ne $tag0)
+        {
+            log_warn("Interset would change the tag from $tag0 to $tag1") if($tag1 ne $tag0);
+            unshift(@miscfeatures, "AltTag=$tag1");
+        }
+        ###!!! We do not check the previous contents of MISC because we know that in this particular data it is empty.
+        $node->wild()->{misc} = join('|', map {s/^(.)/\u$1/; s/-/=/; $_} (@miscfeatures));
     }
 }
 
