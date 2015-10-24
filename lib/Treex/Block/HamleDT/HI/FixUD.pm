@@ -13,7 +13,6 @@ sub process_atree
     my $self = shift;
     my $root = shift;
     $self->fix_features($root);
-    $self->regenerate_upos($root);
 }
 
 
@@ -39,13 +38,18 @@ sub fix_features
         my $cat = '_';
         foreach my $feature (@shakfeatures)
         {
-            if($feature =~ m/^(chunkId|chunkType|stype|vib|tam)-/)
+            if($feature =~ m/^(chunkId|chunkType|stype)-/)
             {
                 push(@miscfeatures, $feature);
             }
             elsif($feature =~ m/^cat-(.*)$/)
             {
                 $cat = $1;
+            }
+            elsif($feature =~ m/^(vib|tam)-/)
+            {
+                push(@morfeatures, $feature);
+                push(@miscfeatures, $feature);
             }
             else
             {
@@ -61,22 +65,7 @@ sub fix_features
         my $src_tag = "$conll_pos\t$cat\t$conll_feat";
         my $f = decode('hi::conll', $src_tag);
         $node->set_iset($f);
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# After changes done to Interset (including part of speech) generates the
-# universal part-of-speech tag anew.
-#------------------------------------------------------------------------------
-sub regenerate_upos
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
+        # Changed features may cause a change of UPOS but it is probably not desirable. Or is it?
         my $tag0 = $node->tag();
         my $tag1 = $node->iset()->get_upos();
         log_warn("Changing tag from $tag0 to $tag1") if($tag1 ne $tag0);
