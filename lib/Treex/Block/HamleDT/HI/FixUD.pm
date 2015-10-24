@@ -13,6 +13,7 @@ sub process_atree
     my $self = shift;
     my $root = shift;
     $self->fix_features($root);
+    $self->fix_root($root);
 }
 
 
@@ -75,13 +76,32 @@ sub fix_features
             $f->set_upos($tag0);
             unless($tag1 eq 'X')
             {
-                log_warn("Interset would change the tag from $tag0 to $tag1") if($tag1 ne $tag0);
                 unshift(@miscfeatures, "AltTag=$tag0-$tag1");
             }
         }
         $node->set_iset($f);
         ###!!! We do not check the previous contents of MISC because we know that in this particular data it is empty.
         $node->wild()->{misc} = join('|', @miscfeatures);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# There is one case where a node depends on the root but its deprel is not
+# 'root'.
+#------------------------------------------------------------------------------
+sub fix_root
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->children();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() ne 'root')
+        {
+            $node->set_deprel('root');
+        }
     }
 }
 
