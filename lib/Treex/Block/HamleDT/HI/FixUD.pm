@@ -62,15 +62,20 @@ sub fix_features
         my $conll_feat = scalar(@morfeatures)>0 ? join('|', @morfeatures) : '_';
         my $src_tag = "$conll_pos\t$cat\t$conll_feat";
         my $f = decode('hi::conll', $src_tag);
-        $node->set_iset($f);
         # Changed features may cause a change of UPOS but it is probably not desirable. Or is it?
         my $tag0 = $node->tag();
-        my $tag1 = $node->iset()->get_upos();
+        my $tag1 = $f->get_upos();
         if($tag1 ne $tag0)
         {
-            log_warn("Interset would change the tag from $tag0 to $tag1") if($tag1 ne $tag0);
-            unshift(@miscfeatures, "AltTag=$tag1");
+            # Adjust Interset to the original tag.
+            $f->set_upos($tag0);
+            unless($tag1 eq 'X')
+            {
+                log_warn("Interset would change the tag from $tag0 to $tag1") if($tag1 ne $tag0);
+                unshift(@miscfeatures, "AltTag=$tag1");
+            }
         }
+        $node->set_iset($f);
         ###!!! We do not check the previous contents of MISC because we know that in this particular data it is empty.
         $node->wild()->{misc} = join('|', map {s/^(.)/\u$1/; s/-/=/; $_} (@miscfeatures));
     }
