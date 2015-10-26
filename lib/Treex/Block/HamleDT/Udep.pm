@@ -64,7 +64,8 @@ sub process_zone
     (
         'prep_is_head'           => 0,
         'cop_is_head'            => 0,
-        'coordination_head_rule' => 'first_conjunct'
+        'coordination_head_rule' => 'first_conjunct',
+        'counted_genitives'      => $self->language() ne 'la'
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();

@@ -48,6 +48,17 @@ has 'coordination_head_rule' =>
         'See Treex::Core::Phrase::Coordination, head_rule attribute.'
 );
 
+has 'counted_genitives' =>
+(
+    is       => 'ro',
+    isa      => 'Bool',
+    required => 1,
+    default  => 1,
+    documentation =>
+        'Shall we detect counted nouns in genitive and transform them? '.
+        'This should not be called e.g. in the Index Thomisticus Treebank.'
+);
+
 
 
 #------------------------------------------------------------------------------
@@ -76,7 +87,7 @@ sub detect_special_constructions
         $phrase = $self->detect_prague_copula($phrase);
         $phrase = $self->detect_name_phrase($phrase);
         $phrase = $self->detect_compound_numeral($phrase);
-        $phrase = $self->detect_counted_noun_in_genitive($phrase);
+        $phrase = $self->detect_counted_noun_in_genitive($phrase) if($self->counted_genitives());
         $phrase = $self->detect_indirect_object($phrase);
         $phrase = $self->detect_controlled_verb($phrase);
         $phrase = $self->detect_controlled_subject($phrase);
@@ -633,6 +644,10 @@ sub detect_compound_numeral
 #------------------------------------------------------------------------------
 # Makes sure that numerals modify counted nouns, not vice versa. (In PDT, both
 # directions are possible under certain circumstances.)
+# Note that this transformation is not suitable for all Prague-style treebanks.
+# In the Index Thomisticus Treebank, there are genitives attached to numerals
+# but it is always a construction of the type "one of them", "unum eorum", and
+# it should not be transformed. Thus a parameter of this class can turn it on.
 #------------------------------------------------------------------------------
 sub detect_counted_noun_in_genitive
 {
