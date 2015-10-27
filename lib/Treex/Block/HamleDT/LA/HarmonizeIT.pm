@@ -86,9 +86,9 @@ sub fix_part_of_speech
     my $nouns = $self->nouns();
     my $adjectives = $self->adjectives();
     my $pronouns = $self->pronouns();
+    my $lemma = $node->lemma();
     if($node->is_noun())
     {
-        my $lemma = $node->lemma();
         my $is_noun = exists($nouns->{$lemma});
         my $is_adjective = exists($adjectives->{$lemma});
         my $is_pronoun = exists($pronouns->{$lemma});
@@ -188,6 +188,67 @@ sub fix_part_of_speech
         {
             # cat prague.log | perl -pe 's/^doc.*TREEX-WARN.*\d+\.\d+:\s+//' | grep -v 'Apposition without' | grep -v TREEX-INFO | grep -v 'treex -p' | sort -u > unsolved_lemmas.txt
             log_warn("UNKNOWN LEMMA $lemma");
+        }
+    }
+    # Marco's rules for splitting "particles":
+    elsif($node->is_particle())
+    {
+        my $afun = $node->conll_deprel();
+        $afun = 'NR' if(!defined($afun));
+        $afun =~ s/_(Co|Ap|Pa)$//;
+        if($afun eq 'AuxC')
+        {
+            $node->iset()->add('pos' => 'conj', 'conjtype' => 'sub');
+        }
+        elsif($afun eq 'Coord' && $lemma !~ m/\pP/)
+        {
+            $node->iset()->add('pos' => 'conj', 'conjtype' => 'coor');
+        }
+        elsif($afun eq 'Adv')
+        {
+            $node->iset()->add('pos' => 'adv');
+        }
+        elsif($afun =~ m/^Aux[YZ]$/)
+        {
+            if($lemma =~ m/^(ac|aut|autem|et|nec|neque|sive|vel)$/)
+            {
+                $node->iset()->add('pos' => 'conj', 'conjtype' => 'coor');
+            }
+            elsif($lemma =~ m/^(quam|quando|quod|si|sicut|tamquam|ut)$/)
+            {
+                $node->iset()->add('pos' => 'conj', 'conjtype' => 'sub');
+            }
+            elsif($lemma =~ m/^(a|ad|de|e|in|per)$/)
+            {
+                $node->iset()->add('pos' => 'adp');
+            }
+            else
+            {
+                $node->iset()->add('pos' => 'adv');
+            }
+        }
+        elsif($afun eq 'Apos' && $lemma !~ m/\pP/)
+        {
+            if($lemma =~ m/^(et|sive|vel)$/)
+            {
+                $node->iset()->add('pos' => 'conj', 'conjtype' => 'coor');
+            }
+            elsif($lemma eq 'quia')
+            {
+                $node->iset()->add('pos' => 'conj', 'conjtype' => 'sub');
+            }
+            else
+            {
+                $node->iset()->add('pos' => 'adv');
+            }
+        }
+        elsif($afun eq 'AuxP')
+        {
+            $node->iset()->add('pos' => 'adp');
+        }
+        else
+        {
+            log_warn("UNKNOWN PARTICLE $lemma $afun");
         }
     }
 }
