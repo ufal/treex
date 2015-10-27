@@ -48,25 +48,25 @@ sub BUILD
 #------------------------------------------------------------------------------
 # Takes detokenized sentences one at a time, and stores them with the bundles.
 #------------------------------------------------------------------------------
-sub process_bundle
+sub process_zone
 {
     my $self = shift;
-    my $bundle = shift;
+    my $zone = shift;
     my $sentences = $self->sentences();
     my $next_sentence = unshift(@{$sentences});
     if(defined($next_sentence))
     {
-        $bundle->set_sentence($next_sentence);
+        $zone->set_sentence($next_sentence);
         # We want the detokenized sentence to appear as a comment in the CoNLL-U output.
         # This is a temporary measure before we manage to represent everything as fused words
         # and with the no_space_after attribute.
-        my $comment = $bundle->wild()->{comment};
+        my $comment = $zone->get_bundle()->wild()->{comment};
         if(defined($comment) && $comment ne '')
         {
             $comment .= "\n";
         }
         $comment .= 'full_sent '.$next_sentence;
-        $bundle->wild()->{comment} = $comment;
+        $zone->get_bundle()->wild()->{comment} = $comment;
     }
     else
     {
