@@ -35,6 +35,7 @@ sub BUILD
     my $from = $self->from();
     my $sentences = $self->sentences();
     open(SENT, $from) or log_fatal("Cannot read $from: $!");
+    binmode(SENT, ':utf8');
     while(<SENT>)
     {
         chomp();
@@ -53,20 +54,21 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $sentences = $self->sentences();
-    my $next_sentence = unshift(@{$sentences});
+    my $next_sentence = shift(@{$sentences});
     if(defined($next_sentence))
     {
         $zone->set_sentence($next_sentence);
         # We want the detokenized sentence to appear as a comment in the CoNLL-U output.
         # This is a temporary measure before we manage to represent everything as fused words
         # and with the no_space_after attribute.
-        my $comment = $zone->get_bundle()->wild()->{comment};
+        my $wild = $zone->get_bundle()->wild();
+        my $comment = $wild->{comment};
         if(defined($comment) && $comment ne '')
         {
             $comment .= "\n";
         }
         $comment .= 'full_sent '.$next_sentence;
-        $zone->get_bundle()->wild()->{comment} = $comment;
+        $wild->{comment} = $comment;
     }
     else
     {
