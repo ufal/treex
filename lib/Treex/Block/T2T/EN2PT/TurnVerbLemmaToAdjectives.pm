@@ -7,9 +7,6 @@ use Treex::Tool::Lexicon::Generation::PT::ClientLXSuite;
 use Treex::Tool::LXSuite::LXConjugator;
 use Treex::Tool::LXSuite::LXInflector;
 
-has lxsuite_key => ( isa => 'Str', is => 'ro', required => 1 );
-has lxsuite_host => ( isa => 'Str', is => 'ro', required => 1 );
-has lxsuite_port => ( isa => 'Int', is => 'ro', required => 1 );
 has [qw( _conjugator _inflector )] => ( is => 'rw' );
 
 
@@ -41,13 +38,8 @@ sub process_tnode {
 
 sub BUILD {
     my $self = shift;
-    my $lxconfig = {
-        lxsuite_key  => $self->lxsuite_key,
-        lxsuite_host => $self->lxsuite_host,
-        lxsuite_port => $self->lxsuite_port,
-    };
-    $self->_set_conjugator(Treex::Tool::LXSuite::LXConjugator->new($lxconfig));
-    $self->_set_inflector(Treex::Tool::LXSuite::LXInflector->new($lxconfig));
+    $self->_set_conjugator(Treex::Tool::LXSuite::LXConjugator->new());
+    $self->_set_inflector(Treex::Tool::LXSuite::LXInflector->new());
 }
 
 1;

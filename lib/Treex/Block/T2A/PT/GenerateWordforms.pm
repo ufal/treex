@@ -6,9 +6,6 @@ extends 'Treex::Core::Block';
 use Treex::Tool::Lexicon::Generation::PT::ClientLXSuite;
 use Data::Dumper;
 
-has lxsuite_key => ( isa => 'Str', is => 'ro', required => 1 );
-has lxsuite_host => ( isa => 'Str', is => 'ro', required => 1 );
-has lxsuite_port => ( isa => 'Int', is => 'ro', required => 1 );
 has generator => ( is => 'rw' );
 
 
