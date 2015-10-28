@@ -17,9 +17,6 @@ extends 'Treex::Core::Block';
 #  in a way that TokenizeOnWhitespace would fail when trying to determine
 #  the no_space_after attribute of a-tree nodes.
 
-has lxsuite_host => ( isa => 'Str', is => 'ro', required => 1);
-has lxsuite_port => ( isa => 'Int', is => 'ro', required => 1);
-has lxsuite_key => ( isa => 'Str', is => 'ro', required => 1 );
 has _tokenizer => ( isa => 'Treex::Tool::LXSuite::LXTokenizer', is => 'ro',
     required => 1, builder => '_build_tokenizer', lazy=>1 );
 
@@ -30,11 +27,7 @@ sub BUILD {
 
 sub _build_tokenizer {
     my $self = shift;
-    return Treex::Tool::LXSuite::LXTokenizer->new({
-        lxsuite_key => $self->lxsuite_key,
-        lxsuite_host => $self->lxsuite_host,
-        lxsuite_port => $self->lxsuite_port,
-    });
+    return Treex::Tool::LXSuite::LXTokenizer->new();
 }
 
 sub process_zone {
