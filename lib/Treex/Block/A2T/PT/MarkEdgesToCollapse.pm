@@ -37,28 +37,36 @@ override is_aux_to_parent => sub {
         return 1;
     }
 
+    # TODO: at this moment, modal verbs appear both below and under meaningful verbs
+    # this probably leads to an ordering problem (modals are now merged both with parents and children infinitives)
+    # but the whole problem should disappear as soon as modals are treated in a unified way after harmonization
+    if ($self->is_modal($node,$a_parent)) {
+        return 1;
+    }
+
+
     return 0;
 };
 
 
 #TODO: treatment of modal verbs postponed
 
-#override is_modal => sub {
-#    my ( $self, $modal, $infinitive ) = @_;
+override is_modal => sub {
+    my ( $self, $modal, $infinitive ) = @_;
 
     # Check if $infinitive is the lexical verb with which the modal should merge.
-#    return 0 if !$self->_is_infinitive( $modal, $infinitive );
+    return 0 if !$self->_is_infinitive( $modal, $infinitive );
     
-#    return 1 if $modal->lemma =~ /^(poder|querer|dever)$/;
+    return 1 if $modal->lemma =~ /^(poder|querer|dever)$/;
 
-#    return 0;
-#};
+    return 0;
+};
 
-#sub _is_infinitive {
-#    my ( $self, $modal, $infinitive ) = @_;
-#    return 1 if $infinitive->iset->verbform eq "inf";
-#    return 0;
-#}
+sub _is_infinitive {
+    my ( $self, $modal, $infinitive ) = @_;
+    return 1 if $infinitive->iset->verbform eq "inf";
+    return 0;
+}
 
 
 
