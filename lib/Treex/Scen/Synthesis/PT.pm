@@ -62,7 +62,7 @@ sub get_scenario_string {
     'A2W::PT::ConcatenateTokens',
 
     # this is the place for temporary regex-based hacks:
-    #'A2W::PT::DirtyTricks',
+    'A2W::PT::DirtyTricks',
     ;
     return $scen;
 }
