@@ -29,7 +29,7 @@ override 'process_tnode' => sub {
     my @subnodes = grep{$_->formeme =~ /^(n|adj):attr/} $tnode->get_children({ ordered => 1});
     my $nodeaux = $anode;
 
-    $nodeaux = @subnodes[-1]->get_lex_anode() if(@subnodes);
+    $nodeaux = $subnodes[-1]->get_lex_anode() if(@subnodes);
 
     $nodeaux->iset->add("case" => "$prep_forms[-1]") if (defined $prep_forms[-1] && $prep_forms[-1] =~ /$CASES/);
 
