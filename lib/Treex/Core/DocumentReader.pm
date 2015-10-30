@@ -65,7 +65,7 @@ sub next_document_for_this_job {
         if ($res) {
             $self->_set_file_number(0);
             $self->_set_doc_number( $res->{file_number} - 1 );
-            $self->from->_set_filenames( [ $res->{result} ] );
+            $self->from->_set_filenames( [ $res->{result} ] );    # $res->{result} contains the next file name
         }
 
         # Martin Majliš had the following for BaseAlignedReader but I see no reason for it.
