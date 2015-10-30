@@ -4,9 +4,6 @@ use Treex::Tool::LXSuite::LXTokenizerAndTagger;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-has lxsuite_key => ( isa => 'Str', is => 'ro', required => 1 );
-has lxsuite_host => ( isa => 'Str', is => 'ro', required => 1 );
-has lxsuite_port => ( isa => 'Int', is => 'ro', required => 1 );
 has generator => ( is => 'rw' );
 
 sub process_anode {

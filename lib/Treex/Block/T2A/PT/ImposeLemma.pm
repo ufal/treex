@@ -29,6 +29,11 @@ sub process_tnode {
         $a_node->set_attr('lemma', 'separador' );
     }
 
+    if ($tnode->t_lemma eq 'exploração'){
+        $tnode->set_attr('t_lemma', 'tocar' );
+        $a_node->set_attr('lemma', 'tocar' );
+    }
+
     return;
 }
 
