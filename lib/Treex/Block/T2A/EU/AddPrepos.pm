@@ -3,8 +3,13 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::T2A::AddPrepos';
 
+use utf8;
+
+
 # In Spanish, it seems adverbs may have prepositions as well (e.g. "por allí").
 has '+formeme_prep_regexp' => ( default => '^(?:n|adj|adv):(.+)[+]' );
+
+my $CASES = "^(nom|gen|dat|acc|voc|loc|ins|abl|par|dis|ess|tra|com|abe|ine|ela|ill|add|ade|all|sub|sup|del|lat|tem|ter|abs|erg|cau|ben)\$";
 
 override 'process_tnode' => sub {
     my ( $self, $tnode ) = @_;
@@ -21,11 +26,16 @@ override 'process_tnode' => sub {
     # Put them before $anode's subtree (in right word order)
     my @prep_nodes;
 
-    $anode->iset->add("case" => "$prep_forms[-1]") if (defined $prep_forms[-1]);
+    my @subnodes = grep{$_->formeme =~ /^(n|adj):attr/} $tnode->get_children({ ordered => 1});
+    my $nodeaux = $anode;
+
+    $nodeaux = @subnodes[-1]->get_lex_anode() if(@subnodes);
+
+    $nodeaux->iset->add("case" => "$prep_forms[-1]") if (defined $prep_forms[-1] && $prep_forms[-1] =~ /$CASES/);
 
     # Language-specific stuff to go here
     $self->postprocess($tnode, $anode, $prep_forms_string, \@prep_nodes);
-    
+
     return;
 };
 

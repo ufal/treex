@@ -11,6 +11,7 @@ T2A::InitMorphcat
 T2A::ImposeSubjpredAgr
 T2A::ImposeAttrAgr
 T2A::EU::AddArticles
+T2A::EU::AddPrepos
 T2A::AddSubconjs
 T2A::EU::AddAuxVerbModalTense
 T2A::EU::AddNegationParticle
