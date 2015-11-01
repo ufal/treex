@@ -706,7 +706,6 @@ alienatio	NcC
 alienator	NcC
 alienigena	NcA
 alienum	NcB
-alienus	NcB
 alimentum	NcB
 alimonia	NcA
 alimonium	NcB
@@ -1455,7 +1454,6 @@ cadus	NcB
 caecias	NcA
 caecilia	NcA
 caecitas	NcC
-caecus	NcB
 caedes/-is	NcC
 caelatura	NcA
 caelibatus	NcD
@@ -1582,7 +1580,6 @@ canna	NcA
 canna	NcA
 canon	NcC
 canonica	NcB
-canonicus	NcB
 cantatio	NcC
 cantator	NcC
 cantatrix	NcC
@@ -1662,7 +1659,6 @@ carnifex	NcC
 carnificium	NcB
 caro/carnis	NcC
 caros	NcB
-carpentarius	NcB
 carruca	NcA
 cartallus	NcB
 cartilago	NcC
@@ -2776,7 +2772,6 @@ decessio	NcC
 decessus	NcD
 decima	NcA
 decimatio	NcC
-decimus	NcB
 decipula	NcA
 decipulum	NcB
 decisio	NcC
@@ -3289,7 +3284,6 @@ ebullitio	NcC
 ebur/ebor	NcC
 ecclesia	NcA
 ecclesiastes	NcA
-ecclesiasticus	NcB
 echinus	NcB
 echo	NcP
 eclipsis	NcC
@@ -3786,7 +3780,6 @@ fecunditas	NcC
 fedus	NcB
 fel	NcC
 felicitas	NcC
-felix	NcC
 femella	NcA
 femina	NcA
 feminal	NcC
@@ -4215,7 +4208,6 @@ gressus	NcD
 grex	NcC
 grillus	NcB
 grossitudo	NcC
-grossus	NcB
 grus/gruis	NcC
 gryllus	NcB
 gryps	NcC
@@ -4257,7 +4249,6 @@ haemorrhoissa	NcA
 haeres	NcC
 haeresiarcha/-es	NcA
 haeresis	NcC
-haereticus	NcB
 haesitantia	NcA
 haesitatio	NcC
 hagiographa	NcB
@@ -4475,7 +4466,6 @@ illustratio	NcC
 illustrator	NcC
 illustratus	NcD
 illuuies	NcE
-imaginarius	NcB
 imaginatio	NcC
 imago	NcC
 imbecillitas	NcC
@@ -4663,7 +4653,6 @@ indigena	NcA
 indigentia	NcA
 indiges	NcC
 indigestio	NcC
-indigestus	NcD
 indignatio	NcC
 indignitas	NcC
 indisciplinatio	NcC
@@ -5207,7 +5196,6 @@ leprosi	NcB
 lepus	NcC
 lepusculus	NcB
 lethargia	NcA
-lethargicus	NcB
 lethargus	NcB
 letum	NcB
 leuamen	NcC
@@ -5226,7 +5214,6 @@ libanus	NcB
 libatio	NcC
 libella	NcA
 libellus	NcB
-liber	NcB
 liberalitas	NcC
 liberatio	NcC
 liberator	NcC
@@ -5477,8 +5464,6 @@ malogranatum	NcB
 malope	NcA
 ma'lum	NcB
 malum-granatum	NcB
-malus	NcB
-malus	NcB
 mamilla	NcA
 mamma	NcA
 mammilla	NcA
@@ -5559,7 +5544,6 @@ materia	NcA
 materies	NcE
 matertera	NcA
 mathematica/-e	NcA
-mathematicus	NcB
 matricida	NcA
 matricula	NcA
 matrimonium	NcB
@@ -5574,7 +5558,6 @@ maxilla	NcA
 meatus	NcD
 mechanica	NcA
 mechanicum	NcB
-mechanicus	NcB
 meddix	NcC
 medela	NcA
 mediatio	NcC
@@ -5721,7 +5704,6 @@ mi'liarium	NcB
 militia	NcA
 milito	NcC
 milium	NcB
-mille	NnP
 millesima	NcA
 millia	NcC
 milliarium	NcB
@@ -5876,7 +5858,6 @@ multitudo	NcC
 multum	NcB
 mulus	NcB
 mundana	NcB
-mundanus	NcB
 mundatio	NcC
 mundator	NcC
 munditia	NcA
@@ -5915,7 +5896,6 @@ musculus	NcB
 muscus	NcB
 musica	NcB
 musica/-e	NcA
-musicus	NcB
 musium	NcB
 mussitatio	NcC
 mussitator	NcC
@@ -5990,7 +5970,6 @@ nebris	NcC
 nebula	NcA
 nebulositas	NcC
 necessaria	NcA
-necessarius	NcB
 necessitas	NcC
 necessitudo	NcC
 necromantea	NcA
@@ -6066,7 +6045,6 @@ nona	NcA
 nonaria	NcA
 nongentus	NcB
 nonnus	NcB
-nonus	NcB
 nonussis	NcC
 norma	NcA
 nota	NcA
@@ -6358,7 +6336,6 @@ ordinatio	NcC
 ordinator	NcC
 ordinatrix	NcC
 ordo	NcC
-organicus	NcB
 organum	NcB
 orichalcum	NcB
 orificium	NcB
@@ -6437,7 +6414,6 @@ paenitudo	NcC
 paenula	NcA
 paganismus	NcB
 paganitas	NcC
-paganus	NcB
 pagella	NcA
 pagina	NcA
 pagos	NcP
@@ -6808,7 +6784,6 @@ phoenicium	NcB
 phoenix	NcC
 phonos	NcB
 phrenesis	NcC
-phreneticus	NcB
 phronesis	NcC
 phrynus	NcB
 phthisicus	NcB
@@ -6832,7 +6807,6 @@ pictoria	NcA
 pictura	NcA
 picus	NcB
 pietas	NcC
-pigmentarius	NcB
 pigmentum	NcB
 pignus	NcC
 pigredo	NcC
@@ -6908,7 +6882,6 @@ plantatio	NcC
 plantator	NcC
 plantatorium	NcB
 planum	NcB
-planus	NcB
 plasma	NcA
 plasma	NcC
 plasmatio	NcC
@@ -7522,7 +7495,6 @@ quantitas	NcC
 quarta	NcA
 quartana	NcA
 quartum	NcB
-quartus	NcB
 quaternitas	NcC
 quatriduum	NcB
 quercus	NcD
@@ -7846,7 +7818,6 @@ rubor	NcC
 rubus	NcB
 rudens	NcC
 rudimentum	NcB
-rudis	NcC
 ruditas	NcC
 rufius	NcB
 ruga	NcA
@@ -8122,7 +8093,6 @@ senatus	NcD
 senatusconsultum	NcB
 seneca	NcA
 senecta	NcA
-senectus	NcC
 senica	NcA
 senio	NcC
 senium	NcB
@@ -8313,8 +8283,6 @@ sona	NcA
 sonitus	NcD
 sonor	NcC
 sonoritas	NcC
-sonus	NcD
-sonus	NcB
 sophia	NcA
 sophisma	NcC
 sophismation	NcB
@@ -9150,7 +9118,6 @@ uates/-is	NcC
 uaticinatio	NcC
 uaticinium	NcB
 uau	NcP
-uber	NcC
 ubertas	NcC
 udum	NcB
 "ue""rum"	NcB
@@ -9547,7 +9514,7 @@ sub _build_list_of_adjectives
 {
     # lemma cod_morf_lem
     my $list_of_adjectives = <<EOF
-"a""ereus"	Af-
+aereus	Af-
 abdicatiuus	Af-
 abditissimus	Af-
 abiectior	Af-
@@ -9632,7 +9599,6 @@ aduersatiuus	Af-
 adulatorior	Af-
 adulatorius	Af-
 adulescentulus/-os	Af-
-adulter	Af-
 adulterinus	Af-
 adulterior	Af-
 aduncus	Af-
@@ -9640,7 +9606,6 @@ aedificatorius	Af-
 aedificialis	Af-
 aeger	Af-
 aegris	Af-
-aegrotus	Af-
 aemulus	Af-
 aeneus	Af-
 aenius	Af-
@@ -9736,7 +9701,6 @@ amatorius	Af-
 ambidexter	Af-
 ambiguus	Af-
 ambitiosus	Af-
-ambo	Af-
 ambrosior	Af-
 ambrosius	Af-
 ambulabilis	Af-
@@ -9745,7 +9709,6 @@ amicabilior	Af-
 amicabilis	Af-
 amicior	Af-
 amicissimus	Af-
-amicus	Af-
 amissibilis	Af-
 amoenior	Af-
 amoenus	Af-
@@ -9838,7 +9801,6 @@ aquilus	Af-
 aquosus	Af-
 arabicus	Af-
 arabilis	Af-
-araneus	Af-
 aratius	Af-
 arbitrarior	Af-
 arbitrarius	Af-
@@ -9873,7 +9835,6 @@ argumentatiuus	Af-
 argutissimus	Af-
 aridus	Af-
 aristobolius	Af-
-arithmeticus	Af-
 armamentarius	Af-
 armentarius	Af-
 armiger	Af-
@@ -9909,7 +9870,6 @@ astrictior	Af-
 astrifer	Af-
 astriger	Af-
 astrologicus	Af-
-astrologus	Af-
 astronomicus	Af-
 astutior	Af-
 astutissimus	Af-
@@ -10606,7 +10566,6 @@ demonstrabilis	Af-
 demonstratiuus	Af-
 demonstratorius	Af-
 denarior	Af-
-denarius	Af-
 deni	Ad-
 denominatiuus	Af-
 densior	Af-
@@ -10976,7 +10935,6 @@ extraneus	Af-
 extraordinarius	Af-
 extremus	Af-
 exularis	Af-
-faber	Af-
 fabricabilis	Af-
 fabricior	Af-
 fabricius	Af-
@@ -11073,7 +11031,6 @@ festiuus	Af-
 festus	Af-
 fetidus	Af-
 fetosus	Af-
-fetus	Af-
 ficarius	Af-
 fictilis	Af-
 ficulneus	Af-
@@ -11261,7 +11218,6 @@ gracilis	Af-
 gracilus	Af-
 gradatus	Af-
 grammaticalis	Af-
-grammaticus	Af-
 granatus	Af-
 grandaeuus/-os	Af-
 grandior	Af-
@@ -11810,7 +11766,6 @@ inferius	Af-
 infermentatus	Af-
 infernalis	Af-
 infernas	Af-
-infernus	Af-
 infertus	Af-
 inferus/infer	Af-
 infestior	Af-
@@ -11836,7 +11791,6 @@ infirmus	Af-
 inflexibilis	Af-
 inflexus	Af-
 influus	Af-
-influxus	Af-
 informabilis	Af-
 informis	Af-
 infortunatus	Af-
@@ -12175,7 +12129,6 @@ latior	Af-
 latissimus	Af-
 latissimus	Af-
 latrabilis	Af-
-latus	Af-
 lauatorius	Af-
 laudabilior	Af-
 laudabilis	Af-
@@ -12239,7 +12192,6 @@ limosus	Af-
 limpidior	Af-
 limpidissimus	Af-
 limpidus	Af-
-limus	Af-
 linealis	Af-
 linearis	Af-
 linearius	Af-
@@ -12334,7 +12286,6 @@ magnanimus	Af-
 magnificus	Af-
 magniloquus	Af-
 magnus	Af-
-magus	Af-
 maiestus	Af-
 maior	Af-
 maleficior	Af-
@@ -12365,7 +12316,6 @@ mansuetissimus	Af-
 mansuetissimus	Af-
 manualis	Af-
 manuatus	Af-
-manus	Af-
 manuus	Af-
 marcidus	Af-
 marinus	Af-
@@ -12457,7 +12407,6 @@ milliarius	Af-
 minax	Af-
 mineus	Af-
 minimus	Af-
-minister	Af-
 minius	Af-
 minor	Af-
 minus	Af-
@@ -12560,7 +12509,6 @@ mundatorius	Af-
 mundialis	Af-
 mundior	Af-
 mundissimus	Af-
-mundus	Af-
 municipalis	Af-
 munificens	Af-
 munificus	Af-
@@ -13052,7 +13000,6 @@ phaleratus	Af-
 phantasticus	Af-
 philologus	Af-
 philosophicus	Af-
-philosophus	Af-
 phlegmaticus	Af-
 phoeniceus	Af-
 phoenicius	Af-
@@ -13438,7 +13385,6 @@ querneus	Af-
 quernus	Af-
 querulosus	Af-
 querulus	Af-
-quies	Af-
 quietior	Af-
 quietissimus	Af-
 quietus	Af-
