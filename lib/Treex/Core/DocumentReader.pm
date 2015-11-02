@@ -65,7 +65,19 @@ sub next_document_for_this_job {
         if ($res) {
             $self->_set_file_number(0);
             $self->_set_doc_number( $res->{file_number} - 1 );
-            $self->from->_set_filenames( [ $res->{result} ] );    # $res->{result} contains the next file name
+            
+            # $res->{result} contains the next file name for plain readers,
+            # a hashref: zone -> file name for aligned readers
+            if (ref($res->{result}) eq 'HASH'){
+                # here we assume that all zones exist in _filenames 
+                # (they should since all arguments are passed on to jobs)
+                while (my ($zone, $filename) = each %{$res->{result}}){
+                    $self->_filenames->{$zone}->_set_filenames( [ $filename ] );
+                }
+            }
+            else {
+                $self->from->_set_filenames( [ $res->{result} ] );
+            }
         }
 
         # Martin Majliš had the following for BaseAlignedReader but I see no reason for it.
