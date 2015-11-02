@@ -121,19 +121,19 @@ sub fix_part_of_speech
                 log_warn("AMBIGUOUS LEMMA (ADJ|PRON) $lemma");
             }
             my $tag = $adjectives->{$lemma};
-            if($tag eq 'An-')
+            if($tag =~ m/^An/)
             {
                 $node->iset()->add('pos' => 'num', 'numtype' => 'card');
             }
-            elsif($tag eq 'Ao-')
+            elsif($tag =~ m/^Ao/)
             {
                 $node->iset()->add('pos' => 'adj', 'numtype' => 'ord');
             }
-            elsif($tag eq 'Ad-')
+            elsif($tag =~ m/^Ad/)
             {
                 $node->iset()->add('pos' => 'adj', 'numtype' => 'dist');
             }
-            elsif($tag eq 'Au-')
+            elsif($tag =~ m/^Au/)
             {
                 $node->iset()->add('pos' => 'adj', 'prontype' => 'ind');
             }
@@ -260,9 +260,40 @@ sub fix_part_of_speech
         {
             $node->iset()->add('pos' => 'adp');
         }
+        # Other afuns such as 'ExD':
+        elsif($lemma =~ m/^(autem|et|neque|vel)$/)
+        {
+            $node->iset()->add('pos' => 'conj', 'conjtype' => 'coor');
+        }
+        elsif($lemma =~ m/^(quia|ut)$/)
+        {
+            $node->iset()->add('pos' => 'conj', 'conjtype' => 'sub');
+        }
+        elsif($lemma =~ m/^(amen|ecce)$/)
+        {
+            $node->iset()->add('pos' => 'int');
+        }
+        elsif($lemma eq 'hic')
+        {
+            # adverb: here
+            # pronoun: this
+            $node->iset()->add('pos' => 'adv', 'prontype' => 'dem');
+        }
+        elsif($lemma eq 'mille')
+        {
+            # thousand (noun or numeral)
+            $node->iset()->add('pos' => 'num', 'numtype' => 'card');
+        }
         else
         {
-            log_warn("UNKNOWN PARTICLE $lemma $afun");
+            # adhuc alibi alioqui aliquando cujusmodi deinde demum deorsum ejusmodi
+            # enim ergo etiam forsitan hujusmodi ibi ideo igitur immo inde interdum
+            # invicem ita itaque item iterum magis nam nec nequaquam non numquam nunc
+            # omnino palam postea postmodum praesertim praeterea pridie quandoque
+            # quantum quare quidem quodammodo quomodo rursus scilicet semper seorsum
+            # sic simul solummodo sursum tamen tandem tantum tunc ubi unde utrum
+            # videlicet
+            $node->iset()->add('pos' => 'adv');
         }
     }
 }
@@ -15194,7 +15225,7 @@ se	Px-
 seipse	Px-
 semetipse	Px-
 siquis	P4-
-sui	Ps-
+sui	Px-
 suos	Ps-
 suus	Ps-
 talis	Pu-
