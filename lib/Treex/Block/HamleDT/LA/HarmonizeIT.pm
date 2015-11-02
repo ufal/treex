@@ -13080,6 +13080,7 @@ naualis	Af-
 nauicularius	Af-
 nauticus	Af-
 nauus	Af-
+navifactivus	Af-
 nebulosus	Af-
 necessarior	Af-
 necessarius	Af-
