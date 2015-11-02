@@ -351,6 +351,7 @@ abiectio	NcC
 abies	NcC
 abiunctum	NcB
 abiuratio	NcC
+abjectio	NcC
 ablactatio	NcC
 ablatio	NcC
 ablatiuus	NcB
@@ -407,6 +408,7 @@ acceptrix	NcC
 acceptum	NcB
 accessio	NcC
 accessus	NcD
+accidens	Nc-
 accidentia	NcA
 accinctus	NcD
 accipiter	NcC
@@ -446,6 +448,7 @@ acte	NcA
 actio	NcC
 actiuitas	NcC
 actor	NcC
+actualitas	NcC
 actum	NcB
 actus	NcD
 aculeus	NcB
@@ -455,8 +458,10 @@ acus	NcB
 acus	NcD
 acutus	NcD
 adaequatio	NcC
+adam	Np-
 adamantis	NcC
-adamas/adamans	NcC
+adamans	NcC
+adamas	NcC
 addicta	NcA
 addictio	NcC
 addictus	NcB
@@ -478,6 +483,7 @@ adiectus	NcD
 adimpletio	NcC
 adinuentio	NcC
 adinuentor	NcC
+adinventio	NcC
 aditus	NcD
 adiumentum	NcB
 adiunctio	NcC
@@ -490,6 +496,9 @@ adiutrix	NcC
 adiutus	NcD
 adiuuamentum	NcB
 adiuuatio	NcC
+adjectio	NcC
+adjectivum	NcB
+adjumentum	NcB
 adminicula	NcA
 adminiculum	NcB
 administra	NcA
@@ -562,6 +571,8 @@ aduocator	NcC
 aduocatus	NcB
 adustio	NcC
 adustum	NcB
+adventus	NcD
+adversarius	NcB
 aedes/-is	NcC
 aedifex	NcC
 aedificatio	NcC
@@ -588,10 +599,12 @@ aequanimitas	NcC
 aequatio	NcC
 aequator	NcC
 aequinoctium	NcB
+aequiparantia	Nc-
 aequiparatio	NcC
 aequiperatio	NcC
 aequitas	NcC
 aequiuocatio	NcC
+aequivocatio	NcC
 aequor	NcC
 aequum	NcB
 aer	NcC
@@ -644,6 +657,7 @@ affluentia	NcA
 agamus	NcB
 agape	NcA
 agellus	NcB
+agens	Nc-
 ager	NcB
 agger	NcC
 aggestum	NcB
@@ -692,6 +706,7 @@ albinus	NcB
 albor	NcC
 albugo	NcC
 album	NcB
+alchimista	Nc-
 alcyon	NcC
 alcyone	NcA
 alea	NcA
@@ -699,7 +714,9 @@ aleator	NcC
 alec/alex	NcC
 ales	NcC
 aleum	NcB
+alexander   Np-
 alfabetum	NcB
+algazel	Nc-
 algor	NcC
 alia	NcA
 alienatio	NcC
@@ -733,8 +750,10 @@ alnus	NcB
 aloe/-a	NcA
 alpha	NcC
 alphabetum	NcB
-altare/altar	NcC
+altar	NcC
+altare	NcC
 altarium	NcB
+alteratio	NcC
 altercatio	NcC
 alteritas	NcC
 alternatio	NcC
@@ -791,6 +810,7 @@ amoena	NcB
 amoenitas	NcC
 amomum/-on	NcB
 amor	NcC
+amos	Np-
 amotio	NcC
 amphibologia	NcA
 amphimacros/-us	NcB
@@ -822,9 +842,9 @@ anapestica	NcB
 anapestum	NcB
 anapestus	NcB
 ana's	NcC
-"anathe""ma"	NcC
 anathema	NcA
 anathe'ma	NcC
+anaxagoras	Nc-
 ancilla	NcA
 ancora	NcA
 ancorale	NcC
@@ -879,6 +899,7 @@ antemna	NcA
 antemurale	NcC
 antenna	NcA
 anthrax	NcC
+anthropomorphita	NcA
 anthropomorphitae	NcA
 antichristus	NcB
 anticipatio	NcC
@@ -923,6 +944,7 @@ apius	NcB
 apocalypsis	NcC
 apocopa/-e	NcA
 apocrypha	NcB
+apodiacula	Nc-
 apologia	NcA
 aporia	NcA
 aposiopesis	NcC
@@ -942,6 +964,7 @@ apparentia	NcA
 apparitio	NcC
 apparitor	NcC
 appellatio	NcC
+appendentia	Nc-
 appendicium	NcB
 appendium	NcB
 appendix	NcC
@@ -964,11 +987,13 @@ approbator	NcC
 approbatum	NcB
 appropinquatio	NcC
 appropriatio	NcC
+approximatio	NcC
 apra	NcA
 apsinthium	NcB
 apsinthius	NcB
 aptatio	NcC
 aptitudo	NcC
+apulejus    Nc-
 aqua	NcA
 aquae-ductum	NcB
 aquae-ductus	NcD
@@ -983,6 +1008,7 @@ aquilonia	NcB
 aquositas	NcC
 ara	NcA
 arabica	NcA
+arabs	Nc-
 aranea	NcA
 araneum	NcB
 araneus	NcB
@@ -1022,6 +1048,7 @@ architriclinus	NcB
 archium	NcB
 archon	NcC
 arcion	NcB
+arctatio	NcC
 arctos/-us	NcB
 arcturus	NcB
 arctus	NcD
@@ -1049,15 +1076,18 @@ argutio	NcC
 arida	NcA
 ariditas	NcC
 aridum	NcB
+arianus	Nc-
 aries	NcC
 aris	NcC
 arista	NcA
 ariste	NcA
 aristis	NcC
 aristocratia	NcA
+aristoteles	Np-
 arithmetica	NcB
 arithmetica/-e	NcA
 arithmeticus	NcB
+arius	Nc-
 arma	NcB
 armamentarium	NcB
 armamentarius	NcB
@@ -1090,8 +1120,10 @@ artaba	NcA
 arteria	NcA
 arterium	NcB
 articulatio	NcC
-articulus/-um	NcB
+articulum	NcB
+articulus	NcB
 artifex	NcC
+artificiatum	Nc-
 artificiolum	NcB
 artificium	NcB
 artocopus	NcB
@@ -1219,6 +1251,7 @@ auguratio	NcC
 auguratrix	NcC
 auguratus	NcD
 augurium	NcB
+augustinus	Np-
 auia	NcA
 auia	NcA
 auicula	NcA
@@ -1268,6 +1301,12 @@ auxiliatio	NcC
 auxiliator	NcC
 auxiliatus	NcD
 auxilium	NcB
+avempace	Nc-
+averroes	Np-
+aversio	NcC
+avicebron	Np-
+avicenna	Np-
+avis	Nc-
 axilla	NcA
 axioma	NcC
 axis	NcC
@@ -1282,7 +1321,8 @@ bacchius	NcB
 bacchus	NcB
 bactroperita	NcA
 bacula	NcA
-baculum/-us	NcB
+baculum	NcB
+baculus	NcB
 baiulatio	NcC
 baiulus	NcB
 balena	NcA
@@ -1324,6 +1364,7 @@ basilica	NcA
 basilice	NcA
 basiliscus	NcB
 basilium	NcB
+basilius	NcB
 basis	NcC
 basium	NcB
 batus	NcB
@@ -1345,9 +1386,10 @@ beneficentia	NcA
 beneficiarius	NcB
 beneficiatus	NcD
 beneficientia	NcA
-bene'ficium	NcB
+beneficium	NcB
 beneplacitum	NcB
 beneuolentia	NcA
+benevolentia	NcA
 benignitas	NcC
 beniuolentia	NcA
 beryllus/-os	NcB
@@ -1386,6 +1428,7 @@ blasphemium	NcB
 boa	NcA
 boatus	NcD
 bo'lus	NcB
+boetius	Nc-
 bombus	NcB
 bombyx	NcC
 bonitas	NcC
@@ -1513,6 +1556,7 @@ calendarium	NcB
 calida	NcA
 calidaria	NcA
 calidarium	NcB
+caliditas	Nc-
 calidum	NcB
 caliga	NcA
 caligatio	NcC
@@ -1570,10 +1614,11 @@ candidatus	NcD
 candidatus	NcB
 candidum	NcB
 candor	NcC
+canes	NcC
 cani	NcB
 canicula	NcA
 canina	NcA
-canis/-es	NcC
+canis	NcC
 canistrum/canister	NcB
 canities	NcE
 canna	NcA
@@ -1599,13 +1644,15 @@ capella	NcA
 capellus	NcB
 caper	NcB
 capillatura	NcA
-capillus/-um	NcB
+capillum	NcB
+capillus	NcB
 capio	NcC
 capis	NcC
 capistrum/capister	NcB
 capital/-e	NcC
 capitium	NcB
-capitulum/-us	NcB
+capitulum	NcB
+capitulus	NcB
 capitum	NcB
 capnos	NcB
 capo	NcC
@@ -1657,7 +1704,8 @@ carmen	NcC
 carnalitas	NcC
 carnifex	NcC
 carnificium	NcB
-caro/carnis	NcC
+carnis	NcC
+caro	NcC
 caros	NcB
 carruca	NcA
 cartallus	NcB
@@ -1723,6 +1771,7 @@ cauma	NcA
 caupo	NcC
 caurus	NcB
 causa	NcA
+causalitas	Nc-
 causatio	NcC
 causator	NcC
 causidicus	NcB
@@ -1770,7 +1819,8 @@ centenarii	NcB
 centenarium	NcB
 centenum	NcB
 centesima	NcA
-centrum/-on	NcB
+centron	NcB
+centrum	NcB
 centuplum	NcB
 centuria	NcA
 centurio	NcC
@@ -1786,12 +1836,15 @@ cerates	NcA
 ceratum	NcB
 cercius	NcB
 cerdo	NcC
+cerdonianus	Nc-
 cerea	NcA
-cerebrum/-us	NcB
+cerebrum	NcB
+cerebrus	NcB
 ceremonia	NcA
 cereus	NcB
 cerimonia	NcA
 cerintha/-e	NcA
+cerinthianus	Nc-
 cerinthus	NcB
 cerium	NcB
 cernus	NcB
@@ -1799,6 +1852,7 @@ cernuus	NcB
 certamen	NcC
 certatio	NcC
 certator	NcC
+certificatio	Nc-
 certitudo	NcC
 certum	NcB
 cerua	NcA
@@ -1836,6 +1890,7 @@ chelidonium	NcB
 chi	NcP
 chiliarches	NcA
 chiliarchus	NcB
+chiliasta	NcA
 chiliastae	NcA
 chium	NcB
 chlamis	NcC
@@ -1880,12 +1935,14 @@ cinctorium	NcB
 cinctum	NcB
 cinctura	NcA
 cinctus	NcD
+ciner	NcC
 cingula	NcA
 cingulum	NcB
 cingulus	NcB
-cinis/ciner/cinus	NcC
+cinis	NcC
 cinnamomum	NcB
 cinnus	NcB
+cinus	NcC
 circes	NcC
 circinus	NcB
 circius	NcB
@@ -1928,6 +1985,7 @@ ciuilitas	NcC
 ciuis	NcC
 ciuitas	NcC
 ciuitatula	NcA
+civitas	NcC
 clades/-is	NcC
 clamatio	NcC
 clamor/clamos	NcC
@@ -1947,6 +2005,7 @@ claustrum	NcB
 clausula	NcA
 clausura	NcA
 clauus	NcB
+clavis	NcC
 clementia	NcA
 clepsydra	NcA
 clericatus	NcD
@@ -2027,6 +2086,7 @@ cognitus	NcD
 cognomen	NcC
 cognomentum	NcB
 cognoscentia	NcA
+cognoscibilitas	Nc-
 cohabitatio	NcC
 cohaerentia	NcA
 cohereditas	NcC
@@ -2082,9 +2142,10 @@ colona	NcA
 colonia	NcA
 colonus	NcB
 colophon	NcC
-color/colos	NcC
+color	NcC
 colorarius	NcB
 coloratio	NcC
+colos	NcC
 colossus/-os	NcB
 coluber	NcB
 columba	NcA
@@ -2153,11 +2214,13 @@ commotio	NcC
 commotor	NcC
 commotus	NcD
 commune	NcC
+communicantia	Nc-
 communicatio	NcC
 communicator	NcC
 communicatus	NcD
 communio	NcC
 communitas	NcC
+commutativus	Nc-
 commutatio	NcC
 commutatus	NcD
 comoedia	NcA
@@ -2182,6 +2245,7 @@ compes	NcC
 competentia	NcA
 compilatio	NcC
 compitum/-us	NcB
+complacentia	Nc-
 complantatio	NcC
 complementum	NcB
 completio	NcC
@@ -2208,6 +2272,7 @@ conatus	NcD
 concaptiuus	NcB
 concatenatio	NcC
 concauitas	NcC
+concausa	Nc-
 concauum	NcB
 concentus	NcD
 conceptio	NcC
@@ -2238,6 +2303,7 @@ conclauium	NcB
 conclusio	NcC
 conclusum	NcB
 conclusus	NcD
+concomitantia	Nc-
 concordatio	NcC
 concordia	NcA
 concordium	NcB
@@ -2256,6 +2322,7 @@ concursus	NcD
 concussio	NcC
 concussor	NcC
 concussus	NcD
+condecentia	Nc-
 condelectatio	NcC
 condemnatio	NcC
 condemnator	NcC
@@ -2312,6 +2379,7 @@ conflictus	NcD
 confluentia	NcA
 confoederatio	NcC
 conformatio	NcC
+conformitas	Nc-
 confractio	NcC
 confractum	NcB
 confractus	NcD
@@ -2349,6 +2417,7 @@ coniunctum	NcB
 coniunctus	NcD
 coniunx/coniux	NcC
 coniuratio	NcC
+conjunctio	NcC
 connexio	NcC
 connubium	NcB
 connumeratio	NcC
@@ -2378,12 +2447,14 @@ conseruatio	NcC
 conseruator	NcC
 conseruatrix	NcC
 conseruus/-os	NcB
+conservatio	NcC
 consessus	NcD
 considerantia	NcA
 consideratio	NcC
 considerator	NcC
 considium	NcB
 consignatio	NcC
+consignificatio	NcC
 consiliaris	NcC
 consiliarius	NcB
 consiliatio	NcC
@@ -2422,6 +2493,7 @@ constitutus	NcD
 constratum	NcB
 constrictio	NcC
 constructio	NcC
+consubstantialitas	Nc-
 consuetudo	NcC
 consul	NcC
 consulatus	NcD
@@ -2454,6 +2526,7 @@ contestatio	NcC
 contextio	NcC
 contextus	NcD
 conticinium	NcB
+contiguatio	NcC
 continentia	NcA
 contingentia	NcA
 continuatio	NcC
@@ -2512,6 +2585,9 @@ conuocatio	NcC
 conuocator	NcC
 conus	NcB
 conuulsa	NcB
+convenientia	NcA
+conversatio	NcC
+conversio	NcC
 cooperarius	NcB
 cooperatio	NcC
 cooperator	NcC
@@ -2555,6 +2631,7 @@ coronatio	NcC
 coronis	NcC
 coronula	NcA
 corporalitas	NcC
+corporeitas	Nc-
 corpulentia	NcA
 corpus	NcC
 corpusculum	NcB
@@ -2659,10 +2736,12 @@ cucurbita	NcA
 culex/culix	NcC
 culix	NcC
 culmen	NcC
-culmus/-um	NcB
+culmum	NcB
+culmus	NcB
 culpa	NcA
 culta	NcB
-cultellus/-um	NcB
+cultellum	NcB
+cultellus	NcB
 culter	NcB
 cultio	NcC
 cultor	NcC
@@ -2701,7 +2780,8 @@ curia	NcA
 curio	NcC
 curiositas	NcC
 curis/-es	NcC
-curriculum/-us	NcB
+curriculum	NcB
+curriculus	NcB
 currus	NcD
 cursor	NcC
 cursura	NcA
@@ -2709,6 +2789,7 @@ cursus	NcD
 curuatio	NcC
 curuitas	NcC
 curuum	NcB
+curvitas	NcC
 custodia	NcA
 custoditio	NcC
 custos	NcC
@@ -2734,6 +2815,7 @@ daemon	NcC
 daemoniacus	NcB
 daemonie	NcA
 daemonium/-on	NcB
+damascenus	Nc-
 dammula	NcA
 damnatio	NcC
 damnator	NcC
@@ -2747,6 +2829,7 @@ dator	NcC
 datrix	NcC
 datum	NcB
 datus	NcD
+david	Np-
 dea	NcA
 dealbatio	NcC
 deambulatio	NcC
@@ -2814,6 +2897,7 @@ defensator	NcC
 defensatrix	NcC
 defensio	NcC
 defensor	NcC
+deficientia	Nc-
 definitio	NcC
 definitor	NcC
 deflexio	NcC
@@ -2836,6 +2920,7 @@ deiectio	NcC
 deiector	NcC
 deiectus	NcD
 deitas	NcC
+dejectio	NcC
 delapsus	NcD
 delatio	NcC
 delator	NcC
@@ -2869,10 +2954,12 @@ delubrum	NcB
 delusio	NcC
 delusor	NcC
 dementia	NcA
+demeritum	Nc-
 demersus	NcD
 deminutio	NcC
 demissio	NcC
 democratia	NcA
+democritus	Np-
 demonstratio	NcC
 demonstratiua	NcA
 demonstrator	NcC
@@ -2890,7 +2977,9 @@ densitas	NcC
 denudatio	NcC
 denuntiatio	NcC
 denuntiator	NcC
+deordinatio	NcC
 deosculatio	NcC
+dependentia	Nc-
 deperditio	NcC
 deperditum	NcB
 depictio	NcC
@@ -2930,6 +3019,7 @@ descriptio	NcC
 descriptor	NcC
 desertio	NcC
 desertor	NcC
+desertum	Nc-
 "desi""dia"	NcA
 desiccatio	NcC
 desiderium	NcB
@@ -2982,6 +3072,7 @@ deuorator	NcC
 deuotio	NcC
 deus	NcB
 deuteronomium	NcB
+deviatio	NcC
 dextera	NcA
 dextera	NcB
 dextra	NcA
@@ -3002,10 +3093,12 @@ diagramma	NcC
 dialectica	NcB
 dialectice/-a	NcA
 dialogus	NcB
-diametros/-us/diameteN2	NcB
+diametros	NcB
 diametrum	NcB
+diametrus	NcB
 diapason	NcP
 diapente	NcP
+diaphanitas	Nc-
 diaphragma	NcC
 diapsalma	NcC
 diarium	NcB
@@ -3034,6 +3127,7 @@ diffidentia	NcA
 diffinitio	NcC
 diffinitio	NcC
 diffluentia	NcA
+difformitas	Nc-
 diffusio	NcC
 digamia	NcA
 digesta	NcB
@@ -3069,7 +3163,10 @@ diminutiuum	NcB
 dimissio	NcC
 dimissor	NcC
 dimissus	NcD
+dinandus	Nc-
+dinarchus	Nc-
 dioecesis	NcC
+dionysius	Np-
 diphthongus/-os	NcB
 diplois	NcC
 dipondium	NcB
@@ -3105,6 +3202,7 @@ discussio	NcC
 discussor	NcC
 disertitudo	NcC
 disiunctio	NcC
+disjunctio	NcC
 disparilitas	NcC
 dispendium	NcB
 dispensatio	NcC
@@ -3186,6 +3284,11 @@ diuulgatio	NcC
 diuulgator	NcC
 diuum	NcB
 diuus	NcB
+diversimodus	Nc-
+diversitas	Nc-
+divinitas	Nc-
+divisio	NcC
+divitiae	Nc-
 "do""lium"	NcB
 docilitas	NcC
 doctio	NcC
@@ -3273,6 +3376,7 @@ duplum	NcB
 dupondium	NcB
 dupondius	NcB
 durabilitas	NcC
+duratio	NcC
 duritia	NcA
 durities	NcE
 dux	NcC
@@ -3356,11 +3460,13 @@ elephantine	NcA
 elephantus	NcB
 eleuatio	NcC
 eleuator	NcC
+elevatio	NcC
 elisio	NcC
 elix	NcC
 elleborum/-us	NcB
 elocutio	NcC
 elogium	NcB
+elongatio	NcC
 eloquentia	NcA
 eloquium	NcB
 ema	NcC
@@ -3377,6 +3483,7 @@ emissarius	NcB
 emissio	NcC
 emissus	NcD
 emolumentum	NcB
+empedocles	Np-
 emphasis	NcC
 emplastrum	NcB
 emptio	NcC
@@ -3387,7 +3494,8 @@ emundatio	NcC
 enariste	NcA
 enarratio	NcC
 encaenia	NcB
-enchiridion/-um	NcB
+enchiridion	NcB
+enchiridium	NcB
 endelechia	NcA
 energia	NcA
 energumenos	NcB
@@ -3395,10 +3503,12 @@ eneruatio	NcC
 enigma	NcC
 enodatio	NcC
 enormitas	NcC
+ens	Nc-
 ensis	NcC
 entelechia	NcA
 enthymema	NcA
 enthymema	NcC
+entitas	Nc-
 enumeratio	NcC
 enunciatio	NcC
 enunciatum	NcB
@@ -3410,6 +3520,7 @@ epactae	NcA
 ephebus	NcB
 ephorus	NcB
 epicyclus	NcB
+epieikeia	Nc-
 epigramma	NcC
 epilepsia	NcA
 epilogus	NcB
@@ -3443,7 +3554,8 @@ equitatio	NcC
 equitatus	NcD
 equitatus	NcD
 equitium	NcB
-equus/-os	NcB
+equos	NcB
+equus	NcB
 er	NcC
 era	NcA
 eradicatio	NcC
@@ -3472,7 +3584,9 @@ eruditus	NcD
 eruptio	NcC
 erus	NcB
 eruum/-om	NcB
+esau	Np-
 esca	NcA
+esse	Nc-
 esseda	NcA
 essedum	NcB
 essentia	NcA
@@ -3485,6 +3599,7 @@ eternitas	NcC
 etesiae	NcA
 etesias	NcA
 ethice/-a	NcA
+ethici	Nc-
 ethnici	NcB
 ethos	NcC
 etymologia	NcA
@@ -3519,6 +3634,11 @@ euroauster	NcB
 eurus	NcB
 eusebes	NcC
 euulsio	NcC
+eva	Np-
+evangelista	Nc-
+evangelium	Nc-
+eventus	Nc-
+evidentia	Nc-
 exacerbatio	NcC
 exactio	NcC
 exactor	NcC
@@ -3569,7 +3689,7 @@ excussus	NcD
 execratio	NcC
 executio	NcC
 exedra	NcA
-exemplar/-e	NcC
+exemplar	NcC
 exemplarium	NcB
 exemplum	NcB
 exemptio	NcC
@@ -3593,6 +3713,7 @@ exiguum	NcB
 exilitas	NcC
 exilium	NcB
 exinanitio	NcC
+existentia	Nc-
 existimatio	NcC
 exitio	NcC
 exitium	NcB
@@ -3666,6 +3787,7 @@ exsudatio	NcC
 exsultatio	NcC
 exsuperantia	NcA
 exta	NcB
+extasis	Nc-
 extensio	NcC
 extensus	NcD
 extentio	NcC
@@ -3679,6 +3801,7 @@ extinctio	NcC
 extirpatio	NcC
 extollentia	NcA
 extorsio	NcC
+extractio	NcC
 extremitas	NcC
 extremum	NcB
 exuberantia	NcA
@@ -3695,7 +3818,7 @@ fabrica	NcA
 fabricatio	NcC
 fabricator	NcC
 fabricatus	NcD
-fa'bula	NcA
+fabula	NcA
 fabulatio	NcC
 fabulus	NcB
 fabus	NcB
@@ -3789,7 +3912,7 @@ femur	NcC
 feneratio	NcC
 fenerator	NcC
 fenestra	NcA
-fenum/-us	NcB
+fenum	NcB
 fenus	NcC
 fera	NcA
 ferculum	NcB
@@ -3809,6 +3932,7 @@ fertilitas	NcC
 fertum	NcB
 ferula	NcA
 feruor	NcC
+fervor	NcC
 ferus	NcB
 festinantia	NcA
 festinatio	NcC
@@ -3855,11 +3979,12 @@ fimbria	NcA
 fimbrium	NcB
 fimum/-us	NcB
 finis	NcC
+finitas	NcC
 finitima	NcB
 finitimi	NcB
 finitio	NcC
 finitor	NcC
-firmamentum/-us	NcB
+firmamentum	NcB
 firmitas	NcC
 firmitudo	NcC
 fiscella	NcA
@@ -3975,6 +4100,7 @@ fraus	NcC
 "fre""tus"	NcD
 fremitus	NcD
 freneticus	NcB
+frenifactrix	Nc-
 frenum/-us	NcB
 frequentatio	NcC
 frequentia	NcA
@@ -3991,7 +4117,7 @@ friuolum	NcB
 frixorium	NcB
 frondea	NcB
 frons	NcC
-frons	NcC
+frons^frontis	NcC
 fructetum	NcB
 fructificatio	NcC
 fructus	NcD
@@ -4025,6 +4151,7 @@ fullonium	NcB
 fulmen	NcC
 fulminatio	NcC
 fuluum	NcB
+fumositas	Nc-
 fumus	NcB
 functio	NcC
 funda	NcA
@@ -4051,9 +4178,11 @@ fustis	NcC
 fusum	NcB
 fusus	NcB
 fusus	NcD
+futurum	Nc-
 gaesum	NcB
 galaxias	NcA
 galea	NcA
+galenus	Nc-
 galerus/-um	NcB
 galla	NcA
 gallica	NcA
@@ -4115,6 +4244,7 @@ gentilitas	NcC
 genu/-us/-um	NcD
 genus	NcC
 geomantia	NcA
+geometer	Nc-
 geometres/-a	NcA
 geometria	NcA
 geometrica	NcB
@@ -4176,6 +4306,7 @@ gradatio	NcC
 gradatus	NcD
 gradus	NcB
 gradus	NcD
+graecus	Nc-
 gramen	NcC
 gramma	NcC
 grammateus	NcC
@@ -4201,6 +4332,8 @@ grauamen	NcC
 grauedo	NcC
 grauida	NcA
 grauitas	NcC
+gravitas	NcC
+gregorius	Np-
 gremium	NcB
 gremium	NcB
 gremius	NcB
@@ -4227,8 +4360,9 @@ gustatus	NcD
 gustum	NcB
 gustus	NcD
 gutta	NcA
+guttor	NcC
 guttula	NcA
-guttur/guttor	NcC
+guttur	NcC
 guttus	NcB
 gutus	NcB
 gymnas	NcC
@@ -4237,6 +4371,7 @@ gyrus	NcB
 habena	NcA
 habentia	NcA
 habilitas	NcC
+habilitatio	NcC
 habitaculum	NcB
 habitatio	NcC
 habitator	NcC
@@ -4288,11 +4423,12 @@ helia	NcA
 helleborum/-us	NcB
 hemisphaerium/-on	NcB
 hendecasyllabum/-os	NcB
-hepar/epar	NcC
+hepar	NcC
 hepatia	NcB
 heptagonon	NcB
 herba	NcA
 herbum	NcB
+hercules	Np-
 hereditas	NcC
 heredium	NcB
 heres	NcC
@@ -4312,7 +4448,9 @@ hiatus	NcD
 hibernum	NcB
 hiems/hiemps/hiemis	NcC
 hiera	NcA
+hierarchia	Nc-
 hilaritas	NcC
+hilarius	Nc-
 hilla	NcA
 hillum	NcB
 hinnitus	NcD
@@ -4345,10 +4483,11 @@ homo	NcC
 homuncio	NcC
 honestas	NcC
 honestum	NcB
-honor/honos	NcC
+honor	NcC
 honorarium	NcB
 honoratio	NcC
 honorificentia	NcA
+honos	NcC
 hora	NcA
 horarium	NcB
 hordeum	NcB
@@ -4372,6 +4511,7 @@ hospitium	NcB
 hostia	NcA
 hostis	NcC
 hostus	NcB
+hugo	Np-
 humanitas	NcC
 humecta	NcB
 humectatio	NcC
@@ -4404,6 +4544,7 @@ hypostasis	NcC
 hypothesis	NcC
 hyssopum/-us	NcB
 iacinthus/-os	NcB
+iacob	Np-
 iactantia	NcA
 iactatio	NcC
 iactator	NcC
@@ -4423,19 +4564,23 @@ ictus	NcD
 idea	NcA
 identitas	NcC
 idioma	NcC
-idiota/-es	NcA
+idiota	NcA
 idolatria	NcA
 idoleum	NcB
 idolium	NcB
+idololatra	Nc-
 idololatres	NcA
 idololatria	NcA
 idololatris	NcC
-idolon/-um	NcB
+idolon	NcB
 idolothytum	NcB
+idolum	NcB
 idoneitas	NcC
 idus	NcD
 iecur/iocur/iecor	NcC
 ieiunium	NcB
+iejunus	Nc-
+iesus	Np-
 ignauia	NcA
 igniculum	NcB
 igniculus	NcB
@@ -4476,6 +4621,7 @@ imitator	NcC
 imitatrix	NcC
 imitatus	NcD
 immanitas	NcC
+immaterialitas	Nc-
 immaturitas	NcC
 immensitas	NcC
 immensum	NcB
@@ -4612,6 +4758,7 @@ inconsultum	NcB
 inconsultus	NcD
 incontinentia	NcA
 inconuenientia	NcA
+inconveniens	Nc-
 incorporalia	NcC
 incorporalitas	NcC
 incorporatio	NcC
@@ -4641,8 +4788,10 @@ indages	NcC
 indago	NcC
 indebitum	NcB
 indecentia	NcA
+indeficientia	NcA
 indefinitum	NcB
 indemnitas	NcC
+indeterminatio	NcC
 indeuotio	NcC
 index	NcC
 indicatio	NcC
@@ -4657,8 +4806,13 @@ indignatio	NcC
 indignitas	NcC
 indisciplinatio	NcC
 indiscretio	NcC
+indispositio	NcC
 indiuiduitas	NcC
 indiuiduum	NcB
+individuatio	NcC
+individuus	Nc-
+indivisibilitas	Nc-
+indivisio	NcC
 indoles	NcC
 induciae	NcA
 inductio	NcC
@@ -4694,6 +4848,7 @@ infelicitas	NcC
 inferi	NcB
 infernum	NcB
 infernus	NcB
+inferus	Nc-
 infestatio	NcC
 infidelitas	NcC
 infinitas	NcC
@@ -4708,6 +4863,7 @@ inflexio	NcC
 inflexus	NcD
 inflictio	NcC
 inflictus	NcD
+influentia	NcA
 influxio	NcC
 influxus	NcD
 informatio	NcC
@@ -4721,6 +4877,7 @@ infusio	NcC
 infusor	NcC
 infusus	NcD
 ingeminatio	NcC
+ingenerabilis	Nc-
 ingeniositas	NcC
 ingenium	NcB
 ingenius	NcB
@@ -4736,6 +4893,7 @@ ingruentia	NcA
 ingurgitatio	NcC
 inhabitatio	NcC
 inhabitator	NcC
+inhaerentia	NcA
 inhibitio	NcC
 inhonestas	NcC
 inhonoratio	NcC
@@ -4754,9 +4912,14 @@ iniunctio	NcC
 iniuria	NcA
 iniustitia	NcA
 iniustitium	NcB
+injustitia	NcA
+innascibilitas	Nc-
 innocentia	NcA
+innocentius	Nc-
 innouatio	NcC
 innouator	NcC
+innovatio	NcC
+innovator	Nc-
 innumerabilitas	NcC
 innumerum	NcB
 innupta	NcA
@@ -4810,6 +4973,7 @@ inspicium	NcB
 inspiratio	NcC
 inspirator	NcC
 instabilitas	NcC
+instans	Nc-
 instantia	NcA
 instar	NcP
 instauratio	NcC
@@ -4833,6 +4997,7 @@ insula	NcA
 insultatio	NcC
 insultator	NcC
 insurrectio	NcC
+insyllogizatus	Nc-
 intactus	NcD
 integratio	NcC
 integritas	NcC
@@ -4842,6 +5007,7 @@ intellectualitas	NcC
 intellectus	NcD
 intellegentia	NcA
 intelligentia	NcA
+intelligibilitas	Nc-
 intemperantia	NcA
 intemperies	NcE
 intensio	NcC
@@ -4894,6 +5060,8 @@ interstitium	NcB
 interuallum	NcB
 interuentio	NcC
 interuentus	NcD
+intervallum	NcB
+interventus	NcD
 intestina	NcA
 intestinum	NcB
 intestinus	NcB
@@ -4938,11 +5106,18 @@ inuolumentum	NcB
 inuolutio	NcC
 inuoluus	NcB
 inutilitas	NcC
+inventio	NcC
+inventor	NcC
+investigatio	NcC
+invidia	NcA
+invocatio	NcC
+iob	Np-
 iocularitas	NcC
 ioculatio	NcC
 ioculator	NcC
 iocunditas	NcC
 iocus	NcB
+iohannes	Np-
 ion	NcC
 ion	NcB
 iota	NcA
@@ -4953,6 +5128,7 @@ irenaceus	NcB
 iris	NcC
 ironia	NcA
 irrationabilitas	NcC
+irrationalitas	NcC
 irreligiositas	NcC
 irreuerentia	NcA
 irrigatio	NcC
@@ -4965,9 +5141,11 @@ irritatus	NcD
 irritum	NcB
 irrogatio	NcC
 irroratio	NcC
+isaia	Np-
 isagoga/-e	NcA
 ison	NcB
 isosceles	NcC
+israel	Np-
 italia	NcA
 italus	NcB
 iter	NcC
@@ -4998,7 +5176,7 @@ iugerum/-us	NcB
 iugulatio	NcC
 iugulum/-us	NcB
 iugum/-us	NcB
-iumentum/-us	NcB
+iumentum	NcB
 iunctio	NcC
 iunctura	NcA
 iunctus	NcD
@@ -5032,6 +5210,8 @@ iuuencula	NcA
 iuuenculus	NcB
 iuuenta	NcA
 iuuentus	NcC
+iuvamentum	NcB
+iuventus	Nc-
 ixios	NcB
 iynx	NcC
 kalendae	NcA
@@ -5042,12 +5222,12 @@ labarum	NcB
 labes	NcC
 labia	NcA
 labium	NcB
-labor/labos	NcC
+labor	NcC
 la'brum	NcB
 labrusca	NcA
 labruscum	NcB
 labyrinthus/-um/-os	NcB
-lac/lact/lacte	NcC
+lac	NcC
 laceratio	NcC
 lacerta	NcA
 lacertum	NcB
@@ -5175,6 +5355,7 @@ legio	NcC
 legislatio	NcC
 legislator	NcC
 legisperitus	NcB
+legitimitas	Nc-
 legumen	NcC
 lema	NcA
 lemures	NcC
@@ -5203,10 +5384,12 @@ leuatio	NcC
 leuca	NcA
 leucas	NcC
 leuce	NcA
+leucippus	Nc-
 leuconotus	NcB
 leuga	NcA
 le'uitas	NcC
 leunculus	NcB
+levitas	NcC
 lex	NcC
 libamen	NcC
 libamentum	NcB
@@ -5225,6 +5408,7 @@ libertina	NcA
 libertinium	NcB
 libertinus	NcB
 libertus	NcB
+liber^volumen	Nc-
 libido	NcC
 libitum	NcB
 libitus	NcD
@@ -5336,7 +5520,7 @@ lotura	NcA
 "lu""tum"	NcB
 lubricitas	NcC
 lubricum	NcB
-luca/-as	NcA
+lucas	NcA
 lucellum	NcB
 lucerna	NcA
 luciditas	NcC
@@ -5364,7 +5548,7 @@ lumbare	NcC
 lumbricus	NcB
 lumbus	NcB
 lumen	NcC
-luminare/luminar	NcC
+luminare	NcC
 luna	NcA
 lunula	NcA
 lupa	NcA
@@ -5378,7 +5562,7 @@ lusor	NcC
 lustratio	NcC
 lusus	NcD
 luteum	NcB
-lu'tum	NcB
+lutum	NcB
 lutus	NcB
 lux	NcC
 luxum	NcB
@@ -5386,6 +5570,7 @@ luxuria	NcA
 luxuries	NcE
 luxus	NcD
 luxus	NcD
+ly	Nc-
 lychnus	NcB
 lympha	NcA
 lymphatus	NcD
@@ -5431,6 +5616,8 @@ magnificatio	NcC
 magnificentia	NcA
 magnitudo	NcC
 magus	NcB
+mahumetista	Nc-
+mahumetus	Np-
 maiestas	NcC
 maiorius	NcB
 mala	NcA
@@ -5462,7 +5649,7 @@ mallo	NcC
 mallos/-us	NcB
 malogranatum	NcB
 malope	NcA
-ma'lum	NcB
+malum	NcB
 malum-granatum	NcB
 mamilla	NcA
 mamma	NcA
@@ -5488,6 +5675,7 @@ manentia	NcA
 manes	NcC
 mania	NcA
 manica	NcA
+manichaeus	Np-
 manicon	NcB
 manifestatio	NcC
 manifestator	NcC
@@ -5509,6 +5697,8 @@ manumissio	NcC
 manus	NcD
 manutergium	NcB
 mappa	NcA
+marchianista	Nc-
+marchius	Nc-
 marcor	NcC
 marculus	NcB
 marcus	NcB
@@ -5528,6 +5718,7 @@ marones	NcC
 marsupium	NcB
 marsuppium	NcB
 martellum	NcB
+martellus	Nc-
 martyr	NcC
 martyra	NcA
 martyrium	NcB
@@ -5541,6 +5732,7 @@ masticum	NcB
 mater	NcC
 mater-familias	NcC
 materia	NcA
+materialitas	NcC
 materies	NcE
 matertera	NcA
 mathematica/-e	NcA
@@ -5552,6 +5744,7 @@ matrona	NcA
 maturatio	NcC
 maturitas	NcC
 matutinum	NcB
+mauri	Nc-
 maxilla	NcA
 "me""dica/-e"	NcA
 "me""sis"	NcC
@@ -5570,7 +5763,7 @@ medicamentum	NcB
 medicatio	NcC
 medicator	NcC
 medicina	NcA
-me'dicus	NcB
+medicus	NcB
 medietas	NcC
 medimnum	NcB
 medimnus	NcB
@@ -5682,6 +5875,7 @@ metaplasmus	NcB
 metella	NcA
 metellus	NcB
 metempsychosis	NcC
+meteori	Nc-
 methodium	NcB
 methodos/-us	NcB
 metonymia	NcA
@@ -5775,7 +5969,7 @@ moeror	NcC
 moestitia	NcA
 mola	NcA
 molendinum	NcB
-moles/-is	NcC
+moles	NcC
 molestia	NcA
 molimen	NcC
 mo'li'tor	NcC
@@ -5835,9 +6029,12 @@ morum	NcB
 morus	NcB
 mos	NcC
 motio	NcC
+motivus	Nc-
 motor	NcC
 motorium	NcB
+motrix	Nc-
 motus	NcD
+moyses	Np-
 "mu""seum"	NcB
 mucor	NcC
 mucro	NcC
@@ -5935,13 +6132,13 @@ nanus	NcB
 naphtha/-as	NcA
 narcissus	NcB
 nardus/-um	NcB
-naris/nar	NcC
+naris	NcC
 narratio	NcC
 narrator	NcC
 narratus	NcD
 nascentia	NcA
 nasica	NcA
-nasus/-um	NcB
+nasus	NcB
 nata	NcA
 natale	NcC
 natatoria	NcA
@@ -5949,6 +6146,7 @@ natatus	NcD
 natio	NcC
 natis	NcC
 natiuitas	NcC
+nativitas	NcC
 natura	NcA
 naturale	NcC
 naturalitas	NcC
@@ -5966,6 +6164,7 @@ nauium	NcB
 nausea	NcA
 nauta	NcA
 nautici	NcB
+navis	NcC
 nebris	NcC
 nebula	NcA
 nebulositas	NcC
@@ -5999,6 +6198,7 @@ nequities	NcE
 nerium	NcB
 neruia	NcB
 neruus/-os	NcB
+nervus	NcB
 nescientia	NcA
 nete	NcA
 nex	NcC
@@ -6008,7 +6208,7 @@ nexus	NcB
 nexus	NcD
 nidor	NcC
 nidulus	NcB
-nidus/-um	NcB
+nidus	NcB
 nigrae	NcA
 nigredo	NcC
 nigror	NcC
@@ -6066,6 +6266,7 @@ nouelli	NcB
 nouerca	NcA
 nouilunium	NcB
 nouitas	NcC
+novitas	NcC
 nox	NcC
 noxa	NcA
 noxia	NcA
@@ -6122,6 +6323,7 @@ nutus	NcD
 nux	NcC
 nycticorax	NcC
 nympha/-e	NcA
+nyssenus	Np-
 obba	NcA
 obdormitio	NcC
 obductio	NcC
@@ -6139,6 +6341,9 @@ obitus	NcB
 obitus	NcD
 obiurgatio	NcC
 obiurgator	NcC
+objectio	NcC
+objectum	NcB
+objicio	NcC
 oblatio	NcC
 oblator	NcC
 oblectamen	NcC
@@ -6151,6 +6356,7 @@ obliterator	NcC
 oblitterator	NcC
 obliuio	NcC
 obliuium	NcB
+oblivio	NcC
 oblocutio	NcC
 obnoxietas	NcC
 obnubilatio	NcC
@@ -6172,6 +6378,7 @@ obseruantia	NcA
 obseruatio	NcC
 obseruator	NcC
 obseruatus	NcD
+observatio	NcC
 obses	NcC
 obsessio	NcC
 obsessor	NcC
@@ -6197,6 +6404,7 @@ obtutus	NcD
 obuersio	NcC
 obuius	NcB
 obumbratio	NcC
+obviatio	NcC
 occasio	NcC
 occasus	NcD
 occidentalia	NcC
@@ -6220,9 +6428,9 @@ oculata	NcA
 oculus	NcB
 ode	NcA
 odeum	NcB
-"odi""um"	NcB
+odium	NcB
 odi'um	NcB
-odor/odos	NcC
+odor	NcC
 odoramentum	NcB
 odoratio	NcC
 odoratus	NcD
@@ -6247,6 +6455,7 @@ oliua	NcA
 oliueta	NcA
 oliuetum	NcB
 oliuum	NcB
+oliva	NcA
 olla	NcA
 olympus/-os	NcB
 omelia	NcA
@@ -6336,10 +6545,12 @@ ordinatio	NcC
 ordinator	NcC
 ordinatrix	NcC
 ordo	NcC
+organizatio	NcC
 organum	NcB
 orichalcum	NcB
 orificium	NcB
 origa	NcA
+origenes	Nc-
 originarii	NcB
 origo	NcC
 orna	NcA
@@ -6359,7 +6570,8 @@ orum	NcB
 orum	NcB
 oryx	NcC
 os	NcC
-os	NcC
+os^oris	NcC
+os^ossis	NcC
 osculatio	NcC
 osculatio	NcC
 osculum	NcB
@@ -6395,6 +6607,7 @@ ouile	NcC
 ouina	NcA
 ouis	NcC
 ouum	NcB
+ovis	NcC
 pabulum	NcB
 pacificatio	NcC
 pacta	NcA
@@ -6447,7 +6660,7 @@ pammachium	NcB
 pana	NcA
 paniculus	NcB
 panifica	NcA
-panis/-e	NcC
+panis	NcC
 panna	NcA
 panniculus	NcB
 pannosi	NcB
@@ -6517,6 +6730,7 @@ partura	NcA
 parturitio	NcC
 partus	NcD
 paruitas	NcC
+parum	NcB
 parus	NcB
 pascha	NcC
 pascua	NcA
@@ -6691,6 +6905,8 @@ periscelis	NcC
 peritia	NcA
 periurium	NcB
 perizoma	NcC
+perjurium	NcB
+permanentia	NcA
 permansio	NcC
 permissio	NcC
 permissor	NcC
@@ -6705,6 +6921,7 @@ perpendiculum/-us	NcB
 perpessio	NcC
 perpetratio	NcC
 perpetuarium	NcB
+perpetuatio	NcC
 perpetuitas	NcC
 perpetuum	NcB
 perplexio	NcC
@@ -6717,6 +6934,7 @@ persecutrix	NcC
 perseuerantia	NcA
 perseueratio	NcC
 persona	NcA
+personalitas	NcC
 personata	NcA
 personatum	NcB
 perspectio	NcC
@@ -6739,6 +6957,7 @@ peruersor	NcC
 peruicacia	NcA
 peruigilium	NcB
 peruium	NcB
+perventio	NcC
 pes	NcC
 pessos	NcB
 pessulum	NcB
@@ -6754,6 +6973,7 @@ petitus	NcD
 petra	NcA
 petro	NcC
 petrosa	NcB
+petrus	Np-
 petulantia	NcA
 phalanga	NcA
 phalanx	NcC
@@ -6890,6 +7110,7 @@ plastes	NcA
 platanus	NcB
 platea	NcA
 platea	NcA
+plato	Np-
 platon	NcC
 plaustra	NcA
 plaustrum	NcB
@@ -6925,7 +7146,7 @@ poena	NcA
 poenitentia	NcA
 poenitudo	NcC
 poesis	NcC
-poeta/-es	NcA
+poeta	NcA
 poetica/-e	NcA
 poeticum	NcB
 poetria	NcA
@@ -6961,7 +7182,7 @@ pontus	NcB
 poples	NcC
 populatio	NcC
 populatio	NcC
-po'pulus	NcB
+populus	NcB
 porca	NcA
 porca	NcA
 porcina	NcA
@@ -6969,6 +7190,7 @@ porcinum	NcB
 porcus	NcB
 porisma	NcC
 porphyrio	NcC
+porphyrius	Nc-
 porrectio	NcC
 porrectum	NcB
 porrigo	NcC
@@ -7009,6 +7231,7 @@ potator	NcC
 potatus	NcD
 potentatus	NcD
 potentia	NcA
+potentialitas	NcC
 poterium	NcB
 potestas	NcC
 potio	NcC
@@ -7039,6 +7262,7 @@ praeco	NcC
 praecogitatio	NcC
 praecognitio	NcC
 praecognitor	NcC
+praeconceptio	NcC
 praeconium	NcB
 praecordia	NcB
 praecursio	NcC
@@ -7056,12 +7280,15 @@ praedicamentum	NcB
 praedicatio	NcC
 praedicator	NcC
 praedicatrix	NcC
+praedicatum	NcB
 praedictio	NcC
 praedictum	NcB
 praediuinatio	NcC
 praedium	NcB
 praedo	NcC
+praeelectio	NcC
 praeeminentia	NcA
+praeexistentia	NcA
 praefatio	NcC
 praefator	NcC
 praefatum	NcB
@@ -7073,6 +7300,7 @@ praefectus	NcB
 praefiguratio	NcC
 praefinitio	NcC
 praeiudicium	NcB
+praejudicium	NcB
 praelatio	NcC
 praelator	NcC
 praelectio	NcC
@@ -7082,6 +7310,7 @@ praelocutio	NcC
 praemeditatio	NcC
 praemiator	NcC
 praeminentia	NcA
+praemissa	Nc-
 praemium	NcB
 praemonitum	NcB
 praemonitus	NcD
@@ -7115,6 +7344,7 @@ praescriptus	NcD
 praesentia	NcA
 praesepe/-es/-is	NcC
 praesepium	NcB
+praeservatio	NcC
 praeses	NcC
 praesidium	NcB
 praesignator	NcC
@@ -7166,12 +7396,14 @@ primordium	NcB
 primum	NcB
 principale	NcC
 principalitas	NcC
+principiatum	NcB
 principatus	NcD
 principium	NcB
 principium	NcB
 prioratus	NcD
 priuatio	NcC
 priuilegium	NcB
+privatio	NcC
 proauus	NcB
 proba	NcA
 probabilitas	NcC
@@ -7208,6 +7440,7 @@ proditrix	NcC
 prodromus	NcB
 producta	NcB
 productio	NcC
+productor	Nc-
 produx	NcC
 proeliator	NcC
 proelium	NcB
@@ -7236,6 +7469,7 @@ prohibitor	NcC
 proiectio	NcC
 proiectum	NcB
 proiectus	NcD
+projectio	NcC
 prolapsio	NcC
 prolapsus	NcD
 prolatio	NcC
@@ -7254,6 +7488,7 @@ promissum	NcB
 promissus	NcD
 promota	NcB
 promotio	NcC
+promptitudo	NcC
 promotor	NcC
 promotus	NcD
 promptuarium	NcB
@@ -7265,6 +7500,7 @@ pronaus/-os	NcB
 pronepos	NcC
 pronomen	NcC
 pronuba	NcA
+pronunciatio	NcC
 pronuntiatio	NcC
 pronuntiator	NcC
 pronuntiatum	NcB
@@ -7276,7 +7512,7 @@ propages	NcC
 propago	NcC
 propassio	NcC
 propatruus	NcB
-propheta/-es	NcA
+propheta	NcA
 prophetia	NcA
 prophetis	NcC
 prophetissa	NcA
@@ -7288,6 +7524,7 @@ propitiator	NcC
 propitiatorium	NcB
 propitiatus	NcD
 proportio	NcC
+proportionabilitas	NcC
 proportionalitas	NcC
 propositio	NcC
 proprietas	NcC
@@ -7347,6 +7584,8 @@ prouisus	NcD
 prouocatio	NcC
 prouocator	NcC
 prouocatrix	NcC
+providentia	NcA
+provisor	Nc-
 proximitas	NcC
 prudentia	NcA
 pruina	NcA
@@ -7383,7 +7622,7 @@ pudor	NcC
 puella	NcA
 puellarius	NcB
 puellus	NcB
-puer/-us	NcB
+puer	NcB
 puera	NcA
 puerilitas	NcC
 pueritia	NcA
@@ -7400,6 +7639,7 @@ pugnator	NcC
 pugnatrix	NcC
 pugnus/-um	NcB
 pulchritudo	NcC
+pulcritudo	NcC
 pulex/pulix	NcC
 pullo	NcC
 pullulatio	NcC
@@ -7421,10 +7661,11 @@ puluinar	NcC
 puluinarium	NcB
 puluis/puluer	NcC
 puluisculus/-um	NcB
+pulvis	NcC
 pumex	NcC
 puncta	NcA
 punctio	NcC
-punctum/-us	NcB
+punctum	NcB
 punctura	NcA
 punctus	NcD
 punitio	NcC
@@ -7438,6 +7679,7 @@ purgamen	NcC
 purgamentum	NcB
 purgatio	NcC
 purgator	NcC
+purgatorium	NcB
 purificatio	NcC
 puritas	NcC
 puritas	NcC
@@ -7462,6 +7704,7 @@ pyromantia	NcA
 pyrrichius	NcB
 pyrum	NcB
 pyrus	NcB
+pythagoras	Np-
 pythonion	NcB
 pythonissa	NcA
 pyxis	NcC
@@ -7505,6 +7748,7 @@ questio	NcC
 questio	NcC
 questus	NcD
 questus	NcD
+quidditas	Nc-
 quies	NcC
 quiescentia	NcA
 quietatio	NcC
@@ -7513,7 +7757,7 @@ quinquagesima	NcA
 quinquennium	NcB
 quinta	NcA
 quoquus	NcB
-"ra""pina"	NcA
+rabbi	Nc-
 rabia	NcA
 rabies	NcE
 raca	NcP
@@ -7530,11 +7774,12 @@ rana	NcA
 rancor	NcC
 rapacitas	NcC
 rapiditas	NcC
-ra'pina	NcA
+rapina	NcA
 raptor	NcC
 raptum	NcB
 raptus	NcD
 rapum	NcB
+rarefactio	NcC
 raritas	NcC
 rasio	NcC
 rasis	NcC
@@ -7561,6 +7806,7 @@ rebellium	NcB
 recapitulatio	NcC
 receptaculum	NcB
 receptator	NcC
+receptibilitas	NcC
 receptio	NcC
 receptor	NcC
 receptus	NcD
@@ -7629,7 +7875,7 @@ regnator	NcC
 regnum	NcB
 regressus	NcD
 regula	NcA
-regula	NcA
+regularitas	NcC
 regulus	NcB
 reiecta	NcB
 reiectio	NcC
@@ -7665,10 +7911,12 @@ remuneratio	NcC
 remunerator	NcC
 remus	NcB
 ren	NcC
+renes	Nc-
 renisus	NcD
 renouamen	NcC
 renouatio	NcC
 renouator	NcC
+renovatio	NcC
 renuntiatio	NcC
 reparatio	NcC
 reparator	NcC
@@ -7770,6 +8018,9 @@ reuocatio	NcC
 reuocator	NcC
 reuolutio	NcC
 reus	NcB
+revelatio	NcC
+reverberatio	NcC
+reverentia	NcA
 rex	NcC
 rhamnus/-os	NcB
 rhetor	NcC
@@ -7793,6 +8044,7 @@ ritus	NcD
 riuora	NcB
 riuulus	NcB
 riuus	NcB
+rivulus	NcB
 rixa	NcA
 robigo	NcC
 robor	NcC
@@ -7802,6 +8054,7 @@ rogatio	NcC
 rogator	NcC
 rogatus	NcD
 rogus/-um	NcB
+romanus	Nc-
 roratio	NcC
 ros	NcC
 rosa	NcA
@@ -7861,6 +8114,7 @@ sacrificium	NcB
 sacrilegium	NcB
 sacrium	NcB
 sacrum	NcB
+sadducaeus	Nc-
 saeculum	NcB
 saepes/saeps	NcC
 saeptum	NcB
@@ -7887,6 +8141,7 @@ saliua	NcA
 saliunca	NcA
 saliuncula	NcA
 salix	NcC
+salomon	Np-
 salsamentum	NcB
 salsedo	NcC
 salsugo	NcC
@@ -7917,7 +8172,7 @@ sanctitudo	NcC
 sanctor	NcC
 sanctuarium	NcB
 sandalium	NcB
-sanguis/sanguen	NcC
+sanguis	NcC
 sanguisuga	NcA
 sanies	NcE
 sanitas	NcC
@@ -7928,6 +8183,7 @@ sapor	NcC
 sappirus	NcB
 sarabala	NcB
 saraballa	NcB
+saracenus	Nc-
 sarcasmos	NcB
 sarcina	NcA
 sarcinula	NcA
@@ -8051,6 +8307,7 @@ sebum	NcB
 secessio	NcC
 secessus	NcD
 secretarium	NcB
+secretum	Nc-
 secta	NcA
 sectator	NcC
 sectio	NcC
@@ -8063,7 +8320,7 @@ secus	NcP
 secutor	NcC
 sedatio	NcC
 sedatus	NcD
-sedes/-is	NcC
+sedes	NcC
 sedile	NcC
 seditio	NcC
 seductio	NcC
@@ -8137,6 +8394,7 @@ serium	NcB
 sermo	NcC
 sermocinatio	NcC
 sermunculus	NcB
+serpens	Nc-
 serra	NcA
 serta	NcA
 sertum	NcB
@@ -8153,12 +8411,15 @@ seruolus	NcB
 seruula	NcA
 seruulus	NcB
 seruus/-os	NcB
+servitus	NcC
+servus	NcB
 sessio	NcC
 sessor	NcC
 sessorium	NcB
 seta	NcA
 setim	NcP
 seueritas	NcC
+severitas	NcC
 sexta	NcA
 sextarius	NcB
 sexus	NcD
@@ -8173,6 +8434,7 @@ sicera	NcA
 siclus	NcB
 sidus	NcC
 sigillarius	NcB
+sigillatio	NcC
 sigillum	NcB
 sigma	NcC
 signaculum	NcB
@@ -8200,6 +8462,8 @@ similatio	NcC
 simile	NcC
 similitudo	NcC
 simius	NcB
+simon	Np-
+simonides	Np-
 simpla	NcA
 simplicii	NcB
 simplicitas	NcC
@@ -8246,6 +8510,7 @@ socia	NcA
 societas	NcC
 socius	NcB
 socordia	NcA
+socrates	Np-
 socrus	NcD
 socrus	NcB
 sodalitas	NcC
@@ -8299,7 +8564,7 @@ sorex	NcC
 sorix	NcC
 soror	NcC
 sororius	NcB
-sors/sortis	NcC
+sors	NcC
 sortitio	NcC
 sortitus	NcD
 sorus	NcB
@@ -8325,14 +8590,14 @@ speciositas	NcC
 spectaculum	NcB
 spectamen	NcC
 spectator	NcC
-spe'cula	NcA
+specula	NcA
 speculamen	NcC
 specular	NcC
 specularium	NcB
 speculatio	NcC
 speculator	NcC
 speculatrix	NcC
-speculum/-us	NcB
+speculum	NcB
 specum	NcB
 specus	NcD
 spelta	NcA
@@ -8498,6 +8763,7 @@ suasum	NcB
 suasus	NcD
 suauitas	NcC
 suauium	NcB
+suavitas	NcC
 subauditio	NcC
 subcumbus	NcB
 subdiacon	NcC
@@ -8517,6 +8783,8 @@ subiectus	NcD
 subiices	NcC
 subitatio	NcC
 subiugatio	NcC
+subjectio	NcC
+subjectum	NcB
 sublatio	NcC
 subleuatio	NcC
 sublimitas	NcC
@@ -8626,6 +8894,7 @@ suppletio	NcC
 supplicatio	NcC
 supplicium	NcB
 suppositio	NcC
+suppositum	Nc-
 supputator	NcC
 sura	NcA
 surcula	NcA
@@ -8709,6 +8978,7 @@ tala	NcA
 talentum	NcB
 talio	NcC
 talla	NcA
+talmut	Np-
 talpa	NcA
 talus	NcB
 tapete/tapes	NcC
@@ -8748,7 +9018,7 @@ telonium	NcB
 telum	NcB
 temeritas	NcC
 temetum	NcB
-te'mo	NcC
+temo	NcC
 temperamentum	NcB
 temperantia	NcA
 temperatio	NcC
@@ -8800,6 +9070,7 @@ territorium	NcB
 terror	NcC
 tersus	NcD
 tertiodecimus	NcB
+tertullianus	Nc-
 tessala	NcA
 tessella	NcA
 testa	NcA
@@ -8839,9 +9110,10 @@ theologus	NcB
 theorema	NcC
 theoria	NcA
 theorice	NcA
+theos	Nc-
 theotocos	NcB
 theristrum	NcB
-thesaurus/-um	NcB
+thesaurus	NcB
 thesis	NcC
 thium	NcB
 thoraca/-e	NcA
@@ -8865,7 +9137,7 @@ tibicinium	NcB
 tignum	NcB
 tigris	NcC
 timiditas	NcC
-timor/timos	NcC
+timor	NcC
 timum	NcB
 tinctio	NcC
 tinctor	NcC
@@ -8922,6 +9194,7 @@ tortuositas	NcC
 tortura	NcA
 tortus	NcD
 torus/-um	NcB
+totalitas	NcC
 trabs/trabes/trabis	NcC
 tracta	NcA
 tractatio	NcC
@@ -8966,7 +9239,9 @@ translatus	NcD
 transmigratio	NcC
 transmissio	NcC
 transmissus	NcD
+transmutabilitas	NcC
 transmutatio	NcC
+transubstantiatio	NcC
 transumptio	NcC
 tremor	NcC
 trepidatio	NcC
@@ -8986,6 +9261,7 @@ tributus	NcD
 tributus	NcB
 triclinium	NcB
 triduum	NcB
+triduus	NcB
 triennium	NcB
 trierarcha	NcA
 trierarchus	NcB
@@ -9397,6 +9673,7 @@ unguis/unx	NcC
 ungula	NcA
 ungula	NcA
 ungulus	NcB
+unibilitas	NcC
 uniformitas	NcC
 u'nio	NcC
 unitas	NcC
@@ -9405,6 +9682,8 @@ uniuersalitas	NcC
 uniuersitas	NcC
 uniuersum	NcB
 uniuocatio	NcC
+universalitas	NcC
+universitas	NcC
 uocabulum	NcB
 uocatio	NcC
 uocatio	NcC
@@ -9455,6 +9734,7 @@ urtica	NcA
 urus	NcB
 uruum	NcB
 usia	NcA
+usiosis	Nc-
 ustio	NcC
 usura	NcA
 usurpatio	NcC
@@ -9462,7 +9742,7 @@ usurpator	NcC
 usus	NcD
 utensilia	NcC
 uter/utris	NcC
-uterus/-um/uter	NcB
+uterus	NcB
 utilitas	NcC
 uua	NcA
 uulcanus	NcB
@@ -9481,14 +9761,62 @@ uultus	NcD
 uulua	NcA
 uxor	NcC
 uxorium	NcB
+vadianus	Nc-
+vanitas	Nc-
+vapor	Nc-
+variabilitas	Nc-
+variatio	NcC
+varietas	NcC
+vehiculum	NcB
+velocitas	NcC
+veneratio	NcC
+venter	Nc-
+verbum	NcB
+verisimilitudo	NcC
+veritas	NcC
+vertex	Nc-
+vertibilitas	NcC
+vespertilio	NcC
+vestigium	NcB
+vestimentum	NcB
+vestis	Nc-
+vestitus	Nc-
+via	NcA
+viator	Nc-
+vicis	Nc-
+vicissitudo	NcC
+victor	Nc-
+victoria	NcA
+vigor	Nc-
+vilitas	NcC
+vinculum	NcB
+vindicta	Nc-
+vinum	NcB
+violentia	NcA
+vir	Nc-
+virgo	Nc-
+virtus	Nc-
+vis	Nc-
+visio	Nc-
+visus	Nc-
+vita	Nc-
+vitium	NcB
+vituperium	NcB
+vivificatio	NcC
+voluntas	NcC
+voluptas	NcC
+vox	Nc-
+vulgus	Nc-
 xanthos	NcB
 xenium	NcB
 xenodochium	NcB
+zabius	Nc-
 zelator	NcC
 zelotes	NcA
 zelotypa	NcA
 zelotypia	NcA
 zelus	NcB
+zeno	Nc-
 zephirus	NcB
 zephyrus/-os	NcB
 zizania	NcB
