@@ -39,6 +39,14 @@ has pronouns =>
     lazy    => 1
 );
 
+has verbs =>
+(
+    is      => 'ro',
+    isa     => 'HashRef',
+    builder => '_build_list_of_verbs',
+    lazy    => 1
+);
+
 #------------------------------------------------------------------------------
 # Reads the Latin CoNLL trees, converts morphosyntactic tags to the positional
 # tagset and transforms the tree to adhere to PDT guidelines.
@@ -86,12 +94,14 @@ sub fix_part_of_speech
     my $nouns = $self->nouns();
     my $adjectives = $self->adjectives();
     my $pronouns = $self->pronouns();
+    my $verbs = $self->verbs();
     my $lemma = $node->lemma();
     if($node->is_noun())
     {
         my $is_noun = exists($nouns->{$lemma});
         my $is_adjective = exists($adjectives->{$lemma});
         my $is_pronoun = exists($pronouns->{$lemma});
+        my $is_verb = exists($verbs->{$lemma});
         if($is_noun)
         {
             if($is_adjective)
@@ -183,6 +193,10 @@ sub fix_part_of_speech
             {
                 $node->iset()->set('prontype' => 'prn');
             }
+        }
+        elsif($is_verb)
+        {
+            $node->iset()->add('pos' => 'verb', 'prontype' => '');
         }
         else
         {
@@ -13100,6 +13114,7 @@ nouenarius	Af-
 nouenus	Ad-
 nouissimus	Af-
 nouus	Af-
+novem	AnP
 novenarius	Af-
 novus	Af-
 noxior	Af-
@@ -13892,6 +13907,7 @@ quartus	Ao-
 quaternarior	Af-
 quaternarius	Af-
 quaternus	Ad-
+quator	AnP
 quatriduanus	Af-
 quattuor	AnP
 quattuordecim	AnP
@@ -14715,7 +14731,7 @@ tredecim	AnP
 tremebundus	Af-
 tremulus	Af-
 trepidus	Af-
-tres/-is	An-
+tres	An-
 triangularis	Af-
 triangulis	Af-
 triangulus	Af-
@@ -14983,6 +14999,7 @@ ultroneus	Af-
 umbraticus	Af-
 umbratilis	Af-
 umbrosus	Af-
+una	AnP
 unanimis	Af-
 unanimus	Af-
 uncus	Af-
@@ -15122,6 +15139,7 @@ alteruter	Pu-
 cuius	P5-
 cuiusuis	Pu-
 ego	Pq-
+egometipse	Pq-
 hic	Py-
 idem	P3-
 ille	Py-
@@ -15139,6 +15157,7 @@ nihil	Pu-
 nihilum	Pu-
 nil	Pu-
 nilum	Pu-
+nonnullus	Pu-
 non-nullus	Pu-
 nos	Pq-
 noster	Ps-
@@ -15165,29 +15184,36 @@ quisquam	Pu-
 quisque	P2-
 quisquis	P2-
 quiuis	Pu-
+quivis	Pu-
+quod	P2P
 quodquod	P2P
 quot	P5P
 quotquot	P2P
 quotus	P5-
 se	Px-
+seipse	Px-
+semetipse	Px-
 siquis	P4-
+sui	Ps-
 suos	Ps-
 suus	Ps-
 talis	Pu-
 tantus	Pu-
 tantusdem	Pu-
-"to""tus"	Pu-
 tot	PuP
+totus	Pu-
 tu	Pq-
 tuos	Ps-
 tuus	Ps-
 uester	Ps-
 ullus	Pu-
+unusquisque	Pu-
 unus-quisque	Pu-
 uos	Pq-
 uter	P7-
 uterlibet	P2-
 uterque	Pu-
+vester	Ps-
 EOF
     ;
     my @pronouns = split(/\r?\n/, $list_of_pronouns);
@@ -15198,6 +15224,54 @@ EOF
         $pronouns{$p} = $tag;
     }
     return \%pronouns;
+}
+
+#------------------------------------------------------------------------------
+# Returns a reference to a hash lemmas of Latin verbs that have appeared with
+# a tag for nominal declension (this is weird and it might be an annotation
+# error). Based on a list by Marco Passarotti.
+#------------------------------------------------------------------------------
+sub _build_list_of_verbs
+{
+    # lemma
+    my $list_of_verbs = <<EOF
+absolvo
+accido^cado
+adjutor
+ago
+attendo
+compono
+congruo
+converto
+debeo
+decet
+dico
+diligo
+emineo
+exprimo
+inhaereo
+moveo
+occulo
+ordino
+patior
+posse
+praedico
+rego
+sancio
+stringo
+subjicio
+sufficio
+sum
+unio
+EOF
+    ;
+    my @verbs = split(/\r?\n/, $list_of_verbs);
+    my %verbs;
+    foreach my $v (@verbs)
+    {
+        $verbs{$v}++;
+    }
+    return \%verbs;
 }
 
 1;
