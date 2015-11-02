@@ -27,7 +27,7 @@ sub process_zone {
     # Create a-nodes and detect the no_space_after attribute.
     foreach my $i ( ( 0 .. $#tokens ) ) {
         my $token = $tokens[$i];
-        
+
         # By default, there is a space after each token.
         my $no_space_after = 0;
 

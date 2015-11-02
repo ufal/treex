@@ -26,7 +26,7 @@ has 'data_dir' => (
 
 sub BUILD {
     my ($self) = @_;
-    
+
     # Force the lazy-built parameters to be loaded.
     # This should not be needed, but for some strange reasons it is.
     # Without this Morce::English tags "But" as IN instead of CC.
@@ -112,7 +112,7 @@ sub get_possible_tags {    ## no critic (Subroutines::ProhibitExcessComplexity) 
         }
         return @possible;
     }
-    
+
     # 2a. check big_dict
     $dict_tags = $self->big_dict->{$lowerform};
     if ($dict_tags){
@@ -120,8 +120,8 @@ sub get_possible_tags {    ## no critic (Subroutines::ProhibitExcessComplexity) 
         if ( $lowerform ne $wordform ) {
             push @possible, qw(NNP NNPS);
         }
-    } 
-    
+    }
+
     # 2b apply morpho guesses, recall is more important than precision
     else {
         push @possible, qw(FW JJ NN NNS RB);
@@ -129,18 +129,18 @@ sub get_possible_tags {    ## no critic (Subroutines::ProhibitExcessComplexity) 
         # comparative
         if ($lowerform =~ /er($|-)|^more-|^less-/) {
             push @possible, qw(JJR RBR);
-        }    
-        
+        }
+
         # superlative
         if ($lowerform =~ /est($|-)|^most-|^least/) {
             push @possible, qw(JJS RBS);
-        }    
-        
+        }
+
         # -ing form
         if ( $lowerform =~ /ing$|[^aeiouy]in$/ ) {
             push @possible, qw(VBG);
         }
-        
+
         # third person
         if ( $lowerform =~ /[^s]s$/ ) {
             push @possible, qw(VBZ);
@@ -148,15 +148,15 @@ sub get_possible_tags {    ## no critic (Subroutines::ProhibitExcessComplexity) 
         else {
             push @possible, qw(VB VBP);
         }
-        
+
         # capital-letter (proper nouns and adjactives)
         if ( $lowerform ne $wordform ) {
             push @possible, qw(NNP NNPS);
-        }    
+        }
         elsif ( $lowerform =~ /^[0-9']/ ) {
             push @possible, qw(NNP);
         }
-        
+
         #  symbols
         if ($lowerform =~ /[^a-zA-Z0-9]+/ or $lowerform =~ /^&.*;$/ )
         {
@@ -165,13 +165,13 @@ sub get_possible_tags {    ## no critic (Subroutines::ProhibitExcessComplexity) 
 #                @possible = ('SYM', ':', ',');
 #            }
         }
-        
+
         # numbers
         if ( $lowerform =~ /[-0-9]+/ or $lowerform =~ /^[ixvcmd\.]+$/ ) {
             push @possible, qw(CD);
         }
     }
-    
+
     # 3. check irregular verbs
     if ( $self->preterites->{$lowerform} ) {
         push @possible, qw(VBD);

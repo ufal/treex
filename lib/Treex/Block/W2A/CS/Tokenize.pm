@@ -19,7 +19,7 @@ override 'tokenize_sentence' => sub {
 
     # Czech conditional enclitic "-li" should be treated as a separate token
     $sentence =~ s/ (\p{Letter}+)-(li|LI) / $1 - $2 /g;
-    
+
     # Number ranges are considered 3 tokens in PDT (and thus learned to be treated so by parsers)
     $sentence =~ s/([0-9])\-([0-9])/$1 - $2/g;
 
@@ -36,13 +36,13 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::W2A::CS::Tokenize
 
 =head1 DESCRIPTION
 
-Each sentence is split into a sequence of tokens. The L<default language-independent tokenization|Treex::Block::W2A::Tokenize> 
+Each sentence is split into a sequence of tokens. The L<default language-independent tokenization|Treex::Block::W2A::Tokenize>
 is used.
 
 =head1 AUTHORS

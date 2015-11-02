@@ -20,7 +20,7 @@ sub process_document {
     return;
 }
 
-sub process_doc_zone {    
+sub process_doc_zone {
     my ( $self, $doczone, $document ) = @_;
 
     my $text = $doczone->text;

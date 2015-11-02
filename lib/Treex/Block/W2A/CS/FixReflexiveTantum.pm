@@ -46,16 +46,16 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::W2A::CS::FixReflexiveTantum
 
 =head1 DESCRIPTION
 
-This makes sure that any reflexive tantum particle "se/si" as marked by the parser (C<AuxT>) hangs under an actual 
+This makes sure that any reflexive tantum particle "se/si" as marked by the parser (C<AuxT>) hangs under an actual
 reflexive tantum verb (or deverbative noun or adjective).
 
-If not, the C<afun> of the reflexive particle  is converted to C<AuxR>, C<Obj> or C<Adv>.  
+If not, the C<afun> of the reflexive particle  is converted to C<AuxR>, C<Obj> or C<Adv>.
 
 =head1 AUTHORS
 

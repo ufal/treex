@@ -117,7 +117,7 @@ my @DATA = qw(
     zip ztrip
 );
 
-sub analyze() {
+sub analyze() { 	## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
     foreach my $stem (@DATA) {
         my $double = $stem;
         $double =~ s/(.)$/$1$1/;

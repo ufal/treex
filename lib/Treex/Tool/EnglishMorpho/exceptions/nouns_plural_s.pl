@@ -30,14 +30,14 @@ my @DATA = qw(
     photo
 );
 
-sub analyze() {
+sub analyze() {		## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
     foreach (@DATA) {
         print "${_}s\tNNS\t$_\n";
     }
     return;
 }
 
-sub generate() {
+sub generate() {	## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
     foreach (@DATA) {
 
         # words ending in -e are covered by rules in EnglishMorpho::Generator.pm

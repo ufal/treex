@@ -6,10 +6,10 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseTextReader';
 
-sub next_document_text {   
+sub next_document_text {
     my ($self) = @_;
     return $self->from->next_file_text() if $self->is_one_doc_per_file;
- 
+
     my $text = '';
     my $empty_lines = 0;
     LINE:

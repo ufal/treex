@@ -158,8 +158,8 @@ sub get_poss_adj {
 # If the second parameter is set to true, the number for homonymous lemmas is truncated as well.
 # See http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/en/m-layer/html/ch02s01.html
 sub truncate_lemma {
-    my ($lemma, $strip_numbers) = @_;    
-    
+    my ($lemma, $strip_numbers) = @_;
+
     $lemma =~ s/((?:(`|_;|_:|_,|_\^|))+)(`|_;|_:|_,|_\^).+$/$1/;
 
     # Lemma cannot be empty (e.g. "`a la" instead of "à la" in ČNK)
@@ -174,10 +174,10 @@ sub truncate_lemma {
 
 # Given a lemma, this returns all the term types (given name - Y, surname - S, geography - G etc.) this lemma belongs to
 sub get_term_types {
-    
+
     my ($lemma) = @_;
     my $term_types = '';
-    
+
     while ( $lemma =~ m/_;([YSEGKRmHULjgcybuwpzo])/g ){
         $term_types .= $1;
     }
