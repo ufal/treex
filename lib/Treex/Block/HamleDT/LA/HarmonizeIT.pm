@@ -9842,21 +9842,23 @@ sub _build_list_of_adjectives
 {
     # lemma cod_morf_lem
     my $list_of_adjectives = <<EOF
-aereus	Af-
 abdicatiuus	Af-
 abditissimus	Af-
 abiectior	Af-
 abiectissimus	Af-
 abiegnus	Af-
 ablatiuus	Af-
+ablativus	Af-
 abominabilior	Af-
 abominabilis	Af-
 abortiuus	Af-
 abruptissimus	Af-
 absolutior	Af-
+absolutus	Af-
 absonus	Af-
 abstinentissimus	Af-
 abstractior	Af-
+abstractus	Af-
 absurdior	Af-
 absurdissimus	Af-
 absurdus	Af-
@@ -9865,6 +9867,7 @@ abundantissimus	Af-
 abundus	Af-
 abusiuior	Af-
 abusiuus	Af-
+abusivus	Af-
 acatalecticus	Af-
 acceptabilior	Af-
 acceptabilis	Af-
@@ -9873,6 +9876,7 @@ acceptior	Af-
 acceptissimus	Af-
 acceptorius	Af-
 accessibilis	Af-
+accidentalis	Af-
 acclinis	Af-
 accommodatior	Af-
 accommodus	Af-
@@ -9893,6 +9897,7 @@ acquisitiuus	Af-
 acrior	Af-
 actiuissimus	Af-
 actiuus	Af-
+activus	Af-
 actorius	Af-
 actualis	Af-
 actualissimus	Af-
@@ -9905,6 +9910,7 @@ adamantior	Af-
 adibilis	Af-
 adiectiuus	Af-
 adiunctiuus	Af-
+adjectivus	Af-
 administratiuus	Af-
 administratorior	Af-
 administratorius	Af-
@@ -9930,6 +9936,7 @@ adulescentulus/-os	Af-
 adulterinus	Af-
 adulterior	Af-
 aduncus	Af-
+aedificativus	Af-
 aedificatorius	Af-
 aedificialis	Af-
 aeger	Af-
@@ -9954,12 +9961,15 @@ aequior	Af-
 aequipollens	Af-
 aequissimus	Af-
 aequiuocus	Af-
-aequus/-os	Af-
+aequivocus	Af-
+aequus	Af-
 aerarior	Af-
 aerarius	Af-
-a'ereus	Af-
+aereus	Af-
+aereus^aer	Af-
 aerius	Af-
 aerumnosus	Af-
+aestimativus	Af-
 aestimatorius	Af-
 aestiualis	Af-
 aestiuus/-os	Af-
@@ -9973,13 +9983,16 @@ aeuiternus	Af-
 affabilior	Af-
 affabilis	Af-
 affectiuus	Af-
+affectivus	Af-
 affectuosior	Af-
 affectuosus	Af-
 affinior	Af-
 affinis	Af-
 affirmatiuus	Af-
+affirmativus	Af-
 affluentissimus	Af-
 affluus	Af-
+agibilis	Af-
 agilior	Af-
 agilis	Af-
 agillimus	Af-
@@ -10007,11 +10020,13 @@ alearis	Af-
 alienigenus	Af-
 alienior	Af-
 alienus	Af-
+aliqualis	Af-
 allegoricus	Af-
 allophylus	Af-
 alluuius	Af-
 almificus	Af-
 almus	Af-
+alterans	Af-
 altercabilis	Af-
 alternus	Af-
 altilis	Af-
@@ -10090,6 +10105,8 @@ antiquarius	Af-
 antiquior	Af-
 antiquissimus	Af-
 antiquus	Af-
+antonomasticus	Af-
+anulosus	Af-
 anxior	Af-
 anxior	Af-
 anxius	Af-
@@ -10107,8 +10124,10 @@ appellatiuus	Af-
 appetentior	Af-
 appetibilior	Af-
 appetibilis	Af-
+appetitivus	Af-
 appositiuus	Af-
 apprehensibilis	Af-
+apprehensivus	Af-
 approbabilis	Af-
 approbatiuus	Af-
 approbus	Af-
@@ -10116,6 +10135,7 @@ aptior	Af-
 aptior	Af-
 aptissimus	Af-
 aptissimus	Af-
+aptus	Af-
 aquarior	Af-
 aquarius	Af-
 aquaticus	Af-
@@ -10153,7 +10173,7 @@ arcuatus	Af-
 ardentior	Af-
 ardentissimus	Af-
 arduissimus	Af-
-arduus/-os	Af-
+arduus	Af-
 argentarius	Af-
 argenteus	Af-
 argentius	Af-
@@ -10192,6 +10212,7 @@ asperior	Af-
 asperrimus	Af-
 assertorius	Af-
 assiduus	Af-
+assimilabilis	Af-
 assimilis	Af-
 assus	Af-
 astrictior	Af-
@@ -10224,6 +10245,8 @@ audacissimus	Af-
 audax	Af-
 audibilis	Af-
 auditorius	Af-
+augmentabilis	Af-
+augmentativus	Af-
 auguralis	Af-
 augurior	Af-
 augurius	Af-
@@ -10254,13 +10277,13 @@ autumnus	Af-
 auxiliaris	Af-
 auxiliarius	Af-
 azymus	Af-
-"bacchi""us"	Af-
 bacchicus	Af-
-bacchi'us	Af-
+bacchius	Af-
 balbus	Af-
 balnearis	Af-
 balnearius	Af-
 balneatus	Af-
+baptismalis	Af-
 barbaricus	Af-
 barbarus/-os	Af-
 barbatus	Af-
@@ -10270,6 +10293,7 @@ basus	Af-
 beatificus	Af-
 beatior	Af-
 beatissimus	Af-
+beatus	Af-
 bellicosissimus	Af-
 bellicosus	Af-
 bellicus	Af-
@@ -10328,10 +10352,12 @@ borealior	Af-
 borealis	Af-
 boreus	Af-
 bouinus	Af-
+bovinus	Af-
 breuiarius	Af-
 breuior	Af-
 breuis	Af-
 breuissimus	Af-
+brevis	Af-
 brumalis	Af-
 brutalis	Af-
 brutus	Af-
@@ -10473,6 +10499,7 @@ cereus	Af-
 cernuus	Af-
 certior	Af-
 certissimus	Af-
+certitudinalis	Af-
 certus	Af-
 ceruicosus	Af-
 ceterus	Au-
@@ -10481,6 +10508,7 @@ chelidonius	Af-
 chirurgicus	Af-
 cholericus	Af-
 choriambicus	Af-
+christianus	Af-
 christus	Af-
 chronicus	Af-
 chryseus	Af-
@@ -10503,8 +10531,10 @@ citer	Af-
 citerior	Af-
 citior	Af-
 citissimus	Af-
-citus	af-
+citrinus	Af-
+citus	Af-
 ciuilis	Af-
+civilis	Af-
 clamorosus	Af-
 clamosus	Af-
 clandestinus	Af-
@@ -10533,15 +10563,19 @@ coelibatus	Af-
 coenosus	Af-
 coessentialis	Af-
 cogitabilis	Af-
+cogitativus	Af-
 cognatissimus	Af-
 cognatus	Af-
+cognitivus	Af-
 cognitorius	Af-
 cognominis	Af-
 cognoscibilis	Af-
+cognoscitivus	Af-
 coheres	Af-
 collatiuus	Af-
 collectaneus	Af-
 collectiuus	Af-
+collectivus	Af-
 colligatior	Af-
 colobus	Af-
 colophonior	Af-
@@ -10554,6 +10588,7 @@ columbinus	Af-
 columnaris	Af-
 columnarius	Af-
 colurus	Af-
+combustibilis	Af-
 comestibilis	Af-
 comicus	Af-
 comis	Af-
@@ -10571,6 +10606,7 @@ commodior	Af-
 commodissimus	Af-
 commodus	Af-
 commotius	Af-
+communicabilis	Af-
 communicarius	Af-
 communior	Af-
 communis	Af-
@@ -10591,13 +10627,17 @@ competentior	Af-
 completior	Af-
 completissimus	Af-
 completiuus	Af-
+completivus	Af-
+completus	Af-
 complex	Af-
 complures	Au-
+componibilis	Af-
 compos	Af-
 compositior	Af-
 compositiuus	Af-
 comprehensibilis	Af-
 comprehensiuus	Af-
+comprehensivus	Af-
 comptior	Af-
 concauus	Af-
 conceptiuus	Af-
@@ -10644,6 +10684,8 @@ coniugus	Af-
 coniunctior	Af-
 coniunctissimus	Af-
 coniunctiuus	Af-
+conjecturalis	Af-
+connaturalis	Af-
 consanguineus	Af-
 conscior	Af-
 conscius	Af-
@@ -10653,6 +10695,7 @@ consequentior	Af-
 consequius	Af-
 consequus	Af-
 conseruabilis	Af-
+conservativus	Af-
 consignificans	Af-
 consiliarior	Af-
 consiliarius	Af-
@@ -10667,15 +10710,18 @@ conspicabilis	Af-
 conspicuus	Af-
 constantior	Af-
 constantissimus	Af-
+constitutivus	Af-
 constrictior	Af-
 constrictiuus	Af-
 consubstantialis	Af-
 consuetudinarius	Af-
 consularis	Af-
 consultior	Af-
+consummativus	Af-
 contagiosus	Af-
 contemplabilis	Af-
 contemplatiuus	Af-
+contemplativus	Af-
 contemplatorius	Af-
 contemporaneus	Af-
 contemptibilior	Af-
@@ -10684,6 +10730,7 @@ contemptissimus	Af-
 contens	Af-
 contentiosissimus	Af-
 contentiosus	Af-
+contentivus	Af-
 contiguus	Af-
 continentior	Af-
 continuatior	Af-
@@ -10706,6 +10753,8 @@ conuenientior	Af-
 conuenientissimus	Af-
 conuertibilis	Af-
 conuexus	Af-
+conversus	Af-
+convictus	Af-
 coomnipotens	Af-
 cooperarius	Af-
 copiosior	Af-
@@ -10740,6 +10789,7 @@ corruptibilis	Af-
 corruptissimus	Af-
 corruptissimus	Af-
 corruptiuus	Af-
+corruptivus	Af-
 corruptorius	Af-
 corticeus	Af-
 corticius	Af-
@@ -10804,6 +10854,7 @@ curtior	Af-
 curtus	Af-
 curulis	Af-
 curuus	Af-
+curvus	Af-
 cyaneus	Af-
 cynicus	Af-
 cypressinus	Af-
@@ -10813,6 +10864,7 @@ cyprius	Af-
 dactylicus	Af-
 daedalus	Af-
 daemoniacus	Af-
+daemonium	Af-
 damnabilior	Af-
 damnabilis	Af-
 damnas	AfP
@@ -10823,6 +10875,7 @@ dapsilis	Af-
 datiuus	Af-
 debil/-is	Af-
 debilior	Af-
+debilis	Af-
 debilissimus	Af-
 decachordus	Af-
 decem	AnP
@@ -10854,6 +10907,7 @@ dedecorus	Af-
 deditissimus	Af-
 deductiuus	Af-
 defectiuus	Af-
+defectivus	Af-
 deficientior	Af-
 deficientissimus	Af-
 definitiuus	Af-
@@ -10892,10 +10946,12 @@ dementissimus	Af-
 demissior	Af-
 demonstrabilis	Af-
 demonstratiuus	Af-
+demonstrativus	Af-
 demonstratorius	Af-
 denarior	Af-
 deni	Ad-
 denominatiuus	Af-
+denominativus	Af-
 densior	Af-
 densissimus	Af-
 densus	Af-
@@ -10903,6 +10959,7 @@ dentatus	Af-
 denuntiatiuus	Af-
 deprecabilis	Af-
 deprecatiuus	Af-
+deprecativus	Af-
 deprecatorius	Af-
 deprehensibilis	Af-
 depressior	Af-
@@ -10927,6 +10984,7 @@ desperabilis	Af-
 desperatissimus	Af-
 despicabilis	Af-
 destructiuus	Af-
+destructivus	Af-
 deterior	Af-
 deterior	Af-
 deterius	Af-
@@ -10948,6 +11006,7 @@ diadematus	Af-
 dialecticus	Af-
 diametralis	Af-
 diametros/-us	Af-
+diaphanus	Af-
 dichotomos	Af-
 dicibilis	Af-
 dictatorius	Af-
@@ -10958,8 +11017,10 @@ difficilior	Af-
 difficilis	Af-
 difficillimus	Af-
 diffusior	Af-
+diffusivus	Af-
 digamus	Af-
 digestibilis	Af-
+degestivus	Af-
 digitalis	Af-
 dignior	Af-
 dignissimus	Af-
@@ -10972,6 +11033,8 @@ diligentior	Af-
 diligentissimus	Af-
 diligibilis	Af-
 dilucidus	Af-
+dimensionatus	Af-
+dimensivus	Af-
 dimeter	Af-
 dimidiatus	Af-
 dimidior	Af-
@@ -10982,6 +11045,7 @@ dinus	Af-
 dioecesanus	Af-
 diphthongus	Af-
 directior	Af-
+directus	Af-
 dirus	Af-
 dis/ditis	Af-
 discalceatus	Af-
@@ -10994,7 +11058,9 @@ discordiosus	Af-
 discors/discordis	Af-
 discretior	Af-
 discretiuus	Af-
+discretivus	Af-
 discriminalis	Af-
+discursivus	Af-
 disertus	Af-
 disiunctiuus	Af-
 dispar	Af-
@@ -11002,6 +11068,7 @@ dispendiosus	Af-
 dispensatiuus	Af-
 dispensatorius	Af-
 dispositissimus	Af-
+dispositivus	Af-
 disputabilis	Af-
 disputatorius	Af-
 dissentaneus	Af-
@@ -11013,7 +11080,9 @@ dissolutissimus	Af-
 dissonus	Af-
 distantior	Af-
 distinctior	Af-
+distinctivus	Af-
 distributiuus	Af-
+distributivus	Af-
 districtior	Af-
 districtissimus	Af-
 disyllabus	Af-
@@ -11035,6 +11104,11 @@ diutinus	Af-
 diuturnior	Af-
 diuturnus	Af-
 diuus	Af-
+diversificatio	Af-
+diversus	Af-
+divinus	Af-
+divisibilis	Af-
+divisivus	Af-
 docibilis	Af-
 docilior	Af-
 docilis	Af-
@@ -11048,6 +11122,7 @@ dolosus	Af-
 domabilis	Af-
 domesticior	Af-
 domesticus	Af-
+dominativus	Af-
 dominicus	Af-
 donabilis	Af-
 donarior	Af-
@@ -11102,10 +11177,12 @@ edentulus	Af-
 edulis	Af-
 effabilis	Af-
 effectiuus	Af-
+effectivus	Af-
 effetus	Af-
 efficacior	Af-
 efficacissimus	Af-
 efficax	Af-
+efficiens	Af-
 effluxus	Af-
 effrenis	Af-
 effrenus	Af-
@@ -11128,10 +11205,13 @@ elegantissimus	Af-
 elegiacus	Af-
 elegius	Af-
 elementarior	Af-
+elementaris	Af-
 elementarius	Af-
+elementatus	Af-
 elephantinus	Af-
 eleuatior	Af-
 eleuatissimus	Af-
+eligibilis	Af-
 elimatior	Af-
 elimatior	Af-
 elinguis	Af-
@@ -11159,8 +11239,10 @@ eneruus	Af-
 enormior	Af-
 enormis	Af-
 enunciatiuus	Af-
+enuntiabilis	Af-
 enuntiatiuus	Af-
 eous	Af-
+epicureus	Af-
 epicyclus	Af-
 epilepticus	Af-
 episcopalis	Af-
@@ -11170,7 +11252,7 @@ epistularis	Af-
 epitaphios/-ius	Af-
 epitritos/-us	Af-
 epularis	Af-
-equester/equestris	Af-
+equester	Af-
 equinus	Af-
 equitatus	Af-
 errabundus	Af-
@@ -11178,6 +11260,7 @@ erraticius	Af-
 erraticus	Af-
 erroneus	Af-
 erubescibilis	Af-
+essentialis	Af-
 etesior	Af-
 etesius	Af-
 ethicus	Af-
@@ -11193,6 +11276,7 @@ euitabilis	Af-
 euodes	Af-
 euripideus	Af-
 euripidius	Af-
+evidens	Af-
 exaltus	Af-
 exanimis	Af-
 exanimus	Af-
@@ -11207,6 +11291,7 @@ excors	Af-
 excusabilior	Af-
 excusabilis	Af-
 excusatorius	Af-
+executivus	Af-
 exemplarior	Af-
 exemplaris	Af-
 exemplatus	Af-
@@ -11262,6 +11347,7 @@ extorris	Af-
 extraneus	Af-
 extraordinarius	Af-
 extremus	Af-
+extrinsecus	Af-
 exularis	Af-
 fabricabilis	Af-
 fabricior	Af-
@@ -11275,6 +11361,8 @@ facilis	Af-
 facillimus	Af-
 facinorosissimus	Af-
 facinorosus	Af-
+factibilis	Af-
+factivus	Af-
 facundior	Af-
 facundissimus	Af-
 facundus	Af-
@@ -11352,6 +11440,7 @@ feruentissimus	Af-
 feruidior	Af-
 feruidus	Af-
 ferus	Af-
+fervens	Af-
 fessus	Af-
 festinis	Af-
 festinus	Af-
@@ -11360,6 +11449,7 @@ festus	Af-
 fetidus	Af-
 fetosus	Af-
 ficarius	Af-
+ficticius	Af-
 fictilis	Af-
 ficulneus	Af-
 fideiussorius	Af-
@@ -11395,6 +11485,7 @@ flammaris	Af-
 flammeus	Af-
 flammiger	Af-
 flauus	Af-
+flavus	Af-
 flebilior	Af-
 flebilis	Af-
 flexibilior	Af-
@@ -11409,6 +11500,7 @@ fluctiuagus	Af-
 fluctuosus	Af-
 fluidus	Af-
 fluuialis	Af-
+fluxibilis	Af-
 fluxilis	Af-
 focarius	Af-
 foedior	Af-
@@ -11426,6 +11518,7 @@ formabilis	Af-
 formalior	Af-
 formalis	Af-
 formalissimus	Af-
+formativus	Af-
 formidabilior	Af-
 formidabilis	Af-
 formidolosus	Af-
@@ -11457,6 +11550,7 @@ frigidior	Af-
 frigidissimus	Af-
 frigidus	Af-
 friuolus	Af-
+frivolus	Af-
 frixorius	Af-
 frondeus	Af-
 frondifer	Af-
@@ -11496,6 +11590,7 @@ fusilis	Af-
 futilior	Af-
 futilis	Af-
 futtilis	Af-
+futurus	Af-
 galearis	Af-
 galeatus	Af-
 gallicus	Af-
