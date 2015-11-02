@@ -11608,6 +11608,7 @@ generabilis	Af-
 generalior	Af-
 generalis	Af-
 generalissimus	Af-
+generativus	Af-
 generosior	Af-
 generosissimus	Af-
 generosus	Af-
@@ -11615,6 +11616,7 @@ genethliacus	Af-
 genetiuus	Af-
 genitalis	Af-
 genitiuus	Af-
+genitivus	Af-
 gentilicius	Af-
 gentilis	Af-
 geometricalis	Af-
@@ -11659,11 +11661,14 @@ grauidus	Af-
 grauior	Af-
 grauis	Af-
 grauissimus	Af-
+gravis	Af-
 gregalis	Af-
 gressibilis	Af-
 grossior	Af-
 grossissimus	Af-
 grossus	Af-
+gubernativus	Af-
+gubernatorius	Af-
 gulosior	Af-
 gulosus	Af-
 gustabilis	Af-
@@ -11672,6 +11677,7 @@ habilior	Af-
 habilis	Af-
 habitabilis	Af-
 habitiuus	Af-
+habitualis	Af-
 habundus	Af-
 haereticus	Af-
 harenosus	Af-
@@ -11681,6 +11687,7 @@ hebes	Af-
 hebetior	Af-
 heluius	Af-
 hemiolios/-ius	Af-
+hemisphaerium	Af-
 hendecasyllabus/-os	Af-
 heptagonus	Af-
 herbipotens	Af-
@@ -11690,6 +11697,7 @@ herniosus	Af-
 heroicus/-os	Af-
 herous	Af-
 hesternus	Af-
+heterogeneus	Af-
 hexameter/hexametrus	Af-
 hibernalis	Af-
 hibernus	Af-
@@ -11712,6 +11720,7 @@ hodiernus	Af-
 holocaustos/-us	Af-
 homicidialis	Af-
 homoeusios	Af-
+homogeneus	Af-
 homousios	Af-
 honestior	Af-
 honestissimus	Af-
@@ -11779,6 +11788,7 @@ ignorabilis	Af-
 ignoscibilis	Af-
 ignotior	Af-
 ignotissimus	Af-
+ignotus	Af-
 iliacus	Af-
 iliacus	Af-
 illaboriosus	Af-
@@ -11794,6 +11804,7 @@ illiteratus	Af-
 illitteratus	Af-
 illocalis	Af-
 illotus	Af-
+illuminabilis	Af-
 illuminus	Af-
 illusorius	Af-
 illustrior	Af-
@@ -11802,6 +11813,7 @@ imaginabilis	Af-
 imaginalis	Af-
 imaginarior	Af-
 imaginarius	Af-
+imaginativus	Af-
 imbecillior	Af-
 imbecillis	Af-
 imbecillus	Af-
@@ -11817,6 +11829,7 @@ immanis	Af-
 immanissimus	Af-
 immansuetus	Af-
 immarcescibilis	Af-
+immaterialis	Af-
 immaturus	Af-
 immediatior	Af-
 immediatissimus	Af-
@@ -11825,6 +11838,7 @@ immemor/-is	Af-
 immensurabilis	Af-
 immensus	Af-
 immeritus	Af-
+imminorabilis	Af-
 imminutus	Af-
 immisericors	Af-
 immitigabilis	Af-
@@ -11857,6 +11871,7 @@ impaenitens	Af-
 impalpabilis	Af-
 impar	Af-
 imparatus	Af-
+impartibilis	Af-
 imparticipabilior	Af-
 imparticipabilis	Af-
 impassibilis	Af-
@@ -11866,7 +11881,9 @@ impauidus	Af-
 impausabilis	Af-
 impeccabilis	Af-
 impeditior	Af-
+impeditivus	Af-
 imperatiuus	Af-
+imperativus	Af-
 imperatorius	Af-
 imperfectior	Af-
 imperfectissimus	Af-
@@ -11916,6 +11933,7 @@ improbabilis	Af-
 improbatus	Af-
 improbissimus	Af-
 improbus	Af-
+improportionatus	Af-
 impropriissimus	Af-
 improprior	Af-
 improprius	Af-
@@ -11976,6 +11994,7 @@ incestuosus	Af-
 incestus	Af-
 inchoatiuus	Af-
 incircumcisus	Af-
+incircumscriptivus	Af-
 incircumscriptus	Af-
 incircumspectus	Af-
 incitus	Af-
@@ -12007,6 +12026,7 @@ incompetens	Af-
 incompletior	Af-
 incompletissimus	Af-
 incompletus	Af-
+incomplexus	Af-
 incompositus	Af-
 incomprehensibilior	Af-
 incomprehensibilis	Af-
@@ -12090,6 +12110,7 @@ indeterminatior	Af-
 indeterminatus	Af-
 indeuotus	Af-
 indicatiuus	Af-
+indicativus	Af-
 indicens	Af-
 indictus	Af-
 indifferens	Af-
@@ -12106,6 +12127,7 @@ indignissimus	Af-
 indignus	Af-
 indignus	Af-
 indigus	Af-
+indirectus	Af-
 indisciplinatus	Af-
 indiscrepans	Af-
 indiscretior	Af-
@@ -12120,6 +12142,9 @@ indiuiduus	Af-
 indiuisibilior	Af-
 indiuisibilis	Af-
 indiuisus	Af-
+individualis	Af-
+indivisibilis	Af-
+indivisus	Af-
 indocibilis	Af-
 indocilis	Af-
 indoctior	Af-
@@ -12168,6 +12193,7 @@ inexstinguibilis	Af-
 inexterminabilis	Af-
 inextimabilis	Af-
 inextinguibilis	Af-
+infallibilis	Af-
 infamis	Af-
 infamus	Af-
 infandus	Af-
@@ -12234,6 +12260,7 @@ ingratus	Af-
 inhabilis	Af-
 inhabitabilis	Af-
 inhabitabilis	Af-
+inhaerens	Af-
 inhonestus	Af-
 inhonorabilior	Af-
 inhonorabilis	Af-
@@ -12248,7 +12275,7 @@ inimicus	Af-
 inintelligibilis	Af-
 iniquior	Af-
 iniquissimus	Af-
-iniquus/-os	Af-
+iniquus	Af-
 initialis	Af-
 iniucundus	Af-
 iniunctus	Af-
@@ -12257,7 +12284,10 @@ iniurius	Af-
 iniustior	Af-
 iniustissimus	Af-
 iniustus	Af-
+injurius	Af-
+injustus	Af-
 innascibilis	Af-
+innaturalis	Af-
 innatus	Af-
 innocens	Af-
 innocentior	Af-
@@ -12287,6 +12317,7 @@ inquies	Af-
 inquietus	Af-
 inquinatissimus	Af-
 inquisitiuus	Af-
+inquisitivus	Af-
 inquisitus	Af-
 insanabilior	Af-
 insanabilis	Af-
@@ -12339,6 +12370,7 @@ instantissimus	Af-
 institorius	Af-
 institutorius	Af-
 instructior	Af-
+instrumentalis	Af-
 insuauis	Af-
 insuetus	Af-
 insufficiens	Af-
@@ -12352,10 +12384,12 @@ integer	Af-
 integerrimus	Af-
 intellectibilis	Af-
 intellectiuus	Af-
+intellectivus	Af-
 intellectualior	Af-
 intellectualis	Af-
 intellegibilis	Af-
 intelligentior	Af-
+intelligibilis	Af-
 intemeratus	Af-
 intemperans	Af-
 intemperantior	Af-
@@ -12367,6 +12401,7 @@ intemptatus	Af-
 intensior	Af-
 intensissimus	Af-
 intentatus	Af-
+intentionalis	Af-
 intentior	Af-
 intentissimus	Af-
 interemptorius	Af-
@@ -12393,6 +12428,7 @@ intransgressibilis	Af-
 intransibilis	Af-
 intransitiuus	Af-
 intrepidus	Af-
+intrinsecus	Af-
 introductorius	Af-
 intumulatus	Af-
 inturbatus	Af-
@@ -12429,6 +12465,9 @@ inuoluntarius	Af-
 inusitatus	Af-
 inutilis	Af-
 inuulneratus	Af-
+invariabilis	Af-
+invisibilis	Af-
+involuntarius	Af-
 iocosus	Af-
 iocularis	Af-
 iocundus	Af-
@@ -12448,6 +12487,7 @@ irrecuperabilior	Af-
 irrecuperabilis	Af-
 irreflexus	Af-
 irregressibilis	Af-
+irregularis	Af-
 irreligiosus	Af-
 irremediabilis	Af-
 irremissibilior	Af-
@@ -12476,6 +12516,7 @@ iubilaeus	Af-
 iucundior	Af-
 iucundissimus	Af-
 iucundus	Af-
+iudaeus	Af-
 iudicabilis	Af-
 iudicatorius	Af-
 iudicialis	Af-
@@ -12501,6 +12542,7 @@ iuuenculus	Af-
 iuuenilis	Af-
 iuuenis	Af-
 iuuentus	Af-
+iuvenis	Af-
 karissimus	Af-
 karus	Af-
 labilis	Af-
@@ -12549,6 +12591,7 @@ lateralis	Af-
 latericius	Af-
 latior	Af-
 latior	Af-
+latinus	Af-
 latissimus	Af-
 latissimus	Af-
 latrabilis	Af-
@@ -12564,7 +12607,6 @@ lautior	Af-
 laxatiuus	Af-
 laxior	Af-
 laxus	Af-
-"le""uis"	Af-
 legalis	Af-
 legatorius	Af-
 legibilis	Af-
@@ -12589,6 +12631,7 @@ leuior	Af-
 le'uis	Af-
 leuissimus	Af-
 leuissimus	Af-
+levis	Af-
 "li""brarius"	Af-
 libentior	Af-
 libentissimus	Af-
@@ -12663,6 +12706,7 @@ lucidior	Af-
 lucidissimus	Af-
 lucidus	Af-
 lucifer	Af-
+luciferianus	Af-
 lucifluus	Af-
 lucinus	Af-
 lucratiuus	Af-
@@ -12673,7 +12717,7 @@ luctuosus	Af-
 luculentior	Af-
 luculentissimus	Af-
 luculentus	Af-
-ludicer/ludicrus	Af-
+ludicer	Af-
 lugubris	Af-
 luminosus	Af-
 lunaris	Af-
@@ -12737,9 +12781,12 @@ mansuetior	Af-
 mansuetior	Af-
 mansuetissimus	Af-
 mansuetissimus	Af-
+mansuetus	Af-
 manualis	Af-
 manuatus	Af-
+manufactus	Af-
 manuus	Af-
+marchianus	Af-
 marcidus	Af-
 marinus	Af-
 maritalis	Af-
@@ -12764,6 +12811,7 @@ maximus	Af-
 "me""dicus"	Af-
 mechanicus	Af-
 medicabilis	Af-
+medicativus	Af-
 medicinalis	Af-
 medicinus	Af-
 me'dicus	Af-
@@ -12783,6 +12831,7 @@ membranus	Af-
 memorabilis	Af-
 memoralis	Af-
 memoratiuus	Af-
+memorativus	Af-
 memorialis	Af-
 mendacior	Af-
 mendax	Af-
@@ -12794,6 +12843,7 @@ menstruus	Af-
 mensurabilis	Af-
 mensuralis	Af-
 mensurnus	Af-
+mentalis	Af-
 mentior	Af-
 meracissimus	Af-
 meracus	Af-
@@ -12813,6 +12863,7 @@ merus	Af-
 messorius	Af-
 metallicus	Af-
 metaphoricus	Af-
+metaphysicus	Af-
 metonymicus	Af-
 metricus	Af-
 metropolitanus	Af-
@@ -12828,6 +12879,7 @@ millesimus	Ao-
 milliarior	Af-
 milliarius	Af-
 minax	Af-
+mineralis	Af-
 mineus	Af-
 minimus	Af-
 minius	Af-
@@ -12837,10 +12889,12 @@ minutissimus	Af-
 mirabilior	Af-
 mirabilis	Af-
 mirabilissimus	Af-
+miraculosus	Af-
 miraculus	Af-
 mirificus	Af-
 mirus	Af-
-miser/-us	Af-
+miscibilis	Af-
+miser	Af-
 miserabilior	Af-
 miserabilis	Af-
 misericordior	Af-
@@ -12932,6 +12986,7 @@ mundatorius	Af-
 mundialis	Af-
 mundior	Af-
 mundissimus	Af-
+mundus^purus	Af-
 municipalis	Af-
 munificens	Af-
 munificus	Af-
@@ -12977,10 +13032,12 @@ nauus	Af-
 nebulosus	Af-
 necessarior	Af-
 necessarius	Af-
+necesse	Af-
 nefandissimus	Af-
 nefandus	Af-
 nefarius	Af-
 negatiuus	Af-
+negativus	Af-
 negligentior	Af-
 negotialis	Af-
 negotiatorius	Af-
@@ -12996,6 +13053,7 @@ nescius	Af-
 neutralis	Af-
 niger	Af-
 nigrior	Af-
+nigromanticus	Af-
 nimbosus	Af-
 nimior	Af-
 nimius	Af-
@@ -13008,6 +13066,7 @@ nobilior	Af-
 nobilis	Af-
 nobilissimus	Af-
 nociuus	Af-
+nocivus	Af-
 noctiuagus	Af-
 nocturnus	Af-
 nocuus	Af-
@@ -13026,6 +13085,7 @@ nostras/nostratis	Af-
 notabilis	Af-
 notarior	Af-
 notarius	Af-
+notionalis	Af-
 notior	Af-
 notior	Af-
 notissimus	Af-
@@ -13040,6 +13100,8 @@ nouenarius	Af-
 nouenus	Ad-
 nouissimus	Af-
 nouus	Af-
+novenarius	Af-
+novus	Af-
 noxior	Af-
 noxissimus	Af-
 noxius	Af-
@@ -13073,6 +13135,7 @@ nutricius	Af-
 nutritior	Af-
 nutritior	Af-
 nutritius	Af-
+nutritivus	Af-
 nutritorius	Af-
 obedientissimus	Af-
 obessus	Af-
@@ -13104,10 +13167,12 @@ occiduus	Af-
 occisorius	Af-
 occultior	Af-
 occultissimus	Af-
+occultus	Af-
 octangulus	Af-
 octauior	Ao-
 octauus	Ao-
 octauus-decimus	Ao-
+octavus	Ao-
 octingenti	An-
 octo	AnP
 octodecim	AnP
@@ -13147,8 +13212,10 @@ onerosus	Af-
 onustus	Af-
 onychinus	Af-
 opacus	Af-
+operabilis	Af-
 operarior	Af-
 operarius	Af-
+operativus	Af-
 operatorior	Af-
 operatorius	Af-
 operosior	Af-
@@ -13188,7 +13255,9 @@ ordinarius	Af-
 ordinatior	Af-
 ordinatissimus	Af-
 ordinatiuus	Af-
+ordinatus	Af-
 organicus	Af-
+organizabilis	Af-
 orientalis	Af-
 originalis	Af-
 originarius	Af-
@@ -13201,6 +13270,7 @@ orthogonus	Af-
 ortogonior	Af-
 ortogonior	Af-
 osseus	Af-
+ostensivus	Af-
 ostentarius	Af-
 ostiarior	Af-
 ostiarius	Af-
@@ -13231,7 +13301,7 @@ paluster/palustris	Af-
 pandus	Af-
 pannosus	Af-
 papyrius	Af-
-par/-is	Af-
+par	Af-
 paradoxos	Af-
 paragogus	Af-
 parallelos/-us	Af-
@@ -13248,6 +13318,7 @@ partialis	Af-
 partibilis	Af-
 particeps	Af-
 participabilis	Af-
+participativus	Af-
 participialis	Af-
 participior	Af-
 particularior	Af-
@@ -13256,6 +13327,7 @@ particularissimus	Af-
 paruissimus	Af-
 paruulus	Af-
 paruus	Af-
+parvus	Af-
 pascalis	Af-
 paschalis	Af-
 pascualis	Af-
@@ -13265,11 +13337,13 @@ passibilior	Af-
 passibilis	Af-
 passiuus	Af-
 passiuus	Af-
+passivus	Af-
 pastoralis	Af-
 pastorius	Af-
 patentior	Af-
 paternus	Af-
 pathicus	Af-
+patiens	Af-
 patientior	Af-
 patientissimus	Af-
 patriarchalis	Af-
@@ -13349,9 +13423,11 @@ peremptorius	Af-
 perennis	Af-
 perexiguus	Af-
 perexilis	Af-
+perfectibilis	Af-
 perfectior	Af-
 perfectissimus	Af-
 perfectiuus	Af-
+perfectivus	Af-
 perficus	Af-
 perfidus	Af-
 perfunctorius	Af-
@@ -13393,6 +13469,7 @@ persimilis	Af-
 personalis	Af-
 personatus	Af-
 personus	Af-
+perspectivus	Af-
 perspicabilis	Af-
 perspicacior	Af-
 perspicax	Af-
@@ -13411,6 +13488,7 @@ peruigil/-is	Af-
 peruior	Af-
 peruius	Af-
 perutilis	Af-
+pervius	Af-
 pessimus	Af-
 pestifer	Af-
 pestilens	Af-
@@ -13466,6 +13544,7 @@ plantaris	Af-
 planus	Af-
 plastus	Af-
 plataninus	Af-
+platonicus	Af-
 plautus	Af-
 plautus	Af-
 plebeior	Af-
@@ -13507,6 +13586,7 @@ porcinus	Af-
 portabilis	Af-
 portatorius	Af-
 positiuus	Af-
+positivus	Af-
 possessiuus	Af-
 possessorius	Af-
 possibilior	Af-
@@ -13537,6 +13617,7 @@ praecelsior	Af-
 praecelsus	Af-
 praeceps	Af-
 praeceptiuus	Af-
+praeceptivus	Af-
 praecipes	Af-
 praecipitus	Af-
 praecipuus	Af-
@@ -13554,6 +13635,7 @@ praedicatiuus	Af-
 praeditus	Af-
 praediues	Af-
 praedulcis	Af-
+praeeligibilis	Af-
 praeeminentior	Af-
 praegnans	Af-
 praegnas	Af-
@@ -13574,8 +13656,10 @@ praerogatiuus	Af-
 praeruptissimus	Af-
 praescior	Af-
 praescius	Af-
+praesens	Af-
 praesentarior	Af-
 praesentarius	Af-
+praesentialis	Af-
 praesentior	Af-
 praesidalis	Af-
 praesidialis	Af-
@@ -13602,6 +13686,7 @@ primaeuus	Af-
 primarius	Af-
 primas	Af-
 primitiuus	Af-
+primitivus	Af-
 primogenitus	Af-
 primordialis	Af-
 primoris	Af-
@@ -13620,6 +13705,7 @@ pristinus	Af-
 pristinus	Af-
 priuatiuus	Af-
 priuus	Af-
+privativus	Af-
 probabilior	Af-
 probabilis	Af-
 probaticus	Af-
@@ -13649,8 +13735,10 @@ prodigiosus	Af-
 prodigus	Af-
 proditorior	Af-
 proditorius	Af-
+producibilis	Af-
 productior	Af-
 productiuus	Af-
+productivus	Af-
 profanus	Af-
 profestus	Af-
 proficuus	Af-
@@ -13663,6 +13751,7 @@ profundissimus	Af-
 profundus	Af-
 profusior	Af-
 prognosticus	Af-
+progressivus	Af-
 prohibitorius	Af-
 proiectorius	Af-
 prolatiuus	Af-
@@ -13693,6 +13782,7 @@ propior	Af-
 propitiabilis	Af-
 propitior	Af-
 propitius	Af-
+proportionabilis	Af-
 proportionalis	Af-
 proportionatissimus	Af-
 proportionatus	Af-
@@ -13767,6 +13857,7 @@ putridus	Af-
 putus	Af-
 pyrrichior	Af-
 pyrrichius	Af-
+pythagoricus	Af-
 quadragenarior	Af-
 quadragenarius	Af-
 quadragesimalis	Af-
@@ -13795,6 +13886,7 @@ quaestorius	Af-
 quaestuarius	Af-
 qualitatiuus	Af-
 quamplurimus	Au-
+quantitativus	Af-
 quartanus	Af-
 quartus	Ao-
 quaternarior	Af-
@@ -13850,6 +13942,7 @@ rarior	Af-
 rarissimus	Af-
 rarus	Af-
 ratiocinatiuus	Af-
+ratiocinativus	Af-
 rationabilior	Af-
 rationabilis	Af-
 rationabilissimus	Af-
@@ -13858,19 +13951,23 @@ rationarius	Af-
 rationatiuus	Af-
 raucior	Af-
 raucus	Af-
+realis	Af-
 rebellis	Af-
 recens	Af-
 recentior	Af-
 receptibilis	Af-
+receptivus	Af-
 receptorius	Af-
 recidiuus	Af-
 reciprocus	Af-
+recitativus	Af-
 reconditissimus	Af-
 recordabilis	Af-
 recordatiuus	Af-
 rectilineus	Af-
 rectior	Af-
 rectissimus	Af-
+rectus	Af-
 recuruus	Af-
 recusabilis	Af-
 rediuiuus	Af-
@@ -13888,6 +13985,7 @@ regularior	Af-
 regularis	Af-
 regularissimus	Af-
 relatiuus	Af-
+relativus	Af-
 religiosior	Af-
 religiosissimus	Af-
 religiosus	Af-
@@ -13902,6 +14000,8 @@ remotissimus	Af-
 reparabilis	Af-
 repentinus	Af-
 repletiuus	Af-
+repraesentabilis	Af-
+repraesentativus	Af-
 reprehensibilis	Af-
 reprobabilis	Af-
 reprobatissimus	Af-
@@ -13962,6 +14062,7 @@ rutilus	Af-
 saccinus	Af-
 sacer	Af-
 sacerdotalis	Af-
+sacramentalis	Af-
 sacratior	Af-
 sacratissimus	Af-
 sacrificior	Af-
@@ -13990,7 +14091,7 @@ salarius	Af-
 salax	Af-
 salinus	Af-
 salsissimus	Af-
-saluber/salubris	Af-
+saluber	Af-
 saluberrimus	Af-
 salubrior	Af-
 saluificus	Af-
@@ -13999,17 +14100,21 @@ salutifer	Af-
 saluus	Af-
 sanabilior	Af-
 sanabilis	Af-
+sanativus	Af-
 sanctificus	Af-
 sanctimonialis	Af-
 sanctior	Af-
 sanctissimus	Af-
+sanctus	Af-
 sanguineus	Af-
 sanguinolentus	Af-
+sanguinus	Af-
 sanior	Af-
 sanissimus	Af-
 sanus	Af-
 sapidior	Af-
 sapidus	Af-
+sapiens	Af-
 sapientialis	Af-
 sapientior	Af-
 sapientissimus	Af-
@@ -14075,6 +14180,7 @@ sementinus	Af-
 semicirculus	Af-
 seminalis	Af-
 seminarius	Af-
+seminativus	Af-
 semipedalis	Af-
 semiplenus	Af-
 semiuiuus	Af-
@@ -14094,6 +14200,7 @@ sensatus	Af-
 sensibilior	Af-
 sensibilis	Af-
 sensificus	Af-
+sensitivus	Af-
 sensualis	Af-
 sententialis	Af-
 sententiosus	Af-
@@ -14138,6 +14245,7 @@ seruantissimus	Af-
 seruilis	Af-
 serus	Af-
 seruus	Af-
+servilis	Af-
 sescenti	An-
 sesqualter	Af-
 sesquialter	Af-
@@ -14176,6 +14284,7 @@ signifer	Af-
 significabilis	Af-
 significantior	Af-
 significatiuus	Af-
+significativus	Af-
 silentior	Af-
 silentior	Af-
 silentus	Af-
@@ -14183,7 +14292,8 @@ siluestris/siluester	Af-
 silus	Af-
 similagineus	Af-
 similior	Af-
-similis/simil	Af-
+similis	Af-
+similitudinarius	Af-
 simillimus	Af-
 simplex	Af-
 simplicior	Af-
@@ -14207,6 +14317,7 @@ singularius	Af-
 singulus	Ad-
 sinister	Af-
 sitistus	Af-
+situalis	Af-
 smaragdinus	Af-
 sobrior	Af-
 sobrius	Af-
@@ -14251,7 +14362,7 @@ sonorior	Af-
 sonorus	Af-
 sons	Af-
 sonus	Af-
-sophisticus/-os	Af-
+sophisticus	Af-
 soporus	Af-
 sordidior	Af-
 sordidus	Af-
@@ -14265,6 +14376,7 @@ spatiosus	Af-
 specialior	Af-
 specialis	Af-
 specialissimus	Af-
+specificus	Af-
 speciosior	Af-
 speciosissimus	Af-
 speciosus	Af-
@@ -14274,6 +14386,7 @@ speculabilis	Af-
 specularis	Af-
 specularius	Af-
 speculatiuus	Af-
+speculativus	Af-
 speculatorius	Af-
 sperabilis	Af-
 sphaeralis	Af-
@@ -14353,6 +14466,7 @@ suadus	Af-
 suauior	Af-
 suauis	Af-
 suauissimus	Af-
+suavis	Af-
 subalbus	Af-
 subalternus	Af-
 subcaelestis	Af-
@@ -14363,6 +14477,8 @@ subiectiuus	Af-
 subitaneus	Af-
 subiugalis	Af-
 subiunctiuus	Af-
+subjectivus	Af-
+subjectus	Af-
 sublimior	Af-
 sublimis	Af-
 sublimissimus	Af-
@@ -14373,16 +14489,20 @@ submultiplex	Af-
 subnixus	Af-
 subrubeus	Af-
 subsequus	Af-
+subsistens	Af-
 subsolanus	Af-
 substantialior	Af-
 substantialis	Af-
+substantificus	Af-
 substantiuus	Af-
+substantivus	Af-
 substitutiuus	Af-
 subterraneus	Af-
 subtilior	Af-
 subtilis	Af-
 subtilissimus	Af-
 suburbanus	Af-
+successivus	Af-
 successorius	Af-
 succidus	Af-
 succinctior	Af-
@@ -14390,6 +14510,7 @@ sucidus	Af-
 sudorus	Af-
 sudus	Af-
 suffertus	Af-
+sufficiens	Af-
 sufficientior	Af-
 sufficientissimus	Af-
 suillus	Af-
@@ -14410,6 +14531,7 @@ superbus	Af-
 supercaelestis	Af-
 supercoelestis	Af-
 supereminentior	Af-
+superessentialis	Af-
 superexcellens	Af-
 superexcellentior	Af-
 superficialis	Af-
@@ -14418,6 +14540,7 @@ superior	Af-
 superior	Af-
 superlatiuus	Af-
 superlatus	Af-
+supernaturalis	Af-
 supernus	Af-
 superparticularis	Af-
 superquadripartiens	Af-
@@ -14427,6 +14550,7 @@ supersubstantialis	Af-
 supertripartiens	Af-
 superuacaneus	Af-
 superuacuus	Af-
+superus	Af-
 supinus	Af-
 supplex	Af-
 supplicior	Af-
@@ -14441,11 +14565,13 @@ sus	Af-
 susceptibilior	Af-
 susceptibilis	Af-
 susceptiuus	Af-
+susceptivus	Af-
 suspiciosus	Af-
 susurrus	Af-
 syllogisticus	Af-
 symbolicus	Af-
 symmetros/symmeter	Af-
+syncategorematicus	Af-
 synecdochicus	Af-
 synodalis	Af-
 synodicus	Af-
@@ -14564,6 +14690,7 @@ torridus	Af-
 tortuosus	Af-
 torus	Af-
 toruus	Af-
+totalis	Af-
 totior	Au-
 to'tus	Au-
 toxicatus	Af-
@@ -14578,6 +14705,8 @@ transitorior	Af-
 transitorius	Af-
 translatiuus	Af-
 transmarinus	Af-
+transmutabilis	Af-
+transmutativus	Af-
 transumptiuus	Af-
 trecenti	AnP
 trecenti	An-
@@ -14601,6 +14730,7 @@ triceni	Ad-
 tricensimus	Ao-
 triceps	Af-
 tricesimus	Ao-
+tricubitus	Af-
 triduanus	Af-
 triennis	Af-
 trieris	Af-
@@ -14866,6 +14996,7 @@ undeuigesimus	Ao-
 undosus	Af-
 unguentarior	Af-
 unguentarius	Af-
+unibilis	Af-
 unicolor	Af-
 unicolorus	Af-
 unicornis	Af-
@@ -14879,11 +15010,15 @@ unior	An-
 unisonus	Af-
 unitior	Af-
 unitissimus	Af-
+unitivus	Af-
 uniuersalior	Af-
 uniuersalis	Af-
 uniuersalissimus	Af-
 uniuersus	Au-
 uniuocus	Af-
+universalis	Af-
+universus	Af-
+univocus	Af-
 unus	An-
 uocabilis	Af-
 uocalis	Af-
@@ -14919,6 +15054,39 @@ uulnerarius	Af-
 uulpinus	Af-
 uxoratus	Af-
 uxorius	Af-
+vacuus	Af-
+vanus	Af-
+variabilis	Af-
+varius	Af-
+vegetabilis	Af-
+vegetativus	Af-
+vehemens	Af-
+velox	Af-
+venereus	Af-
+verax	Af-
+verbalis	Af-
+verisimilis	Af-
+verus	Af-
+vespertinus	Af-
+vetus	Af-
+vicinus	Af-
+vilis	Af-
+violentus	Af-
+virtualis	Af-
+virtuosus	Af-
+visibilis	Af-
+visivus	Af-
+vitalis	Af-
+vitiosus	Af-
+vituperabilis	Af-
+vivax	Af-
+vividus	Af-
+vivus	Af-
+vocalis	Af-
+volatilis	Af-
+volubilis	Af-
+volucer	Af-
+voluntarius	Af-
 zelotypus	Af-
 zephyrius	Af-
 zodiacus	Af-
