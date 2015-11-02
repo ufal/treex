@@ -102,7 +102,13 @@ sub fix_part_of_speech
         my $is_adjective = exists($adjectives->{$lemma});
         my $is_pronoun = exists($pronouns->{$lemma});
         my $is_verb = exists($verbs->{$lemma});
-        if($is_noun)
+        # Annotation error: lemma pbjectum instead of objectum.
+        if($lemma eq 'pbjectum')
+        {
+            $node->set_lemma('objectum');
+            $node->iset()->set('pos' => 'noun');
+        }
+        elsif($is_noun)
         {
             if($is_adjective)
             {
@@ -198,7 +204,7 @@ sub fix_part_of_speech
         {
             $node->iset()->add('pos' => 'verb', 'prontype' => '');
         }
-        else
+        elsif($lemma ne '_')
         {
             # cat prague.log | perl -pe 's/^doc.*TREEX-WARN.*\d+\.\d+:\s+//' | grep -v 'Apposition without' | grep -v TREEX-INFO | grep -v 'treex -p' | sort -u > unsolved_lemmas.txt
             log_warn("UNKNOWN LEMMA $lemma");
@@ -11065,7 +11071,7 @@ diffusior	Af-
 diffusivus	Af-
 digamus	Af-
 digestibilis	Af-
-degestivus	Af-
+digestivus	Af-
 digitalis	Af-
 dignior	Af-
 dignissimus	Af-
@@ -15162,6 +15168,7 @@ aliquantulus	Pu-
 aliquantus	Pu-
 aliqui	Pu-
 aliquicumque	P2-
+aliquid	Pu-
 aliquis	Pu-
 aliquot	P-P
 alius	Pu-
@@ -15280,6 +15287,7 @@ dico
 diligo
 emineo
 exprimo
+figo
 inhaereo
 moveo
 occulo
