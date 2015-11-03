@@ -24,10 +24,13 @@ sub process_document {
 			my $atree = $zone->get_atree();
 			my @nodes = $atree->get_descendants( { ordered => 1 } );
 			my @forms = map { $_->form } @nodes;
-			my @tr_forms = $self->transliterate(\@forms);
-			map{$nodes[$_]->set_attr('form', $tr_forms[$_])}0..$#tr_forms;
+			my @tr_forms = $self->transliterate_forms(\@forms);
+			map {$nodes[$_]->set_attr('form', $tr_forms[$_])}0..$#tr_forms;
+            my @lemmas = map { $_->lemma } @nodes;
+            my @tr_lemmas = $self->transliterate_forms(\@lemmas);
+            map {$nodes[$_]->set_attr('lemma', $tr_lemmas[$_])} (0..$#tr_lemmas);
 		}
-		elsif ($zone->sentence) {
+		if ($zone->sentence) {
 			my $sentence_tr = $self->transliterate_sentence($zone->sentence);
 			$zone->set_sentence($sentence_tr);
 		}
@@ -43,12 +46,12 @@ sub transliterate_sentence {
 	            my @words = split(/\s+/, $sentence);
 	            map{$_ =~ s/(.*[a-zA-Z].*)/<§§§§>$1<řřřř>/}@words;
                 my @words_tr = ();
-                foreach my $w (@words) {                
+                foreach my $w (@words) {
                     push @words_tr, $w and next if $w =~ /^<§§§§>(.+)<řřřř>$/;
                     my $w_tr = $self->transliterator->transliterate_string( $w );
-                    push @words_tr, $w_tr;            
+                    push @words_tr, $w_tr;
                 }
-                $sentence_tr = join " ", @words_tr;	            
+                $sentence_tr = join " ", @words_tr;	
 			}
 			else {
 				$sentence_tr = $self->transliterator->transliterate_string( $sentence );
@@ -62,7 +65,7 @@ sub transliterate_sentence {
                     if ($w =~ /^<§§§§>(.+)<řřřř>$/) {
                         $w = $1;
                         push @words_tr, $w and next;
-                    }                    
+                    }
                     my $w_tr =$self->transliterator->transliterate_string( $w );
                     push @words_tr, $w_tr;    	            	
 	            }
@@ -78,7 +81,7 @@ sub transliterate_sentence {
 	}
 }
 
-sub transltierate_forms {
+sub transliterate_forms {
 	my ( $self, $forms_ref ) = @_;
 	my @tr = @{$forms_ref};
 
@@ -123,7 +126,7 @@ Treex::Block::W2W::TA::Transliteration - Transliteration Between Different Forma
 
 =head1 DESCRIPTION
 
-By default, the 'forms' and 'lemmas' of a-trees are transliterated from one format to another. 
+By default, the 'forms' and 'lemmas' of a-trees are transliterated from one format to another.
 
 =head1 PARAMETERS
 

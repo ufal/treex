@@ -2,6 +2,7 @@ package Treex::Block::Read::BasePMLReader;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseReader';
+with 'Treex::Block::Read::BaseSplitterRole';
 
 use Treex::PML::Factory;
 use Treex::PML::Instance;
@@ -35,7 +36,13 @@ sub _copy_list_attr {
     return if not ref $list;
 
     if ($ref) {
-        foreach (@$list) { s/^.*#//; }
+        foreach (@$list) {
+            # Index Thomisticus (Latin Treebank) contains <coref_text.rf><LM/><LM>some-ID</LM></coref_text.rf>
+            # where the <LM/> is an error, but we want to be gracefull and load the file anyway.
+            #log_fatal "$old_attr_name $new_attr_name ".$treex_node->get_address.Dumper($list) if !defined $_;
+            next if !defined $_;
+            s/^.*#//;
+        }
     }
     $treex_node->set_attr( $new_attr_name, $list );
     return;

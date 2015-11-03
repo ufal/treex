@@ -44,7 +44,7 @@ sub _build_tagger {
 
 after 'process_atree' => sub {
     my ($self, $atree) = @_;
-    
+
     my @nodes = $atree->get_descendants({ordered=>1});
 
     # It is legal to have a tree with no nodes (e.g. for non 1-1 aligned sentences),

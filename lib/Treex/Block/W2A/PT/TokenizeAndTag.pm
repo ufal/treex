@@ -3,9 +3,6 @@ use Moose;
 use Treex::Tool::LXSuite::LXTokenizerAndTagger;
 extends 'Treex::Core::Block';
 
-has lxsuite_host => ( isa => 'Str', is => 'ro', required => 1);
-has lxsuite_port => ( isa => 'Int', is => 'ro', required => 1);
-has lxsuite_key => ( isa => 'Str', is => 'ro', required => 1 );
 has _tt => ( isa => 'Treex::Tool::LXSuite::LXTokenizerAndTagger',
     is => 'ro', required => 1, builder => '_build_tt', lazy => 1 );
 
@@ -16,11 +13,7 @@ sub BUILD {
 
 sub _build_tt {
     my $self = shift;
-    return Treex::Tool::LXSuite::LXTokenizerAndTagger->new({
-        lxsuite_key => $self->lxsuite_key,
-        lxsuite_host => $self->lxsuite_host,
-        lxsuite_port => $self->lxsuite_port,
-    });
+    return Treex::Tool::LXSuite::LXTokenizerAndTagger->new();
 }
 
 sub process_zone {
@@ -45,7 +38,7 @@ sub process_zone {
             lemma          => $lemmas->[$i],
             'conll/pos'    => $postags->[$i],
             'conll/cpos'   => $cpostags->[$i],
-            'conll/feat'   => $feats->[$i]
+            'conll/feat'   => $feats->[$i],
         });
     }
     return 1;

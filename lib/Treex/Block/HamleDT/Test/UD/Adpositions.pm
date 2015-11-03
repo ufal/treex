@@ -27,10 +27,13 @@ sub process_atree
             my $deprel = $node->deprel();
             # Do not test adpositions in foreign text, they have their own rules for attachment.
             next if($deprel eq 'foreign');
+            # Do not test adpositions that are part of a multi-word expression. MWE's must be tested separately by their own rules.
+            # The whole MWE may act as something else than adposition. It can be an advmod.
+            next if($deprel eq 'mwe' || any {$_->deprel() eq 'mwe'} ($node->children()));
             my $ok = $node->is_leaf();
             if(!$ok)
             {
-                $ok = !any {$_->deprel() !~ m/^(mwe|conj|cc)$/} ($node->children());
+                $ok = !any {$_->deprel() !~ m/^(conj|cc)$/} ($node->children());
             }
             if($parent->is_root())
             {
@@ -39,7 +42,7 @@ sub process_atree
             else
             {
                 my $dir = $node->ord() - $parent->ord();
-                if($deprel =~ m/^(mwe|conj)$/)
+                if($deprel =~ m/^(conj)$/)
                 {
                     $ok = $ok && $dir > 0; # parent is to the left from the adposition
                 }

@@ -54,7 +54,7 @@ virtuoso	virtuosi
 vita	vitae
 END_DATA
 
-sub analyze() {
+sub analyze() {		## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
     foreach my $line ( split( "\n", $DATA ) ) {
         next if $line =~ /regular$/;
         my ( $singular, $plural ) = split( /\s+/, $line );
@@ -63,7 +63,7 @@ sub analyze() {
     return;
 }
 
-sub generate() {
+sub generate() {	## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
     foreach my $line ( split( "\n", $DATA ) ) {
         next if $line =~ /regular$/;
         print "$line\n";

@@ -158,7 +158,7 @@ sub _get_field_value {
                 $field_value = $parent->get_attr('ord');
 
             } elsif ( $field_name eq 'trunc_lemma' ) {
-                # lemma without details - works only for Czech 
+                # lemma without details - works only for Czech
                 $field_value =
                     Treex::Tool::Lexicon::CS::truncate_lemma (
                         $node->get_attr('lemma'), 1 );
@@ -205,22 +205,22 @@ sub compute_tree_distance_aligned {
     my @tree_distances;
     my @all_nodes =
 	( $node->get_root() )->get_descendants( { ordered => 1 } );
-    
+
     # get aligned node
     my $aligned_node = undef;
     if ( defined $alignment_hash ) {
-	
+
 	# get alignment from the alignment_hash
 	$aligned_node = $alignment_hash->{ $node->get_attr('id') };
     } else {
-	
+
 	# get alignment directly from the node
 	$aligned_node = $self->_get_aligned_node($node);
     }
-    
+
     # get field value on the aligned node
     if ( defined $aligned_node ) {
-	
+
 	# compute the distances
 	# distance to root node
 	push @tree_distances, $self->_compute_tree_distance_to_root($aligned_node);
@@ -240,7 +240,7 @@ sub compute_tree_distance_aligned {
 	    push @tree_distances, 0;
 	}
     }
-    
+
     return join ' ', @tree_distances;
 }
 

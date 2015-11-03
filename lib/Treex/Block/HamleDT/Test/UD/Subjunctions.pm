@@ -50,7 +50,9 @@ sub process_atree
                 {
                     # It is not so rare that certain conjunctions are judged by dictionary as subordinating
                     # but they are actually used as coordinating. So we must allow 'cc', too.
-                    $ok = $ok && $deprel =~ m/^(mark|cc)$/;
+                    # And some subordinating conjunctions (such as "as") modify noun phrases, in which case
+                    # they should be labeled 'case'.
+                    $ok = $ok && $deprel =~ m/^(mark|cc|case)$/;
                 }
             }
             if(!$ok)

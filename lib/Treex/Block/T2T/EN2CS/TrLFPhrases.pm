@@ -23,10 +23,20 @@ Readonly my $CHILD_PARENT_TO_ONE_NODE => {
     third_time_CP     => 'potřetí#D',
     last_time_CP      => 'naposledy#D',
     right_click_CP    => 'pravým tlačítkem myši klikněte#V',
+    check_mark_CP     => 'zaškrtnutí#N',
 };
+
+# one English t-lemma + syntpos --> Czech child (t-lemma, formeme, mlayer_pos) + parent (t-lemma, mlayer_pos)
+# (given in requested word order)
+my %ONE_NODE_TO_CHILD_PARENT = (
+    'toolbar|n' => 'panel|N nástrojů|x|X',
+    'website|n' => 'webový|adj:attr|A stránka|N',
+);
+
 
 sub process_ttree {
     my ( $self, $cs_troot ) = @_;
+
     my @cs_tnodes = $cs_troot->get_descendants( { ordered => 1 } );
 
     # Hack for "That is," -> "Jinými slovy"
@@ -82,8 +92,8 @@ sub process_tnode {
 
         # "this year" -> "letos"
         if ( $p_formeme =~ /^n:(adv|than.X)$/ ) {
-            my $l = $lemma eq 'this' ? 'letos' : 'vloni';
-            my $f = $p_formeme =~ /adv/ ? 'adv:' : 'n:než+X';
+            my $l = $lemma eq 'this'    ? 'letos' : 'vloni';
+            my $f = $p_formeme =~ /adv/ ? 'adv:'  : 'n:než+X';
             $cs_parent->set_attr( 'mlayer_pos', 'D' );
             $cs_parent->set_t_lemma($l);
             $cs_parent->set_formeme($f);
@@ -148,6 +158,37 @@ sub process_tnode {
         $child->set_formeme_origin('rule-TrLFPhrases');
     }
 
+    # "where it says" -> "kde se píše"
+    # this is probably QTLeap-specific, but "it says" should not occur anywhere else
+    if (    $en_tnode->t_lemma eq 'say'
+        and $en_tnode->gram_diathesis eq 'act' 
+        and $en_tnode->gram_tense eq 'sim'
+        and any { $_->t_lemma eq '#PersPron' && $_->formeme eq 'n:subj' && $_->gram_gender eq 'neut' && $_->gram_number eq 'sg' } $en_tnode->get_echildren
+        )
+    {
+        $cs_tnode->set_t_lemma('psát');
+        $cs_tnode->set_gram_diathesis('deagent');
+        $cs_tnode->set_voice('reflexive_diathesis');
+        $cs_tnode->set_t_lemma_origin('rule-TrLFPhrases');
+    }
+
+    # "follow instructions" -> "postupujte podle pokynů"
+    if ( $en_tnode->t_lemma eq 'instruction' and $en_parent->t_lemma eq 'follow' ){
+        $cs_tnode->set_t_lemma('pokyn');
+        $cs_tnode->set_formeme('n:podle+2');
+        $cs_tnode->set_t_lemma_origin('rule-TrLFPhrases');
+        $cs_tnode->set_formeme_origin('rule-TrLFPhrases');
+        $cs_parent->set_t_lemma('postupovat');
+        $cs_parent->set_t_lemma_origin('rule-TrLFPhrases');
+    }
+
+    if ( $en_tnode->t_lemma eq '/_off' && $en_tnode->formeme eq 'n:on+X'){
+        $cs_tnode->set_t_lemma('zapnutí/vypnutí');
+        $cs_tnode->set_formeme('x');
+        $cs_tnode->set_t_lemma_origin('rule-TrLFPhrases');
+        $cs_tnode->set_formeme_origin('rule-TrLFPhrases');
+    }
+
     # Two English t-nodes, child and parent, translates to one Czech t-node
     my $key = $en_parent->precedes($en_tnode) ? $p_lemma . '_' . $lemma . '_PC' : $lemma . '_' . $p_lemma . '_CP';
     my $one_node_variants = $CHILD_PARENT_TO_ONE_NODE->{$key};
@@ -181,8 +222,54 @@ sub process_tnode {
         }
         $cs_tnode->remove();
     }
+
+    $self->try_1to2($cs_tnode, $en_tnode);
+
     return;
 }
+
+# Try translating one English node into two Czech nodes (according
+# to dictionary ONE_NODE_TO_CHILD_PARENT, see above)
+sub try_1to2 {
+    my ($self, $cs_tnode, $en_tnode) = @_;
+
+    my $id = $en_tnode->t_lemma . '|' . $en_tnode->formeme;
+    $id =~ s/:.*$//;
+    if ( my $translation = $ONE_NODE_TO_CHILD_PARENT{$id} ) {
+        my ( $child_info, $node_info ) = split / /, $translation;
+        my $swap_order = 0;
+        if ( $node_info =~ /^.*\|.*\|.*$/ ){
+            $swap_order = 1;
+            ( $child_info, $node_info ) = ( $node_info, $child_info );
+        }
+
+        my ( $t_lemma, $formeme, $mlayer_pos ) = split /\|/, $child_info;
+        my $child = $cs_tnode->create_child(
+            {
+                t_lemma        => $t_lemma,
+                formeme        => $formeme,
+                mlayer_pos     => $mlayer_pos,
+                t_lemma_origin => 'rule-TrLFPhrases',
+                formeme_origin => 'rule-TrLFPhrases',
+                clause_number  => $cs_tnode->clause_number,
+                nodetype       => 'complex',                
+            }
+        );
+        $child->set_src_tnode($en_tnode);
+        if ($swap_order){
+            $child->shift_after_node($cs_tnode);
+        }
+        else {
+            $child->shift_before_node($cs_tnode);
+        }
+
+        ( $t_lemma, $mlayer_pos ) = split /\|/, $node_info;
+        $cs_tnode->set_t_lemma($t_lemma);
+        $cs_tnode->set_attr( 'mlayer_pos', $mlayer_pos );
+        $cs_tnode->set_t_lemma_origin('rule-TrLFPhrases');
+    }
+}
+
 
 1;
 

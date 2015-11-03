@@ -128,7 +128,7 @@ my @DATA = qw(
     zone
 );
 
-sub analyze() {
+sub analyze() {		## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
     foreach (@DATA) {
         s/.$//;
         print "${_}es\tVBZ\t${_}e\n";

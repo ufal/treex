@@ -46,16 +46,17 @@ sub get_scenario_string {
     my ($self) = @_;
 
     my $scen = join "\n",
-    'Util::SetGlobal lxsuite_host=' . $self->lxsuite_host . ' lxsuite_port=' . $self->lxsuite_port,
-    'Util::SetGlobal lxsuite_key=' . $self->lxsuite_key,
+    #'Util::SetGlobal lxsuite_host=' . $self->lxsuite_host . ' lxsuite_port=' . $self->lxsuite_port,
+    #'Util::SetGlobal lxsuite_key=' . $self->lxsuite_key,
     'W2A::ResegmentSentences',
+    'W2A::PT::LXSuite',
     'W2A::PT::TokenizeAndTag',
-    $self->gazetteer && defined $self->trg_lang ? 'W2A::GazeteerMatch trg_lang='.$self->trg_lang.' filter_id_prefixes="'.$self->gazetteer.'"' : (),
     'W2A::PT::FixTags',
     'W2A::NormalizeForms',
     'W2A::MarkChunks min_quotes=3',
+    $self->gazetteer && defined $self->trg_lang ? 'W2A::PT::GazeteerMatch trg_lang='.$self->trg_lang.' filter_id_prefixes="'.$self->gazetteer.'"' : (),
     # a-layer
-    'W2A::PT::Parse lxsuite_mode=conll.pos:parser:conll.usd',
+    #'W2A::PT::Parse lxsuite_mode=conll.pos:parser:conll.usd',
     'HamleDT::PT::HarmonizeCintilUSD',
     'W2A::PT::FixAfuns',
     # t-layer
@@ -63,31 +64,30 @@ sub get_scenario_string {
     'A2T::BuildTtree',
     'A2T::RehangUnaryCoordConj',
     'A2T::SetIsMember',
+    $self->gazetteer ? 'A2T::ProjectGazeteerInfo' : (),
     'A2T::PT::SetCoapFunctors',
     'A2T::FixIsMember',
     'A2T::MarkParentheses',
     'A2T::MoveAuxFromCoordToMembers',
-    $self->gazetteer ? 'A2T::ProjectGazeteerInfo' : (),
     'A2T::MarkClauseHeads',
     'A2T::MarkRelClauseHeads',
     'A2T::MarkRelClauseCoref',
     'A2T::DeleteChildlessPunctuation',
     # lexical transformation of lemmas to t-lemmas should be here
-    #A2T::PT::FixTlemmas
     'A2T::SetNodetype',
     'A2T::SetFormeme',
     'A2T::PT::FixFormeme',
-    'A2T::SetGrammatemes',
+    'A2T::PT::SetGrammatemes',
     'A2T::PT::SetGrammatemesFromAux',
     'A2T::AddPersPronSb',
     'A2T::MinimizeGrammatemes',
+    'A2T::SetSentmod',
     'A2T::PT::FixImperatives',
     'A2T::PT::FixPersPron',
-    # semantic role labeling should be here
-    #A2T::PT::SetFunctors
     'A2T::SetNodetype',
     'A2T::FixAtomicNodes',
     'A2T::MarkReflpronCoref',
+    'T2T::FixPunctFormemes',
     ;
     return $scen;
 }

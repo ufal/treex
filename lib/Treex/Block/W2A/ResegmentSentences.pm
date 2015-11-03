@@ -10,7 +10,7 @@ has remove => (
     is => 'ro',
     isa => enum( [qw(no all diff)] ),
     default => 'no',
-    documentation => 'remove=no   ... Do not delete any bundles (default). ' 
+    documentation => 'remove=no   ... Do not delete any bundles (default). '
                    . 'remove=all  ... Delete bundles with multiple subsegments. '
                    . 'remove=diff ... Delete bundles with zones with different number of subsegments.',
 );
@@ -71,7 +71,7 @@ sub process_bundle {
     # We are finished if
     # the zone to be processed contains just one sentence.
     return if $my_segments == 1;
-    
+
     # So we have more subsegments. Delete the bundle and exit if requested.
     if ($self->remove eq 'all'){
         $bundle->remove();

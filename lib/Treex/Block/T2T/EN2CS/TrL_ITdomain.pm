@@ -7,10 +7,17 @@ extends 'Treex::Core::Block';
 Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{Wi-Fi}      => 'Wi-Fi|X',
     q{WiFi}       => 'WiFi|X',
-    q{wi-fi}       => 'Wi-Fi|X',
+    q{wi-fi}      => 'Wi-Fi|X',
     q{sm}         => 'SMS|X',
     q{Start}      => 'Start|X',
     q{Windows}    => 'Windows|X',
+    q{Word}       => 'Word|X',
+    q{Chrome}     => 'Chrome|X',
+    q{gbp}        => 'Gb/s|X',
+    q{mbp}        => 'Mb/s|X',
+    q{10.04}      => '10.04|X',
+    q{ruler}      => 'pravítko|N',
+    q{shell}      => 'shell|N',
     q{right-click}=> 'pravým tlačítkem myši klikněte|V',
 );
 
@@ -43,6 +50,9 @@ sub get_lemma_and_pos {
     if ( $en_tlemma eq 'go' && defined $en_tnode->gram_verbmod){
         return 'přejít|V';
     }
+
+    # Windows may be tagged as NNS (instead of NNP)
+    return 'Windows|X' if $en_tlemma eq 'window' && $en_tnode->get_lex_anode->form eq 'Windows';
     
     # imperatives
     if (($en_tnode->gram_verbmod || '') eq 'imp'){

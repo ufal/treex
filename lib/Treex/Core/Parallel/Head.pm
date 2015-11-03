@@ -306,7 +306,12 @@ sub _run_job_script {
     my $script_filename = "scripts/job" . sprintf( "%03d", $jobnumber ) . ".sh";
 
     if ( $self->local ) {
-        system "$workdir/$script_filename &";
+        my $pid = fork();
+        if (!$pid){
+            # I am the child process: replace me with the job script (will never return)
+            exec "$workdir/$script_filename";
+        }
+        push @{ $self->sge_job_numbers }, $pid;
     }
     else {
         my $mem       = $self->mem;
@@ -961,7 +966,7 @@ sub _check_job_errors {
         my $error_file = $workdir . "/status/" . sprintf( "job%03d", $fatal_job ) . "." . $fatal_doc . ".stderr";
         if ( $fatal_doc =~ /[0-9]+/ ) {
             $error_file = $workdir . "/output/" . sprintf( "doc%07d", $fatal_doc ) . ".stderr";
-            if ( !-d $error_file ) {
+            if ( !-f $error_file ) {
                 $error_file = $workdir . "/error/" . sprintf( "doc%07d", $fatal_doc ) . ".stderr";
             }
         }
@@ -1072,6 +1077,13 @@ sub _delete_jobs {
     my $self = shift;
 
     log_info "Deleting jobs: " . join( ', ', @{ $self->sge_job_numbers } );
+
+    if ($self->local){
+        # The only thing we need to do here is exit the program – child processes
+        # will die automatically.
+        return;
+    }
+
     my %jobs = ();
     foreach my $job ( @{ $self->sge_job_numbers } ) {
         qx(qdel $job);

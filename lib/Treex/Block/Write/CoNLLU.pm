@@ -86,6 +86,7 @@ sub process_atree
         my ($upos, $feat) = split(/\t/, $upos_features);
         my $pord = $node->get_parent()->ord();
         my @misc;
+        @misc = split(/\|/, $wild->{misc}) if(exists($wild->{misc}) && defined($wild->{misc}));
         if($node->no_space_after())
         {
             push(@misc, 'SpaceAfter=No');

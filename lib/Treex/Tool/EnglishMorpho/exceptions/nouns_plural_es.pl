@@ -6,14 +6,14 @@ my @DATA = qw(
     iris
 );
 
-sub analyze() {
+sub analyze() {		## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
     foreach (@DATA) {
         print "${_}es\tNNS\t$_\n";
     }
     return;
 }
 
-sub generate() {
+sub generate() {	## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
     foreach (@DATA) {
         print "$_\t${_}es\n";
     }

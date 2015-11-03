@@ -266,7 +266,7 @@ my @DATA = qw(
     writings
 );
 
-sub analyze() {
+sub analyze() {		## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
     foreach (@DATA) {
         print "$_\tNNS\t$_\n";
     }

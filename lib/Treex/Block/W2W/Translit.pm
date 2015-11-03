@@ -52,7 +52,7 @@ sub BUILD
     # 0xB00: Oriya script.
     translit::brahmi::inicializovat($table, 2816, $scientific);
     # 0xB80: Tamil script.
-    translit::brahmi::inicializovat($table, 2944, $scientific);
+    translit::brahmi::inicializovat($table, 2944, $scientific ? 2 : 0);
     # 0xC00: Telugu script.
     translit::brahmi::inicializovat($table, 3072, $scientific);
     # 0xC80: Kannada script.

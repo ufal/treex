@@ -35,7 +35,7 @@ sub split_long_chunks {
 sub process_atree {
     my ( $self, $a_root ) = @_;
     my @a_nodes = $a_root->get_descendants( { ordered => 1 } );
-    
+
     # Skip the sentence if this block is used in "reparse" mode and no reparsing is needed
     return 1 if $self->reparse && !$a_root->get_attr('reparse');
 
@@ -58,7 +58,7 @@ sub process_atree {
     # split too long chunks.
     # and add the full sentence as the last chunk (or more chunks if too long).
     my @sorted_chunks =
-        sort { @$a <=> @$b } 
+        sort { @$a <=> @$b }
         map {$self->split_long_chunks($_)}
         grep { @$_ < @a_nodes }
         values %chunks;
@@ -129,6 +129,7 @@ sub label_parenthesis_token {
 sub parse_chunk {
     log_fatal 'parse_chunk must be implemented in derived clases';
     my ( $self, @a_nodes ) = @_;
+	return;
 }
 
 1;
@@ -137,7 +138,7 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::W2A::BaseChunkParser
 
@@ -151,8 +152,8 @@ will be parsed into its own subtree.
 
 =head1 PARAMETERS
 
-=over 
-   
+=over
+
 =item reparse
 
 Process only bundles where the root node has the attribute C<reparse> set.

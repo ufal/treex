@@ -7,6 +7,7 @@ use Data::Dumper;
 use File::Slurp;
 
 extends 'Treex::Block::Read::BaseReader';
+with 'Treex::Block::Read::BaseSplitterRole';
 
 sub next_document_text {
 

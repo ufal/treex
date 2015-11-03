@@ -8,7 +8,7 @@ my @DATA = qw(
     traffic
 );
 
-sub analyze() {
+sub analyze() {		## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
     foreach (@DATA) {
         print $_. "ked\tVBD\t" . $_ . "\n";
         print $_. "ked\tVBN\t" . $_ . "\n";

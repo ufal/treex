@@ -68,6 +68,8 @@ sub process_tnode {
 sub formeme_for_tnode {
     my ( $en_tnode,  $cs_tnode )   = @_;
     my ( $en_tlemma, $en_formeme ) = $en_tnode->get_attrs(qw(t_lemma formeme));
+    my $en_parent = $en_tnode->get_parent();
+
     return 'n:v+4' if $en_tlemma =~ /^(sun|mon|tues|wednes|thurs|fri|satur)day$/i && $en_formeme eq 'n:on+X';
     return 'n:v+6' if $en_tlemma eq 'abroad' && $en_formeme eq 'adv:';
     return 'adj:poss' if $en_tlemma eq '#PersPron' && $en_formeme eq 'n:poss';
@@ -79,7 +81,7 @@ sub formeme_for_tnode {
         return 'adj:attr' if $en_formeme eq 'n:poss' and $n_node->get_attr('ne_type') =~ /^g/;
     }
 
-    return 'n:attr' if $en_tnode->get_parent->is_name_of_person && $en_formeme eq 'n:attr';
+    return 'n:attr' if $en_parent->is_name_of_person && $en_formeme eq 'n:attr';
 
     return 'n:attr' if ( $en_tnode->is_name_of_person || $en_tlemma =~ /^[\p{isUpper}\d]+$/ ) && $en_formeme eq 'n:attr';
     return 'n:attr' if $en_tlemma =~ /^(which|whose|that|this|these)$/ && $en_formeme eq 'n:attr';
@@ -111,6 +113,8 @@ sub formeme_for_tnode {
         $tak->shift_before_subtree($cs_tnode);
         return 'v:aby+fin';
     }
+
+    return 'v:zda+fin' if ( ($en_parent->t_lemma // '') eq 'check' and $en_formeme eq 'v:if+fin' );
 
     return $QUICKFIX_TRANSLATION_OF{$en_formeme};
 }

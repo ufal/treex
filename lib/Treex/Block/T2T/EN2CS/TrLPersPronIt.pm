@@ -107,7 +107,13 @@ sub process_tnode {
             $cs_tnode->set_attr( 'mlayer_pos', "P" );
             $cs_tnode->set_t_lemma_origin('ItTransl');
         }
-        elsif ($class eq "n") {
+
+        # TODO: We cannot drop "it" in sentence "Yes, it is possible.",
+        # but the classifier assigns $class eq 'n' here.
+        # So let's do not drop any subjects.
+        # Some #PersPron (including it) subjects will be dropped in T2A::CS::DropSubjPersProns,
+        # but they should be present on the t-layer anyway.
+        elsif ($class eq "n" && !$en_tnode->formeme eq 'n:subj') {
             #$cs_tnode->set_t_lemma("#Gen");
             #$cs_tnode->set_t_lemma_origin('ItTransl');
             my $cs_parent = $cs_tnode->get_parent;

@@ -26,7 +26,6 @@ sub process_zone {
 
     $sentence =~ s/ rocích/ letech/g;
     $sentence =~ s/(v|V) roku/$1 roce/g;
-    $sentence =~ s/_/ /g;                         # !!! tohle by se nemelo stavat
     $sentence =~ s/ US / USA /g;
 
     # zavorky

@@ -26,6 +26,7 @@ sub process_zone
     # and with special care at places where prepositions and coordinations interact.
     $self->process_prep_sub_arg_cloud($root);
     $self->raise_subordinating_conjunctions($root);
+    $self->reshape_verb_preposition_infinitive($root);
     $self->check_afuns($root);
 }
 
@@ -443,7 +444,40 @@ sub deprel_to_afun
         }
         $node->set_afun($afun);
     }
-    return;
+    # Fix known annotation errors.
+    # We should fix it now, before the superordinate class will perform other tree operations.
+    $self->fix_annotation_errors($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes a few known annotation errors that appear in the data. Should be called
+# from deprel_to_afun() so that it precedes any tree operations that the
+# superordinate class may want to do.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        my $parent = $node->parent();
+        my @children = $node->children();
+        # o industrial portuense Manuel Macedo, Ramiro Moreira e Pedro Menezes, todos testemunhas em este caso
+        # the Porto industrialist Manuel Macedo, Ramiro Moreira and Pedro Menezes, all witnesses in this case
+        # Coordination has not been restructured yet, thus the head is the first conjunct ('industrial').
+        if(defined($parent) && scalar(@children)==1 &&
+           $parent->form() eq 'industrial' &&
+           $node->form() eq 'todos' && $node->afun() eq 'Atr' &&
+           $children[0]->form() eq 'testemunhas' && $children[0]->afun() eq 'Pnom')
+        {
+            $children[0]->set_parent($parent);
+            $children[0]->set_afun('Apposition');
+            $node->set_parent($children[0]);
+        }
+    }
 }
 
 
@@ -468,6 +502,45 @@ sub detect_coordination
     push(@recurse, $coordination->get_shared_modifiers());
     push(@recurse, $coordination->get_private_modifiers($node));
     return @recurse;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Reshapes verb-preposition-infinitive constructions such as "tivéssemos de
+# informar" ("we had to inform"). In the original treebank the preposition is
+# attached to the previous verb as a leaf, labeled "PRT-AUX<", which we
+# translate to "AuxT". But we should insert it to the path from the left verb
+# to the infinitive, and label it "AuxC" because it functions as a subordinator
+# or infinitive marker.
+#------------------------------------------------------------------------------
+sub reshape_verb_preposition_infinitive
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->afun() eq 'AuxT' && $node->is_leaf())
+        {
+            my $parent = $node->parent();
+            my $infinitive = $node->get_right_neighbor();
+            if(defined($parent) && $parent->is_verb() &&
+               defined($infinitive) && $infinitive->is_infinitive())
+            {
+                $infinitive->set_parent($node);
+                $node->set_afun('AuxC');
+            }
+            # Even if the conditions for re-attaching are not met, we do not want
+            # to keep the AuxT afun in Portuguese. Not for prepositions.
+            # (Reflexiva tantum might appear in Portuguese but the original treebank
+            # does not annotate them.)
+            elsif($node->is_adposition() || $node->form() eq 'que')
+            {
+                $node->set_afun('AuxC');
+            }
+        }
+    }
 }
 
 

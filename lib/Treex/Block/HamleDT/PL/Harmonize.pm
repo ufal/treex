@@ -37,9 +37,8 @@ sub process_zone
 {
     my $self   = shift;
     my $zone   = shift;
-
     my $root = $self->SUPER::process_zone($zone);
-#    $self->process_args($root);
+    $self->fix_morphology($root);
     $self->attach_final_punctuation_to_root($root);
     $self->restructure_coordination($root, $debug);
     $self->process_prep_sub_arg_cloud($root);
@@ -70,13 +69,41 @@ sub get_input_tag_for_interset
 
 
 #------------------------------------------------------------------------------
+# Fixes tags and features for words for which the Polish tagset is too coarse
+# grained.
+#------------------------------------------------------------------------------
+sub fix_morphology
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $form = $node->form();
+        my $iset = $node->iset();
+        # The correct form is 'się' but due to typos in the corpus we have to
+        # look for 'sie' and 'sia' as well.
+        if(defined($form) && $form =~ m/^si[ęea]$/i && $node->is_particle())
+        {
+            $iset->add('pos' => 'noun', 'prontype' => 'prs', 'reflex' => 'reflex');
+            $iset->set('typo' => 'typo') if($form =~ m/^si[ea]$/i);
+        }
+        # Adjust the tag to the modified values of Interset.
+        $self->set_pdt_tag($node);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Try to convert dependency relation tags to analytical functions.
 # http://zil.ipipan.waw.pl/FunkcjeZaleznosciowe
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 # There are 25 distinct dependency relation tags: abbrev_punct adjunct aglt app
 # aux comp comp_fin comp_inf complm cond conjunct coord coord_punct imp mwe ne
-#  neg obj obj_th pd pre_coord pred punct refl subj; not including errors
-# (twice 'interp' instead of 'punct' and once 'ne_' instead of 'ne')
+# neg obj obj_th pd pre_coord pred punct refl subj.
+# In addition this method also handles tags that occur in the treebank by
+# error: twice 'interp' instead of 'punct' and once 'ne_' instead of 'ne'.
 #------------------------------------------------------------------------------
 sub deprel_to_afun
 {
@@ -120,7 +147,16 @@ sub deprel_to_afun
             ###!!! but we want to get AuxP(po, przyjeździe); AuxZ(przyjeździe, dopiero).
             if ($eparent->iset()->pos() =~ m/^(verb|adj|adv|part)$/)
             {
-                $node->set_afun('Adv');
+                if ($node->is_subordinator() && $node->is_leaf())
+                {
+                    # If it is not leaf then its child will get SubArg and later
+                    # transformations will cause this node to become AuxC.
+                    $node->set_afun('AuxC');
+                }
+                else
+                {
+                    $node->set_afun('Adv');
+                }
             }
             # parent is a noun -> Atr
             elsif ($eparent->is_noun() || $eparent->is_numeral())
@@ -225,6 +261,10 @@ sub deprel_to_afun
             {
                 $node->set_afun('PrepArg');
             }
+            elsif ($eparent->is_subordinator())
+            {
+                $node->set_afun('SubArg');
+            }
             elsif ($eparent->is_noun())
             {
                 $node->set_afun('Atr');
@@ -323,7 +363,13 @@ sub deprel_to_afun
         elsif ($deprel eq 'coord_punct')
         {
             $node->wild()->{'coordinator'} = 1;
-            if ($node->form eq ',')
+            if ($parent->is_root())
+            {
+                # This afun will be transfered to the conjuncts when coordination is processed.
+                # We do not want the conjuncts to get 'AuxX'!
+                $node->set_afun('Pred');
+            }
+            elsif ($node->form eq ',')
             {
                 $node->set_afun('AuxX');
             }
@@ -347,7 +393,7 @@ sub deprel_to_afun
             $node->set_afun('CoordArg');
             # node is a conjunct
             $node->wild()->{'conjunct'} = 1;
-            # parent must be a coordinator (does it?)
+            # parent must be a coordinator (must it?)
             $parent->wild()->{'coordinator'} = 1;
         }
         # pre_coord ... pre-conjunction; first part of a correlative conjunction (such as English "either ... or")
@@ -401,6 +447,67 @@ sub deprel_to_afun
             # If it is fatal however, the current tree will not be saved and we only will be able to examine the original tree.
             log_fatal( "Missing afun for node " . $node->form() . "/" . $node->tag() . "/" . $node->conll_deprel() );
         }
+    }
+    # Fix known annotation errors.
+    # We should fix it now, before the superordinate class will perform other tree operations.
+    $self->fix_annotation_errors($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes a few known annotation errors that appear in the data. Should be called
+# from deprel_to_afun() so that it precedes any tree operations that the
+# superordinate class may want to do.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self = shift;
+    my $root = shift;
+    my $sentence = $root->get_subtree_string();
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    if($sentence =~ m/^Zachrobotało w bramie ?, zachrzęściło i błysnęła latarka Softa ?\. ?$/i)
+    {
+        my $zachrobotalo = $nodes[0];
+        my $comma        = $nodes[3];
+        my $zachrzescilo = $nodes[4];
+        my $i            = $nodes[5];
+        $zachrobotalo->set_parent($i);
+        $zachrobotalo->set_afun('CoordArg');
+        $zachrobotalo->wild()->{'conjunct'} = 1;
+        $zachrzescilo->set_parent($i);
+        $zachrzescilo->set_afun('CoordArg');
+        $zachrzescilo->wild()->{'conjunct'} = 1;
+        $comma->set_afun('AuxX');
+        delete($comma->wild()->{'coordinator'});
+        $i->wild()->{'coordinator'} = 1;
+    }
+    elsif($sentence =~ m/^Włoszczyznę pokroić ?, kapustę poszatkować i razem udusić ?\. ?$/i)
+    {
+        my $pokroic     = $nodes[1];
+        my $comma       = $nodes[2];
+        my $poszatkowac = $nodes[4];
+        my $i           = $nodes[5];
+        $pokroic->set_parent($i);
+        $pokroic->set_afun('CoordArg');
+        $pokroic->wild()->{'conjunct'} = 1;
+        $poszatkowac->set_parent($i);
+        $poszatkowac->set_afun('CoordArg');
+        $poszatkowac->wild()->{'conjunct'} = 1;
+        $comma->set_afun('AuxX');
+        delete($comma->wild()->{'coordinator'});
+        $i->wild()->{'coordinator'} = 1;
+    }
+    elsif($sentence =~ m/, 300 tys . zł pochodzić będzie z kredytu , a/i && scalar(@nodes)>13 && $nodes[13]->form() eq 'pochodzić')
+    {
+        my $comma     = $nodes[8];
+        my $pochodzic = $nodes[13];
+        my $a         = $nodes[18];
+        $pochodzic->set_parent($a);
+        $pochodzic->set_afun('CoordArg');
+        $pochodzic->wild()->{'conjunct'} = 1;
+        delete($comma->wild()->{'coordinator'});
+        $a->wild()->{'coordinator'} = 1;
     }
 }
 

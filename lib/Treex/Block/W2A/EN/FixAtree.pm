@@ -321,6 +321,12 @@ sub fix_node {
             $node->set_parent($five);
         }
     }
+    
+    # and then do... -- rehang "then" from "and" to "do"
+    if ( $lemma eq 'then' && !@children && $p_lemma eq 'and' and $next_node and $next_node->tag =~ /^VB/ ){
+        $node->set_parent($next_node);
+        $node->set_is_member(undef);
+    }
 
     return;
 }

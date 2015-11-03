@@ -38,8 +38,16 @@ sub _start_alpino {
             my $listing = get($ALPINO_WEB);
             log_fatal( 'Could not get a list of Alpino versions from ' . $ALPINO_WEB ) if ( !$listing );
 
-            # This will find the last link to Alpino-something on the website, we assume it's the latest
-            my ($last_version) = ( $listing =~ m/^.*(<a[^>]*href="Alpino-[^"]*)"/s );
+            # Find links to Linux-x86_64 Alpino versions on the Alpino website,
+            # sort them according to version number and remember the latest one
+            my (@versions) = $listing =~ m/<a[^>]*href="Alpino-x86_64-[^"]*sicstus.tar.gz/g;
+            my ($last_version) = sort {
+                    my $b_ver_num = $b;
+                    $b_ver_num =~ s/.*-([0-9]+)-sicstus.*/$1/;
+                    my $a_ver_num = $a;
+                    $a_ver_num =~ s/.*-([0-9]+)-sicstus.*/$1/;
+                    $b_ver_num <=> $a_ver_num
+                } @versions;
             $last_version =~ s/<a[^>]*href="//;
             log_fatal( 'Could not find a reference to an Alpino version on ' . $ALPINO_WEB ) if ( !$last_version );
 

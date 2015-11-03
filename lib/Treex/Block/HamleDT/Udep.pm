@@ -64,7 +64,8 @@ sub process_zone
     (
         'prep_is_head'           => 0,
         'cop_is_head'            => 0,
-        'coordination_head_rule' => 'first_conjunct'
+        'coordination_head_rule' => 'first_conjunct',
+        'counted_genitives'      => $self->language() ne 'la'
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
@@ -117,7 +118,8 @@ sub exchange_tags
 
 #------------------------------------------------------------------------------
 # Some treebanks do not distinguish symbols from punctuation. This method fixes
-# this for a few listed symbols.
+# this for a few listed symbols. Some other treebanks tag symbols as the words
+# they substitute for (e.g. '%' is NOUN but it should be SYM).
 #------------------------------------------------------------------------------
 sub fix_symbols
 {
@@ -126,12 +128,20 @@ sub fix_symbols
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        if($node->is_punctuation())
+        # '%' (percent) and '$' (dollar) will be tagged SYM regardless their
+        # original part of speech (probably PUNCT or NOUN).
+        if($node->form() =~ m/^[\$%]$/)
+        {
+            $node->iset()->set('pos', 'sym');
+            # If the original dependency relation was AuxG, it should be changed but there is no way of knowing the correct relation.
+            # The underlying words are nouns, hence they could be Sb, Obj, Adv, Atr, Apposition or even Pnom.
+        }
+        elsif($node->is_punctuation())
         {
             # Note that some characters cannot be decided in this simple way.
             # For example, '-' is either punctuation (hyphen) or symbol (minus)
             # but we cannot tell them apart automatically if we do not understand the sentence.
-            if($node->form() =~ m/^[\$%\+=]$/)
+            if($node->form() =~ m/^[\+=]$/)
             {
                 $node->iset()->set('pos', 'sym');
                 if($node->afun() eq 'AuxG')
@@ -731,7 +741,8 @@ sub fix_determiners
             # Pronominal numerals (quantifiers) "kolik", "mnoho" etc. are not determiners if they are not used together with a counted noun.
             # They may be used e.g. as an object: "Kolik to stojí?" = "How-much it costs?"
             # Important: We assume that the high-value numerals have been pushed down first.
-            elsif($node->is_numeral())
+            # But beware: some numerals are adverbs and not pronouns (e.g. Portuguese "mais").
+            elsif($node->is_numeral() && !$node->is_adverb())
             {
                 if($node->deprel() !~ m/^det(:numgov|:nummod)?$/)
                 {

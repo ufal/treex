@@ -1,7 +1,7 @@
 package Treex::Block::T2A::PT::InitMorphcat;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block::T2A::InitMorphcat';
+extends 'Treex::Block::T2A::InitMorphcatPT';
 
 after process_tnode => sub {
     my ( $self, $t_node ) = @_;

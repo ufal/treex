@@ -219,7 +219,7 @@ my %irregular_verbs = (
 );
 #>>> perltidy on
 #
-sub print_dump() {
+sub print_dump() {		## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
     while ( my ( $base, $forms ) = each %irregular_verbs ) {
         foreach my $pref ( '', split( '\|', $forms->{pref} || '' ) ) {
             print "$pref$base\t$pref" . $forms->{ps} . "\t$pref" . $forms->{pp};
@@ -231,7 +231,7 @@ sub print_dump() {
     return;
 }
 
-sub analyze() {
+sub analyze() {		## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
     while ( my ( $base, $forms ) = each %irregular_verbs ) {
         foreach my $pref ( '', split( '\|', $forms->{pref} || '' ) ) {
             foreach ( split '\|', $forms->{ps} ) { print "$pref$_\tVBD\t$pref$base\n"; }

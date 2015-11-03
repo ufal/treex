@@ -89,7 +89,7 @@ my @OTHER = qw(
 
 
 
-sub analyze() {
+sub analyze() {		## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
     foreach (@OTHER) {
         print "${_}es\tVBZ\t$_\n";
     }

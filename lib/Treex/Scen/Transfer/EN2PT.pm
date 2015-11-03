@@ -86,8 +86,8 @@ sub get_scenario_string {
     }
 
     my $scen = join "\n",
-    'Util::SetGlobal lxsuite_host=' . $self->lxsuite_host . ' lxsuite_port=' . $self->lxsuite_port,
-    'Util::SetGlobal lxsuite_key=' . $self->lxsuite_key,
+    #'Util::SetGlobal lxsuite_host=' . $self->lxsuite_host . ' lxsuite_port=' . $self->lxsuite_port,
+    #'Util::SetGlobal lxsuite_key=' . $self->lxsuite_key,
     'Util::SetGlobal language=pt selector=tst',
     'T2T::CopyTtree source_language=en source_selector=src',
     $self->gazetteer ? 'T2T::TrGazeteerItems src_lang='.$self->src_lang : (),
@@ -104,8 +104,9 @@ sub get_scenario_string {
     'Util::DefinedAttr tnode=t_lemma,formeme message="after simple transfer"',
     'T2T::SetClauseNumber',
     #T2T::RecoverUnknownLemmas.pm
-    # 'T2T::FixPunctFormemes',
+    'T2T::FixPunctFormemes',
     'T2T::FixFormemeWrtNodetype',
+    
     'T2T::EN2PT::Noun1Noun2_To_Noun2DeNoun1',
     'T2T::EN2PT::MoveAdjsAfterNouns',
     'T2T::EN2PT::FixPersPron',
