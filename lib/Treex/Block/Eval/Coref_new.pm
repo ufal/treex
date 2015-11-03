@@ -40,6 +40,20 @@ sub process_tnode {
 
 Precision, recall and F-measure for coreference.
 
+USAGE:
+
+cd ~/projects/czeng_coref
+treex -L cs 
+    Read::Treex from=@data/cs/analysed/pdt/eval/0001/list 
+    Util::SetGlobal selector=src 
+    Coref::RemoveLinks type=all 
+    A2T::CS::MarkRelClauseHeads 
+    A2T::CS::MarkRelClauseCoref 
+    Util::SetGlobal selector=ref 
+    Coref::PrepareSpecializedEval category=relpron 
+    Eval::Coref_new
+| ./eval.pl
+
 =back
 
 =cut
