@@ -24,7 +24,7 @@ sub process_zone
         $form = '' if(!defined($form));
         my $next_form = $nodes[$i+1]->form();
         $next_form = '' if(!defined($next_form));
-        if($form      =~ m/^¡¿[$lbr]$/ ||
+        if($form      =~ m/^[¡¿$lbr]$/ ||
            $next_form =~ m/^[\.,;:!\?$rbr]$/)
         {
             $nodes[$i]->set_no_space_after(1);
