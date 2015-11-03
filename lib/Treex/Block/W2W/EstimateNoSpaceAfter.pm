@@ -27,8 +27,11 @@ sub process_zone
         # The ASCII hyphen (spojovník) should be used only to join two parts of
         # a compound word and thus there are no spaces around it. Note however
         # that it is often used wrongly instead of N- and M-dash.
-        if($form      =~ m/^[-¡¿$lbr]$/ ||
-           $next_form =~ m/^[-\.,;:!\?$rbr]$/)
+        ###!!! Loganathan's Tamil data contain hyphens as separate tokens only in cases where they were separated by spaces in the original data.
+        ###!!! The compounds with hyphen are kept as one token (i.e. left part + hyphen + right part). Thus we currently omit the hyphen from both
+        ###!!! regular expressions.
+        if($form      =~ m/^[¡¿$lbr]$/ ||
+           $next_form =~ m/^[\.,;:!\?$rbr]$/)
         {
             $nodes[$i]->set_no_space_after(1);
         }
