@@ -27,7 +27,7 @@ sub process_zone
         if($form      =~ m/^¡¿[$lbr]$/ ||
            $next_form =~ m/^[\.,;:!\?$rbr]$/)
         {
-            $node->set_no_space_after(1);
+            $nodes[$i]->set_no_space_after(1);
         }
     }
 }
