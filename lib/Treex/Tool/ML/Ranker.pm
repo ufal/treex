@@ -14,7 +14,7 @@ sub pick_winner {
     
     # DEBUG
     #if ($debug) {
-    #    print STDERR join "\n", (map {$_ . " : " . $cand_weights->{$_}} keys %{$cand_weights});
+    #    print STDERR join "\n", @cand_weights;
     #    print STDERR "\n";
     #}
 
