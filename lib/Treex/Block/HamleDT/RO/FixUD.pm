@@ -34,6 +34,7 @@ sub fix_features
         # Changed features may cause a change of UPOS but it is probably not desirable. Or is it?
         my $tag0 = $node->tag();
         my $tag1 = $f->get_upos();
+        my @miscfeatures;
         if($tag1 ne $tag0)
         {
             # Adjust Interset to the original tag.
