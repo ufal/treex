@@ -46,6 +46,9 @@ sub rank {
 
     my $instance_str = Treex::Tool::ML::VowpalWabbit::Util::format_multiline($instance);
     print {$self->_write_handle} $instance_str . "\n";
+    #if ($debug) {
+    #    print STDERR $instance_str . "\n";
+    #}
 
     my @losses = ();
 
