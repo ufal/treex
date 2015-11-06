@@ -1,7 +1,6 @@
-# input file
-#RAW := small.tsv.gz
-#RAW := ${TMT_ROOT}/share/generated_data/czech_language_model/joint_table.tsv.gz
-RAW := ${TMT_ROOT}/share/data/models/language/cs/counts_raw.tsv.gz
+# Input files with vectors
+# Replace with desired source(s)
+RAW := cs/wmt12-newscrawl/vectors/
 
 # There must be enough space in temp dir!
 #TEMP_DIR:=/tmp
@@ -30,7 +29,7 @@ help:
 	less README
 
 counts_unfiltered.tsv.gz: $(RAW)
-	zcat $(RAW) |\
+	find $(RAW) -type f | xargs -n 100 cat |\
 	  perl -nle 'my($Ld,$Lg,$Fd,$Pd,$Pg)=split /\t/, $_; print join "\t", lc $Lg,$Pg,lc $Ld,$Pd,$Fd;' |\
 	  sort -S $(MEMORY) -T $(TEMP_DIR) | uniq -c | perl -pe 's/^ *([0-9]+) /$1\t/' | gzip > counts_unfiltered.tsv.gz
 
