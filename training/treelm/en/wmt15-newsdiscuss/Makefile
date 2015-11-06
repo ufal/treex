@@ -14,5 +14,5 @@ plain:
 	mkdir -p plain
 	zcat news-discuss-v1.en.txt.gz | split --lines=100 --numeric-suffixes --suffix-length=6 --additional-suffix=.txt - plain/f
 
-#Posts.xml: stackoverflow.com-Posts.7z
-#	7z x stackoverflow.com-Posts.7z
+news-discuss-v1.en.txt.gz:
+	wget http://www.statmt.org/wmt15/news-discuss-v1.en.txt.gz

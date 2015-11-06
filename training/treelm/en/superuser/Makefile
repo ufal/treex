@@ -14,3 +14,6 @@ plain: Posts.xml
 	mkdir -p plain
 	cat Posts.xml | sed 's/.*Body="\([^"]*\)".*/\1/' | ./clean_stackexchange.pl | split --lines=100 --numeric-suffixes --suffix-length=6 --additional-suffix=.txt - plain/f
 
+Posts.xml:
+	wget https://archive.org/download/stackexchange/superuser.com.7z
+	7z e superuser.com.7z Posts.xml

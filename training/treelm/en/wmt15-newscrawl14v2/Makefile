@@ -14,4 +14,5 @@ plain:
 	mkdir -p plain
 	zcat news.2014.en.shuffled.v2.gz | split --lines=100 --numeric-suffixes --suffix-length=6 --additional-suffix=.txt - plain/f
 
-
+news.2014.en.shuffled.v2.gz:
+	wget http://www.statmt.org/wmt15/training-monolingual-news-crawl-v2/news.2014.cs.shuffled.v2.gz
