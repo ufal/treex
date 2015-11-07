@@ -28,13 +28,22 @@ my %lspecrel =
     'es'  => ['acl:relcl'],
     'et'  => ['advmod:emph', 'compound:prt', 'nummod:gov'],
     'fa'  => ['acl:relcl', 'compound:lvc', 'compound:prt', 'det:predet', 'nmod:poss', 'nsubj:nc'],
+    'fi'  => ['acl:relcl', 'cc:preconj', 'compound:nn', 'compound:prt', 'csubj:cop', 'nmod:gobj', 'nmod:gsubj', 'nmod:own', 'nmod:poss', 'nsubj:cop', 'xcomp:ds'],
+    'fr'  => ['acl:relcl', 'nmod:poss'],
+    'ga'  => ['acl:relcl', 'case:voc', 'compound:prt', 'csubj:cleft', 'csubj:cop', 'mark:prt', 'nmod:poss', 'nmod:prep', 'nmod:tmod', 'xcomp:pred'],
     'grc' => ['advmod:emph'],
+    'he'  => ['acl:inf', 'acl:relcl', 'advmod:inf', 'advmod:phrase', 'aux:q', 'case:acc', 'case:gen', 'conj:discourse', 'det:def', 'det:quant', 'nmod:poss', 'nmod:smixut', 'nmod:tmod', 'nsubj:cop'],
+    'hu'  => ['advmod:locy', 'advmod:mode', 'advmod:obl', 'advmod:que', 'advmod:tfrom', 'advmod:tlocy', 'advmod:to', 'advmod:tto', 'amod:att', 'amod:attlvc', 'amod:mode', 'amod:obl', 'ccomp:obj', 'ccomp:obl', 'ccomp:pred', 'compound:preverb', 'dobj:lvc', 'name:hu', 'nmod:att', 'nmod:attlvc', 'nmod:obl', 'nmod:obllvc', 'nsubj:lvc'],
+    'it'  => ['acl:relcl', 'det:poss', 'det:predet', 'expl:impers'],
     'la'  => ['advmod:emph', 'auxpass:reflex'],
     'nl'  => ['compound:prt', 'det:nummod'],
     'pl'  => [],
     'pt'  => ['advmod:emph', 'auxpass:reflex'],
+    'ro'  => ['advcl:tcl', 'advcl:tmod', 'advmod:tmod', 'cc:preconj', 'expl:impers', 'expl:pass', 'expl:poss', 'expl:pv', 'nmod:agent', 'nmod:pmod', 'nmod:tmod'],
+    'sl'  => ['cc:preconj'],
+    'sv'  => ['acl:relcl', 'compound:prt', 'nmod:agent', 'nmod:poss'],
     'ta'  => ['advmod:emph', 'compound:prt'],
-    'xx'  => ['acl:relcl', 'det:pdt', 'compound:prt'],
+    'xx'  => [],
 );
 
 sub process_anode
