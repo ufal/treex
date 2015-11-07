@@ -22,8 +22,12 @@ my %lspecrel =
 (
     'ar'  => ['advmod:emph'],
     'cs'  => ['advmod:emph', 'auxpass:reflex', 'det:numgov', 'det:nummod', 'nummod:gov'],
+    'da'  => ['acl:relcl', 'compound:prt', 'nmod:loc', 'nmod:poss', 'nmod:tmod'],
+    'de'  => ['nmod:poss'],
+    'en'  => ['acl:relcl', 'cc:preconj', 'compound:prt', 'det:predet', 'nmod:npmod', 'nmod:poss', 'nmod:tmod'],
     'es'  => ['acl:relcl'],
     'et'  => ['advmod:emph', 'compound:prt', 'nummod:gov'],
+    'fa'  => ['acl:relcl', 'compound:lvc', 'compound:prt', 'det:predet', 'nmod:poss', 'nsubj:nc'],
     'grc' => ['advmod:emph'],
     'la'  => ['advmod:emph', 'auxpass:reflex'],
     'nl'  => ['compound:prt', 'det:nummod'],
