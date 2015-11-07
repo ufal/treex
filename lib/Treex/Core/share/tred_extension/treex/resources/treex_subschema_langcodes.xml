@@ -81,6 +81,7 @@
       <value>el</value> <!-- Greek -->
       <value>grc</value> <!-- Ancient Greek -->
       <value>hy</value> <!-- Armenian -->
+      <value>hit</value> <!-- Hittite -->
       <!-- Iranian languages -->
       <value>fa</value> <!-- Persian -->
       <value>ku-latn</value> <!-- Kurdish in Latin script -->

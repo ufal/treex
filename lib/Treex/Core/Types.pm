@@ -48,6 +48,7 @@ my %EXTRA_LANG_CODES = (
     'ell'     => "Modern Greek",  # ISO 639-3
     'got'     => "Gothic",        # ISO 639-2
     'grc'     => "Ancient Greek", # ISO 639-2
+    'hit'     => "Hittite",       # ISO 639-2
     'hsb'     => "Upper Sorbian",
     'hak'     => "Hakka",
     'kaa'     => "Karakalpak",
