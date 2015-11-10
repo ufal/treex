@@ -74,9 +74,9 @@ Readonly our $DOCUMENT_FROM_CACHE => 2;
 # TODO this could also be in Scenario instead of Block...
 
 # new other block of same name replaces old one here
-has _loaded_other_blocks       => ( is => 'rw', isa => 'HashRef',  default => sub { {} } ); 
+has _loaded_other_blocks       => ( is => 'rw', isa => 'HashRef',  default => sub { {} } );
 # all loaded other blocks, no replacing
-has _loaded_other_blocks_array => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } ); 
+has _loaded_other_blocks_array => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 
 sub zone_label {
     my ($self) = @_;
@@ -113,7 +113,7 @@ sub BUILD {
         my @codes = split /,/, $self->language;
         my %selected;
         for my $code (@codes) {
-            log_fatal "'$code' is not a valid ISO 639-1 language code"
+            log_fatal "'$code' is not a valid ISO 639 language code"
                 if !Treex::Core::Types::is_lang_code($code);
             $selected{$code} = 1;
         }
@@ -156,7 +156,7 @@ sub _compute_hash {
         grep { defined( $self->{$_} ) }    # value has to be defined
         grep { !/(scenario|block)/ }
         keys %{$self};
-        
+
     # Digest::MD5 cannot handle Unicode strings (it dies with "Wide character in subroutine entry")
     use Encode;
     $md5->add(Encode::encode_utf8($params_str));
@@ -278,13 +278,13 @@ sub process_bundle {
         } else {
             @sels = keys %{$self->_is_selector_selected};
         }
-        
+
         # Cartesian product of lang(uage)s and sel(ector)s
         @zones = map {my $l = $_; map{$bundle->get_or_create_zone($l, $_)} @sels} @langs;
     } else {
         @zones = $self->get_selected_zones(@zones);
     }
-    
+
     if (!@zones && $self->if_missing_zone =~ /fatal|warn/) {
         my $message = "No zone (language="
             . $self->language
@@ -326,7 +326,7 @@ sub _try_process_layer {
                 return 0;
             }
         }
-        
+
         #$self->process_atree($tree, $bundleNo);
         $m->execute( $self, $zone->get_tree($layer), $bundleNo );
         return 1;
@@ -341,7 +341,7 @@ sub _try_process_layer {
             }
         }
         my $tree = $zone->get_tree($layer);
-    
+
         # process_ptree should be executed also on the root node (usually the S phrase)
         my @opts = $layer eq 'p' ? ( { add_self => 1 } ) : ();
         foreach my $node ( $tree->get_descendants(@opts) ) {
@@ -366,7 +366,7 @@ sub process_zone {
             $overriden++;
         }
     }
-    
+
     if (!$overriden && $self->if_missing_tree =~ /fatal|warn/){
         my $message = "At least one of the methods /process_(document|bundle|zone|[atnp](tree|node))/ "
             . "must be overriden and the corresponding [atnp] trees must be present in bundles.\n"

@@ -39,7 +39,9 @@ sub fix_features
         {
             # Adjust Interset to the original tag.
             $f->set_upos($tag0);
-            unless($tag1 eq 'X')
+            # The original tags for punctuation are not Multext-East and we could not convert them.
+            # Thus we will have a random result for punctuation but we should not promote it.
+            unless($tag1 eq 'X' || $tag0 eq 'PUNCT')
             {
                 unshift(@miscfeatures, "AltTag=$tag0-$tag1");
             }
