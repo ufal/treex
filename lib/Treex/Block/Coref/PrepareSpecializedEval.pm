@@ -37,7 +37,7 @@ sub process_document {
     my ($self, $doc) = @_;
 
     my @ref_ttrees = map {$_->get_tree($self->language, 't', $self->selector)} $doc->get_bundles;
-    my @ref_chains = Treex::Tool::Coreference::Utils::get_coreference_entities(@ref_ttrees);
+    my @ref_chains = Treex::Tool::Coreference::Utils::get_coreference_entities(\@ref_ttrees);
 
 
     # label or nodes belonging to the specified category
@@ -52,7 +52,7 @@ sub process_document {
     # remove all coreference links from src that do not comply to the specified category
     remove_non_category_links(\@src_ttrees, $self->category);
     
-    my @src_chains = Treex::Tool::Coreference::Utils::get_coreference_entities(@src_ttrees);
+    my @src_chains = Treex::Tool::Coreference::Utils::get_coreference_entities(\@src_ttrees);
 
     # all the nodes, which are involved in coreference in src are included in evaluation
     foreach my $src_chain (@src_chains) {

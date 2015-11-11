@@ -35,7 +35,7 @@ before 'process_document' => sub {
     }
 
     my @ttrees = map { $_->get_tree($self->language,'t',$self->selector) } $doc->get_bundles;
-    my @chains = Treex::Tool::Coreference::Utils::get_coreference_entities(@ttrees);
+    my @chains = Treex::Tool::Coreference::Utils::get_coreference_entities(\@ttrees);
     my $entity_idx = 1;
     foreach my $chain (@chains) {
         foreach my $node (@$chain) {
