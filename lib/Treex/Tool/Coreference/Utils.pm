@@ -59,7 +59,7 @@ sub _sort_chains_topological {
         my @sorted_chain = sort {$order_hash{$a->id} <=> $order_hash{$b->id}} @$chain;
         push @sorted_chains, \@sorted_chain;
     }
-    return @sorted_chain;
+    return @sorted_chains;
 }
 
 sub get_coreference_entities {
@@ -79,7 +79,7 @@ sub get_coreference_entities {
         @sorted_chains = _sort_chains_deepord(@chains);
     }
     elsif ($params->{ordered} eq 'topological') {
-        @sorted_chains = _sort_chains_topological(@chains);
+        @sorted_chains = _sort_chains_topological($coref_graph, @chains);
         @sorted_chains = _sort_chains_deepord(@chains) if (!@sorted_chains);
     }
 
