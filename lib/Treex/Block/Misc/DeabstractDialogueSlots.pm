@@ -48,8 +48,8 @@ sub process_ttree {
         if (!$self->xs_instead){
             $value = shift @{ $abstr->{$slot} };
             push @{ $abstr->{$slot} }, $value;
-            $value =~ s/^"//;
-            $value =~ s/"$//;
+            $value =~ s/^["']//;
+            $value =~ s/["']$//;
             $value =~ s/ /_/g;
         }
         $tnode->set_t_lemma($value);
