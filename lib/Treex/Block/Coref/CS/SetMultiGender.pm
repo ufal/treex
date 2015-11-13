@@ -21,6 +21,9 @@ my $GENDER_LABEL = {
 sub process_tnode {
     my ($self, $tnode) = @_;
 
+    # apply only to semantic nouns
+    return if (!defined $tnode->gram_sempos || $tnode->gram_sempos !~ /^n/);
+
     my $gender;
 
     if (defined $tnode->wild->{'aux_gram/gender'}) {
