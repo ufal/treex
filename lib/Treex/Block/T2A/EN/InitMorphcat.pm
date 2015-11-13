@@ -67,10 +67,14 @@ sub process_tnode {
             my $person = $t_node->gram_person || '.';
 
             # get attributes from coreference, if needed
-            if ( my ($t_antec) = $t_node->get_coref_gram_nodes() ) {
-                $gender = $gender eq 'inher' ? ( $t_antec->gram_gender || '.' ) : '.';
-                $person = $person eq 'inher' ? ( $t_antec->gram_person || '.' ) : '.';
-                if ( $number eq 'inher' and $t_antec->gram_number ) {
+            if (my ($t_antec) = $t_node->get_coref_gram_nodes()) {
+                if ($gender eq 'inher') {
+                    $gender = $t_antec->gram_gender || '.';
+                }
+                if ($person eq 'inher') {
+                    $person = $t_antec->gram_person || '.';
+                }
+                if ($number eq 'inher' and $t_antec->gram_number) {
                     $a_node->set_morphcat_number( $M_NUMBER_FOR{ $t_antec->gram_number } );
                 }
             }
