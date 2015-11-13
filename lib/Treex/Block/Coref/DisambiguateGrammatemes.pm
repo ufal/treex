@@ -12,12 +12,12 @@ has 'replace_inher' => ( is => 'ro', isa => 'Bool', default => 1 );
 has 'gender' => ( is => 'ro', isa => 'Bool', default => 1 );
 has 'number' => ( is => 'ro', isa => 'Bool', default => 1 );
 
-sub _fits_aux_gram_gender {
+sub _fits_multi_gram_gender {
     my ($tnode, $ante) = @_;
-    if (defined $tnode->wild->{'aux_gram/gender'}) {
-        my %gend_hash = map {$_ => 1} split /\//, $tnode->wild->{'aux_gram/gender'};
+    if (defined $tnode->wild->{'multi_gram/gender'}) {
+        my %gend_hash = map {$_ => 1} split /\//, $tnode->wild->{'multi_gram/gender'};
         if (!$gend_hash{$ante->gram_gender}) {
-            log_warn "The gender '".$ante->gram_gender."' of the node ". $tnode->id . " propagated from its antecedent does not agree with possible genders ('".$tnode->wild->{'aux_gram/gender'}."')in this context.";
+            log_warn "The gender '".$ante->gram_gender."' of the node ". $tnode->id . " propagated from its antecedent does not agree with possible genders ('".$tnode->wild->{'multi_gram/gender'}."')in this context.";
         }
     }
 }
@@ -39,7 +39,7 @@ sub process_document {
                 defined $tnode->gram_gender &&
                 ($tnode->gram_gender eq 'nr' || ($self->replace_inher && $tnode->gram_gender eq 'inher'))) {
                 
-                _fits_aux_gram_gender($tnode, $ante);
+                _fits_multi_gram_gender($tnode, $ante);
                 $tnode->set_gram_gender($ante->gram_gender);
             }
             if ($self->number &&
