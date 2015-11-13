@@ -86,7 +86,7 @@ sub process_tnode {
         # gender position is '-'
         else {
             $aux_gender = 'anim/inan/fem/neut';
-            $gender = 'anim';
+            $gender = 'nr';
         }
         # evidence from the data - gender of the generated perspron can be anything, 
         # if the verb is in present tense and 1st or 2nd person
