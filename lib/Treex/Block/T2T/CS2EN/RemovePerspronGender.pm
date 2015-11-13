@@ -24,7 +24,7 @@ sub process_tnode {
 
         # even without antecedent: generated subjects -- remove gender if 'anim' was just guessed
         # good for IT domain (where things are concerned), not that good for news (where mostly persons are concerned)
-        if ( ( $t_src->formeme // '' ) eq 'drop' and ( $t_src->wild->{'aux_gram/gender'} // '' ) eq 'anim/inan/fem/neut' ) {
+        if ( ( $t_src->formeme // '' ) eq 'drop') {
             $t_node->set_gram_gender('nr');
         }
         return;
