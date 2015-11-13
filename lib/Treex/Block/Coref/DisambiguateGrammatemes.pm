@@ -17,7 +17,7 @@ sub _fits_multi_gram_gender {
     if (defined $tnode->wild->{'multi_gram/gender'}) {
         my %gend_hash = map {$_ => 1} split /\//, $tnode->wild->{'multi_gram/gender'};
         if (defined $ante->gram_gender && $ante->gram_gender ne 'nr' && !$gend_hash{$ante->gram_gender}) {
-            log_warn "The gender '".$ante->gram_gender."' of the node ". $tnode->get_address . " propagated from its antecedent does not agree with possible genders ('".$tnode->wild->{'multi_gram/gender'}."')in this context.";
+            log_warn "The gender '".$ante->gram_gender."' of the node ". $tnode->id . " propagated from its antecedent does not agree with possible genders (".$tnode->wild->{'multi_gram/gender'}.") in this context.";
         }
     }
 }
