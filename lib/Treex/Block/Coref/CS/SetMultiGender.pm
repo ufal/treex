@@ -27,7 +27,7 @@ sub process_tnode {
     my $gender;
 
     if (defined $tnode->wild->{'aux_gram/gender'}) {
-        $gender = delete $tnode->wild->{'aux_gram/gender'};
+        $gender = $tnode->wild->{'aux_gram/gender'};
     }
     elsif (defined $tnode->gram_gender && $tnode->gram_gender ne "nr" && $tnode->gram_gender ne "inher") {
         $gender = $tnode->gram_gender;
