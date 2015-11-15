@@ -27,7 +27,6 @@ sub process_tnode {
         my @anode_tags = $self->_get_anode_tags($t_node);
 
         my ( $person, $gender, $number );
-        my ( $aux_gender, $aux_number );
 
         # TODO the verb can be just "to be", so take dependent adjectives into account
 
@@ -49,18 +48,17 @@ sub process_tnode {
         }
         # in fact, this can appear just with 'Q' gender
         elsif ( grep { $_ =~ /^V..W/ } @anode_tags ) {
-            $aux_number = 'sg/pl';
+            #$number = 'sg|pl';
             $number = 'sg';
         }
         # number position is '-'
         else {
-            $aux_number = 'sg/pl';
+            #$number = 'sg|pl';
             $number = 'sg';
         }
 
         if ( grep { $_ =~ /^V.Q/ } @anode_tags ) {    # napraseno !!! ve skutecnosti je poznani rodu daleko tezsi
-            $aux_gender = 'fem/neut';
-            $gender = 'fem';
+            $gender = 'fem|neut';
         }
         # in fact, it can appear just in singular
         elsif ( grep { $_ =~ /^V.N/ } @anode_tags ) {
@@ -71,22 +69,18 @@ sub process_tnode {
             $gender = 'anim';
         }
         elsif ( grep { $_ =~ /^V.Y/ } @anode_tags ) {
-            $aux_gender = 'anim/inan';
-            $gender = 'anim';
+            $gender = 'anim|inan';
         }
         # in fact, it can appear just in plural
         elsif ( grep { $_ =~ /^V.T/ } @anode_tags ) {
-            $aux_gender = 'inan/fem';
-            $gender = 'anim';
+            $gender = 'inan|fem';
         }
         elsif ( grep { $_ =~ /^V.H/ } @anode_tags ) {
-            $aux_gender = 'fem/neut';
-            $gender = 'anim';
+            $gender = 'fem|neut';
         }
         # gender position is '-'
         else {
-            $aux_gender = 'anim/inan/fem/neut';
-            $gender = 'nr';
+            $gender = 'anim|inan|fem|neut';
         }
         # evidence from the data - gender of the generated perspron can be anything, 
         # if the verb is in present tense and 1st or 2nd person
@@ -97,8 +91,6 @@ sub process_tnode {
         $new_node->set_gram_person($person);
         $new_node->set_gram_gender($gender);
         $new_node->set_gram_number($number);
-        $new_node->wild->{'aux_gram/number'} = $aux_number if (defined $aux_number);
-        $new_node->wild->{'aux_gram/gender'} = $aux_gender if (defined $aux_gender);
     }
     return;
 }
