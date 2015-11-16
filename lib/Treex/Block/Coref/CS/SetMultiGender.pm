@@ -18,6 +18,28 @@ my $GENDER_LABEL = {
     Z => "anim/inan/neut",
 };
 
+sub _ambig_gender {
+    my ($tnode) = @_;
+    
+    my $gender;
+    my $anode = $tnode->get_lex_anode;
+    if (defined $anode) {
+        if ($anode->tag =~ /^PS...(.)/) {
+            $gender = $GENDER_LABEL->{$1} // "anim/inan/fem/neut";
+        }
+        elsif ($anode->tag =~ /^P.(.)/) {
+            $gender = $GENDER_LABEL->{$1} // "anim/inan/fem/neut";
+        }
+        else {
+            $gender = "anim/inan/fem/neut";
+        }
+    }
+    else {
+        $gender = "anim/inan/fem/neut";
+    }
+    return $gender;
+}
+
 sub process_tnode {
     my ($self, $tnode) = @_;
 
@@ -26,28 +48,24 @@ sub process_tnode {
 
     my $gender;
 
+    # dropped subject pronouns
     if (defined $tnode->wild->{'aux_gram/gender'}) {
         $gender = $tnode->wild->{'aux_gram/gender'};
     }
+    # possessive pronouns (personal, reflexive, relative) - take the possessor's gender instead
+    #elsif () {
+    #}
+    # already disambiguated non-possessive pronouns
     elsif (defined $tnode->gram_gender && $tnode->gram_gender ne "nr" && $tnode->gram_gender ne "inher") {
         $gender = $tnode->gram_gender;
-    }
-    else {
         my $anode = $tnode->get_lex_anode;
-        if (defined $anode) {
-            if ($anode->tag =~ /^PS...(.)/) {
-                $gender = $GENDER_LABEL->{$1} // "anim/inan/fem/neut";
-            }
-            elsif ($anode->tag =~ /^P.(.)/) {
-                $gender = $GENDER_LABEL->{$1} // "anim/inan/fem/neut";
-            }
-            else {
-                $gender = "anim/inan/fem/neut";
-            }
-        }
-        else {
-            $gender = "anim/inan/fem/neut";
-        }
+        my $form_tag = defined $anode ? $anode->form . "\t" . $anode->tag . "\t" . $gender : "_\t_\t_";
+        #print STDERR "DISAMBIG GENDERS: $form_tag\n";
+        #$gender = _ambig_gender($tnode);
+    }
+    # ambiguous non-possessive pronouns
+    else {
+        $gender = _ambig_gender($tnode);
     }
     
     $tnode->wild->{'multi_gram/gender'} = $gender;
