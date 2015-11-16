@@ -217,7 +217,7 @@ override '_unary_features' => sub {
         $coref_features->{c_anaph_num} = $node->gram_number;
     }
     for my $gen (qw/anim inan fem neut/) {
-        $coref_features->{'c_'.$node.'_gen_'.$gen} = (defined $coref_features->{'c_'.$node.'_gen'} && $coref_features->{'c_'.$node.'_gen'} =~ /$gen/) || 0;
+        $coref_features->{'c_'.$type.'_gen_'.$gen} = (defined $coref_features->{'c_'.$type.'_gen'} && $coref_features->{'c_'.$type.'_gen'} =~ /$gen/) || 0;
     }
 
     #   24: 8 x tag($inode, $jnode), joined
