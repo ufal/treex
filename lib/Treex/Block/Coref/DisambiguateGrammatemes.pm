@@ -14,16 +14,18 @@ has 'number' => ( is => 'ro', isa => 'Bool', default => 1 );
 
 sub _fits_multi_gram_gender {
     my ($tnode, $ante) = @_;
-    return if (!defined $tnode->gram_gender);
-    my %gend_hash = map {$_ => 1} split /\|/, $tnode->gram_gender;
-    if (defined $ante->gram_gender && $ante->gram_gender !~ /(^nr$)|\|/ && !$gend_hash{$ante->gram_gender}) {
-        log_warn "The gender '".$ante->gram_gender."' of the node ". $tnode->id . " propagated from its antecedent does not agree with possible genders (".$tnode->gram_gender.") in this context.";
+    my ($gender, $ante_gender) = ($tnode->gram_gender, $ante->gram_gender);
+    return if (!defined $gender);
+    my %gend_hash = map {$_ => 1} split /\|/, $gender;
+
+    if (defined $ante_gender && $ante_gender !~ /(^nr$)|\|/ && $gender ne "inher" && !$gend_hash{$ante_gender}) {
+        log_warn "The gender '".$ante_gender."' of the node ". $tnode->id . " propagated from its antecedent does not agree with possible genders (".$gender.") in this context.";
     }
 }
 
-sub process_document {
+sub propagate_via_coref {
     my ($self, $doc) = @_;
-
+    
     my @ttrees = map { $_->get_tree($self->language,'t',$self->selector) } $doc->get_bundles;
     my @chains = Treex::Tool::Coreference::Utils::get_coreference_entities(\@ttrees, {ordered => 'topological'});
 
@@ -49,6 +51,31 @@ sub process_document {
             }
         }
     }
+}
+
+sub disambiguate_without_coref {
+    my ($self, $tnode) = @_;
+    
+    my $gender = $tnode->gram_gender;
+    return if (!defined $gender);
+    # do nothing if there is no ambiguity
+    return if ($gender !~ /\|/);
+
+    $gender = ($gender eq 'anim|inan') ? 'anim' :
+              ($gender eq 'fem|neut')  ? 'fem'  :
+                                         'nr'   ;
+    $tnode->set_gram_gender($gender);
+}
+
+before 'process_document' => sub {
+    my ($self, $doc) = @_;
+
+    $self->propagate_via_coref($doc);
+};
+
+sub process_tnode {
+    my ($self, $tnode) = @_;
+    $self->disambiguate_without_coref($tnode);
 }
 
 1;
