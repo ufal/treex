@@ -14,14 +14,20 @@ has 'replace_inher' => ( is => 'ro', isa => 'Bool', default => 1 );
 has 'gender' => ( is => 'ro', isa => 'Bool', default => 1 );
 has 'number' => ( is => 'ro', isa => 'Bool', default => 1 );
 
-sub _fits_multi_gram_gender {
-    my ($tnode, $ante) = @_;
-    my ($gender, $ante_gender) = ($tnode->gram_gender, $ante->gram_gender);
-    return if (!defined $gender);
-    my %gend_hash = map {$_ => 1} split /\|/, $gender;
+sub _fits_multivalue_grammateme {
+    my ($type, $tnode, $ante) = @_;
+    my ($gram, $ante_gram);
+    if ($type eq 'gender') {
+        ($gram, $ante_gram) = ($tnode->gram_gender, $ante->gram_gender);
+    }
+    else {
+        ($gram, $ante_gram) = ($tnode->gram_number, $ante->gram_number);
+    }
+    return if (!defined $gram);
+    my %gend_hash = map {$_ => 1} split /\|/, $gram;
 
-    if (defined $ante_gender && $ante_gender !~ /(^nr$)|\|/ && $gender ne "inher" && !$gend_hash{$ante_gender}) {
-        log_warn "The gender '".$ante_gender."' of the node ". $tnode->id . " propagated from its antecedent does not agree with possible genders (".$gender.") in this context.";
+    if (defined $ante_gram && $ante_gram !~ /(^nr$)|\|/ && $gram ne "inher" && !$gend_hash{$ante_gram}) {
+        log_warn "The $type grammateme '".$ante_gram."' of the node ". $tnode->id . " propagated from its antecedent does not agree with possible grams (".$gram.") in this context.";
     }
 }
 
@@ -42,20 +48,21 @@ sub propagate_via_coref {
                 defined $tnode->gram_gender &&
                 ($tnode->gram_gender =~ /(^nr$)|\|/ || ($self->replace_inher && $tnode->gram_gender eq 'inher'))) {
                 
-                _fits_multi_gram_gender($tnode, $ante);
+                _fits_multivalue_grammateme('gender', $tnode, $ante);
                 $tnode->set_gram_gender($ante->gram_gender);
             }
             if ($self->number &&
                 defined $tnode->gram_number &&
-                ($tnode->gram_number eq 'nr' || ($self->replace_inher && $tnode->gram_number eq 'inher'))) {
+                ($tnode->gram_number =~ /(^nr$)|\|/ || ($self->replace_inher && $tnode->gram_number eq 'inher'))) {
                 
+                _fits_multivalue_grammateme('number', $tnode, $ante);
                 $tnode->set_gram_number($ante->gram_number);
             }
         }
     }
 }
 
-sub disambiguate_without_coref {
+sub disambiguate_gender_without_coref {
     my ($self, $tnode) = @_;
     
     my $gender = $tnode->gram_gender;
@@ -67,6 +74,19 @@ sub disambiguate_without_coref {
               ($gender eq 'fem|neut')  ? 'fem'  :
                                          'nr'   ;
     $tnode->set_gram_gender($gender);
+
+}
+
+sub disambiguate_number_without_coref {
+    my ($self, $tnode) = @_;
+    
+    my $number = $tnode->gram_number;
+    return if (!defined $number);
+    # do nothing if there is no ambiguity
+    return if ($number !~ /\|/);
+
+    $number = "sg";
+    $tnode->set_gram_number($number);
 }
 
 before 'process_document' => sub {
@@ -77,7 +97,8 @@ before 'process_document' => sub {
 
 sub process_tnode {
     my ($self, $tnode) = @_;
-    $self->disambiguate_without_coref($tnode);
+    $self->disambiguate_gender_without_coref($tnode);
+    $self->disambiguate_number_without_coref($tnode);
 }
 
 1;
