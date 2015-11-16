@@ -211,16 +211,13 @@ override '_unary_features' => sub {
     if ($type eq 'cand') {
         ( $coref_features->{c_cand_gen}, $coref_features->{c_cand_num} ) = _get_cand_gennum( $node );
         #print STDERR "UNDEF: " . $node->get_address ."\n" if (!defined $coref_features->{c_cand_gen});
-        for my $gen (qw/anim inan fem neut/) {
-            $coref_features->{'c_cand_gen_'.$gen} = (defined $coref_features->{c_cand_gen} && $coref_features->{c_cand_gen} =~ /$gen/) || 0;
-        }
     }
     else {
-        $coref_features->{c_anaph_gen} = $node->wild->{'multi_gram/gender'} // $node->gram_gender;
+        $coref_features->{c_anaph_gen} = $node->gram_gender;
         $coref_features->{c_anaph_num} = $node->gram_number;
-        for my $gen (qw/anim inan fem neut/) {
-            $coref_features->{'c_anaph_gen_'.$gen} = (defined $coref_features->{c_cand_gen} && $coref_features->{c_anaph_gen} =~ /$gen/) || 0;
-        }
+    }
+    for my $gen (qw/anim inan fem neut/) {
+        $coref_features->{'c_'.$node.'_gen_'.$gen} = (defined $coref_features->{'c_'.$node.'_gen'} && $coref_features->{'c_'.$node.'_gen'} =~ /$gen/) || 0;
     }
 
     #   24: 8 x tag($inode, $jnode), joined
@@ -264,7 +261,7 @@ sub _get_coord_gennum {
     }
 
 	if ((scalar @{$parray} == 1) || ($antec->functor eq 'APPS')) {
-		$gen = $parray->[0]->wild->{'multi_gram/gender'} // $parray->[0]->gram_gender;
+		$gen = $parray->[0]->gram_gender;
 		$num = $parray->[0]->gram_number;
 	}
 	else {
@@ -318,7 +315,7 @@ sub _get_refl_gennum {
 	while ((!$node->gram_gender || ($node->gram_gender eq 'inher')) && (my ($antec) = $node->get_coref_gram_nodes)) {
         $node = $antec;
 	}
-    my $gen = $node->wild->{'multi_gram/gender'} // $node->gram_gender;
+    my $gen = $node->gram_gender;
 	return ($gen, $node->gram_number);
 }
 
@@ -343,7 +340,7 @@ sub _get_cand_gennum {
 			return _get_refl_gennum($ante);
 		}
 	}
-    my $gen = $node->wild->{'multi_gram/gender'} // $node->gram_gender;
+    my $gen = $node->gram_gender;
 	return ($gen, $node->gram_number);
 }
 
