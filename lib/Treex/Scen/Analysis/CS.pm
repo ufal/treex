@@ -159,7 +159,7 @@ sub get_scenario_string {
             'Coref::CS::SetMultiGender',
             'A2T::CS::MarkTextPronCoref',
             'Coref::RearrangeLinks retain_cataphora=1',
-            'Coref::DisambiguateGrammatemes',
+            'A2T::DisambiguateGrammatemes',
             ;
     }
 
