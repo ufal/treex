@@ -28,7 +28,13 @@ sub _my_dir {
 }
 get_conversion_rules_from_file(_my_dir() . "/conversion_rules.txt");
 
-my %tnumber2gnumber = ( 'S' => 'sg', 'P' => 'pl', 'D' => 'pl' );
+my %tnumber2gnumber = ( 
+    S => 'sg',
+    P => 'pl', 
+    D => 'pl',
+    W => 'sg|pl',
+    X => 'sg|pl',
+);
 my %tgender2ggender = (
     F => "fem",
     H => "fem|neut",
@@ -246,7 +252,7 @@ sub assign_automatic_grammatemes {
         $t_node->set_t_lemma('#PersPron');
         $t_node->set_gram_sempos('n.pron.def.pers');
         $t_node->set_gram_person($tperson);
-        $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tnumber} );
+        $t_node->set_gram_number( $tnumber2gnumber{$tnumber} );
         $t_node->set_gram_politeness('basic');
         if ( $tperson eq '3' ) {
             if ( $tgender2ggender{$tgender} ) {
@@ -310,7 +316,7 @@ sub assign_automatic_grammatemes {
         $t_node->set_gram_sempos('n.pron.def.pers');
         $t_node->set_gram_person($tperson);
         $t_node->set_gram_politeness('basic');
-        $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tposnumber} );
+        $t_node->set_gram_number( $tnumber2gnumber{$tposnumber} );
         if ( $tperson eq "3" ) {
             if ( $tgender2ggender{$tposgender} ) {
                 $t_node->set_gram_gender( $tgender2ggender{$tposgender} );
@@ -354,7 +360,7 @@ sub assign_automatic_grammatemes {
         $t_node->set_gram_sempos('n.quant.def');
         $t_node->set_gram_numertype('basic');
         $t_node->set_gram_gender( $numerallemma2gender{$t_lemma} );
-        $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tnumber} );
+        $t_node->set_gram_number( $tnumber2gnumber{$tnumber} );
     }
     elsif ( $t_lemma eq "sto" ) {
 
@@ -384,7 +390,7 @@ sub assign_automatic_grammatemes {
 
         #      set_attr($t_node,'t_lemma',$t_lemma);
         $t_node->set_gram_gender( $tgender2ggender{$tgender} );
-        $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tnumber} );
+        $t_node->set_gram_number( $tnumber2gnumber{$tnumber} );
 
         #      if (not $tnumber2gnumber{$tnumber} and   ### ???? was war tas?
         #	  $t_node->{_t_lemma_}=~/^.R$/ and $t_node->{tag}=~/^..F/) {
@@ -397,7 +403,7 @@ sub assign_automatic_grammatemes {
                 set_gn_by_verb_agreement( $t_node, 'gender', $temp_attrs );
                 $changed++;
             }
-            if ( $t_node->attr('gram/number') =~ /^(|nr)$/ ) {
+            if ( $t_node->gram_number =~ /^(|nr)$/ ) {
                 set_gn_by_verb_agreement( $t_node, 'number', $temp_attrs );
                 $changed++;
             }
@@ -456,7 +462,7 @@ sub assign_automatic_grammatemes {
             )
         {
             $t_node->set_gram_sempos('n.quant.def');
-            $t_node->set_gram_number('nr');
+            $t_node->set_gram_number('sg|pl');
             $t_node->set_gram_gender('anim|inan|fem|neut');
         }
         elsif ( adjectival($t_node) ) {
@@ -464,7 +470,7 @@ sub assign_automatic_grammatemes {
         }
         else {
             $t_node->set_gram_sempos('n.quant.def');
-            $t_node->set_gram_number('nr');
+            $t_node->set_gram_number('sg|pl');
             $t_node->set_gram_gender('anim|inan|fem|neut');
         }
 
@@ -476,7 +482,7 @@ sub assign_automatic_grammatemes {
         }
     }
     elsif ( $tag =~ /^Cy/ ) {                                                    # pětina, wordclass a numertype a tlemma dostanou z konv.souboru
-        $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tnumber} );
+        $t_node->set_gram_number( $tnumber2gnumber{$tnumber} );
         $t_node->set_gram_gender( $tgender2ggender{$tgender} );
 
         # ptacek: ale jen pro 7 vyjmenovanych t-lemmat
@@ -492,7 +498,7 @@ sub assign_automatic_grammatemes {
     # substantivne pouzita adjektiva
     elsif ( $tag =~ /^A/ and $functor !~ /^(FPHR|ID)/ and not adjectival($t_node) and $parent->t_lemma !~ /[tn]í$/ ) {
         $t_node->set_gram_sempos('n.denot');
-        $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tnumber} );
+        $t_node->set_gram_number( $tnumber2gnumber{$tnumber} );
         $t_node->set_gram_gender( $tgender2ggender{$tgender} );
     }
 
@@ -739,7 +745,7 @@ sub assign_automatic_grammatemes {
         $t_node->set_gram_sempos('n.denot');
         log_warn('Unknown: ' . $t_node->t_lemma . ' ' . $t_node->get_address) if (!$tgender ||!$tnumber); 
         $t_node->set_gram_gender( $tgender2ggender{$tgender} );
-        $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tnumber} );
+        $t_node->set_gram_number( $tnumber2gnumber{$tnumber} );
     }
 }    # end of assign_automatic_grammatemes
 
@@ -829,7 +835,7 @@ sub set_gn_by_verb_agreement {
         elsif ( $attr eq "number" ) {
             my ($number) = map { $_->tag; $1 } grep { $_->tag =~ /^...[PS]/ } @verb_a_nodes;
             if ($number) {
-                $t_node->set_attr( 'gram/number', $tnumber2gnumber{$number} );
+                $t_node->set_gram_number( $tnumber2gnumber{$number} );
                 $changed++;
             }
         }
@@ -945,7 +951,7 @@ sub apply_postprocessing {
             }
 
             if ( $tnumber2gnumber{$tnumber} ) {
-                $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tnumber} );
+                $t_node->set_gram_number( $tnumber2gnumber{$tnumber} );
             }
             else {
                 $t_node->set_gram_number('sg');
@@ -962,7 +968,7 @@ sub apply_postprocessing {
 
     if ( $t_node->gram_sempos eq "n.pron.def.demon" ) { # tgender and tnumber might be undefined for #EmpNoun        
         $t_node->set_gram_gender( $tgender2ggender{$tgender} ) if ($tgender && $tgender2ggender{$tgender});
-        $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tnumber} ) if ($tnumber && $tnumber2gnumber{$tnumber});
+        $t_node->set_gram_number( $tnumber2gnumber{$tnumber} ) if ($tnumber && $tnumber2gnumber{$tnumber});
     }
 
     # gramatem negation u pojmenovacich uzlu
@@ -1241,7 +1247,7 @@ sub set_indefpron_pgn_by_verb_agreement {
             $change++;
         }
 
-        my ($number) = grep {$_} map { $_->tag =~ /^...([PS])/; $tnumber2gnumber{$1} } @verb_a_nodes;
+        my ($number) = grep {$_} map { $_->tag =~ /^...([PSDWX])/; $tnumber2gnumber{$1} } @verb_a_nodes;
         if ( $number and $number ne $t_node->gram_number ) {
             $t_node->set_gram_number($number);
             $change++;
@@ -1278,7 +1284,7 @@ sub set_missing_gn_by_verb_agreement {
         }
 
         if ( ( $t_node->gram_number || '' ) =~ /^(|nr)$/ and $parent eq $t_node->get_parent ) {    # cislo se neda spolehlive tahat, kdyz jde o koordinaci
-            my ($number) = grep {$_} map { $_->tag =~ /^...([PS])/; $tnumber2gnumber{$1} } @verb_a_nodes;
+            my ($number) = grep {$_} map { $_->tag =~ /^...([PSDWX])/; $tnumber2gnumber{$1} } @verb_a_nodes;
             if ($number) {
                 $t_node->set_gram_number($number);
             }

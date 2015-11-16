@@ -48,13 +48,11 @@ sub process_tnode {
         }
         # in fact, this can appear just with 'Q' gender
         elsif ( grep { $_ =~ /^V..W/ } @anode_tags ) {
-            #$number = 'sg|pl';
-            $number = 'sg';
+            $number = 'sg|pl';
         }
         # number position is '-'
         else {
-            #$number = 'sg|pl';
-            $number = 'sg';
+            $number = 'sg|pl';
         }
 
         if ( grep { $_ =~ /^V.Q/ } @anode_tags ) {    # napraseno !!! ve skutecnosti je poznani rodu daleko tezsi
