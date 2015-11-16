@@ -270,8 +270,8 @@ sub _agree_feats {
 #        return $b_false;
 #    }
 
-    my %f1_hash = map {$_ => 1} split /\//, $f1;
-    foreach my $f2_value (split /\//, $f2) {
+    my %f1_hash = map {$_ => 1} split /\|/, $f1;
+    foreach my $f2_value (split /\|/, $f2) {
         return $b_true if ($f1_hash{$f2_value});
     }
     return $b_false;
