@@ -104,7 +104,7 @@ sub get_scenario_string {
     'A2T::SetDocOrds',
     'A2T::CS::MarkTextPronCoref',
     'Coref::RearrangeLinks retain_cataphora=1',
-    'Coref::DisambiguateGrammatemes',
+    'A2T::DisambiguateGrammatemes',
     ;
 
     return $scen;

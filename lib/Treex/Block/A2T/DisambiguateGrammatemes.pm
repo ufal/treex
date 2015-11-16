@@ -1,8 +1,10 @@
-package Treex::Block::Coref::DisambiguateGrammatemes;
+package Treex::Block::A2T::DisambiguateGrammatemes;
 use Moose;
 use Treex::Core::Common;
 
 use Treex::Tool::Coreference::Utils;
+
+# TODO: multi-values for number
 
 extends 'Treex::Core::Block';
 
@@ -86,14 +88,16 @@ __END__
 
 =head1 NAME
 
-Treex::Block::Coref::DisambiguateGrammatemes
+Treex::Block::A2T::DisambiguateGrammatemes
 
 =head1 DESCRIPTION
 
-The block disambiguates 'nr' values of number and gender grammatemes of anaphoric 
+The block disambiguates multi-values of number and gender grammatemes of anaphoric 
 nodes by copying these values from its antecedent.
 By default, the 'inher' values are also replaced by their respective counterparts
 from the antecedent.
+If there is no antecedent of a node with multi-valued grammateme, this grammateme
+is disambiguated by a rule.
 
 =head1 PARAMETERS
 
