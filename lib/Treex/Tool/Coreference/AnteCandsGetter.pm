@@ -2,6 +2,7 @@ package Treex::Tool::Coreference::AnteCandsGetter;
 
 use Moose::Role;
 use Treex::Tool::Context::Sentences;
+use List::MoreUtils qw/none/;
 
 requires '_build_cand_filter';
 
@@ -100,6 +101,8 @@ sub _select_all_cands {
         $anaph, -$self->prev_sents_num, 0, {preceding_only => 1}
     );
     @cands = grep {$self->_cand_filter->is_candidate( $_)} @cands;
+    # remove the candidates that even transitively point to the anaphor - cycle prevention
+    @cands = grep {my $cand = $_; none {$_ == $anaph} $cand->get_coref_chain} @cands;
     # nearest candidates to be the first
     @cands = reverse @cands;
 
