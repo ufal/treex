@@ -12,7 +12,8 @@ use Treex::Tool::Coreference::NounAnteCandsGetter;
 use Treex::Tool::Coreference::NodeFilter::PersPron;
 
 has '+model_path' => (
-    default => 'data/models/coreference/CS/vw/perspron.2015-04-29.train.pdt.cs.vw.ranking.model',
+    #default => 'data/models/coreference/CS/vw/perspron.2015-04-29.train.pdt.cs.vw.ranking.model',
+    default => 'data/models/coreference/CS/vw/perspron.2015-11-16.train.pdt.cs.vw.ranking.model',
 );
 
 override '_build_ranker' => sub {
