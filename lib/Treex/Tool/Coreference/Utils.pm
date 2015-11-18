@@ -51,7 +51,10 @@ sub _sort_chains_deepord {
 sub _sort_chains_topological {
     my ($coref_graph, @chains) = @_;
     my @topo_nodes = $coref_graph->topological_sort(empty_if_cyclic => 1);
-    return if (!@topo_nodes);
+    if (!@topo_nodes) {
+        log_warn "Not able to sort topologically. A coreference cycle found in the document.";
+        return;
+    }
     
     my %order_hash = map {$topo_nodes[$_]->id => $_} 0 .. $#topo_nodes;
     my @sorted_chains;
