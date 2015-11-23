@@ -129,8 +129,11 @@ sub fix_symbols
     foreach my $node (@nodes)
     {
         # '%' (percent) and '$' (dollar) will be tagged SYM regardless their
-        # original part of speech (probably PUNCT or NOUN).
-        if($node->form() =~ m/^[\$%]$/)
+        # original part of speech (probably PUNCT or NOUN). Note that we do not
+        # require that the token consists solely of the symbol character.
+        # Especially with '$' there are tokens like 'US$', 'CR$' etc. that
+        # should be included.
+        if($node->form() =~ m/[\$%]$/)
         {
             $node->iset()->set('pos', 'sym');
             # If the original dependency relation was AuxG, it should be changed but there is no way of knowing the correct relation.
