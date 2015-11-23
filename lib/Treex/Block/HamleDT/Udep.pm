@@ -314,7 +314,7 @@ sub afun_to_udeprel
             {
                 $deprel = 'foreign';
             }
-            elsif($node->is_adjective() && $node->is_pronoun() && $self->agree($node, $parent, 'case'))
+            elsif($node->is_determiner() && $self->agree($node, $parent, 'case'))
             {
                 # Warning: In Czech and some other languages the tagset does not distinguish determiners from pronouns.
                 # The distinction is done during Interset decoding, using heuristics.
