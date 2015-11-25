@@ -51,6 +51,7 @@ sub process_zone
     $self->fix_symbols($root);
     $self->fix_annotation_errors($root);
     $self->afun_to_udeprel($root);
+    $self->split_tokens_on_underscore($root);
     $self->relabel_appos_name($root);
     # The most difficult part is detection of coordination, prepositional and
     # similar phrases and their interaction. It will be done bottom-up using
@@ -508,6 +509,73 @@ sub afun_to_udeprel
 
 
 #------------------------------------------------------------------------------
+# Some treebanks have multi-word expressions collapsed to one node and the
+# original words are connected with the underscore character. For example, in
+# Portuguese there is the token "Ministério_do_Planeamento_e_Administração_do_Território".
+# This is not allowed in Universal Dependencies. Multi-word expressions must be
+# split again and the individual words can then be connected using relations
+# that will mark the multi-word expression.
+#------------------------------------------------------------------------------
+sub split_tokens_on_underscore
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    for(my $i = 0; $i <= $#nodes; $i++)
+    {
+        my $node = $nodes[$i];
+        if($node->form() =~ m/._./)
+        {
+            # If the MWE is tagged as proper noun then the words will also be
+            # proper nouns and they will be connected using the 'name' relation.
+            # We have to ignore that some of these proper "nouns" are in fact
+            # adjectives (e.g. "San" in "San Salvador"). But we will not ignore
+            # function words such as "de". These are language-specific.
+            if($node->is_proper_noun())
+            {
+                my @words = split(/_/, $node->form());
+                ###!!! Only the easy cases now: give up if there are all-lowercase words (probably function words).
+                my $fw = any {lc($_) eq $_} (@words);
+                unless($fw)
+                {
+                    my $ord = $node->ord();
+                    my $n = scalar(@words);
+                    my @lemmas = split(/_/, $node->lemma());
+                    if(scalar(@lemmas) != $n)
+                    {
+                        log_warn("MWE '".$node->form()."' contains $n words but its lemma '".$node->lemma()."' contains ".scalar(@lemmas)." words.");
+                    }
+                    # Generate nodes for the new words.
+                    for(my $j = 1; $j < $n; $j++)
+                    {
+                        my $new_node = $node->create_child();
+                        $new_node->_set_ord($ord+$j);
+                        $new_node->set_form($words[$j]);
+                        my $lemma = $lemmas[$j];
+                        $lemma = '_' if(!defined($lemma));
+                        $new_node->set_lemma($lemma);
+                        # Copy all Interset features. It may be wrong, e.g. if we are splitting "Presidente_da_República", the MWE may be masculine but "República" is not.
+                        # Unfortunately there is no dictionary-independent way to deduce the features of the individual words.
+                        $new_node->set_iset($node->get_iset());
+                        $new_node->set_deprel('name');
+                    }
+                    # The original node will now represent only the first word.
+                    $node->set_form($words[0]);
+                    $node->set_lemma($lemmas[0]);
+                    # Adjust ords of the subsequent old nodes!
+                    for(my $j = $i + 1; $j <= $#nodes; $j++)
+                    {
+                        $nodes[$j]->_set_ord( $ord + $n + ($j - $i - 1) );
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # In the Croatian SETimes corpus, given name of a person depends on the family
 # name, and the relation is labeled as apposition. Change the label to 'name'.
 # This should be done before we start structural transformations.
@@ -520,7 +588,7 @@ sub relabel_appos_name
     foreach my $node (@nodes)
     {
         my $deprel = $node->deprel();
-        if($deprel eq 'appos')
+        if(defined($deprel) && $deprel eq 'appos')
         {
             my $parent = $node->parent();
             next if($parent->is_root());
