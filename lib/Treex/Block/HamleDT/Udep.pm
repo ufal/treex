@@ -526,6 +526,8 @@ sub split_tokens_on_underscore
         my $node = $nodes[$i];
         if($node->form() =~ m/._./)
         {
+            my @words = split(/_/, $node->form());
+            my $n = scalar(@words);
             # If the MWE is tagged as proper noun then the words will also be
             # proper nouns and they will be connected using the 'name' relation.
             # We have to ignore that some of these proper "nouns" are in fact
@@ -533,38 +535,8 @@ sub split_tokens_on_underscore
             # function words such as "de". These are language-specific.
             if($node->is_proper_noun())
             {
-                my @words = split(/_/, $node->form());
-                my $n = scalar(@words);
-                my $ord = $node->ord();
-                my @lemmas = split(/_/, $node->lemma());
-                if(scalar(@lemmas) != $n)
-                {
-                    log_warn("MWE '".$node->form()."' contains $n words but its lemma '".$node->lemma()."' contains ".scalar(@lemmas)." words.");
-                }
                 # Generate nodes for the new words.
-                my @new_nodes;
-                for(my $j = 1; $j < $n; $j++)
-                {
-                    my $new_node = $node->create_child();
-                    $new_node->_set_ord($ord+$j);
-                    $new_node->set_form($words[$j]);
-                    my $lemma = $lemmas[$j];
-                    $lemma = '_' if(!defined($lemma));
-                    $new_node->set_lemma($lemma);
-                    # Copy all Interset features. It may be wrong, e.g. if we are splitting "Presidente_da_República", the MWE may be masculine but "República" is not.
-                    # Unfortunately there is no dictionary-independent way to deduce the features of the individual words.
-                    $new_node->set_iset($node->iset());
-                    $new_node->set_deprel('name');
-                    push(@new_nodes, $new_node);
-                }
-                # The original node will now represent only the first word.
-                $node->set_form($words[0]);
-                $node->set_lemma($lemmas[0]);
-                # Adjust ords of the subsequent old nodes!
-                for(my $j = $i + 1; $j <= $#nodes; $j++)
-                {
-                    $nodes[$j]->_set_ord( $ord + $n + ($j - $i - 1) );
-                }
+                my @new_nodes = $self->generate_subnodes(\@nodes, $i, \@words, 'name');
                 # Were there any function words? Approximation: all-lowercase words within named entities are probably function words.
                 ###!!! Note that this will not recognize a function word if it is the first word of the MWE (the articles are likely to occur first).
                 my @fw = grep {lc($_) eq $_} (@words);
@@ -582,8 +554,85 @@ sub split_tokens_on_underscore
                     log_warn("Function words in the named entity '".join(' ', @words)."' may not have been attached correctly.");
                 }
             }
+            # Compound preposition.
+            elsif($node->is_adposition())
+            {
+                # Generate nodes for the new words.
+                my @new_nodes = $self->generate_subnodes(\@nodes, $i, \@words, 'mwe');
+                # abaixo_de, acerca_de, acima_de
+                if($n == 2 && $words[1] =~ m/^(de|a)$/i)
+                {
+                    $node->iset()->set_hash({'pos' => 'adv'});
+                    $new_nodes[0]->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep'});
+                }
+                # à_beira_de, a_cargo_de, a_coberto_de
+                ###!!! but: obra_do_mestre
+                elsif($n == 3)
+                {
+                    $node->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep'});
+                    $new_nodes[0]->iset()->set_hash({'pos' => 'noun', 'nountype' => 'com'});
+                    $new_nodes[1]->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep'});
+                }
+                # desde_há
+                # in_loco
+                # para_os_lados_de
+                # tal_como
+                else
+                {
+                    log_warn("The compound preposition '".join(' ', @words)."' may not have been decomposed correctly.");
+                }
+            }
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# This method is called at several places in split_tokens_on_underscore() and
+# it is responsible for creating the new nodes, distributing words and lemmas
+# connecting the new subtree in a canonical way and taking care of ords.
+#------------------------------------------------------------------------------
+sub generate_subnodes
+{
+    my $self = shift;
+    my $nodes = shift; # ArrayRef: all existing nodes, ordered
+    my $i = shift; # index of the current node (this node will be split)
+    my $node = $nodes->[$i];
+    my $ord = $node->ord();
+    my $words = shift; # ArrayRef: word forms to generate from the current node
+    my $n = scalar(@{$words});
+    my $deprel = shift; # deprel to use when connecting the new nodes to the current one
+    my @lemmas = split(/_/, $node->lemma());
+    if(scalar(@lemmas) != $n)
+    {
+        log_warn("MWE '".$node->form()."' contains $n words but its lemma '".$node->lemma()."' contains ".scalar(@lemmas)." words.");
+    }
+    my @new_nodes;
+    for(my $j = 1; $j < $n; $j++)
+    {
+        my $new_node = $node->create_child();
+        $new_node->_set_ord($ord+$j);
+        $new_node->set_form($words->[$j]);
+        my $lemma = $lemmas[$j];
+        $lemma = '_' if(!defined($lemma));
+        $new_node->set_lemma($lemma);
+        # Copy all Interset features. It may be wrong, e.g. if we are splitting "Presidente_da_República", the MWE may be masculine but "República" is not.
+        # Unfortunately there is no dictionary-independent way to deduce the features of the individual words.
+        $new_node->set_iset($node->iset());
+        $new_node->set_deprel($deprel);
+        push(@new_nodes, $new_node);
+    }
+    # The original node will now represent only the first word.
+    $node->set_form($words->[0]);
+    $node->set_lemma($lemmas->[0]);
+    # Adjust ords of the subsequent old nodes!
+    for(my $j = $i + 1; $j <= $#nodes; $j++)
+    {
+        $nodes[$j]->_set_ord( $ord + $n + ($j - $i - 1) );
+    }
+    # Return the list of new nodes.
+    return @new_nodes;
 }
 
 
