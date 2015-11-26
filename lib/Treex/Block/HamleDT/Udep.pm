@@ -625,11 +625,11 @@ sub generate_subnodes
     }
     # The original node will now represent only the first word.
     $node->set_form($words->[0]);
-    $node->set_lemma($lemmas->[0]);
+    $node->set_lemma($lemmas[0]);
     # Adjust ords of the subsequent old nodes!
-    for(my $j = $i + 1; $j <= $#nodes; $j++)
+    for(my $j = $i + 1; $j <= $#{$nodes}; $j++)
     {
-        $nodes[$j]->_set_ord( $ord + $n + ($j - $i - 1) );
+        $nodes->[$j]->_set_ord( $ord + $n + ($j - $i - 1) );
     }
     # Return the list of new nodes.
     return @new_nodes;
