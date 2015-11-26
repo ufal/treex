@@ -534,39 +534,52 @@ sub split_tokens_on_underscore
             if($node->is_proper_noun())
             {
                 my @words = split(/_/, $node->form());
-                ###!!! Only the easy cases now: give up if there are all-lowercase words (probably function words).
-                my $fw = any {lc($_) eq $_} (@words);
-                unless($fw)
+                my $n = scalar(@words);
+                my $ord = $node->ord();
+                my @lemmas = split(/_/, $node->lemma());
+                if(scalar(@lemmas) != $n)
                 {
-                    my $ord = $node->ord();
-                    my $n = scalar(@words);
-                    my @lemmas = split(/_/, $node->lemma());
-                    if(scalar(@lemmas) != $n)
-                    {
-                        log_warn("MWE '".$node->form()."' contains $n words but its lemma '".$node->lemma()."' contains ".scalar(@lemmas)." words.");
-                    }
-                    # Generate nodes for the new words.
-                    for(my $j = 1; $j < $n; $j++)
-                    {
-                        my $new_node = $node->create_child();
-                        $new_node->_set_ord($ord+$j);
-                        $new_node->set_form($words[$j]);
-                        my $lemma = $lemmas[$j];
-                        $lemma = '_' if(!defined($lemma));
-                        $new_node->set_lemma($lemma);
-                        # Copy all Interset features. It may be wrong, e.g. if we are splitting "Presidente_da_República", the MWE may be masculine but "República" is not.
-                        # Unfortunately there is no dictionary-independent way to deduce the features of the individual words.
-                        $new_node->set_iset($node->get_iset());
-                        $new_node->set_deprel('name');
-                    }
-                    # The original node will now represent only the first word.
-                    $node->set_form($words[0]);
-                    $node->set_lemma($lemmas[0]);
-                    # Adjust ords of the subsequent old nodes!
-                    for(my $j = $i + 1; $j <= $#nodes; $j++)
-                    {
-                        $nodes[$j]->_set_ord( $ord + $n + ($j - $i - 1) );
-                    }
+                    log_warn("MWE '".$node->form()."' contains $n words but its lemma '".$node->lemma()."' contains ".scalar(@lemmas)." words.");
+                }
+                # Generate nodes for the new words.
+                my @new_nodes;
+                for(my $j = 1; $j < $n; $j++)
+                {
+                    my $new_node = $node->create_child();
+                    $new_node->_set_ord($ord+$j);
+                    $new_node->set_form($words[$j]);
+                    my $lemma = $lemmas[$j];
+                    $lemma = '_' if(!defined($lemma));
+                    $new_node->set_lemma($lemma);
+                    # Copy all Interset features. It may be wrong, e.g. if we are splitting "Presidente_da_República", the MWE may be masculine but "República" is not.
+                    # Unfortunately there is no dictionary-independent way to deduce the features of the individual words.
+                    $new_node->set_iset($node->iset());
+                    $new_node->set_deprel('name');
+                    push(@new_nodes, $new_node);
+                }
+                # The original node will now represent only the first word.
+                $node->set_form($words[0]);
+                $node->set_lemma($lemmas[0]);
+                # Adjust ords of the subsequent old nodes!
+                for(my $j = $i + 1; $j <= $#nodes; $j++)
+                {
+                    $nodes[$j]->_set_ord( $ord + $n + ($j - $i - 1) );
+                }
+                # Were there any function words? Approximation: all-lowercase words within named entities are probably function words.
+                ###!!! Note that this will not recognize a function word if it is the first word of the MWE (the articles are likely to occur first).
+                my @fw = grep {lc($_) eq $_} (@words);
+                # Relatively easy: three or more words, the second word from right is /(de|do|da|dos|das)/.
+                if($n >= 3 && scalar(@fw) == 1 && $words[$n-2] =~ m/^(de|do|da|dos|das)$/)
+                {
+                    # Only now we can reattach the function words. We could not do it before all new nodes were created.
+                    ###!!! We assume that the second word is the only function word albeit we have not checked that the third word is not.
+                    $new_nodes[$n-3]->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep'});
+                    $new_nodes[$n-3]->set_parent($new_nodes[$n-2]);
+                    $new_nodes[$n-3]->set_deprel('case');
+                }
+                elsif(scalar(@fw) > 0)
+                {
+                    log_warn("Function words in the named entity '".join(' ', @words)."' may not have been attached correctly.");
                 }
             }
         }
