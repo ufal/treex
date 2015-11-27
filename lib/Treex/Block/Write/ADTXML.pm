@@ -200,8 +200,8 @@ sub _get_pos {
     }
     if ( $pos eq 'adj' ) {
         $data{'aform'} = 'base'   if ( $anode->match_iset( 'degree' => 'pos' ) );
-        $data{'aform'} = 'compar' if ( $anode->match_iset( 'degree' => 'comp' ) );
-        $data{'aform'} = 'super'  if ( $anode->match_iset( 'degree' => 'sup' ) );
+        $data{'aform'} = 'compar' if ( $anode->is_comparative() );
+        $data{'aform'} = 'super'  if ( $anode->is_superlative() );
     }
 
     return join( ' ', map { $_ . '="' . $data{$_} . '"' } sort { $a cmp $b } keys %data );
