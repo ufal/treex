@@ -145,21 +145,8 @@ sub detect_special_constructions
         # hence we do not see a prepositional phrase (the label would have to be AuxP
         # instead of Coord). However, after processing the coordination the phrase
         # will get a new label and it may well be AuxP.
-        $phrase = $self->detect_multi_word_expression($phrase);
         $phrase = $self->detect_prague_coordination($phrase);
         $phrase = $self->detect_prague_pp($phrase);
-        $phrase = $self->detect_colon_predicate($phrase);
-        $phrase = $self->detect_prague_copula($phrase);
-        $phrase = $self->detect_name_phrase($phrase);
-        $phrase = $self->detect_compound_numeral($phrase);
-        $phrase = $self->detect_counted_noun_in_genitive($phrase) if($self->counted_genitives());
-        $phrase = $self->detect_indirect_object($phrase);
-        $phrase = $self->detect_controlled_verb($phrase);
-        $phrase = $self->detect_controlled_subject($phrase);
-    }
-    else
-    {
-        $phrase = $self->detect_root_phrase($phrase);
     }
     # Return the resulting phrase. It may be different from the input phrase.
     return $phrase;
