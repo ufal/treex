@@ -285,19 +285,11 @@ sub detect_prague_pp
     # If this is the Prague style then the preposition (if any) must be the head.
     if($self->is_deprel($phrase->deprel(), 'auxpc'))
     {
-        ###!!! Will $1 survive the return from the is_deprel() method? Even if it will, it is very nasty to catch it here!
-        ###!!! This is the downside of moving the regular expressions to the dialect layer. We have to do something about it.
-        ###!!! Confirmed: It will not survive. For now, let's repeat the regular expression:
-        $phrase->deprel() =~ m/^(case|mark):(aux[pc])/;
-        my $target_deprel = $1;
+        my $target_deprel = $phrase->deprel();
         my $c = $self->classify_prague_pp_subphrases($phrase);
         # If there are no argument candidates, we cannot create a prepositional phrase.
         if(!defined($c))
         {
-            # The ':auxp' or ':auxc' in deprel marked unprocessed prepositions and subordinating conjunctions.
-            # Now that this one has been visited (even if we did not find the expected configuration) we must
-            # remove this extension so that only known labels appear in the output.
-            $phrase->set_deprel($target_deprel);
             return $phrase;
         }
         # We are working bottom-up, thus the current phrase does not have a parent yet and we do not have to take care of the parent link.
@@ -363,9 +355,7 @@ sub classify_prague_pp_subphrases
     # Classify dependents of the preposition.
     foreach my $d (@dependents)
     {
-        # Case attached to case (or mark to mark, or even mark to case or case to mark) means a multi-word preposition (conjunction).
-        # The leaves used to be labeled AuxP (AuxC) and later case:auxp (mark:auxc). But we are working bottom-up. We have visited
-        # the dependents, we were unable to construct a PP (because they have no children) but we removed the :aux[pc] from the label.
+        # AuxP attached to AuxP (or AuxC to AuxC, or even AuxC to AuxP or AuxP to AuxC) means a multi-word preposition (conjunction).
         if($self->is_deprel($d->deprel(), 'auxpc1'))
         {
             push(@mwauxp, $d);
@@ -397,7 +387,7 @@ sub classify_prague_pp_subphrases
     my $preposition = $phrase;
     # If there are two or more argument candidates, we have to select the best one.
     # There may be more sophisticated approaches but let's just take the first one for the moment.
-    # Emphasizers (AuxZ or advmod:emph) preceding the preposition should be attached to the argument
+    # Emphasizers (AuxZ) preceding the preposition should be attached to the argument
     # rather than the preposition. However, occasionally they are attached to the preposition, as in [cs]:
     #   , přinejmenším pokud jde o platy
     #   , at-least if are-concerned about salaries
