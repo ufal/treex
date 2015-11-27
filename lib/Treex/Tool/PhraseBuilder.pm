@@ -85,6 +85,7 @@ sub detect_special_constructions
         $phrase = $self->detect_prague_pp($phrase);
         $phrase = $self->detect_colon_predicate($phrase);
         $phrase = $self->detect_prague_copula($phrase);
+        $phrase = $self->detect_multi_word_expression($phrase);
         $phrase = $self->detect_name_phrase($phrase);
         $phrase = $self->detect_compound_numeral($phrase);
         $phrase = $self->detect_counted_noun_in_genitive($phrase) if($self->counted_genitives());
@@ -516,6 +517,69 @@ sub detect_prague_copula
         return $pp;
     }
     # Return the input phrase if no PP has been detected.
+    return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Looks for multi-word expressions, i.e. two or more nodes connected by the mwe
+# relation. Makes sure that the leftmost node is the head. MWEs in UD are
+# supposed to be flat and this method does not search recursively for nested
+# mwe relations. Prague treebanks do not have an equivalent of the mwe relation
+# but it may be recognized and introduced during conversion.
+#------------------------------------------------------------------------------
+sub detect_multi_word_expression
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    # Are there any non-core children attached as mwe?
+    my @dependents = $phrase->dependents();
+    my @mwe = grep {$_->deprel() eq 'mwe'} (@dependents);
+    if(scalar(@mwe)>=1)
+    {
+        my @nonmwe = grep {$_->deprel() ne 'mwe'} (@dependents);
+        # If there are mwe children, then the current phrase is a mwe, too.
+        # Detach the dependents first, so that we can put the current phrase on the same level with the other mwes.
+        foreach my $d (@dependents)
+        {
+            $d->set_parent(undef);
+        }
+        my $deprel = $phrase->deprel();
+        my $member = $phrase->is_member();
+        $phrase->set_is_member(0);
+        # Add the current phrase (without dependents) to the mwes and order them.
+        push(@mwe, $phrase);
+        @mwe = sort {$a->ord() <=> $b->ord()} (@mwe);
+        # Create a new nonterminal phrase for the mwe only.
+        # (In the future we may also want to create a new subclass of nonterminal
+        # phrases specifically for head-first multi-word segments. But it is not
+        # necessary for transformations to work, so let's keep this for now.)
+        my $mwephrase = new Treex::Core::Phrase::NTerm('head' => shift(@mwe));
+        foreach my $n (@mwe)
+        {
+            $n->set_parent($mwephrase);
+            $n->set_deprel('mwe');
+            $n->set_is_member(0);
+        }
+        # Create a new nonterminal phrase that will group the mwe phrase with
+        # the original non-mwe dependents, if any.
+        if(scalar(@nonmwe)>=1)
+        {
+            $phrase = new Treex::Core::Phrase::NTerm('head' => $mwephrase);
+            foreach my $d (@nonmwe)
+            {
+                $d->set_parent($phrase);
+                $d->set_is_member(0);
+            }
+        }
+        else
+        {
+            $phrase = $mwephrase;
+        }
+        $phrase->set_deprel($deprel);
+        $phrase->set_is_member($member);
+    }
     return $phrase;
 }
 
