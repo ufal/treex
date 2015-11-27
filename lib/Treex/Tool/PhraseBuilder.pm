@@ -59,6 +59,92 @@ has 'counted_genitives' =>
         'This should not be called e.g. in the Index Thomisticus Treebank.'
 );
 
+has 'dialect' =>
+(
+    is         => 'ro',
+    isa        => 'HashRef',
+    lazy_build => 1,
+    documentation =>
+        'Defines the dialect of the Prague annotation style: translates our '.
+        '"neutral" labels to the dependency labels actually used in the data.'
+);
+
+
+
+#------------------------------------------------------------------------------
+# Defines the dialect of the Prague annotation style that is used in the data.
+# What dependency labels are used? By separating the labels from the other code
+# we can use the same PhraseBuilder for Prague-style trees with original Prague
+# labels (afuns), as well as for trees in which the labels have already been
+# translated to Universal Dependencies (but the topology is still Prague-like).
+#
+# Usage 0: if ( $self->is_deprel( $deprel, 'punct' ) ) { ... }
+# Usage 1: $self->set_deprel( $phrase, 'punct' );
+#------------------------------------------------------------------------------
+sub _build_dialect
+{
+    # A lazy builder can be called from anywhere, including map or grep. Protect $_!
+    local $_;
+    # Mapping from id to regular expression describing corresponding deprels in the dialect.
+    # The second position is the label used in set_deprel(); not available for all ids.
+    my %map =
+    (
+        'advmod'    => ['^advmod$', 'advmod'],
+        'appos'     => ['^appos$', 'appos'],
+        'aux'       => ['^aux$', 'aux'],
+        'auxk'      => ['^root:auxk$'],
+        'auxpc'     => ['^(case|mark):(aux[pc])'],
+        'auxpc1'    => ['(case|mark)'],
+        'auxv'      => ['^aux$', 'aux'],
+        'auxyz'     => ['^(advmod:emph|cc)$'],
+        'case'      => ['^case$', 'case'],
+        'cc'        => ['^cc$', 'cc'],
+        'ccomp'     => ['^ccomp$', 'ccomp'],
+        'compound'  => ['^compound$', 'compound'],
+        'coord'     => [':coord'],
+        'cop'       => ['^cop$', 'cop'],
+        'cxcomp'    => ['^[cx]comp$'],
+        'dobj'      => ['^dobj$', 'dobj'],
+        'iobj'      => ['^iobj$', 'iobj'],
+        'mwe'       => ['^mwe$', 'mwe'],
+        'name'      => ['^name$', 'name'],
+        'nmod'      => ['^nmod$', 'nmod'],
+        'nsubj'     => ['^nsubj$', 'nsubj'],
+        'nummod'    => ['^(nummod|nummod:gov|det:nummod|det:numgov)$'],
+        'parataxis' => ['^parataxis$', 'parataxis'],
+        'pnom'      => ['pnom'], # ^dep:pnom$
+        'punct'     => ['^punct$', 'punct'],
+        'root'      => ['^root(:|$)', 'root'],
+        'subj'      => ['subj'], # ^[nc]subj(pass)?(:|$)
+        'xcomp'     => ['^xcomp$', 'xcomp'],
+    );
+    return \%map;
+}
+sub is_deprel
+{
+    my $self = shift;
+    my $deprel = shift; # deprel to test
+    my $id = shift; # our neutral/mixed label
+    my $map = $self->dialect();
+    return exists($map->{$id}) && $deprel =~ m/$map->{$id}[0]/i;
+}
+sub set_deprel
+{
+    my $self = shift;
+    my $phrase = shift;
+    my $id = shift;
+    my $map = $self->dialect();
+    if(exists($map->{$id}) && defined($map->{$id}[1]))
+    {
+        return $phrase->set_deprel($map->{$id}[1]);
+    }
+    else
+    {
+        log_warn("Dependency relation '$id' is unknown in this dialect of phrase builder.");
+        return $phrase->set_deprel("dep:$id");
+    }
+}
+
 
 
 #------------------------------------------------------------------------------
@@ -115,11 +201,12 @@ sub detect_prague_coordination
     # If this is the Prague style then the head is either coordinating conjunction or punctuation.
     # The deprel is already partially converted to UD, so it should be something:coord
     # (cc:coord, punct:coord); see HamleDT::Udep->afun_to_udeprel().
-    if($phrase->deprel() =~ m/:coord/i)
+    if($self->is_deprel($phrase->deprel(), 'coord'))
     {
         # Remove the ':coord' part from the deprel. Even if we do not find any
         # conjunct and cannot construct coordination, the label cannot remain
         # in the data.
+        ###!!! This operation works only with the UD dialect! But the current dialect layer cannot handle it.
         my $deprel = $phrase->deprel();
         $deprel =~ s/:coord//i;
         $phrase->set_deprel($deprel);
@@ -152,7 +239,7 @@ sub detect_prague_coordination
             # Additional coordinating conjunctions (except the head).
             # In PDT they are labeled AuxY but other words in the tree may get
             # this label too. During label conversion it is converted to cc.
-            elsif($d->deprel() eq 'cc')
+            elsif($self->is_deprel($d->deprel(), 'cc'))
             {
                 push(@coordinators, $d);
             }
@@ -163,7 +250,7 @@ sub detect_prague_coordination
             # apposition (playing either a conjunct or a shared dependent) but
             # it should have been processed by now, as we are proceeding
             # bottom-up.
-            elsif($d->deprel() eq 'punct')
+            elsif($self->is_deprel($d->deprel(), 'punct'))
             {
                 push(@punctuation, $d);
             }
@@ -185,7 +272,7 @@ sub detect_prague_coordination
         my $member = $phrase->is_member();
         my $old_head = $phrase->head();
         $phrase->detach_children_and_die();
-        if($deprel eq 'punct')
+        if($self->is_deprel($deprel, 'punct'))
         {
             push(@punctuation, $old_head);
         }
@@ -243,10 +330,12 @@ sub detect_prague_pp
     my $self = shift;
     my $phrase = shift; # Treex::Core::Phrase
     # If this is the Prague style then the preposition (if any) must be the head.
-    # The deprel is already partially converted to UD, so it should be something:auxp
-    # (case:auxp, mark:auxp); see HamleDT::Udep->afun_to_udeprel().
-    if($phrase->deprel() =~ m/^(case|mark):(aux[pc])/i)
+    if($self->is_deprel($phrase->deprel(), 'auxpc'))
     {
+        ###!!! Will $1 survive the return from the is_deprel() method? Even if it will, it is very nasty to catch it here!
+        ###!!! This is the downside of moving the regular expressions to the dialect layer. We have to do something about it.
+        ###!!! Confirmed: It will not survive. For now, let's repeat the regular expression:
+        $phrase->deprel() =~ m/^(case|mark):(aux[pc])/;
         my $target_deprel = $1;
         my $c = $self->classify_prague_pp_subphrases($phrase);
         # If there are no argument candidates, we cannot create a prepositional phrase.
@@ -279,7 +368,7 @@ sub detect_prague_pp
             foreach my $mwp (@mwe)
             {
                 $mwp->set_parent($c->{fun});
-                $mwp->set_deprel('mwe');
+                $self->set_deprel($mwp, 'mwe');
             }
         }
         my $pp = new Treex::Core::Phrase::PP
@@ -324,7 +413,7 @@ sub classify_prague_pp_subphrases
         # Case attached to case (or mark to mark, or even mark to case or case to mark) means a multi-word preposition (conjunction).
         # The leaves used to be labeled AuxP (AuxC) and later case:auxp (mark:auxc). But we are working bottom-up. We have visited
         # the dependents, we were unable to construct a PP (because they have no children) but we removed the :aux[pc] from the label.
-        if($d->deprel() =~ m/(case|mark)/i)
+        if($self->is_deprel($d->deprel(), 'auxpc1'))
         {
             push(@mwauxp, $d);
         }
@@ -365,8 +454,8 @@ sub classify_prague_pp_subphrases
     #   třeba v tom
     #   for-example in the-fact
     # In this case, "třeba" is attached to "v" as AuxY (cc), not as AuxZ (advmod:emph).
-    my @ecandidates = grep {$_->deprel() =~ m/^(advmod:emph|cc)$/} (@candidates);
-    my @ocandidates = grep {$_->deprel() !~ m/^(advmod:emph|cc)$/} (@candidates);
+    my @ecandidates = grep {$self->is_deprel($_->deprel(), 'auxyz')} (@candidates);
+    my @ocandidates = grep {!$self->is_deprel($_->deprel(), 'auxyz')} (@candidates);
     my $argument;
     if(scalar(@ocandidates)>0)
     {
@@ -399,9 +488,7 @@ sub detect_prague_copula
     my $self = shift;
     my $phrase = shift; # Treex::Core::Phrase
     # If this is the Prague style then the copula (if any) must be the head.
-    # The deprel is already partially converted to UD, so there should be a child
-    # labeled dep:pnom; see HamleDT::Udep->afun_to_udeprel().
-    my @pnom = grep {$_->deprel() =~ m/pnom/i} ($phrase->dependents('ordered' => 1));
+    my @pnom = grep {$self->is_deprel($_->deprel(), 'pnom')} ($phrase->dependents('ordered' => 1));
     if(scalar(@pnom)>=1)
     {
         # Now it is clear that we have a nominal predicate with copula.
@@ -461,7 +548,7 @@ sub detect_prague_copula
                 }
             }
             # The unselected candidates must receive a dependency relation label (at the moment they only have 'dep:pnom').
-            my $subject_exists = any {$_->deprel() =~ m/subj/i} ($phrase->dependents());
+            my $subject_exists = any {$self->is_deprel($_->deprel(), 'subj')} ($phrase->dependents());
             foreach my $x (@pnom)
             {
                 unless($x == $argument)
@@ -470,16 +557,16 @@ sub detect_prague_copula
                     {
                         if($subject_exists)
                         {
-                            $x->set_deprel('nmod');
+                            $self->set_deprel($x, 'nmod');
                         }
                         else
                         {
-                            $x->set_deprel('nsubj');
+                            $self->set_deprel($x, 'nsubj');
                         }
                     }
                     else
                     {
-                        $x->set_deprel('advmod');
+                        $self->set_deprel($x, 'advmod');
                     }
                 }
             }
@@ -502,11 +589,11 @@ sub detect_prague_copula
         # Punctuation should not be attached as cop.
         if($copula->node()->is_punctuation())
         {
-            $copula->set_deprel('punct');
+            $self->set_deprel($copula, 'punct');
         }
         else
         {
-            $copula->set_deprel('cop');
+            $self->set_deprel($copula, 'cop');
         }
         $pp->set_deprel($deprel);
         $pp->set_parent($parent);
@@ -535,10 +622,10 @@ sub detect_multi_word_expression
     my $phrase = shift; # Treex::Core::Phrase
     # Are there any non-core children attached as mwe?
     my @dependents = $phrase->dependents();
-    my @mwe = grep {$_->deprel() eq 'mwe'} (@dependents);
+    my @mwe = grep {$self->is_deprel($_->deprel(), 'mwe')} (@dependents);
     if(scalar(@mwe)>=1)
     {
-        my @nonmwe = grep {$_->deprel() ne 'mwe'} (@dependents);
+        my @nonmwe = grep {!$self->is_deprel($_->deprel(), 'mwe')} (@dependents);
         # If there are mwe children, then the current phrase is a mwe, too.
         # Detach the dependents first, so that we can put the current phrase on the same level with the other mwes.
         foreach my $d (@dependents)
@@ -559,7 +646,7 @@ sub detect_multi_word_expression
         foreach my $n (@mwe)
         {
             $n->set_parent($mwephrase);
-            $n->set_deprel('mwe');
+            $self->set_deprel($n, 'mwe');
             $n->set_is_member(0);
         }
         # Create a new nonterminal phrase that will group the mwe phrase with
@@ -598,10 +685,10 @@ sub detect_name_phrase
     my $phrase = shift; # Treex::Core::Phrase
     # Are there any non-core children attached as name?
     my @dependents = $phrase->dependents();
-    my @name = grep {$_->deprel() eq 'name'} (@dependents);
+    my @name = grep {$self->is_deprel($_->deprel(), 'name')} (@dependents);
     if(scalar(@name)>=1)
     {
-        my @nonname = grep {$_->deprel() ne 'name'} (@dependents);
+        my @nonname = grep {!$self->is_deprel($_->deprel(), 'name')} (@dependents);
         # If there are name children, then the current phrase is a name, too.
         # Detach the dependents first, so that we can put the current phrase on the same level with the other names.
         foreach my $d (@dependents)
@@ -622,7 +709,7 @@ sub detect_name_phrase
         foreach my $n (@name)
         {
             $n->set_parent($namephrase);
-            $n->set_deprel('name');
+            $self->set_deprel($n, 'name');
             $n->set_is_member(0);
         }
         # Create a new nonterminal phrase that will group the name phrase with
@@ -679,7 +766,7 @@ sub detect_compound_numeral
         foreach my $n (@cnum)
         {
             $n->set_parent($cnumphrase);
-            $n->set_deprel('compound');
+            $self->set_deprel($n, 'compound');
             $n->set_is_member(0);
         }
         # Create a new nonterminal phrase that will group the numeral phrase with
@@ -733,7 +820,7 @@ sub detect_counted_noun_in_genitive
             {
                 my @dchildren = $d->children();
                 $ok = $ok && !any {$_->node()->is_adposition()} (@dchildren);
-                $ok = $ok && $d->deprel() ne 'appos';
+                $ok = $ok && !$self->is_deprel($d->deprel(), 'appos');
             }
             if($ok)
             {
@@ -765,14 +852,16 @@ sub detect_counted_noun_in_genitive
             # If the deprel convertor returned nummod or its relatives, it means that the whole phrase (numeral+nominal)
             # originally modified another nominal as Atr. Since the counted noun is now going to head the phrase, we
             # have to change the deprel to nmod. We would not change the deprel if it was nsubj, dobj, appos etc.
-            if($deprel =~ m/^(nummod|nummod:gov|det:nummod|det:numgov)$/)
+            if($self->is_deprel($deprel, 'nummod'))
             {
+                ###!!! We must translate the label to the current dialect!
                 $deprel = 'nmod';
             }
             # Create a new nonterminal phrase with the counted noun as the head.
             my $ntphrase = new Treex::Core::Phrase::NTerm('head' => $counted_noun);
             # Attach the numeral also as a dependent to the new phrase.
             $phrase->set_parent($ntphrase);
+            ###!!! We must translate the labels to the current dialect!
             $phrase->set_deprel($phrase->node()->iset()->prontype() eq '' ? 'nummod:gov' : 'det:numgov');
             $phrase->set_is_member(0);
             $phrase = $ntphrase;
@@ -803,24 +892,24 @@ sub detect_indirect_object
         # If there is a clausal complement (ccomp or xcomp), we assume that it
         # takes the role of the direct object. Any other object will be labeled
         # as indirect.
-        if(any {$_->deprel() =~ m/^[cx]comp$/} (@dependents))
+        if(any {$self->is_deprel($_->deprel(), 'cxcomp')} (@dependents))
         {
             foreach my $d (@dependents)
             {
-                if($d->deprel() eq 'dobj')
+                if($self->is_deprel($d->deprel(), 'dobj'))
                 {
-                    $d->set_deprel('iobj');
+                    $self->set_deprel($d, 'iobj');
                 }
             }
         }
         # If there is an accusative object without preposition, all other objects are indirect.
-        elsif(any {$_->deprel() eq 'dobj' && $self->get_phrase_case($_) eq 'acc'} (@dependents))
+        elsif(any {$self->is_deprel($_->deprel(), 'dobj') && $self->get_phrase_case($_) eq 'acc'} (@dependents))
         {
             foreach my $d (@dependents)
             {
-                if($d->deprel() eq 'dobj' && $self->get_phrase_case($d) ne 'acc')
+                if($self->is_deprel($d->deprel(), 'dobj') && $self->get_phrase_case($d) ne 'acc')
                 {
-                    $d->set_deprel('iobj');
+                    $self->set_deprel($d, 'iobj');
                 }
             }
         }
@@ -847,12 +936,12 @@ sub detect_controlled_verb
     # Only look for clausal complements headed by verbs.
     # We assume that ccomp has been initially changed to xcomp wherever infinitive was seen,
     # so now we only check that the infinitive is genuine.
-    if($phrase->node()->is_infinitive() && $phrase->deprel() eq 'xcomp')
+    if($phrase->node()->is_infinitive() && $self->is_deprel($phrase->deprel(), 'xcomp'))
     {
         my @dependents = $phrase->dependents();
-        if(any {$_->deprel() eq 'aux' && $_->node()->iset()->tense() eq 'fut'} (@dependents))
+        if(any {$self->is_deprel($_->deprel(), 'aux') && $_->node()->iset()->tense() eq 'fut'} (@dependents))
         {
-            $phrase->set_deprel('ccomp');
+            $self->set_deprel($phrase, 'ccomp');
         }
     }
     return $phrase;
@@ -876,8 +965,8 @@ sub detect_controlled_subject
     if($phrase->node()->is_verb())
     {
         my @dependents = $phrase->dependents();
-        my @controlled_infinitives = grep {$_->deprel() eq 'xcomp' && $_->node()->is_infinitive()} (@dependents);
-        my $has_subject = any {$_->deprel() =~ m/^[nc]subj(pass)?(:|$)/} (@dependents);
+        my @controlled_infinitives = grep {$self->is_deprel($_->deprel(), 'xcomp') && $_->node()->is_infinitive()} (@dependents);
+        my $has_subject = any {$self->is_deprel($_->deprel(), 'subj')} (@dependents);
         if(scalar(@controlled_infinitives)>0 && !$has_subject)
         {
             # It is not clear what we should do if there is more than one infinitive and they are not in coordination.
@@ -885,7 +974,7 @@ sub detect_controlled_subject
             # If there is a coordination of infinitives, we can only fix the error if they share one subject.
             # If the subject(s) is (are) attached as private dependents of the conjuncts, we will not fix them.
             my $infinitive = shift(@controlled_infinitives);
-            my @subjects = grep {$_->deprel() =~ m/^[nc]subj(pass)?(:|$)/} ($infinitive->dependents());
+            my @subjects = grep {$self->is_deprel($_->deprel(), 'subj')} ($infinitive->dependents());
             if(scalar(@subjects)>0)
             {
                 # Again, more than one subject (uncoordinate) does not make sense. Let's take the first one.
@@ -915,7 +1004,7 @@ sub get_phrase_case
     {
         # Does the phrase have any children (probably core children) attached as case?
         my @children = $phrase->children();
-        my @case_forms = map {$_->node()->form()} (grep {$_->deprel() eq 'case'} (@children));
+        my @case_forms = map {$_->node()->form()} (grep {$self->is_deprel($_->deprel(), 'case')} (@children));
         # Does the head node have the case feature?
         my $head_case = $node->iset()->case();
         push(@case_forms, $head_case) unless($head_case eq '');
@@ -959,11 +1048,11 @@ sub detect_colon_predicate
             my $new_head = shift(@npunct);
             $phrase->set_head($new_head);
             $phrase->set_deprel($deprel);
-            $old_head->set_deprel('punct');
+            $self->set_deprel($old_head, 'punct');
             # All other children of the colon (if any; probably just one other child) will be attached to the new head as apposition.
             foreach my $d (@npunct)
             {
-                $d->set_deprel('appos');
+                $self->set_deprel($d, 'appos');
             }
         }
     }
@@ -1012,15 +1101,15 @@ sub detect_root_phrase
             {
                 $d->set_parent($subphrase);
                 # Solve the sentence-final punctuation at the same time.
-                if($d->deprel() eq 'root:auxk')
+                if($self->is_deprel($d->deprel(), 'auxk'))
                 {
-                    $d->set_deprel('punct');
+                    $self->set_deprel($d, 'punct');
                 }
                 # If a Pnom was attached directly to the root (e.g. in Arabic), it did not go through the copula inversion
                 # and its deprel is still dep:pnom. Change it to something compatible with Universal Dependencies.
-                if($d->deprel() eq 'dep:pnom')
+                if($self->is_deprel($d->deprel(), 'pnom'))
                 {
-                    $d->set_deprel('parataxis');
+                    $self->set_deprel($d, 'parataxis');
                 }
             }
             $subphrase->set_parent($phrase);
@@ -1029,7 +1118,7 @@ sub detect_root_phrase
         # The child of the artificial root node is always attached with the label "root".
         if(scalar(@dependents)>0)
         {
-            $dependents[0]->set_deprel('root');
+            $self->set_deprel($dependents[0], 'root');
         }
     }
     # Return the modified phrase as with all detect methods.
