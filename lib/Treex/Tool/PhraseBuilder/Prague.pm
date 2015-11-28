@@ -70,10 +70,13 @@ sub _build_dialect
         'advmod'    => ['^Adv$', 'Adv'],
         'appos'     => ['^Apposition$', 'Apposition'],
         'aux'       => ['^AuxV$', 'AuxV'],
-        'auxk'      => ['^AuxK$'],
+        'auxg'      => ['^AuxG$', 'AuxG'], # punctuation other than comma
+        'auxk'      => ['^AuxK$', 'AuxK'], # sentence-terminating punctuation
         'auxpc'     => ['^Aux[PC]$'],
         'auxpc1'    => ['^Aux[PC]$'],
         'auxv'      => ['^AuxV$', 'AuxV'],
+        'auxx'      => ['^AuxX$', 'AuxX'], # comma
+        'auxy'      => ['^AuxY$', 'AuxY'], # additional coordinating conjunction or other function word
         'auxyz'     => ['^Aux[YZ]$'],
         'case'      => ['^AuxP$', 'AuxP'],
         'cc'        => ['^AuxY$', 'AuxY'],
@@ -157,6 +160,8 @@ sub detect_special_constructions
 #------------------------------------------------------------------------------
 # Examines a nonterminal phrase in the Prague style. If it recognizes
 # a coordination, transforms the general NTerm to Coordination.
+###!!! The current implementation does not take into account possible orphans
+###!!! caused by ellipsis.
 #------------------------------------------------------------------------------
 sub detect_prague_coordination
 {
@@ -165,7 +170,6 @@ sub detect_prague_coordination
     # If this is the Prague style then the head is either coordinating conjunction or punctuation.
     if($self->is_deprel($phrase->deprel(), 'coord'))
     {
-        my $deprel = $phrase->deprel();
         my @dependents = $phrase->dependents('ordered' => 1);
         my @conjuncts;
         my @coordinators;
@@ -178,8 +182,10 @@ sub detect_prague_coordination
             if($d->is_member())
             {
                 # Occasionally punctuation is labeled as conjunct (not nested coordination,
-                # that should be solved by now, but an orphan leaf node after ellipsis).
+                # which should be solved by now, but an orphan leaf node after ellipsis).
                 # We want to make it normal punctuation instead.
+                # (Note that we cannot recognize punctuation by dependency label in this case.
+                # It will be labeled 'ExD', not 'AuxX' or 'AuxG'.)
                 if($d->node()->is_punctuation() && $d->node()->is_leaf())
                 {
                     $d->set_is_member(0);
@@ -194,7 +200,8 @@ sub detect_prague_coordination
             }
             # Additional coordinating conjunctions (except the head).
             # In PDT they are labeled AuxY but other words in the tree may get
-            # this label too. During label conversion it is converted to cc.
+            # that label too. We identify it as 'cc' and use the dialect vocabulary
+            # to see what label we actually expect.
             elsif($self->is_deprel($d->deprel(), 'cc'))
             {
                 push(@coordinators, $d);
@@ -218,6 +225,11 @@ sub detect_prague_coordination
         my $n = scalar(@conjuncts);
         if($n == 0)
         {
+            log_warn('Coordination without conjuncts');
+            # We cannot keep 'coord' as the deprel of the phrase if there are no conjuncts.
+            my $node = $phrase->node();
+            my $deprel_id = defined($node->form()) && $node->form() eq ',' ? 'auxx' : $node->is_punctuation() ? 'auxg' : 'auxy';
+            $self->set_deprel($phrase, $deprel_id);
             return $phrase;
         }
         # Now it is clear that we have a coordination. A new Coordination phrase will be created
@@ -226,7 +238,8 @@ sub detect_prague_coordination
         my $member = $phrase->is_member();
         my $old_head = $phrase->head();
         $phrase->detach_children_and_die();
-        if($self->is_deprel($deprel, 'punct'))
+        # The dependency relation label of the coordination head was 'coord' regardless whether it was conjunction or punctuation.
+        if($old_head->node()->is_punctuation())
         {
             push(@punctuation, $old_head);
         }
@@ -247,10 +260,11 @@ sub detect_prague_coordination
             'is_member'    => $member
         );
         # Remove the is_member flag from the conjuncts. It will be no longer
-        # needed as we now know what are the conjuncts.
-        # Do not assign 'conj' as the deprel of the non-head conjuncts. That will
-        # be set during back-projection to the dependency tree, based on the
-        # annotation style that will be selected at that time.
+        # needed as we now know what are the conjuncts. (It may be re-introduced
+        # during back-projection to the dependency tree if the Prague annotation
+        # style is retained. Similarly we do not change the deprel of the non-head
+        # conjuncts now, but they may be later changed to 'conj' if the UD
+        # annotation style is selected.)
         foreach my $c (@conjuncts)
         {
             $c->set_is_member(0);
