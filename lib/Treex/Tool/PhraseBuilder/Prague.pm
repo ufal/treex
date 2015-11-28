@@ -67,37 +67,16 @@ sub _build_dialect
     # The second position is the label used in set_deprel(); not available for all ids.
     my %map =
     (
-        'advmod'    => ['^Adv$', 'Adv'],
-        'appos'     => ['^Apposition$', 'Apposition'],
-        'aux'       => ['^AuxV$', 'AuxV'],
         'auxg'      => ['^AuxG$', 'AuxG'], # punctuation other than comma
         'auxk'      => ['^AuxK$', 'AuxK'], # sentence-terminating punctuation
-        'auxpc'     => ['^Aux[PC]$'],
-        'auxpc1'    => ['^Aux[PC]$'],
-        'auxv'      => ['^AuxV$', 'AuxV'],
+        'auxpc'     => ['^Aux[PC]$'],      # preposition or subordinating conjunction
         'auxx'      => ['^AuxX$', 'AuxX'], # comma
         'auxy'      => ['^AuxY$', 'AuxY'], # additional coordinating conjunction or other function word
         'auxyz'     => ['^Aux[YZ]$'],
-        'case'      => ['^AuxP$', 'AuxP'],
-        'cc'        => ['^AuxY$', 'AuxY'],
-        'ccomp'     => ['^Obj$', 'Obj'],
-        'compound'  => ['^Compound$', 'Compound'],
-        'coord'     => ['^Coord$'],
-        'cop'       => ['^Cop$', 'Cop'],
-        'cxcomp'    => ['^Obj$'],
-        'dobj'      => ['^Obj$', 'Obj'],
-        'iobj'      => ['^Obj$', 'Obj'],
-        'mwe'       => ['^Mwe$', 'Mwe'],
-        'name'      => ['^Name$', 'Name'],
-        'nmod'      => ['^(Atr|Adv)$', 'Atr'],
-        'nsubj'     => ['^Sb$', 'Sb'],
-        'nummod'    => ['^Atr$'],
-        'parataxis' => ['^Pred$', 'Pred'],
-        'pnom'      => ['Pnom'],
+        'cc'        => ['^AuxY$', 'AuxY'], # coordinating conjunction
+        'coord'     => ['^Coord$'],        # head of coordination (conjunction or punctuation)
+        'mwe'       => ['^Mwe$', 'Mwe'],   # non-head word of a multi-word expression
         'punct'     => ['^Aux[XGK]$', 'AuxG'],
-        'root'      => ['^Pred', 'Pred'],
-        'subj'      => ['Sb'],
-        'xcomp'     => ['^Obj$', 'Obj'],
     );
     return \%map;
 }
@@ -299,9 +278,12 @@ sub detect_prague_pp
     # If this is the Prague style then the preposition (if any) must be the head.
     if($self->is_deprel($phrase->deprel(), 'auxpc'))
     {
-        my $target_deprel = $phrase->deprel();
+        # Remember whether the actual function word is 'auxp' (preposition) or 'auxc' (subordinating conjunction).
+        # We will need the label later.
+        my $fun_deprel = $phrase->deprel();
         my $c = $self->classify_prague_pp_subphrases($phrase);
         # If there are no argument candidates, we cannot create a prepositional phrase.
+        # (This does not necessarily mean an error in the data. Multi-word prepositions form subtrees where even leaves are labeled AuxP.)
         if(!defined($c))
         {
             return $phrase;
@@ -312,18 +294,20 @@ sub detect_prague_pp
         $phrase->set_is_member(0);
         # Now it is clear that we have a prepositional phrase.
         # The preposition ($c->{fun}) is the current phrase but we have to detach the dependents and only keep the core.
-        $c->{fun}->set_deprel($target_deprel);
+        $c->{fun}->set_deprel($fun_deprel);
         $c->{arg}->set_parent(undef);
         # If the preposition consists of multiple nodes, group them in a new NTerm first.
         # The main prepositional node has already been detached from its original parent so it can be used as the head elsewhere.
         if(scalar(@{$c->{mwe}}) > 0)
         {
             # The leftmost node of the MWE will be its head.
+            ###!!! This is the UD approach. Multi-word prepositions in PDT are head-final because the last token (preposition) governs the case of the noun.
+            ###!!! If we want to make it variable we should define multi-word expressions as another specific phrase type.
             my @mwe = sort {$a->node()->ord() <=> $b->node()->ord()} (@{$c->{mwe}}, $c->{fun});
             my $head = shift(@mwe);
             $head->set_parent(undef);
             $c->{fun} = new Treex::Core::Phrase::NTerm('head' => $head);
-            $c->{fun}->set_deprel($target_deprel);
+            $c->{fun}->set_deprel($fun_deprel);
             foreach my $mwp (@mwe)
             {
                 $mwp->set_parent($c->{fun});
@@ -370,7 +354,7 @@ sub classify_prague_pp_subphrases
     foreach my $d (@dependents)
     {
         # AuxP attached to AuxP (or AuxC to AuxC, or even AuxC to AuxP or AuxP to AuxC) means a multi-word preposition (conjunction).
-        if($self->is_deprel($d->deprel(), 'auxpc1'))
+        if($self->is_deprel($d->deprel(), 'auxpc'))
         {
             push(@mwauxp, $d);
         }
