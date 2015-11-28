@@ -67,16 +67,17 @@ sub _build_dialect
     # The second position is the label used in set_deprel(); not available for all ids.
     my %map =
     (
-        'auxg'      => ['^AuxG$', 'AuxG'], # punctuation other than comma
-        'auxk'      => ['^AuxK$', 'AuxK'], # sentence-terminating punctuation
-        'auxpc'     => ['^Aux[PC]$'],      # preposition or subordinating conjunction
-        'auxx'      => ['^AuxX$', 'AuxX'], # comma
-        'auxy'      => ['^AuxY$', 'AuxY'], # additional coordinating conjunction or other function word
-        'auxyz'     => ['^Aux[YZ]$'],
-        'cc'        => ['^AuxY$', 'AuxY'], # coordinating conjunction
-        'coord'     => ['^Coord$'],        # head of coordination (conjunction or punctuation)
-        'mwe'       => ['^Mwe$', 'Mwe'],   # non-head word of a multi-word expression
-        'punct'     => ['^Aux[XGK]$', 'AuxG'],
+        'auxg'  => ['^AuxG$', 'AuxG'], # punctuation other than comma
+        'auxk'  => ['^AuxK$', 'AuxK'], # sentence-terminating punctuation
+        'auxpc' => ['^Aux[PC]$'],      # preposition or subordinating conjunction
+        'auxx'  => ['^AuxX$', 'AuxX'], # comma
+        'auxy'  => ['^AuxY$', 'AuxY'], # additional coordinating conjunction or other function word
+        'auxyz' => ['^Aux[YZ]$'],
+        'cc'    => ['^AuxY$', 'AuxY'], # coordinating conjunction
+        'conj'  => ['^CoordArg$', 'CoordArg'], # conjunct
+        'coord' => ['^Coord$'],        # head of coordination (conjunction or punctuation)
+        'mwe'   => ['^Mwe$', 'Mwe'],   # non-head word of a multi-word expression
+        'punct' => ['^Aux[XGK]$', 'AuxG'],
     );
     return \%map;
 }
@@ -259,6 +260,233 @@ sub detect_prague_coordination
             $parent->replace_child($phrase, $coordination);
         }
         return $coordination;
+    }
+    # Return the input NTerm phrase if no Coordination has been detected.
+    return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Examines a nonterminal phrase in the Alpino style. This style is similar to
+# Prague in that a coordinator plays the head; however, the deprel of the head
+# is the relation of the coordination to its parent, and the coordination is
+# recognized by the deprels of the conjuncts.
+#
+# If a coordination is recognized, the function transforms the general NTerm to
+# Coordination.
+#------------------------------------------------------------------------------
+sub detect_alpino_coordination
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    # If this is the Alpino style then the head is a coordinating conjunction,
+    # its deprel may be anything but the conjuncts are labeled with a specific
+    # deprel.
+    my @dependents = $phrase->dependents('ordered' => 1);
+    my @conjuncts = grep {$self->is_deprel($_->deprel(), 'conj')} (@dependents);
+    if(@conjuncts)
+    {
+        my @coordinators;
+        my @punctuation;
+        my @sdependents;
+        # Classify dependents.
+        my ($cmin, $cmax);
+        foreach my $d (@dependents)
+        {
+            if($self->is_deprel($d->deprel(), 'conj'))
+            {
+                $cmin = $d->ord() if(!defined($cmin));
+                $cmax = $d->ord();
+            }
+            # Additional coordinating conjunctions (except the head).
+            # In PDT they are labeled AuxY but other words in the tree may get
+            # that label too. We identify it as 'cc' and use the dialect vocabulary
+            # to see what label we actually expect.
+            elsif($self->is_deprel($d->deprel(), 'cc'))
+            {
+                push(@coordinators, $d);
+            }
+            # Punctuation (except the head).
+            # Some punctuation may have headed a nested coordination or
+            # apposition (playing either a conjunct or a shared dependent) but
+            # it should have been processed by now, as we are proceeding
+            # bottom-up.
+            elsif($self->is_deprel($d->deprel(), 'punct'))
+            {
+                push(@punctuation, $d);
+            }
+            # The rest are dependents shared by all the conjuncts.
+            else
+            {
+                push(@sdependents, $d);
+            }
+        }
+        # Now it is clear that we have a coordination. A new Coordination phrase will be created
+        # and the old input NTerm will be destroyed.
+        my $parent = $phrase->parent();
+        my $member = $phrase->is_member();
+        my $old_head = $phrase->head();
+        $phrase->detach_children_and_die();
+        # The dependency relation label of the coordination head represented the relation of the
+        # coordination to its parent and did not distinguish whether the head was conjunction or punctuation.
+        if($old_head->node()->is_punctuation())
+        {
+            push(@punctuation, $old_head);
+        }
+        else
+        {
+            push(@coordinators, $old_head);
+        }
+        # Punctuation can be considered a conjunct delimiter only if it occurs
+        # between conjuncts.
+        my @inpunct  = grep {my $o = $_->ord(); $o > $cmin && $o < $cmax;} (@punctuation);
+        my @outpunct = grep {my $o = $_->ord(); $o < $cmin || $o > $cmax;} (@punctuation);
+        my $coordination = new Treex::Core::Phrase::Coordination
+        (
+            'conjuncts'    => \@conjuncts,
+            'coordinators' => \@coordinators,
+            'punctuation'  => \@inpunct,
+            'head_rule'    => $self->coordination_head_rule(),
+            'is_member'    => $member
+        );
+        # Remove the is_member flag from the conjuncts. We did not need it in
+        # the Alpino style anyway but now that the conjuncts have been detected
+        # we should make sure the flag is clean. (It may be re-introduced
+        # during back-projection to the dependency tree if the Prague annotation
+        # style is selected. Similarly we do not change the deprel of the non-head
+        # conjuncts now, but they may be later changed to 'conj' if the UD
+        # annotation style is selected.)
+        foreach my $c (@conjuncts)
+        {
+            $c->set_is_member(0);
+        }
+        foreach my $d (@sdependents, @outpunct)
+        {
+            $d->set_parent($coordination);
+        }
+        # If the original phrase already had a parent, we must make sure that
+        # the parent is aware of the reincarnation we have made.
+        if(defined($parent))
+        {
+            $parent->replace_child($phrase, $coordination);
+        }
+        return $coordination;
+        ###!!!!!!!!!!!!!!!!!!!!!! This method is in the Coordination class. Write something similar for the PhraseBuilder.
+        # We now know all we can.
+        # It's time for a few more heuristics.
+        # Even though the Alpino style belongs to the Prague family, it does not seem to take the opportunity to distinguish shared modifiers.
+        # There are frequent non-projective dependents of the first conjunct that appear in the sentence after the last conjunct.
+        ###!!!$self->reconsider_distant_private_modifiers();
+    }
+    # Return the input NTerm phrase if no Coordination has been detected.
+    return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Examines a nonterminal phrase in the left-to-right Stanford style. The head
+# of the coordination is the first conjunct and it has no special label. All
+# subsequent conjuncts and all delimiters (punctuation and conjunctions) are
+# attached to it using prescribed relations.
+# This style allows limited representation of nested coordination. It cannot
+# distinguish ((A,B),C) from (A,B,C). Having nested coordination as the first
+# conjunct is a problem. Example treebank is Bulgarian.
+#
+# If a coordination is recognized, the function transforms the general NTerm to
+# Coordination.
+#------------------------------------------------------------------------------
+sub detect_stanford_coordination
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    # If this is the Stanford style then the head is a conjunct, its deprel may
+    # be anything but the other conjuncts are labeled with a specific deprel.
+    my @dependents = $phrase->dependents('ordered' => 1);
+    my @conjuncts = grep {$self->is_deprel($_->deprel(), 'conj')} (@dependents);
+    if(@conjuncts)
+    {
+        my @coordinators;
+        my @punctuation;
+        my @sdependents;
+        # Classify dependents.
+        my ($cmin, $cmax);
+        $cmin = $phrase->ord();
+        foreach my $d (@dependents)
+        {
+            if($self->is_deprel($d->deprel(), 'conj'))
+            {
+                # Check $cmin just in case the head conjunct was not the first one (it should have been!)
+                $cmin = $d->ord() if($d->ord()<$cmin);
+                $cmax = $d->ord();
+            }
+            # Coordinating conjunctions.
+            # In PDT they are labeled AuxY but other words in the tree may get
+            # that label too. We identify it as 'cc' and use the dialect vocabulary
+            # to see what label we actually expect.
+            elsif($self->is_deprel($d->deprel(), 'cc'))
+            {
+                push(@coordinators, $d);
+            }
+            # Punctuation.
+            elsif($self->is_deprel($d->deprel(), 'punct'))
+            {
+                push(@punctuation, $d);
+            }
+            # The rest are dependents shared by all the conjuncts.
+            else
+            {
+                push(@sdependents, $d);
+            }
+        }
+        # Now it is clear that we have a coordination. A new Coordination phrase will be created
+        # and the old input NTerm will be destroyed.
+        my $parent = $phrase->parent();
+        my $member = $phrase->is_member();
+        my $old_head = $phrase->head();
+        $phrase->detach_children_and_die();
+        unshift(@conjuncts, $old_head);
+        # Punctuation can be considered a conjunct delimiter only if it occurs
+        # between conjuncts.
+        my @inpunct  = grep {my $o = $_->ord(); $o > $cmin && $o < $cmax;} (@punctuation);
+        my @outpunct = grep {my $o = $_->ord(); $o < $cmin || $o > $cmax;} (@punctuation);
+        my $coordination = new Treex::Core::Phrase::Coordination
+        (
+            'conjuncts'    => \@conjuncts,
+            'coordinators' => \@coordinators,
+            'punctuation'  => \@inpunct,
+            'head_rule'    => $self->coordination_head_rule(),
+            'is_member'    => $member
+        );
+        # Remove the is_member flag from the conjuncts. We did not need it in
+        # the Stanford style anyway but now that the conjuncts have been detected
+        # we should make sure the flag is clean. (It may be re-introduced
+        # during back-projection to the dependency tree if the Prague annotation
+        # style is selected. Similarly we do not change the deprel of the non-head
+        # conjuncts now, but they may be later changed to 'conj' if the UD/Stanford
+        # annotation style is selected.)
+        foreach my $c (@conjuncts)
+        {
+            $c->set_is_member(0);
+        }
+        foreach my $d (@sdependents, @outpunct)
+        {
+            $d->set_parent($coordination);
+        }
+        # If the original phrase already had a parent, we must make sure that
+        # the parent is aware of the reincarnation we have made.
+        if(defined($parent))
+        {
+            $parent->replace_child($phrase, $coordination);
+        }
+        return $coordination;
+        ###!!!!!!!!!!!!!!!!!!!!!! This method is in the Coordination class. Write something similar for the PhraseBuilder.
+        # We now know all we can.
+        # It's time for a few more heuristics.
+        # Even though the Alpino style belongs to the Prague family, it does not seem to take the opportunity to distinguish shared modifiers.
+        # There are frequent non-projective dependents of the first conjunct that appear in the sentence after the last conjunct.
+        ###!!!$self->reconsider_distant_private_modifiers();
     }
     # Return the input NTerm phrase if no Coordination has been detected.
     return $phrase;
