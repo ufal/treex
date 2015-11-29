@@ -225,7 +225,7 @@ sub detect_prague_coordination
         }
         # Now it is clear that we have a coordination.
         # Create a new Coordination phrase and destroy the old input NTerm.
-        return replace_nterm_by_coordination($phrase, \@conjuncts, \@coordinators, \@punctuation, \@sdependents, $cmin, $cmax);
+        return $self->replace_nterm_by_coordination($phrase, \@conjuncts, \@coordinators, \@punctuation, \@sdependents, $cmin, $cmax);
     }
     # Return the input NTerm phrase if no Coordination has been detected.
     return $phrase;
@@ -301,7 +301,7 @@ sub detect_alpino_coordination
         }
         # Now it is clear that we have a coordination.
         # Create a new Coordination phrase and destroy the old input NTerm.
-        return replace_nterm_by_coordination($phrase, \@conjuncts, \@coordinators, \@punctuation, \@sdependents, $cmin, $cmax);
+        return $self->replace_nterm_by_coordination($phrase, \@conjuncts, \@coordinators, \@punctuation, \@sdependents, $cmin, $cmax);
         ###!!!!!!!!!!!!!!!!!!!!!! This method is in the Coordination class. Write something similar for the PhraseBuilder.
         # We now know all we can.
         # It's time for a few more heuristics.
@@ -370,7 +370,7 @@ sub detect_stanford_coordination
         }
         # Now it is clear that we have a coordination.
         # The old input NTerm will now only hold the first conjunct with its private dependents.
-        return surround_nterm_by_coordination($phrase, \@conjuncts, \@coordinators, \@punctuation, [], $cmin, $cmax);
+        return $self->surround_nterm_by_coordination($phrase, \@conjuncts, \@coordinators, \@punctuation, [], $cmin, $cmax);
         ###!!!!!!!!!!!!!!!!!!!!!! This method is in the Coordination class. Write something similar for the PhraseBuilder.
         # We now know all we can.
         # It's time for a few more heuristics.
@@ -448,20 +448,20 @@ sub detect_moscow_coordination
                 # shared by all conjuncts. We may later apply heuristics to identify
                 # shared dependents.
             }
-            ###!!! Zatím předpokládejme, že $conjunct není vnořená fráze typu Coordination.
-            # Pokud je $conjunct vnořená koordinace, tak nechceme aktuální frázi obalovat novou koordinací.
-            # Místo toho chceme $conjunct odpojit od aktuální fráze (rodič bude dočasně undef),
-            # přidat do něj aktuální frázi jako nový člen koordinace (k tomu musím doprogramovat metodu add_conjunct())
-            # a následně nahradit aktuální frázi touto koordinací.
-            ###!!!
-            # If a conjunct child is already a Coordination phrase then there is
-            # a coordination of more than two conjuncts and we should elevate it to
-            # the current level and add the current head to it as a new conjunct.
-            ###!!! This is not yet implemented!
             # The old input NTerm will now only hold the first conjunct with its private dependents.
             # We will create a Coordination with two conjuncts. If there are more child conjuncts,
             # the Coordination will then become the current phrase (head conjunct) and combine with them.
-            $phrase = surround_nterm_by_coordination($phrase, [$conjunct], \@coordinators, \@punctuation, [], $cmin, $cmax);
+            if($conjunct->is_coordination())
+            {
+                # If a conjunct child is already a Coordination phrase then there is
+                # a coordination of more than two conjuncts and we should elevate it to
+                # the current level and add the current head to it as a new conjunct.
+                $phrase = $self->surround_nterm_by_existing_coordination($phrase, $conjunct, \@coordinators, \@punctuation);
+            }
+            else
+            {
+                $phrase = $self->surround_nterm_by_coordination($phrase, [$conjunct], \@coordinators, \@punctuation, [], $cmin, $cmax);
+            }
             $first = 0;
         }
         ###!!!!!!!!!!!!!!!!!!!!!! This method is in the Coordination class. Write something similar for the PhraseBuilder.
@@ -587,6 +587,53 @@ sub surround_nterm_by_coordination
     foreach my $d (@{$sdependents}, @outpunct)
     {
         $d->set_parent($coordination);
+    }
+    return $coordination;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Takes a general NTerm phrase and a Coordination phrase (presumably but not
+# necessarily a dependent of the NTerm). Detaches Coordination from the NTerm
+# if it is its current parent. Then makes the NTerm a new conjunct in the
+# Coordination and returns the Coordination. This code is used by the
+# detect_moscow_coordination() method if coordination has more than two
+# conjuncts.
+#------------------------------------------------------------------------------
+sub surround_nterm_by_existing_coordination
+{
+    my $self = shift;
+    my $phrase = shift;
+    my $coordination = shift; # Treex::Core::Phrase::Coordination
+    my $coordinators = shift; # ArrayRef
+    my $punctuation = shift; # ArrayRef
+    my $parent = $phrase->parent();
+    my $member = $phrase->is_member();
+    # Detach the right conjunct from its current parent (which is probably the
+    # left conjunct, i.e. $phrase). The right conjunct is Coordination and will
+    # replace the $phrase. If $phrase already has a parent (improbable, because
+    # we process the phrases bottom-up), that parent will be now parent of the
+    # Coordination.
+    $coordination->set_parent(undef);
+    if(defined($parent))
+    {
+        $parent->replace_child($phrase, $coordination);
+    }
+    $coordination->set_is_member($member);
+    # Add the phrase as a new conjunct to the coordination.
+    $coordination->add_conjunct($phrase);
+    $phrase->set_is_member(0);
+    # Add the new delimiters to the coordination.
+    foreach my $c (@{$coordinators})
+    {
+        $coordination->add_coordinator($c);
+        $c->set_is_member(0);
+    }
+    foreach my $p (@{$punctuation})
+    {
+        $coordination->add_punctuation($p);
+        $p->set_is_member(0);
     }
     return $coordination;
 }

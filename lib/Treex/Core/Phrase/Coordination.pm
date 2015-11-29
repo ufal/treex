@@ -85,7 +85,7 @@ around BUILDARGS => sub
 #------------------------------------------------------------------------------
 # After the object is constructed, this block makes sure that the core children
 # refer back to it as their parent. Also, at least one conjunct is required and
-# making the conjuncts parametr required is not enough to enforce that.
+# making the conjuncts parameter required is not enough to enforce that.
 #------------------------------------------------------------------------------
 sub BUILD
 {
@@ -110,6 +110,19 @@ sub BUILD
 
 
 #------------------------------------------------------------------------------
+# Tells whether this phrase is coordination. We could probably use the Moose's
+# methods to query the class name but this will be more convenient.
+#------------------------------------------------------------------------------
+sub is_coordination
+{
+    my $self = shift;
+    # Default is FALSE, to be overridden here.
+    return 1;
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the list of conjuncts in the coordination. The only difference from
 # the getter _conjuncts_ref() is that the getter returns a reference to the
 # array of conjuncts, while this method returns a list of conjuncts, hence it
@@ -121,6 +134,46 @@ sub conjuncts
     log_fatal('Dead') if($self->dead());
     my @conjuncts = @{$self->_conjuncts_ref()};
     return $self->_order_required(@_) ? $self->order_phrases(@conjuncts) : @conjuncts;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Adds a phrase as a new conjunct to this coordination. The phrase may be
+# currently a dependent of another phrase and will be correctly re-linked.
+# However, it must not be a core child of any phrase.
+#------------------------------------------------------------------------------
+sub add_conjunct
+{
+    log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
+    my $self = shift;
+    my $new_conjunct = shift;
+    log_fatal('Dead') if($self->dead());
+    # First make it my dependent. This ensures that the new conjunct is
+    # correctly detached from its current parent, if any. If it is already my
+    # dependent, nothing will happen. But if it is my or someone else's core
+    # child, an exception will be thrown. The set_parent() method also checks
+    # that no cycle will be created.
+    $new_conjunct->set_parent($self);
+    # Now remove it from my dependents and add it to my conjuncts.
+    my $nhc = $self->_dependents_ref();
+    my $found = 0;
+    for(my $i = 0; $i <= $#{$nhc}; $i++)
+    {
+        if($nhc->[$i] == $new_conjunct)
+        {
+            $found = 1;
+            splice(@{$nhc}, $i, 1);
+            last;
+        }
+    }
+    if(!$found)
+    {
+        log_fatal("Could not find the phrase among my non-core children");
+    }
+    # Add it to my conjuncts.
+    my $cnj = $self->_conjuncts_ref();
+    push(@{$cnj}, $new_conjunct);
 }
 
 
@@ -142,6 +195,46 @@ sub coordinators
 
 
 #------------------------------------------------------------------------------
+# Adds a phrase as a new coordinator to this coordination. The phrase may be
+# currently a dependent of another phrase and will be correctly re-linked.
+# However, it must not be a core child of any phrase.
+#------------------------------------------------------------------------------
+sub add_coordinator
+{
+    log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
+    my $self = shift;
+    my $new_coordinator = shift;
+    log_fatal('Dead') if($self->dead());
+    # First make it my dependent. This ensures that the new coordinator is
+    # correctly detached from its current parent, if any. If it is already my
+    # dependent, nothing will happen. But if it is my or someone else's core
+    # child, an exception will be thrown. The set_parent() method also checks
+    # that no cycle will be created.
+    $new_coordinator->set_parent($self);
+    # Now remove it from my dependents and add it to my coordinators.
+    my $nhc = $self->_dependents_ref();
+    my $found = 0;
+    for(my $i = 0; $i <= $#{$nhc}; $i++)
+    {
+        if($nhc->[$i] == $new_coordinator)
+        {
+            $found = 1;
+            splice(@{$nhc}, $i, 1);
+            last;
+        }
+    }
+    if(!$found)
+    {
+        log_fatal("Could not find the phrase among my non-core children");
+    }
+    # Add it to my coordinators.
+    my $cnj = $self->_coordinators_ref();
+    push(@{$cnj}, $new_coordinator);
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the list of punctuation symbols between conjuncts. The only
 # difference from the getter _punctuation_ref() is that the getter returns a
 # reference to the array, while this method returns a list, hence it is more
@@ -153,6 +246,46 @@ sub punctuation
     log_fatal('Dead') if($self->dead());
     my @punctuation = @{$self->_punctuation_ref()};
     return $self->_order_required(@_) ? $self->order_phrases(@punctuation) : @punctuation;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Adds a phrase as a new punctuation delimiter to this coordination. The phrase
+# may be currently a dependent of another phrase and will be correctly
+# re-linked. However, it must not be a core child of any phrase.
+#------------------------------------------------------------------------------
+sub add_punctuation
+{
+    log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
+    my $self = shift;
+    my $new_punctuation = shift;
+    log_fatal('Dead') if($self->dead());
+    # First make it my dependent. This ensures that the new phrase is
+    # correctly detached from its current parent, if any. If it is already my
+    # dependent, nothing will happen. But if it is my or someone else's core
+    # child, an exception will be thrown. The set_parent() method also checks
+    # that no cycle will be created.
+    $new_punctuation->set_parent($self);
+    # Now remove it from my dependents and add it to my coordinators.
+    my $nhc = $self->_dependents_ref();
+    my $found = 0;
+    for(my $i = 0; $i <= $#{$nhc}; $i++)
+    {
+        if($nhc->[$i] == $new_punctuation)
+        {
+            $found = 1;
+            splice(@{$nhc}, $i, 1);
+            last;
+        }
+    }
+    if(!$found)
+    {
+        log_fatal("Could not find the phrase among my non-core children");
+    }
+    # Add it to my coordinators.
+    my $cnj = $self->_punctuation_ref();
+    push(@{$cnj}, $new_punctuation);
 }
 
 
@@ -478,6 +611,12 @@ getter C<_conjuncts_ref()> is that the getter returns a reference to the array
 of conjuncts, while this method returns a list of conjuncts. Hence this method is
 more similar to the other methods that return lists of children.
 
+=item add_conjunct
+
+Adds a phrase as a new conjunct to this coordination. The phrase may be
+currently a dependent of another phrase and will be correctly re-linked.
+However, it must not be a core child of any phrase.
+
 =item coordinators
 
 Returns the list of coordinating conjunctions (but not punctuation).
@@ -486,6 +625,12 @@ getter C<_coordinators_ref()> is that the getter returns a reference to array,
 while this method returns a list. Hence this method is
 more similar to the other methods that return lists of children.
 
+=item add_coordinator
+
+Adds a phrase as a new coordinator to this coordination. The phrase may be
+currently a dependent of another phrase and will be correctly re-linked.
+However, it must not be a core child of any phrase.
+
 =item punctuation
 
 Returns the list of punctuation symbols between conjuncts.
@@ -493,6 +638,12 @@ The only difference from the
 getter C<_punctuation_ref()> is that the getter returns a reference to array,
 while this method returns a list. Hence this method is
 more similar to the other methods that return lists of children.
+
+=item add_punctuation
+
+Adds a phrase as a new punctuation delimiter to this coordination. The phrase
+may be currently a dependent of another phrase and will be correctly
+re-linked. However, it must not be a core child of any phrase.
 
 =item nonhead_children
 
@@ -525,4 +676,5 @@ Daniel Zeman <zeman@ufal.mff.cuni.cz>
 =head1 COPYRIGHT AND LICENSE
 
 Copyright © 2013, 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

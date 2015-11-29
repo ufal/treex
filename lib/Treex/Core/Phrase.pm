@@ -122,6 +122,19 @@ sub is_terminal
 
 
 #------------------------------------------------------------------------------
+# Tells whether this phrase is coordination. We could probably use the Moose's
+# methods to query the class name but this will be more convenient.
+#------------------------------------------------------------------------------
+sub is_coordination
+{
+    my $self = shift;
+    # Default is FALSE, to be overridden in Coordination.
+    return 0;
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the head node of the phrase. For terminal phrases this should just
 # return their node attribute. For nonterminal phrases this should return the
 # node of their head child. This is an abstract method that must be defined in
@@ -325,6 +338,11 @@ This method is used to prevent cycles when setting a new parent.
 
 Tells whether this phrase is terminal, that is, it does not have children
 (subphrases).
+
+=item my $isc = $phrase->is_coordination();
+
+Tells whether this phrase is L<Treex::Core::Phrase::Coordination> or its
+descendant.
 
 =item my $node = $phrase->node();
 
