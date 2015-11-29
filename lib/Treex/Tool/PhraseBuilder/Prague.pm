@@ -212,13 +212,9 @@ sub detect_prague_coordination
             $self->set_deprel($phrase, $deprel_id);
             return $phrase;
         }
-        # Now it is clear that we have a coordination. A new Coordination phrase will be created
-        # and the old input NTerm will be destroyed.
-        my $parent = $phrase->parent();
-        my $member = $phrase->is_member();
+        # The dependency relation label of the coordination head represented the relation of the
+        # coordination to its parent and did not distinguish whether the head was conjunction or punctuation.
         my $old_head = $phrase->head();
-        $phrase->detach_children_and_die();
-        # The dependency relation label of the coordination head was 'coord' regardless whether it was conjunction or punctuation.
         if($old_head->node()->is_punctuation())
         {
             push(@punctuation, $old_head);
@@ -227,39 +223,9 @@ sub detect_prague_coordination
         {
             push(@coordinators, $old_head);
         }
-        # Punctuation can be considered a conjunct delimiter only if it occurs
-        # between conjuncts.
-        my @inpunct  = grep {my $o = $_->ord(); $o > $cmin && $o < $cmax;} (@punctuation);
-        my @outpunct = grep {my $o = $_->ord(); $o < $cmin || $o > $cmax;} (@punctuation);
-        my $coordination = new Treex::Core::Phrase::Coordination
-        (
-            'conjuncts'    => \@conjuncts,
-            'coordinators' => \@coordinators,
-            'punctuation'  => \@inpunct,
-            'head_rule'    => $self->coordination_head_rule(),
-            'is_member'    => $member
-        );
-        # Remove the is_member flag from the conjuncts. It will be no longer
-        # needed as we now know what are the conjuncts. (It may be re-introduced
-        # during back-projection to the dependency tree if the Prague annotation
-        # style is retained. Similarly we do not change the deprel of the non-head
-        # conjuncts now, but they may be later changed to 'conj' if the UD
-        # annotation style is selected.)
-        foreach my $c (@conjuncts)
-        {
-            $c->set_is_member(0);
-        }
-        foreach my $d (@sdependents, @outpunct)
-        {
-            $d->set_parent($coordination);
-        }
-        # If the original phrase already had a parent, we must make sure that
-        # the parent is aware of the reincarnation we have made.
-        if(defined($parent))
-        {
-            $parent->replace_child($phrase, $coordination);
-        }
-        return $coordination;
+        # Now it is clear that we have a coordination.
+        # Create a new Coordination phrase and destroy the old input NTerm.
+        return replace_nterm_by_coordination($phrase, \@conjuncts, \@coordinators, \@punctuation, \@sdependents, $cmin, $cmax);
     }
     # Return the input NTerm phrase if no Coordination has been detected.
     return $phrase;
@@ -322,14 +288,9 @@ sub detect_alpino_coordination
                 push(@sdependents, $d);
             }
         }
-        # Now it is clear that we have a coordination. A new Coordination phrase will be created
-        # and the old input NTerm will be destroyed.
-        my $parent = $phrase->parent();
-        my $member = $phrase->is_member();
-        my $old_head = $phrase->head();
-        $phrase->detach_children_and_die();
         # The dependency relation label of the coordination head represented the relation of the
         # coordination to its parent and did not distinguish whether the head was conjunction or punctuation.
+        my $old_head = $phrase->head();
         if($old_head->node()->is_punctuation())
         {
             push(@punctuation, $old_head);
@@ -338,40 +299,9 @@ sub detect_alpino_coordination
         {
             push(@coordinators, $old_head);
         }
-        # Punctuation can be considered a conjunct delimiter only if it occurs
-        # between conjuncts.
-        my @inpunct  = grep {my $o = $_->ord(); $o > $cmin && $o < $cmax;} (@punctuation);
-        my @outpunct = grep {my $o = $_->ord(); $o < $cmin || $o > $cmax;} (@punctuation);
-        my $coordination = new Treex::Core::Phrase::Coordination
-        (
-            'conjuncts'    => \@conjuncts,
-            'coordinators' => \@coordinators,
-            'punctuation'  => \@inpunct,
-            'head_rule'    => $self->coordination_head_rule(),
-            'is_member'    => $member
-        );
-        # Remove the is_member flag from the conjuncts. We did not need it in
-        # the Alpino style anyway but now that the conjuncts have been detected
-        # we should make sure the flag is clean. (It may be re-introduced
-        # during back-projection to the dependency tree if the Prague annotation
-        # style is selected. Similarly we do not change the deprel of the non-head
-        # conjuncts now, but they may be later changed to 'conj' if the UD
-        # annotation style is selected.)
-        foreach my $c (@conjuncts)
-        {
-            $c->set_is_member(0);
-        }
-        foreach my $d (@sdependents, @outpunct)
-        {
-            $d->set_parent($coordination);
-        }
-        # If the original phrase already had a parent, we must make sure that
-        # the parent is aware of the reincarnation we have made.
-        if(defined($parent))
-        {
-            $parent->replace_child($phrase, $coordination);
-        }
-        return $coordination;
+        # Now it is clear that we have a coordination.
+        # Create a new Coordination phrase and destroy the old input NTerm.
+        return replace_nterm_by_coordination($phrase, \@conjuncts, \@coordinators, \@punctuation, \@sdependents, $cmin, $cmax);
         ###!!!!!!!!!!!!!!!!!!!!!! This method is in the Coordination class. Write something similar for the PhraseBuilder.
         # We now know all we can.
         # It's time for a few more heuristics.
@@ -440,47 +370,10 @@ sub detect_stanford_coordination
                 push(@sdependents, $d);
             }
         }
-        # Now it is clear that we have a coordination. A new Coordination phrase will be created
-        # and the old input NTerm will be destroyed.
-        my $parent = $phrase->parent();
-        my $member = $phrase->is_member();
-        my $old_head = $phrase->head();
-        $phrase->detach_children_and_die();
-        unshift(@conjuncts, $old_head);
-        # Punctuation can be considered a conjunct delimiter only if it occurs
-        # between conjuncts.
-        my @inpunct  = grep {my $o = $_->ord(); $o > $cmin && $o < $cmax;} (@punctuation);
-        my @outpunct = grep {my $o = $_->ord(); $o < $cmin || $o > $cmax;} (@punctuation);
-        my $coordination = new Treex::Core::Phrase::Coordination
-        (
-            'conjuncts'    => \@conjuncts,
-            'coordinators' => \@coordinators,
-            'punctuation'  => \@inpunct,
-            'head_rule'    => $self->coordination_head_rule(),
-            'is_member'    => $member
-        );
-        # Remove the is_member flag from the conjuncts. We did not need it in
-        # the Stanford style anyway but now that the conjuncts have been detected
-        # we should make sure the flag is clean. (It may be re-introduced
-        # during back-projection to the dependency tree if the Prague annotation
-        # style is selected. Similarly we do not change the deprel of the non-head
-        # conjuncts now, but they may be later changed to 'conj' if the UD/Stanford
-        # annotation style is selected.)
-        foreach my $c (@conjuncts)
-        {
-            $c->set_is_member(0);
-        }
-        foreach my $d (@sdependents, @outpunct)
-        {
-            $d->set_parent($coordination);
-        }
-        # If the original phrase already had a parent, we must make sure that
-        # the parent is aware of the reincarnation we have made.
-        if(defined($parent))
-        {
-            $parent->replace_child($phrase, $coordination);
-        }
-        return $coordination;
+        unshift(@conjuncts, $phrase->head());
+        # Now it is clear that we have a coordination.
+        # Create a new Coordination phrase and destroy the old input NTerm.
+        return replace_nterm_by_coordination($phrase, \@conjuncts, \@coordinators, \@punctuation, \@sdependents, $cmin, $cmax);
         ###!!!!!!!!!!!!!!!!!!!!!! This method is in the Coordination class. Write something similar for the PhraseBuilder.
         # We now know all we can.
         # It's time for a few more heuristics.
@@ -490,6 +383,60 @@ sub detect_stanford_coordination
     }
     # Return the input NTerm phrase if no Coordination has been detected.
     return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Replaces a general NTerm phrase by a new Coordination phrase. Common code
+# used by the various detect_*_coordination() methods.
+#------------------------------------------------------------------------------
+sub replace_nterm_by_coordination
+{
+    my $self = shift;
+    my $phrase = shift;
+    my $conjuncts = shift; # ArrayRef
+    my $coordinators = shift; # ArrayRef
+    my $punctuation = shift; # ArrayRef
+    my $sdependents = shift; # ArrayRef
+    my $cmin = shift;
+    my $cmax = shift;
+    # Create a new Coordination phrase and destroy the old input NTerm.
+    my $parent = $phrase->parent();
+    my $member = $phrase->is_member();
+    $phrase->detach_children_and_die();
+    # Punctuation can be considered a conjunct delimiter only if it occurs
+    # between conjuncts.
+    my @inpunct  = grep {my $o = $_->ord(); $o > $cmin && $o < $cmax;} (@{$punctuation});
+    my @outpunct = grep {my $o = $_->ord(); $o < $cmin || $o > $cmax;} (@{$punctuation});
+    my $coordination = new Treex::Core::Phrase::Coordination
+    (
+        'conjuncts'    => $conjuncts,
+        'coordinators' => $coordinators,
+        'punctuation'  => \@inpunct,
+        'head_rule'    => $self->coordination_head_rule(),
+        'is_member'    => $member
+    );
+    # Remove the is_member flag from the conjuncts. It may be re-introduced
+    # during back-projection to the dependency tree if the Prague annotation
+    # style is selected. Similarly we do not change the deprel of the non-head
+    # conjuncts now, but they may be later changed to 'conj' if the UD/Stanford
+    # annotation style is selected.
+    foreach my $c (@{$conjuncts})
+    {
+        $c->set_is_member(0);
+    }
+    foreach my $d (@{$sdependents}, @outpunct)
+    {
+        $d->set_parent($coordination);
+    }
+    # If the original phrase already had a parent, we must make sure that
+    # the parent is aware of the reincarnation we have made.
+    if(defined($parent))
+    {
+        $parent->replace_child($phrase, $coordination);
+    }
+    return $coordination;
 }
 
 
