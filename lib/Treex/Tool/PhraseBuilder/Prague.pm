@@ -411,50 +411,65 @@ sub detect_moscow_coordination
     if(@conjuncts)
     {
         # If scalar(@conjuncts) > 1 then there is a nested coordination.
-        # If a conjunct child is already a Coordination phrase then there is
-        # a coordination of more than two conjuncts and we should elevate it to
-        # the current level and add the current head to it as a new conjunct.
-        ###!!! This is not yet implemented!
-        my @coordinators;
-        my @punctuation;
-        # Classify dependents.
-        my ($cmin, $cmax);
-        $cmin = $phrase->ord();
-        foreach my $d (@dependents)
+        my $first = 1;
+        my $last = 0;
+        while(@conjuncts)
         {
-            if($self->is_deprel($d->deprel(), 'conj'))
+            my $conjunct = shift(@conjuncts);
+            $last = scalar(@conjuncts)==0;
+            # All child conjuncts should be to the right of the head conjunct.
+            # If they are not, we will still collect them but inner and outer
+            # punctuation will not be distinguished correctly.
+            my $cmin = $phrase->ord();
+            my $cmax = $conjunct->ord();
+            my @coordinators;
+            my @punctuation;
+            # Classify dependents.
+            foreach my $d (@dependents)
             {
-                # Check $cmin just in case the head conjunct was not the first one (it should have been!)
-                $cmin = $d->ord() if($d->ord()<$cmin);
-                $cmax = $d->ord();
+                my $dord = $d->ord();
+                last if($dord>$cmax && !$last);
+                next if($dord<$cmin && !$first);
+                # Coordinating conjunctions.
+                # In PDT they are labeled AuxY but other words in the tree may get
+                # that label too. We identify it as 'cc' and use the dialect vocabulary
+                # to see what label we actually expect.
+                if($self->is_deprel($d->deprel(), 'cc'))
+                {
+                    push(@coordinators, $d);
+                }
+                # Punctuation.
+                elsif($dord>$cmin && $dord<$cmax && $self->is_deprel($d->deprel(), 'punct'))
+                {
+                    push(@punctuation, $d);
+                }
+                # The rest are private dependents of the head conjunct. Note that
+                # the Moscow style cannot distinguish them from the dependents
+                # shared by all conjuncts. We may later apply heuristics to identify
+                # shared dependents.
             }
-            # Coordinating conjunctions.
-            # In PDT they are labeled AuxY but other words in the tree may get
-            # that label too. We identify it as 'cc' and use the dialect vocabulary
-            # to see what label we actually expect.
-            elsif($self->is_deprel($d->deprel(), 'cc'))
-            {
-                push(@coordinators, $d);
-            }
-            # Punctuation.
-            elsif($self->is_deprel($d->deprel(), 'punct'))
-            {
-                push(@punctuation, $d);
-            }
-            # The rest are private dependents of the head conjunct. Note that
-            # the Moscow style cannot distinguish them from the dependents
-            # shared by all conjuncts. We may later apply heuristics to identify
-            # shared dependents.
+            ###!!! Zatím předpokládejme, že $conjunct není vnořená fráze typu Coordination.
+            # Pokud je $conjunct vnořená koordinace, tak nechceme aktuální frázi obalovat novou koordinací.
+            # Místo toho chceme $conjunct odpojit od aktuální fráze (rodič bude dočasně undef),
+            # přidat do něj aktuální frázi jako nový člen koordinace (k tomu musím doprogramovat metodu add_conjunct())
+            # a následně nahradit aktuální frázi touto koordinací.
+            ###!!!
+            # If a conjunct child is already a Coordination phrase then there is
+            # a coordination of more than two conjuncts and we should elevate it to
+            # the current level and add the current head to it as a new conjunct.
+            ###!!! This is not yet implemented!
+            # The old input NTerm will now only hold the first conjunct with its private dependents.
+            # We will create a Coordination with two conjuncts. If there are more child conjuncts,
+            # the Coordination will then become the current phrase (head conjunct) and combine with them.
+            $phrase = surround_nterm_by_coordination($phrase, [$conjunct], \@coordinators, \@punctuation, [], $cmin, $cmax);
+            $first = 0;
         }
-        # Now it is clear that we have a coordination.
-        # The old input NTerm will now only hold the first conjunct with its private dependents.
-        return surround_nterm_by_coordination($phrase, \@conjuncts, \@coordinators, \@punctuation, [], $cmin, $cmax);
         ###!!!!!!!!!!!!!!!!!!!!!! This method is in the Coordination class. Write something similar for the PhraseBuilder.
         # We now know all we can.
         # It's time for a few more heuristics.
         ###!!!$self->reconsider_distant_private_modifiers();
     }
-    # Return the input NTerm phrase if no Coordination has been detected.
+    # If we have detected a coordination, $phrase now points to the Coordination. Otherwise it is still the input NTerm.
     return $phrase;
 }
 
