@@ -419,7 +419,6 @@ sub detect_moscow_coordination
         ###!!! This is not yet implemented!
         my @coordinators;
         my @punctuation;
-        my @sdependents;
         # Classify dependents.
         my ($cmin, $cmax);
         $cmin = $phrase->ord();
@@ -444,17 +443,15 @@ sub detect_moscow_coordination
             {
                 push(@punctuation, $d);
             }
-            # The rest are dependents shared by all the conjuncts.
-            ###!!! Or just private modifiers of the head conjunct? This was always our default!
-            else
-            {
-                push(@sdependents, $d);
-            }
+            # The rest are private dependents of the head conjunct. Note that
+            # the Moscow style cannot distinguish them from the dependents
+            # shared by all conjuncts. We may later apply heuristics to identify
+            # shared dependents.
         }
         unshift(@conjuncts, $phrase->head());
         # Now it is clear that we have a coordination.
         # Create a new Coordination phrase and destroy the old input NTerm.
-        return replace_nterm_by_coordination($phrase, \@conjuncts, \@coordinators, \@punctuation, \@sdependents, $cmin, $cmax);
+        return replace_nterm_by_coordination($phrase, \@conjuncts, \@coordinators, \@punctuation, [], $cmin, $cmax);
     }
     # Return the input NTerm phrase if no Coordination has been detected.
     return $phrase;
