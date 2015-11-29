@@ -374,8 +374,6 @@ sub detect_stanford_coordination
         ###!!!!!!!!!!!!!!!!!!!!!! This method is in the Coordination class. Write something similar for the PhraseBuilder.
         # We now know all we can.
         # It's time for a few more heuristics.
-        # Even though the Alpino style belongs to the Prague family, it does not seem to take the opportunity to distinguish shared modifiers.
-        # There are frequent non-projective dependents of the first conjunct that appear in the sentence after the last conjunct.
         ###!!!$self->reconsider_distant_private_modifiers();
     }
     # Return the input NTerm phrase if no Coordination has been detected.
@@ -448,10 +446,13 @@ sub detect_moscow_coordination
             # shared by all conjuncts. We may later apply heuristics to identify
             # shared dependents.
         }
-        unshift(@conjuncts, $phrase->head());
         # Now it is clear that we have a coordination.
-        # Create a new Coordination phrase and destroy the old input NTerm.
-        return replace_nterm_by_coordination($phrase, \@conjuncts, \@coordinators, \@punctuation, [], $cmin, $cmax);
+        # The old input NTerm will now only hold the first conjunct with its private dependents.
+        return surround_nterm_by_coordination($phrase, \@conjuncts, \@coordinators, \@punctuation, [], $cmin, $cmax);
+        ###!!!!!!!!!!!!!!!!!!!!!! This method is in the Coordination class. Write something similar for the PhraseBuilder.
+        # We now know all we can.
+        # It's time for a few more heuristics.
+        ###!!!$self->reconsider_distant_private_modifiers();
     }
     # Return the input NTerm phrase if no Coordination has been detected.
     return $phrase;
@@ -518,7 +519,7 @@ sub replace_nterm_by_coordination
 # NTerm becomes a conjunct in the Coordination. It keeps the private dependents
 # of the conjunct. Dependents that are listed separately as other conjuncts or
 # delimiters will be detached from the NTerm and used in the Coordination. This
-# code is used by the detect_stanford_coordination() method.
+# code is used by the detect_(stanford|moscow)_coordination() methods.
 #------------------------------------------------------------------------------
 sub surround_nterm_by_coordination
 {
