@@ -46,26 +46,62 @@ sub feat_hash_to_sparse_list {
 }
 
 sub _unary_features_prefixed {
-    my ($self, $node, $type) = @_;
-    my $feats = $self->_unary_features( $node );
+    my ($self, $node, $type, $add_feats) = @_;
+    my $feats = $self->_unary_features( $node, $type, $add_feats );
     my %new_feats = map {$type . "_" . $_ => $feats->{$_}} keys %$feats;
     return \%new_feats;
 }
 
-sub create_instances {
-    my ($self, $node1, $cands) = @_;
+sub _split_feats_into_namespaces {
+    my ($self, $instance) = @_;
+
+    my ($cand_feats, $shared_feats) = @$instance;
+    my $new_instance = [
+        [ map {_sfin_featline($shared_feats)} @$cand_feats ],
+        _sfin_featline($shared_feats),
+    ];
+    return $new_instance;
+}
+
+sub _sfin_featline {
+    my ($feats) = @_;
     
-    my $node1_unary_h = $self->_unary_features_prefixed( $node1, $self->node1_label );
+    my %ns_feats = ();
+    foreach my $feat (@$feats) {
+        my ($key, $value) = @$feat;
+        if ($key =~ /^(.*)\^(.*)$/) {
+            my $old = $shared_ns_feats{$1} // [];
+            push @$old, "$2=$value";
+            $shared_ns_feats{$1} = $old;
+        }
+        else {
+            my $old = $shared_ns_feats{default} // [];
+            push @$old, "$key=$value";
+            $shared_ns_feats{default} = $old;
+        }
+    }
+    my $feat_str = "";
+    foreach my $ns (sort {$a eq "default" ? 1 : $a cmp $b} keys %shared_ns_feats) {
+        $feat_str .= "|$ns " . (join " ", @{$shared_ns_feats{$ns}});
+    }
+    return $feat_str;
+}
+
+
+sub create_instances {
+    my ($self, $node1, $cands, $add_feats) = @_;
+    
+    my $node1_unary_h = $self->_unary_features_prefixed( $node1, $self->node1_label, $add_feats );
     my $node1_unary_l = feat_hash_to_sparse_list($node1_unary_h);
 
     my @cand_feats = ();
     my $ord = 1;
     foreach my $cand (@$cands) {
         if ($cand != $node1) {
-            my $cand_unary_h = $self->_unary_features_prefixed( $cand, $self->node2_label );
+            my $cand_unary_h = $self->_unary_features_prefixed( $cand, $self->node2_label, $add_feats );
             # TODO for convenience we merge the two hashes into a single one => should be passed separately
             my $both_unary_h = {%$cand_unary_h, %$node1_unary_h};
-            my $cand_binary_h = $self->_binary_features( $both_unary_h, $node1, $cand, $ord);
+            my $cand_binary_h = $self->_binary_features( $both_unary_h, $node1, $cand, { %$add_feats, "cand_ord" => $ord });
             my $cand_unary_l = feat_hash_to_sparse_list($cand_unary_h);
             my $cand_binary_l = feat_hash_to_sparse_list($cand_binary_h);
             push @cand_feats, [@$cand_unary_l, @$cand_binary_l];
@@ -77,7 +113,10 @@ sub create_instances {
         $ord++;
     }
 
-    return [\@cand_feats, $node1_unary_l];
+    my $instance = [\@cand_feats, $node1_unary_l];
+    $instance = $self->_split_feats_into_namespaces($instance);
+    
+    return $instance;
 }
 
 1;

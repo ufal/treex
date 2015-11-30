@@ -29,11 +29,15 @@ sub _reset_global_structs {
 }
 
 sub _unary_features {
-    my ($self, $node) = @_;
+    my ($self, $node, $type, $add_feats) = @_;
 
     $self->_reset_global_structs($node);
 
     my $feats = {};
+
+    if ($type eq "n1") {
+        $feats->{"type^nodetype"} = $add_feats->{nodetype};
+    }
 
     #$feats->{id} = $node->get_address;
     $feats->{t_lemma} = $node->t_lemma;
@@ -53,7 +57,7 @@ sub _unary_features {
 }
 
 sub _binary_features {
-    my ($self, $set_features, $node1, $node2, $node2_ord) = @_;
+    my ($self, $set_features, $node1, $node2, $add_feats) = @_;
 
     my $feats = { %$set_features };
 
@@ -189,6 +193,5 @@ sub _get_subtree_aligns {
     $self->_subtree_aligns->{$tnode->id} = $subtree_align;
     return $subtree_align;
 }
-
 
 1;
