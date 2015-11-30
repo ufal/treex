@@ -758,7 +758,8 @@ sub detect_prague_apposition
         }
         # The dependency relation label of the apposition head did not distinguish whether the head was conjunction or punctuation.
         my $old_head = $phrase->head();
-        if($old_head->node()->is_punctuation())
+        my $node = $old_head->node();
+        if($node->is_punctuation())
         {
             push(@punctuation, $old_head);
             my $deprel_id = defined($node->form()) && $node->form() eq ',' ? 'auxx' : 'auxg';
