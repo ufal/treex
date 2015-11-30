@@ -164,6 +164,9 @@ sub format_singleline {
         $feat_str = "default ";
         $feat_str .= join " ", (map {feat_perl_to_vw($_)} @feats_items);
     }
+    if ($feat_str =~ /^\|(.*)$/) {
+        $feat_str = $1;
+    }
     my $line = sprintf "%s %s|%s\t%s\n",
         defined $label ? $label : "",
         defined $tag ? $tag : "",
