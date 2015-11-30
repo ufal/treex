@@ -826,7 +826,7 @@ __PACKAGE__->meta->make_immutable();
 
 =head1 NAME
 
-Treex::Tool::PhraseBuilder
+Treex::Tool::PhraseBuilder::Prague
 
 =head1 DESCRIPTION
 

@@ -1,7 +1,8 @@
 package Treex::Block::HamleDT::HarmonizePDT;
+use utf8;
 use Moose;
 use Treex::Core::Common;
-use utf8;
+use Treex::Tool::PhraseBuilder::Prague;
 extends 'Treex::Block::HamleDT::Harmonize';
 
 #------------------------------------------------------------------------------
