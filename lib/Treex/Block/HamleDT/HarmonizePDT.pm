@@ -30,7 +30,7 @@ sub process_zone
     ###!!!
     # See the comment at sub detect_coordination for why we are doing this even with PDT-style treebanks.
     ###!!!$self->restructure_coordination($root);
-    $self->pdt2hamledt_apposition($root);
+    ###!!!$self->pdt2hamledt_apposition($root);
     # We used to reattach final punctuation before handling coordination and apposition but that was a mistake.
     # The sentence-final punctuation might serve as coap head, in which case this function must not modify it.
     # The function knows it but it cannot be called before coap annotation has stabilized.

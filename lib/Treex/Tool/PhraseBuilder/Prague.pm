@@ -67,6 +67,8 @@ sub _build_dialect
     # The second position is the label used in set_deprel(); not available for all ids.
     my %map =
     (
+        'apos'  => ['^Apos$', 'Apos'], # head of paratactic apposition (punctuation or conjunction)
+        'appos' => ['^Apposition$', 'Apposition'], # dependent member of hypotactic apposition
         'auxg'  => ['^AuxG$', 'AuxG'], # punctuation other than comma
         'auxk'  => ['^AuxK$', 'AuxK'], # sentence-terminating punctuation
         'auxpc' => ['^Aux[PC]$'],      # preposition or subordinating conjunction
@@ -129,11 +131,18 @@ sub detect_special_constructions
         # instead of Coord). However, after processing the coordination the phrase
         # will get a new label and it may well be AuxP.
         $phrase = $self->detect_prague_coordination($phrase);
+        $phrase = $self->detect_prague_apposition($phrase);
         $phrase = $self->detect_prague_pp($phrase);
     }
     # Return the resulting phrase. It may be different from the input phrase.
     return $phrase;
 }
+
+
+
+#==============================================================================
+# Coordination
+#==============================================================================
 
 
 
@@ -658,6 +667,143 @@ sub reconsider_distant_private_dependents
         }
     }
 }
+
+
+
+#==============================================================================
+# Apposition
+#==============================================================================
+
+
+
+#------------------------------------------------------------------------------
+# Examines a Prague-style nonterminal phrase whether it is an apposition.
+# Appositions in the Prague annotation style are analyzed paratactically like
+# coordinations. The delimiter (usually punctuation) is the head and both
+# members are attached to it. Unlike with coordination, the apposition is not
+# converted to a special phrase type. It is just transformed to a hypotactic
+# relation using ordinary nonterminal phrases.
+#------------------------------------------------------------------------------
+sub detect_prague_apposition
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    # If this is the Prague style then the head is either punctuation or a conjunction.
+    # Apposition is very similar to coordination in the Prague style. Usually
+    # it has only two members (“conjuncts”) but it is not guaranteed. In case
+    # of ellipsis, the elided member may be represented by two or more orphans.
+    if($self->is_deprel($phrase->deprel(), 'apos'))
+    {
+        my @dependents = $phrase->dependents('ordered' => 1);
+        my @conjuncts;
+        my @coordinators;
+        my @punctuation;
+        my @sdependents;
+        # Classify dependents.
+        my ($cmin, $cmax);
+        foreach my $d (@dependents)
+        {
+            if($d->is_member())
+            {
+                # Occasionally punctuation is labeled as conjunct (not nested coordination,
+                # which should be solved by now, but an orphan leaf node after ellipsis).
+                # We want to make it normal punctuation instead.
+                # (Note that we cannot recognize punctuation by dependency label in this case.
+                # It will be labeled 'ExD', not 'AuxX' or 'AuxG'.)
+                if($d->node()->is_punctuation() && $d->node()->is_leaf())
+                {
+                    $d->set_is_member(0);
+                    push(@punctuation, $d);
+                }
+                else
+                {
+                    push(@conjuncts, $d);
+                    $cmin = $d->ord() if(!defined($cmin));
+                    $cmax = $d->ord();
+                }
+            }
+            # Additional coordinating conjunctions (except the head).
+            # In PDT they are labeled AuxY but other words in the tree may get
+            # that label too. We identify it as 'cc' and use the dialect vocabulary
+            # to see what label we actually expect.
+            elsif($self->is_deprel($d->deprel(), 'cc'))
+            {
+                push(@coordinators, $d);
+            }
+            # Punctuation (except the head).
+            # Some punctuation may have headed a nested coordination or
+            # apposition (playing either a conjunct or a shared dependent) but
+            # it should have been processed by now, as we are proceeding
+            # bottom-up.
+            elsif($self->is_deprel($d->deprel(), 'punct'))
+            {
+                push(@punctuation, $d);
+            }
+            # The rest are dependents shared by all the conjuncts.
+            else
+            {
+                push(@sdependents, $d);
+            }
+        }
+        # If there are no conjuncts, we cannot create a coordination.
+        my $n = scalar(@conjuncts);
+        if($n == 0)
+        {
+            log_warn('Apposition without members');
+            # We cannot keep 'apos' as the deprel of the phrase if there are no members.
+            my $node = $phrase->node();
+            my $deprel_id = defined($node->form()) && $node->form() eq ',' ? 'auxx' : $node->is_punctuation() ? 'auxg' : 'auxy';
+            $self->set_deprel($phrase, $deprel_id);
+            return $phrase;
+        }
+        # The dependency relation label of the apposition head did not distinguish whether the head was conjunction or punctuation.
+        my $old_head = $phrase->head();
+        if($old_head->node()->is_punctuation())
+        {
+            push(@punctuation, $old_head);
+            my $deprel_id = defined($node->form()) && $node->form() eq ',' ? 'auxx' : 'auxg';
+            $self->set_deprel($old_head, $deprel_id);
+        }
+        else
+        {
+            push(@coordinators, $old_head);
+            $self->set_deprel($old_head, 'auxy');
+        }
+        $old_head->set_is_member(0);
+        # Now it is clear that we have an apposition.
+        # Make the first member the head.
+        # Note that we could not use the set_head() method if this was a Coordination or a PP phrase instead of a generic NTerm.
+        # However, in the Prague style one node cannot head an Apposition and a Coordination or PP at the same time. Since we
+        # have seen the Apos dependency label, we know that the current phrase is an ordinary NTerm.
+        my $head_conjunct = shift(@conjuncts);
+        $phrase->set_head($head_conjunct);
+        # Remove the is_member flag from the conjuncts. We will no longer need it because we are transforming the tree to hypotactic apposition.
+        $head_conjunct->set_is_member(0);
+        foreach my $c (@conjuncts)
+        {
+            $c->set_is_member(0);
+            $self->set_deprel($c, 'appos');
+        }
+        # It is not guaranteed that there is a second member (although it is weird if there isn't).
+        # But if there is a second member, the delimiting punctuation should be attached to it.
+        if(@conjuncts)
+        {
+            @punctuation = grep {my $ord = $_->ord(); $ord>$cmin && $ord<$cmax} (@punctuation);
+            foreach my $d (@punctuation, @coordinators)
+            {
+                $d->set_parent($conjuncts[0]);
+            }
+        }
+    }
+    # Return the input NTerm phrase if no Coordination has been detected.
+    return $phrase;
+}
+
+
+
+#==============================================================================
+# Prepositional phrase
+#==============================================================================
 
 
 
