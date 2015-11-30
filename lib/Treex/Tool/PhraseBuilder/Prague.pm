@@ -302,12 +302,10 @@ sub detect_alpino_coordination
         # Now it is clear that we have a coordination.
         # Create a new Coordination phrase and destroy the old input NTerm.
         return $self->replace_nterm_by_coordination($phrase, \@conjuncts, \@coordinators, \@punctuation, \@sdependents, $cmin, $cmax);
-        ###!!!!!!!!!!!!!!!!!!!!!! This method is in the Coordination class. Write something similar for the PhraseBuilder.
-        # We now know all we can.
-        # It's time for a few more heuristics.
+        # Use heuristic to recognize some shared dependents.
         # Even though the Alpino style belongs to the Prague family, it does not seem to take the opportunity to distinguish shared modifiers.
         # There are frequent non-projective dependents of the first conjunct that appear in the sentence after the last conjunct.
-        ###!!!$self->reconsider_distant_private_modifiers();
+        $self->reconsider_distant_private_dependents($phrase);
     }
     # Return the input NTerm phrase if no Coordination has been detected.
     return $phrase;
@@ -371,10 +369,8 @@ sub detect_stanford_coordination
         # Now it is clear that we have a coordination.
         # The old input NTerm will now only hold the first conjunct with its private dependents.
         return $self->surround_nterm_by_coordination($phrase, \@conjuncts, \@coordinators, \@punctuation, [], $cmin, $cmax);
-        ###!!!!!!!!!!!!!!!!!!!!!! This method is in the Coordination class. Write something similar for the PhraseBuilder.
-        # We now know all we can.
-        # It's time for a few more heuristics.
-        ###!!!$self->reconsider_distant_private_modifiers();
+        # Use heuristic to recognize some shared dependents.
+        $self->reconsider_distant_private_dependents($phrase);
     }
     # Return the input NTerm phrase if no Coordination has been detected.
     return $phrase;
@@ -464,10 +460,8 @@ sub detect_moscow_coordination
             }
             $first = 0;
         }
-        ###!!!!!!!!!!!!!!!!!!!!!! This method is in the Coordination class. Write something similar for the PhraseBuilder.
-        # We now know all we can.
-        # It's time for a few more heuristics.
-        ###!!!$self->reconsider_distant_private_modifiers();
+        # Use heuristic to recognize some shared dependents.
+        $self->reconsider_distant_private_dependents($phrase);
     }
     # If we have detected a coordination, $phrase now points to the Coordination. Otherwise it is still the input NTerm.
     return $phrase;
@@ -636,6 +630,33 @@ sub surround_nterm_by_existing_coordination
         $p->set_is_member(0);
     }
     return $coordination;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Examines private modifiers of the first (word-order-wise) conjunct. If they
+# lie after the last conjunct, the function reclassifies them as shared
+# modifiers. This is a heuristic that should work well with coordinations that
+# were originally encoded in left-to-right Moscow or Stanford styles.
+#------------------------------------------------------------------------------
+sub reconsider_distant_private_dependents
+{
+    my $self = shift;
+    my $coordination = shift;
+    my @conjuncts = $coordination->conjuncts('ordered' => 1);
+    return if(scalar(@conjuncts)<2);
+    # We will only compare the head nodes of the constituents, not the whole subtrees that could be interleaved.
+    my $maxord = $conjuncts[-1]->ord();
+    my @dependents = $conjuncts[0]->dependents();
+    foreach my $d (@dependents)
+    {
+        if($d->ord() > $maxord)
+        {
+            # Detach the dependent from the first conjunct and attach it to the coordination, thus making it a shared dependent.
+            $d->set_parent($coordination);
+        }
+    }
 }
 
 
