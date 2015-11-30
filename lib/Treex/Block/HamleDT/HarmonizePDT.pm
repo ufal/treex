@@ -15,8 +15,20 @@ sub process_zone
     my $tagset = shift;
     my $root = $self->SUPER::process_zone($zone, $tagset);
     my @nodes = $root->get_descendants({ordered => 1});
+    ###!!!
+    # Debugging the phrase-based implementation of tree transformations (30.11.2015).
+    my $builder = new Treex::Tool::PhraseBuilder::Prague
+    (
+        'prep_is_head'           => 1,
+        'cop_is_head'            => 1, ###!!! To tenhle builder vůbec neřeší.
+        'coordination_head_rule' => 'last_coordinator',
+        'counted_genitives'      => $self->language() ne 'la' ###!!! V tomhle builderu se s genitivy nic nedělá, ne?
+    );
+    my $phrase = $builder->build($root);
+    $phrase->project_dependencies();
+    ###!!!
     # See the comment at sub detect_coordination for why we are doing this even with PDT-style treebanks.
-    $self->restructure_coordination($root);
+    ###!!!$self->restructure_coordination($root);
     $self->pdt2hamledt_apposition($root);
     # We used to reattach final punctuation before handling coordination and apposition but that was a mistake.
     # The sentence-final punctuation might serve as coap head, in which case this function must not modify it.
