@@ -97,12 +97,12 @@ sub _is_3rd_pers_cs_a {
     
     # reflexive
     my $arg_reflexive = $args->{reflexive} // 0;
-    my $reflexive = is_reflexive($tnode);
+    my $reflexive = is_reflexive($anode);
     return 0 if !ternary_arg($arg_reflexive, $reflexive);
 
     # possessive
     my $arg_possessive = $args->{possessive} // 0;
-    my $possessive = is_possessive($tnode);
+    my $possessive = is_possessive($anode);
     return 0 if !ternary_arg($arg_possessive, $possessive);
    
     return 1;
@@ -236,39 +236,51 @@ sub _is_3rd_pers_en_a {
     
     # reflexive
     my $arg_reflexive = $args->{reflexive} // 0;
-    my $reflexive = is_reflexive($tnode);
+    my $reflexive = is_reflexive($anode);
     return 0 if !ternary_arg($arg_reflexive, $reflexive);
 
     # possessive
     my $arg_possessive = $args->{possessive} // 0;
-    my $possessive = is_possessive($tnode);
+    my $possessive = is_possessive($anode);
     return 0 if !ternary_arg($arg_possessive, $possessive);
    
     return 1;
 }
 
 sub is_reflexive {
-    my ($tnode) = @_;
-    my $reflex = $tnode->get_attr('is_reflexive');
-    return $reflex if (defined $reflex);
-    my $anode = $tnode->get_lex_anode;
+    my ($node) = @_;
+    my $anode;
+    if ($node->get_layer eq "t") {
+        my $t_reflex = $node->get_attr('is_reflexive');
+        return $t_reflex if (defined $t_reflex);
+        $anode = $node->get_lex_anode;
+    }
+    else {
+        $anode = $node;
+    }
+    
     return 0 if (!defined $anode);
     my $lemma = $anode->lemma;
-    if ($tnode->language eq "cs") {
+    if ($anode->language eq "cs") {
         $lemma = Treex::Tool::Lexicon::CS::truncate_lemma($lemma, 1);
     }
-    $reflex = $PERS_PRONS_REFLEX{$tnode->language}{$lemma};
-    return $reflex;
+    return $PERS_PRONS_REFLEX{$anode->language}{$lemma};
 }
 
 sub is_possessive {
-    my ($tnode) = @_;
-    my $anode = $tnode->get_lex_anode;
+    my ($node) = @_;
+    my $anode;
+    if ($node->get_layer eq "t") {
+        $anode = $node->get_lex_anode;
+    }
+    else {
+        $anode = $node;
+    }
     return 0 if (!defined $anode);
-    if ($tnode->language eq "en") {
+    if ($anode->language eq "en") {
         return $anode->tag eq 'PRP$';
     }
-    elsif ($tnode->language eq "cs") {
+    elsif ($anode->language eq "cs") {
         return $anode->tag =~ /^.[18SU]/;
     }
     return 0;
