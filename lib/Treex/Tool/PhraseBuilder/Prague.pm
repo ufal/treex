@@ -790,9 +790,17 @@ sub detect_prague_apposition
         if(@conjuncts)
         {
             @punctuation = grep {my $ord = $_->ord(); $ord>$cmin && $ord<$cmax} (@punctuation);
-            foreach my $d (@punctuation, @coordinators)
+            if(@punctuation || @coordinators)
             {
-                $d->set_parent($conjuncts[0]);
+                # The second member could be a terminal phrase, which cannot take dependents.
+                # Wrap it in a new nonterminal.
+                $conjuncts[0]->set_parent(undef);
+                my $nterm = new Treex::Core::Phrase::NTerm('head' => $conjuncts[0]);
+                $nterm->set_parent($phrase);
+                foreach my $d (@punctuation, @coordinators)
+                {
+                    $d->set_parent($nterm);
+                }
             }
         }
     }
