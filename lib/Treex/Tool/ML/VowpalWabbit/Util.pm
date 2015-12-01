@@ -274,7 +274,15 @@ sub feat_perl_to_vw {
     my ($feat, $on_featstr) = @_;
     # ":" and "|" is a special char in VW
     $feat =~ s/:/__COL__/g;
-    $feat =~ s/\|/__PIPE__/g;
+    if ($on_featstr) {
+        $feat =~ s/^\|/:/g;
+        $feat =~ s/ \|([^ =]+)/ :$1/g;
+        $feat =~ s/\|/__PIPE__/g;
+        $feat =~ s/:/\|/g;
+    }
+    else {
+        $feat =~ s/\|/__PIPE__/g;
+    }
     $feat =~ s/\t/__TAB__/g;
     if (!$on_featstr) {
         $feat =~ s/ /__SPACE__/g;
