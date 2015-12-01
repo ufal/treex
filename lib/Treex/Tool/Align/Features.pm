@@ -29,14 +29,14 @@ sub _reset_global_structs {
 }
 
 sub _unary_features {
-    my ($self, $node, $type, $add_feats) = @_;
+    my ($self, $node, $type) = @_;
 
     $self->_reset_global_structs($node);
 
     my $feats = {};
 
     if ($type eq "n1") {
-        $feats->{"type^nodetype"} = $add_feats->{nodetype};
+        $feats->{"type^nodetype"} = $node->wild->{filter_types};
     }
 
     #$feats->{id} = $node->get_address;
@@ -57,7 +57,7 @@ sub _unary_features {
 }
 
 sub _binary_features {
-    my ($self, $set_features, $node1, $node2, $add_feats) = @_;
+    my ($self, $set_features, $node1, $node2) = @_;
 
     my $feats = { %$set_features };
 
