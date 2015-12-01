@@ -3,14 +3,19 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
 
-sub process_anode {
-    my ($self, $anode) = @_;
-    if ($anode->is_coap_root) {
-        if (not first {$_->is_member} $anode->get_children) {
-            $self->complain($anode);
+sub process_anode
+{
+    my $self = shift;
+    my $node = shift;
+    if($node->deprel() =~ m/^(Coord|Apos)$/)
+    {
+        if(!first {$_->is_member()} $node->children())
+        {
+            $self->complain($node);
         }
-        else {
-            $self->praise($anode);
+        else
+        {
+            $self->praise($node);
         }
     }
 }
@@ -28,6 +33,6 @@ member node among its children.
 
 =cut
 
-# Copyright 2011 Zdenek Zabokrtsky
+# Copyright 2011 Zdeněk Žabokrtský
+# Copyright 2015 Dan Zeman
 # This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
-

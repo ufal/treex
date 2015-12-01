@@ -6,7 +6,7 @@ extends 'Treex::Block::Test::BaseTester';
 sub process_anode {
     my ($self, $anode) = @_;
 
-    if (($anode->afun || '') eq 'Coord') {
+    if (($anode->deprel || '') eq 'Coord') {
 
 	my $leftmost = $anode->get_descendants({first_only=>1});
 	my $rightmost = $anode->get_descendants({last_only=>1});
@@ -34,4 +34,3 @@ Punctuation should not appear as a sibling of a coordination if it is between th
 
 # Copyright 2012 Jindra Helcl
 # This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
-

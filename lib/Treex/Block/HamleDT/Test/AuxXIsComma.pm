@@ -6,7 +6,7 @@ extends 'Treex::Block::Test::BaseTester';
 sub process_anode {
     my ($self, $anode) = @_;
 
-    if ($anode->afun eq 'AuxX' && $anode->form ne ',') {
+    if ($anode->deprel eq 'AuxX' && $anode->form ne ',') {
         $self->complain($anode);
     }
 }
@@ -22,4 +22,3 @@ Only comma should be AuxX
 =back
 
 =cut
-

@@ -23,7 +23,6 @@ We should try to have a low number of NR afuns, but it is better to assign this 
 
 See also
 
-L<Treex::Block::HamleDT::Test::AfunDefined>
 L<Treex::Block::HamleDT::Test::AfunKnown>
 
 =back

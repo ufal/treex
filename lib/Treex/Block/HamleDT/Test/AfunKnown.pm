@@ -30,7 +30,6 @@ also the special afun value "NR" (intentionally marked as not recognized).
 
 See also
 
-L<Treex::Block::HamleDT::Test::AfunDefined>
 L<Treex::Block::HamleDT::Test::AfunNotNR>
 
 =back

@@ -4,26 +4,30 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
 
-# Tests if the punctuation at the end of sentence (hanged on the root) is AuxK
+# Checks whether the sentence-final punctuation is labeled AuxK.
 
-sub process_atree {
-    my ( $self, $a_root ) = @_;
-
-    my $last_subtree = ($a_root->get_descendants({ordered=>1}))[-1];
-    if ($last_subtree->afun !~ /Aux[XK]/) {
-        return; # sentence does not have punctuation at all
-    }
-
-    # if it has punctuation at the end, test if it's AuxK
-    foreach my $a_node  ($a_root->get_children()) {
-        if ($a_node->afun eq "AuxK") {
-            return; # ending punctuation found => does not complain
+sub process_atree
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    my $last_node = $nodes[-1];
+    # Node cannot be labeled AuxK if it is not the last node.
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'AuxK' && $node != $last_node)
+        {
+            $self->complain($node);
         }
     }
-
-    $self->complain($a_root);
+    # Node cannot be labeled AuxX or AuxG if it is the last node.
+    if($last_node->deprel() =~ m/^Aux[GX]$/)
+    {
+        $self->complain($last_node);
+    }
 }
 
 # (C) 2012 Jindřich Libovický <jlibovicky@gmail.com>
+# Copyright 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 1;
