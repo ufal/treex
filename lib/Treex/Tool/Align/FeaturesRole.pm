@@ -48,7 +48,7 @@ sub feat_hash_to_sparse_list {
 sub _unary_features_prefixed {
     my ($self, $node, $type, $add_feats) = @_;
     my $feats = $self->_unary_features( $node, $type, $add_feats );
-    my %new_feats = map {$type . "_" . $_ => $feats->{$_}} keys %$feats;
+    my %new_feats = map {my $new_feat = $_; $new_feat =~ s/^((?:[^\^]+\^)?)/$1$type\_/g; $new_feat => $feats->{$_}} keys %$feats;
     return \%new_feats;
 }
 
@@ -57,7 +57,7 @@ sub _split_feats_into_namespaces {
 
     my ($cand_feats, $shared_feats) = @$instance;
     my $new_instance = [
-        [ map {_sfin_featline($shared_feats)} @$cand_feats ],
+        [ map {_sfin_featline($_)} @$cand_feats ],
         _sfin_featline($shared_feats),
     ];
     return $new_instance;
@@ -70,20 +70,21 @@ sub _sfin_featline {
     foreach my $feat (@$feats) {
         my ($key, $value) = @$feat;
         if ($key =~ /^(.*)\^(.*)$/) {
-            my $old = $shared_ns_feats{$1} // [];
+            my $old = $ns_feats{$1} // [];
             push @$old, "$2=$value";
-            $shared_ns_feats{$1} = $old;
+            $ns_feats{$1} = $old;
         }
         else {
-            my $old = $shared_ns_feats{default} // [];
+            my $old = $ns_feats{default} // [];
             push @$old, "$key=$value";
-            $shared_ns_feats{default} = $old;
+            $ns_feats{default} = $old;
         }
     }
     my $feat_str = "";
-    foreach my $ns (sort {$a eq "default" ? 1 : $a cmp $b} keys %shared_ns_feats) {
-        $feat_str .= "|$ns " . (join " ", @{$shared_ns_feats{$ns}});
+    foreach my $ns (sort {$a eq "default" ? 1 : ($b eq "default" ? -1 : ($a cmp $b))} keys %ns_feats) {
+        $feat_str .= " |$ns " . (join " ", @{$ns_feats{$ns}});
     }
+    $feat_str =~ s/^ +//;
     return $feat_str;
 }
 
