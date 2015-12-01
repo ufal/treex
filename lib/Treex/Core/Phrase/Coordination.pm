@@ -473,7 +473,7 @@ sub project_dependencies
         {
             my $dep_node = $d->node();
             $dep_node->set_parent($head_node);
-            $dep_node->set_deprel($d->deprel());
+            $dep_node->set_deprel($d->project_deprel());
         }
     }
     else ###!!! This is probably not correct, as it does not assume any particular coordination style.
@@ -483,7 +483,7 @@ sub project_dependencies
         {
             my $dep_node = $dependent->node();
             $dep_node->set_parent($head_node);
-            $dep_node->set_deprel($dependent->deprel());
+            $dep_node->set_deprel($dependent->project_deprel());
         }
     }
 }

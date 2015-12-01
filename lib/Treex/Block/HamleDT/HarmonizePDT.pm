@@ -34,7 +34,12 @@ sub process_zone
     # We used to reattach final punctuation before handling coordination and apposition but that was a mistake.
     # The sentence-final punctuation might serve as coap head, in which case this function must not modify it.
     # The function knows it but it cannot be called before coap annotation has stabilized.
-    $self->attach_final_punctuation_to_root($root) unless($#nodes>=0 && $nodes[$#nodes]->afun() eq 'Coord');
+    #$self->attach_final_punctuation_to_root($root) unless($#nodes>=0 && $nodes[$#nodes]->afun() eq 'Coord');
+    ###!!! is_member undef and is_member 0 are equivalent; however, the latter makes larger XML file.
+    foreach my $node (@nodes)
+    {
+        $node->set_is_member(undef) if(!$node->is_member());
+    }
     return $root;
 }
 

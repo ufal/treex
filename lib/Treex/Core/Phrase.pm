@@ -167,6 +167,22 @@ sub deprel
 
 
 #------------------------------------------------------------------------------
+# Returns the deprel that should be used when the phrase tree is projected back
+# to a dependency tree (see the method project_dependencies()). In most cases
+# this is identical to what deprel() returns. However, for instance
+# prepositional phrases in Prague treebanks are attached using AuxP. Their
+# relation to the parent (returned by deprel()) is projected to the argument of
+# the preposition.
+#------------------------------------------------------------------------------
+sub project_deprel
+{
+    my $self = shift;
+    return $self->deprel();
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the node's ord attribute. This means that nodes that do not implement
 # the Ordered role cannot be wrapped in phrases. We sometimes need to order
 # child phrases according to the word order of their head nodes.
@@ -361,6 +377,15 @@ underlying nodes. When the phrase tree is transformed to the desired style,
 the relations may be modified; at the end, they can be projected to the
 dependency tree again. A general nonterminal phrase typically has the same
 deprel as its head child. Terminal phrases store deprels as attributes.
+
+=item my $deprel = $phrase->project_deprel();
+
+Returns the deprel that should be used when the phrase tree is projected back
+to a dependency tree (see the method project_dependencies()). In most cases
+this is identical to what deprel() returns. However, for instance
+prepositional phrases in Prague treebanks are attached using C<AuxP>. Their
+relation to the parent (returned by deprel()) is projected as the label of
+the dependency between the preposition and its argument.
 
 =item my $ord = $phrase->ord();
 

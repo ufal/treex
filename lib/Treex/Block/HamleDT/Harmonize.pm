@@ -42,6 +42,17 @@ sub process_zone
     # and it is almost always treebank-specific (only a few treebanks use the same tagset as the PDT).
     $root->set_afun('AuxS');
     $self->deprel_to_afun($root);
+    ###!!! Fall 2015: We gradually leave afuns and use only deprels.
+    ###!!! Afuns are too specific to PDT and they are enumerated in the XML schema, thus it is difficult to add or modify values.
+    ###!!! At the end of the day we will also want to rewrite (and rename) the deprel_to_afun() method.
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $afun = $node->afun();
+        $afun = 'NR' if(!defined($afun));
+        $node->set_deprel($afun);
+        $node->set_afun(undef);
+    }
 
     # The return value can be used by the overriding methods of subclasses.
     return $root;

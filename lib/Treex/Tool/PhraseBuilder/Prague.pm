@@ -870,6 +870,7 @@ sub detect_prague_pp
             'arg'           => $c->{arg},
             'fun_is_head'   => $self->prep_is_head(),
             'deprel_at_fun' => 0,
+            'core_deprel'   => $fun_deprel,
             'is_member'     => $member
         );
         foreach my $d (@{$c->{dep}})

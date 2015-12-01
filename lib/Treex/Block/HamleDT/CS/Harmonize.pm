@@ -25,6 +25,19 @@ sub process_zone
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
     $self->remove_features_from_lemmas($root);
+    ###!!! Fall 2015: We gradually leave afuns and use only deprels.
+    ###!!! Afuns are too specific to PDT and they are enumerated in the XML schema, thus it is difficult to add or modify values.
+    ###!!! At the end of the day we will also want to rewrite (and rename) the deprel_to_afun() method.
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $afun = $node->afun();
+        if(defined($afun))
+        {
+            $node->set_deprel($afun);
+            $node->set_afun(undef);
+        }
+    }
 }
 
 

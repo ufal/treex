@@ -395,7 +395,7 @@ sub project_dependencies
     {
         my $dep_node = $dependent->node();
         $dep_node->set_parent($head_node);
-        $dep_node->set_deprel($dependent->deprel());
+        $dep_node->set_deprel($dependent->project_deprel());
     }
 }
 

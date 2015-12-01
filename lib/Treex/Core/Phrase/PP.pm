@@ -46,6 +46,26 @@ has 'deprel_at_fun' =>
         'argument, regardless which of them is the head.'
 );
 
+has 'core_deprel' =>
+(
+    is       => 'rw',
+    isa      => 'Str',
+    required => 1,
+    default  => 'case', # mark, AuxP, PrepArg
+    documentation =>
+        'The deprel that does not describe the relation of the PP to its parent. '.
+        'There are always two important relations in PPs, one of them is reachable via '.
+        '$self->deprel() and the other via $self->core_deprel(). '.
+        'In Prague treebanks, the PP is headed by preposition but the parent '.
+        'relation (indicated by deprel) is labeled at the argument. The label of the preposition '.
+        '(indicated by core_deprel) is always AuxP. In Universal Dependencies, '.
+        'the PP is headed by the argument which also bears the deprel '.
+        'of the parent relation. The preposition is attached to the argument and '.
+        'its label (indicated by core_deprel) is case or mark. '.
+        'Other treebanks may have the preposition as both the head and the parent-deprel bearer, '.
+        'while the argument would be attached as PrepArg (indicated by core_deprel). '
+);
+
 
 
 #------------------------------------------------------------------------------
@@ -137,6 +157,27 @@ sub set_deprel
     my $self = shift;
     log_fatal('Dead') if($self->dead());
     $self->deprel_at_fun() ? $self->fun()->set_deprel(@_) : $self->arg()->set_deprel(@_);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the deprel that should be used when the phrase tree is projected back
+# to a dependency tree (see the method project_dependencies()). In most cases
+# this is identical to what deprel() returns. However, for instance
+# prepositional phrases in Prague treebanks are attached using AuxP. Their
+# relation to the parent (returned by deprel()) is projected to the argument of
+# the preposition.
+#------------------------------------------------------------------------------
+sub project_deprel
+{
+    my $self = shift;
+    log_fatal('Dead') if($self->dead());
+    # fun_is_head  && deprel_at_fun  => project_deprel == deprel      # many treebanks
+    # fun_is_head  && !deprel_at_fun => project_deprel == core_deprel # Prague style
+    # !fun_is_head && !deprel_at_fun => project_deprel == deprel      # UD style
+    # !fun_is_head && deprel_at_fun  => project_deprel == core_deprel # not used anywhere
+    return ($self->fun_is_head() && !$self->deprel_at_fun() || !$self->fun_is_head() && $self->deprel_at_fun()) ? $self->core_deprel() : $self->deprel();
 }
 
 
@@ -263,6 +304,20 @@ Where (at what core child) is the label of the relation between this phrase and
 its parent? It is either at the function word or at the argument, regardless
 which of them is the head.
 
+=item core_deprel
+
+The deprel that does not describe the relation of the PP to its parent. There
+are always two important relations in PPs, one of them is reachable via
+deprel() and the other via core_deprel(). In Prague treebanks, the PP is headed
+by preposition but the parent relation (indicated by deprel) is labeled at the
+argument. The label of the preposition (indicated by core_deprel) is always
+C<AuxP>. In Universal Dependencies, the PP is headed by the argument which also
+bears the deprel of the parent relation. The preposition is attached to the
+argument and its label (indicated by core_deprel) is C<case> or C<mark>. Other
+treebanks may have the preposition as both the head and the parent-deprel
+bearer, while the argument would be attached as PrepArg (indicated by
+core_deprel).
+
 =back
 
 =head1 METHODS
@@ -304,6 +359,15 @@ Depending on the current preference it is either the function word or the
 argument. This is not necessarily the same child that is the current head.
 The label is not propagated to the underlying dependency tree
 (the project_dependencies() method would have to be called to achieve that).
+
+=item project_deprel
+
+Returns the deprel that should be used when the phrase tree is projected back
+to a dependency tree (see the method project_dependencies()). In most cases
+this is identical to what deprel() returns. However, for instance
+prepositional phrases in Prague treebanks are attached using C<AuxP>. Their
+relation to the parent (returned by deprel()) is projected as the label of
+the dependency between the preposition and its argument.
 
 =item replace_core_child
 
