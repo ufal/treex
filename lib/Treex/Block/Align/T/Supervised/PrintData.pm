@@ -10,6 +10,7 @@ extends 'Treex::Block::Write::BaseTextWriter';
 with 'Treex::Block::Align::T::Supervised::Base';
 with 'Treex::Block::Filter::Node::T';
 
+has '+node_types' => ( default => 'all_anaph' );
 has 'gold_align_filter' => (is => 'ro', isa => 'HashRef', builder => '_build_gaf');
 
 sub BUILD {
