@@ -383,15 +383,16 @@ sub set_deprel
 {
     my $self = shift;
     log_fatal('Dead') if($self->dead());
-    my @conjuncts = $self->conjuncts();
+    my @conjuncts = $self->conjuncts('ordered' => 1);
     if($self->head_rule() eq 'last_coordinator')
     {
+        ###!!! Orphans from elided conjuncts are labeled 'ExD' in the Prague
+        ###!!! annotation style. This is the only legitimate case when a non-first
+        ###!!! "conjunct" has not the same deprel as the first conjunct.
+        my $exd_means_orphan = $conjuncts[0]->deprel() ne 'ExD';
         foreach my $c (@conjuncts)
         {
-            ###!!! Orphans from elided conjuncts are labeled 'ExD' in the Prague
-            ###!!! annotation style. This is the only legitimate case when a non-first
-            ###!!! "conjunct" has not the same deprel as the first conjunct.
-            unless($c->deprel() eq 'ExD')
+            unless($exd_means_orphan && $c->deprel() eq 'ExD')
             {
                 $c->set_deprel(@_);
             }
