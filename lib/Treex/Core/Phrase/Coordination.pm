@@ -534,6 +534,7 @@ sub project_dependencies
     elsif($head_rule eq 'last_coordinator')
     {
         my $head = scalar(@coordinators) > 0 ? pop(@coordinators) : pop(@punctuation);
+        $head->set_deprel('Coord');
         $head_node = $head->node();
         foreach my $c (@conjuncts)
         {
