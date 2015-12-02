@@ -469,8 +469,9 @@ sub project_deprel
 {
     my $self = shift;
     log_fatal('Dead') if($self->dead());
-    if($self->head_rule() eq 'last_coordinator' && (scalar($self->coordinators()) > 0 || scalar($self->punctuation()) > 0))
+    if($self->head_rule() eq 'last_coordinator')
     {
+        log_warn('Coord');
         return 'Coord'; ###!!! attribute / dialect?
     }
     else
