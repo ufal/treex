@@ -52,15 +52,6 @@ has 'head_rule' =>
         '                     if there are neither conjunctions nor punctuation, the first conjunct is the head.'
 );
 
-has 'deprel' =>
-(
-    is       => 'rw',
-    isa      => 'Str',
-    required => 1,
-    documentation =>
-        'Dependency relation of the coordination to its parent.'
-);
-
 
 
 #------------------------------------------------------------------------------
@@ -368,6 +359,53 @@ sub core_children
 
 
 #------------------------------------------------------------------------------
+# Returns the type of the dependency relation of the coordination to its
+# governing phrase.
+#------------------------------------------------------------------------------
+sub deprel
+{
+    my $self = shift;
+    log_fatal('Dead') if($self->dead());
+    my @conjuncts = $self->conjuncts();
+    return $conjuncts[0]->deprel();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Sets a new type of the dependency relation of the coordination to its
+# governing phrase. For nonterminal phrases the label is propagated to one (or
+# several) of their children. It is not propagated to the underlying dependency
+# tree (the project_dependencies() method would have to be called to achieve
+# that).
+#------------------------------------------------------------------------------
+sub set_deprel
+{
+    my $self = shift;
+    log_fatal('Dead') if($self->dead());
+    my @conjuncts = $self->conjuncts();
+    if($self->head_rule() eq 'last_coordinator')
+    {
+        foreach my $c (@conjuncts)
+        {
+            ###!!! Orphans from elided conjuncts are labeled 'ExD' in the Prague
+            ###!!! annotation style. This is the only legitimate case when a non-first
+            ###!!! "conjunct" has not the same deprel as the first conjunct.
+            unless($c->deprel() eq 'ExD')
+            {
+                $c->set_deprel(@_);
+            }
+        }
+    }
+    else # head_rule eq 'first_conjunct'
+    {
+        $self->head()->set_deprel(@_);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Replaces one of the core children (conjunct, coordinator or punctuation) by
 # another phrase. This is used when we want to transform the child to a
 # different class of phrase. The replacement must not have a parent yet.
@@ -462,23 +500,6 @@ sub project_dependencies
         $head_rule = 'first_conjunct'; ###!!! But then it should be possible to define deprels for this head rule in the current dialect.
     }
     # Recursion first, we work bottom-up.
-    # Since we save the coordination's deprel directly in the coordination, we
-    # must first make sure that it is properly distributed to the participating
-    # nodes, depending on the current annotation style.
-    ###!!! Tady se nějak nabourává dosavadní koncepce. Měli bychom si ujasnit, kdy se smí do deprelu hrabat a kdy se co kam promítne.
-    ###!!! Možná by nakonec každá fráze mohla mít svůj deprel. Pokud se při projekci zjistí, že je hlavou své rodičovské fráze a ta má
-    ###!!! jiný deprel, tak dostane přednost deprel rodičovské fráze. Ale to celé se promítne až při promítání do podkladového závislostního
-    ###!!! stromu. Jinak bychom totiž nemohli beztrestně změnit anotační styl za života fráze. Pokud by se permanentně dodržovala pravidla
-    ###!!! anotačního stylu pro deprely, tak by se při změně stylu musely všechny deprely zkontrolovat a upravit. A to už je vlastně totéž
-    ###!!! jako projekce do závislostního stromu. Takže bude lepší dovolit deprely, které si konkurují, a stanovit jasná pravidla, co se s nimi
-    ###!!! stane, až si o projekci opravdu řekneme.
-    if($head_rule eq 'last_coordinator')
-    {
-        foreach my $c (@conjuncts)
-        {
-            $c->set_deprel($self->deprel());
-        }
-    }
     my @children = $self->children();
     foreach my $child (@children)
     {
@@ -673,17 +694,6 @@ the head; in asyndetic coordination (no conjunctions) the last punctuation
 symbol is the head; if there are neither conjunctions nor punctuation, the
 first conjunct is the head.
 
-=item deprel
-
-Any label describing the type of the dependency relation between this
-coordination and the governing phrase (node of the first ancestor phrase where
-this one does not act as head).
-
-Deprels are normally stored at terminal phrases. Coordinations are special
-because they decide where the label is stored according to the current
-annotation style. The deprel is stored directly in the Coordination until it
-is projected back to the underlying dependency tree.
-
 =back
 
 =head1 METHODS
@@ -745,6 +755,22 @@ all core children except the one that currently serves as the head.
 
 Returns the list of the children of the phrase that are not dependents, i.e.
 all conjuncts, coordinators and punctuation.
+
+=item deprel
+
+Returns the type of the dependency relation of the coordination to the governing
+phrase.
+
+=item set_deprel
+
+Sets a new type of the dependency relation of the phrase to the governing
+phrase. For nonterminal phrases the label is propagated to one (or several)
+of their children. It is not propagated to the underlying dependency tree
+(the C<project_dependencies()> method would have to be called to achieve that).
+
+Depending on the current annotation style, deprel of coordination is propagated
+either to just the first conjunct, or to all conjuncts (except for orphans from
+elided conjuncts).
 
 =item project_deprel
 
