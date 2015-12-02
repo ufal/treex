@@ -412,6 +412,29 @@ sub replace_core_child
 
 
 #------------------------------------------------------------------------------
+# Returns the deprel that should be used when the phrase tree is projected back
+# to a dependency tree (see the method project_dependencies()). In most cases
+# this is identical to what deprel() returns. However, for instance
+# coordinations in Prague treebanks are attached using Coord. Their
+# relation to the parent (returned by deprel()) is projected to the conjuncts.
+#------------------------------------------------------------------------------
+sub project_deprel
+{
+    my $self = shift;
+    log_fatal('Dead') if($self->dead());
+    if($self->head_rule() eq 'last_coordinator' && (scalar($self->coordinators()) > 0 || scalar($self->punctuation()) > 0))
+    {
+        return 'Coord'; ###!!! attribute / dialect?
+    }
+    else
+    {
+        return $self->deprel();
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Projects dependencies between the head and the dependents back to the
 # underlying dependency structure.
 #------------------------------------------------------------------------------
@@ -684,6 +707,14 @@ all core children except the one that currently serves as the head.
 
 Returns the list of the children of the phrase that are not dependents, i.e.
 all conjuncts, coordinators and punctuation.
+
+=item project_deprel
+
+Returns the deprel that should be used when the phrase tree is projected back
+to a dependency tree (see the method project_dependencies()). In most cases
+this is identical to what deprel() returns. However, for instance
+coordinations in Prague treebanks are attached using C<Coord>. Their
+relation to the parent (returned by deprel()) is projected to the conjuncts.
 
 =item project_dependencies
 
