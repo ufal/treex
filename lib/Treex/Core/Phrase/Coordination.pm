@@ -427,7 +427,17 @@ sub project_dependencies
     }
     my $head_node = $self->node();
     # We also have to change selected deprels. It depends on the current head rule.
-    if($self->head_rule() eq 'first_conjunct')
+    my $head_rule = $self->head_rule();
+    my @conjuncts = $self->conjuncts('ordered' => 1);
+    my @coordinators = $self->coordinators('ordered' => 1);
+    my @punctuation = $self->punctuation('ordered' => 1);
+    my @dependents = $self->dependents();
+    if($head_rule eq 'last_coordinator' && scalar(@coordinators) == 0 && scalar(@punctuation) == 0)
+    {
+        log_warn("Coordination without delimiters cannot use the 'last_coordinator' head rule.");
+        $head_rule = 'first_conjunct'; ###!!! But then it should be possible to define deprels for this head rule in the current dialect.
+    }
+    if($head_rule eq 'first_conjunct')
     {
         # If the first conjunct has a deprel other than 'dep', and another conjunct has 'dep',
         # then the other conjunct is an orphan caused by ellipsis. We currently keep the 'dep'
@@ -435,7 +445,6 @@ sub project_dependencies
         ###!!! This is specific to the conversion from the Prague style to Universal Dependencies.
         ###!!! It should be solved elsewhere. Even orphans are not the main business of coordinations.
         my $dep_means_orphan = $self->deprel() ne 'dep';
-        my @conjuncts = $self->conjuncts('ordered' => 1);
         shift(@conjuncts);
         foreach my $c (@conjuncts)
         {
@@ -454,21 +463,18 @@ sub project_dependencies
                 $conj_node->set_deprel('conj');
             }
         }
-        my @coordinators = $self->coordinators();
         foreach my $c (@coordinators)
         {
             my $coor_node = $c->node();
             $coor_node->set_parent($head_node);
             $coor_node->set_deprel('cc');
         }
-        my @punctuation = $self->punctuation();
         foreach my $p (@punctuation)
         {
             my $punct_node = $p->node();
             $punct_node->set_parent($head_node);
             $punct_node->set_deprel('punct');
         }
-        my @dependents = $self->dependents();
         foreach my $d (@dependents)
         {
             my $dep_node = $d->node();
@@ -476,15 +482,39 @@ sub project_dependencies
             $dep_node->set_deprel($d->project_deprel());
         }
     }
-    else ###!!! This is probably not correct, as it does not assume any particular coordination style.
+    elsif($head_rule eq 'last_coordinator')
     {
-        my @dependents = $self->nonhead_children();
-        foreach my $dependent (@dependents)
+        my $head = scalar(@coordinators) > 0 ? pop(@coordinators) : pop(@punctuation);
+        $head_node = $head->node();
+        foreach my $c (@conjuncts)
         {
-            my $dep_node = $dependent->node();
-            $dep_node->set_parent($head_node);
-            $dep_node->set_deprel($dependent->project_deprel());
+            my $conj_node = $c->node();
+            $conj_node->set_parent($head_node);
+            $conj_node->set_deprel($c->project_deprel());
+            $conj_node->set_is_member(1);
         }
+        foreach my $c (@coordinators)
+        {
+            my $coor_node = $c->node();
+            $coor_node->set_parent($head_node);
+            $coor_node->set_deprel('AuxY');
+        }
+        foreach my $p (@punctuation)
+        {
+            my $punct_node = $p->node();
+            $punct_node->set_parent($head_node);
+            $punct_node->set_deprel($punct_node->form() eq ',' ? 'AuxX' : 'AuxG');
+        }
+        foreach my $d (@dependents)
+        {
+            my $dep_node = $d->node();
+            $dep_node->set_parent($head_node);
+            $dep_node->set_deprel($d->project_deprel());
+        }
+    }
+    else
+    {
+        log_fatal("Unknown coordination head rule '$head_rule'.");
     }
 }
 
