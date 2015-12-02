@@ -52,6 +52,15 @@ has 'head_rule' =>
         '                     if there are neither conjunctions nor punctuation, the first conjunct is the head.'
 );
 
+has 'deprel' =>
+(
+    is       => 'rw',
+    isa      => 'Str',
+    required => 1,
+    documentation =>
+        'Dependency relation of the coordination to its parent.'
+);
+
 
 
 #------------------------------------------------------------------------------
@@ -442,14 +451,6 @@ sub project_dependencies
 {
     my $self = shift;
     log_fatal('Dead') if($self->dead());
-    # Recursion first, we work bottom-up.
-    my @children = $self->children();
-    foreach my $child (@children)
-    {
-        $child->project_dependencies();
-    }
-    my $head_node = $self->node();
-    # We also have to change selected deprels. It depends on the current head rule.
     my $head_rule = $self->head_rule();
     my @conjuncts = $self->conjuncts('ordered' => 1);
     my @coordinators = $self->coordinators('ordered' => 1);
@@ -460,6 +461,31 @@ sub project_dependencies
         log_warn("Coordination without delimiters cannot use the 'last_coordinator' head rule.");
         $head_rule = 'first_conjunct'; ###!!! But then it should be possible to define deprels for this head rule in the current dialect.
     }
+    # Recursion first, we work bottom-up.
+    # Since we save the coordination's deprel directly in the coordination, we
+    # must first make sure that it is properly distributed to the participating
+    # nodes, depending on the current annotation style.
+    ###!!! Tady se nějak nabourává dosavadní koncepce. Měli bychom si ujasnit, kdy se smí do deprelu hrabat a kdy se co kam promítne.
+    ###!!! Možná by nakonec každá fráze mohla mít svůj deprel. Pokud se při projekci zjistí, že je hlavou své rodičovské fráze a ta má
+    ###!!! jiný deprel, tak dostane přednost deprel rodičovské fráze. Ale to celé se promítne až při promítání do podkladového závislostního
+    ###!!! stromu. Jinak bychom totiž nemohli beztrestně změnit anotační styl za života fráze. Pokud by se permanentně dodržovala pravidla
+    ###!!! anotačního stylu pro deprely, tak by se při změně stylu musely všechny deprely zkontrolovat a upravit. A to už je vlastně totéž
+    ###!!! jako projekce do závislostního stromu. Takže bude lepší dovolit deprely, které si konkurují, a stanovit jasná pravidla, co se s nimi
+    ###!!! stane, až si o projekci opravdu řekneme.
+    if($head_rule eq 'last_coordinator')
+    {
+        foreach my $c (@conjuncts)
+        {
+            $c->set_deprel($self->deprel());
+        }
+    }
+    my @children = $self->children();
+    foreach my $child (@children)
+    {
+        $child->project_dependencies();
+    }
+    my $head_node = $self->node();
+    # We also have to change selected deprels. It depends on the current head rule.
     if($head_rule eq 'first_conjunct')
     {
         # If the first conjunct has a deprel other than 'dep', and another conjunct has 'dep',
@@ -645,6 +671,17 @@ C<last_coordinator> means that the last coordinating conjunction, if any, is
 the head; in asyndetic coordination (no conjunctions) the last punctuation
 symbol is the head; if there are neither conjunctions nor punctuation, the
 first conjunct is the head.
+
+=item deprel
+
+Any label describing the type of the dependency relation between this
+coordination and the governing phrase (node of the first ancestor phrase where
+this one does not act as head).
+
+Deprels are normally stored at terminal phrases. Coordinations are special
+because they decide where the label is stored according to the current
+annotation style. The deprel is stored directly in the Coordination until it
+is projected back to the underlying dependency tree.
 
 =back
 

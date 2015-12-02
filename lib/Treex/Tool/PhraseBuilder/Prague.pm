@@ -506,7 +506,8 @@ sub replace_nterm_by_coordination
         'coordinators' => $coordinators,
         'punctuation'  => \@inpunct,
         'head_rule'    => $self->coordination_head_rule(),
-        'is_member'    => $member
+        'is_member'    => $member,
+        'deprel'       => $conjuncts->[0]->deprel()
     );
     # Remove the is_member flag from the conjuncts. It may be re-introduced
     # during back-projection to the dependency tree if the Prague annotation
@@ -576,7 +577,8 @@ sub surround_nterm_by_coordination
         'coordinators' => $coordinators,
         'punctuation'  => \@inpunct,
         'head_rule'    => $self->coordination_head_rule(),
-        'is_member'    => $member
+        'is_member'    => $member,
+        'deprel'       => $conjuncts->[0]->deprel()
     );
     # Remove the is_member flag from the conjuncts. It may be re-introduced
     # during back-projection to the dependency tree if the Prague annotation
