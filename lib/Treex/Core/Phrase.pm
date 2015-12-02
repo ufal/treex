@@ -177,7 +177,7 @@ sub deprel
 sub project_deprel
 {
     my $self = shift;
-    return $self->deprel();
+    log_fatal("The project_deprel() method is not implemented");
 }
 
 

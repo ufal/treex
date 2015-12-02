@@ -471,7 +471,6 @@ sub project_deprel
     log_fatal('Dead') if($self->dead());
     if($self->head_rule() eq 'last_coordinator')
     {
-        log_warn('Coord');
         return 'Coord'; ###!!! attribute / dialect?
     }
     else

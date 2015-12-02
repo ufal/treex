@@ -202,6 +202,23 @@ sub set_deprel
 
 
 #------------------------------------------------------------------------------
+# Returns the deprel that should be used when the phrase tree is projected back
+# to a dependency tree (see the method project_dependencies()). In most cases
+# this is identical to what deprel() returns. However, for instance
+# prepositional phrases in Prague treebanks are attached using AuxP. Their
+# relation to the parent (returned by deprel()) is projected to the argument of
+# the preposition.
+#------------------------------------------------------------------------------
+sub project_deprel
+{
+    my $self = shift;
+    log_fatal('Dead') if($self->dead());
+    return $self->head()->project_deprel();
+}
+
+
+
+#------------------------------------------------------------------------------
 # Adds a child phrase (subphrase). By default, the new child will not be head,
 # it will be an ordinary modifier. This is a private method that should be
 # called only from the public method Phrase::set_parent().

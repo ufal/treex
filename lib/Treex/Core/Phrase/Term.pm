@@ -109,6 +109,22 @@ sub children
 
 
 #------------------------------------------------------------------------------
+# Returns the deprel that should be used when the phrase tree is projected back
+# to a dependency tree (see the method project_dependencies()). In most cases
+# this is identical to what deprel() returns. However, for instance
+# prepositional phrases in Prague treebanks are attached using AuxP. Their
+# relation to the parent (returned by deprel()) is projected to the argument of
+# the preposition.
+#------------------------------------------------------------------------------
+sub project_deprel
+{
+    my $self = shift;
+    return $self->deprel();
+}
+
+
+
+#------------------------------------------------------------------------------
 # Projects dependencies between the head and the dependents back to the
 # underlying dependency structure. There is not much to do in the terminal
 # phrase as it does not have any dependents. However, we will attach all nodes
