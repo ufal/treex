@@ -407,6 +407,29 @@ sub set_deprel
 
 
 #------------------------------------------------------------------------------
+# Returns the deprel that should be used when the phrase tree is projected back
+# to a dependency tree (see the method project_dependencies()). In most cases
+# this is identical to what deprel() returns. However, for instance
+# coordinations in Prague treebanks are attached using Coord. Their
+# relation to the parent (returned by deprel()) is projected to the conjuncts.
+#------------------------------------------------------------------------------
+sub project_deprel
+{
+    my $self = shift;
+    log_fatal('Dead') if($self->dead());
+    if($self->head_rule() eq 'last_coordinator')
+    {
+        return 'Coord'; ###!!! attribute / dialect?
+    }
+    else
+    {
+        return $self->head()->project_deprel();
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Replaces one of the core children (conjunct, coordinator or punctuation) by
 # another phrase. This is used when we want to transform the child to a
 # different class of phrase. The replacement must not have a parent yet.
@@ -455,29 +478,6 @@ sub replace_core_child
     }
     # We should not ever get here.
     log_fatal("The child to be replaced is not in my core");
-}
-
-
-
-#------------------------------------------------------------------------------
-# Returns the deprel that should be used when the phrase tree is projected back
-# to a dependency tree (see the method project_dependencies()). In most cases
-# this is identical to what deprel() returns. However, for instance
-# coordinations in Prague treebanks are attached using Coord. Their
-# relation to the parent (returned by deprel()) is projected to the conjuncts.
-#------------------------------------------------------------------------------
-sub project_deprel
-{
-    my $self = shift;
-    log_fatal('Dead') if($self->dead());
-    if($self->head_rule() eq 'last_coordinator')
-    {
-        return 'Coord'; ###!!! attribute / dialect?
-    }
-    else
-    {
-        return $self->deprel();
-    }
 }
 
 

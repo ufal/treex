@@ -127,6 +127,17 @@ sub core_children
 
 
 #------------------------------------------------------------------------------
+# A shortcut to the attributes.
+#------------------------------------------------------------------------------
+sub deprel_at_head
+{
+    my $self = shift;
+    return ($self->fun_is_head() && $self->deprel_at_fun()) || (!$self->fun_is_head() && !$self->deprel_at_fun());
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the type of the dependency relation of the phrase to the governing
 # phrase. A prepositional phrase has the same deprel as one of its core
 # children. Depending on the current preference it is either the function word or
@@ -156,7 +167,16 @@ sub set_deprel
 {
     my $self = shift;
     log_fatal('Dead') if($self->dead());
-    $self->deprel_at_fun() ? $self->fun()->set_deprel(@_) : $self->arg()->set_deprel(@_);
+    if($self->deprel_at_fun())
+    {
+        $self->fun()->set_deprel(@_);
+        $self->arg()->set_deprel($self->core_deprel());
+    }
+    else
+    {
+        $self->arg()->set_deprel(@_);
+        $self->fun()->set_deprel($self->core_deprel());
+    }
 }
 
 
@@ -177,7 +197,15 @@ sub project_deprel
     # fun_is_head  && !deprel_at_fun => project_deprel == core_deprel # Prague style
     # !fun_is_head && !deprel_at_fun => project_deprel == deprel      # UD style
     # !fun_is_head && deprel_at_fun  => project_deprel == core_deprel # not used anywhere
-    return ($self->fun_is_head() && !$self->deprel_at_fun() || !$self->fun_is_head() && $self->deprel_at_fun()) ? $self->core_deprel() : $self->deprel();
+    if($self->deprel_at_head())
+    {
+        return $self->head()->project_deprel();
+    }
+    else
+    {
+        # If the real deprel is not kept at the head then the head must have a technical deprel.
+        return $self->core_deprel();
+    }
 }
 
 

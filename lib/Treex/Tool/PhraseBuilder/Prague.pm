@@ -506,8 +506,7 @@ sub replace_nterm_by_coordination
         'coordinators' => $coordinators,
         'punctuation'  => \@inpunct,
         'head_rule'    => $self->coordination_head_rule(),
-        'is_member'    => $member,
-        'deprel'       => $conjuncts->[0]->deprel()
+        'is_member'    => $member
     );
     # Remove the is_member flag from the conjuncts. It may be re-introduced
     # during back-projection to the dependency tree if the Prague annotation
@@ -577,8 +576,7 @@ sub surround_nterm_by_coordination
         'coordinators' => $coordinators,
         'punctuation'  => \@inpunct,
         'head_rule'    => $self->coordination_head_rule(),
-        'is_member'    => $member,
-        'deprel'       => $conjuncts->[0]->deprel()
+        'is_member'    => $member
     );
     # Remove the is_member flag from the conjuncts. It may be re-introduced
     # during back-projection to the dependency tree if the Prague annotation
@@ -912,7 +910,8 @@ sub classify_prague_pp_subphrases
             push(@mwauxp, $d);
         }
         # Punctuation should never represent an argument of a preposition (provided we have solved any coordinations on lower levels).
-        elsif($d->node()->is_punctuation())
+        elsif($self->is_deprel($d->deprel(), 'punct'))
+        #elsif($d->node()->is_punctuation()) ##################!!!!!!!!!!!!!!!!!!!! Jo. Jenže i když jsme zpracovali koordinaci, tak její hlavní uzel je furt interpunkce. To její deprel je jiný (zde Atr).
         {
             push(@punc, $d);
         }
