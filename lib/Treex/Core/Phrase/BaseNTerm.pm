@@ -407,8 +407,6 @@ sub project_dependencies
         $child->project_dependencies();
     }
     my $head_node = $self->node();
-    ###!!! debugging
-    $head_node->wild()->{'PHRASE_DEBUG'} = $self->as_string();
     my @dependents = $self->nonhead_children();
     foreach my $dependent (@dependents)
     {

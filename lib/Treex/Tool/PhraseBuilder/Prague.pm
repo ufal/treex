@@ -911,7 +911,6 @@ sub classify_prague_pp_subphrases
         }
         # Punctuation should never represent an argument of a preposition (provided we have solved any coordinations on lower levels).
         elsif($self->is_deprel($d->deprel(), 'punct'))
-        #elsif($d->node()->is_punctuation()) ##################!!!!!!!!!!!!!!!!!!!! Jo. Jenže i když jsme zpracovali koordinaci, tak její hlavní uzel je furt interpunkce. To její deprel je jiný (zde Atr).
         {
             push(@punc, $d);
         }
@@ -922,6 +921,7 @@ sub classify_prague_pp_subphrases
         }
     }
     # If there are no argument candidates, we cannot create a prepositional phrase.
+    # We will not complain though. Legitimate AuxP leaves may occur in multi-word prepositions.
     my $n = scalar(@candidates);
     if($n == 0)
     {
