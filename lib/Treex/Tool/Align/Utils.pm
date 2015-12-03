@@ -34,8 +34,9 @@ sub get_aligned_nodes_by_filter {
     # retrieve aligned nodes and its types outcoming links
     
     if (!$filter || !$filter->{directed}) {
-        my @aligned_from = $node->get_referencing_nodes('alignment');
-        my @aligned_from_types = map {get_alignment_types($_, $node)} @aligned_from;
+        my @aligned_from = sort {$a->id cmp $b->id} $node->get_referencing_nodes('alignment');
+        my %seen_ids = ();
+        my @aligned_from_types = map {get_alignment_types($_, $node)} grep {!$seen_ids{$_->id}++} @aligned_from;
         #log_info "ALIFROM: " . Dumper(\@aligned_from_types);
         #log_info "ALIFROMIDS: " . (join ",", map {$_->id} @aligned_from);
         push @aligned, @aligned_from;
