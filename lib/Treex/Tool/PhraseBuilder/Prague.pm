@@ -500,6 +500,14 @@ sub replace_nterm_by_coordination
     # between conjuncts.
     my @inpunct  = grep {my $o = $_->ord(); $o > $cmin && $o < $cmax;} (@{$punctuation});
     my @outpunct = grep {my $o = $_->ord(); $o < $cmin || $o > $cmax;} (@{$punctuation});
+    # We need at least one delimiter to serve as head in Prague-style coordination.
+    # If there is nothing better, take even outlying punctuation. It is occasionally
+    # abused this way even in PDT (although the examples I saw may be annotation errors and may not be coordinations at all).
+    if(scalar(@{$coordinators}) == 0 && scalar(@inpunct) == 0 && scalar(@outpunct) > 0)
+    {
+        @inpunct = @outpunct;
+        @outpunct = ();
+    }
     my $coordination = new Treex::Core::Phrase::Coordination
     (
         'conjuncts'    => $conjuncts,
