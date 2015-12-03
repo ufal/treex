@@ -23,27 +23,35 @@ sub are_aligned {
 sub get_aligned_nodes_by_filter {
     my ($node, $filter) = @_;
     
-    # retrieve aligned nodes and its types for both incoming and outcoming links
+    # retrieve aligned nodes and its types outcoming links
+    
     my ($aligned_to, $aligned_to_types) = $node->get_aligned_nodes();
     #log_info "ALITO: " . Dumper($aligned_to_types);
     #log_info "ALITOIDS: " . (join ",", map {$_->id} @$aligned_to);
     my @aligned = $aligned_to ? @$aligned_to : ();
     my @aligned_types = $aligned_to_types ? @$aligned_to_types : ();
     
-    if (!$filter->{directed}) {
+    # retrieve aligned nodes and its types outcoming links
+    
+    if (!$filter || !$filter->{directed}) {
         my @aligned_from = $node->get_referencing_nodes('alignment');
         my @aligned_from_types = map {get_alignment_types($_, $node)} @aligned_from;
-    #log_info "ALIFROM: " . Dumper(\@aligned_from_types);
-    #log_info "ALIFROMIDS: " . (join ",", map {$_->id} @aligned_from);
+        #log_info "ALIFROM: " . Dumper(\@aligned_from_types);
+        #log_info "ALIFROMIDS: " . (join ",", map {$_->id} @aligned_from);
         push @aligned, @aligned_from;
         push @aligned_types, @aligned_from_types;
     }
 
-    my ($edge_nodes, $edge_types) = _edge_filter_out(\@aligned, \@aligned_types, $filter);
-    my ($filtered_nodes, $filtered_types) = _node_filter_out($edge_nodes, $edge_types, $filter);
+    # filter the retrieved nodes and links
+
+    my ($final_nodes, $final_types) = (\@aligned, \@aligned_types);
+    if ($filter) {
+        ($final_nodes, $final_types) = _edge_filter_out($final_nodes, $final_types, $filter);
+        ($final_nodes, $final_types) = _node_filter_out($final_nodes, $final_types, $filter);
+    }
   
-    log_debug "[Tool::Align::Utils::get_aligned_nodes_by_filter]\tfiltered: " . (join " ", @$filtered_types), 1;
-    return ($filtered_nodes, $filtered_types);
+    log_debug "[Tool::Align::Utils::get_aligned_nodes_by_filter]\tfiltered: " . (join " ", @$final_types), 1;
+    return ($final_nodes, $final_types);
 }
 
 sub remove_aligned_nodes_by_filter {
@@ -79,10 +87,10 @@ sub _value_of_type {
     my $i = 0;
     foreach my $type_re (@$type_list) {
         if ($type_re =~ /^!(.*)/) {
-            return undef if ($type =~ /$1/);
+            return undef if ($type =~ /^$1$/);
         }
         else {
-            return $i if ($type =~ /$type_re/);
+            return $i if ($type =~ /^$type_re$/);
         }
         $i++;
     }
@@ -97,7 +105,7 @@ sub _edge_filter_out {
     #log_info 'ALITYPES: ' . Dumper($types);
     my @values = map {_value_of_type($_, $rel_types)} @$types;
     #log_info 'ALITYPES: ' . Dumper(\@values);
-    my @idx = grep { defined $values[$_] } 0 .. scalar(@$nodes)-1;
+    my @idx = grep { defined $values[$_] } 0 .. $#$nodes;
     @idx = sort {$values[$a] <=> $values[$b]} @idx;
 
     return ([@$nodes[@idx]], [@$types[@idx]]);
@@ -228,3 +236,76 @@ sub print_nodes {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Treex::Tool::Align::Utils
+
+=head1 SYNOPSIS
+
+ use Treex::Tool::Align::Utils;
+
+ my ($ali_nodes, $ali_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter(
+    $tnode,
+    { language => 'en', selector => 'src', rel_types => ['!gold','!supervised','.*'] }
+ );
+ 
+ 
+=head1 DESCRIPTION
+
+Even though word-alignment is considered to be non-directional, Treex natively represents
+alignment between two nodes as a directed link. This module offers a set of functions
+that enables the user to ask for alignment link without bothering about what is the direction
+of alignment links in the particular document.
+
+=head1 FUNCTIONS
+
+=over
+
+=item ($ali_nodes, $ali_types) = get_aligned_nodes_by_filter($node, $filter)
+
+This is the main getter method. It returns all nodes aligned to a specified node C<$node>,
+and types of these alignment links as two list references -- C<$ali_nodes>, and C<$ali_types>,
+respectively. By the parameter C<$filter>, one may specify a filter to be applied to the nodes
+and links. The filter is a hash reference, with the following possible keys:
+ 
+C<language> - the language of the aligned nodes (e.g. C<en>)
+C<selector> - the selector of the aligned nodes (e.g. C<src>)
+C<directed> - return only the links originating from the C<$node> (possible values: C<0> and C<1>)
+C<rel_types> - filter the alignment types. The value of this parameter must be a reference to
+a list of regular expression strings. The expressions starting with the C<!> sign represent negative
+filters. The actual link type is compared to these regexps one after another, skipping the rest
+if the type matches a current regexp. If the type matches no regexps in the list, it is filtered out.
+Therefore, negative rules should be at the beginning of the list, followed by at least one positive
+rule. For instance, C<['a','b']> returns only links of type C<a> or C<b>. On the other hand, 
+C<['!a','!b','.*']> returns everything except for C<a> and C<b>. The filter C<['!ab.*','a.*']>
+accepts only the types starting with C<a>, except for those starting with C<ab>.
+                
+
+Both returned list references -- C<$ali_nodes> and C<$ali_types>, are always defined. If the
+C<$node> has no alignment link that satisfies the filter constraints, a reference to an empty
+list is returned.
+
+=item $bool = are_aligned($node1, $node2, $filter)
+
+An indicator function of whether the nodes C<$node1> and C<$node2> are aligned under the conditions
+specified by the filter C<$filter> (see more in the C<get_aligned_nodes_by_filter> function description).
+
+=item remove_aligned_nodes_by_filter($node, $filter)
+
+This deletes the alignment links pointing from/to the node C<$node>. Only the links satisfying
+the C<$filter> constraints are removed.
+
+=back
+
+=head1 AUTHOR
+
+Michal Novak <mnovak@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2014-15 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
