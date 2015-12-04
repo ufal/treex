@@ -37,12 +37,12 @@ sub fix_negation
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        if($node->afun() eq 'AuxZ')
+        if($node->deprel() eq 'AuxZ')
         {
             # I believe that the following function as negative particles in Latin.
             if($node->form() =~ m/^(non|ne)$/i)
             {
-                $node->set_afun('Neg');
+                $node->set_deprel('Neg');
             }
         }
     }
@@ -143,7 +143,7 @@ sub fix_annotation_errors
         # nisi si me iudicas curare
         # unless you care to judge me
         # "nisi si" = "unless"; "except if"
-        elsif($node->form() =~ m/^si$/i && $node->parent()->form() =~ m/^nisi$/i && $node->afun() eq 'AuxY' && scalar($node->children())==1)
+        elsif(defined($node->form()) && $node->form() =~ m/^si$/i && && defined($node->parent()->form()) && $node->parent()->form() =~ m/^nisi$/i && $node->afun() eq 'AuxY' && scalar($node->children())==1)
         {
             $node->set_afun('AuxC');
         }

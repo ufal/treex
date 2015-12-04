@@ -37,13 +37,13 @@ sub fix_negation
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        if($node->afun() eq 'AuxZ')
+        if($node->deprel() eq 'AuxZ')
         {
             # I believe that the following function as negative particles in Ancient Greek (based on Google search).
             # I suspect that there are other forms that I am missing here.
             if($node->form() =~ m/^(οὐ|οὔ|οὐκ|μὴ|μη|μή|οὐχ)$/i)
             {
-                $node->set_afun('Neg');
+                $node->set_deprel('Neg');
             }
         }
     }

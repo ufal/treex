@@ -784,96 +784,18 @@ sub remove_ismember_membership
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
-    foreach my $node (@nodes) {
-        if ($node->is_member) {
+    foreach my $node (@nodes)
+    {
+        if ($node->is_member)
+        {
             my $parnode = $node->get_parent();
-            if (defined $parnode) {
-                my $parafun = $parnode->afun();
-                if ($parafun !~ /^(Coord|Apos)$/) {# remove the 'is_member'
-                    $node->set_is_member(0);
-                }
-            }
-        }
-    }
-}
-
-# Global counter over all documents.
-###!!! We only need it for investigation of the source data. Once done, we will adjust routines and stop collecting statistics.
-# How to access it in functions:
-# my $counter = $self->_counter();
-# $counter->{xxx}++;
-# How to print the final counts: use sub process_end();
-has _counter => ( is => 'ro', default => sub { {} } );
-
-#------------------------------------------------------------------------------
-# Collects statistics of ways in which coordination is annotated.
-#------------------------------------------------------------------------------
-sub investigate_coordinations
-{
-    my $self = shift;
-    my $root = shift;
-    my $counter = $self->_counter();
-    my @nodes = $root->get_descendants({'ordered' => 1});
-    foreach my $node (@nodes)
-    {
-        # Nodes with afuns 'Coord' and 'CoordArg' participate in coordinations.
-        # Nodes with afun 'ExD' participate if their parent is 'Coord'.
-        # (There may be orphans of conjuncts that were not connected via any conjunction, thus no 'Coord'. But there is no way to recognize them.)
-        # Ignore additional conjunctions and punctuation at the moment.
-        my $afun = $node->afun();
-        if($afun =~ m/^Coord(Arg)?$/ ||
-           $afun eq 'ExD' && defined($node->parent()) && $node->parent()->afun() eq 'Coord')
-        {
-            # Find the root node of the coordination.
-            # Do not recognize nested coordinations. Traverse ancestors until their afun is not coordinational.
-            # (Possibilities to annotate nested coordination under the Danish scheme are limited anyway.)
-            my $coordroot = $node;
-            while(1)
+            if (defined $parnode)
             {
-                my $parent = $coordroot->parent();
-                if(!defined($parent))
+                my $pardeprel = $parnode->deprel();
+                if (defined($pardeprel) && $pardeprel !~ /^(Coord|Apos)$/)
                 {
-                    log_warn("A node that ought to participate in coordination has no parent.");
-                    ###!!! Co teď? Přeskočit ho? Nebo s ním naložit, jako kdyby to byl kořen koordinace?
-                    last;
+                    $node->set_is_member(undef);
                 }
-                $coordroot = $parent;
-                if($coordroot->afun() !~ m/^Coord(Arg)?$/)
-                {
-                    # The dependency relation of this node to its parent is not coordinational.
-                    # Thus this is the root (head) node of the coordination.
-                    last;
-                }
-            }
-            # The node participates in a coordination and we know the root of the coordination.
-            # Store links to all participating nodes at the coordination root.
-            # Note that the coordination root itself will not be part of this array because it does not have a coordinational afun.
-            push(@{$coordroot->{coordination_nodes}}, $node);
-        }
-    }
-    # All coordination roots now know that they govern coordinations and they know all participating nodes.
-    foreach my $node (@nodes)
-    {
-        if(exists($node->{coordination_nodes}))
-        {
-            my @conodes = @{$node->{coordination_nodes}};
-            if(scalar(@conodes)>=1)
-            {
-                # Include the coordination root in the nodes. Order them according to the sentence.
-                push(@conodes, $node);
-                @conodes = sort {$a->ord() <=> $b->ord()} (@conodes);
-                # A typical coordination will have three nodes: two conjuncts and a conjunction.
-                # Coordination signature: parents and afuns.
-                for(my $i = 0; $i<=$#conodes; $i++)
-                {
-                    $conodes[$i]{coindex} = $i+1;
-                }
-                $node->parent()->{coindex} = 0;
-                my $n = scalar(grep {$_->afun() ne 'Coord'} (@conodes));
-                my $signature = sprintf("%02d", $n).' '.join(' ', map {my $p = $_->parent()->{coindex}; my $a = $p>0 ? $_->afun() : 'XXX'; $p.':'.$a} (@conodes));
-                log_info($signature);
-                print($signature, "\t", $node->get_address(), "\n");
-                $counter->{$signature}++;
             }
         }
     }
@@ -1039,19 +961,6 @@ sub sentence_contains
     my $sentence = $node->get_zone()->sentence();
     return $sentence =~ m/$query/;
 }
-
-
-
-override 'process_end' => sub {
-    my $self = shift;
-    my $counter = $self->_counter();
-    my @ns = sort {$a cmp $b} (keys(%{$counter}));
-    foreach my $n (@ns)
-    {
-        print("# Coord $n\t$counter->{$n}\n");
-    }
-    super();
-};
 
 
 

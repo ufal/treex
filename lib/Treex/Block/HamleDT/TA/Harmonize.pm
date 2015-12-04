@@ -107,12 +107,12 @@ sub fix_coordination
     foreach my $node (@nodes)
     {
         # Fix conjuncts outside coordination.
-        if($node->is_member() && $node->parent()->afun() ne 'Coord')
+        if($node->is_member() && $node->parent()->deprel() ne 'Coord')
         {
             my $parent = $node->parent();
-            if($parent->form() eq 'um' || $parent->afun() eq 'AuxX')
+            if($parent->form() eq 'um' || $parent->deprel() eq 'AuxX')
             {
-                $parent->set_afun('Coord');
+                $parent->set_deprel('Coord');
             }
             else
             {
@@ -125,7 +125,7 @@ sub fix_coordination
                     {
                         $node->set_parent($rs1);
                         $rs2->set_parent($rs1);
-                        $rs1->set_afun('Coord');
+                        $rs1->set_deprel('Coord');
                         $solved = 1;
                     }
                 }
@@ -136,12 +136,12 @@ sub fix_coordination
             }
         }
         # Fix coordination without conjuncts.
-        if($node->afun() eq 'Coord' && !grep {$_->is_member()} ($node->children()))
+        if($node->deprel() eq 'Coord' && !grep {$_->is_member()} ($node->children()))
         {
             my @children = $node->children();
             if(scalar(@children)==0)
             {
-                $node->set_afun('AuxY');
+                $node->set_deprel('AuxY');
             }
             else
             {

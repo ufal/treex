@@ -84,8 +84,8 @@ sub check_coord_membership
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $afun = $node->afun();
-        if($afun eq 'Coord')
+        my $deprel = $node->deprel();
+        if($deprel eq 'Coord')
         {
             my @children = $node->children();
             # Are there any children?
@@ -96,7 +96,7 @@ sub check_coord_membership
                 my $parent = $node->parent();
                 my $sibling = $node->get_left_neighbor();
                 my $uncle = $parent->get_left_neighbor();
-                if($parent->afun() eq 'Pred' && defined($sibling) && $sibling->afun() eq 'Pred')
+                if($parent->deprel() eq 'Pred' && defined($sibling) && $sibling->deprel() eq 'Pred')
                 {
                     $node->set_parent($parent->parent());
                     $sibling->set_parent($node);
@@ -104,22 +104,22 @@ sub check_coord_membership
                     $parent->set_parent($node);
                     $parent->set_is_member(1);
                 }
-                elsif($parent->afun() eq 'Pred' && defined($uncle)) # $uncle->afun() eq 'ExD' but it is a verb
+                elsif($parent->deprel() eq 'Pred' && defined($uncle)) # $uncle->deprel() eq 'ExD' but it is a verb
                 {
                     $node->set_parent($parent->parent());
                     $uncle->set_parent($node);
-                    $uncle->set_afun('Pred');
+                    $uncle->set_deprel('Pred');
                     $uncle->set_is_member(1);
                     $parent->set_parent($node);
                     $parent->set_is_member(1);
                 }
                 elsif($node->is_leaf() && $node->get_iset('pos') eq 'conj')
                 {
-                    $node->set_afun('AuxY');
+                    $node->set_deprel('AuxY');
                 }
                 elsif($node->is_leaf() && $node->get_iset('pos') eq 'noun')
                 {
-                    $node->set_afun('Atr');
+                    $node->set_deprel('Atr');
                 }
             }
             # If there are children, are there conjuncts among them?

@@ -110,7 +110,7 @@ sub change_wrong_puctuation_root
         # I am not taking the last one
         for my $child (@children[0..$#children-1])
         {
-            if ($child->afun() =~ /^Aux[XG]$/ && $child->is_leaf())
+            if ($child->deprel() =~ /^Aux[XG]$/ && $child->is_leaf())
             {
                 my $conjunction = $child->get_next_node();
                 if (defined($conjunction) && $conjunction->is_conjunction())
@@ -128,24 +128,24 @@ sub change_wrong_puctuation_root
 #------------------------------------------------------------------------------
 sub change_quotation_predicate_into_obj
 {
-	my $self = shift;
-	my $root = shift;
-	my @nodes = $root->get_descendants();
-	for my $node (@nodes)
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    for my $node (@nodes)
     {
-		my @children = $node->get_children();
-		my $has_quotation_dependent = 0;
-		for my $child (@children)
+        my @children = $node->get_children();
+        my $has_quotation_dependent = 0;
+        for my $child (@children)
         {
-			if ($child->form eq q{"})
+            if ($child->form eq q{"})
             {
-				if ($node->afun() eq "Adv")
+                if ($node->deprel() eq 'Adv')
                 {
-					$node->set_afun("Obj");
-				}
-			}
-		}
-	}
+                    $node->set_deprel('Obj');
+                }
+            }
+        }
+    }
 }
 
 

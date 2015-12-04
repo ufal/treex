@@ -331,12 +331,12 @@ sub fix_negation
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        if($node->afun() eq 'AuxZ')
+        if($node->deprel() eq 'AuxZ')
         {
             # I believe that the following function as negative particles in Latin.
             if($node->form() =~ m/^(non|ne)$/i)
             {
-                $node->set_afun('Neg');
+                $node->set_deprel('Neg');
             }
         }
     }

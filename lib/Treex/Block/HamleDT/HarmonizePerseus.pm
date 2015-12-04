@@ -287,7 +287,7 @@ sub fix_undefined_nodes
         my $node = $nodes[$i];
         # If this is the last punctuation in the sentence, chances are that it was already recognized as AuxK.
         # In that case the problem is already fixed.
-        if($node->conll_deprel() eq 'UNDEFINED' && $node->afun() ne 'AuxK' && $node->afun() ne 'Coord')
+        if($node->conll_deprel() eq 'UNDEFINED' && $node->deprel() ne 'AuxK' && $node->deprel() ne 'Coord')
         {
             if($node->parent()->is_root() && $node->is_leaf())
             {
@@ -297,16 +297,16 @@ sub fix_undefined_nodes
                     $node->set_parent($nodes[$i-1]);
                 }
                 # If there is no preceding token but there is a following token, attach the node there.
-                elsif($i<$#nodes && $nodes[$i+1]->afun() ne 'AuxK')
+                elsif($i<$#nodes && $nodes[$i+1]->deprel() ne 'AuxK')
                 {
                     $node->set_parent($nodes[$i+1]);
                 }
                 # If this is the only token in the sentence, it remained attached to the root.
-                # Pick the right afun for the node.
+                # Pick the right deprel for the node.
                 my $form = $node->form();
                 if($form eq ',')
                 {
-                    $node->set_afun('AuxX');
+                    $node->set_deprel('AuxX');
                 }
                 # Besides punctuation there are also separated diacritics that should never appear alone in a node but they do:
                 # 768 \x{300} COMBINING GRAVE ACCENT
@@ -318,38 +318,38 @@ sub fix_undefined_nodes
                 # All these characters belong to the class M (marks).
                 elsif($form =~ m/^[\pP\pM]+$/)
                 {
-                    $node->set_afun('AuxG');
+                    $node->set_deprel('AuxG');
                 }
                 else # neither punctuation nor diacritics
                 {
-                    $node->set_afun('AuxY');
+                    $node->set_deprel('AuxY');
                 }
             }
             # Other UNDEFINED nodes.
             elsif($node->parent()->is_root() && $node->is_verb())
             {
-                $node->set_afun('Pred');
+                $node->set_deprel('Pred');
             }
             elsif($node->parent()->is_root())
             {
-                $node->set_afun('ExD');
+                $node->set_deprel('ExD');
             }
             elsif(grep {$_->conll_deprel() eq 'XSEG'} ($node->get_siblings()))
             {
                 # UNDEFINED nodes that are siblings of XSEG nodes should have been also XSEG nodes.
-                $node->set_afun('Atr');
+                $node->set_deprel('Atr');
             }
             elsif($node->parent()->is_noun())
             {
-                $node->set_afun('Atr');
+                $node->set_deprel('Atr');
             }
             elsif($node->parent()->is_verb() && $node->match_iset('pos' => 'noun', 'case' => 'acc'))
             {
-                $node->set_afun('Obj');
+                $node->set_deprel('Obj');
             }
             else
             {
-                $node->set_afun('ExD');
+                $node->set_deprel('ExD');
             }
         }
     }
@@ -375,18 +375,18 @@ sub fix_deficient_sentential_coordination
     if(scalar(@rchildren)==2)
     {
         my $conjunction = $rchildren[0];
-        if($conjunction->afun() eq 'Pred' && grep {$_->is_member()} ($conjunction->children()))
+        if($conjunction->deprel() eq 'Pred' && grep {$_->is_member()} ($conjunction->children()))
         {
-            $conjunction->set_afun('Coord');
+            $conjunction->set_deprel('Coord');
         }
     }
     # Sometimes the conjunction is leaf, attached to root and marked as Coord; the predicate(s) is(are) its sibling(s).
     if(scalar(@rchildren)>=2)
     {
         my $conjunction = $rchildren[0];
-        if($conjunction->iset()->pos() =~ m/^(conj|part)$/ && $conjunction->afun() eq 'Coord' && $conjunction->is_leaf())
+        if($conjunction->iset()->pos() =~ m/^(conj|part)$/ && $conjunction->deprel() eq 'Coord' && $conjunction->is_leaf())
         {
-            my @predicates = grep {$_->afun() eq 'Pred'} (@rchildren);
+            my @predicates = grep {$_->deprel() eq 'Pred'} (@rchildren);
             if(scalar(@predicates)>=1)
             {
                 foreach my $predicate (@predicates)
@@ -399,7 +399,7 @@ sub fix_deficient_sentential_coordination
             {
                 # We were not able to find any conjuncts for the conjunction.
                 # Thus it must not be labeled Coord.
-                $conjunction->set_afun('ExD');
+                $conjunction->set_deprel('ExD');
             }
         }
     }
@@ -419,8 +419,8 @@ sub check_coord_membership
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $afun = $node->afun();
-        if($afun eq 'Coord')
+        my $deprel = $node->deprel();
+        if($deprel eq 'Coord')
         {
             my @children = $node->children();
             # Are there any children?
@@ -433,22 +433,22 @@ sub check_coord_membership
                 my $uncle = $parent->get_left_neighbor();
                 if($node->form() eq ',')
                 {
-                    $node->set_afun('AuxX');
+                    $node->set_deprel('AuxX');
                 }
                 elsif($node->is_punctuation())
                 {
-                    $node->set_afun('AuxG');
+                    $node->set_deprel('AuxG');
                 }
-                elsif($parent->afun() eq 'Coord' && $node->iset()->pos() =~ m/^(conj|part|adv)$/)
+                elsif($parent->deprel() eq 'Coord' && $node->iset()->pos() =~ m/^(conj|part|adv)$/)
                 {
-                    $node->set_afun('AuxY');
+                    $node->set_deprel('AuxY');
                 }
             }
             # If there are children, are there conjuncts among them?
             elsif(scalar(grep {$_->is_member()} (@children))==0)
             {
                 # Annotation error: quotation mark attached to comma.
-                if(scalar(grep {$_->afun() eq 'AuxG'} (@children))==scalar(@children))
+                if(scalar(grep {$_->deprel() eq 'AuxG'} (@children))==scalar(@children))
                 {
                     foreach my $child (@children)
                     {
@@ -456,7 +456,7 @@ sub check_coord_membership
                         # If it is now attached to the right, look for the parent on the right. Otherwise on the left.
                         if($child->ord()<$node->ord())
                         {
-                            my @candidates = grep {$_->ord()>$child->ord() && $_->afun() !~ m/^Aux[^C]/} (@nodes);
+                            my @candidates = grep {$_->ord()>$child->ord() && $_->deprel() !~ m/^Aux[^C]/} (@nodes);
                             if(@candidates)
                             {
                                 $child->set_parent($candidates[0]);
@@ -464,7 +464,7 @@ sub check_coord_membership
                         }
                         else
                         {
-                            my @candidates = grep {$_->ord()<$child->ord() && $_->afun() !~ m/^Aux[^C]/} (@nodes);
+                            my @candidates = grep {$_->ord()<$child->ord() && $_->deprel() !~ m/^Aux[^C]/} (@nodes);
                             if(@candidates)
                             {
                                 $child->set_parent($candidates[-1]);
@@ -473,11 +473,11 @@ sub check_coord_membership
                     }
                     if($node->form() eq ',')
                     {
-                        $node->set_afun('AuxX');
+                        $node->set_deprel('AuxX');
                     }
                     elsif($node->iset()->pos() eq 'punc')
                     {
-                        $node->set_afun('AuxG');
+                        $node->set_deprel('AuxG');
                     }
                 }
                 else

@@ -261,8 +261,8 @@ sub fix_laysa
 #------------------------------------------------------------------------------
 # Repairs annotation of coordinations and appositions. The current PADT data
 # contain nodes that are marked as members of either coordination or apposition
-# but their parent's afun is neither Coord nor Apos. It also contains nodes
-# with one of these afuns that do not have any children marked as members.
+# but their parent's deprel is neither Coord nor Apos. It also contains nodes
+# with one of these deprels that do not have any children marked as members.
 #------------------------------------------------------------------------------
 sub fix_coap_ismember
 {
@@ -275,12 +275,12 @@ sub fix_coap_ismember
         if($node->is_member())
         {
             my $parent = $node->parent();
-            if($parent->afun() !~ m/^(Coord|Apos)$/)
+            if($parent->deprel() !~ m/^(Coord|Apos)$/)
             {
                 # Make the parent Coord root if it is a coordinating conjunction or a comma.
                 if($parent->get_iset('pos') eq 'conj' || $parent->form() && $parent->form() eq '،')
                 {
-                    $parent->set_afun('Coord');
+                    $parent->set_deprel('Coord');
                 }
                 # Otherwise remove the membership flag.
                 else
@@ -290,12 +290,12 @@ sub fix_coap_ismember
             }
         }
         # Empty coordinations.
-        if($node->afun() =~ m/^(Coord|Apos)$/ && !grep {$_->is_member()} ($node->children()))
+        if($node->deprel() =~ m/^(Coord|Apos)$/ && !grep {$_->is_member()} ($node->children()))
         {
-            my $afun = $node->afun();
+            my $deprel = $node->deprel();
             my @children = $node->children();
             # Misannotated deficient coordination (a single conjunct).
-            if($afun eq 'Coord' && scalar(@children)==1)
+            if($deprel eq 'Coord' && scalar(@children)==1)
             {
                 $children[0]->set_is_member(1);
             }
@@ -304,14 +304,14 @@ sub fix_coap_ismember
             # but some of them are punctuations and quite a few are unrecognized words
             # that should have been split into multiple tokens, the first token being the
             # conjunction و wa (and).
-            elsif($afun eq 'Coord' && scalar(@children)>1)
+            elsif($deprel eq 'Coord' && scalar(@children)>1)
             {
                 # Exclude AuxG children, e.g. quotation marks around the coordination, or commas between conjuncts.
                 # Exclude AuxY children, i.e. additional conjunctions.
                 my $found = 0;
                 foreach my $child (@children)
                 {
-                    unless($child->afun() =~ m/^(AuxG|AuxY)$/)
+                    unless($child->deprel() =~ m/^(AuxG|AuxY)$/)
                     {
                         $child->set_is_member(1);
                         $found = 1;
@@ -324,15 +324,15 @@ sub fix_coap_ismember
                 }
             }
             # Misannotated apposition.
-            elsif($afun eq 'Apos' && scalar(@children)==2)
+            elsif($deprel eq 'Apos' && scalar(@children)==2)
             {
                 $children[0]->set_is_member(1);
                 $children[1]->set_is_member(1);
             }
             # There was one occurrence of the following error.
-            elsif($afun eq 'Apos' && $node->get_iset('pos') eq 'conj' && scalar(@children)>2)
+            elsif($deprel eq 'Apos' && $node->get_iset('pos') eq 'conj' && scalar(@children)>2)
             {
-                $node->set_afun('Coord');
+                $node->set_deprel('Coord');
                 foreach my $child (@children)
                 {
                     $child->set_is_member(1);
@@ -340,16 +340,16 @@ sub fix_coap_ismember
             }
             # Apposition with one child? I do not understand the examples but I assume that these are actually members of appositions that lack the joining node.
             # ###!!! This may be quite wrong! Get translations of the examples!
-            elsif($afun eq 'Apos' && scalar(@children)==1)
+            elsif($deprel eq 'Apos' && scalar(@children)==1)
             {
-                $node->set_afun('Apposition');
+                $node->set_deprel('Apposition');
             }
             # Other errors: coordination/apposition root has no children at all.
             elsif(scalar(@children)==0)
             {
                 # We cannot say how this error arose.
                 # Resort to default tags: ExD under the root, Adv under a verb, Atr elsewhere.
-                $self->set_default_afun($node);
+                $self->set_default_deprel($node);
             }
             ###!!! Další případy: uzel se spojkou wa má Apos (ne Coord!), má tři děti - předměty slovesa, které je jeho rodičem.
         }
@@ -378,11 +378,11 @@ sub fix_auxp
             # Example: nahwa išrína áman (about twenty years)
             # Example 2: siwá li 13600 sarínin (except for 13600 beds)
             # AuxE marks "emphatic particles". It is occasionally observed at prepositions. It is probably an annotation error.
-            # Occasionally we see prepositions tagged by other afuns (Atr, Obj, Adv). I asked Ota Smrž to look at the examples
+            # Occasionally we see prepositions tagged by other deprels (Atr, Obj, Adv). I asked Ota Smrž to look at the examples
             # but my current hypothesis is that these are annotation errors.
-            if($node->afun() =~ m/^(AuxY|AuxM|AuxE|Atr|Obj|Adv)$/)
+            if($node->deprel() =~ m/^(AuxY|AuxM|AuxE|Atr|Obj|Adv)$/)
             {
-                $node->set_afun('AuxP');
+                $node->set_deprel('AuxP');
             }
         }
         # Compound prepositions. Example:
@@ -394,14 +394,14 @@ sub fix_auxp
         # Example 2:
         # "bi-al-qurbi" (with nearness) "min" (from) "qaryati" (village) = near the village
         # Original annotation: "min" is the head. "bi", "al-qurbi" and "qaryati" are attached to it (AuxY/RR, AuxY/NN, AtrAdv/NN).
-        if($node->is_adposition() && $node->afun() eq 'AuxY' && scalar($node->children())==0)
+        if($node->is_adposition() && $node->deprel() eq 'AuxY' && scalar($node->children())==0)
         {
             my $parent = $node->parent();
             if($parent)
             {
                 my @children = $parent->children();
                 # bihasabi
-                if($parent->is_adposition() && $parent->afun() eq 'AuxP' && scalar(@children)==2 && $node->ord()>$parent->ord())
+                if($parent->is_adposition() && $parent->deprel() eq 'AuxP' && scalar(@children)==2 && $node->ord()>$parent->ord())
                 {
                     foreach my $child (@children)
                     {
@@ -410,13 +410,13 @@ sub fix_auxp
                             $child->set_parent($node);
                         }
                     }
-                    $node->set_afun('AuxP');
+                    $node->set_deprel('AuxP');
                 }
                 # min chilála (during)
-                elsif($parent->is_adposition() && $parent->afun() eq 'AuxP' && scalar(@children)==2 && $node->ord()<$parent->ord())
+                elsif($parent->is_adposition() && $parent->deprel() eq 'AuxP' && scalar(@children)==2 && $node->ord()<$parent->ord())
                 {
                     $node->set_parent($parent->parent());
-                    $node->set_afun('AuxP');
+                    $node->set_deprel('AuxP');
                     $parent->set_parent($node);
                     if($parent->is_member())
                     {
@@ -425,12 +425,12 @@ sub fix_auxp
                     }
                 }
                 # bilqurbi min
-                elsif($parent->is_adposition() && $parent->afun() eq 'AuxP' && scalar(@children)==3 && $children[1]->afun() eq 'AuxY' && $parent->ord()==$node->ord()+2 && $children[2]->ord()==$parent->ord()+1)
+                elsif($parent->is_adposition() && $parent->deprel() eq 'AuxP' && scalar(@children)==3 && $children[1]->deprel() eq 'AuxY' && $parent->ord()==$node->ord()+2 && $children[2]->ord()==$parent->ord()+1)
                 {
                     $children[1]->set_parent($node);
-                    $children[1]->set_afun('AuxP');
+                    $children[1]->set_deprel('AuxP');
                     $node->set_parent($parent->parent());
-                    $node->set_afun('AuxP');
+                    $node->set_deprel('AuxP');
                     $parent->set_parent($node);
                     if($parent->is_member())
                     {
