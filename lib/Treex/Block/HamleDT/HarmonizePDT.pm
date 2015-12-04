@@ -28,6 +28,11 @@ sub process_zone
         {
             $node->set_deprel('AuxY');
         }
+        # AuxK used for question marks and exclamation marks that terminate phrases but not the whole sentence.
+        if($node->deprel() eq 'AuxK' && !$node->parent()->is_root())
+        {
+            $node->set_deprel($node->form() eq ',' ? 'AuxX' : 'AuxG');
+        }
     }
     # Phrase-based implementation of tree transformations (30.11.2015).
     my $builder = new Treex::Tool::PhraseBuilder::Prague
