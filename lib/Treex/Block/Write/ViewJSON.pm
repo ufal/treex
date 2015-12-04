@@ -45,6 +45,47 @@ __PACKAGE__->meta->make_immutable;
 
 __END__
 
+=pod
+
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Block::Write::ViewJSON
+
+=head1 SYNOPSIS
+
+Convert to JSON
+
+    treex Read::Treex from=file.treex.gz Write::ViewJSON to=.
+    treex Read::Treex from=file.treex.gz Write::ViewJSON pretty=1 to=.
+
+View JSON
+
+    view-treex file.json
+    # or directly
+    view-treex file.treex.gz
+
+=head1 DESCRIPTION
+
+Document writer for JSON format used for visualizing Treex files. This block
+depends on L<Treex::View> to process files. Make sure you have L<Treex::View>
+installed.
+
+You can use generated JSON files to display trees on web using L<Treex View
+Javascript Library|https://github.com/ufal/js-treex-view> our view them using
+L<Treex::View>.
+
+=head1 ATTRIBUTES
+
+=over
+
+=item pretty
+
+If set to C<1> will output nicely formatted JSON
+
+=back
+
 =head1 AUTHOR
 
 Michal Sedlak E<lt>sedlak@ufal.mff.cuni.czE<gt>
