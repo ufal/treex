@@ -253,6 +253,7 @@ sub as_string
     my $deps = join(', ', map {$_->as_string()} (@dependents));
     $deps = 'DEPS '.$deps if($deps);
     my $subtree = join(' ', ($fun, $arg, $deps));
+    $subtree .= ' _M' if($self->is_member());
     return "(PP $subtree)";
 }
 

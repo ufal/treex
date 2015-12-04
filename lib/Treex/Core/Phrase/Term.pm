@@ -165,6 +165,7 @@ sub as_string
     }
     my $ord = $node->ord();
     my $deprel = defined($self->deprel()) ? '-'.$self->deprel() : '';
+    $deprel .= '_M' if($self->is_member());
     return "[ $form-$ord$deprel ]";
 }
 

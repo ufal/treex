@@ -611,6 +611,7 @@ sub as_string
     my $deps = join(', ', map {$_->as_string()} (@dependents));
     $deps = 'DEPS '.$deps if($deps);
     my $subtree = join(' ', ($conj, $coor, $punc, $deps));
+    $subtree .= ' _M' if($self->is_member());
     return "(CO $subtree)";
 }
 

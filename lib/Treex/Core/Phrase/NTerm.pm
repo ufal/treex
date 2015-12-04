@@ -95,6 +95,7 @@ sub as_string
     my $deps = join(', ', map {$_->as_string()} (@dependents));
     $deps = 'DEPS '.$deps if($deps);
     my $subtree = join(' ', ($head, $deps));
+    $subtree .= ' _M' if($self->is_member());
     return "(NT $subtree)";
 }
 

@@ -170,22 +170,9 @@ sub detect_prague_coordination
         {
             if($d->is_member())
             {
-                # Occasionally punctuation is labeled as conjunct (not nested coordination,
-                # which should be solved by now, but an orphan leaf node after ellipsis).
-                # We want to make it normal punctuation instead.
-                # (Note that we cannot recognize punctuation by dependency label in this case.
-                # It will be labeled 'ExD', not 'AuxX' or 'AuxG'.)
-                if($d->node()->is_punctuation() && $d->node()->is_leaf())
-                {
-                    $d->set_is_member(0);
-                    push(@punctuation, $d);
-                }
-                else
-                {
-                    push(@conjuncts, $d);
-                    $cmin = $d->ord() if(!defined($cmin));
-                    $cmax = $d->ord();
-                }
+                push(@conjuncts, $d);
+                $cmin = $d->ord() if(!defined($cmin));
+                $cmax = $d->ord();
             }
             # Additional coordinating conjunctions (except the head).
             # In PDT they are labeled AuxY but other words in the tree may get
@@ -525,9 +512,16 @@ sub replace_nterm_by_coordination
     {
         $c->set_is_member(0);
     }
-    foreach my $d (@{$sdependents}, @outpunct)
+    foreach my $d (@{$sdependents})
     {
         $d->set_parent($coordination);
+    }
+    foreach my $p (@outpunct)
+    {
+        $p->set_parent($coordination);
+        # Occasionally an outer punctuation symbol was the original head and now an inner punctuation symbol serves as the head.
+        # The old head has the 'Coord' label but it should get something else if it is no longer the head.
+        $self->set_deprel($p, $p->node()->form() eq ',' ? 'auxx' : 'auxg');
     }
     # If the original phrase already had a parent, we must make sure that
     # the parent is aware of the reincarnation we have made.
