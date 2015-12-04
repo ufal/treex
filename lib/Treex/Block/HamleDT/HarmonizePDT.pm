@@ -59,6 +59,44 @@ sub process_zone
 
 
 #------------------------------------------------------------------------------
+# Coordination of prepositional phrases or subordinate clauses:
+# In PDT, is_member is set at the node that bears the real deprel. It is not
+# set at the AuxP/AuxC node. In HamleDT (and in Treex in general), is_member is
+# set directly at the child of the coordination head (preposition or not). This
+# function moves the is_member attribute wherever needed to match the HamleDT
+# convention. The function is adapted from Zdeněk's block HamleDT::
+# Pdt2TreexIsMemberConversion (now removed).
+#------------------------------------------------------------------------------
+sub pdt_to_treex_is_member_conversion {
+    my ( $self, $root ) = @_;
+    foreach my $old_member (grep {$_->is_member} $root->get_descendants) {
+        my $new_member = $self->_climb_up_below_coap($old_member);
+        if ($new_member && $new_member != $old_member) {
+            $new_member->set_is_member(1);
+            $old_member->set_is_member(undef);
+        }
+    }
+}
+
+sub _climb_up_below_coap {
+    my $self = shift;
+    my ($node) = @_;
+    if ($node->get_parent->is_root) {
+        log_warn('No co/ap node between a co/ap member and the tree root');
+        return;
+    }
+    # We cannot use $node->get_parent->is_coap_root because it queries the afun attribute while we use the deprel attribute.
+    elsif (defined($node->get_parent()->deprel()) && $node->get_parent()->deprel() =~ m/^(Coord|Apos)/) {
+        return $node;
+    }
+    else {
+        return $self->_climb_up_below_coap($node->parent);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # This method is called for coordination nodes whose members do not have the
 # is_member attribute set (this is an annotation error but it happens).
 # The function estimates, based on afuns, which children are members and which
@@ -155,5 +193,6 @@ It also provides methods for fixing some errors, such as missing conjuncts in co
 
 =cut
 
-# Copyright 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2014, 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

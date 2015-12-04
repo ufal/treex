@@ -12,6 +12,13 @@ sub process_atree
     my $root = shift;
     my @nodes = $root->get_descendants({'ordered' => 1});
     my $last_node = $nodes[-1];
+    # Some treebanks contain empty sentences. It is not the primary focus of this test but we have to check it anyway,
+    # so why not report it.
+    if(!defined($last_node))
+    {
+        $self->complain($root);
+        return;
+    }
     # Node cannot be labeled AuxK if it is not the last node.
     foreach my $node (@nodes)
     {

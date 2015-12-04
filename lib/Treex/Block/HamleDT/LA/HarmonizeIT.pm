@@ -57,7 +57,7 @@ sub process_zone
     # Note that below we also modify convert_tags(), which is called from SUPER::process_zone().
     my $root = $self->SUPER::process_zone($zone);
     $self->fix_negation($root);
-    $self->check_afuns($root);
+    $self->check_deprels($root);
     return;
 }
 
@@ -212,22 +212,22 @@ sub fix_part_of_speech
     # Marco's rules for splitting "particles":
     elsif($node->is_particle())
     {
-        my $afun = $node->conll_deprel();
-        $afun = 'NR' if(!defined($afun));
-        $afun =~ s/_(Co|Ap|Pa)$//;
-        if($afun eq 'AuxC')
+        my $deprel = $node->conll_deprel();
+        $deprel = 'NR' if(!defined($deprel));
+        $deprel =~ s/_(Co|Ap|Pa)$//;
+        if($deprel eq 'AuxC')
         {
             $node->iset()->add('pos' => 'conj', 'conjtype' => 'sub');
         }
-        elsif($afun eq 'Coord' && $lemma !~ m/\pP/)
+        elsif($deprel eq 'Coord' && $lemma !~ m/\pP/)
         {
             $node->iset()->add('pos' => 'conj', 'conjtype' => 'coor');
         }
-        elsif($afun eq 'Adv')
+        elsif($deprel eq 'Adv')
         {
             $node->iset()->add('pos' => 'adv');
         }
-        elsif($afun =~ m/^Aux[YZ]$/)
+        elsif($deprel =~ m/^Aux[YZ]$/)
         {
             if($lemma =~ m/^(ac|aut|autem|et|nec|neque|sive|vel)$/)
             {
@@ -246,7 +246,7 @@ sub fix_part_of_speech
                 $node->iset()->add('pos' => 'adv');
             }
         }
-        elsif($afun eq 'Apos' && $lemma !~ m/\pP/)
+        elsif($deprel eq 'Apos' && $lemma !~ m/\pP/)
         {
             if($lemma =~ m/^(et|sive|vel)$/)
             {
@@ -261,11 +261,11 @@ sub fix_part_of_speech
                 $node->iset()->add('pos' => 'adv');
             }
         }
-        elsif($afun eq 'AuxP')
+        elsif($deprel eq 'AuxP')
         {
             $node->iset()->add('pos' => 'adp');
         }
-        # Other afuns such as 'ExD':
+        # Other deprels such as 'ExD':
         elsif($lemma =~ m/^(autem|et|neque|vel)$/)
         {
             $node->iset()->add('pos' => 'conj', 'conjtype' => 'coor');
@@ -344,7 +344,7 @@ sub fix_negation
 
 #------------------------------------------------------------------------------
 # Fixes a few known annotation errors that appear in the data. Should be called
-# from deprel_to_afun() so that it precedes any tree operations that the
+# from convert_deprels() so that it precedes any tree operations that the
 # superordinate class may want to do.
 #------------------------------------------------------------------------------
 sub fix_annotation_errors
@@ -357,21 +357,21 @@ sub fix_annotation_errors
         my $parent = $node->parent();
         my @children = $node->children();
         # Coord is leaf or its children are not conjuncts.
-        if($node->afun() eq 'Coord' && scalar(grep {$_->is_member()} (@children))==0)
+        if($node->deprel() eq 'Coord' && scalar(grep {$_->is_member()} (@children))==0)
         {
             my $rsibling = $node->get_right_neighbor();
             # Is this an additional delimiter in another coordination?
-            if($parent->afun() eq 'Coord' && scalar(@children)==1 && $children[0]->afun() eq 'AuxX')
+            if($parent->deprel() eq 'Coord' && scalar(@children)==1 && $children[0]->deprel() eq 'AuxX')
             {
                 $children[0]->set_parent($parent);
                 $children[0]->set_is_member(undef);
-                $node->set_afun('AuxY');
+                $node->set_deprel('AuxY');
                 $node->set_is_member(undef);
             }
             # Default will apply to one case.
             else
             {
-                $node->set_afun('AuxY');
+                $node->set_deprel('AuxY');
                 $node->set_is_member(undef);
             }
         }
@@ -15321,7 +15321,7 @@ EOF
 
 Converts the Index Thomisticus Treebank (Latin) to the HamleDT (Prague) style.
 Most of the deprel tags follow PDT conventions, the only addition being OComp.
-The is_member attribute is not set properly, the afuns of the conjuncts have the '_Co' suffix instead.
+The is_member attribute is not set properly, the deprels of the conjuncts have the '_Co' suffix instead.
 
 =back
 

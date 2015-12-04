@@ -985,5 +985,5 @@ features.
 
 =cut
 
-# Copyright 2011-2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011-2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

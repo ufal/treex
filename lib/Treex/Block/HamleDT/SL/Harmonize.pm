@@ -16,7 +16,7 @@ has iset_driver =>
 
 #------------------------------------------------------------------------------
 # Reads the Slovene tree, converts morphosyntactic tags to the PDT tagset,
-# converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
+# converts deprels, transforms tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
@@ -28,10 +28,10 @@ sub process_zone
 }
 
 #------------------------------------------------------------------------------
-# Convert dependency relation tags to analytical functions.
+# Convert dependency relation labels.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub convert_deprels
 {
     my $self  = shift;
     my $root  = shift;
@@ -39,21 +39,20 @@ sub deprel_to_afun
     foreach my $node (@nodes)
     {
         my $deprel = $node->conll_deprel();
-        my $afun   = $deprel;
-        # combined afuns (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
-        if ( $afun =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/ )
+        # combined deprels (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
+        if ( $deprel =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/ )
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
         # There are a few nodes wrongly labeled as Coord. Fix them.
         # We must do it now, before SUPER->restructure_coordination() starts.
         # And also before we try to reconstruct members of coordination (comma/Coord must become comma/AuxX where appropriate).
-        if($afun eq 'Coord')
+        if($deprel eq 'Coord')
         {
             my @children = $node->children();
             if($node->form() eq ',' && $node->is_leaf())
             {
-                $afun = 'AuxX';
+                $deprel = 'AuxX';
             }
             elsif($node->form() eq 'In' && $node->is_leaf() && $node->parent()->is_root())
             {
@@ -73,25 +72,25 @@ sub deprel_to_afun
                       scalar(@children)==2 && lc($children[0]->form()) eq 'vendar' && !$children[1]->is_verb()
                   ))
             {
-                $afun = 'ExD';
+                $deprel = 'ExD';
             }
         }
         # Unlike the CoNLL conversion of the Czech PDT 2.0, the Slovenes don't mark coordination members.
         # (They do in their original data format but the information has not been ported to CoNLL!)
         # I suspect (but I am not sure) that they always attach coordination modifiers to a member,
         # so there are no shared modifiers and all children of Coord are members. Let's start with this hypothesis.
-        # We cannot query parent's afun because it may not have been copied from conll_deprel yet.
+        # We cannot query parent's deprel because it may not have been copied from conll_deprel yet.
         my $pdeprel = $node->parent()->conll_deprel();
         $pdeprel = '' if ( !defined($pdeprel) );
         if ($pdeprel =~ m/^(Coord|Apos)$/
             &&
-            $afun !~ m/^(Aux[GKXY])$/
+            $deprel !~ m/^(Aux[GKXY])$/
             )
         {
             $node->set_is_member(1);
         }
-        # Set the (possibly changed) afun back to the node.
-        $node->set_afun($afun);
+        # Set the (possibly changed) deprel back to the node.
+        $node->set_deprel($deprel);
     }
 }
 
@@ -160,7 +159,7 @@ Converts SDT (Slovene Dependency Treebank) trees from CoNLL to the style of
 HamleDT (Prague). The structure of the trees should already
 adhere to the PDT guidelines because SDT has been modeled after PDT. Some
 minor adjustments to the analytical functions may be needed while porting
-them from the conll/deprel attribute to afun. Morphological tags will be
+them from the conll/deprel attribute to deprel. Morphological tags will be
 decoded into Interset and converted to the 15-character positional tags
 of PDT.
 
@@ -168,6 +167,6 @@ of PDT.
 
 =cut
 
-# Copyright 2011, 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011, 2014, 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # Copyright 2012 Karel Bilek <kb@karelbilek.com>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

@@ -25,19 +25,6 @@ sub process_zone
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
     $self->remove_features_from_lemmas($root);
-    ###!!! Fall 2015: We gradually leave afuns and use only deprels.
-    ###!!! Afuns are too specific to PDT and they are enumerated in the XML schema, thus it is difficult to add or modify values.
-    ###!!! At the end of the day we will also want to rewrite (and rename) the deprel_to_afun() method.
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $afun = $node->afun();
-        if(defined($afun))
-        {
-            $node->set_deprel($afun);
-            $node->set_afun(undef);
-        }
-    }
 }
 
 
@@ -227,38 +214,37 @@ sub remove_features_from_lemmas
 
 
 #------------------------------------------------------------------------------
-# Convert dependency relation tags to analytical functions.
+# Convert dependency relation labels.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub convert_deprels
 {
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $deprel = $node->conll_deprel();
-        my $afun   = $deprel;
-        if ( $afun =~ s/_M$// )
+        my $deprel = $node->deprel();
+        if ( $deprel =~ s/_M$// )
         {
             $node->set_is_member(1);
         }
-        # combined afuns (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
-        if ( $afun =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/ )
+        # combined deprels (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
+        if ( $deprel =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/ )
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
         # Annotation error (one occurrence in PDT 3.0): Coord must not be leaf.
-        if($afun eq 'Coord' && $node->is_leaf() && $node->parent()->is_root())
+        if($deprel eq 'Coord' && $node->is_leaf() && $node->parent()->is_root())
         {
-            $afun = 'ExD';
+            $deprel = 'ExD';
         }
-        $node->set_afun($afun);
+        $node->set_deprel($deprel);
     }
     # Coordination of prepositional phrases or subordinate clauses:
-    # In PDT, is_member is set at the node that bears the real afun. It is not set at the AuxP/AuxC node.
+    # In PDT, is_member is set at the node that bears the real deprel. It is not set at the AuxP/AuxC node.
     # In HamleDT (and in Treex in general), is_member is set directly at the child of the coordination head (preposition or not).
-    $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($root->get_zone());
+    $self->pdt_to_treex_is_member_conversion($root);
 }
 
 
@@ -277,6 +263,6 @@ minor changes take place. Morphological tags are decoded into Interset.
 
 =cut
 
-# Copyright 2011, 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011, 2014, 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

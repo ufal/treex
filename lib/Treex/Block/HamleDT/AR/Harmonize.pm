@@ -18,7 +18,7 @@ has iset_driver =>
 
 #------------------------------------------------------------------------------
 # Reads the Arabic tree, converts morphosyntactic tags to the PDT tagset,
-# converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
+# converts dependency relations, transforms tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
@@ -50,69 +50,64 @@ sub get_input_tag_for_interset
 
 
 #------------------------------------------------------------------------------
-# Adjusts analytical functions (syntactic tags). This method is called
-# deprel_to_afun() due to compatibility reasons. Nevertheless, it does not use
-# the value of the conll/deprel attribute. We converted the PADT PML files
-# directly to Treex without CoNLL, so the afun attribute already has a value.
-# We filled conll/deprel as well but the values are not identical to afun: they
-# also reflect other attributes such as is_member.
+# Adjusts dependency relation labels.
 # less /net/data/conll/2007/ar/doc/README
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub convert_deprels
 {
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $afun   = $node->afun() || $node->conll_deprel;
+        my $deprel = $node->deprel();
 
-        # PADT defines some afuns that were not defined in PDT.
+        # PADT defines some deprels that were not defined in PDT.
         # PredE = existential predicate
         # PredC = conjunction as the clause's head
-        if ( $afun =~ m/^Pred[EC]$/ )
+        if ( $deprel =~ m/^Pred[EC]$/ )
         {
-            $afun = 'Pred';
+            $deprel = 'Pred';
         }
 
         # PredP = preposition as the clause's head
         # (It is a prepositional phrase in the position of a nominal predicate. In other languages there would be a copula but Arabic does not use overt copulas.)
-        elsif ( $afun eq 'PredP' )
+        elsif ( $deprel eq 'PredP' )
         {
-            $afun = 'AuxP';
+            $deprel = 'AuxP';
         }
 
         # Ante = anteposition
-        elsif ( $afun eq 'Ante' )
+        elsif ( $deprel eq 'Ante' )
         {
-            $afun = 'Apposition';
+            $deprel = 'Apposition';
         }
 
         # AuxE = emphasizing expression
-        elsif ( $afun eq 'AuxE' )
+        elsif ( $deprel eq 'AuxE' )
         {
-            $afun = 'AuxZ';
+            $deprel = 'AuxZ';
         }
 
         # AuxM = modifying expression
-        elsif ( $afun eq 'AuxM' )
+        elsif ( $deprel eq 'AuxM' )
         {
             # Some instances are prepositional phrases. The AuxM label appears at the preposition instead of AuxP.
-            # Similarly to prepositions the real afun of the whole phrase is at the child of the preposition: Sb, Obj, Pnom etc.
+            # Similarly to prepositions the real deprel of the whole phrase is at the child of the preposition: Sb, Obj, Pnom etc.
             if ( $node->is_adposition() )
             {
-                $afun = 'AuxP';
+                $deprel = 'AuxP';
             }
             # AuxM is also used with negative particles لَا (lā), لَم (lam) and لَن (lan).
             elsif ( $node->is_particle() && $node->form() =~ m/^لَ?[امن]/ )
             {
-                $afun = 'Neg';
+                $deprel = 'Neg';
             }
             # AuxM is also used with future particles سَ (sa) and سَوفَ (sawfa).
             elsif ( $node->is_particle() && $node->form() =~ m/^سَ?(وفَ?)$/ )
             {
-                $afun = 'AuxV';
+                $deprel = 'AuxV';
             }
             ###!!! TODO: Explore the rest!
             # Some of them will also act as Neg or AuxV, e.g. لَيسَ (laysa) is negation but it is also a verb ("be not").
@@ -123,29 +118,29 @@ sub deprel_to_afun
             elsif ( $node->form() eq 'لَيسَ' )
             {
                 # The structure will be transformed later.
-                $afun = 'Cop';
+                $deprel = 'Cop';
             }
             else
             {
-                $afun = 'AuxV';
+                $deprel = 'AuxV';
             }
         }
 
         # _ = excessive token esp. due to a typo
-        elsif ( $afun eq '_' )
+        elsif ( $deprel eq '_' )
         {
-            $afun = '';
+            $deprel = '';
         }
 
-        # combined afuns (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
-        elsif ( $afun =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/ )
+        # combined deprels (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
+        elsif ( $deprel =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/ )
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
 
-        # Beware: PADT allows joint afuns such as 'ExD|Sb', which are not allowed by the PML schema.
-        $afun =~ s/\|.*//;
-        $node->set_afun($afun || 'NR');
+        # Beware: PADT allows joint deprels such as 'ExD|Sb', which are not allowed by the PML schema.
+        $deprel =~ s/\|.*//;
+        $node->set_deprel($deprel || 'NR');
     }
     # Fix known annotation errors.
     # We should fix it now, before the superordinate class will perform other tree operations.
@@ -156,7 +151,7 @@ sub deprel_to_afun
 
 #------------------------------------------------------------------------------
 # Fixes a few known annotation errors that appear in the data. Should be called
-# from deprel_to_afun() so that it precedes any tree operations that the
+# from convert_deprels() so that it precedes any tree operations that the
 # superordinate class may want to do.
 #------------------------------------------------------------------------------
 sub fix_annotation_errors
@@ -172,11 +167,11 @@ sub fix_annotation_errors
     if(scalar(@nodes) == 4 &&
        $nodes[0]->is_conjunction() && $nodes[1]->is_conjunction() && $nodes[2]->is_pronoun() && $nodes[3]->is_punctuation() &&
        $nodes[0]->parent()->is_root() && $nodes[1]->parent()->is_root() && $nodes[2]->parent() == $nodes[1] && $nodes[3]->parent()->is_root() &&
-       $nodes[0]->afun() eq 'AuxY' && $nodes[1]->afun() eq 'AuxC' && $nodes[3]->afun() eq 'AuxK')
+       $nodes[0]->deprel() eq 'AuxY' && $nodes[1]->deprel() eq 'AuxC' && $nodes[3]->deprel() eq 'AuxK')
     {
-        $nodes[0]->set_afun('Coord');
+        $nodes[0]->set_deprel('Coord');
         $nodes[1]->set_parent($nodes[0]);
-        $nodes[2]->set_afun('ExD');
+        $nodes[2]->set_deprel('ExD');
     }
     # This must also be solved before the parent block applies any of its transformations.
     # If the landscape is changed, we will no longer recognize the context for laysa.
@@ -201,14 +196,14 @@ sub fix_laysa
     foreach my $node (@nodes)
     {
         my $form = $node->form();
-        my $afun = $node->afun();
-        if($afun eq 'Cop')
+        my $deprel = $node->deprel();
+        if($deprel eq 'Cop')
         {
             # We have not assigned the Cop label to any other node than "laysa".
             # But other tree transformations may have caused that the label ended up elsewhere.
             # We cannot keep it so we will replace it by AuxV, which the verb would get otherwise.
             ###!!! TODO: This should be investigated further! This solution is probably incorrect!
-            $node->set_afun('AuxV');
+            $node->set_deprel('AuxV');
             if($form eq 'لَيسَ')
             {
                 my $laysa = $node;
@@ -227,7 +222,7 @@ sub fix_laysa
                     $preposition->set_parent($laysa);
                     # Sometimes the preposition has more than one child besides laysa. The non-argument children are AuxY or AuxE (AuxE would now be replaced by AuxZ).
                     my @children = $preposition->children();
-                    my @arguments = grep {$_->afun() !~ m/^Aux[EYZ]$/} (@children);
+                    my @arguments = grep {$_->deprel() !~ m/^Aux[EYZ]$/} (@children);
                     unless(scalar(@arguments) == 1)
                     {
                         log_warn("No or too many arguments");
@@ -243,9 +238,9 @@ sub fix_laysa
                         }
                     }
                     # Swap dependency relations.
-                    $afun = $argument->afun();
-                    $laysa->set_afun($afun) unless($afun eq 'Cop');
-                    $argument->set_afun('Pnom');
+                    $deprel = $argument->deprel();
+                    $laysa->set_deprel($deprel) unless($deprel eq 'Cop');
+                    $argument->set_deprel('Pnom');
                 }
                 else
                 {
@@ -463,5 +458,5 @@ tagset of PDT.)
 
 =cut
 
-# Copyright 2011, 2013, 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011, 2013, 2014, 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

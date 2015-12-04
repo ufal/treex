@@ -208,8 +208,7 @@ sub deprel_to_afun
     # Third loop: we still cannot rely on is_member because it is not guaranteed that it is always set directly under COORD or APOS.
     # The source data follow the PDT convention that AuxP and AuxC nodes do not have it (and thus it is marked at a lower level).
     # In contrast, Treex marks is_member directly under Coord or Apos. We cannot convert it later because we need reliable is_member
-    # for afun conversion. And we cannot use the Pdt2TreexIsMemberConversion block because it relies on the afuns Coord and Apos
-    # and these are not yet ready.
+    # for deprel conversion.
     foreach my $node (@nodes)
     {
         # no is_member allowed directly below root
@@ -219,7 +218,7 @@ sub deprel_to_afun
         }
         if($node->is_member())
         {
-            my $new_member = _climb_up_below_coap($node);
+            my $new_member = $self->_climb_up_below_coap($node);
             if($new_member && $new_member != $node)
             {
                 $new_member->set_is_member(1);
@@ -245,15 +244,15 @@ sub deprel_to_afun
 
 
 #------------------------------------------------------------------------------
-# Searches for the head of coordination or apposition in AGDT. Adapted from
-# Pdt2TreexIsMemberConversion by Zdeněk Žabokrtský (but different because of
-# slightly different afuns in this treebank). Used for moving the is_member
-# flag directly under the head (even if it is AuxP, in which case PDT would not
-# put the flag there).
+# Searches for the head of coordination or apposition in AGDT. Overrides the
+# method from HarmonizePDT because of slightly different deprels in this
+# treebank. Used for moving the is_member flag directly under the head (even if
+# it is AuxP, in which case PDT would not put the flag there).
 #------------------------------------------------------------------------------
 sub _climb_up_below_coap
 {
-    my ($node) = @_;
+    my $self = shift;
+    my $node = shift;
     if ($node->parent()->is_root())
     {
         log_warn('No co/ap node between a co/ap member and the tree root');
@@ -265,7 +264,7 @@ sub _climb_up_below_coap
     }
     else
     {
-        return _climb_up_below_coap($node->parent());
+        return $self->_climb_up_below_coap($node->parent());
     }
 }
 
@@ -506,7 +505,7 @@ but slight adjustments are necessary.
 
 =cut
 
-# Copyright 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2014, 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # Copyright 2011 Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
