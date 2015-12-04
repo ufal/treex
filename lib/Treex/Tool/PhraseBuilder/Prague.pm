@@ -78,7 +78,7 @@ sub _build_dialect
         'cc'    => ['^AuxY$', 'AuxY'], # coordinating conjunction
         'conj'  => ['^CoordArg$', 'CoordArg'], # conjunct
         'coord' => ['^Coord$'],        # head of coordination (conjunction or punctuation)
-        'mwe'   => ['^Mwe$', 'Mwe'],   # non-head word of a multi-word expression
+        'mwe'   => ['^AuxP$', 'AuxP'],   # non-head word of a multi-word expression; PDT has only multi-word prepositions
         'punct' => ['^Aux[XGK]$', 'AuxG'],
     );
     return \%map;
@@ -852,11 +852,11 @@ sub detect_prague_pp
         # The main prepositional node has already been detached from its original parent so it can be used as the head elsewhere.
         if(scalar(@{$c->{mwe}}) > 0)
         {
-            # The leftmost node of the MWE will be its head.
-            ###!!! This is the UD approach. Multi-word prepositions in PDT are head-final because the last token (preposition) governs the case of the noun.
+            # In PDT, the last token (preposition or noun) is the head because it governs the case of the following noun.
+            # In UD, the leftmost node of the MWE is its head.
             ###!!! If we want to make it variable we should define multi-word expressions as another specific phrase type.
             my @mwe = sort {$a->node()->ord() <=> $b->node()->ord()} (@{$c->{mwe}}, $c->{fun});
-            my $head = shift(@mwe);
+            my $head = pop(@mwe);
             $head->set_parent(undef);
             $c->{fun} = new Treex::Core::Phrase::NTerm('head' => $head);
             $c->{fun}->set_deprel($fun_deprel);
