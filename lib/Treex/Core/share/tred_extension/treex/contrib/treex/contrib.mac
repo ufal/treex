@@ -4,13 +4,8 @@
 #ifinclude <contrib/eng-vallex/contrib.mac>
 #ifinclude <contrib/vallex/contrib.mac>
 
-#include "utils.mac"
-
 package Treex_mode;
 #binding-context Treex_mode
-
-# I need this to detect extension presence in pmltq
-$ENV{TREEX_EXTENSION}=1;
 
 print STDERR "Initializing Treex extension\n";
 
