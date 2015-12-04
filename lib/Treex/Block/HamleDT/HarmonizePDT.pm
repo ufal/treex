@@ -16,8 +16,20 @@ sub process_zone
     my $tagset = shift;
     my $root = $self->SUPER::process_zone($zone, $tagset);
     my @nodes = $root->get_descendants({ordered => 1});
-    ###!!!
-    # Debugging the phrase-based implementation of tree transformations (30.11.2015).
+    # An easy bug to fix in afuns. It is rare but it exists.
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'AuxX' && $node->form() ne ',' && $node->is_punctuation())
+        {
+            $node->set_deprel('AuxG');
+        }
+        # The letter 'x' used instead of the operator of multiplication ('×').
+        if($node->deprel() eq 'AuxG' && $node->form() eq 'x' && $node->is_conjunction())
+        {
+            $node->set_deprel('AuxY');
+        }
+    }
+    # Phrase-based implementation of tree transformations (30.11.2015).
     my $builder = new Treex::Tool::PhraseBuilder::Prague
     (
         'prep_is_head'           => 1,
@@ -27,136 +39,16 @@ sub process_zone
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
-    ###!!!
-    # See the comment at sub detect_coordination for why we are doing this even with PDT-style treebanks.
-    ###!!!$self->restructure_coordination($root);
-    ###!!!$self->pdt2hamledt_apposition($root);
     # We used to reattach final punctuation before handling coordination and apposition but that was a mistake.
     # The sentence-final punctuation might serve as coap head, in which case this function must not modify it.
     # The function knows it but it cannot be called before coap annotation has stabilized.
-    #$self->attach_final_punctuation_to_root($root) unless($#nodes>=0 && $nodes[$#nodes]->afun() eq 'Coord');
-    ###!!! is_member undef and is_member 0 are equivalent; however, the latter makes larger XML file.
+    $self->attach_final_punctuation_to_root($root);
+    # is_member undef and is_member 0 are equivalent; however, the latter makes larger XML file.
     foreach my $node (@nodes)
     {
         $node->set_is_member(undef) if(!$node->is_member());
     }
     return $root;
-}
-
-#------------------------------------------------------------------------------
-# Reshapes apposition from the style of PDT to the style of HamleDT. Adapted
-# from Martin Popel's block Pdt2HamledtApos.
-#------------------------------------------------------------------------------
-sub pdt2hamledt_apposition
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants({ordered => 1});
-    foreach my $node (@nodes)
-    {
-        next if($node->afun() ne 'Apos');
-        my $old_head = $node;
-        my @children = $old_head->get_children({ordered=>1});
-        my ($first_ap, @other_ap) = grep {$_->is_member()} (@children);
-        if (!$first_ap)
-        {
-            log_warn('Apposition without members at ' . $old_head->get_address());
-            # Something is wrong but we cannot allow the 'Apos' afun in the output.
-            if($old_head->form() eq ',')
-            {
-                $old_head->set_afun('AuxX');
-            }
-            elsif($old_head->is_punctuation())
-            {
-                $old_head->set_afun('AuxG');
-            }
-            elsif(scalar(@children)>0 && $children[0]->afun() ne 'Apos')
-            {
-                $old_head->set_afun($children[0]->afun());
-            }
-            else
-            {
-                $old_head->set_afun('AuxY');
-            }
-            next;
-        }
-        # Usually, apposition has exactly two members.
-        # However, ExD (and unannotated coordination) can result in more members
-        # and the second member can be the whole following sentence (i.e. just one member in the tree).
-        # We must be prepared also for such cases. Uncomment the following line to see them.
-        #log_warn 'Strange apposition at ' . $old_head->get_address() if @other_ap != 1;
-        # Make the first member of apposition the new head.
-        $first_ap->set_parent($old_head->get_parent());
-        $first_ap->set_is_member(0);
-        # Attach other apposition members (hopefully just one) to the new head.
-        foreach my $another_ap (@other_ap)
-        {
-            $another_ap->set_parent($first_ap);
-            $another_ap->set_is_member(0);
-            # $another_ap could be coordination, preposition or subordinating conjunction, then the afun would have to be set further down.
-            $another_ap->set_real_afun('Apposition');
-        }
-        # Attach the comma (or semicolon or dash or bracket) under the second apposition member.
-        if (@other_ap)
-        {
-            $old_head->set_parent($other_ap[0]);
-        }
-        else
-        {
-            $old_head->set_parent($first_ap);
-        }
-        # Most of the apposition heads in PDT are punctuation nodes. But some of them are not, e.g. the joining expression "to je" ("that is").
-        $old_head->set_afun($old_head->form eq ',' ? 'AuxX' : $old_head->is_punctuation() ? 'AuxG' : 'AuxY');
-        # Reattach children of the comma, such as a second comma etc.
-        my $new_parent = $old_head->parent();
-        @children = $old_head->get_children();
-        foreach my $child (@children)
-        {
-            $child->set_parent($new_parent);
-        }
-        # Reattach possible AuxG (dashes or right brackets) under the last member of apposition.
-        my @auxg = grep {!$_->is_member && $_->afun eq 'AuxG'} @children;
-        if (@other_ap)
-        {
-            foreach my $bracket (@auxg)
-            {
-                $bracket->set_parent($other_ap[-1]);
-            }
-        }
-        # If the whole apposition was a conjunct of some outer coordination, is_member must stay with the head
-        if ($old_head->is_member)
-        {
-            $first_ap->set_is_member(1);
-            $old_head->set_is_member(0);
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Detects coordination in the shape we expect to find it in PDT and derived
-# treebanks. Even though the harmonized shape will be almost identical (the
-# input is supposed to adhere to the style that is also used in HamleDT), there
-# are slight deviations that we want to polish by decoding and re-encoding the
-# coordinations. For example, in PADT the first conjunction serves as the head
-# of multi-conjunct coordination, while HamleDT uses the last conjunction. This
-# function will also make sure that additional attributes related to
-# coordination (such as is_shared_modifier) will be properly set.
-#------------------------------------------------------------------------------
-sub detect_coordination
-{
-    my $self = shift;
-    my $node = shift;
-    my $coordination = shift;
-    my $debug = shift;
-    $coordination->detect_prague($node);
-    # The caller does not know where to apply recursion because it depends on annotation style.
-    # Return all conjuncts and shared modifiers for the Prague family of styles.
-    # Return orphan conjuncts and all shared and private modifiers for the other styles.
-    my @recurse = $coordination->get_conjuncts();
-    push(@recurse, $coordination->get_shared_modifiers());
-    return @recurse;
 }
 
 

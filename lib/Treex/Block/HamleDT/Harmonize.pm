@@ -435,7 +435,7 @@ sub attach_final_punctuation_to_root
     my $rule1i1 = $#nodes;
     my $i = $#nodes;
     # Do not touch the last node if it heads coordination or apposition.
-    return if($i>=0 && $nodes[$i]->afun()  && $nodes[$i]->afun() =~ m/^(Coord|Apos)$/);
+    return if($i>=0 && $nodes[$i]->deprel()  && $nodes[$i]->deprel() =~ m/^(Coord|Apos)$/);
     while($i>=0 && $nodes[$i]->form() =~ m/^$rule2chars+$/)
     {
         $rule2 = 1;
@@ -443,7 +443,7 @@ sub attach_final_punctuation_to_root
         $i--;
     }
     # Do not touch the last node if it heads coordination or apposition.
-    return if($i>=0 && $nodes[$i]->afun() && $nodes[$i]->afun() =~ m/^(Coord|Apos)$/);
+    return if($i>=0 && $nodes[$i]->deprel() && $nodes[$i]->deprel() =~ m/^(Coord|Apos)$/);
     while($i>=0 && $nodes[$i]->form() =~ m/^$rule1chars+$/)
     {
         $rule1 = 1;
@@ -451,14 +451,14 @@ sub attach_final_punctuation_to_root
         $i--;
     }
     # Do not touch the last node if it heads coordination or apposition.
-    return if(defined($rule1i0) && $rule1i0>=0 && $rule1i0<=$#nodes && $nodes[$rule1i0]->afun() && $nodes[$rule1i0]->afun() =~ m/^(Coord|Apos)$/);
+    return if(defined($rule1i0) && $rule1i0>=0 && $rule1i0<=$#nodes && $nodes[$rule1i0]->deprel() && $nodes[$rule1i0]->deprel() =~ m/^(Coord|Apos)$/);
     if($rule2 && $rule1)
     {
         $rule1i1 = $rule2i0-1;
         for(my $i = $rule2i0; $i<=$#nodes; $i++)
         {
             $nodes[$i]->set_parent($root);
-            $nodes[$i]->set_afun('AuxG');
+            $nodes[$i]->set_deprel('AuxG');
             # Even though some treebanks think otherwise, final punctuation marks are neither conjunctions nor conjuncts.
             delete($nodes[$i]->wild()->{conjunct});
             delete($nodes[$i]->wild()->{coordinator});
@@ -470,11 +470,11 @@ sub attach_final_punctuation_to_root
                 $child->set_parent($root);
                 if($child->is_verb())
                 {
-                    $child->set_afun('Pred');
+                    $child->set_deprel('Pred');
                 }
                 else
                 {
-                    $child->set_afun('ExD');
+                    $child->set_deprel('ExD');
                 }
             }
         }
@@ -486,11 +486,11 @@ sub attach_final_punctuation_to_root
             $nodes[$i]->set_parent($root);
             if($nodes[$i]->form() =~ m/^,\x{60C}$/)
             {
-                $nodes[$i]->set_afun('AuxX');
+                $nodes[$i]->set_deprel('AuxX');
             }
             else
             {
-                $nodes[$i]->set_afun('AuxK');
+                $nodes[$i]->set_deprel('AuxK');
             }
             delete($nodes[$i]->wild()->{conjunct});
             delete($nodes[$i]->wild()->{coordinator});
@@ -502,11 +502,11 @@ sub attach_final_punctuation_to_root
                 $child->set_parent($root);
                 if($child->is_verb())
                 {
-                    $child->set_afun('Pred');
+                    $child->set_deprel('Pred');
                 }
                 else
                 {
-                    $child->set_afun('ExD');
+                    $child->set_deprel('ExD');
                 }
             }
         }

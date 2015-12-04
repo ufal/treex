@@ -7,7 +7,8 @@ sub process_anode
 {
     my $self = shift;
     my $node = shift;
-    if($node->deprel() eq 'AuxG' && !$node->is_punctuation())
+    # AuxG may also be used for numbers idenitifying items in numbered lists.
+    if($node->deprel() eq 'AuxG' && !$node->is_punctuation() && !$node->form() =~ m/^\d+$/)
     {
         $self->complain($node, 'AuxG : '.$node->tag());
     }
