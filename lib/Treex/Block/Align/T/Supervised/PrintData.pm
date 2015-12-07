@@ -10,6 +10,7 @@ extends 'Treex::Block::Write::BaseTextWriter';
 with 'Treex::Block::Align::T::Supervised::Base';
 with 'Treex::Block::Filter::Node::T';
 
+has 'align_language' => (is => 'ro', isa => 'Str', required => 1);
 has '+node_types' => ( default => 'all_anaph' );
 has 'gold_align_filter' => (is => 'ro', isa => 'HashRef', builder => '_build_gaf');
 
@@ -44,7 +45,7 @@ sub _get_losses {
 sub process_filtered_tnode {
     my ($self, $tnode) = @_;
 
-    my @cands = $self->_get_candidates($tnode);
+    my @cands = $self->_get_candidates($tnode, $self->align_language);
     my $feats = $self->_feat_extractor->create_instances($tnode, \@cands);
     
     my ($gold_aligned_node) = $self->_get_positive_candidate($tnode);
