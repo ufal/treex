@@ -50,7 +50,7 @@ sub process_zone
     $self->exchange_tags($root);
     $self->fix_symbols($root);
     $self->fix_annotation_errors($root);
-    $self->afun_to_udeprel($root);
+    $self->convert_deprels($root);
     $self->split_tokens_on_underscore($root);
     $self->relabel_appos_name($root);
     # The most difficult part is detection of coordination, prepositional and
@@ -148,10 +148,9 @@ sub fix_symbols
             if($node->form() =~ m/^[\+=]$/)
             {
                 $node->iset()->set('pos', 'sym');
-                if($node->afun() eq 'AuxG')
+                if($node->deprel() eq 'AuxG')
                 {
-                    $node->set_afun('AuxY');
-                    $node->set_deprel('cc');
+                    $node->set_deprel('AuxY');
                 }
             }
             # Slash '/' can be punctuation or mathematical symbol.
@@ -159,10 +158,9 @@ sub fix_symbols
             elsif($node->form() eq '/' && !$node->is_leaf() && !$node->is_coap_root())
             {
                 $node->iset()->set('pos', 'sym');
-                if($node->afun() eq 'AuxG')
+                if($node->deprel() eq 'AuxG')
                 {
-                    $node->set_afun('AuxY');
-                    $node->set_deprel('cc');
+                    $node->set_deprel('AuxY');
                 }
                 my $parent = $node->parent();
                 my @children = $node->children();
@@ -176,10 +174,9 @@ sub fix_symbols
         elsif($node->form() eq 'x' && $node->is_conjunction())
         {
             $node->iset()->set('pos', 'sym');
-            if($node->afun() eq 'AuxG')
+            if($node->deprel() eq 'AuxG')
             {
-                $node->set_afun('AuxY');
-                $node->set_deprel('cc');
+                $node->set_deprel('AuxY');
             }
         }
     }
@@ -192,16 +189,15 @@ sub fix_symbols
 # This new version (2015-03-25) is meant to act before any structural changes,
 # even before coordination gets reshaped.
 #------------------------------------------------------------------------------
-sub afun_to_udeprel
+sub convert_deprels
 {
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $afun = $node->afun();
-        $afun = '' if(!defined($afun));
-        my $deprel;
+        my $deprel = $node->deprel();
+        $deprel = '' if(!defined($deprel));
         my $parent = $node->parent();
         # The top nodes (children of the root) must be labeled 'root'.
         # However, this will be solved elsewhere (and tree transformations may
@@ -211,7 +207,7 @@ sub afun_to_udeprel
         # We will temporarily extend the label if it heads coordination so that the coordination can later be reshaped properly.
         if($node->is_punctuation())
         {
-            if($afun eq 'Coord')
+            if($deprel eq 'Coord')
             {
                 $deprel = 'punct:coord';
             }
@@ -223,7 +219,7 @@ sub afun_to_udeprel
         # Coord marks the conjunction that heads a coordination.
         # (Punctuation heading coordination has been processed earlier and temporarily labeled 'punct:coord'.)
         # Coordinations will be later restructured and the conjunction will be attached as 'cc'.
-        elsif($afun eq 'Coord')
+        elsif($deprel eq 'Coord')
         {
             $deprel = 'cc:coord';
         }
@@ -232,25 +228,25 @@ sub afun_to_udeprel
         # 2. It is a leaf, attached to another preposition, forming a multi-word preposition. (In this case the word can be even a noun.)
         # Prepositional phrases will be later restructured. In the situation 1, the preposition will be attached to its argument as 'case'.
         # In the situation 2, the first word in the multi-word prepositon will become the head and all other parts will be attached to it as 'mwe'.
-        elsif($afun eq 'AuxP')
+        elsif($deprel eq 'AuxP')
         {
             $deprel = 'case:auxp';
         }
         # AuxC marks a subordinating conjunction that heads a subordinate clause.
         # It will be later restructured and the conjunction will be attached to the subordinate predicate as 'mark'.
-        elsif($afun eq 'AuxC')
+        elsif($deprel eq 'AuxC')
         {
             $deprel = 'mark:auxc';
         }
-        # Predicate: If the node is not the main predicate of the sentence and it has the Pred afun,
+        # Predicate: If the node is not the main predicate of the sentence and it has the Pred deprel,
         # then it is probably the main predicate of a parenthetical expression.
         # Exception: predicates of coordinate main clauses. This must be solved after coordinations have been reshaped. ###!!! TODO
-        elsif($afun eq 'Pred')
+        elsif($deprel eq 'Pred')
         {
             $deprel = 'parataxis';
         }
         # Subject: nsubj, nsubjpass, csubj, csubjpass
-        elsif($afun eq 'Sb')
+        elsif($deprel eq 'Sb')
         {
             # Is the parent a passive verb?
             ###!!! This will not catch reflexive passives. TODO: Catch them.
@@ -266,7 +262,7 @@ sub afun_to_udeprel
             }
         }
         # Object: dobj, iobj, ccomp, xcomp
-        elsif($afun eq 'Obj')
+        elsif($deprel eq 'Obj')
         {
             ###!!! If a verb has two or more objects, we should select one direct object and the others will be indirect.
             ###!!! We would probably have to consider all valency frames to do that properly.
@@ -283,12 +279,12 @@ sub afun_to_udeprel
         # Examples: ne, nikoli, nikoliv, ani?, vůbec?
         # I am not sure that we want to distinguish them from the other AuxZ using the neg relation.
         # AuxZ words are mostly adverbs, coordinating conjunctions and particles. Other parts of speech are extremely rare.
-        elsif($afun eq 'Adv')
+        elsif($deprel eq 'Adv')
         {
             $deprel = $node->is_verb() ? 'advcl' : $node->is_noun() ? 'nmod' : 'advmod';
         }
         # Attribute of a noun: amod, nummod, nmod, acl
-        elsif($afun eq 'Atr')
+        elsif($deprel eq 'Atr')
         {
             # Cardinal number is nummod, ordinal number is amod. It should not be a problem because Interset should categorize ordinals as special types of adjectives.
             # But we cannot use the is_numeral() method because it returns true if pos=num or if numtype is not empty.
@@ -336,20 +332,20 @@ sub afun_to_udeprel
                 $deprel = 'nmod';
             }
         }
-        # AuxA is not an official afun used in HamleDT 2.0. Nevertheless it has been introduced in some (not all)
+        # AuxA is not an official deprel used in HamleDT 2.0. Nevertheless it has been introduced in some (not all)
         # languages by people who want to use the resulting data in TectoMT. It marks articles attached to nouns.
-        elsif($afun eq 'AuxA')
+        elsif($deprel eq 'AuxA')
         {
             $deprel = 'det';
         }
         # Verbal attribute is analyzed as secondary predication.
         ###!!! TODO: distinguish core arguments (xcomp) from non-core arguments and adjuncts (acl/advcl).
-        elsif($afun =~ m/^AtvV?$/)
+        elsif($deprel =~ m/^AtvV?$/)
         {
             $deprel = 'xcomp';
         }
         # Auxiliary verb "být" ("to be"): aux, auxpass
-        elsif($afun eq 'AuxV')
+        elsif($deprel eq 'AuxV')
         {
             $deprel = $parent->iset()->is_passive() ? 'auxpass' : 'aux';
             # Side effect: We also want to modify Interset. The PDT tagset does not distinguish auxiliary verbs but UPOS does.
@@ -358,7 +354,7 @@ sub afun_to_udeprel
         # Reflexive pronoun "se", "si" with inherently reflexive verbs.
         # Unfortunately, previous harmonization to the Prague style abused the AuxT label to also cover Germanic verbal particles and other compound-like stuff with verbs.
         # We have to test for reflexivity if we want to output expl!
-        elsif($afun eq 'AuxT')
+        elsif($deprel eq 'AuxT')
         {
             # This appears in Slavic languages, although in theory it could be used in some Romance and Germanic languages as well.
             # It actually also appears in Dutch (but we mixed it with verbal particles there).
@@ -367,7 +363,7 @@ sub afun_to_udeprel
             {
                 $deprel = 'expl';
             }
-            # The Tamil afun CC (compound) has also been converted to AuxT. 11 out of 12 occurrences are tagged as verbs.
+            # The Tamil deprel CC (compound) has also been converted to AuxT. 11 out of 12 occurrences are tagged as verbs.
             elsif($node->is_verb())
             {
                 $deprel = 'compound';
@@ -384,12 +380,12 @@ sub afun_to_udeprel
             }
         }
         # Reflexive pronoun "se", "si" used for reflexive passive.
-        elsif($afun eq 'AuxR')
+        elsif($deprel eq 'AuxR')
         {
             $deprel = 'auxpass:reflex';
         }
         # AuxZ: intensifier or negation
-        elsif($afun eq 'AuxZ')
+        elsif($deprel eq 'AuxZ')
         {
             # Negation is mostly done using bound prefix ne-.
             # If it is a separate word ("ne už personálním, ale organizačním"; "potřeboval čtyřnohého a ne dvounohého přítele), it is labeled AuxZ.
@@ -414,13 +410,13 @@ sub afun_to_udeprel
             }
         }
         # Neg: used in Prague-style harmonization of some treebanks (e.g. Romanian) for negation (elsewhere it may be AuxZ or Adv).
-        elsif($afun eq 'Neg')
+        elsif($deprel eq 'Neg')
         {
             $deprel = 'neg';
         }
         # AuxY: Additional conjunction in coordination ... cc
         # AuxY: Subordinating conjunction "jako" ("as") attached to Atv or AtvV, or even Obj (of verbal adjectives) ... mark
-        elsif($afun eq 'AuxY')
+        elsif($deprel eq 'AuxY')
         {
             if(lc($node->form()) eq 'jako')
             {
@@ -440,19 +436,19 @@ sub afun_to_udeprel
             }
         }
         # AuxO: redundant "to" or "si" ("co to znamená pátý postulát dokázat").
-        elsif($afun eq 'AuxO')
+        elsif($deprel eq 'AuxO')
         {
             $deprel = 'discourse';
         }
         # Apposition
-        elsif($afun eq 'Apposition')
+        elsif($deprel eq 'Apposition')
         {
             $deprel = 'appos';
         }
         # Punctuation
         ###!!! Since we now label all punctuation (decided by Interset) as punct,
         ###!!! here we only get non-punctuation labeled (by mistake?) AuxG, AuxX or AuxK. What to do with this???
-        elsif($afun eq 'AuxG')
+        elsif($deprel eq 'AuxG')
         {
             # AuxG is intended for graphical symbols other than comma and the sentence-terminating punctuation.
             # It is mostly assigned to punctuation but sometimes to symbols (% $ + x) or even alphanumeric tokens (1 2 3).
@@ -470,15 +466,15 @@ sub afun_to_udeprel
                 $deprel = 'nmod'; ###!!! or nsubj or dobj or whatever
             }
         }
-        elsif($afun =~ m/^Aux[XK]$/)
+        elsif($deprel =~ m/^Aux[XK]$/)
         {
             # AuxX is reserved for commas.
             # AuxK is used for sentence-terminating punctuation, usually a period, an exclamation mark or a question mark.
-            log_warn("Node '".$node->form()."' has afun '$afun' but it is not punctuation.");
+            log_warn("Node '".$node->form()."' has deprel '$deprel' but it is not punctuation.");
             $deprel = 'punct';
         }
         ###!!! TODO: ExD with chains of orphans should be stanfordized!
-        elsif($afun eq 'ExD')
+        elsif($deprel eq 'ExD')
         {
             # Some ExD are vocatives.
             if($node->iset()->case() eq 'voc')
@@ -499,7 +495,7 @@ sub afun_to_udeprel
         # Set up a fallback so that $deprel is always defined.
         else
         {
-            $deprel = 'dep:'.lc($afun);
+            $deprel = 'dep:'.lc($deprel);
         }
         # Save the universal dependency relation label with the node.
         $node->set_deprel($deprel);
@@ -793,9 +789,9 @@ sub fix_determiners
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        # The is_pronoun() method will catch all pronominal words, i.e. UPOS pronouns (pos=noun), determiners (pos=adj),
+        # The is_pronominal() method will catch all pronominal words, i.e. UPOS pronouns (pos=noun), determiners (pos=adj),
         # even pronominal adverbs (pos=adv) and undecided words if the source tagset does not have determiners (pos=adj|noun).
-        if($node->is_pronoun())
+        if($node->is_pronominal())
         {
             # The is_adjective() method will catch both pos=adj and pos=adj|noun.
             if($node->is_adjective())
@@ -820,7 +816,7 @@ sub fix_determiners
                     #  nabídka všech (offer of all) (genitive construction; the words do not agree in case)
                     #  půl tuctu jich (half dozen of them) (genitive construction; the words agree in case because tuctu is incidentially also genitive, but they do not agree in number; in addition, "jich" is a non-possessive personal pronoun which should never become det)
                     #  firmy All - Impex (foreign determiner All; it cannot agree in case because it does not have case)
-                    #  děvy samy (girls themselves) (the words agree in case but the afun is Atv, not Atr, thus we should not get through the 'amod' constraint above)
+                    #  děvy samy (girls themselves) (the words agree in case but the deprel is Atv, not Atr, thus we should not get through the 'amod' constraint above)
                     # The tree has not changed from the Prague style except for coordination. Nominal predicates still depend on copulas.
                     # If it does not modify a noun (adjective, pronoun), it is not a determiner.
                     $change = 1 if(!$parent->is_noun() && !$parent->is_adjective());
@@ -975,13 +971,13 @@ sub fix_annotation_errors
     {
         my $form = $node->form();
         my $pos  = $node->iset()->pos();
-        my $afun = $node->afun();
-        if($form =~ m/^[so]$/i && !$node->is_adposition() && $afun eq 'AuxP')
+        my $deprel = $node->deprel();
+        if($form =~ m/^[so]$/i && !$node->is_adposition() && $deprel eq 'AuxP')
         {
-            # We do not know what the correct afun would be. There is a chance it would be Apposition or Atr but it is not guaranteed.
+            # We do not know what the correct deprel would be. There is a chance it would be Apposition or Atr but it is not guaranteed.
             # On the other hand, any of the two, even if incorrect, is much better than AuxP, which would trigger various transformations,
             # inappropriate in this context.
-            $node->set_afun('Atr');
+            $node->set_deprel('Atr');
         }
         # Fix unknown tags of punctuation. If the part of speech is unknown and the form consists only of punctuation characters,
         # set the part of speech to PUNCT. This occurs in the Ancient Greek Dependency Treebank.
@@ -994,16 +990,16 @@ sub fix_annotation_errors
         # Changing Adv to AuxC would normally also involve moving the conjunction between the subordinate predicate and
         # its parent, but we do not need to do that because our target style is UD and there both AuxC (mark) and Adv (advmod)
         # will be attached as children of the subordinate predicate.
-        elsif(lc($form) eq 'jakmile' && $pos eq 'conj' && $afun eq 'Adv')
+        elsif(lc($form) eq 'jakmile' && $pos eq 'conj' && $deprel eq 'Adv')
         {
-            $node->set_afun('AuxC');
+            $node->set_deprel('AuxC');
         }
         # In the Czech PDT, there is one occurrence of English "Devil ' s Hole", with the dependency AuxT(Devil, s).
         # Since "s" is not a reflexive pronoun, the convertor would convert the AuxT to compound:prt, which is not allowed in Czech.
         # Make it Atr instead. It will be converted to foreign.
-        elsif($form eq 's' && $node->afun() eq 'AuxT' && $node->parent()->form() eq 'Devil')
+        elsif($form eq 's' && $node->deprel() eq 'AuxT' && $node->parent()->form() eq 'Devil')
         {
-            $node->set_afun('Atr');
+            $node->set_deprel('Atr');
         }
     }
 }
