@@ -31,10 +31,10 @@ sub _build_model_paths {
 
     my $default_paths = {
         en => {
-            cs => 'data/models/align/supervised/en.all_anaph.00_iter.model',
+            cs => 'data/models/align/supervised/en_cs.all_anaph.00_iter.model',
         },
         cs => {
-            en => '',
+            en => 'data/models/align/supervised/cs_en.all_anaph.00_iter.model',
         }
     };
     if ($self->language eq "all") {
@@ -113,8 +113,14 @@ after 'process_bundle' => sub {
         Treex::Tool::Align::Utils::remove_aligned_nodes_by_filter($from_node, {language => $self->align_trg_lang, selector => $self->selector, rel_types => ['!gold']});
         foreach my $to_id (keys %{$links->{$from_id}}) {
             my $to_node = $bundle->get_document->get_node_by_id($to_id);
+            # skip if referring to itself => no alignment detected
+            next if ($from_node == $to_node);
             log_info "[".(ref $self)."] Adding alignment: " . $from_id . " --> " . $to_id;
             Treex::Tool::Align::Utils::add_aligned_node($from_node, $to_node, "supervised");
+            #print STDERR join " ", map {$_->id eq $from_id ? "<".$_->t_lemma.">" : $_->t_lemma} $from_node->get_root->get_descendants({ordered => 1});
+            #print STDERR "\n";
+            #print STDERR join " ", map {$_->id eq $to_id ? "<".$_->t_lemma.">" : $_->t_lemma} $to_node->get_root->get_descendants({ordered => 1});
+            #print STDERR "\n";
         }
     }
 
