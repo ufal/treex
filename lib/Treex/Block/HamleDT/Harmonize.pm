@@ -41,18 +41,8 @@ sub process_zone
     # Conversion from dependency relation tags to afuns (analytical function tags) must be done always
     # and it is almost always treebank-specific (only a few treebanks use the same tagset as the PDT).
     $root->set_afun('AuxS');
-    $self->deprel_to_afun($root);
-    ###!!! Fall 2015: We gradually leave afuns and use only deprels.
-    ###!!! Afuns are too specific to PDT and they are enumerated in the XML schema, thus it is difficult to add or modify values.
-    ###!!! At the end of the day we will also want to rewrite (and rename) the deprel_to_afun() method.
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $afun = $node->afun();
-        $afun = 'NR' if(!defined($afun));
-        $node->set_deprel($afun);
-        $node->set_afun(undef);
-    }
+    $self->convert_deprels($root);
+    $self->fix_annotation_errors($root);
 
     # The return value can be used by the overriding methods of subclasses.
     return $root;
@@ -185,36 +175,44 @@ sub fill_in_lemmas
 
 
 #------------------------------------------------------------------------------
-# Convert dependency relation tags to analytical functions.
-# This abstract class does not understand the source-dependent CoNLL deprels,
-# so it only copies them to afuns. The method must be overriden in order to
-# produce valid afuns.
+# Convert dependency relation tags to the harmonized label set. The method must
+# be overridden in order to produce valid deprels.
 #
 # List and description of analytical functions in PDT 2.0:
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
-#
-# We define the following pseudo-afuns that are not defined in PDT but are
-# useful for the different structures of some treebanks. Note that these
-# pseudo-afuns are expected in some methods.
-#   PrepArg ... argument of a preposition (typically a noun)
-#   SubArg .... argument of a subordinator (typically a verb)
-#   NumArg .... argument of a number (counted noun)
-#   DetArg .... argument of a determiner (typically a noun)
-#   PossArg ... argument of a possessive (possessed noun)
-#   AdjArg .... argument of an adjective (modified noun)
-#   CoordArg .. coordination member (probably not
-#               the first one, in treebanks with different coordinations)
+# (Note that the HamleDT 2.0 label set is a modification of the PDT set, and
+# that we may use temporarily other labels that will disappear once the tree
+# structure is successfully transformed.)
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub convert_deprels
 {
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
+        ###!!! Do we still want to bother with the conll/deprel?
         my $deprel = $node->conll_deprel();
-        $node->set_afun($deprel);
+        $node->set_deprel($deprel);
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# A method to target known annotation errors (these could be batches of
+# automatically identifiable guideline violations but often it is just a single
+# point in the data; if we cannot fix the source data, this will ensure that
+# any conversion we produce is fixed). This method will be called right after
+# converting the deprels to the harmonized label set, but before any tree
+# transformations. This ancestor implementation is empty; the real errors must
+# be defined for each harmonized treebank separately.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self = shift;
+    my $root = shift;
+    return 1;
 }
 
 
