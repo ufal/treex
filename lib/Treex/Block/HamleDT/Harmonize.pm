@@ -191,8 +191,13 @@ sub convert_deprels
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        ###!!! Do we still want to bother with the conll/deprel?
-        my $deprel = $node->conll_deprel();
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
         $node->set_deprel($deprel);
     }
 }
