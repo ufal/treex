@@ -179,6 +179,22 @@ sub fix_annotation_errors
     # This must also be solved before the parent block applies any of its transformations.
     # If the landscape is changed, we will no longer recognize the context for laysa.
     $self->fix_laysa($root);
+    # Fix coordination without conjuncts.
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'Coord' && !grep {$_->is_member()} ($node->children()))
+        {
+            my @children = $node->children();
+            if(scalar(@children)==0)
+            {
+                $node->set_deprel('AuxY');
+            }
+            else
+            {
+                $self->identify_conjuncts($node);
+            }
+        }
+    }
 }
 
 
