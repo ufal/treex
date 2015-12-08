@@ -148,9 +148,6 @@ sub convert_deprels
         $deprel =~ s/\|.*//;
         $node->set_deprel($deprel || 'NR');
     }
-    # Fix known annotation errors.
-    # We should fix it now, before the superordinate class will perform other tree operations.
-    $self->fix_annotation_errors($root);
 }
 
 
