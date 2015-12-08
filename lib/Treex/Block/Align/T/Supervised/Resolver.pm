@@ -31,10 +31,10 @@ sub _build_model_paths {
 
     my $default_paths = {
         en => {
-            cs => 'data/models/align/supervised/en_cs.all_anaph.00_iter.model',
+            cs => 'data/models/align/supervised/en_cs.all_anaph.train.model',
         },
         cs => {
-            en => 'data/models/align/supervised/cs_en.all_anaph.00_iter.model',
+            en => 'data/models/align/supervised/cs_en.all_anaph.train.model',
         }
     };
     if ($self->language eq "all") {
