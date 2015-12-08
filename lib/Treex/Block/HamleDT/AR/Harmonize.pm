@@ -182,7 +182,7 @@ sub fix_annotation_errors
     # Fix coordination without conjuncts.
     foreach my $node (@nodes)
     {
-        if($node->deprel() eq 'Coord' && !grep {$_->is_member()} ($node->children()))
+        if($node->deprel() =~ m/^(Coord|Apos)(_|$)/ && !grep {$_->is_member()} ($node->children()))
         {
             my @children = $node->children();
             if(scalar(@children)==0)
