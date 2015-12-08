@@ -132,10 +132,10 @@ sub _finalize_links {
         my $to_node = $possible_links[$idx]->[1];
 
         if ($covered_ids{$from_node->id}) {
-            log_warn "[".(ref $self)."] Trying to add alignment link to the already aligned node ".$from_node->get_address.".";
+            log_warn "[".(ref $self)."] Alignment link ".$from_node->id." --> ".$to_node->id." skipped. The node ".$from_node->id." already covered.";
         }
         elsif ($covered_ids{$to_node->id}) {
-            log_warn "[".(ref $self)."] Trying to add alignment link to the already aligned node ".$to_node->get_address.".";
+            log_warn "[".(ref $self)."] Alignment link ".$from_node->id." --> ".$to_node->id." skipped. The node ".$to_node->id." already covered.";
         }
         else {
             if ($from_node != $to_node) {
