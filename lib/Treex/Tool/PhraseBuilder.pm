@@ -377,6 +377,7 @@ sub detect_prague_pp
             'arg'           => $c->{arg},
             'fun_is_head'   => $self->prep_is_head(),
             'deprel_at_fun' => 0,
+            'core_deprel'   => $target_deprel,
             'is_member'     => $member
         );
         foreach my $d (@{$c->{dep}})
@@ -577,24 +578,19 @@ sub detect_prague_copula
         my $member = $phrase->is_member();
         $copula->set_parent(undef);
         $argument->set_parent(undef);
+        # Copula is sometimes represented by a punctuation sign (dash, colon) instead of the verb "to be".
+        # Punctuation should not be attached as cop.
+        my $fun_deprel = $copula->node()->is_punctuation() ? 'punct' : 'cop';
+        $self->set_deprel($copula, $fun_deprel);
         my $pp = new Treex::Core::Phrase::PP
         (
             'fun'           => $copula,
             'arg'           => $argument,
             'fun_is_head'   => $self->cop_is_head(),
             'deprel_at_fun' => 0,
+            'core_deprel'   => 'cop',
             'is_member'     => $member
         );
-        # Copula is sometimes represented by a punctuation sign (dash, colon) instead of the verb "to be".
-        # Punctuation should not be attached as cop.
-        if($copula->node()->is_punctuation())
-        {
-            $self->set_deprel($copula, 'punct');
-        }
-        else
-        {
-            $self->set_deprel($copula, 'cop');
-        }
         $pp->set_deprel($deprel);
         $pp->set_parent($parent);
         foreach my $d (@dependents)
