@@ -83,8 +83,6 @@ sub _add_link {
     my ($n1_id, $n2_id) = map {$_->id} ($n1, $n2);
     my $links = $self->_links;
     
-    print STDERR "trying to add link: $n1_id <-> $n2_id\n";
-
     #if (defined $links->{$n1_id}) {
     #    if (!defined $links->{$n1_id}{$n2_id}) {
     #        log_warn "[".(ref $self)."] Trying to add alignment link to the already aligned node ".$n1->get_address.".";
@@ -105,8 +103,6 @@ sub _finalize_links {
     my ($self, $bundle) = @_;
     my $links = $self->_links;
 
-    print STDERR Dumper($links);
-    
     my @possible_links = ();
     my @links_scores = ();
     
