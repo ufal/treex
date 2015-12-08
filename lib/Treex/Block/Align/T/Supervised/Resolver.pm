@@ -4,6 +4,7 @@ use Moose;
 use Treex::Core::Common;
 
 use List::Util qw/max/;
+use sort 'stable';
 
 use Treex::Tool::Align::Utils;
 use Treex::Tool::ML::VowpalWabbit::Ranker;
@@ -84,46 +85,77 @@ sub _add_link {
     
     print STDERR "trying to add link: $n1_id <-> $n2_id\n";
 
-    if (defined $links->{$n1_id}) {
-        if (!defined $links->{$n1_id}{$n2_id}) {
-            log_warn "[".(ref $self)."] Trying to add alignment link to the already aligned node ".$n1->get_address.".";
+    #if (defined $links->{$n1_id}) {
+    #    if (!defined $links->{$n1_id}{$n2_id}) {
+    #        log_warn "[".(ref $self)."] Trying to add alignment link to the already aligned node ".$n1->get_address.".";
+    #    }
+    #}
+    #elsif (defined $links->{$n2_id}) {
+    #    if (!defined $links->{$n2_id}{$n1_id}) {
+    #        log_warn "[".(ref $self)."] Trying to add alignment link to the already aligned node ".$n2->get_address.".";
+    #    }
+    #}
+    #else {
+        $links->{$n1_id}{$n2_id}++;
+        $links->{$n2_id}{$n1_id}++;
+    #}
+}
+
+sub _finalize_links {
+    my ($self, $bundle) = @_;
+    my $links = $self->_links;
+
+    print STDERR Dumper($links);
+    
+    my @possible_links = ();
+    my @links_scores = ();
+    
+    foreach my $from_id (sort keys %$links) {
+        my $from_node = $bundle->get_document->get_node_by_id($from_id);
+        Treex::Tool::Align::Utils::remove_aligned_nodes_by_filter(
+            $from_node, 
+            {
+                language => $self->_get_align_lang($from_node->language),
+                selector => $self->selector, 
+                rel_types => ['!gold','.*']
+            }
+        );
+        foreach my $to_id (sort keys %{$links->{$from_id}}) {
+            my $to_node = $bundle->get_document->get_node_by_id($to_id);
+            next if ($from_id ne $to_id && $from_node->language eq $self->align_trg_lang);
+            push @possible_links, [$from_node, $to_node];
+            push @links_scores, $links->{$from_id}{$to_id};
         }
     }
-    elsif (defined $links->{$n2_id}) {
-        if (!defined $links->{$n2_id}{$n1_id}) {
-            log_warn "[".(ref $self)."] Trying to add alignment link to the already aligned node ".$n2->get_address.".";
+
+    my @sorted_idx = sort {$links_scores[$b] <=> $links_scores[$a]} 0 .. $#links_scores;
+
+    my %covered_ids = ();
+    foreach my $idx (@sorted_idx) {
+        my $from_node = $possible_links[$idx]->[0];
+        my $to_node = $possible_links[$idx]->[1];
+
+        if ($covered_ids{$from_node->id}) {
+            log_warn "[".(ref $self)."] Trying to add alignment link to the already aligned node ".$from_node->get_address.".";
         }
-    }
-    else {
-        $links->{$n1_id}{$n2_id} = 1;
-        $links->{$n2_id}{$n1_id} = 1;
+        elsif ($covered_ids{$to_node->id}) {
+            log_warn "[".(ref $self)."] Trying to add alignment link to the already aligned node ".$to_node->get_address.".";
+        }
+        else {
+            if ($from_node != $to_node) {
+                log_info "[".(ref $self)."] Adding alignment: " . $from_node->id . " --> " . $to_node->id;
+                Treex::Tool::Align::Utils::add_aligned_node($from_node, $to_node, "supervised");
+            }
+            $covered_ids{$from_node->id} = 1;
+            $covered_ids{$to_node->id} = 1;
+        }
     }
 }
 
 after 'process_bundle' => sub {
     my ($self, $bundle) = @_;
 
-    my $links = $self->_links;
-
-    print STDERR Dumper($links);
-
-    foreach my $from_id (keys %$links) {
-        my $from_node = $bundle->get_document->get_node_by_id($from_id);
-        next if ($from_node->language eq $self->align_trg_lang);
-        Treex::Tool::Align::Utils::remove_aligned_nodes_by_filter($from_node, {language => $self->align_trg_lang, selector => $self->selector, rel_types => ['!gold']});
-        foreach my $to_id (keys %{$links->{$from_id}}) {
-            my $to_node = $bundle->get_document->get_node_by_id($to_id);
-            # skip if referring to itself => no alignment detected
-            next if ($from_node == $to_node);
-            log_info "[".(ref $self)."] Adding alignment: " . $from_id . " --> " . $to_id;
-            Treex::Tool::Align::Utils::add_aligned_node($from_node, $to_node, "supervised");
-            #print STDERR join " ", map {$_->id eq $from_id ? "<".$_->t_lemma.">" : $_->t_lemma} $from_node->get_root->get_descendants({ordered => 1});
-            #print STDERR "\n";
-            #print STDERR join " ", map {$_->id eq $to_id ? "<".$_->t_lemma.">" : $_->t_lemma} $to_node->get_root->get_descendants({ordered => 1});
-            #print STDERR "\n";
-        }
-    }
-
+    $self->_finalize_links($bundle);
     $self->_set_links({});
 };
 
