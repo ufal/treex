@@ -1051,7 +1051,7 @@ sub relabel_subordinate_clauses
             }
             # Complement clauses depend on a verb that requires them as argument.
             # Examples: he says that..., he believes that..., he hopes that...
-            elsif(any {$_->lemma() eq 'da'} (@marks))
+            elsif(any {my $l = $_->lemma(); defined($l) && $l eq 'da'} (@marks))
             {
                 $node->set_deprel('ccomp');
             }
