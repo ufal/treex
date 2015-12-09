@@ -361,7 +361,9 @@ before 'fix_annotation_errors' => sub
         {
             my $rsibling = $node->get_right_neighbor();
             # Is this an additional delimiter in another coordination?
-            if($parent->deprel() eq 'Coord' && scalar(@children)==1 && $children[0]->deprel() eq 'AuxX')
+            my $pdeprel = $parent->deprel();
+            $pdeprel = '' if(!defined($pdeprel));
+            if($pdeprel eq 'Coord' && scalar(@children)==1 && $children[0]->deprel() eq 'AuxX')
             {
                 $children[0]->set_parent($parent);
                 $children[0]->set_is_member(undef);
