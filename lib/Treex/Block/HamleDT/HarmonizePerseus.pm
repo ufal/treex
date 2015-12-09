@@ -352,7 +352,7 @@ sub set_real_deprel
             return;
         }
     }
-    $self->set_deprel($new_deprel);
+    $node->set_deprel($new_deprel);
     return $deprel;
 }
 
