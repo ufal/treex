@@ -49,6 +49,18 @@ sub convert_deprels
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
+    # Make sure that the dependency relation label is in the deprel attribute and not somewhere else.
+    foreach my $node (@nodes)
+    {
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
+        $node->set_deprel($deprel);
+    }
     # Coordination of prepositional phrases or subordinate clauses:
     # In PDT, is_member is set at the node that bears the real deprel. It is not set at the AuxP/AuxC node.
     # In HamleDT (and in Treex in general), is_member is set directly at the child of the coordination head (preposition or not).
@@ -59,7 +71,7 @@ sub convert_deprels
         if($node->is_member())
         {
             my $parent = $node->parent();
-            if(!$parent->is_coap_root())
+            if(!$parent->deprel() =~ m/^(Coord|Apos)$/)
             {
                 if($parent->is_conjunction() || $parent->form() && $parent->form() =~ m/^(ani|,|;|:|-+)$/)
                 {
@@ -67,12 +79,12 @@ sub convert_deprels
                 }
                 else
                 {
-                    $node->set_is_member(0);
+                    $node->set_is_member(undef);
                 }
             }
         }
         # combined deprels (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr) -> Atr
-        if ( $node->deprel() =~ m/^(AtrAtr)|(AtrAdv)|(AdvAtr)|(AtrObj)|(ObjAtr)/ )
+        if($node->deprel() =~ m/^(AtrAtr)|(AtrAdv)|(AdvAtr)|(AtrObj)|(ObjAtr)/)
         {
             $node->set_deprel('Atr');
         }
@@ -93,15 +105,12 @@ sub convert_deprels
             $node->set_deprel($self->guess_deprel($node));
         }
     }
-    # Fix known annotation errors. They include coordination, i.e. the tree may now not be valid.
-    # We should fix it now, before the superordinate class will perform other tree operations.
-    $self->fix_annotation_errors($root);
 }
 
 #------------------------------------------------------------------------------
-# Fixes a few known annotation errors that appear in the data. Should be called
-# from convert_deprels() so that it precedes any tree operations that the
-# superordinate class may want to do.
+# Fixes a few known annotation errors that appear in the data.
+# This method will be called right after converting the deprels to the
+# harmonized label set, but before any tree transformations.
 #------------------------------------------------------------------------------
 sub fix_annotation_errors
 {
