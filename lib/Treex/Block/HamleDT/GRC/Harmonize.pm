@@ -182,7 +182,7 @@ before 'fix_annotation_errors' => sub
             }
         }
     }
-}
+};
 
 1;
 
