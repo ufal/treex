@@ -325,15 +325,15 @@ sub set_real_deprel
             }
             foreach my $child (@children)
             {
-                $self->set_real_deprel($child, $new_deprel);
+                $self->set_real_deprel($child, $new_deprel, $warnings);
             }
-            return;
+            return $deprel;
         }
     }
     elsif ( $deprel =~ m/^(Coord|Apos)$/ )
     {
-        my @members = $node->get_coap_members();
-        my $n       = scalar(@members);
+        my @members = grep {$_->is_member()} ($node->children());
+        my $n = scalar(@members);
         if ( $n < 1 )
         {
             if ($warnings)
@@ -347,9 +347,9 @@ sub set_real_deprel
         {
             foreach my $member (@members)
             {
-                $self->set_real_deprel($member, $new_deprel);
+                $self->set_real_deprel($member, $new_deprel, $warnings);
             }
-            return;
+            return $deprel;
         }
     }
     $node->set_deprel($new_deprel);
