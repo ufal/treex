@@ -53,7 +53,7 @@ sub fix_negation
 # from convert_deprels() so that it precedes any tree operations that the
 # superordinate class may want to do.
 #------------------------------------------------------------------------------
-sub fix_annotation_errors
+before 'fix_annotation_errors' => sub
 {
     my $self = shift;
     my $root = shift;
@@ -172,7 +172,7 @@ sub fix_annotation_errors
             }
         }
     }
-}
+};
 
 1;
 
