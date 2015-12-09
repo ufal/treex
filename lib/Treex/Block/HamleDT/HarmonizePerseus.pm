@@ -355,7 +355,7 @@ sub set_real_deprel
 
 #------------------------------------------------------------------------------
 # Catches possible annotation inconsistencies. If there are no conjuncts under
-# a Coord node, let's try to find them.
+# a Coord or Apos node, let's try to find them.
 #
 # This method will be called right after converting the deprels to the
 # harmonized label set, but before any tree transformations.
@@ -368,7 +368,7 @@ sub fix_annotation_errors
     foreach my $node (@nodes)
     {
         my $deprel = $node->deprel();
-        if($deprel eq 'Coord')
+        if($deprel =~ m/^(Coord|Apos)$/)
         {
             my @children = $node->children();
             # Are there any children?
