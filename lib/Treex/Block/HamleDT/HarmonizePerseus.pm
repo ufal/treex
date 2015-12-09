@@ -276,6 +276,89 @@ sub _climb_up_below_coap
 
 
 #------------------------------------------------------------------------------
+# Sets the real function of the subtree. If its current deprel is AuxP or AuxC,
+# finds the first descendant with a real deprel and replaces it. If this is
+# a coordination or apposition root, finds all the members and replaces their
+# deprels (but note that members of the same coordination can differ in deprels
+# if some of them have 'ExD'; this method can only set the same deprel for
+# all).
+#
+# This method is adapted from Treex::Core::Node::A->set_real_afun(). We need it
+# to work with deprels instead of afuns. And we do not want to have an
+# analogous method set_real_deprel() in Treex::Core::Node::A because deprels
+# are more general than afuns and we should not assume the special meaning of
+# the values Coord|Apos|AuxP\AuxC globally.
+#------------------------------------------------------------------------------
+sub set_real_deprel
+{
+    my $self = shift;
+    my $node = shift;
+    my $new_deprel = shift;
+    my $warnings = shift;
+    my $deprel = $node->deprel();
+    if ( not defined($deprel) )
+    {
+        $deprel = '';
+    }
+    if ( $deprel =~ m/^Aux[PC]$/ )
+    {
+        my @children = $node->children();
+        # Exclude punctuation children (deprel-wise, not POS-tag-wise: we do not want to exclude coordination heads).
+        @children = grep {$_->deprel() !~ m/^Aux[XGK]$/} (@children);
+        my $n = scalar(@children);
+        if ( $n < 1 )
+        {
+            if ($warnings)
+            {
+                my $i_sentence = $node->get_bundle()->get_position() + 1;    # tred numbers from 1
+                my $form       = $node->form();
+                log_warn("$deprel node does not have children (sentence $i_sentence, '$form')");
+            }
+        }
+        else
+        {
+            if ( $warnings && $n > 1 )
+            {
+                my $i_sentence = $node->get_bundle()->get_position() + 1;    # tred numbers from 1
+                my $form       = $node->form();
+                log_warn("$deprel node has $n children so it is not clear which one bears the real deprel (sentence $i_sentence, '$form')");
+            }
+            foreach my $child (@children)
+            {
+                $child->set_real_deprel($new_deprel);
+            }
+            return;
+        }
+    }
+    elsif ( $deprel =~ m/^(Coord|Apos)$/ )
+    {
+        my @members = $node->get_coap_members();
+        my $n       = scalar(@members);
+        if ( $n < 1 )
+        {
+            if ($warnings)
+            {
+                my $i_sentence = $node->get_bundle()->get_position() + 1;    # tred numbers from 1
+                my $form       = $node->form();
+                log_warn("$deprel does not have members (sentence $i_sentence, '$form')");
+            }
+        }
+        else
+        {
+            foreach my $member (@members)
+            {
+                $member->set_real_deprel($new_deprel);
+            }
+            return;
+        }
+    }
+    $self->set_deprel($new_deprel);
+    return $deprel;
+}
+
+
+
+#------------------------------------------------------------------------------
 # A few punctuation nodes (commas and dashes) are attached non-projectively to
 # the root, ignoring their neighboring tokens. They are labeled with the
 # UNDEFINED deprel (which we temporarily converted to NR). Attach them to the
