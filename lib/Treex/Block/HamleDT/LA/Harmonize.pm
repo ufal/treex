@@ -143,7 +143,7 @@ before 'fix_annotation_errors' => sub
         # nisi si me iudicas curare
         # unless you care to judge me
         # "nisi si" = "unless"; "except if"
-        elsif(defined($node->form()) && $node->form() =~ m/^si$/i && && defined($node->parent()->form()) && $node->parent()->form() =~ m/^nisi$/i && $node->deprel() eq 'AuxY' && scalar($node->children())==1)
+        elsif(defined($node->form()) && $node->form() =~ m/^si$/i && defined($node->parent()->form()) && $node->parent()->form() =~ m/^nisi$/i && $node->deprel() eq 'AuxY' && scalar($node->children())==1)
         {
             $node->set_deprel('AuxC');
         }
