@@ -397,6 +397,7 @@ sub set_deprel
                 $c->set_deprel(@_);
             }
         }
+        $self->head()->set_deprel('Coord');
     }
     else # head_rule eq 'first_conjunct'
     {

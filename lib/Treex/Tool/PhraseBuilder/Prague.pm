@@ -510,7 +510,7 @@ sub replace_nterm_by_coordination
     # annotation style is selected.
     foreach my $c (@{$conjuncts})
     {
-        $c->set_is_member(0);
+        $c->set_is_member(undef);
     }
     foreach my $d (@{$sdependents})
     {
@@ -587,7 +587,7 @@ sub surround_nterm_by_coordination
     # annotation style is selected.
     foreach my $c (@{$conjuncts})
     {
-        $c->set_is_member(0);
+        $c->set_is_member(undef);
     }
     foreach my $d (@{$sdependents}, @outpunct)
     {
@@ -628,17 +628,17 @@ sub surround_nterm_by_existing_coordination
     $coordination->set_is_member($member);
     # Add the phrase as a new conjunct to the coordination.
     $coordination->add_conjunct($phrase);
-    $phrase->set_is_member(0);
+    $phrase->set_is_member(undef);
     # Add the new delimiters to the coordination.
     foreach my $c (@{$coordinators})
     {
         $coordination->add_coordinator($c);
-        $c->set_is_member(0);
+        $c->set_is_member(undef);
     }
     foreach my $p (@{$punctuation})
     {
         $coordination->add_punctuation($p);
-        $p->set_is_member(0);
+        $p->set_is_member(undef);
     }
     return $coordination;
 }
@@ -714,7 +714,7 @@ sub detect_prague_apposition
                 # It will be labeled 'ExD', not 'AuxX' or 'AuxG'.)
                 if($d->node()->is_punctuation() && $d->node()->is_leaf())
                 {
-                    $d->set_is_member(0);
+                    $d->set_is_member(undef);
                     push(@punctuation, $d);
                 }
                 else
@@ -772,7 +772,7 @@ sub detect_prague_apposition
             push(@coordinators, $old_head);
             $self->set_deprel($old_head, 'auxy');
         }
-        $old_head->set_is_member(0);
+        $old_head->set_is_member(undef);
         # Now it is clear that we have an apposition.
         # Make the first member the head.
         # Note that we could not use the set_head() method if this was a Coordination or a PP phrase instead of a generic NTerm.
@@ -781,10 +781,10 @@ sub detect_prague_apposition
         my $head_conjunct = shift(@conjuncts);
         $phrase->set_head($head_conjunct);
         # Remove the is_member flag from the conjuncts. We will no longer need it because we are transforming the tree to hypotactic apposition.
-        $head_conjunct->set_is_member(0);
+        $head_conjunct->set_is_member(undef);
         foreach my $c (@conjuncts)
         {
-            $c->set_is_member(0);
+            $c->set_is_member(undef);
             $self->set_deprel($c, 'appos');
         }
         # It is not guaranteed that there is a second member (although it is weird if there isn't).
@@ -844,7 +844,7 @@ sub detect_prague_pp
         # We are working bottom-up, thus the current phrase does not have a parent yet and we do not have to take care of the parent link.
         # We have to detach the argument though, and we have to port the is_member flag.
         my $member = $phrase->is_member();
-        $phrase->set_is_member(0);
+        $phrase->set_is_member(undef);
         # Now it is clear that we have a prepositional phrase.
         # The preposition ($c->{fun}) is the current phrase but we have to detach the dependents and only keep the core.
         $c->{fun}->set_deprel($fun_deprel);
