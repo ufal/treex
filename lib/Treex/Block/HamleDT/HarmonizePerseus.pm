@@ -237,7 +237,7 @@ sub convert_deprels
         if($node->wild()->{'ExD conjuncts'})
         {
             # set_real_deprel() goes down if it sees Coord, Apos, AuxP or AuxC
-            $node->set_real_deprel('ExD');
+            $self->set_real_deprel($node, 'ExD');
             delete($node->wild()->{'ExD conjuncts'});
         }
     }
@@ -325,7 +325,7 @@ sub set_real_deprel
             }
             foreach my $child (@children)
             {
-                $child->set_real_deprel($new_deprel);
+                $self->set_real_deprel($child, $new_deprel);
             }
             return;
         }
@@ -347,7 +347,7 @@ sub set_real_deprel
         {
             foreach my $member (@members)
             {
-                $member->set_real_deprel($new_deprel);
+                $self->set_real_deprel($member, $new_deprel);
             }
             return;
         }
