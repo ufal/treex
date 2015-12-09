@@ -54,7 +54,7 @@ sub fix_negation
 # be called right after converting the deprels to the harmonized label set, but
 # before any tree transformations.
 #------------------------------------------------------------------------------
-sub fix_annotation_errors
+before 'fix_annotation_errors' => sub
 {
     my $self = shift;
     my $root = shift;

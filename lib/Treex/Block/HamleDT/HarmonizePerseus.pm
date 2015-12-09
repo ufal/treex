@@ -39,8 +39,6 @@ sub process_zone
     $self->detect_proper_nouns($root);
     $self->fix_deficient_sentential_coordination($root);
     $self->fix_undefined_nodes($root);
-    ###!!! TODO: grc trees sometimes have conjunct1, coordination, conjunct2 as siblings. We should fix it, but meanwhile we just delete deprel=Coord from the coordination.
-    $self->check_coord_membership($root);
     return $root;
 }
 
@@ -241,9 +239,6 @@ sub convert_deprels
             delete($node->wild()->{'ExD conjuncts'});
         }
     }
-    # Fix known annotation errors. They include coordination, i.e. the tree may now not be valid.
-    # We should fix it now, before the superordinate class will perform other tree operations.
-    $self->fix_annotation_errors($root);
 }
 
 
@@ -354,6 +349,92 @@ sub set_real_deprel
     }
     $node->set_deprel($new_deprel);
     return $deprel;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Catches possible annotation inconsistencies. If there are no conjuncts under
+# a Coord node, let's try to find them.
+#
+# This method will be called right after converting the deprels to the
+# harmonized label set, but before any tree transformations.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $deprel = $node->deprel();
+        if($deprel eq 'Coord')
+        {
+            my @children = $node->children();
+            # Are there any children?
+            if(scalar(@children)==0)
+            {
+                # There are a few annotation errors where a leaf node is labeled Coord.
+                # In some cases, the node is rightly Coord but it ought not to be leaf.
+                my $parent = $node->parent();
+                my $sibling = $node->get_left_neighbor();
+                my $uncle = $parent->get_left_neighbor();
+                if($node->form() eq ',')
+                {
+                    $node->set_deprel('AuxX');
+                }
+                elsif($node->is_punctuation())
+                {
+                    $node->set_deprel('AuxG');
+                }
+                elsif($parent->deprel() eq 'Coord' && $node->iset()->pos() =~ m/^(conj|part|adv)$/)
+                {
+                    $node->set_deprel('AuxY');
+                }
+            }
+            # If there are children, are there conjuncts among them?
+            elsif(scalar(grep {$_->is_member()} (@children))==0)
+            {
+                # Annotation error: quotation mark attached to comma.
+                if(scalar(grep {$_->deprel() eq 'AuxG'} (@children))==scalar(@children))
+                {
+                    foreach my $child (@children)
+                    {
+                        # The child is punctuation. Attach it to the closest non-punctuation node.
+                        # If it is now attached to the right, look for the parent on the right. Otherwise on the left.
+                        if($child->ord()<$node->ord())
+                        {
+                            my @candidates = grep {$_->ord()>$child->ord() && $_->deprel() !~ m/^Aux[^C]/} (@nodes);
+                            if(@candidates)
+                            {
+                                $child->set_parent($candidates[0]);
+                            }
+                        }
+                        else
+                        {
+                            my @candidates = grep {$_->ord()<$child->ord() && $_->deprel() !~ m/^Aux[^C]/} (@nodes);
+                            if(@candidates)
+                            {
+                                $child->set_parent($candidates[-1]);
+                            }
+                        }
+                    }
+                    if($node->form() eq ',')
+                    {
+                        $node->set_deprel('AuxX');
+                    }
+                    elsif($node->iset()->pos() eq 'punc')
+                    {
+                        $node->set_deprel('AuxG');
+                    }
+                }
+                else
+                {
+                    $self->identify_coap_members($node);
+                }
+            }
+        }
+    }
 }
 
 
@@ -487,90 +568,6 @@ sub fix_deficient_sentential_coordination
                 # We were not able to find any conjuncts for the conjunction.
                 # Thus it must not be labeled Coord.
                 $conjunction->set_deprel('ExD');
-            }
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Catches possible annotation inconsistencies. If there are no conjuncts under
-# a Coord node, let's try to find them. (We do not care about apposition
-# because it has been restructured.)
-#------------------------------------------------------------------------------
-sub check_coord_membership
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $deprel = $node->deprel();
-        if($deprel eq 'Coord')
-        {
-            my @children = $node->children();
-            # Are there any children?
-            if(scalar(@children)==0)
-            {
-                # There are a few annotation errors where a leaf node is labeled Coord.
-                # In some cases, the node is rightly Coord but it ought not to be leaf.
-                my $parent = $node->parent();
-                my $sibling = $node->get_left_neighbor();
-                my $uncle = $parent->get_left_neighbor();
-                if($node->form() eq ',')
-                {
-                    $node->set_deprel('AuxX');
-                }
-                elsif($node->is_punctuation())
-                {
-                    $node->set_deprel('AuxG');
-                }
-                elsif($parent->deprel() eq 'Coord' && $node->iset()->pos() =~ m/^(conj|part|adv)$/)
-                {
-                    $node->set_deprel('AuxY');
-                }
-            }
-            # If there are children, are there conjuncts among them?
-            elsif(scalar(grep {$_->is_member()} (@children))==0)
-            {
-                # Annotation error: quotation mark attached to comma.
-                if(scalar(grep {$_->deprel() eq 'AuxG'} (@children))==scalar(@children))
-                {
-                    foreach my $child (@children)
-                    {
-                        # The child is punctuation. Attach it to the closest non-punctuation node.
-                        # If it is now attached to the right, look for the parent on the right. Otherwise on the left.
-                        if($child->ord()<$node->ord())
-                        {
-                            my @candidates = grep {$_->ord()>$child->ord() && $_->deprel() !~ m/^Aux[^C]/} (@nodes);
-                            if(@candidates)
-                            {
-                                $child->set_parent($candidates[0]);
-                            }
-                        }
-                        else
-                        {
-                            my @candidates = grep {$_->ord()<$child->ord() && $_->deprel() !~ m/^Aux[^C]/} (@nodes);
-                            if(@candidates)
-                            {
-                                $child->set_parent($candidates[-1]);
-                            }
-                        }
-                    }
-                    if($node->form() eq ',')
-                    {
-                        $node->set_deprel('AuxX');
-                    }
-                    elsif($node->iset()->pos() eq 'punc')
-                    {
-                        $node->set_deprel('AuxG');
-                    }
-                }
-                else
-                {
-                    $self->identify_coap_members($node);
-                }
             }
         }
     }
