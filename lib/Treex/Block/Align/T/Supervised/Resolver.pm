@@ -16,6 +16,7 @@ with 'Treex::Block::Filter::Node::T';
 has '+node_types' => ( default => 'all_anaph' );
 has 'model_path' => (is => 'ro', isa => 'Str');
 has 'align_trg_lang' => ( is => 'ro', isa => 'Treex::Type::LangCode', default => sub {my $self = shift; $self->language } );
+has 'delete_orig_align' => ( is => 'ro', isa => 'Bool', default => 1 );
 
 has '_model_paths' => (is => 'ro', isa => 'HashRef[HashRef[Str]]', lazy => 1, builder => '_build_model_paths');
 has '_rankers' => (is => 'ro', isa => 'HashRef[HashRef[Treex::Tool::ML::VowpalWabbit::Ranker]]', builder => '_build_rankers', lazy => 1);
@@ -83,20 +84,8 @@ sub _add_link {
     my ($n1_id, $n2_id) = map {$_->id} ($n1, $n2);
     my $links = $self->_links;
     
-    #if (defined $links->{$n1_id}) {
-    #    if (!defined $links->{$n1_id}{$n2_id}) {
-    #        log_warn "[".(ref $self)."] Trying to add alignment link to the already aligned node ".$n1->get_address.".";
-    #    }
-    #}
-    #elsif (defined $links->{$n2_id}) {
-    #    if (!defined $links->{$n2_id}{$n1_id}) {
-    #        log_warn "[".(ref $self)."] Trying to add alignment link to the already aligned node ".$n2->get_address.".";
-    #    }
-    #}
-    #else {
-        $links->{$n1_id}{$n2_id}++;
-        $links->{$n2_id}{$n1_id}++;
-    #}
+    $links->{$n1_id}{$n2_id}++;
+    $links->{$n2_id}{$n1_id}++;
 }
 
 sub _finalize_links {
@@ -108,14 +97,16 @@ sub _finalize_links {
     
     foreach my $from_id (sort keys %$links) {
         my $from_node = $bundle->get_document->get_node_by_id($from_id);
-        Treex::Tool::Align::Utils::remove_aligned_nodes_by_filter(
-            $from_node, 
-            {
-                language => $self->_get_align_lang($from_node->language),
-                selector => $self->selector, 
-                rel_types => ['!gold','.*']
-            }
-        );
+        if ($self->delete_orig_align) {
+            Treex::Tool::Align::Utils::remove_aligned_nodes_by_filter(
+                $from_node, 
+                {
+                    language => $self->_get_align_lang($from_node->language),
+                    selector => $self->selector, 
+                    rel_types => ['!gold','.*']
+                }
+            );
+        }
         foreach my $to_id (sort keys %{$links->{$from_id}}) {
             my $to_node = $bundle->get_document->get_node_by_id($to_id);
             next if ($from_id ne $to_id && $from_node->language eq $self->align_trg_lang);
