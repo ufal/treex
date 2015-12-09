@@ -145,7 +145,7 @@ sub fix_coordination
             }
             else
             {
-                $self->identify_conjuncts($node);
+                $self->identify_coap_members($node);
             }
         }
     }

@@ -597,13 +597,13 @@ sub shape_coordination_recursively
 # This method is called for coordination and apposition nodes whose members do
 # not have the is_member attribute set (e.g. in Arabic and Slovene treebanks
 # the information was lost in conversion to CoNLL). It estimates, based on
-# afuns, which children are members and which are shared modifiers.
+# deprels, which children are members and which are shared modifiers.
 #------------------------------------------------------------------------------
 sub identify_coap_members
 {
     my $self = shift;
     my $coap = shift;
-    return unless($coap->afun() =~ m/^(Coord|Apos)$/);
+    return unless($coap->deprel() =~ m/^(Coord|Apos)$/);
     # We should not estimate coap membership if it is already known!
     foreach my $child ($coap->children())
     {
@@ -617,12 +617,12 @@ sub identify_coap_members
     # Get the list of potential members and modifiers, i.e. drop delimiters.
     # Note that there may be more than one Coord|Apos node involved if there are nested structures.
     # We simplify the task by assuming (wrongly) that nested structures are always members and never modifiers.
-    # Delimiters can have the following afuns:
+    # Delimiters can have the following deprels:
     # Coord|Apos ... the root of the structure, either conjunction or punctuation
     # AuxY ... other conjunction
     # AuxX ... comma
     # AuxG ... other punctuation
-    my @memod = grep {$_->afun() !~ m/^Aux[GXY]$/ && $_!=$coap} (@involved);
+    my @memod = grep {$_->deprel() !~ m/^Aux[GXY]$/ && $_!=$coap} (@involved);
     # If there are only two (or fewer) candidates, consider both members.
     if(scalar(@memod)<=2)
     {
@@ -633,22 +633,22 @@ sub identify_coap_members
     }
     else
     {
-        # Hypothesis: all members typically have the same afun.
-        # Find the most frequent afun among candidates.
-        # For the case of ties, remember the first occurrence of each afun.
-        # Do not count nested 'Coord' and 'Apos': these are jokers substituting any member afun.
+        # Hypothesis: all members typically have the same deprel.
+        # Find the most frequent deprel among candidates.
+        # For the case of ties, remember the first occurrence of each deprel.
+        # Do not count nested 'Coord' and 'Apos': these are jokers substituting any member deprel.
         # Same for 'ExD': these are also considered members (in fact they are children of an ellided member).
         my %count;
         my %first;
         foreach my $m (@memod)
         {
-            my $afun = defined($m->afun()) ? $m->afun() : '';
-            next if($afun =~ m/^(Coord|Apos|ExD)$/);
-            $count{$afun}++;
-            $first{$afun} = $m->ord() if(!exists($first{$afun}));
+            my $deprel = defined($m->deprel()) ? $m->deprel() : '';
+            next if($deprel =~ m/^(Coord|Apos|ExD)$/);
+            $count{$deprel}++;
+            $first{$deprel} = $m->ord() if(!exists($first{$deprel}));
         }
-        # Get the winning afun.
-        my @afuns = sort
+        # Get the winning deprel.
+        my @deprels = sort
         {
             my $result = $count{$b} <=> $count{$a};
             unless($result)
@@ -658,15 +658,15 @@ sub identify_coap_members
             return $result;
         }
         (keys(%count));
-        # Note that there may be no specific winning afun if all candidate afuns were Coord|Apos|ExD.
-        my $winner = @afuns ? $afuns[0] : '';
-        ###!!! If the winning afun is 'Atr', it is possible that some Atr nodes are members and some are shared modifiers.
+        # Note that there may be no specific winning deprel if all candidate deprels were Coord|Apos|ExD.
+        my $winner = @deprels ? $deprels[0] : '';
+        ###!!! If the winning deprel is 'Atr', it is possible that some Atr nodes are members and some are shared modifiers.
         ###!!! In such case we ought to check whether the nodes are delimited by a delimiter.
         ###!!! This has not yet been implemented.
         foreach my $m (@memod)
         {
-            my $afun = defined($m->afun()) ? $m->afun() : '';
-            if($afun eq $winner || $afun =~ m/^(Coord|Apos|ExD)$/)
+            my $deprel = defined($m->deprel()) ? $m->deprel() : '';
+            if($deprel eq $winner || $deprel =~ m/^(Coord|Apos|ExD)$/)
             {
                 $m->set_is_member(1);
             }

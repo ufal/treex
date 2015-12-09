@@ -191,7 +191,7 @@ sub fix_annotation_errors
             }
             else
             {
-                $self->identify_conjuncts($node);
+                $self->identify_coap_members($node);
             }
         }
     }
