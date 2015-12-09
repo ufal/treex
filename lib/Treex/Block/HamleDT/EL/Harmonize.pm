@@ -24,7 +24,6 @@ sub process_zone
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
     # Error handling routines
-    $self->check_coord_membership($root);
     $self->remove_ismember_membership($root);
 }
 
@@ -46,8 +45,6 @@ sub convert_deprels
         $deprel = $node->afun() if(!defined($deprel));
         $deprel = $node->conll_deprel() if(!defined($deprel));
         $deprel = 'NR' if(!defined($deprel));
-        my $form   = $node->form();
-        my $pos    = $node->conll_pos();
         # Convert _Co and _Ap suffixes to the is_member flag.
         if($deprel =~ s/_(Co|Ap)$//)
         {
@@ -60,7 +57,8 @@ sub convert_deprels
         }
         # HamleDT currently does not distinguish direct and indirect objects.
         $deprel =~ s/^IObj/Obj/;
-        if ( $deprel eq '---' ) {
+        if ( $deprel eq '---' )
+        {
             $deprel = "Atr";
         }
         # combined deprels (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
@@ -78,10 +76,11 @@ sub convert_deprels
 
 #------------------------------------------------------------------------------
 # Catches possible annotation inconsistencies. If there are no conjuncts under
-# a Coord node, let's try to find them. (We do not care about apposition
-# because it has been restructured.)
+# a Coord node, let's try to find them; same for Apos. This method is called
+# from the superordinate class before any tree transformations occur (in
+# particular before coordination is analyzed).
 #------------------------------------------------------------------------------
-sub check_coord_membership
+sub fix_annotation_errors
 {
     my $self  = shift;
     my $root  = shift;
@@ -89,7 +88,7 @@ sub check_coord_membership
     foreach my $node (@nodes)
     {
         my $deprel = $node->deprel();
-        if($deprel eq 'Coord')
+        if($deprel =~ m/^(Coord|Apos)$/)
         {
             my @children = $node->children();
             # Are there any children?
