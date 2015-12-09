@@ -971,6 +971,7 @@ sub fix_annotation_errors
     foreach my $node (@nodes)
     {
         my $form = $node->form();
+        $form = '' if(!defined($form));
         my $pos  = $node->iset()->pos();
         my $deprel = $node->deprel();
         if($form =~ m/^[so]$/i && !$node->is_adposition() && $deprel eq 'AuxP')
