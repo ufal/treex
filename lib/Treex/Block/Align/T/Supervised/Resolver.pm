@@ -162,7 +162,7 @@ sub process_filtered_tnode {
     
     my @cands = $self->_get_candidates($tnode, $align_lang);
     if (@cands > 100) {
-        log_warn "[Block::My::AlignmentResolver]\tMore than 100 alignment candidates.";
+        log_warn "[".(ref $self)."] More than 100 alignment candidates.";
         return;
     }
     my $feats = $self->_feat_extractor->create_instances($tnode, \@cands);
