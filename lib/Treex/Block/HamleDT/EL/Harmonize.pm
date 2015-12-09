@@ -23,8 +23,6 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
-    # Error handling routines
-    $self->remove_ismember_membership($root);
 }
 
 #------------------------------------------------------------------------------
@@ -71,6 +69,9 @@ sub convert_deprels
     # Coordination of prepositional phrases or subordinate clauses:
     # In PDT, is_member is set at the node that bears the real deprel. It is not set at the AuxP/AuxC node.
     # In HamleDT (and in Treex in general), is_member is set directly at the child of the coordination head (preposition or not).
+    ###!!! The Greek Dependency Treebank contains inconsistencies where deprels end in _Co or _Ap but they are not under Coord or Apos.
+    ###!!! The following call will cause a lot of warnings "No co/ap node between a co/ap member and the tree root".
+    ###!!! The inconsistencies will be fixed later in fix_annotation_errors().
     $self->pdt_to_treex_is_member_conversion($root);
 }
 
@@ -116,11 +117,11 @@ sub fix_annotation_errors
                     $parent->set_parent($node);
                     $parent->set_is_member(1);
                 }
-                elsif($node->is_leaf() && $node->get_iset('pos') eq 'conj')
+                elsif($node->is_leaf() && $node->is_conjuction())
                 {
                     $node->set_deprel('AuxY');
                 }
-                elsif($node->is_leaf() && $node->get_iset('pos') eq 'noun')
+                elsif($node->is_leaf() && $node->is_noun())
                 {
                     $node->set_deprel('Atr');
                 }
@@ -132,6 +133,7 @@ sub fix_annotation_errors
             }
         }
     }
+    $self->remove_ismember_membership($root);
 }
 
 
