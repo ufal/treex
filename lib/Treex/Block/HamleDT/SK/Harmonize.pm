@@ -15,8 +15,8 @@ has iset_driver =>
 );
 
 #------------------------------------------------------------------------------
-# Reads the Slovak tree, converts morphosyntactic tags to the PDT tagset,
-# converts deprels if applicable, transforms tree to adhere to HamleDT guidelines.
+# Reads the Slovak tree, converts morphosyntactic tags and dependency relation
+# labels, and transforms tree to adhere to the HamleDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
