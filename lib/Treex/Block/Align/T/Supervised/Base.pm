@@ -24,3 +24,24 @@ sub _get_candidates {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Treex::Block::Align::T::Supervised::Base
+
+=head1 DESCRIPTION
+
+This role shares the aspects of supervised alignment resolver shared by the Resolver class
+and the PrintData class: feature selection, and candidate selection.
+
+=head1 AUTHOR
+
+Michal Novak <mnovak@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

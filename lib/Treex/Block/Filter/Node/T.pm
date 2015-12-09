@@ -58,3 +58,40 @@ sub process_tnode {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Treex::Block::Filter::Node::T
+
+=head1 DESCRIPTION
+
+The role that applies process_tnode only to the specified category of t-nodes.
+
+=head1 PARAMETERS
+
+=over
+
+=item node_types
+
+A comma-separated list of the node types on which this block should be applied
+
+=head2 Types:
+
+=item perspron - all personal, possessive and reflexive pronouns in 3rd person (English, Czech)
+=item zero - all #Cor nodes and unexpressed #PersPron nodes possibly in 3rd person (English, Czech)
+=item relpron - all relative pronouns, relativizing adverbs, possibly including also some interrogative and fused pronouns (English, Czech)
+=item all_anaph - perspron + zero + relpron
+
+=back
+
+=head1 AUTHOR
+
+Michal Novak <mnovak@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

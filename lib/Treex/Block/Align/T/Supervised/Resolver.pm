@@ -182,3 +182,69 @@ sub process_filtered_tnode {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Treex::Block::Align::T::Supervised::Resolver
+
+=head1 SYNOPSIS
+
+ treex
+    Read::Treex from=sample.treex.gz
+    Align::T::Supervised::Resolver language=en,cs align_trg_lang=en delete_orig_align=0
+ 
+=head1 DESCRIPTION
+
+Supervised resolver for alignment. For a defined language pair (parameter C<language>),
+the block applies a single or both directional alignment models (paramter C<model_path>)
+trained in Vowpal Wabbit on specified nodes (parameter C<node_types>). Since the PML 
+representation of the alignment link is also directional, the target alignment language 
+(parameter C<align_trg_lang>) must be specified. By default, the original alignment 
+of the source and target node is deleted (parameter C<delete_orig_align>).
+
+=head1 PARAMETERS
+
+=over
+
+=item language
+
+A comma-separated list of the languages between which alignment is to be resolved.
+The list must contain exactly two items. The value C<all> is not allowed.
+
+=item model_path
+
+A comma-separated list of paths to models. The list must consist of two items corresponding
+to the forward, and the backward alignment model. The forward model is expected to be trained
+in the direction of the language pair as specified in C<language>, while the backward model
+in the opposite direction. 
+If one of the models is ommitted, only a single model in the specified direction is used.
+If the parameter is undefined, use default values.
+
+=item node_types
+
+A comma-separated list of the node types on which this block should be applied (see more 
+in C<Treex::Block::Filter::Node::T>).
+
+=item align_trg_lang
+
+As alignment links in PML are directional, their direction must be determined by specifying
+the target language.
+
+=item delete_orig_align
+
+If a new alignment link is found, the original links the source or target node are involved
+in are deleted (by default).
+
+=back
+
+=head1 AUTHOR
+
+Michal Novak <mnovak@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2013-14 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
