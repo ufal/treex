@@ -520,7 +520,8 @@ sub split_tokens_on_underscore
     for(my $i = 0; $i <= $#nodes; $i++)
     {
         my $node = $nodes[$i];
-        if($node->form() =~ m/._./)
+        my $form = $node->form();
+        if(defined($form) && $form =~ m/._./)
         {
             my @words = split(/_/, $node->form());
             my $n = scalar(@words);
