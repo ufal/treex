@@ -39,7 +39,13 @@ sub convert_deprels
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
         my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
         my $form   = $node->form();
         my $pos    = $node->conll_pos();
         # Convert _Co and _Ap suffixes to the is_member flag.
