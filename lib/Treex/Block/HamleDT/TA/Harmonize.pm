@@ -141,10 +141,10 @@ sub fix_annotation_errors
                 }
             }
         }
-        # Fix coordination without conjuncts.
-        if($node->deprel() eq 'Coord' && !grep {$_->is_member()} ($node->children()))
+        # Fix coordination without conjuncts or apposition without members.
+        my @children = $node->children();
+        if($node->deprel() =~ m/^(Coord|Apos)$/ && !any {$_->is_member()} (@children))
         {
-            my @children = $node->children();
             if(scalar(@children)==0)
             {
                 $node->set_deprel('AuxY');
