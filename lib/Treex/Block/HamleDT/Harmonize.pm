@@ -265,22 +265,22 @@ sub set_default_afun
 
 
 #------------------------------------------------------------------------------
-# After all transformations all nodes must have valid afuns (not our pseudo-
-# afuns). Report cases breaching this rule so that we can easily find them in
-# Ttred. This function allows only afuns that are part of the HamleDT label
+# After all transformations all nodes must have valid deprels (not our pseudo-
+# deprels). Report cases breaching this rule so that we can easily find them in
+# Ttred. This function allows only deprels that are part of the HamleDT label
 # set. Special Prague labels for Arabic and Tamil may be excluded. On the other
 # hand, new labels may have been introduced to HamleDT, e.g. "Neg".
 #------------------------------------------------------------------------------
-sub check_afuns
+sub check_deprels
 {
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $afun = $node->afun();
-        if ( defined($afun) &&
-             $afun !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|AtvV|ExD|Coord|Apposition|Aux[APCVTOYXZGKR]|Neg|NR)$/           )
+        my $deprel = $node->deprel();
+        if ( defined($deprel) &&
+             $deprel !~ m/^(Pred|Sb|Obj|Pnom|Adv|Atr|Atv|AtvV|ExD|Coord|Apposition|Aux[APCVTOYXZGKR]|Neg|NR)$/           )
         {
             log_warn($node->get_address());
             $self->log_sentence($root);
@@ -290,17 +290,17 @@ sub check_afuns
             my $deprel = $node->conll_deprel();
 
             # This cannot be fatal if we want the trees to be saved and examined in Ttred.
-            if ($afun)
+            if ($deprel)
             {
-                log_warn("Node $ord:$form/$tag/$deprel still has the afun $afun, invalid in HamleDT.");
-                # Erase the pseudo-afun to avoid further complaints of Treex and Tred.
-                log_info("Removing the invalid afun...");
-                $node->set_afun('NR');
+                log_warn("Node $ord:$form/$tag/$deprel still has the deprel $deprel, invalid in HamleDT.");
+                # Erase the pseudo-deprel to avoid further complaints of Treex and Tred.
+                log_info("Removing the invalid deprel...");
+                $node->set_deprel('NR');
             }
             else
             {
-                log_warn("Node $ord:$form/$tag/$deprel still has no afun.");
-                $node->set_afun('NR');
+                log_warn("Node $ord:$form/$tag/$deprel still has no deprel.");
+                $node->set_deprel('NR');
             }
         }
     }
@@ -514,46 +514,6 @@ sub attach_final_punctuation_to_root
             }
         }
     }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Restructures coordinations to the Prague style.
-# Calls a treebank-specific method detect_coordination() that fills a list of
-# arrays, each containing a hash with the following keys:
-# - members: list of nodes that are members of coordination
-# - delimiters: list of nodes with commas or conjunctions between the members
-# - shared_modifiers: list of nodes that depend on the whole coordination
-# - parent: the node the coordination modifies
-# - afun: the analytical function of the whole coordination wrt. its parent
-#------------------------------------------------------------------------------
-sub restructure_coordination
-{
-    my $self  = shift;
-    my $root  = shift;
-    my $debug = shift;
-    # Wait with debugging until the problematic sentence:
-    #my $debug = $self->sentence_contains($root, 'Spürst du das');
-    log_info('DEBUG ON') if ($debug);
-    $self->shape_coordination_recursively( $root, $debug );
-}
-
-
-
-#------------------------------------------------------------------------------
-# Every descendant of this class should implement its own method
-# detect_coordination(). It may use the prepared detect_...() methods of
-# Coordination but it must select what annotation style is to be expected in
-# the data.
-#------------------------------------------------------------------------------
-sub detect_coordination
-{
-    my $self = shift;
-    my $node = shift;
-    my $coordination = shift;
-    my $debug = shift;
-    log_fatal("detect_coordination() must be implemented in all blocks derived from HamleDT::Harmonize.");
 }
 
 

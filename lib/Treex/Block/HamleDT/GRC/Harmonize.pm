@@ -50,9 +50,9 @@ sub fix_negation
 }
 
 #------------------------------------------------------------------------------
-# Fixes a few known annotation errors that appear in the data. Should be called
-# from convert_deprels() so that it precedes any tree operations that the
-# superordinate class may want to do.
+# Fixes a few known annotation errors that appear in the data. This method will
+# be called right after converting the deprels to the harmonized label set, but
+# before any tree transformations.
 #------------------------------------------------------------------------------
 sub fix_annotation_errors
 {
