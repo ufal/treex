@@ -39,7 +39,7 @@ sub process_zone
     $self->detect_proper_nouns($root);
     $self->fix_deficient_sentential_coordination($root);
     $self->fix_undefined_nodes($root);
-    ###!!! TODO: grc trees sometimes have conjunct1, coordination, conjunct2 as siblings. We should fix it, but meanwhile we just delete afun=Coord from the coordination.
+    ###!!! TODO: grc trees sometimes have conjunct1, coordination, conjunct2 as siblings. We should fix it, but meanwhile we just delete deprel=Coord from the coordination.
     $self->check_coord_membership($root);
     return $root;
 }
@@ -100,100 +100,105 @@ sub detect_proper_nouns
 
 
 #------------------------------------------------------------------------------
-# Convert dependency relation tags to analytical functions.
+# Convert dependency relation tags to the harmonized label set.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub convert_deprels
 {
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
-    # First loop: copy deprel to afun and convert _CO and _AP to is_member.
+    # First loop: copy deprel to deprel and convert _CO and _AP to is_member.
     # Leave everything else untouched until we know that is_member is set correctly for all nodes.
     foreach my $node (@nodes)
     {
-        my $deprel = $node->conll_deprel();
-        my $afun = $deprel;
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
         # There were occasional cycles in the source data. They were removed before importing the trees to Treex
         # but a mark was left in the dependency label where the cycle was broken.
         # Example: AuxP-CYCLE:12-CYCLE:16-CYCLE:15-CYCLE:14
-        # We have no means of repairing the structure but we have to remove the mark in order to get a valid afun.
-        $afun =~ s/-CYCLE.*//;
+        # We have no means of repairing the structure but we have to remove the mark in order to get a valid deprel.
+        $deprel =~ s/-CYCLE.*//;
         # The _CO suffix signals conjuncts.
         # The _AP suffix signals members of apposition.
         # We will later reshape appositions but the routine will expect is_member set.
-        if($afun =~ s/_(CO|AP)$//i)
+        if($deprel =~ s/_(CO|AP)$//i)
         {
             $node->set_is_member(1);
             # There are nodes that have both _AP and _CO but we have no means of representing that.
             # Remove the other suffix if present.
-            $afun =~ s/_(CO|AP)$//i;
+            $deprel =~ s/_(CO|AP)$//i;
         }
         # Convert the _PA suffix to the is_parenthesis_root flag.
-        if($afun =~ s/_PA$//i)
+        if($deprel =~ s/_PA$//i)
         {
             $node->set_is_parenthesis_root(1);
         }
-        $node->set_afun($afun);
+        $node->set_deprel($deprel);
     }
     # Second loop: process chained dependency labels and decide, what nodes are ExD, Coord, Apos, AuxP or AuxC.
-    # At the same time translate the other afuns to the dialect of HamleDT.
+    # At the same time translate the other deprels to the dialect of HamleDT.
     foreach my $node (@nodes)
     {
-        my $afun = $node->afun();
+        my $deprel = $node->deprel();
         # There are chained dependency labels that describe situation around elipsis.
         # They ought to contain an ExD, which may be indexed (e.g. ExD0).
         # The tag before ExD describes the dependency of the node on its elided parent.
         # The tag after ExD describes the dependency of the elided parent on the grandparent.
         # Example: ADV_ExD0_PRED_CO
         # Similar cases in PDT get just ExD.
-        if($afun =~ m/ExD/)
+        if($deprel =~ m/ExD/)
         {
             # If the chained label is something like COORD_ExD0_OBJ_CO_ExD1_PRED,
             # this node should be Coord and the conjuncts should get ExD.
-            # However, we still cannot set afun=ExD for the conjuncts.
+            # However, we still cannot set deprel=ExD for the conjuncts.
             # This would involve traversing also AuxP nodes and nested Coord, so we need to have all Coords in place first.
-            if($afun =~ m/^COORD/i)
+            if($deprel =~ m/^COORD/i)
             {
-                $node->set_afun('Coord');
+                $node->set_deprel('Coord');
                 $node->wild()->{'ExD conjuncts'} = 1;
             }
-            elsif($afun =~ m/^APOS/i)
+            elsif($deprel =~ m/^APOS/i)
             {
-                $node->set_afun('Apos');
+                $node->set_deprel('Apos');
                 $node->wild()->{'ExD conjuncts'} = 1;
             }
             # Do not change AuxX and AuxG either.
-            # These afuns reflect more what the node is than how it modifies its parent.
-            elsif($afun =~ m/^(Aux[CPGX])/)
+            # These deprels reflect more what the node is than how it modifies its parent.
+            elsif($deprel =~ m/^(Aux[CPGX])/)
             {
-                $node->set_afun($1);
+                $node->set_deprel($1);
                 $node->wild()->{'ExD conjuncts'} = 1;
             }
             else
             {
-                $node->set_afun('ExD');
+                $node->set_deprel('ExD');
             }
         }
-        # Most AGDT afuns are all uppercase but we typically want only the first letter uppercase.
-        elsif(exists($agdt2pdt{$afun}))
+        # Most AGDT deprels are all uppercase but we typically want only the first letter uppercase.
+        elsif(exists($agdt2pdt{$deprel}))
         {
-            $node->set_afun($agdt2pdt{$afun});
+            $node->set_deprel($agdt2pdt{$deprel});
         }
         # AuxG cannot be conjunct in HamleDT but it happens in AGDT.
-        if($node->afun() eq 'AuxG' && $node->is_member())
+        if($node->deprel() eq 'AuxG' && $node->is_member())
         {
             $node->set_is_member(undef);
         }
         # Try to fix inconsistencies in annotation of coordination.
-        if($node->afun() !~ m/^(Coord|Apos)$/)
+        if($node->deprel() !~ m/^(Coord|Apos)$/)
         {
             my @members = grep {$_->is_member()} ($node->children());
             if(scalar(@members)>0)
             {
                 if($node->iset()->pos() =~ m/^(conj|punc|part|adv)$/)
                 {
-                    $node->set_afun('Coord');
+                    $node->set_deprel('Coord');
                 }
                 else
                 {
@@ -231,8 +236,8 @@ sub deprel_to_afun
     {
         if($node->wild()->{'ExD conjuncts'})
         {
-            # set_real_afun() goes down if it sees Coord, Apos, AuxP or AuxC
-            $node->set_real_afun('ExD');
+            # set_real_deprel() goes down if it sees Coord, Apos, AuxP or AuxC
+            $node->set_real_deprel('ExD');
             delete($node->wild()->{'ExD conjuncts'});
         }
     }
@@ -258,7 +263,7 @@ sub _climb_up_below_coap
         log_warn('No co/ap node between a co/ap member and the tree root');
         return;
     }
-    elsif ($node->parent()->afun() =~ m/(COORD|APOS)/i)
+    elsif ($node->parent()->deprel() =~ m/(COORD|APOS)/i)
     {
         return $node;
     }
@@ -273,8 +278,8 @@ sub _climb_up_below_coap
 #------------------------------------------------------------------------------
 # A few punctuation nodes (commas and dashes) are attached non-projectively to
 # the root, ignoring their neighboring tokens. They are labeled with the
-# UNDEFINED afun (which we temporarily converted to NR). Attach them to the
-# preceding token and give them a better afun.
+# UNDEFINED deprel (which we temporarily converted to NR). Attach them to the
+# preceding token and give them a better deprel.
 #------------------------------------------------------------------------------
 sub fix_undefined_nodes
 {
