@@ -747,7 +747,7 @@ sub detect_prague_apposition
                 push(@sdependents, $d);
             }
         }
-        # If there are no conjuncts, we cannot create a coordination.
+        # If there are no members ("conjuncts"), we cannot create an apposition.
         my $n = scalar(@conjuncts);
         if($n == 0)
         {
@@ -791,7 +791,9 @@ sub detect_prague_apposition
         # But if there is a second member, the delimiting punctuation should be attached to it.
         if(@conjuncts)
         {
-            @punctuation = grep {my $ord = $_->ord(); $ord>$cmin && $ord<$cmax} (@punctuation);
+            ###!!! Unlike coordination, it is unclear whether we want to treat punctuation differently if it occurs after the second member.
+            ###!!! For example for brackets it would mean that the opening bracket is attached to the second member and the closing bracket to the first member.
+            #@punctuation = grep {my $ord = $_->ord(); $ord>$cmin && $ord<$cmax} (@punctuation);
             if(@punctuation || @coordinators)
             {
                 # The second member could be a terminal phrase, which cannot take dependents.
@@ -806,7 +808,6 @@ sub detect_prague_apposition
             }
         }
     }
-    # Return the input NTerm phrase if no Coordination has been detected.
     return $phrase;
 }
 

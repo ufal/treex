@@ -265,6 +265,99 @@ sub set_default_afun
 
 
 #------------------------------------------------------------------------------
+# Sets the real function of the subtree. If its current deprel is AuxP or AuxC,
+# finds the first descendant with a real deprel and replaces it. If this is
+# a coordination or apposition root, finds all the members and replaces their
+# deprels (but note that members of the same coordination can differ in deprels
+# if some of them have 'ExD'; this method can only set the same deprel for
+# all).
+#
+# This method is adapted from Treex::Core::Node::A->set_real_afun(). We need it
+# to work with deprels instead of afuns. And we do not want to have an
+# analogous method set_real_deprel() in Treex::Core::Node::A because deprels
+# are more general than afuns and we should not assume the special meaning of
+# the values Coord|Apos|AuxP|AuxC globally.
+#------------------------------------------------------------------------------
+sub set_real_deprel
+{
+    my $self = shift;
+    my $node = shift;
+    my $new_deprel = shift;
+    my $warnings = shift;
+    my $deprel = $node->deprel();
+    if ( not defined($deprel) )
+    {
+        $deprel = '';
+    }
+    if ( $deprel =~ m/^Aux[PC]$/ )
+    {
+        my @children = $node->children();
+        # Exclude punctuation children (deprel-wise, not POS-tag-wise: we do not want to exclude coordination heads).
+        @children = grep {$_->deprel() !~ m/^Aux[XGK]$/} (@children);
+        my $n = scalar(@children);
+        if ( $n < 1 )
+        {
+            if ($warnings)
+            {
+                my $i_sentence = $node->get_bundle()->get_position() + 1;    # tred numbers from 1
+                my $form       = $node->form();
+                log_warn("$deprel node does not have children (sentence $i_sentence, '$form')");
+            }
+        }
+        else
+        {
+            if ( $warnings && $n > 1 )
+            {
+                my $i_sentence = $node->get_bundle()->get_position() + 1;    # tred numbers from 1
+                my $form       = $node->form();
+                log_warn("$deprel node has $n children so it is not clear which one bears the real deprel (sentence $i_sentence, '$form')");
+            }
+            foreach my $child (@children)
+            {
+                $self->set_real_deprel($child, $new_deprel, $warnings);
+            }
+            return $deprel;
+        }
+    }
+    elsif ( $deprel =~ m/^(Coord|Apos)$/ )
+    {
+        my @members = grep {$_->is_member()} ($node->children());
+        my $n = scalar(@members);
+        if ( $n < 1 )
+        {
+            if ($warnings)
+            {
+                my $i_sentence = $node->get_bundle()->get_position() + 1;    # tred numbers from 1
+                my $form       = $node->form();
+                log_warn("$deprel does not have members (sentence $i_sentence, '$form')");
+            }
+        }
+        else
+        {
+            foreach my $member (@members)
+            {
+                $self->set_real_deprel($member, $new_deprel, $warnings);
+            }
+            return $deprel;
+        }
+    }
+    # This is a normal node (i.e. not Coord|Apos|AuxP|AuxC), which can receive its own label.
+    # Special value PredOrExD is for nodes / constructions directly under the root node.
+    # It should be resolved to either Pred or ExD, depending on whether the node is or is not a verb.
+    if($new_deprel eq 'PredOrExD')
+    {
+        $node->set_deprel($node->is_verb() ? 'Pred' : 'ExD');
+    }
+    else
+    {
+        $node->set_deprel($new_deprel);
+    }
+    return $deprel;
+}
+
+
+
+#------------------------------------------------------------------------------
 # After all transformations all nodes must have valid deprels (not our pseudo-
 # deprels). Report cases breaching this rule so that we can easily find them in
 # Ttred. This function allows only deprels that are part of the HamleDT label
@@ -465,20 +558,13 @@ sub attach_final_punctuation_to_root
             # Even though some treebanks think otherwise, final punctuation marks are neither conjunctions nor conjuncts.
             delete($nodes[$i]->wild()->{conjunct});
             delete($nodes[$i]->wild()->{coordinator});
-            $nodes[$i]->set_is_member(0);
+            $nodes[$i]->set_is_member(undef);
             # Sentence-terminating punctuation should be a leaf node.
             # If it governs anything it should be probably reattached to the root.
             foreach my $child ($nodes[$i]->children())
             {
                 $child->set_parent($root);
-                if($child->is_verb())
-                {
-                    $child->set_deprel('Pred');
-                }
-                else
-                {
-                    $child->set_deprel('ExD');
-                }
+                $self->set_real_deprel($child, 'PredOrExD');
             }
         }
     }
@@ -497,20 +583,13 @@ sub attach_final_punctuation_to_root
             }
             delete($nodes[$i]->wild()->{conjunct});
             delete($nodes[$i]->wild()->{coordinator});
-            $nodes[$i]->set_is_member(0);
+            $nodes[$i]->set_is_member(undef);
             # Sentence-terminating punctuation should be a leaf node.
             # If it governs anything it should be probably reattached to the root.
             foreach my $child ($nodes[$i]->children())
             {
                 $child->set_parent($root);
-                if($child->is_verb())
-                {
-                    $child->set_deprel('Pred');
-                }
-                else
-                {
-                    $child->set_deprel('ExD');
-                }
+                $self->set_real_deprel($child, 'PredOrExD');
             }
         }
     }
