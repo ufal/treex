@@ -117,7 +117,7 @@ sub fix_annotation_errors
                     $parent->set_parent($node);
                     $parent->set_is_member(1);
                 }
-                elsif($node->is_leaf() && $node->is_conjuction())
+                elsif($node->is_leaf() && $node->is_conjunction())
                 {
                     $node->set_deprel('AuxY');
                 }
