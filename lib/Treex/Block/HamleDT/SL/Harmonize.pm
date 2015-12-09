@@ -38,7 +38,13 @@ sub convert_deprels
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $deprel = $node->conll_deprel();
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
         # combined deprels (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
         if ( $deprel =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/ )
         {
@@ -136,7 +142,7 @@ sub change_quotation_predicate_into_obj
         my $has_quotation_dependent = 0;
         for my $child (@children)
         {
-            if ($child->form eq q{"})
+            if ($child->form eq q{"}) # "
             {
                 if ($node->deprel() eq 'Adv')
                 {
