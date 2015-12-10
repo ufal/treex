@@ -60,3 +60,5 @@ skip = EOLTests
 ;config = weaver.ini
 [TestRelease] ; extract archive and run tests before releasing the dist
 
+[MetaResources]
+repository = http://github.com/ufal/treex
