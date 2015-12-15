@@ -10,7 +10,7 @@ MODULES := ${CORE} \
            $(addprefix ${TOOLS}/, Probe.pm) \
            $(addprefix ${LIB}/, Treex.pm) \
            $(addprefix ${TREEX}/, Core.pm) \
-           $(addprefix ${READ}/, Text.pm Treex.pm Sentences.pm BaseReader.pm BaseTextReader.pm) \
+           $(addprefix ${READ}/, Text.pm Treex.pm Sentences.pm BaseReader.pm BaseTextReader.pm BaseSplitterRole.pm) \
            $(addprefix ${READ_T}/, base.t) \
            $(addprefix ${WRITE}/, Text.pm Treex.pm Sentences.pm BaseWriter.pm BaseTextWriter.pm)
 
