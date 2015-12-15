@@ -40,4 +40,7 @@ match     = ^test\.(out|err|mix)
 
 [TestRelease] ; extract archive and run tests before releasing the dist
 
-
+[MetaResources]
+homepage   = http://ufal.mff.cuni.cz/treex
+repository = https://github.com/ufal/treex
+bugtracker = https://github.com/ufal/treex/issues

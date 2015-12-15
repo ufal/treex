@@ -41,4 +41,7 @@ match     = generate_html.sh
 
 [PodVersion]
 
-
+[MetaResources]
+homepage   = http://ufal.mff.cuni.cz/treex
+repository = https://github.com/ufal/treex
+bugtracker = https://github.com/ufal/treex/issues

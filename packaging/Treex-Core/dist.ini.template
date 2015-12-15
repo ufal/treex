@@ -61,4 +61,6 @@ skip = EOLTests
 [TestRelease] ; extract archive and run tests before releasing the dist
 
 [MetaResources]
-repository = http://github.com/ufal/treex
+homepage   = http://ufal.mff.cuni.cz/treex
+repository = https://github.com/ufal/treex
+bugtracker = https://github.com/ufal/treex/issues
