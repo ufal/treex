@@ -60,6 +60,26 @@ skip = EOLTests
 ;config = weaver.ini
 [TestRelease] ; extract archive and run tests before releasing the dist
 
+[MetaNoIndex]
+package = Parse::RecDescent::_Runtime
+package = Parse::RecDescent::_Runtime::Action
+package = Parse::RecDescent::_Runtime::ColCounter
+package = Parse::RecDescent::_Runtime::Directive
+package = Parse::RecDescent::_Runtime::Error
+package = Parse::RecDescent::_Runtime::Expectation
+package = Parse::RecDescent::_Runtime::InterpLit
+package = Parse::RecDescent::_Runtime::LineCounter
+package = Parse::RecDescent::_Runtime::Literal
+package = Parse::RecDescent::_Runtime::OffsetCounter
+package = Parse::RecDescent::_Runtime::Operator
+package = Parse::RecDescent::_Runtime::Production
+package = Parse::RecDescent::_Runtime::Repetition
+package = Parse::RecDescent::_Runtime::Result
+package = Parse::RecDescent::_Runtime::Rule
+package = Parse::RecDescent::_Runtime::Subrule
+package = Parse::RecDescent::_Runtime::Token
+package = Parse::RecDescent::_Runtime::UncondReject
+
 [MetaResources]
 homepage   = http://ufal.mff.cuni.cz/treex
 repository = https://github.com/ufal/treex
