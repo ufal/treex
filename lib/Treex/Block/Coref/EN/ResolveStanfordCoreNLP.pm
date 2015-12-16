@@ -5,7 +5,8 @@ use Treex::Core::Common;
 use Lingua::StanfordCoreNLP;
 use Text::Unidecode;
 
-extends 'Treex::Block::Coref::ResolveFromRawText';
+extends 'Treex::Core::Block';
+with 'Treex::Block::Coref::ResolveFromRawText';
 
 has '_pipeline' => ( is => 'ro', builder => '_build_pipeline');
 
@@ -40,17 +41,29 @@ sub _normalize_token {
 #    $self->_pipeline;
 #}
 
-sub process_document {
-    my ($self, $doc) = @_;
+sub _prepare_raw_text {
+    my ($self, $bundles) = @_;
+    return join "\n", map {
+            my $zone = $_->get_zone($self->language, $self->selector);
+            $zone->sentence
+        } @$bundles;
+}
 
-    my $raw_text = $self->_prepare_raw_text($doc);
+sub _process_bundle_block {
+    my ($self, $block_id, $bundles) = @_;
+
+    log_info "Processing bundle block $block_id ...";
+
+    my $raw_text = $self->_prepare_raw_text($bundles);
+
+    #log_info "$raw_text";
 
     my $result;
     eval {
         $result = $self->_pipeline->process($raw_text);
     };
     if ($@){
-        log_warn "Skipping document " . $doc->full_filename() . " due to: $@";
+        log_warn "Skipping document (block) " . $block_id . " due to: $@";
         return;
     }
     
@@ -74,7 +87,7 @@ sub process_document {
         }
     }
 
-    my @atrees = map {$_->get_tree($self->language, 'a', $self->selector)} $doc->get_bundles;
+    my @atrees = map {$_->get_tree($self->language, 'a', $self->selector)} @$bundles;
     my @our_anodes = map {[$_->get_descendants({ordered=>1})]} @atrees;
     my @our_tokens = map {[map {_normalize_token($_->form)} @$_]} @our_anodes;
     my @stanford_tokens = map {[map {_normalize_token($_->getWord())} @{$_->getTokens->toArray()}]} @{$result->toArray()};

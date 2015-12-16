@@ -3,37 +3,104 @@ use Moose;
 use utf8;
 use Treex::Core::Common;
 
+use IPC::Run3;
 use Treex::Tool::ProcessUtils;
 use File::Temp;
 
-extends 'Treex::Block::Coref::ResolveFromRawText';
+extends 'Treex::Core::Block';
+with 'Treex::Block::Coref::ResolveFromRawText';
 
-sub process_document_one_zone_at_time {
-    my ($self, $doc) = @_;
+has '_tmp_dir' => ( is => 'rw', isa => 'File::Temp::Dir' );
+has '_bart_read' => ( is => 'rw', isa => 'FileHandle');
+has '_bart_write' => ( is => 'rw', isa => 'FileHandle');
+has '_bart_pid' => ( is => 'rw', isa => 'Int');
 
-    my $tokenized_text = "";
-    foreach my $bundle ($doc->get_bundles) {
-        my $atree = $bundle->get_tree($self->language, "a", $self->selector);
-        my $sent = join " ", map {$_->form} $atree->get_descendants({ordered => 1});
-        $tokenized_text .= $sent . "\n";
+
+sub java_version {
+    my ($java_cmd) = @_;
+    my ($in, $out, $err);
+    my $lines = run3("$java_cmd -version", \$in, \$out, \$err);
+    my ($version) = grep {$_ =~ /^java version/} split /\n/, $err;
+    $version =~ s/^[^"]*"//;
+    $version =~ s/"[^"]*$//;
+    return $version;
+}
+
+sub process_start {
+    my ($self) = @_;
+    
+    my $dir = File::Temp->newdir("/COMP.TMP/bart.tmpdir.XXXXX");
+    $self->_set_tmp_dir($dir);
+
+    my $java_cmd = defined $ENV{JAVA_HOME} ? $ENV{JAVA_HOME}."/bin/java" : "java";
+    my $java_version = java_version($java_cmd);
+    if ($java_version !~ /^1\.7\..*/) {
+        log_warn "BART 2 should be run on Java version 1.7.*. You are using the version $java_version. BART could not work properly. You can change it by modifying the enviroment variable JAVA_HOME."
     }
 
-    my $dir = File::Temp->newdir("/COMP.TMP/bart.tmpdir.XXXXX");
     my $command = "cd $dir;";
-    my $cp = join ":", map {'/net/cluster/TMP/mnovak/tools/BART-2.0/' . $_} ("src", "dist/BART.jar", "libs2/*");
-    $command .= " java -Xmx1024m -classpath \"$cp\" -Delkfed.rootDir='/net/cluster/TMP/mnovak/tools/BART-2.0' elkfed.webdemo.Demo";
+    my $cp = join ":", map {'/net/cluster/TMP/mnovak/tools/BART-2.0/' . $_} ("BART2_eclipse/BART.jar", "libs2/*");
+    $command .= " $java_cmd -Xmx1024m -classpath \"$cp\" -Delkfed.rootDir='/net/cluster/TMP/mnovak/tools/BART-2.0' elkfed.webdemo.Demo";
 
-    my ( $read, $write, $pid ) = Treex::Tool::ProcessUtils::bipipe($command);
+    #log_info "Launching BART 2.0: $command";
+    my ( $read, $write, $pid );
+    eval {
+        ( $read, $write, $pid ) = Treex::Tool::ProcessUtils::bipipe($command);
+    };
+    if ($@) {
+        log_fatal $@;
+    }
+
+    while (my $line = <$read>) {
+        chomp $line;
+        last if ($line =~ /^<INIT_OK>/);
+    }
+    $self->_set_bart_read($read);
+    $self->_set_bart_write($write);
+    $self->_set_bart_pid($pid);
+}
+
+sub process_end {
+    my ($self) = @_;
+    log_info "Closing BART 2.0...";
+    close( $self->_bart_write );
+    close( $self->_bart_read );
+    Treex::Tool::ProcessUtils::safewaitpid( $self->_bart_pid );
+}
+
+sub _process_bundle_block {
+    my ($self, $block_id, $bundles) = @_;
     
-    print $write $tokenized_text;
-    close( $write );
+    log_info "Processing bundle block $block_id ...";
+    
+    my @sentences = $self->_prepare_raw_text($bundles);
 
-    my @xml_lines = <$read>;
-    close( $read );
-    Treex::Tool::ProcessUtils::safewaitpid( $pid );
+    foreach my $sent (@sentences) {
+        my $ack;
+        eval {
+            print {$self->_bart_write} $sent;
+            print {$self->_bart_write} "\n";
+            my $read = $self->_bart_read; 
+            $ack = <$read>;
+        };
+        if ($@) {
+            log_fatal $@;
+        }
+        if ($ack !~ /^<LINE_OK>/) {
+            log_fatal "A problem occurred while reading an input by BART";
+        }
+    }
+    print {$self->_bart_write} "\n";
+
+    my $read = $self->_bart_read; 
+    my @xml_lines;
+    while (my $line = <$read>) {
+        last if ($line =~ /^<DOC_FINISHED>/);
+        push @xml_lines, $line;
+    }
 
     my ($sents, $corefs) = _extract_info(\@xml_lines);
-    my @atrees = map {$_->get_tree($self->language, "a", $self->selector)} $doc->get_bundles;
+    my @atrees = map {$_->get_tree($self->language, "a", $self->selector)} @$bundles;
     my @all_nodes = map { [ $_->get_descendants({ordered => 1}) ] } @atrees;
     my @all_forms = map { [ map {$_->form} @$_ ] } @all_nodes;
 
@@ -54,6 +121,17 @@ sub process_document_one_zone_at_time {
             $ante = $anaph;
         }
     }
+}
+
+sub _prepare_raw_text {
+    my ($self, $bundles) = @_;
+    
+    my @sents = map {
+        my $atree = $_->get_tree($self->language, "a", $self->selector);
+        my $sent = join " ", map {$_->form} $atree->get_descendants({ordered => 1});
+        $sent
+    } @$bundles;
+    return @sents;
 }
 
 sub locate_mention_head {
@@ -93,6 +171,8 @@ sub locate_mention_head {
 sub _common_ancestor {
     my ($node1, $node2) = @_;
 
+    return $node1 if (!defined $node2);
+    return $node2 if (!defined $node1);
     return $node1 if ($node1 == $node2);
 
     my $ances = $node2;
@@ -103,18 +183,6 @@ sub _common_ancestor {
 
     return undef if (!defined $ances);
     return $ances;
-}
-
-sub _prepare_raw_text {
-    my ($self, $doc) = @_;
-    
-    my $tokenized_text = "";
-    foreach my $bundle ($doc->get_bundles) {
-        my $atree = $bundle->get_tree($self->language, "a", $self->selector);
-        my $sent = join " ", map {$_->form} $atree->get_descendants({ordered => 1});
-        $tokenized_text .= $sent . "\n";
-    }
-    return $tokenized_text;
 }
 
 sub _extract_info {
@@ -152,13 +220,6 @@ sub _extract_info {
 
     return (\@sents, \%corefs);
 }
-
-sub process_document {
-    my ($self, $doc) = @_;
-    $self->process_document_one_zone_at_time($doc);
-    #$self->_apply_function_on_each_zone($doc, \&process_document_one_zone_at_time, $self, $doc);
-}
-
 
 1;
 __END__
