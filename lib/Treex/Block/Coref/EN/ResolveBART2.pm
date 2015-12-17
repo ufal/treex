@@ -13,9 +13,9 @@ extends 'Treex::Core::Block';
 with 'Treex::Block::Coref::ResolveFromRawText';
 
 has '_tmp_dir' => ( is => 'rw', isa => 'File::Temp::Dir' );
-has '_bart_read' => ( is => 'rw', isa => 'FileHandle');
-has '_bart_write' => ( is => 'rw', isa => 'FileHandle');
-has '_bart_pid' => ( is => 'rw', isa => 'Int');
+has '_bart_read' => ( is => 'rw', isa => 'Maybe[FileHandle]');
+has '_bart_write' => ( is => 'rw', isa => 'Maybe[FileHandle]');
+has '_bart_pid' => ( is => 'rw', isa => 'Maybe[Int]');
 
 
 sub java_version {
@@ -28,8 +28,10 @@ sub java_version {
     return $version;
 }
 
-sub process_start {
+sub _init_bart {
     my ($self) = @_;
+    
+    log_info "Starting BART 2.0...";
     
     my $dir = File::Temp->newdir("/COMP.TMP/bart.tmpdir.XXXXX");
     $self->_set_tmp_dir($dir);
@@ -42,7 +44,7 @@ sub process_start {
 
     my $command = "cd $dir;";
     my $cp = join ":", map {'/net/cluster/TMP/mnovak/tools/BART-2.0/' . $_} ("BART2_eclipse/BART.jar", "libs2/*");
-    $command .= " $java_cmd -Xmx3072m -classpath \"$cp\" -Delkfed.rootDir='/net/cluster/TMP/mnovak/tools/BART-2.0' elkfed.webdemo.Demo";
+    $command .= " $java_cmd -Xmx1024m -classpath \"$cp\" -Delkfed.rootDir='/net/cluster/TMP/mnovak/tools/BART-2.0' elkfed.webdemo.Demo";
 
     #log_info "Launching BART 2.0: $command";
     my ( $read, $write, $pid );
@@ -62,16 +64,38 @@ sub process_start {
     $self->_set_bart_pid($pid);
 }
 
-sub process_end {
+sub _finish_bart {
     my ($self) = @_;
-    log_info "Closing BART 2.0...";
+    log_info "Ending BART 2.0...";
     close( $self->_bart_write );
     close( $self->_bart_read );
     Treex::Tool::ProcessUtils::safewaitpid( $self->_bart_pid );
+    $self->_set_bart_read(undef);
+    $self->_set_bart_write(undef);
+    $self->_set_bart_pid(undef);
+}
+
+sub process_start {
+    my ($self) = @_;
+    $self->_init_bart;
+}
+
+sub process_end {
+    my ($self) = @_;
+    $self->_finish_bart;
 }
 
 sub _process_bundle_block {
     my ($self, $block_id, $bundles) = @_;
+
+    my $write = $self->_bart_write;
+    my $read = $self->_bart_read;
+
+    if (!defined $write || !defined $read) {
+        $self->_init_bart;
+        $write = $self->_bart_write;
+        $read = $self->_bart_read;
+    }
     
     log_info "Processing bundle block $block_id ...";
     
@@ -80,9 +104,8 @@ sub _process_bundle_block {
     foreach my $sent (@sentences) {
         my $ack;
         eval {
-            print {$self->_bart_write} $sent;
-            print {$self->_bart_write} "\n";
-            my $read = $self->_bart_read; 
+            print {$write} $sent;
+            print {$write} "\n";
             $ack = <$read>;
         };
         if ($@) {
@@ -93,11 +116,15 @@ sub _process_bundle_block {
             log_fatal "A problem occurred while reading an input by BART";
         }
     }
-    print {$self->_bart_write} "\n";
+    print {$write} "\n";
 
-    my $read = $self->_bart_read; 
     my @xml_lines;
     while (my $line = <$read>) {
+        if ($line =~ /^<ERROR>/) {
+            log_warn "BART ran out of the memory while processing the bundle block $block_id. The block will be skipped and BART restarted.";
+            $self->_finish_bart;
+            return;
+        }
         last if ($line =~ /^<DOC_FINISHED>/);
         push @xml_lines, $line;
     }
