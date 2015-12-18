@@ -4,6 +4,7 @@ use Moose::Role;
 use Moose::Util::TypeConstraints;
 use Treex::Core::Log;
 use Readonly;
+use Treex::Tool::Align::Utils;
 
 #
 # DATA
@@ -356,9 +357,9 @@ sub _get_referenced_nodes {
                 }
             }
 
-            # get alignment from $node->get_aligned_nodes()
+            # get alignment going in both directions, using Treex::Tool::Align::Utils 
             else {
-                my ( $aligned_nodes, $aligned_nodes_types ) = $node->get_aligned_nodes();
+                my ( $aligned_nodes, $aligned_nodes_types ) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($node);
                 if ($aligned_nodes) {
                     $self->_cache->{$ref}->{$node} = $aligned_nodes;
                 }
