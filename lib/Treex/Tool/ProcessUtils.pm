@@ -16,10 +16,15 @@ sub bipipe {
         $binmode = ":utf8";
     }
 
+    my @cmd_args = ( $cmd );
+    if (ref($cmd) eq 'ARRAY') {
+        @cmd_args = ( @$cmd, '' );
+    }
+
     my $reader;
     my $writer;
-    my $pid = open2( $reader, $writer, $cmd );
-    log_fatal("Failed to open bipipe to: $cmd") if !$pid;
+    my $pid = open2( $reader, $writer, @cmd_args );
+    log_fatal("Failed to open bipipe to: ". join " ", @cmd_args) if !$pid;
     $writer->autoflush(1);
     $reader->autoflush(1);
 
