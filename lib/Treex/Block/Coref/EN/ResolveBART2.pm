@@ -16,6 +16,7 @@ has '_tmp_dir' => ( is => 'rw', isa => 'Maybe[File::Temp::Dir]' );
 has '_bart_read' => ( is => 'rw', isa => 'Maybe[FileHandle]');
 has '_bart_write' => ( is => 'rw', isa => 'Maybe[FileHandle]');
 has '_bart_pid' => ( is => 'rw', isa => 'Maybe[Int]');
+has 'skip_nonref' => ( is => 'ro', isa => 'Bool', default => 1 );
 has 'java_timeout' => ( is => 'ro', isa => 'Int', default => '120' );
 
 my $BART_CMD = <<'CMD';
@@ -176,12 +177,11 @@ sub _process_bundle_block {
 
     for my $entity_id (keys %$corefs) {
         my $chain = $corefs->{$entity_id};
-        my $ante = locate_mention_head(shift @$chain, $align, \@all_nodes);
-        while (my $anaph = locate_mention_head(shift @$chain, $align, \@all_nodes)) {
-            if (defined $ante && defined $anaph && !$ante->is_root && !$anaph->is_root) {
-                $anaph->add_coref_text_nodes($ante);
-                # print STDERR "ANAPH: " . $anaph->t_lemma . "\n";
-            }
+        my @mention_tnodes = grep {defined $_} map {$self->locate_mention_head($_, $align, \@all_nodes)} @$chain;
+        my $ante = shift @mention_tnodes;
+        while (my $anaph = shift @mention_tnodes) {
+            $anaph->add_coref_text_nodes($ante);
+            # print STDERR "ANAPH: " . $anaph->t_lemma . "\n";
             $ante = $anaph;
         }
     }
@@ -199,7 +199,7 @@ sub _prepare_raw_text {
 }
 
 sub locate_mention_head {
-    my ($mention, $align, $anodes, $sents) = @_;
+    my ($self, $mention, $align, $anodes, $sents) = @_;
 
     return if (!defined $mention);
 
@@ -231,6 +231,16 @@ sub locate_mention_head {
         );
         $head_tnode = _common_ancestor($start_tnode, $end_tnode);
     }
+
+    # check if not root
+    return if ($head_tnode->is_root);
+
+    # check if non-referential and possibly skip
+    if ($self->skip_nonref && defined $head_tnode->wild->{referential} && $head_tnode->wild->{referential} == 0) {
+        log_warn "The non-referential node ".$head_tnode->id." marked as coreferential by BART. Skipping the BART's decision.";
+        return;
+    }
+
     return $head_tnode;
 }
 
