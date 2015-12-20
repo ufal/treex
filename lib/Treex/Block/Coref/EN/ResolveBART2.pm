@@ -232,6 +232,8 @@ sub locate_mention_head {
         $head_tnode = _common_ancestor($start_tnode, $end_tnode);
     }
 
+    return if (!defined $head_tnode);
+
     # check if not root
     return if ($head_tnode->is_root);
 
