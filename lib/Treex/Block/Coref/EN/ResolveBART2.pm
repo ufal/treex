@@ -53,7 +53,7 @@ sub _init_bart {
     my $java_cmd = defined $ENV{JAVA_HOME} ? $ENV{JAVA_HOME}."/bin/java" : "java";
     my $java_version = java_version($java_cmd);
     if ($java_version !~ /^1\.7\..*/) {
-        log_warn "BART 2 should be run on Java version 1.7.*. You are using the version $java_version. BART could not work properly. You can change it by modifying the enviroment variable JAVA_HOME."
+        log_warn "BART 2 should be run on Java version 1.7.*. You are using the version $java_version. BART could not work properly. You can change it by modifying the enviroment variable JAVA_HOME in your ~/.bashrc."
     }
     
     my $cp = join ":", map {'/net/cluster/TMP/mnovak/tools/BART-2.0/' . $_} ("BART2_eclipse/BART.jar", "libs2/*");
