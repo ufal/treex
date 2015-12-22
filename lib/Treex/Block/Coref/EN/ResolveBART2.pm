@@ -21,10 +21,9 @@ has 'java_timeout' => ( is => 'ro', isa => 'Int', default => '120' );
 
 my $BART_CMD = <<'CMD';
 _term() { 
-    for child in $(ps -o pid --ppid $$ | grep -v PID); do
-        echo "Killing process no. $child ..." >&2;
-        kill -TERM "$child" 2>/dev/null;
-    done
+    #ps -o pid,comm,start --ppid $$ >&2;
+    #strace -fe kill pkill -TERM -P $$ >&2;
+    pkill -TERM -P $$ >&2;
 }
 trap _term EXIT
 
@@ -34,9 +33,14 @@ CMD
 
 sub java_version {
     my ($java_cmd) = @_;
-    my ($in, $out, $err);
-    my $lines = run3("$java_cmd -version", \$in, \$out, \$err);
-    my ($version) = grep {$_ =~ /^java version/} split /\n/, $err;
+    my @err_lines;
+    run3([$java_cmd, "-Xmx10m", "-version"], \undef, \undef, \@err_lines);
+    if ($?) {
+        log_warn "Unable to run \"$java_cmd -Xmx10m -version\" due to:\n" . join "\n", @err_lines;
+        log_warn "In spite of that, we attempt to run BART...";
+        return;
+    }
+    my ($version) = grep {$_ =~ /^java version/} @err_lines;
     $version =~ s/^[^"]*"//;
     $version =~ s/"[^"]*$//;
     return $version;
@@ -52,7 +56,7 @@ sub _init_bart {
 
     my $java_cmd = defined $ENV{JAVA_HOME} ? $ENV{JAVA_HOME}."/bin/java" : "java";
     my $java_version = java_version($java_cmd);
-    if ($java_version !~ /^1\.7\..*/) {
+    if (defined $java_version && $java_version !~ /^1\.7\..*/) {
         log_warn "BART 2 should be run on Java version 1.7.*. You are using the version $java_version. BART could not work properly. You can change it by modifying the enviroment variable JAVA_HOME in your ~/.bashrc."
     }
     
