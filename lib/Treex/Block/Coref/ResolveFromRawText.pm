@@ -1,14 +1,56 @@
 package Treex::Block::Coref::ResolveFromRawText;
-use Moose;
+use Moose::Role;
 use utf8;
 use Treex::Core::Common;
 
-extends 'Treex::Core::Block';
+has 'is_czeng' => ( is => 'ro', isa => 'Bool', required => 1 );
 
-sub _prepare_raw_text {
+requires '_process_bundle_block';
+requires '_prepare_raw_text';
+
+sub process_document {
     my ($self, $doc) = @_;
-    my @zones = map {$_->get_zone($self->language, $self->selector)} $doc->get_bundles;
-    return join "\n", map {$_->sentence} @zones;
+
+    my ($bundle_blocks, $block_ids) = $self->_get_bundle_blocks($doc);
+
+    for (my $i = 0; $i < @$bundle_blocks; $i++) {
+        $self->_process_bundle_block($block_ids->[$i], $bundle_blocks->[$i]);
+    }
+}
+
+sub _get_bundle_blocks {
+    my ($self, $doc) = @_;
+    my @bundles = $doc->get_bundles;
+    my @bundle_blocks = ();
+    my @block_ids = ();
+    my @texts = ();
+    if ($self->is_czeng) {
+        my $prev_block_id = undef;
+        my @curr_block_bundles = ();
+        foreach my $bundle (@bundles) {
+            my $curr_block_id = $bundle->attr('czeng/blockid');
+            if (defined $prev_block_id && defined $curr_block_id && $curr_block_id ne $prev_block_id ) {
+                push @bundle_blocks, [ @curr_block_bundles ];
+                push @block_ids, $prev_block_id;
+                @curr_block_bundles = ();
+            }
+            if (defined $curr_block_id) {
+                $prev_block_id = $curr_block_id;
+            }
+            else {
+                log_warn "The bundle attribute 'czeng/blockid' is undefined. Adding bundle to the previous block.";
+            }
+            push @curr_block_bundles, $bundle;
+        }
+        if (@curr_block_bundles) {
+            push @bundle_blocks, [ @curr_block_bundles ];
+            push @block_ids, $prev_block_id;
+        }
+    }
+    else {
+        @bundle_blocks = ( \@bundles );
+    }
+    return (\@bundle_blocks, \@block_ids);
 }
 
 sub _is_prefix {
