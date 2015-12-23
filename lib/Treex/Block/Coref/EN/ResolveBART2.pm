@@ -55,6 +55,7 @@ sub _init_bart {
     log_info "Starting BART 2.0...";
     
     my $dir = File::Temp->newdir($self->tmp_dir_prefix . "/bart.tmpdir.XXXXX");
+    log_info "BART temporary directory: $dir";
     $self->_set_tmp_dir($dir);
 
     my $java_cmd = defined $ENV{JAVA_HOME} ? $ENV{JAVA_HOME}."/bin/java" : "java";
