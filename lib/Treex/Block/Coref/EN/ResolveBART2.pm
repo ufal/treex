@@ -12,18 +12,21 @@ use HTML::Entities;
 extends 'Treex::Core::Block';
 with 'Treex::Block::Coref::ResolveFromRawText';
 
+has 'tmp_dir_prefix' => ( is => 'ro', isa => 'Str', default => sub { -d '/COMP.TMP' ? '/COMP.TMP' : '.' } );
+has 'skip_nonref' => ( is => 'ro', isa => 'Bool', default => 1 );
+has 'java_timeout' => ( is => 'ro', isa => 'Int', default => '120' );
+
 has '_tmp_dir' => ( is => 'rw', isa => 'Maybe[File::Temp::Dir]' );
 has '_bart_read' => ( is => 'rw', isa => 'Maybe[FileHandle]');
 has '_bart_write' => ( is => 'rw', isa => 'Maybe[FileHandle]');
 has '_bart_pid' => ( is => 'rw', isa => 'Maybe[Int]');
-has 'skip_nonref' => ( is => 'ro', isa => 'Bool', default => 1 );
-has 'java_timeout' => ( is => 'ro', isa => 'Int', default => '120' );
 
 my $BART_CMD = <<'CMD';
 _term() { 
     #ps -o pid,comm,start --ppid $$ >&2;
     #strace -fe kill pkill -TERM -P $$ >&2;
-    pkill -TERM -P $$ >&2;
+    pkill -TERM -P $$ >&2
+    wait
 }
 trap _term EXIT
 
@@ -51,7 +54,7 @@ sub _init_bart {
     
     log_info "Starting BART 2.0...";
     
-    my $dir = File::Temp->newdir("/COMP.TMP/bart.tmpdir.XXXXX");
+    my $dir = File::Temp->newdir($self->tmp_dir_prefix . "/bart.tmpdir.XXXXX");
     $self->_set_tmp_dir($dir);
 
     my $java_cmd = defined $ENV{JAVA_HOME} ? $ENV{JAVA_HOME}."/bin/java" : "java";
@@ -95,7 +98,7 @@ sub _finish_bart {
     $self->_set_bart_read(undef);
     $self->_set_bart_write(undef);
     $self->_set_bart_pid(undef);
-    $self->_set_tmp_dir(undef);
+    #$self->_set_tmp_dir(undef);
 }
 
 sub process_start {
