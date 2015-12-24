@@ -66,10 +66,10 @@ sub _value_of_type {
     my $i = 0;
     foreach my $type_re (@$type_list) {
         if ($type_re =~ /^!(.*)/) {
-            return undef if ($type =~ /^$1$/);
+            return undef if ($type =~ /$1/);
         }
         else {
-            return $i if ($type =~ /^$type_re$/);
+            return $i if ($type =~ /$type_re/);
         }
         $i++;
     }
@@ -103,6 +103,22 @@ sub _get_direct_aligned_nodes {
     return ( undef, undef );
 }
 
+sub get_aligned_nodes_of_type {
+    my ( $self, $type_regex, $lang, $selector ) = @_;
+
+    if ($type_regex =~ /^!/) {
+        log_warn "Note that a alignment type regex starting with ! has a special meaning.";
+    }
+
+    my ($ali_nodes) = $self->get_aligned_nodes({ 
+        directed => 1, 
+        language => $lang,
+        selector => $selector,
+        rel_types => [ $type_regex ],
+    });
+    return @$ali_nodes;
+}
+
 #==============================================
 
 sub get_aligned_nodes_by_tree {
@@ -125,25 +141,6 @@ sub get_aligned_nodes_by_tree {
     return ( undef, undef );
 }
 
-sub get_aligned_nodes_of_type {
-    my ( $self, $type_regex, $lang, $selector ) = @_;
-    my @nodes;
-    my ( $n_rf, $t_rf );
-    if ((defined $lang) && (defined $selector)) {
-        ( $n_rf, $t_rf ) = $self->get_aligned_nodes_by_tree($lang, $selector);
-    }
-    else {
-        ( $n_rf, $t_rf ) = $self->get_aligned_nodes();    
-    }    
-    return if !$n_rf;
-    my $iterator = List::MoreUtils::each_arrayref( $n_rf, $t_rf );
-    while ( my ( $node, $type ) = $iterator->() ) {
-        if ( $type =~ /$type_regex/ ) {
-            push @nodes, $node;
-        }
-    }
-    return @nodes;
-}
 
 sub is_aligned_to {
     my ( $self, $node, $type ) = @_;
@@ -223,8 +220,8 @@ a list of regular expression strings. The expressions starting with the C<!> sig
 filters. The actual link type is compared to these regexps one after another, skipping the rest
 if the type matches a current regexp. If the type matches no regexps in the list, it is filtered out.
 Therefore, negative rules should be at the beginning of the list, followed by at least one positive
-rule. For instance, C<['a','b']> returns only links of type C<a> or C<b>. On the other hand, 
-C<['!a','!b','.*']> returns everything except for C<a> and C<b>. The filter C<['!ab.*','a.*']>
+rule. For instance, C<['^a$','^b$']> returns only links of type C<a> or C<b>. On the other hand, 
+C<['!^a$','!^b$','.*']> returns everything except for C<a> and C<b>. The filter C<['!^ab.*','^a.*']>
 accepts only the types starting with C<a>, except for those starting with C<ab>.
 
 If no filter is specified, a default filter C<DEFAULT_FILTER> is used.
