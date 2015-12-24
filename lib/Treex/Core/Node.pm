@@ -11,6 +11,7 @@ use Treex::PML;
 
 extends 'Treex::PML::Node';
 with 'Treex::Core::WildAttr';
+with 'Treex::Core::Node::Aligned';
 
 # overloading does not work with namespace::autoclean
 # see https://rt.cpan.org/Public/Bug/Display.html?id=50938
@@ -678,104 +679,6 @@ sub dominates {
     return $another_node->is_descendant_of($self);
 }
 
-#----------- alignment -------------
-
-sub get_aligned_nodes {
-    my ($self) = @_;
-    my $links_rf = $self->get_attr('alignment');
-    if ($links_rf) {
-        my $document = $self->get_document;
-        my @nodes    = map { $document->get_node_by_id( $_->{'counterpart.rf'} ) } @$links_rf;
-        my @types    = map { $_->{'type'} } @$links_rf;
-        return ( \@nodes, \@types );
-    }
-    return ( undef, undef );
-}
-
-sub get_aligned_nodes_by_tree {
-    my ($self, $lang, $selector) = @_;
-    my @nodes = ();
-    my @types = ();
-    my $links_rf = $self->get_attr('alignment');
-    if ($links_rf) {
-        my $document = $self->get_document;
-        foreach my $l_rf (@{$links_rf}) {
-            if ($l_rf->{'counterpart.rf'} =~ /^(a|t)_tree-$lang(_$selector)?-.+$/) {
-                my $n = $document->get_node_by_id( $l_rf->{'counterpart.rf'} );
-                my $t = $l_rf->{'type'};
-                push @nodes, $n;
-                push @types, $t;
-            }
-        }
-        return ( \@nodes, \@types ) if     scalar(@nodes) > 0 ;    
-    }
-    return ( undef, undef );
-}
-
-sub get_aligned_nodes_of_type {
-    my ( $self, $type_regex, $lang, $selector ) = @_;
-    my @nodes;
-    my ( $n_rf, $t_rf );
-    if ((defined $lang) && (defined $selector)) {
-        ( $n_rf, $t_rf ) = $self->get_aligned_nodes_by_tree($lang, $selector);
-    }
-    else {
-        ( $n_rf, $t_rf ) = $self->get_aligned_nodes();    
-    }    
-    return if !$n_rf;
-    my $iterator = List::MoreUtils::each_arrayref( $n_rf, $t_rf );
-    while ( my ( $node, $type ) = $iterator->() ) {
-        if ( $type =~ /$type_regex/ ) {
-            push @nodes, $node;
-        }
-    }
-    return @nodes;
-}
-
-sub is_aligned_to {
-    my ( $self, $node, $type ) = @_;
-    log_fatal 'Incorrect number of parameters' if @_ != 3;
-    return ((any { $_ eq $node } $self->get_aligned_nodes_of_type( $type )) ? 1 : 0);
-}
-
-sub delete_aligned_node {
-    my ( $self, $node, $type ) = @_;
-    my $links_rf = $self->get_attr('alignment');
-    my @links    = ();
-    if ($links_rf) {
-        @links = grep {
-            $_->{'counterpart.rf'} ne $node->id
-                || ( defined($type) && defined( $_->{'type'} ) && $_->{'type'} ne $type )
-            }
-            @$links_rf;
-    }
-    $self->set_attr( 'alignment', \@links );
-    return;
-}
-
-sub add_aligned_node {
-    my ( $self, $node, $type ) = @_;
-    my $links_rf = $self->get_attr('alignment');
-    my %new_link = ( 'counterpart.rf' => $node->id, 'type' => $type // ''); #/ so we have no undefs
-    push( @$links_rf, \%new_link );
-    $self->set_attr( 'alignment', $links_rf );
-    return;
-}
-
-# remove invalid alignment links (leading to unindexed nodes)
-sub update_aligned_nodes {
-    my ($self)   = @_;
-    my $doc      = $self->get_document();
-    my $links_rf = $self->get_attr('alignment');
-    my @new_links;
-
-    foreach my $link ( @{$links_rf} ) {
-        push @new_links, $link if ( $doc->id_is_indexed( $link->{'counterpart.rf'} ) );
-    }
-    $self->set_attr( 'alignment', \@new_links );
-    return;
-}
-
 #************************************
 #---- OTHER ------
 
@@ -1292,37 +1195,6 @@ Actually, this is shortcut for C<$node-E<gt>get_siblings({following_only=E<gt>1,
 
 If a node has no PML type, then its type is detected (according
 to the node's location) and filled by the PML interface.
-
-=back
-
-
-=head2 Access to alignment
-
-=over
-
-=item $node->add_aligned_node($target, $type)
-
-Aligns $target node to $node. The prior existence of the link is not checked.
-
-=item my ($nodes_rf, $types_rf) = $node->get_aligned_nodes()
-
-Returns an array containing two array references. The first array contains the nodes aligned to this node, the second array contains types of the links.
-
-=item my @nodes = $node->get_aligned_nodes_of_type($regex_constraint_on_type)
-
-Returns a list of nodes aligned to the $node by the specified alignment type.
-
-=item $node->delete_aligned_node($target, $type)
-
-All alignments of the $target to $node are deleted, if their types equal $type.
-
-=item my $is_aligned = $node->is_aligned_to($target, $regex_constraint_on_type)
-
-Returns 1 if the nodes are aligned, 0 otherwise.
-
-=item $node->update_aligned_nodes()
-
-Removes all alignment links leading to nodes which have been deleted.
 
 =back
 
