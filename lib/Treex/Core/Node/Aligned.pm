@@ -6,14 +6,14 @@ use Moose::Role;
 use MooseX::SemiAffordanceAccessor;
 use Treex::Core::Common;
 
-my $DEFAULT_FILTER = { 
+use constant DEFAULT_FILTER => ( 
     directed => 1, 
-};
+);
 
 sub get_aligned_nodes {
     my ($self, $filter) = @_;
 
-    $filter //= { %{$self->default_filter} };
+    $filter //= { DEFAULT_FILTER };
     
     # retrieve aligned nodes and its types outcoming links
     
@@ -120,27 +120,6 @@ sub get_aligned_nodes_of_type {
 }
 
 #==============================================
-
-sub get_aligned_nodes_by_tree {
-    my ($self, $lang, $selector) = @_;
-    my @nodes = ();
-    my @types = ();
-    my $links_rf = $self->get_attr('alignment');
-    if ($links_rf) {
-        my $document = $self->get_document;
-        foreach my $l_rf (@{$links_rf}) {
-            if ($l_rf->{'counterpart.rf'} =~ /^(a|t)_tree-$lang(_$selector)?-.+$/) {
-                my $n = $document->get_node_by_id( $l_rf->{'counterpart.rf'} );
-                my $t = $l_rf->{'type'};
-                push @nodes, $n;
-                push @types, $t;
-            }
-        }
-        return ( \@nodes, \@types ) if     scalar(@nodes) > 0 ;    
-    }
-    return ( undef, undef );
-}
-
 
 sub is_aligned_to {
     my ( $self, $node, $type ) = @_;
@@ -264,7 +243,7 @@ Removes all alignment links leading to nodes which have been deleted.
 =item DEFAULT_FILTER
 
 A default filter is used, if no filter is specified for the methods that support it.
-By default: { directed => 1 }
+By default: ( directed => 1 )
 
 =back 
 

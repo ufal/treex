@@ -63,7 +63,11 @@ sub process_atree {
     		my @referring_nodes = $sn->get_referencing_nodes('alignment');
     		if (@referring_nodes) {
     			foreach my $rn (@referring_nodes) {
-    				my ($nodes_ref, $types_ref) = $rn->get_aligned_nodes_by_tree($src_language, $src_selector);
+    				my ($nodes_ref, $types_ref) = $rn->get_aligned_nodes({ 
+                        directed => 1, 
+                        language => $src_language, 
+                        selector => $src_selector
+                    });
     				if ($nodes_ref) {
 						my @aligning_nodes = @{$nodes_ref};
 						my @types = @{$types_ref};
