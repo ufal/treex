@@ -13,7 +13,10 @@ use constant DEFAULT_FILTER => (
 sub get_aligned_nodes {
     my ($self, $filter) = @_;
 
-    $filter //= { DEFAULT_FILTER };
+    $filter //= {};
+    $filter = { map {
+        $filter->{$_} // DEFAULT_FILTER{$_} 
+    } keys DEFAULT_FILTER };
     
     # retrieve aligned nodes and its types outcoming links
     
@@ -119,13 +122,14 @@ sub get_aligned_nodes_of_type {
     return @$ali_nodes;
 }
 
+sub is_aligned_to {
+    my ($node1, $node2, $filter) = @_;
+    my ($nodes, $types) = $node1->get_aligned_nodes($filter);
+    return any {$_ == $node2} @$nodes;
+}
+
 #==============================================
 
-sub is_aligned_to {
-    my ( $self, $node, $type ) = @_;
-    log_fatal 'Incorrect number of parameters' if @_ != 3;
-    return ((any { $_ eq $node } $self->get_aligned_nodes_of_type( $type )) ? 1 : 0);
-}
 
 sub delete_aligned_node {
     my ( $self, $node, $type ) = @_;
@@ -193,7 +197,8 @@ and links. The filter is a hash reference, with the following possible keys:
  
 C<language> - the language of the aligned nodes (e.g. C<en>)
 C<selector> - the selector of the aligned nodes (e.g. C<src>)
-C<directed> - return only the links originating from the C<$node> (possible values: C<0> and C<1>)
+C<directed> - return only the links originating from the C<$node> (possible values: C<0> and C<1>,
+by default equals to C<1>)
 C<rel_types> - filter the alignment types. The value of this parameter must be a reference to
 a list of regular expression strings. The expressions starting with the C<!> sign represent negative
 filters. The actual link type is compared to these regexps one after another, skipping the rest

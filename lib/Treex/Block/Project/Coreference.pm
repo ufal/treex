@@ -33,7 +33,7 @@ sub get_aligned {
     if ($is_src xor $self->alignment_direction eq 'trg2src'){
         @aligned = $node->get_aligned_nodes_of_type($self->alignment_type);
     } else {
-        @aligned = grep {$_->is_aligned_to($node, $self->alignment_type)}
+        @aligned = grep {$_->is_aligned_to($node, {rel_types => [$self->alignment_type]})}
                    $node->get_referencing_nodes('alignment');
     }
     return if !@aligned;

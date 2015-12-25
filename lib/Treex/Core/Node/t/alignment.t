@@ -28,8 +28,8 @@ cmp_ok(@$types_rf, '==', 1, 'orientation');
 is($nodes_rf->[0], $en_node, 'correct node');
 is($types_rf->[0], 'alignment', 'correct type');
 
-cmp_ok($cs_node->is_aligned_to($en_node, '.'), '==', 1, 'is aligned');
-cmp_ok($en_node->is_aligned_to($cs_node, '.'), '==', 0, 'is not aligned');
+cmp_ok($cs_node->is_aligned_to($en_node, {rel_types => ['.']}), '==', 1, 'is aligned');
+cmp_ok($en_node->is_aligned_to($cs_node, {rel_types => ['.']}), '==', 0, 'is not aligned');
 
 is(($cs_node->get_aligned_nodes_of_type('gn'))[0], $en_node, 'get_aligned_nodes_of_type');
 
@@ -39,11 +39,11 @@ cmp_ok(@$nodes_rf, '==', 2, 'duplicate');
 cmp_ok(@$types_rf, '==', 2, 'duplicate');
 
 $cs_node->delete_aligned_node($en_node, 'nonsense');
-cmp_ok($cs_node->is_aligned_to($en_node, '.'), '==', 1, 'not deleted');
+cmp_ok($cs_node->is_aligned_to($en_node, {rel_types => ['.']}), '==', 1, 'not deleted');
 
 $cs_node->add_aligned_node($en_node, 'relation');
 $cs_node->delete_aligned_node($en_node, 'alignment');
-cmp_ok($cs_node->is_aligned_to($en_node, 'alignment'), '==', 0, 'deleted');
-cmp_ok($cs_node->is_aligned_to($en_node, 'relation'), '==', 1, 'not deleted');
+cmp_ok($cs_node->is_aligned_to($en_node, {rel_types => ['alignment']}), '==', 0, 'deleted');
+cmp_ok($cs_node->is_aligned_to($en_node, {rel_types => ['relation']}), '==', 1, 'not deleted');
 
 done_testing;

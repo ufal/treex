@@ -13,20 +13,13 @@ my %SIEVES_HASH = (
     siblings => \&access_via_siblings,
 );
 
-sub are_aligned {
-    my ($node1, $node2, $filter) = @_;
-
-    my ($nodes, $types) = get_aligned_nodes_by_filter($node1, $filter);
-    return any {$_ == $node2} @$nodes;
-}
-
 sub remove_aligned_nodes_by_filter {
     my ($node, $filter) = @_;
 
     my ($nodes, $types) = get_aligned_nodes_by_filter($node, $filter);
     for (my $i = 0; $i < @$nodes; $i++) {
         log_debug "[Tool::Align::Utils::remove_aligned_nodes_by_filter]\tremoving: " . $types->[$i] . " " . $nodes->[$i]->id, 1;
-        if ($node->is_aligned_to($nodes->[$i], $types->[$i])) {
+        if ($node->is_aligned_to($nodes->[$i], {directed => 1, rel_types => ['^'.$types->[$i].'$']})) {
             $node->delete_aligned_node($nodes->[$i], $types->[$i]);
         }
         else {
@@ -46,7 +39,7 @@ sub add_aligned_node {
         $node1->add_aligned_node($node2, $type);
     }
 
-    #if ($node1->is_aligned_to($node2, $old_type)) {
+    #if ($node1->is_aligned_to($node2, {directed => 1, rel_types => ['^'.$old_type.'$']})) {
     #    $node1->delete_aligned_node($node2, $old_type);
     #    $node1->add_aligned_node($node2, "$old_type $type");
     #}

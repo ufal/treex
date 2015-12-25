@@ -64,7 +64,6 @@ sub process_atree {
     		if (@referring_nodes) {
     			foreach my $rn (@referring_nodes) {
     				my ($nodes_ref, $types_ref) = $rn->get_aligned_nodes({ 
-                        directed => 1, 
                         language => $src_language, 
                         selector => $src_selector
                     });
