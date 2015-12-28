@@ -2,7 +2,6 @@ package Treex::Tool::Coreference::Features::Aligned;
 
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::Align::Utils;
 #use Cache::MemoryCache;
 
 with 'Treex::Tool::Coreference::CorefFeatures';

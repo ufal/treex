@@ -3,7 +3,6 @@ package Treex::Tool::Align::Features;
 use Moose;
 use Treex::Core::Common;
 
-use Treex::Tool::Align::Utils;
 use Graph;
 use Treex::Tool::Lexicon::UniversalTagset;
 use Treex::Tool::Coreference::NodeFilter::PersPron;

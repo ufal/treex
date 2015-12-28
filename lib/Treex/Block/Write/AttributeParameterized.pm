@@ -4,7 +4,6 @@ use Moose::Role;
 use Moose::Util::TypeConstraints;
 use Treex::Core::Log;
 use Readonly;
-use Treex::Tool::Align::Utils;
 
 #
 # DATA
