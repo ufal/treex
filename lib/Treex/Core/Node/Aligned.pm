@@ -36,7 +36,7 @@ sub get_aligned_nodes {
     if (!$directed) {
         my @aligned_from = sort {$a->id cmp $b->id} $self->get_referencing_nodes('alignment');
         my %seen_ids = ();
-        my @aligned_from_types = map {get_alignment_types($_, $self)} grep {!$seen_ids{$_->id}++} @aligned_from;
+        my @aligned_from_types = map {$_->_get_alignment_types($self)} grep {!$seen_ids{$_->id}++} @aligned_from;
         #log_info "ALIFROM: " . Dumper(\@aligned_from_types);
         #log_info "ALIFROMIDS: " . (join ",", map {$_->id} @aligned_from);
         push @aligned, @aligned_from;
@@ -124,6 +124,31 @@ sub _get_direct_aligned_nodes {
     }
     return ( undef, undef );
 }
+
+sub _get_alignment_types {
+    my ($from, $to, $both_dir) = @_;
+
+    my @all_types;
+    my @types_idx;
+    
+    my ($nodes, $types) = $from->_get_direct_aligned_nodes();
+    if (defined $nodes) {
+        @types_idx = grep {$nodes->[$_] == $to} 0 .. scalar(@$nodes)-1;
+    }
+    push @all_types, @$types[@types_idx];
+    
+    # try the opposite link
+    if ($both_dir) {
+        ($nodes, $types) = $to->_get_direct_aligned_nodes();
+        if (defined $nodes) {
+            @types_idx = grep {$nodes->[$_] == $from} 0 .. scalar(@$nodes)-1;
+        }
+        push @all_types, @$types[@types_idx];
+    }
+    
+    return @all_types;
+}
+
 
 sub get_aligned_nodes_of_type {
     my ( $self, $type_regex, $lang, $selector ) = @_;

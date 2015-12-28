@@ -17,7 +17,8 @@ sub add_aligned_node {
     my ($node1, $node2, $type) = @_;
     #log_info "ALIGN ADD: " . $node2->id;
         
-    my @old_types = get_alignment_types($node1, $node2);
+    # TODO should not call a private method of a different class
+    my @old_types = $node1->_get_alignment_types($node2);
     my $type_defined = any {$_ eq $type} @old_types;
     if (!$type_defined) {
         #log_info "ADD_ALIGN: $type " . $node2->id;
@@ -32,30 +33,6 @@ sub add_aligned_node {
     #    $node2->delete_aligned_node($node1, $old_type);
     #    $node2->add_aligned_node($node1, "$old_type $type");
     #}
-}
-
-sub get_alignment_types {
-    my ($from, $to, $both_dir) = @_;
-
-    my @all_types;
-    my @types_idx;
-    
-    my ($nodes, $types) = $from->_get_direct_aligned_nodes();
-    if (defined $nodes) {
-        @types_idx = grep {$nodes->[$_] == $to} 0 .. scalar(@$nodes)-1;
-    }
-    push @all_types, @$types[@types_idx];
-    
-    # try the opposite link
-    if ($both_dir) {
-        ($nodes, $types) = $to->_get_direct_aligned_nodes();
-        if (defined $nodes) {
-            @types_idx = grep {$nodes->[$_] == $from} 0 .. scalar(@$nodes)-1;
-        }
-        push @all_types, @$types[@types_idx];
-    }
-    
-    return @all_types;
 }
 
 sub aligned_transitively {
