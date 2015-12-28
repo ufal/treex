@@ -6,13 +6,13 @@ use Moose::Role;
 use MooseX::SemiAffordanceAccessor;
 use Treex::Core::Common;
 
-sub _fill_default_filter_values {
+sub _set_directed_as_default {
     my ($filter) = @_;
     
     my $new_filter = $filter // {};
     if (!defined $new_filter->{directed}) {
-        log_warn "You called \$node->get_aligned_nodes(\$filter) without determining the \"directed\" parameter in the \$filter.
-            For the time being, it returns links only in the specified direction, but this will be changed soon."
+        log_warn "You called \$node->get_aligned_nodes(\$filter) without determining the \"directed\" parameter in the \$filter. "
+            . "For the time being, it returns links only in the specified direction, but this will be changed soon.";
         $new_filter->{directed} = 1;
     }
     return $new_filter;
