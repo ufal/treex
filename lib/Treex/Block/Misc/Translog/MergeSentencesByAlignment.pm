@@ -15,7 +15,7 @@ sub process_document {
         foreach my $da_node ($bundle->get_zone('da')->get_atree->get_descendants) {
 
             # find the first aligned node, and move all nodes to
-            my ($nodes_rf, $types_rf) = $da_node->get_aligned_nodes;
+            my ($nodes_rf, $types_rf) = $da_node->get_directed_aligned_nodes;
 
             if (defined $nodes_rf) {
                 my ($aligned_en_node) = @$nodes_rf;

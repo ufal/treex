@@ -10,7 +10,7 @@ sub process_tnode {
     my ($self, $tnode) = @_;
 
     my $id = $tnode->get_attr('val_frame.rf') or return;
-    my ($aligns, $types) = $tnode->get_aligned_nodes();
+    my ($aligns, $types) = $tnode->get_directed_aligned_nodes();
     return if !$aligns;
     my ($al_tnode) = @$aligns;
 

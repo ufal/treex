@@ -65,7 +65,7 @@ sub process_bundle {
     my %aligned_by_giza = ();
     if ($self->using_walign) {
         foreach my $cs_anode ( $czech_atree->get_children ) {
-            my ( $nodes, $types ) = $cs_anode->get_aligned_nodes();
+            my ( $nodes, $types ) = $cs_anode->get_directed_aligned_nodes();
             foreach my $i ( 0 .. $#$nodes ) {
                 $aligned_by_giza{$cs_anode}{$$nodes[$i]} = $$types[$i];
             }

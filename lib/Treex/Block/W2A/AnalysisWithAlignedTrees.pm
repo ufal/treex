@@ -61,7 +61,7 @@ sub _get_alignment_hash {
         }
     } else {
 
-        # Node->get_aligned_nodes() will be used directly
+        # Node->get_directed_aligned_nodes() will be used directly
         $alignment_hash = undef;
     }
 
@@ -70,14 +70,14 @@ sub _get_alignment_hash {
 
 # get the first node aligned to $node
 # with alignment of type set in $self->alignment_type
-# directly using $node->get_aligned_nodes()
+# directly using $node->get_directed_aligned_nodes()
 # (or return undef)
 sub _get_aligned_node {
     my ( $self, $node ) = @_;
 
     my $aligned_node = undef;
 
-    my ( $aligned_nodes, $types ) = $node->get_aligned_nodes();
+    my ( $aligned_nodes, $types ) = $node->get_directed_aligned_nodes();
     if ($aligned_nodes) {
 
         # try to find an aligned node with the right type of alignment

@@ -12,7 +12,7 @@ sub process_zone {
 	my $tree = $zone->get_tree($self->layer);
 	my @nodes = $tree->get_descendants({ordered=>1});
 	foreach my $n (@nodes) {
-		my ($aligned_nodes_ref, $types_ref) = $n->get_aligned_nodes();
+		my ($aligned_nodes_ref, $types_ref) = $n->get_directed_aligned_nodes();
 		if (defined $aligned_nodes_ref) {
 			my @aligned_nodes = @{$aligned_nodes_ref};	
 			map{$n->delete_aligned_node($_, $self->alignment_type)}@aligned_nodes;

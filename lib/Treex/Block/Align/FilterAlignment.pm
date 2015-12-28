@@ -19,7 +19,7 @@ sub process_zone {
     my @nodes = $zone->get_tree( $self->layer )->get_descendants( { ordered => 1 } );
 
     foreach my $a (@nodes) {
-        my ($bs, $types) = $a->get_aligned_nodes();
+        my ($bs, $types) = $a->get_directed_aligned_nodes();
         
         next if (!$bs);
         

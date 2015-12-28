@@ -48,7 +48,7 @@ sub process_start {
 
 sub process_tnode {
     my ( $self, $cs_tnode ) = @_;
-    my ($en_tnodes_rf, $ali_types_rf) = $cs_tnode->get_aligned_nodes();
+    my ($en_tnodes_rf, $ali_types_rf) = $cs_tnode->get_directed_aligned_nodes();
     for my $i (0 .. $#{$en_tnodes_rf}) {
         my $types = $ali_types_rf->[$i];
         if ($types =~ /int|tali/){

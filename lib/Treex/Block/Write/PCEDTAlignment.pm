@@ -10,7 +10,7 @@ has '+extension' => ( default => '.align' );
 
 sub process_tnode {
     my ( $self,     $tnode ) = @_;
-    my ( $cs_nodes, $types ) = $tnode->get_aligned_nodes();
+    my ( $cs_nodes, $types ) = $tnode->get_directed_aligned_nodes();
     return if !$$cs_nodes[0];
     my $cs_tnode = $$cs_nodes[0];
     return if !$tnode->get_lex_anode;

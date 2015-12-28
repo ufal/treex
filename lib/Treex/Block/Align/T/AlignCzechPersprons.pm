@@ -15,7 +15,7 @@ sub process_ttree {
         if ($t_node->is_generated) {
             my ($eparent) = $t_node->get_eparents;
             next if !$eparent;
-            my ($en_tnodes, $types) = $eparent->get_aligned_nodes;
+            my ($en_tnodes, $types) = $eparent->get_directed_aligned_nodes;
             my ($en_eparent) = map {$$en_tnodes[$_]} grep {$$types[$_] =~ /int/} (0 .. $#$en_tnodes);
             next if !$en_eparent;
             foreach my $en_child ($en_eparent->get_echildren) {
