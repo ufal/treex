@@ -98,14 +98,11 @@ sub _finalize_links {
     foreach my $from_id (sort keys %$links) {
         my $from_node = $bundle->get_document->get_node_by_id($from_id);
         if ($self->delete_orig_align) {
-            Treex::Tool::Align::Utils::remove_aligned_nodes_by_filter(
-                $from_node, 
-                {
-                    language => $self->_get_align_lang($from_node->language),
-                    selector => $self->selector, 
-                    rel_types => ['!gold','.*']
-                }
-            );
+            $from_node->delete_aligned_nodes_by_filter({
+                language => $self->_get_align_lang($from_node->language),
+                selector => $self->selector, 
+                rel_types => ['!gold','.*'],
+            });
         }
         foreach my $to_id (sort keys %{$links->{$from_id}}) {
             my $to_node = $bundle->get_document->get_node_by_id($to_id);

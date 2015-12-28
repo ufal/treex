@@ -165,7 +165,7 @@ sub delete_aligned_nodes_by_filter {
 
     my ($nodes, $types) = $node->get_aligned_nodes($filter);
     for (my $i = 0; $i < @$nodes; $i++) {
-        log_debug "[Tool::Align::Utils::remove_aligned_nodes_by_filter]\tremoving: " . $types->[$i] . " " . $nodes->[$i]->id, 1;
+        log_debug "[Core::Node::Aligned::delete_aligned_nodes_by_filter]\tremoving: " . $types->[$i] . " " . $nodes->[$i]->id, 1;
         if ($node->is_directed_aligned_to($nodes->[$i], {rel_types => ['^'.$types->[$i].'$']})) {
             $node->delete_aligned_node($nodes->[$i], $types->[$i]);
         }
@@ -272,7 +272,7 @@ specified by the filter C<$filter> (see more in the C<get_aligned_nodes> functio
 
 All alignments of the $target to $node are deleted, if their types equal $type.
 
-=item $node->remove_aligned_nodes_by_filter($filter)
+=item $node->delete_aligned_nodes_by_filter($filter)
 
 This deletes the alignment links pointing from/to the node C<$node>. Only the links satisfying
 the C<$filter> constraints are removed.
