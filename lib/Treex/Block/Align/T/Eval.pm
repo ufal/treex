@@ -5,8 +5,6 @@ use Treex::Core::Common;
 
 use List::MoreUtils qw/any/;
 
-use Treex::Tool::Align::Utils;
-
 extends 'Treex::Block::Write::BaseTextWriter';
 with 'Treex::Block::Filter::Node::T';
 
@@ -18,12 +16,18 @@ sub _process_node {
     my ($self, $node) = @_;
     
     # get true and predicted aligned nodes
-    my ($true_nodes, $true_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($node,
-        {language => $self->align_language, selector => $self->selector, rel_types => ['gold']});
+    my ($true_nodes, $true_types) = $node->get_undirected_aligned_nodes({
+        language => $self->align_language,
+        selector => $self->selector,
+        rel_types => ['gold'],
+    });
     log_debug "TRUE_TYPES: " . (join " ", @$true_types), 1;
     my @rel_types = split /,/, $self->align_reltypes;
-    my ($pred_nodes, $pred_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($node,
-        {language => $self->align_language, selector => $self->selector, rel_types => \@rel_types });
+    my ($pred_nodes, $pred_types) = $node->get_undirected_aligned_nodes({
+        language => $self->align_language,
+        selector => $self->selector,
+        rel_types => \@rel_types,
+    });
     log_debug "PRED_TYPES: " . (join " ", @$pred_types), 1;
    
     # get all candidates for alignment
@@ -103,7 +107,7 @@ A comma-separated list of the node types to be evaluated (see more in C<Treex::B
 =item align_reltypes
 
 The comma-separated list of types of alignment links to be evaluated. The format of the list must satisfy
-the format required by the C<rel_types> parameter in C<Treex::Tool::Align::Utils>.
+the format required by the C<rel_types> parameter in C<Treex::Core::Node::Aligned>.
 
 =item align_language
 

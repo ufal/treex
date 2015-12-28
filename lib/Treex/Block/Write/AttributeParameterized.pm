@@ -357,9 +357,9 @@ sub _get_referenced_nodes {
                 }
             }
 
-            # get alignment going in both directions, using Treex::Tool::Align::Utils 
+            # get alignment going in both directions 
             else {
-                my ( $aligned_nodes, $aligned_nodes_types ) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($node);
+                my ( $aligned_nodes, $aligned_nodes_types ) = $node->get_undirected_aligned_nodes();
                 if ($aligned_nodes) {
                     $self->_cache->{$ref}->{$node} = $aligned_nodes;
                 }

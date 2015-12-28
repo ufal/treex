@@ -170,7 +170,10 @@ sub _get_sent_graph {
     foreach my $node (@nodes) {
         $g->set_edge_attribute($node->id, $node->get_parent->id, "type", "parent");
         $g->set_edge_attribute($node->get_parent->id, $node->id, "type", "child");
-        my ($ali_nodes, $ali_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($node, { directed => 1, rel_types => $GIZA_ORIG_RULES_FILTER });
+        my ($ali_nodes, $ali_types) = $node->get_directed_aligned_nodes({
+            directed => 1,
+            rel_types => $GIZA_ORIG_RULES_FILTER
+        });
         foreach my $ali (@$ali_nodes) {
             $g->add_weighted_edge($node->id, $ali->id, 100);
             $g->add_weighted_edge($ali->id, $node->id, 100);
@@ -204,12 +207,19 @@ sub _get_subtree_aligns {
 
     my @ali_phrase_nodes = ();
     if ($type eq 'clause_head') {
-        my ($an, $at) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($par, {selector => $par->selector, rel_types => $GIZA_ORIG_RULES_FILTER });
+        my ($an, $at) = $par->get_undirected_aligned_nodes({
+            selector => $par->selector,
+            rel_types => $GIZA_ORIG_RULES_FILTER
+        });
         @ali_phrase_nodes = @$an;
     }
     else {
         @ali_phrase_nodes = map {
-            my ($an, $at) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($_, {selector => $_->selector, rel_types => $GIZA_ORIG_RULES_FILTER }); @$an
+            my ($an, $at) = $_->get_undirected_aligned_nodes({
+                selector => $_->selector,
+                rel_types => $GIZA_ORIG_RULES_FILTER,
+            });
+            @$an
         } $par->get_descendants();
     }
 

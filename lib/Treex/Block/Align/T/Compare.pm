@@ -5,8 +5,6 @@ use Treex::Core::Common;
 
 use Term::ANSIColor;
 
-use Treex::Tool::Align::Utils;
-
 extends 'Treex::Block::Write::BaseTextWriter';
 with 'Treex::Block::Filter::Node::T';
 
@@ -102,8 +100,8 @@ sub _linearize_subtree_recur {
 sub _process_node {
     my ($self, $l1_node) = @_;
     
-    my ($l2_true_nodes, $true_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($l1_node, $self->_true_align_filter);
-    my ($l2_pred_nodes, $pred_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($l1_node, $self->_pred_align_filter);
+    my ($l2_true_nodes, $true_types) = $l1_node->get_undirected_aligned_nodes($self->_true_align_filter);
+    my ($l2_pred_nodes, $pred_types) = $l1_node->get_undirected_aligned_nodes($self->_pred_align_filter);
 
     my %l2_true_ids = map {$_->id => 1} @$l2_true_nodes;
     my %l2_pred_ids = map {$_->id => 1} @$l2_pred_nodes;
@@ -195,7 +193,7 @@ A comma-separated list of the node types to be in focus (see more in C<Treex::Bl
 
 The comma-separated lists of types of alignment links to be compared.
 The format of the lists must satisfy the format required by the C<rel_types> 
-parameter in C<Treex::Tool::Align::Utils>.
+parameter in C<Treex::Core::Node::Aligned>.
 
 =back
 

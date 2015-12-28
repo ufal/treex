@@ -51,7 +51,7 @@ sub get_aligned_nodes {
         ($final_nodes, $final_types) = _node_filter_out($final_nodes, $final_types, $filter);
     }
   
-    log_debug "[Tool::Align::Utils::get_aligned_nodes_by_filter]\tfiltered: " . (join " ", @$final_types), 1;
+    log_debug "[Core::Node::Aligned::get_aligned_nodes]\tfiltered: " . (join " ", @$final_types), 1;
     return ($final_nodes, $final_types);
 }
 
