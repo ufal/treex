@@ -166,7 +166,7 @@ sub delete_aligned_nodes_by_filter {
     my ($nodes, $types) = $node->get_aligned_nodes($filter);
     for (my $i = 0; $i < @$nodes; $i++) {
         log_debug "[Tool::Align::Utils::remove_aligned_nodes_by_filter]\tremoving: " . $types->[$i] . " " . $nodes->[$i]->id, 1;
-        if ($node->is_aligned_to($nodes->[$i], {directed => 1, rel_types => ['^'.$types->[$i].'$']})) {
+        if ($node->is_directed_aligned_to($nodes->[$i], {rel_types => ['^'.$types->[$i].'$']})) {
             $node->delete_aligned_node($nodes->[$i], $types->[$i]);
         }
         else {

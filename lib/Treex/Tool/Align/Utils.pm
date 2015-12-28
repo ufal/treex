@@ -24,7 +24,7 @@ sub add_aligned_node {
         $node1->add_aligned_node($node2, $type);
     }
 
-    #if ($node1->is_aligned_to($node2, {directed => 1, rel_types => ['^'.$old_type.'$']})) {
+    #if ($node1->is_directed_aligned_to($node2, {rel_types => ['^'.$old_type.'$']})) {
     #    $node1->delete_aligned_node($node2, $old_type);
     #    $node1->add_aligned_node($node2, "$old_type $type");
     #}
