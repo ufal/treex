@@ -64,7 +64,7 @@ sub _csrefs_from_ensrc {
     my ($self, $ensrc) = @_;
     
     # moving to "en-ref" nodes via monolingual alignment
-    my @enrefs = grep {$_->is_aligned_to($ensrc, {rel_types => ['monolingual']})} $ensrc->get_referencing_nodes('alignment');
+    my @enrefs = grep {$_->is_directed_aligned_to($ensrc, {rel_types => ['monolingual']})} $ensrc->get_referencing_nodes('alignment');
     return [] if ( @enrefs == 0 );
     
     # getting all nodes aligned with the first "en-ref"
@@ -79,9 +79,9 @@ sub _csrefs_from_ensrc {
 sub _get_aligned_nodes_czeng {
     my ($self, $tnode) = @_;
 
-    my @t_cssrc = grep {!$_->is_aligned_to($tnode, {rel_types => ['monolingual']})} $tnode->get_referencing_nodes('alignment');
+    my @t_cssrc = grep {!$_->is_directed_aligned_to($tnode, {rel_types => ['monolingual']})} $tnode->get_referencing_nodes('alignment');
     my $anode = $tnode->get_lex_anode;
-    my @a_cssrc = grep {!$_->is_aligned_to($anode, {rel_types => ['monolingual']})} $anode->get_referencing_nodes('alignment');
+    my @a_cssrc = grep {!$_->is_directed_aligned_to($anode, {rel_types => ['monolingual']})} $anode->get_referencing_nodes('alignment');
     return (\@t_cssrc, \@a_cssrc);
 }
 
@@ -109,7 +109,7 @@ sub _get_gold_counterpart_tlemma {
     my ($self, $ensrc_it) = @_;
     
     my $a_ensrc_it = $ensrc_it->get_lex_anode;
-    my ($a_enref_it) = grep {$_->is_aligned_to($a_ensrc_it, {rel_types => ['monolingual']})} $a_ensrc_it->get_referencing_nodes('alignment');
+    my ($a_enref_it) = grep {$_->is_directed_aligned_to($a_ensrc_it, {rel_types => ['monolingual']})} $a_ensrc_it->get_referencing_nodes('alignment');
     return "__NO_A_ENREF__" if !$a_enref_it;
     my ($enref_it) = $a_enref_it->get_referencing_nodes('a/lex.rf');
     return "__NO_T_ENREF__" if !$enref_it;

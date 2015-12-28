@@ -381,7 +381,7 @@ sub node_release_hook {
         and
         $roots[0] != $roots[1] and $zones[0] != $zones[1]) {
 
-        if ($node->is_aligned_to($target, {rel_types => ['alignment']})) {
+        if ($node->is_directed_aligned_to($target, {rel_types => ['alignment']})) {
             $node->delete_aligned_node($target, 'alignment');
         } else {
             $node->add_aligned_node($target, 'alignment');

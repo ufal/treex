@@ -53,7 +53,7 @@ sub prune_many_to_one {
 	my ($self, $source_tree, $target_tree) = @_;
 	my @nodes = $target_tree->get_descendants( { ordered => 1 } );
 	foreach my $node (@nodes) {
-		my @referring_nodes = grep{ $_->is_aligned_to($node, {rel_types => ['^'.$self->alignment_type.'$']}) } $node->get_referencing_nodes('alignment');
+		my @referring_nodes = grep{ $_->is_directed_aligned_to($node, {rel_types => ['^'.$self->alignment_type.'$']}) } $node->get_referencing_nodes('alignment');
 		if (scalar(@referring_nodes) > 1) {
 			my @referring_nodes_sorted = sort {$a->ord <=> $b->ord}@referring_nodes;	
 			foreach my $i (0..($#referring_nodes_sorted-1)) {

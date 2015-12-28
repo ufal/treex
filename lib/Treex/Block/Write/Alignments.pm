@@ -34,7 +34,7 @@ sub process_zone {
     }
     else {
     	foreach my $sn (@source_nodes) {
-    		my @trg_nodes = grep {$_->is_aligned_to($sn, {rel_types => ['^'.$self->alignment_type.'$']})} $sn->get_referencing_nodes('alignment', $self->language, $self->selector);
+    		my @trg_nodes = grep {$_->is_directed_aligned_to($sn, {rel_types => ['^'.$self->alignment_type.'$']})} $sn->get_referencing_nodes('alignment', $self->language, $self->selector);
     		if (@trg_nodes) {
     			map{push @alignments, ($sn->ord-1) . '-' . ($_->ord-1) }@trg_nodes;
     		}
