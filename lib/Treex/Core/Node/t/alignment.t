@@ -14,8 +14,8 @@ my $cs_root = $cs_zone->create_ttree;
 my $en_node = $en_root->create_child;
 my $cs_node = $cs_root->create_child;
 
-cmp_ok($en_node->get_aligned_nodes // 0, '==', 0, 'no alignment');
-cmp_ok($cs_node->get_aligned_nodes // 0, '==', 0, 'no alignment');
+is_deeply([$en_node->get_aligned_nodes], [[], []], 'no alignment');
+is_deeply([$cs_node->get_aligned_nodes], [[], []], 'no alignment');
 
 $cs_node->add_aligned_node($en_node, 'alignment');
 
