@@ -63,7 +63,7 @@ sub process_atree {
     		my @referring_nodes = $sn->get_referencing_nodes('alignment');
     		if (@referring_nodes) {
     			foreach my $rn (@referring_nodes) {
-    				my ($nodes_ref, $types_ref) = $rn->get_aligned_nodes({ 
+    				my ($nodes_ref, $types_ref) = $rn->get_directed_aligned_nodes({ 
                         language => $src_language, 
                         selector => $src_selector
                     });
@@ -78,7 +78,7 @@ sub process_atree {
     	}    	
     	# replicate outgoing alignments (if any) in 'source_selector' to 'to_selector'
     	foreach my $i (0..$#src_nodes) {
-    		my ($nodes_ref, $types_ref) = $src_nodes[$i]->get_aligned_nodes();
+    		my ($nodes_ref, $types_ref) = $src_nodes[$i]->get_directed_aligned_nodes();
     		if ($nodes_ref) {
 				my @aligned_nodes = @{$nodes_ref};
 				my @types = @{$types_ref};
