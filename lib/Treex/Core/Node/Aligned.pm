@@ -132,13 +132,26 @@ sub get_aligned_nodes_of_type {
         log_warn "Note that a alignment type regex starting with ! has a special meaning.";
     }
 
-    my ($ali_nodes) = $self->get_aligned_nodes({ 
-        directed => 1, 
+    my ($ali_nodes) = $self->get_directed_aligned_nodes({ 
         language => $lang,
         selector => $selector,
         rel_types => [ $type_regex ],
     });
     return @$ali_nodes;
+}
+
+sub is_undirected_aligned_to {
+    my ($node1, $node2, $filter) = @_;
+    $filter //= {};
+    $filter->{directed} = 0;
+    return $node1->is_aligned_to($node2, $filter);
+}
+
+sub is_directed_aligned_to {
+    my ($node1, $node2, $filter) = @_;
+    $filter //= {};
+    $filter->{directed} = 1;
+    return $node1->is_aligned_to($node2, $filter);
 }
 
 sub is_aligned_to {
