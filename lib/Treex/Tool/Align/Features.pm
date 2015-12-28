@@ -84,13 +84,13 @@ sub _add_align_features {
 
     # all alignmnets excpt for the gold one projected from "ref"
     # TODO: do not project gold annotation to "src" => clearer solution
-    my $nodes_aligned = Treex::Tool::Align::Utils::are_aligned($node1, $node2, { rel_types => $GIZA_ORIG_RULES_FILTER });
+    my $nodes_aligned = $node1->is_undirected_aligned_to($node2, { rel_types => $GIZA_ORIG_RULES_FILTER });
     $feats->{giza_aligned} = $nodes_aligned ? 1 : 0;
 
 
     my ($par1) = $node1->get_eparents({or_topological => 1});
     my ($par2) = $node2->get_eparents({or_topological => 1});
-    my $par_aligned = Treex::Tool::Align::Utils::are_aligned($par1, $par2, { rel_types => $GIZA_ORIG_RULES_FILTER });
+    my $par_aligned = $par1->is_undirected_aligned_to($par2, { rel_types => $GIZA_ORIG_RULES_FILTER });
     $feats->{par_aligned} = $par_aligned ? 1 : 0;
 
     $feats->{subtree_aligned_all} = $self->subtree_alignment($node1, $node2, 'all') ? 1 : 0;
