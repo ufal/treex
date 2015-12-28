@@ -65,7 +65,7 @@ sub aligned_transitively {
 
     my $filter;
     foreach my $filter (@$filters) {
-        @level_aligned = map {my ($n, $t) = get_aligned_nodes_by_filter($_, $filter); @$n;} @level_aligned;
+        @level_aligned = map {my ($n, $t) = $_->get_undirected_aligned_nodes($filter); @$n;} @level_aligned;
     }
     return @level_aligned;
 }
@@ -149,12 +149,6 @@ Treex::Tool::Align::Utils
 
  use Treex::Tool::Align::Utils;
 
- my ($ali_nodes, $ali_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter(
-    $tnode,
-    { language => 'en', selector => 'src', rel_types => ['!gold','!supervised','.*'] }
- );
- 
- 
 =head1 DESCRIPTION
 
 Even though word-alignment is considered to be non-directional, Treex natively represents
