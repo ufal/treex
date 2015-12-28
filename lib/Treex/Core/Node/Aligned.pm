@@ -252,12 +252,25 @@ rule. For instance, C<['^a$','^b$']> returns only links of type C<a> or C<b>. On
 C<['!^a$','!^b$','.*']> returns everything except for C<a> and C<b>. The filter C<['!^ab.*','^a.*']>
 accepts only the types starting with C<a>, except for those starting with C<ab>.
 
-For the time being, if the parameter C<directed> in the C<filter> is not specified,
-C<directed = 0> is the default.
+For the time being, C<directed = 1> is the default if it is not specified in the filter. However,
+this will probably change soon, so you had better use C<get_directed_aligned_nodes> for this purpose,
+or specify the C<directed> parameter, explicitly.
 
 Both returned list references -- C<$ali_nodes> and C<$ali_types>, are always defined. If the
 C<$node> has no alignment link that satisfies the filter constraints, a reference to an empty
 list is returned.
+
+=item ($ali_nodes, $ali_types) = $node->get_undirected_aligned_nodes($filter)
+
+Return counterparts of the links in both the specified and opposite direction.
+It calls C<get_aligned_nodes> with C<directed> equal to 0.
+
+=item ($ali_nodes, $ali_types) = $node->get_directed_aligned_nodes($filter)
+
+Return only counterparts of the links in the specified direction.
+Calls C<get_aligned_nodes> with C<directed> equal to 1.
+With undefined C<filter>, it corresponds to the original version of the
+C<get_aligned_nodes> method.
 
 =item my @nodes = $node->get_aligned_nodes_of_type($regex_constraint_on_type)
 
@@ -267,6 +280,17 @@ Returns a list of nodes aligned to the $node by the specified alignment type.
 
 An indicator function of whether the nodes C<$node1> and C<$node2> are aligned under the conditions
 specified by the filter C<$filter> (see more in the C<get_aligned_nodes> function description).
+For the time being, C<directed = 1> is the default if it is not specified in the filter. However,
+this will probably change soon, so you had better use C<is_directed_aligned_to> for this purpose,
+or specify the C<directed> parameter, explicitly.
+
+=item my $is_aligned = $node1->is_undirected_aligned_to($node2, $filter)
+
+The same as C<is_aligned_to>, accepting links in both the specified and the opposite direction.
+
+=item my $is_aligned = $node1->is_directed_aligned_to($node2, $filter)
+
+The same as C<is_aligned_to>, accepting links only in the specified direction.
 
 =item $node->delete_aligned_node($target, $type)
 
@@ -276,8 +300,7 @@ All alignments of the $target to $node are deleted, if their types equal $type.
 
 This deletes the alignment links pointing from/to the node C<$node>. Only the links satisfying
 the C<$filter> constraints are removed.
-For the time being, if the parameter C<directed> in the C<filter> is not specified, 
-C<directed = 0> is the default.
+If the parameter C<directed> in the C<filter> is not specified, C<directed = 0> is the default.
 
 =item $node->add_aligned_node($target, $type)
 
