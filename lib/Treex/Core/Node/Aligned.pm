@@ -6,28 +6,35 @@ use Moose::Role;
 use MooseX::SemiAffordanceAccessor;
 use Treex::Core::Common;
 
-use constant DEFAULT_FILTER => ( 
-    directed => 1, 
-);
-
 sub _fill_default_filter_values {
     my ($filter) = @_;
     
     my $new_filter = $filter // {};
-    my %default_filter = DEFAULT_FILTER;
-
-    foreach my $key (keys %default_filter) {
-        if (!defined $filter->{$key}) {
-            $new_filter->{$key} = $default_filter{$key};
-        }
+    if (!defined $new_filter->{directed}) {
+        $new_filter->{directed} = 1;
     }
     return $new_filter;
+}
+
+sub get_undirected_aligned_nodes {
+    my ($self, $filter) = @_;
+    $filter //= {};
+    $filter->{directed} = 0;
+
+    return $self->get_aligned_nodes($filter);
+}
+
+sub get_directed_aligned_nodes {
+    $filter //= {};
+    $filter->{directed} = 1;
+
+    return $self->get_aligned_nodes($filter);
 }
 
 sub get_aligned_nodes {
     my ($self, $filter) = @_;
 
-    $filter = _fill_default_filter_values($filter); 
+    $filter = _set_directed_as_default($filter); 
     # retrieve aligned nodes and its types outcoming links
     
     my ($aligned_to, $aligned_to_types) = $self->_get_direct_aligned_nodes();
@@ -229,7 +236,8 @@ rule. For instance, C<['^a$','^b$']> returns only links of type C<a> or C<b>. On
 C<['!^a$','!^b$','.*']> returns everything except for C<a> and C<b>. The filter C<['!^ab.*','^a.*']>
 accepts only the types starting with C<a>, except for those starting with C<ab>.
 
-If no filter is specified, a default filter C<DEFAULT_FILTER> is used.
+For the time being, if the parameter C<directed> in the C<filter> is not specified,
+C<directed = 0> is the default.
 
 Both returned list references -- C<$ali_nodes> and C<$ali_types>, are always defined. If the
 C<$node> has no alignment link that satisfies the filter constraints, a reference to an empty
@@ -252,7 +260,8 @@ All alignments of the $target to $node are deleted, if their types equal $type.
 
 This deletes the alignment links pointing from/to the node C<$node>. Only the links satisfying
 the C<$filter> constraints are removed.
-If no filter specified, the C<DEFAULT_FILTER> is used.
+For the time being, if the parameter C<directed> in the C<filter> is not specified, 
+C<directed = 0> is the default.
 
 =item $node->add_aligned_node($target, $type)
 
@@ -264,23 +273,12 @@ Removes all alignment links leading to nodes which have been deleted.
 
 =back
 
-=head1 CONSTANTS
-
-=over
-
-=item DEFAULT_FILTER
-
-A default filter is used, if no filter is specified for the methods that support it.
-By default: ( directed => 1 )
-
-=back 
-
 =head1 AUTHOR
 
-Martin Popel <popel@ufal.mff.cuni.cz>
+Michal Novák <mnovak@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
