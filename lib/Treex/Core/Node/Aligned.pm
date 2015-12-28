@@ -93,7 +93,6 @@ sub _edge_filter_out {
     return ([@$nodes[@idx]], [@$types[@idx]]);
 }
 
-#sub get_aligned_nodes {
 sub _get_direct_aligned_nodes {
     my ($self) = @_;
     my $links_rf = $self->get_attr('alignment');
@@ -128,8 +127,20 @@ sub is_aligned_to {
     return any {$_ == $node2} @$nodes;
 }
 
-#==============================================
+sub delete_aligned_nodes_by_filter {
+    my ($node, $filter) = @_;
 
+    my ($nodes, $types) = $node->get_aligned_nodes($filter);
+    for (my $i = 0; $i < @$nodes; $i++) {
+        log_debug "[Tool::Align::Utils::remove_aligned_nodes_by_filter]\tremoving: " . $types->[$i] . " " . $nodes->[$i]->id, 1;
+        if ($node->is_aligned_to($nodes->[$i], {directed => 1, rel_types => ['^'.$types->[$i].'$']})) {
+            $node->delete_aligned_node($nodes->[$i], $types->[$i]);
+        }
+        else {
+            $nodes->[$i]->delete_aligned_node($node, $types->[$i]);
+        }
+    }
+}
 
 sub delete_aligned_node {
     my ( $self, $node, $type ) = @_;
@@ -214,26 +225,28 @@ Both returned list references -- C<$ali_nodes> and C<$ali_types>, are always def
 C<$node> has no alignment link that satisfies the filter constraints, a reference to an empty
 list is returned.
 
-
-=item $node->add_aligned_node($target, $type)
-
-Aligns $target node to $node. The prior existence of the link is not checked.
-
-=item my ($nodes_rf, $types_rf) = $node->get_aligned_nodes()
-
-Returns an array containing two array references. The first array contains the nodes aligned to this node, the second array contains types of the links.
-
 =item my @nodes = $node->get_aligned_nodes_of_type($regex_constraint_on_type)
 
 Returns a list of nodes aligned to the $node by the specified alignment type.
+
+=item my $is_aligned = $node1->is_aligned_to($node2, $filter)
+
+An indicator function of whether the nodes C<$node1> and C<$node2> are aligned under the conditions
+specified by the filter C<$filter> (see more in the C<get_aligned_nodes> function description).
 
 =item $node->delete_aligned_node($target, $type)
 
 All alignments of the $target to $node are deleted, if their types equal $type.
 
-=item my $is_aligned = $node->is_aligned_to($target, $regex_constraint_on_type)
+=item $node->remove_aligned_nodes_by_filter($filter)
 
-Returns 1 if the nodes are aligned, 0 otherwise.
+This deletes the alignment links pointing from/to the node C<$node>. Only the links satisfying
+the C<$filter> constraints are removed.
+If no filter specified, the C<DEFAULT_FILTER> is used.
+
+=item $node->add_aligned_node($target, $type)
+
+Aligns $target node to $node. The prior existence of the link is not checked.
 
 =item $node->update_aligned_nodes()
 

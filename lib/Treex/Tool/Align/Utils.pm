@@ -13,21 +13,6 @@ my %SIEVES_HASH = (
     siblings => \&access_via_siblings,
 );
 
-sub remove_aligned_nodes_by_filter {
-    my ($node, $filter) = @_;
-
-    my ($nodes, $types) = get_aligned_nodes_by_filter($node, $filter);
-    for (my $i = 0; $i < @$nodes; $i++) {
-        log_debug "[Tool::Align::Utils::remove_aligned_nodes_by_filter]\tremoving: " . $types->[$i] . " " . $nodes->[$i]->id, 1;
-        if ($node->is_aligned_to($nodes->[$i], {directed => 1, rel_types => ['^'.$types->[$i].'$']})) {
-            $node->delete_aligned_node($nodes->[$i], $types->[$i]);
-        }
-        else {
-            $nodes->[$i]->delete_aligned_node($node, $types->[$i]);
-        }
-    }
-}
-
 sub add_aligned_node {
     my ($node1, $node2, $type) = @_;
     #log_info "ALIGN ADD: " . $node2->id;
@@ -180,16 +165,6 @@ of alignment links in the particular document.
 =head1 FUNCTIONS
 
 =over
-
-=item $bool = are_aligned($node1, $node2, $filter)
-
-An indicator function of whether the nodes C<$node1> and C<$node2> are aligned under the conditions
-specified by the filter C<$filter> (see more in the C<get_aligned_nodes_by_filter> function description).
-
-=item remove_aligned_nodes_by_filter($node, $filter)
-
-This deletes the alignment links pointing from/to the node C<$node>. Only the links satisfying
-the C<$filter> constraints are removed.
 
 =back
 
