@@ -10,14 +10,24 @@ use constant DEFAULT_FILTER => (
     directed => 1, 
 );
 
+sub _fill_default_filter_values {
+    my ($filter) = @_;
+    
+    my $new_filter = $filter // {};
+    my %default_filter = DEFAULT_FILTER;
+
+    foreach my $key (keys %default_filter) {
+        if (!defined $filter->{$key}) {
+            $new_filter->{$key} = $default_filter{$key};
+        }
+    }
+    return $new_filter;
+}
+
 sub get_aligned_nodes {
     my ($self, $filter) = @_;
 
-    $filter //= {};
-    $filter = { map {
-        $filter->{$_} // DEFAULT_FILTER{$_} 
-    } keys DEFAULT_FILTER };
-    
+    $filter = _fill_default_filter_values($filter); 
     # retrieve aligned nodes and its types outcoming links
     
     my ($aligned_to, $aligned_to_types) = $self->_get_direct_aligned_nodes();
