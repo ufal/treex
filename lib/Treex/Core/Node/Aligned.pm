@@ -18,22 +18,6 @@ sub _set_directed_as_default {
     return $new_filter;
 }
 
-sub get_undirected_aligned_nodes {
-    my ($self, $filter) = @_;
-    $filter //= {};
-    $filter->{directed} = 0;
-
-    return $self->get_aligned_nodes($filter);
-}
-
-sub get_directed_aligned_nodes {
-    my ($self, $filter) = @_;
-    $filter //= {};
-    $filter->{directed} = 1;
-
-    return $self->get_aligned_nodes($filter);
-}
-
 sub get_aligned_nodes {
     my ($self, $filter) = @_;
 
@@ -69,6 +53,22 @@ sub get_aligned_nodes {
   
     log_debug "[Tool::Align::Utils::get_aligned_nodes_by_filter]\tfiltered: " . (join " ", @$final_types), 1;
     return ($final_nodes, $final_types);
+}
+
+sub get_undirected_aligned_nodes {
+    my ($self, $filter) = @_;
+    $filter //= {};
+    $filter->{directed} = 0;
+
+    return $self->get_aligned_nodes($filter);
+}
+
+sub get_directed_aligned_nodes {
+    my ($self, $filter) = @_;
+    $filter //= {};
+    $filter->{directed} = 1;
+
+    return $self->get_aligned_nodes($filter);
 }
 
 sub _node_filter_out {
@@ -140,6 +140,12 @@ sub get_aligned_nodes_of_type {
     return @$ali_nodes;
 }
 
+sub is_aligned_to {
+    my ($node1, $node2, $filter) = @_;
+    my ($nodes, $types) = $node1->get_aligned_nodes($filter);
+    return any {$_ == $node2} @$nodes;
+}
+
 sub is_undirected_aligned_to {
     my ($node1, $node2, $filter) = @_;
     $filter //= {};
@@ -152,12 +158,6 @@ sub is_directed_aligned_to {
     $filter //= {};
     $filter->{directed} = 1;
     return $node1->is_aligned_to($node2, $filter);
-}
-
-sub is_aligned_to {
-    my ($node1, $node2, $filter) = @_;
-    my ($nodes, $types) = $node1->get_aligned_nodes($filter);
-    return any {$_ == $node2} @$nodes;
 }
 
 sub delete_aligned_nodes_by_filter {
