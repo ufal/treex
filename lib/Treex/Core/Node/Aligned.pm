@@ -27,6 +27,7 @@ sub get_undirected_aligned_nodes {
 }
 
 sub get_directed_aligned_nodes {
+    my ($self, $filter) = @_;
     $filter //= {};
     $filter->{directed} = 1;
 
