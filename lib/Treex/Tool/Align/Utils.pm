@@ -108,12 +108,6 @@ sub access_via_siblings {
     return @aligned_sibs;
 }
 
-sub print_nodes {
-    my (@nodes) = @_;
-    my @addresses = map {$_->get_address} @nodes;
-    print STDERR Dumper(\@addresses);
-}
-
 1;
 
 __END__
