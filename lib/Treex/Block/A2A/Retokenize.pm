@@ -31,7 +31,7 @@ sub process_anode {
         # (otherwise simply return)
         
         my $aroot = $anode->get_root();
-        my ($aligned_nodes_rf, $aligned_types_rf) = $anode->get_aligned_nodes();
+        my ($aligned_nodes_rf, $aligned_types_rf) = $anode->get_directed_aligned_nodes();
     
         my $new_node;
         my @unaligned_nodes;

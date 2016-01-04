@@ -42,7 +42,9 @@ sub delete_alignment_links {
 		my @src_nodes = $src_root->get_descendants({ordered=>1});
 		foreach my $i (0..$#src_nodes) {
 			if ($self->alignment_direction eq 'trg2src') {
-				my @referring_nodes = grep {$_->is_aligned_to($src_nodes[$i], '^' . $self->alignment_type . '$')} $src_nodes[$i]->get_referencing_nodes('alignment', $self->language, $self->selector);	
+				my @referring_nodes = grep {
+                    $_->is_directed_aligned_to($src_nodes[$i], { rel_types => ['^'.$self->alignment_type.'$']})
+                } $src_nodes[$i]->get_referencing_nodes('alignment', $self->language, $self->selector);	
 				if (@referring_nodes) {
 					# delete alignments for some English function words that do not have 
 					# translation equivalents

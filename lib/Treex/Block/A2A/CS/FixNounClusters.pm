@@ -31,7 +31,7 @@ sub fix {
         )
     {
 
-        my ($nodes) = $en_gov->get_aligned_nodes();
+        my ($nodes) = $en_gov->get_directed_aligned_nodes();
         if ( !$nodes || !@$nodes ) { return; }
 
         my $cs_gov = $nodes->[0];

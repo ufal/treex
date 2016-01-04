@@ -15,11 +15,11 @@ sub process_bundle {
     for my $zone ($bundle->get_all_zones) {
         my $atree = $zone->get_atree;
         for my $node ($zone->get_atree->get_descendants) {
-            my ($nodes, $types) = $node->get_aligned_nodes;
+            my ($nodes, $types) = $node->get_directed_aligned_nodes;
             next unless $nodes;
             my $following = $node->get_next_node;
             next unless $following;
-            my ($f_nodes, $f_types) = $following->get_aligned_nodes;
+            my ($f_nodes, $f_types) = $following->get_directed_aligned_nodes;
             next unless $f_nodes;
 
             my ($align1, $align2);

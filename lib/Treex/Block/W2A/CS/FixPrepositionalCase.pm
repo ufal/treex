@@ -135,9 +135,9 @@ sub _get_possible_cases {
 #sub _log_application {
 #    my ( $caption, $case, $word, $prep ) = @_;
 #
-#    my ($gold_word) = $word->get_aligned_nodes();
+#    my ($gold_word) = $word->get_directed_aligned_nodes();
 #    $gold_word = $gold_word->[0];
-#    my ($gold_prep) = $prep->get_aligned_nodes();
+#    my ($gold_prep) = $prep->get_directed_aligned_nodes();
 #    $gold_prep = $gold_prep->[0];
 #
 #    log_warn( join( "\t", ( $caption, $case, $word->tag, $gold_word->tag, $prep->tag, $gold_prep->tag, _log_sent( [ $word, $prep ] ) ) ) );

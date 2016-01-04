@@ -6,7 +6,7 @@ extends 'Treex::Core::Block';
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
-    my ($aligned) = $tnode->get_aligned_nodes();
+    my ($aligned) = $tnode->get_directed_aligned_nodes();
 
     if ($aligned) {
         foreach my $source ( @{$aligned} ) {

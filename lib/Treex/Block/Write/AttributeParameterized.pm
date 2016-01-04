@@ -356,9 +356,9 @@ sub _get_referenced_nodes {
                 }
             }
 
-            # get alignment from $node->get_aligned_nodes()
+            # get alignment going in both directions 
             else {
-                my ( $aligned_nodes, $aligned_nodes_types ) = $node->get_aligned_nodes();
+                my ( $aligned_nodes, $aligned_nodes_types ) = $node->get_undirected_aligned_nodes();
                 if ($aligned_nodes) {
                     $self->_cache->{$ref}->{$node} = $aligned_nodes;
                 }

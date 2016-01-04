@@ -20,7 +20,7 @@ sub process_zone {
     my @nodes = $zone->get_tree( $self->layer )->get_descendants( { ordered => 1 } );
 
     foreach my $x (@nodes) {
-		my ( $n_rf, $t_rf ) = $x->get_aligned_nodes();
+		my ( $n_rf, $t_rf ) = $x->get_directed_aligned_nodes();
         if ($self->reverse_align_type and $t_rf) {
             my $iterator = List::MoreUtils::each_arrayref( $n_rf, $t_rf );
             while ( my ( $y, $type ) = $iterator->() ) {

@@ -667,7 +667,7 @@ sub process_bundle {
             my @alignments = ();
             foreach my $node1 ( sort { $a->get_attr('ord') <=> $b->get_attr('ord') } $tree1->get_descendants ) {
                 my $ord1    = $node1->get_attr('ord') - 1;
-                my ($nodes2, $types) = $node1->get_aligned_nodes();
+                my ($nodes2, $types) = $node1->get_directed_aligned_nodes();
                 next if ! defined $nodes2;
                 for(my $i=0; $i<scalar(@$nodes2); $i++) {
 #                 foreach my $node2 (keys %$counterparts_and_type) {

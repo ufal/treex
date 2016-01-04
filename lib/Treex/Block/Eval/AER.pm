@@ -37,14 +37,14 @@ sub process_atree {
 		my @target_nodes;
 		my @gold_nodes;
 		if ($self->target_alignment_direction eq 'trg2src') {
-			@target_nodes = grep {$_->is_aligned_to($node, '^' . $self->target_alignment_type . '$')} $node->get_referencing_nodes('alignment', $self->target_language, $self->target_selector);
+			@target_nodes = grep {$_->is_directed_aligned_to($node, {rel_types => ['^'.$self->target_alignment_type.'$']})} $node->get_referencing_nodes('alignment', $self->target_language, $self->target_selector);
 		}
 		else {
 			@target_nodes = $node->get_aligned_nodes_of_type('^' . $self->target_alignment_type . '$', $self->target_language, $self->target_selector);			
 		}
 		
 		if ($self->gold_alignment_direction eq 'trg2src') {
-			@gold_nodes = grep {$_->is_aligned_to($node, '^' . $self->gold_alignment_type . '$')} $node->get_referencing_nodes('alignment', $self->target_language, $self->gold_selector);
+			@gold_nodes = grep {$_->is_directed_aligned_to($node, {rel_types => ['^'.$self->gold_alignment_type.'$']})} $node->get_referencing_nodes('alignment', $self->target_language, $self->gold_selector);
 		}
 		else {
 			@gold_nodes = $node->get_aligned_nodes_of_type('^' . $self->gold_alignment_type . '$', $self->target_language, $self->gold_selector);

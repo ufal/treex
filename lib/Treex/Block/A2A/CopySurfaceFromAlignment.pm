@@ -23,7 +23,7 @@ sub _get_aligned_node {
 
     my ( $anode ) = @_;
 
-    my ($aligned) = $anode->get_aligned_nodes();
+    my ($aligned) = $anode->get_directed_aligned_nodes();
 
     if ($aligned) {
         return $aligned->[0];

@@ -39,7 +39,7 @@ sub _process_tree() {
         $alignment_hash = {};
         my $aligned_root = $tree->get_bundle->get_tree( $self->alignment_language, $self->layer, $self->alignment_selector );
         foreach my $aligned_node ( $aligned_root->get_descendants ) {
-            my ( $nodes, $types ) = $aligned_node->get_aligned_nodes();
+            my ( $nodes, $types ) = $aligned_node->get_directed_aligned_nodes();
 	    if ($nodes) {
 		for (my $i = 0; $i < @{$nodes}; $i++) {
 		    my $node = $nodes->[$i];
@@ -58,7 +58,7 @@ sub _process_tree() {
         }
     }
 
-    # else: Node->get_aligned_nodes() will be used directly
+    # else: Node->get_directed_aligned_nodes() will be used directly
 
     # nodes of a sentence, each node consisting of several attributes
     print { $self->_file_handle } join $self->separator,
@@ -143,7 +143,7 @@ Default value of 1 means that the alignment information is stored in the nodes
 of C<alignment_language> and a reverse mapping is to be computed.
 Value of 0 means that alignment info is stored in the nodes of C<language>
 and nothing has to be precomputed:
-L<Treex::Core::Node/get_aligned_nodes> can be used directly.
+L<Treex::Core::Node/get_directed_aligned_nodes> can be used directly.
 
 =item C<attributes>
 

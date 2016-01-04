@@ -51,7 +51,7 @@ sub process_ttree {
     foreach my $tnode ( $troot->get_descendants ) {
         my $anode = $tnode->get_lex_anode;
         next if not $anode;
-        my ( $nodes, $types ) = $anode->get_aligned_nodes();
+        my ( $nodes, $types ) = $anode->get_directed_aligned_nodes();
         foreach my $i ( 0 .. $#$nodes ) {
             next if (keys %{$self->align_type} && !$self->align_type->{$types->[$i]});
             my $to_tnode = $a2t{ $$nodes[$i] } || next;

@@ -23,7 +23,7 @@ sub process_zone {
             @src_nodes = $node->get_aligned_nodes_of_type($self->alignment_type);
             
         } else {
-            @src_nodes = grep {$_->is_aligned_to($node, $self->alignment_type)}
+            @src_nodes = grep {$_->is_directed_aligned_to($node, {rel_types => [$self->alignment_type]})}
                          $node->get_referencing_nodes('alignment');
         }
 

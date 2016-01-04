@@ -3,7 +3,6 @@ package Treex::Tool::Align::Features;
 use Moose;
 use Treex::Core::Common;
 
-use Treex::Tool::Align::Utils;
 use Graph;
 use Treex::Tool::Lexicon::UniversalTagset;
 use Treex::Tool::Coreference::NodeFilter::PersPron;
@@ -84,13 +83,13 @@ sub _add_align_features {
 
     # all alignmnets excpt for the gold one projected from "ref"
     # TODO: do not project gold annotation to "src" => clearer solution
-    my $nodes_aligned = Treex::Tool::Align::Utils::are_aligned($node1, $node2, { rel_types => $GIZA_ORIG_RULES_FILTER });
+    my $nodes_aligned = $node1->is_undirected_aligned_to($node2, { rel_types => $GIZA_ORIG_RULES_FILTER });
     $feats->{giza_aligned} = $nodes_aligned ? 1 : 0;
 
 
     my ($par1) = $node1->get_eparents({or_topological => 1});
     my ($par2) = $node2->get_eparents({or_topological => 1});
-    my $par_aligned = Treex::Tool::Align::Utils::are_aligned($par1, $par2, { rel_types => $GIZA_ORIG_RULES_FILTER });
+    my $par_aligned = $par1->is_undirected_aligned_to($par2, { rel_types => $GIZA_ORIG_RULES_FILTER });
     $feats->{par_aligned} = $par_aligned ? 1 : 0;
 
     $feats->{subtree_aligned_all} = $self->subtree_alignment($node1, $node2, 'all') ? 1 : 0;
@@ -170,7 +169,10 @@ sub _get_sent_graph {
     foreach my $node (@nodes) {
         $g->set_edge_attribute($node->id, $node->get_parent->id, "type", "parent");
         $g->set_edge_attribute($node->get_parent->id, $node->id, "type", "child");
-        my ($ali_nodes, $ali_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($node, { directed => 1, rel_types => $GIZA_ORIG_RULES_FILTER });
+        my ($ali_nodes, $ali_types) = $node->get_directed_aligned_nodes({
+            directed => 1,
+            rel_types => $GIZA_ORIG_RULES_FILTER
+        });
         foreach my $ali (@$ali_nodes) {
             $g->add_weighted_edge($node->id, $ali->id, 100);
             $g->add_weighted_edge($ali->id, $node->id, 100);
@@ -204,12 +206,19 @@ sub _get_subtree_aligns {
 
     my @ali_phrase_nodes = ();
     if ($type eq 'clause_head') {
-        my ($an, $at) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($par, {selector => $par->selector, rel_types => $GIZA_ORIG_RULES_FILTER });
+        my ($an, $at) = $par->get_undirected_aligned_nodes({
+            selector => $par->selector,
+            rel_types => $GIZA_ORIG_RULES_FILTER
+        });
         @ali_phrase_nodes = @$an;
     }
     else {
         @ali_phrase_nodes = map {
-            my ($an, $at) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($_, {selector => $_->selector, rel_types => $GIZA_ORIG_RULES_FILTER }); @$an
+            my ($an, $at) = $_->get_undirected_aligned_nodes({
+                selector => $_->selector,
+                rel_types => $GIZA_ORIG_RULES_FILTER,
+            });
+            @$an
         } $par->get_descendants();
     }
 
