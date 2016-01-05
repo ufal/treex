@@ -1,14 +1,15 @@
 package Treex::Block::T2T::EN2PT::TurnVerbLemmaToAdjectives;
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::LXSuite;
+
 extends 'Treex::Core::Block';
 
-use Treex::Tool::Lexicon::Generation::PT::ClientLXSuite;
-use Treex::Tool::LXSuite::LXConjugator;
-use Treex::Tool::LXSuite::LXInflector;
+has lxsuite => ( is => 'ro', isa => 'Treex::Tool::LXSuite', default => sub { return Treex::Tool::LXSuite->new; }, required => 1, lazy => 0 );
 
-has [qw( _conjugator _inflector )] => ( is => 'rw' );
-
+sub _build_lxsuite {
+    return Treex::Tool::LXSuite->new();
+}
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
@@ -20,7 +21,7 @@ sub process_tnode {
         my $person = "g";
         my $number = "s";
 
-        my $response = $self->_conjugator->conjugate($lemma, $form, $person, $number);
+        my $response = $self->lxsuite->conjugate($lemma, $form, $person, $number);
         
         $response =~ /([^\/]+)\/?/;
 
@@ -34,12 +35,6 @@ sub process_tnode {
     }
 
     return;
-}
-
-sub BUILD {
-    my $self = shift;
-    $self->_set_conjugator(Treex::Tool::LXSuite::LXConjugator->new());
-    $self->_set_inflector(Treex::Tool::LXSuite::LXInflector->new());
 }
 
 1;
