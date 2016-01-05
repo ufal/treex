@@ -12,9 +12,8 @@ use Treex::Tool::Coreference::Features::Container;
 use Treex::Tool::Coreference::Features::Aligned;
 
 has '+model_path' => (
-#    default => 'data/models/coreference/EN/perceptron/text.perspron.analysed',
-    # $CZENG_COREF/tmp/ml/run_2014-10-24_14-04-16/001.8f801ad5b1.featset/001.134ca.mlmethod/model/train_00-18.pcedt_bi.en.analysed.ali-sup.vw.ranking.model
-    default => 'data/models/coreference/EN/vowpal_wabbit/perspron_3rd.mono_all.analysed.model',
+    # $CZENG_COREF/tmp/ml/run_2015-04-04_12-44-16_9036.testing_on_English/001.8f801ad5b1.featset/001.134ca.mlmethod/model/train_00-18.pcedt_bi.en.analysed.ali-sup.vw.ranking.model
+    default => 'data/models/coreference/EN/vowpal_wabbit/2015-04-04.perspron_3rd.mono_all.analysed.model',
 );
 has 'aligned_feats' => ( is => 'ro', isa => 'Bool', default => 0 );
 
@@ -57,7 +56,7 @@ override '_build_ante_cands_selector' => sub {
     my $acs = Treex::Tool::Coreference::NounAnteCandsGetter->new({
         prev_sents_num => 1,
         anaphor_as_candidate => $self->anaphor_as_candidate,
-#        cands_within_czeng_blocks => 1,
+        cands_within_czeng_blocks => 1,
         max_size => 100,
     });
     return $acs;

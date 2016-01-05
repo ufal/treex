@@ -222,7 +222,7 @@ my $total_sum = 0;
 
 sub get_aligned_node {
     my ( $t_node ) = @_;
-    my ($aligned, $types) = $t_node->get_aligned_nodes;
+    my ($aligned, $types) = $t_node->get_directed_aligned_nodes;
     return ( $aligned->[0] ) ? $aligned->[0] : "";
 }
 

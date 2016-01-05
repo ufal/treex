@@ -11,8 +11,7 @@ has iset_driver =>
     required      => 1,
     default       => 'ar::padt',
     documentation => 'Which interset driver should be used to decode tags in this treebank? '.
-                     'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
-                     'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
+                     'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
 
@@ -117,6 +116,15 @@ sub deprel_to_afun
             }
             ###!!! TODO: Explore the rest!
             # Some of them will also act as Neg or AuxV, e.g. لَيسَ (laysa) is negation but it is also a verb ("be not").
+            # See also https://en.wiktionary.org/wiki/%D9%84%D9%8A%D8%B3
+            # Note that "laysa" is usually analyzed as copula and there is a Pnom child. But in a handful of cases
+            # it is attached to a following preposition as AuxM. Here I believe that "laysa" should still be copula
+            # and the prepositional phrase should be the nominal predicate.
+            elsif ( $node->form() eq 'لَيسَ' )
+            {
+                # The structure will be transformed later.
+                $afun = 'Cop';
+            }
             else
             {
                 $afun = 'AuxV';
@@ -169,6 +177,82 @@ sub fix_annotation_errors
         $nodes[0]->set_afun('Coord');
         $nodes[1]->set_parent($nodes[0]);
         $nodes[2]->set_afun('ExD');
+    }
+    # This must also be solved before the parent block applies any of its transformations.
+    # If the landscape is changed, we will no longer recognize the context for laysa.
+    $self->fix_laysa($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Arabic  لَيسَ (laysa) is a negative copula ("be not"). In many cases it is
+# attached as copula and it has a child attached as Pnom. In a few cases where
+# the nominal predicate was expressed as a prepositional phrase, the copula was
+# attached as AuxM to the preposition. We have temporarily changed the label to
+# Cop. This method will make the dependency structure parallel to other nominal
+# predicates.
+#------------------------------------------------------------------------------
+sub fix_laysa
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $form = $node->form();
+        my $afun = $node->afun();
+        if($afun eq 'Cop')
+        {
+            # We have not assigned the Cop label to any other node than "laysa".
+            # But other tree transformations may have caused that the label ended up elsewhere.
+            # We cannot keep it so we will replace it by AuxV, which the verb would get otherwise.
+            ###!!! TODO: This should be investigated further! This solution is probably incorrect!
+            $node->set_afun('AuxV');
+            if($form eq 'لَيسَ')
+            {
+                my $laysa = $node;
+                # In all cases that I have seen the parent was a preposition. Sometimes it was a coordination member at the same time.
+                # However, there may be other cases that I have not seen because they did not violate the particular test that I used.
+                my $preposition = $node->parent();
+                if($preposition->is_adposition())
+                {
+                    my $parent = $preposition->parent();
+                    $laysa->set_parent($parent);
+                    if($preposition->is_member())
+                    {
+                        $laysa->set_is_member(1);
+                        $preposition->set_is_member(0);
+                    }
+                    $preposition->set_parent($laysa);
+                    # Sometimes the preposition has more than one child besides laysa. The non-argument children are AuxY or AuxE (AuxE would now be replaced by AuxZ).
+                    my @children = $preposition->children();
+                    my @arguments = grep {$_->afun() !~ m/^Aux[EYZ]$/} (@children);
+                    unless(scalar(@arguments) == 1)
+                    {
+                        log_warn("No or too many arguments");
+                        next;
+                    }
+                    my $argument = $arguments[0];
+                    # Only the argument must be attached to the preposition. All other children must be attached to the argument.
+                    foreach my $child (@children)
+                    {
+                        unless($child == $argument)
+                        {
+                            $child->set_parent($argument);
+                        }
+                    }
+                    # Swap dependency relations.
+                    $afun = $argument->afun();
+                    $laysa->set_afun($afun) unless($afun eq 'Cop');
+                    $argument->set_afun('Pnom');
+                }
+                else
+                {
+                    log_warn("Expected preposition");
+                }
+            }
+        }
     }
 }
 

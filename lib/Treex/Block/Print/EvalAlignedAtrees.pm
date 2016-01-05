@@ -17,13 +17,13 @@ my $err_nodes = 0;
 sub process_anode {
     my ( $self, $node, $bundleNo ) = @_;
     $all_nodes++;
-    my ($n) = $node->get_aligned_nodes;
+    my ($n) = $node->get_directed_aligned_nodes;
     log_fatal 'Node ' . $node->get_address . ' has no aligned nodes' if !$n;
     my ($a) = @$n;
     return if $node->get_parent->is_root && $a->get_parent->is_root;
     return $self->report_error( $node, $bundleNo ) if $node->get_parent->is_root || $a->get_parent->is_root;
 
-    my ($pn) = $node->get_parent->get_aligned_nodes;
+    my ($pn) = $node->get_parent->get_directed_aligned_nodes;
     return $self->report_error( $node, $bundleNo ) if !$pn;
     my ($pa) = @$pn;
     return $self->report_error( $node, $bundleNo ) if $a->parent != $pa;

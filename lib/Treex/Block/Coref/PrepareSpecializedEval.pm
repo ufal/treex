@@ -6,6 +6,7 @@ use 5.010;    # operator //
 
 use Treex::Tool::Coreference::NodeFilter::PersPron;
 use Treex::Tool::Coreference::NodeFilter::RelPron;
+use Treex::Tool::Coreference::Utils;
 
 use List::MoreUtils qw/all/;
 
@@ -15,7 +16,7 @@ extends 'Treex::Core::Block';
 
 has '+selector' => (default => 'ref');
 has 'response_selector' => ( is => 'ro', isa => 'Str', default => 'src' );
-has 'category' => ( is => 'ro', isa => enum([qw/text gram centrpron zero relpron/]), default => 'text');
+has 'category' => ( is => 'ro', isa => enum([qw/text gram perspron.all posspron.all centrpron zero relpron/]), default => 'text');
 
 my $MONO_ALIGN_FILTER = {rel_types => ['monolingual']};
 
@@ -132,6 +133,18 @@ sub _is_in_category {
     elsif ($category eq "gram") {
         my @antes = $tnode->get_coref_gram_nodes;
         return (@antes > 0);
+    }
+    elsif ($category =~ /^perspron\.all/) {
+        my $anode = $tnode->get_lex_anode;
+        my $is = defined $anode && ($anode->tag eq 'PRP');
+        print STDERR "PERS: ".$anode->form. ":" . $tnode->id . "\n" if $is;
+        return $is;
+    }
+    elsif ($category =~ /^posspron\.all/) {
+        my $anode = $tnode->get_lex_anode;
+        my $is = defined $anode && ($anode->tag eq 'PRP$');
+        print STDERR "POSS: ".$anode->form. ":" . $tnode->id . "\n" if $is;
+        return $is;
     }
     elsif ($category =~ /^centrpron/) {
         return Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($tnode, {expressed => 1});

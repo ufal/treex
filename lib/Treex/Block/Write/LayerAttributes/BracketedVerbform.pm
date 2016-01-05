@@ -16,7 +16,7 @@ sub modify_single {
     return '' if ( ( $tnode->gram_sempos || '' ) ne 'v' );
 
     if ( $self->use_aligned_golden ) {
-        my ($aligned) = $tnode->get_aligned_nodes();
+        my ($aligned) = $tnode->get_directed_aligned_nodes();
         $aligned = first { ( $_->gram_sempos || '' ) eq 'v' } @{$aligned};
         if ($aligned) {
             $tnode = $aligned;

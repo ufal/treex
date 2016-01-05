@@ -215,7 +215,8 @@ override 'process_document' => sub {
     # For some reason the scenario->runner was not defined in some cases, so
     # we test it too
     # Dusan Varis 2014
-    $self->_close_file_handle() if ($self->scenario->runner && $self->scenario->runner->jobindex);
+    # Also $self->scenario may not be defined if the writer is instantiated directly from Perl.
+    $self->_close_file_handle() if $self->scenario && $self->scenario->runner && $self->scenario->runner->jobindex;
     # or if $self->scenario->runner->isa("Treex::Core::Parallel::Node")?
 
     return;

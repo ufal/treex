@@ -226,7 +226,7 @@ sub precompute_alignment {
     foreach my $document (@$documents_rf) {
         foreach my $bundle ($document->get_bundles) {
             foreach my $node ($bundle->get_tree($self->language, 'a', $self->selector)->get_descendants) {
-                my ($nodes, $types) = $node->get_aligned_nodes();
+                my ($nodes, $types) = $node->get_directed_aligned_nodes();
                 foreach my $i (0 .. $#$nodes) {
                     if ($$types[$i] =~ /int/) {
                         $self->_alignment->{$node} = $$nodes[$i];

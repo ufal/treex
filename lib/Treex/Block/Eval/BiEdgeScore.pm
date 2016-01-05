@@ -18,7 +18,7 @@ sub process_atree {
     my @nodes = $root->get_descendants( { ordered => 1 } );
     my %alignment;
 	foreach my $node (@nodes) {
-        my ($alinodes, $alitypes) = $node->get_aligned_nodes;
+        my ($alinodes, $alitypes) = $node->get_directed_aligned_nodes;
         foreach my $i (0 .. $#$alinodes) {
             if ($$alitypes[$i] =~ /int/) {
                 $alignment{$node} = $$alinodes[$i];

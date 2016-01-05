@@ -101,8 +101,8 @@ sub project_subtree {
 		my @trg_nodes;
 		if ( $self->alignment_direction eq 'trg2src' ) {
 			@trg_nodes = grep {
-				$_->is_aligned_to( $src_node,
-					'^' . $self->alignment_type . '$' )
+				$_->is_directed_aligned_to( $src_node,
+					{rel_types => ['^'.$self->alignment_type.'$']} )
 			  } $src_node->get_referencing_nodes( 'alignment', $self->language,
 				$self->selector );
 		}

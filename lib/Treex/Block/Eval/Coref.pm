@@ -92,7 +92,7 @@ sub _get_corresponding_node {
 
     my $src_node = $ref_node->src_tnode;
     if (!defined $src_node) {
-        my ($aligned, $types) = $ref_node->get_aligned_nodes;
+        my ($aligned, $types) = $ref_node->get_directed_aligned_nodes;
         $src_node = $aligned->[0];
         if (@$aligned > 1) {
             print STDERR "MORE THAN ONE ALIGNED NODE: ". $ref_node->id. " -> " .(join ", ", (map {$_->id} @$aligned)). "\n";

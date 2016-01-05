@@ -26,7 +26,7 @@ sub process_bundle {
 
     # sort counterparts for each node from 'int' through 'gdfa' to 'right'
     foreach my $node ( $source_root->get_descendants( { ordered => 1 } ) ) {
-        my ( $nodes, $types ) = $node->get_aligned_nodes();
+        my ( $nodes, $types ) = $node->get_directed_aligned_nodes();
         foreach my $i ( ( 0 .. $#$nodes ) ) {
             if ( $$types[$i] =~ /int/ && !defined $linked_to{ $$nodes[$i] } ) {
                 push @{ $counterparts[ $node->ord ] }, $$nodes[$i];
@@ -35,7 +35,7 @@ sub process_bundle {
         }
     }
     foreach my $node ( $source_root->get_descendants( { ordered => 1 } ) ) {
-        my ( $nodes, $types ) = $node->get_aligned_nodes();
+        my ( $nodes, $types ) = $node->get_directed_aligned_nodes();
         foreach my $i ( ( 0 .. $#$nodes ) ) {
             if ( $$types[$i] =~ /gdfa/ && $$types[$i] =~ /right/ && $$types[$i] !~ /int/ && !defined $linked_to{ $$nodes[$i] } ) {
                 push @{ $counterparts[ $node->ord ] }, $$nodes[$i];
@@ -44,7 +44,7 @@ sub process_bundle {
         }
     }
     foreach my $node ( $source_root->get_descendants( { ordered => 1 } ) ) {
-        my ( $nodes, $types ) = $node->get_aligned_nodes();
+        my ( $nodes, $types ) = $node->get_directed_aligned_nodes();
         foreach my $i ( ( 0 .. $#$nodes ) ) {
             if ( $$types[$i] =~ /right/ && $$types[$i] !~ /gdfa/ && !defined $linked_to{ $$nodes[$i] } ) {
                 push @{ $counterparts[ $node->ord ] }, $$nodes[$i];

@@ -9,7 +9,7 @@ has '+return_values_names' => ( default => sub { [''] } );
 sub modify_single {
 
     my ( $self, $anode ) = @_;
-    my ( $aligned_nodes ) = $anode->get_aligned_nodes();
+    my ( $aligned_nodes ) = $anode->get_directed_aligned_nodes();
     return '' if (!$aligned_nodes); # TODO return form of current node?
     
     my $aligned_node = shift @$aligned_nodes;

@@ -21,7 +21,7 @@ my %total;
 
 sub process_anode {
     my ($self, $anode) = @_;
-    my ($nodes, $types) = $anode->get_aligned_nodes;
+    my ($nodes, $types) = $anode->get_directed_aligned_nodes;
     my $anode2 = $nodes->[0];
     if ($anode2) {
         return if $anode->lemma ne $anode2->lemma;
