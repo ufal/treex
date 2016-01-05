@@ -21,6 +21,8 @@ has '_bart_read' => ( is => 'rw', isa => 'Maybe[FileHandle]');
 has '_bart_write' => ( is => 'rw', isa => 'Maybe[FileHandle]');
 has '_bart_pid' => ( is => 'rw', isa => 'Maybe[Int]');
 
+# TODO: dispose of the absolute paths for the deployment
+
 my $BART_CMD = <<'CMD';
 _term() { 
     #ps -o pid,comm,start --ppid $$ >&2;
@@ -64,6 +66,7 @@ sub _init_bart {
         log_warn "BART 2 should be run on Java version 1.7.*. You are using the version $java_version. BART could not work properly. You can change it by modifying the enviroment variable JAVA_HOME in your ~/.bashrc."
     }
     
+    # TODO: dispose of the absolute paths for the deployment
     my $cp = join ":", map {'/net/cluster/TMP/mnovak/tools/BART-2.0/' . $_} ("BART2_eclipse/BART.jar", "libs2/*");
 
     my $command = sprintf $BART_CMD, $dir, $java_cmd, $cp;
