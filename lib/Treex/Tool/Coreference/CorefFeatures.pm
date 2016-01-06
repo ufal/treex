@@ -1,165 +1,25 @@
 package Treex::Tool::Coreference::CorefFeatures;
 
-use Moose::Role;
-use Moose::Util::TypeConstraints;
+use Moose;
+#use Moose::Util::TypeConstraints;
 use Treex::Core::Common;
 
-#has 'feature_names' => (
-#    is          => 'ro',
-#    required    => 1,
-#    isa         => 'ArrayRef[Str]',
-#    lazy        => 1,
-#    builder     => '_build_feature_names',
-#);
+with 'Treex::Tool::ML::Ranker::Features';
 
-#has 'format' => (
-#    is          => 'ro',
-#    required    => 1,
-#    isa         => enum([qw/percep unsup/]),
-#    default     => 'percep',
-#);
-
-#requires '_build_feature_names';
-
-requires '_unary_features';
-requires '_binary_features';
+has '+node1_label' => ( default => 'anaph' );
+has '+node2_label' => ( default => 'cand' );
 
 my $b_true = '1';
 my $b_false = '-1';
 
-my $SELF_LABEL = "__SELF__";
-
-#sub anaph_feature_names {
-#    my ($self) = @_;
-#    my @names = grep {$_ =~ /anaph/} @{$self->feature_names};
-#    return \@names;
-#}
-#sub nonanaph_feature_names {
-#    my ($self) = @_;
-#    my @names = grep {$_ !~ /anaph/} @{$self->feature_names};
-#    return \@names;
-#}
-#
-#sub extract_anaph_features {
-#    my ($self, $anaph) = @_;
-#    return $self->_unary_features( $anaph, 'anaph' );
-#}
-
-#sub extract_nonanaph_features {
-#    my ($self, $anaph_features, $anaph, $cand, $candord) = @_;
-#    
-#    my $cand_features = $self->_unary_features( $cand, 'cand' );
-#    my $unary_features = {%$anaph_features, %$cand_features};
-#    my $binary_features = $self->_binary_features( 
-#        $unary_features, $anaph, $cand, $candord );
-#
-#    return {%$cand_features, %$binary_features};
-#}
-
-sub feat_hash_to_sparse_list {
-    my ($hash) = @_;
-    my @list = map {
-        my $key = $_;
-        if (ref($hash->{$key}) eq "ARRAY") {
-            map {[$key, $_]} @{$hash->{$key}};
-        }
-        else {
-            [$key, $hash->{$key}];
-        }
-    } sort keys %$hash;
-    @list = grep {defined $_->[1]} @list;
-    return \@list;
+sub _unary_features {
+    log_warn 'Treex::Tool::Coreference::CorefFeatures is an abstract class. The _unary_features method must be implemented in a subclass.';
+}
+sub _binary_features {
+    log_warn 'Treex::Tool::Coreference::CorefFeatures is an abstract class. The _binary_features method must be implemented in a subclass.';
 }
 
-sub create_instances {
-    my ($self, $anaph, $ante_cands) = @_;
-    
-    my $anaph_unary_h = $self->_unary_features( $anaph, 'anaph' );
-    my $anaph_unary_l = feat_hash_to_sparse_list($anaph_unary_h);
-
-    my @cand_feats = ();
-    my $ord = 1;
-    foreach my $cand (@$ante_cands) {
-        if ($cand != $anaph) {
-            my $cand_unary_h = $self->_unary_features( $cand, 'cand' );
-            # TODO for convenience we merge the two hashes into a single one => should be passed separately
-            my $both_unary_h = {%$cand_unary_h, %$anaph_unary_h};
-            my $cand_binary_h = $self->_binary_features( $both_unary_h, $anaph, $cand, $ord);
-            my $cand_unary_l = feat_hash_to_sparse_list($cand_unary_h);
-            my $cand_binary_l = feat_hash_to_sparse_list($cand_binary_h);
-            push @cand_feats, [@$cand_unary_l, @$cand_binary_l];
-        }
-        # pushing empty instance for the anaphor as candidate (it is entirely described by shared features)
-        else {
-            push @cand_feats, [[$SELF_LABEL,1]];
-        }
-        $ord++;
-    }
-
-    return [\@cand_feats, $anaph_unary_l];
-
-
-#    if ($self->format eq 'unsup') {
-#        return $self->_create_instances(
-#            $anaph, $ante_cands, $ords
-#        );
-#    }
-#    else {
-#        return $self->_create_joint_instances(
-#            $anaph, $ante_cands, $ords
-#        );
-#    }
-}
-
-#sub _create_joint_instances {
-#    my ($self, $anaph, $ante_cands, $ords) = @_;
-#
-#    my $instances = 
-#        $self->_create_instances( $anaph, $ante_cands, $ords );
-#    my $joint_instances = $instances->{'cands'};
-#
-#    foreach my $cand_id (keys %{$joint_instances}) {
-#        $joint_instances->{$cand_id} = {
-#            %{$joint_instances->{$cand_id}},
-#            %{$instances->{'anaph'}},
-#        };
-#    }
-#    return $joint_instances;
-#}
-
-#sub _create_instances {
-#    my ( $self, $anaph, $ante_cands, $ords ) = @_;
-#
-#    if (!defined $ords) {
-#        my @antes_only_cands = grep { $_ != $anaph } @$ante_cands;
-#        $ords = [ 0 .. @antes_only_cands-1 ];
-#    }
-#
-#    my $anaph_instance = $self->extract_anaph_features( $anaph );
-#
-#    my $cand_instances;
-#    #print STDERR "ANTE_CANDS: " . @$ante_cands . "\n";
-#    foreach my $cand (@$ante_cands) {
-#    
-#        my $features = $anaph_instance;
-#        if ($cand == $anaph) {
-#            $features = {};
-#        }
-#        else {
-#            my $ord = shift @$ords;
-#            $features = $self->extract_nonanaph_features( 
-#                $features, $anaph, $cand, $ord );
-#        }
-#
-#        $cand_instances->{ $cand->id } = $features;
-#    }
-#
-#    my $instances = {
-#        anaph => $anaph_instance,
-#        cands => $cand_instances,
-#    };
-#    return $instances;
-#}
+# TODO: if not necessary for the other types, move the following methods to Coreference::PronCorefFeatures
 
 sub init_doc_features {
     my ($self, $doc, $lang, $sel) = @_;
@@ -223,6 +83,8 @@ sub mark_doc_clause_nums {
         $curr_clause_num += $clause_count;
     }
 }
+
+# TODO: move the following methods to Treex::Tool::ML::Ranker::Features and refactor
 
 # quantization
 # takes an array of numbers, which corresponds to the boundary values of
