@@ -2,10 +2,10 @@ package Treex::Block::Align::T::Supervised::Base;
 
 use Moose::Role;
 
-use Treex::Tool::Align::FeaturesRole;
+use Treex::Tool::ML::Ranker::Features;
 use Treex::Tool::Align::Features;
 
-has '_feat_extractor' => (is => 'ro', isa => 'Treex::Tool::Align::FeaturesRole', builder => '_build_feat_extractor');
+has '_feat_extractor' => (is => 'ro', isa => 'Treex::Tool::ML::Ranker::Features', builder => '_build_feat_extractor');
 
 sub _build_feat_extractor {
     my ($self) = @_;
