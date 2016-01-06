@@ -1,4 +1,4 @@
-package Treex::Tool::Align::FeaturesRole;
+package Treex::Tool::ML::Ranker::Features;
 
 use Moose::Role;
 use Moose::Util::TypeConstraints;

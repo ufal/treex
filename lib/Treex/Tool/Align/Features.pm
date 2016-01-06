@@ -9,7 +9,7 @@ use Treex::Tool::Coreference::NodeFilter::PersPron;
 use Treex::Tool::Lexicon::CS;
 use List::MoreUtils qw/uniq/;
 
-with 'Treex::Tool::Align::FeaturesRole';
+with 'Treex::Tool::ML::Ranker::Features';
 
 has '_sent_graphs' => ( is => 'rw', isa => 'HashRef', default => sub {{}});
 has '_subtree_aligns' => ( is => 'rw', isa => 'HashRef', default => sub {{}});
