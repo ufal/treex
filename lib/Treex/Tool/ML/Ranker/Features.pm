@@ -102,7 +102,7 @@ sub create_instances {
             my $cand_unary_h = $self->_unary_features_prefixed( $cand, $self->node2_label );
             # TODO for convenience we merge the two hashes into a single one => should be passed separately
             my $both_unary_h = {%$cand_unary_h, %$node1_unary_h};
-            my $cand_binary_h = $self->_binary_features( $both_unary_h, $node1, $cand );
+            my $cand_binary_h = $self->_binary_features( $both_unary_h, $node1, $cand, $ord );
             my $cand_unary_l = feat_hash_to_sparse_list($cand_unary_h);
             my $cand_binary_l = feat_hash_to_sparse_list($cand_binary_h);
             push @cand_feats, [@$cand_unary_l, @$cand_binary_l];

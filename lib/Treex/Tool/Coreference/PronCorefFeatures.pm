@@ -3,7 +3,7 @@ package Treex::Tool::Coreference::PronCorefFeatures;
 use Moose;
 use Treex::Core::Common;
 
-with 'Treex::Tool::Coreference::CorefFeatures';
+extends 'Treex::Tool::Coreference::CorefFeatures';
 
 my $b_true = '1';
 my $b_false = '-1';
@@ -30,7 +30,7 @@ sub _anaph_loc_buck {
     return _categorize( $anaph->ord, [0, 3, 5, 9] );
 }
 
-sub _binary_features {
+override '_binary_features' => sub {
     my ($self, $set_features, $anaph, $cand, $candord) = @_;
 
     my $coref_features = {};
@@ -131,9 +131,9 @@ sub _binary_features {
     $coref_features->{b_sibl} = _are_siblings( $cand, $anaph );
 
     return $coref_features;
-}
+};
 
-sub _unary_features {
+override '_unary_features' => sub {
     my ($self, $node, $type) = @_;
 
     my $coref_features = {};
@@ -186,7 +186,7 @@ sub _unary_features {
     $coref_features->{'c_'.$type.'_tfa'}  = $node->tfa;
     
     return $coref_features;
-}
+};
 
 # returns if $inode and $jnode have the same eparent
 sub _are_siblings {
