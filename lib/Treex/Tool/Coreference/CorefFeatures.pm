@@ -90,7 +90,7 @@ sub mark_doc_clause_nums {
 # takes an array of numbers, which corresponds to the boundary values of
 # clusters
 sub _categorize {
-    my ( $real, $bins_rf ) = @_;
+    my ( $self, $real, $bins_rf ) = @_;
     my $retval = "-inf";
     for (@$bins_rf) {
         $retval = $_ if $real >= $_;

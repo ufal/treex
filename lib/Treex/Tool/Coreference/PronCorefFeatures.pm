@@ -22,12 +22,12 @@ sub _ante_loc_buck {
     if ($sent_dist == 0) {
         $pos = $anaph->ord - $cand->ord;
     }
-    return _categorize( $pos, [0, 3, 5, 9, 17, 33] );
+    return $self->_categorize( $pos, [0, 3, 5, 9, 17, 33] );
 }
 
 sub _anaph_loc_buck {
     my ($self, $anaph) = @_;
-    return _categorize( $anaph->ord, [0, 3, 5, 9] );
+    return $self->_categorize( $anaph->ord, [0, 3, 5, 9] );
 }
 
 override '_binary_features' => sub {
@@ -40,15 +40,15 @@ override '_binary_features' => sub {
     #   4x num: sentence distance, clause distance, file deepord distance, candidate's order
     $coref_features->{c_sent_dist} =
         $anaph->get_bundle->get_position - $cand->get_bundle->get_position;
-    $coref_features->{c_clause_dist} = _categorize(
+    $coref_features->{c_clause_dist} = $self->_categorize(
         $anaph->wild->{aca_clausenum} - $cand->wild->{aca_clausenum}, 
         [-2, -1, 0, 1, 2, 3, 7]
     );
-    $coref_features->{c_file_deepord_dist} = _categorize(
+    $coref_features->{c_file_deepord_dist} = $self->_categorize(
         $anaph->wild->{doc_ord} - $cand->wild->{doc_ord},
         [1, 2, 3, 6, 15, 25, 40, 50]
     );
-    $coref_features->{c_cand_ord} = _categorize(
+    $coref_features->{c_cand_ord} = $self->_categorize(
         $candord,
         [1, 2, 3, 5, 8, 11, 17, 22]
     );
@@ -144,7 +144,7 @@ override '_unary_features' => sub {
     #$coref_features->{$type.'_id'} = $node->get_address;
 
     if ($type eq 'anaph') {
-        $coref_features->{c_anaph_sentord} = _categorize(
+        $coref_features->{c_anaph_sentord} = $self->_categorize(
             $node->get_root->wild->{czeng_sentord},
             [0, 1, 2, 3]
         );
