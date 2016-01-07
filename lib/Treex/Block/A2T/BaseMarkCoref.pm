@@ -3,6 +3,11 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+with 'Treex::Block::Filter::Node::T' => {
+    -alias => { node_types => 'anaph_types' },
+    -excludes => 'node_types',
+};
+
 has 'model_path' => (
     is       => 'ro',
     required => 1,
@@ -47,14 +52,6 @@ has '_ante_cands_selector' => (
     builder     => '_build_ante_cands_selector',
 );
 
-has '_anaph_cands_filter' => (
-    is          => 'ro',
-    required    => 1,
-    isa         => 'Treex::Tool::Coreference::NodeFilter',
-    lazy        => 1,
-    builder     => '_build_anaph_cands_filter',
-);
-
 # Attribute _ranker depends on the attribute model_path, whose value do not
 # have to be accessible when building other attributes. Thus, _ranker is
 # defined as lazy, i.e. it is built during its first access. However, we wish all
@@ -65,7 +62,6 @@ sub BUILD {
     $self->_ranker;
     $self->_feature_extractor;
     $self->_ante_cands_selector;
-    $self->_anaph_cands_filter;
 }
 
 sub _build_ranker {
@@ -79,10 +75,6 @@ sub _build_feature_extractor {
 sub _build_ante_cands_selector {
     my ($self) = @_;
     return log_fatal "method _build_ante_cands_selector must be overriden in " . ref($self);
-}
-sub _build_anaph_cands_filter {
-    my ($self) = @_;
-    return log_fatal "method _build_anaph_cands_filter must be overriden in " . ref($self);
 }
 
 sub process_document_one_zone_at_time {
@@ -98,70 +90,67 @@ sub process_document {
     return;
 }
 
-sub process_tnode {
+sub process_filtered_tnode {
     my ( $self, $t_node ) = @_;
 
     return if ( $t_node->is_root );
-    
-    if ( $self->_anaph_cands_filter->is_candidate( $t_node ) ) {
+   
+    my @ante_cands = $self->_ante_cands_selector->get_candidates( $t_node );
 
-        my @ante_cands = $self->_ante_cands_selector->get_candidates( $t_node );
-
-        if ($self->diagnostics) {
-            $t_node->wild->{coref_diag}{is_anaph} = 1;
-            $_->wild->{coref_diag}{cand_for}{$t_node->id} = 1 foreach (@ante_cands);
-        }
+    if ($self->diagnostics) {
+        $t_node->wild->{coref_diag}{is_anaph} = 1;
+        $_->wild->{coref_diag}{cand_for}{$t_node->id} = 1 foreach (@ante_cands);
+    }
 
 # DEBUG
-        #my $debug = 0;
-        #if ($t_node->id eq "t_tree-cs_src-s9_1of2-n886") {
-        #    $debug = 1;
-        #}
+    #my $debug = 0;
+    #if ($t_node->id eq "t_tree-cs_src-s9_1of2-n886") {
+    #    $debug = 1;
+    #}
 
-        # instances is a reference to a hash in the form { id => instance }
-        my $fe = $self->_feature_extractor;
-        my $instances = $fe->create_instances( $t_node, \@ante_cands );
+    # instances is a reference to a hash in the form { id => instance }
+    my $fe = $self->_feature_extractor;
+    my $instances = $fe->create_instances( $t_node, \@ante_cands );
 
-        #if ($debug) {
-        #    print STDERR Dumper($instances);
-        #}
+    #if ($debug) {
+    #    print STDERR Dumper($instances);
+    #}
 
-        # at this point we have to count on a very common case, when the true
-        # antecedent lies in the previous sentence, which is however not
-        # available (because of filtering and document segmentation)
-        my $ranker = $self->_ranker;
-        my $ante_idx  = $ranker->pick_winner( $instances );
+    # at this point we have to count on a very common case, when the true
+    # antecedent lies in the previous sentence, which is however not
+    # available (because of filtering and document segmentation)
+    my $ranker = $self->_ranker;
+    my $ante_idx  = $ranker->pick_winner( $instances );
 
-        return if (!defined $ante_idx);
-        my $ante = $ante_cands[$ante_idx];
+    return if (!defined $ante_idx);
+    my $ante = $ante_cands[$ante_idx];
 
 # DEBUG
 #        my $antec  = $ranker->pick_winner( $instances, $debug );
 
-        # DEBUG
-        #print "ANAPH: " . $t_node->id . "; ";
-        #print "PRED: $antec\n";
-        #print (join "\n", map {$_->id} @$ante_cands);
-        #print "\n";
+    # DEBUG
+    #print "ANAPH: " . $t_node->id . "; ";
+    #print "PRED: $antec\n";
+    #print (join "\n", map {$_->id} @$ante_cands);
+    #print "\n";
 
-        # DEBUG
-        #my $test_id = 't-ln95045-100-p2s1w13';
-        #if (defined $instances->{$test_id}) {
-        #    my $feat = $instances->{$test_id};
+    # DEBUG
+    #my $test_id = 't-ln95045-100-p2s1w13';
+    #if (defined $instances->{$test_id}) {
+    #    my $feat = $instances->{$test_id};
 
-         #   foreach my $name (sort keys %$feat) {
-         #       print $name . ": " . $feat->{$name} . "\n";
-         #   }
-            
-        #}
+     #   foreach my $name (sort keys %$feat) {
+     #       print $name . ": " . $feat->{$name} . "\n";
+     #   }
+        
+    #}
 
-        if ($ante != $t_node) {
-            $t_node->set_attr( 'coref_text.rf', [$ante->id] );
-            $t_node->wild->{referential} = 1;
-        }
-        else {
-            $t_node->wild->{referential} = 0;
-        }
+    if ($ante != $t_node) {
+        $t_node->set_attr( 'coref_text.rf', [$ante->id] );
+        $t_node->wild->{referential} = 1;
+    }
+    else {
+        $t_node->wild->{referential} = 0;
     }
 }
 

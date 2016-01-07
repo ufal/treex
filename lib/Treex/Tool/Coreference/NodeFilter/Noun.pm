@@ -4,15 +4,6 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Coreference::NodeFilter::Utils qw/ternary_arg/;
 
-with 'Treex::Tool::Coreference::NodeFilter';
-
-has 'args' => (is => "ro", isa => "HashRef", default => sub {{}});
-
-sub is_candidate {
-    my ($self, $tnode) = @_;
-    return is_3rd_pers($tnode, $self->args);
-}
-
 sub is_sem_noun {
     my ($tnode, $args) = @_;
     $args //= {};

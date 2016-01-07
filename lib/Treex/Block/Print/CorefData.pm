@@ -2,10 +2,17 @@ package Treex::Block::Print::CorefData;
 
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::ML::VowpalWabbit::Util;
 use List::Util;
 
+use Treex::Tool::ML::VowpalWabbit::Util;
+use Treex::Tool::Coreference::Filter;
+
 extends 'Treex::Block::Write::BaseTextWriter';
+
+with 'Treex::Block::Filter::Node::T' => {
+    -alias => { node_types => 'anaph_types' },
+    -excludes => 'node_types',
+};
 
 has 'anaphor_as_candidate' => (
     is          => 'ro',
@@ -34,13 +41,6 @@ has '_ante_cands_selector' => (
     builder     => '_build_ante_cands_selector',
 );
 
-has '_anaph_cands_filter' => (
-    is          => 'ro',
-    required    => 1,
-    isa         => 'Treex::Tool::Coreference::NodeFilter',
-    builder     => '_build_anaph_cands_filter',
-);
-
 sub BUILD {
     my ($self) = @_;
     $self->_ante_cands_selector;
@@ -54,20 +54,17 @@ sub _build_ante_cands_selector {
     my ($self) = @_;
     return log_fatal "method _build_ante_cands_selector must be overriden in " . ref($self);
 }
-sub _build_anaph_cands_filter {
-    my ($self) = @_;
-    return log_fatal "method _build_anaph_cands_filter must be overriden in " . ref($self);
-}
 
 before 'process_document' => sub {
     my ($self, $doc) = @_;
 
+    # TODO should this be possibly moved to a separate block ???
     # copy labels from the gold data first
     if ($self->labeled) {
         foreach my $bundle ($doc->get_bundles) {
             my $ttree = $bundle->get_tree($self->language, 't', $self->selector);
             foreach my $tnode ($ttree->get_descendants) {
-                next if (!$self->_anaph_cands_filter->is_candidate( $tnode ));
+                next if (!Treex::Tool::Coreference::Filter::matches($tnode, $self->anaph_types));
                 $self->_copy_coref_from_alignment($tnode);
             }
         }
@@ -95,11 +92,10 @@ sub _comment_for_line {
     return $comment;
 }
 
-sub process_tnode {
+sub process_filtered_tnode {
     my ( $self, $tnode ) = @_;
 
     return if ( $tnode->is_root );
-    return if (!$self->_anaph_cands_filter->is_candidate( $tnode ));
     
     my $acs = $self->_ante_cands_selector;
     my $fe = $self->_feature_extractor;

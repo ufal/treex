@@ -5,8 +5,6 @@ use Treex::Core::Common;
 use Treex::Tool::Lexicon::CS;
 use Treex::Tool::Coreference::NodeFilter::Utils qw/ternary_arg/;
 
-with 'Treex::Tool::Coreference::NodeFilter';
-
 #my %BANNED_PRONS = map {$_ => 1} qw/
 #    i me my mine myself you your yours yourself yourselves we us our ours ourselves one
 #/;
@@ -24,13 +22,6 @@ my %PERS_PRONS_REFLEX = (
             se svůj
           /},
 );
-
-has 'args' => (is => "ro", isa => "HashRef", default => sub {{}});
-
-sub is_candidate {
-    my ($self, $tnode) = @_;
-    return is_3rd_pers($tnode, $self->args);
-}
 
 sub is_3rd_pers {
     my ($node, $args) = @_;

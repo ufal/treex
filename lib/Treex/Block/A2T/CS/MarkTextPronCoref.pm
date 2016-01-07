@@ -9,8 +9,8 @@ extends 'Treex::Block::A2T::BaseMarkCoref';
 use Treex::Tool::ML::VowpalWabbit::Ranker;
 use Treex::Tool::Coreference::CS::PronCorefFeatures;
 use Treex::Tool::Coreference::AnteCandsGetter;
-use Treex::Tool::Coreference::NodeFilter::PersPron;
 
+has '+anaph_types' => ( default => '#perspron.no_refl' );
 has '+model_path' => (
     #default => 'data/models/coreference/CS/vw/perspron.2015-04-29.train.pdt.cs.vw.ranking.model',
     default => 'data/models/coreference/CS/vw/perspron.2015-11-16.train.pdt.cs.vw.ranking.model',
@@ -46,19 +46,6 @@ override '_build_ante_cands_selector' => sub {
         max_size => 100,
     });
     return $acs;
-};
-
-override '_build_anaph_cands_filter' => sub {
-    my ($self) = @_;
-    my $args = {
-        #skip_nonref => 1,
-        # both expressed and unexpressed
-        expressed => 0,
-        # excluding reflexive pronouns
-        reflexive => -1,
-    };
-    my $acf = Treex::Tool::Coreference::NodeFilter::PersPron->new({args => $args});
-    return $acf;
 };
 
 1;
