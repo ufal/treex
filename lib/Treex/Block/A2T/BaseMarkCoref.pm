@@ -3,10 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
-with 'Treex::Block::Filter::Node::T' => {
-    -alias => { node_types => 'anaph_types' },
-    -excludes => 'node_types',
-};
+with 'Treex::Block::Filter::Node::T';
 
 has 'model_path' => (
     is       => 'ro',
