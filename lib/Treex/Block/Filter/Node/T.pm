@@ -5,7 +5,7 @@ use Moose::Util::TypeConstraints;
 use Treex::Core::Common;
 
 # TODO to be renamed to Treex::Tool::Coreference::NodeFilter
-use Treex::Tool::Coreference::Filter;
+use Treex::Tool::Coreference::NodeFilter;
 
 requires 'process_filtered_tnode';
 
@@ -18,7 +18,7 @@ has 'node_types' => ( is => 'ro', isa => 'CommaArrayRef', coerce => 1 );
 
 sub process_tnode {
     my ($self, $tnode) = @_;
-    return if (!Treex::Tool::Coreference::Filter::matches($tnode, $self->node_types));
+    return if (!Treex::Tool::Coreference::NodeFilter::matches($tnode, $self->node_types));
     $self->process_filtered_tnode($tnode);
 }
 
@@ -41,7 +41,7 @@ The role that applies process_tnode only to the specified category of t-nodes.
 =item node_types
 
 A comma-separated list of the node types on which this block should be applied.
-See C<Treex::Tool::Coreference::Filter> for possible values.
+See C<Treex::Tool::Coreference::NodeFilter> for possible values.
 
 =head1 AUTHOR
 

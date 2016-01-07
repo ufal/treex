@@ -5,7 +5,7 @@ use Treex::Core::Common;
 use List::Util;
 
 use Treex::Tool::ML::VowpalWabbit::Util;
-use Treex::Tool::Coreference::Filter;
+use Treex::Tool::Coreference::NodeFilter;
 
 extends 'Treex::Block::Write::BaseTextWriter';
 
@@ -64,7 +64,7 @@ before 'process_document' => sub {
         foreach my $bundle ($doc->get_bundles) {
             my $ttree = $bundle->get_tree($self->language, 't', $self->selector);
             foreach my $tnode ($ttree->get_descendants) {
-                next if (!Treex::Tool::Coreference::Filter::matches($tnode, $self->anaph_types));
+                next if (!Treex::Tool::Coreference::NodeFilter::matches($tnode, $self->anaph_types));
                 $self->_copy_coref_from_alignment($tnode);
             }
         }

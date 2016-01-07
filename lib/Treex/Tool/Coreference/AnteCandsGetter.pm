@@ -3,7 +3,7 @@ package Treex::Tool::Coreference::AnteCandsGetter;
 use Moose;
 use Treex::Tool::Context::Sentences;
 use List::MoreUtils qw/none/;
-use Treex::Tool::Coreference::Filter;
+use Treex::Tool::Coreference::NodeFilter;
 
 has 'cand_types' => ( 
     isa => 'ArrayRef[Str]',
@@ -98,7 +98,7 @@ sub _select_all_cands {
     my @cands = $self->_node_selector->nodes_in_surroundings(
         $anaph, -$self->prev_sents_num, 0, {preceding_only => 1}
     );
-    @cands = grep {Treex::Tool::Coreference::Filter::matches($_, $self->cand_types)} @cands;
+    @cands = grep {Treex::Tool::Coreference::NodeFilter::matches($_, $self->cand_types)} @cands;
     # remove the candidates that even transitively point to the anaphor - cycle prevention
     @cands = grep {my $cand = $_; none {$_ == $anaph} $cand->get_coref_chain} @cands;
     # nearest candidates to be the first
@@ -238,7 +238,7 @@ candidates, must be specified in a sublclass.
 
 Every antecedent candidate must match at least one of the type specified
 by this parameter as a list.
-All types specified in C<Treex::Tool::Coreference::Filter> are accepted.
+All types specified in C<Treex::Tool::Coreference::NodeFilter> are accepted.
 
 =item prev_sents_num
 
