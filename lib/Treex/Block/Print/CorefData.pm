@@ -9,10 +9,7 @@ use Treex::Tool::Coreference::NodeFilter;
 
 extends 'Treex::Block::Write::BaseTextWriter';
 
-with 'Treex::Block::Filter::Node::T' => {
-    -alias => { node_types => 'anaph_types' },
-    -excludes => 'node_types',
-};
+with 'Treex::Block::Filter::Node::T';
 
 has 'anaphor_as_candidate' => (
     is          => 'ro',
@@ -64,7 +61,7 @@ before 'process_document' => sub {
         foreach my $bundle ($doc->get_bundles) {
             my $ttree = $bundle->get_tree($self->language, 't', $self->selector);
             foreach my $tnode ($ttree->get_descendants) {
-                next if (!Treex::Tool::Coreference::NodeFilter::matches($tnode, $self->anaph_types));
+                next if (!Treex::Tool::Coreference::NodeFilter::matches($tnode, $self->node_types));
                 $self->_copy_coref_from_alignment($tnode);
             }
         }

@@ -10,7 +10,7 @@ use Treex::Tool::ML::VowpalWabbit::Ranker;
 use Treex::Tool::Coreference::CS::PronCorefFeatures;
 use Treex::Tool::Coreference::AnteCandsGetter;
 
-has '+anaph_types' => ( default => '#perspron.no_refl' );
+has '+node_types' => ( default => '#perspron.no_refl' );
 has '+model_path' => (
     #default => 'data/models/coreference/CS/vw/perspron.2015-04-29.train.pdt.cs.vw.ranking.model',
     default => 'data/models/coreference/CS/vw/perspron.2015-11-16.train.pdt.cs.vw.ranking.model',

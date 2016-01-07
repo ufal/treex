@@ -10,7 +10,7 @@ use Treex::Tool::Coreference::Features::Container;
 use Treex::Tool::Coreference::Features::Aligned;
 use Treex::Tool::Coreference::Features::Coreference;
 
-has '+anaph_types' => ( default => '#perspron.no_refl' );
+has '+node_types' => ( default => '#perspron.no_refl' );
 has 'aligned_feats' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 override '_build_feature_extractor' => sub {
