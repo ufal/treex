@@ -36,7 +36,7 @@ sub _unary_features {
     my $feats = {};
 
     if ($type eq "n1") {
-        my $anaph_types = join " ", grep {$_ ne "all_anaph"} (split /,/, $node->wild->{filter_types});
+        my $anaph_types = join " ", grep {$_ ne "all_anaph"} @{$node->wild->{filter_types}};
         $feats->{"type^nodetype"} = $anaph_types;
     }
 
