@@ -1,3 +1,7 @@
+##########################################
+######## THIS MODULE IS OBSOLETE #########
+########### SHOULD BE DELETED ############
+##########################################
 package Treex::Tool::Coreference::EN::PronAnaphFilter;
 
 use Moose;

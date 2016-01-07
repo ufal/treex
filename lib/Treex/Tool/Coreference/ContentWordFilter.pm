@@ -3,6 +3,7 @@ package Treex::Tool::Coreference::ContentWordFilter;
 use Moose;
 use Treex::Core::Common;
 
+# TODO the old style of NodeFilter: this should be moved to NodeFilter::ContentWord and added as an item to the new NodeFilter
 with 'Treex::Tool::Coreference::NodeFilter';
 
 my %en_nocontent_pos = map {$_ => 1} (
