@@ -5,7 +5,7 @@ use Treex::Core::Common;
 
 use List::MoreUtils qw/any/;
 
-with 'Treex::Tool::Coreference::CorefFeatures';
+extends 'Treex::Tool::Coreference::CorefFeatures';
 
 sub _is_coref {
     my ($anaph, $cand) = @_;
@@ -14,16 +14,16 @@ sub _is_coref {
     return any {$_ == $cand} @antecs;
 }
 
-sub _binary_features {
+override '_binary_features' => sub {
     my ($self, $set_features, $anaph, $cand, $candord) = @_;
     
     my $feats = {};
     $feats->{is_coref} = _is_coref($anaph, $cand) ? 1 : 0;
     return $feats;
-}
+};
 
-sub _unary_features {
+override '_unary_features' => sub {
     return {};
-}
+};
 
 1;
