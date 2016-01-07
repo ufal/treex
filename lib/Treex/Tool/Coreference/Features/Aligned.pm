@@ -4,7 +4,7 @@ use Moose;
 use Treex::Core::Common;
 #use Cache::MemoryCache;
 
-with 'Treex::Tool::Coreference::CorefFeatures';
+extends 'Treex::Tool::Coreference::CorefFeatures';
 
 has 'feat_extractors' => (is => 'ro', isa => 'ArrayRef[Treex::Tool::Coreference::CorefFeatures]', required => 1);
 
@@ -35,7 +35,7 @@ sub _build_unary_feats_cache {
     return Cache::MemoryCache->new({default_expires_in => 30});
 }
 
-sub _binary_features {
+override '_binary_features' => sub {
     my ($self, $set_features, $anaph, $cand, $candord) = @_;
 
     my ($ali_anaph_nodes, $ali_anaph_types) = $anaph->get_undirected_aligned_nodes($self->_align_filter);
@@ -71,9 +71,9 @@ sub _binary_features {
     }
 
     return _add_prefix(\%feats);
-}
+};
 
-sub _unary_features {
+override '_unary_features' => sub {
     my ($self, $node, $type) = @_;
 
     my ($ali_nodes, $ali_types) = $node->get_undirected_aligned_nodes($self->_align_filter);
@@ -92,15 +92,15 @@ sub _unary_features {
     #}
 
     return _add_prefix($feats);
-}
+};
 
-sub init_doc_features {
+override 'init_doc_features' => sub {
     my ($self, $doc, $lang, $sel) = @_;
     
     foreach my $fe (@{$self->feat_extractors}) {
         my $fe_feats = $fe->init_doc_features($doc, $self->align_lang, $sel);
     }
-}
+};
 
 sub _add_prefix {
     my ($feats) = @_;

@@ -2,11 +2,11 @@ package Treex::Tool::Coreference::Features::Container;
 
 use Moose;
 
-with 'Treex::Tool::Coreference::CorefFeatures';
+extends 'Treex::Tool::Coreference::CorefFeatures';
 
 has 'feat_extractors' => (is => 'ro', isa => 'ArrayRef[Treex::Tool::Coreference::CorefFeatures]', required => 1);
 
-sub _binary_features {
+override '_binary_features' => sub {
     my ($self, $set_features, $anaph, $cand, $candord) = @_;
 
     my %feats = ();
@@ -15,9 +15,9 @@ sub _binary_features {
         %feats = (%feats, %$fe_feats);
     }
     return \%feats;
-}
+};
 
-sub _unary_features {
+override '_unary_features' => sub {
     my ($self, $node, $type) = @_;
     
     my %feats = ();
@@ -26,14 +26,14 @@ sub _unary_features {
         %feats = (%feats, %$fe_feats);
     }
     return \%feats;
-}
+};
 
-sub init_doc_features {
+override 'init_doc_features' => sub {
     my ($self, $doc, $lang, $sel) = @_;
     
     foreach my $fe (@{$self->feat_extractors}) {
         my $fe_feats = $fe->init_doc_features($doc, $lang, $sel);
     }
-}
+};
 
 1;
