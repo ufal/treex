@@ -7,10 +7,10 @@ extends 'Treex::Block::A2T::BaseMarkCoref';
 use Treex::Tool::ML::VowpalWabbit::Ranker;
 use Treex::Tool::Coreference::EN::PronCorefFeatures;
 use Treex::Tool::Coreference::AnteCandsGetter;
-use Treex::Tool::Coreference::NodeFilter::PersPron;
 use Treex::Tool::Coreference::Features::Container;
 use Treex::Tool::Coreference::Features::Aligned;
 
+has '+anaph_types' => ( default => '#perspron.coref' );
 has '+model_path' => (
     # $CZENG_COREF/tmp/ml/run_2015-04-04_12-44-16_9036.testing_on_English/001.8f801ad5b1.featset/001.134ca.mlmethod/model/train_00-18.pcedt_bi.en.analysed.ali-sup.vw.ranking.model
     default => 'data/models/coreference/EN/vowpal_wabbit/2015-04-04.perspron_3rd.mono_all.analysed.model',
@@ -61,15 +61,6 @@ override '_build_ante_cands_selector' => sub {
         max_size => 100,
     });
     return $acs;
-};
-
-override '_build_anaph_cands_filter' => sub {
-    my ($self) = @_;
-    my $args = {
-        skip_nonref => 1,
-    };
-    my $acf = Treex::Tool::Coreference::NodeFilter::PersPron->new({args => $args});
-    return $acf;
 };
 
 1;

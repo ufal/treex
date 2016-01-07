@@ -4,13 +4,13 @@ use Treex::Core::Common;
 extends 'Treex::Block::Print::CorefData';
 
 use Treex::Tool::Coreference::AnteCandsGetter;
-use Treex::Tool::Coreference::NodeFilter::PersPron;
 use Treex::Tool::Coreference::EN::PronCorefFeatures;
 use Treex::Tool::Coreference::CS::PronCorefFeatures;
 use Treex::Tool::Coreference::Features::Container;
 use Treex::Tool::Coreference::Features::Aligned;
 use Treex::Tool::Coreference::Features::Coreference;
 
+has '+anaph_types' => ( default => '#perspron.coref' );
 has 'aligned_feats' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 override '_build_feature_extractor' => sub {
@@ -48,16 +48,6 @@ override '_build_ante_cands_selector' => sub {
         max_size => 100,
     });
     return $acs;
-};
-
-override '_build_anaph_cands_filter' => sub {
-    my ($self) = @_;
-    my $acf = Treex::Tool::Coreference::NodeFilter::PersPron->new({
-        args => {
-                # including reflexive pronouns
-            }
-    });
-    return $acf;
 };
 
 1;
