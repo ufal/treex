@@ -7,8 +7,6 @@ use Treex::Core::Common;
 requires '_unary_features';
 requires '_binary_features';
 
-# TODO this should be somehow merged with the role Tool::Coreference::CorefFeatures
-
 has 'node1_label' => (is => 'ro', isa => 'Str', default => 'n1');
 has 'node2_label' => (is => 'ro', isa => 'Str', default => 'n2');
 
