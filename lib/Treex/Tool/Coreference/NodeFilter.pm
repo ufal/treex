@@ -1,4 +1,4 @@
-package Treex::Tool::Coreference::Filter;
+package Treex::Tool::Coreference::NodeFilter;
 
 use Moose;
 use Treex::Core::Common;
@@ -73,7 +73,7 @@ __END__
 
 =head1 NAME
 
-Treex::Tool::Coreference::Filter
+Treex::Tool::Coreference::NodeFilter
 
 =head1 DESCRIPTION
 
