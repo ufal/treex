@@ -2,7 +2,7 @@ package Treex::Block::My::UnsupCSPersPronData;
 
 use Moose;
 
-use Treex::Tool::Coreference::NounAnteCandsGetter;
+use Treex::Tool::Coreference::AnteCandsGetter;
 
 extends 'Treex::Block::Print::CS::TextPronCorefData';
 
@@ -38,7 +38,8 @@ override '_build_feature_extractor' => sub {
 
 override '_build_ante_cands_selector' => sub {
     my ($self) = @_;
-    my $acs = Treex::Tool::Coreference::NounAnteCandsGetter->new({
+    my $acs = Treex::Tool::Coreference::AnteCandsGetter->new({
+        cand_types => [ 'noun.3_pers' ],
         prev_sents_num => 1,
         #anaphor_as_candidate => 1,
     });

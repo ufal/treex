@@ -5,6 +5,7 @@ use Treex::Core::Common;
 
 use Treex::Tool::Coreference::NodeFilter::PersPron;
 use Treex::Tool::Coreference::NodeFilter::RelPron;
+use Treex::Tool::Coreference::NodeFilter::Noun;
 use Treex::Block::My::CorefExprAddresses;
 
 use List::MoreUtils qw/any/;
@@ -29,6 +30,12 @@ sub get_types {
         #$type = "cor";
         $types->{zero} = 1;
         $types->{all_anaph} = 1;
+    }
+    if (Treex::Tool::Coreference::NodeFilter::Noun::is_sem_noun($node)) {
+        $types->{'noun'} = 1;
+    }
+    if (Treex::Tool::Coreference::NodeFilter::Noun::is_sem_noun($node, {third_pers => 1})) {
+        $types->{'noun.3_pers'} = 1;
     }
     #elsif (Treex::Block::My::CorefExprAddresses::_is_cs_ten($node)) {
     #    $type = "ten";
@@ -74,12 +81,11 @@ Treex::Tool::Coreference::Filter
 A comma-separated list of the node types on which this block should be applied
 
 =head2 Types:
-
+=over
 =item perspron - all personal, possessive and reflexive pronouns in 3rd person (English, Czech)
 =item zero - all #Cor nodes and unexpressed #PersPron nodes possibly in 3rd person (English, Czech)
 =item relpron - all relative pronouns, relativizing adverbs, possibly including also some interrogative and fused pronouns (English, Czech)
 =item all_anaph - perspron + zero + relpron
-
 =back
 
 =head1 AUTHOR

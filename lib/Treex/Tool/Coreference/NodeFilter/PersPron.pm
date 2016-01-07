@@ -3,6 +3,7 @@ package Treex::Tool::Coreference::NodeFilter::PersPron;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Lexicon::CS;
+use Treex::Tool::Coreference::NodeFilter::Utils qw/ternary_arg/;
 
 with 'Treex::Tool::Coreference::NodeFilter';
 
@@ -60,23 +61,6 @@ sub _is_3rd_pers_cs {
     }
     else {
         return _is_3rd_pers_cs_t($node, $args);
-    }
-}
-
-# processing ternary arguments for binary indicators
-# arg = 0 : does not take the indicator into account
-# arg = 1 : indicator must be true
-# arg = -1 : indicator must be false
-sub ternary_arg {
-    my ($arg, $indicator) = @_;
-    if ($arg > 0) {
-        return $indicator;
-    }
-    elsif ($arg < 0) {
-        return !$indicator;
-    }
-    else {
-        return 1;
     }
 }
 

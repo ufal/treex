@@ -8,7 +8,7 @@ extends 'Treex::Block::A2T::BaseMarkCoref';
 #use Treex::Tool::Coreference::ProbDistrRanker;
 use Treex::Tool::ML::VowpalWabbit::Ranker;
 use Treex::Tool::Coreference::CS::PronCorefFeatures;
-use Treex::Tool::Coreference::NounAnteCandsGetter;
+use Treex::Tool::Coreference::AnteCandsGetter;
 use Treex::Tool::Coreference::NodeFilter::PersPron;
 
 has '+model_path' => (
@@ -38,7 +38,8 @@ override '_build_feature_extractor' => sub {
 
 override '_build_ante_cands_selector' => sub {
     my ($self) = @_;
-    my $acs = Treex::Tool::Coreference::NounAnteCandsGetter->new({
+    my $acs = Treex::Tool::Coreference::AnteCandsGetter->new({
+        cand_types => [ 'noun.3_pers' ],
         prev_sents_num => 1,
         anaphor_as_candidate => 1,
         cands_within_czeng_blocks => 1,
