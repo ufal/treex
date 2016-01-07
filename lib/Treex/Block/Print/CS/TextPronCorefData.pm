@@ -3,7 +3,7 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Print::CorefData';
 
-use Treex::Tool::Coreference::NounAnteCandsGetter;
+use Treex::Tool::Coreference::AnteCandsGetter;
 use Treex::Tool::Coreference::NodeFilter::PersPron;
 use Treex::Tool::Coreference::EN::PronCorefFeatures;
 use Treex::Tool::Coreference::CS::PronCorefFeatures;
@@ -40,7 +40,8 @@ override '_build_feature_extractor' => sub {
 
 override '_build_ante_cands_selector' => sub {
     my ($self) = @_;
-    my $acs = Treex::Tool::Coreference::NounAnteCandsGetter->new({
+    my $acs = Treex::Tool::Coreference::AnteCandsGetter->new({
+        cand_types => [ 'noun.3_pers' ],
         prev_sents_num => 1,
         anaphor_as_candidate => $self->anaphor_as_candidate,
         cands_within_czeng_blocks => 1,
