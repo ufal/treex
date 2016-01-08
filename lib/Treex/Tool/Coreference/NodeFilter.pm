@@ -6,6 +6,7 @@ use Treex::Core::Common;
 use Treex::Tool::Coreference::NodeFilter::PersPron;
 use Treex::Tool::Coreference::NodeFilter::RelPron;
 use Treex::Tool::Coreference::NodeFilter::Noun;
+use Treex::Tool::Coreference::NodeFilter::Verb;
 use Treex::Block::My::CorefExprAddresses;
 
 use List::MoreUtils qw/any/;
@@ -42,6 +43,9 @@ sub get_types {
     }
     if (Treex::Tool::Coreference::NodeFilter::Noun::is_sem_noun($node, {third_pers => 1})) {
         $types->{'noun.3_pers'} = 1;
+    }
+    if (Treex::Tool::Coreference::NodeFilter::Verb::is_sem_verb($node)) {
+        $types->{'verb'} = 1;
     }
     #elsif (Treex::Block::My::CorefExprAddresses::_is_cs_ten($node)) {
     #    $type = "ten";
@@ -96,6 +100,7 @@ A comma-separated list of the node types on which this block should be applied
 =item #perspron.no_refl - <perspron> + unexpressed #PersPron nodes - reflexive pronouns
 =item noun - semantic nouns
 =item noun.3_pers - semantic nouns in 3rd or unknown person
+=item verb - semantic verbs
 =back
 
 =head1 AUTHOR
