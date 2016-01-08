@@ -8,13 +8,14 @@ use Treex::Core::Common;
 use Treex::Tool::Coreference::NodeFilter;
 
 requires 'process_filtered_tnode';
+requires '_build_node_types';
 
 subtype 'CommaArrayRef' => as 'ArrayRef';
 coerce 'CommaArrayRef'
     => from 'Str'
     => via { [split /,/] };
 
-has 'node_types' => ( is => 'ro', isa => 'CommaArrayRef', coerce => 1 );
+has 'node_types' => ( is => 'ro', isa => 'CommaArrayRef', coerce => 1, builder => '_build_node_types' );
 
 sub process_tnode {
     my ($self, $tnode) = @_;
