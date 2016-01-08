@@ -16,6 +16,7 @@ has '_subtree_aligns' => ( is => 'rw', isa => 'HashRef', default => sub {{}});
 has '_curr_filename' => (is => 'rw', isa => 'Str', default => "");
 
 my $GIZA_ORIG_RULES_FILTER = [ '!gold', '!robust', '!supervised', '.*' ];
+my %POSSIBLE_NODE_TYPES = map {$_ => 1} qw/perspron relpron zero/;
 
 sub _reset_global_structs {
     my ($self, $tnode) = @_;
@@ -36,7 +37,7 @@ sub _unary_features {
     my $feats = {};
 
     if ($type eq "n1") {
-        my $anaph_types = join " ", grep {$_ ne "all_anaph"} @{$node->wild->{filter_types}};
+        my $anaph_types = join ",", grep {$POSSIBLE_NODE_TYPES{$_}} @{$node->wild->{filter_types}};
         $feats->{"type^nodetype"} = $anaph_types;
     }
 
