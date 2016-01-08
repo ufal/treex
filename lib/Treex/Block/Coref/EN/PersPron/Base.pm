@@ -2,8 +2,9 @@ package Treex::Block::Coref::EN::PersPron::Base;
 use Moose::Role;
 use Treex::Core::Common;
 
-use Treex::Tool::Coreference::EN::PronCorefFeatures;
 use Treex::Tool::Coreference::AnteCandsGetter;
+use Treex::Tool::Coreference::EN::PronCorefFeatures;
+use Treex::Tool::Coreference::CS::PronCorefFeatures;
 use Treex::Tool::Coreference::Features::Container;
 use Treex::Tool::Coreference::Features::Aligned;
 
@@ -57,6 +58,8 @@ sub _build_ante_cands_selector {
 
 1;
 
+#TODO extend documentation
+
 __END__
 
 =head1 NAME
@@ -74,6 +77,6 @@ Michal Novak <mnovak@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

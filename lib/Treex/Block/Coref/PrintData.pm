@@ -161,3 +161,4 @@ sub is_text_coref {
 
 
 1;
+#TODO add documentation
