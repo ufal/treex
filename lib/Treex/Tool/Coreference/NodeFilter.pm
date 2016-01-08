@@ -91,7 +91,11 @@ A comma-separated list of the node types on which this block should be applied
 =item perspron - all personal, possessive and reflexive pronouns in 3rd person (English, Czech)
 =item zero - all #Cor nodes and unexpressed #PersPron nodes possibly in 3rd person (English, Czech)
 =item relpron - all relative pronouns, relativizing adverbs, possibly including also some interrogative and fused pronouns (English, Czech)
-=item all_anaph - perspron + zero + relpron
+=item all_anaph - <perspron> + <zero> + <relpron>
+=item #perspron.coref - <perspron> + unexpressed #PersPron nodes - pronouns marked as non-referential.
+=item #perspron.no_refl - <perspron> + unexpressed #PersPron nodes - reflexive pronouns
+=item noun - semantic nouns
+=item noun.3_pers - semantic nouns in 3rd or unknown person
 =back
 
 =head1 AUTHOR
