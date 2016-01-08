@@ -119,6 +119,8 @@ sub process_filtered_tnode {
 }
 
 1;
+#TODO adjust documentation
+
 __END__
 
 =encoding utf-8
@@ -158,6 +160,6 @@ Michal Novák <mnovak@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

@@ -21,15 +21,17 @@ override '_build_ranker' => sub {
     return $ranker;
 };
 
-
 1;
+
+#TODO adjust documentation
+
 __END__
 
 =encoding utf-8
 
 =head1 NAME 
 
-Treex::Block::A2T::EN::MarkTextPronCoref
+Treex::Block::Coref::EN::PersPron::Resolve
 
 =head1 DESCRIPTION
 
@@ -46,6 +48,6 @@ Michal Novák <mnovak@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
