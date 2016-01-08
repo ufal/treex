@@ -11,9 +11,7 @@ use Treex::Tool::ML::VowpalWabbit::Ranker;
 
 extends 'Treex::Core::Block';
 with 'Treex::Block::Align::T::Supervised::Base';
-with 'Treex::Block::Filter::Node::T';
 
-has '+node_types' => ( default => 'all_anaph' );
 has 'model_path' => (is => 'ro', isa => 'Str');
 has 'align_trg_lang' => ( is => 'ro', isa => 'Treex::Type::LangCode', default => sub {my $self = shift; $self->language } );
 has 'align_name' => ( is => 'ro', isa => 'Str', default => 'supervised' );
