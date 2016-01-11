@@ -1,4 +1,4 @@
-package Treex::Block::Coref::EN::PersPron::Base;
+package Treex::Block::Coref::CS::PersPron::Base;
 use Moose::Role;
 use Treex::Core::Common;
 

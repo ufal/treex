@@ -1,7 +1,7 @@
-package Treex::Block::Print::CS::TextPronCorefData;
+package Treex::Block::Coref::CS::PersPron::PrintData;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Block::Print::CorefData';
+extends 'Treex::Block::Coref::PrintData';
 with 'Treex::Block::Coref::CS::PersPron::Base';
 
 1;
