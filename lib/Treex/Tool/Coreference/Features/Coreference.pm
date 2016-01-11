@@ -22,8 +22,9 @@ override '_binary_features' => sub {
     return $feats;
 };
 
-override '_unary_features' => sub {
-    return {};
+augment '_unary_features' => sub {
+    my $feats = inner() || {};
+    return $feats;
 };
 
 1;

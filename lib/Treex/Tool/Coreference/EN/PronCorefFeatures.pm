@@ -316,7 +316,7 @@ override '_binary_features' => sub {
 
 override '_unary_features' => sub {
     my ($self, $node, $type) = @_;
-    my $coref_features = super();
+    my $coref_features = {};
     
     $coref_features->{'c_'.$type.'_gen'} = $node->gram_gender;
     $coref_features->{'c_'.$type.'_num'} = $node->gram_number;
@@ -353,7 +353,8 @@ override '_unary_features' => sub {
         $coref_features->{'b_'.$type.'_referential'} = $node->wild->{referential};
     }
     
-    return $coref_features;
+    my $sub_feats = inner() || {};
+    return { %$coref_features, %$sub_feats };
 };
 
 1;

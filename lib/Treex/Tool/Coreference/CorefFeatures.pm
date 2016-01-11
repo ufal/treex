@@ -4,7 +4,7 @@ use Moose;
 #use Moose::Util::TypeConstraints;
 use Treex::Core::Common;
 
-with 'Treex::Tool::ML::Ranker::Features';
+extends 'Treex::Tool::ML::Ranker::Features';
 
 has '+node1_label' => ( default => 'anaph' );
 has '+node2_label' => ( default => 'cand' );
@@ -12,12 +12,9 @@ has '+node2_label' => ( default => 'cand' );
 my $b_true = '1';
 my $b_false = '-1';
 
-sub _unary_features {
-    log_warn 'Treex::Tool::Coreference::CorefFeatures is an abstract class. The _unary_features method must be implemented in a subclass.';
-}
-sub _binary_features {
-    log_warn 'Treex::Tool::Coreference::CorefFeatures is an abstract class. The _binary_features method must be implemented in a subclass.';
-}
+#sub _unary_features {
+#    log_warn 'Treex::Tool::Coreference::CorefFeatures is an abstract class. The _unary_features method must be implemented in a subclass.';
+#}
 
 # TODO: if not necessary for the other types, move the following methods to Coreference::PronCorefFeatures
 

@@ -6,6 +6,10 @@ extends 'Treex::Tool::Coreference::CorefFeatures';
 
 has 'feat_extractors' => (is => 'ro', isa => 'ArrayRef[Treex::Tool::Coreference::CorefFeatures]', required => 1);
 
+override '_build_prefix_unary' => sub {
+    return 0;
+};
+
 override '_binary_features' => sub {
     my ($self, $set_features, $anaph, $cand, $candord) = @_;
 
@@ -17,7 +21,7 @@ override '_binary_features' => sub {
     return \%feats;
 };
 
-override '_unary_features' => sub {
+augment '_unary_features' => sub {
     my ($self, $node, $type) = @_;
     
     my %feats = ();
@@ -25,7 +29,8 @@ override '_unary_features' => sub {
         my $fe_feats = $fe->_unary_features($node, $type);
         %feats = (%feats, %$fe_feats);
     }
-    return \%feats;
+    my $sub_feats = inner() || {};
+    return { %feats, %$sub_feats };
 };
 
 override 'init_doc_features' => sub {

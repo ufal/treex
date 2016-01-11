@@ -15,6 +15,10 @@ my %actants = map { $_ => 1 } qw/ACT PAT ADDR APP/;
 #    return log_fatal "method _build_feature_names must be overriden in " . ref($self);
 #}
 
+override '_build_prefix_unary' => sub {
+    return 0;
+};
+
 sub _ante_loc_buck {
     my ($self, $anaph, $cand, $sent_dist) = @_;
 
@@ -133,7 +137,7 @@ override '_binary_features' => sub {
     return $coref_features;
 };
 
-override '_unary_features' => sub {
+augment '_unary_features' => sub {
     my ($self, $node, $type) = @_;
 
     my $coref_features = {};
@@ -185,7 +189,9 @@ override '_unary_features' => sub {
     #   3:  tfa($inode, $jnode);
     $coref_features->{'c_'.$type.'_tfa'}  = $node->tfa;
     
-    return $coref_features;
+    my $sub_feats = inner() || {};
+
+    return { %$coref_features, %$sub_feats };
 };
 
 # returns if $inode and $jnode have the same eparent
