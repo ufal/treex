@@ -6,7 +6,7 @@ use List::MoreUtils qw/any/;
 
 extends 'Treex::Tool::Coreference::CorefFeatures';
 
-override '_unary_features' => sub {
+augment '_unary_features' => sub {
     my ($self, $node, $type) = @_;
 
     my $feats = {};
@@ -17,7 +17,8 @@ override '_unary_features' => sub {
     $feats->{$type.'_gen'} = $node->gram_gender // "";
     $feats->{$type.'_num'} = $node->gram_number // "";
 
-    return $feats;
+    my $sub_feats = inner() || {};
+    return { %$feats, %$sub_feats };
 };
 
 override '_binary_features' => sub {
