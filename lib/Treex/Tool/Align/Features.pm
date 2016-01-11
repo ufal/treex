@@ -78,7 +78,7 @@ override '_binary_features' => sub {
     delete @$feats{keys %$set_features};
 
     return $feats;
-}
+};
 
 sub _add_align_features {
     my ($self, $feats, $node1, $node2) = @_;
