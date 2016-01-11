@@ -73,7 +73,7 @@ override '_binary_features' => sub {
     return _add_prefix(\%feats);
 };
 
-override '_unary_features' => sub {
+augment '_unary_features' => sub {
     my ($self, $node, $type) = @_;
 
     my ($ali_nodes, $ali_types) = $node->get_undirected_aligned_nodes($self->_align_filter);
@@ -91,7 +91,9 @@ override '_unary_features' => sub {
     #    $self->_unary_feats_cache->set($ali_nodes->[0]->id, $feats);
     #}
 
-    return _add_prefix($feats);
+    my $ali_feats = _add_prefix($feats);
+    my $sub_feats = inner() || {};
+    return { %$ali_feats, %$sub_feats };
 };
 
 override 'init_doc_features' => sub {

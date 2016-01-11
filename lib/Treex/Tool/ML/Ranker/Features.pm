@@ -1,16 +1,21 @@
 package Treex::Tool::ML::Ranker::Features;
 
-use Moose::Role;
+use Moose;
 use Moose::Util::TypeConstraints;
 use Treex::Core::Common;
 
-requires '_unary_features';
-requires '_binary_features';
+#requires '_unary_features';
+#requires '_binary_features';
 
 has 'node1_label' => (is => 'ro', isa => 'Str', default => 'n1');
 has 'node2_label' => (is => 'ro', isa => 'Str', default => 'n2');
+has '_prefix_unary' => (is => 'ro', isa => 'Bool', builder => '_build_prefix_unary', init_arg => undef);
 
 my $SELF_LABEL = "__SELF__";
+
+sub _build_prefix_unary {
+    return 1;
+}
 
 sub cat {
     my ($self, $feats, $name) = @_;
@@ -43,11 +48,16 @@ sub feat_hash_to_sparse_list {
     return \@list;
 }
 
-sub _unary_features_prefixed {
+sub _unary_features {
     my ($self, $node, $type) = @_;
-    my $feats = $self->_unary_features( $node, $type );
+    my $feats = inner();
+    return $feats if (!$self->_prefix_unary);
     my %new_feats = map {my $new_feat = $_; $new_feat =~ s/^((?:[^\^]+\^)?)/$1$type\_/g; $new_feat => $feats->{$_}} keys %$feats;
     return \%new_feats;
+}
+
+sub _binary_features {
+    log_warn 'Treex::Tool::ML::Ranker::Features is an abstract class. The _binary_features method must be implemented in a subclass.';
 }
 
 sub _split_feats_into_namespaces {
@@ -90,14 +100,14 @@ sub _sfin_featline {
 sub create_instances {
     my ($self, $node1, $cands) = @_;
     
-    my $node1_unary_h = $self->_unary_features_prefixed( $node1, $self->node1_label );
+    my $node1_unary_h = $self->_unary_features( $node1, $self->node1_label );
     my $node1_unary_l = feat_hash_to_sparse_list($node1_unary_h);
 
     my @cand_feats = ();
     my $ord = 1;
     foreach my $cand (@$cands) {
         if ($cand != $node1) {
-            my $cand_unary_h = $self->_unary_features_prefixed( $cand, $self->node2_label );
+            my $cand_unary_h = $self->_unary_features( $cand, $self->node2_label );
             # TODO for convenience we merge the two hashes into a single one => should be passed separately
             my $both_unary_h = {%$cand_unary_h, %$node1_unary_h};
             my $cand_binary_h = $self->_binary_features( $both_unary_h, $node1, $cand, $ord );

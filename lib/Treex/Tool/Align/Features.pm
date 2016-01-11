@@ -9,7 +9,7 @@ use Treex::Tool::Coreference::NodeFilter::PersPron;
 use Treex::Tool::Lexicon::CS;
 use List::MoreUtils qw/uniq/;
 
-with 'Treex::Tool::ML::Ranker::Features';
+extends 'Treex::Tool::ML::Ranker::Features';
 
 has '_sent_graphs' => ( is => 'rw', isa => 'HashRef', default => sub {{}});
 has '_subtree_aligns' => ( is => 'rw', isa => 'HashRef', default => sub {{}});
@@ -29,7 +29,7 @@ sub _reset_global_structs {
     }
 }
 
-sub _unary_features {
+augment '_unary_features' => sub {
     my ($self, $node, $type) = @_;
 
     $self->_reset_global_structs($node);
@@ -61,10 +61,11 @@ sub _unary_features {
 
     $feats->{reflex} = Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {reflexive => 1}) ? 1 : 0;
 
-    return $feats;
-}
+    my $sub_feats = inner() || {};
+    return { %$feats, %$sub_feats };
+};
 
-sub _binary_features {
+override '_binary_features' => sub {
     my ($self, $set_features, $node1, $node2) = @_;
 
     my $feats = { %$set_features };

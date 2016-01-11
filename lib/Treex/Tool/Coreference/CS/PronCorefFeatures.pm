@@ -200,9 +200,9 @@ override '_binary_features' => sub {
     return $coref_features;
 };
 
-override '_unary_features' => sub {
+augment '_unary_features' => sub {
     my ($self, $node, $type) = @_;
-    my $coref_features = super();
+    my $coref_features = {};
 
 ###########################
     #   Morphological:
@@ -245,7 +245,9 @@ override '_unary_features' => sub {
         #   EuroWordNet nouns
         $coref_features->{cand_ewn_class} = $self->_ewn_classes->{$node->t_lemma};
     }
-    return $coref_features;
+
+    my $sub_feats = inner() || {};
+    return { %$coref_features, %$sub_feats };
 };
 
 ### returns the final gender and number of a list of coordinated nodes: Tata a mama sli; Mama a dite sly
