@@ -4,6 +4,7 @@ use Moose;
 
 use Treex::Tool::Coreference::AnteCandsGetter;
 
+# TODO: if refactored, Treex::Block::Coref::CS::PersPron::PrintData should be a superclass
 extends 'Treex::Block::Print::CS::TextPronCorefData';
 
 has '+unsupervised' => (
