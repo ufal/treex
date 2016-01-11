@@ -127,7 +127,7 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::A2T::BaseMarkCoref
+Treex::Block::Coref::Resolve
 
 =head1 DESCRIPTION
 
