@@ -1,0 +1,66 @@
+treex git repository:
+    - branch "new_coref"
+        * refactoring CR utilities
+            - merging them with the utils for supervised alignment
+            - therefore, both CR and Supervised Align scenario must be run to ensure that the funcionality did not change
+            - almost no tests are written :(
+            - run the following commands instead:
+                * treex -Len Read::Treex from=@/home/mnovak/projects/czeng_coref/data/en/analysed/czeng_0/train/0001/list Coref::RemoveLinks A2T::SetDocOrds Coref::EN::PersPron::Resolve
+                    - testing if CR runs smoothly
+                * qtl; cd repo/translate/cs-en/news; make translate eval D="testing Coref::CS::PersPron::Resolve - cs perspron CR refactored"
+                  qtl; cd repo/translate/en-cs/news; make translate eval D="testing Coref::EN::PersPron::Resolve - en perspron CR refactored"
+                    - testing Czech/English CR, if it produces the same results before and after the refactoring. See the branches 
+                        "new_coref.before_large_refactoring.mt_test", "new_coref.en_persprons_refactored.mt_test", and "new_coref.cs_persprons_refactored.mt_test"
+                * cd ~mnovak/projects/align_resolver; treex -Len -Ssrc Read::Treex from=@data/gold_aligned.mgiza_on_czeng/dev.list Align::T::Supervised::PrintData align_language=cs node_types=all_anaph
+                    - if the changes in CR do not affect supervised alignment
+        * feature extractors
+            - an abstract subclass Tool::ML::Ranker::Features (used to be a role but changed to enable/disable unary features prefixing)
+            - unary features prefixing via the private attribute '_prefix_unary'
+            - using augment and inner for '_unary_features' is a bit strange; not using it for '_binary_features'
+            - TODO: a hierarchy of features extractors should be reconsidered, but it's not a toughest issue
+        * node filtering
+            - an attempt to unify to unify multiple node filters
+            - some of them labelled as obsolete, but not deleted yet: Block::Eval::Coref, Tool::Coreference::CS::PronAnaphFilter,
+                Tool::Coreference::CS::RelPronAnaphFilter, Tool::Coreference::EN::PronAnaphFilter,
+                Tool::Coreference::Features::Distance, Tool::Coreference::Features::Morphological, Tool::Coreference::Features::TectoSyntax,
+                Tool::Coreference::remove_PronCoref
+            - using Tool::Coreference::NodeFilter to assign classes to nodes
+            - a Block role Block::Filter::Node::T directly uses it to access only the tnodes that belong to one of the predefined classes:
+                attribute 'node_types', a method 'process_filtered_tnode' must be implemented
+            - if the 'node_types' is used as a feature in some feature selector, the list must be filtered to rule out labels that has nothing
+                to do with the feature selector, e.g. the constant %POSSIBLE_NODE_TYPES in Tool::Align::Features
+        * ante cands getter
+            - disposing of specialized sublasses for specific node types, e.g. NounAntesCandGetter
+            - using only Tool::Coreference::AnteCandsGetter + the parameter 'cand_types' calling the Tool::Coreference::NodeFilter in the code
+        * resolvers and printers
+            - the same pattern as applied for supervised alignemnt, applied for CR (* is a role, => is 'with', --> is 'extends'), the same holds for CS and RelPron
+                Block::Coref::PrintData       <--  EN::PersPron::PrintData
+                       ||                               ||
+                       \/                               \/
+                *Block::Coref::SupervisedBase  <=  *EN::PersPron::Base
+                       /\                               /\
+                       ||                               ||
+                Block::Coref::Resolve         <--  EN::PersPron::Resolve
+            - this has been tested on toy classes in (TO BE REMOVED):
+                cec; cd skuska
+            - old resolvers and printers removed: Block::A2T::BaseMarkCoref, Block::A2T::CS(EN)::MarkTextPronCoref, Block::Print::CorefData, Block::Print::CS(EN)::TextPronCorefData
+            - TODO: move everything else that is not TreexCR to directory 'Treex::Block::Coref::External' or 'Treex::Block::Coref::Utils' 
+            
+    - branches "new_coref.before_large_refactoring.mt_test", "new_coref.en_persprons_refactored.mt_test", and "new_coref.cs_persprons_refactored.mt_test"
+        - see above
+
+coref git repository:
+    - branch "new_coref"
+        * a CR training folder
+            - cec; cd treex_cr_train
+            - inspired by "qtl; cd translate"
+            - started working on data printer
+                * deciding whether to use Bash or Makefiles (STOP POINT)
+        * this PROGRESS_STATE
+    - not versioned
+        * a CR resolution folder
+            - cec; cd treex_cr
+
+tectomt git-svn repository:
+    - branch "new_coref"
+        - labelling the obsolete classes and replacing the obsolete calls
