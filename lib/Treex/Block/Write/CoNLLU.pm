@@ -89,7 +89,7 @@ sub process_atree
         @misc = split(/\|/, $wild->{misc}) if(exists($wild->{misc}) && defined($wild->{misc}));
         if($node->no_space_after())
         {
-            push(@misc, 'SpaceAfter=No');
+            unshift(@misc, 'SpaceAfter=No');
         }
         # If transliteration of the word form to Latin (or another) alphabet is available, put it in the MISC column.
         if(defined($node->translit()))
