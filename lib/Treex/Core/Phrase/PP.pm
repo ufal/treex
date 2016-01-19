@@ -197,15 +197,14 @@ sub project_deprel
     # fun_is_head  && !deprel_at_fun => project_deprel == core_deprel # Prague style
     # !fun_is_head && !deprel_at_fun => project_deprel == deprel      # UD style
     # !fun_is_head && deprel_at_fun  => project_deprel == core_deprel # not used anywhere
-    if($self->deprel_at_head())
-    {
-        return $self->head()->project_deprel();
-    }
-    else
-    {
-        # If the real deprel is not kept at the head then the head must have a technical deprel.
-        return $self->core_deprel();
-    }
+    # Here we always return the project_deprel of the head phrase. If our main deprel is not at the head
+    # (and thus the head deprel / project deprel is the core_deprel, e.g. 'AuxP'), we have to trust the
+    # previous code that the head deprel has been set and maintained correctly. We cannot just return the
+    # core_deprel here. If the head is not a normal phrase (e.g. if it is a coordination of prepositions),
+    # then the core deprel may be buried deeper and the actual projected deprel may be Coord, not AuxP!
+    # In consequence, the only difference between this implementation of project_deprel() and
+    # that of the ancestor class BaseNTerm is currently this comment.
+    return $self->head()->project_deprel();
 }
 
 
