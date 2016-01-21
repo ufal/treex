@@ -49,29 +49,33 @@ sub process_start {
 sub process_ttree {
     my ( $self, $troot ) = @_;
 
+    $self->_set_cur_da_type('');
     if ( $self->_da_types ) {
         $self->_set_cur_da_type( shift @{ $self->_da_types } );
     }
     foreach my $tnode ( $troot->get_descendants( { ordered => 1 } ) ) {
         $self->process_tnode($tnode);
     }
-    $self->_set_cur_da_type(undef);
+    $self->_set_cur_da_type('');
 }
 
 sub process_tnode {
     my ( $self, $tnode ) = @_;
+    my $da_type = $self->_cur_da_type;
+    my $t_lemma = $tnode->t_lemma // '';
+    my $formeme = $tnode->formeme // '';
 
-    if ( $self->grammatemes->{ $self->_cur_da_type . '//' . $tnode->t_lemma . " " . $tnode->formeme } ) {
-        $self->_set_grams( $self->grammatemes->{ $self->_cur_da_type . '//' . $tnode->t_lemma . " " . $tnode->formeme } );
+    if ( $self->grammatemes->{ $da_type . '//' . $t_lemma . " " . $formeme } ) {
+        $self->_set_grams( $tnode, $self->grammatemes->{ $da_type . '//' . $t_lemma . " " . $formeme } );
     }
-    elsif ( $self->grammatemes->{ $self->_cur_da_type . '//' . $tnode->formeme } ) {
-        $self->_set_grams( $self->grammatemes->{ $self->_cur_da_type . '//' . $tnode->formeme } );
+    elsif ( $self->grammatemes->{ $da_type . '//' . $formeme } ) {
+        $self->_set_grams( $tnode, $self->grammatemes->{ $da_type . '//' . $formeme } );
     }
-    elsif ( $self->grammatemes->{ $tnode->t_lemma . " " . $tnode->formeme } ) {
-        $self->_set_grams( $tnode, $self->grammatemes->{ $tnode->t_lemma . " " . $tnode->formeme } );
+    elsif ( $self->grammatemes->{ $t_lemma . " " . $formeme } ) {
+        $self->_set_grams( $tnode, $self->grammatemes->{ $t_lemma . " " . $formeme } );
     }
-    elsif ( $self->grammatemes->{ $tnode->formeme } ) {
-        $self->_set_grams( $tnode, $self->grammatemes->{ $tnode->formeme } );
+    elsif ( $self->grammatemes->{ $formeme } ) {
+        $self->_set_grams( $tnode, $self->grammatemes->{ $formeme } );
     }
 }
 
@@ -133,5 +137,5 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2014–2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2014–2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
