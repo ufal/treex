@@ -857,16 +857,16 @@ sub raise_subordinating_conjunctions
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
-        if($node->afun() eq 'AuxC' && !$node->get_echildren() && !$node->is_member())
+        if($node->deprel() eq 'AuxC' && $node->is_leaf() && !$node->is_member())
         {
             my $parent = $node->parent();
             # Multi-word AuxC should have all but the last word as leaves. Skip dependent parts of AuxC MWE.
-            unless($parent->is_root() || $parent->afun() eq 'AuxC')
+            unless($parent->is_root() || $parent->deprel() eq 'AuxC')
             {
                 my $grandparent = $parent->parent();
                 # Is there a left neighbor and is it a comma?
                 my $ln = $node->get_left_neighbor();
-                my $comma = $ln && $ln->afun() eq 'AuxX' ? $ln : undef;
+                my $comma = $ln && $ln->deprel() eq 'AuxX' ? $ln : undef;
                 if($comma)
                 {
                     $comma->set_parent($node);
