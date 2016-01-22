@@ -37,7 +37,7 @@ sub detect_special_constructions
         # instead of Coord). However, after processing the coordination the phrase
         # will get a new label and it may well be AuxP.
         $phrase = $self->detect_stanford_coordination($phrase);
-        $phrase = $self->detect_prague_pp($phrase); ###!!!
+        $phrase = $self->detect_stanford_pp($phrase);
     }
     # Return the resulting phrase. It may be different from the input phrase.
     return $phrase;

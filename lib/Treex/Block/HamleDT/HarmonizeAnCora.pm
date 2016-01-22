@@ -23,10 +23,10 @@ sub process_zone
     if ($self->auxk_to_root){
         $self->attach_final_punctuation_to_root($root);
     }
-    $self->restructure_coordination($root);
+    ###!!!$self->restructure_coordination($root);
     # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
     # and with special care at places where prepositions and coordinations interact.
-    $self->process_prep_sub_arg_cloud($root);
+    ###!!!$self->process_prep_sub_arg_cloud($root);
     $self->raise_subordinating_conjunctions($root);
     $self->lift_noun_phrases($root);
     $self->check_afuns($root);

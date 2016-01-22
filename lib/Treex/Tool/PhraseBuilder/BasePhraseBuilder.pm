@@ -67,18 +67,23 @@ sub _build_dialect
     # The second position is the label used in set_deprel(); not available for all ids.
     my %map =
     (
-        'apos'  => ['^Apos$', 'Apos'], # head of paratactic apposition (punctuation or conjunction)
+        'apos'  => ['^Apos$', 'Apos'],  # head of paratactic apposition (punctuation or conjunction)
         'appos' => ['^Apposition$', 'Apposition'], # dependent member of hypotactic apposition
-        'auxg'  => ['^AuxG$', 'AuxG'], # punctuation other than comma
-        'auxk'  => ['^AuxK$', 'AuxK'], # sentence-terminating punctuation
-        'auxpc' => ['^Aux[PC]$'],      # preposition or subordinating conjunction
-        'auxx'  => ['^AuxX$', 'AuxX'], # comma
-        'auxy'  => ['^AuxY$', 'AuxY'], # additional coordinating conjunction or other function word
+        'auxg'  => ['^AuxG$', 'AuxG'],  # punctuation other than comma
+        'auxk'  => ['^AuxK$', 'AuxK'],  # sentence-terminating punctuation
+        'auxpc' => ['^Aux[PC]$'],       # preposition or subordinating conjunction
+        'auxp'  => ['^AuxP$', 'AuxP'],  # preposition
+        'auxc'  => ['^AuxC$', 'AuxC'],  # subordinating conjunction
+        'psarg' => ['^(Prep|Sub)Arg$'], # argument of preposition or subordinating conjunction
+        'parg'  => ['^PrepArg$', 'PrepArg'], # argument of preposition
+        'sarg'  => ['^SubArg$', 'SubArg'], # argument of subordinating conjunction
+        'auxx'  => ['^AuxX$', 'AuxX'],  # comma
+        'auxy'  => ['^AuxY$', 'AuxY'],  # additional coordinating conjunction or other function word
         'auxyz' => ['^Aux[YZ]$'],
-        'cc'    => ['^AuxY$', 'AuxY'], # coordinating conjunction
+        'cc'    => ['^AuxY$', 'AuxY'],  # coordinating conjunction
         'conj'  => ['^CoordArg$', 'CoordArg'], # conjunct
-        'coord' => ['^Coord$'],        # head of coordination (conjunction or punctuation)
-        'mwe'   => ['^AuxP$', 'AuxP'],   # non-head word of a multi-word expression; PDT has only multi-word prepositions
+        'coord' => ['^Coord$'],         # head of coordination (conjunction or punctuation)
+        'mwe'   => ['^AuxP$', 'AuxP'],  # non-head word of a multi-word expression; PDT has only multi-word prepositions
         'punct' => ['^Aux[XGK]$', 'AuxG'],
     );
     return \%map;
@@ -91,21 +96,28 @@ sub is_deprel
     my $map = $self->dialect();
     return exists($map->{$id}) && $deprel =~ m/$map->{$id}[0]/i;
 }
+sub map_deprel
+{
+    my $self = shift;
+    my $id = shift;
+    my $map = $self->dialect();
+    if(exists($map->{$id}) && defined($map->{$id}[1]))
+    {
+        return $map->{$id}[1];
+    }
+    else
+    {
+        log_warn("Dependency relation '$id' is unknown in this dialect of phrase builder.");
+        return "dep:$id";
+    }
+}
 sub set_deprel
 {
     my $self = shift;
     my $phrase = shift;
     my $id = shift;
     my $map = $self->dialect();
-    if(exists($map->{$id}) && defined($map->{$id}[1]))
-    {
-        return $phrase->set_deprel($map->{$id}[1]);
-    }
-    else
-    {
-        log_warn("Dependency relation '$id' is unknown in this dialect of phrase builder.");
-        return $phrase->set_deprel("dep:$id");
-    }
+    return $phrase->set_deprel($self->map_deprel($id));
 }
 
 
@@ -940,6 +952,64 @@ sub classify_prague_pp_subphrases
         'dep' => [@candidates, @punc]
     );
     return \%classification;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Examines a nonterminal phrase whether it is a prepositional phrase in the
+# mainstream non-Prague style: the preposition is the head and its deprel label
+# is the relation of the whole phrase to its parent, not just an auxiliary
+# label for the preposition. Despite our calling it "Stanford", this approach
+# is used in various non-Prague annotation styles.
+#------------------------------------------------------------------------------
+sub detect_stanford_pp
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    # The preposition (if any) is the head. We do not use the POS tag to
+    # recognize prepositions. We look at the child deprels instead: one of the
+    # children should be shouting "I'm the argument of a preposition!"
+    # Unlike in the Prague style, we do not handle multi-word prepositions at
+    # the same time.
+    my @dependents = $phrase->dependents('ordered' => 1);
+    my @arguments = grep {$self->is_deprel($_->deprel(), 'psarg')} (@dependents);
+    if(@arguments)
+    {
+        # We are working bottom-up, thus the current phrase does not have a parent yet and we do not have to take care of the parent link.
+        # We have to detach the argument though, and we have to port the is_member flag.
+        my $member = $phrase->is_member();
+        $phrase->set_is_member(undef);
+        my $pp_deprel = $phrase->deprel();
+        # Now it is clear that we have a prepositional phrase.
+        # The preposition is the current phrase but we have to detach the dependents and only keep the core.
+        my $fun = $phrase;
+        my $arg = $arguments[0];
+        my $fun_deprel = $self->map_deprel($self->is_deprel($arg->deprel(), 'parg') ? 'auxp' : 'auxc');
+        $fun->set_deprel($fun_deprel);
+        $arg->set_parent(undef);
+        $arg->set_deprel($pp_deprel);
+        my $pp = new Treex::Core::Phrase::PP
+        (
+            'fun'           => $fun,
+            'arg'           => $arg,
+            'fun_is_head'   => $self->prep_is_head(),
+            'deprel_at_fun' => 0,
+            'core_deprel'   => $fun_deprel,
+            'is_member'     => $member
+        );
+        $pp->set_deprel($pp_deprel);
+        foreach my $d (@dependents)
+        {
+            unless($d == $arg)
+            {
+                $d->set_parent($pp);
+            }
+        }
+        return $pp;
+    }
+    # Return the input NTerm phrase if no PP has been detected.
+    return $phrase;
 }
 
 
