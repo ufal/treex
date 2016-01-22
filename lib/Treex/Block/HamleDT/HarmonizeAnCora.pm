@@ -1,7 +1,8 @@
 package Treex::Block::HamleDT::HarmonizeAnCora;
+use utf8;
 use Moose;
 use Treex::Core::Common;
-use utf8;
+use Treex::Tool::PhraseBuilder::StanfordToPrague;
 extends 'Treex::Block::HamleDT::Harmonize';
 
 has auxk_to_root => (is=>'ro', isa=>'Bool', default=>0, documentation=>'attach final punctuation to the technical root' );
