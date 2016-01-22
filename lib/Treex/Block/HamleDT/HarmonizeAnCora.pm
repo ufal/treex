@@ -30,7 +30,7 @@ sub process_zone
     ###!!!$self->process_prep_sub_arg_cloud($root);
     $self->raise_subordinating_conjunctions($root);
     $self->lift_noun_phrases($root);
-    $self->check_afuns($root);
+    $self->check_deprels($root);
     return $root;
 }
 
