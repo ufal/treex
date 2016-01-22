@@ -572,7 +572,7 @@ sub convert_deprels
         if($node->is_article())
         {
             $deprel = 'AuxA';
-            $node->set_definiteness($lemma eq 'el' ? 'def' : 'ind');
+            $node->iset()->set('definiteness', $lemma eq 'el' ? 'def' : 'ind');
         }
         $node->set_deprel($deprel);
     }
