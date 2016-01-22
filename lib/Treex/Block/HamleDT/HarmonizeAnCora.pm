@@ -25,7 +25,7 @@ sub process_zone
         $self->attach_final_punctuation_to_root($root);
     }
     ###!!!$self->restructure_coordination($root);
-    # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
+    # Shifting deprels at prepositions and subordinating conjunctions must be done after coordinations are solved
     # and with special care at places where prepositions and coordinations interact.
     ###!!!$self->process_prep_sub_arg_cloud($root);
     $self->raise_subordinating_conjunctions($root);
@@ -57,28 +57,35 @@ sub get_input_tag_for_interset
 
 
 #------------------------------------------------------------------------------
-# Convert dependency relation tags to analytical functions.
+# Convert dependency relation labels.
 # /net/data/CoNLL/2009/es/doc/tagsets.pdf
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub convert_deprels
 {
-    my ( $self, $root ) = @_;
-    foreach my $node ($root->get_descendants)
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
     {
-        my $deprel = $node->conll_deprel();
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
         my ($parent) = $node->get_eparents();
         my $pos    = $node->iset()->pos();
         my $ppos   = $parent ? $parent->iset()->pos() : '';
         my $lemma  = $node->lemma;
-        my $afun = 'NR';
         # Adjective in leaf node. Could be headed by article! Example:
         # aquests primers tres mesos
         # these first three months
         # TREE: mesos ( aquests/spec ( primers/a , tres/d ) )
         if($deprel eq 'a')
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
         # Orational adjunct. Example:
         # segons el Tribunal Suprem
@@ -86,7 +93,7 @@ sub deprel_to_afun
         # NOTE: "segons" is by far the most frequent lemma with the "ao" tag.
         elsif($deprel eq 'ao')
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
         # Attribute. The meaning is different from attribute in PDT.
         # els accidents van ser reals
@@ -94,7 +101,7 @@ sub deprel_to_afun
         # ser ( accidents/suj ( els/spec ) , van/v , reals/atr )
         elsif($deprel eq 'atr')
         {
-            $afun = 'Pnom';
+            $deprel = 'Pnom';
         }
         # Conjunction in leaf node. Very rare (errors?) In the examples, coordinating conjunctions are more frequent than subordinating ones.
         # See also "conj" and "coord".
@@ -102,19 +109,19 @@ sub deprel_to_afun
         {
             if($lemma eq 'com' && scalar($node->get_children())==1 && $ppos eq 'verb')
             {
-                $afun = 'AuxC';
-                ###!!! We would like to assign $node->get_children()[0]->set_afun('Adv'). But we should not do it at this moment because the child may be processed by deprel_to_afun() later.
+                $deprel = 'AuxC';
+                ###!!! We would like to assign $node->get_children()[0]->set_deprel('Adv'). But we should not do it at this moment because the child may be processed by deprel_to_deprel() later.
             }
             elsif($lemma eq 'que' && scalar($node->get_children())==0 && $ppos =~ m/^(adv|conj)$/)
             {
                 # Example: més que suficients
                 # more than sufficient
                 # TREE: suficients/s.a ( més/spec ( que/c ) )
-                $afun = 'AuxY';
+                $deprel = 'AuxY';
             }
             else
             {
-                $afun = 'Coord';
+                $deprel = 'Coord';
                 $node->wild()->{coordinator} = 1;
             }
         }
@@ -124,41 +131,41 @@ sub deprel_to_afun
         # tried by a kangaroo court
         elsif($deprel eq 'cag')
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
         # Adjunct. Example:
         # gràcies al fet
         # thanks to
         elsif($deprel eq 'cc')
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
         # Direct object. Example:
         # Llorens ha criticat la Generalitat/cd
         # Llorens has criticized the Government
         elsif($deprel eq 'cd')
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
         # Indirect object. Example:
         # La norma/suj permetrà a/ci les autonomies habilitar/cd altres sales de/cc forma extraordinària.
         # The rule will allow the autonomies to enable other rooms dramatically.
         elsif($deprel eq 'ci')
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
         # Subordinating conjunction (que, perquè, si, quan, ...)
         # The conjunction is attached to the head of the subordinate clause, which is attached to the superordinate predicate.
         elsif($deprel eq 'conj')
         {
             ###!!! We will later want to reattach it. Now it is a leaf.
-            $afun = 'AuxC';
+            $deprel = 'AuxC';
         }
         # Coordinating conjunction (i, o, però, ni, ...)
         # The conjunction is attached to the first conjunct.
         elsif($deprel eq 'coord')
         {
-            $afun = 'Coord';
+            $deprel = 'Coord';
             $node->wild()->{coordinator} = 1;
         }
         # Predicative complement. Noun/prepositional part of compound verbs? Example:
@@ -168,14 +175,14 @@ sub deprel_to_afun
         # The most frequent expression tagged cpred is "com_a".
         elsif($deprel eq 'cpred')
         {
-            $afun = 'Obj'; ###!!! Should we invent a new tag for this?
+            $deprel = 'Obj'; ###!!! Should we invent a new tag for this?
         }
         # Prepositional object. Example:
         # entrar en crisi
         # enter crisis
         elsif($deprel eq 'creg')
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
         # Determiner leaf. Example:
         # tots els usuaris
@@ -183,25 +190,25 @@ sub deprel_to_afun
         # TREE: usuaris ( els/spec ( tots/d ) )
         elsif($deprel eq 'd')
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
         # Textual element, e.g. introducing expression at the beginning of the sentence. Example:
         # En aquest sentit, ...
         # In this sense, ...
         elsif($deprel eq 'et')
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
         # Punctuation mark.
         elsif($deprel eq 'f')
         {
             if($node->form() eq ',')
             {
-                $afun = 'AuxX';
+                $deprel = 'AuxX';
             }
             else
             {
-                $afun = 'AuxG';
+                $deprel = 'AuxG';
             }
         }
         # Gerund. Example:
@@ -212,30 +219,30 @@ sub deprel_to_afun
         {
             ###!!! The structure in the above example is strange.
             ###!!! We would make "debatre" object of "intentant".
-            $afun = 'AuxV';
+            $deprel = 'AuxV';
         }
         # Adjective conjunct, member of adjective group.
         # Adverbial conjunct, member of adverb group.
         # Nominal conjunct, member of noun group.
         elsif($deprel =~ m/^grup\.(a|adv|nom)$/)
         {
-            $afun = 'CoordArg';
+            $deprel = 'CoordArg';
             $node->wild()->{conjunct} = 1;
         }
         # grup.verb is probably an error. There is just one occurrence and it is the first part of a compound coordinating conjunction either-or.
         elsif($deprel eq 'grup.verb')
         {
-            $afun = 'AuxY';
+            $deprel = 'AuxY';
         }
         # Interjection leaf, single occurrence.
         elsif($deprel eq 'i')
         {
-            $afun = 'ExD';
+            $deprel = 'ExD';
         }
         # Impersonality mark (reflexive pronoun, passive construction).
         elsif($deprel eq 'impers')
         {
-            $afun = 'AuxR';
+            $deprel = 'AuxR';
         }
         # Inserted element (parenthesis). Example:
         # , ha afegit,
@@ -244,17 +251,17 @@ sub deprel_to_afun
         {
             # Annotation in PDT (http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s06.html):
             # If it is a particle that would normally get AuxY, it gets AuxY-Pa.
-            # If it is a constituent that matches the sentence, just is delimited by commas or brackets: its normal afun + -Pa.
+            # If it is a constituent that matches the sentence, just is delimited by commas or brackets: its normal deprel + -Pa.
             # If it is a sentence with predicate and it does not fit in the structure of the surrounding sentence, Pred-Pa.
             # Otherwise, ExD-Pa.
             ###!!! We did not capture parenthesis in HamleDT so far.
             if($pos eq 'verb')
             {
-                $afun = 'Pred';
+                $deprel = 'Pred';
             }
             else
             {
-                $afun = 'ExD';
+                $deprel = 'ExD';
             }
         }
         # Infinitive. Example:
@@ -265,12 +272,12 @@ sub deprel_to_afun
         {
             ###!!! The structure in the above example is strange.
             ###!!! We would make "que toca" object of "destacar".
-            $afun = 'AuxV';
+            $deprel = 'AuxV';
         }
         # Interjection.
         elsif($deprel eq 'interjeccio')
         {
-            $afun = 'ExD';
+            $deprel = 'ExD';
         }
         # Non-argumental verb modifier.
         # no, també, només, ja, tampoc
@@ -279,18 +286,18 @@ sub deprel_to_afun
         {
             if($node->form() =~ m/^no$/i)
             {
-                $afun = 'Neg';
+                $deprel = 'Neg';
             }
             else
             {
-                $afun = 'Adv';
+                $deprel = 'Adv';
             }
         }
         # Reflexive pronoun.
         # es, s', hi, -se, se
         elsif($deprel eq 'morfema.pronominal')
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
         # Reflexive pronoun. See also "impers" and "morfema.pronominal".
         # es, s', -se, se
@@ -302,7 +309,7 @@ sub deprel_to_afun
         # on completion of a century of the birth of the artist
         elsif($deprel eq 'morfema.verbal')
         {
-            $afun = 'AuxR';
+            $deprel = 'AuxR';
         }
         # Noun leaf. Often within quantification expressions; most frequent word is "resta". Example:
         # un centenar de representants
@@ -311,14 +318,14 @@ sub deprel_to_afun
         elsif($deprel eq 'n')
         {
             ###!!! We will want to restructure this.
-            $afun = 'DetArg';
+            $deprel = 'DetArg';
         }
         # Negation. Adverbial particle that may modify nouns, adjectives and verbs. Example:
         # persona no grata
         # undesirable person
         elsif($deprel eq 'neg')
         {
-            $afun = 'Neg';
+            $deprel = 'Neg';
         }
         # Pronoun leaf. Example:
         # el mateix Borrell
@@ -327,7 +334,7 @@ sub deprel_to_afun
         elsif($deprel eq 'p')
         {
             ###!!! We will want to restructure this.
-            $afun = 'DetArg';
+            $deprel = 'DetArg';
         }
         # Participle leaf. Example:
         # distribuïda atenent a criteris
@@ -336,7 +343,7 @@ sub deprel_to_afun
         elsif($deprel eq 'participi')
         {
             ###!!! We will want to restructure this.
-            $afun = 'AdjArg';
+            $deprel = 'AdjArg';
         }
         # Reflexive pronoun used to form reflexive passive. Example:
         # See also morfema.pronominal, morfema.verbal and impers.
@@ -344,11 +351,11 @@ sub deprel_to_afun
         # where it was explained
         elsif($deprel eq 'pass')
         {
-            #$afun = 'AuxR';
-            # It is not clear whether Spanish deprel=pass (e.g. lemma=se) should have afun=AuxR or afun=Obj
+            #$deprel = 'AuxR';
+            # It is not clear whether Spanish deprel=pass (e.g. lemma=se) should have deprel=AuxR or deprel=Obj
             # see https://ufal.mff.cuni.cz/pdt2.0/doc/manuals/en/a-layer/html/ch03s06x25.html#sereflex-3
-            # Currently, the synthesis cannot add nodes with reflexive/passive lemma=se afun=AuxR, so I prefer afun=Obj.
-            $afun = 'Obj';
+            # Currently, the synthesis cannot add nodes with reflexive/passive lemma=se deprel=AuxR, so I prefer deprel=Obj.
+            $deprel = 'Obj';
         }
         # Preposition leaf attached to a verb. Example: de, com, a, segons, a_punt_de
         # per mirar de conèixer les circumstàncies
@@ -356,7 +363,7 @@ sub deprel_to_afun
         elsif($deprel eq 'prep')
         {
             ###!!! We will want to restructure this.
-            $afun = 'AuxP';
+            $deprel = 'AuxP';
         }
         # Adverb leaf. Example:
         # ara fa tan sols un any
@@ -365,7 +372,7 @@ sub deprel_to_afun
         # TREE: any ( ara/r , fa/v , tan_sols/r , un/d )
         elsif($deprel eq 'r')
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
         # Relative pronoun (què, qual, quals, qui, que, on). Example:
         # en el qual
@@ -378,7 +385,7 @@ sub deprel_to_afun
         ###!!! We would like to restructure this latter example.
         elsif($deprel eq 'relatiu')
         {
-            $afun = 'PrepArg';
+            $deprel = 'PrepArg';
         }
         # Head of subordinate clause. Example:
         # litres que han arribat al riu
@@ -388,13 +395,13 @@ sub deprel_to_afun
         {
             if($ppos eq 'noun')
             {
-                $afun = 'Atr';
+                $deprel = 'Atr';
             }
             else
             {
                 ###!!! We should look at children to distinguish adverbial clauses. (E.g., is "where" or "when" among the children?)
                 ###!!! On the other hand, looking at parent (verba dicendi) could reveal that it is complement clause.
-                $afun = 'Adv'; ###!!! or 'Obj'
+                $deprel = 'Adv'; ###!!! or 'Obj'
             }
         }
         # Preposition leaf. See also "prep". Example:
@@ -405,7 +412,7 @@ sub deprel_to_afun
         elsif($deprel eq 's')
         {
             ###!!! We will want to restructure this.
-            $afun = 'AuxP';
+            $deprel = 'AuxP';
         }
         # Adjective phrase that does not depend on a verb. Mostly a modifier of noun. Example:
         # una selva petita
@@ -413,7 +420,7 @@ sub deprel_to_afun
         # TREE: selva ( una/spec , petita/s.a )
         elsif($deprel eq 's.a')
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
         # Adjective phrase that depends on a verb.
         # (But in reality, many occurrences I saw do not depend on a verb. Are they annotation errors?)
@@ -428,28 +435,28 @@ sub deprel_to_afun
         {
             if($ppos eq 'adp')
             {
-                $afun = 'PrepArg';
+                $deprel = 'PrepArg';
             }
             else
             {
-                $afun = 'Atr';
+                $deprel = 'Atr';
             }
         }
         # Adverb phrase.
         elsif($deprel eq 'sadv')
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
         # Main predicate or other main head if there is no predicate.
         elsif($deprel eq 'sentence')
         {
             if($pos eq 'verb')
             {
-                $afun = 'Pred';
+                $deprel = 'Pred';
             }
             else
             {
-                $afun = 'ExD';
+                $deprel = 'ExD';
             }
         }
         # Noun phrase that is not tagged specifically as subject or object.
@@ -459,84 +466,84 @@ sub deprel_to_afun
         {
             if($ppos eq 'adp')
             {
-                $afun = 'PrepArg';
+                $deprel = 'PrepArg';
             }
             elsif($ppos eq 'conj')
             {
-                $afun = 'SubArg';
+                $deprel = 'SubArg';
             }
             elsif($ppos =~ m/^(verb|adj)$/)
             {
-                $afun = 'Obj';
+                $deprel = 'Obj';
             }
             elsif($ppos eq 'adv')
             {
-                $afun = 'Adv';
+                $deprel = 'Adv';
             }
             else
             {
-                $afun = 'Apposition';
+                $deprel = 'Apposition';
             }
         }
         # Prepositional phrase.
         elsif($deprel eq 'sp')
         {
-            # We do not want to assign AuxP now. That will be achieved by swapping afuns later.
+            # We do not want to assign AuxP now. That will be achieved by swapping deprels later.
             # Now we have to figure out the relation of the prepositional phrase to its parent.
             if($ppos =~ m/^(noun|adj|num)$/)
             {
                 # adj example: propietària de les mines
                 # num example: una de cada tres pessetes
-                $afun = 'Atr';
+                $deprel = 'Atr';
             }
-            elsif($ppos eq 'verb' && $lemma =~ m/^(a|al|d'|de|del)$/i)
+            elsif($ppos eq 'verb' && $lemma =~ m/^(a|al|d'|de|del)$/i) # '
             {
-                $afun = 'Obj';
+                $deprel = 'Obj';
             }
             elsif($ppos eq 'verb')
             {
                 # Observed with a variety of other prepositions, e.g.: com_a, al_marge_de, sobre, per, en.
-                $afun = 'Adv';
+                $deprel = 'Adv';
             }
             elsif($ppos eq 'adv')
             {
-                $afun = 'Adv';
+                $deprel = 'Adv';
             }
             elsif($ppos eq 'adp')
             {
                 # Example: per a quatre veterinaris gironins
-                $afun = 'PrepArg';
+                $deprel = 'PrepArg';
             }
             elsif($ppos eq 'conj')
             {
                 # Example: com en la passada legislatura
-                $afun = 'SubArg';
+                $deprel = 'SubArg';
             }
             else
             {
-                $afun = 'NR'; ###!!! Where else does it occur?
+                $deprel = 'NR'; ###!!! Where else does it occur?
             }
         }
         # Specifier, i.e. article, numeral or other determiner.
         elsif($deprel eq 'spec')
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
             if ($lemma eq 'uno'){
                 $node->iset->set_prontype('art');
-                $afun = 'AuxA';
+                $deprel = 'AuxA';
             }
         }
         # Subject, including inserted empty nodes (Catalan is pro-drop language) and relative pronouns in subordinate clauses.
         elsif($deprel eq 'suj')
         {
-            $afun = 'Sb';
+            $deprel = 'Sb';
         }
         # Auxiliary or semi-auxiliary verb. Example:
         # La moció ha estat aprovada.
         # The motion has been approved.
         elsif($deprel eq 'v')
         {
-            $afun = 'AuxV';
+            $deprel = 'AuxV';
         }
         # Vocative. Example:
         # Senyora, escriure una cançó així és molt difícil.
@@ -544,7 +551,7 @@ sub deprel_to_afun
         elsif($deprel eq 'voc')
         {
             # In PDT, vocatives are annotated as "ExD_Pa" (parenthesis).
-            $afun = "ExD"; ###!!! a co ta parenteze?
+            $deprel = "ExD"; ###!!! a co ta parenteze?
         }
         # Date/time. Example:
         # les 22.30 hores
@@ -555,19 +562,19 @@ sub deprel_to_afun
         # TREE: hores ( 1.15/spec )
         elsif($deprel eq 'w')
         {
-            $afun = 'DetArg';
+            $deprel = 'DetArg';
         }
         # Number (expressed in digits) leaf, usually attached to a determiner.
         elsif($deprel eq 'z')
         {
-            $afun = 'DetArg';
+            $deprel = 'DetArg';
         }
-        $node->set_afun($afun);
-
-        if ($node->is_article){
-            $node->set_afun('AuxA');
-            $node->iset->set_definiteness($lemma eq 'el' ? 'def' : 'ind');
+        if($node->is_article())
+        {
+            $deprel = 'AuxA';
+            $node->set_definiteness($lemma eq 'el' ? 'def' : 'ind');
         }
+        $node->set_deprel($deprel);
     }
     # Improve analytical functions for processing of coordinations.
     $self->catch_runaway_conjuncts($root);
@@ -614,7 +621,7 @@ sub catch_runaway_conjuncts
                         my @rswtp = @right_siblings;
                         for(my $i = $#rswtp; $i>=0 && $i<=$#rswtp; $i--)
                         {
-                            if($rswtp[$i]->afun() =~ m/^Aux[GX]$/)
+                            if($rswtp[$i]->deprel() =~ m/^Aux[GX]$/)
                             {
                                 splice(@rswtp, $#rswtp);
                             }
@@ -654,7 +661,7 @@ sub catch_runaway_conjuncts
                 # If there is just one left sibling, it is the only candidate for the other conjunct, regardless whether parts of speech match.
                 # Punctuation nodes in the sequence of left siblings are not interesting.
                 my @left_siblings = $node->get_siblings({preceding_only => 1});
-                my @lswp = grep {$_->afun() !~ m/^Aux[GX]$/} (@left_siblings);
+                my @lswp = grep {$_->deprel() !~ m/^Aux[GX]$/} (@left_siblings);
                 my $form = $node->form();
                 my $search_for = $form eq 'tant' ? 'com' : $form eq 'ja_sigui' ? 'o' : $form eq 'no_només' ? 'sinó_també' : '';
                 my @com = grep {$_->lemma() eq $search_for && $_->ord() > $node->ord()} ($node->parent()->get_descendants());
@@ -668,7 +675,7 @@ sub catch_runaway_conjuncts
                 {
                     my $com = $com[0];
                     $node->set_parent($com);
-                    $node->set_afun('AuxY');
+                    $node->set_deprel('AuxY');
                 }
                 # Other cases than compound conjunctions.
                 elsif(scalar(@lswp)==1)
@@ -686,9 +693,9 @@ sub catch_runaway_conjuncts
                     for(my $i = $#left_siblings; $i>=0 && $i<=$#left_siblings; $i--)
                     {
                         my $current = $left_siblings[$i];
-                        last if($expected_comma && $current->afun() ne 'AuxX');
+                        last if($expected_comma && $current->deprel() ne 'AuxX');
                         $expected_comma = 0;
-                        if($current->afun() ne 'AuxX')
+                        if($current->deprel() ne 'AuxX')
                         {
                             $conjuncts_found++;
                             $current->wild()->{conjunct} = 1;
@@ -701,7 +708,7 @@ sub catch_runaway_conjuncts
                     if($conjuncts_found==0)
                     {
                         $node->wild()->{coordinator} = 0;
-                        $node->set_afun('AuxY');
+                        $node->set_deprel('AuxY');
                     }
                 }
             }
@@ -746,8 +753,8 @@ sub lift_noun_phrases
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $afun = $node->afun();
-        if ( $afun =~ m/^(DetArg|NumArg|PossArg|AdjArg)$/ )
+        my $deprel = $node->deprel();
+        if ( $deprel =~ m/^(DetArg|NumArg|PossArg|AdjArg)$/ )
         {
             $self->lift_node( $node, 'Atr' );
         }
