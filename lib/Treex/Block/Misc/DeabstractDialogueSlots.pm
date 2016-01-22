@@ -42,7 +42,7 @@ sub process_ttree {
     my ( $self, $troot ) = @_;
     my $abstr = $self->_get_next_abstraction();
     
-    foreach my $tnode ( grep { $_->t_lemma =~ /^X-[a-z]+$/ } $troot->get_descendants( { ordered => 1 } ) ) {
+    foreach my $tnode ( grep { $_->t_lemma =~ /^X-[a-z_]+$/ } $troot->get_descendants( { ordered => 1 } ) ) {
         my ($slot) = ( $tnode->t_lemma =~ /^X-(.*)$/ );
         my $value = 'X';
         if (!$self->xs_instead){
