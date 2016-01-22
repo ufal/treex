@@ -28,9 +28,7 @@ sub process_zone
     my $builder = new Treex::Tool::PhraseBuilder::Prague
     (
         'prep_is_head'           => 1,
-        'cop_is_head'            => 1, ###!!! To tenhle builder vůbec neřeší.
-        'coordination_head_rule' => 'last_coordinator',
-        'counted_genitives'      => $self->language() ne 'la' ###!!! V tomhle builderu se s genitivy nic nedělá, ne?
+        'coordination_head_rule' => 'last_coordinator'
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
