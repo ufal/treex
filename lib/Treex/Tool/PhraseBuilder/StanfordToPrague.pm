@@ -1,4 +1,4 @@
-package Treex::Tool::PhraseBuilder::Prague;
+package Treex::Tool::PhraseBuilder::StanfordToPrague;
 
 use utf8;
 use namespace::autoclean;
@@ -36,9 +36,8 @@ sub detect_special_constructions
         # hence we do not see a prepositional phrase (the label would have to be AuxP
         # instead of Coord). However, after processing the coordination the phrase
         # will get a new label and it may well be AuxP.
-        $phrase = $self->detect_prague_coordination($phrase);
-        $phrase = $self->detect_prague_apposition($phrase);
-        $phrase = $self->detect_prague_pp($phrase);
+        $phrase = $self->detect_stanford_coordination($phrase);
+        $phrase = $self->detect_prague_pp($phrase); ###!!!
     }
     # Return the resulting phrase. It may be different from the input phrase.
     return $phrase;
@@ -58,20 +57,20 @@ __PACKAGE__->meta->make_immutable();
 
 =head1 NAME
 
-Treex::Tool::PhraseBuilder::Prague
+Treex::Tool::PhraseBuilder::StanfordToPrague
 
 =head1 DESCRIPTION
 
 Derived from C<Treex::Core::Phrase::Builder>, this class implements language-
 and treebank-specific phrase structures.
 
-There are methods that detect structures in a Prague-style treebank (such as
-the Czech Prague Dependency Treebank).
+It expects that the dependency relation labels have been translated to the
+Prague dialect. The expected tree structure features Stanford coordination
+and prepositional phrases with the function marked at the head preposition.
+The target style is Prague.
 
-Transformations organized bottom-up during phrase building are advantageous
-because we can rely on that all special structures (such as coordination) on the
-lower levels have been detected and treated properly so that we will not
-accidentially destroy them.
+Input treebanks for which this builder should work include AnCora (Catalan and
+Spanish).
 
 =head1 METHODS
 
@@ -89,6 +88,6 @@ Daniel Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

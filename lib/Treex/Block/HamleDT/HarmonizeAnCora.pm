@@ -10,9 +10,17 @@ sub process_zone
 {
     my $self = shift;
     my $zone = shift;
-
-    # call backup_zone($zone), convert_tags($root) and deprel_to_afun($root)
     my $root = $self->SUPER::process_zone($zone);
+    # Phrase-based implementation of tree transformations (22.1.2016).
+    my $builder = new Treex::Tool::PhraseBuilder::StanfordToPrague
+    (
+        'prep_is_head'           => 1,
+        'cop_is_head'            => 1, ###!!! To tenhle builder vůbec neřeší.
+        'coordination_head_rule' => 'last_coordinator',
+        'counted_genitives'      => $self->language() ne 'la' ###!!! V tomhle builderu se s genitivy nic nedělá, ne?
+    );
+    my $phrase = $builder->build($root);
+    $phrase->project_dependencies();
 
     if ($self->auxk_to_root){
         $self->attach_final_punctuation_to_root($root);
