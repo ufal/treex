@@ -19,16 +19,28 @@ has iset_driver =>
 # Reads the Dutch tree, converts morphosyntactic tags to Interset, converts
 # deprel tags to afuns, transforms tree to adhere to HamleDT guidelines.
 #------------------------------------------------------------------------------
-sub process_zone {
+sub process_zone
+{
     my $self   = shift;
     my $zone   = shift;
     my $root = $self->SUPER::process_zone( $zone );
+    # Phrase-based implementation of tree transformations (22.1.2016).
+    my $builder = new Treex::Tool::PhraseBuilder::Prague
+    (
+        'prep_is_head'           => 1,
+        'cop_is_head'            => 1, ###!!! To tenhle builder vůbec neřeší.
+        'coordination_head_rule' => 'last_coordinator',
+        'counted_genitives'      => $self->language() ne 'la' ###!!! V tomhle builderu se s genitivy nic nedělá, ne?
+    );
+    my $phrase = $builder->build($root);
+    $phrase->project_dependencies();
     $self->attach_final_punctuation_to_root($root);
-    $self->restructure_coordination($root);
+    ###!!!$self->restructure_coordination($root);
     # Fix interrogative pronouns before subordinating conjunctions because the treebank wants us to think they are the same.
     $self->fix_int_rel_words($root);
     $self->fix_int_rel_prepositional_phrases($root);
     $self->fix_int_rel_phrases($root);
+    ###!!! WE WANT TO MOVE THIS UNDER THE PHRASE BUILDER!
     # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
     # and with special care at places where prepositions and coordinations interact.
     $self->process_prep_sub_arg_cloud($root);
