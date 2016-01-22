@@ -1,4 +1,4 @@
-package Treex::Tool::PhraseBuilder;
+package Treex::Tool::PhraseBuilder::UD;
 
 use utf8;
 use namespace::autoclean;
@@ -1135,7 +1135,7 @@ __PACKAGE__->meta->make_immutable();
 
 =head1 NAME
 
-Treex::Tool::PhraseBuilder
+Treex::Tool::PhraseBuilder::UD
 
 =head1 DESCRIPTION
 

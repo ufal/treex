@@ -3,7 +3,7 @@ use utf8;
 use open ':utf8';
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::PhraseBuilder;
+use Treex::Tool::PhraseBuilder::UD;
 extends 'Treex::Core::Block';
 
 has 'last_file_stem' => ( is => 'rw', isa => 'Str', default => '' );
@@ -61,7 +61,7 @@ sub process_zone
     # below say how should the resulting dependency tree look like. The code
     # of the builder knows how the INPUT tree looks like (including the deprels
     # already converted from Prague to the UD set).
-    my $builder = new Treex::Tool::PhraseBuilder
+    my $builder = new Treex::Tool::PhraseBuilder::UD
     (
         'prep_is_head'           => 0,
         'cop_is_head'            => 0,
