@@ -23,7 +23,7 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
-    $self->fix_annotation_errors($root);
+    $self->fix_annotation_errors_after_coordination($root);
 }
 
 
@@ -34,7 +34,7 @@ sub process_zone
 # solved. The function is meant to collect bad cases but it could damage the
 # good ones.
 #------------------------------------------------------------------------------
-sub fix_annotation_errors
+sub fix_annotation_errors_after_coordination
 {
     my $self = shift;
     my $root = shift;

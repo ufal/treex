@@ -14,11 +14,38 @@ has iset_driver =>
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
-# If there are any language-specific phenomena to handle, uncomment process_zone() and put the code there.
-# Make sure to call $self->SUPER::process_zone($zone) from there!
-# sub process_zone {
-#    my $root = $self->SUPER::process_zone($zone);
-#}
+
+
+#------------------------------------------------------------------------------
+# Fixes a few known annotation errors that appear in the data.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    # Coma_Estadella , Àngel_Jové , Víctor_P._Pallarés i Josep_Guinovart
+    # Angel is attached correctly to Coma but everything else is attached to Angel.
+    foreach my $node (@nodes)
+    {
+        if($node->form() eq 'Àngel_Jové')
+        {
+            my $parent = $node->parent();
+            my $pform = $parent->form();
+            if(defined($pform) && $pform eq 'Coma_Estadella')
+            {
+                my @children = $node->children({'ordered' => 1});
+                if(scalar(@children)==5 && $node->deprel() eq 'CoordArg' && $children[2]->deprel() eq 'CoordArg')
+                {
+                    foreach my $child (@children)
+                    {
+                        $child->set_parent($parent);
+                    }
+                }
+            }
+        }
+    }
+}
 
 
 
