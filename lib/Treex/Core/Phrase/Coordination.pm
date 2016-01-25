@@ -302,7 +302,7 @@ sub head
     if($rule eq 'first_conjunct')
     {
         # There is always at least one conjunct.
-        return ($self->conjuncts())[0];
+        return ($self->conjuncts('ordered' => 1))[0];
     }
     elsif($rule eq 'last_coordinator')
     {
@@ -500,6 +500,7 @@ sub project_dependencies
     {
         log_warn("Coordination without delimiters cannot use the 'last_coordinator' head rule.");
         $head_rule = 'first_conjunct'; ###!!! But then it should be possible to define deprels for this head rule in the current dialect.
+        $self->set_head_rule($head_rule);
     }
     # Recursion first, we work bottom-up.
     my @children = $self->children();
