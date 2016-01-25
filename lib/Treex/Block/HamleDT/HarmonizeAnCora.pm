@@ -5,7 +5,7 @@ use Treex::Core::Common;
 use Treex::Tool::PhraseBuilder::StanfordToPrague;
 extends 'Treex::Block::HamleDT::Harmonize';
 
-has auxk_to_root => (is=>'ro', isa=>'Bool', default=>0, documentation=>'attach final punctuation to the technical root' );
+has auxk_to_root => (is=>'ro', isa=>'Bool', default=>1, documentation=>'attach final punctuation to the technical root' );
 
 sub process_zone
 {
