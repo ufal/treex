@@ -42,6 +42,10 @@ sub fix_annotation_errors
                         $child->set_parent($parent);
                     }
                 }
+                else
+                {
+                    log_fatal(scalar(@children));
+                }
             }
         }
     }
