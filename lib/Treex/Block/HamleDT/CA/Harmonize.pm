@@ -56,6 +56,21 @@ sub fix_annotation_errors
                 $node->set_deprel('PrepArg');
             }
         }
+        # Els presidents de les federacions de Lleida , Isidre_Gavín , Barcelona-comarques Joan_Raventós , ...
+        elsif($form eq 'Isidre_Gavín')
+        {
+            my $parent = $node->parent();
+            my $pform = $parent->form();
+            if(defined($pform) && $pform eq 'Lleida')
+            {
+                my @children = $node->children({'ordered' => 1});
+                if(scalar(@children)==2 && $children[1]->form() eq ',')
+                {
+                    # We need a punctuation node to head the coordination "Lleida , Barcelona-comarques".
+                    $children[1]->set_parent($parent);
+                }
+            }
+        }
     }
 }
 
