@@ -110,7 +110,7 @@ sub convert_deprels
             if($lemma eq 'com' && scalar($node->get_children())==1 && $ppos eq 'verb')
             {
                 $deprel = 'AuxC';
-                ###!!! We would like to assign $node->get_children()[0]->set_deprel('Adv'). But we should not do it at this moment because the child may be processed by deprel_to_deprel() later.
+                ###!!! We would like to assign $node->get_children()[0]->set_deprel('Adv'). But we should not do it at this moment because the child may be processed by convert_deprels() later.
             }
             elsif($lemma eq 'que' && scalar($node->get_children())==0 && $ppos =~ m/^(adv|conj)$/)
             {
@@ -121,8 +121,10 @@ sub convert_deprels
             }
             else
             {
-                $deprel = 'Coord';
-                $node->wild()->{coordinator} = 1;
+                # We have Stanford-style coordination and the conjunction is not head. It must not be labeled Coord,
+                # otherwise the bottom-up working phrase builder could confuse it with nested Prague-style coordinations
+                # created in previous steps.
+                $deprel = 'AuxY';
             }
         }
         # Agent complement.
@@ -165,8 +167,10 @@ sub convert_deprels
         # The conjunction is attached to the first conjunct.
         elsif($deprel eq 'coord')
         {
-            $deprel = 'Coord';
-            $node->wild()->{coordinator} = 1;
+            # We have Stanford-style coordination and the conjunction is not head. It must not be labeled Coord,
+            # otherwise the bottom-up working phrase builder could confuse it with nested Prague-style coordinations
+            # created in previous steps.
+            $deprel = 'AuxY';
         }
         # Predicative complement. Noun/prepositional part of compound verbs? Example:
         # ha fet públic
@@ -227,7 +231,6 @@ sub convert_deprels
         elsif($deprel =~ m/^grup\.(a|adv|nom)$/)
         {
             $deprel = 'CoordArg';
-            $node->wild()->{conjunct} = 1;
         }
         # grup.verb is probably an error. There is just one occurrence and it is the first part of a compound coordinating conjunction either-or.
         elsif($deprel eq 'grup.verb')
@@ -528,7 +531,8 @@ sub convert_deprels
         elsif($deprel eq 'spec')
         {
             $deprel = 'Atr';
-            if ($lemma eq 'uno'){
+            if ($lemma eq 'uno')
+            {
                 $node->iset->set_prontype('art');
                 $deprel = 'AuxA';
             }
