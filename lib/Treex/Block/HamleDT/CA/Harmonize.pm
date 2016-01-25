@@ -66,14 +66,15 @@ sub fix_annotation_errors
                 my @children = $node->children({'ordered' => 1});
                 if(scalar(@children)==2 && $children[1]->form() eq ',')
                 {
+                    # Joan_Raventós should be attached to Barcelona-comarques rather than to Lleida.
+                    # Do this before attaching the comma to Lleida. children(ordered) does not work as expected.
+                    my @siblings = $parent->children({'ordered' => 1});
+                    if(scalar(@siblings)==3)
+                    {
+                        $siblings[2]->set_parent($siblings[1]);
+                    }
                     # We need a punctuation node to head the coordination "Lleida , Barcelona-comarques".
                     $children[1]->set_parent($parent);
-                    # Joan_Raventós should be attached to Barcelona-comarques rather than to Lleida.
-                    my @siblings = $parent->children({'ordered' => 1});
-                    if(scalar(@siblings)==4)
-                    {
-                        $siblings[3]->set_parent($siblings[2]);
-                    }
                 }
             }
         }
