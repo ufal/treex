@@ -39,9 +39,10 @@ sub fix_annotation_errors
     foreach my $node (@nodes)
     {
         # entre Labastida y Fox
+        # entre Liga , Copa y Mundial
         # Structure is correct but Labastida is marked as conjunct while it should bear the deprel of the coordination.
         my $form = $node->form();
-        if($form eq 'Labastida')
+        if($form eq 'Labastida' || $form eq 'Liga')
         {
             my $parent = $node->parent();
             my $pform = $parent->form();
