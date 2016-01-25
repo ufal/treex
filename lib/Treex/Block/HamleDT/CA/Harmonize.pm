@@ -29,11 +29,11 @@ sub fix_annotation_errors
         # Coma_Estadella , Àngel_Jové , Víctor_P._Pallarés i Josep_Guinovart
         # Angel is attached correctly to Coma but everything else is attached to Angel.
         my $form = $node->form();
+        my $parent = $node->parent();
+        my $pform = $parent->form() // '';
         if($form eq 'Àngel_Jové')
         {
-            my $parent = $node->parent();
-            my $pform = $parent->form();
-            if(defined($pform) && $pform eq 'Coma_Estadella')
+            if($pform eq 'Coma_Estadella')
             {
                 my @children = $node->children({'ordered' => 1});
                 if(scalar(@children)==5 && $node->deprel() eq 'CoordArg' && $children[2]->deprel() eq 'CoordArg')
@@ -49,9 +49,7 @@ sub fix_annotation_errors
         # Structure is correct but finals is marked as conjunct while it should bear the deprel of the coordination.
         elsif($form eq 'finals' && $node->deprel() eq 'CoordArg')
         {
-            my $parent = $node->parent();
-            my $pform = $parent->form();
-            if(defined($pform) && $pform eq 'a')
+            if($pform eq 'a')
             {
                 $node->set_deprel('PrepArg');
             }
@@ -59,9 +57,7 @@ sub fix_annotation_errors
         # Els presidents de les federacions de Lleida , Isidre_Gavín , Barcelona-comarques Joan_Raventós , ...
         elsif($form eq 'Isidre_Gavín')
         {
-            my $parent = $node->parent();
-            my $pform = $parent->form();
-            if(defined($pform) && $pform eq 'Lleida')
+            if($pform eq 'Lleida')
             {
                 my @children = $node->children({'ordered' => 1});
                 if(scalar(@children)==2 && $children[1]->form() eq ',')
@@ -77,6 +73,16 @@ sub fix_annotation_errors
                     $children[1]->set_parent($parent);
                 }
             }
+        }
+        # d' agents locals
+        # dels espais públics
+        # dels 20 vocals
+        elsif(($form eq 'locals' && $pform eq 'agents' ||
+               $form eq 'públics' && $pform eq 'espais' ||
+               $form eq 'vocals' && $pform eq '20')
+             && $node->deprel() eq 'CoordArg' && scalar($parent->children())==1)
+        {
+            $node->set_deprel('Atr');
         }
     }
 }
