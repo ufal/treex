@@ -921,7 +921,7 @@ sub lift_node
         {
             # No need to test whether $sibling==$node as we already reattached $node.
             # If parent is Coord, reattach modifiers but not conjuncts!
-            unless($parent->afun() eq 'Coord' && ($sibling->is_member() || $sibling->afun() =~ m/^Aux[GXY]$/))
+            unless($parent->deprel() eq 'Coord' && ($sibling->is_member() || $sibling->deprel() =~ m/^Aux[GXY]$/))
             {
                 $sibling->set_parent($node);
             }
@@ -929,7 +929,7 @@ sub lift_node
         # Reattach the previous parent to myself.
         $parent->set_parent($node);
         # If parent is coordination, we must set afun of its conjuncts.
-        $parent->set_real_afun($afun);
+        $parent->set_real_afun($afun); ##############!!!!!!!!!!!!!!!!!!!!!!!!!!!!! jenže my teď místo afunů pracujeme s deprely!
         $parent->set_is_member(0);
         $parent->set_conll_deprel('');
     }
