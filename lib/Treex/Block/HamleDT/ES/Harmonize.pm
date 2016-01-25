@@ -42,7 +42,7 @@ sub fix_annotation_errors
     foreach my $node (@nodes)
     {
         # Coordination without conjuncts.
-        if($node->afun() eq 'Coord')
+        if($node->deprel() eq 'Coord')
         {
             my $parent = $node->parent();
             my @children = $node->children();
@@ -83,7 +83,7 @@ sub fix_annotation_errors
                 $lconjunct->set_is_member(1);
                 $rconjunct->set_parent($node);
                 $rconjunct->set_is_member(1);
-                $rconjunct->set_afun($lconjunct->afun());
+                $rconjunct->set_deprel($lconjunct->deprel());
             }
         }
     }
