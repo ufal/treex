@@ -29,6 +29,33 @@ sub process_zone
 
 
 #------------------------------------------------------------------------------
+# Fixes a few known annotation errors that appear in the data.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        # entre Labastida y Fox
+        # Structure is correct but Labastida is marked as conjunct while it should bear the deprel of the coordination.
+        my $form = $node->form();
+        if($form eq 'Labastida')
+        {
+            my $parent = $node->parent();
+            my $pform = $parent->form();
+            if(defined($pform) && $pform eq 'entre')
+            {
+                $node->set_deprel('PrepArg');
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Fixes a few known annotation errors that appear in the data. Unlike in other
 # treebanks, here it is called after correctly annotated coordinations are
 # solved. The function is meant to collect bad cases but it could damage the
