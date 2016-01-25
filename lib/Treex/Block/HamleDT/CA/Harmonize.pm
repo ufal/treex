@@ -24,11 +24,12 @@ sub fix_annotation_errors
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants();
-    # Coma_Estadella , Àngel_Jové , Víctor_P._Pallarés i Josep_Guinovart
-    # Angel is attached correctly to Coma but everything else is attached to Angel.
     foreach my $node (@nodes)
     {
-        if($node->form() eq 'Àngel_Jové')
+        # Coma_Estadella , Àngel_Jové , Víctor_P._Pallarés i Josep_Guinovart
+        # Angel is attached correctly to Coma but everything else is attached to Angel.
+        my $form = $node->form();
+        if($form eq 'Àngel_Jové')
         {
             my $parent = $node->parent();
             my $pform = $parent->form();
@@ -42,10 +43,17 @@ sub fix_annotation_errors
                         $child->set_parent($parent);
                     }
                 }
-                else
-                {
-                    log_fatal(scalar(@children));
-                }
+            }
+        }
+        # a finals de novembre o principis de desembre
+        # Structure is correct but finals is marked as conjunct while it should bear the deprel of the coordination.
+        elsif($form eq 'finals' && $node->deprel() eq 'CoordArg')
+        {
+            my $parent = $node->parent();
+            my $pform = $parent->form();
+            if(defined($pform) && $pform eq 'a')
+            {
+                $node->set_deprel('PrepArg');
             }
         }
     }
