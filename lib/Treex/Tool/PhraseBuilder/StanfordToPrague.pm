@@ -32,12 +32,13 @@ sub detect_special_constructions
     {
         # Despite the fact that we work bottom-up, the order of these detection
         # methods matters. There may be multiple special constructions on the same
-        # level of the tree. For example: We see a phrase labeled Coord (coordination),
-        # hence we do not see a prepositional phrase (the label would have to be AuxP
-        # instead of Coord). However, after processing the coordination the phrase
-        # will get a new label and it may well be AuxP.
-        $phrase = $self->detect_stanford_coordination($phrase);
+        # level of the tree. For example: coordination of prepositional phrases.
+        # The first conjunct is the head of the coordination and it is also a preposition.
+        # If we restructure the coordination before attending to the prepositional
+        # phrase, we will move the preposition to a lower level and it will be
+        # never discovered that it has a PrepArg child.
         $phrase = $self->detect_stanford_pp($phrase);
+        $phrase = $self->detect_stanford_coordination($phrase);
     }
     # Return the resulting phrase. It may be different from the input phrase.
     return $phrase;
