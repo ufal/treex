@@ -237,6 +237,20 @@ sub convert_deprels
                 ###!!! The problem is that in these cases we do not know the deprel of the prepositional phrase. It should be annotated at the preposition but it isn't.
                 $deprel = 'PrepArg';
             }
+            # A few mistakes occur also with determiners (pronouns) and numerals.
+            elsif($parent->is_pronominal())
+            {
+                $deprel = 'DetArg';
+            }
+            elsif($parent->is_numeral())
+            {
+                $deprel = 'NumArg';
+            }
+            # In one case a grup.a is attached to a grup.nom; the grup.nom is a conjunct in coordination of nouns while the adjective is just an attribute.
+            elsif($deprel eq 'grup.a' && $parent->is_noun())
+            {
+                $deprel = 'Atr';
+            }
             else
             {
                 $deprel = 'CoordArg';
