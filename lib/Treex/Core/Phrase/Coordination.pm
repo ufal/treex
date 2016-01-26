@@ -52,6 +52,18 @@ has 'head_rule' =>
         '                     if there are neither conjunctions nor punctuation, the first conjunct is the head.'
 );
 
+has '_deprel' =>
+(
+    is       => 'ro',
+    isa      => 'Str',
+    required => 1,
+    documentation =>
+        'We need to know the dependency relation between the coordination and its parent in the dependency structure. '.
+        'Depending on the selected annotation style, we will either store it at the head node, or distribute it among conjuncts. '.
+        'Subsequent calls to set_deprel(), if any, will do the right thing based on the annotation style; '.
+        'but we have to take care of the initial deprel setting, just in case there will be no further changes.'
+);
+
 
 
 #------------------------------------------------------------------------------
@@ -76,6 +88,10 @@ around BUILDARGS => sub
     if(defined($attr->{punctuation}) && ref($attr->{punctuation}) eq 'ARRAY')
     {
         $attr->{_punctuation_ref} = $attr->{punctuation};
+    }
+    if(defined($attr->{deprel}) && !defined($attr->{_deprel}))
+    {
+        $attr->{_deprel} = $attr->{deprel};
     }
     return $attr;
 };
@@ -105,6 +121,12 @@ sub BUILD
         }
         $child->_set_parent($self);
     }
+    # Take care of the initial deprel setting. Deprel is stored at individual
+    # nodes, so make sure that the nodes responsible for storing the deprel
+    # of the entire coordination (according to the current annotation style)
+    # have it. (We cannot rely on the original dependency tree because it may
+    # have used a different annotation style.)
+    $self->set_deprel($self->_deprel());
 }
 
 

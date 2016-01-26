@@ -463,6 +463,7 @@ sub replace_nterm_by_coordination
     my $cmax = shift;
     # Create a new Coordination phrase and destroy the old input NTerm.
     my $parent = $phrase->parent();
+    my $deprel = $phrase->deprel();
     my $member = $phrase->is_member();
     $phrase->detach_children_and_die();
     # Punctuation can be considered a conjunct delimiter only if it occurs
@@ -483,6 +484,7 @@ sub replace_nterm_by_coordination
         'coordinators' => $coordinators,
         'punctuation'  => \@inpunct,
         'head_rule'    => $self->coordination_head_rule(),
+        'deprel'       => $deprel,
         'is_member'    => $member
     );
     # Remove the is_member flag from the conjuncts. It may be re-introduced
@@ -533,6 +535,7 @@ sub surround_nterm_by_coordination
     my $sdependents = shift; # ArrayRef
     my $cmin = shift;
     my $cmax = shift;
+    my $deprel = $phrase->deprel();
     my $member = $phrase->is_member();
     # We process the tree bottom-up, the current phrase should just have no parent
     # at this moment. Make sure that the parent is really undefined. It is important
@@ -560,6 +563,7 @@ sub surround_nterm_by_coordination
         'coordinators' => $coordinators,
         'punctuation'  => \@inpunct,
         'head_rule'    => $self->coordination_head_rule(),
+        'deprel'       => $deprel,
         'is_member'    => $member
     );
     # Remove the is_member flag from the conjuncts. It may be re-introduced

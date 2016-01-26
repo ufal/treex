@@ -230,7 +230,17 @@ sub convert_deprels
         # Nominal conjunct, member of noun group.
         elsif($deprel =~ m/^grup\.(a|adv|nom)$/)
         {
-            $deprel = 'CoordArg';
+            # Sometimes a noun is attached (mistakenly?) to a preposition as grup.nom.
+            # It is not probable that the preposition is one conjunct and the noun is the other, and it was not so in any of the occurrences I've seen.
+            if($ppos eq 'adp')
+            {
+                ###!!! The problem is that in these cases we do not know the deprel of the prepositional phrase. It should be annotated at the preposition but it isn't.
+                $deprel = 'PrepArg';
+            }
+            else
+            {
+                $deprel = 'CoordArg';
+            }
         }
         # grup.verb is probably an error. There is just one occurrence and it is the first part of a compound coordinating conjunction either-or.
         elsif($deprel eq 'grup.verb')
@@ -599,10 +609,10 @@ sub catch_runaway_conjuncts
     foreach my $node (@nodes)
     {
         # Coordinated nouns, adjectives and adverbs: second and further conjuncts should have deprel=grup.nom (grup.a, grup.adv).
-        # If they do, then we have assigned $node->wild()->{conjunct} = 1. Unfortunately, many do not; neither do coordinated verbs (clauses).
+        # If they do, then we have converted their deprel to CoordArg. Unfortunately, many do not; neither do coordinated verbs (clauses).
         # If there is a coordinating conjunction without conjuncts, we should investigate.
         # (Exclude coordinating conjunctions that are children of the root. The root cannot be the first conjunct.)
-        if($node->wild()->{coordinator} && !$node->parent()->is_root())
+        if($node->deprel() eq 'AuxY' && !$node->parent()->is_root())
         {
             # Left-headed Stanford style prevails in the treebank. Coordinating conjunction is attached to the left, to the first conjunct.
             # Surprisingly, some coordinating conjunctions are attached to the right (is this an error?)
@@ -612,7 +622,7 @@ sub catch_runaway_conjuncts
             {
                 # The right sibling of the coordinator should be a conjunct. Is there a conjunct?
                 my @right_siblings = $node->get_siblings({following_only => 1});
-                my @right_conjuncts = grep {$_->wild()->{conjunct}} (@right_siblings);
+                my @right_conjuncts = grep {$_->deprel() eq 'CoordArg'} (@right_siblings);
                 if(scalar(@right_conjuncts)==0)
                 {
                     # Coordinating conjunction does not have right sibling marked as conjunct.
@@ -643,19 +653,19 @@ sub catch_runaway_conjuncts
                         # What else could we do if the left sibling of the rightmost child is coordinating conjunction?
                         scalar(@rswtp)==1)
                         {
-                            $rn->wild()->{conjunct} = 1;
+                            $rn->set_deprel('CoordArg');
                         }
                         # Fall back: sometimes the conjunction joins its two neighbors.
-                        elsif($ln && $ln->ord() > $node->parent()->ord())
+                        elsif($ln && $ln->ord() > $node->parent()->ord() && !$ln->is_punctuation())
                         {
                             $node->set_parent($ln);
                             $rn->set_parent($ln);
-                            $rn->wild()->{conjunct} = 1;
+                            $rn->set_deprel('CoordArg');
                         }
                         # No left neighbors, two right siblings (conjunct and shared modifier).
                         elsif(!$ln || $ln->ord() < $node->parent()->ord())
                         {
-                            $rn->wild()->{conjunct} = 1;
+                            $rn->set_deprel('CoordArg');
                         }
                     }
                 }
@@ -685,7 +695,7 @@ sub catch_runaway_conjuncts
                 elsif(scalar(@lswp)==1)
                 {
                     my $first_conjunct = $lswp[0];
-                    $first_conjunct->wild()->{conjunct} = 1;
+                    $first_conjunct->set_deprel('CoordArg');
                 }
                 # Although in many coordinations the conjunct have all the same part of speech, it is not guaranteed:
                 # quines són/v funcions, si hi haurà/v especialitzacions, on estaran/v ubicats i/c altres aspectes/n
@@ -702,7 +712,7 @@ sub catch_runaway_conjuncts
                         if($current->deprel() ne 'AuxX')
                         {
                             $conjuncts_found++;
-                            $current->wild()->{conjunct} = 1;
+                            $current->set_deprel('CoordArg');
                             $expected_comma = 1;
                         }
                     }
@@ -711,37 +721,12 @@ sub catch_runaway_conjuncts
                     # IC-V , and more if it loses its principal referee , Rafael_Ribó , will be
                     if($conjuncts_found==0)
                     {
-                        $node->wild()->{coordinator} = 0;
                         $node->set_deprel('AuxY');
                     }
                 }
             }
         }
     }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Detects coordination in the shape we expect to find it in the Catalan
-# treebank.
-#------------------------------------------------------------------------------
-sub detect_coordination
-{
-    my $self = shift;
-    my $node = shift;
-    my $coordination = shift;
-    my $debug = shift;
-    $coordination->detect_stanford($node);
-    # The caller does not know where to apply recursion because it depends on annotation style.
-    # Return all conjuncts and shared modifiers for the Prague family of styles.
-    # Return non-head conjuncts, private modifiers of the head conjunct and all shared modifiers for the Stanford family of styles.
-    # (Do not return delimiters, i.e. do not return all original children of the node. One of the delimiters will become the new head and then recursion would fall into an endless loop.)
-    # Return orphan conjuncts and all shared and private modifiers for the other styles.
-    my @recurse = grep {$_ != $node} ($coordination->get_conjuncts());
-    push(@recurse, $coordination->get_shared_modifiers());
-    push(@recurse, $coordination->get_private_modifiers($node));
-    return @recurse;
 }
 
 
