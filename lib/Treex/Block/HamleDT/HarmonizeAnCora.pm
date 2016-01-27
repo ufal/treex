@@ -29,7 +29,6 @@ sub process_zone
     # and with special care at places where prepositions and coordinations interact.
     ###!!!$self->process_prep_sub_arg_cloud($root);
     $self->raise_subordinating_conjunctions($root);
-    $self->lift_noun_phrases($root);
     $self->check_deprels($root);
     return $root;
 }
@@ -748,6 +747,8 @@ sub catch_runaway_conjuncts
 #------------------------------------------------------------------------------
 # Swaps nodes at some edges where the Danish notion of dependency violates the
 # principle of reducibility: nouns attached to determiners, numbers etc.
+######!!!!!!!! DEPRECATED. The superordinated lift_node() method does not handle
+# special classes of nonterminal phrases properly.
 #------------------------------------------------------------------------------
 sub lift_noun_phrases
 {

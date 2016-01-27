@@ -67,24 +67,32 @@ sub _build_dialect
     # The second position is the label used in set_deprel(); not available for all ids.
     my %map =
     (
-        'apos'  => ['^Apos$', 'Apos'],  # head of paratactic apposition (punctuation or conjunction)
-        'appos' => ['^Apposition$', 'Apposition'], # dependent member of hypotactic apposition
-        'auxg'  => ['^AuxG$', 'AuxG'],  # punctuation other than comma
-        'auxk'  => ['^AuxK$', 'AuxK'],  # sentence-terminating punctuation
-        'auxpc' => ['^Aux[PC]$'],       # preposition or subordinating conjunction
-        'auxp'  => ['^AuxP$', 'AuxP'],  # preposition
-        'auxc'  => ['^AuxC$', 'AuxC'],  # subordinating conjunction
-        'psarg' => ['^(Prep|Sub)Arg$'], # argument of preposition or subordinating conjunction
-        'parg'  => ['^PrepArg$', 'PrepArg'], # argument of preposition
-        'sarg'  => ['^SubArg$', 'SubArg'], # argument of subordinating conjunction
-        'auxx'  => ['^AuxX$', 'AuxX'],  # comma
-        'auxy'  => ['^AuxY$', 'AuxY'],  # additional coordinating conjunction or other function word
-        'auxyz' => ['^Aux[YZ]$'],
-        'cc'    => ['^AuxY$', 'AuxY'],  # coordinating conjunction
-        'conj'  => ['^CoordArg$', 'CoordArg'], # conjunct
-        'coord' => ['^Coord$'],         # head of coordination (conjunction or punctuation)
-        'mwe'   => ['^AuxP$', 'AuxP'],  # non-head word of a multi-word expression; PDT has only multi-word prepositions
-        'punct' => ['^Aux[XGK]$', 'AuxG'],
+        'apos'   => ['^Apos$', 'Apos'],  # head of paratactic apposition (punctuation or conjunction)
+        'appos'  => ['^Apposition$', 'Apposition'], # dependent member of hypotactic apposition
+        'auxg'   => ['^AuxG$', 'AuxG'],  # punctuation other than comma
+        'auxk'   => ['^AuxK$', 'AuxK'],  # sentence-terminating punctuation
+        'auxpc'  => ['^Aux[PC]$'],       # preposition or subordinating conjunction
+        'auxp'   => ['^AuxP$', 'AuxP'],  # preposition
+        'auxc'   => ['^AuxC$', 'AuxC'],  # subordinating conjunction
+        'psarg'  => ['^(Prep|Sub)Arg$'], # argument of preposition or subordinating conjunction
+        'parg'   => ['^PrepArg$', 'PrepArg'], # argument of preposition
+        'sarg'   => ['^SubArg$', 'SubArg'], # argument of subordinating conjunction
+        'auxx'   => ['^AuxX$', 'AuxX'],  # comma
+        'auxy'   => ['^AuxY$', 'AuxY'],  # additional coordinating conjunction or other function word
+        'auxyz'  => ['^Aux[YZ]$'],
+        'cc'     => ['^AuxY$', 'AuxY'],  # coordinating conjunction
+        'conj'   => ['^CoordArg$', 'CoordArg'], # conjunct
+        'coord'  => ['^Coord$'],         # head of coordination (conjunction or punctuation)
+        'mwe'    => ['^AuxP$', 'AuxP'],  # non-head word of a multi-word expression; PDT has only multi-word prepositions
+        'punct'  => ['^Aux[XGK]$', 'AuxG'],
+        'det'    => ['^Atr$', 'Atr'],         # determiner attached to noun
+        'detarg' => ['^DetArg$', 'DetArg'],   # noun attached to determiner
+        'nummod' => ['^Atr$', 'Atr'],         # numeral attached to counted noun
+        'numarg' => ['^NumArg$', 'NumArg'],   # counted noun attached to numeral
+        'amod'   => ['^Atr$', 'Atr'],         # adjective attached to noun
+        'adjarg' => ['^AdjArg$', 'AdjArg'],   # noun attached to adjective that modifies it
+        'genmod' => ['^Atr$', 'Atr'],         # genitive or possessive noun attached to the modified (possessed) noun
+        'genarg' => ['^PossArg$', 'PossArg'], # possessed (modified) noun attached to possessive (genitive) noun that modifies it
     );
     return \%map;
 }
@@ -1013,6 +1021,61 @@ sub detect_stanford_pp
         return $pp;
     }
     # Return the input NTerm phrase if no PP has been detected.
+    return $phrase;
+}
+
+
+
+#==============================================================================
+# Head changes
+#==============================================================================
+
+
+
+#------------------------------------------------------------------------------
+# Examines a nonterminal phrase. If there is a dependent child with the deprel
+# saying that it is an argument of determiner / numeral / adjective /
+# possessive, makes it the head of the phrase. The previous head (i.e. the
+# determiner, numeral etc.) will get a new deprel. If multiple children claim
+# to be the argument, the leftmost one will become the head.
+#------------------------------------------------------------------------------
+sub convert_phrase_headed_by_modifier
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    # Table of corresponding deprels:
+    # 1. the current deprel of the future head (argument)
+    # 2. the new deprel of the current head (modifier)
+    my @dmap =
+    (
+        ['detarg', 'det'],
+        ['numarg', 'nummod'],
+        ['adjarg', 'amod'],
+        ['genarg', 'genmod']
+    );
+    my @dependents = $phrase->dependents('ordered' => 1);
+    foreach my $d (@dependents)
+    {
+        foreach my $pair (@dmap)
+        {
+            my $argdeprel = $pair->[0];
+            my $moddeprel = $pair->[1];
+            if($self->is_deprel($d->deprel(), $argdeprel))
+            {
+                ###!!! Nechceme ty manipulace s deprely a membery také přesunout do set_deprel()?
+                my $deprel = $phrase->deprel();
+                my $member = $phrase->is_member();
+                $phrase->set_deprel($moddeprel);
+                my $old_head = $phrase->head();
+                # If this is a special nonterminal class such as Coordination, set_head() will encapsulate it in a new NTerm and return reference to it.
+                $phrase = $phrase->set_head($d);
+                $phrase->set_deprel($deprel);
+                $phrase->set_is_member($member);
+                # Do not look for other argument candidates and return the modified phrase.
+                return $phrase;
+            }
+        }
+    }
     return $phrase;
 }
 

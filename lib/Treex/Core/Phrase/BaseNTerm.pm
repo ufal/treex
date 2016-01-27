@@ -6,6 +6,7 @@ use namespace::autoclean;
 use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Log;
+use Treex::Core::Phrase::NTerm;
 
 extends 'Treex::Core::Phrase';
 
@@ -57,6 +58,41 @@ sub head
 {
     my $self = shift;
     log_fatal("The head() method is not implemented");
+}
+
+
+
+#------------------------------------------------------------------------------
+# Takes a dependent child of this phrase and makes it the head. The standard
+# NTerm phrase will define this method as just moving the head flag among its
+# children. However, special classes of phrases (such as Coordination) do not
+# allow to simply set the head. For such phrases, making them dependent on one
+# of their current dependents means encapsulating them in a new nonterminal
+# phrase. Such behavior is defined here. Note that the caller must be prepared
+# that they will get a different phrase object than the one whose method they
+# called! The current phrase or its replacement is returned by the method.
+#------------------------------------------------------------------------------
+sub set_head
+{
+    my $self = shift;
+    my $new_head = shift; # Treex::Core::Phrase
+    log_fatal('Dead') if($self->dead());
+    my $old_head = $self->head();
+    return $self if ($new_head == $old_head);
+    # Remove the new head from the list of non-head children.
+    $new_head->set_parent(undef);
+    # Create a new nonterminal phrase with this head.
+    my $ntphrase = new Treex::Core::Phrase::NTerm('head' => $new_head);
+    # If the current phrase is a core child of another phrase, we must carefully
+    # replace it by the new one, otherwise the parent will complain.
+    if(defined($self->parent()))
+    {
+        $self->parent()->replace_child($self, $ntphrase);
+    }
+    # Attach the current phrase as a dependent to the new phrase.
+    $self->set_parent($ntphrase);
+    # Return the new nonterminal phrase that replaces me.
+    return $ntphrase;
 }
 
 

@@ -39,7 +39,10 @@ sub BUILD
 
 #------------------------------------------------------------------------------
 # Sets a new head child for this phrase. The new head must be already a child
-# of this phrase. The old head will become an ordinary non-head child.
+# of this phrase. The old head will become an ordinary non-head child. The
+# method returns the reference to self (because for other classes of non-
+# terminals, changing the head means encapsulating the phrase in a new NTerm
+# and returning the reference to the new phrase).
 #------------------------------------------------------------------------------
 sub set_head
 {
@@ -47,7 +50,7 @@ sub set_head
     my $new_head = shift; # Treex::Core::Phrase
     log_fatal('Dead') if($self->dead());
     my $old_head = $self->head();
-    return if ($new_head == $old_head);
+    return $self if ($new_head == $old_head);
     # Remove the new head from the list of non-head children.
     # (The method will also verify that it is defined and is my child.)
     $self->_remove_child($new_head);
@@ -55,6 +58,8 @@ sub set_head
     $self->_add_child($old_head);
     # Finally, set the new head, using the private bare setter.
     $self->_set_head($new_head);
+    # Return reference to self because we have not encapsulated ourselves in a new phrase.
+    return $self;
 }
 
 
