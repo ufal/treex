@@ -587,7 +587,7 @@ sub convert_deprels
         elsif($deprel eq 'spec')
         {
             # entre els 16 i els 18 anys ... spec(anys, els); spec(els, els).
-            if($parent->lemma() eq $lemma && $node->get_left_neighbor()->is_coordinator())
+            if($parent->lemma() eq $lemma && $parent->ord() < $node->ord())
             {
                 $deprel = 'CoordArg';
             }
