@@ -119,6 +119,13 @@ sub map_deprel
         return "dep:$id";
     }
 }
+sub has_deprel
+{
+    my $self = shift;
+    my $phrase = shift;
+    my $id = shift;
+    return $self->is_deprel($phrase->deprel(), $id);
+}
 sub set_deprel
 {
     my $self = shift;
@@ -1061,7 +1068,7 @@ sub convert_phrase_headed_by_modifier
         {
             my $argdeprel = $pair->[0];
             my $moddeprel = $pair->[1];
-            if($self->is_deprel($d->deprel(), $argdeprel))
+            if($self->has_deprel($d, $argdeprel))
             {
                 # If there are multiple argument candidates, the first one will become the new head.
                 # The others (after $found is set to 1) will remain where they are but they must get a valid deprel.
@@ -1081,7 +1088,7 @@ sub convert_phrase_headed_by_modifier
                 {
                     # This method is used for annotation styles where DetArg is not a valid relation.
                     # Therefore we must reset the deprel of the remaining candidates to something valid.
-                    $self->set_deprel($phrase, 'genmod');
+                    $self->set_deprel($d, 'genmod');
                 }
             }
         }
