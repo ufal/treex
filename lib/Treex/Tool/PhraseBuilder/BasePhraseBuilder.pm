@@ -1066,7 +1066,6 @@ sub convert_phrase_headed_by_modifier
                 my $deprel = $phrase->deprel();
                 my $member = $phrase->is_member();
                 $phrase->set_deprel($moddeprel);
-                my $old_head = $phrase->head();
                 # If this is a special nonterminal class such as Coordination, set_head() will encapsulate it in a new NTerm and return reference to it.
                 $phrase = $phrase->set_head($d);
                 $phrase->set_deprel($deprel);
