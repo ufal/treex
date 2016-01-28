@@ -1054,6 +1054,7 @@ sub convert_phrase_headed_by_modifier
         ['genarg', 'genmod']
     );
     my @dependents = $phrase->dependents('ordered' => 1);
+    my $found = 0;
     foreach my $d (@dependents)
     {
         foreach my $pair (@dmap)
@@ -1062,16 +1063,26 @@ sub convert_phrase_headed_by_modifier
             my $moddeprel = $pair->[1];
             if($self->is_deprel($d->deprel(), $argdeprel))
             {
-                ###!!! Nechceme ty manipulace s deprely a membery také přesunout do set_deprel()?
-                my $deprel = $phrase->deprel();
-                my $member = $phrase->is_member();
-                $self->set_deprel($phrase, $moddeprel);
-                # If this is a special nonterminal class such as Coordination, set_head() will encapsulate it in a new NTerm and return reference to it.
-                $phrase = $phrase->set_head($d);
-                $phrase->set_deprel($deprel);
-                $phrase->set_is_member($member);
-                # Do not look for other argument candidates and return the modified phrase.
-                return $phrase;
+                # If there are multiple argument candidates, the first one will become the new head.
+                # The others (after $found is set to 1) will remain where they are but they must get a valid deprel.
+                unless($found)
+                {
+                    $found = 1;
+                    ###!!! Nechceme ty manipulace s deprely a membery také přesunout do set_deprel()?
+                    my $deprel = $phrase->deprel();
+                    my $member = $phrase->is_member();
+                    $self->set_deprel($phrase, $moddeprel);
+                    # If this is a special nonterminal class such as Coordination, set_head() will encapsulate it in a new NTerm and return reference to it.
+                    $phrase = $phrase->set_head($d);
+                    $phrase->set_deprel($deprel);
+                    $phrase->set_is_member($member);
+                }
+                else
+                {
+                    # This method is used for annotation styles where DetArg is not a valid relation.
+                    # Therefore we must reset the deprel of the remaining candidates to something valid.
+                    $self->set_deprel($phrase, 'genmod');
+                }
             }
         }
     }
