@@ -1065,10 +1065,10 @@ sub convert_phrase_headed_by_modifier
                 ###!!! Nechceme ty manipulace s deprely a membery také přesunout do set_deprel()?
                 my $deprel = $phrase->deprel();
                 my $member = $phrase->is_member();
-                $phrase->set_deprel($moddeprel);
+                $self->set_deprel($phrase, $moddeprel);
                 # If this is a special nonterminal class such as Coordination, set_head() will encapsulate it in a new NTerm and return reference to it.
                 $phrase = $phrase->set_head($d);
-                $phrase->set_deprel($deprel);
+                $self->set_deprel($phrase, $deprel);
                 $phrase->set_is_member($member);
                 # Do not look for other argument candidates and return the modified phrase.
                 return $phrase;
