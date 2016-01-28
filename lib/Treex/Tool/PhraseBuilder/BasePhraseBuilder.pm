@@ -1025,6 +1025,12 @@ sub detect_stanford_pp
                 $d->set_parent($pp);
             }
         }
+        # This method is used for annotation styles where PrepArg is not a valid relation.
+        # Therefore we must reset the deprel of the remaining candidates to something valid.
+        for(my $i = 1; $i <= $#arguments; $i++)
+        {
+            $self->set_deprel($arguments[$i], 'genmod');
+        }
         return $pp;
     }
     # Return the input NTerm phrase if no PP has been detected.
