@@ -538,7 +538,22 @@ sub convert_deprels
             elsif($ppos eq 'adp')
             {
                 # Example: per a quatre veterinaris gironins
-                $deprel = 'PrepArg';
+                # Note that an 'sp' attached to another preposition may also mean coordination: als hospitals, als centres assistencials, mercats i escoles
+                # Check whether the parent preposition is to the left and there are at least two siblings in between:
+                # the argument of the parent preposition, and a comma or conjunction (or both).
+                my @pchildren = $parent->children({'ordered' => 1});
+                my $pord = $parent->ord();
+                my $nord = $node->ord();
+                my @betweench = grep {$_->ord() > $pord && $_->ord() < $nord} (@pchildren);
+                my @coordinators = grep {$_->is_coordinator() || $_->is_punctuation()} (@betweench);
+                if(scalar(@betweench) >= 2 && scalar(@coordinators) >= 1)
+                {
+                    $deprel = 'CoordArg';
+                }
+                else
+                {
+                    $deprel = 'PrepArg';
+                }
             }
             elsif($ppos eq 'conj')
             {
