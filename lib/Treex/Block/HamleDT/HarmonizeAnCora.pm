@@ -586,7 +586,12 @@ sub convert_deprels
         # Specifier, i.e. article, numeral or other determiner.
         elsif($deprel eq 'spec')
         {
-            if($lemma =~ m/^(uno|el)$/i)
+            # entre els 16 i els 18 anys ... spec(anys, els); spec(els, els).
+            if($parent->lemma() eq $lemma && $node->get_left_neighbor()->is_coordinator())
+            {
+                $deprel = 'CoordArg';
+            }
+            elsif($lemma =~ m/^(uno|el)$/i)
             {
                 $node->iset()->set_prontype('art');
                 $deprel = 'AuxA';
