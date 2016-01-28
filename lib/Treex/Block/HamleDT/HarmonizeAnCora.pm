@@ -241,7 +241,7 @@ sub convert_deprels
             {
                 $deprel = 'DetArg';
             }
-            elsif($parent->is_numeral())
+            elsif($parent->is_numeral() && !$node->is_numeral())
             {
                 $deprel = 'NumArg';
             }
