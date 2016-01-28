@@ -85,7 +85,7 @@ sub _build_dialect
         'coord'  => ['^Coord$'],         # head of coordination (conjunction or punctuation)
         'mwe'    => ['^AuxP$', 'AuxP'],  # non-head word of a multi-word expression; PDT has only multi-word prepositions
         'punct'  => ['^Aux[XGK]$', 'AuxG'],
-        'det'    => ['^Atr$', 'Atr'],         # determiner attached to noun
+        'det'    => ['^AuxA$', 'AuxA'],       # determiner attached to noun
         'detarg' => ['^DetArg$', 'DetArg'],   # noun attached to determiner
         'nummod' => ['^Atr$', 'Atr'],         # numeral attached to counted noun
         'numarg' => ['^NumArg$', 'NumArg'],   # counted noun attached to numeral

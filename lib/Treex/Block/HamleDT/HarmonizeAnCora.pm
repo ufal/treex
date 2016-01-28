@@ -586,11 +586,14 @@ sub convert_deprels
         # Specifier, i.e. article, numeral or other determiner.
         elsif($deprel eq 'spec')
         {
-            $deprel = 'Atr';
-            if ($lemma eq 'uno')
+            if($lemma =~ m/^(uno|el)$/i)
             {
-                $node->iset->set_prontype('art');
+                $node->iset()->set_prontype('art');
                 $deprel = 'AuxA';
+            }
+            else
+            {
+                $deprel = 'Atr';
             }
         }
         # Subject, including inserted empty nodes (Catalan is pro-drop language) and relative pronouns in subordinate clauses.
@@ -628,11 +631,6 @@ sub convert_deprels
         elsif($deprel eq 'z')
         {
             $deprel = 'DetArg';
-        }
-        if($node->is_article())
-        {
-            $deprel = 'AuxA';
-            $node->iset()->set('definiteness', $lemma eq 'el' ? 'def' : 'ind');
         }
         $node->set_deprel($deprel);
     }
