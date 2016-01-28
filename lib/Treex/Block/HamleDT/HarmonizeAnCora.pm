@@ -343,8 +343,17 @@ sub convert_deprels
         # TREE: representants ( un/spec ( centenar/n , de/s ) )
         elsif($deprel eq 'n')
         {
-            ###!!! We will want to restructure this.
-            $deprel = 'DetArg';
+            # Occasionally a noun attached to another noun is labeled "n": L'Associació Cultural El Galliner ... n(El_Galliner, Associació_Cultural).
+            if($ppos eq 'noun')
+            {
+                $deprel = 'Atr';
+            }
+            # Often however it is a noun attached to something that normally should not head a phrase, e.g. a determiner.
+            else
+            {
+                ###!!! We will want to restructure this.
+                $deprel = 'DetArg';
+            }
         }
         # Negation. Adverbial particle that may modify nouns, adjectives and verbs. Example:
         # persona no grata
@@ -368,8 +377,17 @@ sub convert_deprels
         # TREE: atenent ( distribuïda/participi , a/creg ( criteris/sn ) )
         elsif($deprel eq 'participi')
         {
-            ###!!! We will want to restructure this.
-            $deprel = 'AdjArg';
+            # If the parent is verb, the participle is a nominal predicate and the verb is copula.
+            # que van ser confiscats ... participi(van, confiscats); v(van, ser).
+            if($ppos eq 'verb')
+            {
+                $deprel = 'Pnom';
+            }
+            else
+            {
+                ###!!! We will want to restructure this.
+                $deprel = 'AdjArg';
+            }
         }
         # Reflexive pronoun used to form reflexive passive. Example:
         # See also morfema.pronominal, morfema.verbal and impers.
