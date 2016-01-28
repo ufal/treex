@@ -60,7 +60,8 @@ sub process_ttree {
         elsif ( $self->xs_instead eq '#' ) {
             $value = shift( @{ $abstr->{$slot} } ) // '';
             push @{ $abstr->{$slot} }, $value;
-            $value =~ s/"[^"]+"(?!#)/X/g;
+
+            $value =~ s/"[^"#]+"(?!#)/X/g;
             $value =~ s/^"//;
             $value =~ s/ and "/and /g;
             $value =~ s/"#//g;
@@ -77,7 +78,7 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::Misc::DeabstractDialogueSlots
 
