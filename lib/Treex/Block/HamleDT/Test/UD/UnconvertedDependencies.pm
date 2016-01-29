@@ -21,12 +21,13 @@ my @relations =
 my %lspecrel =
 (
     'ar'  => ['advmod:emph'],
+    'ca'  => ['auxpass:reflex', 'det:nummod'],
     'cs'  => ['advmod:emph', 'auxpass:reflex', 'det:numgov', 'det:nummod', 'nummod:gov'],
     'da'  => ['acl:relcl', 'compound:prt', 'nmod:loc', 'nmod:poss', 'nmod:tmod'],
     'de'  => ['nmod:poss'],
     'el'  => ['acl:relcl'],
     'en'  => ['acl:relcl', 'cc:preconj', 'compound:prt', 'det:predet', 'nmod:npmod', 'nmod:poss', 'nmod:tmod'],
-    'es'  => ['acl:relcl'],
+    'es'  => ['acl:relcl', 'auxpass:reflex', 'det:nummod'],
     'et'  => ['advmod:emph', 'compound:prt', 'nummod:gov'],
     'fa'  => ['acl:relcl', 'cc:preconj', 'compound:lvc', 'compound:prt', 'det:predet', 'nmod:poss', 'nsubj:nc'],
     'fi'  => ['acl:relcl', 'advcl:compar', 'cc:preconj', 'compound:nn', 'compound:prt', 'csubj:cop', 'mark:comparator', 'nmod:gobj', 'nmod:gsubj', 'nmod:own', 'nmod:poss', 'nsubj:cop', 'xcomp:ds'],
