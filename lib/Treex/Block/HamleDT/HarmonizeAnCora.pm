@@ -12,6 +12,7 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+    $self->fill_definiteness_of_articles($root);
     # Phrase-based implementation of tree transformations (22.1.2016).
     my $builder = new Treex::Tool::PhraseBuilder::StanfordToPrague
     (
@@ -20,14 +21,10 @@ sub process_zone
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
-
-    if ($self->auxk_to_root){
+    if($self->auxk_to_root())
+    {
         $self->attach_final_punctuation_to_root($root);
     }
-    ###!!!$self->restructure_coordination($root);
-    # Shifting deprels at prepositions and subordinating conjunctions must be done after coordinations are solved
-    # and with special care at places where prepositions and coordinations interact.
-    ###!!!$self->process_prep_sub_arg_cloud($root);
     $self->raise_subordinating_conjunctions($root);
     $self->check_deprels($root);
     return $root;
@@ -51,6 +48,29 @@ sub get_input_tag_for_interset
     my $conll_feat = $node->conll_feat();
     # CoNLL 2009 uses only two columns.
     return "$conll_pos\t$conll_feat";
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fills the feature of definiteness, which is missing in the original
+# annotation of articles.
+#------------------------------------------------------------------------------
+sub fill_definiteness_of_articles
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->is_article())
+        {
+            my $lemma = $node->lemma();
+            # Catalan article lemmas: un, el
+            # Spanish article lemmas: uno, el
+            $node->iset()->set('definiteness', $lemma eq 'el' ? 'def' : 'ind');
+        }
+    }
 }
 
 
