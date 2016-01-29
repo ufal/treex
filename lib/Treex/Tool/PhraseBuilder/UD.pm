@@ -290,6 +290,7 @@ sub detect_prague_coordination
             'coordinators' => \@coordinators,
             'punctuation'  => \@inpunct,
             'head_rule'    => $self->coordination_head_rule(),
+            'deprel'       => $deprel,
             'is_member'    => $member
         );
         # Remove the is_member flag from the conjuncts. It will be no longer

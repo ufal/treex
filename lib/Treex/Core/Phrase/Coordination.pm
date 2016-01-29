@@ -674,7 +674,7 @@ Treex::Core::Phrase::Coordination
   my $coordphr = new Treex::Core::Phrase::Term ('node' => $coord);
   my $conj1phr = new Treex::Core::Phrase::Term ('node' => $conj1);
   my $conj2phr = new Treex::Core::Phrase::Term ('node' => $conj2);
-  my $cphrase  = new Treex::Core::Phrase::Coordination ('conjuncts' => [$conj1phr, $conj2phr], 'coordinators' => [$coordphr], 'head_rule' => 'last_coordinator');
+  my $cphrase  = new Treex::Core::Phrase::Coordination ('conjuncts' => [$conj1phr, $conj2phr], 'coordinators' => [$coordphr], 'head_rule' => 'last_coordinator', 'deprel' => 'Pred');
 
 =head1 DESCRIPTION
 
