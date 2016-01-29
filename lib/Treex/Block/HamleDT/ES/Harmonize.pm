@@ -76,6 +76,23 @@ sub fix_annotation_errors
                 $node->set_parent($grandparent->parent());
             }
         }
+        # o lo que es lo mismo
+        elsif($form eq 'o' && !$node->is_leaf())
+        {
+            my $phrase = join(' ', map {$_->form()} ($node->get_descendants({'add_self' => 1, 'ordered' => 1})));
+            if($phrase eq ', o lo que es lo mismo ,')
+            {
+                my @children = $node->get_children({'ordered' => 1});
+                if(scalar(@children) == 3)
+                {
+                    foreach my $child (@children)
+                    {
+                        $child->set_parent($parent);
+                        $child->set_deprel($child->form() eq ',' ? 'AuxX' : 'CoordArg');
+                    }
+                }
+            }
+        }
     }
 }
 
