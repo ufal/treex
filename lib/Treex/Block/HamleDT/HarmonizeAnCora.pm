@@ -591,13 +591,15 @@ sub convert_deprels
             {
                 $deprel = 'CoordArg';
             }
-            elsif($lemma =~ m/^(uno|el)$/i)
+            elsif($lemma =~ m/^(uno|el)$/i && $node->is_leaf())
             {
                 $node->iset()->set_prontype('art');
                 $deprel = 'AuxA';
             }
             else
             {
+                # Example: els 16 anys ... spec(anys, els); z(els, 16).
+                # "els" is not leaf but it will become leaf later during transformations.
                 $deprel = 'Atr';
             }
         }

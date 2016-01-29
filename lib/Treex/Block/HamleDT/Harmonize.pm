@@ -380,9 +380,7 @@ sub check_deprels
             my $ord    = $node->ord();
             my $form   = $node->form();
             my $tag    = $node->tag();
-            my $deprel = $node->conll_deprel();
-
-            # This cannot be fatal if we want the trees to be saved and examined in Ttred.
+            # This cannot be fatal if we want the trees to be saved and examined in Tred.
             if ($deprel)
             {
                 log_warn("Node $ord:$form/$tag/$deprel still has the deprel $deprel, invalid in HamleDT.");
