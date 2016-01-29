@@ -38,9 +38,9 @@ sub detect_special_constructions
         # phrase, we will move the preposition to a lower level and it will be
         # never discovered that it has a PrepArg child.
         $phrase = $self->detect_stanford_pp($phrase);
-        $phrase = $self->detect_stanford_coordination($phrase);
         # This is needed when converting the AnCora coprora (Catalan and Spanish) to the Prague style.
         $phrase = $self->convert_phrase_headed_by_modifier($phrase);
+        $phrase = $self->detect_stanford_coordination($phrase);
     }
     # Return the resulting phrase. It may be different from the input phrase.
     return $phrase;
