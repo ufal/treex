@@ -42,14 +42,31 @@ sub fix_annotation_errors
         # entre Liga , Copa y Mundial
         # Structure is correct but Labastida is marked as conjunct while it should bear the deprel of the coordination.
         my $form = $node->form();
+        my $parent = $node->parent();
+        my $pform = $parent->form() // '';
         if($form eq 'Labastida' || $form eq 'Liga')
         {
-            my $parent = $node->parent();
-            my $pform = $parent->form();
-            if(defined($pform) && $pform eq 'entre')
+            if($pform eq 'entre')
             {
                 $node->set_deprel('PrepArg');
             }
+        }
+        # te rebajas
+        elsif($form eq 'te' && $pform eq 'rebajas' && $node->deprel() eq 'CoordArg')
+        {
+            $node->set_deprel('Obj');
+        }
+        # Transferencia - - Interacciones
+        elsif($form eq '-' && $pform eq 'Interacciones' && $parent->parent()->form() eq 'Transferencia' && $parent->deprel() eq 'CoordArg')
+        {
+            $node->set_parent($parent->parent());
+        }
+        # Toni_Portillo , su preparador físico , Pep_Font , su psicólogo , Esperanza_Gutiérrez , ayudante de prensa ,
+        # All the commas are attached to the appositions but we need the right commas as coordination delimiters.
+        elsif($form eq ',' && !$parent->is_root() && $parent->ord() < $node->ord() &&
+              $parent->deprel() eq 'Apposition' && $parent->parent()->form() =~ m/^(Toni_Portillo|Pep_Font|Esperanza_Gutiérrez)$/)
+        {
+            $node->set_parent($parent->parent());
         }
     }
 }
