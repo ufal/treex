@@ -84,6 +84,17 @@ sub fix_annotation_errors
         {
             $node->set_deprel('Atr');
         }
+        # L' èxit va ser clar , rotund , merescut .
+        # "rotund" is attached to "clar" as "grup.a" (CoordArg).
+        # So should be "merescut", but its relation is labeled "participi", not "grup.a". Fix it.
+        elsif($form eq 'merescut')
+        {
+            my $phrase = join(' ', map {$_->form()} ($node->parent()->get_descendants({'add_self' => 1, 'ordered' => 1})));
+            if($phrase eq 'clar , rotund , merescut')
+            {
+                $node->set_deprel('CoordArg');
+            }
+        }
     }
 }
 
