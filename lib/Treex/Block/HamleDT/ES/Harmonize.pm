@@ -66,7 +66,15 @@ sub fix_annotation_errors
         elsif($form eq ',' && !$parent->is_root() && $parent->ord() < $node->ord() &&
               $parent->deprel() eq 'Apposition' && $parent->parent()->form() =~ m/^(Toni_Portillo|Pep_Font|Esperanza_Gutiérrez)$/)
         {
-            $node->set_parent($parent->parent());
+            my $grandparent = $parent->parent();
+            if($grandparent->form() eq 'Toni_Portillo')
+            {
+                $node->set_parent($grandparent);
+            }
+            else
+            {
+                $node->set_parent($grandparent->parent());
+            }
         }
     }
 }
