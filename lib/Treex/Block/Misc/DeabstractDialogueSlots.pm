@@ -10,7 +10,7 @@ has 'abstraction_file' => ( isa => 'Str', is => 'rw', required => 1 );
 
 has '_abstractions' => ( isa => 'ArrayRef', is => 'rw', default => sub { [] } );
 
-has 'xs_instead' => ( isa => 'Bool', is => 'rw', default => 0 );
+has 'xs_instead' => ( isa => 'Str', is => 'rw', default => '' );
 
 
 sub process_start {
@@ -29,7 +29,7 @@ sub _get_next_abstraction {
     my %abstr_set = ();
 
     foreach my $abstr ( split /\t/, shift @{ $self->_abstractions } ) {
-        my ( $slot, $value ) = ( $abstr =~ /^([^=]*)=("[^"]*"|[^:]+):[0-9]+-[0-9]+$/ );
+        my ( $slot, $value ) = ( $abstr =~ /^([^=]*)=(.*):[0-9]+-[0-9]+$/ );
         if ( not defined( $abstr_set{$slot} ) ) {
             $abstr_set{$slot} = [];
         }
@@ -41,17 +41,32 @@ sub _get_next_abstraction {
 sub process_ttree {
     my ( $self, $troot ) = @_;
     my $abstr = $self->_get_next_abstraction();
-    
-    foreach my $tnode ( grep { $_->t_lemma =~ /^X-[a-z]+$/ } $troot->get_descendants( { ordered => 1 } ) ) {
+
+    foreach my $tnode ( grep { ( $_->t_lemma // '' ) =~ /^X-[a-z_]+$/ } $troot->get_descendants( { ordered => 1 } ) ) {
         my ($slot) = ( $tnode->t_lemma =~ /^X-(.*)$/ );
         my $value = 'X';
-        if (!$self->xs_instead){
-            $value = shift @{ $abstr->{$slot} };
+
+        # deabstract everything
+        if ( !$self->xs_instead ) {
+            $value = shift( @{ $abstr->{$slot} } ) // '';
             push @{ $abstr->{$slot} }, $value;
             $value =~ s/^["']//;
-            $value =~ s/["']$//;
+            $value =~ s/["']#?$//;
+            $value =~ s/"#? and "/ and /g;
             $value =~ s/ /_/g;
         }
+
+        # deabstract only those that were deabstracted in BAGEL data
+        elsif ( $self->xs_instead eq '#' ) {
+            $value = shift( @{ $abstr->{$slot} } ) // '';
+            push @{ $abstr->{$slot} }, $value;
+
+            $value =~ s/"[^"#]+"(?!#)/X/g;
+            $value =~ s/^"//;
+            $value =~ s/ and "/and /g;
+            $value =~ s/"#//g;
+        }
+
         $tnode->set_t_lemma($value);
     }
 
@@ -63,7 +78,7 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::Misc::DeabstractDialogueSlots
 
