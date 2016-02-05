@@ -25,8 +25,8 @@ treex git repository:
                 Tool::Coreference::Features::Distance, Tool::Coreference::Features::Morphological, Tool::Coreference::Features::TectoSyntax,
                 Tool::Coreference::remove_PronCoref
             - using Tool::Coreference::NodeFilter to assign classes to nodes
-            - a Block role Block::Filter::Node::T directly uses it to access only the tnodes that belong to one of the predefined classes:
-                attribute 'node_types', a method 'process_filtered_tnode' must be implemented
+            - a parametrized Block role Block::Filter::Node directly uses it to access only the [at]nodes that belong to one of the predefined classes:
+                attribute 'node_types', a method 'process_filtered_[at]node' must be implemented
             - if the 'node_types' is used as a feature in some feature selector, the list must be filtered to rule out labels that has nothing
                 to do with the feature selector, e.g. the constant %POSSIBLE_NODE_TYPES in Tool::Align::Features
         * ante cands getter
