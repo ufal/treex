@@ -4,7 +4,6 @@ use Moose::Role;
 use Moose::Util::TypeConstraints;
 use Treex::Core::Common;
 
-# TODO to be renamed to Treex::Tool::Coreference::NodeFilter
 use Treex::Tool::Coreference::NodeFilter;
 
 requires 'process_filtered_tnode';
