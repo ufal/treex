@@ -84,7 +84,7 @@ The source language is specified by the parameter C<language>.
 
 =item node_types
 
-A comma-separated list of the node types on which this block should be applied (see more in C<Treex::Block::Filter::Node::T>)
+A comma-separated list of the node types on which this block should be applied (see more in C<Treex::Block::Filter::Node>)
 
 =back
 

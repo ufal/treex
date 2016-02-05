@@ -6,7 +6,9 @@ use Treex::Core::Common;
 use List::MoreUtils qw/any/;
 
 extends 'Treex::Block::Write::BaseTextWriter';
-with 'Treex::Block::Filter::Node::T';
+with 'Treex::Block::Filter::Node' => {
+    layer => 't',
+};
 
 has '+node_types' => ( default => 'all_anaph' );
 has 'align_language' => (is => 'ro', isa => 'Str', required => 1);
@@ -102,7 +104,7 @@ Specifies the source language of the evaluated alignment,
 
 =item node_types
 
-A comma-separated list of the node types to be evaluated (see more in C<Treex::Block::Filter::Node::T>)
+A comma-separated list of the node types to be evaluated (see more in C<Treex::Block::Filter::Node>)
 
 =item align_reltypes
 

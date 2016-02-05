@@ -220,7 +220,7 @@ If the parameter is undefined, use default values.
 =item node_types
 
 A comma-separated list of the node types on which this block should be applied (see more 
-in C<Treex::Block::Filter::Node::T>).
+in C<Treex::Block::Filter::Node>).
 
 =item align_trg_lang
 
