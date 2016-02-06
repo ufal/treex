@@ -5,24 +5,32 @@ use Treex::Core::Common;
 use Treex::Tool::Coreference::NodeFilter::Utils qw/ternary_arg/;
 
 sub is_sem_noun {
+    my ($node, $args) = @_;
+    if ($node->get_layer eq 't') {
+        return is_sem_noun_t($node, $args);
+    }
+    return 0;
+}
+
+sub is_sem_noun_t {
     my ($tnode, $args) = @_;
     $args //= {};
     
-    return if !_is_sem_noun_all($tnode, $args);
+    return if !_is_sem_noun_t_all($tnode, $args);
     if ($tnode->language eq 'cs') {
-        return if !is_sem_noun_cs($tnode, $args);
+        return if !is_sem_noun_t_cs($tnode, $args);
     }
     return 1;
 }
 
-sub is_sem_noun_cs {
+sub is_sem_noun_t_cs {
     my ($tnode, $args) = @_;
     
     my $anode = $tnode->get_lex_anode;
     return (!$anode || ($anode->tag !~ /^[CJRTDIZV]/));
 }    
 
-sub _is_sem_noun_all {
+sub _is_sem_noun_t_all {
     my ($tnode, $args) = @_;
 
     my $third_pers = !$tnode->gram_person || ($tnode->gram_person !~ /1|2/);
