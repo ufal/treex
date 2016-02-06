@@ -18,6 +18,9 @@ sub get_types {
         $types->{perspron} = 1;
         $types->{all_anaph} = 1;
     }
+    if (Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {expressed => 1, possessive => 1})) {
+        $types->{'perspron.poss'} = 1;
+    }
     if (Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {expressed => -1})) {
         #$type = "perspron_unexpr";
         $types->{zero} = 1;
