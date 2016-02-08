@@ -1,4 +1,4 @@
-package Treex::Block::My::AlignmentLoader;
+package Treex::Block::Align::Annot::Load;
 
 use Moose;
 use Treex::Core::Common;
@@ -41,13 +41,15 @@ sub _build_align_records {
     my $line_num = 0;
     my $src_id;
     my $annot_info = {};
+    my $align_info;
+    my $coref_expr_type;
 
     while (my $line = <$f>) {
         $line_num++;
         chomp $line;
         # read the ID line
         if ($line_num == 1 || $line =~ /^ID:/) {
-            $src_id = ($line =~ /^.*\.([^.]*)$/);
+            ($src_id) = ($line =~ /^.*\.([^.]*)$/);
             next;
         }
         # skip surface sentences
@@ -66,27 +68,27 @@ sub _build_align_records {
             my $lang_rec = {
                 style => $style,
                 annot_idx => \@annot_idx,
-                anodes_ids => \@annot_ids,
-            }
+                anodes_ids => \@anodes_ids,
+            };
             $annot_info->{$lang} = $lang_rec;
             next;
         }
         # read the additional annotation info - old style ERR:
         if ($line =~ s/^ERR://) {
             my @parts = split /\t/, $line;
-            my $info = join "\t", grep {$_!~/^TYPE=/} @parts;
-            my ($type) = grep {$_ =~ /^TYPE=/} @parts;
+            $align_info = join "\t", grep {$_!~/^TYPE=/} @parts;
+            ($coref_expr_type) = grep {$_ =~ /^TYPE=/} @parts;
             my @langs = sort keys %$annot_info;
             if (@langs != 2) {
                 log_warn "It is not possible to reveal to which language pair the annotation info startin with ERR belongs.";
             }
-            $annot_info{$langs[0]}{info} = $info if ($info !~ /^\s*$/);
-            $annot_info{$langs[0]}{type} = $type;
+            $annot_info->{__COMMON__}{info} = $align_info if ($align_info !~ /^\s*$/);
+            $annot_info->{__COMMON__}{type} = $coref_expr_type;
             next;
         }
         # read the additional annotation info - new style INFO_LANG:
         if ($line =~ s/^INFO_([A-Z]+)://) {
-            $annot_info{lc($1)}{info} = $line if ($info !~ /^\s*$/);
+            $annot_info->{lc($1)}{info} = $line if ($line !~ /^\s*$/);
             next;
         }
         # read the empty line
@@ -109,7 +111,6 @@ sub _nodes_linear {
 
 sub _nodes_structured {
     my ($ttree) = @_;
-    log_info "STRUCT: " . $ttree->id;
     my @list = ();
     my @stack = $ttree->get_children({ordered => 1});
     while (@stack) {
@@ -123,8 +124,8 @@ sub _nodes_structured {
 sub _find_nodes_by_idx {
     my ($bundle, $rec, $lang, $selector) = @_;
 
-    my $tree = $bundle->get_tree($lang, substr($rec->style, 0, 1), $selector);
-    my @all_nodes = $rec->style eq "tt" ? _nodes_structured($tree) : _nodes_linear($tree);
+    my $tree = $bundle->get_tree($lang, substr($rec->{style}, 0, 1), $selector);
+    my @all_nodes = $rec->{style} eq "tt" ? _nodes_structured($tree) : _nodes_linear($tree);
     my @ali_nodes = @all_nodes[@{$rec->{annot_idx}}];
     return \@ali_nodes;
 }
@@ -150,35 +151,35 @@ sub process_document {
         my $selector = $node->selector;
         my $rec = $self->_align_records->{$id};
 
+        _set_align_info($node, $rec);
+
         foreach my $src_lang (keys %{$self->_aligns_graph}) {
             my ($trg_lang, $align_type) = @{$self->_aligns_graph->{$src_lang}};
             my ($src_rec, $trg_rec) = map {$rec->{$_}} ($src_lang, $trg_lang);
 
             # making a link between a-nodes or t-nodes
-            my $src_nodes = _find_nodes_by_idx($bundle, $src_rec, $src_lang, $selector);
-            my $trg_nodes = _find_nodes_by_idx($bundle, $trg_rec, $trg_lang, $selector);
+            my $src_nodes = _find_nodes_by_idx($node->get_bundle, $src_rec, $src_lang, $selector);
+            my $trg_nodes = _find_nodes_by_idx($node->get_bundle, $trg_rec, $trg_lang, $selector);
             _add_align($src_nodes, $trg_nodes, $align_type, );
-
+            
             # in the old format, alignment between a-nodes can be specified in t-nodes
-            my $src_anodes = _find_anodes_by_id($doc, $src_rec, $src_nodes);
-            my $trg_anodes = _find_anodes_by_id($doc, $trg_rec, $trg_nodes);
-            _add_align($src_anodes, $trg_anodes, $align_type);
-
-            # set align info
-            _set_align_info($src_nodes, $src_rec);
-            _set_align_info($src_anodes, $src_rec);
-            _set_align_info($trg_nodes, $trg_rec);
-            _set_align_info($trg_anodes, $trg_rec);
-
+            if (@{$src_rec->{anodes_ids}} || @{$trg_rec->{anodes_ids}}) {
+                my $src_anodes = _find_anodes_by_id($doc, $src_rec, $src_nodes);
+                my $trg_anodes = _find_anodes_by_id($doc, $trg_rec, $trg_nodes);
+                _add_align($src_anodes, $trg_anodes, $align_type);
+            }
         }
     }
 }
 
 sub _set_align_info {
-    my ($nodes, $rec) = @_;
-    foreach my $node (@$nodes) {
-        $node->wild->{align_info} = $rec->{info} if (defined $rec->{info});
-        $node->wild->{coref_expr_type} = $rec->{type} if (defined $rec->{type});
+    my ($node, $rec) = @_;
+    my $src_lang = $node->language;
+    my @other_langs = grep {$_ ne "__COMMON__" && $_ ne $src_lang} keys %$rec;
+    foreach my $trg_lang (@other_langs) {
+        $node->wild->{align_info}{$trg_lang} = $rec->{$trg_lang}{info} // $rec->{__COMMON__}{info};
+        log_info sprintf("Setting align info for '%s' in %s: %s", $trg_lang, $node->id, $node->wild->{align_info}{$trg_lang} // "__UNDEF__");
+        $node->wild->{coref_expr_type}{$trg_lang} = $rec->{$trg_lang}{type} || $rec->{__COMMON__}{type};
     }
 }
 
@@ -187,7 +188,8 @@ sub _add_align {
     
     foreach my $src_node (@$src_nodes) {
         foreach my $trg_node (@$trg_nodes) {
-            log_info sprintf("Adding alignment '%s' between nodes: %s -> %s", $type, $src_node->id, $trg_node->id);
+            my $lemma_func = $src_node->get_layer eq "a" ? "lemma" : "t_lemma";
+            log_info sprintf("Adding alignment '%s' between nodes: %s -> %s (%s -> %s)", $type, $src_node->id, $trg_node->id, $src_node->$lemma_func, $trg_node->$lemma_func);
             Treex::Tool::Align::Utils::add_aligned_node($src_node, $trg_node, $type);
         }
     }
