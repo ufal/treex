@@ -39,6 +39,7 @@ sub _build_align_records {
     open my $f, "<:utf8", $self->from;
 
     my $line_num = 0;
+    my $doc_id;
     my $src_id;
     my $annot_info = {};
     my $align_info;
@@ -49,7 +50,7 @@ sub _build_align_records {
         chomp $line;
         # read the ID line
         if ($line_num == 1 || $line =~ /^ID:/) {
-            ($src_id) = ($line =~ /^.*\.([^.]*)$/);
+            ($doc_id, $src_id) = ($line =~ /^.*\/(.*)\.s?treex.*\.([^.]*)$/);
             next;
         }
         # skip surface sentences
@@ -93,7 +94,8 @@ sub _build_align_records {
         }
         # read the empty line
         if ($line =~ /^\s*$/) {
-            $align_rec->{$src_id} = $annot_info;
+            $align_rec->{$doc_id}{$src_id} = $annot_info;
+            $doc_id = undef;
             $src_id = undef;
             $annot_info = {};
             $line_num = 0;
@@ -144,12 +146,19 @@ sub process_document {
 
     print "UNDF DOC\n" if (!defined $doc);
 
-    foreach my $id (keys %{$self->_align_records}) {
+    #print STDERR "DOC: " . $doc->file_stem . "\n";
+
+    my $doc_align_records = $self->_align_records->{$doc->file_stem};
+    foreach my $id (keys %$doc_align_records) {
         next if (!$doc->id_is_indexed($id));
         
         my $node = $doc->get_node_by_id($id);
         my $selector = $node->selector;
-        my $rec = $self->_align_records->{$id};
+        my $rec = $doc_align_records->{$id};
+
+        #$Data::Dumper::Maxdepth = 4;
+        #print STDERR "ID: " . $node->id . "\n";
+        #print STDERR Dumper($rec);
 
         _set_align_info($node, $rec);
 
@@ -170,6 +179,7 @@ sub process_document {
             }
         }
     }
+    #exit();
 }
 
 sub _set_align_info {
