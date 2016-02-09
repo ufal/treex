@@ -3,6 +3,7 @@ package Treex::Block::Align::ProjectAlignment;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Align::Utils;
+use Clone qw/clone/;
 
 extends 'Treex::Core::Block';
 
@@ -50,28 +51,36 @@ sub process_bundle {
         my $src_tree = $bundle->get_tree($l1, $self->layer, $self->selector);
         foreach my $node ($src_tree->get_descendants({ordered => 1})) {
             foreach my $l2 (keys %{$self->_aligns_graph->{$l1}}) {
+                
                 my $rel_types = $self->_aligns_graph->{$l1}{$l2};
-                my ($trg_nodes, $trg_aligns, $trg_ali_types);
+                my ($src_aligns, $src_ali_types) = $node->get_undirected_aligned_nodes({
+                    selector => $node->selector,
+                    language => $l2,
+                    rel_types => $rel_types,
+                });
+                
+                my ($trg_nodes, $trg_aligns, $trg_ali_types, $trg_nodes_ali_info, $trg_aligns_ali_info);
                 # project to the other layer
                 if (defined $self->trg_layer) {
-                    ($trg_nodes, $trg_aligns, $trg_ali_types) = $self->_align_from_other_layer(
-                        $node, $l2, $self->trg_layer, $rel_types
+                    ($trg_nodes, $trg_aligns, $trg_ali_types, $trg_nodes_ali_info, $trg_aligns_ali_info) = $self->_align_from_other_layer(
+                        $node, $src_aligns, $src_ali_types, $self->trg_layer
                     );
                 }
                 # project to the other selector
                 elsif (defined $self->trg_selector) {
-                    ($trg_nodes, $trg_aligns, $trg_ali_types) = $self->_align_from_other_selector(
-                        $node, $l2, $self->trg_selector, $rel_types
+                    ($trg_nodes, $trg_aligns, $trg_ali_types, $trg_nodes_ali_info, $trg_aligns_ali_info) = $self->_align_from_other_selector(
+                        $node, $src_aligns, $src_ali_types, $self->trg_selector
                     );
                 }
                 # create projected links
                 for (my $i = 0; $i < @$trg_aligns; $i++) {
                     my $trg_aligned_node = $trg_aligns->[$i];
                     my $trg_ali_type = $trg_ali_types->[$i];
+                    $trg_aligned_node->wild->{align_info} = clone($trg_aligns_ali_info->[$i]) if (defined $trg_aligns_ali_info->[$i]);
                     foreach my $trg_node (@$trg_nodes) {
+                        $trg_node->wild->{align_info} = clone($trg_nodes_ali_info) if (defined $trg_nodes_ali_info);
                         log_info sprintf("Adding alignment of type '%s' between nodes: %s -> %s", $trg_ali_type, $trg_node->id, $trg_aligned_node->id);
                         Treex::Tool::Align::Utils::add_aligned_node($trg_node, $trg_aligned_node, $trg_ali_type);
-                        $trg_node->wild->{align_info} = $node->wild->{align_info};
                     }
                 }
             }
@@ -93,59 +102,52 @@ sub _get_other_layer_counterpart {
 }
 
 sub _align_from_other_layer {
-    my ($self, $src_node, $trg_lang, $trg_layer, $rel_types) = @_;
+    my ($self, $src_node, $src_aligns, $src_ali_types, $trg_layer) = @_;
     
-    my ($src_aligns, $src_ali_types) = $src_node->get_undirected_aligned_nodes({
-        selector => $src_node->selector,
-        language => $trg_lang,
-        rel_types => $rel_types,
-    });
-    return ([], [], []) if (!@$src_aligns);
-
-    my $trg_node =  _get_other_layer_counterpart($src_node);
-    return ([], [], []) if (!defined $trg_node);
+    my $trg_node = _get_other_layer_counterpart($src_node);
+    return map {[]} 1..5 if (!defined $trg_node);
 
     my @trg_aligns = map { _get_other_layer_counterpart($_) } @$src_aligns;
     my @def_idx = grep {defined $trg_aligns[$_]} 0 .. $#trg_aligns;
 
     my @trg_aligns_def = @trg_aligns[@def_idx];
-    my @trg_ali_types = @$src_ali_types;
-    my @trg_ali_types_def = @trg_ali_types[@def_idx];
+    my @src_ali_types_arr = @$src_ali_types;
+    my @trg_ali_types_def = @src_ali_types_arr[@def_idx];
+    my $trg_nodes_info = $src_node->wild->{align_info};
+    my @src_aligns_arr = @$src_aligns;
+    my @trg_aligns_info = map {$_->wild->{align_info}} @src_aligns_arr[@def_idx];
 
-    return ([$trg_node], \@trg_aligns_def, \@trg_ali_types_def);
+    return ([$trg_node], \@trg_aligns_def, \@trg_ali_types_def, $trg_nodes_info, \@trg_aligns_info);
 }
 
 sub _align_from_other_selector {
-    my ($self, $src_node, $trg_lang, $trg_selector, $rel_types) = @_;
+    my ($self, $src_node, $src_aligns, $src_ali_types, $trg_selector) = @_;
     
-    my ($src_aligns, $src_ali_types) = $src_node->get_undirected_aligned_nodes({
-        selector => $src_node->selector,
-        language => $trg_lang,
-        rel_types => $rel_types,
-    });
-    return ([], [], []) if (!@$src_aligns);
-
     my ($trg_nodes, $mono_types) = $src_node->get_undirected_aligned_nodes({
         selector => $trg_selector,
         language => $src_node->language,
     });
-    return ([], [], []) if (!@$trg_nodes);
+    return map {[]} 1..5 if (!@$trg_nodes);
+
+    my $trg_nodes_info = $src_node->wild->{align_info};
     
     #print STDERR Dumper(\@z1_trg_nodes);
     #print STDERR join " ", (map {$_->id} @z1_trg_nodes);
     my @trg_aligns = ();
     my @trg_ali_types = ();
+    my @trg_aligns_info = ();
     for (my $i = 0; $i < @$src_aligns; $i++) {
         my $src_aligned_node = $src_aligns->[$i];
         (my $tmp_trg_aligns, $mono_types) = $src_aligned_node->get_undirected_aligned_nodes({
             selector => $trg_selector,
-            language => $trg_lang,
+            language => $src_aligned_node->language,
         });
         push @trg_aligns, @$tmp_trg_aligns;
         push @trg_ali_types, ($src_ali_types->[$i]) x scalar @$tmp_trg_aligns;
+        push @trg_aligns_info, map {$src_aligned_node->wild->{align_info}} 1 .. scalar @$tmp_trg_aligns;
     }
     
-    return ($trg_nodes, \@trg_aligns, \@trg_ali_types);
+    return ($trg_nodes, \@trg_aligns, \@trg_ali_types, $trg_nodes_info, \@trg_aligns_info);
 }
 
 1;
