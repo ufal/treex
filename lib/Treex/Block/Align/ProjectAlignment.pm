@@ -49,8 +49,9 @@ sub process_bundle {
 
     foreach my $l1 (keys %{$self->_aligns_graph}) {
         my $src_tree = $bundle->get_tree($l1, $self->layer, $self->selector);
-        foreach my $node ($src_tree->get_descendants({ordered => 1})) {
-            foreach my $l2 (keys %{$self->_aligns_graph->{$l1}}) {
+        foreach my $l2 (keys %{$self->_aligns_graph->{$l1}}) {
+            my %src_covered_aligns = ();
+            foreach my $node ($src_tree->get_descendants({ordered => 1})) {
                 
                 my $rel_types = $self->_aligns_graph->{$l1}{$l2};
                 my ($src_aligns, $src_ali_types) = $node->get_undirected_aligned_nodes({
@@ -58,6 +59,7 @@ sub process_bundle {
                     language => $l2,
                     rel_types => $rel_types,
                 });
+                $src_covered_aligns{$_->id} = 1 for @$src_aligns;
                 
                 my ($trg_nodes, $trg_aligns, $trg_ali_types, $trg_nodes_ali_info, $trg_aligns_ali_info);
                 # project to the other layer
@@ -73,15 +75,37 @@ sub process_bundle {
                     );
                 }
                 # create projected links
-                for (my $i = 0; $i < @$trg_aligns; $i++) {
-                    my $trg_aligned_node = $trg_aligns->[$i];
-                    my $trg_ali_type = $trg_ali_types->[$i];
-                    $trg_aligned_node->wild->{align_info} = clone($trg_aligns_ali_info->[$i]) if (defined $trg_aligns_ali_info->[$i]);
-                    foreach my $trg_node (@$trg_nodes) {
-                        $trg_node->wild->{align_info} = clone($trg_nodes_ali_info) if (defined $trg_nodes_ali_info);
+                foreach my $trg_node (@$trg_nodes) {
+                    $trg_node->wild->{align_info} = clone($trg_nodes_ali_info) if (defined $trg_nodes_ali_info);
+                    for (my $i = 0; $i < @$trg_aligns; $i++) {
+                        my $trg_aligned_node = $trg_aligns->[$i];
+                        my $trg_ali_type = $trg_ali_types->[$i];
+                        $trg_aligned_node->wild->{align_info} = clone($trg_aligns_ali_info->[$i]) if (defined $trg_aligns_ali_info->[$i]);
                         log_info sprintf("Adding alignment of type '%s' between nodes: %s -> %s", $trg_ali_type, $trg_node->id, $trg_aligned_node->id);
                         Treex::Tool::Align::Utils::add_aligned_node($trg_node, $trg_aligned_node, $trg_ali_type);
                     }
+                }
+            }
+            my $align_tree = $bundle->get_tree($l2, $self->layer, $self->selector);
+            # run through the nodes from the other language just to find 'align_info' items there and project it
+            # TODO: this is horrible
+            foreach my $node ($align_tree->get_descendants({ordered => 1})) {
+                next if ($src_covered_aligns{$node->id});
+                my ($trg_nodes, $trg_aligns, $trg_ali_types, $trg_nodes_ali_info, $trg_aligns_ali_info);
+                # project to the other layer
+                if (defined $self->trg_layer) {
+                    ($trg_nodes, $trg_aligns, $trg_ali_types, $trg_nodes_ali_info, $trg_aligns_ali_info) = $self->_align_from_other_layer(
+                        $node, [], [], $self->trg_layer
+                    );
+                }
+                # project to the other selector
+                elsif (defined $self->trg_selector) {
+                    ($trg_nodes, $trg_aligns, $trg_ali_types, $trg_nodes_ali_info, $trg_aligns_ali_info) = $self->_align_from_other_selector(
+                        $node, [], [], $self->trg_selector
+                    );
+                }
+                foreach my $trg_node (@$trg_nodes) {
+                    $trg_node->wild->{align_info} = clone($trg_nodes_ali_info) if (defined $trg_nodes_ali_info);
                 }
             }
         }
@@ -122,7 +146,7 @@ sub _align_from_other_layer {
 
 sub _align_from_other_selector {
     my ($self, $src_node, $src_aligns, $src_ali_types, $trg_selector) = @_;
-    
+
     my ($trg_nodes, $mono_types) = $src_node->get_undirected_aligned_nodes({
         selector => $trg_selector,
         language => $src_node->language,
