@@ -26,12 +26,12 @@ A2T::MoveAuxFromCoordToMembers
 A2T::LA::SetFunctors
 A2T::SetNodetype
 A2T::LA::MarkClauseHeads
-A2T::MarkRelClauseHeads
-A2T::MarkRelClauseCoref
+A2T::LA::MarkRelClauseHeads
+A2T::LA::MarkRelClauseCoref
 #TODO A2T::LA::FixTlemmas
 #TODO A2T::LA::FixNumerals
 A2T::LA::SetGrammatemes
-#TODO A2T::LA::AddPersPron
+A2T::LA::AddPersPron
 END
 
 sub get_scenario_string {
@@ -78,6 +78,8 @@ expect Index Thomisticus conll files on the input.
 and add block C<HamleDT::LA::HarmonizeIT> to the beginning of the scenario.
 
 =head1 AUTHORS
+
+Christophe Onambele <christophe.onambele@unicatt.it>
 
 Martin Popel <popel@ufal.mff.cuni.cz>
 
