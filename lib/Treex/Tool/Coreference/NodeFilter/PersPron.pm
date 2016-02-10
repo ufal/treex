@@ -48,7 +48,7 @@ sub _is_3rd_pers_cs {
     my ($node, $args) = @_;
 
     if ($node->get_layer eq "a") {
-        return 0;
+        return _is_3rd_pers_cs_a($node, $args);
     }
     else {
         return _is_3rd_pers_cs_t($node, $args);
