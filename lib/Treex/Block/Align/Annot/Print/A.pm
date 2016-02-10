@@ -13,7 +13,6 @@ sub _build_node_types {
 
 sub process_filtered_anode {
     my ($self, $anode) = @_;
-    print "NODE_TYPES: " . Dumper($self->node_types);
     $self->_process_node($anode);
 }
 
