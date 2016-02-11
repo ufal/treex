@@ -5,9 +5,7 @@ use Moose::Role;
 use Treex::Tool::ML::Ranker::Features;
 use Treex::Tool::Align::Features;
 
-with 'Treex::Block::Filter::Node' => {
-    layer => 't',
-};
+with 'Treex::Block::Filter::Node';
 
 has '_feat_extractor' => (is => 'ro', isa => 'Treex::Tool::ML::Ranker::Features', builder => '_build_feat_extractor');
 
