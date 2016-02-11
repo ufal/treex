@@ -1,47 +1,50 @@
 package Treex::Block::Filter::Node;
 
+use Moose::Role;
 use Moose::Util::TypeConstraints;
+use Treex::Core::Common;
+use Treex::Tool::Coreference::NodeFilter;
 
 subtype 'CommaArrayRef' => as 'ArrayRef';
 coerce 'CommaArrayRef'
     => from 'Str'
     => via { [split /,/] };
-subtype 'Layer'
-    => as 'Str'
-    => where {m/^[at]$/i}
-=> message {"Layer must be one of: [A]nalytical, [T]ectogrammatical"};
+subtype 'CommaHashRef' => as 'HashRef[Bool]';
+coerce 'CommaHashRef'
+    => from 'Str'
+    => via { my @a = split /,/, $_; my %hash; @hash{@a} = (1) x @a; \%hash };
 
-use MooseX::Role::Parameterized;
 
-parameter layer => (
-    isa => 'Layer',
-    required => 1,
-);
-
-use Treex::Core::Common;
-use Treex::Tool::Coreference::NodeFilter;
-
-role {
-
-my $p = shift;
-my $layer = $p->layer;
-
-my $process_name = 'process_'.$layer.'node';
-my $process_filtered_name = 'process_filtered_'.$layer.'node';
-
-requires "$process_filtered_name";
 requires '_build_node_types';
 
 has 'node_types' => ( is => 'ro', isa => 'CommaArrayRef', coerce => 1, builder => '_build_node_types' );
-#has 'layer' => ( is => 'ro', isa => 'Layer', coerce => 1, default => 't' );
+has 'layers' => ( is => 'ro', isa => 'CommaHashRef', coerce => 1, builder => '_build_layers' );
 
-method "$process_name" => sub {
-    my ($self, $node) = @_;
-    return if (!Treex::Tool::Coreference::NodeFilter::matches($node, $self->node_types));
-    $self->$process_filtered_name($node);
-};
+sub _build_layers {
+    my ($self) = @_;
+    return "a,t";
+}
 
-}; # end of role {
+sub _process_node {
+    my ($self, $node, $layer) = @_;
+    return if (!$self->layers->{$layer});
+    my $meta = $self->meta;
+    if (my $m = $meta->find_method_by_name("process_".$layer."node_filtered")) {
+        return if (!Treex::Tool::Coreference::NodeFilter::matches($node, $self->node_types));
+        $m->execute( $self, $node );
+    }
+}
+
+sub process_anode {
+    my ($self, $anode) = @_;
+    $self->_process_node($anode, "a");
+}
+
+sub process_tnode {
+    my ($self, $tnode) = @_;
+    $self->_process_node($tnode, "t");
+}
+
 
 1;
 
