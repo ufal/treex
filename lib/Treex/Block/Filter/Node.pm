@@ -29,7 +29,7 @@ sub _process_node {
     my ($self, $node, $layer) = @_;
     return if (!$self->layers->{$layer});
     my $meta = $self->meta;
-    if (my $m = $meta->find_method_by_name("process_".$layer."node_filtered")) {
+    if (my $m = $meta->find_method_by_name("process_filtered_".$layer."node")) {
         return if (!Treex::Tool::Coreference::NodeFilter::matches($node, $self->node_types));
         $m->execute( $self, $node );
     }
