@@ -102,10 +102,10 @@ sub _process_node {
     # it should be one language fewer than the number of all languages
     my @all_langs = keys %$gold_aligns;
     my $annotated_langs = already_annotated_langs($gold_aligns);
-    return if (scalar @all_langs > (scalar keys %$annotated_langs) + 1);
+    return if (scalar @all_langs == (scalar keys %$annotated_langs) + 1);
     
     my $giza_aligns = $self->get_giza_aligns($node, $gold_aligns);
-    my %merged_aligns = map {$_ => ( @{$gold_aligns->{$_}} ? $gold_aligns->{$_} : ($giza_aligns->{$_} // []))} keys %$gold_aligns;
+    my %merged_aligns = map {$_ => ( $annotated_langs->{$_} ? $gold_aligns->{$_} : ($giza_aligns->{$_} // []))} keys %$gold_aligns;
 
     my @langs = ($self->language, sort grep {$_ ne $self->language} keys %merged_aligns);
     my @zones = map {$node->get_bundle->get_zone($_, $self->selector)} @langs;
