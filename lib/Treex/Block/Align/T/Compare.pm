@@ -6,9 +6,7 @@ use Treex::Core::Common;
 use Term::ANSIColor;
 
 extends 'Treex::Block::Write::BaseTextWriter';
-with 'Treex::Block::Filter::Node' => {
-    layer => 't',
-};
+with 'Treex::Block::Filter::Node';
 
 has '+node_types' => ( default => 'all_anaph' );
 has 'align_language' => (is => 'ro', isa => 'Str', required => 1);

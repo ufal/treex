@@ -5,9 +5,7 @@ use Treex::Core::Common;
 use Treex::Tool::Coreference::CorefFeatures;
 use Treex::Tool::Coreference::AnteCandsGetter;
 
-with 'Treex::Block::Filter::Node' => {
-    layer => 't',
-};
+with 'Treex::Block::Filter::Node';
 
 has 'anaphor_as_candidate' => (
     is       => 'ro',
