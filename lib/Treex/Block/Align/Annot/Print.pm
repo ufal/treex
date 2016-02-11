@@ -103,11 +103,11 @@ sub get_giza_aligns {
     return $giza_aligns;
 }
 
-sub process_anode_filtered {
+sub process_filtered_anode {
     my ($self, $anode) = @_;
     $self->_print_for_layer_node($anode, 'a');
 }
-sub process_tnode_filtered {
+sub process_filtered_tnode {
     my ($self, $tnode) = @_;
     $self->_print_for_layer_node($tnode, 't');
 }
