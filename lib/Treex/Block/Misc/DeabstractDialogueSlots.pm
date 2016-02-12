@@ -63,7 +63,7 @@ sub process_ttree {
 
             $value =~ s/"[^"#]+"(?!#)/X/g;
             $value =~ s/^"//;
-            $value =~ s/ and "/and /g;
+            $value =~ s/ and "/ and /g;
             $value =~ s/"#//g;
         }
 
