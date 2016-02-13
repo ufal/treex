@@ -160,12 +160,15 @@ sub process_document {
         #print STDERR "ID: " . $node->id . "\n";
         #print STDERR Dumper($rec);
 
-        _set_align_info($node, $rec);
+        my $annotated_langs = _set_align_info($node, $rec);
 
         foreach my $src_lang (keys %{$self->_aligns_graph}) {
             my ($trg_lang, $align_type) = @{$self->_aligns_graph->{$src_lang}};
             my ($src_rec, $trg_rec) = map {$rec->{$_}} ($src_lang, $trg_lang);
 
+            next if (!defined $annotated_langs->{$src_lang});
+            next if (!defined $annotated_langs->{$trg_lang});
+        
             # making a link between a-nodes or t-nodes
             my $src_nodes = _find_nodes_by_idx($node->get_bundle, $src_rec, $src_lang, $selector);
             my $trg_nodes = _find_nodes_by_idx($node->get_bundle, $trg_rec, $trg_lang, $selector);
@@ -185,21 +188,30 @@ sub process_document {
 sub _set_align_info {
     my ($node, $rec) = @_;
     my $src_lang = $node->language;
+    my %annotated_langs = ();
     # the old annotation style
     if (defined $rec->{__COMMON__}) {
         my ($trg_lang, @other_langs) = grep {$_ ne "__COMMON__" && $_ ne $src_lang} keys %$rec;
         if (@other_langs) {
             log_warn "The old ali_annot format used only for cs and en, however these languages found: " . (join ", ", ($src_lang, $trg_lang, @other_langs));
         }
-        $node->wild->{align_info}{$trg_lang} = $rec->{__COMMON__}{info};
-        $node->wild->{align_info}{$src_lang} = $rec->{__COMMON__}{type};
+        if (defined $rec->{__COMMON__}{info}) {
+            $annotated_langs{$src_lang} = 1;
+            $annotated_langs{$trg_lang} = 1;
+            $node->wild->{align_info}{$trg_lang} = $rec->{__COMMON__}{info};
+            $node->wild->{align_info}{$src_lang} = $rec->{__COMMON__}{type} if (defined $rec->{__COMMON__}{type});
+        }
     }
     else {
         foreach my $trg_lang (keys %$rec) {
-            $node->wild->{align_info}{$trg_lang} = $rec->{$trg_lang}{info};
+            if (defined $rec->{$trg_lang}{info}) {
+                $annotated_langs{$trg_lang} = 1;
+                $node->wild->{align_info}{$trg_lang} = $rec->{$trg_lang}{info};
+            }
             #log_info sprintf("Setting align info for '%s' in %s: %s", $trg_lang, $node->id, $node->wild->{align_info}{$trg_lang} // "__UNDEF__");
         }
     }
+    return \%annotated_langs;
 }
 
 sub _add_align {
