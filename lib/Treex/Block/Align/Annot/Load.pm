@@ -169,7 +169,7 @@ sub process_document {
             # making a link between a-nodes or t-nodes
             my $src_nodes = _find_nodes_by_idx($node->get_bundle, $src_rec, $src_lang, $selector);
             my $trg_nodes = _find_nodes_by_idx($node->get_bundle, $trg_rec, $trg_lang, $selector);
-            _add_align($src_nodes, $trg_nodes, $align_type, );
+            _add_align($src_nodes, $trg_nodes, $align_type);
             
             # in the old format, alignment between a-nodes can be specified in t-nodes
             if (@{$src_rec->{anodes_ids}} || @{$trg_rec->{anodes_ids}}) {
@@ -185,11 +185,20 @@ sub process_document {
 sub _set_align_info {
     my ($node, $rec) = @_;
     my $src_lang = $node->language;
-    my @other_langs = grep {$_ ne "__COMMON__" && $_ ne $src_lang} keys %$rec;
-    foreach my $trg_lang (@other_langs) {
-        $node->wild->{align_info}{$trg_lang} = $rec->{$trg_lang}{info} // $rec->{__COMMON__}{info};
-        log_info sprintf("Setting align info for '%s' in %s: %s", $trg_lang, $node->id, $node->wild->{align_info}{$trg_lang} // "__UNDEF__");
-        $node->wild->{coref_expr_type}{$trg_lang} = $rec->{$trg_lang}{type} || $rec->{__COMMON__}{type};
+    # the old annotation style
+    if (defined $rec->{__COMMON__}) {
+        my ($trg_lang, @other_langs) = grep {$_ ne "__COMMON__" && $_ ne $src_lang} keys %$rec;
+        if (@other_langs) {
+            log_warn "The old ali_annot format used only for cs and en, however these languages found: " . (join ", ", ($src_lang, $trg_lang, @other_langs));
+        }
+        $node->wild->{align_info}{$trg_lang} = $rec->{__COMMON__}{info};
+        $node->wild->{align_info}{$src_lang} = $rec->{__COMMON__}{type};
+    }
+    else {
+        foreach my $trg_lang (keys %$rec) {
+            $node->wild->{align_info}{$trg_lang} = $rec->{$trg_lang}{info};
+            #log_info sprintf("Setting align info for '%s' in %s: %s", $trg_lang, $node->id, $node->wild->{align_info}{$trg_lang} // "__UNDEF__");
+        }
     }
 }
 
