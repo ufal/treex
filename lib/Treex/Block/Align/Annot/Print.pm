@@ -5,6 +5,8 @@ use Treex::Core::Common;
 use List::MoreUtils qw/all any/;
 use Moose::Util::TypeConstraints;
 
+use Treex::Tool::Align::Annot::Util;
+
 extends 'Treex::Block::Write::BaseTextWriter';
 with 'Treex::Block::Filter::Node';
 
@@ -44,35 +46,6 @@ sub _build_node_types {
 # print only for t-nodes by default
 sub _build_layers {
     return "t";
-}
-
-sub get_gold_aligns {
-    my ($self, $node) = @_;
-    my %gold_aligns = map {
-        my ($ali_nodes, $ali_types) = $node->get_undirected_aligned_nodes({ 
-            language => $_, 
-            selector => $node->selector, 
-            rel_types => [$self->gold_ali_type],
-        });
-        $_ => $ali_nodes;
-    } @{$self->align_langs};
-    $gold_aligns{$node->language} = [$node];
-    return \%gold_aligns;
-}
-
-sub already_annotated_langs {
-    my ($gold_aligns) = @_;
-
-    my @all_langs = keys %$gold_aligns;
-    my %annotated_langs = ();
-    foreach my $lang (@all_langs) {
-        my $lang_nodes = $gold_aligns->{$lang};
-        my @align_infos = grep {defined $_} map {$_->wild->{align_info}} @$lang_nodes;
-        foreach my $align_info (@align_infos) {
-            $annotated_langs{$_} = 1 foreach (keys %$align_info);
-        }
-    }
-    return \%annotated_langs;
 }
 
 sub get_giza_aligns {
@@ -115,16 +88,14 @@ sub process_filtered_tnode {
 sub _print_for_layer_node {
     my ($self, $node, $layer) = @_;
 
-    my $gold_aligns = $self->get_gold_aligns($node);
+    my $gold_aligns = Treex::Tool::Align::Annot::Util::get_gold_aligns($node, $self->align_langs, $self->gold_ali_type);
+    my $align_info = Treex::Tool::Align::Annot::Util::get_align_info($gold_aligns);
     
-    # extract all align_infos and find out how many languages are covered
-    # it should be one language fewer than the number of all languages
-    my @all_langs = keys %$gold_aligns;
-    my $annotated_langs = already_annotated_langs($gold_aligns);
-    return if (scalar @all_langs == (scalar keys %$annotated_langs) + 1);
+    # from collected align_info find out how many languages are covered
+    return if (scalar keys %$gold_aligns == scalar keys %$align_info);
     
     my $giza_aligns = $self->get_giza_aligns($node, $gold_aligns);
-    my %merged_aligns = map {$_ => ( $annotated_langs->{$_} ? $gold_aligns->{$_} : ($giza_aligns->{$_} // []))} keys %$gold_aligns;
+    my %merged_aligns = map {$_ => ( defined $align_info->{$_} ? $gold_aligns->{$_} : ($giza_aligns->{$_} // []))} keys %$gold_aligns;
 
     my @langs = ($self->language, sort grep {$_ ne $self->language} keys %merged_aligns);
     my @zones = map {$node->get_bundle->get_zone($_, $self->selector)} @langs;
@@ -138,8 +109,8 @@ sub _print_for_layer_node {
         $self->print_sentences_tnodes(\%merged_aligns, \@langs, \@zones);
     }
 
-    for (my $i = 1; $i < @langs; $i++) {
-        print {$self->_file_handle} "INFO_".uc($langs[$i]).":\t\n";
+    foreach my $lang (@langs) {
+        printf {$self->_file_handle} "INFO_%s:\t%s\n", uc($lang), $align_info->{$lang} // "";
     }
     print {$self->_file_handle} "\n";
 }
