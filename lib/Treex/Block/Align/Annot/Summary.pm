@@ -4,6 +4,8 @@ use Moose;
 use Moose::Util::TypeConstraints;
 use Treex::Core::Common;
 
+use Treex::Tool::Align::Annot::Util;
+
 extends 'Treex::Block::Write::BaseTextWriter';
 with 'Treex::Block::Filter::Node';
 
@@ -73,35 +75,6 @@ sub feats_for_anode {
     return @feats;
 }
 
-sub get_gold_aligns {
-    my ($self, $node) = @_;
-    my %gold_aligns = map {
-        my ($ali_nodes, $ali_types) = $node->get_undirected_aligned_nodes({ 
-            language => $_, 
-            selector => $node->selector, 
-            rel_types => [$self->gold_ali_type],
-        });
-        $_ => $ali_nodes;
-    } @{$self->align_langs};
-    $gold_aligns{$node->language} = [$node];
-    return \%gold_aligns;
-}
-
-sub get_align_info {
-    my ($gold_aligns) = @_;
-
-    my @all_langs = keys %$gold_aligns;
-    my $align_info;
-    foreach my $lang (@all_langs) {
-        my ($ali_node) = @{$gold_aligns->{$lang}};
-        next if (!defined $ali_node);
-        if (defined $ali_node->wild->{align_info}) {
-            $align_info->{$_} = $ali_node->wild->{align_info}->{$_} foreach (keys %{$ali_node->wild->{align_info}});
-        }
-    }
-    return $align_info;
-}
-
 #sub process_filtered_tnode {
 #    my ($self, $tnode) = @_;
 #
@@ -140,8 +113,8 @@ sub get_align_info {
 sub process_filtered_anode {
     my ($self, $anode) = @_;
 
-    my $gold_aligns = $self->get_gold_aligns($anode);
-    my $align_info = get_align_info($gold_aligns);
+    my $gold_aligns = Treex::Tool::Align::Annot::Util::get_gold_aligns($anode, $self->align_langs, $self->gold_ali_type);
+    my $align_info = Treex::Tool::Align::Annot::Util::get_align_info($gold_aligns);
 
     my @all_feats = ();
     foreach my $lang ($anode->language, @{$self->align_langs}) {
