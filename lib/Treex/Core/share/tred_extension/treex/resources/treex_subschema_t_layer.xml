@@ -388,6 +388,8 @@
 
   <type name="t-dispmod.type">
     <choice>
+      <value>disp3</value>
+      <value>disp2</value>
       <value>disp1</value>
       <value>disp0</value>
       <value>nr</value>
