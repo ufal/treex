@@ -38,6 +38,7 @@ sub process_zone
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
     $self->fix_root_punctuation($root);
+    $self->fix_sentence_segmentation($root);
 }
 
 
@@ -249,6 +250,75 @@ sub fix_root_punctuation
                 $tn->set_deprel('root');
             }
         }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# There are sentences where multiple nodes are attached to the root. If we have
+# sorted out punctuation (see fix_root_punctuation() above), the remaining
+# cases are multiple sentences that ended up in one tree because the sentence
+# segmenter failed to separate them. This method will take the subtree of each
+# top node and make it an independent tree. Note that it will not always solve
+# the entire problem. Sometimes a token on the border of the two subtrees
+# should be split, too (either last word + punctuation, or last word + punctu-
+# ation + first word of the next sentence are merged in one token).
+#------------------------------------------------------------------------------
+sub fix_sentence_segmentation
+{
+    my $self = shift;
+    my $root = shift;
+    my @topnodes = $root->get_children({'ordered' => 1});
+    if(scalar(@topnodes)>1)
+    {
+        # Sort out the nodes of the individual sentences.
+        my @sentences;
+        foreach my $tn (@topnodes)
+        {
+            my @sentence = $tn->get_descendants({'add_self' => 1, 'ordered' => 1});
+            push(@sentences, \@sentence);
+        }
+        # Create bundles for the new sentences.
+        my $current_bundle = $root->get_bundle();
+        my $document = $current_bundle->get_document();
+        for(my $i = 1; $i<=$#sentences; $i++)
+        {
+            # Note that the new bundle will contain only one zone.
+            # If there are other zones in the source bundle (probably the 'orig' zone?), they will not be copied.
+            # The entire original tree will stay with the converted tree of the first sentence.
+            my $new_bundle = $document->create_bundle({'after' => $current_bundle});
+            my $new_zone = $new_bundle->create_zone($self->language(), $self->selector());
+            my $new_tree = $new_zone->create_atree();
+            # Get the minimal and maximal ords in this sentence.
+            my $minord;
+            my $maxord;
+            foreach my $node (@{$sentences[$i]})
+            {
+                if(!defined($minord) || $node->ord() < $minord)
+                {
+                    $minord = $node->ord();
+                }
+                if(!defined($maxord) || $node->ord() > $maxord)
+                {
+                    $maxord = $node->ord();
+                }
+            }
+            # Reattach the top node of the sentence to the root of the new tree.
+            foreach my $node (@{$sentences[$i]})
+            {
+                my $pord = $node->parent()->ord();
+                if($pord < $minord || $pord > $maxord)
+                {
+                    $node->set_parent($new_tree);
+                }
+            }
+            # Modify the ords in the new sentence so that they start at 1 again.
+            $new_tree->_normalize_node_ordering();
+            # Make the new bundle current, just in case we will be creating another bundle, so that we know where to place it.
+            $current_bundle = $new_bundle;
+        }
+        $root->_normalize_node_ordering();
     }
 }
 
