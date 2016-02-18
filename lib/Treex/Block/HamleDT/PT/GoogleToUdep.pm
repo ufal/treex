@@ -97,10 +97,7 @@ my %conversion_table =
 (
     'ROOT'      => 'root',
     'acomp'     => 'xcomp:adj', # "passageiro se sente prejudicado" acomp(sente, prejudicado) (doplněk)
-    'adp'       => 'mark', # leaf adposition (e.g. "passar a acreditar": aux(acreditar, passar); adp(acreditar, a))
-                           ###!!! Sometimes it is also attached to a nominal and it should be converted to 'case'.
-                           ###!!! Example: "acarretou danos/dobj ao conjunto/iobj"
-                           ###!!! Because the prepositional phrase is an object (not just modifier), they wanted the noun attached directly to the verb, and the preposition then had to go down.
+    'adp'       => 'case', # leaf adposition; needs special treatment (see below) to distinguish between 'case' and 'mark'
     'adpcomp'   => 'scarg', # clausal argument of adposition (e.g. "para acreditar"); structural transformation needed
     'adpmod'    => 'nmod', # adpositional phrase acting as a non-core dependent
     'adpobj'    => 'adparg', # nominal argument of adposition; structural transformation needed
@@ -160,10 +157,23 @@ sub convert_deprels
         $deprel = $node->conll_deprel() if(!defined($deprel));
         $deprel = 'NR' if(!defined($deprel));
         my $parent = $node->parent();
-        my $pos    = $node->iset()->pos();
-        my $ppos   = $parent ? $parent->iset()->pos() : '';
-        my $lemma  = $node->lemma();
-        if(exists($conversion_table{$deprel}))
+        # 'adp' is a leaf adposition. It may have two causes:
+        # 1. The adpositional phrase is a core dependent such as 'iobj'. Unlike adpositional modifiers, objects are headed by nominals.
+        #    Example: "acarretou danos/dobj ao conjunto/iobj"
+        # 2. Auxiliary verb + preposition + infinitive (such as Portuguese passar a acreditar); both the auxiliary and the preposition are attached to the main verb.
+        # We want 'case' in 1. and 'mark' in 2.
+        if($deprel eq 'adp')
+        {
+            if($parent->is_verb())
+            {
+                $deprel = 'mark';
+            }
+            else
+            {
+                $deprel = 'case';
+            }
+        }
+        elsif(exists($conversion_table{$deprel}))
         {
             $deprel = $conversion_table{$deprel};
         }
