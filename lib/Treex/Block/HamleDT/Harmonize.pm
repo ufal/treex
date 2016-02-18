@@ -73,7 +73,7 @@ sub convert_tags
             }
         }
         # Now that we have a copy of the original tag, we can convert it.
-        $self->convert_tag( $node );
+        $self->decode_iset( $node );
         $self->set_pdt_tag( $node );
         # For the case we later access the CoNLL attributes, reset them as well.
         # (We can still specify other source attributes in Write::CoNLLX and similar blocks.)
@@ -108,10 +108,9 @@ sub get_input_tag_for_interset
 
 #------------------------------------------------------------------------------
 # Decodes the part-of-speech tag and features from a CoNLL treebank into
-# Interset features. Stores the features with the node. Then sets the tag
-# attribute to the closest match in the PDT tagset.
+# Interset features. Stores the features with the node.
 #------------------------------------------------------------------------------
-sub convert_tag
+sub decode_iset
 {
     my $self   = shift;
     my $node   = shift;
@@ -120,6 +119,12 @@ sub convert_tag
     my $f = decode($driver, $src_tag);
     log_fatal("Could not decode '$src_tag' with '$driver' Interset driver") if(!defined($f));
     $node->set_iset($f);
+}
+sub convert_tag
+{
+    my $self = shift;
+    log_warn('The HamleDT::Harmonize::convert_tag() method is deprecated as of 2016-02-18. Use decode_iset() instead.');
+    return $self->decode_iset(@_);
 }
 
 
@@ -133,12 +138,27 @@ sub convert_tag
 #------------------------------------------------------------------------------
 sub set_pdt_tag
 {
-    my $self   = shift;
-    my $node   = shift;
+    my $self = shift;
+    my $node = shift;
     my $f = $node->iset();
     log_fatal("Undefined interset feature structure") if(!defined($f));
     my $pdt_tag = encode('cs::pdt', $f);
     $node->set_tag($pdt_tag);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Sets the universal POS tag to the tag attribute, based on Interset.
+#------------------------------------------------------------------------------
+sub set_upos_tag
+{
+    my $self = shift;
+    my $node = shift;
+    my $f = $node->iset();
+    log_fatal("Undefined interset feature structure") if(!defined($f));
+    my $upos = $f->get_upos();
+    $node->set_tag($upos);
 }
 
 

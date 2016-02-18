@@ -93,6 +93,12 @@ sub _build_dialect
         'adjarg' => ['^AdjArg$', 'AdjArg'],   # noun attached to adjective that modifies it
         'genmod' => ['^Atr$', 'Atr'],         # genitive or possessive noun attached to the modified (possessed) noun
         'genarg' => ['^PossArg$', 'PossArg'], # possessed (modified) noun attached to possessive (genitive) noun that modifies it
+        'pnom'   => ['^Pnom$', 'Pnom'],       # nominal predicate (predicative adjective or noun) attached to a copula
+        'cop'    => ['^Cop$', 'Cop'],         # copula attached to a nominal predicate
+        'subj'   => ['^Sb$'],
+        'nsubj'  => ['^Sb$', 'Sb'],
+        'nmod'   => ['^Atr|Adv$', 'Adv'],
+        'advmod' => ['^Adv$', 'Adv'],
     );
     return \%map;
 }
