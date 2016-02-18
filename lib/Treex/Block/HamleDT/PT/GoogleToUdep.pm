@@ -29,6 +29,7 @@ sub process_zone
     my $root = $zone->get_atree();
     $self->convert_tags($root);
     $self->convert_deprels($root);
+    $self->fix_annotation_errors($root);
     my $builder = new Treex::Tool::PhraseBuilder::StanfordToUD
     (
         'prep_is_head'           => 0,
@@ -179,6 +180,37 @@ sub convert_deprels
             $deprel = $conversion_table{$deprel};
         }
         $node->set_deprel($deprel);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes a few known annotation errors that appear in the data.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'root' && !$node->parent()->is_root())
+        {
+            my $form = $node->form();
+            if($form eq 'café')
+            {
+                $node->set_deprel('nsubj');
+            }
+            elsif($form eq 'é')
+            {
+                $node->set_deprel('ccomp');
+            }
+            elsif($form eq 'adequado')
+            {
+                $node->set_deprel('conj');
+            }
+        }
     }
 }
 
