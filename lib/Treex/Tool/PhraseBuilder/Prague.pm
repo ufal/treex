@@ -7,7 +7,7 @@ use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Log;
 
-extends 'Treex::Tool::PhraseBuilder::BasePhraseBuilder';
+extends 'Treex::Tool::PhraseBuilder::ToPrague';
 
 
 

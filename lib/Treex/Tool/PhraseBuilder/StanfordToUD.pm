@@ -7,61 +7,7 @@ use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Log;
 
-extends 'Treex::Tool::PhraseBuilder::BasePhraseBuilder';
-
-
-
-#------------------------------------------------------------------------------
-# Overrides the inherited default dialect (Prague) to the dialect of Universal
-# Dependencies (Stanford).
-# What dependency labels are used? By separating the labels from the other code
-# we can use the same PhraseBuilder for Prague-style trees with original Prague
-# labels (afuns), as well as for trees in which the labels have already been
-# translated to Universal Dependencies (but the topology is still Prague-like).
-#------------------------------------------------------------------------------
-sub _build_dialect
-{
-    # A lazy builder can be called from anywhere, including map or grep. Protect $_!
-    local $_;
-    # Mapping from id to regular expression describing corresponding deprels in the dialect.
-    # The second position is the label used in set_deprel(); not available for all ids.
-    my %map =
-    (
-        'apos'   => ['^apos$', 'apos'],   # head of paratactic apposition (punctuation or conjunction)
-        'appos'  => ['^appos$', 'appos'], # dependent member of hypotactic apposition
-        'auxg'   => ['^punct$', 'punct'], # punctuation other than comma
-        'auxk'   => ['^punct$', 'punct'], # sentence-terminating punctuation
-        'auxpc'  => ['^case|mark$'],      # adposition or subordinating conjunction
-        'auxp'   => ['^case$', 'case'],   # adposition
-        'auxc'   => ['^mark$', 'mark'],   # subordinating conjunction
-        'psarg'  => ['^(adp|sc)arg$'],  # argument of adposition or subordinating conjunction
-        'parg'   => ['^adparg$', 'adparg'], # argument of adposition
-        'sarg'   => ['^scarg$', 'scarg'], # argument of subordinating conjunction
-        'auxx'   => ['^punct$', 'punct'], # comma
-        'auxy'   => ['^cc$', 'cc'],       # additional coordinating conjunction or other function word
-        'auxyz'  => ['^aux[yz]$'],
-        'cc'     => ['^cc$', 'cc'],       # coordinating conjunction
-        'conj'   => ['^conj$', 'conj'],   # conjunct
-        'coord'  => ['^coord$'],          # head of coordination (conjunction or punctuation)
-        'mwe'    => ['^mwe$', 'mwe'],     # non-head word of a multi-word expression; PDT has only multi-word prepositions
-        'punct'  => ['^punct$', 'punct'],
-        'det'    => ['^det$', 'det'],       # determiner attached to noun
-        'detarg' => ['^detarg$', 'detarg'], # noun attached to determiner
-        'nummod' => ['^nummod$', 'nummod'], # numeral attached to counted noun
-        'numarg' => ['^numarg$', 'numarg'], # counted noun attached to numeral
-        'amod'   => ['^amod$', 'amod'],     # adjective attached to noun
-        'adjarg' => ['^adjarg$', 'adjarg'], # noun attached to adjective that modifies it
-        'genmod' => ['^nmod$', 'nmod'],     # genitive or possessive noun attached to the modified (possessed) noun
-        'genarg' => ['^genarg$', 'genarg'], # possessed (modified) noun attached to possessive (genitive) noun that modifies it
-        'pnom'   => ['^pnom$', 'pnom'],     # nominal predicate (predicative adjective or noun) attached to a copula
-        'cop'    => ['^cop$', 'cop'],       # copula attached to a nominal predicate
-        'subj'   => ['subj'],
-        'nsubj'  => ['^nsubj$', 'nsubj'],
-        'nmod'   => ['^nmod$', 'nmod'],
-        'advmod' => ['^advmod$', 'advmod'],
-    );
-    return \%map;
-}
+extends 'Treex::Tool::PhraseBuilder::ToUD';
 
 
 

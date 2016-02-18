@@ -59,49 +59,6 @@ has 'dialect' =>
 # Usage 0: if ( $self->is_deprel( $deprel, 'punct' ) ) { ... }
 # Usage 1: $self->set_deprel( $phrase, 'punct' );
 #------------------------------------------------------------------------------
-sub _build_dialect
-{
-    # A lazy builder can be called from anywhere, including map or grep. Protect $_!
-    local $_;
-    # Mapping from id to regular expression describing corresponding deprels in the dialect.
-    # The second position is the label used in set_deprel(); not available for all ids.
-    my %map =
-    (
-        'apos'   => ['^Apos$', 'Apos'],  # head of paratactic apposition (punctuation or conjunction)
-        'appos'  => ['^Apposition$', 'Apposition'], # dependent member of hypotactic apposition
-        'auxg'   => ['^AuxG$', 'AuxG'],  # punctuation other than comma
-        'auxk'   => ['^AuxK$', 'AuxK'],  # sentence-terminating punctuation
-        'auxpc'  => ['^Aux[PC]$'],       # preposition or subordinating conjunction
-        'auxp'   => ['^AuxP$', 'AuxP'],  # preposition
-        'auxc'   => ['^AuxC$', 'AuxC'],  # subordinating conjunction
-        'psarg'  => ['^(Prep|Sub)Arg$'], # argument of preposition or subordinating conjunction
-        'parg'   => ['^PrepArg$', 'PrepArg'], # argument of preposition
-        'sarg'   => ['^SubArg$', 'SubArg'], # argument of subordinating conjunction
-        'auxx'   => ['^AuxX$', 'AuxX'],  # comma
-        'auxy'   => ['^AuxY$', 'AuxY'],  # additional coordinating conjunction or other function word
-        'auxyz'  => ['^Aux[YZ]$'],
-        'cc'     => ['^AuxY$', 'AuxY'],  # coordinating conjunction
-        'conj'   => ['^CoordArg$', 'CoordArg'], # conjunct
-        'coord'  => ['^Coord$'],         # head of coordination (conjunction or punctuation)
-        'mwe'    => ['^AuxP$', 'AuxP'],  # non-head word of a multi-word expression; PDT has only multi-word prepositions
-        'punct'  => ['^Aux[XGK]$', 'AuxG'],
-        'det'    => ['^AuxA$', 'AuxA'],       # determiner attached to noun
-        'detarg' => ['^DetArg$', 'DetArg'],   # noun attached to determiner
-        'nummod' => ['^Atr$', 'Atr'],         # numeral attached to counted noun
-        'numarg' => ['^NumArg$', 'NumArg'],   # counted noun attached to numeral
-        'amod'   => ['^Atr$', 'Atr'],         # adjective attached to noun
-        'adjarg' => ['^AdjArg$', 'AdjArg'],   # noun attached to adjective that modifies it
-        'genmod' => ['^Atr$', 'Atr'],         # genitive or possessive noun attached to the modified (possessed) noun
-        'genarg' => ['^PossArg$', 'PossArg'], # possessed (modified) noun attached to possessive (genitive) noun that modifies it
-        'pnom'   => ['^Pnom$', 'Pnom'],       # nominal predicate (predicative adjective or noun) attached to a copula
-        'cop'    => ['^Cop$', 'Cop'],         # copula attached to a nominal predicate
-        'subj'   => ['^Sb$'],
-        'nsubj'  => ['^Sb$', 'Sb'],
-        'nmod'   => ['^Atr|Adv$', 'Adv'],
-        'advmod' => ['^Adv$', 'Adv'],
-    );
-    return \%map;
-}
 sub is_deprel
 {
     my $self = shift;
