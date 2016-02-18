@@ -35,8 +35,10 @@ sub detect_special_constructions
         # If we restructure the coordination before attending to the prepositional
         # phrase, we will move the preposition to a lower level and it will be
         # never discovered that it has a PrepArg child.
+        $phrase = $self->detect_multi_word_expression($phrase);
         $phrase = $self->detect_stanford_pp($phrase);
         $phrase = $self->detect_prague_copula($phrase); ###!!! Perhaps we should rename this method to detect_copula_head().
+        $phrase = $self->detect_name_phrase($phrase);
         $phrase = $self->detect_stanford_coordination($phrase);
     }
     # Return the resulting phrase. It may be different from the input phrase.

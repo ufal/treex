@@ -57,6 +57,7 @@ sub _build_dialect
         'nsubj'  => ['^Sb$', 'Sb'],
         'nmod'   => ['^Atr|Adv$', 'Adv'],
         'advmod' => ['^Adv$', 'Adv'],
+        'name'   => ['^Atr$', 'Atr'],
     );
     return \%map;
 }
