@@ -36,6 +36,7 @@ sub process_zone
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
+    $self->fix_root_punctuation($root);
 }
 
 
@@ -178,6 +179,44 @@ sub convert_deprels
             $deprel = $conversion_table{$deprel};
         }
         $node->set_deprel($deprel);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# There are sentences where multiple nodes are attached to the root. A few of
+# them are just because of the final punctuation being attached to the root
+# instead of the main predicate. This method will re-attach such punctuation.
+#------------------------------------------------------------------------------
+sub fix_root_punctuation
+{
+    my $self = shift;
+    my $root = shift;
+    my @topnodes = $root->get_children({'ordered' => 1});
+    if(scalar(@topnodes)>1)
+    {
+        my $last_tn;
+        foreach my $tn (@topnodes)
+        {
+            if($tn->is_punctuation())
+            {
+                if(defined($last_tn))
+                {
+                    $tn->set_parent($last_tn);
+                    $tn->set_deprel('punct');
+                }
+                else
+                {
+                    $tn->set_deprel('root');
+                }
+            }
+            else
+            {
+                $last_tn = $tn;
+                $tn->set_deprel('root');
+            }
+        }
     }
 }
 
