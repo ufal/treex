@@ -51,6 +51,7 @@ sub process_zone
     $self->fix_symbols($root);
     $self->fix_annotation_errors($root);
     $self->convert_deprels($root);
+    $self->remove_null_pronouns($root);
     $self->split_tokens_on_underscore($root);
     $self->relabel_appos_name($root);
     # The most difficult part is detection of coordination, prepositional and
@@ -499,6 +500,34 @@ sub convert_deprels
         }
         # Save the universal dependency relation label with the node.
         $node->set_deprel($deprel);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# The AnCora treebanks of Catalan and Spanish contain empty nodes representing
+# elided subjects. These nodes are typically leaves (but I don't know whether
+# it is guaranteed). Remove them.
+#------------------------------------------------------------------------------
+sub remove_null_pronouns
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->form() eq '_' && $node->is_pronoun())
+        {
+            if($node->is_leaf())
+            {
+                $node->remove();
+            }
+            else
+            {
+                log_warn('Cannot remove NULL node that is not leaf.');
+            }
+        }
     }
 }
 
