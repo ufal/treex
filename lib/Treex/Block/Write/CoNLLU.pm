@@ -9,6 +9,7 @@ extends 'Treex::Block::Write::BaseTextWriter';
 
 has '+language'                        => ( required => 1 );
 has 'print_id'                         => ( is       => 'ro', isa => 'Bool', default => 1, documentation => 'print sent_id and orig_file_sentence in CoNLL-U comment before each sentence' );
+has 'xpostag'                          => ( is       => 'ro', isa => 'Bool', default => 1, documentation => 'include a treebank-specific tag in the XPOSTAG column?' );
 has 'randomly_select_sentences_ratio'  => ( is       => 'rw', isa => 'Num',  default => 1 );
 
 has _was => ( is => 'rw', default => sub{{}} );
@@ -125,9 +126,10 @@ sub process_atree
         }
         my $misc = scalar(@misc)>0 ? join('|', @misc) : '_';
         my $deprel = $node->deprel();
-        # CoNLL-U columns: ID, FORM, LEMMA, CPOSTAG=UPOS, POSTAG=corpus-specific, FEATS, HEAD, DEPREL, DEPS(additional), MISC
+        # CoNLL-U columns: ID, FORM, LEMMA, UPOSTAG, XPOSTAG(treebank-specific), FEATS, HEAD, DEPREL, DEPS(additional), MISC
         # Make sure that values are not empty and that they do not contain spaces.
-        my @values = ($ord, $form, $lemma, $upos, $tag, $feat, $pord, $deprel, '_', $misc);
+        my $xpostag = $self->xpostag() ? $tag : '_';
+        my @values = ($ord, $form, $lemma, $upos, $xpostag, $feat, $pord, $deprel, '_', $misc);
         @values = map
         {
             my $x = $_ // '_';

@@ -12,6 +12,11 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+    # The original treebank-specific tag of the AnCora corpora is not interesting and we do not want to keep it for UD.
+    foreach my $node ($root->get_descendants())
+    {
+        $node->set_conll_pos(undef);
+    }
     $self->fill_definiteness_of_articles($root);
     # Phrase-based implementation of tree transformations (22.1.2016).
     my $builder = new Treex::Tool::PhraseBuilder::StanfordToPrague
