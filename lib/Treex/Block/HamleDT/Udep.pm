@@ -596,7 +596,7 @@ sub split_tokens_on_underscore
                 }
             }
             # MW nouns: aire acondicionado, cabeza de serie, artigo 1º do código da estrada
-            elsif($node->is_common_noun())
+            elsif($node->is_noun() && !$node->is_pronominal() && !$node->is_proper_noun())
             {
                 my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'compound');
                 $self->tag_nodes(\@subnodes, {'pos' => 'noun', 'nountype' => 'com'});
