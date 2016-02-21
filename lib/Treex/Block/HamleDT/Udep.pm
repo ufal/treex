@@ -546,67 +546,83 @@ sub split_tokens_on_underscore
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants({'ordered' => 1});
+    my $ap = "'";
     for(my $i = 0; $i <= $#nodes; $i++)
     {
         my $node = $nodes[$i];
         my $form = $node->form();
-        if(defined($form) && $form =~ m/._./)
+        ###!!! Skip multi-word verbs (light verb constructions) for the moment.
+        if(defined($form) && $form =~ m/._./ && !$node->is_verb())
         {
             my @words = split(/_/, $node->form());
             my $n = scalar(@words);
+            # Percentage.
+            if($form =~ m/^[-+0-9,.${ap}]+_(per_cent|por_ciento|%)$/i)
+            {
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'nmod');
+                $self->tag_nodes(\@subnodes);
+                if(scalar(@subnodes)==3)
+                {
+                    # Attach "por" to "ciento".
+                    $subnodes[1]->set_parent($subnodes[2]);
+                    $subnodes[1]->set_deprel('case');
+                }
+            }
+            # MW prepositions: a banda de, a causa de, referente a
+            # MW adverbs: al fin, de otro lado, eso sí
+            # MW subordinating conjunctions: al mismo tiempo que, de manera que, en caso de que
+            # MW coordinating conjunctions: así como, mientras que, no sólo, sino también
+            elsif($node->is_adposition() ||
+               $node->is_adverb() ||
+               $node->is_conjunction())
+            {
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'mwe');
+                $self->tag_nodes(\@subnodes, {'pos' => 'noun', 'nountype' => 'com'});
+            }
+            # MW adjectives: de moda, ex comunista, non grato
+            elsif($node->is_adjective() && !$node->is_pronominal())
+            {
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'amod');
+                $self->tag_nodes(\@subnodes, {'pos' => 'adj'});
+                @subnodes = $self->attach_left_function_words(@subnodes);
+                for(my $i = 1; $i <= $#subnodes; $i++)
+                {
+                    if(any {$_->is_adposition()} ($subnodes[$i]->children()))
+                    {
+                        $subnodes[$i]->set_tag('NOUN');
+                        $subnodes[$i]->iset()->set('pos' => 'noun');
+                        $subnodes[$i]->set_deprel('nmod');
+                    }
+                }
+            }
+            # MW nouns: aire acondicionado, cabeza de serie, artigo 1º do código da estrada
+            elsif($node->is_common_noun())
+            {
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'compound');
+                $self->tag_nodes(\@subnodes, {'pos' => 'noun', 'nountype' => 'com'});
+                @subnodes = $self->attach_left_function_words(@subnodes);
+            }
+            # MW interjections: bendita sea (bless her), cómo no, qué caramba, qué mala suerte
+            elsif($node->is_interjection())
+            {
+                # It is only a few expressions but we would have to analyze them all manually.
+                # Neither mwe nor compound seems to be a good fit for these. Let's get around with 'dep' for the moment.
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'dep');
+                $self->tag_nodes(\@subnodes, {'pos' => 'int'});
+            }
             # If the MWE is tagged as proper noun then the words will also be
             # proper nouns and they will be connected using the 'name' relation.
             # We have to ignore that some of these proper "nouns" are in fact
             # adjectives (e.g. "San" in "San Salvador"). But we will not ignore
             # function words such as "de". These are language-specific.
-            if($node->is_proper_noun())
+            elsif($node->is_proper_noun())
             {
-                # Generate nodes for the new words.
-                my @new_nodes = $self->generate_subnodes(\@nodes, $i, \@words, 'name');
-                # Were there any function words? Approximation: all-lowercase words within named entities are probably function words.
-                ###!!! Note that this will not recognize a function word if it is the first word of the MWE (the articles are likely to occur first).
-                my @fw = grep {lc($_) eq $_} (@words);
-                # Relatively easy: three or more words, the second word from right is /(de|do|da|dos|das)/.
-                if($n >= 3 && scalar(@fw) == 1 && $words[$n-2] =~ m/^(de|do|da|dos|das)$/)
-                {
-                    # Only now we can reattach the function words. We could not do it before all new nodes were created.
-                    ###!!! We assume that the second word is the only function word albeit we have not checked that the third word is not.
-                    $new_nodes[$n-3]->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep'});
-                    $new_nodes[$n-3]->set_parent($new_nodes[$n-2]);
-                    $new_nodes[$n-3]->set_deprel('case');
-                }
-                elsif(scalar(@fw) > 0)
-                {
-                    log_warn("Function words in the named entity '".join(' ', @words)."' may not have been attached correctly.");
-                }
-            }
-            # Compound preposition.
-            elsif($node->is_adposition())
-            {
-                # Generate nodes for the new words.
-                my @new_nodes = $self->generate_subnodes(\@nodes, $i, \@words, 'mwe');
-                # abaixo_de, acerca_de, acima_de
-                if($n == 2 && $words[1] =~ m/^(de|a)$/i)
-                {
-                    $node->iset()->set_hash({'pos' => 'adv'});
-                    $new_nodes[0]->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep'});
-                }
-                # à_beira_de, a_cargo_de, a_coberto_de
-                ###!!! but: obra_do_mestre
-                elsif($n == 3)
-                {
-                    $node->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep'});
-                    $new_nodes[0]->iset()->set_hash({'pos' => 'noun', 'nountype' => 'com'});
-                    $new_nodes[1]->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep'});
-                }
-                # desde_há
-                # in_loco
-                # para_os_lados_de
-                # tal_como
-                else
-                {
-                    log_warn("The compound preposition '".join(' ', @words)."' may not have been decomposed correctly.");
-                }
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'name');
+                $self->tag_nodes(\@subnodes, {'pos' => 'noun', 'nountype' => 'prop'});
+                @subnodes = $self->attach_left_function_words(@subnodes);
+                ###!!! We want to solve occasional coordination: Ministerio de Agricultura , Pesca y Alimentación
+                ###!!! The 'name' relations should not bypass prepositions.
+                ###!!! Nouns with prepositions should be attached to the head of the prevous cluster as 'nmod', not 'name'.
             }
         }
     }
@@ -658,7 +674,168 @@ sub generate_subnodes
         $nodes->[$j]->_set_ord( $ord + $n + ($j - $i - 1) );
     }
     # Return the list of new nodes.
-    return @new_nodes;
+    return ($node, @new_nodes);
+}
+
+
+
+#------------------------------------------------------------------------------
+# A primitive method to tag unambiguous function words in certain Romance
+# languages. Used to tag new nodes when MWE nodes are split. Language
+# dependent! Nodes whose form is not recognized will be left intact.
+#------------------------------------------------------------------------------
+sub tag_nodes
+{
+    my $self = shift;
+    my $nodes = shift; # ArrayRef: nodes that should be (re-)tagged
+    my $default = shift; # HashRef: Interset features to set for unrecognized nodes
+    # Currently supported languages: Catalan, Spanish and Portuguese.
+    my $ap = "'";
+    my %dethash =
+    (
+        # Definite and indefinite articles.
+        'el'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
+        'lo'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
+        'la'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'},
+        "l'"  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'number' => 'sing'},
+        'o'   => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
+        'a'   => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'},
+        'els' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'},
+        'los' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'},
+        'las' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'},
+        'os'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'},
+        'as'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'},
+        'un'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'masc', 'number' => 'sing'},
+        'una' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'fem',  'number' => 'sing'},
+        'um'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'masc', 'number' => 'sing'},
+        'uma' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'fem',  'number' => 'sing'},
+        # Possessive determiners.
+        'su'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'number' => 'sing'},
+        'sus' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'number' => 'plur'},
+        'seu' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'gender' => 'masc', 'number' => 'sing'},
+        'sua' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'gender' => 'fem',  'number' => 'sing'},
+        # Other determiners.
+        'aquel' => {'pos' => 'adj', 'prontype' => 'dem', 'gender' => 'masc', 'number' => 'sing'},
+    );
+    ###!!! The following is not yet implemented.
+    # Note that "a" in Portuguese can be either ADP or DET. Within a multi-word preposition we will only consider DET if it is neither the first nor the last word of the expression.
+    my $adp = 'a|às?|als?|amb|ante|aos?|com|con|d${ap}|das?|de|dels?|des|dos?|em|en|entre|hasta|in|nas?|nos?|para|pelas?|pelos?|pels?|per|por|sem|sin|sob|sobre';
+    # Cross-language ambiguity: Catalan "com" is SCONJ ("how"), Portuguese "com" is ADP ("with").
+    my $sconj = 'com|como|que|si';
+    my $conj = 'e|i|ni|o|ou|sino|sinó|y';
+    my $part = 'não|no';
+    # In addition a few open-class words that appear in multi-word prepositions.
+    my $adj = 'baix|bell|bons|certa|cierto|debido|devido|especial|gran|grande|igual|junt|junto|larga|libre|limpio|maior|mala|mesmo|mismo|muitas|nou|nuevo|otro|outro|poca|primeiro|próximo|qualquer|rara|segundo';
+    my $adv = 'abaixo|acerca|acima|además|agora|ahí|ahora|aí|além|ali|alrededor|amén|antes|aparte|apesar|aquando|aqui|aquí|asi|así|bien|cerca|cómo|cuando|darrere|debaixo|debajo|delante|dentro|después|detrás|diante|encima|enfront|enllà|enlloc|enmig|entonces|entorn|ja|já|juntament|lejos|longe|luego|mais|más|menos|menys|més|mucho|muchísimo|només|onde|poco|poquito|pouco|prop|quando|quant|quanto|sempre|siempre|tard|tarde|ya';
+    foreach my $node (@{$nodes})
+    {
+        my $form = lc($node->form());
+        if(exists($dethash{$form}))
+        {
+            $node->iset()->set_hash($dethash{$form});
+            $node->set_tag($node->iset()->get_upos());
+        }
+        elsif($form =~ m/^($adp)$/i)
+        {
+            $node->set_tag('ADP');
+            $node->iset()->add('pos' => 'adp', 'adpostype' => 'prep');
+        }
+        elsif($form =~ m/^($sconj)$/i)
+        {
+            $node->set_tag('SCONJ');
+            $node->iset()->add('pos' => 'conj', 'conjtype' => 'sub');
+        }
+        elsif($form =~ m/^($conj)$/i)
+        {
+            $node->set_tag('CONJ');
+            $node->iset()->add('pos' => 'conj', 'conjtype' => 'coor');
+        }
+        elsif($form =~ m/^($part)$/i)
+        {
+            $node->set_tag('PART');
+            $node->iset()->add('pos' => 'part', 'negativeness' => 'neg');
+        }
+        elsif($form =~ m/^($adj)$/i)
+        {
+            $node->set_tag('ADJ');
+            $node->iset()->add('pos' => 'adj', 'prontype' => '');
+        }
+        elsif($form =~ m/^($adv)$/i)
+        {
+            $node->set_tag('ADV');
+            $node->iset()->add('pos' => 'adv');
+        }
+        elsif($form =~ m/^[-+.,:]*[0-9]+[-+.,:0-9]*$/)
+        {
+            $node->set_tag('NUM');
+            $node->iset()->add('pos' => 'num', 'numtype' => 'card', 'numform' => 'digit');
+        }
+        elsif($form eq '%')
+        {
+            $node->set_tag('SYM');
+            $node->iset()->add('pos' => 'sym');
+        }
+        elsif($form =~ m/^\pP+$/)
+        {
+            $node->set_tag('PUNCT');
+            $node->iset()->add('pos' => 'punc');
+        }
+        else
+        {
+            $node->iset()->set_hash($default);
+            $node->set_tag($node->iset()->get_upos());
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Attaches prepositions and determiners to the following nodes. Assumes that
+# the first node is the current head and all other nodes are attached to it.
+# Thus cycles must be treated only if the first node is to be re-attached.
+#------------------------------------------------------------------------------
+sub attach_left_function_words
+{
+    my $self = shift;
+    my @nodes = @_;
+    my $content_word; # the non-function node to the right, if any
+    for(my $i = $#nodes; $i >= 0; $i--)
+    {
+        my $reattach = 0;
+        my $original_deprel = $nodes[$i]->deprel();
+        if($nodes[$i]->is_determiner() && defined($content_word))
+        {
+            $reattach = 1;
+            $nodes[$i]->set_deprel('det');
+        }
+        elsif(($nodes[$i]->is_adposition() || $nodes[$i]->is_subordinator()) && defined($content_word))
+        {
+            $reattach = 1;
+            $nodes[$i]->set_deprel('case');
+        }
+        elsif($nodes[$i]->is_particle() && $nodes[$i]->is_negative() && defined($content_word))
+        {
+            $reattach = 1;
+            $nodes[$i]->set_deprel('neg');
+        }
+        if($reattach)
+        {
+            if($content_word->is_descendant_of($nodes[$i]))
+            {
+                $content_word->set_parent($nodes[$i]->parent());
+                $content_word->set_deprel($original_deprel);
+            }
+            $nodes[$i]->set_parent($content_word);
+            splice(@nodes, $i, 1);
+        }
+        else
+        {
+            $content_word = $nodes[$i];
+        }
+    }
+    # The function words that had found their parents were removed from the array. Return the new array.
+    return @nodes;
 }
 
 
