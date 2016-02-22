@@ -137,6 +137,50 @@ sub order_phrases
 
 
 #------------------------------------------------------------------------------
+# Returns the list of all nodes covered by the phrase, i.e. the head node of
+# this phrase and of all its descendants.
+#------------------------------------------------------------------------------
+sub nodes
+{
+    my $self = shift;
+    log_fatal('Dead') if($self->dead());
+    my @children = $self->children();
+    my @nodes;
+    foreach my $child (@children)
+    {
+        my @child_nodes = $child->nodes();
+        push(@nodes, @child_nodes);
+    }
+    # Well, not the best possible naming, but... order_phrases() will work even
+    # for nodes, as long as they have the ord() attribute (which they must if they
+    # are wrapped in phrases).
+    return $self->_order_required(@_) ? $self->order_phrases(@nodes) : @nodes;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of all terminal descendants of this phrase. Similar to
+# nodes(), but instead of Node objects returns the Phrase::Term objects, in
+# which the nodes are wrapped.
+#------------------------------------------------------------------------------
+sub terminals
+{
+    my $self = shift;
+    log_fatal('Dead') if($self->dead());
+    my @children = $self->children();
+    my @terminals;
+    foreach my $child (@children)
+    {
+        my @child_terminals = $child->terminals();
+        push(@terminals, @child_terminals);
+    }
+    return $self->_order_required(@_) ? $self->order_phrases(@terminals) : @terminals;
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the list of dependents of the phrase. The only difference from the
 # getter _dependents_ref() is that the getter returns a reference to the array
 # of dependents, while this method returns a list of dependents, hence it is
@@ -255,6 +299,35 @@ sub project_deprel
 
 
 #------------------------------------------------------------------------------
+# Returns the lowest and the highest ord values of the nodes covered by this
+# phrase (always a pair of scalar values; they will be identical for terminal
+# phrases). Note that there is no guarantee that all nodes within the span are
+# covered by this phrase. There may be gaps!
+#------------------------------------------------------------------------------
+sub span
+{
+    my $self = shift;
+    # The phrases may overlap, thus requesting ordering of the children will not help us.
+    my @children = $self->children();
+    my ($min, $max);
+    foreach my $child (@children)
+    {
+        my ($left, $right) = $child->span();
+        if(!defined($min) || $left < $min)
+        {
+            $min = $left;
+        }
+        if(!defined($max) || $right > $max)
+        {
+            $max = $right;
+        }
+    }
+    return ($min, $max);
+}
+
+
+
+#------------------------------------------------------------------------------
 # Adds a child phrase (subphrase). By default, the new child will not be head,
 # it will be an ordinary modifier. This is a private method that should be
 # called only from the public method Phrase::set_parent().
@@ -294,6 +367,8 @@ sub _remove_child
     }
     if(any {$_ == $child} ($self->core_children()))
     {
+        log_warn($self->as_string());
+        log_warn($child->as_string());
         log_fatal("Cannot remove the head child or any other core child");
     }
     my $nhc = $self->_dependents_ref();
@@ -531,6 +606,17 @@ Special cases of nonterminals may have multiple children with special behavior,
 and they may choose which one of these children shall be head under the current
 annotation style.
 
+=item nodes
+
+Returns the list of all nodes covered by the phrase, i.e. the head node of
+this phrase and of all its descendants.
+
+=item terminals
+
+Returns the list of all terminal descendants of this phrase. Similar to
+C<nodes()>, but instead of C<Node> objects returns the C<Phrase::Term> objects, in
+which the nodes are wrapped.
+
 =item dependents
 
 Returns the list of dependents of the phrase. The only difference from the
@@ -577,6 +663,13 @@ Sets a new type of the dependency relation of the phrase to the governing
 phrase. For nonterminal phrases the label is propagated to one (or several)
 of their children. It is not propagated to the underlying dependency tree
 (the C<project_dependencies()> method would have to be called to achieve that).
+
+=item span
+
+Returns the lowest and the highest ord values of the nodes covered by this
+phrase (always a pair of scalar values; they will be identical for terminal
+phrases). Note that there is no guarantee that all nodes within the span are
+covered by this phrase. There may be gaps!
 
 =item replace_child
 

@@ -467,17 +467,25 @@ sub fix_annotation_errors
     {
         my $parent = $node->parent();
         my @children = $node->children();
-        # o industrial portuense Manuel Macedo, Ramiro Moreira e Pedro Menezes, todos testemunhas em este caso
-        # the Porto industrialist Manuel Macedo, Ramiro Moreira and Pedro Menezes, all witnesses in this case
-        # Coordination has not been restructured yet, thus the head is the first conjunct ('industrial').
-        if(defined($parent) && scalar(@children)==1 &&
-           $parent->form() eq 'industrial' &&
-           $node->form() eq 'todos' && $node->deprel() eq 'Atr' &&
-           $children[0]->form() eq 'testemunhas' && $children[0]->deprel() eq 'Pnom')
+        my $form = $node->form() // '';
+        my $deprel = $node->deprel();
+        my $pform = $parent->form() // '';
+        my $pdeprel = $parent->deprel();
+        if(scalar(@children)==1)
         {
-            $children[0]->set_parent($parent);
-            $children[0]->set_deprel('Apposition');
-            $node->set_parent($children[0]);
+            my $cform = $children[0]->form() // '';
+            my $cdeprel = $children[0]->deprel();
+            # o industrial portuense Manuel Macedo, Ramiro Moreira e Pedro Menezes, todos testemunhas em este caso
+            # the Porto industrialist Manuel Macedo, Ramiro Moreira and Pedro Menezes, all witnesses in this case
+            # Coordination has not been restructured yet, thus the head is the first conjunct ('industrial').
+            if($pform eq 'industrial' &&
+               $form eq 'todos' && $deprel eq 'Atr' &&
+               $cform eq 'testemunhas' && $cdeprel eq 'Pnom')
+            {
+                $children[0]->set_parent($parent);
+                $children[0]->set_deprel('Apposition');
+                $node->set_parent($children[0]);
+            }
         }
     }
 }

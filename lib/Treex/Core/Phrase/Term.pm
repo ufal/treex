@@ -85,6 +85,32 @@ sub is_terminal
 
 
 #------------------------------------------------------------------------------
+# Returns the list of all nodes covered by the phrase, i.e. the head node of
+# this phrase and of all its descendants.
+#------------------------------------------------------------------------------
+sub nodes
+{
+    my $self = shift;
+    my $node = $self->node();
+    return ($node);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns a one-element list containing this phrase. This method is used to
+# collect all terminal descendants of a phrase. It is similar to nodes() but
+# instead of Node objects, it returns phrases that wrap the nodes.
+#------------------------------------------------------------------------------
+sub terminals
+{
+    my $self = shift;
+    return ($self);
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the list of dependents of the phrase. Terminal phrases return an
 # empty list by definition.
 #------------------------------------------------------------------------------
@@ -120,6 +146,21 @@ sub project_deprel
 {
     my $self = shift;
     return $self->deprel();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the lowest and the highest ord values of the nodes covered by this
+# phrase (always a pair of scalar values; they will be identical for terminal
+# phrases). Note that there is no guarantee that all nodes within the span are
+# covered by this phrase. There may be gaps!
+#------------------------------------------------------------------------------
+sub span
+{
+    my $self = shift;
+    my $ord = $self->ord();
+    return ($ord, $ord);
 }
 
 
@@ -225,6 +266,17 @@ The C<deprel> attribute can also be supplied separately when creating the
 C<Phrase::Term>. If it is not supplied, it will be copied from the C<Node>
 to which the C<node> attribute refers.
 
+=item nodes
+
+Returns the list of all nodes covered by the phrase, which in the case of
+a terminal phrase means just the node wrapped in it.
+
+=item terminals
+
+Returns a one-element list containing this phrase. This method is used to
+collect all terminal descendants of a phrase. It is similar to C<nodes()> but
+instead of C<Node> objects, it returns phrases that wrap the nodes.
+
 =item dependents
 
 Returns the list of dependents of the phrase. Terminal phrases return an
@@ -234,6 +286,11 @@ empty list by definition.
 
 Returns the list of children of the phrase. Terminal phrases return an
 empty list by definition.
+
+=item span
+
+Returns the lowest and the highest ord values of the nodes covered by this
+phrase. For a terminal phrase, the result is just the C<ord> repeated twice.
 
 =item project_dependencies
 

@@ -322,13 +322,16 @@ sub detect_stanford_coordination
             # shared by all conjuncts. We may later apply heuristics to identify
             # shared dependents.
         }
+        # Check whether we have a delimiter before every but the first conjunct. If not, then look for available commas.
+        my @conjall = sort {$a->ord() <=> $b->ord()} ($phrase, @conjuncts);
+        $self->add_punctuation_to_coordination(\@conjall, \@punctuation, \@coordinators);
         # Now it is clear that we have a coordination.
         # The old input NTerm will now only hold the first conjunct with its private dependents.
-        return $self->surround_nterm_by_coordination($phrase, \@conjuncts, \@coordinators, \@punctuation, [], $cmin, $cmax);
+        $phrase = $self->surround_nterm_by_coordination($phrase, \@conjuncts, \@coordinators, \@punctuation, [], $cmin, $cmax);
         # Use heuristic to recognize some shared dependents.
         $self->reconsider_distant_private_dependents($phrase);
     }
-    # Return the input NTerm phrase if no Coordination has been detected.
+    # If we have detected a coordination, $phrase now points to the Coordination. Otherwise it is still the input NTerm.
     return $phrase;
 }
 
@@ -421,6 +424,89 @@ sub detect_moscow_coordination
     }
     # If we have detected a coordination, $phrase now points to the Coordination. Otherwise it is still the input NTerm.
     return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Takes lists of conjuncts and delimiters of a coordination. Checks whether we
+# have a delimiter before every but the first conjunct. If not, then it looks
+# for available commas, and if it finds them, it adds them to the list of
+# punctuation delimiters.
+#------------------------------------------------------------------------------
+sub add_punctuation_to_coordination
+{
+    my $self = shift;
+    my $conjuncts = shift; # ArrayRef: list of all conjuncts including the first one, even if it is the current head
+    my $punctuation = shift; # ArrayRef: list of punctuation delimiters found so far
+    my $coordinators = shift; # ArrayRef: list of coordinating conjunctions
+    my @conjuncts = sort {$a->ord() <=> $b->ord()} (@{$conjuncts});
+    my @conjords = sort {$a <=> $b} (map {$_->ord()} (@conjuncts));
+    my @delmords = sort {$a <=> $b} (map {$_->ord()} (@{$punctuation}, @{$coordinators}));
+    @delmords = grep {$_ > $conjords[0] && $_ < $conjords[-1]} (@delmords);
+    my $lc = 0; # $conjords[0]
+    my $rc = 1; # $conjords[1]
+    my $cd = 0; # $delmords[0] is the current delimiter
+    my @delforconj;
+    while($cd <= $#delmords && $rc <= $#conjords)
+    {
+        if($delmords[$cd] > $conjords[$lc] && $delmords[$cd] < $conjords[$rc])
+        {
+            $delforconj[$rc] = $delmords[$cd];
+            $cd++;
+        }
+        else
+        {
+            $lc++;
+            $rc++;
+        }
+    }
+    for(my $i = 1; $i <= $#conjords; $i++)
+    {
+        if(!defined($delforconj[$i]))
+        {
+            # We have no delimiter between the $i-th and the preceding conjunct.
+            # Maybe there is a comma attached somewhere else in the subtree of one of the conjuncts.
+            # (It could be also attached non-projectively higher in the tree, but then it would be out of our reach, unfortunately.
+            # We are building the phrase structure tree bottom-up, thus a higher comma may not even have its phrase at the moment!)
+            # Consider two phrase subtrees, left and right. If in the current style neither of the two conjuncts dominates the other,
+            # then the two subtrees are the entire phrases headed by the two conjuncts. If the left conjunct dominates the right one,
+            # then the left subtree contains only those dependents that lie entirely to the left of the right subtree.
+            # In analogy, if the right conjunct dominates the left one, the right subtree contains only selected dependents.
+            # The comma must be either the rightmost node of the left subtree, or the leftmost node of the right subtree.
+            # It could be also other symbols than commas but we do not want to generalize too much, e.g. quotation marks are not coordination delimiters.
+            # Beware: in some annotation styles, commas can head coordination and apposition. Take only leaf nodes!
+            my @lterms = $conjuncts[$i-1]->terminals('ordered' => 1);
+            my @rterms = $conjuncts[$i]->terminals('ordered' => 1);
+            if($conjuncts[$i]->is_descendant_of($conjuncts[$i-1]))
+            {
+                my $lmr = $rterms[0]->ord();
+                # Look for the rightmost terminal in the subtree of the left conjunct, that lies to the left of $lmr.
+                @lterms = grep {$_->ord() < $lmr} (@lterms);
+            }
+            elsif($conjuncts[$i-1]->is_descendant_of($conjuncts[$i]))
+            {
+                my $rml = $lterms[-1]->ord();
+                # Look for the leftmost terminal in the subtree of the right conjunct, that lies to the right of $rml.
+                @rterms = grep {$_->ord() > $rml} (@rterms);
+            }
+            my $result;
+            if($lterms[-1]->node()->form() eq ',' && !$lterms[-1]->is_core_child())
+            {
+                $result = $lterms[-1];
+            }
+            elsif($rterms[0]->node()->form() eq ',' && !$rterms[0]->is_core_child())
+            {
+                $result = $rterms[0];
+            }
+            if(defined($result))
+            {
+                # Add the terminal phrase of the comma to our list of punctuation phrases.
+                # Then the coordination builder should automatically pick it and use it in the coordination.
+                push(@{$punctuation}, $result);
+            }
+        }
+    }
 }
 
 
