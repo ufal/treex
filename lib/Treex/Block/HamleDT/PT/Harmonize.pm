@@ -487,7 +487,44 @@ sub fix_annotation_errors
                 $node->set_parent($children[0]);
             }
         }
+        if($form eq 'com' && $deprel eq 'CoordArg' &&
+           $self->get_node_spanstring($parent) eq 'Conduzido de helicóptero para Durban com os cotos de as pernas mergulhados em gelo')
+        {
+            $node->set_deprel('Adv');
+        }
+        elsif($form eq 'tenha' && $deprel eq 'CoordArg' && $self->get_node_spanstring($node) =~ m/^que tenha sido transposto para a UCCLA/)
+        {
+            $node->set_deprel('Adv');
+        }
+        elsif($form eq 'diziam' && $self->get_node_spanstring($node) eq '« Está tudo cheio » , diziam elementos de a organização , « tente em a bancada de o lado » .')
+        {
+            my @subtree = $node->get_descendants({'add_self' => 1, 'ordered' => 1});
+            # Attach quotation marks to the quoted contents.
+            $subtree[0]->set_parent($subtree[1]);
+            $subtree[4]->set_parent($subtree[1]);
+            $subtree[12]->set_parent($subtree[13]);
+            $subtree[20]->set_parent($subtree[13]);
+            # Attach at least one comma to the first part so that we can build a Prague coordination.
+            $subtree[5]->set_parent($subtree[1]);
+            $subtree[11]->set_parent($subtree[13]);
+        }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Collects word forms of all nodes in a subtree of a given node. Useful to
+# uniquely identify sentences or their parts that are known to contain
+# annotation errors. (We do not want to use node IDs because they are not fixed
+# enough in all treebanks.)
+#------------------------------------------------------------------------------
+sub get_node_spanstring
+{
+    my $self = shift;
+    my $node = shift;
+    my @nodes = $node->get_descendants({'add_self' => 1, 'ordered' => 1});
+    return join(' ', map {$_->form() // ''} (@nodes));
 }
 
 
