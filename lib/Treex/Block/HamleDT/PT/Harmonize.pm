@@ -487,7 +487,15 @@ sub fix_annotation_errors
                 $node->set_parent($children[0]);
             }
         }
-        if($form eq 'com' && $deprel eq 'CoordArg' &&
+        if($form eq 'de' && $self->get_node_spanstring($node) =~ m/^de a Comunidade e de os estados-membros exigirem/)
+        {
+            my @subtree = $node->get_descendants({'add_self' => 1, 'ordered' => 1});
+            $subtree[4]->set_parent($subtree[2]); # CoordArg(Comunidade, de)
+            $subtree[4]->set_deprel('CoordArg');
+            $subtree[6]->set_parent($subtree[4]); # PrepArg(de, estados-membros)
+            $subtree[6]->set_deprel('PrepArg');
+        }
+        elsif($form eq 'com' && $deprel eq 'CoordArg' &&
            $self->get_node_spanstring($parent) eq 'Conduzido de helicóptero para Durban com os cotos de as pernas mergulhados em gelo')
         {
             $node->set_deprel('Adv');
@@ -507,6 +515,129 @@ sub fix_annotation_errors
             # Attach at least one comma to the first part so that we can build a Prague coordination.
             $subtree[5]->set_parent($subtree[1]);
             $subtree[11]->set_parent($subtree[13]);
+        }
+        elsif($form eq 'excepção' && $self->get_node_spanstring($node) =~ m/^excepção para o Instituto_Nacional_da_Habitação e de o Instituto_de_Gestão_e_Alienação_do_/)
+        {
+            my @subtree = $node->get_descendants({'add_self' => 1, 'ordered' => 1});
+            $subtree[4]->set_parent($subtree[1]); # CoordArg(para, e)
+            $subtree[6]->set_parent($subtree[7]); # AuxA(Instituto_de_Gestão, o)
+            $subtree[7]->set_parent($subtree[5]); # PrepArg(de, Instituto_de_Gestão)
+            $subtree[7]->set_deprel('PrepArg');
+            # The remaining children of the first Instituto modify the entire coordination.
+            for(my $i = 8; $i <= $#subtree; $i++)
+            {
+                if($subtree[$i]->parent()==$subtree[3])
+                {
+                    $subtree[$i]->set_parent($subtree[1]);
+                }
+            }
+        }
+        elsif($form eq 'nada' && $deprel eq 'CoordArg' && $self->get_node_spanstring($parent) =~ m/^nada mais nada menos/i)
+        {
+            # This is not an annotation error but we cannot represent a coordination in Prague Dependencies
+            # if there are no delimiters. And "nada mais nada menos" (nothing more nothing less) is analyzed as coordination.
+            $node->set_deprel('Apposition');
+        }
+        elsif($form eq 'capacidade' && $self->get_node_spanstring($node) eq 'a capacidade de fabricar -- e de já possuir -- armamento nuclear')
+        {
+            my @subtree = $node->get_descendants({'add_self' => 1, 'ordered' => 1});
+            $subtree[4]->set_parent($subtree[2]); # AuxG(de, --)
+            $subtree[5]->set_parent($subtree[2]); # AuxY(de, e)
+            $subtree[8]->set_parent($subtree[6]); # PrepArg(de, possuir)
+            $subtree[8]->set_deprel('PrepArg');
+            $subtree[9]->set_parent($subtree[2]); # AuxG(de, --)
+        }
+        elsif($form eq 'pelo_menos' && $pform eq 'estabilidade' && $pdeprel eq 'CoordArg')
+        {
+            $node->set_parent($parent->parent());
+            $node->set_deprel('AuxY');
+        }
+        elsif($form eq 'apoio' && $self->get_node_spanstring($node) =~ m/^o apoio de os governos ocidentais e de o FMI/)
+        {
+            my @subtree = $node->get_descendants({'add_self' => 1, 'ordered' => 1});
+            $subtree[6]->set_parent($subtree[2]); # AuxY(de, e)
+            $subtree[9]->set_parent($subtree[7]); # PrepArg(de, FMI)
+            $subtree[9]->set_deprel('PrepArg');
+            $subtree[10]->set_parent($subtree[12]); # AuxX(tenderão, ,)
+        }
+        elsif($form eq 'fantasia' && $self->get_node_spanstring($node) =~ m/^enorme fantasia , transbordante emoção/)
+        {
+            my @subtree = $parent->get_descendants({'add_self' => 1, 'ordered' => 1});
+            $subtree[3]->set_parent($subtree[0]); # AuxY(de, ,)
+            $subtree[7]->set_parent($subtree[5]); # PrepArg(de, emoção)
+            $subtree[7]->set_deprel('PrepArg');
+        }
+        elsif($form eq '19h30' && $self->get_node_spanstring($parent) eq 'A as 19h30 em o Hotel_Alfa , em Lisboa .')
+        {
+            my @subtree = $parent->get_descendants({'add_self' => 1, 'ordered' => 1});
+            $subtree[3]->set_parent($parent->parent());
+            $subtree[3]->set_deprel('ExD');
+        }
+        elsif($form =~ m/^(ouvir|compreender)$/ && $self->get_node_spanstring($node) =~ m/^(ouvir e cantar sem saber|compreender e aceitar critérios)/)
+        {
+            my @subtree = $parent->get_descendants({'add_self' => 1, 'ordered' => 1});
+            $subtree[2]->set_parent($subtree[0]); # AuxY(de, e)
+            $subtree[4]->set_parent($subtree[3]); # PrepArg(de, cantar)
+            $subtree[4]->set_deprel('PrepArg');
+        }
+        elsif($form eq 'força' && $self->get_node_spanstring($node) =~ m/^a força e o valor de a sua identidade/)
+        {
+            my @subtree = $parent->get_descendants({'add_self' => 1, 'ordered' => 1});
+            $subtree[3]->set_parent($subtree[0]); # AuxY(de, e)
+            $subtree[6]->set_parent($subtree[4]); # PrepArg(de, valor)
+            $subtree[6]->set_deprel('PrepArg');
+            $subtree[11]->set_parent($subtree[7]); # AuxX(de, ,)
+            $subtree[12]->set_parent($subtree[7]); # CoordArg(de, de)
+            $subtree[12]->set_deprel('CoordArg');
+            $subtree[16]->set_parent($subtree[7]); # AuxY(de, e)
+            $subtree[17]->set_parent($subtree[7]); # CoordArg(de, de)
+            $subtree[22]->set_parent($subtree[20]); # Atr(projecto, de)
+            $subtree[22]->set_deprel('Atr');
+            $subtree[25]->set_parent($subtree[27]); # Sb(orgulha, que)
+            $subtree[30]->set_parent($subtree[28]); # AuxY(de, e)
+            $subtree[32]->set_parent($subtree[31]); # PrepArg(de, querer)
+            $subtree[32]->set_deprel('PrepArg');
+        }
+        elsif($form eq 'seja' && $pform eq 'seja' && $deprel eq 'CoordArg' && $pdeprel eq 'Adv')
+        {
+            $node->set_parent($parent->parent());
+            $node->set_deprel('Adv');
+        }
+        elsif($form eq 'atuam' && $self->get_node_spanstring($node) =~ m/^onde atuam como operadores em vários Estados/)
+        {
+            my @subtree = $node->get_descendants({'add_self' => 1, 'ordered' => 1});
+            $subtree[7]->set_parent($subtree[2]); # AuxY(como, e)
+        }
+        elsif($form eq 'peça' && $deprel eq 'CoordArg' && $self->get_node_spanstring($node) =~ m/^peça a URV em a sua mesada$/)
+        {
+            $node->set_deprel('Obj');
+        }
+        elsif($form eq 'respira' && $deprel eq 'CoordArg' && $self->get_node_spanstring($node) =~ m/^ele respira com ajuda de aparelhos$/)
+        {
+            $node->set_deprel('ExD');
+        }
+        elsif($form eq 'pode-' && $deprel eq 'CoordArg' && $self->get_node_spanstring($node) =~ m/^com um empréstimo de US\$ 10 ,/)
+        {
+            $node->set_deprel('ExD');
+        }
+        elsif($form eq 'a' && $deprel eq 'CoordArg' && $pform eq 'decisão' && $self->get_node_spanstring($node) eq 'a decisão')
+        {
+            $node->set_parent($parent->parent());
+            $node->set_deprel('ExD');
+        }
+        elsif($form eq 'pode' && $deprel eq 'CoordArg' && $self->get_node_spanstring($node) =~ m/^pode optar entre o curso técnico/)
+        {
+            $node->set_deprel('ExD');
+        }
+        elsif($form eq 'elogiaram' && $deprel eq 'CoordArg' && $self->get_node_spanstring($node) =~ m/^os presidentes de a Lituânia , Algirdas/)
+        {
+            $node->set_deprel('ExD');
+        }
+        elsif($form eq 'Em' && $self->get_node_spanstring($node) =~ m/^Em isto também em a resistência/)
+        {
+            my @subtree = $node->get_descendants({'add_self' => 1, 'ordered' => 1});
+            $subtree[2]->set_parent($subtree[0]);
+            $subtree[2]->set_deprel('AuxY');
         }
     }
 }
