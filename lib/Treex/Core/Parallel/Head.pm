@@ -250,6 +250,9 @@ sub _create_job_script {
     my $script_filename = "scripts/job$jobnumber.sh";
     open my $J, ">", "$workdir/$script_filename" or log_fatal $!;
     print $J "#!/bin/bash\n\n";
+
+    print $J "export PERL5LIB=".$ENV{PERL5LIB}."\n\n";
+
     my $started_file = ( $workdir =~ /^\// ? $workdir : "$current_dir/$workdir" )
         . "/status/job$jobnumber.started";
 
