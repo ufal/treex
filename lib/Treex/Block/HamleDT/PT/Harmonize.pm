@@ -150,8 +150,9 @@ sub convert_deprels
         # Auxiliary verb.
         # Auxiliary verbs often head verbal groups and thus their label represents the whole group and is something else than AUX.
         # However, if the group involves a chain of two auxiliaries and one main verb, the middle auxiliary will be labeled AUX.
-        # ter sido/AUX suspensa, está a ser/AUX preparado
+        # ter sido/AUX suspensa (have been suspended), está a ser/AUX preparado (it is being prepared)
         # ser, sido, ter, sendo, vir
+        ###!!! We should later restructure this! In Prague Dependencies, AuxV are attached as leaves to the participles of content verbs!
         elsif($deprel eq 'AUX')
         {
             $deprel = 'AuxV';
@@ -468,6 +469,7 @@ sub fix_annotation_errors
         my $parent = $node->parent();
         my @children = $node->children();
         my $form = $node->form() // '';
+        my $lemma = $node->lemma() // '';
         my $deprel = $node->deprel();
         my $pform = $parent->form() // '';
         my $pdeprel = $parent->deprel();
@@ -486,6 +488,15 @@ sub fix_annotation_errors
                 $children[0]->set_deprel('Apposition');
                 $node->set_parent($children[0]);
             }
+        }
+        # There are three instances of "converter" labeled AuxV, but "converter" is not an auxiliary verb.
+        if($lemma eq 'converter' && $deprel eq 'AuxV')
+        {
+            ###!!! Note: In all three cases, the effective parent is a form of the auxiliary verb "ser" (to be).
+            ###!!! What we really want to do is to invert the structure so that "ser" depends on the content verb (participle).
+            ###!!! Because there are other verbs than "converter" (e.g. "atualizar") that are wrongly labeled "AuxV", only they did not make it to the statistics and Valéria did not spot them.
+            $deprel = 'Obj';
+            $node->set_deprel($deprel);
         }
         if($form eq 'de' && $self->get_node_spanstring($node) =~ m/^de a Comunidade e de os estados-membros exigirem/)
         {
