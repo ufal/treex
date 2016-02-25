@@ -152,10 +152,9 @@ sub convert_deprels
         # However, if the group involves a chain of two auxiliaries and one main verb, the middle auxiliary will be labeled AUX.
         # ter sido/AUX suspensa (have been suspended), está a ser/AUX preparado (it is being prepared)
         # ser, sido, ter, sendo, vir
-        ###!!! We should later restructure this! In Prague Dependencies, AuxV are attached as leaves to the participles of content verbs!
         elsif($deprel eq 'AUX')
         {
-            $deprel = 'AuxV';
+            $deprel = 'AuxArg';
         }
         # Right modifier of auxiliary verb.
         # In the few examples I saw, this was the first (head) conjunct of coordinate participles or infinitives, attached to an auxiliary verb.

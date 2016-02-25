@@ -58,6 +58,9 @@ sub _build_dialect
         'nmod'   => ['^nmod$', 'nmod'],
         'advmod' => ['^advmod$', 'advmod'],
         'name'   => ['^name$', 'name'],
+        'auxarg' => ['^auxarg$', 'auxarg'], # content verb (participle) attached to an auxiliary verb (finite)
+        'auxv'   => ['^aux$', 'aux'],       # auxiliary verb attached to a main (content) verb
+        'xcomp'  => ['^xcomp$', 'xcomp'],   # controlled verb (usually non-finite) attached to a controlling verb
     );
     return \%map;
 }

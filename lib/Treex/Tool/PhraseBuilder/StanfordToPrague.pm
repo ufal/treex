@@ -33,6 +33,8 @@ sub detect_special_constructions
         # phrase, we will move the preposition to a lower level and it will be
         # never discovered that it has a PrepArg child.
         $phrase = $self->detect_stanford_pp($phrase);
+        # This is needed when converting the Bosque corpus (Portuguese) and maybe some others.
+        $phrase = $self->detect_auxiliary_head($phrase);
         # This is needed when converting the AnCora coprora (Catalan and Spanish) to the Prague style.
         $phrase = $self->convert_phrase_headed_by_modifier($phrase);
         $phrase = $self->detect_stanford_coordination($phrase);

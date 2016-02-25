@@ -1088,6 +1088,69 @@ sub detect_stanford_pp
 
 
 
+#------------------------------------------------------------------------------
+# Examines a nonterminal phrase whether its head is an auxiliary verb, while
+# the content verb is one of the dependents. Converts the phrase to a PP
+# phrase (function word plus argument). Any other dependents of the auxiliary
+# will become dependents of the whole phrase (in some treebanks, the subject
+# and free modifiers are attached to the finite verb, while the participle of
+# the content verb has only its core arguments).
+#------------------------------------------------------------------------------
+sub detect_auxiliary_head
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    # We look for a child attached as 'auxarg' (AuxArg in Prague dialect).
+    # This label corresponds e.g. to the AUX relation in the Bosque treebank of
+    # Portuguese. Example: serão convertidas “will be converted”.
+    my @dependents = $phrase->dependents('ordered' => 1);
+    my @arguments = grep {$self->is_deprel($_->deprel(), 'auxarg')} (@dependents);
+    if(@arguments)
+    {
+        # We are working bottom-up, thus the current phrase does not have a parent yet and we do not have to take care of the parent link.
+        # We have to detach the argument though, and we have to port the is_member flag.
+        my $member = $phrase->is_member();
+        $phrase->set_is_member(undef);
+        my $pp_deprel = $phrase->deprel();
+        # Now it is clear that we have a verb phrase.
+        # The auxiliary is the current head but we have to detach the dependents and only keep the core.
+        my $fun = $phrase;
+        my $arg = $arguments[0];
+        my $fun_deprel = $self->map_deprel('auxv');
+        $fun->set_deprel($fun_deprel);
+        $arg->set_parent(undef);
+        $arg->set_deprel($pp_deprel);
+        my $pp = new Treex::Core::Phrase::PP
+        (
+            'fun'           => $fun,
+            'arg'           => $arg,
+            'fun_is_head'   => 0, # Neither in Prague nor in UD is auxiliary verb the head. If we need it somewhere, we will have to make it a parameter of the builder.
+            'deprel_at_fun' => 0,
+            'core_deprel'   => $fun_deprel,
+            'is_member'     => $member
+        );
+        $pp->set_deprel($pp_deprel);
+        foreach my $d (@dependents)
+        {
+            unless($d == $arg)
+            {
+                $d->set_parent($pp);
+            }
+        }
+        # This method is used for annotation styles where AuxArg is not a valid relation.
+        # Therefore we must reset the deprel of the remaining candidates to something valid.
+        for(my $i = 1; $i <= $#arguments; $i++)
+        {
+            $self->set_deprel($arguments[$i], 'xcomp');
+        }
+        return $pp;
+    }
+    # Return the input NTerm phrase if no PP has been detected.
+    return $phrase;
+}
+
+
+
 #==============================================================================
 # Head changes
 #==============================================================================
