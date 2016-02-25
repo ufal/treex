@@ -16,6 +16,7 @@ with 'Treex::Block::Filter::Node::T';
 has '+node_types' => ( default => 'all_anaph' );
 has 'model_path' => (is => 'ro', isa => 'Str');
 has 'align_trg_lang' => ( is => 'ro', isa => 'Treex::Type::LangCode', default => sub {my $self = shift; $self->language } );
+has 'align_name' => ( is => 'ro', isa => 'Str', default => 'supervised' );
 has 'delete_orig_align' => ( is => 'ro', isa => 'Bool', default => 1 );
 
 has '_model_paths' => (is => 'ro', isa => 'HashRef[HashRef[Str]]', lazy => 1, builder => '_build_model_paths');
@@ -128,7 +129,7 @@ sub _finalize_links {
         else {
             if ($from_node != $to_node) {
                 log_info "[".(ref $self)."] Adding alignment: " . $from_node->id . " --> " . $to_node->id;
-                Treex::Tool::Align::Utils::add_aligned_node($from_node, $to_node, "supervised");
+                Treex::Tool::Align::Utils::add_aligned_node($from_node, $to_node, $self->align_name);
             }
             $covered_ids{$from_node->id} = 1;
             $covered_ids{$to_node->id} = 1;
