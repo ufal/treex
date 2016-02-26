@@ -690,49 +690,85 @@ sub tag_nodes
     my $nodes = shift; # ArrayRef: nodes that should be (re-)tagged
     my $default = shift; # HashRef: Interset features to set for unrecognized nodes
     # Currently supported languages: Catalan, Spanish and Portuguese.
+    # In general, we want to use a mixed dictionary. If there is a foreign named entity (such as Catalan "L'Hospitalet" in Spanish text),
+    # we still want to recognize the "L'" as a determiner. If it was "La", it would become a DET anyway, regardless whether it is
+    # Spanish, Catalan, French or Italian.
+    # However, some words should be in a language-specific dictionary to reduce homonymy.
+    # For example, Portuguese "a" is either a DET or an ADP. In Catalan and Spanish, it is only ADP.
+    # We do not want to extend the Portuguese homonymy issue to the other languages.
+    my $language = $self->language();
     my $ap = "'";
     my %dethash =
     (
-        # Definite and indefinite articles.
-        'el'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
-        'lo'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
-        'la'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'},
-        "l'"  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'number' => 'sing'},
-        'o'   => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
-        'a'   => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'},
-        'els' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'},
-        'los' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'},
-        'las' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'},
-        'os'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'},
-        'as'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'},
-        'un'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'masc', 'number' => 'sing'},
-        'una' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'fem',  'number' => 'sing'},
-        'um'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'masc', 'number' => 'sing'},
-        'uma' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'fem',  'number' => 'sing'},
-        # Possessive determiners.
-        'su'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'number' => 'sing'},
-        'sus' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'number' => 'plur'},
-        'seu' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'gender' => 'masc', 'number' => 'sing'},
-        'sua' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'gender' => 'fem',  'number' => 'sing'},
-        # Other determiners.
-        'aquel' => {'pos' => 'adj', 'prontype' => 'dem', 'gender' => 'masc', 'number' => 'sing'},
+        'all' =>
+        {
+            # Definite and indefinite articles.
+            'el'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
+            'lo'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
+            'la'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'},
+            "l'"  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'number' => 'sing'},
+            'els' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'},
+            'los' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'},
+            'las' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'},
+            'os'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'},
+            'as'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'},
+            'un'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'masc', 'number' => 'sing'},
+            'una' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'fem',  'number' => 'sing'},
+            'um'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'masc', 'number' => 'sing'},
+            'uma' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'fem',  'number' => 'sing'},
+            # Possessive determiners.
+            'su'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'number' => 'sing'},
+            'sus' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'number' => 'plur'},
+            'seu' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'gender' => 'masc', 'number' => 'sing'},
+            'sua' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'gender' => 'fem',  'number' => 'sing'},
+            # Other determiners.
+            'aquel' => {'pos' => 'adj', 'prontype' => 'dem', 'gender' => 'masc', 'number' => 'sing'},
+        },
+        'ca' =>
+        {
+            'com' => {'pos' => 'conj', 'conjtype' => 'sub'}, # how
+        },
+        'pt' =>
+        {
+            'o'   => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
+            'a'   => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'},
+            'com' => {'pos' => 'adp', 'adpostype' => 'prep'}, # with
+        }
     );
-    ###!!! The following is not yet implemented.
     # Note that "a" in Portuguese can be either ADP or DET. Within a multi-word preposition we will only consider DET if it is neither the first nor the last word of the expression.
-    my $adp = 'a|às?|als?|amb|ante|aos?|com|con|d${ap}|das?|de|dels?|des|dos?|em|en|entre|hasta|in|nas?|nos?|para|pelas?|pelos?|pels?|per|por|sem|sin|sob|sobre';
-    # Cross-language ambiguity: Catalan "com" is SCONJ ("how"), Portuguese "com" is ADP ("with").
-    my $sconj = 'com|como|que|si';
+    my $adp = 'a|às?|als?|amb|ante|aos?|con|d${ap}|das?|de|dels?|des|dos?|em|en|entre|hasta|in|nas?|nos?|para|pelas?|pelos?|pels?|per|por|sem|sin|sob|sobre';
+    my $sconj = 'como|que|si';
     my $conj = 'e|i|ni|o|ou|sino|sinó|y';
     my $part = 'não|no';
     # In addition a few open-class words that appear in multi-word prepositions.
     my $adj = 'baix|bell|bons|certa|cierto|debido|devido|especial|gran|grande|igual|junt|junto|larga|libre|limpio|maior|mala|mesmo|mismo|muitas|nou|nuevo|otro|outro|poca|primeiro|próximo|qualquer|rara|segundo';
     my $adv = 'abaixo|acerca|acima|además|agora|ahí|ahora|aí|além|ali|alrededor|amén|antes|aparte|apesar|aquando|aqui|aquí|asi|así|bien|cerca|cómo|cuando|darrere|debaixo|debajo|delante|dentro|después|detrás|diante|encima|enfront|enllà|enlloc|enmig|entonces|entorn|ja|já|juntament|lejos|longe|luego|mais|más|menos|menys|més|mucho|muchísimo|només|onde|poco|poquito|pouco|prop|quando|quant|quanto|sempre|siempre|tard|tarde|ya';
-    foreach my $node (@{$nodes})
+    for(my $i = 0; $i <= $#nodes; $i++)
     {
+        my $node = $nodes[$i];
         my $form = lc($node->form());
-        if(exists($dethash{$form}))
+        # Current tag of the node is the tag of the multi-word expression. It can help us in resolving the homonymous Portuguese "a".
+        my $current_tag = $node->tag();
+        if($language eq 'pt' && $form eq 'a' && $current_tag eq 'ADP')
         {
-            $node->iset()->set_hash($dethash{$form});
+            if($i==0 || $i==$#nodes)
+            {
+                $node->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep'});
+            }
+            else
+            {
+                $node->iset()->set_hash($dethash{$language}{$form});
+            }
+            $node->set_tag($node->iset()->get_upos());
+        }
+        elsif(exists($dethash{$language}{$form}))
+        {
+            $node->iset()->set_hash($dethash{$language}{$form});
+            $node->set_tag($node->iset()->get_upos());
+        }
+        elsif(exists($dethash{all}{$form}))
+        {
+            $node->iset()->set_hash($dethash{all}{$form});
             $node->set_tag($node->iset()->get_upos());
         }
         elsif($form =~ m/^($adp)$/i)
