@@ -18,6 +18,7 @@ has 'model_path' => (is => 'ro', isa => 'Str');
 has 'align_trg_lang' => ( is => 'ro', isa => 'Treex::Type::LangCode', default => sub {my $self = shift; $self->language } );
 has 'align_name' => ( is => 'ro', isa => 'Str', default => 'supervised' );
 has 'delete_orig_align' => ( is => 'ro', isa => 'Bool', default => 1 );
+has 'skip_annotated' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 has '_model_paths' => (is => 'ro', isa => 'HashRef[HashRef[Str]]', lazy => 1, builder => '_build_model_paths');
 has '_rankers' => (is => 'ro', isa => 'HashRef[HashRef[Treex::Tool::ML::VowpalWabbit::Ranker]]', builder => '_build_rankers', lazy => 1);
@@ -154,6 +155,8 @@ sub _get_align_lang {
 
 sub process_filtered_tnode {
     my ($self, $tnode) = @_;
+
+    return if ($self->skip_annotated && $tnode->get_attr('is_align_coref'));
     
     my $lang = $tnode->language;
     my $align_lang = $self->_get_align_lang($lang);
