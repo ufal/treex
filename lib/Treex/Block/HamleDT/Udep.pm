@@ -716,6 +716,23 @@ sub tag_nodes
             'una' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'fem',  'number' => 'sing'},
             'um'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'masc', 'number' => 'sing'},
             'uma' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'fem',  'number' => 'sing'},
+            # Fused preposition + determiner.
+            'al'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # a+el
+            'als'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # a+els
+            'ao'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # a+o
+            'aos'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # a+os
+            'à'     => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # a+a
+            'às'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # a+as
+            'del'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # de+el
+            'dels'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # de+els
+            'do'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # de+o
+            'dos'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # de+os
+            'da'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # de+a
+            'das'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # de+as
+            'pelo'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # por+o
+            'pelos' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # por+os
+            'pela'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # por+a
+            'pelas' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # por+as
             # Possessive determiners.
             'su'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'number' => 'sing'},
             'sus' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'number' => 'plur'},
@@ -727,12 +744,25 @@ sub tag_nodes
         'ca' =>
         {
             'com' => {'pos' => 'conj', 'conjtype' => 'sub'}, # how
+            'no'  => {'pos' => 'part', 'negativeness' => 'neg'},
+        },
+        'es' =>
+        {
+            'no'  => {'pos' => 'part', 'negativeness' => 'neg'},
         },
         'pt' =>
         {
+            # Definite and indefinite articles.
             'o'   => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
             'a'   => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'},
+            # Fused preposition + determiner.
+            'no'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # em+o
+            'nos'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # em+os
+            'na'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # em+a
+            'nas'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # em+as
+            # Other.
             'com' => {'pos' => 'adp', 'adpostype' => 'prep'}, # with
+            'não' => {'pos' => 'part', 'negativeness' => 'neg'},
         }
     );
     # Note that "a" in Portuguese can be either ADP or DET. Within a multi-word preposition we will only consider DET if it is neither the first nor the last word of the expression.
@@ -774,22 +804,22 @@ sub tag_nodes
         elsif($form =~ m/^($adp)$/i)
         {
             $node->set_tag('ADP');
-            $node->iset()->add('pos' => 'adp', 'adpostype' => 'prep');
+            $node->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep'});
         }
         elsif($form =~ m/^($sconj)$/i)
         {
             $node->set_tag('SCONJ');
-            $node->iset()->add('pos' => 'conj', 'conjtype' => 'sub');
+            $node->iset()->set_hash({'pos' => 'conj', 'conjtype' => 'sub'});
         }
         elsif($form =~ m/^($conj)$/i)
         {
             $node->set_tag('CONJ');
-            $node->iset()->add('pos' => 'conj', 'conjtype' => 'coor');
+            $node->iset()->set_hash({'pos' => 'conj', 'conjtype' => 'coor'});
         }
         elsif($form =~ m/^($part)$/i)
         {
             $node->set_tag('PART');
-            $node->iset()->add('pos' => 'part', 'negativeness' => 'neg');
+            $node->iset()->set_hash({'pos' => 'part', 'negativeness' => 'neg'});
         }
         elsif($form =~ m/^($adj)$/i)
         {
