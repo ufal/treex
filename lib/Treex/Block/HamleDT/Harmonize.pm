@@ -35,6 +35,13 @@ sub process_zone
     my $zone   = shift;
     my $root = $zone->get_atree();
 
+    # Adjust the sentence id that will be eventually printed in the CoNLL-U file.
+    # Now we probably have something like "a_tree-ca-s30-root". Both "a_tree-" and "-root" are superfluous.
+    my $id = $root->id();
+    $id =~ s/^a_tree-//;
+    $id =~ s/-root$//;
+    $root->set_id($id);
+
     # Convert CoNLL POS tags and features to Interset and PDT if possible.
     $self->convert_tags( $root );
 
