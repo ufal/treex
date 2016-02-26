@@ -130,6 +130,8 @@ sub _finalize_links {
             if ($from_node != $to_node) {
                 log_info "[".(ref $self)."] Adding alignment: " . $from_node->id . " --> " . $to_node->id;
                 Treex::Tool::Align::Utils::add_aligned_node($from_node, $to_node, $self->align_name);
+                $from_node->set_attr('is_align_coref', 1);
+                $to_node->set_attr('is_align_coref', 1);
             }
             $covered_ids{$from_node->id} = 1;
             $covered_ids{$to_node->id} = 1;

@@ -118,6 +118,9 @@
           <list ordered="0" type="align-links.type"/>
       </member>
 
+      <!-- align_coref stuff (mnovak 26.2.2016) -->
+      <member name="is_align_coref" type="bool.type"/>
+
       <!-- TimeML stuff (ptacek 22.2.2010)-->
       <member name="timeml">
 	      <structure>
