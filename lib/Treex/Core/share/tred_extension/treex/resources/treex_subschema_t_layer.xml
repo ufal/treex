@@ -90,6 +90,9 @@
 
       <!--  References -->
       <member name="compl.rf"><list ordered="0"><cdata format="PMLREF"/></list></member>
+      <member name="bridging" required="0">
+        <list ordered="0" type="t-bridging-link.type"/>
+      </member>
       <member name="coref_text.rf"><list ordered="0"><cdata format="PMLREF"/></list></member>
       <member name="coref_text" required="0">
         <list ordered="0" type="t-coref_text-link.type"/>
@@ -204,6 +207,29 @@
             <cdata format="any"/>
           </member>
       </structure>
+  </type>
+  
+  <type name="t-bridging-link.type">
+    <structure>
+      <member name="target_node.rf" required="1">
+        <cdata format="PMLREF"/>
+      </member>
+      <member name="type" type="t-bridging-type.type" required="1"/>
+    </structure>
+  </type>
+
+  <type name="t-bridging-type.type">
+    <choice>
+      <value>CONTRAST</value>
+      <value>SUB_SET</value>
+      <value>SET_SUB</value>
+      <value>PART_WHOLE</value>
+      <value>WHOLE_PART</value>
+      <value>FUNCT_P</value>
+      <value>P_FUNCT</value>
+      <value>REST</value>
+      <value>ANAF</value>
+    </choice>
   </type>
 
   <type name="t-coref_text-link.type">

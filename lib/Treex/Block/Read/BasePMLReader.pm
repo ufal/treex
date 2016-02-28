@@ -68,7 +68,7 @@ sub _convert_ttree {
             'dispmod', 'iterativeness', 'indeftype', 'person', 'numertype', 'politeness', 'negation', 'typgroup',
         );
         my @list_attribs = (
-            'compl.rf', 'coref_text.rf', 'coref_text', 'coref_gram.rf', 'a/aux.rf',
+            'compl.rf', 'coref_text.rf', 'coref_text', 'coref_gram.rf', 'bridging', 'a/aux.rf',
         );
 
         $self->_copy_attr( $pml_node, $treex_node, 'deepord', 'ord' );
