@@ -283,6 +283,15 @@ sub get_bridging_nodes {
     return (\@nodes, \@types);
 }
 
+sub add_bridging_node {
+    my ( $self, $node, $type ) = @_;
+    my $links_rf = $self->get_attr('bridging');
+    my %new_link = ( 'target_node.rf' => $node->id, 'type' => $type // ''); #/ so we have no undefs
+    push( @$links_rf, \%new_link );
+    $self->set_attr( 'bridging', $links_rf );
+    return;
+}
+
 # ----------- complement nodes -------------
 
 sub get_compl_nodes {
@@ -468,6 +477,10 @@ Remove all invalid coreferences from C<coref_gram.rf> and C<coref_text.rf>.
 
 Access the nodes referred from the current node by bridging anaphora (in C<bridging> attribute).
 The method returns references to two lists of the equal length: the referred nodes and the types of bridging relations.
+
+=item $node->add_bridging_node($node, $type)
+
+Add bridging anaphora to C<$node> of type C<$type> (to C<bridging>).
 
 =back
 
