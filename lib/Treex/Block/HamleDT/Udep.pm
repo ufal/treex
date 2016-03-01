@@ -1242,8 +1242,8 @@ sub fix_annotation_errors
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $form = $node->form();
-        $form = '' if(!defined($form));
+        my $form = $node->form() // '';
+        my $lemma = $node->lemma() // '';
         my $pos  = $node->iset()->pos();
         my $deprel = $node->deprel();
         if($form =~ m/^[so]$/i && !$node->is_adposition() && $deprel eq 'AuxP')
@@ -1274,6 +1274,12 @@ sub fix_annotation_errors
         elsif($form eq 's' && $node->deprel() eq 'AuxT' && $node->parent()->form() eq 'Devil')
         {
             $node->set_deprel('Atr');
+        }
+        # In AnCora (ca+es), the MWE "10_per_cent" will have the lemma "10_%", which is a mismatch in number of elements.
+        elsif($form =~ m/_(per_cent|por_ciento)$/i && $lemma =~ m/_%$/)
+        {
+            $lemma = lc($form);
+            $node->set_lemma($lemma);
         }
     }
 }
