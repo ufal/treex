@@ -22,6 +22,7 @@ sub _build_dash {
         'rule-based'       => '5,3',
         'monolingual'      => '5,3',      
         'coref_supervised' => '5,3',      
+        'coref_gold'       => '5,3',      
         'copy'             => '5,3',        
     };
 }

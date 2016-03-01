@@ -44,6 +44,7 @@ sub _build_colors {
         'rule-based'       => '#bebebe',
         'monolingual'      => '#bebebe',
         'coref_supervised' => '#bebebe',
+        'coref_gold'       => '#bebebe',
         'copy'             => '#bebebe',
 
         'lex'         => '#006400',
