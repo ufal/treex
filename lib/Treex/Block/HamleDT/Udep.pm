@@ -727,7 +727,7 @@ sub tag_nodes
             'del'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # de+el
             'dels'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # de+els
             'do'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # de+o
-            'dos'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # de+os
+            # "dos" is in the language-specific part.
             'da'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # de+a
             'das'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # de+as
             'pelo'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # por+o
@@ -744,7 +744,7 @@ sub tag_nodes
             # Numerals.
             'zero'   => {'pos' => 'num', 'numtype' => 'card'},
             'cero'   => {'pos' => 'num', 'numtype' => 'card'},
-            'dos'    => {'pos' => 'num', 'numtype' => 'card'},
+            # "dos" is in the language-specific part.
             'dues'   => {'pos' => 'num', 'numtype' => 'card', 'gender' => 'fem'},
             'dois'   => {'pos' => 'num', 'numtype' => 'card', 'gender' => 'masc'},
             'duas'   => {'pos' => 'num', 'numtype' => 'card', 'gender' => 'fem'},
@@ -827,11 +827,13 @@ sub tag_nodes
         },
         'ca' =>
         {
+            'dos' => {'pos' => 'num', 'numtype' => 'card', 'gender' => 'masc'}, # two
             'com' => {'pos' => 'conj', 'conjtype' => 'sub'}, # how
             'no'  => {'pos' => 'part', 'negativeness' => 'neg'},
         },
         'es' =>
         {
+            'dos' => {'pos' => 'num', 'numtype' => 'card'}, # two (both masculine and feminine)
             'no'  => {'pos' => 'part', 'negativeness' => 'neg'},
         },
         'pt' =>
@@ -840,10 +842,11 @@ sub tag_nodes
             'o'   => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
             'a'   => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'},
             # Fused preposition + determiner.
-            'no'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # em+o
-            'nos'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # em+os
-            'na'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # em+a
-            'nas'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # em+as
+            'dos' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # de+os
+            'no'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # em+o
+            'nos' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # em+os
+            'na'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # em+a
+            'nas' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # em+as
             # Other.
             'com' => {'pos' => 'adp', 'adpostype' => 'prep'}, # with
             'não' => {'pos' => 'part', 'negativeness' => 'neg'},
@@ -862,7 +865,7 @@ sub tag_nodes
         my $node = $nodes->[$i];
         my $form = lc($node->form());
         # Current tag of the node is the tag of the multi-word expression. It can help us in resolving the homonymous Portuguese "a".
-        my $current_tag = $node->tag();
+        my $current_tag = $node->tag() // '';
         if($language eq 'pt' && $form eq 'a' && $current_tag eq 'ADP')
         {
             if($i==0 || $i==$#{$nodes})
