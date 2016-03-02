@@ -925,7 +925,6 @@ sub tag_nodes
     my $adp = "a|amb|ante|con|d${ap}|de|des|em|en|entre|hasta|in|para|pels?|per|por|sem|sin|sob|sobre";
     my $sconj = 'como|que|si';
     my $conj = 'e|i|ni|o|ou|sino|sinó|y';
-    my $part = 'não|no';
     # In addition a few open-class words that appear in multi-word prepositions.
     my $adj = 'baix|bell|bons|certa|cierto|debido|devido|especial|gran|grande|igual|junt|junto|larga|libre|limpio|maior|mala|mesmo|mismo|muitas|nou|nuevo|otro|outro|poca|primeiro|próximo|qualquer|rara|segundo';
     my $adv = 'abaixo|acerca|acima|además|agora|ahí|ahora|aí|além|ali|alrededor|amén|antes|aparte|apesar|aquando|aqui|aquí|asi|así|bien|cerca|cómo|cuando|darrere|debaixo|debajo|delante|dentro|después|detrás|diante|encima|enfront|enllà|enlloc|enmig|entonces|entorn|ja|já|juntament|lejos|longe|luego|mais|más|menos|menys|més|mucho|muchísimo|només|onde|poco|poquito|pouco|prop|quando|quant|quanto|sempre|siempre|tard|tarde|ya';
@@ -972,11 +971,6 @@ sub tag_nodes
             $node->set_tag('CONJ');
             $node->iset()->set_hash({'pos' => 'conj', 'conjtype' => 'coor'});
         }
-        elsif($form =~ m/^($part)$/i)
-        {
-            $node->set_tag('PART');
-            $node->iset()->set_hash({'pos' => 'part', 'negativeness' => 'neg'});
-        }
         elsif($form =~ m/^($adj)$/i)
         {
             $node->set_tag('ADJ');
@@ -1000,7 +994,7 @@ sub tag_nodes
         elsif($form =~ m/^\pP+$/)
         {
             $node->set_tag('PUNCT');
-            $node->iset()->add('pos' => 'punc');
+            $node->iset()->set_hash('pos' => 'punc');
         }
         else
         {
