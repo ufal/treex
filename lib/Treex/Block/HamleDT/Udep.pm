@@ -658,7 +658,38 @@ sub split_tokens_on_underscore
                         $left_neighbor = $subnodes[$i];
                     }
                 }
-                ###!!! We want to solve occasional coordination: Ministerio de Agricultura , Pesca y Alimentación
+                # Solve occasional coordination: Ministerio de Agricultura , Pesca y Alimentación
+                for(my $i = $#subnodes; $i > 1; $i--)
+                {
+                    if($subnodes[$i-1]->is_coordinator())
+                    {
+                        # $subnodes[$i-2] might be the first conjunct. But if there is a comma and another cluster, look further.
+                        my $j = $i-2;
+                        while($j > 1 && $subnodes[$j-1]->form() eq ',')
+                        {
+                            $j -= 2;
+                        }
+                        # Now $subnodes[$j] is the first conjunct.
+                        for(my $k = $j+1; $k <= $i; $k++)
+                        {
+                            $subnodes[$k]->set_parent($subnodes[$j]);
+                            if($subnodes[$k]->form() eq ',')
+                            {
+                                $subnodes[$k]->set_deprel('punct');
+                            }
+                            elsif($subnodes[$k]->is_coordinator())
+                            {
+                                $subnodes[$k]->set_deprel('cc');
+                            }
+                            else
+                            {
+                                $subnodes[$k]->set_deprel('conj');
+                            }
+                        }
+                        splice(@subnodes, $j+1, $i-$j);
+                        $i = $j+1;
+                    }
+                }
                 ###!!! The 'name' relations should not bypass prepositions.
                 ###!!! Nouns with prepositions should be attached to the head of the prevous cluster as 'nmod', not 'name'.
             }
