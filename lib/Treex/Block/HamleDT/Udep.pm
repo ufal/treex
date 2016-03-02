@@ -6,8 +6,8 @@ use Treex::Core::Common;
 use Treex::Tool::PhraseBuilder::UD;
 extends 'Treex::Core::Block';
 
-has 'last_file_stem' => ( is => 'rw', isa => 'Str', default => '' );
-has 'sent_in_file'   => ( is => 'rw', isa => 'Int', default => 0 );
+has 'last_loaded_from' => ( is => 'rw', isa => 'Str', default => '' );
+has 'sent_in_file'     => ( is => 'rw', isa => 'Int', default => 0 );
 
 
 
@@ -23,17 +23,20 @@ sub process_zone
     # (In any case, Write::CoNLLU will print the sentence id. But this additional
     # information is also very useful for debugging, as it ensures a user can find the sentence in Tred.)
     my $bundle = $zone->get_bundle();
-    my $file_stem = $bundle->get_document()->file_stem();
-    if($file_stem eq $self->last_file_stem())
+    my $loaded_from = $bundle->get_document()->loaded_from(); # the full path to the input file
+    my $file_stem = $bundle->get_document()->file_stem(); # this will be used in the comment
+    if($loaded_from eq $self->last_loaded_from())
     {
         $self->set_sent_in_file($self->sent_in_file() + 1);
     }
     else
     {
-        $self->set_last_file_stem($file_stem);
+        $self->set_last_loaded_from($loaded_from);
         $self->set_sent_in_file(1);
     }
     my $sent_in_file = $self->sent_in_file();
+    ###!!! Sanity check; the issue should be solved by now.
+    log_fatal("More than 100 sentences in a file.") if($sent_in_file > 100);
     my $comment = "orig_file_sentence $file_stem\#$sent_in_file";
     my @comments;
     if(defined($bundle->wild()->{comment}))
@@ -552,9 +555,21 @@ sub split_tokens_on_underscore
         my $node = $nodes[$i];
         my $form = $node->form();
         ###!!! Skip multi-word verbs (light verb constructions) for the moment.
+        ###!!! (This will also skip multi-word auxiliary verbs, which are rather suspicious and should probably be treated neither as MWEs, nor auxiliaries.)
         if(defined($form) && $form =~ m/._./ && !$node->is_verb())
         {
-            my @words = split(/_/, $node->form());
+            # Preserve the original multi-word expression as a MISC attribute, otherwise we would loose the information.
+            my $mwe = $node->form();
+            $mwe =~ s/&/&amp;/g;
+            $mwe =~ s/\|/&verbar;/g;
+            my $mwepos = $node->iset()->get_upos();
+            my $wild = $node->wild();
+            my @misc;
+            @misc = split(/\|/, $wild->{misc}) if(exists($wild->{misc}) && defined($wild->{misc}));
+            push(@misc, "MWE=$mwe");
+            push(@misc, "MWEPOS=$mwepos");
+            $wild->{misc} = join('|', @misc);
+            my @words = split(/_/, $mwe);
             my $n = scalar(@words);
             # Percentage.
             if($form =~ m/^[^_]+_(per_cent|por_ciento|%)$/i)
@@ -620,6 +635,29 @@ sub split_tokens_on_underscore
                 my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'name');
                 $self->tag_nodes(\@subnodes, {'pos' => 'noun', 'nountype' => 'prop'});
                 @subnodes = $self->attach_left_function_words(@subnodes);
+                # Connect clusters of content words. Treat them all as PROPN, albeit some of them are actually adjectives
+                # (Aeropuertos Españoles y Navegación Aérea).
+                my $left_neighbor =$subnodes[0];
+                for(my $i = 1; $i <= $#subnodes; $i++)
+                {
+                    # If there are no intervening nodes between two proper nouns, connect them.
+                    if($subnodes[$i-1]->is_proper_noun() &&
+                       ($subnodes[$i]->is_proper_noun() || $subnodes[$i]->is_numeral()) &&
+                       ($subnodes[$i]->ord() == $subnodes[$i-1]->ord() + 1 || $left_neighbor->parent() == $subnodes[$i-1]))
+                    {
+                        $subnodes[$i]->set_parent($subnodes[$i-1]);
+                        if($subnodes[$i]->is_numeral())
+                        {
+                            $subnodes[$i]->set_deprel('nummod');
+                        }
+                        $left_neighbor = $subnodes[$i];
+                        splice(@subnodes, $i--, 1);
+                    }
+                    else
+                    {
+                        $left_neighbor = $subnodes[$i];
+                    }
+                }
                 ###!!! We want to solve occasional coordination: Ministerio de Agricultura , Pesca y Alimentación
                 ###!!! The 'name' relations should not bypass prepositions.
                 ###!!! Nouns with prepositions should be attached to the head of the prevous cluster as 'nmod', not 'name'.
@@ -853,7 +891,7 @@ sub tag_nodes
         }
     );
     # Note that "a" in Portuguese can be either ADP or DET. Within a multi-word preposition we will only consider DET if it is neither the first nor the last word of the expression.
-    my $adp = 'a|às?|als?|amb|ante|aos?|con|d${ap}|das?|de|dels?|des|dos?|em|en|entre|hasta|in|nas?|nos?|para|pelas?|pelos?|pels?|per|por|sem|sin|sob|sobre';
+    my $adp = "a|amb|ante|con|d${ap}|de|des|em|en|entre|hasta|in|para|pels?|per|por|sem|sin|sob|sobre";
     my $sconj = 'como|que|si';
     my $conj = 'e|i|ni|o|ou|sino|sinó|y';
     my $part = 'não|no';
@@ -1301,7 +1339,7 @@ sub check_determiners
         my $iset = $node->iset();
         if($iset->upos() eq 'DET')
         {
-            if($node->deprel() !~ m/^det(:numgov|:nummod)?$/)
+            if($node->deprel() !~ m/^(det(:numgov|:nummod)?|mwe)$/)
             {
                 log_warn($npform.' is tagged DET but is not attached as det but as '.$node->deprel());
             }
