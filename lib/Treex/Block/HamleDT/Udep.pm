@@ -994,7 +994,7 @@ sub tag_nodes
         elsif($form =~ m/^\pP+$/)
         {
             $node->set_tag('PUNCT');
-            $node->iset()->set_hash('pos' => 'punc');
+            $node->iset()->set_hash({'pos' => 'punc'});
         }
         else
         {
