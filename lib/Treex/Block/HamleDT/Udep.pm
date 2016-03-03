@@ -569,6 +569,11 @@ sub split_tokens_on_underscore
             push(@misc, "MWE=$mwe");
             push(@misc, "MWEPOS=$mwepos");
             $wild->{misc} = join('|', @misc);
+            # Remember the attachment of the MWE. It is possible that the first node will not be the head and we will have to attach the new head somewhere.
+            my $mwe_parent = $node->parent();
+            my $mwe_is_member = $node->is_member();
+            my $mwe_deprel = $node->deprel();
+            # Split the multi-word expression.
             my @words = split(/_/, $mwe);
             my $n = scalar(@words);
             # Percentage.
@@ -632,8 +637,23 @@ sub split_tokens_on_underscore
             # function words such as "de". These are language-specific.
             elsif($node->is_proper_noun())
             {
+                # This is currently the only type of MWE where a non-first node may become the head (in case of coordination).
+                # Thus we have to temporarily reset the is_member flag (and later carry it over to the new head).
+                ###!!!$node->set_is_member(undef);
                 my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'name');
                 $self->tag_nodes(\@subnodes, {'pos' => 'noun', 'nountype' => 'prop'});
+                # Change the 'name' relation of punctuation and numbers. (Do not touch the head node!)
+                for(my $i = 1; $i<=$#subnodes; $i++)
+                {
+                    if($subnodes[$i]->is_numeral())
+                    {
+                        $subnodes[$i]->set_deprel('nummod');
+                    }
+                    elsif($subnodes[$i]->is_punctuation())
+                    {
+                        $subnodes[$i]->set_deprel('punct');
+                    }
+                }
                 @subnodes = $self->attach_left_function_words(@subnodes);
                 # Connect clusters of content words. Treat them all as PROPN, albeit some of them are actually adjectives
                 # (Aeropuertos Españoles y Navegación Aérea).
@@ -646,10 +666,6 @@ sub split_tokens_on_underscore
                        ($subnodes[$i]->ord() == $subnodes[$i-1]->ord() + 1 || $left_neighbor->parent() == $subnodes[$i-1]))
                     {
                         $subnodes[$i]->set_parent($subnodes[$i-1]);
-                        if($subnodes[$i]->is_numeral())
-                        {
-                            $subnodes[$i]->set_deprel('nummod');
-                        }
                         $left_neighbor = $subnodes[$i];
                         splice(@subnodes, $i--, 1);
                     }
@@ -659,39 +675,61 @@ sub split_tokens_on_underscore
                     }
                 }
                 # Solve occasional coordination: Ministerio de Agricultura , Pesca y Alimentación
-                for(my $i = $#subnodes; $i > 1; $i--)
+                # This function is called before trees have been transformed from Prague to UD, so we must construct a Prague coordination here.piopi
+                if(0)
                 {
-                    if($subnodes[$i-1]->is_coordinator())
+                    for(my $i = $#subnodes; $i > 1; $i--)
                     {
-                        # $subnodes[$i-2] might be the first conjunct. But if there is a comma and another cluster, look further.
-                        my $j = $i-2;
-                        while($j > 1 && $subnodes[$j-1]->form() eq ',')
+                        if($subnodes[$i-1]->is_coordinator())
                         {
-                            $j -= 2;
+                            # Right now the conjunction probably depends on one of the conjuncts.
+                            # If this is the case, reattach it to its grandparent so we can attach the conjunct to the conjunction without creating a cycle.
+                            my $coord = $subnodes[$i-1];
+                            $coord->set_deprel('cc:coord');
+                            if($coord->is_descendant_of($subnodes[$i-2]))
+                            {
+                                $coord->set_parent($subnodes[$i-2]->parent());
+                            }
+                            $subnodes[$i]->set_parent($coord);
+                            $subnodes[$i]->set_is_member(1);
+                            $subnodes[$i-2]->set_parent($coord);
+                            $subnodes[$i-2]->set_is_member(1);
+                            # $subnodes[$i-2] might be the first conjunct. But if there is a comma and another cluster, look further.
+                            my $j = $i-2;
+                            while($j > 1 && $subnodes[$j-1]->form() eq ',')
+                            {
+                                if($coord->is_descendant_of($subnodes[$j-2]))
+                                {
+                                    $coord->set_parent($subnodes[$j-2]->parent());
+                                }
+                                $subnodes[$j-1]->set_parent($coord);
+                                $subnodes[$j-1]->set_deprel('punct');
+                                $subnodes[$j-1]->set_is_member(undef);
+                                $subnodes[$j-2]->set_parent($coord);
+                                $subnodes[$j-2]->set_deprel('name');
+                                $subnodes[$j-2]->set_is_member(1);
+                                $j -= 2;
+                            }
+                            splice(@subnodes, $j, $i-$j+1, $coord);
+                            $i = $j+1;
                         }
-                        # Now $subnodes[$j] is the first conjunct.
-                        for(my $k = $j+1; $k <= $i; $k++)
-                        {
-                            $subnodes[$k]->set_parent($subnodes[$j]);
-                            if($subnodes[$k]->form() eq ',')
-                            {
-                                $subnodes[$k]->set_deprel('punct');
-                            }
-                            elsif($subnodes[$k]->is_coordinator())
-                            {
-                                $subnodes[$k]->set_deprel('cc');
-                            }
-                            else
-                            {
-                                $subnodes[$k]->set_deprel('conj');
-                            }
-                        }
-                        splice(@subnodes, $j+1, $i-$j);
-                        $i = $j+1;
                     }
-                }
-                ###!!! The 'name' relations should not bypass prepositions.
-                ###!!! Nouns with prepositions should be attached to the head of the prevous cluster as 'nmod', not 'name'.
+                    ###!!! The 'name' relations should not bypass prepositions.
+                    ###!!! Nouns with prepositions should be attached to the head of the prevous cluster as 'nmod', not 'name'.
+                    # Now the first subnode is the head even if it is not the original node (Prague coordination).
+                    # The parent is set correctly but the is_member flag is not; fix it.
+                    $subnodes[0]->set_is_member($mwe_is_member);
+                    if($subnodes[0]->deprel() eq 'cc:coord')
+                    {
+                        foreach my $child ($subnodes[0]->children())
+                        {
+                            if($child->is_member())
+                            {
+                                $child->set_deprel($mwe_deprel);
+                            }
+                        }
+                    }
+                } ###!!! if(0)
             }
         }
     }
@@ -984,7 +1022,7 @@ sub tag_nodes
         elsif($form =~ m/^[-+.,:]*[0-9]+[-+.,:0-9]*$/)
         {
             $node->set_tag('NUM');
-            $node->iset()->add('pos' => 'num', 'numtype' => 'card', 'numform' => 'digit');
+            $node->iset()->set_hash({'pos' => 'num', 'numtype' => 'card', 'numform' => 'digit'});
         }
         elsif($form eq '%')
         {
