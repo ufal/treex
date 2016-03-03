@@ -28,6 +28,28 @@ sub _get_predictions {
     return;
 }
 
+# we may want to predict whole sentence at once
+sub get_predictions_array {
+	my ($self, $instances) = @_;
+
+	my $predictions_array = $self->_get_predictions_array($instances);
+	return $predictions_array if defined $predictions_array;
+
+	foreach my $instance_info ( @$instances ) {
+		push @$predictions_array, $self->get_predictions($instance_info);
+	}
+	
+	return $predictions_array;
+}
+
+sub _get_predictions_array {
+	my ($self, $instances) = @_;
+
+	log_debug "'get_predictions_array' method not implemented, generating predictions one by one.";
+
+	return undef;
+}
+
 sub get_best_prediction {
     my ($self, $instance_info) = @_;
 

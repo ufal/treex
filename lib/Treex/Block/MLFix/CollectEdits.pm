@@ -1,4 +1,5 @@
 package Treex::Block::MLFix::CollectEdits;
+
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';
@@ -82,15 +83,19 @@ sub process_anode {
     my ($node_ref) = $node->get_aligned_nodes_of_type($self->ref_alignment_type);
 	my ($node_src) = $node->get_aligned_nodes_of_type($self->src_alignment_type);
 
+	my ($parent) = $node->get_eparents( {or_topological => 1} );
 	my ($parent_src) = $node_src->get_eparents( {or_topological => 1} )
 		if defined $node_src;
-	my $parent = undef;
-	if (defined $parent_src) {
-		my ($parent_rf) = $parent_src->get_undirected_aligned_nodes({
-			rel_types => [ $self->src_alignment_type ]
-		});
-		($parent) = @{ $parent_rf } if defined $parent_src;
-	}
+
+#	my ($parent_src) = $node_src->get_eparents( {or_topological => 1} )
+#		if defined $node_src;
+#	my $parent = undef;
+#	if (defined $parent_src) {
+#		my ($parent_rf) = $parent_src->get_undirected_aligned_nodes({
+#			rel_types => [ $self->src_alignment_type ]
+#		});
+#		($parent) = @{ $parent_rf } if defined $parent_src;
+#	}
 
     # collect only those edits that correspond to things MLfix can fix
     # (assumes we don't change lemmas and don't rehang nodes)
@@ -106,20 +111,18 @@ sub process_anode {
         my $info = { "NULL" => "" };
 		# TODO: we can't access parents/children of the src, ref zones atm.
 		my $names = [ "node" ];
-		my $no_granpa = [ "node", "parent", "precchild", "follchild", "precsibling", "follsibling" ];
+		my $no_grandpa = [ "node", "parent", "precchild", "follchild", "precsibling", "follsibling" ];
 
         # smtout (old), ref (new) and source (src) nodes info
-        $self->node_info_getter->add_info($info, 'old', $node, $names);
+        $self->node_info_getter->add_info($info, 'old', $node);
         $self->node_info_getter->add_info($info, 'new', $node_ref, $names);
 		$self->node_info_getter->add_info($info, 'src', $node_src);
         
 		# parents (smtout - parentold, source - parentsrc)
-		$self->node_info_getter->add_info($info, 'parentold', $parent, $names) if defined $parent;
-        $self->node_info_getter->add_info($info, 'parentsrc', $parent_src, $no_granpa) if defined $parent_src;
+		$self->node_info_getter->add_info($info, 'parentold', $parent, $no_grandpa) if defined $parent;
+        $self->node_info_getter->add_info($info, 'parentsrc', $parent_src, $no_grandpa) if defined $parent_src;
 
-        my @fields = map { exists $info->{$_} ? $info->{$_} : $info->{"NULL"}  } @{$self->fields_ar};
-		log_info(scalar @{$self->fields_ar});
-		log_info($self->fields_ar->[0]);
+        my @fields = map { defined $info->{$_} ? $info->{$_} : $info->{"NULL"}  } @{$self->fields_ar};
         print { $self->_file_handle() } (join "\t", @fields)."\n";
     }
 }

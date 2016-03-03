@@ -26,6 +26,24 @@ sub _load_models {
     return \%models;
 }
 
+sub _get_predictions {
+    my ($self, $instances) = @_;
+
+    my @model_predictions_array = map { {} } @$instances;
+
+	my @model_names = keys %{$self->_models};
+	foreach my $model_name (@model_names) {
+		my $model = $self->_models->{$model_name};
+		my $current_predictions_array = $model->get_predictions_array($instances);
+		my $iterator = List::MoreUtils::each_arrayref(\@model_predictions_array, $current_predictions_array);
+		while ( my ($model_predictions, $current_predictions) = $iterator->() ) {
+			$model_predictions->{$model_name} = $current_predictions;
+		}
+	}
+
+    return \@model_predictions_array;
+}
+
 sub _predict_new_tags {
 	my ($self, $predictions) = @_;
 	my %tags = ();
