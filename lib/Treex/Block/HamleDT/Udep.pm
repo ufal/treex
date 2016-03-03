@@ -554,14 +554,14 @@ sub split_tokens_on_underscore
     {
         my $node = $nodes[$i];
         my $form = $node->form();
-        ###!!! Skip multi-word verbs (light verb constructions) for the moment.
-        ###!!! (This will also skip multi-word auxiliary verbs, which are rather suspicious and should probably be treated neither as MWEs, nor auxiliaries.)
-        if(defined($form) && $form =~ m/._./ && !$node->is_verb())
+        if(defined($form) && $form =~ m/._./)
         {
             # Preserve the original multi-word expression as a MISC attribute, otherwise we would loose the information.
             my $mwe = $node->form();
             $mwe =~ s/&/&amp;/g;
             $mwe =~ s/\|/&verbar;/g;
+            # Two expressions in Portuguese contain a typo: two consecutive underscores.
+            $mwe =~ s/_+/_/g;
             my $mwepos = $node->iset()->get_upos();
             my $wild = $node->wild();
             my @misc;
@@ -731,6 +731,14 @@ sub split_tokens_on_underscore
                     }
                 } ###!!! if(0)
             }
+            else # all other multi-word expressions
+            {
+                # MW numerals such es "cuatro de cada diez".
+                # MW verbs are light-verb constructios such es "tener en cuenta".
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'compound');
+                my $iset_hash = $node->iset()->get_hash();
+                $self->tag_nodes(\@subnodes, $iset_hash);
+            }
         }
     }
 }
@@ -842,10 +850,30 @@ sub tag_nodes
             'pela'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # por+a
             'pelas' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # por+as
             # Possessive determiners.
-            'su'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'number' => 'sing'},
-            'sus' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'number' => 'plur'},
-            'seu' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'gender' => 'masc', 'number' => 'sing'},
-            'sua' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'gender' => 'fem',  'number' => 'sing'},
+            'su'    => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'number' => 'sing'}, # es
+            'sus'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'number' => 'plur'}, # es
+            'suyo'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'masc', 'number' => 'sing'}, # es
+            'suya'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'sing'}, # es
+            'suyos' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'masc', 'number' => 'plur'}, # es
+            'suyas' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'plur'}, # es
+            'seu'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'masc', 'number' => 'sing'}, # ca, pt
+            'seva'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'sing'}, # ca
+            'seus'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'masc', 'number' => 'plur'}, # ca
+            'seves' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'plur'}, # ca
+            'sua'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'sing'}, # pt
+            'mío'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'sing', 'possnumber' => 'sing'}, # es
+            'mía'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'sing', 'possnumber' => 'sing'}, # es
+            'míos'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'plur', 'possnumber' => 'sing'}, # es
+            'mías'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'plur', 'possnumber' => 'sing'}, # es
+            'meu'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'sing', 'possnumber' => 'sing'}, # ca, pt
+            'meus'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'plur', 'possnumber' => 'sing'}, # ca
+            'nuestro'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'sing', 'possnumber' => 'plur'}, # es
+            'nuestra'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'sing', 'possnumber' => 'plur'}, # es
+            'nuestros' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'plur', 'possnumber' => 'plur'}, # es
+            'nuestras' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'plur', 'possnumber' => 'plur'}, # es
+            'nostre'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'sing', 'possnumber' => 'plur'}, # ca
+            'nostra'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'sing', 'possnumber' => 'plur'}, # ca
+            'nostres'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'number' => 'plur', 'possnumber' => 'plur'}, # ca
             # Other determiners.
             'aquel' => {'pos' => 'adj', 'prontype' => 'dem', 'gender' => 'masc', 'number' => 'sing'},
             # Numerals.
@@ -1554,8 +1582,12 @@ which will become our new default central annotation style.
 
 =back
 
-=cut
+=head1 AUTHORS
 
-# Copyright 2014, 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
+Daniel Zeman <zeman@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2014-2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
