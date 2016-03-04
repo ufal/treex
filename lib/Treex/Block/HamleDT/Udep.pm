@@ -675,60 +675,57 @@ sub split_tokens_on_underscore
                 }
                 # Solve occasional coordination: Ministerio de Agricultura , Pesca y Alimentación
                 # This function is called before trees have been transformed from Prague to UD, so we must construct a Prague coordination here.piopi
-                if(0)
+                for(my $i = $#subnodes; $i > 1; $i--)
                 {
-                    for(my $i = $#subnodes; $i > 1; $i--)
+                    if($subnodes[$i-1]->is_coordinator())
                     {
-                        if($subnodes[$i-1]->is_coordinator())
+                        # Right now the conjunction probably depends on one of the conjuncts.
+                        # If this is the case, reattach it to its grandparent so we can attach the conjunct to the conjunction without creating a cycle.
+                        my $coord = $subnodes[$i-1];
+                        $coord->set_deprel('coord');
+                        if($coord->is_descendant_of($subnodes[$i-2]))
                         {
-                            # Right now the conjunction probably depends on one of the conjuncts.
-                            # If this is the case, reattach it to its grandparent so we can attach the conjunct to the conjunction without creating a cycle.
-                            my $coord = $subnodes[$i-1];
-                            $coord->set_deprel('coord');
-                            if($coord->is_descendant_of($subnodes[$i-2]))
+                            $coord->set_parent($subnodes[$i-2]->parent());
+                        }
+                        $subnodes[$i]->set_parent($coord);
+                        $subnodes[$i]->set_is_member(1);
+                        $subnodes[$i-2]->set_parent($coord);
+                        $subnodes[$i-2]->set_is_member(1);
+                        # $subnodes[$i-2] might be the first conjunct. But if there is a comma and another cluster, look further.
+                        my $j = $i-2;
+                        while($j > 1 && $subnodes[$j-1]->form() eq ',')
+                        {
+                            if($coord->is_descendant_of($subnodes[$j-2]))
                             {
-                                $coord->set_parent($subnodes[$i-2]->parent());
+                                $coord->set_parent($subnodes[$j-2]->parent());
                             }
-                            $subnodes[$i]->set_parent($coord);
-                            $subnodes[$i]->set_is_member(1);
-                            $subnodes[$i-2]->set_parent($coord);
-                            $subnodes[$i-2]->set_is_member(1);
-                            # $subnodes[$i-2] might be the first conjunct. But if there is a comma and another cluster, look further.
-                            my $j = $i-2;
-                            while($j > 1 && $subnodes[$j-1]->form() eq ',')
-                            {
-                                if($coord->is_descendant_of($subnodes[$j-2]))
-                                {
-                                    $coord->set_parent($subnodes[$j-2]->parent());
-                                }
-                                $subnodes[$j-1]->set_parent($coord);
-                                $subnodes[$j-1]->set_deprel('punct');
-                                $subnodes[$j-1]->set_is_member(undef);
-                                $subnodes[$j-2]->set_parent($coord);
-                                $subnodes[$j-2]->set_deprel('name');
-                                $subnodes[$j-2]->set_is_member(1);
-                                $j -= 2;
-                            }
-                            splice(@subnodes, $j, $i-$j+1, $coord);
-                            $i = $j+1;
+                            $subnodes[$j-1]->set_parent($coord);
+                            $subnodes[$j-1]->set_deprel('punct');
+                            $subnodes[$j-1]->set_is_member(undef);
+                            $subnodes[$j-2]->set_parent($coord);
+                            $subnodes[$j-2]->set_deprel('name');
+                            $subnodes[$j-2]->set_is_member(1);
+                            $j -= 2;
+                        }
+                        splice(@subnodes, $j, $i-$j+1, $coord);
+                        $i = $j+1;
+                    }
+                }
+                ###!!! The 'name' relations should not bypass prepositions.
+                ###!!! Nouns with prepositions should be attached to the head of the prevous cluster as 'nmod', not 'name'.
+                # Now the first subnode is the head even if it is not the original node (Prague coordination).
+                # The parent is set correctly but the is_member flag is not; fix it.
+                $subnodes[0]->set_is_member($mwe_is_member);
+                if($subnodes[0]->deprel() eq 'cc:coord')
+                {
+                    foreach my $child ($subnodes[0]->children())
+                    {
+                        if($child->is_member())
+                        {
+                            $child->set_deprel($mwe_deprel);
                         }
                     }
-                    ###!!! The 'name' relations should not bypass prepositions.
-                    ###!!! Nouns with prepositions should be attached to the head of the prevous cluster as 'nmod', not 'name'.
-                    # Now the first subnode is the head even if it is not the original node (Prague coordination).
-                    # The parent is set correctly but the is_member flag is not; fix it.
-                    $subnodes[0]->set_is_member($mwe_is_member);
-                    if($subnodes[0]->deprel() eq 'cc:coord')
-                    {
-                        foreach my $child ($subnodes[0]->children())
-                        {
-                            if($child->is_member())
-                            {
-                                $child->set_deprel($mwe_deprel);
-                            }
-                        }
-                    }
-                } ###!!! if(0)
+                }
             }
             else # all other multi-word expressions
             {
