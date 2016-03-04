@@ -716,7 +716,7 @@ sub split_tokens_on_underscore
                 # Now the first subnode is the head even if it is not the original node (Prague coordination).
                 # The parent is set correctly but the is_member flag is not; fix it.
                 $subnodes[0]->set_is_member($mwe_is_member);
-                if($subnodes[0]->deprel() eq 'cc:coord')
+                if($subnodes[0]->deprel() eq 'coord')
                 {
                     foreach my $child ($subnodes[0]->children())
                     {
