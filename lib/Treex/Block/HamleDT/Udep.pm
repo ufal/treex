@@ -65,7 +65,7 @@ sub process_zone
     # below say how should the resulting dependency tree look like. The code
     # of the builder knows how the INPUT tree looks like (including the deprels
     # already converted from Prague to the UD set).
-    my $builder = new Treex::Tool::PhraseBuilder::UD
+    my $builder = new Treex::Tool::PhraseBuilder::PragueToUD
     (
         'prep_is_head'           => 0,
         'cop_is_head'            => 0,
@@ -213,7 +213,7 @@ sub convert_deprels
         {
             if($deprel eq 'Coord')
             {
-                $deprel = 'punct:coord';
+                $deprel = 'coord';
             }
             else
             {
@@ -221,11 +221,11 @@ sub convert_deprels
             }
         }
         # Coord marks the conjunction that heads a coordination.
-        # (Punctuation heading coordination has been processed earlier and temporarily labeled 'punct:coord'.)
+        # (Punctuation heading coordination has been processed earlier.)
         # Coordinations will be later restructured and the conjunction will be attached as 'cc'.
         elsif($deprel eq 'Coord')
         {
-            $deprel = 'cc:coord';
+            $deprel = 'coord';
         }
         # AuxP marks a preposition. There are two possibilities:
         # 1. It heads a prepositional phrase. The relation of the phrase to its parent is marked at the argument of the preposition.
@@ -234,13 +234,13 @@ sub convert_deprels
         # In the situation 2, the first word in the multi-word prepositon will become the head and all other parts will be attached to it as 'mwe'.
         elsif($deprel eq 'AuxP')
         {
-            $deprel = 'case:auxp';
+            $deprel = 'case';
         }
         # AuxC marks a subordinating conjunction that heads a subordinate clause.
         # It will be later restructured and the conjunction will be attached to the subordinate predicate as 'mark'.
         elsif($deprel eq 'AuxC')
         {
-            $deprel = 'mark:auxc';
+            $deprel = 'mark';
         }
         # Predicate: If the node is not the main predicate of the sentence and it has the Pred deprel,
         # then it is probably the main predicate of a parenthetical expression.
@@ -276,6 +276,13 @@ sub convert_deprels
             # If this is a verb form other than infinitive then it is a ccomp.
             ###!!! TODO: But if the infinitive is part of periphrastic future, then it is ccomp, not xcomp!
             $deprel = $node->is_verb() ? ($node->is_infinitive() ? 'xcomp' : 'ccomp') : 'dobj';
+        }
+        # Nominal predicate attached to a copula verb.
+        elsif($deprel eq 'Pnom')
+        {
+            # We will later transform the structure so that copula depends on the nominal predicate.
+            # The 'pnom' label will disappear and the inverted relation will be labeled 'cop'.
+            $deprel = 'pnom';
         }
         # Adverbial modifier: advmod, nmod, advcl
         # Note: UD also distinguishes the relation neg. In Czech, most negation is done using bound morphemes.
@@ -424,15 +431,7 @@ sub convert_deprels
         {
             if(lc($node->form()) eq 'jako')
             {
-                if(defined($parent->form()) && lc($parent->form()) eq 'když')
-                {
-                    # Since "když" is probably also mark:auxc, this will make "jako když" a multi-word conjunction.
-                    $deprel = 'mark:auxc';
-                }
-                else
-                {
-                    $deprel = 'mark';
-                }
+                $deprel = 'mark';
             }
             else
             {
@@ -685,7 +684,7 @@ sub split_tokens_on_underscore
                             # Right now the conjunction probably depends on one of the conjuncts.
                             # If this is the case, reattach it to its grandparent so we can attach the conjunct to the conjunction without creating a cycle.
                             my $coord = $subnodes[$i-1];
-                            $coord->set_deprel('cc:coord');
+                            $coord->set_deprel('coord');
                             if($coord->is_descendant_of($subnodes[$i-2]))
                             {
                                 $coord->set_parent($subnodes[$i-2]->parent());

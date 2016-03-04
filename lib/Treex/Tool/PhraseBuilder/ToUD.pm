@@ -25,44 +25,177 @@ sub _build_dialect
     # The second position is the label used in set_deprel(); not available for all ids.
     my %map =
     (
-        'apos'   => ['^apos$', 'apos'],   # head of paratactic apposition (punctuation or conjunction)
-        'appos'  => ['^appos$', 'appos'], # dependent member of hypotactic apposition
-        'auxg'   => ['^punct$', 'punct'], # punctuation other than comma
-        'auxk'   => ['^punct$', 'punct'], # sentence-terminating punctuation
-        'auxpc'  => ['^case|mark$'],      # adposition or subordinating conjunction
-        'auxp'   => ['^case$', 'case'],   # adposition
-        'auxc'   => ['^mark$', 'mark'],   # subordinating conjunction
-        'psarg'  => ['^(adp|sc)arg$'],  # argument of adposition or subordinating conjunction
-        'parg'   => ['^adparg$', 'adparg'], # argument of adposition
-        'sarg'   => ['^scarg$', 'scarg'], # argument of subordinating conjunction
-        'auxx'   => ['^punct$', 'punct'], # comma
-        'auxy'   => ['^cc$', 'cc'],       # additional coordinating conjunction or other function word
-        'auxyz'  => ['^aux[yz]$'],
-        'cc'     => ['^cc$', 'cc'],       # coordinating conjunction
-        'conj'   => ['^conj$', 'conj'],   # conjunct
-        'coord'  => ['^coord$'],          # head of coordination (conjunction or punctuation)
-        'mwe'    => ['^mwe$', 'mwe'],     # non-head word of a multi-word expression; PDT has only multi-word prepositions
-        'punct'  => ['^punct$', 'punct'],
-        'det'    => ['^det$', 'det'],       # determiner attached to noun
-        'detarg' => ['^detarg$', 'detarg'], # noun attached to determiner
-        'nummod' => ['^nummod$', 'nummod'], # numeral attached to counted noun
-        'numarg' => ['^numarg$', 'numarg'], # counted noun attached to numeral
-        'amod'   => ['^amod$', 'amod'],     # adjective attached to noun
-        'adjarg' => ['^adjarg$', 'adjarg'], # noun attached to adjective that modifies it
-        'genmod' => ['^nmod$', 'nmod'],     # genitive or possessive noun attached to the modified (possessed) noun
-        'genarg' => ['^genarg$', 'genarg'], # possessed (modified) noun attached to possessive (genitive) noun that modifies it
-        'pnom'   => ['^pnom$', 'pnom'],     # nominal predicate (predicative adjective or noun) attached to a copula
-        'cop'    => ['^cop$', 'cop'],       # copula attached to a nominal predicate
-        'subj'   => ['subj'],
-        'nsubj'  => ['^nsubj$', 'nsubj'],
-        'nmod'   => ['^nmod$', 'nmod'],
-        'advmod' => ['^advmod$', 'advmod'],
-        'name'   => ['^name$', 'name'],
-        'auxarg' => ['^auxarg$', 'auxarg'], # content verb (participle) attached to an auxiliary verb (finite)
-        'auxv'   => ['^aux$', 'aux'],       # auxiliary verb attached to a main (content) verb
-        'xcomp'  => ['^xcomp$', 'xcomp'],   # controlled verb (usually non-finite) attached to a controlling verb
+        'apos'      => ['^apos$', 'apos'],   # head of paratactic apposition (punctuation or conjunction)
+        'appos'     => ['^appos$', 'appos'], # dependent member of hypotactic apposition
+        'auxpc'     => ['^case|mark$'],      # adposition or subordinating conjunction
+        'auxp'      => ['^case$', 'case'],   # adposition
+        'auxc'      => ['^mark$', 'mark'],   # subordinating conjunction
+        'psarg'     => ['^(adp|sc)arg$'],    # argument of adposition or subordinating conjunction
+        'parg'      => ['^adparg$', 'adparg'], # argument of adposition
+        'sarg'      => ['^scarg$', 'scarg'], # argument of subordinating conjunction
+        'punct'     => ['^punct$', 'punct'], # punctuation
+        'auxx'      => ['^punct$', 'punct'], # comma
+        'auxg'      => ['^punct$', 'punct'], # punctuation other than comma
+        'auxk'      => ['^punct$', 'punct'], # sentence-terminating punctuation
+        'auxy'      => ['^cc$', 'cc'],       # additional coordinating conjunction or other function word
+        'auxyz'     => ['^(advmod:emph|cc)$'],
+        'cc'        => ['^cc$', 'cc'],       # coordinating conjunction
+        'conj'      => ['^conj$', 'conj'],   # conjunct
+        'coord'     => ['^coord$', 'coord'], # head of coordination (conjunction or punctuation)
+        'mwe'       => ['^mwe$', 'mwe'],     # non-head word of a multi-word expression; PDT has only multi-word prepositions
+        'compound'  => ['^compound$', 'compound'], # non-head word of a compound
+        'det'       => ['^det$', 'det'],       # determiner attached to noun
+        'detarg'    => ['^detarg$', 'detarg'], # noun attached to determiner
+        'nummod'    => ['^nummod$', 'nummod'], # numeral attached to counted noun
+        'numarg'    => ['^numarg$', 'numarg'], # counted noun attached to numeral
+        'amod'      => ['^amod$', 'amod'],     # adjective attached to noun
+        'adjarg'    => ['^adjarg$', 'adjarg'], # noun attached to adjective that modifies it
+        'genmod'    => ['^nmod$', 'nmod'],     # genitive or possessive noun attached to the modified (possessed) noun
+        'genarg'    => ['^genarg$', 'genarg'], # possessed (modified) noun attached to possessive (genitive) noun that modifies it
+        'pnom'      => ['^pnom$', 'pnom'],     # nominal predicate (predicative adjective or noun) attached to a copula
+        'cop'       => ['^cop$', 'cop'],       # copula attached to a nominal predicate
+        'subj'      => ['subj'],               # subject (nominal or clausal, active or passive)
+        'nsubj'     => ['^nsubj$', 'nsubj'],   # nominal subject in active clause
+        'nmod'      => ['^nmod$', 'nmod'],     # nominal modifier (attribute or adjunct)
+        'advmod'    => ['^advmod$', 'advmod'], # adverbial modifier (realized as adverb, not as a noun phrase)
+        'name'      => ['^name$', 'name'],     # non-head part of a multi-word named entity without internal syntactic structure
+        'auxarg'    => ['^auxarg$', 'auxarg'], # content verb (participle) attached to an auxiliary verb (finite)
+        'auxv'      => ['^aux$', 'aux'],       # auxiliary verb attached to a main (content) verb
+        'xcomp'     => ['^xcomp$', 'xcomp'],   # controlled verb (usually non-finite) attached to a controlling verb
+        'ccomp'     => ['^ccomp$', 'ccomp'],   # complement clause that is not xcomp (note that non-core subordinate clauses are acl or advcl)
+        'cxcomp'    => ['^[cx]comp$'],
+        'dobj'      => ['^dobj$', 'dobj'],     # direct nominal object
+        'iobj'      => ['^iobj$', 'iobj'],     # indirect nominal object
+        'parataxis' => ['^parataxis$', 'parataxis'], # loosely attached clause
+        'root'      => ['^root$', 'root'],     # the top node attached to the artificial root
     );
     return \%map;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Examines a nonterminal phrase in the Prague style (with analytical functions
+# converted to dependency relation labels based on Universal Dependencies).
+# If it recognizes a copula construction, transforms the general NTerm to PP.
+#------------------------------------------------------------------------------
+sub detect_prague_copula
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    # If this is the Prague style then the copula (if any) must be the head.
+    my @pnom = grep {$self->is_deprel($_->deprel(), 'pnom')} ($phrase->dependents('ordered' => 1));
+    if(scalar(@pnom)>=1)
+    {
+        # Now it is clear that we have a nominal predicate with copula.
+        # If this is currently an ordinary NTerm phrase, its head is the copula.
+        # However, it is also possible that we have a special phrase such as coordination.
+        # Then we cannot just take the head. The whole core of the phrase is the copula.
+        # (For coordinate copulas, consider "he is and always was the best goalkeeper".)
+        # Therefore we will remove the dependents and keep the core phrase as the copula.
+        # For ordinary NTerm phrases this will add one unnecessary (but harmless) layer around the head.
+        my $copula = $phrase;
+        # Note that the nominal predicate can also be seen as the argument of the copula,
+        # and we will denote it as $argument here, which is the terminology inside Phrase::PP.
+        my $argument;
+        # There should not be more than one nominal predicate but it is not guaranteed.
+        # There are about 40 sentences even in PDT; all of them are annotation errors.
+        # We will try to identify the most probable predicate; but note that these
+        # heuristics may be language-dependent.
+        if(scalar(@pnom)==1)
+        {
+            $argument = shift(@pnom);
+        }
+        else
+        {
+            # Look for an adjective in nominative (or without case marking).
+            my @selection = grep {$_->node()->is_adjective() && $_->node()->iset()->case() =~ m/^(nom)?$/} (@pnom);
+            if(@selection)
+            {
+                $argument = shift(@selection);
+            }
+            else
+            {
+                # Look for a participle.
+                @selection = grep {$_->node()->is_participle()} (@pnom);
+                if(@selection)
+                {
+                    $argument = shift(@selection);
+                }
+                else
+                {
+                    # Look for a noun.
+                    # (Specific for Czech: the noun will usually be in nominative or instrumental.
+                    # But it can also be in genitive (transformed phrases with counted nouns).)
+                    # We will not check the case here as the benefit is negligible.
+                    # However, we will take the last noun, not the first one. A frequent annotation
+                    # error is that the subject is labeled as Pnom, and the configuration where
+                    # subject precedes predicate is more likely.
+                    @selection = grep {$_->node()->is_noun()} (@pnom);
+                    if(@selection)
+                    {
+                        $argument = pop(@selection);
+                    }
+                    else
+                    {
+                        # No typical nominal predicates found. Take the last candidate.
+                        $argument = pop(@pnom);
+                    }
+                }
+            }
+            # The unselected candidates must receive a dependency relation label (at the moment they only have 'pnom').
+            my $subject_exists = any {$self->is_deprel($_->deprel(), 'subj')} ($phrase->dependents());
+            foreach my $x (@pnom)
+            {
+                unless($x == $argument)
+                {
+                    if($x->node()->is_noun() || $x->node()->is_adjective() || $x->node()->is_numeral() || $x->node()->is_participle())
+                    {
+                        if($subject_exists)
+                        {
+                            $self->set_deprel($x, 'nmod');
+                        }
+                        else
+                        {
+                            $self->set_deprel($x, 'nsubj');
+                        }
+                    }
+                    else
+                    {
+                        $self->set_deprel($x, 'advmod');
+                    }
+                }
+            }
+        }
+        my @dependents = grep {$_ != $argument} ($phrase->dependents());
+        my $parent = $phrase->parent();
+        my $deprel = $phrase->deprel();
+        my $member = $phrase->is_member();
+        $copula->set_parent(undef);
+        $argument->set_parent(undef);
+        # Copula is sometimes represented by a punctuation sign (dash, colon) instead of the verb "to be".
+        # Punctuation should not be attached as cop.
+        my $fun_deprel = $copula->node()->is_punctuation() ? 'punct' : 'cop';
+        $self->set_deprel($copula, $fun_deprel);
+        my $pp = new Treex::Core::Phrase::PP
+        (
+            'fun'           => $copula,
+            'arg'           => $argument,
+            'fun_is_head'   => 0,
+            'deprel_at_fun' => 0,
+            'core_deprel'   => 'cop',
+            'is_member'     => $member
+        );
+        $pp->set_deprel($deprel);
+        $pp->set_parent($parent);
+        foreach my $d (@dependents)
+        {
+            $d->set_parent($pp);
+        }
+        return $pp;
+    }
+    # Return the input phrase if no PP has been detected.
+    return $phrase;
 }
 
 

@@ -6,11 +6,6 @@ use namespace::autoclean;
 use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Log;
-use Treex::Core::Node;
-use Treex::Core::Phrase::Term;
-use Treex::Core::Phrase::NTerm;
-use Treex::Core::Phrase::PP;
-use Treex::Core::Phrase::Coordination;
 
 extends 'Treex::Core::Phrase::Builder';
 
@@ -25,6 +20,18 @@ has 'prep_is_head' =>
     documentation =>
         'Should preposition and subordinating conjunction head its phrase? '.
         'See Treex::Core::Phrase::PP, fun_is_head attribute.'
+);
+
+has 'mwe_is_head_first' =>
+(
+    is       => 'ro',
+    isa      => 'Bool',
+    required => 1,
+    default  => 1,
+    documentation =>
+        'Should the first token of a multi-word expression head the MWE? '.
+        'This is the rule for UD relations mwe and name. '.
+        'However, MW prepositions in Prague dependencies are head-last. '
 );
 
 has 'coordination_head_rule' =>
@@ -181,6 +188,8 @@ sub detect_prague_coordination
         }
         # Now it is clear that we have a coordination.
         # Create a new Coordination phrase and destroy the old input NTerm.
+        # Take the deprel of the whole coordination from the first conjunct. The 'coord' deprel was only a technical tag.
+        $phrase->set_deprel($conjuncts[0]->deprel());
         return $self->replace_nterm_by_coordination($phrase, \@conjuncts, \@coordinators, \@punctuation, \@sdependents, $cmin, $cmax);
     }
     # Return the input NTerm phrase if no Coordination has been detected.
@@ -881,7 +890,7 @@ sub detect_prague_pp
     # If this is the Prague style then the preposition (if any) must be the head.
     if($self->is_deprel($phrase->deprel(), 'auxpc'))
     {
-        # Remember whether the actual function word is 'auxp' (preposition) or 'auxc' (subordinating conjunction).
+        # Remember whether the actual function word is adposition ('AuxP' or 'case') or subordinating conjunction ('AuxC' or 'mark').
         # We will need the label later.
         my $fun_deprel = $phrase->deprel();
         my $c = $self->classify_prague_pp_subphrases($phrase);
@@ -907,7 +916,7 @@ sub detect_prague_pp
             # In UD, the leftmost node of the MWE is its head.
             ###!!! If we want to make it variable we should define multi-word expressions as another specific phrase type.
             my @mwe = sort {$a->node()->ord() <=> $b->node()->ord()} (@{$c->{mwe}}, $c->{fun});
-            my $head = pop(@mwe);
+            my $head = $self->mwe_is_head_first() ? shift(@mwe) : pop(@mwe);
             $head->set_parent(undef);
             $c->{fun} = new Treex::Core::Phrase::NTerm('head' => $head);
             $c->{fun}->set_deprel($fun_deprel);
@@ -963,7 +972,7 @@ sub classify_prague_pp_subphrases
             push(@mwauxp, $d);
         }
         # Punctuation should never represent an argument of a preposition (provided we have solved any coordinations on lower levels).
-        elsif($self->is_deprel($d->deprel(), 'punct'))
+        elsif($d->node()->is_punctuation())
         {
             push(@punc, $d);
         }
@@ -990,7 +999,7 @@ sub classify_prague_pp_subphrases
     my $preposition = $phrase;
     # If there are two or more argument candidates, we have to select the best one.
     # There may be more sophisticated approaches but let's just take the first one for the moment.
-    # Emphasizers (AuxZ) preceding the preposition should be attached to the argument
+    # Emphasizers (AuxZ or advmod:emph) preceding the preposition should be attached to the argument
     # rather than the preposition. However, occasionally they are attached to the preposition, as in [cs]:
     #   , přinejmenším pokud jde o platy
     #   , at-least if are-concerned about salaries
