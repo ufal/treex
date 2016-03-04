@@ -3,7 +3,7 @@ use utf8;
 use open ':utf8';
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::PhraseBuilder::UD;
+use Treex::Tool::PhraseBuilder::PragueToUD;
 extends 'Treex::Core::Block';
 
 has 'last_loaded_from' => ( is => 'rw', isa => 'Str', default => '' );
