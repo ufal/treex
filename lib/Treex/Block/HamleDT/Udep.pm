@@ -621,14 +621,6 @@ sub split_tokens_on_underscore
                 $self->tag_nodes(\@subnodes, {'pos' => 'noun', 'nountype' => 'com'});
                 @subnodes = $self->attach_left_function_words(@subnodes);
             }
-            # MW interjections: bendita sea (bless her), cómo no, qué caramba, qué mala suerte
-            elsif($node->is_interjection())
-            {
-                # It is only a few expressions but we would have to analyze them all manually.
-                # Neither mwe nor compound seems to be a good fit for these. Let's get around with 'dep' for the moment.
-                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'dep');
-                $self->tag_nodes(\@subnodes, {'pos' => 'int'});
-            }
             # If the MWE is tagged as proper noun then the words will also be
             # proper nouns and they will be connected using the 'name' relation.
             # We have to ignore that some of these proper "nouns" are in fact
@@ -726,6 +718,14 @@ sub split_tokens_on_underscore
                         }
                     }
                 }
+            }
+            # MW interjections: bendita sea (bless her), cómo no, qué caramba, qué mala suerte
+            elsif($node->is_interjection())
+            {
+                # It is only a few expressions but we would have to analyze them all manually.
+                # Neither mwe nor compound seems to be a good fit for these. Let's get around with 'dep' for the moment.
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'dep');
+                $self->tag_nodes(\@subnodes, {'pos' => 'int'});
             }
             else # all other multi-word expressions
             {

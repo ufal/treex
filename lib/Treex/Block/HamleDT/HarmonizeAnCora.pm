@@ -99,7 +99,7 @@ sub convert_deprels
         $deprel = $node->afun() if(!defined($deprel));
         $deprel = $node->conll_deprel() if(!defined($deprel));
         $deprel = 'NR' if(!defined($deprel));
-        my ($parent) = $node->get_eparents();
+        my $parent = $node->parent();
         my $pos    = $node->iset()->pos();
         my $ppos   = $parent ? $parent->iset()->pos() : '';
         my $lemma  = $node->lemma;
@@ -657,12 +657,32 @@ sub convert_deprels
         # TREE: hores ( 1.15/spec )
         elsif($deprel eq 'w')
         {
-            $deprel = 'DetArg';
+            # If attached to another number (as the second year in "1903 - 1905"), make it just Atr (is it what PDT would do?)
+            if($parent->is_noun() || $parent->is_numeral() || $parent->is_adverb())
+            {
+                $deprel = 'Atr';
+            }
+            # However, sometimes it is attached to a determiner.
+            else
+            {
+                $deprel = 'DetArg';
+            }
         }
-        # Number (expressed in digits) leaf, usually attached to a determiner.
+        # Number (expressed in digits) leaf.
         elsif($deprel eq 'z')
         {
-            $deprel = 'DetArg';
+            # Sometimes attached quite normally, as in "hace 14 años"; make it Atr.
+            # If attached to another number (as the second year in "1903 - 1905"), make it just Atr (is it what PDT would do?)
+            # If attached to an adverb, it is almost always the type "más de 500" (sometimes attached to "más", sometimes "más_de" is a collapsed token).
+            if($parent->is_noun() || $parent->is_numeral() || $parent->is_adverb())
+            {
+                $deprel = 'Atr';
+            }
+            # However, quite often it is attached to a determiner.
+            else
+            {
+                $deprel = 'DetArg';
+            }
         }
         $node->set_deprel($deprel);
     }
