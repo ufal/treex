@@ -35,8 +35,6 @@ sub process_zone
         $self->set_sent_in_file(1);
     }
     my $sent_in_file = $self->sent_in_file();
-    ###!!! Sanity check; the issue should be solved by now.
-    log_fatal("More than 100 sentences in a file.") if($sent_in_file > 100);
     my $comment = "orig_file_sentence $file_stem\#$sent_in_file";
     my @comments;
     if(defined($bundle->wild()->{comment}))

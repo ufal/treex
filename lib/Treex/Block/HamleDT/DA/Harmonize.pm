@@ -1,9 +1,11 @@
 package Treex::Block::HamleDT::DA::Harmonize;
+use utf8;
 use Moose;
 use Treex::Core::Common;
-use Treex::Core::Cloud;
-use utf8;
+use Treex::Tool::PhraseBuilder::StanfordToPrague;
 extends 'Treex::Block::HamleDT::Harmonize';
+
+
 
 has iset_driver =>
 (
@@ -15,6 +17,8 @@ has iset_driver =>
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
+
+
 #------------------------------------------------------------------------------
 # Reads the Danish tree, converts morphosyntactic tags to the PDT tagset,
 # converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
@@ -24,18 +28,26 @@ sub process_zone
     my $self   = shift;
     my $zone   = shift;
     my $root = $self->SUPER::process_zone($zone);
-
     # Adjust the tree structure.
+    # Phrase-based implementation of tree transformations (5.3.2016).
+    # Note that Stanford to Prague is not the best model for Danish because the
+    # coordination style in the Danish treebank is a hybrid of Stanford and Mel'čuk.
+    # But we have currently nothing better.
+    my $builder = new Treex::Tool::PhraseBuilder::StanfordToPrague
+    (
+        'prep_is_head'           => 1,
+        'coordination_head_rule' => 'last_coordinator'
+    );
+    my $phrase = $builder->build($root);
+    $phrase->project_dependencies();
     # Reattaching final punctuation before solving coordinations saves final punctuation from being treated as coordinational.
     $self->attach_final_punctuation_to_root($root);
-    $self->restructure_coordination($root);
-    # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
-    # and with special care at places where prepositions and coordinations interact.
-    $self->process_prep_sub_arg_cloud($root);
     $self->lift_noun_phrases($root);
     $self->reattach_modifier_from_auxt_to_verb($root);
-    $self->check_afuns($root);
+    $self->check_deprels($root);
 }
+
+
 
 #------------------------------------------------------------------------------
 # Uses lexical and morphosyntactic information to estimate whether a node can
@@ -47,11 +59,9 @@ sub is_possible_subordinator
 {
     my $self = shift;
     my $node = shift;
-
     # Subordinating conjunctions are subordinators.
     # Occasionally conjunctions tagged as coordinating (e.g. "for") work that way too, so we will only check that it is a conjunction.
     return $node->get_iset('pos') =~ m/^(conj|part|adv)$/ ||
-
         # Some subordinators ("at", "som") are tagged as particles. Some are tagged as adverbs. We list them here.
         # subordinating conjunction: "hvorvidt" (if)
         # WH-adverb functioning as subordinator: "hvordan" (how)
@@ -59,20 +69,22 @@ sub is_possible_subordinator
         $node->form() =~ m/^(at|som)$/;
 }
 
+
+
 #------------------------------------------------------------------------------
 # The dependency tag 'nobj' (noun object) can correspond to many possible
 # analytical functions. In some cases it corresponds to pseudo-functions that
 # cannot be saved to disk but they will be used to restructure the tree later
 # (DetArg, NumArg, AdjArg, PrepArg, SubArg).
 #------------------------------------------------------------------------------
-sub nobj_to_afun
+sub nobj_to_deprel
 {
     my $self  = shift;
     my $node = shift;
     my $parent = $node->parent();
     my $ppos = $parent->get_iset('pos');
     $ppos = 'prondet' if($parent->get_iset('prontype') ne '');
-    my $afun;
+    my $deprel;
     # Most specific cases (looking at node->form) first!
     # Infinitive can be 'nobj' of another node.
     # så meget kludder ..., at man kan sende... (so much chaotic ..., that one can send...)
@@ -84,66 +96,68 @@ sub nobj_to_afun
     # Here, 'at' is 'nobj' of 'det' (nonprojective).
     if ( $node->form() =~ m/^(at|om)$/i && $parent->form() =~ m/^så$/i )
     {
-        $afun = 'Adv';
+        $deprel = 'Adv';
     }
     elsif ( $node->form() =~ m/^(at|om)$/i && $parent->form() =~ m/^det$/i )
     {
-        $afun = 'Apposition';
+        $deprel = 'Apposition';
     }
     # If there is a determiner it is the head of the noun phrase.
     # The noun that depends on it is tagged 'nobj'. (Adjectives, if any, are tagged 'mod'.)
     elsif($ppos eq 'prondet')
     {
-        $afun = 'DetArg';
+        $deprel = 'DetArg';
     }
     # If there is a numeral substituting the determiner then it is the head.
     elsif ( $ppos eq 'num' )
     {
-        $afun = 'NumArg';
+        $deprel = 'NumArg';
     }
     # If the noun phrase does not contain determiner but it has an adjective, the adjective is the head.
     elsif ( $ppos eq 'adj' )
     {
-        $afun = 'AdjArg';
+        $deprel = 'AdjArg';
     }
     # The noun within a prepositional phrase is also tagged 'nobj'.
     # "som" (as) tagged as particle may act as a preposition (Example: som/TT/pobj undskyldning/NN/nobj)
     # "heriblandt" (including) tagged as adverb may act as a preposition (Example: heriblandt/Db/mod Lvov/NN/nobj)
     elsif ($ppos eq 'adp' || lc( $parent->form() ) =~ m/^(.*som|heriblandt)$/)
     {
-        $afun = 'PrepArg';
+        $deprel = 'PrepArg';
     }
     # If there is a noun under a subordinating conjunction, it is also tagged 'nobj'.
     # "end" (than) can have noun arguments
     elsif ( $self->is_possible_subordinator($parent) )
     {
-        $afun = 'SubArg';
+        $deprel = 'SubArg';
     }
     # parent is interjection
     # Example: "/XP/pnct Åh/I/qobj snack/NC/nobj ,/XP/pnct "/XP/pnct sagde/VA/ROOT
     elsif ( $ppos eq 'int' )
     {
-        $afun = 'ExD';
+        $deprel = 'ExD';
     }
     # error in data: sentence-final punctuation, attached to the main verb, has nobj instead of pnct
     elsif ( $node->get_iset('pos') eq 'punc' )
     {
         $node->set_conll_deprel('pnct');
-        $afun = 'AuxK';
+        $deprel = 'AuxK';
     }
-    # We need some default so that every nobj gets an afun even if its parent is another or unknown part of speech.
+    # We need some default so that every nobj gets an deprel even if its parent is another or unknown part of speech.
     # Some examples:
     # Klokken/NN/? 17.05/Cn/nobj
     # §/XS/? 20/AC/nobj
     else
     {
-        $afun = 'Atr';
+        $deprel = 'Atr';
     }
-    return $afun;
+    return $deprel;
 }
 
+
+
 #------------------------------------------------------------------------------
-# Try to convert dependency relation tags to analytical functions.
+# Convert dependency relation labels.
 # http://copenhagen-dependency-treebank.googlecode.com/svn/trunk/manual/cdt-manual.pdf
 # (especially the part SYNCOMP in 3.1)
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
@@ -152,42 +166,47 @@ sub nobj_to_afun
 # dobj err expl iobj list lobj mod modp name namef namel nobj numm obl part
 # pnct pobj possd pred qobj rel subj title tobj vobj voc xpl xtop
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub convert_deprels
 {
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $deprel = $node->conll_deprel();
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
         my $parent = $node->parent();
         my $ppos   = $parent->get_iset('pos');
-
         # ROOT ... the main verb of the main clause; head noun if there is no verb
         # list ... the sentence is a list item and this is the main verb attached to the item number
         if ( $deprel =~ m/^(ROOT|list)$/ )
         {
             if ( $node->get_iset('pos') eq 'verb' )
             {
-                $node->set_afun('Pred');
+                $node->set_deprel('Pred');
             }
             else
             {
-                $node->set_afun('ExD');
+                $node->set_deprel('ExD');
             }
         }
 
         # part ... verbal particle (e.g. "down" in "break down something")
         elsif ( $deprel eq 'part' )
         {
-            $node->set_afun('AuxT');
+            $node->set_deprel('AuxT');
         }
 
         # subj ... subject of clause, attached to the predicate (verb)
         # expl ... expletive (výplňový) subject
         elsif ( $deprel =~ m/^(subj|expl)$/ )
         {
-            $node->set_afun('Sb');
+            $node->set_deprel('Sb');
         }
 
         # dobj ... direct object
@@ -195,7 +214,7 @@ sub deprel_to_afun
         # qobj ... quotation object
         elsif ( $deprel =~ m/^[diq]obj$/ )
         {
-            $node->set_afun('Obj');
+            $node->set_deprel('Obj');
         }
 
         # lobj ... valency-bound location/direction adverbial?
@@ -208,11 +227,11 @@ sub deprel_to_afun
         {
             if ( $ppos eq 'noun' )
             {
-                $node->set_afun('Atr');
+                $node->set_deprel('Atr');
             }
             else
             {
-                $node->set_afun('Adv');
+                $node->set_deprel('Adv');
             }
         }
 
@@ -229,34 +248,34 @@ sub deprel_to_afun
             # "for" occurs tagged as coordinating conjunction, although it functions as subordinator.
             if ( $self->is_possible_subordinator($parent) )
             {
-                $node->set_afun('SubArg');
+                $node->set_deprel('SubArg');
             }
             elsif ( $ppos eq 'adp' )
             {
-                $node->set_afun('PrepArg');
+                $node->set_deprel('PrepArg');
             }
 
             # the auxiliary verb form "havde" occurred with unknown tag!
             elsif ( $ppos eq 'verb' || $parent->form() eq 'havde' )
             {
-                $node->set_afun('Obj');
+                $node->set_deprel('Obj');
             }
             elsif ( $ppos =~ m/^(noun|adj|num)$/ )
             {
-                $node->set_afun('Atr');
+                $node->set_deprel('Atr');
             }
 
             # Example: så længe/Db, ... <clause>/vobj
             elsif ( $ppos eq 'adv' )
             {
-                $node->set_afun('Adv');
+                $node->set_deprel('Adv');
             }
 
             # We need a default here. Sometimes even a frequent word such as the preposition "med" ("with") is tagged as unknown.
             # (On the other hand, it is unclear why specifically this case should have a vobj. The example is from train/004.treex#1.)
             else
             {
-                $node->set_afun('Adv');
+                $node->set_deprel('Adv');
             }
         }
 
@@ -265,15 +284,15 @@ sub deprel_to_afun
         {
             if ( $ppos =~ m/^(noun|adj|num)$/ )
             {
-                $node->set_afun('Atr');
+                $node->set_deprel('Atr');
             }
             elsif ( $ppos eq 'verb' )
             {
-                $node->set_afun('Adv');
+                $node->set_deprel('Adv');
             }
             elsif ( $self->is_possible_subordinator($parent) )
             {
-                $node->set_afun('SubArg');
+                $node->set_deprel('SubArg');
             }
 
             # Relative pronouns and determiners are possible subordinators in DDT and the relative clause predicates are attached to them.
@@ -285,26 +304,26 @@ sub deprel_to_afun
             {
                 ###!!! We should investigate whether the clause modifies a noun (Atr) or a verb (Adv or Obj).
                 ###!!! We should also later restructure this part.
-                $node->set_afun('Adv');
+                $node->set_deprel('Adv');
             }
 
             # We need a default for the case that the parent is tagged as another part of speech or unknown word.
             else
             {
-                $node->set_afun('Atr');
+                $node->set_deprel('Atr');
             }
         }
 
         # pred ... predicative (adjective attached to copula)
         elsif ( $deprel eq 'pred' )
         {
-            $node->set_afun('Pnom');
+            $node->set_deprel('Pnom');
         }
 
         # nobj ... noun argument of anything but verb?
         elsif ( $deprel eq 'nobj' )
         {
-            $node->set_afun($self->nobj_to_afun($node));
+            $node->set_deprel($self->nobj_to_deprel($node));
         }
 
         # pobj ... prepositional object
@@ -317,31 +336,31 @@ sub deprel_to_afun
                 lc( $node->form() ) eq 'af'
                 )
             {
-                $node->set_afun('Atr');
+                $node->set_deprel('Atr');
             }
 
             # numeral parent example:
             # 34 af 149.000 (34 of 149,000)
             elsif ( $ppos =~ m/^(noun|adj|num)$/ )
             {
-                $node->set_afun('Atr');
+                $node->set_deprel('Atr');
             }
             elsif ( $ppos eq 'verb' )
             {
-                $node->set_afun('Obj');
+                $node->set_deprel('Obj');
             }
             elsif ( $ppos eq 'adv' )
             {
-                $node->set_afun('Adv');
+                $node->set_deprel('Adv');
             }
 
             # Preposition attached to another preposition? Example:
             # fra X til Y (from X to Y; "til" is pobj of "fra")
-            # If the first preposition governs the second one (like here), the parent (first prep) already has got afun
+            # If the first preposition governs the second one (like here), the parent (first prep) already has got deprel
             # which we can copy to the child. Note that we probably later want to reattach the child to its grandparent, too.
             elsif ( $ppos eq 'adp' )
             {
-                $node->set_afun( $parent->afun() );
+                $node->set_deprel( $parent->deprel() );
             }
 
             # The parent can be an unknown word, e.g. in an English clause embedded in Danish text.
@@ -350,7 +369,7 @@ sub deprel_to_afun
             {
 
                 # Tokens in foreign phrases in PDT are usually s-tagged 'Atr'.
-                $node->set_afun('Atr');
+                $node->set_deprel('Atr');
             }
         }
 
@@ -361,11 +380,11 @@ sub deprel_to_afun
         {
             if ( $self->is_possible_subordinator($parent) )
             {
-                $node->set_afun('SubArg');
+                $node->set_deprel('SubArg');
             }
             elsif ( $ppos eq 'adp' )
             {
-                $node->set_afun('PrepArg');
+                $node->set_deprel('PrepArg');
             }
         }
 
@@ -374,7 +393,7 @@ sub deprel_to_afun
         # Og hvor/rep .../pnct hvordan/mod gik/conj
         elsif ( $deprel eq 'rep' )
         {
-            $node->set_afun('Atr');
+            $node->set_deprel('Atr');
         }
 
         # aobj ... adjectival object
@@ -382,13 +401,13 @@ sub deprel_to_afun
         # kan/VB/Pred sige/Vf/vobj sig/P6/dobj fri/AA/aobj for/RR/pobj... (can [verb] himself free for...)
         elsif ( $deprel eq 'aobj' )
         {
-            $node->set_afun('Atv');
+            $node->set_deprel('Atv');
         }
 
         # possd ... argument of a possessive, i.e. the thing possessed
         elsif ( $deprel eq 'possd' )
         {
-            $node->set_afun('PossArg');
+            $node->set_deprel('PossArg');
         }
 
         # name ... part of name of a person, e.g. the middle initial, attached to the main name
@@ -397,7 +416,7 @@ sub deprel_to_afun
         # title ... title of a person, attached to the last name
         elsif ( $deprel =~ m/^(name[fl]?|title)$/ )
         {
-            $node->set_afun('Atr');
+            $node->set_deprel('Atr');
         }
 
         # appr ... restrictive apposition (no comma)
@@ -408,8 +427,8 @@ sub deprel_to_afun
         # americký prezident Bush ("prezident" is Atr of "Bush", "americký" is Atr of "prezident")
         elsif ( $deprel eq 'appr' )
         {
-            ###!!! If we later want to make the appr the root of the subtree, we should use a distinctive pseudo-afun here (NounArg?)
-            $node->set_afun('Atr');
+            ###!!! If we later want to make the appr the root of the subtree, we should use a distinctive pseudo-deprel here (NounArg?)
+            $node->set_deprel('Atr');
         }
 
         # appa ... parenthetic apposition
@@ -419,17 +438,17 @@ sub deprel_to_afun
         elsif ( $deprel eq 'appa' )
         {
             ###!!! In PDT the left bracket would be the root of the apposition and both "Ungdom" and "DSU" would be members.
-            $node->set_afun('Apposition');
+            $node->set_deprel('Apposition');
         }
 
         # voc ... vocative specification
         # Example:
         # Will you help me, Mary/voc ?
-        # In PDT they are tagged ExD_Pa (but since PDT 2.0 the _Pa suffix is not part of the afun attribute).
+        # In PDT they are tagged ExD_Pa (but since PDT 2.0 the _Pa suffix is not part of the deprel attribute).
         elsif ( $deprel eq 'voc' )
         {
             ###!!! ExD_Pa?
-            $node->set_afun('ExD');
+            $node->set_deprel('ExD');
         }
 
         # mod ... attribute of a noun
@@ -449,15 +468,15 @@ sub deprel_to_afun
                  $parent->get_iset('prontype') ne '' &&
                  !grep {$_->get_iset('pos') eq 'noun'} ($node->get_siblings()))
             {
-                $node->set_afun('DetArg');
+                $node->set_deprel('DetArg');
             }
             elsif ( $ppos =~ m/^(noun|adj|num)$/ )
             {
-                $node->set_afun('Atr');
+                $node->set_deprel('Atr');
             }
             else
             {
-                $node->set_afun('Adv');
+                $node->set_deprel('Adv');
             }
         }
 
@@ -471,7 +490,7 @@ sub deprel_to_afun
         # hundred four thousand and twenty three" has value "(2 * 100 + 4) * 1000 + (20 + (3))".
         elsif ( $deprel =~ m/^num[am]$/ )
         {
-            $node->set_afun('Atr');
+            $node->set_deprel('Atr');
         }
 
         # xtop ... external topic with resuming pronoun
@@ -486,7 +505,7 @@ sub deprel_to_afun
             # naar/J,/xtop governs the subordinated clause and is attached to the predicate of the main clause (stopper).
             # saa/Db/mod is the co-coordinator and is attached to the predicate of the main clause, too.
             # I am currently not sure how to map this on the PDT rules.
-            $node->set_afun('Adv');
+            $node->set_deprel('Adv');
         }
 
         # pnct ... punctuation
@@ -494,11 +513,11 @@ sub deprel_to_afun
         {
             if ( $node->form() eq ',' )
             {
-                $node->set_afun('AuxX');
+                $node->set_deprel('AuxX');
             }
             else
             {
-                $node->set_afun('AuxG');
+                $node->set_deprel('AuxG');
             }
 
             # The sentence-final punctuation should get 'AuxK' but we will also have to reattach it and we will retag it at the same time.
@@ -513,42 +532,42 @@ sub deprel_to_afun
         # In PDT, we tag them 'ExD' instead.
         elsif ( $deprel =~ m/^<.+>$/ )
         {
-            $node->set_afun('ExD');
+            $node->set_deprel('ExD');
         }
 
         # err ... deprecated error relation
         # Used when connecting two phrases that do not fit together, often because of errors in the text.
         elsif ( $deprel eq 'err' )
         {
-            $node->set_afun('ExD');
+            $node->set_deprel('ExD');
         }
 
-        # Pseudo-afuns for coordination nodes until coordination is processed properly.
-        # We also duplicate the information in separate temporary attributes that will survive possible afun modifications.
+        # Pseudo-deprels for coordination nodes until coordination is processed properly.
+        # We also duplicate the information in separate temporary attributes that will survive possible deprel modifications.
         # However, the coordination may not be detected if tree topology changes, so we still have to process coordinations ASAP!
         elsif ( $deprel eq 'coord' )
         {
-            $node->set_afun('Coord');
+            $node->set_deprel('Coord');
             $node->wild()->{coordinator} = 1;
         }
         elsif ( $deprel eq 'conj' )
         {
-            $node->set_afun('CoordArg');
+            $node->set_deprel('CoordArg');
             $node->wild()->{conjunct} = 1;
         }
     }
 
-    # Make sure that all nodes now have their afuns.
+    # Make sure that all nodes now have their deprels.
     foreach my $node (@nodes)
     {
-        my $afun = $node->afun();
-        if ( !$afun )
+        my $deprel = $node->deprel();
+        if ( !$deprel )
         {
             $self->log_sentence($root);
 
             # If the following log is warn, we will be waiting for tons of warinings until we can look at the actual data.
             # If it is fatal however, the current tree will not be saved and we only will be able to examine the original tree.
-            log_fatal( "Missing afun for node " . $node->form() . "/" . $node->tag() . "/" . $node->conll_deprel() );
+            log_fatal( "Missing deprel for node " . $node->form() . "/" . $node->tag() . "/" . $node->conll_deprel() );
         }
     }
 }
@@ -564,32 +583,15 @@ sub lift_noun_phrases
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $afun = $node->afun();
-        if ( $afun =~ m/^(DetArg|NumArg|PossArg|AdjArg)$/ )
+        my $deprel = $node->deprel();
+        if ( $deprel =~ m/^(DetArg|NumArg|PossArg|AdjArg)$/ )
         {
             $self->lift_node( $node, 'Atr' );
         }
     }
 }
 
-#------------------------------------------------------------------------------
-# Detects coordination in the shape we expect to find it in the Danish
-# treebank.
-#------------------------------------------------------------------------------
-sub detect_coordination
-{
-    my $self = shift;
-    my $node = shift;
-    my $coordination = shift;
-    my $debug = shift;
-    $coordination->detect_mosford($node);
-    # The caller does not know where to apply recursion because it depends on annotation style.
-    # Return all conjuncts and shared modifiers for the Prague family of styles.
-    # Return orphan conjuncts and all shared and private modifiers for the other styles.
-    my @recurse = $coordination->get_orphans();
-    push(@recurse, $coordination->get_children());
-    return @recurse;
-}
+
 
 #------------------------------------------------------------------------------
 # Corrects attachment of adverbial modifier that is erroneously attached to
@@ -604,7 +606,7 @@ sub reattach_modifier_from_auxt_to_verb
     foreach my $node (@nodes)
     {
         my $parent = $node->parent();
-        if(defined($parent) && $parent->afun() eq 'AuxT')
+        if(defined($parent) && $parent->deprel() eq 'AuxT')
         {
             my $grandparent = $parent->parent();
             if(defined($grandparent) && $grandparent->match_iset('pos' => 'verb'))

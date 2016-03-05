@@ -513,6 +513,13 @@ sub project_dependencies
 {
     my $self = shift;
     log_fatal('Dead') if($self->dead());
+    # Recursion first, we work bottom-up.
+    # Note that even the order of conjuncts may change if a nested coordination is forced to change the head rule and becomes represented by another node!
+    my @children = $self->children();
+    foreach my $child (@children)
+    {
+        $child->project_dependencies();
+    }
     my $head_rule = $self->head_rule();
     my @conjuncts = $self->conjuncts('ordered' => 1);
     my @coordinators = $self->coordinators('ordered' => 1);
@@ -523,12 +530,6 @@ sub project_dependencies
         log_warn("Coordination without delimiters cannot use the 'last_coordinator' head rule.");
         $head_rule = 'first_conjunct'; ###!!! But then it should be possible to define deprels for this head rule in the current dialect.
         $self->set_head_rule($head_rule);
-    }
-    # Recursion first, we work bottom-up.
-    my @children = $self->children();
-    foreach my $child (@children)
-    {
-        $child->project_dependencies();
     }
     my $head_node = $self->node();
     # We also have to change selected deprels. It depends on the current head rule.

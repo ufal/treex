@@ -1,4 +1,4 @@
-package Treex::Tool::PhraseBuilder::StanfordToPrague;
+package Treex::Tool::PhraseBuilder::MoscowToPrague;
 
 use utf8;
 use namespace::autoclean;
@@ -33,11 +33,7 @@ sub detect_special_constructions
         # phrase, we will move the preposition to a lower level and it will be
         # never discovered that it has a PrepArg child.
         $phrase = $self->detect_stanford_pp($phrase);
-        # This is needed when converting the Bosque corpus (Portuguese) and maybe some others.
-        $phrase = $self->detect_auxiliary_head($phrase);
-        # This is needed when converting the AnCora coprora (Catalan and Spanish) to the Prague style.
-        $phrase = $self->convert_phrase_headed_by_modifier($phrase);
-        $phrase = $self->detect_stanford_coordination($phrase);
+        $phrase = $self->detect_moscow_coordination($phrase);
     }
     # Return the resulting phrase. It may be different from the input phrase.
     return $phrase;
@@ -57,7 +53,7 @@ __PACKAGE__->meta->make_immutable();
 
 =head1 NAME
 
-Treex::Tool::PhraseBuilder::StanfordToPrague
+Treex::Tool::PhraseBuilder::MoscowToPrague
 
 =head1 DESCRIPTION
 
@@ -65,12 +61,11 @@ Derived from C<Treex::Core::Phrase::Builder>, this class implements language-
 and treebank-specific phrase structures.
 
 It expects that the dependency relation labels have been translated to the
-Prague dialect. The expected tree structure features Stanford coordination
+Prague dialect. The expected tree structure features Moscow coordination
 and prepositional phrases with the function marked at the head preposition.
 The target style is Prague.
 
-Input treebanks for which this builder should work include AnCora (Catalan and
-Spanish), Bosque (Portuguese), BulTreeBank (Bulgarian) and others.
+Input treebanks for which this builder should work include Tiger (German).
 
 =head1 METHODS
 

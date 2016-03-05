@@ -500,11 +500,11 @@ sub add_punctuation_to_coordination
                 @rterms = grep {$_->ord() > $rml} (@rterms);
             }
             my $result;
-            if($lterms[-1]->node()->form() eq ',' && !$lterms[-1]->is_core_child())
+            if(scalar(@lterms) > 0 && $lterms[-1]->node()->form() eq ',' && !$lterms[-1]->is_core_child())
             {
                 $result = $lterms[-1];
             }
-            elsif($rterms[0]->node()->form() eq ',' && !$rterms[0]->is_core_child())
+            elsif(scalar(@rterms) > 0 && $rterms[0]->node()->form() eq ',' && !$rterms[0]->is_core_child())
             {
                 $result = $rterms[0];
             }
