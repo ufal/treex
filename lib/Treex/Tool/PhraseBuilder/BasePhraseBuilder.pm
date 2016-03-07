@@ -449,6 +449,14 @@ sub add_punctuation_to_coordination
     my $conjuncts = shift; # ArrayRef: list of all conjuncts including the first one, even if it is the current head
     my $punctuation = shift; # ArrayRef: list of punctuation delimiters found so far
     my $coordinators = shift; # ArrayRef: list of coordinating conjunctions
+    # There may be annotation error due to which the missing comma is mis-classified as conjunct.
+    # We must not add it to punctuation without first removing it from the list of conjuncts!
+    # (Example: This has happened in the Italian CoNLL 2007 treebank.)
+    my %conjuncts;
+    foreach my $c (@{$conjuncts})
+    {
+        $conjuncts{$c}++;
+    }
     my @conjuncts = sort {$a->ord() <=> $b->ord()} (@{$conjuncts});
     my @conjords = sort {$a <=> $b} (map {$_->ord()} (@conjuncts));
     my @delmords = sort {$a <=> $b} (map {$_->ord()} (@{$punctuation}, @{$coordinators}));
@@ -499,12 +507,14 @@ sub add_punctuation_to_coordination
                 # Look for the leftmost terminal in the subtree of the right conjunct, that lies to the right of $rml.
                 @rterms = grep {$_->ord() > $rml} (@rterms);
             }
+            # Check that the terminal phrase of the comma is not labeled as conjunct by mistake.
+            # That would mean that our is_core_child() test will not detect a conflict but the conflict will appear in the future anyway.
             my $result;
-            if(scalar(@lterms) > 0 && $lterms[-1]->node()->form() eq ',' && !$lterms[-1]->is_core_child())
+            if(scalar(@lterms) > 0 && $lterms[-1]->node()->form() eq ',' && !$lterms[-1]->is_core_child() && !exists($conjuncts{$lterms[-1]}))
             {
                 $result = $lterms[-1];
             }
-            elsif(scalar(@rterms) > 0 && $rterms[0]->node()->form() eq ',' && !$rterms[0]->is_core_child())
+            elsif(scalar(@rterms) > 0 && $rterms[0]->node()->form() eq ',' && !$rterms[0]->is_core_child() && !exists($conjuncts{$rterms[0]}))
             {
                 $result = $rterms[0];
             }
@@ -515,6 +525,42 @@ sub add_punctuation_to_coordination
                 push(@{$punctuation}, $result);
             }
         }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# A debugging function. When constructing a Treex::Core::Phrase::Coordination,
+# no node can be listed as conjunct and delimiter at the same time. If
+# everything in this class is done correctly, this will not happen. But if
+# there is suspicion, this function can be used to pinpoint the problem. The
+# function throws an exception if problem is detected, and keeps silent
+# otherwise.
+#------------------------------------------------------------------------------
+sub check_coordination_components_for_duplicities
+{
+    my $self = shift;
+    my $phrase = shift;
+    my $conjuncts = shift; # ArrayRef
+    my $coordinators = shift; # ArrayRef
+    my $punctuation = shift; # ArrayRef
+    my $sentence = join(' ', map {$_->form()} ($phrase->node()->get_root()->get_descendants({'ordered' => 1})));
+    my $conjstr = join(' ', map {$_->node()->form().'-'.$_->ord()} (@{$conjuncts}));
+    my $coorstr = join(' ', map {$_->node()->form().'-'.$_->ord()} (@{$coordinators}));
+    my $puncstr = join(' ', map {$_->node()->form().'-'.$_->ord()} (@{$punctuation}));
+    my %map;
+    foreach my $d (@{$conjuncts}, @{$coordinators}, @{$punctuation})
+    {
+        if(exists($map{$d}))
+        {
+            log_warn($sentence);
+            log_warn('CONJ: '.$conjstr);
+            log_warn('COOR: '.$coorstr);
+            log_warn('PUNC: '.$puncstr);
+            log_fatal('This phrase is listed twice: '.$d->as_string());
+        }
+        $map{$d}++;
     }
 }
 
@@ -539,6 +585,7 @@ sub replace_nterm_by_coordination
     my $deprel = $phrase->deprel();
     my $member = $phrase->is_member();
     $phrase->detach_children_and_die();
+    # $self->check_coordination_components_for_duplicities($phrase, $conjuncts, $coordinators, $punctuation);
     # Punctuation can be considered a conjunct delimiter only if it occurs
     # between conjuncts.
     my @inpunct  = grep {my $o = $_->ord(); $o > $cmin && $o < $cmax;} (@{$punctuation});
@@ -620,6 +667,7 @@ sub surround_nterm_by_coordination
         log_fatal("Phrases must be processed bottom-up and the parent must be undefined at this moment.");
     }
     unshift(@{$conjuncts}, $phrase);
+    # $self->check_coordination_components_for_duplicities($phrase, $conjuncts, $coordinators, $punctuation);
     # Punctuation can be considered a conjunct delimiter only if it occurs between conjuncts.
     my @inpunct  = grep {my $o = $_->ord(); $o > $cmin && $o < $cmax;} (@{$punctuation});
     my @outpunct = grep {my $o = $_->ord(); $o < $cmin || $o > $cmax;} (@{$punctuation});
