@@ -775,7 +775,7 @@ sub mark_deficient_clausal_coordination
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants( { ordered => 1 } );
-    if ( $nodes[0]->afun() eq 'Coord' && scalar($nodes[0]->get_coap_members())==0 )
+    if($nodes[0]->deprel() eq 'Coord' && scalar(grep {$_->is_member()} ($nodes[0]->children())) == 0)
     {
         my $croot = $nodes[0];
         my @root_children = $root->children();
@@ -786,15 +786,15 @@ sub mark_deficient_clausal_coordination
         {
             next if($rc==$croot);
             # The sentence-final punctuation must stay at the upper level.
-            next if($rc->afun() eq 'AuxK');
+            next if($rc->deprel() eq 'AuxK');
             $rc->set_parent($croot);
-            $rc->set_is_member(1) unless($rc->afun() =~ m/^Aux[GXY]$/);
+            $rc->set_is_member(1) unless($rc->deprel() =~ m/^Aux[GXY]$/);
         }
         # It is not guaranteed that $croot now has coordination members.
         # If we were not able to find nodes elligible as members, we must not tag $croot as Coord.
-        if(scalar($croot->get_coap_members())==0)
+        if(scalar(grep {$_->is_member()} ($croot->children())) == 0)
         {
-            $croot->set_afun('ExD');
+            $croot->set_deprel('ExD');
         }
     }
 }
