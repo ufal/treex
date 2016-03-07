@@ -1,4 +1,5 @@
 package Treex::Block::Read::BaseSplitterRole;
+
 use strict;
 use warnings;
 use Moose::Role;

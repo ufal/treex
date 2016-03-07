@@ -21,7 +21,7 @@ sub process_atree {
 
 			# step 2: split the list of alignment links
 
-			my ( $ali_nodes_rf, $ali_types_rf ) = $node->get_aligned_nodes;
+			my ( $ali_nodes_rf, $ali_types_rf ) = $node->get_directed_aligned_nodes;
 
 			if ($ali_nodes_rf) {
 				foreach my $index ( 0 .. $#$ali_nodes_rf ) {
@@ -47,7 +47,7 @@ sub process_atree {
 			$new_node->shift_before_node($node);
 			$new_node->set_no_space_after(1);
 
-			my ( $ali_nodes_rf, $ali_types_rf ) = $node->get_aligned_nodes;
+			my ( $ali_nodes_rf, $ali_types_rf ) = $node->get_directed_aligned_nodes;
 
 			if ($ali_nodes_rf) {
 				foreach my $index ( 0 .. $#$ali_nodes_rf ) {

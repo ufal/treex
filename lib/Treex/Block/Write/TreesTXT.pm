@@ -196,11 +196,11 @@ sub fillLeftRightMost {
 sub compareNode {
     my ( $a, $b ) = @_;
     return ($a->[INDEX] < $b->[INDEX] and $a->[RIGHTMOST] < $b->[INDEX])
-        #or 
+        #||
         #($a->[INDEX] > $b->[INDEX] and $a->[INDEX] > $b->[RIGHTMOST])
-        or
+        ||
         ($a->[INDEX] > $b->[INDEX] and $a->[LEFTMOST] < $b->[INDEX])
-        #or 
+        #||
         #($a->[INDEX] > $b->[INDEX] and $a->[INDEX] > $b->[LEFTMOST])
         ;
 }

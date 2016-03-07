@@ -23,7 +23,7 @@ override '_get_aligned_anode' => sub {
     my $src_tnode = $tnode->src_tnode();
     return undef if !$src_tnode;
     
-    my ($ali_tnode) = $src_tnode->get_aligned_nodes();
+    my ($ali_tnode) = $src_tnode->get_directed_aligned_nodes();
     return undef if !$ali_tnode;
     $ali_tnode = $ali_tnode->[0];
     return $ali_tnode->get_lex_anode();
@@ -35,7 +35,7 @@ sub _get_aligned_ttree {
 
     return if !$src_ttree;
     my ($first_aligned) = first { defined $_ } map {
-        my ($ali_nodes) = $_->get_aligned_nodes();
+        my ($ali_nodes) = $_->get_directed_aligned_nodes();
         $ali_nodes ? @$ali_nodes : undef
     } $src_ttree->get_descendants();
     return undef if (!$first_aligned);

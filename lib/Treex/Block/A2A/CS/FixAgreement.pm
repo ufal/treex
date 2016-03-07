@@ -76,7 +76,7 @@ sub process_zone {
             $self->source_language, 'a', $self->source_selector
         );
         foreach my $en_node ( $en_root->get_descendants ) {
-            my ( $nodes, $types ) = $en_node->get_aligned_nodes();
+            my ( $nodes, $types ) = $en_node->get_directed_aligned_nodes();
             if ( $nodes->[0] ) {
                 $en_counterpart{ $nodes->[0]->id } = $en_node;
             }
@@ -300,7 +300,7 @@ sub remove_node {
         my $en_parent = $self->en($node)->get_eparents(
             { first_only => 1, or_topological => 1 }
         );
-        my ($nodes) = $en_parent->get_aligned_nodes();
+        my ($nodes) = $en_parent->get_directed_aligned_nodes();
         if ( $nodes->[0] && !$nodes->[0]->is_descendant_of($node) ) {
             $parent = $nodes->[0];
         }

@@ -27,7 +27,7 @@ sub process_bundle {
 
     my $alignments = '';
     foreach my $second_lang_node ($second_lang_atree->get_descendants) {
-        my ($alignment_links_rf, $alignment_types_rf) = $second_lang_node->get_aligned_nodes;
+        my ($alignment_links_rf, $alignment_types_rf) = $second_lang_node->get_directed_aligned_nodes;
         if ($alignment_links_rf) {
             my @da_indices;
 

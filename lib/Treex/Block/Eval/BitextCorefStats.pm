@@ -17,7 +17,7 @@ sub process_tnode {
 
 
     if ($self->filter->is_candidate( $tnode )) {
-        my ($nodes, $types) = $tnode->get_aligned_nodes;
+        my ($nodes, $types) = $tnode->get_directed_aligned_nodes;
 
         # PRINTING THE COUNT OF ALIGNED NODES
         #if (!$nodes) {
@@ -40,7 +40,7 @@ sub process_tnode {
             #}
 
             if ($lemma eq '#PersPron') {
-                my @antes_align_en = map {my ($nodes, $types) = $_->get_aligned_nodes; $nodes ? @$nodes : ()} $tnode->get_coref_nodes;
+                my @antes_align_en = map {my ($nodes, $types) = $_->get_directed_aligned_nodes; $nodes ? @$nodes : ()} $tnode->get_coref_nodes;
                 my %antes_en_hash = map {$_->id => 1} $en_node->get_coref_nodes;
 
                 my @in_common = grep {$antes_en_hash{$_->id}} @antes_align_en;

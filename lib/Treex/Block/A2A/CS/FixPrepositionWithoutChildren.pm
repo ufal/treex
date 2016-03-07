@@ -19,7 +19,7 @@ sub fix {
             return;
         }
         foreach my $en_child ( $self->en($node)->get_children ) {
-            my ( $nodes, $types ) = $en_child->get_aligned_nodes;
+            my ( $nodes, $types ) = $en_child->get_directed_aligned_nodes;
 
             #if (!$nodes) { return; }
             my @cs_children = $$nodes[0];

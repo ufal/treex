@@ -9,7 +9,7 @@ sub fix {
 
     return if !defined $al_child;
     my ($al_parent) = $al_child->get_eparents();
-    #my ($al_al_parent) = $al_parent->get_aligned_nodes();
+    #my ($al_al_parent) = $al_parent->get_directed_aligned_nodes();
 
     if ($al_child->tag =~ /^N...2/
         && $al_parent->tag =~ /^N/

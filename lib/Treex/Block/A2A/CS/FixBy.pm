@@ -38,7 +38,7 @@ sub fix {
 
         # there shouldn't be any other preposition aligned to 'by'
         # so delete it if there is one
-        my ( $nodes, $types ) = $aligned_parent->get_aligned_nodes();
+        my ( $nodes, $types ) = $aligned_parent->get_directed_aligned_nodes();
         if ( my $node_aligned_to_by = $$nodes[0] ) {
             if ( $node_aligned_to_by->tag =~ /^R/ ) {
                 $self->logfix1( $node_aligned_to_by, "By (aligned prep)" );

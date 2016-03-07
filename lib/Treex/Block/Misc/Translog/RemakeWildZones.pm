@@ -73,7 +73,7 @@ sub process_document {
 						$in_value{"$diff:$deprel"}=1;
 						
 					}
-					my ($nodes_rf,$typ_ref) = $node->get_aligned_nodes();
+					my ($nodes_rf,$typ_ref) = $node->get_directed_aligned_nodes();
 					
 					if (defined $nodes_rf){
 						my @ref_nodes = @{$nodes_rf};

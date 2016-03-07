@@ -37,3 +37,7 @@ match     = ^test\.(out|err|mix)
 ;config = weaver.ini
 [TestRelease] ; extract archive and run tests before releasing the dist
 
+[MetaResources]
+homepage   = https://ufal.mff.cuni.cz/tools/mstperl-parser
+repository = https://github.com/ufal/treex
+bugtracker = https://github.com/ufal/treex/issues

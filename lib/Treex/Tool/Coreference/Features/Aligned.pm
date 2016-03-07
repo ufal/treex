@@ -2,7 +2,6 @@ package Treex::Tool::Coreference::Features::Aligned;
 
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::Align::Utils;
 #use Cache::MemoryCache;
 
 with 'Treex::Tool::Coreference::CorefFeatures';
@@ -39,11 +38,11 @@ sub _build_unary_feats_cache {
 sub _binary_features {
     my ($self, $set_features, $anaph, $cand, $candord) = @_;
 
-    my ($ali_anaph_nodes, $ali_anaph_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($anaph, $self->_align_filter);
+    my ($ali_anaph_nodes, $ali_anaph_types) = $anaph->get_undirected_aligned_nodes($self->_align_filter);
 # TODO: features based on the errors returned
     return {} if (!@$ali_anaph_nodes);
     log_debug "[Tool::Coreference::Features::Aligned::_binary_features]\tanaphor ali_types: " . (join " ", @$ali_anaph_types), 1;
-    my ($ali_cand_nodes, $ali_cand_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($cand, $self->_align_filter);
+    my ($ali_cand_nodes, $ali_cand_types) = $cand->get_undirected_aligned_nodes($self->_align_filter);
 # TODO: features based on the errors returned
     return {} if (!@$ali_cand_nodes);
     log_debug "[Tool::Coreference::Features::Aligned::_binary_features]\tcand ali_types: " . (join " ", @$ali_cand_types), 1;
@@ -77,7 +76,7 @@ sub _binary_features {
 sub _unary_features {
     my ($self, $node, $type) = @_;
 
-    my ($ali_nodes, $ali_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($node, $self->_align_filter);
+    my ($ali_nodes, $ali_types) = $node->get_undirected_aligned_nodes($self->_align_filter);
 # TODO: features based on the errors returned
     return {} if (!@$ali_nodes);
     log_debug "[Tool::Coreference::Features::Aligned::_unary_features]\tanaphor ali_types: " . (join " ", @$ali_types), 1;

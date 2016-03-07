@@ -82,15 +82,27 @@ sub process_atree
         ###!!! Much in the same fashion as the attributes in Write::CoNLLX are selected.
         my $tag = $node->conll_pos();
         $tag = $node->tag() if(!defined($tag) || $tag eq '');
-        my $isetfs = $node->iset();
-        my $upos_features = encode('mul::uposf', $isetfs);
-        my ($upos, $feat) = split(/\t/, $upos_features);
+
+        # If no iset feature is set, we want to print "_" in the FEATS and UPOS columns.
+        # Unfortunately, it is difficult to detect this case
+        # because $node->iset() creates new Lingua::Interset::FeatureStructure,
+        # which has all (60) features set to an empty string.
+        # Using encode('mul::uposf', $isetfs) results in UPOS='X'.
+        # So we need to access directly $node->{iset}.
+        my ($upos, $feat);
+        if ($node->{iset}){
+            my $isetfs = $node->iset();
+            my $upos_features = encode('mul::uposf', $isetfs);
+            ($upos, $feat) = split(/\t/, $upos_features);
+        } else {
+            ($upos, $feat) = ('_', '_');
+        }
         my $pord = $node->get_parent()->ord();
         my @misc;
         @misc = split(/\|/, $wild->{misc}) if(exists($wild->{misc}) && defined($wild->{misc}));
         if($node->no_space_after())
         {
-            push(@misc, 'SpaceAfter=No');
+            unshift(@misc, 'SpaceAfter=No');
         }
         # If transliteration of the word form to Latin (or another) alphabet is available, put it in the MISC column.
         if(defined($node->translit()))

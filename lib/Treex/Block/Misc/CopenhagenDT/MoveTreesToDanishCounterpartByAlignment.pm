@@ -25,7 +25,7 @@ print STDERR "XXXX $SourceLanguage\n";
             my %alignments_per_da_tree;
             foreach my $node ($tree->get_descendants({add_self=>1})) {
 
-                my ($nodes_rf, $types_rf) = $node->get_aligned_nodes;
+                my ($nodes_rf, $types_rf) = $node->get_directed_aligned_nodes;
 
                 if (defined $nodes_rf and scalar @{$nodes_rf} > 0) {
 

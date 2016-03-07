@@ -33,7 +33,7 @@ sub process_bundle {
 
 sub _get_first_aligned_node {
     my ($self,$node) = @_;
-    my ($aligned_nodes_rf,$aligned_types_rf) = $node->get_aligned_nodes;
+    my ($aligned_nodes_rf,$aligned_types_rf) = $node->get_directed_aligned_nodes;
     return undef if not defined $aligned_types_rf;
     my ($first) = @$aligned_nodes_rf;
     return $first;

@@ -71,7 +71,7 @@ sub _build_feature_extractor {
 
 sub process_tnode {
     my ( $self, $ali_src_tnode ) = @_;
-    my ($ali_trg_tnodes_rf, $ali_types_rf) = $ali_src_tnode->get_aligned_nodes();
+    my ($ali_trg_tnodes_rf, $ali_types_rf) = $ali_src_tnode->get_directed_aligned_nodes();
     for my $i (0 .. $#{$ali_trg_tnodes_rf}) {
         my $types = $ali_types_rf->[$i];
         if ($types =~ /int|tali/){

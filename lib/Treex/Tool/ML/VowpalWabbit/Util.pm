@@ -30,15 +30,14 @@ sub _parse_line {
     return [] if ($line =~ /^\s*$/);
 
     my ($data, $comment) = split /\t/, $line;
-    my ($label_str, $feat_str) = split /\|/, $data;
+    my ($label_str, $feat_str) = split /\|/, $data, 2;
+    $feat_str = "|" . $feat_str;
     my ($label, $tag) = split / /, $label_str;
     $label = undef if ($label eq "");
 
     my $feats = $feat_str;
     if ($args->{parse_feats} ne "no") {
         my @feat_list = split / /, $feats;
-        # remove a possible namespace id
-        shift @feat_list;
         if ($args->{parse_feats} eq "pair") {
             @feat_list = map {[split /$FEAT_VAL_DELIM/, $_, 2]} @feat_list;
         }
@@ -158,12 +157,15 @@ sub format_singleline {
     else {
         my @feats_items = map {
             ref($_) eq 'ARRAY' ?
-                $_->[0] .$FEAT_VAL_DELIM. $_->[1] :
+                join $FEAT_VAL_DELIM, @$_ :
                 $_;
         } @$feats;
-        $feat_str = "default ";
+        if (@feats_items && $feats_items[0] !~ /^\|/) {
+            $feat_str = "|default ";
+        }
         $feat_str .= join " ", (map {feat_perl_to_vw($_)} @feats_items);
     }
+    $feat_str =~ s/^\|?//;
     my $line = sprintf "%s %s|%s\t%s\n",
         defined $label ? $label : "",
         defined $tag ? $tag : "",
@@ -271,7 +273,15 @@ sub feat_perl_to_vw {
     my ($feat, $on_featstr) = @_;
     # ":" and "|" is a special char in VW
     $feat =~ s/:/__COL__/g;
+    
+    # replace all "|" except those leading a feature (namespace names)
+    if ($on_featstr) {
+        $feat =~ s/ \|([^ =]+)/ :$1/g;
+    }
+    $feat =~ s/^\|/:/g;
     $feat =~ s/\|/__PIPE__/g;
+    $feat =~ s/:/\|/g;
+    
     $feat =~ s/\t/__TAB__/g;
     if (!$on_featstr) {
         $feat =~ s/ /__SPACE__/g;

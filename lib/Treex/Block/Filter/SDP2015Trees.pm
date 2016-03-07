@@ -18,6 +18,10 @@ sub process_document
     my $document = shift;
     my $hash = $self->_id_hash();
     my @bundles = $document->get_bundles();
+    # Postpone removing bundles until the end. Calling Bundle->remove() multiple times would not be efficient (see also a comment there).
+    # Instead, we will do the removing ourselves. (Also, if we removed a bundle during processing the document, the method get_sentence_id()
+    # would return wrong result.)
+    my @ibundles_to_remove;
     for (my $i = 0; $i < @bundles; ++$i)
     {
         my $sdp_id = $self->get_sentence_id($bundles[$i]);
@@ -27,8 +31,22 @@ sub process_document
         }
         else
         {
-            $bundles[$i]->remove();
+            # Clean the bundle's content first (to ensure de-indexing).
+            foreach my $zone ( $bundles[$i]->get_all_zones() )
+            {
+                $bundles[$i]->remove_zone( $zone->language(), $zone->selector() );
+            }
+            push(@ibundles_to_remove, $i);
         }
+    }
+    while(scalar(@ibundles_to_remove) > 0)
+    {
+        # Remove the last bundle first so that the indices of the other bundles to remove remain unchanged.
+        my $i = pop(@ibundles_to_remove);
+        $document->delete_tree($i);
+        # Make sure that any attempt by anyone to use the removed bundle will throw an exception.
+        # (It will work despite the fact that Bundle is not a descendant of Treex::Core::Node.)
+        bless($bundles[$i], 'Treex::Core::Node::Removed');
     }
     return 1;
 }
@@ -46,6 +64,7 @@ sub _build_id_hash
         chomp();
         s/^\s+//;
         s/\s+$//;
+        log_warn("Duplicate ID $_ in the filter.") if(exists($hash{$_}));
         $hash{$_}++;
     }
     close(IDLIST);
