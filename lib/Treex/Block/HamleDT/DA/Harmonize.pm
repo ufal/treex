@@ -42,7 +42,6 @@ sub process_zone
     $phrase->project_dependencies();
     # Reattaching final punctuation before solving coordinations saves final punctuation from being treated as coordinational.
     $self->attach_final_punctuation_to_root($root);
-    $self->lift_noun_phrases($root);
     $self->reattach_modifier_from_auxt_to_verb($root);
     $self->check_deprels($root);
 }
@@ -568,25 +567,6 @@ sub convert_deprels
             # If the following log is warn, we will be waiting for tons of warinings until we can look at the actual data.
             # If it is fatal however, the current tree will not be saved and we only will be able to examine the original tree.
             log_fatal( "Missing deprel for node " . $node->form() . "/" . $node->tag() . "/" . $node->conll_deprel() );
-        }
-    }
-}
-
-#------------------------------------------------------------------------------
-# Swaps nodes at some edges where the Danish notion of dependency violates the
-# principle of reducibility: nouns attached to determiners, numbers etc.
-#------------------------------------------------------------------------------
-sub lift_noun_phrases
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $deprel = $node->deprel();
-        if ( $deprel =~ m/^(DetArg|NumArg|PossArg|AdjArg)$/ )
-        {
-            $self->lift_node( $node, 'Atr' );
         }
     }
 }

@@ -51,7 +51,7 @@ sub convert_deprels
             $deprel = 'Atr';
         }
         # There are a few nodes wrongly labeled as Coord. Fix them.
-        # We must do it now, before SUPER->restructure_coordination() starts.
+        # We must do it now, before restructuring of coordination starts.
         # And also before we try to reconstruct members of coordination (comma/Coord must become comma/AuxX where appropriate).
         if($deprel eq 'Coord')
         {

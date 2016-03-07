@@ -605,25 +605,6 @@ sub convert_deprels
 
 
 
-#------------------------------------------------------------------------------
-# Detects coordination in the shape we expect to find it in the Swedish
-# treebank.
-#------------------------------------------------------------------------------
-sub detect_coordination
-{
-    my $self = shift;
-    my $node = shift;
-    my $coordination = shift;
-    my $debug = shift;
-    $coordination->detect_moscow($node);
-    # The caller does not know where to apply recursion because it depends on annotation style.
-    # Return all conjuncts and shared modifiers for the Prague family of styles.
-    # Return orphan conjuncts and all shared and private modifiers for the other styles.
-    my @recurse = $coordination->get_orphans();
-    push(@recurse, $coordination->get_children());
-    return @recurse;
-}
-
 1;
 
 =over

@@ -18,7 +18,6 @@ sub process_zone {
     my $self   = shift;
     my $zone   = shift;
     my $a_root = $self->SUPER::process_zone($zone);
-    # $self->restructure_coordination($a_root);
     $self->attach_final_punctuation_to_root($a_root);
     $self->check_deprels($a_root);
     return $a_root;
@@ -125,16 +124,6 @@ sub convert_deprels {
 # of the others.
 #
 # The members of the coordination are marked by the CONJ label.
-#
-# TODO: run this before changing the afuns etc.
-sub detect_coordination
-{
-    my $self = shift;
-    my $node = shift;
-    my $coordination = shift;
-    my $debug = shift;
-    return 'not implemented';
-}
 
 1;
 

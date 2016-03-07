@@ -1,11 +1,11 @@
 package Treex::Block::HamleDT::Harmonize;
+use utf8;
 use Moose;
 use Treex::Core::Common;
-use Treex::Core::Coordination;
-use Treex::Core::Cloud;
 use Lingua::Interset qw(decode encode);
-use utf8;
 extends 'Treex::Core::Block';
+
+
 
 has iset_driver =>
 (
@@ -427,93 +427,6 @@ sub check_deprels
 
 
 #------------------------------------------------------------------------------
-# Shifts afun from preposition (subordinating conjunction) to its argument and
-# gives the preposition (conjunction) new afun 'AuxP' ('AuxC'). Useful for
-# treebanks where prepositions and subordinating conjunctions bear the deprel
-# of their subtree. The subclass should not call this method before it assigns
-# afuns to all nodes and before it converts coordination. Arguments of
-# prepositions (subordinating conjunctions) must have the afun 'PrepArg'
-# ('SubArg'). There should be just one child with such afun.
-#------------------------------------------------------------------------------
-sub process_prep_sub_arg_cloud
-{
-    my $self = shift;
-    my $root = shift;
-    # Convert the tree of nodes to tree of clouds, i.e. build the parallel structure.
-    my $cloud = Treex::Core::Cloud->new();
-    $cloud->create_from_node($root);
-    # Traverse the tree of clouds.
-    $self->process_prep_sub_arg_cloud_recursive($cloud);
-    $cloud->destroy_children();
-}
-sub process_prep_sub_arg_cloud_recursive
-{
-    my $self                = shift;
-    my $cloud               = shift;
-    my $parent_current_afun = shift;
-    my $parent_new_afun     = $parent_current_afun;
-    my $current_afun        = $cloud->afun();
-    $current_afun = '' if(!defined($current_afun));
-
-    # If I am currently a prep/sub argument, let's steal the parent's afun.
-    if ( $current_afun eq 'PrepArg' )
-    {
-        $current_afun    = $parent_current_afun;
-        $parent_new_afun = 'AuxP';
-    }
-    elsif ( $current_afun eq 'SubArg' )
-    {
-        $current_afun    = $parent_current_afun;
-        $parent_new_afun = 'AuxC';
-    }
-
-    # Now let's see whether my children want my afun.
-    my $new_afun = $current_afun;
-    # Recursion that traverses the whole tree means that we go to both participants and modifiers.
-    # But we cannot work with both the same way.
-    # We cannot compare participants' afun with the afun of the coordination cloud: they should be identical!
-    my @children = $cloud->get_shared_modifiers();
-    my @participants = $cloud->get_participants();
-    my $argument_found = 0;
-    foreach my $child (@children)
-    {
-
-        # Ask a child if it wants my afun and what afun it thinks I should get.
-        # A preposition can have more than one child and some of the children may not be PrepArgs.
-        # So only set $new_afun if it really differs from $current_afun
-        # (otherwise the first child could propose a change and the second could revert it).
-        my $suggested_afun = $self->process_prep_sub_arg_cloud_recursive( $child, $current_afun );
-        if($suggested_afun ne $current_afun)
-        {
-            # Even if the preposition has several children, only one can be PrepArg.
-            # Otherwise it would not be clear what to do.
-            # (Note however that there is no warranty that the input data is clean.)
-            if($argument_found)
-            {
-                log_warn("Two or more Prep/SubArg children under one preposition/conjunction.");
-            }
-            $new_afun = $suggested_afun;
-            $argument_found = 1;
-        }
-    }
-    foreach my $participant (@participants)
-    {
-        # A non-trivial cloud, e.g. coordination, cannot accept AuxP suggestions from its participants.
-        # In particular, coordination should have the same afun as most if not all its conjuncts.
-        # We will recurse to participants so that anything within their subtrees can be processed
-        # but we will ignore their suggestions going back up.
-        my $ignored_suggestion = $self->process_prep_sub_arg_cloud_recursive($participant, $parent_current_afun);
-    }
-    # Set the afun my children selected (it is either my current afun or 'AuxP' or 'AuxC').
-    $cloud->set_afun($new_afun);
-
-    # Let the parent know what I selected for him.
-    return $parent_new_afun;
-}
-
-
-
-#------------------------------------------------------------------------------
 # Examines the last node of the sentence. If it is a punctuation, makes sure
 # that it is attached to the artificial root node. We deviate here from PDT.
 # In PDT, if there is a quotation mark after sentence-terminating period, they
@@ -616,41 +529,6 @@ sub attach_final_punctuation_to_root
                 $child->set_parent($root);
                 $self->set_real_deprel($child, 'PredOrExD');
             }
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Recursively search for coordinations and solve them immediately, i.e. don't
-# collect all first. Use the Coordination object.
-#------------------------------------------------------------------------------
-sub shape_coordination_recursively
-{
-    my $self  = shift;
-    my $root  = shift;
-    my $debug = shift;
-    my $coordination = new Treex::Core::Coordination;
-    my @recursion = $self->detect_coordination($root, $coordination, $debug);
-    if(scalar($coordination->get_conjuncts())>0)
-    {
-        log_info('COORDINATION FOUND') if ($debug);
-        # We have found coordination! Solve it right away.
-        $coordination->shape_prague();
-        # Call recursively on all descendants. (The exact recursive set depends on annotation style.
-        # We got it from detect_coordination().)
-        foreach my $node (@recursion)
-        {
-            $self->shape_coordination_recursively($node, $debug);
-        }
-    }
-    # Call recursively on all children if no coordination detected now.
-    else
-    {
-        foreach my $child ($root->children())
-        {
-            $self->shape_coordination_recursively($child, $debug);
         }
     }
 }
@@ -903,94 +781,6 @@ sub raise_subordinating_conjunctions
                 $parent->set_is_member(0);
             }
         }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Swaps node with its parent. The original parent becomes a child of the node.
-# All other children of the original parent become children of the node. The
-# node also keeps its original children.
-#
-# The lifted node gets the afun of the original parent while the original
-# parent gets a new afun. The conll_deprel attribute is changed, too, to
-# prevent possible coordination destruction.
-#
-# If the original parent had is_member set, the flag will be moved to the
-# lifted node. If the lifted node had is_member set, we must lift the whole
-# coordination! If the original parent is Coord and the lifted node is a shared
-# modifier of coordination, we must be careful with reattaching the original
-# siblings of the lifted node. Only other shared modifiers can be reattached.
-#------------------------------------------------------------------------------
-sub lift_node
-{
-    my $self   = shift;
-    my $node   = shift;
-    my $afun   = shift;             # new afun for the old parent
-    my $parent = $node->parent();
-    confess('Cannot lift a child of the root') if ( $parent->is_root() );
-    my $grandparent = $parent->parent();
-
-    # Lifting a conjunct means lifting the whole coordination!
-    unless($node->is_member())
-    {
-        # Reattach myself to the grandparent.
-        $node->set_parent($grandparent);
-        # If parent is coordination, we need the afun of the conjuncts.
-        $node->set_afun($parent->get_real_afun());
-        $node->set_is_member( $parent->is_member() );
-        $node->set_conll_deprel( $parent->conll_deprel() );
-        # Reattach all previous siblings to myself.
-        foreach my $sibling ( $parent->children() )
-        {
-            # No need to test whether $sibling==$node as we already reattached $node.
-            # If parent is Coord, reattach modifiers but not conjuncts!
-            unless($parent->deprel() eq 'Coord' && ($sibling->is_member() || $sibling->deprel() =~ m/^Aux[GXY]$/))
-            {
-                $sibling->set_parent($node);
-            }
-        }
-        # Reattach the previous parent to myself.
-        $parent->set_parent($node);
-        # If parent is coordination, we must set afun of its conjuncts.
-        $parent->set_real_afun($afun); ##############!!!!!!!!!!!!!!!!!!!!!!!!!!!!! jenže my teď místo afunů pracujeme s deprely!
-        $parent->set_is_member(0);
-        $parent->set_conll_deprel('');
-    }
-    else # lift coordination
-    {
-        my $coordination = new Treex::Core::Coordination;
-        $coordination->detect_prague($parent);
-        # Now redefine parent and grandparent to those of the whole coordination.
-        my $coordroot = $parent;
-        $parent = $grandparent;
-        confess('Cannot lift a child of the root') if ( $parent->is_root() );
-        $grandparent = $parent->parent();
-        # Reattach coordination to the grandparent.
-        $coordination->set_parent($grandparent);
-        # If parent is coordination, we need the afun of the conjuncts.
-        $coordination->set_afun($parent->get_real_afun());
-        $coordroot->set_is_member($parent->is_member());
-        # Reattach all previous siblings to myself.
-        foreach my $sibling ($parent->children())
-        {
-            unless($sibling==$coordroot)
-            {
-                # If parent is Coord, reattach modifiers but not conjuncts!
-                unless($parent->afun() eq 'Coord' && ($sibling->is_member() || $sibling->afun() =~ m/^Aux[GXY]$/))
-                {
-                    $coordination->add_shared_modifier($sibling);
-                }
-            }
-        }
-        # Reattach the previous parent to myself.
-        $coordination->add_shared_modifier($parent);
-        # If parent is coordination, we must set afun of its conjuncts.
-        $parent->set_real_afun($afun);
-        $parent->set_is_member(0);
-        $parent->set_conll_deprel('');
-        $coordination->shape_prague();
     }
 }
 

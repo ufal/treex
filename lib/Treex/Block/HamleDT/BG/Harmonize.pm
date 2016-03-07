@@ -334,7 +334,9 @@ sub process_auxiliary_particles
             # which should not be marked as an infinitive.
             $node->iset->set_verbform('inf');
         } else {   # ще
-            $self->lift_node( $head, 'AuxV' );
+            ###!!! We used to call the inherited method lift node( $head, 'AuxV' ) here.
+            ###!!! The method is now deprecated because it did not handle coordination properly.
+            ###!!! The node raising should be done within the phrase model.
         }
     }
     return;
@@ -399,7 +401,9 @@ sub process_auxiliary_verbs
     # Lift the identified nodes.
     foreach my $node (@liftnodes)
     {
-        $self->lift_node( $node, 'AuxV' );
+        ###!!! We used to call the inherited method lift node( $node, 'AuxV' ) here.
+        ###!!! The method is now deprecated because it did not handle coordination properly.
+        ###!!! The node raising should be done within the phrase model.
     }
 }
 

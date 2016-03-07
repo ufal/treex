@@ -827,30 +827,6 @@ sub catch_runaway_conjuncts
 
 
 
-#------------------------------------------------------------------------------
-# Swaps nodes at some edges where the Danish notion of dependency violates the
-# principle of reducibility: nouns attached to determiners, numbers etc.
-######!!!!!!!! DEPRECATED. The superordinated lift_node() method does not handle
-# special classes of nonterminal phrases properly.
-#------------------------------------------------------------------------------
-sub lift_noun_phrases
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $deprel = $node->deprel();
-        if ( $deprel =~ m/^(DetArg|NumArg|PossArg|AdjArg)$/ )
-        {
-            $self->lift_node( $node, 'Atr' );
-        }
-    }
-}
-
-
-
-
 1;
 
 =over

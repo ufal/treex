@@ -2,7 +2,6 @@ package Treex::Block::HamleDT::NL::Harmonize;
 use utf8;
 use Moose;
 use Treex::Core::Common;
-use Treex::Core::Cloud;
 use Treex::Tool::PhraseBuilder::AlpinoToPrague;
 extends 'Treex::Block::HamleDT::Harmonize';
 

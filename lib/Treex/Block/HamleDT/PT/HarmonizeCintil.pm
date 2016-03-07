@@ -1,7 +1,8 @@
 package Treex::Block::HamleDT::PT::HarmonizeCintil;
+use utf8;
 use Moose;
 use Treex::Core::Common;
-use utf8;
+use Treex::Tool::PhraseBuilder::MoscowToPrague;
 extends 'Treex::Block::HamleDT::Harmonize';
 
 has '+iset_driver' => (default=>'pt::cintil');
@@ -64,6 +65,10 @@ sub process_zone {
         $self->fix_lemma($node);
 
         # Conversion from dependency relation tags to afuns (analytical function tags)
+        ###!!! Note that all harmonization blocks in HamleDT have switched from afuns to deprels.
+        ###!!! HamleDT needs deprels (not afuns) later when the data is converted to Universal Dependencies.
+        ###!!! DZ: I am not changing it here because I understand that afuns are needed upstream when working with Cintil.
+        ###!!! But perhaps it would be better to do harmonization without afuns and later copy deprels to afuns in a separate block, if afuns are needed.
         my $afun = $self->guess_afun($node);
         $node->set_afun($afun || 'NR');
     }
@@ -71,14 +76,21 @@ sub process_zone {
     # See HamleDT::Harmonize for implementation details.
     $self->attach_final_punctuation_to_root($root);
 
-    # See HamleDT::Harmonize and detect_coordination() for implementation details.
-    $self->restructure_coordination($root);
+    # See Treex::Tool::PhraseBuilder::BasePhraseBuilder for implementation details.
+    # Phrase-based implementation of tree transformations (7.3.2016).
+    my $builder = new Treex::Tool::PhraseBuilder::MoscowToPrague
+    (
+        'prep_is_head'           => 1,
+        'coordination_head_rule' => 'last_coordinator'
+    );
+    my $phrase = $builder->build($root);
+    $phrase->project_dependencies();
 
     # Adverbs (including rhematizers) should not depend on prepositions.
     foreach my $node (@nodes) {
         $self->rehang_rhematizers($node);
     }
-    
+
     return;
 }
 
@@ -132,7 +144,7 @@ sub fix_form {
 
     # For some strange reason feminine definite singular articles are capitalized in CINTIL.
     $form = 'a' if $form eq 'A' && $node->ord > 1;
-    
+
     $node->set_form($form);
     return;
 }
@@ -170,7 +182,7 @@ sub guess_afun {
         $node->wild->{conjunct} = 1;
         return 'CoordArg';
     }
-   
+
     if ($deprel eq 'C') {
         return 'Adv' if $pos eq 'noun';
         return 'Obj' if $pos eq 'verb';
@@ -186,20 +198,6 @@ sub guess_afun {
     return 'AuxA' if $node->iset->adjtype eq 'art'; # articles
 
     return $CINTIL_DEPREL_TO_AFUN{$node->conll_deprel};
-}
-
-sub detect_coordination {
-    my ($self, $node, $coordination, $debug) = @_;
-    $coordination->detect_moscow($node);
-    # The caller does not know where to apply recursion because it depends on annotation style.
-    # Return all conjuncts and shared modifiers for the Prague family of styles.
-    # Return non-head conjuncts, private modifiers of the head conjunct and all shared modifiers for the Stanford family of styles.
-    # (Do not return delimiters, i.e. do not return all original children of the node. One of the delimiters will become the new head and then recursion would fall into an endless loop.)
-    # Return orphan conjuncts and all shared and private modifiers for the other styles.
-    my @recurse = grep {$_ != $node} ($coordination->get_conjuncts());
-    push(@recurse, $coordination->get_shared_modifiers());
-    push(@recurse, $coordination->get_private_modifiers($node));
-    return @recurse;
 }
 
 # The surface sentence cannot be stored in the CoNLL format,
@@ -270,7 +268,7 @@ sub rehang_rhematizers {
 
 1;
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::HamleDT::PT::HarmonizeCintil
 
@@ -287,4 +285,3 @@ Martin Popel <popel@ufal.mff.cuni.cz>
 Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
-
