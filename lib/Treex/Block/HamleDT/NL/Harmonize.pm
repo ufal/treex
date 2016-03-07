@@ -3,6 +3,7 @@ use utf8;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Cloud;
+use Treex::Tool::PhraseBuilder::AlpinoToPrague;
 extends 'Treex::Block::HamleDT::Harmonize';
 
 
@@ -29,7 +30,7 @@ sub process_zone
     my $zone   = shift;
     my $root = $self->SUPER::process_zone( $zone );
     # Phrase-based implementation of tree transformations (22.1.2016).
-    my $builder = new Treex::Tool::PhraseBuilder::Prague ###!!! AlpinoToPrague?
+    my $builder = new Treex::Tool::PhraseBuilder::AlpinoToPrague
     (
         'prep_is_head'           => 1,
         'coordination_head_rule' => 'last_coordinator'
@@ -37,15 +38,10 @@ sub process_zone
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
     $self->attach_final_punctuation_to_root($root);
-    ###!!!$self->restructure_coordination($root);
     # Fix interrogative pronouns before subordinating conjunctions because the treebank wants us to think they are the same.
     $self->fix_int_rel_words($root);
     $self->fix_int_rel_prepositional_phrases($root);
     $self->fix_int_rel_phrases($root);
-    ###!!! WE WANT TO MOVE THIS UNDER THE PHRASE BUILDER!
-    # Shifting deprels at prepositions and subordinating conjunctions must be done after coordinations are solved
-    # and with special care at places where prepositions and coordinations interact.
-    $self->process_prep_sub_arg_cloud($root);
     $self->fix_naar_toe($root);
     $self->fix_als($root);
     $self->lift_commas($root);
@@ -381,27 +377,6 @@ sub fix_annotation_errors
             $parent->set_parent($nodes[$i+1]);
         }
     }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Detects coordination in the shape we expect to find it in the Dutch treebank.
-#------------------------------------------------------------------------------
-sub detect_coordination
-{
-    my $self = shift;
-    my $node = shift;
-    my $coordination = shift;
-    my $debug = shift;
-    $coordination->detect_alpino($node);
-    $coordination->capture_commas();
-    # The caller does not know where to apply recursion because it depends on annotation style.
-    # Return all conjuncts and shared modifiers for the Prague family of styles.
-    # Return orphan conjuncts and all shared and private modifiers for the other styles.
-    my @recurse = $coordination->get_conjuncts();
-    push(@recurse, $coordination->get_shared_modifiers());
-    return @recurse;
 }
 
 

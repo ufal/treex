@@ -394,6 +394,9 @@ sub detect_moscow_coordination
                 my $dord = $d->ord();
                 last if($dord>$cmax && !$last);
                 next if($dord<$cmin && !$first);
+                # If conjunct subtrees grow through each other, the ord attribute may not be safe to determine which comma is whose.
+                # As a sanity check, skip dependents that have been grabbed by another conjunct.
+                next if($d->is_core_child());
                 # Coordinating conjunctions.
                 # In PDT they are labeled AuxY but other words in the tree may get
                 # that label too. We identify it as 'cc' and use the dialect vocabulary
@@ -531,6 +534,21 @@ sub add_punctuation_to_coordination
 
 
 #------------------------------------------------------------------------------
+# A debugging function. Takes a phrase, gets its head node, traverses the
+# dependency up to the root, finds all nodes in the dependency tree and returns
+# their word forms in one string.
+#------------------------------------------------------------------------------
+sub get_sentence_for_phrase
+{
+    my $self = shift;
+    my $phrase = shift;
+    my $sentence = join(' ', map {$_->form()} ($phrase->node()->get_root()->get_descendants({'ordered' => 1})));
+    return $sentence;
+}
+
+
+
+#------------------------------------------------------------------------------
 # A debugging function. When constructing a Treex::Core::Phrase::Coordination,
 # no node can be listed as conjunct and delimiter at the same time. If
 # everything in this class is done correctly, this will not happen. But if
@@ -545,7 +563,7 @@ sub check_coordination_components_for_duplicities
     my $conjuncts = shift; # ArrayRef
     my $coordinators = shift; # ArrayRef
     my $punctuation = shift; # ArrayRef
-    my $sentence = join(' ', map {$_->form()} ($phrase->node()->get_root()->get_descendants({'ordered' => 1})));
+    my $sentence = $self->get_sentence_for_phrase($phrase);
     my $conjstr = join(' ', map {$_->node()->form().'-'.$_->ord()} (@{$conjuncts}));
     my $coorstr = join(' ', map {$_->node()->form().'-'.$_->ord()} (@{$coordinators}));
     my $puncstr = join(' ', map {$_->node()->form().'-'.$_->ord()} (@{$punctuation}));
@@ -675,6 +693,12 @@ sub surround_nterm_by_coordination
     # input phrase so that we can use them in the new Coordination phrase.
     foreach my $d (@{$conjuncts}, @{$coordinators}, @inpunct)
     {
+        if($d->is_core_child())
+        {
+            log_warn($self->get_sentence_for_phrase($phrase));
+            log_warn($d->as_string());
+            log_warn('The phrase is already core child of another phrase and it cannot participate in the new coordination.');
+        }
         $d->set_parent(undef);
     }
     # Create a new Coordination phrase.

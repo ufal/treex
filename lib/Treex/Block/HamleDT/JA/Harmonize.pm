@@ -28,7 +28,7 @@ sub process_zone
 {
     my $self   = shift;
     my $zone   = shift;
-    my $a_root = $self->SUPER::process_zone($zone);
+    my $root = $self->SUPER::process_zone($zone);
     # Phrase-based implementation of tree transformations (5.3.2016).
     my $builder = new Treex::Tool::PhraseBuilder::MoscowToPrague
     (
@@ -37,8 +37,8 @@ sub process_zone
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
-    $self->attach_final_punctuation_to_root($a_root);
-    $self->check_deprels($a_root);
+    $self->attach_final_punctuation_to_root($root);
+    $self->check_deprels($root);
 }
 
 
