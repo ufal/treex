@@ -26,6 +26,12 @@ sub get_align_info {
         foreach my $align_node (@{$gold_aligns->{$lang}}) {
             my $partial_info = $align_node->wild->{align_info};
             next if (!defined $partial_info);
+            if (!ref($partial_info)) {
+                my ($other_lang) = grep {$_ ne $lang} @all_langs;
+                $partial_info = {
+                    $other_lang => $partial_info,
+                };
+            }
             foreach my $part_lang (keys %$partial_info) {
                 if (defined $align_info->{$part_lang}) {
                     log_warn "The align_info wild attribute already set for language $part_lang in one of the nodes gold-aligned to ".$align_node->id.". Overwriting it with a new value.";
