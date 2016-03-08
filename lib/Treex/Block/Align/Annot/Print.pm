@@ -190,11 +190,11 @@ sub _linearize_ttree {
 }
 
 sub _linearize_ttree_structured {
-    my ($ttree, $highlight_arr) = @_;
+    my ($zone, $highlight_arr) = @_;
     
     my $highlight_indic = { map {$_->id => $_} grep {defined $_} @$highlight_arr };
 
-    my ($sub_root) = $ttree->get_children({ordered => 1});
+    my ($sub_root) = $zone->get_ttree->get_children({ordered => 1});
     my $str = _linearize_subtree_recur($sub_root, $highlight_indic);
     return $str;
 }

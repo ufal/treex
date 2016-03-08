@@ -59,6 +59,7 @@ sub get_types {
 
 sub matches {
     my ($tnode, $node_types) = @_;
+    return 1 if (!@$node_types);
 
     my $types;
     if (defined $tnode->wild->{filter_types}) {
