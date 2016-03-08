@@ -252,10 +252,6 @@ sub convert_deprels
             log_warn( "Missing deprel for node " . $node->form() . "/" . $node->tag() . "/" . $node->conll_deprel() );
         }
     }
-
-    # Once all nodes have hopefully their deprels, prepositions must delegate their deprels to their children.
-    # (Don't do this earlier. If appositions are postpositions, we would be copying deprels that don't exist yet.)
-    $self->process_prep_sub_arg_cloud($root);
 }
 
 

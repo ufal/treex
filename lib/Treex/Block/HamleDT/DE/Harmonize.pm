@@ -520,8 +520,8 @@ sub process_tiger_prepositional_phrases
                     $preparg = $prepchildren[0];
                 }
             }
-            # Labeling of the preposition and its noun is a complex task and it interferes with other prepositions, subordinating conjunctions and coordinations.
-            # We leave it for further processing in process_prep_sub_arg_cloud(). However, we must make sure that the noun is temporarily labeled PrepArg.
+            # Labeling of the preposition and its noun is a complex task and it interferes with other prepositions, subordinating conjunctions and with coordination.
+            # We leave it for further processing in the phrase builder. However, we must make sure that the noun is temporarily labeled PrepArg.
             # And more importantly, we must reattach all the other children from the preposition to the noun.
             ###!!! If we worked with afun instead of deprel, we would use set_real_afun() instead of set_afun().
             ###!!! If the current deprel of $preparg is Coord or AuxC, we cannot simply replace it because it would violate other assumptions about the tree!
