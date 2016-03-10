@@ -12,8 +12,20 @@ sub _create_coref_graph {
         foreach my $anaph ($ttree->get_descendants({ ordered => 1 })) {
             
             my @antes = $anaph->get_coref_nodes;
+            if (scalar @antes == 1) {
+                $graph->add_edge( $anaph, $antes[0] );
+            }
+            # split antecedents - A, B, and A+B treat as 3 separate entities => do not add links between A (B) an A+B
+            elsif (scalar @antes > 1) {
+                foreach my $ante (@antes) {
+                    $graph->add_vertex( $ante );
+                }
+            }
+            # split antecedent represented as SUB_SET bridging
+            my ($br_antes, $br_types) = $anaph->get_bridging_nodes();
+            @antes = map {$br_antes->[$_]} grep {$br_types->[$_] eq "SUB_SET"} 0..$#$br_antes;
             foreach my $ante (@antes) {
-                $graph->add_edge( $anaph, $ante );
+                $graph->add_vertex( $ante );
             }
         }
     }
