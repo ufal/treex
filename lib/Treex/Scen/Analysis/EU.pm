@@ -31,6 +31,7 @@ sub get_scenario_string {
     $self->gazetteer && defined $self->trg_lang ? 'W2A::GazeteerMatch trg_lang='.$self->trg_lang.' filter_id_prefixes="'.$self->gazetteer.'"' : (),
     'W2A::EU::TagAndParse',
     'HamleDT::EU::Harmonize iset_driver=eu::eustagger',
+    q(Util::Eval anode='$.set_afun($.deprel)'),
     'W2A::EU::FixTagAndParse',
     'W2A::EU::FixModalVerbs',
     'A2T::EU::MarkEdgesToCollapse',
