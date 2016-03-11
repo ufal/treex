@@ -44,6 +44,14 @@ has trg_lang => (
     documentation => 'Gazetteers are defined for language pairs. Both source and target languages must be specified.',
 );
 
+has valframes => (
+     is => 'ro',
+     isa => 'Bool',
+     default => 0,
+     documentation => 'Set valency frame references to valency dictionary?',
+);
+
+
 sub get_scenario_string {
     my ($self) = @_;
 
@@ -97,6 +105,7 @@ sub get_scenario_string {
     'A2T::FixAtomicNodes',
     'A2T::CS::SetGrammatemes',
     'A2T::SetSentmod',
+    $self->valframes ? 'A2T::CS::SetValencyFrameRefVW' : (),
     'A2T::CS::MarkReflexivePassiveGen',
     'A2T::CS::FixNonthirdPersSubj',
     'A2T::CS::AddPersPron',

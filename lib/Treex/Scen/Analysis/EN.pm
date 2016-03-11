@@ -44,6 +44,13 @@ has trg_lang => (
     documentation => 'Gazetteers are defined for language pairs. Both source and target languages must be specified.',
 );
 
+has valframes => (
+     is => 'ro',
+     isa => 'Bool',
+     default => 0,
+     documentation => 'Set valency frame references to valency dictionary?',
+);
+
 # TODO Add parameter
 # has memory => (
 #     is => 'ro',
@@ -131,6 +138,7 @@ sub get_scenario_string {
     'A2T::EN::FixRelClauseNoRelPron',
     $self->functors eq 'VW' ? 'A2T::EN::SetFunctorsVW' : (),
     $self->functors eq 'VW' ? 'A2T::SetNodetype' : (), # fix nodetype changes induced by functors
+    $self->valframes ? 'A2T::EN::SetValencyFrameRefVW' : (),
     'A2T::EN::MarkReferentialIt resolver_type=nada threshold=0.5 suffix=nada_0.5', # you need Treex::External::NADA installed for this
     'A2T::EN::FindTextCoref',
     ;
@@ -191,6 +199,11 @@ simple = A2T::EN::SetFunctors
 MLProcess = A2T::EN::SetFunctors2 (functors trained from PEDT, extra 2GB RAM needed)
 
 VW = A2T::EN::SetFunctorsVW (VowpalWabbit model trained on PEDT)
+
+=head2 valframes (boolean)
+
+Set valency frame references (IDs in the EngVallex dictionary) indicating the word sense
+of all verbs (defaults to 0)?
 
 =head1 AUTHORS
 
