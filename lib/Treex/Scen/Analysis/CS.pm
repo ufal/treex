@@ -25,7 +25,7 @@ has ner => (
 
 has functors => (
      is => 'ro',
-     isa => enum( [qw(MLProcess simple)] ),
+     isa => enum( [qw(MLProcess simple VW)] ),
      default => 'MLProcess',
      documentation => 'Which analyzer of functors to use',
 );
@@ -91,7 +91,8 @@ sub get_scenario_string {
     'A2T::CS::SetFormeme use_version=2 fix_prep=0',
     'A2T::CS::SetDiathesis',
     $self->functors eq 'MLProcess' ? 'A2T::CS::SetFunctors memory=2g' : (),
-    'A2T::CS::SetMissingFunctors',
+    $self->functors eq 'VW' ? 'A2T::CS::SetFunctorsVW' : (),
+    $self->functors eq 'MLProcess' ? 'A2T::CS::SetMissingFunctors': (),
     'A2T::SetNodetype',
     'A2T::FixAtomicNodes',
     'A2T::CS::SetGrammatemes',

@@ -25,7 +25,7 @@ has ner => (
 
 has functors => (
      is => 'ro',
-     isa => enum( [qw(simple MLProcess)] ),
+     isa => enum( [qw(simple MLProcess VW)] ),
      default => 'simple',
      documentation => 'Which analyzer of functors to use',
 );
@@ -129,6 +129,8 @@ sub get_scenario_string {
     'A2T::EN::AddCorAct',
     'T2T::SetClauseNumber',
     'A2T::EN::FixRelClauseNoRelPron',
+    $self->functors eq 'VW' ? 'A2T::EN::SetFunctorsVW' : (),
+    $self->functors eq 'VW' ? 'A2T::SetNodetype' : (), # fix nodetype changes induced by functors
     'A2T::EN::MarkReferentialIt resolver_type=nada threshold=0.5 suffix=nada_0.5', # you need Treex::External::NADA installed for this
     'A2T::EN::FindTextCoref',
     ;
@@ -182,11 +184,13 @@ NameTag = A2N::EN::NameTag
 
 Stanford = A2N::EN::StanfordNamedEntities model=ner-eng-ie.crf-3-all2008.ser.gz
 
-=head2 functors (simple, MLProcess)
+=head2 functors (simple, MLProcess, VW)
 
 simple = A2T::EN::SetFunctors
 
 MLProcess = A2T::EN::SetFunctors2 (functors trained from PEDT, extra 2GB RAM needed)
+
+VW = A2T::EN::SetFunctorsVW (VowpalWabbit model trained on PEDT)
 
 =head1 AUTHORS
 
@@ -194,6 +198,6 @@ Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2015-2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
