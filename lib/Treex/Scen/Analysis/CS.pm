@@ -92,7 +92,7 @@ sub get_scenario_string {
     'A2T::CS::SetDiathesis',
     $self->functors eq 'MLProcess' ? 'A2T::CS::SetFunctors memory=2g' : (),
     $self->functors eq 'VW' ? 'A2T::CS::SetFunctorsVW' : (),
-    $self->functors eq 'MLProcess' ? 'A2T::CS::SetMissingFunctors': (),
+    $self->functors ne 'VW' ? 'A2T::CS::SetMissingFunctors': (),
     'A2T::SetNodetype',
     'A2T::FixAtomicNodes',
     'A2T::CS::SetGrammatemes',
@@ -146,6 +146,6 @@ Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2015-2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
