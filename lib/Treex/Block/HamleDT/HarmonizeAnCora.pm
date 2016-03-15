@@ -452,17 +452,30 @@ sub convert_deprels
         # to be the one that registered
         # TREE: ser ( registrar/atr ( el/spec , que/relatiu , va/v ) )
         ###!!! We would like to restructure this latter example.
+        # Occasionally it is a relative determiner attached to a noun, as in "el Care, cuya firma da derecho..." ... relatiu(firma, cuya); suj(da_derecho, firma).
         elsif($deprel eq 'relatiu')
         {
-            $deprel = 'PrepArg';
+            if($parent->is_noun())
+            {
+                $deprel = 'Atr';
+            }
+            else
+            {
+                $deprel = 'PrepArg';
+            }
         }
         # Head of subordinate clause. Example:
         # litres que han arribat al riu
         # liters that have reached the river
         # TREE: litres ( arribat/S ( que/suj , han/v , al/cc ( riu/sn ) ) )
+        # Infinitive under preposition is also 'S': ... para asegurar la provisión ...
         elsif($deprel eq 'S')
         {
-            if($ppos eq 'noun')
+            if($pos eq 'verb' && $ppos eq 'adp')
+            {
+                $deprel = 'SubArg';
+            }
+            elsif($ppos eq 'noun')
             {
                 $deprel = 'Atr';
             }
@@ -487,9 +500,17 @@ sub convert_deprels
         # una selva petita
         # a small forest
         # TREE: selva ( una/spec , petita/s.a )
+        # Sometimes it is the head of a nounless prepositional phrase: fabricantes de electrónica.ADJ.
         elsif($deprel eq 's.a')
         {
-            $deprel = 'Atr';
+            if($ppos eq 'adp')
+            {
+                $deprel = 'PrepArg';
+            }
+            else
+            {
+                $deprel = 'Atr';
+            }
         }
         # Adjective phrase that depends on a verb.
         # (But in reality, many occurrences I saw do not depend on a verb. Are they annotation errors?)
@@ -512,9 +533,17 @@ sub convert_deprels
             }
         }
         # Adverb phrase.
+        # Occasionally the adverb may appear with a preposition, as in "de ayer" ("ayer" is tagged ADV, not NOUN).
         elsif($deprel eq 'sadv')
         {
-            $deprel = 'Adv';
+            if($ppos eq 'adp')
+            {
+                $deprel = 'PrepArg';
+            }
+            else
+            {
+                $deprel = 'Adv';
+            }
         }
         # Main predicate or other main head if there is no predicate.
         elsif($deprel eq 'sentence')
