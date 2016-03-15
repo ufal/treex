@@ -332,6 +332,10 @@ sub convert_deprels
             {
                 $deprel = 'amod';
             }
+            elsif($node->is_adverb())
+            {
+                $deprel = 'advmod';
+            }
             elsif($node->is_verb())
             {
                 $deprel = 'acl';
@@ -717,6 +721,44 @@ sub split_tokens_on_underscore
                     }
                 }
             }
+            # MW verbs are light-verb constructions such as "tener en cuenta", "tomar en cuenta", "llevarse a cabo", "cerrar en banda", "dar derecho".
+            elsif($node->is_verb())
+            {
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'compound');
+                my $iset_hash = $node->iset()->get_hash();
+                $self->tag_nodes(\@subnodes, $iset_hash);
+                my $n = scalar(@subnodes);
+                # Two-word compound verbs. The expected decomposition is VERB+NOUN, as in "dar derecho".
+                # Occasionally the second word is infinitive, as in [ca] "fer servir".
+                if($n==2 && $subnodes[1]->is_verb() && lc($subnodes[1]->form()) ne 'servir')
+                {
+                    my $form = $subnodes[1]->form();
+                    my $number = $form =~ m/s$/i ? 'plur' : 'sing';
+                    my $gender = $form =~ m/os?$/i ? 'masc' : $form =~ m/as?$/i ? 'fem' : '';
+                    $subnodes[1]->set_tag('NOUN');
+                    $subnodes[1]->iset()->set_hash({'pos' => 'noun', 'nountype' => 'com', 'gender' => $gender, 'number' => $number});
+                }
+                # Most verb compounds consist of three words. The expected decomposition is VERB+ADP+NOUN, as in "tener en cuenta" / "tenir en compte".
+                # Occasionally, there can be infinitive instead of the noun, as in [ca] "donar a conèixer", "to give to know" = "release, publish".
+                elsif($n==3)
+                {
+                    $subnodes[1]->set_parent($subnodes[2]);
+                    my $form = $subnodes[2]->form();
+                    if($form eq 'conèixer')
+                    {
+                        $subnodes[2]->iset()->set_hash({'pos' => 'verb', 'verbform' => 'inf'});
+                        $subnodes[1]->set_deprel('mark');
+                    }
+                    else
+                    {
+                        my $number = $form =~ m/s$/i ? 'plur' : 'sing';
+                        my $gender = $form =~ m/os?$/i ? 'masc' : $form =~ m/as?$/i ? 'fem' : '';
+                        $subnodes[2]->set_tag('NOUN');
+                        $subnodes[2]->iset()->set_hash({'pos' => 'noun', 'nountype' => 'com', 'gender' => $gender, 'number' => $number});
+                        $subnodes[1]->set_deprel('case');
+                    }
+                }
+            }
             # MW interjections: bendita sea (bless her), cómo no, qué caramba, qué mala suerte
             elsif($node->is_interjection())
             {
@@ -728,7 +770,6 @@ sub split_tokens_on_underscore
             else # all other multi-word expressions
             {
                 # MW numerals such es "cuatro de cada diez".
-                # MW verbs are light-verb constructios such es "tener en cuenta".
                 my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'compound');
                 my $iset_hash = $node->iset()->get_hash();
                 $self->tag_nodes(\@subnodes, $iset_hash);
