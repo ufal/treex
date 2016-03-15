@@ -600,6 +600,15 @@ sub split_tokens_on_underscore
                 my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'mwe');
                 $self->tag_nodes(\@subnodes, {'pos' => 'noun', 'nountype' => 'com'});
             }
+            # MW determiners or pronouns: [ca] el seu, la seva; [es] el mío; [pt] todo o
+            # We want to attach both parts separately to the current parent. But only if they work as determiners.
+            # When Spanish "el mío" is the subject of the sentence, then "mío" should be pronoun and "el" should be attached to it as 'det'.
+            elsif($node->is_determiner() && $node->deprel() eq 'det' && scalar(@words)==2)
+            {
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'det');
+                $self->tag_nodes(\@subnodes, {'pos' => 'adj', 'prontype' => 'art'});
+                $subnodes[1]->set_parent($subnodes[0]->parent());
+            }
             # MW adjectives: de moda, ex comunista, non grato
             elsif($node->is_adjective() && !$node->is_pronominal())
             {
@@ -909,8 +918,10 @@ sub tag_nodes
             'nostre'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'sing', 'possnumber' => 'plur'}, # ca
             'nostra'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'sing', 'possnumber' => 'plur'}, # ca
             'nostres'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'number' => 'plur', 'possnumber' => 'plur'}, # ca
-            # Other determiners.
+            # Other determiners and pronouns.
             'aquel' => {'pos' => 'adj', 'prontype' => 'dem', 'gender' => 'masc', 'number' => 'sing'},
+            'todo'  => {'pos' => 'adj', 'prontype' => 'tot', 'gender' => 'masc', 'number' => 'sing'},
+            'tot'   => {'pos' => 'adj', 'prontype' => 'tot', 'gender' => 'masc', 'number' => 'sing'},
             # Numerals.
             'zero'   => {'pos' => 'num', 'numtype' => 'card'},
             'cero'   => {'pos' => 'num', 'numtype' => 'card'},
@@ -994,6 +1005,9 @@ sub tag_nodes
             'milió'  => {'pos' => 'num', 'numtype' => 'card'},
             'millón' => {'pos' => 'num', 'numtype' => 'card'},
             'milhão' => {'pos' => 'num', 'numtype' => 'card'},
+            # nouns
+            'ejemplo' => {'pos' => 'noun', 'nountype' => 'com', 'gender' => 'masc', 'number' => 'sing'},
+            'embargo' => {'pos' => 'noun', 'nountype' => 'com', 'gender' => 'masc', 'number' => 'sing'},
         },
         'ca' =>
         {
@@ -1025,10 +1039,10 @@ sub tag_nodes
     # Note that "a" in Portuguese can be either ADP or DET. Within a multi-word preposition we will only consider DET if it is neither the first nor the last word of the expression.
     my $adp = "a|amb|ante|con|d${ap}|de|des|em|en|entre|hasta|in|para|pels?|per|por|sem|sin|sob|sobre";
     my $sconj = 'como|que|si';
-    my $conj = 'e|i|ni|o|ou|sino|sinó|y';
+    my $conj = 'e|i|mentre|mientras|ni|o|ou|sino|sinó|y';
     # In addition a few open-class words that appear in multi-word prepositions.
     my $adj = 'baix|bell|bons|certa|cierto|debido|devido|especial|gran|grande|igual|junt|junto|larga|libre|limpio|maior|mala|mesmo|mismo|muitas|nou|nuevo|otro|outro|poca|primeiro|próximo|qualquer|rara|segundo';
-    my $adv = 'abaixo|acerca|acima|además|agora|ahí|ahora|aí|além|ali|alrededor|amén|antes|aparte|apesar|aquando|aqui|aquí|asi|así|bien|cerca|cómo|cuando|darrere|debaixo|debajo|delante|dentro|después|detrás|diante|encima|enfront|enllà|enlloc|enmig|entonces|entorn|ja|já|juntament|lejos|longe|luego|mais|más|menos|menys|més|mucho|muchísimo|només|onde|poco|poquito|pouco|prop|quando|quant|quanto|sempre|siempre|tard|tarde|ya';
+    my $adv = 'abaixo|acerca|acima|además|agora|ahí|ahora|aí|així|além|ali|alrededor|amén|antes|aparte|apesar|aquando|aqui|aquí|asi|así|bien|cerca|cómo|cuando|darrere|debaixo|debajo|delante|dentro|después|detrás|diante|encara|encima|enfront|enllà|enlloc|enmig|entonces|entorn|fins|ja|já|juntament|lejos|longe|luego|mais|más|menos|menys|més|mucho|muchísimo|només|onde|poco|poquito|pouco|prop|quando|quant|quanto|sempre|siempre|sólo|tard|tarde|ya';
     for(my $i = 0; $i <= $#{$nodes}; $i++)
     {
         my $node = $nodes->[$i];
