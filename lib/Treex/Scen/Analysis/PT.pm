@@ -50,7 +50,6 @@ sub get_scenario_string {
     #'Util::SetGlobal lxsuite_key=' . $self->lxsuite_key,
     'W2A::ResegmentSentences',
     'W2A::PT::LXSuite',
-    'W2A::PT::TokenizeAndTag',
     'W2A::PT::FixTags',
     'W2A::NormalizeForms',
     'W2A::MarkChunks min_quotes=3',
