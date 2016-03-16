@@ -1044,7 +1044,10 @@ sub classify_prague_pp_subphrases
             push(@mwauxp, $d);
         }
         # Punctuation should never represent an argument of a preposition (provided we have solved any coordinations on lower levels).
-        elsif($d->node()->is_punctuation())
+        ###!!! But what if our target coordination style is Prague? Then the coordination phrase is still represented by punctuation!
+        ###!!! So we cannot ask anything about $d->node(). But we can query $d->deprel() and we should get the deprel of the entire coordination.
+        #elsif($d->node()->is_punctuation())
+        elsif($self->is_deprel($d->deprel(), 'punct'))
         {
             push(@punc, $d);
         }
