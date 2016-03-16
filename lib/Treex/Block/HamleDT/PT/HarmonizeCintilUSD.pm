@@ -1,7 +1,8 @@
 package Treex::Block::HamleDT::PT::HarmonizeCintilUSD;
+use utf8;
 use Moose;
 use Treex::Core::Common;
-use utf8;
+use Treex::Tool::PhraseBuilder::StanfordToPrague;
 extends 'Treex::Block::HamleDT::Harmonize';
 
 has iset_driver =>
@@ -26,7 +27,7 @@ has punctuation_spaces_marked =>
 
 #------------------------------------------------------------------------------
 # Reads the Portuguese tree, converts morphosyntactic tags to Interset,
-# converts deprel tags to afuns, transforms tree to adhere to the HamleDT
+# converts dependency relations, transforms tree to adhere to the HamleDT
 # guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
@@ -36,12 +37,19 @@ sub process_zone
     my $root = $self->SUPER::process_zone($zone);
 
     # Adjust the tree structure.
+    # Phrase-based implementation of tree transformations (7.3.2016).
+    my $builder = new Treex::Tool::PhraseBuilder::StanfordToPrague
+    (
+        'prep_is_head'           => 1,
+        'coordination_head_rule' => 'last_coordinator'
+    );
+    my $phrase = $builder->build($root);
+    $phrase->project_dependencies();
     $self->attach_final_punctuation_to_root($root);
-    $self->restructure_coordination($root);
     $self->raise_function_words($root);
     $self->fix_comparative_constructions($root);
-    # Make sure that all nodes have known afuns.
-    $self->check_afuns($root);
+    # Make sure that all nodes have known deprels.
+    $self->check_deprels($root);
 
     # $zone->sentence should contain the (surface, detokenized) sentence string.
     $self->fill_sentence($root);
@@ -66,10 +74,10 @@ sub process_zone
 }
 
 #------------------------------------------------------------------------------
-# Convert dependency relation tags to analytical functions.
+# Convert dependency relation labels.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub convert_deprels
 {
     my $self  = shift;
     my $root  = shift;
@@ -77,8 +85,13 @@ sub deprel_to_afun
     foreach my $node (@nodes)
     {
         my $parent = $node->parent();
-        my $deprel = $node->conll_deprel();
-        my $afun   = 'NR';
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
         # Attributes that we may have to query.
         my $plemma = $parent->lemma();
         # Convert the labels.
@@ -86,147 +99,147 @@ sub deprel_to_afun
         # Example: a vw ainda não tomou qualquer decisão , porque estão a analisar/ADVCL as várias hipóteses
         if($deprel eq 'ADVCL')
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
         # Adverb that functions as adverbial modifier.
         # Example: muito barato
         elsif($deprel eq 'ADVMOD')
         {
-            # The negation ("not") is also labeled ADVMOD but we want the afun Neg for it.
+            # The negation ("not") is also labeled ADVMOD but we want the deprel Neg for it.
             # Example: Hoje o Manuel não comprou um livro.
             # Translation: Today Manuel did not buy a book.
             if(lc($node->form()) eq 'não')
             {
-                $afun = 'Neg';
+                $deprel = 'Neg';
             }
             else
             {
-                $afun = 'Adv';
+                $deprel = 'Adv';
             }
         }
         # Adjectival modifier of a noun.
         # Example: um computador barato
         elsif($deprel eq 'AMOD')
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
         # Apposition. (The examples do not seem similar to what PDT calls apposition.)
         # Example: uma grande vitória para mim/APPOS [APPOS(vitória, mim)]
         elsif($deprel eq 'APPOS')
         {
-            $afun = 'Apposition';
+            $deprel = 'Apposition';
         }
         # Auxiliary verb. The examples seem to be reversed. In the following, infinitive is attached as AUX to the auxiliary verb "vai":
         # Example: o governo vai hoje assinar/AUX um protocolo
         elsif($deprel eq 'AUX')
         {
-            $afun = 'AuxV'; ###!!! Jak by tohle vypadalo v PDT?
+            $deprel = 'AuxV'; ###!!! Jak by tohle vypadalo v PDT?
         }
         # Preposition attached to its nominal argument is labeled CASE.
         # Example: em_/CASE o armazém
         elsif($deprel eq 'CASE')
         {
-            $afun = 'AuxP';
+            $deprel = 'AuxP';
         }
         # Coordinating conjunction. At least this is the meaning of CC in the original Stanford Dependencies.
         # CINTIL seems to hide the real conjunction but it does not hesitate to label CC the comma in a multi-conjunct coordination.
         # Example: a retirada militar de hebron , os colonatos judeus [CC(colonatos, ,), PARATAXIS(retirada, colonatos)]
         elsif($deprel eq 'CC')
         {
-            $afun = 'AuxY';
+            $deprel = 'AuxY';
             $node->wild()->{coordinator} = 1;
         }
         # Clausal complement of a predicate.
         # Example: sei que a herança não é boa/CCOMP
         elsif($deprel eq 'CCOMP')
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
         # Complement (adverbial?)
         # Example: vivem aqui/COMP
         elsif($deprel eq 'COMP')
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
         # Non-first conjunct is attached to the first conjunct as CONJ.
         elsif($deprel eq 'CONJ')
         {
-            $afun = 'CoordArg';
+            $deprel = 'CoordArg';
             $node->wild()->{conjunct} = 1;
         }
         # Copula is attached to the nominal predicate.
         # Example: este computador é/COP barato
         elsif($deprel eq 'COP')
         {
-            $afun = 'Cop';
+            $deprel = 'Cop';
         }
         # Clausal subject.
         # Example: quem não ficou satisfeito com o bombardeamento sobre srebrenica foi lord david owen [CSUBJ(lord, satisfeito)] ###!!!???
         elsif($deprel eq 'CSUBJ')
         {
-            $afun = 'Sb';
+            $deprel = 'Sb';
         }
         # Clausal subject of a passive verb.
         ###!!! There are 9 occurrences of CSUBJPASS in the data and they are probably errors. It is assigned to "que" instead of verbs.
         elsif($deprel eq 'CSUBJPASS')
         {
-            $afun = 'Sb';
+            $deprel = 'Sb';
         }
         # Uncategorized dependency.
         # Example: cerca de dois/DEP [DEP(cerca, dois)]
         elsif($deprel eq 'DEP')
         {
-            $afun = 'ExD'; ###!!!???
+            $deprel = 'ExD'; ###!!!???
         }
         # Determiner attached to a noun.
         # Example: o cliente
         elsif($deprel eq 'DET')
         {
-            $afun = 'Atr';
-            ###!!! HamleDT 2.0 does not set the AuxA afun. We should do this in a separate block, so that this block produces HamleDT-compliant output.
+            $deprel = 'Atr';
+            ###!!! HamleDT 2.0 does not set the AuxA deprel. We should do this in a separate block, so that this block produces HamleDT-compliant output.
             ###!!! However, we only use this block in Portuguese analysis for QTLeap, so we can bias it towards that goal.
             ###!!! (The blocks that construct t-trees from a-trees need AuxA to distinguish articles from other determiners.
-            ###!!! They hide all a-nodes with Aux* afuns and articles shall be hidden while other determiners shall not.)
-            $afun = 'AuxA' if($node->iset()->is_article());
+            ###!!! They hide all a-nodes with Aux* deprels and articles shall be hidden while other determiners shall not.)
+            $deprel = 'AuxA' if($node->iset()->is_article());
         }
         # Direct object of verb. (If there is one object, it is direct. If there are more, one of them is direct and the rest are indirect.)
         # Example: o cliente encomendou um computador/DOBJ barato
         elsif($deprel eq 'DOBJ')
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
         # Indirect object of verb. (If there is one object, it is direct. If there are more, one of them is direct and the rest are indirect.)
         # Example: a criança obedece apenas a_ a mãe/IOBJ
         elsif($deprel eq 'IOBJ')
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
         # MARK is typically used for subordinating conjunctions attached to the predicate of the subordinate clause.
         # Example: , porque/MARK o empreiteiro de_ a obra o demoveu [MARK(demoveu, porque)]
         elsif($deprel eq 'MARK')
         {
-            $afun = 'AuxC';
+            $deprel = 'AuxC';
         }
         # Modifier (adjunct of a verb, not realized as an adverb).
         # Example: o manuel foi a_ a loja com a maria/MOD
         elsif($deprel eq 'MOD')
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
         # Multi-word expression.
         # Example: vinte/NUMMOD e/MWE dois/MWE computadores
         elsif($deprel eq 'MWE')
         {
             # A head-first phrase with all dependents labeled Atr is the behavior closest to PDT.
-            #$afun = 'MWE'; ###!!! Atr?
-            $afun = 'Atr';
+            #$deprel = 'MWE'; ###!!! Atr?
+            $deprel = 'Atr';
         }
         # NCMOD ###!!!??? It looks like failed conversion of prepositional phrases.
         # Example: chegam discretamente junto/PREPC a_ a cruz alta [PREPC(chegam, junto); NCMOD(junto, cruz)]
         ###!!! It does not occur in the corrected data of 2014-10-15.
         elsif($deprel eq 'NCMOD')
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
         # Negation?
         # Example: que nem/NEG sequer devia ter começado [NEG(devia, nem)]
@@ -234,27 +247,27 @@ sub deprel_to_afun
         # Translation: that should not even have started
         elsif($deprel eq 'NEG')
         {
-            $afun = 'Neg';
+            $deprel = 'Neg';
         }
         # Noun phrase that functions as an adverbial modifier.
         # Example: o elemento feminino está favorecido esta semana/NPADVMOD
         ###!!! It does not occur in the corrected data of 2014-10-15.
         elsif($deprel eq 'NPADVMOD')
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
         # Noun phrase that functions as subject.
         # Example: este computador/NSUBJ é baratíssimo
         elsif($deprel eq 'NSUBJ')
         {
-            $afun = 'Sb';
+            $deprel = 'Sb';
         }
         # Nominal subject of a passive clause.
         # Example: sabemos que os prémios/NSUBJPASS são devidos
         ###!!! It does not occur in the corrected data of 2014-10-15.
         elsif($deprel eq 'NSUBJPASS')
         {
-            $afun = 'Sb';
+            $deprel = 'Sb';
         }
         # Numerical modifier (cardinal number modifying a counted noun).
         # The NUMMOD label is used for numbers expressed as words.
@@ -263,7 +276,7 @@ sub deprel_to_afun
         ###!!! It does not occur in the corrected data of 2014-10-15.
         elsif($deprel eq 'NUMMOD')
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
         # Number expressed using digits. It may have the same function as NUMMOD.
         # Example: tinha 39/NUMBER anos
@@ -271,62 +284,62 @@ sub deprel_to_afun
         ###!!! It does not occur in the corrected data of 2014-10-15.
         elsif($deprel eq 'NUMBER')
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
         # Parataxis. Loosely attached clause.
         # Example: analisamos , dialogamos/PARATAXIS
         elsif($deprel eq 'PARATAXIS')
         {
-            $afun = 'ExD';
+            $deprel = 'ExD';
         }
         # Prepositional object of verb.
         # Example: o cliente estava contentíssimo com a compra/POBJ
         elsif($deprel eq 'POBJ')
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
         # Possessive modifier.
         # Example: de_ os seus/POSS países balcânicos
         elsif($deprel eq 'POSS')
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
         # Modifier of a possessive modifier.
         # Example: os seus próprios programas [POSSESSIVE(seus, próprios)]
         ###!!! It does not occur in the corrected data of 2014-10-15.
         elsif($deprel eq 'POSSESSIVE')
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
         # Some coordinating conjunctions are attached as PRECONJ and I do not know why.
         # Example: nem o restaurante... [PRECONJ(restaurante, nem)]
         elsif($deprel eq 'PRECONJ')
         {
-            $afun = 'AuxY';
+            $deprel = 'AuxY';
         }
         # Predeterminer.
         # Example: quase/DET tudo/PREDET [PREDET(quase, tudo)]
         elsif($deprel eq 'PREDET')
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
         # PREPC ###!!!??? It looks like failed conversion of prepositional phrases.
         # Example: chegam discretamente junto/PREPC a_ a cruz alta [PREPC(chegam, junto); NCMOD(junto, cruz)]
         ###!!! It does not occur in the corrected data of 2014-10-15.
         elsif($deprel eq 'PREPC')
         {
-            $afun = 'AuxP';
+            $deprel = 'AuxP';
         }
         # Punctuation.
         elsif($deprel eq 'PUNCT')
         {
             if($node->form() eq ',')
             {
-                $afun = 'AuxX';
+                $deprel = 'AuxX';
             }
             else
             {
-                $afun = 'AuxG';
+                $deprel = 'AuxG';
             }
         }
         # Modifier of quantity??? ###!!!
@@ -335,32 +348,27 @@ sub deprel_to_afun
         ###!!! It does not occur in the corrected data of 2014-10-15.
         elsif($deprel eq 'QUANTMOD')
         {
-            $afun = 'AuxP';
+            $deprel = 'AuxP';
         }
         # Root token, child of the artificial root node. Typically the main predicate.
         elsif($deprel eq 'ROOT')
         {
-            $afun = 'Pred'; ###!!! nebo ExD
+            $deprel = 'Pred'; ###!!! nebo ExD
         }
         # Clausal complement that does not have its independent subject.
         # It is controlled by a higher clause and its subject is either subject or object of the higher clause.
         # Example: nenhum membro quis falar/XCOMP
         elsif($deprel eq 'XCOMP')
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
-        $node->set_afun($afun);
+        $node->set_deprel($deprel);
     }
-    # Fix known annotation errors. They include coordination, i.e. the tree may now not be valid.
-    # We should fix it now, before the superordinate class will perform other tree operations.
-    $self->fix_annotation_errors($root);
 }
 
 
 #------------------------------------------------------------------------------
-# Fixes a few known annotation errors that appear in the data. Should be called
-# from deprel_to_afun() so that it precedes any tree operations that the
-# superordinate class may want to do.
+# Fixes a few known annotation errors that appear in the data.
 #------------------------------------------------------------------------------
 sub fix_annotation_errors
 {
@@ -375,37 +383,14 @@ sub fix_annotation_errors
         # (ter, haver). For some reason, the input data also use it with
         # arguments of phasal verbs, e.g. in "A encomenda acabou por chegar.",
         # there is AUX(acabou, chegar).
-        if($node->afun() eq 'AuxV' && $node->lemma() !~ m/^(ter|haver)$/i) #|ser|poder|dever|ir|vir|estar|ficar|continuar)$/i)
+        if($node->deprel() eq 'AuxV' && $node->lemma() !~ m/^(ter|haver)$/i) #|ser|poder|dever|ir|vir|estar|ficar|continuar)$/i)
         {
             log_warn($node->get_address());
             $self->log_sentence($root);
             log_warn("A node is attached as AUX but its lemma is ".$node->lemma());
-            $node->set_afun('Obj');
+            $node->set_deprel('Obj');
         }
     }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Detects coordination in the Stanford shape.
-#------------------------------------------------------------------------------
-sub detect_coordination
-{
-    my $self = shift;
-    my $node = shift;
-    my $coordination = shift;
-    my $debug = shift;
-    $coordination->detect_stanford($node);
-    # The caller does not know where to apply recursion because it depends on annotation style.
-    # Return all conjuncts and shared modifiers for the Prague family of styles.
-    # Return non-head conjuncts, private modifiers of the head conjunct and all shared modifiers for the Stanford family of styles.
-    # (Do not return delimiters, i.e. do not return all original children of the node. One of the delimiters will become the new head and then recursion would fall into an endless loop.)
-    # Return orphan conjuncts and all shared and private modifiers for the other styles.
-    my @recurse = grep {$_ != $node} ($coordination->get_conjuncts());
-    push(@recurse, $coordination->get_shared_modifiers());
-    push(@recurse, $coordination->get_private_modifiers($node));
-    return @recurse;
 }
 
 
@@ -425,7 +410,7 @@ sub raise_function_words
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
-        if($node->afun() eq 'Cop' && $node->is_leaf() && !$node->is_member())
+        if($node->deprel() eq 'Cop' && $node->is_leaf() && !$node->is_member())
         {
             my $parent = $node->parent();
             if(defined($parent))
@@ -434,10 +419,10 @@ sub raise_function_words
                 if(defined($grandparent))
                 {
                     $node->set_parent($grandparent);
-                    $node->set_afun($parent->afun());
+                    $node->set_deprel($parent->deprel());
                     $node->set_is_member($parent->is_member());
                     $parent->set_parent($node);
-                    $parent->set_afun('Pnom');
+                    $parent->set_deprel('Pnom');
                     $parent->set_is_member(0);
                     # Find subject, if any (it is not forbidden to find even more (non-coordinate), although it would be strange).
                     my @subjects = grep {$_->get_real_afun() eq 'Sb'} $parent->children();
@@ -457,7 +442,7 @@ sub raise_function_words
                 }
             }
         }
-        elsif($node->afun() eq 'AuxP' && $node->is_leaf() && !$node->is_member())
+        elsif($node->deprel() eq 'AuxP' && $node->is_leaf() && !$node->is_member())
         {
             my $parent = $node->parent();
             if(defined($parent))
@@ -465,7 +450,7 @@ sub raise_function_words
                 my $grandparent = $parent->parent();
                 if(defined($grandparent))
                 {
-                    if(defined($grandparent->afun()) && $grandparent->afun() eq 'AuxP')
+                    if(defined($grandparent->deprel()) && $grandparent->deprel() eq 'AuxP')
                     {
                         log_warn('Attaching a preposition under another preposition');
                     }
@@ -481,9 +466,9 @@ sub raise_function_words
 }
 
 #------------------------------------------------------------------------------
-# "maior de(afun=AuxY,parent=que) o(afun=AuxY,parent=que) que(deprel=DEP,afun=ExD,parent=Maria) Maria(deprel=Dep,afun=ExD,parent=maior)"
+# "maior de(deprel=AuxY,parent=que) o(deprel=AuxY,parent=que) que(deprel=DEP,deprel=ExD,parent=Maria) Maria(deprel=Dep,deprel=ExD,parent=maior)"
 # ->
-# "maior de(afun=AuxC,parent=que) o(afun=AuxC,parent=que) que(deprel=DEP,afun=AuxC,parent=maior) Maria(deprel=Dep,afun=Obj,parent=que)"
+# "maior de(deprel=AuxC,parent=que) o(deprel=AuxC,parent=que) que(deprel=DEP,deprel=AuxC,parent=maior) Maria(deprel=Dep,deprel=Obj,parent=que)"
 #------------------------------------------------------------------------------
 sub fix_comparative_constructions
 {
@@ -497,9 +482,9 @@ sub fix_comparative_constructions
             next if any {!$_->is_conjunction} @conjunction_nodes;
             foreach my $conj_node (@conjunction_nodes)
             {
-                $conj_node->set_afun('AuxC');
+                $conj_node->set_deprel('AuxC');
             }
-            $parent->set_afun('Obj');
+            $parent->set_deprel('Obj');
             $node->set_parent($parent->get_parent());
             $parent->set_parent($node);
         }
@@ -622,8 +607,8 @@ sub fill_sentence
 # Some adverbs (mostly rhematizers "apenas", "mesmo", ...) depend on
 # a preposition ("de", "a") in CINTIL. However, prepositions should have only
 # one child in the HamleDT/Prague style (except for multi-word prepositions).
-# E.g. "A encomenda está mesmo(afun=Adv,parent=em_,newparent=armazém) em_ o armazém . "
-#      "A criança obedece apenas(afun=Adv,parent=a_,newparent=mãe) a_ a mãe ."
+# E.g. "A encomenda está mesmo(deprel=Adv,parent=em_,newparent=armazém) em_ o armazém . "
+#      "A criança obedece apenas(deprel=Adv,parent=a_,newparent=mãe) a_ a mãe ."
 # Should we differentiate the scope of the rhematizer:
 # "The child obeys only the mother" and "The child only obeys the mother"?
 #------------------------------------------------------------------------------

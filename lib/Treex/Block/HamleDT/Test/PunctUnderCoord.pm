@@ -3,20 +3,25 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Test::BaseTester';
 
-sub process_anode {
-    my ($self, $anode) = @_;
-
-    if (($anode->afun || '') eq 'Coord') {
-
-	my $leftmost = $anode->get_descendants({first_only=>1});
-	my $rightmost = $anode->get_descendants({last_only=>1});
-
-	# take all punctuations that conflicts with the coordination and rehang them to the coord node
-	my (@puncts) = grep {$_->ord > $leftmost->ord && $_->ord < $rightmost->ord && $_->form =~ m/^[[:punct:]]+$/} $anode->get_siblings;
-
-	if( scalar @puncts > 0) {
-	    $self->complain($anode);
-	}
+sub process_anode
+{
+    my $self = shift;
+    my $node = shift;
+    if(($node->deprel() || '') eq 'Coord')
+    {
+        my $leftmost = $node->get_descendants({first_only=>1});
+        my $rightmost = $node->get_descendants({last_only=>1});
+        if(defined($leftmost) && defined($rightmost))
+        {
+            my $lord = $leftmost->ord();
+            my $rord = $rightmost->ord();
+            # Find all punctuation symbols that conflict with the coordination.
+            my (@punct) = grep {$_->ord() > $lord && $_->ord() < $rord && $_->form() =~ m/^[[:punct:]]+$/} $node->get_siblings();
+            if(scalar(@punct) > 0)
+            {
+                $self->complain($node);
+            }
+        }
     }
 }
 
@@ -33,5 +38,5 @@ Punctuation should not appear as a sibling of a coordination if it is between th
 =cut
 
 # Copyright 2012 Jindra Helcl
+# Copyright 2015 Dan Zeman
 # This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
-

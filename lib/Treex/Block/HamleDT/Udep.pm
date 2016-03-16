@@ -3,11 +3,11 @@ use utf8;
 use open ':utf8';
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::PhraseBuilder;
+use Treex::Tool::PhraseBuilder::PragueToUD;
 extends 'Treex::Core::Block';
 
-has 'last_file_stem' => ( is => 'rw', isa => 'Str', default => '' );
-has 'sent_in_file'   => ( is => 'rw', isa => 'Int', default => 0 );
+has 'last_loaded_from' => ( is => 'rw', isa => 'Str', default => '' );
+has 'sent_in_file'     => ( is => 'rw', isa => 'Int', default => 0 );
 
 
 
@@ -23,14 +23,15 @@ sub process_zone
     # (In any case, Write::CoNLLU will print the sentence id. But this additional
     # information is also very useful for debugging, as it ensures a user can find the sentence in Tred.)
     my $bundle = $zone->get_bundle();
-    my $file_stem = $bundle->get_document()->file_stem();
-    if($file_stem eq $self->last_file_stem())
+    my $loaded_from = $bundle->get_document()->loaded_from(); # the full path to the input file
+    my $file_stem = $bundle->get_document()->file_stem(); # this will be used in the comment
+    if($loaded_from eq $self->last_loaded_from())
     {
         $self->set_sent_in_file($self->sent_in_file() + 1);
     }
     else
     {
-        $self->set_last_file_stem($file_stem);
+        $self->set_last_loaded_from($loaded_from);
         $self->set_sent_in_file(1);
     }
     my $sent_in_file = $self->sent_in_file();
@@ -50,7 +51,8 @@ sub process_zone
     $self->exchange_tags($root);
     $self->fix_symbols($root);
     $self->fix_annotation_errors($root);
-    $self->afun_to_udeprel($root);
+    $self->convert_deprels($root);
+    $self->remove_null_pronouns($root);
     $self->split_tokens_on_underscore($root);
     $self->relabel_appos_name($root);
     # The most difficult part is detection of coordination, prepositional and
@@ -61,7 +63,7 @@ sub process_zone
     # below say how should the resulting dependency tree look like. The code
     # of the builder knows how the INPUT tree looks like (including the deprels
     # already converted from Prague to the UD set).
-    my $builder = new Treex::Tool::PhraseBuilder
+    my $builder = new Treex::Tool::PhraseBuilder::PragueToUD
     (
         'prep_is_head'           => 0,
         'cop_is_head'            => 0,
@@ -148,10 +150,9 @@ sub fix_symbols
             if($node->form() =~ m/^[\+=]$/)
             {
                 $node->iset()->set('pos', 'sym');
-                if($node->afun() eq 'AuxG')
+                if($node->deprel() eq 'AuxG')
                 {
-                    $node->set_afun('AuxY');
-                    $node->set_deprel('cc');
+                    $node->set_deprel('AuxY');
                 }
             }
             # Slash '/' can be punctuation or mathematical symbol.
@@ -159,10 +160,9 @@ sub fix_symbols
             elsif($node->form() eq '/' && !$node->is_leaf() && !$node->is_coap_root())
             {
                 $node->iset()->set('pos', 'sym');
-                if($node->afun() eq 'AuxG')
+                if($node->deprel() eq 'AuxG')
                 {
-                    $node->set_afun('AuxY');
-                    $node->set_deprel('cc');
+                    $node->set_deprel('AuxY');
                 }
                 my $parent = $node->parent();
                 my @children = $node->children();
@@ -176,10 +176,9 @@ sub fix_symbols
         elsif($node->form() eq 'x' && $node->is_conjunction())
         {
             $node->iset()->set('pos', 'sym');
-            if($node->afun() eq 'AuxG')
+            if($node->deprel() eq 'AuxG')
             {
-                $node->set_afun('AuxY');
-                $node->set_deprel('cc');
+                $node->set_deprel('AuxY');
             }
         }
     }
@@ -192,16 +191,15 @@ sub fix_symbols
 # This new version (2015-03-25) is meant to act before any structural changes,
 # even before coordination gets reshaped.
 #------------------------------------------------------------------------------
-sub afun_to_udeprel
+sub convert_deprels
 {
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $afun = $node->afun();
-        $afun = '' if(!defined($afun));
-        my $deprel;
+        my $deprel = $node->deprel();
+        $deprel = '' if(!defined($deprel));
         my $parent = $node->parent();
         # The top nodes (children of the root) must be labeled 'root'.
         # However, this will be solved elsewhere (and tree transformations may
@@ -211,9 +209,9 @@ sub afun_to_udeprel
         # We will temporarily extend the label if it heads coordination so that the coordination can later be reshaped properly.
         if($node->is_punctuation())
         {
-            if($afun eq 'Coord')
+            if($deprel eq 'Coord')
             {
-                $deprel = 'punct:coord';
+                $deprel = 'coord';
             }
             else
             {
@@ -221,36 +219,36 @@ sub afun_to_udeprel
             }
         }
         # Coord marks the conjunction that heads a coordination.
-        # (Punctuation heading coordination has been processed earlier and temporarily labeled 'punct:coord'.)
+        # (Punctuation heading coordination has been processed earlier.)
         # Coordinations will be later restructured and the conjunction will be attached as 'cc'.
-        elsif($afun eq 'Coord')
+        elsif($deprel eq 'Coord')
         {
-            $deprel = 'cc:coord';
+            $deprel = 'coord';
         }
         # AuxP marks a preposition. There are two possibilities:
         # 1. It heads a prepositional phrase. The relation of the phrase to its parent is marked at the argument of the preposition.
         # 2. It is a leaf, attached to another preposition, forming a multi-word preposition. (In this case the word can be even a noun.)
         # Prepositional phrases will be later restructured. In the situation 1, the preposition will be attached to its argument as 'case'.
         # In the situation 2, the first word in the multi-word prepositon will become the head and all other parts will be attached to it as 'mwe'.
-        elsif($afun eq 'AuxP')
+        elsif($deprel eq 'AuxP')
         {
-            $deprel = 'case:auxp';
+            $deprel = 'case';
         }
         # AuxC marks a subordinating conjunction that heads a subordinate clause.
         # It will be later restructured and the conjunction will be attached to the subordinate predicate as 'mark'.
-        elsif($afun eq 'AuxC')
+        elsif($deprel eq 'AuxC')
         {
-            $deprel = 'mark:auxc';
+            $deprel = 'mark';
         }
-        # Predicate: If the node is not the main predicate of the sentence and it has the Pred afun,
+        # Predicate: If the node is not the main predicate of the sentence and it has the Pred deprel,
         # then it is probably the main predicate of a parenthetical expression.
         # Exception: predicates of coordinate main clauses. This must be solved after coordinations have been reshaped. ###!!! TODO
-        elsif($afun eq 'Pred')
+        elsif($deprel eq 'Pred')
         {
             $deprel = 'parataxis';
         }
         # Subject: nsubj, nsubjpass, csubj, csubjpass
-        elsif($afun eq 'Sb')
+        elsif($deprel eq 'Sb')
         {
             # Is the parent a passive verb?
             ###!!! This will not catch reflexive passives. TODO: Catch them.
@@ -266,7 +264,7 @@ sub afun_to_udeprel
             }
         }
         # Object: dobj, iobj, ccomp, xcomp
-        elsif($afun eq 'Obj')
+        elsif($deprel eq 'Obj')
         {
             ###!!! If a verb has two or more objects, we should select one direct object and the others will be indirect.
             ###!!! We would probably have to consider all valency frames to do that properly.
@@ -277,18 +275,25 @@ sub afun_to_udeprel
             ###!!! TODO: But if the infinitive is part of periphrastic future, then it is ccomp, not xcomp!
             $deprel = $node->is_verb() ? ($node->is_infinitive() ? 'xcomp' : 'ccomp') : 'dobj';
         }
+        # Nominal predicate attached to a copula verb.
+        elsif($deprel eq 'Pnom')
+        {
+            # We will later transform the structure so that copula depends on the nominal predicate.
+            # The 'pnom' label will disappear and the inverted relation will be labeled 'cop'.
+            $deprel = 'pnom';
+        }
         # Adverbial modifier: advmod, nmod, advcl
         # Note: UD also distinguishes the relation neg. In Czech, most negation is done using bound morphemes.
         # Separate negative particles exist but they are either ExD (replacing elided negated "to be") or AuxZ ("ne poslední zvýšení cen").
         # Examples: ne, nikoli, nikoliv, ani?, vůbec?
         # I am not sure that we want to distinguish them from the other AuxZ using the neg relation.
         # AuxZ words are mostly adverbs, coordinating conjunctions and particles. Other parts of speech are extremely rare.
-        elsif($afun eq 'Adv')
+        elsif($deprel eq 'Adv')
         {
             $deprel = $node->is_verb() ? 'advcl' : $node->is_noun() ? 'nmod' : 'advmod';
         }
         # Attribute of a noun: amod, nummod, nmod, acl
-        elsif($afun eq 'Atr')
+        elsif($deprel eq 'Atr')
         {
             # Cardinal number is nummod, ordinal number is amod. It should not be a problem because Interset should categorize ordinals as special types of adjectives.
             # But we cannot use the is_numeral() method because it returns true if pos=num or if numtype is not empty.
@@ -327,6 +332,10 @@ sub afun_to_udeprel
             {
                 $deprel = 'amod';
             }
+            elsif($node->is_adverb())
+            {
+                $deprel = 'advmod';
+            }
             elsif($node->is_verb())
             {
                 $deprel = 'acl';
@@ -336,20 +345,20 @@ sub afun_to_udeprel
                 $deprel = 'nmod';
             }
         }
-        # AuxA is not an official afun used in HamleDT 2.0. Nevertheless it has been introduced in some (not all)
+        # AuxA is not an official deprel used in HamleDT 2.0. Nevertheless it has been introduced in some (not all)
         # languages by people who want to use the resulting data in TectoMT. It marks articles attached to nouns.
-        elsif($afun eq 'AuxA')
+        elsif($deprel eq 'AuxA')
         {
             $deprel = 'det';
         }
         # Verbal attribute is analyzed as secondary predication.
         ###!!! TODO: distinguish core arguments (xcomp) from non-core arguments and adjuncts (acl/advcl).
-        elsif($afun =~ m/^AtvV?$/)
+        elsif($deprel =~ m/^AtvV?$/)
         {
             $deprel = 'xcomp';
         }
         # Auxiliary verb "být" ("to be"): aux, auxpass
-        elsif($afun eq 'AuxV')
+        elsif($deprel eq 'AuxV')
         {
             $deprel = $parent->iset()->is_passive() ? 'auxpass' : 'aux';
             # Side effect: We also want to modify Interset. The PDT tagset does not distinguish auxiliary verbs but UPOS does.
@@ -358,7 +367,7 @@ sub afun_to_udeprel
         # Reflexive pronoun "se", "si" with inherently reflexive verbs.
         # Unfortunately, previous harmonization to the Prague style abused the AuxT label to also cover Germanic verbal particles and other compound-like stuff with verbs.
         # We have to test for reflexivity if we want to output expl!
-        elsif($afun eq 'AuxT')
+        elsif($deprel eq 'AuxT')
         {
             # This appears in Slavic languages, although in theory it could be used in some Romance and Germanic languages as well.
             # It actually also appears in Dutch (but we mixed it with verbal particles there).
@@ -367,7 +376,7 @@ sub afun_to_udeprel
             {
                 $deprel = 'expl';
             }
-            # The Tamil afun CC (compound) has also been converted to AuxT. 11 out of 12 occurrences are tagged as verbs.
+            # The Tamil deprel CC (compound) has also been converted to AuxT. 11 out of 12 occurrences are tagged as verbs.
             elsif($node->is_verb())
             {
                 $deprel = 'compound';
@@ -384,12 +393,12 @@ sub afun_to_udeprel
             }
         }
         # Reflexive pronoun "se", "si" used for reflexive passive.
-        elsif($afun eq 'AuxR')
+        elsif($deprel eq 'AuxR')
         {
             $deprel = 'auxpass:reflex';
         }
         # AuxZ: intensifier or negation
-        elsif($afun eq 'AuxZ')
+        elsif($deprel eq 'AuxZ')
         {
             # Negation is mostly done using bound prefix ne-.
             # If it is a separate word ("ne už personálním, ale organizačním"; "potřeboval čtyřnohého a ne dvounohého přítele), it is labeled AuxZ.
@@ -414,25 +423,17 @@ sub afun_to_udeprel
             }
         }
         # Neg: used in Prague-style harmonization of some treebanks (e.g. Romanian) for negation (elsewhere it may be AuxZ or Adv).
-        elsif($afun eq 'Neg')
+        elsif($deprel eq 'Neg')
         {
             $deprel = 'neg';
         }
         # AuxY: Additional conjunction in coordination ... cc
         # AuxY: Subordinating conjunction "jako" ("as") attached to Atv or AtvV, or even Obj (of verbal adjectives) ... mark
-        elsif($afun eq 'AuxY')
+        elsif($deprel eq 'AuxY')
         {
             if(lc($node->form()) eq 'jako')
             {
-                if(defined($parent->form()) && lc($parent->form()) eq 'když')
-                {
-                    # Since "když" is probably also mark:auxc, this will make "jako když" a multi-word conjunction.
-                    $deprel = 'mark:auxc';
-                }
-                else
-                {
-                    $deprel = 'mark';
-                }
+                $deprel = 'mark';
             }
             else
             {
@@ -440,19 +441,19 @@ sub afun_to_udeprel
             }
         }
         # AuxO: redundant "to" or "si" ("co to znamená pátý postulát dokázat").
-        elsif($afun eq 'AuxO')
+        elsif($deprel eq 'AuxO')
         {
             $deprel = 'discourse';
         }
         # Apposition
-        elsif($afun eq 'Apposition')
+        elsif($deprel eq 'Apposition')
         {
             $deprel = 'appos';
         }
         # Punctuation
         ###!!! Since we now label all punctuation (decided by Interset) as punct,
         ###!!! here we only get non-punctuation labeled (by mistake?) AuxG, AuxX or AuxK. What to do with this???
-        elsif($afun eq 'AuxG')
+        elsif($deprel eq 'AuxG')
         {
             # AuxG is intended for graphical symbols other than comma and the sentence-terminating punctuation.
             # It is mostly assigned to punctuation but sometimes to symbols (% $ + x) or even alphanumeric tokens (1 2 3).
@@ -470,15 +471,15 @@ sub afun_to_udeprel
                 $deprel = 'nmod'; ###!!! or nsubj or dobj or whatever
             }
         }
-        elsif($afun =~ m/^Aux[XK]$/)
+        elsif($deprel =~ m/^Aux[XK]$/)
         {
             # AuxX is reserved for commas.
             # AuxK is used for sentence-terminating punctuation, usually a period, an exclamation mark or a question mark.
-            log_warn("Node '".$node->form()."' has afun '$afun' but it is not punctuation.");
+            log_warn("Node '".$node->form()."' has deprel '$deprel' but it is not punctuation.");
             $deprel = 'punct';
         }
         ###!!! TODO: ExD with chains of orphans should be stanfordized!
-        elsif($afun eq 'ExD')
+        elsif($deprel eq 'ExD')
         {
             # Some ExD are vocatives.
             if($node->iset()->case() eq 'voc')
@@ -499,10 +500,38 @@ sub afun_to_udeprel
         # Set up a fallback so that $deprel is always defined.
         else
         {
-            $deprel = 'dep:'.lc($afun);
+            $deprel = 'dep:'.lc($deprel);
         }
         # Save the universal dependency relation label with the node.
         $node->set_deprel($deprel);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# The AnCora treebanks of Catalan and Spanish contain empty nodes representing
+# elided subjects. These nodes are typically leaves (but I don't know whether
+# it is guaranteed). Remove them.
+#------------------------------------------------------------------------------
+sub remove_null_pronouns
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->form() eq '_' && $node->is_pronoun())
+        {
+            if($node->is_leaf())
+            {
+                $node->remove();
+            }
+            else
+            {
+                log_warn('Cannot remove NULL node that is not leaf.');
+            }
+        }
     }
 }
 
@@ -521,66 +550,238 @@ sub split_tokens_on_underscore
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants({'ordered' => 1});
+    my $ap = "'";
     for(my $i = 0; $i <= $#nodes; $i++)
     {
         my $node = $nodes[$i];
-        if($node->form() =~ m/._./)
+        my $form = $node->form();
+        if(defined($form) && $form =~ m/._./)
         {
-            my @words = split(/_/, $node->form());
+            # Preserve the original multi-word expression as a MISC attribute, otherwise we would loose the information.
+            my $mwe = $node->form();
+            $mwe =~ s/&/&amp;/g;
+            $mwe =~ s/\|/&verbar;/g;
+            # Two expressions in Portuguese contain a typo: two consecutive underscores.
+            $mwe =~ s/_+/_/g;
+            my $mwepos = $node->iset()->get_upos();
+            my $wild = $node->wild();
+            my @misc;
+            @misc = split(/\|/, $wild->{misc}) if(exists($wild->{misc}) && defined($wild->{misc}));
+            push(@misc, "MWE=$mwe");
+            push(@misc, "MWEPOS=$mwepos");
+            $wild->{misc} = join('|', @misc);
+            # Remember the attachment of the MWE. It is possible that the first node will not be the head and we will have to attach the new head somewhere.
+            my $mwe_parent = $node->parent();
+            my $mwe_is_member = $node->is_member();
+            my $mwe_deprel = $node->deprel();
+            # Split the multi-word expression.
+            my @words = split(/_/, $mwe);
             my $n = scalar(@words);
+            # Percentage.
+            if($form =~ m/^[^_]+_(per_cent|por_ciento|%)$/i)
+            {
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'nmod');
+                $self->tag_nodes(\@subnodes);
+                if(scalar(@subnodes)==3)
+                {
+                    # Attach "por" to "ciento".
+                    $subnodes[1]->set_parent($subnodes[2]);
+                    $subnodes[1]->set_deprel('case');
+                }
+            }
+            # MW prepositions: a banda de, a causa de, referente a
+            # MW adverbs: al fin, de otro lado, eso sí
+            # MW subordinating conjunctions: al mismo tiempo que, de manera que, en caso de que
+            # MW coordinating conjunctions: así como, mientras que, no sólo, sino también
+            elsif($node->is_adposition() ||
+               $node->is_adverb() ||
+               $node->is_conjunction())
+            {
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'mwe');
+                $self->tag_nodes(\@subnodes, {'pos' => 'noun', 'nountype' => 'com'});
+            }
+            # MW determiners or pronouns: [ca] el seu, la seva; [es] el mío; [pt] todo o
+            # We want to attach both parts separately to the current parent. But only if they work as determiners.
+            # When Spanish "el mío" is the subject of the sentence, then "mío" should be pronoun and "el" should be attached to it as 'det'.
+            elsif($node->is_determiner() && $node->deprel() eq 'det' && scalar(@words)==2)
+            {
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'det');
+                $self->tag_nodes(\@subnodes, {'pos' => 'adj', 'prontype' => 'art'});
+                $subnodes[1]->set_parent($subnodes[0]->parent());
+            }
+            # MW adjectives: de moda, ex comunista, non grato
+            elsif($node->is_adjective() && !$node->is_pronominal())
+            {
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'amod');
+                $self->tag_nodes(\@subnodes, {'pos' => 'adj'});
+                @subnodes = $self->attach_left_function_words(@subnodes);
+                for(my $i = 1; $i <= $#subnodes; $i++)
+                {
+                    if(any {$_->is_adposition()} ($subnodes[$i]->children()))
+                    {
+                        $subnodes[$i]->set_tag('NOUN');
+                        $subnodes[$i]->iset()->set('pos' => 'noun');
+                        $subnodes[$i]->set_deprel('nmod');
+                    }
+                }
+            }
+            # MW nouns: aire acondicionado, cabeza de serie, artigo 1º do código da estrada
+            elsif($node->is_noun() && !$node->is_pronominal() && !$node->is_proper_noun())
+            {
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'compound');
+                $self->tag_nodes(\@subnodes, {'pos' => 'noun', 'nountype' => 'com'});
+                @subnodes = $self->attach_left_function_words(@subnodes);
+            }
             # If the MWE is tagged as proper noun then the words will also be
             # proper nouns and they will be connected using the 'name' relation.
             # We have to ignore that some of these proper "nouns" are in fact
             # adjectives (e.g. "San" in "San Salvador"). But we will not ignore
             # function words such as "de". These are language-specific.
-            if($node->is_proper_noun())
+            elsif($node->is_proper_noun())
             {
-                # Generate nodes for the new words.
-                my @new_nodes = $self->generate_subnodes(\@nodes, $i, \@words, 'name');
-                # Were there any function words? Approximation: all-lowercase words within named entities are probably function words.
-                ###!!! Note that this will not recognize a function word if it is the first word of the MWE (the articles are likely to occur first).
-                my @fw = grep {lc($_) eq $_} (@words);
-                # Relatively easy: three or more words, the second word from right is /(de|do|da|dos|das)/.
-                if($n >= 3 && scalar(@fw) == 1 && $words[$n-2] =~ m/^(de|do|da|dos|das)$/)
+                # This is currently the only type of MWE where a non-first node may become the head (in case of coordination).
+                # Thus we have to temporarily reset the is_member flag (and later carry it over to the new head).
+                ###!!!$node->set_is_member(undef);
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'name');
+                $self->tag_nodes(\@subnodes, {'pos' => 'noun', 'nountype' => 'prop'});
+                # Change the 'name' relation of punctuation and numbers. (Do not touch the head node!)
+                for(my $i = 1; $i<=$#subnodes; $i++)
                 {
-                    # Only now we can reattach the function words. We could not do it before all new nodes were created.
-                    ###!!! We assume that the second word is the only function word albeit we have not checked that the third word is not.
-                    $new_nodes[$n-3]->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep'});
-                    $new_nodes[$n-3]->set_parent($new_nodes[$n-2]);
-                    $new_nodes[$n-3]->set_deprel('case');
+                    if($subnodes[$i]->is_numeral())
+                    {
+                        $subnodes[$i]->set_deprel('nummod');
+                    }
+                    elsif($subnodes[$i]->is_punctuation())
+                    {
+                        $subnodes[$i]->set_deprel('punct');
+                    }
                 }
-                elsif(scalar(@fw) > 0)
+                @subnodes = $self->attach_left_function_words(@subnodes);
+                # Connect clusters of content words. Treat them all as PROPN, albeit some of them are actually adjectives
+                # (Aeropuertos Españoles y Navegación Aérea).
+                my $left_neighbor =$subnodes[0];
+                for(my $i = 1; $i <= $#subnodes; $i++)
                 {
-                    log_warn("Function words in the named entity '".join(' ', @words)."' may not have been attached correctly.");
+                    # If there are no intervening nodes between two proper nouns, connect them.
+                    if($subnodes[$i-1]->is_proper_noun() &&
+                       ($subnodes[$i]->is_proper_noun() || $subnodes[$i]->is_numeral()) &&
+                       ($subnodes[$i]->ord() == $subnodes[$i-1]->ord() + 1 || $left_neighbor->parent() == $subnodes[$i-1]))
+                    {
+                        $subnodes[$i]->set_parent($subnodes[$i-1]);
+                        $left_neighbor = $subnodes[$i];
+                        splice(@subnodes, $i--, 1);
+                    }
+                    else
+                    {
+                        $left_neighbor = $subnodes[$i];
+                    }
+                }
+                # Solve occasional coordination: Ministerio de Agricultura , Pesca y Alimentación
+                # This function is called before trees have been transformed from Prague to UD, so we must construct a Prague coordination here.piopi
+                for(my $i = $#subnodes; $i > 1; $i--)
+                {
+                    if($subnodes[$i-1]->is_coordinator())
+                    {
+                        # Right now the conjunction probably depends on one of the conjuncts.
+                        # If this is the case, reattach it to its grandparent so we can attach the conjunct to the conjunction without creating a cycle.
+                        my $coord = $subnodes[$i-1];
+                        $coord->set_deprel('coord');
+                        if($coord->is_descendant_of($subnodes[$i-2]))
+                        {
+                            $coord->set_parent($subnodes[$i-2]->parent());
+                        }
+                        $subnodes[$i]->set_parent($coord);
+                        $subnodes[$i]->set_is_member(1);
+                        $subnodes[$i-2]->set_parent($coord);
+                        $subnodes[$i-2]->set_is_member(1);
+                        # $subnodes[$i-2] might be the first conjunct. But if there is a comma and another cluster, look further.
+                        my $j = $i-2;
+                        while($j > 1 && $subnodes[$j-1]->form() eq ',')
+                        {
+                            if($coord->is_descendant_of($subnodes[$j-2]))
+                            {
+                                $coord->set_parent($subnodes[$j-2]->parent());
+                            }
+                            $subnodes[$j-1]->set_parent($coord);
+                            $subnodes[$j-1]->set_deprel('punct');
+                            $subnodes[$j-1]->set_is_member(undef);
+                            $subnodes[$j-2]->set_parent($coord);
+                            $subnodes[$j-2]->set_deprel('name');
+                            $subnodes[$j-2]->set_is_member(1);
+                            $j -= 2;
+                        }
+                        splice(@subnodes, $j, $i-$j+1, $coord);
+                        $i = $j+1;
+                    }
+                }
+                ###!!! The 'name' relations should not bypass prepositions.
+                ###!!! Nouns with prepositions should be attached to the head of the prevous cluster as 'nmod', not 'name'.
+                # Now the first subnode is the head even if it is not the original node (Prague coordination).
+                # The parent is set correctly but the is_member flag is not; fix it.
+                $subnodes[0]->set_is_member($mwe_is_member);
+                if($subnodes[0]->deprel() eq 'coord')
+                {
+                    foreach my $child ($subnodes[0]->children())
+                    {
+                        if($child->is_member())
+                        {
+                            $child->set_deprel($mwe_deprel);
+                        }
+                    }
                 }
             }
-            # Compound preposition.
-            elsif($node->is_adposition())
+            # MW verbs are light-verb constructions such as "tener en cuenta", "tomar en cuenta", "llevarse a cabo", "cerrar en banda", "dar derecho".
+            elsif($node->is_verb())
             {
-                # Generate nodes for the new words.
-                my @new_nodes = $self->generate_subnodes(\@nodes, $i, \@words, 'mwe');
-                # abaixo_de, acerca_de, acima_de
-                if($n == 2 && $words[1] =~ m/^(de|a)$/i)
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'compound');
+                my $iset_hash = $node->iset()->get_hash();
+                $self->tag_nodes(\@subnodes, $iset_hash);
+                my $n = scalar(@subnodes);
+                # Two-word compound verbs. The expected decomposition is VERB+NOUN, as in "dar derecho".
+                # Occasionally the second word is infinitive, as in [ca] "fer servir".
+                if($n==2 && $subnodes[1]->is_verb() && lc($subnodes[1]->form()) ne 'servir')
                 {
-                    $node->iset()->set_hash({'pos' => 'adv'});
-                    $new_nodes[0]->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep'});
+                    my $form = $subnodes[1]->form();
+                    my $number = $form =~ m/s$/i ? 'plur' : 'sing';
+                    my $gender = $form =~ m/os?$/i ? 'masc' : $form =~ m/as?$/i ? 'fem' : '';
+                    $subnodes[1]->set_tag('NOUN');
+                    $subnodes[1]->iset()->set_hash({'pos' => 'noun', 'nountype' => 'com', 'gender' => $gender, 'number' => $number});
                 }
-                # à_beira_de, a_cargo_de, a_coberto_de
-                ###!!! but: obra_do_mestre
-                elsif($n == 3)
+                # Most verb compounds consist of three words. The expected decomposition is VERB+ADP+NOUN, as in "tener en cuenta" / "tenir en compte".
+                # Occasionally, there can be infinitive instead of the noun, as in [ca] "donar a conèixer", "to give to know" = "release, publish".
+                elsif($n==3)
                 {
-                    $node->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep'});
-                    $new_nodes[0]->iset()->set_hash({'pos' => 'noun', 'nountype' => 'com'});
-                    $new_nodes[1]->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep'});
+                    $subnodes[1]->set_parent($subnodes[2]);
+                    my $form = $subnodes[2]->form();
+                    if($form eq 'conèixer')
+                    {
+                        $subnodes[2]->iset()->set_hash({'pos' => 'verb', 'verbform' => 'inf'});
+                        $subnodes[1]->set_deprel('mark');
+                    }
+                    else
+                    {
+                        my $number = $form =~ m/s$/i ? 'plur' : 'sing';
+                        my $gender = $form =~ m/os?$/i ? 'masc' : $form =~ m/as?$/i ? 'fem' : '';
+                        $subnodes[2]->set_tag('NOUN');
+                        $subnodes[2]->iset()->set_hash({'pos' => 'noun', 'nountype' => 'com', 'gender' => $gender, 'number' => $number});
+                        $subnodes[1]->set_deprel('case');
+                    }
                 }
-                # desde_há
-                # in_loco
-                # para_os_lados_de
-                # tal_como
-                else
-                {
-                    log_warn("The compound preposition '".join(' ', @words)."' may not have been decomposed correctly.");
-                }
+            }
+            # MW interjections: bendita sea (bless her), cómo no, qué caramba, qué mala suerte
+            elsif($node->is_interjection())
+            {
+                # It is only a few expressions but we would have to analyze them all manually.
+                # Neither mwe nor compound seems to be a good fit for these. Let's get around with 'dep' for the moment.
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'dep');
+                $self->tag_nodes(\@subnodes, {'pos' => 'int'});
+            }
+            else # all other multi-word expressions
+            {
+                # MW numerals such es "cuatro de cada diez".
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'compound');
+                my $iset_hash = $node->iset()->get_hash();
+                $self->tag_nodes(\@subnodes, $iset_hash);
             }
         }
     }
@@ -632,7 +833,340 @@ sub generate_subnodes
         $nodes->[$j]->_set_ord( $ord + $n + ($j - $i - 1) );
     }
     # Return the list of new nodes.
-    return @new_nodes;
+    return ($node, @new_nodes);
+}
+
+
+
+#------------------------------------------------------------------------------
+# A primitive method to tag unambiguous function words in certain Romance
+# languages. Used to tag new nodes when MWE nodes are split. Language
+# dependent! Nodes whose form is not recognized will be left intact.
+#------------------------------------------------------------------------------
+sub tag_nodes
+{
+    my $self = shift;
+    my $nodes = shift; # ArrayRef: nodes that should be (re-)tagged
+    my $default = shift; # HashRef: Interset features to set for unrecognized nodes
+    # Currently supported languages: Catalan, Spanish and Portuguese.
+    # In general, we want to use a mixed dictionary. If there is a foreign named entity (such as Catalan "L'Hospitalet" in Spanish text),
+    # we still want to recognize the "L'" as a determiner. If it was "La", it would become a DET anyway, regardless whether it is
+    # Spanish, Catalan, French or Italian.
+    # However, some words should be in a language-specific dictionary to reduce homonymy.
+    # For example, Portuguese "a" is either a DET or an ADP. In Catalan and Spanish, it is only ADP.
+    # We do not want to extend the Portuguese homonymy issue to the other languages.
+    my $language = $self->language();
+    my $ap = "'";
+    my %dethash =
+    (
+        'all' =>
+        {
+            # Definite and indefinite articles.
+            'el'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
+            'lo'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
+            'la'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'},
+            "l'"  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'number' => 'sing'},
+            'els' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'},
+            'les' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'},
+            'los' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'},
+            'las' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'},
+            'os'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'},
+            'as'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'},
+            'un'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'masc', 'number' => 'sing'},
+            'una' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'fem',  'number' => 'sing'},
+            'um'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'masc', 'number' => 'sing'},
+            'uma' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'fem',  'number' => 'sing'},
+            # Fused preposition + determiner.
+            'al'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # a+el
+            'als'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # a+els
+            'ao'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # a+o
+            'aos'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # a+os
+            'à'     => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # a+a
+            'às'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # a+as
+            'del'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # de+el
+            'dels'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # de+els
+            'do'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # de+o
+            # "dos" is in the language-specific part.
+            'da'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # de+a
+            'das'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # de+as
+            'pelo'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # por+o
+            'pelos' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # por+os
+            'pela'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # por+a
+            'pelas' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # por+as
+            # Possessive determiners.
+            'su'    => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'number' => 'sing'}, # es
+            'sus'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'number' => 'plur'}, # es
+            'suyo'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'masc', 'number' => 'sing'}, # es
+            'suya'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'sing'}, # es
+            'suyos' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'masc', 'number' => 'plur'}, # es
+            'suyas' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'plur'}, # es
+            'seu'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'masc', 'number' => 'sing'}, # ca, pt
+            'seva'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'sing'}, # ca
+            'seus'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'masc', 'number' => 'plur'}, # ca
+            'seves' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'plur'}, # ca
+            'sua'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'sing'}, # pt
+            'mío'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'sing', 'possnumber' => 'sing'}, # es
+            'mía'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'sing', 'possnumber' => 'sing'}, # es
+            'míos'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'plur', 'possnumber' => 'sing'}, # es
+            'mías'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'plur', 'possnumber' => 'sing'}, # es
+            'meu'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'sing', 'possnumber' => 'sing'}, # ca, pt
+            'meus'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'plur', 'possnumber' => 'sing'}, # ca
+            'nuestro'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'sing', 'possnumber' => 'plur'}, # es
+            'nuestra'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'sing', 'possnumber' => 'plur'}, # es
+            'nuestros' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'plur', 'possnumber' => 'plur'}, # es
+            'nuestras' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'plur', 'possnumber' => 'plur'}, # es
+            'nostre'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'sing', 'possnumber' => 'plur'}, # ca
+            'nostra'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'sing', 'possnumber' => 'plur'}, # ca
+            'nostres'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'number' => 'plur', 'possnumber' => 'plur'}, # ca
+            # Other determiners and pronouns.
+            'aquel' => {'pos' => 'adj', 'prontype' => 'dem', 'gender' => 'masc', 'number' => 'sing'},
+            'todo'  => {'pos' => 'adj', 'prontype' => 'tot', 'gender' => 'masc', 'number' => 'sing'},
+            'tot'   => {'pos' => 'adj', 'prontype' => 'tot', 'gender' => 'masc', 'number' => 'sing'},
+            # Numerals.
+            'zero'   => {'pos' => 'num', 'numtype' => 'card'},
+            'cero'   => {'pos' => 'num', 'numtype' => 'card'},
+            # "dos" is in the language-specific part.
+            'dues'   => {'pos' => 'num', 'numtype' => 'card', 'gender' => 'fem'},
+            'dois'   => {'pos' => 'num', 'numtype' => 'card', 'gender' => 'masc'},
+            'duas'   => {'pos' => 'num', 'numtype' => 'card', 'gender' => 'fem'},
+            'tres'   => {'pos' => 'num', 'numtype' => 'card'},
+            'três'   => {'pos' => 'num', 'numtype' => 'card'},
+            'quatre' => {'pos' => 'num', 'numtype' => 'card'},
+            'cuatro' => {'pos' => 'num', 'numtype' => 'card'},
+            'quatro' => {'pos' => 'num', 'numtype' => 'card'},
+            'cinc'   => {'pos' => 'num', 'numtype' => 'card'},
+            'cinco'  => {'pos' => 'num', 'numtype' => 'card'},
+            'sis'    => {'pos' => 'num', 'numtype' => 'card'},
+            'seis'   => {'pos' => 'num', 'numtype' => 'card'},
+            'set'    => {'pos' => 'num', 'numtype' => 'card'},
+            'siete'  => {'pos' => 'num', 'numtype' => 'card'},
+            'sete'   => {'pos' => 'num', 'numtype' => 'card'},
+            'vuit'   => {'pos' => 'num', 'numtype' => 'card'},
+            'ocho'   => {'pos' => 'num', 'numtype' => 'card'},
+            'oito'   => {'pos' => 'num', 'numtype' => 'card'},
+            'nou'    => {'pos' => 'num', 'numtype' => 'card'},
+            'nueve'  => {'pos' => 'num', 'numtype' => 'card'},
+            'nove'   => {'pos' => 'num', 'numtype' => 'card'},
+            'deu'    => {'pos' => 'num', 'numtype' => 'card'},
+            'diez'   => {'pos' => 'num', 'numtype' => 'card'},
+            'dez'    => {'pos' => 'num', 'numtype' => 'card'},
+            'onze'   => {'pos' => 'num', 'numtype' => 'card'},
+            'once'   => {'pos' => 'num', 'numtype' => 'card'},
+            'dotze'  => {'pos' => 'num', 'numtype' => 'card'},
+            'doce'   => {'pos' => 'num', 'numtype' => 'card'},
+            'doze'   => {'pos' => 'num', 'numtype' => 'card'},
+            'tretze' => {'pos' => 'num', 'numtype' => 'card'},
+            'trece'  => {'pos' => 'num', 'numtype' => 'card'},
+            'treze'  => {'pos' => 'num', 'numtype' => 'card'},
+            'catorze' => {'pos' => 'num', 'numtype' => 'card'},
+            'catorce' => {'pos' => 'num', 'numtype' => 'card'},
+            'quinze' => {'pos' => 'num', 'numtype' => 'card'},
+            'quince' => {'pos' => 'num', 'numtype' => 'card'},
+            'setze'  => {'pos' => 'num', 'numtype' => 'card'},
+            'dieciséis' => {'pos' => 'num', 'numtype' => 'card'},
+            'dezasseis' => {'pos' => 'num', 'numtype' => 'card'},
+            'disset' => {'pos' => 'num', 'numtype' => 'card'},
+            'diecisiete' => {'pos' => 'num', 'numtype' => 'card'},
+            'dezassete' => {'pos' => 'num', 'numtype' => 'card'},
+            'divuit' => {'pos' => 'num', 'numtype' => 'card'},
+            'dieciocho' => {'pos' => 'num', 'numtype' => 'card'},
+            'dezoito' => {'pos' => 'num', 'numtype' => 'card'},
+            'dinou'  => {'pos' => 'num', 'numtype' => 'card'},
+            'diecinueve' => {'pos' => 'num', 'numtype' => 'card'},
+            'dezanove' => {'pos' => 'num', 'numtype' => 'card'},
+            'vint'   => {'pos' => 'num', 'numtype' => 'card'},
+            'veinte' => {'pos' => 'num', 'numtype' => 'card'},
+            'vinte'  => {'pos' => 'num', 'numtype' => 'card'},
+            'trenta' => {'pos' => 'num', 'numtype' => 'card'},
+            'treinta' => {'pos' => 'num', 'numtype' => 'card'},
+            'trinta' => {'pos' => 'num', 'numtype' => 'card'},
+            'quaranta' => {'pos' => 'num', 'numtype' => 'card'},
+            'cuaranta' => {'pos' => 'num', 'numtype' => 'card'},
+            'quarenta' => {'pos' => 'num', 'numtype' => 'card'},
+            'cinquanta' => {'pos' => 'num', 'numtype' => 'card'},
+            'cincuenta' => {'pos' => 'num', 'numtype' => 'card'},
+            'cinquenta' => {'pos' => 'num', 'numtype' => 'card'},
+            'seixanta' => {'pos' => 'num', 'numtype' => 'card'},
+            'sesenta' => {'pos' => 'num', 'numtype' => 'card'},
+            'sessenta' => {'pos' => 'num', 'numtype' => 'card'},
+            'setanta' => {'pos' => 'num', 'numtype' => 'card'},
+            'setenta' => {'pos' => 'num', 'numtype' => 'card'},
+            'vuitanta' => {'pos' => 'num', 'numtype' => 'card'},
+            'ochenta' => {'pos' => 'num', 'numtype' => 'card'},
+            'oitenta' => {'pos' => 'num', 'numtype' => 'card'},
+            'noranta' => {'pos' => 'num', 'numtype' => 'card'},
+            'noventa' => {'pos' => 'num', 'numtype' => 'card'},
+            'cent'   => {'pos' => 'num', 'numtype' => 'card'},
+            'cien'   => {'pos' => 'num', 'numtype' => 'card'},
+            'ciento' => {'pos' => 'num', 'numtype' => 'card'},
+            'cem'    => {'pos' => 'num', 'numtype' => 'card'},
+            'cemto'  => {'pos' => 'num', 'numtype' => 'card'},
+            'mil'    => {'pos' => 'num', 'numtype' => 'card'},
+            'milió'  => {'pos' => 'num', 'numtype' => 'card'},
+            'millón' => {'pos' => 'num', 'numtype' => 'card'},
+            'milhão' => {'pos' => 'num', 'numtype' => 'card'},
+            # nouns
+            'ejemplo' => {'pos' => 'noun', 'nountype' => 'com', 'gender' => 'masc', 'number' => 'sing'},
+            'embargo' => {'pos' => 'noun', 'nountype' => 'com', 'gender' => 'masc', 'number' => 'sing'},
+        },
+        'ca' =>
+        {
+            'dos' => {'pos' => 'num', 'numtype' => 'card', 'gender' => 'masc'}, # two
+            'com' => {'pos' => 'conj', 'conjtype' => 'sub'}, # how
+            'no'  => {'pos' => 'part', 'negativeness' => 'neg'},
+        },
+        'es' =>
+        {
+            'dos' => {'pos' => 'num', 'numtype' => 'card'}, # two (both masculine and feminine)
+            'no'  => {'pos' => 'part', 'negativeness' => 'neg'},
+        },
+        'pt' =>
+        {
+            # Definite and indefinite articles.
+            'o'   => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
+            'a'   => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'},
+            # Fused preposition + determiner.
+            'dos' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # de+os
+            'no'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # em+o
+            'nos' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # em+os
+            'na'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # em+a
+            'nas' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # em+as
+            # Other.
+            'com' => {'pos' => 'adp', 'adpostype' => 'prep'}, # with
+            'não' => {'pos' => 'part', 'negativeness' => 'neg'},
+        }
+    );
+    # Note that "a" in Portuguese can be either ADP or DET. Within a multi-word preposition we will only consider DET if it is neither the first nor the last word of the expression.
+    my $adp = "a|amb|ante|con|d${ap}|de|des|em|en|entre|hasta|in|para|pels?|per|por|sem|sin|sob|sobre";
+    my $sconj = 'como|que|si';
+    my $conj = 'e|i|mentre|mientras|ni|o|ou|sino|sinó|y';
+    # In addition a few open-class words that appear in multi-word prepositions.
+    my $adj = 'baix|bell|bons|certa|cierto|debido|devido|especial|gran|grande|igual|junt|junto|larga|libre|limpio|maior|mala|mesmo|mismo|muitas|nou|nuevo|otro|outro|poca|primeiro|próximo|qualquer|rara|segundo';
+    my $adv = 'abaixo|acerca|acima|además|agora|ahí|ahora|aí|així|além|ali|alrededor|amén|antes|aparte|apesar|aquando|aqui|aquí|asi|así|bien|cerca|cómo|cuando|darrere|debaixo|debajo|delante|dentro|después|detrás|diante|encara|encima|enfront|enllà|enlloc|enmig|entonces|entorn|fins|ja|já|juntament|lejos|longe|luego|mais|más|menos|menys|més|mucho|muchísimo|només|onde|poco|poquito|pouco|prop|quando|quant|quanto|sempre|siempre|sólo|tard|tarde|ya';
+    for(my $i = 0; $i <= $#{$nodes}; $i++)
+    {
+        my $node = $nodes->[$i];
+        my $form = lc($node->form());
+        # Current tag of the node is the tag of the multi-word expression. It can help us in resolving the homonymous Portuguese "a".
+        my $current_tag = $node->tag() // '';
+        if($language eq 'pt' && $form eq 'a' && $current_tag eq 'ADP')
+        {
+            if($i==0 || $i==$#{$nodes})
+            {
+                $node->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep'});
+            }
+            else
+            {
+                $node->iset()->set_hash($dethash{$language}{$form});
+            }
+            $node->set_tag($node->iset()->get_upos());
+        }
+        elsif(exists($dethash{$language}{$form}))
+        {
+            $node->iset()->set_hash($dethash{$language}{$form});
+            $node->set_tag($node->iset()->get_upos());
+        }
+        elsif(exists($dethash{all}{$form}))
+        {
+            $node->iset()->set_hash($dethash{all}{$form});
+            $node->set_tag($node->iset()->get_upos());
+        }
+        elsif($form =~ m/^($adp)$/i)
+        {
+            $node->set_tag('ADP');
+            $node->iset()->set_hash({'pos' => 'adp', 'adpostype' => 'prep'});
+        }
+        elsif($form =~ m/^($sconj)$/i)
+        {
+            $node->set_tag('SCONJ');
+            $node->iset()->set_hash({'pos' => 'conj', 'conjtype' => 'sub'});
+        }
+        elsif($form =~ m/^($conj)$/i)
+        {
+            $node->set_tag('CONJ');
+            $node->iset()->set_hash({'pos' => 'conj', 'conjtype' => 'coor'});
+        }
+        elsif($form =~ m/^($adj)$/i)
+        {
+            $node->set_tag('ADJ');
+            $node->iset()->add('pos' => 'adj', 'prontype' => '');
+        }
+        elsif($form =~ m/^($adv)$/i)
+        {
+            $node->set_tag('ADV');
+            $node->iset()->add('pos' => 'adv');
+        }
+        elsif($form =~ m/^[-+.,:]*[0-9]+[-+.,:0-9]*$/)
+        {
+            $node->set_tag('NUM');
+            $node->iset()->set_hash({'pos' => 'num', 'numtype' => 'card', 'numform' => 'digit'});
+        }
+        elsif($form eq '%')
+        {
+            $node->set_tag('SYM');
+            $node->iset()->add('pos' => 'sym');
+        }
+        elsif($form =~ m/^\pP+$/)
+        {
+            $node->set_tag('PUNCT');
+            $node->iset()->set_hash({'pos' => 'punc'});
+        }
+        else
+        {
+            $node->iset()->set_hash($default);
+            $node->set_tag($node->iset()->get_upos());
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Attaches prepositions and determiners to the following nodes. Assumes that
+# the first node is the current head and all other nodes are attached to it.
+# Thus cycles must be treated only if the first node is to be re-attached.
+#------------------------------------------------------------------------------
+sub attach_left_function_words
+{
+    my $self = shift;
+    my @nodes = @_;
+    my $content_word; # the non-function node to the right, if any
+    for(my $i = $#nodes; $i >= 0; $i--)
+    {
+        my $reattach = 0;
+        my $original_deprel = $nodes[$i]->deprel();
+        if($nodes[$i]->is_determiner() && defined($content_word))
+        {
+            $reattach = 1;
+            $nodes[$i]->set_deprel('det');
+        }
+        elsif(($nodes[$i]->is_adposition() || $nodes[$i]->is_subordinator()) && defined($content_word))
+        {
+            $reattach = 1;
+            $nodes[$i]->set_deprel('case');
+        }
+        elsif($nodes[$i]->is_particle() && $nodes[$i]->is_negative() && defined($content_word))
+        {
+            $reattach = 1;
+            $nodes[$i]->set_deprel('neg');
+        }
+        if($reattach)
+        {
+            if($content_word->is_descendant_of($nodes[$i]))
+            {
+                $content_word->set_parent($nodes[$i]->parent());
+                $content_word->set_deprel($original_deprel);
+            }
+            $nodes[$i]->set_parent($content_word);
+            splice(@nodes, $i, 1);
+        }
+        else
+        {
+            $content_word = $nodes[$i];
+        }
+    }
+    # The function words that had found their parents were removed from the array. Return the new array.
+    return @nodes;
 }
 
 
@@ -793,69 +1327,73 @@ sub fix_determiners
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        # The is_pronoun() method will catch all pronominal words, i.e. UPOS pronouns (pos=noun), determiners (pos=adj),
+        # The is_pronominal() method will catch all pronominal words, i.e. UPOS pronouns (pos=noun), determiners (pos=adj),
         # even pronominal adverbs (pos=adv) and undecided words if the source tagset does not have determiners (pos=adj|noun).
-        if($node->is_pronoun())
+        if($node->is_pronominal())
         {
             # The is_adjective() method will catch both pos=adj and pos=adj|noun.
             if($node->is_adjective())
             {
                 my $parent = $node->parent();
                 my $change = 0; # do not change DET to PRON
-                if(!$parent->is_root())
+                # Articles are always determiners and never pronouns.
+                unless($node->is_article())
                 {
-                    # The common pattern is that the parent is a noun (or pronoun) and that it follows the determiner.
-                    #  possessive: můj pes (my dog)
-                    #  demonstrative: ten pes (that dog)
-                    #  interrogative: který pes (which dog)
-                    #  indefinite: nějaký pes (some dog)
-                    #  total: každý pes (every dog)
-                    #  negative: žádný pes (no dog)
-                    # Sometimes the determiner can follow the noun, instead of preceding it.
-                    #  v Německu samém (in Germany itself)
-                    #  té naší (the our)
-                    #  to vše (that all)
-                    #  nás všechny (us all)
-                    # But we want to rule out genitive constructions where one genitive pronoun post-modifies a noun phrase.
-                    #  nabídka všech (offer of all) (genitive construction; the words do not agree in case)
-                    #  půl tuctu jich (half dozen of them) (genitive construction; the words agree in case because tuctu is incidentially also genitive, but they do not agree in number; in addition, "jich" is a non-possessive personal pronoun which should never become det)
-                    #  firmy All - Impex (foreign determiner All; it cannot agree in case because it does not have case)
-                    #  děvy samy (girls themselves) (the words agree in case but the afun is Atv, not Atr, thus we should not get through the 'amod' constraint above)
-                    # The tree has not changed from the Prague style except for coordination. Nominal predicates still depend on copulas.
-                    # If it does not modify a noun (adjective, pronoun), it is not a determiner.
-                    $change = 1 if(!$parent->is_noun() && !$parent->is_adjective());
-                    # If they do not agree, it is not a determiner.
-                    $change = 1 if(!$self->agree($node, $parent, 'case'));
-                    # The following Czech pronouns are never used as determiners:
-                    # - personal (not possessive) pronouns, including non-possessive reflexives
-                    # - *kdo, *co, nic
-                    # - "to" in the compound conjunction "a to"
-                    if($node->iset()->prontype() eq 'prs' && !$node->is_possessive() ||
-                       $node->form() =~ m/(kdo|co|^nic)$/i)
+                    if(!$parent->is_root())
                     {
-                        $change = 1;
-                    }
-                    elsif(lc($node->form()) eq 'to')
-                    {
-                        my @children = $node->children();
-                        if(any {lc($_->form()) eq 'a'} @children)
+                        # The common pattern is that the parent is a noun (or pronoun) and that it follows the determiner.
+                        #  possessive: můj pes (my dog)
+                        #  demonstrative: ten pes (that dog)
+                        #  interrogative: který pes (which dog)
+                        #  indefinite: nějaký pes (some dog)
+                        #  total: každý pes (every dog)
+                        #  negative: žádný pes (no dog)
+                        # Sometimes the determiner can follow the noun, instead of preceding it.
+                        #  v Německu samém (in Germany itself)
+                        #  té naší (the our)
+                        #  to vše (that all)
+                        #  nás všechny (us all)
+                        # But we want to rule out genitive constructions where one genitive pronoun post-modifies a noun phrase.
+                        #  nabídka všech (offer of all) (genitive construction; the words do not agree in case)
+                        #  půl tuctu jich (half dozen of them) (genitive construction; the words agree in case because tuctu is incidentially also genitive, but they do not agree in number; in addition, "jich" is a non-possessive personal pronoun which should never become det)
+                        #  firmy All - Impex (foreign determiner All; it cannot agree in case because it does not have case)
+                        #  děvy samy (girls themselves) (the words agree in case but the deprel is Atv, not Atr, thus we should not get through the 'amod' constraint above)
+                        # The tree has not changed from the Prague style except for coordination. Nominal predicates still depend on copulas.
+                        # If it does not modify a noun (adjective, pronoun), it is not a determiner.
+                        $change = 1 if(!$parent->is_noun() && !$parent->is_adjective());
+                        # If they do not agree, it is not a determiner.
+                        $change = 1 if(!$self->agree($node, $parent, 'case'));
+                        # The following Czech pronouns are never used as determiners:
+                        # - personal (not possessive) pronouns, including non-possessive reflexives
+                        # - *kdo, *co, nic
+                        # - "to" in the compound conjunction "a to"
+                        if($node->iset()->prontype() eq 'prs' && !$node->is_possessive() ||
+                           $node->form() =~ m/(kdo|co|^nic)$/i)
+                        {
+                            $change = 1;
+                        }
+                        elsif(lc($node->form()) eq 'to')
+                        {
+                            my @children = $node->children();
+                            if(any {lc($_->form()) eq 'a'} @children)
+                            {
+                                $change = 1;
+                            }
+                        }
+                        # If it is attached via one of the following relations, it is a pronoun, not a determiner.
+                        ###!!! We include 'conj' because conjuncts are more often than not pronouns and we do not want to implement the correct treatment of coordinations.
+                        ###!!! Nevertheless it is possible that determiners are coordinated: "ochutnala můj i tvůj oběd".
+                        if($node->deprel() =~ m/^(nsubj|dobj|iobj|xcomp|advmod|case|appos|conj|cc|discourse|parataxis|foreign|dep)$/)
                         {
                             $change = 1;
                         }
                     }
-                    # If it is attached via one of the following relations, it is a pronoun, not a determiner.
-                    ###!!! We include 'conj' because conjuncts are more often than not pronouns and we do not want to implement the correct treatment of coordinations.
-                    ###!!! Nevertheless it is possible that determiners are coordinated: "ochutnala můj i tvůj oběd".
-                    if($node->deprel() =~ m/^(nsubj|dobj|iobj|xcomp|advmod|case|appos|conj|cc|discourse|parataxis|foreign|dep)$/)
+                    else
                     {
+                        # Neither pronoun nor determiner normally depend directly on the root.
+                        # They do so only in the case of ellipsis. Then we will call them pronouns, not determiners (usually it is their verbal head what has been deleted).
                         $change = 1;
                     }
-                }
-                else
-                {
-                    # Neither pronoun nor determiner normally depend directly on the root.
-                    # They do so only in the case of ellipsis. Then we will call them pronouns, not determiners (usually it is their verbal head what has been deleted).
-                    $change = 1;
                 }
                 if($change)
                 {
@@ -941,7 +1479,7 @@ sub check_determiners
         my $iset = $node->iset();
         if($iset->upos() eq 'DET')
         {
-            if($node->deprel() !~ m/^det(:numgov|:nummod)?$/)
+            if($node->deprel() !~ m/^(det(:numgov|:nummod)?|mwe)$/)
             {
                 log_warn($npform.' is tagged DET but is not attached as det but as '.$node->deprel());
             }
@@ -973,15 +1511,16 @@ sub fix_annotation_errors
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $form = $node->form();
+        my $form = $node->form() // '';
+        my $lemma = $node->lemma() // '';
         my $pos  = $node->iset()->pos();
-        my $afun = $node->afun();
-        if($form =~ m/^[so]$/i && !$node->is_adposition() && $afun eq 'AuxP')
+        my $deprel = $node->deprel();
+        if($form =~ m/^[so]$/i && !$node->is_adposition() && $deprel eq 'AuxP')
         {
-            # We do not know what the correct afun would be. There is a chance it would be Apposition or Atr but it is not guaranteed.
+            # We do not know what the correct deprel would be. There is a chance it would be Apposition or Atr but it is not guaranteed.
             # On the other hand, any of the two, even if incorrect, is much better than AuxP, which would trigger various transformations,
             # inappropriate in this context.
-            $node->set_afun('Atr');
+            $node->set_deprel('Atr');
         }
         # Fix unknown tags of punctuation. If the part of speech is unknown and the form consists only of punctuation characters,
         # set the part of speech to PUNCT. This occurs in the Ancient Greek Dependency Treebank.
@@ -994,16 +1533,22 @@ sub fix_annotation_errors
         # Changing Adv to AuxC would normally also involve moving the conjunction between the subordinate predicate and
         # its parent, but we do not need to do that because our target style is UD and there both AuxC (mark) and Adv (advmod)
         # will be attached as children of the subordinate predicate.
-        elsif(lc($form) eq 'jakmile' && $pos eq 'conj' && $afun eq 'Adv')
+        elsif(lc($form) eq 'jakmile' && $pos eq 'conj' && $deprel eq 'Adv')
         {
-            $node->set_afun('AuxC');
+            $node->set_deprel('AuxC');
         }
         # In the Czech PDT, there is one occurrence of English "Devil ' s Hole", with the dependency AuxT(Devil, s).
         # Since "s" is not a reflexive pronoun, the convertor would convert the AuxT to compound:prt, which is not allowed in Czech.
         # Make it Atr instead. It will be converted to foreign.
-        elsif($form eq 's' && $node->afun() eq 'AuxT' && $node->parent()->form() eq 'Devil')
+        elsif($form eq 's' && $node->deprel() eq 'AuxT' && $node->parent()->form() eq 'Devil')
         {
-            $node->set_afun('Atr');
+            $node->set_deprel('Atr');
+        }
+        # In AnCora (ca+es), the MWE "10_per_cent" will have the lemma "10_%", which is a mismatch in number of elements.
+        elsif($form =~ m/_(per_cent|por_ciento)$/i && $lemma =~ m/_%$/)
+        {
+            $lemma = lc($form);
+            $node->set_lemma($lemma);
         }
     }
 }
@@ -1055,7 +1600,7 @@ sub relabel_subordinate_clauses
             }
             # Complement clauses depend on a verb that requires them as argument.
             # Examples: he says that..., he believes that..., he hopes that...
-            elsif(any {$_->lemma() eq 'da'} (@marks))
+            elsif(any {my $l = $_->lemma(); defined($l) && $l eq 'da'} (@marks))
             {
                 $node->set_deprel('ccomp');
             }
@@ -1086,8 +1631,12 @@ which will become our new default central annotation style.
 
 =back
 
-=cut
+=head1 AUTHORS
 
-# Copyright 2014, 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
+Daniel Zeman <zeman@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2014-2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

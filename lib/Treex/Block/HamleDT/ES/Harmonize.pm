@@ -23,7 +23,77 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
-    $self->fix_annotation_errors($root);
+    $self->fix_annotation_errors_after_coordination($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes a few known annotation errors that appear in the data.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        # entre Labastida y Fox
+        # entre Liga , Copa y Mundial
+        # Structure is correct but Labastida is marked as conjunct while it should bear the deprel of the coordination.
+        my $form = $node->form();
+        my $parent = $node->parent();
+        my $pform = $parent->form() // '';
+        if($form eq 'Labastida' || $form eq 'Liga')
+        {
+            if($pform eq 'entre')
+            {
+                $node->set_deprel('PrepArg');
+            }
+        }
+        # te rebajas
+        elsif($form eq 'te' && $pform eq 'rebajas' && $node->deprel() eq 'CoordArg')
+        {
+            $node->set_deprel('Obj');
+        }
+        # Transferencia - - Interacciones
+        elsif($form eq '-' && $pform eq 'Interacciones' && $parent->parent()->form() eq 'Transferencia' && $parent->deprel() eq 'CoordArg')
+        {
+            $node->set_parent($parent->parent());
+        }
+        # Toni_Portillo , su preparador físico , Pep_Font , su psicólogo , Esperanza_Gutiérrez , ayudante de prensa ,
+        # All the commas are attached to the appositions but we need the right commas as coordination delimiters.
+        elsif($form eq ',' && !$parent->is_root() && $parent->ord() < $node->ord() &&
+              $parent->deprel() eq 'Apposition' && $parent->parent()->form() =~ m/^(Toni_Portillo|Pep_Font|Esperanza_Gutiérrez)$/)
+        {
+            my $grandparent = $parent->parent();
+            if($grandparent->form() eq 'Toni_Portillo')
+            {
+                $node->set_parent($grandparent);
+            }
+            else
+            {
+                $node->set_parent($grandparent->parent());
+            }
+        }
+        # o lo que es lo mismo
+        elsif($form eq 'o' && !$node->is_leaf())
+        {
+            my $phrase = join(' ', map {$_->form()} ($node->get_descendants({'add_self' => 1, 'ordered' => 1})));
+            if($phrase eq ', o lo que es lo mismo ,')
+            {
+                my @children = $node->get_children({'ordered' => 1});
+                if(scalar(@children) == 3)
+                {
+                    foreach my $child (@children)
+                    {
+                        $child->set_parent($parent);
+                        $child->set_deprel($child->form() eq ',' ? 'AuxX' : 'CoordArg');
+                    }
+                }
+            }
+        }
+    }
 }
 
 
@@ -34,7 +104,7 @@ sub process_zone
 # solved. The function is meant to collect bad cases but it could damage the
 # good ones.
 #------------------------------------------------------------------------------
-sub fix_annotation_errors
+sub fix_annotation_errors_after_coordination
 {
     my $self = shift;
     my $root = shift;
@@ -42,7 +112,7 @@ sub fix_annotation_errors
     foreach my $node (@nodes)
     {
         # Coordination without conjuncts.
-        if($node->afun() eq 'Coord')
+        if($node->deprel() eq 'Coord')
         {
             my $parent = $node->parent();
             my @children = $node->children();
@@ -83,7 +153,7 @@ sub fix_annotation_errors
                 $lconjunct->set_is_member(1);
                 $rconjunct->set_parent($node);
                 $rconjunct->set_is_member(1);
-                $rconjunct->set_afun($lconjunct->afun());
+                $rconjunct->set_deprel($lconjunct->deprel());
             }
         }
     }

@@ -23,69 +23,73 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
-    # Error handling routines
-    $self->check_coord_membership($root);
-    $self->remove_ismember_membership($root);
 }
 
 #------------------------------------------------------------------------------
-# Convert dependency relation tags to analytical functions.
+# Convert dependency relation labels.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub convert_deprels
 {
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $deprel = $node->conll_deprel();
-        my $form   = $node->form();
-        my $pos    = $node->conll_pos();
-        # default assignment
-        my $afun = $deprel;
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
         # Convert _Co and _Ap suffixes to the is_member flag.
-        if($afun =~ s/_(Co|Ap)$//)
+        if($deprel =~ s/_(Co|Ap)$//)
         {
             $node->set_is_member(1);
         }
         # Convert the _Pa suffix to the is_parenthesis_root flag.
-        if($afun =~ s/_Pa$//)
+        if($deprel =~ s/_Pa$//)
         {
             $node->set_is_parenthesis_root(1);
         }
         # HamleDT currently does not distinguish direct and indirect objects.
-        $afun =~ s/^IObj/Obj/;
-        if ( $deprel eq '---' ) {
-            $afun = "Atr";
-        }
-        # combined afuns (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
-        if ( $afun =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/ )
+        $deprel =~ s/^IObj/Obj/;
+        if ( $deprel eq '---' )
         {
-            $afun = 'Atr';
+            $deprel = "Atr";
         }
-        $node->set_afun($afun);
+        # combined deprels (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
+        if ( $deprel =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/ )
+        {
+            $deprel = 'Atr';
+        }
+        $node->set_deprel($deprel);
     }
     # Coordination of prepositional phrases or subordinate clauses:
-    # In PDT, is_member is set at the node that bears the real afun. It is not set at the AuxP/AuxC node.
+    # In PDT, is_member is set at the node that bears the real deprel. It is not set at the AuxP/AuxC node.
     # In HamleDT (and in Treex in general), is_member is set directly at the child of the coordination head (preposition or not).
-    $self->get_or_load_other_block('HamleDT::Pdt2TreexIsMemberConversion')->process_zone($root->get_zone());
+    ###!!! The Greek Dependency Treebank contains inconsistencies where deprels end in _Co or _Ap but they are not under Coord or Apos.
+    ###!!! The following call will cause a lot of warnings "No co/ap node between a co/ap member and the tree root".
+    ###!!! The inconsistencies will be fixed later in fix_annotation_errors().
+    $self->pdt_to_treex_is_member_conversion($root);
 }
 
 #------------------------------------------------------------------------------
 # Catches possible annotation inconsistencies. If there are no conjuncts under
-# a Coord node, let's try to find them. (We do not care about apposition
-# because it has been restructured.)
+# a Coord node, let's try to find them; same for Apos. This method is called
+# from the superordinate class before any tree transformations occur (in
+# particular before coordination is analyzed).
 #------------------------------------------------------------------------------
-sub check_coord_membership
+sub fix_annotation_errors
 {
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $afun = $node->afun();
-        if($afun eq 'Coord')
+        my $deprel = $node->deprel();
+        if($deprel =~ m/^(Coord|Apos)$/)
         {
             my @children = $node->children();
             # Are there any children?
@@ -96,7 +100,7 @@ sub check_coord_membership
                 my $parent = $node->parent();
                 my $sibling = $node->get_left_neighbor();
                 my $uncle = $parent->get_left_neighbor();
-                if($parent->afun() eq 'Pred' && defined($sibling) && $sibling->afun() eq 'Pred')
+                if($parent->deprel() eq 'Pred' && defined($sibling) && $sibling->deprel() eq 'Pred')
                 {
                     $node->set_parent($parent->parent());
                     $sibling->set_parent($node);
@@ -104,22 +108,22 @@ sub check_coord_membership
                     $parent->set_parent($node);
                     $parent->set_is_member(1);
                 }
-                elsif($parent->afun() eq 'Pred' && defined($uncle)) # $uncle->afun() eq 'ExD' but it is a verb
+                elsif($parent->deprel() eq 'Pred' && defined($uncle)) # $uncle->deprel() eq 'ExD' but it is a verb
                 {
                     $node->set_parent($parent->parent());
                     $uncle->set_parent($node);
-                    $uncle->set_afun('Pred');
+                    $uncle->set_deprel('Pred');
                     $uncle->set_is_member(1);
                     $parent->set_parent($node);
                     $parent->set_is_member(1);
                 }
-                elsif($node->is_leaf() && $node->get_iset('pos') eq 'conj')
+                elsif($node->is_leaf() && $node->is_conjunction())
                 {
-                    $node->set_afun('AuxY');
+                    $node->set_deprel('AuxY');
                 }
-                elsif($node->is_leaf() && $node->get_iset('pos') eq 'noun')
+                elsif($node->is_leaf() && $node->is_noun())
                 {
-                    $node->set_afun('Atr');
+                    $node->set_deprel('Atr');
                 }
             }
             # If there are children, are there conjuncts among them?
@@ -129,6 +133,7 @@ sub check_coord_membership
             }
         }
     }
+    $self->remove_ismember_membership($root);
 }
 
 
@@ -153,7 +158,7 @@ Converts Modern Greek dependency treebank into the style of HamleDT (Prague).
 
 =cut
 
-# Copyright 2011, 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011, 2014, 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # Copyright 2011 Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

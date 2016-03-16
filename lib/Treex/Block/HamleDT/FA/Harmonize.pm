@@ -1,7 +1,8 @@
 package Treex::Block::HamleDT::FA::Harmonize;
+use utf8;
 use Moose;
 use Treex::Core::Common;
-use utf8;
+use Treex::Tool::PhraseBuilder::MoscowToPrague;
 extends 'Treex::Block::HamleDT::Harmonize';
 
 
@@ -28,19 +29,26 @@ sub process_zone
     my $zone = shift;
     my $root = $self->SUPER::process_zone( $zone );
     # Adjust the tree structure.
+    # Phrase-based implementation of tree transformations (5.3.2016).
+    my $builder = new Treex::Tool::PhraseBuilder::MoscowToPrague
+    (
+        'prep_is_head'           => 1,
+        'coordination_head_rule' => 'last_coordinator'
+    );
+    my $phrase = $builder->build($root);
+    $phrase->project_dependencies();
     $self->attach_final_punctuation_to_root($root);
-    $self->restructure_coordination($root, 1);
-    $self->check_afuns($root);
+    $self->check_deprels($root);
 }
 
 
 
 #------------------------------------------------------------------------------
-# Convert dependency relation tags to analytical functions.
+# Convert dependency relation labels.
 # https://wiki.ufal.ms.mff.cuni.cz/_media/user:zeman:treebanks:persian-dependency-treebank-version-0.1-annotation-manual-and-user-guide.pdf
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub convert_deprels
 {
     my $self       = shift;
     my $root       = shift;
@@ -52,34 +60,39 @@ sub deprel_to_afun
         # SBJ OBJ NVE ENC VPP OBJ2 TAM MOS PROG ADVC VCL VPRT LVP PARCL ADV AJUCL PART VCONJ
         # NPREMOD NPOSTMOD NPP NCL MOZ APP NCONJ NADV NE MESU NPRT COMPPP ADJADV ACL AJPP NEZ AJCONJ APREMOD APOSTMOD
         # PREDEP POSDEP PCONJ AVCONJ PRD ROOT PUNC
-        my $deprel = $node->conll_deprel();
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
         my $parent = $node->parent();
         my $pos    = $node->get_iset('pos');
         my $ppos   = $parent->get_iset('pos');
-        my $afun   = 'NR';
         # Dependency of the main verb on the artificial root node.
         # An error? There is also a 'PRD' (instead of 'ROOT') that depends directly on the root.
         if ( $deprel eq 'ROOT' || $deprel eq 'PRD' && $parent==$root )
         {
             if ( $pos eq 'verb' )
             {
-                $afun = 'Pred';
+                $deprel = 'Pred';
             }
             else
             {
-                $afun = 'ExD';
+                $deprel = 'ExD';
             }
         }
         # PRD: Predicate of a subordinate or relative clause, attached to the subordinating conjunction.
         #     Example: amädäm ta bebinäm = I-came to I-see = I came to see (bebinäm is PRD of ta).
         elsif ( $deprel eq 'PRD' )
         {
-            $afun = 'SubArg';
+            $deprel = 'SubArg';
         }
         # Subject.
         elsif ( $deprel eq 'SBJ' )
         {
-            $afun = 'Sb';
+            $deprel = 'Sb';
         }
         # OBJ:  Object.
         # VPP:  Prepositional complement of verb (this is the label of the preposition, so ve also need to switch it with the NP later).
@@ -92,7 +105,7 @@ sub deprel_to_afun
         # NEZ:  Ezafe complement of adjective (see MOZ below for ezafe explanation): negäran-e u = anxious-EZAFE him = anxious about him.
         elsif ( $deprel =~ m/^(OBJ2?|VPP|VPRT|LVP|VCL|NPRT|ACL|AJPP|NEZ)$/ )
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
         # NVE: Non-verbal element of a compound verb (compound predicate).
         # ENC: Enclitic non-verbal element of a compound verb.
@@ -102,7 +115,7 @@ sub deprel_to_afun
         # NE: Non-verbal element of compound infinitive (Persian infinitives behave (and are tagged?) as nouns).
         elsif ( $deprel =~ m/^(NVE|ENC|MOS|NE)$/ )
         {
-            $afun = 'Pnom';
+            $deprel = 'Pnom';
         }
         # TAM: Tamiz: a property ascribed by the subject to the object (simplified).
         # Typically occurs with verbs like namidän (to name), xandän (to call), danestän (to consider) etc.
@@ -112,7 +125,7 @@ sub deprel_to_afun
         # The relation between "mipendarim" and "xub" is labeled "TAM".
         elsif ( $deprel eq 'TAM' )
         {
-            $afun = 'Atv';
+            $deprel = 'Atv';
         }
         # ADVC: Adverbial complement of verb: tehran mandäm = Tehran stay/PAST-1ST-SG = I stayed in Tehran.
         # ADV: Adverbial modifier of verb: bäraje xärid räftäm = for shopping I-went = I went for shopping.
@@ -131,11 +144,11 @@ sub deprel_to_afun
         {
             if($node->form() =~ m/^(نه|غیر)$/)
             {
-                $afun = 'Neg';
+                $deprel = 'Neg';
             }
             else
             {
-                $afun = 'Adv';
+                $deprel = 'Adv';
             }
         }
         # PROG: Auxiliary forming the progressive tense.
@@ -145,7 +158,7 @@ sub deprel_to_afun
         # Daštäm is the auxiliary.
         elsif ( $deprel eq 'PROG' )
         {
-            $afun = 'AuxV';
+            $deprel = 'AuxV';
         }
         # PART: Interrogative particle.
         #     The words "aja" and "mägär" turn the sentence into a yes/no question.
@@ -154,7 +167,7 @@ sub deprel_to_afun
         {
             # The Czech PDT tagset does not seem to provide a better label than AuxV.
             # There might be something in the Arabic PADT: AuxM?
-            $afun = 'AuxV';
+            $deprel = 'AuxV';
         }
         # NPREMOD: Pre-modifier of noun (superlative adjective, numeral, title).
         # NPOSTMOD: Post-modifier of noun (positive and comparative adjective, numeral).
@@ -171,16 +184,16 @@ sub deprel_to_afun
         # MESU: Measure (a measurement unit between numeral and counted noun): do dželd ketab = two volume book
         elsif ( $deprel =~ m/^(NPREMOD|NPOSTMOD|NPP|NCL|MOZ|MESU)$/ )
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
         # COMPPP: Comparative preposition: behtär äz servät = better than wealth; äz is COMPPP of behtär.
         #     http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s07s09s02.html
         #     In PDT, comparative constructions "better than something" are analyzed as ellipsis for "better than something is".
         #     They are thus tagged 'ExD', which does not say much (many other very different cases are tagged 'ExD', too).
-        #     We may want to consider introducing special afun for comparative constructions instead.
+        #     We may want to consider introducing special deprel for comparative constructions instead.
         elsif ( $deprel eq 'COMPPP' )
         {
-            $afun = 'ExD';
+            $deprel = 'ExD';
         }
         # PREDEP: Pre-dependent in cases that do not have their own specific tag.
         #     Most common: relation between a noun and its accusative postposition "-ra": äli -ra didäm = Ali ACC I-saw = I saw Ali (äli is PREDEP of -ra).
@@ -194,16 +207,15 @@ sub deprel_to_afun
         {
             if($ppos eq 'adp')
             {
-                $afun = 'PrepArg';
+                $deprel = 'PrepArg';
             }
             elsif($ppos eq 'conj' && $parent->get_iset('conjtype') eq 'coor')
             {
-                $afun = 'CoordArg';
-                $node->wild()->{conjunct} = 1;
+                $deprel = 'CoordArg';
             }
             else
             {
-                $afun = 'AuxZ';
+                $deprel = 'AuxZ';
             }
         }
         # VCONJ: Coordinating conjunction between two verbs (the one appearing earlier is dependent, the one appearing later is the head)
@@ -214,13 +226,12 @@ sub deprel_to_afun
         # AVCONJ: Same for adverbs.
         elsif ( $deprel =~ m/^(VCONJ|NCONJ|AJCONJ|PCONJ|AVCONJ)$/ )
         {
-            $afun = 'Coord';
-            $node->wild()->{coordinator} = 1;
+            $deprel = 'Coord';
         }
         # Second member of apposition: sädi šaer -e irani = Saadi poet EZAFE Iranian = Saadi, the Iranian poet
         elsif ( $deprel eq 'APP' )
         {
-            $afun = 'Apposition';
+            $deprel = 'Apposition';
         }
         # Punctuation.
         elsif ( $deprel eq 'PUNC' )
@@ -228,46 +239,40 @@ sub deprel_to_afun
             my $arabic_comma = "\x{60C}";
             if($node->form() =~ m/^[,$arabic_comma]$/)
             {
-                $afun = 'AuxX';
+                $deprel = 'AuxX';
             }
             else
             {
-                $afun = 'AuxG';
+                $deprel = 'AuxG';
             }
             # The sentence-final punctuation should get 'AuxK' but we will also have to reattach it and we will retag it at the same time.
         }
-        $node->set_afun($afun);
+        $node->set_deprel($deprel);
     }
-    # Prepositions now have the afun of the whole prepositional phrase and nouns below prepositions have the pseudo-afun PrepArg.
-    # In the whole tree, move the afun of the PPs to the nouns, and give the prepositions new afun AuxP.
-    $self->process_prep_sub_arg_cloud($root);
     # Sentence test/001.treex.gz#41: conjunction 'va' m-tagged 'CONJ' (correct) but s-tagged 'PUNC' instead of *CONJ.
-    # Thus it is not coordination, thus the 'PREDEP' verb attached to it should not get the 'CoordArg' pseudo-afun.
+    # Thus it is not coordination, thus the 'PREDEP' verb attached to it should not get the 'CoordArg' pseudo-deprel.
     foreach my $node (@nodes)
     {
-        if($node->afun() eq 'CoordArg' && $node->parent()->afun() ne 'Coord')
+        if($node->deprel() eq 'CoordArg' && $node->parent()->deprel() ne 'Coord')
         {
             # I do not know what the sentence means and what we should do in this strange case.
-            $node->set_afun('ExD');
+            $node->set_deprel('ExD');
         }
         # Consolidate information about participants of coordination so that it can be properly detected.
         my $cnode_type = $self->get_cnode_type($node);
+        ###!!! We now do not rely on wild->coordinator/conjunct when detecting coordination.
+        ###!!! However, it seems that in this treebank it will be more difficult to get rid of it.
+        ###!!! The if-elsif blocks below contained various adjustments of wild attributes; maybe we have to adjust the deprels or is_member instead?
         my $wild = $node->wild();
         $wild->{cnode_type} = $cnode_type;
         if(!defined($cnode_type) || $cnode_type eq 'hmember')
         {
-            delete($wild->{coordinator});
-            delete($wild->{conjunct});
         }
         elsif($cnode_type eq 'nhmember')
         {
-            $wild->{conjunct} = 1;
-            delete($wild->{coordinator});
         }
         elsif($cnode_type =~ m/^(conjunction|punctuation)$/)
         {
-            $wild->{coordinator} = 1;
-            delete($wild->{conjunct});
         }
     }
 }
@@ -295,22 +300,22 @@ sub get_cnode_type
     my $self = shift;
     my $node = shift;
     my $result; # hmember | nhmember | conjunction | punctuation | undef
-    my $afun = $node->afun();
-    if($afun eq 'CoordArg')
+    my $deprel = $node->deprel();
+    if($deprel eq 'CoordArg')
     {
         $result = 'nhmember';
     }
-    elsif($afun eq 'AuxX')
+    elsif($deprel eq 'AuxX')
     {
         my @siblings = grep {$_!=$node} ($node->parent()->children());
-        $result = 'punctuation' if(grep {$_->afun() eq 'Coord'} (@siblings));
+        $result = 'punctuation' if(grep {$_->deprel() eq 'Coord'} (@siblings));
     }
     else
     {
         my @children = $node->children();
-        if($afun eq 'Coord')
+        if($deprel eq 'Coord')
         {
-            if(grep {$_->afun() eq 'CoordArg'} (@children))
+            if(grep {$_->deprel() eq 'CoordArg'} (@children))
             {
                 $result = 'conjunction';
             }
@@ -319,33 +324,12 @@ sub get_cnode_type
                 $result = 'nhmember';
             }
         }
-        elsif(grep {$_->afun() eq 'Coord'} (@children))
+        elsif(grep {$_->deprel() eq 'Coord'} (@children))
         {
             $result = 'hmember';
         }
     }
     return $result;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Detects coordination in the shape we expect to find it in the Persian
-# treebank.
-#------------------------------------------------------------------------------
-sub detect_coordination
-{
-    my $self = shift;
-    my $node = shift;
-    my $coordination = shift;
-    my $debug = shift;
-    $coordination->detect_moscow2($node);
-    # The caller does not know where to apply recursion because it depends on annotation style.
-    # Return all conjuncts and shared modifiers for the Prague family of styles.
-    # Return orphan conjuncts and all shared and private modifiers for the other styles.
-    my @recurse = $coordination->get_orphans();
-    push(@recurse, $coordination->get_children());
-    return @recurse;
 }
 
 
@@ -364,5 +348,5 @@ Interset and to the 15-character positional tags of PDT.
 
 =cut
 
-# Copyright 2012, 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2012, 2014, 2016 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

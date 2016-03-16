@@ -53,7 +53,8 @@ sub process_atree {
         }
         my $p_ord = $anode->get_parent->ord;
         # Make sure that values are not empty and that they do not contain spaces.
-        my @values = ($anode->ord, $anode->form, $lemma, $cpos, $pos, $feat, $p_ord, $deprel);
+        # A valid CoNLL-X file has 10 columns. In our case the last two (PHEAD and PDEPREL) will be always empty (underscore).
+        my @values = ($anode->ord, $anode->form, $lemma, $cpos, $pos, $feat, $p_ord, $deprel, '_', '_');
         @values = map
         {
             my $x = $_ // '_';

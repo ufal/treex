@@ -39,8 +39,6 @@ sub process_zone
     $self->detect_proper_nouns($root);
     $self->fix_deficient_sentential_coordination($root);
     $self->fix_undefined_nodes($root);
-    ###!!! TODO: grc trees sometimes have conjunct1, coordination, conjunct2 as siblings. We should fix it, but meanwhile we just delete afun=Coord from the coordination.
-    $self->check_coord_membership($root);
     return $root;
 }
 
@@ -100,100 +98,105 @@ sub detect_proper_nouns
 
 
 #------------------------------------------------------------------------------
-# Convert dependency relation tags to analytical functions.
+# Convert dependency relation tags to the harmonized label set.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub convert_deprels
 {
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
-    # First loop: copy deprel to afun and convert _CO and _AP to is_member.
+    # First loop: copy deprel to deprel and convert _CO and _AP to is_member.
     # Leave everything else untouched until we know that is_member is set correctly for all nodes.
     foreach my $node (@nodes)
     {
-        my $deprel = $node->conll_deprel();
-        my $afun = $deprel;
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
         # There were occasional cycles in the source data. They were removed before importing the trees to Treex
         # but a mark was left in the dependency label where the cycle was broken.
         # Example: AuxP-CYCLE:12-CYCLE:16-CYCLE:15-CYCLE:14
-        # We have no means of repairing the structure but we have to remove the mark in order to get a valid afun.
-        $afun =~ s/-CYCLE.*//;
+        # We have no means of repairing the structure but we have to remove the mark in order to get a valid deprel.
+        $deprel =~ s/-CYCLE.*//;
         # The _CO suffix signals conjuncts.
         # The _AP suffix signals members of apposition.
         # We will later reshape appositions but the routine will expect is_member set.
-        if($afun =~ s/_(CO|AP)$//i)
+        if($deprel =~ s/_(CO|AP)$//i)
         {
             $node->set_is_member(1);
             # There are nodes that have both _AP and _CO but we have no means of representing that.
             # Remove the other suffix if present.
-            $afun =~ s/_(CO|AP)$//i;
+            $deprel =~ s/_(CO|AP)$//i;
         }
         # Convert the _PA suffix to the is_parenthesis_root flag.
-        if($afun =~ s/_PA$//i)
+        if($deprel =~ s/_PA$//i)
         {
             $node->set_is_parenthesis_root(1);
         }
-        $node->set_afun($afun);
+        $node->set_deprel($deprel);
     }
     # Second loop: process chained dependency labels and decide, what nodes are ExD, Coord, Apos, AuxP or AuxC.
-    # At the same time translate the other afuns to the dialect of HamleDT.
+    # At the same time translate the other deprels to the dialect of HamleDT.
     foreach my $node (@nodes)
     {
-        my $afun = $node->afun();
+        my $deprel = $node->deprel();
         # There are chained dependency labels that describe situation around elipsis.
         # They ought to contain an ExD, which may be indexed (e.g. ExD0).
         # The tag before ExD describes the dependency of the node on its elided parent.
         # The tag after ExD describes the dependency of the elided parent on the grandparent.
         # Example: ADV_ExD0_PRED_CO
         # Similar cases in PDT get just ExD.
-        if($afun =~ m/ExD/)
+        if($deprel =~ m/ExD/)
         {
             # If the chained label is something like COORD_ExD0_OBJ_CO_ExD1_PRED,
             # this node should be Coord and the conjuncts should get ExD.
-            # However, we still cannot set afun=ExD for the conjuncts.
+            # However, we still cannot set deprel=ExD for the conjuncts.
             # This would involve traversing also AuxP nodes and nested Coord, so we need to have all Coords in place first.
-            if($afun =~ m/^COORD/i)
+            if($deprel =~ m/^COORD/i)
             {
-                $node->set_afun('Coord');
+                $node->set_deprel('Coord');
                 $node->wild()->{'ExD conjuncts'} = 1;
             }
-            elsif($afun =~ m/^APOS/i)
+            elsif($deprel =~ m/^APOS/i)
             {
-                $node->set_afun('Apos');
+                $node->set_deprel('Apos');
                 $node->wild()->{'ExD conjuncts'} = 1;
             }
             # Do not change AuxX and AuxG either.
-            # These afuns reflect more what the node is than how it modifies its parent.
-            elsif($afun =~ m/^(Aux[CPGX])/)
+            # These deprels reflect more what the node is than how it modifies its parent.
+            elsif($deprel =~ m/^(Aux[CPGX])/)
             {
-                $node->set_afun($1);
+                $node->set_deprel($1);
                 $node->wild()->{'ExD conjuncts'} = 1;
             }
             else
             {
-                $node->set_afun('ExD');
+                $node->set_deprel('ExD');
             }
         }
-        # Most AGDT afuns are all uppercase but we typically want only the first letter uppercase.
-        elsif(exists($agdt2pdt{$afun}))
+        # Most AGDT deprels are all uppercase but we typically want only the first letter uppercase.
+        elsif(exists($agdt2pdt{$deprel}))
         {
-            $node->set_afun($agdt2pdt{$afun});
+            $node->set_deprel($agdt2pdt{$deprel});
         }
         # AuxG cannot be conjunct in HamleDT but it happens in AGDT.
-        if($node->afun() eq 'AuxG' && $node->is_member())
+        if($node->deprel() eq 'AuxG' && $node->is_member())
         {
             $node->set_is_member(undef);
         }
         # Try to fix inconsistencies in annotation of coordination.
-        if($node->afun() !~ m/^(Coord|Apos)$/)
+        if($node->deprel() !~ m/^(Coord|Apos)$/)
         {
             my @members = grep {$_->is_member()} ($node->children());
             if(scalar(@members)>0)
             {
                 if($node->iset()->pos() =~ m/^(conj|punc|part|adv)$/)
                 {
-                    $node->set_afun('Coord');
+                    $node->set_deprel('Coord');
                 }
                 else
                 {
@@ -208,8 +211,7 @@ sub deprel_to_afun
     # Third loop: we still cannot rely on is_member because it is not guaranteed that it is always set directly under COORD or APOS.
     # The source data follow the PDT convention that AuxP and AuxC nodes do not have it (and thus it is marked at a lower level).
     # In contrast, Treex marks is_member directly under Coord or Apos. We cannot convert it later because we need reliable is_member
-    # for afun conversion. And we cannot use the Pdt2TreexIsMemberConversion block because it relies on the afuns Coord and Apos
-    # and these are not yet ready.
+    # for deprel conversion.
     foreach my $node (@nodes)
     {
         # no is_member allowed directly below root
@@ -219,7 +221,7 @@ sub deprel_to_afun
         }
         if($node->is_member())
         {
-            my $new_member = _climb_up_below_coap($node);
+            my $new_member = $self->_climb_up_below_coap($node);
             if($new_member && $new_member != $node)
             {
                 $new_member->set_is_member(1);
@@ -232,40 +234,123 @@ sub deprel_to_afun
     {
         if($node->wild()->{'ExD conjuncts'})
         {
-            # set_real_afun() goes down if it sees Coord, Apos, AuxP or AuxC
-            $node->set_real_afun('ExD');
+            # set_real_deprel() goes down if it sees Coord, Apos, AuxP or AuxC
+            $self->set_real_deprel($node, 'ExD');
             delete($node->wild()->{'ExD conjuncts'});
         }
     }
-    # Fix known annotation errors. They include coordination, i.e. the tree may now not be valid.
-    # We should fix it now, before the superordinate class will perform other tree operations.
-    $self->fix_annotation_errors($root);
 }
 
 
 
 #------------------------------------------------------------------------------
-# Searches for the head of coordination or apposition in AGDT. Adapted from
-# Pdt2TreexIsMemberConversion by Zdeněk Žabokrtský (but different because of
-# slightly different afuns in this treebank). Used for moving the is_member
-# flag directly under the head (even if it is AuxP, in which case PDT would not
-# put the flag there).
+# Searches for the head of coordination or apposition in AGDT. Overrides the
+# method from HarmonizePDT because of slightly different deprels in this
+# treebank. Used for moving the is_member flag directly under the head (even if
+# it is AuxP, in which case PDT would not put the flag there).
 #------------------------------------------------------------------------------
 sub _climb_up_below_coap
 {
-    my ($node) = @_;
+    my $self = shift;
+    my $node = shift;
     if ($node->parent()->is_root())
     {
         log_warn('No co/ap node between a co/ap member and the tree root');
         return;
     }
-    elsif ($node->parent()->afun() =~ m/(COORD|APOS)/i)
+    elsif ($node->parent()->deprel() =~ m/(COORD|APOS)/i)
     {
         return $node;
     }
     else
     {
-        return _climb_up_below_coap($node->parent());
+        return $self->_climb_up_below_coap($node->parent());
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Catches possible annotation inconsistencies. If there are no conjuncts under
+# a Coord or Apos node, let's try to find them.
+#
+# This method will be called right after converting the deprels to the
+# harmonized label set, but before any tree transformations.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $deprel = $node->deprel();
+        if($deprel =~ m/^(Coord|Apos)$/)
+        {
+            my @children = $node->children();
+            # Are there any children?
+            if(scalar(@children)==0)
+            {
+                # There are a few annotation errors where a leaf node is labeled Coord.
+                # In some cases, the node is rightly Coord but it ought not to be leaf.
+                my $parent = $node->parent();
+                my $sibling = $node->get_left_neighbor();
+                my $uncle = $parent->get_left_neighbor();
+                if($node->form() eq ',')
+                {
+                    $node->set_deprel('AuxX');
+                }
+                elsif($node->is_punctuation())
+                {
+                    $node->set_deprel('AuxG');
+                }
+                elsif($parent->deprel() eq 'Coord' && $node->iset()->pos() =~ m/^(conj|part|adv)$/)
+                {
+                    $node->set_deprel('AuxY');
+                }
+            }
+            # If there are children, are there conjuncts among them?
+            elsif(scalar(grep {$_->is_member()} (@children))==0)
+            {
+                # Annotation error: quotation mark attached to comma.
+                if(scalar(grep {$_->deprel() eq 'AuxG'} (@children))==scalar(@children))
+                {
+                    foreach my $child (@children)
+                    {
+                        # The child is punctuation. Attach it to the closest non-punctuation node.
+                        # If it is now attached to the right, look for the parent on the right. Otherwise on the left.
+                        if($child->ord()<$node->ord())
+                        {
+                            my @candidates = grep {$_->ord()>$child->ord() && $_->deprel() !~ m/^Aux[^C]/} (@nodes);
+                            if(@candidates)
+                            {
+                                $child->set_parent($candidates[0]);
+                            }
+                        }
+                        else
+                        {
+                            my @candidates = grep {$_->ord()<$child->ord() && $_->deprel() !~ m/^Aux[^C]/} (@nodes);
+                            if(@candidates)
+                            {
+                                $child->set_parent($candidates[-1]);
+                            }
+                        }
+                    }
+                    if($node->form() eq ',')
+                    {
+                        $node->set_deprel('AuxX');
+                    }
+                    elsif($node->iset()->pos() eq 'punc')
+                    {
+                        $node->set_deprel('AuxG');
+                    }
+                }
+                else
+                {
+                    $self->identify_coap_members($node);
+                }
+            }
+        }
     }
 }
 
@@ -274,8 +359,8 @@ sub _climb_up_below_coap
 #------------------------------------------------------------------------------
 # A few punctuation nodes (commas and dashes) are attached non-projectively to
 # the root, ignoring their neighboring tokens. They are labeled with the
-# UNDEFINED afun (which we temporarily converted to NR). Attach them to the
-# preceding token and give them a better afun.
+# UNDEFINED deprel (which we temporarily converted to NR). Attach them to the
+# preceding token and give them a better deprel.
 #------------------------------------------------------------------------------
 sub fix_undefined_nodes
 {
@@ -287,7 +372,7 @@ sub fix_undefined_nodes
         my $node = $nodes[$i];
         # If this is the last punctuation in the sentence, chances are that it was already recognized as AuxK.
         # In that case the problem is already fixed.
-        if($node->conll_deprel() eq 'UNDEFINED' && $node->afun() ne 'AuxK' && $node->afun() ne 'Coord')
+        if($node->conll_deprel() eq 'UNDEFINED' && $node->deprel() ne 'AuxK' && $node->deprel() ne 'Coord')
         {
             if($node->parent()->is_root() && $node->is_leaf())
             {
@@ -297,16 +382,16 @@ sub fix_undefined_nodes
                     $node->set_parent($nodes[$i-1]);
                 }
                 # If there is no preceding token but there is a following token, attach the node there.
-                elsif($i<$#nodes && $nodes[$i+1]->afun() ne 'AuxK')
+                elsif($i<$#nodes && $nodes[$i+1]->deprel() ne 'AuxK')
                 {
                     $node->set_parent($nodes[$i+1]);
                 }
                 # If this is the only token in the sentence, it remained attached to the root.
-                # Pick the right afun for the node.
+                # Pick the right deprel for the node.
                 my $form = $node->form();
                 if($form eq ',')
                 {
-                    $node->set_afun('AuxX');
+                    $node->set_deprel('AuxX');
                 }
                 # Besides punctuation there are also separated diacritics that should never appear alone in a node but they do:
                 # 768 \x{300} COMBINING GRAVE ACCENT
@@ -318,38 +403,38 @@ sub fix_undefined_nodes
                 # All these characters belong to the class M (marks).
                 elsif($form =~ m/^[\pP\pM]+$/)
                 {
-                    $node->set_afun('AuxG');
+                    $node->set_deprel('AuxG');
                 }
                 else # neither punctuation nor diacritics
                 {
-                    $node->set_afun('AuxY');
+                    $node->set_deprel('AuxY');
                 }
             }
             # Other UNDEFINED nodes.
             elsif($node->parent()->is_root() && $node->is_verb())
             {
-                $node->set_afun('Pred');
+                $node->set_deprel('Pred');
             }
             elsif($node->parent()->is_root())
             {
-                $node->set_afun('ExD');
+                $node->set_deprel('ExD');
             }
             elsif(grep {$_->conll_deprel() eq 'XSEG'} ($node->get_siblings()))
             {
                 # UNDEFINED nodes that are siblings of XSEG nodes should have been also XSEG nodes.
-                $node->set_afun('Atr');
+                $node->set_deprel('Atr');
             }
             elsif($node->parent()->is_noun())
             {
-                $node->set_afun('Atr');
+                $node->set_deprel('Atr');
             }
             elsif($node->parent()->is_verb() && $node->match_iset('pos' => 'noun', 'case' => 'acc'))
             {
-                $node->set_afun('Obj');
+                $node->set_deprel('Obj');
             }
             else
             {
-                $node->set_afun('ExD');
+                $node->set_deprel('ExD');
             }
         }
     }
@@ -375,18 +460,18 @@ sub fix_deficient_sentential_coordination
     if(scalar(@rchildren)==2)
     {
         my $conjunction = $rchildren[0];
-        if($conjunction->afun() eq 'Pred' && grep {$_->is_member()} ($conjunction->children()))
+        if($conjunction->deprel() eq 'Pred' && grep {$_->is_member()} ($conjunction->children()))
         {
-            $conjunction->set_afun('Coord');
+            $conjunction->set_deprel('Coord');
         }
     }
     # Sometimes the conjunction is leaf, attached to root and marked as Coord; the predicate(s) is(are) its sibling(s).
     if(scalar(@rchildren)>=2)
     {
         my $conjunction = $rchildren[0];
-        if($conjunction->iset()->pos() =~ m/^(conj|part)$/ && $conjunction->afun() eq 'Coord' && $conjunction->is_leaf())
+        if($conjunction->iset()->pos() =~ m/^(conj|part)$/ && $conjunction->deprel() eq 'Coord' && $conjunction->is_leaf())
         {
-            my @predicates = grep {$_->afun() eq 'Pred'} (@rchildren);
+            my @predicates = grep {$_->deprel() eq 'Pred'} (@rchildren);
             if(scalar(@predicates)>=1)
             {
                 foreach my $predicate (@predicates)
@@ -399,91 +484,7 @@ sub fix_deficient_sentential_coordination
             {
                 # We were not able to find any conjuncts for the conjunction.
                 # Thus it must not be labeled Coord.
-                $conjunction->set_afun('ExD');
-            }
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Catches possible annotation inconsistencies. If there are no conjuncts under
-# a Coord node, let's try to find them. (We do not care about apposition
-# because it has been restructured.)
-#------------------------------------------------------------------------------
-sub check_coord_membership
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $afun = $node->afun();
-        if($afun eq 'Coord')
-        {
-            my @children = $node->children();
-            # Are there any children?
-            if(scalar(@children)==0)
-            {
-                # There are a few annotation errors where a leaf node is labeled Coord.
-                # In some cases, the node is rightly Coord but it ought not to be leaf.
-                my $parent = $node->parent();
-                my $sibling = $node->get_left_neighbor();
-                my $uncle = $parent->get_left_neighbor();
-                if($node->form() eq ',')
-                {
-                    $node->set_afun('AuxX');
-                }
-                elsif($node->is_punctuation())
-                {
-                    $node->set_afun('AuxG');
-                }
-                elsif($parent->afun() eq 'Coord' && $node->iset()->pos() =~ m/^(conj|part|adv)$/)
-                {
-                    $node->set_afun('AuxY');
-                }
-            }
-            # If there are children, are there conjuncts among them?
-            elsif(scalar(grep {$_->is_member()} (@children))==0)
-            {
-                # Annotation error: quotation mark attached to comma.
-                if(scalar(grep {$_->afun() eq 'AuxG'} (@children))==scalar(@children))
-                {
-                    foreach my $child (@children)
-                    {
-                        # The child is punctuation. Attach it to the closest non-punctuation node.
-                        # If it is now attached to the right, look for the parent on the right. Otherwise on the left.
-                        if($child->ord()<$node->ord())
-                        {
-                            my @candidates = grep {$_->ord()>$child->ord() && $_->afun() !~ m/^Aux[^C]/} (@nodes);
-                            if(@candidates)
-                            {
-                                $child->set_parent($candidates[0]);
-                            }
-                        }
-                        else
-                        {
-                            my @candidates = grep {$_->ord()<$child->ord() && $_->afun() !~ m/^Aux[^C]/} (@nodes);
-                            if(@candidates)
-                            {
-                                $child->set_parent($candidates[-1]);
-                            }
-                        }
-                    }
-                    if($node->form() eq ',')
-                    {
-                        $node->set_afun('AuxX');
-                    }
-                    elsif($node->iset()->pos() eq 'punc')
-                    {
-                        $node->set_afun('AuxG');
-                    }
-                }
-                else
-                {
-                    $self->identify_coap_members($node);
-                }
+                $conjunction->set_deprel('ExD');
             }
         }
     }
@@ -506,7 +507,7 @@ but slight adjustments are necessary.
 
 =cut
 
-# Copyright 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2014, 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # Copyright 2011 Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

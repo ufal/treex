@@ -1,8 +1,10 @@
 package Treex::Block::HamleDT::TE::Harmonize;
+use utf8;
 use Moose;
 use Treex::Core::Common;
-use utf8;
 extends 'Treex::Block::HamleDT::Harmonize';
+
+
 
 has iset_driver =>
 (
@@ -13,6 +15,8 @@ has iset_driver =>
     documentation => 'Which interset driver should be used to decode tags in this treebank? '.
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
+
+
 
 #------------------------------------------------------------------------------
 # Reads the Telugu CoNLL trees, converts morphosyntactic tags to the positional
@@ -25,6 +29,8 @@ sub process_zone
     my $a_root = $self->SUPER::process_zone($zone);
     $self->attach_final_punctuation_to_root($a_root);
 }
+
+
 
 #------------------------------------------------------------------------------
 # Different source treebanks may use different attributes to store information
@@ -45,43 +51,46 @@ sub get_input_tag_for_interset
     return "$conll_pos\t$conll_feat";
 }
 
+
+
 #------------------------------------------------------------------------------
-# Convert dependency relation tags to analytical functions.
+# Convert dependency relation labels.
 # http://ltrc.iiit.ac.in/nlptools2010/files/documents/dep-tagset.pdf
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub convert_deprels
 {
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
-        my $deprel = $node->conll_deprel();
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
         my $form   = $node->form();
         my $pos    = $node->conll_pos();
         my $cpos   = $node->conll_cpos();
-
-        #log_info("conllpos=".$pos.", isetpos=".$node->get_iset('pos'));
-
-        # default assignment
-        my $afun = $deprel;
-        $afun = 'Atr';    # default assignment if nothing gets assigned
+        $deprel = 'Atr';    # default assignment if nothing gets assigned
 
         if ( $deprel eq "main" ) {
-            $afun = "Pred";
+            $deprel = "Pred";
         }
 
         # Subject
         if ( $deprel =~ /^(k1|pk1|k4a|r6-k1)$/ )
         {
-            $afun = 'Sb';
+            $deprel = 'Sb';
         }
         # ras-k1 ... associative karta. Not a subject. Someone secondary who assists the subject (asymmetric coordination).
         # (It does not occur in the first training file and it might not occur in Telugu at all.)
         elsif($deprel eq 'ras-k1')
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
         # k1s ... vidheya karta (karta samanadhikarana) = noun complement of karta (according to documentation)
         # Training sentence 6:
@@ -94,59 +103,59 @@ sub deprel_to_afun
         # (Google: :-)) Magavallakante women more canipotunnaru
         elsif ( $deprel =~ m/^(k1s)$/ )
         {
-            $afun = 'Pnom';
+            $deprel = 'Pnom';
         }
         elsif ( $deprel =~ m/^(k1u)$/ )
         {
-            $afun = 'Atv'; # or Pnom?
+            $deprel = 'Atv'; # or Pnom?
         }
         elsif ( $deprel =~ /^(jk1|mk1)$/ ) {
-            $afun = "Obj";
+            $deprel = "Obj";
         }
         elsif ( $deprel eq "k1s" ) {
-            $afun = "Atv";    # noun complements
+            $deprel = "Atv";    # noun complements
         }
         elsif ( $deprel =~ /^(k2|k2p|k2g|k2s|k2u|r6-k2|ras-k2)$/ ) {
-            $afun = "Obj";
+            $deprel = "Obj";
         }
         elsif ( $deprel eq "k3" ) {
-            $afun = "Adv";    # Instrumental
+            $deprel = "Adv";    # Instrumental
         }
         elsif ( $deprel eq "k4" || $deprel eq "k4s" ) {
-            $afun = "Obj";    # recipient of the action
+            $deprel = "Obj";    # recipient of the action
         }
         elsif ( $deprel eq "k5" ) {
-            $afun = "Adv";    # source of an activity
+            $deprel = "Adv";    # source of an activity
         }
         elsif ( $deprel =~ /^(k5prk|k7t|k7p|k7|k7u|vmod)$/ ) {
-            $afun = "Adv";    # reason, location
+            $deprel = "Adv";    # reason, location
         }
         elsif ( $deprel =~ /^(r6|r6v)$/ ) {
-            $afun = "Atr";    # genitive
+            $deprel = "Atr";    # genitive
         }
         elsif ( $deprel =~ /^(adv|sent-adv|rd|rh|rt|ras-NEG|rsp|NEG)$/ ) {
-            $afun = "Adv";
+            $deprel = "Adv";
         }
         elsif ( $deprel eq "rs" ) {
-            $afun = "Atr";    # noun elaboration ... not sure
+            $deprel = "Atr";    # noun elaboration ... not sure
         }
         elsif ( $deprel eq "rad" ) {
-            $afun = "Atr";    # address ... not sure
+            $deprel = "Atr";    # address ... not sure
         }
         elsif ( $deprel eq "nmod__relc" || $deprel eq "nmod__adj" ) {
-            $afun = "Atr";    # relative clause modifying noun
+            $deprel = "Atr";    # relative clause modifying noun
         }
         elsif ( $deprel eq "rbmod" || $deprel eq "rbmod__relc" ) {
-            $afun = "Adv";    # relative clause modifying adverb
+            $deprel = "Adv";    # relative clause modifying adverb
         }
         elsif ( $deprel eq "jjmod__relc" ) {
-            $afun = "Atr";    # relative clause modifying adjective
+            $deprel = "Atr";    # relative clause modifying adjective
         }
         elsif ( $deprel eq "nmod" ) {
-            $afun = "Atr";    # attributes
+            $deprel = "Atr";    # attributes
         }
         elsif ( $deprel eq "jjmod" ) {
-            $afun = "Atr";    # modifiers of adjectives.
+            $deprel = "Atr";    # modifiers of adjectives.
         }
         # "pof" means "part of relation" (according to documentation).
         # It is often found at the content part of "compound verbs" (light verb plus noun or adjective, the noun/adjective is pof).
@@ -163,51 +172,51 @@ sub deprel_to_afun
         {
             # It would be useful to have a special tag for nominal parts of compound verbs.
             # We do not have it now.
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
         elsif ( $deprel eq "ccof" ) {
             $node->set_is_member(1);
         }
         elsif ( $deprel eq "fragof" ) {
-            $afun = "Atr";    # modifiers of adjectives.
+            $deprel = "Atr";    # modifiers of adjectives.
         }
         elsif ( $deprel eq "enm" ) {
-            $afun = "Atr";    # enumerator
+            $deprel = "Atr";    # enumerator
         }
 
         # Some information from POS
         if ( $node->is_adposition() ) {
-            $afun = 'AuxP';
+            $deprel = 'AuxP';
         }
         if ( $node->get_iset('verbtype') eq 'mod' ) {
-            $afun = 'AuxV';
+            $deprel = 'AuxV';
         }
 
         if ( $cpos eq "VAUX" ) {
-            $afun = 'AuxV';
+            $deprel = 'AuxV';
         }
         elsif ( $cpos eq "PSP" ) {
-            $afun = 'AuxP';
+            $deprel = 'AuxP';
         }
 
         if ( $deprel eq "rsym" ) {
             if ( $form eq ',' ) {
-                $afun = 'AuxX';
+                $deprel = 'AuxX';
             }
             elsif ( $form =~ /^(\?|\:|\.|\!)$/ ) {
-                $afun = 'AuxK';
+                $deprel = 'AuxK';
             }
             elsif ( $form =~ /^(\(|\)|[|]|\$|\%|\=)$/ ) {
-                $afun = 'AuxG';
+                $deprel = 'AuxG';
             }
         }
         elsif ( $deprel =~ /^(jjmod_intf|pof__redup|pof__cn|pof__cv|lwg__cont|lwg__rest)$/ ) {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
         elsif ( $deprel eq "lwg__neg" ) {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
-        $node->set_afun($afun);
+        $node->set_deprel($deprel);
     }
     # Now that all functions are converted, make sure that functions of coordinations are properly shifted.
     foreach my $node (@nodes)
@@ -216,8 +225,8 @@ sub deprel_to_afun
         {
             my $parent = $node->parent();
             log_fatal("Parentless conjunct") if(!defined($parent));
-            $node->set_afun($parent->afun());
-            # We have to wait with setting parent's afun to Coord until all conjuncts have copied the parent's original afun.
+            $node->set_deprel($parent->deprel());
+            # We have to wait with setting parent's deprel to Coord until all conjuncts have copied the parent's original deprel.
         }
     }
     # Tag coordination heads as Coord.
@@ -227,7 +236,7 @@ sub deprel_to_afun
         {
             my $parent = $node->parent();
             # We have checked that all conjuncts actually have parents.
-            $parent->set_afun('Coord');
+            $parent->set_deprel('Coord');
         }
     }
 }

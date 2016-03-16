@@ -22,7 +22,7 @@ sub process_zone
     my $rule1i1 = $#nodes;
     my $i = $#nodes;
     # Do not touch the last node if it heads coordination or apposition.
-    return if($i>=0 && $nodes[$i]->afun() =~ m/^(Coord|Apos)$/);
+    return if($i>=0 && $nodes[$i]->deprel() =~ m/^(Coord|Apos)$/);
     while($i>=0 && $nodes[$i]->form() =~ m/^$rule2chars+$/)
     {
         $rule2 = 1;
@@ -30,7 +30,7 @@ sub process_zone
         $i--;
     }
     # Do not touch the last node if it heads coordination or apposition.
-    return if($i>=0 && $nodes[$i]->afun() =~ m/^(Coord|Apos)$/);
+    return if($i>=0 && $nodes[$i]->deprel() =~ m/^(Coord|Apos)$/);
     while($i>=0 && $nodes[$i]->form() =~ m/^$rule1chars+$/)
     {
         $rule1 = 1;
@@ -38,7 +38,7 @@ sub process_zone
         $i--;
     }
     # Do not touch the last node if it heads coordination or apposition.
-    return if($rule1i0>=0 && $rule1i0<=$#nodes && $nodes[$rule1i0]->afun() =~ m/^(Coord|Apos)$/);
+    return if($rule1i0>=0 && $rule1i0<=$#nodes && $nodes[$rule1i0]->deprel() =~ m/^(Coord|Apos)$/);
     if($rule2 && $rule1)
     {
         $rule1i1 = $rule2i0-1;
@@ -48,9 +48,9 @@ sub process_zone
             {
                 $self->complain($nodes[$i], 'parent is not root');
             }
-            elsif(!defined($nodes[$i]->afun()) || $nodes[$i]->afun() ne 'AuxG')
+            elsif(!defined($nodes[$i]->deprel()) || $nodes[$i]->deprel() ne 'AuxG')
             {
-                $self->complain($nodes[$i], 'afun is '.$nodes[$i]->afun().' instead of AuxG');
+                $self->complain($nodes[$i], 'deprel is '.$nodes[$i]->deprel().' instead of AuxG');
             }
             elsif($nodes[$i]->children())
             {
@@ -62,22 +62,22 @@ sub process_zone
     {
         for(my $i = $rule1i0; $i<=$rule1i1; $i++)
         {
-            my $expected_afun;
+            my $expected_deprel;
             if($nodes[$i]->form() =~ m/^,\x{60C}$/)
             {
-                $expected_afun = 'AuxX';
+                $expected_deprel = 'AuxX';
             }
             else
             {
-                $expected_afun = 'AuxK';
+                $expected_deprel = 'AuxK';
             }
             if($nodes[$i]->parent() != $root)
             {
                 $self->complain($nodes[$i], 'parent is not root');
             }
-            elsif(!defined($nodes[$i]->afun()) || $nodes[$i]->afun() ne $expected_afun)
+            elsif(!defined($nodes[$i]->deprel()) || $nodes[$i]->deprel() ne $expected_deprel)
             {
-                $self->complain($nodes[$i], 'afun is '.$nodes[$i]->afun().' instead of '.$expected_afun);
+                $self->complain($nodes[$i], 'deprel is '.$nodes[$i]->deprel().' instead of '.$expected_deprel);
             }
             elsif($nodes[$i]->children())
             {
@@ -136,7 +136,7 @@ sub attach_final_punctuation_to_root
         for(my $i = $rule2i0; $i<=$#nodes; $i++)
         {
             $nodes[$i]->set_parent($root);
-            $nodes[$i]->set_afun('AuxG');
+            $nodes[$i]->set_deprel('AuxG');
         }
     }
     if($rule1)
@@ -146,11 +146,11 @@ sub attach_final_punctuation_to_root
             $nodes[$i]->set_parent($root);
             if($nodes[$i]->form() =~ m/^,\x{60C}$/)
             {
-                $nodes[$i]->set_afun('AuxX');
+                $nodes[$i]->set_deprel('AuxX');
             }
             else
             {
-                $nodes[$i]->set_afun('AuxK');
+                $nodes[$i]->set_deprel('AuxK');
             }
         }
     }
@@ -162,7 +162,7 @@ sub attach_final_punctuation_to_root
 
 =item Treex::Block::HamleDT::Test::FinalPunctuation
 
-Sentence-final punctuation should be attached directly to root, with the AuxK afun.
+Sentence-final punctuation should be attached directly to root, with the AuxK deprel.
 
 There will be exceptions, e.g. if the sentence ends with a period and a quotation mark (in that order),
 the current annotation scheme of PDT attaches the period as AuxK of the root, and the quotation mark

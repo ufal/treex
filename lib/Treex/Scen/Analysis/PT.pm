@@ -58,6 +58,7 @@ sub get_scenario_string {
     # a-layer
     #'W2A::PT::Parse lxsuite_mode=conll.pos:parser:conll.usd',
     'HamleDT::PT::HarmonizeCintilUSD',
+    q(Util::Eval anode='$.set_afun($.deprel)'),
     'W2A::PT::FixAfuns',
     # t-layer
     'A2T::PT::MarkEdgesToCollapse',
