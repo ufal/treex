@@ -23,6 +23,21 @@ has hmtm => (
      documentation => 'Apply HMTM (TreeViterbi) with TreeLM reranking',
 );
 
+has vw => (
+     is => 'ro',
+     isa => 'Bool',
+     default => 0,
+     documentation => 'Apply VowpalWabbit transfer model',
+);
+
+has vw_model => (
+    is => 'ro',
+    isa => 'Str',
+    default => 0,
+    documentation => 'model for the VowpalWabbit transfer, default=0 means use the default defined in T2T::EN2CS::TrLAddVariantsVW2',
+);
+
+
 has gazetteer => (
      is => 'ro',
      isa => 'Str',
@@ -62,6 +77,14 @@ sub get_scenario_string {
         $IT_FORMEME_MODELS = "static 1.0 IT/batch1a-formeme.static.gz\n      maxent 0.5 IT/batch1a-formeme.maxent.gz";
     }
 
+    my $VW;
+    if ($self->vw){
+        $VW = "Treelets::AddTwonodeScores language=en selector=src\nT2T::EN2CS::TrLAddVariantsVW2";
+        if ($self->vw_model){
+            $VW .= ' vw_model='.$self->vw_model;
+        }
+    }
+
     my $scen = join "\n",
     'Util::SetGlobal language=cs selector=tst',
     'T2T::CopyTtree source_language=en source_selector=src',
@@ -81,7 +104,7 @@ sub get_scenario_string {
     'T2T::EN2CS::TrLPersPronIt',
     'T2T::EN2CS::TrLPersPronRefl',
     'T2T::EN2CS::TrLHackNNP',
-      #static 0.5 20150726_tlemma.static.min_2.minpc_1.gz
+    $VW,
     "T2T::EN2CS::TrLAddVariantsInterpol model_dir=data/models/translation/en2cs models='
       static 0.5 tlemma_czeng09.static.pls.slurp.gz
       maxent 1.0 tlemma_czeng12.maxent.10000.100.2_1.compact.pls.gz
@@ -146,7 +169,7 @@ Treex::Scen::Transfer::EN2CS - English-to-Czech TectoMT transfer (no analysis, n
 
  # From command line
  treex Scen::Transfer::EN2CS Write::Treex to=translated.treex.gz -- en_ttrees.treex.gz
- 
+
  treex --dump_scenario Scen::Transfer::EN2CS
 
 =head1 DESCRIPTION
