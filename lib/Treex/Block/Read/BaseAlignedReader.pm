@@ -69,7 +69,7 @@ sub BUILD {
             }
             $self->_filenames->{$arg} = $files;
         }
-        elsif ( $arg =~ /selector|language|scenario/ ) { }
+        elsif ( $arg =~ /selector|language|scenario|skip_finished/ ) { }
         else                                           { log_warn "$arg is not a zone label (e.g. en_src)"; }
     }
     if (my $regex = $self->skip_finished){
