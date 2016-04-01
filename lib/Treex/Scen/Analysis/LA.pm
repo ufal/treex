@@ -32,6 +32,7 @@ A2T::LA::MarkRelClauseCoref
 #TODO A2T::LA::FixNumerals
 A2T::LA::SetGrammatemes
 A2T::LA::AddPersPron
+A2T::LA::TopicFocusArticulation
 END
 
 sub get_scenario_string {
