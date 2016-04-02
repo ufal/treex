@@ -152,21 +152,23 @@ sub format_singleline {
 
     my $feat_str;
     if (!ref($feats)) {
-        $feat_str = feat_perl_to_vw($feats, 1);
+        $feat_str = join " ", (map {feat_perl_to_vw($_)} (split / +/, $feats));
     }
     else {
+        # join keys and values
         my @feats_items = map {
             ref($_) eq 'ARRAY' ?
-                join $FEAT_VAL_DELIM, @$_ :
+                ($_->[0] =~ /^\|/ ?
+                    $_->[0] :
+                    join $FEAT_VAL_DELIM, @$_) :
                 $_;
         } @$feats;
-        if (@feats_items && $feats_items[0] !~ /^\|/) {
-            $feat_str = "|default ";
-        }
         $feat_str .= join " ", (map {feat_perl_to_vw($_)} @feats_items);
     }
-    $feat_str =~ s/^\|?//;
-    my $line = sprintf "%s %s|%s\t%s\n",
+    if ($feat_str !~ /^\|/) {
+        $feat_str = "| ".$feat_str;
+    }
+    my $line = sprintf "%s %s%s\t%s\n",
         defined $label ? $label : "",
         defined $tag ? $tag : "",
         $feat_str,
@@ -270,22 +272,17 @@ sub format_singleline {
 #}
 
 sub feat_perl_to_vw {
-    my ($feat, $on_featstr) = @_;
-    # ":" and "|" is a special char in VW
+    my ($feat) = @_;
+    # ":" and non-starting "|" is a special char in VW
+    # a leading "|" treat as a namespace indicator, otherwise replace by a placeholder 
     $feat =~ s/:/__COL__/g;
     
-    # replace all "|" except those leading a feature (namespace names)
-    if ($on_featstr) {
-        $feat =~ s/ \|([^ =]+)/ :$1/g;
-    }
     $feat =~ s/^\|/:/g;
     $feat =~ s/\|/__PIPE__/g;
     $feat =~ s/:/\|/g;
     
     $feat =~ s/\t/__TAB__/g;
-    if (!$on_featstr) {
-        $feat =~ s/ /__SPACE__/g;
-    }
+    $feat =~ s/ /__SPACE__/g;
     #utf8::encode($feat);
     return $feat;
 }
@@ -334,7 +331,7 @@ Treex::Tool::ML::VowpalWabbit::Util
 
  use Treex::Tool::ML::VowpalWabbit::Util;
  
- while ( my ($instance, $tag, $comment) = Treex::Tool::ML::VowpalWabbit::Util::parse_multiline(*STDIN, {split_key_val => 1}) ) {
+ while ( my ($instance, $tag, $comment) = Treex::Tool::ML::VowpalWabbit::Util::parse_multiline(*STDIN, {parse_feats => 'pair'}) ) {
      my ($feats, $losses) = @$instance;
      my $format_str = Treex::Tool::ML::VowpalWabbit::Util::format_multiline($feats, $losses, $comment);
      print $format_str . "\n";
@@ -344,7 +341,7 @@ Treex::Tool::ML::VowpalWabbit::Util
 
 Parser and formatter for data tables formatted in the style accepted by the Vowpal Wabbit ML tool.
 It can handle both singleline (e.g. for the OAA method) and multiline format (for the CSOAA_LDF method).
-In fact, not all options for this format are supported (e.g. namespaces, multiple costed labels on a single line).
+In fact, not all options for this format are supported (e.g. multiple costed labels on a single line).
 On the other hand, the tables may be extended by an additional tab-separated column containing comments.
 
 =head1 FUNCTIONS
@@ -382,7 +379,10 @@ It parses a data table into multiline instances. These are separated by an empty
 
 =head2 format_singleline
 
-Formatter for singleline instances.
+Formatter for singleline instances. It takes four arguments: C<feats>, C<label>, C<tag> and C<comments>.
+The C<feats> argument can be a string representing the whole feature string, a list of strings representing
+a list of features, or a list of two-item lists representing a list of key-value features. Some of the items
+in the lists may introduce a new namespace: such an item must start with the C<|> symbol.
 
 =head2 format_multiline
 
@@ -397,10 +397,15 @@ The Perl script:
             ["trg_lemma", "shledat"]
         ],
         [
-            ["trg_lemma", "nalezt"]
+            ["|namespace1", undef],
+            ["trg_lemma", "nalezt"],
+            ["|namespace2", undef],
+            ["unk_feat", 1],
         ],
         [
             ["trg_lemma", "prohlasit"]
+            ["|namespace2", undef],
+            ["unk_feat", 0],
         ],
     ],
     [
@@ -423,15 +428,19 @@ The Perl script:
 
 prints out the following:
 
- shared |default lemma=find pos=v child_lemma=solution	tu nic
- 1:1 2-1|default trg_lemma=nalezt	id=1
- 2:0 2-1|default trg_lemma=shledat	id=2 # toto je spravne
- 3:1 2-1|default trg_lemma=prohlasit	id=3
+ shared | lemma=find pos=v child_lemma=solution	tu nic
+ 1:1 2-1| trg_lemma=shledat	id=1
+ 2:0 2-1|namespace1 trg_lemma=nalezt |namespace2 unk_feat=1	id=2 # toto je spravne
+ 3:1 2-1| trg_lemma=prohlasit |namespace2 unk_feat=0	id=3
 
-For the time being, all features are in the "default" namespace. Tags (the part before the "|" symbol) are the same for every candidate in the instance 
-and contain the idx of the candidate with the minimum loss ("2" in this case). The following ("-1") is there only from the historic reasons and can be freely ignored.
+Features may be introduced with namespace labels. See the documentation of
+the C<format_singleline> method for more.
+Tags (the part before the "|" symbol) are the same for every candidate in the instance 
+and contain the idx of the candidate with the minimum loss ("2" in this case). 
+The following ("-1") is there only from the historic reasons and can be freely ignored.
 
-Comments (optional parameter) are added as a last column (tab-separated) and must be cut off before running VW on the generated table.
+Comments (optional parameter) are added as a last column (tab-separated) and must be cut off 
+before running VW on the generated table.
 
 =head1 AUTHOR
 
