@@ -73,7 +73,7 @@ sub _list_to_nslist {
         # indicator of the new namespace (key starting with "|", undef value)
         push @ns_list, ["|$ns", undef];
         # all the features from this namespace follow - sorted by their name
-        push @ns_list, (sort {$a cmp $b} @{$ns_feats{$ns}});
+        push @ns_list, (sort {(join "", @$a) cmp (join "", @$b)} @{$ns_feats{$ns}});
     }
     return @ns_list;
 }
