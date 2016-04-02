@@ -3,6 +3,7 @@ use Moose;
 use Treex::Core::Common;
 use List::Util;
 
+use Treex::Tool::Align::Utils;
 use Treex::Tool::ML::VowpalWabbit::Util;
 use Treex::Tool::Coreference::NodeFilter;
 
