@@ -33,9 +33,11 @@ sub eq {
     return $val1 eq $val2 ? 1 : 0;
 }
 
-sub feat_hash_to_sparse_list {
+sub feat_hash_to_nslist {
     my ($hash) = @_;
-    my @list = map {
+    # unfold possible array values of the hash
+    # allow defined values only
+    my @unfolded_defined_list = grep {defined $_->[1]} map {
         my $key = $_;
         if (ref($hash->{$key}) eq "ARRAY") {
             map {[$key, $_]} @{$hash->{$key}};
@@ -43,9 +45,37 @@ sub feat_hash_to_sparse_list {
         else {
             [$key, $hash->{$key}];
         }
-    } sort keys %$hash;
-    @list = grep {defined $_->[1]} @list;
-    return \@list;
+    } keys %$hash;
+    my @nslist = _list_to_nslist(@unfolded_defined_list);
+    return \@nslist;
+}
+
+sub _list_to_nslist {
+    my (@list) = @_;
+    
+    my %ns_feats = ();
+    foreach my $feat (@list) {
+        my ($key, $value) = @$feat;
+        if ($key =~ /^(.*)\^(.*)$/) {
+            my $old = $ns_feats{$1} // [];
+            push @$old, [$2, $value];
+            $ns_feats{$1} = $old;
+        }
+        else {
+            my $old = $ns_feats{default} // [];
+            push @$old, [$key, $value];
+            $ns_feats{default} = $old;
+        }
+    }
+    my @ns_list = ();
+    # default namespace is always the last, all the other are ordered alphabetically
+    foreach my $ns (sort {$a eq "default" ? 1 : ($b eq "default" ? -1 : ($a cmp $b))} keys %ns_feats) {
+        # indicator of the new namespace (key starting with "|", undef value)
+        push @ns_list, ["|$ns", undef];
+        # all the features from this namespace follow - sorted by their name
+        push @ns_list, (sort {$a cmp $b} @{$ns_feats{$ns}});
+    }
+    return @ns_list;
 }
 
 sub _unary_features {
@@ -60,70 +90,33 @@ sub _binary_features {
     log_warn 'Treex::Tool::ML::Ranker::Features is an abstract class. The _binary_features method must be implemented in a subclass.';
 }
 
-sub _split_feats_into_namespaces {
-    my ($self, $instance) = @_;
-
-    my ($cand_feats, $shared_feats) = @$instance;
-    my $new_instance = [
-        [ map {_sfin_featline($_)} @$cand_feats ],
-        _sfin_featline($shared_feats),
-    ];
-    return $new_instance;
-}
-
-sub _sfin_featline {
-    my ($feats) = @_;
-    
-    my %ns_feats = ();
-    foreach my $feat (@$feats) {
-        my ($key, $value) = @$feat;
-        if ($key =~ /^(.*)\^(.*)$/) {
-            my $old = $ns_feats{$1} // [];
-            push @$old, "$2=$value";
-            $ns_feats{$1} = $old;
-        }
-        else {
-            my $old = $ns_feats{default} // [];
-            push @$old, "$key=$value";
-            $ns_feats{default} = $old;
-        }
-    }
-    my $feat_str = "";
-    foreach my $ns (sort {$a eq "default" ? 1 : ($b eq "default" ? -1 : ($a cmp $b))} keys %ns_feats) {
-        $feat_str .= " |$ns " . (join " ", @{$ns_feats{$ns}});
-    }
-    $feat_str =~ s/^ +//;
-    return $feat_str;
-}
-
-
 sub create_instances {
     my ($self, $node1, $cands) = @_;
     
     my $node1_unary_h = $self->_unary_features( $node1, $self->node1_label );
-    my $node1_unary_l = feat_hash_to_sparse_list($node1_unary_h);
+    my $node1_unary_l = feat_hash_to_nslist($node1_unary_h);
 
     my @cand_feats = ();
     my $ord = 1;
     foreach my $cand (@$cands) {
+        my $cand_h;
         if ($cand != $node1) {
             my $cand_unary_h = $self->_unary_features( $cand, $self->node2_label );
             # TODO for convenience we merge the two hashes into a single one => should be passed separately
             my $both_unary_h = {%$cand_unary_h, %$node1_unary_h};
             my $cand_binary_h = $self->_binary_features( $both_unary_h, $node1, $cand, $ord );
-            my $cand_unary_l = feat_hash_to_sparse_list($cand_unary_h);
-            my $cand_binary_l = feat_hash_to_sparse_list($cand_binary_h);
-            push @cand_feats, [@$cand_unary_l, @$cand_binary_l];
+            $cand_h = { %$cand_unary_h, %$cand_binary_h};
         }
         # pushing empty instance for the anaphor as candidate (it is entirely described by shared features)
         else {
-            push @cand_feats, [[$SELF_LABEL,1]];
+            $cand_h =  { $SELF_LABEL => 1 };
         }
+        my $cand_l = feat_hash_to_nslist($cand_h);
+        push @cand_feats, $cand_l;
         $ord++;
     }
 
     my $instance = [\@cand_feats, $node1_unary_l];
-    $instance = $self->_split_feats_into_namespaces($instance);
     
     return $instance;
 }
