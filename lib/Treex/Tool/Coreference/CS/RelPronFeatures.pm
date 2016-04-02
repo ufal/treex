@@ -11,11 +11,11 @@ augment '_unary_features' => sub {
 
     my $feats = {};
 
-    $feats->{$type.'_tlemma'} = $node->t_lemma;
-    $feats->{$type.'_fmm'} = $node->formeme;
+    $feats->{'tlemma'} = $node->t_lemma;
+    $feats->{'fmm'} = $node->formeme;
 
-    $feats->{$type.'_gen'} = $node->gram_gender // "";
-    $feats->{$type.'_num'} = $node->gram_number // "";
+    $feats->{'gen'} = $node->gram_gender // "";
+    $feats->{'num'} = $node->gram_number // "";
 
     my $sub_feats = inner() || {};
     return { %$feats, %$sub_feats };
