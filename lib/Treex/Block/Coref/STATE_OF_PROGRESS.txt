@@ -11,7 +11,7 @@ treex git repository:
                   qtl; cd repo/translate/en-cs/news; make translate eval D="testing Coref::EN::PersPron::Resolve - en perspron CR refactored"
                     - testing Czech/English CR, if it produces the same results before and after the refactoring. See the branches 
                         "new_coref.before_large_refactoring.mt_test", "new_coref.en_persprons_refactored.mt_test", and "new_coref.cs_persprons_refactored.mt_test"
-                * cd ~mnovak/projects/align_resolver; treex -Len -Ssrc Read::Treex from=@data/gold_aligned.mgiza_on_czeng/dev.list Align::T::Supervised::PrintData align_language=cs node_types=all_anaph
+                * cd ~mnovak/projects/align_coref; treex -Len -Ssrc Read::Treex from=@data/gold_aligned.mgiza_on_czeng/dev.list Align::T::Supervised::PrintData align_language=cs node_types=all_anaph
                     - if the changes in CR do not affect supervised alignment
         * feature extractors
             - an abstract subclass Tool::ML::Ranker::Features (used to be a role but changed to enable/disable unary features prefixing)
