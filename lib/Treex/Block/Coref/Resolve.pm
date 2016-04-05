@@ -72,9 +72,7 @@ sub process_filtered_tnode {
     #    $debug = 1;
     #}
 
-    # instances is a reference to a hash in the form { id => instance }
-    my $fe = $self->_feature_extractor;
-    my $instances = $fe->create_instances( $t_node, \@ante_cands );
+    my ($instances) = $self->get_features_comments( $t_node, \@ante_cands);
 
     #if ($debug) {
     #    print STDERR Dumper($instances);
