@@ -13,6 +13,8 @@ augment '_unary_features' => sub {
 
     my $feats = {};
 
+    $feats->{'id'} = $node->get_address;
+
     $feats->{'tlemma'} = $node->t_lemma;
     $feats->{'fmm'} = $node->formeme;
 

@@ -37,24 +37,6 @@ before 'process_document' => sub {
     $self->_feature_extractor->init_doc_features( $doc, $self->language, $self->selector );
 };
 
-sub comments_from_feats {
-    my ($feats) = @_;
-    my ($cand_feats, $shared_feats) = @$feats;
-    my @cand_comments = map {_comment_for_line($_, "cand")} @$cand_feats;
-    my $shared_comment = _comment_for_line($shared_feats, "anaph");
-    return [\@cand_comments, $shared_comment];
-}
-
-sub _comment_for_line {
-    my ($feat_list, $type) = @_;
-
-    my %feat_hash = map {$_->[0] => $_->[1]} @$feat_list;
-    my $id = $feat_hash{$type."_id"} // "";
-    my $align_id = $feat_hash{"align_".$type."_id"} // "";
-    my $comment = sprintf "%s %s", $id, $align_id;
-    return $comment;
-}
-
 sub process_filtered_tnode {
     my ( $self, $tnode ) = @_;
 
@@ -67,8 +49,7 @@ sub process_filtered_tnode {
     my $losses = $self->labeled ? is_text_coref($tnode, @cands) : undef;
 
     if (!$self->labeled || $losses) {
-        my $feats = $self->_feature_extractor->create_instances($tnode, \@cands);
-        my $comments = comments_from_feats($feats);
+        my ($feats, $comments) = $self->get_features_comments($tnode, \@cands);
         my $instance_str = Treex::Tool::ML::VowpalWabbit::Util::format_multiline($feats, $losses, $comments);
 
         print {$self->_file_handle} $instance_str;

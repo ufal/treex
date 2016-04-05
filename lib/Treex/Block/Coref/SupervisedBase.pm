@@ -43,6 +43,46 @@ sub _build_ante_cands_selector {
     log_fatal "method _build_ante_cands_selector must be overriden in " . ref($self);
 }
 
+sub get_features_comments {
+    my ($self, $tnode, $cands) = @_;
+    my $feats = $self->_feature_extractor->create_instances($tnode, $cands);
+    my $comments = _comments_from_feats($feats);
+    my $new_feats = _remove_id_feats($feats);
+    return ($new_feats, $comments);
+}
+
+sub _comments_from_feats {
+    my ($feats) = @_;
+    my ($cand_feats, $shared_feats) = @$feats;
+    my @cand_comments = map {_comment_for_line($_, "cand")} @$cand_feats;
+    my $shared_comment = _comment_for_line($shared_feats, "anaph");
+    return [\@cand_comments, $shared_comment];
+}
+
+sub _comment_for_line {
+    my ($feat_list, $type) = @_;
+
+    my %feat_hash = map {$_->[0] => $_->[1]} @$feat_list;
+    my $id = $feat_hash{$type."_id"} // "";
+    my $align_id = $feat_hash{"align_".$type."_id"} // "";
+    my $comment = sprintf "%s %s", $id, $align_id;
+    return $comment;
+}
+
+sub _remove_id_feats {
+    my ($feats) = @_;
+    my ($cand_feats, $shared_feats) = @$feats;
+    my @cand_new_feats = map {_remove_id_feats_for_line($_)} @$cand_feats;
+    my $shared_new_feats = _remove_id_feats_for_line($shared_feats);
+    return [\@cand_new_feats, $shared_new_feats];
+}
+
+sub _remove_id_feats_for_line {
+    my ($feat_list) = @_;
+    my @filtered_feat_list = grep {$_->[0] !~ /_id$/} @$feat_list;
+    return \@filtered_feat_list;
+}
+
 1;
 #TODO extend documentation
 
