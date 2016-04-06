@@ -108,6 +108,7 @@ sub process_filtered_tnode {
     #}
 
     if ($ante != $t_node) {
+        log_debug "COREF_LINK: ".$t_node->id. " -> ".$ante->id, 1;
         $t_node->set_attr( 'coref_text.rf', [$ante->id] );
         $t_node->wild->{referential} = 1;
     }
