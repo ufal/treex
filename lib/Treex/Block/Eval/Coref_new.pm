@@ -32,6 +32,9 @@ sub process_tnode {
     print "\n";
 }
 
+# TODO: consider refactoring to produce the VW result format, which can be consequently processed by the MLyn eval scripts
+# see Align::T::Eval for more
+
 1;
 
 =over
