@@ -1,9 +1,12 @@
 package Treex::Block::Coref::SimpleEval;
 use Moose;
 use Treex::Core::Common;
-extends 'Treex::Core::Block';
 
 use Treex::Tool::Align::Utils;
+
+extends 'Treex::Block::Write::BaseTextWriter';
+
+has '+extension' => ( default => '.tsv' );
 
 sub process_tnode {
     my ($self, $tnode) = @_;
@@ -24,12 +27,12 @@ sub process_tnode {
 
     my @matched = grep {$ref_antes_hash{$_->id}} @src_ref_antes;
 
-    print (@matched ? 1 : 0);
-    print "\t";
-    print (@src_ref_antes ? 1 : 0);
-    print "\t";
-    print (@ref_antes ? 1 : 0);
-    print "\n";
+    print {$self->_file_handle} (@matched ? 1 : 0);
+    print {$self->_file_handle} "\t";
+    print {$self->_file_handle} (@src_ref_antes ? 1 : 0);
+    print {$self->_file_handle} "\t";
+    print {$self->_file_handle} (@ref_antes ? 1 : 0);
+    print {$self->_file_handle} "\n";
 }
 
 # TODO: consider refactoring to produce the VW result format, which can be consequently processed by the MLyn eval scripts
