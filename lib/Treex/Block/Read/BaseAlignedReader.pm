@@ -55,6 +55,7 @@ has skip_finished => (
 sub BUILD {
     my ( $self, $args ) = @_;
     foreach my $arg ( keys %{$args} ) {
+        next if($arg =~ m/^(conll_format|is_member_within_afun)$/);
         my ( $lang, $sele ) = ( $arg, '' );
         if ( $arg =~ /_/ ) {
             ( $lang, $sele ) = split /_/, $arg;
@@ -263,4 +264,3 @@ Martin Popel
 Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
-
