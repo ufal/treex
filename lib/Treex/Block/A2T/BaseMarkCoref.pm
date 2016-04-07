@@ -113,14 +113,18 @@ sub process_tnode {
         }
 
 # DEBUG
-#        my $debug = 0;
-#        if ($t_node->id eq "t_tree-cs_src-s15-n1119") {
-#            $debug = 1;
-#        }
+        #my $debug = 0;
+        #if ($t_node->id eq "t_tree-cs_src-s9_1of2-n886") {
+        #    $debug = 1;
+        #}
 
         # instances is a reference to a hash in the form { id => instance }
         my $fe = $self->_feature_extractor;
         my $instances = $fe->create_instances( $t_node, \@ante_cands );
+
+        #if ($debug) {
+        #    print STDERR Dumper($instances);
+        #}
 
         # at this point we have to count on a very common case, when the true
         # antecedent lies in the previous sentence, which is however not

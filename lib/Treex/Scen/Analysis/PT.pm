@@ -50,7 +50,6 @@ sub get_scenario_string {
     #'Util::SetGlobal lxsuite_key=' . $self->lxsuite_key,
     'W2A::ResegmentSentences',
     'W2A::PT::LXSuite',
-    'W2A::PT::TokenizeAndTag',
     'W2A::PT::FixTags',
     'W2A::NormalizeForms',
     'W2A::MarkChunks min_quotes=3',
@@ -58,6 +57,7 @@ sub get_scenario_string {
     # a-layer
     #'W2A::PT::Parse lxsuite_mode=conll.pos:parser:conll.usd',
     'HamleDT::PT::HarmonizeCintilUSD',
+    q(Util::Eval anode='$.set_afun($.deprel)'),
     'W2A::PT::FixAfuns',
     # t-layer
     'A2T::PT::MarkEdgesToCollapse',

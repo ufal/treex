@@ -27,7 +27,7 @@ sub process_node {
         ($node2) = $node1->get_aligned_nodes_of_type('int|rule-based');
         $tree2 ||= $node2->get_root() if $node2;
     } else {
-        ($node2) = grep {$_->is_aligned_to($node1, 'int|rule-based')} $node1->get_referencing_nodes('alignment');
+        ($node2) = grep {$_->is_directed_aligned_to($node1, {rel_types => ['int|rule-based']}) } $node1->get_referencing_nodes('alignment');
     }
 
     # If $node1 is aligned, save its alignment as a string to @my_al.

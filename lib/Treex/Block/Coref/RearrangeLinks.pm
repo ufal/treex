@@ -55,7 +55,7 @@ sub process_document_one_zone_at_time {
     my ($self, $doc) = @_;
 
     my @ttrees = map { $_->get_tree($self->language,'t',$self->selector) } $doc->get_bundles;
-    my @chains = Treex::Tool::Coreference::Utils::get_coreference_entities(@ttrees);
+    my @chains = Treex::Tool::Coreference::Utils::get_coreference_entities(\@ttrees);
 
     foreach my $chain (@chains) {
         $self->_sort_chain( $chain );

@@ -11,13 +11,12 @@ has iset_driver =>
     required      => 1,
     default       => 'et::puudepank',
     documentation => 'Which interset driver should be used to decode tags in this treebank? '.
-                     'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
-                     'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
+                     'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
 #------------------------------------------------------------------------------
 # Reads the Estonian tree, transforms tree to adhere to PDT guidelines,
-# converts Tiger functions to afuns.
+# converts Tiger functions to deprels.
 #------------------------------------------------------------------------------
 sub process_zone
 {
@@ -50,17 +49,17 @@ sub get_input_tag_for_interset
 sub tiger2pdt {
     my $a_root = shift;
     for my $anode ($a_root->get_descendants) {
-        set_afun($anode, $anode->get_parent, $anode->wild->{function});
+        set_deprel($anode, $anode->get_parent, $anode->wild->{function});
         convert_coordination($anode) if 'CJT' eq $anode->wild->{function};
     }
 } # tiger2pdt
 
 sub convert_coordination {
     my $node = shift;
-    return if defined($node->{afun}) && 'NR' ne $node->afun;
+    return if defined($node->{deprel}) && 'NR' ne $node->deprel;
     my $parent = $node->get_parent;
     if (grep $_ eq $parent->wild->{function}, qw/CO --/) {
-        $parent->set_afun('Pred');
+        $parent->set_deprel('Pred');
         log_warn("Setting Pred for CO\t" . $parent->get_address);
     }
 
@@ -77,13 +76,13 @@ sub convert_coordination {
                     log_warn("No coord\t" . $node->get_address);
                     my $higher = $members[-1]->get_parent;
                     $_->set_parent($higher) for @members;
-                    $_->set_afun($members[-1]->afun) for @members;
+                    $_->set_deprel($members[-1]->deprel) for @members;
            } else {
                     $coord->set_parent($members[-1]->get_parent);
-                    $coord->set_afun('Coord');
+                    $coord->set_deprel('Coord');
                     $_->set_parent($coord) for @members;
                     $_->set_is_member(1) for @members;
-                    $_->set_afun($members[-1]->afun)
+                    $_->set_deprel($members[-1]->deprel)
                         for @members[0 .. $#members-1];
                 }
             }
@@ -96,10 +95,10 @@ sub convert_coordination {
         }
     } else {
         my @siblings = grep 'CJT' eq $_->wild->{function}, $node->get_siblings;
-        my $afun = $node->get_parent->afun;
-        $_->set_afun($afun) for $node, @siblings;
+        my $deprel = $node->get_parent->deprel;
+        $_->set_deprel($deprel) for $node, @siblings;
         $_->set_is_member(1) for $node, @siblings;
-        $parent->set_afun('Coord');
+        $parent->set_deprel('Coord');
     }
 } # convert_coordination
 
@@ -123,53 +122,53 @@ sub convert_subordinator {
     }
 } # convert_subordinator
 
-sub set_afun {
+sub set_deprel {
     my ($achild, $ahead, $func) = @_;
-    my $afun;
-    if(!defined($achild->{afun}))
+    my $deprel;
+    if(!defined($achild->{deprel}))
     {
-        $achild->{afun} = 'NR';
+        $achild->{deprel} = 'NR';
     }
-    return if 'NR' ne $achild->{afun};
+    return if 'NR' ne $achild->{deprel};
 
     if (not $func) {
         if (',' eq $achild->{form}) {
-            $afun = 'AuxX';
+            $deprel = 'AuxX';
         } else {
-            $afun = 'ExD';
+            $deprel = 'ExD';
         }
 
     } elsif ('X' eq $func) {
-        $afun = 'ExD';
+        $deprel = 'ExD';
 
     } elsif ('D' eq $func) {
         if ($ahead->tag =~ m{^(?:prp|pst)/}) {
             my @children = $ahead->get_children({ordered => 1});
             if (1 < @children) {
-                $_->set_afun('AuxZ') for @children;
+                $_->set_deprel('AuxZ') for @children;
             }
-            $children[-1]->set_afun($ahead->afun);
-            $ahead->set_afun('AuxP');
+            $children[-1]->set_deprel($ahead->deprel);
+            $ahead->set_deprel('AuxP');
             $ahead = $ahead->get_parent;
         }
         if ($ahead->tag =~ m{^(?:n|pro[np]|num)[-/]}) {
-            $afun = 'Atr';
+            $deprel = 'Atr';
             if ($ahead->tag =~ /^pron-dem/
                 and $achild->tag =~ /^adv/) {
-                $afun = 'Adv';
+                $deprel = 'Adv';
             }
         } elsif ($ahead->tag =~ /^(?:v|ad[jv])/) {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         } elsif (0 == index $ahead->tag, 'conj') {
             if ($achild->tag =~ /^adv/) {
-                $afun = 'AuxY';
+                $deprel = 'AuxY';
             } else {
                 my $member = (grep 'CJT' eq $_->wild->{function},
                               $ahead->get_children)[0];
                 if ($member) {
-                    set_afun($achild, $member, 'D');
+                    set_deprel($achild, $member, 'D');
                 } else {
-                    $afun = 'ExD';
+                    $deprel = 'ExD';
                 }
             }
         }
@@ -179,108 +178,108 @@ sub set_afun {
         # are sometimes attached as "A" but we do not want to label them "Adv".
         if($achild->tag =~ m/conj-s/)
         {
-            $afun = 'AuxC';
+            $deprel = 'AuxC';
         }
         else
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
 
     # not sure about this one (??)
     } elsif ('DA' eq $func) {
-        $afun = 'Adv';
+        $deprel = 'Adv';
 
     } elsif (grep $_ eq $func, qw/O DO/) {
-        $afun = 'Obj';
+        $deprel = 'Obj';
 
     } elsif ('S' eq $func) {
-        $afun = 'Sb';
+        $deprel = 'Sb';
 
     } elsif ('B' eq $func) {
-        $afun = 'AuxY';
+        $deprel = 'AuxY';
 
     } elsif ('C' eq $func) {
-        $afun = 'Pnom';
+        $deprel = 'Pnom';
         if (not $ahead->tag =~ m{^v[-/]}) {
             log_info("Pnom under nonverb\t" . $achild->get_address);
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
 
     } elsif (grep $_ eq $func,qw/FST EM QM EXC/) {
-        $afun = 'AuxK';
+        $deprel = 'AuxK';
         $achild->set_parent($achild->get_root);
 
     } elsif ('SUB' eq $func) {
-        $afun = 'AuxC';
+        $deprel = 'AuxC';
         convert_subordinator($achild);
 
     } elsif ($func =~ /^[AV]neg$/) {
-        $afun = 'Neg';
+        $deprel = 'Neg';
 
     } elsif (grep $_ eq $func, qw/Vmod Vaux Vph/) {
-        $afun = 'AuxV';
+        $deprel = 'AuxV';
         log_warn("AuxV under nonverb\t" . $achild->get_address)
             unless $ahead->tag =~ m{^v[-/]};
 
     } elsif ($func =~ /^Vm(?:ain)?$/) {
-        if ('AuxS' eq $ahead->afun) {
-            $afun = 'Pred';
+        if ('AuxS' eq $ahead->deprel) {
+            $deprel = 'Pred';
         } else {
             log_warn("Main verb not under root\t" . $achild->get_address);
-            $afun = 'AuxV';
+            $deprel = 'AuxV';
         }
 
     } elsif ('P' eq $func) {
-        if ('AuxS' eq $ahead->afun) {
-            $afun = 'Pred';
+        if ('AuxS' eq $ahead->deprel) {
+            $deprel = 'Pred';
         } else {
-            $afun = 'ExD';
+            $deprel = 'ExD';
             log_warn("P under non root\t", $achild->get_address);
         }
 
     } elsif (grep $_ eq $func, qw/CO D/
              and $ahead->tag && $ahead->tag =~ m{^(?:conj|punc|v[/-])}) {
-        $afun = 'AuxY';
+        $deprel = 'AuxY';
 
     # repetition in spoken language
     } elsif (grep $_ eq $func, qw/UTT REP T/) {
-        $afun = 'ExD';
+        $deprel = 'ExD';
 
     # verbal particle (similar to preposition in English phrasal verbs).
     } elsif ('Vpart' eq $func) {
-        $afun = 'AuxT';
+        $deprel = 'AuxT';
         log_warn("Vpart under non-verb\t" . $achild->get_address)
             unless $ahead->tag =~ /^v/;
 
     } elsif ('H' eq $func
              and not $achild->get_siblings) {
-        $afun = 'ExD';
+        $deprel = 'ExD';
 
     } elsif (grep $_ eq $func, qw/-- PNC/
              and $achild->tag =~ m{^punc/(?:Com|--)$}) {
         if (',' eq $achild->form) {
-            $afun = 'AuxX';
+            $deprel = 'AuxX';
         } else {
-            $afun = 'AuxG';
+            $deprel = 'AuxG';
         }
 
     } elsif ('H' eq $func) {
-        $afun = 'Atr';
+        $deprel = 'Atr';
     }
     elsif ('ORPHAN' eq $func)
     {
         if ($achild->form() eq ',')
         {
-            $afun = 'AuxX';
+            $deprel = 'AuxX';
         }
         elsif ($achild->tag() eq 'adv/--')
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
     }
 
-    $achild->set_afun($afun) if $afun;
-} # set_afun
+    $achild->set_deprel($deprel) if $deprel;
+} # set_deprel
 
 
 

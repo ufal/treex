@@ -26,29 +26,43 @@ sub process_bundle {
 
     # sort counterparts for each node from 'int' through 'gdfa' to 'right'
     foreach my $node ( $source_root->get_descendants( { ordered => 1 } ) ) {
-        my ( $nodes, $types ) = $node->get_aligned_nodes();
-        foreach my $i ( 0, $#$nodes ) {
-            if ( $$types[$i] =~ /int/ ) {
-                push @{ $counterparts[ $node->ord ] }, $$nodes[$i];
-                $linked_to{ $$nodes[$i] } = $node;
+        my ( $nodes, $types ) = $node->get_directed_aligned_nodes();
+		my $iterator = List::MoreUtils::each_arrayref($nodes, $types);
+		while (my ($n, $t) = $iterator->() ) {
+			if ( $t =~ /int/ ) {
+				push @{ $counterparts[ $node->ord ] }, $n;
+                $linked_to{ $n } = $node;
+            }
+		}
+    }
+    foreach my $node ( $source_root->get_descendants( { ordered => 1 } ) ) {
+        my ( $nodes, $types ) = $node->get_directed_aligned_nodes();
+		my $iterator = List::MoreUtils::each_arrayref($nodes, $types);
+        while (my ($n, $t) = $iterator->() ) {
+            if ( $t =~ /gdfa/ && $t !~ /int/ ) {
+                push @{ $counterparts[ $node->ord ] }, $n;
+                $linked_to{ $n } = $node;
             }
         }
     }
     foreach my $node ( $source_root->get_descendants( { ordered => 1 } ) ) {
-        my ( $nodes, $types ) = $node->get_aligned_nodes();
-        foreach my $i ( 0, $#$nodes ) {
-            if ( $$types[$i] =~ /gdfa/ && $$types[$i] !~ /int/ ) {
-                push @{ $counterparts[ $node->ord ] }, $$nodes[$i];
-                $linked_to{ $$nodes[$i] } = $node;
+        my ( $nodes, $types ) = $node->get_directed_aligned_nodes();
+		my $iterator = List::MoreUtils::each_arrayref($nodes, $types);
+        while (my ($n, $t) = $iterator->() ) {
+            if ( $t =~ /right/ && $t !~ /gdfa/ ) {
+                push @{ $counterparts[ $node->ord ] }, $n;
+                $linked_to{ $n } = $node;
             }
         }
     }
-    foreach my $node ( $source_root->get_descendants( { ordered => 1 } ) ) {
-        my ( $nodes, $types ) = $node->get_aligned_nodes();
-        foreach my $i ( 0, $#$nodes ) {
-            if ( $$types[$i] =~ /right/ && $$types[$i] !~ /gdfa/ ) {
-                push @{ $counterparts[ $node->ord ] }, $$nodes[$i];
-                $linked_to{ $$nodes[$i] } = $node;
+	# TODO: Can this block be used with alignment created by 'Align::ReverseAlignment'?
+	foreach my $node ( $source_root->get_descendants( { ordered => 1 } ) ) {
+        my ( $nodes, $types ) = $node->get_directed_aligned_nodes();
+        my $iterator = List::MoreUtils::each_arrayref($nodes, $types);
+        while (my ($n, $t) = $iterator->() ) {
+            if ( $t =~ /reverse_alignment/ && $t !~ /right/ ) {
+                push @{ $counterparts[ $node->ord ] }, $n;
+                $linked_to{ $n } = $node;
             }
         }
     }

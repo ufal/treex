@@ -171,7 +171,7 @@ my $LIST_TYPES = [
         max     => 400,       # maximum average list-item length (overrides the default)
         min     => 30,        # minimum average list-item length (overrides the default)
         # negative pre-context, not used if not set (here: skip semicolons separating just numbers)
-        neg_pre => '[0-9]\h*(?=;\h*[0-9]+(?:[^\.0-9]|\.[0-9]|$))',     
+        neg_pre => '[0-9]\h*(?=;\h*[0-9]+(?:[^\.0-9]|\.[0-9]|$))',
     },
 ];
 
@@ -341,12 +341,12 @@ Do the segmentation (handling C<use_paragraphs> and C<use_lines>)
 
 =item $text = split_at_terminal_punctuation($text)
 
-Adds newlines after terminal punctuation followed by an uppercase letter. 
+Adds newlines after terminal punctuation followed by an uppercase letter.
 
 =item $text = apply_contextual_rules($text)
 
 Add unbreakers (C<E<lt>E<lt>E<lt>DOTE<gt>E<gt>E<gt>>) and hard breaks (C<\n>) using the whole context, not
-just a single word. 
+just a single word.
 
 =item unbreakers
 

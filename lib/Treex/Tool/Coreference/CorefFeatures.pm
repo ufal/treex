@@ -66,7 +66,7 @@ sub feat_hash_to_sparse_list {
         else {
             [$key, $hash->{$key}];
         }
-    } keys %$hash;
+    } sort keys %$hash;
     @list = grep {defined $_->[1]} @list;
     return \@list;
 }

@@ -187,7 +187,7 @@ sub analyze_en {
                 else {
                     $non_anaph_sum++;
                 }
-                my ($aligned, $types) = $t_node->get_aligned_nodes;
+                my ($aligned, $types) = $t_node->get_directed_aligned_nodes;
                 if ( $aligned and $types->[0] ne "monolingual" ) {
     #                     $cs_node = $aligned->[0];
     #                         $cs_node->t_lemma eq "ten" ) {
@@ -201,7 +201,7 @@ sub analyze_en {
             }
             else {
                 $pleon_sum++;
-                my ($aligned, $types) = $t_node->get_aligned_nodes;
+                my ($aligned, $types) = $t_node->get_directed_aligned_nodes;
                 if ( $aligned and $types->[0] ne "monolingual" ) {
                     $cs_node = $aligned->[0];
                     if ( Treex::Block::Eval::AddPersPronSb::has_pleon_sb($cs_node) ) {
@@ -467,7 +467,7 @@ sub analyze_cs {
 
 sub get_aligned_node {
     my ( $t_node ) = @_;
-    my ($aligned, $types) = $t_node->get_aligned_nodes;
+    my ($aligned, $types) = $t_node->get_directed_aligned_nodes;
     if ( $types ) {
         my $i;
         for ( $i = 0; $i < @{$types}; $i++ ) {
@@ -501,7 +501,7 @@ sub get_en2cs_links {
     my ( $cs_tree ) = @_;
     my %en2cs_node;
     foreach my $cs_node ( $cs_tree->get_descendants ) {
-        my ($aligned, $types) = $cs_node->get_aligned_nodes;
+        my ($aligned, $types) = $cs_node->get_directed_aligned_nodes;
         foreach my $en_node ( @{$aligned} ) {
             $en2cs_node{$en_node} = $cs_node;
         }
@@ -514,7 +514,7 @@ sub get_cs2en_links {
     my ( $en_tree ) = @_;
     my %cs2en_node;
     foreach my $en_node ( $en_tree->get_descendants ) {
-        my ($aligned, $types) = $en_node->get_aligned_nodes;
+        my ($aligned, $types) = $en_node->get_directed_aligned_nodes;
         if ( $aligned ) {
             for ( my $i = 0; $i < @$aligned; $i++ ) {
                 $cs2en_node{$aligned->[$i]} = $en_node if ( $types->[$i] ne "monolingual" );
@@ -1490,7 +1490,7 @@ sub test_it_cs {
 
 sub has_en_perspron {
     my ( $cs_verb ) = @_;
-    my ($aligned, $types) = $cs_verb->get_aligned_nodes;
+    my ($aligned, $types) = $cs_verb->get_directed_aligned_nodes;
 #     my $en_verb = get_aligned_node($cs_verb);
 #     if ( $aligned ) {
     my $i = 0;
@@ -1520,7 +1520,7 @@ sub has_en_perspron {
 
 sub has_en_sb {
     my ( $cs_verb ) = @_;
-    my ($aligned, $types) = $cs_verb->get_aligned_nodes;
+    my ($aligned, $types) = $cs_verb->get_directed_aligned_nodes;
     my $i = 0;
     while ( $aligned->[$i] ) {
         if ( ($aligned->[$i]->gram_sempos || "") eq "v" ) {

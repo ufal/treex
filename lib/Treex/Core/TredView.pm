@@ -381,7 +381,7 @@ sub node_release_hook {
         and
         $roots[0] != $roots[1] and $zones[0] != $zones[1]) {
 
-        if ($node->is_aligned_to($target, 'alignment')) {
+        if ($node->is_directed_aligned_to($target, {rel_types => ['alignment']})) {
             $node->delete_aligned_node($target, 'alignment');
         } else {
             $node->add_aligned_node($target, 'alignment');
@@ -659,14 +659,22 @@ sub node_style_hook {
     my @target_ids;
     my @arrow_types;
 
-    foreach my $ref_attr ( 'coref_gram', 'coref_text', 'compl' ) {
+    foreach my $ref_attr ( 'coref_gram', 'coref_text', 'compl', 'bridging' ) {
         if ( defined $node->attr( $ref_attr . '.rf' ) ) {
             foreach my $target_id ( @{ $node->attr( $ref_attr . '.rf' ) } ) {
                 push @target_ids,  $target_id;
                 push @arrow_types, $ref_attr;
             }
         }
+        elsif ( defined $node->attr( $ref_attr ) ) {
+            my $links = $node->attr( $ref_attr ); 
+            foreach my $link (@$links) {
+                push @target_ids, $link->{'target_node.rf'};
+                push @arrow_types, $ref_attr;
+            }
+        }
     }
+
 
     # P-layer indexes and coindexes
     if ( $node->get_layer eq 'p' ) {

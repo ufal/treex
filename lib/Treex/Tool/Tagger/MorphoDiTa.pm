@@ -18,7 +18,7 @@ if (my $dep = $@) {
     log_warn('missing module: Ufal::MorphoDiTa');
     exit 0;
 }
-    
+
 
 # Path to the model data file
 has model => ( is => 'ro', isa => 'Str', required => 1 );
@@ -69,7 +69,7 @@ sub tag_sentence {
         push @tags, $tag_and_lemma->{tag};
         push @lemmas, $tag_and_lemma->{lemma};
     }
-    
+
     return (\@tags, \@lemmas);
 }
 
@@ -98,7 +98,7 @@ Treex::Tool::Tagger::MorphoDiTa - wrapper for Ufal::MorphoDiTa
  # or czech-morfflex-pdt-131112.tagger-best_accuracy
  my @tokens = qw(Jak to jde ?);
  my ($tags_rf, $lemmas_rf) = $tagger->tag_sentence(\@tokens);
- 
+
 =head1 DESCRIPTION
 
 Wrapper for state-of-the-art part-of-speech (morphological) tagger MorphoDiTa

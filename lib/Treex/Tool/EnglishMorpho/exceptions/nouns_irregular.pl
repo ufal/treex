@@ -43,7 +43,7 @@ kubbitz	kibbutzim
 lira	lire
 END_DATA
 
-sub analyze() {
+sub analyze() {		## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
     foreach my $line ( split( "\n", $DATA ) ) {
         next if $line =~ /regular$/;
         my ( $singular, $plural ) = split( /\s+/, $line );
@@ -52,7 +52,7 @@ sub analyze() {
     return;
 }
 
-sub generate() {
+sub generate() {	## no critic qw(Subroutines::ProhibitSubroutinePrototypes)
     foreach my $line ( split( "\n", $DATA ) ) {
         next if $line =~ /regular$/;
         next if $line =~ /#2$/;

@@ -9,7 +9,7 @@ sub process_anode
     my $self = shift;
     my $node = shift;
     my $deprel = $node->deprel();
-    if($deprel =~ m/^(conj|mwe|name)$/)
+    if($deprel =~ m/^(conj|mwe|name)(:|$)/)
     {
         my $parent = $node->parent();
         if(!defined($parent) || $parent->ord() >= $node->ord())

@@ -12,7 +12,7 @@ my %gram2iset = (
     'definiteness=reduced'    => 'definiteness=red',
 
     'degcmp=pos'  => 'degree=pos',
-    'degcmp=comp' => 'degree=comp',
+    'degcmp=comp' => 'degree=cmp',
     'degcmp=sup'  => 'degree=sup',
 
     'diathesis=pas' => 'voice=pass',
@@ -89,7 +89,7 @@ sub process_tnode {
     my $gender = $t_node->gram_gender || '';
     if ( $gender eq 'inan' ) {
         $a_node->iset->set_animateness('inan');
-    }    
+    }
 
     # The type of pronoun is not preserved on t-layer, but at least we know it is a pronoun
     if ( ( $t_node->gram_sempos // '' ) =~ /pron/ ) {
@@ -107,15 +107,15 @@ sub process_tnode {
             $a_node->iset->set_person('');
         }
     }
-    
+
     # Fill grammatemes through coref_gram.rf for reflexive pronouns
     if ( $t_node->t_lemma eq '#PersPron' and ( my ($t_antec) = $t_node->get_coref_gram_nodes() ) ){
         while ( $t_antec->get_coref_gram_nodes() ){
             ($t_antec) = $t_antec->get_coref_gram_nodes();  # go to the beginng of the coreference chain
         }
-        my $antec_gram = $t_antec->get_attr('gram') or return; 
+        my $antec_gram = $t_antec->get_attr('gram') or return;
         $self->fill_iset_from_gram( $t_node, $a_node, $antec_gram );
-        $a_node->iset->set_reflex('reflex');    
+        $a_node->iset->set_reflex('reflex');
     }
 
     return;
@@ -127,7 +127,7 @@ sub should_fill {
 
 sub fill_iset_from_gram {
     my ( $self, $t_node, $a_node, $grammatemes_rf ) = @_;
-    
+
     while ( my ( $name, $value ) = each %{$grammatemes_rf} ) {
         if ( defined $value && $self->should_fill( $name, $t_node ) && ( my $iset_rule = $gram2iset{"$name=$value"} ) ) {
             my ( $i_name, $i_value ) = split /=/, $iset_rule;
@@ -142,7 +142,7 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::T2A::InitMorphcat
 

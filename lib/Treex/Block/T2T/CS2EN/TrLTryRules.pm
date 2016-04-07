@@ -7,6 +7,9 @@ extends 'Treex::Core::Block';
 #TODO These hacks should be removed from here and added to the translation dictionary
 Readonly my %QUICKFIX_TRANSLATION_OF => (
 
+    q{„} => q{"}, # TODO: or should we use typographic “…” quotes?
+    q{“} => q{"},
+
     #q{skype}      => 'Skype|NNP',
     #q{Skype}      => 'Skype|NNP',
     'opakovač'        => 'repeater|noun',

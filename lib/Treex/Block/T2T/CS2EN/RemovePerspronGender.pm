@@ -24,14 +24,19 @@ sub process_tnode {
 
         # even without antecedent: generated subjects -- remove gender if 'anim' was just guessed
         # good for IT domain (where things are concerned), not that good for news (where mostly persons are concerned)
-        if ( ( $t_src->formeme // '' ) eq 'drop' and ( $t_src->wild->{'aux_gram/gender'} // '' ) eq 'anim/inan/fem/neut' ) {
+        if ( ( $t_src->formeme // '' ) eq 'drop') {
             $t_node->set_gram_gender('nr');
         }
         return;
     }
 
     my $t_antec = first { $_->gram_sempos =~ /^n.denot/ } reverse @coref;
-    return if ( !$t_antec );
+    if ( !$t_antec ) {
+        return if ( !$self->remove_guessed_gender );
+        # remove the guessed gender
+        $t_node->set_gram_gender('nr');
+        return;
+    }
 
     # skip anything that might refer to persons
     return if ( $t_antec->is_name_of_person );

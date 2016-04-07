@@ -41,7 +41,7 @@ override '_get_feature_names' => sub {
 };
 
 override '_get_features' => sub {
-    
+
     my ( $self, $forms, $analyses, $i ) = @_;
     my $wordform = $forms->[$i];
     my $analysis = $analyses->[$i];

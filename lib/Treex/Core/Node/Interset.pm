@@ -9,7 +9,7 @@ parameter interset_attribute => (
 
 use Treex::Core::Log;
 use List::Util qw(first); # TODO: this wouldn't be needed if there was Treex::Core::Common for roles
-use Lingua::Interset 2.047;
+use Lingua::Interset 2.050;
 use Lingua::Interset::FeatureStructure;
 use Data::Dumper;
 
@@ -30,52 +30,137 @@ has $interset_attribute => (
         matches
         upos
         set_upos
-        is_noun
         is_abbreviation
+        is_abessive
+        is_ablative
+        is_absolute_superlative
+        is_absolutive
+        is_accusative
         is_active
+        is_additive
+        is_adessive
         is_adjective
         is_adposition
         is_adverb
         is_affirmative
+        is_allative
+        is_animate
+        is_aorist
+        is_archaic
         is_article
+        is_associative
+        is_benefactive
         is_cardinal
+        is_colloquial
+        is_comitative
         is_common_gender
         is_comparative
         is_conditional
         is_conjunction
+        is_conjunctive
         is_coordinator
+        is_dative
+        is_definite
+        is_delative
+        is_demonstrative
+        is_desiderative
+        is_destinative
+        is_determiner
+        is_diminutive
+        is_distributive
         is_dual
+        is_elative
+        is_ergative
+        is_essive
+        is_exclamative
+        is_factive
         is_feminine
         is_finite_verb
+        is_first_person
         is_foreign
+        is_future
+        is_genitive
         is_gerund
+        is_gerundive
         is_hyph
+        is_illative
+        is_imperative
+        is_imperfect
+        is_inanimate
+        is_indefinite
+        is_indicative
+        is_inessive
         is_infinitive
+        is_informal
+        is_instructive
+        is_instrumental
         is_interjection
+        is_interrogative
+        is_intransitive
+        is_jussive
+        is_lative
+        is_locative
         is_masculine
+        is_mediopassive
+        is_middle_voice
         is_modal
+        is_motivative
+        is_multiplicative
+        is_narrative
+        is_necessitative
         is_negative
+        is_nominative
+        is_nonhuman
         is_neuter
+        is_noun
         is_numeral
+        is_optative
         is_ordinal
         is_participle
         is_particle
+        is_partitive
         is_past
+        is_perfect
+        is_personal
         is_personal_pronoun
-        is_possessive
+        is_pluperfect
         is_plural
+        is_polite
+        is_positive
+        is_possessive
+        is_potential
+        is_present
+        is_prolative
+        is_pronominal
         is_pronoun
         is_proper_noun
+        is_progressive
+        is_prospective
         is_punctuation
+        is_quotative
+        is_rare
+        is_reciprocal
         is_reflexive
+        is_relative
+        is_second_person
         is_singular
+        is_subjunctive
+        is_sublative
         is_subordinator
+        is_superessive
         is_superlative
         is_supine
         is_symbol
+        is_temporal
+        is_terminative
+        is_third_person
+        is_total
         is_transgressive
+        is_transitive
+        is_translative
         is_typo
         is_verb
+        is_vocative
         is_wh
     )],
    # Note that we cannot export

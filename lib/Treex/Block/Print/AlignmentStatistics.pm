@@ -80,8 +80,8 @@ sub get_local_stat {
 				}
 				elsif ( scalar(@aligned_nodes) == 1 ) {
 					my @referring_nodes = grep {
-						$_->is_aligned_to( $aligned_nodes[0],
-							'^' . $self->alignment_type . '$' )
+						$_->is_directed_aligned_to( $aligned_nodes[0],
+							{rel_types => ['^'.$self->alignment_type.'$']} )
 					  } $aligned_nodes[0]->get_referencing_nodes( 'alignment',
 						$self->source_language, $self->source_selector );
 					if ( scalar(@referring_nodes) == 1 ) {
@@ -97,8 +97,8 @@ sub get_local_stat {
 		}
 		foreach my $j ( 0 .. $#tgt_nodes ) {
 			my @referring_nodes = grep {
-				$_->is_aligned_to( $tgt_nodes[$j],
-					'^' . $self->alignment_type . '$' )
+				$_->is_directed_aligned_to( $tgt_nodes[$j],
+					{rel_types => ['^'.$self->alignment_type.'$']} )
 			  } $tgt_nodes[$j]
 			  ->get_referencing_nodes( 'alignment', $self->source_language,
 				$self->source_selector );
@@ -129,8 +129,8 @@ sub get_local_stat {
 	else {
 		foreach my $i ( 0 .. $#src_nodes ) {
 			my @referring_nodes = grep {
-				$_->is_aligned_to( $src_nodes[$i],
-					'^' . $self->alignment_type . '$' )
+				$_->is_directed_aligned_to( $src_nodes[$i],
+					{rel_types => ['^'.$self->alignment_type.'$']} )
 			  } $src_nodes[$i]
 			  ->get_referencing_nodes( 'alignment', $self->language,
 				$self->selector );
@@ -169,8 +169,8 @@ sub get_local_stat {
 					my $is_m_to_1 = 1;
 					foreach my $an (@aligned_nodes) {
 						my @referring_nodes = grep {
-							$_->is_aligned_to( $an,
-								'^' . $self->alignment_type . '$' )
+							$_->is_directed_aligned_to( $an,
+								{rel_types => ['^'.$self->alignment_type.'$']} )
 						  } $an->get_referencing_nodes( 'alignment',
 							$self->language, $self->selector );
 						if ( scalar( @referring_nodes != 1 ) ) {

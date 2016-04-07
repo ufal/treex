@@ -64,11 +64,11 @@ sub _csrefs_from_ensrc {
     my ($self, $ensrc) = @_;
     
     # moving to "en-ref" nodes via monolingual alignment
-    my @enrefs = grep {$_->is_aligned_to($ensrc, 'monolingual')} $ensrc->get_referencing_nodes('alignment');
+    my @enrefs = grep {$_->is_directed_aligned_to($ensrc, {rel_types => ['monolingual']})} $ensrc->get_referencing_nodes('alignment');
     return [] if ( @enrefs == 0 );
     
     # getting all nodes aligned with the first "en-ref"
-    my ($aligns, $type) = $enrefs[0]->get_aligned_nodes;
+    my ($aligns, $type) = $enrefs[0]->get_directed_aligned_nodes;
     return [] if (!$aligns || !$type);
     
     # collecting all aligned nodes except for those monolingually aligned - supposed to be "cs-ref"
@@ -79,9 +79,9 @@ sub _csrefs_from_ensrc {
 sub _get_aligned_nodes_czeng {
     my ($self, $tnode) = @_;
 
-    my @t_cssrc = grep {!$_->is_aligned_to($tnode, 'monolingual')} $tnode->get_referencing_nodes('alignment');
+    my @t_cssrc = grep {!$_->is_directed_aligned_to($tnode, {rel_types => ['monolingual']})} $tnode->get_referencing_nodes('alignment');
     my $anode = $tnode->get_lex_anode;
-    my @a_cssrc = grep {!$_->is_aligned_to($anode, 'monolingual')} $anode->get_referencing_nodes('alignment');
+    my @a_cssrc = grep {!$_->is_directed_aligned_to($anode, {rel_types => ['monolingual']})} $anode->get_referencing_nodes('alignment');
     return (\@t_cssrc, \@a_cssrc);
 }
 
@@ -109,14 +109,14 @@ sub _get_gold_counterpart_tlemma {
     my ($self, $ensrc_it) = @_;
     
     my $a_ensrc_it = $ensrc_it->get_lex_anode;
-    my ($a_enref_it) = grep {$_->is_aligned_to($a_ensrc_it, 'monolingual')} $a_ensrc_it->get_referencing_nodes('alignment');
+    my ($a_enref_it) = grep {$_->is_directed_aligned_to($a_ensrc_it, {rel_types => ['monolingual']})} $a_ensrc_it->get_referencing_nodes('alignment');
     return "__NO_A_ENREF__" if !$a_enref_it;
     my ($enref_it) = $a_enref_it->get_referencing_nodes('a/lex.rf');
     return "__NO_T_ENREF__" if !$enref_it;
 
     my ($enref_par) = grep {$_->formeme && ($_->formeme =~ /^v/)} $enref_it->get_eparents;
     return "__NO_V_ENREF_PAR__" if !$enref_par;
-    my ($aligns, $type) = $enref_par->get_aligned_nodes;
+    my ($aligns, $type) = $enref_par->get_directed_aligned_nodes;
     return "__NO_CSREF_PAR__" if (!$aligns || !$type);
         
     my ($csref_par) = grep {$_->formeme =~ /^v/} map {$aligns->[$_]} grep {$type->[$_] ne 'monolingual'} (0 .. @$aligns-1);
@@ -133,7 +133,7 @@ sub _gold_counterpart_tlemma_via_alayer {
     my ($a_enref_par) = grep {defined $_->tag && ($_->tag =~ /^V/)} $a_enref_it->get_eparents;
     return "__A:NO_A_V_ENREF_PAR__" if !$a_enref_par;
 
-    my ($aligns, $type) = $a_enref_par->get_aligned_nodes;
+    my ($aligns, $type) = $a_enref_par->get_directed_aligned_nodes;
     return "__A:NO_A_CSREF_PAR1__" if (!$aligns || !$type);
     my ($a_csref_par) = map {$aligns->[$_]} grep {$type->[$_] ne 'monolingual'} (0 .. @$aligns-1);
     return "__A:NO_A_CSREF_PAR2__" if !$a_csref_par;

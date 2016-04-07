@@ -25,7 +25,7 @@ has ner => (
 
 has functors => (
      is => 'ro',
-     isa => enum( [qw(MLProcess simple)] ),
+     isa => enum( [qw(MLProcess simple VW)] ),
      default => 'MLProcess',
      documentation => 'Which analyzer of functors to use',
 );
@@ -43,6 +43,14 @@ has trg_lang => (
     isa => 'Str',
     documentation => 'Gazetteers are defined for language pairs. Both source and target languages must be specified.',
 );
+
+has valframes => (
+     is => 'ro',
+     isa => 'Bool',
+     default => 0,
+     documentation => 'Set valency frame references to valency dictionary?',
+);
+
 
 sub get_scenario_string {
     my ($self) = @_;
@@ -91,19 +99,23 @@ sub get_scenario_string {
     'A2T::CS::SetFormeme use_version=2 fix_prep=0',
     'A2T::CS::SetDiathesis',
     $self->functors eq 'MLProcess' ? 'A2T::CS::SetFunctors memory=2g' : (),
-    'A2T::CS::SetMissingFunctors',
+    $self->functors eq 'VW' ? 'A2T::CS::SetFunctorsVW' : (),
+    $self->functors ne 'VW' ? 'A2T::CS::SetMissingFunctors': (),
     'A2T::SetNodetype',
     'A2T::FixAtomicNodes',
     'A2T::CS::SetGrammatemes',
     'A2T::SetSentmod',
+    $self->valframes ? 'A2T::CS::SetValencyFrameRefVW' : (),
     'A2T::CS::MarkReflexivePassiveGen',
     'A2T::CS::FixNonthirdPersSubj',
     'A2T::CS::AddPersPron',
     'T2T::SetClauseNumber',
     'A2T::CS::MarkReflpronCoref',
     'A2T::SetDocOrds',
+    'Coref::CS::SetMultiGender',
     'A2T::CS::MarkTextPronCoref',
     'Coref::RearrangeLinks retain_cataphora=1',
+    'Coref::DisambiguateGrammatemes',
     ;
 
     return $scen;
@@ -143,6 +155,6 @@ Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2015-2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

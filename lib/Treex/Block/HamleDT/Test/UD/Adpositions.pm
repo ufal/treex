@@ -46,9 +46,18 @@ sub process_atree
                 {
                     $ok = $ok && $dir > 0; # parent is to the left from the adposition
                 }
+                # The 'mark' relation is used instead of 'case' if the adposition modifies an entire clause (that is, the adposition functions as a subordinating conjunction).
+                # That usually means that the parent is a non-finite verb form such as infinitive or gerund. However, if the verb is copula, it will be sibling, not parent.
+                # Note however, that nominal predicates with a copula may also have genuine adposition ('case') modifiers.
+                # 'case' example: Couceiro dijo que España está en el buen camino ... ccomp(dijo, camino); cop(camino, está); case(camino, en)
+                # 'mark' example: hace hincapié en que los retornos son muy elevados ... ccomp(hace, elevados); mark(elevados, en); cop(elevados, son)
                 elsif($parent->is_verb())
                 {
                     $ok = $ok && $deprel =~ m/^(mark|compound:prt)$/;
+                }
+                elsif(any {defined($_->deprel()) && $_->deprel() eq 'cop'} ($parent->children()))
+                {
+                    $ok = $ok && $deprel =~ m/^(mark|case)$/;
                 }
                 else
                 {

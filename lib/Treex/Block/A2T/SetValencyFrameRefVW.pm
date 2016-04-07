@@ -103,15 +103,51 @@ Treex::Block::A2T::SetValencyFrameRefVW
 
 =head1 DESCRIPTION
 
-TODO
+Set valency frame reference (val_frame.rf) to an id from a valency dictionary, using
+the VowpalWabbit classifier with the given model, plus the dictionary as a fallback. 
 
 =head1 PARAMETERS
 
-=head2 sempos_filter
+=over
+
+=item valency_dict_name
+
+Name of the valency dictionary, such as C<vallex.xml> (will be located in 
+C<share/data/resources/vallex>).
+
+=item valency_dict_prefix
+
+The valency dictionary prefix to be used (e.g., C<cs-v#>). This is a kind of hack,
+the value should correspond to the reference to the dictionary in the Treex file
+(but the reference is never checked, which may lead to problems in TrEd).
+
+=item sempos_filter
 
 Use this parameter if you want to set valency frames eg. for verbs only
-(sempos_filter=v). The filter is a regexp on the gram/sempos attribute of t-nodes.
+(sempos_filter='^v'). The filter is a regexp on the gram/sempos attribute of t-nodes.
 The default is empty, ie. all nodes will be allowed to the classification.
+
+=item model_file
+
+Path to the VowpalWabbit model file (in share or plain relative/absolute path).
+
+=item features_file
+
+Path to features configuration file (in YAML format).
+
+=item vallex_mapping_file
+
+Path to Vallex mapping file for billingual experiments.
+
+=item vallex_mapping_by_lemma
+
+Split the 'present in Vallex mapping' feature by lemmas (default and better: 0)?
+
+=item restrict_frames_file
+
+Allows to the list of frames that may be predicted to the ones given in this file.
+
+=back
 
 =head1 AUTHOR
 
@@ -119,6 +155,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2014-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

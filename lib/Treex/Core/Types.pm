@@ -39,14 +39,16 @@ subtype 'Treex::Type::ZoneCode'
     => where { my ( $l, $s ) = split /_/, $_; is_lang_code($l) && ( !defined $s || $s =~ /^[a-z\d]*$/i ) }
 => message {'ZoneCode must be LangCode or LangCode_Selector, e.g. "en_src"'};
 
-# ISO 639-1 language code with some extensions from ISO 639-2
-# Added code for Modern Greek which comes under ISO 639-3
+# ISO 639-1 language code with some extensions from ISO 639-2 and 639-3
+# Added code for Modern Greek which comes under ISO 639-3 (but normally it is encoded using ISO 639-1 'el')
 use Locale::Language;
 my %EXTRA_LANG_CODES = (
     'bxr'     => "Buryat",
     'dsb'     => "Lower Sorbian",
-    'ell'     => "Modern Greek", # ISO 639-3
-    'grc'     => "Ancient Greek",# ISO 639-2 code
+    'ell'     => "Modern Greek",  # ISO 639-3
+    'got'     => "Gothic",        # ISO 639-2
+    'grc'     => "Ancient Greek", # ISO 639-2
+    'hit'     => "Hittite",       # ISO 639-2
     'hsb'     => "Upper Sorbian",
     'hak'     => "Hakka",
     'kaa'     => "Karakalpak",
@@ -147,4 +149,3 @@ Tomáš Kraut <kraut@ufal.mff.cuni.cz>
 Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
-

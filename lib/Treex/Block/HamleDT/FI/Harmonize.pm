@@ -1,8 +1,10 @@
 package Treex::Block::HamleDT::FI::Harmonize;
+use utf8;
 use Moose;
 use Treex::Core::Common;
-use utf8;
 extends 'Treex::Block::HamleDT::Harmonize';
+
+
 
 has iset_driver =>
 (
@@ -11,9 +13,10 @@ has iset_driver =>
     required      => 1,
     default       => 'fi::conll',
     documentation => 'Which interset driver should be used to decode tags in this treebank? '.
-                     'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
-                     'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
+                     'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
+
+
 
 #------------------------------------------------------------------------------
 # Reads the Finnish tree, transforms tree to adhere to HamleDT guidelines,

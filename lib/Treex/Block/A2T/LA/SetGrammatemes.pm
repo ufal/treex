@@ -77,55 +77,8 @@ sub process_tnode {
         && (grep $grandparent_lemma eq $_, qw(possum debeo volo nolo malo soleo incipio desino intendo))
         && $grandparent_afun eq 'Pred') {
         $t_node->set_attr('sentmod', 'enunc');
-    }
-
-    # the #PersPron t-lemma is assigned to all the n.pron.def.pers. (personal-possessive-reflexive pronouns)
-    # NB! This is not a grammateme, but an attribute
-        if (grep $lex_lemma eq $_, qw(ego tu meus tuus suus vester noster sui)) {
-            $t_node->set_attr('t_lemma', '#PersPron');
-    }
-
-    # the #Neg t-lemma is assigned to 'non'
-    # NB! This is not a grammateme, but an attribute
-        if ($lex_lemma eq 'non') {
-            $t_node->set_attr('t_lemma', '#Neg');
-    }
-
-    # the t-lemma 'qui' is assigned to nodes with m-lemma "aliqui/quicumque/quidam/quilibet"
-    # NB! This is not a grammateme, but an attribute
-        if (grep $lex_lemma eq $_, qw(aliqui quicumque quidam quilibet)) {
-            $t_node->set_attr('t_lemma', 'qui');
-    }
-
-    # the t-lemma 'quis' is assigned to nodes with m-lemma "aliquis/quisquis/unusquisque"
-    # NB! This is not a grammateme, but an attribute
-        if (grep $lex_lemma eq $_, qw(aliquis quisquis unusquisque)) {
-            $t_node->set_attr('t_lemma', 'quis');
-    }
-
-    # the t-lemma 'qualis' is assigned to nodes with m-lemma 'qualiscumque'
-    # NB! This is not a grammateme, but an attribute
-        if ($lex_lemma eq 'qualiscumque') {
-            $t_node->set_attr('t_lemma', 'qualis');
-    }
-
-    # the t-lemma 'quantus' is assigned to nodes with m-lemma 'quantuscumque'
-    # NB! This is not a grammateme, but an attribute
-        if ($lex_lemma eq 'quantuscumque') {
-            $t_node->set_attr('t_lemma', 'quantus');
-    }
-
-    # the t-lemma 'ipse' is assigned to nodes with m-lemma 'seipse'
-    # NB! This is not a grammateme, but an attribute
-        if ($lex_lemma eq 'seipse') {
-            $t_node->set_attr('t_lemma', 'ipse');
-    }
-
-    # the t-lemma 'uter' is assigned to nodes with m-lemma 'uterque'
-    # NB! This is not a grammateme, but an attribute
-        if ($lex_lemma eq 'uterque') {
-            $t_node->set_attr('t_lemma', 'uter');
-    }
+    }  
+  
 
     # the 'f' value of tfa is assigned
     # NB! This is not a grammateme, but an attribute
@@ -805,12 +758,6 @@ sub process_tnode {
     
     }	
 
-    # numertype 'ord' (i.e. ordinal) to most frequent ordinal numerals
-    if (grep $lex_lemma eq $_, qw(primus secundus tertius quartus quintus sextus septimus octavus nonus decimus undecimus)) {
-            $t_node->set_gram_numertype('ord');
-    
-    }
-
     # numertype 'ord' (i.e. ordinal) to Roman numbers
     if ($lex_lemma eq "num. rom.") {
             $t_node->set_gram_numertype('ord');
@@ -818,10 +765,10 @@ sub process_tnode {
     }	
 
     # numertype 'set' to ditributive numbers of the 'singulus' kind
-    if (grep $lex_lemma eq $_, qw(singulus trinus ternus quaternus)) {
-            $t_node->set_gram_numertype('set');
+   # if (grep $lex_lemma eq $_, qw(singulus trinus ternus quaternus)) {
+    #        $t_node->set_gram_numertype('set');
     
-    }
+    #}
 
     # numertype 'kind' to ditributive numbers of the 'bis' and 'duplex' kind
     if (grep $lex_lemma eq $_, qw(semel bis ter quater quinquies sexies septies octies novies decies duplex triplex)) {
@@ -860,9 +807,14 @@ sub process_tnode {
                 decimusoctavus duodeviginti
                 octavusdecimus duodeviginti/;
         if (exists $ordinal_numerals{$lex_lemma}) {
-            $t_node->set_attr('t_lemma', $ordinal_numerals{$lex_lemma});
+            $t_node->set_t_lemma($ordinal_numerals{$lex_lemma});
+            $t_node->set_gram_numertype('ord'); # we set the grammateme for ordinal numerals
         }
-
+# numertype 'ord' (i.e. ordinal) to most frequent ordinal numerals
+   # "if (grep $lex_lemma eq $_, qw(primus secundus tertius quartus quintus sextus septimus octavus nonus decimus undecimus)) {
+    #        $t_node->set_gram_numertype('ord');
+    
+ #   }
 
     # distributive numerals have t-lemma identical to the corresponding cardinal number (e.g. 'singulus' -> 'unus')
     # NB! The list is not complete (only the most frequent lemmas are reported): for the complete list of distirbutive numerals in the IT, see "301-FRLM.DATI"
@@ -887,6 +839,7 @@ sub process_tnode {
                 centenus centum/;
         if (exists $distributive_numerals{$lex_lemma}) {
             $t_node->set_attr('t_lemma', $distributive_numerals{$lex_lemma});
+	   $t_node->set_gram_numertype('set'); # we set the grammateme for distributive numerals
         }
 
     # ADV. NUM. MULT. have t-lemma identical to the corresponding cardinal number (e.g. 'semel' -> 'unus')

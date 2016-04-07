@@ -1,0 +1,43 @@
+How to create Tree language model
+
+In the raw input file (counts_raw.tsv.gz aka joint_table.tsv.gz) each line represents one t-level edge.
+Tab separated columns are: Ld Lg Fd Pd Pg.
+Where: L = lemma, F = formeme, P = POS(part of speech tag), d = dependent node of a edge, g = governing node.
+
+Targets of Makefile:
+
+counts_unfiltered.tsv.gz
+  Sum up the same lines from the raw input.
+  Columns will be in order: Count Lg Pg Ld Pd Fd.
+  Both Lg and Ld will be lowercased (since case of t-lemmas is actually unstable).
+
+counts_filtered.tsv.gz
+  Drop edges with count=1 and edges with lemma=~/^[0-9]+$/ (numbers) or pos=~/[ZJ]/ (punctuation, conjunction).
+
+lemma_id.pls.gz
+  File suitable for LanguageModel::Lemma
+
+models:
+  Creates files c_LgFdLd.pls.gz and c_PgFdLd.pls.gz - counts stored in gzipped perl storable.
+  For memory and speed efficiency lemma+pos are represented as integer IDs instead of strings, see LanguageModel::Lemma.
+  So here Lg means ID of governing lemma & its pos (and Ld means ID of the dependent lemma & pos).
+  Example usage:
+  my $cLgFdLd = _load_plsgz('c_LgFdLd.pls.gz' );
+  my $cPgFdLd = _load_plsgz('c_PgFdLd.pls.gz' );
+  my $ALL = '<ALL>'; # special key for total of all subkeys
+  my $Lg = LanguageModel::Lemma->new('pes','N');
+  my $Pg = $Lg->get_pos(); # $Pg = 'N';
+  my $Fd = 'adj:attr';
+  my $Ld = LanguageModel::Lemma->new('zlý','A');
+  my $number_of_LgFdLd = $cLgFdLd->[$$Lg]{$Fd}{$$Ld};
+  my $number_of_LgFd   = $cLgFdLd->[$$Lg]{$Fd}{$ALL};
+  my $number_of_Lg     = $cLgFdLd->[$$Lg]{$ALL};
+  my $number_of_PgFdLd = $cPgFdLd->{$Pg}{$Fd}{$$Ld};
+  my $number_of_PgFd   = $cPgFdLd->{$Pg}{$Fd}{$ALL};
+  my $number_of_Pg     = $cPgFdLd->{$Pg}{$ALL};
+
+copy_to_share:
+  Copies lemma_id.pls.gz c_*.pls.gz.
+
+----------
+Author: Martin Popel

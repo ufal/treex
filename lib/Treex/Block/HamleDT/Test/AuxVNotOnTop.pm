@@ -10,7 +10,7 @@ sub process_atree {
     my ( $self, $a_root ) = @_;
 
     foreach my $anode ($a_root->get_children()) {
-        if ($anode->afun eq "AuxV") {
+        if ($anode->deprel eq "AuxV") {
             $self->complain($a_root);
             return;
         }

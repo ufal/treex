@@ -31,7 +31,7 @@ sub process_ttree {
     foreach my $tnode ( $troot->get_descendants ) {
         my $anode = $tnode->get_lex_anode;
         next if not $anode;
-        my ( $nodes, $types ) = $anode->get_aligned_nodes();
+        my ( $nodes, $types ) = $anode->get_directed_aligned_nodes();
         foreach my $i ( 0 .. $#$nodes ) {
             my $to_tnode = $a2t{ $$nodes[$i] } || next;
 
@@ -46,7 +46,7 @@ sub process_ttree {
     foreach my $tnode ( $troot->get_descendants ) {
         my $anode = $tnode->get_lex_anode;
         next if not $anode;
-        my ( $nodes, $types ) = $anode->get_aligned_nodes();
+        my ( $nodes, $types ) = $anode->get_directed_aligned_nodes();
         foreach my $i ( 0 .. $#$nodes ) {
             my $to_tnode = $a2t{ $$nodes[$i] } || next;
 
@@ -62,7 +62,7 @@ sub process_ttree {
     # connect other not yet aligned nodes, that have the same functor and their parents are aligned
     foreach my $tnode ( $troot->get_descendants ) {
         next if $is_aligned{$tnode};
-        my ( $nodes, $types ) = $tnode->get_parent->get_aligned_nodes();
+        my ( $nodes, $types ) = $tnode->get_parent->get_directed_aligned_nodes();
         next if !$nodes || !@$nodes;
         next if !$is_aligned{ $$nodes[0] };
         foreach my $candidate ( $$nodes[0]->get_children() ) {

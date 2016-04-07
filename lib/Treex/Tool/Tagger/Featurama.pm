@@ -134,6 +134,7 @@ sub DEMOLISH {
     if ( $self->{perc} ) {
         $self->perc->testFinish();
     }
+	return;
 }
 
 sub tag_sentence {
@@ -255,7 +256,7 @@ This method should return an array of feature names.
 
 =item _get_features($wordforms_rf, $analyses_rf_rf, $index)
 
-This method should return an array of features, given 
+This method should return an array of features, given
 all wordforms in the sentence,
 all possible morphological analyses for each of the wordforms,
 and a position in the sentence.

@@ -6,6 +6,7 @@ use namespace::autoclean;
 use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Log;
+use Treex::Core::Phrase::NTerm;
 
 extends 'Treex::Core::Phrase';
 
@@ -62,6 +63,41 @@ sub head
 
 
 #------------------------------------------------------------------------------
+# Takes a dependent child of this phrase and makes it the head. The standard
+# NTerm phrase will define this method as just moving the head flag among its
+# children. However, special classes of phrases (such as Coordination) do not
+# allow to simply set the head. For such phrases, making them dependent on one
+# of their current dependents means encapsulating them in a new nonterminal
+# phrase. Such behavior is defined here. Note that the caller must be prepared
+# that they will get a different phrase object than the one whose method they
+# called! The current phrase or its replacement is returned by the method.
+#------------------------------------------------------------------------------
+sub set_head
+{
+    my $self = shift;
+    my $new_head = shift; # Treex::Core::Phrase
+    log_fatal('Dead') if($self->dead());
+    my $old_head = $self->head();
+    return $self if ($new_head == $old_head);
+    # Remove the new head from the list of non-head children.
+    $new_head->set_parent(undef);
+    # Create a new nonterminal phrase with this head.
+    my $ntphrase = new Treex::Core::Phrase::NTerm('head' => $new_head);
+    # If the current phrase is a core child of another phrase, we must carefully
+    # replace it by the new one, otherwise the parent will complain.
+    if(defined($self->parent()))
+    {
+        $self->parent()->replace_child($self, $ntphrase);
+    }
+    # Attach the current phrase as a dependent to the new phrase.
+    $self->set_parent($ntphrase);
+    # Return the new nonterminal phrase that replaces me.
+    return $ntphrase;
+}
+
+
+
+#------------------------------------------------------------------------------
 # Figures out whether an ordered list of children is required. Allows both hash
 # and non-hash notations, i.e.
 #   my @c = $p->dependents({'ordered' => 1});
@@ -96,6 +132,50 @@ sub order_phrases
 {
     my $self = shift;
     return sort {$a->ord() <=> $b->ord()} (@_);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of all nodes covered by the phrase, i.e. the head node of
+# this phrase and of all its descendants.
+#------------------------------------------------------------------------------
+sub nodes
+{
+    my $self = shift;
+    log_fatal('Dead') if($self->dead());
+    my @children = $self->children();
+    my @nodes;
+    foreach my $child (@children)
+    {
+        my @child_nodes = $child->nodes();
+        push(@nodes, @child_nodes);
+    }
+    # Well, not the best possible naming, but... order_phrases() will work even
+    # for nodes, as long as they have the ord() attribute (which they must if they
+    # are wrapped in phrases).
+    return $self->_order_required(@_) ? $self->order_phrases(@nodes) : @nodes;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of all terminal descendants of this phrase. Similar to
+# nodes(), but instead of Node objects returns the Phrase::Term objects, in
+# which the nodes are wrapped.
+#------------------------------------------------------------------------------
+sub terminals
+{
+    my $self = shift;
+    log_fatal('Dead') if($self->dead());
+    my @children = $self->children();
+    my @terminals;
+    foreach my $child (@children)
+    {
+        my @child_terminals = $child->terminals();
+        push(@terminals, @child_terminals);
+    }
+    return $self->_order_required(@_) ? $self->order_phrases(@terminals) : @terminals;
 }
 
 
@@ -202,6 +282,52 @@ sub set_deprel
 
 
 #------------------------------------------------------------------------------
+# Returns the deprel that should be used when the phrase tree is projected back
+# to a dependency tree (see the method project_dependencies()). In most cases
+# this is identical to what deprel() returns. However, for instance
+# prepositional phrases in Prague treebanks are attached using AuxP. Their
+# relation to the parent (returned by deprel()) is projected to the argument of
+# the preposition.
+#------------------------------------------------------------------------------
+sub project_deprel
+{
+    my $self = shift;
+    log_fatal('Dead') if($self->dead());
+    return $self->head()->project_deprel();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the lowest and the highest ord values of the nodes covered by this
+# phrase (always a pair of scalar values; they will be identical for terminal
+# phrases). Note that there is no guarantee that all nodes within the span are
+# covered by this phrase. There may be gaps!
+#------------------------------------------------------------------------------
+sub span
+{
+    my $self = shift;
+    # The phrases may overlap, thus requesting ordering of the children will not help us.
+    my @children = $self->children();
+    my ($min, $max);
+    foreach my $child (@children)
+    {
+        my ($left, $right) = $child->span();
+        if(!defined($min) || $left < $min)
+        {
+            $min = $left;
+        }
+        if(!defined($max) || $right > $max)
+        {
+            $max = $right;
+        }
+    }
+    return ($min, $max);
+}
+
+
+
+#------------------------------------------------------------------------------
 # Adds a child phrase (subphrase). By default, the new child will not be head,
 # it will be an ordinary modifier. This is a private method that should be
 # called only from the public method Phrase::set_parent().
@@ -241,6 +367,8 @@ sub _remove_child
     }
     if(any {$_ == $child} ($self->core_children()))
     {
+        log_warn($self->as_string());
+        log_warn($child->as_string());
         log_fatal("Cannot remove the head child or any other core child");
     }
     my $nhc = $self->_dependents_ref();
@@ -395,7 +523,7 @@ sub project_dependencies
     {
         my $dep_node = $dependent->node();
         $dep_node->set_parent($head_node);
-        $dep_node->set_deprel($dependent->deprel());
+        $dep_node->set_deprel($dependent->project_deprel());
     }
 }
 
@@ -414,6 +542,7 @@ sub as_string
     my $deps = join(', ', map {$_->as_string()} (@dependents));
     $deps = 'DEPS '.$deps if($deps);
     my $subtree = join(' ', ($core, $deps));
+    $subtree .= ' _M' if($self->is_member());
     return "(BNT $subtree)";
 }
 
@@ -477,6 +606,17 @@ Special cases of nonterminals may have multiple children with special behavior,
 and they may choose which one of these children shall be head under the current
 annotation style.
 
+=item nodes
+
+Returns the list of all nodes covered by the phrase, i.e. the head node of
+this phrase and of all its descendants.
+
+=item terminals
+
+Returns the list of all terminal descendants of this phrase. Similar to
+C<nodes()>, but instead of C<Node> objects returns the C<Phrase::Term> objects, in
+which the nodes are wrapped.
+
 =item dependents
 
 Returns the list of dependents of the phrase. The only difference from the
@@ -523,6 +663,13 @@ Sets a new type of the dependency relation of the phrase to the governing
 phrase. For nonterminal phrases the label is propagated to one (or several)
 of their children. It is not propagated to the underlying dependency tree
 (the C<project_dependencies()> method would have to be called to achieve that).
+
+=item span
+
+Returns the lowest and the highest ord values of the nodes covered by this
+phrase (always a pair of scalar values; they will be identical for terminal
+phrases). Note that there is no guarantee that all nodes within the span are
+covered by this phrase. There may be gaps!
 
 =item replace_child
 

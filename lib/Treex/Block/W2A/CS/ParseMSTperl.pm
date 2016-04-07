@@ -13,7 +13,7 @@ has 'alignment_is_backwards' => ( isa => 'Bool', is => 'ro', default => '1' );
 
 sub get_coarse_grained_tag {
     my ( $self, $tag ) = @_;
-    
+
     my $ctag;
     if ( substr( $tag, 4, 1 ) eq '-' ) {
 	# no case -> Pos + Subpos
@@ -29,7 +29,7 @@ sub get_coarse_grained_tag {
 1;
 
 __END__
- 
+
 =head1 NAME
 
 Treex::Block::W2A::CS::ParseMSTperl

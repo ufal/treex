@@ -11,15 +11,14 @@ has iset_driver =>
     required      => 1,
     default       => 'ar::padt',
     documentation => 'Which interset driver should be used to decode tags in this treebank? '.
-                     'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
-                     'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
+                     'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
 
 
 #------------------------------------------------------------------------------
 # Reads the Arabic tree, converts morphosyntactic tags to the PDT tagset,
-# converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
+# converts dependency relations, transforms tree to adhere to PDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
@@ -51,104 +50,111 @@ sub get_input_tag_for_interset
 
 
 #------------------------------------------------------------------------------
-# Adjusts analytical functions (syntactic tags). This method is called
-# deprel_to_afun() due to compatibility reasons. Nevertheless, it does not use
-# the value of the conll/deprel attribute. We converted the PADT PML files
-# directly to Treex without CoNLL, so the afun attribute already has a value.
-# We filled conll/deprel as well but the values are not identical to afun: they
-# also reflect other attributes such as is_member.
+# Adjusts dependency relation labels.
 # less /net/data/conll/2007/ar/doc/README
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub convert_deprels
 {
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $afun   = $node->afun() || $node->conll_deprel;
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
 
-        # PADT defines some afuns that were not defined in PDT.
+        # PADT defines some deprels that were not defined in PDT.
         # PredE = existential predicate
         # PredC = conjunction as the clause's head
-        if ( $afun =~ m/^Pred[EC]$/ )
+        if ( $deprel =~ m/^Pred[EC]$/ )
         {
-            $afun = 'Pred';
+            $deprel = 'Pred';
         }
 
         # PredP = preposition as the clause's head
         # (It is a prepositional phrase in the position of a nominal predicate. In other languages there would be a copula but Arabic does not use overt copulas.)
-        elsif ( $afun eq 'PredP' )
+        elsif ( $deprel eq 'PredP' )
         {
-            $afun = 'AuxP';
+            $deprel = 'AuxP';
         }
 
         # Ante = anteposition
-        elsif ( $afun eq 'Ante' )
+        elsif ( $deprel eq 'Ante' )
         {
-            $afun = 'Apposition';
+            $deprel = 'Apposition';
         }
 
         # AuxE = emphasizing expression
-        elsif ( $afun eq 'AuxE' )
+        elsif ( $deprel eq 'AuxE' )
         {
-            $afun = 'AuxZ';
+            $deprel = 'AuxZ';
         }
 
         # AuxM = modifying expression
-        elsif ( $afun eq 'AuxM' )
+        elsif ( $deprel eq 'AuxM' )
         {
             # Some instances are prepositional phrases. The AuxM label appears at the preposition instead of AuxP.
-            # Similarly to prepositions the real afun of the whole phrase is at the child of the preposition: Sb, Obj, Pnom etc.
+            # Similarly to prepositions the real deprel of the whole phrase is at the child of the preposition: Sb, Obj, Pnom etc.
             if ( $node->is_adposition() )
             {
-                $afun = 'AuxP';
+                $deprel = 'AuxP';
             }
             # AuxM is also used with negative particles لَا (lā), لَم (lam) and لَن (lan).
             elsif ( $node->is_particle() && $node->form() =~ m/^لَ?[امن]/ )
             {
-                $afun = 'Neg';
+                $deprel = 'Neg';
             }
             # AuxM is also used with future particles سَ (sa) and سَوفَ (sawfa).
             elsif ( $node->is_particle() && $node->form() =~ m/^سَ?(وفَ?)$/ )
             {
-                $afun = 'AuxV';
+                $deprel = 'AuxV';
             }
             ###!!! TODO: Explore the rest!
             # Some of them will also act as Neg or AuxV, e.g. لَيسَ (laysa) is negation but it is also a verb ("be not").
+            # See also https://en.wiktionary.org/wiki/%D9%84%D9%8A%D8%B3
+            # Note that "laysa" is usually analyzed as copula and there is a Pnom child. But in a handful of cases
+            # it is attached to a following preposition as AuxM. Here I believe that "laysa" should still be copula
+            # and the prepositional phrase should be the nominal predicate.
+            elsif ( $node->form() eq 'لَيسَ' )
+            {
+                # The structure will be transformed later.
+                $deprel = 'Cop';
+            }
             else
             {
-                $afun = 'AuxV';
+                $deprel = 'AuxV';
             }
         }
 
         # _ = excessive token esp. due to a typo
-        elsif ( $afun eq '_' )
+        elsif ( $deprel eq '_' )
         {
-            $afun = '';
+            $deprel = '';
         }
 
-        # combined afuns (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
-        elsif ( $afun =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/ )
+        # combined deprels (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
+        elsif ( $deprel =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/ )
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
 
-        # Beware: PADT allows joint afuns such as 'ExD|Sb', which are not allowed by the PML schema.
-        $afun =~ s/\|.*//;
-        $node->set_afun($afun || 'NR');
+        # Beware: PADT allows joint deprels such as 'ExD|Sb', which are not allowed by the PML schema.
+        $deprel =~ s/\|.*//;
+        $node->set_deprel($deprel || 'NR');
     }
-    # Fix known annotation errors.
-    # We should fix it now, before the superordinate class will perform other tree operations.
-    $self->fix_annotation_errors($root);
 }
 
 
 
 #------------------------------------------------------------------------------
 # Fixes a few known annotation errors that appear in the data. Should be called
-# from deprel_to_afun() so that it precedes any tree operations that the
+# from convert_deprels() so that it precedes any tree operations that the
 # superordinate class may want to do.
 #------------------------------------------------------------------------------
 sub fix_annotation_errors
@@ -164,11 +170,103 @@ sub fix_annotation_errors
     if(scalar(@nodes) == 4 &&
        $nodes[0]->is_conjunction() && $nodes[1]->is_conjunction() && $nodes[2]->is_pronoun() && $nodes[3]->is_punctuation() &&
        $nodes[0]->parent()->is_root() && $nodes[1]->parent()->is_root() && $nodes[2]->parent() == $nodes[1] && $nodes[3]->parent()->is_root() &&
-       $nodes[0]->afun() eq 'AuxY' && $nodes[1]->afun() eq 'AuxC' && $nodes[3]->afun() eq 'AuxK')
+       $nodes[0]->deprel() eq 'AuxY' && $nodes[1]->deprel() eq 'AuxC' && $nodes[3]->deprel() eq 'AuxK')
     {
-        $nodes[0]->set_afun('Coord');
+        $nodes[0]->set_deprel('Coord');
         $nodes[1]->set_parent($nodes[0]);
-        $nodes[2]->set_afun('ExD');
+        $nodes[2]->set_deprel('ExD');
+    }
+    # This must also be solved before the parent block applies any of its transformations.
+    # If the landscape is changed, we will no longer recognize the context for laysa.
+    $self->fix_laysa($root);
+    # Fix coordination without conjuncts.
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() =~ m/^(Coord|Apos)(_|$)/ && !grep {$_->is_member()} ($node->children()))
+        {
+            my @children = $node->children();
+            if(scalar(@children)==0)
+            {
+                $node->set_deprel('AuxY');
+            }
+            else
+            {
+                $self->identify_coap_members($node);
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Arabic  لَيسَ (laysa) is a negative copula ("be not"). In many cases it is
+# attached as copula and it has a child attached as Pnom. In a few cases where
+# the nominal predicate was expressed as a prepositional phrase, the copula was
+# attached as AuxM to the preposition. We have temporarily changed the label to
+# Cop. This method will make the dependency structure parallel to other nominal
+# predicates.
+#------------------------------------------------------------------------------
+sub fix_laysa
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $form = $node->form();
+        my $deprel = $node->deprel();
+        if($deprel eq 'Cop')
+        {
+            # We have not assigned the Cop label to any other node than "laysa".
+            # But other tree transformations may have caused that the label ended up elsewhere.
+            # We cannot keep it so we will replace it by AuxV, which the verb would get otherwise.
+            ###!!! TODO: This should be investigated further! This solution is probably incorrect!
+            $node->set_deprel('AuxV');
+            if($form eq 'لَيسَ')
+            {
+                my $laysa = $node;
+                # In all cases that I have seen the parent was a preposition. Sometimes it was a coordination member at the same time.
+                # However, there may be other cases that I have not seen because they did not violate the particular test that I used.
+                my $preposition = $node->parent();
+                if($preposition->is_adposition())
+                {
+                    my $parent = $preposition->parent();
+                    $laysa->set_parent($parent);
+                    if($preposition->is_member())
+                    {
+                        $laysa->set_is_member(1);
+                        $preposition->set_is_member(0);
+                    }
+                    $preposition->set_parent($laysa);
+                    # Sometimes the preposition has more than one child besides laysa. The non-argument children are AuxY or AuxE (AuxE would now be replaced by AuxZ).
+                    my @children = $preposition->children();
+                    my @arguments = grep {$_->deprel() !~ m/^Aux[EYZ]$/} (@children);
+                    unless(scalar(@arguments) == 1)
+                    {
+                        log_warn("No or too many arguments");
+                        next;
+                    }
+                    my $argument = $arguments[0];
+                    # Only the argument must be attached to the preposition. All other children must be attached to the argument.
+                    foreach my $child (@children)
+                    {
+                        unless($child == $argument)
+                        {
+                            $child->set_parent($argument);
+                        }
+                    }
+                    # Swap dependency relations.
+                    $deprel = $argument->deprel();
+                    $laysa->set_deprel($deprel) unless($deprel eq 'Cop');
+                    $argument->set_deprel('Pnom');
+                }
+                else
+                {
+                    log_warn("Expected preposition");
+                }
+            }
+        }
     }
 }
 
@@ -177,8 +275,8 @@ sub fix_annotation_errors
 #------------------------------------------------------------------------------
 # Repairs annotation of coordinations and appositions. The current PADT data
 # contain nodes that are marked as members of either coordination or apposition
-# but their parent's afun is neither Coord nor Apos. It also contains nodes
-# with one of these afuns that do not have any children marked as members.
+# but their parent's deprel is neither Coord nor Apos. It also contains nodes
+# with one of these deprels that do not have any children marked as members.
 #------------------------------------------------------------------------------
 sub fix_coap_ismember
 {
@@ -191,12 +289,12 @@ sub fix_coap_ismember
         if($node->is_member())
         {
             my $parent = $node->parent();
-            if($parent->afun() !~ m/^(Coord|Apos)$/)
+            if($parent->deprel() !~ m/^(Coord|Apos)$/)
             {
                 # Make the parent Coord root if it is a coordinating conjunction or a comma.
                 if($parent->get_iset('pos') eq 'conj' || $parent->form() && $parent->form() eq '،')
                 {
-                    $parent->set_afun('Coord');
+                    $parent->set_deprel('Coord');
                 }
                 # Otherwise remove the membership flag.
                 else
@@ -206,12 +304,12 @@ sub fix_coap_ismember
             }
         }
         # Empty coordinations.
-        if($node->afun() =~ m/^(Coord|Apos)$/ && !grep {$_->is_member()} ($node->children()))
+        if($node->deprel() =~ m/^(Coord|Apos)$/ && !grep {$_->is_member()} ($node->children()))
         {
-            my $afun = $node->afun();
+            my $deprel = $node->deprel();
             my @children = $node->children();
             # Misannotated deficient coordination (a single conjunct).
-            if($afun eq 'Coord' && scalar(@children)==1)
+            if($deprel eq 'Coord' && scalar(@children)==1)
             {
                 $children[0]->set_is_member(1);
             }
@@ -220,14 +318,14 @@ sub fix_coap_ismember
             # but some of them are punctuations and quite a few are unrecognized words
             # that should have been split into multiple tokens, the first token being the
             # conjunction و wa (and).
-            elsif($afun eq 'Coord' && scalar(@children)>1)
+            elsif($deprel eq 'Coord' && scalar(@children)>1)
             {
                 # Exclude AuxG children, e.g. quotation marks around the coordination, or commas between conjuncts.
                 # Exclude AuxY children, i.e. additional conjunctions.
                 my $found = 0;
                 foreach my $child (@children)
                 {
-                    unless($child->afun() =~ m/^(AuxG|AuxY)$/)
+                    unless($child->deprel() =~ m/^(AuxG|AuxY)$/)
                     {
                         $child->set_is_member(1);
                         $found = 1;
@@ -240,15 +338,15 @@ sub fix_coap_ismember
                 }
             }
             # Misannotated apposition.
-            elsif($afun eq 'Apos' && scalar(@children)==2)
+            elsif($deprel eq 'Apos' && scalar(@children)==2)
             {
                 $children[0]->set_is_member(1);
                 $children[1]->set_is_member(1);
             }
             # There was one occurrence of the following error.
-            elsif($afun eq 'Apos' && $node->get_iset('pos') eq 'conj' && scalar(@children)>2)
+            elsif($deprel eq 'Apos' && $node->get_iset('pos') eq 'conj' && scalar(@children)>2)
             {
-                $node->set_afun('Coord');
+                $node->set_deprel('Coord');
                 foreach my $child (@children)
                 {
                     $child->set_is_member(1);
@@ -256,16 +354,16 @@ sub fix_coap_ismember
             }
             # Apposition with one child? I do not understand the examples but I assume that these are actually members of appositions that lack the joining node.
             # ###!!! This may be quite wrong! Get translations of the examples!
-            elsif($afun eq 'Apos' && scalar(@children)==1)
+            elsif($deprel eq 'Apos' && scalar(@children)==1)
             {
-                $node->set_afun('Apposition');
+                $node->set_deprel('Apposition');
             }
             # Other errors: coordination/apposition root has no children at all.
             elsif(scalar(@children)==0)
             {
                 # We cannot say how this error arose.
                 # Resort to default tags: ExD under the root, Adv under a verb, Atr elsewhere.
-                $self->set_default_afun($node);
+                $self->set_default_deprel($node);
             }
             ###!!! Další případy: uzel se spojkou wa má Apos (ne Coord!), má tři děti - předměty slovesa, které je jeho rodičem.
         }
@@ -294,11 +392,11 @@ sub fix_auxp
             # Example: nahwa išrína áman (about twenty years)
             # Example 2: siwá li 13600 sarínin (except for 13600 beds)
             # AuxE marks "emphatic particles". It is occasionally observed at prepositions. It is probably an annotation error.
-            # Occasionally we see prepositions tagged by other afuns (Atr, Obj, Adv). I asked Ota Smrž to look at the examples
+            # Occasionally we see prepositions tagged by other deprels (Atr, Obj, Adv). I asked Ota Smrž to look at the examples
             # but my current hypothesis is that these are annotation errors.
-            if($node->afun() =~ m/^(AuxY|AuxM|AuxE|Atr|Obj|Adv)$/)
+            if($node->deprel() =~ m/^(AuxY|AuxM|AuxE|Atr|Obj|Adv)$/)
             {
-                $node->set_afun('AuxP');
+                $node->set_deprel('AuxP');
             }
         }
         # Compound prepositions. Example:
@@ -310,14 +408,14 @@ sub fix_auxp
         # Example 2:
         # "bi-al-qurbi" (with nearness) "min" (from) "qaryati" (village) = near the village
         # Original annotation: "min" is the head. "bi", "al-qurbi" and "qaryati" are attached to it (AuxY/RR, AuxY/NN, AtrAdv/NN).
-        if($node->is_adposition() && $node->afun() eq 'AuxY' && scalar($node->children())==0)
+        if($node->is_adposition() && $node->deprel() eq 'AuxY' && scalar($node->children())==0)
         {
             my $parent = $node->parent();
             if($parent)
             {
                 my @children = $parent->children();
                 # bihasabi
-                if($parent->is_adposition() && $parent->afun() eq 'AuxP' && scalar(@children)==2 && $node->ord()>$parent->ord())
+                if($parent->is_adposition() && $parent->deprel() eq 'AuxP' && scalar(@children)==2 && $node->ord()>$parent->ord())
                 {
                     foreach my $child (@children)
                     {
@@ -326,13 +424,13 @@ sub fix_auxp
                             $child->set_parent($node);
                         }
                     }
-                    $node->set_afun('AuxP');
+                    $node->set_deprel('AuxP');
                 }
                 # min chilála (during)
-                elsif($parent->is_adposition() && $parent->afun() eq 'AuxP' && scalar(@children)==2 && $node->ord()<$parent->ord())
+                elsif($parent->is_adposition() && $parent->deprel() eq 'AuxP' && scalar(@children)==2 && $node->ord()<$parent->ord())
                 {
                     $node->set_parent($parent->parent());
-                    $node->set_afun('AuxP');
+                    $node->set_deprel('AuxP');
                     $parent->set_parent($node);
                     if($parent->is_member())
                     {
@@ -341,12 +439,12 @@ sub fix_auxp
                     }
                 }
                 # bilqurbi min
-                elsif($parent->is_adposition() && $parent->afun() eq 'AuxP' && scalar(@children)==3 && $children[1]->afun() eq 'AuxY' && $parent->ord()==$node->ord()+2 && $children[2]->ord()==$parent->ord()+1)
+                elsif($parent->is_adposition() && $parent->deprel() eq 'AuxP' && scalar(@children)==3 && $children[1]->deprel() eq 'AuxY' && $parent->ord()==$node->ord()+2 && $children[2]->ord()==$parent->ord()+1)
                 {
                     $children[1]->set_parent($node);
-                    $children[1]->set_afun('AuxP');
+                    $children[1]->set_deprel('AuxP');
                     $node->set_parent($parent->parent());
-                    $node->set_afun('AuxP');
+                    $node->set_deprel('AuxP');
                     $parent->set_parent($node);
                     if($parent->is_member())
                     {
@@ -379,5 +477,5 @@ tagset of PDT.)
 
 =cut
 
-# Copyright 2011, 2013, 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011, 2013, 2014, 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

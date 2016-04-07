@@ -23,14 +23,14 @@ sub process_zone {
 
     foreach my $x (@nodes) {
         
-        my ( $ys, $ytypes ) = $x->get_aligned_nodes();
+        my ( $ys, $ytypes ) = $x->get_directed_aligned_nodes();
         next if (!$ys); 
 
         for ( my $i = 0; $i < @{$ys}; ++$i ) {
 
             my ( $y, $ytype ) = ( $ys->[$i], $ytypes->[$i] );
 
-            my ($zs) = $y->get_aligned_nodes();
+            my ($zs) = $y->get_directed_aligned_nodes();
             foreach my $z ( @{$zs} ) {
                 $x->add_aligned_node( $z, $self->preserve_type ? $ytype : $self->align_type );
             }

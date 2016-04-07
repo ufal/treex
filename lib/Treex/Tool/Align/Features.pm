@@ -3,10 +3,10 @@ package Treex::Tool::Align::Features;
 use Moose;
 use Treex::Core::Common;
 
-use Treex::Tool::Align::Utils;
 use Graph;
 use Treex::Tool::Lexicon::UniversalTagset;
 use Treex::Tool::Coreference::NodeFilter::PersPron;
+use Treex::Tool::Lexicon::CS;
 use List::MoreUtils qw/uniq/;
 
 with 'Treex::Tool::Align::FeaturesRole';
@@ -29,19 +29,30 @@ sub _reset_global_structs {
 }
 
 sub _unary_features {
-    my ($self, $node) = @_;
+    my ($self, $node, $type) = @_;
 
     $self->_reset_global_structs($node);
 
     my $feats = {};
 
-    $feats->{id} = $node->get_address;
+    if ($type eq "n1") {
+        my $anaph_types = join " ", grep {$_ ne "all_anaph"} (split /,/, $node->wild->{filter_types});
+        $feats->{"type^nodetype"} = $anaph_types;
+    }
+
+    #$feats->{id} = $node->get_address;
     $feats->{t_lemma} = $node->t_lemma;
     $feats->{functor} = $node->functor;
+    $feats->{gen} = $node->gram_gender // "undef";
+    $feats->{num} = $node->gram_number // "undef";
+    $feats->{gennum} = $feats->{gen} . "_" . $feats->{num};
 
     my $anode = $node->get_lex_anode;
     $feats->{tag} = defined $anode ? substr($anode->tag, 0, 4) : "undef";
     $feats->{utag} = defined $anode ? Treex::Tool::Lexicon::UniversalTagset::convert_tag($anode->tag, $node->language) : "undef";
+    $feats->{lemma} = defined $anode ? ( $anode->language eq "cs" ? Treex::Tool::Lexicon::CS::truncate_lemma($anode->lemma) : $anode->lemma )
+                                     : "undef";
+    $feats->{gennumlemma} = $feats->{gennum} . "_" . $feats->{lemma};
 
     my ($par) = $node->get_eparents({or_topological => 1});
     my $par_anode = $par->get_lex_anode;
@@ -53,13 +64,16 @@ sub _unary_features {
 }
 
 sub _binary_features {
-    my ($self, $set_features, $node1, $node2, $node2_ord) = @_;
+    my ($self, $set_features, $node1, $node2) = @_;
 
-    my $feats = $set_features;
+    my $feats = { %$set_features };
 
     $self->_add_align_features($feats, $node1, $node2);
     $self->_add_gram_features($feats, $node1, $node2);
     $self->_add_comb_features($feats, $node1, $node2);
+
+    # the unary feats must be removed
+    delete @$feats{keys %$set_features};
 
     return $feats;
 }
@@ -69,16 +83,17 @@ sub _add_align_features {
 
     # all alignmnets excpt for the gold one projected from "ref"
     # TODO: do not project gold annotation to "src" => clearer solution
-    my $nodes_aligned = Treex::Tool::Align::Utils::are_aligned($node1, $node2, { rel_types => $GIZA_ORIG_RULES_FILTER });
+    my $nodes_aligned = $node1->is_undirected_aligned_to($node2, { rel_types => $GIZA_ORIG_RULES_FILTER });
     $feats->{giza_aligned} = $nodes_aligned ? 1 : 0;
 
 
     my ($par1) = $node1->get_eparents({or_topological => 1});
     my ($par2) = $node2->get_eparents({or_topological => 1});
-    my $par_aligned = Treex::Tool::Align::Utils::are_aligned($par1, $par2, { rel_types => $GIZA_ORIG_RULES_FILTER });
+    my $par_aligned = $par1->is_undirected_aligned_to($par2, { rel_types => $GIZA_ORIG_RULES_FILTER });
     $feats->{par_aligned} = $par_aligned ? 1 : 0;
 
-    $feats->{subtree_aligned} = $self->subtree_alignment($node1, $node2) ? 1 : 0;
+    $feats->{subtree_aligned_all} = $self->subtree_alignment($node1, $node2, 'all') ? 1 : 0;
+    $feats->{subtree_aligned_head} = $self->subtree_alignment($node1, $node2, 'clause_head') ? 1 : 0;
 
     $self->_add_graph_features($feats, $node1, $node2);
 }
@@ -89,8 +104,17 @@ sub _add_gram_features {
     $feats->{t_lemma_cat} = $self->cat($feats, "t_lemma");
     $feats->{tag_cat} = $self->cat($feats, "tag");
     $feats->{utag_cat} = $self->cat($feats, "utag");
+    $feats->{lemma_cat} = $self->cat($feats, "lemma");
     $feats->{functor_cat} = $self->cat($feats, "functor");
     $feats->{functor_eq}  = $self->eq($feats, "functor");
+
+    $feats->{gen_cat} = $self->cat($feats, "gen");
+    $feats->{gen_eq} = $self->eq($feats, "gen");
+    $feats->{num_cat} = $self->cat($feats, "num");
+    $feats->{num_eq} = $self->eq($feats, "num");
+    $feats->{gennum_cat} = $self->cat($feats, "gennum");
+    $feats->{gennum_eq} = $self->eq($feats, "gennum");
+    $feats->{gennumlemma_cat} = $self->cat($feats, "gennumlemma");
 }
 
 sub _add_comb_features {
@@ -98,9 +122,16 @@ sub _add_comb_features {
 
     $feats->{alipar_functor_cat} = $feats->{functor_cat} . "_" . $feats->{par_aligned};
     $feats->{alipar_functor_eq} = $feats->{functor_eq} . "_" . $feats->{par_aligned};
-    $feats->{alidir_t_lemma} = $feats->{$self->node2_label . "_t_lemma"} . "_" . $feats->{giza_aligned};
-    $feats->{alipar_t_lemma} = $feats->{$self->node2_label . "_t_lemma"} . "_" . $feats->{par_aligned};
-    $feats->{alisubtree_t_lemma} = $feats->{$self->node2_label . "_t_lemma"} . "_" . $feats->{subtree_aligned};
+    
+    $feats->{alidir_n1_t_lemma} = $feats->{$self->node1_label . "_t_lemma"} . "_" . $feats->{giza_aligned};
+    $feats->{alipar_n1_t_lemma} = $feats->{$self->node1_label . "_t_lemma"} . "_" . $feats->{par_aligned};
+    $feats->{alisubtreeall_n1_t_lemma} = $feats->{$self->node1_label . "_t_lemma"} . "_" . $feats->{subtree_aligned_all};
+    $feats->{alisubtreehead_n1_t_lemma} = $feats->{$self->node1_label . "_t_lemma"} . "_" . $feats->{subtree_aligned_head};
+    
+    $feats->{alidir_n2_t_lemma} = $feats->{$self->node2_label . "_t_lemma"} . "_" . $feats->{giza_aligned};
+    $feats->{alipar_n2_t_lemma} = $feats->{$self->node2_label . "_t_lemma"} . "_" . $feats->{par_aligned};
+    $feats->{alisubtreeall_n2_t_lemma} = $feats->{$self->node2_label . "_t_lemma"} . "_" . $feats->{subtree_aligned_all};
+    $feats->{alisubtreehead_n2_t_lemma} = $feats->{$self->node2_label . "_t_lemma"} . "_" . $feats->{subtree_aligned_head};
 }
 
 sub _add_graph_features {
@@ -138,7 +169,10 @@ sub _get_sent_graph {
     foreach my $node (@nodes) {
         $g->set_edge_attribute($node->id, $node->get_parent->id, "type", "parent");
         $g->set_edge_attribute($node->get_parent->id, $node->id, "type", "child");
-        my ($ali_nodes, $ali_types) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($node, { directed => 1, rel_types => $GIZA_ORIG_RULES_FILTER });
+        my ($ali_nodes, $ali_types) = $node->get_directed_aligned_nodes({
+            directed => 1,
+            rel_types => $GIZA_ORIG_RULES_FILTER
+        });
         foreach my $ali (@$ali_nodes) {
             $g->add_weighted_edge($node->id, $ali->id, 100);
             $g->add_weighted_edge($ali->id, $node->id, 100);
@@ -154,15 +188,15 @@ sub _get_sent_graph {
 }
 
 sub subtree_alignment {
-    my ($self, $l1_node, $l2_node) = @_;
-    my $subtree_align = $self->_get_subtree_aligns($l1_node);
+    my ($self, $l1_node, $l2_node, $type) = @_;
+    my $subtree_align = $self->_get_subtree_aligns($l1_node, $type);
     return defined $subtree_align->{$l2_node->id};
 }
 
 sub _get_subtree_aligns {
-    my ($self, $tnode) = @_;
+    my ($self, $tnode, $type) = @_;
 
-    my $subtree_align = $self->_subtree_aligns->{$tnode->id};
+    my $subtree_align = $self->_subtree_aligns->{$type}{$tnode->id};
     return $subtree_align if (defined $subtree_align);
 
     my $par = $tnode;
@@ -170,17 +204,29 @@ sub _get_subtree_aligns {
         $par = $par->get_parent;
     }
 
-    my @phrase_nodes = $par->get_descendants();
-    my @ali_phrase_nodes = map {
-        my ($an, $at) = Treex::Tool::Align::Utils::get_aligned_nodes_by_filter($_, {selector => $_->selector, rel_types => $GIZA_ORIG_RULES_FILTER }); @$an
-    } @phrase_nodes;
+    my @ali_phrase_nodes = ();
+    if ($type eq 'clause_head') {
+        my ($an, $at) = $par->get_undirected_aligned_nodes({
+            selector => $par->selector,
+            rel_types => $GIZA_ORIG_RULES_FILTER
+        });
+        @ali_phrase_nodes = @$an;
+    }
+    else {
+        @ali_phrase_nodes = map {
+            my ($an, $at) = $_->get_undirected_aligned_nodes({
+                selector => $_->selector,
+                rel_types => $GIZA_ORIG_RULES_FILTER,
+            });
+            @$an
+        } $par->get_descendants();
+    }
 
     my @all_ali_desc = uniq map {$_->get_descendants({add_self => 1})} @ali_phrase_nodes;
     $subtree_align = { map {$_->id => 1} @all_ali_desc };
 
-    $self->_subtree_aligns->{$tnode->id} = $subtree_align;
+    $self->_subtree_aligns->{$type}{$tnode->id} = $subtree_align;
     return $subtree_align;
 }
-
 
 1;

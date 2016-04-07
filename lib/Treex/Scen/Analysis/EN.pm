@@ -25,7 +25,7 @@ has ner => (
 
 has functors => (
      is => 'ro',
-     isa => enum( [qw(simple MLProcess)] ),
+     isa => enum( [qw(simple MLProcess VW)] ),
      default => 'simple',
      documentation => 'Which analyzer of functors to use',
 );
@@ -42,6 +42,13 @@ has trg_lang => (
     is => 'ro',
     isa => 'Str',
     documentation => 'Gazetteers are defined for language pairs. Both source and target languages must be specified.',
+);
+
+has valframes => (
+     is => 'ro',
+     isa => 'Bool',
+     default => 0,
+     documentation => 'Set valency frame references to valency dictionary?',
 );
 
 # TODO Add parameter
@@ -129,6 +136,9 @@ sub get_scenario_string {
     'A2T::EN::AddCorAct',
     'T2T::SetClauseNumber',
     'A2T::EN::FixRelClauseNoRelPron',
+    $self->functors eq 'VW' ? 'A2T::EN::SetFunctorsVW' : (),
+    $self->functors eq 'VW' ? 'A2T::SetNodetype' : (), # fix nodetype changes induced by functors
+    $self->valframes ? 'A2T::EN::SetValencyFrameRefVW' : (),
     'A2T::EN::MarkReferentialIt resolver_type=nada threshold=0.5 suffix=nada_0.5', # you need Treex::External::NADA installed for this
     'A2T::EN::FindTextCoref',
     ;
@@ -182,11 +192,18 @@ NameTag = A2N::EN::NameTag
 
 Stanford = A2N::EN::StanfordNamedEntities model=ner-eng-ie.crf-3-all2008.ser.gz
 
-=head2 functors (simple, MLProcess)
+=head2 functors (simple, MLProcess, VW)
 
 simple = A2T::EN::SetFunctors
 
 MLProcess = A2T::EN::SetFunctors2 (functors trained from PEDT, extra 2GB RAM needed)
+
+VW = A2T::EN::SetFunctorsVW (VowpalWabbit model trained on PEDT)
+
+=head2 valframes (boolean)
+
+Set valency frame references (IDs in the EngVallex dictionary) indicating the word sense
+of all verbs (defaults to 0)?
 
 =head1 AUTHORS
 
@@ -194,6 +211,6 @@ Martin Popel <popel@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2015-2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

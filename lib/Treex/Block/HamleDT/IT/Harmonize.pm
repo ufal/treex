@@ -1,9 +1,12 @@
 package Treex::Block::HamleDT::IT::Harmonize;
 use feature state;
+use utf8;
 use Moose;
 use Treex::Core::Common;
-use utf8;
+use Treex::Tool::PhraseBuilder::StanfordToPrague;
 extends 'Treex::Block::HamleDT::Harmonize';
+
+
 
 has iset_driver =>
 (
@@ -12,8 +15,7 @@ has iset_driver =>
     required      => 1,
     default       => 'it::conll',
     documentation => 'Which interset driver should be used to decode tags in this treebank? '.
-                     'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
-                     'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
+                     'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
 
@@ -27,61 +29,68 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+    # Phrase-based implementation of tree transformations (5.3.2016).
+    my $builder = new Treex::Tool::PhraseBuilder::StanfordToPrague
+    (
+        'prep_is_head'           => 1,
+        'coordination_head_rule' => 'last_coordinator'
+    );
+    my $phrase = $builder->build($root);
+    $phrase->project_dependencies();
     $self->attach_final_punctuation_to_root($root);
-    $self->restructure_coordination($root);
     $self->relabel_conjunctless_commas($root);
-    # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
-    # and with special care at places where prepositions and coordinations interact.
-    $self->process_prep_sub_arg_cloud($root);
     $self->mark_deficient_clausal_coordination($root);
-    $self->check_afuns($root);
+    $self->check_deprels($root);
 }
 
 
 
 #------------------------------------------------------------------------------
-# Convert dependency relation tags to analytical functions.
+# Convert dependency relation labels.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub convert_deprels
 {
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $deprel = $node->conll_deprel;
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
         my $form   = $node->form;
         my $pos    = $node->conll_pos;
         my $parent = $node->parent();
         my $ppos   = $parent->get_iset('pos');
-
-        # default assignment
-        my $afun = 'NR';
 
         # Coordinating conjunctions.
         if ($deprel =~ m/^(con|dis)$/)
         {
             if($form eq ',')
             {
-                $afun = 'AuxX';
+                $deprel = 'AuxX';
             }
             elsif($node->is_punctuation())
             {
-                $afun = 'AuxG';
+                $deprel = 'AuxG';
             }
             else
             {
                 # Some conjunctions will be relabeled Coord later during coordination processing.
                 # But some will not, often due to annotation errors. To make sure that there are no Coords without conjuncts, we label them AuxY at the moment.
-                $afun = 'AuxY';
+                $deprel = 'AuxY';
             }
             $node->wild()->{coordinator} = 1;
         }
         # Conjunct (not the first one in a coordination).
         elsif ($deprel =~ m/^(con|dis)g$/)
         {
-            $afun = 'CoordArg';
+            $deprel = 'CoordArg';
             $node->wild()->{conjunct} = 1;
         }
         # Punctuation that is not labeled as coordinating.
@@ -89,52 +98,49 @@ sub deprel_to_afun
         {
             if ( $form eq ',' )
             {
-                $afun = 'AuxX';
+                $deprel = 'AuxX';
             }
             else
             {
-                $afun = 'AuxG';
+                $deprel = 'AuxG';
             }
         }
 
-        # trivial conversion to PDT style afun
-        $afun = 'Atv'   if ( $deprel eq 'arg' );        # arg       -> Atv
-        $afun = 'AuxV'  if ( $deprel eq 'aux' );        # aux       -> AuxV
-        $afun = 'AuxT'  if ( $deprel eq 'clit' );       # clit      -> AuxT
-        $afun = 'Obj'   if ( $deprel eq 'comp' );       # comp      -> Obj
-        $afun = 'Atr'   if ( $deprel eq 'concat' );     # concat    -> Atr
-        $afun = 'SubArg' if ( $deprel eq 'cong_sub');    # cong_sub  -> AuxC
-        $afun = 'Atr'  if ( $deprel eq 'det' );          # det       -> Atr (in future maybe AuxA)
-        $afun = 'AuxV'  if ( $deprel eq 'modal' );      # modal     -> AuxV
-        $afun = 'Adv'   if ( $deprel eq 'obl' );        # obl       -> Adv
-        $afun = 'Obj'   if ( $deprel eq 'ogg_d' );      # ogg_d     -> Obj
-        $afun = 'Obj'   if ( $deprel eq 'ogg_i' );      # ogg_i     -> Obj
-        $afun = 'Pnom'  if ( $deprel eq 'pred' );       # pred      -> Pnom
-        $afun = 'PrepArg' if ( $deprel eq 'prep' );       # prep      -> AuxP
-        $afun = 'Sb'    if ( $deprel eq 'sogg' );       # sogg      -> Sb
+        # trivial conversion to PDT style deprel
+        $deprel = 'Atv'   if ( $deprel eq 'arg' );        # arg       -> Atv
+        $deprel = 'AuxV'  if ( $deprel eq 'aux' );        # aux       -> AuxV
+        $deprel = 'AuxT'  if ( $deprel eq 'clit' );       # clit      -> AuxT
+        $deprel = 'Obj'   if ( $deprel eq 'comp' );       # comp      -> Obj
+        $deprel = 'Atr'   if ( $deprel eq 'concat' );     # concat    -> Atr
+        $deprel = 'SubArg' if ( $deprel eq 'cong_sub');    # cong_sub  -> AuxC
+        $deprel = 'Atr'  if ( $deprel eq 'det' );          # det       -> Atr (in future maybe AuxA)
+        $deprel = 'AuxV'  if ( $deprel eq 'modal' );      # modal     -> AuxV
+        $deprel = 'Adv'   if ( $deprel eq 'obl' );        # obl       -> Adv
+        $deprel = 'Obj'   if ( $deprel eq 'ogg_d' );      # ogg_d     -> Obj
+        $deprel = 'Obj'   if ( $deprel eq 'ogg_i' );      # ogg_i     -> Obj
+        $deprel = 'Pnom'  if ( $deprel eq 'pred' );       # pred      -> Pnom
+        $deprel = 'PrepArg' if ( $deprel eq 'prep' );       # prep      -> AuxP
+        $deprel = 'Sb'    if ( $deprel eq 'sogg' );       # sogg      -> Sb
 
-        # $afun = 'Atr'   if ( $deprel eq 'mod' );        # mod       -> Atr
-        # $afun = 'Atr'   if ( $deprel eq 'mod_rel' );    # mod_rel   -> Atr
+        # $deprel = 'Atr'   if ( $deprel eq 'mod' );        # mod       -> Atr
+        # $deprel = 'Atr'   if ( $deprel eq 'mod_rel' );    # mod_rel   -> Atr
         if ($deprel =~ /^mod(?:_rel)?$/) {
             if ($ppos =~ /^n(?:oun|um)$/) {
-                $afun = 'Atr';
+                $deprel = 'Atr';
             } else {
-                $afun = 'Adv';
+                $deprel = 'Adv';
             }
         }
 
         # deprelation ROOT can be 'Pred'            # pred      -> Pred
         if ( ($deprel eq 'ROOT') && ($node->get_iset('pos') eq 'verb')) {
-            $afun = 'Pred';
+            $deprel = 'Pred';
         }
         elsif ( ($deprel eq 'ROOT') && !($node->get_iset('pos') eq 'verb')){
-            $afun = 'ExD';
+            $deprel = 'ExD';
         }
-        $node->set_afun($afun);
+        $node->set_deprel($deprel);
     }
-    # Fix known irregularities in the data.
-    # Do so here, before the superordinate class operates on the data.
-    $self->fix_annotation_errors($root);
 }
 
 
@@ -157,7 +163,7 @@ sub fix_annotation_errors
         {
             $ma->set_parent($root);
             $ma->set_is_member(undef);
-            $ma->set_afun('Coord');
+            $ma->set_deprel('Coord');
             foreach my $p (@predicates)
             {
                 $p->set_parent($ma);
@@ -165,10 +171,10 @@ sub fix_annotation_errors
             }
             $gia->set_parent($ma);
             $gia->set_is_member(1);
-            $gia->set_afun('ExD');
+            $gia->set_deprel('ExD');
             $comma->set_parent($ma);
             $comma->set_is_member(undef);
-            $comma->set_afun('AuxX');
+            $comma->set_deprel('AuxX');
         }
     }
     foreach my $node (@nodes)
@@ -177,7 +183,7 @@ sub fix_annotation_errors
         if($node->form() eq 'prima')
         {
             my @rsiblings = $node->get_siblings({following_only => 1});
-            if(scalar(@rsiblings)>=4 && $rsiblings[1]->form() eq 'e' && $rsiblings[2]->form() eq 'poi' && $rsiblings[0]->afun() eq $rsiblings[3]->afun())
+            if(scalar(@rsiblings)>=4 && $rsiblings[1]->form() eq 'e' && $rsiblings[2]->form() eq 'poi' && $rsiblings[0]->deprel() eq $rsiblings[3]->deprel())
             {
                 # Attach prima ("first") to the first conjunct.
                 $node->set_parent($rsiblings[0]);
@@ -188,17 +194,17 @@ sub fix_annotation_errors
                 $rsiblings[3]->set_parent($rsiblings[1]);
                 $rsiblings[0]->set_is_member(1);
                 $rsiblings[3]->set_is_member(1);
-                # The conjunction probably already has the Coord afun but make sure it does.
-                $rsiblings[1]->set_afun('Coord');
+                # The conjunction probably already has the Coord deprel but make sure it does.
+                $rsiblings[1]->set_deprel('Coord');
             }
         }
         # The verb è ("is") confused with the conjunction e ("and").
-        elsif($node->form() eq 'è' && $node->is_verb() && $node->afun() eq 'Coord')
+        elsif($node->form() eq 'è' && $node->is_verb() && $node->deprel() eq 'Coord')
         {
-            ###!!! The problem is that we do not know the real afun of the verb.
+            ###!!! The problem is that we do not know the real deprel of the verb.
             ###!!! But we cannot leave Coord here because there are no conjuncts and the annotation would not be consistent.
-            ###!!! The Pred afun might work if this is the main predicate of the sentence; otherwise, we would have to recognize a relative clause.
-            $node->set_afun('Pred');
+            ###!!! The Pred deprel might work if this is the main predicate of the sentence; otherwise, we would have to recognize a relative clause.
+            $node->set_deprel('Pred');
         }
         # Coordinating conjunction deeply attached to the subtree of the first conjunct instead of being left sibling of the second conjunct.
         # We can detect it if the following node is the head of the second conjunct. If there are left dependents, we cannot.
@@ -216,7 +222,7 @@ sub fix_annotation_errors
             my $conjunction = $node;
             my $rconjunct = $node->get_next_node();
             my $lconjunct = $rconjunct->get_left_neighbor();
-            if($lconjunct && $rconjunct && !$lconjunct->is_punctuation() && !$rconjunct->is_punctuation() && $lconjunct->afun() eq $rconjunct->afun())
+            if($lconjunct && $rconjunct && !$lconjunct->is_punctuation() && !$rconjunct->is_punctuation() && $lconjunct->deprel() eq $rconjunct->deprel())
             {
                 $conjunction->set_parent($lconjunct);
                 $rconjunct->set_parent($lconjunct);
@@ -232,13 +238,13 @@ sub fix_annotation_errors
             my $rconjunct = $node->get_right_neighbor();
             if(!$lconjunct->wild()->{conjunct} && !$rconjunct->wild()->{conjunct} &&
                !$lconjunct->is_punctuation() && !$rconjunct->is_punctuation() &&
-               $lconjunct->afun() eq $rconjunct->afun())
+               $lconjunct->deprel() eq $rconjunct->deprel())
             {
-                my $afun = $lconjunct->afun();
+                my $deprel = $lconjunct->deprel();
                 my @conjuncts = ($lconjunct, $rconjunct);
                 my @delimiters = ($conjunction);
                 my @lsiblings = $lconjunct->get_siblings({preceding_only => 1});
-                while(scalar(@lsiblings)>=2 && $lsiblings[$#lsiblings]->form() eq ',' && $lsiblings[$#lsiblings-1]->afun() eq $afun)
+                while(scalar(@lsiblings)>=2 && $lsiblings[$#lsiblings]->form() eq ',' && $lsiblings[$#lsiblings-1]->deprel() eq $deprel)
                 {
                     my $comma = pop(@lsiblings);
                     my $conjunct = pop(@lsiblings);
@@ -250,7 +256,7 @@ sub fix_annotation_errors
                 foreach my $c (@conjuncts)
                 {
                     $c->set_parent($firstconjunct);
-                    $c->set_afun('CoordArg');
+                    $c->set_deprel('CoordArg');
                     $c->wild()->{conjunct} = 1;
                     $c->wild()->{coordinator} = undef;
                 }
@@ -259,11 +265,11 @@ sub fix_annotation_errors
                     $d->set_parent($firstconjunct);
                     if($d->form() eq ',')
                     {
-                        $d->set_afun('AuxX');
+                        $d->set_deprel('AuxX');
                     }
                     else
                     {
-                        $d->set_afun('Coord');
+                        $d->set_deprel('Coord');
                     }
                     $d->wild()->{conjunct} = undef;
                     $d->wild()->{coordinator} = 1;
@@ -276,33 +282,9 @@ sub fix_annotation_errors
 
 
 #------------------------------------------------------------------------------
-# Detects coordination in the shape we expect to find it in the Italian
-# treebank.
-#------------------------------------------------------------------------------
-sub detect_coordination
-{
-    my $self = shift;
-    my $node = shift;
-    my $coordination = shift;
-    my $debug = shift;
-    $coordination->detect_stanford($node);
-    # The caller does not know where to apply recursion because it depends on annotation style.
-    # Return all conjuncts and shared modifiers for the Prague family of styles.
-    # Return non-head conjuncts, private modifiers of the head conjunct and all shared modifiers for the Stanford family of styles.
-    # (Do not return delimiters, i.e. do not return all original children of the node. One of the delimiters will become the new head and then recursion would fall into an endless loop.)
-    # Return orphan conjuncts and all shared and private modifiers for the other styles.
-    my @recurse = grep {$_ != $node} ($coordination->get_conjuncts());
-    push(@recurse, $coordination->get_shared_modifiers());
-    push(@recurse, $coordination->get_private_modifiers($node));
-    return @recurse;
-}
-
-
-
-#------------------------------------------------------------------------------
 # Commas had the same label as coordinating conjunctions, regardless whether
 # their function was coordinating or not. As a result, we now have a number of
-# commas with the afun Coord, which are leaves and do not have any conjuncts.
+# commas with the deprel Coord, which are leaves and do not have any conjuncts.
 #------------------------------------------------------------------------------
 sub relabel_conjunctless_commas
 {
@@ -310,9 +292,9 @@ sub relabel_conjunctless_commas
     my $root = shift;
     foreach my $node ($root->get_descendants())
     {
-        if($node->form() eq ',' && $node->afun() eq 'Coord' && $node->is_leaf())
+        if($node->form() eq ',' && $node->deprel() eq 'Coord' && $node->is_leaf())
         {
-            $node->set_afun('AuxX');
+            $node->set_deprel('AuxX');
         }
     }
 }

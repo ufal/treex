@@ -5,6 +5,7 @@ use namespace::autoclean;
 
 use Moose;
 use MooseX::SemiAffordanceAccessor; # attribute x is written using set_x($value) and read using x()
+use List::MoreUtils qw(any);
 use Treex::Core::Log;
 use Treex::Core::Node;
 
@@ -122,6 +123,33 @@ sub is_terminal
 
 
 #------------------------------------------------------------------------------
+# Tells whether this phrase is coordination. We could probably use the Moose's
+# methods to query the class name but this will be more convenient.
+#------------------------------------------------------------------------------
+sub is_coordination
+{
+    my $self = shift;
+    # Default is FALSE, to be overridden in Coordination.
+    return 0;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Tells whether this phrase is core child of another phrase. That is sometimes
+# important to know because core children cannot be easily moved around.
+#------------------------------------------------------------------------------
+sub is_core_child
+{
+    my $self = shift;
+    my $parent = $self->parent();
+    return 0 if(!defined($parent));
+    return any {$_ == $self} ($parent->core_children())
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the head node of the phrase. For terminal phrases this should just
 # return their node attribute. For nonterminal phrases this should return the
 # node of their head child. This is an abstract method that must be defined in
@@ -131,6 +159,31 @@ sub node
 {
     my $self = shift;
     log_fatal("The node() method is not implemented");
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of all nodes covered by the phrase, i.e. the head node of
+# this phrase and of all its descendants.
+#------------------------------------------------------------------------------
+sub nodes
+{
+    my $self = shift;
+    log_fatal("The nodes() method is not implemented");
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of all terminal descendants of this phrase. Similar to
+# nodes(), but instead of Node objects returns the Phrase::Term objects, in
+# which the nodes are wrapped.
+#------------------------------------------------------------------------------
+sub terminals
+{
+    my $self = shift;
+    log_fatal("The terminals() method is not implemented");
 }
 
 
@@ -154,6 +207,22 @@ sub deprel
 
 
 #------------------------------------------------------------------------------
+# Returns the deprel that should be used when the phrase tree is projected back
+# to a dependency tree (see the method project_dependencies()). In most cases
+# this is identical to what deprel() returns. However, for instance
+# prepositional phrases in Prague treebanks are attached using AuxP. Their
+# relation to the parent (returned by deprel()) is projected to the argument of
+# the preposition.
+#------------------------------------------------------------------------------
+sub project_deprel
+{
+    my $self = shift;
+    log_fatal("The project_deprel() method is not implemented");
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the node's ord attribute. This means that nodes that do not implement
 # the Ordered role cannot be wrapped in phrases. We sometimes need to order
 # child phrases according to the word order of their head nodes.
@@ -162,6 +231,20 @@ sub ord
 {
     my $self = shift;
     return $self->node()->ord();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the lowest and the highest ord values of the nodes covered by this
+# phrase (always a pair of scalar values; they will be identical for terminal
+# phrases). Note that there is no guarantee that all nodes within the span are
+# covered by this phrase. There may be gaps!
+#------------------------------------------------------------------------------
+sub span
+{
+    my $self = shift;
+    log_fatal("The span() method is not implemented");
 }
 
 
@@ -326,12 +409,33 @@ This method is used to prevent cycles when setting a new parent.
 Tells whether this phrase is terminal, that is, it does not have children
 (subphrases).
 
+=item my $isc = $phrase->is_coordination();
+
+Tells whether this phrase is L<Treex::Core::Phrase::Coordination> or its
+descendant.
+
+=item my $iscc = $phrase->is_core_child();
+
+Tells whether this phrase is core child of another phrase. That is sometimes
+important to know because core children cannot be easily moved around.
+
 =item my $node = $phrase->node();
 
 Returns the head node of the phrase. For terminal phrases this should just
 return their node attribute. For nonterminal phrases this should return the
 node of their head child. This is an abstract method that must be defined in
 every derived class.
+
+=item my @nodes = $phrase->nodes();
+
+Returns the list of all nodes covered by the phrase, i.e. the head node of
+this phrase and of all its descendants.
+
+=item my @phrases = $phrase->terminals();
+
+Returns the list of all terminal descendants of this phrase. Similar to
+C<nodes()>, but instead of C<Node> objects returns the C<Phrase::Term> objects, in
+which the nodes are wrapped.
 
 =item my $deprel = $phrase->deprel();
 
@@ -344,11 +448,27 @@ the relations may be modified; at the end, they can be projected to the
 dependency tree again. A general nonterminal phrase typically has the same
 deprel as its head child. Terminal phrases store deprels as attributes.
 
+=item my $deprel = $phrase->project_deprel();
+
+Returns the deprel that should be used when the phrase tree is projected back
+to a dependency tree (see the method project_dependencies()). In most cases
+this is identical to what deprel() returns. However, for instance
+prepositional phrases in Prague treebanks are attached using C<AuxP>. Their
+relation to the parent (returned by deprel()) is projected as the label of
+the dependency between the preposition and its argument.
+
 =item my $ord = $phrase->ord();
 
 Returns the head node's ord attribute. This means that nodes that do not implement
 the L<Treex::Core::Node::Ordered|Ordered> role cannot be wrapped in phrases. We sometimes need to order
 child phrases according to the word order of their head nodes.
+
+=item my ($left, $right) = $phrase->span();
+
+Returns the lowest and the highest ord values of the nodes covered by this
+phrase (always a pair of scalar values; they will be identical for terminal
+phrases). Note that there is no guarantee that all nodes within the span are
+covered by this phrase. There may be gaps!
 
 =item $phrase->project_dependencies();
 

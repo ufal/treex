@@ -11,20 +11,15 @@ has iset_driver =>
     required      => 1,
     default       => 'he::conll',
     documentation => 'Which interset driver should be used to decode tags in this treebank? '.
-                     'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
-                     'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
+                     'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
 sub process_zone {
     my $self   = shift;
     my $zone   = shift;
-
     my $a_root = $self->SUPER::process_zone($zone);
-    # $self->restructure_coordination($a_root);
     $self->attach_final_punctuation_to_root($a_root);
-    
-    $self->check_afuns($a_root);
-
+    $self->check_deprels($a_root);
     return $a_root;
 }
 
@@ -36,7 +31,7 @@ my %deprel2afun = (
 
     # COMMON LABELS
     # =============
-    
+
     # Subject
     SBJ => 'Sb',
     # Complement
@@ -47,7 +42,7 @@ my %deprel2afun = (
     ADJ => 'Atr',
     # no info, but probably an adverb
     ADV => 'Adv',
-    
+
     # HARDER LABELS
     # ===============
 
@@ -58,21 +53,21 @@ my %deprel2afun = (
     # head).
     # TODO
     CONJ => 'Coord',
-    
+
     # parts of multi-word expressions
     # first word is the head, following words form a chain
     # ???
     # use set_default_afun()
     # MW => 'Apos',
-    
+
     # WEIRD LABELS
     # ============
 
     # generic label
     # Atr/Adv/???
     # use set_default_afun()
-    # dep => 'Atr', 
-    
+    # dep => 'Atr',
+
     # MOD is used for general modifiers of nouns, adjectives, adverbs,
     # prepositional phrase (this info is NOT from Yoav, but from Mila)
     # ?? is there a difference from 'dep' ??
@@ -83,7 +78,7 @@ my %deprel2afun = (
     # Pred/ExD
     # use set_default_afun()
     # ROOT => 'Pred',
-    
+
     # pronominal suffixes
     # inflected preposition (וב⇒suffאוה ב “in-him” )
     prep_infl => 'AuxP',
@@ -100,7 +95,7 @@ my %deprel2afun = (
 );
 
 
-sub deprel_to_afun {
+sub convert_deprels {
     my $self   = shift;
     my $root   = shift;
     my @nodes  = $root->get_descendants();
@@ -109,15 +104,15 @@ sub deprel_to_afun {
 	    my $deprel = $node->conll_deprel;
 	    my $parent = $node->get_parent();
 
-        my $afun = $deprel2afun{$deprel};
+        $deprel = $deprel2afun{$deprel};
 
         # TODO
 
-        if ( defined $afun ) {
-            $node->set_afun($afun);
+        if ( defined $deprel ) {
+            $node->set_deprel($deprel);
         }
         else {
-            $self->set_default_afun($node);
+            $self->set_default_deprel($node);
         }
     }
 }
@@ -129,20 +124,10 @@ sub deprel_to_afun {
 # of the others.
 #
 # The members of the coordination are marked by the CONJ label.
-#
-# TODO: run this before changing the afuns etc.
-sub detect_coordination
-{
-    my $self = shift;
-    my $node = shift;
-    my $coordination = shift;
-    my $debug = shift;
-    return 'not implemented';
-}
 
 1;
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::HamleDT::HE::Harmonize
 
@@ -161,4 +146,3 @@ Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
-

@@ -1,8 +1,11 @@
 package Treex::Block::HamleDT::EU::Harmonize;
+use utf8;
 use Moose;
 use Treex::Core::Common;
-use utf8;
+use Treex::Tool::PhraseBuilder::AlpinoToPrague;
 extends 'Treex::Block::HamleDT::Harmonize';
+
+
 
 has iset_driver =>
 (
@@ -11,8 +14,7 @@ has iset_driver =>
     required      => 1,
     default       => 'eu::conll',
     documentation => 'Which interset driver should be used to decode tags in this treebank? '.
-                     'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
-                     'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
+                     'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
 
@@ -26,31 +28,41 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+    # Phrase-based implementation of tree transformations (5.3.2016).
+    my $builder = new Treex::Tool::PhraseBuilder::AlpinoToPrague
+    (
+        'prep_is_head'           => 1,
+        'coordination_head_rule' => 'last_coordinator'
+    );
+    my $phrase = $builder->build($root);
+    $phrase->project_dependencies();
     $self->attach_final_punctuation_to_root($root);
-    $self->restructure_coordination($root);
-    # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
-    # and with special care at places where prepositions and coordinations interact.
-    $self->process_prep_sub_arg_cloud($root);
     $self->correct_punctuations($root);
     $self->check_coord_membership($root);
-    $self->check_afuns($root);
+    $self->check_deprels($root);
 }
 
 
 
 #------------------------------------------------------------------------------
-# Convert dependency relation tags to analytical functions.
+# Convert dependency relation labels.
 # http://ixa.si.ehu.es/Ixa/Argitalpenak/Barne_txostenak/1068549887/publikoak/guia.pdf
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub convert_deprels
 {
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $deprel = $node->conll_deprel();
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
         my $form   = $node->form();
         my $pos    = $node->get_iset('pos');
         # my $subpos = $node->get_iset('subpos'); # feature deprecated
@@ -59,34 +71,31 @@ sub deprel_to_afun
         my $conll_subpos = $node->conll_pos();
         my $conll_pos    = $node->conll_cpos();
 
-        # default assignment
-        my $afun = 'NR';
-
         # There was one cycle in the input data. It has been broken and attached to the root, thus we will deal with it as with a predicate.
         $deprel = 'ROOT' if ($deprel =~ m/^ncpred-CYCLE/);
 
         # main predicate
         if ($deprel eq 'ROOT')
         {
-            $afun = 'Pred';
+            $deprel = 'Pred';
         }
 
         # subject
         elsif ($deprel =~ m/^(ncsubj|ccomp_subj|xcomp_subj)$/)
         {
-            $afun = 'Sb';
+            $deprel = 'Sb';
         }
 
         # object
         elsif ($deprel =~ m/^(ncobj|nczobj|ccomp_obj|ccomp_zobj|xcomp_obj|xcomp_zobj)$/)
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
 
         # apposition
         elsif ($deprel =~ m/^(apocmod|apoxmod|aponcmod|aponcpred)$/)
         {
-            $afun = 'Apposition';
+            $deprel = 'Apposition';
         }
 
         # non-core modifier
@@ -96,30 +105,30 @@ sub deprel_to_afun
         {
             if (lc($form) eq 'ez')
             {
-                $afun = 'Neg';
+                $deprel = 'Neg';
             }
             ###!!! Note that we would need effective parents to be able to check the real part of speech.
             ###!!! However, these will not be available until we convert coordination.
             elsif ($ppos =~ m/^(ad)?verb$/)
             {
-                $afun = 'Adv';
+                $deprel = 'Adv';
             }
             else # noun, adjective, numeral
             {
-                $afun = 'Atr';
+                $deprel = 'Atr';
             }
         }
 
         # determiner
         elsif ($deprel eq 'detmod')
         {
-            $afun = 'Atr'; ###!!! in future probably 'AuxA';
+            $deprel = 'Atr'; ###!!! in future probably 'AuxA';
         }
 
         # auxiliary verb
         elsif ($deprel eq 'auxmod')
         {
-            $afun = 'AuxV';
+            $deprel = 'AuxV';
         }
 
         # 1. clausal & predicative modifiers
@@ -127,11 +136,11 @@ sub deprel_to_afun
         {
             if ($ppos eq 'noun')
             {
-                $afun = 'Atr';
+                $deprel = 'Atr';
             }
             else
             {
-                $afun = 'Adv';
+                $deprel = 'Adv';
             }
         }
 
@@ -145,7 +154,7 @@ sub deprel_to_afun
         # askoz_ere/BST/gradmod maila hobea = much level higher
         elsif ($deprel eq 'gradmod')
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
 
         # conjunct attached to conjunction, particle or punctuation
@@ -156,15 +165,14 @@ sub deprel_to_afun
         {
             # Conjuncts are attached to their conjunction and labeled "lot".
             # The label of the conjunction that heads the coordination describes the relation of the coordination to its parent.
-            $afun = 'CoordArg';
-            $node->wild()->{conjunct} = 1;
+            $deprel = 'CoordArg';
         }
 
         # coordinating conjunction at the beginning of the sentence (deficient sentential coordination)
         elsif ($deprel eq 'lotat')
         {
             ###!!! We should later reattach the main predicate to this conjunction as the only conjunct!
-            $afun = 'AuxY';
+            $deprel = 'AuxY';
         }
 
         # other conjunctions
@@ -173,11 +181,11 @@ sub deprel_to_afun
             my @children = $node->children();
             if (@children)
             {
-                $afun = 'AuxC';
+                $deprel = 'AuxC';
             }
             else
             {
-                $afun = 'AuxY';
+                $deprel = 'AuxY';
             }
         }
 
@@ -187,7 +195,7 @@ sub deprel_to_afun
         # Later processing will move the function down from the postposition to the noun, and the postposition will get AuxP.
         elsif ($deprel eq 'postos')
         {
-            $afun = 'PrepArg';
+            $deprel = 'PrepArg';
         }
 
         # menos: It seems to be (mostly) the argument of a subordinating conjunction (or a postposition); see also postos.
@@ -201,37 +209,37 @@ sub deprel_to_afun
             # Example: ondo baino hobeto = better than well (lit. well than better)
             if ($conll_pos eq 'BST' && $form eq 'baino')
             {
-                $afun = 'AuxC';
+                $deprel = 'AuxC';
             }
             else
             {
-                $afun = 'SubArg';
+                $deprel = 'SubArg';
             }
         }
 
         # particles
         # prtmod # !!JM TODO - "label used to mark various particles - 'badin', 'omen', etc."
         elsif ($deprel eq 'prtmod') {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
         # galdemod - focalizer (?)
         elsif ($deprel eq 'galdemod') {
-            $afun = 'AuxZ';
+            $deprel = 'AuxZ';
         }
 
         # interjection # !!JM TODO - "Uf.itj_out, vydechl Petr.", "Nezmokni, Pavle.itj_out."
         elsif ($deprel eq 'itj_out') {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
 
         # attributes # JM not sure whether "attribute" is the right term, seems more like a part of a name
         elsif ($deprel eq 'entios') {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
 
         # haos
         elsif ($deprel eq 'haos') {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
 
         # punctuation
@@ -240,15 +248,15 @@ sub deprel_to_afun
             # Note: The sentence-final punctuation will get the AuxK label during later processing.
             if ($form eq ',')
             {
-                $afun = 'AuxX';
+                $deprel = 'AuxX';
             }
             else
             {
-                $afun = 'AuxG';
+                $deprel = 'AuxG';
             }
         }
 
-        $node->set_afun($afun);
+        $node->set_deprel($deprel);
     }
     # Fix known irregularities in the data.
     # Do so here, before the superordinate class operates on the data.
@@ -271,7 +279,7 @@ sub fix_annotation_errors
     {
         # ords:       1         2  3      4         5         6              7     8    9          10 11        12  13         14 15       16     17  18 19 20 21     22        23  24     25       26    27  28   29       30         31         32
         my @pord = (undef,3,    3, 0,     6,        4,        9,             8,    6,   16,        9, 12,       16, 12,        16,16,      19,    16, 19,3, 19,22,    23,       28, 25,    26,      27,   23, 19,  28,      31,        28,        0 );
-        my @afun = qw(AuxS Adv  Neg Pred  Atr       Atr       Adv            Atr   Atr  Adv        AuxX CoordArg Sb CoordArg   Neg AuxV    CoordArg Adv AuxX Obj AuxX Atr CoordArg Sb Atr  Atr      Atr   CoordArg CoordArg AuxV Atr   Adv        AuxK);
+        my @deprel = qw(AuxS Adv  Neg Pred  Atr       Atr       Adv            Atr   Atr  Adv        AuxX CoordArg Sb CoordArg   Neg AuxV    CoordArg Adv AuxX Obj AuxX Atr CoordArg Sb Atr  Atr      Atr   CoordArg CoordArg AuxV Atr   Adv        AuxK);
         my @tree = @nodes;
         unshift(@tree, $root);
         # To prevent cycles on the fly, first attach everything to the root, then reattach to the final parents.
@@ -281,42 +289,12 @@ sub fix_annotation_errors
         }
         for (my $i = 1; $i <= $#tree; $i++)
         {
-            #my $message = "Attaching $i:".$tree[$i]->form()." to $pord[$i]:".$tree[$pord[$i]]->form()." as $afun[$i].";
+            #my $message = "Attaching $i:".$tree[$i]->form()." to $pord[$i]:".$tree[$pord[$i]]->form()." as $deprel[$i].";
             #log_info($message);
             $tree[$i]->set_parent($tree[$pord[$i]]);
-            $tree[$i]->set_afun($afun[$i]);
-            my $wild = $tree[$i]->wild();
-            if ($afun[$i] eq 'CoordArg')
-            {
-                $wild->{conjunct} = 1;
-            }
-            else
-            {
-                delete($wild->{conjunct});
-            }
+            $tree[$i]->set_deprel($deprel[$i]);
         }
     }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Detects coordination in the shape we expect to find it in the Basque
-# treebank.
-#------------------------------------------------------------------------------
-sub detect_coordination
-{
-    my $self = shift;
-    my $node = shift;
-    my $coordination = shift;
-    my $debug = shift;
-    $coordination->detect_alpino($node);
-    # The caller does not know where to apply recursion because it depends on annotation style.
-    # Return all conjuncts and shared modifiers for the Prague family of styles.
-    # Return orphan conjuncts and all shared and private modifiers for the other styles.
-    my @recurse = $coordination->get_conjuncts();
-    push(@recurse, $coordination->get_shared_modifiers());
-    return @recurse;
 }
 
 
@@ -334,9 +312,9 @@ sub correct_punctuations {
     for (my $i = 0; $i <= $#nodes; $i++) {
         my $node = $nodes[$i];
         if (defined $node) {
-            my $afun = $node->afun();
+            my $deprel = $node->deprel();
             my $ordn = $node->ord();
-            if ($afun =~ /^(AuxX|AuxG)$/) {
+            if ($deprel =~ /^(AuxX|AuxG)$/) {
                 my $parnode = $node->get_parent();
                 if (defined $parnode && !$parnode->is_root() && !$parnode->is_coap_root()) {
                     my $parparnode = $parnode->get_parent();

@@ -44,7 +44,7 @@ sub filter_self {
         push @$errors, "NOPRON_CS_REF_TNODE";
         return;
     }
-    print STDERR "SELF-PRONOUN\t" . $tnode->get_address() . "\n";
+    log_debug "SELF-PRONOUN\t" . $tnode->get_address(), 1;
     return @filtered;
 }
 
@@ -52,7 +52,7 @@ sub filter_eparents {
     my ($aligned, $tnode, $errors) = @_;
     my @filtered = Treex::Tool::Align::Robust::Common::filter_by_functor($aligned, $tnode->functor, $errors);
     if (@filtered) {
-        print STDERR "PARENTS-FUNCTOR\t" . $tnode->get_address() . "\n";
+        log_debug "PARENTS-FUNCTOR\t" . $tnode->get_address(), 1;
     }
     return @filtered;
 }
@@ -64,7 +64,7 @@ sub filter_siblings {
     my @kids = $par->get_echildren({or_topological => 1});
     my @filtered = Treex::Tool::Align::Robust::Common::filter_by_functor(\@kids, $tnode->functor, $errors);
     if (@filtered) {
-        print STDERR "SIBLINGS-FUNCTOR\t" . $tnode->get_address() . "\n";
+        log_debug "SIBLINGS-FUNCTOR\t" . $tnode->get_address(), 1;
     }
     return @filtered;
 }
@@ -82,7 +82,7 @@ sub filter_ancestor {
         return;
     }
     push @$errors, "BENEF_FOUND";
-    print STDERR "ANCESTORS-DATIVE\t" . $tnode->get_address() . "\n";
+    log_debug "ANCESTORS-DATIVE\t" . $tnode->get_address(), 1;
     return @aligned_dative_childs;
 }
 

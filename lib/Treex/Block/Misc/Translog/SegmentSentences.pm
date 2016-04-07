@@ -40,7 +40,7 @@ sub process_document {
             }
 
             else { # otherwise we search for the English boundary by alignment
-                my ($nodes_rf, $types_rf) = $da_sentence_end_node->get_aligned_nodes;
+                my ($nodes_rf, $types_rf) = $da_sentence_end_node->get_directed_aligned_nodes;
                 if ($nodes_rf) {
                     ($en_sentence_end_node) = @$nodes_rf;
                 }

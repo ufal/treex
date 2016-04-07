@@ -23,7 +23,7 @@ SKIP:
     } or skip 'Cannot download model', 3;
     my $tagger = Treex::Tool::Tagger::MorphoDiTa->new(model => $test_model);
     isa_ok( $tagger, 'Treex::Tool::Tagger::MorphoDiTa' );
-    
+
     my @forms           = qw(How are you ?);
     my @expected_tags   = qw(WRB VBP PRP .);
     my @expected_lemmas = qw(how be you ?);

@@ -32,7 +32,7 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::W2A::CS::FixReflexivePronouns
 

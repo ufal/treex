@@ -14,8 +14,8 @@ sub process_anode
     my $subject_found = 0;
     foreach my $child (@children)
     {
-        my $afun = $child->afun() // '';
-        if($afun eq 'Sb')
+        my $deprel = $child->deprel() // '';
+        if($deprel eq 'Sb')
         {
             # Is this the second subject under the same parent?
             if($subject_found)
@@ -38,10 +38,10 @@ sub process_anode
 
 =item Treex::Block::HamleDT::Test::MaxOneSubject
 
-One verb should have maximally one subject (afun=Sb).
+One verb should have maximally one subject (deprel=Sb).
 Note that coordination of subjects does not violate this condition because it is represented by the root of the subtree.
 
-The same constraint probably holds for some other dependents, e.g. nominal predicates (afun=Pnom).
+The same constraint probably holds for some other dependents, e.g. nominal predicates (deprel=Pnom).
 
 =back
 

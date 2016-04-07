@@ -295,11 +295,11 @@ Treex::Tool::Lexicon::CS::Reflexivity
 =head1 SYNOPSIS
 
  use Treex::Tool::Lexicon::CS::Reflexivity;
- 
+
  foreach my $lemma (qw(chodit zeptat troufat)) {
      print Treex::Tool::Lexicon::CS::Reflexivity::fix_reflexivity($lemma)."\n";
  }
- 
+
  if (!Treex::Tool::Lexicon::CS::Reflexivity::is_possible_tantum('zvýhodnit_se')){
      # do something about it
  }
@@ -316,7 +316,7 @@ Based on a list of reflexives extracted from VALLEX 2.5.
 
 =item my $bool = Treex::Tool::Lexicon::CS::Reflexivity::is_possible_tantum($tlemma)
 
-Returns true only if the given lemma (such as "ptát_se", "jistý_si", "kolísat_se") is on the list 
+Returns true only if the given lemma (such as "ptát_se", "jistý_si", "kolísat_se") is on the list
 of possible reflexive tantums (which is not true for the last example). The list is based on
 VALLEX 2.5, PDT-VALLEX 2.0 and the PDT 2.0 data.
 
@@ -327,8 +327,8 @@ VALLEX 2.5, PDT-VALLEX 2.0 and the PDT 2.0 data.
 =head1 TODO
 
 The list of possible reflexives should be probably narrowed down, since it contains also verbs in which
-the reflexive tantum variant from the dictionary is either highly unlikely to occur (e.g. "dělat_se" as 
-in "Dělá se hezky.") or not entirely justifiable (e.g. "seznámit se" or "zabít se"). 
+the reflexive tantum variant from the dictionary is either highly unlikely to occur (e.g. "dělat_se" as
+in "Dělá se hezky.") or not entirely justifiable (e.g. "seznámit se" or "zabít se").
 
 =head1 AUTHORS
 

@@ -105,7 +105,7 @@ L<W2A::SegmentOnNewlines|Treex::Block::W2A::SegmentOnNewlines>.
 
 Should very long segments (longer than the given number of words) be split?
 The number of words is only approximate; detected by counting whitespace only,
-not by full tokenization. Set to zero to disable this function completely (default 
+not by full tokenization. Set to zero to disable this function completely (default
 is 250 as longer sentences often cause the parser to fail).
 
 =head2 detect_lists

@@ -1,8 +1,11 @@
 package Treex::Block::HamleDT::DE::Harmonize;
+use utf8;
 use Moose;
 use Treex::Core::Common;
-use utf8;
+use Treex::Tool::PhraseBuilder::MoscowToPrague;
 extends 'Treex::Block::HamleDT::Harmonize';
+
+
 
 has iset_driver =>
 (
@@ -11,33 +14,46 @@ has iset_driver =>
     required      => 1,
     default       => 'de::conll2009',
     documentation => 'Which interset driver should be used to decode tags in this treebank? '.
-                     'Lowercase, language code :: treebank code, e.g. "cs::pdt". '.
-                     'The driver must be available in "$TMT_ROOT/libs/other/tagset".'
+                     'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
+
+
 #------------------------------------------------------------------------------
-# Reads the German tree, converts morphosyntactic tags to the PDT tagset,
-# converts deprel tags to afuns, transforms tree to adhere to PDT guidelines.
+# Reads the German tree, converts morphosyntactic tags to Interset, converts
+# dependency relation labels, transforms tree to adhere to Prague guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone( $zone );
-
     # Adjust the tree structure.
+    # Phrase-based implementation of tree transformations (5.3.2016).
+    my $builder = new Treex::Tool::PhraseBuilder::MoscowToPrague
+    (
+        'prep_is_head'           => 1,
+        'coordination_head_rule' => 'last_coordinator'
+    );
+    my $phrase = $builder->build($root);
+    $phrase->project_dependencies();
     $self->attach_final_punctuation_to_root($root);
-    $self->restructure_coordination($root);
-    # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
-    # and with special care at places where prepositions and coordinations interact.
-    # Prepositional phrases in Tiger are different from most treebanks. That's why we do this in two steps,
-    # the first one is Tiger-specific, the second is applied to many treebanks.
-    $self->process_tiger_prepositional_phrases($root);
-    $self->process_prep_sub_arg_cloud($root);
+    ###!!! Prepositional phrases in Tiger are different from most treebanks.
+    ###!!! The previous version of our harmonization worked in two steps.
+    ###!!! The first step was Tiger-specific, the second (preposition gets AuxP
+    ###!!! and the real deprel goes down) was shared by many treebanks.
+    ###!!! However, now the second part is hidden in the phrase model above,
+    ###!!! and the following method must be incorporated there as well in order
+    ###!!! to work. But we cannot call it before the phrase builder because it
+    ###!!! assumes that coordinations are solved, and coordinations are also
+    ###!!! transformed inside the phrase model.
+    #$self->process_tiger_prepositional_phrases($root); ###!!!
     $self->mark_deficient_coordination($root);
     $self->rehang_auxc($root);
-    $self->check_afuns($root);
+    $self->check_deprels($root);
 }
+
+
 
 #------------------------------------------------------------------------------
 # Different source treebanks may use different attributes to store information
@@ -57,12 +73,14 @@ sub get_input_tag_for_interset
     return "$conll_pos\t$conll_feat";
 }
 
+
+
 #------------------------------------------------------------------------------
-# Convert dependency relation tags to analytical functions.
+# Convert dependency relation labels.
 # http://www.ims.uni-stuttgart.de/forschung/ressourcen/korpora/TIGERCorpus/annotation/tiger_scheme-syntax.pdf
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub convert_deprels
 {
     my $self       = shift;
     my $root       = shift;
@@ -70,33 +88,37 @@ sub deprel_to_afun
     my $sp_counter = 0;
     foreach my $node (@nodes)
     {
-
         # The corpus contains the following 46 dependency relation tags:
         # -- AC ADC AG AMS APP AVC CC CD CJ CM CP CVC DA DH DM EP HD JU MNR MO NG NK NMC
         # OA OA2 OC OG OP PAR PD PG PH PM PNC PUNC RC RE ROOT RS SB SBP SP SVP UC VO
-        my $deprel = $node->conll_deprel();
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
         my $parent = $node->parent();
         my $pos    = $node->get_iset('pos');
         my $ppos   = $parent->get_iset('pos');
-        my $afun;
 
         # Dependency of the main verb on the artificial root node.
         if ( $deprel eq 'ROOT' )
         {
             if ( $pos eq 'verb' )
             {
-                $afun = 'Pred';
+                $deprel = 'Pred';
             }
             else
             {
-                $afun = 'ExD';
+                $deprel = 'ExD';
             }
         }
 
         # Subject.
         elsif ( $deprel eq 'SB' )
         {
-            $afun = 'Sb';
+            $deprel = 'Sb';
         }
 
         # EP = Expletive (výplňové) es
@@ -104,13 +126,13 @@ sub deprel_to_afun
         # Formally it is the subject of the verb 'geben'.
         elsif ( $deprel eq 'EP' )
         {
-            $afun = 'Sb';
+            $deprel = 'Sb';
         }
 
         # Nominal/adjectival predicative.
         elsif ( $deprel eq 'PD' )
         {
-            $afun = 'Pnom';
+            $deprel = 'Pnom';
         }
 
         # Subject or predicative.
@@ -122,11 +144,11 @@ sub deprel_to_afun
             $sp_counter++;
             if ( $sp_counter % 2 )
             {
-                $afun = 'Sb';
+                $deprel = 'Sb';
             }
             else
             {
-                $afun = 'Pnom';
+                $deprel = 'Pnom';
             }
         }
 
@@ -134,7 +156,7 @@ sub deprel_to_afun
         # Example: in/CVC Schwung/NK bringen
         elsif ( $deprel eq 'CVC' )
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
 
         # NK = Noun Kernel (?) = modifiers of nouns?
@@ -148,13 +170,13 @@ sub deprel_to_afun
         #      This example seems to result from an error during conversion of the Tiger constituent structure to dependencies.
         elsif ( $deprel =~ m/^(NK|AG|PG|MNR|PNC|ADC|NMC|HD)$/ )
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
 
         # Negation (usually of adjective or verb): 'nicht'.
         elsif ( $deprel eq 'NG' )
         {
-            $afun = 'Neg';
+            $deprel = 'Neg';
         }
 
         # Measure argument of adjective.
@@ -163,7 +185,7 @@ sub deprel_to_afun
         {
 
             # Inconsistent in PDT, sometimes 'Atr' or even 'Obj' but 'Adv' seems to be the most frequent.
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
 
         # Modifier.
@@ -178,16 +200,16 @@ sub deprel_to_afun
                 # Is this a prepositional phrase?
                 if ( $pos eq 'adp' && scalar($node->children()) > 0 )
                 {
-                    $afun = 'Atr';
+                    $deprel = 'Atr';
                 }
                 else
                 {
-                    $afun = 'AuxZ';
+                    $deprel = 'AuxZ';
                 }
             }
             else
             {
-                $afun = 'Adv';
+                $deprel = 'Adv';
             }
         }
 
@@ -195,7 +217,7 @@ sub deprel_to_afun
         # Und/J^/AVC zwar/Db/MO jetzt/Db/ROOT !/Z:/PUNC
         elsif ( $deprel eq 'AVC' )
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
 
         # Relative clause.
@@ -203,11 +225,11 @@ sub deprel_to_afun
         {
             if ( $ppos =~ m/^(noun|adj|num)$/ )
             {
-                $afun = 'Atr';
+                $deprel = 'Atr';
             }
             else
             {
-                $afun = 'Adv';
+                $deprel = 'Adv';
             }
         }
 
@@ -220,7 +242,7 @@ sub deprel_to_afun
         # SBP = Logical subject in passive construction.
         elsif ( $deprel =~ m/^(OC|OA2?|OG|DA|OP|SBP)$/ )
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
 
         # Repeated element.
@@ -228,35 +250,33 @@ sub deprel_to_afun
         # darüber/OP ,/PUNC welche/NK ... wäre/RE (darüber is subtree root, comma and wäre are attached to darüber)
         elsif ( $deprel eq 'RE' )
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
 
         # Reported speech (either direct speech in quotation marks or the pattern in the following example).
         # Perot sei/Vc/RS ein autoritärer Macher, beschreibt/VB/ROOT ihn...
         elsif ( $deprel eq 'RS' )
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
 
         # CD = Coordinating conjunction.
         # JU = Junctor (conjunction in the beginning of the sentence, deficient coordination).
         elsif ( $deprel =~ m/^(CD|JU)$/ )
         {
-            $afun = 'Coord';
-            $node->wild()->{coordinator} = 1;
+            $deprel = 'Coord';
         }
 
         # Member of coordination.
         elsif ( $deprel eq 'CJ' )
         {
-            $afun = 'CoordArg';
-            $node->wild()->{conjunct} = 1;
+            $deprel = 'CoordArg';
         }
 
         # Second member of apposition.
         elsif ( $deprel eq 'APP' )
         {
-            $afun = 'Apposition';
+            $deprel = 'Apposition';
         }
 
         # Adposition (preposition, postposition or circumposition).
@@ -265,7 +285,7 @@ sub deprel_to_afun
         # Example: aufgrund/RR von/RR Entscheidungen/NN
         elsif ( $deprel eq 'AC' )
         {
-            $afun = 'AuxP';
+            $deprel = 'AuxP';
         }
 
         # CP = Complementizer (dass)
@@ -277,17 +297,17 @@ sub deprel_to_afun
         # als/CM dabei gegenwärtige Sünder abgeurteilt werden/CC
         elsif ( $deprel =~ m/^C[MP]$/ )
         {
-            $afun = 'AuxC';
+            $deprel = 'AuxC';
         }
         elsif ( $deprel eq 'CC' )
         {
             if ( $ppos =~ m/^(noun|adj|num)$/ )
             {
-                $afun = 'Atr';
+                $deprel = 'Atr';
             }
             else
             {
-                $afun = 'Adv';
+                $deprel = 'Adv';
             }
         }
 
@@ -296,18 +316,18 @@ sub deprel_to_afun
         # -- = unknown function? First example was a ExD-Pa: WUNSIEDEL, 5. Juli ( dpa/-- ).
         elsif ( $deprel =~ m/^(PAR|VO|--)$/ )
         {
-            $afun = 'ExD';
+            $deprel = 'ExD';
             $node->set_is_parenthesis_root(1);
         }
 
         # DH = Discourse-level head (with direct speech, information about who said that).
         # It is also used for location information in the beginning of a news report. Example:
         # FR/DH :/PUNC Auf die Wahlerfolge... haben/ROOT die Etablierten... reagiert.
-        # In PDT such initial localizations are segmented as separate sentences and get the 'ExD' afun.
+        # In PDT such initial localizations are segmented as separate sentences and get the 'ExD' deprel.
         # DM = Discourse marker. Example: 'ja' ('yes'). In PDT, 'ano' ('yes') usually gets 'ExD'.
         elsif ( $deprel =~ m/^D[HM]$/ )
         {
-            $afun = 'ExD';
+            $deprel = 'ExD';
         }
 
         # PH = Placeholder
@@ -316,30 +336,30 @@ sub deprel_to_afun
         # 'Gewitter' is subject, so 'es' cannot be subject.
         elsif ( $deprel eq 'PH' )
         {
-            $afun = 'AuxO';
+            $deprel = 'AuxO';
         }
 
         # Morphological particle: infinitival marker 'zu' with some verb infinitives.
         # The particle is attached to the verb in Tiger treebank.
         # In Danish DT we dealt with infinitive markers 'at' as with subordinating conjunctions. Should we do the same here?
-		# BUT: In English, the particle 'to' gets the 'AuxV' afun which is more intuitive (- or is it?), it
+		# BUT: In English, the particle 'to' gets the 'AuxV' deprel which is more intuitive (- or is it?), it
 		# also avoids leaving 'AuxC' nodes with no children.
         elsif ( $deprel eq 'PM' )
         {
-        #    $afun = 'AuxC';
-		     $afun = 'AuxV';
+        #    $deprel = 'AuxC';
+		     $deprel = 'AuxV';
         }
 
         # SVP = Separable verb prefix.
         elsif ( $deprel eq 'SVP' )
         {
-            $afun = 'AuxT';
+            $deprel = 'AuxT';
         }
 
         # Unit component: token in embedded foreign phrase or quotation.
         elsif ( $deprel eq 'UC' )
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
 
         # Punctuation.
@@ -347,18 +367,17 @@ sub deprel_to_afun
         {
             if ( $node->form() eq ',' )
             {
-                $afun = 'AuxX';
+                $deprel = 'AuxX';
             }
             else
             {
-                $afun = 'AuxG';
+                $deprel = 'AuxG';
             }
 
             # The sentence-final punctuation should get 'AuxK' but we will also have to reattach it and we will retag it at the same time.
         }
-        $node->set_afun($afun);
+        $node->set_deprel($deprel);
     }
-    $self->fix_annotation_errors($root);
 }
 
 
@@ -378,13 +397,13 @@ sub fix_annotation_errors
         my $andrade = $nodes[2];
         my $verb = $sowie->parent();
         $sowie->set_parent($root);
-        $sowie->set_afun('Coord');
+        $sowie->set_deprel('Coord');
         $sowie->set_is_member(undef);
         $andrade->set_parent($sowie);
-        $andrade->set_afun('ExD');
+        $andrade->set_deprel('ExD');
         $andrade->set_is_member(1);
         $verb->set_parent($andrade);
-        $verb->set_afun('Atr');
+        $verb->set_deprel('Atr');
         $verb->set_is_member(undef);
     }
     # On and over
@@ -394,20 +413,20 @@ sub fix_annotation_errors
         my $and = $nodes[1];
         my $over = $nodes[2];
         $and->set_parent($root);
-        $and->set_afun('Coord');
+        $and->set_deprel('Coord');
         $and->set_is_member(undef);
         $on->set_parent($and);
-        $on->set_afun('ExD');
+        $on->set_deprel('ExD');
         $on->set_is_member(1);
         $over->set_parent($and);
-        $over->set_afun('ExD');
+        $over->set_deprel('ExD');
         $over->set_is_member(1);
     }
     foreach my $node (@nodes)
     {
         # Man bleibt draußen, fremd.
         # "draußen" is mistakenly labeled as conjunction, not as conjunct.
-        if($node->form() eq 'draußen' && $node->afun() eq 'Coord' && $node->is_leaf())
+        if($node->form() eq 'draußen' && $node->deprel() eq 'Coord' && $node->is_leaf())
         {
             my $draussen = $node;
             my $comma = $draussen->get_right_neighbor();
@@ -416,10 +435,10 @@ sub fix_annotation_errors
             {
                 my $grandparent = $fremd->parent();
                 $comma->set_parent($grandparent);
-                $comma->set_afun('Coord');
+                $comma->set_deprel('Coord');
                 $comma->set_is_member(undef);
                 $draussen->set_parent($comma);
-                $draussen->set_afun($fremd->afun());
+                $draussen->set_deprel($fremd->deprel());
                 $draussen->set_is_member(1);
                 $fremd->set_parent($comma);
                 $fremd->set_is_member(1);
@@ -427,19 +446,17 @@ sub fix_annotation_errors
         }
         # weder willens noch imstande
         # "willens" analyzed as head conjunct, all three other nodes labeled as conjunctions.
-        elsif($node->form() eq 'imstande' && $node->parent()->form() eq 'willens' && $node->is_leaf() && $node->afun() eq 'Coord')
+        elsif($node->form() eq 'imstande' && $node->parent()->form() eq 'willens' && $node->is_leaf() && $node->deprel() eq 'Coord')
         {
             # Just label "imstande" as the second conjunct. Coordination processing will take care of the rest.
-            $node->set_afun('CoordArg');
-            $node->wild()->{conjunct} = 1;
-            $node->wild()->{coordinator} = 0;
+            $node->set_deprel('CoordArg');
         }
         # vom gesamten Ersten Senat entscheiden zu lassen
         # "vom" is mistakenly labeled as separable verb prefix.
-        elsif($node->form() eq 'vom' && $node->afun() eq 'AuxT' && $node->parent()->form() eq 'entscheiden')
+        elsif($node->form() eq 'vom' && $node->deprel() eq 'AuxT' && $node->parent()->form() eq 'entscheiden')
         {
-            # The afun will be later shifted down to the noun.
-            $node->set_afun('Obj');
+            # The deprel will be later shifted down to the noun.
+            $node->set_deprel('Obj');
         }
     }
 }
@@ -456,7 +473,7 @@ sub fix_annotation_errors
 # and one in genitive, as:
 #     nach einer Umfrage des Fortune Wirtschaftsmagazins unter den Bossen
 #     nach < (einer > Umfrage < (des Fortune > Wirtschaftsmagazins) (unter < (den > Bossen)))
-# The preposition does not have the 'AuxP' afun.
+# The preposition does not have the 'AuxP' deprel.
 #------------------------------------------------------------------------------
 sub process_tiger_prepositional_phrases
 {
@@ -468,7 +485,7 @@ sub process_tiger_prepositional_phrases
         {
             my @prepchildren = $node->children();
             my $preparg;
-            # If there are no children this preposition cannot get the AuxP afun.
+            # If there are no children this preposition cannot get the AuxP deprel.
             if ( scalar(@prepchildren) == 0 )
             {
                 next;
@@ -503,12 +520,12 @@ sub process_tiger_prepositional_phrases
                     $preparg = $prepchildren[0];
                 }
             }
-            # Labeling of the preposition and its noun is a complex task and it interferes with other prepositions, subordinating conjunctions and coordinations.
-            # We leave it for further processing in process_prep_sub_arg_cloud(). However, we must make sure that the noun is temporarily labeled PrepArg
-            # (this is what process_prep_sub_arg_cloud() expects). And more importantly, we must reattach all the other children from the preposition to the noun.
-            # Note that we use set_real_afun(), not set_afun(). If the current afun of $preparg is Coord or AuxC, we cannot simply replace it because it would
-            # violate other assumptions about the tree!
-            $preparg->set_real_afun('PrepArg');
+            # Labeling of the preposition and its noun is a complex task and it interferes with other prepositions, subordinating conjunctions and with coordination.
+            # We leave it for further processing in the phrase builder. However, we must make sure that the noun is temporarily labeled PrepArg.
+            # And more importantly, we must reattach all the other children from the preposition to the noun.
+            ###!!! If we worked with afun instead of deprel, we would use set_real_afun() instead of set_afun().
+            ###!!! If the current deprel of $preparg is Coord or AuxC, we cannot simply replace it because it would violate other assumptions about the tree!
+            $preparg->set_deprel('PrepArg'); ###!!!
             foreach my $child (@prepchildren)
             {
                 unless ( $child == $preparg )
@@ -523,35 +540,13 @@ sub process_tiger_prepositional_phrases
 
 
 #------------------------------------------------------------------------------
-# Detects coordination in the shape we expect to find it in the German
-# treebank.
-#------------------------------------------------------------------------------
-sub detect_coordination
-{
-    my $self = shift;
-    my $node = shift;
-    my $coordination = shift;
-    my $debug = shift;
-    $coordination->detect_moscow($node);
-    $coordination->capture_commas();
-    # The caller does not know where to apply recursion because it depends on annotation style.
-    # Return all conjuncts and shared modifiers for the Prague family of styles.
-    # Return orphan conjuncts and all shared and private modifiers for the other styles.
-    my @recurse = $coordination->get_orphans();
-    push(@recurse, $coordination->get_children());
-    return @recurse;
-}
-
-
-
-#------------------------------------------------------------------------------
 # Deficient sentential coordination is not labeled as coordination in Tiger
 # but should be so labeled under the Prague guidelines. We must process it
 # separately.
 #
 # According to PDT annotation manual:
 # "4.1.3.6. One-member sentential coordination", conjunctions referring to
-# preceding context outside the sentence are often assigned the Coord afun, in
+# preceding context outside the sentence are often assigned the Coord deprel, in
 # such cases, they should govern the sentence as if the sentence was the only
 # coordination member.
 #------------------------------------------------------------------------------
@@ -566,12 +561,12 @@ sub mark_deficient_coordination
         # Since normal coordination has been solved by now, we just look for childless Coords.
         my @children = $node->children();
         next unless($node->conll_deprel() eq 'JU' && ($node->is_leaf() || scalar(@children)==1 && $children[0]->form() eq 'Nun') && !$node->is_member() ||
-            $node->afun() eq 'Coord' && $node->is_leaf());
+            $node->deprel() eq 'Coord' && $node->is_leaf());
         my $main = $node->parent();
         next if($main->is_root() || $main->is_member());
         # Make this structure coordination with just one conjunct.
         $node->set_parent($main->parent());
-        $node->set_afun('Coord');
+        $node->set_deprel('Coord');
         $main->set_parent($node);
         $main->set_is_member(1);
     }
@@ -614,11 +609,11 @@ sub rehang_auxc
         {
             $subord_conj->set_iset('pos' => 'conj', 'conjtype' => 'sub');
             $self->set_pdt_tag($subord_conj);
-            $subord_conj->set_afun('AuxC');
+            $subord_conj->set_deprel('AuxC');
         }
         # Subordinating conjunctions are attached to the predicate of the subordinate clause.
         # We want them on the path from the parent of the clause to its predicate.
-        if ($subord_conj->afun() eq 'AuxC' && $subord_conj->match_iset('pos' => 'conj', 'conjtype' => 'sub') && $subord_conj->is_leaf())
+        if ($subord_conj->deprel() eq 'AuxC' && $subord_conj->match_iset('pos' => 'conj', 'conjtype' => 'sub') && $subord_conj->is_leaf())
         {
             # If the parent is conjunct, $subord_conj should govern the whole coordination.
             while($parent->is_member())
@@ -631,7 +626,7 @@ sub rehang_auxc
             $parent->set_parent($subord_conj);
             my $prev = $subord_conj->get_prev_node();
             # If there is comma before the conjunction, it should be attached to the conjunction.
-            if($prev && $prev->afun() eq 'AuxX')
+            if($prev && $prev->deprel() eq 'AuxX')
             {
                 $prev->set_parent($subord_conj);
                 $prev->set_is_member(undef);
@@ -656,5 +651,5 @@ Morphological tags will be decoded into Interset and to the 15-character positio
 
 =cut
 
-# Copyright 2011, 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011, 2014, 2016 Dan Zeman <zeman@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

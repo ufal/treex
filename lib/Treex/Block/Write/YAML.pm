@@ -13,20 +13,31 @@ override '_do_process_document' => sub {
 
     my ( $self, $document ) = @_;
 
+    # get the YAML dump of everything
+
     my @bundles;
     foreach my $bundle ( $document->get_bundles() ) {
         push @bundles, $self->serialize_bundle($bundle);
     }
     my $yaml_text = Dump( \@bundles );
 
-    # hacks with the produced YAML here (avoid double UTF8 for human readability,
-    # convert Treex::PML::whatever arrays/hashes to plain ones)
+    # now do some hacks so that the produced YAML can be loaded elsewhere (i.e., by PyYAML)
+
+    # avoid double UTF8 for human readability
     utf8::decode($yaml_text);
+
+    # convert Treex::PML::whatever arrays/hashes to plain ones)
     $yaml_text =~ s{!!perl/(hash|array):\S+}{}g;
     $yaml_text =~ s{(^[^:]+:\s*)([0-9]+_[0-9_]+)(\s*(?:,|$))}{$1'$2'$3}mg;    # enquote numbers with underscores
     $yaml_text =~ s{: =$}{: '='}mg;                                           # enquote equal signs or PyYAML won't read them
     $yaml_text =~ s{: ''$}{: ""}mg;                                           # always put empty strings in double quotes
-    $yaml_text =~ s{(^[^:]+:\s*)(on|off|yes|no)(\s*(?:,|$))}{$1'$2'$3}mg;     # enquote words that would be considered boolean by PyYAML
+                                                                              # enquote words that would be considered boolean by PyYAML,
+                                                                              # but avoid enquoting their usage inside sentences (where they aren't considered boolean)
+    $yaml_text =~ s{(^(?![ -]*sentence)[^:]+:\s*)(on|off|yes|no)(\s*(?:,|$))}{$1'$2'$3}mg;
+    $yaml_text =~ s{(^[^:]+:\s*)(on|off|yes|no)(\s*$)}{$1'$2'$3}mg;
+
+    # output the result
+
     print { $self->_file_handle } $yaml_text;
     return;
 };
@@ -82,9 +93,10 @@ Readonly my $ATTR => {
 sub serialize_tree {
     my ( $self, $layer, $root ) = @_;
     my %data;
+
     # ordered for A, T nodes, otherwise unordered
     my $args = $layer =~ /[at]/ ? { ordered => 1 } : {};
-    
+
     # root attributes
     foreach my $attr ( @{ $ATTR->{$layer} } ) {
         my $value = $root->get_attr($attr);
@@ -94,7 +106,7 @@ sub serialize_tree {
     # all descendants
     $data{nodes} = [
         map { $self->serialize_node( $layer, $_ ) }
-            $root->get_descendants( $args )
+            $root->get_descendants($args)
     ];
 
     return \%data;
@@ -108,14 +120,14 @@ sub serialize_node {
     foreach my $attr ( @{ $ATTR->{$layer} } ) {
         my $value = $node->get_attr($attr);
 
-        if ($attr eq 'iset'){ # exclude empty Interset values
-            foreach my $key (keys %$value){
+        if ( $attr eq 'iset' ) {    # exclude empty Interset values
+            foreach my $key ( keys %$value ) {
                 delete $value->{$key} if ( $value->{$key} eq '' );
             }
         }
-        if ($attr eq 'gram'){ # do not write empty grammateme values
-            foreach my $key (keys %$value){
-                delete $value->{$key} if ( !defined($value->{$key}) );
+        if ( $attr eq 'gram' ) {    # do not write empty grammateme values
+            foreach my $key ( keys %$value ) {
+                delete $value->{$key} if ( !defined( $value->{$key} ) );
             }
         }
 
@@ -161,6 +173,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2012-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

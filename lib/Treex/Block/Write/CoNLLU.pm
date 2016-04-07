@@ -8,7 +8,8 @@ use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';
 
 has '+language'                        => ( required => 1 );
-has 'print_id'                         => ( is       => 'ro', isa => 'Bool', default => 1, documentation => 'print sent_id and orig_file_sentence in CoNLL-U comment before each sentence' );
+has 'print_id'                         => ( is       => 'ro', isa => 'Bool', default => 1, documentation => 'print sent_id in CoNLL-U comment before each sentence' );
+has 'xpostag'                          => ( is       => 'ro', isa => 'Bool', default => 1, documentation => 'include a treebank-specific tag in the XPOSTAG column?' );
 has 'randomly_select_sentences_ratio'  => ( is       => 'rw', isa => 'Num',  default => 1 );
 
 has _was => ( is => 'rw', default => sub{{}} );
@@ -81,15 +82,27 @@ sub process_atree
         ###!!! Much in the same fashion as the attributes in Write::CoNLLX are selected.
         my $tag = $node->conll_pos();
         $tag = $node->tag() if(!defined($tag) || $tag eq '');
-        my $isetfs = $node->iset();
-        my $upos_features = encode('mul::uposf', $isetfs);
-        my ($upos, $feat) = split(/\t/, $upos_features);
+
+        # If no iset feature is set, we want to print "_" in the FEATS and UPOS columns.
+        # Unfortunately, it is difficult to detect this case
+        # because $node->iset() creates new Lingua::Interset::FeatureStructure,
+        # which has all (60) features set to an empty string.
+        # Using encode('mul::uposf', $isetfs) results in UPOS='X'.
+        # So we need to access directly $node->{iset}.
+        my ($upos, $feat);
+        if ($node->{iset}){
+            my $isetfs = $node->iset();
+            my $upos_features = encode('mul::uposf', $isetfs);
+            ($upos, $feat) = split(/\t/, $upos_features);
+        } else {
+            ($upos, $feat) = ('_', '_');
+        }
         my $pord = $node->get_parent()->ord();
         my @misc;
         @misc = split(/\|/, $wild->{misc}) if(exists($wild->{misc}) && defined($wild->{misc}));
         if($node->no_space_after())
         {
-            push(@misc, 'SpaceAfter=No');
+            unshift(@misc, 'SpaceAfter=No');
         }
         # If transliteration of the word form to Latin (or another) alphabet is available, put it in the MISC column.
         if(defined($node->translit()))
@@ -125,9 +138,10 @@ sub process_atree
         }
         my $misc = scalar(@misc)>0 ? join('|', @misc) : '_';
         my $deprel = $node->deprel();
-        # CoNLL-U columns: ID, FORM, LEMMA, CPOSTAG=UPOS, POSTAG=corpus-specific, FEATS, HEAD, DEPREL, DEPS(additional), MISC
+        # CoNLL-U columns: ID, FORM, LEMMA, UPOSTAG, XPOSTAG(treebank-specific), FEATS, HEAD, DEPREL, DEPS(additional), MISC
         # Make sure that values are not empty and that they do not contain spaces.
-        my @values = ($ord, $form, $lemma, $upos, $tag, $feat, $pord, $deprel, '_', $misc);
+        my $xpostag = $self->xpostag() ? $tag : '_';
+        my @values = ($ord, $form, $lemma, $upos, $xpostag, $feat, $pord, $deprel, '_', $misc);
         @values = map
         {
             my $x = $_ // '_';

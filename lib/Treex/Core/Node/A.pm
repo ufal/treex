@@ -215,6 +215,7 @@ sub copy_attributes
         'form', 'lemma', 'tag', 'no_space_after', 'translit', 'gloss',
         'ord', 'deprel', 'afun', 'is_member', 'is_parenthesis_root',
         'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat', 'is_shared_modifier', 'morphcat',
+        'clause_number', 'is_clause_head',
         )
     {
         my $value = $self->get_attr($attribute);

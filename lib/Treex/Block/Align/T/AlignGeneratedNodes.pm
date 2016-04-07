@@ -107,10 +107,10 @@ sub score {
 
     my $src_par = $src_node->get_parent;
     
-    $feature_vector{aligned_parent} = $src_par->is_aligned_to($trg_node->get_parent, 'monolingual') ? 1 : 0;
+    $feature_vector{aligned_parent} = $src_par->is_directed_aligned_to($trg_node->get_parent, {rel_types => ['monolingual']}) ? 1 : 0;
     
-    my @src_eparents = $src_node->get_eparents;
-    my @trg_eparents = $trg_node->get_eparents;
+    my @src_eparents = $src_node->get_eparents({or_topological=>1});
+    my @trg_eparents = $trg_node->get_eparents({or_topological=>1});
 
     $feature_vector{aligned_eparents} = $self->compare_aligned_nodes(\@src_eparents, \@trg_eparents);
 

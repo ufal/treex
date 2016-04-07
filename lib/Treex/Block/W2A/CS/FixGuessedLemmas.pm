@@ -152,7 +152,7 @@ sub fix_lemma_using_list {
 
     #    log_info "LONGEST_PREFIX: $longest_prefix";
 
-    my @possible_words = $wt->lookup($longest_prefix);
+    my @possible_words = sort $wt->lookup($longest_prefix);
     my @distances = map { distance( $lc_form, $_ ) } @possible_words;
 
     my $min_dist = min @distances;

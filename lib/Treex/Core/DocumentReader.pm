@@ -41,25 +41,45 @@ has doc_number => (
 
 has consumer => (
     isa => 'Treex::Block::Read::ConsumerReader',
-    is => 'rw'
+    is  => 'rw'
 );
 
 sub next_document_for_this_job {
     my ($self) = @_;
 
-    # TODO this is very ugly hack (next_filename _set_file_number is defined only in BaseReader and BaseAlignedReader)
-    # In parallel execution, the file_number is sent from the head to the workers via TCP
-    # and only one doc per file is allowed, so we can update $self->file_number and $self->doc_number
-    # before each call of next_document.
-    # However the implementation of next_document will increase the numbers, so we must set it -1.
-    # This code must be specified here in next_document_for_this_job because method next_filename may be overriden
-    # or it may not be used at all (e.g. BaseTextReader delegas its functionality to Treex::Core::Files).
+    # In parallel execution, the file name is sent from the head to the workers via TCP
+    # and only one doc per file is allowed, so we can override the file list to contain just
+    # the file to be processed and set the $self->file_number counter to 0 – just before the file
+    # to be processed (we will get another file name and reset it again next time).
+    #
+    # $self->doc_number is set to the number of processed files minus 1 since it will be increased
+    # in next_document().
+    #
+    # This is an ugly hack (next_filename _set_file_number is defined only in BaseReader and BaseAlignedReader),
+    # but this code must be specified here in next_document_for_this_job because the method next_filename
+    # may be overriden or may not be used at all (e.g., BaseTextReader delegates its functionality
+    # to Treex::Core::Files).
+
     if ( $self->consumer ) {
         my $res = $self->consumer->call("next_filename");
         if ($res) {
-            $self->_set_file_number($res->{file_number} - 1);
-            $self->_set_doc_number($res->{file_number} - 1);
+            $self->_set_file_number(0);
+            $self->_set_doc_number( $res->{file_number} - 1 );
+            
+            # $res->{result} contains the next file name for plain readers,
+            # a hashref: zone -> file name for aligned readers
+            if (ref($res->{result}) eq 'HASH'){
+                # here we assume that all zones exist in _filenames 
+                # (they should since all arguments are passed on to jobs)
+                while (my ($zone, $filename) = each %{$res->{result}}){
+                    $self->_filenames->{$zone}->_set_filenames( [ $filename ] );
+                }
+            }
+            else {
+                $self->from->_set_filenames( [ $res->{result} ] );
+            }
         }
+
         # Martin Majliš had the following for BaseAlignedReader but I see no reason for it.
         # elsif ($self->_files_per_zone){
         #    $self->_set_file_number($self->_files_per_zone + 2);
@@ -101,7 +121,6 @@ sub restart {
     return;
 }
 
-
 # Readers usually do not need any share files,
 # but all blocks should implement this method
 # and readers do not extend Treex::Core::Block.
@@ -109,7 +128,6 @@ sub get_required_share_files {
     my ($self) = @_;
     return ();
 }
-
 
 1;
 

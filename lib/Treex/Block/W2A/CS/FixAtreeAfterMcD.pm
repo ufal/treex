@@ -18,7 +18,7 @@ sub process_atree {
                 # _Co under AuxX => change AuxX to Coord
                 $a_node->set_afun('Coord');
             }
-        }        
+        }
     }
 
     my @root_children = grep { $_->afun ne "AuxK" } $a_root->get_children;
@@ -34,7 +34,7 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::W2A::CS::FixAtreeAfterMcD
 
@@ -42,7 +42,7 @@ Treex::Block::W2A::CS::FixAtreeAfterMcD
 
 Some hardwired fixes of McDonald parser output:
 
-=over 
+=over
 
 =item *
 

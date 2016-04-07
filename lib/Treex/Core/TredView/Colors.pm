@@ -30,19 +30,22 @@ sub _build_colors {
 
         'coref_gram' => '#c05633',
         'coref_text' => '#4c509f',
+        'bridging'   => '#00ccff',
         'compl'      => '#629f52',
         'coindex'    => '#ffa500',    #orange
 
         # various alignment link types
-        'alignment'   => '#bebebe',
-        'left'        => '#bebebe',
-        'right'       => '#bebebe',
-        'int'         => '#bebebe',
-        'gdfa'        => '#bebebe',
-        'revgdfa'     => '#bebebe',
-        'rule-based'  => '#bebebe',
-        'monolingual' => '#bebebe',
-        'copy'        => '#bebebe',
+        'alignment'        => '#bebebe',
+        'left'             => '#bebebe',
+        'right'            => '#bebebe',
+        'int'              => '#bebebe',
+        'gdfa'             => '#bebebe',
+        'revgdfa'          => '#bebebe',
+        'rule-based'       => '#bebebe',
+        'monolingual'      => '#bebebe',
+        'coref_supervised' => '#bebebe',
+        'coref_gold'       => '#bebebe',
+        'copy'             => '#bebebe',
 
         'lex'         => '#006400',
         'aux'         => '#ff8c00',

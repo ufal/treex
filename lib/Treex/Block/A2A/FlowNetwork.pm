@@ -69,7 +69,7 @@ sub process_bundle {
             $alignment_total += $BASE_WEIGHT;
         }
         next if $s_ord == 0;
-        my ($alinodes, $alitypes) = $source_nodes[$s_ord - 1]->get_aligned_nodes();
+        my ($alinodes, $alitypes) = $source_nodes[$s_ord - 1]->get_directed_aligned_nodes();
         foreach my $n (0 .. $#$alinodes) {
             my $t_ord = $$alinodes[$n]->ord;
             my $weight = $$alitypes[$n] =~ /left/ ? $BONUS : 0;
