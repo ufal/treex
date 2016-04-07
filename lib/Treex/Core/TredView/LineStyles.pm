@@ -13,15 +13,17 @@ has '_dash' => (
 sub _build_dash {
     return {
         # just alignment lines are dashed, others are plain
-        'alignment'   => '5,3',
-        'left'        => '5,3',
-        'right'       => '5,3',
-        'int'         => '5,3',
-        'gdfa'        => '5,3',
-        'revgdfa'     => '5,3',
-        'rule-based'  => '5,3',
-        'monolingual' => '5,3',      
-        'copy'        => '5,3',        
+        'alignment'        => '5,3',
+        'left'             => '5,3',
+        'right'            => '5,3',
+        'int'              => '5,3',
+        'gdfa'             => '5,3',
+        'revgdfa'          => '5,3',
+        'rule-based'       => '5,3',
+        'monolingual'      => '5,3',      
+        'coref_supervised' => '5,3',      
+        'coref_gold'       => '5,3',      
+        'copy'             => '5,3',        
     };
 }
 
