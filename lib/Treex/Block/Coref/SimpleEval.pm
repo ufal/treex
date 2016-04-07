@@ -1,4 +1,4 @@
-package Treex::Block::Eval::Coref_new;
+package Treex::Block::Coref::SimpleEval;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
@@ -39,7 +39,7 @@ sub process_tnode {
 
 =over
 
-=item Treex::Block::Eval::Coref
+=item Treex::Block::Coref::SimpleEval
 
 Precision, recall and F-measure for coreference.
 
@@ -54,7 +54,7 @@ treex -L cs
     A2T::CS::MarkRelClauseCoref 
     Util::SetGlobal selector=ref 
     Coref::PrepareSpecializedEval category=relpron 
-    Eval::Coref_new
+    Coref::SimpleEval
 | ./eval.pl
 
 =back
