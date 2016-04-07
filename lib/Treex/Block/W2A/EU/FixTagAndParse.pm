@@ -11,7 +11,7 @@ sub process_anode {
     my $lemma = $anode->lemma;
     
     # == Fix dependency structutre
-    
+
     # == Fix lemma
     $lemma = "ukan" if ($lemma eq "*edun");
     $lemma = "edin" if ($lemma eq "*edin");
@@ -55,6 +55,11 @@ sub process_anode {
 
 
     $anode->set_lemma($lemma);
+
+    # Avoid giving a wrong lemma to integers and floats by setting the form as the lemma
+    if($anode->form =~ /(\d+([\.,]\d+)*)[-\.]?\w*/){
+	$anode->set_lemma($1); 
+    }
     
     # == Fix iset
     if ($lemma eq "bat") {
@@ -65,9 +70,16 @@ sub process_anode {
     # Some subjects should be actually objects
     $self->fix_false_subject($anode);  
    
+    # Store other/erl in the wild dump
+    my $erl = $anode->get_attr("iset/other/erl") if ($anode->iset->other);
+    $anode->wild->{erl} = $erl if($erl);
+
     $anode->set_tag(join ' ', $anode->get_iset_values);
     return;
 }
+
+
+
 
 sub fix_false_subject {
     my ($self, $anode) = @_;

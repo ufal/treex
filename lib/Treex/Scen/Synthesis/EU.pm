@@ -12,8 +12,8 @@ T2A::ImposeSubjpredAgr
 T2A::ImposeAttrAgr
 T2A::EU::AddArticles
 T2A::EU::AddPrepos
-T2A::AddSubconjs
 T2A::EU::AddAuxVerbModalTense
+T2A::EU::AddSubconjs
 T2A::EU::AddNegationParticle
 T2A::EU::DropPersPron
 T2A::AddCoordPunct
@@ -22,6 +22,7 @@ T2A::AddParentheses
 T2A::AddSentFinalPunct
 T2A::EU::AddSubordClausePunct
 Util::Eval anode='$.set_tag(join "+", $.get_iset_values())'
+Util::Eval anode='$.set_tag(join "+", $.get_iset_values(), $.wild->{erl}) if($.wild->{erl})'
 T2A::EU::GenerateWordforms
 T2A::DeleteSuperfluousAuxCP
 T2A::CapitalizeSentStart
@@ -31,6 +32,7 @@ END
 
 sub get_scenario_string {
     return $FULL;
+
 }
 
 1;
