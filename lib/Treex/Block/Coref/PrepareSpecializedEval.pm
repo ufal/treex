@@ -1,5 +1,7 @@
 package Treex::Block::Coref::PrepareSpecializedEval;
 
+# TODO use Tool::Coreference::NodeFilter for node filtering
+
 use Moose;
 use Treex::Core::Common;
 use 5.010;    # operator //
