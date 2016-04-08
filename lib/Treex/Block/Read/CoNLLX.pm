@@ -10,6 +10,7 @@ extends 'Treex::Block::Read::BaseCoNLLReader';
 has 'sent_in_file'   => ( is => 'rw', isa => 'Int', default => 0 );
 has 'feat_is_iset'   => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'deprel_is_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'is_member_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub next_document {
     my ($self) = @_;
@@ -50,6 +51,10 @@ sub next_document {
             $newnode->set_conll_feat($feat);
             if ( $self->feat_is_iset ) {
                 $newnode->set_iset_conll_feat($feat);
+            }
+            if($self->is_member_within_afun() && $deprel =~ s/_M$//)
+            {
+                $newnode->set_is_member(1);
             }
             $newnode->set_conll_deprel($deprel);
             if ( $self->deprel_is_afun ) {
@@ -138,10 +143,11 @@ L<Treex::Core::Bundle>
 
 =head1 AUTHOR
 
-David Mareček
+David Mareček <marecek@ufal.mff.cuni.cz>
+Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011-2013 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2013, 2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
