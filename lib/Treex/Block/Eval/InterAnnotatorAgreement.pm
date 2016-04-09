@@ -8,7 +8,9 @@ has '+language' => ( required => 1 );
 
 
 #------------------------------------------------------------------------------
-# Counts nonprojective dependencies in the a-tree of a zone.
+# Prints events that can be used to compute inter-annotator agreement and
+# related statistics. At the same time filters the treebank and removes bundles
+# where the two annotators do not agree.
 #------------------------------------------------------------------------------
 sub process_document
 {
