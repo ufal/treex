@@ -67,7 +67,7 @@ sub process_document
                 {
                     print("unmatched_tag\t1\n");
                 }
-                if(is_empty($nodes1[$i]->deprel()) || $nodes1[$i]->deprel() eq '???' || is_empty($nodes2[$i]->deprel()) || $nodes2[$i]->deprel() eq '???')
+                if(is_empty($nodes1[$i]->deprel()) || $nodes1[$i]->deprel() =~ m/^(\?\?\?|NR)$/ || is_empty($nodes2[$i]->deprel()) || $nodes2[$i]->deprel() =~ m/^(\?\?\?|NR)$/)
                 {
                     print("empty_deprel\t1\n");
                     $ok = 0;
