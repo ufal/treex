@@ -14,13 +14,15 @@ sub _coref_format {
     my ($sents, $anaph_id) = @_;
 
     my $is_correct = 0;
+    my $has_sys_ante = 0;
+    my $has_key_ante = 0;
 
     my @words = ();
     foreach my $ttree (@$sents) {
         foreach my $tnode ($ttree->get_descendants({ordered => 1})) {
             my @colors = ();
             if ($tnode->id eq $anaph_id) {
-                push @colors, "on_yellow";
+                push @colors, "yellow";
             }
             if ($tnode->wild->{coref_diag}{cand_for}{$anaph_id}) {
                 push @colors, "reverse";
@@ -28,12 +30,16 @@ sub _coref_format {
             if ($tnode->wild->{coref_diag}{sys_ante_for}{$anaph_id} && $tnode->wild->{coref_diag}{key_ante_for}{$anaph_id}) {
                 push @colors, "green";
                 $is_correct = 1;
+                $has_key_ante = 1;
+                $has_sys_ante = 1;
             }
             elsif ($tnode->wild->{coref_diag}{key_ante_for}{$anaph_id}) {
                 push @colors, "cyan";
+                $has_key_ante = 1;
             }
             elsif ($tnode->wild->{coref_diag}{sys_ante_for}{$anaph_id}) {
                 push @colors, "red";
+                $has_sys_ante = 1;
             }
 
             my $anode = $tnode->get_lex_anode;
@@ -43,6 +49,9 @@ sub _coref_format {
             }
             push @words, $word;
         }
+    }
+    if (!$has_sys_ante && !$has_key_ante) {
+        $is_correct = 1;
     }
     my $str = $is_correct ? "OK:\t" : "ERR:\t";
     $str .= join " ", @words;
