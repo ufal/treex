@@ -11,6 +11,7 @@ has 'sent_in_file'   => ( is => 'rw', isa => 'Int', default => 0 );
 has 'feat_is_iset'   => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'deprel_is_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'is_member_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'is_parenthesis_root_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 sub next_document {
     my ($self) = @_;
@@ -51,6 +52,13 @@ sub next_document {
             $newnode->set_conll_feat($feat);
             if ( $self->feat_is_iset ) {
                 $newnode->set_iset_conll_feat($feat);
+            }
+            if($self->is_parenthesis_root_within_afun)
+            {
+                if($deprel =~ s/_P$// || $deprel =~ s/_MP$/_M/ || $deprel =~ s/_PM$/_M/)
+                {
+                    $newnode->set_is_parenthesis_root(1);
+                }
             }
             if($self->is_member_within_afun() && $deprel =~ s/_M$//)
             {

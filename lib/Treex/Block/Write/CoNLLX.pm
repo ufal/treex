@@ -16,6 +16,7 @@ has 'feat_attribute'                   => ( is       => 'rw', isa => 'Str', defa
 has 'is_member_within_afun'            => ( is       => 'rw', isa => 'Bool', default => 0 );
 has 'is_shared_modifier_within_afun'   => ( is       => 'rw', isa => 'Bool', default => 0 );
 has 'is_coord_conjunction_within_afun' => ( is       => 'rw', isa => 'Bool', default => 0 );
+has 'is_parenthesis_root_within_afun'  => ( is       => 'rw', isa => 'Bool', default => 0 );
 has 'randomly_select_sentences_ratio'  => ( is       => 'rw', isa => 'Num',  default => 1 );
 
 has _was => ( is => 'rw', default => sub{{}} );
@@ -32,13 +33,12 @@ sub process_atree {
             map { $self->get_attribute( $anode, $_ ) }
             (qw(lemma pos cpos deprel)); # "conll/" will be prefixed if needed; see get_attribute()
 
-        #my $ctag  = $self->get_coarse_grained_tag($tag);
-
         # append suffices to afuns
         my $suffix = '';
         $suffix .= 'M' if $self->is_member_within_afun            && $anode->is_member;
         $suffix .= 'S' if $self->is_shared_modifier_within_afun   && $anode->is_shared_modifier;
         $suffix .= 'C' if $self->is_coord_conjunction_within_afun && $anode->wild->{is_coord_conjunction};
+        $suffix .= 'P' if $self->is_parenthesis_root_within_afun  && $anode->is_parenthesis_root;
         $deprel .= "_$suffix" if $suffix;
 
         my $feat;
@@ -178,6 +178,6 @@ David Mareček, Daniel Zeman, Martin Popel
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011, 2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
