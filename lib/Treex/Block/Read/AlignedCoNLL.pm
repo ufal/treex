@@ -7,6 +7,7 @@ extends 'Treex::Block::Read::BaseAlignedTextReader';
 
 has 'conll_format' => ( is => 'ro', isa => 'Str', default => '2009', documentation => 'CoNLL flavor: 2006 or 2009, default is 2009.' );
 has 'is_member_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'is_parenthesis_root_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
 
 
 
@@ -60,6 +61,13 @@ sub next_document {
                 $pos    = $ppos    if $pos    eq '_';
                 $head   = $phead   if $head   eq '_';
                 $deprel = $pdeprel if $deprel eq '_';
+                if($self->is_parenthesis_root_within_afun)
+                {
+                    if($deprel =~ s/_P$// || $deprel =~ s/_MP$/_M/ || $deprel =~ s/_PM$/_M/)
+                    {
+                        $newnode->set_is_parenthesis_root(1);
+                    }
+                }
                 if($self->is_member_within_afun() && $deprel =~ s/_M$//)
                 {
                     $newnode->set_is_member(1);
