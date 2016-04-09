@@ -18,24 +18,14 @@ sub process_anode
     if(defined($parent))
     {
         my $pos = $node->get_iset('pos');
-        # TODO: should the determiners (adjtype = 'det') be included as well?
         $pos = 'art' if($node->get_iset('adjtype') eq 'art');
         my $prn = $node->get_iset('prontype');
         # Two pronouns, one modifying the other, are not error (da: "det andet").
         # Thus we want to catch only real nouns/adjectives below.
         $pos = 'pronoun' if($prn ne '');
-        my $ppos = $parent->get_iset('pos');
-        # TODO: should the determiners (adjtype = 'det') be included as well?
-        $ppos = 'art' if($parent->get_iset('adjtype') eq 'art');
-        my $pprn = $parent->get_iset('prontype');
-        $ppos = 'pronoun' if($pprn ne '');
-        if($pos =~ m/^(noun|adj)$/ && $ppos =~ m/^(pronoun|num|art)$/)
+        if($pos =~ m/^(noun|adj)$/ && $parent->is_determiner())
         {
             $self->complain($node, $parent->form().'->'.$node->form());
-        }
-        elsif($ppos =~ m/^(noun|adj)$/ && $pos =~ m/^(pronoun|num|art)$/)
-        {
-            $self->praise($node);
         }
     }
 }
