@@ -121,7 +121,7 @@ sub new_document {
         ( $stem, $file_number ) = ( $self->file_stem, undef );
     }
     else {    # Magical heuristics how to choose default name for a document loaded from several files
-        foreach my $zone_label ( keys %filenames ) {
+        foreach my $zone_label ( sort (keys %filenames) ) {
             my $filename = $filenames{$zone_label};
             ( $volume, $dirs, $file ) = File::Spec->splitpath($filename);
 
