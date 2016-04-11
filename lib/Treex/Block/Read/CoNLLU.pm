@@ -106,7 +106,7 @@ sub next_document {
             if ($feats ne '_') {
                 $newnode->iset->add_ufeatures(split(/\|/, $feats));
             }
-            if ($misc && $misc =~ s/SpaceAfter=No//){
+            if ($misc && $misc =~ s/(^SpaceAfter=No(\|)?|\|SpaceAfter=No)//){
                 $newnode->set_no_space_after(1);
             }
             if ($misc && $misc ne '_'){

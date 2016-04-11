@@ -25,8 +25,9 @@ sub process_tnode {
             'lemma'         => 'there',
             'form'          => 'there',
             'tag'           => 'EX',
-            'afun'          => 'Sb',
+            'afun'          => 'Sb',  # TODO is it a real subject ??
             'morphcat/pos'  => '!',
+            'morphcat/person'  => '3',
             'clause_number' => $anode->clause_number,
         }
     );

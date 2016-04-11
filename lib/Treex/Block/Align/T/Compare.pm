@@ -6,7 +6,7 @@ use Treex::Core::Common;
 use Term::ANSIColor;
 
 extends 'Treex::Block::Write::BaseTextWriter';
-with 'Treex::Block::Filter::Node::T';
+with 'Treex::Block::Filter::Node';
 
 has '+node_types' => ( default => 'all_anaph' );
 has 'align_language' => (is => 'ro', isa => 'Str', required => 1);
@@ -187,7 +187,7 @@ Specifies the target language of the compared alignments.
 
 =item node_types
 
-A comma-separated list of the node types to be in focus (see more in C<Treex::Block::Filter::Node::T>)
+A comma-separated list of the node types to be in focus (see more in C<Treex::Block::Filter::Node>)
 
 =item true_align_type, pred_align_type
 

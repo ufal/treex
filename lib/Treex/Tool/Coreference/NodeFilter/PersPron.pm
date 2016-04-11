@@ -1,5 +1,6 @@
 package Treex::Tool::Coreference::NodeFilter::PersPron;
 
+use utf8;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Lexicon::CS;
@@ -39,6 +40,9 @@ sub is_3rd_pers {
         #}
         return $is_pers;
     }
+    if ($node->language eq 'ru') {
+        return _is_3rd_pers_ru($node, $args);
+    }
 }
 
 # possible args:
@@ -48,7 +52,7 @@ sub _is_3rd_pers_cs {
     my ($node, $args) = @_;
 
     if ($node->get_layer eq "a") {
-        return 0;
+        return _is_3rd_pers_cs_a($node, $args);
     }
     else {
         return _is_3rd_pers_cs_t($node, $args);
@@ -222,6 +226,32 @@ sub _is_3rd_pers_en_a {
     return 1;
 }
 
+sub _is_3rd_pers_ru {
+    my ($node, $args) = @_;
+    if ($node->get_layer eq "a") {
+        return _is_3rd_pers_ru_a($node, $args);
+    }
+}
+
+sub _is_3rd_pers_ru_a {
+    my ($anode, $args) = @_;
+    
+    # is pronoun
+    my $is_pron = ($anode->tag =~ /^P/);
+    return 0 if (!$is_pron);
+    
+    # return only expressed by default
+    my $expressed = $args->{expressed} // 1;
+    return 0 if ($expressed < 0);
+
+    # possessive
+    my $arg_possessive = $args->{possessive} // 0;
+    my $possessive = is_possessive($anode);
+    return 0 if !ternary_arg($arg_possessive, $possessive);
+
+    return 1;
+}
+
 sub is_reflexive {
     my ($node) = @_;
     my $anode;
@@ -257,6 +287,12 @@ sub is_possessive {
     }
     elsif ($anode->language eq "cs") {
         return $anode->tag =~ /^.[18SU]/;
+    }
+    elsif ($anode->language eq "ru") {
+        return 1 if (lc($anode->lemma) eq "свой");
+        return 1 if (lc($anode->form) eq "его");
+        return 1 if (lc($anode->form) eq "её");
+        return 1 if (lc($anode->form) eq "их");
     }
     return 0;
 }

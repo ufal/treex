@@ -5,6 +5,12 @@ use Treex::Core::Common;
 use Treex::Tool::Coreference::NodeFilter::Utils qw/ternary_arg/;
 
 sub is_sem_verb {
+    my ($node, $args) = @_;
+    return 0 if ($node->get_layer ne 't');
+    return is_sem_verb_t($node, $args);
+}
+
+sub is_sem_verb_t {
     my ($tnode, $args) = @_;
     return (defined $tnode->gram_sempos && ($tnode->gram_sempos =~ /^v/));
 }
