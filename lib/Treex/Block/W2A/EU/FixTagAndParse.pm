@@ -53,6 +53,9 @@ sub process_anode {
 	$anode->set_afun('Obj');
     }
 
+    # Give case to the genitive if it is  missing
+    $anode->set_iset('case'=>'gen') if (!$anode->iset->case && ($anode->iset->pos eq "noun") && (lc($form) ne lc($lemma)) && $form =~ /r?en$/);
+    $anode->set_iset('case'=>'loc') if (!$anode->iset->case && ($anode->iset->pos eq "noun") && (lc($form) ne lc($lemma)) && $form =~ /e?ko$/);
 
     $anode->set_lemma($lemma);
 
