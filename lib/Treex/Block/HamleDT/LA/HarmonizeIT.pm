@@ -160,11 +160,12 @@ sub fix_part_of_speech
                 'Px-' => 'prs', ###!!! reflexive ... se
                 'Pl-' => 'rcp',
                 'Pu-' => 'ind', # aliquantulus, aliquantus, alius, alteruter, cuiusuis, nemo, neuter, ...
+                'PuP' => 'ind|dem', # tot (so many, many)
                 'P2-' => 'ind|rel', # aliquicumque, qualiscumque, quicumque, quisque, quisquis, uterlibet
                 'P2P' => 'ind|rel', # quodquod, quotquot
                 'P4-' => 'ind|int', # nequis, numquis, quis, siquis
                 'P5-' => 'int|rel', # cuius, qualis, quantulus, quantus, quotus
-                'P5P' => 'int|rel', # quot
+                'P5P' => 'int|rel', # quot (how many)
                 'P6-' => 'ind', # indefinite ordinal numeral ... alter
                 'P7-' => 'ind|int|rel', # qui, uter
             );
