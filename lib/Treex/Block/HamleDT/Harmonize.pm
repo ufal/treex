@@ -43,7 +43,8 @@ sub process_zone
     $root->set_id($id);
 
     # Convert CoNLL POS tags and features to Interset and PDT if possible.
-    $self->convert_tags( $root );
+    $self->convert_tags($root);
+    $self->fix_morphology($root);
 
     # Conversion from dependency relation tags to afuns (analytical function tags) must be done always
     # and it is almost always treebank-specific (only a few treebanks use the same tagset as the PDT).
@@ -166,6 +167,24 @@ sub set_upos_tag
     log_fatal("Undefined interset feature structure") if(!defined($f));
     my $upos = $f->get_upos();
     $node->set_tag($upos);
+}
+
+
+
+#------------------------------------------------------------------------------
+# A method to target known divergences in lemma, part of speech and
+# morphological features. This could include annotation errors as well as
+# differences by design. Unlike fix_annotation_errors() (see below), this
+# method is called before converting the dependency relation labels (but after
+# decoding the original tags into Interset features). This ancestor
+# implementation is empty; the real errors must be defined for each harmonized
+# treebank separately.
+#------------------------------------------------------------------------------
+sub fix_morphology
+{
+    my $self = shift;
+    my $root = shift;
+    return 1;
 }
 
 

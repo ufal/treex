@@ -188,7 +188,31 @@ sub convert_deprels
         {
             $node->set_is_member(undef);
         }
-        # Try to fix inconsistencies in annotation of coordination.
+    }
+    # Third loop: we still cannot rely on is_member because it is not guaranteed that it is always set directly under COORD or APOS.
+    # The source data follow the PDT convention that AuxP and AuxC nodes do not have it (and thus it is marked at a lower level).
+    # In contrast, Treex marks is_member directly under Coord or Apos. We cannot convert it later because we need reliable is_member
+    # for deprel conversion.
+    foreach my $node (@nodes)
+    {
+        # no is_member allowed directly below root
+        if($node->is_member() and $node->parent()->is_root())
+        {
+            $node->set_is_member(undef);
+        }
+        if($node->is_member())
+        {
+            my $new_member = $self->_climb_up_below_coap($node);
+            if($new_member && $new_member != $node)
+            {
+                $new_member->set_is_member(1);
+                $node->set_is_member(undef);
+            }
+        }
+    }
+    # Fourth loop: if there are inconsistencies in coordination even after moving is_member up to Aux[PC], fix them.
+    foreach my $node (@nodes)
+    {
         if($node->deprel() !~ m/^(Coord|Apos)$/)
         {
             my @members = grep {$_->is_member()} ($node->children());
@@ -208,28 +232,7 @@ sub convert_deprels
             }
         }
     }
-    # Third loop: we still cannot rely on is_member because it is not guaranteed that it is always set directly under COORD or APOS.
-    # The source data follow the PDT convention that AuxP and AuxC nodes do not have it (and thus it is marked at a lower level).
-    # In contrast, Treex marks is_member directly under Coord or Apos. We cannot convert it later because we need reliable is_member
-    # for deprel conversion.
-    foreach my $node (@nodes)
-    {
-        # no is_member allowed directly below root
-        if ($node->is_member and $node->get_parent->is_root)
-        {
-            $node->set_is_member(0);
-        }
-        if($node->is_member())
-        {
-            my $new_member = $self->_climb_up_below_coap($node);
-            if($new_member && $new_member != $node)
-            {
-                $new_member->set_is_member(1);
-                $node->set_is_member(undef);
-            }
-        }
-    }
-    # Fourth loop: finish propagating ExD down the tree at coordination and apposition.
+    # Fifth loop: finish propagating ExD down the tree at coordination and apposition.
     foreach my $node (@nodes)
     {
         if($node->wild()->{'ExD conjuncts'})
@@ -238,33 +241,6 @@ sub convert_deprels
             $self->set_real_deprel($node, 'ExD');
             delete($node->wild()->{'ExD conjuncts'});
         }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Searches for the head of coordination or apposition in AGDT. Overrides the
-# method from HarmonizePDT because of slightly different deprels in this
-# treebank. Used for moving the is_member flag directly under the head (even if
-# it is AuxP, in which case PDT would not put the flag there).
-#------------------------------------------------------------------------------
-sub _climb_up_below_coap
-{
-    my $self = shift;
-    my $node = shift;
-    if ($node->parent()->is_root())
-    {
-        log_warn('No co/ap node between a co/ap member and the tree root');
-        return;
-    }
-    elsif ($node->parent()->deprel() =~ m/(COORD|APOS)/i)
-    {
-        return $node;
-    }
-    else
-    {
-        return $self->_climb_up_below_coap($node->parent());
     }
 }
 

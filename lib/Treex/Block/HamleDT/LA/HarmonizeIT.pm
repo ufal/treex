@@ -63,10 +63,10 @@ sub process_zone
 
 #------------------------------------------------------------------------------
 # Fixing the part of speech must happen after the original tag is converted to
-# Interset but before converting the dependency relations, both of which are
-# called from the SUPER::process_zone().
+# Interset but before converting the dependency relations. This function is
+# called from SUPER::process_zone().
 #------------------------------------------------------------------------------
-after 'convert_tags' => sub
+sub fix_morphology
 {
     my $self = shift;
     my $root = shift;
@@ -75,7 +75,7 @@ after 'convert_tags' => sub
         $self->fix_part_of_speech($node);
         $self->fix_iset($node);
     }
-};
+}
 
 #------------------------------------------------------------------------------
 # The Index Thomisticus Treebank uses a "morphological tripartity" annotation.

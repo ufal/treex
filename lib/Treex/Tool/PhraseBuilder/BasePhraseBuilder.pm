@@ -169,6 +169,8 @@ sub detect_prague_coordination
         if($n == 0)
         {
             log_warn('Coordination without conjuncts');
+            log_warn($phrase->node()->get_address());
+            log_warn($phrase->as_string());
             # We cannot keep 'coord' as the deprel of the phrase if there are no conjuncts.
             my $node = $phrase->node();
             my $deprel_id = defined($node->form()) && $node->form() eq ',' ? 'auxx' : $node->is_punctuation() ? 'auxg' : 'auxy';
