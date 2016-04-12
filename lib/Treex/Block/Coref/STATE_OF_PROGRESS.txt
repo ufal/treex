@@ -64,3 +64,47 @@ coref git repository:
 tectomt git-svn repository:
     - branch "new_coref"
         - labelling the obsolete classes and replacing the obsolete calls
+
+
+----------------------------- 12.4.2016 -----------------------------------------------
+
+treex git repository:
+    - branch "new_coref"
+        * namespaces supported in VW formatter in Tool::ML::VowpalWabbit::Util
+            - a new namespace is introduced by a feature whose key starts with the '|' symbol, its name following
+            - Tool::ML::Ranker::Features transforms the features stored internally as hashes with keys following the pattern "ns^key" to the format accepted by the VW formatter
+        * a wrapper around the CR feature selector put into Coref::SupervisedBase
+            - it extracts node IDs, put it into comments section of the extended VW format and removes it from the feature set
+        * CR scenario in Scen::Coref
+            - able to resolve coreference up to the specified level
+        * CR resolver for Czech relprons
+        * simple evaluation of CR
+            - Eval::Coref_new renamed to Coref::SimpleEval
+            - adjusted to treat also the cases with a missing counterpart in the other selector
+            - it is described in the commmit message #43e317cdb7
+                - TODO: rewrite it into the PerlDoc of Coref::SimpleEval
+        * align_coref_annot merged in
+            - mostly due to the Filter::Node class unrestricted for the t-layer (it may be used for t, or a, or both the layers)
+coref git repository:
+    - branch "new_coref"
+        * a CR training folder:
+            - cec; cd treex_cr_train
+            - inspired by "qtl; cd translate"
+            - a training pipeline for the Czech relprons works out
+            - TODO: continue for other types
+        * a CR resolution folder
+            - cec; cd treex_cr
+            - performs the resolution up to the specified level
+            - evaluates the spacified level
+                - Coref::SimpleEval
+                    - TODO: the overall number of instances coming from the dev test section in the treex_cr_train 
+                      differ from the overall number of instances counted by Coref::SimpleEval
+                - conll_scorer put on hold until Coref::PrepareSpecializedEval is fixed, or used for all the mentions
+            - shows the results in a pretty-print colored format
+            - TODO: print the scores to the final result table logging all the runs
+MLyn git repository:
+    - branch "master"
+        * ML Framework extracted from the tectomt git-svn repository and renamed to MLyn
+        * TODO file added
+            - TODO: should be transformed to GitHub issues
+
