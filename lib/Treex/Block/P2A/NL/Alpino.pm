@@ -503,6 +503,8 @@ sub fix_quotes {
 
         if ( $anodes[$i]->form =~ m/^[„“”‚‘’'`"]+$/ and $anodes[$i]->parent == $aroot ) {
 
+            return if (@anodes == 1);  # ignore sentences consisting of a singular quotation mark
+
             # try to find the pairing quote and the highest node between the quotes
             my $hi_node = $i < $#anodes ? $anodes[ $i + 1 ] : $anodes[ $i - 1 ];
             my $hi_node_depth = $hi_node->get_depth();
