@@ -181,6 +181,12 @@ sub fix_morphology
             {
                 $newlemma =~ s/i[eauo](m|ch|mi)?$/ie/;
             }
+            # Negation.
+            if($newlemma =~ m/^nie/ && $lemma !~ m/^nie/)
+            {
+                $newlemma =~ s/^nie//;
+                $iset->add('negativeness' => 'neg');
+            }
             $node->set_lemma($newlemma);
         }
         # Adjust the tag to the modified values of Interset.
