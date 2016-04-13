@@ -160,6 +160,11 @@ sub fix_morphology
             # Forms: żaden, żadna, żadne, żadnego, żadnemu, żadnym, żadnej, żadną.
             $iset->add('pos' => 'adj', 'prontype' => 'neg');
         }
+        # Verbal nouns should be nouns, not verbs.
+        elsif($node->is_verb() && $node->is_gerund())
+        {
+            $iset->add('pos' => 'noun');
+        }
         # Adjust the tag to the modified values of Interset.
         $self->set_pdt_tag($node);
     }
