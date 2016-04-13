@@ -195,6 +195,7 @@ sub fix_part_of_speech
             }
             else
             {
+                log_warn("Unknown pronoun ".$node->form()." (tag $tag)");
                 $node->iset()->set('prontype' => 'prn');
             }
         }
