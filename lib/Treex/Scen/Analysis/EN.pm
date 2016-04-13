@@ -51,6 +51,13 @@ has valframes => (
      documentation => 'Set valency frame references to valency dictionary?',
 );
 
+has pretokenized => (
+    is => 'ro',
+    isa => 'Str',
+    default => 0,
+    documentation => 'Is the input pretokenized? If set to 1, will only tokenize on whitespace.'
+);
+
 # TODO Add parameter
 # has memory => (
 #     is => 'ro',
@@ -70,7 +77,7 @@ sub get_scenario_string {
     my ($self) = @_;
 
     my $scen = join "\n",
-    'W2A::EN::Tokenize',
+    $self->pretokenized ? 'W2A::TokenizeOnWhitespace' : 'W2A::EN::Tokenize',
     'W2A::EN::NormalizeForms',
     'W2A::EN::FixTokenization',
     $self->gazetteer && defined $self->trg_lang ? 'W2A::EN::GazeteerMatch trg_lang='.$self->trg_lang.' filter_id_prefixes="'.$self->gazetteer.'"' : (),

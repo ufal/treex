@@ -20,7 +20,7 @@ sub process_zone {
 
     # Don't put period after colon, semicolon, or three dots
     my $last_token = $troot->get_descendants( { last_only => 1 } );
-    return if $last_token->t_lemma =~ /^[:;.]/;
+    return if $last_token->t_lemma =~ /^[:;.\?!]/;
 
     my $punct_mark = ( ( $first_troot->sentmod || '' ) eq 'inter' ) ? '?' : '.';
     
