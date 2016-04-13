@@ -169,6 +169,19 @@ sub fix_morphology
         elsif($node->is_verb() && $node->is_gerund())
         {
             $iset->add('pos' => 'noun');
+            # That was the easy part. But we also have to replace the verbal lemma (infinitive) by the nominal lemma (nominative singular).
+            # The endings are -[nc]ie/ia/iu/iem/iom/iach/iami; except for genitive plural, where we have just -ń.
+            my $newlemma = lc($form);
+            if($node->is_genitive() && $node->is_plural())
+            {
+                $newlemma =~ s/ń$/nie/;
+                log_warn("Unsure about lemma of verbal noun: genitive plural is '$form', suggested lemma is '$lemma'.");
+            }
+            else
+            {
+                $newlemma =~ s/i[eauo](m|ch|mi)?$/ie/;
+            }
+            $node->set_lemma($newlemma);
         }
         # Adjust the tag to the modified values of Interset.
         $self->set_pdt_tag($node);
