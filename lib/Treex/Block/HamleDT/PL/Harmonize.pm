@@ -86,7 +86,12 @@ sub fix_morphology
         my $form = $node->form() // '';
         my $lemma = $node->lemma() // '';
         my $iset = $node->iset();
-        if($form =~ m/^by$/i && $node->is_particle())
+        # The source tagset does not distinguish between common and proper nouns.
+        if($node->is_noun() && $lemma ne lc($lemma))
+        {
+            $iset->add('nountype' => 'prop');
+        }
+        elsif($form =~ m/^by$/i && $node->is_particle())
         {
             $iset->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'aspect' => 'imp', 'verbform' => 'fin', 'mood' => 'cnd'});
             $node->set_lemma('być');
