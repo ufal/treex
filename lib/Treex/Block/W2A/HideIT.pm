@@ -3,6 +3,19 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+has use_alphabetic_indexes => ( is => 'rw', isa => 'Bool', default => 0 );
+my @alphabet = ("a".."z", "A".."Z");
+
+sub index {
+    my ($self, $index) = @_;
+
+    if ($self->use_alphabetic_indexes) {
+        return $alphabet[$index];
+    } else {
+        return $index;
+    }
+}
+
 sub process_zone {
     my ($self, $zone) = @_;
     my ($changed_sentence, $entities_ref) = $self->substitute_entities($zone->sentence);
@@ -76,7 +89,7 @@ sub substitute_entities {
   my $count = 1;
   foreach my $posible_path (@possible_paths){
     if (not (scalar split (/\s/, $posible_path) > scalar split (/\\/, $posible_path))) {
-      my $replace = "xxxUPATH" . $count . "xxx";
+      my $replace = "xxxUPATH" . $self->index($count) . "xxx";
       $sentence =~ s/\Q$posible_path\E/$replace/;
       $upaths{$replace} = $posible_path;
       $count++;
@@ -94,7 +107,7 @@ sub substitute_entities {
   $count = 1;
   foreach my $posible_path (@possible_paths){
     if (not (scalar split (/\s/, $posible_path) > scalar split (/\\/, $posible_path))) {
-      my $replace = "xxxWPATH" . $count . "xxx";
+      my $replace = "xxxWPATH" . $self->index($count) . "xxx";
       $sentence =~ s/\Q$posible_path\E/$replace/;
       $wpaths{$replace} = $posible_path;
       $count++;
@@ -105,7 +118,7 @@ sub substitute_entities {
   $count = 1;
   foreach my $posible_file (@possible_filenames){
     if (length $posible_file > 4) {
-      my $replace = "xxxPFILENAME" . $count . "xxx";
+      my $replace = "xxxPFILENAME" . $self->index($count) . "xxx";
       $sentence =~ s/$posible_file/$replace/;
       $files{$replace} = $posible_file;
       $count++;
