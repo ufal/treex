@@ -292,7 +292,6 @@ sub is_possessive {
         return 1 if (lc($anode->lemma) eq "свой");
         return 1 if (lc($anode->form) eq "его");
         return 1 if (lc($anode->form) eq "её");
-        return 1 if (lc($anode->form) eq "ее");
         return 1 if (lc($anode->form) eq "их");
     }
     return 0;
