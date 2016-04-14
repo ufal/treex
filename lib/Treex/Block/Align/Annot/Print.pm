@@ -141,7 +141,8 @@ sub _linearize_atree {
 
     my @tree_nodes = $zone->get_atree->get_descendants({ordered => 1});
     my @tree_forms = map {
-        $on_nodes_indic{$_->id} ? "<" . $_->form . ">" : $_->form;
+        my $form = escape_chars($_->form);
+        $on_nodes_indic{$_->id} ? "<" . $form . ">" : $_->form;
     } @tree_nodes;
 
     return join " ", @tree_forms;
@@ -160,11 +161,7 @@ sub _linearize_tnode {
     else {
         $word = $tnode->t_lemma .".". $tnode->functor;
     }
-    $word =~ s/ /_/g;
-    $word =~ s/</&lt;/g;
-    $word =~ s/>/&gt;/g;
-    $word =~ s/\[/&osb;/g;
-    $word =~ s/\]/&csb;/g;
+    $word = escape_chars($word);
 
     if ($highlight_indic->{$tnode->id}) {
         $word = "<" . $word . ">";
@@ -211,6 +208,16 @@ sub _linearize_subtree_recur {
         $str .= " ]";
     }
     return $str;
+}
+
+sub escape_chars {
+    my ($word) = @_;
+    $word =~ s/ /_/g;
+    $word =~ s/</&lt;/g;
+    $word =~ s/>/&gt;/g;
+    $word =~ s/\[/&osb;/g;
+    $word =~ s/\]/&csb;/g;
+    return $word;
 }
 
 1;
