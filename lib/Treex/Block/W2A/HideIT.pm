@@ -4,7 +4,7 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
 has use_alphabetic_indexes => ( is => 'rw', isa => 'Bool', default => 0 );
-my @alphabet = ("a".."z", "A".."Z");
+my @alphabet = ("aa".."zz");
 
 sub index {
     my ($self, $index) = @_;
