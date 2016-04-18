@@ -127,7 +127,7 @@ sub _process_bundle_block {
         $read = $self->_bart_read;
     }
     
-    log_info "Processing bundle block $block_id ...";
+    log_info "Processing bundle block ".($block_id // "")."...";
     
     my @sentences = $self->_prepare_raw_text($bundles);
 
