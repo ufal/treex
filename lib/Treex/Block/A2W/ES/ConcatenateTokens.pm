@@ -65,11 +65,11 @@ Treex::Block::A2W::ES::ConcatenateTokens
 
 Creates a sentence as a concatenation of a-nodes, removing spacing where needed.
 
-Handling Spanish contractions (e.g. "de" + "o" = "do").
+Handling Spanish contractions (e.g. "de" + "el" = "del").
 
 =head1 AUTHOR
 
-Gorka Labaka
+Gorka Labaka <gorka.labaka@ehu.eus>
 
 Martin Popel <popel@ufal.mff.cuni.cz>
 

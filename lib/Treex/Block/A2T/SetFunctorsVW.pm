@@ -40,12 +40,17 @@ sub process_tnode {
 
     my ( $self, $tnode ) = @_;
 
-    $tnode->set_functor();    # force-undef the valency frame beforhand to enable predicting 1st frame
+    # force-undef functor, otherwise the system will think this is the "correct" one
+    my $old_functor = $tnode->functor;
+    $tnode->set_functor();    
 
     my ( $feat_str ) = $self->_feats->get_feats_and_class( $tnode );    
     my $predicted = $self->_classif->classify($feat_str);
     if ($predicted) {
         $tnode->set_functor($predicted);
+    }
+    else {
+        $tnode->set_functor($old_functor);  # fallback to "old" functor (should never happen)
     }
     return;
 }

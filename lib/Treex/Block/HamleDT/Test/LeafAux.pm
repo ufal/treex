@@ -5,7 +5,7 @@ extends 'Treex::Block::Test::BaseTester';
 
 sub process_anode {
     my ( $self, $anode ) = @_;
-    if ( ( $anode->afun || '' ) =~ /^(AuxT|AuxR|AuxX|AuxA)$/ && $anode->get_children ) {
+    if ( ( $anode->deprel || '' ) =~ /^(AuxT|AuxR|AuxX|AuxA)$/ && $anode->get_children ) {
         $self->complain( $anode, $anode->afun );
     }
     return;

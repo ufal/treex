@@ -8,7 +8,8 @@ use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';
 
 has '+language'                        => ( required => 1 );
-has 'print_id'                         => ( is       => 'ro', isa => 'Bool', default => 1, documentation => 'print sent_id and orig_file_sentence in CoNLL-U comment before each sentence' );
+has 'print_id'                         => ( is       => 'ro', isa => 'Bool', default => 1, documentation => 'print sent_id in CoNLL-U comment before each sentence' );
+has 'xpostag'                          => ( is       => 'ro', isa => 'Bool', default => 1, documentation => 'include a treebank-specific tag in the XPOSTAG column?' );
 has 'randomly_select_sentences_ratio'  => ( is       => 'rw', isa => 'Num',  default => 1 );
 
 has _was => ( is => 'rw', default => sub{{}} );
@@ -47,6 +48,7 @@ sub process_atree
         {
             my $first_fused_node_ord = $node->ord();
             my $last_fused_node_ord = $wild->{fused_end};
+            my $last_fused_node_no_space_after = 0;
             # We used to save the ord of the last element with every fused element but now it is no longer guaranteed.
             # Let's find out.
             if(!defined($last_fused_node_ord))
@@ -54,8 +56,15 @@ sub process_atree
                 for(my $j = $i+1; $j<=$#nodes; $j++)
                 {
                     $last_fused_node_ord = $nodes[$j]->ord();
+                    $last_fused_node_no_space_after = $nodes[$j]->no_space_after();
                     last if(defined($nodes[$j]->wild()->{fused}) && $nodes[$j]->wild()->{fused} eq 'end');
                 }
+            }
+            else
+            {
+                my $last_fused_node = $nodes[$last_fused_node_ord-1];
+                log_fatal('Node ord mismatch') if($last_fused_node->ord() != $last_fused_node_ord);
+                $last_fused_node_no_space_after = $last_fused_node->no_space_after();
             }
             my $range = '0-0';
             if(defined($first_fused_node_ord) && defined($last_fused_node_ord))
@@ -67,7 +76,8 @@ sub process_atree
                 log_warn("Cannot determine the span of a fused token");
             }
             my $form = $wild->{fused_form};
-            print { $self->_file_handle() } ("$range\t$form\t_\t_\t_\t_\t_\t_\t_\t_\n");
+            my $misc = $last_fused_node_no_space_after ? 'SpaceAfter=No' : '_';
+            print { $self->_file_handle() } ("$range\t$form\t_\t_\t_\t_\t_\t_\t_\t$misc\n");
         }
         my $ord = $node->ord();
         my $form = $node->form();
@@ -99,7 +109,8 @@ sub process_atree
         my $pord = $node->get_parent()->ord();
         my @misc;
         @misc = split(/\|/, $wild->{misc}) if(exists($wild->{misc}) && defined($wild->{misc}));
-        if($node->no_space_after())
+        # In the case of fused surface token, SpaceAfter=No may be specified for the surface token but NOT for the individual syntactic words.
+        if($node->no_space_after() && !defined($wild->{fused}))
         {
             unshift(@misc, 'SpaceAfter=No');
         }
@@ -107,6 +118,10 @@ sub process_atree
         if(defined($node->translit()))
         {
             push(@misc, 'Translit='.$node->translit());
+        }
+        if(defined($node->wild()->{lemma_translit}))
+        {
+            push(@misc, 'LTranslit='.$node->wild()->{lemma_translit});
         }
         ###!!! (Czech)-specific wild attributes that have been cut off the lemma.
         ###!!! In the future we will want to make them normal attributes.
@@ -137,9 +152,10 @@ sub process_atree
         }
         my $misc = scalar(@misc)>0 ? join('|', @misc) : '_';
         my $deprel = $node->deprel();
-        # CoNLL-U columns: ID, FORM, LEMMA, CPOSTAG=UPOS, POSTAG=corpus-specific, FEATS, HEAD, DEPREL, DEPS(additional), MISC
+        # CoNLL-U columns: ID, FORM, LEMMA, UPOSTAG, XPOSTAG(treebank-specific), FEATS, HEAD, DEPREL, DEPS(additional), MISC
         # Make sure that values are not empty and that they do not contain spaces.
-        my @values = ($ord, $form, $lemma, $upos, $tag, $feat, $pord, $deprel, '_', $misc);
+        my $xpostag = $self->xpostag() ? $tag : '_';
+        my @values = ($ord, $form, $lemma, $upos, $xpostag, $feat, $pord, $deprel, '_', $misc);
         @values = map
         {
             my $x = $_ // '_';

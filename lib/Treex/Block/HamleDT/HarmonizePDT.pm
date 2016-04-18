@@ -1,7 +1,8 @@
 package Treex::Block::HamleDT::HarmonizePDT;
+use utf8;
 use Moose;
 use Treex::Core::Common;
-use utf8;
+use Treex::Tool::PhraseBuilder::Prague;
 extends 'Treex::Block::HamleDT::Harmonize';
 
 #------------------------------------------------------------------------------
@@ -15,213 +16,98 @@ sub process_zone
     my $tagset = shift;
     my $root = $self->SUPER::process_zone($zone, $tagset);
     my @nodes = $root->get_descendants({ordered => 1});
-    # See the comment at sub detect_coordination for why we are doing this even with PDT-style treebanks.
-    $self->restructure_coordination($root);
-    $self->pdt2hamledt_apposition($root);
+    # An easy bug to fix in deprels. It is rare but it exists.
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'AuxX' && $node->form() ne ',' && $node->is_punctuation())
+        {
+            $node->set_deprel('AuxG');
+        }
+        # The letter 'x' used instead of the operator of multiplication ('×').
+        if($node->deprel() eq 'AuxG' && $node->form() eq 'x' && $node->is_conjunction())
+        {
+            $node->set_deprel('AuxY');
+        }
+        # AuxK used for question marks and exclamation marks that terminate phrases but not the whole sentence.
+        if($node->deprel() eq 'AuxK' && !$node->parent()->is_root())
+        {
+            $node->set_deprel($node->form() eq ',' ? 'AuxX' : 'AuxG');
+        }
+    }
+    # Is_member should be set directly under the Coord|Apos node. Some Prague-style treebanks have it deeper.
+    # Fix it here, before building phrases (it will not harm treebanks that are already OK.)
+    $self->pdt_to_treex_is_member_conversion($root);
+    # Phrase-based implementation of tree transformations (30.11.2015).
+    my $builder = new Treex::Tool::PhraseBuilder::Prague
+    (
+        'prep_is_head'           => 1,
+        'coordination_head_rule' => 'last_coordinator'
+    );
+    my $phrase = $builder->build($root);
+    $phrase->project_dependencies();
     # We used to reattach final punctuation before handling coordination and apposition but that was a mistake.
     # The sentence-final punctuation might serve as coap head, in which case this function must not modify it.
     # The function knows it but it cannot be called before coap annotation has stabilized.
-    $self->attach_final_punctuation_to_root($root) unless($#nodes>=0 && $nodes[$#nodes]->afun() eq 'Coord');
+    $self->attach_final_punctuation_to_root($root);
+    # is_member undef and is_member 0 are equivalent; however, the latter makes larger XML file.
+    foreach my $node (@nodes)
+    {
+        $node->set_is_member(undef) if(!$node->is_member());
+    }
     return $root;
 }
 
+
+
 #------------------------------------------------------------------------------
-# Reshapes apposition from the style of PDT to the style of HamleDT. Adapted
-# from Martin Popel's block Pdt2HamledtApos.
+# Coordination of prepositional phrases or subordinate clauses:
+# In PDT, is_member is set at the node that bears the real deprel. It is not
+# set at the AuxP/AuxC node. In HamleDT (and in Treex in general), is_member is
+# set directly at the child of the coordination head (preposition or not). This
+# function moves the is_member attribute wherever needed to match the HamleDT
+# convention. The function is adapted from Zdeněk's block HamleDT::
+# Pdt2TreexIsMemberConversion (now removed).
+#
+# Note that HarmonizePerseus does this conversion during conversion of deprels.
+# It does not call pdt_to_treex_is_member_conversion() but it does make use of
+# the _climb_up_below_coap() function defined below. When we arrive here from
+# HarmonizePerseus, is_member has been converted. But we will have work if we
+# arrive directly from this block or from another derivate.
 #------------------------------------------------------------------------------
-sub pdt2hamledt_apposition
+sub pdt_to_treex_is_member_conversion
 {
     my $self = shift;
     my $root = shift;
-    my @nodes = $root->get_descendants({ordered => 1});
-    foreach my $node (@nodes)
+    foreach my $old_member (grep {$_->is_member()} ($root->get_descendants()))
     {
-        next if($node->afun() ne 'Apos');
-        my $old_head = $node;
-        my @children = $old_head->get_children({ordered=>1});
-        my ($first_ap, @other_ap) = grep {$_->is_member()} (@children);
-        if (!$first_ap)
+        my $new_member = $self->_climb_up_below_coap($old_member);
+        if ($new_member && $new_member != $old_member)
         {
-            log_warn('Apposition without members at ' . $old_head->get_address());
-            # Something is wrong but we cannot allow the 'Apos' afun in the output.
-            if($old_head->form() eq ',')
-            {
-                $old_head->set_afun('AuxX');
-            }
-            elsif($old_head->is_punctuation())
-            {
-                $old_head->set_afun('AuxG');
-            }
-            elsif(scalar(@children)>0 && $children[0]->afun() ne 'Apos')
-            {
-                $old_head->set_afun($children[0]->afun());
-            }
-            else
-            {
-                $old_head->set_afun('AuxY');
-            }
-            next;
-        }
-        # Usually, apposition has exactly two members.
-        # However, ExD (and unannotated coordination) can result in more members
-        # and the second member can be the whole following sentence (i.e. just one member in the tree).
-        # We must be prepared also for such cases. Uncomment the following line to see them.
-        #log_warn 'Strange apposition at ' . $old_head->get_address() if @other_ap != 1;
-        # Make the first member of apposition the new head.
-        $first_ap->set_parent($old_head->get_parent());
-        $first_ap->set_is_member(0);
-        # Attach other apposition members (hopefully just one) to the new head.
-        foreach my $another_ap (@other_ap)
-        {
-            $another_ap->set_parent($first_ap);
-            $another_ap->set_is_member(0);
-            # $another_ap could be coordination, preposition or subordinating conjunction, then the afun would have to be set further down.
-            $another_ap->set_real_afun('Apposition');
-        }
-        # Attach the comma (or semicolon or dash or bracket) under the second apposition member.
-        if (@other_ap)
-        {
-            $old_head->set_parent($other_ap[0]);
-        }
-        else
-        {
-            $old_head->set_parent($first_ap);
-        }
-        # Most of the apposition heads in PDT are punctuation nodes. But some of them are not, e.g. the joining expression "to je" ("that is").
-        $old_head->set_afun($old_head->form eq ',' ? 'AuxX' : $old_head->is_punctuation() ? 'AuxG' : 'AuxY');
-        # Reattach children of the comma, such as a second comma etc.
-        my $new_parent = $old_head->parent();
-        @children = $old_head->get_children();
-        foreach my $child (@children)
-        {
-            $child->set_parent($new_parent);
-        }
-        # Reattach possible AuxG (dashes or right brackets) under the last member of apposition.
-        my @auxg = grep {!$_->is_member && $_->afun eq 'AuxG'} @children;
-        if (@other_ap)
-        {
-            foreach my $bracket (@auxg)
-            {
-                $bracket->set_parent($other_ap[-1]);
-            }
-        }
-        # If the whole apposition was a conjunct of some outer coordination, is_member must stay with the head
-        if ($old_head->is_member)
-        {
-            $first_ap->set_is_member(1);
-            $old_head->set_is_member(0);
+            $new_member->set_is_member(1);
+            $old_member->set_is_member(undef);
         }
     }
 }
 
-
-
-#------------------------------------------------------------------------------
-# Detects coordination in the shape we expect to find it in PDT and derived
-# treebanks. Even though the harmonized shape will be almost identical (the
-# input is supposed to adhere to the style that is also used in HamleDT), there
-# are slight deviations that we want to polish by decoding and re-encoding the
-# coordinations. For example, in PADT the first conjunction serves as the head
-# of multi-conjunct coordination, while HamleDT uses the last conjunction. This
-# function will also make sure that additional attributes related to
-# coordination (such as is_shared_modifier) will be properly set.
-#------------------------------------------------------------------------------
-sub detect_coordination
+sub _climb_up_below_coap
 {
     my $self = shift;
-    my $node = shift;
-    my $coordination = shift;
-    my $debug = shift;
-    $coordination->detect_prague($node);
-    # The caller does not know where to apply recursion because it depends on annotation style.
-    # Return all conjuncts and shared modifiers for the Prague family of styles.
-    # Return orphan conjuncts and all shared and private modifiers for the other styles.
-    my @recurse = $coordination->get_conjuncts();
-    push(@recurse, $coordination->get_shared_modifiers());
-    return @recurse;
-}
-
-
-
-#------------------------------------------------------------------------------
-# This method is called for coordination nodes whose members do not have the
-# is_member attribute set (this is an annotation error but it happens).
-# The function estimates, based on afuns, which children are members and which
-# are shared modifiers.
-# Note that it could be used to fix apposition as well but HamleDT does not
-# treat apposition as a paratactic structure.
-#------------------------------------------------------------------------------
-sub identify_conjuncts
-{
-    my $self = shift;
-    my $coap = shift;
-    # We should not estimate coap membership if it is already known!
-    foreach my $child ($coap->children())
+    my ($node) = @_;
+    my $parent = $node->parent();
+    if ($parent->is_root())
     {
-        if($child->is_member())
-        {
-            log_warn('Trying to estimate CoAp membership of a node that is already marked as member.');
-        }
+        log_warn('No Coord/Apos node between a member of coordination/apposition and the tree root');
+        log_warn($node->get_address()); # this is probably not the original member node but at least we tell the tree
+        return;
     }
-    # Get the list of nodes involved in the structure.
-    my @involved = $coap->get_children({'ordered' => 1, 'add_self' => 1});
-    # Get the list of potential members and modifiers, i.e. drop delimiters.
-    # Note that there may be more than one Coord|Apos node involved if there are nested structures.
-    # We simplify the task by assuming (wrongly) that nested structures are always members and never modifiers.
-    # Delimiters can have the following afuns:
-    # Coord|Apos ... the root of the structure, either conjunction or punctuation
-    # AuxY ... other conjunction
-    # AuxX ... comma
-    # AuxG ... other punctuation
-    my @memod = grep {$_->afun() !~ m/^Aux[GXY]$/ && $_!=$coap} (@involved);
-    # If there are only two (or fewer) candidates, consider both members.
-    if(scalar(@memod)<=2)
+    # We cannot use $node->get_parent->is_coap_root because it queries the afun attribute while we use the deprel attribute.
+    elsif (defined($parent->deprel()) && $parent->deprel() =~ m/^(Coord|Apos)/i)
     {
-        foreach my $m (@memod)
-        {
-            $m->set_is_member(1);
-        }
+        return $node;
     }
     else
     {
-        # Hypothesis: all members typically have the same afun.
-        # Find the most frequent afun among candidates.
-        # For the case of ties, remember the first occurrence of each afun.
-        # Do not count nested 'Coord' and 'Apos': these are jokers substituting any member afun.
-        # Same for 'ExD': these are also considered members (in fact they are children of an ellided member).
-        my %count;
-        my %first;
-        foreach my $m (@memod)
-        {
-            my $afun = defined($m->afun()) ? $m->afun() : '';
-            next if($afun =~ m/^(Coord|Apos|ExD)$/);
-            $count{$afun}++;
-            $first{$afun} = $m->ord() if(!exists($first{$afun}));
-        }
-        # Get the winning afun.
-        my @afuns = sort
-        {
-            my $result = $count{$b} <=> $count{$a};
-            unless($result)
-            {
-                $result = $first{$a} <=> $first{$b};
-            }
-            return $result;
-        }
-        (keys(%count));
-        # Note that there may be no specific winning afun if all candidate afuns were Coord|Apos|ExD.
-        my $winner = @afuns ? $afuns[0] : '';
-        ###!!! If the winning afun is 'Atr', it is possible that some Atr nodes are members and some are shared modifiers.
-        ###!!! In such case we ought to check whether the nodes are delimited by a delimiter.
-        ###!!! This has not yet been implemented.
-        foreach my $m (@memod)
-        {
-            my $afun = defined($m->afun()) ? $m->afun() : '';
-            if($afun eq $winner || $afun =~ m/^(Coord|Apos|ExD)$/)
-            {
-                $m->set_is_member(1);
-            }
-        }
+        return $self->_climb_up_below_coap($parent);
     }
 }
 
@@ -240,5 +126,6 @@ It also provides methods for fixing some errors, such as missing conjuncts in co
 
 =cut
 
-# Copyright 2014 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2014, 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2011 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

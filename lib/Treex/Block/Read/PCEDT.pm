@@ -6,6 +6,7 @@ extends 'Treex::Block::Read::BasePMLReader';
 use Treex::PML::Factory;
 use Treex::PML::Instance;
 
+has p_layer => ( isa => 'Bool', is => 'ro', default => 1, documentation=> 'Do we have phrase-structure trees? Should we load *.p.gz files?');
 # layers: analytical, tectogrammatical, constituent (p-) trees
 has '+_layers' => ( default => sub { [ 'a', 't', 'p' ] } );
 
@@ -35,7 +36,13 @@ sub _convert_ptree {
     }
 
     foreach my $pml_child ( $pml_node->children ) {
-        my $treex_child = $treex_node->create_child();
+        my $treex_child;
+        if ($pml_child->attr('#name') eq 'nonterminal') {
+            $treex_child = $treex_node->create_nonterminal_child();
+        }
+        else {
+            $treex_child = $treex_node->create_terminal_child();
+        }
         $self->_convert_ptree( $pml_child, $treex_child );
     }
     return;
@@ -97,7 +104,7 @@ override '_convert_all_trees' => sub {
 
             $zone->set_sentence( $aroot->get_subtree_string );
 
-            if ( $language eq 'en' ) {
+            if ( $self->p_layer && $language eq 'en' ) {
                 my $proot = $zone->create_ptree;
                 $self->_convert_ptree( $pmldoc->{$language}{p}->tree($tree_number), $proot );
 

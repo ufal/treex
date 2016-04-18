@@ -10,25 +10,29 @@ sub process_anode
 {
     my $self = shift;
     my $node = shift;
-    my @children = $node->get_children({'ordered' => 1});
-    my $subject_found = 0;
-    foreach my $child (@children)
+    # Skip coordination and apposition heads (coordinated subjects => many Sb children of Coord).
+    unless($node->deprel() =~ m/^(Coord|Apos)$/)
     {
-        my $afun = $child->afun() // '';
-        if($afun eq 'Sb')
+        my @children = $node->get_children({'ordered' => 1});
+        my $subject_found = 0;
+        foreach my $child (@children)
         {
-            # Is this the second subject under the same parent?
-            if($subject_found)
+            my $deprel = $child->deprel() // '';
+            if($deprel eq 'Sb')
             {
-                $self->complain($node);
-                # Do not search for a third subject. Enough has been seen.
-                return;
+                # Is this the second subject under the same parent?
+                if($subject_found)
+                {
+                    $self->complain($node);
+                    # Do not search for a third subject. Enough has been seen.
+                    return;
+                }
+                $subject_found = 1;
             }
-            $subject_found = 1;
         }
-    }
-    if ($subject_found == 1) {
-        $self->praise($node);
+        if ($subject_found == 1) {
+            $self->praise($node);
+        }
     }
 }
 
@@ -38,10 +42,10 @@ sub process_anode
 
 =item Treex::Block::HamleDT::Test::MaxOneSubject
 
-One verb should have maximally one subject (afun=Sb).
+One verb should have maximally one subject (deprel=Sb).
 Note that coordination of subjects does not violate this condition because it is represented by the root of the subtree.
 
-The same constraint probably holds for some other dependents, e.g. nominal predicates (afun=Pnom).
+The same constraint probably holds for some other dependents, e.g. nominal predicates (deprel=Pnom).
 
 =back
 

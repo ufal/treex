@@ -14,7 +14,9 @@ with 'Treex::Block::Align::T::Supervised::Base';
 
 has 'model_path' => (is => 'ro', isa => 'Str');
 has 'align_trg_lang' => ( is => 'ro', isa => 'Treex::Type::LangCode', default => sub {my $self = shift; $self->language } );
+has 'align_name' => ( is => 'ro', isa => 'Str', default => 'supervised' );
 has 'delete_orig_align' => ( is => 'ro', isa => 'Bool', default => 1 );
+has 'skip_annotated' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 has '_model_paths' => (is => 'ro', isa => 'HashRef[HashRef[Str]]', lazy => 1, builder => '_build_model_paths');
 has '_rankers' => (is => 'ro', isa => 'HashRef[HashRef[Treex::Tool::ML::VowpalWabbit::Ranker]]', builder => '_build_rankers', lazy => 1);
@@ -95,13 +97,6 @@ sub _finalize_links {
     
     foreach my $from_id (sort keys %$links) {
         my $from_node = $bundle->get_document->get_node_by_id($from_id);
-        if ($self->delete_orig_align) {
-            $from_node->delete_aligned_nodes_by_filter({
-                language => $self->_get_align_lang($from_node->language),
-                selector => $self->selector, 
-                rel_types => ['!gold','.*'],
-            });
-        }
         foreach my $to_id (sort keys %{$links->{$from_id}}) {
             my $to_node = $bundle->get_document->get_node_by_id($to_id);
             next if ($from_id ne $to_id && $from_node->language eq $self->align_trg_lang);
@@ -126,7 +121,7 @@ sub _finalize_links {
         else {
             if ($from_node != $to_node) {
                 log_info "[".(ref $self)."] Adding alignment: " . $from_node->id . " --> " . $to_node->id;
-                Treex::Tool::Align::Utils::add_aligned_node($from_node, $to_node, "supervised");
+                Treex::Tool::Align::Utils::add_aligned_node($from_node, $to_node, $self->align_name);
             }
             $covered_ids{$from_node->id} = 1;
             $covered_ids{$to_node->id} = 1;
@@ -149,6 +144,8 @@ sub _get_align_lang {
 
 sub process_filtered_tnode {
     my ($self, $tnode) = @_;
+
+    return if ($self->skip_annotated && $tnode->get_attr('is_align_coref'));
     
     my $lang = $tnode->language;
     my $align_lang = $self->_get_align_lang($lang);
@@ -173,6 +170,14 @@ sub process_filtered_tnode {
         $winner_idx = $ranker->pick_winner($feats);
     }
 
+    if ($self->delete_orig_align) {
+        $tnode->delete_aligned_nodes_by_filter({
+            language => $self->_get_align_lang($tnode->language),
+            selector => $self->selector, 
+            rel_types => ['!gold','.*'],
+        });
+    }
+    $tnode->set_attr('is_align_coref', 1);
     $self->_add_link($tnode, $cands[$winner_idx]);
 }
 

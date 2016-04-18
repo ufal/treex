@@ -52,6 +52,18 @@ has 'head_rule' =>
         '                     if there are neither conjunctions nor punctuation, the first conjunct is the head.'
 );
 
+has '_deprel' =>
+(
+    is       => 'ro',
+    isa      => 'Str',
+    required => 1,
+    documentation =>
+        'We need to know the dependency relation between the coordination and its parent in the dependency structure. '.
+        'Depending on the selected annotation style, we will either store it at the head node, or distribute it among conjuncts. '.
+        'Subsequent calls to set_deprel(), if any, will do the right thing based on the annotation style; '.
+        'but we have to take care of the initial deprel setting, just in case there will be no further changes.'
+);
+
 
 
 #------------------------------------------------------------------------------
@@ -77,6 +89,10 @@ around BUILDARGS => sub
     {
         $attr->{_punctuation_ref} = $attr->{punctuation};
     }
+    if(defined($attr->{deprel}) && !defined($attr->{_deprel}))
+    {
+        $attr->{_deprel} = $attr->{deprel};
+    }
     return $attr;
 };
 
@@ -85,7 +101,7 @@ around BUILDARGS => sub
 #------------------------------------------------------------------------------
 # After the object is constructed, this block makes sure that the core children
 # refer back to it as their parent. Also, at least one conjunct is required and
-# making the conjuncts parametr required is not enough to enforce that.
+# making the conjuncts parameter required is not enough to enforce that.
 #------------------------------------------------------------------------------
 sub BUILD
 {
@@ -105,6 +121,25 @@ sub BUILD
         }
         $child->_set_parent($self);
     }
+    # Take care of the initial deprel setting. Deprel is stored at individual
+    # nodes, so make sure that the nodes responsible for storing the deprel
+    # of the entire coordination (according to the current annotation style)
+    # have it. (We cannot rely on the original dependency tree because it may
+    # have used a different annotation style.)
+    $self->set_deprel($self->_deprel());
+}
+
+
+
+#------------------------------------------------------------------------------
+# Tells whether this phrase is coordination. We could probably use the Moose's
+# methods to query the class name but this will be more convenient.
+#------------------------------------------------------------------------------
+sub is_coordination
+{
+    my $self = shift;
+    # Default is FALSE, to be overridden here.
+    return 1;
 }
 
 
@@ -126,6 +161,46 @@ sub conjuncts
 
 
 #------------------------------------------------------------------------------
+# Adds a phrase as a new conjunct to this coordination. The phrase may be
+# currently a dependent of another phrase and will be correctly re-linked.
+# However, it must not be a core child of any phrase.
+#------------------------------------------------------------------------------
+sub add_conjunct
+{
+    log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
+    my $self = shift;
+    my $new_conjunct = shift;
+    log_fatal('Dead') if($self->dead());
+    # First make it my dependent. This ensures that the new conjunct is
+    # correctly detached from its current parent, if any. If it is already my
+    # dependent, nothing will happen. But if it is my or someone else's core
+    # child, an exception will be thrown. The set_parent() method also checks
+    # that no cycle will be created.
+    $new_conjunct->set_parent($self);
+    # Now remove it from my dependents and add it to my conjuncts.
+    my $nhc = $self->_dependents_ref();
+    my $found = 0;
+    for(my $i = 0; $i <= $#{$nhc}; $i++)
+    {
+        if($nhc->[$i] == $new_conjunct)
+        {
+            $found = 1;
+            splice(@{$nhc}, $i, 1);
+            last;
+        }
+    }
+    if(!$found)
+    {
+        log_fatal("Could not find the phrase among my non-core children");
+    }
+    # Add it to my conjuncts.
+    my $cnj = $self->_conjuncts_ref();
+    push(@{$cnj}, $new_conjunct);
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the list of coordinators. The only difference from the getter
 # _coordinators_ref() is that the getter returns a reference to the array of
 # coordinators, while this method returns a list, hence it is more similar to
@@ -137,6 +212,46 @@ sub coordinators
     log_fatal('Dead') if($self->dead());
     my @coordinators = @{$self->_coordinators_ref()};
     return $self->_order_required(@_) ? $self->order_phrases(@coordinators) : @coordinators;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Adds a phrase as a new coordinator to this coordination. The phrase may be
+# currently a dependent of another phrase and will be correctly re-linked.
+# However, it must not be a core child of any phrase.
+#------------------------------------------------------------------------------
+sub add_coordinator
+{
+    log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
+    my $self = shift;
+    my $new_coordinator = shift;
+    log_fatal('Dead') if($self->dead());
+    # First make it my dependent. This ensures that the new coordinator is
+    # correctly detached from its current parent, if any. If it is already my
+    # dependent, nothing will happen. But if it is my or someone else's core
+    # child, an exception will be thrown. The set_parent() method also checks
+    # that no cycle will be created.
+    $new_coordinator->set_parent($self);
+    # Now remove it from my dependents and add it to my coordinators.
+    my $nhc = $self->_dependents_ref();
+    my $found = 0;
+    for(my $i = 0; $i <= $#{$nhc}; $i++)
+    {
+        if($nhc->[$i] == $new_coordinator)
+        {
+            $found = 1;
+            splice(@{$nhc}, $i, 1);
+            last;
+        }
+    }
+    if(!$found)
+    {
+        log_fatal("Could not find the phrase among my non-core children");
+    }
+    # Add it to my coordinators.
+    my $cnj = $self->_coordinators_ref();
+    push(@{$cnj}, $new_coordinator);
 }
 
 
@@ -158,6 +273,46 @@ sub punctuation
 
 
 #------------------------------------------------------------------------------
+# Adds a phrase as a new punctuation delimiter to this coordination. The phrase
+# may be currently a dependent of another phrase and will be correctly
+# re-linked. However, it must not be a core child of any phrase.
+#------------------------------------------------------------------------------
+sub add_punctuation
+{
+    log_fatal('Incorrect number of arguments') if(scalar(@_) != 2);
+    my $self = shift;
+    my $new_punctuation = shift;
+    log_fatal('Dead') if($self->dead());
+    # First make it my dependent. This ensures that the new phrase is
+    # correctly detached from its current parent, if any. If it is already my
+    # dependent, nothing will happen. But if it is my or someone else's core
+    # child, an exception will be thrown. The set_parent() method also checks
+    # that no cycle will be created.
+    $new_punctuation->set_parent($self);
+    # Now remove it from my dependents and add it to my coordinators.
+    my $nhc = $self->_dependents_ref();
+    my $found = 0;
+    for(my $i = 0; $i <= $#{$nhc}; $i++)
+    {
+        if($nhc->[$i] == $new_punctuation)
+        {
+            $found = 1;
+            splice(@{$nhc}, $i, 1);
+            last;
+        }
+    }
+    if(!$found)
+    {
+        log_fatal("Could not find the phrase among my non-core children");
+    }
+    # Add it to my coordinators.
+    my $cnj = $self->_punctuation_ref();
+    push(@{$cnj}, $new_punctuation);
+}
+
+
+
+#------------------------------------------------------------------------------
 # Returns the head child of the phrase. Depending on the current preference,
 # it is either the preposition or its argument.
 #------------------------------------------------------------------------------
@@ -169,7 +324,7 @@ sub head
     if($rule eq 'first_conjunct')
     {
         # There is always at least one conjunct.
-        return ($self->conjuncts())[0];
+        return ($self->conjuncts('ordered' => 1))[0];
     }
     elsif($rule eq 'last_coordinator')
     {
@@ -221,6 +376,78 @@ sub core_children
     log_fatal('Dead') if($self->dead());
     my @children = ($self->conjuncts(), $self->coordinators(), $self->punctuation());
     return $self->_order_required(@_) ? $self->order_phrases(@children) : @children;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the type of the dependency relation of the coordination to its
+# governing phrase.
+#------------------------------------------------------------------------------
+sub deprel
+{
+    my $self = shift;
+    log_fatal('Dead') if($self->dead());
+    my @conjuncts = $self->conjuncts();
+    return $conjuncts[0]->deprel();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Sets a new type of the dependency relation of the coordination to its
+# governing phrase. For nonterminal phrases the label is propagated to one (or
+# several) of their children. It is not propagated to the underlying dependency
+# tree (the project_dependencies() method would have to be called to achieve
+# that).
+#------------------------------------------------------------------------------
+sub set_deprel
+{
+    my $self = shift;
+    log_fatal('Dead') if($self->dead());
+    my @conjuncts = $self->conjuncts('ordered' => 1);
+    if($self->head_rule() eq 'last_coordinator')
+    {
+        ###!!! Orphans from elided conjuncts are labeled 'ExD' in the Prague
+        ###!!! annotation style. This is the only legitimate case when a non-first
+        ###!!! "conjunct" has not the same deprel as the first conjunct.
+        my $exd_means_orphan = $conjuncts[0]->deprel() ne 'ExD';
+        foreach my $c (@conjuncts)
+        {
+            unless($exd_means_orphan && $c->deprel() eq 'ExD')
+            {
+                $c->set_deprel(@_);
+            }
+        }
+        $self->head()->set_deprel('Coord');
+    }
+    else # head_rule eq 'first_conjunct'
+    {
+        $self->head()->set_deprel(@_);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the deprel that should be used when the phrase tree is projected back
+# to a dependency tree (see the method project_dependencies()). In most cases
+# this is identical to what deprel() returns. However, for instance
+# coordinations in Prague treebanks are attached using Coord. Their
+# relation to the parent (returned by deprel()) is projected to the conjuncts.
+#------------------------------------------------------------------------------
+sub project_deprel
+{
+    my $self = shift;
+    log_fatal('Dead') if($self->dead());
+    if($self->head_rule() eq 'last_coordinator')
+    {
+        return 'Coord'; ###!!! attribute / dialect?
+    }
+    else
+    {
+        return $self->head()->project_deprel();
+    }
 }
 
 
@@ -287,14 +514,26 @@ sub project_dependencies
     my $self = shift;
     log_fatal('Dead') if($self->dead());
     # Recursion first, we work bottom-up.
+    # Note that even the order of conjuncts may change if a nested coordination is forced to change the head rule and becomes represented by another node!
     my @children = $self->children();
     foreach my $child (@children)
     {
         $child->project_dependencies();
     }
+    my $head_rule = $self->head_rule();
+    my @conjuncts = $self->conjuncts('ordered' => 1);
+    my @coordinators = $self->coordinators('ordered' => 1);
+    my @punctuation = $self->punctuation('ordered' => 1);
+    my @dependents = $self->dependents();
+    if($head_rule eq 'last_coordinator' && scalar(@coordinators) == 0 && scalar(@punctuation) == 0)
+    {
+        log_warn("Coordination without delimiters cannot use the 'last_coordinator' head rule.");
+        $head_rule = 'first_conjunct'; ###!!! But then it should be possible to define deprels for this head rule in the current dialect.
+        $self->set_head_rule($head_rule);
+    }
     my $head_node = $self->node();
     # We also have to change selected deprels. It depends on the current head rule.
-    if($self->head_rule() eq 'first_conjunct')
+    if($head_rule eq 'first_conjunct')
     {
         # If the first conjunct has a deprel other than 'dep', and another conjunct has 'dep',
         # then the other conjunct is an orphan caused by ellipsis. We currently keep the 'dep'
@@ -302,7 +541,6 @@ sub project_dependencies
         ###!!! This is specific to the conversion from the Prague style to Universal Dependencies.
         ###!!! It should be solved elsewhere. Even orphans are not the main business of coordinations.
         my $dep_means_orphan = $self->deprel() ne 'dep';
-        my @conjuncts = $self->conjuncts('ordered' => 1);
         shift(@conjuncts);
         foreach my $c (@conjuncts)
         {
@@ -321,37 +559,59 @@ sub project_dependencies
                 $conj_node->set_deprel('conj');
             }
         }
-        my @coordinators = $self->coordinators();
         foreach my $c (@coordinators)
         {
             my $coor_node = $c->node();
             $coor_node->set_parent($head_node);
             $coor_node->set_deprel('cc');
         }
-        my @punctuation = $self->punctuation();
         foreach my $p (@punctuation)
         {
             my $punct_node = $p->node();
             $punct_node->set_parent($head_node);
             $punct_node->set_deprel('punct');
         }
-        my @dependents = $self->dependents();
         foreach my $d (@dependents)
         {
             my $dep_node = $d->node();
             $dep_node->set_parent($head_node);
-            $dep_node->set_deprel($d->deprel());
+            $dep_node->set_deprel($d->project_deprel());
         }
     }
-    else ###!!! This is probably not correct, as it does not assume any particular coordination style.
+    elsif($head_rule eq 'last_coordinator')
     {
-        my @dependents = $self->nonhead_children();
-        foreach my $dependent (@dependents)
+        my $head = scalar(@coordinators) > 0 ? pop(@coordinators) : pop(@punctuation);
+        $head->set_deprel('Coord');
+        $head_node = $head->node();
+        foreach my $c (@conjuncts)
         {
-            my $dep_node = $dependent->node();
-            $dep_node->set_parent($head_node);
-            $dep_node->set_deprel($dependent->deprel());
+            my $conj_node = $c->node();
+            $conj_node->set_parent($head_node);
+            $conj_node->set_deprel($c->project_deprel());
+            $conj_node->set_is_member(1);
         }
+        foreach my $c (@coordinators)
+        {
+            my $coor_node = $c->node();
+            $coor_node->set_parent($head_node);
+            $coor_node->set_deprel('AuxY');
+        }
+        foreach my $p (@punctuation)
+        {
+            my $punct_node = $p->node();
+            $punct_node->set_parent($head_node);
+            $punct_node->set_deprel($punct_node->form() eq ',' ? 'AuxX' : 'AuxG');
+        }
+        foreach my $d (@dependents)
+        {
+            my $dep_node = $d->node();
+            $dep_node->set_parent($head_node);
+            $dep_node->set_deprel($d->project_deprel());
+        }
+    }
+    else
+    {
+        log_fatal("Unknown coordination head rule '$head_rule'.");
     }
 }
 
@@ -376,6 +636,7 @@ sub as_string
     my $deps = join(', ', map {$_->as_string()} (@dependents));
     $deps = 'DEPS '.$deps if($deps);
     my $subtree = join(' ', ($conj, $coor, $punc, $deps));
+    $subtree .= ' _M' if($self->is_member());
     return "(CO $subtree)";
 }
 
@@ -414,7 +675,7 @@ Treex::Core::Phrase::Coordination
   my $coordphr = new Treex::Core::Phrase::Term ('node' => $coord);
   my $conj1phr = new Treex::Core::Phrase::Term ('node' => $conj1);
   my $conj2phr = new Treex::Core::Phrase::Term ('node' => $conj2);
-  my $cphrase  = new Treex::Core::Phrase::Coordination ('conjuncts' => [$conj1phr, $conj2phr], 'coordinators' => [$coordphr], 'head_rule' => 'last_coordinator');
+  my $cphrase  = new Treex::Core::Phrase::Coordination ('conjuncts' => [$conj1phr, $conj2phr], 'coordinators' => [$coordphr], 'head_rule' => 'last_coordinator', 'deprel' => 'Pred');
 
 =head1 DESCRIPTION
 
@@ -478,6 +739,12 @@ getter C<_conjuncts_ref()> is that the getter returns a reference to the array
 of conjuncts, while this method returns a list of conjuncts. Hence this method is
 more similar to the other methods that return lists of children.
 
+=item add_conjunct
+
+Adds a phrase as a new conjunct to this coordination. The phrase may be
+currently a dependent of another phrase and will be correctly re-linked.
+However, it must not be a core child of any phrase.
+
 =item coordinators
 
 Returns the list of coordinating conjunctions (but not punctuation).
@@ -486,6 +753,12 @@ getter C<_coordinators_ref()> is that the getter returns a reference to array,
 while this method returns a list. Hence this method is
 more similar to the other methods that return lists of children.
 
+=item add_coordinator
+
+Adds a phrase as a new coordinator to this coordination. The phrase may be
+currently a dependent of another phrase and will be correctly re-linked.
+However, it must not be a core child of any phrase.
+
 =item punctuation
 
 Returns the list of punctuation symbols between conjuncts.
@@ -493,6 +766,12 @@ The only difference from the
 getter C<_punctuation_ref()> is that the getter returns a reference to array,
 while this method returns a list. Hence this method is
 more similar to the other methods that return lists of children.
+
+=item add_punctuation
+
+Adds a phrase as a new punctuation delimiter to this coordination. The phrase
+may be currently a dependent of another phrase and will be correctly
+re-linked. However, it must not be a core child of any phrase.
 
 =item nonhead_children
 
@@ -503,6 +782,30 @@ all core children except the one that currently serves as the head.
 
 Returns the list of the children of the phrase that are not dependents, i.e.
 all conjuncts, coordinators and punctuation.
+
+=item deprel
+
+Returns the type of the dependency relation of the coordination to the governing
+phrase.
+
+=item set_deprel
+
+Sets a new type of the dependency relation of the phrase to the governing
+phrase. For nonterminal phrases the label is propagated to one (or several)
+of their children. It is not propagated to the underlying dependency tree
+(the C<project_dependencies()> method would have to be called to achieve that).
+
+Depending on the current annotation style, deprel of coordination is propagated
+either to just the first conjunct, or to all conjuncts (except for orphans from
+elided conjuncts).
+
+=item project_deprel
+
+Returns the deprel that should be used when the phrase tree is projected back
+to a dependency tree (see the method project_dependencies()). In most cases
+this is identical to what deprel() returns. However, for instance
+coordinations in Prague treebanks are attached using C<Coord>. Their
+relation to the parent (returned by deprel()) is projected to the conjuncts.
 
 =item project_dependencies
 
@@ -525,4 +828,5 @@ Daniel Zeman <zeman@ufal.mff.cuni.cz>
 =head1 COPYRIGHT AND LICENSE
 
 Copyright © 2013, 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

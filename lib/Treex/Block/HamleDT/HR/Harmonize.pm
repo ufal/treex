@@ -503,7 +503,7 @@ sub fix_annotation_errors
         # tries to restructure coordination.
         if($node->afun() eq 'Coord')
         {
-            $self->identify_conjuncts($node);
+            $self->identify_coap_members($node);
         }
         # u suprotnom = otherwise
         if($node->form() eq 'suprotnom' && $parent->lemma() eq 'u' &&

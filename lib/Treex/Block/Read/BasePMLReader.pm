@@ -61,14 +61,14 @@ sub _convert_ttree {
         my @scalar_attribs = (
             't_lemma', 'functor', 'id', 'nodetype', 'is_generated', 'subfunctor', 'is_member', 'is_name',
             'is_name_of_person', 'is_dsp_root', 'sentmod', 'tfa', 'is_parenthesis', 'is_state',
-            'coref_special'
+            'coref_special', 'discourse_special',
         );
         my @gram_attribs = (
             'sempos', 'gender', 'number', 'degcmp', 'verbmod', 'deontmod', 'tense', 'aspect', 'resultative',
             'dispmod', 'iterativeness', 'indeftype', 'person', 'numertype', 'politeness', 'negation', 'typgroup',
         );
         my @list_attribs = (
-            'compl.rf', 'coref_text.rf', 'coref_text', 'coref_gram.rf', 'a/aux.rf'
+            'compl.rf', 'coref_text.rf', 'coref_text', 'coref_gram.rf', 'bridging', 'a/aux.rf',
         );
 
         $self->_copy_attr( $pml_node, $treex_node, 'deepord', 'ord' );
@@ -87,6 +87,9 @@ sub _convert_ttree {
         foreach my $attr_name (@list_attribs) {
             $self->_copy_list_attr( $pml_node, $treex_node, $attr_name, $attr_name, 1 );
         }
+        # 'discourse' is a list, but not a reference
+        # TODO: it should be represented in a better way
+        $self->_copy_list_attr( $pml_node, $treex_node, 'discourse', 'discourse' );
 
         my %gram = ();
         foreach my $attr_name (@gram_attribs) {

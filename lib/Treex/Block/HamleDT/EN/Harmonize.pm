@@ -1,8 +1,11 @@
 package Treex::Block::HamleDT::EN::Harmonize;
+use utf8;
 use Moose;
 use Treex::Core::Common;
-use utf8;
+use Treex::Tool::PhraseBuilder::AlpinoToPrague;
 extends 'Treex::Block::HamleDT::Harmonize';
+
+
 
 has iset_driver =>
 (
@@ -14,6 +17,8 @@ has iset_driver =>
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
+
+
 sub process_zone
 {
     my $self = shift;
@@ -21,44 +26,54 @@ sub process_zone
     my $root = $self->SUPER::process_zone($zone);
     $self->distinguish_subordinators_from_prepositions($root);
     $self->fix_annotation_errors($root);
+    # Phrase-based implementation of tree transformations (5.3.2016).
+    my $builder = new Treex::Tool::PhraseBuilder::AlpinoToPrague
+    (
+        'prep_is_head'           => 1,
+        'coordination_head_rule' => 'last_coordinator'
+    );
+    my $phrase = $builder->build($root);
+    $phrase->project_dependencies();
     $self->attach_final_punctuation_to_root($root);
-    $self->restructure_coordination($root);
-    # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
-    # and with special care at places where prepositions and coordinations interact.
-    $self->process_prep_sub_arg_cloud($root);
     # "for someone to do something" must be fixed before raising subordinating conjunctions because the procedure assumes the original layout.
     $self->fix_for_someone_to_do_something($root);
     $self->raise_subordinating_conjunctions($root);
     $self->get_or_load_other_block('W2A::EN::FixMultiwordPrepAndConj')->process_atree($root);
     $self->fix_auxiliary_verbs($root);
-    $self->check_afuns($root);
+    $self->check_deprels($root);
 }
 
 
 
 #------------------------------------------------------------------------------
-# Convert dependency relation tags to analytical functions.
+# Convert dependency relation labels.
 # There is no good documentation of the tags used in CoNLL 2007 English data.
 # Something can be found in Richard Johansson, Pierre Nugues: Extended Constituent-to-Dependency Conversion for English, NODALIDA 2007.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub convert_deprels
 {
-    my ( $self, $root ) = @_;
+    my $self = shift;
+    my $root = shift;
     foreach my $node ($root->get_descendants)
     {
-        my $deprel = $node->conll_deprel();
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
         my $parent = $node->parent();
         my $pos    = $node->get_iset('pos');
 #        my $subpos = $node->get_iset('subpos'); # feature deprecated
         my $ppos   = $parent ? $parent->get_iset('pos') : '';
-        my $afun = 'NR';
         # Adverbial modifier. Typically realized as adverb or prepositional phrase.
         # Most frequent words: in, to, on, for, at
         # Share prices also/ADV closed lower.
         if($deprel eq 'ADV')
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
         # Modifier of adjective or adverb. Typically realized as adverb. Example:
         # Most frequent words: million, to, billion, more, as
@@ -70,23 +85,23 @@ sub deprel_to_afun
             # Here it is a prepositional phrase and we want it to be treated as such.
             if($ppos eq 'adp')
             {
-                $afun = 'PrepArg';
+                $deprel = 'PrepArg';
             }
             else
             {
-                $afun = 'Adv';
+                $deprel = 'Adv';
             }
         }
         # Coordinating conjunction that does not head coordination. This could be the first token of the sentence (deficient sentential coordination).
         # Most frequent words: But, And, or, and, not
         elsif($deprel eq 'CC')
         {
-            $afun = 'AuxY';
+            $deprel = 'AuxY';
         }
         # Conjunct attached to coordinating conjunction. The head conjunction bears the label of the relation of the whole structure to its parent.
         elsif($deprel eq 'COORD')
         {
-            $afun = 'CoordArg';
+            $deprel = 'CoordArg';
             $node->wild()->{conjunct} = 1;
         }
         # Dependent that does not get any better label. Examples include dependent parts of compound prepositions ("because of", "such as"),
@@ -96,44 +111,44 @@ sub deprel_to_afun
         {
             ###!!! Originally I tried AuxY here because it is sometimes interpreted as "anything else".
             ###!!! But it interfered with detection of coordinations, as AuxY nodes were considered delimiters, which was wrong here.
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
         # Expletive. Typically a verb attached to another verb; sibling of verb1 is the pronoun "it" as substitute subject. Example:
         # It/SBJ is much easier/VMOD to be/EXP second.
         elsif($deprel eq 'EXP')
         {
             ###!!! It would be attached nonprojectively to "it" in PDT, I guess. We should do something about it in structural transformation.
-            $afun = 'ExD';
+            $deprel = 'ExD';
         }
         # Gap, ellipsis. This link connects corresponding sentence elements in coordination with ellipsis.
         # One elided word may cause several GAP links.
         elsif($deprel eq 'GAP')
         {
-            $afun = 'ExD';
+            $deprel = 'ExD';
         }
         # Indirect object. Typically appears next to an OBJ. However, I saw quite a few cases that I would analyze differently.
         # That gave them/IOBJ a sweep/OBJ.
         elsif($deprel eq 'IOBJ')
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
         # Logical subject in passive clause. Usually a phrase headed by the preposition "by".
         elsif($deprel eq 'LGS')
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
         # Modifier of noun. Articles, determiners, adjectives, other nouns...
         # Most frequent words: the, of, a, 's, in
         # share/NMOD prices, Hong/NMOD Kong, concern about/NMOD
         elsif($deprel eq 'NMOD')
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
         # Direct object. Argument of verb.
         # caused pressure/OBJ
         elsif($deprel eq 'OBJ')
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
         # Punctuation that does not head coordination.
         # Most frequent words: , . `` '' -- :
@@ -141,35 +156,35 @@ sub deprel_to_afun
         {
             if($node->form() eq ',')
             {
-                $afun = 'AuxX';
+                $deprel = 'AuxX';
                 # There are a few annotation errors where the comma heads a coordination but lacks the function of the coordination towards its parent.
                 if (grep {$_->conll_deprel() eq 'COORD'} $node->children())
                 {
                     # This is a coordinating comma. Guess what is its relation towards its parent.
                     if ($ppos eq 'noun')
                     {
-                        $afun = 'Atr';
+                        $deprel = 'Atr';
                     }
                     elsif ($ppos eq 'verb' && $parent->lemma() eq 'be')
                     {
-                        $afun = 'Pnom';
+                        $deprel = 'Pnom';
                     }
                     else # non-copula verb
                     {
-                        $afun = 'Adv';
+                        $deprel = 'Adv';
                     }
                 }
             }
             else
             {
-                $afun = 'AuxG';
+                $deprel = 'AuxG';
             }
         }
         # Modifier of preposition. This is the head noun within a prepositional phrase. The preposition bears the label of the relation of the whole structure to its parent.
         # in Sydney/PMOD
         elsif($deprel eq 'PMOD')
         {
-            $afun = 'PrepArg';
+            $deprel = 'PrepArg';
         }
         # Parenthesis. This is the head of a segment inside brackets.
         # his { Mr. Ortega/PRN 's }
@@ -180,11 +195,11 @@ sub deprel_to_afun
             my $lord = $psubtree[0]->ord();
             if($parent->ord() == $lord-1 && $ppos eq 'noun')
             {
-                $afun = 'Apposition';
+                $deprel = 'Apposition';
             }
             else
             {
-                $afun = 'ExD';
+                $deprel = 'ExD';
                 $node->set_is_parenthesis_root(1);
             }
             ###!!! Special case: ", Mr. Lane said,", "said" is the head and depends on the predicate of what Mr. Lane said.
@@ -197,27 +212,27 @@ sub deprel_to_afun
         # setting off/PRT
         elsif($deprel eq 'PRT')
         {
-            $afun = 'AuxT';
+            $deprel = 'AuxT';
         }
         # Root of the sentence, main predicate.
         # Coordinating conjunction gets this label in case of coordinate clauses.
         # Most frequent words: said, is, and, was, says
         elsif($deprel eq 'ROOT')
         {
-            $afun = 'Pred';
+            $deprel = 'Pred';
         }
         # Subject. Usually a noun or pronoun.
         # Most frequent words: it, he, that, they, which
         elsif($deprel eq 'SBJ')
         {
-            $afun = 'Sb';
+            $deprel = 'Sb';
         }
         # Temporal expression. This label only applies to names of months that are attached to years.
         # Most frequent words: Nov., Oct., March, October, June
         # for Jan./TMP 1, 1990
         elsif($deprel eq 'TMP')
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
         # Verb complement. A typical VC node is a content verb whose parent is a finite form of an auxiliary such as will, has, is, would, be.
         # Most frequent words: be, been, have, and, expected
@@ -230,12 +245,12 @@ sub deprel_to_afun
         {
             if($parent->form() =~ m/^(must|can|could|may|might|shall|should|going)$/i)
             {
-                $afun = 'Obj';
+                $deprel = 'Obj';
             }
             else
             {
                 # The structure will be later changed. This node will become parent and the current parent will become child, labeled AuxV.
-                $afun = 'AuxV';
+                $deprel = 'AuxV';
             }
         }
         # Modifier of verb. Typically a subordinating conjunction or negation.
@@ -245,25 +260,25 @@ sub deprel_to_afun
         {
             if($node->form() =~ m/^n[o']t$/i)
             {
-                $afun = 'Neg';
+                $deprel = 'Neg';
             }
             # We must not toggle on coordinating conjunction!
             # That is most likely a coordination of VMOD conjuncts, whose part of speech could be anything!
             elsif($node->is_subordinator() || $node->is_adposition())
             {
-                $afun = 'AuxC';
+                $deprel = 'AuxC';
             }
             elsif($parent->lemma() eq 'be')
             {
                 # may ( be/VC ( difficult/VMOD ) )
-                $afun = 'Pnom';
+                $deprel = 'Pnom';
             }
             else ###!!! ??? investigate!
             {
-                $afun = 'Adv';
+                $deprel = 'Adv';
             }
         }
-        $node->set_afun($afun);
+        $node->set_deprel($deprel);
     }
 }
 
@@ -293,15 +308,15 @@ sub fix_annotation_errors
                 if($child->get_iset('pos') eq $the_other->get_iset('pos'))
                 {
                     $node->set_parent($parent->parent());
-                    $node->set_afun('Atr');
+                    $node->set_deprel('Atr');
                     $node->set_is_member(0);
                     $parent->set_parent($node);
-                    $parent->set_afun('Atr');
+                    $parent->set_deprel('Atr');
                     $parent->set_is_member(0);
                     $child->set_parent($parent);
-                    $child->set_afun('CoordArg');
+                    $child->set_deprel('CoordArg');
                     $child->wild()->{conjunct} = 1;
-                    $the_other->set_afun('CoordArg');
+                    $the_other->set_deprel('CoordArg');
                     $the_other->wild()->{conjunct} = 1;
                 }
             }
@@ -355,29 +370,6 @@ sub distinguish_subordinators_from_prepositions
 
 
 #------------------------------------------------------------------------------
-# Detects coordination in the shape we expect to find it in the English treebank.
-#------------------------------------------------------------------------------
-sub detect_coordination
-{
-    my $self = shift;
-    my $node = shift;
-    my $coordination = shift;
-    my $debug = shift;
-    # The Alpino (Dutch) style essentially belongs to the Prague family but it
-    # assigns special labels to conjuncts and the function of the whole
-    # structure is marked at the coordination head.
-    $coordination->detect_alpino($node);
-    # The caller does not know where to apply recursion because it depends on annotation style.
-    # Return all conjuncts and shared modifiers for the Prague family of styles.
-    # Return orphan conjuncts and all shared and private modifiers for the other styles.
-    my @recurse = $coordination->get_conjuncts();
-    push(@recurse, $coordination->get_shared_modifiers());
-    return @recurse;
-}
-
-
-
-#------------------------------------------------------------------------------
 # Construction type: they have been desperate for the US to rejoin the group
 # ORIGINAL TREE: desperate ( rejoin/AMOD ( for/VMOD, US/SBJ, to/VMOD, group/OBJ ) )
 # DESIRED TREE: desperate ( to/AuxC ( rejoin/Obj ( for/AuxP ( US/Sb ), group/Obj ) ) )
@@ -396,16 +388,16 @@ sub fix_for_someone_to_do_something
             my ($to) = grep {$_->form() eq 'to'} (@children);
             my $subject = $node->get_right_neighbor();
             ###!!! Pozor, podmět taky může být koordinace, s tím tady zatím nepočítáme!
-            if($to && $subject && $subject->afun() eq 'Sb')
+            if($to && $subject && $subject->deprel() eq 'Sb')
             {
                 my $grandparent = $verb->parent();
-                $node->set_afun('AuxP');
+                $node->set_deprel('AuxP');
                 $subject->set_parent($node);
                 $to->set_parent($grandparent);
-                $to->set_afun('AuxC');
+                $to->set_deprel('AuxC');
                 $to->set_is_member($verb->is_member());
                 $verb->set_parent($to);
-                $verb->set_afun('Obj');
+                $verb->set_deprel('Obj');
                 $verb->set_is_member(undef);
             }
         }
@@ -447,7 +439,7 @@ sub fix_auxiliary_verbs
         my @eparents;
         # Look for constructions we want to change. Note that we also require that the node already is labeled AuxV (original label VC).
         # We do that to distinguish from adjunct clauses.
-        if($node->is_verb() && $node->afun() eq 'AuxV')
+        if($node->is_verb() && $node->deprel() eq 'AuxV')
         {
             @eparents = $node->get_eparents();
             if(scalar(@eparents)>=1)
@@ -490,14 +482,14 @@ sub fix_auxiliary_verbs
             {
                 my $grandparent = $parent->get_parent();
                 $node->set_parent($grandparent);
-                $node->set_afun($parent->afun());
+                $node->set_deprel($parent->deprel());
                 my @be_children = $parent->get_children();
                 for my $child (@be_children)
                 {
                     $child->set_parent($node);
                 }
                 $parent->set_parent($node);
-                $parent->set_afun('AuxV');
+                $parent->set_deprel('AuxV');
             }
         }
     }

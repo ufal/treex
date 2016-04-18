@@ -16,14 +16,13 @@ has iset_driver =>
 
 #------------------------------------------------------------------------------
 # Reads the TamilTB CoNLL trees, converts morphosyntactic tags to the positional
-# tagset and transforms the tree to adhere to PDT guidelines.
+# tagset and transforms the tree to adhere to the HamleDT guidelines.
 #------------------------------------------------------------------------------
 sub process_zone
 {
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
-    $self->fix_coordination($root);
 }
 
 #------------------------------------------------------------------------------
@@ -45,74 +44,81 @@ sub get_input_tag_for_interset
 }
 
 #------------------------------------------------------------------------------
-# Convert dependency relation tags to analytical functions.
+# Convert dependency relation labels.
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub convert_deprels
 {
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $deprel = $node->conll_deprel();
-        my $afun   = $deprel;
-        if ( $afun =~ s/_M$// )
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
+        if ( $deprel =~ s/_M$// )
         {
             $node->set_is_member(1);
         }
-        # Certain TamilTB-specific afuns are not part of the HamleDT label set.
+        # Certain TamilTB-specific deprels are not part of the HamleDT label set.
         # Adverbial complements and adjuncts are merged to just adverbials.
-        if($afun =~ m/^(AAdjn|AComp)$/)
+        if($deprel =~ m/^(AAdjn|AComp)$/)
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
         # Adjectival participial or adjectivalized verb.
         # Most often attached to nouns.
-        elsif($afun eq 'AdjAtr')
+        elsif($deprel eq 'AdjAtr')
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
         # Part of a word.
-        elsif($afun eq 'CC')
+        elsif($deprel eq 'CC')
         {
             if($node->parent()->get_iset('pos') eq 'verb')
             {
-                $afun = 'AuxT';
+                $deprel = 'AuxT';
             }
             else
             {
-                $afun = 'Atr';
+                $deprel = 'Atr';
             }
         }
         # Complement other than attaching to verbs.
-        elsif($afun eq 'Comp')
+        elsif($deprel eq 'Comp')
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
-        $node->set_afun($afun);
+        $node->set_deprel($deprel);
     }
 }
 
 
 
 #------------------------------------------------------------------------------
-# Fixes occasional errors in analysis of coordination.
+# Catches possible annotation inconsistencies, especially in coordination.
+# This method will be called right after converting the deprels to the
+# harmonized label set, but before any tree transformations.
 #------------------------------------------------------------------------------
-sub fix_coordination
+sub fix_annotation_errors
 {
-    my $self = shift;
-    my $root = shift;
+    my $self  = shift;
+    my $root  = shift;
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
         # Fix conjuncts outside coordination.
-        if($node->is_member() && $node->parent()->afun() ne 'Coord')
+        if($node->is_member() && $node->parent()->deprel() ne 'Coord')
         {
             my $parent = $node->parent();
-            if($parent->form() eq 'um' || $parent->afun() eq 'AuxX')
+            if($parent->form() eq 'um' || $parent->deprel() eq 'AuxX')
             {
-                $parent->set_afun('Coord');
+                $parent->set_deprel('Coord');
             }
             else
             {
@@ -125,27 +131,27 @@ sub fix_coordination
                     {
                         $node->set_parent($rs1);
                         $rs2->set_parent($rs1);
-                        $rs1->set_afun('Coord');
+                        $rs1->set_deprel('Coord');
                         $solved = 1;
                     }
                 }
                 if(!$solved)
                 {
-                    $node->set_is_member(0);
+                    $node->set_is_member(undef);
                 }
             }
         }
-        # Fix coordination without conjuncts.
-        if($node->afun() eq 'Coord' && !grep {$_->is_member()} ($node->children()))
+        # Fix coordination without conjuncts or apposition without members.
+        my @children = $node->children();
+        if($node->deprel() =~ m/^(Coord|Apos)$/ && !any {$_->is_member()} (@children))
         {
-            my @children = $node->children();
             if(scalar(@children)==0)
             {
-                $node->set_afun('AuxY');
+                $node->set_deprel('AuxY');
             }
             else
             {
-                $self->identify_conjuncts($node);
+                $self->identify_coap_members($node);
             }
         }
     }

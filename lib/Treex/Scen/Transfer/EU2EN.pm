@@ -9,6 +9,13 @@ has domain => (
      documentation => 'domain of the input texts',
 );
 
+has tm_adaptation => (
+     is => 'ro',
+     isa => enum( [qw(auto no 0 interpol)] ),
+     default => 'auto',
+     documentation => 'domain adaptation of Translation Models to IT domain',
+);
+
 has hmtm => (
      is => 'ro',
      isa => 'Bool',
@@ -30,6 +37,13 @@ has fl_agreement => (
      documentation => 'Use T2T::FormemeTLemmaAgreement with a specified function as parameter',
 );
 
+has terminology => (
+     is => 'ro',
+     isa => enum( [qw(auto no 0 yes)] ),
+     default => 'auto',
+     documentation => 'Use T2T::TrLApplyTbxDictionary with Microsoft Terminology Collection',
+);
+
 # TODO gazetteers should work without any dependance on source language here
 has src_lang => (
     is => 'ro',
@@ -39,6 +53,13 @@ has src_lang => (
 
 sub BUILD {
     my ($self) = @_;
+    if ($self->tm_adaptation eq 'auto'){
+        $self->{tm_adaptation} = $self->domain eq 'IT' ? 'interpol' : 'no';
+    }
+
+    if ($self->terminology eq 'auto'){
+        $self->{terminology} = $self->domain eq 'IT' ? 'yes' : 'no';
+    }
     return;
 }
 
@@ -48,15 +69,28 @@ sub get_scenario_string {
     
     my $TM_DIR= 'data/models/translation/eu2en';
     
+    my $IT_LEMMA_MODELS = '';
+    my $IT_FORMEME_MODELS = '';
+    if ($self->tm_adaptation eq 'interpol'){
+        $IT_LEMMA_MODELS = "static 0.5 IT/20150930_batch1q-tlemma.static.gz\n      maxent 1.0 IT/20150930_batch1q-tlemma.maxent.gz";
+        $IT_FORMEME_MODELS = "static 1.0 IT/20150930_batch1q-formeme.static.gz\n      maxent 0.5 IT/20150930_batch1q-formeme.maxent.gz";
+    }
+    
     my $scen = join "\n",
     'Util::SetGlobal language=en selector=tst',
     'T2T::CopyTtree source_language=eu source_selector=src',
     $self->gazetteer ? 'T2T::TrGazeteerItems src_lang='.$self->src_lang : (),
 
-    $self->domain eq 'IT' ? 'T2T::TrLApplyTbxDictionary tbx=data/dictionaries/MicrosoftTermCollection.eu.tbx tbx_src_id=eu-es tbx_trg_id=en-US analysis=@data/dictionaries/MicrosoftTermCollection.eu.filelist analysis_src_language=eu analysis_src_selector=trg analysis_trg_language=en analysis_trg_selector=src src_blacklist=data/dictionaries/MicrosoftTermCollection.eu-en.src.blacklist.txt trg_blacklist=data/dictionaries/MicrosoftTermCollection.eu-en.trg.blacklist.txt' : (),
+    $self->terminology eq 'yes' ? 'T2T::TrLApplyTbxDictionary tbx=data/dictionaries/MicrosoftTermCollection.eu.tbx tbx_src_id=eu-es tbx_trg_id=en-US analysis=@data/dictionaries/MicrosoftTermCollection.eu.filelist analysis_src_language=eu analysis_src_selector=trg analysis_trg_language=en analysis_trg_selector=src src_blacklist=data/dictionaries/MicrosoftTermCollection.eu-en.src.blacklist.txt trg_blacklist=data/dictionaries/MicrosoftTermCollection.eu-en.trg.blacklist.txt' : (),
 
-    "T2T::TrFAddVariants static_model=$TM_DIR/20150930_formeme.static.gz discr_model=$TM_DIR/20150930_formeme.maxent.gz",
-    "T2T::TrLAddVariants static_model=$TM_DIR/20150930_tlemma.static.gz discr_model=$TM_DIR/20150930_tlemma.maxent.gz",
+    "T2T::TrFAddVariantsInterpol model_dir=$TM_DIR models='
+      static 1.0 20150930_formeme.static.gz
+      maxent 0.5 20150930_formeme.maxent.gz
+      $IT_FORMEME_MODELS'",
+    "T2T::TrLAddVariantsInterpol model_dir=$TM_DIR models='
+      static 0.5 20150930_tlemma.static.gz
+      maxent 1.0 20150930_tlemma.maxent.gz
+      $IT_LEMMA_MODELS'",
     $self->fl_agreement ? 'T2T::FormemeTLemmaAgreement fun='.$self->fl_agreement : (),
     'Util::DefinedAttr tnode=t_lemma,formeme message="after simple transfer"',
     'T2T::SetClauseNumber',

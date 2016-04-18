@@ -159,7 +159,7 @@ sub get_anodes {
     return $self->_process_switches( $arg_ref, @nodes );
 }
 
-#------------ coreference nodes -------------------
+#------------ coreference and bridging nodes -------------------
 
 sub get_coref_nodes {
     my ( $self, $arg_ref ) = @_;
@@ -271,6 +271,24 @@ sub update_coref_nodes {
 
     $self->_update_list('coref_gram.rf');
     $self->_update_list('coref_text.rf');
+    return;
+}
+
+sub get_bridging_nodes {
+    my ($self, $arg_ref) = @_;
+    my $bridging = $self->get_attr('bridging') // [];
+    my $doc = $self->get_document;
+    my @nodes = map {$doc->get_node_by_id($_->{'target_node.rf'})} @$bridging; 
+    my @types = map {$_->{'type'}} @$bridging;
+    return (\@nodes, \@types);
+}
+
+sub add_bridging_node {
+    my ( $self, $node, $type ) = @_;
+    my $links_rf = $self->get_attr('bridging');
+    my %new_link = ( 'target_node.rf' => $node->id, 'type' => $type // ''); #/ so we have no undefs
+    push( @$links_rf, \%new_link );
+    $self->set_attr( 'bridging', $links_rf );
     return;
 }
 
@@ -454,6 +472,15 @@ Remove the specified nodes from C<coref_gram.rf> or C<coref_text.rf> (if they ar
 =item $node->update_coref_nodes()
 
 Remove all invalid coreferences from C<coref_gram.rf> and C<coref_text.rf>.
+
+=item $node->get_bridging_nodes()
+
+Access the nodes referred from the current node by bridging anaphora (in C<bridging> attribute).
+The method returns references to two lists of the equal length: the referred nodes and the types of bridging relations.
+
+=item $node->add_bridging_node($node, $type)
+
+Add bridging anaphora to C<$node> of type C<$type> (to C<bridging>).
 
 =back
 

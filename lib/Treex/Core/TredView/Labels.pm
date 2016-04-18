@@ -283,7 +283,7 @@ sub _tnode_labels {
         $line1 .= $self->_colors->get( 'sentmod', 1 ) . '.' . $node->sentmod;
     }
 
-    foreach my $type ( 'compl', 'coref_text', 'coref_gram' ) {
+    foreach my $type ( 'compl', 'coref_text', 'coref_gram', 'bridging' ) {
         if ( defined $node->{ $type . '.rf' } ) {
             foreach my $ref ( TredMacro::ListV( $node->{ $type . '.rf' } ) ) {
                 my $ref_node = $self->_treex_doc->get_node_by_id($ref);
@@ -292,6 +292,14 @@ sub _tnode_labels {
                 }
             }
         }
+        elsif ( defined $node->{ $type } ) {
+           foreach my $ref ( map {$_->{ 'target_node.rf' }} TredMacro::ListV( $node->{ $type } ) ) {
+                my $ref_node = $self->_treex_doc->get_node_by_id($ref);
+                if ( $node->get_bundle->get_position() != $ref_node->get_bundle->get_position() ) {
+                    $line1 .= ' ' . $self->_colors->get( $type, 1 ) . $ref_node->{t_lemma};
+                }
+           }
+       }
     }
 
     my $line2 = $node->{functor};

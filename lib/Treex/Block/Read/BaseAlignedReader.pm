@@ -55,6 +55,7 @@ has skip_finished => (
 sub BUILD {
     my ( $self, $args ) = @_;
     foreach my $arg ( keys %{$args} ) {
+        next if($arg =~ m/^(conll_format|is_member_within_afun|is_parenthesis_root_within_afun)$/);
         my ( $lang, $sele ) = ( $arg, '' );
         if ( $arg =~ /_/ ) {
             ( $lang, $sele ) = split /_/, $arg;
@@ -69,7 +70,7 @@ sub BUILD {
             }
             $self->_filenames->{$arg} = $files;
         }
-        elsif ( $arg =~ /selector|language|scenario/ ) { }
+        elsif ( $arg =~ /selector|language|scenario|skip_finished/ ) { }
         else                                           { log_warn "$arg is not a zone label (e.g. en_src)"; }
     }
     if (my $regex = $self->skip_finished){
@@ -120,7 +121,7 @@ sub new_document {
         ( $stem, $file_number ) = ( $self->file_stem, undef );
     }
     else {    # Magical heuristics how to choose default name for a document loaded from several files
-        foreach my $zone_label ( keys %filenames ) {
+        foreach my $zone_label ( sort (keys %filenames) ) {
             my $filename = $filenames{$zone_label};
             ( $volume, $dirs, $file ) = File::Spec->splitpath($filename);
 
@@ -263,4 +264,3 @@ Martin Popel
 Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
-

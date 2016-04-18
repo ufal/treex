@@ -1,9 +1,11 @@
 package Treex::Block::HamleDT::NL::Harmonize;
+use utf8;
 use Moose;
 use Treex::Core::Common;
-use Treex::Core::Cloud;
-use utf8;
+use Treex::Tool::PhraseBuilder::AlpinoToPrague;
 extends 'Treex::Block::HamleDT::Harmonize';
+
+
 
 has iset_driver =>
 (
@@ -15,23 +17,30 @@ has iset_driver =>
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
+
+
 #------------------------------------------------------------------------------
 # Reads the Dutch tree, converts morphosyntactic tags to Interset, converts
-# deprel tags to afuns, transforms tree to adhere to HamleDT guidelines.
+# dependency relations, transforms tree to adhere to HamleDT guidelines.
 #------------------------------------------------------------------------------
-sub process_zone {
+sub process_zone
+{
     my $self   = shift;
     my $zone   = shift;
     my $root = $self->SUPER::process_zone( $zone );
+    # Phrase-based implementation of tree transformations (22.1.2016).
+    my $builder = new Treex::Tool::PhraseBuilder::AlpinoToPrague
+    (
+        'prep_is_head'           => 1,
+        'coordination_head_rule' => 'last_coordinator'
+    );
+    my $phrase = $builder->build($root);
+    $phrase->project_dependencies();
     $self->attach_final_punctuation_to_root($root);
-    $self->restructure_coordination($root);
     # Fix interrogative pronouns before subordinating conjunctions because the treebank wants us to think they are the same.
     $self->fix_int_rel_words($root);
     $self->fix_int_rel_prepositional_phrases($root);
     $self->fix_int_rel_phrases($root);
-    # Shifting afuns at prepositions and subordinating conjunctions must be done after coordinations are solved
-    # and with special care at places where prepositions and coordinations interact.
-    $self->process_prep_sub_arg_cloud($root);
     $self->fix_naar_toe($root);
     $self->fix_als($root);
     $self->lift_commas($root);
@@ -40,15 +49,17 @@ sub process_zone {
     ###!!! tam i chybu, kterou současné testy přímo neodhalí.
     #$self->fix_InfinitivesNotBeingObjects($root);
     #$self->fix_SubordinatingConj($root);
-    #$self->check_afuns($root);
+    #$self->check_deprels($root);
 }
 
+
+
 #------------------------------------------------------------------------------
-# Convert dependency relation tags to analytical functions.
+# Convert dependency relation labels.
 # acroread /net/data/conll/2006/nl/doc/syn_prot.pdf &
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
 #------------------------------------------------------------------------------
-sub deprel_to_afun
+sub convert_deprels
 {
     my $self       = shift;
     my $root       = shift;
@@ -58,30 +69,34 @@ sub deprel_to_afun
         # The corpus contains the following 26 dependency relation tags:
         # ROOT app body cnj crd det dp hd hdf ld me mod obcomp obj1 obj2
         # pc pobj1 predc predm punct sat se su sup svp vc
-        my $deprel = $node->conll_deprel();
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
         my $parent = $node->parent();
         my $pos    = $node->get_iset('pos');
         my $ppos   = $parent->get_iset('pos');
-        my $afun;
-
         # Dependency of the main verb on the artificial root node.
         if ( $deprel eq 'ROOT' )
         {
             ###!!! If the root is conjunction we ought to check whether it conjoins verbs or something else!
             if ( $pos eq 'verb' || $pos eq 'conj' )
             {
-                $afun = 'Pred';
+                $deprel = 'Pred';
             }
             else
             {
-                $afun = 'ExD';
+                $deprel = 'ExD';
             }
         }
 
         # Apposition.
         elsif ( $deprel eq 'app' )
         {
-            $afun = 'Apposition';
+            $deprel = 'Apposition';
         }
 
         # Predicate of subordinated clause.
@@ -103,20 +118,20 @@ sub deprel_to_afun
             ###!!! It can be a coordinating conjunction if the parent is coordination ('welke architect en meubelmaker' = 'which architect and furniture maker').
             if ( !$parent->is_root() )
             {
-                $afun = 'SubArg';
+                $deprel = 'SubArg';
             }
             else
             {
                 $self->log_sentence($node);
                 log_warn('I do not know what to do with the label "body" when its parent is the root.');
-                $afun = 'NR';
+                $deprel = 'NR';
             }
         }
 
         # Conjunct.
         elsif ( $deprel eq 'cnj' )
         {
-            $afun = 'CoordArg';
+            $deprel = 'CoordArg';
             $node->wild()->{conjunct} = 1;
         }
 
@@ -128,20 +143,20 @@ sub deprel_to_afun
         # Children of "zowel": in/cnj als/crd gewicht/cnj
         elsif ( $deprel eq 'crd' )
         {
-            $afun = 'AuxY';
+            $deprel = 'AuxY';
         }
 
         # Determiner (article, number etc.)
         elsif ( $deprel eq 'det' )
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
 
         # Sort of parenthesis? There is only one occurrence of this label in the whole treebank: train/025#330.
         elsif ( $deprel eq 'dp' )
         {
             ###!!! How do we currently tag parenthesized insertions in PDT? # could be Apposition?
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
 
         # Unknown meaning, very infrequent (9 occurrences). Example train/001#232: one instance of verb 'moet' ('must') attached to another.
@@ -150,7 +165,7 @@ sub deprel_to_afun
         {
             ###!!! Are the other occurrences similar? Look at the other examples!
             ###!!! Is there a better label?
-            $afun = 'AuxV';
+            $deprel = 'AuxV';
         }
 
         # Non-head part of compound preposition? Example test/001#19: 'tot nu toe' = 'up to now' (lit. 'to now up')
@@ -161,7 +176,7 @@ sub deprel_to_afun
         ###!!! At least we could make 'naar' depend on 'toe', 'toe' being AuxP and 'naar' being Adv.
         elsif ( $deprel eq 'hdf' )
         {
-            $afun = 'AuxP';
+            $deprel = 'AuxP';
         }
 
         # locative or directional complement
@@ -169,7 +184,7 @@ sub deprel_to_afun
         # Example (test/001#6): 'om de tafel zitten' = 'to sit around the table'
         elsif ( $deprel eq 'ld' )
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
 
         # maat (duur, gewicht...) complement
@@ -177,7 +192,7 @@ sub deprel_to_afun
         # Example (test/001#85): 'vier dagen' = 'four days'
         elsif ( $deprel eq 'me' )
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
 
         # bijwoordelijke bepaling
@@ -187,15 +202,15 @@ sub deprel_to_afun
         {
             if ($ppos eq 'noun')
             {
-                $afun = 'Atr';
+                $deprel = 'Atr';
             }
             elsif ($node->form() =~ m/^niet$/i)
             {
-                $afun = 'Neg';
+                $deprel = 'Neg';
             }
             else
             {
-                $afun = 'Adv';
+                $deprel = 'Adv';
             }
         }
 
@@ -204,7 +219,7 @@ sub deprel_to_afun
         # veel ( zo/mod ( mogelijk/obcomp ) )
         elsif ( $deprel eq 'obcomp' )
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
 
         # obj1:
@@ -218,11 +233,11 @@ sub deprel_to_afun
         {
             if ( $ppos eq 'adp' )
             {
-                $afun = 'PrepArg';
+                $deprel = 'PrepArg';
             }
             else
             {
-                $afun = 'Obj';
+                $deprel = 'Obj';
             }
         }
 
@@ -230,7 +245,7 @@ sub deprel_to_afun
         # secondary object (cooperative, interested, empirical)
         elsif ( $deprel eq 'obj2' )
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
 
         # voorzetselvoorwerp
@@ -239,14 +254,14 @@ sub deprel_to_afun
         # The relation of the inner noun phrase to the preposition is obj1.
         elsif ( $deprel eq 'pc' )
         {
-            $afun = 'Obj';
+            $deprel = 'Obj';
         }
 
         # predicatief complement
         # predicative complement
         elsif ( $deprel eq 'predc' )
         {
-            $afun = 'Pnom';
+            $deprel = 'Pnom';
         }
 
         # bepaling van gesteldheid 'tijdens de handeling'
@@ -256,7 +271,7 @@ sub deprel_to_afun
         elsif ( $deprel eq 'predm' )
         {
             ###!!! Is it always adverbial? Investigate the other examples!
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
 
         # punctuation
@@ -264,18 +279,18 @@ sub deprel_to_afun
         {
             if ( $node->form() eq ',' )
             {
-                $afun = 'AuxX';
+                $deprel = 'AuxX';
             }
             else
             {
-                $afun = 'AuxG';
+                $deprel = 'AuxG';
             }
         }
 
         # Only one occurrence in the whole treebank (train/017#279)
         elsif ( $deprel eq 'sat' )
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
 
         # verplicht reflexief object
@@ -283,14 +298,14 @@ sub deprel_to_afun
         # Example (test/001#122): 'ontwikkelt zich' = lit. 'develops itself' = 'develops'
         elsif ( $deprel eq 'se' )
         {
-            $afun = 'AuxT';
+            $deprel = 'AuxT';
         }
 
         # onderwerp
         # subject
         elsif ( $deprel eq 'su' )
         {
-            $afun = 'Sb';
+            $deprel = 'Sb';
         }
 
         # voorlopig subject
@@ -298,7 +313,7 @@ sub deprel_to_afun
         # Example (test/001#25): 'het ligt in de...' = 'it lies in the...'
         elsif ( $deprel eq 'sup' )
         {
-            $afun = 'Sb';
+            $deprel = 'Sb';
         }
 
         # scheidbaar deel van werkwoord
@@ -306,7 +321,7 @@ sub deprel_to_afun
         # Example (test/001#4): 'zorg' in 'zorg dragen' = 'ensure'
         elsif ( $deprel eq 'svp' )
         {
-            $afun = 'AuxT';
+            $deprel = 'AuxT';
         }
 
         # verbaal complement, werkwoordelijk deel van gezegde
@@ -314,29 +329,26 @@ sub deprel_to_afun
         # Example (test/001#2): participle 'gekozen' in 'is gekozen' = 'is selected'
         elsif ( $deprel eq 'vc' )
         {
-            $afun = 'AuxV';
+            $deprel = 'AuxV';
         }
 
         else
         {
-            $afun = 'NR';
+            $deprel = 'NR';
         }
 
-        $node->set_afun($afun);
+        $node->set_deprel($deprel);
         if ( $node->wild()->{conjunct} && $node->wild()->{coordinator} )
         {
             log_warn('We do not expect a node to be conjunct and coordination at the same time.');
         }
     }
-    $self->fix_annotation_errors($root);
 }
 
 
 
 #------------------------------------------------------------------------------
-# Fixes a few known annotation errors that appear in the data. Should be called
-# from deprel_to_afun() so that it precedes any tree operations that the
-# superordinate class may want to do.
+# Fixes a few known annotation errors that appear in the data.
 #------------------------------------------------------------------------------
 sub fix_annotation_errors
 {
@@ -369,27 +381,6 @@ sub fix_annotation_errors
 
 
 #------------------------------------------------------------------------------
-# Detects coordination in the shape we expect to find it in the Dutch treebank.
-#------------------------------------------------------------------------------
-sub detect_coordination
-{
-    my $self = shift;
-    my $node = shift;
-    my $coordination = shift;
-    my $debug = shift;
-    $coordination->detect_alpino($node);
-    $coordination->capture_commas();
-    # The caller does not know where to apply recursion because it depends on annotation style.
-    # Return all conjuncts and shared modifiers for the Prague family of styles.
-    # Return orphan conjuncts and all shared and private modifiers for the other styles.
-    my @recurse = $coordination->get_conjuncts();
-    push(@recurse, $coordination->get_shared_modifiers());
-    return @recurse;
-}
-
-
-
-#------------------------------------------------------------------------------
 # Reattaches interrogative and relative pronouns and adverbs. The predicate of
 # the clause they introduce is originally attached to the pronoun, as if it was
 # a subordinating conjunction. However, in contrast to conjunctions, pronouns
@@ -409,13 +400,13 @@ sub fix_int_rel_words
     {
         # We are looking for a node that
         # - is an interrogative or relative pronoun (e.g. "wie" = "who", "wat" = "what") or adverb ("waar" = "where", "hoe" = "how");
-        # - has just one child, which is a verb, its deprel is "body" and afun is "SubArg";
+        # - has just one child, which is a verb, its deprel is "body" and deprel is "SubArg";
         my @children = $node->children();
         if($node->get_iset('prontype') =~ m/^(int|rel)$/ && $node->form() =~ m/^(wie|wat|waar|hoe)$/i &&
            scalar(@children)==1)
         {
             my $gc = $children[0];
-            if($gc->get_iset('pos') eq 'verb' && $gc->afun() eq 'SubArg')
+            if($gc->get_iset('pos') eq 'verb' && $gc->deprel() eq 'SubArg')
             {
                 my $pronoun = $node;
                 my $verb = $gc;
@@ -423,7 +414,7 @@ sub fix_int_rel_words
                 # Attach the pronoun to the verb.
                 # Use heuristics to estimate the function of the pronoun.
                 $verb->set_parent($pronoun->parent());
-                $verb->set_afun($pronoun->afun());
+                $verb->set_deprel($pronoun->deprel());
                 $verb->set_is_member($pronoun->is_member());
                 $pronoun->set_parent($verb);
                 $pronoun->set_is_member(0);
@@ -433,25 +424,25 @@ sub fix_int_rel_words
                 # Otherwise this is an object.
                 if($pronoun->get_iset('pos') eq 'adv')
                 {
-                    $pronoun->set_afun('Adv');
+                    $pronoun->set_deprel('Adv');
                 }
                 elsif(!defined($self->get_subject($verb)))
                 {
-                    $pronoun->set_afun('Sb');
+                    $pronoun->set_deprel('Sb');
                 }
                 elsif($verb->lemma() =~ m/^(ben|word)$/) # to be | to become
                 {
-                    $pronoun->set_afun('Pnom');
+                    $pronoun->set_deprel('Pnom');
                 }
                 else
                 {
-                    $pronoun->set_afun('Obj');
+                    $pronoun->set_deprel('Obj');
                 }
-                # If the pronoun was attached directly to the root, it had the 'ExD' afun.
+                # If the pronoun was attached directly to the root, it had the 'ExD' deprel.
                 # However, if there is now a verb instead, it can be a 'Pred'.
-                if($verb->parent()->is_root() && $verb->afun() eq 'ExD')
+                if($verb->parent()->is_root() && $verb->deprel() eq 'ExD')
                 {
-                    $verb->set_afun('Pred');
+                    $verb->set_deprel('Pred');
                 }
             }
         }
@@ -484,25 +475,25 @@ sub fix_int_rel_prepositional_phrases
         if($node->get_iset('pos') eq 'prep')
         {
             my @children = $node->children();
-            if(scalar(@children)==2 && $children[0]->afun() eq 'PrepArg' && $children[1]->afun() eq 'SubArg')
+            if(scalar(@children)==2 && $children[0]->deprel() eq 'PrepArg' && $children[1]->deprel() eq 'SubArg')
             {
                 my $preposition = $node;
                 my $verb = $children[1];
                 $verb->set_parent($preposition->parent());
-                $verb->set_afun($preposition->afun());
+                $verb->set_deprel($preposition->deprel());
                 $verb->set_is_member($preposition->is_member());
                 $preposition->set_parent($verb);
                 # Use heuristics to estimate the function of the prepositional phrase.
                 # Subject or nominal predicate are not likely. Object or adverbial modifier are much more probable.
                 # It is difficult to distinguish between the two. Let's pick the object.
-                $preposition->set_afun('Obj');
+                $preposition->set_deprel('Obj');
                 $preposition->set_is_member(0);
-                # If the preposition was attached directly to the root, it had the 'ExD' afun.
+                # If the preposition was attached directly to the root, it had the 'ExD' deprel.
                 # However, if there is now a verb instead, it can be a 'Pred'.
                 # Let's first check that it really is a verb.
-                if($verb->get_iset('pos') eq 'verb' && $verb->parent()->is_root() && $verb->afun() eq 'ExD')
+                if($verb->get_iset('pos') eq 'verb' && $verb->parent()->is_root() && $verb->deprel() eq 'ExD')
                 {
-                    $verb->set_afun('Pred');
+                    $verb->set_deprel('Pred');
                 }
             }
         }
@@ -544,7 +535,7 @@ sub fix_int_rel_phrases
         {
             my $verb = $children[-1];
             $verb->set_parent($node->parent());
-            # If the node was attached directly to the root, it had the 'ExD' afun.
+            # If the node was attached directly to the root, it had the 'ExD' deprel.
             # If it was head of coordination, it had 'Coord' instead.
             # However, if there is now a verb instead, it can be a 'Pred'.
             if($verb->parent()->is_root())
@@ -591,7 +582,7 @@ sub get_subject
 {
     my $self = shift;
     my $verb = shift;
-    my @subjects = grep {$_->afun() eq 'Sb'} ($verb->children());
+    my @subjects = grep {$_->deprel() eq 'Sb'} ($verb->children());
     my $subject;
     if(@subjects)
     {
@@ -599,7 +590,7 @@ sub get_subject
     }
     else
     {
-        my @auxv = grep {$_->afun() eq 'AuxV'} ($verb->children());
+        my @auxv = grep {$_->deprel() eq 'AuxV'} ($verb->children());
         foreach my $auxv (@auxv)
         {
             $subject = $self->get_subject($auxv);
@@ -639,15 +630,15 @@ sub fix_naar_toe
         # om/Adv/J, zich/AuxT/P6 heen/AuxP/RR = around = lit. about themselves away
         # om/Adv/J, Venetie heen/AuxP/RR = to Venice
         # -op/Adv/AO het gevaar af/AuxP/Db = at the risk
-        if($node->afun() eq 'AuxP' && scalar($node->children())==0)
+        if($node->deprel() eq 'AuxP' && scalar($node->children())==0)
         {
             my $naar = $node->parent();
             # Block the example with coordination, allow all the others.
-            if($naar->afun() eq 'Adv')
+            if($naar->deprel() eq 'Adv')
             {
                 $node->set_parent($naar->parent());
                 $naar->set_parent($node);
-                # Naar will keep its current afun. Is_member should be shifted but we do not expect it to be set here.
+                # Naar will keep its current deprel. Is_member should be shifted but we do not expect it to be set here.
                 $node->set_is_member($naar->is_member());
                 $naar->set_is_member(0);
             }
@@ -673,10 +664,10 @@ sub fix_als
             my $parent = $node->parent();
             my @children = $node->children();
             if(defined($parent) && scalar(@children)==1 &&
-               $node->afun() !~ m/^(Aux[PC]|Coord)$/ && $children[0]->afun() eq 'Obj')
+               $node->deprel() !~ m/^(Aux[PC]|Coord)$/ && $children[0]->deprel() eq 'Obj')
             {
-                $children[0]->set_afun($node->afun());
-                $node->set_afun($children[0]->is_verb() ? 'AuxC' : 'AuxP');
+                $children[0]->set_deprel($node->deprel());
+                $node->set_deprel($children[0]->is_verb() ? 'AuxC' : 'AuxP');
             }
         }
     }
@@ -725,7 +716,7 @@ sub fix_InfinitivesNotBeingObjects {
 
 
     foreach my $anode ($root->get_children()) {
-        if ($anode->afun eq "Pred") {
+        if ($anode->deprel eq "Pred") {
             push @standalonePreds, $anode;
         }
         elsif ($anode->tag =~ /^Vf/) {
@@ -739,7 +730,7 @@ sub fix_InfinitivesNotBeingObjects {
         my $infinitive = $standaloneInfinitives[0];
 
         $infinitive->set_parent($pred);
-        $infinitive->set_afun("Obj");
+        $infinitive->set_deprel("Obj");
     }
 }
 
@@ -749,7 +740,7 @@ sub fix_SubordinatingConj {
     # take sentences with two predicates on the root
     my @predicates = ();
     foreach my $anode ($root->get_children()) {
-        if ($anode->afun eq "Pred") { push @predicates, $anode; }
+        if ($anode->deprel eq "Pred") { push @predicates, $anode; }
     }
 
     # just two clauses, it should be obvious how they should look like
@@ -779,7 +770,7 @@ sub fix_SubordinatingConj {
 
         $conj->set_parent($mainClause);
         $depedentClause->set_parent($conj);
-        $depedentClause->set_afun("NR");
+        $depedentClause->set_deprel("NR");
     }
 }
 
