@@ -364,7 +364,7 @@ sub _execute {
     }
 
     while ( !$done ) {
-        
+
         $self->_execute_scenario();
 
         $done = 1;
@@ -438,7 +438,7 @@ sub _get_reader_name_for {
 # This is where the main work is done. It is overridden in parallel execution.
 sub _execute_scenario {
     my ($self) = @_;
-    
+
     log_info "Local (single-process) execution.";
 
     $self->_init_scenario();
@@ -458,7 +458,7 @@ sub _construct_scenario_string_with_quoted_whitespace {
     my ($self) = @_;
     my @arguments;
     foreach my $arg ( @{ $self->extra_argv } ) {
-        if ( $arg =~ /(\S+)=(.*\s.*)$/ ) {
+        if ( $arg =~ /([^=\s]+)=(.*\s.*)$/ ) {
             my ( $name, $value ) = ( $1, $2 );
             $value =~ s/'/\\'/g;
             push @arguments, qq($name='$value');
@@ -539,7 +539,7 @@ sub treex {
             pop @$arguments;    # delete "--"
         }
         my $runner;
-        
+
         if (any { $_ =~ /^--jobindex/ } @$arguments){
             require Treex::Core::Parallel::Node;
             $runner = Treex::Core::Parallel::Node->new_with_options( \%args );
@@ -621,9 +621,9 @@ using a thin front-end script called C<treex>. However, the same list of
 arguments can be passed by an array reference to the function C<treex()>
 imported from C<Treex::Core::Run>.
 
-Note that this module supports distributed processing (Linux-only!), simply by 
-adding the switch C<-p>. The C<treex> method then creates a 
-C<Treex::Core::Parallel::Head> object, which extends C<Treex::Core::Run> 
+Note that this module supports distributed processing (Linux-only!), simply by
+adding the switch C<-p>. The C<treex> method then creates a
+C<Treex::Core::Parallel::Head> object, which extends C<Treex::Core::Run>
 by providing parallel processing functionality.
 
 Then there are two ways to process the data in a parallel fashion. By
