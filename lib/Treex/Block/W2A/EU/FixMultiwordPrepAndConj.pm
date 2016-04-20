@@ -280,6 +280,8 @@ my %erl_hash=('mod' => $ERL_MOD, # -en +
 	      'mod/denb' => $ERL_KONPL
     );
 
+
+
 #Function to hang all the children of a node from the head
 #   conjPos_node: The node which bears the posposition
 #   sub_node: Nodes to be hung under the headposposition ( case node or rel node)
@@ -288,55 +290,54 @@ my %erl_hash=('mod' => $ERL_MOD, # -en +
 #         1: Preposition
 sub rehang_nodes{
     my ($conjPos_node, $sub_node, $mode) = @_;
-
+    
     # If the parent of the case|erl node is the posposition itself it is correctly hung
     # Otherwise it needs to be rehung
     if (! $sub_node->get_parent()->equals($conjPos_node)){
-	     
-	# If the function of the sub node is Aux or
-	# If the function of the sub node is Atr and its parent is a noun it needs to be rehung
-	# i.e: programa bati buruz
-	if ( ($sub_node->afun ~~ /^Aux.$/) || ( ( $mode eq "1") && ( $sub_node->afun eq "Atr" ) && ( $sub_node->get_parent()->get_attr("iset/pos") eq "noun" ) ) ){   
-		    			
-	    # Get the noun case (parent of the case node)
-	    my $head_node = $sub_node->get_parent();
 
-	    # Avoid redundancy 
-	    my $head_grandparent = $head_node->get_parent()->get_parent();
-	    if ( $head_grandparent && $head_grandparent->equals($conjPos_node) ){ 
-		$head_node->get_parent()->set_parent($conjPos_node->get_parent());
-	    }
-	    else{
-		# Hang the posposition from the parent of the noun node
-		$conjPos_node->set_parent($head_node->get_parent()) if( (! $conjPos_node->get_parent()->equals($head_node->get_parent())) && (! $conjPos_node->equals($head_node->get_parent())) );
-	    }
+	# Two scenarios can happen when rehanging the nodes:
+	#    1. The sub_node is a descendant of the conjPos node. 
+	#       This case requires the relocation of the subtree going from the conjPos node to the sub_node.
+	#       Otherwise moving the conjPos node may lead to a cycle
+	#    2. The sub_node is not a descendant of the conjPos node.
+	#       In this case the conjPos node can be moved to its position without any further problem
+
+	# Rehang the subtree (case 1) if necessary
+	if($sub_node->is_descendant_of($conjPos_node)){
+
+	    # Get the children of the conjPos nodes
+	    my @child_nodes = $conjPos_node->get_children({ordered=>1});
+
+	    # Select the children which is an ancestor of the sub_node
+	    my @subtree_head_node = grep {$sub_node->is_descendant_of($_) || $_->equals($sub_node) } @child_nodes ; 
 	    
-	    # Hang the noun node from the posposition node
-	    $head_node->set_parent($conjPos_node) if (! $head_node->get_parent()->equals($conjPos_node));
 	    
-	    
-	    # Hang the case node from the noun node
-	    $sub_node->set_parent($head_node) if (! $sub_node->get_parent()->equals($head_node));
-	    
+	    $subtree_head_node[0]->set_parent($conjPos_node->get_parent()) if($subtree_head_node[0] && ! $subtree_head_node[0]->get_parent()->equals($conjPos_node->get_parent()) );
+
 	}
-	else {
-	    
-	    # Hang the posposition node from the parent of the case node
-	    $conjPos_node->set_parent($sub_node->get_parent()) if (! $conjPos_node->get_parent()->equals($sub_node->get_parent()));  
-			
-	    # Hang the case node from the posposition
-	    $sub_node->set_parent($conjPos_node) if (! $sub_node->get_parent()->equals($conjPos_node));;
-		    
-	} # end else	
 
+	# Get the element which will be hung from the postposition node
+	my $head_node = $sub_node;
+
+	# If the function of the sub node is Aux or
+	# If the function of the sub node is Atr and its parent is a noun the head will be this node
+	# i.e: programa bati buruz	
+	$head_node=$sub_node->get_parent() if ( ($sub_node->afun ~~ /^Aux.$/) || ( ( $mode eq "1") && ( $sub_node->afun eq "Atr" ) && ($sub_node->get_parent() &&  $sub_node->get_parent()->get_attr("iset/pos") eq "noun" ) ) );
+	
+	
+	# Hang the posposition node from the parent of the sub_node (subtree)
+	$conjPos_node->set_parent($head_node->get_parent()) if($head_node->get_parent() && ! $conjPos_node->equals($head_node->get_parent()));
+	
+	# Hang the sub_node (subtree) from the posposition node
+	$head_node->set_parent($conjPos_node) if($head_node->get_parent() && ! $head_node->get_parent()->equals($conjPos_node));
+	
 	# Set the corresponding afun to the conjPos node
 	$conjPos_node->set_afun("AuxP") if ($mode eq "0");
 	$conjPos_node->set_afun("AuxC") if ($mode eq "1");
-
     }
-
+    
     return 1;
-
+    
 }
 
 
@@ -362,8 +363,10 @@ sub process_atree {
 	my $postp = lc( $anodes[$starts_at]->lemma );	    
 
 	# Rehang the nodes
-	rehang_nodes($anodes[$starts_at],$anodes[$sub_ind],0) if($erl && defined($erl_hash{$erl}) && ($erl_hash{$erl} =~ /\Q$postp\E/));
-	rehang_nodes($anodes[$starts_at],$anodes[$sub_ind],1) if($case && defined($prep_hash{$case}) && ($prep_hash{$case} =~ /\Q$postp\E/));								 
+	if($anodes[$starts_at] && $anodes[$sub_ind]){
+	    rehang_nodes($anodes[$starts_at],$anodes[$sub_ind],0) if($erl && defined($erl_hash{$erl}) && ($erl_hash{$erl} =~ /\Q$postp\E/));
+	    rehang_nodes($anodes[$starts_at],$anodes[$sub_ind],1) if($case && defined($prep_hash{$case}) && ($prep_hash{$case} =~ /\Q$postp\E/));								 
+	}
 
    } # end for
 

@@ -227,7 +227,7 @@ override 'process_tnode' => sub {
 sub is_transitive {
     my ($self, $tnode) = @_;
 
-    return 1 if ( any { $_->formeme =~ /^n:erg/ } $tnode->get_children() );
+    return 1 if ( any { $_->formeme =~ /^n:\[erg\]/ } $tnode->get_children() );
 
     return 0;
 }

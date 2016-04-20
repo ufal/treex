@@ -73,8 +73,8 @@ sub get_scenario_string {
     my $IT_LEMMA_MODELS = '';
     my $IT_FORMEME_MODELS = '';
     if ($self->tm_adaptation eq 'interpol'){
-        $IT_LEMMA_MODELS = "static 0.5 IT/20150930_batch1a-tlemma.static.gz\n      maxent 1.0 IT/20150930_batch1a-tlemma.maxent.gz";
-        $IT_FORMEME_MODELS = "static 1.0 IT/20150930_batch1a-formeme.static.gz\n      maxent 0.5 IT/20150930_batch1a-formeme.maxent.gz";
+        $IT_LEMMA_MODELS = "static 0.5 IT/20160415_batch1a-tlemma.static.gz\n      maxent 1.0 IT/20160415_batch1a-tlemma.maxent.gz";
+        $IT_FORMEME_MODELS = "static 1.0 IT/20160415_batch1a-formeme.static.gz\n      maxent 0.5 IT/20160415_batch1a-formeme.maxent.gz";
     }
 
     my $scen = join "\n",
@@ -87,12 +87,12 @@ sub get_scenario_string {
     $self->terminology eq 'yes' ? 'T2T::TrLApplyTbxDictionary tbx=data/dictionaries/MicrosoftTermCollection.eu.tbx tbx_src_id=en-US tbx_trg_id=eu-es analysis=@data/dictionaries/MicrosoftTermCollection.eu.filelist analysis_src_language=en analysis_src_selector=src analysis_trg_language=eu analysis_trg_selector=trg src_blacklist=data/dictionaries/MicrosoftTermCollection.en-eu.src.blacklist.txt' : (),
 
     "T2T::TrFAddVariantsInterpol model_dir=$TM_DIR models='
-      static 1.0 20150930_formeme.static.gz
-      maxent 0.5 20150930_formeme.maxent.gz
+      static 1.0 20160415_formeme.static.gz
+      maxent 0.5 20160415_formeme.maxent.gz
       $IT_FORMEME_MODELS'",
     "T2T::TrLAddVariantsInterpol model_dir=$TM_DIR models='
-      static 0.5 20150930_tlemma.static.gz
-      maxent 1.0 20150930_tlemma.maxent.gz
+      static 0.5 20160415_tlemma.static.gz
+      maxent 1.0 20160415_tlemma.maxent.gz
       $IT_LEMMA_MODELS'",
 
     $self->fl_agreement ? 'T2T::FormemeTLemmaAgreement fun='.$self->fl_agreement : (),

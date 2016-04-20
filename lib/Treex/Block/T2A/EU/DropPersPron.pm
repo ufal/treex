@@ -6,7 +6,7 @@ extends 'Treex::Core::Block';
 sub process_tnode {
     my ( $self, $t_node ) = @_;
     if ($t_node->t_lemma eq '#PersPron'){
-    ## subject nodes should be tagged as n:abs+X or n:erg+X
+    ## subject nodes should be tagged as n:[abs]+X or n:[erg]+X
         my $a_node = $t_node->get_lex_anode();
         $self->drop($a_node);
     }
