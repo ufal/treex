@@ -32,7 +32,7 @@ sub process_atree {
                 Treex::Tool::Lexicon::CS::truncate_lemma($anodes[$i]->lemma, 1),
                 $anodes[ $i + 1 ]->form
             );
-            if ($anodes[$i]->form ne $vocalized) {
+            if (lc($anodes[$i]->form) ne lc($vocalized)) {
                 $fixLogger->logfix1($anodes[$i], "VocalizePrepos");
                 $anodes[$i]->set_form($vocalized);
                 $fixLogger->logfix2($anodes[$i]);
