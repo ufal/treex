@@ -4,6 +4,7 @@ use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseCoNLLReader';
 
 has 'sent_in_file' => ( is => 'rw', isa => 'Int', default => 0 );
+has 'use_p_attribs' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 sub next_document {
     my ($self) = @_;
@@ -34,6 +35,13 @@ sub next_document {
             # Warning: the PHEAD and PDEPREL occur in both CoNLL 2009 and 2006 but have totally different meanings!
             # We could call them differently but we do not use their values so far so it does not make a difference.
             my ( $id, $form, $lemma, $plemma, $postag, $ppos, $feats, $pfeat, $head, $phead, $deprel, $pdeprel, $fillpred, $pred, @apreds ) = split( /\s+/, $token );
+            if ($self->use_p_attribs) {
+                $lemma = $plemma;
+                $postag = $ppos;
+                $feats = $pfeat;
+                $head = $phead;
+                $deprel = $pdeprel;
+            }
             my $newnode = $aroot->create_child();
             $newnode->shift_after_subtree($aroot);
             $newnode->set_form($form);
