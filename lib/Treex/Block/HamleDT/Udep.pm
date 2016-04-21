@@ -72,6 +72,19 @@ sub process_zone
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
+    # Portuguese expressions "cerca_de" and "mais_de" were tagged as prepositions but attached as Atr.
+    # Now the MWE are split and "cerca" is attached as nmod. Fix it to case.
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $form = $node->form() // '';
+        my $deprel = $node->deprel() // '';
+        my @children = $node->children();
+        if($form =~ m/^(cerca|mais)$/i && $deprel eq 'nmod' && scalar(@children)==1 && lc($children[0]->form()) eq 'de')
+        {
+            $node->set_deprel('case');
+        }
+    }
     $self->change_case_to_mark_under_verb($root);
     $self->dissolve_chains_of_auxiliaries($root);
     $self->fix_jak_znamo($root);
@@ -83,7 +96,6 @@ sub process_zone
     $self->check_determiners($root);
     ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
     ###!!! Copy them to conll/deprel (which is displayed) until we make Tred know deprel.
-    my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
         my $upos = $node->iset()->upos();
@@ -253,7 +265,8 @@ sub convert_deprels
         elsif($deprel eq 'Sb')
         {
             # Is the parent a passive verb?
-            ###!!! This will not catch reflexive passives. TODO: Catch them.
+            # Note that this will not catch all passives (e.g. reflexive passives).
+            # Thus we will later check whether there is an auxpass sibling.
             if($parent->iset()->is_passive())
             {
                 # If this is a verb (including infinitive) then it is a clausal subject.
@@ -1062,6 +1075,11 @@ sub tag_nodes
                 $node->iset()->set_hash($dethash{$language}{$form});
             }
             $node->set_tag($node->iset()->get_upos());
+        }
+        # Ali Abdullah Saleh: in this case "Ali" is not adverb.
+        elsif($form eq 'ali' && $current_tag eq 'PROPN')
+        {
+            # Do nothing. Keep the current tag.
         }
         elsif(exists($dethash{$language}{$form}))
         {

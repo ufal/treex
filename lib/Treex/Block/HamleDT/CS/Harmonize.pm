@@ -284,6 +284,11 @@ sub fix_annotation_errors
             $participle->set_parent($node);
             $participle->set_deprel('Obj');
         }
+        # CAC 2.0: především
+        elsif($lemma eq 'především' && $deprel eq 'AuxG')
+        {
+            $node->set_deprel('AuxZ');
+        }
         # CAC 2.0 contains restored non-word nodes that were omitted in the original data (Korpus věcného stylu).
         # Punctuation symbols were restored according to orthography rules.
         # Missing numbers are substituted by the '#' wildcard.

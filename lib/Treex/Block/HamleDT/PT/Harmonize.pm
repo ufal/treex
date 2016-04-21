@@ -649,6 +649,10 @@ sub fix_annotation_errors
             $subtree[2]->set_parent($subtree[0]);
             $subtree[2]->set_deprel('AuxY');
         }
+        elsif($form eq 'longe' && $pform eq 'embora')
+        {
+            $node->set_deprel('SubArg');
+        }
     }
 }
 
