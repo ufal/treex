@@ -104,34 +104,38 @@ sub parse_multiline {
 }
 
 sub format_multiline {
-    my ($feats, $losses, $comments) = @_;
+    my ($feats, $losses, $comments, $tags) = @_;
 
     my ($cands_feats, $shared_feats) = @$feats;
     my ($cand_comments, $shared_comment) = defined $comments ? @$comments : ([], undef);
+    my ($cand_tags, $shared_tags) = defined $tags ? @$tags : (undef, undef);
 
     my $instance_str = "";
 
     if (defined $shared_feats) {
-        $instance_str .= format_singleline($shared_feats, $SHARED_LABEL, undef, $shared_comment);
+        $instance_str .= format_singleline($shared_feats, $SHARED_LABEL, $shared_tags, $shared_comment);
     }
 
-    my $tag = "";
-    if (defined $losses) {
-        my $min_loss = min @$losses;
-        my @min_loss_idx = grep {$losses->[$_] == $min_loss} 0 .. $#$losses;
-        $tag = join ",", (map {$_ + 1} @min_loss_idx);
-       
-        #my ($self_cand_idx) = grep {
-        #    my $feat = $cands_feats->[$_][0];
-        #    if (ref($feat) eq 'ARRAY') {
-        #        $feat->[0] eq $SELF_LABEL;
-        #    }
-        #    else {
-        #        $feat eq $SELF_LABEL.$FEAT_VAL_DELIM."1";
-        #    }
-        #} 0 .. $#$cands_feats;
-        my $self_cand_idx = 0;
-        $tag .= '-' . ($self_cand_idx+1) if (defined $self_cand_idx);
+    if (!defined $cand_tags) {
+        my $tag = "";
+        if (defined $losses) {
+            my $min_loss = min @$losses;
+            my @min_loss_idx = grep {$losses->[$_] == $min_loss} 0 .. $#$losses;
+            $tag = join ",", (map {$_ + 1} @min_loss_idx);
+           
+            #my ($self_cand_idx) = grep {
+            #    my $feat = $cands_feats->[$_][0];
+            #    if (ref($feat) eq 'ARRAY') {
+            #        $feat->[0] eq $SELF_LABEL;
+            #    }
+            #    else {
+            #        $feat eq $SELF_LABEL.$FEAT_VAL_DELIM."1";
+            #    }
+            #} 0 .. $#$cands_feats;
+            my $self_cand_idx = 0;
+            $tag .= '-' . ($self_cand_idx+1) if (defined $self_cand_idx);
+        }
+        $cand_tags = [ (scalar @$losses)x$tag ];
     }
     
     my $i = 0;
@@ -140,6 +144,7 @@ sub format_multiline {
         if (defined $losses) {
             $label .= ":" . $losses->[$i];
         }
+        my $tag = $cand_tags->[$i];
         $instance_str .= format_singleline($cand_feats, $label, $tag, $cand_comments->[$i]);
         $i++;
     }
