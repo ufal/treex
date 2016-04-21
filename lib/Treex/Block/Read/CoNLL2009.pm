@@ -9,6 +9,7 @@ has 'use_p_attribs' => ( is => 'ro', isa => 'Bool', default => 0 );
 sub next_document {
     my ($self) = @_;
     my $text = $self->next_document_text();
+    log_info "Processing filename: ". $self->from->current_filename;
     return if !defined $text;
 
     my $document = $self->new_document();
