@@ -78,6 +78,7 @@ sub process_zone
     $self->classify_numerals($root);
     $self->fix_determiners($root);
     $self->relabel_subordinate_clauses($root);
+    $self->check_ncsubjpass_when_auxpass($root);
     # Sanity checks.
     $self->check_determiners($root);
     ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
@@ -1215,6 +1216,45 @@ sub change_case_to_mark_under_verb
         if($node->deprel() eq 'case' && $node->parent()->is_verb())
         {
             $node->set_deprel('mark');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# If a verb has an auxpass(:refl) child, its subject must be also *pass. We
+# try to get the subjects right already during deprel conversion, checking
+# whether the parent is a passive participle. But that will not work for
+# reflexive passives, where we have to wait until the reflexive pronoun has its
+# deprel. Probably it will also not work if the participle does not have the
+# voice feature because its function is not limited to passive (such as in
+# English). This method will fix it. It should be called after the main part of
+# conversion is done (otherwise coordination could obscure the passive
+# auxiliary).
+#------------------------------------------------------------------------------
+sub check_ncsubjpass_when_auxpass
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my @children = $node->children();
+        my @auxpass = grep {$_->deprel() =~ m/^auxpass/} (@children);
+        if(scalar(@auxpass) > 0)
+        {
+            foreach my $child (@children)
+            {
+                if($child->deprel() eq 'nsubj')
+                {
+                    $child->set_deprel('nsubjpass');
+                }
+                elsif($child->deprel() eq 'csubj')
+                {
+                    $child->set_deprel('csubjpass');
+                }
+            }
         }
     }
 }
