@@ -135,7 +135,7 @@ sub format_multiline {
             my $self_cand_idx = 0;
             $tag .= '-' . ($self_cand_idx+1) if (defined $self_cand_idx);
         }
-        $cand_tags = [ (scalar @$losses)x$tag ];
+        $cand_tags = [ ($tag)x(scalar @$losses) ];
     }
     
     my $i = 0;
