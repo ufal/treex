@@ -1256,7 +1256,7 @@ sub fix_em_que_de_que
         if($node->form() eq 'que' && $node->is_pronoun() && $node->deprel() eq 'mark')
         {
             my $ln = $node->get_left_neighbor();
-            if(defined($ln) && $ln->form() =~ m/^(de|em)$/i)
+            if(defined($ln) && $ln->form() =~ m/^(a|de|em)$/i)
             {
                 $ln->set_parent($node);
                 $ln->set_deprel('case');
