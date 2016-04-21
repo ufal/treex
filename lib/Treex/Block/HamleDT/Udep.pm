@@ -1270,7 +1270,16 @@ sub fix_em_que_de_que
         # "quem" = "who". It is rare and the only case without preposition (which it is, if the previous if did not help) that I have seen was subject.
         if(lc($node->form()) eq 'quem' && $node->is_pronoun() && $node->deprel() eq 'mark')
         {
-            $node->set_deprel('nsubj');
+            # Two instances of "quem" already have the preposition attached as child but they are still not nmod.
+            my @adpchildren = grep {$_->is_adposition()} ($node->children());
+            if(scalar(@adpchildren) > 0)
+            {
+                $node->set_deprel('nmod');
+            }
+            else
+            {
+                $node->set_deprel('nsubj');
+            }
         }
     }
 }
