@@ -77,7 +77,7 @@ sub get_scenario_string {
         $IT_FORMEME_MODELS = "static 1.0 IT/batch1a-formeme.static.gz\n      maxent 0.5 IT/batch1a-formeme.maxent.gz";
     }
 
-    my $VW;
+    my $VW = '';
     if ($self->vw){
         $VW = "Treelets::AddTwonodeScores language=en selector=src\nT2T::EN2CS::TrLAddVariantsVW2";
         if ($self->vw_model){
