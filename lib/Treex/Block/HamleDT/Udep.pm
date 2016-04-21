@@ -1253,7 +1253,7 @@ sub fix_em_que_de_que
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        if($node->form() eq 'que' && $node->is_pronoun() && $node->deprel() eq 'mark')
+        if($node->form() =~ m/^quem?$/i && $node->is_pronoun() && $node->deprel() eq 'mark')
         {
             my $ln = $node->get_left_neighbor();
             if(defined($ln) && $ln->is_adposition()) # a, com, de, em, ...
@@ -1267,8 +1267,8 @@ sub fix_em_que_de_que
                 }
             }
         }
-        # "quem" = "who". It is rare and the case I have seen was subject.
-        elsif(lc($node->form()) eq 'quem' && $node->is_pronoun() && $node->deprel() eq 'mark')
+        # "quem" = "who". It is rare and the only case without preposition (which it is, if the previous if did not help) that I have seen was subject.
+        if(lc($node->form()) eq 'quem' && $node->is_pronoun() && $node->deprel() eq 'mark')
         {
             $node->set_deprel('nsubj');
         }
