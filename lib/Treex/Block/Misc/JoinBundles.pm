@@ -30,11 +30,15 @@ sub join_bundles {
 
     foreach my $zone2 ($bundle2->get_all_zones()){
         my ($lang, $sele) = ($zone2->language, $zone2->selector);
-        my $zone1 = $bundle1->get_zone($lang, $sele);
+        my $zone1 = $bundle1->get_or_create_zone($lang, $sele);
 
         # Join attribute "sentence" with one space
         if (defined $zone2->sentence){
-            $zone1->set_sentence($zone1->sentence . ' ' . $zone2->sentence);
+            if (defined $zone1->sentence) {
+                $zone1->set_sentence($zone1->sentence . ' ' . $zone2->sentence);
+            } else {
+                $zone1->set_sentence($zone2->sentence);
+            }
         }
 
         # Join the trees
