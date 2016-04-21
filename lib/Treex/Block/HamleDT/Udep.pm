@@ -86,6 +86,7 @@ sub process_zone
         }
     }
     $self->change_case_to_mark_under_verb($root);
+    $self->fix_em_que_de_que($root);
     $self->dissolve_chains_of_auxiliaries($root);
     $self->fix_jak_znamo($root);
     $self->classify_numerals($root);
@@ -1234,6 +1235,42 @@ sub change_case_to_mark_under_verb
         if($node->deprel() eq 'case' && $node->parent()->is_verb())
         {
             $node->set_deprel('mark');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes Portuguese "em que" and "de que" where "que" is correctly tagged PRON
+# but incorrectly attached as mark. (This should have been fixed in the
+# conversion from Bosque to Prague, it is a conversion error there.)
+#------------------------------------------------------------------------------
+sub fix_em_que_de_que
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->form() eq 'que' && $node->is_pronoun() && $node->deprel() eq 'mark')
+        {
+            my $ln = $node->get_left_neighbor();
+            if(defined($ln) && $ln->form() =~ m/^(de|em)$/i)
+            {
+                $ln->set_parent($node);
+                $ln->set_deprel('case');
+                $node->set_deprel('nmod');
+                if($node->parent()->deprel() eq 'ccomp')
+                {
+                    $node->parent()->set_deprel('acl');
+                }
+            }
+        }
+        # "quem" = "who". It is rare and the case I have seen was subject.
+        elsif(lc($node->form()) eq 'quem' && $node->is_pronoun() && $node->deprel() eq 'mark')
+        {
+            $node->set_deprel('nsubj');
         }
     }
 }
