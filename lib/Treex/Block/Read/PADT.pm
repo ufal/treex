@@ -165,10 +165,9 @@ override '_convert_atree' => sub
         }
         else
         {
-            foreach my $attr_name ('form', 'lemma', 'tag')
-            {
-                $self->_copy_attr($pml_node, $treex_node, "m/$attr_name", $attr_name);
-            }
+            $self->_copy_attr($pml_node, $treex_node, 'm/form',      'form');
+            $self->_copy_attr($pml_node, $treex_node, 'm/cite/form', 'lemma');
+            $self->_copy_attr($pml_node, $treex_node, 'm/tag',       'tag');
             # Transliterate form and lemma to vocalized Arabic script.
             # (The data contain words and tokens, whereas tokens are subunits of words.
             # The forms of words are stored in unvocalized Arabic script as they were on input.
@@ -186,12 +185,13 @@ override '_convert_atree' => sub
                 my $alemma = ElixirFM::orth($treex_node->lemma());
                 my $rlemma = ElixirFM::phon($treex_node->lemma());
                 push(@features, 'rlemma='.$rlemma);
-                $treex_node->{wild}{translit_lemma} = $rlemma;
+                # wild/lemma_translit, if present, is written in Write::CoNLLU as MISC LTranslit.
+                $treex_node->{wild}{lemma_translit} = $rlemma;
                 $treex_node->set_lemma($alemma);
             }
             # Copy English glosses from the reflex element.
-            # m/core/reflex has type Treex::PML::List=ARRAY.
-            my $glosses = $pml_node->attr('m/core/reflex');
+            # m/cite/reflex has type Treex::PML::List=ARRAY.
+            my $glosses = $pml_node->attr('m/cite/reflex');
             if(defined($glosses))
             {
                 my $gloss = join(',', map {s/\s+/_/g; $_;} @{$glosses});
@@ -256,6 +256,7 @@ override '_convert_atree' => sub
             if($treex_node->afun() eq '???')
             {
                 $treex_node->set_afun('NR');
+                $treex_node->set_deprel('NR');
                 $deprel = '_';
             }
             # The AuxS afun is reserved for tree roots and should never occur in a non-root node.
@@ -265,11 +266,13 @@ override '_convert_atree' => sub
             elsif($treex_node->afun() eq 'AuxS')
             {
                 $treex_node->set_afun('NR');
+                $treex_node->set_deprel('NR');
                 $deprel = '_';
             }
             else
             {
                 $deprel = $treex_node->afun();
+                $treex_node->set_deprel($deprel);
             }
             if($pml_node->attr('parallel'))
             {
