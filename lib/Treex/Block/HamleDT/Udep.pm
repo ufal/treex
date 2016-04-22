@@ -296,7 +296,15 @@ sub convert_deprels
         {
             # We will later transform the structure so that copula depends on the nominal predicate.
             # The 'pnom' label will disappear and the inverted relation will be labeled 'cop'.
-            $deprel = 'pnom';
+            # We cannot do this if the predicate is a subordinate clause ("my opinion is that we should not go there"). Then a verb would have two subjects.
+            if($node->is_verb() && !$node->is_participle())
+            {
+                $deprel = 'ccomp';
+            }
+            else
+            {
+                $deprel = 'pnom';
+            }
         }
         # Adverbial modifier: advmod, nmod, advcl
         # Note: UD also distinguishes the relation neg. In Czech, most negation is done using bound morphemes.
