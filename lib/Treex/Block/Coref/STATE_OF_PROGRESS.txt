@@ -97,8 +97,14 @@ coref git repository:
             - performs the resolution up to the specified level
             - evaluates the spacified level
                 - Coref::SimpleEval
-                    - TODO: the overall number of instances coming from the dev test section in the treex_cr_train 
-                      differ from the overall number of instances counted by Coref::SimpleEval
+                    - the overall number of instances coming from the dev test section in the treex_cr_train 
+                      differ from the overall number of instances counted by Coref::SimpleEval. The reasons are the following:
+                        * a true antecedent is filtered out:
+                            - sempos=adj.denot, "pomoci postiženým, kteří nemají" (cmpr9415_035.streex##4.t_tree-cs_src-s4-n290)
+                            - sempos=adj.pron.def.demon, "totožná s tou, s níž Jihomoravané" (ln94200_158.streex##11.t_tree-cs_src-s11-n903)
+                            - sempos=adj.pron.indef, "poskytnuta každému, kdo splní" (ln94202_135.streex##9.t_tree-cs_src-s9-n736)
+                            - sempos=n.pron.def.demon, "je to, čemu ekonomové říkají" (ln94202_19.streex##34.t_tree-cs_src-s34-n2938)
+                            - nodetype=coap, "provedli španělští a britští ženisté, kteří budou" (ln94202_64.streex##2.t_tree-cs_src-s2-n100)
                 - conll_scorer put on hold until Coref::PrepareSpecializedEval is fixed, or used for all the mentions
             - shows the results in a pretty-print colored format
             - TODO: print the scores to the final result table logging all the runs
