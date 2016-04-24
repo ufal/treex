@@ -57,7 +57,7 @@ sub process_bundle {
         my ($ali_nodes, $ali_types) = $ref_tnode->get_undirected_aligned_nodes({language => $self->language, selector => $self->pred_selector});
         # process the ref nodes that have a src counterpart
         foreach my $ali_src_tnode (@$ali_nodes) {
-            printf STDERR "ALI SRC TNODE: %s\n", $ali_src_tnode->get_address;
+            #printf STDERR "ALI SRC TNODE: %s\n", $ali_src_tnode->get_address;
             $covered_src_nodes{$ali_src_tnode->id}++;
             my @ali_src_antes = $ali_src_tnode->get_coref_nodes;
             my $pred_eval_class = @ali_src_antes ? 1 : 0;
