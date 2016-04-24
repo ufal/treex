@@ -17,6 +17,12 @@ has 'prev_sents_num' => (
     required => 1,
 );
 
+has 'preceding_only' => (
+    isa => 'Bool',
+    is => 'ro',
+    default => 1,
+);
+
 has 'anaphor_as_candidate' => (
     isa => 'Bool',
     is  => 'ro',
@@ -96,7 +102,7 @@ sub _select_all_cands {
     my ($self, $anaph) = @_;
 
     my @cands = $self->_node_selector->nodes_in_surroundings(
-        $anaph, -$self->prev_sents_num, 0, {preceding_only => 1}
+        $anaph, -$self->prev_sents_num, 0, {preceding_only => $self->preceding_only}
     );
     @cands = grep {Treex::Tool::Coreference::NodeFilter::matches($_, $self->cand_types)} @cands;
     # remove the candidates that even transitively point to the anaphor - cycle prevention

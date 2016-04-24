@@ -32,6 +32,10 @@ sub get_types {
     if (Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {expressed => 0, reflexive => -1})) {
         $types->{'#perspron.no_refl'} = 1;
     }
+    if (Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {expressed => 1, reflexive => 1})) {
+        $types->{'reflpron'} = 1;
+        $types->{all_anaph} = 1;
+    }
     if (Treex::Tool::Coreference::NodeFilter::RelPron::is_relat($node)) {
         $types->{relpron} = 1;
         $types->{all_anaph} = 1;
