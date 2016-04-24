@@ -19,6 +19,7 @@ augment '_unary_features' => sub {
 
     my $anode = $node->get_lex_anode;
     $feats->{'lemma'} = defined $anode ? Treex::Tool::Lexicon::CS::truncate_lemma($anode->lemma) : $UNDEF_VALUE;
+    $feats->{'subpos'} = defined $anode ? substr($anode->tag, 1, 1) : $UNDEF_VALUE;
 
     #$feats->{'tlemma'} = $node->t_lemma;
     #$feats->{'fmm'} = $node->formeme;
