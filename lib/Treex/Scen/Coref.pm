@@ -3,8 +3,8 @@ use Moose;
 use Moose::Util::TypeConstraints;
 use Treex::Core::Common;
 
-subtype 'CommaHashRef' => as 'HashRef';
-coerce 'CommaHashRef'
+subtype 'ModuleIndicator' => as 'HashRef';
+coerce 'ModuleIndicator'
     => from 'Str'
     => via { my %h = map {$_ => 1} (split /,/, $_); \%h };
 
@@ -17,7 +17,7 @@ has 'language' => (
 
 has 'modules' => (
     is => 'ro',
-    isa => 'CommaHashRef',
+    isa => 'ModuleIndicator',
     coerce => 1,
     default => 'all',
 );
