@@ -926,6 +926,7 @@ sub detect_prague_apposition
         {
             ###!!! Unlike coordination, it is unclear whether we want to treat punctuation differently if it occurs after the second member.
             ###!!! For example for brackets it would mean that the opening bracket is attached to the second member and the closing bracket to the first member.
+            ###!!! However, we do not want to attach to the second member punctuation that occurs before the first member. We do not want to create nonprojectivity.
             #@punctuation = grep {my $ord = $_->ord(); $ord>$cmin && $ord<$cmax} (@punctuation);
             if(@punctuation || @coordinators)
             {
@@ -936,7 +937,14 @@ sub detect_prague_apposition
                 $nterm->set_parent($phrase);
                 foreach my $d (@punctuation, @coordinators)
                 {
-                    $d->set_parent($nterm);
+                    if($d->ord() < $head_conjunct->ord())
+                    {
+                        $d->set_parent($phrase);
+                    }
+                    else
+                    {
+                        $d->set_parent($nterm);
+                    }
                 }
             }
         }

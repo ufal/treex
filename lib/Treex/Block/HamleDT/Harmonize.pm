@@ -269,14 +269,14 @@ sub fix_annotation_errors
 
 
 #------------------------------------------------------------------------------
-# Assigns default afuns. To be used if a node does not have a valid afun value
-# and we cannot tell anything more precise about the node.
+# Assigns default Prague deprels. To be used if a node does not have a valid
+# deprel value and we cannot tell anything more precise about the node.
 #------------------------------------------------------------------------------
-sub set_default_afun
+sub set_default_deprel
 {
     my $self = shift;
     my $node = shift;
-    my $afun;
+    my $deprel;
     my $parent = $node->parent();
     if($parent->is_root())
     {
@@ -284,11 +284,11 @@ sub set_default_afun
         # There could also be coordination of verbal predicates (possibly nested coordination) but we do not check it at the moment. ###!!!
         if($node->is_verb())
         {
-            $afun = 'Pred';
+            $deprel = 'Pred';
         }
         else
         {
-            $afun = 'ExD';
+            $deprel = 'ExD';
         }
     }
     else
@@ -296,16 +296,16 @@ sub set_default_afun
         # Nominal nodes are modified by attributes, verbal nodes by objects or adverbials.
         # (Adverbials are default because there are typically fewer constraints on them.)
         # Again, we do not check whether the parent is a coordination of verbs. ###!!!
-        if($parent->is_verb())
+        if($parent->is_verb() || $parent->is_adverb())
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
         else
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
     }
-    $node->set_afun($afun);
+    $node->set_deprel($deprel);
 }
 
 

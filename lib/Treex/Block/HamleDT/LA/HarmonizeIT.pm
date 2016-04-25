@@ -382,6 +382,11 @@ before 'fix_annotation_errors' => sub
                 $node->set_is_member(undef);
             }
         }
+        # "igitur" and "quidem" attached as AuxX
+        elsif($node->deprel() eq 'AuxX' && $node->form() =~ m/^(igitur|quidem)$/)
+        {
+            $node->set_deprel('AuxY');
+        }
     }
 };
 

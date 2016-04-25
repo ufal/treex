@@ -7,7 +7,9 @@ sub process_anode
 {
     my $self = shift;
     my $node = shift;
-    if($node->deprel() eq 'cc' && !$node->is_conjunction())
+    # At least in Czech many adverbs have grammaticalized and work like conjunctions (sice, tedy, tak).
+    # Therefore we allow both conjunctions and adverbs.
+    if($node->deprel() eq 'cc' && !($node->is_conjunction() || $node->is_adverb()))
     {
         $self->complain($node, $node->form());
     }

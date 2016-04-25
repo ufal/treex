@@ -72,17 +72,31 @@ sub process_zone
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
+    # Portuguese expressions "cerca_de" and "mais_de" were tagged as prepositions but attached as Atr.
+    # Now the MWE are split and "cerca" is attached as nmod. Fix it to case.
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $form = $node->form() // '';
+        my $deprel = $node->deprel() // '';
+        my @children = $node->children();
+        if($form =~ m/^(cerca|mais)$/i && $deprel eq 'nmod' && scalar(@children)==1 && lc($children[0]->form()) eq 'de')
+        {
+            $node->set_deprel('case');
+        }
+    }
     $self->change_case_to_mark_under_verb($root);
+    $self->fix_em_que_de_que($root);
     $self->dissolve_chains_of_auxiliaries($root);
     $self->fix_jak_znamo($root);
     $self->classify_numerals($root);
     $self->fix_determiners($root);
     $self->relabel_subordinate_clauses($root);
+    $self->check_ncsubjpass_when_auxpass($root);
     # Sanity checks.
     $self->check_determiners($root);
     ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
     ###!!! Copy them to conll/deprel (which is displayed) until we make Tred know deprel.
-    my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
         my $upos = $node->iset()->upos();
@@ -252,7 +266,8 @@ sub convert_deprels
         elsif($deprel eq 'Sb')
         {
             # Is the parent a passive verb?
-            ###!!! This will not catch reflexive passives. TODO: Catch them.
+            # Note that this will not catch all passives (e.g. reflexive passives).
+            # Thus we will later check whether there is an auxpass sibling.
             if($parent->iset()->is_passive())
             {
                 # If this is a verb (including infinitive) then it is a clausal subject.
@@ -281,7 +296,15 @@ sub convert_deprels
         {
             # We will later transform the structure so that copula depends on the nominal predicate.
             # The 'pnom' label will disappear and the inverted relation will be labeled 'cop'.
-            $deprel = 'pnom';
+            # We cannot do this if the predicate is a subordinate clause ("my opinion is that we should not go there"). Then a verb would have two subjects.
+            if($node->is_verb() && !$node->is_participle())
+            {
+                $deprel = 'ccomp';
+            }
+            else
+            {
+                $deprel = 'pnom';
+            }
         }
         # Adverbial modifier: advmod, nmod, advcl
         # Note: UD also distinguishes the relation neg. In Czech, most negation is done using bound morphemes.
@@ -1062,6 +1085,11 @@ sub tag_nodes
             }
             $node->set_tag($node->iset()->get_upos());
         }
+        # Ali Abdullah Saleh: in this case "Ali" is not adverb.
+        elsif($form eq 'ali' && $current_tag eq 'PROPN')
+        {
+            # Do nothing. Keep the current tag.
+        }
         elsif(exists($dethash{$language}{$form}))
         {
             $node->iset()->set_hash($dethash{$language}{$form});
@@ -1215,6 +1243,90 @@ sub change_case_to_mark_under_verb
         if($node->deprel() eq 'case' && $node->parent()->is_verb())
         {
             $node->set_deprel('mark');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes Portuguese "em que" and "de que" where "que" is correctly tagged PRON
+# but incorrectly attached as mark. (This should have been fixed in the
+# conversion from Bosque to Prague, it is a conversion error there.)
+#------------------------------------------------------------------------------
+sub fix_em_que_de_que
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->form() =~ m/^quem?$/i && $node->is_pronoun() && $node->deprel() eq 'mark')
+        {
+            my $ln = $node->get_left_neighbor();
+            if(defined($ln) && $ln->is_adposition()) # a, com, de, em, ...
+            {
+                $ln->set_parent($node);
+                $ln->set_deprel('case');
+                $node->set_deprel('nmod');
+                if($node->parent()->deprel() eq 'ccomp')
+                {
+                    $node->parent()->set_deprel('acl');
+                }
+            }
+        }
+        # "quem" = "who". It is rare and the only case without preposition (which it is, if the previous if did not help) that I have seen was subject.
+        if(lc($node->form()) eq 'quem' && $node->is_pronoun() && $node->deprel() eq 'mark')
+        {
+            # Two instances of "quem" already have the preposition attached as child but they are still not nmod.
+            my @adpchildren = grep {$_->is_adposition()} ($node->children());
+            if(scalar(@adpchildren) > 0)
+            {
+                $node->set_deprel('nmod');
+            }
+            else
+            {
+                $node->set_deprel('nsubj');
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# If a verb has an auxpass(:refl) child, its subject must be also *pass. We
+# try to get the subjects right already during deprel conversion, checking
+# whether the parent is a passive participle. But that will not work for
+# reflexive passives, where we have to wait until the reflexive pronoun has its
+# deprel. Probably it will also not work if the participle does not have the
+# voice feature because its function is not limited to passive (such as in
+# English). This method will fix it. It should be called after the main part of
+# conversion is done (otherwise coordination could obscure the passive
+# auxiliary).
+#------------------------------------------------------------------------------
+sub check_ncsubjpass_when_auxpass
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my @children = $node->children();
+        my @auxpass = grep {$_->deprel() =~ m/^auxpass/} (@children);
+        if(scalar(@auxpass) > 0)
+        {
+            foreach my $child (@children)
+            {
+                if($child->deprel() eq 'nsubj')
+                {
+                    $child->set_deprel('nsubjpass');
+                }
+                elsif($child->deprel() eq 'csubj')
+                {
+                    $child->set_deprel('csubjpass');
+                }
+            }
         }
     }
 }

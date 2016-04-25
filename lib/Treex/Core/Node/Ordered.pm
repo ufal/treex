@@ -88,8 +88,12 @@ sub _normalize_node_ordering {
     log_fatal 'Incorrect number of arguments' if @_ != 1;
     my $self = shift;
     log_fatal('Ordering normalization can be applied only on root nodes!') if $self->get_parent();
+    # Do not use add_self => 1. Unshift myself as the first element instead.
+    # Otherwise normalization will not work as expected if the current ord of the root is nonzero and/or a non-root node has zero.
+    my @nodes = $self->get_descendants( { ordered => 1 } );
+    unshift(@nodes, $self);
     my $new_ord = 0;
-    foreach my $node ( $self->get_descendants( { ordered => 1, add_self => 1 } ) ) {
+    foreach my $node (@nodes) {
         $node->_set_ord($new_ord);
         $new_ord++
     }

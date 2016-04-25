@@ -135,6 +135,11 @@ sub _convert_atree {
         my $treex_child = $treex_node->create_child;
         $self->_convert_atree( $pml_child, $treex_child );
     }
+    # Unfortunately it is not guaranteed that the ord values in the input tree form a 1..N sequence.
+    if($treex_node->is_root())
+    {
+        $treex_node->_normalize_node_ordering();
+    }
     return;
 }
 

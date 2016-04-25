@@ -3,7 +3,7 @@ package Treex::Block::A2A::CS::FixPrepositionalCase;
 use Moose;
 use Treex::Core::Common;
 
-use CzechMorpho;
+use Treex::Tool::Lexicon::Generation::CS;
 
 extends 'Treex::Block::A2A::CS::FixAgreement';
 
@@ -11,7 +11,7 @@ has '_analyzer' => (
     is      => 'rw',
     isa     => 'Object',
     lazy    => 1,
-    default => sub { CzechMorpho::Analyzer->new() }
+    default => sub {Treex::Tool::Lexicon::Generation::CS->new() }
 );
 
 #has 'skip_prep_tag' => ( is => 'rw', isa => 'Str', default => "s_2 s_4 za_2 v_4 mezi_4 z_2 před_4 o_4 po_4" );
@@ -160,7 +160,7 @@ sub _get_possible_cases {
     my $tags   = {};
     my $lemmas = {};
 
-    my @analyses = $self->_analyzer->analyze($form);
+    my @analyses = $self->_analyzer->analyze_form($form);
 
     foreach my $analysis (@analyses) {
 

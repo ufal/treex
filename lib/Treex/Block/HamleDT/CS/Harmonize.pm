@@ -255,6 +255,79 @@ sub convert_deprels
 
 
 
+#------------------------------------------------------------------------------
+# Catches possible annotation inconsistencies.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $form = $node->form() // '';
+        my $lemma = $node->lemma() // '';
+        my $deprel = $node->deprel() // '';
+        # Two occurrences of "se" in CAC 2.0 have AuxT instead of AuxP.
+        if($deprel eq 'AuxT' && $node->is_adposition())
+        {
+            $node->set_deprel('AuxP');
+        }
+        # One occurrence of "se" in CAC 2.0 has AuxP instead of AuxT.
+        elsif($deprel eq 'AuxP' && $node->is_pronoun() && $node->is_reflexive() && $node->is_leaf())
+        {
+            $node->set_deprel('AuxT');
+        }
+        # In the phrase "co se týče" ("as concerns"), "co" is sometimes tagged PRON+Sb (14 occurrences in PDT), sometimes SCONJ+AuxC (7).
+        # We may eventually want to select one of these approaches. However, it must not be PRON+AuxC (2 occurrences in CAC).
+        elsif(lc($form) eq 'co' && $node->is_pronoun() && $deprel eq 'AuxC')
+        {
+            $node->iset()->set_hash({'pos' => 'conj', 'conjtype' => 'sub'});
+            $self->set_pdt_tag($node);
+        }
+        # Czech constructions with "mít" (to have) + participle are not considered a perfect tense and "mít" is not auxiliary verb, despite the similarity to English perfect.
+        # In PDT the verb "mít" is the head and the participle is analyzed either as AtvV complement (mít vyhráno, mít splněno, mít natrénováno) or as Obj (mít nasbíráno, mít spočteno).
+        # It is not distinguished whether both "mít" and the participle have a shared subject, or not (mít zakázáno / AtvV, mít někde napsáno / Obj).
+        # The same applies to CAC except for one annotation error where "mít" is attached to a participle as AuxV ("Měla položeno pět zásobních řadů s kašnami.")
+        elsif($deprel eq 'AuxV' && $lemma eq 'mít')
+        {
+            my $participle = $node->parent();
+            $node->set_parent($participle->parent());
+            $node->set_deprel($participle->deprel());
+            $participle->set_parent($node);
+            $participle->set_deprel('Obj');
+        }
+        # CAC 2.0: především
+        elsif($lemma eq 'především' && $deprel eq 'AuxG')
+        {
+            $node->set_deprel('AuxZ');
+        }
+        # CAC 2.0 contains restored non-word nodes that were omitted in the original data (Korpus věcného stylu).
+        # Punctuation symbols were restored according to orthography rules.
+        # Missing numbers are substituted by the '#' wildcard.
+        # Missing measure units are substituted by '?', which seems unfortunate because the question mark is a common punctuation symbol. Let's replace it by something more specific.
+        elsif($lemma eq '?' && $deprel !~ m/^Aux[GK]$/)
+        {
+            # In 6 cases the wildcard represents a reflexive pronoun attached to an inherently reflexive verb.
+            if($deprel eq 'AuxT')
+            {
+                $node->set_form('se');
+                $node->set_lemma('se');
+                $node->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => 'reflex', 'case' => 'acc'});
+            }
+            else
+            {
+                my $symbol = '*';
+                $node->set_form($symbol);
+                $node->set_lemma($symbol);
+                $node->iset()->set('pos', 'sym');
+            }
+        }
+    }
+}
+
+
+
 1;
 
 =over
