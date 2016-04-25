@@ -28,6 +28,8 @@ sub get_scenario_string {
     my $scen = join "\n",
     'Util::Eval document="1;"',
     $self->modules->{relpron} || $self->modules->{all} ? 'Coref::CS::RelPron::Resolve' : '',
+    $self->modules->{reflpron} || $self->modules->{all} ? 'Coref::CS::ReflPron::Resolve' : '',
+    $self->modules->{perspron} || $self->modules->{all} ? 'Coref::CS::PersPron::Resolve' : '',
     ;
 
     return $scen;
