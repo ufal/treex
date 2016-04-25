@@ -141,15 +141,24 @@ override '_convert_atree' => sub
         my $wrf = $pml_node->attr('w/w.rf');
         if(defined($wrf))
         {
-            $treex_node->{wild}{wrf} = $wrf;
+            $treex_node->wild()->{wrf} = $wrf;
+        }
+        # Attributes from the word layer.
+        # The surface word may correspond to more than one nodes (morphological analysis and second-level tokenization).
+        # It is also usually not vocalized, unlike the word form on the morphological layer.
+        my $aform = $pml_node->attr('w/form');
+        if(defined($aform))
+        {
+            $treex_node->wild()->{aform} = $aform;
         }
         # Attributes from the morphological layer.
+        # Note that the *.morpho.pml file may contain multiple morphological analyses per surface word.
+        # The disambiguation is only visible in *.syntax.pml where a node points to one 'm' element.
         # Tokens recognized by the morphological analyzer have their form transliterated to the Latin script.
         # Out-of-vocabulary words have the original form, i.e. unvocalized Arabic script.
         # Out-of-vocabulary words do not have the 'm' section. We have to go directly to the 'w' layer.
         if(!defined($pml_node->attr('m')))
         {
-            my $aform = $pml_node->attr('w/form');
             my $rform = Encode::Arabic::Buckwalter::encode('buckwalter', $aform);
             $treex_node->set_form($aform);
             $treex_node->set_attr('translit', $rform);
