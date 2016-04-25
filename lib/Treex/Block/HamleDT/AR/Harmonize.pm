@@ -50,6 +50,57 @@ sub get_input_tag_for_interset
 
 
 #------------------------------------------------------------------------------
+# Copies to wild/misc attributes that we want to preserve in the CoNLL-U file.
+# Perhaps this task would be better match for Prague-to-UD conversion but it is
+# specific for PADT and Udep.pm is used for all treebanks.
+#------------------------------------------------------------------------------
+sub fix_morphology
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $wild = $node->wild();
+        my @misc;
+        if(defined($wild->{misc}))
+        {
+            @misc = split(/\|/, $wild->{misc});
+        }
+        if(defined($wild->{aform}))
+        {
+            my $aform = $wild->{aform};
+            $aform =~ s/&/&amp;/g;
+            $aform =~ s/\|/&verbar;/g;
+            @misc = grep {!m/^Aform=/} (@misc);
+            push(@misc, "Aform=$aform");
+        }
+        if(defined($wild->{gloss}))
+        {
+            my $gloss = $wild->{gloss};
+            $gloss =~ s/&/&amp;/g;
+            $gloss =~ s/\|/&verbar;/g;
+            @misc = grep {!m/^Gloss=/} (@misc);
+            push(@misc, "Gloss=$gloss");
+        }
+        if(defined($wild->{root}))
+        {
+            my $root = $wild->{root};
+            $root =~ s/&/&amp;/g;
+            $root =~ s/\|/&verbar;/g;
+            @misc = grep {!m/^Root=/} (@misc);
+            push(@misc, "Root=$root");
+        }
+        if(scalar(@misc)>0)
+        {
+            $wild->{misc} = join('|', @misc);
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Adjusts dependency relation labels.
 # less /net/data/conll/2007/ar/doc/README
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html
