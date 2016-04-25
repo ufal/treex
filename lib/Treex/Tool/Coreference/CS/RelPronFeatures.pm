@@ -4,7 +4,7 @@ use Moose;
 use Treex::Core::Common;
 use List::MoreUtils qw/any/;
 
-extends 'Treex::Tool::Coreference::CorefFeatures';
+extends 'Treex::Tool::Coreference::BaseCorefFeatures';
 
 my $UNDEF_VALUE = "undef";
 

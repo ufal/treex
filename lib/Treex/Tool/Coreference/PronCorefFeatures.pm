@@ -3,7 +3,7 @@ package Treex::Tool::Coreference::PronCorefFeatures;
 use Moose;
 use Treex::Core::Common;
 
-extends 'Treex::Tool::Coreference::CorefFeatures';
+extends 'Treex::Tool::Coreference::BaseCorefFeatures';
 
 my $b_true = '1';
 my $b_false = '-1';
