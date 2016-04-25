@@ -11,7 +11,7 @@ use Treex::Tool::ML::VowpalWabbit::Ranker;
 
 has '+model_path' => (
     #default => 'data/models/coreference/CS/vw/perspron.2015-04-29.train.pdt.cs.vw.ranking.model',
-    default => 'data/models/coreference/CS/vw/relpron.2016-04-06.train.pdt.cs.vw.ranking.model',
+    default => 'data/models/coreference/CS/vw/relpron.2016-04-24.train.pdt.cs.vw.ranking.model',
 );
 
 override '_build_ranker' => sub {
