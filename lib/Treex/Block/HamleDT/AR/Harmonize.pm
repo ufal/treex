@@ -81,14 +81,18 @@ sub fix_morphology
                 # fused_form
                 for(my $j = 0; $j <= $#fused_indices; $j++)
                 {
-                    $nodes[$fused_indices[$j]]->wild()->{fused} = ($j==0) ? 'start' : ($j==$#fused_indices) ? 'end' : 'middle';
-                    $nodes[$fused_indices[$j]]->wild()->{fused_end} = $nodes[$fused_indices[-1]]->ord();
-                    $nodes[$fused_indices[$j]]->wild()->{fused_form} = $nodes[$fused_indices[$j]]->wild()->{aform};
+                    my $wild = $nodes[$fused_indices[$j]]->wild();
+                    $wild->{fused} = ($j==0) ? 'start' : ($j==$#fused_indices) ? 'end' : 'middle';
+                    $wild->{fused_end} = $nodes[$fused_indices[-1]]->ord();
+                    $wild->{fused_form} = $wild->{aform};
+                    # We will make the unvocalized surface forms the main forms of all nodes, except for syntactic words that are fused on surface.
+                    $wild->{aform} = $nodes[$fused_indices[$j]]->form();
                 }
             }
             splice(@fused_indices);
         }
     }
+    # Copy attributes that shall be preserved to MISC.
     foreach my $node (@nodes)
     {
         my $wild = $node->wild();
@@ -97,35 +101,47 @@ sub fix_morphology
         {
             @misc = split(/\|/, $wild->{misc});
         }
+        # Aform is the original unvocalized surface form. It should appear as FORM in the CoNLL-U file. Except for parts of fused forms where only vocalized form is available.
+        # Vform is the vocalized lexical form assigned during morphological analysis. It is a MISC attribute. But for unknown words the attribute contains only a copy of the surface form.
+        @misc = $self->add_misc('Vform', $node->form());
         if(defined($wild->{aform}))
         {
-            my $aform = $wild->{aform};
-            $aform =~ s/&/&amp;/g;
-            $aform =~ s/\|/&verbar;/g;
-            @misc = grep {!m/^Aform=/} (@misc);
-            push(@misc, "Aform=$aform");
+            $node->set_form($wild->{aform});
         }
         if(defined($wild->{gloss}))
         {
-            my $gloss = $wild->{gloss};
-            $gloss =~ s/&/&amp;/g;
-            $gloss =~ s/\|/&verbar;/g;
-            @misc = grep {!m/^Gloss=/} (@misc);
-            push(@misc, "Gloss=$gloss");
+            @misc = $self->add_misc('Gloss', $wild->{gloss}, @misc);
         }
         if(defined($wild->{root}))
         {
-            my $root = $wild->{root};
-            $root =~ s/&/&amp;/g;
-            $root =~ s/\|/&verbar;/g;
-            @misc = grep {!m/^Root=/} (@misc);
-            push(@misc, "Root=$root");
+            @misc = $self->add_misc('Root', $wild->{root}, @misc);
         }
         if(scalar(@misc)>0)
         {
             $wild->{misc} = join('|', @misc);
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Adds an attribute-value pair to the list of MISC attributes for the last
+# column of the CoNLL-U file.
+#------------------------------------------------------------------------------
+sub add_misc
+{
+    my $self = shift;
+    my $misc_name = shift;
+    my $misc_value = shift;
+    my @misc = @_;
+    # Escape special characters & and | (only in the value; we assume that the name is safe).
+    $misc_value =~ s/&/&amp;/g;
+    $misc_value =~ s/\|/&verbar;/g;
+    # We assume that all MISC attributes are unique. Erase previous value if any.
+    @misc = grep {!m/^$misc_name=/} (@misc);
+    push(@misc, "$misc_name=$misc_value");
+    return @misc;
 }
 
 
