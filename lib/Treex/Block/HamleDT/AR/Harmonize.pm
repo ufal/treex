@@ -58,7 +58,37 @@ sub fix_morphology
 {
     my $self = shift;
     my $root = shift;
-    my @nodes = $root->get_descendants();
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    # Detect sequences of nodes that share their source surface token.
+    my @fused_indices;
+    for(my $i = 0; $i < $#nodes; $i++)
+    {
+        my $wrf0 = $nodes[$i]->wild()->{wrf} // '';
+        my $wrf1 = $nodes[$i+1]->wild()->{wrf} // '';
+        log_warn('Missing reference to surface token') if($wrf0 eq '' || $wrf1 eq '');
+        if($wrf1 eq $wrf0)
+        {
+            push(@fused_indices, $i) if(scalar(@fused_indices)==0);
+            push(@fused_indices, $i+1);
+        }
+        else
+        {
+            if(scalar(@fused_indices)>1)
+            {
+                # We currently set the following wild attributes for fused nodes (see Write::CoNLLU):
+                # fused = start|middle|end
+                # fused_end = ord of the last node
+                # fused_form
+                for(my $j = 0; $j <= $#fused_indices; $j++)
+                {
+                    $nodes[$fused_indices[$j]]->wild()->{fused} = ($j==0) ? 'start' : ($j==$#fused_indices) ? 'end' : 'middle';
+                    $nodes[$fused_indices[$j]]->wild()->{fused_end} = $nodes[$fused_indices[-1]]->ord();
+                    $nodes[$fused_indices[$j]]->wild()->{fused_form} = $nodes[$fused_indices[$j]]->wild()->{aform};
+                }
+            }
+            splice(@fused_indices);
+        }
+    }
     foreach my $node (@nodes)
     {
         my $wild = $node->wild();
