@@ -6,7 +6,7 @@ use List::MoreUtils qw/any/;
 
 use Treex::Tool::Lexicon::CS;
 
-extends 'Treex::Tool::Coreference::CorefFeatures';
+extends 'Treex::Tool::Coreference::BaseCorefFeatures';
 
 my $UNDEF_VALUE = "undef";
 

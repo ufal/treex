@@ -9,9 +9,8 @@ use Treex::Core::Common;
 
 has 'node1_label' => (is => 'ro', isa => 'Str', default => 'n1');
 has 'node2_label' => (is => 'ro', isa => 'Str', default => 'n2');
+has 'self_label'  => (is => 'ro', isa => 'Str', default => '__SELF__');
 has '_prefix_unary' => (is => 'ro', isa => 'Bool', builder => '_build_prefix_unary', init_arg => undef);
-
-my $SELF_LABEL = "__SELF__";
 
 sub _build_prefix_unary {
     return 1;
@@ -109,7 +108,7 @@ sub create_instances {
         }
         # pushing empty instance for the anaphor as candidate (it is entirely described by shared features)
         else {
-            $cand_h =  { $SELF_LABEL => 1 };
+            $cand_h =  { $self->self_label => 1 };
         }
         my $cand_l = feat_hash_to_nslist($cand_h);
         push @cand_feats, $cand_l;

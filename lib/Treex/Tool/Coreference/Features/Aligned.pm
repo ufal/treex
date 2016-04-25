@@ -96,13 +96,13 @@ augment '_unary_features' => sub {
     return { %$ali_feats, %$sub_feats };
 };
 
-override 'init_doc_features' => sub {
+sub init_doc_features {
     my ($self, $doc, $lang, $sel) = @_;
     
     foreach my $fe (@{$self->feat_extractors}) {
         my $fe_feats = $fe->init_doc_features($doc, $self->align_lang, $sel);
     }
-};
+}
 
 sub _add_prefix {
     my ($feats) = @_;

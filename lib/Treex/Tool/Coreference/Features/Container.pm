@@ -1,6 +1,7 @@
 package Treex::Tool::Coreference::Features::Container;
 
 use Moose;
+use Treex::Core::Common;
 
 extends 'Treex::Tool::Coreference::CorefFeatures';
 
@@ -33,12 +34,12 @@ augment '_unary_features' => sub {
     return { %feats, %$sub_feats };
 };
 
-override 'init_doc_features' => sub {
+sub init_doc_features {
     my ($self, $doc, $lang, $sel) = @_;
     
     foreach my $fe (@{$self->feat_extractors}) {
         my $fe_feats = $fe->init_doc_features($doc, $lang, $sel);
     }
-};
+}
 
 1;
