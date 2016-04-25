@@ -86,7 +86,9 @@ sub fix_morphology
                     $wild->{fused_end} = $nodes[$fused_indices[-1]]->ord();
                     $wild->{fused_form} = $wild->{aform};
                     # We will make the unvocalized surface forms the main forms of all nodes, except for syntactic words that are fused on surface.
+                    # For the syntactic words we only apply a primitive stripping of diacritical marks.
                     $wild->{aform} = $nodes[$fused_indices[$j]]->form();
+                    $wild->{aform} =~ s/[\x{64B}-\x{652}]//g;
                 }
             }
             splice(@fused_indices);
