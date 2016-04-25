@@ -8,7 +8,18 @@ use Treex::Tool::Coreference::Utils;
 extends 'Treex::Block::Write::BaseTextWriter';
 
 has '+extension' => ( default => '.txt' );
-has '_sents_active_for' => ( is => 'rw', isa => 'HashRef', default => sub{{}} );
+has '_ord_of_ttree'  => ( is => 'rw', isa => 'HashRef', default => sub{{}} );
+has '_key_sents_for' => ( is => 'rw', isa => 'HashRef', default => sub{{}} );
+has '_sys_sents_for' => ( is => 'rw', isa => 'HashRef', default => sub{{}} );
+
+before 'process_document' => sub {
+    my ($self, $doc) = @_;
+    my @ttrees = map {$_->get_tree($self->language, 't', $self->selector)} $doc->get_bundles;
+    my %ord_of_ttree = map {$ttrees[$_]->id => $_} 0 .. $#ttrees;
+    $self->_set_ord_of_ttree(\%ord_of_ttree);
+    $self->_set_key_sents_for({});
+    $self->_set_sys_sents_for({});
+};
 
 sub _coref_format {
     my ($sents, $anaph_id) = @_;
@@ -61,42 +72,57 @@ sub _coref_format {
 sub process_ttree {
     my ($self, $ttree) = @_;
 
-    my %active_for = ();
+    my %key_ante_for = ();
+    my %sys_ante_for = ();
 
     foreach my $tnode ($ttree->get_descendants({ordered => 1})) {
         my $coref_diag = $tnode->wild->{coref_diag};
         next if (!defined $coref_diag);
-        foreach my $anaph_id (keys %{$coref_diag->{cand_for} || {}}) {
-            if (!$active_for{$anaph_id}) {
-                $active_for{$anaph_id} = 1;
-            }
+        foreach my $anaph_id (keys %{$coref_diag->{key_ante_for} || {}}) {
+            $key_ante_for{$anaph_id} = 1;
         }
+        foreach my $anaph_id (keys %{$coref_diag->{sys_ante_for} || {}}) {
+            $sys_ante_for{$anaph_id} = 1;
+        }
+    }
+    
+    foreach my $anaph_id (keys %key_ante_for) {
+        $self->_key_sents_for->{$anaph_id} = $ttree;
+    }
+    foreach my $anaph_id (keys %sys_ante_for) {
+        $self->_sys_sents_for->{$anaph_id} = $ttree;
+    }
         
+    foreach my $tnode ($ttree->get_descendants({ordered => 1})) {
+        my $coref_diag = $tnode->wild->{coref_diag};
         if ($coref_diag->{is_anaph}) {
-            delete $active_for{$tnode->id};
 
-            my $sents = delete $self->_sents_active_for->{$tnode->id};
-            push @$sents, $ttree;
+            my %sents = ();
+            my $key_ttree = delete $self->_key_sents_for->{$tnode->id};
+            $sents{$key_ttree->id} = $key_ttree if (defined $key_ttree);
+            my $sys_ttree = delete $self->_sys_sents_for->{$tnode->id};
+            $sents{$sys_ttree->id} = $sys_ttree if (defined $sys_ttree);
+            $sents{$ttree->id} = $ttree;
+
+            my @sorted_sents = sort {$self->_ord_of_ttree->{$a->id} <=> $self->_ord_of_ttree->{$b->id}} values %sents;
+            my @diffs = map {$self->_ord_of_ttree->{$sorted_sents[$_+1]->id} - $self->_ord_of_ttree->{$sorted_sents[$_]->id} - 1} 0..$#sorted_sents-1;
 
             print {$self->_file_handle} $tnode->get_address;
             print {$self->_file_handle} "\n";
-            print {$self->_file_handle} join " ", map {$_->get_zone->sentence} @$sents;
+            print {$self->_file_handle} join " ", map {
+                my $sent = $sorted_sents[$_]->get_zone->sentence;
+                if ($diffs[$_]) {
+                    $sent .= " ...".$diffs[$_]."...";
+                }
+                $sent} 0..$#sorted_sents;
             print {$self->_file_handle} "\n";
-            print {$self->_file_handle} _coref_format($sents, $tnode->id);
+            print {$self->_file_handle} _coref_format(\@sorted_sents, $tnode->id);
             print {$self->_file_handle} "\n";
             print {$self->_file_handle} "\n";
         }
 
     }
 
-    foreach my $anaph_id (keys %active_for) {
-        if (defined $self->_sents_active_for->{$anaph_id}) {
-            push @{$self->_sents_active_for->{$anaph_id}}, $ttree;
-        }
-        else {
-            $self->_sents_active_for->{$anaph_id} = [ $ttree ];
-        }
-    }
 
 
     
