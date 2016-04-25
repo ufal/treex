@@ -320,7 +320,7 @@ of a verb. If there are more Czech forms of the given lemma which are compatible
 with the (underspecified) tag then the most frequent form is choosen.
 
 Forms and their frequencies are taken from C<Treex::Tool::LM::MorphoLM>.
-C<CzechMorpho> interface to Jan Hajic's morphology is now used only as a fallback
+MorphoDiTa (L<Treex::Tool::Lexicon::Generation::CS>) interface to Jan Hajic's morphology is now used only as a fallback
 when there are no compatible forms in C<Treex::Tool::LM::MorphoLM>.
 
 The resulting form and its corresponding tag are stored in the node attributes
