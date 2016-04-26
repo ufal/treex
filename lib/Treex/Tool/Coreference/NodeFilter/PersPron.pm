@@ -258,6 +258,7 @@ sub is_reflexive {
     if ($node->get_layer eq "t") {
         my $t_reflex = $node->get_attr('is_reflexive');
         return $t_reflex if (defined $t_reflex);
+        return 0 if ($node->nodetype ne 'complex');
         $anode = $node->get_lex_anode;
     }
     else {

@@ -25,7 +25,7 @@ sub is_sem_noun_t {
 
 sub is_sem_noun_t_cs {
     my ($tnode, $args) = @_;
-    
+
     my $anode = $tnode->get_lex_anode;
     return (!$anode || ($anode->tag !~ /^[CJRTDIZV]/));
 }    
@@ -37,6 +37,7 @@ sub _is_sem_noun_t_all {
     my $arg_third_pers = $args->{third_pers} // 0;
     return 0 if !ternary_arg($arg_third_pers, $third_pers);
 
+    return 1 if (defined $tnode->formeme && $tnode->formeme =~ /^n/);
     return (defined $tnode->gram_sempos && ($tnode->gram_sempos =~ /^n/));
 }
 
