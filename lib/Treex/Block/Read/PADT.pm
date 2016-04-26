@@ -35,7 +35,8 @@ sub _build_layers
     # We will directly access only files from the 'syntax' layer.
     # The two lower layers are referenced from syntax and will be read as well.
     # It will happen automatically via references, so we are not supposed to list those lower layers here.
-    return ['syntax'];
+    ###!!! However! I want to access meta/document of the words layer and it is not made available automatically!
+    return ['syntax', 'words'];
 }
 
 
@@ -72,14 +73,70 @@ override '_convert_all_trees' => sub
     my $self = shift;
     my $pmldoc = shift;
     my $document = shift;
+    # Get document id and normalize it.
+    # ummah20040407_001     (složka AEP, soubor UMH_ARB_20040407.0001) ... Ummah Press Service (AEP = Arabic English Parallel News)
+    # ASB20040928.0023      (složka ASB, soubor ASB_ARB_20040928.0023) ... As Sabah News Agency
+    # 20000715_AFP_ARB.0001 (složka EAT, soubor AFP_ARB_20000715.0001) ... Agence France Presse (EAT = English Arabic Treebank; part of Arabic English Parallel News)
+    # HYT_ARB_20010204.0082 (složka HYT, soubor HYT_ARB_20010204.0082) ... Al Hayat News Agency
+    # ALH20010204.0082 ... taky Al Hayat
+    # ANN20021101.0003      (složka NHR, soubor NHR_ARB_20021101.0003) ... An Nahar News Agency
+    # XIA20030501.0001      (složka XIN, soubor XIN_ARB_20030501.0001) ... Xinhua News Agency
+    my $csd = $pmldoc->{words}->listMetaData()->{pml_root}{meta}{document};
+    $csd =~ s/ummah(\d{8})_(\d{3})/ummah.$1.0$2/;
+    $csd =~ s/ASB(\d{8}\.\d{4})/assabah.$1/;
+    $csd =~ s/(\d{8})_AFP_ARB\.(\d{4})/afp.$1.$2/;
+    $csd =~ s/HYT_ARB_(\d{8}\.\d{4})/alhayat.$1/;
+    $csd =~ s/ALH(\d{8}\.\d{4})/alhayat.$1/;
+    $csd =~ s/ANN(\d{8}\.\d{4})/annahar.$1/;
+    $csd =~ s/XIA(\d{8}\.\d{4})/xinhua.$1/;
+    log_warn('Unrecognized document source '.$csd) if($csd !~ m/^(afp|ummah|assabah|alhayat|annahar|xinhua)\.\d/);
+    log_info('Current source document: '.$csd);
+    # The trees at the 'words' level correspond to paragraphs and each paragraph
+    # consists of one or more units. We really need to access the units, as these
+    # correspond to trees at the level of 'syntax'.
+    my @units;
+    my $np = $pmldoc->{words}->trees();
+    for(my $ip = 0; $ip < $np; $ip++)
+    {
+        my $paragraph = $pmldoc->{words}->tree($ip);
+        for(my $u = $paragraph->firstson(); defined($u); $u = $u->rbrother())
+        {
+            push(@units, $u);
+        }
+    }
+    my $nunits = scalar(@units);
     my $ntrees = $pmldoc->{syntax}->trees();
+    log_warn("$nunits on the words level does not correspond to $ntrees trees on the syntax level") if($ntrees!=$nunits);
     for(my $tree_number = 0; $tree_number<$ntrees; $tree_number++)
     {
         my $bundle = $document->create_bundle();
         my $zone = $bundle->create_zone($self->language(), $self->selector());
         my $aroot = $zone->create_atree();
         $self->_convert_atree($pmldoc->{syntax}->tree($tree_number), $aroot);
-        $zone->set_sentence($aroot->get_subtree_string());
+        my $unit = $units[$tree_number];
+        if(defined($unit))
+        {
+            my $id = $unit->attr('id');
+            # Every ID starts with 'w-' for the 'words' layer. We collapse layers and do not need this.
+            # However, we want the unit/bundle id to contain the document name so it is unique in the entire treebank.
+            $id =~ s:^w-:$csd/:;
+            $aroot->set_id($id);
+            my $form = $unit->attr('form');
+            if(defined($form))
+            {
+                $zone->set_sentence($form);
+            }
+            else
+            {
+                log_warn("Undefined form of unit $id.");
+                $zone->set_sentence($aroot->get_subtree_string());
+            }
+        }
+        else
+        {
+            log_warn("Undefined 'words' unit number $tree_number.");
+            $zone->set_sentence($aroot->get_subtree_string());
+        }
     }
 };
 
@@ -137,7 +194,8 @@ override '_convert_atree' => sub
         # The id of the Word is like this: 'm-p1w1'.
         # The Word refers to the corresponding element of the word layer.
         # The id there is like: 'w-p1u1w1'. So here it also gives the index of Unit.
-        # @available_attributes = $pml_node->attribute_paths();
+        #my @available_attributes = $pml_node->attribute_paths();
+        #log_fatal(join("\n", ('Available attributes:', @available_attributes)));
         my $wrf = $pml_node->attr('w/w.rf');
         if(defined($wrf))
         {
@@ -339,6 +397,70 @@ override '_create_val_refs' => sub
     my ( $self, $pmldoc, $document ) = @_;
     return;
 };
+
+
+
+###!!! Debugging Treex::PML and the PADT PML format.
+use Scalar::Util qw(reftype);
+sub dbgstr
+{
+    my $x = shift;
+    my $d = shift;
+    $d = {} if(!defined($d));
+    return '' if(!defined($x));
+    my $r = reftype($x);
+    my $s;
+    # Undefined reftype means this is not a reference but a plain scalar.
+    if(!defined($r))
+    {
+        $s = "'$x'";
+    }
+    elsif($r eq 'HASH')
+    {
+        my $xscalar = scalar($x);
+        return '!' if(exists($d->{$xscalar}));
+        $d->{$xscalar}++;
+        $s = "$x ".dbgstrhash($x, $d);
+    }
+    elsif($r eq 'ARRAY')
+    {
+        my $xscalar = scalar($x);
+        return '!' if(exists($d->{$xscalar}));
+        $d->{$xscalar}++;
+        $s = "$x ".dbgstrarray($x, $d);
+    }
+    elsif($r eq '')
+    {
+        $s = $x;
+    }
+    else
+    {
+        $s = "unknown reference type $r";
+    }
+    return $s;
+}
+sub dbgstrhash
+{
+    my $x = shift;
+    my $d = shift;
+    my @s;
+    foreach my $k (sort(keys(%{$x})))
+    {
+        push(@s, "$k => ".dbgstr($x->{$k}, $d));
+    }
+    return '{ '.join(', ', @s).' }';
+}
+sub dbgstrarray
+{
+    my $x = shift;
+    my $d = shift;
+    my @s;
+    foreach my $e (@{$x})
+    {
+        push(@s, dbgstr($e, $d));
+    }
+    return '[ '.join(', ', @s).' ]';
+}
 
 1;
 
