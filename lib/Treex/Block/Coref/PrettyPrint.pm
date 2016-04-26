@@ -32,13 +32,13 @@ sub _coref_format {
     foreach my $ttree (@$sents) {
         foreach my $tnode ($ttree->get_descendants({ordered => 1})) {
             my @colors = ();
-            if ($tnode->id eq $anaph_id) {
-                push @colors, "yellow";
-            }
             if ($tnode->wild->{coref_diag}{cand_for}{$anaph_id}) {
                 push @colors, "reverse";
             }
-            if ($tnode->wild->{coref_diag}{sys_ante_for}{$anaph_id} && $tnode->wild->{coref_diag}{key_ante_for}{$anaph_id}) {
+            if ($tnode->id eq $anaph_id) {
+                push @colors, "yellow";
+            }
+            elsif ($tnode->wild->{coref_diag}{sys_ante_for}{$anaph_id} && $tnode->wild->{coref_diag}{key_ante_for}{$anaph_id}) {
                 push @colors, "green";
                 $is_correct = 1;
                 $has_key_ante = 1;
