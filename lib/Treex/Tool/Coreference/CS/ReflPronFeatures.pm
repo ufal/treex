@@ -3,6 +3,7 @@ package Treex::Tool::Coreference::CS::ReflPronFeatures;
 use Moose;
 use Treex::Core::Common;
 use List::MoreUtils qw/any/;
+use Treex::Tool::Coreference::NodeFilter;
 
 use Treex::Tool::Lexicon::CS;
 
@@ -21,6 +22,10 @@ augment '_unary_features' => sub {
     $feats->{'lemma'} = defined $anode ? Treex::Tool::Lexicon::CS::truncate_lemma($anode->lemma) : $UNDEF_VALUE;
     $feats->{'subpos'} = defined $anode ? substr($anode->tag, 1, 1) : $UNDEF_VALUE;
 
+    if ($type eq 'cand') {
+        $feats->{'is_refl'} = Treex::Tool::Coreference::NodeFilter::matches($node, ['reflpron']) ? 1 : 0;
+    }
+
     #$feats->{'tlemma'} = $node->t_lemma;
     #$feats->{'fmm'} = $node->formeme;
 
@@ -35,6 +40,9 @@ override '_binary_features' => sub {
 
     $feats->{clause_subject} = $self->_is_clause_subject($anaph, $cand) ? 1 : 0;
     $feats->{is_subject} = $self->_is_subject($cand) ? 1 : 0;
+
+    $feats->{in_clause} = $anaph->clause_number eq $cand->clause_number ? 1 : 0;
+    $feats->{refl_in_clause} = $set_features->{'c^cand_is_refl'} . "_" . $feats->{in_clause};
     
     return $feats;
 };

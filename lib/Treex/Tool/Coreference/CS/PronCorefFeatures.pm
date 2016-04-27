@@ -169,27 +169,27 @@ override '_binary_features' => sub {
     #   8:  gender, num, agreement, joined
     
     $coref_features->{b_gen_agree} 
-        = $self->_agree_feats($set_features->{c_cand_gen}, $set_features->{c_anaph_gen});
+        = $self->_agree_feats($set_features->{'c^c_cand_gen'}, $set_features->{'a^c_anaph_gen'});
     $coref_features->{c_join_gen} 
-        = $self->_join_feats($set_features->{c_cand_gen}, $set_features->{c_anaph_gen});
+        = $self->_join_feats($set_features->{'c^c_cand_gen'}, $set_features->{'a^c_anaph_gen'});
 
     $coref_features->{b_num_agree} 
-        = $self->_agree_feats($set_features->{c_cand_num}, $set_features->{c_anaph_num});
+        = $self->_agree_feats($set_features->{'c^c_cand_num'}, $set_features->{'a^c_anaph_num'});
     $coref_features->{c_join_num} 
-        = $self->_join_feats($set_features->{c_cand_num}, $set_features->{c_anaph_num});
+        = $self->_join_feats($set_features->{'c^c_cand_num'}, $set_features->{'a^c_anaph_num'});
 
     $coref_features->{c_join_asubpos}  
-        = $self->_join_feats($set_features->{c_cand_asubpos}, $set_features->{c_anaph_asubpos});
+        = $self->_join_feats($set_features->{'c^c_cand_asubpos'}, $set_features->{'a^c_anaph_asubpos'});
     $coref_features->{c_join_agen}  
-        = $self->_join_feats($set_features->{c_cand_agen}, $set_features->{c_anaph_agen});
+        = $self->_join_feats($set_features->{'c^c_cand_agen'}, $set_features->{'a^c_anaph_agen'});
     $coref_features->{c_join_acase}  
-        = $self->_join_feats($set_features->{c_cand_acase}, $set_features->{c_anaph_acase});
+        = $self->_join_feats($set_features->{'c^c_cand_acase'}, $set_features->{'a^c_anaph_acase'});
     $coref_features->{c_join_apossgen}  
-        = $self->_join_feats($set_features->{c_cand_apossgen}, $set_features->{c_anaph_apossgen});
+        = $self->_join_feats($set_features->{'c^c_cand_apossgen'}, $set_features->{'a^c_anaph_apossgen'});
     $coref_features->{c_join_apossnum}  
-        = $self->_join_feats($set_features->{c_cand_apossnum}, $set_features->{c_anaph_apossnum});
+        = $self->_join_feats($set_features->{'c^c_cand_apossnum'}, $set_features->{'a^c_anaph_apossnum'});
     $coref_features->{c_join_apers}  
-        = $self->_join_feats($set_features->{c_cand_apers}, $set_features->{c_anaph_apers});
+        = $self->_join_feats($set_features->{'c^c_cand_apers'}, $set_features->{'a^c_anaph_apers'});
     #   1: collocation
     $coref_features->{b_coll} = $self->_in_collocation( $cand, $anaph );
 
