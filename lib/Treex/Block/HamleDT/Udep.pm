@@ -463,7 +463,9 @@ sub convert_deprels
             }
             # When it is attached to a subordinating conjunction (AuxC), the two form a multi-word subordinator.
             # Index Thomisticus examples: ita quod (so that), etiam si (even if), quod quod (what is that), ac si (as if), et si (although)
-            elsif($parent->deprel() =~ m/^(AuxC|mark)$/)
+            elsif(defined($parent->deprel()) && $parent->deprel() =~ m/^(AuxC|mark)$/ ||
+                  defined($parent->afun())   && $parent->afun()   =~ m/^(AuxC|mark)$/ ||
+                  defined($parent->conll_deprel()) && $parent->conll_deprel() =~ m/^(AuxC|mark)$/)
             {
                 # The phrase builder will later transform it to MWE.
                 $deprel = 'mark';
