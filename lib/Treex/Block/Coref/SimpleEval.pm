@@ -77,14 +77,14 @@ sub process_bundle {
                 $both_eval_class = 1;
             }
 
-            print {$self->_file_handle} join " ", ($gold_eval_class, $pred_eval_class, $both_eval_class);
+            print {$self->_file_handle} join " ", ($gold_eval_class, $pred_eval_class, $both_eval_class, $ali_src_tnode->get_address);
             print {$self->_file_handle} "\n";
         }
         # process the ref nodes that have no src counterpart
         # considered correct if the ref node is non-anaphoric
         if (!@$ali_nodes) {
-            printf STDERR "NO SRC: %s\n", $ref_tnode->get_address;
-            print {$self->_file_handle} join " ", ($gold_eval_class, 0, 1-$gold_eval_class);
+            #printf STDERR "NO SRC: %s %d\n", $ref_tnode->get_address, 1-$gold_eval_class;
+            print {$self->_file_handle} join " ", ($gold_eval_class, 0, 1-$gold_eval_class, $ref_tnode->get_address);
             print {$self->_file_handle} "\n";
         }
     }
@@ -92,10 +92,10 @@ sub process_bundle {
         next if (defined $covered_src_nodes{$src_tnode->id});
         next if (!Treex::Tool::Coreference::NodeFilter::matches($src_tnode, $self->node_types));
         
-        printf STDERR "NO REF: %s\n", $src_tnode->get_address;
-        
         my $pred_eval_class = $src_tnode->get_coref_nodes ? 1 : 0;
-        print {$self->_file_handle} join " ", (0, $pred_eval_class, 1-$pred_eval_class);
+        #printf STDERR "NO REF: %s %d\n", $src_tnode->get_address, 1-$pred_eval_class;
+        
+        print {$self->_file_handle} join " ", (0, $pred_eval_class, 1-$pred_eval_class, $src_tnode->get_address);
         print {$self->_file_handle} "\n";
     }
 }
