@@ -12,6 +12,7 @@ has '+schema_dir' => ( builder => '_build_schema_dir', lazy_build => 0 );
 has '+_layers' => ( builder => '_build_layers', lazy_build => 1 );
 has '+_file_suffix' => ( default => '\.syntax\.pml(\.gz)?$' );
 has language => ( isa => 'Treex::Type::LangCode', is => 'ro', required => 1, default => 'ar' );
+has '_no_space_after' => ( isa => 'HashRef', is => 'rw', default => sub { {} }, documentation => 'hash word id => boolean space after wor no=1/yes=0|undef' );
 
 sub _build_schema_dir
 {
@@ -105,6 +106,44 @@ override '_convert_all_trees' => sub
         }
     }
     my $nunits = scalar(@units);
+    # Erase the _no_space_after hash before processing the new document.
+    my $nsa = $self->_no_space_after();
+    %{$nsa} = ();
+    # For each unit (sentence), loop over tokens and check whether they are separated by whitespace.
+    for(my $i = 0; $i < $nunits; $i++)
+    {
+        my $unit = $units[$i];
+        my $sentence = $unit->attr('form');
+        # Make sure that 'no_space_after' is not set for the last token of the sentence.
+        $sentence .= ' ';
+        if(defined($sentence))
+        {
+            # Children of <Unit> are <Word>. Their attributes are id and form.
+            for(my $w = $unit->firstson(); defined($w); $w = $w->rbrother())
+            {
+                my $wid = $w->attr('id');
+                my $wform = $w->attr('form');
+                # There shouldn't be any whitespace in the beginning of the sentence but just in case.
+                $sentence =~ s/^\s+//;
+                # Eat the current token from the beginning of the sentence.
+                if(!($sentence =~ s/^\Q$wform\E//))
+                {
+                    log_warn('Unmatched unit/form and word/forms in '.$unit->attr('id'));
+                    last;
+                }
+                # Look for whitespace after the token.
+                if($sentence =~ s/^\s+//)
+                {
+                    $nsa->{$wid} = 0;
+                }
+                else
+                {
+                    $nsa->{$wid} = 1;
+                }
+            }
+        }
+    }
+    # Read syntactic annotation.
     my $ntrees = $pmldoc->{syntax}->trees();
     log_warn("$nunits on the words level does not correspond to $ntrees trees on the syntax level") if($ntrees!=$nunits);
     for(my $tree_number = 0; $tree_number<$ntrees; $tree_number++)
@@ -179,6 +218,7 @@ override '_convert_atree' => sub
     my $self = shift;
     my $pml_node = shift; # where to copy attributes from
     my $treex_node = shift; # where to copy attributes to
+    my $nsa = $self->_no_space_after();
     # The following attributes are present for all nodes including the root.
     foreach my $attr_name ('id', 'ord', 'afun')
     {
@@ -199,7 +239,12 @@ override '_convert_atree' => sub
         my $wrf = $pml_node->attr('w/w.rf');
         if(defined($wrf))
         {
+            $wrf =~ s/^w\#//;
             $treex_node->wild()->{wrf} = $wrf;
+            if($nsa->{$wrf})
+            {
+                $treex_node->set_no_space_after(1);
+            }
         }
         # Attributes from the word layer.
         # The surface word may correspond to more than one nodes (morphological analysis and second-level tokenization).
