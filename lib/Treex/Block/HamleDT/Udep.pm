@@ -452,7 +452,6 @@ sub convert_deprels
             $deprel = 'neg';
         }
         # AuxY: Additional conjunction in coordination ... cc
-        # AuxY: Subordinating conjunction "jako" ("as") attached to Atv or AtvV, or even Obj (of verbal adjectives) ... mark
         elsif($deprel eq 'AuxY')
         {
             # When it is attached to a verb, it is a sentence adverbial, disjunct or connector.
@@ -470,10 +469,15 @@ sub convert_deprels
                 # The phrase builder will later transform it to MWE.
                 $deprel = 'mark';
             }
-            elsif(lc($node->form()) eq 'jako')
+            # AuxY: Subordinating conjunction "jako" ("as") attached to Atv or AtvV, or even Obj (of verbal adjectives) ... mark
+            ###!!! If we had access to the original deprel (afun) of the parent, we could check whether it is m/^AtvV?$/.
+            # Index Thomisticus examples: ut (as), sicut (as), quasi (as), tanquam (like), utpote (as).
+            elsif(lc($node->form()) =~ m/^(jako|ut|sicut|quasi|tanquam|utpote)$/)
             {
                 $deprel = 'mark';
             }
+            # Non-head conjunction in coordination.
+            # Index Thomisticus examples: et (and), enim (indeed), vel (or), igitur (therefore), neque (neither).
             else
             {
                 $deprel = 'cc';
