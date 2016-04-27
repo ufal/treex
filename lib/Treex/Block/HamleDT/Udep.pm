@@ -455,7 +455,13 @@ sub convert_deprels
         # AuxY: Subordinating conjunction "jako" ("as") attached to Atv or AtvV, or even Obj (of verbal adjectives) ... mark
         elsif($deprel eq 'AuxY')
         {
-            if(lc($node->form()) eq 'jako')
+            # When it is attached to a verb, it is a sentence adverbial, disjunct or connector.
+            # Index Thomisticus examples: igitur (therefore), enim (indeed), unde (whence), sic (so, thus), ergo (therefore).
+            if($parent->is_verb())
+            {
+                $deprel = 'advmod';
+            }
+            elsif(lc($node->form()) eq 'jako')
             {
                 $deprel = 'mark';
             }
