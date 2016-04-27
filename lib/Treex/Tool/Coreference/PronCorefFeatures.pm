@@ -65,29 +65,29 @@ override '_binary_features' => sub {
     #   24: 8 x tag($inode, $jnode), joined
     
     $coref_features->{c_join_apos}  
-        = $self->_join_feats($set_features->{c_cand_apos}, $set_features->{c_anaph_apos});
+        = $self->_join_feats($set_features->{'c^c_cand_apos'}, $set_features->{'a^c_anaph_apos'});
     $coref_features->{c_join_anum}  
-        = $self->_join_feats($set_features->{c_cand_anum}, $set_features->{c_anaph_anum});
+        = $self->_join_feats($set_features->{'c^c_cand_anum'}, $set_features->{'a^c_anaph_anum'});
 
 ###########################
     #   Functional:
     #   3:  functor($inode, $jnode);
     $coref_features->{b_fun_agree} 
-        = $self->_agree_feats($set_features->{c_cand_fun}, $set_features->{c_anaph_fun});
+        = $self->_agree_feats($set_features->{'c^c_cand_fun'}, $set_features->{'a^c_anaph_fun'});
     $coref_features->{c_join_fun}  
-        = $self->_join_feats($set_features->{c_cand_fun}, $set_features->{c_anaph_fun});
+        = $self->_join_feats($set_features->{'c^c_cand_fun'}, $set_features->{'a^c_anaph_fun'});
 
     #   formeme
     $coref_features->{b_fmm_agree} 
-        = $self->_agree_feats($set_features->{c_cand_fmm}, $set_features->{c_anaph_fmm});
+        = $self->_agree_feats($set_features->{'c^c_cand_fmm'}, $set_features->{'a^c_anaph_fmm'});
     $coref_features->{c_join_fmm}  
-        = $self->_join_feats($set_features->{c_cand_fmm}, $set_features->{c_anaph_fmm});
+        = $self->_join_feats($set_features->{'c^c_cand_fmm'}, $set_features->{'a^c_anaph_fmm'});
     
     #   3: afun($inode, $jnode);
     $coref_features->{b_afun_agree} 
-        = $self->_agree_feats($set_features->{c_cand_afun}, $set_features->{c_anaph_afun});
+        = $self->_agree_feats($set_features->{'c^c_cand_afun'}, $set_features->{'a^c_anaph_afun'});
     $coref_features->{c_join_afun}  
-        = $self->_join_feats($set_features->{c_cand_afun}, $set_features->{c_anaph_afun});
+        = $self->_join_feats($set_features->{'c^c_cand_afun'}, $set_features->{'a^c_anaph_afun'});
     
     #   3: aktant($inode, $jnode);
     $coref_features->{b_akt_agree} 
@@ -104,32 +104,32 @@ override '_binary_features' => sub {
     #   2: agreement in eparent functor and sempos
 	#my ($anaph_epar_lemma, $cand_epar_lemma) = map {my $epar = ($_->get_eparents)[0]; $epar->t_lemma} ($anaph, $cand);
     $coref_features->{b_epar_fmm_agree}
-        = $self->_agree_feats($set_features->{c_cand_epar_fmm}, $set_features->{c_anaph_epar_fmm});
+        = $self->_agree_feats($set_features->{'c^c_cand_epar_fmm'}, $set_features->{'a^c_anaph_epar_fmm'});
     $coref_features->{c_join_epar_fmm}          
-        = $self->_join_feats($set_features->{c_cand_epar_fmm}, $set_features->{c_anaph_epar_fmm});
+        = $self->_join_feats($set_features->{'c^c_cand_epar_fmm'}, $set_features->{'a^c_anaph_epar_fmm'});
     $coref_features->{b_epar_fun_agree}
-        = $self->_agree_feats($set_features->{c_cand_epar_fun}, $set_features->{c_anaph_epar_fun});
+        = $self->_agree_feats($set_features->{'c^c_cand_epar_fun'}, $set_features->{'a^c_anaph_epar_fun'});
     $coref_features->{c_join_epar_fun}          
-        = $self->_join_feats($set_features->{c_cand_epar_fun}, $set_features->{c_anaph_epar_fun});
+        = $self->_join_feats($set_features->{'c^c_cand_epar_fun'}, $set_features->{'a^c_anaph_epar_fun'});
     $coref_features->{b_epar_sempos_agree}      
-        = $self->_agree_feats($set_features->{c_cand_epar_sempos}, $set_features->{c_anaph_epar_sempos});
+        = $self->_agree_feats($set_features->{'c^c_cand_epar_sempos'}, $set_features->{'a^c_anaph_epar_sempos'});
     $coref_features->{c_join_epar_sempos}       
-        = $self->_join_feats($set_features->{c_cand_epar_sempos}, $set_features->{c_anaph_epar_sempos});
+        = $self->_join_feats($set_features->{'c^c_cand_epar_sempos'}, $set_features->{'a^c_anaph_epar_sempos'});
     $coref_features->{b_epar_lemma_agree}       
         #= $self->_agree_feats($cand_epar_lemma, $anaph_epar_lemma);
-        = $self->_agree_feats($set_features->{c_cand_epar_lemma}, $set_features->{c_anaph_epar_lemma});
+        = $self->_agree_feats($set_features->{'c^c_cand_epar_lemma'}, $set_features->{'a^c_anaph_epar_lemma'});
     $coref_features->{c_join_epar_lemma}        
         #= $self->_join_feats($cand_epar_lemma, $anaph_epar_lemma);
-        = $self->_join_feats($set_features->{c_cand_epar_lemma}, $set_features->{c_anaph_epar_lemma});
+        = $self->_join_feats($set_features->{'c^c_cand_epar_lemma'}, $set_features->{'a^c_anaph_epar_lemma'});
     $coref_features->{c_join_clemma_aeparlemma} 
         #= $self->_join_feats($cand->t_lemma, $anaph_epar_lemma);
-        = $self->_join_feats($cand->t_lemma, $set_features->{c_anaph_epar_lemma});
+        = $self->_join_feats($cand->t_lemma, $set_features->{'a^c_anaph_epar_lemma'});
     
     #   3:  tfa($inode, $jnode);
     $coref_features->{b_tfa_agree} 
-        = $self->_agree_feats($set_features->{c_cand_tfa}, $set_features->{c_anaph_tfa});
+        = $self->_agree_feats($set_features->{'c^c_cand_tfa'}, $set_features->{'a^c_anaph_tfa'});
     $coref_features->{c_join_tfa}  
-        = $self->_join_feats($set_features->{c_cand_tfa}, $set_features->{c_anaph_tfa});
+        = $self->_join_feats($set_features->{'c^c_cand_tfa'}, $set_features->{'a^c_anaph_tfa'});
     
     #   1: are_siblings($inode, $jnode)
     $coref_features->{b_sibl} = _are_siblings( $cand, $anaph );

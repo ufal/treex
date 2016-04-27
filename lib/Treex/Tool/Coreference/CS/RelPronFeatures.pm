@@ -32,10 +32,26 @@ override '_binary_features' => sub {
 
     $feats->{clause_parent} = $self->_is_clause_parent($anaph, $cand) ? 1 : 0;
     
-    $feats->{gen_agree} = $self->_agree_feats($set_features->{cand_gen}, $set_features->{anaph_gen});
-    $feats->{gen_join} = $self->_join_feats($set_features->{cand_gen}, $set_features->{anaph_gen});
-    $feats->{num_agree} = $self->_agree_feats($set_features->{cand_num}, $set_features->{anaph_num});
-    $feats->{num_join} = $self->_join_feats($set_features->{cand_num}, $set_features->{anaph_num});
+    $feats->{gen_agree} = $self->_agree_feats($set_features->{'c^cand_gen'}, $set_features->{'a^anaph_gen'});
+    $feats->{gen_join} = $self->_join_feats($set_features->{'c^cand_gen'}, $set_features->{'a^anaph_gen'});
+    $feats->{num_agree} = $self->_agree_feats($set_features->{'c^cand_num'}, $set_features->{'a^anaph_num'});
+    $feats->{num_join} = $self->_join_feats($set_features->{'c^cand_num'}, $set_features->{'a^anaph_num'});
+    
+    $feats->{cand_ancestor} = (any {$_ == $anaph} $cand->get_descendants()) ? 1 : 0;
+    $feats->{cand_ancestor_num_agree} = $feats->{cand_ancestor} . "_" . $feats->{num_agree};
+    $feats->{cand_ancestor_gen_agree} = $feats->{cand_ancestor} . "_" . $feats->{gen_agree};
+    $feats->{cand_ancestor_gennum_agree} = $feats->{cand_ancestor} . "_" . $feats->{gen_agree} . "_" . $feats->{num_agree};
+
+    my $aanaph = $anaph->get_lex_anode;
+    my $acand = $cand->get_lex_anode;
+    if (defined $aanaph && defined $acand) {
+        my @anodes = $aanaph->get_root->get_descendants({ordered => 1});
+        my @nodes_between = @anodes[$acand->ord .. $aanaph->ord-2];
+        
+        $feats->{is_comma_between} = any {$_->form eq ","} @nodes_between;
+        $feats->{words_between_count} = scalar @nodes_between;
+    }
+
 
     return $feats;
 };
