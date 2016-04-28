@@ -211,6 +211,15 @@ sub convert_deprels
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants();
+    # We will need to query the original Prague deprel (afun) of parent nodes in certain situations.
+    # It will not be guaranteed that the parent deprel has not been converted by then. Therefore we will make a copy now.
+    # Make sure that the copy is defined even if the parent is root.
+    $root->wild()->{prague_deprel} = 'AuxS';
+    foreach my $node (@nodes)
+    {
+        my $deprel = $node->deprel() // '';
+        $node->wild()->{prague_deprel} = $deprel;
+    }
     foreach my $node (@nodes)
     {
         my $deprel = $node->deprel();
@@ -451,32 +460,37 @@ sub convert_deprels
         {
             $deprel = 'neg';
         }
-        # AuxY: Additional conjunction in coordination ... cc
+        # The AuxY deprel is used in various situations, see below.
         elsif($deprel eq 'AuxY')
         {
             # When it is attached to a verb, it is a sentence adverbial, disjunct or connector.
             # Index Thomisticus examples: igitur (therefore), enim (indeed), unde (whence), sic (so, thus), ergo (therefore).
-            if($parent->is_verb())
+            if($parent->is_verb() && !$node->is_coordinator())
             {
                 $deprel = 'advmod';
             }
             # When it is attached to a subordinating conjunction (AuxC), the two form a multi-word subordinator.
             # Index Thomisticus examples: ita quod (so that), etiam si (even if), quod quod (what is that), ac si (as if), et si (although)
-            elsif(defined($parent->deprel()) && $parent->deprel() =~ m/^(AuxC|mark)$/ ||
-                  defined($parent->afun())   && $parent->afun()   =~ m/^(AuxC|mark)$/ ||
-                  defined($parent->conll_deprel()) && $parent->conll_deprel() =~ m/^(AuxC|mark)$/)
+            elsif($parent->wild()->{prague_deprel} eq 'AuxC')
             {
                 # The phrase builder will later transform it to MWE.
                 $deprel = 'mark';
             }
-            # AuxY: Subordinating conjunction "jako" ("as") attached to Atv or AtvV, or even Obj (of verbal adjectives) ... mark
-            ###!!! If we had access to the original deprel (afun) of the parent, we could check whether it is m/^AtvV?$/.
-            # Index Thomisticus examples: ut (as), sicut (as), quasi (as), tanquam (like), utpote (as).
-            elsif(lc($node->form()) =~ m/^(jako|ut|sicut|quasi|tanquam|utpote)$/)
+            # When it is attached to a complement (Atv, AtvV), it is usually an equivalent of the subordinating conjunction "as" and it should be 'mark'.
+            # Czech: "jako" ("as"); sometimes it is attached even to Obj (of verbal adjectives). It should never get the 'cc' deprel, so we will mention it explicitly.
+            # Index Thomisticus examples: ut (as), sicut (as), quasi (as), tanquam (like), utpote (as) etc.
+            elsif($parent->wild()->{prague_deprel} =~ m/^AtvV?$/ ||
+                  lc($node->form()) =~ m/^(jako|ut|sicut|quasi|tanquam|utpote)$/)
             {
                 $deprel = 'mark';
             }
-            # Non-head conjunction in coordination.
+            # AuxY may be a preposition attached to an adverb; unlike normal AuxP prepositions, this one is not the head.
+            # Index Thomisticus: ad invicem (each other); "invicem" is adverb that could be roughly translated as "mutually".
+            elsif($node->is_adposition())
+            {
+                $deprel = 'case';
+            }
+            # Non-head conjunction in coordination is probably the most common usage.
             # Index Thomisticus examples: et (and), enim (indeed), vel (or), igitur (therefore), neque (neither).
             else
             {
@@ -547,6 +561,12 @@ sub convert_deprels
         }
         # Save the universal dependency relation label with the node.
         $node->set_deprel($deprel);
+    }
+    # Now that all deprels have been converted we do not need the copies of the original deprels any more. Delete them.
+    delete($root->wild()->{prague_deprel});
+    foreach my $node (@nodes)
+    {
+        delete($node->wild()->{prague_deprel});
     }
 }
 

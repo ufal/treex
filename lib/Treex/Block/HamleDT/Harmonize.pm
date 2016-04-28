@@ -45,10 +45,19 @@ sub process_zone
     # Convert CoNLL POS tags and features to Interset and PDT if possible.
     $self->convert_tags($root);
     $self->fix_morphology($root);
+    foreach my $node ($root->get_descendants())
+    {
+        $self->set_pdt_tag($node);
+        # For the case we later access the CoNLL attributes, reset them as well, except for conll/pos, which holds the tag from the source tagset.
+        # (We can still specify other source attributes in Write::CoNLLX and similar blocks.)
+        my $tag = $node->tag(); # now the PDT tag
+        $node->set_conll_cpos(substr($tag, 0, 1));
+        $node->set_conll_feat($node->iset()->as_string_conllx());
+    }
 
     # Conversion from dependency relation tags to afuns (analytical function tags) must be done always
     # and it is almost always treebank-specific (only a few treebanks use the same tagset as the PDT).
-    $root->set_afun('AuxS');
+    $root->set_deprel('AuxS');
     $self->convert_deprels($root);
     $self->fix_annotation_errors($root);
 
@@ -81,14 +90,10 @@ sub convert_tags
             }
         }
         # Now that we have a copy of the original tag, we can convert it.
-        $self->decode_iset( $node );
-        $self->set_pdt_tag( $node );
-        # For the case we later access the CoNLL attributes, reset them as well.
-        # (We can still specify other source attributes in Write::CoNLLX and similar blocks.)
-        my $tag = $node->tag(); # now the PDT tag
-        $node->set_conll_cpos(substr($tag, 0, 1));
+        $self->decode_iset($node);
+        # Keep the original tag as the CoNLL POS attribute. The Write::CoNLLU block will print it alongside the universal POS tag.
+        # Do not do this before decoding Interset! The current value of conll/pos may be part of its input!
         $node->set_conll_pos($origtag);
-        $node->set_conll_feat($node->iset()->as_string_conllx());
     }
 }
 
