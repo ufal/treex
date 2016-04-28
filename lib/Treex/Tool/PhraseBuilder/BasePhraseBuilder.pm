@@ -1183,6 +1183,87 @@ sub detect_stanford_pp
 
 
 #------------------------------------------------------------------------------
+# Examines a nonterminal phrase whether it is a subordinate clause in the
+# Alpino style: like in Stanford, the subordinating conjunction is the head and
+# its deprel label is the relation of the whole clause to its parent, not just
+# an auxiliary label for the conjunction. However, unlike in Stanford, Alpino
+# treats relative pronouns and adverbs as if they were subordinating
+# conjunctions. In case of relative determiners it gets even trickier: the
+# whole relative phrase (such as "welke boeken", "which books") takes the place
+# of the conjunction. We want to fix this and put the relative element down in
+# the clause.
+#------------------------------------------------------------------------------
+sub detect_alpino_clause
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    # The subordinating conjunction or the relative element is the head.
+    # We look at the child deprels: one of the children should be shouting "I'm the argument of a subordinator!"
+    my @dependents = $phrase->dependents('ordered' => 1);
+    my @arguments = grep {$self->is_deprel($_->deprel(), 'sarg')} (@dependents);
+    if(@arguments)
+    {
+        # We are working bottom-up, thus the current phrase does not have a parent yet and we do not have to take care of the parent link.
+        # We have to detach the argument though, and we have to port the is_member flag.
+        my $member = $phrase->is_member();
+        my $pp_deprel = $phrase->deprel();
+        # Now it is clear that we have a subordinate clause.
+        # The subordinator is the current phrase but we have to detach the dependents and only keep the core.
+        # If the subordinator is a relative pronoun, it can be subject, object or modifier of the subordinate clause. Then we will not construct a PP!
+        # Dutch examples: die (that), dat (that), hoeveel (how many), hetgeen (which), wat (what), wie (who), welke (which), zoveel (as many)
+        if($phrase->node()->is_pronoun())
+        {
+            ###!!! We should implement heuristics to decide between subject, object or optional modifier.
+            ###!!! Also note that the subordinator may be a multi-word noun phrase (welke boeken = which books) or a prepositional phrase (bij wat = by what).
+            ###!!! All that will currently come out wrong.
+            $phrase->head()->set_deprel($self->map_deprel('dobj'));
+            $phrase->set_head($arguments[0]);
+            $phrase->set_deprel($pp_deprel);
+        }
+        else
+        {
+            $phrase->set_is_member(undef);
+            my $fun = $phrase;
+            my $arg = $arguments[0];
+            my $fun_deprel = $self->map_deprel('auxc');
+            $fun->set_deprel($fun_deprel);
+            $arg->set_parent(undef);
+            $arg->set_deprel($pp_deprel);
+            my $pp = new Treex::Core::Phrase::PP
+            (
+                'fun'           => $fun,
+                'arg'           => $arg,
+                'fun_is_head'   => $self->prep_is_head(),
+                'deprel_at_fun' => 0,
+                'core_deprel'   => $fun_deprel,
+                'is_member'     => $member
+            );
+            $pp->set_deprel($pp_deprel);
+            foreach my $d (@dependents)
+            {
+                unless($d == $arg)
+                {
+                    $d->set_parent($pp);
+                }
+            }
+            $phrase = $pp;
+        }
+        # This method is used for annotation styles where SubArg is not a valid relation.
+        # Therefore we must reset the deprel of the remaining candidates to something valid.
+        foreach my $argument (@arguments)
+        {
+            if($self->is_deprel($argument->deprel(), 'sarg'))
+            {
+                $self->set_deprel($argument, 'ccomp');
+            }
+        }
+    }
+    return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
 # Examines a nonterminal phrase whether its head is an auxiliary verb, while
 # the content verb is one of the dependents. Converts the phrase to a PP
 # phrase (function word plus argument). Any other dependents of the auxiliary
