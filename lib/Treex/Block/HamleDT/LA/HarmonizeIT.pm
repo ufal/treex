@@ -209,6 +209,21 @@ sub fix_part_of_speech
             log_warn("UNKNOWN LEMMA $lemma");
         }
     }
+    # "cum" is either preposition or subordinating conjunction
+    elsif($node->is_adposition())
+    {
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
+        if($deprel eq 'AuxC')
+        {
+            $node->iset()->set_hash({'pos' => 'conj', 'conjtype' => 'sub'});
+        }
+    }
     # Marco's rules for splitting "particles":
     elsif($node->is_particle())
     {
