@@ -173,7 +173,7 @@ sub fix_symbols
             }
             # Slash '/' can be punctuation or mathematical symbol.
             # It is difficult to tell automatically but we will make it a symbol if it is not leaf (and does not head coordination).
-            elsif($node->form() eq '/' && !$node->is_leaf() && !$node->is_coap_root())
+            elsif($node->form() eq '/' && !$node->is_leaf() && $node->deprel() !~ m/^(Coord|Apos)$/)
             {
                 $node->iset()->set('pos', 'sym');
                 if($node->deprel() eq 'AuxG')
