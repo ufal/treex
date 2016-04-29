@@ -123,6 +123,8 @@ sub detect_prague_coordination
 {
     my $self = shift;
     my $phrase = shift; # Treex::Core::Phrase
+    # Do not check terminal phrases even if their deprel is Coord. We have to collect the nonterminal with their dependents first.
+    return $phrase if($phrase->is_terminal());
     # If this is the Prague style then the head is either coordinating conjunction or punctuation.
     if($self->is_deprel($phrase->deprel(), 'coord'))
     {
@@ -947,6 +949,39 @@ sub detect_prague_apposition
                     }
                 }
             }
+        }
+    }
+    return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Examines a Prague-style nonterminal phrase. A rare but existing construction
+# in Prague treebanks is hyphen analyzed as copula verb, e.g. "Šerák - 1353"
+# meaning "Šerák [is] 1353 [meters tall]". It should be apposition, which is
+# how this method re-analyzes it.
+#------------------------------------------------------------------------------
+sub detect_punctuation_pnom_apposition
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    # Is the head of the phrase punctuation (dash, colon)?
+    if($phrase->node()->form() =~ m/^[-:]$/)
+    {
+        # Does it have two dependents, a subject and a nominal predicate?
+        my @dependents = $phrase->dependents('ordered' => 1);
+        my @pnomdeps = grep {$self->is_deprel($_->deprel(), 'pnom')} (@dependents);
+        my @subjects = grep {$self->is_deprel($_->deprel(), 'subj')} (@dependents);
+        if(scalar(@subjects)==1 && scalar(@pnomdeps)==1)
+        {
+            my $punctuation = $phrase->head();
+            my $deprel = $phrase->deprel();
+            $phrase->set_head($subjects[0]);
+            $phrase->set_deprel($deprel);
+            $self->set_deprel($punctuation, 'punct');
+            $punctuation->set_is_member(undef);
+            $self->set_deprel($pnomdeps[0], 'appos');
         }
     }
     return $phrase;

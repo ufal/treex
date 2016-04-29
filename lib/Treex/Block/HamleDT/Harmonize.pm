@@ -34,6 +34,7 @@ sub process_zone
     my $self   = shift;
     my $zone   = shift;
     my $root = $zone->get_atree();
+    my @nodes = $root->get_descendants();
 
     # Adjust the sentence id that will be eventually printed in the CoNLL-U file.
     # Now we probably have something like "a_tree-ca-s30-root". Both "a_tree-" and "-root" are superfluous.
@@ -45,7 +46,7 @@ sub process_zone
     # Convert CoNLL POS tags and features to Interset and PDT if possible.
     $self->convert_tags($root);
     $self->fix_morphology($root);
-    foreach my $node ($root->get_descendants())
+    foreach my $node (@nodes)
     {
         $self->set_pdt_tag($node);
         # For the case we later access the CoNLL attributes, reset them as well, except for conll/pos, which holds the tag from the source tagset.
@@ -60,6 +61,13 @@ sub process_zone
     $root->set_deprel('AuxS');
     $self->convert_deprels($root);
     $self->fix_annotation_errors($root);
+    # To avoid any confusion, make sure that 'deprel' is the only attribute bearing the dependency relation label.
+    # Otherwise later changes will break synchronization with 'afun' and 'conll/deprel'.
+    foreach my $node (@nodes)
+    {
+        $node->set_afun(undef);
+        $node->set_conll_deprel(undef);
+    }
 
     # The return value can be used by the overriding methods of subclasses.
     return $root;
@@ -842,6 +850,37 @@ sub sentence_contains
     my $query    = shift;
     my $sentence = $node->get_zone()->sentence();
     return $sentence =~ m/$query/;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Collects all nodes in a subtree of a given node. Useful for fixing known
+# annotation errors, see also get_node_spanstring(). Returns ordered list.
+#------------------------------------------------------------------------------
+sub get_node_subtree
+{
+    my $self = shift;
+    my $node = shift;
+    my @nodes = $node->get_descendants({'add_self' => 1, 'ordered' => 1});
+    return @nodes;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Collects word forms of all nodes in a subtree of a given node. Useful to
+# uniquely identify sentences or their parts that are known to contain
+# annotation errors. (We do not want to use node IDs because they are not fixed
+# enough in all treebanks.) Example usage:
+# if($self->get_node_spanstring($node) =~ m/^peça a URV em a sua mesada$/)
+#------------------------------------------------------------------------------
+sub get_node_spanstring
+{
+    my $self = shift;
+    my $node = shift;
+    my @nodes = $self->get_node_subtree($node);
+    return join(' ', map {$_->form() // ''} (@nodes));
 }
 
 

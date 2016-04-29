@@ -311,6 +311,12 @@ sub convert_deprels
             {
                 $deprel = 'ccomp';
             }
+            # The symbol "=" is tagged SYM and substitutes a verb ("equals to"). This verb is not considered copula (only "to be" is copula).
+            # Hence we will re-classify the relation as object.
+            elsif($parent->form() eq '=')
+            {
+                $deprel = 'dobj';
+            }
             else
             {
                 $deprel = 'pnom';

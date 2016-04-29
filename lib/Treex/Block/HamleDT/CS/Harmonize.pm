@@ -323,6 +323,77 @@ sub fix_annotation_errors
                 $node->iset()->set('pos', 'sym');
             }
         }
+        # PDT 3.0: Wrong Pnom.
+        elsif($self->get_node_spanstring($node) =~ m/^systém převratný , ale funkční a perspektivní$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            foreach my $i (1, 4, 6)
+            {
+                $subtree[$i]->set_deprel('Atr');
+            }
+        }
+        elsif($self->get_node_spanstring($node) =~ m/^zdravá \( to je nepoškozená chorobami nebo škůdci , nenamrzlá , nezapařená , bez známek hniloby nebo plísně \)$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            my $zdrava = $subtree[0];
+            $zdrava->set_parent($node->parent());
+            foreach my $zc ($zdrava->children()) # ( to je nepoškozená )
+            {
+                $zc->set_parent($node);
+            }
+            foreach my $i (4, 9, 11) # nepoškozená nenamrzlá nezapařená
+            {
+                $subtree[$i]->set_deprel('Apposition');
+                $subtree[$i]->set_is_member(1);
+            }
+            # "bez známek" is a prepositional phrase and the annotation must be split between the two words.
+            $subtree[13]->set_is_member(1);
+            $subtree[14]->set_deprel('Apposition');
+            # Both "to" and "je" are AuxY in similar sentences.
+            $subtree[2]->set_deprel('AuxY');
+        }
+        # "nejsou s to"
+        elsif($node->form() eq 's' && $node->deprel() eq 'Pnom')
+        {
+            $node->set_deprel('AuxP');
+        }
+        elsif($self->get_node_spanstring($node) =~ m/^jiným než zdvořilostním aktem/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[3]->set_deprel('Atr'); # "aktem" should not be Pnom
+        }
+        elsif($self->get_node_spanstring($node) =~ m/^pouze respektování dané situace na trhu peněz a vypořádání se s ní$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[8]->set_is_member(1);
+        }
+        elsif($self->get_node_spanstring($node) =~ m/^početné a hlavně všelijaké :/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[4]->set_is_member(1); # At this moment the colon still heads an apposition.
+        }
+        elsif($self->get_node_spanstring($node) =~ m/^jen trochu nervózní policisté$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[2]->set_deprel('Atr');
+        }
+        elsif($self->get_node_spanstring($node) =~ m/^: jakékoliv investice do oprav a modernizace nájemního bytového fondu jsou a budou ztrátové$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[5]->set_is_member(undef); # first "a"
+            $subtree[10]->set_deprel('Atr'); # jsou
+            $subtree[12]->set_deprel('Atr'); # budou
+        }
+        elsif($self->get_node_spanstring($node) =~ m/^zbytečné , nevhodně složité$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_is_member(1);
+        }
+        elsif($self->get_node_spanstring($node) =~ m/^nejenom příčinou a prostředkem šíření této nemoci , ale také otráveným prostředím , ve kterém vzniká$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[11]->set_is_member(1); # prostředím
+        }
     }
 }
 

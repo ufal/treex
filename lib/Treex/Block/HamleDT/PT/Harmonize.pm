@@ -659,22 +659,6 @@ sub fix_annotation_errors
 
 
 #------------------------------------------------------------------------------
-# Collects word forms of all nodes in a subtree of a given node. Useful to
-# uniquely identify sentences or their parts that are known to contain
-# annotation errors. (We do not want to use node IDs because they are not fixed
-# enough in all treebanks.)
-#------------------------------------------------------------------------------
-sub get_node_spanstring
-{
-    my $self = shift;
-    my $node = shift;
-    my @nodes = $node->get_descendants({'add_self' => 1, 'ordered' => 1});
-    return join(' ', map {$_->form() // ''} (@nodes));
-}
-
-
-
-#------------------------------------------------------------------------------
 # Reshapes verb-preposition-infinitive constructions such as "tivéssemos de
 # informar" ("we had to inform"). In the original treebank the preposition is
 # attached to the previous verb as a leaf, labeled "PRT-AUX<", which we
