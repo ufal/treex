@@ -93,6 +93,7 @@ sub process_zone
     $self->fix_determiners($root);
     $self->relabel_subordinate_clauses($root);
     $self->check_ncsubjpass_when_auxpass($root);
+    $self->raise_punctuation_from_coordinating_conjunction($root);
     # Sanity checks.
     $self->check_determiners($root);
     ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
@@ -463,15 +464,9 @@ sub convert_deprels
         # The AuxY deprel is used in various situations, see below.
         elsif($deprel eq 'AuxY')
         {
-            # When it is attached to a verb, it is a sentence adverbial, disjunct or connector.
-            # Index Thomisticus examples: igitur (therefore), enim (indeed), unde (whence), sic (so, thus), ergo (therefore).
-            if($parent->is_verb() && !$node->is_coordinator())
-            {
-                $deprel = 'advmod';
-            }
             # When it is attached to a subordinating conjunction (AuxC), the two form a multi-word subordinator.
             # Index Thomisticus examples: ita quod (so that), etiam si (even if), quod quod (what is that), ac si (as if), et si (although)
-            elsif($parent->wild()->{prague_deprel} eq 'AuxC')
+            if($parent->wild()->{prague_deprel} eq 'AuxC')
             {
                 # The phrase builder will later transform it to MWE.
                 $deprel = 'mark';
@@ -489,6 +484,12 @@ sub convert_deprels
             elsif($node->is_adposition())
             {
                 $deprel = 'case';
+            }
+            # When it is attached to a verb, it is a sentence adverbial, disjunct or connector.
+            # Index Thomisticus examples: igitur (therefore), enim (indeed), unde (whence), sic (so, thus), ergo (therefore).
+            elsif($parent->is_verb() && !$node->is_coordinator())
+            {
+                $deprel = 'advmod';
             }
             # Non-head conjunction in coordination is probably the most common usage.
             # Index Thomisticus examples: et (and), enim (indeed), vel (or), igitur (therefore), neque (neither).
@@ -1390,6 +1391,32 @@ sub dissolve_chains_of_auxiliaries
         if($node->iset()->is_auxiliary() && $node->parent()->iset()->is_auxiliary() && $node->deprel() =~ m/^aux/ && !$node->parent()->parent()->is_root())
         {
             $node->set_parent($node->parent()->parent());
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Punctuation in coordination is sometimes attached to a non-head conjunction
+# instead to the head (e.g. in Index Thomisticus). Now all coordinating
+# conjunctions are attached to the first conjunct and so should be commas.
+#------------------------------------------------------------------------------
+sub raise_punctuation_from_coordinating_conjunction
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'punct')
+        {
+            my $parent = $node->parent();
+            my $pdeprel = $parent->deprel() // '';
+            if($pdeprel eq 'cc')
+            {
+                $node->set_parent($parent->parent());
+            }
         }
     }
 }
