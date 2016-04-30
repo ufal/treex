@@ -89,25 +89,41 @@ sub pdt_to_treex_is_member_conversion
     }
 }
 
+
+
+#------------------------------------------------------------------------------
+# Searches for the next Coord/Apos node on the path from a node to the root.
+# Returns the node directly under the Coord/Apos node. If no Coord/Apos node is
+# found, the result is undefined.
+#------------------------------------------------------------------------------
 sub _climb_up_below_coap
 {
     my $self = shift;
     my ($node) = @_;
-    my $parent = $node->parent();
-    if ($parent->is_root())
+    my $debug_address = $node->get_address();
+    my @debug_path = ($node->form());
+    while(1)
     {
-        log_warn('No Coord/Apos node between a member of coordination/apposition and the tree root');
-        log_warn($node->get_address()); # this is probably not the original member node but at least we tell the tree
-        return;
-    }
-    # We cannot use $node->get_parent->is_coap_root because it queries the afun attribute while we use the deprel attribute.
-    elsif (defined($parent->deprel()) && $parent->deprel() =~ m/^(Coord|Apos)/i)
-    {
-        return $node;
-    }
-    else
-    {
-        return $self->_climb_up_below_coap($parent);
+        my $parent = $node->parent();
+        my $pdeprel = $parent->deprel() // '';
+        if ($parent->is_root())
+        {
+            push(@debug_path, 'ROOT');
+            log_warn('No Coord/Apos node between a member of coordination/apposition and the tree root');
+            log_warn($debug_address);
+            log_warn('The path: '.join(' ', @debug_path));
+            return;
+        }
+        # We cannot use $parent->is_coap_root() because it queries the afun attribute while we use the deprel attribute.
+        elsif ($parent->deprel() =~ m/^(Coord|Apos)/i)
+        {
+            return $node;
+        }
+        else
+        {
+            push(@debug_path, $parent->form());
+            $node = $parent;
+        }
     }
 }
 
