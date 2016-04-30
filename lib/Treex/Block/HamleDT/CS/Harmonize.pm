@@ -338,6 +338,7 @@ sub fix_annotation_errors
             my @subtree = $self->get_node_subtree($node);
             my $zdrava = $subtree[0];
             $zdrava->set_parent($node->parent());
+            $zdrava->set_is_member(undef);
             foreach my $zc ($zdrava->children()) # ( to je nepoškozená )
             {
                 $zc->set_parent($node);
