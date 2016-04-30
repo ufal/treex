@@ -356,7 +356,11 @@ sub convert_deprels
             {
                 $deprel = 'name';
             }
-            elsif($node->is_foreign() && $parent->is_foreign())
+            elsif($node->is_foreign() && $parent->is_foreign() ||
+                  $node->is_foreign() && $node->is_adposition() && $parent->is_proper_noun())
+                  ###!!! van Gogh, de Gaulle in Czech text; but it means we will have to reverse the relation left-to-right!
+                  ###!!! Maybe it will be better to change the relation to "name" when we have to reorder it anyway.
+                  ###!!! Another solution would be to label the relation "case". But foreign prepositions do not have this function in Czech.
             {
                 $deprel = 'foreign';
             }
