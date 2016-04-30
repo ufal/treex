@@ -268,6 +268,7 @@ sub fix_annotation_errors
         my $form = $node->form() // '';
         my $lemma = $node->lemma() // '';
         my $deprel = $node->deprel() // '';
+        my $spanstring = $self->get_node_spanstring($node);
         # Two occurrences of "se" in CAC 2.0 have AuxT instead of AuxP.
         if($deprel eq 'AuxT' && $node->is_adposition())
         {
@@ -324,7 +325,7 @@ sub fix_annotation_errors
             }
         }
         # PDT 3.0: Wrong Pnom.
-        elsif($self->get_node_spanstring($node) =~ m/^systém převratný , ale funkční a perspektivní$/)
+        elsif($spanstring =~ m/^systém převratný , ale funkční a perspektivní$/)
         {
             my @subtree = $self->get_node_subtree($node);
             foreach my $i (1, 4, 6)
@@ -332,7 +333,7 @@ sub fix_annotation_errors
                 $subtree[$i]->set_deprel('Atr');
             }
         }
-        elsif($self->get_node_spanstring($node) =~ m/^zdravá \( to je nepoškozená chorobami nebo škůdci , nenamrzlá , nezapařená , bez známek hniloby nebo plísně \)$/)
+        elsif($spanstring =~ m/^zdravá \( to je nepoškozená chorobami nebo škůdci , nenamrzlá , nezapařená , bez známek hniloby nebo plísně \)$/)
         {
             my @subtree = $self->get_node_subtree($node);
             my $zdrava = $subtree[0];
@@ -357,42 +358,54 @@ sub fix_annotation_errors
         {
             $node->set_deprel('AuxP');
         }
-        elsif($self->get_node_spanstring($node) =~ m/^jiným než zdvořilostním aktem/)
+        elsif($spanstring =~ m/^jiným než zdvořilostním aktem/)
         {
             my @subtree = $self->get_node_subtree($node);
             $subtree[3]->set_deprel('Atr'); # "aktem" should not be Pnom
         }
-        elsif($self->get_node_spanstring($node) =~ m/^pouze respektování dané situace na trhu peněz a vypořádání se s ní$/)
+        elsif($spanstring =~ m/^pouze respektování dané situace na trhu peněz a vypořádání se s ní$/)
         {
             my @subtree = $self->get_node_subtree($node);
             $subtree[8]->set_is_member(1);
         }
-        elsif($self->get_node_spanstring($node) =~ m/^početné a hlavně všelijaké :/i)
+        elsif($spanstring =~ m/^početné a hlavně všelijaké :/i)
         {
             my @subtree = $self->get_node_subtree($node);
             $subtree[4]->set_is_member(1); # At this moment the colon still heads an apposition.
         }
-        elsif($self->get_node_spanstring($node) =~ m/^jen trochu nervózní policisté$/i)
+        elsif($spanstring =~ m/^jen trochu nervózní policisté$/i)
         {
             my @subtree = $self->get_node_subtree($node);
             $subtree[2]->set_deprel('Atr');
         }
-        elsif($self->get_node_spanstring($node) =~ m/^: jakékoliv investice do oprav a modernizace nájemního bytového fondu jsou a budou ztrátové$/i)
+        elsif($spanstring =~ m/^: jakékoliv investice do oprav a modernizace nájemního bytového fondu jsou a budou ztrátové$/i)
         {
             my @subtree = $self->get_node_subtree($node);
             $subtree[5]->set_is_member(undef); # first "a"
             $subtree[10]->set_deprel('Atr'); # jsou
             $subtree[12]->set_deprel('Atr'); # budou
         }
-        elsif($self->get_node_spanstring($node) =~ m/^zbytečné , nevhodně složité$/i)
+        elsif($spanstring =~ m/^zbytečné , nevhodně složité$/i)
         {
             my @subtree = $self->get_node_subtree($node);
             $subtree[0]->set_is_member(1);
         }
-        elsif($self->get_node_spanstring($node) =~ m/^nejenom příčinou a prostředkem šíření této nemoci , ale také otráveným prostředím , ve kterém vzniká$/i)
+        elsif($spanstring =~ m/^nejenom příčinou a prostředkem šíření této nemoci , ale také otráveným prostředím , ve kterém vzniká$/i)
         {
             my @subtree = $self->get_node_subtree($node);
             $subtree[11]->set_is_member(1); # prostředím
+        }
+        elsif($spanstring =~ m/^v podoboru elektrárenství$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_deprel('AuxP');
+        }
+        elsif($spanstring =~ m/^Toto nanejvýš zajímavé čtení musíme dát do souladu se skutečností/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # multi-word preposition "do souladu se"
+            $subtree[6]->set_parent($subtree[8]);
+            $subtree[7]->set_parent($subtree[8]);
         }
     }
 }
