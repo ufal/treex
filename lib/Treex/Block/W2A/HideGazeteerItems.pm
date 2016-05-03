@@ -123,6 +123,7 @@ Based on L<Treex::Block::T2T::HideGazeteerItems> but operating on a-layer, not t
 Translation of gazeteer items. Load the gazeteer for the target language and look up the translation by its id.
 
 The original form is hidden by a placeholder such as C<xxxitemaaxxx>, and the translation is stored into a wild attribute called C<gazeteer_translation>.
+Also, all of the translations are stored in a hash in a bundle wild attribute called C<gazeteer_translations>; the keys are the placeholders.
 
 =head1 AUTHORS
 
