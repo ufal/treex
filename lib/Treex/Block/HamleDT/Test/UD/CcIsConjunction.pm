@@ -8,8 +8,10 @@ sub process_anode
     my $self = shift;
     my $node = shift;
     # At least in Czech many adverbs have grammaticalized and work like conjunctions (sice, tedy, tak).
-    # Therefore we allow both conjunctions and adverbs.
-    if($node->deprel() eq 'cc' && !($node->is_conjunction() || $node->is_adverb()))
+    # Particles may also function like conjunctions ([cs] nejen).
+    # Symbols may also function like conjunctions (+, ×).
+    # Therefore we allow conjunctions, adverbs, particles and symbols.
+    if($node->deprel() eq 'cc' && !($node->is_conjunction() || $node->is_adverb() || $node->is_particle() || $node->is_symbol()))
     {
         $self->complain($node, $node->form());
     }

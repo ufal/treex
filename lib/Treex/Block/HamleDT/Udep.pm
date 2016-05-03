@@ -93,6 +93,7 @@ sub process_zone
     $self->fix_determiners($root);
     $self->relabel_subordinate_clauses($root);
     $self->check_ncsubjpass_when_auxpass($root);
+    $self->raise_punctuation_from_coordinating_conjunction($root);
     # Sanity checks.
     $self->check_determiners($root);
     ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
@@ -172,7 +173,7 @@ sub fix_symbols
             }
             # Slash '/' can be punctuation or mathematical symbol.
             # It is difficult to tell automatically but we will make it a symbol if it is not leaf (and does not head coordination).
-            elsif($node->form() eq '/' && !$node->is_leaf() && !$node->is_coap_root())
+            elsif($node->form() eq '/' && !$node->is_leaf() && $node->deprel() !~ m/^(Coord|Apos)$/)
             {
                 $node->iset()->set('pos', 'sym');
                 if($node->deprel() eq 'AuxG')
@@ -211,6 +212,15 @@ sub convert_deprels
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants();
+    # We will need to query the original Prague deprel (afun) of parent nodes in certain situations.
+    # It will not be guaranteed that the parent deprel has not been converted by then. Therefore we will make a copy now.
+    # Make sure that the copy is defined even if the parent is root.
+    $root->wild()->{prague_deprel} = 'AuxS';
+    foreach my $node (@nodes)
+    {
+        my $deprel = $node->deprel() // '';
+        $node->wild()->{prague_deprel} = $deprel;
+    }
     foreach my $node (@nodes)
     {
         my $deprel = $node->deprel();
@@ -301,6 +311,12 @@ sub convert_deprels
             {
                 $deprel = 'ccomp';
             }
+            # The symbol "=" is tagged SYM and substitutes a verb ("equals to"). This verb is not considered copula (only "to be" is copula).
+            # Hence we will re-classify the relation as object.
+            elsif($parent->form() eq '=')
+            {
+                $deprel = 'dobj';
+            }
             else
             {
                 $deprel = 'pnom';
@@ -340,7 +356,11 @@ sub convert_deprels
             {
                 $deprel = 'name';
             }
-            elsif($node->is_foreign() && $parent->is_foreign())
+            elsif($node->is_foreign() && $parent->is_foreign() ||
+                  $node->is_foreign() && $node->is_adposition() && $parent->is_proper_noun())
+                  ###!!! van Gogh, de Gaulle in Czech text; but it means we will have to reverse the relation left-to-right!
+                  ###!!! Maybe it will be better to change the relation to "name" when we have to reorder it anyway.
+                  ###!!! Another solution would be to label the relation "case". But foreign prepositions do not have this function in Czech.
             {
                 $deprel = 'foreign';
             }
@@ -451,14 +471,38 @@ sub convert_deprels
         {
             $deprel = 'neg';
         }
-        # AuxY: Additional conjunction in coordination ... cc
-        # AuxY: Subordinating conjunction "jako" ("as") attached to Atv or AtvV, or even Obj (of verbal adjectives) ... mark
+        # The AuxY deprel is used in various situations, see below.
         elsif($deprel eq 'AuxY')
         {
-            if(lc($node->form()) eq 'jako')
+            # When it is attached to a subordinating conjunction (AuxC), the two form a multi-word subordinator.
+            # Index Thomisticus examples: ita quod (so that), etiam si (even if), quod quod (what is that), ac si (as if), et si (although)
+            if($parent->wild()->{prague_deprel} eq 'AuxC')
+            {
+                # The phrase builder will later transform it to MWE.
+                $deprel = 'mark';
+            }
+            # When it is attached to a complement (Atv, AtvV), it is usually an equivalent of the subordinating conjunction "as" and it should be 'mark'.
+            # Czech: "jako" ("as"); sometimes it is attached even to Obj (of verbal adjectives). It should never get the 'cc' deprel, so we will mention it explicitly.
+            # Index Thomisticus examples: ut (as), sicut (as), quasi (as), tanquam (like), utpote (as) etc.
+            elsif($parent->wild()->{prague_deprel} =~ m/^AtvV?$/ ||
+                  lc($node->form()) =~ m/^(jako|ut|sicut|quasi|tanquam|utpote)$/)
             {
                 $deprel = 'mark';
             }
+            # AuxY may be a preposition attached to an adverb; unlike normal AuxP prepositions, this one is not the head.
+            # Index Thomisticus: ad invicem (each other); "invicem" is adverb that could be roughly translated as "mutually".
+            elsif($node->is_adposition())
+            {
+                $deprel = 'case';
+            }
+            # When it is attached to a verb, it is a sentence adverbial, disjunct or connector.
+            # Index Thomisticus examples: igitur (therefore), enim (indeed), unde (whence), sic (so, thus), ergo (therefore).
+            elsif($parent->is_verb() && !$node->is_coordinator())
+            {
+                $deprel = 'advmod';
+            }
+            # Non-head conjunction in coordination is probably the most common usage.
+            # Index Thomisticus examples: et (and), enim (indeed), vel (or), igitur (therefore), neque (neither).
             else
             {
                 $deprel = 'cc';
@@ -528,6 +572,12 @@ sub convert_deprels
         }
         # Save the universal dependency relation label with the node.
         $node->set_deprel($deprel);
+    }
+    # Now that all deprels have been converted we do not need the copies of the original deprels any more. Delete them.
+    delete($root->wild()->{prague_deprel});
+    foreach my $node (@nodes)
+    {
+        delete($node->wild()->{prague_deprel});
     }
 }
 
@@ -1351,6 +1401,32 @@ sub dissolve_chains_of_auxiliaries
         if($node->iset()->is_auxiliary() && $node->parent()->iset()->is_auxiliary() && $node->deprel() =~ m/^aux/ && !$node->parent()->parent()->is_root())
         {
             $node->set_parent($node->parent()->parent());
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Punctuation in coordination is sometimes attached to a non-head conjunction
+# instead to the head (e.g. in Index Thomisticus). Now all coordinating
+# conjunctions are attached to the first conjunct and so should be commas.
+#------------------------------------------------------------------------------
+sub raise_punctuation_from_coordinating_conjunction
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'punct')
+        {
+            my $parent = $node->parent();
+            my $pdeprel = $parent->deprel() // '';
+            if($pdeprel eq 'cc')
+            {
+                $node->set_parent($parent->parent());
+            }
         }
     }
 }

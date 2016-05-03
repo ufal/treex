@@ -30,7 +30,10 @@ sub detect_special_constructions
         # level of the tree, for example coordination of prepositional phrases.
         # However, it should not matter in the Alpino style.
         $phrase = $self->detect_alpino_coordination($phrase);
+        $phrase = $self->detect_alpino_clause($phrase);
         $phrase = $self->detect_stanford_pp($phrase);
+        # The Alpino treebank has finite auxiliary verbs as heads of participles.
+        $phrase = $self->detect_auxiliary_head($phrase);
     }
     # Return the resulting phrase. It may be different from the input phrase.
     return $phrase;
