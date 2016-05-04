@@ -59,7 +59,13 @@ has gazetteer => (
      documentation => 'Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo',
 );
 
-has gazetteer_xml => ( is => 'rw', isa => 'Bool', default => 0 );
+has moses_xml => ( is => 'rw', isa => 'Bool', default => 0 );
+
+has tokenize_moses => ( is => 'rw', isa => 'Bool', default => 0 );
+
+has lowercase => ( is => 'rw', isa => 'Bool', default => 0 );
+
+has truecase_moses => ( is => 'rw', isa => 'Bool', default => 0 );
 
 has trg_lang => (
     is => 'ro',
@@ -112,14 +118,17 @@ sub get_scenario_string {
     $self->resegment ? 'W2A::ResegmentSentences' : (),
     $self->resegment ? 'Write::BundleIds to=' . $self->bundle_ids_file : (),
     $self->hideIT ? 'W2A::HideIT use_alphabetic_indexes=1' : (),
-    $self->hideIT ? 'Write::BundleWildAttributeDump attribute=entities  to=' . $self->replacements_file : (),
-    $self->pretokenized ? 'W2A::TokenizeOnWhitespace' : 'W2A::EN::Tokenize',
+    $self->hideIT && !$self->moses_xml ? 'Write::BundleWildAttributeDump attribute=entities  to=' . $self->replacements_file : (),
+    $self->pretokenized ? 'W2A::TokenizeOnWhitespace' : ($self->tokenize_moses ? 'W2A::TokenizeMoses no_escape=1 protected_patterns_file=url.protection' : 'W2A::EN::Tokenize'),
     # 'W2A::EN::NormalizeForms',
     # 'W2A::EN::FixTokenization',
     $self->gazetteer ? 'W2A::EN::GazeteerMatch trg_lang='.$self->trg_lang.' filter_id_prefixes="'.$self->gazetteer.'"' : (),
-    $self->gazetteer_xml ? 'Util::Eval anode="my $form = $anode->form; if($form =~ /[><]/) {$form =~ s/</\&lt;/g; $form =~ s/>/\&gt;/g; $anode->set_form($form); $anode->set_no_space_after(0); ($anode->get_prev_node // $anode)->set_no_space_after(0); }"' : (),
-    $self->gazetteer ? 'W2A::' . ($self->gazetteer_xml ? 'XML' : 'Hide') . 'GazeteerItems trg_lang='.$self->trg_lang : (),
-    $self->gazetteer && !$self->gazetteer_xml ? 'Write::BundleWildAttributeDump attribute=gazeteer_translations  to=' . $self->gazeteer_translations_file : (),
+    $self->moses_xml ? 'W2A::EscapeMoses' : (),
+    # TODO $self->truecase_moses ? 'W2A::TruecaseMoses' : ();
+    $self->lowercase ? 'Util::Eval anode="$anode->set_form(lc $anode->form);"' : (),
+    # $self->gazetteer_xml ? 'Util::Eval anode="my $form = $anode->form; if($form =~ /[><]/) {$form =~ s/</\&lt;/g; $form =~ s/>/\&gt;/g; $anode->set_form($form); $anode->set_no_space_after(0); ($anode->get_prev_node // $anode)->set_no_space_after(0); }"' : (),
+    $self->gazetteer ? 'W2A::HideGazeteerItems trg_lang=' . $self->trg_lang . ($self->moses_xml ? ' moses_xml=1' : '') : (),
+    $self->gazetteer && !$self->moses_xml ? 'Write::BundleWildAttributeDump attribute=gazeteer_translations  to=' . $self->gazeteer_translations_file : (),
     $self->tag && $self->tagger eq 'Morce' ? 'W2A::EN::TagMorce' . ($self->tagger_lemmatize ? ' lemmatize=1 ' : '') : (),
     $self->tag && $self->tagger eq 'MorphoDiTa' ? 'W2A::EN::TagMorphoDiTa' . ($self->tagger_lemmatize ? ' lemmatize=1 ' : '') : (),
     $self->tag && $self->fix_tags ? 'W2A::EN::FixTags' : (),
@@ -127,6 +136,7 @@ sub get_scenario_string {
     $self->tag && !$self->tagger_lemmatize ? 'W2A::EN::Lemmatize' : (),
     $self->tag && $self->fix_tags && $self->domain eq 'IT' ? ' W2A::EN::QtHackTags' : (),
     $self->detokenize ? 'A2W::Detokenize remove_final_space=1' : 'A2W::ConcatenateTokens',
+    $self->hideIT && $self->moses_xml ? 'A2W::ShowIT moses_xml=1' : (),
     $self->tag ? 'Write::AttributeSentences layer=a attributes=form,lemma,tag' : 'Write::Sentences join_resegmented=0',
     ;
 
@@ -169,6 +179,19 @@ Treex analysis for Moses, parametrizable as to which púarts to run or not
 =item tagging and lemmatization
 
 =item writeout
+
+=item moses_xml
+
+Annotate HideIT and Gazzetteer items with Moses XML tags.
+Also implies Moses entities escaping.
+
+In most cases should be used with C<tokenize_moses> and C<lowercase> or C<truecase_moses>.
+
+=item tokenize_moses
+
+=item lowercase
+
+=item truecase_moses
 
 =back
 
