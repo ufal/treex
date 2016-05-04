@@ -7,7 +7,8 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::W2A::TokenizeOnWhitespace';
 
-use Treex::Core::Resource qw(require_file_from_share);
+use Treex::Core::Resource "require_file_from_share";
+use Treex::Tool::Moses;
 
 has '+language' => ( required => 1 );
 
@@ -342,7 +343,6 @@ $text =~ s=([;:@#\$%&\p{IsSc}\p{IsSo}])= $1 =g;
     return $text;
 }
 
-# escape special chars
 after 'process_zone' => sub {
     my ($self, $zone) = @_;
 
@@ -350,21 +350,7 @@ after 'process_zone' => sub {
     # otherwise escape unless no_escape=1;
     # also if skip_xml, then skip XML/HTML tag lines
     if (($self->penn || !$self->no_escape) && (!$self->skip_xml || $zone->sentence !~ /^<.+>$/)) {
-        my $aroot = $zone->get_atree();
-        foreach my $anode ($aroot->get_descendants()) {
-            my $text = $anode->form;
-
-            $text =~ s/\&/\&amp;/g;   # escape escape
-            $text =~ s/\|/\&#124;/g;  # factor separator
-            $text =~ s/\</\&lt;/g;    # xml
-            $text =~ s/\>/\&gt;/g;    # xml
-            $text =~ s/\'/\&apos;/g;  # xml
-            $text =~ s/\"/\&quot;/g;  # xml
-            $text =~ s/\[/\&#91;/g;   # syntax non-terminal
-            $text =~ s/\]/\&#93;/g;   # syntax non-terminal
-
-            $anode->set_form($text);
-        }
+        Treex::Tool::Moses::escape_anodes($zone->get_atree());
     }
 
     return;
@@ -432,11 +418,8 @@ don't perform HTML escaping on apostrophy, quotes, etc
 =head1 AUTHOR
 
 Rudolf Rosa <rosa@ufal.mff.cuni.cz>
-
 Pidong Wang
-
 Josh Schroeder
-
 Philipp Koehn
 
 =head1 COPYRIGHT AND LICENSE
