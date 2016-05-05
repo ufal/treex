@@ -136,7 +136,7 @@ sub get_scenario_string {
     $self->tag && !$self->tagger_lemmatize ? 'W2A::EN::Lemmatize' : (),
     $self->tag && $self->fix_tags && $self->domain eq 'IT' ? ' W2A::EN::QtHackTags' : (),
     $self->detokenize ? 'A2W::Detokenize remove_final_space=1' : 'A2W::ConcatenateTokens',
-    $self->hideIT && $self->moses_xml ? 'A2W::ShowIT moses_xml=1' : (),
+    $self->hideIT && $self->moses_xml ? 'A2W::ShowIT moses_xml=1 set_original_sentence=0' : (),
     $self->tag ? 'Write::AttributeSentences layer=a attributes=form,lemma,tag' : 'Write::Sentences join_resegmented=0',
     ;
 
