@@ -45,11 +45,11 @@ has replacements_file => (
     default => 'replacements.dump',
 );
 
-has gazeteer_translations_file => (
+has gazetteer_translations_file => (
     is => 'ro',
     isa => 'Str',
     documentation => 'Filename for storing the replacements',
-    default => 'gazeteer_translations.dump',
+    default => 'gazetteer_translations.dump',
 );
 
 has bundle_ids_file => (
@@ -69,9 +69,9 @@ sub get_scenario_string {
     # 'Util::Eval zone="my $sentence = $zone->sentence; $sentence =~ s/&lt;/</g; $sentence =~ s/&gt;/>/g; $zone->set_sentence($sentence)"',
     $self->showIT ? 'Read::BundleWildAttribute attribute=entities from=' . $self->replacements_file : (),
     $self->showIT ? 'A2W::ShowIT source_selector=' : (),
+    $self->gazetteer ? 'Read::BundleWildAttribute attribute=gazetteer_translations from=' . $self->gazetteer_translations_file : (),
+    $self->gazetteer ? 'A2W::ShowGazetteerItems' : (),
     ($self->pretokenized ? 'W2A::TokenizeOnWhitespace' : 'W2A::Tokenize') . ' language=all',
-    $self->gazetteer ? 'Read::BundleWildAttribute attribute=gazeteer_translations from=' . $self->gazeteer_translations_file : (),
-    $self->gazetteer ? 'A2W::ShowGazeteerItems' : (),
     'A2A::ProjectCase',
     'A2W::CapitalizeSentStart',
     $self->detokenize ? 'A2W::Detokenize remove_final_space=1' : 'A2W::ConcatenateTokens',
@@ -114,7 +114,7 @@ Treex analysis for Moses, parametrizable as to which púarts to run or not
 
 =item tokenization
 
-=item gazeteers
+=item gazetteers
 
 =item tagging and lemmatization
 
