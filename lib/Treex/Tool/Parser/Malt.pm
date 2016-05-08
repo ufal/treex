@@ -12,8 +12,9 @@ has memory     => ( isa => 'Str',  is => 'rw', default => '10g' );
 sub BUILD {
     my ($self) = @_;
 
-    my $bindir = Treex::Core::Config->share_dir."/installed_tools/malt_parser/malt-1.5";
-    die "Missing $bindir\n" if !-d $bindir;
+    my $bindir = Treex::Core::Config->share_dir."/installed_tools/malt_parser/maltparser-1.8.1";
+    my $maltjar = "$bindir/maltparser-1.8.1.jar";
+    die "Missing $maltjar\n" if !-f $maltjar;
 
     my $model_path = $self->model;
     if (!-e $model_path) {
@@ -34,7 +35,7 @@ sub BUILD {
     my $abs_model_path = absolutize_path($model_path);
     system "ln -s $abs_model_path $workdir/$model_name";
 
-    my $command = "cd $workdir; java -Xmx".$self->memory." -jar $bindir/malt.jar -c $model_name";
+    my $command = "cd $workdir; java -Xmx".$self->memory." -jar $maltjar -c $model_name";
 
     # start MaltParser
     ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::bipipe( $command );
