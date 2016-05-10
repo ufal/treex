@@ -25,11 +25,10 @@ sub process_atree
     my @nodes = $tree->get_descendants({ordered => 1});
     # Empty sentences are not allowed.
     return if(scalar(@nodes)==0);
-    # Print sentence ID as a comment before the sentence.
-    # Example: "a-cmpr9406-001-p2s1" is the ID of the a-tree of the first training sentence of PDT, "Třikrát rychlejší než slovo".
+    # Print sentence (bundle) ID as a comment before the sentence.
     if ($self->print_id)
     {
-        print {$self->_file_handle()} ("\# sent_id ", $tree->id(), "\n");
+        print {$self->_file_handle()} ("\# sent_id ", $tree->get_bundle->id(), "\n");
     }
     # Print the original CoNLL-U comments for this sentence if present.
     my $comment = $tree->get_bundle->wild->{comment};
