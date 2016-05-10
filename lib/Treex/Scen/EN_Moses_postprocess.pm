@@ -66,7 +66,6 @@ sub get_scenario_string {
     # 'Util::SetGlobal selector=src',
     # 'Util::SetGlobal language=cs',
     # 'Read::Sentences',
-    # 'Util::Eval zone="my $sentence = $zone->sentence; $sentence =~ s/&lt;/</g; $sentence =~ s/&gt;/>/g; $zone->set_sentence($sentence)"',
     $self->showIT ? 'Read::BundleWildAttribute attribute=entities from=' . $self->replacements_file : (),
     $self->showIT ? 'A2W::ShowIT source_selector=' : (),
     $self->gazetteer ? 'Read::BundleWildAttribute attribute=gazetteer_translations from=' . $self->gazetteer_translations_file : (),
