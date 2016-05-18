@@ -131,7 +131,7 @@ my @lemma_rules = (
     ['dg', 'DŽ'],
     ['g$', 'Ž'],
     # ['t(?=ur$)', 'Č'],
-    ['j', 'Ž'],
+    # ['j', 'Ž'],
     ['w', 'V'],
     # ['[aeiou-]\Kc', 'K'], # c after vowel or dash
     # ['c(?!$)', 'K'], # non-final c
