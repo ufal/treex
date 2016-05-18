@@ -59,6 +59,10 @@ has src_lang => (
     documentation => 'Gazetteers are defined for language pairs. Both source and target languages must be specified.',
 );
 
+has lemma_models => ( is => 'rw', isa => 'Str', default => "static 0.5 tlemma_czeng09.static.pls.slurp.gz
+    maxent 1.0 tlemma_czeng12.maxent.10000.100.2_1.compact.pls.gz
+    static 0.1 tlemma_humanlex.static.pls.slurp.gz" );
+
 sub BUILD {
     my ($self) = @_;
     if ($self->tm_adaptation eq 'auto'){
@@ -105,11 +109,7 @@ sub get_scenario_string {
     'T2T::EN2CS::TrLPersPronRefl',
     'T2T::EN2CS::TrLHackNNP',
     $VW,
-    "T2T::EN2CS::TrLAddVariantsInterpol model_dir=data/models/translation/en2cs models='
-      static 0.5 tlemma_czeng09.static.pls.slurp.gz
-      maxent 1.0 tlemma_czeng12.maxent.10000.100.2_1.compact.pls.gz
-      static 0.1 tlemma_humanlex.static.pls.slurp.gz
-      $IT_LEMMA_MODELS'",
+    "T2T::EN2CS::TrLAddVariantsInterpol model_dir=data/models/translation/en2cs models='" . $self->lemma_models . " $IT_LEMMA_MODELS'",
     'T2T::EN2CS::TrLFNumeralsByRules',
     'T2T::EN2CS::TrLFilterAspect',
     'T2T::EN2CS::TransformPassiveConstructions',
