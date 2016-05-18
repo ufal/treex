@@ -6,6 +6,8 @@ extends 'Treex::Block::A2A::CS::FixAgreement';
 use Treex::Tool::Depfix::CS::SimpleTranslator;
 use Treex::Tool::Depfix::CS::DiacriticsStripper;
 
+has translate => ( is => 'rw', isa => 'Bool', default => 0 );
+
 my %do_not_uc = (
     eur => 1,
     euro => 1,
@@ -124,7 +126,7 @@ sub try_to_translate {
     # it is uncommon to keep it untranslated
     # (the approximate match and the X@ tag suggest
     # that the word was left untranslated)
-    if ( $dep->tag =~ /^X@/ && $endep->form =~ /^[a-z]*$/ ) {
+    if ( $self->translate && $dep->tag =~ /^X@/ && $endep->form =~ /^[a-z]*$/ ) {
         my $en_lc_lemma = lc $endep->lemma;
         my $translator =
             Treex::Tool::Depfix::CS::SimpleTranslator->new();
