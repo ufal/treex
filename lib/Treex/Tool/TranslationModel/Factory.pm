@@ -5,6 +5,7 @@ use Moose;
 use Treex::Core::Common;
 
 use Treex::Tool::TranslationModel::Static::Model;
+use Treex::Tool::TranslationModel::Rulebased::Model;
 use Treex::Tool::TranslationModel::ML::Model;
 
 use Treex::Tool::TranslationModel::Static::RelFreq::Learner_new;
@@ -16,6 +17,9 @@ sub create_model {
     my $model;
     if ($model_type eq 'static') {
         $model = Treex::Tool::TranslationModel::Static::Model->new();
+    }
+    elsif ($model_type eq 'rulebased') {
+        $model = Treex::Tool::TranslationModel::Rulebased::Model->new();
     }
     else {
         $model = Treex::Tool::TranslationModel::ML::Model->new({ model_type => $model_type });
