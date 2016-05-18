@@ -181,10 +181,7 @@ Lord, Sir, Miss
 zoo/ZOO
 Plan
 
-TODO:
-
-When lowercasing, it is often the case that the system failed to translate a word, believing it to be a named entity when in fact it is not. --> try to retranslate in such case?
-(WMT10: Director, ZOO, 'S, Unleashed, Going Under, Euro)
+TODO: turn into T2T::FixCasing and try to apply in translation
 
 =head1 AUTHORS
 
