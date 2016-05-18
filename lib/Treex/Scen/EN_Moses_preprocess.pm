@@ -63,6 +63,8 @@ has normalize => ( is => 'rw', isa => 'Bool', default => 0 );
 
 has moses_xml => ( is => 'rw', isa => 'Bool', default => 0 );
 
+has escape_moses => ( is => 'rw', isa => 'Bool', default => 0 );
+
 has tokenize_moses => ( is => 'rw', isa => 'Bool', default => 0 );
 
 has tokenize_morphodita => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -139,9 +141,8 @@ sub get_scenario_string {
     # 'W2A::EN::NormalizeForms',
     # 'W2A::EN::FixTokenization',
     $self->gazetteer ? 'W2A::EN::GazeteerMatch trg_lang='.$self->trg_lang.' filter_id_prefixes="'.$self->gazetteer.'"' : (),
-    $self->moses_xml ? 'W2A::EscapeMoses' : (),
+    $self->moses_xml || $self->escape_moses ? 'W2A::EscapeMoses' : (),
     $self->lowercase ? 'Util::Eval anode="$anode->set_form(lc $anode->form);"' : (),
-    # $self->gazetteer_xml ? 'Util::Eval anode="my $form = $anode->form; if($form =~ /[><]/) {$form =~ s/</\&lt;/g; $form =~ s/>/\&gt;/g; $anode->set_form($form); $anode->set_no_space_after(0); ($anode->get_prev_node // $anode)->set_no_space_after(0); }"' : (),
     $self->gazetteer ? 'W2A::HideGazeteerItems trg_lang=' . $self->trg_lang . ($self->moses_xml ? ' moses_xml=1' : '') : (),
     $self->gazetteer && !$self->moses_xml ? 'Write::BundleWildAttributeDump attribute=gazeteer_translations  to=' . $self->gazeteer_translations_file : (),
     $self->tag && $self->tagger eq 'Morce' ? 'W2A::EN::TagMorce' . ($self->tagger_lemmatize ? ' lemmatize=1 ' : '') : (),
