@@ -99,6 +99,8 @@ my %suffix_rules = (
     ],
     v => [
         ['ate$', 'ovat'],
+        ['ise$', 'izovat'],
+        ['ize$', 'izovat'],
         ['ing$', 'ující'],
         ['y$', 'iovat'], # iovat
         ['$', 'ovat'],
@@ -118,7 +120,6 @@ my @lemma_rules = (
     ['^\Ky', 'J'],
     ['[aeiou]\Ky', 'J'],
     ['c(?=[eiy])', 'C'], # protect 'ce', 'ci', 'cy'
-    ['[aeiouy]\Kse', 'Ze'], # <vowel>se -> ze
     ['[aeiouy].*\K[ey]$', ''], # remove final 'e' and 'y', unless it is the only vowel
     
     # consonants
@@ -220,6 +221,8 @@ sub generate_labels {
 sub transform_lemma {
     my ($self, $lemma, $sempos) = @_;
 
+    $lemma =~ s/[aeiouy]\Kse/ze/g; # <vowel>se -> ze
+    
     # suffix
     my $suffix = '';
     foreach my $rule (@{$suffix_rules{$sempos}}) {
