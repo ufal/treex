@@ -63,6 +63,15 @@ has lemma_models => ( is => 'rw', isa => 'Str', default => "static 0.5 tlemma_cz
     maxent 1.0 tlemma_czeng12.maxent.10000.100.2_1.compact.pls.gz
     static 0.1 tlemma_humanlex.static.pls.slurp.gz" );
 
+#TODO the old CzEng 0.9 static models (both formeme and tlemma) proved to be better than the new ones (min_instances=2, min_per_class=1) with maxent_features_version=1.0
+#static 1.0 20150726_formeme.static.min_2.minpc_1.gz
+has formeme_models => ( is => 'rw', isa => 'Str', default => "static 1.0 formeme_czeng09.static.pls.slurp.gz
+      maxent 0.5 formeme_czeng09.maxent.compact.pls.slurp.gz" );
+
+has maxent_features_version => ( is => 'rw', isa => 'Str', default => '0.9' );
+
+has try_split_compounds => ( is => 'rw', isa => 'Bool', default => 1 );
+
 sub BUILD {
     my ($self) = @_;
     if ($self->tm_adaptation eq 'auto'){
@@ -96,12 +105,8 @@ sub get_scenario_string {
     'T2T::EN2CS::DeleteSuperfluousTnodes',
     $self->gazetteer ? 'T2T::TrGazeteerItems src_lang='.$self->src_lang : (),
     'T2T::EN2CS::TrFTryRules',
-    #TODO the old CzEng 0.9 static models (both formeme and tlemma) proved to be better than the new ones (min_instances=2, min_per_class=1) with maxent_features_version=1.0
-      #static 1.0 20150726_formeme.static.min_2.minpc_1.gz
-    "T2T::EN2CS::TrFAddVariantsInterpol model_dir=data/models/translation/en2cs maxent_features_version=0.9 models='
-      static 1.0 formeme_czeng09.static.pls.slurp.gz
-      maxent 0.5 formeme_czeng09.maxent.compact.pls.slurp.gz
-      $IT_FORMEME_MODELS'",
+    "T2T::EN2CS::TrFAddVariantsInterpol model_dir=data/models/translation/en2cs maxent_features_version=" . $self->maxent_features_version
+        . " models='" . $self->formeme_models . " $IT_FORMEME_MODELS'",
     'T2T::EN2CS::TrFRerank2',
     'T2T::EN2CS::TrLTryRules',
     $self->domain eq 'IT' ? 'T2T::EN2CS::TrL_ITdomain' : (),
@@ -115,7 +120,7 @@ sub get_scenario_string {
     'T2T::EN2CS::TransformPassiveConstructions',
     'T2T::EN2CS::PrunePersonalNameVariants',
     'T2T::EN2CS::RemoveUnpassivizableVariants',
-    'T2T::EN2CS::TrLFCompounds',
+    $self->try_split_compounds ? 'T2T::EN2CS::TrLFCompounds' : (),
     'T2T::CutVariants lemma_prob_sum=0.5 formeme_prob_sum=0.9 max_lemma_variants=7 max_formeme_variants=7',
     $self->fl_agreement ? 'T2T::CS2CS::FormemeTLemmaAgreement fun='.$self->fl_agreement : (),
     $self->hmtm ? 'T2T::RehangToEffParents' : (),
