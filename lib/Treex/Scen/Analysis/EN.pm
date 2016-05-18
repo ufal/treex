@@ -58,6 +58,11 @@ has pretokenized => (
     documentation => 'Is the input pretokenized? If set to 1, will only tokenize on whitespace.'
 );
 
+# Useful if you dont have NADA
+# Or install NADA:
+# cd $TMT_ROOT/install/tool_installation/NADA && perl Makefile.PL && make && make install
+has mark_it => ( is => 'rw', isa => 'Bool', default => 1 );
+
 # TODO Add parameter
 # has memory => (
 #     is => 'ro',
@@ -146,7 +151,7 @@ sub get_scenario_string {
     $self->functors eq 'VW' ? 'A2T::EN::SetFunctorsVW' : (),
     $self->functors eq 'VW' ? 'A2T::SetNodetype' : (), # fix nodetype changes induced by functors
     $self->valframes ? 'A2T::EN::SetValencyFrameRefVW' : (),
-    'A2T::EN::MarkReferentialIt resolver_type=nada threshold=0.5 suffix=nada_0.5', # you need Treex::External::NADA installed for this
+    $self->mark_it ? 'A2T::EN::MarkReferentialIt resolver_type=nada threshold=0.5 suffix=nada_0.5' : (), # you need Treex::External::NADA installed for this
     'A2T::EN::FindTextCoref',
     ;
 
