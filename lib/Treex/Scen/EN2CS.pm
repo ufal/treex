@@ -30,6 +30,8 @@ has gazetteer => (
      documentation => 'Use W2A::EN::GazeteerMatch A2T::ProjectGazeteerInfo T2T::TrGazeteerItems, default=all if domain=IT',
 );
 
+has project_case => ( is => 'ro', isa => 'Bool', default => 1 );
+
 sub BUILD {
     my ($self) = @_;
 
@@ -56,8 +58,8 @@ sub get_scenario_string {
     $self->hideIT ? 'W2A::HideIT' : (),
     "Scen::Analysis::EN $params",
     "Scen::Transfer::EN2CS $params",
-    'Util::SetGlobal language=cs selector=tst',
-    "Scen::Synthesis::CS $params",
+    "Util::SetGlobal language=cs selector=tst source_language='en' source_selector='src'",
+    "Scen::Synthesis::CS project_case=".$self->project_case." $params",
     $self->hideIT ? 'A2W::ShowIT' : (),
     ;
     return $scen;

@@ -71,7 +71,7 @@ sub get_scenario_string {
     $self->gazetteer ? 'Read::BundleWildAttribute attribute=gazetteer_translations from=' . $self->gazetteer_translations_file : (),
     $self->gazetteer ? 'A2W::ShowGazetteerItems' : (),
     ($self->pretokenized ? 'W2A::TokenizeOnWhitespace' : 'W2A::Tokenize') . ' language=all',
-    'A2A::ProjectCase',
+    "A2A::ProjectCase source_language='en'",
     'A2W::CapitalizeSentStart',
     $self->detokenize ? 'A2W::Detokenize remove_final_space=1' : 'A2W::ConcatenateTokens',
     $self->resegment ? 'Read::BundleIds from=' . $self->bundle_ids_file : (),
