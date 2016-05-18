@@ -5,6 +5,8 @@ use Treex::Core::Common;
 
 with 'Treex::Tool::TranslationModel::Model';
 
+has skip_names => ( is => 'rw', isa => 'Bool', default => 0 );
+
 # TODO it is for English-to-Czech only, but this is not parametrizable at the moment
 
 # some overrdies
@@ -21,38 +23,38 @@ sub _get_transl_variants { return; }
 # transformation rules
 
 my %full_match_rules = (
-    'be' => 'být',
-    'have' => 'mít',
-    'do' => 'dělat',
-    'and' => 'a',
-    'or' => 'nebo',
-    'but' => 'ale',
-    'therefore' => 'proto',
-    'that' => 'který',
-    'which' => 'který',
-    'what' => 'co',
-    'each' => 'každý',
-    'other' => 'jiný',
-    'then' => 'pak',
-    'also' => 'také',
-    'as' => 'tak',
-    'all' => 'všechen',
-    'this' => 'tento',
-    'these' => 'tyto',
-    'many' => 'mnoho',
-    'only' => 'jen',
-    'main' => 'hlavní',
-    'mainly' => 'hlavně',
-    'one' => '1',
-    'two' => '2',
-    'three' => '3',
-    'four' => '4',
-    'five' => '5',
-    'six' => '6',
-    'seven' => '7',
-    'eight' => '8',
-    'nine' => '9',
-    'ten' => '10',
+    'be' => 'být#V',
+    'have' => 'mít#V',
+    'do' => 'dělat#V',
+    'and' => 'a#J',
+    'or' => 'nebo#J',
+    'but' => 'ale#J',
+    'therefore' => 'proto#J',
+    'that' => 'který#P',
+    'which' => 'který#P',
+    'what' => 'co#P',
+    'each' => 'každý#A',
+    'other' => 'jiný#A',
+    'then' => 'pak#D',
+    'also' => 'také#D',
+    'as' => 'tak#D',
+    'all' => 'všechen#P',
+    'this' => 'tento#P',
+    'these' => 'tento#P',
+    'many' => 'mnoho#C',
+    'only' => 'jen#D',
+    'main' => 'hlavní#A',
+    'mainly' => 'hlavně#D',
+    'one' => '1#C',
+    'two' => '2#C',
+    'three' => '3#C',
+    'four' => '4#C',
+    'five' => '5#C',
+    'six' => '6#C',
+    'seven' => '7#C',
+    'eight' => '8#C',
+    'nine' => '9#C',
+    'ten' => '10#C',
 );
 
 my %suffix_rules = (
@@ -78,6 +80,7 @@ my %suffix_rules = (
         ['ive$', 'ivní'],
         ['ar$', 'ární'],
         ['al$', 'ální'],
+        ['ous$', 'ální'],
         ['ed$', 'ovaný'],
         ['ing$', 'ující'],
         ['$', 'ový'],
@@ -90,6 +93,7 @@ my %suffix_rules = (
         ['ically$', 'icky'],
         ['ively$', 'ivně'],
         ['ally$', 'álně'],
+        ['ously$', 'álně'],
         ['ly$', 'ně'],
         ['$', 'ově'],
     ],
@@ -108,10 +112,13 @@ my @deduplication_rules = (
     ['(.)\K\1', ''],
 );
 
+# TODO lemma#SUFFIX -- can match suffix but do not have to
+
 my @lemma_rules = (
     ['^\Ky', 'J'],
     ['[aeiou]\Ky', 'J'],
     ['c(?=[eiy])', 'C'], # protect 'ce', 'ci', 'cy'
+    ['[aeiouy]\Kse', 'Ze'], # <vowel>se -> ze
     ['[aeiouy].*\K[ey]$', ''], # remove final 'e' and 'y', unless it is the only vowel
     
     # consonants
@@ -133,8 +140,6 @@ my @lemma_rules = (
     # ['t(?=ur$)', 'Č'],
     # ['j', 'Ž'],
     ['w', 'V'],
-    # ['[aeiou-]\Kc', 'K'], # c after vowel or dash
-    # ['c(?!$)', 'K'], # non-final c
     ['c', 'K'],
     
     # vowels
@@ -147,29 +152,27 @@ my @lemma_rules = (
     ['ie(?!$)', 'Í'],
 );
 
-my %sempos2pos = (
-    adj => 'A',
-    adv => 'D',
-    n => 'N',
-    v => 'V',
-    x => 'X',
-);
+# in the order of likelihood of generating
+my @semposes = ('n', 'adj', 'v', 'adv', 'x');
 
 # override 'get_translations' => sub {
 sub get_translations {
     my ($self, $lemma, $features_ar) = @_;
 
     my $features = $self->feats_ar2hr($features_ar);
-    my $tag = $sempos2pos{$features->{short_sempos} // 'x'} // 'X';
+    my $labels = $self->generate_labels($lemma, $features);
 
-    my $lemmas = $self->transform_lemma($lemma, $features);
-
-    my $prob = 1;
-    my @variants = map { { 
-            label => $_ . '#' . $tag,
-            prob => ($prob -= 0.1),
+    my $prob = 0.5;
+    my @variants;
+    foreach my $label (@$labels) {
+        log_debug("RB: adding $label with $prob", 1);
+        push @variants, { 
+            label => $label,
+            prob => $prob,
             source => $self->source,
-        } } @$lemmas;
+        };
+        $prob /= 2;
+    }
 
     # Ordering of keys in a Perl hash is not deterministic.
     # However, we want our experiments deterministic,
@@ -178,22 +181,47 @@ sub get_translations {
     return @results;
 }
 
-sub transform_lemma {
+my %lengthening = (a => 'á', e => 'é', i => 'í', o => 'ó');
+sub generate_labels {
     my ($self, $lemma, $features) = @_;
 
-    # non-alphabetical: skip
+    my $sempos = $features->{short_sempos};
+    my @result;
+    
     if ($lemma !~ /^[\p{L}-]*$/) {
-        return [$lemma];
-    }
+        # non-alphabetical: skip
+        push @result, $self->l_s($lemma, $sempos);
+    # if (lcfirst $lemma ne $lemma) {
+    # if ($features->{capitalized}) {
+    } elsif ($self->skip_names && $features->{ne_type}) {
+        # named entity: skip
+        push @result, $self->l_s($lemma, $sempos);
+    } elsif (defined $full_match_rules{$lemma}) {
+        # full word
+        push @result, $full_match_rules{$lemma};
+    } else {
+        # prefer the specified sempos, but go over all semposes
+        foreach my $sem ($sempos, @semposes) {
+            # add a candidate
+            my ($new_lemma, $suffix) = $self->transform_lemma($lemma, $sem);
+            push @result, $self->l_s($new_lemma . $suffix, $sem);
 
-    # full word
-    if (defined $full_match_rules{$lemma}) {
-        return [$full_match_rules{$lemma}];
+            # add a secondary candidate: make prefinal vowel longer
+            if ($new_lemma =~ /([aeio]).$/) {
+                substr $new_lemma, -2, 1, $lengthening{$1};
+                push @result, $self->l_s($new_lemma . $suffix, $sem);
+            }
+        }
     }
+    
+    return \@result;
+}
+
+sub transform_lemma {
+    my ($self, $lemma, $sempos) = @_;
 
     # suffix
     my $suffix = '';
-    my $sempos = $features->{short_sempos};
     foreach my $rule (@{$suffix_rules{$sempos}}) {
         my $from = $rule->[0];
         my $to = $rule->[1];
@@ -221,17 +249,22 @@ sub transform_lemma {
     }
     $lemma = lc $lemma;
 
-    my @result = ($lemma . $suffix);
+    return ($lemma, $suffix);
+}
 
-    # add a secondary candidate: make prefinal vowel longer
-    my %lengthening = (a => 'á', e => 'é', i => 'í', o => 'ó');
-    my $lemmaa = $lemma;
-    if ($lemmaa =~ /([aeio]).$/) {
-        substr $lemmaa, -2, 1, $lengthening{$1};
-        push @result, ($lemmaa . $suffix);
-    }
+# lemma & sempos -> lemma#tag
+my %sempos2pos = (
+    adj => 'A',
+    adv => 'D',
+    n => 'N',
+    v => 'V',
+    x => 'X',
+);
+sub l_s {
+    my ($self, $lemma, $sempos) = @_;
 
-    return \@result;
+    my $tag = $sempos2pos{$sempos // 'x'} // 'X';
+    return $lemma . '#' . $tag;
 }
 
 sub feats_ar2hr {
