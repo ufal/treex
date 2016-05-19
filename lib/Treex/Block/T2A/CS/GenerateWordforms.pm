@@ -84,6 +84,7 @@ my @ending_surrogate = (
     ['o$', 'město', 'o$'],
     ['e$', 'růže', 'e$'],
     ['a$', 'žena', 'a$'],
+    ['ost$', 'kost', '$'],
     ['e$', 'vesele', 'e$'],
     ['ě$', 'mladě', 'ě$'],
     ['[hkrdtnbflmpsvz]$', 'svrab', '$'],
