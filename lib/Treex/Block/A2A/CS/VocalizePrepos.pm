@@ -2,45 +2,32 @@ package Treex::Block::A2A::CS::VocalizePrepos;
 use utf8;
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::Lexicon::CS;
 extends 'Treex::Block::T2A::CS::VocalizePrepos';
 
-use Treex::Tool::Depfix::CS::FixLogger;
+override 'is_prep' => sub {
+    my ($self, $anode) = @_;
 
-
-my $fixLogger;
-
-sub process_start {
-    my $self = shift;
-    
-    $fixLogger = Treex::Tool::Depfix::CS::FixLogger->new({
-        language => $self->language,
-    });
-
-    return;
-}
-
-sub process_atree {
-    my ( $self, $a_root ) = @_;
-
-    my @anodes = $a_root->get_descendants( { ordered => 1 } );
-
-    # we consider bigrams
-    foreach my $i ( 0 .. $#anodes - 1 ) {
-        if ( $anodes[$i]->tag =~ /^R/ ) {
-            my $vocalized = Treex::Block::T2A::CS::VocalizePrepos::vocalize(
-                Treex::Tool::Lexicon::CS::truncate_lemma($anodes[$i]->lemma, 1),
-                $anodes[ $i + 1 ]->form
-            );
-            if (lc($anodes[$i]->form) ne lc($vocalized)) {
-                $fixLogger->logfix1($anodes[$i], "VocalizePrepos");
-                $anodes[$i]->set_form($vocalized);
-                $fixLogger->logfix2($anodes[$i]);
-            }
-        }
-    }
-    return;
-}
+    return $anode->tag =~ /^R/;
+};
 
 1;
 
+=head1 NAME 
+
+Treex::Block::A2A::CS::VocalizePrepos
+
+=head1 DESCRIPTION
+
+An a-layer version of L<Treex::Block::T2A::CS::VocalizePrepos>.
+
+=head1 AUTHOR
+
+Rudolf Rosa <rosa@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2015 by Institute of Formal and Applied Linguistics,
+Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.

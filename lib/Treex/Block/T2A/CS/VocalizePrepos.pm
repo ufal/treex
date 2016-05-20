@@ -11,12 +11,18 @@ sub process_atree {
 
     # we consider bigrams
     foreach my $i ( 0 .. $#anodes - 1 ) {
-        if ( $anodes[$i]->get_attr('morphcat/pos') =~ /^R/ ) {
+        if ( $self->is_prep($anodes[$i]) ) {
             my $vocalized = vocalize( $anodes[$i]->lemma, $anodes[ $i + 1 ]->form );
             $anodes[$i]->set_form($vocalized);
         }
     }
     return;
+}
+
+sub is_prep {
+    my ($self, $anode) = @_;
+
+    return $anode->get_attr('morphcat/pos') =~ /^R/;
 }
 
 sub vocalize {
