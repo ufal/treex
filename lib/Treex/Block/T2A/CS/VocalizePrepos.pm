@@ -2,6 +2,7 @@ package Treex::Block::T2A::CS::VocalizePrepos;
 use utf8;
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::Lexicon::CS;
 extends 'Treex::Core::Block';
 
 sub process_atree {
@@ -12,7 +13,9 @@ sub process_atree {
     # we consider bigrams
     foreach my $i ( 0 .. $#anodes - 1 ) {
         if ( $self->is_prep($anodes[$i]) ) {
-            my $vocalized = vocalize( $anodes[$i]->lemma, $anodes[ $i + 1 ]->form );
+            my $vocalized = vocalize(
+                Treex::Tool::Lexicon::CS::truncate_lemma($anodes[$i]->lemma, 1),
+                $anodes[ $i + 1 ]->form );
             $anodes[$i]->set_form($vocalized);
         }
     }
