@@ -11,7 +11,9 @@ use Treex::Tool::ML::VowpalWabbit::Ranker;
 
 has '+model_path' => (
     #default => 'data/models/coreference/CS/vw/perspron.2015-04-29.train.pdt.cs.vw.ranking.model',
-    default => 'data/models/coreference/CS/vw/perspron.2015-11-16.train.pdt.cs.vw.ranking.model',
+    #default => 'data/models/coreference/CS/vw/perspron.2015-11-16.train.pdt.cs.vw.ranking.model',
+    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/run_2016-04-25_11-25-07_17770.cs-perspron_within_a_new_directory_+_a_and_c_namespaces/003.fcc2aaeffe.featset/001.7eb17.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
+    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/run_2016-04-27_10-39-34_18736.fixed_features_for_joins_and_agrees/002.c2b8206b36.featset/004.37316.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
 );
 
 override '_build_ranker' => sub {
