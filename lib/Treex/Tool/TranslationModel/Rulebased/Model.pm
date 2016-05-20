@@ -311,7 +311,7 @@ Treex::Tool::TranslationModel::Rulebased::Model - Simple EN-to-CS rulebased t_le
 =head1 SYNOPSIS
 
  # From command line
- treex -Len -Ssrc Read::Sentences from=input.txt Scen::EN2CS resegment=1 lemma_models='rulebased 1.0 dummy' Write::Sentences to=output.txt join_resegmented=1
+ treex -Len -Ssrc Read::Sentences from=input.txt Scen::EN2CS resegment=1 lemma_models='rulebased 1.0 dummy' Write::Sentences to=output.txt
  
 =item DESCRIPTION
 
@@ -345,5 +345,3 @@ Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 Copyright © 2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
-
-
