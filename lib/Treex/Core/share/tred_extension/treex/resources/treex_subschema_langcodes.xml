@@ -21,16 +21,7 @@
        -->
   <type name="langcode.type">
     <choice>
-      <!-- major languages -->
-      <value>en</value> <!-- English -->
-      <value>de</value> <!-- German -->
-      <value>fr</value> <!-- French -->
-      <value>es</value> <!-- Spanish -->
-      <value>it</value> <!-- Italian -->
-      <value>ru</value> <!-- Russian -->
-      <value>ar</value> <!-- Arabic -->
-      <value>zh</value> <!-- Chinese -->
-      <!-- other Slavic languages -->
+      <!-- Slavic languages -->
       <value>cs</value> <!-- Czech -->
       <value>sk</value> <!-- Slovak -->
       <value>pl</value> <!-- Polish -->
@@ -38,13 +29,16 @@
       <value>hsb</value> <!-- Upper Sorbian -->
       <value>be</value> <!-- Belarusian -->
       <value>uk</value> <!-- Ukrainian -->
+      <value>ru</value> <!-- Russian -->
       <value>sl</value> <!-- Slovene -->
       <value>hr</value> <!-- Croatian -->
       <value>sr</value> <!-- Serbian -->
       <value>mk</value> <!-- Macedonian -->
       <value>bg</value> <!-- Bulgarian -->
       <value>cu</value> <!-- Old Church Slavonic -->
-      <!-- other Germanic languages -->
+      <!-- Germanic languages -->
+      <value>en</value> <!-- English -->
+      <value>de</value> <!-- German -->
       <value>nl</value> <!-- Dutch -->
       <value>af</value> <!-- Afrikaans -->
       <value>fy</value> <!-- Frisian -->
@@ -57,12 +51,15 @@
       <value>fo</value> <!-- Faroese -->
       <value>is</value> <!-- Icelandic -->
       <value>got</value> <!-- Gothic -->
-      <!-- other Romance and Italic languages -->
+      <!-- Romance and Italic languages -->
       <value>la</value> <!-- Latin -->
+      <value>it</value> <!-- Italian -->
+      <value>es</value> <!-- Spanish -->
       <value>pt</value> <!-- Portuguese -->
       <value>gl</value> <!-- Galician -->
       <value>ca</value> <!-- Catalan -->
       <value>oc</value> <!-- Occitan -->
+      <value>fr</value> <!-- French -->
       <value>rm</value> <!-- Rhaeto-Romance -->
       <value>co</value> <!-- Corsican -->
       <value>sc</value> <!-- Sardinian -->
@@ -84,6 +81,7 @@
       <value>hit</value> <!-- Hittite -->
       <!-- Iranian languages -->
       <value>fa</value> <!-- Persian -->
+      <value>ku</value> <!-- Kurdish -->
       <value>ku-latn</value> <!-- Kurdish in Latin script -->
       <value>ku-arab</value> <!-- Kurdish in Arabic script -->
       <value>ku-cyrl</value> <!-- Kurdish in Cyrillic script -->
@@ -103,7 +101,8 @@
       <value>bn</value> <!-- Bengali -->
       <value>as</value> <!-- Assamese -->
       <value>rmy</value> <!-- Romany -->
-      <!-- other Semitic languages -->
+      <!-- Semitic languages -->
+      <value>ar</value> <!-- Arabic -->
       <value>mt</value> <!-- Maltese -->
       <value>he</value> <!-- Hebrew -->
       <value>am</value> <!-- Amharic -->
@@ -141,7 +140,7 @@
       <value>ml</value> <!-- Malayalam -->
       <value>ta</value> <!-- Tamil -->
       <!-- Sino-Tibetan languages -->
-      <value>zh</value> <!-- Mandarin Chinese -->
+      <value>zh</value> <!-- Chinese -->
       <value>hak</value> <!-- Hakka -->
       <value>nan</value> <!-- Taiwanese -->
       <value>yue</value> <!-- Cantonese -->
