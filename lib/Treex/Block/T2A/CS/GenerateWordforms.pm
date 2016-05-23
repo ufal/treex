@@ -75,6 +75,22 @@ sub _should_generate {
     );
 }
 
+# match ending, surrogate lemma, substitute ending
+my @ending_surrogate = (
+    ['ovat$', 'kupovat', 'ovat$'],
+    ['ání$', 'plavání', 'í$'],
+    ['í$', 'jarní', 'í$'],
+    ['ý$', 'mladý', 'ý$'],
+    ['o$', 'město', 'o$'],
+    ['e$', 'růže', 'e$'],
+    ['a$', 'žena', 'a$'],
+    ['ost$', 'kost', '$'],
+    ['e$', 'vesele', 'e$'],
+    ['ě$', 'mladě', 'ě$'],
+    ['[hkrdtnbflmpsvz]$', 'svrab', '$'],
+    ['[žšřčcjďťňbflmpsvz]$', 'muž', '$'],
+);
+
 sub _generate_word_form {
     my $a_node = shift;
     my $dont_warn = shift;
@@ -149,6 +165,36 @@ sub _generate_word_form {
 
     $form = _form_after_tag_relaxing( $lemma, $tag_regex, $partial_regexps_ref, $a_node );
     return $form if $form;
+
+    # HACK: try to inflect based solely on the ending
+    # skip names and other weird stuff
+    if ((lcfirst $lemma eq $lemma) && ($lemma =~ /^[\p{L}-]*$/)) {
+        foreach my $ending_surrogate_pair (@ending_surrogate) {
+            my $ending = $ending_surrogate_pair->[0];
+            if ($lemma =~ /$ending/) {
+                my $surrogate_lemma = $ending_surrogate_pair->[1];
+                log_debug("trying SURR $surrogate_lemma on $lemma $tag_regex", 1);
+                my $form_info = $morphoLM->best_form_of_lemma( $surrogate_lemma, $tag_regex );
+                if (!$form_info) {
+                    ($form_info) = $generator->forms_of_lemma(
+                        $surrogate_lemma, { tag_regex => "^$tag_regex" } );
+                }
+                if (!$form_info) {
+                    next;
+                }
+
+                my $replace = $ending_surrogate_pair->[2];
+                my $stem = $lemma =~ s/$replace//r;
+                my $surrogate_stem = $surrogate_lemma =~ s/$replace//r;
+                if ($form_info->{form} =~ s/$surrogate_stem/$stem/) {
+                    log_debug( "SURR: $lemma\t$tag_regex\t" . $form_info->get_form() . "\t"
+                        . $form_info->get_tag() . "\tttred " . $a_node->get_address() . " &", 1 );
+                    $form_info->{lemma} = $lemma;
+                    return $form_info;
+                }
+            }
+        }
+    }
 
     # If there are no compatible forms from morphology analysis, return the lemma at least
     log_debug( "LEMM: $lemma\t$tag_regex\t$lemma\tttred " . $a_node->get_address() . " &", 1 );

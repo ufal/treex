@@ -6,9 +6,9 @@ extends 'Treex::Core::Block';
 
 use Text::Unidecode;
 
-has 'source_language' => ( is => 'rw', isa => 'Str', default => 'en' );
-has 'source_selector' => ( is => 'rw', isa => 'Str', default => '' );
-has 'ignore_diacritics' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'source_language' => ( is => 'ro', isa => 'Str', default => '' );
+has 'source_selector' => ( is => 'ro', isa => 'Str', default => '' );
+has 'ignore_diacritics' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 sub lcsf {
     my ($self, $anode) = @_;
