@@ -12,6 +12,8 @@ has resegment => (
 
 sub BUILD {
     my ($self) = @_;
+    # running BART for coreference resolution in English
+    $self->{coref} = "BART";
     return;
 }
 
@@ -26,6 +28,10 @@ sub get_scenario_string {
     'Util::SetGlobal language=cs selector=src',
     $self->resegment ? 'W2A::ResegmentSentences' : (),
     "Scen::Analysis::CS $params",
+    # TODO: add align blocks here
+    # ???
+    # alignment of coreferential expressions
+    'Align::T::Supervised::Resolver language=en,cs align_trg_lang=en node_types=all_anaph',
     ;
     return $scen;
 }
