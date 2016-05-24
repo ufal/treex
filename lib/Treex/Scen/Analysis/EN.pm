@@ -30,6 +30,13 @@ has functors => (
      documentation => 'Which analyzer of functors to use',
 );
 
+has coref => (
+    is => 'ro',
+    isa => enum( [qw(simple BART)] ),
+    default => 'simple',
+    documentation => 'Which coreference resolver to use',
+);
+
 has gazetteer => (
      is => 'ro',
      isa => 'Str',
@@ -152,7 +159,7 @@ sub get_scenario_string {
     $self->functors eq 'VW' ? 'A2T::SetNodetype' : (), # fix nodetype changes induced by functors
     $self->valframes ? 'A2T::EN::SetValencyFrameRefVW' : (),
     $self->mark_it ? 'A2T::EN::MarkReferentialIt resolver_type=nada threshold=0.5 suffix=nada_0.5' : (), # you need Treex::External::NADA installed for this
-    'A2T::EN::FindTextCoref',
+    $self->coref eq 'BART' ? 'Coref::EN::ResolveBART2 is_czeng=1' : 'A2T::EN::FindTextCoref',
     ;
 
     return $scen;
