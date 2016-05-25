@@ -34,7 +34,7 @@ sub get_scenario_string {
     'Align::T::CopyAlignmentFromAlayer language=cs to_language=en',
     'Align::T::AlignCzechPersprons language=cs to_language=en',
     # alignment of coreferential expressions
-    'Align::T::Supiervised::Resolver language=en,cs align_trg_lang=en node_types=all_anaph',
+    'Align::T::Supervised::Resolver language=en,cs align_trg_lang=en node_types=all_anaph',
     ;
     return $scen;
 }
