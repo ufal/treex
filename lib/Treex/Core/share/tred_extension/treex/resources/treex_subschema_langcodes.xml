@@ -98,24 +98,24 @@
       <value>os</value> <!-- Ossetic -->
       <value>tg</value> <!-- Tajiki (in Cyrillic script) -->
       <value>ps</value> <!-- Pashto -->
-      <!-- Indo-Aryan languages -->
+      <!-- Dardic and Indo-Aryan languages -->
       <value>ks</value> <!-- Kashmiri (in Arabic script) -->
+      <value>sa</value> <!-- Sanskrit -->
+      <value>pi</value> <!-- Pāli -->
       <value>sd</value> <!-- Sindhi -->
       <value>pa</value> <!-- Punjabi -->
       <value>ur</value> <!-- Urdu -->
       <value>hi</value> <!-- Hindi -->
-      <value>sa</value> <!-- Sanskrit -->
       <value>bh</value> <!-- Bihari -->
-      <value>gu</value> <!-- Gujarati -->
-      <value>mr</value> <!-- Marathi -->
       <value>ne</value> <!-- Nepali -->
-      <value>pi</value> <!-- Pāli -->
       <value>or</value> <!-- Oriya -->
       <value>bn</value> <!-- Bengali -->
       <value>as</value> <!-- Assamese -->
-      <value>rmy</value> <!-- Romany -->
+      <value>gu</value> <!-- Gujarati -->
+      <value>mr</value> <!-- Marathi -->
       <value>si</value> <!-- Sinhala -->
       <value>dv</value> <!-- Divehi -->
+      <value>rmy</value> <!-- Romany -->
       <!-- Semitic languages -->
       <value>ar</value> <!-- Arabic -->
       <value>mt</value> <!-- Maltese -->
@@ -139,12 +139,12 @@
       <value>ig</value> <!-- Igbo -->
       <value>sg</value> <!-- Sango -->
       <!-- Bantu languages -->
-      <value>ln</value> <!-- Lingala -->
+      <value>ln</value> <!-- Lingala (Ngala) -->
       <value>kg</value> <!-- Kongo -->
       <value>lu</value> <!-- Luba-Katanga -->
-      <value>lg</value> <!-- Luganda -->
-      <value>rw</value> <!-- Kinyarwanda -->
-      <value>rn</value> <!-- Kirundi -->
+      <value>lg</value> <!-- Luganda (Ganda) -->
+      <value>rw</value> <!-- Kinyarwanda (Rwanda) -->
+      <value>rn</value> <!-- Kirundi (Rundi) -->
       <value>ki</value> <!-- Kikuyu -->
       <value>sw</value> <!-- Swahili -->
       <value>ny</value> <!-- Chichewa -->
