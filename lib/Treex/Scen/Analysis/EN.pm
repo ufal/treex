@@ -219,6 +219,12 @@ MLProcess = A2T::EN::SetFunctors2 (functors trained from PEDT, extra 2GB RAM nee
 
 VW = A2T::EN::SetFunctorsVW (VowpalWabbit model trained on PEDT)
 
+=head2 coref (simple, BART)
+
+simple = A2T::EN::FindTextCoref (old rule-based CR for possessives looking for the anteceent within the same sentence)
+
+BART = Coref::EN::ResolveBART2 (full-fledged CR, requires Java 1.7 and 5G mem, default timeout 120s for one document or CzEng block)
+
 =head2 valframes (boolean)
 
 Set valency frame references (IDs in the EngVallex dictionary) indicating the word sense
