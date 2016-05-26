@@ -28,8 +28,11 @@ sub get_scenario_string {
     'Util::SetGlobal language=cs selector=src',
     $self->resegment ? 'W2A::ResegmentSentences' : (),
     "Scen::Analysis::CS $params",
-    # TODO: add align blocks here
+    # TODO: add m-align blocks here
     # ???
+    # David Marecek's t-aligner (tectogrammatical node-alignment with Giza features)
+    'Align::T::CopyAlignmentFromAlayer language=cs to_language=en',
+    'Align::T::AlignCzechPersprons language=cs to_language=en',
     # alignment of coreferential expressions
     'Align::T::Supervised::Resolver language=en,cs align_trg_lang=en node_types=all_anaph',
     ;
