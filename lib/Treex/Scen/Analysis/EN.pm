@@ -30,6 +30,13 @@ has functors => (
      documentation => 'Which analyzer of functors to use',
 );
 
+has coref => (
+    is => 'ro',
+    isa => enum( [qw(simple BART)] ),
+    default => 'simple',
+    documentation => 'Which coreference resolver to use',
+);
+
 has gazetteer => (
      is => 'ro',
      isa => 'Str',
@@ -152,7 +159,7 @@ sub get_scenario_string {
     $self->functors eq 'VW' ? 'A2T::SetNodetype' : (), # fix nodetype changes induced by functors
     $self->valframes ? 'A2T::EN::SetValencyFrameRefVW' : (),
     $self->mark_it ? 'A2T::EN::MarkReferentialIt resolver_type=nada threshold=0.5 suffix=nada_0.5' : (), # you need Treex::External::NADA installed for this
-    'A2T::EN::FindTextCoref',
+    $self->coref eq 'BART' ? 'Coref::EN::ResolveBART2 is_czeng=1' : 'A2T::EN::FindTextCoref',
     ;
 
     return $scen;
@@ -211,6 +218,12 @@ simple = A2T::EN::SetFunctors
 MLProcess = A2T::EN::SetFunctors2 (functors trained from PEDT, extra 2GB RAM needed)
 
 VW = A2T::EN::SetFunctorsVW (VowpalWabbit model trained on PEDT)
+
+=head2 coref (simple, BART)
+
+simple = A2T::EN::FindTextCoref (old rule-based CR for possessives looking for the anteceent within the same sentence)
+
+BART = Coref::EN::ResolveBART2 (full-fledged CR, requires Java 1.7 and 5G mem, default timeout 120s for one document or CzEng block)
 
 =head2 valframes (boolean)
 

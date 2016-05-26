@@ -8,7 +8,7 @@ use Treex::Tool::ML::VowpalWabbit::Util;
 
 with 'Treex::Tool::ML::Ranker';
 
-has 'vw_path' => (is => 'ro', isa => 'Str', required => 1, default => '/net/cluster/TMP/mnovak/tools/vowpal_wabbit/vowpalwabbit/vw');
+has 'vw_path' => (is => 'ro', isa => 'Str', required => 1, default => 'installed_tools/ml/vowpal_wabbit-v7.10.1-7453326e57/vowpalwabbit/vw');
 #has 'vw_path' => (is => 'ro', isa => 'Str', required => 1, default => '/net/cluster/TMP/mnovak/tools/vowpal_wabbit-v7.7-e9f67eca58/vowpalwabbit/vw');
 #has 'vw_path' => (is => 'ro', isa => 'Str', required => 1, default => '/net/work/people/mnovak/tools/x86_64/vowpal_wabbit/vowpalwabbit/vw');
 has '_read_handle'  => ( is => 'rw', isa => 'FileHandle' );
