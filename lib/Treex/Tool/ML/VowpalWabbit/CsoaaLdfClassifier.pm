@@ -6,7 +6,7 @@ use Treex::Core::Common;
 use Treex::Core::Resource qw(require_file_from_share);
 
 
-has 'vw_path' => ( is => 'ro', isa => 'Str', required => 1, default => '/home/odusek/work/tools/vowpal_wabbit/vowpalwabbit/vw' );
+has 'vw_path' => (is => 'ro', isa => 'Str', required => 1, default => 'installed_tools/ml/vowpal_wabbit-v7.10.1-7453326e57/vowpalwabbit/vw');
 
 has '_read_handle'  => ( is => 'rw', isa => 'FileHandle' );
 has '_write_handle' => ( is => 'rw', isa => 'FileHandle' );
