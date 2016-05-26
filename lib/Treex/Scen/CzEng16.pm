@@ -14,8 +14,6 @@ sub BUILD {
     my ($self) = @_;
     # running BART for coreference resolution in English
     $self->{coref} = "BART";
-    # use the VW version of functors
-    $self->{functors} = "VW";
     return;
 }
 
@@ -24,12 +22,14 @@ sub get_scenario_string {
     my $params = $self->args_str;
 
     my $scen = join "\n",
-    'Util::SetGlobal language=en selector=src',
+    # EN analysis
+    'Util::SetGlobal language=en',
     $self->resegment ? 'W2A::ResegmentSentences' : (),
     "Scen::Analysis::EN functors=VW $params",
-    'Util::SetGlobal language=cs selector=src',
+    # CS analysis
+    'Util::SetGlobal language=cs',
     $self->resegment ? 'W2A::ResegmentSentences' : (),
-    "Scen::Analysis::CS $params",
+    "Scen::Analysis::CS functors=VW $params",
     # TODO: add m-align blocks here
     # ???
     # David Marecek's t-aligner (tectogrammatical node-alignment with Giza features)
@@ -38,10 +38,10 @@ sub get_scenario_string {
     # alignment of coreferential expressions
     'Align::T::Supervised::Resolver language=en,cs align_trg_lang=en node_types=all_anaph',
     # cross-lingual valency frames
-    'Util::SetGlobal language=en selector=src',
+    'Util::SetGlobal language=en',
     'A2T::EN::SetValencyFrameRefVW model_file=data/models/valframes/VF-EN_with_CS.232.csoaa_ldf_mc-passes_4-loss_function_hinge.model features_file=data/models/valframes/features-valrf_en-aligned_lemma.vw.yml vallex_mapping_file=data/models/valframes/czengvallex.en_frame-cs_lemma.fixed.limit.txt vallex_mapping_by_lemma=0',
-    'Util::SetGlobal language=cs selector=src',
-    'A2T::EN::SetValencyFrameRefVW model_file=data/models/valframes/VF-CS_with_EN.233.csoaa_ldf_mc-passes_4-loss_function_hinge.model features_file=data/models/valframes/features-valrf_cs-aligned_lemma.vw.yml vallex_mapping_file=data/models/valframes/czengvallex.cs_frame-en_lemma.fixed.limit.txt vallex_mapping_by_lemma=0 restrict_frames_file=data/models/valframes/frames-in-data_cs.txt'
+    'Util::SetGlobal language=cs',
+    'A2T::CS::SetValencyFrameRefVW model_file=data/models/valframes/VF-CS_with_EN.233.csoaa_ldf_mc-passes_4-loss_function_hinge.model features_file=data/models/valframes/features-valrf_cs-aligned_lemma.vw.yml vallex_mapping_file=data/models/valframes/czengvallex.cs_frame-en_lemma.fixed.limit.txt vallex_mapping_by_lemma=0 restrict_frames_file=data/models/valframes/frames-in-data_cs.txt'
     ;
     return $scen;
 }
