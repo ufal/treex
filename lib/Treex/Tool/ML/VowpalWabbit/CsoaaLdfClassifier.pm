@@ -5,8 +5,7 @@ use Treex::Tool::ProcessUtils;
 use Treex::Core::Common;
 use Treex::Core::Resource qw(require_file_from_share);
 
-
-has 'vw_path' => (is => 'ro', isa => 'Str', required => 1, default => 'installed_tools/ml/vowpal_wabbit-v7.10.1-7453326e57/vowpalwabbit/vw');
+has 'vw_path' => (is => 'ro', isa => 'Str', required => 1, default => '/home/odusek/treex/share/installed_tools/ml/vowpal_wabbit-v7.7.0-aaf6ad4/vowpalwabbit/vw');
 
 has '_read_handle'  => ( is => 'rw', isa => 'FileHandle' );
 has '_write_handle' => ( is => 'rw', isa => 'FileHandle' );
@@ -20,7 +19,7 @@ sub BUILD {
     my ($self) = @_;
 
     my $model_path = $self->_locate_model_file( $self->model_path, $self );
-    my $command = sprintf "%s --ring_size %d -t -i %s -p /dev/stdout 2> /dev/null", $self->vw_path, $self->ring_size, $model_path;
+    my $command = sprintf "%s --ring_size %d -t -i %s -p /dev/stdout 2>/dev/null", $self->vw_path, $self->ring_size, $model_path;
 
     my ( $read, $write, $pid ) = Treex::Tool::ProcessUtils::bipipe($command);
 
