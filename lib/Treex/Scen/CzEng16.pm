@@ -24,7 +24,7 @@ sub get_scenario_string {
     my $scen = join "\n",
     'Util::SetGlobal language=en selector=src',
     $self->resegment ? 'W2A::ResegmentSentences' : (),
-    "Scen::Analysis::EN $params",
+    "Scen::Analysis::EN functors=VW $params",
     'Util::SetGlobal language=cs selector=src',
     $self->resegment ? 'W2A::ResegmentSentences' : (),
     "Scen::Analysis::CS $params",
