@@ -124,6 +124,7 @@
       <value>ti</value> <!-- Tigrinya -->
       <!-- other Afroasiatic languages -->
       <value>ha</value> <!-- Hausa -->
+      <value>cop</value> <!-- Coptic -->
       <value>aa</value> <!-- Afar -->
       <value>om</value> <!-- Oromo -->
       <value>so</value> <!-- Somali -->
