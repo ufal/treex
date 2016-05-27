@@ -30,8 +30,15 @@ sub get_scenario_string {
     'Util::SetGlobal language=cs',
     $self->resegment ? 'W2A::ResegmentSentences' : (),
     "Scen::Analysis::CS functors=VW $params",
+
+    # Obo decided quotation marks should not be present on the t-layer in CzEng,
+    # (although it is useful to keep them as t-nodes for most applications, e.g. MT).
+    'A2T::DeleteChildlessPunctuation language=en,cs',
+
     # TODO: add m-align blocks here
-    # ???
+    # Align::A::AlignMGiza from_language=cs to_language=en # or from_language=en to_language=cs???
+
+
     # David Marecek's t-aligner (tectogrammatical node-alignment with Giza features)
     'Align::T::CopyAlignmentFromAlayer language=cs to_language=en',
     'Align::T::AlignCzechPersprons language=cs to_language=en',
