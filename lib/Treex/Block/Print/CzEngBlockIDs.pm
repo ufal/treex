@@ -13,7 +13,14 @@ override _do_process_document => sub {
             $line .= "\t" . join ' ', @outids;
             @outids = ();
         }
-        next if $bundle->wild->{to_delete};
+        if ($bundle->wild->{to_delete}) {
+          if (@outids) {
+            # emit the previous sequence of sentences
+            $line .= "\t" . join ' ', @outids;
+            @outids = ();
+          }
+          next; # don't add this bundle at all
+        }
         push @outids, $bundle->id;
     }
     if (@outids) {
