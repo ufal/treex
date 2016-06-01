@@ -11,20 +11,18 @@ has store_orig_filename => (is=>'ro', isa=>'Bool', default=>1);
 has 'last_loaded_from' => ( is => 'rw', isa => 'Str', default => '' );
 has 'sent_in_file'     => ( is => 'rw', isa => 'Int', default => 0 );
 
-
-
 #------------------------------------------------------------------------------
 # Reads a Prague-style tree and transforms it to Universal Dependencies.
 #------------------------------------------------------------------------------
-sub process_zone {
-    my ($self, $zone) = @_;
+sub process_atree {
+    my ($self, $root) = @_;
 
     # Add the name of the input file and the number of the sentence inside
     # the file as a comment that will be written in the CoNLL-U format.
     # (In any case, Write::CoNLLU will print the sentence id. But this additional
     # information is also very useful for debugging, as it ensures a user can find the sentence in Tred.)
     if ($self->store_orig_filename){
-        my $bundle = $zone->get_bundle();
+        my $bundle = $root->get_bundle();
         my $loaded_from = $bundle->get_document()->loaded_from(); # the full path to the input file
         my $file_stem = $bundle->get_document()->file_stem(); # this will be used in the comment
         if($loaded_from eq $self->last_loaded_from()) {
@@ -46,7 +44,6 @@ sub process_zone {
     }
 
     # Now the harmonization proper.
-    my $root = $zone->get_atree();
     $self->exchange_tags($root);
     $self->fix_symbols($root);
     $self->fix_annotation_errors($root);
@@ -67,7 +64,7 @@ sub process_zone {
         'prep_is_head'           => 0,
         'cop_is_head'            => 0,
         'coordination_head_rule' => 'first_conjunct',
-        'counted_genitives'      => $self->language() ne 'la'
+        'counted_genitives'      => $root->language ne 'la'
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
@@ -921,6 +918,7 @@ sub tag_nodes
     my $self = shift;
     my $nodes = shift; # ArrayRef: nodes that should be (re-)tagged
     my $default = shift; # HashRef: Interset features to set for unrecognized nodes
+
     # Currently supported languages: Catalan, Spanish and Portuguese.
     # In general, we want to use a mixed dictionary. If there is a foreign named entity (such as Catalan "L'Hospitalet" in Spanish text),
     # we still want to recognize the "L'" as a determiner. If it was "La", it would become a DET anyway, regardless whether it is
@@ -928,7 +926,7 @@ sub tag_nodes
     # However, some words should be in a language-specific dictionary to reduce homonymy.
     # For example, Portuguese "a" is either a DET or an ADP. In Catalan and Spanish, it is only ADP.
     # We do not want to extend the Portuguese homonymy issue to the other languages.
-    my $language = $self->language();
+    my $language = $nodes->[0]->language;
     my $ap = "'";
     my %dethash =
     (
@@ -1527,14 +1525,14 @@ sub classify_numerals
 # do not search for effective parent (e.g. in "některého žáka či žákyni").
 # Dependency relation labels must have been converted to UD labels.
 #------------------------------------------------------------------------------
-sub fix_determiners
-{
-    my $self  = shift;
-    my $root  = shift;
+sub fix_determiners {
+    my ($self, $root)  = @_;
+
     ###!!! Do not do anything for Maltese. There is no tree structure we could
     ###!!! rely on. This is definitely not the best place to turn this off, we
     ###!!! need a more general solution! But right now a quick hack is needed.
-    return if($self->language() eq 'mt');
+    return if $root->language eq 'mt';
+
     ###!!!
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
