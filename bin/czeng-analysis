@@ -61,9 +61,9 @@ fi
 
 # choose correct pipeline
 if [[ $LANGUAGE == "cs" ]]; then
-	cat /dev/stdin | $TREEX $READER Scen::Analysis::CS $WRITER
+	cat /dev/stdin | $TREEX $READER Scen::Analysis::CS functors=VW valframes=1 A2T::DeleteChildlessPunctuation language=cs $WRITER
 elif [[ $LANGUAGE == "en" ]]; then
-	cat /dev/stdin | $TREEX $READER Scen::Analysis::EN $WRITER
+	cat /dev/stdin | $TREEX $READER Scen::Analysis::EN functors=VW valframes=1 coref=BART A2T::DeleteChildlessPunctuation language=en $WRITER
 else
 	echo "Language '$LANGUAGE' not supported (see $) -h)" 1>&2
 fi
