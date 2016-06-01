@@ -6,6 +6,8 @@ use Treex::Core::Common;
 use Treex::Tool::PhraseBuilder::PragueToUD;
 extends 'Treex::Core::Block';
 
+has store_orig_filename => (is=>'ro', isa=>'Bool', default=>1);
+
 has 'last_loaded_from' => ( is => 'rw', isa => 'Str', default => '' );
 has 'sent_in_file'     => ( is => 'rw', isa => 'Int', default => 0 );
 
@@ -14,38 +16,35 @@ has 'sent_in_file'     => ( is => 'rw', isa => 'Int', default => 0 );
 #------------------------------------------------------------------------------
 # Reads a Prague-style tree and transforms it to Universal Dependencies.
 #------------------------------------------------------------------------------
-sub process_zone
-{
-    my $self = shift;
-    my $zone = shift;
+sub process_zone {
+    my ($self, $zone) = @_;
+
     # Add the name of the input file and the number of the sentence inside
     # the file as a comment that will be written in the CoNLL-U format.
     # (In any case, Write::CoNLLU will print the sentence id. But this additional
     # information is also very useful for debugging, as it ensures a user can find the sentence in Tred.)
-    my $bundle = $zone->get_bundle();
-    my $loaded_from = $bundle->get_document()->loaded_from(); # the full path to the input file
-    my $file_stem = $bundle->get_document()->file_stem(); # this will be used in the comment
-    if($loaded_from eq $self->last_loaded_from())
-    {
-        $self->set_sent_in_file($self->sent_in_file() + 1);
+    if ($self->store_orig_filename){
+        my $bundle = $zone->get_bundle();
+        my $loaded_from = $bundle->get_document()->loaded_from(); # the full path to the input file
+        my $file_stem = $bundle->get_document()->file_stem(); # this will be used in the comment
+        if($loaded_from eq $self->last_loaded_from()) {
+            $self->set_sent_in_file($self->sent_in_file() + 1);
+        } else {
+            $self->set_last_loaded_from($loaded_from);
+            $self->set_sent_in_file(1);
+        }
+        my $sent_in_file = $self->sent_in_file();
+        my $comment = "orig_file_sentence $file_stem\#$sent_in_file";
+        my @comments;
+        if(defined($bundle->wild()->{comment})) {
+            @comments = split(/\n/, $bundle->wild()->{comment});
+        }
+        if (! any {$_ eq $comment} (@comments)) {
+            push(@comments, $comment);
+            $bundle->wild()->{comment} = join("\n", @comments);
+        }
     }
-    else
-    {
-        $self->set_last_loaded_from($loaded_from);
-        $self->set_sent_in_file(1);
-    }
-    my $sent_in_file = $self->sent_in_file();
-    my $comment = "orig_file_sentence $file_stem\#$sent_in_file";
-    my @comments;
-    if(defined($bundle->wild()->{comment}))
-    {
-        @comments = split(/\n/, $bundle->wild()->{comment});
-    }
-    unless(any {$_ eq $comment} (@comments))
-    {
-        push(@comments, $comment);
-        $bundle->wild()->{comment} = join("\n", @comments);
-    }
+
     # Now the harmonization proper.
     my $root = $zone->get_atree();
     $self->exchange_tags($root);
