@@ -11,6 +11,7 @@ sub get_scenario_string {
     q{Util::Eval anode='$.set_deprel($.afun)'},
     'A2A::ConvertTags input_driver=cs::pdt language=cs',
     'A2A::ConvertTags input_driver=en::penn language=en',
+    'A2A::EN::EnhanceInterset',
     'HamleDT::Udep store_orig_filename=0',
     'Write::CoNLLU to=' . $self->to;
     ;
