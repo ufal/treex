@@ -7,9 +7,10 @@ use Lingua::Interset qw(encode);
 use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';
 
-has 'print_id'                         => ( is       => 'ro', isa => 'Bool', default => 1, documentation => 'print sent_id in CoNLL-U comment before each sentence' );
-has 'xpostag'                          => ( is       => 'ro', isa => 'Bool', default => 1, documentation => 'include a treebank-specific tag in the XPOSTAG column?' );
-has 'randomly_select_sentences_ratio'  => ( is       => 'rw', isa => 'Num',  default => 1 );
+has 'print_id'                         => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print sent_id in CoNLL-U comment before each sentence' );
+has 'xpostag'                          => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'include a treebank-specific tag in the XPOSTAG column?' );
+has 'randomly_select_sentences_ratio'  => ( is => 'rw', isa => 'Num',  default => 1 );
+has 'alignment'                        => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print alignment links in the 9th column' );
 
 has _was => ( is => 'rw', default => sub{{}} );
 
@@ -153,7 +154,16 @@ sub process_atree {
         # CoNLL-U columns: ID, FORM, LEMMA, UPOSTAG, XPOSTAG(treebank-specific), FEATS, HEAD, DEPREL, DEPS(additional), MISC
         # Make sure that values are not empty and that they do not contain spaces.
         my $xpostag = $self->xpostag() ? $tag : '_';
-        my @values = ($ord, $form, $lemma, $upos, $xpostag, $feat, $pord, $deprel, '_', $misc);
+
+        my $relations = '_';
+        if ($self->alignment) {
+            my ($al_nodes, $al_types) = $node->get_aligned_nodes({directed=>1});
+            if (@$al_nodes) {
+                $relations = join '|', map {$self->_print_alignment($al_nodes->[$_], $al_types->[$_])} (0 .. @$al_nodes-1);
+            }
+        }
+
+        my @values = ($ord, $form, $lemma, $upos, $xpostag, $feat, $pord, $deprel, $relations, $misc);
         @values = map
         {
             my $x = $_ // '_';
@@ -168,6 +178,19 @@ sub process_atree {
     }
     print { $self->_file_handle() } "\n" if($tree->get_descendants());
     return;
+}
+
+sub _print_alignment {
+    my ($self, $node, $type) = @_;
+    my $id = $node->get_bundle->id;
+    $id .= '/' . $node->get_zone->get_label;
+    $id .= '#' . $node->ord;
+    my $t = $type =~ /int/  ? 'int' :
+            $type =~ /gdfa/ ? 'gdfa':
+            $type =~ /left/ ? 'left':
+            $type =~ /right/? 'right':
+            $type =~ /rule|supervised/ ? 'rule' : 'other';
+    return "$id:align_$t";
 }
 
 1;

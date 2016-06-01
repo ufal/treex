@@ -13,7 +13,13 @@ sub get_scenario_string {
     'A2A::ConvertTags input_driver=en::penn language=en',
     'A2A::EN::EnhanceInterset',
     'HamleDT::Udep store_orig_filename=0',
-    'Write::CoNLLU to=' . $self->to;
+
+    # bundle IDs are used also in node IDs in CoNLLU, so let's make them shorter, e.g.
+    # $s = 'subtitlesM-b1-00train'
+    # $f = 'f000001-s5/en'
+    q{Util::Eval bundle='my ($s,$f) = ($.id =~ /(.*)-(f\d+-s\d+)/); $.set_id($f); $.wild->{comment}="CzEng_section $s"'},
+
+    'Write::CoNLLU to=' . $self->to,
     ;
     return $scen;
 }
