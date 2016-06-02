@@ -4,6 +4,8 @@ use Treex::Core::Common;
 
 has to => (is=>'ro', isa=>'Str', default=>'-');
 
+has substitute => (is=>'ro', isa=>'Str', default=>'');
+
 sub get_scenario_string {
     my ($self) = @_;
 
@@ -11,7 +13,8 @@ sub get_scenario_string {
     q{Util::Eval anode='$.set_deprel($.afun)'},
     'A2A::ConvertTags input_driver=cs::pdt language=cs',
     'A2A::ConvertTags input_driver=en::penn language=en',
-    'A2A::EN::EnhanceInterset',
+    'A2A::EN::EnhanceInterset language=en',
+    'A2A::CS::RemoveFeaturesFromLemmas language=cs',
     'HamleDT::Udep store_orig_filename=0',
 
     # bundle IDs are used also in node IDs in CoNLLU, so let's make them shorter, e.g.
@@ -19,7 +22,7 @@ sub get_scenario_string {
     # $f = 'f000001-s5/en'
     q{Util::Eval bundle='my ($s,$f) = ($.id =~ /(.*)-(f\d+-s\d+)/); $.set_id($f); $.wild->{comment}="CzEng_section $s"'},
 
-    'Write::CoNLLU to=' . $self->to,
+    'Write::CoNLLU to=' . $self->to . ($self->substitute ? " substitute=".$self->substitute : ''),
     ;
     return $scen;
 }
@@ -27,7 +30,6 @@ sub get_scenario_string {
 1;
 
 __END__
-
 
 =encoding utf-8
 
