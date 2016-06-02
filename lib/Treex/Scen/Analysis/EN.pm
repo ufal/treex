@@ -103,6 +103,8 @@ sub get_scenario_string {
     $self->ner eq 'NameTag' ?  'A2N::EN::NameTag' : (),
     $self->ner eq 'Stanford' ? 'A2N::EN::StanfordNamedEntities model=ner-eng-ie.crf-3-all2008.ser.gz' : (),
     'A2N::EN::DistinguishPersonalNames',
+    #'A2N::FixMissingLinks', # without this A2N::NestEntities throws errors
+    #'A2N::NestEntities', # entities in n-trees should be nested, but adding this makes en-cs TectoMT BLEU worse
 
     'W2A::MarkChunks',
     'W2A::EN::ParseMST model=conll_mcd_order2_0.01.model',
