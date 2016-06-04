@@ -273,15 +273,43 @@ sub fix_annotation_errors
 {
     my $self  = shift;
     my $root  = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    for(my $i = 0; $i<=$#nodes; $i++)
     {
+        my $node = $nodes[$i];
         my $form = $node->form() // '';
         my $lemma = $node->lemma() // '';
         my $deprel = $node->deprel() // '';
         my $spanstring = $self->get_node_spanstring($node);
+        # There are three instances of broken decimal numbers in PDT.
+        if($form =~ m/^\d+$/ && $i+2<=$#nodes &&
+           !$node->parent()->is_root() && $node->parent()->form() eq ',' && $node->parent() == $nodes[$i+1] &&
+           $node->deprel() eq 'Atr' && !$node->is_member() && scalar($node->parent()->children())==1 &&
+           $nodes[$i+2]->form() =~ m/^\d+$/)
+        {
+            my $integer = $node;
+            my $comma = $nodes[$i+1];
+            my $decimal = $nodes[$i+2];
+            # The three nodes will be merged into one. The decimal node will be kept and integer and comma will be removed.
+            # Numbers in PDT are "normalized" to use decimal point rather than comma, even though it is a violation of the standard Czech orthography.
+            my $number = $integer->form().'.'.$decimal->form();
+            $decimal->set_form($number);
+            $decimal->set_lemma($number);
+            my @integer_children = $integer->children();
+            foreach my $c (@integer_children)
+            {
+                $c->set_parent($decimal);
+            }
+            # We do not need to care about children of the comma. In the three known instances, the only child of the comma is the integer that we just removed.
+            splice(@nodes, $i, 2);
+            # The remove() method will also take care of ord re-normalization.
+            $integer->remove();
+            $comma->remove();
+            last; ###!!! V těch třech větách, o kterých je řeč, stejně nevím o další chybě. Ale hlavně mi nějak nefunguje práce s polem @nodes po umazání těch dvou uzlů.
+            # $i now points to the former decimal, now a merged number. No need to adjust $i; the number does not have to be considered for further error fixing.
+        }
         # Two occurrences of "se" in CAC 2.0 have AuxT instead of AuxP.
-        if($deprel eq 'AuxT' && $node->is_adposition())
+        elsif($deprel eq 'AuxT' && $node->is_adposition())
         {
             $node->set_deprel('AuxP');
         }
