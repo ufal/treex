@@ -14,7 +14,7 @@ has iset_driver =>
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
-
+has change_bundle_id => (is=>'ro', isa=>'Bool', default=>1, documentation=>'use id of a-tree roots as the bundle id');
 
 #------------------------------------------------------------------------------
 # Reads the Czech tree and transforms it to adhere to the HamleDT guidelines.
@@ -24,18 +24,22 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+
     ###!!! Perhaps we should do this in Read::PDT.
     # The bundles in the PDT data have simple ids like this: 's1'.
     # In contrast, the root nodes of a-trees reflect the original PDT id: 'a-cmpr9406-001-p2s1' (surprisingly it does not identify the zone).
     # We want to preserve the original sentence id. And we want it to appear in bundle id because that will be used when writing CoNLL-U.
-    my $sentence_id = $root->id();
-    $sentence_id =~ s/^a-//;
-    if(length($sentence_id)>1)
-    {
-        my $bundle = $zone->get_bundle();
-        $bundle->set_id($sentence_id);
+    if ($self->change_bundle_id) {
+        my $sentence_id = $root->id();
+        $sentence_id =~ s/^a-//;
+        if(length($sentence_id)>1)
+        {
+            my $bundle = $zone->get_bundle();
+            $bundle->set_id($sentence_id);
+        }
     }
     $self->remove_features_from_lemmas($root);
+    return;
 }
 
 
