@@ -17,6 +17,7 @@ sub get_scenario_string {
     # English
     'A2A::ConvertTags input_driver=en::penn language=en',
     'A2A::EN::EnhanceInterset language=en',
+    'W2A::EN::QuotesStyle language=en',
 
     # Czech
     # HamleDT::CS::Harmonize was created for transforming gold PDT data,
