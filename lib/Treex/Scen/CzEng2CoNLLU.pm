@@ -31,11 +31,14 @@ sub get_scenario_string {
 
     # Conversion of Prague/HamleDT-style dependencies to UD-style
     'HamleDT::Udep store_orig_filename=0',
+    q{Util::Eval anode='$.set_deprel("dep") if $.deprel eq "dep:nr";'},
 
     # bundle IDs are used also in node IDs in CoNLLU, so let's make them shorter, e.g.
     # $s = 'subtitlesM-b1-00train'
     # $f = 'f000001-s5/en'
     q{Util::Eval bundle='my ($s,$f) = ($.id =~ /(.*)-(f\d+-s\d+)/); $.set_id($f); $.wild->{comment}="CzEng_section $s"'},
+    # TODO: export also filter_score
+    # my $score = $.get_attr("czeng/filter_score"); $.wild->{comment}="CzEng_section $s\nfilter_score $score";
 
     'Write::CoNLLU to=' . $self->to . ($self->substitute ? " substitute=".$self->substitute : ''),
     ;
