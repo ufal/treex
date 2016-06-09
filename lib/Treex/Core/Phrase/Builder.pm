@@ -22,14 +22,14 @@ sub build
     my $self = shift;
     my $node = shift; # Treex::Core::Node
     my @nchildren = $node->children();
-    my $phrase = new Treex::Core::Phrase::Term('node' => $node);
+    my $phrase = Treex::Core::Phrase::Term->new('node' => $node);
     if(@nchildren)
     {
         # Move the is_member flag to the parent phrase.
         my $member = $phrase->is_member();
         $phrase->set_is_member(0);
         # Create a new nonterminal phrase and make the current terminal phrase its head child.
-        $phrase = new Treex::Core::Phrase::NTerm('head' => $phrase, 'is_member' => $member);
+        $phrase = Treex::Core::Phrase::NTerm->new('head' => $phrase, 'is_member' => $member);
         foreach my $nchild (@nchildren)
         {
             my $pchild = $self->build($nchild);
