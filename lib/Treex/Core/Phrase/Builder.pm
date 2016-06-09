@@ -1,18 +1,12 @@
 package Treex::Core::Phrase::Builder;
-
-use utf8;
 use namespace::autoclean;
-
 use Moose;
-use List::MoreUtils qw(any);
-use Treex::Core::Log;
+use Treex::Core::Common;
 use Treex::Core::Node;
 use Treex::Core::Phrase::Term;
 use Treex::Core::Phrase::NTerm;
 use Treex::Core::Phrase::PP;
 use Treex::Core::Phrase::Coordination;
-
-
 
 #------------------------------------------------------------------------------
 # Wraps a node (and its subtree, if any) in a phrase.
