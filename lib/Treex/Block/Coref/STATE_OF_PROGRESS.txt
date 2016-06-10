@@ -91,7 +91,7 @@ coref git repository:
             - cec; cd treex_cr_train
             - inspired by "qtl; cd translate"
             - a training pipeline for the Czech relprons works out
-            - TODO: continue for other types
+            - TODO-FIXED: continue for other types
         * a CR resolution folder
             - cec; cd treex_cr
             - performs the resolution up to the specified level
@@ -107,10 +107,51 @@ coref git repository:
                             - nodetype=coap, "provedli španělští a britští ženisté, kteří budou" (ln94202_64.streex##2.t_tree-cs_src-s2-n100)
                 - conll_scorer put on hold until Coref::PrepareSpecializedEval is fixed, or used for all the mentions
             - shows the results in a pretty-print colored format
-            - TODO: print the scores to the final result table logging all the runs
+            - TODO-FIXED: print the scores to the final result table logging all the runs
 MLyn git repository:
     - branch "master"
         * ML Framework extracted from the tectomt git-svn repository and renamed to MLyn
         * TODO file added
             - TODO: should be transformed to GitHub issues
 
+----------------------------- 20.5.2016 -----------------------------------------------
+
+treex git repository:
+    - branch "new_coref"
+        * VW formatter - possibility to specify tags;
+            - so far, the tags has been calculated based on the losses
+        * CR scenario in Scen::Coref
+            - CS reflpron and perspron added
+        * CR resolver for Czech reflprons
+            - all semantic nouns from the current sentence as antecedent candidates (not only the preceding ones)
+            - features:
+                - unary: lemma, tlemma, subpos, fmm
+                - binary: is_subject, is_clause_subject
+        * again problems with Feature extractors representation
+            - problems with default node names and namespace prefices
+            - Tool::Coreference::BaseCorefFeatures class created to be inherited by content feature extractors, e.g. Tool::Coreference::PronCorefFeatures
+            - Tool::Coreference::CorefFeatures class to be inherited by meta classes, e.g. Tool::Coreference::Features::Container
+        * feature extractors
+            - extracting the binary features, one has to ask for already set unary features with the namespace
+        * CR pretty-print adjusted to print the true as well as predicted antecedent
+            - sentences in between replaced by their number
+            - Coref::PrettyPrint::LabelKey and Coref::PrettyPrint::LabelSys created to set the wilds necessarry for pretty-print
+        * the best models so far point to my /home/mnovak, not the TMT share
+coref git repository:
+    - branch "new_coref"
+        * a CR training folder:
+            - cec; cd treex_cr_train
+            - inspired by "qtl; cd translate"
+            - a training pipeline for persprons and reflprons added
+            - TODO: add training pipeline for zeros, "ten" and other types
+            - testing on eval removed from training
+            - training on PDT 3.0 with multigenders (dataset no. 0005)
+        * a CR resolution folder
+            - cec; cd treex_cr
+            - performs the resolution up to the specified level
+            - resolvers for new types added
+            - pretty-print fixed
+                - TODO: how does it work now?
+            - diff for comparing two pretty-prints
+            - baseline targets added
+                - they only run the evaluation method on already prepared Treex files
