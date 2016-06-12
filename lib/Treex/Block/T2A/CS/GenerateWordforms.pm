@@ -7,6 +7,8 @@ extends 'Treex::Core::Block';
 use Treex::Tool::Lexicon::CS;
 use File::Spec;
 
+has inflect_by_ending => ( is => 'rw', isa => 'Bool', default => 1 );
+
 # supporting auto-download of required data-files
 sub get_required_share_files {
     my ($self) = @_;
@@ -48,7 +50,7 @@ sub process_anode {
     # always generate the form, but warn only if we plan to actually use it
     my $should_generate = _should_generate($a_node);
     my $dont_warn = !$should_generate;
-    my $form = _generate_word_form($a_node, $dont_warn);
+    my $form = $self->_generate_word_form($a_node, $dont_warn);
     
     # each node will have a form
     if ( $should_generate ) {
@@ -92,8 +94,7 @@ my @ending_surrogate = (
 );
 
 sub _generate_word_form {
-    my $a_node = shift;
-    my $dont_warn = shift;
+    my ($self, $a_node, $dont_warn) = @_;
     my $lemma  = $a_node->lemma;
 
     # digits, abbreviations etc. are not attempted to be inflected
@@ -168,7 +169,7 @@ sub _generate_word_form {
 
     # HACK: try to inflect based solely on the ending
     # skip names and other weird stuff
-    if ((lcfirst $lemma eq $lemma) && ($lemma =~ /^[\p{L}-]*$/)) {
+    if ($self->inflect_by_ending && (lcfirst $lemma eq $lemma) && ($lemma =~ /^[\p{L}-]*$/)) {
         foreach my $ending_surrogate_pair (@ending_surrogate) {
             my $ending = $ending_surrogate_pair->[0];
             if ($lemma =~ /$ending/) {
@@ -371,6 +372,15 @@ when there are no compatible forms in C<Treex::Tool::LM::MorphoLM>.
 
 The resulting form and its corresponding tag are stored in the node attributes
 C<form> and C<tag>.
+
+=head1 PARAMETERS
+
+=over
+
+=item inflect_by_ending
+Add a last-resort attempt to inflect an unknown lemma based only on its ending.
+
+=back
 
 =head1 AUTHORS
 

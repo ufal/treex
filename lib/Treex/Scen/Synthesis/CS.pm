@@ -4,6 +4,8 @@ use Treex::Core::Common;
 
 has project_case => ( is => 'rw', isa => 'Bool', default => 0 );
 
+has inflect_by_ending => ( is => 'rw', isa => 'Bool', default => 1 );
+
 sub get_scenario_string {
     my ($self) = @_;
 
@@ -38,7 +40,7 @@ sub get_scenario_string {
     'T2A::CS::AddCoordPunct',
     'T2A::CS::AddAppositionPunct',
     'T2A::CS::ChooseMlemmaForPersPron',
-    'T2A::CS::GenerateWordforms',
+    'T2A::CS::GenerateWordforms inflect_by_ending=' . $self->inflect_by_ending,
     'T2A::CS::DeleteSuperfluousAuxCP',
     'T2A::CS::MoveCliticsToWackernagel',
     'T2A::CS::DeleteEmptyNouns',
