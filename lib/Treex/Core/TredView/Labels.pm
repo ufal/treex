@@ -219,7 +219,10 @@ sub _anode_labels {
         {
             $parent = $parent->parent;
         }
-        if ( $parent->afun =~ m/^(Ap)os|(Co)ord/ ) {
+        my $pafun = $parent->afun();
+        $pafun = $parent->deprel() if(!defined($pafun));
+        $pafun = '' if(!defined($pafun));
+        if ( $pafun =~ m/^(Ap)os|(Co)ord/ ) {
             $line2 .= '_' . $self->_colors->get( 'member', 1 ) . ( $1 ? $1 : $2 );
         }
     }
