@@ -245,7 +245,8 @@ sub _create_job_script {
     my ( $self, $jobnumber, $input ) = @_;
 
     my $workdir     = $self->workdir;
-    my $current_dir = Cwd::cwd;
+    my $current_dir = $ENV{PWD};
+    #my $current_dir = Cwd::cwd;
 
     my $script_filename = "scripts/job$jobnumber.sh";
     open my $J, ">", "$workdir/$script_filename" or log_fatal $!;
