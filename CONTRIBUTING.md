@@ -21,7 +21,7 @@ Thank you for taking the time to contribute and reading these guidelines.
 * Limit the first line of the commit log to 50 or at most 72 characters (that is the title of the commit),
   follow with a blank line and a detailed explanatory text about the commit.
   Refer to the related GitHub issues (e.g. `#1` will be automatically hyperlinked to the issue number 1 on GitHub).
-  See e.g. http://ablogaboutcode.com/2011/03/23/proper-git-commit-messages-and-an-elegant-git-history/.
+  See e.g. http://ablogaboutcode.com/2011/03/23/proper-git-commit-messages-and-an-elegant-git-history.
 * Make sure you can publish the code under [the same license as Perl itself](http://dev.perl.org/licenses/),
   that is dual GNU GPL 1 or later and Artistic License.
   

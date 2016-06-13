@@ -1,11 +1,75 @@
 package Treex::Block::Filter::CzEng::DictionaryRatio;
 use Moose;
 use Treex::Core::Common;
-use TranslationDict::EN2CS;
-use TranslationDict::SimplePOS;
+use Treex::Tool::TranslationModel::Static::Universal;
 use Treex::Block::Filter::CzEng::Common;
 
 extends 'Treex::Block::Filter::CzEng::Common';
+
+has model_file => (
+    isa           => 'Str',
+    is            => 'rw',
+    required      => 0,
+    default       => "resource_data/translation_dictionaries/czeng_prob_dict.tsv",
+);
+
+has _dictionary => (
+    is            => 'rw',
+    required      => '0',
+);
+
+sub BUILD {
+    my $self = shift;
+    my $dictfile = Treex::Core::Resource::require_file_from_share($self->{model_file});
+    $self->{_dictionary} = Treex::Tool::TranslationModel::Static::Universal->new(
+      {
+        file=>$dictfile,
+        columns=>['main_key', 'value', 'prob'],
+      }
+    );
+}
+
+sub tag2simplepos {
+    my ($tag, $tagset) = @_;
+    if (not defined $tag or $tag eq "") {
+        Report::fatal('Undefined or empty tag');
+    }
+    if (not defined $tagset or $tagset eq "") {
+        Report::fatal('Undefined or empty tagset');
+    }
+
+    my $simplepos;
+
+    if ($tagset eq 'pdt') {
+        if ($tag =~ /^([NAVD])/) {
+            $simplepos = $1;
+        }
+        else {
+            $simplepos = 'X';
+        }
+    }
+
+    elsif ($tagset eq 'ptb') {
+        if ($tag =~ /^([NV])/) {
+            $simplepos = $1;
+        }
+        elsif ($tag =~ /^J/) {
+            $simplepos = 'A';
+        }
+        elsif ($tag =~ /^R/) {
+            $simplepos = 'D';
+        }
+        else {
+            $simplepos = 'X';
+        }
+    }
+
+    else {
+        Report::fatal("Unsupported tagset: $tagset");
+    }
+
+    return $simplepos;
+}
 
 sub process_bundle {
     my ( $self, $bundle ) = @_;
@@ -21,17 +85,16 @@ sub process_bundle {
 
     my $covered = 0;                          # number of English words covered in Czech
 
-    my $dict = TranslationDict::EN2CS->new();
     my $has_translation = 0;
 
     for my $en_node (@en) {
         my $en_lemma      = lc( $en_node->get_attr("lemma") );
-        my $en_tag_simple = TranslationDict::SimplePOS::tag2simplepos( $en_node->get_attr("tag"), "ptb" );
-        my @trans         = $dict->get_translations( $en_lemma, $en_lemma, $en_tag_simple );
-        if ( @trans && $trans[0]->{cs_tlemma} ne $en_lemma ) {
+        my $en_tag_simple = tag2simplepos( $en_node->get_attr("tag"), "ptb" );
+        my @trans         = $self->{_dictionary}->translations_of( "$en_lemma#$en_tag_simple" );
+        if ( @trans ) {
             $has_translation++;
-            $covered++ if grep { $cs_lemmas{$_} } map { lc $_->{cs_tlemma} } @trans;
-#            log_info $en_lemma . ": " . join( " ", map { lc $_->{cs_tlemma} } @trans );
+            $covered++ if grep { $cs_lemmas{$_} } map { ($_) = split '#', lc($_) } @trans;
+            # log_info $en_lemma . ": " . join( " ", map { ($_) = split '#', lc($_) } @trans );
         }
     }
 

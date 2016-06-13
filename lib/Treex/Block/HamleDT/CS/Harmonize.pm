@@ -24,6 +24,17 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+    ###!!! Perhaps we should do this in Read::PDT.
+    # The bundles in the PDT data have simple ids like this: 's1'.
+    # In contrast, the root nodes of a-trees reflect the original PDT id: 'a-cmpr9406-001-p2s1' (surprisingly it does not identify the zone).
+    # We want to preserve the original sentence id. And we want it to appear in bundle id because that will be used when writing CoNLL-U.
+    my $sentence_id = $root->id();
+    $sentence_id =~ s/^a-//;
+    if(length($sentence_id)>1)
+    {
+        my $bundle = $zone->get_bundle();
+        $bundle->set_id($sentence_id);
+    }
     $self->remove_features_from_lemmas($root);
 }
 
@@ -251,6 +262,164 @@ sub convert_deprels
     # In PDT, is_member is set at the node that bears the real deprel. It is not set at the AuxP/AuxC node.
     # In HamleDT (and in Treex in general), is_member is set directly at the child of the coordination head (preposition or not).
     $self->pdt_to_treex_is_member_conversion($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Catches possible annotation inconsistencies.
+#------------------------------------------------------------------------------
+sub fix_annotation_errors
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $form = $node->form() // '';
+        my $lemma = $node->lemma() // '';
+        my $deprel = $node->deprel() // '';
+        my $spanstring = $self->get_node_spanstring($node);
+        # Two occurrences of "se" in CAC 2.0 have AuxT instead of AuxP.
+        if($deprel eq 'AuxT' && $node->is_adposition())
+        {
+            $node->set_deprel('AuxP');
+        }
+        # One occurrence of "se" in CAC 2.0 has AuxP instead of AuxT.
+        elsif($deprel eq 'AuxP' && $node->is_pronoun() && $node->is_reflexive() && $node->is_leaf())
+        {
+            $node->set_deprel('AuxT');
+        }
+        # In the phrase "co se týče" ("as concerns"), "co" is sometimes tagged PRON+Sb (14 occurrences in PDT), sometimes SCONJ+AuxC (7).
+        # We may eventually want to select one of these approaches. However, it must not be PRON+AuxC (2 occurrences in CAC).
+        elsif(lc($form) eq 'co' && $node->is_pronoun() && $deprel eq 'AuxC')
+        {
+            $node->iset()->set_hash({'pos' => 'conj', 'conjtype' => 'sub'});
+            $self->set_pdt_tag($node);
+        }
+        # Czech constructions with "mít" (to have) + participle are not considered a perfect tense and "mít" is not auxiliary verb, despite the similarity to English perfect.
+        # In PDT the verb "mít" is the head and the participle is analyzed either as AtvV complement (mít vyhráno, mít splněno, mít natrénováno) or as Obj (mít nasbíráno, mít spočteno).
+        # It is not distinguished whether both "mít" and the participle have a shared subject, or not (mít zakázáno / AtvV, mít někde napsáno / Obj).
+        # The same applies to CAC except for one annotation error where "mít" is attached to a participle as AuxV ("Měla položeno pět zásobních řadů s kašnami.")
+        elsif($deprel eq 'AuxV' && $lemma eq 'mít')
+        {
+            my $participle = $node->parent();
+            $node->set_parent($participle->parent());
+            $node->set_deprel($participle->deprel());
+            $participle->set_parent($node);
+            $participle->set_deprel('Obj');
+        }
+        # CAC 2.0: především
+        elsif($lemma eq 'především' && $deprel eq 'AuxG')
+        {
+            $node->set_deprel('AuxZ');
+        }
+        # CAC 2.0 contains restored non-word nodes that were omitted in the original data (Korpus věcného stylu).
+        # Punctuation symbols were restored according to orthography rules.
+        # Missing numbers are substituted by the '#' wildcard.
+        # Missing measure units are substituted by '?', which seems unfortunate because the question mark is a common punctuation symbol. Let's replace it by something more specific.
+        elsif($lemma eq '?' && $deprel !~ m/^Aux[GK]$/)
+        {
+            # In 6 cases the wildcard represents a reflexive pronoun attached to an inherently reflexive verb.
+            if($deprel eq 'AuxT')
+            {
+                $node->set_form('se');
+                $node->set_lemma('se');
+                $node->iset()->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => 'reflex', 'case' => 'acc'});
+            }
+            else
+            {
+                my $symbol = '*';
+                $node->set_form($symbol);
+                $node->set_lemma($symbol);
+                $node->iset()->set('pos', 'sym');
+            }
+        }
+        # PDT 3.0: Wrong Pnom.
+        elsif($spanstring =~ m/^systém převratný , ale funkční a perspektivní$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            foreach my $i (1, 4, 6)
+            {
+                $subtree[$i]->set_deprel('Atr');
+            }
+        }
+        elsif($spanstring =~ m/^zdravá \( to je nepoškozená chorobami nebo škůdci , nenamrzlá , nezapařená , bez známek hniloby nebo plísně \)$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            my $zdrava = $subtree[0];
+            $zdrava->set_parent($node->parent());
+            $zdrava->set_is_member(undef);
+            foreach my $zc ($zdrava->children()) # ( to je nepoškozená )
+            {
+                $zc->set_parent($node);
+            }
+            foreach my $i (4, 9, 11) # nepoškozená nenamrzlá nezapařená
+            {
+                $subtree[$i]->set_deprel('Apposition');
+                $subtree[$i]->set_is_member(1);
+            }
+            # "bez známek" is a prepositional phrase and the annotation must be split between the two words.
+            $subtree[13]->set_is_member(1);
+            $subtree[14]->set_deprel('Apposition');
+            # Both "to" and "je" are AuxY in similar sentences.
+            $subtree[2]->set_deprel('AuxY');
+        }
+        # "nejsou s to"
+        elsif($node->form() eq 's' && $node->deprel() eq 'Pnom')
+        {
+            $node->set_deprel('AuxP');
+        }
+        elsif($spanstring =~ m/^jiným než zdvořilostním aktem/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[3]->set_deprel('Atr'); # "aktem" should not be Pnom
+        }
+        elsif($spanstring =~ m/^pouze respektování dané situace na trhu peněz a vypořádání se s ní$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[8]->set_is_member(1);
+        }
+        elsif($spanstring =~ m/^početné a hlavně všelijaké :/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[4]->set_is_member(1); # At this moment the colon still heads an apposition.
+        }
+        elsif($spanstring =~ m/^jen trochu nervózní policisté$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[2]->set_deprel('Atr');
+        }
+        elsif($spanstring =~ m/^: jakékoliv investice do oprav a modernizace nájemního bytového fondu jsou a budou ztrátové$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[5]->set_is_member(undef); # first "a"
+            $subtree[10]->set_deprel('Atr'); # jsou
+            $subtree[12]->set_deprel('Atr'); # budou
+        }
+        elsif($spanstring =~ m/^zbytečné , nevhodně složité$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_is_member(1);
+        }
+        elsif($spanstring =~ m/^nejenom příčinou a prostředkem šíření této nemoci , ale také otráveným prostředím , ve kterém vzniká$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[11]->set_is_member(1); # prostředím
+        }
+        elsif($spanstring =~ m/^v podoboru elektrárenství$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[0]->set_deprel('AuxP');
+        }
+        elsif($spanstring =~ m/^Toto nanejvýš zajímavé čtení musíme dát do souladu se skutečností/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # multi-word preposition "do souladu se"
+            $subtree[6]->set_parent($subtree[8]);
+            $subtree[7]->set_parent($subtree[8]);
+        }
+    }
 }
 
 

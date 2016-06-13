@@ -30,6 +30,13 @@ has functors => (
      documentation => 'Which analyzer of functors to use',
 );
 
+has coref => (
+    is => 'ro',
+    isa => enum( [qw(simple BART)] ),
+    default => 'simple',
+    documentation => 'Which coreference resolver to use',
+);
+
 has gazetteer => (
      is => 'ro',
      isa => 'Str',
@@ -57,6 +64,11 @@ has pretokenized => (
     default => 0,
     documentation => 'Is the input pretokenized? If set to 1, will only tokenize on whitespace.'
 );
+
+# Useful if you dont have NADA
+# Or install NADA:
+# cd $TMT_ROOT/install/tool_installation/NADA && perl Makefile.PL && make && make install
+has mark_it => ( is => 'rw', isa => 'Bool', default => 1 );
 
 # TODO Add parameter
 # has memory => (
@@ -91,6 +103,8 @@ sub get_scenario_string {
     $self->ner eq 'NameTag' ?  'A2N::EN::NameTag' : (),
     $self->ner eq 'Stanford' ? 'A2N::EN::StanfordNamedEntities model=ner-eng-ie.crf-3-all2008.ser.gz' : (),
     'A2N::EN::DistinguishPersonalNames',
+    #'A2N::FixMissingLinks', # without this A2N::NestEntities throws errors
+    #'A2N::NestEntities', # entities in n-trees should be nested, but adding this makes en-cs TectoMT BLEU worse
 
     'W2A::MarkChunks',
     'W2A::EN::ParseMST model=conll_mcd_order2_0.01.model',
@@ -146,8 +160,8 @@ sub get_scenario_string {
     $self->functors eq 'VW' ? 'A2T::EN::SetFunctorsVW' : (),
     $self->functors eq 'VW' ? 'A2T::SetNodetype' : (), # fix nodetype changes induced by functors
     $self->valframes ? 'A2T::EN::SetValencyFrameRefVW' : (),
-    'A2T::EN::MarkReferentialIt resolver_type=nada threshold=0.5 suffix=nada_0.5', # you need Treex::External::NADA installed for this
-    'A2T::EN::FindTextCoref',
+    $self->mark_it ? 'A2T::EN::MarkReferentialIt resolver_type=nada threshold=0.5 suffix=nada_0.5' : (), # you need Treex::External::NADA installed for this
+    $self->coref eq 'BART' ? 'Coref::EN::ResolveBART2 is_czeng=1' : 'A2T::EN::FindTextCoref',
     ;
 
     return $scen;
@@ -206,6 +220,12 @@ simple = A2T::EN::SetFunctors
 MLProcess = A2T::EN::SetFunctors2 (functors trained from PEDT, extra 2GB RAM needed)
 
 VW = A2T::EN::SetFunctorsVW (VowpalWabbit model trained on PEDT)
+
+=head2 coref (simple, BART)
+
+simple = A2T::EN::FindTextCoref (old rule-based CR for possessives looking for the anteceent within the same sentence)
+
+BART = Coref::EN::ResolveBART2 (full-fledged CR, requires Java 1.7 and 5G mem, default timeout 120s for one document or CzEng block)
 
 =head2 valframes (boolean)
 

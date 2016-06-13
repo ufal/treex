@@ -348,7 +348,9 @@ sub fix_undefined_nodes
         my $node = $nodes[$i];
         # If this is the last punctuation in the sentence, chances are that it was already recognized as AuxK.
         # In that case the problem is already fixed.
-        if($node->conll_deprel() eq 'UNDEFINED' && $node->deprel() ne 'AuxK' && $node->deprel() ne 'Coord')
+        ###!!! Note that this will probably no longer work. Working with conll/deprel after convert_deprels() is deprecated.
+        ###!!! The value of conll/deprel may have been erased by now.
+        if(defined($node->conll_deprel()) && $node->conll_deprel() eq 'UNDEFINED' && $node->deprel() ne 'AuxK' && $node->deprel() ne 'Coord')
         {
             if($node->parent()->is_root() && $node->is_leaf())
             {

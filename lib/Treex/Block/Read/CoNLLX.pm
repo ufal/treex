@@ -12,6 +12,7 @@ has 'feat_is_iset'   => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'deprel_is_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'is_member_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'is_parenthesis_root_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'sid_within_feat' => ( is => 'rw', isa => 'Bool', default => 0, documentation => 'A sid=.+ feature is interpreted as sentence (bundle) id. Read from first node, erased from all.' );
 
 sub next_document {
     my ($self) = @_;
@@ -39,9 +40,24 @@ sub next_document {
         my @parents = (0);
         my @nodes   = ($aroot);
         my $sentence;
+        my $sid_set = 0;
         foreach my $token (@tokens) {
             next if $token =~ /^\s*$/;
             my ( $id, $form, $lemma, $cpos, $pos, $feat, $head, $deprel ) = split( /\t/, $token );
+            if ( $self->sid_within_feat() )
+            {
+                my @feat = split(/\|/, $feat);
+                my @sid = grep {m/^sid=.+$/} (@feat);
+                @feat = grep {!m/^sid=.+$/} (@feat);
+                $feat = join('|', @feat);
+                $feat = '_' if(!defined($feat) || $feat eq '');
+                if ( !$sid_set && scalar(@sid) >= 1 )
+                {
+                    $sid[0] =~ m/^sid=(.+)$/;
+                    $bundle->set_id($1);
+                    $sid_set = 1;
+                }
+            }
             my $newnode = $aroot->create_child();
             $newnode->shift_after_subtree($aroot);
             $newnode->set_form($form);

@@ -68,10 +68,10 @@ Readonly my $SERVER_PORT => int( 30000 + rand(32000) );
 our $SPECULATIVE_EXECUTION = 0;
 
 
-# This variable stores information about the jobs' and documents' statuses 
+# This variable stores information about the jobs' and documents' statuses
 # (finished, started, loaded etc.). It is shared with the Server thread in _execute_scenario.
 # The Server thread then provides the information and the main thread just displays the
-# current status. 
+# current status.
 our %sh_job_status;
 %sh_job_status = ( 'info_fatalerror' => 0 );
 
@@ -245,7 +245,8 @@ sub _create_job_script {
     my ( $self, $jobnumber, $input ) = @_;
 
     my $workdir     = $self->workdir;
-    my $current_dir = Cwd::cwd;
+    my $current_dir = $ENV{PWD};
+    #my $current_dir = Cwd::cwd;
 
     my $script_filename = "scripts/job$jobnumber.sh";
     open my $J, ">", "$workdir/$script_filename" or log_fatal $!;
@@ -325,6 +326,9 @@ sub _run_job_script {
             $h_vmem = (2*$h_vmem) . $unit;
             #$qsub_opts .= " -l mem_free=$mem -l h_vmem=$h_vmem -l act_mem_free=$mem"; # UPV/EHU
             $qsub_opts .= " -hard -l mem_free=$mem -l h_vmem=$h_vmem -l act_mem_free=$mem";
+        }
+        if ($self->queue){
+            $qsub_opts .= ' -q ' . $self->queue;
         }
         if ($self->qsub){
             $qsub_opts .= ' ' . $self->qsub;
@@ -1024,17 +1028,17 @@ sub _check_epilog_before_finish {
             my $epilog = qx(grep EPILOG $epilog_name);
 
             if ($epilog) {
-                
+
                 # Try waiting for the `.finished' file for one more minute, to compensate for out-of-sync NFS
                 my $finished = $self->_is_job_finished($job_num);
-                
+
                 for (my $i= 0; $i<12; ++$i){
                     last if $finished;
                     sleep 5;
                     $finished = $self->_is_job_finished($job_num);
                 }
                 next if $finished; # abort the fatal error in case the job finish status appeared in the meantime
-                 
+
                 log_info "********************** UNFINISHED JOB $job_str PRODUCED EPILOG: ******************";
                 log_info "**** cat $epilog_name\n";
                 system "cat $epilog_name";
@@ -1183,7 +1187,7 @@ sub _execute_scenario {
             $dir_wildcard =~ s/\{$counter_pattern\}/$counter_str/;
             $workdir = $dir_wildcard;
             $dir_wildcard =~ s/\{X+\}/*/;
-            
+
             # TODO There is a strange problem when executing e.g.
             #  for i in `seq 4`; do treex/bin/t/qparallel.t; done
             # where qparallel.t executes treex -p --cleanup ...
@@ -1203,7 +1207,7 @@ sub _execute_scenario {
         $self->set_workdir($workdir);
     }
     elsif (! -e $workdir) {
-        mkdir $workdir or log_fatal($!); 
+        mkdir $workdir or log_fatal($!);
         log_info "Working directory $workdir created";
         $self->set_workdir($workdir);
     }

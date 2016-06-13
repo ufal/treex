@@ -6,48 +6,44 @@ use Treex::Core::Common;
 use Treex::Tool::PhraseBuilder::PragueToUD;
 extends 'Treex::Core::Block';
 
+has store_orig_filename => (is=>'ro', isa=>'Bool', default=>1);
+
 has 'last_loaded_from' => ( is => 'rw', isa => 'Str', default => '' );
 has 'sent_in_file'     => ( is => 'rw', isa => 'Int', default => 0 );
-
-
 
 #------------------------------------------------------------------------------
 # Reads a Prague-style tree and transforms it to Universal Dependencies.
 #------------------------------------------------------------------------------
-sub process_zone
-{
-    my $self = shift;
-    my $zone = shift;
+sub process_atree {
+    my ($self, $root) = @_;
+
     # Add the name of the input file and the number of the sentence inside
     # the file as a comment that will be written in the CoNLL-U format.
     # (In any case, Write::CoNLLU will print the sentence id. But this additional
     # information is also very useful for debugging, as it ensures a user can find the sentence in Tred.)
-    my $bundle = $zone->get_bundle();
-    my $loaded_from = $bundle->get_document()->loaded_from(); # the full path to the input file
-    my $file_stem = $bundle->get_document()->file_stem(); # this will be used in the comment
-    if($loaded_from eq $self->last_loaded_from())
-    {
-        $self->set_sent_in_file($self->sent_in_file() + 1);
+    if ($self->store_orig_filename){
+        my $bundle = $root->get_bundle();
+        my $loaded_from = $bundle->get_document()->loaded_from(); # the full path to the input file
+        my $file_stem = $bundle->get_document()->file_stem(); # this will be used in the comment
+        if($loaded_from eq $self->last_loaded_from()) {
+            $self->set_sent_in_file($self->sent_in_file() + 1);
+        } else {
+            $self->set_last_loaded_from($loaded_from);
+            $self->set_sent_in_file(1);
+        }
+        my $sent_in_file = $self->sent_in_file();
+        my $comment = "orig_file_sentence $file_stem\#$sent_in_file";
+        my @comments;
+        if(defined($bundle->wild()->{comment})) {
+            @comments = split(/\n/, $bundle->wild()->{comment});
+        }
+        if (! any {$_ eq $comment} (@comments)) {
+            push(@comments, $comment);
+            $bundle->wild()->{comment} = join("\n", @comments);
+        }
     }
-    else
-    {
-        $self->set_last_loaded_from($loaded_from);
-        $self->set_sent_in_file(1);
-    }
-    my $sent_in_file = $self->sent_in_file();
-    my $comment = "orig_file_sentence $file_stem\#$sent_in_file";
-    my @comments;
-    if(defined($bundle->wild()->{comment}))
-    {
-        @comments = split(/\n/, $bundle->wild()->{comment});
-    }
-    unless(any {$_ eq $comment} (@comments))
-    {
-        push(@comments, $comment);
-        $bundle->wild()->{comment} = join("\n", @comments);
-    }
+
     # Now the harmonization proper.
-    my $root = $zone->get_atree();
     $self->exchange_tags($root);
     $self->fix_symbols($root);
     $self->fix_annotation_errors($root);
@@ -68,21 +64,36 @@ sub process_zone
         'prep_is_head'           => 0,
         'cop_is_head'            => 0,
         'coordination_head_rule' => 'first_conjunct',
-        'counted_genitives'      => $self->language() ne 'la'
+        'counted_genitives'      => $root->language ne 'la'
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
+    # Portuguese expressions "cerca_de" and "mais_de" were tagged as prepositions but attached as Atr.
+    # Now the MWE are split and "cerca" is attached as nmod. Fix it to case.
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $form = $node->form() // '';
+        my $deprel = $node->deprel() // '';
+        my @children = $node->children();
+        if($form =~ m/^(cerca|mais)$/i && $deprel eq 'nmod' && scalar(@children)==1 && lc($children[0]->form()) eq 'de')
+        {
+            $node->set_deprel('case');
+        }
+    }
     $self->change_case_to_mark_under_verb($root);
+    $self->fix_em_que_de_que($root);
     $self->dissolve_chains_of_auxiliaries($root);
     $self->fix_jak_znamo($root);
     $self->classify_numerals($root);
     $self->fix_determiners($root);
     $self->relabel_subordinate_clauses($root);
+    $self->check_ncsubjpass_when_auxpass($root);
+    $self->raise_punctuation_from_coordinating_conjunction($root);
     # Sanity checks.
     $self->check_determiners($root);
     ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
     ###!!! Copy them to conll/deprel (which is displayed) until we make Tred know deprel.
-    my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
         my $upos = $node->iset()->upos();
@@ -158,7 +169,7 @@ sub fix_symbols
             }
             # Slash '/' can be punctuation or mathematical symbol.
             # It is difficult to tell automatically but we will make it a symbol if it is not leaf (and does not head coordination).
-            elsif($node->form() eq '/' && !$node->is_leaf() && !$node->is_coap_root())
+            elsif($node->form() eq '/' && !$node->is_leaf() && $node->deprel() !~ m/^(Coord|Apos)$/)
             {
                 $node->iset()->set('pos', 'sym');
                 if($node->deprel() eq 'AuxG')
@@ -197,6 +208,15 @@ sub convert_deprels
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants();
+    # We will need to query the original Prague deprel (afun) of parent nodes in certain situations.
+    # It will not be guaranteed that the parent deprel has not been converted by then. Therefore we will make a copy now.
+    # Make sure that the copy is defined even if the parent is root.
+    $root->wild()->{prague_deprel} = 'AuxS';
+    foreach my $node (@nodes)
+    {
+        my $deprel = $node->deprel() // '';
+        $node->wild()->{prague_deprel} = $deprel;
+    }
     foreach my $node (@nodes)
     {
         my $deprel = $node->deprel();
@@ -252,7 +272,8 @@ sub convert_deprels
         elsif($deprel eq 'Sb')
         {
             # Is the parent a passive verb?
-            ###!!! This will not catch reflexive passives. TODO: Catch them.
+            # Note that this will not catch all passives (e.g. reflexive passives).
+            # Thus we will later check whether there is an auxpass sibling.
             if($parent->iset()->is_passive())
             {
                 # If this is a verb (including infinitive) then it is a clausal subject.
@@ -281,7 +302,21 @@ sub convert_deprels
         {
             # We will later transform the structure so that copula depends on the nominal predicate.
             # The 'pnom' label will disappear and the inverted relation will be labeled 'cop'.
-            $deprel = 'pnom';
+            # We cannot do this if the predicate is a subordinate clause ("my opinion is that we should not go there"). Then a verb would have two subjects.
+            if($node->is_verb() && !$node->is_participle())
+            {
+                $deprel = 'ccomp';
+            }
+            # The symbol "=" is tagged SYM and substitutes a verb ("equals to"). This verb is not considered copula (only "to be" is copula).
+            # Hence we will re-classify the relation as object.
+            elsif($parent->form() eq '=')
+            {
+                $deprel = 'dobj';
+            }
+            else
+            {
+                $deprel = 'pnom';
+            }
         }
         # Adverbial modifier: advmod, nmod, advcl
         # Note: UD also distinguishes the relation neg. In Czech, most negation is done using bound morphemes.
@@ -317,7 +352,11 @@ sub convert_deprels
             {
                 $deprel = 'name';
             }
-            elsif($node->is_foreign() && $parent->is_foreign())
+            elsif($node->is_foreign() && $parent->is_foreign() ||
+                  $node->is_foreign() && $node->is_adposition() && $parent->is_proper_noun())
+                  ###!!! van Gogh, de Gaulle in Czech text; but it means we will have to reverse the relation left-to-right!
+                  ###!!! Maybe it will be better to change the relation to "name" when we have to reorder it anyway.
+                  ###!!! Another solution would be to label the relation "case". But foreign prepositions do not have this function in Czech.
             {
                 $deprel = 'foreign';
             }
@@ -428,14 +467,38 @@ sub convert_deprels
         {
             $deprel = 'neg';
         }
-        # AuxY: Additional conjunction in coordination ... cc
-        # AuxY: Subordinating conjunction "jako" ("as") attached to Atv or AtvV, or even Obj (of verbal adjectives) ... mark
+        # The AuxY deprel is used in various situations, see below.
         elsif($deprel eq 'AuxY')
         {
-            if(lc($node->form()) eq 'jako')
+            # When it is attached to a subordinating conjunction (AuxC), the two form a multi-word subordinator.
+            # Index Thomisticus examples: ita quod (so that), etiam si (even if), quod quod (what is that), ac si (as if), et si (although)
+            if($parent->wild()->{prague_deprel} eq 'AuxC')
+            {
+                # The phrase builder will later transform it to MWE.
+                $deprel = 'mark';
+            }
+            # When it is attached to a complement (Atv, AtvV), it is usually an equivalent of the subordinating conjunction "as" and it should be 'mark'.
+            # Czech: "jako" ("as"); sometimes it is attached even to Obj (of verbal adjectives). It should never get the 'cc' deprel, so we will mention it explicitly.
+            # Index Thomisticus examples: ut (as), sicut (as), quasi (as), tanquam (like), utpote (as) etc.
+            elsif($parent->wild()->{prague_deprel} =~ m/^AtvV?$/ ||
+                  lc($node->form()) =~ m/^(jako|ut|sicut|quasi|tanquam|utpote)$/)
             {
                 $deprel = 'mark';
             }
+            # AuxY may be a preposition attached to an adverb; unlike normal AuxP prepositions, this one is not the head.
+            # Index Thomisticus: ad invicem (each other); "invicem" is adverb that could be roughly translated as "mutually".
+            elsif($node->is_adposition())
+            {
+                $deprel = 'case';
+            }
+            # When it is attached to a verb, it is a sentence adverbial, disjunct or connector.
+            # Index Thomisticus examples: igitur (therefore), enim (indeed), unde (whence), sic (so, thus), ergo (therefore).
+            elsif($parent->is_verb() && !$node->is_coordinator())
+            {
+                $deprel = 'advmod';
+            }
+            # Non-head conjunction in coordination is probably the most common usage.
+            # Index Thomisticus examples: et (and), enim (indeed), vel (or), igitur (therefore), neque (neither).
             else
             {
                 $deprel = 'cc';
@@ -505,6 +568,12 @@ sub convert_deprels
         }
         # Save the universal dependency relation label with the node.
         $node->set_deprel($deprel);
+    }
+    # Now that all deprels have been converted we do not need the copies of the original deprels any more. Delete them.
+    delete($root->wild()->{prague_deprel});
+    foreach my $node (@nodes)
+    {
+        delete($node->wild()->{prague_deprel});
     }
 }
 
@@ -837,7 +906,185 @@ sub generate_subnodes
     return ($node, @new_nodes);
 }
 
-
+my %DETHASH =
+(
+    'all' =>
+    {
+        # Definite and indefinite articles.
+        'el'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
+        'lo'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
+        'la'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'},
+        "l'"  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'number' => 'sing'},
+        'els' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'},
+        'les' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'},
+        'los' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'},
+        'las' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'},
+        'os'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'},
+        'as'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'},
+        'un'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'masc', 'number' => 'sing'},
+        'una' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'fem',  'number' => 'sing'},
+        'um'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'masc', 'number' => 'sing'},
+        'uma' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'fem',  'number' => 'sing'},
+        # Fused preposition + determiner.
+        'al'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # a+el
+        'als'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # a+els
+        'ao'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # a+o
+        'aos'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # a+os
+        'à'     => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # a+a
+        'às'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # a+as
+        'del'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # de+el
+        'dels'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # de+els
+        'do'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # de+o
+        # "dos" is in the language-specific part.
+        'da'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # de+a
+        'das'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # de+as
+        'pelo'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # por+o
+        'pelos' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # por+os
+        'pela'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # por+a
+        'pelas' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # por+as
+        # Possessive determiners.
+        'su'    => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'number' => 'sing'}, # es
+        'sus'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'number' => 'plur'}, # es
+        'suyo'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'masc', 'number' => 'sing'}, # es
+        'suya'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'sing'}, # es
+        'suyos' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'masc', 'number' => 'plur'}, # es
+        'suyas' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'plur'}, # es
+        'seu'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'masc', 'number' => 'sing'}, # ca, pt
+        'seva'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'sing'}, # ca
+        'seus'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'masc', 'number' => 'plur'}, # ca
+        'seves' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'plur'}, # ca
+        'sua'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'sing'}, # pt
+        'mío'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'sing', 'possnumber' => 'sing'}, # es
+        'mía'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'sing', 'possnumber' => 'sing'}, # es
+        'míos'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'plur', 'possnumber' => 'sing'}, # es
+        'mías'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'plur', 'possnumber' => 'sing'}, # es
+        'meu'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'sing', 'possnumber' => 'sing'}, # ca, pt
+        'meus'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'plur', 'possnumber' => 'sing'}, # ca
+        'nuestro'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'sing', 'possnumber' => 'plur'}, # es
+        'nuestra'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'sing', 'possnumber' => 'plur'}, # es
+        'nuestros' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'plur', 'possnumber' => 'plur'}, # es
+        'nuestras' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'plur', 'possnumber' => 'plur'}, # es
+        'nostre'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'sing', 'possnumber' => 'plur'}, # ca
+        'nostra'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'sing', 'possnumber' => 'plur'}, # ca
+        'nostres'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'number' => 'plur', 'possnumber' => 'plur'}, # ca
+        # Other determiners and pronouns.
+        'aquel' => {'pos' => 'adj', 'prontype' => 'dem', 'gender' => 'masc', 'number' => 'sing'},
+        'todo'  => {'pos' => 'adj', 'prontype' => 'tot', 'gender' => 'masc', 'number' => 'sing'},
+        'tot'   => {'pos' => 'adj', 'prontype' => 'tot', 'gender' => 'masc', 'number' => 'sing'},
+        # Numerals.
+        'zero'   => {'pos' => 'num', 'numtype' => 'card'},
+        'cero'   => {'pos' => 'num', 'numtype' => 'card'},
+        # "dos" is in the language-specific part.
+        'dues'   => {'pos' => 'num', 'numtype' => 'card', 'gender' => 'fem'},
+        'dois'   => {'pos' => 'num', 'numtype' => 'card', 'gender' => 'masc'},
+        'duas'   => {'pos' => 'num', 'numtype' => 'card', 'gender' => 'fem'},
+        'tres'   => {'pos' => 'num', 'numtype' => 'card'},
+        'três'   => {'pos' => 'num', 'numtype' => 'card'},
+        'quatre' => {'pos' => 'num', 'numtype' => 'card'},
+        'cuatro' => {'pos' => 'num', 'numtype' => 'card'},
+        'quatro' => {'pos' => 'num', 'numtype' => 'card'},
+        'cinc'   => {'pos' => 'num', 'numtype' => 'card'},
+        'cinco'  => {'pos' => 'num', 'numtype' => 'card'},
+        'sis'    => {'pos' => 'num', 'numtype' => 'card'},
+        'seis'   => {'pos' => 'num', 'numtype' => 'card'},
+        'set'    => {'pos' => 'num', 'numtype' => 'card'},
+        'siete'  => {'pos' => 'num', 'numtype' => 'card'},
+        'sete'   => {'pos' => 'num', 'numtype' => 'card'},
+        'vuit'   => {'pos' => 'num', 'numtype' => 'card'},
+        'ocho'   => {'pos' => 'num', 'numtype' => 'card'},
+        'oito'   => {'pos' => 'num', 'numtype' => 'card'},
+        'nou'    => {'pos' => 'num', 'numtype' => 'card'},
+        'nueve'  => {'pos' => 'num', 'numtype' => 'card'},
+        'nove'   => {'pos' => 'num', 'numtype' => 'card'},
+        'deu'    => {'pos' => 'num', 'numtype' => 'card'},
+        'diez'   => {'pos' => 'num', 'numtype' => 'card'},
+        'dez'    => {'pos' => 'num', 'numtype' => 'card'},
+        'onze'   => {'pos' => 'num', 'numtype' => 'card'},
+        'once'   => {'pos' => 'num', 'numtype' => 'card'},
+        'dotze'  => {'pos' => 'num', 'numtype' => 'card'},
+        'doce'   => {'pos' => 'num', 'numtype' => 'card'},
+        'doze'   => {'pos' => 'num', 'numtype' => 'card'},
+        'tretze' => {'pos' => 'num', 'numtype' => 'card'},
+        'trece'  => {'pos' => 'num', 'numtype' => 'card'},
+        'treze'  => {'pos' => 'num', 'numtype' => 'card'},
+        'catorze' => {'pos' => 'num', 'numtype' => 'card'},
+        'catorce' => {'pos' => 'num', 'numtype' => 'card'},
+        'quinze' => {'pos' => 'num', 'numtype' => 'card'},
+        'quince' => {'pos' => 'num', 'numtype' => 'card'},
+        'setze'  => {'pos' => 'num', 'numtype' => 'card'},
+        'dieciséis' => {'pos' => 'num', 'numtype' => 'card'},
+        'dezasseis' => {'pos' => 'num', 'numtype' => 'card'},
+        'disset' => {'pos' => 'num', 'numtype' => 'card'},
+        'diecisiete' => {'pos' => 'num', 'numtype' => 'card'},
+        'dezassete' => {'pos' => 'num', 'numtype' => 'card'},
+        'divuit' => {'pos' => 'num', 'numtype' => 'card'},
+        'dieciocho' => {'pos' => 'num', 'numtype' => 'card'},
+        'dezoito' => {'pos' => 'num', 'numtype' => 'card'},
+        'dinou'  => {'pos' => 'num', 'numtype' => 'card'},
+        'diecinueve' => {'pos' => 'num', 'numtype' => 'card'},
+        'dezanove' => {'pos' => 'num', 'numtype' => 'card'},
+        'vint'   => {'pos' => 'num', 'numtype' => 'card'},
+        'veinte' => {'pos' => 'num', 'numtype' => 'card'},
+        'vinte'  => {'pos' => 'num', 'numtype' => 'card'},
+        'trenta' => {'pos' => 'num', 'numtype' => 'card'},
+        'treinta' => {'pos' => 'num', 'numtype' => 'card'},
+        'trinta' => {'pos' => 'num', 'numtype' => 'card'},
+        'quaranta' => {'pos' => 'num', 'numtype' => 'card'},
+        'cuaranta' => {'pos' => 'num', 'numtype' => 'card'},
+        'quarenta' => {'pos' => 'num', 'numtype' => 'card'},
+        'cinquanta' => {'pos' => 'num', 'numtype' => 'card'},
+        'cincuenta' => {'pos' => 'num', 'numtype' => 'card'},
+        'cinquenta' => {'pos' => 'num', 'numtype' => 'card'},
+        'seixanta' => {'pos' => 'num', 'numtype' => 'card'},
+        'sesenta' => {'pos' => 'num', 'numtype' => 'card'},
+        'sessenta' => {'pos' => 'num', 'numtype' => 'card'},
+        'setanta' => {'pos' => 'num', 'numtype' => 'card'},
+        'setenta' => {'pos' => 'num', 'numtype' => 'card'},
+        'vuitanta' => {'pos' => 'num', 'numtype' => 'card'},
+        'ochenta' => {'pos' => 'num', 'numtype' => 'card'},
+        'oitenta' => {'pos' => 'num', 'numtype' => 'card'},
+        'noranta' => {'pos' => 'num', 'numtype' => 'card'},
+        'noventa' => {'pos' => 'num', 'numtype' => 'card'},
+        'cent'   => {'pos' => 'num', 'numtype' => 'card'},
+        'cien'   => {'pos' => 'num', 'numtype' => 'card'},
+        'ciento' => {'pos' => 'num', 'numtype' => 'card'},
+        'cem'    => {'pos' => 'num', 'numtype' => 'card'},
+        'cemto'  => {'pos' => 'num', 'numtype' => 'card'},
+        'mil'    => {'pos' => 'num', 'numtype' => 'card'},
+        'milió'  => {'pos' => 'num', 'numtype' => 'card'},
+        'millón' => {'pos' => 'num', 'numtype' => 'card'},
+        'milhão' => {'pos' => 'num', 'numtype' => 'card'},
+        # nouns
+        'ejemplo' => {'pos' => 'noun', 'nountype' => 'com', 'gender' => 'masc', 'number' => 'sing'},
+        'embargo' => {'pos' => 'noun', 'nountype' => 'com', 'gender' => 'masc', 'number' => 'sing'},
+    },
+    'ca' =>
+    {
+        'dos' => {'pos' => 'num', 'numtype' => 'card', 'gender' => 'masc'}, # two
+        'com' => {'pos' => 'conj', 'conjtype' => 'sub'}, # how
+        'no'  => {'pos' => 'part', 'negativeness' => 'neg'},
+    },
+    'es' =>
+    {
+        'dos' => {'pos' => 'num', 'numtype' => 'card'}, # two (both masculine and feminine)
+        'no'  => {'pos' => 'part', 'negativeness' => 'neg'},
+    },
+    'pt' =>
+    {
+        # Definite and indefinite articles.
+        'o'   => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
+        'a'   => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'},
+        # Fused preposition + determiner.
+        'dos' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # de+os
+        'no'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # em+o
+        'nos' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # em+os
+        'na'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # em+a
+        'nas' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # em+as
+        # Other.
+        'com' => {'pos' => 'adp', 'adpostype' => 'prep'}, # with
+        'não' => {'pos' => 'part', 'negativeness' => 'neg'},
+    }
+);
 
 #------------------------------------------------------------------------------
 # A primitive method to tag unambiguous function words in certain Romance
@@ -849,6 +1096,7 @@ sub tag_nodes
     my $self = shift;
     my $nodes = shift; # ArrayRef: nodes that should be (re-)tagged
     my $default = shift; # HashRef: Interset features to set for unrecognized nodes
+
     # Currently supported languages: Catalan, Spanish and Portuguese.
     # In general, we want to use a mixed dictionary. If there is a foreign named entity (such as Catalan "L'Hospitalet" in Spanish text),
     # we still want to recognize the "L'" as a determiner. If it was "La", it would become a DET anyway, regardless whether it is
@@ -856,187 +1104,9 @@ sub tag_nodes
     # However, some words should be in a language-specific dictionary to reduce homonymy.
     # For example, Portuguese "a" is either a DET or an ADP. In Catalan and Spanish, it is only ADP.
     # We do not want to extend the Portuguese homonymy issue to the other languages.
-    my $language = $self->language();
+    my $language = $nodes->[0]->language;
     my $ap = "'";
-    my %dethash =
-    (
-        'all' =>
-        {
-            # Definite and indefinite articles.
-            'el'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
-            'lo'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
-            'la'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'},
-            "l'"  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'number' => 'sing'},
-            'els' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'},
-            'les' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'},
-            'los' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'},
-            'las' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'},
-            'os'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'},
-            'as'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'},
-            'un'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'masc', 'number' => 'sing'},
-            'una' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'fem',  'number' => 'sing'},
-            'um'  => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'masc', 'number' => 'sing'},
-            'uma' => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'ind', 'gender' => 'fem',  'number' => 'sing'},
-            # Fused preposition + determiner.
-            'al'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # a+el
-            'als'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # a+els
-            'ao'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # a+o
-            'aos'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # a+os
-            'à'     => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # a+a
-            'às'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # a+as
-            'del'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # de+el
-            'dels'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # de+els
-            'do'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # de+o
-            # "dos" is in the language-specific part.
-            'da'    => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # de+a
-            'das'   => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # de+as
-            'pelo'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # por+o
-            'pelos' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # por+os
-            'pela'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # por+a
-            'pelas' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # por+as
-            # Possessive determiners.
-            'su'    => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'number' => 'sing'}, # es
-            'sus'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'number' => 'plur'}, # es
-            'suyo'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'masc', 'number' => 'sing'}, # es
-            'suya'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'sing'}, # es
-            'suyos' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'masc', 'number' => 'plur'}, # es
-            'suyas' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'plur'}, # es
-            'seu'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'masc', 'number' => 'sing'}, # ca, pt
-            'seva'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'sing'}, # ca
-            'seus'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'masc', 'number' => 'plur'}, # ca
-            'seves' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'plur'}, # ca
-            'sua'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'gender' => 'fem',  'number' => 'sing'}, # pt
-            'mío'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'sing', 'possnumber' => 'sing'}, # es
-            'mía'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'sing', 'possnumber' => 'sing'}, # es
-            'míos'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'plur', 'possnumber' => 'sing'}, # es
-            'mías'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'plur', 'possnumber' => 'sing'}, # es
-            'meu'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'sing', 'possnumber' => 'sing'}, # ca, pt
-            'meus'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'plur', 'possnumber' => 'sing'}, # ca
-            'nuestro'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'sing', 'possnumber' => 'plur'}, # es
-            'nuestra'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'sing', 'possnumber' => 'plur'}, # es
-            'nuestros' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'plur', 'possnumber' => 'plur'}, # es
-            'nuestras' => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'plur', 'possnumber' => 'plur'}, # es
-            'nostre'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'masc', 'number' => 'sing', 'possnumber' => 'plur'}, # ca
-            'nostra'   => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'gender' => 'fem',  'number' => 'sing', 'possnumber' => 'plur'}, # ca
-            'nostres'  => {'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'number' => 'plur', 'possnumber' => 'plur'}, # ca
-            # Other determiners and pronouns.
-            'aquel' => {'pos' => 'adj', 'prontype' => 'dem', 'gender' => 'masc', 'number' => 'sing'},
-            'todo'  => {'pos' => 'adj', 'prontype' => 'tot', 'gender' => 'masc', 'number' => 'sing'},
-            'tot'   => {'pos' => 'adj', 'prontype' => 'tot', 'gender' => 'masc', 'number' => 'sing'},
-            # Numerals.
-            'zero'   => {'pos' => 'num', 'numtype' => 'card'},
-            'cero'   => {'pos' => 'num', 'numtype' => 'card'},
-            # "dos" is in the language-specific part.
-            'dues'   => {'pos' => 'num', 'numtype' => 'card', 'gender' => 'fem'},
-            'dois'   => {'pos' => 'num', 'numtype' => 'card', 'gender' => 'masc'},
-            'duas'   => {'pos' => 'num', 'numtype' => 'card', 'gender' => 'fem'},
-            'tres'   => {'pos' => 'num', 'numtype' => 'card'},
-            'três'   => {'pos' => 'num', 'numtype' => 'card'},
-            'quatre' => {'pos' => 'num', 'numtype' => 'card'},
-            'cuatro' => {'pos' => 'num', 'numtype' => 'card'},
-            'quatro' => {'pos' => 'num', 'numtype' => 'card'},
-            'cinc'   => {'pos' => 'num', 'numtype' => 'card'},
-            'cinco'  => {'pos' => 'num', 'numtype' => 'card'},
-            'sis'    => {'pos' => 'num', 'numtype' => 'card'},
-            'seis'   => {'pos' => 'num', 'numtype' => 'card'},
-            'set'    => {'pos' => 'num', 'numtype' => 'card'},
-            'siete'  => {'pos' => 'num', 'numtype' => 'card'},
-            'sete'   => {'pos' => 'num', 'numtype' => 'card'},
-            'vuit'   => {'pos' => 'num', 'numtype' => 'card'},
-            'ocho'   => {'pos' => 'num', 'numtype' => 'card'},
-            'oito'   => {'pos' => 'num', 'numtype' => 'card'},
-            'nou'    => {'pos' => 'num', 'numtype' => 'card'},
-            'nueve'  => {'pos' => 'num', 'numtype' => 'card'},
-            'nove'   => {'pos' => 'num', 'numtype' => 'card'},
-            'deu'    => {'pos' => 'num', 'numtype' => 'card'},
-            'diez'   => {'pos' => 'num', 'numtype' => 'card'},
-            'dez'    => {'pos' => 'num', 'numtype' => 'card'},
-            'onze'   => {'pos' => 'num', 'numtype' => 'card'},
-            'once'   => {'pos' => 'num', 'numtype' => 'card'},
-            'dotze'  => {'pos' => 'num', 'numtype' => 'card'},
-            'doce'   => {'pos' => 'num', 'numtype' => 'card'},
-            'doze'   => {'pos' => 'num', 'numtype' => 'card'},
-            'tretze' => {'pos' => 'num', 'numtype' => 'card'},
-            'trece'  => {'pos' => 'num', 'numtype' => 'card'},
-            'treze'  => {'pos' => 'num', 'numtype' => 'card'},
-            'catorze' => {'pos' => 'num', 'numtype' => 'card'},
-            'catorce' => {'pos' => 'num', 'numtype' => 'card'},
-            'quinze' => {'pos' => 'num', 'numtype' => 'card'},
-            'quince' => {'pos' => 'num', 'numtype' => 'card'},
-            'setze'  => {'pos' => 'num', 'numtype' => 'card'},
-            'dieciséis' => {'pos' => 'num', 'numtype' => 'card'},
-            'dezasseis' => {'pos' => 'num', 'numtype' => 'card'},
-            'disset' => {'pos' => 'num', 'numtype' => 'card'},
-            'diecisiete' => {'pos' => 'num', 'numtype' => 'card'},
-            'dezassete' => {'pos' => 'num', 'numtype' => 'card'},
-            'divuit' => {'pos' => 'num', 'numtype' => 'card'},
-            'dieciocho' => {'pos' => 'num', 'numtype' => 'card'},
-            'dezoito' => {'pos' => 'num', 'numtype' => 'card'},
-            'dinou'  => {'pos' => 'num', 'numtype' => 'card'},
-            'diecinueve' => {'pos' => 'num', 'numtype' => 'card'},
-            'dezanove' => {'pos' => 'num', 'numtype' => 'card'},
-            'vint'   => {'pos' => 'num', 'numtype' => 'card'},
-            'veinte' => {'pos' => 'num', 'numtype' => 'card'},
-            'vinte'  => {'pos' => 'num', 'numtype' => 'card'},
-            'trenta' => {'pos' => 'num', 'numtype' => 'card'},
-            'treinta' => {'pos' => 'num', 'numtype' => 'card'},
-            'trinta' => {'pos' => 'num', 'numtype' => 'card'},
-            'quaranta' => {'pos' => 'num', 'numtype' => 'card'},
-            'cuaranta' => {'pos' => 'num', 'numtype' => 'card'},
-            'quarenta' => {'pos' => 'num', 'numtype' => 'card'},
-            'cinquanta' => {'pos' => 'num', 'numtype' => 'card'},
-            'cincuenta' => {'pos' => 'num', 'numtype' => 'card'},
-            'cinquenta' => {'pos' => 'num', 'numtype' => 'card'},
-            'seixanta' => {'pos' => 'num', 'numtype' => 'card'},
-            'sesenta' => {'pos' => 'num', 'numtype' => 'card'},
-            'sessenta' => {'pos' => 'num', 'numtype' => 'card'},
-            'setanta' => {'pos' => 'num', 'numtype' => 'card'},
-            'setenta' => {'pos' => 'num', 'numtype' => 'card'},
-            'vuitanta' => {'pos' => 'num', 'numtype' => 'card'},
-            'ochenta' => {'pos' => 'num', 'numtype' => 'card'},
-            'oitenta' => {'pos' => 'num', 'numtype' => 'card'},
-            'noranta' => {'pos' => 'num', 'numtype' => 'card'},
-            'noventa' => {'pos' => 'num', 'numtype' => 'card'},
-            'cent'   => {'pos' => 'num', 'numtype' => 'card'},
-            'cien'   => {'pos' => 'num', 'numtype' => 'card'},
-            'ciento' => {'pos' => 'num', 'numtype' => 'card'},
-            'cem'    => {'pos' => 'num', 'numtype' => 'card'},
-            'cemto'  => {'pos' => 'num', 'numtype' => 'card'},
-            'mil'    => {'pos' => 'num', 'numtype' => 'card'},
-            'milió'  => {'pos' => 'num', 'numtype' => 'card'},
-            'millón' => {'pos' => 'num', 'numtype' => 'card'},
-            'milhão' => {'pos' => 'num', 'numtype' => 'card'},
-            # nouns
-            'ejemplo' => {'pos' => 'noun', 'nountype' => 'com', 'gender' => 'masc', 'number' => 'sing'},
-            'embargo' => {'pos' => 'noun', 'nountype' => 'com', 'gender' => 'masc', 'number' => 'sing'},
-        },
-        'ca' =>
-        {
-            'dos' => {'pos' => 'num', 'numtype' => 'card', 'gender' => 'masc'}, # two
-            'com' => {'pos' => 'conj', 'conjtype' => 'sub'}, # how
-            'no'  => {'pos' => 'part', 'negativeness' => 'neg'},
-        },
-        'es' =>
-        {
-            'dos' => {'pos' => 'num', 'numtype' => 'card'}, # two (both masculine and feminine)
-            'no'  => {'pos' => 'part', 'negativeness' => 'neg'},
-        },
-        'pt' =>
-        {
-            # Definite and indefinite articles.
-            'o'   => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'},
-            'a'   => {'pos' => 'adj', 'prontype' => 'art', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'},
-            # Fused preposition + determiner.
-            'dos' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # de+os
-            'no'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'sing'}, # em+o
-            'nos' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'masc', 'number' => 'plur'}, # em+os
-            'na'  => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'sing'}, # em+a
-            'nas' => {'pos' => 'adp', 'adpostype' => 'preppron', 'definiteness' => 'def', 'gender' => 'fem',  'number' => 'plur'}, # em+as
-            # Other.
-            'com' => {'pos' => 'adp', 'adpostype' => 'prep'}, # with
-            'não' => {'pos' => 'part', 'negativeness' => 'neg'},
-        }
-    );
+
     # Note that "a" in Portuguese can be either ADP or DET. Within a multi-word preposition we will only consider DET if it is neither the first nor the last word of the expression.
     my $adp = "a|amb|ante|con|d${ap}|de|des|em|en|entre|hasta|in|para|pels?|per|por|sem|sin|sob|sobre";
     my $sconj = 'como|que|si';
@@ -1058,18 +1128,23 @@ sub tag_nodes
             }
             else
             {
-                $node->iset()->set_hash($dethash{$language}{$form});
+                $node->iset()->set_hash($DETHASH{$language}{$form});
             }
             $node->set_tag($node->iset()->get_upos());
         }
-        elsif(exists($dethash{$language}{$form}))
+        # Ali Abdullah Saleh: in this case "Ali" is not adverb.
+        elsif($form eq 'ali' && $current_tag eq 'PROPN')
         {
-            $node->iset()->set_hash($dethash{$language}{$form});
+            # Do nothing. Keep the current tag.
+        }
+        elsif(exists($DETHASH{$language}{$form}))
+        {
+            $node->iset()->set_hash($DETHASH{$language}{$form});
             $node->set_tag($node->iset()->get_upos());
         }
-        elsif(exists($dethash{all}{$form}))
+        elsif(exists($DETHASH{all}{$form}))
         {
-            $node->iset()->set_hash($dethash{all}{$form});
+            $node->iset()->set_hash($DETHASH{all}{$form});
             $node->set_tag($node->iset()->get_upos());
         }
         elsif($form =~ m/^($adp)$/i)
@@ -1222,6 +1297,90 @@ sub change_case_to_mark_under_verb
 
 
 #------------------------------------------------------------------------------
+# Fixes Portuguese "em que" and "de que" where "que" is correctly tagged PRON
+# but incorrectly attached as mark. (This should have been fixed in the
+# conversion from Bosque to Prague, it is a conversion error there.)
+#------------------------------------------------------------------------------
+sub fix_em_que_de_que
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->form() =~ m/^quem?$/i && $node->is_pronoun() && $node->deprel() eq 'mark')
+        {
+            my $ln = $node->get_left_neighbor();
+            if(defined($ln) && $ln->is_adposition()) # a, com, de, em, ...
+            {
+                $ln->set_parent($node);
+                $ln->set_deprel('case');
+                $node->set_deprel('nmod');
+                if($node->parent()->deprel() eq 'ccomp')
+                {
+                    $node->parent()->set_deprel('acl');
+                }
+            }
+        }
+        # "quem" = "who". It is rare and the only case without preposition (which it is, if the previous if did not help) that I have seen was subject.
+        if(lc($node->form()) eq 'quem' && $node->is_pronoun() && $node->deprel() eq 'mark')
+        {
+            # Two instances of "quem" already have the preposition attached as child but they are still not nmod.
+            my @adpchildren = grep {$_->is_adposition()} ($node->children());
+            if(scalar(@adpchildren) > 0)
+            {
+                $node->set_deprel('nmod');
+            }
+            else
+            {
+                $node->set_deprel('nsubj');
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# If a verb has an auxpass(:refl) child, its subject must be also *pass. We
+# try to get the subjects right already during deprel conversion, checking
+# whether the parent is a passive participle. But that will not work for
+# reflexive passives, where we have to wait until the reflexive pronoun has its
+# deprel. Probably it will also not work if the participle does not have the
+# voice feature because its function is not limited to passive (such as in
+# English). This method will fix it. It should be called after the main part of
+# conversion is done (otherwise coordination could obscure the passive
+# auxiliary).
+#------------------------------------------------------------------------------
+sub check_ncsubjpass_when_auxpass
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my @children = $node->children();
+        my @auxpass = grep {$_->deprel() =~ m/^auxpass/} (@children);
+        if(scalar(@auxpass) > 0)
+        {
+            foreach my $child (@children)
+            {
+                if($child->deprel() eq 'nsubj')
+                {
+                    $child->set_deprel('nsubjpass');
+                }
+                elsif($child->deprel() eq 'csubj')
+                {
+                    $child->set_deprel('csubjpass');
+                }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # UD guidelines disallow chains of auxiliary verbs. Regardless whether there is
 # hierarchy in application of grammatical rules, all auxiliaries should be
 # attached directly to the main verb (example [en] "could have been done").
@@ -1239,6 +1398,32 @@ sub dissolve_chains_of_auxiliaries
         if($node->iset()->is_auxiliary() && $node->parent()->iset()->is_auxiliary() && $node->deprel() =~ m/^aux/ && !$node->parent()->parent()->is_root())
         {
             $node->set_parent($node->parent()->parent());
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Punctuation in coordination is sometimes attached to a non-head conjunction
+# instead to the head (e.g. in Index Thomisticus). Now all coordinating
+# conjunctions are attached to the first conjunct and so should be commas.
+#------------------------------------------------------------------------------
+sub raise_punctuation_from_coordinating_conjunction
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'punct')
+        {
+            my $parent = $node->parent();
+            my $pdeprel = $parent->deprel() // '';
+            if($pdeprel eq 'cc')
+            {
+                $node->set_parent($parent->parent());
+            }
         }
     }
 }
@@ -1340,14 +1525,14 @@ sub classify_numerals
 # do not search for effective parent (e.g. in "některého žáka či žákyni").
 # Dependency relation labels must have been converted to UD labels.
 #------------------------------------------------------------------------------
-sub fix_determiners
-{
-    my $self  = shift;
-    my $root  = shift;
+sub fix_determiners {
+    my ($self, $root)  = @_;
+
     ###!!! Do not do anything for Maltese. There is no tree structure we could
     ###!!! rely on. This is definitely not the best place to turn this off, we
     ###!!! need a more general solution! But right now a quick hack is needed.
-    return if($self->language() eq 'mt');
+    return if $root->language eq 'mt';
+
     ###!!!
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)

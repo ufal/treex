@@ -33,7 +33,7 @@ _term() {
 trap _term EXIT
 
 cd %s;
-%s -Xmx1024m -classpath "%s" -Delkfed.rootDir='/net/cluster/TMP/mnovak/tools/BART-2.0' elkfed.webdemo.Demo
+%s -Xmx1024m -classpath "%s" -Delkfed.rootDir='%s' elkfed.webdemo.Demo
 CMD
 
 sub java_version {
@@ -67,9 +67,11 @@ sub _init_bart {
     }
     
     # TODO: dispose of the absolute paths for the deployment
-    my $cp = join ":", map {'/net/cluster/TMP/mnovak/tools/BART-2.0/' . $_} ("BART2_eclipse/BART.jar", "libs2/*");
+    my $root_dir = $ENV{TMT_ROOT}.'/share/installed_tools/coreference/BART2.0/';
+    log_info "BART ROOT DIR: $root_dir";
+    my $cp = join ":", map {$root_dir . $_} ("BART.jar", "libs/*");
 
-    my $command = sprintf $BART_CMD, $dir, $java_cmd, $cp;
+    my $command = sprintf $BART_CMD, $dir, $java_cmd, $cp, $root_dir;
 
     open BART_SCRIPT, ">:utf8", "$dir/bart_script.sh";
     print BART_SCRIPT $command;
