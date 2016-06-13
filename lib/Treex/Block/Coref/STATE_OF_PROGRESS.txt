@@ -155,3 +155,11 @@ coref git repository:
             - diff for comparing two pretty-prints
             - baseline targets added
                 - they only run the evaluation method on already prepared Treex files
+
+
+--------------------------- 13.6.2016 ----------------------------------------------------
+
+treex git repository:
+    - branch "TO_REMOVE.lustre_on_lrc_path_fix"
+        * a temporary fix of Lustre->NFS paths - more info in the commit msg
+        * merged into the "new_coref" branch
