@@ -14,7 +14,7 @@ has iset_driver =>
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
-
+has change_bundle_id => (is=>'ro', isa=>'Bool', default=>1, documentation=>'use id of a-tree roots as the bundle id');
 
 #------------------------------------------------------------------------------
 # Reads the Czech tree and transforms it to adhere to the HamleDT guidelines.
@@ -24,7 +24,22 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+
+    ###!!! Perhaps we should do this in Read::PDT.
+    # The bundles in the PDT data have simple ids like this: 's1'.
+    # In contrast, the root nodes of a-trees reflect the original PDT id: 'a-cmpr9406-001-p2s1' (surprisingly it does not identify the zone).
+    # We want to preserve the original sentence id. And we want it to appear in bundle id because that will be used when writing CoNLL-U.
+    if ($self->change_bundle_id) {
+        my $sentence_id = $root->id();
+        $sentence_id =~ s/^a-//;
+        if(length($sentence_id)>1)
+        {
+            my $bundle = $zone->get_bundle();
+            $bundle->set_id($sentence_id);
+        }
+    }
     $self->remove_features_from_lemmas($root);
+    return;
 }
 
 
@@ -262,15 +277,43 @@ sub fix_annotation_errors
 {
     my $self  = shift;
     my $root  = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    for(my $i = 0; $i<=$#nodes; $i++)
     {
+        my $node = $nodes[$i];
         my $form = $node->form() // '';
         my $lemma = $node->lemma() // '';
         my $deprel = $node->deprel() // '';
         my $spanstring = $self->get_node_spanstring($node);
+        # There are three instances of broken decimal numbers in PDT.
+        if($form =~ m/^\d+$/ && $i+2<=$#nodes &&
+           !$node->parent()->is_root() && $node->parent()->form() eq ',' && $node->parent() == $nodes[$i+1] &&
+           $node->deprel() eq 'Atr' && !$node->is_member() && scalar($node->parent()->children())==1 &&
+           $nodes[$i+2]->form() =~ m/^\d+$/)
+        {
+            my $integer = $node;
+            my $comma = $nodes[$i+1];
+            my $decimal = $nodes[$i+2];
+            # The three nodes will be merged into one. The decimal node will be kept and integer and comma will be removed.
+            # Numbers in PDT are "normalized" to use decimal point rather than comma, even though it is a violation of the standard Czech orthography.
+            my $number = $integer->form().'.'.$decimal->form();
+            $decimal->set_form($number);
+            $decimal->set_lemma($number);
+            my @integer_children = $integer->children();
+            foreach my $c (@integer_children)
+            {
+                $c->set_parent($decimal);
+            }
+            # We do not need to care about children of the comma. In the three known instances, the only child of the comma is the integer that we just removed.
+            splice(@nodes, $i, 2);
+            # The remove() method will also take care of ord re-normalization.
+            $integer->remove();
+            $comma->remove();
+            last; ###!!! V těch třech větách, o kterých je řeč, stejně nevím o další chybě. Ale hlavně mi nějak nefunguje práce s polem @nodes po umazání těch dvou uzlů.
+            # $i now points to the former decimal, now a merged number. No need to adjust $i; the number does not have to be considered for further error fixing.
+        }
         # Two occurrences of "se" in CAC 2.0 have AuxT instead of AuxP.
-        if($deprel eq 'AuxT' && $node->is_adposition())
+        elsif($deprel eq 'AuxT' && $node->is_adposition())
         {
             $node->set_deprel('AuxP');
         }

@@ -1,30 +1,25 @@
 package Treex::Block::Print::CzEngBlockIDs;
 use Moose;
 use Treex::Core::Common;
+extends 'Treex::Block::Write::BaseTextWriter';
 
-extends 'Treex::Core::Block';
-
-override '_do_process_document' => sub {
-
+override _do_process_document => sub {
     my ( $self, $document ) = @_;
-
-    print $document->full_filename;
+    my $line = $document->full_filename;
 
     my @outids = ();
     foreach my $bundle ( $document->get_bundles() ) {
-        if ($bundle->wild->{"segm_break"} && 0 < scalar @outids) {
-            print "\t";
-            print join(" ", @outids);
+        if ($bundle->wild->{segm_break} && @outids) {
+            $line .= "\t" . join ' ', @outids;
             @outids = ();
         }
-        next if $bundle->wild->{"to_delete"};
+        next if $bundle->wild->{to_delete};
         push @outids, $bundle->id;
     }
-    if (0 < scalar @outids) {
-      print "\t";
-      print join(" ", @outids);
+    if (@outids) {
+        $line .= "\t" . join ' ', @outids;
     }
-    print "\n";
+    say {$self->_file_handle} $line;
     return;
 };
 

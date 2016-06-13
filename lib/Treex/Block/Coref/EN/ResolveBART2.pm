@@ -67,7 +67,8 @@ sub _init_bart {
     }
     
     # TODO: dispose of the absolute paths for the deployment
-    my $root_dir = $ENV{TMT_ROOT}.'share/installed_tools/coreference/BART2.0/';
+    my $root_dir = $ENV{TMT_ROOT}.'/share/installed_tools/coreference/BART2.0/';
+    log_info "BART ROOT DIR: $root_dir";
     my $cp = join ":", map {$root_dir . $_} ("BART.jar", "libs/*");
 
     my $command = sprintf $BART_CMD, $dir, $java_cmd, $cp, $root_dir;
