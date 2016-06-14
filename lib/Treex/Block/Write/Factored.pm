@@ -288,6 +288,18 @@ my $export_rules = {
             ];
         },
     },
+    "jam" => {  # Japanese m-layer
+        "uselayer" => "a",
+        "sort"    => "ord",
+        "factors" => sub {
+            my $n = shift;
+            return [
+                $n->get_attr('form'),
+                $n->get_attr('lemma'),
+                $n->get_attr('tag'),
+            ];
+        },
+    },
     "ena" => {
         "sort"    => "ord",
         "factors" => sub {
