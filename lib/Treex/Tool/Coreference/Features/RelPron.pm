@@ -18,8 +18,8 @@ augment '_unary_features' => sub {
     $feats->{'tlemma'} = $node->t_lemma;
     $feats->{'fmm'} = $node->formeme;
 
-    $feats->{'gen'} = $node->gram_gender // $UNDEF_VALUE;
-    $feats->{'num'} = $node->gram_number // $UNDEF_VALUE;
+    $feats->{'gen'} = $node->gram_gender || $UNDEF_VALUE;
+    $feats->{'num'} = $node->gram_number || $UNDEF_VALUE;
 
     my $sub_feats = inner() || {};
     return { %$feats, %$sub_feats };
