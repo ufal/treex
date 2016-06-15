@@ -22,7 +22,7 @@ sub get_types {
         $types->{'perspron.poss'} = 1;
     }
     if (Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {expressed => -1})) {
-        #$type = "perspron_unexpr";
+        $types->{perspron_unexpr} = 1;
         $types->{zero} = 1;
         $types->{all_anaph} = 1;
     }
@@ -42,7 +42,7 @@ sub get_types {
         $types->{all_anaph} = 1;
     }
     if (Treex::Block::My::CorefExprAddresses::_is_cor($node)) {
-        #$type = "cor";
+        $types->{cor} = 1;
         $types->{zero} = 1;
         $types->{all_anaph} = 1;
     }
