@@ -59,8 +59,7 @@ sub process_atree {
     # below say how should the resulting dependency tree look like. The code
     # of the builder knows how the INPUT tree looks like (including the deprels
     # already converted from Prague to the UD set).
-    my $builder = new Treex::Tool::PhraseBuilder::PragueToUD
-    (
+    my $builder = Treex::Tool::PhraseBuilder::PragueToUD->new(
         'prep_is_head'           => 0,
         'cop_is_head'            => 0,
         'coordination_head_rule' => 'first_conjunct',

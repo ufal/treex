@@ -62,7 +62,8 @@ has pretokenized => (
     is => 'ro',
     isa => 'Str',
     default => 0,
-    documentation => 'Is the input pretokenized? If set to 1, will only tokenize on whitespace.'
+    documentation => 'Is the input pretokenized? If set to 1, will only tokenize on whitespace;' .
+    ' setting to "atree" assumes pretokenized flat atrees on the input.'
 );
 
 # Useful if you dont have NADA
@@ -89,7 +90,7 @@ sub get_scenario_string {
     my ($self) = @_;
 
     my $scen = join "\n",
-    $self->pretokenized ? 'W2A::TokenizeOnWhitespace' : 'W2A::EN::Tokenize',
+    $self->pretokenized eq 'atree' ? '' : ( $self->pretokenized ? 'W2A::TokenizeOnWhitespace' : 'W2A::EN::Tokenize' ),
     'W2A::EN::NormalizeForms',
     'W2A::EN::FixTokenization',
     $self->gazetteer && defined $self->trg_lang ? 'W2A::EN::GazeteerMatch trg_lang='.$self->trg_lang.' filter_id_prefixes="'.$self->gazetteer.'"' : (),
@@ -182,7 +183,7 @@ Treex::Scen::Analysis::EN - English tectogrammatical analysis
 
  # From command line
  treex -Len Read::Sentences from=my.txt Scen::Analysis::EN Write::Treex to=my.treex.gz
- 
+
  treex --dump_scenario Scen::Analysis::EN
 
 =head1 DESCRIPTION
