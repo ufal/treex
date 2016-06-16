@@ -29,7 +29,7 @@ sub process_tnode {
                 }
             );
             $cor->shift_after_node($t_node);
-            $cor->set_clause_number($t_node);
+            $cor->set_clause_number($t_node->clause_number);
             my $antec = $t_node->get_parent;
             if ($antec) {
                 $cor->set_deref_attr( 'coref_gram.rf', [$antec] );
