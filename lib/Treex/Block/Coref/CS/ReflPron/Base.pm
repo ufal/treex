@@ -3,7 +3,7 @@ use Moose::Role;
 use Treex::Core::Common;
 
 use Treex::Tool::Coreference::AnteCandsGetter;
-use Treex::Tool::Coreference::CS::ReflPronFeatures;
+use Treex::Tool::Coreference::Features::CS::ReflPron;
 #use Treex::Tool::Coreference::EN::PronCorefFeatures;
 #use Treex::Tool::Coreference::CS::PronCorefFeatures;
 #use Treex::Tool::Coreference::Features::Container;
@@ -24,7 +24,7 @@ sub _build_feature_extractor {
     my ($self) = @_;
     #my @container = ();
  
-    my $cs_fe = Treex::Tool::Coreference::CS::ReflPronFeatures->new();
+    my $cs_fe = Treex::Tool::Coreference::Features::CS::ReflPron->new();
     return $cs_fe;
     #push @container, $cs_fe;
 

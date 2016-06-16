@@ -1,11 +1,9 @@
-package Treex::Tool::Coreference::CS::ReflPronFeatures;
+package Treex::Tool::Coreference::Features::ReflPron;
 
 use Moose;
 use Treex::Core::Common;
 use List::MoreUtils qw/any/;
 use Treex::Tool::Coreference::NodeFilter;
-
-use Treex::Tool::Lexicon::CS;
 
 extends 'Treex::Tool::Coreference::BaseCorefFeatures';
 
@@ -19,8 +17,7 @@ augment '_unary_features' => sub {
     $feats->{'id'} = $node->get_address;
 
     my $anode = $node->get_lex_anode;
-    $feats->{'lemma'} = defined $anode ? Treex::Tool::Lexicon::CS::truncate_lemma($anode->lemma) : $UNDEF_VALUE;
-    $feats->{'subpos'} = defined $anode ? substr($anode->tag, 1, 1) : $UNDEF_VALUE;
+    $feats->{'lemma'} = defined $anode ? $anode->lemma : $UNDEF_VALUE;
 
     if ($type eq 'cand') {
         $feats->{'is_refl'} = Treex::Tool::Coreference::NodeFilter::matches($node, ['reflpron']) ? 1 : 0;
@@ -68,49 +65,11 @@ __END__
 
 =head1 NAME 
 
-Treex::Tool::Coreference::CS::ReflPronFeatures
+Treex::Tool::Coreference::Features::ReflPron
 
 =head1 DESCRIPTION
 
-An abstract class for features needed in personal pronoun coreference
-resolution. The features extracted here should be language independent.
-
-=head1 METHODS
-
-=head2 To be implemented
-
-These methods must be implemented in classes that consume this role.
-
-=over
-
-#=item _build_feature_names 
-#
-#A list of features required for training/resolution. Without implementing 
-#in a subclass it throws an exception.
-
-=back
-
-=head2 Already implemented
-
-=over
-
-=item _unary_features
-
-It returns a hash of unary features that relate either to the anaphor or the
-antecedent candidate. 
-
-Contains just language-independent features. It should be extended by 
-overriding in a subclass.
-
-=item _binary_features 
-
-It returns a hash of binary features that combine both the anaphor and the
-antecedent candidate.
-
-Contains just language-independent features. It should be extended by 
-overriding in a subclass.
-
-=back
+A language-independent feature extractor for CR of reflexive pronouns.
 
 =head1 AUTHORS
 
@@ -118,6 +77,6 @@ Michal Novák <mnovak@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2015-16 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
