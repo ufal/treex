@@ -68,6 +68,11 @@ sub add_node_info {
         $info->{$prefix.'rchildno'} = scalar($node->get_echildren({following_only=>1, or_topological => 1}));
         $self->add_tag_split($info, $prefix, $node);
 		$self->add_interset($info, $prefix, $node);
+
+        my $parent = $getnode{'parent'}($node);
+        if ( defined $parent && !$parent->is_root() ) {
+            $self->add_agreement($info, $prefix, $node, $parent);
+        }
     } else {
         foreach my $attribute (@{$self->attributes}) {
             $info->{$prefix.$attribute} = '';
@@ -102,6 +107,19 @@ sub add_interset {
 	return;
 }
 
+# Extract info about various node - parent agreement
+sub add_agreement {
+    my ($self, $info, $prefix, $node, $parent) = @_;
+    
+    # Interset-based agreement
+    foreach my $feature (Lingua::Interset::FeatureStructure->known_features()) {
+        my $node_feat = $node->get_iset($feature);
+        my $parent_feat = $node->get_iset($feature);
+        $info->{$prefix.$feature."-agr"} = 0;
+        $info->{$prefix.$feature."-agr"} = 1 if $node_feat eq $parent_feat;
+    }
+}
+
 sub add_edge_existence_info {
     my ($self, $info, $prefix, $child, $parent) = @_;
     
@@ -128,13 +146,6 @@ sub add_edge_existence_info {
 
     return;
 }
-
-
-# TODO: define the methods
-#sub get_parent_with_alignment
-
-#sub get_child_with_alignment
-
 
 1;
 
