@@ -86,13 +86,20 @@ sub process_ttree {
         }
     }
     
+    my $doc = $ttree->get_document;
     foreach my $anaph_id (keys %key_ante_for) {
-        $self->_key_sents_for->{$anaph_id} = $ttree;
+        my $anaph_tree_root = $doc->get_node_by_id($anaph_id)->get_root;
+        if ($self->_ord_of_ttree->{$anaph_tree_root->id} != $self->_ord_of_ttree->{$ttree->id}) {
+            $self->_key_sents_for->{$anaph_id} = $ttree;
+        }
     }
     foreach my $anaph_id (keys %sys_ante_for) {
-        $self->_sys_sents_for->{$anaph_id} = $ttree;
+        my $anaph_tree_root = $doc->get_node_by_id($anaph_id)->get_root;
+        if ($self->_ord_of_ttree->{$anaph_tree_root->id} != $self->_ord_of_ttree->{$ttree->id}) {
+            $self->_sys_sents_for->{$anaph_id} = $ttree;
+        }
     }
-        
+
     foreach my $tnode ($ttree->get_descendants({ordered => 1})) {
         my $coref_diag = $tnode->wild->{coref_diag};
         if ($coref_diag->{is_anaph}) {
