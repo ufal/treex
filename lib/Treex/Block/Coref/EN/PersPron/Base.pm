@@ -15,7 +15,7 @@ with 'Treex::Block::Coref::SupervisedBase' => {
 has 'aligned_feats' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 sub _build_node_types {
-    return '#perspron.coref';
+    return '#perspron.no_refl';
 }
 
 sub _build_feature_extractor {
