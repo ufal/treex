@@ -314,7 +314,7 @@ override '_binary_features' => sub {
     return $coref_features;
 };
 
-override '_unary_features' => sub {
+augment '_unary_features' => sub {
     my ($self, $node, $type) = @_;
     my $coref_features = {};
     
