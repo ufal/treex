@@ -287,29 +287,29 @@ override '_binary_features' => sub {
     my $coref_features = super();
 
     $coref_features->{b_gen_agree} 
-        = $self->_agree_feats($set_features->{c_cand_gen}, $set_features->{c_anaph_gen});
+        = $self->_agree_feats($set_features->{'c^c_cand_gen'}, $set_features->{'a^c_anaph_gen'});
     $coref_features->{c_join_gen} 
-        = $self->_join_feats($set_features->{c_cand_gen}, $set_features->{c_anaph_gen});
+        = $self->_join_feats($set_features->{'c^c_cand_gen'}, $set_features->{'a^c_anaph_gen'});
 
     $coref_features->{b_num_agree} 
-        = $self->_agree_feats($set_features->{c_cand_num}, $set_features->{c_anaph_num});
+        = $self->_agree_feats($set_features->{'c^c_cand_num'}, $set_features->{'a^c_anaph_num'});
     $coref_features->{c_join_num} 
-        = $self->_join_feats($set_features->{c_cand_num}, $set_features->{c_anaph_num});
+        = $self->_join_feats($set_features->{'c^c_cand_num'}, $set_features->{'a^c_anaph_num'});
 
     $coref_features->{b_atag_agree} 
-        = $self->_agree_feats($set_features->{c_cand_atag}, $set_features->{c_anaph_atag});
+        = $self->_agree_feats($set_features->{'c^c_cand_atag'}, $set_features->{'a^c_anaph_atag'});
     $coref_features->{c_join_atag}  
-        = $self->_join_feats($set_features->{c_cand_atag}, $set_features->{c_anaph_atag});
+        = $self->_join_feats($set_features->{'c^c_cand_atag'}, $set_features->{'a^c_anaph_atag'});
 
     $coref_features->{b_apos_agree} 
-        = $self->_agree_feats($set_features->{c_cand_apos}, $set_features->{c_anaph_apos});
+        = $self->_agree_feats($set_features->{'c^c_cand_apos'}, $set_features->{'a^c_anaph_apos'});
     $coref_features->{c_join_apos}  
-        = $self->_join_feats($set_features->{c_cand_apos}, $set_features->{c_anaph_apos});
+        = $self->_join_feats($set_features->{'c^c_cand_apos'}, $set_features->{'a^c_anaph_apos'});
 
     $coref_features->{b_anum_agree} 
-        = $self->_agree_feats($set_features->{c_cand_anum}, $set_features->{c_anaph_anum});
+        = $self->_agree_feats($set_features->{'c^c_cand_anum'}, $set_features->{'a^c_anaph_anum'});
     $coref_features->{c_join_anum}  
-        = $self->_join_feats($set_features->{c_cand_anum}, $set_features->{c_anaph_anum});
+        = $self->_join_feats($set_features->{'c^c_cand_anum'}, $set_features->{'a^c_anaph_anum'});
 
     return $coref_features;
 };
