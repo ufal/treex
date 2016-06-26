@@ -37,6 +37,7 @@ has model => (
 
 my %parser_blocks = (
 	'mst'		=> 'ParseMST',
+    'mate'      => 'ParseMate'
 );
 
 sub BUILD {

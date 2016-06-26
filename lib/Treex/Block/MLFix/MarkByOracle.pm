@@ -34,9 +34,10 @@ sub _get_predictions {
     
     foreach my $inst (@$instances) {
         my $prediction = {};
-        if (defined $inst && 
-            ($self->ref_parent_constraint && $inst->{"parentold_node_lemma"} eq $inst->{"parentnew_node_lemma"}) &&
-            ($inst->{"old_node_form"} ne $inst->{"new_node_form"})
+        if (defined $inst &&
+#            ($self->ref_parent_constraint && $inst->{"parentold_node_lemma"} eq $inst->{"parentnew_node_lemma"}) && 
+            ($self->ref_parent_constraint && $inst->{"parentold_node_form"} eq $inst->{"parentnew_node_form"}) &&
+            (lc($inst->{"old_node_form"}) ne lc($inst->{"new_node_form"}))
         ) {
             push @predictions, 1;
             next;

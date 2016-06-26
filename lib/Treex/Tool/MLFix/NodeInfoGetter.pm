@@ -11,7 +11,12 @@ has attributes => (
     default => sub { ['form', 'lemma', 'tag', 'afun'] }
 );
 
-
+has agr2wild => (
+    is => 'rw',
+    isa => 'Bool',
+    default => 0,
+    documentation => "Store the information about agreement into the wild attr (for analysis purposes only)."
+);
 
 # TODO: make this work with unparsed tgt side (parsed src + alignment)
 my %getnode = (
@@ -114,9 +119,11 @@ sub add_agreement {
     # Interset-based agreement
     foreach my $feature (Lingua::Interset::FeatureStructure->known_features()) {
         my $node_feat = $node->get_iset($feature);
-        my $parent_feat = $node->get_iset($feature);
+        my $parent_feat = $parent->get_iset($feature);
         $info->{$prefix.$feature."-agr"} = 0;
         $info->{$prefix.$feature."-agr"} = 1 if $node_feat eq $parent_feat;
+
+        $node->wild->{$feature."_agr"} = $info->{$prefix.$feature."-agr"} if $self->agr2wild;
     }
 }
 

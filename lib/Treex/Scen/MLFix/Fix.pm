@@ -71,12 +71,7 @@ sub get_scenario_string {
     my $fixBlock = $fix_blocks{$self->fix_method};
 
     my $scen = "";
-    if ($self->mark_method eq "oracle") {
-        $scen = "MLFix::${markBlock} language=".$self->language." selector=".$self->selector." config_file=".$self->mark_config_file;
-    }
-    else {
-        $scen = "MLFix::${lang}::${markBlock} language=".$self->language." selector=".$self->selector." config_file=".$self->mark_config_file;
-    }
+    $scen = "MLFix::${markBlock} language=".$self->language." selector=".$self->selector." config_file=".$self->mark_config_file;
 
 	$scen = join "\n",
     $scen,

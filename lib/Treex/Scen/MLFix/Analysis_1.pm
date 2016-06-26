@@ -38,7 +38,8 @@ my %tagger_blocks = (
 	'featurama'		=> 'TagFeaturama',
 	'morce'			=> 'TagMorce',
 	'morphodita'	=> 'TagMorphoDiTa',
-	'stanford'		=> 'TagStanford'
+	'stanford'		=> 'TagStanford',
+    'mate'          => 'ParseMate',
 );
 
 sub BUILD {
@@ -58,6 +59,7 @@ sub get_scenario_string {
 	my $iset_driver = $self->iset_driver;
 
 	$lemmatize = 0 if $language eq "en";
+    $lemmatize = 0 if $language eq "de";
 
 	my $scen = join "\n",
 	"Util::SetGlobal language=$language selector=$selector",
@@ -67,12 +69,15 @@ sub get_scenario_string {
 	$language eq "en" ? "W2A::EN::NormalizeForms" : (),
 	$language eq "en" ? "W2A::EN::FixTokenization" : (),
 
+    $language eq "de" ? "W2A::DE::LemmatizeMate" : (),
+
 	"W2A::${lang}::$tagger_block lemmatize=$lemmatize",
 
 	$language eq "en" ? "W2A::EN::FixTags" : (),
 	$language eq "en" ? "W2A::EN::Lemmatize" : (),
 
-	"A2A::ConvertTags input_driver='$iset_driver'";
+    $language eq "de" ? "A2A::DE::CoNLL2Iset" : (),
+	$language ne "de" ? "A2A::ConvertTags input_driver='$iset_driver'" : ();
 
 	return $scen;
 }

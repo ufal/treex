@@ -120,7 +120,7 @@ sub predict_if_mark {
 sub _get_predictions {
 	my ($self, $instances) = @_;
 
-	my @model_predictions_array = map { {} } @$instances;
+	my @model_predictions_array = ();
 
 	foreach my $instance_info ($instances) {
 		my @model_names = keys %{$self->_models};

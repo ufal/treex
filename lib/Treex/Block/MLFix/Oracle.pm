@@ -33,12 +33,12 @@ sub _get_predictions {
  
     foreach my $inst (@$instances) {
         my $prediction = {};
-        if (!defined $inst ||
-            ($self->ref_parent_constraint && $inst->{"parentold_node_lemma"} ne $inst->{"parentnew_node_lemma"})
-        ) {
-            push @predictions, $prediction;
-            next;
-        }
+#        if (!defined $inst ||
+#            ($self->ref_parent_constraint && $inst->{"parentold_node_lemma"} ne $inst->{"parentnew_node_lemma"})
+#        ) {
+#            push @predictions, $prediction;
+#            next;
+#        }
 
         my $pred = join ";", map { defined $inst->{$_} ? $inst->{$_} : "" } @{ $self->config->{predict} };
         $prediction = { $pred => 1 };

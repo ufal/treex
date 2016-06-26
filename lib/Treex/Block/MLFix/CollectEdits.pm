@@ -74,7 +74,7 @@ sub _build_fields_ar {
 }
 
 sub _build_node_info_getter {
-	return Treex::Tool::MLFix::NodeInfoGetter->new();
+	return Treex::Tool::MLFix::NodeInfoGetter->new( agr2wild => 1 );
 }
 
 before '_do_process_document' => sub {
@@ -126,7 +126,7 @@ sub process_anode {
 
         $info->{"wrong_form_1"} = 0;
         $info->{"wrong_form_2"} = 0;
-        if($node->form ne $node_ref->form) {
+        if(lc($node->form) ne lc($node_ref->form)) {
             $info->{"wrong_form_1"} = 1;
             $info->{"wrong_form_2"} = 1 if (defined $parent_ref && $parent->lemma eq $parent_ref->lemma);
         }
