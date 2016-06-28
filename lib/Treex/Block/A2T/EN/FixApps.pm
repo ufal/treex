@@ -29,6 +29,7 @@ sub process_tnode {
     # find the head node of the second member of the apposition
     # it must be a child of the first member in the original atree
     my $mbr2_anode = $first_comma_anode->get_next_node;
+    return if (!defined $mbr2_anode);
     while (!$mbr2_anode->is_root && $mbr2_anode->get_parent != $mbr1_anode) {
         $mbr2_anode = $mbr2_anode->get_parent;
     }
