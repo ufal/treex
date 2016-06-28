@@ -131,6 +131,7 @@ sub get_scenario_string {
     $self->gazetteer ? 'A2T::ProjectGazeteerInfo' : (),
     'A2T::EN::FixTlemmas',
     'A2T::EN::SetCoapFunctors',
+    'A2T::EN::FixApps',
     'A2T::EN::FixEitherOr',
     'A2T::EN::FixHowPlusAdjective',
     'A2T::FixIsMember',
