@@ -80,22 +80,17 @@ sub _copy_coref_from_alignment {
         log_debug "no gold antecedents" . $tnode->id, 1;
         return;
     }
+    my $ref_ante = $ref_antes[0];
+    if ($ref_ante->functor =~ /^(APPS|CONJ|DISJ|GRAD)$/) {
+        @ref_antes = $ref_ante->get_coap_members;
+    }
     my @src_antes = Treex::Tool::Align::Utils::aligned_transitively(\@ref_antes, [$align_filter]);
 
     if (!@src_antes) {
-        my $ref_ante = $ref_antes[0];
-        
-        # try finding a coap member counterpart
-        if ($ref_ante->functor =~ /^(APPS|CONJ|DISJ|GRAD)$/) {
-            ($ref_ante) = $ref_ante->get_children;
-            @src_antes = Treex::Tool::Align::Utils::aligned_transitively([$ref_ante], [$align_filter]);
-        }
         # try finding a counterpart for any antecedent in the whole coreference chain
-        else {
-            foreach my $ref_prev_ante ( $ref_ante->get_coref_chain ) {
-                @src_antes = Treex::Tool::Align::Utils::aligned_transitively([$ref_prev_ante], [$align_filter]);
-                last if ( @src_antes );
-            }
+        foreach my $ref_prev_ante ( $ref_ante->get_coref_chain ) {
+            @src_antes = Treex::Tool::Align::Utils::aligned_transitively([$ref_prev_ante], [$align_filter]);
+            last if ( @src_antes );
         }
     }
     # remove a possible anaphor itself
