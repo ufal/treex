@@ -10,7 +10,7 @@ sub _is_subtree_mbr2 {
     my ($anode) = @_;
     return 0 if ($anode->afun ne "Atr");
     return 0 if ($anode->tag !~ /^N/);
-    return 0 if ($anode->tag eq "NNP");
+    return 0 if ($anode->tag =~ /^NNP/);
     return 1;
 }
 
@@ -90,6 +90,12 @@ Treex::Block::A2T::EN::FixApps
 
 =head1 DESCRIPTION
 
+This block adds English appostion roots, if the parse tree allows it.
+It must pass the following conditions:
+* the two members of the apposition must be delimited by a comma
+* both members of the apposition must be governed by a noun
+* the second member cannot be governed by a proper noun
+* the second member must be a child of a head of the first member
 
 =head1 AUTHORS
 
