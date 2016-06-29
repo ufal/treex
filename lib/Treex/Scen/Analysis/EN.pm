@@ -2,6 +2,14 @@ package Treex::Scen::Analysis::EN;
 use Moose;
 use Treex::Core::Common;
 
+has tecto => (
+     is => 'ro',
+     isa => enum( [qw(default none)] ),
+     default => 'default',
+     documentation => 'tectogrammatical analysis. '
+                    . 'Use "none" to end the scenario after parsing.',
+);
+
 has domain => (
      is => 'ro',
      isa => enum( [qw(general IT)] ),
@@ -14,6 +22,14 @@ has tagger => (
      isa => enum( [qw(Morce MorphoDiTa)] ),
      default => 'Morce',
      documentation => 'Which PoS tagger to use',
+);
+
+has parser => (
+     is => 'ro',
+     isa => enum( [qw(MST none)] ),
+     default => 'MST',
+     documentation => 'Which dependency parser to use. Default = MST. '
+                    . ' Use "none" to end scenario after tagging/ner.',
 );
 
 has ner => (
@@ -106,7 +122,9 @@ sub get_scenario_string {
     'A2N::EN::DistinguishPersonalNames',
     #'A2N::FixMissingLinks', # without this A2N::NestEntities throws errors
     #'A2N::NestEntities', # entities in n-trees should be nested, but adding this makes en-cs TectoMT BLEU worse
-
+    ;
+    return $scen if $self->parser eq 'none';
+    $scen .= join "\n", '',
     'W2A::MarkChunks',
     'W2A::EN::ParseMST model=conll_mcd_order2_0.01.model',
     'W2A::EN::SetIsMemberFromDeprel',
@@ -122,7 +140,9 @@ sub get_scenario_string {
 
     'A2A::ConvertTags input_driver=en::penn',
     'A2A::EN::EnhanceInterset',
-
+    ;
+    return $scen if $self->tecto eq 'none';
+    $scen .= join "\n", '',
     'A2T::EN::MarkEdgesToCollapse',
     'A2T::EN::MarkEdgesToCollapseNeg',
     'A2T::BuildTtree',
@@ -186,6 +206,12 @@ Treex::Scen::Analysis::EN - English tectogrammatical analysis
 
  treex --dump_scenario Scen::Analysis::EN
 
+ # From scenario
+ Scen::Analysis::EN tecto=none  # do tagging, parsing and NER (skip tecto-analysis)
+ Scen::Analysis::EN parser=none # do tagging and NER (skip parsing and tecto)
+ Scen::Analysis::EN parser=none ner=none # do tagging (skip NER, parsing and tecto)
+ # note that parser=none implies tecto=none
+
 =head1 DESCRIPTION
 
 This scenario starts with tokenization, so sentence segmentation must be performed before.
@@ -199,6 +225,15 @@ writing out your data to disk and then reading them back between the calls,
 or use MorphoDiTa instead of Morce.
 
 =head1 PARAMETERS
+
+=head2 tecto (default, none)
+
+Use "none" to end the scenario after parsing.
+
+=head2 parser (MST, none)
+
+MST = W2A::EN::ParseMST model=conll_mcd_order2_0.01.model
+Use "none" to end the scenario after tagging/ner.
 
 =head2 domain (general, IT)
 
