@@ -46,6 +46,7 @@ match     = dist.ini
 match     = export.tmp
 match     = postprocess_POD.pl
 match     = ^test\.(out|err|mix)
+match     = compile_grammar.pl
 
 [PkgVersion]
 [PodVersion]
@@ -84,3 +85,6 @@ package = Parse::RecDescent::_Runtime::UncondReject
 homepage   = http://ufal.mff.cuni.cz/treex
 repository = https://github.com/ufal/treex
 bugtracker = https://github.com/ufal/treex/issues
+
+[ConfirmRelease]
+[UploadToCPAN]
