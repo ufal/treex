@@ -299,10 +299,10 @@ sub select_node_if_apps {
 }
 
 sub _add_coref_nodes {
-    my ($self, $type, @antes) = shift;
+    my ($self, $type, @antes) = @_;
     my $anaph = select_node_if_apps($self);
     if ($anaph != $self) {
-        return $anaph->add_coref_gram_nodes(@_);
+        return $anaph->_add_coref_nodes($type, @antes);
     }
     @antes = map {select_node_if_apps($_)} @antes;
     my %seen;
