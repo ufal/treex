@@ -5,13 +5,13 @@ use Treex::Core::Common;
 use Graph;
 
 sub _create_coref_graph {
-    my ($ttrees) = @_;
+    my ($ttrees, $appos_aware) = @_;
 
     my $graph = Graph->new;
     foreach my $ttree (@$ttrees) {
         foreach my $anaph ($ttree->get_descendants({ ordered => 1 })) {
             
-            my @antes = $anaph->get_coref_nodes;
+            my @antes = $anaph->get_coref_nodes({appos_aware => 0});
             if (scalar @antes == 1) {
                 $graph->add_edge( $anaph, $antes[0] );
             }
@@ -33,18 +33,30 @@ sub _create_coref_graph {
             }
         }
     }
-    return $graph;
+    return $graph if (!$appos_aware);
+    
+    my $aa_graph = Graph->new;
+    foreach my $anaph ($graph->vertices) {
+        my @anaph_expand = Treex::Core::Node::T::get_node_appos_expanded($anaph);
+        foreach my $new_anaph (@anaph_expand) {
+            $aa_graph->add_vertex($new_anaph);
+            foreach my $ante ($graph->successors($anaph)) {
+                my @ante_expand = Treex::Core::Node::T::get_node_appos_expanded($ante);
+                foreach my $new_ante (@ante_expand) {
+                    $aa_graph->add_edge($new_anaph, $new_ante);
+                }
+            }
+        }
+    }
+    return $aa_graph;
 }
 
 sub _gce_default_params {
     my ($params) = @_;
     
-    if (!defined $params) {
-        $params = { ordered => 'deepord' };
-    }
-    elsif (!defined $params->{ordered}) {
-        $params->{ordered} = 'deepord';
-    }
+    $params //= {};
+    $params->{ordered} //= 'deepord';
+    $params->{appos_aware} //= 1;
     return $params;
 }
 
@@ -88,7 +100,7 @@ sub get_coreference_entities {
 
     # a coreference graph represents the nodes interlinked with
     # coreference links
-    my $coref_graph = _create_coref_graph($ttrees);
+    my $coref_graph = _create_coref_graph($ttrees, $params->{appos_aware});
     # individual coreference chains correspond to weakly connected
     # components in the coreference graph 
     my @chains = $coref_graph->weakly_connected_components;
