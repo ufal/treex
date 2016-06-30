@@ -22,3 +22,6 @@ Commit it with `git add Changes.template; git commit; git push`
  - I think this is not a fatal problem, the rest of Treex-Core is indexed OK.
  - SolutionA: use the `package\n  Treex::Core::ScenarioParser;` trick, so the module is ignored by PAUSE/CPAN
  - SolutionB: remove the `our $VERSION = '1.967009';` line
+* `Git::Tag` and `Git::Commit` dzil plugins do not work now. Maybe because `dzil release` fails because of the PAUSE indexing problem above. 
+* I am not sure if changing `Changes.template` but not commiting the chages does not make problems with the `Git::Check` dzil plugin. There is an option `allow_dirty`.
+* Fix the bugs found by perlcritic and pod-coverage or silence them, so `make test` does not fail.
