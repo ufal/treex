@@ -40,7 +40,7 @@ sub get_cs_scenario_string {
     my ($self) = @_;
 
     my $scen = join "\n",
-    'Util::Eval document="1;"',
+    'Util::SetGlobal language=cs',
     $self->modules->{relpron} || $self->modules->{all} ? 'Coref::CS::RelPron::Resolve' : '',
     $self->modules->{reflpron} || $self->modules->{all} ? 'Coref::CS::ReflPron::Resolve' : '',
     $self->modules->{perspron} || $self->modules->{all} ? 'Coref::CS::PersPron::Resolve' : '',
@@ -53,7 +53,7 @@ sub get_en_scenario_string {
     my ($self) = @_;
 
     my $scen = join "\n",
-    'Util::Eval document="1;"',
+    'Util::SetGlobal language=en',
     $self->modules->{relpron} || $self->modules->{all} ? 'Coref::EN::RelPron::Resolve' : '',
     $self->modules->{reflpron} || $self->modules->{all} ? 'Coref::EN::ReflPron::Resolve' : '',
     $self->modules->{perspron} || $self->modules->{all} ? 'Coref::EN::PersPron::Resolve' : '',
