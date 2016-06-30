@@ -161,69 +161,110 @@ sub get_anodes {
 
 #------------ coreference and bridging nodes -------------------
 
+sub get_node_appos_expanded {
+    my ($node, $arg) = @_;
+    if ($node->is_coap_root && $node->functor eq "APPS") {
+        return ($node->get_coap_members, $arg->{with_appos_root} ? $node : ());
+    }
+    else {
+        my $par = $node->get_parent;
+        if (defined $par && !$par->is_root && $par->is_coap_root && $par->functor eq "APPS" && $node->is_member ) {
+            return ($par->get_coap_members, $arg->{with_appos_root} ? $par : ());
+        }
+    }
+    return $node;
+}
+
+# types are not allowed for the time being
+sub _unfold_appos {
+    my ( $self, $type ) = @_;
+
+    my @appos_nodes_not_self = grep {$_ != $self} get_node_appos_expanded($self, {with_appos_root => 1});
+    
+    my @member_antes = ();
+    # type = { text, gram, all }
+    if ($type eq "gram") {
+        @member_antes = map {$_->get_coref_gram_nodes({appos_aware => 0})} @appos_nodes_not_self;
+    }
+    elsif ($type eq "text") {
+        @member_antes = map {$_->get_coref_text_nodes({appos_aware => 0})} @appos_nodes_not_self;
+    }
+    else {
+        @member_antes = map {$_->get_coref_nodes({appos_aware => 0})} @appos_nodes_not_self;
+    }
+    return @member_antes;
+}
+
+sub _replace_appos_antes {
+    my (@antes) = @_;
+    my @new_antes = map {get_node_appos_expanded($_)} @antes;
+    my %seen = ();
+    my @unique_antes = grep { !$seen{$_->id}++ } @new_antes;
+    return @unique_antes; 
+}
+
+sub _get_coref_nodes {
+    my ($self, $type, $arg_ref) = @_;
+
+    my $appos_aware = $arg_ref->{appos_aware} // 1;
+    my $with_types = $arg_ref->{with_types} // 0;
+    delete $arg_ref->{$_} foreach (qw/appos_aware with_types/);
+
+    my @antes = ();
+    my @types = ();
+
+    if ($type ne 'text') {
+        my @gram_nodes = $self->_get_node_list('coref_gram.rf');
+        push @antes, @gram_nodes; 
+        push @types, map {undef} @gram_nodes;
+    }
+    if ($type ne 'gram') {
+        # textual coreference in PDT2.0 and 2.5 style
+        my @text_nodes = $self->_get_node_list('coref_text.rf');
+        push @antes, @text_nodes; 
+        push @types, map {undef} @text_nodes;
+        # textual coreference in PDT3.0 style
+        my $pdt30_text_coref_rf = $self->get_attr('coref_text') // [];
+        @text_nodes = map {$self->get_document->get_node_by_id( $_->{'target_node.rf'} )} @$pdt30_text_coref_rf;
+        my @text_types = map { $_->{'type'} } @$pdt30_text_coref_rf;
+        push @antes, @text_nodes; 
+        push @types, @text_types;
+    }
+
+    # for the time being, apposition-aware handling is disabled if types are demanded
+    if (!$with_types && $appos_aware) {
+        push @antes, $self->_unfold_appos($type);
+        @antes = _replace_appos_antes(@antes);
+    }
+    
+    my @filtered_antes = $self->_process_switches( $arg_ref, @antes );
+    return @filtered_antes if (!$with_types);
+
+    # return both nodes and types (as list references - similar to alignments)
+    my %node_id_to_index = map {$antes[$_]->id => $_} 0 .. $#antes;
+    my @filtered_types = map {
+        my $idx = $node_id_to_index{$_->id};
+        defined $idx ? $types[$idx] : undef
+    } @filtered_antes;
+    return (\@filtered_antes, \@filtered_types);
+}
+
+
 sub get_coref_nodes {
     my ( $self, $arg_ref ) = @_;
-    
-    # process coreference parameters
-    my $with_types = $arg_ref->{with_types};
-    delete $arg_ref->{with_types};
-    
-    my @gram_nodes = $self->_get_node_list('coref_gram.rf');
-    
-    # textual coreference in PDT2.0 and 2.5 style
-    my @text_nodes = $self->_get_node_list('coref_text.rf');
-    return $self->_process_switches( $arg_ref, (@gram_nodes, @text_nodes) ) if (@text_nodes);
-
-    # textual coreference in PDT3.0 style
-    my $pdt30_text_coref_rf = $self->get_attr('coref_text') // [];
-    my @pdt30_gram_coref = map {{'target_node.rf' => $_->id, 'type' => undef}} @gram_nodes;
-    return $self->_get_pdt30_coref([@pdt30_gram_coref, @$pdt30_text_coref_rf], $with_types, $arg_ref);
+    return $self->_get_coref_nodes('all', $arg_ref);
 }
 
 sub get_coref_gram_nodes {
     my ( $self, $arg_ref ) = @_;
-    return $self->_get_node_list( 'coref_gram.rf', $arg_ref );
+    return $self->_get_coref_nodes('gram', $arg_ref);
 }
 
 sub get_coref_text_nodes {
     my ( $self, $arg_ref ) = @_;
-    
-    # process coreference parameters
-    my $with_types = $arg_ref->{with_types};
-    delete $arg_ref->{with_types};
-    
-    # textual coreference in PDT2.0 and 2.5 style
-    my @nodes = $self->_get_node_list( 'coref_text.rf', $arg_ref );
-    return @nodes if (@nodes);
-    
-    # textual coreference in PDT3.0 style
-    my $pdt30_coref_rf = $self->get_attr('coref_text') // [];
-
-    return $self->_get_pdt30_coref($pdt30_coref_rf, $with_types, $arg_ref);
+    return $self->_get_coref_nodes('text', $arg_ref);
 }
 
-sub _get_pdt30_coref {
-    my ($self, $coref_rf, $with_types, $arg_ref) = @_;
-    
-    my $document = $self->get_document;
-    
-    my @nodes = map {$document->get_node_by_id( $_->{'target_node.rf'} )} @$coref_rf;
-    ## get_node_by_id() will fatally fail if target is not defined!
-    #my @targetrfs = grep {defined($_)} map {$_->{'target_node.rf'}} @{$coref_rf};
-    #my @nodes = map {$document->get_node_by_id($_)} @targetrfs;
-    
-    my @filtered_nodes = $self->_process_switches( $arg_ref, @nodes );
-    return @filtered_nodes if (!$with_types);
-    
-    # return both nodes and types (as list references - similar to alignments)
-    my %node_id_to_index = map {$nodes[$_]->id => $_} 0 .. $#nodes;
-    my @types = map { $_->{'type'} } @$coref_rf;
-    my @filtered_types = map {
-        my $idx = $node_id_to_index{$_->id};
-        defined $idx ? $types[$idx] : undef
-    } @filtered_nodes;
-    return (\@filtered_nodes, \@filtered_types);
-}
 
 # it doesn't return a complete chain, just the members which are accessible
 # from the current node
@@ -248,14 +289,35 @@ sub get_coref_chain {
     return $self->_process_switches( $arg_ref, @nodes );
 }
 
+sub select_node_if_apps {
+    my ($node) = @_;
+    my $par = $node->get_parent;
+    if (defined $par && !$par->is_root && $par->is_coap_root && $par->functor eq "APPS" && $node->is_member ) {
+        return $par;
+    }
+    return $node;
+}
+
+sub _add_coref_nodes {
+    my ($self, $type, @antes) = shift;
+    my $anaph = select_node_if_apps($self);
+    if ($anaph != $self) {
+        return $anaph->add_coref_gram_nodes(@_);
+    }
+    @antes = map {select_node_if_apps($_)} @antes;
+    my %seen;
+    @antes = grep {!$seen{$_->id}++} @antes;
+    return $self->_add_to_node_list( "coref_$type.rf", @antes );
+}
+
 sub add_coref_gram_nodes {
     my $self = shift;
-    return $self->_add_to_node_list( 'coref_gram.rf', @_ );
+    $self->_add_coref_nodes('gram', @_);
 }
 
 sub add_coref_text_nodes {
     my $self = shift;
-    return $self->_add_to_node_list( 'coref_text.rf', @_ );
+    $self->_add_coref_nodes('text', @_);
 }
 
 sub remove_coref_nodes {
