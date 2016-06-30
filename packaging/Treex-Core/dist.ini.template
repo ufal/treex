@@ -59,7 +59,6 @@ skip = EOLTests
 
 ;[PodWeaver]
 ;config = weaver.ini
-[TestRelease] ; extract archive and run tests before releasing the dist
 
 [MetaNoIndex]
 package = Parse::RecDescent::_Runtime
@@ -85,6 +84,8 @@ package = Parse::RecDescent::_Runtime::UncondReject
 homepage   = http://ufal.mff.cuni.cz/treex
 repository = https://github.com/ufal/treex
 bugtracker = https://github.com/ufal/treex/issues
+
+[TestRelease] ; extract the archive and run tests before releasing the dist
 
 [ConfirmRelease]
 [UploadToCPAN]
