@@ -105,94 +105,107 @@ has mark_it => ( is => 'rw', isa => 'Bool', default => 1 );
 sub get_scenario_string {
     my ($self) = @_;
 
-    my $scen = join "\n",
+    my @blocks;
 
-    $self->tokenizer eq 'none' ? () : (
-        $self->tokenizer eq 'whitespace' ? 'W2A::TokenizeOnWhitespace' : 'W2A::EN::Tokenize',
-        'W2A::EN::NormalizeForms',
-        'W2A::EN::FixTokenization',
-        $self->gazetteer && defined $self->trg_lang ? 'W2A::EN::GazeteerMatch trg_lang='.$self->trg_lang.' filter_id_prefixes="'.$self->gazetteer.'"' : (),
-    ),
+    if ($self->tokenizer ne 'none') {
+        push @blocks,
+            $self->tokenizer eq 'whitespace' ?
+                'W2A::TokenizeOnWhitespace'
+                : 'W2A::EN::Tokenize',
+            'W2A::EN::NormalizeForms',
+            'W2A::EN::FixTokenization',
+            $self->gazetteer && defined $self->trg_lang ?
+                'W2A::EN::GazeteerMatch trg_lang='.$self->trg_lang.' filter_id_prefixes="'.$self->gazetteer.'"'
+                : (),
+            ;
+    }
 
-    $self->tagger eq 'none' ? () : (
-        $self->tagger eq 'Morce' ? 'W2A::EN::TagMorce' : (),
-        $self->tagger eq 'MorphoDiTa' ? 'W2A::EN::TagMorphoDiTa' : (),
-        'W2A::EN::FixTags',
-        'W2A::EN::FixTagsImperatives',
-        'W2A::EN::Lemmatize',
-        $self->domain eq 'IT' ? ' W2A::EN::QtHackTags' : (),
-    ),
+    if ($self->tagger ne 'none') {
+        push @blocks,
+            $self->tagger eq 'Morce' ? 'W2A::EN::TagMorce' : (),
+            $self->tagger eq 'MorphoDiTa' ? 'W2A::EN::TagMorphoDiTa' : (),
+            'W2A::EN::FixTags',
+            'W2A::EN::FixTagsImperatives',
+            'W2A::EN::Lemmatize',
+            $self->domain eq 'IT' ? ' W2A::EN::QtHackTags' : (),
+            ;
+    }
 
-    $self->ner eq 'none' ? () : (
-        $self->ner eq 'NameTag' ?  'A2N::EN::NameTag' : (),
-        $self->ner eq 'Stanford' ? 'A2N::EN::StanfordNamedEntities model=ner-eng-ie.crf-3-all2008.ser.gz' : (),
-        'A2N::EN::DistinguishPersonalNames',
-        #'A2N::FixMissingLinks', # without this A2N::NestEntities throws errors
-        #'A2N::NestEntities', # entities in n-trees should be nested, but adding this makes en-cs TectoMT BLEU worse
-    ),
+    if ($self->ner ne 'none') {
+        push @blocks,
+            $self->ner eq 'NameTag' ?  'A2N::EN::NameTag' : (),
+            $self->ner eq 'Stanford' ? 'A2N::EN::StanfordNamedEntities model=ner-eng-ie.crf-3-all2008.ser.gz' : (),
+            'A2N::EN::DistinguishPersonalNames',
+            #'A2N::FixMissingLinks', # without this A2N::NestEntities throws errors
+            #'A2N::NestEntities', # entities in n-trees should be nested, but adding this makes en-cs TectoMT BLEU worse
+            ;
+    }
 
-    $self->parser eq 'none' ? () : (
-        'W2A::MarkChunks',
-        'W2A::EN::ParseMST model=conll_mcd_order2_0.01.model',
-        'W2A::EN::SetIsMemberFromDeprel',
-        'W2A::EN::RehangConllToPdtStyle',
-        'W2A::EN::FixNominalGroups',
-        'W2A::EN::FixIsMember',
-        'W2A::EN::FixAtree',
-        'W2A::EN::FixMultiwordPrepAndConj',
-        'W2A::EN::FixDicendiVerbs',
-        'W2A::EN::SetAfunAuxCPCoord',
-        'W2A::EN::SetAfun',
-        'W2A::FixQuotes',
-        'A2A::ConvertTags input_driver=en::penn',
-        'A2A::EN::EnhanceInterset',
-    ),
+    if ($self->parser ne 'none') {
+        push @blocks,
+            'W2A::MarkChunks',
+            'W2A::EN::ParseMST model=conll_mcd_order2_0.01.model',
+            'W2A::EN::SetIsMemberFromDeprel',
+            'W2A::EN::RehangConllToPdtStyle',
+            'W2A::EN::FixNominalGroups',
+            'W2A::EN::FixIsMember',
+            'W2A::EN::FixAtree',
+            'W2A::EN::FixMultiwordPrepAndConj',
+            'W2A::EN::FixDicendiVerbs',
+            'W2A::EN::SetAfunAuxCPCoord',
+            'W2A::EN::SetAfun',
+            'W2A::FixQuotes',
+            'A2A::ConvertTags input_driver=en::penn',
+            'A2A::EN::EnhanceInterset',
+            ;
+    }
 
-    $self->tecto eq 'none' ? () : (
-        'A2T::EN::MarkEdgesToCollapse',
-        'A2T::EN::MarkEdgesToCollapseNeg',
-        'A2T::BuildTtree',
-        'A2T::SetIsMember',
-        'A2T::EN::MoveAuxFromCoordToMembers',
-        $self->gazetteer ? 'A2T::ProjectGazeteerInfo' : (),
-        'A2T::EN::FixTlemmas',
-        'A2T::EN::SetCoapFunctors',
-        'A2T::EN::FixEitherOr',
-        'A2T::EN::FixHowPlusAdjective',
-        'A2T::FixIsMember',
-        'A2T::EN::MarkClauseHeads',
-        'A2T::EN::SetFunctors',
-        'A2T::EN::MarkInfin',
-        'A2T::EN::MarkRelClauseHeads',
-        'A2T::EN::MarkRelClauseCoref',
-        'A2T::EN::MarkDspRoot',
-        'A2T::MarkParentheses',
-        'A2T::SetNodetype',
-        'A2T::EN::SetFormemeInterset',
-        $self->functors eq 'MLProcess' ? 'A2T::EN::SetFunctors2 memory=2g' : (),
-        $self->functors eq 'MLProcess' ? 'A2T::EN::SetMissingFunctors' : (), # mask unrecognized functors
-        $self->functors eq 'MLProcess' ? 'A2T::SetNodetype' : (), # nodetype setting using functors -- caused problems in translation
-        'A2T::EN::SetTense',
-        'A2T::EN::SetGrammatemes',
-        'A2T::SetGrammatemesFromAux',
-        'A2T::EN::SetSentmod',
-        'A2T::EN::RehangSharedAttr',
-        'A2T::EN::SetVoice',
-        'A2T::EN::FixImperatives',
-        'A2T::EN::SetIsNameOfPerson',
-        'A2T::EN::SetGenderOfPerson',
-        'A2T::EN::AddCorAct',
-        'T2T::SetClauseNumber',
-        'A2T::EN::FixRelClauseNoRelPron',
-        $self->functors eq 'VW' ? 'A2T::EN::SetFunctorsVW' : (),
-        $self->functors eq 'VW' ? 'A2T::SetNodetype' : (), # fix nodetype changes induced by functors
-        $self->valframes ? 'A2T::EN::SetValencyFrameRefVW' : (),
-        $self->mark_it ? 'A2T::EN::MarkReferentialIt resolver_type=nada threshold=0.5 suffix=nada_0.5' : (), # you need Treex::External::NADA installed for this
-        $self->coref eq 'BART' ? 'Coref::EN::ResolveBART2 is_czeng=1' : 'A2T::EN::FindTextCoref',
-    )
-    ;
+    if ($self->tecto ne 'none') {
+        push @blocks,
+            'A2T::EN::MarkEdgesToCollapse',
+            'A2T::EN::MarkEdgesToCollapseNeg',
+            'A2T::BuildTtree',
+            'A2T::SetIsMember',
+            'A2T::EN::MoveAuxFromCoordToMembers',
+            $self->gazetteer ? 'A2T::ProjectGazeteerInfo' : (),
+            'A2T::EN::FixTlemmas',
+            'A2T::EN::SetCoapFunctors',
+            'A2T::EN::FixEitherOr',
+            'A2T::EN::FixHowPlusAdjective',
+            'A2T::FixIsMember',
+            'A2T::EN::MarkClauseHeads',
+            'A2T::EN::SetFunctors',
+            'A2T::EN::MarkInfin',
+            'A2T::EN::MarkRelClauseHeads',
+            'A2T::EN::MarkRelClauseCoref',
+            'A2T::EN::MarkDspRoot',
+            'A2T::MarkParentheses',
+            'A2T::SetNodetype',
+            'A2T::EN::SetFormemeInterset',
+            $self->functors eq 'MLProcess' ? 'A2T::EN::SetFunctors2 memory=2g' : (),
+            $self->functors eq 'MLProcess' ? 'A2T::EN::SetMissingFunctors' : (), # mask unrecognized functors
+            $self->functors eq 'MLProcess' ? 'A2T::SetNodetype' : (), # nodetype setting using functors -- caused problems in translation
+            'A2T::EN::SetTense',
+            'A2T::EN::SetGrammatemes',
+            'A2T::SetGrammatemesFromAux',
+            'A2T::EN::SetSentmod',
+            'A2T::EN::RehangSharedAttr',
+            'A2T::EN::SetVoice',
+            'A2T::EN::FixImperatives',
+            'A2T::EN::SetIsNameOfPerson',
+            'A2T::EN::SetGenderOfPerson',
+            'A2T::EN::AddCorAct',
+            'T2T::SetClauseNumber',
+            'A2T::EN::FixRelClauseNoRelPron',
+            $self->functors eq 'VW' ? 'A2T::EN::SetFunctorsVW' : (),
+            $self->functors eq 'VW' ? 'A2T::SetNodetype' : (), # fix nodetype changes induced by functors
+            $self->valframes ? 'A2T::EN::SetValencyFrameRefVW' : (),
+            $self->mark_it ? 'A2T::EN::MarkReferentialIt resolver_type=nada threshold=0.5 suffix=nada_0.5' : (), # you need Treex::External::NADA installed for this
+            $self->coref eq 'BART' ? 'Coref::EN::ResolveBART2 is_czeng=1' : 'A2T::EN::FindTextCoref',
+            ;
+    }
 
-    return $scen;
+    return join "\n", @blocks;
 }
 
 1;
