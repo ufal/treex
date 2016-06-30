@@ -80,10 +80,10 @@ sub _copy_coref_from_alignment {
         log_debug "no gold antecedents" . $tnode->id, 1;
         return;
     }
-    my $ref_ante = $ref_antes[0];
-    if ($ref_ante->functor =~ /^(APPS|CONJ|DISJ|GRAD)$/) {
-        @ref_antes = $ref_ante->get_coap_members;
-    }
+    #my $ref_ante = $ref_antes[0];
+    #if ($ref_ante->functor =~ /^(APPS|CONJ|DISJ|GRAD)$/) {
+    #    @ref_antes = $ref_ante->get_coap_members;
+    #}
     my @src_antes = Treex::Tool::Align::Utils::aligned_transitively(\@ref_antes, [$align_filter]);
 
     if (!@src_antes) {
@@ -119,7 +119,7 @@ sub is_text_coref {
     my ($anaph, @cands) = @_;
     
     my @antecs = $anaph->get_coref_chain;
-    push @antecs, map { $_->functor =~ /^(APPS|CONJ|DISJ|GRAD)$/ ? $_->children : () } @antecs;
+    #push @antecs, map { $_->functor =~ /^(APPS|CONJ|DISJ|GRAD)$/ ? $_->children : () } @antecs;
 
     # if no antecedent, insert itself and if anaphor as candidate is on, it will be marked positive
     if (!@antecs) {

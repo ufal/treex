@@ -110,9 +110,9 @@ sub process_filtered_tnode {
     if ($ante != $t_node) {
         my $ante_par = $ante->get_parent;
         # if the antecedent is a member of an apposition, point the coreference link to the coap root
-        if ($ante->is_member && $ante_par->functor eq "APPS") {
-            $ante = $ante_par;
-        }
+        #if ($ante->is_member && $ante_par->functor eq "APPS") {
+        #    $ante = $ante_par;
+        #}
         log_debug "COREF_LINK: ".$t_node->id. " -> ".$ante->id, 1;
         $t_node->set_attr( 'coref_text.rf', [$ante->id] );
         $t_node->wild->{referential} = 1;
