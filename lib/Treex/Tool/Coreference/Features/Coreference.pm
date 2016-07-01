@@ -10,7 +10,7 @@ extends 'Treex::Tool::Coreference::CorefFeatures';
 sub _is_coref {
     my ($anaph, $cand) = @_;
     my @antecs = $anaph->get_coref_chain;
-    push @antecs, map { $_->functor =~ /^(APPS|CONJ|DISJ|GRAD)$/ ? $_->children : () } @antecs;
+    #push @antecs, map { $_->functor =~ /^(APPS|CONJ|DISJ|GRAD)$/ ? $_->children : () } @antecs;
     return any {$_ == $cand} @antecs;
 }
 

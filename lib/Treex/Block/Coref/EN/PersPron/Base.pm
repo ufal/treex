@@ -7,6 +7,7 @@ use Treex::Tool::Coreference::EN::PronCorefFeatures;
 use Treex::Tool::Coreference::CS::PronCorefFeatures;
 use Treex::Tool::Coreference::Features::Container;
 use Treex::Tool::Coreference::Features::Aligned;
+use Treex::Tool::Coreference::Features::Coreference;
 
 with 'Treex::Block::Coref::SupervisedBase' => {
     -excludes => [ '_build_feature_extractor', '_build_ante_cands_selector' ],
@@ -29,7 +30,7 @@ sub _build_feature_extractor {
         my $aligned_fe = Treex::Tool::Coreference::Features::Aligned->new({
             feat_extractors => [ 
                 Treex::Tool::Coreference::CS::PronCorefFeatures->new(),
-                #Treex::Tool::Coreference::Features::Coreference->new(),
+                Treex::Tool::Coreference::Features::Coreference->new(),
             ],
             align_lang => 'cs',
             align_selector => 'src',
