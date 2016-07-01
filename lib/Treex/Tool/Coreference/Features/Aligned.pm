@@ -16,6 +16,10 @@ has '_align_filter' => (is => 'ro', isa => 'HashRef', builder => '_build_align_f
 
 #has '_unary_feats_cache' => (is => 'ro', isa => 'Cache::MemoryCache', builder => '_build_unary_feats_cache');
 
+override '_build_prefix_unary' => sub {
+    return 0;
+};
+
 sub BUILD {
     my ($self) = @_;
     $self->_align_filter;
@@ -30,10 +34,10 @@ sub _build_align_filter {
     return $align_filter;
 }
 
-sub _build_unary_feats_cache {
-    my ($self) = @_;
-    return Cache::MemoryCache->new({default_expires_in => 30});
-}
+#sub _build_unary_feats_cache {
+#    my ($self) = @_;
+#    return Cache::MemoryCache->new({default_expires_in => 30});
+#}
 
 override '_binary_features' => sub {
     my ($self, $set_features, $anaph, $cand, $candord) = @_;
@@ -57,9 +61,9 @@ override '_binary_features' => sub {
     #}
     #else {
         $ali_set_features = {};
-        foreach my $key (grep {$_ =~ /^align_/} (keys %$set_features)) {
+        foreach my $key (grep {$_ =~ /^([^\^]+\^)?align_/} (keys %$set_features)) {
             my $new_key = $key;
-            $new_key =~ s/^align_//;
+            $new_key =~ s/^((?:[^\^]+\^)?)align_/$1/;
             $ali_set_features->{$new_key} = $set_features->{$key};
         }
     #}
@@ -106,7 +110,11 @@ sub init_doc_features {
 
 sub _add_prefix {
     my ($feats) = @_;
-    my %renamed_feats = map { 'align_'.$_ => $feats->{$_} } (keys %$feats);
+    my %renamed_feats = map {
+        my $feat_name = $_;
+        $feat_name =~ s{^([^\^]*\^)?}{($1 // q[]) . q[align_]}e;
+        $feat_name => $feats->{$_} 
+    } (keys %$feats);
     return \%renamed_feats;
 }
 
