@@ -274,11 +274,12 @@ sub get_coref_chain {
 
     my %visited_nodes = ();
     my @nodes;
-    my @queue = ( $self->_get_node_list('coref_gram.rf'), $self->_get_node_list('coref_text.rf') );
+    my %sub_args = map {$_ => $arg_ref->{$_}} qw/appos_aware with_types/;
+    my @queue = $self->get_coref_nodes(\%sub_args);
     while ( my $node = shift @queue ) {
         $visited_nodes{$node} = 1;
         push @nodes, $node;
-        my @antes = ( $node->_get_node_list('coref_gram.rf'), $node->_get_node_list('coref_text.rf') );
+        my @antes = $node->get_coref_nodes(\%sub_args);
         foreach my $ante (@antes) {
             if ( !defined $visited_nodes{$ante} ) {
                 push @queue, $ante;
