@@ -5,7 +5,7 @@ use Treex::Core::Common;
 
 use List::MoreUtils qw/any/;
 
-extends 'Treex::Tool::Coreference::CorefFeatures';
+extends 'Treex::Tool::Coreference::BaseCorefFeatures';
 
 sub _is_coref {
     my ($anaph, $cand) = @_;
