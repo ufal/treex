@@ -56,6 +56,27 @@ sub process_filtered_tnode {
     }
 }
 
+sub _treat_generated_node_over_parent {
+    my ($self, $tnode, $align_filter) = @_;
+    
+    return 0 if (!$tnode->is_generated);
+    my $par = $tnode->get_parent;
+    return 0 if (!$par);
+    my ($ref_par) = Treex::Tool::Align::Utils::aligned_transitively([$par], [$align_filter]);
+    return 0 if (!$ref_par);
+    my ($ref_eq) = grep {$_->functor eq $tnode->functor} $ref_par->get_echildren;
+    return 0 if (!$ref_eq);
+    my ($src_ante) = Treex::Tool::Align::Utils::aligned_transitively([$ref_eq], [$align_filter]);
+    return 0 if (!$src_ante);
+    return 0 if ($src_ante == $tnode);
+    # connect only the nodes with the same functor
+    return 0 if ($src_ante->functor ne $tnode->functor);
+
+    log_info "Adding non-existing coreference link: ". $tnode->get_address ." -> ". $src_ante->get_address;
+    $tnode->add_coref_text_nodes($src_ante);
+
+}
+
 sub _copy_coref_from_alignment {
     my ($self, $tnode) = @_;
 
@@ -66,6 +87,9 @@ sub _copy_coref_from_alignment {
     my ($ref_anaph) = Treex::Tool::Align::Utils::aligned_transitively([$tnode], [$align_filter]);
     # no gold t-node counterpart of the anaphor
     if (!defined $ref_anaph) {
+        # it might be present as a result of overgeneration within coordination constructions
+        return if ($self->_treat_generated_node_over_parent($tnode, $align_filter));
+
         log_debug "no gold t-node counterpart of the anaphor: " . $tnode->id, 1;
         return;
     }
