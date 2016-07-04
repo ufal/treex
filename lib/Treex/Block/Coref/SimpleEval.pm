@@ -91,27 +91,70 @@ sub process_bundle {
     foreach my $src_tnode ($src_ttree->get_descendants({ordered => 1})) {
         next if (defined $covered_src_nodes{$src_tnode->id});
         next if (!Treex::Tool::Coreference::NodeFilter::matches($src_tnode, $self->node_types));
-        
+
+        my @src_antes = $src_tnode->get_coref_nodes;
         my $pred_eval_class = $src_tnode->get_coref_nodes ? 1 : 0;
+        # check if the generated node is not coreferential with the node that plays the same role (has the same parents and fills the same functor) in the reference
+        my $both_eval_class = $self->_antes_play_the_same_role($src_tnode, @src_antes) ? 1 : 0;
+        
         #printf STDERR "NO REF: %s %d\n", $src_tnode->get_address, 1-$pred_eval_class;
         
-        print {$self->_file_handle} join " ", (0, $pred_eval_class, 1-$pred_eval_class, $src_tnode->get_address);
+        print {$self->_file_handle} join " ", (0, $pred_eval_class, $both_eval_class, $src_tnode->get_address);
         print {$self->_file_handle} "\n";
     }
 }
+
+sub _antes_play_the_same_role {
+    my ($self, $src_tnode, @src_antes) = @_;
+
+    # monolingual alignment filter
+    my $ali_filter = {language => $self->language, selector => $self->gold_selector};
+    
+    # from the given node, retrieve its parents' referntial counterparts
+    return 0 if (!$src_tnode->is_generated);
+    my @src_pars = $src_tnode->get_eparents;
+    return 0 if (!@src_pars);
+    my @ref_pars = map {my ($n, $t) = $_->get_undirected_aligned_nodes($ali_filter); @$n} @src_pars;
+    return 0 if (!@ref_pars);
+
+    # create an index of parents referential counterparts
+    my %ref_pars_hash = map {$_->id => $_} @ref_pars;
+
+    # find antecedents' referential counterparts of the given node
+    my @ref_antes;
+    my $curr_src_tnode = $src_tnode;
+    do {
+        my @src_antes = $curr_src_tnode->get_coref_nodes;
+        @ref_antes = map {my ($n, $t) = $_->get_undirected_aligned_nodes($ali_filter); @$n} @src_antes;
+        ($curr_src_tnode) = @src_antes;
+    } while (defined $curr_src_tnode && !@ref_antes);
+
+    # filter only those antecedents' refernetial counterparts that share the parent with the given node
+    my @ref_same_par_antes = grep {
+        my @ref_ante_pars = $_->get_eparents;
+        (grep {defined $ref_pars_hash{$_->id}} @ref_ante_pars) ? 1 : 0
+    } @ref_antes;
+
+    # filter only those whose role is the same as the role of the given node
+    my @ref_same_role_antes = grep {$_->functor eq $src_tnode->functor} @ref_same_par_antes;
+    return (@ref_same_role_antes > 0);
+}
+ 
 
 # TODO: consider refactoring to produce the VW result format, which can be consequently processed by the MLyn eval scripts
 # see Align::T::Eval for more
 
 1;
 
-=over
+=head1 NAME
 
-=item Treex::Block::Coref::SimpleEval
+Treex::Block::Coref::SimpleEval
+
+=head1 DESCRIPTION
 
 Precision, recall and F-measure for coreference.
 
-USAGE:
+=head1 SYNOPSIS
 
 cd ~/projects/czeng_coref
 treex -L cs 
@@ -124,10 +167,26 @@ treex -L cs
     Coref::SimpleEval node_types='relpron,perspron'
 | \$MLYN_DIR/scripts/eval.pl --prf --acc
 
+
+=head1 METHODS
+
+=over
+
+=item _antes_play_the_same_role 
+
+It checks, if a given generated node plays the same role as its antecedents.
+This function is supposed to be tailored to automatically generated nodes
+that can be possibly missing in the referential structure. However, a coreference
+resolver might possibly reveal the actual identity of the node with its antecedent.
+
 =back
 
-=cut
+=head1 AUTHORS
 
-# Copyright 2011 Michal Novak
+Michal Novák <mnovak@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
