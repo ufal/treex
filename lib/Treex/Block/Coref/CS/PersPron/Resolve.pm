@@ -12,8 +12,8 @@ use Treex::Tool::ML::VowpalWabbit::Ranker;
 has '+model_path' => (
     #default => 'data/models/coreference/CS/vw/perspron.2015-04-29.train.pdt.cs.vw.ranking.model',
     #default => 'data/models/coreference/CS/vw/perspron.2015-11-16.train.pdt.cs.vw.ranking.model',
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/run_2016-04-25_11-25-07_17770.cs-perspron_within_a_new_directory_+_a_and_c_namespaces/003.fcc2aaeffe.featset/001.7eb17.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
-    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/run_2016-07-03_20-55-40_18147.retraining_all_feats_model/001.6482ae07e1.featset/004.37316.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
+    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/run_2016-07-03_20-55-40_18147.retraining_all_feats_model/001.6482ae07e1.featset/004.37316.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
+    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/run_2016-07-05_00-49-25_10150.new_instances_using_treat-generated-node-over-parent.mlyn_eval_after_bugfix/001.6482ae07e1.featset/004.37316.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
     # new limited features
     #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/run_2016-07-03_19-46-00_17837.using_Coreference_Features_PersPron_-_new_features_-_so_far_limited/004.bc3425f2a5.featset/003.202e7.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
 );
