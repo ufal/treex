@@ -3,6 +3,7 @@ use Moose::Role;
 use Treex::Core::Common;
 
 use Treex::Tool::Coreference::AnteCandsGetter;
+#use Treex::Tool::Coreference::Features::PersPron;
 use Treex::Tool::Coreference::EN::PronCorefFeatures;
 use Treex::Tool::Coreference::CS::PronCorefFeatures;
 use Treex::Tool::Coreference::Features::Container;
@@ -18,6 +19,11 @@ has 'aligned_feats' => ( is => 'ro', isa => 'Bool', default => 0 );
 sub _build_node_types {
     return '#perspron.no_refl';
 }
+
+#sub _build_feature_extractor {
+#    my ($self) = @_;
+#    return Treex::Tool::Coreference::Features::PersPron->new();
+#}
 
 sub _build_feature_extractor {
     my ($self) = @_;
