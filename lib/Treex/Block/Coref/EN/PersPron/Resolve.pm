@@ -10,8 +10,10 @@ use Treex::Tool::ML::VowpalWabbit::Ranker;
 has '+model_path' => (
     # $CZENG_COREF/tmp/ml/run_2015-04-04_12-44-16_9036.testing_on_English/001.8f801ad5b1.featset/001.134ca.mlmethod/model/train_00-18.pcedt_bi.en.analysed.ali-sup.vw.ranking.model
     #default => 'data/models/coreference/EN/vowpal_wabbit/2015-04-04.perspron_3rd.mono_all.analysed.model',
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/en/perspron/tmp/ml/run_2016-06-29_01-16-49_25048.training_on_0021._original_features/001.b9be16d2b7.featset/004.37316.mlmethod/model/train.pcedt_bi.table.gz.vw.ranking.model',
-    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/en/perspron/tmp/ml/run_2016-06-30_19-51-14_21572.training_on_0021._appos_aware_in_Core-Node-T._coord_members_not_cands/001.b9be16d2b7.featset/004.37316.mlmethod/model/train.pcedt_bi.table.gz.vw.ranking.model',
+    # monolingual model
+    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/en/perspron/tmp/ml/run_2016-06-30_19-51-14_21572.training_on_0021._appos_aware_in_Core-Node-T._coord_members_not_cands/001.b9be16d2b7.featset/004.37316.mlmethod/model/train.pcedt_bi.table.gz.vw.ranking.model',
+    # cross-lingual model
+    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/en/perspron/tmp/ml/run_2016-07-01_20-06-47_19333.training_with_aligned_feats/005.3e791d3656.featset/004.37316.mlmethod/model/train.pcedt_bi.with_cs.table.gz.vw.ranking.model',
 );
 
 override '_build_ranker' => sub {
