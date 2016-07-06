@@ -301,14 +301,22 @@ sub select_node_if_apps {
 
 sub _add_coref_nodes {
     my ($self, $type, @antes) = @_;
+    
+    # if called on a member of an apposition, call it on the apposition root
     my $anaph = select_node_if_apps($self);
     if ($anaph != $self) {
         return $anaph->_add_coref_nodes($type, @antes);
     }
+
+    # antes must be apposition roots if in apposition
     @antes = map {select_node_if_apps($_)} @antes;
+    
+    # avoid link repeating and self-reference
     my %seen;
-    @antes = grep {!$seen{$_->id}++} @antes;
-    return $self->_add_to_node_list( "coref_$type.rf", @antes );
+    @antes = grep {$_ != $self} grep {!$seen{$_->id}++} @antes;
+    return if (!@antes); 
+    
+    $self->_add_to_node_list( "coref_$type.rf", @antes );
 }
 
 sub add_coref_gram_nodes {
