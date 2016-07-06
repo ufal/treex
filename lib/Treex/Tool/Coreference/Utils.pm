@@ -152,7 +152,7 @@ The following parameters are supported:
 
     ordered
         deepord - nodes in chains are ordered by their deep order
-        topological - nodes in chains are ordered in a topological order
+        topological - nodes in chains are ordered in a topological order (outcoming nodes first)
 
 =back
 
