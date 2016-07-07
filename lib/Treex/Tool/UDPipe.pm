@@ -1,28 +1,28 @@
 package Treex::Tool::UDPipe;
-# TODO: code duplication with Udapi::Tool::UDPipe
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource;
 use Ufal::UDPipe;
 
-has model => ( is => 'ro', isa => 'Str', required => 1 );
+has model                => ( is => 'ro', isa => 'Str', required   => 1 );
 has _model_absolute_path => ( is => 'ro', isa => 'Str', lazy_build => 1 );
 
 sub _build__model_absolute_path {
     my ($self) = @_;
-    return Treex::Core::Resource::require_file_from_share($self->model);
+    return Treex::Core::Resource::require_file_from_share( $self->model );
 }
 
 # Instance of Ufal::UDPipe::Model
-has tool => (is=>'ro', lazy_build=>1);
-has tokenizer => (is=>'ro', lazy_build=>1);
+has tool      => ( is => 'ro', lazy_build => 1 );
+has tokenizer => ( is => 'ro', lazy_build => 1 );
 
 # tool can be shared by more instances (if the model file is the same)
 my %TOOL_FOR_PATH;
+
 sub _build_tool {
     my ($self) = @_;
-    my $path = $self->_model_absolute_path;
-    my $tool = $TOOL_FOR_PATH{$path};
+    my $path   = $self->_model_absolute_path;
+    my $tool   = $TOOL_FOR_PATH{$path};
     return $tool if $tool;
     log_info("Loading Ufal::UDPipe::Model with model '$path'");
     $tool = Ufal::UDPipe::Model::load($path)
@@ -36,143 +36,143 @@ sub _build_tokenizer {
     return $self->tool->newTokenizer($Ufal::UDPipe::Model::DEFAULT);
 }
 
-# Note that the variables with prefix "udpipe_"
+# Note that the variables with prefix "u_"
 # are not normal Perl variables, but Swig-magic tied hashes.
-# So we can to use only the methods specified in UDPipe API to work with them.
+# So we can use only the methods specified in UDPipe API to work with the variables.
 
 sub tokenize_string {
-    my ($self, $string) = @_;
-    my $udpipe_sentence = Ufal::UDPipe::Sentence->new();
+    my ( $self, $string ) = @_;
+    my $u_sentence = Ufal::UDPipe::Sentence->new();
     my @forms;
     my $tokenizer = $self->tokenizer;
     $tokenizer->setText($string);
-    while ($tokenizer->nextSentence($udpipe_sentence)) {
-        my $udpipe_words = $udpipe_sentence->{words};
-        for my $i (1 .. $udpipe_words->size-1){
-           my $udpipe_word = $udpipe_words->get($i);
-           push @forms, $udpipe_word->{form};
-           # TODO $udpipe_word->{misc} eq 'SpaceAfter=No'
-         }
+    while ( $tokenizer->nextSentence($u_sentence) ) {
+        my $u_words = $u_sentence->{words};
+        for my $i ( 1 .. $u_words->size - 1 ) {
+            my $u_w = $u_words->get($i);
+            push @forms, $u_w->{form};
+        }
     }
     return @forms;
 }
 
 sub tokenize_tree {
-    my ($self, $root) = @_;
-    my $udpipe_sentence = Ufal::UDPipe::Sentence->new();
-    my $tokenizer = $self->tokenizer;
-    $tokenizer->setText($root->get_zone()->sentence);
-    while ($tokenizer->nextSentence($udpipe_sentence)) {
-        my $udpipe_words = $udpipe_sentence->{words};
-        for my $i (1 .. $udpipe_words->size-1){
-           my $uw = $udpipe_words->get($i);
-           $root->create_child(
-               form=>$uw->{form},
-               no_space_after=> ($uw->{misc} eq 'SpaceAfter=No'),
-               ord=>$i);
-         }
+    my ( $self, $root ) = @_;
+    my $u_sentence = Ufal::UDPipe::Sentence->new();
+    my $tokenizer  = $self->tokenizer;
+    $tokenizer->setText( $root->get_zone()->sentence );
+    while ( $tokenizer->nextSentence($u_sentence) ) {
+        my $u_words = $u_sentence->{words};
+        for my $i ( 1 .. $u_words->size - 1 ) {
+            my $u_w = $u_words->get($i);
+            $root->create_child(
+                form           => $u_w->{form},
+                no_space_after => ( $u_w->{misc} eq 'SpaceAfter=No' ),
+                ord            => $i
+            );
+        }
     }
     return;
 }
 
 sub tag_nodes {
-    my ($self, @nodes) = @_;
-    my $udpipe_sentence = Ufal::UDPipe::Sentence->new();
-    my $tool = $self->tool;
-    foreach my $form (map {$_->form} @nodes) {
-        $udpipe_sentence->addWord($form);
+    my ( $self, @nodes ) = @_;
+    my $u_sentence = Ufal::UDPipe::Sentence->new();
+    my $tool       = $self->tool;
+    foreach my $form ( map { $_->form } @nodes ) {
+        $u_sentence->addWord($form);
     }
 
-    $tool->tag($udpipe_sentence, $Ufal::UDPipe::Model::DEFAULT);
+    $tool->tag( $u_sentence, $Ufal::UDPipe::Model::DEFAULT );
 
-    my $udpipe_words = $udpipe_sentence->{words};
-    for my $i (1 .. $udpipe_words->size-1){
-       my $udpipe_word = $udpipe_words->get($i);
-       my $node = $nodes[$i-1];
-       $node->set_conll_cpos($udpipe_word->{upostag});
-       $node->set_conll_pos($udpipe_word->{xpostag});
-       $node->set_lemma($udpipe_word->{lemma});
-       $node->set_conll_feat($udpipe_word->{feats});
-     }
-     return;
+    my $u_words = $u_sentence->{words};
+    for my $i ( 1 .. $u_words->size - 1 ) {
+        my $u_w  = $u_words->get($i);
+        my $node = $nodes[ $i - 1 ];
+        $node->set_conll_cpos( $u_w->{upostag} );
+        $node->set_conll_pos( $u_w->{xpostag} );
+        $node->set_lemma( $u_w->{lemma} );
+        $node->set_conll_feat( $u_w->{feats} );
+    }
+    return;
 }
 
 sub tag_tree {
-    my ($self, $root) = @_;
-    $self->tag_nodes($root->get_descendants({ordered=>1}));
+    my ( $self, $root ) = @_;
+    $self->tag_nodes( $root->get_descendants( { ordered => 1 } ) );
     return;
 }
 
 sub tokenize_tag_tree {
-    my ($self, $root) = @_;
+    my ( $self, $root ) = @_;
     $self->tokenize_tree($root);
     $self->tag_tree($root);
     return;
 }
 
 sub parse_tree {
-    my ($self, $root) = @_;
+    my ( $self, $root ) = @_;
 
     # converting Treex nodes to UDPipe nodes
-    my $udpipe_sentence = Ufal::UDPipe::Sentence->new();
-    my @nodes = $root->get_descendants({ordered=>1});
+    my $u_sentence = Ufal::UDPipe::Sentence->new();
+    my @nodes = $root->get_descendants( { ordered => 1 } );
     foreach my $node (@nodes) {
-        my $uw = $udpipe_sentence->addWord($node->form);
-        $uw->{lemma}   = $node->lemma;
-        $uw->{upostag} = $node->conll_cpos;
-        $uw->{xpostag} = $node->conll_pos;
-        $uw->{feats}   = $node->conll_feat;
+        my $u_w = $u_sentence->addWord( $node->form );
+        $u_w->{lemma}   = $node->lemma;
+        $u_w->{upostag} = $node->conll_cpos;
+        $u_w->{xpostag} = $node->conll_pos;
+        $u_w->{feats}   = $node->conll_feat;
     }
 
     # parsing
     my $tool = $self->tool;
-    $tool->parse($udpipe_sentence, $Ufal::UDPipe::Model::DEFAULT);
+    $tool->parse( $u_sentence, $Ufal::UDPipe::Model::DEFAULT );
 
     # converting UDPipe nodes to Treex nodes
-    my $udpipe_words = $udpipe_sentence->{words};
+    my $u_words = $u_sentence->{words};
     my @heads;
-    my @all_nodes = ($root, @nodes);
-    foreach my $node (@nodes){
+    my @all_nodes = ( $root, @nodes );
+    foreach my $node (@nodes) {
         $node->set_parent($root);
     }
-    for my $i (1 .. $udpipe_words->size-1){
-        my $uw = $udpipe_words->get($i);
+    for my $i ( 1 .. $u_words->size - 1 ) {
+        my $u_w  = $u_words->get($i);
         my $node = $all_nodes[$i];
-        $node->set_parent($all_nodes[$uw->{head}]);
-        $node->set_deprel($uw->{deprel});
-        $node->set_conll_deprel($uw->{deprel});
+        $node->set_parent( $all_nodes[ $u_w->{head} ] );
+        $node->set_deprel( $u_w->{deprel} );
+        $node->set_conll_deprel( $u_w->{deprel} );
     }
     return;
 }
 
 sub tag_parse_tree {
-    my ($self, $root) = @_;
-    my $udpipe_sentence = Ufal::UDPipe::Sentence->new();
-    my @nodes = $root->get_descendants({ordered=>1});
+    my ( $self, $root ) = @_;
+    my $u_sentence = Ufal::UDPipe::Sentence->new();
+    my @nodes = $root->get_descendants( { ordered => 1 } );
     foreach my $node (@nodes) {
         my $form = $node->form;
         log_fatal 'Undefined form of ' . $node->get_address() if !defined $form;
-        $udpipe_sentence->addWord($form);
+        $u_sentence->addWord($form);
     }
 
     my $tool = $self->tool;
-    $tool->tag($udpipe_sentence, $Ufal::UDPipe::Model::DEFAULT);
-    $tool->parse($udpipe_sentence, $Ufal::UDPipe::Model::DEFAULT);
+    $tool->tag( $u_sentence, $Ufal::UDPipe::Model::DEFAULT );
+    $tool->parse( $u_sentence, $Ufal::UDPipe::Model::DEFAULT );
 
-    my $udpipe_words = $udpipe_sentence->{words};
-    for my $i (1 .. $udpipe_words->size-1){
-       my $udpipe_word = $udpipe_words->get($i);
-       my $node = $nodes[$i-1];
-       $node->set_conll_cpos($udpipe_word->{upostag});
-       $node->set_conll_pos($udpipe_word->{xpostag});
-       $node->set_lemma($udpipe_word->{lemma});
-       $node->set_conll_feat($udpipe_word->{feats});
-     }
+    my $u_words = $u_sentence->{words};
+    for my $i ( 1 .. $u_words->size - 1 ) {
+        my $u_w  = $u_words->get($i);
+        my $node = $nodes[ $i - 1 ];
+        $node->set_conll_cpos( $u_w->{upostag} );
+        $node->set_conll_pos( $u_w->{xpostag} );
+        $node->set_lemma( $u_w->{lemma} );
+        $node->set_conll_feat( $u_w->{feats} );
+    }
     return;
 }
 
 sub tokenize_tag_parse_tree {
-    my ($self, $root) = @_;
+    my ( $self, $root ) = @_;
     my $string = $root->get_zone()->sentence;
     log_fatal 'called on non-empty tree' if $root->get_children;
     log_fatal 'empty sentence' if !length $string;
@@ -180,48 +180,51 @@ sub tokenize_tag_parse_tree {
     # tokenization (I cannot turn off segmenter, so I need to join the segments)
     my $tokenizer = $self->tokenizer;
     $tokenizer->setText($string);
-    my $udpipe_sentence = Ufal::UDPipe::Sentence->new();
-    my $is_another = $tokenizer->nextSentence($udpipe_sentence) ;
-    my $udpipe_words = $udpipe_sentence->{words};
-    my $n_words = $udpipe_words->size - 1;
+    my $u_sentence = Ufal::UDPipe::Sentence->new();
+    my $is_another = $tokenizer->nextSentence($u_sentence);
+    my $u_words    = $u_sentence->{words};
+    my $n_words    = $u_words->size - 1;
     if ($is_another) {
-        my $udpipe_sent_cont = Ufal::UDPipe::Sentence->new();
-        while ($tokenizer->nextSentence($udpipe_sent_cont)) {
-            my $udpipe_words_cont = $udpipe_sent_cont->{words};
-            my $n_cont = $udpipe_words_cont->size - 1;
-            for my $i (1 .. $n_cont){
-                my $udpipe_word = $udpipe_words_cont->get($i);
-                $udpipe_word->{id} = ++$n_words;
-                $udpipe_words->push($udpipe_word);
+        my $u_sent_cont = Ufal::UDPipe::Sentence->new();
+        while ( $tokenizer->nextSentence($u_sent_cont) ) {
+            my $u_words_cont = $u_sent_cont->{words};
+            my $n_cont       = $u_words_cont->size - 1;
+            for my $i ( 1 .. $n_cont ) {
+                my $u_w = $u_words_cont->get($i);
+                $u_w->{id} = ++$n_words;
+                $u_words->push($u_w);
             }
         }
     }
 
     # tagging and parsing
     my $tool = $self->tool;
-    $tool->tag($udpipe_sentence, $Ufal::UDPipe::Model::DEFAULT);
-    $tool->parse($udpipe_sentence, $Ufal::UDPipe::Model::DEFAULT);
+    $tool->tag( $u_sentence, $Ufal::UDPipe::Model::DEFAULT );
+    $tool->parse( $u_sentence, $Ufal::UDPipe::Model::DEFAULT );
 
     # converting UDPipe nodes to Treex nodes
-    my (@heads, @nodes);
-    for my $i (1 .. $udpipe_words->size-1){
-        my $uw = $udpipe_words->get($i);
+    my ( @heads, @nodes );
+    for my $i ( 1 .. $u_words->size - 1 ) {
+        my $u_w  = $u_words->get($i);
         my $node = $root->create_child(
-            form=>$uw->{form}, lemma=>$uw->{lemma}, tag=>$uw->{upostag},
-            deprel=>$uw->{deprel}, ord=>$i,
-            no_space_after=> ($uw->{misc} eq 'SpaceAfter=No'),
-            #deps=>$uw->{deps}, misc=>$uw->{misc},
+            form           => $u_w->{form},
+            lemma          => $u_w->{lemma},
+            tag            => $u_w->{upostag},
+            deprel         => $u_w->{deprel},
+            ord            => $i,
+            no_space_after => ( $u_w->{misc} eq 'SpaceAfter=No' ),
+            #deps=>$u_w->{deps}, misc=>$u_w->{misc},
         );
-        $node->set_conll_cpos($uw->{upostag});
-        $node->set_conll_pos($uw->{xpostag});
-        $node->set_conll_feat($uw->{feats});
-        $node->set_conll_deprel($uw->{deprel});
-        push @heads, $uw->{head};
+        $node->set_conll_cpos( $u_w->{upostag} );
+        $node->set_conll_pos( $u_w->{xpostag} );
+        $node->set_conll_feat( $u_w->{feats} );
+        $node->set_conll_deprel( $u_w->{deprel} );
+        push @heads, $u_w->{head};
         push @nodes, $node;
     }
-    my @all_nodes = ($root, @nodes);
-    foreach my $node (@nodes){
-        $node->set_parent($all_nodes[shift @heads]);
+    my @all_nodes = ( $root, @nodes );
+    foreach my $node (@nodes) {
+        $node->set_parent( $all_nodes[ shift @heads ] );
     }
     return;
 }
@@ -283,6 +286,11 @@ C<tokenize_tree>, C<tag_tree> and C<parse_treeparse_tree>.
 
 There are pretrained models for UDPipe for many languages, see
 L<https://ufal.mff.cuni.cz/udpipe/users-manual#universal_dependencies_12_models_performance>.
+
+If you instantiate this class multiple times with the same model,
+only one (shared) L<Ufal::UDPipe> instance will be created internally,
+so there is almost no memory overhead caused by instantiating this class
+in multiple Treex blocks.
 
 =head1 PARAMETERS
 
