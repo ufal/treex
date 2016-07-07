@@ -5,7 +5,6 @@ use Treex::Core::Common;
 use Treex::Core::Resource;
 use Ufal::UDPipe;
 
-
 has model => ( is => 'ro', isa => 'Str', required => 1 );
 has _model_absolute_path => ( is => 'ro', isa => 'Str', lazy_build => 1 );
 
@@ -146,16 +145,19 @@ sub parse_tree {
     return;
 }
 
-
 sub tag_parse_tree {
-    my ($self, @nodes) = @_;
+    my ($self, $root) = @_;
     my $udpipe_sentence = Ufal::UDPipe::Sentence->new();
-    my $tool = $self->tool;
-    foreach my $form (map {$_->form} @nodes) {
+    my @nodes = $root->get_descendants({ordered=>1});
+    foreach my $node (@nodes) {
+        my $form = $node->form;
+        log_fatal 'Undefined form of ' . $node->get_address() if !defined $form;
         $udpipe_sentence->addWord($form);
     }
 
+    my $tool = $self->tool;
     $tool->tag($udpipe_sentence, $Ufal::UDPipe::Model::DEFAULT);
+    $tool->parse($udpipe_sentence, $Ufal::UDPipe::Model::DEFAULT);
 
     my $udpipe_words = $udpipe_sentence->{words};
     for my $i (1 .. $udpipe_words->size-1){
@@ -166,7 +168,7 @@ sub tag_parse_tree {
        $node->set_lemma($udpipe_word->{lemma});
        $node->set_conll_feat($udpipe_word->{feats});
      }
-     return;
+    return;
 }
 
 sub tokenize_tag_parse_tree {
@@ -207,6 +209,7 @@ sub tokenize_tag_parse_tree {
         my $node = $root->create_child(
             form=>$uw->{form}, lemma=>$uw->{lemma}, tag=>$uw->{upostag},
             deprel=>$uw->{deprel}, ord=>$i,
+            no_space_after=> ($uw->{misc} eq 'SpaceAfter=No'),
             #deps=>$uw->{deps}, misc=>$uw->{misc},
         );
         $node->set_conll_cpos($uw->{upostag});
@@ -224,3 +227,86 @@ sub tokenize_tag_parse_tree {
 }
 
 1;
+
+__END__
+
+=pod
+
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Tool::UDPipe - wrapper for Ufal::UDPipe
+
+=head1 SYNOPSIS
+
+ use Treex::Tool::Tagger::MorphoDiTa;
+ my $udpipe = Treex::Tool::UDPipe->new(
+    model => 'data/models/udpipe/english-ud-1.2-160523.udpipe',
+ );
+
+ my @forms = $udpipe->tokenize_string(q{I don't know.});
+
+ my $root = $zone->create_atree();
+ $zone->set_sentence(q{I don't know.});
+ $udapi->tokenize_tree($root);
+
+ my @nodes = $root->get_descendants({ordered=>1});
+ $udapi->tag_nodes(@nodes);
+
+ $udapi->tag_tree($root);
+
+ $udapi->tokenize_tag_tree($root);
+
+ $udapi->parse_tree($root);
+
+ $udapi->tag_parse_tree($root);
+
+ $udapi->tokenize_tag_parse_tree($root);
+
+=head1 DESCRIPTION
+
+Wrapper for state-of-the-art linguistic analyzer UDPipe,
+written in C++ by Milan Straka.
+I does analysis into the Universal Dependencies (UD) style including
+tokenization, tagging (plus lemmatization and universal features)
+and parsing (with deprel labels).
+This tool provides a more user-friendly and perlish interface than the original
+L<Ufal::UDPipe>, which is used under the hood, so it must be installed from CPAN.
+There are several alternative methods how to use the tool dependenig on
+which subtasks (tokenization, tagging, parsing) should be done
+and whether Treex tree (or just its root) is available on the input.
+
+Each method call has some overhead with converting the data structures,
+so it is faster to call C<tokenize_tag_parse_tree> than to call separately
+C<tokenize_tree>, C<tag_tree> and C<parse_treeparse_tree>.
+
+There are pretrained models for UDPipe for many languages, see
+L<https://ufal.mff.cuni.cz/udpipe/users-manual#universal_dependencies_12_models_performance>.
+
+=head1 PARAMETERS
+
+=head2 C<model>
+
+Path to the model file within Treex share
+(or relative path starting with "./" or absolute path starting with "/").
+
+=head1 METHODS
+
+See the synopsis:-)
+
+=head1 SEE ALSO
+
+L<http://ufal.mff.cuni.cz/udpipe>
+
+L<Treex::Block::W2A::UDPipe>
+
+=head1 AUTHOR
+
+Martin Popel <popel@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
