@@ -78,6 +78,7 @@ SKIP:
     is_deeply( \@heads,   \@expected_heads,   'parse_tree - heads' );
     is_deeply( \@deprels, \@expected_deprels, 'parse_tree - deprels' );
 
+    foreach my $node (@nodes) { $node->set_deprel(undef); $node->set_conll_cpos(undef); }
     $udpipe->tag_parse_tree($root);
     @upos    = map { $_->conll_cpos } @nodes;
     @heads   = map { $_->get_parent()->ord } @nodes;

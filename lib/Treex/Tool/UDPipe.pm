@@ -159,6 +159,7 @@ sub tag_parse_tree {
     $tool->tag( $u_sentence, $Ufal::UDPipe::Model::DEFAULT );
     $tool->parse( $u_sentence, $Ufal::UDPipe::Model::DEFAULT );
 
+    my @heads;
     my $u_words = $u_sentence->{words};
     for my $i ( 1 .. $u_words->size - 1 ) {
         my $u_w  = $u_words->get($i);
@@ -167,6 +168,13 @@ sub tag_parse_tree {
         $node->set_conll_pos( $u_w->{xpostag} );
         $node->set_lemma( $u_w->{lemma} );
         $node->set_conll_feat( $u_w->{feats} );
+        $node->set_deprel( $u_w->{deprel} );
+        $node->set_conll_deprel( $u_w->{deprel} );
+        push @heads, $u_w->{head};
+    }
+    my @all_nodes = ( $root, @nodes );
+    foreach my $node (@nodes) {
+        $node->set_parent( $all_nodes[ shift @heads ] );
     }
     return;
 }
