@@ -251,7 +251,7 @@ Treex::Tool::UDPipe - wrapper for Ufal::UDPipe
 
 =head1 SYNOPSIS
 
- use Treex::Tool::Tagger::MorphoDiTa;
+ use Treex::Tool::UDPipe;
  my $udpipe = Treex::Tool::UDPipe->new(
     model => 'data/models/udpipe/english-ud-1.2-160523.udpipe',
  );
