@@ -1,6 +1,7 @@
 package Treex::Block::Align::T::AlignGeneratedNodes;
 use Moose;
 use Treex::Core::Common;
+use Treex::Tool::Align::Utils;
 extends 'Treex::Core::Block';
 
 has 'to_language' => (
@@ -40,29 +41,37 @@ my %weight = (
 );
 
 sub process_zone {
-    my ( $self, $src_zone ) = @_;
-    my $trg_zone = $src_zone->get_bundle()->get_zone( $self->to_language, $self->to_selector );
+    my ( $self, $ref_zone ) = @_;
     
-    my @src_nodes = grep {$_->is_generated} $src_zone->get_ttree->get_descendants( { ordered => 1 } );
-    my @trg_nodes = grep {$_->is_generated} $trg_zone->get_ttree->get_descendants( { ordered => 1 } );
-    return if @trg_nodes == 0;
+    my $auto_zone = $ref_zone->get_bundle()->get_zone( $self->to_language, $self->to_selector );
+    
+    my @ref_nodes = grep {$_->is_generated} $ref_zone->get_ttree->get_descendants( { ordered => 1 } );
+    my @auto_nodes = grep {$_->is_generated} $auto_zone->get_ttree->get_descendants( { ordered => 1 } );
+    return if @auto_nodes == 0;
 
-    my %trg_free = map { $_ => $_ } @trg_nodes;
-    my %src_free = map { $_ => $_ } @src_nodes;
+    my $ref_free = { map { $_->id => $_ } @ref_nodes };
+    my $auto_free = { map { $_->id => $_ } @auto_nodes };
+    
+    $self->align_generated_nodes_by_tlemma_topology($ref_free, $auto_free);
+    $self->align_generated_nodes_by_functor_parent($auto_free);
+}
 
-    while ((scalar (keys %trg_free) > 0) && (scalar (keys %src_free) > 0)) {
+sub align_generated_nodes_by_tlemma_topology {
+    my ( $self, $ref_free, $auto_free ) = @_;
+
+    while ((scalar (keys %$auto_free) > 0) && (scalar (keys %$ref_free) > 0)) {
         my $max_score = 0;
         my ( @winners );
 
-        foreach my $src_node ( values %src_free ) {
-            foreach my $trg_node ( values %trg_free ) {
-                my $score = $self->score( $src_node, $trg_node );
+        foreach my $ref_node ( values %$ref_free ) {
+            foreach my $auto_node ( values %$auto_free ) {
+                my $score = $self->score( $ref_node, $auto_node );
                 if ( $score > $max_score ) {
                     $max_score  = $score;
-                    @winners = ( [$src_node, $trg_node] );
+                    @winners = ( [$ref_node, $auto_node] );
                 }
                 elsif ( $score == $max_score ) {
-                    push @winners, [$src_node, $trg_node];
+                    push @winners, [$ref_node, $auto_node];
                 }
             }
         }
@@ -77,47 +86,47 @@ sub process_zone {
             # print  STDERR "[" . $winner->[0]->id . ", " . $winner->[1]->id . "]" . "\n";
             
             $winner->[0]->add_aligned_node( $winner->[1], 'monolingual' );
-            delete $src_free{$winner->[0]};
-            delete $trg_free{$winner->[1]};
+            delete $ref_free->{$winner->[0]->id};
+            delete $auto_free->{$winner->[1]->id};
         }
     }
     return;
 }
 
 sub compare_aligned_nodes {
-    my ($self, $src_nodes, $trg_nodes) = @_;
-    my %trg_nodes_ids = map {$_->id => 1} @$trg_nodes;
+    my ($self, $ref_nodes, $auto_nodes) = @_;
+    my %auto_nodes_ids = map {$_->id => 1} @$auto_nodes;
 
-    my @src_nodes_trg = map {
+    my @ref_nodes_trg = map {
         $_->get_aligned_nodes_of_type('monolingual');
-    } @$src_nodes;
-    my $both_count = () = grep {$trg_nodes_ids{$_->id}} @src_nodes_trg;
-    my $src_count = scalar @src_nodes_trg;
-    my $trg_count = scalar @$trg_nodes;
+    } @$ref_nodes;
+    my $both_count = () = grep {$auto_nodes_ids{$_->id}} @ref_nodes_trg;
+    my $ref_count = scalar @ref_nodes_trg;
+    my $auto_count = scalar @$auto_nodes;
 
-    return 1 if (($src_count == 0) && ($trg_count == 0));
-    return 2 * $both_count / ($src_count + $trg_count);
+    return 1 if (($ref_count == 0) && ($auto_count == 0));
+    return 2 * $both_count / ($ref_count + $auto_count);
 }
 
 sub score {
-    my ( $self, $src_node, $trg_node ) = @_;
+    my ( $self, $ref_node, $auto_node ) = @_;
     my %feature_vector;
 
-    $feature_vector{lemma_equality} = $src_node->t_lemma eq $trg_node->t_lemma;
+    $feature_vector{lemma_equality} = $ref_node->t_lemma eq $auto_node->t_lemma;
 
-    my $src_par = $src_node->get_parent;
+    my $ref_par = $ref_node->get_parent;
     
-    $feature_vector{aligned_parent} = $src_par->is_directed_aligned_to($trg_node->get_parent, {rel_types => ['monolingual']}) ? 1 : 0;
+    $feature_vector{aligned_parent} = $ref_par->is_directed_aligned_to($auto_node->get_parent, {rel_types => ['monolingual']}) ? 1 : 0;
     
-    my @src_eparents = $src_node->get_eparents({or_topological=>1});
-    my @trg_eparents = $trg_node->get_eparents({or_topological=>1});
+    my @src_eparents = $ref_node->get_eparents({or_topological=>1});
+    my @trg_eparents = $auto_node->get_eparents({or_topological=>1});
 
     $feature_vector{aligned_eparents} = $self->compare_aligned_nodes(\@src_eparents, \@trg_eparents);
 
-    my @src_siblings = $src_node->get_siblings;
-    my @trg_siblings = $trg_node->get_siblings;
+    my @ref_siblings = $ref_node->get_siblings;
+    my @auto_siblings = $auto_node->get_siblings;
 
-    $feature_vector{aligned_siblings} = $self->compare_aligned_nodes(\@src_siblings, \@trg_siblings);
+    $feature_vector{aligned_siblings} = $self->compare_aligned_nodes(\@ref_siblings, \@auto_siblings);
 
     my $score = 0;
     foreach my $feature_name ( keys %feature_vector ) {
@@ -128,7 +137,40 @@ sub score {
     return $score;
 }
 
+sub align_generated_nodes_by_functor_parent {
+    my ($self, $auto_free ) = @_;
+
+    foreach my $auto_node (values %$auto_free) {
+        my $auto_par = $auto_node->get_parent;
+        next if (!$auto_par);
+        my ($ref_par) = Treex::Tool::Align::Utils::aligned_transitively([$auto_par], [{rel_types => ['monolingual']}]);
+        next if (!$ref_par);
+        my ($ref_eq) = grep {$_->functor eq $auto_node->functor} $ref_par->get_echildren;
+        next if (!$ref_eq);
+        
+        $ref_eq->add_aligned_node( $auto_node, 'monolingual' );
+        delete $auto_free->{$auto_node->id};
+    }
+}
+
 1;
 
-# Copyright 2011 Zdenek Zabokrtsky, Martin Popel
-# This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
+=head1 NAME
+
+Treex::Block::Align::T::AlignGeneratedNodes
+
+=head1 DESCRIPTION
+
+A block for monolingual alignment of generated nodes, i.e. aligning
+the generated nodes between gold and automatically analysed trees.
+This block must be run on the zone with gold trees (usually "ref").
+
+=head1 AUTHOR
+
+Michal Novák <mnovak@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011-2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
