@@ -38,6 +38,7 @@ my %weight = (
     aligned_parent         => 6,
     aligned_eparents        => 5,
     aligned_siblings        => 3,
+    functor_equality        => 2,
 );
 
 sub process_zone {
@@ -113,6 +114,7 @@ sub score {
     my %feature_vector;
 
     $feature_vector{lemma_equality} = $ref_node->t_lemma eq $auto_node->t_lemma;
+    $feature_vector{functor_equality} = $ref_node->functor eq $auto_node->functor;
 
     my $ref_par = $ref_node->get_parent;
     
