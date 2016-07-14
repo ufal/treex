@@ -79,8 +79,10 @@ sub _sort_chains_deepord {
 sub _sort_chains_topological {
     my ($coref_graph, @chains) = @_;
     my @topo_nodes = $coref_graph->topological_sort(empty_if_cyclic => 1);
-    if (!@topo_nodes) {
-        log_warn "Not able to sort topologically. A coreference cycle found in the document.";
+    if ($coref_graph->has_vertices() && !@topo_nodes) {
+        my @cycle = $coref_graph->find_a_cycle();
+        my $str = join "\n", map {$_->get_address()} @cycle;
+        log_warn "Not able to sort topologically. A coreference cycle found in the document:\n$str";
         return;
     }
     
