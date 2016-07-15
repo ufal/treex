@@ -4,6 +4,7 @@ use Treex::Core::Common;
 use List::Util;
 
 use Treex::Tool::Align::Utils;
+use Treex::Tool::Coreference::Utils;
 use Treex::Tool::ML::VowpalWabbit::Util;
 use Treex::Tool::Coreference::NodeFilter;
 
@@ -11,6 +12,9 @@ extends 'Treex::Block::Write::BaseTextWriter';
 with 'Treex::Block::Coref::SupervisedBase';
 
 has 'labeled' => ( is => 'ro', isa => 'Bool', default => 1);
+
+has '_id_to_entity_id' => (is => 'rw', isa => 'HashRef');
+has '_entity_id_to_mentions' => (is => 'rw', isa => 'HashRef');
 
 sub BUILD {
     my ($self) = @_;
@@ -20,6 +24,21 @@ sub BUILD {
 
 before 'process_document' => sub {
     my ($self, $doc) = @_;
+    my @ttrees = map {$_->get_tree($self->language, 't', $self->selector)} $doc->get_bundles;
+    my @entities = Treex::Tool::Coreference::Utils::get_coreference_entities(\@ttrees);
+    my %entity_id_to_mentions = ();
+    my %id_to_entity_id = ();
+    my $i = 1;
+    foreach my $entity (@entities) {
+        $entity_id_to_mentions{$i} = $entity;
+        foreach my $mention (@$entity) {
+            $id_to_entity_id{$mention->id} = $i;
+        }
+        $i++;
+    }
+    $self->_set_id_to_entity_id(\%id_to_entity_id);
+    $self->_set_entity_id_to_mentions(\%entity_id_to_mentions);
+    
     # initialize global features
     $self->_feature_extractor->init_doc_features( $doc, $self->language, $self->selector );
 };
@@ -33,7 +52,7 @@ sub process_filtered_tnode {
     my $fe = $self->_feature_extractor;
 
     my @cands = $acs->get_candidates($tnode);
-    my $losses = $self->labeled ? is_text_coref($tnode, @cands) : undef;
+    my $losses = $self->labeled ? $self->is_text_coref($tnode, @cands) : undef;
 
     if (!$self->labeled || $losses) {
         my ($feats, $comments) = $self->get_features_comments($tnode, \@cands);
@@ -44,17 +63,18 @@ sub process_filtered_tnode {
 }
 
 sub is_text_coref {
-    my ($anaph, @cands) = @_;
-    
-    my @antecs = $anaph->get_coref_chain;
-    #push @antecs, map { $_->functor =~ /^(APPS|CONJ|DISJ|GRAD)$/ ? $_->children : () } @antecs;
+    my ($self, $anaph, @cands) = @_;
+
+    my $entity_id = $self->_id_to_entity_id->{$anaph->id};
+    my $whole_chain = defined $entity_id ? $self->_entity_id_to_mentions->{$entity_id} : [];
+    my %chain_hash = map {$_->id => $_} grep {$_ != $anaph} @$whole_chain;
+    my @ante_cands = grep {defined $chain_hash{$_->id}} @cands;
 
     # if no antecedent, insert itself and if anaphor as candidate is on, it will be marked positive
-    if (!@antecs) {
-        push @antecs, $anaph;
+    if (!@ante_cands) {
+        push @ante_cands, $anaph;
     }
-
-    my %antes_hash = map {$_->id => $_} @antecs;
+    my %antes_hash = map {$_->id => $_} @ante_cands;
 
     my @losses = map {defined $antes_hash{$_->id} ? 0 : 1} @cands;
     if (none {$_ == 0} @losses) {
