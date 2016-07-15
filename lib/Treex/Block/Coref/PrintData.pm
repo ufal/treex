@@ -24,17 +24,24 @@ sub BUILD {
 
 before 'process_document' => sub {
     my ($self, $doc) = @_;
-    my @ttrees = map {$_->get_tree($self->language, 't', $self->selector)} $doc->get_bundles;
-    my @entities = Treex::Tool::Coreference::Utils::get_coreference_entities(\@ttrees);
+
     my %entity_id_to_mentions = ();
     my %id_to_entity_id = ();
-    my $i = 1;
-    foreach my $entity (@entities) {
-        $entity_id_to_mentions{$i} = $entity;
-        foreach my $mention (@$entity) {
-            $id_to_entity_id{$mention->id} = $i;
+
+    my @ttrees = map {$_->get_tree($self->language, 't', $self->selector)} $doc->get_bundles;
+    foreach my $ttree (@ttrees) {
+        foreach my $tnode ($ttree->get_descendants) {
+            my $entity_id = $tnode->wild->{gold_coref_entity};
+            if (defined $entity_id) {
+                $id_to_entity_id->{$tnode->id} = $entity_id;
+                if (defined $entity_id_to_mentions{$entity_id}) {
+                    push @{$entity_id_to_mentions{$entity_id}}, $tnode;
+                }
+                else {
+                    $entity_id_to_mentions{$entity_id} = [ $tnode ];
+                }
+            }
         }
-        $i++;
     }
     $self->_set_id_to_entity_id(\%id_to_entity_id);
     $self->_set_entity_id_to_mentions(\%entity_id_to_mentions);
@@ -94,13 +101,15 @@ Treex::Block::Coref::PrintData
 =head1 DESCRIPTION
 
 A basic block of a train table printer for coreference resolution.
+It requires the wild attribute C<gold_coref_entity> to be set.
+This can be ensured by running C<Treex::Block::Coref::ProjectCorefEntities> before.
 
 =head1 SYNOPSIS
 
     treex -L$lang -Ssrc
         Read::Treex from=sample.streex
         Coref::RemoveLinks type=all language=$lang
-        Coref::ProjectLinks selector=ref to_language=$lang to_selector=src
+        Coref::ProjectCorefEntities selector=ref to_language=$lang to_selector=src
         Coref::PrintData language=$lang
 
 C<Coref::PrintData> should be substituted by its subclass.
