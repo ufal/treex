@@ -53,7 +53,7 @@ there is a risk that your previously installed local Perl environment will be in
 See L<TrEd home page|http://ufal.mff.cuni.cz/tred> for details.
 To install Perl Tk module, you need several header files,
 on Ubuntu/Debian you can install them with
-C<sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev libpng12-dev patch>.
+C<sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev libpng12-dev libxslt-dev libgdbm-dev patch>.
 
  # Get a script which automatically downloads and builds everything else
  wget http://ufal.mff.cuni.cz/tred/install_tred.bash
@@ -242,10 +242,11 @@ L<TrEd|http://ufal.mff.cuni.cz/tred> is a fully customizable and programmable gr
 Although TrEd visualization of the linguistic trees produced by Treex can be very helpful, it is not required,
 i.e. Treex is fully functional even without installing TrEd.
 
-To install Perl Tk module, you may need to install some header files and TrEd needs also the C<patch> tool.
+To install Perl Tk and other TrEd dependencies,
+you may need to install some header files and also the C<patch> tool.
 On Ubuntu/Debian you can install these prerequisites using:
 
- sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev libpng12-dev patch
+ sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev libpng12-dev libxslt-dev libgdbm-dev patch
 
 Now, download a small installation script
 
