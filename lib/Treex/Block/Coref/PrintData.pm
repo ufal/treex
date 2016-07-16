@@ -33,7 +33,7 @@ before 'process_document' => sub {
         foreach my $tnode ($ttree->get_descendants) {
             my $entity_id = $tnode->wild->{gold_coref_entity};
             if (defined $entity_id) {
-                $id_to_entity_id->{$tnode->id} = $entity_id;
+                $id_to_entity_id{$tnode->id} = $entity_id;
                 if (defined $entity_id_to_mentions{$entity_id}) {
                     push @{$entity_id_to_mentions{$entity_id}}, $tnode;
                 }
