@@ -50,6 +50,7 @@ sub process_bundle {
 
     my %covered_src_nodes = ();
     foreach my $ref_tnode ($ref_ttree->get_descendants({ordered => 1})) {
+        # process only the gold nodes that match the node type
         next if (!Treex::Tool::Coreference::NodeFilter::matches($ref_tnode, $self->node_types));
 
         my $ref_tnode_eid = $self->_id_to_eid->{$ref_tnode->id};
@@ -57,24 +58,21 @@ sub process_bundle {
         my ($ali_nodes, $ali_types) = $ref_tnode->get_undirected_aligned_nodes({language => $self->language, selector => $self->pred_selector});
         # process the ref nodes that have a src counterpart
         foreach my $ali_src_tnode (@$ali_nodes) {
+            # process it only if the aligned node also matches the node type
+            next if (!Treex::Tool::Coreference::NodeFilter::matches($ali_src_tnode, $self->node_types));
             #printf STDERR "ALI SRC TNODE: %s\n", $ali_src_tnode->get_address;
             $covered_src_nodes{$ali_src_tnode->id}++;
             my @ali_src_antes = $ali_src_tnode->get_coref_nodes;
-            my $pred_eval_class = @ali_src_antes ? 1 : 0;
-            my $both_eval_class = 0;
-            # both the src and the ref mentions are anaphoric - find out if they refer to the same antecedent
-            if ($gold_eval_class && $pred_eval_class) {
-                my @ali_ali_ref_antes = map {
-                    my ($ali, $at) = $_->get_undirected_aligned_nodes({language => $self->language, selector => $self->gold_selector});
-                    @$ali
-                } @ali_src_antes;
-                my @ali_ali_ref_antes_eids = grep {defined $_} map {$self->_id_to_eid->{$_->id}} @ali_ali_ref_antes;
-
-                $both_eval_class = (any {$_ == $ref_tnode_eid} @ali_ali_ref_antes_eids) ? 1 : 0;
+            my ($pred_eval_class, $both_eval_class);
+            # src counterpart is anaphoric
+            if (@ali_src_antes) {
+                $pred_eval_class = 1;
+                $both_eval_class = $self->check_src_antes([$ref_tnode], \@ali_src_antes);
             }
-            # both the src and the ref mentions are non-anaphoric
-            elsif (!$gold_eval_class && !$pred_eval_class) {
-                $both_eval_class = 1;
+            # src counterpart is not anaphoric
+            else {
+                $pred_eval_class = 0;
+                $both_eval_class = ($pred_eval_class == $gold_eval_class) ? 1 : 0;
             }
 
             print {$self->_file_handle} join " ", ($gold_eval_class, $pred_eval_class, $both_eval_class, $ali_src_tnode->get_address);
@@ -92,10 +90,19 @@ sub process_bundle {
         next if (defined $covered_src_nodes{$src_tnode->id});
         next if (!Treex::Tool::Coreference::NodeFilter::matches($src_tnode, $self->node_types));
 
+        my ($pred_eval_class, $both_eval_class);
+
         my @src_antes = $src_tnode->get_coref_nodes;
-        my $pred_eval_class = $src_tnode->get_coref_nodes ? 1 : 0;
-        # check if the generated node is not coreferential with the node that plays the same role (has the same parents and fills the same functor) in the reference
-        my $both_eval_class = $self->_antes_play_the_same_role($src_tnode, @src_antes) ? 1 : 0;
+        $pred_eval_class = @src_antes ? 1 : 0;
+        
+        my ($ref_anaphs, $ali_types) = $ref_tnode->get_undirected_aligned_nodes({language => $self->language, selector => $self->gold_selector});
+
+        if (@$ref_anaphs) {
+            $both_eval_class = $self->check_src_antes($ref_anaphs, \@src_antes);
+        }
+        else {
+            $both_eval_class = @src_antes ? 0 : 1;
+        }
         
         #printf STDERR "NO REF: %s %d\n", $src_tnode->get_address, 1-$pred_eval_class;
         
@@ -104,40 +111,30 @@ sub process_bundle {
     }
 }
 
-sub _antes_play_the_same_role {
-    my ($self, $src_tnode, @src_antes) = @_;
+sub check_src_antes {
+    my ($self, $ref_anaphs, $src_antes) = @_;
 
-    # monolingual alignment filter
-    my $ali_filter = {language => $self->language, selector => $self->gold_selector};
+    my @ref_antes = map {
+        my ($n, $t) = $_->get_undirected_aligned_nodes({language => $self->language, selector => $self->gold_selector}); 
+        @$n
+    } @$src_antes;
     
-    # from the given node, retrieve its parents' referntial counterparts
-    return 0 if (!$src_tnode->is_generated);
-    my @src_pars = $src_tnode->get_eparents;
-    return 0 if (!@src_pars);
-    my @ref_pars = map {my ($n, $t) = $_->get_undirected_aligned_nodes($ali_filter); @$n} @src_pars;
-    return 0 if (!@ref_pars);
-
-    # create an index of parents referential counterparts
-    my %ref_pars_hash = map {$_->id => $_} @ref_pars;
-
-    # find antecedents' referential counterparts of the given node
-    my @ref_antes;
-    my $curr_src_tnode = $src_tnode;
-    do {
-        my @src_antes = $curr_src_tnode->get_coref_nodes;
-        @ref_antes = map {my ($n, $t) = $_->get_undirected_aligned_nodes($ali_filter); @$n} @src_antes;
-        ($curr_src_tnode) = @src_antes;
-    } while (defined $curr_src_tnode && !@ref_antes);
-
-    # filter only those antecedents' refernetial counterparts that share the parent with the given node
-    my @ref_same_par_antes = grep {
-        my @ref_ante_pars = $_->get_eparents;
-        (grep {defined $ref_pars_hash{$_->id}} @ref_ante_pars) ? 1 : 0
-    } @ref_antes;
-
-    # filter only those whose role is the same as the role of the given node
-    my @ref_same_role_antes = grep {$_->functor eq $src_tnode->functor} @ref_same_par_antes;
-    return (@ref_same_role_antes > 0);
+    my %ref_anaphs_id = map {$_->id => 1} @$ref_anaphs;
+    return 1 if (any {$ref_anaphs_id{$_->id}} @ref_antes);
+    
+    my %ref_anaphs_eid = ();
+    foreach my $ref_anaph (@$ref_anaphs) {
+        my $anaph_eid = $self->_id_to_eid->{$ref_anaph->id};
+        if (defined $anaph_eid) {
+            $ref_anaphs_eid{$anaph_eid}++;
+        }
+    }
+    return 1 if (any {
+        my $ante_eid = $self->_id_to_eid->{$_->id}; 
+        defined $ante_eid ? defined $ref_anaphs_eid{$ante_eid} : 0
+    } @ref_antes);
+    
+    return 0;
 }
  
 
@@ -166,18 +163,6 @@ treex -L cs
     Util::SetGlobal selector=ref 
     Coref::SimpleEval node_types='relpron,perspron'
 | \$MLYN_DIR/scripts/eval.pl --prf --acc
-
-
-=head1 METHODS
-
-=over
-
-=item _antes_play_the_same_role 
-
-It checks, if a given generated node plays the same role as its antecedents.
-This function is supposed to be tailored to automatically generated nodes
-that can be possibly missing in the referential structure. However, a coreference
-resolver might possibly reveal the actual identity of the node with its antecedent.
 
 =back
 
