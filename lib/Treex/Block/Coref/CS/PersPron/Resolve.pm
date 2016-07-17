@@ -13,7 +13,7 @@ has '+model_path' => (
     #default => 'data/models/coreference/CS/vw/perspron.2015-04-29.train.pdt.cs.vw.ranking.model',
     #default => 'data/models/coreference/CS/vw/perspron.2015-11-16.train.pdt.cs.vw.ranking.model',
     #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/run_2016-07-05_00-49-25_10150.new_instances_using_treat-generated-node-over-parent.mlyn_eval_after_bugfix/001.6482ae07e1.featset/004.37316.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
-    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/run_2016-07-17_10-26-37_31022.treat-generated-node-over-parent_replaced_by_multiple_monolingual_align/003.fcc2aaeffe.featset/002.f59b5.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
+    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/run_2016-07-17_16-29-46_25740.treat-generated-node-over-parent_replaced_by_multiple_monolingual_align._32bits_per_feat/003.fcc2aaeffe.featset/001.7eb17.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
     # new limited features
     #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/run_2016-07-03_19-46-00_17837.using_Coreference_Features_PersPron_-_new_features_-_so_far_limited/004.bc3425f2a5.featset/003.202e7.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
 );
