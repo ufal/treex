@@ -95,7 +95,7 @@ sub process_bundle {
         my @src_antes = $src_tnode->get_coref_nodes;
         $pred_eval_class = @src_antes ? 1 : 0;
         
-        my ($ref_anaphs, $ali_types) = $ref_tnode->get_undirected_aligned_nodes({language => $self->language, selector => $self->gold_selector});
+        my ($ref_anaphs, $ali_types) = $src_tnode->get_undirected_aligned_nodes({language => $self->language, selector => $self->gold_selector});
 
         if (@$ref_anaphs) {
             $both_eval_class = $self->check_src_antes($ref_anaphs, \@src_antes);
