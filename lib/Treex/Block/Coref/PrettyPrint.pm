@@ -27,6 +27,7 @@ sub _coref_format {
     my $is_correct = 0;
     my $has_sys_ante = 0;
     my $has_key_ante = 0;
+    my $removed_or_merged = 0;
 
     my @words = ();
     foreach my $ttree (@$sents) {
@@ -37,6 +38,7 @@ sub _coref_format {
             }
             if ($tnode->id eq $anaph_id) {
                 push @colors, "yellow";
+                $removed_or_merged = $tnode->wild->{coref_diag}{removed_or_merged} ? 1 : 0;
             }
             elsif ($tnode->wild->{coref_diag}{sys_ante_for}{$anaph_id} && $tnode->wild->{coref_diag}{key_ante_for}{$anaph_id}) {
                 push @colors, "green";
@@ -61,7 +63,14 @@ sub _coref_format {
             push @words, $word;
         }
     }
+    # if both sys and key say $anaph is non-anaphoric, it is correct
     if (!$has_sys_ante && !$has_key_ante) {
+        $is_correct = 1;
+    }
+    # if the $anaph is a result of #PersPron over-generation (has a 'removed_or_merged' flag) two variants are correct:
+    # 1) merge the mention => sys says it belongs to the same entity as key says
+    # 2) remove the mention => sys says it is non-anaphoric
+    if ($removed_or_merged && $has_key_ante && !$has_sys_ante) {
         $is_correct = 1;
     }
     my $str = $is_correct ? "OK:\t" : "ERR:\t";
