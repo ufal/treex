@@ -10,7 +10,7 @@ extends 'Treex::Core::Block';
 
 has 'to_language' => ( is => 'ro', isa => 'Str', required => 1);
 has 'to_selector' => ( is => 'ro', isa => 'Str', default => '');
-has 'align_type' => ( is => 'ro', isa => 'Str' );
+#has 'align_type' => ( is => 'ro', isa => 'Str' );
 has 'wild_attr_name' => ( is => 'ro', isa => 'Str', default => 'gold_coref_entity' );
 has '_align_filter' => ( is => 'ro', isa => 'HashRef', builder => '_build_align_filter', lazy => 1 );
 
@@ -25,9 +25,9 @@ sub _build_align_filter {
         language => $self->to_language,
         selector => $self->to_selector,
     };
-    if (defined $self->align_type) {
-        $af->{rel_types} = [ $self->align_type ];
-    }
+#    if (defined $self->align_type) {
+#        $af->{rel_types} = [ $self->align_type ];
+#    }
     return $af;
 }
 
@@ -52,10 +52,16 @@ sub project_coref_entity {
     my ($self, $src_chain, $entity_id) = @_;
 
     foreach my $src_mention (@$src_chain) {
-        my @trg_mentions = Treex::Tool::Align::Utils::aligned_transitively([$src_mention], [$self->_align_filter]);
-        foreach my $trg_mention (@trg_mentions) {
+        my ($trg_mentions, $ali_types) = $src_mention->get_undirected_aligned_nodes($self->_align_filter);
+        for (my $i = 0; $i < @$trg_mentions; $i++) {
+            my $trg_mention = $trg_mentions->[$i];
             if (!defined $trg_mention->wild->{$self->wild_attr_name}) {
-                $trg_mention->wild->{$self->wild_attr_name} = $entity_id;
+                my $entity_str = $entity_id;
+                # loosely aligned nodes can be also non-anaphoric
+                if ($ali_types->[$i] eq 'monolingual.loose') {
+                    $entity_str .= "?";
+                }
+                $trg_mention->wild->{$self->wild_attr_name} = $entity_str;
             }
         }
     }
