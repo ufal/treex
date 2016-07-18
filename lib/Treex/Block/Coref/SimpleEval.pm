@@ -57,9 +57,12 @@ sub process_bundle {
         my $gold_eval_class = defined $ref_tnode_eid ? 1 : 0;
         my ($ali_nodes, $ali_types) = $ref_tnode->get_undirected_aligned_nodes({language => $self->language, selector => $self->pred_selector});
         # process the ref nodes that have a src counterpart
-        foreach my $ali_src_tnode (@$ali_nodes) {
-            # process it only if the aligned node also matches the node type
-            next if (!Treex::Tool::Coreference::NodeFilter::matches($ali_src_tnode, $self->node_types));
+        for (my $i = 0; $i < @$ali_nodes; $i++) {
+            my $ali_src_tnode = $ali_nodes->[$i];
+            # do not process it if a loosely aligned node does not match the node type
+            # tightly aligned counterparts that do not match the node type must be processed
+            # e.g. if a Czech perspron "je" is mislabeled as a verb "byt" in src
+            next if (!Treex::Tool::Coreference::NodeFilter::matches($ali_src_tnode, $self->node_types) && $ali_types->[$i] eq 'monolingual.loose');
             #printf STDERR "ALI SRC TNODE: %s\n", $ali_src_tnode->get_address;
             $covered_src_nodes{$ali_src_tnode->id}++;
             my @ali_src_antes = $ali_src_tnode->get_coref_nodes;
