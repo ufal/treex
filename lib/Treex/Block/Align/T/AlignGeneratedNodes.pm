@@ -150,7 +150,7 @@ sub align_generated_nodes_by_functor_parent {
         my ($ref_eq) = grep {$_->functor eq $auto_node->functor} $ref_par->get_echildren;
         next if (!$ref_eq);
         
-        $ref_eq->add_aligned_node( $auto_node, 'monolingual' );
+        $ref_eq->add_aligned_node( $auto_node, 'monolingual.loose' );
         delete $auto_free->{$auto_node->id};
     }
 }
