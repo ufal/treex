@@ -2,7 +2,7 @@ package Treex::Block::HamleDT::UdepToPrague;
 use utf8;
 use Moose;
 use Treex::Core::Common;
-use Treex::Tool::PhraseBuilder::StanfordToPrague;
+use Treex::Tool::PhraseBuilder::UDToPrague;
 extends 'Treex::Block::HamleDT::Harmonize';
 
 has iset_driver =>
