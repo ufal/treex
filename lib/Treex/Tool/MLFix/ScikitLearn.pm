@@ -57,8 +57,7 @@ import datetime
 lib_path = os.path.abspath("%s")
 sys.path.append(lib_path)
 import model
-m = model.Model()
-m.load("%s", %s)
+m = model.loadModel("%s")
 INIT
 
 sub _build_python {
@@ -68,9 +67,7 @@ sub _build_python {
 	my $lib_path = require_file_from_share($self->lib_dir . 'model.py');
 	$lib_path =~ s/model\.py//;	
 	my $model_path = require_file_from_share($self->model_dir.$self->model_file);
-    my $gzipped = ($model_path =~ /gz$/ ? "True" : "False"); 
-
-	my $command = sprintf($INIT, $lib_path, $model_path, $gzipped);
+	my $command = sprintf($INIT, $lib_path, $model_path);
 	$python->command($command);
 
     return $python;
@@ -81,58 +78,33 @@ sub _build_command {
 
 	my $COMMAND = <<COMMAND;
 fh = codecs.open("%s", "rb", "UTF-8")
+feature_names = fh.readline().rstrip("\\n").split("\\t")
 x_all = []
 res = []
 while True:
-	line = fh.readline().rstrip("\\n")
-	line = line.rstrip("\\t")
-	if not line:
-		break
-	entries = line.split("\\t")
-	x = dict()
-	for entry in entries:
-		key, value = entry.split("###")
-		x.update({key:value})
-	x_all.append(x)
+    line = fh.readline().rstrip("\\n")
+    if not line:
+        break
+    feat_values = line.split("\\t")
+    x = dict()
+    for i in range(len(feature_names)):
+        x.update({feature_names[i]:feat_values[i]})
+    x_all.append(x)
 fh.close()
 try:
-	sys.stderr.write(str(datetime.datetime.now().time()) + ": started predicting\\n")
-	scores_all = m.predict_proba(x_all)
-	sys.stderr.write(str(datetime.datetime.now().time()) + ": stopped predicting\\n")
-	res = [sorted(zip(m.get_classes(), line), key=(lambda x: x[1]), reverse=True) for line in scores_all]
-except NotImplementedError:
-	scores_all = m.predict(x)
-	res = [zip([line], [1]) for line in scores_all]
+    sys.stderr.write(str(datetime.datetime.now().time()) + ": started predicting\\n")
+    scores_all = m.predict_proba(x_all)
+    sys.stderr.write(str(datetime.datetime.now().time()) + ": stopped predicting (predict_proba)\\n")
+    res = [sorted(zip(m.get_classes(), line), key=(lambda x: x[1]), reverse=True) for line in scores_all]
+except (NotImplementedError, AttributeError):
+    scores_all = m.predict(x_all)
+    sys.stderr.write(str(datetime.datetime.now().time()) + ": stopped predicting (predict))\\n")
+    res = [zip([line], [1]) for line in scores_all]
 res = [filter(lambda x: x[1] != 0, line) for line in res]
-print '\\n'.join(['##'.join([';'.join([str(key) + ':' + str(item) for key, item in pred[0].iteritems()]) + '#' + str(pred[1]) for pred in line]) for line in res])
+print '###'.join(['##'.join([';'.join([str(key) + ':' + str(item) for key, item in pred[0].iteritems()]) + '#' + str(pred[1]) for pred in line]) for line in res])
 COMMAND
 
 	return $COMMAND;
-
-#    my $COMMAND = <<COMMAND;
-#fh = codecs.open("%s", "rb", "UTF-8")
-#x = dict()
-#res = []
-#while True:
-#    line = fh.readline().rstrip("\\n")
-#    if not line:
-#        break
-#    key, value = line.split("\\t")
-#    x.update({key:value})
-#fh.close()
-#try:
-#    scores = m.predict_proba(x)
-#    res = zip(m.get_classes(), scores[0])
-#    res = sorted(res, key=(lambda x: x[1]), reverse=True)
-#except NotImplementedError:
-#    scores = m.predict(x)
-#    res = zip([scores], [1])
-#res = filter(lambda x: x[1] != 0, res)
-#sys.stderr.write(str(datetime.datetime.now().time()) + ": predicted")
-#print '##'.join([';'.join([str(key) + ':' + str(item) for key, item in pred[0].iteritems()]) + '#' + str(pred[1]) for pred in res])
-#COMMAND
-#
-#    return $COMMAND;
 }
 
 sub BUILD {
@@ -148,12 +120,16 @@ sub _get_predictions_array {
     my @target_names = @{ $self->config->{predict} };
 
     my ($tmp_fh, $tmp_filename) = tempfile("python.XXXXX", DIR => $self->tmp_dir, UNLINK => 1);
+    #my $tmp_filename = "/a/LRC_TMP/varis/mlfix/tmp.txt";
+    #open(my $tmp_fh, ">", $tmp_filename) or die "cannot open tmp.txt";
     binmode($tmp_fh, ":encoding(UTF-8)");
+    print $tmp_fh (join "\t", @{ $self->config->{features} }) . "\n";
 	foreach my $instance_info (@$instances) {
-	    foreach my $feature (@{ $self->config->{features} }) {
-    	    print $tmp_fh "$feature\#\#\#$instance_info->{$feature}\t" if defined $instance_info->{$feature};
-	    }
-		print $tmp_fh "\n";
+#	    foreach my $feature (@{ $self->config->{features} }) {
+#    	    print $tmp_fh "$feature\#\#\#$instance_info->{$feature}\t" if defined $instance_info->{$feature};
+#	    }
+#		print $tmp_fh "\n";
+        print $tmp_fh (join "\t", map { defined $instance_info->{$_} ? $instance_info->{$_} : ""} @{ $self->config->{features} }) . "\n";
 	}
     $tmp_fh->flush();
 
@@ -163,17 +139,19 @@ sub _get_predictions_array {
     close($tmp_fh);
 
     my $predictions_array = [];
-	open(my $str_fh, '<', \$output) or die "Cannot open file handle on string $output";
+	#open(my $str_fh, '<', \$output) or die "Cannot open file handle on string $output";
 	
+    my $line_number = 0;
 	# read prediction string for each $instance
-	while (<$str_fh>) {
-		chomp;
-		my $line = $_;
+	#while (<$str_fh>) {
+    for my $line (split /\#\#\#/, $output) {
+        #log_info("LINE: $line");
 
 		my $predictions = {};
 
 		# process the prediction string
 		foreach my $pred_str (split /\#\#/, $line) {
+            #log_info("PRED_STR: $pred_str");
 			my ($dict_str, $score) = split /\#/, $pred_str;
 			my @entries = split /\;/, $dict_str;
 			my %pred = ();
@@ -182,9 +160,11 @@ sub _get_predictions_array {
 			foreach my $new_name (@target_names) {
 				my $old_name = $new_name;
 				$old_name =~ s/new/old/;
-				$pred{ $new_name } = $instances->[$. - 1]->{ $old_name };
+				$pred{ $new_name } = $instances->[$line_number]->{ $old_name };
 			}
-			
+		
+            log_debug("ORIG " . $instances->[$line_number]->{"old_node_lemma"} . ":" . join(";", map { $pred{$_} } @target_names));
+	
 			foreach my $entry (@entries) {
     	        my ($key, $value) = split /\:/, $entry;
 	            $pred{ $key } = $value;
@@ -192,11 +172,13 @@ sub _get_predictions_array {
 
 			my $pred_key = join(";", map { $pred{$_} } @target_names);
 			$predictions->{"$pred_key"} = $score;
+            log_debug("$pred_key : $score");
 			
 		}
 		push @$predictions_array, $predictions;
+        $line_number++;
 	}
-	
+
 	return $predictions_array;
 }
 

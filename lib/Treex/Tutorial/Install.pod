@@ -53,7 +53,7 @@ there is a risk that your previously installed local Perl environment will be in
 See L<TrEd home page|http://ufal.mff.cuni.cz/tred> for details.
 To install Perl Tk module, you need several header files,
 on Ubuntu/Debian you can install them with
-C<sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev libpng12-dev patch>.
+C<sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev libpng12-dev libxslt-dev libgdbm-dev patch>.
 
  # Get a script which automatically downloads and builds everything else
  wget http://ufal.mff.cuni.cz/tred/install_tred.bash
@@ -242,16 +242,17 @@ L<TrEd|http://ufal.mff.cuni.cz/tred> is a fully customizable and programmable gr
 Although TrEd visualization of the linguistic trees produced by Treex can be very helpful, it is not required,
 i.e. Treex is fully functional even without installing TrEd.
 
-To install Perl Tk module, you may need to install some header files and TrEd needs also the C<patch> tool.
+To install Perl Tk and other TrEd dependencies,
+you may need to install some header files and also the C<patch> tool.
 On Ubuntu/Debian you can install these prerequisites using:
 
- sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev libpng12-dev patch
+ sudo apt-get install libx11-dev libxft-dev libfontconfig1-dev libpng12-dev libxslt-dev libgdbm-dev patch
 
 Now, download a small installation script
 
  wget http://ufal.mff.cuni.cz/tred/install_tred.bash
 
-You can type C<bash install_tred.bash -h> to see the installation options. 
+You can type C<bash install_tred.bash -h> to see the installation options.
 To automatically download and build the latest TrEd and its dependencies to F<~/tred>, use:
 
  bash install_tred.bash --tred-dir ~/tred
@@ -288,10 +289,13 @@ So let's create your local clone of Treex in F<~/treex>.
 You need to include the path to the downloaded modules in your $PERL5LIB. Add the following lines to the end of your ~/.bashrc:
 
  export PATH="$HOME/treex/bin:$PATH"
- export PERL5LIB="$HOME/treex/lib:$HOME/treex/oldlib:$PERL5LIB"
+ export PERL5LIB="$HOME/treex/lib:$PERL5LIB"
  export TMT_ROOT=$HOME/.treex
 
-It is important that these lines follow eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib` in your ~/.bashrc, so a GIT module is preferred over a CPAN modules of the same name. To apply the setting for the current bash session, type the three export commands or start a new session. You can check it with:
+It is important that these lines follow eval `perl -I ~/perl5/lib/perl5 -Mlocal::lib` in your ~/.bashrc,
+so a GIT module is preferred over a CPAN modules of the same name.
+To apply the setting for the current bash session, type the three export commands or start a new session.
+You can check it with:
 
  echo $PERL5LIB  # ~/treex/lib should precede ~/perl5/...
  treex -v        # should print "Treex version: DEV from..."
@@ -334,7 +338,7 @@ You may check if you have the required compiler installed on your computer.
 
 When not installed, install it. On Ubuntu/Debian etc. use this command:
 
- sudo apt-get install g++ 
+ sudo apt-get install g++
 
 When the installed compiler version is too old, upgrade it. On Ubuntu/Debian etc. use this command:
 

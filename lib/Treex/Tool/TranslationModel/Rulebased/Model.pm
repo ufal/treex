@@ -204,17 +204,23 @@ sub generate_labels {
     my ($self, $lemma, $features) = @_;
 
     my $sempos = $features->{short_sempos};
-    my @result;
     
     if ($lemma !~ /^[\p{L}-]*$/) {
         # non-alphabetical: skip
-        push @result, $self->l_s($lemma, $sempos);
+        return [$self->l_s($lemma, $sempos)];
     # if (lcfirst $lemma ne $lemma) {
     # if ($features->{capitalized}) {
-    } elsif ($self->skip_names && $features->{ne_type}) {
+    } elsif ($self->skip_names) {
         # named entity: skip
-        push @result, $self->l_s($lemma, $sempos);
-    } elsif (defined $full_match_rules{$lemma}) {
+        if ($features->{ne_type} || $features->{capitalized}) {
+            # TODO handle sentence-initial token specially since it is
+            # expected to be capitalized
+            return [$self->l_s($lemma, 'x')];
+        }
+    }
+    
+    my @result;
+    if (defined $full_match_rules{$lemma}) {
         # full word
         push @result, $full_match_rules{$lemma};
     } else {

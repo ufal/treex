@@ -1,4 +1,5 @@
 package Treex::Core::Phrase::Builder;
+
 use namespace::autoclean;
 use Moose;
 use Treex::Core::Common;
@@ -56,8 +57,6 @@ sub detect_special_constructions
     # Return the resulting phrase. It may be different from the input phrase.
     return $phrase;
 }
-
-
 
 __PACKAGE__->meta->make_immutable();
 
