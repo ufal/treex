@@ -207,10 +207,11 @@ sub convert_deprels
         {
             $deprel = 'Neg';
         }
-        # Noun phrase that functions as an adverbial modifier.
+        # Noun phrase that functions as an adverbial modifier, if attached to a predicate,
+        # and as nominal attribute, if attached to another nominal.
         elsif($deprel =~ m/^nmod(:|$)/)
         {
-            $deprel = 'Adv';
+            $deprel = $parent->is_verb() ? 'Adv' : 'Atr';
         }
         # Noun phrase that functions as subject.
         elsif($deprel =~ m/^nsubj(pass)?(:|$)/)
