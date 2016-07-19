@@ -10,7 +10,7 @@ has iset_driver =>
     is            => 'ro',
     isa           => 'Str',
     required      => 1,
-    default       => 'mul:uposf',
+    default       => 'mul::uposf',
     documentation => 'Which interset driver should be used to decode tags in this treebank? '.
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
