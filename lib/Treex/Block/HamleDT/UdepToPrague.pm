@@ -18,6 +18,30 @@ has iset_driver =>
 
 
 #------------------------------------------------------------------------------
+# Different source treebanks may use different attributes to store information
+# needed by Interset drivers to decode the Interset feature values. By default,
+# the CoNLL 2006 fields CPOS, POS and FEAT are concatenated and used as the
+# input tag. If the morphosyntactic information is stored elsewhere (e.g. in
+# the tag attribute), the Harmonize block of the respective treebank should
+# redefine this method. Note that even CoNLL 2009 differs from CoNLL 2006.
+#------------------------------------------------------------------------------
+sub get_input_tag_for_interset
+{
+    my $self = shift;
+    my $node = shift;
+    # When a CoNLL-U file is read, morphological tags are stored in the following attributes:
+    # tag = conll/cpos ... UPOS, universal POS tag, e.g. NOUN
+    # conll/pos .......... XPOS, language-specific tag, e.g. NNIS1----A----- in PDT
+    # conll/feat ......... FEAT, universal (and language-specific) features in UD format, e.g. Animacy=Anim|Case=Nom|Gender=Masc|Number=Sing
+    # The Interset driver mul::uposf expects UPOS and FEAT, separated by one tab character.
+    my $upos = $node->tag();
+    my $feat = $node->conll_feat();
+    return "$upos\t$feat";
+}
+
+
+
+#------------------------------------------------------------------------------
 # Reads a UD tree, converts universal tags and features to Interset, converts
 # dependency relations, transforms tree to adhere to the HamleDT / Prague
 # guidelines.
