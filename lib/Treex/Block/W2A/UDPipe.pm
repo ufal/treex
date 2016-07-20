@@ -91,7 +91,10 @@ sub _build_tool {
         $self->args->{model} = $self->model;
     }
     elsif ($self->has_model_alias) {
-        $self->args->{model} = $self->known_models()->{$self->model_alias};
+        my $model_name = $self->known_models()->{$self->model_alias};
+        log_fatal 'There is no known model for model_alias=' . $self->model_alias if !defined $model_name;
+        $self->args->{model} = $model_name;
+
     }
     else {
         log_fatal('Model path (model=path/to/model) or alias (e.g. model_alias=en) must be set!');
