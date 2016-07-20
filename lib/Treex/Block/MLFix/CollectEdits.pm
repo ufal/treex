@@ -52,6 +52,12 @@ has node_info_getter => (
 	builder => '_build_node_info_getter'
 );
 
+has no_source => (
+    is => 'ro',
+    isa => 'Bool',
+    default => '0',
+    documentation => 'No source sentences providesd'
+);
 
 sub _build_fields_ar {
     my ($self) = @_;
@@ -68,7 +74,7 @@ sub _build_fields_ar {
 }
 
 sub _build_node_info_getter {
-	return Treex::Tool::MLFix::NodeInfoGetter->new();
+	return Treex::Tool::MLFix::NodeInfoGetter->new( agr2wild => 1 );
 }
 
 before '_do_process_document' => sub {
@@ -86,45 +92,66 @@ sub process_anode {
 	my ($parent) = $node->get_eparents( {or_topological => 1} );
 	my ($parent_src) = $node_src->get_eparents( {or_topological => 1} )
 		if defined $node_src;
-
-#	my ($parent_src) = $node_src->get_eparents( {or_topological => 1} )
-#		if defined $node_src;
-#	my $parent = undef;
-#	if (defined $parent_src) {
-#		my ($parent_rf) = $parent_src->get_undirected_aligned_nodes({
-#			rel_types => [ $self->src_alignment_type ]
-#		});
-#		($parent) = @{ $parent_rf } if defined $parent_src;
-#	}
+    my ($parent_ref) = $parent->get_aligned_nodes_of_type($self->ref_alignment_type)
+        if defined $parent;
 
     # collect only those edits that correspond to things MLfix can fix
     # (assumes we don't change lemmas and don't rehang nodes)
     # TODO is the root check a good thing? (note: beware of lemmas)
-    if (
-		defined $parent && !$parent->is_root() &&
-		defined $parent_src && !$parent_src->is_root() &&
-        defined $node_ref && !$node_ref->is_root() &&
-        $node->lemma eq $node_ref->lemma 
-	#	defined $parent_ref && !$parent_ref->is_root() &&
-    #   $parent->lemma eq $parent_ref->lemma &&
+    if ($self->can_extract_instance($node, $node_src, $node_ref, $parent, $parent_src, $parent_ref)
+#		defined $parent && !$parent->is_root() &&
+#		defined $parent_src && !$parent_src->is_root() &&
+#       defined $node_ref && !$node_ref->is_root() &&
+#       $node->lemma eq $node_ref->lemma &&
+#		defined $parent_ref && !$parent_ref->is_root() &&
+#       $parent->lemma eq $parent_ref->lemma 
     ) {
         my $info = { "NULL" => "" };
-		# TODO: we can't access parents/children of the src, ref zones atm.
-		my $names = [ "node" ];
-		my $no_grandpa = [ "node", "parent", "precchild", "follchild", "precsibling", "follsibling" ];
+		my $flags_node_only = [ "node" ];
+		my $flags_no_grandpa = [ "node", "parent", "precchild", "follchild", "precsibling", "follsibling" ];
+        my $flags_no_parent = [ "node", "precchild", "follchild", "precsibling", "follsibling" ];
 
         # smtout (old), ref (new) and source (src) nodes info
-        $self->node_info_getter->add_info($info, 'old', $node);
-        $self->node_info_getter->add_info($info, 'new', $node_ref, $names);
-		$self->node_info_getter->add_info($info, 'src', $node_src);
+        $self->node_info_getter->add_info($info, 'old', $node, $flags_no_parent);
+        $self->node_info_getter->add_info($info, 'new', $node_ref, $flags_node_only);
         
 		# parents (smtout - parentold, source - parentsrc)
-		$self->node_info_getter->add_info($info, 'parentold', $parent, $no_grandpa) if defined $parent;
-        $self->node_info_getter->add_info($info, 'parentsrc', $parent_src, $no_grandpa) if defined $parent_src;
+		$self->node_info_getter->add_info($info, 'parentold', $parent, $flags_no_grandpa);
+        $self->node_info_getter->add_info($info, 'parentnew', $parent_ref, $flags_node_only) if (defined $parent_ref);
+
+        if (!$self->no_source) {
+            $self->node_info_getter->add_info($info, 'src', $node_src, $flags_no_parent);
+            $self->node_info_getter->add_info($info, 'parentsrc', $parent_src, $flags_no_grandpa);
+        }
+
+        $info->{"wrong_form_1"} = 0;
+        $info->{"wrong_form_2"} = 0;
+        if(lc($node->form) ne lc($node_ref->form)) {
+            $info->{"wrong_form_1"} = 1;
+            $info->{"wrong_form_2"} = 1 if (defined $parent_ref && $parent->lemma eq $parent_ref->lemma);
+        }
+
+        $info->{"old_node_id"} = $node->id;
 
         my @fields = map { defined $info->{$_} ? $info->{$_} : $info->{"NULL"}  } @{$self->fields_ar};
         print { $self->_file_handle() } (join "\t", @fields)."\n";
     }
+}
+
+# Check if we can extract desirable features from this instance
+sub can_extract_instance {
+    my ($self, $node, $node_src, $node_ref, $parent, $parent_src, $parent_ref) = @_;
+   
+    return 0 if (!defined $parent || $parent->is_root());
+    return 0 if (!defined $node_ref || $node_ref->is_root);
+    return 0 if ($node->lemma ne $node_ref->lemma);
+    return 0 if (!defined $parent_ref || $parent_ref->is_root());
+
+    if (!$self->no_source) {
+        return 0 if (!defined$parent_src || $parent_src->is_root());
+    }
+
+    return 1;
 }
 
 1;

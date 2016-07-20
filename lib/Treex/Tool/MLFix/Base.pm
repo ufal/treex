@@ -26,7 +26,7 @@ has _baseline_prediction => (
 sub _build_baseline_prediction {
 	my ($self) = @_;
 
-	return map { $_ =~ s/new/old/} @{ $self->config->{predict} };
+	return map { (my $out = $_) =~ s/new/old/; $out;} @{ $self->config->{predict} };
 }
 
 sub BUILD {

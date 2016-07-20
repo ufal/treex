@@ -12,6 +12,7 @@ sub _load_models {
     my ($self) = @_;
 
 	my $models_rf = $self->config->{models};
+
 	log_fatal("No models listed in the configuration file") if !(%$models_rf);
 
 	my %models = ();
@@ -45,18 +46,28 @@ sub _get_predictions {
 }
 
 sub _predict_new_tags {
-	my ($self, $predictions) = @_;
+	my ($self, $node, $predictions) = @_;
 	my %tags = ();
 
 	foreach my $model_name (keys %{ $self->_models }) {
 		foreach my $prediction (keys %{ $predictions->{$model_name} }) {
-			my %iset_hash = ();
-			@iset_hash{ map { s/new_node_//; $_; } @{ $self->config->{predict} } } = split /;/, $prediction;
+			my $iset_hash = $node->get_iset_structure();
+			@$iset_hash{ map { s/new_node_//; $_; } @{ $self->config->{predict} } } = split /;/, $prediction;
 
-			my $fs = Lingua::Interset::FeatureStructure->new();
-			$fs->set_hash(\%iset_hash);
+            foreach my $key (keys %$iset_hash) {
+#                log_info($node->lemma);
+ #               log_info($key);
+  #              log_info($iset_hash->{$key});
+   #             log_info("");
+            }
+
+            my $fs = Lingua::Interset::FeatureStructure->new();
+			$fs->set_hash($iset_hash);
 
 			my $tag = encode( $self->iset_driver, $fs);
+            $self->chosen_model->{$node->id . " $tag"} = $model_name
+                if !defined $tags{$tag} ||
+                    $predictions->{$model_name}->{$prediction} > $tags{$tag};
 			$tags{$tag} = $predictions->{$model_name}->{$prediction} 
 				if !defined $tags{$tag} ||
 					$predictions->{$model_name}->{$prediction} > $tags{$tag};

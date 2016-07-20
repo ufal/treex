@@ -4,13 +4,12 @@ use Moose;
 use Treex::Core::Common;
 use utf8;
 use List::Util "reduce";
+use YAML::Tiny;
 
 #use Treex::Tool::MLFix::Model;
 use Treex::Tool::MLFix::FixLogger;
 use Treex::Tool::MLFix::NodeInfoGetter;
 extends 'Treex::Core::Block';
-
-#with 'Treex::Tool::MLFix::FixLogger';
 
 # TODO: smt parent aquisition through both alignment or dependency tree depending on the a-tree presence
 
@@ -28,13 +27,6 @@ has source_selector => (
     is => 'rw',
     isa => 'Str',
     default => ''
-);
-
-has smt_parsed => (
-    is => 'ro',
-    isa => 'Bool',
-    default => 0,
-    documentation => 'Did we perform the parsing of the smt output'
 );
 
 has config_file => (
@@ -91,10 +83,17 @@ has log_to_console => (
 has try_switch_number => (
 	is => 'rw',
 	isa => 'Bool',
-	default => '0'
+	default => '1'
 );
 
-has magic => ( is => 'rw', isa => 'Str', default => '' );
+has fix_marked_only => (
+    is => 'ro',
+    isa => 'Bool',
+    default => 1,
+    documentation => 'Should we fix only nodes marked by the Mark2Fix block?'
+);
+
+#has magic => ( is => 'rw', isa => 'Str', default => '' );
 
 has node_info_getter => (
 	is => 'rw',
@@ -110,6 +109,13 @@ has iset_driver => (
                       'Lowercase, language code :: treebank code, e.g. "en::conll".'
 );
 
+has chosen_model => (
+    is              => 'ro',
+    isa             => 'HashRef',
+    builder         => '_build_chosen_model',
+    documentation   => 'Debug only: can be used to mark, which model prediction was used to generate new form...'
+);
+
 sub _build_form_generator {
     my ($self) = @_;
 
@@ -120,6 +126,10 @@ sub _build_form_generator {
 
 sub _build_node_info_getter {
 	return Treex::Tool::MLFix::NodeInfoGetter->new();
+}
+
+sub _build_chosen_model {
+    return {};
 }
 
 sub _load_models {
@@ -172,8 +182,27 @@ sub process_node_recursively_topdown {
 
 sub process_whole_sentence {
 	my ($self, $root) = @_;
-	my @nodes = $root->get_descendants({ ordered => 1 });
+    my @nodes = ();
+    foreach my $node ($root->get_descendants({ ordered => 1 })) {
+        push @nodes, $node if ($node->wild->{"marked2fix"} || !$self->fix_marked_only);
+    }
+    return if scalar @nodes < 1;
+
+    #for my $node (@nodes) {
+    #    log_info("++++++++++++++++++");
+    #    log_info($node->form);
+    #    log_info($node->tag);
+    #}
 	my @instances = map { $self->get_instance_info($_) } @nodes;
+
+    #my $iterator2 = List::MoreUtils::each_arrayref(\@nodes, \@instances);
+    #while (my ($node, $inst) = $iterator2->() ) {
+    #    log_info("___________________");
+    #    log_info($node->form);
+    #    log_info($node->tag);
+    #    log_info($inst->{"old_node_tag"});
+    #    log_info($inst->{"old_node_form"});
+    #}
 
 	my $new_tags = $self->predict_new_tags(\@nodes, \@instances);	
 	if (scalar @nodes != scalar @$new_tags) {
@@ -182,8 +211,9 @@ sub process_whole_sentence {
 
 	my $iterator = List::MoreUtils::each_arrayref(\@nodes, $new_tags);
 	while (my ($node, $new_tag) = $iterator->() ) {
+        log_info($node->form . " : " . $node->tag . " - " . $new_tag);
     	if ( defined $new_tag && $new_tag ne $node->tag ) {
-			$self->fixLogger->logfix1($node);
+			#$self->fixLogger->logfix1($node);
 			$self->regenerate_node($node, $new_tag);
 			$self->fixLogger->logfix2($node);
 		}
@@ -265,15 +295,27 @@ sub predict_new_tags {
     # get predictions from models for each instance
 	# each array member contains a hash of model predictions
 	my $model_predictions_array = $self->_get_predictions($instances);
+    #log_info("instances: " . scalar @$instances . "predictions: " . scalar @$model_predictions_array);
+
+    my @best_tags;
+    my $iterator = List::MoreUtils::each_arrayref($nodes_rf, $model_predictions_array);
+    while (my ($node, $model_predictions) = $iterator->() ) {
+        my $new_tags = $self->_predict_new_tags($node, $model_predictions);
+        push @best_tags, $self->_get_best_tag($node, $new_tags);
+    }
 
     # process predictions to get tag suggestions
-    my @new_tags_array = map { $self->_predict_new_tags($_) } @$model_predictions_array;
+    #my @new_tags_array = ();
+    #my $iterator = List::MoreUtils::each_arrayref($nodes_rf, $model_predictions_array);
+    #while (my ($node, $model_predictions) = $iterator->() ) {
+    #    push @new_tags_array, $self->_predict_new_tags($node, $model_predictions);
+    #}
 
-	my @best_tags;
-	my $iterator = List::MoreUtils::each_arrayref($nodes_rf, \@new_tags_array);
-	while ( my ($node, $new_tags) = $iterator->() ) {
-		push @best_tags, $self->_get_best_tag($node, $new_tags);
-	}
+	#my @best_tags;
+	#$iterator = List::MoreUtils::each_arrayref($nodes_rf, \@new_tags_array);
+	#while ( my ($node, $new_tags) = $iterator->() ) {
+	#	push @best_tags, $self->_get_best_tag($node, $new_tags);
+	#}
 
 	return \@best_tags;
 }
@@ -361,6 +403,9 @@ sub _get_best_tag {
     }
 
     if ( defined $new_tag && $new_tag ne $node->tag ) {
+        #log_info($node->form." tutam $new_tag");
+        log_info("Used model: " . $self->chosen_model->{$node->id . " $new_tag"});
+        $node->wild->{"MLFixedBy"} = $self->chosen_model->{$node->id . " $new_tag"};
         return $new_tag;
     } else {
         return undef;
@@ -371,9 +416,10 @@ sub get_instance_info {
     my ($self, $node) = @_;
 
 	my ($node_src)  = $node->get_aligned_nodes_of_type($self->src_alignment_type);
+
 	my ($parent) = $node->get_eparents({
     	or_topological => 1,
-    	ignore_incorrect_tree_structure => 1
+#    	ignore_incorrect_tree_structure => 1
     });
     my ($parent_src) = $node_src->get_eparents( {or_topological => 1} )
 		if defined $node_src;
@@ -404,14 +450,14 @@ sub get_instance_info {
 
     # smtout (old) and source (src) nodes info
 	$self->node_info_getter->add_info($info, 'old', $node);
-    $self->node_info_getter->add_info($info, 'src',   $node_src)
-		if defined $node_src;
+    $self->node_info_getter->add_info($info, 'src',   $node_src);
+#		if defined $node_src;
 
 	# parents (smtout - parentold, source - parentsrc)
     $self->node_info_getter->add_info($info, 'parentold', $parent, $no_grandpa)
-		if defined $parent;
+		if defined $parent && !$parent->is_root();
     $self->node_info_getter->add_info($info, 'parentsrc', $parent_src, $no_grandpa)
-		if defined $parent_src;
+		if defined $parent_src && !$parent_src->is_root();
 
     return $info;
 }
@@ -421,6 +467,7 @@ sub get_instance_info {
 sub regenerate_node {
     my ( $self, $node, $new_tag ) = @_;
 
+    #log_info("regenerating: " . $node->form . " $new_tag");
     if (defined $new_tag) {
         $node->set_tag($new_tag);
     }

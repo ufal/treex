@@ -22,7 +22,7 @@ has 'a' => ( is => 'ro', isa => 'Maybe[Object]', lazy => 1, default => sub { $_[
 
 has 'tag' => ( is => 'ro', isa => 'Str', lazy_build => 1 );
 
-has 'afun' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { $_[0]->a ? $_[0]->a->afun : '' } );
+has 'afun' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { $_[0]->a && defined($_[0]->a->afun) ? $_[0]->a->afun : '' } );
 
 has 'lemma' => ( is => 'ro', isa => 'Str', lazy => 1, default => sub { $_[0]->a ? $_[0]->a->lemma : '' } );
 

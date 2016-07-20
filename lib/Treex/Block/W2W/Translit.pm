@@ -9,6 +9,8 @@ use translit::greek; # Dan's transliteration table for Greek script
 use translit::cyril; # Dan's transliteration table for Cyrillic script
 use translit::armen; # Dan's transliteration table for Armen script
 use translit::arab; # Dan's transliteration table for the Arabic script
+use translit::urdu; # variant of Arabic script for Urdu
+use translit::uyghur; # variant of Arabic script for Uyghur
 use translit::brahmi; # Dan's transliteration tables for Brahmi-based scripts
 use translit::tibetan; # Dan's transliteration table for Tibetan script
 use translit::mkhedruli; # Dan's transliteration table for Georgian script
@@ -40,7 +42,18 @@ sub BUILD
     # 0x500: Armenian script.
     translit::armen::inicializovat($table);
     # 0x600: Arabic script.
-    translit::arab::inicializovat($table);
+    if($language eq 'ug')
+    {
+        translit::uyghur::inicializovat($table);
+    }
+    elsif($language eq 'ur')
+    {
+        translit::urdu::inicializovat($table);
+    }
+    else
+    {
+        translit::arab::inicializovat($table);
+    }
     # 0x900: Devanagari script (Hindi etc.)
     translit::brahmi::inicializovat($table, 2304, $scientific);
     # 0x980: Bengali script.

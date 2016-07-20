@@ -1,0 +1,56 @@
+body {
+  background: #112;
+  color: wheat;
+  font-family: 'Trebuchet MS', sans-serif;
+  font-size: 10pt;
+}
+em {
+  padding: 0.25em;
+  font-weight: bold;
+}
+pre {
+  font-size: 9pt;
+  font-family: "DejaVu Sans Mono", "Bitstream Vera Sans Mono", monospace;
+  background: #000;
+  color: #ccd;
+}
+code {
+  font-size: 9pt;
+  font-weight: bold;
+  color: #fff;
+}
+a {
+  color: #fc4;
+  text-decoration: none;
+}
+a:hover {
+  color: #fe8;
+}
+div#menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #000;
+  color: #fff;
+  opacity: 0.75;
+}
+ul#list {
+  margin-left: -6em;
+  list-style: none;
+}
+.pod {
+  width: 640px;
+  margin: 2em 4em 2em 4em;
+}
+.pod pre {
+  padding: 0.5em;
+  border: 1px solid #444;
+  -moz-border-radius-bottomleft: 7px;
+  -moz-border-radius-bottomright: 7px;
+  -moz-border-radius-topleft: 7px;
+  -moz-border-radius-topright: 7px;
+}
+.pod p {
+  line-height: 1.4em;
+}
