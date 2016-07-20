@@ -3,6 +3,9 @@ package Treex::Tool::Coreference::CS::PronCorefFeatures;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource qw(require_file_from_share);
+use List::MoreUtils qw/any/;
+
+use Ufal::MorphoDiTa;
 
 extends 'Treex::Tool::Coreference::PronCorefFeatures';
 
@@ -169,7 +172,7 @@ sub _build_ewn_classes {
 sub _build_morpho {
     my ($self) = @_;
     my $morpho_path = require_file_from_share( "data/models/morphodita/cs/czech-morfflex-131112.dict", ref($self) );
-    log_fatal 'MorphoDiTa model ' . $ewn_file . 'does not exist.' if !-f $ewn_file;
+    log_fatal 'MorphoDiTa model ' . $morpho_path . 'does not exist.' if !-f $morpho_path;
     return Ufal::MorphoDiTa::Morpho::load($morpho_path);
 }
 
@@ -249,7 +252,7 @@ augment '_unary_features' => sub {
         $coref_features->{r_cand_freq} = $self->_np_freq->{ $node->t_lemma } || 0;
     }
 
-    $coref_features->{$type.'_can_be_nom'} = _can_be_nominative($node) ? $b_true : $b_false;
+    $coref_features->{$type.'_can_be_nom'} = $self->_can_be_nominative($node) ? $b_true : $b_false;
 
 ###########################
     #   Semantic:
@@ -375,7 +378,7 @@ sub _get_atag {
 # nominative is sometimes mislabeled as accusative, which results in generating a superfluous #PersPron
 # use MorphoDiTa morpho analyzer to let the model know that this may happen
 sub _can_be_nominative {
-    my ($tnode) = @_;
+    my ($self, $tnode) = @_;
 
     my $anode = $tnode->get_lex_anode;
     return if (!defined $anode);
