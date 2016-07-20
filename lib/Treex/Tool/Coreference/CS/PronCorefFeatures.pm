@@ -53,6 +53,12 @@ has '_np_freq' => (
     isa     => 'HashRef[Int]'
 );
 
+has '_morpho' => (
+    is => 'rw',
+    isa => 'Ufal::MorphoDiTa::Morpho',
+    builder => '_build_morpho',
+);
+
 # Attributes _cnk_freqs and _ewn_classes depend on attributes cnk_freqs_path
 # and ewn_classes_path, whose values do not have to be accessible when
 # building other attributes. Thus, _cnk_freqs and _ewn_classes are defined as
@@ -160,6 +166,13 @@ sub _build_ewn_classes {
     return $ewn_classes;
 }
 
+sub _build_morpho {
+    my ($self) = @_;
+    my $morpho_path = require_file_from_share( "data/models/morphodita/cs/czech-morfflex-131112.dict", ref($self) );
+    log_fatal 'MorphoDiTa model ' . $ewn_file . 'does not exist.' if !-f $ewn_file;
+    return Ufal::MorphoDiTa::Morpho::load($morpho_path);
+}
+
 override '_binary_features' => sub {
     my ($self, $set_features, $anaph, $cand, $candord) = @_;
     my $coref_features = super();
@@ -235,6 +248,8 @@ augment '_unary_features' => sub {
     if ($type eq 'cand') {
         $coref_features->{r_cand_freq} = $self->_np_freq->{ $node->t_lemma } || 0;
     }
+
+    $coref_features->{$type.'_can_be_nom'} = _can_be_nominative($node) ? $b_true : $b_false;
 
 ###########################
     #   Semantic:
@@ -354,6 +369,23 @@ sub _get_atag {
 		return substr($anode->tag, $position, 1);
 	}
     return;
+}
+
+
+# nominative is sometimes mislabeled as accusative, which results in generating a superfluous #PersPron
+# use MorphoDiTa morpho analyzer to let the model know that this may happen
+sub _can_be_nominative {
+    my ($tnode) = @_;
+
+    my $anode = $tnode->get_lex_anode;
+    return if (!defined $anode);
+
+    return if ($anode->tag !~ /^....4/);
+
+    my $tagged_lemmas = Ufal::MorphoDiTa::TaggedLemmas->new();
+    $self->_morpho->analyze($anode->form, 1, $tagged_lemmas);
+    my @possible_tags = map {my $tl = $tagged_lemmas->get($_); $tl->{tag}} 0 .. $tagged_lemmas->size()-1;
+    return any {$_ =~ /^....1/} @possible_tags;
 }
 
 # return if $inode and $jnode have the same collocation
