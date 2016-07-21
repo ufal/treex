@@ -253,6 +253,11 @@ augment '_unary_features' => sub {
     }
 
     $coref_features->{$type.'_can_be_nom'} = $self->_can_be_nominative($node) ? $b_true : $b_false;
+    if ($type eq 'anaph') {
+        $coref_features->{$type.'_nom_sibling'} = $self->_sibling_possibly_nominative($node) ? $b_true : $b_false;
+        my ($epar) = $node->get_eparents;
+        $coref_features->{$type.'_nom_sibling_epar_lemma'} = $coref_features->{$type.'_sibling_can_be_nom'} . '_' . $epar->t_lemma;
+    }
 
 ###########################
     #   Semantic:
@@ -374,6 +379,15 @@ sub _get_atag {
     return;
 }
 
+sub _sibling_possibly_nominative {
+    my ($self, $node) = @_;
+
+    return if (!$node->is_generated);
+    return if (!$node->functor ne "ACT");
+
+    my @siblings = $node->get_siblings;
+    return any {$self->_can_be_nominative($_)} @siblings;
+}
 
 # nominative is sometimes mislabeled as accusative, which results in generating a superfluous #PersPron
 # use MorphoDiTa morpho analyzer to let the model know that this may happen
