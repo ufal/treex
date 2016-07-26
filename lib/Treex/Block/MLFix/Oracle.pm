@@ -33,15 +33,11 @@ sub _get_predictions {
  
     foreach my $inst (@$instances) {
         my $prediction = {};
-#        if (!defined $inst ||
-#            ($self->ref_parent_constraint && $inst->{"parentold_node_lemma"} ne $inst->{"parentnew_node_lemma"})
-#        ) {
-#            push @predictions, $prediction;
-#            next;
-#        }
 
         my $pred = join ";", map { defined $inst->{$_} ? $inst->{$_} : "" } @{ $self->config->{predict} };
-        $prediction = { $pred => 1 };
+        log_info($inst->{"old_node_form"});
+        log_info($pred);
+        $prediction = { "Oracle" => { $pred => 1 } };
         push @predictions, $prediction;
     }
 
@@ -53,34 +49,39 @@ sub _predict_new_tags {
 	my %tags = ();
 
     my $model_name = "Oracle";
-    foreach my $prediction (keys %$predictions) {
+    foreach my $prediction (keys %{ $predictions->{$model_name} }) {
         my $iset_hash = $node->get_iset_structure();
 
+        log_info("prediction: $prediction");
         log_info("old: " . $node->form . " - " . $node->tag);
-#        use Data::Dumper;
+        use Data::Dumper;
 #        log_info("---");
 #        log_info(Dumper($iset_hash));
-        my @pred_values = split /;/, $prediction;
-        my $iterator = List::MoreUtils::each_arrayref($self->config->{predict}, \@pred_values);
-        while ( my ($key, $value) = $iterator->() ) {
-            $key =~ s/new_node_//;
-            $iset_hash->{ $key } = $value;
-        }
-#        @$iset_hash{ map { s/new_node_//; $_; } @{ $self->config->{predict} } } = split /;/, $prediction;
+#        my @pred_values = split /;/, $prediction;
+#        my $iterator = List::MoreUtils::each_arrayref($self->config->{predict}, \@pred_values);
+#        while ( my ($key, $value) = $iterator->() ) {
+#            $key =~ s/new_node_//;
+#            $iset_hash->{ $key } = $value;
+#        }
+        my @targets = @{ $self->config->{predict} };
+        @$iset_hash{ map { s/new_node_//; $_; } @targets } = split /;/, $prediction;
+
 #        log_info("+++");
 #        log_info(Dumper($iset_hash));
-        foreach my $key (keys %$iset_hash) {
-            delete $iset_hash->{$key} if !defined $iset_hash->{$key} || $iset_hash->{$key} eq "";
-        }
+#        foreach my $key (keys %$iset_hash) {
+#            delete $iset_hash->{$key} if !defined $iset_hash->{$key} || $iset_hash->{$key} eq "";
+#        }
 
 #        log_info(Dumper($iset_hash));
         $node->set_iset($iset_hash);
 
         my $fs = Lingua::Interset::FeatureStructure->new();
         $fs->set_hash($iset_hash);
+
         my $tag = encode( $self->iset_driver, $fs );
         log_info("new: " . $node->form . " - $tag");
-        $tags{$tag} = $predictions->{$prediction};
+        $tags{$tag} = $predictions->{$model_name}->{$prediction};
+        $self->chosen_model->{$node->id . " $tag"} = $model_name;
     }
 
 	return \%tags;
@@ -92,28 +93,38 @@ sub get_instance_info {
 
     my ($parent) = $node->get_eparents({
         or_topological => 1,
+        ignore_incorrect_tree_structure => 1
     });
-    my ($parent_ref) = $parent->get_aligned_nodes_of_type($self->ref_alignment_type)
-        if defined $parent;
+    my $parent_ref = undef;
+    if (defined $node_ref) {
+        ($parent_ref) = $node_ref->get_eparents( {or_topological => 1, ignore_incorrect_tree_structure => 1} );
+    }
+    if (!defined $parent_ref || $parent_ref->is_root()) {
+        ($parent_ref) = $parent->get_aligned_nodes_of_type($self->ref_alignment_type) if defined $parent;
+    }
    
-    my $info = undef;
+    my $info = {};
+    my $names = [ "node" ];
+    my $no_grandpa = [ "node", "parent", "precchild", "follchild", "precsibling", "follsibling" ];
     if (
         defined $node_ref && !$node_ref->is_root() &&
         $node->lemma eq $node_ref->lemma
     ) {
-        $info = { "NULL" => "", "parentold_node_lemma" => "", "parentnew_node_lemma" => "" };
-        my $names = [ "node", "parent" ];
-        my $no_grandpa = [ "node", "parent", "precchild", "follchild", "precsibling", "follsibling" ];
+#        $info = { "NULL" => "", "parentold_node_lemma" => "", "parentnew_node_lemma" => "" };
 
         # smtout (old) and ref (new) nodes info
         $self->node_info_getter->add_info($info, 'old', $node, $names);
         $self->node_info_getter->add_info($info, 'new', $node_ref, $names);
 
-        $self->node_info_getter->add_info($info, 'parentold', $parent, $no_grandpa)
-            if defined $parent && !$parent->is_root();
-        $self->node_info_getter->add_info($info, 'parentnew', $parent_ref, $no_grandpa)
-            if defined $parent_ref && !$parent->is_root();
-
+#        $self->node_info_getter->add_info($info, 'parentold', $parent, $no_grandpa)
+#            if defined $parent && !$parent->is_root();
+#        $self->node_info_getter->add_info($info, 'parentnew', $parent_ref, $no_grandpa)
+#            if defined $parent_ref && !$parent->is_root();
+    }
+    else {
+        # use the original categories if there isn't proper ref node available
+        $self->node_info_getter->add_info($info, 'old', $node, $names);
+        $self->node_info_getter->add_info($info, 'new', $node, $names);
     }
     return $info;
 }

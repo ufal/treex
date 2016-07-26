@@ -163,8 +163,6 @@ sub _get_predictions_array {
 				$pred{ $new_name } = $instances->[$line_number]->{ $old_name };
 			}
 		
-            log_debug("ORIG " . $instances->[$line_number]->{"old_node_lemma"} . ":" . join(";", map { $pred{$_} } @target_names));
-	
 			foreach my $entry (@entries) {
     	        my ($key, $value) = split /\:/, $entry;
 	            $pred{ $key } = $value;

@@ -28,6 +28,9 @@ sub logfix1 {
     my ( $self, $node, $mess ) = @_;
     my ( $dep, $gov, $d, $g ) = $self->get_pair($node);
 
+    $node->wild->{depfixed} = 1 if defined $node;
+    $node->wild->{"depfixed_$mess"} = 1 if defined $node;
+
     $logfixmsg    = $mess;
     $logfixbundle = $node->get_bundle;
     {
@@ -105,6 +108,8 @@ sub logfix1 {
 
 sub logfix2 {
     my ( $self, $node ) = @_;
+
+    $node->wild->{depfixed} = 1 if defined $node;
 
     my $dep = undef;
     my $gov = undef;

@@ -86,27 +86,39 @@ before '_do_process_document' => sub {
 
 sub process_anode {
     my ($self, $node) = @_;
+
+    my $info = {};
+    $info = $self->get_instance_info($node);
+
+    if (%$info) {
+        my @fields = map { defined $info->{$_} ? $info->{$_} : $info->{"NULL"}  } @{$self->fields_ar};
+        print { $self->_file_handle() } (join "\t", @fields)."\n";
+    }
+}
+
+sub get_instance_info {
+    my ($self, $node) = @_;
     my ($node_ref) = $node->get_aligned_nodes_of_type($self->ref_alignment_type);
 	my ($node_src) = $node->get_aligned_nodes_of_type($self->src_alignment_type);
 
-	my ($parent) = $node->get_eparents( {or_topological => 1} );
-	my ($parent_src) = $node_src->get_eparents( {or_topological => 1} )
+	my ($parent) = $node->get_eparents( {or_topological => 1, ignore_incorrect_tree_structure => 1} );
+	my ($parent_src) = $node_src->get_eparents( {or_topological => 1, ignore_incorrect_tree_structure => 1} )
 		if defined $node_src;
-    my ($parent_ref) = $parent->get_aligned_nodes_of_type($self->ref_alignment_type)
-        if defined $parent;
 
+    my $parent_ref = undef;
+    if (defined $node_ref) {
+        ($parent_ref) = $node_ref->get_eparents( {or_topological => 1, ignore_incorrect_tree_structure => 1} );
+    }
+    if (!defined $parent_ref || $parent_ref->is_root()) {
+        ($parent_ref) = $parent->get_aligned_nodes_of_type($self->ref_alignment_type) if defined $parent;
+    }
+
+    my $info = {};
     # collect only those edits that correspond to things MLfix can fix
     # (assumes we don't change lemmas and don't rehang nodes)
     # TODO is the root check a good thing? (note: beware of lemmas)
-    if ($self->can_extract_instance($node, $node_src, $node_ref, $parent, $parent_src, $parent_ref)
-#		defined $parent && !$parent->is_root() &&
-#		defined $parent_src && !$parent_src->is_root() &&
-#       defined $node_ref && !$node_ref->is_root() &&
-#       $node->lemma eq $node_ref->lemma &&
-#		defined $parent_ref && !$parent_ref->is_root() &&
-#       $parent->lemma eq $parent_ref->lemma 
-    ) {
-        my $info = { "NULL" => "" };
+    if ($self->can_extract_instance($node, $node_src, $node_ref, $parent, $parent_src, $parent_ref)) {
+        $info = { "NULL" => "" };
 		my $flags_node_only = [ "node" ];
 		my $flags_no_grandpa = [ "node", "parent", "precchild", "follchild", "precsibling", "follsibling" ];
         my $flags_no_parent = [ "node", "precchild", "follchild", "precsibling", "follsibling" ];
@@ -117,7 +129,7 @@ sub process_anode {
         
 		# parents (smtout - parentold, source - parentsrc)
 		$self->node_info_getter->add_info($info, 'parentold', $parent, $flags_no_grandpa);
-        $self->node_info_getter->add_info($info, 'parentnew', $parent_ref, $flags_node_only) if (defined $parent_ref);
+        $self->node_info_getter->add_info($info, 'parentnew', $parent_ref, $flags_node_only);
 
         if (!$self->no_source) {
             $self->node_info_getter->add_info($info, 'src', $node_src, $flags_no_parent);
@@ -126,16 +138,17 @@ sub process_anode {
 
         $info->{"wrong_form_1"} = 0;
         $info->{"wrong_form_2"} = 0;
+        $info->{"wrong_form_3"} = 0;
         if(lc($node->form) ne lc($node_ref->form)) {
             $info->{"wrong_form_1"} = 1;
-            $info->{"wrong_form_2"} = 1 if (defined $parent_ref && $parent->lemma eq $parent_ref->lemma);
+            $info->{"wrong_form_2"} = 1 if (defined $parent_ref && lc($parent->form) eq lc($parent_ref->form));
+            $info->{"wrong_form_3"} = $info->{"wrong_form_2"};
+            $info->{"wrong_form_3"} = 1 if $self->was_modified($parent, "wrong_form_3");
         }
 
         $info->{"old_node_id"} = $node->id;
-
-        my @fields = map { defined $info->{$_} ? $info->{$_} : $info->{"NULL"}  } @{$self->fields_ar};
-        print { $self->_file_handle() } (join "\t", @fields)."\n";
     }
+    return $info;
 }
 
 # Check if we can extract desirable features from this instance
@@ -152,6 +165,22 @@ sub can_extract_instance {
     }
 
     return 1;
+}
+
+sub was_modified {
+    my ($self, $node, $mod_type) = @_;
+    return 0 if $mod_type !~ /wrong_form_/;
+
+    if (defined $node->wild->{$mod_type}) {
+        return 1 if $node->wild->{$mod_type} == 1;
+    }
+    else {
+        my $info = $self->get_instance_info($node);
+        $info->{$mod_type} = 0 if !defined $info->{$mod_type};
+        $node->wild->{$mod_type} = $info->{$mod_type};
+        return 1 if $info->{$mod_type} == 1;
+    }
+    return 0;
 }
 
 1;

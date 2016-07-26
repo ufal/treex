@@ -46,6 +46,20 @@ has fix_method => (
     default     => 'scikit-learn'
 );
 
+has voting_method => (
+    is          => 'ro',
+    isa         => 'Str',
+    default     => 'majority',
+    documentation => 'Model combination strategy for Mark2Fix block'
+);
+
+has threshold => (
+    is          => 'ro',
+    isa         => 'Str',
+    default     => '0.5',
+    documentation => 'Threshold for the Mark2Fix block'
+);
+
 my %mark_blocks = (
     'scikit-learn'  => 'MarkByScikitLearn',
     'oracle'        => 'MarkByOracle',
@@ -69,9 +83,11 @@ sub get_scenario_string {
 	my $lang = uc($self->language);
     my $markBlock = $mark_blocks{$self->mark_method};
     my $fixBlock = $fix_blocks{$self->fix_method};
+    my $voting_method = $self->voting_method;
+    my $threshold = $self->threshold;
 
     my $scen = "";
-    $scen = "MLFix::${markBlock} language=".$self->language." selector=".$self->selector." config_file=".$self->mark_config_file;
+    $scen = "MLFix::${markBlock} language=".$self->language." selector=".$self->selector." config_file=".$self->mark_config_file . " voting_method=$voting_method threshold=$threshold";
 
 	$scen = join "\n",
     $scen,

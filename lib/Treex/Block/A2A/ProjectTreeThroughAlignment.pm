@@ -7,6 +7,15 @@ has '+language'   => ( required => 1 );
 has 'to_language' => ( is       => 'rw', isa => 'Str', required => 1 );
 has 'to_selector' => ( is       => 'rw', isa => 'Str', required => 1 );
 
+has project_afuns => (
+    is          => 'rw',
+    isa         => 'Bool',
+    default     => 1,
+    documentation => 'Should we also project analytical functions?'
+);
+
+my %is_processed;
+
 sub process_bundle {
     my ( $self, $bundle ) = @_;
 
@@ -21,7 +30,7 @@ sub process_bundle {
         $node->set_parent($prev_node) if $prev_node;
     }
 
-    my %linked_to;
+	%is_processed = ();
     my @counterparts;
 
     # sort counterparts for each node from 'int' through 'gdfa' to 'right'
@@ -31,7 +40,6 @@ sub process_bundle {
 		while (my ($n, $t) = $iterator->() ) {
 			if ( $t =~ /int/ ) {
 				push @{ $counterparts[ $node->ord ] }, $n;
-                $linked_to{ $n } = $node;
             }
 		}
     }
@@ -41,7 +49,6 @@ sub process_bundle {
         while (my ($n, $t) = $iterator->() ) {
             if ( $t =~ /gdfa/ && $t !~ /int/ ) {
                 push @{ $counterparts[ $node->ord ] }, $n;
-                $linked_to{ $n } = $node;
             }
         }
     }
@@ -51,7 +58,6 @@ sub process_bundle {
         while (my ($n, $t) = $iterator->() ) {
             if ( $t =~ /right/ && $t !~ /gdfa/ ) {
                 push @{ $counterparts[ $node->ord ] }, $n;
-                $linked_to{ $n } = $node;
             }
         }
     }
@@ -60,9 +66,8 @@ sub process_bundle {
         my ( $nodes, $types ) = $node->get_directed_aligned_nodes();
         my $iterator = List::MoreUtils::each_arrayref($nodes, $types);
         while (my ($n, $t) = $iterator->() ) {
-            if ( $t =~ /reverse_alignment/ && $t !~ /right/ ) {
+            if ( $t =~ /reverse/ && $t !~ /right/ ) {
                 push @{ $counterparts[ $node->ord ] }, $n;
-                $linked_to{ $n } = $node;
             }
         }
     }
@@ -77,11 +82,17 @@ sub project_subtree {
         my $main_target_node = shift @other_target_nodes if @other_target_nodes;
 
         if ($main_target_node) {
-            $main_target_node->set_parent($target_root);
+			if (!$is_processed{$main_target_node}) {
+	            $main_target_node->set_parent($target_root);
+                $main_target_node->set_afun($source_node->afun);
+				$is_processed{$main_target_node} = 1;
+			}
             foreach my $target_node (@other_target_nodes) {
                 next if $target_node eq $main_target_node;
+				next if $is_processed{$target_node};
                 $target_node->set_parent($main_target_node);
                 $target_node->set_attr( 'conll_deprel', 'new_node' );
+				$is_processed{$target_node} = 1;
             }
             project_subtree( $bundle, $source_node, $main_target_node, $counterparts );
         }

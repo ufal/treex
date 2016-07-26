@@ -86,6 +86,22 @@ sub get_scenario_string {
         "W2A::CS::FixAtreeAfterMcD",
         "W2A::CS::FixIsMember";
 	}
+    # parse reference sentences
+    elsif ($language eq "cs" && $selector eq "ref") {
+        $scen = join "\n", $scen,
+        "W2A::CS::ParseMSTAdapted",
+        "W2A::CS::FixAtreeAfterMcD",
+        "W2A::CS::FixIsMember",
+        'W2A::CS::FixPrepositionalCase',
+        'W2A::CS::FixReflexiveTantum',
+        'W2A::CS::FixReflexivePronouns';
+    }
+    # for german reference sentences
+    elsif ($self->parser eq "mate" || ($language eq "de" && $selector eq "ref")) {
+        $scen = join "\n", $scen,
+        "W2A::${lang}::ParseMate",
+        "A2A::DE::CoNLL2Iset";
+    }
 	# Default: try to project src tree structure if no parser is provided
 	elsif ($src_language ne "") {
 		$scen = join "\n", $scen,

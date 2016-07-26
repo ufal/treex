@@ -39,7 +39,7 @@ sub process_document {
     $self->parser->process_document($doc);
 }
 
-# This is too time consuming
+# This is too time consuming (computation-wise)
 #
 #sub process_zone {
 #    my ( $self, $zone ) = @_;

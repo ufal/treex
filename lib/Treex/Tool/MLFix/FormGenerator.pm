@@ -4,14 +4,14 @@ use Treex::Core::Common;
 use utf8;
 
 sub get_form {
-    my ( $self, $lemma, $tag ) = @_;
+    my ( $self, $node, $tag ) = @_;
 
     log_fatal "get_form is abstract";
 
     return;
 }
 
-# changes the tag in the node and regebnerates the form correspondingly
+# changes the tag in the node and regenerates the form correspondingly
 sub regenerate_node {
     my ( $self, $node ) = @_;
 
