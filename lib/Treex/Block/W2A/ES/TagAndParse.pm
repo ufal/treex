@@ -78,7 +78,7 @@ sub process_atree {
             $anode->set_tag("x");
 	    $anode->set_conll_pos("");
 	    $anode->set_conll_feat("");
-	    $anode->set_conll_deprel("");
+	    $anode->set_conll_deprel("NR");
 	}
 	else {
 	    $text .= " " if defined $text;
