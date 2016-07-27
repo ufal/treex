@@ -56,16 +56,13 @@ sub process_sentence {
     # we store each line, which consists of wordform+features into @tokens as a string where each feature/wordform is separated by '\t'
     # other block should edit this output as needed
     # EOS marks end of sentence
-    while ( $line !~ "EOS" ) {
+    while ( $line !~ /^EOS$/ ) {
        
         log_fatal("Unitialized line (perhaps MeCab was not initialized correctly).") if (!defined $line); # even with empty string input we should get at least "EOS" line in output, otherwise the tagger wasn't correctly initialized
- 
-        # we don't want to substitute actual commas in the sentence
-        $line =~ s{^(.*),(.*)\t}{$1#comma$2\t};
 
-        $line =~ s{(.),}{$1\t}g;
-
-        $line =~ s{#comma}{,};
+        my ($wordform, $cats) = split /\t/, $line;
+        $cats =~ s{,}{\t}g;
+        $line = "$wordform\t$cats";
 
         push @tokens, $line;
         $line = <$reader>;
