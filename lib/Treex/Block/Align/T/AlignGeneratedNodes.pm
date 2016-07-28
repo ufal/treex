@@ -147,6 +147,7 @@ sub align_generated_nodes_by_functor_parent {
         next if (!$auto_par);
         my ($ref_par) = Treex::Tool::Align::Utils::aligned_transitively([$auto_par], [{rel_types => ['monolingual']}]);
         next if (!$ref_par);
+        next if (!$ref_par->is_member);
         my ($ref_eq) = grep {$_->functor eq $auto_node->functor} $ref_par->get_echildren;
         next if (!$ref_eq);
         
