@@ -3,7 +3,7 @@ package Treex::Tool::Coreference::CS::PronCorefFeatures;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource qw(require_file_from_share);
-use List::MoreUtils qw/any/;
+use List::MoreUtils qw/all any/;
 
 use Ufal::MorphoDiTa;
 
@@ -254,9 +254,7 @@ augment '_unary_features' => sub {
 
     $coref_features->{$type.'_can_be_nom'} = $self->_can_be_nominative($node) ? $b_true : $b_false;
     if ($type eq 'anaph') {
-        $coref_features->{$type.'_nom_sibling'} = $self->_sibling_possibly_nominative($node) ? $b_true : $b_false;
-        my ($epar) = $node->get_eparents;
-        $coref_features->{$type.'_nom_sibling_epar_lemma'} = $coref_features->{$type.'_sibling_can_be_nom'} . '_' . $epar->t_lemma;
+        $self->_valency_for_prodrops($node, $coref_features, $type);
     }
 
 ###########################
@@ -379,14 +377,53 @@ sub _get_atag {
     return;
 }
 
-sub _sibling_possibly_nominative {
-    my ($self, $node) = @_;
+sub _valency_for_prodrops {
+    my ($self, $node, $coref_features, $type) = @_;
 
     return if (!$node->is_generated);
-    return if (!$node->functor ne "ACT");
+    return if ($node->functor ne "ACT");
 
+    my ($par) = grep {$_->formeme =~ /^v/} $node->get_eparents;
+    return if (!$par);
+    
+    my $val = $par->get_attr("val_frame.rf");
+    return if (!defined $val);
+    $val =~ s/^[^\#]*\#//;
+
+    my $frame = Treex::Tool::Vallex::ValencyFrame::get_frame_by_id("vallex-pcedt2.0.xml", $node->language, $val);
+    return if (!$frame);
+    
     my @siblings = $node->get_siblings;
-    return any {$self->_can_be_nominative($_)} @siblings;
+
+    $coref_features->{$type.'_nom_sibling'} = $self->_sibling_possibly_nominative($node, @siblings) ? $b_true : $b_false;
+    $coref_features->{$type.'_too_many_acc'} = _too_many_acc_among_siblings($node, $frame, @siblings) ? $b_true : $b_false;
+    $coref_features->{$type.'_nom_refused'} = _nominative_refused_by_valency($node, $frame, @siblings) ? $b_true : $b_false;
+    $coref_features->{$type.'_nom_sibling_epar_lemma'} = $coref_features->{$type.'_nom_sibling'} . '_' . $par->t_lemma;
+}
+
+sub _sibling_possibly_nominative {
+    my ($self, $node, @siblings) = @_;
+    return any {$_->formeme =~ /^n:4$/ && $self->_can_be_nominative($_)} @siblings;
+}
+
+sub _too_many_acc_among_siblings {
+    my ($node, $frame, @siblings) = @_;
+    my $elements = $frame->elements_have_form("n:4");
+
+    my @acc_nodes = grep {$_->formeme =~ /^n:4$/} @siblings;
+
+    return (scalar(@$elements) < scalar(@acc_nodes));
+}
+
+sub _nominative_refused_by_valency {
+    my ($node, $frame, @siblings) = @_;
+    
+    my %siblings_forms = map {$_->formeme => 1} @siblings;
+    
+    my $elements = $frame->elements_have_form("n:1");
+    return all {
+        any {$siblings_forms{$_}} @{$_->forms_list}
+    } @$elements;
 }
 
 # nominative is sometimes mislabeled as accusative, which results in generating a superfluous #PersPron
