@@ -14,6 +14,7 @@ has '+model_path' => (
     #default => 'data/models/coreference/CS/vw/perspron.2015-11-16.train.pdt.cs.vw.ranking.model',
     #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/run_2016-07-17_16-29-46_25740.treat-generated-node-over-parent_replaced_by_multiple_monolingual_align._32bits_per_feat/003.fcc2aaeffe.featset/002.f59b5.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
     default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/run_2016-07-20_19-06-59_30876.adding_can-be-nominative/004.10257551a3.featset/002.f59b5.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
+    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/run_2016-07-26_17-00-02_7427.valency_features_for_prodrops_added/004.94333cf9c8.featset/002.f59b5.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
     # UDPipe W2A
     #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/run_2016-07-20_11-29-14_21681.data_0007_-_UDPipe_W2A/001.6482ae07e1.featset/002.f59b5.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
     # new limited features
