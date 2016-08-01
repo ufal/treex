@@ -4,6 +4,7 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource qw(require_file_from_share);
 use List::MoreUtils qw/all any/;
+use Treex::Tool::Vallex::ValencyFrame;
 
 use Ufal::MorphoDiTa;
 
@@ -395,10 +396,16 @@ sub _valency_for_prodrops {
     
     my @siblings = $node->get_siblings;
 
-    $coref_features->{$type.'_nom_sibling'} = $self->_sibling_possibly_nominative($node, @siblings) ? $b_true : $b_false;
-    $coref_features->{$type.'_too_many_acc'} = _too_many_acc_among_siblings($node, $frame, @siblings) ? $b_true : $b_false;
-    $coref_features->{$type.'_nom_refused'} = _nominative_refused_by_valency($node, $frame, @siblings) ? $b_true : $b_false;
-    $coref_features->{$type.'_nom_sibling_epar_lemma'} = $coref_features->{$type.'_nom_sibling'} . '_' . $par->t_lemma;
+    if ($self->_sibling_possibly_nominative($node, @siblings)) {
+        $coref_features->{$type.'_nom_sibling'} = $b_true;
+        $coref_features->{$type.'_nom_sibling_epar_lemma'} = $b_true . '_' . $par->t_lemma;
+    }
+    $coref_features->{$type.'_too_many_acc'} = $b_true if (_too_many_acc_among_siblings($node, $frame, @siblings));
+    if ($coref_features->{$type.'_too_many_acc'} && $coref_features->{$type.'_nom_sibling'}) {
+        $coref_features->{$type.'_too_many_acc_nom_sibling'} = $b_true;
+        $coref_features->{$type.'_too_many_acc_nom_sibling_epar_lemma'} = $b_true .'_'. $par->t_lemma;
+    }
+    $coref_features->{$type.'_nom_refused'} = $b_true if (_nominative_refused_by_valency($node, $frame, @siblings));
 }
 
 sub _sibling_possibly_nominative {
