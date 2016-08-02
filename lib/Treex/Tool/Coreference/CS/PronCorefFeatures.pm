@@ -77,49 +77,6 @@ sub BUILD {
 #    $self->_build_feature_names;
 }
 
-#sub _build_feature_names {
-#    my ($self) = @_;
-#
-#    my @feat_names = qw(
-#       c_sent_dist        c_clause_dist         c_file_deepord_dist
-#       c_cand_ord         c_anaph_sentord
-#       
-#       c_cand_fun         c_anaph_fun           b_fun_agree               c_join_fun
-#       c_cand_afun        c_anaph_afun          b_afun_agree              c_join_afun
-#       b_cand_akt         b_anaph_akt           b_akt_agree 
-#       b_cand_subj        b_anaph_subj          b_subj_agree
-#       
-#       c_cand_gen         c_anaph_gen           b_gen_agree               c_join_gen
-#       c_cand_num         c_anaph_num           b_num_agree               c_join_num
-#       c_cand_apos        c_anaph_apos                                    c_join_apos
-#       c_cand_asubpos     c_anaph_asubpos                                 c_join_asubpos
-#       c_cand_agen        c_anaph_agen                                    c_join_agen
-#       c_cand_anum        c_anaph_anum                                    c_join_anum
-#       c_cand_acase       c_anaph_acase                                   c_join_acase
-#       c_cand_apossgen    c_anaph_apossgen                                c_join_apossgen
-#       c_cand_apossnum    c_anaph_apossnum                                c_join_apossnum
-#       c_cand_apers       c_anaph_apers                                   c_join_apers
-#       
-#       b_cand_coord       b_app_in_coord
-#       c_cand_epar_fun    c_anaph_epar_fun      b_epar_fun_agree          c_join_epar_fun
-#       c_cand_epar_sempos c_anaph_epar_sempos   b_epar_sempos_agree       c_join_epar_sempos
-#                                                b_epar_lemma_agree        c_join_epar_lemma
-#                                                                          c_join_clemma_aeparlemma
-#       c_cand_tfa         c_anaph_tfa           b_tfa_agree               c_join_tfa
-#       b_sibl             b_coll                r_cnk_coll
-#       r_cand_freq                            
-#       b_cand_pers
-#
-#    );
-#    
-#    my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/nouns all/;
-#    foreach my $class (sort @{$all_c}) {
-#        my $coref_class = "b_" . $class;
-#        push @feat_names, $coref_class;
-#    }
-#    return \@feat_names;
-#}
-
 sub _build_cnk_freqs {
     my ($self) = @_;
     
@@ -252,7 +209,7 @@ augment '_unary_features' => sub {
     if ($type eq 'cand') {
         $coref_features->{r_cand_freq} = $self->_np_freq->{ $node->t_lemma } || 0;
     }
-
+    
     $coref_features->{$type.'_can_be_nom'} = $self->_can_be_nominative($node) ? $b_true : $b_false;
     if ($type eq 'anaph') {
         $self->_valency_for_prodrops($node, $coref_features, $type);
@@ -405,7 +362,10 @@ sub _valency_for_prodrops {
         $coref_features->{$type.'_too_many_acc_nom_sibling'} = $b_true;
         $coref_features->{$type.'_too_many_acc_nom_sibling_epar_lemma'} = $b_true .'_'. $par->t_lemma;
     }
-    $coref_features->{$type.'_nom_refused'} = $b_true if (_nominative_refused_by_valency($node, $frame, @siblings));
+    if (_nominative_refused_by_valency($node, $frame, @siblings)) {
+        $coref_features->{$type.'_nom_refused'} = $b_true;
+        $coref_features->{$type.'_nom_refused_epar_lemma'} = $b_true .'_'. $par->t_lemma;
+    }
 }
 
 sub _sibling_possibly_nominative {
