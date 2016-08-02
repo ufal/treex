@@ -195,7 +195,8 @@ sub _are_siblings {
 	return ($ipar == $jpar) ? $b_true : $b_false;
 }
 
-# returns the first eparent's functor, sempos, formeme and lemma
+# returns the first eparent's functor, sempos, formeme, lemma, diathesis,
+# and its diathesis combined with the candidate's functor
 sub _set_eparent_features {
 	my ($coref_features, $node, $type) = @_;
 	my ($epar) = $node->get_eparents({or_topological => 1});
@@ -205,6 +206,9 @@ sub _set_eparent_features {
     $coref_features->{$type.'_epar_sempos'} = $epar->gram_sempos;
     $coref_features->{$type.'_epar_fmm'} = $epar->formeme;
     $coref_features->{$type.'_epar_lemma'} = $epar->t_lemma;
+    
+    $coref_features->{$type.'_epar_diath'} = $epar->gram_diathesis // "0";
+    $coref_features->{$type.'_fun_epar_diath'} = $coref_features->{$type.'_diathesis'} . "_" . $coref_features->{'c_'.$type.'_fun'};
 }
 
 # returns whether an anaphor is APP and is in the same clause with a
