@@ -102,28 +102,24 @@ override '_binary_features' => sub {
     
     #   4: get candidate and anaphor eparent functor and sempos
     #   2: agreement in eparent functor and sempos
-	#my ($anaph_epar_lemma, $cand_epar_lemma) = map {my $epar = ($_->get_eparents)[0]; $epar->t_lemma} ($anaph, $cand);
-    $coref_features->{b_epar_fmm_agree}
-        = $self->_agree_feats($set_features->{'c^c_cand_epar_fmm'}, $set_features->{'a^c_anaph_epar_fmm'});
-    $coref_features->{c_join_epar_fmm}          
-        = $self->_join_feats($set_features->{'c^c_cand_epar_fmm'}, $set_features->{'a^c_anaph_epar_fmm'});
-    $coref_features->{b_epar_fun_agree}
-        = $self->_agree_feats($set_features->{'c^c_cand_epar_fun'}, $set_features->{'a^c_anaph_epar_fun'});
-    $coref_features->{c_join_epar_fun}          
-        = $self->_join_feats($set_features->{'c^c_cand_epar_fun'}, $set_features->{'a^c_anaph_epar_fun'});
-    $coref_features->{b_epar_sempos_agree}      
-        = $self->_agree_feats($set_features->{'c^c_cand_epar_sempos'}, $set_features->{'a^c_anaph_epar_sempos'});
-    $coref_features->{c_join_epar_sempos}       
-        = $self->_join_feats($set_features->{'c^c_cand_epar_sempos'}, $set_features->{'a^c_anaph_epar_sempos'});
-    $coref_features->{b_epar_lemma_agree}       
-        #= $self->_agree_feats($cand_epar_lemma, $anaph_epar_lemma);
-        = $self->_agree_feats($set_features->{'c^c_cand_epar_lemma'}, $set_features->{'a^c_anaph_epar_lemma'});
-    $coref_features->{c_join_epar_lemma}        
-        #= $self->_join_feats($cand_epar_lemma, $anaph_epar_lemma);
-        = $self->_join_feats($set_features->{'c^c_cand_epar_lemma'}, $set_features->{'a^c_anaph_epar_lemma'});
-    $coref_features->{c_join_clemma_aeparlemma} 
-        #= $self->_join_feats($cand->t_lemma, $anaph_epar_lemma);
-        = $self->_join_feats($cand->t_lemma, $set_features->{'a^c_anaph_epar_lemma'});
+    $coref_features->{agree_epar_fmm}
+        = $self->_agree_feats($set_features->{'c^cand_epar_fmm'}, $set_features->{'a^anaph_epar_fmm'});
+    $coref_features->{join_epar_fmm}
+        = $self->_join_feats($set_features->{'c^cand_epar_fmm'}, $set_features->{'a^anaph_epar_fmm'});
+    $coref_features->{agree_epar_fun}
+        = $self->_agree_feats($set_features->{'c^cand_epar_fun'}, $set_features->{'a^anaph_epar_fun'});
+    $coref_features->{join_epar_fun}
+        = $self->_join_feats($set_features->{'c^cand_epar_fun'}, $set_features->{'a^anaph_epar_fun'});
+    $coref_features->{agree_epar_sempos}
+        = $self->_agree_feats($set_features->{'c^cand_epar_sempos'}, $set_features->{'a^anaph_epar_sempos'});
+    $coref_features->{join_epar_sempos}
+        = $self->_join_feats($set_features->{'c^cand_epar_sempos'}, $set_features->{'a^anaph_epar_sempos'});
+    $coref_features->{agree_epar_lemma}
+        = $self->_agree_feats($set_features->{'c^cand_epar_lemma'}, $set_features->{'a^anaph_epar_lemma'});
+    $coref_features->{join_epar_lemma}
+        = $self->_join_feats($set_features->{'c^cand_epar_lemma'}, $set_features->{'a^anaph_epar_lemma'});
+    $coref_features->{join_clemma_aeparlemma}
+        = $self->_join_feats($cand->t_lemma, $set_features->{'a^anaph_epar_lemma'});
     
     #   3:  tfa($inode, $jnode);
     $coref_features->{b_tfa_agree} 
@@ -181,10 +177,7 @@ augment '_unary_features' => sub {
     
     #   4: get candidate and anaphor eparent functor and sempos
     #   2: agreement in eparent functor and sempos
-    ( $coref_features->{'c_'.$type.'_epar_fun'},  $coref_features->{'c_'.$type.'_epar_sempos'},
-        $coref_features->{'c_'.$type.'_epar_fmm'}, $coref_features->{'c_'.$type.'_epar_lemma'})  = _get_eparent_features($node);
-# 	my $eparent = ($node->get_eparents)[0];
-# 	$coref_features->{'c_'.$type.'_epar_lemma'} = $eparent->t_lemma;
+    _set_eparent_features($coref_features, $node, $type);
     
     #   3:  tfa($inode, $jnode);
     $coref_features->{'c_'.$type.'_tfa'}  = $node->tfa;
@@ -203,13 +196,15 @@ sub _are_siblings {
 }
 
 # returns the first eparent's functor, sempos, formeme and lemma
-sub _get_eparent_features {
-	my ($node) = @_;
-# 	my $epar = ($node->get_eparents)[0];
-	if ( my $epar = ($node->get_eparents({or_topological => 1}))[0] ) {
-        return ($epar->functor, $epar->gram_sempos, $epar->formeme, $epar->t_lemma);
-	}
-	return;
+sub _set_eparent_features {
+	my ($coref_features, $node, $type) = @_;
+	my ($epar) = $node->get_eparents({or_topological => 1});
+    return if (!$epar);
+
+    $coref_features->{$type.'_epar_fun'} = $epar->functor;
+    $coref_features->{$type.'_epar_sempos'} = $epar->gram_sempos;
+    $coref_features->{$type.'_epar_fmm'} = $epar->formeme;
+    $coref_features->{$type.'_epar_lemma'} = $epar->t_lemma;
 }
 
 # returns whether an anaphor is APP and is in the same clause with a
