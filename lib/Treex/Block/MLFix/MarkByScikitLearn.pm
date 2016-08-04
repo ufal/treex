@@ -1,12 +1,11 @@
-package Treex::Block::MLFix::ScikitLearn;
+package Treex::Block::MLFix::MarkByScikitLearn;
 use Moose;
 use Treex::Core::Common;
 use utf8;
-use Lingua::Interset 2.050 qw(encode);
 
 use Treex::Tool::MLFix::ScikitLearn;
 
-extends 'Treex::Block::MLFix::MLFix';
+extends 'Treex::Block::MLFix::Mark2Fix';
 
 sub _load_models {
     my ($self) = @_;
@@ -38,6 +37,7 @@ sub _get_predictions {
 		my $current_predictions_array = $model->get_predictions_array($instances);
 		my $iterator = List::MoreUtils::each_arrayref(\@model_predictions_array, $current_predictions_array);
 		while ( my ($model_predictions, $current_predictions) = $iterator->() ) {
+            $current_predictions->{1} = 0 if !defined $current_predictions->{1};
 			$model_predictions->{$model_name} = $current_predictions;
 		}
 	}
@@ -45,36 +45,11 @@ sub _get_predictions {
     return \@model_predictions_array;
 }
 
-sub _predict_new_tags {
-	my ($self, $node, $predictions) = @_;
-	my %tags = ();
-
-	foreach my $model_name (keys %{ $self->_models }) {
-		foreach my $prediction (keys %{ $predictions->{$model_name} }) {
-			my $iset_hash = $node->get_iset_structure();
-            my @targets = @{ $self->config->{predict} };
-			@$iset_hash{ map { s/new_node_//; $_; } @targets } = split /;/, $prediction;
-
-            my $fs = Lingua::Interset::FeatureStructure->new();
-			$fs->set_hash($iset_hash);
-
-			my $tag = encode( $self->iset_driver, $fs);
-            $self->chosen_model->{$node->id . " $tag"} = $model_name
-                if !defined $tags{$tag} ||
-                    $predictions->{$model_name}->{$prediction} > $tags{$tag};
-			$tags{$tag} = $predictions->{$model_name}->{$prediction} 
-				if !defined $tags{$tag} ||
-					$predictions->{$model_name}->{$prediction} > $tags{$tag};
-		}
-	}
-	return \%tags;
-}
-
 1;
 
 =head1 NAME 
 
-Treex::Block::MLFix::ScikitLearn -- base class using ScikitLearn-only MLFix models
+Treex::Block::MLFix::MarkByScikitLearn -- Mark nodes that needs to by fixed using a ScikitLearn model
 
 =head1 DESCRIPTION
 

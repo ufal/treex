@@ -71,12 +71,17 @@ sub get_scenario_string {
 
     $language eq "de" ? "W2A::DE::LemmatizeMate" : (),
 
-	"W2A::${lang}::$tagger_block lemmatize=$lemmatize",
+    # German tagging is done during parsing for ref
+	$language ne "de" ? "W2A::${lang}::$tagger_block lemmatize=$lemmatize" : (),
+    $self->tagger eq "mate" ? "W2A::${lang}::$tagger_block lemmatize=$lemmatize" : (),
+
+    $language eq "cs" ? "W2A::CS::FixMorphoErrors" : (),
+    $language eq "cs" ? "W2A::CS::FixGuessedLemmas" : (),
 
 	$language eq "en" ? "W2A::EN::FixTags" : (),
 	$language eq "en" ? "W2A::EN::Lemmatize" : (),
 
-    $language eq "de" ? "A2A::DE::CoNLL2Iset" : (),
+    ($language eq "de" && $selector ne "ref") ? "A2A::DE::CoNLL2Iset" : (),
 	$language ne "de" ? "A2A::ConvertTags input_driver='$iset_driver'" : ();
 
 	return $scen;

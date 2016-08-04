@@ -1,4 +1,4 @@
-package Treex::Scen::MLFix::NER;
+package Treex::Scen::MLFix::WriteSentences;
 
 use Moose;
 use Treex::Core::Common;
@@ -8,18 +8,6 @@ has language => (
 	is			=> 'ro',
 	isa			=> 'Treex::Type::LangCode',
 	required	=> 1
-);
-
-has selector => (
-    is          => 'ro',
-    isa         => 'Treex::Type::Selector',
-    default     => ''
-);
-
-has model => (
-	is			=> 'ro',
-	isa			=> 'Str',
-	default		=> ''
 );
 
 sub BUILD {
@@ -32,20 +20,15 @@ sub get_scenario_string {
 	my ($self) = @_;
 
 	my $language = $self->language;
-    my $selector = $self->selector;
-	my $model = $self->model;
 
-	my $scen = "Util::SetGlobal language=$language selector=$selector";
+	my $scen = join "\n",
+        "Util::SetGlobal language=$language selector=",
+        "A2W::Detokenize",
 
-	if ($language eq "en") {
-		$scen = join "\n", $scen,
-		"A2N::EN::StanfordNamedEntities model=$model",
-		"A2N::EN::DistinguishPersonalNames";
-	}
-	elsif ($language eq "cs") {
-		$scen = join "\n", $scen,
-		"A2N::CS::SimpleRuleNER";
-	}
+        $language eq "cs" ? "A2W::CS::DetokenizeUsingRules" : (),
+        $language eq "cs" ? "A2W::CS::DetokenizeDashes" : ();
+        
+#        q(Util::Eval zone='print $zone->sentence . "\n";');
 
 	return $scen;
 }
@@ -59,7 +42,7 @@ __END__
 
 =head1 NAME
 
-Treex::Scen::MLFix::NER - NER scenario for MLFix pipeline
+Treex::Scen::MLFix::WriteSentences - Detokenize and write fixed sentences
 
 =head1 DESCRIPTION
 
