@@ -9,17 +9,13 @@ sub process_anode
     my $node = shift;
     if(($node->deprel() || '') eq 'Sb')
     {
-        my @eparents = $node->get_eparents({'dive' => 'AuxCP'});
-        foreach my $parent (@eparents)
+        # The direct parent node could be Coord, Apos, AuxP or AuxC. In all these cases the real parent (verb) is elsewhere.
+        # We should call $node->get_eparents({'dive' => 'AuxCP'}) but it works with afuns and we do not have afuns, we have deprels.
+        # Therefore we will just ignore these parents for the time being.
+        my $parent = $node->parent();
+        if($parent->deprel() !~ m/^(Coord|Apos|Aux[PC])/ && !$parent->is_verb())
         {
-            if(!$parent->is_verb())
-            {
-                $self->complain($node);
-            }
-            else
-            {
-                $self->praise($node);
-            }
+            $self->complain($node);
         }
     }
 }
@@ -30,12 +26,12 @@ sub process_anode
 
 =item Treex::Block::HamleDT::Test::SubjectUnderVerb
 
-Subjects (afun=Sb) are expected only under verbs.
+Subjects (deprel=Sb) are expected only under verbs.
 
 =back
 
 =cut
 
 # Copyright 2011 Zdeněk Žabokrtský
-# Copyright 2015 Dan Zeman
+# Copyright 2015, 2016 Dan Zeman
 # This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.

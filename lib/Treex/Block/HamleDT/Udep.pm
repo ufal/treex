@@ -73,6 +73,7 @@ sub process_zone
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
     $self->change_case_to_mark_under_verb($root);
+    $self->dissolve_chains_of_auxiliaries($root);
     $self->fix_jak_znamo($root);
     $self->classify_numerals($root);
     $self->fix_determiners($root);
@@ -1214,6 +1215,30 @@ sub change_case_to_mark_under_verb
         if($node->deprel() eq 'case' && $node->parent()->is_verb())
         {
             $node->set_deprel('mark');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# UD guidelines disallow chains of auxiliary verbs. Regardless whether there is
+# hierarchy in application of grammatical rules, all auxiliaries should be
+# attached directly to the main verb (example [en] "could have been done").
+#------------------------------------------------------------------------------
+sub dissolve_chains_of_auxiliaries
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        # An auxiliary verb may be attached to another auxiliary verb in coordination ([cs] "byl a bude prodáván").
+        # Thus we must check whether the deprel is aux (or auxpass). We also cannot dissolve the chain if the
+        # grandparent is root.
+        if($node->iset()->is_auxiliary() && $node->parent()->iset()->is_auxiliary() && $node->deprel() =~ m/^aux/ && !$node->parent()->parent()->is_root())
+        {
+            $node->set_parent($node->parent()->parent());
         }
     }
 }

@@ -63,20 +63,18 @@ sub process_zone
 
 #------------------------------------------------------------------------------
 # Fixing the part of speech must happen after the original tag is converted to
-# Interset but before converting the dependency relations, both of which are
-# called from the SUPER::process_zone(). Thus we have to modify the behavior of
-# SUPER::convert_tag() to achieve this. Note: instead of overriding
-# convert_tag() and calling the SUPER version from inside, we could also use
-#
-# after 'convert_tag' => sub { my $self = shift; $self->fix_part_of_speech(); };
+# Interset but before converting the dependency relations. This function is
+# called from SUPER::process_zone().
 #------------------------------------------------------------------------------
-sub convert_tag
+sub fix_morphology
 {
     my $self = shift;
-    my $node = shift;
-    $self->SUPER::convert_tag($node);
-    $self->fix_part_of_speech($node);
-    $self->fix_iset($node);
+    my $root = shift;
+    foreach my $node ( $root->get_descendants() )
+    {
+        $self->fix_part_of_speech($node);
+        $self->fix_iset($node);
+    }
 }
 
 #------------------------------------------------------------------------------
@@ -162,11 +160,12 @@ sub fix_part_of_speech
                 'Px-' => 'prs', ###!!! reflexive ... se
                 'Pl-' => 'rcp',
                 'Pu-' => 'ind', # aliquantulus, aliquantus, alius, alteruter, cuiusuis, nemo, neuter, ...
+                'PuP' => 'ind|dem', # tot (so many, many)
                 'P2-' => 'ind|rel', # aliquicumque, qualiscumque, quicumque, quisque, quisquis, uterlibet
                 'P2P' => 'ind|rel', # quodquod, quotquot
                 'P4-' => 'ind|int', # nequis, numquis, quis, siquis
                 'P5-' => 'int|rel', # cuius, qualis, quantulus, quantus, quotus
-                'P5P' => 'int|rel', # quot
+                'P5P' => 'int|rel', # quot (how many)
                 'P6-' => 'ind', # indefinite ordinal numeral ... alter
                 'P7-' => 'ind|int|rel', # qui, uter
             );
@@ -196,6 +195,7 @@ sub fix_part_of_speech
             }
             else
             {
+                log_warn("Unknown pronoun ".$node->form()." (tag $tag)");
                 $node->iset()->set('prontype' => 'prn');
             }
         }
@@ -212,7 +212,12 @@ sub fix_part_of_speech
     # Marco's rules for splitting "particles":
     elsif($node->is_particle())
     {
-        my $deprel = $node->conll_deprel();
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
         $deprel = 'NR' if(!defined($deprel));
         $deprel =~ s/_(Co|Ap|Pa)$//;
         if($deprel eq 'AuxC')

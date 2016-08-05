@@ -3,8 +3,18 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseAlignedTextReader';
 
+
+
+has 'conll_format' => ( is => 'ro', isa => 'Str', default => '2009', documentation => 'CoNLL flavor: 2006 or 2009, default is 2009.' );
+has 'is_member_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'is_parenthesis_root_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
+
+
+
 sub next_document {
     my ($self) = @_;
+    my $format = $self->conll_format();
+    log_fatal("Unknown format flavor '$format'") unless($format =~ m/^200[69]$/);
     my $texts_ref = $self->next_document_texts();
     return if !defined $texts_ref;
 
@@ -35,16 +45,40 @@ sub next_document {
             my @nodes   = ($aroot);
             my $sentence;
             foreach my $token (@tokens) {
-                my ( $id, $form, $lemma, $plemma, $pos, $ppos, $feat, $pfeat, $head, $phead, $deprel, $pdeprel ) = split( /\t/, $token );
+                my ( $id, $form, $lemma, $plemma, $cpos, $pos, $ppos, $feat, $pfeat, $head, $phead, $deprel, $pdeprel );
+                my @fields = split(/\t/, $token);
+                if($format eq '2006')
+                {
+                    ($id, $form, $lemma, $cpos, $pos, $feat, $head, $deprel, $phead, $pdeprel) = @fields;
+                }
+                else
+                {
+                    ($id, $form, $lemma, $plemma, $pos, $ppos, $feat, $pfeat, $head, $phead, $deprel, $pdeprel) = @fields;
+                }
                 my $newnode = $aroot->create_child();
                 $newnode->shift_after_subtree($aroot);
                 $lemma  = $plemma  if $lemma  eq '_';
                 $pos    = $ppos    if $pos    eq '_';
                 $head   = $phead   if $head   eq '_';
                 $deprel = $pdeprel if $deprel eq '_';
+                if($self->is_parenthesis_root_within_afun)
+                {
+                    if($deprel =~ s/_P$// || $deprel =~ s/_MP$/_M/ || $deprel =~ s/_PM$/_M/)
+                    {
+                        $newnode->set_is_parenthesis_root(1);
+                    }
+                }
+                if($self->is_member_within_afun() && $deprel =~ s/_M$//)
+                {
+                    $newnode->set_is_member(1);
+                }
                 $newnode->set_form($form);
                 $newnode->set_lemma($lemma);
                 $newnode->set_tag($pos);
+                $newnode->set_deprel($deprel);
+                $newnode->set_conll_cpos($cpos);
+                $newnode->set_conll_pos($pos);
+                $newnode->set_conll_feat($feat);
                 $newnode->set_conll_deprel($deprel);
                 $sentence .= "$form ";
                 push @nodes,   $newnode;
@@ -65,6 +99,39 @@ sub next_document {
 
 __END__
 
-treex Read::AlignedCoNLL en=en1.conll,en2.conll cs=cs1.conll,cs2.conll
 
-Copyright (c) 2011 David Marecek
+
+=for Pod::Coverage BUILD
+
+=encoding utf-8
+
+=head1 NAME
+
+Treex::Block::Read::AlignedCoNLL
+
+=head1 SYNOPSIS
+
+  treex Read::AlignedCoNLL en=en1.conll,en2.conll cs=cs1.conll,cs2.conll
+  treex Read::AlignedCoNLL sk_annotator1='!sk1*.conll' sk_annotator2='!sk2*.conll'
+
+=head1 DESCRIPTION
+
+Reads simultaneously from two parallel lists of CoNLL files. There should be the
+same number of trees on both sides. Corresponding trees are loaded in different
+zones of one bundle.
+
+Names of parameters of this block specify the destination zone (language code
+is optionally followed by underscore and selector). The parameter value is the
+list of files for this zone.
+
+This reader assumes the CoNLL 2009 file format.
+
+=head1 AUTHORS
+
+David Mareček <marecek@ufal.mff.cuni.cz>,
+Dan Zeman <zeman@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011 by Institute of Formal and Applied Linguistics, Charles University in Prague
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

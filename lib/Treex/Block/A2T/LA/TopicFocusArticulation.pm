@@ -19,6 +19,16 @@ sub process_tnode {
     my $functor = $t_node->functor;
     
     my $lex_anode = $t_node->get_lex_anode;
+    return if !defined $lex_anode;
+    # or even shorter:
+    # my $lex_anode = $t_node->get_lex_anode or return;
+    
+    # my $lex_anode = $t_node->get_lex_anode;
+    # if (!$lex_anode){
+    #    $t_node->set_tfa('t');
+    #    return;
+    #}
+
     my $lex_tag = $lex_anode->tag;
     my $lex_afun = $lex_anode->afun;
     my $lex_lemma = $lex_anode->lemma;
@@ -70,10 +80,7 @@ sub process_tnode {
     elsif ( any { ( ( $lex_lemma eq 'qui' ) && ( $parent_tag =~ /^2/ && $parent_afun eq 'Atr' && $is_afun_of_a_parentchild{AuxV} ) ) } @anode_tags ) {
         $tfa = 't';
     }
-
-    # Add tfa node
-    my $new_node = $t_node->create_child();
-    $new_node->set_tfa($tfa);
+    
     
     return;
     

@@ -92,6 +92,15 @@ sub process_anode
         $translit = translit::prevest($table, $form, $maxl);
     }
     $node->set_attr('translit', $translit);
+    # Transliterate lemma. There is no attribute for transliterated lemma, so store it as a wild attribute.
+    my $lemma = $node->lemma();
+    if(defined($lemma))
+    {
+        my $table = $self->table();
+        my $maxl = $self->maxl();
+        $translit = translit::prevest($table, $lemma, $maxl);
+        $node->wild()->{lemma_translit} = $translit;
+    }
 }
 
 

@@ -34,6 +34,9 @@ sub process_zone
             $node->set_deprel($node->form() eq ',' ? 'AuxX' : 'AuxG');
         }
     }
+    # Is_member should be set directly under the Coord|Apos node. Some Prague-style treebanks have it deeper.
+    # Fix it here, before building phrases (it will not harm treebanks that are already OK.)
+    $self->pdt_to_treex_is_member_conversion($root);
     # Phrase-based implementation of tree transformations (30.11.2015).
     my $builder = new Treex::Tool::PhraseBuilder::Prague
     (
@@ -64,31 +67,47 @@ sub process_zone
 # function moves the is_member attribute wherever needed to match the HamleDT
 # convention. The function is adapted from Zdeněk's block HamleDT::
 # Pdt2TreexIsMemberConversion (now removed).
+#
+# Note that HarmonizePerseus does this conversion during conversion of deprels.
+# It does not call pdt_to_treex_is_member_conversion() but it does make use of
+# the _climb_up_below_coap() function defined below. When we arrive here from
+# HarmonizePerseus, is_member has been converted. But we will have work if we
+# arrive directly from this block or from another derivate.
 #------------------------------------------------------------------------------
-sub pdt_to_treex_is_member_conversion {
-    my ( $self, $root ) = @_;
-    foreach my $old_member (grep {$_->is_member} $root->get_descendants) {
+sub pdt_to_treex_is_member_conversion
+{
+    my $self = shift;
+    my $root = shift;
+    foreach my $old_member (grep {$_->is_member()} ($root->get_descendants()))
+    {
         my $new_member = $self->_climb_up_below_coap($old_member);
-        if ($new_member && $new_member != $old_member) {
+        if ($new_member && $new_member != $old_member)
+        {
             $new_member->set_is_member(1);
             $old_member->set_is_member(undef);
         }
     }
 }
 
-sub _climb_up_below_coap {
+sub _climb_up_below_coap
+{
     my $self = shift;
     my ($node) = @_;
-    if ($node->get_parent->is_root) {
-        log_warn('No co/ap node between a co/ap member and the tree root');
+    my $parent = $node->parent();
+    if ($parent->is_root())
+    {
+        log_warn('No Coord/Apos node between a member of coordination/apposition and the tree root');
+        log_warn($node->get_address()); # this is probably not the original member node but at least we tell the tree
         return;
     }
     # We cannot use $node->get_parent->is_coap_root because it queries the afun attribute while we use the deprel attribute.
-    elsif (defined($node->get_parent()->deprel()) && $node->get_parent()->deprel() =~ m/^(Coord|Apos)/) {
+    elsif (defined($parent->deprel()) && $parent->deprel() =~ m/^(Coord|Apos)/i)
+    {
         return $node;
     }
-    else {
-        return $self->_climb_up_below_coap($node->parent);
+    else
+    {
+        return $self->_climb_up_below_coap($parent);
     }
 }
 
