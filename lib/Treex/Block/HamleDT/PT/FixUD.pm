@@ -42,11 +42,6 @@ sub fix_morphology
         {
             $iset->clear('gender', 'number', 'person', 'verbform');
         }
-        # The person feature also cannot occur with non-pronominal nouns, adjectives and numerals.
-        if((($iset->is_noun() || $iset->is_adjective()) && !$iset->is_pronoun()) || $iset->is_numeral())
-        {
-            $iset->clear('person');
-        }
         # The verbform feature also cannot occur with pronouns, determiners and numerals.
         if($iset->is_pronoun() || $iset->is_numeral())
         {
