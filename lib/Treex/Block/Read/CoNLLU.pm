@@ -39,7 +39,8 @@ sub next_document {
             next LINE if $line =~ /^\s*$/;
             if ($line =~ s/^#\s*//) {
                 if ($line =~ m/sent_id\s+(.*)/) {
-                    $aroot->set_id( $1 );
+                    $bundle->set_id( $1 );
+                    $aroot->set_id( $1.'/'.$self->language );
                 }
                 else {
                     $comment .= "$line\n";

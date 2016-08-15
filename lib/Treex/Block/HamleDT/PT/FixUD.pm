@@ -11,10 +11,34 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
+    $self->fix_sent_id($root);
     $self->fix_morphology($root);
     $self->regenerate_upos($root);
     $self->fix_root_punct($root);
     $self->fix_case_mark($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Updates sentence id from "pt-s106" to just "s106" because Write::CoNLLU now
+# automatically adds the zone language and the resulting comment will read
+# sent_id s106/pt
+#------------------------------------------------------------------------------
+sub fix_sent_id
+{
+    my $self = shift;
+    my $root = shift;
+    my $zone = $root->get_zone();
+    my $bundle = $root->get_bundle();
+    # Both bundle id and tree id should be processed because we cannot be sure which one will be used by downstream blocks / applications.
+    my $language = $zone->language();
+    my $bid = $bundle->id();
+    my $tid = $root->id();
+    $bid =~ s/^$language-//;
+    $tid =~ s/^$language-//;
+    $bundle->set_id($bid) if($bid ne '');
+    $root->set_id($tid) if($tid ne '');
 }
 
 
@@ -123,19 +147,27 @@ sub fix_case_mark
 {
     my $self = shift;
     my $root = shift;
-    my @nodes = $root->get_descendants();
+    my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
         if($node->deprel() eq 'case')
         {
             my $parent = $node->parent();
             # Most prepositions modify infinitives: para preparar, en ir, de retornar...
-            # Some exceptions: desde hace cinco años
-            if($parent->is_infinitive() || $parent->form() =~ m/^hace$/i)
+            if($parent->is_infinitive())
             {
                 $node->set_deprel('mark');
             }
         }
+    }
+    # There is a bug caused by splitting preposition + determiner contractions:
+    # "desta vez" ("this time") is a MWE attached directly to the ROOT node.
+    if($nodes[0]->parent()->is_root() && $nodes[0]->form() eq 'De' &&
+       $nodes[1]->parent()->is_root() && $nodes[1]->form() eq 'esta')
+    {
+        $nodes[0]->set_deprel('root');
+        $nodes[1]->set_parent($nodes[0]);
+        $nodes[1]->set_deprel('mwe');
     }
 }
 
