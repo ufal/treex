@@ -39,8 +39,18 @@ sub next_document {
             next LINE if $line =~ /^\s*$/;
             if ($line =~ s/^#\s*//) {
                 if ($line =~ m/sent_id\s+(.*)/) {
-                    $bundle->set_id( $1 );
-                    $aroot->set_id( $1.'/'.$self->language );
+                    my $sid = $1;
+                    my $zid = $self->language();
+                    # Some CoNLL-U files already have sentence ids with "/language" suffix while others don't.
+                    if ($sid =~ s-/(.+)$--)
+                    {
+                        $zid = $1;
+                    }
+                    # Make sure that there are no additional slashes.
+                    $sid =~ s-/.*$--;
+                    $zid =~ s-/.*$--;
+                    $bundle->set_id( $sid );
+                    $aroot->set_id( "$sid/$zid" );
                 }
                 else {
                     $comment .= "$line\n";
