@@ -13,6 +13,7 @@ sub process_atree
     my $root = shift;
     $self->fix_sent_id($root);
     $self->fix_morphology($root);
+    $self->fix_auxiliary_verbs($root);
     $self->regenerate_upos($root);
     $self->fix_root_punct($root);
     $self->fix_case_mark($root);
@@ -99,6 +100,93 @@ sub fix_morphology
         {
             $iset->set('foreign', 'fscript');
         }
+        # The word "I" is wrongly tagged CONJ, although it is a Roman numeral or the English pronoun in names.
+        if($self->get_node_spanstring($node) =~ m/^(I &amp; D|I Do Not Want What I Haven't Got|I Wanna Live|I Want to Cross Over|Am I Not Your Girl\?)$/) #'
+        {
+            my @subtree = $self->get_node_subtree($node);
+            for(my $i = 0; $i <= $#subtree; $i++)
+            {
+                $iset->set_hash({}); # UPOS = X
+                if($i > 0)
+                {
+                    $subtree[$i]->set_parent($subtree[0]);
+                    $subtree[$i]->set_deprel('name');
+                }
+            }
+        }
+        elsif($form =~ m/^(I|II|III|IV|V|VI|VII|VIII|IX)$/)
+        # a I Divisão
+        # de a I Guerra Mundial
+        # de o I Congresso Nacional de Surdos... (subordinate clause)
+        # a Ponte de D.Luís I
+        # D.Maria I
+        # João Paulo I
+        # I -- ... (sentence number in a list)
+        {
+            $iset->set_hash({'pos' => 'adj', 'numtype' => 'ord', 'numform' => 'roman'});
+        }
+        # The word "si" is wrongly tagged SCONJ in multi-word expressions where it is PRON (SCONJ leaked from Spanish).
+        # Examples: em si, entre si, por si
+        if($form eq 'si' && $iset->is_subordinator() && $node->deprel() eq 'mwe')
+        {
+            $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => 'reflex', 'person' => 3, 'case' => 'acc', 'prepcase' => 'pre'});
+            $node->set_conll_pos('PRON') if($node->conll_pos() eq 'SCONJ');
+            # Change lemma from "si" to "se".
+            $node->set_lemma('se');
+        }
+        # The word "Nacional" in multi-word named entities is wrongly tagged PROPN, should be ADJ.
+        if($form eq 'Nacional' && $iset->is_proper_noun())
+        {
+            $iset->set('pos', 'adj');
+            $iset->clear('nountype');
+            $node->set_deprel('amod') if($node->deprel() eq 'name');
+        }
+        # The token "$/" should really read "/" and it should be tagged SYM. It usually has the "per" meaning. Example:
+        # pagar US$ 1,5 bilhão $/ ano
+        if($form eq '$/')
+        {
+            $node->set_form('/');
+            $node->set_lemma('/');
+            $iset->set_hash({'pos' => 'sym'});
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# There are dozens of verbs tagged AUX. Many of them occur only once and their
+# auxiliary status is highly suspicious.
+#------------------------------------------------------------------------------
+sub fix_auxiliary_verbs
+{
+    my $self = shift;
+    my $root = shift;
+    # The following verbs may occur as auxiliaries, at least in certain contexts (vir, passar, parecer, acabar, chegar and continuar are disputable).
+    my $re_aux = 'ter|haver|estar|ser|ir|poder|dever|vir|passar|parecer|acabar|chegar|continuar';
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        if($node->iset()->is_auxiliary() && $node->lemma() !~ m/^($re_aux)$/)
+        {
+            $node->iset()->set('verbtype', '');
+            # Often the parent is a verb which really should be treated as auxiliary.
+            # We have to check that our own deprel is aux or auxpass; in particular, it should not be conj.
+            my $parent = $node->parent();
+            if($node->deprel() =~ m/^aux(pass)?$/ && $parent->is_verb() && $parent->lemma() =~ m/^($re_aux)$/)
+            {
+                $node->set_parent($parent->parent());
+                $node->set_deprel($parent->deprel());
+                $parent->set_parent($node);
+                $parent->set_deprel('aux');
+                $parent->iset()->set('verbtype', 'aux');
+                my @pchildren = $parent->children();
+                foreach my $c (@pchildren)
+                {
+                    $c->set_parent($node);
+                }
+            }
+        }
     }
 }
 
@@ -169,6 +257,37 @@ sub fix_case_mark
         $nodes[1]->set_parent($nodes[0]);
         $nodes[1]->set_deprel('mwe');
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Collects all nodes in a subtree of a given node. Useful for fixing known
+# annotation errors, see also get_node_spanstring(). Returns ordered list.
+#------------------------------------------------------------------------------
+sub get_node_subtree
+{
+    my $self = shift;
+    my $node = shift;
+    my @nodes = $node->get_descendants({'add_self' => 1, 'ordered' => 1});
+    return @nodes;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Collects word forms of all nodes in a subtree of a given node. Useful to
+# uniquely identify sentences or their parts that are known to contain
+# annotation errors. (We do not want to use node IDs because they are not fixed
+# enough in all treebanks.) Example usage:
+# if($self->get_node_spanstring($node) =~ m/^peça a URV em a sua mesada$/)
+#------------------------------------------------------------------------------
+sub get_node_spanstring
+{
+    my $self = shift;
+    my $node = shift;
+    my @nodes = $self->get_node_subtree($node);
+    return join(' ', map {$_->form() // ''} (@nodes));
 }
 
 
