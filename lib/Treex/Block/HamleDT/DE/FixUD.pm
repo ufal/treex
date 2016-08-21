@@ -70,45 +70,45 @@ sub fix_morphology
             if($lemma eq 'ich')
             {
                 # Should we set case as well? Nom "ich", Dat "mir", Acc "mich".
-                $iset->set_hash({'prontype' => 'prs', 'person' => 1, 'number' => 'sing'});
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 1, 'number' => 'sing'});
             }
             elsif($lemma eq 'wir')
             {
                 # Nom "wir", Dat "uns", Acc "uns".
-                $iset->set_hash({'prontype' => 'prs', 'person' => 1, 'number' => 'plur'});
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 1, 'number' => 'plur'});
             }
             elsif($lemma eq 'du')
             {
                 # Nom "du", Dat "dir", Acc "dich".
-                $iset->set_hash({'prontype' => 'prs', 'person' => 2, 'number' => 'sing', 'politeness' => 'inf'});
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 2, 'number' => 'sing', 'politeness' => 'inf'});
             }
             elsif($lemma eq 'ihr')
             {
                 # Nom "ihr", Dat "euch", Acc "euch".
-                $iset->set_hash({'prontype' => 'prs', 'person' => 2, 'number' => 'plur', 'politeness' => 'inf'});
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 2, 'number' => 'plur', 'politeness' => 'inf'});
             }
             elsif($lemma eq 'er')
             {
                 # Nom "er", Dat "ihm", Acc "ihn".
-                $iset->set_hash({'prontype' => 'prs', 'person' => 3, 'number' => 'sing', 'gender' => 'masc'});
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 3, 'number' => 'sing', 'gender' => 'masc'});
             }
             elsif($lemma eq 'es')
             {
                 # Nom "es", Dat "ihm", Acc "ihn".
-                $iset->set_hash({'prontype' => 'prs', 'person' => 3, 'number' => 'sing', 'gender' => 'neut'});
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 3, 'number' => 'sing', 'gender' => 'neut'});
             }
             elsif($lemma eq 'sie')
             {
                 # Either singular feminine ("she"), or plural any gender ("they"). The lemma does not change.
                 # Fem Sing: Nom "sie", Dat "ihr", Acc "ihr".
                 # Plur:     Nom "sie", Dat "ihnen", Acc "ihnen".
-                $iset->set_hash({'prontype' => 'prs', 'person' => 3});
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 3});
             }
             elsif($lemma eq 'Sie|sie')
             {
                 # Usually polite 2nd person any number (semantically; formally it is 3rd person).
                 # But it could also be the above (normal 3rd person), capitalized because of sentence start.
-                $iset->set_hash({'prontype' => 'prs', 'person' => 2, 'politeness' => 'pol'});
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 2, 'politeness' => 'pol'});
             }
         }
     }
