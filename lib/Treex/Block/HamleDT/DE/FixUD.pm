@@ -12,7 +12,6 @@ sub process_atree
     my $self = shift;
     my $root = shift;
     $self->fix_morphology($root);
-    $self->fix_auxiliary_verbs($root);
     $self->regenerate_upos($root);
     $self->fix_root_punct($root);
 }
@@ -61,44 +60,6 @@ sub fix_morphology
         {
             $iset->set('prontype', 'art');
             $iset->set('definiteness', 'ind');
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# There are dozens of verbs tagged AUX. Many of them occur only once and their
-# auxiliary status is highly suspicious.
-#------------------------------------------------------------------------------
-sub fix_auxiliary_verbs
-{
-    my $self = shift;
-    my $root = shift;
-    # The following verbs may occur as auxiliaries, at least in certain contexts (vir, passar, parecer, acabar, chegar and continuar are disputable).
-    my $re_aux = 'ter|haver|estar|ser|ir|poder|dever|vir|passar|parecer|acabar|chegar|continuar';
-    my @nodes = $root->get_descendants({ordered => 1});
-    foreach my $node (@nodes)
-    {
-        if($node->iset()->is_auxiliary() && $node->lemma() !~ m/^($re_aux)$/)
-        {
-            $node->iset()->set('verbtype', '');
-            # Often the parent is a verb which really should be treated as auxiliary.
-            # We have to check that our own deprel is aux or auxpass; in particular, it should not be conj.
-            my $parent = $node->parent();
-            if($node->deprel() =~ m/^aux(pass)?$/ && $parent->is_verb() && $parent->lemma() =~ m/^($re_aux)$/)
-            {
-                $node->set_parent($parent->parent());
-                $node->set_deprel($parent->deprel());
-                $parent->set_parent($node);
-                $parent->set_deprel('aux');
-                $parent->iset()->set('verbtype', 'aux');
-                my @pchildren = $parent->children();
-                foreach my $c (@pchildren)
-                {
-                    $c->set_parent($node);
-                }
-            }
         }
     }
 }
