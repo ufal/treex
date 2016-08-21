@@ -62,15 +62,6 @@ sub fix_morphology
             $iset->set('prontype', 'art');
             $iset->set('definiteness', 'ind');
         }
-        # Mark words in foreign scripts.
-        my $letters_only = $form;
-        $letters_only =~ s/\PL//g;
-        # Exclude also Latin letters.
-        $letters_only =~ s/\p{Latin}//g;
-        if($letters_only ne '')
-        {
-            $iset->set('foreign', 'fscript');
-        }
     }
 }
 
