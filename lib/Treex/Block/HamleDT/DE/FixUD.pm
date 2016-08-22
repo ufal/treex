@@ -44,6 +44,7 @@ sub fix_morphology
             {
                 $node->iset()->set('verbform', 'part');
             }
+        }
     }
     foreach my $node (@nodes)
     {
