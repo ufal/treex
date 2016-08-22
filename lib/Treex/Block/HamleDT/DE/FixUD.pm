@@ -29,6 +29,7 @@ sub fix_morphology
     foreach my $node (@nodes)
     {
         my $form = $node->form();
+        my $lcform = lc($node->form());
         my $lemma = $node->lemma();
         my $iset = $node->iset();
         # Conll/pos contains the automatically predicted STTS POS tag.
@@ -69,46 +70,48 @@ sub fix_morphology
         {
             if($lemma eq 'ich')
             {
-                # Should we set case as well? Nom "ich", Dat "mir", Acc "mich".
-                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 1, 'number' => 'sing'});
+                my %case = ('ich' => 'nom', 'mir' => 'dat', 'mich' => 'acc');
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 1, 'number' => 'sing', 'case' => $case{$lcform}});
             }
             elsif($lemma eq 'wir')
             {
-                # Nom "wir", Dat "uns", Acc "uns".
-                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 1, 'number' => 'plur'});
+                my %case = ('wir' => 'nom', 'uns' => 'dat|acc');
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 1, 'number' => 'plur', 'case' => $case{$lcform}});
             }
             elsif($lemma eq 'du')
             {
-                # Nom "du", Dat "dir", Acc "dich".
-                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 2, 'number' => 'sing', 'politeness' => 'inf'});
+                my %case = ('ich' => 'nom', 'dir' => 'dat', 'dich' => 'acc');
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 2, 'number' => 'sing', 'politeness' => 'inf', 'case' => $case{$lcform}});
             }
             elsif($lemma eq 'ihr')
             {
-                # Nom "ihr", Dat "euch", Acc "euch".
-                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 2, 'number' => 'plur', 'politeness' => 'inf'});
+                my %case = ('ihr' => 'nom', 'euch' => 'dat|acc');
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 2, 'number' => 'plur', 'politeness' => 'inf', 'case' => $case{$lcform}});
             }
             elsif($lemma eq 'er')
             {
-                # Nom "er", Dat "ihm", Acc "ihn".
-                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 3, 'number' => 'sing', 'gender' => 'masc'});
+                my %case = ('er' => 'nom', 'ihm' => 'dat', 'ihn' => 'acc');
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 3, 'number' => 'sing', 'gender' => 'masc', 'case' => $case{$lcform}});
             }
             elsif($lemma eq 'es')
             {
-                # Nom "es", Dat "ihm", Acc "ihn".
-                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 3, 'number' => 'sing', 'gender' => 'neut'});
+                my %case = ('es' => 'nom', 'ihm' => 'dat', 'ihn' => 'acc');
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 3, 'number' => 'sing', 'gender' => 'neut', 'case' => $case{$lcform}});
             }
             elsif($lemma eq 'sie')
             {
                 # Either singular feminine ("she"), or plural any gender ("they"). The lemma does not change.
                 # Fem Sing: Nom "sie", Dat "ihr", Acc "ihr".
-                # Plur:     Nom "sie", Dat "ihnen", Acc "ihnen".
-                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 3});
+                # Plur:     Nom "sie", Dat "ihnen", Acc "sie".
+                my %case = ('ihr' => 'dat|acc', 'ihnen' => 'dat');
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 3, 'case' => $case{$lcform}});
             }
             elsif($lemma eq 'Sie|sie')
             {
                 # Usually polite 2nd person any number (semantically; formally it is 3rd person).
                 # But it could also be the above (normal 3rd person), capitalized because of sentence start.
-                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 2, 'politeness' => 'pol'});
+                my %case = ('Sie' => 'nom|acc', 'Ihnen' => 'dat');
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 2, 'politeness' => 'pol', 'case' => $case{$form}});
             }
         }
     }
