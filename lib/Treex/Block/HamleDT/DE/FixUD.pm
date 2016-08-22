@@ -86,37 +86,38 @@ sub fix_morphology
             }
         }
         # Fix personal pronouns.
-        if($node->is_pronoun() && $stts eq 'PPER')
+        if($node->is_pronoun() && $stts =~ m/^(PPER|PRF)$/)
         {
+            my $reflex = $stts eq 'PRF' ? 'reflex' : '';
             if($lemma eq 'ich')
             {
                 my %case = ('ich' => 'nom', 'mir' => 'dat', 'mich' => 'acc');
-                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 1, 'number' => 'sing', 'case' => $case{$lcform}});
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => $reflex, 'person' => 1, 'number' => 'sing', 'case' => $case{$lcform}});
             }
             elsif($lemma eq 'wir')
             {
                 my %case = ('wir' => 'nom', 'uns' => 'dat|acc');
-                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 1, 'number' => 'plur', 'case' => $case{$lcform}});
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => $reflex, 'person' => 1, 'number' => 'plur', 'case' => $case{$lcform}});
             }
             elsif($lemma eq 'du')
             {
                 my %case = ('du' => 'nom', 'dir' => 'dat', 'dich' => 'acc');
-                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 2, 'number' => 'sing', 'politeness' => 'inf', 'case' => $case{$lcform}});
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => $reflex, 'person' => 2, 'number' => 'sing', 'politeness' => 'inf', 'case' => $case{$lcform}});
             }
             elsif($lemma eq 'ihr')
             {
                 my %case = ('ihr' => 'nom', 'euch' => 'dat|acc');
-                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 2, 'number' => 'plur', 'politeness' => 'inf', 'case' => $case{$lcform}});
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => $reflex, 'person' => 2, 'number' => 'plur', 'politeness' => 'inf', 'case' => $case{$lcform}});
             }
             elsif($lemma eq 'er')
             {
                 my %case = ('er' => 'nom', 'ihm' => 'dat', 'ihn' => 'acc');
-                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 3, 'number' => 'sing', 'gender' => 'masc', 'case' => $case{$lcform}});
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => $reflex, 'person' => 3, 'number' => 'sing', 'gender' => 'masc', 'case' => $case{$lcform}});
             }
             elsif($lemma eq 'es')
             {
                 my %case = ('es' => 'nom|acc', "'s" => 'nom|acc', 'ihm' => 'dat');
-                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 3, 'number' => 'sing', 'gender' => 'neut', 'case' => $case{$lcform}});
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => $reflex, 'person' => 3, 'number' => 'sing', 'gender' => 'neut', 'case' => $case{$lcform}});
             }
             elsif($lemma eq 'sie')
             {
@@ -126,12 +127,12 @@ sub fix_morphology
                 if($lcform eq 'ihnen' || defined($fv) && lc($fv->form()) =~ m/(^sind|n)$/)
                 {
                     my %case = ('sie' => 'nom|acc', 'ihnen' => 'dat');
-                    $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 3, 'number' => 'plur', 'case' => $case{$lcform}});
+                    $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => $reflex, 'person' => 3, 'number' => 'plur', 'case' => $case{$lcform}});
                 }
                 else
                 {
                     my %case = ('sie' => 'nom|acc', 'ihr' => 'dat');
-                    $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 3, 'number' => 'sing', 'gender' => 'fem', 'case' => $case{$lcform}});
+                    $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => $reflex, 'person' => 3, 'number' => 'sing', 'gender' => 'fem', 'case' => $case{$lcform}});
                 }
             }
             elsif($lemma eq 'Sie|sie')
@@ -139,7 +140,11 @@ sub fix_morphology
                 # Usually polite 2nd person any number (semantically; formally it is 3rd person).
                 # But it could also be the above (normal 3rd person), capitalized because of sentence start.
                 my %case = ('Sie' => 'nom|acc', 'Ihnen' => 'dat');
-                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 2, 'politeness' => 'pol', 'case' => $case{$form}});
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => $reflex, 'person' => 2, 'politeness' => 'pol', 'case' => $case{$form}});
+            }
+            elsif($lemma eq 'er|es|sie') # reflexive "sich"
+            {
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => $reflex, 'person' => 3, 'case' => 'acc'});
             }
         }
     }
