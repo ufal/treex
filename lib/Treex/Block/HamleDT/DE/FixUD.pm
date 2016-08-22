@@ -88,7 +88,7 @@ sub fix_morphology
             }
             elsif($lemma eq 'du')
             {
-                my %case = ('ich' => 'nom', 'dir' => 'dat', 'dich' => 'acc');
+                my %case = ('du' => 'nom', 'dir' => 'dat', 'dich' => 'acc');
                 $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 2, 'number' => 'sing', 'politeness' => 'inf', 'case' => $case{$lcform}});
             }
             elsif($lemma eq 'ihr')
