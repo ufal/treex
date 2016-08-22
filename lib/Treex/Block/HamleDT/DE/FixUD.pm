@@ -115,7 +115,7 @@ sub fix_morphology
             }
             elsif($lemma eq 'es')
             {
-                my %case = ('es' => 'nom|acc', 'ihm' => 'dat', "'s" => 'acc');
+                my %case = ('es' => 'nom|acc', "'s" => 'nom|acc', 'ihm' => 'dat');
                 $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 3, 'number' => 'sing', 'gender' => 'neut', 'case' => $case{$lcform}});
             }
             elsif($lemma eq 'sie')
