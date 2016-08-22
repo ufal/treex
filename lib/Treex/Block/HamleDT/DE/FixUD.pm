@@ -29,10 +29,21 @@ sub fix_morphology
     # Identify finite verbs first. We will need them later to disambiguate personal pronouns.
     foreach my $node (@nodes)
     {
-        if($node->is_verb() && $node->conll_pos() =~ m/^V[VMA]FIN$/)
+        if($node->is_verb())
         {
-            $node->iset()->set('verbform', 'fin');
-        }
+            my $stts = $node->conll_pos();
+            if($stts =~ m/^V[VMA]FIN$/)
+            {
+                $node->iset()->set('verbform', 'fin');
+            }
+            elsif($stts =~ m/^V[VMA]INF$/)
+            {
+                $node->iset()->set('verbform', 'inf');
+            }
+            elsif($stts =~ m/^V[VMA]PP$/)
+            {
+                $node->iset()->set('verbform', 'part');
+            }
     }
     foreach my $node (@nodes)
     {
@@ -103,7 +114,7 @@ sub fix_morphology
             }
             elsif($lemma eq 'es')
             {
-                my %case = ('es' => 'nom|acc', 'ihm' => 'dat');
+                my %case = ('es' => 'nom|acc', 'ihm' => 'dat', "'s" => 'acc');
                 $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 3, 'number' => 'sing', 'gender' => 'neut', 'case' => $case{$lcform}});
             }
             elsif($lemma eq 'sie')
