@@ -26,6 +26,14 @@ sub fix_morphology
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants({ordered => 1});
+    # Identify finite verbs first. We will need them later to disambiguate personal pronouns.
+    foreach my $node (@nodes)
+    {
+        if($node->is_verb() && $node->conll_pos() =~ m/^V[VMA]FIN$/)
+        {
+            $node->iset()->set('verbform', 'fin');
+        }
+    }
     foreach my $node (@nodes)
     {
         my $form = $node->form();
@@ -101,10 +109,18 @@ sub fix_morphology
             elsif($lemma eq 'sie')
             {
                 # Either singular feminine ("she"), or plural any gender ("they"). The lemma does not change.
-                # Fem Sing: Nom "sie", Dat "ihr", Acc "ihr".
-                # Plur:     Nom "sie", Dat "ihnen", Acc "sie".
-                my %case = ('ihr' => 'dat|acc', 'ihnen' => 'dat');
-                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 3, 'case' => $case{$lcform}});
+                # Try to disambiguate based on the form of the governing finite verb.
+                my $fv = $self->get_parent_finite_verb($node);
+                if($lcform eq 'ihnen' || defined($fv) && lc($fv->form()) =~ m/(^sind|n)$/)
+                {
+                    my %case = ('sie' => 'nom|acc', 'ihnen' => 'dat');
+                    $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 3, 'number' => 'plur', 'case' => $case{$lcform}});
+                }
+                else
+                {
+                    my %case = ('sie' => 'nom|acc', 'ihr' => 'dat');
+                    $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 3, 'number' => 'sing', 'gender' => 'fem', 'case' => $case{$lcform}});
+                }
             }
             elsif($lemma eq 'Sie|sie')
             {
@@ -115,6 +131,25 @@ sub fix_morphology
             }
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Identifies and returns the finite verb governing a node. If the parent is
+# not a finite verb, looks for auxiliary/copula siblings.
+#------------------------------------------------------------------------------
+sub get_parent_finite_verb
+{
+    my $self = shift;
+    my $node = shift;
+    my $parent = $node->parent();
+    return $parent if($parent->is_finite_verb());
+    my @siblings = grep {$_ != $node} $parent->children();
+    # Note that there may be other finite siblings that we are not interested in, such as subordinate predicates.
+    my @result = grep {$_->deprel() =~ m/^(aux|auxpass|cop)$/ && $_->is_finite_verb()} @siblings;
+    my $result = scalar(@result) >= 1 ? $result[0] : undef;
+    return $result;
 }
 
 
