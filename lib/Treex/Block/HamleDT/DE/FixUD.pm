@@ -174,7 +174,7 @@ sub fix_morphology
             }
             elsif($lemma eq 'er|es|sie') # reflexive "sich"
             {
-                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => $reflex, 'person' => 3, 'case' => 'acc'});
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => $reflex, 'person' => 3, 'case' => 'dat|acc'});
             }
         }
     }
