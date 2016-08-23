@@ -102,8 +102,17 @@ sub fix_morphology
             }
             elsif($lemma eq 'ein' && $stts eq 'ART')
             {
-                $iset->set('prontype', 'art');
-                $iset->set('definiteness', 'ind');
+                # The UPOSTAG was assigned manually while the STTS XPOSTAG was predicted automatically.
+                # If XPOS=ART co-occurs with UPOS=PRON (not compatible), we believe the UPOSTAG and treat the word as indefinite pronoun.
+                if($node->is_determiner())
+                {
+                    $iset->set('prontype', 'art');
+                    $iset->set('definiteness', 'ind');
+                }
+                else
+                {
+                    $iset->set('prontype', 'ind');
+                }
             }
         }
         # Fix personal pronouns.
