@@ -69,15 +69,27 @@ sub fix_morphology
         {
             $iset->clear('mood', 'tense');
         }
-        # Fix articles. Warning: the indefinite article, "ein", may also be a numeral. The definite article, "der", may also be a relative pronoun.
-        if($node->is_determiner())
+        # Fix articles. Warning: the indefinite article, "ein", may also be a numeral.
+        # The definite article, "der", may also be a demonstrative or relative pronoun.
+        if($node->is_pronominal())
         {
-            if($lemma eq 'd' && $stts eq 'ART')
+            if($lemma eq 'd')
             {
                 $lemma = 'der';
                 $node->set_lemma($lemma);
-                $iset->set('prontype', 'art');
-                $iset->set('definiteness', 'def');
+                if($stts eq 'ART')
+                {
+                    $iset->set('prontype', 'art');
+                    $iset->set('definiteness', 'def');
+                }
+                elsif($stts eq 'PDS')
+                {
+                    $iset->set('prontype', 'dem');
+                }
+                elsif($stts eq 'PRELS')
+                {
+                    $iset->set('prontype', 'rel');
+                }
             }
             elsif($lemma eq 'ein' && $stts eq 'ART')
             {
