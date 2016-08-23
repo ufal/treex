@@ -272,10 +272,78 @@ sub assign_automatic_grammatemes {
 
     elsif ( $t_lemma =~ /^(já|my|ty|vy|on|#PersPron)$/ && !$t_node->get_lex_anode ) {
         $t_node->set_gram_sempos('n.pron.def.pers');
-        set_gn_by_verb_agreement( $t_node, 'number', $temp_attrs );
-        set_gn_by_verb_agreement( $t_node, 'gender', $temp_attrs );
+        #set_gn_by_verb_agreement( $t_node, 'number', $temp_attrs );
+        #set_gn_by_verb_agreement( $t_node, 'gender', $temp_attrs );
         $t_node->set_gram_politeness('basic');
-        $t_node->set_gram_person('3');
+        #$t_node->set_gram_person('3');
+
+        # copied from A2T/CS/AddPersPron
+        my ($par) = $t_node->get_eparents();
+        
+        my @anode_tags = map { $_->tag } ( $par->get_lex_anode, $par->get_aux_anodes );
+        my ( $person, $gender, $number );
+
+        # TODO the verb can be just "to be", so take dependent adjectives into account
+
+        if ( grep { $_ =~ /^(V.|J,).....1/ } @anode_tags ) { # include 'kdybychom', 'abychom'
+            $person = "1";
+        }
+        elsif ( grep { $_ =~ /^(V.|J,).....2/ } @anode_tags ) { # include 'kdybys(te)', 'abys(te)'
+            $person = "2";
+        }
+        else {
+            $person = "3";
+        }
+
+        if ( grep { $_ =~ /^V..P/ } @anode_tags ) {
+            $number = 'pl';
+        }
+        elsif ( grep { $_ =~ /^V..S/ } @anode_tags ) {
+            $number = 'sg';
+        }
+        # in fact, this can appear just with 'Q' gender
+        elsif ( grep { $_ =~ /^V..W/ } @anode_tags ) {
+            $number = 'sg|pl';
+        }
+        # number position is '-'
+        else {
+            $number = 'sg|pl';
+        }
+
+        if ( grep { $_ =~ /^V.Q/ } @anode_tags ) {    # napraseno !!! ve skutecnosti je poznani rodu daleko tezsi
+            $gender = 'fem|neut';
+        }
+        # in fact, it can appear just in singular
+        elsif ( grep { $_ =~ /^V.N/ } @anode_tags ) {
+            $gender = 'neut';
+        }
+        # in fact, it can appear just in plural
+        elsif ( grep { $_ =~ /^V.M/ } @anode_tags ) {
+            $gender = 'anim';
+        }
+        elsif ( grep { $_ =~ /^V.Y/ } @anode_tags ) {
+            $gender = 'anim|inan';
+        }
+        # in fact, it can appear just in plural
+        elsif ( grep { $_ =~ /^V.T/ } @anode_tags ) {
+            $gender = 'inan|fem';
+        }
+        elsif ( grep { $_ =~ /^V.H/ } @anode_tags ) {
+            $gender = 'fem|neut';
+        }
+        # gender position is '-'
+        else {
+            $gender = 'anim|inan|fem|neut';
+        }
+        # evidence from the data - gender of the generated perspron can be anything, 
+        # if the verb is in present tense and 1st or 2nd person
+        #elsif ( grep {$_ =~ /^VB-.---[12]P.*/} @anode_tags ) {
+        #    $gender = 'nr';
+        #}
+
+        $t_node->set_gram_person($person);
+        $t_node->set_gram_gender($gender);
+        $t_node->set_gram_number($number);
 
         #??? dodelat osoby
         #       set_attr($t_node,'t_lemma','#PersPron');
