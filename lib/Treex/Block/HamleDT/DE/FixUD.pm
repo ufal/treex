@@ -84,12 +84,12 @@ sub fix_morphology
                     if($node->is_determiner())
                     {
                         $iset->set('prontype', 'art');
+                        $iset->set('definiteness', 'def');
                     }
                     else
                     {
                         $iset->set('prontype', 'dem');
                     }
-                    $iset->set('definiteness', 'def');
                 }
                 elsif($stts =~ m/^PD(S|AT)$/)
                 {
