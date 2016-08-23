@@ -79,14 +79,23 @@ sub fix_morphology
                 $node->set_lemma($lemma);
                 if($stts eq 'ART')
                 {
-                    $iset->set('prontype', 'art');
+                    # The UPOSTAG was assigned manually while the STTS XPOSTAG was predicted automatically.
+                    # If XPOS=ART co-occurs with UPOS=PRON (not compatible), we believe the UPOSTAG and treat the word as demonstrative pronoun.
+                    if($node->is_determiner())
+                    {
+                        $iset->set('prontype', 'art');
+                    }
+                    else
+                    {
+                        $iset->set('prontype', 'dem');
+                    }
                     $iset->set('definiteness', 'def');
                 }
-                elsif($stts eq 'PDS')
+                elsif($stts =~ m/^PD(S|AT)$/)
                 {
                     $iset->set('prontype', 'dem');
                 }
-                elsif($stts eq 'PRELS')
+                elsif($stts =~ m/^PREL(S|AT)$/)
                 {
                     $iset->set('prontype', 'rel');
                 }
