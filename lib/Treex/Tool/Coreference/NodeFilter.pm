@@ -29,7 +29,8 @@ sub get_types {
     if (Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {skip_nonref => 1})) {
         $types->{'#perspron.coref'} = 1;
     }
-    if (Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {expressed => 0, reflexive => -1})) {
+    if (Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {expressed => 1, reflexive => -1}) || 
+        Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_prodrop($node, {parent_pos => 'v_expr', functor => 'ACT'})) {
         $types->{'#perspron.no_refl'} = 1;
         $types->{all_anaph} = 1;
     }
