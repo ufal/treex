@@ -219,13 +219,13 @@ sub fix_morphology
             {
                 # We have already solved "der, die, das" above.
                 # PDS dies
-                # PDAT dies
+                # PDAT dies derselbe selb diejenige
                 $iset->set_hash({'pos' => $pos, 'prontype' => 'dem'});
             }
             elsif($stts =~ m/^PW(S|AT)$/)
             {
                 # PWS wer was welch
-                # PWAT welch
+                # PWAT welch wieviel
                 $iset->set_hash({'pos' => $pos, 'prontype' => 'int'});
                 if($lemma =~ m/^(wer|was)$/)
                 {
@@ -241,8 +241,31 @@ sub fix_morphology
                     $iset->set('number', 'sing');
                 }
             }
-            # PIAT alle jed kein keinerlei beide ein was einiges einige solch meist mehr viel paar mehrere
-            # PIS man jemand alle nix ander wenig etwas nichts
+            elsif($stts =~ m/^PI(S|AT)$/)
+            {
+                # PIAT alle jed kein keinerlei beide ein was einiges einige solch meist mehr viel paar mehrere
+                # PIS man jemand alle nix ander wenig etwas nichts
+                if($lemma =~ m/^(niemand|nichts|nix)$/)
+                {
+                    $iset->set_hash({'pos' => $pos, 'prontype' => 'neg', 'number' => 'sing'});
+                }
+                elsif($lemma =~ m/^(kein|keinerlei)$/)
+                {
+                    $iset->set_hash({'pos' => $pos, 'prontype' => 'neg'});
+                }
+                elsif($lemma =~ m/^(alle|jed)$/)
+                {
+                    $iset->set_hash({'pos' => $pos, 'prontype' => 'tot'});
+                }
+                elsif($lemma eq 'beide')
+                {
+                    $iset->set_hash({'pos' => $pos, 'prontype' => 'tot', 'numtype' => 'card'});
+                }
+                else
+                {
+                    $iset->set_hash({'pos' => $pos, 'prontype' => 'ind'});
+                }
+            }
         }
     }
 }
