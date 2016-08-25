@@ -184,14 +184,14 @@ sub fix_morphology
             if($lemma eq 'mein')
             {
                 $iset->set('prontype' => 'prs');
-                $iset->set('poss' => 'poss')
+                $iset->set('poss' => 'poss');
                 $iset->set('person' => 1);
                 $iset->set('possnumber' => 'sing');
             }
             elsif($lemma eq 'dein')
             {
                 $iset->set('prontype' => 'prs');
-                $iset->set('poss' => 'poss')
+                $iset->set('poss' => 'poss');
                 $iset->set('person' => 2);
                 $iset->set('politeness' => 'inf');
                 $iset->set('possnumber' => 'sing');
@@ -199,7 +199,7 @@ sub fix_morphology
             elsif($lemma eq 'sein')
             {
                 $iset->set('prontype' => 'prs');
-                $iset->set('poss' => 'poss')
+                $iset->set('poss' => 'poss');
                 $iset->set('person' => 3);
                 $iset->set('possnumber' => 'sing');
                 $iset->set('possgender' => 'masc|neut');
@@ -208,20 +208,20 @@ sub fix_morphology
             {
                 # It can mean either "her" or "their".
                 $iset->set('prontype' => 'prs');
-                $iset->set('poss' => 'poss')
+                $iset->set('poss' => 'poss');
                 $iset->set('person' => 3);
             }
             elsif($lemma eq 'unser')
             {
                 $iset->set('prontype' => 'prs');
-                $iset->set('poss' => 'poss')
+                $iset->set('poss' => 'poss');
                 $iset->set('person' => 1);
                 $iset->set('possnumber' => 'plur');
             }
             elsif($lemma eq 'euer')
             {
                 $iset->set('prontype' => 'prs');
-                $iset->set('poss' => 'poss')
+                $iset->set('poss' => 'poss');
                 $iset->set('person' => 2);
                 $iset->set('politeness' => 'inf');
                 $iset->set('possnumber' => 'plur');
