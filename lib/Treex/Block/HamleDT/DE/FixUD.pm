@@ -149,6 +149,13 @@ sub fix_morphology
                 my %case = ('es' => 'nom|acc', "'s" => 'nom|acc', 'ihm' => 'dat');
                 $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => $reflex, 'person' => 3, 'number' => 'sing', 'gender' => 'neut', 'case' => $case{$lcform}});
             }
+            # For strange reasons, capitalized "Ihm" has the lemma "er|er|es".
+            elsif($lemma eq 'er|er|es')
+            {
+                $lemma = 'er|es';
+                $node->set_lemma($lemma);
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => $reflex, 'person' => 3, 'number' => 'sing', 'gender' => 'masc|neut', 'case' => 'dat'});
+            }
             elsif($lemma eq 'sie')
             {
                 # Either singular feminine ("she"), or plural any gender ("they"). The lemma does not change.
@@ -265,6 +272,159 @@ sub fix_morphology
                 {
                     $iset->set_hash({'pos' => $pos, 'prontype' => 'ind'});
                 }
+            }
+            # Some words have manual UPOS PRON but their predicted XPOS is not pronominal.
+            # "mit" = "with" is a preposition (PRON PTKVZ) but this case is typo, it should read "mir" and mean "me"
+            elsif($stts eq 'PTKVZ' and $lemma eq 'mit')
+            {
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 1, 'number' => 'sing', 'case' => 'dat', 'typo' => 'typo'});
+                $lemma = 'ich';
+                $node->set_lemma($lemma);
+                $stts = 'PPER';
+                $node->set_conll_pos($stts);
+            }
+            # "in" = "in" is a preposition (PRON APPR) but these cases are typos, they should read "ihn" and mean "him"
+            elsif($stts eq 'APPR' and $lemma eq 'in')
+            {
+                $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'person' => 3, 'number' => 'sing', 'gender' => 'masc', 'case' => 'acc', 'typo' => 'typo'});
+                $lemma = 'er';
+                $node->set_lemma($lemma);
+                $stts = 'PPER';
+                $node->set_conll_pos($stts);
+            }
+            elsif($lemma eq 'meinen') # "meine", "meinen" tagged PRON VVFIN, mistaken for the verb "meinen" = "to mean"
+            {
+                $iset->set_hash({'pos' => $pos, 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'possnumber' => 'sing'});
+                $lemma = 'mein';
+                $node->set_lemma($lemma);
+                $stts = 'PPOSAT';
+                $node->set_conll_pos($stts);
+            }
+            # "ebendieses" = "right this" (PRON ADV)
+            elsif($lemma eq 'ebendieses')
+            {
+                $iset->set_hash({'pos' => $pos, 'prontype' => 'dem'});
+                $lemma = 'ebendies';
+                $node->set_lemma($lemma);
+                $stts = 'PDAT';
+                $node->set_conll_pos($stts);
+            }
+            # "selbst" = "self" (PRON ADV)
+            elsif($lemma eq 'selbst')
+            {
+                $iset->set_hash({'pos' => $pos, 'prontype' => 'dem', 'reflex' => 'reflex'});
+            }
+            # "etwas" = "something" (PRON ADV)
+            # "irgendetwas" = "something" (PRON ADV)
+            elsif($lemma =~ m/^(etwas|irgendetwas)$/)
+            {
+                $iset->set_hash({'pos' => $pos, 'prontype' => 'ind'});
+                $stts = 'PIS';
+                $node->set_conll_pos($stts);
+            }
+            # "anderer" = "other" (tagged PRON ADJA, i.e. adjective)
+            # "eigige" is typo, should be "einige" = "some" (PRON ADJA)
+            # "genug" = "enough" (PRON ADV)
+            # "mehr" = "more" (PRON ADV)
+            # "soviel" = "so much" (PRON ADV)
+            # "viel" = "much" (PRON ADV)
+            # "wenig" = "little" (PRON ADV)
+            # "weniger" = "less" (PRON ADV)
+            # "zahlreich" = "numerous" (PRON ADJA)
+            elsif($lemma =~ m/^(ander|eigige|genug|mehr|soviel|viel|wenig(er)?|zahlreich)$/)
+            {
+                $iset->set_hash({'pos' => $pos, 'prontype' => 'ind'});
+                $stts = 'PIAT';
+                $node->set_conll_pos($stts);
+            }
+            # "einen" (PRON ADJA)
+            elsif($lemma eq 'einen')
+            {
+                $iset->set_hash({'pos' => $pos, 'prontype' => 'ind'});
+                $lemma = 'ein';
+                $node->set_lemma($lemma);
+                $stts = 'PIAT';
+                $node->set_conll_pos($stts);
+            }
+            # "mehren" (PRON VVFIN)
+            elsif($lemma eq 'mehren')
+            {
+                $iset->set_hash({'pos' => $pos, 'prontype' => 'ind'});
+                $lemma = 'mehr';
+                $node->set_lemma($lemma);
+                $stts = 'PIAT';
+                $node->set_conll_pos($stts);
+            }
+            # "keinster" = "no" (PRON ADJA)
+            elsif($lemma eq 'keinster')
+            {
+                $iset->set_hash({'pos' => $pos, 'prontype' => 'neg'});
+                $stts = 'PIAT';
+                $node->set_conll_pos($stts);
+            }
+            # "sämtlich" = "all, entire" (PRON ADJA)
+            elsif($lemma eq 'sämtlich')
+            {
+                $iset->set_hash({'pos' => $pos, 'prontype' => 'tot'});
+                $stts = 'PIAT';
+                $node->set_conll_pos($stts);
+            }
+            # "warum" = "why" (PRON PWAV)
+            # "wie" = "how" (PRON PWAV) ... we must check PWAV here because it could be also conjunction "as"
+            # "wo" = "where" (PRON PWAV)
+            elsif($lemma =~ m/^(warum|wie|wo)$/ && $stts eq 'PWAV')
+            {
+                $iset->set_hash({'pos' => 'adv', 'prontype' => 'int'});
+            }
+            # "da" + preposition can be demonstrative or relative pronouns or adverbs (PRON PAV)
+            # examples: dadurch, dafür, damit, danach, darauf, darin, darüber, darum, davon, dazu
+            elsif($stts eq 'PAV' && $lemma =~ m/^da/)
+            {
+                $iset->set_hash({'pos' => $pos, 'prontype' => 'dem|rel'});
+            }
+            # "wo" + preposition can be interrogative or relative pronouns or adverbs (PRON PWAV)
+            # examples: wodurch, womit, wonach, worauf, worüber, wovon, wozu
+            elsif($stts eq 'PWAV' && $lemma =~ m/^wo/)
+            {
+                $iset->set_hash({'pos' => $pos, 'prontype' => 'int|rel'});
+            }
+            # nouns (tagging errors): Auszug, Männchen
+            elsif($stts eq 'NN')
+            {
+                $iset->set_hash({'pos' => 'noun', 'nountype' => 'com'});
+            }
+            elsif($stts eq 'NE')
+            {
+                $iset->set_hash({'pos' => 'noun', 'nountype' => 'prop'});
+            }
+            # adjectives: erster, zweiter, weiterer, letzter, gleicher etc.
+            elsif($stts eq 'ADJA')
+            {
+                my $numtype = $lemma =~ m/^(erst|zweit)$/ ? 'ord' : '';
+                $iset->set_hash({'pos' => 'adj', 'numtype' => $numtype});
+            }
+            # "heraus" = "out" (PRON ADV)
+            elsif($lemma eq 'heraus')
+            {
+                $iset->set_hash({'pos' => 'adv'});
+            }
+            # "dass" = "that" is a subordinating conjunction (PRON KOUS)
+            # "wie" = "as" can be also comparative conjunction (PRON KOKOM) but the two occurrences should be KOUS and ADV ("how")
+            elsif($stts =~ m/^(KOUS|KOKOM)$/)
+            {
+                $iset->set_hash({'pos' => 'conj', 'conjtype' => 'sub'});
+            }
+            # "nicht" = "not" is a negative particle (PRON PTKNEG)
+            elsif($stts eq 'PTKNEG')
+            {
+                $iset->set_hash({'pos' => 'part', 'negativeness' => 'neg'});
+            }
+            # Foreign pronouns and determiners should not get the PRON/DET tag.
+            # Examples: I, you, what, the
+            # "we" is tagged PRON VVFIN
+            elsif($stts eq 'FM' || $lemma eq 'we')
+            {
+                $iset->set_hash({'foreign' => 'foreign'});
             }
         }
     }
