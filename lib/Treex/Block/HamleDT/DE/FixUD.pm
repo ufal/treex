@@ -177,61 +177,43 @@ sub fix_morphology
                 $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => $reflex, 'person' => 3, 'case' => 'dat|acc'});
             }
         }
-        # Possessive pronouns.
-        elsif($node->is_pronominal() && $stts eq 'PPOSAT')
+        elsif($node->is_pronominal())
         {
-            # Do not use set_hash(). We do not want to change pos because we do not want to change PRON <--> DET at this stage.
-            if($lemma eq 'mein')
+            # We do not want to change pos because we do not want to change PRON <--> DET at this stage.
+            my $pos = $iset->pos();
+            # Possessive pronouns.
+            if($stts eq 'PPOSAT')
             {
-                $iset->set('prontype' => 'prs');
-                $iset->set('poss' => 'poss');
-                $iset->set('person' => 1);
-                $iset->set('possnumber' => 'sing');
-            }
-            elsif($lemma eq 'dein')
-            {
-                $iset->set('prontype' => 'prs');
-                $iset->set('poss' => 'poss');
-                $iset->set('person' => 2);
-                $iset->set('politeness' => 'inf');
-                $iset->set('possnumber' => 'sing');
-            }
-            elsif($lemma eq 'sein')
-            {
-                $iset->set('prontype' => 'prs');
-                $iset->set('poss' => 'poss');
-                $iset->set('person' => 3);
-                $iset->set('possnumber' => 'sing');
-                $iset->set('possgender' => 'masc|neut');
-            }
-            elsif($lemma eq 'ihr')
-            {
-                # It can mean either "her" or "their".
-                $iset->set('prontype' => 'prs');
-                $iset->set('poss' => 'poss');
-                $iset->set('person' => 3);
-            }
-            elsif($lemma eq 'unser')
-            {
-                $iset->set('prontype' => 'prs');
-                $iset->set('poss' => 'poss');
-                $iset->set('person' => 1);
-                $iset->set('possnumber' => 'plur');
-            }
-            elsif($lemma eq 'euer')
-            {
-                $iset->set('prontype' => 'prs');
-                $iset->set('poss' => 'poss');
-                $iset->set('person' => 2);
-                $iset->set('politeness' => 'inf');
-                $iset->set('possnumber' => 'plur');
-            }
-            elsif($lemma eq 'Ihr|ihr')
-            {
-                # It can mean either polite "your" (anywhere), or "her" or "their" (at sentence start or else where capitalization is required).
-                $iset->set('prontype' => 'prs');
-                $iset->set('poss' => 'poss');
-                $iset->set('person' => '2|3');
+                if($lemma eq 'mein')
+                {
+                    $iset->set_hash({'pos' => $pos, 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'possnumber' => 'sing'});
+                }
+                elsif($lemma eq 'dein')
+                {
+                    $iset->set_hash({'pos' => $pos, 'prontype' => 'prs', 'poss' => 'poss', 'person' => 2, 'politeness' => 'inf', 'possnumber' => 'sing'});
+                }
+                elsif($lemma eq 'sein')
+                {
+                    $iset->set_hash({'pos' => $pos, 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3, 'possnumber' => 'sing', 'possgender' => 'masc|neut'});
+                }
+                elsif($lemma eq 'ihr')
+                {
+                    # It can mean either "her" or "their".
+                    $iset->set_hash({'pos' => $pos, 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3});
+                }
+                elsif($lemma eq 'unser')
+                {
+                    $iset->set_hash({'pos' => $pos, 'prontype' => 'prs', 'poss' => 'poss', 'person' => 1, 'possnumber' => 'plur'});
+                }
+                elsif($lemma eq 'euer')
+                {
+                    $iset->set_hash({'pos' => $pos, 'prontype' => 'prs', 'poss' => 'poss', 'person' => 2, 'politeness' => 'inf', 'possnumber' => 'plur'});
+                }
+                elsif($lemma eq 'Ihr|ihr')
+                {
+                    # It can mean either polite "your" (anywhere), or "her" or "their" (at sentence start or else where capitalization is required).
+                    $iset->set_hash({'pos' => $pos, 'prontype' => 'prs', 'poss' => 'poss', 'person' => '2|3'});
+                }
             }
         }
     }
