@@ -215,6 +215,34 @@ sub fix_morphology
                     $iset->set_hash({'pos' => $pos, 'prontype' => 'prs', 'poss' => 'poss', 'person' => '2|3'});
                 }
             }
+            elsif($stts =~ m/^PD(S|AT)$/)
+            {
+                # We have already solved "der, die, das" above.
+                # PDS dies
+                # PDAT dies
+                $iset->set_hash({'pos' => $pos, 'prontype' => 'dem'});
+            }
+            elsif($stts =~ m/^PW(S|AT)$/)
+            {
+                # PWS wer was welch
+                # PWAT welch
+                $iset->set_hash({'pos' => $pos, 'prontype' => 'int'});
+                if($lemma =~ m/^(wer|was)$/)
+                {
+                    $iset->set('number', 'sing');
+                }
+            }
+            elsif($stts =~ m/^PREL(S|AT)$/)
+            {
+                # PRELS was
+                $iset->set_hash({'pos' => $pos, 'prontype' => 'rel'});
+                if($lemma =~ m/^(wer|was)$/)
+                {
+                    $iset->set('number', 'sing');
+                }
+            }
+            # PIAT alle jed kein keinerlei beide ein was einiges einige solch meist mehr viel paar mehrere
+            # PIS man jemand alle nix ander wenig etwas nichts
         }
     }
 }
