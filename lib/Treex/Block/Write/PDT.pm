@@ -348,9 +348,10 @@ Optional XML pretty printing (e.g. via xmllint --format), but anyone can do this
 =head1 AUTHOR
 
 Martin Popel <popel@ufal.mff.cuni.cz>
+Jiri Mirovsky <mirovsky@ufal.mff.cuni.cz> (bridging and discourse related parts)
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2012-2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
