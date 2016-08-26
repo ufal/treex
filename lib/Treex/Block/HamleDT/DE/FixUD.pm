@@ -101,20 +101,26 @@ sub fix_morphology
                 }
             }
             # The indefinite article has lemma "ein" but sometimes also "eine".
-            elsif($lemma =~ m/^eine?$/ && $stts eq 'ART')
+            # The form "ne" is a shortcut for "eine".
+            elsif($lemma =~ m/^(eine?|ne)$/)
             {
                 $lemma = 'ein';
                 $node->set_lemma($lemma);
                 # The UPOSTAG was assigned manually while the STTS XPOSTAG was predicted automatically.
                 # If XPOS=ART co-occurs with UPOS=PRON (not compatible), we believe the UPOSTAG and treat the word as indefinite pronoun.
+                # Sometimes the XPOSTAG is not ART but PTKVZ, but UPOSTAG is DET. So the annotator thought it was article but the tagger mistook it for separable verb prefix.
                 if($node->is_determiner())
                 {
                     $iset->set('prontype', 'art');
                     $iset->set('definiteness', 'ind');
+                    $stts = 'ART';
+                    $node->set_conll_pos($stts);
                 }
                 else
                 {
                     $iset->set('prontype', 'ind');
+                    $stts = 'PIS';
+                    $node->set_conll_pos($stts);
                 }
             }
         }
