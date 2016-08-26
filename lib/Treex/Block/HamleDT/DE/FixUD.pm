@@ -100,8 +100,11 @@ sub fix_morphology
                     $iset->set('prontype', 'rel');
                 }
             }
-            elsif($lemma eq 'ein' && $stts eq 'ART')
+            # The indefinite article has lemma "ein" but sometimes also "eine".
+            elsif($lemma =~ m/^eine?$/ && $stts eq 'ART')
             {
+                $lemma = 'ein';
+                $node->set_lemma($lemma);
                 # The UPOSTAG was assigned manually while the STTS XPOSTAG was predicted automatically.
                 # If XPOS=ART co-occurs with UPOS=PRON (not compatible), we believe the UPOSTAG and treat the word as indefinite pronoun.
                 if($node->is_determiner())
