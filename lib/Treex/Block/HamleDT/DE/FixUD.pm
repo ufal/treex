@@ -100,9 +100,10 @@ sub fix_morphology
                     $iset->set('prontype', 'rel');
                 }
             }
-            # The indefinite article has lemma "ein" but sometimes also "eine".
+            # The indefinite article has lemma "ein" but sometimes also "eine", "ne" or "eins".
             # The form "ne" is a shortcut for "eine".
-            elsif($lemma =~ m/^(eine?|ne)$/)
+            # The form "eins" (if not cardinal numeral) is a shortcut for "eines".
+            elsif($lemma =~ m/^(ein[es]?|ne)$/)
             {
                 $lemma = 'ein';
                 $node->set_lemma($lemma);
@@ -125,7 +126,10 @@ sub fix_morphology
             }
         }
         # Fix personal pronouns.
-        if($node->is_pronoun() && $stts =~ m/^(PPER|PRF)$/)
+        # There are a few cases where the UPOSTAG of a (non-possessive) personal pronoun is DET instead of PRON.
+        # These are errors and we will correct them (we ask for is_pronominal(), not is_pronoun(), but then set pos to noun).
+        # However, the word "ihr" can also be a possessive determiner and here the error may be in XPOSTAG!
+        if($node->is_pronominal() && $stts =~ m/^(PPER|PRF)$/)
         {
             my $reflex = $stts eq 'PRF' ? 'reflex' : '';
             if($lemma eq 'ich')
@@ -143,10 +147,17 @@ sub fix_morphology
                 my %case = ('du' => 'nom', 'dir' => 'dat', 'dich' => 'acc');
                 $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => $reflex, 'person' => 2, 'number' => 'sing', 'politeness' => 'inf', 'case' => $case{$lcform}});
             }
-            elsif($lemma eq 'ihr')
+            elsif($lemma eq 'ihr' && $node->is_pronoun())
             {
                 my %case = ('ihr' => 'nom', 'euch' => 'dat|acc');
                 $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => $reflex, 'person' => 2, 'number' => 'plur', 'politeness' => 'inf', 'case' => $case{$lcform}});
+            }
+            elsif($lemma eq 'ihr' && $node->is_determiner())
+            {
+                # It can mean either "her" or "their".
+                $iset->set_hash({'pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'person' => 3});
+                $stts = 'PPOSAT';
+                $node->set_conll_pos($stts);
             }
             elsif($lemma eq 'er')
             {
@@ -413,9 +424,15 @@ sub fix_morphology
                 $iset->set_hash({'pos' => 'adj', 'numtype' => $numtype});
             }
             # "heraus" = "out" (PRON ADV)
-            elsif($lemma eq 'heraus')
+            # "so" = "so" (DET ADV in "so ein")
+            elsif($lemma =~ m/^(heraus|so)$/)
             {
                 $iset->set_hash({'pos' => 'adv'});
+            }
+            # "an" = "at" is a preposition (DET APPR)
+            elsif($stts eq 'APPR')
+            {
+                $iset->set_hash({'pos' => 'adp'});
             }
             # "dass" = "that" is a subordinating conjunction (PRON KOUS)
             # "wie" = "as" can be also comparative conjunction (PRON KOKOM) but the two occurrences should be KOUS and ADV ("how")
