@@ -453,6 +453,14 @@ sub fix_morphology
                 $iset->set_hash({'foreign' => 'foreign'});
             }
         }
+        # Mark ordinal numerals (they are plain adjectives at the moment).
+        # Note that we have to check whether it is adjective because the cardinal and ordinal eight share the lemma "acht".
+        # We do not support all possible compounds such as "einhundertdreiundzwanzigst".
+        # We cannot allow anything at the beginning because we do not want to match things like äußerst, schweizweit, motiviert, gemacht.
+        if($node->is_adjective() && $lemma =~ m/^(erst|zweit|dritt|viert|fünft|sechst|sieb(en)?t|acht|neunt|(drei|vier|fünf|sech|sieb|acht|neun)?zehnt|elft|zwölft|zwanzigst|drei(ß|ss)igst|vierzigst|fünfzigst|sechzigst|siebzigst|achtzigst|neunzigst|(ein|zwei|drei|vier|fünf|sechs|sieben|acht|neun)?hundertst|tausendst|millionst)$/)
+        {
+            $iset->set('numtype', 'ord');
+        }
     }
 }
 
