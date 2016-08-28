@@ -461,6 +461,212 @@ sub fix_morphology
         {
             $iset->set('numtype', 'ord');
         }
+        # Case of noun phrases: manual relation labels sometimes help.
+        if(($node->is_noun() || $node->is_adjective()))
+        {
+            my $deprel = $node->deprel();
+            my @children = $node->children();
+            my @casechildren = grep {$_->deprel() eq 'case'} (@children);
+            my @detchildren = grep {$_->deprel() eq 'det'} (@children);
+            my $det = ''; # we want to query it even if we don't know it
+            my $case = undef;
+            # Cluster determiners according to gender, number and case:
+            # der,               dieser ... masc sing nom, fem sing gen|dat, plur gen
+            #      ein,   ihr           ... masc sing nom, neut sing nom|acc
+            #      einer, ihrer         ... fem sing gen|dat, plur gen
+            # das                       ... neut sing nom|acc
+            # des, eines, ihres         ... masc|neut sing gen
+            #                    dieses ... masc sing gen, neut sing nom|gen|acc
+            # dem, einem, ihrem, diesem ... masc|neut sing dat
+            # den, einen, ihren, diesen ... masc sing acc, plur dat
+            # die, eine,  ihre,  diese  ... fem sing nom|acc, plur nom|acc
+            if(scalar(@detchildren)>0)
+            {
+                my $lcdetform = lc($detchildren[0]->form());
+                if($lcdetform =~ m/(der|dieser|jeder|jener|cher)$/)
+                {
+                    $det = 'der';
+                }
+                elsif($lcdetform =~ m/(ein|ihr|unser|euer)$/)
+                {
+                    $det = 'ein';
+                }
+                elsif($lcdetform =~ m/r$/)
+                {
+                    $det = 'einer';
+                }
+                elsif($lcdetform =~ m/^(das|dieses)$/)
+                {
+                    $det = $lcdetform;
+                }
+                elsif($lcdetform =~ m/s$/)
+                {
+                    $det = 'des';
+                }
+                elsif($lcdetform =~ m/m$/)
+                {
+                    $det = 'dem';
+                }
+                elsif($lcdetform =~ m/n$/)
+                {
+                    $det = 'den';
+                }
+                elsif($lcdetform =~ m/e$/)
+                {
+                    $det = 'die';
+                }
+            }
+            # Subject is nominative.
+            if($deprel =~ m/^nsubj(pass)?$/)
+            {
+                $case = 'nom';
+            }
+            # Indirect object is dative.
+            elsif($deprel eq 'iobj')
+            {
+                $case = 'dat';
+            }
+            # Direct object is accusative.
+            elsif($deprel eq 'dobj')
+            {
+                $case = 'acc';
+            }
+            # Modifier with certain preposition is genitive.
+            elsif($deprel eq 'nmod' && scalar(@casechildren)>0 && $casechildren[0]->lemma() =~ m/^(angesichts|(an)?statt|(au(ß|ss)|inn)erhalb|(dies|jen)seits|dank|infolge|inmitten|mittels|seitens|trotz|(ober|unter)halb|unweit|während|wegen|längst|zugunsten)$/)
+            {
+                $case = 'gen';
+            }
+            # Modifier with certain preposition is dative.
+            elsif($deprel eq 'nmod' && scalar(@casechildren)>0 && $casechildren[0]->lemma() =~ m/^(aus|bei|mit|nach|von|zu)$/)
+            {
+                $case = 'dat';
+            }
+            # Modifier with certain preposition is accusative.
+            elsif($deprel eq 'nmod' && scalar(@casechildren)>0 && $casechildren[0]->lemma() =~ m/^(durch|für|gegen|ohne|um)$/)
+            {
+                $case = 'acc';
+            }
+            # Certain prepositions are either dative (location) or accusative (direction).
+            elsif($deprel eq 'nmod' && scalar(@casechildren)>0 && $casechildren[0]->lemma() =~ m/^(an|auf|hinter|in|neben|über|unter|vor|zwischen)$/)
+            {
+                # dat: dem der den einer
+                # acc: den die das ein dieses
+                if(scalar(@detchildren)>0)
+                {
+                    if($det =~ m/^(dem|der|einer)$/)
+                    {
+                        $case = 'dat';
+                    }
+                    elsif($det =~ m/^(die|das|ein|dieses)$/)
+                    {
+                        $case = 'acc';
+                    }
+                    # "den" is accusative singular or dative plural.
+                    # If form = lemma, assume singular.
+                    elsif($det eq 'den')
+                    {
+                        $case = $lcform eq lc($lemma) ? 'acc' : 'dat';
+                    }
+                }
+            }
+            # Modifier without preposition is probably nominative or genitive.
+            # Dative and accusative probably cannot be excluded, they could occur with verbal nouns and participles.
+            elsif($deprel eq 'nmod' && scalar(@casechildren)==0)
+            {
+                # nom: der die das ein dieses
+                # gen: des dieses der einer
+                # "der" is nominative masculine singular, genitive feminine singular, or genitive plural.
+                # We do not know the gender and cannot distinguish masculine from feminine.
+                if($det =~ m/^(des|einer)$/)
+                {
+                    $case = 'gen';
+                }
+            }
+            if(defined($case))
+            {
+                $iset->set('case', $case);
+                # Case inflections of nouns are rare except for the genitive of masculines and neuters (der Tag – des Tages).
+                # Hence if the case is not genitive and the form differs from lemma, assume it's plural (der Tag – die Tage).
+                # Note that this may occasionally cause errors, e.g. dative of Wald can be (besides Wald) also Walde, even if it is rarely used.
+                # Occurred: "dem Kunden", dative of "der Kunde". ###!!! We should check the determiner too!
+                # Sometimes the form does not change although it is plural ###!!! seine Schnäppchen!
+                # Also note that this only works for nouns, not pronouns, adjectives or determiners!
+                my $number = undef;
+                my $gender = undef;
+                if($node->is_noun() && !$node->is_pronoun())
+                {
+                    # sing: der des dem den die das ein einer dieses
+                    # plur: die der den die einer
+                    my $same = $lcform eq lc($lemma);
+                    if($case eq 'nom' && $same ||
+                       $case eq 'gen' && ($det =~ m/^(des|dieses)$/ || $same && $det =~ m/^(der|einer)$/) ||
+                       $case eq 'dat' && ($det =~ m/^(dem|der|einer)$/ || $same && $det ne 'den') ||
+                       $case eq 'acc' && $same)
+                    {
+                        $number = 'sing';
+                    }
+                    else
+                    {
+                        $number = 'plur';
+                    }
+                    if(defined($number))
+                    {
+                        $iset->set('number', $number);
+                        # If we have a determiner and the form is singular, we can also detect the gender.
+                        # masc: der des dem den ein dieses
+                        # neut: das des dem ein dieses
+                        # fem:  die der einer
+                        if($number eq 'sing')
+                        {
+                            if($case eq 'nom' && $det eq 'der' || $det eq 'den')
+                            {
+                                $gender = 'masc';
+                            }
+                            elsif($det eq 'das' || $case eq 'nom' && $det eq 'dieses')
+                            {
+                                $gender = 'neut';
+                            }
+                            elsif($det =~ m/^(des|dem|ein|dieses)$/)
+                            {
+                                $gender = 'masc|neut';
+                            }
+                            elsif($det =~ m/^(die|der|einer)$/)
+                            {
+                                $gender = 'fem';
+                            }
+                            $iset->set('gender', $gender) if(defined($gender));
+                        }
+                    }
+                    if(!defined($gender))
+                    {
+                        if($lemma =~ m/(ast|ich|ig|or|us)$/)
+                        {
+                            $gender = 'masc';
+                        }
+                        elsif($lemma =~ m/(ei|enz|heit|ie|keit|schaft|sion|sis|tät|tion|ung)$/)
+                        {
+                            $gender = 'fem';
+                        }
+                        elsif($lemma =~ m/(chen|lein|il|it|ment|um)$/)
+                        {
+                            $gender = 'neut';
+                        }
+                        $iset->set('gender', $gender) if(defined($gender));
+                    }
+                }
+                # Dependent determiners and adjectives agree in gender, number and case.
+                # Even if we knew gender of a plural noun, we should not propagate gender to plural determiners and adjectives because they do not inflect for it in plural.
+                foreach my $child (@children)
+                {
+                    if($child->deprel() =~ m/^(det|amod)/)
+                    {
+                        $child->iset()->set('gender', $gender) if(defined($gender));
+                        $child->iset()->set('number', $number) if(defined($number));
+                        $child->iset()->set('case', $case);
+                    }
+                }
+            }
+        }
     }
 }
 
