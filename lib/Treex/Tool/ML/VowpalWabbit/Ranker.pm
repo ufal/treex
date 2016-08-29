@@ -21,7 +21,7 @@ sub BUILD {
     my ($self) = @_;
     
     my $model_path = $self->_locate_model_file($self->model_path, $self);
-    my $command = sprintf "%s -t -i %s -r /dev/stdout 2> /dev/null", $self->vw_path, $model_path;
+    my $command = sprintf "%s -t -i %s -p /dev/stdout --loss_function=logistic --probabilities 2> /dev/null", $self->vw_path, $model_path;
 
     my ( $read, $write, $pid ) = Treex::Tool::ProcessUtils::bipipe($command);
     
@@ -51,21 +51,21 @@ sub rank {
     #    print STDERR $instance_str . "\n";
     #}
 
-    my @losses = ();
+    my @probs = ();
 
     my $fh = $self->_read_handle;
     #my $empty_line = <$fh>;
     #if ($empty_line !~ /^\s*$/) {
     #    log_fatal "First line of VW output must be empty (unless -r instead of -p)";
     #}
+    my $idx = 1;
     while (my $line = <$fh>) {
         chomp $line;
         last if ($line =~ /^\s*$/);
-        my ($idx, $loss) = split /:/, $line;
-        push @losses, $loss;
+        my ($prob, $tag) = split / /, $line;
+        push @probs, $prob;
     }
-    my @scores = map {-$_} @losses;
-    return @scores;
+    return @probs;
 }
 
 1;
