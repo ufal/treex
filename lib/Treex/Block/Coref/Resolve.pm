@@ -82,7 +82,7 @@ sub process_filtered_tnode {
     # antecedent lies in the previous sentence, which is however not
     # available (because of filtering and document segmentation)
     my $ranker = $self->_ranker;
-    my $ante_idx  = $ranker->pick_winner( $instances );
+    my ($ante_idx, $ante_prob)  = $ranker->pick_winner( $instances );
 
     return if (!defined $ante_idx);
     my $ante = $ante_cands[$ante_idx];
@@ -106,6 +106,10 @@ sub process_filtered_tnode {
      #   }
         
     #}
+
+    if ($self->diagnostics) {
+        $t_node->wild->{coref_diag}{ante_prob} = $ante_prob;
+    }
 
     if ($ante != $t_node) {
         my $ante_par = $ante->get_parent;
