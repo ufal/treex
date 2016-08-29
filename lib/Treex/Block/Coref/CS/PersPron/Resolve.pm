@@ -12,7 +12,7 @@ use Treex::Tool::ML::VowpalWabbit::Ranker;
 has '+model_path' => (
     # PDT monolingual
     #################
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/019_run_2016-08-02_22-11-13_12827.data_0008_+_prodrop_valency_and_epar_diathesis_combined/006.a58a87ab5b.featset/004.37316.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
+    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/021_run_2016-08-25_18-10-03_13500.PDT.new_prodrop_filter/001.e6a6d5dba6.featset/004.37316.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
     # UDPipe W2A
     #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/010_run_2016-07-20_11-29-14_21681.data_0007_-_UDPipe_W2A/001.6482ae07e1.featset/002.f59b5.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
     # new limited features
@@ -20,11 +20,11 @@ has '+model_path' => (
     
     # PCEDT monolingual
     #################
-    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/020_run_2016-08-16_17-22-53_21990.aligned_feats_-_first_exper/001.e6a6d5dba6.featset/004.37316.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model',
+    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/022_run_2016-08-25_18-40-12_14840.PCEDT.new_prodrop_filter/001.e6a6d5dba6.featset/004.37316.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model',
     
     # PCEDT cross-lingual
     #################
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/020_run_2016-08-16_17-22-53_21990.aligned_feats_-_first_exper/004.68ab891a00.featset/004.37316.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model',
+    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/022_run_2016-08-25_18-40-12_14840.PCEDT.new_prodrop_filter/004.68ab891a00.featset/004.37316.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model',
     
 );
 
