@@ -28,6 +28,7 @@ sub _coref_format {
     my $has_sys_ante = 0;
     my $has_key_ante = 0;
     my $removed_or_merged = 0;
+    my $ante_prob;
 
     my @words = ();
     foreach my $ttree (@$sents) {
@@ -39,6 +40,7 @@ sub _coref_format {
             if ($tnode->id eq $anaph_id) {
                 push @colors, "yellow";
                 $removed_or_merged = $tnode->wild->{coref_diag}{removed_or_merged} ? 1 : 0;
+                $ante_prob = $tnode->wild->{coref_diag}{ante_prob} // 1;
             }
             elsif ($tnode->wild->{coref_diag}{sys_ante_for}{$anaph_id} && $tnode->wild->{coref_diag}{key_ante_for}{$anaph_id}) {
                 push @colors, "green";
@@ -73,7 +75,10 @@ sub _coref_format {
     if ($removed_or_merged && $has_key_ante && !$has_sys_ante) {
         $is_correct = 1;
     }
-    my $str = $is_correct ? "OK:\t" : "ERR:\t";
+    my $str = $is_correct ? "OK" : "ERR";
+    $str .= "\t";
+    $str .= $is_correct ? $ante_prob : -$ante_prob;
+    $str .= "\t";
     $str .= join " ", @words;
     return $str;
 }
