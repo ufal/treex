@@ -667,6 +667,43 @@ sub fix_morphology
                 }
             }
         }
+        # Degree of comparison of adjectives.
+        if($node->is_adjective() && !$node->is_pronominal())
+        {
+            # We need to eliminate the sharp s to increase the chance of finding a match.
+            $lcform =~ s/ß/ss/g;
+            $lemma =~ s/ß/ss/g;
+            my $degree = '';
+            # lemma e.g. schnell
+            # pos: schnell schnelle schnelles schnellem schnellen schneller
+            # cmp: schneller schnellere schnelleres schnellerem schnelleren schnellerer
+            # sup: schnellst (but breitEst) schnellste schnellstes schnellstem schnellsten schnellster
+            ###!!! We will not catch adjectives where the stem vowel changes, e.g. nah – näher – nächst.
+            if($lcform =~ m/^$lemma(e|es|em|en)?$/) ###!!! "-er" is ambiguous
+            {
+                $degree = 'pos';
+            }
+            elsif($lcform =~ m/^$lemma(er)$/)
+            {
+                # Positive: "ein einzigartiger Parfümeur"; "sehr guter Service" (indefinite masc sing nom)
+                # Also positive: "in letzter Zeit" (indefinite fem sing dat)
+                # Comparative: "sind die deutlichr schlechter"
+                # We may want to nail down these cases by other evidence, e.g. the gender and number of the noun phrase.
+                $degree = 'pos|cmp';
+            }
+            elsif($lcform =~ m/^$lemma(ere|eres|erem|eren|erer)$/ || $lcform =~ m/^(besser)(e|es|em|en|er)?$/)
+            {
+                $degree = 'cmp';
+            }
+            elsif($lcform =~ m/^$lemma(e)?st(e|es|em|en|er)?$/ || $lcform =~ m/^(best)(e|es|em|en|er)?$/)
+            {
+                $degree = 'sup';
+            }
+            if($degree ne '')
+            {
+                $iset->set('degree', $degree);
+            }
+        }
     }
     # Person and number of finite verbs can be deduced from their subjects.
     # We have to do this in a separate loop, after all the pronouns have been solved.
