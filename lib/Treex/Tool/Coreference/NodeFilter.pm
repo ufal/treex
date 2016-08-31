@@ -13,6 +13,16 @@ use List::MoreUtils qw/any/;
 
 sub get_types {
     my ($node) = @_;
+    my @types = @{$node->wild->{filter_types} // []};
+    if (!@types) {
+        my $types_hash = get_types_force($node);
+        @types = sort keys %$types_hash;
+    }
+    return @types;
+}
+
+sub get_types_force {
+    my ($node) = @_;
     my $types;
     if (Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {expressed => 1})) {
         $types->{perspron} = 1;
@@ -64,19 +74,11 @@ sub get_types {
 
 
 sub matches {
-    my ($tnode, $node_types) = @_;
+    my ($node, $node_types) = @_;
     return 1 if (!@$node_types);
 
-    my $types;
-    if (defined $tnode->wild->{filter_types}) {
-        $types = { map {$_ => 1} @{$tnode->wild->{filter_types}} };
-    }
-    else {
-        $types = get_types($tnode);
-        $tnode->wild->{filter_types} = [ sort keys %$types ];
-    }
-    
-    return (any {$types->{$_}} @$node_types);
+    my %types = map {$_ => 1} get_types($node);
+    return (any {$types{$_}} @$node_types);
 }
 
 1;
