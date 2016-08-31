@@ -180,7 +180,7 @@ override 'process_tnode' => sub {
 
 	next if ($lemma =~ /^LEX/ && ($lex_lemma eq 'izan' || $lex_lemma eq 'ukan'));
 
-        my $new_node = $anode->create_child();
+        my $new_node = $anode->create_child({'clause_number' => $anode->clause_number});
         $new_node->reset_morphcat();
 
 	if (($tnode->gram_negation || "") eq "neg1") {

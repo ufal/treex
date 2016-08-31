@@ -60,7 +60,7 @@ sub process_anode {
     $anode->set_lemma($lemma);
 
     # Avoid giving a wrong lemma to integers and floats by setting the form as the lemma
-    if($anode->form =~ /(\d+([\.,]\d+)*)[-\.]?\w*/){
+    if($anode->form =~ /^(\d+([\.,]\d+)*)[-\.]?\w*/){
 	$anode->set_lemma($1); 
     }
     

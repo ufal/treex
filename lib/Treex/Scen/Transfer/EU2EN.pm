@@ -81,7 +81,7 @@ sub get_scenario_string {
     'T2T::CopyTtree source_language=eu source_selector=src',
     $self->gazetteer ? 'T2T::TrGazeteerItems src_lang='.$self->src_lang : (),
 
-    $self->terminology eq 'yes' ? 'T2T::TrLApplyTbxDictionary tbx=data/dictionaries/MicrosoftTermCollection.eu.tbx tbx_src_id=eu-es tbx_trg_id=en-US analysis=@data/dictionaries/MicrosoftTermCollection.eu.filelist analysis_src_language=eu analysis_src_selector=trg analysis_trg_language=en analysis_trg_selector=src src_blacklist=data/dictionaries/MicrosoftTermCollection.eu-en.src.blacklist.txt trg_blacklist=data/dictionaries/MicrosoftTermCollection.eu-en.trg.blacklist.txt' : (),
+    $self->terminology eq 'yes' ? 'T2T::TrLApplyTbxDictionary tbx=data/dictionaries/MicrosoftTermCollection.eu.tbx tbx_src_id=eu-es tbx_trg_id=en-US analysis=@data/dictionaries/MicrosoftTermCollection.eu_Pilot3.filelist analysis_src_language=eu analysis_src_selector=trg analysis_trg_language=en analysis_trg_selector=src src_blacklist=data/dictionaries/MicrosoftTermCollection.eu-en.src.blacklist.txt trg_blacklist=data/dictionaries/MicrosoftTermCollection.eu-en.trg.blacklist.txt' : (),
 
     "T2T::TrFAddVariantsInterpol model_dir=$TM_DIR models='
       static 1.0 20160415_formeme.static.gz

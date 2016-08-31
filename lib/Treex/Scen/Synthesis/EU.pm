@@ -4,25 +4,28 @@ use Treex::Core::Common;
 
 my $FULL = <<'END';
 T2T::SetClauseNumber
-T2A::EU::FixOrder
 T2A::CopyTtree
-T2A::MarkSubject
+T2A::EU::MarkSubject
 T2A::InitMorphcat
-T2A::ImposeSubjpredAgr
+T2A::EU::ImposeSubjObjpredAgr
 T2A::ImposeAttrAgr
 T2A::EU::AddArticles
-T2A::EU::AddPrepos
-T2A::EU::AddAuxVerbModalTense
-T2A::EU::AddSubconjs
+T2A::EU::AddAuxVerbModal
+T2A::EU::AddAuxVerbTense
 T2A::EU::AddNegationParticle
+T2A::EU::FixNegativeVerbOrder
+T2A::EU::FixTransitiveAgreement
+T2A::EU::AddPrepos
+T2A::EU::AddSubconjs
 T2A::EU::DropPersPron
 T2A::AddCoordPunct
 T2A::ProjectClauseNumber
 T2A::AddParentheses
-T2A::AddSentFinalPunct
+T2A::EU::AddSentFinalPunct
 T2A::EU::AddSubordClausePunct
 Util::Eval anode='$.set_tag(join "+", $.get_iset_values())'
 Util::Eval anode='$.set_tag(join "+", $.get_iset_values(), $.wild->{erl}) if($.wild->{erl})'
+T2A::EU::GenerateGazeteerItems
 T2A::EU::GenerateWordforms
 T2A::DeleteSuperfluousAuxCP
 T2A::CapitalizeSentStart

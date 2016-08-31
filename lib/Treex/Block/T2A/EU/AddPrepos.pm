@@ -15,7 +15,7 @@ override 'process_tnode' => sub {
     my ( $self, $tnode ) = @_;
     my $prep_forms_string = $self->get_prep_forms($tnode->formeme);
     my $anode = $tnode->get_lex_anode();
-
+    
     my @anodes = $tnode->get_anodes({ordered=>1});
 
     # Skip weird t-nodes with no lex_anode and nodes with no prepositions to add
@@ -50,15 +50,17 @@ override 'process_tnode' => sub {
     # Make the first element of the array head of the postpositions
     my $posp_head;
     if(defined($posp_forms[0])){
-	$posp_head = $anode->get_parent()->create_child({lemma=>"$posp_forms[0]", form=>"$posp_forms[0]"});
-	$posp_head->shift_after_subtree($anode);
+    	$posp_head = $anode->get_parent()->create_child({lemma=>$posp_forms[0], form=>$posp_forms[0]});
+	$tnode->add_aux_anodes($posp_head);
+    	$posp_head->shift_after_subtree($anode);
     }
     
     shift(@posp_forms); # remove first element of the array
 
     # hang the rest of the pospositions from the head
     foreach (@posp_forms){
-	my $posp_node = $posp_head->create_child({lemma=>"$_", form=> "$_"});
+    	my $posp_node = $posp_head->create_child({lemma=>"$_", form=> "$_"});
+    	$tnode->add_aux_anodes($posp_node);
 	$posp_node->shift_after_node($posp_head); # Give the nodes the proper order
     } 
 

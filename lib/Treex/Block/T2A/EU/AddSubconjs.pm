@@ -41,14 +41,14 @@ override 'process_tnode' => sub {
    # Make the first element of the array head of the subconjs
    my $subconj_head;
    if($subconj_nodes[0]){
-       $subconj_head = $anode->get_parent()->create_child({lemma=>$subconj_nodes[0], form=>$subconj_nodes[0]});
+       $subconj_head = $anode->get_parent()->create_child({lemma=>$subconj_nodes[0], form=>$subconj_nodes[0], clause_number => $anode->clause_number});
        $subconj_head->shift_after_subtree($anode); # Give the head the corresponding order
 
        shift(@subconj_nodes); #remove the first element of the array
 
        # Hang the rest of the nodes from the head
        foreach (@subconj_nodes){
-	   my $subconj_node = $subconj_head->create_child({lemma=>$_, form=>$_});
+	   my $subconj_node = $subconj_head->create_child({lemma=>$_, form=>$_, clause_number => $anode->clause_number});
 	   $subconj_node->shift_after_node($subconj_head); # Give the nodes the proper order
        }
        
