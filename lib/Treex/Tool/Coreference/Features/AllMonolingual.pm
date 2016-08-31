@@ -20,6 +20,9 @@ augment '_unary_features' => sub {
     my $feats = {};
     $feats->{id} = $node->get_address;
 
+    my @nodetypes = Treex::Tool::Coreference::NodeFilter::get_types($node);
+    $feats->{'t^type'} = \@nodetypes;
+
     $self->morphosyntax_unary_feats($feats, $node, $type);
     $self->location_feats($feats, $node, $type);    
     

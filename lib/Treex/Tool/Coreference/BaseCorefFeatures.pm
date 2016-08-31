@@ -18,7 +18,11 @@ my $b_false = '-1';
 augment '_unary_features' => sub {
     my ($self, $node, $type) = @_;
     my $feats = inner();
-    my %new_feats = map {substr($type, 0, 1)."^".$_ => $feats->{$_}} keys %$feats;
+    # automatically add an 'anaph' or 'cand' namespace if a different namespace is not set
+    my %new_feats = map {
+        my $key = $_ !~ /\^/ ? substr($type, 0, 1)."^".$_ : $_;
+        $key => $feats->{$_}
+    } keys %$feats;
     return \%new_feats;
 };
 
