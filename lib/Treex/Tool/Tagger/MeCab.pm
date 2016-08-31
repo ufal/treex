@@ -9,8 +9,20 @@ use Treex::Core::Config;
 use Treex::Tool::ProcessUtils;
 use Treex::Core::Resource;
 
+# Path to the dictionary
+# TODO: Set default to UniDic
+has dictionary_path => (
+	is 		=> 'ro',
+	isa 	=> 'Str',
+	default	=> ''
+);
+
 sub BUILD {
     my ($self) = @_;
+
+	my $dic_path = "";
+	$dic_path = "-d ".require_file_from_share($self->dictionary_path, ref($self)) if ($self->dictionary_path ne "");
+
 
     # TODO find architecture independent solution
     my $bin_path = require_file_from_share(
@@ -18,7 +30,7 @@ sub BUILD {
     	ref($self)
     );
      
-    my $cmd = "$bin_path".' 2>/dev/null';
+    my $cmd = "$bin_path $dic_path".' 2>/dev/null';
 
     # start MeCab tagger
     my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::bipipe( $cmd, ':encoding(utf-8)' );
@@ -44,16 +56,13 @@ sub process_sentence {
     # we store each line, which consists of wordform+features into @tokens as a string where each feature/wordform is separated by '\t'
     # other block should edit this output as needed
     # EOS marks end of sentence
-    while ( $line !~ "EOS" ) {
+    while ( $line !~ /^EOS$/ ) {
        
         log_fatal("Unitialized line (perhaps MeCab was not initialized correctly).") if (!defined $line); # even with empty string input we should get at least "EOS" line in output, otherwise the tagger wasn't correctly initialized
- 
-        # we don't want to substitute actual commas in the sentence
-        $line =~ s{^(.*),\t}{$1#comma\t};
 
-        $line =~ s{(.),}{$1\t}g;
-
-        $line =~ s{#comma}{,};
+        my ($wordform, $cats) = split /\t/, $line;
+        $cats =~ s{,}{\t}g;
+        $line = "$wordform\t$cats";
 
         push @tokens, $line;
         $line = <$reader>;
@@ -99,13 +108,9 @@ You can also install MeCab manually but then you must link the installation dire
 
 =head1 METHODS
 
-=over
-
 =item @tokens = $tagger->process_sentence($sentence);
 
 Returns list of "tokens" for the tokenized input with its morphological categories each separated by \t.
-
-=back
 
 =head1 SEE ALSO
 
@@ -113,7 +118,7 @@ L<MeCab Home Page|http://mecab.googlecode.com/svn/trunk/mecab/doc/index.html>
 
 =head1 AUTHOR
 
-Dušan Variš <dvaris@seznam.cz>
+Dušan Variš <dvaris@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 

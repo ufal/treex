@@ -165,6 +165,15 @@ sub fix_morphology
             # Forms: żaden, żadna, żadne, żadnego, żadnemu, żadnym, żadnej, żadną.
             $iset->add('pos' => 'adj', 'prontype' => 'neg');
         }
+        # L-participles (past tense) should be participles, not finite verbs, because they sometimes combine with finite auxiliary verbs
+        # and because they inflect for gender and not for person.
+        # Note that after this step we will not be able to distinguish the l-participles from adjectival active past participles (-wszy),
+        # unless we convert the latter to adjectives. In the long term we want to make them adjectives but it does not matter now because
+        # they do not occur in the data.
+        elsif($node->is_finite_verb() && $node->is_past())
+        {
+            $iset->add('verbform' => 'part', 'mood' => '', 'voice' => 'act');
+        }
         # Verbal nouns should be nouns, not verbs.
         elsif($node->is_verb() && $node->is_gerund())
         {

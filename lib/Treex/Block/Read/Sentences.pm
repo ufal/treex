@@ -13,7 +13,7 @@ sub next_document {
 
     my $document = $self->new_document();
     foreach my $sentence ( split /\n/, $text ) {
-        next if ($sentence eq '' and $self->skip_empty);
+        next if ($sentence =~ /^\s*$/ and $self->skip_empty);
         my $bundle = $document->create_bundle();
         my $zone = $bundle->create_zone( $self->language, $self->selector );
         $zone->set_sentence($sentence);

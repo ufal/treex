@@ -12,16 +12,20 @@ use Lingua::Interset::Tagset::JA::Ipadic;
 
 extends 'Treex::Core::Block';
 
-has _form_corrections => (
+# Path to the dictionary
+# TODO: Set default to UniDic
+has dictionary_path => (
     is      => 'ro',
-    isa     => 'HashRef[Str]',
-    default => sub {
-        {
-            q(``) => q("),
-            q('') => q("),
-        }
-    },
-    documentation => q{Possible changes in forms done by tagger},
+    isa     => 'Str',
+    default => ''
+);
+
+# MeCab produces "tags" of different lengths for different dictionaries used (e.g. Ipadic has "hiragana lemma" at 7th position, Unidic at 8th)
+# TODO: Set default to UniDic
+has dictionary_type => (
+	is		=> 'ro',
+	isa		=> 'Str',
+	default	=> 'ipadic',
 );
 
 has tagger => ( is => 'rw' );
@@ -35,7 +39,7 @@ sub BUILD {
 sub process_start {
     my ($self) = @_;
 
-    my $tagger = Treex::Tool::Tagger::MeCab->new(); 
+    my $tagger = Treex::Tool::Tagger::MeCab->new( dictionary_path => $self->dictionary_path ); 
     $self->set_tagger( $tagger );
     
     return;   
@@ -65,8 +69,12 @@ sub process_zone {
 
         my $wordform = $features[0];
         my $tag = $features[1].'-'.$features[2].'-'.$features[3].'-'.$features[4];
-        my $lemma = $features[7];      
-		$lemma = $wordform if $lemma =~ m/\*/;
+		my $lemma;
+        $lemma = $features[7] if ($self->dictionary_type eq "ipadic");
+		$lemma = $features[8] if ($self->dictionary_type eq "unidic");
+		
+        $lemma = $wordform if !$lemma; # temp. workaround for "English-like" words => they evidently do not have the lemma column filled
+        $lemma = $wordform if $lemma =~ m/\*/; 
 
 		# handle "special" tokens that MeCab produces sometimes
     	next if ($tag =~ /BOS/ || $tag =~ "空白");
@@ -121,13 +129,14 @@ __END__
 
 =head1 NAME
 
-Treex::Block::W2A::JA::TagMeCab
+Treex::Block::W2A::JA::TagMeCab - Japanese tagging module for Treex
 
 =head1 DESCRIPTION
 
 Each sentence is tokenized and tagged using C<MeCab> (Ipadic POS tags).
+Unidic dictionary can now be chosen too (if installed) via C<dictionary_path> and C<dictionary_type> attributes.
 
-Ipadic tagset uses hierarchical tags. There are four levels of hierarchy,
+Ipadic-style tagset uses hierarchical tags. There are four levels of hierarchy,
 each level is separated by "-".
 Empty categories are marked as "*".
 Tags are in kanji, in the future they should be replaced by Romanized tags or their abbreviations (other japanese treex modules should be modified accordingly).

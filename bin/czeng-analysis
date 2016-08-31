@@ -1,0 +1,69 @@
+#!/bin/bash
+
+DIRECTORY=
+MULTI=
+HELP=
+
+while getopts d:l:i:o:ph opts; do
+	case ${opts} in
+		l) LANGUAGE=${OPTARG} ;;
+		i) IN_FORMAT=${OPTARG} ;;
+		o) OUT_FORMAT=${OPTARG} ;;
+		d) DIRECTORY=${OPTARG} ;;
+		p) MULTI="-p --local" ;;
+		h) HELP=1 ;;
+	esac
+done
+
+# show help
+if [[ $HELP ]]; then
+	echo "Usage: $0 <options>" 1>&2
+	echo "Options:" 1>&2
+	echo "-h	--  show this help" 1>&2
+	echo "-l	--  language (cs|en)" 1>&2
+	echo "-i	--  input format (sentences|text)" 1>&2
+	echo "-o	--  output format (plain|export|treex)" 1>&2
+	echo "-d	--  input directory (default=empty)" 1>&2
+	echo "-p	--  run multi-threaded (experimental)" 1>&2
+	exit 0
+fi
+
+TREEX="treex -L$LANGUAGE $MULTI"
+READER=
+WRITER=
+
+# select correct reader
+if [[ $IN_FORMAT == "text" ]]; then
+	# TODO: trtok preprocess
+	READER="Read::Text"
+else
+	# default: sentences
+	READER="Read::Sentences"
+fi
+
+# select correct writer
+# TODO: masky?
+if [[ $OUT_FORMAT == "export" ]]; then
+    WRITER="Write::Factored outcols=ATTRid:${LANGUAGE}a:${LANGUAGE}t:RFlex-${LANGUAGE}:RFaux-${LANGUAGE} flags=escape_space default_value=???"
+elif [[ $OUT_FORMAT == "treex" ]]; then
+	WRITER="Write::Treex to=-"
+else
+	# default: just print out the input sentences
+	WRITER="Write::Sentences"
+fi
+
+# if the directory param is not set we send stdin to treex
+if [[ -n $DIRECTORY ]]; then
+	READER="$READER from='!${DIRECTORY}/*'"
+else
+    READER="$READER from=-"
+fi
+
+# choose correct pipeline
+if [[ $LANGUAGE == "cs" ]]; then
+	cat /dev/stdin | $TREEX $READER Scen::Analysis::CS functors=VW valframes=1 A2T::DeleteChildlessPunctuation language=cs $WRITER
+elif [[ $LANGUAGE == "en" ]]; then
+	cat /dev/stdin | $TREEX $READER Scen::Analysis::EN functors=VW valframes=1 coref=BART A2T::DeleteChildlessPunctuation language=en $WRITER
+else
+	echo "Language '$LANGUAGE' not supported (see $) -h)" 1>&2
+fi

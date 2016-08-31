@@ -217,6 +217,14 @@ has 'name' => (
         . 'Translates to "qsub -N $name-jobname".',
 );
 
+has 'queue' => (
+    traits        => ['Getopt'],
+    is            => 'ro',
+    isa           => 'Str',
+    default       => '',
+    documentation => 'SGE queue. Translates to "qsub -q $queue".',
+);
+
 has 'qsub' => (
     traits        => ['Getopt'],
     is            => 'ro',

@@ -9,6 +9,12 @@ my $fix_node   = '';
 my $fix_before = '';
 my $fix_after  = '';
 
+#has fix_msg => ( 
+#    is  => 'rw',
+#    isa => 'Str',
+#    default => ''
+#);
+
 sub logfix1 {
     my ( $self, $child, $msg ) = @_;
 

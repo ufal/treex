@@ -19,5 +19,7 @@ postprocess: export.tmp
 	#perl -p -i -e 's/^([^#]*Interset)/#\1/' lib/Treex/Core/Node/A.pm
 
 parser.tmp:
-	cd lib/Treex/Core/ && ./compile_grammar.pl && rm compile_grammar.pl
+	# I think it is not needed to recompile ScenarioParser.pm
+	#./compile_grammar.pl && touch $@
+	# Let's just add a blank line, so Dist::Zilla::Plugin::PkgVersion can include new VERSION
 	touch $@

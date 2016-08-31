@@ -36,6 +36,14 @@ sub process_zone
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
+    # Unfortunately the phrase builder fails to convert all SubArg nodes and we must get rid of this relation before we declare the tree to be Prague style.
+    foreach my $node ($root->get_descendants())
+    {
+        if($node->deprel() eq 'SubArg')
+        {
+            $node->set_deprel('Adv');
+        }
+    }
     $self->attach_final_punctuation_to_root($root);
     # Fix interrogative pronouns before subordinating conjunctions because the treebank wants us to think they are the same.
     $self->fix_int_rel_words($root);
@@ -44,12 +52,7 @@ sub process_zone
     $self->fix_naar_toe($root);
     $self->fix_als($root);
     $self->lift_commas($root);
-    ###!!! Tyhle dvě funkce se sice chvályhodně snaží omezit rozpadlé stromy, kde na kořeni visí několik podstromů,
-    ###!!! ale dělají to zřejmě blbě, což se mimo jiné projevuje i na zhoršených výsledcích testů, ale zahlédl jsem
-    ###!!! tam i chybu, kterou současné testy přímo neodhalí.
-    #$self->fix_InfinitivesNotBeingObjects($root);
-    #$self->fix_SubordinatingConj($root);
-    #$self->check_deprels($root);
+    $self->check_deprels($root);
 }
 
 
@@ -329,7 +332,27 @@ sub convert_deprels
         # Example (test/001#2): participle 'gekozen' in 'is gekozen' = 'is selected'
         elsif ( $deprel eq 'vc' )
         {
-            $deprel = 'AuxV';
+            # We want to make the participle the head and the auxiliary verb its AuxV dependent.
+            if($node->is_participle() && $parent->lemma() eq 'heb')
+            {
+                $deprel = 'AuxArg';
+            }
+            # The 'vc' label is also used for infinitive attached to a modal verb.
+            elsif($node->is_infinitive() && $parent->is_modal())
+            {
+                $deprel = 'Obj';
+            }
+            # The 'vc' label is also used for complement subordinate clauses. Their head in Alpino is either
+            # a subordinating conjunction (complementizer), or a relative word (pronoun, determiner, adverb).
+            elsif(!$node->is_verb())
+            {
+                # A subordinating conjunction will be later relabeled to AuxC and this label will be pushed down to the predicate of the complement clause.
+                $deprel = 'Obj';
+            }
+            else
+            {
+                $deprel = 'AuxV';
+            }
         }
 
         else
@@ -703,74 +726,6 @@ sub lift_commas
                 }
             }
         }
-    }
-}
-
-
-
-sub fix_InfinitivesNotBeingObjects {
-    my ( $self, $root ) = @_;
-
-    my @standalonePreds = ();
-    my @standaloneInfinitives = ();
-
-
-    foreach my $anode ($root->get_children()) {
-        if ($anode->deprel eq "Pred") {
-            push @standalonePreds, $anode;
-        }
-        elsif ($anode->tag =~ /^Vf/) {
-            push @standaloneInfinitives, $anode;
-        }
-    }
-
-    # fix the simpliest case...
-    if (scalar @standalonePreds == 1 && scalar @standaloneInfinitives == 1) {
-        my $pred = $standalonePreds[0];
-        my $infinitive = $standaloneInfinitives[0];
-
-        $infinitive->set_parent($pred);
-        $infinitive->set_deprel("Obj");
-    }
-}
-
-sub fix_SubordinatingConj {
-    my ( $self, $root ) = @_;
-
-    # take sentences with two predicates on the root
-    my @predicates = ();
-    foreach my $anode ($root->get_children()) {
-        if ($anode->deprel eq "Pred") { push @predicates, $anode; }
-    }
-
-    # just two clauses, it should be obvious how they should look like
-    if (scalar @predicates == 2) {
-        my @subordConj = ("omdat", "doordat", "aangezien", "daar", "dan",
-            "zodat", "opdat", "als", "zoals", "tenzij", "voordat", "nadat",
-            "terwijl", "dat", "hoezeer", "indien");
-        my $mainClause;
-        my $depedentClause;
-        my $conj;
-
-        my @firstNodes = $predicates[0]->get_descendants({ordered=>1});
-        my @secondNodes = $predicates[1]->get_descendants({ordered=>1});
-
-        if ( @firstNodes && $firstNodes[0]->lemma =~ (join '|', @subordConj) ) {
-            $depedentClause = $predicates[0];
-            $mainClause = $predicates[1];
-            $conj = $firstNodes[0];
-        }
-        elsif ( @secondNodes && $secondNodes[0]->lemma =~ (join '|', @subordConj) ) {
-            $depedentClause = $predicates[1];
-            $mainClause = $predicates[0];
-            $conj = $secondNodes[1];
-        }
-        else { return; }
-
-
-        $conj->set_parent($mainClause);
-        $depedentClause->set_parent($conj);
-        $depedentClause->set_deprel("NR");
     }
 }
 

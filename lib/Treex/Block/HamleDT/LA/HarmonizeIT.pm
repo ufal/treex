@@ -105,6 +105,10 @@ sub fix_part_of_speech
             $node->set_lemma('objectum');
             $node->iset()->set('pos' => 'noun');
         }
+        elsif($lemma eq 'ob')
+        {
+            $node->iset()->set('pos' => 'adp');
+        }
         elsif($is_noun)
         {
             if($is_adjective)
@@ -207,6 +211,21 @@ sub fix_part_of_speech
         {
             # cat prague.log | perl -pe 's/^doc.*TREEX-WARN.*\d+\.\d+:\s+//' | grep -v 'Apposition without' | grep -v TREEX-INFO | grep -v 'treex -p' | sort -u > unsolved_lemmas.txt
             log_warn("UNKNOWN LEMMA $lemma");
+        }
+    }
+    # "cum" is either preposition or subordinating conjunction
+    elsif($node->is_adposition())
+    {
+        ###!!! We need a well-defined way of specifying where to take the source label.
+        ###!!! Currently we try three possible sources with defined priority (if one
+        ###!!! value is defined, the other will not be checked).
+        my $deprel = $node->deprel();
+        $deprel = $node->afun() if(!defined($deprel));
+        $deprel = $node->conll_deprel() if(!defined($deprel));
+        $deprel = 'NR' if(!defined($deprel));
+        if($deprel eq 'AuxC')
+        {
+            $node->iset()->set_hash({'pos' => 'conj', 'conjtype' => 'sub'});
         }
     }
     # Marco's rules for splitting "particles":
@@ -381,6 +400,11 @@ before 'fix_annotation_errors' => sub
                 $node->set_deprel('AuxY');
                 $node->set_is_member(undef);
             }
+        }
+        # "igitur" and "quidem" attached as AuxX
+        elsif($node->deprel() eq 'AuxX' && $node->form() =~ m/^(igitur|quidem)$/)
+        {
+            $node->set_deprel('AuxY');
         }
     }
 };
@@ -9880,6 +9904,50 @@ zizania	NcB
 zizania	NcA
 zodiacus	NcB
 zona	NcA
+connaturalitas  N
+soliloquia      N
+ames    N
+thronus N
+nubes   N
+arx     N
+indistantia     N
+inferioritas    N
+abraham N
+vinea   N
+ierusalem       N
+clavus  N
+maria   N
+aedes   N
+coquus  N
+caseus  N
+stoicus N
+imarmene        N
+apis    N
+cornu   N
+as      N
+ezechiel        N
+provisio        N
+exsecutrix      N
+nuntius N
+seraphim        N
+cherub  N
+virilitas       N
+michael N
+persa   N
+gabriel N
+colossensis     N
+iuda    N
+homerus N
+iuppiter        N
+ptolemaeus      N
+centiloquium    N
+saturnus        N
+perversitas     N
+phariseus       N
+pharisaeus      N
+priscillianista N
+fames   N
+themistius      N
 EOF
     ;
     my @nouns = map {s/\s.*//; $_} (split(/\r?\n/, $list_of_nouns));
@@ -15151,6 +15219,22 @@ voluntarius	Af-
 zelotypus	Af-
 zephyrius	Af-
 zodiacus	Af-
+celeber A
+voluptuosus     A
+difformis       A
+conservatrix    A
+providus        A
+germinativus    A
+multiplicativus A
+ordinativus     A
+obliquus        A
+regitivus       A
+directivus      A
+deiferus        A
+deiformis       A
+ductivus        A
+validus A
+inalterabilis   A
 EOF
     ;
     my @adjectives = split(/\r?\n/, $list_of_adjectives);
@@ -15184,6 +15268,7 @@ alteruter	Pu-
 cuius	P5-
 cuiusuis	Pu-
 ego	Pq-
+egoipse Pq-
 egometipse	Pq-
 hic	Py-
 idem	P3-
@@ -15281,9 +15366,11 @@ sub _build_list_of_verbs
     # lemma
     my $list_of_verbs = <<EOF
 absolvo
+abundo
 accido^cado
 adjutor
 ago
+ardeo
 attendo
 compono
 congruo
@@ -15292,16 +15379,20 @@ debeo
 decet
 dico
 diligo
+dirigo
 emineo
 exprimo
 figo
 inhaereo
+intendo
 moveo
 occulo
 ordino
 patior
+perficio
 posse
 praedico
+praesum
 rego
 sancio
 stringo
@@ -15334,6 +15425,6 @@ The is_member attribute is not set properly, the deprels of the conjuncts have t
 
 =cut
 
-# Copyright 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright 2015, 2016 Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 # This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.

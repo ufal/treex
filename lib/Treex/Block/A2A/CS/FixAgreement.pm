@@ -5,7 +5,7 @@ use utf8;
 extends 'Treex::Core::Block';
 
 has '+language'       => ( required => 1 );
-has 'source_language' => ( is       => 'rw', isa => 'Str', required => 1 );
+has 'source_language' => ( is       => 'rw', isa => 'Str', default => 'en' );
 has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
 has 'magic'           => ( is       => 'rw', isa => 'Str', default => '' );
 has 'dont_try_switch_number' => ( is => 'rw', isa => 'Bool', default => '0' );

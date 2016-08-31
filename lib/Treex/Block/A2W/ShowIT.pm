@@ -6,7 +6,15 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+use Treex::Tool::Moses;
+
 has source_selector => (is => 'ro', default=>'src');
+
+has set_original_sentence => ( is => 'rw', isa => 'Bool', default => 1 );
+
+has moses_xml => ( is => 'rw', isa => 'Bool', default => 0 );
+
+has prob => ( is => 'rw', isa => 'Str', default => '0.8' );
 
 sub process_zone {
     my ($self, $zone) = @_;
@@ -15,11 +23,13 @@ sub process_zone {
     my $src_zone = first {$_->selector eq $self->source_selector} $bundle->get_all_zones();          
     log_fatal 'No zone with selector '. $self->source_selector if !$src_zone;
 
-    my $re_tst_sentence = reconstruct_entities($zone->sentence, $entities_ref);
+    my $re_tst_sentence = $self->reconstruct_entities($zone->sentence, $entities_ref);
     $re_tst_sentence = fix_quotes($re_tst_sentence);
     $zone->set_sentence($re_tst_sentence);
 
-    $src_zone->set_sentence($bundle->wild->{original_sentence}) if $bundle->wild->{original_sentence};
+    if ($self->set_original_sentence) {
+        $src_zone->set_sentence($bundle->wild->{original_sentence}) if $bundle->wild->{original_sentence};
+    }
     log_debug "New tst snt: $re_tst_sentence\n";
     return;
 }
@@ -31,33 +41,21 @@ sub fix_quotes {
 }
 
 sub reconstruct_entities {
-  my $in_sentence = shift;
-  my $entites_ref = shift;
-  my $out_sentence = $in_sentence;
+  my ($self, $in_sentence, $entites_ref) = @_;
   log_debug "Replacing sent: $in_sentence\n";
-  if (defined($entites_ref->{'commands'})){
-    log_debug "Restoring commands:\n";
-    foreach my $cmd (@{$entites_ref->{'commands'}}){
-      log_debug "Before $cmd: $in_sentence\n";
-      $in_sentence =~ s/xxxCMDxxx/$cmd/i;
-      log_debug "After: $in_sentence\n";
-    }
-  }
-  if (defined($entites_ref->{'entities'})){
-    log_debug "Restoring entites:\n";
-    foreach my $entity (@{$entites_ref->{'entities'}}){
-      log_debug "Before $entity: $in_sentence\n";
-      $in_sentence =~ s/xxxNExxx/$entity/i;
-      log_debug "After: $in_sentence\n";
-    }
-  }  
-  if (defined($entites_ref->{'mails'})){
-    log_debug "Restoring mails:\n";
-    foreach my $entity (@{$entites_ref->{'mails'}}){
-      log_debug "Before $entity: $in_sentence\n";
-      $in_sentence =~ s/xxxMAILxxx/$entity/i;
-      log_debug "After: $in_sentence\n";
-    }
+
+  my %array_entities = (
+      commands => 'xxxCMDxxx',
+      entities => 'xxxNExxx',
+      mails => 'xxxMAILxxx',
+  );
+  foreach my $entity_type (keys %array_entities) {
+      if (defined($entites_ref->{$entity_type})){
+          log_debug "Restoring $entity_type:\n";
+          foreach my $replacement (@{$entites_ref->{$entity_type}}){
+              $in_sentence = $self->replace($in_sentence, $array_entities{$entity_type}, $replacement);
+          }
+      }
   }
   
   foreach my $block (qw (upaths wpaths files)){
@@ -65,22 +63,11 @@ sub reconstruct_entities {
       log_debug "Restoring paths:\n";
       foreach my $entity_key (keys %{$entites_ref->{$block}}){
         my $upath = $entites_ref->{$block}{$entity_key};
-        log_debug "Before $upath: $in_sentence\n";
-        $in_sentence =~ s/$entity_key/$upath/i;
-        log_debug "After: $in_sentence\n";
+        $in_sentence = $self->replace($in_sentence, $entity_key, $upath);
       }
     }
   }
 
-  #if (defined($entites_ref->{'wpaths'})){
-    #log_debug "Restoring paths:\n";
-    #foreach my $entity_key (keys %{$entites_ref->{'wpaths'})}{
-      #my $wpath = $entites_ref->{'wpaths'}{$entity_key};
-      #log_debug "Before $wpath: $in_sentence\n";
-      #$in_sentence =~ s/$entity_key/$wpath/i;
-      #log_debug "After: $in_sentence\n";
-    #}
-  #}
   if (defined($entites_ref->{'urls'})){
     log_debug "Restoring URLs:\n";
     foreach my $entity (@{$entites_ref->{'urls'}}){
@@ -90,14 +77,31 @@ sub reconstruct_entities {
       if (!$1){
         log_debug "No url in $entity\n";
       }
-      $in_sentence =~ s/xxxURLxxx/$originalUrl/i;
-      log_debug "After: $in_sentence\n";
+      $in_sentence = $self->replace($in_sentence, 'xxxURLxxx', $originalUrl);
     }
   }
+
   $in_sentence =~ s/\s+/ /g;
   $in_sentence =~ s/^ *//g;
   $in_sentence =~ s/ *$//g;
   return $in_sentence;
+}
+
+sub replace {
+    my ($self, $in_sentence, $search, $replacement) = @_;
+
+    log_debug "Before $replacement: $in_sentence\n";
+    if ($self->moses_xml) {
+        $replacement = '<item'
+            . ' translation="' . Treex::Tool::Moses::escape($replacement)
+            . '" prob="' . $self->prob . '">'
+            . Treex::Tool::Moses::escape($replacement)
+            . '</item>';
+    }
+    $in_sentence =~ s/$search/$replacement/i;
+    log_debug "After: $in_sentence\n";
+
+    return $in_sentence;
 }
 
 1;

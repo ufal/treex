@@ -33,6 +33,7 @@ sub detect_special_constructions
         # will get a new label and it may well be AuxP.
         $phrase = $self->detect_prague_coordination($phrase);
         $phrase = $self->detect_prague_apposition($phrase);
+        $phrase = $self->detect_punctuation_pnom_apposition($phrase);
         $phrase = $self->detect_prague_pp($phrase);
     }
     # Return the resulting phrase. It may be different from the input phrase.

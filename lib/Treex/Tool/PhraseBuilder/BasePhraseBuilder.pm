@@ -123,6 +123,8 @@ sub detect_prague_coordination
 {
     my $self = shift;
     my $phrase = shift; # Treex::Core::Phrase
+    # Do not check terminal phrases even if their deprel is Coord. We have to collect the nonterminal with their dependents first.
+    return $phrase if($phrase->is_terminal());
     # If this is the Prague style then the head is either coordinating conjunction or punctuation.
     if($self->is_deprel($phrase->deprel(), 'coord'))
     {
@@ -954,6 +956,39 @@ sub detect_prague_apposition
 
 
 
+#------------------------------------------------------------------------------
+# Examines a Prague-style nonterminal phrase. A rare but existing construction
+# in Prague treebanks is hyphen analyzed as copula verb, e.g. "Šerák - 1353"
+# meaning "Šerák [is] 1353 [meters tall]". It should be apposition, which is
+# how this method re-analyzes it.
+#------------------------------------------------------------------------------
+sub detect_punctuation_pnom_apposition
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    # Is the head of the phrase punctuation (dash, colon)?
+    if($phrase->node()->form() =~ m/^[-:]$/)
+    {
+        # Does it have two dependents, a subject and a nominal predicate?
+        my @dependents = $phrase->dependents('ordered' => 1);
+        my @pnomdeps = grep {$self->is_deprel($_->deprel(), 'pnom')} (@dependents);
+        my @subjects = grep {$self->is_deprel($_->deprel(), 'subj')} (@dependents);
+        if(scalar(@subjects)==1 && scalar(@pnomdeps)==1)
+        {
+            my $punctuation = $phrase->head();
+            my $deprel = $phrase->deprel();
+            $phrase->set_head($subjects[0]);
+            $phrase->set_deprel($deprel);
+            $self->set_deprel($punctuation, 'punct');
+            $punctuation->set_is_member(undef);
+            $self->set_deprel($pnomdeps[0], 'appos');
+        }
+    }
+    return $phrase;
+}
+
+
+
 #==============================================================================
 # Prepositional phrase
 #==============================================================================
@@ -1177,6 +1212,87 @@ sub detect_stanford_pp
         return $pp;
     }
     # Return the input NTerm phrase if no PP has been detected.
+    return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Examines a nonterminal phrase whether it is a subordinate clause in the
+# Alpino style: like in Stanford, the subordinating conjunction is the head and
+# its deprel label is the relation of the whole clause to its parent, not just
+# an auxiliary label for the conjunction. However, unlike in Stanford, Alpino
+# treats relative pronouns and adverbs as if they were subordinating
+# conjunctions. In case of relative determiners it gets even trickier: the
+# whole relative phrase (such as "welke boeken", "which books") takes the place
+# of the conjunction. We want to fix this and put the relative element down in
+# the clause.
+#------------------------------------------------------------------------------
+sub detect_alpino_clause
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    # The subordinating conjunction or the relative element is the head.
+    # We look at the child deprels: one of the children should be shouting "I'm the argument of a subordinator!"
+    my @dependents = $phrase->dependents('ordered' => 1);
+    my @arguments = grep {$self->is_deprel($_->deprel(), 'sarg')} (@dependents);
+    if(@arguments)
+    {
+        # We are working bottom-up, thus the current phrase does not have a parent yet and we do not have to take care of the parent link.
+        # We have to detach the argument though, and we have to port the is_member flag.
+        my $member = $phrase->is_member();
+        my $pp_deprel = $phrase->deprel();
+        # Now it is clear that we have a subordinate clause.
+        # The subordinator is the current phrase but we have to detach the dependents and only keep the core.
+        # If the subordinator is a relative pronoun, it can be subject, object or modifier of the subordinate clause. Then we will not construct a PP!
+        # Dutch examples: die (that), dat (that), hoeveel (how many), hetgeen (which), wat (what), wie (who), welke (which), zoveel (as many)
+        if($phrase->node()->is_pronoun())
+        {
+            ###!!! We should implement heuristics to decide between subject, object or optional modifier.
+            ###!!! Also note that the subordinator may be a multi-word noun phrase (welke boeken = which books) or a prepositional phrase (bij wat = by what).
+            ###!!! All that will currently come out wrong.
+            $phrase->head()->set_deprel($self->map_deprel('dobj'));
+            $phrase->set_head($arguments[0]);
+            $phrase->set_deprel($pp_deprel);
+        }
+        else
+        {
+            $phrase->set_is_member(undef);
+            my $fun = $phrase;
+            my $arg = $arguments[0];
+            my $fun_deprel = $self->map_deprel('auxc');
+            $fun->set_deprel($fun_deprel);
+            $arg->set_parent(undef);
+            $arg->set_deprel($pp_deprel);
+            my $pp = new Treex::Core::Phrase::PP
+            (
+                'fun'           => $fun,
+                'arg'           => $arg,
+                'fun_is_head'   => $self->prep_is_head(),
+                'deprel_at_fun' => 0,
+                'core_deprel'   => $fun_deprel,
+                'is_member'     => $member
+            );
+            $pp->set_deprel($pp_deprel);
+            foreach my $d (@dependents)
+            {
+                unless($d == $arg)
+                {
+                    $d->set_parent($pp);
+                }
+            }
+            $phrase = $pp;
+        }
+        # This method is used for annotation styles where SubArg is not a valid relation.
+        # Therefore we must reset the deprel of the remaining candidates to something valid.
+        foreach my $argument (@arguments)
+        {
+            if($self->is_deprel($argument->deprel(), 'sarg'))
+            {
+                $self->set_deprel($argument, 'ccomp');
+            }
+        }
+    }
     return $phrase;
 }
 

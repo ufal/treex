@@ -22,8 +22,17 @@ sub next_document {
         next unless(@lines);
         my $comment = '';
         my $bundle  = $document->create_bundle();
-        my $zone    = $bundle->create_zone( $self->language, $self->selector );
-        my $aroot   = $zone->create_atree();
+        # The default bundle id is something like "s1" where 1 is the number of the sentence.
+        # If the input file is split to multiple Treex documents, it is the index of the sentence in the current output document.
+        # But we want the input sentence number. If the Treex documents are later exported to one file again, the sentence ids should remain unique.
+        # Note that this is only the default sentence id for files that do not contain their own sentence ids. If they do, it will be overwritten below.
+        my $sentid = $self->sent_in_file() + 1;
+        my $sid = $self->sid_prefix().'s'.$sentid;
+        $bundle->set_id($sid);
+        $self->set_sent_in_file($sentid);
+        my $zone = $bundle->create_zone( $self->language, $self->selector );
+        my $aroot = $zone->create_atree();
+        $aroot->set_id($sid.'/'.$self->language());
         my @parents = (0);
         my @nodes   = ($aroot);
         my $sentence;
@@ -39,7 +48,18 @@ sub next_document {
             next LINE if $line =~ /^\s*$/;
             if ($line =~ s/^#\s*//) {
                 if ($line =~ m/sent_id\s+(.*)/) {
-                    $aroot->set_id( $1 );
+                    my $sid = $1;
+                    my $zid = $self->language();
+                    # Some CoNLL-U files already have sentence ids with "/language" suffix while others don't.
+                    if ($sid =~ s-/(.+)$--)
+                    {
+                        $zid = $1;
+                    }
+                    # Make sure that there are no additional slashes.
+                    $sid =~ s-/.*$--;
+                    $zid =~ s-/.*$--;
+                    $bundle->set_id( $sid );
+                    $aroot->set_id( "$sid/$zid" );
                 }
                 else {
                     $comment .= "$line\n";

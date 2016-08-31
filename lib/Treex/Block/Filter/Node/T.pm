@@ -6,7 +6,6 @@ use Treex::Core::Common;
 
 use Treex::Tool::Coreference::NodeFilter::PersPron;
 use Treex::Tool::Coreference::NodeFilter::RelPron;
-use Treex::Block::My::CorefExprAddresses;
 
 use List::MoreUtils qw/none/;
 
@@ -35,17 +34,19 @@ sub get_types {
         $types->{relpron} = 1;
         $types->{all_anaph} = 1;
     }
-    if (Treex::Block::My::CorefExprAddresses::_is_cor($node)) {
+    if (_is_cor($node)) {
         #$type = "cor";
         $types->{zero} = 1;
         $types->{all_anaph} = 1;
     }
-    #elsif (Treex::Block::My::CorefExprAddresses::_is_cs_ten($node)) {
-    #    $type = "ten";
-    #}
     return $types;
 }
 
+sub _is_cor {
+    my ($node) = @_;
+    return 0 if ($node->get_layer ne "t");
+    return ($node->t_lemma eq "#Cor");
+}
 
 sub process_tnode {
     my ($self, $tnode) = @_;
