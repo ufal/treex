@@ -84,12 +84,12 @@ sub get_scenario_string {
     $self->terminology eq 'yes' ? 'T2T::TrLApplyTbxDictionary tbx=data/dictionaries/MicrosoftTermCollection.eu.tbx tbx_src_id=eu-es tbx_trg_id=en-US analysis=@data/dictionaries/MicrosoftTermCollection.eu_Pilot3.filelist analysis_src_language=eu analysis_src_selector=trg analysis_trg_language=en analysis_trg_selector=src src_blacklist=data/dictionaries/MicrosoftTermCollection.eu-en.src.blacklist.txt trg_blacklist=data/dictionaries/MicrosoftTermCollection.eu-en.trg.blacklist.txt' : (),
 
     "T2T::TrFAddVariantsInterpol model_dir=$TM_DIR models='
-      static 1.0 20160415_formeme.static.gz
-      maxent 0.5 20160415_formeme.maxent.gz
+      static 1.0 2016_08_20_none_formeme.static.gz
+      maxent 0.5 2016_08_20_none_formeme.maxent.gz
       $IT_FORMEME_MODELS'",
     "T2T::TrLAddVariantsInterpol model_dir=$TM_DIR models='
-      static 0.5 20160415_tlemma.static.gz
-      maxent 1.0 20160415_tlemma.maxent.gz
+      static 0.5 2016_08_20_none_tlemma.static.gz
+      maxent 1.0 2016_08_20_none_tlemma.maxent.gz
       $IT_LEMMA_MODELS'",
     $self->fl_agreement ? 'T2T::FormemeTLemmaAgreement fun='.$self->fl_agreement : (),
     'Util::DefinedAttr tnode=t_lemma,formeme message="after simple transfer"',
