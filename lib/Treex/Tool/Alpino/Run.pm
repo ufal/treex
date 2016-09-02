@@ -11,7 +11,7 @@ has '_alpino_writehandle' => ( is => 'rw', reader => '_alpino_writehandle', writ
 has '_alpino_pid'         => ( is => 'rw', reader => '_alpino_pid',         writer => '_set_alpino_pid' );
 
 my $EXE        = 'bin/Alpino';
-my $ALPINO_WEB = 'http://www.let.rug.nl/~vannoord/alp/Alpino/binary/versions/';
+my $ALPINO_WEB = 'http://www.let.rug.nl/~vannoord/alp/Alpino/versions/binary/';
 
 sub _start_alpino {
 
