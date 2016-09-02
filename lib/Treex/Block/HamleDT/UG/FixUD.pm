@@ -11,12 +11,40 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
+    $self->fix_pos($root);
     $self->fix_non_leaf_punct($root);
     $self->fix_punct_attachment($root);
     $self->convert_deprels($root);
-    $self->fix_multi_root($root);
     $self->push_copula_down($root);
     $self->push_postposition_down($root);
+    # Do this at the end. It also makes sure that the top node is attached as 'root' (even if it has been moved from elsewhere).
+    $self->fix_multi_root($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes POS tags.
+#------------------------------------------------------------------------------
+sub fix_pos
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $form = $node->form();
+        if($form =~ m/^\pP+$/ && !$node->is_punctuation() && !$node->is_symbol())
+        {
+            $node->iset()->set_hash({'pos' => 'punc'});
+            $node->set_tag('PUNCT');
+        }
+        elsif($form !~ m/^\pP+$/ && $node->is_punctuation())
+        {
+            $node->iset()->set_hash({});
+            $node->set_tag('X');
+        }
+    }
 }
 
 
@@ -176,7 +204,30 @@ sub convert_deprels
                 $deprel = 'nmod:abl';
             }
         }
-        elsif($deprel eq 'ADV')
+        elsif($deprel =~ m/^(ADJMOD|ATT)$/)
+        {
+            if($node->is_numeral())
+            {
+                $deprel = 'nummod';
+            }
+            elsif($node->is_adjective())
+            {
+                $deprel = 'amod';
+            }
+            elsif($node->is_noun() || $node->is_adverb()) # "adverb" was in fact locative noun
+            {
+                $deprel = 'nmod';
+            }
+            elsif($node->is_verb())
+            {
+                $deprel = 'acl';
+            }
+            else # X
+            {
+                $deprel = 'nmod';
+            }
+        }
+        elsif($deprel =~ m/^ADV(MOD)?$/)
         {
             my $parent = $node->parent();
             if($parent->is_adposition())
@@ -219,32 +270,13 @@ sub convert_deprels
                 }
             }
         }
+        elsif($deprel eq 'ADVCL')
+        {
+            $deprel = 'advcl';
+        }
         elsif($deprel eq 'APPOS')
         {
             $deprel = 'appos';
-        }
-        elsif($deprel eq 'ATT')
-        {
-            if($node->is_numeral())
-            {
-                $deprel = 'nummod';
-            }
-            elsif($node->is_adjective())
-            {
-                $deprel = 'amod';
-            }
-            elsif($node->is_noun() || $node->is_adverb()) # "adverb" was in fact locative noun
-            {
-                $deprel = 'nmod';
-            }
-            elsif($node->is_verb())
-            {
-                $deprel = 'acl';
-            }
-            else # X
-            {
-                $deprel = 'nmod';
-            }
         }
         elsif($deprel eq 'AUX')
         {
@@ -278,6 +310,11 @@ sub convert_deprels
         {
             $deprel = 'compound';
         }
+        # COM = comparison. The "standard" that something is compared to is typically a noun phrase in ablative case and is attached to the quality as COM.
+        elsif($deprel eq 'COM')
+        {
+            $deprel = 'nmod:cmp';
+        }
         # Coordination: haywanlar we ösümlüklerge: COORD(ösümlüklerge, haywanlar); CONJ(ösümlüklerge, we).
         # "we" is coordinating conjunction "and".
         elsif($deprel eq 'CONJ')
@@ -303,11 +340,23 @@ sub convert_deprels
         {
             $deprel = 'iobj';
         }
-        # IND seems to often denote vocative noun phrases, delimited by commas: apa (sister), balilar (children), aqsaqal (elders)
+        elsif($deprel eq 'DET')
+        {
+            $deprel = 'det';
+        }
+        # IND = independent.
+        # It often denotes vocative noun phrases, delimited by commas: apa (mother/sister), balilar (children), aqsaqal (elders).
         # Sometimes it also labels a short imperative phrase, e.g. ëling (take something to eat).
         elsif($deprel eq 'IND')
         {
-            $deprel = 'vocative'; ###!!! What shall we do with "ëling"?
+            if($node->is_noun())
+            {
+                $deprel = 'vocative';
+            }
+            else
+            {
+                $deprel = 'discourse';
+            }
         }
         # instrumental case
         elsif($deprel eq 'INST')
@@ -329,6 +378,10 @@ sub convert_deprels
             {
                 $deprel = 'nmod:loc';
             }
+            elsif($node->is_adverb())
+            {
+                $deprel = 'advmod';
+            }
             # non-finite verb in locative case, e.g. këliwatqanda
             elsif($node->is_verb())
             {
@@ -338,6 +391,10 @@ sub convert_deprels
         elsif($deprel eq 'OBJ')
         {
             $deprel = 'dobj';
+        }
+        elsif($deprel eq 'OTHER')
+        {
+            $deprel = 'dep';
         }
         elsif($deprel eq 'POSS')
         {
@@ -358,6 +415,10 @@ sub convert_deprels
         {
             $deprel = 'parataxis';
         }
+        elsif($deprel eq 'QNTMOD')
+        {
+            $deprel = 'nummod';
+        }
         elsif($deprel eq 'QUOT')
         {
             $deprel = 'parataxis';
@@ -377,46 +438,15 @@ sub convert_deprels
                 $deprel = 'nsubj';
             }
         }
+        elsif($deprel eq 'SUBSENT')
+        {
+            $deprel = 'advcl';
+        }
         elsif($deprel eq 'void')
         {
             $deprel = 'dep';
         }
         $node->set_deprel($deprel);
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Fixes multiple branches under the root node.
-#------------------------------------------------------------------------------
-sub fix_multi_root
-{
-    my $self = shift;
-    my $root = shift;
-    my @topnodes = $root->get_children({'ordered' => 1});
-    if(scalar(@topnodes) > 1)
-    {
-        my $winner;
-        # Prefer those with the "root" deprel.
-        my @rtn = grep {$_->deprel() eq 'root'} (@topnodes);
-        if(scalar(@rtn) >= 1)
-        {
-            $winner = pop(@rtn);
-        }
-        else
-        {
-            $winner = pop(@topnodes);
-        }
-        foreach my $tn (@topnodes)
-        {
-            unless($tn==$winner)
-            {
-                $tn->set_parent($winner);
-            }
-        }
-        # Make sure the winner has the required label 'root'.
-        $winner->set_deprel('root');
     }
 }
 
@@ -500,6 +530,11 @@ sub push_postposition_down
                 $postposition->set_deprel('case');
                 $moved = 1;
             }
+            # If the parent is not postposition, there is probably an annotation error. Turn the node into a common modifier.
+            elsif($node->is_noun())
+            {
+                $node->set_deprel('nmod');
+            }
             # The postposition is a function word and should have no dependents of its own (except for multi-word expressions and coordinations).
             if($moved)
             {
@@ -508,6 +543,54 @@ sub push_postposition_down
                     $child->set_parent($node);
                 }
             }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes multiple branches under the root node.
+#------------------------------------------------------------------------------
+sub fix_multi_root
+{
+    my $self = shift;
+    my $root = shift;
+    my @topnodes = $root->get_children({'ordered' => 1});
+    if(scalar(@topnodes) > 1)
+    {
+        my $winner;
+        # Prefer those with the "root" deprel.
+        my @rtn = grep {$_->deprel() eq 'root'} (@topnodes);
+        if(scalar(@rtn) >= 1)
+        {
+            $winner = pop(@rtn);
+        }
+        else
+        {
+            $winner = pop(@topnodes);
+        }
+        foreach my $tn (@topnodes)
+        {
+            unless($tn==$winner)
+            {
+                $tn->set_parent($winner);
+            }
+        }
+        # Make sure the winner has the required label 'root'.
+        $winner->set_deprel('root');
+    }
+    elsif(scalar(@topnodes)==1)
+    {
+        $topnodes[0]->set_deprel('root');
+    }
+    # We also do not allow the 'root' label anywhere else in the tree.
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if(!$node->parent()->is_root() && $node->deprel() eq 'root')
+        {
+            $node->set_deprel('dep');
         }
     }
 }
