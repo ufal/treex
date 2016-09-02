@@ -161,9 +161,49 @@ sub convert_deprels
     foreach my $node (@nodes)
     {
         my $deprel = $node->deprel();
-        if($deprel eq 'ADV')
+        # Input may have contained cycles. After decyclization the deprels may contain traces but that does not help us now.
+        $deprel =~ s/-CYCLE.*$//;
+        # locative case
+        if($deprel eq 'ABL')
         {
-            if($node->parent()->is_verb())
+            # non-finite verb in ablative case
+            if($node->is_verb())
+            {
+                $deprel = 'advcl';
+            }
+            else
+            {
+                $deprel = 'nmod:abl';
+            }
+        }
+        elsif($deprel eq 'ADV')
+        {
+            my $parent = $node->parent();
+            if($parent->is_adposition())
+            {
+                # Only fix the original deprel now. It will be restructured later.
+                $deprel = 'POST';
+            }
+            elsif($parent->is_noun())
+            {
+                if($node->is_noun())
+                {
+                    $deprel = 'nmod';
+                }
+                elsif($node->is_adjective())
+                {
+                    $deprel = 'amod';
+                }
+                elsif($node->is_verb())
+                {
+                    $deprel = 'acl';
+                }
+                else
+                {
+                    $deprel = 'advmod:emph';
+                }
+            }
+            else # parent is probably verb, adjective or adverb
             {
                 if($node->is_verb())
                 {
@@ -177,10 +217,6 @@ sub convert_deprels
                 {
                     $deprel = 'advmod';
                 }
-            }
-            elsif($node->parent()->is_noun() && $node->is_adjective())
-            {
-                $deprel = 'amod';
             }
         }
         elsif($deprel eq 'APPOS')
@@ -197,7 +233,15 @@ sub convert_deprels
             {
                 $deprel = 'amod';
             }
-            elsif($node->is_noun())
+            elsif($node->is_noun() || $node->is_adverb()) # "adverb" was in fact locative noun
+            {
+                $deprel = 'nmod';
+            }
+            elsif($node->is_verb())
+            {
+                $deprel = 'acl';
+            }
+            else # X
             {
                 $deprel = 'nmod';
             }
@@ -220,6 +264,11 @@ sub convert_deprels
                     $child->set_parent($parent);
                 }
             }
+        }
+        # "CL" may be "clause"? Examples look like coordinate clauses attached to the head of the last clause.
+        elsif($deprel eq 'CL')
+        {
+            $deprel = 'conj';
         }
         elsif($deprel eq 'CLAS')
         {
@@ -254,11 +303,36 @@ sub convert_deprels
         {
             $deprel = 'iobj';
         }
+        # IND seems to often denote vocative noun phrases, delimited by commas: apa (sister), balilar (children), aqsaqal (elders)
+        # Sometimes it also labels a short imperative phrase, e.g. ëling (take something to eat).
+        elsif($deprel eq 'IND')
+        {
+            $deprel = 'vocative'; ###!!! What shall we do with "ëling"?
+        }
+        # instrumental case
+        elsif($deprel eq 'INST')
+        {
+            if($node->is_noun() || $node->is_adjective() || $node->is_numeral())
+            {
+                $deprel = 'nmod:ins';
+            }
+            # non-finite verb in instrumental case
+            elsif($node->is_verb())
+            {
+                $deprel = 'advcl';
+            }
+        }
+        # locative case
         elsif($deprel eq 'LOC')
         {
             if($node->is_noun() || $node->is_adjective() || $node->is_numeral())
             {
                 $deprel = 'nmod:loc';
+            }
+            # non-finite verb in locative case, e.g. këliwatqanda
+            elsif($node->is_verb())
+            {
+                $deprel = 'advcl';
             }
         }
         elsif($deprel eq 'OBJ')
@@ -273,8 +347,18 @@ sub convert_deprels
         elsif($deprel eq 'POST')
         {
             # Do nothing now. We will restructure the tree later and the node will get a new deprel then.
+            # Only if we do not plan on restructuring, change the label now.
+            # VERB on VERB – perhaps an error? Example: "qalay.VERB.POST dëgen.VERB.acl"
+            if($node->is_verb() && $node->parent()->is_verb())
+            {
+                $deprel = 'ccomp';
+            }
         }
         elsif($deprel eq 'PRED')
+        {
+            $deprel = 'parataxis';
+        }
+        elsif($deprel eq 'QUOT')
         {
             $deprel = 'parataxis';
         }
@@ -331,6 +415,8 @@ sub fix_multi_root
                 $tn->set_parent($winner);
             }
         }
+        # Make sure the winner has the required label 'root'.
+        $winner->set_deprel('root');
     }
 }
 
@@ -388,7 +474,11 @@ sub push_postposition_down
         {
             my $parent = $node->parent();
             my $postposition = $parent;
-            if($node->is_verb() && ($parent->is_adposition() || $parent->is_conjunction() || $parent->is_noun() && $parent->deprel() eq 'nmod:loc'))
+            my $moved = 0;
+            # Postposition can be also noun in locative, e.g. "halda". Not all are marked as nmod:loc; some are only nmod.
+            # The parent tag may be unknown ('X') and we should not choke on that.
+            my $parent_ok = ($parent->is_adposition() || $parent->is_conjunction() || $parent->is_noun() || $parent->iset()->pos() eq '');
+            if($node->is_verb() && $parent_ok)
             {
                 # The original tag set does not distinguish CONJ and SCONJ but now we know that this is a subordinating conjunction.
                 if($parent->is_conjunction())
@@ -396,28 +486,27 @@ sub push_postposition_down
                     $parent->iset()->set('conjtype', 'sub');
                     $parent->set_tag('SCONJ');
                 }
-                if($postposition->deprel() =~ m/^(advmod|nmod:loc)$/)
-                {
-                    $node->set_deprel('advcl');
-                }
                 $node->set_parent($postposition->parent());
+                $node->set_deprel('advcl');
                 $postposition->set_parent($node);
                 $postposition->set_deprel('mark');
+                $moved = 1;
             }
-            elsif($node->is_noun() && $parent->is_adposition())
+            elsif($parent_ok)
             {
-                if($postposition->deprel() =~ m/^(advmod|nmod:loc)$/)
-                {
-                    $node->set_deprel('nmod');
-                }
                 $node->set_parent($postposition->parent());
+                $node->set_deprel('nmod');
                 $postposition->set_parent($node);
                 $postposition->set_deprel('case');
+                $moved = 1;
             }
             # The postposition is a function word and should have no dependents of its own (except for multi-word expressions and coordinations).
-            foreach my $child ($postposition->children())
+            if($moved)
             {
-                $child->set_parent($node);
+                foreach my $child ($postposition->children())
+                {
+                    $child->set_parent($node);
+                }
             }
         }
     }
