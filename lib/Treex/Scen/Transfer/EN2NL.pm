@@ -79,6 +79,7 @@ sub get_scenario_string {
       maxent 0.5 20150217_formeme.maxent.gz
       $IT_FORMEME_MODELS'",
       #static 0.5 20150725_tlemma.static.min_2.minpc_1.gz
+      # WMT '16: use 20160323 models (just KDE + Europarl, not DPC)
     "T2T::TrLAddVariantsInterpol model_dir=$TM_DIR models='
       static 0.5 20150217_tlemma.static.gz
       maxent 1.0 20150217_tlemma.maxent.gz
