@@ -72,13 +72,16 @@ sub get_types_force {
     return $types;
 }
 
+sub get_matched_set {
+    my ($node, $node_types) = @_;
+    my %types = map {$_ => 1} get_types($node);
+    return grep {$types{$_}} @$node_types;
+}
 
 sub matches {
     my ($node, $node_types) = @_;
     return 1 if (!@$node_types);
-
-    my %types = map {$_ => 1} get_types($node);
-    return (any {$types{$_}} @$node_types);
+    return get_matched_set($node, $node_types) > 0;
 }
 
 1;

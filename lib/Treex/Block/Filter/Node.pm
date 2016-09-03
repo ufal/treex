@@ -30,8 +30,9 @@ sub _process_node {
     return if (!$self->layers->{$layer});
     my $meta = $self->meta;
     if (my $m = $meta->find_method_by_name("process_filtered_".$layer."node")) {
-        return if (!Treex::Tool::Coreference::NodeFilter::matches($node, $self->node_types));
-        $m->execute( $self, $node );
+        my @matched_set = Treex::Tool::Coreference::NodeFilter::matches($node, $self->node_types);
+        return if (!@matched_set && @{$self->node_types});
+        $m->execute( $self, $node, \@matched_set );
     }
 }
 
