@@ -6,9 +6,23 @@ extends 'Treex::Block::T2A::AddSubordClausePunct';
 
 override 'no_comma_between' => sub {
     my ( $self, $left_node, $right_node ) = @_;
+
+    return 1 if any { ( $_->wild->{erl} // '' ) ne '' } ( $left_node, $right_node );
     return 1 if any { ( $_->afun // '' ) =~ /^(Coord|AuxC)$/ } ( $left_node, $right_node );
     return 1 if all { $_->is_member } ( $left_node, $right_node );
     return 0;
+};
+
+override 'postprocess_comma' => sub {
+    my ( $self, $anode, $comma ) = @_;
+
+    my $parent = $comma->get_parent();
+
+    if (($parent->wild->{erl} // '' ) ne '') {
+	$comma->remove();
+    }
+    
+    return;
 };
 
 1;

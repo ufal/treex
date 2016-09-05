@@ -22,11 +22,11 @@ has agr2wild => (
 my %getnode = (
     node => sub { $_[0] },
     parent => sub { $_[0]->get_eparents(
-            {first_only => 1, or_topological => 1} )
+            {first_only => 1, or_topological => 1, ignore_incorrect_tree_structure => 1} )
     },
     grandparent => sub { $_[0]->get_eparents(
-            {first_only => 1, or_topological => 1}
-        )->get_eparents( {first_only => 1, or_topological => 1} )
+            {first_only => 1, or_topological => 1, ignore_incorrect_tree_structure => 1}
+        )->get_eparents( {first_only => 1, or_topological => 1, ignore_incorrect_tree_structure => 1} )
     },
     precchild => sub { $_[0]->get_echildren(
             {last_only => 1, preceding_only => 1, or_topological => 1} )
@@ -41,7 +41,8 @@ my %getnode = (
 sub add_info {
     my ($self, $info, $prefix, $node, $names) = @_;
 
-	#log_info("adding info: $prefix");
+
+    return if !defined $node || $node->is_root();
 
     $prefix = $prefix . '_';
 

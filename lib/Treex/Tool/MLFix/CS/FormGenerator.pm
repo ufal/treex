@@ -43,7 +43,8 @@ sub _build_numberSwitcher {
 
 sub get_form {
 
-    my ( $self, $lemma, $tag ) = @_;
+    my ( $self, $node, $tag ) = @_;
+    my $lemma = $node->lemma;
 
     # TODO: use the proper way :-)
     $lemma =~ s/[-_].+$//;    # ???
@@ -78,7 +79,7 @@ sub get_form {
     # the "1" variant can be safely ignored
     if ( !$form && $tag =~ /1$/ ) {
         $tag =~ s/1$/-/;
-        return $self->get_form( $lemma, $tag );
+        return $self->get_form( $node, $tag );
     }
 
     # numerals have deterministic number
@@ -88,7 +89,7 @@ sub get_form {
         } else {
             $tag = $1 . 'S' . $2;
         }
-        return $self->get_form( $lemma, $tag );
+        return $self->get_form( $node, $tag );
     }
 
     # reasonable but does not bring any improvement:
@@ -123,7 +124,7 @@ sub regenerate_node {
         $node->set_tag($new_tag);
     }
     
-    my $new_form = $self->get_form( $node->lemma, $new_tag );
+    my $new_form = $self->get_form( $node, $new_tag );
     return if !defined $new_form;
     
     $new_form = ucfirst $new_form if $old_form =~ /^(\p{isUpper})/;

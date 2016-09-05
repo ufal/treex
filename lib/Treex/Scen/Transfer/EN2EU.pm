@@ -32,7 +32,7 @@ has gazetteer => (
 
 has fl_agreement => (
      is => 'ro',
-     isa => enum( [qw(0 AM-P GM-P HM-P GM-Log-P HM-Log-P)] ),
+     isa => enum( [qw(0 AM-Log-P Log-AM-P Log-GM-P GM-Log-P Log-HM-P HM-Log-P)] ),
      default => '0',
      documentation => 'Use T2T::FormemeTLemmaAgreement with a specified function as parameter',
 );
@@ -73,34 +73,37 @@ sub get_scenario_string {
     my $IT_LEMMA_MODELS = '';
     my $IT_FORMEME_MODELS = '';
     if ($self->tm_adaptation eq 'interpol'){
-        $IT_LEMMA_MODELS = "static 0.5 IT/20150930_batch1a-tlemma.static.gz\n      maxent 1.0 IT/20150930_batch1a-tlemma.maxent.gz";
-        $IT_FORMEME_MODELS = "static 1.0 IT/20150930_batch1a-formeme.static.gz\n      maxent 0.5 IT/20150930_batch1a-formeme.maxent.gz";
+        $IT_LEMMA_MODELS = "static 0.5 IT/20160415_batch1a-tlemma.static.gz\n      maxent 1.0 IT/20160415_batch1a-tlemma.maxent.gz";
+        $IT_FORMEME_MODELS = "static 1.0 IT/20160415_batch1a-formeme.static.gz\n      maxent 0.5 IT/20160415_batch1a-formeme.maxent.gz";
     }
 
     my $scen = join "\n",
     'Util::SetGlobal language=eu selector=tst',
     'T2T::CopyTtree source_language=en source_selector=src',
+    'T2T::EN2EU::FixYouPl',
+    'T2T::EN2EU::FixPresentContinuous',
     $self->gazetteer ? 'T2T::TrGazeteerItems src_lang='.$self->src_lang : (),
-    'T2T::EN2EU::TrLTryRules',
-    'T2T::EN2EU::RemoveRelPron',
+    $self->domain eq 'IT' ? 'T2T::EN2EU::TrLTryRules' : (),
+    'T2T::EN2EU::TranslateRelPron',
 
-    $self->terminology eq 'yes' ? 'T2T::TrLApplyTbxDictionary tbx=data/dictionaries/MicrosoftTermCollection.eu.tbx tbx_src_id=en-US tbx_trg_id=eu-es analysis=@data/dictionaries/MicrosoftTermCollection.eu.filelist analysis_src_language=en analysis_src_selector=src analysis_trg_language=eu analysis_trg_selector=trg src_blacklist=data/dictionaries/MicrosoftTermCollection.en-eu.src.blacklist.txt' : (),
+    $self->terminology eq 'yes' ? 'T2T::TrLApplyTbxDictionary tbx=data/dictionaries/MicrosoftTermCollection.eu.tbx tbx_src_id=en-US tbx_trg_id=eu-es analysis=@data/dictionaries/MicrosoftTermCollection.eu_Pilot3.filelist analysis_src_language=en analysis_src_selector=src analysis_trg_language=eu analysis_trg_selector=trg src_blacklist=data/dictionaries/MicrosoftTermCollection.en-eu.src.blacklist.txt' : (),
 
     "T2T::TrFAddVariantsInterpol model_dir=$TM_DIR models='
-      static 1.0 20150930_formeme.static.gz
-      maxent 0.5 20150930_formeme.maxent.gz
+      static 1.0 2016_08_20_none_formeme.static.gz
+      maxent 0.5 2016_08_20_none_formeme.maxent.gz
       $IT_FORMEME_MODELS'",
     "T2T::TrLAddVariantsInterpol model_dir=$TM_DIR models='
-      static 0.5 20150930_tlemma.static.gz
-      maxent 1.0 20150930_tlemma.maxent.gz
+      static 0.5 2016_08_20_none_tlemma.static.gz
+      maxent 1.0 2016_08_20_none_tlemma.maxent.gz
       $IT_LEMMA_MODELS'",
 
     $self->fl_agreement ? 'T2T::FormemeTLemmaAgreement fun='.$self->fl_agreement : (),
     'Util::DefinedAttr tnode=t_lemma,formeme message="after simple transfer"',
-    #$self->domain eq 'IT' ? 'T2T::EN2ES::TrL_ITdomain' : (),
     'T2T::SetClauseNumber',
     'T2T::EN2EU::FixDefinitiveness',
     'T2T::EN2EU::FixThereIs',
+    'T2A::EU::FixGramCases',
+    'T2A::EU::FixOrder',
     ;
 
     return $scen;
