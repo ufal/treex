@@ -12,7 +12,9 @@ use Treex::Tool::ML::VowpalWabbit::Ranker;
 has '+model_path' => (
     # PDT monolingual
     #################
-    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/021_run_2016-08-25_18-10-03_13500.PDT.new_prodrop_filter/001.e6a6d5dba6.featset/004.37316.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
+    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/021_run_2016-08-25_18-10-03_13500.PDT.new_prodrop_filter/001.e6a6d5dba6.featset/004.37316.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
+    # joint feature set
+    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/023_run_2016-08-30_23-38-36_9360.PDT.an_all-types_joint_feature_set/001.3b9f404130.featset/004.37316.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
     # UDPipe W2A
     #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/010_run_2016-07-20_11-29-14_21681.data_0007_-_UDPipe_W2A/001.6482ae07e1.featset/002.f59b5.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
     # new limited features
