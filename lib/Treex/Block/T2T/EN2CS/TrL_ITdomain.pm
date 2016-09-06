@@ -67,6 +67,10 @@ sub get_lemma_and_pos {
         return 'e-mail|N';
     }
 
+    if ( $en_tlemma eq 'cloud' && ($en_tnode->formeme // "") eq "n:attr") {
+        return 'cloudový|A';
+    }
+
     # numbers of versions
     if ($en_tlemma =~ /^\d+(\.\d+)+$/ &&
         any {$_->t_lemma eq 'version'} $en_tnode->get_root->get_descendants) {
