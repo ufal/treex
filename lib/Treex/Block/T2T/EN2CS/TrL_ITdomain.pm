@@ -67,6 +67,13 @@ sub get_lemma_and_pos {
         return 'e-mail|N';
     }
 
+    # numbers of versions
+    if ($en_tlemma =~ /^\d+(\.\d+)+$/ &&
+        any {$_->t_lemma eq 'version'} $en_tnode->get_root->get_descendants) {
+
+        return "$en_tlemma|C";
+    }
+
     # If no rules match, get_lemma_and_pos has not succeeded.
     return undef;
 }
