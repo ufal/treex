@@ -27,13 +27,6 @@ has VWstatic_weight => (
     documentation => 'Weight of the Static model (NB: the model will be loaded even if the weight is zero).'
 );
 
-has normalize => (
-    is            => 'ro',
-    isa           => 'Bool',
-    default       => 0,
-    documentation => 'should the probs sum up to 1?'
-);
-
 has add_twonode => (
     is            => 'ro',
     isa           => 'Bool',
@@ -52,13 +45,14 @@ has max_variants => (
 has vw_model => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'vwTMP/mA_p1_b29_l3.model'
+    #default => 'vwTMP/mA_p1_b29_l3.model'
+    default => 'IT/batch1a.vw'
 );
 
 my $static;
 my $src_feature_extractor;
 my $vw_model_path;
-my ($F, $R, $Fname, $Rname);
+my ($F, $P, $Fname, $Pname);
 
 sub load_model {
     my ( $self, $model, $filename ) = @_;
@@ -95,12 +89,12 @@ sub process_document {
     close $F;
       
     # run VW prediction
-    ($R, $Rname) = tempfile('VWrawXXXXXX', TMPDIR => 1);
-    close $R;
-    system "vw -i $vw_model_path --quiet -d $Fname -r $Rname";
+    ($P, $Pname) = tempfile('VWrawXXXXXX', TMPDIR => 1);
+    close $P;
+    system "vw -i $vw_model_path --quiet -d $Fname -p $Pname";
     
     # Fill the predictions into the Treex doc
-    open $R, '<:utf8', $Rname;
+    open $P, '<:utf8', $Pname;
     foreach my $bundle ($doc->get_bundles()){
         my @zones = $self->get_selected_zones($bundle->get_all_zones());
         foreach my $zone (@zones){
@@ -109,10 +103,10 @@ sub process_document {
            }
         }
     }
-    close $R;
+    close $P;
 
     # Clean up the temporary files
-    unlink $Fname, $Rname; # TODO
+    unlink $Fname, $Pname; # TODO
     return 1;
 }
 
@@ -133,23 +127,18 @@ sub fill_tnode {
         
     my @translations;
     my $sum = 0;
-    while (<$R>){
+    while (<$P>){
         chomp;
         last if $_ eq '';
-        my ($score, $variant) = (/^\d+:([-e\d.]+) _([^ ]+)$/) or log_fatal "Strange VW -r output: $_";
-        #csoaa predicts the loss, so instead of -$score, we need +$score
-        $score = 1.0 / (1.0 + exp($score));
-
+        my ($prob, $variant) = (/^([-e\d.]+) _([^ ]+)$/) or log_fatal "Strange VW -p output: $_";
         # TODO interpolate with static
         #$score += $self->VWstatic_weight * $submodel->{$variant};
         #$score /= (1 + $self->VWstatic_weight);
 
-        $sum += $score;
         $variant = '#PersPron#X' if $variant eq '#PersPron'; # TODO
-        push @translations, [$score, $variant];
+        push @translations, [$prob, $variant];
     }
-    log_fatal "No VW translations for $en_tlemma in $Rname trained from $Fname" if !@translations;
-    $sum = 1 if !$self->normalize;
+    log_fatal "No VW translations for $en_tlemma in $Pname trained from $Fname" if !@translations;
     
     
     # Sort: the highest prob first. We need deterministic runs and therefore stable sorting for equally probable translations.
@@ -170,7 +159,7 @@ sub fill_tnode {
                         {   't_lemma' => $1,
                             'pos'     => $2,
                             'origin'  => 'VW',
-                            'logprob' => prob2binlog( $_->[0]/$sum ),
+                            'logprob' => prob2binlog( $_->[0] ),
                         }
                         } @translations
                 ]
@@ -243,9 +232,10 @@ sub lemma {
 my $LOG2 = log 2;
 sub prob2binlog {
     my $prob = shift;
-    if ($prob > 1 or $prob <= 0) {
+    return -20 if $prob == 0;
+    if ($prob > 1 or $prob < 0) {
         log_fatal "probability value $prob is not within the required interval";
-      }
+    }
     return log($prob) / $LOG2;
 }
 

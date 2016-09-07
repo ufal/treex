@@ -18,7 +18,11 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{10.04}      => '10.04|X',
     q{ruler}      => 'pravítko|N',
     q{shell}      => 'shell|N',
+    q{cookie}     => 'cookie|N',
+    q{tap}        => 'klepnout|V',
     q{right-click}=> 'pravým tlačítkem myši klikněte|V',
+    q{client-side}=> 'na straně klienta|A',
+    q{cross-platform}=> 'pro více platforem|A',
 );
 
 sub process_tnode {
