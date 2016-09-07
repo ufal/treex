@@ -155,7 +155,6 @@ sub get_scenario_string {
             'W2A::EN::SetAfunAuxCPCoord',
             'W2A::EN::SetAfun',
             'W2A::FixQuotes',
-            'Write::Treex path=before',
             'W2A::EN::MarkCheckCommas',
             'A2A::ConvertTags input_driver=en::penn',
             'A2A::EN::EnhanceInterset',
