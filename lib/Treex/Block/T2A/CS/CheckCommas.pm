@@ -10,7 +10,7 @@ sub process_tnode {
     if ($tnode->wild->{check_comma_after}) {
         my $anode = $tnode->get_lex_anode;
         my $next_anode = $anode->get_next_node;
-        return if ($next_anode->lemma eq ",");
+        return if !$next_anode || $next_anode->lemma eq ",";
 
         my $comma = $anode->create_child({
             'form'          => ',',
