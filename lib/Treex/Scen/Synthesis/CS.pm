@@ -39,6 +39,7 @@ sub get_scenario_string {
     'T2A::CS::AddSubordClausePunct',
     'T2A::CS::AddCoordPunct',
     'T2A::CS::AddAppositionPunct',
+    'T2A::CS::CheckCommas',
     'T2A::CS::ChooseMlemmaForPersPron',
     'T2A::CS::GenerateWordforms inflect_by_ending=' . $self->inflect_by_ending,
     'T2A::CS::DeleteSuperfluousAuxCP',

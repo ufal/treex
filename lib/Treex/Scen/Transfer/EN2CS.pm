@@ -101,6 +101,7 @@ sub get_scenario_string {
     my $scen = join "\n",
     'Util::SetGlobal language=cs selector=tst',
     'T2T::CopyTtree source_language=en source_selector=src',
+    'T2T::ProjectSelectedWild',
     'T2T::EN2CS::TrLFPhrases',
     'T2T::EN2CS::DeleteSuperfluousTnodes',
     $self->gazetteer ? 'T2T::TrGazeteerItems src_lang='.$self->src_lang : (),
