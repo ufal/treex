@@ -411,9 +411,10 @@ sub convert_deprels
                 $deprel = 'ccomp';
             }
         }
+        # PRED denotes the subject in clauses with nominal predicate (with or without copula).
         elsif($deprel eq 'PRED')
         {
-            $deprel = 'parataxis';
+            $deprel = 'nsubj:cop';
         }
         elsif($deprel eq 'QNTMOD')
         {
