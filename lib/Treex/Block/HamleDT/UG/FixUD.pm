@@ -344,7 +344,14 @@ sub convert_deprels
         {
             $deprel = 'det';
         }
-        # IND = independent.
+        # ETOL = reduplicative
+        # However, there is a whole chain and not all members reduplicate the previous ones. All but the punctuation symbols are chained using ETOL:
+        # tëshi pal - pal , ichi ghal - ghal
+        elsif($deprel eq 'ETOL')
+        {
+            $deprel = 'dep';
+        }
+        # IND = independent
         # It often denotes vocative noun phrases, delimited by commas: apa (mother/sister), balilar (children), aqsaqal (elders).
         # Sometimes it also labels a short imperative phrase, e.g. ëling (take something to eat).
         elsif($deprel eq 'IND')
@@ -361,24 +368,21 @@ sub convert_deprels
         # instrumental case
         elsif($deprel eq 'INST')
         {
-            if($node->is_noun() || $node->is_adjective() || $node->is_numeral())
-            {
-                $deprel = 'nmod:ins';
-            }
             # non-finite verb in instrumental case
-            elsif($node->is_verb())
+            if($node->is_verb())
             {
                 $deprel = 'advcl';
+            }
+            # INST is normally a nominal in instrumental case but since the tags were predicted automatically, there are tagging errors and it can be anything.
+            else
+            {
+                $deprel = 'nmod:ins';
             }
         }
         # locative case
         elsif($deprel eq 'LOC')
         {
-            if($node->is_noun() || $node->is_adjective() || $node->is_numeral())
-            {
-                $deprel = 'nmod:loc';
-            }
-            elsif($node->is_adverb())
+            if($node->is_adverb())
             {
                 $deprel = 'advmod';
             }
@@ -386,6 +390,11 @@ sub convert_deprels
             elsif($node->is_verb())
             {
                 $deprel = 'advcl';
+            }
+            # LOC is normally a nominal in locative case but since the tags were predicted automatically, there are tagging errors and it can be anything.
+            else
+            {
+                $deprel = 'nmod:loc';
             }
         }
         elsif($deprel eq 'OBJ')
@@ -406,9 +415,25 @@ sub convert_deprels
             # Do nothing now. We will restructure the tree later and the node will get a new deprel then.
             # Only if we do not plan on restructuring, change the label now.
             # VERB on VERB – perhaps an error? Example: "qalay.VERB.POST dëgen.VERB.acl"
-            if($node->is_verb() && $node->parent()->is_verb())
+            if($node->parent()->is_verb())
             {
-                $deprel = 'ccomp';
+                if($node->is_verb())
+                {
+                    $deprel = 'ccomp';
+                }
+                elsif($node->is_adverb() || $node->is_adjective())
+                {
+                    $deprel = 'advmod';
+                }
+                # The tagset does not distinguish coordinating and subordinating conjunctions but the examples I saw seemed to be coordinated.
+                elsif($node->is_conjunction())
+                {
+                    $deprel = 'cc';
+                }
+                elsif($node->is_adposition() || $node->is_particle())
+                {
+                    $deprel = 'mark';
+                }
             }
         }
         # PRED denotes the subject in clauses with nominal predicate (with or without copula).
@@ -428,6 +453,11 @@ sub convert_deprels
         {
             $deprel = 'root';
         }
+        # SENT was used in older versions of the data and should not appear any more.
+        elsif($deprel eq 'SENT')
+        {
+            $deprel = 'parataxis';
+        }
         elsif($deprel eq 'SUBJ')
         {
             if($node->is_verb())
@@ -442,6 +472,12 @@ sub convert_deprels
         elsif($deprel eq 'SUBSENT')
         {
             $deprel = 'advcl';
+        }
+        # VOC is vocative but it is now probably replaced by IND (occurs in an old version of the data, only a few times).
+        # Example: "qedirlik lale, ..." = "Dear Lale, ..."; lale is attached to the main predicate as VOC.
+        elsif($deprel eq 'VOC')
+        {
+            $deprel = 'vocative';
         }
         elsif($deprel eq 'void')
         {
@@ -508,7 +544,7 @@ sub push_postposition_down
             my $moved = 0;
             # Postposition can be also noun in locative, e.g. "halda". Not all are marked as nmod:loc; some are only nmod.
             # The parent tag may be unknown ('X') and we should not choke on that.
-            my $parent_ok = ($parent->is_adposition() || $parent->is_conjunction() || $parent->is_noun() || $parent->iset()->pos() eq '');
+            my $parent_ok = ($parent->is_adposition() || $parent->is_conjunction() || $parent->is_particle() || $parent->is_adverb() || $parent->is_noun() || $parent->iset()->pos() eq '');
             if($node->is_verb() && $parent_ok)
             {
                 # The original tag set does not distinguish CONJ and SCONJ but now we know that this is a subordinating conjunction.
