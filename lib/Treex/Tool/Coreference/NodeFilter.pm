@@ -5,6 +5,7 @@ use Treex::Core::Common;
 
 use Treex::Tool::Coreference::NodeFilter::PersPron;
 use Treex::Tool::Coreference::NodeFilter::RelPron;
+use Treex::Tool::Coreference::NodeFilter::DemonPron;
 use Treex::Tool::Coreference::NodeFilter::Noun;
 use Treex::Tool::Coreference::NodeFilter::Verb;
 use Treex::Block::My::CorefExprAddresses;
@@ -66,9 +67,9 @@ sub get_types_force {
     if (Treex::Tool::Coreference::NodeFilter::Verb::is_sem_verb($node)) {
         $types->{'verb'} = 1;
     }
-    #elsif (Treex::Block::My::CorefExprAddresses::_is_cs_ten($node)) {
-    #    $type = "ten";
-    #}
+    if (Treex::Tool::Coreference::NodeFilter::DemonPron::is_demon($node)) {
+        $types->{demon} = 1;
+    }
     return $types;
 }
 
