@@ -46,7 +46,7 @@ has vw_model => (
     is      => 'ro',
     isa     => 'Str',
     #default => 'vwTMP/mA_p1_b29_l3.model'
-    default => 'IT/batch1a.vw'
+    default => 'vw-it/MA-p1-l3-B1-p3-l3.model'
 );
 
 my $static;
