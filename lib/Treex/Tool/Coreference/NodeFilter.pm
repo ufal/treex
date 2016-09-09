@@ -68,7 +68,7 @@ sub get_types_force {
         $types->{'verb'} = 1;
     }
     if (Treex::Tool::Coreference::NodeFilter::DemonPron::is_demon($node)) {
-        $types->{demon} = 1;
+        $types->{demonpron} = 1;
     }
     return $types;
 }
