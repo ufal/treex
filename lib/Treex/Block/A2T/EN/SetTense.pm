@@ -10,7 +10,7 @@ sub process_tnode {
 
     # analyze only verbs
     if ( defined $tnode->get_lex_anode
-        && $tnode->get_lex_anode->tag =~ /^VB/
+        && $tnode->get_lex_anode->tag =~ /^(VB)|(MD)/
     ) {
         
         # analyze the tense 

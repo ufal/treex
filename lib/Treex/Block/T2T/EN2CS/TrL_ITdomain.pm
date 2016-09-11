@@ -18,7 +18,13 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{10.04}      => '10.04|X',
     q{ruler}      => 'pravítko|N',
     q{shell}      => 'shell|N',
+    q{cookie}     => 'cookie|N',
+    q{tap}        => 'klepnout|V',
+    q{bus}        => 'sběrnice|N',
+    q{doc}        => 'dokument|N',
     q{right-click}=> 'pravým tlačítkem myši klikněte|V',
+    q{client-side}=> 'na straně klienta|A',
+    q{cross-platform}=> 'pro více platforem|A',
 );
 
 sub process_tnode {
@@ -66,6 +72,17 @@ sub get_lemma_and_pos {
         return 'e-mailový|A' if ($en_tnode->get_parent->formeme ||'') =~ /^n:/;
         return 'e-mail|N';
     }
+
+    if ( $en_tlemma eq 'cloud'){
+       return 'cloudový|A' if ($en_tnode->get_parent->formeme ||'') =~ /^n:/;
+       return 'cloud|N';
+    }
+
+    # numbers of versions
+    if ($en_tlemma =~ /^\d+(\.\d+)+$/ && any {$_->t_lemma eq 'version'} $en_tnode->get_root->get_descendants) {
+        return "$en_tlemma|C";
+    }
+
 
     # If no rules match, get_lemma_and_pos has not succeeded.
     return undef;

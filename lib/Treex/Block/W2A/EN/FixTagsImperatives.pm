@@ -14,7 +14,7 @@ sub process_atree {
     my @anodes = $aroot->get_descendants({ordered=>1});
     for my $i (0..$#anodes){
         my $anode = $anodes[$i];
-        if ($anode->form =~ /^((right-)?click|check|drag|take|log|press|turn|visit)$/i){
+        if ($anode->form =~ /^((right-)?click|check|drag|take|log|press|turn|visit|tap)$/i){
         
             # Imperative cannot be preceded by a determiner, or determiner+adjective,
             # in such cases, the original tag (NN) was correct.

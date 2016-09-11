@@ -155,6 +155,7 @@ sub get_scenario_string {
             'W2A::EN::SetAfunAuxCPCoord',
             'W2A::EN::SetAfun',
             'W2A::FixQuotes',
+            'W2A::EN::MarkCheckCommas',
             'A2A::ConvertTags input_driver=en::penn',
             'A2A::EN::EnhanceInterset',
             ;
@@ -168,6 +169,7 @@ sub get_scenario_string {
             'A2T::SetIsMember',
             'A2T::EN::MoveAuxFromCoordToMembers',
             $self->gazetteer ? 'A2T::ProjectGazeteerInfo' : (),
+            'A2T::ProjectSelectedWild',
             'A2T::EN::FixTlemmas',
             'A2T::EN::SetCoapFunctors',
             'A2T::EN::FixEitherOr',

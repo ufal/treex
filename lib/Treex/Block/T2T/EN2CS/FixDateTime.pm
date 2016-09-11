@@ -21,6 +21,9 @@ sub process_year {
     my $t_parent = $t_node->get_parent();
     return if $t_parent->is_root();
 
+    # Unless we are translating something about the Battle of Lemnos...
+    return if $t_node->t_lemma eq '1024';
+
     # "in April 2005" -> "v dubnu 2005" (more common than "v dubnu roku 2005")
     return if Treex::Tool::Lexicon::CS::number_of_month( $t_parent->t_lemma );
     
