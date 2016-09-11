@@ -10,6 +10,7 @@ has '+features_file' => ( default => 'data/models/flect/model-eu.features.yml' )
 my $f_handle;
 
 my $usual_errors = {"``+" => "``",
+		    "botoi+noun+def+sing+abs" => "botoia",
 		    "esan+verb+sing+3+3+sing+ind+pres" => "dio","esan+verb+sing+3+3+sing+ind+pres+erl" => "dioen",
 		    "esan+verb+sing+3+3+plur+ind+pres" => "dio","esan+verb+sing+3+3+plur+ind+pres+erl" => "dioen",
 		    "esan+verb+sing+3+ind+pres" => "dio","esan+verb+sing+3+ind+pres+erl" => "dioen",
