@@ -32,15 +32,15 @@ before 'process_document' => sub {
     foreach my $ttree (@ttrees) {
         foreach my $tnode ($ttree->get_descendants) {
             my $entity_id = $tnode->wild->{gold_coref_entity};
-            if (defined $entity_id) {
-                $entity_id =~ s/\?$//;
-                $id_to_entity_id{$tnode->id} = $entity_id;
-                if (defined $entity_id_to_mentions{$entity_id}) {
-                    push @{$entity_id_to_mentions{$entity_id}}, $tnode;
-                }
-                else {
-                    $entity_id_to_mentions{$entity_id} = [ $tnode ];
-                }
+            next if (!defined $entity_id);
+
+            $entity_id =~ s/\?$//;
+            $id_to_entity_id{$tnode->id} = $entity_id;
+            if (defined $entity_id_to_mentions{$entity_id}) {
+                push @{$entity_id_to_mentions{$entity_id}}, $tnode;
+            }
+            else {
+                $entity_id_to_mentions{$entity_id} = [ $tnode ];
             }
         }
     }
@@ -79,17 +79,25 @@ sub is_text_coref {
     my @ante_cands = grep {defined $chain_hash{$_->id}} @cands;
 
     # if no antecedent, insert itself and if anaphor as candidate is on, it will be marked positive
-    if (!@ante_cands) {
-        push @ante_cands, $anaph;
-    }
+    # TODO: shouldn't this be rather:
+    # $self->losses_for_special_classes(@$whole_chain)
+    # in the current implementation, the anaphoric candidates with no antecedent within the scope
+    # of the candidate window is treated as non-anaphoric
+    # with the current implementation (none {$_ == 0} @losses) below should never hold
+    # shouldn't it be left out from the training data?
+    my @losses = $self->losses_for_special_classes($anaph, @ante_cands);
     my %antes_hash = map {$_->id => $_} @ante_cands;
-
-    my @losses = map {defined $antes_hash{$_->id} ? 0 : 1} @cands;
+    push @losses, map {defined $antes_hash{$_->id} ? 0 : 1} @cands;
     if (none {$_ == 0} @losses) {
         log_info "[Coref::PrintData]\tan antecedent exists but there is none among the candidates: " . $anaph->get_address;
         return;
     }
     return \@losses;
+}
+# special classes = [ '__SELF__' ]
+sub losses_for_special_classes {
+    my ($self, $anaph, @ante_cands) = @_;
+    return ( @ante_cands ? 1 : 0 );
 }
 
 

@@ -23,13 +23,6 @@ has 'preceding_only' => (
     default => 1,
 );
 
-has 'anaphor_as_candidate' => (
-    isa => 'Bool',
-    is  => 'ro',
-    required => 1,
-    default => 0,
-);
-
 has 'cands_within_czeng_blocks' => (
     isa => 'Bool',
     is  => 'ro',
@@ -72,9 +65,6 @@ sub get_candidates {
         @cands = @cands[0 .. $self->max_size-1];
     }
     
-    if ($self->anaphor_as_candidate) {
-        unshift @cands, $anaph;
-    }
     return @cands;
 }
 
@@ -253,13 +243,6 @@ it means that nodes from the same sentence prior to the anaphor and
 nodes from C<n> preceding sentences are taken into consideration.
 If the number of preceding sentences is lower, all of them are processed.
 Default value is 1.
-
-=item anaphor_as_candidate
-
-If enabled, the anaphor is included in the antecedent candidates list.
-This is necessary, if the resolver tries to recognize whether the 
-anaphor (candidate) is really an anaphor (so called joint anaphor
-identification and antecedent selection). It is disabled by default.
 
 =item cands_within_czeng_blocks
 

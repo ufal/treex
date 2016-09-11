@@ -12,6 +12,7 @@ has 'to_language' => ( is => 'ro', isa => 'Str', required => 1);
 has 'to_selector' => ( is => 'ro', isa => 'Str', default => '');
 #has 'align_type' => ( is => 'ro', isa => 'Str' );
 has 'wild_attr_name' => ( is => 'ro', isa => 'Str', default => 'gold_coref_entity' );
+has 'wild_attr_special_name' => ( is => 'ro', isa => 'Str', default => 'gold_coref_special' );
 has '_align_filter' => ( is => 'ro', isa => 'HashRef', builder => '_build_align_filter', lazy => 1 );
 
 sub BUILD {
@@ -45,6 +46,18 @@ sub process_document {
     foreach my $chain (@chains) {
         $self->project_coref_entity($chain, $entity_id);
         $entity_id++;
+    }
+
+    # set coref_special
+    foreach my $ttree (@ttrees) {
+        foreach my $src_tnode ($ttree->get_descendants) {
+            my $coref_special = $src_tnode->get_attr("coref_special");
+            next if (!defined $coref_special);
+            my ($trg_nodes, $ali_types) = $src_tnode->get_undirected_aligned_nodes($self->_align_filter);
+            foreach my $trg_node (@$trg_nodes) {
+                $trg_node->wild->{$self->wild_attr_special_name} = $coref_special;
+            }
+        }
     }
 }
 

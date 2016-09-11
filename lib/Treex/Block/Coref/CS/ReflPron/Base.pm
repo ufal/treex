@@ -52,7 +52,6 @@ sub _build_ante_cands_selector {
         cand_types => [ 'noun' ],
         prev_sents_num => 0,
         preceding_only => 0,
-        anaphor_as_candidate => $self->anaphor_as_candidate,
         cands_within_czeng_blocks => 1,
         max_size => 100,
     });
