@@ -107,7 +107,8 @@ sub get_coreference_entities {
     my ($coref_graph, $id_to_node) = _create_coref_graph($ttrees);
     # individual coreference chains correspond to weakly connected
     # components in the coreference graph 
-    my @chains = _chains_id_to_node($id_to_node, $coref_graph->weakly_connected_components);
+    my @sorted_id_chains = sort {(join " ", sort @$a) cmp (join " ", sort @$b)} $coref_graph->weakly_connected_components;
+    my @chains = _chains_id_to_node($id_to_node, @sorted_id_chains);
 
     my @sorted_chains;
     if ($params->{ordered} eq 'deepord') {
