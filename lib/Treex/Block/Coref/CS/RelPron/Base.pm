@@ -53,7 +53,6 @@ sub _build_ante_cands_selector {
     my $acs = Treex::Tool::Coreference::AnteCandsGetter->new({
         cand_types => [ 'noun', 'verb' ],
         prev_sents_num => 0,
-        anaphor_as_candidate => $self->anaphor_as_candidate,
         cands_within_czeng_blocks => 1,
         max_size => 100,
     });

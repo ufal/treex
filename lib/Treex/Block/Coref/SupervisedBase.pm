@@ -7,12 +7,10 @@ use Treex::Tool::Coreference::AnteCandsGetter;
 
 with 'Treex::Block::Filter::Node';
 
-has 'anaphor_as_candidate' => (
-    is       => 'ro',
-    isa      => 'Bool',
-    required => 1,
-    default  => 1,
-    documentation => 'joint anaphoricity determination and antecedent selection',
+has 'special_classes' => (
+    is          => 'ro',
+    isa         => 'ArrayRef[Str]',
+    builder     => '_build_special_classes',
 );
 
 has '_feature_extractor' => (
@@ -30,6 +28,10 @@ has '_ante_cands_selector' => (
     builder     => '_build_ante_cands_selector',
 );
 
+sub _build_special_classes {
+    return [ "c^__SELF__" ];
+}
+
 sub _build_node_types {
     my ($self) = @_;
     log_fatal "method _build_node_types must be overriden in " . ref($self);
@@ -45,7 +47,7 @@ sub _build_ante_cands_selector {
 
 sub get_features_comments {
     my ($self, $tnode, $cands) = @_;
-    my $feats = $self->_feature_extractor->create_instances($tnode, $cands);
+    my $feats = $self->_feature_extractor->create_instances($tnode, $self->special_classes, $cands);
     my $comments = _comments_from_feats($feats);
     my $new_feats = _remove_id_feats($feats);
     return ($new_feats, $comments);

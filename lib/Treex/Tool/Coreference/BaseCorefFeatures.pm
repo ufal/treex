@@ -15,10 +15,8 @@ my $b_false = '-1';
 
 # TODO: if not necessary for the other types, move the following methods to Coreference::PronCorefFeatures
 
-augment '_unary_features' => sub {
-    my ($self, $node, $type) = @_;
-    my $feats = inner();
-    # automatically add an 'anaph' or 'cand' namespace if a different namespace is not set
+override 'prefix_with_ns' => sub {
+    my ($self, $feats, $type) = @_;
     my %new_feats = map {
         my $key = $_ !~ /\^/ ? substr($type, 0, 1)."^".$_ : $_;
         $key => $feats->{$_}

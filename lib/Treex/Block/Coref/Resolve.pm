@@ -83,9 +83,11 @@ sub process_filtered_tnode {
     # available (because of filtering and document segmentation)
     my $ranker = $self->_ranker;
     my ($ante_idx, $ante_prob)  = $ranker->pick_winner( $instances );
-
     return if (!defined $ante_idx);
-    my $ante = $ante_cands[$ante_idx];
+
+    if ($self->diagnostics) {
+        $t_node->wild->{coref_diag}{ante_prob} = $ante_prob;
+    }
 
 # DEBUG
 #        my $antec  = $ranker->pick_winner( $instances, $debug );
@@ -106,13 +108,10 @@ sub process_filtered_tnode {
      #   }
         
     #}
-
-    if ($self->diagnostics) {
-        $t_node->wild->{coref_diag}{ante_prob} = $ante_prob;
-    }
-
-    if ($ante != $t_node) {
-        my $ante_par = $ante->get_parent;
+    my $spec_classes_num = scalar(@{$self->special_classes});
+    if ($ante_idx >= $spec_classes_num) {
+        my $ante = $ante_cands[$ante_idx-$spec_classes_num];
+        #my $ante_par = $ante->get_parent;
         # if the antecedent is a member of an apposition, point the coreference link to the coap root
         #if ($ante->is_member && $ante_par->functor eq "APPS") {
         #    $ante = $ante_par;
@@ -122,8 +121,14 @@ sub process_filtered_tnode {
         $t_node->wild->{referential} = 1;
     }
     else {
-        $t_node->wild->{referential} = 0;
+        $self->actions_for_special_classes($t_node, $ante_idx);
     }
+
+}
+
+sub actions_for_special_classes {
+    my ($self, $t_node, $ante_idx) = @_;
+    $t_node->wild->{referential} = 0;
 }
 
 1;

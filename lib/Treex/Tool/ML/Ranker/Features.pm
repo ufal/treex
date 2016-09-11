@@ -9,7 +9,6 @@ use Treex::Core::Common;
 
 has 'node1_label' => (is => 'ro', isa => 'Str', default => 'n1');
 has 'node2_label' => (is => 'ro', isa => 'Str', default => 'n2');
-has 'self_label'  => (is => 'ro', isa => 'Str', default => '__SELF__');
 has '_prefix_unary' => (is => 'ro', isa => 'Bool', builder => '_build_prefix_unary', init_arg => undef);
 
 sub _build_prefix_unary {
@@ -80,9 +79,21 @@ sub _list_to_nslist {
 sub _unary_features {
     my ($self, $node, $type) = @_;
     my $feats = inner();
+    $feats = $self->prefix_with_ns($feats, $type);
+    $feats = $self->prefix_with_type($feats, $type);
+    return $feats;
+}
+
+sub prefix_with_type {
+    my ($self, $feats, $type) = @_;
     return $feats if (!$self->_prefix_unary);
     my %new_feats = map {my $new_feat = $_; $new_feat =~ s/^((?:[^\^]+\^)?)/$1$type\_/g; $new_feat => $feats->{$_}} keys %$feats;
     return \%new_feats;
+}
+
+sub prefix_with_ns {
+    my ($self, $feats, $type) = @_;
+    return $feats;
 }
 
 sub _binary_features {
@@ -90,26 +101,28 @@ sub _binary_features {
 }
 
 sub create_instances {
-    my ($self, $node1, $cands) = @_;
+    my ($self, $node1, $spec_classes, $cands) = @_;
     
     my $node1_unary_h = $self->_unary_features( $node1, $self->node1_label );
     my $node1_unary_l = feat_hash_to_nslist($node1_unary_h);
 
     my @cand_feats = ();
+    # TODO: ord should be incremented only for the real candidates, however current models are trained with ord=1 for __SELF__
     my $ord = 1;
+    foreach my $class (@$spec_classes) {
+        my $cand_h = $self->prefix_with_ns({ $class => 1}, $self->node2_label);
+        my $cand_l = feat_hash_to_nslist($cand_h);
+        push @cand_feats, $cand_l;
+        $ord++;
+    }
     foreach my $cand (@$cands) {
-        my $cand_h;
-        if ($cand != $node1) {
-            my $cand_unary_h = $self->_unary_features( $cand, $self->node2_label );
-            # TODO for convenience we merge the two hashes into a single one => should be passed separately
-            my $both_unary_h = {%$cand_unary_h, %$node1_unary_h};
-            my $cand_binary_h = $self->_binary_features( $both_unary_h, $node1, $cand, $ord );
-            $cand_h = { %$cand_unary_h, %$cand_binary_h};
-        }
-        # pushing empty instance for the anaphor as candidate (it is entirely described by shared features)
-        else {
-            $cand_h =  { $self->self_label => 1 };
-        }
+        next if ($cand == $node1);
+
+        my $cand_unary_h = $self->_unary_features( $cand, $self->node2_label );
+        # TODO for convenience we merge the two hashes into a single one => should be passed separately
+        my $both_unary_h = {%$cand_unary_h, %$node1_unary_h};
+        my $cand_binary_h = $self->_binary_features( $both_unary_h, $node1, $cand, $ord );
+        my $cand_h = { %$cand_unary_h, %$cand_binary_h};
         my $cand_l = feat_hash_to_nslist($cand_h);
         push @cand_feats, $cand_l;
         $ord++;
