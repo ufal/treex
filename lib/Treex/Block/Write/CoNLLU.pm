@@ -118,7 +118,7 @@ sub process_atree {
         {
             push(@misc, 'Translit='.$node->translit());
         }
-        if(defined($node->wild()->{lemma_translit}))
+        if(defined($node->wild()->{lemma_translit}) && $node->wild()->{lemma_translit} !~ m/^_?$/)
         {
             push(@misc, 'LTranslit='.$node->wild()->{lemma_translit});
         }
