@@ -15,7 +15,9 @@ sub process_atree
     $self->fix_non_leaf_punct($root);
     $self->fix_punct_attachment($root);
     $self->convert_deprels($root);
-    $self->push_copula_down($root);
+    # Since 9.9.2016, I am working with data preprocessed by Marhaba's rules.
+    # I am thus assuming that copula has been re-attached down and I am not re-attaching it back.
+    #$self->push_copula_down($root);
     $self->push_postposition_down($root);
     # Do this at the end. It also makes sure that the top node is attached as 'root' (even if it has been moved from elsewhere).
     $self->fix_multi_root($root);
