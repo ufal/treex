@@ -1,7 +1,7 @@
 package Treex::Block::W2A::EN::MarkCheckCommas;
 use Moose;
 use Treex::Core::Common;
-use Data::Printer;
+#use Data::Printer;
 
 use List::MoreUtils qw/any/;
 

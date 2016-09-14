@@ -23,6 +23,7 @@ T2A::ProjectClauseNumber
 T2A::AddParentheses
 T2A::EU::AddSentFinalPunct
 T2A::EU::AddSubordClausePunct
+T2A::CS::CheckCommas
 Util::Eval anode='$.set_tag(join "+", $.get_iset_values())'
 Util::Eval anode='$.set_tag(join "+", $.get_iset_values(), $.wild->{erl}) if($.wild->{erl})'
 T2A::EU::GenerateGazeteerItems

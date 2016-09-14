@@ -28,6 +28,24 @@ sub process_tnode {
         $trg_tnode->set_t_lemma_origin('rule-TrLTryRules');
         $trg_tnode->set_attr( 'mlayer_pos', $m_pos ) if $m_pos;
     }
+
+    if (($src_tnode->t_lemma || "") =~ /window/) {
+	my ($lex_anode, $right_anode);
+	my @anodes;
+	$lex_anode = $src_tnode->get_lex_anode();
+	if ($lex_anode) {
+	    @anodes = $lex_anode->get_root()->get_descendants({ordered=>1});
+	    $right_anode = @anodes[$lex_anode->ord] if ($#anodes >= $lex_anode->ord);
+	}
+	
+	if ($lex_anode && (($lex_anode->form || "") =~ /windows/i) &&
+	    $right_anode && (($right_anode->form || "") =~ /^[0-9\.]+$/)) {
+	    log_warn("TrLTryRules:" . $lex_anode->form . " " . $right_anode->form);
+	    $trg_tnode->set_t_lemma('Windows');
+	    $trg_tnode->set_t_lemma_origin('rule-TrLTryRules');
+	}
+    }
+    
     return;
 }
 
