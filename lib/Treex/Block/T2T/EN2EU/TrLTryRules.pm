@@ -10,7 +10,7 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
      'tap'                => 'sakatu|verb',
      'start'              => 'abiarazi|verb',
      'then'               => 'ondoren|adv',
-     'wireless'           => 'hari gabeko|adj',
+#     'wireless'           => 'hari gabeko|adj',
 #    'software'           => 'programa|noun',
 );
 
@@ -37,9 +37,11 @@ sub get_lemma_and_pos {
     my $src_pos = ($src_tnode->gram_sempos() || "");
     
     #my $src_anode = $src_tnode->get_lex_anode();
-    # Don't translate #PersPron when they are in subject position
-    if ($src_tlemma =~ /^#/ && 
-	($src_formeme eq 'n:subj' || $src_formeme =~ /^n:obj/)) {
+#    Don't translate #PersPron when they are in subject position
+#    if ($src_tlemma =~ /^#/ && 
+#	($src_formeme eq 'n:subj' || $src_formeme =~ /^n:obj/)) {
+    # Don't translate #PersPron at all
+    if ($src_tlemma =~ /^#/) {
 	return $src_tlemma;
     }
 
