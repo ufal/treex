@@ -52,6 +52,14 @@ has fl_agreement => (
      documentation => 'Use T2T::FormemeTLemmaAgreement with a specified function as parameter',
 );
 
+has terminology => (
+     is => 'ro',
+     isa => enum( [qw(auto no 0 yes)] ),
+     default => '0',
+     documentation => 'Use T2T::TrLApplyTbxDictionary with Microsoft Terminology Collection',
+);
+
+
 # TODO gazetteers should work without any dependance on source language here
 has src_lang => (
     is => 'ro',
@@ -76,6 +84,9 @@ sub BUILD {
     my ($self) = @_;
     if ($self->tm_adaptation eq 'auto'){
         $self->{tm_adaptation} = $self->domain eq 'IT' ? 'interpol' : 'no';
+    }
+    if ($self->terminology eq 'auto'){
+        $self->{terminology} = $self->domain eq 'IT' ? 'yes' : 'no';
     }
     return;
 }
@@ -111,6 +122,7 @@ sub get_scenario_string {
     'T2T::EN2CS::TrFRerank2',
     'T2T::EN2CS::TrLTryRules',
     $self->domain eq 'IT' ? 'T2T::EN2CS::TrL_ITdomain' : (),
+    $self->terminology eq 'yes' ? 'T2T::TrLApplyTbxDictionary tbx=data/dictionaries/MicrosoftTermCollection.cs.tbx tbx_src_id=en-US tbx_trg_id=cs-cz analysis=data/dictionaries/MicrosoftTermCollection.cs.streex analysis_src_language=en analysis_src_selector=src analysis_trg_language=cs analysis_trg_selector=trg src_blacklist=data/dictionaries/MicrosoftTermCollection.en-cs.src.blacklist.txt' : (),
     'T2T::EN2CS::TrLPersPronIt',
     'T2T::EN2CS::TrLPersPronRefl',
     'T2T::EN2CS::TrLHackNNP',

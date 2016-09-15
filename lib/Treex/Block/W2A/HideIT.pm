@@ -42,15 +42,15 @@ sub substitute_entities {
   #$sentence =~ s|(?<!\s)(https?://)| $1|g
   #$sentence =~ s/(["<>{}“”«»–|—„‚‘]|\[|\]|``|\'\'|‘‘|\^)/ $1 /g;
   my $quotes = [
-    {start => '"', end =>'"'}, 
-    {start => "'", end =>"'"}, 
-    {start => '“', end =>'”'}, 
+    {start => '"', end =>'"'},
+    {start => "'", end =>"'"},
+    {start => '“', end =>'”'},
     {start => '«', end =>'»'},
     {start => '„', end =>'“'},
-    {start => '‚', end =>'‘'},    
+    {start => '‚', end =>'‘'},
     {start => '``', end =>'``'}
   ];
-  log_debug "Collecting cmds...\n";  
+  log_debug "Collecting cmds...\n";
   foreach my $quote (@$quotes){
     my $start = $quote->{start};
     my $end = $quote->{end};
@@ -66,12 +66,13 @@ sub substitute_entities {
       my $cmdString = $3;
       push(@commands, $cmdString);
       log_debug "Cmd: $cmdString\n";
-    }  
+    }
   }
   $sentence = $self->_mark_urls($sentence);
-  while($sentence =~ s/(<IT type=".*?">.*?<\/IT>)/xxxURLxxx/){
-    push(@urls, $1);
-    #log_debug "Entity: $2\n";
+  while($sentence =~ s{(<IT type=".*?">.*?</IT>|https?://\S*)}{xxxURLxxx}){
+    my $found = $1;
+    $found =~ s{^(http\S+)}{<IT type="url">$1</IT>};
+    push(@urls, $found);
   }
   while($sentence =~  s/([\w0-9._%+-]+@[^\s]+?)(\s)/xxxMAILxxx$2/){
   # This wold be more strict regexp for emails
@@ -132,7 +133,7 @@ sub substitute_entities {
     #log_debug "Entity: $2\n";
   #}
   if (scalar @urls > 0){
-    log_debug "In $sentence:\nFound urls:", join("\t", @urls), "\n";  
+    log_debug "In $sentence:\nFound urls:", join("\t", @urls), "\n";
     #die;
   }
   return ($sentence, {entities=> \@entities, commands=> \@commands, urls => \@urls, mails => \@mails, upaths => \%upaths, wpaths => \%wpaths, files => \%files});
@@ -171,7 +172,7 @@ Named entites from the IT domain (URLs, emails, Unix commands, Windows/Unix path
 are heuristically (based on quotes etc.) detected in C<$zone->sentence>
 and replaced with placeholders I<xxxURLxxx>, I<xxxMAILxxx> etc.
 The original sentence is backed up in C<$bundle->wild->{original_sentence}>
-and the extracted entites are stored in  C<$bundle->wild->{entites}>. 
+and the extracted entites are stored in  C<$bundle->wild->{entites}>.
 
 =head1 AUTHOR
 
