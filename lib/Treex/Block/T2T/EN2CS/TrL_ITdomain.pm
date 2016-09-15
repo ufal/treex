@@ -22,6 +22,7 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{tap}        => 'klepnout|V',
     q{bus}        => 'sběrnice|N',
     q{doc}        => 'dokument|N',
+    q{ram}        => 'RAM|X',
     q{right-click}=> 'pravým tlačítkem myši klikněte|V',
     q{client-side}=> 'na straně klienta|A',
     q{cross-platform}=> 'pro více platforem|A',
@@ -51,7 +52,7 @@ sub get_lemma_and_pos {
     # Prevent some errors/misses in dictionaries
     my $lemma_and_pos = $QUICKFIX_TRANSLATION_OF{$en_tlemma};
     return $lemma_and_pos if $lemma_and_pos;
-   
+
     # Imperative "go" in IT instructions is "přejděte" rather than "pojďte".
     if ( $en_tlemma eq 'go' && defined $en_tnode->gram_verbmod){
         return 'přejít|V';
@@ -59,11 +60,11 @@ sub get_lemma_and_pos {
 
     # Windows may be tagged as NNS (instead of NNP)
     return 'Windows|X' if $en_tlemma eq 'window' && $en_tnode->get_lex_anode->form eq 'Windows';
-    
+
     # imperatives
     if (($en_tnode->gram_verbmod || '') eq 'imp'){
         return 'stisknout|V' if $en_tlemma eq 'press';
-        return 'kliknout|V'  if $en_tlemma eq 'click';    
+        return 'kliknout|V'  if $en_tlemma eq 'click';
         return 'přihlásit|V' if $en_tlemma eq 'access' && any {$_->t_lemma =~ /^(profile|account)$/} $en_tnode->get_echildren();
         return 'vstoupit|V'  if $en_tlemma eq 'access';
     }
@@ -83,6 +84,10 @@ sub get_lemma_and_pos {
         return "$en_tlemma|C";
     }
 
+    if ($en_tlemma eq 'gaming'){
+        return 'herní|A' if $en_formeme =~ /attr/;
+        return 'hraní|N';
+    }
 
     # If no rules match, get_lemma_and_pos has not succeeded.
     return undef;
