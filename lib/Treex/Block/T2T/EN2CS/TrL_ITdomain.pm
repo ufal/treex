@@ -28,8 +28,12 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{processor}  => 'procesor|N',
     q{platform}   => 'platforma|N',
     q{microsoft}  => 'Microsoft|X',
+    q{gimp}       => 'Gimp|X',
     q{SSL}        => 'SSL|X',
     q{io}         => 'iOS|X',
+    q{hack}       => 'nabourat_se|V',
+    q{hit}        => 'stisknout|V',
+    q{thumbwheel} => 'kolečko|N',
     q{right-click}=> 'pravým tlačítkem myši klikněte|V',
     q{client-side}=> 'na straně klienta|A',
     q{cross-platform}=> 'pro více platforem|A',
@@ -95,6 +99,8 @@ sub get_lemma_and_pos {
         return 'herní|A' if $en_formeme =~ /attr/;
         return 'hraní|N';
     }
+
+    return 'řádek|N' if $en_tlemma eq 'prompt' && $en_tnode->get_lex_anode->form eq 'prompt';
 
     # If no rules match, get_lemma_and_pos has not succeeded.
     return undef;

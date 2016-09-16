@@ -33,10 +33,9 @@ has vw => (
 has vw_model => (
     is => 'ro',
     isa => 'Str',
-    default => 0,
+    default => 'vw-it/MA-p2-l3-B1-p2-l3.model',
     documentation => 'model for the VowpalWabbit transfer, default=0 means use the default defined in T2T::EN2CS::TrLAddVariantsVW2',
 );
-
 
 has gazetteer => (
      is => 'ro',

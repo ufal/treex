@@ -14,11 +14,15 @@ sub process_atree {
     my @anodes = $aroot->get_descendants({ordered=>1});
     for my $i (0..$#anodes){
         my $anode = $anodes[$i];
-        if ($anode->form =~ /^((right-)?click|check|drag|take|log|press|turn|visit|tap|upgrade)$/i){
+        if ($anode->form =~ /^((right-)?click|check|drag|hit|take|log|press|turn|visit|tap|upgrade|use)$/i){
+            if ($anode->form eq 'click' && $i && $anodes[$i-1]->form eq 'left'){
+                $anodes[$i-1]->wild->{orig_tag} = $anodes[$i-1]->tag;
+                $anodes[$i-1]->set_tag('JJ');
+            }
 
-            # Imperative cannot be preceded by a determiner, or determiner+adjective,
+            # Imperative cannot be preceded by a determiner/verb/pronoun, or determiner+adjective,
             # in such cases, the original tag (NN) was correct.
-            next if $i > 0 && $anodes[$i-1]->tag eq 'DT';
+            next if $i > 0 && $anodes[$i-1]->tag =~ /^(DT|VB|PRP)$/;
             next if $i > 1 && $anodes[$i-2]->tag eq 'DT' && $anodes[$i-1]->tag eq 'JJ'; # &&!$anodes[$i-1]->wild->{matched_item};
             $anode->wild->{orig_tag} = $anode->tag;
             $anode->set_tag('VB');

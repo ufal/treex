@@ -147,6 +147,7 @@ sub fix_formeme {
 
     # !!! tohle zahodit, az se pretrenuje maxent (doted nemohl videt spojku 'when')
     return 'v:když+fin' if ( $en_formeme =~ /when\+/ and $cs_formeme =~ /fin/ );
+    return 'v:pokud+fin' if $cs_formeme eq 'v:fin' && $en_formeme eq 'v:if+fin';
 
     return 'adj:attr' if $cs_formeme eq 'n:2' && $cs_tlemma =~ /^ten(to)?$/
             && $cs_parent_formeme =~ /^n/ && $cs_tnode->precedes($cs_parent);
