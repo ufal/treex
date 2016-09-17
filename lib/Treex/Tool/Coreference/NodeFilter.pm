@@ -18,6 +18,7 @@ sub get_types {
     if (!@types) {
         my $types_hash = get_types_force($node);
         @types = sort keys %$types_hash;
+        $node->wild->{filter_types} = \@types;
     }
     return @types;
 }
