@@ -143,7 +143,7 @@ sub _has_determiner {
         $_->t_lemma =~ /^(some|this|those|that|these|which|what|whose|one|no|any|no_one|nobody|nothing|none)$/
             or ( $_->gram_sempos // '' ) =~ /^(adj.pron.def.pers|n.pron.indef|adj.pron.def.demon)$/
             or $_->formeme eq 'n:poss'
-    } $tnode->get_echildren();
+    } $tnode->get_echildren({or_topological=>1});
     return scalar @d;
 }
 
@@ -166,7 +166,7 @@ sub _is_topic {
 sub _has_relative_clause {
     my ($tnode) = @_;
     my @relatives = ();
-    my @relative_clause_heads = grep { $_->formeme eq 'v:rc' } $tnode->get_echildren();
+    my @relative_clause_heads = grep { $_->formeme eq 'v:rc' } $tnode->get_echildren({or_topological=>1});
     if (@relative_clause_heads) {
         @relatives = grep { $_->t_lemma eq 'which' } $relative_clause_heads[0]->get_echildren();
     }
@@ -177,10 +177,10 @@ sub _is_restricted_somehow {
     my ($tnode) = @_;
 
     # unique identification: "the same/left/right/bottom..."
-    return 1 if ( grep { $_->t_lemma =~ /^(same|left|right|top|bottom|first|second|third|last)$/ } $tnode->get_echildren() );
+    return 1 if ( grep { $_->t_lemma =~ /^(same|left|right|top|bottom|first|second|third|last)$/ } $tnode->get_echildren({or_topological=>1}) );
 
     # superlatives: "the best, the greatest..."
-    return 1 if ( grep { ( $_->gram_sempos // '' ) =~ /^adj.denot/ and ( $_->gram_degcmp // '' ) eq 'sup' } $tnode->get_echildren() );
+    return 1 if ( grep { ( $_->gram_sempos // '' ) =~ /^adj.denot/ and ( $_->gram_degcmp // '' ) eq 'sup' } $tnode->get_echildren({or_topological=>1}) );
 
     # TODO this won't probably work
     return scalar( grep { ( $_->functor // '' ) eq 'LOC' } $tnode->get_children() );
@@ -251,7 +251,7 @@ Number of words to consider as "contextually activated".
 
 When the context activation is reset -- after document or after each sentence (use for unrelated sentences).
 
-=back 
+=back
 
 =head1 AUTHOR
 
