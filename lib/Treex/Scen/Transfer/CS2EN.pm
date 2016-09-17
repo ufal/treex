@@ -51,6 +51,13 @@ has src_lang => (
     documentation => 'Gazetteers are defined for language pairs. Both source and target languages must be specified.',
 );
 
+has definiteness => (
+     is => 'ro',
+     isa => enum( [qw(rules VW)] ),
+     default => 'VW',
+     documentation => 'definiteness detection (rule-based or VowpalWabbit)',
+);
+
 sub BUILD {
     my ($self) = @_;
     if ($self->tm_adaptation eq 'auto'){
@@ -103,8 +110,19 @@ sub get_scenario_string {
     $self->domain eq 'IT' ? 'T2T::CS2EN::DeleteSuperfluousNodes' : (), # deletes word "application" and "system" with NE, this rarely influences non-IT domain
     'T2T::CS2EN::FixGrammatemesAfterTransfer',
     'T2T::CS2EN::FixDoubleNegative',
-    'T2T::CS2EN::AddDefiniteness' . ( $self->domain eq 'IT' ? ' clear_context_after=sentence' : '' ),    # TODO: this has nothing to do with IT domain
     ;
+    # definiteness detection (for articles): rule-based or VW
+    # TODO: for IT, context is reset after each sentence due to nature of QTLeap texts, this has nothing to do with IT in general
+    if ($self->definiteness eq 'rules'){
+        $scen .= ' T2T::CS2EN::AddDefiniteness' . ( $self->domain eq 'IT' ? ' clear_context_after=sentence' : '' );
+    }
+    else { 
+        $scen .= ' T2T::SetDefinitenessVW' . 
+                ' model_file=data/models/definiteness/cs/VF.004.csoaa_ldf_mc-passes_4-loss_function_hinge.model ' .
+                ' features_file=data/models/definiteness/cs/feats.yml ' . 
+                ( $self->domain eq 'IT' ? ' clear_context_after=sentence' : '' );
+        $scen .= ' T2T::CS2EN::ReplaceSomeWithIndefArticle';
+    }
     return $scen;
 }
 
