@@ -13,7 +13,7 @@ has '+model_path' => (
     #default => 'data/models/coreference/CS/vw/perspron.2015-04-29.train.pdt.cs.vw.ranking.model',
     #default => 'data/models/coreference/CS/vw/reflpron.2016-04-24.train.pdt.cs.vw.ranking.model',
     #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/reflpron/tmp/ml/run_2016-04-26_00-56-30_22064.candidates_formeme_or_sempos_must_start_with_n_-_more_candidates/003.5902492061.featset/001.7eb17.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
-    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/TODO',
+    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/002_run_2016-09-16_13-53-30_13053.PDT._first_run._MonoligualAll_feats./001.d48d2d7b1c.featset/004.39acd.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
 );
 
 override '_build_ranker' => sub {
