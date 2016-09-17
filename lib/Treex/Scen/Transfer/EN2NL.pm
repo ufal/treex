@@ -75,14 +75,14 @@ sub get_scenario_string {
     # it should be inspected
       #static 1.0 20150725_formeme.static.min_2.minpc_1.gz
     "T2T::TrFAddVariantsInterpol model_dir=$TM_DIR models='
-      static 1.0 20150217_formeme.static.gz
-      maxent 0.5 20150217_formeme.maxent.gz
+      static 1.0 20160909_formeme.static.gz
+      maxent 0.5 20160909_formeme.maxent.gz
       $IT_FORMEME_MODELS'",
       #static 0.5 20150725_tlemma.static.min_2.minpc_1.gz
       # WMT '16: use 20160323 models (just KDE + Europarl, not DPC)
     "T2T::TrLAddVariantsInterpol model_dir=$TM_DIR models='
-      static 0.5 20150217_tlemma.static.gz
-      maxent 1.0 20150217_tlemma.maxent.gz
+      static 0.5 20160909_tlemma.static.gz
+      maxent 1.0 20160909_tlemma.maxent.gz
       $IT_LEMMA_MODELS'",
     $self->fl_agreement ? 'T2T::FormemeTLemmaAgreement fun='.$self->fl_agreement : (),
     'Util::DefinedAttr tnode=t_lemma,formeme message="after simple transfer"',
@@ -90,6 +90,7 @@ sub get_scenario_string {
     'T2T::SetClauseNumber',
     'T2T::EN2NL::TrLFPhrases',
     'T2T::EN2NL::FixCompounds',
+    #'T2T::FixGrammatemesAfterTransfer',  # actually makes things slightly worse
     'T2T::EN2NL::AddNounGender',
     'T2T::EN2NL::TrLFFixTMErrors',
     ;

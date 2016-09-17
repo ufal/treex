@@ -110,6 +110,7 @@ sub get_scenario_string {
       static 1.0 20150725_formeme.static.min_2.minpc_1.gz
       maxent 0.5 20150220_formeme.maxent.gz
       $IT_FORMEME_MODELS'",
+    # 20160909 models don't help here, maybe filtering needs to be changed?
     "T2T::TrLAddVariantsInterpol model_dir=$TM_DIR models='
       static 0.5 20150725_tlemma.static.min_2.minpc_1.gz
       maxent 1.0 20150220_tlemma.maxent.gz
