@@ -19,7 +19,8 @@ sub process_tnode {
     my $cs_tnode = $en_tnode->src_tnode;
     return if !$cs_tnode;
 
-    my $en_formeme = formeme_for_tnode( $cs_tnode, $en_tnode );
+    my $en_formeme = $self->formeme_for_tnode( $cs_tnode, $en_tnode );
+
     if ( defined $en_formeme ) {
         $en_tnode->set_formeme($en_formeme);
         $en_tnode->set_formeme_origin('rule-Translate_F_try_rules');
@@ -28,10 +29,10 @@ sub process_tnode {
 }
 
 sub formeme_for_tnode {
-    my ( $cs_tnode,  $en_tnode ) = @_;
-    
-    my $cs_formeme = $cs_tnode->formeme;
+    my ( $self, $cs_tnode,  $en_tnode ) = @_;
 
+    my $cs_formeme = $cs_tnode->formeme;
+    return 'x' if $cs_tnode->t_lemma =~ /^["„“”']$/;
     return $RULE_TRANSL{$cs_formeme};
 }
 
@@ -41,7 +42,7 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::T2T::CS2EN::TrFTryRules
 
@@ -50,7 +51,7 @@ Treex::Block::T2T::CS2EN::TrFTryRules
 Simple formeme translation rules that are tried before the dictionary translation
 (and have thus higher priority). They are intended to be temporary fixes.
 
-=head1 AUTHORS 
+=head1 AUTHORS
 
 Martin Popel <popel@ufal.mff.cuni.cz>
 
