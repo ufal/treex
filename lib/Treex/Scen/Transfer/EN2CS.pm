@@ -25,8 +25,8 @@ has hmtm => (
 
 has vw => (
      is => 'ro',
-     isa => 'Bool',
-     default => 0,
+     isa => enum( [qw(auto no 0 1 yes)] ),
+     default => 'auto',
      documentation => 'Apply VowpalWabbit transfer model',
 );
 
@@ -87,6 +87,9 @@ sub BUILD {
     if ($self->terminology eq 'auto'){
         $self->{terminology} = $self->domain eq 'IT' ? 'yes' : 'no';
     }
+    if ($self->vw eq 'auto'){
+        $self->{vw} = $self->domain eq 'IT' ? 'yes' : 'no';
+    }
     return;
 }
 
@@ -101,7 +104,7 @@ sub get_scenario_string {
     }
 
     my $VW = '';
-    if ($self->vw){
+    if ($self->vw eq '1' || $self->vw eq 'yes'){
         $VW = "Treelets::AddTwonodeScores language=en selector=src\nT2T::EN2CS::TrLAddVariantsVW2";
         if ($self->vw_model){
             $VW .= ' vw_model='.$self->vw_model;
