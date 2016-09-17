@@ -10,14 +10,16 @@ sub process_tnode {
 
     my ( $self, $t_node ) = @_;
     my $t_src = $t_node->src_tnode or return;
-    
+
     $self->_fix_valid_grammatemes( $t_node, $t_src );
 
     $self->_fix_negation( $t_node, $t_src );
 
     $self->_fix_number( $t_node, $t_src );
-    
+
     $self->_fix_degcmp( $t_node, $t_src );
+
+    $self->_fix_tense( $t_node, $t_src );
 
     return;
 }
@@ -36,6 +38,12 @@ sub _fix_number {
 
 # To be overridden
 sub _fix_degcmp {
+    my ( $self, $t_node, $t_src ) = @_;
+    return;
+}
+
+# To be overridden
+sub _fix_tense {
     my ( $self, $t_node, $t_src ) = @_;
     return;
 }
@@ -89,7 +97,7 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::T2T::FixGrammatemesAfterTransfer
 
@@ -101,7 +109,7 @@ the set of possible grammatemes when part-of-speech is changed in translation.
 Language-specific blocks should add their particular changes for number, negation,
 and degree of comparison.
 
-=head1 AUTHORS 
+=head1 AUTHORS
 
 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 
