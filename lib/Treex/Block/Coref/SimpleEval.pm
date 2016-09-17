@@ -54,7 +54,7 @@ sub process_bundle {
         next if (!Treex::Tool::Coreference::NodeFilter::matches($ref_tnode, $self->node_types));
 
         my $ref_tnode_eid = $self->_id_to_eid->{$ref_tnode->id};
-        my $gold_eval_class = defined $ref_tnode_eid ? 1 : 0;
+        my $gold_eval_class = $ref_tnode->get_coref_nodes > 0 ? 1 : 0;
         my ($ali_nodes, $ali_types) = $ref_tnode->get_undirected_aligned_nodes({language => $self->language, selector => $self->pred_selector});
         # process the ref nodes that have a src counterpart
         for (my $i = 0; $i < @$ali_nodes; $i++) {
