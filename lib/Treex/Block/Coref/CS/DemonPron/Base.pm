@@ -9,6 +9,7 @@ use Treex::Tool::Coreference::Features::DemonPron;
 #use Treex::Tool::Coreference::Features::Container;
 #use Treex::Tool::Coreference::Features::Aligned;
 #use Treex::Tool::Coreference::Features::Coreference;
+use Treex::Tool::Coreference::Features::CS::AllMonolingual;
 
 with 'Treex::Block::Coref::SupervisedBase' => {
     -excludes => [ '_build_feature_extractor', '_build_ante_cands_selector' ],
@@ -27,7 +28,8 @@ sub _build_feature_extractor {
     my ($self) = @_;
     #my @container = ();
  
-    my $cs_fe = Treex::Tool::Coreference::Features::DemonPron->new();
+    #my $cs_fe = Treex::Tool::Coreference::Features::DemonPron->new();
+    my $cs_fe = Treex::Tool::Coreference::Features::CS::AllMonolingual->new();
     return $cs_fe;
     #push @container, $cs_fe;
 
