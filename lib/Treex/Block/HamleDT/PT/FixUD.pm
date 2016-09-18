@@ -91,6 +91,14 @@ sub fix_morphology
                 $iset->set('verbform', 'fin');
             }
         }
+        # The word "muito" ("much"), originally tagged "adv <quant>" in Bosque, was wrongly converted as determiner.
+        # We should change it back to adverb, with the NumType=Card feature marking that it is an adverb of degree or quantity.
+        # However, there are also occurrences that were originally tagged "pron-det <quant>|M|S", these modify a noun ("muito tempo" = "much time")
+        # and should stay tagged as determiners!
+        if($form =~ m/^muito$/i && $node->is_determiner() && $node->conll_pos() =~ m/adv/)
+        {
+            $iset->set_hash({'pos' => 'adv', 'prontype' => 'ind', 'numtype' => 'card'});
+        }
         # Mark words in foreign scripts.
         my $letters_only = $form;
         $letters_only =~ s/\PL//g;
