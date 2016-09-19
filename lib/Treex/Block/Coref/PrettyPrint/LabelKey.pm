@@ -1,6 +1,7 @@
 package Treex::Block::Coref::PrettyPrint::LabelKey;
 use Moose;
 use Treex::Core::Common;
+use Data::Printer;
 
 extends 'Treex::Core::Block';
 
@@ -37,8 +38,12 @@ sub process_tnode {
     $tnode->wild->{coref_diag}{removed_or_merged} = 1 if (($tnode->wild->{gold_coref_entity} // "") =~ /\?$/);
     my $entity_id = $self->_id_to_entity_id->{$tnode->id};
     return if (!defined $entity_id);
+    # return if aligned with a gold node which serves as a first mention of an entity
+    return if (($tnode->wild->{gold_coref_special} // "") =~ /f/);
     my $entity = $self->_entity_id_to_mentions->{$entity_id};
-    $_->wild->{coref_diag}{key_ante_for}{$tnode->id} = 1 foreach (@$entity);
+    foreach (@$entity) {
+        $_->wild->{coref_diag}{key_ante_for}{$tnode->id} = 1;
+    }
 }
 
 1;
