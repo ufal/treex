@@ -387,11 +387,6 @@ sub process_start {
     return;
 }
 
-after 'process_start' => sub {
-    my ($self) = @_;
-    $self->_set_is_started(1);
-};
-
 sub process_end {
     my ($self) = @_;
 
