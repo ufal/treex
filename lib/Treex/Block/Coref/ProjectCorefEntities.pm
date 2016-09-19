@@ -77,7 +77,7 @@ sub project_coref_entity {
                 }
                 $trg_mention->wild->{$self->wild_attr_name} = $entity_str;
                 if ( !$src_mention->get_coref_nodes ) {
-                    $trg_node->wild->{$self->wild_attr_special_name} .= "f";
+                    $trg_mention->wild->{$self->wild_attr_special_name} .= "f";
                 }
             }
         }
