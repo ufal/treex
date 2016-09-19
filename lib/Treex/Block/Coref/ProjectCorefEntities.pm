@@ -55,7 +55,8 @@ sub process_document {
             next if (!defined $coref_special);
             my ($trg_nodes, $ali_types) = $src_tnode->get_undirected_aligned_nodes($self->_align_filter);
             foreach my $trg_node (@$trg_nodes) {
-                $trg_node->wild->{$self->wild_attr_special_name} = $coref_special;
+                # it assigns s(egm) / e(xoph) to the gold coref special wild attr
+                $trg_node->wild->{$self->wild_attr_special_name} = substr($coref_special, 0, 1);
             }
         }
     }
@@ -75,6 +76,9 @@ sub project_coref_entity {
                     $entity_str .= "?";
                 }
                 $trg_mention->wild->{$self->wild_attr_name} = $entity_str;
+                if ( !$src_mention->get_coref_nodes ) {
+                    $trg_node->wild->{$self->wild_attr_special_name} .= "f";
+                }
             }
         }
     }
@@ -89,7 +93,32 @@ Treex::Block::Coref::ProjectCorefEntities
 
 =head1 DESCRIPTION
 
-This blocks projects coreference entities.
+This blocks projects coreference entities and some additional coreference properties.
+All information is stored in two wild attributes, whose names are specified by the
+C<wild_attr_name> and C<wild_attr_special_name> attributes.
+
+=head1 ATTRIBUTES
+
+=over
+
+=item wild_attr_name
+
+The entity number is stored as a wild attribute under the name specified here.
+Used in isolation it has no meaning, however, one can collect all the mentions from the same entity
+by including all mentions sharing the same number.
+It can be followed by a question mark, meaning that this entity is projected through
+the loose monolungual alignment. Both options - assigning them to the specified entity cluster or
+declaring them non-anaphoric - are correct for resolution on such mentions.
+
+=item wild_attr_special_name
+
+Additional coreference properties are stored as a wild attribute under the name specified here.
+So far, three properties can be indicated by the following letters or their combination:
+C<f> - first mention of the coreference entity (chain)
+C<s> - mention referring to a segment
+C<e> - exophoric mention
+
+=back
 
 =head1 AUTHOR
 
