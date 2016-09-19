@@ -102,6 +102,9 @@ sub get_lemma_and_pos {
 
     return 'řádek|N' if $en_tlemma eq 'prompt' && $en_tnode->get_lex_anode->form eq 'prompt';
 
+    # software versions
+    return $en_tlemma . '|N' if $en_tlemma =~ /^\d\d?\.[01]$/;
+
     # If no rules match, get_lemma_and_pos has not succeeded.
     return undef;
 }

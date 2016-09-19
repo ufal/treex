@@ -24,9 +24,12 @@ sub process_year {
     # Unless we are translating something about the Battle of Lemnos...
     return if $t_node->t_lemma eq '1024';
 
+    # English 1,900 is already translated as 1900, but it is not a year.
+    return if $en_t_node->t_lemma =~ /[.,]/;
+
     # "in April 2005" -> "v dubnu 2005" (more common than "v dubnu roku 2005")
     return if Treex::Tool::Lexicon::CS::number_of_month( $t_parent->t_lemma );
-    
+
     # "(2005)" should not be translated as "(rok 2005)" or even "rok (2005)"
     return if $t_node->is_parenthesis;
 

@@ -234,6 +234,8 @@ Saves (prints) the CoNLL-U representation of one sentence (one dependency tree).
 
 Daniel Zeman
 
+Martin Popel
+
 =head1 COPYRIGHT AND LICENSE
 
 Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague

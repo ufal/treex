@@ -23,6 +23,13 @@ has hmtm => (
      documentation => 'Apply HMTM (TreeViterbi) with TreeLM reranking',
 );
 
+has maxent => (
+     is => 'ro',
+     isa => enum( [qw(auto no 0 1 yes)] ),
+     default => 'auto',
+     documentation => 'Apply MaxEnt transfer model',
+);
+
 has vw => (
      is => 'ro',
      isa => enum( [qw(auto no 0 1 yes)] ),
@@ -90,6 +97,9 @@ sub BUILD {
     if ($self->vw eq 'auto'){
         $self->{vw} = $self->domain eq 'IT' ? 'yes' : 'no';
     }
+    if ($self->maxent eq 'auto'){
+        $self->{maxent} = $self->domain eq 'IT' ? 'no' : 'yes';
+    }
     return;
 }
 
@@ -109,6 +119,13 @@ sub get_scenario_string {
         if ($self->vw_model){
             $VW .= ' vw_model='.$self->vw_model;
         }
+        if (!$self->maxent || $self->maxent eq 'no') {
+            $VW .= "\nT2T::EN2CS::TrLAddVariantsBackoff";
+        }
+    }
+    my $maxEnt = '';
+    if ($self->maxent eq '1' || $self->maxent eq 'yes'){
+        $maxEnt = "T2T::EN2CS::TrLAddVariantsInterpol models='" . $self->lemma_models . " $IT_LEMMA_MODELS'",
     }
 
     my $scen = join "\n",
@@ -129,7 +146,7 @@ sub get_scenario_string {
     'T2T::EN2CS::TrLPersPronRefl',
     'T2T::EN2CS::TrLHackNNP',
     $VW,
-    "T2T::EN2CS::TrLAddVariantsInterpol model_dir=data/models/translation/en2cs models='" . $self->lemma_models . " $IT_LEMMA_MODELS'",
+    $maxEnt,
     'T2T::EN2CS::TrLFNumeralsByRules',
     'T2T::EN2CS::TrLFilterAspect',
     'T2T::EN2CS::TransformPassiveConstructions',

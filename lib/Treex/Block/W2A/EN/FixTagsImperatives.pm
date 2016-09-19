@@ -14,7 +14,7 @@ sub process_atree {
     my @anodes = $aroot->get_descendants({ordered=>1});
     for my $i (0..$#anodes){
         my $anode = $anodes[$i];
-        if ($anode->form =~ /^((right-)?click|check|drag|hit|take|log|press|turn|visit|tap|upgrade|use)$/i){
+        if ($anode->form =~ /^((right-)?click|check|drag|hit|take|log|press|turn|unplug|visit|tap|upgrade|use)$/i){
             if ($anode->form eq 'click' && $i && $anodes[$i-1]->form eq 'left'){
                 $anodes[$i-1]->wild->{orig_tag} = $anodes[$i-1]->tag;
                 $anodes[$i-1]->set_tag('JJ');
