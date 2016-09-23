@@ -12,9 +12,10 @@ use Treex::Tool::ML::VowpalWabbit::Ranker;
 has '+model_path' => (
     #default => 'data/models/coreference/CS/vw/perspron.2015-04-29.train.pdt.cs.vw.ranking.model',
     #default => 'data/models/coreference/CS/vw/relpron.2016-04-24.train.pdt.cs.vw.ranking.model',
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/relpron/tmp/ml/run_2016-04-26_15-22-11_14088.cand_ancestor_features/003.610457c11c.featset/001.7eb17.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/relpron/tmp/ml/run_2016-04-26_17-35-08_12399.adding_features_based_on_nodes_in_between/004.8b2c8f04b5.featset/002.f59b5.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
-    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/relpron/tmp/ml/009_run_2016-04-26_17-52-36_1614.bugfix_of_number_and_gender_joins_and_agrees/004.8b2c8f04b5.featset/002.f59b5.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
+    # MODEL FOR RelPron FEATS
+    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/relpron/tmp/ml/009_run_2016-04-26_17-52-36_1614.bugfix_of_number_and_gender_joins_and_agrees/004.8b2c8f04b5.featset/002.f59b5.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
+    # MODEL FOR AllMonolingual FEATS
+    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/relpron/tmp/ml/011_run_2016-08-31_17-28-05_7096.PDT.an_all-types_joint_feature_set_+_nodetype_feats_in_separate_ns/002.e5ce78c10f.featset/018.22ec1.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
 );
 
 override '_build_ranker' => sub {
