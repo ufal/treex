@@ -1,21 +1,11 @@
 package Treex::Scen::Analysis::CS::A;
 use Moose;
 use Treex::Core::Common;
-use utf8;
+with 'Treex::Core::RememberArgs';
 
 sub get_scenario_string {
     my ($self) = @_;
-
-    my $scen = join "\n",
-    'W2A::CS::ParseMSTAdapted',
-    'W2A::CS::FixAtreeAfterMcD',
-    'W2A::CS::FixIsMember',
-    'W2A::CS::FixPrepositionalCase',
-    'W2A::CS::FixReflexiveTantum',
-    'W2A::CS::FixReflexivePronouns',
-    ;
-
-    return $scen;
+    return 'Scen::Analysis::CS tokenizer=none tagger=none ner=none tecto=none ' . $self->args_str;
 }
 
 1;

@@ -1,7 +1,7 @@
 package Treex::Scen::Analysis::CS::M;
 use Moose;
 use Treex::Core::Common;
-use utf8;
+with 'Treex::Core::RememberArgs';
 
 has tagger => (
      is => 'ro',
@@ -23,19 +23,7 @@ has trg_lang => (
 
 sub get_scenario_string {
     my ($self) = @_;
-
-    my $scen = join "\n",
-    'W2A::CS::Tokenize',
-    $self->gazetteer && defined $self->trg_lang ? 'W2A::GazeteerMatch trg_lang='.$self->trg_lang.' filter_id_prefixes="'.$self->gazetteer.'"' : (),
-    $self->tagger eq 'MorphoDiTa' ? 'W2A::CS::TagMorphoDiTa lemmatize=1' : (),
-    $self->tagger eq 'Featurama'  ? 'W2A::CS::TagFeaturama lemmatize=1' : (),
-    $self->tagger eq 'Morce'      ? 'W2A::CS::TagMorce lemmatize=1' : (),
-    'W2A::CS::FixMorphoErrors',
-
-    'W2A::CS::FixGuessedLemmas', ###############
-    ;
-
-    return $scen;
+    return 'Scen::Analysis::CS tokenizer=none ner=none parser=none tecto=none ' . $self->args_str;
 }
 
 1;
