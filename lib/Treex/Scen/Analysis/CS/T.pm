@@ -1,7 +1,7 @@
 package Treex::Scen::Analysis::CS::T;
 use Moose;
 use Treex::Core::Common;
-use utf8;
+with 'Treex::Core::RememberArgs';
 
 has functors => (
      is => 'ro',
@@ -23,47 +23,7 @@ has valframes => (
 
 sub get_scenario_string {
     my ($self) = @_;
-
-    my $scen = join "\n",
-    'A2T::CS::MarkEdgesToCollapse', ####expletives=0
-    'A2T::BuildTtree',
-    'A2T::RehangUnaryCoordConj',
-    'A2T::SetIsMember',
-    'A2T::CS::SetCoapFunctors',
-    'A2T::FixIsMember',
-    'A2T::MarkParentheses',
-    'A2T::MoveAuxFromCoordToMembers',
-    'A2T::CS::MarkClauseHeads',
-    'A2T::CS::MarkRelClauseHeads',
-    'A2T::CS::MarkRelClauseCoref',
-    #A2T::DeleteChildlessPunctuation We want quotes as t-nodes
-    $self->gazetteer ? 'A2T::ProjectGazeteerInfo' : (),
-    'A2T::CS::FixTlemmas',
-    'A2T::CS::FixNumerals',
-    'A2T::SetNodetype',
-    'A2T::CS::SetFormeme use_version=2 fix_prep=0',
-    'A2T::CS::SetDiathesis',
-    $self->functors eq 'MLProcess' ? 'A2T::CS::SetFunctors memory=2g' : (),
-    $self->functors eq 'VW' ? 'A2T::CS::SetFunctorsVW' : (),
-    $self->functors ne 'VW' ? 'A2T::CS::SetMissingFunctors': (),
-    'A2T::SetNodetype',
-    'A2T::FixAtomicNodes',
-    'A2T::CS::SetGrammatemes',
-    'A2T::SetSentmod',
-    $self->valframes ? 'A2T::CS::SetValencyFrameRefVW' : (),
-    'A2T::CS::MarkReflexivePassiveGen',
-    'A2T::CS::FixNonthirdPersSubj',
-    'A2T::CS::AddPersPron',
-    'T2T::SetClauseNumber',
-    'A2T::CS::MarkReflpronCoref',
-    'A2T::SetDocOrds',
-    'Coref::CS::SetMultiGender',
-    'A2T::CS::MarkTextPronCoref',
-    'Coref::RearrangeLinks retain_cataphora=1',
-    'Coref::DisambiguateGrammatemes',
-    ;
-
-    return $scen;
+    return 'Scen::Analysis::CS tokenizer=none tagger=none ner=none parser=none ' . $self->args_str;
 }
 
 1;

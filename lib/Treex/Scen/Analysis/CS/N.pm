@@ -1,7 +1,7 @@
 package Treex::Scen::Analysis::CS::N;
 use Moose;
 use Treex::Core::Common;
-use utf8;
+with 'Treex::Core::RememberArgs';
 
 has domain => (
      is => 'ro',
@@ -19,15 +19,7 @@ has ner => (
 
 sub get_scenario_string {
     my ($self) = @_;
-
-    my $scen = join "\n",
-    $self->ner eq 'NameTag' ? 'A2N::CS::NameTag' : (),
-    $self->ner eq 'simple' ? 'A2N::CS::SimpleRuleNER' : (),
-    $self->domain eq 'IT' ? 'A2N::CS::FixNERforIT' : (),
-    'A2N::CS::NormalizeNames',
-    ;
-
-    return $scen;
+    return 'Scen::Analysis::CS tokenizer=none tagger=none parser=none tecto=none ' . $self->args_str;
 }
 
 1;
