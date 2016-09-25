@@ -12,7 +12,7 @@ has tokenizer => (
 
 has tagger => (
      is => 'ro',
-     isa => enum( [qw(Morce MorphoDiTa)] ),
+     isa => enum( [qw(Morce MorphoDiTa none)] ),
      default => 'Morce',
      documentation => 'Which PoS tagger to use',
 );
