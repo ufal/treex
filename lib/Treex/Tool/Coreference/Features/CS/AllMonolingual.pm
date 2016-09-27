@@ -16,6 +16,20 @@ my $b_false = 0;
 
 my %actants2 = map { $_ => 1 } qw/ACT PAT ADDR EFF ORIG/;
 
+my %a_to_t_genders = (
+    '-' => [ 'undef' ],
+    'F' => [ 'fem' ],
+    'H' => [ 'fem', 'neut' ],
+    'I' => [ 'inan' ],
+    'M' => [ 'anim' ],
+    'N' => [ 'neut' ],
+    'Q' => [ 'fem', 'neut' ],
+    'T' => [ 'inan', 'fem' ],
+    'X' => [ 'inan', 'anim', 'fem', 'neut' ],
+    'Y' => [ 'inan', 'anim' ],
+    'Z' => [ 'inan', 'anim', 'neut' ],
+);
+
 has 'cnk_freqs_path' => (
     is          => 'ro',
     required    => 1,
@@ -181,6 +195,11 @@ sub cs_morphosyntax_unary_feats {
         $feats->{$names[$i]} = defined $anode ? substr($anode->tag, $i, 1) : $UNDEF_VALUE;
     }
     $feats->{lemma} = defined $anode ? Treex::Tool::Lexicon::CS::truncate_lemma($anode->lemma) : $UNDEF_VALUE;
+
+    # feats for demonstrative pronouns
+    if ($type eq "anaph") {
+        $feats->{allgens} = defined $anode ? $self->all_possible_genders($anode->form) : $UNDEF_VALUE;
+    }
 }
 
 sub cs_morphosyntax_binary_feats {
@@ -192,6 +211,18 @@ sub cs_morphosyntax_binary_feats {
         $feats->{"agree_$name"} = $self->_agree_feats($set_feats->{"c^cand_$name"}, $set_feats->{"a^anaph_$name"});
         $feats->{"join_$name"} = $self->_join_feats($set_feats->{"c^cand_$name"}, $set_feats->{"a^anaph_$name"});
     }
+    $feats->{agree_allgens} = $self->_agree_feats($set_feats->{"c^cand_gen"}, $set_feats->{"a^anaph_allgens"});
+    $feats->{join_allgens} = $self->_join_feats($set_feats->{"c^cand_gen"}, $set_feats->{"a^anaph_allgens"});
+}
+
+sub all_possible_genders {
+    my ($self, $form) = @_;
+    my $tagged_lemmas = Ufal::MorphoDiTa::TaggedLemmas->new();
+    $self->_morpho->analyze($form, 1, $tagged_lemmas);
+    my @possible_pron_tags = grep {$_ =~ /^P/} map {my $tl = $tagged_lemmas->get($_); $tl->{tag}} 0 .. $tagged_lemmas->size()-1;
+    my %a_gen_tags = map {substr($_,2,1) => 1} @possible_pron_tags;
+    my %t_gen_tags = map {$_ => 1} map {@{$a_to_t_genders{$_}}} keys %a_gen_tags;
+    return join "|", sort keys %t_gen_tags;
 }
 
 ############################# LEXICON FEATURES ####################################
