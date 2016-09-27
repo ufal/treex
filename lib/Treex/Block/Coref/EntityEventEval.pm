@@ -49,14 +49,7 @@ sub process_bundle {
             #printf STDERR "ALI SRC TNODE: %s\n", $ali_src_tnode->get_address;
             $covered_src_nodes{$ali_src_tnode->id}++;
             
-            my ($ali_src_ante) = $ali_src_tnode->get_coref_nodes;
-            my $ali_src_coref_spec = $ali_src_tnode->get_attr("coref_special");
-            my $pred_eval_class = 
-                defined $ali_src_ante ? (
-                    ($ali_src_ante->formeme // "") =~ /^v/ || ($ali_src_ante->gram_sempos // "") =~ /^v/ ? "EVENT" : "ENTITY"
-                ) : (
-                    $ali_src_coref_spec // "" eq "segm" ? "EVENT" : "OTHER"
-                );
+            my $pred_eval_class = event_or_entity($ali_src_tnode);
 
             print {$self->_file_handle} join " ", ($gold_eval_class, $pred_eval_class, $ali_src_tnode->get_address);
             print {$self->_file_handle} "\n";
@@ -73,19 +66,40 @@ sub process_bundle {
         next if (defined $covered_src_nodes{$src_tnode->id});
         next if (!Treex::Tool::Coreference::NodeFilter::matches($src_tnode, $self->node_types));
 
-        my ($src_ante) = $src_tnode->get_coref_nodes;
-        my $src_coref_spec = $src_tnode->get_attr("coref_special");
-        my $pred_eval_class = 
-            defined $src_ante ? (
-                ($src_ante->formeme // "") =~ /^v/ || ($src_ante->gram_sempos // "") =~ /^v/ ? "EVENT" : "ENTITY"
-            ) : (
-                $src_coref_spec // "" eq "segm" ? "EVENT" : "OTHER"
-            );
+        my $pred_eval_class = event_or_entity($src_tnode);
         
         #printf STDERR "NO REF: %s %d\n", $src_tnode->get_address, 1-$pred_eval_class;
         
         print {$self->_file_handle} join " ", ("OTHER", $pred_eval_class, $src_tnode->get_address);
         print {$self->_file_handle} "\n";
+    }
+}
+
+sub event_or_entity {
+    my ($tnode) = @_;
+    my ($ante) = $tnode->get_coref_nodes;
+    if (defined $ante) {
+        if (($ante->formeme // "") =~ /^v/ || ($ante->gram_sempos // "") =~ /^v/) {
+            return "EVENT";
+        }
+        elsif ($ante->is_coap_root && $ante->functor ne "APPS") {
+            my $verb_as_member = any {
+                ($_->formeme // "") =~ /^v/ || ($_->gram_sempos // "") =~ /^v/
+            } $ante->get_coap_members;
+            return $verb_as_member ? "EVENT" : "ENTITY";
+        }
+        else {
+            return "ENTITY";
+        }
+    }
+    else {
+        my $coref_spec = $tnode->get_attr("coref_special");
+        if (($coref_spec // "") eq "segm") {
+            return "EVENT";
+        }
+        else {
+            return "OTHER";
+        }
     }
 }
 
