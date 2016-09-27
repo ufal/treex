@@ -104,10 +104,15 @@ sub morphosyntax_unary_feats {
         $feats->{"gen_$gen"} = $feats->{gen} =~ /$gen/ ? 1 : 0;
     }
 
-    
     # features copied from the extractor for reflexive pronouns
     $feats->{is_refl} = Treex::Tool::Coreference::NodeFilter::matches($node, ['reflpron']) ? 1 : 0 if ($type eq 'cand');
     $feats->{is_subj_for_refl}  = $self->_is_subject_for_refl($node) if ($type eq 'cand');
+
+    # features focused on demonstrative pronouns
+    if ($type eq 'anaph') {
+        $feats->{is_neutsg} = ($feats->{gen_neut} && $feats->{num} =~ /sg/) ? 1 : 0;
+        $feats->{has_relclause} = _is_extended_by_relclause($node) ? 1 : 0;
+    }
 }
 
 sub morphosyntax_binary_feats {
@@ -125,6 +130,8 @@ sub morphosyntax_binary_feats {
         $feats->{"agree_$name"} = $self->_agree_feats($set_feats->{"c^cand_$name"}, $set_feats->{"a^anaph_$name"});
         $feats->{"join_$name"} = $self->_join_feats($set_feats->{"c^cand_$name"}, $set_feats->{"a^anaph_$name"});
     }
+    $feats->{agree_gennum} = $self->_agree_feats($feats->{agree_gen}, $feats->{agree_num});
+    $feats->{join_gennum} = $self->_join_feats($feats->{agree_gen}, $feats->{agree_num});
     $feats->{join_clemma_aeparlemma} = $self->_join_feats($cand->t_lemma, $set_feats->{'a^anaph_epar_lemma'});
     
     $feats->{app_in_coord} = _is_app_in_coord( $cand, $anaph );
@@ -151,6 +158,16 @@ sub morphosyntax_binary_feats {
     $feats->{clause_subject} = $self->_is_clause_subject($anaph, $cand) ? 1 : 0;
     $feats->{in_clause} = $anaph->clause_number eq $cand->clause_number ? 1 : 0;
     $feats->{refl_in_clause} = $set_feats->{'c^cand_is_refl'} . "_" . $feats->{in_clause};
+    
+    # features focused on demonstrative pronouns
+    $feats->{join_neutsg_num} = $self->_join_feats(
+        $set_feats->{'a^anaph_is_neutsg'},
+        $feats->{agree_num},
+    );
+    $feats->{join_neutsg_gennum} = $self->_join_feats(
+        $set_feats->{'a^anaph_is_neutsg'},
+        $feats->{agree_gennum},
+    );
 }
 
 # TODO: investigate what is goin on in all the following methods
@@ -249,6 +266,15 @@ sub _is_clause_subject {
     return 0 if ($clause->is_root);
     my ($clause_subj) = grep {$self->_is_subject_for_refl($_)} $clause->get_echildren( { or_topological => 1 } );
     return (defined $clause_subj) && ($clause_subj == $cand);
+}
+
+# aims at demonstrative pronouns followed by a relative (or seems-to-be-relative) clause
+sub _is_extended_by_relclause {
+    my ($anaph) = @_;
+    my @relclause_heads = $anaph->get_echildren;
+    my ($first_relclause_node) = sort {$a->ord <=> $b->ord} map {$_->get_descendants} @relclause_heads;
+    return 0 if (!defined $first_relclause_node);
+    return Treex::Tool::Coreference::NodeFilter::matches($first_relclause_node, ['relpron']);
 }
 
 
