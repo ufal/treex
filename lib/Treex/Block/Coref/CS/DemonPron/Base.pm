@@ -54,7 +54,7 @@ sub _build_feature_extractor {
 sub _build_ante_cands_selector {
     my ($self) = @_;
     my $acs = Treex::Tool::Coreference::AnteCandsGetter->new({
-        cand_types => [ 'noun', 'verb' ],
+        cand_types => [ 'noun', 'verb', 'coord' ],
         prev_sents_num => 1,
         preceding_only => 1,
         cands_within_czeng_blocks => 1,
