@@ -8,6 +8,9 @@ use Treex::Tool::Coreference::Utils;
 
 extends 'Treex::Core::Block';
 
+# TODO: move other ("f", "s", "e") special flags to wild_attr_name and cancel wild_attr_special_name
+# so far, only "?" (loose monolingual alignment) and "c" (coordination member) used there
+
 has 'to_language' => ( is => 'ro', isa => 'Str', required => 1);
 has 'to_selector' => ( is => 'ro', isa => 'Str', default => '');
 #has 'align_type' => ( is => 'ro', isa => 'Str' );
@@ -68,19 +71,34 @@ sub project_coref_entity {
     foreach my $src_mention (@$src_chain) {
         my ($trg_mentions, $ali_types) = $src_mention->get_undirected_aligned_nodes($self->_align_filter);
         for (my $i = 0; $i < @$trg_mentions; $i++) {
-            my $trg_mention = $trg_mentions->[$i];
-            if (!defined $trg_mention->wild->{$self->wild_attr_name}) {
-                my $entity_str = $entity_id;
-                # loosely aligned nodes can be also non-anaphoric
-                if ($ali_types->[$i] eq 'monolingual.loose') {
-                    $entity_str .= "?";
-                }
-                $trg_mention->wild->{$self->wild_attr_name} = $entity_str;
-                if ( !$src_mention->get_coref_nodes ) {
-                    $trg_mention->wild->{$self->wild_attr_special_name} .= "f";
+            $self->_project_to_node($src_mention, $trg_mentions->[$i], $ali_types->[$i], $entity_id);
+        }
+        # if the source mention is a coord root with no target counterpart
+        # set the entity id to counterparts of its members and set a flag indicating that the equivalence is not pure
+        if (!@$trg_mentions && $src_mention->is_coap_root && $src_mention->functor ne "APPS") {
+            foreach my $src_member ($src_mention->get_coap_members) {
+                my ($trg_members, $ali_member_types) = $src_member->get_undirected_aligned_nodes($self->_align_filter);
+                for (my $i = 0; $i < @$trg_members; $i++) {
+                    $self->_project_to_node($src_member, $trg_members->[$i], $ali_member_types->[$i], $entity_id);
+                    $trg_members->[$i]->wild->{$self->wild_attr_name} .= "c";
                 }
             }
         }
+    }
+}
+
+sub _project_to_node {
+    my ($self, $src_node, $trg_node, $ali_type, $entity_id) = @_;
+    return if (defined $trg_node->wild->{$self->wild_attr_name});
+    
+    my $entity_str = $entity_id;
+    # loosely aligned nodes can be also non-anaphoric
+    if ($ali_type eq 'monolingual.loose') {
+        $entity_str .= "?";
+    }
+    $trg_node->wild->{$self->wild_attr_name} = $entity_str;
+    if ( !$src_node->get_coref_nodes ) {
+        $trg_node->wild->{$self->wild_attr_special_name} .= "f";
     }
 }
 

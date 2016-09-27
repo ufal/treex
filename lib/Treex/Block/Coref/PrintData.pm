@@ -12,6 +12,7 @@ extends 'Treex::Block::Write::BaseTextWriter';
 with 'Treex::Block::Coref::SupervisedBase';
 
 has 'labeled' => ( is => 'ro', isa => 'Bool', default => 1);
+has 'fix_missing_coord' => ( is => 'ro', isa => 'Bool', default => 0);
 
 has '_id_to_entity_id' => (is => 'rw', isa => 'HashRef');
 has '_entity_id_to_mentions' => (is => 'rw', isa => 'HashRef');
@@ -33,8 +34,9 @@ before 'process_document' => sub {
         foreach my $tnode ($ttree->get_descendants) {
             my $entity_id = $tnode->wild->{gold_coref_entity};
             next if (!defined $entity_id);
+            next if (!$self->fix_missing_coord && $entity_id =~ /c/);
 
-            $entity_id =~ s/\?$//;
+            $entity_id =~ s/\D*$//;
             $id_to_entity_id{$tnode->id} = $entity_id;
             if (defined $entity_id_to_mentions{$entity_id}) {
                 push @{$entity_id_to_mentions{$entity_id}}, $tnode;
