@@ -8,6 +8,7 @@ use Treex::Tool::Coreference::NodeFilter::RelPron;
 use Treex::Tool::Coreference::NodeFilter::DemonPron;
 use Treex::Tool::Coreference::NodeFilter::Noun;
 use Treex::Tool::Coreference::NodeFilter::Verb;
+use Treex::Tool::Coreference::NodeFilter::Coord;
 use Treex::Block::My::CorefExprAddresses;
 
 use List::MoreUtils qw/any/;
@@ -70,6 +71,9 @@ sub get_types_force {
     }
     if (Treex::Tool::Coreference::NodeFilter::DemonPron::is_demon($node)) {
         $types->{demonpron} = 1;
+    }
+    if (Treex::Tool::Coreference::NodeFilter::Coord::is_coord_root($node)) {
+        $types->{coord} = 1;
     }
     return $types;
 }
