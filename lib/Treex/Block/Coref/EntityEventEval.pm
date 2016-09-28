@@ -31,12 +31,7 @@ sub process_bundle {
 
         my ($ref_ante) = $ref_tnode->get_coref_nodes;
         my $ref_coref_spec = $ref_tnode->get_attr("coref_special");
-        my $gold_eval_class = 
-            defined $ref_ante ? (
-                ($ref_ante->formeme // "") =~ /^v/ || ($ref_ante->gram_sempos // "") =~ /^v/ ? "EVENT" : "ENTITY"
-            ) : (
-                $ref_coref_spec // "" eq "segm" ? "EVENT" : "OTHER"
-            );
+        my $gold_eval_class = event_or_entity($ref_tnode);
                 
         my ($ali_nodes, $ali_types) = $ref_tnode->get_undirected_aligned_nodes({language => $self->language, selector => $self->pred_selector});
         # process the ref nodes that have a src counterpart
