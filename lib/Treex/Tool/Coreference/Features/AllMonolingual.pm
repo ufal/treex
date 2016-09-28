@@ -112,6 +112,7 @@ sub morphosyntax_unary_feats {
     if ($type eq 'anaph') {
         $feats->{is_neutsg} = ($feats->{gen_neut} && $feats->{num} =~ /sg/) ? 1 : 0;
         $feats->{has_relclause} = _is_extended_by_relclause($node) ? 1 : 0;
+        $feats->{kid_fmm} = [ grep {defined $_} map {$_->formeme} $node->get_echildren ];
     }
 }
 
