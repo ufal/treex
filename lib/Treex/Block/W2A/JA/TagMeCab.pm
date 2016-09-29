@@ -14,7 +14,7 @@ extends 'Treex::Core::Block';
 
 # Path to the dictionary
 # TODO: Set default to UniDic
-has dictionary_path => (
+has dictionary_path_prefix => (
     is      => 'ro',
     isa     => 'Str',
     default => ''
@@ -24,8 +24,8 @@ has dictionary_path => (
 # TODO: Set default to UniDic
 has dictionary_type => (
 	is		=> 'ro',
-	isa		=> 'Str',
-	default	=> 'ipadic',
+	isa		=> enum( [qw(ipadic UniDic)] ),
+	default	=> 'UniDic',
 );
 
 has tagger => ( is => 'rw' );
@@ -39,7 +39,8 @@ sub BUILD {
 sub process_start {
     my ($self) = @_;
 
-    my $tagger = Treex::Tool::Tagger::MeCab->new( dictionary_path => $self->dictionary_path ); 
+    my $dict_path = $self->dictionary_path_prefix . '/' . lc($self->dictionary_type);
+    my $tagger = Treex::Tool::Tagger::MeCab->new( dictionary_path => $dict_path ); 
     $self->set_tagger( $tagger );
     
     return;   
@@ -53,7 +54,7 @@ sub process_zone {
     # get the source sentence
     my $sentence = $zone->sentence;
     log_fatal("No sentence in zone") if !defined $sentence;
-    log_fatal(qq{There's already atree in zone}) if $zone->has_atree();
+    log_fatal("There's already atree in zone") if $zone->has_atree();
     log_debug("Processing sentence: $sentence"); 
 
     my ( @tokens ) = $self->tagger->process_sentence( $sentence );
@@ -70,10 +71,11 @@ sub process_zone {
         my $wordform = $features[0];
         my $tag = $features[1].'-'.$features[2].'-'.$features[3].'-'.$features[4];
 		my $lemma;
-        $lemma = $features[7] if ($self->dictionary_type eq "ipadic");
-		$lemma = $features[8] if ($self->dictionary_type eq "unidic");
+        $lemma = $features[7] if ($self->dictionary_type eq 'ipadic');
+		$lemma = $features[8] if ($self->dictionary_type eq 'UniDic');
 		
-        $lemma = $wordform if !$lemma; # temp. workaround for "English-like" words => they evidently do not have the lemma column filled
+        # if a lemma wasn't identified, use the wordform
+        $lemma = $wordform if !$lemma;
         $lemma = $wordform if $lemma =~ m/\*/; 
 
 		# handle "special" tokens that MeCab produces sometimes
@@ -111,7 +113,7 @@ sub process_zone {
                 $a_node->set_iset($features);
 		}	
 		else {
-        	log_fatal("Mismatch between tagged word and original sentence: Tagged word: \"$wordform\" Sentence: \"$sentence\"");
+        	log_fatal("Mismatch between tagged word and original sentence -- Tagged word: \"$wordform\" Sentence: \"$sentence\"");
         }
 
     }
@@ -133,8 +135,8 @@ Treex::Block::W2A::JA::TagMeCab - Japanese tagging module for Treex
 
 =head1 DESCRIPTION
 
-Each sentence is tokenized and tagged using C<MeCab> (Ipadic POS tags).
-Unidic dictionary can now be chosen too (if installed) via C<dictionary_path> and C<dictionary_type> attributes.
+Each sentence is tokenized and tagged using C<MeCab> (Ipadic-style POS tags).
+UniDic dictionary can now be chosen too (if installed) via C<dictionary_path> and C<dictionary_type> attributes.
 
 Ipadic-style tagset uses hierarchical tags. There are four levels of hierarchy,
 each level is separated by "-".
