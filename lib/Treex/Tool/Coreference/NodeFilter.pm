@@ -55,6 +55,13 @@ sub get_types_force {
         $types->{relpron} = 1;
         $types->{all_anaph} = 1;
     }
+    if (Treex::Tool::Coreference::NodeFilter::RelPron::is_coz_cs($node)) {
+        $types->{'relpron.coz'} = 1;
+    }
+    if (Treex::Tool::Coreference::NodeFilter::RelPron::is_coz_cs($node) ||
+        Treex::Tool::Coreference::NodeFilter::RelPron::is_co_cs($node)) {
+        $types->{'relpron.co_coz'} = 1;
+    }
     if (Treex::Block::My::CorefExprAddresses::_is_cor($node)) {
         $types->{cor} = 1;
         $types->{zero} = 1;
