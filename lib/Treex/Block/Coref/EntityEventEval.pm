@@ -12,10 +12,15 @@ subtype 'NodeTypeCommaArrayRef' => as 'ArrayRef';
 coerce 'NodeTypeCommaArrayRef'
     => from 'Str'
     => via { [split /,/] };
+subtype 'BridgTypesHash' => as 'HashRef[Bool]';
+coerce 'BridgTypesHash'
+    => from 'Str'
+    => via { my @a = split /,/, $_; my %hash; @hash{@a} = (1) x @a; \%hash };
 
 has 'node_types' => ( is => 'ro', isa => 'NodeTypeCommaArrayRef', coerce => 1, default => '' ); 
 has 'gold_selector' => ( is => 'ro', isa => 'Str', default => 'ref' );
 has 'pred_selector' => ( is => 'ro', isa => 'Str', default => 'src' );
+has 'allow_bridging' => ( is => 'ro', isa => 'BridgTypesHash', coerce => 1, default => '' );
 has '+extension' => ( default => '.tsv' );
 
 sub process_bundle {
@@ -31,7 +36,7 @@ sub process_bundle {
 
         my ($ref_ante) = $ref_tnode->get_coref_nodes;
         my $ref_coref_spec = $ref_tnode->get_attr("coref_special");
-        my $gold_eval_class = event_or_entity($ref_tnode);
+        my $gold_eval_class = $self->event_or_entity($ref_tnode);
                 
         my ($ali_nodes, $ali_types) = $ref_tnode->get_undirected_aligned_nodes({language => $self->language, selector => $self->pred_selector});
         # process the ref nodes that have a src counterpart
@@ -44,7 +49,7 @@ sub process_bundle {
             #printf STDERR "ALI SRC TNODE: %s\n", $ali_src_tnode->get_address;
             $covered_src_nodes{$ali_src_tnode->id}++;
             
-            my $pred_eval_class = event_or_entity($ali_src_tnode);
+            my $pred_eval_class = $self->event_or_entity($ali_src_tnode);
 
             print {$self->_file_handle} join " ", ($gold_eval_class, $pred_eval_class, $ali_src_tnode->get_address);
             print {$self->_file_handle} "\n";
@@ -61,7 +66,7 @@ sub process_bundle {
         next if (defined $covered_src_nodes{$src_tnode->id});
         next if (!Treex::Tool::Coreference::NodeFilter::matches($src_tnode, $self->node_types));
 
-        my $pred_eval_class = event_or_entity($src_tnode);
+        my $pred_eval_class = $self->event_or_entity($src_tnode);
         
         #printf STDERR "NO REF: %s %d\n", $src_tnode->get_address, 1-$pred_eval_class;
         
@@ -71,8 +76,12 @@ sub process_bundle {
 }
 
 sub event_or_entity {
-    my ($tnode) = @_;
+    my ($self, $tnode) = @_;
     my ($ante) = $tnode->get_coref_nodes;
+    if (!defined $ante && %{$self->allow_bridging}) {
+        my ($b_antes, $b_types) = $tnode->get_bridging_nodes;
+        ($ante) = map {$b_antes->[$_]} grep {$self->allow_bridging->{$b_types->[$_]}} 0..$#$b_types;
+    }
     if (defined $ante) {
         if (($ante->formeme // "") =~ /^v/ || ($ante->gram_sempos // "") =~ /^v/) {
             return "EVENT";
