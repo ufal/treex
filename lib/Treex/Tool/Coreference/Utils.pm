@@ -1,41 +1,69 @@
 package Treex::Tool::Coreference::Utils;
 use Moose;
 use Treex::Core::Common;
+use Data::Printer;
 
 use Graph;
 
+sub _add_coref_to_graph {
+    my ($graph, $id_to_node, $anaph, $antes, $same_entity) = @_;
+    if (!defined $id_to_node->{$anaph->id}) {
+        $graph->add_vertex( $anaph->id );
+        $id_to_node->{$anaph->id} = $anaph;
+    }
+    foreach my $ante (@$antes) {
+        if (!defined $id_to_node->{$ante->id}) {
+            $graph->add_vertex( $ante->id );
+            $id_to_node->{$ante->id} = $ante;
+        }
+        if ($same_entity) {
+            $graph->add_edge( $anaph->id, $ante->id );
+        }
+    }
+}
+
 sub _create_coref_graph {
-    my ($ttrees, $appos_aware) = @_;
+    my ($ttrees, $appos_aware, $bridg_as_coref) = @_;
 
     my $id_to_node = {};
     my $graph = Graph->new;
     foreach my $ttree (@$ttrees) {
         foreach my $anaph ($ttree->get_descendants({ ordered => 1 })) {
             
+            # single antecedent
+            # coreference => same entity
             my @antes = $anaph->get_coref_nodes({appos_aware => 0});
             if (scalar @antes == 1) {
-                $graph->add_edge( $anaph->id, $antes[0]->id );
-                $id_to_node->{$anaph->id} = $anaph;
-                $id_to_node->{$antes[0]->id} = $antes[0];
+                _add_coref_to_graph($graph, $id_to_node, $anaph, \@antes, 1);
             }
-            # split antecedents - A, B, and A+B treat as 3 separate entities => do not add links between A (B) an A+B
+            
+            # split antecedents
+            # if SUB_SET bridging is treated as a coreference: join A, B and A+B to a single entity
+            # otherwise: A, B, and A+B treat as 3 separate entities => do not add links between A (B) an A+B
             elsif (scalar @antes > 1) {
-                $graph->add_vertex( $anaph->id );
-                $id_to_node->{$anaph->id} = $anaph;
-                foreach my $ante (@antes) {
-                    $graph->add_vertex( $ante->id );
-                    $id_to_node->{$ante->id} = $ante;
-                }
+                _add_coref_to_graph($graph, $id_to_node, $anaph, \@antes, $bridg_as_coref->{SUB_SET} ? 1 : 0);
             }
-            # split antecedent represented as SUB_SET bridging
-            my ($br_antes, $br_types) = $anaph->get_bridging_nodes();
-            @antes = map {$br_antes->[$_]} grep {$br_types->[$_] eq "SUB_SET"} 0..$#$br_antes;
-            if (@antes) {
-                $graph->add_vertex( $anaph->id );
-                $id_to_node->{$anaph->id} = $anaph;
-                foreach my $ante (@antes) {
-                    $graph->add_vertex( $ante->id );
-                    $id_to_node->{$ante->id} = $ante;
+            
+            # bridging
+            # types stored in 'bridg_as_coref' are treated as coreference => same entity
+            # other types treated as bridging => separate entities
+            else {
+                my ($br_antes, $br_types) = $anaph->get_bridging_nodes();
+                my @br_antes_coref = ();
+                my @br_antes_split = ();
+                for (my $i = 0; $i < @$br_antes; $i++) {
+                    if ($bridg_as_coref->{$br_types->[$i]}) {
+                        push @br_antes_coref, $br_antes->[$i];
+                    }
+                    else {
+                        push @br_antes_split, $br_antes->[$i];
+                    }
+                }
+                if (@br_antes_coref) {
+                    _add_coref_to_graph($graph, $id_to_node, $anaph, \@br_antes_coref, 1);
+                }
+                if (@br_antes_split) {
+                    _add_coref_to_graph($graph, $id_to_node, $anaph, \@br_antes_split, 0);
                 }
             }
         }
@@ -120,7 +148,7 @@ sub get_coreference_entities {
 
     # a coreference graph represents the nodes interlinked with
     # coreference links
-    my ($coref_graph, $id_to_node) = _create_coref_graph($ttrees, $params->{appos_aware});
+    my ($coref_graph, $id_to_node) = _create_coref_graph($ttrees, $params->{appos_aware}, $params->{bridg_as_coref});
     # individual coreference chains correspond to weakly connected
     # components in the coreference graph 
     my @sorted_id_chains = sort {(join " ", sort @$a) cmp (join " ", sort @$b)} $coref_graph->weakly_connected_components;

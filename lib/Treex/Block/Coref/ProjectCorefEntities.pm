@@ -1,6 +1,7 @@
 package Treex::Block::Coref::ProjectCorefEntities;
 
 use Moose;
+use Moose::Util::TypeConstraints;
 use Treex::Core::Common;
 use List::MoreUtils qw/any/;
 use Treex::Tool::Align::Utils;
@@ -8,14 +9,22 @@ use Treex::Tool::Coreference::Utils;
 
 extends 'Treex::Core::Block';
 
+subtype 'BridgTypesHash' => as 'HashRef[Bool]';
+coerce 'BridgTypesHash'
+    => from 'Str'
+    => via { my @a = split /,/, $_; my %hash; @hash{@a} = (1) x @a; \%hash };
+
 # TODO: move other ("f", "s", "e") special flags to wild_attr_name and cancel wild_attr_special_name
 # so far, only "?" (loose monolingual alignment) and "c" (coordination member) used there
+# TODO: is it possible to use ProjectCorefEntities before SimpleEval or EntityEventEval?
+# all the modifications would need to be done only at a single place
 
 has 'to_language' => ( is => 'ro', isa => 'Str', required => 1);
 has 'to_selector' => ( is => 'ro', isa => 'Str', default => '');
 #has 'align_type' => ( is => 'ro', isa => 'Str' );
 has 'wild_attr_name' => ( is => 'ro', isa => 'Str', default => 'gold_coref_entity' );
 has 'wild_attr_special_name' => ( is => 'ro', isa => 'Str', default => 'gold_coref_special' );
+has 'bridg_as_coref' => ( is => 'ro', isa => 'BridgTypesHash', coerce => 1, default => '' );
 has '_align_filter' => ( is => 'ro', isa => 'HashRef', builder => '_build_align_filter', lazy => 1 );
 
 sub BUILD {
@@ -44,7 +53,7 @@ sub process_document {
     }
     my @ttrees = map {$_->get_ttree} @zones;
 
-    my @chains = Treex::Tool::Coreference::Utils::get_coreference_entities(\@ttrees);
+    my @chains = Treex::Tool::Coreference::Utils::get_coreference_entities(\@ttrees, { bridg_as_coref => $self->bridg_as_coref });
     my $entity_id = 1;
     foreach my $chain (@chains) {
         $self->project_coref_entity($chain, $entity_id);

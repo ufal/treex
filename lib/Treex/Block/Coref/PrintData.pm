@@ -11,9 +11,12 @@ use Treex::Tool::Coreference::NodeFilter;
 extends 'Treex::Block::Write::BaseTextWriter';
 with 'Treex::Block::Coref::SupervisedBase';
 
+# TODO: what about moving 'fix_missing_coord' to ProjectCorefEntities
+# similarly to 'bridg_as_coref' there, it's another modification to
+# the standard definitoin of coreference entities
+
 has 'labeled' => ( is => 'ro', isa => 'Bool', default => 1);
 has 'fix_missing_coord' => ( is => 'ro', isa => 'Bool', default => 0);
-
 has '_id_to_entity_id' => (is => 'rw', isa => 'HashRef');
 has '_entity_id_to_mentions' => (is => 'rw', isa => 'HashRef');
 
