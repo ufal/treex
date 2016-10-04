@@ -14,6 +14,20 @@ sub is_relat {
     }
 }
 
+sub is_coz_cs {
+    my ($tnode) = @_;
+    my $anode = $tnode->get_lex_anode;
+    return 0 if !$anode;
+    return $anode->tag =~ /^.E/;
+}
+
+sub is_co_cs {
+    my ($tnode) = @_;
+    my $anode = $tnode->get_lex_anode;
+    return 0 if !$anode;
+    return $anode->tag =~ /^.Q/;
+}
+
 sub _is_relat_cs {
     my ($node, $args) = @_;
 
