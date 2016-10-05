@@ -4,6 +4,7 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Coreference::NodeFilter;
 use Data::Printer;
+use List::MoreUtils qw/any/;
 
 extends 'Treex::Tool::Coreference::BaseCorefFeatures';
 
@@ -112,7 +113,9 @@ sub morphosyntax_unary_feats {
     if ($type eq 'anaph') {
         $feats->{is_neutsg} = ($feats->{gen_neut} && $feats->{num} =~ /sg/) ? 1 : 0;
         $feats->{has_relclause} = _is_extended_by_relclause($node) ? 1 : 0;
+        $feats->{has_clause} = (any {($_->clause_number // 0) != ($node->clause_number // 0)} $node->get_echildren) ? 1 : 0;
         $feats->{kid_fmm} = [ grep {defined $_} map {$_->formeme} $node->get_echildren ];
+        $feats->{fmm_epar_lemma} = ($feats->{epar_lemma} // "undef") . '_' . ($feats->{fmm} // "undef");
     }
 }
 
@@ -277,8 +280,6 @@ sub _is_extended_by_relclause {
     return 0 if (!defined $first_relclause_node);
     return Treex::Tool::Coreference::NodeFilter::matches($first_relclause_node, ['relpron']);
 }
-
-
 
 1;
 __END__

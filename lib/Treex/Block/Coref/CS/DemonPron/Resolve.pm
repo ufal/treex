@@ -17,7 +17,9 @@ has '+model_path' => (
     #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/009_run_2016-09-26_17-48-01_26651.PDT._008_+_has_relclause/005.112aa69cd8.featset/004.39acd.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
     #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/011_run_2016-09-27_17-35-18_16679.PDT._009_+_fix_missing_coord/005.112aa69cd8.featset/004.39acd.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
     #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/012_run_2016-09-27_19-24-40_6362.PDT._011_+_anaph_kid_fmm/005.972e498d21.featset/004.39acd.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
-    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/013_run_2016-10-02_23-12-51_25047.PDT._012_+_bridg_as_coref/005.972e498d21.featset/004.39acd.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
+    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/013_run_2016-10-02_23-12-51_25047.PDT._012_+_bridg_as_coref/005.972e498d21.featset/004.39acd.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
+    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/014_run_2016-10-05_14-11-39_24186.PDT._013_+_anaph_is_a_to_+_anaph_has_clause/005.7a0b9cfce3.featset/004.39acd.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
+    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/015_run_2016-10-05_16-23-51_19534.PDT._014_+_anaph_fmm_epar_lemma/003.c7917ccf86.featset/004.39acd.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
 );
 
 override '_build_ranker' => sub {

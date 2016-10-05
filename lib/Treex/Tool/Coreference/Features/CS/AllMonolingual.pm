@@ -199,6 +199,7 @@ sub cs_morphosyntax_unary_feats {
     # feats for demonstrative pronouns
     if ($type eq "anaph") {
         $feats->{allgens} = defined $anode ? $self->all_possible_genders($anode->form) : $UNDEF_VALUE;
+        $feats->{is_a_to} = _is_a_to($anode) ? 1 : 0;
     }
 }
 
@@ -224,6 +225,15 @@ sub all_possible_genders {
     my %t_gen_tags = map {$_ => 1} map {@{$a_to_t_genders{$_}}} keys %a_gen_tags;
     return join "|", sort keys %t_gen_tags;
 }
+
+sub _is_a_to {
+    my ($anode) = @_;
+    my $prev_anode = $anode->get_prev_node;
+    my $prev_a = defined $prev_anode && $prev_anode->form eq "a";
+    my $is_to = defined $anode && $anode->form eq "to";
+    return $prev_a && $is_to;
+}
+
 
 ############################# LEXICON FEATURES ####################################
 
