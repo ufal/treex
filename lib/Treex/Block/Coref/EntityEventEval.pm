@@ -20,7 +20,7 @@ coerce 'BridgTypesHash'
 has 'node_types' => ( is => 'ro', isa => 'NodeTypeCommaArrayRef', coerce => 1, default => '' ); 
 has 'gold_selector' => ( is => 'ro', isa => 'Str', default => 'ref' );
 has 'pred_selector' => ( is => 'ro', isa => 'Str', default => 'src' );
-has 'allow_bridging' => ( is => 'ro', isa => 'BridgTypesHash', coerce => 1, default => '' );
+has 'bridg_as_coref' => ( is => 'ro', isa => 'BridgTypesHash', coerce => 1, default => '' );
 has '+extension' => ( default => '.tsv' );
 
 sub process_bundle {
@@ -78,9 +78,9 @@ sub process_bundle {
 sub event_or_entity {
     my ($self, $tnode) = @_;
     my ($ante) = $tnode->get_coref_nodes;
-    if (!defined $ante && %{$self->allow_bridging}) {
+    if (!defined $ante && %{$self->bridg_as_coref}) {
         my ($b_antes, $b_types) = $tnode->get_bridging_nodes;
-        ($ante) = map {$b_antes->[$_]} grep {$self->allow_bridging->{$b_types->[$_]}} 0..$#$b_types;
+        ($ante) = map {$b_antes->[$_]} grep {$self->bridg_as_coref->{$b_types->[$_]}} 0..$#$b_types;
     }
     if (defined $ante) {
         if (($ante->formeme // "") =~ /^v/ || ($ante->gram_sempos // "") =~ /^v/) {
