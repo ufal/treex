@@ -100,21 +100,58 @@ sub _binary_features {
     log_warn 'Treex::Tool::ML::Ranker::Features is an abstract class. The _binary_features method must be implemented in a subclass.';
 }
 
+sub merge_feats_to_ee {
+    my ($cand_feats_h, $ee_cands) = @_;
+    my %ee_feats = map {$_ => {"c^__".$_."__" => 1} } qw/ENTITY EVENT/;
+    for (my $i = 0; $i < @$cand_feats_h; $i++) {
+        #p $ee_cands->[$i];
+        #p $ee_feats{$ee_cands->[$i]};
+        #p $cand_feats_h->[$i];
+        merge_feats($ee_feats{$ee_cands->[$i]}, $cand_feats_h->[$i]);
+    }
+    my @ee_feat_arr = map {$ee_feats{$_}} qw/ENTITY EVENT/;
+    return @ee_feat_arr;
+}
+
+sub merge_feats {
+    my ($f1, $f2) = @_;
+    foreach my $k2 (keys %$f2) {
+        my $v1 = $f1->{$k2};
+        my @v1_arr = ();
+        if (defined $v1) {
+            @v1_arr = ( $v1 );
+            if (ref($v1) eq "ARRAY") {
+                @v1_arr = @$v1;
+            }
+        }
+        my $v2 = $f2->{$k2};
+        my @v2_arr = ( $v2 );
+        if (ref($v2) eq "ARRAY") {
+            @v2_arr = @$v2;
+        }
+        push @v1_arr, @v2_arr;
+
+        $f1->{$k2} = \@v1_arr;
+    }
+    return $f1;
+}
+
+
 sub create_instances {
-    my ($self, $node1, $spec_classes, $cands) = @_;
+    my ($self, $node1, $spec_classes, $cands, $ee_cands) = @_;
     
     my $node1_unary_h = $self->_unary_features( $node1, $self->node1_label );
     my $node1_unary_l = feat_hash_to_nslist($node1_unary_h);
 
-    my @cand_feats = ();
+    my @spec_class_feats_h = ();
     # TODO: ord should be incremented only for the real candidates, however current models are trained with ord=1 for __SELF__
     my $ord = 1;
     foreach my $class (@$spec_classes) {
         my $cand_h = $self->prefix_with_ns({ $class => 1}, $self->node2_label);
-        my $cand_l = feat_hash_to_nslist($cand_h);
-        push @cand_feats, $cand_l;
+        push @spec_class_feats_h, $cand_h;
         $ord++;
     }
+    my @cands_feats_h = ();
     foreach my $cand (@$cands) {
         next if ($cand == $node1);
 
@@ -123,12 +160,26 @@ sub create_instances {
         my $both_unary_h = {%$cand_unary_h, %$node1_unary_h};
         my $cand_binary_h = $self->_binary_features( $both_unary_h, $node1, $cand, $ord );
         my $cand_h = { %$cand_unary_h, %$cand_binary_h};
-        my $cand_l = feat_hash_to_nslist($cand_h);
-        push @cand_feats, $cand_l;
+        push @cands_feats_h, $cand_h;
         $ord++;
     }
 
-    my $instance = [\@cand_feats, $node1_unary_l];
+    my @all_cand_feats_h = ();
+    if (defined $ee_cands) {
+        push @all_cand_feats_h, {'c^__OTHER__' => 1};
+        push @all_cand_feats_h, merge_feats_to_ee(\@cands_feats_h, $ee_cands);
+    }
+    else {
+        @all_cand_feats_h = ( @spec_class_feats_h, @cands_feats_h );
+    }
+
+    my @all_cand_feats = ();
+    foreach my $cand_h (@all_cand_feats_h) {
+        my $cand_l = feat_hash_to_nslist($cand_h);
+        push @all_cand_feats, $cand_l;
+    }
+
+    my $instance = [\@all_cand_feats, $node1_unary_l];
     
     return $instance;
 }

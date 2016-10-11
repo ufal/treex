@@ -46,11 +46,11 @@ sub _build_ante_cands_selector {
 }
 
 sub get_features_comments {
-    my ($self, $tnode, $cands) = @_;
-    my $feats = $self->_feature_extractor->create_instances($tnode, $self->special_classes, $cands);
-    my $comments = _comments_from_feats($feats);
+    my ($self, $tnode, $cands, $ee_cands) = @_;
+    my $feats = $self->_feature_extractor->create_instances($tnode, $self->special_classes, $cands, $ee_cands);
+    #my $comments = _comments_from_feats($feats);
     my $new_feats = _remove_id_feats($feats);
-    return ($new_feats, $comments);
+    return $new_feats;
 }
 
 sub _comments_from_feats {
