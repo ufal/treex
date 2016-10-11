@@ -12,15 +12,15 @@ subtype 'NodeTypeCommaArrayRef' => as 'ArrayRef';
 coerce 'NodeTypeCommaArrayRef'
     => from 'Str'
     => via { [split /,/] };
-subtype 'BridgTypesHash' => as 'HashRef[Bool]';
-coerce 'BridgTypesHash'
+subtype 'BridgeTypesHash' => as 'HashRef[Bool]';
+coerce 'BridgeTypesHash'
     => from 'Str'
     => via { my @a = split /,/, $_; my %hash; @hash{@a} = (1) x @a; \%hash };
 
 has 'node_types' => ( is => 'ro', isa => 'NodeTypeCommaArrayRef', coerce => 1, default => '' ); 
 has 'gold_selector' => ( is => 'ro', isa => 'Str', default => 'ref' );
 has 'pred_selector' => ( is => 'ro', isa => 'Str', default => 'src' );
-has 'bridg_as_coref' => ( is => 'ro', isa => 'BridgTypesHash', coerce => 1, default => '' );
+has 'bridg_as_coref' => ( is => 'ro', isa => 'BridgeTypesHash', coerce => 1, default => '' );
 has '+extension' => ( default => '.tsv' );
 
 sub process_bundle {
@@ -72,6 +72,25 @@ sub process_bundle {
         
         print {$self->_file_handle} join " ", ("OTHER", $pred_eval_class, $src_tnode->get_address);
         print {$self->_file_handle} "\n";
+    }
+}
+
+sub trg_node_event_or_entity {
+    my ($trg_node) = @_;
+
+    return if (!defined $trg_node);
+    
+    if (($trg_node->formeme // "") =~ /^v/ || ($trg_node->gram_sempos // "") =~ /^v/) {
+        return "EVENT";
+    }
+    elsif ($trg_node->is_coap_root && $trg_node->functor ne "APPS") {
+        my $verb_as_member = any {
+            ($_->formeme // "") =~ /^v/ || ($_->gram_sempos // "") =~ /^v/
+        } $trg_node->get_coap_members;
+        return $verb_as_member ? "EVENT" : "ENTITY";
+    }
+    else {
+        return "ENTITY";
     }
 }
 
