@@ -49,7 +49,7 @@ sub process_bundle {
             #printf STDERR "ALI SRC TNODE: %s\n", $ali_src_tnode->get_address;
             $covered_src_nodes{$ali_src_tnode->id}++;
             
-            my $pred_eval_class = $self->event_or_entity($ali_src_tnode);
+            my $pred_eval_class = $ali_src_tnode->wild->{ee_pred_class} // "OTHER";
 
             print {$self->_file_handle} join " ", ($gold_eval_class, $pred_eval_class, $ali_src_tnode->get_address);
             print {$self->_file_handle} "\n";
@@ -66,7 +66,7 @@ sub process_bundle {
         next if (defined $covered_src_nodes{$src_tnode->id});
         next if (!Treex::Tool::Coreference::NodeFilter::matches($src_tnode, $self->node_types));
 
-        my $pred_eval_class = $self->event_or_entity($src_tnode);
+        my $pred_eval_class = $src_tnode->wild->{ee_pred_class} // "OTHER";
         
         #printf STDERR "NO REF: %s %d\n", $src_tnode->get_address, 1-$pred_eval_class;
         
@@ -102,18 +102,7 @@ sub event_or_entity {
         ($ante) = map {$b_antes->[$_]} grep {$self->bridg_as_coref->{$b_types->[$_]}} 0..$#$b_types;
     }
     if (defined $ante) {
-        if (($ante->formeme // "") =~ /^v/ || ($ante->gram_sempos // "") =~ /^v/) {
-            return "EVENT";
-        }
-        elsif ($ante->is_coap_root && $ante->functor ne "APPS") {
-            my $verb_as_member = any {
-                ($_->formeme // "") =~ /^v/ || ($_->gram_sempos // "") =~ /^v/
-            } $ante->get_coap_members;
-            return $verb_as_member ? "EVENT" : "ENTITY";
-        }
-        else {
-            return "ENTITY";
-        }
+        return trg_node_event_or_entity($ante);
     }
     else {
         my $coref_spec = $tnode->get_attr("coref_special");
