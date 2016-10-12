@@ -39,6 +39,7 @@ sub process_zone
     $phrase->project_dependencies();
     $self->fix_root_punctuation($root);
     $self->fix_sentence_segmentation($root);
+    $self->fix_false_root_labels($root);
 }
 
 
@@ -53,21 +54,15 @@ sub convert_tags
     foreach my $node ( $root->get_descendants() )
     {
         # We will want to save the original tag (or a part thereof) in conll/pos.
-        my $origtag = $self->get_input_tag_for_interset($node);
-        # 3 fields probably means CPOS-POS-FEAT
-        # 2 fields probably means CPOS-POS
-        my @fields = split(/\t/, $origtag);
-        if(scalar(@fields)>=2)
-        {
-            $origtag = $fields[1];
-            if(defined($fields[2]) && $fields[2] ne '_' && length($fields[2])<30)
-            {
-                $origtag .= '|'.$fields[2];
-            }
-        }
+        ###!!! However! We are now using conll/cpos as input for Interset, while conll/pos already contains what we want to preserve!
+        #my $origtag = $self->get_input_tag_for_interset($node);
+        my $origtag = $node->conll_pos();
         # Now that we have a copy of the original tag, we can convert it.
         $self->decode_iset( $node );
         $self->set_upos_tag( $node );
+        ###!!! There are currently no features, except that Interset always sets NumType=Card for numbers.
+        ###!!! It does not make sense to have just this feature, especially when we cannot be sure that it's always correct.
+        $node->iset()->clear('numtype');
         # For the case we later access the CoNLL attributes, reset them as well.
         # (We can still specify other source attributes in Write::CoNLLX and similar blocks.)
         my $tag = $node->tag(); # now the universal POS tag
@@ -91,7 +86,13 @@ sub get_input_tag_for_interset
 {
     my $self   = shift;
     my $node   = shift;
-    return $node->tag();
+    # If we read the source CoNLL-X file using Read::CoNLLX with default parameters,
+    # tag contains the fine-grained tag from the POS column. For example, the word
+    # "例外の" has the tag NOUN-POSTP. These tags are potentially useful but at present
+    # we do not have the corresponding Interset driver. Therefore we will use only
+    # the coarse-grained Google Universal POS tag.
+    #return $node->tag();
+    return $node->conll_cpos();
 }
 
 
@@ -198,22 +199,6 @@ sub fix_annotation_errors
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        if($node->deprel() eq 'root' && !$node->parent()->is_root())
-        {
-            my $form = $node->form();
-            if($form eq 'café')
-            {
-                $node->set_deprel('nsubj');
-            }
-            elsif($form eq 'é')
-            {
-                $node->set_deprel('ccomp');
-            }
-            elsif($form eq 'adequado')
-            {
-                $node->set_deprel('conj');
-            }
-        }
     }
 }
 
@@ -321,6 +306,27 @@ sub fix_sentence_segmentation
             $current_bundle = $new_bundle;
         }
         $root->_normalize_node_ordering();
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Makes sure that the root relation is not used anywhere alse than for the top
+# node. We are checking it separately at the end because we could have
+# introduced the error when manipulating multiple top nodes.
+#------------------------------------------------------------------------------
+sub fix_false_root_labels
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'root' && !$node->parent()->is_root())
+        {
+            $node->set_deprel('dep');
+        }
     }
 }
 
