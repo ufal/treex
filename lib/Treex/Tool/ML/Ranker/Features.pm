@@ -125,9 +125,12 @@ sub merge_feats {
             }
         }
         my $v2 = $f2->{$k2};
-        my @v2_arr = ( $v2 );
-        if (ref($v2) eq "ARRAY") {
-            @v2_arr = @$v2;
+        my @v2_arr = ();
+        if (defined $v2) {
+            @v2_arr = ( $v2 );
+            if (ref($v2) eq "ARRAY") {
+                @v2_arr = @$v2;
+            }
         }
         push @v1_arr, @v2_arr;
 
