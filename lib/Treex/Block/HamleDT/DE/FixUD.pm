@@ -20,6 +20,7 @@ sub process_atree
     # Other relations will be fixed after morphology and we will use lemmas in the heuristics.
     $self->fix_possessive_determiners($root);
     $self->fix_infinitival_zu($root);
+    $self->fix_separable_verb_prefixes($root);
     $self->fix_mwe($root);
 }
 
@@ -938,6 +939,28 @@ sub fix_infinitival_zu
         if($node->form() =~ m/^zu$/i && $parent->is_verb() && $node->deprel() =~ m/^aux/)
         {
             $node->set_deprel('mark');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Separable verb prefixes are currently attached to the verb as mark. That
+# differs from the other Germanic languages where they are attached as
+# compound:prt. Fix it and make it "compound:prt", too (relying on the
+# predicted STTS tags to identify the verb prefixes correctly).
+#------------------------------------------------------------------------------
+sub fix_separable_verb_prefixes
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'mark' && $node->conll_pos() eq 'PTKVZ')
+        {
+            $node->set_deprel('compound:prt');
         }
     }
 }
