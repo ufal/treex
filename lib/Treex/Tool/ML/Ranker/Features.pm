@@ -100,17 +100,15 @@ sub _binary_features {
     log_warn 'Treex::Tool::ML::Ranker::Features is an abstract class. The _binary_features method must be implemented in a subclass.';
 }
 
-sub merge_feats_to_ee {
-    my ($cand_feats_h, $ee_cands) = @_;
-    my %ee_feats = map {$_ => {"c^__".$_."__" => 1} } qw/ENTITY EVENT/;
+sub merge_cand_feats {
+    my ($cand_feats_h, $merge_cands) = @_;
+    my ($new_classes, $cands_to_new_classes) = @$merge_cands;
+    my %merged_feats = map { $_ => {"c^__".$_."__" => 1} } @$new_classes;
     for (my $i = 0; $i < @$cand_feats_h; $i++) {
-        #p $ee_cands->[$i];
-        #p $ee_feats{$ee_cands->[$i]};
-        #p $cand_feats_h->[$i];
-        merge_feats($ee_feats{$ee_cands->[$i]}, $cand_feats_h->[$i]);
+        merge_feats($merged_feats{$cands_to_new_classes->[$i]}, $cand_feats_h->[$i]);
     }
-    my @ee_feat_arr = map {$ee_feats{$_}} qw/ENTITY EVENT/;
-    return @ee_feat_arr;
+    my @merged_feat_arr = map {$merged_feats{$_}} @$new_classes;
+    return @merged_feat_arr;
 }
 
 sub merge_feats {
@@ -141,7 +139,7 @@ sub merge_feats {
 
 
 sub create_instances {
-    my ($self, $node1, $spec_classes, $cands, $ee_cands) = @_;
+    my ($self, $node1, $spec_classes, $cands, $merge_cands) = @_;
     
     my $node1_unary_h = $self->_unary_features( $node1, $self->node1_label );
     my $node1_unary_l = feat_hash_to_nslist($node1_unary_h);
@@ -150,7 +148,7 @@ sub create_instances {
     # TODO: ord should be incremented only for the real candidates, however current models are trained with ord=1 for __SELF__
     my $ord = 1;
     foreach my $class (@$spec_classes) {
-        my $cand_h = $self->prefix_with_ns({ $class => 1}, $self->node2_label);
+        my $cand_h = $self->prefix_with_ns({$class => 1}, $self->node2_label);
         push @spec_class_feats_h, $cand_h;
         $ord++;
     }
@@ -167,14 +165,10 @@ sub create_instances {
         $ord++;
     }
 
-    my @all_cand_feats_h = ();
-    if (defined $ee_cands) {
-        push @all_cand_feats_h, {'c^__OTHER__' => 1};
-        push @all_cand_feats_h, merge_feats_to_ee(\@cands_feats_h, $ee_cands);
+    if (defined $merge_cands) {
+        @cands_feats_h = merge_cand_feats(\@cands_feats_h, $merge_cands);
     }
-    else {
-        @all_cand_feats_h = ( @spec_class_feats_h, @cands_feats_h );
-    }
+    my @all_cand_feats_h = ( @spec_class_feats_h, @cands_feats_h );
 
     my @all_cand_feats = ();
     foreach my $cand_h (@all_cand_feats_h) {
