@@ -12,14 +12,8 @@ use Treex::Tool::ML::VowpalWabbit::Ranker;
 has '+model_path' => (
     #default => 'data/models/coreference/CS/vw/perspron.2015-04-29.train.pdt.cs.vw.ranking.model',
     #default => 'data/models/coreference/CS/vw/reflpron.2016-04-24.train.pdt.cs.vw.ranking.model',
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/reflpron/tmp/ml/run_2016-04-26_00-56-30_22064.candidates_formeme_or_sempos_must_start_with_n_-_more_candidates/003.5902492061.featset/001.7eb17.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/007_run_2016-09-24_07-00-11_21859.PDT._006_+_allgenders/003.59701f9109.featset/004.39acd.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/009_run_2016-09-26_17-48-01_26651.PDT._008_+_has_relclause/005.112aa69cd8.featset/004.39acd.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/011_run_2016-09-27_17-35-18_16679.PDT._009_+_fix_missing_coord/005.112aa69cd8.featset/004.39acd.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/012_run_2016-09-27_19-24-40_6362.PDT._011_+_anaph_kid_fmm/005.972e498d21.featset/004.39acd.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/013_run_2016-10-02_23-12-51_25047.PDT._012_+_bridg_as_coref/005.972e498d21.featset/004.39acd.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/014_run_2016-10-05_14-11-39_24186.PDT._013_+_anaph_is_a_to_+_anaph_has_clause/005.7a0b9cfce3.featset/004.39acd.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
-    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/015_run_2016-10-05_16-23-51_19534.PDT._014_+_anaph_fmm_epar_lemma/003.c7917ccf86.featset/004.39acd.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
+    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/015_run_2016-10-05_16-23-51_19534.PDT._014_+_anaph_fmm_epar_lemma/003.c7917ccf86.featset/004.39acd.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
+    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/016_run_2016-10-10_18-28-15_3796.PDT._entity_event_training/001.74797fc489.featset/003.d62b7.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
 );
 
 override '_build_ranker' => sub {
