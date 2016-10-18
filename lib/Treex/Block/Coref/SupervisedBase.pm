@@ -64,10 +64,12 @@ sub _comments_from_feats {
 sub _comment_for_line {
     my ($feat_list, $type) = @_;
 
-    my %feat_hash = map {$_->[0] => $_->[1]} @$feat_list;
-    my $id = $feat_hash{$type."_id"} // "";
-    my $align_id = $feat_hash{"align_".$type."_id"} // "";
-    my $comment = sprintf "%s %s", $id, $align_id;
+    my $id_name = $type."_id";
+    my @ids = map {$_->[1] // ""} grep {$_->[0] =~ /$id_name$/} @$feat_list;
+    $id_name = "align_".$type."_id";
+    my @align_ids = map {$_->[1] // ""} grep {$_->[0] =~ /$id_name$/} @$feat_list;
+
+    my $comment = sprintf "%s %s", (join ",", @ids), (join ",", @align_ids);
     return $comment;
 }
 
