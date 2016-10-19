@@ -45,6 +45,9 @@ sub _locate_model_file {
 sub rank {
     my ($self, $instance) = @_;
 
+    my ($cands, $shared) = @$instance;
+    my $cands_count = scalar @$cands;
+
     my $instance_str = Treex::Tool::ML::VowpalWabbit::Util::format_multiline($instance);
     print {$self->_write_handle} $instance_str . "\n";
     #if ($debug) {
@@ -58,13 +61,15 @@ sub rank {
     #if ($empty_line !~ /^\s*$/) {
     #    log_fatal "First line of VW output must be empty (unless -r instead of -p)";
     #}
-    my $idx = 1;
-    while (my $line = <$fh>) {
+    my $line;
+    for (my $i = 0; $i < $cands_count; $i++) { 
+        $line = <$fh>;
         chomp $line;
-        last if ($line =~ /^\s*$/);
         my ($prob, $tag) = split / /, $line;
         push @probs, $prob;
     }
+    $line = <$fh>;
+    log_fatal 'Vowpal Wabbit outputs more results than desired.' if ($line !~ /^\s*$/);
     return @probs;
 }
 
