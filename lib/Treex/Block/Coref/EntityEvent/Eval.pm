@@ -55,17 +55,17 @@ sub process_bundle {
             print {$self->_file_handle} "\n";
         }
     }
-#    foreach my $src_tnode ($src_ttree->get_descendants({ordered => 1})) {
-#        next if (defined $covered_src_nodes{$src_tnode->id});
-#        next if (!Treex::Tool::Coreference::NodeFilter::matches($src_tnode, $self->node_types));
-#
-#        my $pred_eval_class = $src_tnode->wild->{entity_event} // "OTHER";
-#        
-#        #printf STDERR "NO REF: %s %d\n", $src_tnode->get_address, 1-$pred_eval_class;
-#        
-#        print {$self->_file_handle} join " ", ("OTHER", $pred_eval_class, $src_tnode->get_address);
-#        print {$self->_file_handle} "\n";
-#    }
+    foreach my $src_tnode ($src_ttree->get_descendants({ordered => 1})) {
+        next if (defined $covered_src_nodes{$src_tnode->id});
+        next if (!Treex::Tool::Coreference::NodeFilter::matches($src_tnode, $self->node_types));
+
+        my $pred_eval_class = $src_tnode->wild->{entity_event} // "OTHER";
+        
+        #printf STDERR "NO REF: %s %d\n", $src_tnode->get_address, 1-$pred_eval_class;
+        
+        print {$self->_file_handle} join " ", ("OTHER", $pred_eval_class, $src_tnode->get_address);
+        print {$self->_file_handle} "\n";
+    }
 }
 
 1;
