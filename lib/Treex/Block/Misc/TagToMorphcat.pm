@@ -6,13 +6,26 @@ extends 'Treex::Core::Block';
 has '+language' => ( required => 1 );
 
 sub process_anode {
-    my ($self, $anode) = @_;
+    my ( $self, $anode ) = @_;
 
-    return if (!$anode->tag);
+    return if ( !$anode->tag );
 
-    my ($pos, $subpos, $gender, $number, $case, $possgender, $possnumber, 
-        $person, $tense, $grade, $negation, $voice) = split //, $anode->tag;
-    
+    my ($pos, $subpos, $gender, $number, $case, $possgender, $possnumber,
+            $person, $tense, $grade, $negation, $voice ) = split //, $anode->tag;
+
+    $pos        = '.' if ( ( $pos        // '' ) !~ /^[ACDIJNPVRTXZ]$/ );
+    $subpos     = '.' if ( ( $subpos     // '' ) !~ /^[!#*,.0-9:;=?\@A-Z^}~]$/ );
+    $gender     = '.' if ( ( $gender     // '' ) !~ /^[-FHIMNQTXYZ]$/ );
+    $number     = '.' if ( ( $number     // '' ) !~ /^[-DPSWX]$/ );
+    $case       = '.' if ( ( $case       // '' ) !~ /^[-1-7X]$/ );
+    $possgender = '.' if ( ( $possgender // '' ) !~ /^[-FMXZ]$/ );
+    $possnumber = '.' if ( ( $possnumber // '' ) !~ /^[-PS]$/ );
+    $person     = '.' if ( ( $person     // '' ) !~ /^[-123X]$/ );
+    $tense      = '.' if ( ( $tense      // '' ) !~ /^[-FHPRX]$/ );
+    $grade      = '.' if ( ( $grade      // '' ) !~ /^[-123]$/ );
+    $negation   = '.' if ( ( $negation   // '' ) !~ /^[-AN]$/ );
+    $voice      = '.' if ( ( $voice      // '' ) !~ /^[-AP]$/ );
+
     $anode->reset_morphcat();
     $anode->set_morphcat_pos($pos);
     $anode->set_morphcat_subpos($subpos);
