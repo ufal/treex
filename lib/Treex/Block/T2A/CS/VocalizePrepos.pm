@@ -25,7 +25,7 @@ sub process_atree {
 sub is_prep {
     my ($self, $anode) = @_;
 
-    return $anode->get_attr('morphcat/pos') =~ /^R/;
+    return ($anode->get_attr('morphcat/pos') // '.') =~ /^R/;
 }
 
 sub vocalize {

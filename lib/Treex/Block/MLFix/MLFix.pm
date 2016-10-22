@@ -362,7 +362,7 @@ sub _get_best_tag {
         # recombinantion according to form
         my %forms = ();
         foreach my $tag (keys %$new_tags) {
-            my $form = $self->formGenerator->get_form( $node->lemma, $tag );
+            my $form = $self->formGenerator->get_form( $node, $tag );
             if (defined $form) {
                 $forms{$form}->{score} += $new_tags->{$tag};
                 $forms{$form}->{tags}->{$tag} = $new_tags->{$tag};
@@ -419,9 +419,9 @@ sub get_instance_info {
 
 	my ($parent) = $node->get_eparents({
     	or_topological => 1,
-#    	ignore_incorrect_tree_structure => 1
+    	ignore_incorrect_tree_structure => 1
     });
-    my ($parent_src) = $node_src->get_eparents( {or_topological => 1} )
+    my ($parent_src) = $node_src->get_eparents( {or_topological => 1, ignore_incorrect_tree_structure => 1} )
 		if defined $node_src;
 	
 

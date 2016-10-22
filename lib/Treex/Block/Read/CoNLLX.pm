@@ -7,7 +7,6 @@ use Treex::Core::Common;
 use File::Slurp;
 extends 'Treex::Block::Read::BaseCoNLLReader';
 
-has 'sent_in_file'   => ( is => 'rw', isa => 'Int', default => 0 );
 has 'feat_is_iset'   => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'deprel_is_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'is_member_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
@@ -29,11 +28,13 @@ sub next_document {
         # The default bundle id is something like "s1" where 1 is the number of the sentence.
         # If the input file is split to multiple Treex documents, it is the index of the sentence in the current output document.
         # But we want the input sentence number. If the Treex documents are later exported to one file again, the sentence ids should remain unique.
-        my $sentid  = $self->sent_in_file() + 1;
-        $bundle->set_id('s'.$sentid);
+        my $sentid = $self->sent_in_file() + 1;
+        my $sid = $self->sid_prefix().'s'.$sentid;
+        $bundle->set_id($sid);
         $self->set_sent_in_file($sentid);
         my $zone    = $bundle->create_zone( $self->language, $self->selector );
         my $aroot   = $zone->create_atree();
+        $aroot->set_id($sid.'/'.$self->language());
         if ( $self->deprel_is_afun ) {
             $aroot->set_afun('AuxS');
         }

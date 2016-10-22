@@ -55,19 +55,29 @@ override 'postprocess_sentence' => sub {
     # moving commas in 'clausal' pronominal expletives such as ',pote co' -> 'pote, co';
     my @anodes = $aroot->get_descendants( { ordered => 1 } );
     foreach my $i ( 0 .. $#anodes - 2 ) {
-        if ($anodes[ $i + 1 ]->lemma eq 'poté'
-            and $anodes[$i]->lemma   eq ','
-            )
-        {
-
-            #            print $anodes[$i]->get_address."\n";
+        if ($anodes[ $i + 1 ]->lemma eq 'poté' && $anodes[$i]->lemma eq ',') {
             $anodes[$i]->shift_after_node( $anodes[ $i + 1 ], { without_children => 1 } );
+        }
+
+        # "jak udělat" -> ", jak udělat"
+        if ($i && $anodes[$i]->lemma eq 'jak' && $anodes[$i-1]->lemma ne ','){
+            #my ($tnode_verb) = $anodes[$i+1]->get_referencing_nodes('a/lex.rf');
+            #if ($tnode_verb && $tnode_verb->is_infinitive) {
+                my $comma = $anodes[$i]->create_child(
+                {   'form'          => ',',
+                    'lemma'         => ',',
+                    'afun'          => 'AuxX',
+                    'morphcat/pos'  => 'Z',
+                    'clause_number' => 0,
+                });
+                $comma->shift_before_node($anodes[$i]);
+            #}
         }
     }
 
     # Add comma after "Ano" ("Yes") at the beginning of sentence.
     # Maybe "ano" should be marked as is_clause_head, but I am not sure and this solution is easier.
-    if (@anodes>2 && $anodes[0]->lemma eq 'ano' && $anodes[1]->lemma !~ /^[[:punct:]]$/) {
+    if (@anodes>2 && $anodes[0]->lemma =~ /^(ano|ne)$/ && $anodes[1]->lemma !~ /^[[:punct:]]$/) {
         my $comma = $anodes[0]->create_child(
             {   'form'          => ',',
                 'lemma'         => ',',
@@ -88,7 +98,7 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::T2A::AddSubordClausePunct
 
@@ -103,7 +113,7 @@ Czech coordination conjunctions are avoided.
 Note: Contains a hack specific to EN-CS translation regarding
 moving the comma before/after the punctuation.
 
-=head1 AUTHORS 
+=head1 AUTHORS
 
 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 

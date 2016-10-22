@@ -6,6 +6,9 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseTextReader';
 
+has 'sent_in_file' => ( is => 'rw', isa => 'Int', default => 0 ); # sentence number in input file; if output is split, sentence ids will be unique across all output files
+has 'sid_prefix'   => ( is => 'rw', isa => 'Str', default => '' ); # a prefix for generated sentence ids that identifies the input file, so the ids can be unique corpus-wide
+
 sub next_document_text {
     my ($self) = @_;
     return $self->from->next_file_text() if $self->is_one_doc_per_file;

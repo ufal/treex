@@ -16,14 +16,14 @@ has '_gazeteer_hash' => ( is => 'ro', isa => 'Treex::Tool::Gazetteer::Engine', b
 
 my %OTHERLANG_PHRASE_LIST_PATHS = (
     #'cs' => 'data/models/gazeteer/cs_en/toy.cs_en.cs.gaz.gz',
-    'cs' => 'data/models/gazeteer/cs_en/20151009_007.IT.cs_en.cs.gaz.gz',
+    'cs' => 'data/models/gazeteer/cs_en/20160801_008.IT.cs_en.cs.gaz.gz',
     'es' => 'data/models/gazeteer/es_en/20150821_002.IT.es_en.es.gaz.gz',
     'eu' => 'data/models/gazeteer/eu_en/20150821_002.IT.eu_en.eu.gaz.gz',
     'nl' => 'data/models/gazeteer/nl_en/20150821_004.IT.nl_en.nl.gaz.gz',
     'pt' => 'data/models/gazeteer/pt_en/20150821_002.IT.pt_en.pt.gaz.gz',
 );
 my %EN_PHRASE_LIST_PATHS = (
-    'cs' => 'data/models/gazeteer/cs_en/20151009_007.IT.cs_en.en.gaz.gz',
+    'cs' => 'data/models/gazeteer/cs_en/20160801_008.IT.cs_en.en.gaz.gz',
     'es' => 'data/models/gazeteer/es_en/20150821_002.IT.es_en.en.gaz.gz',
     'eu' => 'data/models/gazeteer/eu_en/20150821_002.IT.eu_en.en.gaz.gz',
     'nl' => 'data/models/gazeteer/nl_en/20150821_004.IT.nl_en.en.gaz.gz',
@@ -66,7 +66,7 @@ sub process_tnode {
 
     for (my $i = 0; $i < @$id_list; $i++) {
         my $id = $id_list->[$i];
-        my $phrase = $phrase_list->[$i]; 
+        my $phrase = $phrase_list->[$i];
         my $translated_phrase;
         if ($id eq "__PUNCT__") {
             $translated_phrase = $phrase;
@@ -80,7 +80,7 @@ sub process_tnode {
         }
         push @translated_phrases, $translated_phrase;
     }
-    
+
     $tnode->wild->{gazeteer_entity_id} = $id_list;
     $tnode->wild->{matched_item} = \@translated_phrases;
     $tnode->set_t_lemma(join " ", @translated_phrases);

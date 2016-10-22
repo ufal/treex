@@ -10,6 +10,12 @@ has language => (
 	required	=> 1
 );
 
+has selector => (
+    is          => 'ro',
+    isa         => 'Treex::Type::Selector',
+    default     => ''
+);
+
 has model => (
 	is			=> 'ro',
 	isa			=> 'Str',
@@ -26,9 +32,10 @@ sub get_scenario_string {
 	my ($self) = @_;
 
 	my $language = $self->language;
+    my $selector = $self->selector;
 	my $model = $self->model;
 
-	my $scen = "Util::SetGlobal language=$language";
+	my $scen = "Util::SetGlobal language=$language selector=$selector";
 
 	if ($language eq "en") {
 		$scen = join "\n", $scen,

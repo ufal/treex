@@ -97,6 +97,9 @@
       <member name="alignment">
           <list ordered="0" type="align-links.type"/>
       </member>
+      
+      <!-- align_coref stuff for PCEDT-R (mnovak 23.10.2016) -->
+      <member name="is_align_coref" type="bool.type"/>
 
       <!-- tentative -->
       <member name="chunks"><list ordered="0"><cdata format="any"/></list>

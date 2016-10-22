@@ -11,6 +11,14 @@ override 'particle_for' => sub {
     return 'ez';
 };
 
+override 'postprocess' => sub {
+    my ($self, $t_node, $a_node, $neg_node) = @_;
+
+    $a_node->iset->set_negativeness('');
+
+    return;
+};
+
 1;
 
 __END__

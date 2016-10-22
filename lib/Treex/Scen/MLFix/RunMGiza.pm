@@ -37,7 +37,7 @@ has model => (
 has tmp_dir => (
 	is			=> 'ro',
 	isa			=> 'Str',
-	default		=> '/tmp'
+	default		=> '/mnt/h/tmp'
 );
 
 has cpu_cores => (

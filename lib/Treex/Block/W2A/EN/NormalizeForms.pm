@@ -19,6 +19,15 @@ sub process_anode {
         }
     }
 
+    # "don t" apostrophe missing
+    if ( $form eq 't' ) {
+        my $previous_anode = $anode->get_prev_node();
+        if ( $previous_anode && $previous_anode->form eq 'don') {
+            $previous_anode->set_form('do');
+            $form = "n't";
+        }
+    }
+
     $form =~ s/[’´]/'/g;
     $form =~ s/["”»]/''/g;
     $form =~ s/[“«]/``/g;

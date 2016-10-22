@@ -33,8 +33,8 @@ sub get_scenario_string {
 	"Util::Eval language=$tgt_language selector=T zone=". q('$zone->remove_tree("a") if $zone->has_tree("a");'),
 	"Util::Eval language=$tgt_language selector=FIXLOG zone=".q('$zone->set_sentence("");'),
 	"A2A::CopyAtree source_language=$tgt_language language=$tgt_language selector=T align=1",
-    "Align::AlignSameSentence language=$tgt_language to_selector=T",
-	"Align::AlignForward language=$src_language selector=T overwrite=0 preserve_type=0";
+    #"Align::AlignSameSentence language=$tgt_language to_selector=T",
+	"Align::AlignForward language=$tgt_language selector=T overwrite=0 preserve_type=0";
 
 	return $scen;
 }

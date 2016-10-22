@@ -174,7 +174,7 @@ sub print_tsubtree {
     }
     
     # simple attrs
-    foreach my $attr (qw(coref_special functor nodetype sentmod subfunctor t_lemma tfa val_frame.rf)){
+    foreach my $attr (qw(coref_special discourse_special functor nodetype sentmod subfunctor t_lemma tfa val_frame.rf)){
         my $val = $self->escape_xml($tnode->get_attr($attr));
         print {$t_fh} "<$attr>$val</$attr>" if defined $val;
     }
@@ -212,7 +212,68 @@ sub print_tsubtree {
             print {$t_fh} "</coref_text.rf>";
         }
     }
-    
+
+    # bridging
+    my $ref_arrows = $tnode->get_attr('bridging');
+    my @arrows = ();
+    if ($ref_arrows) {
+        @arrows = @{$ref_arrows};
+    }
+    if (@arrows) {
+        print {$t_fh} "<bridging>";
+        foreach my $arrow (@arrows) { # take all bridging arrows starting at the given node
+            # simple attrs
+            foreach my $attr (qw(target_node.rf type comment src)) {
+                my $val = $self->escape_xml($arrow->{$attr});
+                if ($attr eq 'target_node.rf') {
+                  $val = "t-$val";
+                }
+                print {$t_fh} "<$attr>$val</$attr>" if defined $val;
+            }
+        }
+        print {$t_fh} "</bridging>";
+    }
+
+    # discourse
+    my $ref_discourse_arrows = $tnode->get_attr('discourse');
+    my @discourse_arrows = ();
+    if ($ref_discourse_arrows) {
+        @discourse_arrows = @{$ref_discourse_arrows};
+    }
+    if (@discourse_arrows) {
+        print {$t_fh} "<discourse>";
+        foreach my $arrow (@discourse_arrows) { # take all discourse arrows starting at the given node
+            # simple attrs
+            foreach my $attr (qw(target_node.rf type start_group_id start_range target_group_id target_range discourse_type is_negated comment src is_altlex is_compositional connective_inserted is_implicit is_NP)) {
+                my $val = $self->escape_xml($arrow->{$attr});
+                if ($attr eq 'target_node.rf') {
+                  $val = "t-$val";
+                }
+                print {$t_fh} "<$attr>$val</$attr>" if defined $val;
+            }
+            # list attrs
+            foreach my $attr (qw(a-connectors.rf t-connectors.rf a-connectors_ext.rf t-connectors_ext.rf)) {
+                my $ref_target_ids = $arrow->{$attr};
+                my @target_ids = ();
+                if ($ref_target_ids) {
+                    @target_ids = @{$ref_target_ids};
+                }
+                if (@target_ids) {
+                    print {$t_fh} "<$attr>";
+                    foreach my $target_id (@target_ids) {
+                        my $prefix = "t-";
+                        if ($attr =~ /^a-/) {
+                          $prefix = "a-";
+                        }
+                        print {$t_fh} "<LM>$prefix$target_id</LM>";
+                    }
+                    print {$t_fh} "</$attr>";
+                }
+            }
+        }
+        print {$t_fh} "</discourse>";
+    }
+
     # grammatemes
     print {$t_fh} "<gram>";
     foreach my $attr (qw(sempos gender number degcmp verbmod deontmod tense aspect resultative dispmod iterativeness indeftype person number politeness negation)){ # definiteness diathesis
@@ -287,9 +348,10 @@ Optional XML pretty printing (e.g. via xmllint --format), but anyone can do this
 =head1 AUTHOR
 
 Martin Popel <popel@ufal.mff.cuni.cz>
+Jiri Mirovsky <mirovsky@ufal.mff.cuni.cz> (bridging and discourse related parts)
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2012-2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

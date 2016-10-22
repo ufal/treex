@@ -313,7 +313,8 @@ If you happen to need any of the modules C<CzechMorpho>, C<Morce::Czech> and C<M
 you must install them manually, because these modules were not released on CPAN,
 but they are XS-based (involve compiling C code), so you cannot just download them.
 
- svn --username public export $SVN_TRUNK/libs/packaged /tmp/packaged
+ svn --username public --password public export \
+  https://svn.ms.mff.cuni.cz/svn/tectomt_devel/trunk/libs/packaged /tmp/packaged
  cd /tmp/packaged/Morce-English
  perl Build.PL
  ./Build

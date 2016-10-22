@@ -50,6 +50,7 @@ sub process_document {
     if ( ! $cached_document ) {
         if ( ! $self->_loaded() ) {
             $self->block->process_start();
+            $block->_set_is_started(1);
             $self->_set_loaded(1);
         }
         log_info("CACHE: calling process_document " . $self->block->get_block_name());

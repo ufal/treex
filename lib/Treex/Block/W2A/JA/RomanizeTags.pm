@@ -7,8 +7,29 @@ use Moose;
 use Treex::Core::Common;
 use Encode;
 
+use Lingua::JA::Romanize::Japanese;
+
 extends 'Treex::Core::Block';
 
+# TODO: Something like this should be used in the future
+sub romanize_rest {
+	my ( $tag ) = @_;
+	my $conv = Lingua::JA::Romanize::Japanese->new();
+	my @new_tag = ();
+
+	foreach my $word (split /\-/, $tag) {
+		my $romanized = $word;
+		$romanized = $conv->chars( $word ) if ( $word =~ /[^a-zA-Zōū]/);
+		$romanized =~ s/ //g;
+		push @new_tag, $romanized;
+	}
+
+    return join("-", @new_tag);
+}
+
+
+
+# When we use UniDic dictionary there are many subtags which are not covered by this, however it would be nice to romanize them too
 sub process_anode {
     my ( $self, $anode ) = @_;
     my ( $tag ) = $anode->tag;
@@ -73,7 +94,7 @@ sub process_anode {
             $tag =~ s{国}{Kuni};
             $tag =~ s{姓}{Sei};
 
-    $anode->set_tag($tag);
+    $anode->set_tag(romanize_rest($tag));
 
     return 1;
 }
@@ -88,15 +109,25 @@ __END__
 
 =head1 NAME
 
-Treex::Block::W2A::JA::RomanizeTags - Conversion of IPADIC tags from kanji to romaji.
+Treex::Block::W2A::JA::RomanizeTags - Conversion of IPADIC (and possibly other) tags from kanji to romaji.
 
 =head1 DESCRIPTION
 
-POS tags are romanized for each node.
+POS tags are romanized for each node via hardcoded substitutions. After that,
+rest of the kanji is converted via L<Lingua::JA::Romanize::Japanese|http://mecab.googlecode.com/svn/trunk/mecab/doc/index.html>.
 
 =head1 TODO
 
-Instead of romanization replace tags with appropriate abbreviation for easier work.
+Get rid of the hard coded part (use only the converter).
+
+The converter lists all possible romanizations (if available). Figure out how to pick the correct one.
+
+Instead of romanization replace tags with appropriate abbreviation for easier
+work. This can possibly be implemented in L< Lingua::Interset|http://search.cpan.org/~zeman/Lingua-Interset-2.041/lib/Lingua/Interset.pm>.
+
+=head1 SEE ALSO
+
+L<Lingua::JA::Romanize::Japanese|http://mecab.googlecode.com/svn/trunk/mecab/doc/index.html> - Romanization of Japanese language
 
 =head1 AUTHOR
 

@@ -166,10 +166,10 @@ Treex::Block::A2A::CS::DoubleNegation -- add or remove negation on verb in doubl
 =head1 SYNOPSIS
 
  # Strip negation from text
- treex -Lcs Read::Sentences Scen::Analysis::CS::M Scen::Analysis::CS::A A2A::CS::DoubleNegation denegate=1 A2W::Detokenize remove_final_space=1 Write::Sentences < in.txt > denegated.txt
+ treex -Lcs Read::Sentences Scen::Analysis::CS ner=none tecto=none A2A::CS::DoubleNegation denegate=1 A2W::Detokenize remove_final_space=1 Write::Sentences < in.txt > denegated.txt
 
  # Restore negation in text (ideally should generate text identical to in.txt)
- treex -Lcs Read::Sentences Scen::Analysis::CS::M Scen::Analysis::CS::A A2A::CS::DoubleNegation A2W::Detokenize remove_final_space=1 Write::Sentences < denegated.txt > negated.txt
+ treex -Lcs Read::Sentences Scen::Analysis::CS ner=none tecto=none A2A::CS::DoubleNegation A2W::Detokenize remove_final_space=1 Write::Sentences < denegated.txt > negated.txt
 
 =head1 DESCRIPTION
 

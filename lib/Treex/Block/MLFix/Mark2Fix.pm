@@ -58,6 +58,20 @@ has node_info_getter => (
 	builder => '_build_node_info_getter'
 );
 
+has voting_method => (
+    is => 'rw',
+    isa => enum( [qw(majority at_least_one average)] ),
+    default => 'majority',
+    documentation => 'Prediction strategy when using multiple models'
+);
+
+has threshold => (
+    is => 'rw',
+    isa => 'Num',
+    default => '0.5',
+    documentation => 'Threshold for acceptable positive (1) class prediction probability'
+);
+
 sub _build_node_info_getter {
 	return Treex::Tool::MLFix::NodeInfoGetter->new();
 }
@@ -103,15 +117,45 @@ sub process_whole_sentence {
 	while (my ($node, $pred) = $iterator->() ) {
         log_debug($node->form . ": " . $pred);
         $node->wild->{"marked2fix"} = $pred;
+        $node->wild->{"m2f_voting_method"} = $self->voting_method;
 	}
 	return;
 }
 
 sub predict_if_mark {
     my ($self, $nodes_rf, $instances) = @_;
+    my @predictions = ();
 
-    return $self->_get_predictions($instances);
+    my $model_predictions_array = $self->_get_predictions($instances);
+    
+    my $iterator = List::MoreUtils::each_arrayref($nodes_rf, $model_predictions_array);
+    while (my ($node, $model_predictions) = $iterator->() ) {
+        my $pred = $self->process_model_predictions($model_predictions);
+        push @predictions, $pred;
+    }
+    
+    return \@predictions;
+}
 
+sub process_model_predictions {
+    my ($self, $model_predictions) = @_;
+    my $pred = 0;
+
+    my $n_models = scalar (keys %$model_predictions);
+    my $n_positives = 0;
+    my $pos_prob = 0;
+    foreach my $model (keys %$model_predictions) {
+        $pos_prob += $model_predictions->{$model}->{1};
+        next if ($model_predictions->{$model}->{1} < $self->threshold);
+        $n_positives++;
+    }
+
+    $pred = 1 if ($self->voting_method eq "majority" && 2 * $n_positives > $n_models);
+    $pred = 1 if ($self->voting_method eq "at_least_one" && $n_positives > 0);
+    $pred = 1 if ($self->voting_method eq "average" && $pos_prob / $n_models > $self->threshold);
+    log_info("Mark2Fix - #positives: $n_positives; avg_prob: $pos_prob");
+
+    return $pred;
 }
 
 # This method can be overwritten in the descendants,
@@ -145,7 +189,7 @@ sub get_instance_info {
     	or_topological => 1,
     	ignore_incorrect_tree_structure => 1
     });
-    my ($parent_src) = $node_src->get_eparents( {or_topological => 1} )
+    my ($parent_src) = $node_src->get_eparents( {or_topological => 1, ignore_incorrect_tree_structure => 1} )
 		if defined $node_src;
 	
     my $info = {};

@@ -24,6 +24,7 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{von}        => 'von|X',
     q{ok}         => 'OK|X',
     q{yes}        => 'ano|X',
+    q{eg}         => 'např.|X',
     q{alpha-numeric} => 'alfanumerický|A',
 );
 

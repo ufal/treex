@@ -51,6 +51,13 @@ has src_lang => (
     documentation => 'Gazetteers are defined for language pairs. Both source and target languages must be specified.',
 );
 
+has definiteness => (
+     is => 'ro',
+     isa => enum( [qw(rules VW)] ),
+     default => 'VW',
+     documentation => 'definiteness detection (rule-based or VowpalWabbit)',
+);
+
 sub BUILD {
     my ($self) = @_;
     if ($self->tm_adaptation eq 'auto'){
@@ -101,10 +108,21 @@ sub get_scenario_string {
     'T2T::SetClauseNumber',
     $self->domain eq 'IT' ? 'T2T::CS2EN::RearrangeNounCompounds' : (), # this block helps in IT domain and hurts in general, but maybe it can be improved to help (or at least not hurt) everywhere
     $self->domain eq 'IT' ? 'T2T::CS2EN::DeleteSuperfluousNodes' : (), # deletes word "application" and "system" with NE, this rarely influences non-IT domain
-    'T2T::CS2EN::FixGrammatemesAfterTransfer',
+    'T2T::CS2EN::FixGrammatemesAfterTransfer domain=' . $self->domain,
     'T2T::CS2EN::FixDoubleNegative',
-    'T2T::CS2EN::AddDefiniteness' . ( $self->domain eq 'IT' ? ' clear_context_after=sentence' : '' ),    # TODO: this has nothing to do with IT domain
     ;
+    # definiteness detection (for articles): rule-based or VW
+    # TODO: for IT, context is reset after each sentence due to nature of QTLeap texts, this has nothing to do with IT in general
+    if ($self->definiteness eq 'rules'){
+        $scen .= ' T2T::CS2EN::AddDefiniteness' . ( $self->domain eq 'IT' ? ' clear_context_after=sentence' : '' );
+    }
+    else {
+        $scen .= ' T2T::SetDefinitenessVW' .
+                ' model_file=data/models/definiteness/cs/VF.004.csoaa_ldf_mc-passes_4-loss_function_hinge.model ' .
+                ' features_file=data/models/definiteness/cs/feats.yml ' .
+                ( $self->domain eq 'IT' ? ' clear_context_after=sentence' : '' );
+        $scen .= ' T2T::CS2EN::ReplaceSomeWithIndefArticle';
+    }
     return $scen;
 }
 
@@ -123,7 +141,7 @@ Treex::Scen::Transfer::CS2EN - Czech-to-English TectoMT transfer (no analysis, n
 
  # From command line
  treex Scen::Transfer::CS2EN Write::Treex to=translated.treex.gz -- cs_ttrees.treex.gz
- 
+
  treex --dump_scenario Scen::Transfer::CS2EN
 
 =head1 DESCRIPTION
