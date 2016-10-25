@@ -3,7 +3,6 @@ use Moose::Role;
 use Treex::Core::Common;
 
 use Treex::Tool::Coreference::AnteCandsGetter;
-use Treex::Tool::Coreference::Features::DemonPron;
 use Treex::Tool::Coreference::Features::CS::AllMonolingual;
 
 with 'Treex::Block::Coref::SupervisedBase' => {
