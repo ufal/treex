@@ -15,6 +15,7 @@ has '+model_path' => (
     #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/021_run_2016-08-25_18-10-03_13500.PDT.new_prodrop_filter/001.e6a6d5dba6.featset/004.37316.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
     # joint feature set
     #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/023_run_2016-08-30_23-38-36_9360.PDT.an_all-types_joint_feature_set/001.3b9f404130.featset/004.37316.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
+    default => 'data/models/coreference/CS/vw/perspron.2016-08-30.train.pdt.cs.vw.ranking.model',
     # UDPipe W2A
     #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/010_run_2016-07-20_11-29-14_21681.data_0007_-_UDPipe_W2A/001.6482ae07e1.featset/002.f59b5.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
     # new limited features
@@ -30,7 +31,7 @@ has '+model_path' => (
     #################
     #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/022_run_2016-08-25_18-40-12_14840.PCEDT.new_prodrop_filter/004.68ab891a00.featset/004.37316.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model',
     # joint feature set
-    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/025_run_2016-09-21_20-10-12_17102.PCEDT.all-monolingual_featset_+_nodetypes/008.896a848f42.featset/002.22ec1.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model',
+    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/025_run_2016-09-21_20-10-12_17102.PCEDT.all-monolingual_featset_+_nodetypes/008.896a848f42.featset/002.22ec1.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model',
     
 );
 
