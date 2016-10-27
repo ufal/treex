@@ -24,22 +24,27 @@ sub process_ttree {
     
     foreach my $neg_tnode (@neg_tnodes) {
         # TODO: now string, future structured
+        my $info;
         my $cue;
         my $scope;
         
+        my $neg_anode = $neg_tnode->get_lex_anode;
         if (defined $neg_tnode->gram_negation && $neg_tnode->gram_negation eq 'neg1') {
             # type A
-            my $neg_anode = $neg_tnode->get_lex_anode();
             $cue = (substr $neg_anode->form, 0, 2) . "-";
             $scope = "-" . (substr $neg_anode->form, 2);
+            $info = "[A on " . $neg_anode->ord . " " . $neg_anode->form . "]";
         } else {
             # type B or C
             # cue
             if ($neg_tnode->t_lemma eq '#Neg') {
                 # TODO type C: have to find the negated verb
                 $cue = "ne-";
+                $info = "[C on SOME VERB";
             } else {
                 $cue = $neg_tnode->get_lex_anode->form;
+                $cue = $neg_anode->form;
+                $info = "[B on " . $neg_anode->ord . " " . $neg_anode->form;
             }
 
             # scope
@@ -71,14 +76,18 @@ sub process_ttree {
                     map {$_->get_anodes}
                     uniq
                     @scope_tnodes;
+                $info .= " TYPE 1/2]";
             } else {
                 # type 3
                 $scope = $cue;
+                $info .= " TYPE 3]";
             }
         }
 
-        print { $self->_file_handle } "  CUE: ", $cue, "  SCOPE: ", $scope, "\n";
+        print { $self->_file_handle } $info, " CUE: ", $cue, "  SCOPE: ", $scope, "\n";
     }
+
+    print { $self->_file_handle } "\n";
 
     return;
 }
