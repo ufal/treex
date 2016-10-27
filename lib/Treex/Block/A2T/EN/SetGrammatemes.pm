@@ -47,6 +47,7 @@ Readonly my %PERSPRON_INFO => (
     'yourselves' => '-P2',
     'they' => '-P3', 'their' => '-P3', 'themselves' => '-P3', 'them' => '-P3', 'theirs' => '-P3',
     'one' => '-S3',
+    '\'s' => '-P1', # "us" in "let's"
 );
 
 Readonly my %TECTO_NAME_FOR => (

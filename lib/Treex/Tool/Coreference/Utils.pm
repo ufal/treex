@@ -7,33 +7,40 @@ use Graph;
 sub _create_coref_graph {
     my ($ttrees) = @_;
 
+    my $id_to_node = {};
     my $graph = Graph->new;
     foreach my $ttree (@$ttrees) {
         foreach my $anaph ($ttree->get_descendants({ ordered => 1 })) {
             
             my @antes = $anaph->get_coref_nodes;
             if (scalar @antes == 1) {
-                $graph->add_edge( $anaph, $antes[0] );
+                $graph->add_edge( $anaph->id, $antes[0]->id );
+                $id_to_node->{$anaph->id} = $anaph;
+                $id_to_node->{$antes[0]->id} = $antes[0];
             }
             # split antecedents - A, B, and A+B treat as 3 separate entities => do not add links between A (B) an A+B
             elsif (scalar @antes > 1) {
-                $graph->add_vertex( $anaph );
+                $graph->add_vertex( $anaph->id );
+                $id_to_node->{$anaph->id} = $anaph;
                 foreach my $ante (@antes) {
-                    $graph->add_vertex( $ante );
+                    $graph->add_vertex( $ante->id );
+                    $id_to_node->{$ante->id} = $ante;
                 }
             }
             # split antecedent represented as SUB_SET bridging
             my ($br_antes, $br_types) = $anaph->get_bridging_nodes();
             @antes = map {$br_antes->[$_]} grep {$br_types->[$_] eq "SUB_SET"} 0..$#$br_antes;
             if (@antes) {
-                $graph->add_vertex( $anaph );
+                $graph->add_vertex( $anaph->id );
+                $id_to_node->{$anaph->id} = $anaph;
                 foreach my $ante (@antes) {
-                    $graph->add_vertex( $ante );
+                    $graph->add_vertex( $ante->id );
+                    $id_to_node->{$ante->id} = $ante;
                 }
             }
         }
     }
-    return $graph;
+    return ($graph, $id_to_node);
 }
 
 sub _gce_default_params {
@@ -67,15 +74,27 @@ sub _sort_chains_deepord {
 sub _sort_chains_topological {
     my ($coref_graph, @chains) = @_;
     my @topo_nodes = $coref_graph->topological_sort(empty_if_cyclic => 1);
-    return if (!@topo_nodes);
+    if ($coref_graph->has_vertices() && !@topo_nodes) {
+        my @cycle = $coref_graph->find_a_cycle();
+        my $str = join " ", @cycle;
+        log_warn "Not able to sort topologically. A coreference cycle found in the document: $str";
+        return;
+    }
     
-    my %order_hash = map {$topo_nodes[$_]->id => $_} 0 .. $#topo_nodes;
+    my %order_hash = map {$topo_nodes[$_] => $_} 0 .. $#topo_nodes;
     my @sorted_chains;
     foreach my $chain (@chains) {
         my @sorted_chain = sort {$order_hash{$a->id} <=> $order_hash{$b->id}} @$chain;
         push @sorted_chains, \@sorted_chain;
     }
     return @sorted_chains;
+}
+
+sub _chains_id_to_node {
+    my ($id_to_node, @id_chains) = @_;
+    return map {
+        [ map {$id_to_node->{$_}} @$_ ]
+    } @id_chains;
 }
 
 sub get_coreference_entities {
@@ -85,10 +104,11 @@ sub get_coreference_entities {
 
     # a coreference graph represents the nodes interlinked with
     # coreference links
-    my $coref_graph = _create_coref_graph($ttrees);
+    my ($coref_graph, $id_to_node) = _create_coref_graph($ttrees);
     # individual coreference chains correspond to weakly connected
     # components in the coreference graph 
-    my @chains = $coref_graph->weakly_connected_components;
+    my @sorted_id_chains = sort {(join " ", sort @$a) cmp (join " ", sort @$b)} $coref_graph->weakly_connected_components;
+    my @chains = _chains_id_to_node($id_to_node, @sorted_id_chains);
 
     my @sorted_chains;
     if ($params->{ordered} eq 'deepord') {
@@ -137,7 +157,7 @@ The following parameters are supported:
 
     ordered
         deepord - nodes in chains are ordered by their deep order
-        topological - nodes in chains are ordered in a topological order
+        topological - nodes in chains are ordered in a topological order (outcoming nodes first)
 
 =back
 
