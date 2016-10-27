@@ -15,7 +15,8 @@ has '+model_path' => (
     #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/015_run_2016-10-05_16-23-51_19534.PDT._014_+_anaph_fmm_epar_lemma/003.c7917ccf86.featset/004.39acd.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
     #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/016_run_2016-10-10_18-28-15_3796.PDT._entity_event_training/001.74797fc489.featset/003.d62b7.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
     #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/018_run_2016-10-17_00-59-13_21925.PDT._entity_event_training_refactored/003.23a7df35ec.featset/003.d62b7.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
-    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/019_run_2016-10-18_11-14-32_21585.PDT._entity_event_training._refactored._ee_by_coref_link/003.23a7df35ec.featset/003.d62b7.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
+    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/demonpron/tmp/ml/019_run_2016-10-18_11-14-32_21585.PDT._entity_event_training._refactored._ee_by_coref_link/003.23a7df35ec.featset/003.d62b7.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
+    default => 'data/models/coreference/CS/vw/demonpron_entity-event.2016-10-18.train.pdt.cs.vw.ranking.model',
 );
 
 override '_build_ranker' => sub {
