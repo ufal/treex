@@ -161,20 +161,6 @@ sub get_anodes {
 
 #------------ coreference and bridging nodes -------------------
 
-sub get_appos_expansion {
-    my ($self, $arg) = @_;
-    if ($self->is_coap_root && $self->functor eq "APPS") {
-        return ($self->get_coap_members({direct_only => 1}), $arg->{with_appos_root} ? $self : ());
-    }
-    else {
-        my $par = $self->get_parent;
-        if (defined $par && !$par->is_root && $par->is_coap_root && $par->functor eq "APPS" && $self->is_member ) {
-            return ($par->get_coap_members({direct_only => 1}), $arg->{with_appos_root} ? $par : ());
-        }
-    }
-    return $self;
-}
-
 # types are not allowed for the time being
 sub _unfold_appos {
     my ( $self, $type ) = @_;
