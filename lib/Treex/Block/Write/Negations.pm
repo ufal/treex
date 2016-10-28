@@ -49,19 +49,22 @@ sub process_ttree {
 
             # scope
             my $right_sister = $neg_tnode->get_next_node();
-            if (defined $right_sister) {
+            if (defined $right_sister && defined $right_sister->tfa) {
                 # type 1 or 2
                 my @scope_tnodes;
                 if ($right_sister->tfa eq 'f') {
-                    while (defined $right_sister && $right_sister->tfa eq 'f') {
+                    while (defined $right_sister && defined $right_sister->tfa && $right_sister->tfa eq 'f') {
+                        # TODO add only children (but with subtrees)?
                         push @scope_tnodes, $right_sister->get_descendants({add_self=>1});
                         $right_sister = $right_sister->get_next_node();
                     }
                 } elsif ($right_sister->tfa eq 'c') {
+                    # TODO add only children (but with subtrees)?
                     push @scope_tnodes, $right_sister->get_descendants({add_self=>1});
                 } elsif ($right_sister->tfa eq 't') {
                     my %ft = ( f => 1, t => 1 );
-                    while (defined $right_sister && defined $ft{$right_sister->tfa}) {
+                    while (defined $right_sister && defined $right_sister->tfa && defined $ft{$right_sister->tfa}) {
+                        # TODO add only children (but with subtrees)?
                         push @scope_tnodes, $right_sister->get_descendants({add_self=>1});
                         $right_sister = $right_sister->get_next_node();
                     }
@@ -69,6 +72,8 @@ sub process_ttree {
                     log_warn $neg_tnode->id . ": right sister is missing TFA!";
                     @scope_tnodes = $right_sister;
                 }
+
+                # TODO scope may be discontiguous, is that OK?
 
                 $scope = join ' ',
                     map { $_->form  }
