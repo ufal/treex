@@ -161,25 +161,25 @@ sub get_anodes {
 
 #------------ coreference and bridging nodes -------------------
 
-sub get_node_appos_expanded {
-    my ($node, $arg) = @_;
-    if ($node->is_coap_root && $node->functor eq "APPS") {
-        return ($node->get_coap_members, $arg->{with_appos_root} ? $node : ());
+sub get_appos_expansion {
+    my ($self, $arg) = @_;
+    if ($self->is_coap_root && $self->functor eq "APPS") {
+        return ($self->get_coap_members, $arg->{with_appos_root} ? $self : ());
     }
     else {
-        my $par = $node->get_parent;
-        if (defined $par && !$par->is_root && $par->is_coap_root && $par->functor eq "APPS" && $node->is_member ) {
+        my $par = $self->get_parent;
+        if (defined $par && !$par->is_root && $par->is_coap_root && $par->functor eq "APPS" && $self->is_member ) {
             return ($par->get_coap_members, $arg->{with_appos_root} ? $par : ());
         }
     }
-    return $node;
+    return $self;
 }
 
 # types are not allowed for the time being
 sub _unfold_appos {
     my ( $self, $type ) = @_;
 
-    my @appos_nodes_not_self = grep {$_ != $self} get_node_appos_expanded($self, {with_appos_root => 1});
+    my @appos_nodes_not_self = grep {$_ != $self} $self->get_appos_expansion({with_appos_root => 1});
     
     my @member_antes = ();
     # type = { text, gram, all }
@@ -197,7 +197,7 @@ sub _unfold_appos {
 
 sub _replace_appos_antes {
     my (@antes) = @_;
-    my @new_antes = map {get_node_appos_expanded($_)} @antes;
+    my @new_antes = map {$_->get_appos_expansion({with_appos_root => 0})} @antes;
     my %seen = ();
     my @unique_antes = grep { !$seen{$_->id}++ } @new_antes;
     return @unique_antes; 

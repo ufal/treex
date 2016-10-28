@@ -44,12 +44,14 @@ sub _create_coref_graph {
     
     my $aa_graph = Graph->new;
     foreach my $anaph_id ($graph->vertices) {
-        my @anaph_expand = Treex::Core::Node::T::get_node_appos_expanded($id_to_node->{$anaph_id});
+        my $anaph = $id_to_node->{$anaph_id};
+        my @anaph_expand = $anaph->get_appos_expansion({with_appos_root => 0});
         foreach my $new_anaph (@anaph_expand) {
             $aa_graph->add_vertex($new_anaph->id);
             $id_to_node->{$new_anaph->id} = $new_anaph;
             foreach my $ante_id ($graph->successors($anaph_id)) {
-                my @ante_expand = Treex::Core::Node::T::get_node_appos_expanded($id_to_node->{$ante_id});
+                my $ante = $id_to_node->{$ante_id};
+                my @ante_expand = $ante->get_appos_expansion({with_appos_root => 0});
                 foreach my $new_ante (@ante_expand) {
                     $aa_graph->add_edge($new_anaph->id, $new_ante->id);
                     $id_to_node->{$new_anaph->id} = $new_anaph;
