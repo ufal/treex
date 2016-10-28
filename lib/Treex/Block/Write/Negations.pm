@@ -113,6 +113,13 @@ Treex::Block::Write::Negations
 
 Prints out sentences together with their negation cues and their scopes.
 
+TODO: it seems punctuation does not have TFA, but add it anyway?
+
+TODO: ensure only subordinates are added into the scope, i.e. not a superordinate clause as in:
+Pokud se nad svým přesyceným systémem organizování a hodnocení vědy včas vážně nezamyslíme, může se stát, že toho k hodnocení bude stále méně a méně. 
+[C on SOME VERB TYPE 1/2] CUE: ne-  SCOPE: Pokud se nad svým přesyceným systémem organizování a hodnocení vědy včas vážně nezamyslíme může se stát že toho k hodnocení bude stále méně a méně
+
+
 =head1 AUTHOR
 
 Rudolf Rosa
