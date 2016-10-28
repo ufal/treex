@@ -164,12 +164,12 @@ sub get_anodes {
 sub get_appos_expansion {
     my ($self, $arg) = @_;
     if ($self->is_coap_root && $self->functor eq "APPS") {
-        return ($self->get_coap_members, $arg->{with_appos_root} ? $self : ());
+        return ($self->get_coap_members({direct_only => 1}), $arg->{with_appos_root} ? $self : ());
     }
     else {
         my $par = $self->get_parent;
         if (defined $par && !$par->is_root && $par->is_coap_root && $par->functor eq "APPS" && $self->is_member ) {
-            return ($par->get_coap_members, $arg->{with_appos_root} ? $par : ());
+            return ($par->get_coap_members({direct_only => 1}), $arg->{with_appos_root} ? $par : ());
         }
     }
     return $self;
