@@ -261,20 +261,6 @@ sub is_echild_of {
     return any { $_ == $potential_echild } @echildren;
 }
 
-sub get_appos_expansion {
-    my ($self, $arg_ref ) = @_;
-    if ($self->is_coap_root && $self->functor eq "APPS") {
-        return ($self->get_coap_members({direct_only => 1}), $arg_ref->{with_appos_root} ? $self : ());
-    }
-    else {
-        my $par = $self->get_parent;
-        if (defined $par && !$par->is_root && $par->is_coap_root && $par->functor eq "APPS" && $self->is_member ) {
-            return ($par->get_coap_members({direct_only => 1}), $arg_ref->{with_appos_root} ? $par : ());
-        }
-    }
-    return $self;
-}
-
 1;
 
 __END__
@@ -451,25 +437,6 @@ For example "(A and B) or C":
 =item dive
 
 see L<get_echildren>
-
-=back
-
-=item $node->get_appos_expansion($arg_ref?)
-
-If the node is part of an apposition (no matter whether as a root
-or a member), return all the nodes that constitute the apposition.
-Only the apposition root may be excluded from the selection if the
-option C<with_appos_root> is off.
-The method is used to abstract from the technical implementation
-of appositions. So far, it is used by coreference accessors.
-
-OPTIONS
-
-=over
-
-=item with_appos_root
-
-Include the apposition root. Disabled by default.
 
 =back
 
