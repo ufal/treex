@@ -48,45 +48,96 @@ sub process_ttree {
             }
 
             # scope
-            my $right_sister = $neg_tnode->get_next_node();
-            if (defined $right_sister && defined $right_sister->tfa) {
-                # type 1 or 2
-                my @scope_tnodes;
-                if ($right_sister->tfa eq 'f') {
-                    while (defined $right_sister && defined $right_sister->tfa && $right_sister->tfa eq 'f') {
-                        # TODO add only children (but with subtrees)?
-                        push @scope_tnodes, $right_sister->get_descendants({add_self=>1});
-                        $right_sister = $right_sister->get_next_node();
-                    }
-                } elsif ($right_sister->tfa eq 'c') {
-                    # TODO add only children (but with subtrees)?
-                    push @scope_tnodes, $right_sister->get_descendants({add_self=>1});
-                } elsif ($right_sister->tfa eq 't') {
-                    my %ft = ( f => 1, t => 1 );
-                    while (defined $right_sister && defined $right_sister->tfa && defined $ft{$right_sister->tfa}) {
-                        # TODO add only children (but with subtrees)?
-                        push @scope_tnodes, $right_sister->get_descendants({add_self=>1});
-                        $right_sister = $right_sister->get_next_node();
+            my @right_parents = $neg_tnode->get_eparents({following_only => 1});
+            my @right_sisters = $neg_tnode->get_siblings({following_only => 1});
+            my @potential_scope_tnodes = (@right_parents, @right_sisters); # TODO undefs?
+            @potential_scope_tnodes = sort {$a->ord <=> $b->ord} @potential_scope_tnodes;
+            my $tfa = $potential_scope_tnodes[0]->tfa;
+            # TFA
+            my $tfa;
+            if (@right_parents) {
+                if (@right_sisters) {
+                    if ($right_parents[0]->precedes($right_sisters[0])) {
+                        # type 1
+                        $tfa = $right_parents[0]->tfa;
+                        $info .= " TYPE 1]";
+                    } else {
+                        # type 2
+                        $tfa = $right_sisters[0]->tfa;
+                        $info .= " TYPE 2]";
                     }
                 } else {
-                    log_warn $neg_tnode->id . ": right sister is missing TFA!";
-                    @scope_tnodes = $right_sister;
+                    # type 1
+                    $tfa = $right_parents[0]->tfa;
+                    $info .= " TYPE 1]";
                 }
+            } elsif (@right_sisters) {
+                # type 2
+                $tfa = $right_sisters[0]->tfa;
+                $info .= " TYPE 2]";
+            }
+            # else type 3
 
-                # TODO scope may be discontiguous, is that OK?
-
-                $scope = join ' ',
-                    map { $_->form  }
-                    sort {$a->ord <=> $b->ord}
-                    map {$_->get_anodes}
-                    uniq
-                    @scope_tnodes;
-                $info .= " TYPE 1/2]";
-            } else {
+            # SCOPE TNODES
+            if (!defined $tfa) {
                 # type 3
                 $scope = $cue;
                 $info .= " TYPE 3]";
+            } else {
+                my @scope_tnodes;
+                if ($tfa eq 't') {
+                    @scope_tnodes = grep {
+                        defined $_->tfa
+                        && ($_->tfa eq 't' || $_->tfa eq 'c')
+                        } @potential_scope_tnodes;
+                } else {
+                    @scope_tnodes = grep {
+                        defined $_->tfa
+                        && ($_->tfa eq $tfa)
+                        } @potential_scope_tnodes;
+                }
+                @scope_tnodes = map { $_->get_descendants({add_self=>1}) } @scope_tnodes;
+                @scope_tnodes = sort {$a->ord <=> $b->ord} @scope_tnodes;
+
+
             }
+        }
+
+#        my $right_sister = $neg_tnode->get_next_node();
+#        if (defined $right_sister && defined $right_sister->tfa) {
+#                # type 1 or 2
+#                my @scope_tnodes;
+#                if ($right_sister->tfa eq 'f') {
+#                    while (defined $right_sister && defined $right_sister->tfa && $right_sister->tfa eq 'f') {
+#                        # TODO add only children (but with subtrees)?
+#                        push @scope_tnodes, $right_sister->get_descendants({add_self=>1});
+#                        $right_sister = $right_sister->get_next_node();
+#                    }
+#                } elsif ($right_sister->tfa eq 'c') {
+#                    # TODO add only children (but with subtrees)?
+#                    push @scope_tnodes, $right_sister->get_descendants({add_self=>1});
+#                } elsif ($right_sister->tfa eq 't') {
+#                    my %ft = ( f => 1, t => 1 );
+#                    while (defined $right_sister && defined $right_sister->tfa && defined $ft{$right_sister->tfa}) {
+#                        # TODO add only children (but with subtrees)?
+#                        push @scope_tnodes, $right_sister->get_descendants({add_self=>1});
+#                        $right_sister = $right_sister->get_next_node();
+#                    }
+#                } else {
+#                    log_warn $neg_tnode->id . ": right sister is missing TFA!";
+#                    @scope_tnodes = $right_sister;
+#                }
+#
+#                # TODO scope may be discontiguous, is that OK?
+#
+#                $scope = join ' ',
+#                    map { $_->form  }
+#                    sort {$a->ord <=> $b->ord}
+#                    map {$_->get_anodes}
+#                    uniq
+#                    @scope_tnodes;
+#                $info .= " TYPE 1/2]";
+#            }
         }
 
         print { $self->_file_handle } $info, " CUE: ", $cue, "  SCOPE: ", $scope, "\n";
