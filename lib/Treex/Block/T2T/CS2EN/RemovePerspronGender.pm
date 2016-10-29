@@ -3,6 +3,7 @@ package Treex::Block::T2T::CS2EN::RemovePerspronGender;
 use utf8;
 use Moose;
 use Treex::Core::Common;
+use List::MoreUtils qw/any/;
 extends 'Treex::Core::Block';
 
 has 'remove_guessed_gender' => ( isa => 'Bool', is => 'ro', default => 0 );
@@ -30,8 +31,8 @@ sub process_tnode {
         return;
     }
 
-    my $t_antec = first { $_->gram_sempos =~ /^n.denot/ } reverse @coref;
-    if ( !$t_antec ) {
+    my @t_antecs = grep { $_->gram_sempos =~ /^n.denot/ } reverse @coref;
+    if ( !@t_antecs ) {
         return if ( !$self->remove_guessed_gender );
         # remove the guessed gender
         $t_node->set_gram_gender('nr');
@@ -39,12 +40,12 @@ sub process_tnode {
     }
 
     # skip anything that might refer to persons
-    return if ( $t_antec->is_name_of_person );
+    return if ( any {$_->is_name_of_person} @t_antecs );
 
-    my $a_antec = $t_antec->get_lex_anode() or return;
-    my $n_antec = $a_antec->n_node;
+    my @a_antecs = grep {defined $_} map {$_->get_lex_anode()} @t_antecs;
+    my @n_antecs = grep {defined $_} map {$_->n_node} @a_antecs;
 
-    return if ( $n_antec and $n_antec->ne_type =~ /^[pP]/ );
+    return if ( any {$_->ne_type =~ /^[pP]/} @n_antecs );
 
     # remove the gender
     $t_node->set_gram_gender('nr');
@@ -84,9 +85,10 @@ but this is sometimes bad for the news domain.
 =head1 AUTHORS 
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
+Michal Novák <mnovak@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2015-16 by Institute of Formal and Applied Linguistics, Charles University in Prague
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 

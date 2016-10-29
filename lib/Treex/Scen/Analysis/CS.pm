@@ -158,7 +158,7 @@ sub get_scenario_string {
             'A2T::SetDocOrds',
             'Coref::CS::SetMultiGender',
             'A2T::CS::MarkTextPronCoref',
-            'Coref::RearrangeLinks retain_cataphora=1',
+#            'Coref::RearrangeLinks retain_cataphora=1',
             'Coref::DisambiguateGrammatemes',
             ;
     }
