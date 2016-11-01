@@ -9,7 +9,6 @@ use Treex::Tool::Coreference::NodeFilter::DemonPron;
 use Treex::Tool::Coreference::NodeFilter::Noun;
 use Treex::Tool::Coreference::NodeFilter::Verb;
 use Treex::Tool::Coreference::NodeFilter::Coord;
-use Treex::Block::My::CorefExprAddresses;
 
 use List::MoreUtils qw/any/;
 
@@ -62,11 +61,11 @@ sub get_types_force {
         Treex::Tool::Coreference::NodeFilter::RelPron::is_co_cs($node)) {
         $types->{'relpron.co_coz'} = 1;
     }
-    if (Treex::Block::My::CorefExprAddresses::_is_cor($node)) {
-        $types->{cor} = 1;
-        $types->{zero} = 1;
-        $types->{all_anaph} = 1;
-    }
+    #if (Treex::Block::My::CorefExprAddresses::_is_cor($node)) {
+    #    $types->{cor} = 1;
+    #    $types->{zero} = 1;
+    #    $types->{all_anaph} = 1;
+    #}
     if (Treex::Tool::Coreference::NodeFilter::Noun::is_sem_noun($node)) {
         $types->{'noun'} = 1;
     }
