@@ -1,7 +1,6 @@
 package Treex::Tool::Coreference::Utils;
 use Moose;
 use Treex::Core::Common;
-use Data::Printer;
 
 use Graph;
 
