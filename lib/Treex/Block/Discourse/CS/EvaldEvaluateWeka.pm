@@ -50,13 +50,22 @@ sub process_document {
   log_info("Result: @prediction");
 
   my ($predicted_class, $probability) = parse_weka_output(@prediction);
-  my $info_string = "\n\n================================================================================\n\nThe predicted class for the given text is '$predicted_class', with probability '$probability'\n\n================================================================================\n";
-  log_info($info_string);
+  my $info_string;
+  if ($predicted_class ne 'N/A') {
+    $info_string = "\n\n================================================================================\n\nThe predicted class for the given text is '$predicted_class', with probability '$probability'\n\n================================================================================\n";
+    log_info($info_string);
+  }
 
+  my $cs_zone = $doc->get_zone($self->language);
+  $cs_zone->set_attr('evald_class', $predicted_class);
+  $cs_zone->set_attr('evald_class_prob', $probability);
+  
   my $evald_evaluation_output_file_name = $doc->full_filename . ".prediction";
   open($fh, '>', $evald_evaluation_output_file_name) or die "Could not open file '$evald_evaluation_output_file_name' $!";
   print $fh "@prediction";
-  print $fh $info_string;
+  if ($predicted_class ne 'N/A') {
+    print $fh $info_string;
+  }
   close $fh;
 
 } # process_document
