@@ -86,6 +86,15 @@ my %ha_inter_connector_level2_2_discourse_type = ('a' => 'conj',
                                    
 my %ha_tak_pak = ('jestliže' => 1, 'kdyby' => 1, 'pokud' => 1, 'jestli' => 1, 'li' => 1, 'protože' => 1, 'jelikož' => 1, 'aby' => 1, 'ačkoliv' => 1, 'přestože' => 1);
 
+my %secondary_intersent_prep_ten_2_discourse_type = ('díky' => 'reason',
+                                           'kromě' => 'conj',
+                                           'kvůli' => 'reason',
+                                           'místo' => 'opp',
+                                         'naproti' => 'confr',
+                                        'navzdory' => 'conc',
+                                          'oproti' => 'opp',
+                                           'vedle' => 'conj');
+
 my %connector_ids = ();
 
 my $file_discourse_intra_count;
@@ -396,6 +405,38 @@ sub _discourse_annotate_inter {
             my @a_connectors = ();
             
             create_discourse_link($doc, 0, $start_node, $target_id, 'discourse', $discourse_type, \@t_connectors, \@a_connectors, $source, $comment);
+          }
+
+          # SECONDARY CONNECTIVES PREP+TEN WITHOUT 'že'
+          my @tens_with_prep = grep {has_selected_prep($_)} # check if there is one of the selected prepositions
+                               grep {without_ze($_)} # check that there is no 'že'
+                               grep {$_->wild->{entity_event} and $_->wild->{entity_event} eq 'EVENT'} # check that it refers to an event (not an entity)
+                               grep {$_->t_lemma and $_->t_lemma eq 'ten'}
+                               $t_node->get_children();
+          if (scalar(@tens_with_prep)) { # found one or more such secondary connectives
+            my $ten = $tens_with_prep[0]; # take only the first one (it is unlikely that there are more)
+            my $prep = has_selected_prep($ten); # take the preposition
+            my $start_node = $t_node;
+            my $target_node = ($prev_root->get_children())[0]; # usually there is one linguistic child below the technical root
+            if (lc($prep->form) eq 'kvůli' or lc($prep->form) eq 'díky') {
+              switch_nodes(\$start_node, \$target_node);
+            }
+            my $target_id = $target_node->id;
+            my $discourse_type = $secondary_intersent_prep_ten_2_discourse_type{lc($prep->form)};
+            if (!$discourse_type) {
+              log_warn("Did not find a discourse type for inter-sentential secondary connective '" . lc($prep->form) . " + ten'!");
+              $discourse_type = 'no_discourse_type';
+            }
+            else {
+              log_info("A secondary connective found: '" . lc($prep->form) . " + ten'!");
+            }
+            my $source = 'A_I_A';
+            my $comment = 'no_comment';
+            my @t_connectors = ();
+            my @a_connectors = ($prep);
+
+            create_discourse_link($doc, 0, $start_node, $target_id, 'discourse', $discourse_type, \@t_connectors, \@a_connectors, $source, $comment);
+
           }
         }
 
@@ -720,6 +761,31 @@ sub PRED_not_finite_verb_is_member_recursive {  # returns 1 if the given node is
     }
   }
   return 0;
+}
+
+
+sub has_selected_prep { # returns a node from the referred a-layer nodes that is a preposition that forms together with 'ten' a secondary connective
+  my ($node) = @_;
+  my @anals = $node->get_anodes();
+  foreach my $a_node (@anals) {
+    # log_info("has_selected_prep: checking '" . $a_node->form . "'\n");
+    if ($a_node->form and $secondary_intersent_prep_ten_2_discourse_type{lc($a_node->form)}) {
+      return $a_node;
+    }
+  }
+  return undef;
+}
+
+
+sub without_ze { # returns 1 if at this t-node there is no reference to an a-layer node with lemma 'že'; otherwise returns 0
+  my ($node) = @_;
+  my @anals = $node->get_anodes();
+  foreach my $a_node (@anals) {
+    if ($a_node->form and lc($a_node->form) eq 'že') {
+      return 0;
+    }
+  }
+  return 1;
 }
 
 

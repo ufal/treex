@@ -9,13 +9,14 @@ use Treex::Tool::Coreference::NodeFilter::PersPron;
 use Treex::Tool::Lexicon::CS;
 use List::MoreUtils qw/uniq/;
 
-with 'Treex::Tool::Align::FeaturesRole';
+extends 'Treex::Tool::ML::Ranker::Features';
 
 has '_sent_graphs' => ( is => 'rw', isa => 'HashRef', default => sub {{}});
 has '_subtree_aligns' => ( is => 'rw', isa => 'HashRef', default => sub {{}});
 has '_curr_filename' => (is => 'rw', isa => 'Str', default => "");
 
 my $GIZA_ORIG_RULES_FILTER = [ '!gold', '!robust', '!supervised', '.*' ];
+my %POSSIBLE_NODE_TYPES = map {$_ => 1} qw/perspron relpron zero/;
 
 sub _reset_global_structs {
     my ($self, $tnode) = @_;
@@ -28,7 +29,7 @@ sub _reset_global_structs {
     }
 }
 
-sub _unary_features {
+augment '_unary_features' => sub {
     my ($self, $node, $type) = @_;
 
     $self->_reset_global_structs($node);
@@ -36,7 +37,7 @@ sub _unary_features {
     my $feats = {};
 
     if ($type eq "n1") {
-        my $anaph_types = join " ", grep {$_ ne "all_anaph"} (split /,/, $node->wild->{filter_types});
+        my $anaph_types = join ",", grep {$POSSIBLE_NODE_TYPES{$_}} @{$node->wild->{filter_types}};
         $feats->{"type^nodetype"} = $anaph_types;
     }
 
@@ -60,10 +61,11 @@ sub _unary_features {
 
     $feats->{reflex} = Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {reflexive => 1}) ? 1 : 0;
 
-    return $feats;
-}
+    my $sub_feats = inner() || {};
+    return { %$feats, %$sub_feats };
+};
 
-sub _binary_features {
+override '_binary_features' => sub {
     my ($self, $set_features, $node1, $node2) = @_;
 
     my $feats = { %$set_features };
@@ -76,7 +78,7 @@ sub _binary_features {
     delete @$feats{keys %$set_features};
 
     return $feats;
-}
+};
 
 sub _add_align_features {
     my ($self, $feats, $node1, $node2) = @_;

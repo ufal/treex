@@ -734,6 +734,31 @@ sub fix_morphology
                 $iset->set('degree', $degree);
             }
         }
+        # Fix postpositions and circumpositions that the tagger mistook for separable verb prefixes.
+        if($stts eq 'PTKVZ' && $node->deprel() eq 'case')
+        {
+            # It probably does not precede the parent noun but if it does, it is a preposition.
+            my $ordadp = $node->ord();
+            my $ordnoun = $node->parent()->ord();
+            if($ordadp < $ordnoun)
+            {
+                $stts = 'APPR';
+            }
+            else
+            {
+                # If there is another case dependent before the noun, the case dependents together form a circumposition.
+                my $prep = any {$_->deprel() eq 'case' && $_->ord() < $ordnoun} ($node->parent()->children());
+                if($prep)
+                {
+                    $stts = 'APZR';
+                }
+                else
+                {
+                    $stts = 'APPO';
+                }
+            }
+            $node->set_conll_pos($stts);
+        }
     }
     # Person and number of finite verbs can be deduced from their subjects.
     # We have to do this in a separate loop, after all the pronouns have been solved.

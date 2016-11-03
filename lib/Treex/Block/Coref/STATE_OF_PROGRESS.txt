@@ -1,0 +1,165 @@
+treex git repository:
+    - branch "new_coref"
+        * refactoring CR utilities
+            - merging them with the utils for supervised alignment
+            - therefore, both CR and Supervised Align scenario must be run to ensure that the funcionality did not change
+            - almost no tests are written :(
+            - run the following commands instead:
+                * treex -Len Read::Treex from=@/home/mnovak/projects/czeng_coref/data/en/analysed/czeng_0/train/0001/list Coref::RemoveLinks A2T::SetDocOrds Coref::EN::PersPron::Resolve
+                    - testing if CR runs smoothly
+                * qtl; cd repo/translate/cs-en/news; make translate eval D="testing Coref::CS::PersPron::Resolve - cs perspron CR refactored"
+                  qtl; cd repo/translate/en-cs/news; make translate eval D="testing Coref::EN::PersPron::Resolve - en perspron CR refactored"
+                    - testing Czech/English CR, if it produces the same results before and after the refactoring. See the branches 
+                        "new_coref.before_large_refactoring.mt_test", "new_coref.en_persprons_refactored.mt_test", and "new_coref.cs_persprons_refactored.mt_test"
+                * cd ~mnovak/projects/align_coref; treex -Len -Ssrc Read::Treex from=@data/gold_aligned.mgiza_on_czeng/dev.list Align::T::Supervised::PrintData align_language=cs node_types=all_anaph
+                    - if the changes in CR do not affect supervised alignment
+        * feature extractors
+            - an abstract subclass Tool::ML::Ranker::Features (used to be a role but changed to enable/disable unary features prefixing)
+            - unary features prefixing via the private attribute '_prefix_unary'
+            - using augment and inner for '_unary_features' is a bit strange; not using it for '_binary_features'
+            - TODO: a hierarchy of features extractors should be reconsidered, but it's not a toughest issue
+        * node filtering
+            - an attempt to unify to unify multiple node filters
+            - some of them labelled as obsolete, but not deleted yet: Block::Eval::Coref, Tool::Coreference::CS::PronAnaphFilter,
+                Tool::Coreference::CS::RelPronAnaphFilter, Tool::Coreference::EN::PronAnaphFilter,
+                Tool::Coreference::Features::Distance, Tool::Coreference::Features::Morphological, Tool::Coreference::Features::TectoSyntax,
+                Tool::Coreference::remove_PronCoref
+            - using Tool::Coreference::NodeFilter to assign classes to nodes
+            - the Block::Filter::Node role directly uses it to access only the [at]nodes that belong to one of the predefined classes:
+                attribute 'node_types', a method 'process_filtered_[at]node' must be implemented
+            - if the 'node_types' is used as a feature in some feature selector, the list must be filtered to rule out labels that has nothing
+                to do with the feature selector, e.g. the constant %POSSIBLE_NODE_TYPES in Tool::Align::Features
+        * ante cands getter
+            - disposing of specialized sublasses for specific node types, e.g. NounAntesCandGetter
+            - using only Tool::Coreference::AnteCandsGetter + the parameter 'cand_types' calling the Tool::Coreference::NodeFilter in the code
+        * resolvers and printers
+            - the same pattern as applied for supervised alignemnt, applied for CR (* is a role, => is 'with', --> is 'extends'), the same holds for CS and RelPron
+                Block::Coref::PrintData       <--  EN::PersPron::PrintData
+                       ||                               ||
+                       \/                               \/
+                *Block::Coref::SupervisedBase  <=  *EN::PersPron::Base
+                       /\                               /\
+                       ||                               ||
+                Block::Coref::Resolve         <--  EN::PersPron::Resolve
+            - this has been tested on toy classes in (TO BE REMOVED):
+                cec; cd skuska
+            - old resolvers and printers removed: Block::A2T::BaseMarkCoref, Block::A2T::CS(EN)::MarkTextPronCoref, Block::Print::CorefData, Block::Print::CS(EN)::TextPronCorefData
+            - TODO: move everything else that is not TreexCR to directory 'Treex::Block::Coref::External' or 'Treex::Block::Coref::Utils' 
+            
+    - branches "new_coref.before_large_refactoring.mt_test", "new_coref.en_persprons_refactored.mt_test", and "new_coref.cs_persprons_refactored.mt_test"
+        - see above
+
+coref git repository:
+    - branch "new_coref"
+        * a CR training folder
+            - cec; cd treex_cr_train
+            - inspired by "qtl; cd translate"
+            - started working on data printer
+                * deciding whether to use Bash or Makefiles (STOP POINT)
+        * this PROGRESS_STATE
+    - not versioned
+        * a CR resolution folder
+            - cec; cd treex_cr
+
+tectomt git-svn repository:
+    - branch "new_coref"
+        - labelling the obsolete classes and replacing the obsolete calls
+
+
+----------------------------- 12.4.2016 -----------------------------------------------
+
+treex git repository:
+    - branch "new_coref"
+        * namespaces supported in VW formatter in Tool::ML::VowpalWabbit::Util
+            - a new namespace is introduced by a feature whose key starts with the '|' symbol, its name following
+            - Tool::ML::Ranker::Features transforms the features stored internally as hashes with keys following the pattern "ns^key" to the format accepted by the VW formatter
+        * a wrapper around the CR feature selector put into Coref::SupervisedBase
+            - it extracts node IDs, put it into comments section of the extended VW format and removes it from the feature set
+        * CR scenario in Scen::Coref
+            - able to resolve coreference up to the specified level
+        * CR resolver for Czech relprons
+        * simple evaluation of CR
+            - Eval::Coref_new renamed to Coref::SimpleEval
+            - adjusted to treat also the cases with a missing counterpart in the other selector
+            - it is described in the commmit message #43e317cdb7
+                - TODO: rewrite it into the PerlDoc of Coref::SimpleEval
+        * align_coref_annot merged in
+            - mostly due to the Filter::Node class unrestricted for the t-layer (it may be used for t, or a, or both the layers)
+coref git repository:
+    - branch "new_coref"
+        * a CR training folder:
+            - cec; cd treex_cr_train
+            - inspired by "qtl; cd translate"
+            - a training pipeline for the Czech relprons works out
+            - TODO-FIXED: continue for other types
+        * a CR resolution folder
+            - cec; cd treex_cr
+            - performs the resolution up to the specified level
+            - evaluates the spacified level
+                - Coref::SimpleEval
+                    - the overall number of instances coming from the dev test section in the treex_cr_train 
+                      differ from the overall number of instances counted by Coref::SimpleEval. The reasons are the following:
+                        * a true antecedent is filtered out:
+                            - sempos=adj.denot, "pomoci postiženým, kteří nemají" (cmpr9415_035.streex##4.t_tree-cs_src-s4-n290)
+                            - sempos=adj.pron.def.demon, "totožná s tou, s níž Jihomoravané" (ln94200_158.streex##11.t_tree-cs_src-s11-n903)
+                            - sempos=adj.pron.indef, "poskytnuta každému, kdo splní" (ln94202_135.streex##9.t_tree-cs_src-s9-n736)
+                            - sempos=n.pron.def.demon, "je to, čemu ekonomové říkají" (ln94202_19.streex##34.t_tree-cs_src-s34-n2938)
+                            - nodetype=coap, "provedli španělští a britští ženisté, kteří budou" (ln94202_64.streex##2.t_tree-cs_src-s2-n100)
+                - conll_scorer put on hold until Coref::PrepareSpecializedEval is fixed, or used for all the mentions
+            - shows the results in a pretty-print colored format
+            - TODO-FIXED: print the scores to the final result table logging all the runs
+MLyn git repository:
+    - branch "master"
+        * ML Framework extracted from the tectomt git-svn repository and renamed to MLyn
+        * TODO file added
+            - TODO: should be transformed to GitHub issues
+
+----------------------------- 20.5.2016 -----------------------------------------------
+
+treex git repository:
+    - branch "new_coref"
+        * VW formatter - possibility to specify tags;
+            - so far, the tags has been calculated based on the losses
+        * CR scenario in Scen::Coref
+            - CS reflpron and perspron added
+        * CR resolver for Czech reflprons
+            - all semantic nouns from the current sentence as antecedent candidates (not only the preceding ones)
+            - features:
+                - unary: lemma, tlemma, subpos, fmm
+                - binary: is_subject, is_clause_subject
+        * again problems with Feature extractors representation
+            - problems with default node names and namespace prefices
+            - Tool::Coreference::BaseCorefFeatures class created to be inherited by content feature extractors, e.g. Tool::Coreference::PronCorefFeatures
+            - Tool::Coreference::CorefFeatures class to be inherited by meta classes, e.g. Tool::Coreference::Features::Container
+        * feature extractors
+            - extracting the binary features, one has to ask for already set unary features with the namespace
+        * CR pretty-print adjusted to print the true as well as predicted antecedent
+            - sentences in between replaced by their number
+            - Coref::PrettyPrint::LabelKey and Coref::PrettyPrint::LabelSys created to set the wilds necessarry for pretty-print
+        * the best models so far point to my /home/mnovak, not the TMT share
+coref git repository:
+    - branch "new_coref"
+        * a CR training folder:
+            - cec; cd treex_cr_train
+            - inspired by "qtl; cd translate"
+            - a training pipeline for persprons and reflprons added
+            - TODO: add training pipeline for zeros, "ten" and other types
+            - testing on eval removed from training
+            - training on PDT 3.0 with multigenders (dataset no. 0005)
+        * a CR resolution folder
+            - cec; cd treex_cr
+            - performs the resolution up to the specified level
+            - resolvers for new types added
+            - pretty-print fixed
+                - TODO: how does it work now?
+            - diff for comparing two pretty-prints
+            - baseline targets added
+                - they only run the evaluation method on already prepared Treex files
+
+
+--------------------------- 13.6.2016 ----------------------------------------------------
+
+treex git repository:
+    - branch "TO_REMOVE.lustre_on_lrc_path_fix"
+        * a temporary fix of Lustre->NFS paths - more info in the commit msg
+        * merged into the "new_coref" branch

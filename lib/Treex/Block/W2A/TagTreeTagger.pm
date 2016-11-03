@@ -43,6 +43,7 @@ __END__
   sw.par  Swahili     latin1
   la.par  Latin       latin1
   ru.par  Russian     utf8
+# TODO: Russian tagger seems to have problems if "ё" is replaced by "е" (noticed only on pronouns: "свое" and "ее")
 
 =cut
 

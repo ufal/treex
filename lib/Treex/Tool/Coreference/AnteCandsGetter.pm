@@ -1,9 +1,15 @@
 package Treex::Tool::Coreference::AnteCandsGetter;
 
-use Moose::Role;
+use Moose;
 use Treex::Tool::Context::Sentences;
+use List::MoreUtils qw/none/;
+use Treex::Tool::Coreference::NodeFilter;
 
-requires '_build_cand_filter';
+has 'cand_types' => ( 
+    isa => 'ArrayRef[Str]',
+    is => 'ro',
+    required => 1,
+);
 
 has 'prev_sents_num' => (
     isa => 'Int',
@@ -11,11 +17,10 @@ has 'prev_sents_num' => (
     required => 1,
 );
 
-has 'anaphor_as_candidate' => (
+has 'preceding_only' => (
     isa => 'Bool',
-    is  => 'ro',
-    required => 1,
-    default => 0,
+    is => 'ro',
+    default => 1,
 );
 
 has 'cands_within_czeng_blocks' => (
@@ -39,13 +44,6 @@ has '_node_selector' => (
     builder => '_build_node_selector',
 );
 
-has '_cand_filter' => (
-    isa => 'Treex::Tool::Coreference::NodeFilter',
-    is  => 'ro',
-    required => 1,
-    builder => '_build_cand_filter',
-);
-
 sub BUILD {
     my ($self) = @_;
     $self->_node_selector;
@@ -67,9 +65,6 @@ sub get_candidates {
         @cands = @cands[0 .. $self->max_size-1];
     }
     
-    if ($self->anaphor_as_candidate) {
-        unshift @cands, $anaph;
-    }
     return @cands;
 }
 
@@ -97,9 +92,11 @@ sub _select_all_cands {
     my ($self, $anaph) = @_;
 
     my @cands = $self->_node_selector->nodes_in_surroundings(
-        $anaph, -$self->prev_sents_num, 0, {preceding_only => 1}
+        $anaph, -$self->prev_sents_num, 0, {preceding_only => $self->preceding_only}
     );
-    @cands = grep {$self->_cand_filter->is_candidate( $_)} @cands;
+    @cands = grep {Treex::Tool::Coreference::NodeFilter::matches($_, $self->cand_types)} @cands;
+    # remove the candidates that even transitively point to the anaphor - cycle prevention
+    @cands = grep {my $cand = $_; none {$_ == $anaph} $cand->get_coref_chain} @cands;
     # nearest candidates to be the first
     @cands = reverse @cands;
 
@@ -209,6 +206,9 @@ sub _select_all_cands {
 #}
 
 1;
+
+# TODO adjust docs
+
 __END__
 
 =encoding utf-8
@@ -230,6 +230,12 @@ candidates, must be specified in a sublclass.
 
 =over
 
+=item cand_types
+
+Every antecedent candidate must match at least one of the type specified
+by this parameter as a list.
+All types specified in C<Treex::Tool::Coreference::NodeFilter> are accepted.
+
 =item prev_sents_num
 
 Previous context to select the candidates from. If it is set to C<n>,
@@ -237,13 +243,6 @@ it means that nodes from the same sentence prior to the anaphor and
 nodes from C<n> preceding sentences are taken into consideration.
 If the number of preceding sentences is lower, all of them are processed.
 Default value is 1.
-
-=item anaphor_as_candidate
-
-If enabled, the anaphor is included in the antecedent candidates list.
-This is necessary, if the resolver tries to recognize whether the 
-anaphor (candidate) is really an anaphor (so called joint anaphor
-identification and antecedent selection). It is disabled by default.
 
 =item cands_within_czeng_blocks
 
@@ -256,23 +255,6 @@ otherwise it is the whole document. Disabled by default.
 =back
 
 =head1 METHODS
-
-=head2 To be implemented
-
-These methods must be implemented in classes that consume this role.
-
-=over
-
-=item _build_cand_filter
-
-A builder for a node filter which consumes the role 
-L<Treex::Tool::Coreference::NodeFilter>. This filter is then used
-to select the candidates from the context defined by the parameter
-C<prev_sents_num>.
-
-=back
-
-=head2 Already implemented
 
 =over
 
@@ -297,6 +279,6 @@ Michal Novák <mnovak@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
