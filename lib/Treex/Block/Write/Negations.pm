@@ -22,29 +22,64 @@ sub process_ttree {
         || defined $neg_tlemmas{$_->t_lemma}
     } $troot->get_descendants({ordered => 1});
     
-    foreach my $neg_tnode (@neg_tnodes) {
+    # foreach my $neg_tnode (@neg_tnodes) {
+    foreach my $negation_id (0..$#neg_tnodes) {
+        my $neg_tnode = $neg_tnodes[$negation_id];
         # TODO: now string, future structured
         my $info;
         my $cue;
         my $scope;
         
         my $neg_anode = $neg_tnode->get_lex_anode;
+        my $type;
+        my $moreinfo = "";
         if (defined $neg_tnode->gram_negation && $neg_tnode->gram_negation eq 'neg1') {
             # type A
+            $neg_anode->wild->{negation}->{$negation_id}->{cue} = 1;
+            $neg_anode->wild->{negation}->{$negation_id}->{cue_from} = 0;
+            $neg_anode->wild->{negation}->{$negation_id}->{cue_to} = 1;
+            $neg_anode->wild->{negation}->{$negation_id}->{scope} = 1;
+            $neg_anode->wild->{negation}->{$negation_id}->{scope_from} = 2;
+            $neg_anode->wild->{negation}->{$negation_id}->{scope_to} = length($neg_anode->form)-1;
             $cue = (substr $neg_anode->form, 0, 2) . "-";
             $scope = "-" . (substr $neg_anode->form, 2);
-            $info = "[A on " . $neg_anode->ord . " " . $neg_anode->form . "]";
+            $type = "A";
         } else {
             # type B or C
             # cue
             if ($neg_tnode->t_lemma eq '#Neg') {
-                # TODO type C: have to find the negated verb
+                $type = "C";
                 $cue = "ne-";
-                $info = "[C on SOME VERB";
+                
+                $neg_anode = undef;
+                my @nodes = ($neg_tnode);
+                do {
+                    my @eparents = map { $_->get_eparents } @nodes;
+                    my @negated_verb_anodes =
+                        grep { $_->tag =~ /^V.{9}N/ }
+                        map { $_->get_anodes  }
+                        grep { $_->gram_sempos eq 'v' } @eparents;
+                    if (@negated_verb_anodes) {
+                        $neg_anode = $negated_verb_anodes[0];
+                    } else {
+                        @nodes = @eparents;
+                    }
+                } while (@nodes && !defined $neg_anode);
+                
+                if (defined $neg_anode) {
+                    $neg_anode->wild->{negation}->{$negation_id}->{cue} = 1;
+                    $neg_anode->wild->{negation}->{$negation_id}->{cue_from} = 0;
+                    $neg_anode->wild->{negation}->{$negation_id}->{cue_to} = 1;
+                    $neg_anode->wild->{negation}->{$negation_id}->{scope_from} = 2;
+                    $neg_anode->wild->{negation}->{$negation_id}->{scope_to} = length($neg_anode->form)-1;
+                } else {
+                    log_warn ("negated verb not found for negation tnode " . $neg_tnode->id);
+                    next;
+                }
             } else {
-                $cue = $neg_tnode->get_lex_anode->form;
+                $neg_anode->wild->{negation}->{$negation_id}->{cue} = 1;
                 $cue = $neg_anode->form;
-                $info = "[B on " . $neg_anode->ord . " " . $neg_anode->form;
+                $type = "B";
             }
 
             # scope
@@ -52,35 +87,39 @@ sub process_ttree {
             my @right_sisters = $neg_tnode->get_siblings({following_only => 1});
             my @potential_scope_tnodes = (@right_parents, @right_sisters); # TODO undefs?
             @potential_scope_tnodes = sort {$a->ord <=> $b->ord} @potential_scope_tnodes;
-            my $tfa = @potential_scope_tnodes ? $potential_scope_tnodes[0]->tfa : undef;
+            my ($tfa) = map { $_->tfa } grep { $_->tfa } @potential_scope_tnodes;
 
             # SCOPE TNODES
             if (!defined $tfa) {
                 # type 3
+                $moreinfo = " TYPE 3";
                 $scope = $cue;
-                $info .= " TYPE 3]";
+                $neg_anode->wild->{negation}->{$negation_id}->{scope} = 1;
             } else {
-                $info .= " SISTER: " . $potential_scope_tnodes[0]->get_lex_anode->form;
-                $info .= " TYPE 1/2]";
+                $moreinfo = " SISTER: "
+                    . ($potential_scope_tnodes[0]->get_lex_anode ?
+                        $potential_scope_tnodes[0]->get_lex_anode->form : "(no lex anode)")
+                    . " TYPE 1/2";
                 my %tfa_ok = (
                     f => {f => 1},
                     c => {c => 1},
                     t => {t => 1, c => 1}
                 );
-                my @scope_tnodes =
+                my @scope_anodes =
+                    uniq
+                    sort { $a->ord <=> $b->ord }
+                    map { $_->get_anodes }
                     grep { $neg_tnode->precedes($_) }
                     map { $_->get_descendants({add_self=>1}) }
                     grep {
                         defined $_->tfa && $tfa_ok{$tfa}->{$_->tfa}
                     } @potential_scope_tnodes;
-               $scope = join ' ',
-                   map { $_->form  }
-                   uniq
-                   sort {$a->ord <=> $b->ord}
-                   map {$_->get_anodes}
-                   @scope_tnodes;
+                map {$_->wild->{negation}->{$negation_id}->{scope} = 1} @scope_anodes;
+                $scope = join ' ', map { $_->form  } @scope_anodes;
             }
         }
+        
+        $info = "[$type on " . $neg_anode->ord . " " . $neg_anode->form . "$moreinfo]";
 
         print { $self->_file_handle } $info, " CUE: ", $cue, "  SCOPE: ", $scope, "\n";
     }
@@ -105,11 +144,6 @@ Treex::Block::Write::Negations
 =head1 DESCRIPTION
 
 Prints out sentences together with their negation cues and their scopes.
-
-TODO: ensure only subordinates are added into the scope, i.e. not a superordinate clause as in:
-Pokud se nad svým přesyceným systémem organizování a hodnocení vědy včas vážně nezamyslíme, může se stát, že toho k hodnocení bude stále méně a méně. 
-[C on SOME VERB TYPE 1/2] CUE: ne-  SCOPE: Pokud se nad svým přesyceným systémem organizování a hodnocení vědy včas vážně nezamyslíme může se stát že toho k hodnocení bude stále méně a méně
-
 
 =head1 AUTHOR
 
