@@ -25,8 +25,10 @@ has classifier => (
     documentation => 'Weka classifier to be used, e.g. weka.classifiers.trees.RandomForest',
 );
 
+sub process_zone {
+}
 
-sub process_document {
+sub print_footer {
   my ($self, $doc) = @_;
 
   my $evald_features_file_name = $doc->full_filename . ".arff";
@@ -47,13 +49,13 @@ sub process_document {
   my $java_cmd = "java -cp $weka_jar $class_name -l $weka_model -T $evald_features_file_name -p 0";
   
   my @prediction = qx($java_cmd);
-  log_info("Result: @prediction");
+  log_debug("Result: @prediction");
 
   my ($predicted_class, $probability) = parse_weka_output(@prediction);
   my $info_string;
   if ($predicted_class ne 'N/A') {
     $info_string = "\n\n================================================================================\n\nThe predicted class for the given text is '$predicted_class', with probability '$probability'\n\n================================================================================\n";
-    log_info($info_string);
+    log_debug($info_string);
   }
 
   my $cs_zone = $doc->get_zone($self->language);
@@ -65,7 +67,7 @@ sub process_document {
     print {$self->_file_handle} $info_string;
   }
 
-} # process_document
+} # print_footer
 
 
 =item
