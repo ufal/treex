@@ -2,7 +2,7 @@ package Treex::Block::Discourse::CS::EvaldEvaluateWeka;
 use Moose;
 use Treex::Core::Common;
 
-extends 'Treex::Core::Block';
+extends 'Treex::Block::Write::BaseTextWriter';
 
 has model => (
     is            => 'ro',
@@ -60,13 +60,10 @@ sub process_document {
   $cs_zone->set_attr('evald_class', $predicted_class);
   $cs_zone->set_attr('evald_class_prob', $probability);
   
-  my $evald_evaluation_output_file_name = $doc->full_filename . ".prediction";
-  open($fh, '>', $evald_evaluation_output_file_name) or die "Could not open file '$evald_evaluation_output_file_name' $!";
-  print $fh "@prediction";
+  print {$self->_file_handle} "@prediction";
   if ($predicted_class ne 'N/A') {
-    print $fh $info_string;
+    print {$self->_file_handle} $info_string;
   }
-  close $fh;
 
 } # process_document
 
