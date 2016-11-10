@@ -9,14 +9,17 @@ has '+language' => ( required => 1 );
 
 has '+extension' => ( default => '.txt' );
 
+
 sub process_atree {
 
     my ( $self, $aroot ) = @_;
     my @data = ();
 
+    my %compl_used;
+
     foreach my $anode ( $aroot->get_descendants( { ordered => 1 } ) ) {
         my $form = $anode->form // '';
-        my ( $valframe, $functor, $formeme, $parent_valframe ) = ( '', '', '', '' );
+        my ($valframe, $functor, $formeme, $parent_valframe, $compl_functor, $compl_formeme ) = ( '', '', '', '', '', '' );
         my ($tnode) = $anode->get_referencing_nodes('a/lex.rf');
         if ($tnode) {
             $valframe = $tnode->val_frame_rf // '';
@@ -25,6 +28,30 @@ sub process_atree {
             if (!$tnode->is_coap_root() && !$tnode->is_root()) {
                 my ($first_eparent) = $tnode->get_eparents;
                 $parent_valframe = $first_eparent->val_frame_rf // '';
+            }
+        }
+        else {
+            ($tnode) = $anode->get_referencing_nodes('a/aux.rf');
+        }
+
+        if ($tnode) {
+            while (1) {
+                last if $tnode->is_coap_root || $tnode->is_root;
+                my ($parent_tnode) = $tnode->get_eparents;
+                if ($parent_tnode->is_root) {
+                    last;
+                }
+                elsif ($parent_tnode->val_frame_rf) {
+                    $compl_functor = $tnode->functor // '';
+                    $compl_formeme = $tnode->formeme // '';
+                    if (!$compl_used{$tnode}) {
+                        $compl_functor = "B-$compl_functor" if $compl_functor ne '';
+                        $compl_formeme = "B-$compl_formeme" if $compl_formeme ne '';
+                        $compl_used{$tnode} = 1;
+                    }
+                    last;
+                }
+                $tnode = $parent_tnode;
             }
         }
 
@@ -36,7 +63,8 @@ sub process_atree {
                   . '|' . ( $valframe ne '' && $formeme ne '' ? $formeme : '-' )
                   . '|' . ( $parent_valframe ne '' && $functor ne '' ? $functor : '-' )
                   . '|' . ( $parent_valframe ne '' && $formeme ne '' ? $formeme : '-' )
-
+                  . '|' . ( $compl_functor ne '' ? $compl_functor : '-')
+                  . '|' . ( $compl_formeme ne '' ? $compl_formeme : '-')
         );
         $tok =~ s/ /_/g;
         push @data, $tok;
