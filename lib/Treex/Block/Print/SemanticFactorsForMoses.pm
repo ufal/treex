@@ -36,7 +36,7 @@ sub process_atree {
 
         if ($tnode) {
             while (1) {
-                last if $tnode->is_coap_root || $tnode->is_root;
+                last if $tnode->is_coap_root || $tnode->is_root || $tnode->val_frame_rf;
                 my ($parent_tnode) = $tnode->get_eparents;
                 if ($parent_tnode->is_root) {
                     last;
