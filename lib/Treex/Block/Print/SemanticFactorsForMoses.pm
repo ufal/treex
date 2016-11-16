@@ -19,6 +19,8 @@ sub process_atree {
 
     foreach my $anode ( $aroot->get_descendants( { ordered => 1 } ) ) {
         my $form = $anode->form // '';
+        my $lemma = $anode->lemma // '';
+        my $tag = $anode->tag // '';
         my ($valframe, $functor, $formeme, $parent_valframe, $compl_functor, $compl_formeme ) = ( '', '', '', '', '', '' );
         my ($tnode) = $anode->get_referencing_nodes('a/lex.rf');
         if ($tnode) {
@@ -56,7 +58,9 @@ sub process_atree {
         }
 
         my $tok = (
-            $form . '|' . ( $valframe ne '' ? $valframe : '-' )
+            $form . '|' . ( $lemma ne '' ? $lemma : '-' )
+                  . '|' . ( $tag ne '' ? $tag : '-' )
+                  . '|' . ( $valframe ne '' ? $valframe : '-' )
                   . '|' . ( $functor ne '' ? $functor : '-' )
                   . '|' . ( $formeme ne '' ? $formeme : '-' )
                   . '|' . ( $valframe ne '' && $functor ne '' ? $functor : '-' )
