@@ -2,11 +2,16 @@ package Treex::Scen::Analysis::RU;
 use Moose;
 use Treex::Core::Common;
 
-has domain => (
-     is => 'ro',
-     isa => enum( [qw(general IT)] ),
-     default => 'general',
-     documentation => 'domain of the input texts',
+has unknown_afun_to_atr => (
+    is => 'ro',
+    isa => 'Bool',
+    default => 0,
+);
+
+has default_functor => (
+    is => 'ro',
+    isa => 'Str',
+    default => '',
 );
 
 sub get_scenario_string {
@@ -19,8 +24,12 @@ sub get_scenario_string {
     q(Util::Eval anode='$.set_tag($.conll_pos)'),
     q(Util::Eval anode='$.set_afun($.deprel)'),
     q(Util::Eval anode='$.set_iset_conll_feat($.conll_feat)'),
+    # rehang final punctuation
     q(Util::Eval anode='if ($.conll_pos =~ /^Z/ && !$.get_next_node) {$.set_parent($.get_root)}'),
-    q(Util::Eval anode='my $dr = $.deprel; if ($dr =~ /_M$/) {$.set_is_member(1); $dr =~ s/_M$//; $.set_deprel($dr)}'),
+    # set is_member
+    q(Util::Eval anode='my $afun = $.afun; if ($afun =~ /_M$/) {$.set_is_member(1); $afun =~ s/_M$//; $.set_afun($afun)}'),
+    $self->unknown_afun_to_atr ? q(Util::Eval anode='if ($.afun =~ /^(Apposition)|(NR)|(Neg)$/) {$.set_afun("Atr")}') : (),
+    'W2A::RU::FixPronouns',
     # tecto analysis
     'A2T::MarkEdgesToCollapse',
     'A2T::BuildTtree',
@@ -38,6 +47,7 @@ sub get_scenario_string {
     'A2T::MarkRelClauseCoref ',
     'A2T::SetNodetype',
     'A2T::SetFormeme',
+    $self->default_functor ? (sprintf 'Util::Eval tnode=\'$.set_functor("%s")\'', $self->default_functor) : (),
     'A2T::SetGrammatemes',
     'A2T::SetGrammatemesFromAux',
     'A2T::AddPersPronSb formeme_for_dropped_subj="n:[erg]+X"',
