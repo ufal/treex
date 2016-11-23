@@ -228,10 +228,10 @@ sub all_possible_genders {
 
 sub _is_a_to {
     my ($anode) = @_;
+    return if (!defined $anode);
     my $prev_anode = $anode->get_prev_node;
-    my $prev_a = defined $prev_anode && $prev_anode->form eq "a";
-    my $is_to = defined $anode && $anode->form eq "to";
-    return $prev_a && $is_to;
+    return if (!defined $prev_anode);
+    return ($prev_anode->form eq "a") && ($anode->form eq "to");
 }
 
 

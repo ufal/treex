@@ -161,25 +161,25 @@ sub get_anodes {
 
 #------------ coreference and bridging nodes -------------------
 
-sub get_node_appos_expanded {
-    my ($node, $arg) = @_;
-    if ($node->is_coap_root && $node->functor eq "APPS") {
-        return ($node->get_coap_members, $arg->{with_appos_root} ? $node : ());
+sub get_appos_expansion {
+    my ($self, $arg_ref ) = @_;
+    if ($self->is_coap_root && $self->functor eq "APPS") {
+        return ($self->get_coap_members({direct_only => 1}), $arg_ref->{with_appos_root} ? $self : ());
     }
     else {
-        my $par = $node->get_parent;
-        if (defined $par && !$par->is_root && $par->is_coap_root && $par->functor eq "APPS" && $node->is_member ) {
-            return ($par->get_coap_members, $arg->{with_appos_root} ? $par : ());
+        my $par = $self->get_parent;
+        if (defined $par && !$par->is_root && $par->is_coap_root && $par->functor eq "APPS" && $self->is_member ) {
+            return ($par->get_coap_members({direct_only => 1}), $arg_ref->{with_appos_root} ? $par : ());
         }
     }
-    return $node;
+    return $self;
 }
 
 # types are not allowed for the time being
 sub _unfold_appos {
     my ( $self, $type ) = @_;
 
-    my @appos_nodes_not_self = grep {$_ != $self} get_node_appos_expanded($self, {with_appos_root => 1});
+    my @appos_nodes_not_self = grep {$_ != $self} $self->get_appos_expansion({with_appos_root => 1});
     
     my @member_antes = ();
     # type = { text, gram, all }
@@ -197,7 +197,7 @@ sub _unfold_appos {
 
 sub _replace_appos_antes {
     my (@antes) = @_;
-    my @new_antes = map {get_node_appos_expanded($_)} @antes;
+    my @new_antes = map {$_->get_appos_expansion({with_appos_root => 0})} @antes;
     my %seen = ();
     my @unique_antes = grep { !$seen{$_->id}++ } @new_antes;
     return @unique_antes; 
@@ -553,6 +553,25 @@ The method returns references to two lists of the equal length: the referred nod
 
 Add bridging anaphora to C<$node> of type C<$type> (to C<bridging>).
 
+=item $node->get_appos_expansion($arg_ref?)
+
+If the node is part of an apposition (no matter whether as a root
+or a member), return all the nodes that constitute the apposition.
+Only the apposition root may be excluded from the selection if the
+option C<with_appos_root> is off.
+The method is used to abstract from the technical implementation
+of appositions. So far, it is used by coreference accessors.
+
+OPTIONS
+
+=over
+
+=item with_appos_root
+
+Include the apposition root. Disabled by default.
+
+=back
+
 =back
 
 =head2 Access to source language t-layer (in MT)
@@ -613,8 +632,10 @@ Martin Popel <popel@ufal.mff.cuni.cz>
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
+Michal Novák <mnovak@ufal.mff.cuni.cz>
+
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011-2012 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

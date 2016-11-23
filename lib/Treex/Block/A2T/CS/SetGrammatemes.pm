@@ -1253,7 +1253,7 @@ sub apply_conversion_rules {
     if ( $t_lemma2attribs{$t_lemma} ) {
 
         #    print "APL2\n";
-        foreach my $premise ( keys %{ $t_lemma2attribs{$t_lemma} } ) {
+        foreach my $premise ( sort keys %{ $t_lemma2attribs{$t_lemma} } ) {
 
             my $func = $t_node->functor;
             if ( $premise eq "" or evalpremise( $t_node, $premise ) ) {

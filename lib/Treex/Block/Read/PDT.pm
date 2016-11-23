@@ -103,6 +103,15 @@ override '_convert_all_trees' => sub {
         $zone->set_sentence( $aroot->get_subtree_string );
     }
 
+    # Copy genre
+    if ($pmldoc->{t}){
+        my $metadata = $pmldoc->{t}->metaData('pml_root')->{meta};
+        if ($metadata && $metadata->{genre}) {
+            $document->wild->{genre} = $metadata->{genre};
+        }
+    }
+
+    return;
 };
 
 1;

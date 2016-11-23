@@ -2,7 +2,7 @@ package Treex::Block::Write::Negations;
 
 use Moose;
 use Treex::Core::Common;
-use List::Uniq "uniq";
+use List::MoreUtils "uniq";
 extends 'Treex::Block::Write::BaseTextWriter';
 
 my %neg_tlemmas = (
@@ -12,72 +12,42 @@ my %neg_tlemmas = (
     '#Neg' => 1,
 );
 
-sub process_ttree {
-    my ( $self, $troot ) = @_;
-    
-    print { $self->_file_handle } $troot->get_zone->sentence, "\n";
+# cs = cue / scope
+sub anode_substr {
+    my ($anode, $negation_id, $cs) = @_;
 
-    my @neg_tnodes = grep {
-        (defined $_->gram_negation && $_->gram_negation eq 'neg1')
-        || defined $neg_tlemmas{$_->t_lemma}
-    } $troot->get_descendants({ordered => 1});
-    
-    foreach my $neg_tnode (@neg_tnodes) {
-        # TODO: now string, future structured
-        my $cue;
-        my $scope;
-        
-        if (defined $neg_tnode->gram_negation && $neg_tnode->gram_negation eq 'neg1') {
-            # type A
-            my $neg_anode = $neg_tnode->get_lex_anode();
-            $cue = (substr $neg_anode->form, 0, 2) . "-";
-            $scope = "-" . (substr $neg_anode->form, 2);
-        } else {
-            # type B or C
-            # cue
-            if ($neg_tnode->t_lemma eq '#Neg') {
-                # TODO type C: have to find the negated verb
-                $cue = "ne-";
-            } else {
-                $cue = $neg_tnode->get_lex_anode->form;
-            }
-
-            # scope
-            my $right_sister = $neg_tnode->get_next_node();
-            if (defined $right_sister) {
-                # type 1 or 2
-                my @scope_tnodes;
-                if ($right_sister->tfa eq 'f') {
-                    while (defined $right_sister && $right_sister->tfa eq 'f') {
-                        push @scope_tnodes, $right_sister->get_descendants({add_self=>1});
-                        $right_sister = $right_sister->get_next_node();
-                    }
-                } elsif ($right_sister->tfa eq 'c') {
-                    push @scope_tnodes, $right_sister->get_descendants({add_self=>1});
-                } elsif ($right_sister->tfa eq 't') {
-                    my %ft = ( f => 1, t => 1 );
-                    while (defined $right_sister && defined $ft{$right_sister->tfa}) {
-                        push @scope_tnodes, $right_sister->get_descendants({add_self=>1});
-                        $right_sister = $right_sister->get_next_node();
-                    }
-                } else {
-                    log_warn $neg_tnode->id . ": right sister is missing TFA!";
-                    @scope_tnodes = $right_sister;
-                }
-
-                $scope = join ' ',
-                    map { $_->form  }
-                    sort {$a->ord <=> $b->ord}
-                    map {$_->get_anodes}
-                    uniq
-                    @scope_tnodes;
-            } else {
-                # type 3
-                $scope = $cue;
-            }
+    my $start = $anode->wild->{negation}->{$negation_id}->{$cs . '_from'};
+    if (defined $start) {
+        my $length = $anode->wild->{negation}->{$negation_id}->{$cs . '_to'} - $start + 1;
+        my $form = $anode->form;
+        my $string = substr $form, $start, $length;
+        if ($start > 0) {
+            $string = "-$string";
         }
+        if ($start + $length < length($form)) {
+            $string = "$string-";
+        }
+        return $string;
+    } else {
+        return $anode->form;
+    }
+}
 
-        print { $self->_file_handle } "  CUE: ", $cue, "  SCOPE: ", $scope, "\n";
+sub process_atree {
+    my ( $self, $aroot ) = @_;
+
+    print { $self->_file_handle } $aroot->get_zone->sentence, "\n";
+
+    my $negations_count = $aroot->wild->{negation}->{negations_count};
+    my @descendants = $aroot->get_descendants({ordered => 1});
+    foreach my $negation_id (1..$negations_count) {
+        my @cue_nodes = grep { $_->wild->{negation}->{$negation_id}->{cue} } @descendants;
+        my $cue = join ' ', map { anode_substr($_, $negation_id, 'cue') } @cue_nodes;
+
+        my @scope_nodes = grep { $_->wild->{negation}->{$negation_id}->{scope} } @descendants;
+        my $scope = join ' ', map { anode_substr($_, $negation_id, 'scope') } @scope_nodes;
+
+        print { $self->_file_handle } "  CUE: $cue SCOPE: $scope\n";
     }
 
     return;

@@ -27,7 +27,7 @@ sub _fits_multivalue_grammateme {
     my %gend_hash = map {$_ => 1} split /\|/, $gram;
 
     if (defined $ante_gram && $ante_gram !~ /(^nr$)|\|/ && $gram ne "inher" && !$gend_hash{$ante_gram}) {
-        log_warn "The $type grammateme '".$ante_gram."' of the node ". $tnode->id . " propagated from its antecedent does not agree with possible grams (".$gram.") in this context.";
+        log_debug "The $type grammateme '".$ante_gram."' of the node ". $tnode->id . " propagated from its antecedent does not agree with possible grams (".$gram.") in this context.";
     }
 }
 

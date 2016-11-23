@@ -9,6 +9,7 @@ use Treex::Tool::Coreference::NodeFilter::DemonPron;
 use Treex::Tool::Coreference::NodeFilter::Noun;
 use Treex::Tool::Coreference::NodeFilter::Verb;
 use Treex::Tool::Coreference::NodeFilter::Coord;
+# TODO (NO_MASTER): move the _is_cor method somewhere else and remove a dependency on My::CorefExprAddresses
 use Treex::Block::My::CorefExprAddresses;
 
 use List::MoreUtils qw/any/;

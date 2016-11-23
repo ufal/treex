@@ -156,8 +156,8 @@ sub get_scenario_string {
             'T2T::SetClauseNumber',
             'A2T::CS::MarkReflpronCoref',
             'A2T::SetDocOrds',
-            'A2T::CS::MarkTextPronCoref',
-            'Coref::RearrangeLinks retain_cataphora=1',
+            'Coref::CS::PersPron::Resolve',
+#            'Coref::RearrangeLinks retain_cataphora=1',
             'A2T::DisambiguateGrammatemes',
             ;
     }

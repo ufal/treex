@@ -512,6 +512,7 @@
       <value>sg</value>
       <value>du</value>
       <value>pl</value>
+      <value>sg|pl</value>
       <value>inher</value>
       <value>nr</value>
     </choice>
@@ -531,6 +532,11 @@
       <value>inan</value>
       <value>fem</value>
       <value>neut</value>
+      <value>fem|neut</value>
+      <value>anim|inan</value>
+      <value>inan|fem</value>
+      <value>anim|inan|neut</value>
+      <value>anim|inan|fem|neut</value>
       <value>inher</value>
       <value>nr</value>
     </choice>

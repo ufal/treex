@@ -87,7 +87,7 @@ sub process_tnode {
         $self->_set_grams( $tnode, $grams );
     }
     if ( $tnode->formeme =~ /\|[a-z]+=/ ) {
-        my ( $formeme, $grams ) = split /\|/, $tnode->t_lemma;
+        my ( $formeme, $grams ) = split /\|/, $tnode->formeme;
         $tnode->set_formeme($formeme);
         $self->_set_grams( $tnode, $grams );
     }
