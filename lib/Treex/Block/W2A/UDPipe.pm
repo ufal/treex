@@ -61,6 +61,7 @@ has known_models => (
         pl => 'data/models/udpipe/polish-ud-1.2-160523.udpipe',
         pt => 'data/models/udpipe/portuguese-ud-1.2-160523.udpipe',
         ro => 'data/models/udpipe/romanian-ud-1.2-160523.udpipe',
+        ru_prague => 'data/models/udpipe-prague/russian-hamledt-161016.udpipe',
         sl => 'data/models/udpipe/slovenian-ud-1.2-160523.udpipe',
         sv => 'data/models/udpipe/swedish-ud-1.2-160523.udpipe',
         ta => 'data/models/udpipe/tamil-ud-1.2-160523.udpipe',
