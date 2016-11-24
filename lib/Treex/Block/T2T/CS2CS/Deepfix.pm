@@ -209,7 +209,9 @@ sub nodes_in_different_clauses {
     my $anode2 = ( $node2->isa('Treex::Core::Node::T') )
         ? $node2->wild->{'deepfix_info'}->{'lexnode'} : $node2;
 
-    if ( defined $anode1 && defined $anode2 ) {
+    if ( defined $anode1 && $anode1->isa('Treex::Core::Node::A')
+        && defined $anode2 && $anode2->isa('Treex::Core::Node::A')
+    ) {
         my $comma = any { defined $_->form && $_->form =~ /[,;:\-]/ }
             $anode1->get_nodes_between($anode2);
         my $conjunction = any { defined $_->tag && $_->tag =~ /^J/ }
