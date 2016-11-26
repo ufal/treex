@@ -97,11 +97,13 @@ sub process_ttree {
                 uniq
                 sort { $a->ord <=> $b->ord }
                 map  { $_->get_anodes }
+                grep { $_->follows($neg_tnode) }
                 map  { $_->get_descendants({add_self=>1}) }
                 grep { defined $_->tfa && $tfa_ok{$tfa}->{$_->tfa} }
                 @potential_scope_tnodes;
         } else {
             # type 3
+            # TODO check with guidelines
             $neg_anode->wild->{negation}->{$negation_id}->{scope} = 1;
         }
     }
