@@ -20,7 +20,7 @@ sub create_model {
     }
     elsif ($model_type eq 'rulebased') {
         # TODO make skip_names parametrizable
-        $model = Treex::Tool::TranslationModel::Rulebased::Model->new({skip_names => 1});
+        $model = Treex::Tool::TranslationModel::Rulebased::Model->new({skip_names => 0});
     }
     else {
         $model = Treex::Tool::TranslationModel::ML::Model->new({ model_type => $model_type });
