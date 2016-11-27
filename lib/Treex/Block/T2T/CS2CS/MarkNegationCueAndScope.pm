@@ -87,7 +87,7 @@ sub process_ttree {
         my @potential_scope_tnodes;
         push @potential_scope_tnodes, $neg_tnode->get_eparents({following_only => 1});
         push @potential_scope_tnodes, $neg_tnode->get_esiblings({following_only => 1});
-        push @potential_scope_tnodes, $neg_tnode->get_siblings({following_only => 1});
+        #push @potential_scope_tnodes, $neg_tnode->get_siblings({following_only => 1});
         @potential_scope_tnodes = sort {$a->ord <=> $b->ord} @potential_scope_tnodes;
         my ($tfa) = map { $_->tfa } grep { $_->tfa } @potential_scope_tnodes;
 
@@ -96,16 +96,27 @@ sub process_ttree {
         # SCOPE TNODES
         if (defined $tfa) {
             # type 1/2
+            # grep { !defined $_->tfa || $tfa_ok{$tfa}->{$_->tfa} }
+            my @head_tnodes = grep { defined $_->tfa && $tfa_ok{$tfa}->{$_->tfa} }
+                @potential_scope_tnodes;
+            # For each coordinated, add all sisters and the parent conjunction
+            my @member_head_tnodes = grep {$_->is_member} @head_tnodes;
+            foreach my $member_head_tnode (@member_head_tnodes) {
+                my @add_members = $member_head_tnode->get_esiblings();
+                foreach my $member (@add_members) {
+                    my $parent = $member->get_parent();
+                    if ($parent->nodetype eq 'coap') {
+                        push @add_members, $parent;
+                    }
+                }
+                push @head_tnodes, @add_members;
+            }
+            # Add all descendants
             map  { $_->wild->{negation}->{$negation_id}->{scope} = 1 }
-                uniq
-                sort { $a->ord <=> $b->ord }
                 map  { $_->get_anodes }
                 grep { $_->follows($neg_tnode) }
                 map  { $_->get_descendants({add_self=>1}) }
-                # grep { defined $_->tfa && $tfa_ok{$tfa}->{$_->tfa} }
-                grep { !defined $_->tfa || $tfa_ok{$tfa}->{$_->tfa} }
-                uniq
-                @potential_scope_tnodes;
+                @head_tnodes;
         } else {
             # type 3
             # TODO check with guidelines
