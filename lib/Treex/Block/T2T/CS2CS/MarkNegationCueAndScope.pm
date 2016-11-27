@@ -42,7 +42,7 @@ sub process_ttree {
     }
 
     # type B/C
-    my @neg_tnodes_BC = grep { defined $neg_tlemmas{$_->t_lemma} } @descendants;
+    my @neg_tnodes_BC = grep { defined $neg_tlemmas{$_->t_lemma} && $_->functor eq 'RHEM' } @descendants;
     foreach my $neg_tnode (@neg_tnodes_BC) {
         # CUE
         my $neg_anode = $neg_tnode->get_lex_anode;
@@ -86,9 +86,12 @@ sub process_ttree {
         # SCOPE
         my @potential_scope_tnodes;
         push @potential_scope_tnodes, $neg_tnode->get_eparents({following_only => 1});
+        push @potential_scope_tnodes, $neg_tnode->get_esiblings({following_only => 1});
         push @potential_scope_tnodes, $neg_tnode->get_siblings({following_only => 1});
         @potential_scope_tnodes = sort {$a->ord <=> $b->ord} @potential_scope_tnodes;
         my ($tfa) = map { $_->tfa } grep { $_->tfa } @potential_scope_tnodes;
+
+        # TODO nodetype=coap -> celý to patří do coord, tfa určuje první uzel
 
         # SCOPE TNODES
         if (defined $tfa) {
@@ -99,7 +102,9 @@ sub process_ttree {
                 map  { $_->get_anodes }
                 grep { $_->follows($neg_tnode) }
                 map  { $_->get_descendants({add_self=>1}) }
-                grep { defined $_->tfa && $tfa_ok{$tfa}->{$_->tfa} }
+                # grep { defined $_->tfa && $tfa_ok{$tfa}->{$_->tfa} }
+                grep { !defined $_->tfa || $tfa_ok{$tfa}->{$_->tfa} }
+                uniq
                 @potential_scope_tnodes;
         } else {
             # type 3
