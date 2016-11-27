@@ -91,7 +91,13 @@ sub process_ttree {
         @potential_scope_tnodes = sort {$a->ord <=> $b->ord} @potential_scope_tnodes;
         my ($tfa) = map { $_->tfa } grep { $_->tfa } @potential_scope_tnodes;
 
-        # TODO nodetype=coap -> celý to patří do coord, tfa určuje první uzel
+        # TODO if parent is coap, then only is_member=0 sibglings are negated
+        # (these might already be happening, but check)
+        # (Petr nemá nové auto a motorku (ale staré auto a motorku). -> ne nové)
+        # (??? Petr ne přišel a odešel, ale přišel a neodešel. -> ne přišel a odešel, "ne" shared mod)
+        # TODO what is the eparents of a non-member child of coap?
+
+        # TODO nodetype=coap -> celý to patří do coord, tfa určuje první uzel (done-check)
 
         # SCOPE TNODES
         if (defined $tfa) {
