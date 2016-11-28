@@ -5,6 +5,8 @@ use Treex::Core::Common;
 use List::MoreUtils "uniq";
 extends 'Treex::Block::Write::BaseTextWriter';
 
+has only_negated => ( is => 'rw', isa => 'Bool', default => 0 );
+
 my %neg_tlemmas = (
     ne => 1,
     nikoli => 1,
@@ -33,12 +35,34 @@ sub anode_substr {
     }
 }
 
-sub process_atree {
-    my ( $self, $aroot ) = @_;
+sub process_zone {
+    my ( $self, $zone ) = @_;
 
-    print { $self->_file_handle } $aroot->get_zone->sentence, "\n";
-
+    my $aroot = $zone->get_atree();
     my $negations_count = $aroot->wild->{negation}->{negations_count};
+    if ($negations_count == 0 && $self->only_negated) {
+        return;
+    }
+    
+    my $troot = $zone->get_ttree();
+    my @tnodes = $troot->get_descendants({ordered => 1});
+    foreach my $tnode (@tnodes) {
+        my @signature = grep { defined $_ } ($tnode->t_lemma, $tnode->functor, $tnode->tfa);
+        print { $self->_file_handle } join '/', @signature;
+        my @anodes = $tnode->get_anodes({ordered => 1});
+        if (@anodes) {
+            print { $self->_file_handle } " (";
+            my @aforms;
+            foreach my $anode (@anodes) {
+                push @aforms, $anode->form;
+            }
+            print { $self->_file_handle } join ' ', @aforms;
+            print { $self->_file_handle } ")";
+        }
+        print { $self->_file_handle } " ";
+    }
+    print { $self->_file_handle } "\n";
+
     my @descendants = $aroot->get_descendants({ordered => 1});
     foreach my $negation_id (1..$negations_count) {
         my @cue_nodes = grep { $_->wild->{negation}->{$negation_id}->{cue} } @descendants;

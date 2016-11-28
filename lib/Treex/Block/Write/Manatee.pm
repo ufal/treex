@@ -92,6 +92,7 @@ sub process_atree {
         if (defined $tnode) { 
         # no strict 'refs'; 
         #$$t_attr = $tnode->get_attr($t_attr); #'DEFINED_ANODE_FUNCTOR';
+                $functor = $tnode->functor;
                 $t_lemma = $tnode->t_lemma;
                 $tfa = $tnode->tfa;
                 $deepord = $tnode->ord;
@@ -99,21 +100,21 @@ sub process_atree {
                 $coref_special = $tnode->get_attr('coref_special');
                 $discourse_special = $tnode->get_attr('discourse_special');
                 $discourse_type = $tnode->get_attr('discourse_type');
-
                my $disc = $tnode->get_attr('discourse');
                if ($disc){
                                                 
                         ($discourse_type) = map { $_->{discourse_type} } @$disc ;
+                        if ( $_->{'target_node.rf'} ){
                         my ($disc_target_node) = map { $tnode->get_document->get_node_by_id( $_->{'target_node.rf'} ) } @$disc;
                         my $a_target = $disc_target_node->get_lex_anode();
                         my ( $d_form, $d1_lemma, $d_pos, $d_deprel ) =
                         map { $self->get_attribute( $a_target, $_ ) } (qw(form lemma pos deprel));
                         my $d_lemma=Treex::Tool::Lexicon::CS::truncate_lemma( $d1_lemma, 1 );
                         $disc_target = 'form='.$d_form.'|lemma='.$d_lemma."|tag=".$d_pos."|afun=". $d_deprel . '|functor='. $disc_target_node->functor;
+                        } else {$disc_target = '_';}
+                    #    my @disc_connector = map { $tnode->get_document->get_node_by_id( $_->{'t_connectors.rf'} ) } @$disc;
 
-                        my @disc_connector = map { $tnode->get_document->get_node_by_id( $_->{'t_connectors.rf'} ) } @$disc;
-
-                } else { $discourse_type = '_DISCOURSE_TYPE'; $disc_target = '_DISC_TARGET'; }
+                } else { $discourse_type = '_'; $disc_target = '_'; }
 
 
                 my $grammatemes = $tnode->get_attr('gram');
@@ -125,25 +126,30 @@ sub process_atree {
                 $grammatemes_rf=join('|', @grammateme_pairs);
                 my ($t_antes) = $tnode->get_coref_text_nodes(); # also, get_coref_gram_nodes
                 if ($t_antes){
+                       # my $a_antes = $t_antes->get_lex_anode();
+                       # my ( $an_form, $an1_lemma, $an_pos, $an_deprel ) =
+                       # map { $self->get_attribute( $a_antes, $_ ) } (qw(form lemma pos deprel));
+                       # my $an_lemma=Treex::Tool::Lexicon::CS::truncate_lemma( $an1_lemma, 1 );
+
                         $antes = 'tlemma='. $t_antes->t_lemma . '|functor=' . $t_antes->functor;  
                 }
                 else{
-                        $antes = '_ANTES';
+                        $antes = '_';
                 } 
         }
         else{
         #        no strict 'refs';
                # $$t_attr = '_';
-                $functor = '_FUNCTOR';
-                $t_lemma = '_TLEMMA';
-                $sempos ='_SEMPOS';
-                $deepord = '_DEEPORD';
-                $grammatemes_rf = '_GRMMATEMES';
-                $coref_special = '_COREFSPECIAL';
-                $antes = '_ANTES';
-                $discourse_special ='_DISCOURSE';
-                $discourse_type = '_DISCTYPE';
-                $disc_target = '_DISCTARGET';
+                $functor = '_';
+                $t_lemma = '_';
+                $sempos ='_';
+                $deepord = '_';
+                $grammatemes_rf = '_';
+                $coref_special = '_';
+                $antes = '_';
+                $discourse_special ='_';
+                $discourse_type = '_';
+                $disc_target = '_';
         }
        # }
         my @values;
@@ -157,7 +163,7 @@ sub process_atree {
                 @values = ($anode->form, $truncated_lemma, $pos, $deprel, $distance, $p_form, $p_lemma, $p_pos, $p_afun, $ep_distance, $ep_form, $ep_lemma, $ep_tag, $ep_afun); 
         }
         else{
-                @values = ($anode->form, $truncated_lemma, $pos, $anode->ord, $clause_number, $anode->is_member, $deprel, $a_type, $deepord, $t_lemma, $functor, $tfa, $sempos, $grammatemes_rf, $coref_special, $antes, $discourse_special, $discourse_type, $disc_target, $p_form, $p_lemma, $p_pos, $p_afun, $ep_form, $ep_lemma, $ep_tag, $ep_afun);
+                @values = ($anode->form, $truncated_lemma, $pos, $anode->ord, $clause_number, $anode->is_member, $deprel, $a_type, $deepord, $t_lemma, $functor, $tfa, $sempos, $grammatemes_rf, $coref_special, $antes, $discourse_special, $discourse_type, $disc_target,  $distance, $ep_distance, $p_form, $p_lemma, $p_pos, $p_afun, $ep_form, $ep_lemma, $ep_tag, $ep_afun);
         }
         @values = map
         {
@@ -264,14 +270,17 @@ sub set_position{
 override 'process_bundle' => sub {
 	my ($self, $bundle) = @_;	
 	my $position = $bundle->id; #$bundle->get_position()+1;
-    print { $self->_file_handle } "<s id=\"" . $position . "\">\n";
+    my $unique_id = $self->{file_stem} . "_" . $position;
+    print { $self->_file_handle } "<s id=\"" . $unique_id . "\">\n";
     $self->SUPER::process_bundle($bundle);    
     print { $self->_file_handle } "</s>\n";
 };
 
 override 'print_header' => sub {
-	my ($self, $document) = @_;	
-    print { $self->_file_handle } "<doc id=\"" . $document->file_stem . "\">\n";         
+	my ($self, $document) = @_;
+    $self->{file_stem} = $document->file_stem;
+    my $metadata = $document->wild->{genre};
+    print { $self->_file_handle } "<doc id=\"" . $document->file_stem . "\"" . " genre=\"" . $metadata  . "\">\n";         
 };
 
 override 'print_footer' => sub {
@@ -332,7 +341,7 @@ Default is C<tag>.
 
 =head1 AUTHOR
 
-David Mareček, Daniel Zeman, Martin Popel, Ondřej Dušek, Michal Josífko
+David Mareček, Daniel Zeman, Martin Popel, Ondřej Dušek, Michal Josífko, Natalia Klyueva
 
 =head1 COPYRIGHT AND LICENSE
 
