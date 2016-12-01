@@ -47,7 +47,7 @@ sub process_zone {
 
     if ($self->print_id) {
         print { $self->_file_handle }
-            $zone->get_document->full_filename, ".t.gz##", $zone->get_bundle->get_position, "\n";
+            $zone->get_document->full_filename, ".t.gz##", ($zone->get_bundle->get_position + 1), "\n";
     }
 
     if ($self->print_sentence) {
