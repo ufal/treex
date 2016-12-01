@@ -7,12 +7,11 @@ extends 'Treex::Block::Write::BaseTextWriter';
 
 has only_negated => ( is => 'rw', isa => 'Bool', default => 0 );
 
-my %neg_tlemmas = (
-    ne => 1,
-    nikoli => 1,
-    nikoliv => 1,
-    '#Neg' => 1,
-);
+has print_ttree => ( is => 'rw', isa => 'Bool', default => 0 );
+
+has print_sentence => ( is => 'rw', isa => 'Bool', default => 0 );
+
+has print_id => ( is => 'rw', isa => 'Bool', default => 0 );
 
 # cs = cue / scope
 sub anode_substr {
@@ -44,24 +43,37 @@ sub process_zone {
         return;
     }
     
-    my $troot = $zone->get_ttree();
-    my @tnodes = $troot->get_descendants({ordered => 1});
-    foreach my $tnode (@tnodes) {
-        my @signature = grep { defined $_ } ($tnode->t_lemma, $tnode->functor, $tnode->tfa);
-        print { $self->_file_handle } join '/', @signature;
-        my @anodes = $tnode->get_anodes({ordered => 1});
-        if (@anodes) {
-            print { $self->_file_handle } " (";
-            my @aforms;
-            foreach my $anode (@anodes) {
-                push @aforms, $anode->form;
-            }
-            print { $self->_file_handle } join ' ', @aforms;
-            print { $self->_file_handle } ")";
-        }
-        print { $self->_file_handle } " ";
-    }
     print { $self->_file_handle } "\n";
+
+    if ($self->print_id) {
+        print { $self->_file_handle }
+            $zone->get_document->full_filename, ".gz##", $zone->get_bundle->get_position, "\n";
+    }
+
+    if ($self->print_sentence) {
+        print { $self->_file_handle } $zone->sentence, "\n";
+    }
+
+    if ($self->print_ttree) {
+        my $troot = $zone->get_ttree();
+        my @tnodes = $troot->get_descendants({ordered => 1});
+        foreach my $tnode (@tnodes) {
+            my @signature = grep { defined $_ } ($tnode->t_lemma, $tnode->functor, $tnode->tfa);
+            print { $self->_file_handle } join '/', @signature;
+            my @anodes = $tnode->get_anodes({ordered => 1});
+            if (@anodes) {
+                print { $self->_file_handle } " (";
+                my @aforms;
+                foreach my $anode (@anodes) {
+                    push @aforms, $anode->form;
+                }
+                print { $self->_file_handle } join ' ', @aforms;
+                print { $self->_file_handle } ")";
+            }
+            print { $self->_file_handle } " ";
+        }
+        print { $self->_file_handle } "\n";
+    }
 
     my @descendants = $aroot->get_descendants({ordered => 1});
     foreach my $negation_id (1..$negations_count) {
