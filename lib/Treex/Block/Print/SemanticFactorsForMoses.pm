@@ -57,28 +57,32 @@ sub process_atree {
             }
         }
 
-        my $tok = (
-            $form . '|' . ( $lemma ne '' ? $lemma : '-' )
-                  . '|' . ( $tag ne '' ? $tag : '-' )
-                  . '|' . ( $valframe ne '' ? $valframe : '-' )
-                  . '|' . ( $functor ne '' ? $functor : '-' )
-                  . '|' . ( $formeme ne '' ? $formeme : '-' )
-                  . '|' . ( $valframe ne '' && $functor ne '' ? $functor : '-' )
-                  . '|' . ( $valframe ne '' && $formeme ne '' ? $formeme : '-' )
-                  . '|' . ( $parent_valframe ne '' && $functor ne '' ? $functor : '-' )
-                  . '|' . ( $parent_valframe ne '' && $formeme ne '' ? $formeme : '-' )
-                  . '|' . ( $compl_functor ne '' ? $compl_functor : '-')
-                  . '|' . ( $compl_formeme ne '' ? $compl_formeme : '-')
+        my @tok = (
+            $form,
+            ( $lemma ne '' ? $lemma : '-' ),
+            ( $tag ne '' ? $tag : '-' ),
+            ( $valframe ne '' ? $valframe : '-' ),
+            ( $functor ne '' ? $functor : '-' ),
+            ( $formeme ne '' ? $formeme : '-' ),
+            ( $valframe ne '' && $functor ne '' ? $functor : '-' ),
+            ( $valframe ne '' && $formeme ne '' ? $formeme : '-' ),
+            ( $parent_valframe ne '' && $functor ne '' ? $functor : '-' ),
+            ( $parent_valframe ne '' && $formeme ne '' ? $formeme : '-' ),
+            ( $compl_functor ne '' ? $compl_functor : '-'),
+            ( $compl_formeme ne '' ? $compl_formeme : '-')
         );
-        $tok =~ s/ /_/g;
-        push @data, $tok;
+        
+        # escape spaces, ampersands and pipes  
+        @tok = map { s/&/&amp;/g; s/\|/&pipe;/g; s/ /&space;/g; $_ } @tok;
+
+        push @data, join ('|', @tok);
     }
     my $sent_id = $aroot->id;
     $sent_id =~ s/^a_tree-..-//;
     $sent_id =~ s/-root$//;
 
 
-    print { $self->_file_handle } $sent_id, "\t", join( " ", @data ), "\n";
+    print { $self->_file_handle } join( " ", @data ), "\n";
 
     return;
 }
