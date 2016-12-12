@@ -109,13 +109,13 @@ sub _process_sentence {
                 #printf STDERR "ANODES: %s\n", join(" ", map {$_->form} @anodes[$iws .. $i-1]);
             }
             my @coref_info = uniq grep {$_ ne '-'} map {$_->[1]} @conll_sent[$jws .. $j-1];
+            my $coref_info_str = join "|", @coref_info;
             for (my $k = $iws; $k < $i; $k++) {
-                my $coref_info_str = join " ", @coref_info;
                 log_warn "Multiple coreference information stored to anode ".$anodes[$k]->id.": ".$coref_info_str if (@coref_info > 1);
-                $anodes[$k]->wild->{coref_annot} = join " ", @coref_info;
+                set_coref_mention_wilds($anodes[$k], $coref_info_str);
             }
             if ($i < @anodes && $j < @conll_sent) {
-                $anodes[$i]->wild->{coref_annot} = $conll_sent[$j];
+                set_coref_mention_wilds($anodes[$i], $conll_sent[$j]->[1]);
             }
         }
         else {
@@ -123,6 +123,15 @@ sub _process_sentence {
         }
         $j++;
     }
+}
+
+sub set_coref_mention_wilds {
+    my ($anode, $coref_info_str) = @_;
+    my @coref_info = split /\|/, $coref_info_str;
+    my @entity_start_idxs = map {$_ =~ /\((\d+)/; $1} grep {$_ =~ /\(\d+/} @coref_info;
+    my @entity_end_idxs = map {$_ =~ /(\d+)\)/; $1} grep {$_ =~ /\d+\)/} @coref_info;
+    $anode->wild->{coref_mention_start} = [ @entity_start_idxs ] if (@entity_start_idxs);
+    $anode->wild->{coref_mention_end} = [ @entity_end_idxs ] if (@entity_end_idxs);
 }
 
 1;
