@@ -12,6 +12,9 @@ sub is_relat {
     if ($tnode->language eq 'en') {
         return _is_relat_en($tnode);
     }
+    if ($tnode->language eq 'ru') {
+        return _is_relat_ru($tnode);
+    }
 }
 
 sub is_coz_cs {
@@ -90,6 +93,32 @@ sub _is_relat_en_a {
     return 1 if ($anode->tag =~ /^W/);
     return 1 if ($anode->tag eq "IN" && $anode->lemma eq "that" && !$anode->get_children());
     return 0;
+}
+
+sub _is_relat_ru {
+    my ($node, $args) = @_;
+
+    if ($node->get_layer eq "a") {
+        return _is_relat_ru_a($node, $args);
+    }
+    else {
+        return _is_relat_ru_t($node, $args);
+    }
+}
+
+sub _is_relat_ru_t {
+    my ($tnode) = @_;
+    #my $is_via_indeftype = _is_relat_via_indeftype($tnode);
+    #return $is_via_indeftype ? 1 : 0;
+    my $anode = $tnode->get_lex_anode();
+    return _is_relat_ru_a($anode);
+}
+
+sub _is_relat_ru_a {
+    my ($anode) = @_;
+    # Russian parsed by UDPipe trained on HamleDT uses the same tags as Czech, except for pronouns
+    # pronouns must be fixed by hand in W2A::RU::FixPronouns
+    return _is_relat_cs_via_tag($anode);
 }
 
 # so far the best
