@@ -93,6 +93,7 @@ sub is_possessive {
         return $anode->tag =~ /^.[18SU]/;
     }
     elsif ($anode->language eq "ru") {
+        return 1 if ($anode->tag =~ /^P[S8]/);
         return 1 if (lc($anode->lemma) eq "свой");
         return 1 if (lc($anode->form) eq "его");
         return 1 if (lc($anode->form) eq "её");
@@ -291,14 +292,25 @@ sub _is_3rd_pers_ru {
     if ($node->get_layer eq "a") {
         return _is_3rd_pers_ru_a($node, $args);
     }
+    if ($node->get_layer eq "t") {
+        return _is_3rd_pers_ru_t($node, $args);
+    }
+}
+
+sub _is_3rd_pers_ru_t {
+    my ($anode, $args) = @_;
+    my $anode = $tnode->get_lex_anode;
+    return 0 if !$anode;
+    return _is_3rd_pers_ru_a($anode);
 }
 
 sub _is_3rd_pers_ru_a {
     my ($anode, $args) = @_;
     
-    # is pronoun
-    my $is_pron = ($anode->tag =~ /^P/);
-    return 0 if (!$is_pron);
+    # is central pronoun in a 3rd person
+    my $is_pron = ($anode->tag =~ /^P[P5S8]/);
+    my $is_third = ($anode->tag !~ /^.....[12]/);
+    return 0 if (!$is_pron || !$is_third);
     
     # return only expressed by default
     my $expressed = $args->{expressed} // 1;
