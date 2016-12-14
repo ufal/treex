@@ -2,6 +2,12 @@ package Treex::Scen::Analysis::RU;
 use Moose;
 use Treex::Core::Common;
 
+has tokenized => (
+    is => 'ro',
+    isa => 'Bool',
+    default => 0,
+);
+
 has unknown_afun_to_atr => (
     is => 'ro',
     isa => 'Bool',
@@ -18,7 +24,7 @@ sub get_scenario_string {
     my ($self) = @_;
 
     my $scen = join "\n",
-    'W2A::RU::Tokenize',
+    $self->tokenized ? '' : 'W2A::RU::Tokenize',
     # Run Russian UDPipe
     'W2A::UDPipe tokenize=0 model_alias=ru_prague',
     q(Util::Eval anode='$.set_tag($.conll_pos)'),
