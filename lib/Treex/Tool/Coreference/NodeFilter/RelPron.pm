@@ -111,6 +111,7 @@ sub _is_relat_ru_t {
     #my $is_via_indeftype = _is_relat_via_indeftype($tnode);
     #return $is_via_indeftype ? 1 : 0;
     my $anode = $tnode->get_lex_anode();
+    return 0 if (!defined $anode);
     return _is_relat_ru_a($anode);
 }
 

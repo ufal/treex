@@ -349,24 +349,24 @@ sub _is_3rd_pers_en_a {
 
 ########################### RUSSIAN #############################
 
-sub _is_3rd_pers_ru {
+sub _is_pers_ru {
     my ($node, $args) = @_;
     if ($node->get_layer eq "a") {
-        return _is_3rd_pers_ru_a($node, $args);
+        return _is_pers_ru_a($node, $args);
     }
     if ($node->get_layer eq "t") {
-        return _is_3rd_pers_ru_t($node, $args);
+        return _is_pers_ru_t($node, $args);
     }
 }
 
-sub _is_3rd_pers_ru_t {
-    my ($anode, $args) = @_;
+sub _is_pers_ru_t {
+    my ($tnode, $args) = @_;
     my $anode = $tnode->get_lex_anode;
     return 0 if !$anode;
-    return _is_3rd_pers_ru_a($anode);
+    return _is_pers_ru_a($anode);
 }
 
-sub _is_3rd_pers_ru_a {
+sub _is_pers_ru_a {
     my ($anode, $args) = @_;
     
     # is pronoun
