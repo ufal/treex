@@ -24,15 +24,15 @@ my %PERS_PRONS_REFLEX = (
           /},
 );
 
-sub is_3rd_pers {
+sub is_pers {
     my ($node, $args) = @_;
     $args //= {};
 
     if ($node->language eq 'cs') {
-        return _is_3rd_pers_cs($node, $args);
+        return _is_pers_cs($node, $args);
     }
     if ($node->language eq 'en') {
-        my $is_pers = _is_3rd_pers_en($node, $args);
+        my $is_pers = _is_pers_en($node, $args);
         #if ($is_pers) {
         #    my $anode = $tnode->get_lex_anode;
         #    print "ALEMMA: " . $anode->lemma . "\n";
@@ -41,8 +41,15 @@ sub is_3rd_pers {
         return $is_pers;
     }
     if ($node->language eq 'ru') {
-        return _is_3rd_pers_ru($node, $args);
+        return _is_pers_ru($node, $args);
     }
+}
+
+sub is_3rd_pers {
+    my ($anode, $args) = @_;
+    $args //= {};
+    $args->{person_3rd} = 1;
+    is_pers($anode, $args);
 }
 
 sub is_3rd_prodrop {
@@ -102,25 +109,29 @@ sub is_possessive {
     return 0;
 }
 
+###############################################################
 ############################## PRIVATE ########################
+###############################################################
 
-#---------------- 3rd person personal pronoun -----------------
+########################### CZECH #############################
+
+#---------------- personal pronoun -----------------
 
 # possible args:
 #   skip_nonref : skip personal pronouns that are labeled as non-referential
 #   reflexive : include reflexive pronouns (default = 1)
-sub _is_3rd_pers_cs {
+sub _is_pers_cs {
     my ($node, $args) = @_;
 
     if ($node->get_layer eq "a") {
-        return _is_3rd_pers_cs_a($node, $args);
+        return _is_pers_cs_a($node, $args);
     }
     else {
-        return _is_3rd_pers_cs_t($node, $args);
+        return _is_pers_cs_t($node, $args);
     }
 }
 
-sub _is_3rd_pers_cs_a {
+sub _is_pers_cs_a {
     my ($anode, $args) = @_;
 
     # is pronoun
@@ -128,8 +139,10 @@ sub _is_3rd_pers_cs_a {
     return 0 if (!$is_perspron);
 
     # is 3rd person
-    my $is_3rd_person = $anode->tag =~ /^.......[^12]/;
-    return 0 if (!$is_3rd_person);
+    my $arg_3rd_person = $args->{person_3rd} // 0;
+    my $is_3rd_person = $anode->tag =~ /^.......3/;
+    my $is_any_person = $anode->tag =~ /^.......[-X]/;
+    return 0 if !ternary_arg($arg_3rd_person, $is_3rd_person) && !$is_any_person;
 
     # return only expressed by default
     my $expressed = $args->{expressed} // 1;
@@ -150,6 +163,9 @@ sub _is_3rd_pers_cs_a {
 
 sub _is_3rd_pers_cs_t {
     my ($tnode, $args) = @_;
+        
+    # personal pronoun 
+    return 0 if ($tnode->t_lemma ne '#PersPron');
 
     # return only expressed by default
     my $arg_expressed = $args->{expressed} // 1;
@@ -160,14 +176,18 @@ sub _is_3rd_pers_cs_t {
 
     
     # is in 3rd person
-    my $is_3rd_pers = 1;
+    my $arg_3rd_person = $args->{person_3rd} // 0;
+    my $is_3rd_person = 0;
+    my $is_any_person = 1;
     if ( defined $tnode->gram_person ) {
-        $is_3rd_pers = ($tnode->gram_person eq '3' || $tnode->gram_person eq 'inher');
+        $is_3rd_person = $tnode->gram_person eq '3';
+        $is_any_person = $tnode->gram_person eq 'inher';
     }
     elsif (defined $anode) {
-        my $person = substr $anode->tag, 7, 1;
-        $is_3rd_pers = ($person ne '1') && ($person ne '2');
+        $is_3rd_person = $anode->tag =~ /^.......3/;
+        $is_any_person = $anode->tag =~ /^.......[-X]/;
     }
+    return 0 if !ternary_arg($arg_3rd_person, $is_3rd_person) && !$is_any_person;
     #else {
     #    my $par = $tnode->get_parent;
     #    my $apar = $par->get_lex_anode;
@@ -197,131 +217,7 @@ sub _is_3rd_pers_cs_t {
         my $is_refer = $tnode->wild->{referential};
         $ok_skip_nonref = !defined $is_refer || ($is_refer == 1);
     }
-
-    return (
-        ($tnode->t_lemma eq '#PersPron') &&  # personal pronoun 
-        $is_3rd_pers &&    # third person
-        $ok_skip_nonref  # referential (if it's set)
-    );
-}
-
-
-# possible args:
-#   skip_nonref : skip personal pronouns that are labeled as non-referential
-#   reflexive : include reflexive pronouns (default = 1)
-sub _is_3rd_pers_en {
-    my ($node, $args) = @_;
-
-    if ($node->get_layer eq "a") {
-        return _is_3rd_pers_en_a($node, $args);
-    }
-    else {
-        return _is_3rd_pers_en_t($node, $args);
-    }
-}
-
-sub _is_3rd_pers_en_t {
-    my ($tnode, $args) = @_;
-
-    # is expressed on the surface
-    my $arg_expressed = $args->{expressed} // 1;
-    my $anode = $tnode->get_lex_anode;
-    my $expressed = defined $anode;
-    return 0 if !ternary_arg($arg_expressed, $expressed);
-    
-    # is in 3rd person
-    # by default generated #PersPron with no gram_person set are in 3rd person
-    my $is_3rd_pers = 1;
-    if ( defined $tnode->gram_person ) {
-        $is_3rd_pers = ($tnode->gram_person eq '3');
-    }
-    elsif (defined $anode) {
-        $is_3rd_pers = (defined $THIRD_PERS_PRONS{$anode->lemma});
-    }
-
-    # reflexive
-    my $arg_reflexive = $args->{reflexive} // 0;
-    my $reflexive = is_reflexive($tnode);
-    return 0 if !ternary_arg($arg_reflexive, $reflexive);
-    
-    # possessive
-    my $arg_possessive = $args->{possessive} // 0;
-    my $possessive = is_possessive($tnode);
-    return 0 if !ternary_arg($arg_possessive, $possessive);
-    
-    # skip non-referential
-    my $ok_skip_nonref = 1;
-    if ($args->{skip_nonref}) {
-        my $is_refer = $tnode->wild->{referential};
-        $ok_skip_nonref = !defined $is_refer || ($is_refer == 1);
-    }
-
-    return (
-        ($tnode->t_lemma eq '#PersPron') &&  # personal pronoun 
-        $is_3rd_pers &&    # third person
-        $ok_skip_nonref  # referential (if it's set)
-    );
-}
-
-sub _is_3rd_pers_en_a {
-    my ($anode, $args) = @_;
-    
-    # is central (sometimes called personal)  pronoun
-    my $is_perspron = $THIRD_PERS_PRONS{$anode->lemma};
-    return 0 if (!$is_perspron);
-    
-    # return only expressed by default
-    my $expressed = $args->{expressed} // 1;
-    return 0 if ($expressed < 0);
-    
-    # reflexive
-    my $arg_reflexive = $args->{reflexive} // 0;
-    my $reflexive = is_reflexive($anode);
-    return 0 if !ternary_arg($arg_reflexive, $reflexive);
-
-    # possessive
-    my $arg_possessive = $args->{possessive} // 0;
-    my $possessive = is_possessive($anode);
-    return 0 if !ternary_arg($arg_possessive, $possessive);
-   
-    return 1;
-}
-
-sub _is_3rd_pers_ru {
-    my ($node, $args) = @_;
-    if ($node->get_layer eq "a") {
-        return _is_3rd_pers_ru_a($node, $args);
-    }
-    if ($node->get_layer eq "t") {
-        return _is_3rd_pers_ru_t($node, $args);
-    }
-}
-
-sub _is_3rd_pers_ru_t {
-    my ($anode, $args) = @_;
-    my $anode = $tnode->get_lex_anode;
-    return 0 if !$anode;
-    return _is_3rd_pers_ru_a($anode);
-}
-
-sub _is_3rd_pers_ru_a {
-    my ($anode, $args) = @_;
-    
-    # is central pronoun in a 3rd person
-    my $is_pron = ($anode->tag =~ /^P[P5S8]/);
-    my $is_third = ($anode->tag !~ /^.....[12]/);
-    return 0 if (!$is_pron || !$is_third);
-    
-    # return only expressed by default
-    my $expressed = $args->{expressed} // 1;
-    return 0 if ($expressed < 0);
-
-    # possessive
-    my $arg_possessive = $args->{possessive} // 0;
-    my $possessive = is_possessive($anode);
-    return 0 if !ternary_arg($arg_possessive, $possessive);
-
-    return 1;
+    return $ok_skip_nonref; # referential (if it's set)
 }
 
 #---------------- 3rd person prodrop -----------------
@@ -362,6 +258,137 @@ sub _is_3rd_prodrop_cs_t {
         ($tnode->t_lemma eq '#PersPron') &&  # personal pronoun 
         $is_3rd_pers    # third person
     );
+}
+
+########################### ENGLISH #############################
+
+# possible args:
+#   skip_nonref : skip personal pronouns that are labeled as non-referential
+#   reflexive : include reflexive pronouns (default = 1)
+sub _is_3rd_pers_en {
+    my ($node, $args) = @_;
+
+    if ($node->get_layer eq "a") {
+        return _is_3rd_pers_en_a($node, $args);
+    }
+    else {
+        return _is_3rd_pers_en_t($node, $args);
+    }
+}
+
+sub _is_3rd_pers_en_t {
+    my ($tnode, $args) = @_;
+        
+    # personal pronoun 
+    return 0 if ($tnode->t_lemma ne '#PersPron');
+
+    # is expressed on the surface
+    my $arg_expressed = $args->{expressed} // 1;
+    my $anode = $tnode->get_lex_anode;
+    my $expressed = defined $anode;
+    return 0 if !ternary_arg($arg_expressed, $expressed);
+    
+    # is in 3rd person
+    # by default generated #PersPron with no gram_person set are in 3rd person
+    my $arg_3rd_person = $args->{person_3rd} // 0;
+    my $is_3rd_person = 1;
+    if ( defined $tnode->gram_person ) {
+        $is_3rd_person = $tnode->gram_person eq '3';
+    }
+    elsif (defined $anode) {
+        $is_3rd_person = defined $THIRD_PERS_PRONS{$anode->lemma};
+    }
+    return 0 if !ternary_arg($arg_3rd_person, $is_3rd_person);
+
+    # reflexive
+    my $arg_reflexive = $args->{reflexive} // 0;
+    my $reflexive = is_reflexive($tnode);
+    return 0 if !ternary_arg($arg_reflexive, $reflexive);
+    
+    # possessive
+    my $arg_possessive = $args->{possessive} // 0;
+    my $possessive = is_possessive($tnode);
+    return 0 if !ternary_arg($arg_possessive, $possessive);
+    
+    # skip non-referential
+    my $ok_skip_nonref = 1;
+    if ($args->{skip_nonref}) {
+        my $is_refer = $tnode->wild->{referential};
+        $ok_skip_nonref = !defined $is_refer || ($is_refer == 1);
+    }
+    return $ok_skip_nonref;  # referential (if it's set)
+}
+
+sub _is_3rd_pers_en_a {
+    my ($anode, $args) = @_;
+    
+    # is central (sometimes called personal)  pronoun
+    return 0 if ($anode->tag !~ /^PRP/);
+    
+    # is in third person
+    my $arg_3rd_person = $args->{person_3rd} // 0;
+    my $is_3rd_person = $THIRD_PERS_PRONS{$anode->lemma};
+    return 0 if !ternary_arg($arg_3rd_person, $is_3rd_person);
+    
+    # return only expressed by default
+    my $expressed = $args->{expressed} // 1;
+    return 0 if ($expressed < 0);
+    
+    # reflexive
+    my $arg_reflexive = $args->{reflexive} // 0;
+    my $reflexive = is_reflexive($anode);
+    return 0 if !ternary_arg($arg_reflexive, $reflexive);
+
+    # possessive
+    my $arg_possessive = $args->{possessive} // 0;
+    my $possessive = is_possessive($anode);
+    return 0 if !ternary_arg($arg_possessive, $possessive);
+   
+    return 1;
+}
+
+########################### RUSSIAN #############################
+
+sub _is_3rd_pers_ru {
+    my ($node, $args) = @_;
+    if ($node->get_layer eq "a") {
+        return _is_3rd_pers_ru_a($node, $args);
+    }
+    if ($node->get_layer eq "t") {
+        return _is_3rd_pers_ru_t($node, $args);
+    }
+}
+
+sub _is_3rd_pers_ru_t {
+    my ($anode, $args) = @_;
+    my $anode = $tnode->get_lex_anode;
+    return 0 if !$anode;
+    return _is_3rd_pers_ru_a($anode);
+}
+
+sub _is_3rd_pers_ru_a {
+    my ($anode, $args) = @_;
+    
+    # is pronoun
+    my $is_pron = ($anode->tag =~ /^P[PS568]/);
+    return 0 if (!$is_pron);
+    
+    # is central pronoun in a 3rd person
+    my $arg_3rd_person = $args->{person_3rd} // 0;
+    my $is_3rd_person = $anode->tag =~ /^.......3/;
+    my $is_any_person = $anode->tag =~ /^.......[-X]/;
+    return 0 if !ternary_arg($arg_3rd_person, $is_3rd_person) && !$is_any_person;
+    
+    # return only expressed by default
+    my $expressed = $args->{expressed} // 1;
+    return 0 if ($expressed < 0);
+
+    # possessive
+    my $arg_possessive = $args->{possessive} // 0;
+    my $possessive = is_possessive($anode);
+    return 0 if !ternary_arg($arg_possessive, $possessive);
+
+    return 1;
 }
 
 # TODO doc
