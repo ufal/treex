@@ -25,8 +25,14 @@ sub get_scenario_string {
 
     my $scen = join "\n",
     $self->tokenized ? '' : 'W2A::RU::Tokenize',
+    # first run tree tagger, because it seems to produce better lemmas
+    'W2A::TagTreeTagger lemmatize=1',
+    # copy the TreeTagger lemma to the wild
+    q(Util::Eval anode='$.wild->{tt_lemma} = $.lemma'),
     # Run Russian UDPipe
     'W2A::UDPipe tokenize=0 model_alias=ru_prague',
+    # copy UDPipe lemma to the wild and restore the TreeTagger lemma
+    q(Util::Eval anode='$.wild->{udp_lemma} = $.lemma; $.set_lemma($.wild->{tt_lemma})'),
     q(Util::Eval anode='$.set_tag($.conll_pos)'),
     q(Util::Eval anode='$.set_afun($.deprel)'),
     q(Util::Eval anode='$.set_iset_conll_feat($.conll_feat)'),
@@ -56,10 +62,12 @@ sub get_scenario_string {
     $self->default_functor ? (sprintf 'Util::Eval tnode=\'$.set_functor("%s")\'', $self->default_functor) : (),
     'A2T::SetGrammatemes',
     'A2T::SetGrammatemesFromAux',
-    'A2T::AddPersPronSb formeme_for_dropped_subj="n:[erg]+X"',
+    'A2T::AddPersPronSb',
     'A2T::MinimizeGrammatemes',
     'A2T::FixAtomicNodes',
     'A2T::MarkReflpronCoref',
+    'T2T::SetClauseNumber',
+    'A2T::SetDocOrds',
     ;
 
     return $scen;
