@@ -21,6 +21,10 @@ sub _set_directed_as_default {
 sub get_aligned_nodes {
     my ($self, $filter) = @_;
 
+    # return self if both language and selector of a counterpart should be the same as the self's ones
+    return ([$self], ["self"]) if (defined $filter->{language} && defined $filter->{selector} &&
+        $filter->{language} eq $self->language && $filter->{selector} eq $self->selector);
+
     $filter = _set_directed_as_default($filter); 
     # retrieve aligned nodes and its types outcoming links
     
