@@ -77,7 +77,7 @@ sub get_types_force {
     if (Treex::Tool::Coreference::NodeFilter::Noun::is_sem_noun($node)) {
         $types->{'noun'} = 1;
     }
-    if (Treex::Tool::Coreference::NodeFilter::Noun::is_sem_noun($node, {third_pers => 1})) {
+    if (Treex::Tool::Coreference::NodeFilter::Noun::is_sem_noun($node, {person_3rd => 1})) {
         $types->{'noun.3_pers'} = 1;
     }
     if (Treex::Tool::Coreference::NodeFilter::Verb::is_sem_verb($node)) {

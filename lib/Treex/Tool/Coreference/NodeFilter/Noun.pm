@@ -34,7 +34,7 @@ sub _is_sem_noun_t_all {
     my ($tnode, $args) = @_;
 
     my $third_pers = !$tnode->gram_person || ($tnode->gram_person !~ /1|2/);
-    my $arg_third_pers = $args->{third_pers} // 0;
+    my $arg_third_pers = $args->{person_3rd} // 0;
     return 0 if !ternary_arg($arg_third_pers, $third_pers);
 
     return 1 if (defined $tnode->formeme && $tnode->formeme =~ /^n/);
