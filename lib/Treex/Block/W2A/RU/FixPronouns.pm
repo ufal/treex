@@ -2,6 +2,7 @@ package Treex::Block::W2A::RU::FixPronouns;
 use utf8;
 use Moose;
 use Treex::Core::Common;
+use List::MoreUtils qw/any/;
 
 extends 'Treex::Core::Block';
 
@@ -13,25 +14,39 @@ sub process_anode {
     my $form = lc($anode->form);
 
     return if ($tag !~ /^[AN]/);
-    
+
+    my @form_ords = map {ord($_)} split(//, $anode->form);
+    # if the word contains a letter in cyrilics, change all the latin letters to their same looking cyrilic variants
+    if (any {$_ > 1000} @form_ords) {
+        $form =~ s/o/о/g;
+        $form =~ s/a/а/g;
+        $form =~ s/e/е/g;
+        $form =~ s/p/р/g;
+        $form =~ s/c/с/g;
+        $form =~ s/y/у/g;
+        $form =~ s/x/х/g;
+    }
+
     $tag =~ s/^../PP/ if ($form =~ /^(я|меня|мне|мной)$/);
     $tag =~ s/^../PP/ if ($form =~ /^(ты|тебя|тебе|тобой)$/);
     $tag =~ s/^../PP/ if ($form =~ /^(мы|нас|нам|нами)$/);
     $tag =~ s/^../PP/ if ($form =~ /^(вы|вас|вам|вами)$/);
-    $tag =~ s/^../PP/ if ($form =~ /^(oн|его|ему|им)$/);
-    $tag =~ s/^../PP/ if ($form =~ /^(oнa|её|eй|ею)$/);
-    $tag =~ s/^../PP/ if ($form =~ /^(oнo|его|ему|им)$/);
-    $tag =~ s/^../PP/ if ($form =~ /^(oни|их|им|ими)$/);
+    $tag =~ s/^../PP/ if ($form =~ /^(он|его|ему|им)$/);
+    $tag =~ s/^../PP/ if ($form =~ /^(она|её|ее|ей|ею)$/);
+    $tag =~ s/^../PP/ if ($form =~ /^(оно|его|ему|им)$/);
+    $tag =~ s/^../PP/ if ($form =~ /^(они|их|им|ими)$/);
     
-    $tag =~ s/^../P5/ if ($form =~ /^(нём|ней|них)$/);
+    $tag =~ s/^../P5/ if ($form =~ /^н(ём|его|ему|им)$/);
+    $tag =~ s/^../P5/ if ($form =~ /^н(ей|её|ее|ею)$/);
+    $tag =~ s/^../P5/ if ($form =~ /^н(их|им|ими)$/);
 
-    $tag =~ s/^../PS/ if ($form =~ /^(мо|тво)(й|я|ё|и|его|ю|их|ей|ему|им|ими|ём)$/);
+    $tag =~ s/^../PS/ if ($form =~ /^(мо|тво)(й|я|ё|и|его|ю|их|ей|ему|им|ими|ём|ем)$/);
     $tag =~ s/^../PS/ if ($form =~ /^(наш|ваш)(а|е|и|его|у|их|ей|ему|им|ими|ем)$/);
-    $tag =~ s/^../PS/ if ($form =~ /^(его|её|их)$/);
+    $tag =~ s/^../PS/ if ($form =~ /^(его|её|ее|их)$/);
    
     # TODO: what about reflexive verbs e.g. умываться
     $tag =~ s/^../P6/ if ($form =~ /^(себ(я|е|ой)|собой)$/);
-    $tag =~ s/^../P8/ if ($form =~ /^сво(й|я|ё|и|его|ю|их|ей|ему|им|ими|ём)$/);
+    $tag =~ s/^../P8/ if ($form =~ /^сво(й|я|ё|е|и|его|ю|их|ей|ему|им|ими|ём|ем)$/);
 
     $tag =~ s/^../P4/ if ($lemma =~ /^(который|какой|чей)$/);
     $tag =~ s/^../PK/ if ($lemma =~ /^кто$/);
