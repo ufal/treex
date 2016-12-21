@@ -23,20 +23,26 @@ has hmtm => (
      documentation => 'Apply HMTM (TreeViterbi) with TreeLM reranking',
 );
 
+has maxent => (
+     is => 'ro',
+     isa => enum( [qw(auto no 0 1 yes)] ),
+     default => 'auto',
+     documentation => 'Apply MaxEnt transfer model',
+);
+
 has vw => (
      is => 'ro',
-     isa => 'Bool',
-     default => 0,
+     isa => enum( [qw(auto no 0 1 yes)] ),
+     default => 'auto',
      documentation => 'Apply VowpalWabbit transfer model',
 );
 
 has vw_model => (
     is => 'ro',
     isa => 'Str',
-    default => 0,
+    default => 'vw-it/MA-p2-l3-B1-p2-l3.model',
     documentation => 'model for the VowpalWabbit transfer, default=0 means use the default defined in T2T::EN2CS::TrLAddVariantsVW2',
 );
-
 
 has gazetteer => (
      is => 'ro',
@@ -51,6 +57,14 @@ has fl_agreement => (
      default => '0',
      documentation => 'Use T2T::FormemeTLemmaAgreement with a specified function as parameter',
 );
+
+has terminology => (
+     is => 'ro',
+     isa => enum( [qw(auto no 0 yes)] ),
+     default => '0',
+     documentation => 'Use T2T::TrLApplyTbxDictionary with Microsoft Terminology Collection',
+);
+
 
 # TODO gazetteers should work without any dependance on source language here
 has src_lang => (
@@ -77,6 +91,15 @@ sub BUILD {
     if ($self->tm_adaptation eq 'auto'){
         $self->{tm_adaptation} = $self->domain eq 'IT' ? 'interpol' : 'no';
     }
+    if ($self->terminology eq 'auto'){
+        $self->{terminology} = $self->domain eq 'IT' ? 'yes' : 'no';
+    }
+    if ($self->vw eq 'auto'){
+        $self->{vw} = $self->domain eq 'IT' ? 'yes' : 'no';
+    }
+    if ($self->maxent eq 'auto'){
+        $self->{maxent} = $self->domain eq 'IT' ? 'no' : 'yes';
+    }
     return;
 }
 
@@ -91,16 +114,24 @@ sub get_scenario_string {
     }
 
     my $VW = '';
-    if ($self->vw){
+    if ($self->vw eq '1' || $self->vw eq 'yes'){
         $VW = "Treelets::AddTwonodeScores language=en selector=src\nT2T::EN2CS::TrLAddVariantsVW2";
         if ($self->vw_model){
             $VW .= ' vw_model='.$self->vw_model;
         }
+        if (!$self->maxent || $self->maxent eq 'no') {
+            $VW .= "\nT2T::EN2CS::TrLAddVariantsBackoff";
+        }
+    }
+    my $maxEnt = '';
+    if ($self->maxent eq '1' || $self->maxent eq 'yes'){
+        $maxEnt = "T2T::EN2CS::TrLAddVariantsInterpol models='" . $self->lemma_models . " $IT_LEMMA_MODELS'",
     }
 
     my $scen = join "\n",
     'Util::SetGlobal language=cs selector=tst',
     'T2T::CopyTtree source_language=en source_selector=src',
+    'T2T::ProjectSelectedWild',
     'T2T::EN2CS::TrLFPhrases',
     'T2T::EN2CS::DeleteSuperfluousTnodes',
     $self->gazetteer ? 'T2T::TrGazeteerItems src_lang='.$self->src_lang : (),
@@ -110,11 +141,12 @@ sub get_scenario_string {
     'T2T::EN2CS::TrFRerank2',
     'T2T::EN2CS::TrLTryRules',
     $self->domain eq 'IT' ? 'T2T::EN2CS::TrL_ITdomain' : (),
+    $self->terminology eq 'yes' ? 'T2T::TrLApplyTbxDictionary tbx=data/dictionaries/MicrosoftTermCollection.cs.tbx tbx_src_id=en-US tbx_trg_id=cs-cz analysis=data/dictionaries/MicrosoftTermCollection.cs.streex analysis_src_language=en analysis_src_selector=src analysis_trg_language=cs analysis_trg_selector=trg src_blacklist=data/dictionaries/MicrosoftTermCollection.en-cs.src.blacklist.txt' : (),
     'T2T::EN2CS::TrLPersPronIt',
     'T2T::EN2CS::TrLPersPronRefl',
     'T2T::EN2CS::TrLHackNNP',
     $VW,
-    "T2T::EN2CS::TrLAddVariantsInterpol model_dir=data/models/translation/en2cs models='" . $self->lemma_models . " $IT_LEMMA_MODELS'",
+    $maxEnt,
     'T2T::EN2CS::TrLFNumeralsByRules',
     'T2T::EN2CS::TrLFilterAspect',
     'T2T::EN2CS::TransformPassiveConstructions',

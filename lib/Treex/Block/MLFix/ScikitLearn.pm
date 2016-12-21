@@ -52,14 +52,8 @@ sub _predict_new_tags {
 	foreach my $model_name (keys %{ $self->_models }) {
 		foreach my $prediction (keys %{ $predictions->{$model_name} }) {
 			my $iset_hash = $node->get_iset_structure();
-			@$iset_hash{ map { s/new_node_//; $_; } @{ $self->config->{predict} } } = split /;/, $prediction;
-
-            foreach my $key (keys %$iset_hash) {
-#                log_info($node->lemma);
- #               log_info($key);
-  #              log_info($iset_hash->{$key});
-   #             log_info("");
-            }
+            my @targets = @{ $self->config->{predict} };
+			@$iset_hash{ map { s/new_node_//; $_; } @targets } = split /;/, $prediction;
 
             my $fs = Lingua::Interset::FeatureStructure->new();
 			$fs->set_hash($iset_hash);

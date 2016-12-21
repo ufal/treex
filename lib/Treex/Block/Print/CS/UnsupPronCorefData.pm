@@ -2,8 +2,9 @@ package Treex::Block::My::UnsupCSPersPronData;
 
 use Moose;
 
-use Treex::Tool::Coreference::NounAnteCandsGetter;
+use Treex::Tool::Coreference::AnteCandsGetter;
 
+# TODO: if refactored, Treex::Block::Coref::CS::PersPron::PrintData should be a superclass
 extends 'Treex::Block::Print::CS::TextPronCorefData';
 
 has '+unsupervised' => (
@@ -38,7 +39,8 @@ override '_build_feature_extractor' => sub {
 
 override '_build_ante_cands_selector' => sub {
     my ($self) = @_;
-    my $acs = Treex::Tool::Coreference::NounAnteCandsGetter->new({
+    my $acs = Treex::Tool::Coreference::AnteCandsGetter->new({
+        cand_types => [ 'noun.3_pers' ],
         prev_sents_num => 1,
         #anaphor_as_candidate => 1,
     });

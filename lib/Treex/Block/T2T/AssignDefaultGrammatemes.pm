@@ -44,6 +44,7 @@ sub process_start {
         $self->_set_da_types( \@das );
     }
     close($fh);
+    return;
 }
 
 sub process_ttree {
@@ -57,6 +58,7 @@ sub process_ttree {
         $self->process_tnode($tnode);
     }
     $self->_set_cur_da_type('');
+    return;
 }
 
 sub process_tnode {
@@ -74,9 +76,22 @@ sub process_tnode {
     elsif ( $self->grammatemes->{ $t_lemma . " " . $formeme } ) {
         $self->_set_grams( $tnode, $self->grammatemes->{ $t_lemma . " " . $formeme } );
     }
-    elsif ( $self->grammatemes->{ $formeme } ) {
-        $self->_set_grams( $tnode, $self->grammatemes->{ $formeme } );
+    elsif ( $self->grammatemes->{$formeme} ) {
+        $self->_set_grams( $tnode, $self->grammatemes->{$formeme} );
     }
+
+    # setting overrides from t-lemmas and formemes
+    if ( $tnode->t_lemma =~ /\|[a-z]+=/ ) {
+        my ( $t_lemma, $grams ) = split /\|/, $tnode->t_lemma;
+        $tnode->set_t_lemma($t_lemma);
+        $self->_set_grams( $tnode, $grams );
+    }
+    if ( $tnode->formeme =~ /\|[a-z]+=/ ) {
+        my ( $formeme, $grams ) = split /\|/, $tnode->formeme;
+        $tnode->set_formeme($formeme);
+        $self->_set_grams( $tnode, $grams );
+    }
+    return;
 }
 
 sub _set_grams {
@@ -95,6 +110,7 @@ sub _set_grams {
             $tnode->set_attr( "gram/$gram_type", $gram_val );
         }
     }
+    return;
 }
 
 1;

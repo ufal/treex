@@ -7,8 +7,10 @@ extends 'Treex::Core::Block';
 #TODO These hacks should be removed from here and added to the translation dictionary
 Readonly my %QUICKFIX_TRANSLATION_OF => (
 
-    q{„} => q{"}, # TODO: or should we use typographic “…” quotes?
-    q{“} => q{"},
+    q{„} => q{“},
+    q{“} => q{”},
+    q{‘} => q{’},
+    q{‚} => q{‘},
 
     #q{skype}      => 'Skype|NNP',
     #q{Skype}      => 'Skype|NNP',
@@ -85,7 +87,7 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     'voluntaristický' => 'voluntary|adj',
     'sběratelka' => 'collector|noun',
     'sběratel' => 'collector|noun',
-    
+
 
     # TODO: the following is QTLeap-specific -- it should not be used elsewhere
     'písmo'        => 'font|noun',

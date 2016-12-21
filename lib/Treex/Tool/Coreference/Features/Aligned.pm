@@ -4,7 +4,7 @@ use Moose;
 use Treex::Core::Common;
 #use Cache::MemoryCache;
 
-with 'Treex::Tool::Coreference::CorefFeatures';
+extends 'Treex::Tool::Coreference::CorefFeatures';
 
 has 'feat_extractors' => (is => 'ro', isa => 'ArrayRef[Treex::Tool::Coreference::CorefFeatures]', required => 1);
 
@@ -15,6 +15,10 @@ has 'align_types' => (is => 'ro', isa => 'ArrayRef[Str]');
 has '_align_filter' => (is => 'ro', isa => 'HashRef', builder => '_build_align_filter', lazy => 1);
 
 #has '_unary_feats_cache' => (is => 'ro', isa => 'Cache::MemoryCache', builder => '_build_unary_feats_cache');
+
+override '_build_prefix_unary' => sub {
+    return 0;
+};
 
 sub BUILD {
     my ($self) = @_;
@@ -30,12 +34,12 @@ sub _build_align_filter {
     return $align_filter;
 }
 
-sub _build_unary_feats_cache {
-    my ($self) = @_;
-    return Cache::MemoryCache->new({default_expires_in => 30});
-}
+#sub _build_unary_feats_cache {
+#    my ($self) = @_;
+#    return Cache::MemoryCache->new({default_expires_in => 30});
+#}
 
-sub _binary_features {
+override '_binary_features' => sub {
     my ($self, $set_features, $anaph, $cand, $candord) = @_;
 
     my ($ali_anaph_nodes, $ali_anaph_types) = $anaph->get_undirected_aligned_nodes($self->_align_filter);
@@ -57,9 +61,9 @@ sub _binary_features {
     #}
     #else {
         $ali_set_features = {};
-        foreach my $key (grep {$_ =~ /^align_/} (keys %$set_features)) {
+        foreach my $key (grep {$_ =~ /^([^\^]+\^)?align_/} (keys %$set_features)) {
             my $new_key = $key;
-            $new_key =~ s/^align_//;
+            $new_key =~ s/^((?:[^\^]+\^)?)align_/$1/;
             $ali_set_features->{$new_key} = $set_features->{$key};
         }
     #}
@@ -71,9 +75,9 @@ sub _binary_features {
     }
 
     return _add_prefix(\%feats);
-}
+};
 
-sub _unary_features {
+augment '_unary_features' => sub {
     my ($self, $node, $type) = @_;
 
     my ($ali_nodes, $ali_types) = $node->get_undirected_aligned_nodes($self->_align_filter);
@@ -91,8 +95,10 @@ sub _unary_features {
     #    $self->_unary_feats_cache->set($ali_nodes->[0]->id, $feats);
     #}
 
-    return _add_prefix($feats);
-}
+    my $ali_feats = _add_prefix($feats);
+    my $sub_feats = inner() || {};
+    return { %$ali_feats, %$sub_feats };
+};
 
 sub init_doc_features {
     my ($self, $doc, $lang, $sel) = @_;
@@ -104,7 +110,11 @@ sub init_doc_features {
 
 sub _add_prefix {
     my ($feats) = @_;
-    my %renamed_feats = map { 'align_'.$_ => $feats->{$_} } (keys %$feats);
+    my %renamed_feats = map {
+        my $feat_name = $_;
+        $feat_name =~ s{^([^\^]*\^)?}{($1 // q[]) . q[align_]}e;
+        $feat_name => $feats->{$_} 
+    } (keys %$feats);
     return \%renamed_feats;
 }
 

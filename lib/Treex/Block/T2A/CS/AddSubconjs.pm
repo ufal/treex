@@ -57,6 +57,11 @@ override 'postprocess' => sub {
         $a_node->set_parent($first_after);
     }
 
+    my $ano = $a_node->get_children({first_only=>1});
+    if ($ano && $ano->lemma =~ /^(ano|ne)$/) {
+        $ano->shift_before_node($subconj_nodes->[0]);
+    }
+
     return;
 };
 
@@ -67,7 +72,7 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::T2A::CS::AddSubconjs
 
@@ -79,7 +84,7 @@ Add a-nodes corresponding to subordinating conjunctions
 Czech-specific: inflecting conjunctions 'aby', 'kdyby', handling clause membership
 for expletive 'to'.
 
-=head1 AUTHORS 
+=head1 AUTHORS
 
 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 

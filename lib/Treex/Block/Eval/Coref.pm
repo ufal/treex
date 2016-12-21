@@ -1,3 +1,7 @@
+##########################################
+######## THIS MODULE IS OBSOLETE #########
+########### SHOULD BE DELETED ############
+##########################################
 package Treex::Block::Eval::Coref;
 use Moose;
 use Treex::Core::Common;

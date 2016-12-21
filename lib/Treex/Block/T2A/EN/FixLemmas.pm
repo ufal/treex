@@ -31,18 +31,21 @@ sub process_anode {
 
     # fix personal pronouns
     if ( $lemma eq '#PersPron' ) {
-        my $num  = ( $anode->morphcat_number || '.' ) ne '.' ? $anode->morphcat_number : 'S';
-        my $pers = ( $anode->morphcat_person || '.' ) ne '.' ? $anode->morphcat_person : '3';
+        my $num  = ( $anode->morphcat_number || '.' ) !~ /^(\.|nr)$/ ? $anode->morphcat_number : 'S';
+        my $pers = ( $anode->morphcat_person || '.' ) !~ /^(\.|nr)$/ ? $anode->morphcat_person : '3';
         my $sig  = "$num $pers";
 
         if ( $pers eq '3' and $num eq 'S' ) {
-            my $gen = ( $anode->morphcat_gender || '.' ) ne '.' ? $anode->morphcat_gender : 'N';
+            my $gen = ( $anode->morphcat_gender || '.' ) !~ /^(\.|nr)$/ ? $anode->morphcat_gender : 'N';
             $sig .= ' ' . $gen;
         }
         if ( $anode->morphcat_subpos eq 'S' ) {    # possessives
             $sig .= ' poss';
         }
-        $anode->set_lemma( $PERSPRON{$sig} );
+        if (!defined($PERSPRON{$sig})){
+            log_warn($anode->id . ": undefined #PersPron surface form for signature: " . $sig);
+        }
+        $anode->set_lemma( $PERSPRON{$sig} // '' );
     }
 
     # fix negation particle
@@ -50,6 +53,7 @@ sub process_anode {
         $anode->set_lemma('not');
     }
 
+    return;
 }
 
 1;

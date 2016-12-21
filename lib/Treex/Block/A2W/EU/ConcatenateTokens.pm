@@ -33,6 +33,8 @@ sub process_zone {
     $sentence =~ s/`` ?/"/g;
     $sentence =~ s/ ?''/"/g;
 
+    $sentence =~ s/([eE]z) ezin ez da/$1, ezin da/;
+    
     $zone->set_sentence($sentence);
     return;
 }

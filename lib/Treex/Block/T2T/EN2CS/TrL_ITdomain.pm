@@ -18,7 +18,25 @@ Readonly my %QUICKFIX_TRANSLATION_OF => (
     q{10.04}      => '10.04|X',
     q{ruler}      => 'pravítko|N',
     q{shell}      => 'shell|N',
+    q{cookie}     => 'cookie|N',
+    q{tap}        => 'klepnout|V',
+    q{bus}        => 'sběrnice|N',
+    q{doc}        => 'dokument|N',
+    q{ram}        => 'RAM|X',
+    q{audacity}   => 'Audacity|X',
+    q{tweet}      => 'tweet|N',
+    q{processor}  => 'procesor|N',
+    q{platform}   => 'platforma|N',
+    q{microsoft}  => 'Microsoft|X',
+    q{gimp}       => 'Gimp|X',
+    q{SSL}        => 'SSL|X',
+    q{io}         => 'iOS|X',
+    q{hack}       => 'nabourat_se|V',
+    q{hit}        => 'stisknout|V',
+    q{thumbwheel} => 'kolečko|N',
     q{right-click}=> 'pravým tlačítkem myši klikněte|V',
+    q{client-side}=> 'na straně klienta|A',
+    q{cross-platform}=> 'pro více platforem|A',
 );
 
 sub process_tnode {
@@ -45,7 +63,7 @@ sub get_lemma_and_pos {
     # Prevent some errors/misses in dictionaries
     my $lemma_and_pos = $QUICKFIX_TRANSLATION_OF{$en_tlemma};
     return $lemma_and_pos if $lemma_and_pos;
-   
+
     # Imperative "go" in IT instructions is "přejděte" rather than "pojďte".
     if ( $en_tlemma eq 'go' && defined $en_tnode->gram_verbmod){
         return 'přejít|V';
@@ -53,11 +71,11 @@ sub get_lemma_and_pos {
 
     # Windows may be tagged as NNS (instead of NNP)
     return 'Windows|X' if $en_tlemma eq 'window' && $en_tnode->get_lex_anode->form eq 'Windows';
-    
+
     # imperatives
     if (($en_tnode->gram_verbmod || '') eq 'imp'){
         return 'stisknout|V' if $en_tlemma eq 'press';
-        return 'kliknout|V'  if $en_tlemma eq 'click';    
+        return 'kliknout|V'  if $en_tlemma eq 'click';
         return 'přihlásit|V' if $en_tlemma eq 'access' && any {$_->t_lemma =~ /^(profile|account)$/} $en_tnode->get_echildren();
         return 'vstoupit|V'  if $en_tlemma eq 'access';
     }
@@ -66,6 +84,26 @@ sub get_lemma_and_pos {
         return 'e-mailový|A' if ($en_tnode->get_parent->formeme ||'') =~ /^n:/;
         return 'e-mail|N';
     }
+
+    if ( $en_tlemma eq 'cloud'){
+       return 'cloudový|A' if ($en_tnode->get_parent->formeme ||'') =~ /^n:/;
+       return 'cloud|N';
+    }
+
+    # numbers of versions
+    if ($en_tlemma =~ /^\d+(\.\d+)+$/ && any {$_->t_lemma eq 'version'} $en_tnode->get_root->get_descendants) {
+        return "$en_tlemma|C";
+    }
+
+    if ($en_tlemma eq 'gaming'){
+        return 'herní|A' if $en_formeme =~ /attr/;
+        return 'hraní|N';
+    }
+
+    return 'řádek|N' if $en_tlemma eq 'prompt' && $en_tnode->get_lex_anode->form eq 'prompt';
+
+    # software versions
+    return $en_tlemma . '|N' if $en_tlemma =~ /^\d\d?\.[01]$/;
 
     # If no rules match, get_lemma_and_pos has not succeeded.
     return undef;

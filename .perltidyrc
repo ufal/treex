@@ -1,0 +1,21 @@
+# Use Conway's PBP recommendations
+--perl-best-practices
+# (which means -l=78 -i=4 -ci=4 -st -se -vt=2 -cti=0 -pt=1 -bt=1 -sbt=1 -bbt=1 -nsfs -nolq
+#              -wbb="% + - * / x != == >= <= =~ !~ < > | & = **= += *= &= <<= &&= -= /= |= >>= ||= //= .= %= ^= x="
+# )
+
+# with the exception of:
+
+--maximum-line-length=0
+# I think it is better to break lines manually (and yes, ideally to max 78 characters),
+# When there are too many indent levels (nested blocks)
+# it is better to refactor rather then auto-break lines.
+
+--no-delete-old-newlines
+# Sometimes I consider some statements (e.g. list expression) nicer to read when divided on more lines.
+
+--no-outdent-labels
+# In PBP there is no outdenting, but Conway forgot to add it to his perltidyrc
+
+# From shell you can use the settings above with
+# perltidy -pbp -l=0 -ndnl -nola

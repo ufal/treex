@@ -314,6 +314,7 @@ sub _get_tag_regex {
     }
 
     $morphcat{subpos} =~ s/A/\[AU\]/;
+    $morphcat{subpos} =~ s/([?*])/\\$1/;  # escaping regex control characters
 
     $morphcat{case} =~ s/(\d)/\[${1}X\]/;
 

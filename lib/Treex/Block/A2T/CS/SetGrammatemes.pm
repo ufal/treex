@@ -28,8 +28,25 @@ sub _my_dir {
 }
 get_conversion_rules_from_file(_my_dir() . "/conversion_rules.txt");
 
-my %tnumber2gnumber = ( 'S' => 'sg', 'P' => 'pl', 'D' => 'pl' );
-my %tgender2ggender = ( 'F' => 'fem', 'I' => 'inan', 'M' => 'anim', 'N' => 'neut' );
+my %tnumber2gnumber = ( 
+    S => 'sg',
+    P => 'pl', 
+    D => 'pl',
+    W => 'sg|pl',
+    X => 'sg|pl',
+);
+my %tgender2ggender = (
+    F => "fem",
+    H => "fem|neut",
+    I => "inan",
+    M => "anim",
+    N => "neut",
+    Q => "fem|neut",
+    T => "inan|fem",
+    X => "anim|inan|fem|neut",
+    Y => "anim|inan",
+    Z => "anim|inan|neut",
+);
 
 # podruhe: preklad casti tagu na hodnotu gramatemu (navazuje na tabulky u set_gn...
 my %tdegree2gdegree   = ( '1' => 'pos',  '2' => 'comp', '3' => 'sup', '-' => 'pos' );
@@ -235,11 +252,11 @@ sub assign_automatic_grammatemes {
         $t_node->set_t_lemma('#PersPron');
         $t_node->set_gram_sempos('n.pron.def.pers');
         $t_node->set_gram_person($tperson);
-        $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tnumber} );
+        $t_node->set_gram_number( $tnumber2gnumber{$tnumber} );
         $t_node->set_gram_politeness('basic');
         if ( $tperson eq '3' ) {
             if ( $tgender2ggender{$tgender} ) {
-                $t_node->set_attr( 'gram/gender', $tgender2ggender{$tgender} );
+                $t_node->set_gram_gender($tgender2ggender{$tgender} );
             }
             else {
 
@@ -255,10 +272,78 @@ sub assign_automatic_grammatemes {
 
     elsif ( $t_lemma =~ /^(já|my|ty|vy|on|#PersPron)$/ && !$t_node->get_lex_anode ) {
         $t_node->set_gram_sempos('n.pron.def.pers');
-        set_gn_by_verb_agreement( $t_node, 'number', $temp_attrs );
-        set_gn_by_verb_agreement( $t_node, 'gender', $temp_attrs );
+        #set_gn_by_verb_agreement( $t_node, 'number', $temp_attrs );
+        #set_gn_by_verb_agreement( $t_node, 'gender', $temp_attrs );
         $t_node->set_gram_politeness('basic');
-        $t_node->set_gram_person('3');
+        #$t_node->set_gram_person('3');
+
+        # copied from A2T/CS/AddPersPron
+        my ($par) = $t_node->get_eparents();
+        
+        my @anode_tags = map { $_->tag } ( $par->get_lex_anode, $par->get_aux_anodes );
+        my ( $person, $gender, $number );
+
+        # TODO the verb can be just "to be", so take dependent adjectives into account
+
+        if ( grep { $_ =~ /^(V.|J,).....1/ } @anode_tags ) { # include 'kdybychom', 'abychom'
+            $person = "1";
+        }
+        elsif ( grep { $_ =~ /^(V.|J,).....2/ } @anode_tags ) { # include 'kdybys(te)', 'abys(te)'
+            $person = "2";
+        }
+        else {
+            $person = "3";
+        }
+
+        if ( grep { $_ =~ /^V..P/ } @anode_tags ) {
+            $number = 'pl';
+        }
+        elsif ( grep { $_ =~ /^V..S/ } @anode_tags ) {
+            $number = 'sg';
+        }
+        # in fact, this can appear just with 'Q' gender
+        elsif ( grep { $_ =~ /^V..W/ } @anode_tags ) {
+            $number = 'sg|pl';
+        }
+        # number position is '-'
+        else {
+            $number = 'sg|pl';
+        }
+
+        if ( grep { $_ =~ /^V.Q/ } @anode_tags ) {    # napraseno !!! ve skutecnosti je poznani rodu daleko tezsi
+            $gender = 'fem|neut';
+        }
+        # in fact, it can appear just in singular
+        elsif ( grep { $_ =~ /^V.N/ } @anode_tags ) {
+            $gender = 'neut';
+        }
+        # in fact, it can appear just in plural
+        elsif ( grep { $_ =~ /^V.M/ } @anode_tags ) {
+            $gender = 'anim';
+        }
+        elsif ( grep { $_ =~ /^V.Y/ } @anode_tags ) {
+            $gender = 'anim|inan';
+        }
+        # in fact, it can appear just in plural
+        elsif ( grep { $_ =~ /^V.T/ } @anode_tags ) {
+            $gender = 'inan|fem';
+        }
+        elsif ( grep { $_ =~ /^V.H/ } @anode_tags ) {
+            $gender = 'fem|neut';
+        }
+        # gender position is '-'
+        else {
+            $gender = 'anim|inan|fem|neut';
+        }
+        # evidence from the data - gender of the generated perspron can be anything, 
+        # if the verb is in present tense and 1st or 2nd person
+        #elsif ( grep {$_ =~ /^VB-.---[12]P.*/} @anode_tags ) {
+        #    $gender = 'nr';
+        #}
+
+        $t_node->set_gram_person($person);
+        $t_node->set_gram_gender($gender);
+        $t_node->set_gram_number($number);
 
         #??? dodelat osoby
         #       set_attr($t_node,'t_lemma','#PersPron');
@@ -299,10 +384,10 @@ sub assign_automatic_grammatemes {
         $t_node->set_gram_sempos('n.pron.def.pers');
         $t_node->set_gram_person($tperson);
         $t_node->set_gram_politeness('basic');
-        $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tposnumber} );
+        $t_node->set_gram_number( $tnumber2gnumber{$tposnumber} );
         if ( $tperson eq "3" ) {
             if ( $tgender2ggender{$tposgender} ) {
-                $t_node->set_attr( 'gram/gender', $tgender2ggender{$tposgender} );
+                $t_node->set_gram_gender( $tgender2ggender{$tposgender} );
             }
         }
     }
@@ -331,7 +416,7 @@ sub assign_automatic_grammatemes {
         #            $t_node->set_t_lemma( Fill_grammatemes::possadj_to_noun( $m_lemma ) );
         #        }
         $t_node->set_gram_number('sg');
-        $t_node->set_attr( 'gram/gender', $tgender2ggender{$tposgender} );
+        $t_node->set_gram_gender($tgender2ggender{$tposgender} );
     }
 
     # --- A.4. prevadeni adjektiv vzniklych z adverbii apod. --- to se nebude delat
@@ -342,8 +427,8 @@ sub assign_automatic_grammatemes {
         #      set_attr($t_node,'t_lemma',$t_lemma);
         $t_node->set_gram_sempos('n.quant.def');
         $t_node->set_gram_numertype('basic');
-        $t_node->set_attr( 'gram/gender', $numerallemma2gender{$t_lemma} );
-        $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tnumber} );
+        $t_node->set_gram_gender( $numerallemma2gender{$t_lemma} );
+        $t_node->set_gram_number( $tnumber2gnumber{$tnumber} );
     }
     elsif ( $t_lemma eq "sto" ) {
 
@@ -372,8 +457,8 @@ sub assign_automatic_grammatemes {
         }
 
         #      set_attr($t_node,'t_lemma',$t_lemma);
-        $t_node->set_attr( 'gram/gender', $tgender2ggender{$tgender} );
-        $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tnumber} );
+        $t_node->set_gram_gender( $tgender2ggender{$tgender} );
+        $t_node->set_gram_number( $tnumber2gnumber{$tnumber} );
 
         #      if (not $tnumber2gnumber{$tnumber} and   ### ???? was war tas?
         #	  $t_node->{_t_lemma_}=~/^.R$/ and $t_node->{tag}=~/^..F/) {
@@ -382,11 +467,11 @@ sub assign_automatic_grammatemes {
 
         if ( $$temp_attrs{$t_node}{lex_afun} eq 'Sb' && $tag =~ /^V/ ) {    # doplneni rodu a cisla (pokud chybi), ze shody se slovesem
             my $changed;
-            if ( $t_node->attr('gram/gender') =~ /^(|nr)$/ ) {
+            if ( $t_node->gram_gender =~ /^(|nr)$/ ) {
                 set_gn_by_verb_agreement( $t_node, 'gender', $temp_attrs );
                 $changed++;
             }
-            if ( $t_node->attr('gram/number') =~ /^(|nr)$/ ) {
+            if ( $t_node->gram_number =~ /^(|nr)$/ ) {
                 set_gn_by_verb_agreement( $t_node, 'number', $temp_attrs );
                 $changed++;
             }
@@ -420,7 +505,7 @@ sub assign_automatic_grammatemes {
             else {
                 $t_node->set_gram_number('pl')
             }
-            $t_node->set_attr( 'gram/gender', $tgender2ggender{$tgender} );    # ??? od ctyrky to stejne nefunguje, vzal to cert
+            $t_node->set_gram_gender( $tgender2ggender{$tgender} );    # ??? od ctyrky to stejne nefunguje, vzal to cert
         }
         else {
             $t_node->set_gram_sempos('adj.quant.def');
@@ -445,16 +530,16 @@ sub assign_automatic_grammatemes {
             )
         {
             $t_node->set_gram_sempos('n.quant.def');
-            $t_node->set_gram_number('nr');
-            $t_node->set_gram_gender('nr');
+            $t_node->set_gram_number('sg|pl');
+            $t_node->set_gram_gender('anim|inan|fem|neut');
         }
         elsif ( adjectival($t_node) ) {
             $t_node->set_gram_sempos('adj.quant.def')
         }
         else {
             $t_node->set_gram_sempos('n.quant.def');
-            $t_node->set_gram_number('nr');
-            $t_node->set_gram_gender('nr');
+            $t_node->set_gram_number('sg|pl');
+            $t_node->set_gram_gender('anim|inan|fem|neut');
         }
 
         if ( grep { $$temp_attrs{$_}{lex_form} eq "." } $t_node->children ) {    # radeji pres AIDREFS ???
@@ -465,8 +550,8 @@ sub assign_automatic_grammatemes {
         }
     }
     elsif ( $tag =~ /^Cy/ ) {                                                    # pětina, wordclass a numertype a tlemma dostanou z konv.souboru
-        $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tnumber} );
-        $t_node->set_attr( 'gram/gender', $tgender2ggender{$tgender} );
+        $t_node->set_gram_number( $tnumber2gnumber{$tnumber} );
+        $t_node->set_gram_gender( $tgender2ggender{$tgender} );
 
         # ptacek: ale jen pro 7 vyjmenovanych t-lemmat
         # proto wordclass a numertype vyplnuju nove i zde
@@ -481,8 +566,8 @@ sub assign_automatic_grammatemes {
     # substantivne pouzita adjektiva
     elsif ( $tag =~ /^A/ and $functor !~ /^(FPHR|ID)/ and not adjectival($t_node) and $parent->t_lemma !~ /[tn]í$/ ) {
         $t_node->set_gram_sempos('n.denot');
-        $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tnumber} );
-        $t_node->set_attr( 'gram/gender', $tgender2ggender{$tgender} );
+        $t_node->set_gram_number( $tnumber2gnumber{$tnumber} );
+        $t_node->set_gram_gender( $tgender2ggender{$tgender} );
     }
 
     # --- B.6. adjektiva pojmenovavaci
@@ -727,8 +812,8 @@ sub assign_automatic_grammatemes {
     else {        
         $t_node->set_gram_sempos('n.denot');
         log_warn('Unknown: ' . $t_node->t_lemma . ' ' . $t_node->get_address) if (!$tgender ||!$tnumber); 
-        $t_node->set_attr( 'gram/gender', $tgender2ggender{$tgender} );
-        $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tnumber} );
+        $t_node->set_gram_gender( $tgender2ggender{$tgender} );
+        $t_node->set_gram_number( $tnumber2gnumber{$tnumber} );
     }
 }    # end of assign_automatic_grammatemes
 
@@ -738,7 +823,7 @@ sub set_gn_by_adj_agreement {
     my @adjectivals = grep { $$temp_attrs{$_}{lex_tag} =~ /^[APC][^Pd][^-][^-]/ } $t_node->get_echildren( { or_topological => 1 } );
     my $value;
     if ( $attr eq 'gender' ) {
-        my ($tgenderadj) = map { $$temp_attrs{$_}{lex_tag} =~ /^..(.)/; $1 } grep { $$temp_attrs{$_}{lex_tag} =~ /^..[FNIM]/ } @adjectivals;
+        my ($tgenderadj) = map { $$temp_attrs{$_}{lex_tag} =~ /^..(.)/; $1 } grep { $$temp_attrs{$_}{lex_tag} =~ /^..[FHIMNQTXYZ]/ } @adjectivals;
         if ($tgenderadj) {
             $value = $tgender2ggender{$tgenderadj};
             $t_node->set_gram_gender($value);
@@ -798,11 +883,11 @@ sub set_gn_by_verb_agreement {
 
         if ( $attr eq "gender" ) {
 
-            my ($gender) = map { $_->tag =~ /^..(.)/; $1 } grep { $_->tag =~ /^..[FNIM]/ } @verb_a_nodes;
+            my ($gender) = map { $_->tag =~ /^..(.)/; $1 } grep { $_->tag =~ /^..[FHIMNQTXZ]/ } @verb_a_nodes;
 
             if ($gender) {
 
-                $t_node->set_attr( 'gram/gender', $tgender2ggender{$gender} );
+                $t_node->set_gram_gender($tgender2ggender{$gender});
                 $changed++;
             }
             elsif (
@@ -818,7 +903,7 @@ sub set_gn_by_verb_agreement {
         elsif ( $attr eq "number" ) {
             my ($number) = map { $_->tag; $1 } grep { $_->tag =~ /^...[PS]/ } @verb_a_nodes;
             if ($number) {
-                $t_node->set_attr( 'gram/number', $tnumber2gnumber{$number} );
+                $t_node->set_gram_number( $tnumber2gnumber{$number} );
                 $changed++;
             }
         }
@@ -927,14 +1012,14 @@ sub apply_postprocessing {
         }
         else {
             if ( $tgender2ggender{$tgender} ) {
-                $t_node->set_attr( 'gram/gender', $tgender2ggender{$tgender} );
+                $t_node->set_gram_gender( $tgender2ggender{$tgender} );
             }
             else {    # cosi je defaultne sing.neut.
                 $t_node->set_gram_gender('neut');
             }
 
             if ( $tnumber2gnumber{$tnumber} ) {
-                $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tnumber} );
+                $t_node->set_gram_number( $tnumber2gnumber{$tnumber} );
             }
             else {
                 $t_node->set_gram_number('sg');
@@ -950,8 +1035,8 @@ sub apply_postprocessing {
     }
 
     if ( $t_node->gram_sempos eq "n.pron.def.demon" ) { # tgender and tnumber might be undefined for #EmpNoun        
-        $t_node->set_attr( 'gram/gender', $tgender2ggender{$tgender} ) if ($tgender && $tgender2ggender{$tgender});
-        $t_node->set_attr( 'gram/number', $tnumber2gnumber{$tnumber} ) if ($tnumber && $tnumber2gnumber{$tnumber});
+        $t_node->set_gram_gender( $tgender2ggender{$tgender} ) if ($tgender && $tgender2ggender{$tgender});
+        $t_node->set_gram_number( $tnumber2gnumber{$tnumber} ) if ($tnumber && $tnumber2gnumber{$tnumber});
     }
 
     # gramatem negation u pojmenovacich uzlu
@@ -1168,7 +1253,7 @@ sub apply_conversion_rules {
     if ( $t_lemma2attribs{$t_lemma} ) {
 
         #    print "APL2\n";
-        foreach my $premise ( keys %{ $t_lemma2attribs{$t_lemma} } ) {
+        foreach my $premise ( sort keys %{ $t_lemma2attribs{$t_lemma} } ) {
 
             my $func = $t_node->functor;
             if ( $premise eq "" or evalpremise( $t_node, $premise ) ) {
@@ -1224,13 +1309,13 @@ sub set_indefpron_pgn_by_verb_agreement {
             $change++;
         }
 
-        my ($gender) = grep {$_} map { $_->tag =~ /^..([MINF])/; $tgender2ggender{$1} } @verb_a_nodes;
+        my ($gender) = grep {$_} map { $_->tag =~ /^..([FHIMNQTXYZ])/; $tgender2ggender{$1} } @verb_a_nodes;
         if ( $gender and $gender ne $t_node->gram_gender ) {
             $t_node->set_gram_gender($gender);
             $change++;
         }
 
-        my ($number) = grep {$_} map { $_->tag =~ /^...([PS])/; $tnumber2gnumber{$1} } @verb_a_nodes;
+        my ($number) = grep {$_} map { $_->tag =~ /^...([PSDWX])/; $tnumber2gnumber{$1} } @verb_a_nodes;
         if ( $number and $number ne $t_node->gram_number ) {
             $t_node->set_gram_number($number);
             $change++;
@@ -1260,14 +1345,14 @@ sub set_missing_gn_by_verb_agreement {
         }
 
         if ( ( $t_node->gram_gender || '' ) =~ /^(|nr)$/ ) {
-            my ($gender) = grep {$_} map { $_->tag =~ /^..([MINF])/; $tgender2ggender{$1} } @verb_a_nodes;
+            my ($gender) = grep {$_} map { $_->tag =~ /^..([FHIMNQTXYZ])/; $tgender2ggender{$1} } @verb_a_nodes;
             if ($gender) {
                 $t_node->set_gram_gender($gender);
             }
         }
 
         if ( ( $t_node->gram_number || '' ) =~ /^(|nr)$/ and $parent eq $t_node->get_parent ) {    # cislo se neda spolehlive tahat, kdyz jde o koordinaci
-            my ($number) = grep {$_} map { $_->tag =~ /^...([PS])/; $tnumber2gnumber{$1} } @verb_a_nodes;
+            my ($number) = grep {$_} map { $_->tag =~ /^...([PSDWX])/; $tnumber2gnumber{$1} } @verb_a_nodes;
             if ($number) {
                 $t_node->set_gram_number($number);
             }

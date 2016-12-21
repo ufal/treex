@@ -3,6 +3,10 @@ package Treex::Tool::Coreference::CS::PronCorefFeatures;
 use Moose;
 use Treex::Core::Common;
 use Treex::Core::Resource qw(require_file_from_share);
+use List::MoreUtils qw/all any/;
+use Treex::Tool::Vallex::ValencyFrame;
+
+use Ufal::MorphoDiTa;
 
 extends 'Treex::Tool::Coreference::PronCorefFeatures';
 
@@ -53,6 +57,12 @@ has '_np_freq' => (
     isa     => 'HashRef[Int]'
 );
 
+has '_morpho' => (
+    is => 'rw',
+    isa => 'Ufal::MorphoDiTa::Morpho',
+    builder => '_build_morpho',
+);
+
 # Attributes _cnk_freqs and _ewn_classes depend on attributes cnk_freqs_path
 # and ewn_classes_path, whose values do not have to be accessible when
 # building other attributes. Thus, _cnk_freqs and _ewn_classes are defined as
@@ -66,49 +76,6 @@ sub BUILD {
     $self->_ewn_classes;
 #    $self->_build_feature_names;
 }
-
-#sub _build_feature_names {
-#    my ($self) = @_;
-#
-#    my @feat_names = qw(
-#       c_sent_dist        c_clause_dist         c_file_deepord_dist
-#       c_cand_ord         c_anaph_sentord
-#       
-#       c_cand_fun         c_anaph_fun           b_fun_agree               c_join_fun
-#       c_cand_afun        c_anaph_afun          b_afun_agree              c_join_afun
-#       b_cand_akt         b_anaph_akt           b_akt_agree 
-#       b_cand_subj        b_anaph_subj          b_subj_agree
-#       
-#       c_cand_gen         c_anaph_gen           b_gen_agree               c_join_gen
-#       c_cand_num         c_anaph_num           b_num_agree               c_join_num
-#       c_cand_apos        c_anaph_apos                                    c_join_apos
-#       c_cand_asubpos     c_anaph_asubpos                                 c_join_asubpos
-#       c_cand_agen        c_anaph_agen                                    c_join_agen
-#       c_cand_anum        c_anaph_anum                                    c_join_anum
-#       c_cand_acase       c_anaph_acase                                   c_join_acase
-#       c_cand_apossgen    c_anaph_apossgen                                c_join_apossgen
-#       c_cand_apossnum    c_anaph_apossnum                                c_join_apossnum
-#       c_cand_apers       c_anaph_apers                                   c_join_apers
-#       
-#       b_cand_coord       b_app_in_coord
-#       c_cand_epar_fun    c_anaph_epar_fun      b_epar_fun_agree          c_join_epar_fun
-#       c_cand_epar_sempos c_anaph_epar_sempos   b_epar_sempos_agree       c_join_epar_sempos
-#                                                b_epar_lemma_agree        c_join_epar_lemma
-#                                                                          c_join_clemma_aeparlemma
-#       c_cand_tfa         c_anaph_tfa           b_tfa_agree               c_join_tfa
-#       b_sibl             b_coll                r_cnk_coll
-#       r_cand_freq                            
-#       b_cand_pers
-#
-#    );
-#    
-#    my ($noun_c, $all_c) = map {$self->_ewn_classes->{$_}} qw/nouns all/;
-#    foreach my $class (sort @{$all_c}) {
-#        my $coref_class = "b_" . $class;
-#        push @feat_names, $coref_class;
-#    }
-#    return \@feat_names;
-#}
 
 sub _build_cnk_freqs {
     my ($self) = @_;
@@ -160,6 +127,13 @@ sub _build_ewn_classes {
     return $ewn_classes;
 }
 
+sub _build_morpho {
+    my ($self) = @_;
+    my $morpho_path = require_file_from_share( "data/models/morphodita/cs/czech-morfflex-131112.dict", ref($self) );
+    log_fatal 'MorphoDiTa model ' . $morpho_path . 'does not exist.' if !-f $morpho_path;
+    return Ufal::MorphoDiTa::Morpho::load($morpho_path);
+}
+
 override '_binary_features' => sub {
     my ($self, $set_features, $anaph, $cand, $candord) = @_;
     my $coref_features = super();
@@ -169,27 +143,27 @@ override '_binary_features' => sub {
     #   8:  gender, num, agreement, joined
     
     $coref_features->{b_gen_agree} 
-        = $self->_agree_feats($set_features->{c_cand_gen}, $set_features->{c_anaph_gen});
+        = $self->_agree_feats($set_features->{'c^c_cand_gen'}, $set_features->{'a^c_anaph_gen'});
     $coref_features->{c_join_gen} 
-        = $self->_join_feats($set_features->{c_cand_gen}, $set_features->{c_anaph_gen});
+        = $self->_join_feats($set_features->{'c^c_cand_gen'}, $set_features->{'a^c_anaph_gen'});
 
     $coref_features->{b_num_agree} 
-        = $self->_agree_feats($set_features->{c_cand_num}, $set_features->{c_anaph_num});
+        = $self->_agree_feats($set_features->{'c^c_cand_num'}, $set_features->{'a^c_anaph_num'});
     $coref_features->{c_join_num} 
-        = $self->_join_feats($set_features->{c_cand_num}, $set_features->{c_anaph_num});
+        = $self->_join_feats($set_features->{'c^c_cand_num'}, $set_features->{'a^c_anaph_num'});
 
     $coref_features->{c_join_asubpos}  
-        = $self->_join_feats($set_features->{c_cand_asubpos}, $set_features->{c_anaph_asubpos});
+        = $self->_join_feats($set_features->{'c^c_cand_asubpos'}, $set_features->{'a^c_anaph_asubpos'});
     $coref_features->{c_join_agen}  
-        = $self->_join_feats($set_features->{c_cand_agen}, $set_features->{c_anaph_agen});
+        = $self->_join_feats($set_features->{'c^c_cand_agen'}, $set_features->{'a^c_anaph_agen'});
     $coref_features->{c_join_acase}  
-        = $self->_join_feats($set_features->{c_cand_acase}, $set_features->{c_anaph_acase});
+        = $self->_join_feats($set_features->{'c^c_cand_acase'}, $set_features->{'a^c_anaph_acase'});
     $coref_features->{c_join_apossgen}  
-        = $self->_join_feats($set_features->{c_cand_apossgen}, $set_features->{c_anaph_apossgen});
+        = $self->_join_feats($set_features->{'c^c_cand_apossgen'}, $set_features->{'a^c_anaph_apossgen'});
     $coref_features->{c_join_apossnum}  
-        = $self->_join_feats($set_features->{c_cand_apossnum}, $set_features->{c_anaph_apossnum});
+        = $self->_join_feats($set_features->{'c^c_cand_apossnum'}, $set_features->{'a^c_anaph_apossnum'});
     $coref_features->{c_join_apers}  
-        = $self->_join_feats($set_features->{c_cand_apers}, $set_features->{c_anaph_apers});
+        = $self->_join_feats($set_features->{'c^c_cand_apers'}, $set_features->{'a^c_anaph_apers'});
     #   1: collocation
     $coref_features->{b_coll} = $self->_in_collocation( $cand, $anaph );
 
@@ -200,9 +174,9 @@ override '_binary_features' => sub {
     return $coref_features;
 };
 
-override '_unary_features' => sub {
+augment '_unary_features' => sub {
     my ($self, $node, $type) = @_;
-    my $coref_features = super();
+    my $coref_features = {};
 
 ###########################
     #   Morphological:
@@ -211,16 +185,13 @@ override '_unary_features' => sub {
     if ($type eq 'cand') {
         ( $coref_features->{c_cand_gen}, $coref_features->{c_cand_num} ) = _get_cand_gennum( $node );
         #print STDERR "UNDEF: " . $node->get_address ."\n" if (!defined $coref_features->{c_cand_gen});
-        for my $gen (qw/anim inan fem neut/) {
-            $coref_features->{'c_cand_gen_'.$gen} = (defined $coref_features->{c_cand_gen} && $coref_features->{c_cand_gen} =~ /$gen/) || 0;
-        }
     }
     else {
-        $coref_features->{c_anaph_gen} = $node->wild->{'multi_gram/gender'} // $node->gram_gender;
+        $coref_features->{c_anaph_gen} = $node->gram_gender;
         $coref_features->{c_anaph_num} = $node->gram_number;
-        for my $gen (qw/anim inan fem neut/) {
-            $coref_features->{'c_anaph_gen_'.$gen} = (defined $coref_features->{c_cand_gen} && $coref_features->{c_anaph_gen} =~ /$gen/) || 0;
-        }
+    }
+    for my $gen (qw/anim inan fem neut/) {
+        $coref_features->{'c_'.$type.'_gen_'.$gen} = (defined $coref_features->{'c_'.$type.'_gen'} && $coref_features->{'c_'.$type.'_gen'} =~ /$gen/) || 0;
     }
 
     #   24: 8 x tag($inode, $jnode), joined
@@ -238,6 +209,11 @@ override '_unary_features' => sub {
     if ($type eq 'cand') {
         $coref_features->{r_cand_freq} = $self->_np_freq->{ $node->t_lemma } || 0;
     }
+    
+    $coref_features->{$type.'_can_be_nom'} = $self->_can_be_nominative($node) ? $b_true : $b_false;
+    if ($type eq 'anaph') {
+        $self->_valency_for_prodrops($node, $coref_features, $type);
+    }
 
 ###########################
     #   Semantic:
@@ -248,7 +224,9 @@ override '_unary_features' => sub {
         #   EuroWordNet nouns
         $coref_features->{cand_ewn_class} = $self->_ewn_classes->{$node->t_lemma};
     }
-    return $coref_features;
+
+    my $sub_feats = inner() || {};
+    return { %$coref_features, %$sub_feats };
 };
 
 ### returns the final gender and number of a list of coordinated nodes: Tata a mama sli; Mama a dite sly
@@ -264,7 +242,7 @@ sub _get_coord_gennum {
     }
 
 	if ((scalar @{$parray} == 1) || ($antec->functor eq 'APPS')) {
-		$gen = $parray->[0]->wild->{'multi_gram/gender'} // $parray->[0]->gram_gender;
+		$gen = $parray->[0]->gram_gender;
 		$num = $parray->[0]->gram_number;
 	}
 	else {
@@ -318,7 +296,7 @@ sub _get_refl_gennum {
 	while ((!$node->gram_gender || ($node->gram_gender eq 'inher')) && (my ($antec) = $node->get_coref_gram_nodes)) {
         $node = $antec;
 	}
-    my $gen = $node->wild->{'multi_gram/gender'} // $node->gram_gender;
+    my $gen = $node->gram_gender;
 	return ($gen, $node->gram_number);
 }
 
@@ -343,7 +321,7 @@ sub _get_cand_gennum {
 			return _get_refl_gennum($ante);
 		}
 	}
-    my $gen = $node->wild->{'multi_gram/gender'} // $node->gram_gender;
+    my $gen = $node->gram_gender;
 	return ($gen, $node->gram_number);
 }
 
@@ -355,6 +333,80 @@ sub _get_atag {
 		return substr($anode->tag, $position, 1);
 	}
     return;
+}
+
+sub _valency_for_prodrops {
+    my ($self, $node, $coref_features, $type) = @_;
+
+    return if (!$node->is_generated);
+    return if ($node->functor ne "ACT");
+
+    my ($par) = grep {$_->formeme =~ /^v/} $node->get_eparents;
+    return if (!$par);
+    
+    my $val = $par->get_attr("val_frame.rf");
+    return if (!defined $val);
+    $val =~ s/^[^\#]*\#//;
+
+    my $frame = Treex::Tool::Vallex::ValencyFrame::get_frame_by_id("vallex-pcedt2.0.xml", $node->language, $val);
+    return if (!$frame);
+    
+    my @siblings = $node->get_siblings;
+
+    if ($self->_sibling_possibly_nominative($node, @siblings)) {
+        $coref_features->{$type.'_nom_sibling'} = $b_true;
+        $coref_features->{$type.'_nom_sibling_epar_lemma'} = $b_true . '_' . $par->t_lemma;
+    }
+    $coref_features->{$type.'_too_many_acc'} = $b_true if (_too_many_acc_among_siblings($node, $frame, @siblings));
+    if ($coref_features->{$type.'_too_many_acc'} && $coref_features->{$type.'_nom_sibling'}) {
+        $coref_features->{$type.'_too_many_acc_nom_sibling'} = $b_true;
+        $coref_features->{$type.'_too_many_acc_nom_sibling_epar_lemma'} = $b_true .'_'. $par->t_lemma;
+    }
+    if (_nominative_refused_by_valency($node, $frame, @siblings)) {
+        $coref_features->{$type.'_nom_refused'} = $b_true;
+        $coref_features->{$type.'_nom_refused_epar_lemma'} = $b_true .'_'. $par->t_lemma;
+    }
+}
+
+sub _sibling_possibly_nominative {
+    my ($self, $node, @siblings) = @_;
+    return any {$_->formeme =~ /^n:4$/ && $self->_can_be_nominative($_)} @siblings;
+}
+
+sub _too_many_acc_among_siblings {
+    my ($node, $frame, @siblings) = @_;
+    my $elements = $frame->elements_have_form("n:4");
+
+    my @acc_nodes = grep {$_->formeme =~ /^n:4$/} @siblings;
+
+    return (scalar(@$elements) < scalar(@acc_nodes));
+}
+
+sub _nominative_refused_by_valency {
+    my ($node, $frame, @siblings) = @_;
+    
+    my %siblings_forms = map {$_->formeme => 1} @siblings;
+    
+    my $elements = $frame->elements_have_form("n:1");
+    return all {
+        any {$siblings_forms{$_}} @{$_->forms_list}
+    } @$elements;
+}
+
+# nominative is sometimes mislabeled as accusative, which results in generating a superfluous #PersPron
+# use MorphoDiTa morpho analyzer to let the model know that this may happen
+sub _can_be_nominative {
+    my ($self, $tnode) = @_;
+
+    my $anode = $tnode->get_lex_anode;
+    return if (!defined $anode);
+
+    return if ($anode->tag !~ /^....4/);
+
+    my $tagged_lemmas = Ufal::MorphoDiTa::TaggedLemmas->new();
+    $self->_morpho->analyze($anode->form, 1, $tagged_lemmas);
+    my @possible_tags = map {my $tl = $tagged_lemmas->get($_); $tl->{tag}} 0 .. $tagged_lemmas->size()-1;
+    return any {$_ =~ /^....1/} @possible_tags;
 }
 
 # return if $inode and $jnode have the same collocation

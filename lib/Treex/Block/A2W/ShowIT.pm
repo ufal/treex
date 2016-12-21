@@ -20,11 +20,11 @@ sub process_zone {
     my ($self, $zone) = @_;
     my $bundle = $zone->get_bundle();
     my $entities_ref = $bundle->wild->{entities};
-    my $src_zone = first {$_->selector eq $self->source_selector} $bundle->get_all_zones();          
+    my $src_zone = first {$_->selector eq $self->source_selector} $bundle->get_all_zones();
     log_fatal 'No zone with selector '. $self->source_selector if !$src_zone;
 
     my $re_tst_sentence = $self->reconstruct_entities($zone->sentence, $entities_ref);
-    $re_tst_sentence = fix_quotes($re_tst_sentence);
+    $re_tst_sentence = $self->fix_quotes($re_tst_sentence, $zone);
     $zone->set_sentence($re_tst_sentence);
 
     if ($self->set_original_sentence) {
@@ -35,9 +35,13 @@ sub process_zone {
 }
 
 sub fix_quotes {
-  my $sentence = shift;
-  $sentence =~ s/“([^”]+?)”/„$1“/ig;
-  return $sentence;      
+    my ($self, $sentence, $zone) = @_;
+    if ($zone->language eq 'cs') {
+        $sentence =~ s/“([^”]+?)”/„$1“/ig;
+    } else {
+        $sentence =~ s/“([^”]+?)”/"$1"/ig; # In IT domain, it is safer to expect non-directional quotes
+    }
+    return $sentence;
 }
 
 sub reconstruct_entities {
@@ -57,7 +61,7 @@ sub reconstruct_entities {
           }
       }
   }
-  
+
   foreach my $block (qw (upaths wpaths files)){
     if (defined($entites_ref->{$block})){
       log_debug "Restoring paths:\n";

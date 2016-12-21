@@ -147,6 +147,7 @@ sub fix_formeme {
 
     # !!! tohle zahodit, az se pretrenuje maxent (doted nemohl videt spojku 'when')
     return 'v:když+fin' if ( $en_formeme =~ /when\+/ and $cs_formeme =~ /fin/ );
+    return 'v:pokud+fin' if $cs_formeme eq 'v:fin' && $en_formeme eq 'v:if+fin';
 
     return 'adj:attr' if $cs_formeme eq 'n:2' && $cs_tlemma =~ /^ten(to)?$/
             && $cs_parent_formeme =~ /^n/ && $cs_tnode->precedes($cs_parent);
@@ -156,10 +157,9 @@ sub fix_formeme {
     return 'adv:' if $cs_pos eq 'D' and $cs_formeme =~ /n:(.+)\+/ and $1 ne "než";    # 'nez' is a conjunction indeed
 
     # 'zpusob jak ...'
-    if ( $cs_formeme eq 'v:inf' and $en_formeme eq 'v:to+inf' and $cs_parent_tlemma eq 'způsob' ) {
-        return 'v:jak+inf';
-    }
+    return 'v:jak+inf' if $cs_formeme eq 'v:inf' && $en_formeme eq 'v:to+inf' && $cs_parent_tlemma eq 'způsob';
 
+    return 'n:v+6' if $cs_tlemma eq 'pořádek' && $en_formeme eq 'adj:compl';
     return;
 }
 
