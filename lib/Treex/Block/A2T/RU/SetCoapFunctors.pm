@@ -38,11 +38,12 @@ sub process_tnode {
 
 =item Treex::Block::A2T::RU::SetCoapFunctors
 
-Functors (attribute C<functor>) in Czech t-trees have to be assigned in (at
+Functors (attribute C<functor>) in t-trees have to be assigned in (at
 least) two phases. This block corresponds to the first phase, in which only
 coordination and apposition functors are filled (which makes it possible to use
 the notions of effective parents and effective children in the following
 phase).
+This block is specific for Russian.
 
 =back
 
