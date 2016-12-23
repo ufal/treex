@@ -4,6 +4,7 @@ use Treex::Core::Common;
 extends 'Treex::Block::Read::BaseCoNLLReader';
 
 has 'sent_in_file' => ( is => 'rw', isa => 'Int', default => 0 );
+has 'doc_reset_sent_id' => ( is => 'ro', isa => 'Bool', default => 0 );
 has 'use_p_attribs' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 sub next_document {
@@ -11,6 +12,7 @@ sub next_document {
     my $text = $self->next_document_text();
     log_debug "Processing filename: ". $self->from->current_filename;
     return if !defined $text;
+    $self->set_sent_in_file(0) if ($self->doc_reset_sent_id);
 
     my $document = $self->new_document();
     foreach my $tree ( split /\n\s*\n/, $text ) {
