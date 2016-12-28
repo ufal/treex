@@ -29,6 +29,7 @@ sub get_scenario_string {
     'W2A::TagTreeTagger lemmatize=1',
     # copy the TreeTagger lemma to the wild
     q(Util::Eval anode='$.wild->{tt_lemma} = $.lemma'),
+    'A2N::RU::NameTag',
     # Run Russian UDPipe
     'W2A::UDPipe tokenize=0 model_alias=ru_prague',
     # copy UDPipe lemma to the wild and restore the TreeTagger lemma
