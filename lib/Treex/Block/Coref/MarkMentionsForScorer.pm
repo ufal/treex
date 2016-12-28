@@ -3,14 +3,16 @@ use Moose;
 use Treex::Core::Common;
 
 use Treex::Tool::Coreference::Utils;
+use Treex::Tool::Coreference::NodeFilter;
 
 extends 'Treex::Core::Block';
 
 has 'layer' => ( is => 'ro', isa => enum([qw/a t/]), default => 'a' );
 has 'only_heads' => ( is => 'ro', isa => 'Bool', default => 1 );
 has 'clear' => ( is => 'ro', isa => 'Bool', default => 1 );
+has 'dummy_cands' => ( is => 'ro', isa => 'Bool', default => 0 );
 
-has '_entities' => ( is => 'rw', isa => 'HashRef[Int]', default => sub {{}} );
+has '_entities' => ( is => 'rw', isa => 'HashRef[Str]', default => sub {{}} );
 
 # project only nodes that are not anaphors of grammatical coreference
 #sub _is_coref_text_mention {
@@ -34,24 +36,32 @@ before 'process_document' => sub {
         }
     }
 
-    my @ttrees = map { $_->get_tree($self->language,'t',$self->selector) } $doc->get_bundles;
-    my @chains = Treex::Tool::Coreference::Utils::get_coreference_entities(\@ttrees);
-    my $entity_idx = 1;
-    foreach my $chain (@chains) {
-        foreach my $node (@$chain) {
-            $self->_entities->{$node->id} = $entity_idx;
+    if (!$self->dummy_cands) {
+        my @ttrees = map { $_->get_tree($self->language,'t',$self->selector) } $doc->get_bundles;
+        my @chains = Treex::Tool::Coreference::Utils::get_coreference_entities(\@ttrees);
+        my $entity_idx = 1;
+        foreach my $chain (@chains) {
+            foreach my $node (@$chain) {
+                $self->_entities->{$node->id} = $entity_idx;
+            }
+            $entity_idx++;
         }
-        $entity_idx++;
     }
 };
 
 sub process_tnode {
     my ($self, $tnode) = @_;
-    
-#    return if (!_is_coref_text_mention($tnode));
-    my $entity_idx = $self->_entities->{$tnode->id};
-    return if (!defined $entity_idx);
 
+    my $entity_idx;
+    if ($self->dummy_cands) {
+         return if (!Treex::Tool::Coreference::NodeFilter::matches($tnode, ['all_anaph_corbon17']));
+         $entity_idx = 0;
+    }
+    else {
+#    return if (!_is_coref_text_mention($tnode));
+        $entity_idx = $self->_entities->{$tnode->id};
+        return if (!defined $entity_idx);
+    }
     
     my @mention_nodes;
 # TODO what about discarding relative clauses
