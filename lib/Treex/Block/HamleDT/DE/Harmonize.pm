@@ -48,7 +48,7 @@ sub process_zone
     ###!!! assumes that coordinations are solved, and coordinations are also
     ###!!! transformed inside the phrase model.
     #$self->process_tiger_prepositional_phrases($root); ###!!!
-    $self->mark_deficient_coordination($root);
+    #$self->mark_deficient_coordination($root);
     $self->rehang_auxc($root);
     $self->check_deprels($root);
 }
@@ -560,6 +560,10 @@ sub mark_deficient_coordination
         # Note: There are a few cases where the conjunction is labeled "CD" instead of "JU", mostly when the parent is not Pred but ExD.
         # Since normal coordination has been solved by now, we just look for childless Coords.
         my @children = $node->children();
+        print STDERR "DEPREL: ".$node->deprel()."\n";
+        print STDERR "CONLL_DEPREL: ".$node->conll_deprel()."\n";
+        print STDERR "CONLL_DEPREL: ".$node->get_attr("conll/deprel")."\n";
+        print STDERR "LEMMA: ".$node->lemma()."\n";
         next unless($node->conll_deprel() eq 'JU' && ($node->is_leaf() || scalar(@children)==1 && $children[0]->form() eq 'Nun') && !$node->is_member() ||
             $node->deprel() eq 'Coord' && $node->is_leaf());
         my $main = $node->parent();
