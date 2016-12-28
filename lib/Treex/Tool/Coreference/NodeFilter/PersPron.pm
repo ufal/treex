@@ -40,9 +40,8 @@ sub is_pers {
         #}
         return $is_pers;
     }
-    if ($node->language eq 'ru') {
-        return _is_pers_ru($node, $args);
-    }
+    # other: Russian, German
+    return _is_pers_prague($node, $args);
 }
 
 sub is_3rd_pers {
@@ -96,9 +95,6 @@ sub is_possessive {
     if ($anode->language eq "en") {
         return $anode->tag eq 'PRP$';
     }
-    elsif ($anode->language eq "cs") {
-        return $anode->tag =~ /^.[18SU]/;
-    }
     elsif ($anode->language eq "ru") {
         return 1 if ($anode->tag =~ /^P[S8]/);
         return 1 if (lc($anode->lemma) eq "свой");
@@ -106,7 +102,10 @@ sub is_possessive {
         return 1 if (lc($anode->form) eq "её");
         return 1 if (lc($anode->form) eq "их");
     }
-    return 0;
+    else {
+        # Czech, German
+        return $anode->tag =~ /^.[18SU]/;
+    }
 }
 
 ###############################################################
@@ -347,26 +346,27 @@ sub _is_3rd_pers_en_a {
     return 1;
 }
 
-########################### RUSSIAN #############################
+########################### PRAGUE STYLE GENERAL #############################
+########################### RUSSIAN, GERMAN #############################
 
-sub _is_pers_ru {
+sub _is_pers_prague {
     my ($node, $args) = @_;
     if ($node->get_layer eq "a") {
-        return _is_pers_ru_a($node, $args);
+        return _is_pers_prague_a($node, $args);
     }
     if ($node->get_layer eq "t") {
-        return _is_pers_ru_t($node, $args);
+        return _is_pers_prague_t($node, $args);
     }
 }
 
-sub _is_pers_ru_t {
+sub _is_pers_prague_t {
     my ($tnode, $args) = @_;
     my $anode = $tnode->get_lex_anode;
     return 0 if !$anode;
-    return _is_pers_ru_a($anode);
+    return _is_pers_prague_a($anode, $args);
 }
 
-sub _is_pers_ru_a {
+sub _is_pers_prague_a {
     my ($anode, $args) = @_;
     
     # is pronoun
