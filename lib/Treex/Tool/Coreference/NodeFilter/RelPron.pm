@@ -3,18 +3,18 @@ package Treex::Tool::Coreference::NodeFilter::RelPron;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Lexicon::CS;
+use Treex::Tool::Coreference::NodeFilter::Utils qw/ternary_arg/;
 
 sub is_relat {
-    my ($tnode) = @_;
+    my ($tnode, $args) = @_;
     if ($tnode->language eq 'cs') {
-        return _is_relat_cs($tnode);
+        return _is_relat_cs($tnode, $args);
     }
     if ($tnode->language eq 'en') {
-        return _is_relat_en($tnode);
+        return _is_relat_en($tnode, $args);
     }
-    if ($tnode->language eq 'ru') {
-        return _is_relat_ru($tnode);
-    }
+    # Russian, German
+    return _is_relat_prague($tnode, $args);
 }
 
 sub is_coz_cs {
@@ -43,7 +43,7 @@ sub _is_relat_cs {
 }
 
 sub _is_relat_cs_t {
-    my ($tnode) = @_;
+    my ($tnode, $args) = @_;
 
     #my $is_via_indeftype = _is_relat_via_indeftype($tnode);
     #return ($is_via_indeftype ? 1 : 0);
@@ -53,13 +53,13 @@ sub _is_relat_cs_t {
     
     my $anode = $tnode->get_lex_anode;
     return 0 if !$anode;
-    return _is_relat_cs_a($anode);
+    return _is_relat_cs_a($anode, $args);
 }
 
 sub _is_relat_cs_a {
-    my ($anode) = @_;
+    my ($anode, $args) = @_;
 
-    my $has_relat_tag = _is_relat_cs_via_tag($anode);
+    my $has_relat_tag = _is_relat_prague_via_tag($anode, $args);
     my $is_relat_lemma = _is_relat_cs_via_lemma($anode); 
     
     #return $has_relat_tag;
@@ -95,31 +95,32 @@ sub _is_relat_en_a {
     return 0;
 }
 
-sub _is_relat_ru {
+sub _is_relat_prague {
     my ($node, $args) = @_;
 
     if ($node->get_layer eq "a") {
-        return _is_relat_ru_a($node, $args);
+        return _is_relat_prague_a($node, $args);
     }
     else {
-        return _is_relat_ru_t($node, $args);
+        return _is_relat_prague_t($node, $args);
     }
 }
 
-sub _is_relat_ru_t {
-    my ($tnode) = @_;
+sub _is_relat_prague_t {
+    my ($tnode, $args) = @_;
     #my $is_via_indeftype = _is_relat_via_indeftype($tnode);
     #return $is_via_indeftype ? 1 : 0;
     my $anode = $tnode->get_lex_anode();
     return 0 if (!defined $anode);
-    return _is_relat_ru_a($anode);
+    return _is_relat_prague_a($anode, $args);
 }
 
-sub _is_relat_ru_a {
-    my ($anode) = @_;
+sub _is_relat_prague_a {
+    my ($anode, $args) = @_;
+    # Russian, German
     # Russian parsed by UDPipe trained on HamleDT uses the same tags as Czech, except for pronouns
     # pronouns must be fixed by hand in W2A::RU::FixPronouns
-    return _is_relat_cs_via_tag($anode);
+    return _is_relat_prague_via_tag($anode, $args);
 }
 
 # so far the best
@@ -133,9 +134,8 @@ sub _is_relat_via_indeftype {
 }
 
 # "kde" and "kdy" are missing since their tags are Dd------
-sub _is_relat_cs_via_tag {
-    my ($anode) = @_;
-    
+sub _is_relat_prague_via_tag {
+    my ($anode, $args) = @_;
     # 1 = Relative possessive pronoun jehož, jejíž, ... (lit. whose in subordinate relative clause) 
     # 4 = Relative/interrogative pronoun with adjectival declension of both types (soft and hard) (jaký, který, čí, ..., lit. what, which, whose, ...) 
     # 9 = Relative pronoun jenž, již, ... after a preposition (n-: něhož, niž, ..., lit. who)
@@ -144,7 +144,12 @@ sub _is_relat_cs_via_tag {
     # K = Relative/interrogative pronoun kdo (lit. who), incl. forms with affixes -ž and -s (affixes are distinguished by the category VAR (for -ž) and PERSON (for -s))
     # Q = Pronoun relative/interrogative co, copak, cožpak (lit. what, isn't-it-true-that)
     # ? = Numeral kolik (lit. how many/how much)
-    return $anode->tag =~ /^.[149EJKQ\?]/;
+    
+    my $arg_iswhat = $args->{is_what} // 0;
+    my $iswhat = $anode->tag =~ /^.Q/;
+    return 0 if !ternary_arg($arg_iswhat, $iswhat);
+    
+    return $anode->tag =~ /^.[149EJK\?]/;
 }
 
 # there is a problem with "již"

@@ -17,11 +17,11 @@ use List::MoreUtils qw/any/;
 sub get_types {
     my ($node) = @_;
     my @types = @{$node->wild->{filter_types} // []};
-    if (!@types) {
+    #if (!@types) {
         my $types_hash = get_types_force($node);
         @types = sort keys %$types_hash;
         $node->wild->{filter_types} = \@types;
-    }
+    #}
     return @types;
 }
 
@@ -62,6 +62,9 @@ sub get_types_force {
     if (Treex::Tool::Coreference::NodeFilter::RelPron::is_relat($node)) {
         $types->{relpron} = 1;
         $types->{all_anaph} = 1;
+    }
+    if (Treex::Tool::Coreference::NodeFilter::RelPron::is_relat($node, { is_what => -1 })) {
+        $types->{'relpron.no_what'} = 1;
         $types->{all_anaph_corbon17} = 1;
     }
     if (Treex::Tool::Coreference::NodeFilter::RelPron::is_coz_cs($node)) {
@@ -75,6 +78,13 @@ sub get_types_force {
         $types->{cor} = 1;
         $types->{zero} = 1;
         $types->{all_anaph} = 1;
+    }
+    if (Treex::Tool::Coreference::NodeFilter::Noun::is_sem_noun($node) &&
+        !Treex::Tool::Coreference::NodeFilter::RelPron::is_relat($node) &&
+        !Treex::Tool::Coreference::NodeFilter::PersPron::is_pers($node, { expressed => 0, person_3rd => 0, reflexive => 0 }) &&
+        !Treex::Tool::Coreference::NodeFilter::DemonPron::is_demon($node)) {
+        $types->{'noun.only'} = 1;
+        $types->{all_anaph_corbon17} = 1;
     }
     if (Treex::Tool::Coreference::NodeFilter::Noun::is_sem_noun($node)) {
         $types->{'noun'} = 1;
