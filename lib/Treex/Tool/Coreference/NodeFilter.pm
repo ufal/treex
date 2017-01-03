@@ -86,6 +86,13 @@ sub get_types_force {
         $types->{'noun.only'} = 1;
         $types->{all_anaph_corbon17} = 1;
     }
+    if (Treex::Tool::Coreference::NodeFilter::Noun::is_sem_noun($node, { definite => 1 }) &&
+        !Treex::Tool::Coreference::NodeFilter::RelPron::is_relat($node) &&
+        !Treex::Tool::Coreference::NodeFilter::PersPron::is_pers($node, { expressed => 0, person_3rd => 0, reflexive => 0 }) &&
+        !Treex::Tool::Coreference::NodeFilter::DemonPron::is_demon($node)) {
+        $types->{'noun.only.definite'} = 1;
+        $types->{all_anaph_corbon17} = 1;
+    }
     if (Treex::Tool::Coreference::NodeFilter::Noun::is_sem_noun($node)) {
         $types->{'noun'} = 1;
     }
