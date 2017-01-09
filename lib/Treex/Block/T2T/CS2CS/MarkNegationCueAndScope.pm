@@ -5,6 +5,10 @@ use Treex::Core::Common;
 use List::MoreUtils "uniq";
 extends 'Treex::Core::Block';
 
+has type => ( is => 'rw', isa => 'Str', default => '' );
+
+has special => ( is => 'rw', isa => 'Str', default => '' );
+
 my %neg_tlemmas = (
     ne => 1,
     nikoli => 1,
@@ -45,6 +49,12 @@ sub process_ttree {
     # scope: "velký"
     my @neg_tnodes_A = grep { defined $_->gram_negation && $_->gram_negation eq 'neg1' } @descendants;
     foreach my $neg_tnode (@neg_tnodes_A) {
+        if ($self->type && $self->type ne 'A') {
+            next;
+        }
+        if ($self->special) {
+            next;
+        }
         $negation_id++;
         my $neg_anode = $neg_tnode->get_lex_anode;
         $neg_anode->wild->{negation}->{$negation_id}->{cue} = 1;
@@ -64,12 +74,17 @@ sub process_ttree {
             # type B
             # e.g. "ne nadarmo se říká..."
             # cue: "ne"
-            $negation_id++;
+            if ($self->type && $self->type ne 'B') {
+                next;
+            }
             $neg_anode->wild->{negation}->{$negation_id}->{cue} = 1;
         } else {
             # type C
             # e.g. "nepřijel na koncert" ("#Neg přijet koncert")
             # cue: "ne"
+            if ($self->type && $self->type ne 'C') {
+                next;
+            }
             my @nodes = ($neg_tnode);
             do {
                 my @eparents = map { $_->get_eparents } @nodes;
@@ -85,7 +100,6 @@ sub process_ttree {
             } while (@nodes && !defined $neg_anode);
 
             if (defined $neg_anode) {
-                $negation_id++;
                 $neg_anode->wild->{negation}->{$negation_id}->{cue} = 1;
                 $neg_anode->wild->{negation}->{$negation_id}->{cue_from} = 0;
                 $neg_anode->wild->{negation}->{$negation_id}->{cue_to} = 1;
@@ -111,16 +125,27 @@ sub process_ttree {
             # type 1/2
             # Add topological siblings (i.e. incl. coap root siblings)
             push @scope_candidates, $neg_tnode->get_siblings( {following_only => 1} );
+            if ($self->special eq 'notfa' && !grep { !defined $_->tfa } @scope_candidates) {
+                next;
+            }
+            if ($self->special eq 'coord' && !grep { $_->is_member || $_->nodetype eq 'coap' } @scope_candidates) {
+                next;
+            }
             # Add all nodes with correct tfa and their descendants
             map { $_->wild->{negation}->{$negation_id}->{scope} = 1 }
                 map  { $_->get_anodes }
                 grep { $_->follows($neg_tnode) }
                 map  { $_->get_descendants({add_self=>1}) }
                 grep { tfa_ok($tfa, $_) }
-                @scope_candidates
+                @scope_candidates;
+            $negation_id++;
         } else {
             # type 3
+            if ($self->special) {
+                next;
+            }
             $neg_anode->wild->{negation}->{$negation_id}->{scope} = 1;
+            $negation_id++;
         }
     }
 
