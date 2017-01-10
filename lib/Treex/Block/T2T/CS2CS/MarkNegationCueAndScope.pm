@@ -83,7 +83,7 @@ sub process_ttree {
             $type_ok = !$self->type || $self->type eq 'C';
             my @nodes = ($neg_tnode);
             do {
-                my @eparents = map { $_->get_eparents } @nodes;
+                my @eparents = grep { !$_->is_root } map { $_->get_eparents } @nodes;
                 my @negated_verb_anodes =
                     grep { $_->tag =~ /^V.{9}N/ }
                     map { $_->get_anodes  }
