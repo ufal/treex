@@ -38,8 +38,8 @@ sub process_zone {
     my ( $self, $zone ) = @_;
 
     my $aroot = $zone->get_atree();
-    my $negations_count = $aroot->wild->{negation}->{negations_count};
-    if ($negations_count == 0 && $self->only_negated) {
+    my $negation_ids = $aroot->wild->{negation}->{negation_ids};
+    if ((!defined $negation_ids || @$negation_ids == 0) && $self->only_negated) {
         return;
     }
     
@@ -74,9 +74,8 @@ sub process_zone {
         }
         print { $self->_file_handle } "\n";
     }
-
     my @descendants = $aroot->get_descendants({ordered => 1});
-    foreach my $negation_id (1..$negations_count) {
+    foreach my $negation_id (@$negation_ids) {
         my @cue_nodes = grep { $_->wild->{negation}->{$negation_id}->{cue} } @descendants;
         my $cue = join ' ', map { anode_substr($_, $negation_id, 'cue') } @cue_nodes;
 
