@@ -8,7 +8,7 @@ extends 'Treex::Block::Read::BaseAlignedTextReader';
 has 'conll_format' => ( is => 'ro', isa => 'Str', default => '2009', documentation => 'CoNLL flavor: 2006 or 2009 or conllu, default is 2009.' );
 has 'is_member_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'is_parenthesis_root_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
-
+has nonparsed => ( is => 'rw', isa => 'Bool', default => 0 );
 
 
 sub next_document {
@@ -75,7 +75,17 @@ sub next_document {
                 $newnode->shift_after_subtree($aroot);
                 $lemma  = $plemma  if $lemma  eq '_';
                 $pos    = $ppos    if $pos    eq '_';
-                $head   = $phead   if $head   eq '_';
+                if ($head eq '_') {
+                    if (defined $phead && $phead ne '_') {
+                        $head = $phead;
+                    } else {
+                        if (!$self->nonparsed) {
+                            log_fatal("Head must be set a number!");
+                        } else {
+                            $head = 0;
+                        }
+                    }
+                }
                 $deprel = $pdeprel if $deprel eq '_';
                 if($self->is_parenthesis_root_within_afun)
                 {
@@ -143,6 +153,10 @@ list of files for this zone.
 This reader assumes the CoNLL 2009 file format.
 
 There is rudimentary suppport for conllu (skipping comments only at the moment).
+
+=head1 PARAMS
+
+nonparsed -- allow head set to _ (udapi produces that when only tagging is done)
 
 =head1 AUTHORS
 
