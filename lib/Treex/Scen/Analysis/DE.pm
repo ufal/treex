@@ -84,7 +84,7 @@ sub get_scenario_string {
             'A2T::BuildTtree',
             'A2T::RehangUnaryCoordConj',
             'A2T::SetIsMember',
-            'A2T::RU::SetCoapFunctors',
+            'A2T::DE::SetCoapFunctors',
 #    q(Util::Eval tnode='print $.t_lemma."\n" if ($.is_coap_root);')
             'A2T::FixIsMember',
             'A2T::HideParentheses',
