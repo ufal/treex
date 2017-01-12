@@ -51,6 +51,22 @@ sub process_zone
     #$self->mark_deficient_coordination($root);
     $self->rehang_auxc($root);
     $self->check_deprels($root);
+
+    foreach my $node ($root->get_descendants({ordered => 1})) {
+        my $prontype = $node->get_iset('prontype');
+        my $adpostype = $node->get_iset('adpostype');
+        if (defined $adpostype && $adpostype eq "prep") {
+            my $orig_deprel = $node->deprel;
+            my @kids = $node->get_children;
+            if (@kids == 1) {
+                $kids[0]->set_deprel($orig_deprel);
+            }
+            $node->set_deprel("AuxP");
+        }
+        elsif (defined $prontype && $prontype eq "art") {
+            $node->set_deprel("AuxA");
+        }
+    }
 }
 
 
