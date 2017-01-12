@@ -264,18 +264,18 @@ sub _is_3rd_prodrop_cs_t {
 # possible args:
 #   skip_nonref : skip personal pronouns that are labeled as non-referential
 #   reflexive : include reflexive pronouns (default = 1)
-sub _is_3rd_pers_en {
+sub _is_pers_en {
     my ($node, $args) = @_;
 
     if ($node->get_layer eq "a") {
-        return _is_3rd_pers_en_a($node, $args);
+        return _is_pers_en_a($node, $args);
     }
     else {
-        return _is_3rd_pers_en_t($node, $args);
+        return _is_pers_en_t($node, $args);
     }
 }
 
-sub _is_3rd_pers_en_t {
+sub _is_pers_en_t {
     my ($tnode, $args) = @_;
         
     # personal pronoun 
@@ -318,7 +318,7 @@ sub _is_3rd_pers_en_t {
     return $ok_skip_nonref;  # referential (if it's set)
 }
 
-sub _is_3rd_pers_en_a {
+sub _is_pers_en_a {
     my ($anode, $args) = @_;
     
     # is central (sometimes called personal)  pronoun
