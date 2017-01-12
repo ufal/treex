@@ -56,7 +56,7 @@ has functors => (
 
 has coref => (
     is => 'ro',
-    isa => enum( [qw(simple BART)] ),
+    isa => enum( [qw(simple BART none)] ),
     default => 'simple',
     documentation => 'Which coreference resolver to use',
 );
@@ -204,7 +204,8 @@ sub get_scenario_string {
             $self->functors eq 'VW' ? 'A2T::SetNodetype' : (), # fix nodetype changes induced by functors
             $self->valframes ? 'A2T::EN::SetValencyFrameRefVW' : (),
             $self->mark_it ? 'A2T::EN::MarkReferentialIt resolver_type=nada threshold=0.5 suffix=nada_0.5' : (), # you need Treex::External::NADA installed for this
-            $self->coref eq 'BART' ? 'Coref::EN::ResolveBART2 is_czeng=1' : 'A2T::EN::FindTextCoref',
+            $self->coref eq 'BART' ? 'Coref::EN::ResolveBART2 is_czeng=1' : 
+                ( $self->coref eq 'simple' ? 'A2T::EN::FindTextCoref' : () ),
             ;
     }
 
