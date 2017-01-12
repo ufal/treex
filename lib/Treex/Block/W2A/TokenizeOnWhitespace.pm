@@ -43,8 +43,8 @@ sub process_zone {
             # using a non-greedy regex and the expected next token returned from the tokenization.
             my $next_token = $tokens[$i+1];
             my ($first, $rest) = ($sentence =~ /^(.*?)(\Q$next_token\E.*)$/);
-            $no_space_after = 1 if $first !~ /\s$/;
-            $sentence = $rest;
+            $no_space_after = 1 if (defined $first && $first !~ /\s$/);
+            $sentence = $rest if (defined $rest);
         }
 
         # create new a-node
