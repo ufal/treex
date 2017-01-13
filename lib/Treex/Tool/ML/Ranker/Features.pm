@@ -100,6 +100,10 @@ sub _binary_features {
     log_warn 'Treex::Tool::ML::Ranker::Features is an abstract class. The _binary_features method must be implemented in a subclass.';
 }
 
+sub _add_global_features {
+    #log_warn 'Treex::Tool::ML::Ranker::Features is an abstract class. The _add_global_features method must be implemented in a subclass.';
+}
+
 sub merge_cand_feats {
     my ($cand_feats_h, $merge_cands) = @_;
     my ($new_classes, $cands_to_new_classes) = @$merge_cands;
@@ -142,7 +146,6 @@ sub create_instances {
     my ($self, $node1, $spec_classes, $cands, $merge_cands) = @_;
     
     my $node1_unary_h = $self->_unary_features( $node1, $self->node1_label );
-    my $node1_unary_l = feat_hash_to_nslist($node1_unary_h);
 
     my @spec_class_feats_h = ();
     # TODO: ord should be incremented only for the real candidates, however current models are trained with ord=1 for __SELF__
@@ -164,17 +167,21 @@ sub create_instances {
         push @cands_feats_h, $cand_h;
         $ord++;
     }
+    $self->_add_global_features(\@cands_feats_h, $node1_unary_h, $cands, $node1);
+
 
     if (defined $merge_cands) {
         @cands_feats_h = merge_cand_feats(\@cands_feats_h, $merge_cands);
     }
     my @all_cand_feats_h = ( @spec_class_feats_h, @cands_feats_h );
 
+    # transform from hashes to lists
     my @all_cand_feats = ();
     foreach my $cand_h (@all_cand_feats_h) {
         my $cand_l = feat_hash_to_nslist($cand_h);
         push @all_cand_feats, $cand_l;
     }
+    my $node1_unary_l = feat_hash_to_nslist($node1_unary_h);
 
     my $instance = [\@all_cand_feats, $node1_unary_l];
     
