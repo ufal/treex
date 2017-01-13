@@ -160,7 +160,7 @@ sub _is_pers_cs_a {
     return 1;
 }
 
-sub _is_3rd_pers_cs_t {
+sub _is_pers_cs_t {
     my ($tnode, $args) = @_;
         
     # personal pronoun 
