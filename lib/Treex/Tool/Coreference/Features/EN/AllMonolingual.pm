@@ -192,7 +192,7 @@ sub _get_tag_pos_num {
 }
 
 sub _ante_synt_type {
-    my ($self, $cand, $pos) = @_;
+    my ($self, $cand) = @_;
     my @anodes_prep = grep {my ($tag, $pos, $num) = $self->_get_tag_pos_num($cand); defined $pos && ($pos eq 'R')} $cand->get_aux_anodes;
 
     if (@anodes_prep > 0) {
@@ -212,7 +212,7 @@ sub _ante_synt_type {
 }
 
 sub _ante_type {
-    my ($self, $cand, $pos) = @_;
+    my ($self, $cand) = @_;
 
     if (defined $cand->get_n_node) {
         return 'ne';
