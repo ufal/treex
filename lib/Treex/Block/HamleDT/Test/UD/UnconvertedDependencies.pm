@@ -7,7 +7,7 @@ extends 'Treex::Block::Test::BaseTester';
 # 40 universal dependency relations
 my @relations =
 (
-    'nsubj', 'nsubjpass', 'obj', 'iobj', 'csubj', 'csubjpass', 'ccomp', 'xcomp',
+    'nsubj', 'nsubj:pass', 'obj', 'iobj', 'csubj', 'csubj:pass', 'ccomp', 'xcomp',
     'nmod', 'advmod', 'advcl', 'neg',
     'vocative', 'discourse', 'expl', 'aux', 'auxpass', 'cop', 'mark',
     'appos', 'amod', 'det', 'nummod', 'acl', 'case',

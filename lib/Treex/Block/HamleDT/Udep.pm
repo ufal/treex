@@ -267,7 +267,7 @@ sub convert_deprels
         {
             $deprel = 'parataxis';
         }
-        # Subject: nsubj, nsubjpass, csubj, csubjpass
+        # Subject: nsubj, nsubj:pass, csubj, csubj:pass
         elsif($deprel eq 'Sb')
         {
             # Is the parent a passive verb?
@@ -276,7 +276,7 @@ sub convert_deprels
             if($parent->iset()->is_passive())
             {
                 # If this is a verb (including infinitive) then it is a clausal subject.
-                $deprel = $node->is_verb() ? 'csubjpass' : 'nsubjpass';
+                $deprel = $node->is_verb() ? 'csubj:pass' : 'nsubj:pass';
             }
             else # Parent is not passive.
             {
@@ -1366,11 +1366,11 @@ sub check_ncsubjpass_when_auxpass
             {
                 if($child->deprel() eq 'nsubj')
                 {
-                    $child->set_deprel('nsubjpass');
+                    $child->set_deprel('nsubj:pass');
                 }
                 elsif($child->deprel() eq 'csubj')
                 {
-                    $child->set_deprel('csubjpass');
+                    $child->set_deprel('csubj:pass');
                 }
             }
         }
