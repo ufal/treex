@@ -405,7 +405,7 @@ sub convert_deprels
         }
         # Reflexive pronoun "se", "si" with inherently reflexive verbs.
         # Unfortunately, previous harmonization to the Prague style abused the AuxT label to also cover Germanic verbal particles and other compound-like stuff with verbs.
-        # We have to test for reflexivity if we want to output expl!
+        # We have to test for reflexivity if we want to output expl:pv!
         elsif($deprel eq 'AuxT')
         {
             # This appears in Slavic languages, although in theory it could be used in some Romance and Germanic languages as well.
@@ -413,7 +413,7 @@ sub convert_deprels
             # Most Dutch pronouns used with this label are tagged as reflexive but a few are not.
             if($node->is_reflexive() || $node->is_pronoun())
             {
-                $deprel = 'expl';
+                $deprel = 'expl:pv';
             }
             # The Tamil deprel CC (compound) has also been converted to AuxT. 11 out of 12 occurrences are tagged as verbs.
             elsif($node->is_verb())
@@ -434,7 +434,7 @@ sub convert_deprels
         # Reflexive pronoun "se", "si" used for reflexive passive.
         elsif($deprel eq 'AuxR')
         {
-            $deprel = 'auxpass:reflex';
+            $deprel = 'expl:pass';
         }
         # AuxZ: intensifier or negation
         elsif($deprel eq 'AuxZ')
