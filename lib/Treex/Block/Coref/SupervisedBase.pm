@@ -13,6 +13,8 @@ has 'special_classes' => (
     builder     => '_build_special_classes',
 );
 
+has 'aligned_feats' => ( is => 'ro', isa => 'Bool', builder => 'build_aligned_feats', lazy => 1 );
+
 has '_feature_extractor' => (
     is          => 'ro',
     required    => 1,
@@ -30,6 +32,10 @@ has '_ante_cands_selector' => (
 
 sub _build_special_classes {
     return [ "c^__SELF__" ];
+}
+
+sub build_aligned_feats {
+    return 0;
 }
 
 sub _build_node_types {

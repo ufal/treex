@@ -3,19 +3,16 @@ use Moose::Role;
 use Treex::Core::Common;
 
 use Treex::Tool::Coreference::AnteCandsGetter;
-use Treex::Tool::Coreference::Features::RelPron;
-#use Treex::Tool::Coreference::EN::PronCorefFeatures;
-#use Treex::Tool::Coreference::CS::PronCorefFeatures;
-#use Treex::Tool::Coreference::Features::Container;
-#use Treex::Tool::Coreference::Features::Aligned;
-#use Treex::Tool::Coreference::Features::Coreference;
+#use Treex::Tool::Coreference::Features::RelPron;
+use Treex::Tool::Coreference::Features::Container;
+use Treex::Tool::Coreference::Features::Aligned;
+use Treex::Tool::Coreference::Features::Coreference;
 use Treex::Tool::Coreference::Features::CS::AllMonolingual;
+use Treex::Tool::Coreference::Features::EN::AllMonolingual;
 
 with 'Treex::Block::Coref::SupervisedBase' => {
     -excludes => [ '_build_feature_extractor', '_build_ante_cands_selector' ],
 };
-
-has 'aligned_feats' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 sub _build_node_types {
     return 'relpron';
@@ -23,29 +20,30 @@ sub _build_node_types {
 
 sub _build_feature_extractor {
     my ($self) = @_;
-    #my @container = ();
+    my @container = ();
  
     #my $cs_fe = Treex::Tool::Coreference::Features::RelPron->new();
+    #return $cs_fe;
     my $cs_fe = Treex::Tool::Coreference::Features::CS::AllMonolingual->new();
-    return $cs_fe;
-    #push @container, $cs_fe;
+    push @container, $cs_fe;
 
-    #if ($self->aligned_feats) {
-    #    my $aligned_fe = Treex::Tool::Coreference::Features::Aligned->new({
-    #        feat_extractors => [ 
-    #            Treex::Tool::Coreference::EN::PronCorefFeatures->new(),
-    #            #Treex::Tool::Coreference::Features::Coreference->new(),
-    #        ],
-    #        align_lang => 'en',
-    #        align_types => ['supervised', '.*'],
-    #    });
-    #    push @container, $aligned_fe;
-    #}
+    if ($self->aligned_feats) {
+        my $aligned_fe = Treex::Tool::Coreference::Features::Aligned->new({
+            feat_extractors => [ 
+                Treex::Tool::Coreference::Features::EN::AllMonolingual->new(),
+                Treex::Tool::Coreference::Features::Coreference->new(),
+            ],
+            align_lang => 'en',
+            align_selector => 'src',
+            align_types => ['supervised', '.*'],
+        });
+        push @container, $aligned_fe;
+    }
     
-    #my $fe = Treex::Tool::Coreference::Features::Container->new({
-    #    feat_extractors => \@container,
-    #});
-    #return $fe;
+    my $fe = Treex::Tool::Coreference::Features::Container->new({
+        feat_extractors => \@container,
+    });
+    return $fe;
 }
 
 sub _build_ante_cands_selector {
