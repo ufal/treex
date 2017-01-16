@@ -179,7 +179,7 @@ sub convert_deprels
             $deprel = 'ExD'; ###!!!???
         }
         # Direct object of verb. (If there is one object, it is direct. If there are more, one of them is direct and the rest are indirect.)
-        elsif($deprel =~ m/^dobj(:|$)/)
+        elsif($deprel =~ m/^d?obj(:|$)/)
         {
             $deprel = 'Obj';
         }

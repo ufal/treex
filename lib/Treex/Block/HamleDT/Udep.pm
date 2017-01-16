@@ -284,7 +284,7 @@ sub convert_deprels
                 $deprel = $node->is_verb() ? 'csubj' : 'nsubj';
             }
         }
-        # Object: dobj, iobj, ccomp, xcomp
+        # Object: obj, iobj, ccomp, xcomp
         elsif($deprel eq 'Obj')
         {
             ###!!! If a verb has two or more objects, we should select one direct object and the others will be indirect.
@@ -294,7 +294,7 @@ sub convert_deprels
             # If this is an infinitive then it is an xcomp (controlled clausal complement).
             # If this is a verb form other than infinitive then it is a ccomp.
             ###!!! TODO: But if the infinitive is part of periphrastic future, then it is ccomp, not xcomp!
-            $deprel = $node->is_verb() ? ($node->is_infinitive() ? 'xcomp' : 'ccomp') : 'dobj';
+            $deprel = $node->is_verb() ? ($node->is_infinitive() ? 'xcomp' : 'ccomp') : 'obj';
         }
         # Nominal predicate attached to a copula verb.
         elsif($deprel eq 'Pnom')
@@ -310,7 +310,7 @@ sub convert_deprels
             # Hence we will re-classify the relation as object.
             elsif($parent->form() eq '=')
             {
-                $deprel = 'dobj';
+                $deprel = 'obj';
             }
             else
             {
@@ -531,7 +531,7 @@ sub convert_deprels
             }
             else
             {
-                $deprel = 'nmod'; ###!!! or nsubj or dobj or whatever
+                $deprel = 'nmod'; ###!!! or nsubj or obj or whatever
             }
         }
         elsif($deprel =~ m/^Aux[XK]$/)
@@ -1592,7 +1592,7 @@ sub fix_determiners {
                         # If it is attached via one of the following relations, it is a pronoun, not a determiner.
                         ###!!! We include 'conj' because conjuncts are more often than not pronouns and we do not want to implement the correct treatment of coordinations.
                         ###!!! Nevertheless it is possible that determiners are coordinated: "ochutnala můj i tvůj oběd".
-                        if($node->deprel() =~ m/^(nsubj|dobj|iobj|xcomp|advmod|case|appos|conj|cc|discourse|parataxis|foreign|dep)$/)
+                        if($node->deprel() =~ m/^(nsubj|obj|iobj|xcomp|advmod|case|appos|conj|cc|discourse|parataxis|foreign|dep)$/)
                         {
                             $change = 1;
                         }
@@ -1792,7 +1792,7 @@ sub relabel_subordinate_clauses
                 {
                     # The Croatian treebank analyzes both subordinating conjunctions and relative pronouns
                     # the same way. We want to separate them again. Pronouns should not be labeled 'mark'.
-                    # They probably fill a slot in the frame of the subordinate verb: 'nsubj', 'dobj' etc.
+                    # They probably fill a slot in the frame of the subordinate verb: 'nsubj', 'obj' etc.
                     if($mark->is_pronoun() && $mark->is_noun())
                     {
                         my $case = $mark->iset()->case();
@@ -1802,7 +1802,7 @@ sub relabel_subordinate_clauses
                         }
                         else
                         {
-                            $mark->set_deprel('dobj');
+                            $mark->set_deprel('obj');
                         }
                     }
                 }

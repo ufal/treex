@@ -7,7 +7,7 @@ extends 'Treex::Block::Test::BaseTester';
 # 40 universal dependency relations
 my @relations =
 (
-    'nsubj', 'nsubjpass', 'dobj', 'iobj', 'csubj', 'csubjpass', 'ccomp', 'xcomp',
+    'nsubj', 'nsubjpass', 'obj', 'iobj', 'csubj', 'csubjpass', 'ccomp', 'xcomp',
     'nmod', 'advmod', 'advcl', 'neg',
     'vocative', 'discourse', 'expl', 'aux', 'auxpass', 'cop', 'mark',
     'appos', 'amod', 'det', 'nummod', 'acl', 'case',
@@ -36,7 +36,7 @@ my %lspecrel =
     'grc' => ['advmod:emph'],
     'he'  => ['acl:inf', 'acl:relcl', 'advmod:inf', 'advmod:phrase', 'aux:q', 'case:acc', 'case:gen', 'conj:discourse', 'det:def', 'det:quant', 'nmod:poss', 'nmod:smixut', 'nmod:tmod', 'nsubj:cop'],
     'hi'  => ['acl:relcl'],
-    'hu'  => ['advmod:locy', 'advmod:mode', 'advmod:obl', 'advmod:que', 'advmod:tfrom', 'advmod:tlocy', 'advmod:to', 'advmod:tto', 'amod:att', 'amod:attlvc', 'amod:mode', 'amod:obl', 'ccomp:obj', 'ccomp:obl', 'ccomp:pred', 'compound:preverb', 'dobj:lvc', 'name:hu', 'nmod:att', 'nmod:attlvc', 'nmod:obl', 'nmod:obllvc', 'nsubj:lvc'],
+    'hu'  => ['advmod:locy', 'advmod:mode', 'advmod:obl', 'advmod:que', 'advmod:tfrom', 'advmod:tlocy', 'advmod:to', 'advmod:tto', 'amod:att', 'amod:attlvc', 'amod:mode', 'amod:obl', 'ccomp:obj', 'ccomp:obl', 'ccomp:pred', 'compound:preverb', 'obj:lvc', 'name:hu', 'nmod:att', 'nmod:attlvc', 'nmod:obl', 'nmod:obllvc', 'nsubj:lvc'],
     'it'  => ['acl:relcl', 'det:poss', 'det:predet', 'expl:impers'],
     'la'  => ['advmod:emph', 'auxpass:reflex'],
     'nl'  => ['compound:prt', 'det:nummod'],
@@ -47,7 +47,7 @@ my %lspecrel =
     'sl'  => ['cc:preconj'],
     'sv'  => ['acl:relcl', 'compound:prt', 'nmod:agent', 'nmod:poss'],
     'ta'  => ['advmod:emph', 'compound:prt'],
-    'ug'  => ['advcl:cond', 'advmod:emph', 'aux:q', 'compound:lvc', 'compound:redup', 'conj>advcl', 'conj>dobj', 'conj>dobj:cau', 'conj>nmod', 'conj>nsubj', 'dobj:cau', 'nmod:abl', 'nmod:cau', 'nmod:clas', 'nmod:cmp', 'nmod:ins', 'nmod:loc', 'nmod:part', 'nmod:pass', 'nmod:poss', 'nmod:ref', 'nmod:tmod', 'nsubj:cop'],
+    'ug'  => ['advcl:cond', 'advmod:emph', 'aux:q', 'compound:lvc', 'compound:redup', 'conj>advcl', 'conj>obj', 'conj>obj:cau', 'conj>nmod', 'conj>nsubj', 'obj:cau', 'nmod:abl', 'nmod:cau', 'nmod:clas', 'nmod:cmp', 'nmod:ins', 'nmod:loc', 'nmod:part', 'nmod:pass', 'nmod:poss', 'nmod:ref', 'nmod:tmod', 'nsubj:cop'],
     'xx'  => [],
 );
 
