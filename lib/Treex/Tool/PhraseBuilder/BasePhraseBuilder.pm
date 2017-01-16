@@ -1251,7 +1251,7 @@ sub detect_alpino_clause
             ###!!! We should implement heuristics to decide between subject, object or optional modifier.
             ###!!! Also note that the subordinator may be a multi-word noun phrase (welke boeken = which books) or a prepositional phrase (bij wat = by what).
             ###!!! All that will currently come out wrong.
-            $phrase->head()->set_deprel($self->map_deprel('dobj'));
+            $phrase->head()->set_deprel($self->map_deprel('obj'));
             $phrase->set_head($arguments[0]);
             $phrase->set_deprel($pp_deprel);
         }

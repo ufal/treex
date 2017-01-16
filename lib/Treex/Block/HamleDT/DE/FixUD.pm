@@ -557,7 +557,7 @@ sub fix_morphology
                 $case = 'dat';
             }
             # Direct object is accusative.
-            elsif($deprel eq 'dobj')
+            elsif($deprel eq 'obj')
             {
                 $case = 'acc';
             }

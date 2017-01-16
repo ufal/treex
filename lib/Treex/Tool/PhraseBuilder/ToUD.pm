@@ -64,7 +64,7 @@ sub _build_dialect
         'xcomp'     => ['^xcomp$', 'xcomp'],   # controlled verb (usually non-finite) attached to a controlling verb
         'ccomp'     => ['^ccomp$', 'ccomp'],   # complement clause that is not xcomp (note that non-core subordinate clauses are acl or advcl)
         'cxcomp'    => ['^[cx]comp$'],
-        'dobj'      => ['^dobj$', 'dobj'],     # direct nominal object
+        'obj'       => ['^d?obj$', 'obj'],     # direct nominal object
         'iobj'      => ['^iobj$', 'iobj'],     # indirect nominal object
         'parataxis' => ['^parataxis$', 'parataxis'], # loosely attached clause
         'root'      => ['^root$', 'root'],     # the top node attached to the artificial root
