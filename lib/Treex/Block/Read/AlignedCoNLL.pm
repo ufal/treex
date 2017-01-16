@@ -5,16 +5,15 @@ extends 'Treex::Block::Read::BaseAlignedTextReader';
 
 
 
-has 'conll_format' => ( is => 'ro', isa => 'Str', default => '2009', documentation => 'CoNLL flavor: 2006 or 2009, default is 2009.' );
+has 'conll_format' => ( is => 'ro', isa => 'Str', default => '2009', documentation => 'CoNLL flavor: 2006 or 2009 or conllu, default is 2009.' );
 has 'is_member_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'is_parenthesis_root_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
-
 
 
 sub next_document {
     my ($self) = @_;
     my $format = $self->conll_format();
-    log_fatal("Unknown format flavor '$format'") unless($format =~ m/^200[69]$/);
+    log_fatal("Unknown format flavor '$format'") unless($format =~ m/^200[69]|conllu$/);
     my $texts_ref = $self->next_document_texts();
     return if !defined $texts_ref;
 
@@ -45,21 +44,43 @@ sub next_document {
             my @nodes   = ($aroot);
             my $sentence;
             foreach my $token (@tokens) {
-                my ( $id, $form, $lemma, $plemma, $cpos, $pos, $ppos, $feat, $pfeat, $head, $phead, $deprel, $pdeprel );
+                my ( $id, $form, $lemma, $plemma, $cpos, $pos, $ppos, $feat, $pfeat, $head, $phead, $deprel, $pdeprel, $deps, $misc );
                 my @fields = split(/\t/, $token);
-                if($format eq '2006')
+                if ($format eq '2006')
                 {
+                    if (@fields < 10) {
+                        log_fatal "Not enough fields: " . join '\t', @fields;
+                    }
                     ($id, $form, $lemma, $cpos, $pos, $feat, $head, $deprel, $phead, $pdeprel) = @fields;
                 }
-                else
+                elsif ($format eq '2009')
                 {
+                    if (@fields < 12) {
+                        log_fatal "Not enough fields: " . join '\t', @fields;
+                    }
                     ($id, $form, $lemma, $plemma, $pos, $ppos, $feat, $pfeat, $head, $phead, $deprel, $pdeprel) = @fields;
+                }
+                elsif ($format eq 'conllu')
+                {
+                    if ($token =~ /^#/) {
+                        # comment, skip
+                        next;
+                    } elsif (@fields < 10) {
+                        log_fatal "Not enough fields: " . join '\t', @fields;
+                    }
+                    ($id, $form, $lemma, $pos, $cpos, $feat, $head, $deprel, $deps, $misc) = @fields;
                 }
                 my $newnode = $aroot->create_child();
                 $newnode->shift_after_subtree($aroot);
                 $lemma  = $plemma  if $lemma  eq '_';
                 $pos    = $ppos    if $pos    eq '_';
-                $head   = $phead   if $head   eq '_';
+                if ($head eq '_') {
+                    if (defined $phead && $phead ne '_') {
+                        $head = $phead;
+                    } else {
+                        $head = 0;
+                    }
+                }
                 $deprel = $pdeprel if $deprel eq '_';
                 if($self->is_parenthesis_root_within_afun)
                 {
@@ -125,6 +146,11 @@ is optionally followed by underscore and selector). The parameter value is the
 list of files for this zone.
 
 This reader assumes the CoNLL 2009 file format.
+
+There is rudimentary suppport for conllu (skipping comments only at the moment).
+
+=head1 PARAMS
+
 
 =head1 AUTHORS
 

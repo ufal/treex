@@ -294,7 +294,7 @@ method set_iset_conll_feat => sub {
     my ($self, $feat_string) = @_;
     my @pairs = split /\|/, $feat_string;
     foreach my $pair (@pairs) {
-        $pair =~ s/;/|/g;
+        $pair =~ s/[;,]/|/g;
         my ($feature, $value) = split /=/, $pair;
         $self->set_iset($feature, $value);
     }

@@ -58,6 +58,13 @@ has definiteness => (
      documentation => 'definiteness detection (rule-based or VowpalWabbit)',
 );
 
+has terminology => (
+     is => 'ro',
+     isa => enum( [qw(auto no 0 yes)] ),
+     default => '0',
+     documentation => 'Use T2T::TrLApplyTbxDictionary with Microsoft Terminology Collection',
+);
+
 sub BUILD {
     my ($self) = @_;
     if ($self->tm_adaptation eq 'auto'){
@@ -91,6 +98,7 @@ sub get_scenario_string {
       maxent 0.5 20141209_formeme.maxent.gz
       $IT_FORMEME_MODELS'",
     'T2T::CS2EN::TrLTryRules',
+    $self->terminology eq 'yes' ? 'T2T::TrLApplyTbxDictionary tbx=data/dictionaries/MicrosoftTermCollection.cs.tbx tbx_trg_id=en-US tbx_src_id=cs-cz analysis=data/dictionaries/MicrosoftTermCollection.cs.streex analysis_src_language=en analysis_src_selector=src analysis_trg_language=cs analysis_trg_selector=trg src_blacklist=data/dictionaries/MicrosoftTermCollection.en-cs.src.blacklist.txt' : (),
     "T2T::CS2EN::TrLAddVariantsInterpol model_dir=data/models/translation/cs2en models='
       static 0.5 20150724_lemma.static.min_2.minpc_1.gz
       maxent 1.0 20141209_lemma.maxent.gz

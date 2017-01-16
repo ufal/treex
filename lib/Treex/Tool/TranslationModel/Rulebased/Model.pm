@@ -90,7 +90,7 @@ my %suffix_rules = (
         ['ive$', 'ivní'],
         ['ar$', 'ární'],
         ['al$', 'ální'],
-        ['ous$', 'ální'],
+        ['ous$', 'ózní'],
         ['ed$', 'ovaný'],
         ['ing$', 'ující'],
         ['$', 'ový'],

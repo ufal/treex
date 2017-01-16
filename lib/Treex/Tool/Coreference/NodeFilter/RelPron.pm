@@ -4,13 +4,6 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Lexicon::CS;
 
-with 'Treex::Tool::Coreference::NodeFilter';
-
-sub is_candidate {
-    my ($self, $t_node) = @_;
-    return is_relat($t_node);
-}
-
 sub is_relat {
     my ($tnode) = @_;
     if ($tnode->language eq 'cs') {
@@ -19,6 +12,20 @@ sub is_relat {
     if ($tnode->language eq 'en') {
         return _is_relat_en($tnode);
     }
+}
+
+sub is_coz_cs {
+    my ($tnode) = @_;
+    my $anode = $tnode->get_lex_anode;
+    return 0 if !$anode;
+    return $anode->tag =~ /^.E/;
+}
+
+sub is_co_cs {
+    my ($tnode) = @_;
+    my $anode = $tnode->get_lex_anode;
+    return 0 if !$anode;
+    return $anode->tag =~ /^.Q/;
 }
 
 sub _is_relat_cs {

@@ -89,7 +89,7 @@ sub _create_coref_str {
 sub _extract_data {
     my ($node) = @_;
 
-    my ($id, $token, $lemma, $pos, $head, $deprel, $coref);
+    my ($id, $token, $lemma, $pos, $head, $deprel, $coref, $treex_id);
 
     # printing out the a-layer
     if ($node->get_layer eq "a") {
@@ -107,8 +107,9 @@ sub _extract_data {
         $deprel = $node->functor;
     }
     $id = $node->wild->{doc_ord} // $node->ord;
-    $head = !$node->is_root ? $node->get_parent->ord : 0;
+    $head = !$node->is_root ? ($node->get_parent->wild->{doc_ord} // $node->get_parent->ord) : 0;
     $coref = _create_coref_str($node) || $NOT_SET;
+    $treex_id = $node->id;
 
     my @cols = (
         $id,                # Col 1     ID: word identifiers in the sentence
@@ -130,6 +131,7 @@ sub _extract_data {
                             # Col *     APREDs: N columns, one for each predicate in 15, containing the semantic roles/dependencies of each particular predicate
                             # Col *     PAPREDs: M columns, one for each predicate in 16, with the same information as APREDs but predicted with an automatic analyzer
         $coref,             # Col -1    COREF: coreference annotation in open-close notation, using "|" to separate multiple annotations
+        $treex_id,          # Col -2    TREEX_ID
     );
     return \@cols;
 }

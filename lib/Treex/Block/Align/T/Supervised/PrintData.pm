@@ -8,10 +8,8 @@ use Treex::Tool::Align::Utils;
 
 extends 'Treex::Block::Write::BaseTextWriter';
 with 'Treex::Block::Align::T::Supervised::Base';
-with 'Treex::Block::Filter::Node::T';
 
 has 'align_language' => (is => 'ro', isa => 'Str', required => 1);
-has '+node_types' => ( default => 'all_anaph' );
 
 has '_gold_align_filter' => (is => 'ro', isa => 'HashRef', builder => '_build_gaf');
 
@@ -24,7 +22,6 @@ sub _build_gaf {
     my ($self) = @_;
     return { language => $self->align_language, rel_types => ['gold'] };
 }
-
 
 sub _get_positive_candidate {
     my ($self, $tnode) = @_;
@@ -87,7 +84,7 @@ The source language is specified by the parameter C<language>.
 
 =item node_types
 
-A comma-separated list of the node types on which this block should be applied (see more in C<Treex::Block::Filter::Node::T>)
+A comma-separated list of the node types on which this block should be applied (see more in C<Treex::Block::Filter::Node>)
 
 =back
 

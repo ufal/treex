@@ -11,12 +11,10 @@ use Treex::Tool::ML::VowpalWabbit::Ranker;
 
 extends 'Treex::Core::Block';
 with 'Treex::Block::Align::T::Supervised::Base';
-with 'Treex::Block::Filter::Node::T';
 
-has '+node_types' => ( default => 'all_anaph' );
 has 'model_path' => (is => 'ro', isa => 'Str');
 has 'align_trg_lang' => ( is => 'ro', isa => 'Treex::Type::LangCode', default => sub {my $self = shift; $self->language } );
-has 'align_name' => ( is => 'ro', isa => 'Str', default => 'supervised' );
+has 'align_name' => ( is => 'ro', isa => 'Str', default => 'coref_supervised' );
 has 'delete_orig_align' => ( is => 'ro', isa => 'Bool', default => 1 );
 has 'skip_annotated' => ( is => 'ro', isa => 'Bool', default => 0 );
 
@@ -227,7 +225,7 @@ If the parameter is undefined, use default values.
 =item node_types
 
 A comma-separated list of the node types on which this block should be applied (see more 
-in C<Treex::Block::Filter::Node::T>).
+in C<Treex::Block::Filter::Node>).
 
 =item align_trg_lang
 

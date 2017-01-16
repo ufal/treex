@@ -6,6 +6,13 @@ use POSIX;
 
 extends 'Treex::Core::Block';
 
+has target => (
+    is            => 'ro',
+    isa           => 'Str',
+    required      => 1,
+    documentation => 'target classification set, two possible values: L1 for native speakers, L2 for second language learners',
+);
+
 my $number_of_sentences;
 my $number_of_words;
 
@@ -107,8 +114,12 @@ my %ha_connectors_subord = ('protože' => '1',
                             'přestože' => '1',
                             'jestli' => '1');
 
+my $target;
+
 sub process_document {
   my ($self, $doc) = @_;
+
+  $target = $self->target;
 
   $number_of_words = 0;
   $number_of_discourse_relations_intra = 0;
@@ -300,19 +311,69 @@ sub process_document {
   my $number_of_different_connectives = scalar(keys(%connectives));
   $features .= "$number_of_different_connectives, ";
 
-  my $avg_a_per_100connectives = ceil(100*(scalar($connectives{'a'}) ? scalar($connectives{'a'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.1));
+
+  my $avg_a_per_100connectives = ceil(100*(scalar($connectives{'a'}) ? scalar($connectives{'a'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
   $features .= "$avg_a_per_100connectives, ";
 
-  my $percentage_temporal = ceil(100*$count_temporal/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.1));
+  my $avg_ale_per_100connectives = ceil(100*(scalar($connectives{'ale'}) ? scalar($connectives{'ale'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+  $features .= "$avg_ale_per_100connectives, ";
+
+  my $avg_protoze_per_100connectives = ceil(100*(scalar($connectives{'protože'}) ? scalar($connectives{'protože'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+  $features .= "$avg_protoze_per_100connectives, ";
+
+  my $avg_take_taky_per_100connectives = ceil(100*((scalar($connectives{'také'}) or scalar($connectives{'taky'})) ? scalar($connectives{'také'}//0 + $connectives{'taky'}//0) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+  $features .= "$avg_take_taky_per_100connectives, ";
+
+  my $avg_potom_pak_per_100connectives = ceil(100*((scalar($connectives{'potom'}) or scalar($connectives{'pak'})) ? scalar($connectives{'potom'}//0 + $connectives{'pak'}//0) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+  $features .= "$avg_potom_pak_per_100connectives, ";
+
+  my $avg_kdyz_per_100connectives = ceil(100*(scalar($connectives{'když'}) ? scalar($connectives{'když'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+  $features .= "$avg_kdyz_per_100connectives, ";
+
+  my $avg_nebo_per_100connectives = ceil(100*(scalar($connectives{'nebo'}) ? scalar($connectives{'nebo'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+  $features .= "$avg_nebo_per_100connectives, ";
+
+  my $avg_proto_per_100connectives = ceil(100*(scalar($connectives{'proto'}) ? scalar($connectives{'proto'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+  $features .= "$avg_proto_per_100connectives, ";
+
+  my $avg_tak_per_100connectives = ceil(100*(scalar($connectives{'tak'}) ? scalar($connectives{'tak'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+  $features .= "$avg_tak_per_100connectives, ";
+
+  my $avg_aby_per_100connectives = ceil(100*(scalar($connectives{'aby'}) ? scalar($connectives{'aby'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+  $features .= "$avg_aby_per_100connectives, ";
+
+  my $avg_totiz_per_100connectives = ceil(100*(scalar($connectives{'totiž'}) ? scalar($connectives{'totiž'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+  $features .= "$avg_totiz_per_100connectives, ";
+
+
+  my @connective_usages_sorted = sort {$b <=> $a} map {$connectives{$_}} keys (%connectives); # sort numbers of usages of the connectives in the decreasing order (disregard the connectives themselves)
+  my $percent_most_frequent_connectives_first = 0;
+  if (scalar(@connective_usages_sorted) >= 1) {
+    my $most_frequent_connectives_first = $connective_usages_sorted[0];
+    $percent_most_frequent_connectives_first = ceil(100*$most_frequent_connectives_first/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+  }
+  $features .= "$percent_most_frequent_connectives_first, ";
+
+  my $percent_most_frequent_connectives_first_and_second = 0;
+  if (scalar(@connective_usages_sorted) >= 2) {
+    my $most_frequent_connectives_first_and_second = $connective_usages_sorted[0] + $connective_usages_sorted[1];
+    $percent_most_frequent_connectives_first_and_second = ceil(100*$most_frequent_connectives_first_and_second/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+  }
+  else {
+    $percent_most_frequent_connectives_first_and_second = $percent_most_frequent_connectives_first;
+  }
+  $features .= "$percent_most_frequent_connectives_first_and_second, ";
+
+  my $percentage_temporal = ceil(100*$count_temporal/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
   $features .= "$percentage_temporal, ";
 
-  my $percentage_contingency = ceil(100*$count_contingency/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.1));
+  my $percentage_contingency = ceil(100*$count_contingency/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
   $features .= "$percentage_contingency, ";
 
-  my $percentage_contrast = ceil(100*$count_contrast/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.1));
+  my $percentage_contrast = ceil(100*$count_contrast/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
   $features .= "$percentage_contrast, ";
 
-  my $percentage_expansion = ceil(100*$count_expansion/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.1));
+  my $percentage_expansion = ceil(100*$count_expansion/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
   $features .= "$percentage_expansion, ";
 
   #my $coherence_mark = get_document_attr('CEFR_coherence');
@@ -353,20 +414,40 @@ sub get_weka_header {
   $header .= '@ATTRIBUTE avg_inter_per_100sent  NUMERIC' . "\n";
   $header .= '@ATTRIBUTE avg_discourse_per_100sent   NUMERIC' . "\n";
   $header .= '@ATTRIBUTE different_connectives   NUMERIC' . "\n";
+
   $header .= '@ATTRIBUTE percentage_a   NUMERIC' . "\n";
+  $header .= '@ATTRIBUTE percentage_ale   NUMERIC' . "\n";
+  $header .= '@ATTRIBUTE percentage_protoze   NUMERIC' . "\n";
+  $header .= '@ATTRIBUTE percentage_take_taky   NUMERIC' . "\n";
+  $header .= '@ATTRIBUTE percentage_potom_pak   NUMERIC' . "\n";
+  $header .= '@ATTRIBUTE percentage_kdyz   NUMERIC' . "\n";
+  $header .= '@ATTRIBUTE percentage_nebo   NUMERIC' . "\n";
+  $header .= '@ATTRIBUTE percentage_proto   NUMERIC' . "\n";
+  $header .= '@ATTRIBUTE percentage_tak   NUMERIC' . "\n";
+  $header .= '@ATTRIBUTE percentage_aby   NUMERIC' . "\n";
+  $header .= '@ATTRIBUTE percentage_totiz   NUMERIC' . "\n";
+
+  $header .= '@ATTRIBUTE percentage_first_connective   NUMERIC' . "\n";
+  $header .= '@ATTRIBUTE percentage_first_and_second_connectives   NUMERIC' . "\n";
   
   $header .= '@ATTRIBUTE percentage_temporal  NUMERIC' . "\n";
   $header .= '@ATTRIBUTE percentage_contingency  NUMERIC' . "\n";
   $header .= '@ATTRIBUTE percentage_contrast  NUMERIC' . "\n";
   $header .= '@ATTRIBUTE percentage_expansion  NUMERIC' . "\n";
 
-  $header .= '@ATTRIBUTE mark_coherence  {A1, A2, B1, B2, C1}' . "\n";
+  if ($target eq 'L1') {
+    $header .= '@ATTRIBUTE mark_coherence  {1, 2, 3, 4, 5}' . "\n";
+  }
+  else {
+    $header .= '@ATTRIBUTE mark_coherence  {A1, A2, B1, B2, C1, C2}' . "\n";
+  }  
 
   $header .= "\n" . '@DATA' . "\n";
   return $header;
 }
 
 sub get_simpson_index {
+  return 0 if ($number_of_words < 2);
   my %frequencies_counts;
   # count how many times various frequencies of lemmas occurred
   foreach my $key (keys (%lemmas_counts)) {

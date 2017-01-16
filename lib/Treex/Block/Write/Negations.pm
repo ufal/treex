@@ -2,82 +2,87 @@ package Treex::Block::Write::Negations;
 
 use Moose;
 use Treex::Core::Common;
-use List::Uniq "uniq";
+use List::MoreUtils "uniq";
 extends 'Treex::Block::Write::BaseTextWriter';
 
-my %neg_tlemmas = (
-    ne => 1,
-    nikoli => 1,
-    nikoliv => 1,
-    '#Neg' => 1,
-);
+has only_negated => ( is => 'rw', isa => 'Bool', default => 0 );
 
-sub process_ttree {
-    my ( $self, $troot ) = @_;
-    
-    print { $self->_file_handle } $troot->get_zone->sentence, "\n";
+has print_ttree => ( is => 'rw', isa => 'Bool', default => 0 );
 
-    my @neg_tnodes = grep {
-        (defined $_->gram_negation && $_->gram_negation eq 'neg1')
-        || defined $neg_tlemmas{$_->t_lemma}
-    } $troot->get_descendants({ordered => 1});
-    
-    foreach my $neg_tnode (@neg_tnodes) {
-        # TODO: now string, future structured
-        my $cue;
-        my $scope;
-        
-        if (defined $neg_tnode->gram_negation && $neg_tnode->gram_negation eq 'neg1') {
-            # type A
-            my $neg_anode = $neg_tnode->get_lex_anode();
-            $cue = (substr $neg_anode->form, 0, 2) . "-";
-            $scope = "-" . (substr $neg_anode->form, 2);
-        } else {
-            # type B or C
-            # cue
-            if ($neg_tnode->t_lemma eq '#Neg') {
-                # TODO type C: have to find the negated verb
-                $cue = "ne-";
-            } else {
-                $cue = $neg_tnode->get_lex_anode->form;
-            }
+has print_sentence => ( is => 'rw', isa => 'Bool', default => 0 );
 
-            # scope
-            my $right_sister = $neg_tnode->get_next_node();
-            if (defined $right_sister) {
-                # type 1 or 2
-                my @scope_tnodes;
-                if ($right_sister->tfa eq 'f') {
-                    while (defined $right_sister && $right_sister->tfa eq 'f') {
-                        push @scope_tnodes, $right_sister->get_descendants({add_self=>1});
-                        $right_sister = $right_sister->get_next_node();
-                    }
-                } elsif ($right_sister->tfa eq 'c') {
-                    push @scope_tnodes, $right_sister->get_descendants({add_self=>1});
-                } elsif ($right_sister->tfa eq 't') {
-                    my %ft = ( f => 1, t => 1 );
-                    while (defined $right_sister && defined $ft{$right_sister->tfa}) {
-                        push @scope_tnodes, $right_sister->get_descendants({add_self=>1});
-                        $right_sister = $right_sister->get_next_node();
-                    }
-                } else {
-                    log_warn $neg_tnode->id . ": right sister is missing TFA!";
-                    @scope_tnodes = $right_sister;
-                }
+has print_id => ( is => 'rw', isa => 'Bool', default => 0 );
 
-                $scope = join ' ',
-                    map { $_->form  }
-                    sort {$a->ord <=> $b->ord}
-                    map {$_->get_anodes}
-                    uniq
-                    @scope_tnodes;
-            } else {
-                # type 3
-                $scope = $cue;
-            }
+# cs = cue / scope
+sub anode_substr {
+    my ($anode, $negation_id, $cs) = @_;
+
+    my $start = $anode->wild->{negation}->{$negation_id}->{$cs . '_from'};
+    if (defined $start) {
+        my $length = $anode->wild->{negation}->{$negation_id}->{$cs . '_to'} - $start + 1;
+        my $form = $anode->form;
+        my $string = substr $form, $start, $length;
+        if ($start > 0) {
+            $string = "-$string";
         }
+        if ($start + $length < length($form)) {
+            $string = "$string-";
+        }
+        return $string;
+    } else {
+        return $anode->form;
+    }
+}
 
-        print { $self->_file_handle } "  CUE: ", $cue, "  SCOPE: ", $scope, "\n";
+sub process_zone {
+    my ( $self, $zone ) = @_;
+
+    my $aroot = $zone->get_atree();
+    my $negation_ids = $aroot->wild->{negation}->{negation_ids};
+    if ((!defined $negation_ids || @$negation_ids == 0) && $self->only_negated) {
+        return;
+    }
+    
+    print { $self->_file_handle } "\n";
+
+    if ($self->print_id) {
+        print { $self->_file_handle }
+            $zone->get_document->full_filename, ".t.gz##", ($zone->get_bundle->get_position + 1), "\n";
+    }
+
+    if ($self->print_sentence) {
+        print { $self->_file_handle } $zone->sentence, "\n";
+    }
+
+    if ($self->print_ttree) {
+        my $troot = $zone->get_ttree();
+        my @tnodes = $troot->get_descendants({ordered => 1});
+        foreach my $tnode (@tnodes) {
+            my @signature = grep { defined $_ } ($tnode->t_lemma, $tnode->functor, $tnode->tfa);
+            print { $self->_file_handle } join '/', @signature;
+            my @anodes = $tnode->get_anodes({ordered => 1});
+            if (@anodes) {
+                print { $self->_file_handle } " (";
+                my @aforms;
+                foreach my $anode (@anodes) {
+                    push @aforms, $anode->form;
+                }
+                print { $self->_file_handle } join ' ', @aforms;
+                print { $self->_file_handle } ")";
+            }
+            print { $self->_file_handle } " ";
+        }
+        print { $self->_file_handle } "\n";
+    }
+    my @descendants = $aroot->get_descendants({ordered => 1});
+    foreach my $negation_id (@$negation_ids) {
+        my @cue_nodes = grep { $_->wild->{negation}->{$negation_id}->{cue} } @descendants;
+        my $cue = join ' ', map { anode_substr($_, $negation_id, 'cue') } @cue_nodes;
+
+        my @scope_nodes = grep { $_->wild->{negation}->{$negation_id}->{scope} } @descendants;
+        my $scope = join ' ', map { anode_substr($_, $negation_id, 'scope') } @scope_nodes;
+
+        print { $self->_file_handle } "  CUE: $cue SCOPE: $scope\n";
     }
 
     return;
