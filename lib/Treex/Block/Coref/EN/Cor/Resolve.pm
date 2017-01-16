@@ -1,28 +1,23 @@
-package Treex::Block::Coref::CS::RelPron::Resolve;
+package Treex::Block::Coref::EN::Cor::Resolve;
 use Moose;
 use Moose::Util::TypeConstraints;
 use Treex::Core::Common;
 extends 'Treex::Block::Coref::Resolve';
-with 'Treex::Block::Coref::CS::RelPron::Base';
+with 'Treex::Block::Coref::EN::Cor::Base';
 
 use Treex::Tool::ML::VowpalWabbit::Ranker;
 
-has '+model_type' => ( isa => enum([qw/pdt pcedt_bi pcedt_bi.with_en/]), default => 'pdt' );
+has '+model_type' => ( isa => enum([qw/pcedt_bi pcedt_bi.with_en/]), default => 'pcedt_bi' );
 
 override '_build_model_for_type' => sub {
-    my $dir = '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/relpron/tmp/ml';
+    my $dir = '/home/mnovak/projects/czeng_coref/treex_cr_train/en/cor/tmp/ml';
     return {
-        'pdt' => "$dir/014_run_2017-01-15_01-19-00_14344.PDT.feats-AllMonolingual.round1/001.17cb9c0d6f.featset/002.22ec1.mlmethod/model/train.pdt.table.gz.vw.ranking.model",
-        'pcedt_bi' => "$dir/015_run_2017-01-15_01-19-10_14932.PCEDT.feats-AllMonolingual.round1/001.17cb9c0d6f.featset/004.39acd.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model",
-        'pcedt_bi.with_en' => "$dir/015_run_2017-01-15_01-19-10_14932.PCEDT.feats-AllMonolingual.round1/003.ab5a492ac8.featset/001.0017e.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model",
+        'pcedt_bi' => "$dir/002_run_2017-01-15_17-19-58_30384.PCEDT.feats-AllMonolingual.round1/001.9fd0f3842c.featset/004.39acd.mlmethod/model/train.pcedt_bi.with_cs.table.gz.vw.ranking.model",
+        'pcedt_bi.with_en' => "$dir/002_run_2017-01-15_17-19-58_30384.PCEDT.feats-AllMonolingual.round1/003.cc47b795e9.featset/004.39acd.mlmethod/model/train.pcedt_bi.with_cs.table.gz.vw.ranking.model",
     };
 };
-
 override '_build_ranker' => sub {
     my ($self) = @_;
-#    my $ranker = Treex::Tool::Coreference::RuleBasedRanker->new();
-#    my $ranker = Treex::Tool::Coreference::ProbDistrRanker->new(
-#    my $ranker = Treex::Tool::Coreference::PerceptronRanker->new( 
     my $ranker = Treex::Tool::ML::VowpalWabbit::Ranker->new( 
         { model_path => $self->model_path } 
     );
@@ -39,7 +34,7 @@ __END__
 
 =head1 NAME 
 
-Treex::Block::Coref::CS::RelPron::Resolve
+Treex::Block::Coref::EN::Cor::Resolve
 
 =head1 DESCRIPTION
 

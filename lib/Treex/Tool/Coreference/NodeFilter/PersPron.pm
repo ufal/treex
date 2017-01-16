@@ -59,6 +59,12 @@ sub is_3rd_prodrop {
     }
 }
 
+sub is_cor {
+    my ($node, $params) = @_;
+    return 0 if ($node->get_layer ne "t");
+    return ($node->t_lemma eq "#Cor");
+}
+
 #---------------- public auxiliary -----------------
 
 sub is_reflexive {

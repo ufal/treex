@@ -3,13 +3,23 @@ use Moose;
 use Treex::Core::Common;
 
 extends 'Treex::Core::Block';
-with 'Treex::Block::Coref::SupervisedBase';
+with 'Treex::Block::Coref::SupervisedBase' => {
+    -excludes => [ 'build_aligned_feats' ],
+};
 
+has 'model_type' => ( is => 'ro', isa => 'Str' );
 has 'model_path' => (
     is       => 'ro',
     required => 1,
     isa      => 'Str',
+    builder => 'build_model_path',
+    lazy => 1,
     documentation => 'path to a trained model',
+);
+has '_model_for_type' => (
+    is => 'ro',
+    isa => 'HashRef[Str]',
+    builder => '_build_model_for_type',
 );
 
 has 'diagnostics' => ( is => 'ro', isa => 'Bool', default => 0);
@@ -31,9 +41,26 @@ has '_ranker' => (
 sub BUILD {
     my ($self) = @_;
 
+    $self->build_aligned_feats;
+    $self->_build_model_for_type;
+    $self->build_model_path;
     $self->_ranker;
     $self->_feature_extractor;
     $self->_ante_cands_selector;
+}
+sub build_aligned_feats {
+    my ($self) = @_;
+    return $self->model_type =~ /with_/ ? 1 : 0;
+}
+sub _build_model_for_type {
+    my ($self) = @_;
+    return log_fatal "method _build_model_for_type must be overriden in " . ref($self);
+}
+sub build_model_path {
+    my ($self) = @_;
+    my $path = $self->_model_for_type->{$self->model_type};
+    print STDERR "MODEL_PATH: $path" . ref($self) . "\n";
+    return $path;
 }
 
 sub _build_ranker {

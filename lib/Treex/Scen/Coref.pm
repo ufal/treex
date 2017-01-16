@@ -22,6 +22,12 @@ has 'modules' => (
     default => 'all',
 );
 
+has 'model_type' => (
+    is => 'ro',
+    isa => enum([qw/pdt pcedt_bi pcedt_bi.with_en/]),
+    predicate => 'has_model_type',
+);
+
 sub get_scenario_string {
     my ($self) = @_;
     if ($self->language eq 'en') {
@@ -39,11 +45,16 @@ sub get_scenario_string {
 sub get_cs_scenario_string {
     my ($self) = @_;
 
+    my $model_type = '';
+    if ($self->has_model_type) {
+        $model_type = ' model_type='.$self->model_type;
+    }
+
     my $scen = join "\n",
     'Util::SetGlobal language=cs',
-    $self->modules->{relpron} || $self->modules->{all} ? 'Coref::CS::RelPron::Resolve' : '',
-    $self->modules->{reflpron} || $self->modules->{all} ? 'Coref::CS::ReflPron::Resolve' : '',
-    $self->modules->{perspron} || $self->modules->{all} ? 'Coref::CS::PersPron::Resolve' : '',
+    $self->modules->{relpron} || $self->modules->{all} ? 'Coref::CS::RelPron::Resolve'.$model_type : '',
+    $self->modules->{reflpron} || $self->modules->{all} ? 'Coref::CS::ReflPron::Resolve'.$model_type : '',
+    $self->modules->{perspron} || $self->modules->{all} ? 'Coref::CS::PersPron::Resolve'.$model_type : '',
     ;
 
     return $scen;
@@ -51,12 +62,17 @@ sub get_cs_scenario_string {
 
 sub get_en_scenario_string {
     my ($self) = @_;
+    
+    my $model_type = '';
+    if ($self->has_model_type) {
+        $model_type = ' model_type='.$self->model_type;
+    }
 
     my $scen = join "\n",
     'Util::SetGlobal language=en',
-    $self->modules->{relpron} || $self->modules->{all} ? 'Coref::EN::RelPron::Resolve' : '',
-    $self->modules->{reflpron} || $self->modules->{all} ? 'Coref::EN::ReflPron::Resolve' : '',
-    $self->modules->{perspron} || $self->modules->{all} ? 'Coref::EN::PersPron::Resolve' : '',
+    $self->modules->{relpron} || $self->modules->{all} ? 'Coref::EN::RelPron::Resolve'.$model_type : '',
+    $self->modules->{reflpron} || $self->modules->{all} ? 'Coref::EN::ReflPron::Resolve'.$model_type : '',
+    $self->modules->{perspron} || $self->modules->{all} ? 'Coref::EN::PersPron::Resolve'.$model_type : '',
     ;
 
     return $scen;

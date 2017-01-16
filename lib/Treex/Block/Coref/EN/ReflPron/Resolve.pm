@@ -1,26 +1,23 @@
 package Treex::Block::Coref::EN::ReflPron::Resolve;
 use Moose;
+use Moose::Util::TypeConstraints;
 use Treex::Core::Common;
 extends 'Treex::Block::Coref::Resolve';
 with 'Treex::Block::Coref::EN::ReflPron::Base';
 
-#use Treex::Tool::Coreference::PerceptronRanker;
-#use Treex::Tool::Coreference::RuleBasedRanker;
-#use Treex::Tool::Coreference::ProbDistrRanker;
 use Treex::Tool::ML::VowpalWabbit::Ranker;
 
-has '+model_path' => (
-    #default => 'data/models/coreference/CS/vw/perspron.2015-04-29.train.pdt.cs.vw.ranking.model',
-    #default => 'data/models/coreference/CS/vw/reflpron.2016-04-24.train.pdt.cs.vw.ranking.model',
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/reflpron/tmp/ml/run_2016-04-26_00-56-30_22064.candidates_formeme_or_sempos_must_start_with_n_-_more_candidates/003.5902492061.featset/001.7eb17.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
-    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/en/reflpron/tmp/ml/run_2016-06-16_16-04-27_3983.first_model_for_English_reflprons/004.af303d1c32.featset/001.7eb17.mlmethod/model/train.pcedt_bi.table.gz.vw.ranking.model',
-);
+has '+model_type' => ( isa => enum([qw/pcedt_bi pcedt_bi.with_en/]), default => 'pcedt_bi' );
 
+override '_build_model_for_type' => sub {
+    my $dir = '/home/mnovak/projects/czeng_coref/treex_cr_train/en/reflpron/tmp/ml';
+    return {
+        'pcedt_bi' => "$dir/run_2016-06-16_16-04-27_3983.first_model_for_English_reflprons/004.af303d1c32.featset/001.7eb17.mlmethod/model/train.pcedt_bi.table.gz.vw.ranking.model",
+        #'pcedt_bi.with_en' => "$dir/027_run_2017-01-14_02-37-37_21334.PCEDT.new_models_with_EN.CS__AllMonolingual_feats/004.7f391f3429.featset/002.22ec1.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model",
+    };
+};
 override '_build_ranker' => sub {
     my ($self) = @_;
-#    my $ranker = Treex::Tool::Coreference::RuleBasedRanker->new();
-#    my $ranker = Treex::Tool::Coreference::ProbDistrRanker->new(
-#    my $ranker = Treex::Tool::Coreference::PerceptronRanker->new( 
     my $ranker = Treex::Tool::ML::VowpalWabbit::Ranker->new( 
         { model_path => $self->model_path } 
     );

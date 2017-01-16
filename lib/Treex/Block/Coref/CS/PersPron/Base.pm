@@ -4,40 +4,33 @@ use Treex::Core::Common;
 
 use Treex::Tool::Coreference::AnteCandsGetter;
 #use Treex::Tool::Coreference::Features::PersPron;
-use Treex::Tool::Coreference::EN::PronCorefFeatures;
-use Treex::Tool::Coreference::CS::PronCorefFeatures;
 use Treex::Tool::Coreference::Features::Container;
 use Treex::Tool::Coreference::Features::Aligned;
 use Treex::Tool::Coreference::Features::Coreference;
 use Treex::Tool::Coreference::Features::CS::AllMonolingual;
+use Treex::Tool::Coreference::Features::EN::AllMonolingual;
 
 with 'Treex::Block::Coref::SupervisedBase' => {
     -excludes => [ '_build_feature_extractor', '_build_ante_cands_selector' ],
 };
 
-has 'aligned_feats' => ( is => 'ro', isa => 'Bool', default => 0 );
-
 sub _build_node_types {
     return '#perspron.no_refl';
 }
-
-#sub _build_feature_extractor {
-#    my ($self) = @_;
-#    return Treex::Tool::Coreference::Features::PersPron->new();
-#}
 
 sub _build_feature_extractor {
     my ($self) = @_;
     my @container = ();
  
-    #my $cs_fe = Treex::Tool::Coreference::CS::PronCorefFeatures->new();
+    #my $cs_fe = Treex::Tool::Coreference::Features::PersPron->new();
+    #return $cs_fe;
     my $cs_fe = Treex::Tool::Coreference::Features::CS::AllMonolingual->new();
     push @container, $cs_fe;
 
     if ($self->aligned_feats) {
         my $aligned_fe = Treex::Tool::Coreference::Features::Aligned->new({
             feat_extractors => [ 
-                Treex::Tool::Coreference::EN::PronCorefFeatures->new(),
+                Treex::Tool::Coreference::Features::EN::AllMonolingual->new(),
                 Treex::Tool::Coreference::Features::Coreference->new(),
             ],
             align_lang => 'en',
