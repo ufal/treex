@@ -1027,12 +1027,12 @@ sub detect_prague_pp
         $c->{arg}->set_parent(undef);
         # If the preposition consists of multiple nodes, group them in a new NTerm first.
         # The main prepositional node has already been detached from its original parent so it can be used as the head elsewhere.
-        if(scalar(@{$c->{mwe}}) > 0)
+        if(scalar(@{$c->{fixed}}) > 0)
         {
             # In PDT, the last token (preposition or noun) is the head because it governs the case of the following noun.
             # In UD, the leftmost node of the MWE is its head.
             ###!!! If we want to make it variable we should define multi-word expressions as another specific phrase type.
-            my @mwe = sort {$a->node()->ord() <=> $b->node()->ord()} (@{$c->{mwe}}, $c->{fun});
+            my @mwe = sort {$a->node()->ord() <=> $b->node()->ord()} (@{$c->{fixed}}, $c->{fun});
             my $head = $self->mwe_is_head_first() ? shift(@mwe) : pop(@mwe);
             $head->set_parent(undef);
             $c->{fun} = new Treex::Core::Phrase::NTerm('head' => $head);
