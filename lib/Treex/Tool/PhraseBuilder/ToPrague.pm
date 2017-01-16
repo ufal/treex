@@ -42,7 +42,7 @@ sub _build_dialect
         'cc'        => ['^AuxY$', 'AuxY'],  # coordinating conjunction
         'conj'      => ['^CoordArg$', 'CoordArg'], # conjunct
         'coord'     => ['^Coord$', 'Coord'],     # head of coordination (conjunction or punctuation)
-        'mwe'       => ['^AuxP$', 'AuxP'],       # non-head word of a multi-word expression; PDT has only multi-word prepositions
+        'fixed'     => ['^AuxP$', 'AuxP'],       # non-head word of a multi-word expression; PDT has only multi-word prepositions
         'compound'  => ['^Atr$', 'Atr'],         # non-head word of a compound
         'det'       => ['^AuxA$', 'AuxA'],       # determiner attached to noun
         'detarg'    => ['^DetArg$', 'DetArg'],   # noun attached to determiner

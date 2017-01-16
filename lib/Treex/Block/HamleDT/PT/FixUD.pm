@@ -135,7 +135,7 @@ sub fix_morphology
         }
         # The word "si" is wrongly tagged SCONJ in multi-word expressions where it is PRON (SCONJ leaked from Spanish).
         # Examples: em si, entre si, por si
-        if($form eq 'si' && $iset->is_subordinator() && $node->deprel() eq 'mwe')
+        if($form eq 'si' && $iset->is_subordinator() && $node->deprel() eq 'fixed')
         {
             $iset->set_hash({'pos' => 'noun', 'prontype' => 'prs', 'reflex' => 'reflex', 'person' => 3, 'case' => 'acc', 'prepcase' => 'pre'});
             $node->set_conll_pos('PRON') if($node->conll_pos() eq 'SCONJ');
@@ -263,7 +263,7 @@ sub fix_case_mark
     {
         $nodes[0]->set_deprel('root');
         $nodes[1]->set_parent($nodes[0]);
-        $nodes[1]->set_deprel('mwe');
+        $nodes[1]->set_deprel('fixed');
     }
 }
 

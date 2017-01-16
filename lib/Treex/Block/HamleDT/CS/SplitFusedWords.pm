@@ -233,7 +233,7 @@ sub split_fused_token
 # In UD, "kdyby" is treated as a fusion of "když+by", hence we have "jako když
 # by". Both "když" and "by" are attached to "jako" but this is an example where
 # we actually want to attach each part to a different parent: "když" to "jako"
-# (mwe), and "by" (aux) to the verb parent of "jako".
+# (fixed), and "by" (aux) to the verb parent of "jako".
 #------------------------------------------------------------------------------
 sub fix_jako_kdyby
 {
@@ -256,7 +256,7 @@ sub fix_jako_kdyby
                 $n2->set_parent($verb);
                 $n2->set_deprel('aux');
             }
-            $n1->set_deprel('mwe');
+            $n1->set_deprel('fixed');
         }
     }
 }

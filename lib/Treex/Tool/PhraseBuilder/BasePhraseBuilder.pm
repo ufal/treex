@@ -1040,7 +1040,7 @@ sub detect_prague_pp
             foreach my $mwp (@mwe)
             {
                 $mwp->set_parent($c->{fun});
-                $self->set_deprel($mwp, 'mwe');
+                $self->set_deprel($mwp, 'fixed');
             }
         }
         my $pp = new Treex::Core::Phrase::PP
@@ -1143,10 +1143,10 @@ sub classify_prague_pp_subphrases
     }
     my %classification =
     (
-        'fun' => $preposition,
-        'mwe' => \@mwauxp,
-        'arg' => $argument,
-        'dep' => [@candidates, @punc]
+        'fun'   => $preposition,
+        'fixed' => \@mwauxp,
+        'arg'   => $argument,
+        'dep'   => [@candidates, @punc]
     );
     return \%classification;
 }

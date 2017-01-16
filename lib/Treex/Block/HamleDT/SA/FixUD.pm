@@ -275,7 +275,7 @@ sub fix_case_mark
     {
         $nodes[0]->set_deprel('root');
         $nodes[1]->set_parent($nodes[0]);
-        $nodes[1]->set_deprel('mwe');
+        $nodes[1]->set_deprel('fixed');
     }
 }
 

@@ -993,7 +993,7 @@ sub fix_separable_verb_prefixes
 
 
 #------------------------------------------------------------------------------
-# Sometimes the "mwe" relation connects a multi-word expression to its parent,
+# Sometimes the 'fixed' relation connects a multi-word expression to its parent,
 # instead of connecting the members of the MWE together. We can only fix it by
 # consulting a list of potentially offending MWEs. For some of them we will not
 # even grant them the MWE status, as this should be very restricted in UD.
@@ -1015,7 +1015,7 @@ sub fix_mwe
             $subtree[2]->set_deprel('nmod');
             $subtree[1]->set_parent($subtree[2]);
             $subtree[1]->set_deprel('case');
-            # The relation to the parent of the MWE should be nmod (because "Alles" is pronoun), not mwe.
+            # The relation to the parent of the MWE should be nmod (because "Alles" is pronoun), not fixed.
             $node->set_deprel('nmod');
         }
     }
