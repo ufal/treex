@@ -33,16 +33,16 @@
       <member name="hyph"><cdata format="any"/></member>
       <member name="typo"><cdata format="any"/></member>
       <member name="echo"><cdata format="any"/></member>
-      <member name="negativeness"><cdata format="any"/></member>
-      <member name="definiteness"><cdata format="any"/></member>
+      <member name="polarity"><cdata format="any"/></member>
+      <member name="definite"><cdata format="any"/></member>
       <member name="gender"><cdata format="any"/></member>
-      <member name="animateness"><cdata format="any"/></member>
+      <member name="animacy"><cdata format="any"/></member>
       <member name="number"><cdata format="any"/></member>
       <member name="case"><cdata format="any"/></member>
       <member name="prepcase"><cdata format="any"/></member>
       <member name="degree"><cdata format="any"/></member>
       <member name="person"><cdata format="any"/></member>
-      <member name="politeness"><cdata format="any"/></member>
+      <member name="polite"><cdata format="any"/></member>
       <member name="possgender"><cdata format="any"/></member>
       <member name="possnumber"><cdata format="any"/></member>
       <member name="possperson"><cdata format="any"/></member>
@@ -53,9 +53,9 @@
       <member name="absnumber"><cdata format="any"/></member>
       <member name="ergnumber"><cdata format="any"/></member>
       <member name="datnumber"><cdata format="any"/></member>
-      <member name="abspoliteness"><cdata format="any"/></member>
-      <member name="ergpoliteness"><cdata format="any"/></member>
-      <member name="datpoliteness"><cdata format="any"/></member>
+      <member name="abspolite"><cdata format="any"/></member>
+      <member name="ergpolite"><cdata format="any"/></member>
+      <member name="datpolite"><cdata format="any"/></member>
       <member name="erggender"><cdata format="any"/></member>
       <member name="datgender"><cdata format="any"/></member>
       <member name="position"><cdata format="any"/></member>
