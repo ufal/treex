@@ -11,7 +11,7 @@ sub process_atree
     foreach my $node (@nodes)
     {
         # A preposition normally depends on a following node (usually noun) and the relation is 'case'.
-        # It may also depend on a preceding node as 'mwe' or 'conj'.
+        # It may also depend on a preceding node as 'fixed' or 'conj'.
         # In case of ellipsis (incomplete sentence), it may depend on the root as 'root'.
         # In some languages the borderline between adpositions and subordinating conjunctions is fuzzy.
         # If a preposition is attached to a verb, it is treated as a subordinating conjunction and the relation is labeled 'mark'
@@ -29,7 +29,7 @@ sub process_atree
             next if($deprel eq 'foreign');
             # Do not test adpositions that are part of a multi-word expression. MWE's must be tested separately by their own rules.
             # The whole MWE may act as something else than adposition. It can be an advmod.
-            next if($deprel eq 'mwe' || any {$_->deprel() eq 'mwe'} ($node->children()));
+            next if($deprel eq 'fixed' || any {$_->deprel() eq 'fixed'} ($node->children()));
             my $ok = $node->is_leaf();
             if(!$ok)
             {
@@ -79,7 +79,7 @@ sub process_atree
 =item Treex::Block::HamleDT::Test::UD::Adpositions
 
 A preposition normally depends on a following node (usually noun) and the relation is 'case'.
-It may also depend on a preceding node as 'mwe' or 'conj'.
+It may also depend on a preceding node as 'fixed' or 'conj'.
 In case of ellipsis (incomplete sentence), it may depend on the root as 'root'.
 In any case, the preposition should be leaf.
 

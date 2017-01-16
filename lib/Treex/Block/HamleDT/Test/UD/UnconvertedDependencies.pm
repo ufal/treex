@@ -11,7 +11,7 @@ my @relations =
     'nmod', 'advmod', 'advcl', 'neg',
     'vocative', 'discourse', 'expl', 'aux', 'auxpass', 'cop', 'mark',
     'appos', 'amod', 'det', 'nummod', 'acl', 'case',
-    'compound', 'mwe', 'flat', 'goeswith', 'foreign',
+    'compound', 'fixed', 'flat', 'goeswith', 'foreign',
     'conj', 'cc', 'punct',
     'list', 'dislocated', 'parataxis', 'remnant', 'reparandum',
     'root', 'dep'
