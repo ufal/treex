@@ -214,7 +214,7 @@ sub convert_deprels
             $deprel = 'AuxC';
         }
         # Multi-word expression.
-        elsif($deprel =~ m/^mwe(:|$)/)
+        elsif($deprel =~ m/^(mwe|fixed)(:|$)/)
         {
             # A head-first phrase with all dependents labeled Atr is the behavior closest to PDT.
             ###!!! However, in the case of multi-word prepositions, it should be AuxP.
@@ -222,7 +222,7 @@ sub convert_deprels
             $deprel = 'Atr';
         }
         # Non-first part of a multi-word name, if no normal head-dependent relation can be recognized.
-        elsif($deprel =~ m/^name(:|$)/)
+        elsif($deprel =~ m/^(name|flat)(:|$)/)
         {
             $deprel = 'Atr';
         }

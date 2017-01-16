@@ -249,7 +249,7 @@ sub convert_deprels
         # 1. It heads a prepositional phrase. The relation of the phrase to its parent is marked at the argument of the preposition.
         # 2. It is a leaf, attached to another preposition, forming a multi-word preposition. (In this case the word can be even a noun.)
         # Prepositional phrases will be later restructured. In the situation 1, the preposition will be attached to its argument as 'case'.
-        # In the situation 2, the first word in the multi-word prepositon will become the head and all other parts will be attached to it as 'mwe'.
+        # In the situation 2, the first word in the multi-word prepositon will become the head and all other parts will be attached to it as 'fixed'.
         elsif($deprel eq 'AuxP')
         {
             $deprel = 'case';
@@ -666,7 +666,7 @@ sub split_tokens_on_underscore
                $node->is_adverb() ||
                $node->is_conjunction())
             {
-                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'mwe');
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'fixed');
                 $self->tag_nodes(\@subnodes, {'pos' => 'noun', 'nountype' => 'com'});
             }
             # MW determiners or pronouns: [ca] el seu, la seva; [es] el mío; [pt] todo o
@@ -841,7 +841,7 @@ sub split_tokens_on_underscore
             elsif($node->is_interjection())
             {
                 # It is only a few expressions but we would have to analyze them all manually.
-                # Neither mwe nor compound seems to be a good fit for these. Let's get around with 'dep' for the moment.
+                # Neither fixed nor compound seems to be a good fit for these. Let's get around with 'dep' for the moment.
                 my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'dep');
                 $self->tag_nodes(\@subnodes, {'pos' => 'int'});
             }
@@ -1688,7 +1688,7 @@ sub check_determiners
         my $iset = $node->iset();
         if($iset->upos() eq 'DET')
         {
-            if($node->deprel() !~ m/^(det(:numgov|:nummod)?|mwe)$/)
+            if($node->deprel() !~ m/^(det(:numgov|:nummod)?|fixed)$/)
             {
                 log_warn($npform.' is tagged DET but is not attached as det but as '.$node->deprel());
             }
