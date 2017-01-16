@@ -30,7 +30,7 @@ has 'mwe_is_head_first' =>
     default  => 1,
     documentation =>
         'Should the first token of a multi-word expression head the MWE? '.
-        'This is the rule for UD relations mwe and name. '.
+        'This is the rule for UD relations fixed and flat. '.
         'However, MW prepositions in Prague dependencies are head-last. '
 );
 

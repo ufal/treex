@@ -9,12 +9,12 @@ sub process_anode
     my $self = shift;
     my $node = shift;
     my $deprel = $node->deprel();
-    if($deprel =~ m/^(conj|mwe|name)(:|$)/)
+    if($deprel =~ m/^(conj|mwe|flat)(:|$)/)
     {
         my $parent = $node->parent();
         if(!defined($parent) || $parent->ord() >= $node->ord())
         {
-            $self->complain($node, 'conj|mwe|name must always go from left to right');
+            $self->complain($node, 'conj|mwe|flat must always go from left to right');
         }
     }
 }
@@ -25,7 +25,7 @@ sub process_anode
 
 =item Treex::Block::HamleDT::Test::UD::LeftToRightRelations
 
-The relations C<conj>, C<mwe> and C<name> must always be left-to-right (head-initial).
+The relations C<conj>, C<mwe> and C<flat> must always be left-to-right (head-initial).
 
 =back
 

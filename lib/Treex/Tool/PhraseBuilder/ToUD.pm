@@ -58,7 +58,7 @@ sub _build_dialect
         'nsubj'     => ['^nsubj$', 'nsubj'],   # nominal subject in active clause
         'nmod'      => ['^nmod$', 'nmod'],     # nominal modifier (attribute or adjunct)
         'advmod'    => ['^advmod$', 'advmod'], # adverbial modifier (realized as adverb, not as a noun phrase)
-        'name'      => ['^name$', 'name'],     # non-head part of a multi-word named entity without internal syntactic structure
+        'flat'      => ['^(name|flat)$', 'flat'], # non-head part of a multi-word named entity without internal syntactic structure
         'auxarg'    => ['^auxarg$', 'auxarg'], # content verb (participle) attached to an auxiliary verb (finite)
         'auxv'      => ['^aux$', 'aux'],       # auxiliary verb attached to a main (content) verb
         'xcomp'     => ['^xcomp$', 'xcomp'],   # controlled verb (usually non-finite) attached to a controlling verb
@@ -274,12 +274,12 @@ sub detect_name_phrase
 {
     my $self = shift;
     my $phrase = shift; # Treex::Core::Phrase
-    # Are there any non-core children attached as name?
+    # Are there any non-core children attached as flat?
     my @dependents = $phrase->dependents();
-    my @name = grep {$self->is_deprel($_->deprel(), 'name')} (@dependents);
+    my @name = grep {$self->is_deprel($_->deprel(), 'flat')} (@dependents);
     if(scalar(@name)>=1)
     {
-        my @nonname = grep {!$self->is_deprel($_->deprel(), 'name')} (@dependents);
+        my @nonname = grep {!$self->is_deprel($_->deprel(), 'flat')} (@dependents);
         # If there are name children, then the current phrase is a name, too.
         # Detach the dependents first, so that we can put the current phrase on the same level with the other names.
         foreach my $d (@dependents)
@@ -300,7 +300,7 @@ sub detect_name_phrase
         foreach my $n (@name)
         {
             $n->set_parent($namephrase);
-            $self->set_deprel($n, 'name');
+            $self->set_deprel($n, 'flat');
             $n->set_is_member(0);
         }
         # Create a new nonterminal phrase that will group the name phrase with

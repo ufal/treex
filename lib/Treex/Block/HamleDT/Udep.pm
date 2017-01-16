@@ -349,12 +349,12 @@ sub convert_deprels
             elsif($node->iset()->nametype() =~ m/(giv|sur|prs)/ &&
                   $parent->iset()->nametype() =~ m/(giv|sur|prs)/)
             {
-                $deprel = 'name';
+                $deprel = 'flat';
             }
             elsif($node->is_foreign() && $parent->is_foreign() ||
                   $node->is_foreign() && $node->is_adposition() && $parent->is_proper_noun())
                   ###!!! van Gogh, de Gaulle in Czech text; but it means we will have to reverse the relation left-to-right!
-                  ###!!! Maybe it will be better to change the relation to "name" when we have to reorder it anyway.
+                  ###!!! Maybe it will be better to change the relation to "flat" when we have to reorder it anyway.
                   ###!!! Another solution would be to label the relation "case". But foreign prepositions do not have this function in Czech.
             {
                 $deprel = 'foreign';
@@ -702,7 +702,7 @@ sub split_tokens_on_underscore
                 @subnodes = $self->attach_left_function_words(@subnodes);
             }
             # If the MWE is tagged as proper noun then the words will also be
-            # proper nouns and they will be connected using the 'name' relation.
+            # proper nouns and they will be connected using the 'flat' relation.
             # We have to ignore that some of these proper "nouns" are in fact
             # adjectives (e.g. "San" in "San Salvador"). But we will not ignore
             # function words such as "de". These are language-specific.
@@ -711,9 +711,9 @@ sub split_tokens_on_underscore
                 # This is currently the only type of MWE where a non-first node may become the head (in case of coordination).
                 # Thus we have to temporarily reset the is_member flag (and later carry it over to the new head).
                 ###!!!$node->set_is_member(undef);
-                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'name');
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'flat');
                 $self->tag_nodes(\@subnodes, {'pos' => 'noun', 'nountype' => 'prop'});
-                # Change the 'name' relation of punctuation and numbers. (Do not touch the head node!)
+                # Change the 'flat' relation of punctuation and numbers. (Do not touch the head node!)
                 for(my $i = 1; $i<=$#subnodes; $i++)
                 {
                     if($subnodes[$i]->is_numeral())
@@ -775,7 +775,7 @@ sub split_tokens_on_underscore
                             $subnodes[$j-1]->set_deprel('punct');
                             $subnodes[$j-1]->set_is_member(undef);
                             $subnodes[$j-2]->set_parent($coord);
-                            $subnodes[$j-2]->set_deprel('name');
+                            $subnodes[$j-2]->set_deprel('flat');
                             $subnodes[$j-2]->set_is_member(1);
                             $j -= 2;
                         }
@@ -783,8 +783,8 @@ sub split_tokens_on_underscore
                         $i = $j+1;
                     }
                 }
-                ###!!! The 'name' relations should not bypass prepositions.
-                ###!!! Nouns with prepositions should be attached to the head of the prevous cluster as 'nmod', not 'name'.
+                ###!!! The 'flat' relations should not bypass prepositions.
+                ###!!! Nouns with prepositions should be attached to the head of the prevous cluster as 'nmod', not 'flat'.
                 # Now the first subnode is the head even if it is not the original node (Prague coordination).
                 # The parent is set correctly but the is_member flag is not; fix it.
                 $subnodes[0]->set_is_member($mwe_is_member);
@@ -1248,7 +1248,7 @@ sub attach_left_function_words
 
 #------------------------------------------------------------------------------
 # In the Croatian SETimes corpus, given name of a person depends on the family
-# name, and the relation is labeled as apposition. Change the label to 'name'.
+# name, and the relation is labeled as apposition. Change the label to 'flat'.
 # This should be done before we start structural transformations.
 #------------------------------------------------------------------------------
 sub relabel_appos_name
@@ -1265,7 +1265,7 @@ sub relabel_appos_name
             next if($parent->is_root());
             if($node->is_proper_noun() && $parent->is_proper_noun() && $self->agree($node, $parent, 'case'))
             {
-                $node->set_deprel('name');
+                $node->set_deprel('flat');
             }
         }
     }

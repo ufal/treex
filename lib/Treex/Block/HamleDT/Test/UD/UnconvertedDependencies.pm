@@ -11,7 +11,7 @@ my @relations =
     'nmod', 'advmod', 'advcl', 'neg',
     'vocative', 'discourse', 'expl', 'aux', 'auxpass', 'cop', 'mark',
     'appos', 'amod', 'det', 'nummod', 'acl', 'case',
-    'compound', 'mwe', 'name', 'goeswith', 'foreign',
+    'compound', 'mwe', 'flat', 'goeswith', 'foreign',
     'conj', 'cc', 'punct',
     'list', 'dislocated', 'parataxis', 'remnant', 'reparandum',
     'root', 'dep'
@@ -36,7 +36,7 @@ my %lspecrel =
     'grc' => ['advmod:emph'],
     'he'  => ['acl:inf', 'acl:relcl', 'advmod:inf', 'advmod:phrase', 'aux:q', 'case:acc', 'case:gen', 'conj:discourse', 'det:def', 'det:quant', 'nmod:poss', 'nmod:smixut', 'nmod:tmod', 'nsubj:cop'],
     'hi'  => ['acl:relcl'],
-    'hu'  => ['advmod:locy', 'advmod:mode', 'advmod:obl', 'advmod:que', 'advmod:tfrom', 'advmod:tlocy', 'advmod:to', 'advmod:tto', 'amod:att', 'amod:attlvc', 'amod:mode', 'amod:obl', 'ccomp:obj', 'ccomp:obl', 'ccomp:pred', 'compound:preverb', 'obj:lvc', 'name:hu', 'nmod:att', 'nmod:attlvc', 'nmod:obl', 'nmod:obllvc', 'nsubj:lvc'],
+    'hu'  => ['advmod:locy', 'advmod:mode', 'advmod:obl', 'advmod:que', 'advmod:tfrom', 'advmod:tlocy', 'advmod:to', 'advmod:tto', 'amod:att', 'amod:attlvc', 'amod:mode', 'amod:obl', 'ccomp:obj', 'ccomp:obl', 'ccomp:pred', 'compound:preverb', 'obj:lvc', 'flat:hu', 'nmod:att', 'nmod:attlvc', 'nmod:obl', 'nmod:obllvc', 'nsubj:lvc'],
     'it'  => ['acl:relcl', 'det:poss', 'det:predet', 'expl:impers'],
     'la'  => ['advmod:emph', 'auxpass:reflex'],
     'nl'  => ['compound:prt', 'det:nummod'],

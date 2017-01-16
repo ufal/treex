@@ -426,7 +426,7 @@ sub fix_pos
         # tagged PROPN, e.g. possessive determiners "mi", "nuestro", and foreign
         # determiners such as "the". This is not allowed. The Spanish determiners
         # must be tagged DET. The foreign determiners must be either tagged DET,
-        # or their deprel must be changed from det to name.
+        # or their deprel must be changed from det to flat.
         if($node->deprel() eq 'det' && $iset->is_proper_noun())
         {
             $iset->clear('nountype');
