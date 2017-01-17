@@ -316,6 +316,12 @@ sub convert_deprels
             {
                 $deprel = 'pnom';
             }
+            # Side effect: We also want to modify Interset. The PDT tagset does not distinguish auxiliary verbs but UPOS does.
+            # Since UD v2, copula verbs are considered auxiliary, too.
+            if($parent->is_verb())
+            {
+                $parent->iset()->set('verbtype', 'aux');
+            }
         }
         # Adverbial modifier: advmod, obl, advcl
         elsif($deprel eq 'Adv')
