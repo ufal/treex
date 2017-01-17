@@ -599,16 +599,31 @@ sub project_dependencies
                 $conj_node->set_deprel('conj');
             }
         }
+        # Since UD v2, delimiters are not attached to the first conjunct. They are attached to the immediately following conjunct.
+        my $fc = $head_node;
+        my $ifc = 0;
         foreach my $c (@coordinators)
         {
             my $coor_node = $c->node();
-            $coor_node->set_parent($head_node);
+            while($ifc < $#conjuncts && $coor_node->ord() > $conjuncts[$ifc]->ord())
+            {
+                $ifc++;
+            }
+            $fc = $conjuncts[$ifc]->node() if($ifc <= $#conjuncts);
+            $coor_node->set_parent($fc);
             $coor_node->set_deprel('cc');
         }
+        $fc = $head_node;
+        $ifc = 0;
         foreach my $p (@punctuation)
         {
             my $punct_node = $p->node();
-            $punct_node->set_parent($head_node);
+            while($ifc < $#conjuncts && $punct_node->ord() > $conjuncts[$ifc]->ord())
+            {
+                $ifc++;
+            }
+            $fc = $conjuncts[$ifc]->node() if($ifc <= $#conjuncts);
+            $punct_node->set_parent($fc);
             $punct_node->set_deprel('punct');
         }
         foreach my $d (@dependents)
