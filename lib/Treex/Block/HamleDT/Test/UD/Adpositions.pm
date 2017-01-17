@@ -26,7 +26,7 @@ sub process_atree
             my $parent = $node->parent();
             my $deprel = $node->deprel();
             # Do not test adpositions in foreign text, they have their own rules for attachment.
-            next if($deprel eq 'foreign');
+            next if($deprel =~ m/flat|foreign/);
             # Do not test adpositions that are part of a multi-word expression. MWE's must be tested separately by their own rules.
             # The whole MWE may act as something else than adposition. It can be an advmod.
             next if($deprel eq 'fixed' || any {$_->deprel() eq 'fixed'} ($node->children()));

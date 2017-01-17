@@ -354,10 +354,9 @@ sub convert_deprels
             elsif($node->is_foreign() && $parent->is_foreign() ||
                   $node->is_foreign() && $node->is_adposition() && $parent->is_proper_noun())
                   ###!!! van Gogh, de Gaulle in Czech text; but it means we will have to reverse the relation left-to-right!
-                  ###!!! Maybe it will be better to change the relation to "flat" when we have to reorder it anyway.
                   ###!!! Another solution would be to label the relation "case". But foreign prepositions do not have this function in Czech.
             {
-                $deprel = 'foreign';
+                $deprel = 'flat:foreign';
             }
             elsif($node->is_determiner() && $self->agree($node, $parent, 'case'))
             {
@@ -1592,7 +1591,7 @@ sub fix_determiners {
                         # If it is attached via one of the following relations, it is a pronoun, not a determiner.
                         ###!!! We include 'conj' because conjuncts are more often than not pronouns and we do not want to implement the correct treatment of coordinations.
                         ###!!! Nevertheless it is possible that determiners are coordinated: "ochutnala můj i tvůj oběd".
-                        if($node->deprel() =~ m/^(nsubj|obj|iobj|xcomp|advmod|case|appos|conj|cc|discourse|parataxis|foreign|dep)$/)
+                        if($node->deprel() =~ m/^(nsubj|obj|iobj|xcomp|advmod|case|appos|conj|cc|discourse|parataxis|flat:foreign|dep)$/)
                         {
                             $change = 1;
                         }

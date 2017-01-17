@@ -188,11 +188,6 @@ sub convert_deprels
         {
             $deprel = 'AuxT';
         }
-        # Non-first word in a foreign segment in case of code switching.
-        elsif($deprel =~ m/^foreign(:|$)/)
-        {
-            $deprel = 'Atr';
-        }
         # Two parts of what should be one word. May occur in poorly edited text.
         elsif($deprel =~ m/^goeswith(:|$)/)
         {
