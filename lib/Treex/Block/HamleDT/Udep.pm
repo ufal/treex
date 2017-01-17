@@ -1341,8 +1341,8 @@ sub fix_em_que_de_que
 
 
 #------------------------------------------------------------------------------
-# If a verb has an auxpass(:refl) child, its subject must be also *pass. We
-# try to get the subjects right already during deprel conversion, checking
+# If a verb has an auxpass or expl:pass child, its subject must be also *pass.
+# We try to get the subjects right already during deprel conversion, checking
 # whether the parent is a passive participle. But that will not work for
 # reflexive passives, where we have to wait until the reflexive pronoun has its
 # deprel. Probably it will also not work if the participle does not have the
@@ -1359,7 +1359,7 @@ sub check_ncsubjpass_when_auxpass
     foreach my $node (@nodes)
     {
         my @children = $node->children();
-        my @auxpass = grep {$_->deprel() =~ m/^auxpass/} (@children);
+        my @auxpass = grep {$_->deprel() =~ m/^(auxpass|expl:pass)$/} (@children);
         if(scalar(@auxpass) > 0)
         {
             foreach my $child (@children)
