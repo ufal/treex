@@ -13,7 +13,7 @@ sub process_atree
     my $root = shift;
     # Fix relations before morphology. The fixes depend only on UPOS tags, not on morphology (e.g. NOUN should not be attached as det).
     # And with better relations we will be more able to disambiguate morphological case and gender.
-    $self->fix_det_nmod($root);
+    $self->convert_deprels($root);
     $self->fix_morphology($root);
     $self->regenerate_upos($root);
     $self->fix_root_punct($root);
@@ -26,22 +26,39 @@ sub process_atree
 
 
 
+my %v12deprel =
+(
+    'dobj'      => 'obj',
+    'nsubjpass' => 'nsubj:pass',
+    'csubjpass' => 'csubj:pass',
+    'auxpass'   => 'aux:pass',
+    'neg'       => 'advmod',
+    'name'      => 'flat',
+    'foreign'   => 'flat:foreign',
+    'mwe'       => 'fixed'
+);
+
+
+
 #------------------------------------------------------------------------------
-# Fixes known issues in dependency relations.
+# Converts dependency relations from UD v1 to v2.
 #------------------------------------------------------------------------------
-sub fix_det_nmod
+sub convert_deprels
 {
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants();
-    # Identify finite verbs first. We will need them later to disambiguate personal pronouns.
     foreach my $node (@nodes)
     {
         my $parent = $node->parent();
-        # Genitive noun phrases are often attached as det while they should be nmod.
-        if($node->is_noun() && !$node->is_pronominal() && $parent->is_noun() && $node->deprel() =~ m/^det(:|$)/)
+        my $deprel = $node->deprel();
+        if(exists($v12deprel{$deprel}))
         {
-            $node->set_deprel('nmod');
+            $node->set_deprel($v12deprel{$deprel});
+        }
+        elsif($deprel eq 'nmod' && $parent->is_verb())
+        {
+            $node->set_deprel('obl');
         }
     }
 }
@@ -758,93 +775,6 @@ sub fix_morphology
                 }
             }
             $node->set_conll_pos($stts);
-        }
-    }
-    # Person and number of finite verbs can be deduced from their subjects.
-    # We have to do this in a separate loop, after all the pronouns have been solved.
-    foreach my $node (@nodes)
-    {
-        my $form = $node->form();
-        my $lcform = lc($node->form());
-        my $lemma = $node->lemma();
-        my $iset = $node->iset();
-        if($node->is_finite_verb())
-        {
-            my $subject = $self->get_subject($node);
-            if(defined($subject))
-            {
-                my $number = $subject->iset()->number();
-                my $person = $subject->iset()->person();
-                # Note that the polite pronoun "Sie" is tagged with 2nd person but the verb is third person plural.
-                # Also note that we will occasionally introduce errors if there is a coordination of singular subjects, the verb is plural.
-                if($lcform =~ m/en$/)
-                {
-                    $iset->set('number', 'plur');
-                }
-                elsif($lcform =~ m/e$/)
-                {
-                    $iset->set('number', 'sing');
-                }
-                elsif($number =~ m/^(sing|plur)$/)
-                {
-                    $iset->set('number', $number);
-                }
-                if($person eq '1' || $person eq '2' && $subject->iset()->politeness() eq 'inf')
-                {
-                    $iset->set('person', $person);
-                }
-                else
-                {
-                    $iset->set('person', '3');
-                }
-            }
-            # Mood and tense can be derived only from the lexicon. Set it at least for a few high-frequency verbs.
-            # Note that the imperative is usually ambiguous with indicative or subjunctive and we could only distinguish it by context and word order.
-            # Certain forms of subjunctive I are usually ambiguous with indicative.
-            # sein "to be"
-            # mood=ind tense=pres: bin bist ist sind seid
-            # mood=ind tense=past: war warst waren wart
-            # mood=imp:            sei seien seid
-            # mood=sub (Konj I):   sei seist seiest seien seit seiet
-            # mood=sub (Konj II):  wäre wärst wärest wären wärt wäret
-            # haben "to have"
-            # mood=ind tense=pres: habe hab hast hat haben habt
-            # mood=ind tense=past: hatte hattest hatten hattet
-            # mood=imp:            habe hab haben habt
-            # mood=sub (Konj I):   habe habest haben habet
-            # mood=sub (Konj II):  hätte hättest hätten hättet
-            # werden "to become"
-            # mood=ind tense=pres: werde wirst wird werden werdet
-            # mood=ind tense=past: wurde wurdest wurden wurdet
-            # mood=imp:            werde werden werdet
-            # mood=sub (Konj I):   werde werdest werden werdet
-            # mood=sub (Konj II):  würde würdest würden würdet
-            # können "can"
-            # mood=ind tense=pres: kann kannst können könnt
-            # mood=ind tense=past: konnte konntest konnten konntet
-            # mood=sub tense=pres: könne könnest können könnet
-            # mood=sub tense=past: könnte könntest könnten könntet
-            # müssen "must"
-            # mood=ind tense=pres: muss musst müssen müsst
-            # mood=ind tense=past: musste musstest mussten musstet
-            # mood=sub tense=pres: müsse müssest müssen müsset
-            # mood=sub tense=past: müsste müsstest müssten müsstet
-            if($lcform =~ m/^(bin|bist|ist|sind|seid|ha(be|st|t|ben|bt)|werd(e|en|et)|wir(st|d)|kann(st)?|könn(en|t)|musst?|müss(en|t)|soll(st|en|t)?|will(st)?|woll(en|t)|mag(st)?|mög(en|t)|darf(st)?|dürf(en|t)|weiß(t)?|wiss(en|t))$/)
-            {
-                $iset->add('mood' => 'ind', 'tense' => 'pres');
-            }
-            elsif($lcform =~ m/^((war|wurde)(st|en|t)?|(hat|konn|muss|[sw]oll|moch|durf|wuss)(te|test|ten|tet))$/)
-            {
-                $iset->add('mood' => 'ind', 'tense' => 'past');
-            }
-            elsif($lcform =~ m/^(sei(e?st|en|e?t)|(hab|werd|könn|müss|[sw]oll|mög|dürf|wiss)(e|est|en|et))$/)
-            {
-                $iset->add('mood' => 'sub', 'tense' => 'pres');
-            }
-            elsif($lcform =~ m/^(wär(e|e?st|en|e?t)|würde(st|en|t)?|(hät|könn|müss|möch|dürf|wüss)(te|test|ten|tet))$/)
-            {
-                $iset->add('mood' => 'sub', 'tense' => 'past');
-            }
         }
     }
 }
