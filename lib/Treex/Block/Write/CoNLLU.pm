@@ -1,7 +1,4 @@
 package Treex::Block::Write::CoNLLU;
-
-use strict;
-use warnings;
 use Moose;
 use Lingua::Interset qw(encode);
 use Treex::Core::Common;
@@ -9,13 +6,92 @@ extends 'Treex::Block::Write::BaseTextWriter';
 
 has 'print_sent_id'                    => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print sent_id in CoNLL-U comment before each sentence' );
 has 'print_text'                       => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print sentence text in CoNLL-U comment before each sentence' );
-has 'xpostag'                          => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'include a treebank-specific tag in the XPOSTAG column?' );
 has 'randomly_select_sentences_ratio'  => ( is => 'rw', isa => 'Num',  default => 1 );
 has 'alignment'                        => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print alignment links in the 9th column' );
+
+# Where to find which CoNLL-U column?
+# All the following parameters can have a special value "0",
+# which means exclude this column (use "_" instead).
+# Otherwise they specify a comma-separated sequnce of attributes (fallbacks)
+# to try and use the first non-empty one.
+# The default values are chosen so they cover several scenarios
+# e.g. (deprel in $node->deprel or $node->conll_deprel or $node->afun).
+# However, when using this block in a given scenario where we know where to find each attribute,
+# it is recommended to override these defaults by explicitly specifying the parameters
+# and using just one item in each sequence.
+# "iset" is a special value which means to use Lingua::Interset::encode('mul::uposf', $node->iset)
+# for extracting UPOS and/or FEATS.
+has 'deprel' => ( is => 'ro', default => 'deprel,conll/deprel,afun', documentation => 'list of node attributes to check when printing the DEPREL column' );
+has 'xpos' => ( is => 'ro', default => 'conll/cpos,conll/pos,tag', documentation => 'list of node attributes to check when printing the XPOS column' );
+has 'upos' => ( is => 'ro', default => 'iset,conll/pos', documentation => 'list of node attributes to check when printing the UPOS column' );
+has 'feats' => ( is => 'ro', default => 'iset,conll/feat', documentation => 'list of node attributes to check when printing the FEATS column' );
 
 has _was => ( is => 'rw', default => sub{{}} );
 
 has '+extension' => ( default => '.conllu' );
+
+sub _get_deprel {
+    my ($self, $node) = @_;
+    my @attrs = split /,/, $self->deprel;
+    foreach my $attr (@attrs) {
+        return '_' if $attr eq '0';
+        my $value = $node->get_attr($attr);
+        return $value if defined $value && $value ne '';
+    }
+    return '_';
+}
+
+sub _get_xpos {
+    my ($self, $node) = @_;
+    my @attrs = split /,/, $self->xpos;
+    foreach my $attr (@attrs) {
+        return '_' if $attr eq '0';
+        my $value = $node->get_attr($attr);
+        return $value if defined $value && $value ne '';
+    }
+    return '_';
+}
+
+sub _get_upos {
+    my ($self, $node) = @_;
+    my @attrs = split /,/, $self->upos;
+    foreach my $attr (@attrs) {
+        return '_' if $attr eq '0';
+        if ($attr eq 'iset') {
+            my $isetfs = $node->iset();
+            if ($isetfs->get_nonempty_features()) {
+                my $upos_features = encode('mul::uposf', $isetfs);
+                my ($upos, $feat) = split(/\t/, $upos_features);
+                return $upos;
+            }
+        } else {
+            my $value = $node->get_attr($attr);
+            return $value if defined $value && $value ne '';
+        }
+    }
+    return '_';
+}
+
+sub _get_feats {
+    my ($self, $node) = @_;
+    my @attrs = split /,/, $self->feats;
+    foreach my $attr (@attrs) {
+        return '_' if $attr eq '0';
+        if ($attr eq 'iset') {
+            my $isetfs = $node->iset();
+            if ($isetfs->get_nonempty_features()) {
+                my $upos_features = encode('mul::uposf', $isetfs);
+                my ($upos, $feat) = split(/\t/, $upos_features);
+                return $feat;
+            }
+        } else {
+            my $value = $node->get_attr($attr);
+            return $value if defined $value && $value ne '';
+        }
+    }
+    return '_';
+}
+
 
 sub process_atree {
     my ($self, $tree) = @_;
@@ -83,36 +159,19 @@ sub process_atree {
             my $misc = $last_fused_node_no_space_after ? 'SpaceAfter=No' : '_';
             print { $self->_file_handle() } ("$range\t$form\t_\t_\t_\t_\t_\t_\t_\t$misc\n");
         }
-        my $ord = $node->ord();
-        my $form = $node->form();
-        my $lemma = $node->lemma();
-        # We want to write the original, corpus-specific POS tag in the POSTAG column.
-        # It is not always clear where we should find it.
-        # At present I take conll/pos because that is where the original tag survives the
-        # HamleDT harmonization process (orig -> prague -> ud). If it is not defined,
-        # I take tag as back-off.
-        ###!!! It would be better to use a block parameter to let the user specify what tag we should use.
-        ###!!! Much in the same fashion as the attributes in Write::CoNLLX are selected.
-        my $tag = $node->conll_pos();
-        $tag = $node->tag() if(!defined($tag) || $tag eq '');
+        my $ord = $node->ord;
+        my $pord = $node->get_parent->ord;
+        my $form = $node->form;
+        my $lemma = $node->lemma;
 
-        # If no iset feature is set, we want to print "_" in the FEATS and UPOS columns.
-        # Unfortunately, it is difficult to detect this case
-        # because $node->iset() creates new Lingua::Interset::FeatureStructure,
-        # which has all (60) features set to an empty string.
-        # Using encode('mul::uposf', $isetfs) results in UPOS='X'.
-        # So we need to access directly $node->{iset}.
-        my ($upos, $feat);
-        if ($node->{iset}){
-            my $isetfs = $node->iset();
-            my $upos_features = encode('mul::uposf', $isetfs);
-            ($upos, $feat) = split(/\t/, $upos_features);
-        } else {
-            ($upos, $feat) = ('_', '_');
-        }
-        my $pord = $node->get_parent()->ord();
+        my $upos = $self->_get_upos($node);
+        my $xpos = $self->_get_xpos($node);
+        my $deprel = $self->_get_deprel($node);
+        my $feats = $self->_get_feats($node);
+
         my @misc;
         @misc = split(/\|/, $wild->{misc}) if(exists($wild->{misc}) && defined($wild->{misc}));
+
         # In the case of fused surface token, SpaceAfter=No may be specified for the surface token but NOT for the individual syntactic words.
         if($node->no_space_after() && !defined($wild->{fused}))
         {
@@ -155,10 +214,6 @@ sub process_atree {
             push(@misc, "LNumValue=$wild->{lnumvalue}");
         }
         my $misc = scalar(@misc)>0 ? join('|', @misc) : '_';
-        my $deprel = $node->deprel();
-        # CoNLL-U columns: ID, FORM, LEMMA, UPOSTAG, XPOSTAG(treebank-specific), FEATS, HEAD, DEPREL, DEPS(additional), MISC
-        # Make sure that values are not empty and that they do not contain spaces.
-        my $xpostag = $self->xpostag() ? $tag : '_';
 
         my $relations = '_';
         if ($self->alignment) {
@@ -168,7 +223,9 @@ sub process_atree {
             }
         }
 
-        my @values = ($ord, $form, $lemma, $upos, $xpostag, $feat, $pord, $deprel, $relations, $misc);
+        # CoNLL-U columns: ID, FORM, LEMMA, UPOS, XPOS(treebank-specific), FEATS, HEAD, DEPREL, DEPS(additional), MISC
+        # Make sure that values are not empty and that they do not contain spaces.
+        my @values = ($ord, $form, $lemma, $upos, $xpos, $feats, $pord, $deprel, $relations, $misc);
         @values = map
         {
             my $x = $_ // '_';
@@ -181,7 +238,7 @@ sub process_atree {
         (@values);
         print { $self->_file_handle() } join("\t", @values)."\n";
     }
-    print { $self->_file_handle() } "\n" if($tree->get_descendants());
+    print { $self->_file_handle() } "\n" if $tree->get_descendants();
     return;
 }
 
