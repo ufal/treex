@@ -223,7 +223,7 @@ sub convert_deprels
         }
         # Noun phrase that functions as an adverbial modifier, if attached to a predicate,
         # and as nominal attribute, if attached to another nominal.
-        elsif($deprel =~ m/^nmod(:|$)/)
+        elsif($deprel =~ m/^(nmod|obl)(:|$)/)
         {
             $deprel = $parent->is_verb() ? 'Adv' : 'Atr';
         }

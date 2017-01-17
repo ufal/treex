@@ -317,10 +317,10 @@ sub convert_deprels
                 $deprel = 'pnom';
             }
         }
-        # Adverbial modifier: advmod, nmod, advcl
+        # Adverbial modifier: advmod, obl, advcl
         elsif($deprel eq 'Adv')
         {
-            $deprel = $node->is_verb() ? 'advcl' : $node->is_noun() ? 'nmod' : 'advmod';
+            $deprel = $node->is_verb() ? 'advcl' : $node->is_noun() ? 'obl' : 'advmod';
         }
         # Attribute of a noun: amod, nummod, nmod, acl
         elsif($deprel eq 'Atr')
