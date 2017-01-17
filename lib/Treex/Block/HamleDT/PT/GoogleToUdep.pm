@@ -133,7 +133,7 @@ my %conversion_table =
     'parataxis' => 'parataxis',
     'partmod'   => 'acl:part', # participle acting as an adjectival modifier
     'poss'      => 'det:poss', # possessive determiner (pronoun)
-    'prt'       => 'expl', # the reflexive pronoun "se" when tagged as particle and used with an inherently reflexive verb ###!!! also compound:prt in Germanic languages?
+    'prt'       => 'expl:pv', # the reflexive pronoun "se" when tagged as particle and used with an inherently reflexive verb ###!!! also compound:prt in Germanic languages?
     'rcmod'     => 'acl:relcl', # relative clause
     'xcomp'     => 'xcomp'
 );
