@@ -272,7 +272,7 @@ sub convert_deprels
         {
             # Is the parent a passive verb?
             # Note that this will not catch all passives (e.g. reflexive passives).
-            # Thus we will later check whether there is an auxpass sibling.
+            # Thus we will later check whether there is an aux:pass sibling.
             if($parent->iset()->is_passive())
             {
                 # If this is a verb (including infinitive) then it is a clausal subject.
@@ -396,10 +396,10 @@ sub convert_deprels
         {
             $deprel = 'xcomp';
         }
-        # Auxiliary verb "být" ("to be"): aux, auxpass
+        # Auxiliary verb "být" ("to be"): aux, aux:pass
         elsif($deprel eq 'AuxV')
         {
-            $deprel = $parent->iset()->is_passive() ? 'auxpass' : 'aux';
+            $deprel = $parent->iset()->is_passive() ? 'aux:pass' : 'aux';
             # Side effect: We also want to modify Interset. The PDT tagset does not distinguish auxiliary verbs but UPOS does.
             $node->iset()->set('verbtype', 'aux');
         }
@@ -1341,7 +1341,7 @@ sub fix_em_que_de_que
 
 
 #------------------------------------------------------------------------------
-# If a verb has an auxpass or expl:pass child, its subject must be also *pass.
+# If a verb has an aux:pass or expl:pass child, its subject must be also *pass.
 # We try to get the subjects right already during deprel conversion, checking
 # whether the parent is a passive participle. But that will not work for
 # reflexive passives, where we have to wait until the reflexive pronoun has its
@@ -1359,7 +1359,7 @@ sub check_ncsubjpass_when_auxpass
     foreach my $node (@nodes)
     {
         my @children = $node->children();
-        my @auxpass = grep {$_->deprel() =~ m/^(auxpass|expl:pass)$/} (@children);
+        my @auxpass = grep {$_->deprel() =~ m/^(aux|expl):pass$/} (@children);
         if(scalar(@auxpass) > 0)
         {
             foreach my $child (@children)
@@ -1392,7 +1392,7 @@ sub dissolve_chains_of_auxiliaries
     foreach my $node (@nodes)
     {
         # An auxiliary verb may be attached to another auxiliary verb in coordination ([cs] "byl a bude prodáván").
-        # Thus we must check whether the deprel is aux (or auxpass). We also cannot dissolve the chain if the
+        # Thus we must check whether the deprel is aux (or aux:pass). We also cannot dissolve the chain if the
         # grandparent is root.
         if($node->iset()->is_auxiliary() && $node->parent()->iset()->is_auxiliary() && $node->deprel() =~ m/^aux/ && !$node->parent()->parent()->is_root())
         {

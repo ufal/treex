@@ -179,7 +179,7 @@ sub fix_auxiliary_verbs
         {
             $node->iset()->set('verbtype', '');
             # Often the parent is a verb which really should be treated as auxiliary.
-            # We have to check that our own deprel is aux or auxpass; in particular, it should not be conj.
+            # We have to check that our own deprel is aux; in particular, it should not be conj.
             my $parent = $node->parent();
             if($node->deprel() =~ m/^aux(pass)?$/ && $parent->is_verb() && $parent->lemma() =~ m/^($re_aux)$/)
             {

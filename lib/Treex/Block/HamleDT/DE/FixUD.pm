@@ -863,7 +863,7 @@ sub get_parent_finite_verb
     return $parent if($parent->is_finite_verb());
     my @siblings = grep {$_ != $node} $parent->children();
     # Note that there may be other finite siblings that we are not interested in, such as subordinate predicates.
-    my @result = grep {$_->deprel() =~ m/^(aux|auxpass|cop)$/ && $_->is_finite_verb()} @siblings;
+    my @result = grep {$_->deprel() =~ m/^(aux|aux:pass|cop)$/ && $_->is_finite_verb()} @siblings;
     my $result = scalar(@result) >= 1 ? $result[0] : undef;
     return $result;
 }
