@@ -7,7 +7,8 @@ use Lingua::Interset qw(encode);
 use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';
 
-has 'print_id'                         => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print sent_id in CoNLL-U comment before each sentence' );
+has 'print_sent_id'                    => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print sent_id in CoNLL-U comment before each sentence' );
+has 'print_text'                       => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print sentence text in CoNLL-U comment before each sentence' );
 has 'xpostag'                          => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'include a treebank-specific tag in the XPOSTAG column?' );
 has 'randomly_select_sentences_ratio'  => ( is => 'rw', isa => 'Num',  default => 1 );
 has 'alignment'                        => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print alignment links in the 9th column' );
@@ -25,10 +26,14 @@ sub process_atree {
     # Empty sentences are not allowed.
     return if(scalar(@nodes)==0);
     # Print sentence (bundle) ID as a comment before the sentence.
-    if ($self->print_id) {
+    if ($self->print_sent_id) {
         my $sent_id = $tree->get_bundle->id;
         $sent_id .= '/' . $tree->get_zone->get_label;
-        print {$self->_file_handle} "\# sent_id $sent_id\n";
+        print {$self->_file_handle} "# sent_id = $sent_id\n";
+    }
+    if ($self->print_text) {
+        my $text = $tree->get_zone->sentence;
+        print {$self->_file_handle} "# text = $text\n" if defined $text;
     }
     # Print the original CoNLL-U comments for this sentence if present.
     my $comment = $tree->get_bundle->wild->{comment};
