@@ -8,7 +8,7 @@ extends 'Treex::Block::Test::BaseTester';
 my @relations =
 (
     'nsubj', 'nsubj:pass', 'obj', 'iobj', 'csubj', 'csubj:pass', 'ccomp', 'xcomp',
-    'nmod', 'advmod', 'advcl', 'neg',
+    'nmod', 'advmod', 'advcl',
     'vocative', 'discourse', 'expl', 'aux', 'aux:pass', 'cop', 'mark',
     'appos', 'amod', 'det', 'nummod', 'acl', 'case',
     'compound', 'fixed', 'flat', 'flat:foreign', 'goeswith',

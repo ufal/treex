@@ -221,11 +221,6 @@ sub convert_deprels
         {
             $deprel = 'Atr';
         }
-        # Negation.
-        elsif($deprel =~ m/^neg(:|$)/)
-        {
-            $deprel = 'Neg';
-        }
         # Noun phrase that functions as an adverbial modifier, if attached to a predicate,
         # and as nominal attribute, if attached to another nominal.
         elsif($deprel =~ m/^nmod(:|$)/)

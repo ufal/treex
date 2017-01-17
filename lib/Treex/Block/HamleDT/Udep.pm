@@ -318,11 +318,6 @@ sub convert_deprels
             }
         }
         # Adverbial modifier: advmod, nmod, advcl
-        # Note: UD also distinguishes the relation neg. In Czech, most negation is done using bound morphemes.
-        # Separate negative particles exist but they are either ExD (replacing elided negated "to be") or AuxZ ("ne poslední zvýšení cen").
-        # Examples: ne, nikoli, nikoliv, ani?, vůbec?
-        # I am not sure that we want to distinguish them from the other AuxZ using the neg relation.
-        # AuxZ words are mostly adverbs, coordinating conjunctions and particles. Other parts of speech are extremely rare.
         elsif($deprel eq 'Adv')
         {
             $deprel = $node->is_verb() ? 'advcl' : $node->is_noun() ? 'nmod' : 'advmod';
@@ -438,14 +433,7 @@ sub convert_deprels
         # AuxZ: intensifier or negation
         elsif($deprel eq 'AuxZ')
         {
-            # Negation is mostly done using bound prefix ne-.
-            # If it is a separate word ("ne už personálním, ale organizačním"; "potřeboval čtyřnohého a ne dvounohého přítele), it is labeled AuxZ.
-            ###!!! This is specific to Czech!
             my $lemma = $node->lemma();
-            if(defined($lemma) && $lemma eq 'ne')
-            {
-                $deprel = 'neg';
-            }
             # AuxZ is an emphasizing word (“especially on Monday”).
             # It also occurs with numbers (“jen čtyři firmy”, “jen několik procent”).
             # The word "jen" ("only") is not necessarily a restriction. It rather emphasizes that the number is a restriction.
@@ -455,15 +443,13 @@ sub convert_deprels
             # https://ufal.mff.cuni.cz/pdt2.0/doc/manuals/en/t-layer/html/ch07s07s05.html
             # Most frequent lemmas with AuxZ: i (4775 výskytů), jen, až, pouze, ani, už, již, ještě, také, především (689 výskytů)
             # Most frequent t-lemmas with RHEM: #Neg (7589 výskytů), i, jen, také, už, již, ani, až, pouze, například (500 výskytů)
-            else
-            {
-                $deprel = 'advmod:emph';
-            }
+            $deprel = 'advmod:emph';
         }
         # Neg: used in Prague-style harmonization of some treebanks (e.g. Romanian) for negation (elsewhere it may be AuxZ or Adv).
         elsif($deprel eq 'Neg')
         {
-            $deprel = 'neg';
+            # There was a separate 'neg' relation in UD v1 but it was removed in UD v2.
+            $deprel = 'advmod';
         }
         # The AuxY deprel is used in various situations, see below.
         elsif($deprel eq 'AuxY')
