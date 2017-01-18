@@ -15,6 +15,7 @@ sub process_atree
     # Fix relations before morphology. The fixes depend only on UPOS tags, not on morphology (e.g. NOUN should not be attached as det).
     # And with better relations we will be more able to disambiguate morphological case and gender.
     $self->convert_deprels($root);
+    $self->fix_morphology($root);
     $self->regenerate_upos($root);
     # Coordinating conjunctions and punctuation should now be attached to the following conjunct.
     # The Coordination phrase class already outputs the new structure, hence simple
@@ -70,20 +71,23 @@ sub convert_deprels
 
 
 #------------------------------------------------------------------------------
-# Identifies and returns the finite verb governing a node. If the parent is
-# not a finite verb, looks for auxiliary/copula siblings.
+# Fixes known issues in features.
 #------------------------------------------------------------------------------
-sub get_parent_finite_verb
+sub fix_morphology
 {
     my $self = shift;
-    my $node = shift;
-    my $parent = $node->parent();
-    return $parent if($parent->is_finite_verb());
-    my @siblings = grep {$_ != $node} $parent->children();
-    # Note that there may be other finite siblings that we are not interested in, such as subordinate predicates.
-    my @result = grep {$_->deprel() =~ m/^(aux|aux:pass|cop)$/ && $_->is_finite_verb()} @siblings;
-    my $result = scalar(@result) >= 1 ? $result[0] : undef;
-    return $result;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        my $form = $node->form();
+        my $lemma = $node->lemma();
+        my $iset = $node->iset();
+        if($lemma eq 'nicht')
+        {
+            $iset->set('polarity', 'neg');
+        }
+    }
 }
 
 
