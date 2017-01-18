@@ -21,22 +21,28 @@ has 'alignment'                        => ( is => 'ro', isa => 'Bool', default =
 # and using just one item in each sequence.
 # "iset" is a special value which means to use Lingua::Interset::encode('mul::uposf', $node->iset)
 # for extracting UPOS and/or FEATS.
-has 'deprel' => ( is => 'ro', default => 'deprel,conll/deprel,afun', documentation => 'list of node attributes to check when printing the DEPREL column' );
-has 'xpos' => ( is => 'ro', default => 'conll/cpos,conll/pos,tag', documentation => 'list of node attributes to check when printing the XPOS column' );
-has 'upos' => ( is => 'ro', default => 'iset,conll/pos', documentation => 'list of node attributes to check when printing the UPOS column' );
+has 'upos' => ( is => 'ro', default => 'iset', documentation => 'list of node attributes to check when printing the UPOS column' );
+has 'xpos' => ( is => 'ro', default => 'conll/pos,conll/cpos,tag', documentation => 'list of node attributes to check when printing the XPOS column' );
 has 'feats' => ( is => 'ro', default => 'iset,conll/feat', documentation => 'list of node attributes to check when printing the FEATS column' );
+has 'deprel' => ( is => 'ro', default => 'deprel,conll/deprel,afun', documentation => 'list of node attributes to check when printing the DEPREL column' );
 
 has _was => ( is => 'rw', default => sub{{}} );
 
 has '+extension' => ( default => '.conllu' );
 
-sub _get_deprel {
+sub _get_upos {
     my ($self, $node) = @_;
-    my @attrs = split /,/, $self->deprel;
+    my @attrs = split /,/, $self->upos;
     foreach my $attr (@attrs) {
         return '_' if $attr eq '0';
-        my $value = $node->get_attr($attr);
-        return $value if defined $value && $value ne '';
+        # If we ask for UPOS from Interset and the Interset features are empty, we want to (and should!) get the 'X' tag.
+        # Not '_' and not a substitute from the next available attribute (conll/pos etc.) which is not even a valid universal POS tag.
+        if ($attr eq 'iset') {
+            return $node->iset()->get_upos();
+        } else {
+            my $value = $node->get_attr($attr);
+            return $value if defined $value && $value ne '';
+        }
     }
     return '_';
 }
@@ -48,26 +54,6 @@ sub _get_xpos {
         return '_' if $attr eq '0';
         my $value = $node->get_attr($attr);
         return $value if defined $value && $value ne '';
-    }
-    return '_';
-}
-
-sub _get_upos {
-    my ($self, $node) = @_;
-    my @attrs = split /,/, $self->upos;
-    foreach my $attr (@attrs) {
-        return '_' if $attr eq '0';
-        if ($attr eq 'iset') {
-            my $isetfs = $node->iset();
-            if ($isetfs->get_nonempty_features()) {
-                my $upos_features = encode('mul::uposf', $isetfs);
-                my ($upos, $feat) = split(/\t/, $upos_features);
-                return $upos;
-            }
-        } else {
-            my $value = $node->get_attr($attr);
-            return $value if defined $value && $value ne '';
-        }
     }
     return '_';
 }
@@ -88,6 +74,17 @@ sub _get_feats {
             my $value = $node->get_attr($attr);
             return $value if defined $value && $value ne '';
         }
+    }
+    return '_';
+}
+
+sub _get_deprel {
+    my ($self, $node) = @_;
+    my @attrs = split /,/, $self->deprel;
+    foreach my $attr (@attrs) {
+        return '_' if $attr eq '0';
+        my $value = $node->get_attr($attr);
+        return $value if defined $value && $value ne '';
     }
     return '_';
 }
