@@ -620,11 +620,14 @@ sub project_dependencies
         foreach my $c (@coordinators)
         {
             my $coor_node = $c->node();
-            while($ifc < $#conjuncts && $coor_node->ord() > $conjuncts[$ifc]->ord())
+            unless($coor_node->ord() < $head_node->ord())
             {
-                $ifc++;
+                while($ifc < $#conjuncts && $coor_node->ord() > $conjuncts[$ifc]->ord())
+                {
+                    $ifc++;
+                }
+                $fc = $conjuncts[$ifc]->node() if($ifc <= $#conjuncts);
             }
-            $fc = $conjuncts[$ifc]->node() if($ifc <= $#conjuncts);
             $coor_node->set_parent($fc);
             $coor_node->set_deprel('cc');
         }
@@ -633,11 +636,14 @@ sub project_dependencies
         foreach my $p (@punctuation)
         {
             my $punct_node = $p->node();
-            while($ifc < $#conjuncts && $punct_node->ord() > $conjuncts[$ifc]->ord())
+            unless($punct_node->ord() < $head_node->ord())
             {
-                $ifc++;
+                while($ifc < $#conjuncts && $punct_node->ord() > $conjuncts[$ifc]->ord())
+                {
+                    $ifc++;
+                }
+                $fc = $conjuncts[$ifc]->node() if($ifc <= $#conjuncts);
             }
-            $fc = $conjuncts[$ifc]->node() if($ifc <= $#conjuncts);
             $punct_node->set_parent($fc);
             $punct_node->set_deprel('punct');
         }
