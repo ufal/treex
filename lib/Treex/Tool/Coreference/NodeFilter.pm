@@ -47,12 +47,14 @@ sub get_types_force {
         $types->{all_anaph} = 1;
         $types->{all_anaph_corbon17} = 1;
         $types->{'all_anaph.cr'} = 1;
+        $types->{'all_anaph.cr.cs'} = 1;
     }
     if (Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {expressed => 1, reflexive => 1})) {
         $types->{'reflpron'} = 1;
         $types->{all_anaph} = 1;
         $types->{all_anaph_corbon17} = 1;
         $types->{'all_anaph.cr'} = 1;
+        $types->{'all_anaph.cr.cs'} = 1;
     }
     # TODO: include prodrops in 1st or 2nd person (for Czech and Russian)
     if (Treex::Tool::Coreference::NodeFilter::PersPron::is_pers($node, { expressed => 1, person_3rd => -1, reflexive => -1 })) {
@@ -63,6 +65,7 @@ sub get_types_force {
         $types->{relpron} = 1;
         $types->{all_anaph} = 1;
         $types->{'all_anaph.cr'} = 1;
+        $types->{'all_anaph.cr.cs'} = 1;
     }
     if (Treex::Tool::Coreference::NodeFilter::RelPron::is_relat($node, { is_what => -1 })) {
         $types->{'relpron.no_what'} = 1;
