@@ -37,25 +37,36 @@ sub _is_sem_noun_t_all {
     my $arg_third_pers = $args->{person_3rd} // 0;
     return 0 if !ternary_arg($arg_third_pers, $third_pers);
     
-    # definite
+    # indefinite
     my $anode = $tnode->get_lex_anode;
     if (defined $anode) {
-        my $arg_definite = $args->{definite} // 0;
-        my $definite = is_definite($anode);
-        return 0 if !ternary_arg($arg_definite, $definite);
+        my $arg_indefinite = $args->{indefinite} // 0;
+        my $indefinite = is_indefinite($anode);
+        return 0 if !ternary_arg($arg_indefinite, $indefinite);
     }
 
     return 1 if (defined $tnode->formeme && $tnode->formeme =~ /^n/);
     return (defined $tnode->gram_sempos && ($tnode->gram_sempos =~ /^n/));
 }
 
+sub is_indefinite {
+    my ($anode) = @_;
+    if ($anode->language eq 'de') {
+        my @kids = $anode->get_children;
+        return any {$_->lemma eq "ein"} @kids;
+    }
+    return 0;
+}
+
 sub is_definite {
     my ($anode) = @_;
     if ($anode->language eq 'de') {
         my @kids = $anode->get_children;
-        return !any {$_->lemma eq "ein"} @kids;
+        return any {($_->lemma eq "der") || 
+                    ($_->lemma eq "die") ||
+                    ($_->lemma eq "das")} @kids;
     }
-    return 1;
+    return 0;
 }
 
 1;
