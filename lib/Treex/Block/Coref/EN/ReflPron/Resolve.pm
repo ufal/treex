@@ -12,8 +12,9 @@ has '+model_type' => ( isa => enum([qw/pcedt_bi pcedt_bi.with_en/]), default => 
 override '_build_model_for_type' => sub {
     my $dir = '/home/mnovak/projects/czeng_coref/treex_cr_train/en/reflpron/tmp/ml';
     return {
-        'pcedt_bi' => "$dir/run_2016-06-16_16-04-27_3983.first_model_for_English_reflprons/004.af303d1c32.featset/001.7eb17.mlmethod/model/train.pcedt_bi.table.gz.vw.ranking.model",
-        #'pcedt_bi.with_en' => "$dir/027_run_2017-01-14_02-37-37_21334.PCEDT.new_models_with_EN.CS__AllMonolingual_feats/004.7f391f3429.featset/002.22ec1.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model",
+        #'pcedt_bi' => "$dir/002_run_2017-01-16_10-50-54_14671.PCEDT.feats-AllMonolingual.round1/001.9fd0f3842c.featset/002.22ec1.mlmethod/model/train.pcedt_bi.with_cs.table.gz.vw.ranking.model",
+        'pcedt_bi' => "$dir/004_run_2017-01-17_22-34-17_28244.PCEDT.monolingual.feats-AllMonolingual/001.9fd0f3842c.featset/020.b0167.mlmethod/model/train.pcedt_bi.table.gz.vw.ranking.model",
+        #'pcedt_bi.with_en' => "$dir/002_run_2017-01-16_10-50-54_14671.PCEDT.feats-AllMonolingual.round1/003.cc47b795e9.featset/002.22ec1.mlmethod/model/train.pcedt_bi.with_cs.table.gz.vw.ranking.model",
     };
 };
 override '_build_ranker' => sub {
