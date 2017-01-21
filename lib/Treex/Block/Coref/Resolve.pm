@@ -7,7 +7,7 @@ with 'Treex::Block::Coref::SupervisedBase' => {
     -excludes => [ 'build_aligned_feats' ],
 };
 
-has 'model_type' => ( is => 'ro', isa => 'Str' );
+has 'model_type' => ( is => 'ro', isa => 'Str', predicate => 'has_model_type' );
 has 'model_path' => (
     is       => 'ro',
     required => 1,
@@ -54,11 +54,16 @@ sub build_aligned_feats {
 }
 sub _build_model_for_type {
     my ($self) = @_;
-    return log_fatal "method _build_model_for_type must be overriden in " . ref($self);
+    return {};
+#    return log_fatal "method _build_model_for_type must be overriden in " . ref($self);
 }
 sub build_model_path {
     my ($self) = @_;
-    my $path = $self->_model_for_type->{$self->model_type};
+    my $path;
+    if ($self->has_model_type) {
+        $path = $self->_model_for_type->{$self->model_type};
+    }
+    log_fatal "either specify model_type and override _build_model_for_type, or just override build_model_path in " . ref($self) if (!defined $path);
     print STDERR "MODEL_PATH: $path" . ref($self) . "\n";
     return $path;
 }
