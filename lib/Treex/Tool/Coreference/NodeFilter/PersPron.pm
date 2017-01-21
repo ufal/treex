@@ -85,6 +85,9 @@ sub is_reflexive {
     if ($anode->language eq "cs") {
         $lemma = Treex::Tool::Lexicon::CS::truncate_lemma($lemma, 1);
     }
+    elsif ($anode->language eq "ru") {
+        return 1 if ($anode->tag =~ /^P[68]/);
+    }
     return $PERS_PRONS_REFLEX{$anode->language}{$lemma};
 }
 
@@ -389,6 +392,11 @@ sub _is_pers_prague_a {
     my $expressed = $args->{expressed} // 1;
     return 0 if ($expressed < 0);
 
+    # reflexive
+    my $arg_reflexive = $args->{reflexive} // 0;
+    my $reflexive = is_reflexive($anode);
+    return 0 if !ternary_arg($arg_reflexive, $reflexive);
+    
     # possessive
     my $arg_possessive = $args->{possessive} // 0;
     my $possessive = is_possessive($anode);
