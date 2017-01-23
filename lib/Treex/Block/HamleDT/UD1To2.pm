@@ -1,4 +1,4 @@
-package Treex::Block::HamleDT::DE::UD1To2;
+package Treex::Block::HamleDT::UD1To2;
 use utf8;
 use Moose;
 use List::MoreUtils qw(any);
@@ -109,9 +109,10 @@ sub get_node_spanstring
 
 =over
 
-=item Treex::Block::HamleDT::DE::FixUD
+=item Treex::Block::HamleDT::UD1To2
 
-This is a temporary block that should fix selected known problems in the German UD treebank.
+This is a temporary block that should do the language-independent part of conversion
+from Universal Dependencies v1 to v2.
 
 =back
 
@@ -121,6 +122,6 @@ Daniel Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2016, 2017 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2017 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
