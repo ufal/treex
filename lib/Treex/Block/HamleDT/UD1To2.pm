@@ -35,7 +35,6 @@ my %v12deprel =
     'nsubjpass' => 'nsubj:pass',
     'csubjpass' => 'csubj:pass',
     'auxpass'   => 'aux:pass',
-    ###!!! We may want to also check that the child node has either Polarity=Neg or PronType=Neg.
     'neg'       => 'advmod',
     'name'      => 'flat',
     ###!!! We may want to convert 'foreign' to just 'flat' and check that both the child and the parent have the feature Foreign=Yes.
@@ -57,6 +56,19 @@ sub convert_deprels
     {
         my $parent = $node->parent();
         my $deprel = $node->deprel();
+        my $iset = $node->iset();
+        # If we are removing the 'neg' relation, make sure that the node has one of the features Polarity=Neg or PronType=Neg.
+        if($deprel eq 'neg')
+        {
+            if($node->is_pronominal())
+            {
+                $iset->set('prontype', 'neg');
+            }
+            else
+            {
+                $iset->set('polarity', 'neg');
+            }
+        }
         if(exists($v12deprel{$deprel}))
         {
             $node->set_deprel($v12deprel{$deprel});
