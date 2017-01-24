@@ -42,6 +42,12 @@ sub process_atree {
             $bundle->wild()->{comment} = join("\n", @comments);
         }
     }
+    # Remove leading and trailing spaces from the sentence text (which will be printed in the text comment).
+    my $zone = $root->get_zone();
+    my $sentence = $zone->sentence();
+    $sentence =~ s/^\s+//;
+    $sentence =~ s/\s+$//;
+    $zone->set_sentence($sentence);
 
     # Now the harmonization proper.
     $self->exchange_tags($root);
