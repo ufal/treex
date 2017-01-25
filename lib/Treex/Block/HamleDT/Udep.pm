@@ -314,7 +314,7 @@ sub convert_deprels
             }
             # The symbol "=" is tagged SYM and substitutes a verb ("equals to"). This verb is not considered copula (only "to be" is copula).
             # Hence we will re-classify the relation as object.
-            elsif($parent->form() eq '=')
+            elsif(!$parent->is_root() && $parent->form() eq '=')
             {
                 $deprel = 'obj';
             }
