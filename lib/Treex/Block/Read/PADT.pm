@@ -159,7 +159,11 @@ override '_convert_all_trees' => sub
             # Every ID starts with 'w-' for the 'words' layer. We collapse layers and do not need this.
             # However, we want the unit/bundle id to contain the document name so it is unique in the entire treebank.
             $id =~ s:^w-:$csd/:;
-            $aroot->set_id($id);
+            # Martin has stolen the '/' character to separate bundle from zone in sentence ids in CoNLL-U files,
+            # therefore we cannot leave any '/' characters in the id of the bundle.
+            $id =~ s-/-:-g;
+            $bundle->set_id($id);
+            $aroot->set_id("$id/a");
             my $form = $unit->attr('form');
             if(defined($form))
             {
