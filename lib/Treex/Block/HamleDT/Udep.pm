@@ -42,12 +42,6 @@ sub process_atree {
             $bundle->wild()->{comment} = join("\n", @comments);
         }
     }
-    # Remove leading and trailing spaces from the sentence text (which will be printed in the text comment).
-    my $zone = $root->get_zone();
-    my $sentence = $zone->sentence();
-    $sentence =~ s/^\s+//;
-    $sentence =~ s/\s+$//;
-    $zone->set_sentence($sentence);
 
     # Now the harmonization proper.
     $self->exchange_tags($root);
@@ -73,6 +67,8 @@ sub process_atree {
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
+    # The 'cop' relation can be recognized only after transformations.
+    $self->tag_copulas_aux($root);
     # Portuguese expressions "cerca_de" and "mais_de" were tagged as prepositions but attached as Atr.
     # Now the MWE are split and "cerca" is attached as nmod. Fix it to case.
     my @nodes = $root->get_descendants({'ordered' => 1});
@@ -109,42 +105,47 @@ sub process_atree {
         $node->set_conll_deprel($node->deprel());
         $node->set_afun(undef); # just in case... (should be done already)
     }
-    # Estimate some more no_space_afters, occurring e.g. in Catalan: "l', d', s'" before a pronounced vowel.
-    ###!!! We are applying it now to any language and even in treebanks that already had no_space_after in order. That is probably wrong!
-    # Also treat single quotes as double quotes in W2W::EstimateNoSpaceAfter. Single quotes are not touched there because it is not guaranteed
-    # that they are quotes (and not apostrophes tokenized off), and that block is more responsible than we here :-)
-    my $nq = 0;
-    for(my $i = 0; $i<$#nodes; $i++)
+    ###!!! The following block helps with Catalan and maybe some other languages but it cannot be applied blindly to any languages.
+    ###!!! Especially it must not be applied to corpora where the no_space_after attribute is properly set from the underlying text (e.g. Czech).
+    ###!!! We should move it as an optional extension to the W2W::EstimateNoSpaceAfter block.
+    if(0)
     {
-        my $form = $nodes[$i]->form();
-        if($form =~ m/\pL'$/)
-        {
-            $nodes[$i]->set_no_space_after(1);
-        }
-        # Odd undirected quotes are considered opening, even are closing.
-        # It will not work if a quote is missing or if the quoted text spans multiple sentences.
-        if($form eq "'")
-        {
-            $nq++;
-            # If the number of quotes is even, the no_space_after flag has been set at the previous token.
-            # If the number of quotes is odd, we must set the flag now.
-            if($nq % 2 == 1)
-            {
-                $nodes[$i]->set_no_space_after(1);
-            }
-        }
-        my $next_form = $nodes[$i+1]->form();
-        $next_form = '' if(!defined($next_form));
-        # If the current number of quotes is odd, the next quote will be even.
-        if($next_form eq "'" && $nq % 2 == 1)
-        {
-            $nodes[$i]->set_no_space_after(1);
-        }
+	# Estimate some more no_space_afters, occurring e.g. in Catalan: "l', d', s'" before a pronounced vowel.
+	# Also treat single quotes as double quotes in W2W::EstimateNoSpaceAfter. Single quotes are not touched there because it is not guaranteed
+	# that they are quotes (and not apostrophes tokenized off), and that block is more responsible than we here :-)
+	my $nq = 0;
+	for(my $i = 0; $i<$#nodes; $i++)
+	{
+		my $form = $nodes[$i]->form();
+		if($form =~ m/\pL'$/)
+		{
+		$nodes[$i]->set_no_space_after(1);
+		}
+		# Odd undirected quotes are considered opening, even are closing.
+		# It will not work if a quote is missing or if the quoted text spans multiple sentences.
+		if($form eq "'")
+		{
+		$nq++;
+		# If the number of quotes is even, the no_space_after flag has been set at the previous token.
+		# If the number of quotes is odd, we must set the flag now.
+		if($nq % 2 == 1)
+		{
+			$nodes[$i]->set_no_space_after(1);
+		}
+		}
+		my $next_form = $nodes[$i+1]->form();
+		$next_form = '' if(!defined($next_form));
+		# If the current number of quotes is odd, the next quote will be even.
+		if($next_form eq "'" && $nq % 2 == 1)
+		{
+		$nodes[$i]->set_no_space_after(1);
+		}
+	}
     }
     # Some of the above transformations may have split or removed nodes.
     # Make sure that the full sentence text corresponds to the nodes again.
     my $text = $self->collect_sentence_text(@nodes);
-    $zone->set_sentence($text);
+    $root->get_zone()->set_sentence($text);
 }
 
 
@@ -357,12 +358,6 @@ sub convert_deprels
             else
             {
                 $deprel = 'pnom';
-            }
-            # Side effect: We also want to modify Interset. The PDT tagset does not distinguish auxiliary verbs but UPOS does.
-            # Since UD v2, copula verbs are considered auxiliary, too.
-            if($parent->is_verb())
-            {
-                $parent->iset()->set('verbtype', 'aux');
             }
         }
         # Adverbial modifier: advmod, obl, advcl
@@ -606,6 +601,28 @@ sub convert_deprels
     foreach my $node (@nodes)
     {
         delete($node->wild()->{prague_deprel});
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Since UD v2, verbal copulas must be tagged AUX and not VERB. We cannot check
+# this during the deprel conversion because we do not always see the real
+# copula as the parent of the Pnom node (hint: coordination).
+#------------------------------------------------------------------------------
+sub tag_copulas_aux
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'cop' && $node->is_verb())
+        {
+            $node->iset()->set('verbtype', 'aux');
+            $node->set_tag('AUX');
+        }
     }
 }
 
