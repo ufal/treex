@@ -113,6 +113,7 @@ sub get_types_force {
     }
     if (Treex::Tool::Coreference::NodeFilter::DemonPron::is_demon($node)) {
         $types->{demonpron} = 1;
+        $types->{all_anaph_corbon17} = 1;
     }
     if (Treex::Tool::Coreference::NodeFilter::Coord::is_coord_root($node)) {
         $types->{coord} = 1;
