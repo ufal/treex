@@ -98,7 +98,7 @@ sub fix_annotation_errors
         # L' edició , en vuit volums , en català i castellà , inclourà els textos que Salvador_Dalí va escriure des_de 1919 , quan _ tenia 15 anys , fins gairebé al final de la_seva vida .
         # 1919 is the head, attached upwards as 'cc' (adjunct). Children: des_de (coord), tenia (S), fins (coord), final (sn).
         # "fins" heads the subtree "fins gairebé al". But "al" should be attached to "final" and it isn't. And it is probably better not to do it as coordination anyway.
-        elsif($form eq '1919' || $self->get_node_spanstring($node) =~ m/^des_de 1919 , quan _ tenia 15 anys , fins gairebé al final de la_seva vida$/)
+        elsif($form eq '1919' && $self->get_node_spanstring($node) =~ m/^des_de 1919 , quan _ tenia 15 anys , fins gairebé al final de la_seva vida$/)
         {
             my @subtree = $self->get_node_subtree($node);
             my $desde = $subtree[0];

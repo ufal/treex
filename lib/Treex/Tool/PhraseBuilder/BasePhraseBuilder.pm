@@ -22,7 +22,7 @@ has 'prep_is_head' =>
         'See Treex::Core::Phrase::PP, fun_is_head attribute.'
 );
 
-has 'mwe_is_head_first' =>
+has 'fixed_is_head_first' =>
 (
     is       => 'ro',
     isa      => 'Bool',
@@ -1033,7 +1033,7 @@ sub detect_prague_pp
             # In UD, the leftmost node of the MWE is its head.
             ###!!! If we want to make it variable we should define multi-word expressions as another specific phrase type.
             my @mwe = sort {$a->node()->ord() <=> $b->node()->ord()} (@{$c->{fixed}}, $c->{fun});
-            my $head = $self->mwe_is_head_first() ? shift(@mwe) : pop(@mwe);
+            my $head = $self->fixed_is_head_first() ? shift(@mwe) : pop(@mwe);
             $head->set_parent(undef);
             $c->{fun} = new Treex::Core::Phrase::NTerm('head' => $head);
             $c->{fun}->set_deprel($fun_deprel);
@@ -1421,6 +1421,40 @@ sub convert_phrase_headed_by_modifier
             }
         }
     }
+    return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Examines a nonterminal phrase in the Prague style. If it recognizes a fixed
+# phrase where one of the members heads a nested fixed phrase, merges the two
+# phrases into one. For example, the German UD data from Google used chains of
+# fixed relations to annotate expressions "nach wie vor" and "so gut wie".
+#------------------------------------------------------------------------------
+sub detect_fixed_chain
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    my @dependents = $phrase->dependents('ordered' => 1);
+    my $is_fixed = any {$self->has_deprel($_, 'fixed')} (@dependents);
+    foreach my $d (@dependents)
+    {
+        if($self->has_deprel($d, 'fixed'))
+        {
+            # Does the fixed dependent have its own fixed dependents?
+            # If it does, re-attach them directly to the current phrase.
+            my @grandchildren = $d->dependents('ordered' => 1);
+            foreach my $gc (@grandchildren)
+            {
+                if($self->has_deprel($gc, 'fixed'))
+                {
+                    $gc->set_parent($phrase);
+                }
+            }
+        }
+    }
+    # Return the input NTerm phrase.
     return $phrase;
 }
 
