@@ -27,6 +27,8 @@ sub process_anode {
         $form =~ s/x/х/g;
     }
 
+    ############### SETTING POS AND SUBPOS ##################
+
     $tag =~ s/^../PP/ if ($form =~ /^(я|меня|мне|мной)$/);
     $tag =~ s/^../PP/ if ($form =~ /^(ты|тебя|тебе|тобой)$/);
     $tag =~ s/^../PP/ if ($form =~ /^(мы|нас|нам|нами)$/);
@@ -52,6 +54,12 @@ sub process_anode {
     $tag =~ s/^../PK/ if ($lemma =~ /^кто$/);
     $tag =~ s/^../PQ/ if ($lemma =~ /^что$/);
     $tag =~ s/^../PD/ if ($lemma =~ /^это$/);
+    
+    ############### SETTING POS AND SUBPOS ##################
+
+    $tag =~ s/^(.......)[-X]/${1}1/ if ($lemma =~ /^(я|мой|мы|наш)$/);
+    $tag =~ s/^(.......)[-X]/${1}2/ if ($lemma =~ /^(ты|твой|вы|ваш)$/);
+    $tag =~ s/^(.......)[-X]/${1}3/ if ($lemma =~ /^(он|она|оно|ее|его|они|их)$/);
     
     $anode->set_tag($tag);
 }
