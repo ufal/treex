@@ -26,6 +26,7 @@ sub process_anode {
     $tag =~ s/^(PS.....)[X-]/${1}3/ if ($lemma =~ /^ihr/);
     
     $anode->set_tag($tag);
+    $anode->set_lemma($lemma);
 }
 
 
