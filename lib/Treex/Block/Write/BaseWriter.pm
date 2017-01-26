@@ -81,7 +81,20 @@ sub _build_filenames {
     return [ split /[ ,]+/, $self->to ];
 }
 
-# Return 1 if the document should be compressed (and '.gz' added to its extension). 
+sub BUILD {
+    my ($self) = @_;
+    # fail soon if running under treex -p
+    if ($self->scenario && $self->scenario->runner && $self->scenario->runner->jobindex) {
+        # and if the output file is specified
+        if ($self->to ne '-' and $self->to ne '.') {
+            log_fatal "Merging writer output with treex -p into file(s) (except for stdout) "
+                . "is not supported. to=" . $self->to;
+        }
+    }
+    return;
+}
+
+# Return 1 if the document should be compressed (and '.gz' added to its extension).
 sub _compress_document {
 
     my ( $self, $document ) = @_;
@@ -104,14 +117,14 @@ sub _document_extension {
     return $self->extension . ( $self->_compress_document($document) ? '.gz' : '' );
 }
 
-# This just returns the next filename from the list given in the 'to' parameter. 
+# This just returns the next filename from the list given in the 'to' parameter.
 sub _get_next_filename {
-    
+
     my ($self) = @_;
-    
-    my ( $next_filename, @rest_filenames ) = @{ $self->_filenames };    
-    $self->_set_filenames( \@rest_filenames );        
-    return $next_filename;     
+
+    my ( $next_filename, @rest_filenames ) = @{ $self->_filenames };
+    $self->_set_filenames( \@rest_filenames );
+    return $next_filename;
 }
 
 
@@ -149,7 +162,7 @@ sub _get_filename {
             $filename = ( defined $self->path ? $self->path : '' ) . $next_filename;
         }
     }
-    
+
     if (defined $self->substitute){
         my $eval_string = '$filename =~ s' . $self->substitute . ';1;';
         eval $eval_string or log_fatal "Failed to eval $eval_string"; ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
@@ -170,17 +183,17 @@ sub _get_filename {
 # my $regex = $self->substitute;
 # my $delimiter = ",";
 # my $lc = ($regex =~ /i$/);
-# 
+#
 # # regex can have format {<old>}{<new>}
 # if ( $regex =~ /^{(.*)}{(.*)}i?$/ ) {
 #     $regex =~ s/^{(.*)}{(.*)}i?$/$1,$2/;
 # }
 # # otherwise regex should have format /<original>/<replacement>/, where "/" is delimiter of a choice
-# else {         
+# else {
 #     $delimiter = substr($regex, 0, 1);
 #     $regex =~ s/^\Q$delimiter\E(.*)\Q$delimiter\E$/$1/;
 # }
-# 
+#
 # my @old_new_regex = split /\Q$delimiter\E/, $regex;
 # log_fatal "Incorrect form of regex $self->substitute" if (scalar @old_new_regex != 2);
 # $filename =~ s/$old_new_regex[0]/$old_new_regex[1]/i if $lc;
@@ -188,21 +201,21 @@ sub _get_filename {
 
 
 
-# Default process_document method for all Writer blocks. 
+# Default process_document method for all Writer blocks.
 override 'process_document' => sub {
     my ( $self, $document ) = @_;
 
     # set _file_handle properly (this MUST be called if process_document is overridden)
     $self->_prepare_file_handle($document);
-    
+
     $self->_do_before_process($document);
 
     # call the original process_document with _file_handle set
     $self->_do_process_document($document);
 
     $self->_do_after_process($document);
-    
-    # This is not needed as the current file handle will be closed when opening the next file 
+
+    # This is not needed as the current file handle will be closed when opening the next file
     # (in _prepare_file_handle) or at the end of the process.
     # However, commenting the following line leads to undeterministic errors (e.g. in en2cs)
     # UNFINISHED JOB e2c-news-dev2009-job001 PRODUCED EPILOG.
@@ -274,7 +287,7 @@ sub _prepare_file_handle {
     my ( $self, $document ) = @_;
 
     my $filename = $self->_get_filename($document);
-    
+
     #log_warn("PREPARE FILENAME: $filename; LAST: " . $self->_last_filename);
     #log_warn(int(defined $self->_last_filename) . " + " . int($filename eq $self->_last_filename) . " + " . $filename ne "__FAKE_OUTPUT__");
 
@@ -324,7 +337,7 @@ sub _open_file_handle {
     else {
         open ( $hdl, '>', $filename );
     }
-    
+
     $hdl->autoflush(1);
     return $hdl;
 }
@@ -335,7 +348,7 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::Write::BaseWriter
 
@@ -344,10 +357,10 @@ Treex::Block::Write::BaseWriter
 This is the base class for document writer blocks in Treex.
 
 It handles selecting and opening the output files, allowing for output of one-file per document.
-The output file name(s) may be set in several ways (standard output may also be used as a file 
-with the name '-'); GZip file compression is supported.  
+The output file name(s) may be set in several ways (standard output may also be used as a file
+with the name '-'); GZip file compression is supported.
 
-Other features, such as writing all documents to one file or setting character encoding, 
+Other features, such as writing all documents to one file or setting character encoding,
 are enabled in L<Treex::Block::Write::BaseTextWriter>.
 
 =head1 PARAMETERS
@@ -370,8 +383,8 @@ A string to append after C<file_stem>.
 
 =item C<compress>
 
-If set to 1, the output files are compressed using GZip (if C<to> is used to set 
-file names, the names must also contain the ".gz" suffix). 
+If set to 1, the output files are compressed using GZip (if C<to> is used to set
+file names, the names must also contain the ".gz" suffix).
 
 =item C<clobber>
 
@@ -384,7 +397,7 @@ If set to 1, existing destination files will be overwritten.
 The derived classes should just use C<print { $self->_file_handle } "output text">, the
 base class will take care of opening the proper file.
 
-All derived classes that override the C<process_document> method directly must call 
+All derived classes that override the C<process_document> method directly must call
 the C<_prepare_file_handle> method to gain access to the correct file handle.
 
 The C<extension> parameter should be overriden with the default file extension
@@ -392,23 +405,23 @@ for the given file type.
 
 =head1 TODO
 
-=over 
+=over
 
-=item * 
+=item *
 
-Set C<compress> if file name contains .gz or .bz2? Add .gz to extension to even for file names set with 
+Set C<compress> if file name contains .gz or .bz2? Add .gz to extension to even for file names set with
 the C<to> parameter if C<compress> is set to true?
 
-=item * 
+=item *
 
 Possibly rearrange somehow so that the C<_prepare_file_handle> method is not needed. The problem is that
 if this was a Moose role, it would have to be applied only after an override to C<process_document>. The
 Moose C<inner> and C<augment> operators are a possibility, but would not remove a need for a somewhat
 non-standard behavior in derived classes (one could not just override C<process_document>, but would
-have to C<augment> it). 
+have to C<augment> it).
 
-=back 
- 
+=back
+
 =head1 AUTHORS
 
 Ondřej Dušek <odusek@ufal.mff.cuni.cz>
