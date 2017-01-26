@@ -105,45 +105,11 @@ sub process_atree {
         $node->set_conll_deprel($node->deprel());
         $node->set_afun(undef); # just in case... (should be done already)
     }
-    ###!!! The following block helps with Catalan and maybe some other languages but it cannot be applied blindly to any languages.
-    ###!!! Especially it must not be applied to corpora where the no_space_after attribute is properly set from the underlying text (e.g. Czech).
-    ###!!! We should move it as an optional extension to the W2W::EstimateNoSpaceAfter block.
-    if(0)
-    {
-	# Estimate some more no_space_afters, occurring e.g. in Catalan: "l', d', s'" before a pronounced vowel.
-	# Also treat single quotes as double quotes in W2W::EstimateNoSpaceAfter. Single quotes are not touched there because it is not guaranteed
-	# that they are quotes (and not apostrophes tokenized off), and that block is more responsible than we here :-)
-	my $nq = 0;
-	for(my $i = 0; $i<$#nodes; $i++)
-	{
-		my $form = $nodes[$i]->form();
-		if($form =~ m/\pL'$/)
-		{
-		$nodes[$i]->set_no_space_after(1);
-		}
-		# Odd undirected quotes are considered opening, even are closing.
-		# It will not work if a quote is missing or if the quoted text spans multiple sentences.
-		if($form eq "'")
-		{
-		$nq++;
-		# If the number of quotes is even, the no_space_after flag has been set at the previous token.
-		# If the number of quotes is odd, we must set the flag now.
-		if($nq % 2 == 1)
-		{
-			$nodes[$i]->set_no_space_after(1);
-		}
-		}
-		my $next_form = $nodes[$i+1]->form();
-		$next_form = '' if(!defined($next_form));
-		# If the current number of quotes is odd, the next quote will be even.
-		if($next_form eq "'" && $nq % 2 == 1)
-		{
-		$nodes[$i]->set_no_space_after(1);
-		}
-	}
-    }
     # Some of the above transformations may have split or removed nodes.
     # Make sure that the full sentence text corresponds to the nodes again.
+    ###!!! Note that for the Prague treebanks this may introduce unexpected differences.
+    ###!!! If there were typos in the underlying text or if numbers were normalized from "1,6" to "1.6",
+    ###!!! the sentence attribute contains the real input text, but it will be replaced by the normalized word forms now.
     my $text = $self->collect_sentence_text(@nodes);
     $root->get_zone()->set_sentence($text);
 }
@@ -956,6 +922,39 @@ sub generate_subnodes
     {
         $node->set_no_space_after(undef);
         $new_nodes[-1]->set_no_space_after(1);
+    }
+    # In addition, some guessing of no_space_after that we did in W2W::EstimateNoSpaceAfter must now be redone on the new nodes.
+    # For example, if the MWE was "La_Casa_d'_Andalusia", we now have "d'" that does not know that it should be adjacent to "Andalusia".
+    # The same holds for single quotes, e.g. "Fundació_'_la_Caixa_'".
+    if(scalar(@new_nodes) > 0)
+    {
+        my @all_nodes = ($node, @new_nodes);
+        my $nsq = 0;
+        for(my $i = 0; $i < $#all_nodes; $i++)
+        {
+            my $current_node = $all_nodes[$i];
+            if($current_node->form() =~ m/\pL'$/)
+            {
+                $current_node->set_no_space_after(1);
+            }
+            # Odd undirected quotes are considered opening, even are closing.
+            # It will not work if a quote is missing or if the quoted text spans multiple sentences.
+            if($current_node->form() eq "'")
+            {
+                $nsq++;
+                # If the number of quotes is even, the no_space_after flag has been set at the previous token.
+                # If the number of quotes is odd, we must set the flag now.
+                if($nsq % 2 == 1)
+                {
+                    $current_node->set_no_space_after(1);
+                }
+            }
+            # If the current number of quotes is odd, the next quote will be even.
+            if($all_nodes[$i+1]->form() eq "'" && $nsq % 2 == 1)
+            {
+                $current_node->set_no_space_after(1);
+            }
+        }
     }
     # Return the list of new nodes.
     return ($node, @new_nodes);
