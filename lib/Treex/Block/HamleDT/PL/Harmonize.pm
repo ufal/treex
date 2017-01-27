@@ -67,6 +67,7 @@ sub get_input_tag_for_interset
     my $conll_feat = $node->conll_feat();
     # Compose a tag string in the form expected by the pl::ipipan Interset driver.
     $conll_feat =~ s/\|/:/g;
+    $conll_feat =~ s/(.):_$/$1/;
     return "$conll_pos:$conll_feat";
 }
 
