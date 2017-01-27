@@ -168,7 +168,7 @@ sub mark_multiword_tokens
                                 'deprel' => 'det'}
             );
             # Both nodes should end up as siblings.
-            $new_nodes[1]->set_parent($node->parent());
+            $new_nodes[1]->set_parent($new_nodes[0]->parent());
         }
     }
 }
