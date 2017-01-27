@@ -117,6 +117,16 @@ my %contractions =
 
 
 
+my %lex =
+(
+    'o'  => {'gender' => 'masc', 'number' => 'sing', 'xpos' => 'M|S'},
+    'a'  => {'gender' => 'fem',  'number' => 'sing', 'xpos' => 'F|S'},
+    'os' => {'gender' => 'masc', 'number' => 'plur', 'xpos' => 'M|P'},
+    'as' => {'gender' => 'fem',  'number' => 'plur', 'xpos' => 'F|P'}
+);
+
+
+
 #------------------------------------------------------------------------------
 # Identifies nodes from the original Portuguese treebank that are part of a
 # larger surface token. Marks them as such (multi-word tokens will be visible
@@ -143,13 +153,6 @@ sub mark_multiword_tokens
     # Example: The original treebank contained "Junta_da_Justiça_do_Trabalho" as one
     # node. We have split it to 5 normal tokens but we still need to further split
     # the contractions "da" and "do".
-    my %lex =
-    (
-        'o'  => {'gender' => 'masc', 'number' => 'sing', 'xpos' => 'M|S'},
-        'a'  => {'gender' => 'fem',  'number' => 'sing', 'xpos' => 'F|S'},
-        'os' => {'gender' => 'masc', 'number' => 'plur', 'xpos' => 'M|P'},
-        'as' => {'gender' => 'fem',  'number' => 'plur', 'xpos' => 'F|P'}
-    );
     foreach my $node (@nodes)
     {
         my $form = $node->form();
@@ -157,6 +160,7 @@ sub mark_multiword_tokens
         {
             my $w1 = $form =~ m/^[aà]/i ? 'a' : $form =~ m/^d/i ? 'de' : $form =~ m/^n/i ? 'en' : 'por';
             my $w2 = $form =~ m/[aà]$/i ? 'a' : $form =~ m/[aà]s$/i ? 'as' : $form =~ m/o$/i ? 'o' : 'os';
+            # The current $node will be deleted. The new nodes will be created as sibling children of the parent of the current node.
             my @new_nodes = $self->split_fused_token
             (
                 $node,
@@ -167,8 +171,6 @@ sub mark_multiword_tokens
                                 'iset'   => {'pos' => 'adj', 'prontype' => 'art', 'definite' => 'def', 'gender' => $lex{$w2}{gender}, 'number' => $lex{$w2}{number}},
                                 'deprel' => 'det'}
             );
-            # Both nodes should end up as siblings.
-            $new_nodes[1]->set_parent($new_nodes[0]->parent());
         }
     }
 }
