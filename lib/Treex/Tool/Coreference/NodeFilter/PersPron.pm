@@ -85,7 +85,7 @@ sub is_reflexive {
     if ($anode->language eq "cs") {
         $lemma = Treex::Tool::Lexicon::CS::truncate_lemma($lemma, 1);
     }
-    elsif ($anode->language eq "ru") {
+    elsif ($anode->language eq "ru" || $anode->language eq "de") {
         return 1 if ($anode->tag =~ /^P[68]/);
     }
     return $PERS_PRONS_REFLEX{$anode->language}{$lemma};
