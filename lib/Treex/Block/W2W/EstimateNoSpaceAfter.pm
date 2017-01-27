@@ -4,6 +4,27 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+has 'single_quotes' =>
+(
+    is      => 'ro',
+    isa     => 'Bool',
+    default => 1,
+    documentation =>
+        'Should apostrophe tokens be treated as undirected single quotes? '.
+        'Turn this off if things like English '."don't".' appear as three tokens '."(don ' t)".'.'
+);
+has 'larticle' =>
+(
+    is      => 'ro',
+    isa     => 'Bool',
+    default => 1,
+    documentation =>
+        "Some languages, e.g. Catalan and French, use an apostrophe to attach clitics to the following word ".
+        "if it starts with a pronounced vowel: l', d', s' etc. It also occurs in Irish names (O'Brien) and ".
+        "elsewhere. We will add no_space_after when a token ends in a letter and an apostrophe. Turn this off ".
+        "if apostrophes used as single quotes have not been tokenized off the neighboring word."
+);
+
 ###!!! Directed quotation marks are language-dependent. We are currently treating
 ###!!! them as in English, regardless the language of the document.
 my $lbr = '\(\[\{‘';
@@ -18,6 +39,7 @@ sub process_zone
     my $root = $zone->get_atree();
     my @nodes = $root->get_descendants({'ordered' => 1});
     my $nq = 0;
+    my $nsq = 0;
     for(my $i = 0; $i<$#nodes; $i++)
     {
         my $form = $nodes[$i]->form();
@@ -51,6 +73,34 @@ sub process_zone
         if($next_form eq '"' && $nq % 2 == 1)
         {
             $nodes[$i]->set_no_space_after(1);
+        }
+        if($self->single_quotes())
+        {
+            # Odd undirected quotes are considered opening, even are closing.
+            # It will not work if a quote is missing or if the quoted text spans multiple sentences.
+            if($form eq "'")
+            {
+                $nsq++;
+                # If the number of quotes is even, the no_space_after flag has been set at the previous token.
+                # If the number of quotes is odd, we must set the flag now.
+                if($nsq % 2 == 1)
+                {
+                    $nodes[$i]->set_no_space_after(1);
+                }
+            }
+            # If the current number of quotes is odd, the next quote will be even.
+            if($next_form eq "'" && $nsq % 2 == 1)
+            {
+                $nodes[$i]->set_no_space_after(1);
+            }
+        }
+        # l'article, O'Brien etc.
+        if($self->larticle())
+        {
+            if($form =~ m/\pL'$/)
+            {
+                $nodes[$i]->set_no_space_after(1);
+            }
         }
     }
     # We have to set the sentence text anew.

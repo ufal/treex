@@ -40,6 +40,7 @@ sub detect_special_constructions
         $phrase = $self->detect_prague_copula($phrase); ###!!! Perhaps we should rename this method to detect_copula_head().
         $phrase = $self->detect_name_phrase($phrase);
         $phrase = $self->detect_stanford_coordination($phrase);
+        $phrase = $self->detect_fixed_chain($phrase);
     }
     # Return the resulting phrase. It may be different from the input phrase.
     return $phrase;

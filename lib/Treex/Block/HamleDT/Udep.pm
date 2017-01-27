@@ -42,12 +42,6 @@ sub process_atree {
             $bundle->wild()->{comment} = join("\n", @comments);
         }
     }
-    # Remove leading and trailing spaces from the sentence text (which will be printed in the text comment).
-    my $zone = $root->get_zone();
-    my $sentence = $zone->sentence();
-    $sentence =~ s/^\s+//;
-    $sentence =~ s/\s+$//;
-    $zone->set_sentence($sentence);
 
     # Now the harmonization proper.
     $self->exchange_tags($root);
@@ -73,9 +67,11 @@ sub process_atree {
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
+    # The 'cop' relation can be recognized only after transformations.
+    $self->tag_copulas_aux($root);
     # Portuguese expressions "cerca_de" and "mais_de" were tagged as prepositions but attached as Atr.
     # Now the MWE are split and "cerca" is attached as nmod. Fix it to case.
-    my @nodes = $root->get_descendants();
+    my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
         my $form = $node->form() // '';
@@ -109,6 +105,13 @@ sub process_atree {
         $node->set_conll_deprel($node->deprel());
         $node->set_afun(undef); # just in case... (should be done already)
     }
+    # Some of the above transformations may have split or removed nodes.
+    # Make sure that the full sentence text corresponds to the nodes again.
+    ###!!! Note that for the Prague treebanks this may introduce unexpected differences.
+    ###!!! If there were typos in the underlying text or if numbers were normalized from "1,6" to "1.6",
+    ###!!! the sentence attribute contains the real input text, but it will be replaced by the normalized word forms now.
+    my $text = $self->collect_sentence_text(@nodes);
+    $root->get_zone()->set_sentence($text);
 }
 
 
@@ -321,12 +324,6 @@ sub convert_deprels
             else
             {
                 $deprel = 'pnom';
-            }
-            # Side effect: We also want to modify Interset. The PDT tagset does not distinguish auxiliary verbs but UPOS does.
-            # Since UD v2, copula verbs are considered auxiliary, too.
-            if($parent->is_verb())
-            {
-                $parent->iset()->set('verbtype', 'aux');
             }
         }
         # Adverbial modifier: advmod, obl, advcl
@@ -570,6 +567,28 @@ sub convert_deprels
     foreach my $node (@nodes)
     {
         delete($node->wild()->{prague_deprel});
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Since UD v2, verbal copulas must be tagged AUX and not VERB. We cannot check
+# this during the deprel conversion because we do not always see the real
+# copula as the parent of the Pnom node (hint: coordination).
+#------------------------------------------------------------------------------
+sub tag_copulas_aux
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'cop' && $node->is_verb())
+        {
+            $node->iset()->set('verbtype', 'aux');
+            $node->set_tag('AUX');
+        }
     }
 }
 
@@ -897,6 +916,45 @@ sub generate_subnodes
     for(my $j = $i + 1; $j <= $#{$nodes}; $j++)
     {
         $nodes->[$j]->_set_ord( $ord + $n + ($j - $i - 1) );
+    }
+    # If the original node had no_space_after set, this flag must be now set at the last subnode!
+    if($node->no_space_after() && scalar(@new_nodes)>0)
+    {
+        $node->set_no_space_after(undef);
+        $new_nodes[-1]->set_no_space_after(1);
+    }
+    # In addition, some guessing of no_space_after that we did in W2W::EstimateNoSpaceAfter must now be redone on the new nodes.
+    # For example, if the MWE was "La_Casa_d'_Andalusia", we now have "d'" that does not know that it should be adjacent to "Andalusia".
+    # The same holds for single quotes, e.g. "Fundació_'_la_Caixa_'".
+    if(scalar(@new_nodes) > 0)
+    {
+        my @all_nodes = ($node, @new_nodes);
+        my $nsq = 0;
+        for(my $i = 0; $i < $#all_nodes; $i++)
+        {
+            my $current_node = $all_nodes[$i];
+            if($current_node->form() =~ m/\pL'$/)
+            {
+                $current_node->set_no_space_after(1);
+            }
+            # Odd undirected quotes are considered opening, even are closing.
+            # It will not work if a quote is missing or if the quoted text spans multiple sentences.
+            if($current_node->form() eq "'")
+            {
+                $nsq++;
+                # If the number of quotes is even, the no_space_after flag has been set at the previous token.
+                # If the number of quotes is odd, we must set the flag now.
+                if($nsq % 2 == 1)
+                {
+                    $current_node->set_no_space_after(1);
+                }
+            }
+            # If the current number of quotes is odd, the next quote will be even.
+            if($all_nodes[$i+1]->form() eq "'" && $nsq % 2 == 1)
+            {
+                $current_node->set_no_space_after(1);
+            }
+        }
     }
     # Return the list of new nodes.
     return ($node, @new_nodes);
@@ -1818,6 +1876,66 @@ sub relabel_subordinate_clauses
             }
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the sentence text, observing the current setting of no_space_after
+# and of the fused multi-word tokens (still stored as wild attributes).
+#------------------------------------------------------------------------------
+sub collect_sentence_text
+{
+    my $self = shift;
+    my @nodes = @_;
+    my $text = '';
+    for(my $i = 0; $i<=$#nodes; $i++)
+    {
+        my $node = $nodes[$i];
+        my $wild = $node->wild();
+        my $fused = $wild->{fused};
+        if(defined($fused) && $fused eq 'start')
+        {
+            my $first_fused_node_ord = $node->ord();
+            my $last_fused_node_ord = $wild->{fused_end};
+            my $last_fused_node_no_space_after = 0;
+            # We used to save the ord of the last element with every fused element but now it is no longer guaranteed.
+            # Let's find out.
+            if(!defined($last_fused_node_ord))
+            {
+                for(my $j = $i+1; $j<=$#nodes; $j++)
+                {
+                    $last_fused_node_ord = $nodes[$j]->ord();
+                    $last_fused_node_no_space_after = $nodes[$j]->no_space_after();
+                    last if(defined($nodes[$j]->wild()->{fused}) && $nodes[$j]->wild()->{fused} eq 'end');
+                }
+            }
+            else
+            {
+                my $last_fused_node = $nodes[$last_fused_node_ord-1];
+                log_fatal('Node ord mismatch') if($last_fused_node->ord() != $last_fused_node_ord);
+                $last_fused_node_no_space_after = $last_fused_node->no_space_after();
+            }
+            if(defined($first_fused_node_ord) && defined($last_fused_node_ord))
+            {
+                $i += $last_fused_node_ord - $first_fused_node_ord;
+            }
+            else
+            {
+                log_warn("Cannot determine the span of a fused token");
+            }
+            $text .= $wild->{fused_form};
+            $text .= ' ' unless($last_fused_node_no_space_after);
+        }
+        else
+        {
+            $text .= $node->form();
+            $text .= ' ' unless($node->no_space_after());
+        }
+    }
+    $text =~ s/^\s+//;
+    $text =~ s/\s+$//;
+    return $text;
 }
 
 
