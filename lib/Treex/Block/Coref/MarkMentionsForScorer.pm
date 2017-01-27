@@ -36,6 +36,8 @@ before 'process_document' => sub {
         }
     }
 
+    $self->_entities = {};
+
     if (!$self->dummy_cands) {
         my @ttrees = map { $_->get_tree($self->language,'t',$self->selector) } $doc->get_bundles;
         my @chains = Treex::Tool::Coreference::Utils::get_coreference_entities(\@ttrees);
@@ -64,30 +66,44 @@ sub process_tnode {
     }
     
     my @mention_nodes;
-# TODO what about discarding relative clauses
-    if ($self->layer eq 'a') {
-        my $alex = $tnode->get_lex_anode();
-        if ($self->only_heads) {
-            @mention_nodes = ( $alex );
-        }
-        else {
-            @mention_nodes = $alex ? $alex->get_descendants({ordered => 1, add_self => 1}) : ();
-        }
+    if ($self->only_heads) {
+        @mention_nodes = ( $tnode );
     }
     else {
-        if ($self->only_heads) {
-            @mention_nodes = ( $tnode );
-        }
-        else {
-            @mention_nodes = $tnode->get_descendants({ordered => 1, add_self => 1});
-        }
+        @mention_nodes = get_desc_no_verbal_subtree($tnode);
     }
     return if (!@mention_nodes);
+# TODO what about discarding relative clauses
+    if ($self->layer eq 'a') {
+
+        my $head_mention = $mention_nodes[0];
+        my $a_head_mention = $head_mention->get_lex_anode;
+        return if (!defined $a_head_mention);
+        
+        my @mention_anodes = grep {defined $_ && ($_ == $a_head_mention || $_->is_descendant_of($a_head_mention))}
+            map { $self->only_heads ? $_->get_lex_anode : $_->get_anodes } @mention_nodes;
+        @mention_nodes = sort {$a->ord <=> $b->ord} @mention_anodes;
+
+        if ($mention_nodes[-1]->form =~ /^[.,:]$/) {
+            pop @mention_nodes;
+        }
+    }
     
     # the beginning of the mention
     push @{$mention_nodes[0]->wild->{coref_mention_start}}, $entity_idx;
     # the end of the mention
     push @{$mention_nodes[-1]->wild->{coref_mention_end}}, $entity_idx;
+}
+
+sub get_desc_no_verbal_subtree {
+    my ($tnode) = @_;
+    my @desc = ( $tnode );
+    foreach my $kid ($tnode->get_children) {
+        next if ((defined $kid->formeme && $kid->formeme =~ /^v/) || (defined $kid->gram_sempos && $kid->gram_sempos =~ /^v/));
+        my @subdesc = get_desc_no_verbal_subtree($kid);
+        push @desc, @subdesc;
+    }
+    return @desc;
 }
 
 1;
