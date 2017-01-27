@@ -128,6 +128,36 @@ my %lex =
 
 
 #------------------------------------------------------------------------------
+# Makes capitalization similar to the original form.
+#------------------------------------------------------------------------------
+sub copy_capitalization
+{
+    my $self = shift;
+    my $origform = shift;
+    my $newform = shift;
+    # If original form is longer than one character and all uppercase, return all uppercase.
+    if(length($origform) > 1 && uc($origform) eq $origform)
+    {
+        return uc($newform);
+    }
+    # If original form is mixed case but starts with uppercase, return capitalized form.
+    # (The remaining characters are probably lowercase but we do not touch them, so there is what the caller put there.)
+    elsif($origform =~ m/^\p{Lu}/)
+    {
+        $newform =~ s/^(.)/\u$1/;
+        return $newform;
+    }
+    # In all other cases return the new form untouched.
+    # (It is probably lowercase but we do not touch it, so there is what the caller put there.)
+    else
+    {
+        return $newform;
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Identifies nodes from the original Portuguese treebank that are part of a
 # larger surface token. Marks them as such (multi-word tokens will be visible
 # in the CoNLL-U file).
@@ -142,9 +172,48 @@ sub mark_multiword_tokens
         my $x = $nodes[$i]->form();
         my $y = $nodes[$i+1]->form();
         my $xy = "$x:$y";
-        if(exists($contractions{$xy}))
+        my $lcxy = lc($xy);
+        if(exists($contractions{$lcxy}))
         {
-            $self->mark_multiword_token($contractions{$xy}, $nodes[$i], $nodes[$i+1]);
+            my $fused_form = $self->copy_capitalization($xy, $contractions{$lcxy});
+            $self->mark_multiword_token($fused_form, $nodes[$i], $nodes[$i+1]);
+            $i++;
+        }
+        # Verb + clitic.
+        # Warning! The original treebank keeps the hyphen with the verb ("Trata- se") while we want to move it to the clitic ("Trata -se").
+        # Exceptionally there are two clitics:
+        # apresenta-se-lhe (originally tokenized as "apresenta- se- lhe")
+        elsif($nodes[$i]->is_verb() && $y =~ m/^se-$/i && $i+2 <= $#nodes && $nodes[$i+2]->form() =~ m/^lhe$/i)
+        {
+            $x =~ s/-$//;
+            $y =~ s/-$//;
+            $y = '-'.$y;
+            my $z = '-'.$nodes[$i+2]->form();
+            $nodes[$i]->set_form($x);
+            $nodes[$i+1]->set_form($y);
+            $nodes[$i+2]->set_form($z);
+            $self->mark_multiword_token($x.$y.$z, $nodes[$i], $nodes[$i+1], $nodes[$i+2]);
+            $i += 2;
+        }
+        # In 1st person plural the final "-s" is omitted on the surface:
+        # encontramo-nos = encontramos -nos = encontramos- nos
+        # In certain cases the clitic is infixed:
+        # centrar-se-á = centrará -se
+        # far-se-á = fará -se
+        # proceder-se-á = procederá -se
+        # ver-se-á = verá -se
+        # juntar-se-ão = juntarão -se = juntarão- se-
+        elsif($nodes[$i]->is_verb() && $nodes[$i+1]->is_pronoun() && $x =~ m/-$/ && $y =~ m/^-?(a|as|de|la|las|lhe|lhes|lo|los|me|na|nas|no|nos|o|os|se|te|vos)-?$/i)
+        {
+            $x =~ s/-$//;
+            $y =~ s/-$//;
+            $y = '-'.$y unless($y =~ m/^-/);
+            $nodes[$i]->set_form($x);
+            $nodes[$i+1]->set_form($y);
+            $xy = $x.$y;
+            $xy =~ s/os-nos$/o-nos/i;
+            $xy =~ s/r(á|ão)$y$/r$y-$1/i;
+            $self->mark_multiword_token($xy, $nodes[$i], $nodes[$i+1]);
             $i++;
         }
     }
@@ -158,7 +227,7 @@ sub mark_multiword_tokens
         my $form = $node->form();
         if($node->is_adposition() && $form =~ m/^(ao|à|(d|n|pel)[oa])s?$/i)
         {
-            my $w1 = $form =~ m/^[aà]/i ? 'a' : $form =~ m/^d/i ? 'de' : $form =~ m/^n/i ? 'en' : 'por';
+            my $w1 = $self->copy_capitalization($form, $form =~ m/^[aà]/i ? 'a' : $form =~ m/^d/i ? 'de' : $form =~ m/^n/i ? 'en' : 'por');
             my $w2 = $form =~ m/[aà]$/i ? 'a' : $form =~ m/[aà]s$/i ? 'as' : $form =~ m/o$/i ? 'o' : 'os';
             # The current $node will be deleted. The new nodes will be created as sibling children of the parent of the current node.
             my @new_nodes = $self->split_fused_token
@@ -275,6 +344,28 @@ sub split_fused_token
     {
         $nodes[$i]->_set_ord($i+1);
         delete($nodes[$i]->wild()->{fused_ord});
+    }
+    # If there had been other fused groups, we must take care of their attributes as well.
+    for(my $i = 0; $i<=$#nodes; $i++)
+    {
+        if(exists($nodes[$i]->wild()->{fused}) && $nodes[$i]->wild()->{fused} eq 'start')
+        {
+            my $fsord = $nodes[$i]->ord();
+            # Find the end node.
+            my $j = $i+1;
+            log_fatal("Corrupted representation of multi-word tokens") if($j > $#nodes);
+            while($j<=$#nodes && $nodes[$j]->wild()->{fused} ne 'end')
+            {
+                $j++;
+            }
+            my $feord = $nodes[$j]->ord();
+            for(my $k = $i; $k <= $j; $k++)
+            {
+                $nodes[$k]->wild()->{fused_start} = $fsord;
+                $nodes[$k]->wild()->{fused_end} = $feord;
+            }
+            $i = $j;
+        }
     }
     # Now that all nodes have their ord correct (we need to refer to the ords now),
     # save information about the group in every new node.
