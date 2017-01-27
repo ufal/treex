@@ -33,6 +33,10 @@ sub process_zone
 # Identifies nodes from the original Polish treebank that are part of a larger
 # surface token. Marks them as such (multi-word tokens will be visible in the
 # CoNLL-U file).
+
+# Pisownia łączna / rozdzielna:
+# http://sjp.pwn.pl/zasady/43-Pisownia-laczna-czastek-bym-bys-by-bysmy-byscie;629503.html
+# http://sjp.pwn.pl/zasady/44-Pisownia-rozdzielna-czastek-bym-bys-by-bysmy-byscie;629509.html
 #------------------------------------------------------------------------------
 sub mark_multiword_tokens
 {
@@ -44,9 +48,35 @@ sub mark_multiword_tokens
     # forms: em, m, eś, ś, śmy, ście.
     for(my $i = $#nodes; $i > 0; $i--)
     {
-        if($nodes[$i]->lemma() eq 'być' && $nodes[$i]->form() =~ m/^(em|m|eś|ś|śmy|ście)$/)
+        if($nodes[$i]->lemma() eq 'być' && $nodes[$i]->form() =~ m/^(em|m|eś|ś|śmy|ście)$/i)
         {
-            $self->mark_multiword_token($nodes[$i-1]->form().$nodes[$i]->form(), $nodes[$i-1], $nodes[$i]);
+            my $fused_form = $nodes[$i-1]->form().$nodes[$i]->form();
+            my @mwsequence = ($nodes[$i-1], $nodes[$i]);
+            # If the previous word is the conditional particle "by" and the word before that
+            # qualifies, they should be written together too. Example: "mógłbym".
+            if(lc($nodes[$i-1]->form()) eq 'by' && $i >= 2 && $nodes[$i-2]->form() =~ m/(ł[aoy]?|li)$/i)
+            {
+                $fused_form = $nodes[$i-2]->form().$fused_form;
+                unshift(@mwsequence, $nodes[$i-2]);
+            }
+            $self->mark_multiword_token($fused_form, @mwsequence);
+            $i -= scalar(@mwsequence)-1;
+        }
+        # In the third person conditional, the "by" occurs without agglutinating morpheme
+        # and it may or may not be attached to the preceding word, depending on what the
+        # preceding word is. Example: "mógłby".
+        # Counter-example:
+        # Gdyby tak było, natychmiast by|m zaprotestował.
+        # Tady se to "bym" nepřilepuje k předcházejícímu slovu, protože l-příčestí následuje až potom.
+        # Odpovídá našemu "aby", "kdyby":
+        # Jeżeli nie masz , to by ś na pewno ukrywał , gdyby ś miał .
+        # Tady zase Poláci nerozdělili "gdyby", ale to "ś" bude přilepené ke spojce a ne ke slovesu ani k částici "by"!
+        elsif(lc($nodes[$i]->form()) eq 'by' && $nodes[$i-1]->form() =~ m/(ł[aoy]?|li)$/i)
+        {
+            my $fused_form = $nodes[$i-1]->form().$nodes[$i]->form();
+            my @mwsequence = ($nodes[$i-1], $nodes[$i]);
+            $self->mark_multiword_token($fused_form, @mwsequence);
+            $i -= scalar(@mwsequence)-1;
         }
     }
 }
