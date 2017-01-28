@@ -242,6 +242,18 @@ sub mark_multiword_tokens
             );
         }
     }
+    ###!!! The following is not really about splitting multi-word tokens.
+    ###!!! But it is a temporary code to make the two conversions of Bosque converge, and this block is only used with Bosque.
+    foreach my $node (@nodes)
+    {
+        # The feature AdpType=Prep is not used in UD_Portuguese-Bosque.
+        $node->iset()->clear('adpostype');
+        # The negative particle is tagged ADV in both versions and it should have Polarity=Neg.
+        if($node->form() =~ m/^não$/i)
+        {
+            $node->iset()->set('polarity', 'neg');
+        }
+    }
 }
 
 
