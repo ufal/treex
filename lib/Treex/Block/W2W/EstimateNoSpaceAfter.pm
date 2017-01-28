@@ -27,8 +27,9 @@ has 'larticle' =>
 
 ###!!! Directed quotation marks are language-dependent. We are currently treating
 ###!!! them as in English, regardless the language of the document.
-my $lbr = '\(\[\{‘';
-my $rbr = '\}\]\)’';
+###!!! The double-angle-bracket quotation marks are treated as in Portuguese.
+my $lbr = '\(\[\{‘«';
+my $rbr = '\}\]\)’»';
 
 
 
