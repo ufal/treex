@@ -85,11 +85,10 @@ sub process_zone
         {
             $comment .= "\n";
         }
-        $comment .= 'full_sent '.$next_sentence;
         my $table = $self->table();
         my $maxl = $self->maxl();
         my $translit = translit::prevest($table, $next_sentence, $maxl);
-        $comment .= "\nfull_sent_translit $translit";
+        $comment .= "full_sent_translit $translit";
         $wild->{comment} = $comment;
         # Find alignment between orthographic and syntactic words.
         my @nodes = $zone->get_atree()->get_descendants({'ordered' => 1});
