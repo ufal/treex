@@ -244,6 +244,7 @@ sub mark_multiword_tokens
     }
     ###!!! The following is not really about splitting multi-word tokens.
     ###!!! But it is a temporary code to make the two conversions of Bosque converge, and this block is only used with Bosque.
+    @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
         # The feature AdpType=Prep is not used in UD_Portuguese-Bosque.
