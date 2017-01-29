@@ -36,7 +36,7 @@ before 'process_document' => sub {
         }
     }
 
-    $self->_entities = {};
+    $self->_set_entities({});
 
     if (!$self->dummy_cands) {
         my @ttrees = map { $_->get_tree($self->language,'t',$self->selector) } $doc->get_bundles;
