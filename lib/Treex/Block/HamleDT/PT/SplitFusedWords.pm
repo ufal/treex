@@ -233,13 +233,19 @@ sub mark_multiword_tokens
             my @new_nodes = $self->split_fused_token
             (
                 $node,
-                {'form' => $w1, 'lemma'  => lc($w1), 'tag' => 'ADP', 'conll_pos' => 'prp|<sam->',
+                {'form' => $w1, 'lemma'  => lc($w1), 'tag' => 'ADP', 'conll_pos' => 'ADP',
                                 'iset'   => {'pos' => 'adp', 'adpostype' => 'prep'},
                                 'deprel' => 'case'},
-                {'form' => $w2, 'lemma'  => 'o',     'tag' => 'DET', 'conll_pos' => "art|<-sam>|<artd>|$lex{$w2}{xpos}",
+                {'form' => $w2, 'lemma'  => 'o',     'tag' => 'DET', 'conll_pos' => 'DET',
                                 'iset'   => {'pos' => 'adj', 'prontype' => 'art', 'definite' => 'def', 'gender' => $lex{$w2}{gender}, 'number' => $lex{$w2}{number}},
                                 'deprel' => 'det'}
             );
+            # It may happen that the parent is root. We do not want to attach two nodes to the root.
+            if(scalar(@new_nodes)>=2 && $new_nodes[1]->parent()->is_root())
+            {
+                $new_nodes[0]->set_parent($new_nodes[1]);
+                $new_nodes[0]->set_deprel('case');
+            }
         }
     }
     ###!!! The following is not really about splitting multi-word tokens.
