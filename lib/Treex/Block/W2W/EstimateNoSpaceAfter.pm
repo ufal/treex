@@ -71,7 +71,8 @@ sub process_zone
             }
         }
         # If the current number of quotes is odd, the next quote will be even.
-        if($next_form eq '"' && $nq % 2 == 1)
+        # If the next quote is odd but it is the last token of the sentence, treat it as closing anyway.
+        if($next_form eq '"' && ($nq % 2 == 1 || $self->i_th_node_is_terminal_punctuation($i+1, @nodes)))
         {
             $nodes[$i]->set_no_space_after(1);
         }
@@ -90,7 +91,8 @@ sub process_zone
                 }
             }
             # If the current number of quotes is odd, the next quote will be even.
-            if($next_form eq "'" && $nsq % 2 == 1)
+            # If the next quote is odd but it is the last token of the sentence, treat it as closing anyway.
+            if($next_form eq "'" && ($nsq % 2 == 1 || $self->i_th_node_is_terminal_punctuation($i+1, @nodes)))
             {
                 $nodes[$i]->set_no_space_after(1);
             }
@@ -98,7 +100,7 @@ sub process_zone
         # l'article, O'Brien etc.
         if($self->larticle())
         {
-            if($form =~ m/\pL'$/)
+            if($form =~ m/\pL'$/) # ' syntax highlighting
             {
                 $nodes[$i]->set_no_space_after(1);
             }
@@ -107,6 +109,30 @@ sub process_zone
     # We have to set the sentence text anew.
     my $text = $self->collect_sentence_text(@nodes);
     $zone->set_sentence($text);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Finds out whether a node is punctuation at the end of the sentence. This does
+# not necessarily mean that it is the last node. If the subsequent nodes are
+# only punctuation, we report the current node as terminal, too.
+#------------------------------------------------------------------------------
+sub i_th_node_is_terminal_punctuation
+{
+    my $self = shift;
+    my $i = shift; # index of questioned node
+    my @nodes = @_;
+    return 0 if($i > $#nodes);
+    for(; $i <= $#nodes; $i++)
+    {
+        my $form = $nodes[$i]->form() // '';
+        if($form !~ m/^\pP+$/)
+        {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 
