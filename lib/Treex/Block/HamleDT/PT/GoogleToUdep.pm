@@ -281,6 +281,8 @@ sub fix_sentence_segmentation
         }
         # Create bundles for the new sentences.
         my $current_bundle = $root->get_bundle();
+        my $current_sid = $current_bundle->id();
+        $current_bundle->set_id($current_sid.'a');
         my $document = $current_bundle->get_document();
         for(my $i = 1; $i<=$#sentences; $i++)
         {
@@ -288,6 +290,10 @@ sub fix_sentence_segmentation
             # If there are other zones in the source bundle (probably the 'orig' zone?), they will not be copied.
             # The entire original tree will stay with the converted tree of the first sentence.
             my $new_bundle = $document->create_bundle({'after' => $current_bundle});
+            # Get letter that will distinguish the new sentence in id. Make sure we do not go past 'z'.
+            log_fatal("Unexpectedly high number of sub-sentences") if($i > 25);
+            my $letter = ord('a')+$i
+            $new_bundle->set_id($current_sid.$letter);
             my $new_zone = $new_bundle->create_zone($self->language(), $self->selector());
             my $new_tree = $new_zone->create_atree();
             # Get the minimal and maximal ords in this sentence.
