@@ -292,7 +292,7 @@ sub fix_sentence_segmentation
             my $new_bundle = $document->create_bundle({'after' => $current_bundle});
             # Get letter that will distinguish the new sentence in id. Make sure we do not go past 'z'.
             log_fatal("Unexpectedly high number of sub-sentences") if($i > 25);
-            my $letter = ord('a')+$i
+            my $letter = chr(ord('a')+$i);
             $new_bundle->set_id($current_sid.$letter);
             my $new_zone = $new_bundle->create_zone($self->language(), $self->selector());
             my $new_tree = $new_zone->create_atree();
