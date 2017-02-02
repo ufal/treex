@@ -156,6 +156,10 @@ sub process_ttree {
             $spec_ok = !$self->special;
             $subtype_ok = $self->subtype eq '' || $self->subtype eq '3';
             $neg_anode->wild->{negation}->{$negation_id}->{scope} = 1;
+            if (!defined $neg_tlemmas{$neg_anode->lemma}) {
+                $neg_anode->wild->{negation}->{$negation_id}->{scope_from} = 0;
+                $neg_anode->wild->{negation}->{$negation_id}->{scope_to} = 1;
+            }
         }
         if ($type_ok && $subtype_ok && $spec_ok) {
             push @{$aroot->wild->{negation}->{negation_ids}}, $negation_id;
