@@ -5,6 +5,7 @@ use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';
 
 has 'print_sent_id'                    => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print sent_id in CoNLL-U comment before each sentence' );
+has 'print_zone_id'                    => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'include zone id in sent_id comment after a slash' );
 has 'print_text'                       => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print sentence text in CoNLL-U comment before each sentence' );
 has 'randomly_select_sentences_ratio'  => ( is => 'rw', isa => 'Num',  default => 1 );
 has 'alignment'                        => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print alignment links in the 9th column' );
@@ -21,22 +22,28 @@ has 'alignment'                        => ( is => 'ro', isa => 'Bool', default =
 # and using just one item in each sequence.
 # "iset" is a special value which means to use Lingua::Interset::encode('mul::uposf', $node->iset)
 # for extracting UPOS and/or FEATS.
-has 'deprel' => ( is => 'ro', default => 'deprel,conll/deprel,afun', documentation => 'list of node attributes to check when printing the DEPREL column' );
-has 'xpos' => ( is => 'ro', default => 'conll/cpos,conll/pos,tag', documentation => 'list of node attributes to check when printing the XPOS column' );
-has 'upos' => ( is => 'ro', default => 'iset,conll/pos', documentation => 'list of node attributes to check when printing the UPOS column' );
+has 'upos' => ( is => 'ro', default => 'iset', documentation => 'list of node attributes to check when printing the UPOS column' );
+has 'xpos' => ( is => 'ro', default => 'conll/pos,conll/cpos,tag', documentation => 'list of node attributes to check when printing the XPOS column' );
 has 'feats' => ( is => 'ro', default => 'iset,conll/feat', documentation => 'list of node attributes to check when printing the FEATS column' );
+has 'deprel' => ( is => 'ro', default => 'deprel,conll/deprel,afun', documentation => 'list of node attributes to check when printing the DEPREL column' );
 
 has _was => ( is => 'rw', default => sub{{}} );
 
 has '+extension' => ( default => '.conllu' );
 
-sub _get_deprel {
+sub _get_upos {
     my ($self, $node) = @_;
-    my @attrs = split /,/, $self->deprel;
+    my @attrs = split /,/, $self->upos;
     foreach my $attr (@attrs) {
         return '_' if $attr eq '0';
-        my $value = $node->get_attr($attr);
-        return $value if defined $value && $value ne '';
+        # If we ask for UPOS from Interset and the Interset features are empty, we want to (and should!) get the 'X' tag.
+        # Not '_' and not a substitute from the next available attribute (conll/pos etc.) which is not even a valid universal POS tag.
+        if ($attr eq 'iset') {
+            return $node->iset()->get_upos();
+        } else {
+            my $value = $node->get_attr($attr);
+            return $value if defined $value && $value ne '';
+        }
     }
     return '_';
 }
@@ -48,26 +55,6 @@ sub _get_xpos {
         return '_' if $attr eq '0';
         my $value = $node->get_attr($attr);
         return $value if defined $value && $value ne '';
-    }
-    return '_';
-}
-
-sub _get_upos {
-    my ($self, $node) = @_;
-    my @attrs = split /,/, $self->upos;
-    foreach my $attr (@attrs) {
-        return '_' if $attr eq '0';
-        if ($attr eq 'iset') {
-            my $isetfs = $node->iset();
-            if ($isetfs->get_nonempty_features()) {
-                my $upos_features = encode('mul::uposf', $isetfs);
-                my ($upos, $feat) = split(/\t/, $upos_features);
-                return $upos;
-            }
-        } else {
-            my $value = $node->get_attr($attr);
-            return $value if defined $value && $value ne '';
-        }
     }
     return '_';
 }
@@ -92,6 +79,17 @@ sub _get_feats {
     return '_';
 }
 
+sub _get_deprel {
+    my ($self, $node) = @_;
+    my @attrs = split /,/, $self->deprel;
+    foreach my $attr (@attrs) {
+        return '_' if $attr eq '0';
+        my $value = $node->get_attr($attr);
+        return $value if defined $value && $value ne '';
+    }
+    return '_';
+}
+
 
 sub process_atree {
     my ($self, $tree) = @_;
@@ -104,7 +102,9 @@ sub process_atree {
     # Print sentence (bundle) ID as a comment before the sentence.
     if ($self->print_sent_id) {
         my $sent_id = $tree->get_bundle->id;
-        $sent_id .= '/' . $tree->get_zone->get_label;
+        if ($self->print_zone_id) {
+            $sent_id .= '/' . $tree->get_zone->get_label;
+        }
         print {$self->_file_handle} "# sent_id = $sent_id\n";
     }
     if ($self->print_text) {
@@ -280,6 +280,19 @@ Output encoding. C<utf8> by default.
 
 The name of the output file, STDOUT by default.
 
+=item print_sent_id
+
+Print C<sent_id> in CoNLL-U comment before each sentence.
+
+=item print_zone_id
+
+Include zone id in the C<sent_id> comment after a slash. Example:
+C<sent_id = s350/cs>.
+
+=item print_text
+
+Print sentence text in CoNLL-U comment before each sentence.
+
 =back
 
 =head1 METHODS
@@ -300,6 +313,6 @@ Martin Popel
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2014, 2017 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
