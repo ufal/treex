@@ -52,6 +52,47 @@ sub fix_morphology
         # word forms. However, it may be sometimes useful to have them explicitly
         # shown in the LEMMA column.
         $node->set_lemma($node->form());
+        # Interset currently destroys several Chinese-specific values of the
+        # Case feature. These values are undocumented and it is questionable
+        # whether they should be used like this. But we should not discard the
+        # annotation until we decide how to encode it better.
+        # Case=Advb
+        # Case=Comp
+        # Case=Rel
+        # The features are still preserved in the conll/feat attribute of each
+        # node. However, the Write::CoNLLU block will not take them from there.
+        # The values Advb and Comp seem to only distinguish various usages of
+        # particles:
+        # Case=Advb
+        # 地	PART	mark	64
+        # 的	PART	mark	37
+        # 之	PART	mark	2
+        # Case=Comp
+        # 的	PART	mark	1
+        # 得	PART	mark	24
+        # It seems more appropriate to encode them in the syntactic relation.
+        my $origfeat = $node->conll_feat();
+        if($origfeat =~ m/Case=Advb/)
+        {
+            $node->set_deprel('mark:advb');
+        }
+        if($origfeat =~ m/Case=Comp/)
+        {
+            $node->set_deprel('mark:comp');
+        }
+        # The feature Case=Rel is mostly used with particles that make relative
+        # clauses. Their current deprel is wrong. They are attached to the head
+        # verb of the relative clause, which is also acl:relcl. The particle
+        # itself is a leaf and it should be either just mark, or mark:relcl.
+        # Case=Rel
+        # 身體	NOUN	nmod	1
+        # 的	PART	acl:relcl	2366
+        # 之	PART	acl:relcl	61
+        # 的	PART	dep	1
+        if($origfeat =~ m/Case=Comp/)
+        {
+            $node->set_deprel('mark:relcl');
+        }
     }
 }
 
