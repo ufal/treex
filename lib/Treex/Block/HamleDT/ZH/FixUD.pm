@@ -13,6 +13,7 @@ sub process_atree
     my $root = shift;
     $self->fix_tokenization($root);
     $self->fix_morphology($root);
+    $self->regenerate_upos($root);
 }
 
 
@@ -58,6 +59,11 @@ sub fix_morphology
             $lemma =~ s/們$//;
         }
         $node->set_lemma($lemma);
+        # Verbal copulas should be AUX and not VERB.
+        if($node->is_verb() && $node->deprel() eq 'cop')
+        {
+            $node->iset()->set('verbtype', 'aux');
+        }
         # Interset currently destroys several Chinese-specific values of the
         # Case feature. These values are undocumented and it is questionable
         # whether they should be used like this. But we should not discard the
@@ -99,6 +105,23 @@ sub fix_morphology
         {
             $node->set_deprel('mark:relcl');
         }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# After changes done to Interset (including part of speech) generates the
+# universal part-of-speech tag anew.
+#------------------------------------------------------------------------------
+sub regenerate_upos
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        $node->set_tag($node->iset()->get_upos());
     }
 }
 
