@@ -51,7 +51,13 @@ sub fix_morphology
         # any morphology in Chinese, and lemmas will (mostly?) be identical to
         # word forms. However, it may be sometimes useful to have them explicitly
         # shown in the LEMMA column.
-        $node->set_lemma($node->form());
+        my $lemma = $node->form();
+        # Exception: plural pronouns formed using the suffix "們" will be lemmatized to singular.
+        if($node->is_plural() && length($lemma)>1)
+        {
+            $lemma =~ s/們$//;
+        }
+        $node->set_lemma($lemma);
         # Interset currently destroys several Chinese-specific values of the
         # Case feature. These values are undocumented and it is questionable
         # whether they should be used like this. But we should not discard the
