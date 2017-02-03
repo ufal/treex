@@ -62,7 +62,7 @@ sub convert_tags
         $self->set_upos_tag( $node );
         ###!!! There are currently no features, except that Interset always sets NumType=Card for numbers.
         ###!!! It does not make sense to have just this feature, especially when we cannot be sure that it's always correct.
-        $node->iset()->clear('numtype');
+        #$node->iset()->clear('numtype');
         # For the case we later access the CoNLL attributes, reset them as well.
         # (We can still specify other source attributes in Write::CoNLLX and similar blocks.)
         my $tag = $node->tag(); # now the universal POS tag
@@ -87,8 +87,8 @@ sub get_input_tag_for_interset
     my $self   = shift;
     my $node   = shift;
     # If we read the source CoNLL-X file using Read::CoNLLX with default parameters,
-    # tag contains the fine-grained tag from the POS column. For example, the word
-    # "例外の" has the tag NOUN-POSTP. These tags are potentially useful but at present
+    # tag contains the fine-grained tag from the POS column. For example, the verb
+    # "곳입니다" has the tag NOMCOP. These tags are potentially useful but at present
     # we do not have the corresponding Interset driver. Therefore we will use only
     # the coarse-grained Google Universal POS tag.
     #return $node->tag();
