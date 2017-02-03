@@ -14,6 +14,7 @@ sub process_atree
     $self->fix_tokenization($root);
     $self->fix_morphology($root);
     $self->regenerate_upos($root);
+    $self->fix_remnant($root);
 }
 
 
@@ -122,6 +123,48 @@ sub regenerate_upos
     foreach my $node (@nodes)
     {
         $node->set_tag($node->iset()->get_upos());
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# There is one sentence that uses the remnant relation. This sentence must be
+# analyzed differently under UD v2.
+#------------------------------------------------------------------------------
+sub fix_remnant
+{
+    my $self = shift;
+    my $root = shift;
+    # 北京外城共有七門,南面三門,東西各一門,此外還有兩座便門.
+    # Běijīng wài chéng gòngyǒu qī mén, nánmiàn sānmén, dōngxi gè yīmén, cǐwài hái yǒu liǎng zuò biàn mén.
+    # Google Translate: Beijing outside the city a total of seven, three south, east and west each one, in addition to two side door.
+    # Meaning estimated by DZ: Outer part of Beijing has a total of seven gates,
+    # three of them in the south, one in the east and one in the west,
+    # in addition there are two side gates.
+    my @top = $root->children();
+    if($self->get_node_spanstring($top[0]) =~ m/^北京 外城 共 有 七 門 , 南面 三 門 , 東西 各 一 門 , 此外 還 有 兩 座 便門 .$/)
+    {
+        my @subtree = $self->get_node_subtree($top[0]);
+        # Subject to the first you.
+        $subtree[1]->set_parent($subtree[3]);
+        # Convert remnants to conjuncts + orphans.
+        $subtree[6]->set_parent($subtree[7]);
+        $subtree[7]->set_parent($subtree[3]);
+        $subtree[7]->set_deprel('conj');
+        $subtree[9]->set_parent($subtree[7]);
+        $subtree[9]->set_deprel('orphan');
+        $subtree[10]->set_parent($subtree[11]);
+        $subtree[11]->set_parent($subtree[3]);
+        $subtree[11]->set_deprel('conj');
+        $subtree[14]->set_parent($subtree[11]);
+        $subtree[14]->set_deprel('orphan');
+        # Make the first you the root.
+        $subtree[3]->set_parent($root);
+        $subtree[3]->set_deprel('root');
+        $subtree[18]->set_parent($subtree[3]);
+        $subtree[18]->set_deprel('conj');
+        $subtree[22]->set_parent($subtree[3]);
     }
 }
 
