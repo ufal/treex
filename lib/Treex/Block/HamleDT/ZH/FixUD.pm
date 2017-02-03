@@ -89,7 +89,7 @@ sub fix_morphology
         # 的	PART	acl:relcl	2366
         # 之	PART	acl:relcl	61
         # 的	PART	dep	1
-        if($origfeat =~ m/Case=Comp/)
+        if($origfeat =~ m/Case=Rel/)
         {
             $node->set_deprel('mark:relcl');
         }
