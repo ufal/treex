@@ -26,10 +26,37 @@ has 'larticle' =>
 );
 
 ###!!! Directed quotation marks are language-dependent. We are currently treating
-###!!! them as in English, regardless the language of the document.
+###!!! them as in English, unless we know that the language of the document uses
+###!!! a different system.
 ###!!! The double-angle-bracket quotation marks are treated as in Portuguese.
 my $lbr = '\(\[\{‘«';
 my $rbr = '\}\]\)’»';
+sub lang_spec_opquotes
+{
+    my $self = shift;
+    my $language = shift;
+    if($language =~ m/^(cs|sk)$/)
+    {
+        return '„‚';
+    }
+    else # default: English
+    {
+        return '“‘';
+    }
+}
+sub lang_spec_clquotes
+{
+    my $self = shift;
+    my $language = shift;
+    if($language =~ m/^(cs|sk)$/)
+    {
+        return '“‘';
+    }
+    else # default: English
+    {
+        return '”’';
+    }
+}
 
 
 
@@ -37,6 +64,9 @@ sub process_zone
 {
     my $self = shift;
     my $zone = shift;
+    my $language = $zone->get_language();
+    my $oq = $self->lang_spec_opquotes($language);
+    my $cq = $self->lang_spec_clquotes($language);
     my $root = $zone->get_atree();
     my @nodes = $root->get_descendants({'ordered' => 1});
     my $nq = 0;
@@ -55,8 +85,8 @@ sub process_zone
         ###!!! regular expressions.
         # Some treebanks normalize their quotation marks to the TeX notation: ``quoted''. We will take such pairs always as directed quotes.
         # Next form superscript digit should probably be adjacent to this one because it probably denotes the exponent: km²
-        if($form      =~ m/^([¡¿$lbr]|``)$/ ||
-           $next_form =~ m/^([,;:!\?${rbr}¹²³]|\.+|'')$/)
+        if($form      =~ m/^([¡¿${lbr}${oq}]|``)$/ ||
+           $next_form =~ m/^([,;:!\?${rbr}${cq}¹²³]|\.+|'')$/)
         {
             $nodes[$i]->set_no_space_after(1);
         }
