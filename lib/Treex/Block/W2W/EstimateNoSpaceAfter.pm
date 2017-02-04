@@ -53,8 +53,10 @@ sub process_zone
         ###!!! Loganathan's Tamil data contain hyphens as separate tokens only in cases where they were separated by spaces in the original data.
         ###!!! The compounds with hyphen are kept as one token (i.e. left part + hyphen + right part). Thus we currently omit the hyphen from both
         ###!!! regular expressions.
-        if($form      =~ m/^[¡¿$lbr]$/ ||
-           $next_form =~ m/^[\.,;:!\?$rbr]$/)
+        # Some treebanks normalize their quotation marks to the TeX notation: ``quoted''. We will take such pairs always as directed quotes.
+        # Next form superscript digit should probably be adjacent to this one because it probably denotes the exponent: km²
+        if($form      =~ m/^([¡¿$lbr]|``)$/ ||
+           $next_form =~ m/^([,;:!\?${rbr}¹²³]|\.+|'')$/)
         {
             $nodes[$i]->set_no_space_after(1);
         }
