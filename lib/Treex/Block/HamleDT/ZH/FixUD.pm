@@ -29,10 +29,19 @@ sub fix_tokenization
     my $root = shift;
     my $text = '';
     my @nodes = $root->get_descendants({ordered => 1});
-    foreach my $node (@nodes)
+    for(my $i = 0; $i<=$#nodes; $i++)
     {
-        $text .= $node->form();
-        $node->set_no_space_after(1);
+        $text .= $nodes[$i]->form();
+        # Exception: If there is an embedded sequence of two or more words in
+        # a script that uses spaces between words, the spaces will be preserved.
+        if($i < $#nodes && $nodes[$i]->form() =~ m/[\p{Latin}0-9]/ && $nodes[$i+1]->form() =~ m/[\p{Latin}0-9]/)
+        {
+            $text .= ' ';
+        }
+        else
+        {
+            $nodes[$i]->set_no_space_after(1);
+        }
     }
     $root->get_zone()->set_sentence($text);
 }
