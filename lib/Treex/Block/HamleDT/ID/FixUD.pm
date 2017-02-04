@@ -27,6 +27,11 @@ sub fix_morphology
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
+        # Reduplicated words (marking plural) should be compound, not fixed.
+        if($node->deprel() eq 'fixed' && lc($node->form()) eq lc($node->parent()->form()))
+        {
+            $node->set_deprel('compound:plur');
+        }
         # Verbal copulas should be AUX and not VERB.
         if($node->is_verb() && $node->deprel() eq 'cop')
         {
