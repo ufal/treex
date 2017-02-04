@@ -64,7 +64,7 @@ sub process_zone
 {
     my $self = shift;
     my $zone = shift;
-    my $language = $zone->get_language();
+    my $language = $zone->language();
     my $oq = $self->lang_spec_opquotes($language);
     my $cq = $self->lang_spec_clquotes($language);
     my $root = $zone->get_atree();
