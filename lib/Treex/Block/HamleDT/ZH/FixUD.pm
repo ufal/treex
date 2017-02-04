@@ -14,6 +14,7 @@ sub process_atree
     $self->fix_tokenization($root);
     $self->fix_morphology($root);
     $self->regenerate_upos($root);
+    $self->detect_classifiers($root);
     $self->fix_remnant($root);
 }
 
@@ -132,6 +133,38 @@ sub regenerate_upos
     foreach my $node (@nodes)
     {
         $node->set_tag($node->iset()->get_upos());
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Attempts to detect classifiers for which there is a new relation in UD v2.
+# Does not attempt (at present) to change the tree structure. See the issue 374
+# (https://github.com/UniversalDependencies/docs/issues/374) for possible
+# structures.
+#------------------------------------------------------------------------------
+sub detect_classifiers
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    foreach my $node (@nodes)
+    {
+        if($node->is_noun() && $node->conll_pos() eq 'NNB')
+        {
+            my $parent = $node->parent();
+            my @children = $node->children();
+            ###!!! We currently restrict ourselves to numeral-classifier-noun constructions and determiner-classifier-noun constructions.
+            if(!$parent->is_root() && $parent->is_noun() && $node->deprel() eq 'nmod' &&
+               scalar(@children)==1 &&
+               ($children[0]->is_numeral() && $children[0]->deprel() eq 'nummod' ||
+                $children[0]->is_determiner() && $children[0]->deprel() eq 'det')
+            {
+                $node->set_deprel('clf');
+                ###!!! We should also set NounType=Clf but Interset currently does not support it.
+            }
+        }
     }
 }
 
