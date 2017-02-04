@@ -41,7 +41,7 @@ sub lang_spec_opquotes
     }
     else # default: English
     {
-        return '“‘';
+        return '“‘„‚';
     }
 }
 sub lang_spec_clquotes
@@ -50,7 +50,7 @@ sub lang_spec_clquotes
     my $language = shift;
     if($language =~ m/^(cs|sk)$/)
     {
-        return '“‘';
+        return '“‘”’';
     }
     else # default: English
     {
