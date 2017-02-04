@@ -159,7 +159,7 @@ sub detect_classifiers
             if(!$parent->is_root() && $parent->is_noun() && $node->deprel() eq 'nmod' &&
                scalar(@children)==1 &&
                ($children[0]->is_numeral() && $children[0]->deprel() eq 'nummod' ||
-                $children[0]->is_determiner() && $children[0]->deprel() eq 'det')
+                $children[0]->is_determiner() && $children[0]->deprel() eq 'det'))
             {
                 $node->set_deprel('clf');
                 ###!!! We should also set NounType=Clf but Interset currently does not support it.
