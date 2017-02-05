@@ -71,6 +71,7 @@ sub regenerate_upos
 my %v12deprel =
 (
     'dobj'      => 'obj',
+    'dobj:cau'  => 'obj:cau',
     'nsubjpass' => 'nsubj:pass',
     'csubjpass' => 'csubj:pass',
     'auxpass'   => 'aux:pass',
