@@ -258,7 +258,7 @@ sub fix_morphology
         }
         # Pronominal numerals are all treated as combined demonstrative and indefinite, because the PDT tag is only one (and "tolik" can probably be both).
         # But we can distinguish them by the lemma.
-        if($node->is_pronominal() && $lemma =~ m/^(po)?(několik|mnoho|málo)(kátý|káté|kerý|kero|krát)?$/)
+        if($node->is_pronominal() && $lemma =~ m/^((po)?((ně|kdoví|bůhví|nevím)kolik|(ne)?(mnoho|málo)|(nej)?(více?|méně|míň)|nesčíslně)(átý|áté|erý|ero|k?ráte?)?)$/)
         {
             $node->iset()->set('prontype', 'ind');
         }
