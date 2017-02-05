@@ -72,6 +72,8 @@ my %v12deprel =
 (
     'dobj'      => 'obj',
     'dobj:cau'  => 'obj:cau',
+    # In https://github.com/UniversalDependencies/docs/issues/355, it was decided to use nmod:comp in Turkic languages; nmod:cmp in Uyghur must be fixed.
+    'nmod:cmp'  => 'nmod:comp',
     'nsubjpass' => 'nsubj:pass',
     'csubjpass' => 'csubj:pass',
     'auxpass'   => 'aux:pass',
