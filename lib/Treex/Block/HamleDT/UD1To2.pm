@@ -41,17 +41,6 @@ sub fix_verbal_copulas
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
-        ###!!! Tohle patří jinam, jsou to dvě rychlé opravy chyb v ručních anotacích ujgurštiny.
-        if($node->parent()->is_root() && $node->deprel() ne 'root')
-        {
-            $node->set_deprel('root');
-            log_warn("Changing deprel under root to 'root'");
-        }
-        if(!$node->parent()->is_root() && $node->deprel() eq 'root')
-        {
-            $node->set_deprel('cop');
-            log_warn("Deprel 'root' changed to 'cop' because the parent is not root.");
-        }
         # Verbal copulas should be AUX and not VERB.
         if($node->is_verb() && $node->deprel() eq 'cop')
         {
@@ -83,8 +72,6 @@ my %v12deprel =
 (
     'dobj'      => 'obj',
     'dobj:cau'  => 'obj:cau',
-    # In https://github.com/UniversalDependencies/docs/issues/355, it was decided to use nmod:comp in Turkic languages; nmod:cmp in Uyghur must be fixed.
-    'nmod:cmp'  => 'nmod:comp',
     'nsubjpass' => 'nsubj:pass',
     'csubjpass' => 'csubj:pass',
     'auxpass'   => 'aux:pass',
@@ -92,15 +79,7 @@ my %v12deprel =
     'name'      => 'flat',
     ###!!! We may want to convert 'foreign' to just 'flat' and check that both the child and the parent have the feature Foreign=Yes.
     'foreign'   => 'flat:foreign',
-    'mwe'       => 'fixed',
-    # Some other typos in manual annotation of Uyghur:
-    ###!!! Instead of fixing them here, I should tell Marhaba to fix them in her Treex files.
-    'compound：redup' => 'compound:redup',
-    'compound:lv'    => 'compound:lvc',
-    'compound:poss'  => 'nmod:poss',
-    'amod:tmod'      => 'nmod:tmod',
-    'advmod:tmod'    => 'nmod:tmod',
-    'advcl:emph'     => 'advmod:emph'
+    'mwe'       => 'fixed'
 );
 
 
