@@ -39,6 +39,7 @@ sub process_zone
         }
     }
     $self->remove_features_from_lemmas($root);
+    $self->fix_morphology($root);
     return;
 }
 
@@ -223,6 +224,27 @@ sub remove_features_from_lemmas
             }
         }
         $node->set_lemma($lemma);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Adds Interset features that cannot be decoded from the PDT tags but they can
+# be inferred from lemmas and word forms.
+#------------------------------------------------------------------------------
+sub fix_morphology
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        # Pronouns čí, něčí, čísi, číkoli, ledačí, kdečí, bůhvíčí, nevímčí, ničí should have Poss=Yes.
+        if($node->is_pronominal() && $node->lemma() =~ m/^((ně|leda|kde|bůhví|nevím|ni)?čí|čí(si|koliv?))$/)
+        {
+            $node->iset()->set('poss', 'poss');
+        }
     }
 }
 
