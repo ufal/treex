@@ -241,10 +241,26 @@ sub fix_morphology
     foreach my $node (@nodes)
     {
         my $lemma = $node->lemma();
+        # Indefinite pronouns and determiners cannot be distinguished by their PDT tag (PZ*).
+        if($node->is_pronominal() && $lemma =~ m/(^(jaký|který|čí)|(jaký|který|čí)$|^(každý|všechen|sám|žádný)$)/)
+        {
+            $node->iset()->set('pos', 'adj');
+        }
+        # Pronoun (determiner) "sám" is difficult to classify in the traditional Czech system but in UD v2 we now have the prontype=emph, which is quite suitable.
+        if($node->is_pronominal() && $lemma eq 'sám')
+        {
+            $node->iset()->set('prontype', 'emp');
+        }
         # Pronouns čí, něčí, čísi, číkoli, ledačí, kdečí, bůhvíčí, nevímčí, ničí should have Poss=Yes.
         if($node->is_pronominal() && $lemma =~ m/^((ně|ledas?|kde|bůhví|nevím|ni)?čí|čí(si|koliv?))$/)
         {
             $node->iset()->set('poss', 'poss');
+        }
+        # Pronominal numerals are all treated as combined demonstrative and indefinite, because the PDT tag is only one (and "tolik" can probably be both).
+        # But we can distinguish them by the lemma.
+        if($node->is_pronominal() && $lemma =~ m/^(po)?(několik|mnoho|málo)(kátý|káté|kerý|kero|krát)?$/)
+        {
+            $node->iset()->set('prontype', 'ind');
         }
         # Pronominal adverbs.
         if($node->is_adverb())
