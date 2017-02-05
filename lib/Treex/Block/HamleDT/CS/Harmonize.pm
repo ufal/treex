@@ -240,10 +240,35 @@ sub fix_morphology
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
+        my $lemma = $node->lemma();
         # Pronouns čí, něčí, čísi, číkoli, ledačí, kdečí, bůhvíčí, nevímčí, ničí should have Poss=Yes.
-        if($node->is_pronominal() && $node->lemma() =~ m/^((ně|leda|kde|bůhví|nevím|ni)?čí|čí(si|koliv?))$/)
+        if($node->is_pronominal() && $lemma =~ m/^((ně|ledas?|kde|bůhví|nevím|ni)?čí|čí(si|koliv?))$/)
         {
             $node->iset()->set('poss', 'poss');
+        }
+        # Pronominal adverbs.
+        if($node->is_adverb())
+        {
+            if($lemma =~ m/^(kde|kam|odkud|kudy|kdy|odkdy|dokdy|jak|proč)$/)
+            {
+                $node->iset()->set('prontype', 'int|rel');
+            }
+            elsif($lemma =~ m/^((ně|ledas?|málo|kde|bůhví|nevím)(kde|kam|kudy|kdy|jak)|(od|do)ně(kud|kdy)|(kde|kam|odkud|kudy|kdy|jak)(si|koliv?))$/)
+            {
+                $node->iset()->set('prontype', 'ind');
+            }
+            elsif($lemma =~ m/^(tady|zde|tu|tam|tamhle|onam|odsud|odtud|odtamtud|teď|nyní|tehdy|tenkrát|odtehdy|dotehdy|dosud|tak|proto)$/)
+            {
+                $node->iset()->set('prontype', 'dem');
+            }
+            elsif($lemma =~ m/^(všude|odevšad|všudy|vždy|odevždy|odjakživa|navždy)$/)
+            {
+                $node->iset()->set('prontype', 'tot');
+            }
+            elsif($lemma =~ m/^(nikde|nikam|odnikud|nikudy|nikdy|odnikdy|donikdy|nijak)$/)
+            {
+                $node->iset()->set('prontype', 'neg');
+            }
         }
     }
 }
