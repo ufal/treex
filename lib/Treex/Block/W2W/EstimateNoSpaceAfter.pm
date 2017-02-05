@@ -86,7 +86,7 @@ sub process_zone
         # Some treebanks normalize their quotation marks to the TeX notation: ``quoted''. We will take such pairs always as directed quotes.
         # Next form superscript digit should probably be adjacent to this one because it probably denotes the exponent: km²
         if($form      =~ m/^([¡¿${lbr}${oq}]|``)$/ ||
-           $next_form =~ m/^([,;:!\?${rbr}${cq}¹²³]|\.+|'')$/)
+           $next_form =~ m/^([,;:!۔،؛؟\?${rbr}${cq}¹²³]|\.+|'')$/)
         {
             $nodes[$i]->set_no_space_after(1);
         }

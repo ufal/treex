@@ -41,6 +41,17 @@ sub fix_verbal_copulas
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
+        ###!!! Tohle patří jinam, jsou to dvě rychlé opravy chyb v ručních anotacích ujgurštiny.
+        if($node->parent()->is_root() && $node->deprel() ne 'root')
+        {
+            $node->set_deprel('root');
+            log_warn("Changing deprel under root to 'root'");
+        }
+        if(!$node->parent()->is_root() && $node->deprel() eq 'root')
+        {
+            $node->set_deprel('cop');
+            log_warn("Deprel 'root' changed to 'cop' because the parent is not root.");
+        }
         # Verbal copulas should be AUX and not VERB.
         if($node->is_verb() && $node->deprel() eq 'cop')
         {
