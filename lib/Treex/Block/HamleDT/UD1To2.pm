@@ -84,11 +84,12 @@ my %v12deprel =
     'mwe'       => 'fixed',
     # Some other typos in manual annotation of Uyghur:
     ###!!! Instead of fixing them here, I should tell Marhaba to fix them in her Treex files.
-    'compound: redup' => 'compound:redup',
-    'compound:lv'     => 'compound:lvc',
-    'compound:poss'   => 'nmod:poss',
-    'amod:tmod'       => 'nmod:tmod',
-    'advmod:tmod'     => 'nmod:tmod'
+    'compound：redup' => 'compound:redup',
+    'compound:lv'    => 'compound:lvc',
+    'compound:poss'  => 'nmod:poss',
+    'amod:tmod'      => 'nmod:tmod',
+    'advmod:tmod'    => 'nmod:tmod',
+    'advcl:emph'     => 'advmod:emph'
 );
 
 
