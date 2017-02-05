@@ -257,7 +257,7 @@ sub fix_morphology
             {
                 $node->iset()->set('prontype', 'ind');
             }
-            elsif($lemma =~ m/^(tady|zde|tu|tam|tamhle|onam|odsud|odtud|odtamtud|teď|nyní|tehdy|tenkrát|odtehdy|dotehdy|dosud|tak|proto)$/)
+            elsif($lemma =~ m/^(tady|zde|tu|tam|tamhle|onam|odsud|odtud|odtamtud|teď|nyní|tehdy|tentokráte?|tenkráte?|odtehdy|dotehdy|dosud|tak|proto)$/)
             {
                 $node->iset()->set('prontype', 'dem');
             }

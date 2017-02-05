@@ -87,12 +87,11 @@ sub process_atree {
     $self->dissolve_chains_of_auxiliaries($root);
     $self->fix_jak_znamo($root);
     $self->classify_numerals($root);
-    $self->fix_determiners($root);
+    ###!!! Do not switch between DET and PRON just because there is / is not a modified nominal.
+    ###!!! $self->fix_determiners($root);
     $self->relabel_subordinate_clauses($root);
     $self->check_ncsubjpass_when_auxpass($root);
     $self->raise_punctuation_from_coordinating_conjunction($root);
-    # Sanity checks.
-    $self->check_determiners($root);
     ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
     ###!!! Copy them to conll/deprel (which is displayed) until we make Tred know deprel.
     foreach my $node (@nodes)
@@ -1568,6 +1567,9 @@ sub classify_numerals
 
 
 #------------------------------------------------------------------------------
+###!!! THIS METHOD SHOULD NOT BE USED UNDER UD V2! HOWEVER, I TEMPORARILY KEEP
+###!!! IT HERE BECAUSE WE MAY WANT TO USE IT FOR SELECTED WORDS, E.G. CZECH
+###!!! "to".
 # Changes some determiners to pronouns, based on syntactic annotation.
 # The Interset driver of the PDT tagset divides pronouns to pronouns and
 # determiners. It knows that some pronouns are capable of acting as determiners
@@ -1714,48 +1716,6 @@ sub agree
         return 1 if($i2->contains($feature, $v1));
     }
     return 0;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Sanity check: everything that is tagged DET must be attached as det.
-#------------------------------------------------------------------------------
-sub check_determiners
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $form = defined($node->form()) ? $node->form() : '<EMPTY>';
-        my $pform = $node->parent()->is_root() ? '<ROOT>' : defined($node->parent()->form()) ? $node->parent()->form() : '<EMPTY>';
-        my $npform;
-        if($node->parent()->ord() < $node->ord())
-        {
-            $npform = "($pform) $form";
-        }
-        else
-        {
-            $npform = "$form ($pform)";
-        }
-        # Determiner is a pronominal adjective.
-        my $iset = $node->iset();
-        if($iset->upos() eq 'DET')
-        {
-            if($node->deprel() !~ m/^(det(:numgov|:nummod)?|fixed)$/)
-            {
-                log_warn($npform.' is tagged DET but is not attached as det but as '.$node->deprel());
-            }
-        }
-        elsif($node->deprel() eq 'det')
-        {
-            if($iset->upos() ne 'DET')
-            {
-                log_warn($npform.' is attached as det but is not tagged DET');
-            }
-        }
-    }
 }
 
 
