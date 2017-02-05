@@ -12,8 +12,7 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
-    $self->fix_features($root);
-    $self->fix_root($root);
+    #$self->fix_features($root);
 }
 
 
@@ -92,39 +91,6 @@ sub fix_features
 
 
 
-#------------------------------------------------------------------------------
-# There is one case where a node depends on the root but its deprel is not
-# 'root', or it does not depend on the root and its deprel is 'root'.
-#------------------------------------------------------------------------------
-sub fix_root
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        if($node->parent()->is_root() && $node->deprel() ne 'root')
-        {
-            $node->set_deprel('root');
-        }
-        elsif(!$node->parent()->is_root() && $node->deprel() eq 'root')
-        {
-            # The only occurrence I saw was a number attached to another number.
-            # But let's do it a bit more general.
-            if($node->is_numeral())
-            {
-                $node->set_deprel('nummod');
-            }
-            else
-            {
-                $node->set_deprel('dep');
-            }
-        }
-    }
-}
-
-
-
 1;
 
 =over
@@ -135,6 +101,9 @@ This is a temporary block used to prepare the Hindi UD 1.2 treebank.
 We got new data from Riyaz Ahmad / IIIT Hyderabad. The data is larger than the
 previous Hindi data we had, and the dependency relations already follow the UD
 guidelines. However, features have to be converted.
+
+Update: For the conversion from UD 1.4 to UD 2.0, the method fix_features() is
+no longer called. The main UD 1 to 2 conversion is done in a separate block.
 
 =back
 

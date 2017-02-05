@@ -12,6 +12,8 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
+    $self->fix_verbal_copulas($root);
+    $self->regenerate_upos($root);
     # Fix relations before morphology. The fixes depend only on UPOS tags, not on morphology (e.g. NOUN should not be attached as det).
     # And with better relations we will be more able to disambiguate morphological case and gender.
     $self->convert_deprels($root);
@@ -25,6 +27,43 @@ sub process_atree
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Verbal copulas must now have the tag AUX, not VERB.
+#------------------------------------------------------------------------------
+sub fix_verbal_copulas
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        # Verbal copulas should be AUX and not VERB.
+        if($node->is_verb() && $node->deprel() eq 'cop')
+        {
+            $node->iset()->set('verbtype', 'aux');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# After changes done to Interset (including part of speech) generates the
+# universal part-of-speech tag anew.
+#------------------------------------------------------------------------------
+sub regenerate_upos
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        $node->set_tag($node->iset()->get_upos());
+    }
 }
 
 
