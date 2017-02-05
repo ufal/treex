@@ -270,7 +270,7 @@ sub fix_morphology
             {
                 $node->iset()->set('prontype', 'int|rel');
             }
-            elsif($lemma =~ m/^((po)?((ně|kdoví|bůhví|nevím)kolik|(ne)?(mnoho|málo)|(nej)?(více?|méně|míň)|nesčíslně)(átý|áté|erý|ero|k?ráte?)?)$/)
+            elsif($lemma =~ m/^((po)?((ně|kdoví|bůhví|nevím)kolik|(ne|pře)?(mnoho|málo)|(nej)?(více?|méně|míň)|moc|mó+c|hodně|bezpočtu|nespočet|nesčíslně)(átý|áté|erý|ero|k?ráte?)?)$/)
             {
                 $node->iset()->set('prontype', 'ind');
             }
