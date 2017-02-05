@@ -81,7 +81,14 @@ my %v12deprel =
     'name'      => 'flat',
     ###!!! We may want to convert 'foreign' to just 'flat' and check that both the child and the parent have the feature Foreign=Yes.
     'foreign'   => 'flat:foreign',
-    'mwe'       => 'fixed'
+    'mwe'       => 'fixed',
+    # Some other typos in manual annotation of Uyghur:
+    ###!!! Instead of fixing them here, I should tell Marhaba to fix them in her Treex files.
+    'compound: redup' => 'compound:redup',
+    'compound:lv'     => 'compound:lvc',
+    'compound:poss'   => 'nmod:poss',
+    'amod:tmod'       => 'nmod:tmod',
+    'advmod:tmod'     => 'nmod:tmod'
 );
 
 
