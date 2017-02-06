@@ -74,11 +74,35 @@ sub fix_morphology
                 $iset->set('prontype', 'prs');
                 $iset->set('reflex', 'reflex');
             }
-            elsif($lemma =~ m/^(môj|tvoj|jeho|jej|náš|váš|ich)$/)
+            elsif($lemma =~ m/^(môj|tvoj)$/)
             {
                 $iset->set('pos', 'adj');
                 $iset->set('prontype', 'prs');
                 $iset->set('poss', 'poss');
+                $iset->set('possnumber', 'sing');
+            }
+            elsif($lemma =~ m/^(jeho)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'prs');
+                $iset->set('poss', 'poss');
+                $iset->set('possnumber', 'sing');
+                $iset->set('possgender', 'masc|neut');
+            }
+            elsif($lemma =~ m/^(jej)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'prs');
+                $iset->set('poss', 'poss');
+                $iset->set('possnumber', 'sing');
+                $iset->set('possgender', 'fem');
+            }
+            elsif($lemma =~ m/^(náš|váš|ich)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'prs');
+                $iset->set('poss', 'poss');
+                $iset->set('possnumber', 'plur');
             }
             elsif($lemma =~ m/^(svoj)$/)
             {
