@@ -39,7 +39,6 @@ sub process_zone
         }
     }
     $self->remove_features_from_lemmas($root);
-    $self->fix_morphology($root);
     return;
 }
 

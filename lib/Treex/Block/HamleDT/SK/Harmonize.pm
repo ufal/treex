@@ -25,7 +25,6 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
-    $self->fix_morphology($root);
 }
 
 
@@ -131,11 +130,6 @@ sub fix_morphology
                 $lemma =~ s/^ne//i;
                 $node->set_lemma($lemma);
                 $node->iset()->set('polarity', 'neg');
-                if($original_polarity ne 'neg')
-                {
-                    my $form = $node->form();
-                    log_warn("Changing polarity of $form from '$original_polarity' to 'neg'");
-                }
             }
             # In some cases the original annotation was OK: affirmative lemma of a negative form, negative polarity set.
             # Make sure we do not rewrite it now!
@@ -143,11 +137,6 @@ sub fix_morphology
             elsif($original_polarity ne 'neg' && !$node->is_conditional())
             {
                 $node->iset()->set('polarity', 'pos');
-                if($original_polarity ne 'pos')
-                {
-                    my $form = $node->form();
-                    log_warn("Changing polarity of $form from '$original_polarity' to 'pos'");
-                }
             }
         }
     }
