@@ -44,7 +44,7 @@ sub process_zone
     ###!!! It should be investigated and fixed better than just calling the method twice.
     ###!!! Taky tím, že jsme fix_morphology() pustili už dříve a změnili jsme lemma u příčestí trpného
     ###!!! ze slovesa na adjektivum, jsme umazali ocásek u lemmatu, který určoval vid, tudíž jsme o vid přišli!
-    $self->fix_morphology($root);
+#    $self->fix_morphology($root);
     return;
 }
 
@@ -275,7 +275,7 @@ sub remove_features_from_lemmas
                 $iset->set('nountype', 'prop');
             }
         }
-        elsif($node->is_noun() && !$node->is_pronoun())
+        elsif($node->is_noun() && !$node->is_pronoun() && $iset->nountype() eq '')
         {
             $iset->set('nountype', 'com');
         }
