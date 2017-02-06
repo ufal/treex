@@ -14,6 +14,8 @@ has iset_driver =>
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
+
+
 #------------------------------------------------------------------------------
 # Reads the Slovak tree, converts morphosyntactic tags and dependency relation
 # labels, and transforms tree to adhere to the HamleDT guidelines.
@@ -23,7 +25,10 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+    $self->fix_morphology($root);
 }
+
+
 
 #------------------------------------------------------------------------------
 # Different source treebanks may use different attributes to store information
@@ -39,6 +44,102 @@ sub get_input_tag_for_interset
     my $node   = shift;
     return $node->tag();
 }
+
+
+
+#------------------------------------------------------------------------------
+# Adds Interset features that cannot be decoded from the PDT tags but they can
+# be inferred from lemmas and word forms.
+#------------------------------------------------------------------------------
+sub fix_morphology
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $lemma = $node->lemma();
+        # Fix Interset features of pronominal words.
+        if(0 && $node->is_pronominal())
+        {
+            # Indefinite pronouns and determiners cannot be distinguished by their PDT tag (PZ*).
+            if($lemma =~ m/^((ně|ledas?|kde|bůhví|nevím|málo)?(kdo|co)(si|koliv?)?|nikdo|nic)$/)
+            {
+                $node->iset()->set('pos', 'noun');
+            }
+            elsif($lemma =~ m/(^(jaký|který)|(jaký|který)$|^(každý|všechen|sám|žádný)$)/)
+            {
+                $node->iset()->set('pos', 'adj');
+            }
+            # Pronouns čí, něčí, čísi, číkoli, ledačí, kdečí, bůhvíčí, nevímčí, ničí should have Poss=Yes.
+            elsif($lemma =~ m/^((ně|ledas?|kde|bůhví|nevím|ni)?čí|čí(si|koliv?))$/)
+            {
+                $node->iset()->set('pos', 'adj');
+                $node->iset()->set('poss', 'poss');
+            }
+            # Pronoun (determiner) "sám" is difficult to classify in the traditional Czech system but in UD v2 we now have the prontype=emph, which is quite suitable.
+            if($lemma eq 'sám')
+            {
+                $node->iset()->set('prontype', 'emp');
+            }
+            # Pronominal numerals are all treated as combined demonstrative and indefinite, because the PDT tag is only one.
+            # But we can distinguish them by the lemma.
+            if($lemma =~ m/^kolikráte?$/)
+            {
+                $node->iset()->set('prontype', 'int|rel');
+            }
+            elsif($lemma =~ m/^((po)?((ně|kdoví|bůhví|nevím)kolik|(ne|pře)?(mnoho|málo)|(nej)?(více?|méně|míň)|moc|mó+c|hodně|bezpočtu|nespočet|nesčíslně)(átý|áté|erý|ero|k?ráte?)?)$/)
+            {
+                $node->iset()->set('prontype', 'ind');
+            }
+            elsif($lemma =~ m/^tolik(ráte?)?$/)
+            {
+                $node->iset()->set('prontype', 'dem');
+            }
+        }
+        # Pronominal adverbs.
+        if(0 && $node->is_adverb())
+        {
+            if($lemma =~ m/^(kde|kam|odkud|kudy|kdy|odkdy|dokdy|jak|proč)$/)
+            {
+                $node->iset()->set('prontype', 'int|rel');
+            }
+            elsif($lemma =~ m/^((ně|ledas?|málo|kde|bůhví|nevím)(kde|kam|kudy|kdy|jak)|(od|do)ně(kud|kdy)|(kde|kam|odkud|kudy|kdy|jak)(si|koliv?))$/)
+            {
+                $node->iset()->set('prontype', 'ind');
+            }
+            elsif($lemma =~ m/^(tady|zde|tu|tam|tamhle|onam|odsud|odtud|odtamtud|teď|nyní|tehdy|tentokráte?|tenkráte?|odtehdy|dotehdy|dosud|tak|proto)$/)
+            {
+                $node->iset()->set('prontype', 'dem');
+            }
+            elsif($lemma =~ m/^(všude|odevšad|všudy|vždy|odevždy|odjakživa|navždy)$/)
+            {
+                $node->iset()->set('prontype', 'tot');
+            }
+            elsif($lemma =~ m/^(nikde|nikam|odnikud|nikudy|nikdy|odnikdy|donikdy|nijak)$/)
+            {
+                $node->iset()->set('prontype', 'neg');
+            }
+        }
+        # Negation of verbs is treated as derivational morphology in the Slovak National Corpus.
+        # We have to merge negative verbs with their affirmative counterparts.
+        if($node->is_verb())
+        {
+            if($lemma =~ m/^ne./ && $lemma !~ m/^(nechať|nechávať|nenávidieť|nenávidený)$/)
+            {
+                $lemma =~ s/^ne//;
+                $node->set_lemma($lemma);
+                $node->iset()->set('polarity', 'neg');
+            }
+            else
+            {
+                $node->iset()->set('polarity', 'pos');
+            }
+        }
+    }
+}
+
+
 
 #------------------------------------------------------------------------------
 # Convert dependency relation labels.
@@ -106,6 +207,8 @@ sub convert_deprels
         }
     }
 }
+
+
 
 #------------------------------------------------------------------------------
 # Fixes a few known annotation errors that appear in the data.
@@ -176,6 +279,8 @@ sub fix_annotation_errors
         }
     }
 }
+
+
 
 #------------------------------------------------------------------------------
 # The Slovak Treebank suffers from several hundred unassigned syntactic tags.
@@ -310,6 +415,8 @@ sub guess_deprel
     }
     return $deprel;
 }
+
+
 
 1;
 
