@@ -125,13 +125,14 @@ sub fix_morphology
         # We have to merge negative verbs with their affirmative counterparts.
         if($node->is_verb())
         {
-            if($lemma =~ m/^ne./ && $lemma !~ m/^(nechať|nechávať|nenávidieť|nenávidený)$/)
+            if($lemma =~ m/^ne./i && $lemma !~ m/^(nechať|nechávať|nenávidieť|nenávidený)$/i)
             {
-                $lemma =~ s/^ne//;
+                $lemma =~ s/^ne//i;
                 $node->set_lemma($lemma);
                 $node->iset()->set('polarity', 'neg');
             }
-            else
+            # It does not make sense to mark polarity for "by". All other forms will have it marked.
+            elsif(!$node->is_conditional())
             {
                 $node->iset()->set('polarity', 'pos');
             }
