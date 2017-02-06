@@ -79,7 +79,7 @@ sub fix_morphology
         if($node->is_pronominal())
         {
             # Indefinite pronouns and determiners cannot be distinguished by their PDT tag (PZ*).
-            if($lemma =~ m/^((ně|ledas?|kde|bůhví|nevím|málo)?(kdo|co)(si|koliv?)?|nikdo|nic)$/)
+            if($lemma =~ m/^((ně|lec|ledas?|kde|bůhví|kdoví|nevím|málo)?(kdo|cos?)(si|koliv?)?|nikdo|nic)$/)
             {
                 $node->iset()->set('pos', 'noun');
             }
@@ -88,7 +88,7 @@ sub fix_morphology
                 $node->iset()->set('pos', 'adj');
             }
             # Pronouns čí, něčí, čísi, číkoli, ledačí, kdečí, bůhvíčí, nevímčí, ničí should have Poss=Yes.
-            elsif($lemma =~ m/^((ně|ledas?|kde|bůhví|nevím|ni)?čí|čí(si|koliv?))$/)
+            elsif($lemma =~ m/^((ně|lec|ledas?|kde|bůhví|kdoví|nevím|ni)?čí|čí(si|koliv?))$/)
             {
                 $node->iset()->set('pos', 'adj');
                 $node->iset()->set('poss', 'poss');
