@@ -285,6 +285,18 @@ sub fix_morphology
                 $node->iset()->set('polarity', 'pos');
             }
         }
+        # Distinguish coordinating and subordinating conjunctions.
+        if($node->is_conjunction())
+        {
+            if($lemma =~ m/^(a|aj|ale|alebo|ani|avšak|ba|buď|i|jednak|lebo|len|lenže|nielen|no|predsa|preto|pritom|pričom|prv|síce|tak|takže|teda|to|veď|však|zato|či|čiže)$/)
+            {
+                $node->iset()->set('conjtype', 'coor');
+            }
+            else # aby ak ako akoby akože akže až hoci ibaže keby keď keďže kým nech než pokiaľ pokým pretože tým čo čím že
+            {
+                $node->iset()->set('conjtype', 'sub');
+            }
+        }
     }
 }
 
