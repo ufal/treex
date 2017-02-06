@@ -302,6 +302,26 @@ sub fix_morphology
                 $node->iset()->set('prontype', 'neg');
             }
         }
+        # Passive participles should be adjectives both in their short (predicative)
+        # and long (attributive) form. Now the long forms are adjectives and short
+        # forms are verbs (while the same dichotomy of non-verbal adjectives, such as
+        # starý-stár, is kept within adjectives).
+        if($node->is_verb() && $node->is_participle() && $node->is_passive())
+        {
+            $node->iset()->set('pos', 'adj');
+            $node->iset()->set('variant', 'short');
+            # That was the easy part. But we must also change the lemma.
+            # nést-nesen-nesený, brát-brán-braný, mazat-mazán-mazaný, péci-pečen-pečený, zavřít-zavřen-zavřený, tisknout-tištěn-tištěný, minout-minut-minutý, začít-začat-začatý,
+            # krýt-kryt-krytý, kupovat-kupován-kupovaný, prosit-prošen-prošený, trpět-trpěn-trpěný, sázet-sázen-sázený, dělat-dělán-dělaný
+            my $form = lc($node->form());
+            # Remove gender/number morpheme if present.
+            $form =~ s/[aoiy]$//;
+            # Stem vowel change "á" to "a".
+            $form =~ s/án$/an/;
+            # Add the ending of masculine singular nominative long adjectives.
+            $form .= 'ý';
+            $node->set_lemma($form);
+        }
     }
 }
 
