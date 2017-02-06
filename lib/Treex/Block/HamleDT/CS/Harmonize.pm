@@ -306,7 +306,7 @@ sub fix_morphology
         # and long (attributive) form. Now the long forms are adjectives and short
         # forms are verbs (while the same dichotomy of non-verbal adjectives, such as
         # starý-stár, is kept within adjectives).
-        if($node->is_verb() && $node->is_participle() && $node->is_passive())
+        if($node->is_verb() && $node->is_participle() && $node->iset()->is_passive())
         {
             $node->iset()->set('pos', 'adj');
             $node->iset()->set('variant', 'short');
