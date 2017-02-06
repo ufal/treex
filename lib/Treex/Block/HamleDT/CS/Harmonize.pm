@@ -39,6 +39,11 @@ sub process_zone
         }
     }
     $self->remove_features_from_lemmas($root);
+    ###!!! fix_morphology() is called from SUPER::process_zone() above and we should not have to call it here again.
+    ###!!! But unfortunately it turns out that some changes disappear if we remove this call.
+    ###!!! (e.g. improved prontypes of pronouns, determiners, quantifiers and adverbs)
+    ###!!! It should be investigated and fixed better than just calling the method twice.
+    $self->fix_morphology($root);
     return;
 }
 
