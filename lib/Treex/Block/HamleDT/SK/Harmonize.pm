@@ -125,16 +125,27 @@ sub fix_morphology
         # We have to merge negative verbs with their affirmative counterparts.
         if($node->is_verb())
         {
+            my $original_polarity = $node->iset()->polarity();
             if($lemma =~ m/^ne./i && $lemma !~ m/^(nechať|nechávať|nenávidieť|nenávidený)$/i)
             {
                 $lemma =~ s/^ne//i;
                 $node->set_lemma($lemma);
                 $node->iset()->set('polarity', 'neg');
+                if($original_polarity ne 'neg')
+                {
+                    my $form = $node->form();
+                    log_warn("Changing polarity of $form from '$original_polarity' to 'neg'");
+                }
             }
             # It does not make sense to mark polarity for "by". All other forms will have it marked.
             elsif(!$node->is_conditional())
             {
                 $node->iset()->set('polarity', 'pos');
+                if($original_polarity ne 'pos')
+                {
+                    my $form = $node->form();
+                    log_warn("Changing polarity of $form from '$original_polarity' to 'pos'");
+                }
             }
         }
     }
