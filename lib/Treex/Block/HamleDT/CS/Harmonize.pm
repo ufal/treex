@@ -38,13 +38,6 @@ sub process_zone
             $bundle->set_id($sentence_id);
         }
     }
-    ###!!! fix_morphology() is called from SUPER::process_zone() above and we should not have to call it here again.
-    ###!!! But unfortunately it turns out that some changes disappear if we remove this call.
-    ###!!! (e.g. improved prontypes of pronouns, determiners, quantifiers and adverbs)
-    ###!!! It should be investigated and fixed better than just calling the method twice.
-    ###!!! Taky tím, že jsme fix_morphology() pustili už dříve a změnili jsme lemma u příčestí trpného
-    ###!!! ze slovesa na adjektivum, jsme umazali ocásek u lemmatu, který určoval vid, tudíž jsme o vid přišli!
-#    $self->fix_morphology($root);
     return;
 }
 
