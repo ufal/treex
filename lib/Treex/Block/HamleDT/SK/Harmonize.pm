@@ -63,17 +63,32 @@ sub fix_morphology
         {
             my $iset = $node->iset();
             ###!!! We also need to handle fusions: do_on na_on na_ono naň oň po_on pre_on preň u_on za_on
-            if($lemma =~ m/^(ja|ty|on|ona|ono|my|vy|seba|si|sa)$/)
+            if($lemma =~ m/^(ja|ty|on|ona|ono|my|vy)$/)
             {
                 $iset->set('pos', 'noun');
                 $iset->set('prontype', 'prs');
             }
-            elsif($lemma =~ m/^(môj|tvoj|jeho|jej|náš|váš|ich|svoj)$/)
+            elsif($lemma =~ m/^(seba|si|sa)$/)
+            {
+                $iset->set('pos', 'noun');
+                $iset->set('prontype', 'prs');
+                $iset->set('reflex', 'reflex');
+            }
+            elsif($lemma =~ m/^(môj|tvoj|jeho|jej|náš|váš|ich)$/)
             {
                 $iset->set('pos', 'adj');
                 $iset->set('prontype', 'prs');
                 $iset->set('poss', 'poss');
             }
+            elsif($lemma =~ m/^(svoj)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'prs');
+                $iset->set('poss', 'poss');
+                $iset->set('reflex', 'reflex');
+            }
+            # Unlike in Czech, there are separate lemmas for each gender (ten-ta-to).
+            # Neuter singular is very likely to act more like pronoun than like determiner but we currently keep it consistent with Czech and Slovenian, i.e. all demonstratives are DET.
             elsif($lemma =~ m/^(ta|taktýto|takéto|taký|takýto|tamten|ten|tento|to|toto|tá|táto|týmto|onaký)$/)
             {
                 $iset->set('pos', 'adj');
