@@ -137,8 +137,10 @@ sub fix_morphology
                     log_warn("Changing polarity of $form from '$original_polarity' to 'neg'");
                 }
             }
+            # In some cases the original annotation was OK: affirmative lemma of a negative form, negative polarity set.
+            # Make sure we do not rewrite it now!
             # It does not make sense to mark polarity for "by". All other forms will have it marked.
-            elsif(!$node->is_conditional())
+            elsif($original_polarity ne 'neg' && !$node->is_conditional())
             {
                 $node->iset()->set('polarity', 'pos');
                 if($original_polarity ne 'pos')
