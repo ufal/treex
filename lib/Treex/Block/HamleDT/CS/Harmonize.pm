@@ -38,7 +38,6 @@ sub process_zone
             $bundle->set_id($sentence_id);
         }
     }
-    $self->remove_features_from_lemmas($root);
     ###!!! fix_morphology() is called from SUPER::process_zone() above and we should not have to call it here again.
     ###!!! But unfortunately it turns out that some changes disappear if we remove this call.
     ###!!! (e.g. improved prontypes of pronouns, determiners, quantifiers and adverbs)
@@ -64,6 +63,108 @@ sub get_input_tag_for_interset
     my $self   = shift;
     my $node   = shift;
     return $node->tag();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Adds Interset features that cannot be decoded from the PDT tags but they can
+# be inferred from lemmas and word forms. This method is called from
+# SUPER->process_zone().
+#------------------------------------------------------------------------------
+sub fix_morphology
+{
+    my $self = shift;
+    my $root = shift;
+    # We must first normalize the lemmas because many subsequent rules depend on them.
+    $self->remove_features_from_lemmas($root);
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $lemma = $node->lemma();
+        # Fix Interset features of pronominal words.
+        if($node->is_pronominal())
+        {
+            # Indefinite pronouns and determiners cannot be distinguished by their PDT tag (PZ*).
+            if($lemma =~ m/^((ně|ledas?|kde|bůhví|nevím|málo)?(kdo|co)(si|koliv?)?|nikdo|nic)$/)
+            {
+                $node->iset()->set('pos', 'noun');
+            }
+            elsif($lemma =~ m/(^(jaký|který)|(jaký|který)$|^(každý|všechen|sám|žádný)$)/)
+            {
+                $node->iset()->set('pos', 'adj');
+            }
+            # Pronouns čí, něčí, čísi, číkoli, ledačí, kdečí, bůhvíčí, nevímčí, ničí should have Poss=Yes.
+            elsif($lemma =~ m/^((ně|ledas?|kde|bůhví|nevím|ni)?čí|čí(si|koliv?))$/)
+            {
+                $node->iset()->set('pos', 'adj');
+                $node->iset()->set('poss', 'poss');
+            }
+            # Pronoun (determiner) "sám" is difficult to classify in the traditional Czech system but in UD v2 we now have the prontype=emph, which is quite suitable.
+            if($lemma eq 'sám')
+            {
+                $node->iset()->set('prontype', 'emp');
+            }
+            # Pronominal numerals are all treated as combined demonstrative and indefinite, because the PDT tag is only one.
+            # But we can distinguish them by the lemma.
+            if($lemma =~ m/^kolikráte?$/)
+            {
+                $node->iset()->set('prontype', 'int|rel');
+            }
+            elsif($lemma =~ m/^((po)?((ně|kdoví|bůhví|nevím)kolik|(ne|pře)?(mnoho|málo)|(nej)?(více?|méně|míň)|moc|mó+c|hodně|bezpočtu|nespočet|nesčíslně)(átý|áté|erý|ero|k?ráte?)?)$/)
+            {
+                $node->iset()->set('prontype', 'ind');
+            }
+            elsif($lemma =~ m/^tolik(ráte?)?$/)
+            {
+                $node->iset()->set('prontype', 'dem');
+            }
+        }
+        # Pronominal adverbs.
+        if($node->is_adverb())
+        {
+            if($lemma =~ m/^(kde|kam|odkud|kudy|kdy|odkdy|dokdy|jak|proč)$/)
+            {
+                $node->iset()->set('prontype', 'int|rel');
+            }
+            elsif($lemma =~ m/^((ně|ledas?|málo|kde|bůhví|nevím)(kde|kam|kudy|kdy|jak)|(od|do)ně(kud|kdy)|(kde|kam|odkud|kudy|kdy|jak)(si|koliv?))$/)
+            {
+                $node->iset()->set('prontype', 'ind');
+            }
+            elsif($lemma =~ m/^(tady|zde|tu|tam|tamhle|onam|odsud|odtud|odtamtud|teď|nyní|tehdy|tentokráte?|tenkráte?|odtehdy|dotehdy|dosud|tak|proto)$/)
+            {
+                $node->iset()->set('prontype', 'dem');
+            }
+            elsif($lemma =~ m/^(všude|odevšad|všudy|vždy|odevždy|odjakživa|navždy)$/)
+            {
+                $node->iset()->set('prontype', 'tot');
+            }
+            elsif($lemma =~ m/^(nikde|nikam|odnikud|nikudy|nikdy|odnikdy|donikdy|nijak)$/)
+            {
+                $node->iset()->set('prontype', 'neg');
+            }
+        }
+        # Passive participles should be adjectives both in their short (predicative)
+        # and long (attributive) form. Now the long forms are adjectives and short
+        # forms are verbs (while the same dichotomy of non-verbal adjectives, such as
+        # starý-stár, is kept within adjectives).
+        if($node->is_verb() && $node->is_participle() && $node->iset()->is_passive())
+        {
+            $node->iset()->set('pos', 'adj');
+            $node->iset()->set('variant', 'short');
+            # That was the easy part. But we must also change the lemma.
+            # nést-nesen-nesený, brát-brán-braný, mazat-mazán-mazaný, péci-pečen-pečený, zavřít-zavřen-zavřený, tisknout-tištěn-tištěný, minout-minut-minutý, začít-začat-začatý,
+            # krýt-kryt-krytý, kupovat-kupován-kupovaný, prosit-prošen-prošený, trpět-trpěn-trpěný, sázet-sázen-sázený, dělat-dělán-dělaný
+            my $form = lc($node->form());
+            # Remove gender/number morpheme if present.
+            $form =~ s/[aoiy]$//;
+            # Stem vowel change "á" to "a".
+            $form =~ s/án$/an/;
+            # Add the ending of masculine singular nominative long adjectives.
+            $form .= 'ý';
+            $node->set_lemma($form);
+        }
+    }
 }
 
 
@@ -181,7 +282,7 @@ sub remove_features_from_lemmas
         # Numeric value after lemmas of numeral words.
         # Example: třikrát`3
         my $wild = $node->wild();
-        if($lemma =~ s/\`(\d+)//)
+        if($lemma =~ s/\`(\d+)//) # `
         {
             $wild->{lnumvalue} = $1;
         }
@@ -230,105 +331,6 @@ sub remove_features_from_lemmas
             }
         }
         $node->set_lemma($lemma);
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Adds Interset features that cannot be decoded from the PDT tags but they can
-# be inferred from lemmas and word forms.
-#------------------------------------------------------------------------------
-sub fix_morphology
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $lemma = $node->lemma();
-        # Fix Interset features of pronominal words.
-        if($node->is_pronominal())
-        {
-            # Indefinite pronouns and determiners cannot be distinguished by their PDT tag (PZ*).
-            if($lemma =~ m/^((ně|ledas?|kde|bůhví|nevím|málo)?(kdo|co)(si|koliv?)?|nikdo|nic)$/)
-            {
-                $node->iset()->set('pos', 'noun');
-            }
-            elsif($lemma =~ m/(^(jaký|který)|(jaký|který)$|^(každý|všechen|sám|žádný)$)/)
-            {
-                $node->iset()->set('pos', 'adj');
-            }
-            # Pronouns čí, něčí, čísi, číkoli, ledačí, kdečí, bůhvíčí, nevímčí, ničí should have Poss=Yes.
-            elsif($lemma =~ m/^((ně|ledas?|kde|bůhví|nevím|ni)?čí|čí(si|koliv?))$/)
-            {
-                $node->iset()->set('pos', 'adj');
-                $node->iset()->set('poss', 'poss');
-            }
-            # Pronoun (determiner) "sám" is difficult to classify in the traditional Czech system but in UD v2 we now have the prontype=emph, which is quite suitable.
-            if($lemma eq 'sám')
-            {
-                $node->iset()->set('prontype', 'emp');
-            }
-            # Pronominal numerals are all treated as combined demonstrative and indefinite, because the PDT tag is only one.
-            # But we can distinguish them by the lemma.
-            if($lemma =~ m/^kolikráte?$/)
-            {
-                $node->iset()->set('prontype', 'int|rel');
-            }
-            elsif($lemma =~ m/^((po)?((ně|kdoví|bůhví|nevím)kolik|(ne|pře)?(mnoho|málo)|(nej)?(více?|méně|míň)|moc|mó+c|hodně|bezpočtu|nespočet|nesčíslně)(átý|áté|erý|ero|k?ráte?)?)$/)
-            {
-                $node->iset()->set('prontype', 'ind');
-            }
-            elsif($lemma =~ m/^tolik(ráte?)?$/)
-            {
-                $node->iset()->set('prontype', 'dem');
-            }
-        }
-        # Pronominal adverbs.
-        if($node->is_adverb())
-        {
-            if($lemma =~ m/^(kde|kam|odkud|kudy|kdy|odkdy|dokdy|jak|proč)$/)
-            {
-                $node->iset()->set('prontype', 'int|rel');
-            }
-            elsif($lemma =~ m/^((ně|ledas?|málo|kde|bůhví|nevím)(kde|kam|kudy|kdy|jak)|(od|do)ně(kud|kdy)|(kde|kam|odkud|kudy|kdy|jak)(si|koliv?))$/)
-            {
-                $node->iset()->set('prontype', 'ind');
-            }
-            elsif($lemma =~ m/^(tady|zde|tu|tam|tamhle|onam|odsud|odtud|odtamtud|teď|nyní|tehdy|tentokráte?|tenkráte?|odtehdy|dotehdy|dosud|tak|proto)$/)
-            {
-                $node->iset()->set('prontype', 'dem');
-            }
-            elsif($lemma =~ m/^(všude|odevšad|všudy|vždy|odevždy|odjakživa|navždy)$/)
-            {
-                $node->iset()->set('prontype', 'tot');
-            }
-            elsif($lemma =~ m/^(nikde|nikam|odnikud|nikudy|nikdy|odnikdy|donikdy|nijak)$/)
-            {
-                $node->iset()->set('prontype', 'neg');
-            }
-        }
-        # Passive participles should be adjectives both in their short (predicative)
-        # and long (attributive) form. Now the long forms are adjectives and short
-        # forms are verbs (while the same dichotomy of non-verbal adjectives, such as
-        # starý-stár, is kept within adjectives).
-        if($node->is_verb() && $node->is_participle() && $node->iset()->is_passive())
-        {
-            $node->iset()->set('pos', 'adj');
-            $node->iset()->set('variant', 'short');
-            # That was the easy part. But we must also change the lemma.
-            # nést-nesen-nesený, brát-brán-braný, mazat-mazán-mazaný, péci-pečen-pečený, zavřít-zavřen-zavřený, tisknout-tištěn-tištěný, minout-minut-minutý, začít-začat-začatý,
-            # krýt-kryt-krytý, kupovat-kupován-kupovaný, prosit-prošen-prošený, trpět-trpěn-trpěný, sázet-sázen-sázený, dělat-dělán-dělaný
-            my $form = lc($node->form());
-            # Remove gender/number morpheme if present.
-            $form =~ s/[aoiy]$//;
-            # Stem vowel change "á" to "a".
-            $form =~ s/án$/an/;
-            # Add the ending of masculine singular nominative long adjectives.
-            $form .= 'ý';
-            $node->set_lemma($form);
-        }
     }
 }
 
