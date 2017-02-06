@@ -58,10 +58,10 @@ sub fix_morphology
     foreach my $node (@nodes)
     {
         my $lemma = $node->lemma();
+        my $iset = $node->iset();
         # Fix Interset features of pronominal words.
         if($node->is_pronominal())
         {
-            my $iset = $node->iset();
             ###!!! We also need to handle fusions: do_on na_on na_ono naň oň po_on pre_on preň u_on za_on
             if($lemma =~ m/^(ja|ty|on|ona|ono|my|vy)$/)
             {
@@ -215,28 +215,28 @@ sub fix_morphology
             # Pronominal adverbs.
             elsif($lemma =~ m/^(ako|kadiaľ|kam|kamže|kde|kdeby|kedy|odkedy|odkiaľ|prečo)$/)
             {
-                $node->iset()->set('pos', 'adv');
-                $node->iset()->set('prontype', 'int|rel');
+                $iset->set('pos', 'adv');
+                $iset->set('prontype', 'int|rel');
             }
             elsif($lemma =~ m/^(nejako?|(nie|bohvie|daj|ktovie|málo)(ako|kde|kedy)|inak|inde|inokade|inokedy|ináč|(ako|kadiaľ|kam|kde|kdeby|kedy|odkedy|odkiaľ)(si|koľvek))$/)
             {
-                $node->iset()->set('pos', 'adv');
-                $node->iset()->set('prontype', 'ind');
+                $iset->set('pos', 'adv');
+                $iset->set('prontype', 'ind');
             }
             elsif($lemma =~ m/^(dosiaľ|dovtedy|natoľko|odtiaľ|odvtedy|onak|preto|sem|stadiaľ|tade|tadiaľ|tadiaľto|tak|takisto|takto|tam|tamhľa|tu|už|vtedy|zatiaľ)$/)
             {
-                $node->iset()->set('pos', 'adv');
-                $node->iset()->set('prontype', 'dem');
+                $iset->set('pos', 'adv');
+                $iset->set('prontype', 'dem');
             }
             elsif($lemma =~ m/^(všade|všelijako|vždy)$/)
             {
-                $node->iset()->set('pos', 'adv');
-                $node->iset()->set('prontype', 'tot');
+                $iset->set('pos', 'adv');
+                $iset->set('prontype', 'tot');
             }
             elsif($lemma =~ m/^(nijako|nikam|nikde|nikdy)$/)
             {
-                $node->iset()->set('pos', 'adv');
-                $node->iset()->set('prontype', 'neg');
+                $iset->set('pos', 'adv');
+                $iset->set('prontype', 'neg');
             }
         }
         # Ordinal and multiplicative numerals must be distinguished from cardinals.
@@ -248,41 +248,52 @@ sub fix_morphology
             # tretí, tridsiaty, trinásty, tristý, ôsmy, šesťdesiaty, šiesty, štvrtý, štvrý
             if($lemma =~ m/(prvý|druhý|tretí|štvrtý|piaty|šiesty|siedmy|ôsmy|deviaty|siaty|sty|stý|posledný)$/i)
             {
-                $node->iset()->set('pos', 'adj');
-                $node->iset()->set('numtype', 'ord');
+                $iset->set('pos', 'adj');
+                $iset->set('numtype', 'ord');
             }
             elsif($lemma =~ m/(jedinký|jediný|dvojaký|dvojitý|štvrý|násobný|mnohoraký|mnohý|viacerý|ostatný)$/i)
             {
-                $node->iset()->set('pos', 'adj');
-                $node->iset()->set('numtype', 'mult');
+                $iset->set('pos', 'adj');
+                $iset->set('numtype', 'mult');
             }
             elsif($lemma =~ m/(krát|dvojako|raz|neraz)$/i)
             {
-                $node->iset()->set('pos', 'adv');
-                $node->iset()->set('numtype', 'mult');
+                $iset->set('pos', 'adv');
+                $iset->set('numtype', 'mult');
             }
             elsif($lemma =~ m/dvadsiatka/i)
             {
-                $node->iset()->set('pos', 'noun');
+                $iset->set('pos', 'noun');
             }
         }
-        # Negation of verbs is treated as derivational morphology in the Slovak National Corpus.
-        # We have to merge negative verbs with their affirmative counterparts.
         if($node->is_verb())
         {
+            # Negation of verbs is treated as derivational morphology in the Slovak National Corpus.
+            # We have to merge negative verbs with their affirmative counterparts.
             my $original_polarity = $node->iset()->polarity();
             if($lemma =~ m/^ne./i && $lemma !~ m/^(nechať|nechávať|nenávidieť|nenávidený)$/i)
             {
                 $lemma =~ s/^ne//i;
                 $node->set_lemma($lemma);
-                $node->iset()->set('polarity', 'neg');
+                $iset->set('polarity', 'neg');
             }
             # In some cases the original annotation was OK: affirmative lemma of a negative form, negative polarity set.
             # Make sure we do not rewrite it now!
             # It does not make sense to mark polarity for "by". All other forms will have it marked.
             elsif($original_polarity ne 'neg' && !$node->is_conditional())
             {
-                $node->iset()->set('polarity', 'pos');
+                $iset->set('polarity', 'pos');
+            }
+            # SNC has a dedicated POS tag ('G*') for participles, i.e. they are neither verbs nor adjectives there.
+            # Interset converts participles to verbs. However, we want only l-participles to be verbs.
+            # We can distinguish them by lemma: l-participles have the infinitive (zabil => zabiť), other participles have\
+            # masculine nominative form of the participle (obkľúčený => obkľúčený, žijúcu => žijúci).
+            if($node->is_participle())
+            {
+                if($lemma !~ m/ť$/)
+                {
+                    $iset->set('pos', 'adj');
+                }
             }
         }
         # Distinguish coordinating and subordinating conjunctions.
