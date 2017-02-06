@@ -59,64 +59,144 @@ sub fix_morphology
     {
         my $lemma = $node->lemma();
         # Fix Interset features of pronominal words.
-        if(0 && $node->is_pronominal())
+        if($node->is_pronominal())
         {
-            # Indefinite pronouns and determiners cannot be distinguished by their PDT tag (PZ*).
-            if($lemma =~ m/^((ně|ledas?|kde|bůhví|nevím|málo)?(kdo|co)(si|koliv?)?|nikdo|nic)$/)
+            my $iset = $node->iset();
+            ###!!! We also need to handle fusions: do_on na_on na_ono naň oň po_on pre_on preň u_on za_on
+            if($lemma =~ m/^(ja|ty|on|ona|ono|my|vy|seba|si|sa)$/)
             {
-                $node->iset()->set('pos', 'noun');
+                $iset->set('pos', 'noun');
+                $iset->set('prontype', 'prs');
             }
-            elsif($lemma =~ m/(^(jaký|který)|(jaký|který)$|^(každý|všechen|sám|žádný)$)/)
+            elsif($lemma =~ m/^(môj|tvoj|jeho|jej|náš|váš|ich|svoj)$/)
             {
-                $node->iset()->set('pos', 'adj');
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'prs');
+                $iset->set('poss', 'poss');
             }
-            # Pronouns čí, něčí, čísi, číkoli, ledačí, kdečí, bůhvíčí, nevímčí, ničí should have Poss=Yes.
-            elsif($lemma =~ m/^((ně|ledas?|kde|bůhví|nevím|ni)?čí|čí(si|koliv?))$/)
+            elsif($lemma =~ m/^(ta|taktýto|takéto|taký|takýto|tamten|ten|tento|to|toto|tá|táto|týmto|onaký)$/)
             {
-                $node->iset()->set('pos', 'adj');
-                $node->iset()->set('poss', 'poss');
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'dem');
             }
-            # Pronoun (determiner) "sám" is difficult to classify in the traditional Czech system but in UD v2 we now have the prontype=emph, which is quite suitable.
-            if($lemma eq 'sám')
+            elsif($lemma =~ m/^(kto|ktože|čo|čože)$/)
             {
-                $node->iset()->set('prontype', 'emp');
+                $iset->set('pos', 'noun');
+                $iset->set('prontype', 'int|rel');
             }
-            # Pronominal numerals are all treated as combined demonstrative and indefinite, because the PDT tag is only one.
-            # But we can distinguish them by the lemma.
-            if($lemma =~ m/^kolikráte?$/)
+            elsif($lemma =~ m/^((nie|málo|všeli)(kto|čo)|(kto|čo)(si|koľvek))$/)
             {
+                $iset->set('pos', 'noun');
+                $iset->set('prontype', 'ind');
+            }
+            elsif($lemma =~ m/^(všetko)$/)
+            {
+                $iset->set('pos', 'noun');
+                $iset->set('prontype', 'tot');
+            }
+            elsif($lemma =~ m/^(nik|nikto|nič)$/)
+            {
+                $iset->set('pos', 'noun');
+                $iset->set('prontype', 'neg');
+            }
+            elsif($lemma =~ m/^(aký|ktorý)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'int|rel');
+            }
+            elsif($lemma =~ m/^(čí)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'int|rel');
+                $iset->set('poss', 'poss');
+            }
+            elsif($lemma =~ m/^((da|kade|ne|všeli)(jaký)|(hoci|nie|poda)(ktorý)|iný|istý|všakovaký|(aký|ktorý)(si|koľvek))$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'ind');
+            }
+            elsif($lemma =~ m/^čí(si|koľvek)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'ind');
+                $iset->set('poss', 'poss');
+            }
+            elsif($lemma =~ m/^(sám|samý)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'emp');
+            }
+            elsif($lemma =~ m/^(každý|všetok)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'tot');
+            }
+            elsif($lemma =~ m/^(nijaký|žiaden|žiadny)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'neg');
+            }
+            # Pronominal quantifiers (numerals).
+            elsif($lemma eq 'koľko')
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'int|rel');
+                $iset->set('numtype', 'card');
+            }
+            elsif($lemma eq 'koľkokrát')
+            {
+                $iset->set('pos', 'adv');
+                $iset->set('prontype', 'int|rel');
+                $iset->set('numtype', 'mult');
+            }
+            elsif($lemma eq 'toľko')
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'dem');
+                $iset->set('numtype', 'card');
+            }
+            elsif($lemma eq 'toľkokrát')
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'dem');
+                $iset->set('numtype', 'mult');
+            }
+            elsif($lemma =~ m/^nieko[ľl]k[oý]$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'ind');
+                $iset->set('numtype', 'card');
+            }
+            elsif($lemma =~ m/^(niekoľko|veľa)krát$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'ind');
+                $iset->set('numtype', 'mult');
+            }
+            # Pronominal adverbs.
+            elsif($lemma =~ m/^(ako|kadiaľ|kam|kamže|kde|kdeby|kedy|odkedy|odkiaľ|prečo)$/)
+            {
+                $node->iset()->set('pos', 'adv');
                 $node->iset()->set('prontype', 'int|rel');
             }
-            elsif($lemma =~ m/^((po)?((ně|kdoví|bůhví|nevím)kolik|(ne|pře)?(mnoho|málo)|(nej)?(více?|méně|míň)|moc|mó+c|hodně|bezpočtu|nespočet|nesčíslně)(átý|áté|erý|ero|k?ráte?)?)$/)
+            elsif($lemma =~ m/^(nejako?|(nie|bohvie|daj|ktovie|málo)(ako|kde|kedy)|inak|inde|inokade|inokedy|ináč|(ako|kadiaľ|kam|kde|kdeby|kedy|odkedy|odkiaľ)(si|koľvek))$/)
             {
+                $node->iset()->set('pos', 'adv');
                 $node->iset()->set('prontype', 'ind');
             }
-            elsif($lemma =~ m/^tolik(ráte?)?$/)
+            elsif($lemma =~ m/^(dosiaľ|dovtedy|natoľko|odtiaľ|odvtedy|onak|preto|sem|stadiaľ|tade|tadiaľ|tadiaľto|tak|takisto|takto|tam|tamhľa|tu|už|vtedy|zatiaľ)$/)
             {
+                $node->iset()->set('pos', 'adv');
                 $node->iset()->set('prontype', 'dem');
             }
-        }
-        # Pronominal adverbs.
-        if(0 && $node->is_adverb())
-        {
-            if($lemma =~ m/^(kde|kam|odkud|kudy|kdy|odkdy|dokdy|jak|proč)$/)
+            elsif($lemma =~ m/^(všade|všelijako|vždy)$/)
             {
-                $node->iset()->set('prontype', 'int|rel');
-            }
-            elsif($lemma =~ m/^((ně|ledas?|málo|kde|bůhví|nevím)(kde|kam|kudy|kdy|jak)|(od|do)ně(kud|kdy)|(kde|kam|odkud|kudy|kdy|jak)(si|koliv?))$/)
-            {
-                $node->iset()->set('prontype', 'ind');
-            }
-            elsif($lemma =~ m/^(tady|zde|tu|tam|tamhle|onam|odsud|odtud|odtamtud|teď|nyní|tehdy|tentokráte?|tenkráte?|odtehdy|dotehdy|dosud|tak|proto)$/)
-            {
-                $node->iset()->set('prontype', 'dem');
-            }
-            elsif($lemma =~ m/^(všude|odevšad|všudy|vždy|odevždy|odjakživa|navždy)$/)
-            {
+                $node->iset()->set('pos', 'adv');
                 $node->iset()->set('prontype', 'tot');
             }
-            elsif($lemma =~ m/^(nikde|nikam|odnikud|nikudy|nikdy|odnikdy|donikdy|nijak)$/)
+            elsif($lemma =~ m/^(nijako|nikam|nikde|nikdy)$/)
             {
+                $node->iset()->set('pos', 'adv');
                 $node->iset()->set('prontype', 'neg');
             }
         }
