@@ -328,7 +328,7 @@ sub convert_deprels
         # Adverbial modifier: advmod, obl, advcl
         elsif($deprel eq 'Adv')
         {
-            $deprel = $node->is_verb() ? 'advcl' : $node->is_noun() ? 'obl' : 'advmod';
+            $deprel = $node->is_verb() ? 'advcl' : ($node->is_noun() || $node->is_adjective() || $node->is_numeral()) ? 'obl' : 'advmod';
         }
         # Attribute of a noun: amod, nummod, nmod, acl
         elsif($deprel eq 'Atr')
