@@ -120,6 +120,33 @@ sub fix_morphology
                 $node->iset()->set('prontype', 'neg');
             }
         }
+        # Ordinal and multiplicative numerals must be distinguished from cardinals.
+        if($node->is_numeral())
+        {
+            # The following ordinal numeral lemmas have been observed in the corpus:
+            # desiaty, deviaty, deväťdesiaty, druhý, dvadsiaty, dvanásty, jedenásty,
+            # osemdesiaty, piaty, posledný, prvá, prvý, sedemdesiaty, siedmy,
+            # tretí, tridsiaty, trinásty, tristý, ôsmy, šesťdesiaty, šiesty, štvrtý, štvrý
+            if($lemma =~ m/(prvý|druhý|tretí|štvrtý|piaty|šiesty|siedmy|ôsmy|deviaty|siaty|sty|stý|posledný)$/i)
+            {
+                $node->iset()->set('pos', 'adj');
+                $node->iset()->set('numtype', 'ord');
+            }
+            elsif($lemma =~ m/(jedinký|jediný|dvojaký|dvojitý|štvrý|násobný|mnohoraký|mnohý|viacerý|ostatný)$/i)
+            {
+                $node->iset()->set('pos', 'adj');
+                $node->iset()->set('numtype', 'mult');
+            }
+            elsif($lemma =~ m/(krát|dvojako|raz|neraz)$/i)
+            {
+                $node->iset()->set('pos', 'adv');
+                $node->iset()->set('numtype', 'mult');
+            }
+            elsif($lemma =~ m/dvadsiatka/i)
+            {
+                $node->iset()->set('pos', 'noun');
+            }
+        }
         # Negation of verbs is treated as derivational morphology in the Slovak National Corpus.
         # We have to merge negative verbs with their affirmative counterparts.
         if($node->is_verb())
