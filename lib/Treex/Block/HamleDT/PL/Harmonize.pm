@@ -139,7 +139,7 @@ sub fix_morphology
         {
             # Forms: ten, ta, to, ci, tą, te, tę, tego, tej, temu, tych, tym, tymi.
             # Forms: taki, taka, takie, tacy, takiego, takiej, taką, takich, takim, takimi.
-            $iset->add('pos' => 'adj', 'prontype' => 'dem');
+            $iset->add('pos' => 'adj', 'prontype' => 'dem', 'degree' => '');
         }
         elsif($lemma =~ m/^(kto|co)$/ && $node->is_noun())
         {
@@ -151,18 +151,18 @@ sub fix_morphology
         {
             # Forms: jaki, jaka, jakie, jacy, jakiego, jakiej, jaką, jakich, jakim, jakimi.
             # Forms: który, która, które, którzy, którego, któremu, której, którą, których, którym, którymi.
-            $iset->add('pos' => 'adj', 'prontype' => 'int|rel');
+            $iset->add('pos' => 'adj', 'prontype' => 'int|rel', 'degree' => '');
         }
         elsif($lemma =~ m/^(ktoś|coś|ktokolwiek|cokolwiek)$/ && $node->is_noun())
         {
             # Forms: ktoś, kogoś, komuś, kimś.
             # Forms: coś, czegoś, czemuś, czymś.
             # Forms: cokolwiek.
-            $iset->add('pos' => 'adj', 'prontype' => 'ind');
+            $iset->add('pos' => 'noun', 'prontype' => 'ind');
         }
         elsif($lemma =~ m/^(jakiś|któryś|niejaki|niektóry|jakikolwiek|którykolwiek)$/ && $node->is_adjective())
         {
-            $iset->add('pos' => 'adj', 'prontype' => 'ind');
+            $iset->add('pos' => 'adj', 'prontype' => 'ind', 'degree' => '');
         }
         elsif($lemma =~ m/^kilka/ && $node->is_numeral())
         {
@@ -178,7 +178,7 @@ sub fix_morphology
         elsif($lemma =~ m/^(każdy|wszystek|wszelki)$/ && $node->is_adjective())
         {
             # Forms: każdy, każda, każde, każdego, każdemu, każdym, każdej, każdą.
-            $iset->add('pos' => 'adj', 'prontype' => 'tot');
+            $iset->add('pos' => 'adj', 'prontype' => 'tot', 'degree' => '');
         }
         elsif($lemma =~ m/^(nikt|nic)$/ && $node->is_noun())
         {
@@ -189,7 +189,7 @@ sub fix_morphology
         elsif($lemma =~ m/^(żaden)$/ && $node->is_adjective())
         {
             # Forms: żaden, żadna, żadne, żadnego, żadnemu, żadnym, żadnej, żadną.
-            $iset->add('pos' => 'adj', 'prontype' => 'neg');
+            $iset->add('pos' => 'adj', 'prontype' => 'neg', 'degree' => '');
         }
         # Participles should be adjectives, now they are verbs.
         # The only exception is l-participles but they are not yet tagged as participles.
