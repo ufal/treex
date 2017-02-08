@@ -166,6 +166,7 @@ has $interset_attribute => (
         is_translative
         is_typo
         is_verb
+        is_verbal_noun
         is_vocative
         is_wh
     )],
