@@ -177,7 +177,7 @@ sub fix_morphology
             $iset->add('verbform' => 'part', 'mood' => '', 'voice' => 'act');
         }
         # Verbal nouns should be nouns, not verbs.
-        elsif($node->is_verb() && $node->is_gerund())
+        elsif($node->is_verb() && $node->is_verbal_noun())
         {
             $iset->add('pos' => 'noun');
             # That was the easy part. But we also have to replace the verbal lemma (infinitive) by the nominal lemma (nominative singular).
