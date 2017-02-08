@@ -167,15 +167,17 @@ sub fix_morphology
             # Forms: żaden, żadna, żadne, żadnego, żadnemu, żadnym, żadnej, żadną.
             $iset->add('pos' => 'adj', 'prontype' => 'neg');
         }
-        # Passive participles should be adjectives, now they are verbs.
-        elsif($node->is_verb() && $node->is_participle() && $node->iset()->is_passive())
+        # Participles should be adjectives, now they are verbs.
+        # The only exception is l-participles but they are not yet tagged as participles.
+        elsif($node->is_verb() && $node->is_participle())
         {
             $node->iset()->set('pos', 'adj');
             # That was the easy part. But we must also change the lemma.
-            # poddano – poddać => poddany
+            # poddano – poddać => poddany (passive participle)
+            # idące – iść => idący (active present participle)
             my $form = lc($node->form());
             # Remove gender/number/case morpheme if present.
-            $form =~ s/([nt])(y|e|o|ego|emu|ym|a|ej|ą|i|ych|ymi)$/$1/;
+            $form =~ s/([cnt])(y|e|o|ego|emu|ym|a|ej|ą|i|ych|ymi)$/$1/;
             # Add the ending of masculine singular nominative long adjectives.
             $form .= 'y';
             $node->set_lemma($form);
