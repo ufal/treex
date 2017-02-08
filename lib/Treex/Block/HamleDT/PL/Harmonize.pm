@@ -105,6 +105,30 @@ sub fix_morphology
             $iset->add('pos' => 'noun', 'prontype' => 'prs', 'reflex' => 'reflex');
             $iset->set('typo' => 'typo') if($form =~ m/^si[ea]$/i);
         }
+        # Possessive determiners.
+        elsif($lemma eq 'mój')
+        {
+            $iset->add('prontype' => 'prs', 'poss' => 'poss', 'person' => '1', 'possnumber' => 'sing', 'degree' => '');
+        }
+        elsif($lemma eq 'twój')
+        {
+            $iset->add('prontype' => 'prs', 'poss' => 'poss', 'person' => '2', 'possnumber' => 'sing', 'degree' => '');
+        }
+        ###!!! Third person possessive pronouns "jego", "jej", "ich" are analyzed as genitive forms of the personal pronouns "on", "ona", "ono", "oni".
+        ###!!! We cannot easily distinguish the possessive usage from other genitive usage, although the latter will be rather rare.
+        ###!!! The situation is different from Czech where the forms "její" and "jejich" cannot be used as genitive (which is "jí" and "jich", respectively).
+        elsif($lemma eq 'nasz')
+        {
+            $iset->add('prontype' => 'prs', 'poss' => 'poss', 'person' => '1', 'possnumber' => 'plur', 'degree' => '');
+        }
+        elsif($lemma eq 'wasz')
+        {
+            $iset->add('prontype' => 'prs', 'poss' => 'poss', 'person' => '2', 'possnumber' => 'plur', 'degree' => '');
+        }
+        elsif($lemma eq 'swój')
+        {
+            $iset->add('prontype' => 'prs', 'poss' => 'poss', 'reflex' => 'reflex', 'degree' => '');
+        }
         # Demonstrative pronouns and determiners.
         elsif($lemma eq 'to' && $node->is_noun())
         {
