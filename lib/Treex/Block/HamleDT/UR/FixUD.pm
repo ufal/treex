@@ -93,6 +93,9 @@ sub fix_features
         {
             my $deprel = $1;
             my $cycle_head = $2;
+            # In two cases the deprel in the cycle is "dobj". It should have been converted to "obj" but it was not
+            # because the UD1To2 block did not recognize the deprel with the "-CYCLE" suffix. Convert it now.
+            $deprel =~ s/^dobj$/obj/;
             $node->set_deprel($deprel);
             push(@miscfeatures, "CycleHead=$cycle_head");
         }
