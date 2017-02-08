@@ -84,6 +84,17 @@ sub fix_features
             }
         }
         $node->set_iset($f);
+        # Since we are collecting MISC attributes, let us also do something that does not involve morphological features.
+        # The original annotation contained some cycles and we have automatically broken them, using a separate script
+        # and preserving the original parent index in the deprel. For example, the deprel is now "punct-CYCLE:7".
+        # Let us make the deprel valid again and save the information about the cycle in MISC.
+        if($node->deprel() =~ m/^(.+)-CYCLE:(\d+)$/)
+        {
+            my $deprel = $1;
+            my $cycle_head = $2;
+            $node->set_deprel($deprel);
+            push(@miscfeatures, "CycleHead=$cycle_head");
+        }
         ###!!! We do not check the previous contents of MISC because we know that in this particular data it is empty.
         $node->wild()->{misc} = join('|', @miscfeatures);
     }
