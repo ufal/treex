@@ -13,6 +13,7 @@ sub process_atree
     my $self = shift;
     my $root = shift;
     $self->fix_features($root);
+    $self->fix_multiple_root_nodes($root);
 }
 
 
@@ -97,6 +98,55 @@ sub fix_features
         }
         ###!!! We do not check the previous contents of MISC because we know that in this particular data it is empty.
         $node->wild()->{misc} = join('|', @miscfeatures);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes multiple nodes attached to the root. This happens when a cycle has been
+# broken and the detached node has been attached directly to the root. But it
+# may also happen as an independent annotation error.
+#------------------------------------------------------------------------------
+sub fix_multiple_root_nodes
+{
+    my $self = shift;
+    my $root = shift;
+    my @children = $root->children();
+    if(scalar(@children)>=2)
+    {
+        # Which node is going to be the only child of the root?
+        # Preferably one that already has the 'root' deprel.
+        my @children_with_root = grep {$_->deprel() eq 'root'} (@children);
+        my $winner;
+        if(scalar(@children_with_root)>=1)
+        {
+            $winner = $children_with_root[0];
+        }
+        else
+        {
+            $winner = $children[0];
+            $winner->set_deprel('root');
+        }
+        # Attach the other children to the winner.
+        foreach my $c (@children)
+        {
+            unless($c == $winner)
+            {
+                $c->set_parent($winner);
+                if($c->deprel() eq 'root')
+                {
+                    if($c->is_punctuation())
+                    {
+                        $c->set_deprel('punct');
+                    }
+                    else
+                    {
+                        $c->set_deprel('dep');
+                    }
+                }
+            }
+        }
     }
 }
 
