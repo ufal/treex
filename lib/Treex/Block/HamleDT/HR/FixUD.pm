@@ -28,9 +28,40 @@ sub fix_morphology
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
+        my $lemma = $node->lemma();
+        my $iset = $node->iset();
+        # Pronominal words.
+        if($node->is_pronominal())
+        {
+            # Reflexive pronouns lack PronType=Prs.
+            # On the other hand they have Number=Sing while they are used in plural as well.
+            if($lemma eq 'sebe')
+            {
+                $iset->set('prontype' => 'prs', 'number' => '');
+            }
+            # Possessive determiners.
+            elsif($lemma =~ m/^(moj|tvoj|njegov)$/)
+            {
+                $iset->set('pos' => 'adj', 'prontype' => 'prs', 'possnumber' => 'sing');
+            }
+            elsif($lemma =~ m/^(naš|vaš|njihov)$/)
+            {
+                $iset->set('pos' => 'adj', 'prontype' => 'prs', 'possnumber' => 'plur');
+            }
+            # Reflexive possessive determiners.
+            elsif($lemma eq 'svoj')
+            {
+                $iset->set('pos' => 'adj', 'prontype' => 'prs');
+            }
+        }
         # Verbal copulas should be AUX and not VERB.
         if($node->is_verb() && $node->deprel() eq 'cop')
         {
+            # The only copula verb is "biti".
+            if($lemma ne 'biti')
+            {
+                log_warn("Copula verb should have lemma 'biti' but this one has '$lemma'");
+            }
             $node->iset()->set('verbtype', 'aux');
         }
     }
