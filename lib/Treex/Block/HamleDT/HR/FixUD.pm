@@ -37,21 +37,21 @@ sub fix_morphology
             # On the other hand they have Number=Sing while they are used in plural as well.
             if($lemma eq 'sebe')
             {
-                $iset->set('prontype' => 'prs', 'number' => '');
+                $iset->add('prontype' => 'prs', 'number' => '');
             }
             # Possessive determiners.
             elsif($lemma =~ m/^(moj|tvoj|njegov)$/)
             {
-                $iset->set('pos' => 'adj', 'prontype' => 'prs', 'possnumber' => 'sing');
+                $iset->add('pos' => 'adj', 'prontype' => 'prs', 'possnumber' => 'sing');
             }
             elsif($lemma =~ m/^(naš|vaš|njihov)$/)
             {
-                $iset->set('pos' => 'adj', 'prontype' => 'prs', 'possnumber' => 'plur');
+                $iset->add('pos' => 'adj', 'prontype' => 'prs', 'possnumber' => 'plur');
             }
             # Reflexive possessive determiners.
             elsif($lemma eq 'svoj')
             {
-                $iset->set('pos' => 'adj', 'prontype' => 'prs');
+                $iset->add('pos' => 'adj', 'prontype' => 'prs');
             }
         }
         # Verbal copulas should be AUX and not VERB.
