@@ -40,9 +40,17 @@ sub fix_morphology
                 $iset->add('prontype' => 'prs', 'number' => '');
             }
             # Possessive determiners.
-            elsif($lemma =~ m/^(moj|tvoj|njegov)$/)
+            elsif($lemma =~ m/^(moj|tvoj)$/)
             {
                 $iset->add('pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'possnumber' => 'sing');
+            }
+            elsif($lemma =~ m/^(njegov)$/)
+            {
+                $iset->add('pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'possnumber' => 'sing', 'possgender' => 'masc|neut');
+            }
+            elsif($lemma =~ m/^(njezin|njen)$/)
+            {
+                $iset->add('pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'possnumber' => 'sing', 'possgender' => 'fem');
             }
             elsif($lemma =~ m/^(naš|vaš|njihov)$/)
             {
