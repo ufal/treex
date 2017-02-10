@@ -42,16 +42,16 @@ sub fix_morphology
             # Possessive determiners.
             elsif($lemma =~ m/^(moj|tvoj|njegov)$/)
             {
-                $iset->add('pos' => 'adj', 'prontype' => 'prs', 'possnumber' => 'sing');
+                $iset->add('pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'possnumber' => 'sing');
             }
             elsif($lemma =~ m/^(naš|vaš|njihov)$/)
             {
-                $iset->add('pos' => 'adj', 'prontype' => 'prs', 'possnumber' => 'plur');
+                $iset->add('pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss', 'possnumber' => 'plur');
             }
             # Reflexive possessive determiners.
             elsif($lemma eq 'svoj')
             {
-                $iset->add('pos' => 'adj', 'prontype' => 'prs');
+                $iset->add('pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss');
             }
         }
         # Verbal copulas should be AUX and not VERB.
