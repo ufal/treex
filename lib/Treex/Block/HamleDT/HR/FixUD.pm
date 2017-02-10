@@ -70,6 +70,11 @@ sub fix_relations
         {
             $node->set_deprel('expl:pv');
         }
+        ###!!! TEMPORARY HACK: THROW AWAY REMNANT BECAUSE WE CANNOT CONVERT IT.
+        if($node->deprel() eq 'remnant')
+        {
+            $node->set_deprel('dep:remnant');
+        }
     }
 }
 
