@@ -69,9 +69,13 @@ sub fix_morphology
             }
             # Relative determiner "koji" is now tagged PRON Ind.
             # Do not damage cases that were already disambiguated as interrogative (and not relative).
-            elsif($lemma =~ m/^(kakav|koji)$/ && $iset->prontype() ne 'int')
+            elsif($lemma =~ m/^(kakav|koji)$/)
             {
-                $iset->add('pos' => 'adj', 'prontype' => 'int|rel');
+                $iset->add('pos' => 'adj');
+                unless($iset->prontype() eq 'int')
+                {
+                    $iset->add('prontype' => 'int|rel');
+                }
             }
             # Interrogative or relative possessive determiner "čiji" ("whose").
             elsif($lemma eq 'čiji')
