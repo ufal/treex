@@ -106,7 +106,17 @@ sub fix_morphology
             {
                 log_warn("Copula verb should have lemma 'biti/bivati' but this one has '$lemma'");
             }
-            $node->iset()->set('verbtype', 'aux');
+            $iset->set('verbtype', 'aux');
+        }
+        # Passive participles should have the voice feature.
+        if($node->is_participle())
+        {
+            # Is there an aux:pass, expl:pass, nsubj:pass or csubj:pass child?
+            my @passchildren = grep {$_->deprel() =~ m/:pass$/} ($node->children());
+            if(scalar(@passchildren) >= 1)
+            {
+                $iset->set('voice' => 'pass');
+            }
         }
     }
 }
@@ -149,7 +159,7 @@ sub fix_relations
         # They must show the core function they have wrt the predicate of the subordinate clause.
         # WARNING: "što" can be also used as a subordinating conjunction: "Dobro je što nam pružaju više informacija."
         # But then it should be tagged SCONJ, not PRON!
-        if($node->lemma() =~ m/^(tko|što|kakav|koji)$/ && $node->deprel() eq 'mark' && $node->parent()->is_verb())
+        if($node->lemma() =~ m/^(tko|što|kakav|koji)$/ && $node->deprel() eq 'mark' && ($node->parent()->is_verb() || $node->parent()->is_participle()))
         {
             if($node->is_nominative())
             {
