@@ -61,23 +61,16 @@ sub fix_morphology
             {
                 $iset->add('pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss');
             }
+            # Interrogative or relative pronouns "tko" and "što" are now tagged as indefinite.
+            elsif($lemma =~ m/^(tko|što)$/)
+            {
+                # It is not customary to show the person of relative pronouns, but in UD_Croatian they currently have Person=3.
+                $iset->add('prontype' => 'int|rel', 'person' => '');
+            }
             # Interrogative or relative determiner "koji" is now tagged PRON Ind.
             elsif($lemma eq 'koji')
             {
                 $iset->add('pos' => 'adj', 'prontype' => 'int|rel');
-                # This pronoun is often attached as "mark", which is an error. "Mark" is for subordinating conjunctions.
-                # The pronoun is probably subject or object of the relative clause.
-                if($node->deprel() eq 'mark')
-                {
-                    if($node->is_nominative())
-                    {
-                        $node->set_deprel('nsubj');
-                    }
-                    elsif($node->is_accusative())
-                    {
-                        $node->set_deprel('obj');
-                    }
-                }
             }
         }
         # Verbal copulas should be AUX and not VERB.
@@ -126,6 +119,25 @@ sub fix_relations
         if($node->is_reflexive() && $node->deprel() eq 'compound')
         {
             $node->set_deprel('expl:pv');
+        }
+        # Relative pronouns and determiners must not be attached as mark because they are not subordinating conjunctions (although they do subordinate).
+        # They must show the core function they have wrt the predicate of the subordinate clause.
+        # WARNING: "što" can be also used as a subordinating conjunction: "Dobro je što nam pružaju više informacija."
+        # But then it should be tagged SCONJ, not PRON!
+        if($node->lemma() =~ m/^(tko|što|koji)$/ && $node->deprel() eq 'mark')
+        {
+            if($node->is_nominative())
+            {
+                $node->set_deprel('nsubj');
+            }
+            elsif($node->is_accusative())
+            {
+                $node->set_deprel('obj');
+            }
+            elsif($node->is_locative())
+            {
+                $node->set_deprel('obl');
+            }
         }
         ###!!! TEMPORARY HACK: THROW AWAY REMNANT BECAUSE WE CANNOT CONVERT IT.
         if($node->deprel() eq 'remnant')
