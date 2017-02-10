@@ -61,6 +61,24 @@ sub fix_morphology
             {
                 $iset->add('pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss');
             }
+            # Interrogative or relative determiner "koji" is now tagged PRON Ind.
+            elsif($lemma eq 'koji')
+            {
+                $iset->add('pos' => 'adj', 'prontype' => 'int|rel');
+                # This pronoun is often attached as "mark", which is an error. "Mark" is for subordinating conjunctions.
+                # The pronoun is probably subject or object of the relative clause.
+                if($node->deprel() eq 'mark')
+                {
+                    if($node->is_nominative())
+                    {
+                        $node->set_deprel('nsubj');
+                    }
+                    elsif($node->is_accusative())
+                    {
+                        $node->set_deprel('obj');
+                    }
+                }
+            }
         }
         # Verbal copulas should be AUX and not VERB.
         if($node->is_verb() && $node->deprel() eq 'cop')
