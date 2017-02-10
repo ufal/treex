@@ -67,8 +67,9 @@ sub fix_morphology
                 # It is not customary to show the person of relative pronouns, but in UD_Croatian they currently have Person=3.
                 $iset->add('prontype' => 'int|rel', 'person' => '');
             }
-            # Interrogative or relative determiner "koji" is now tagged PRON Ind.
-            elsif($lemma =~ m/^(kakav|koji)$/)
+            # Relative determiner "koji" is now tagged PRON Ind.
+            # Do not damage cases that were already disambiguated as interrogative (and not relative).
+            elsif($lemma =~ m/^(kakav|koji)$/ && $iset->prontype() ne 'int')
             {
                 $iset->add('pos' => 'adj', 'prontype' => 'int|rel');
             }
