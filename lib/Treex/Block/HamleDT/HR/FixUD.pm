@@ -62,10 +62,25 @@ sub fix_morphology
                 $iset->add('pos' => 'adj', 'prontype' => 'prs', 'poss' => 'poss');
             }
             # Interrogative or relative pronouns "tko" and "što" are now tagged as indefinite.
-            elsif($lemma =~ m/^(tko|što)$/)
+            elsif($lemma eq 'tko')
             {
                 # It is not customary to show the person of relative pronouns, but in UD_Croatian they currently have Person=3.
                 $iset->add('prontype' => 'int|rel', 'person' => '');
+            }
+            # If "što" works like a subordinating conjunction, it should be tagged as such.
+            # We cannot recognize such cases reliably (the deprel "mark" is currently used also with real pronouns).
+            # But if it is in nominative and the clause already has a subject, it is suspicious.
+            elsif($lemma eq 'što')
+            {
+                if($node->deprel() eq 'mark' && $iset->is_nominative() && any {$_->deprel() =~ m/subj/} ($node->parent()->children()))
+                {
+                    $iset->set_hash({'pos' => 'conj', 'conjtype' => 'sub'});
+                }
+                else
+                {
+                    # It is not customary to show the person of relative pronouns, but in UD_Croatian they currently have Person=3.
+                    $iset->add('prontype' => 'int|rel', 'person' => '');
+                }
             }
             # Relative determiner "koji" is now tagged PRON Ind.
             # Do not damage cases that were already disambiguated as interrogative (and not relative).
