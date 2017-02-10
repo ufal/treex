@@ -68,9 +68,14 @@ sub fix_morphology
                 $iset->add('prontype' => 'int|rel', 'person' => '');
             }
             # Interrogative or relative determiner "koji" is now tagged PRON Ind.
-            elsif($lemma eq 'koji')
+            elsif($lemma =~ m/^(kakav|koji)$/)
             {
                 $iset->add('pos' => 'adj', 'prontype' => 'int|rel');
+            }
+            # Interrogative or relative possessive determiner "čiji" ("whose").
+            elsif($lemma eq 'čiji')
+            {
+                $iset->add('pos' => 'adj', 'prontype' => 'int|rel', 'poss' => 'poss');
             }
         }
         # Verbal copulas should be AUX and not VERB.
@@ -124,7 +129,7 @@ sub fix_relations
         # They must show the core function they have wrt the predicate of the subordinate clause.
         # WARNING: "što" can be also used as a subordinating conjunction: "Dobro je što nam pružaju više informacija."
         # But then it should be tagged SCONJ, not PRON!
-        if($node->lemma() =~ m/^(tko|što|koji)$/ && $node->deprel() eq 'mark')
+        if($node->lemma() =~ m/^(tko|što|kakav|koji)$/ && $node->deprel() eq 'mark' && $node->parent()->is_verb())
         {
             if($node->is_nominative())
             {
@@ -134,7 +139,19 @@ sub fix_relations
             {
                 $node->set_deprel('obj');
             }
+            # Genitive can be obl, especially with a preposition ("od čega se odnosi...")
+            # But it is not guaranteed. It could be also an object.
+            elsif($node->is_genitive())
+            {
+                $node->set_deprel('obl');
+            }
             elsif($node->is_locative())
+            {
+                $node->set_deprel('obl');
+            }
+            # Instrumental can be obl:agent of passives ("čime je potvrđena važeća prognoza").
+            # But it is not guaranteed. It could be also an object.
+            elsif($node->is_instrumental())
             {
                 $node->set_deprel('obl');
             }
