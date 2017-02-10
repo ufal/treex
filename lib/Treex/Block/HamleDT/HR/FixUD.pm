@@ -102,9 +102,9 @@ sub fix_morphology
         if($node->is_verb() && $node->deprel() eq 'cop')
         {
             # The only copula verb is "biti".
-            if($lemma ne 'biti')
+            if($lemma !~ m/^(biti|bivati)$/)
             {
-                log_warn("Copula verb should have lemma 'biti' but this one has '$lemma'");
+                log_warn("Copula verb should have lemma 'biti/bivati' but this one has '$lemma'");
             }
             $node->iset()->set('verbtype', 'aux');
         }
@@ -174,6 +174,19 @@ sub fix_relations
             elsif($node->is_instrumental())
             {
                 $node->set_deprel('obl');
+            }
+        }
+        # timove čiji će zadatak biti nadzor cijena
+        # teams whose task will be to control price
+        # We have mark(nadzor, čiji). We want det(zadatak, čiji).
+        elsif($node->lemma() eq 'čiji' && $node->deprel() eq 'mark')
+        {
+            my @siblings = $node->parent()->get_children({'ordered' => 1});
+            if(scalar(@siblings) >= 3 && $siblings[0] == $node && $siblings[1]->deprel() =~ m/^aux/ && $siblings[2]->is_noun() &&
+               $node->iset()->case() eq $siblings[2]->iset()->case())
+            {
+                $node->set_parent($siblings[2]);
+                $node->set_deprel('det');
             }
         }
         ###!!! TEMPORARY HACK: THROW AWAY REMNANT BECAUSE WE CANNOT CONVERT IT.
