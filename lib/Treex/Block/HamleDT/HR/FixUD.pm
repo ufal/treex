@@ -159,31 +159,34 @@ sub fix_relations
         # They must show the core function they have wrt the predicate of the subordinate clause.
         # WARNING: "što" can be also used as a subordinating conjunction: "Dobro je što nam pružaju više informacija."
         # But then it should be tagged SCONJ, not PRON!
-        if($node->lemma() =~ m/^(tko|što|kakav|koji)$/ && $node->deprel() eq 'mark' && ($node->parent()->is_verb() || $node->parent()->is_participle()))
+        if($node->lemma() =~ m/^(tko|što|kakav|koji)$/ && $node->deprel() eq 'mark')
         {
             if($node->is_nominative())
             {
                 $node->set_deprel('nsubj');
             }
-            elsif($node->is_accusative())
+            elsif($node->parent()->is_verb() || $node->parent()->is_participle())
             {
-                $node->set_deprel('obj');
-            }
-            # Genitive can be obl, especially with a preposition ("od čega se odnosi...")
-            # But it is not guaranteed. It could be also an object.
-            elsif($node->is_genitive())
-            {
-                $node->set_deprel('obl');
-            }
-            elsif($node->is_locative())
-            {
-                $node->set_deprel('obl');
-            }
-            # Instrumental can be obl:agent of passives ("čime je potvrđena važeća prognoza").
-            # But it is not guaranteed. It could be also an object.
-            elsif($node->is_instrumental())
-            {
-                $node->set_deprel('obl');
+                if($node->is_accusative())
+                {
+                    $node->set_deprel('obj');
+                }
+                # Genitive can be obl, especially with a preposition ("od čega se odnosi...")
+                # But it is not guaranteed. It could be also an object.
+                elsif($node->is_genitive())
+                {
+                    $node->set_deprel('obl');
+                }
+                elsif($node->is_locative())
+                {
+                    $node->set_deprel('obl');
+                }
+                # Instrumental can be obl:agent of passives ("čime je potvrđena važeća prognoza").
+                # But it is not guaranteed. It could be also an object.
+                elsif($node->is_instrumental())
+                {
+                    $node->set_deprel('obl');
+                }
             }
         }
         # timove čiji će zadatak biti nadzor cijena
