@@ -287,6 +287,11 @@ sub fix_relations
         {
             $node->set_deprel('advmod:emph');
         }
+        # Punctuation should be attached as punct or root.
+        if($node->is_punctuation() && !$node->parent()->is_root())
+        {
+            $node->set_deprel('punct');
+        }
         # Individual annotation errors found in the data.
         my $spanstring = $self->get_node_spanstring($node);
         # whose seat is in Brussels
