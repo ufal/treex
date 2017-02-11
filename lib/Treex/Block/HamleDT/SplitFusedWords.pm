@@ -7,6 +7,36 @@ extends 'Treex::Core::Block';
 
 
 #------------------------------------------------------------------------------
+# Makes capitalization similar to the original form.
+#------------------------------------------------------------------------------
+sub copy_capitalization
+{
+    my $self = shift;
+    my $origform = shift;
+    my $newform = shift;
+    # If original form is longer than one character and all uppercase, return all uppercase.
+    if(length($origform) > 1 && uc($origform) eq $origform)
+    {
+        return uc($newform);
+    }
+    # If original form is mixed case but starts with uppercase, return capitalized form.
+    # (The remaining characters are probably lowercase but we do not touch them, so there is what the caller put there.)
+    elsif($origform =~ m/^\p{Lu}/)
+    {
+        $newform =~ s/^(.)/\u$1/;
+        return $newform;
+    }
+    # In all other cases return the new form untouched.
+    # (It is probably lowercase but we do not touch it, so there is what the caller put there.)
+    else
+    {
+        return $newform;
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Splits a node of a fused token into multiple new nodes, then deletes the old
 # one.
 #------------------------------------------------------------------------------
@@ -93,6 +123,92 @@ sub split_fused_token
         $nnw->{fused} = ($i == 0) ? 'start' : ($i == $#new_nodes) ? 'end' : 'middle';
     }
     return @new_nodes;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Marks a sequence of existing nodes as belonging to one multi-word token.
+#------------------------------------------------------------------------------
+sub mark_multiword_token
+{
+    my $self = shift;
+    my $fused_form = shift;
+    # The nodes that form the group. They should form a contiguous span in the sentence.
+    # And they should be sorted by their ords.
+    my @nodes = @_;
+    return if(scalar(@nodes) < 2);
+    my $fsord = $nodes[0]->ord();
+    my $feord = $nodes[-1]->ord();
+    for(my $i = 0; $i <= $#nodes; $i++)
+    {
+        my $nnw = $nodes[$i]->wild();
+        ###!!! Later we will want to make these attributes normal (not wild).
+        $nnw->{fused_form} = $fused_form;
+        $nnw->{fused_start} = $fsord;
+        $nnw->{fused_end} = $feord;
+        $nnw->{fused} = ($i == 0) ? 'start' : ($i == $#nodes) ? 'end' : 'middle';
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the sentence text, observing the current setting of no_space_after
+# and of the fused multi-word tokens (still stored as wild attributes).
+#------------------------------------------------------------------------------
+sub collect_sentence_text
+{
+    my $self = shift;
+    my @nodes = @_;
+    my $text = '';
+    for(my $i = 0; $i<=$#nodes; $i++)
+    {
+        my $node = $nodes[$i];
+        my $wild = $node->wild();
+        my $fused = $wild->{fused};
+        if(defined($fused) && $fused eq 'start')
+        {
+            my $first_fused_node_ord = $node->ord();
+            my $last_fused_node_ord = $wild->{fused_end};
+            my $last_fused_node_no_space_after = 0;
+            # We used to save the ord of the last element with every fused element but now it is no longer guaranteed.
+            # Let's find out.
+            if(!defined($last_fused_node_ord))
+            {
+                for(my $j = $i+1; $j<=$#nodes; $j++)
+                {
+                    $last_fused_node_ord = $nodes[$j]->ord();
+                    $last_fused_node_no_space_after = $nodes[$j]->no_space_after();
+                    last if(defined($nodes[$j]->wild()->{fused}) && $nodes[$j]->wild()->{fused} eq 'end');
+                }
+            }
+            else
+            {
+                my $last_fused_node = $nodes[$last_fused_node_ord-1];
+                log_fatal('Node ord mismatch') if($last_fused_node->ord() != $last_fused_node_ord);
+                $last_fused_node_no_space_after = $last_fused_node->no_space_after();
+            }
+            if(defined($first_fused_node_ord) && defined($last_fused_node_ord))
+            {
+                $i += $last_fused_node_ord - $first_fused_node_ord;
+            }
+            else
+            {
+                log_warn("Cannot determine the span of a fused token");
+            }
+            $text .= $wild->{fused_form};
+            $text .= ' ' unless($last_fused_node_no_space_after);
+        }
+        else
+        {
+            $text .= $node->form();
+            $text .= ' ' unless($node->no_space_after());
+        }
+    }
+    $text =~ s/^\s+//;
+    $text =~ s/\s+$//;
+    return $text;
 }
 
 
