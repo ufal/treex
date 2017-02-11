@@ -117,6 +117,11 @@ sub fix_morphology
             {
                 $iset->add('pos' => 'adj', 'prontype' => 'int|rel', 'poss' => 'poss');
             }
+            # Total determiner "sav" ("every, all").
+            elsif($lemma eq 'sav')
+            {
+                $iset->add('pos' => 'adj', 'prontype' => 'tot', 'degree' => '');
+            }
         }
         # Ordinal numerals are ADJ or ADV, not NUM.
         if($node->is_ordinal())
