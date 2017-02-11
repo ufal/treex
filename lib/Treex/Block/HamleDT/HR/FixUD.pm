@@ -30,6 +30,18 @@ sub fix_morphology
     {
         my $lemma = $node->lemma();
         my $iset = $node->iset();
+        # Dative vs. locative.
+        # Croatian nominals have almost always identical forms of dative and locative, both in singular and plural.
+        # The treebank distinguishes the two features (case=dat and case=loc) but there are annotation errors.
+        # Assume that it cannot be locative if there is no preposition.
+        if($node->is_locative())
+        {
+            my @prepositions = grep {$_->is_adposition()} ($node->children());
+            if(scalar(@prepositions)==0)
+            {
+                $iset->set('case', 'dat');
+            }
+        }
         # Pronominal words.
         if($node->is_pronominal())
         {
