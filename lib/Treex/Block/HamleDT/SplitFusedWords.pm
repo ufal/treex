@@ -73,6 +73,13 @@ sub split_fused_token
         }
         push(@new_nodes, $node);
     }
+    # The no_space_after attribute applies to the multi-word token (fusion), not to the individual nodes.
+    # However, the CoNLL-U writer expects to find it at the last node of the fusion.
+    # Move it there if it is set at the original node.
+    if($fused_node->no_space_after())
+    {
+        $new_nodes[-1]->set_no_space_after(1);
+    }
     # We do not expect any children but since it is not guaranteed, let's make sure they are moved to $n1.
     my @children = $fused_node->children();
     foreach my $child (@children)
