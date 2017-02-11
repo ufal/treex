@@ -138,6 +138,18 @@ sub fix_morphology
             }
             $iset->set('verbtype', 'aux');
         }
+        # Finite verbs must be marked as such and must have mood.
+        if($node->is_verb())
+        {
+            if($iset->verbform() eq '')
+            {
+                $iset->set('verbform', 'fin');
+            }
+            if($iset->verbform() eq 'fin' && $iset->mood() eq '')
+            {
+                $iset->set('mood', 'ind');
+            }
+        }
         # Passive participles should have the voice feature.
         # And some of them lack even the verbform feature!
         if($node->is_participle() || $lemma =~ m/^(predviđen|zaključen)$/)
