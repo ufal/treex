@@ -118,6 +118,11 @@ sub fix_morphology
                 $iset->add('pos' => 'adj', 'prontype' => 'int|rel', 'poss' => 'poss');
             }
         }
+        # Ordinal numerals are ADJ or ADV, not NUM.
+        if($node->is_ordinal())
+        {
+            $iset->set('pos', 'adj');
+        }
         # Verbal copulas should be AUX and not VERB.
         if($node->is_verb() && $node->deprel() eq 'cop')
         {
