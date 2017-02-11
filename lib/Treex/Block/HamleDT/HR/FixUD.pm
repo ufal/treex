@@ -233,7 +233,8 @@ sub fix_relations
         elsif($node->lemma() eq 'čiji' && $node->deprel() eq 'mark')
         {
             my @siblings = $node->parent()->get_children({'ordered' => 1});
-            while(scalar(@siblings) >= 3 && $siblings[0]->deprel() eq 'punct')
+            # Remove comma and coordinators (", ali čije ...").
+            while(scalar(@siblings) >= 3 && $siblings[0]->deprel() =~ m/^(punct|cc)$/)
             {
                 shift(@siblings);
             }
