@@ -39,7 +39,7 @@ sub fix_morphology
         if($node->is_locative() && !$node->is_adposition())
         {
             my @prepositions = grep {$_->is_adposition()} ($node->children());
-            if(scalar(@prepositions)==0 && $node->parent()->case() =~ m/dat|loc/)
+            if(scalar(@prepositions)==0 && $node->parent()->iset()->case() =~ m/dat|loc/)
             {
                 @prepositions = grep {$_->is_adposition()} ($node->parent()->children());
             }
