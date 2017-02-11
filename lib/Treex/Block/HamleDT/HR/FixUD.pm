@@ -281,6 +281,11 @@ sub fix_relations
         {
             $node->set_deprel('obl');
         }
+        # Ordinal numerals modifying a nominal should be amod, not nummod.
+        if($node->is_ordinal() && $node->deprel() eq 'nummod')
+        {
+            $node->set_deprel('amod');
+        }
         # oko 69 kilometara (about 69 kilometers)
         # "Oko" is adverb ("approximately"), attached to the numeral as "det", which is definitely wrong.
         if($node->is_adverb() && $node->parent()->is_numeral() && $node->deprel() eq 'det')
