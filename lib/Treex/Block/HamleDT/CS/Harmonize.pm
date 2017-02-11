@@ -237,10 +237,48 @@ sub remove_features_from_lemmas
         # According to the documentation in http://ufal.mff.cuni.cz/techrep/tr27.pdf, lemmas may also encode the part of speech:
         # _:[NAJZMVDPCIFQX]
         # However, none of these codes actually appears in PDT 3.0 data.
+        # According to the documentation in http://ufal.mff.cuni.cz/techrep/tr27.pdf, lemmas may also encode style:
+        # _,[tnashelvx]
+        # It is not necessarily the same thing as the style in inflection.
+        # For instance, "zelenej" is a colloquial form of a neutral lemma "zelený".
+        # However, "zpackaný" is a colloquial lemma, regardless whether the form is "zpackaný" (neutral) or "zpackanej" (colloquial).
         # Move the foreign feature from the lemma to the Interset features.
         if($lemma =~ s/_,t//)
         {
             $iset->set('foreign', 'foreign');
+        }
+        # Vernacular (dialect)
+        if($lemma =~ s/_,n//)
+        {
+            # Examples: súdit, husličky
+            $iset->set('style', 'vrnc');
+        }
+        # The style flat _,a means "archaic" but it seems to be used inconsistently in the data. Discard it.
+        # The style flat _,s means "bookish" but it seems to be used inconsistently in the data. Discard it.
+        $lemma =~ s/_,[as]//;
+        # Colloquial
+        if($lemma =~ s/_,h//)
+        {
+            # Examples: vejstraha, bichle
+            $iset->set('style', 'coll');
+        }
+        # Expressive
+        if($lemma =~ s/_,e//)
+        {
+            # Examples: miminko, hovínko
+            $iset->set('style', 'expr');
+        }
+        # Slang, argot
+        if($lemma =~ s/_,l//)
+        {
+            # Examples: mukl, děcák, pécéčko
+            $iset->set('style', 'slng');
+        }
+        # Vulgar
+        if($lemma =~ s/_,v//)
+        {
+            # Examples: parchant, bordelový
+            $iset->set('style', 'vulg');
         }
         # The style flag _,x means, according to documentation, "outdated spelling or misspelling".
         # But it occurs with a number of alternative spellings and sometimes it is debatable whether they are outdated, e.g. "patriotismus" vs. "patriotizmus".
@@ -250,6 +288,8 @@ sub remove_features_from_lemmas
             # According to documentation in http://ufal.mff.cuni.cz/techrep/tr27.pdf,
             # 2 means "variant, rarely used, bookish, or archaic".
             $iset->set('variant', '2');
+            $iset->set('style', 'rare');
+            $lemma =~ s/^serioznóst$/serióznost/;
         }
         # Term categories encode (among others) types of named entities.
         # There may be two categories at one lemma.
