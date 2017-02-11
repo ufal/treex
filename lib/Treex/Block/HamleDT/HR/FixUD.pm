@@ -267,6 +267,44 @@ sub fix_relations
         {
             $node->set_deprel('obl');
         }
+        # Individual annotation errors found in the data.
+        my $spanstring = $self->get_node_spanstring($node);
+        # whose seat is in Brussels
+        if($spanstring =~ m/^, čije je sjedište u Bruxellesu$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[5]->set_parent($node->parent());
+            $subtree[5]->set_deprel($node->deprel());
+            $subtree[2]->set_parent($subtree[5]);
+            $subtree[2]->set_deprel('cop');
+            $subtree[3]->set_parent($subtree[5]);
+            $subtree[3]->set_deprel('nsubj');
+            $subtree[1]->set_parent($subtree[3]);
+            $subtree[1]->set_deprel('det');
+            $subtree[0]->set_parent($subtree[5]);
+        }
+        # like communities in which minority population dominates
+        elsif($spanstring =~ m/^kako zajednice u kojima dominira manjinsko stanovništvo$/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[1]->set_parent($node->parent());
+            $subtree[1]->set_deprel($node->deprel());
+            $subtree[0]->set_parent($subtree[1]);
+            $subtree[0]->set_deprel('mark');
+            $subtree[4]->set_parent($subtree[1]);
+            $subtree[4]->set_deprel('acl');
+            $subtree[3]->set_parent($subtree[4]);
+            $subtree[3]->set_deprel('obl');
+        }
+        # including one for best new artist
+        elsif($spanstring =~ m/^, među kojima i onu za najboljeg izvođača ,/i)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            $subtree[4]->set_parent($node->parent());
+            $subtree[4]->set_deprel('conj'); # originally: parataxis
+            $subtree[2]->set_parent($subtree[4]);
+            $subtree[2]->set_deprel('orphan');
+        }
         ###!!! TEMPORARY HACK: THROW AWAY REMNANT BECAUSE WE CANNOT CONVERT IT.
         if($node->deprel() eq 'remnant')
         {
