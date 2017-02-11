@@ -205,7 +205,7 @@ sub fix_relations
         ###!!! TEMPORARY HACK: THROW AWAY REMNANT BECAUSE WE CANNOT CONVERT IT.
         if($node->deprel() eq 'remnant')
         {
-            $node->set_deprel('dep:remnant');
+            #$node->set_deprel('dep:remnant');
         }
     }
 }
