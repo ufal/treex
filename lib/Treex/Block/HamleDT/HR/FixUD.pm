@@ -267,6 +267,12 @@ sub fix_relations
         {
             $node->set_deprel('obl');
         }
+        # oko 69 kilometara (about 69 kilometers)
+        # "Oko" is adverb ("approximately"), attached to the numeral as "det", which is definitely wrong.
+        if($node->is_adverb() && $node->parent()->is_numeral() && $node->deprel() eq 'det')
+        {
+            $node->set_deprel('advmod:emph');
+        }
         # Individual annotation errors found in the data.
         my $spanstring = $self->get_node_spanstring($node);
         # whose seat is in Brussels
