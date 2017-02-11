@@ -252,7 +252,7 @@ sub fix_relations
                 $node->set_parent($siblings[2]);
                 $node->set_deprel('det');
             }
-            elsif($node->parent()->is_noun() && $node->iset()->case() eq $parent->iset()->case())
+            elsif($node->parent()->is_noun() && $node->iset()->case() eq $node->parent()->iset()->case())
             {
                 $node->set_deprel('det');
             }
