@@ -104,7 +104,7 @@ sub fix_morphology
             }
             # Relative determiner "koji" is now tagged PRON Ind.
             # Do not damage cases that were already disambiguated as interrogative (and not relative).
-            elsif($lemma =~ m/^(kakav|koji)$/)
+            elsif($lemma =~ m/^(kakav|koji|koliki)$/)
             {
                 $iset->add('pos' => 'adj');
                 unless($iset->prontype() eq 'int')
@@ -130,7 +130,7 @@ sub fix_morphology
         }
         # Passive participles should have the voice feature.
         # And some of them lack even the verbform feature!
-        if($node->is_participle() || $lemma =~ m/^(zaključen)$/)
+        if($node->is_participle() || $lemma =~ m/^(predviđen|zaključen)$/)
         {
             $iset->set('verbform', 'part');
             # Is there an aux:pass, expl:pass, nsubj:pass or csubj:pass child?
@@ -139,6 +139,11 @@ sub fix_morphology
             {
                 $iset->set('voice' => 'pass');
             }
+        }
+        # "jedem" (I eat), lemma "jesti", is tagged NOUN and not VERB? Annotation error.
+        if($node->form() eq 'jedem' && $lemma eq 'jesti' && $node->is_noun())
+        {
+            $iset->set_hash({'pos' => 'verb', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'number' => 'sing', 'person' => '1'});
         }
     }
 }
@@ -224,7 +229,7 @@ sub fix_relations
                     $node->set_deprel('obl');
                 }
             }
-            elsif(any {$_->deprel() eq 'cop'} ($node->parent()->children()))
+            elsif(any {$_->deprel() =~ m/^(cop|aux)$/} ($node->parent()->children()))
             {
                 # There is at least one occurrence of "kojima" without preposition which should in fact be dative.
                 if(lc($node->form()) eq 'kojima' && $node->is_locative() && scalar($node->children())==0)
@@ -237,7 +242,7 @@ sub fix_relations
         # timove čiji će zadatak biti nadzor cijena
         # teams whose task will be to control price
         # We have mark(nadzor, čiji). We want det(zadatak, čiji).
-        elsif($node->lemma() eq 'čiji' && $node->deprel() eq 'mark')
+        if($node->lemma() =~ m/^(čiji|koliki|koji)$/ && $node->deprel() eq 'mark')
         {
             # Remove punctuation, coordinators (", ali čije ...") and prepositions ("na čijem čelu").
             my @siblings = grep {$_->deprel() !~ m/^(punct|cc|case)$/} ($node->parent()->get_children({'ordered' => 1}));
@@ -256,6 +261,11 @@ sub fix_relations
             {
                 $node->set_deprel('det');
             }
+        }
+        # uz njega možete obaviti (with him you can do)
+        elsif($node->lemma() eq 'on' && $node->deprel() eq 'mark')
+        {
+            $node->set_deprel('obl');
         }
         ###!!! TEMPORARY HACK: THROW AWAY REMNANT BECAUSE WE CANNOT CONVERT IT.
         if($node->deprel() eq 'remnant')
