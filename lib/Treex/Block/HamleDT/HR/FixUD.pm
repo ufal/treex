@@ -233,6 +233,10 @@ sub fix_relations
         elsif($node->lemma() eq 'čiji' && $node->deprel() eq 'mark')
         {
             my @siblings = $node->parent()->get_children({'ordered' => 1});
+            while(scalar(@siblings) >= 3 && $siblings[0]->deprel() eq 'punct')
+            {
+                shift(@siblings);
+            }
             if(scalar(@siblings) >= 3 && $siblings[0] == $node && $siblings[1]->deprel() =~ m/^(aux|cop)/ && $siblings[2]->is_noun() &&
                $node->iset()->case() eq $siblings[2]->iset()->case())
             {
