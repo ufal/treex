@@ -243,9 +243,14 @@ sub remove_features_from_lemmas
             $iset->set('foreign', 'foreign');
         }
         # The style flag _,x means, according to documentation, "outdated spelling or misspelling".
-        # It occurs once in PDT 3.0, the word "ledasjaký" is lemmatized as "ledajaký_,x".
-        # Remove the flag without keeping the information anywhere (this particular example is dubious).
-        $lemma =~ s/_,x//;
+        # But it occurs with a number of alternative spellings and sometimes it is debatable whether they are outdated, e.g. "patriotismus" vs. "patriotizmus".
+        # And there is one clear bug: lemma "serioznóst" instead of "serióznost".
+        if($lemma =~ s/_,x//)
+        {
+            # According to documentation in http://ufal.mff.cuni.cz/techrep/tr27.pdf,
+            # 2 means "variant, rarely used, bookish, or archaic".
+            $iset->set('variant', '2');
+        }
         # Term categories encode (among others) types of named entities.
         # There may be two categories at one lemma.
         # JVC_;K_;R (buď továrna, nebo výrobek)
