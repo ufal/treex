@@ -220,7 +220,7 @@ sub fix_relations
             elsif(any {$_->deprel() eq 'cop'} ($node->parent()->children()))
             {
                 # There is at least one occurrence of "kojima" without preposition which should in fact be dative.
-                if(lc($node->form()) eq 'kojima' && scalar($node->children())==0)
+                if(lc($node->form()) eq 'kojima' && $node->is_locative() && scalar($node->children())==0)
                 {
                     $node->iset()->set('case', 'dat');
                 }
@@ -233,7 +233,7 @@ sub fix_relations
         elsif($node->lemma() eq 'čiji' && $node->deprel() eq 'mark')
         {
             my @siblings = $node->parent()->get_children({'ordered' => 1});
-            if(scalar(@siblings) >= 3 && $siblings[0] == $node && $siblings[1]->deprel() =~ m/^aux/ && $siblings[2]->is_noun() &&
+            if(scalar(@siblings) >= 3 && $siblings[0] == $node && $siblings[1]->deprel() =~ m/^(aux|cop)/ && $siblings[2]->is_noun() &&
                $node->iset()->case() eq $siblings[2]->iset()->case())
             {
                 $node->set_parent($siblings[2]);
