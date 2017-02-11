@@ -35,9 +35,14 @@ sub fix_morphology
         # The treebank distinguishes the two features (case=dat and case=loc) but there are annotation errors.
         # Assume that it cannot be locative if there is no preposition.
         # (Warning: There is also a valency case at prepositions. That should not be modified.)
+        # (Warning 2: Determiners and adjectives may be siblings of the preposition rather than its parents!)
         if($node->is_locative() && !$node->is_adposition())
         {
             my @prepositions = grep {$_->is_adposition()} ($node->children());
+            if(scalar(@prepositions)==0 && $node->parent()->case() =~ m/dat|loc/)
+            {
+                @prepositions = grep {$_->is_adposition()} ($node->parent()->children());
+            }
             if(scalar(@prepositions)==0)
             {
                 $iset->set('case', 'dat');
