@@ -296,8 +296,8 @@ sub fix_relations
             $subtree[3]->set_parent($subtree[4]);
             $subtree[3]->set_deprel('obl');
         }
-        # including one for best new artist
-        elsif($spanstring =~ m/^, među kojima i onu za najboljeg izvođača ,/i)
+        # including one for best new artist of the year
+        elsif($spanstring =~ m/^, među kojima i onu za najboljeg izvođača/i)
         {
             my @subtree = $self->get_node_subtree($node);
             $subtree[4]->set_parent($node->parent());
