@@ -239,8 +239,8 @@ sub fix_relations
         # We have mark(nadzor, čiji). We want det(zadatak, čiji).
         elsif($node->lemma() eq 'čiji' && $node->deprel() eq 'mark')
         {
-            # Remove punctuation and coordinators (", ali čije ...").
-            my @siblings = grep {$_->deprel() !~ m/^(punct|cc)$/} ($node->parent()->get_children({'ordered' => 1}));
+            # Remove punctuation, coordinators (", ali čije ...") and prepositions ("na čijem čelu").
+            my @siblings = grep {$_->deprel() !~ m/^(punct|cc|case)$/} ($node->parent()->get_children({'ordered' => 1}));
             if(scalar(@siblings) >= 3 && $siblings[0] == $node && $siblings[1]->deprel() =~ m/^(aux|cop)/ && $siblings[2]->is_noun() &&
                $node->iset()->case() eq $siblings[2]->iset()->case() ||
                scalar(@siblings) >= 2 && $siblings[0] == $node && $siblings[1]->is_noun() &&
