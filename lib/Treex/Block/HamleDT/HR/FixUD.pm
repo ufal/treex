@@ -199,7 +199,16 @@ sub fix_relations
                 }
                 elsif($node->is_locative())
                 {
-                    $node->set_deprel('obl');
+                    # There is at least one occurrence of "kojima" without preposition which should in fact be dative.
+                    if(lc($node->form()) eq 'kojima' && scalar($node->children())==0)
+                    {
+                        $node->iset()->set('case', 'dat');
+                        $node->set_deprel('obj'); ###!!! or iobj
+                    }
+                    else
+                    {
+                        $node->set_deprel('obl');
+                    }
                 }
                 # Instrumental can be obl:agent of passives ("čime je potvrđena važeća prognoza").
                 # But it is not guaranteed. It could be also an object.
@@ -207,6 +216,15 @@ sub fix_relations
                 {
                     $node->set_deprel('obl');
                 }
+            }
+            elsif(any {$_->deprel() eq 'cop'} ($node->parent()->children()))
+            {
+                # There is at least one occurrence of "kojima" without preposition which should in fact be dative.
+                if(lc($node->form()) eq 'kojima' && scalar($node->children())==0)
+                {
+                    $node->iset()->set('case', 'dat');
+                }
+                $node->set_deprel('nmod');
             }
         }
         # timove čiji će zadatak biti nadzor cijena
