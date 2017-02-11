@@ -36,7 +36,8 @@ sub fix_morphology
         # Assume that it cannot be locative if there is no preposition.
         # (Warning: There is also a valency case at prepositions. That should not be modified.)
         # (Warning 2: Determiners and adjectives may be siblings of the preposition rather than its parents!)
-        if($node->is_locative() && !$node->is_adposition())
+        # (Warning 3: If the node or its parent is attached as conj, the rules are even more complex. Give up.)
+        if($node->is_locative() && !$node->is_adposition() && !$node->deprel() eq 'conj' && !$node->parent()->deprel() eq 'conj')
         {
             my @prepositions = grep {$_->is_adposition()} ($node->children());
             if(scalar(@prepositions)==0 && $node->parent()->iset()->case() =~ m/dat|loc/)
