@@ -252,6 +252,10 @@ sub fix_relations
                 $node->set_parent($siblings[2]);
                 $node->set_deprel('det');
             }
+            elsif($node->parent()->is_noun() && $node->iset()->case() eq $parent->iset()->case())
+            {
+                $node->set_deprel('det');
+            }
         }
         ###!!! TEMPORARY HACK: THROW AWAY REMNANT BECAUSE WE CANNOT CONVERT IT.
         if($node->deprel() eq 'remnant')
