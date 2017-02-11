@@ -79,7 +79,7 @@ sub fix_morphology
         if($node->is_pronominal())
         {
             # Indefinite pronouns and determiners cannot be distinguished by their PDT tag (PZ*).
-            if($lemma =~ m/^((ně|lec|ledas?|kde|bůhví|kdoví|nevím|málo)?(kdo|cos?)(si|koliv?)?|nikdo|nic)$/)
+            if($lemma =~ m/^((ně|lec|ledas?|kde|bůhví|kdoví|nevím|málo|sotva)?(kdo|cos?)(si|koliv?)?|nikdo|nic)$/)
             {
                 $node->iset()->set('pos', 'noun');
             }
@@ -242,6 +242,10 @@ sub remove_features_from_lemmas
         {
             $iset->set('foreign', 'foreign');
         }
+        # The style flag _,x means, according to documentation, "outdated spelling or misspelling".
+        # It occurs once in PDT 3.0, the word "ledasjaký" is lemmatized as "ledajaký_,x".
+        # Remove the flag without keeping the information anywhere (this particular example is dubious).
+        $lemma =~ s/_,x//;
         # Term categories encode (among others) types of named entities.
         # There may be two categories at one lemma.
         # JVC_;K_;R (buď továrna, nebo výrobek)
