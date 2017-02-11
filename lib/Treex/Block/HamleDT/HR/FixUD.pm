@@ -129,8 +129,10 @@ sub fix_morphology
             $iset->set('verbtype', 'aux');
         }
         # Passive participles should have the voice feature.
-        if($node->is_participle())
+        # And some of them lack even the verbform feature!
+        if($node->is_participle() || $lemma =~ m/^(zaključen)$/)
         {
+            $iset->set('verbform', 'part');
             # Is there an aux:pass, expl:pass, nsubj:pass or csubj:pass child?
             my @passchildren = grep {$_->deprel() =~ m/:pass$/} ($node->children());
             if(scalar(@passchildren) >= 1)
@@ -196,6 +198,11 @@ sub fix_relations
                 elsif($node->is_genitive())
                 {
                     $node->set_deprel('obl');
+                }
+                # Dative can be obj, iobj or obl.
+                elsif($node->is_dative())
+                {
+                    $node->set_deprel('obj');
                 }
                 elsif($node->is_locative())
                 {
