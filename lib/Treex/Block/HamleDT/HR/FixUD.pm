@@ -320,7 +320,15 @@ sub fix_relations
         # Possessive adjectives (e.g. "Ashdownov", "Đinđićeve") should be attached to the possessed nouns as amod, not as nmod.
         if($node->is_adjective() && $node->is_possessive() && $node->deprel() eq 'nmod')
         {
-            $node->set_deprel('amod');
+            # The is_adjective() method captures also possessive determiners (moj, tvoj, njegov, njezin).
+            if($node->is_pronominal())
+            {
+                $node->set_deprel('det');
+            }
+            else
+            {
+                $node->set_deprel('amod');
+            }
         }
         # Reflexive pronouns of inherently reflexive verbs should be attached as expl:pv, not as compound (UD guideline).
         if($node->is_reflexive() && $node->deprel() eq 'compound')
