@@ -179,7 +179,15 @@ sub fix_morphology
             }
             if($iset->verbform() eq 'fin' && $iset->mood() eq '')
             {
-                $iset->set('mood', 'ind');
+                # Conditional auxiliaries get cnd, everything else gets ind.
+                if($node->form() =~ m/^(bih|bi|bismo|biste)$/i)
+                {
+                    $iset->set('mood', 'cnd');
+                }
+                else
+                {
+                    $iset->set('mood', 'ind');
+                }
             }
         }
         # Passive participles should have the voice feature.
