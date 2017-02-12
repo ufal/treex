@@ -173,7 +173,7 @@ sub fix_morphology
         }
         elsif($lemma =~ m/^(nekoliko)$/)
         {
-            $iset->add('pos' => 'adj', 'prontype' => 'ind', 'numtype' => 'card');
+            $iset->add('pos' => 'adj', 'prontype' => 'ind', 'numtype' => 'card', 'degree' => '');
         }
         elsif($lemma =~ m/^(mnogo|malo|vrlo|dosta)$/)
         {
