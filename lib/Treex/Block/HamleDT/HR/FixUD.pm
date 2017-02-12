@@ -155,6 +155,30 @@ sub fix_morphology
         {
             $iset->add('pos' => 'adj', 'prontype' => 'tot', 'degree' => '');
         }
+        # Pronominal adverbs should get PronType.
+        if($node->is_adverb())
+        {
+            if($lemma =~ m/^(gdje|odakle|kuda|kada|kad|otkada|kako|zašto)$/)
+            {
+                $iset->add('prontype' => 'int|rel');
+            }
+            elsif($lemma =~ m/^(tu|tamo|ovdje|ondje|sada|tada|onda|tako|stoga)$/)
+            {
+                $iset->add('prontype' => 'dem');
+            }
+            elsif($lemma =~ m/^(negdje|odnekud|ponekad|nekada|nekako)$/)
+            {
+                $iset->add('prontype' => 'ind');
+            }
+            elsif($lemma =~ m/^(svuda|uvijek|svakako)$/)
+            {
+                $iset->add('prontype' => 'tot');
+            }
+            elsif($lemma =~ m/^(nigdje|ikad|nikako)$/)
+            {
+                $iset->add('prontype' => 'neg');
+            }
+        }
         # Ordinal numerals are ADJ or ADV, not NUM.
         if($node->is_ordinal())
         {
