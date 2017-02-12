@@ -238,9 +238,15 @@ sub fix_morphology
                 }
             }
         }
+        # L-participles will be marked with Voice=Act && Tense=Past (although they can also be used to form the conditional).
+        # So far the past tense was marked only at the old aorist/imperfect forms.
+        if($node->is_verb() && $node->is_participle())
+        {
+            $iset->add('voice' => 'act', 'tense' => 'past');
+        }
         # Passive participles should have the voice feature.
         # And some of them lack even the verbform feature!
-        if($node->is_participle() || $lemma =~ m/^(predviđen|zaključen)$/)
+        if($node->is_adjective() && $node->is_participle() || $lemma =~ m/^(predviđen|zaključen)$/)
         {
             $iset->set('verbform', 'part');
             # Is there an aux:pass, expl:pass, nsubj:pass or csubj:pass child?
