@@ -524,7 +524,7 @@ sub fix_relations
             $subtree[28]->set_parent($subtree[26]);
             $subtree[28]->set_deprel('nsubj');
             $subtree[24]->set_parent($subtree[26]);
-            $subtree[24]->set_parent('advmod');
+            $subtree[24]->set_deprel('advmod');
         }
         elsif($spanstring eq 'U većini slučajeva nabava nove patrone s tintom košta koliko i cijeli pisač .')
         {
