@@ -70,16 +70,17 @@ sub regenerate_upos
 
 my %v12deprel =
 (
-    'dobj'      => 'obj',
-    'dobj:cau'  => 'obj:cau',
-    'nsubjpass' => 'nsubj:pass',
-    'csubjpass' => 'csubj:pass',
-    'auxpass'   => 'aux:pass',
-    'neg'       => 'advmod',
-    'name'      => 'flat',
+    'dobj'       => 'obj',
+    'dobj:cau'   => 'obj:cau',
+    'nsubjpass'  => 'nsubj:pass',
+    'csubjpass'  => 'csubj:pass',
+    'auxpass'    => 'aux:pass',
+    'nmod:agent' => 'obl:agent',
+    'neg'        => 'advmod',
+    'name'       => 'flat',
     ###!!! We may want to convert 'foreign' to just 'flat' and check that both the child and the parent have the feature Foreign=Yes.
-    'foreign'   => 'flat:foreign',
-    'mwe'       => 'fixed'
+    'foreign'    => 'flat:foreign',
+    'mwe'        => 'fixed'
 );
 
 
