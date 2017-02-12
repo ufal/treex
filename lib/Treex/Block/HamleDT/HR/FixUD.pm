@@ -169,7 +169,7 @@ sub fix_morphology
         }
         elsif($lemma =~ m/^(toliko)$/)
         {
-            $iset->add('prontype' => 'dem', 'numtype' => 'card');
+            $iset->add('prontype' => 'dem', 'numtype' => 'card', 'degree' => '');
         }
         elsif($lemma =~ m/^(nekoliko)$/)
         {
@@ -177,7 +177,7 @@ sub fix_morphology
         }
         elsif($lemma =~ m/^(mnogo|malo|vrlo|dosta)$/)
         {
-            $iset->add('prontype' => 'ind', 'numtype' => 'card');
+            $iset->add('pos' => 'adv', 'prontype' => 'ind', 'numtype' => 'card');
         }
         # Pronominal adverbs should get PronType.
         if($node->is_adverb())
