@@ -80,7 +80,9 @@ my %v12deprel =
     'name'       => 'flat',
     ###!!! We may want to convert 'foreign' to just 'flat' and check that both the child and the parent have the feature Foreign=Yes.
     'foreign'    => 'flat:foreign',
-    'mwe'        => 'fixed'
+    'mwe'        => 'fixed',
+    # nummod:entity was used in Russian and they discarded it for v2.
+    'nummod:entity' => 'nummod'
 );
 
 
