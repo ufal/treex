@@ -317,6 +317,11 @@ sub fix_relations
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
+        # Possessive adjectives (e.g. "Ashdownov", "Đinđićeve") should be attached to the possessed nouns as amod, not as nmod.
+        if($node->is_adjective() && $node->is_possessive() && $node->deprel() eq 'nmod')
+        {
+            $node->set_deprel('amod');
+        }
         # Reflexive pronouns of inherently reflexive verbs should be attached as expl:pv, not as compound (UD guideline).
         if($node->is_reflexive() && $node->deprel() eq 'compound')
         {
