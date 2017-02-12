@@ -255,7 +255,15 @@ sub fix_morphology
         # Example: "govoreći", lemma "govoriti" ("speak").
         if($node->is_adverb() && $node->is_participle())
         {
-            $iset->set('verbform', 'conv');
+            # Distinguish present converbs (-ći) and past converbs (-vši).
+            if($node->form() =~ m/ši$/i)
+            {
+                $iset->add('verbform' => 'conv', 'tense' => 'past');
+            }
+            else
+            {
+                $iset->add('verbform' => 'conv', 'tense' => 'pres');
+            }
         }
         # "jedem" (I eat), lemma "jesti", is tagged NOUN and not VERB? Annotation error.
         if($node->form() eq 'jedem' && $lemma eq 'jesti' && $node->is_noun())
