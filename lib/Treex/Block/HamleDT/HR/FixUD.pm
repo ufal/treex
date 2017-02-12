@@ -445,6 +445,99 @@ sub fix_relations
             $subtree[2]->set_parent($subtree[4]);
             $subtree[2]->set_deprel('orphan');
         }
+        # Remnant relations that cannot be converted even by Udapi.
+        elsif($spanstring eq '" Želite li da se zakon poštuje ili ne ?')
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # ne je remnant, má být conj
+            $subtree[8]->set_deprel('conj');
+        }
+        elsif($spanstring eq 'Iz tog razloga , mnogo je više mladih kandidata nego ranije koji se nadmeću za dužnosti .')
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # nego ranije ... než dříve, obě visí nahoře (cc, remnant), místo toho nego má viset na ranije jako mark, ranije má viset nahoře jako advcl
+            $subtree[10]->set_deprel('advcl');
+            $subtree[9]->set_parent($subtree[10]);
+            $subtree[9]->set_deprel('mark');
+        }
+        elsif($spanstring eq 'Druga je bila Ruskinja Olga Peretyatko , a treća Tae-Joong Yang iz Južne Koreje .')
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # Tae-Joong nechat viset na Ruskinja, ale jako conj; treća na ní jako orphan.
+            $subtree[9]->set_deprel('conj');
+            $subtree[8]->set_parent($subtree[9]);
+            $subtree[8]->set_deprel('orphan');
+        }
+        elsif($spanstring eq 'Propast komunizma donijela je Crnogorcima višestranačku demokraciju , a na koncu i neovisnost .')
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # neovisnost převěsit na donijela jako conj, koncu je orphan
+            $subtree[12]->set_parent($subtree[2]);
+            $subtree[12]->set_deprel('conj');
+            $subtree[10]->set_parent($subtree[12]);
+            $subtree[10]->set_deprel('orphan');
+        }
+        elsif($spanstring eq 'Danas , prosječan Crnogorac živi lošije nego prije , kaže Kostić-Mandić , 40 , profesorica prava i bivša članica parlamenta .')
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # lošije nego/cc prije/remnant má být mark a advmod/advcl
+            $subtree[6]->set_parent($subtree[7]);
+            $subtree[6]->set_deprel('mark');
+            $subtree[7]->set_deprel('advmod');
+        }
+        elsif($spanstring eq 'U tebi se budi lagana zavist , ali ne zbog toga što on ima , nego jer bi i ti želio .')
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # ne je remnant. Asi má být advmod. Jinak bych to musel předělat celé. Nego je taky remnant. Asi cc.
+            $subtree[8]->set_deprel('advmod');
+            $subtree[15]->set_deprel('cc');
+        }
+        elsif($spanstring eq 'Kulturno umjetničko društvo Otrovanec za trajni doprinos u očuvanju kulturne baštine podravskog kraja i promidžbu Općine Pitomača ; Milan Šelimber za trajni doprinos u očuvanju kulturne baštine podravskog kraja i promidžbu općine Pitomača ; Mateja Fras za iskazane rezultate i aktivan rad s mladim naraštajima u vatrogastvu ; Alen Dokuš za iskazanu hrabrost i požrtvovnost te promicanje moralnih i društvenih vrijednosti ; Julijana Pečar za izniman doprinos iskazan prilikom organizacije kulturnih događaja na području općine Pitomača ; Mladen Balić za postignute rezultate u gospodarstvu i promidžbi općine Pitomača ; Srebrna plaketa Grb Općine Pitomača : Dobrovoljno vatrogasno društvo Kladare za trajni doprinos i iznimna postignuća u vatrogastvu kroz 80 godina organiziranog postojanja i rada ; Dobrovoljnom vatrogasnom društvu Otrovanec za trajni doprinos i iznimna postignuća u vatrogastvu kroz 80 godina organiziranog postojanja i rada .')
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # jsou pěkně po dvou. Vždy prvního pověsit na društvo jako conj, druhého na prvního jako orphan.
+            my $previous;
+            for(my $i = 0; $i<=$#subtree; $i++)
+            {
+                if($subtree[$i]->deprel() eq 'remnant')
+                {
+                    if(defined($previous))
+                    {
+                        $subtree[$i]->set_parent($previous);
+                        $subtree[$i]->set_deprel('orphan');
+                        $previous = undef;
+                    }
+                    else
+                    {
+                        $subtree[$i]->set_parent($subtree[2]);
+                        $subtree[$i]->set_deprel('conj');
+                        $previous = $subtree[$i];
+                    }
+                }
+            }
+        }
+        elsif($spanstring eq 'No , ako i poster promatramo kao promomaterija za " međunarodnu verifikaciju " ( jer je tako i naslovljen ) , onda se pitam otkud na posteru i Selim Bešlagić i Hidajet Repovac ?')
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # remnanty jsou "posteru" (má být ccomp a viset tam, co visí) a "Selim" (má viset na posteru jako nsubj)
+            $subtree[26]->set_deprel('ccomp');
+            $subtree[28]->set_parent($subtree[26]);
+            $subtree[28]->set_deprel('nsubj');
+        }
+        elsif($spanstring eq 'U većini slučajeva nabava nove patrone s tintom košta koliko i cijeli pisač .')
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # pisač je remnant, má být ccomp
+            $subtree[12]->set_deprel('ccomp');
+        }
+        elsif($spanstring eq 'Prvi je referenca na legendarni roman naslova Kvaka 22 , a drugi taj što isti broj na dresu nosi Eduardo Da Silva .')
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # remnanty jsou drugi (prvi) a taj (referenca). Drugi má viset jako conj tam, co visí. Taj má viset na drugi jako nsubj.
+            $subtree[11]->set_deprel('conj');
+            $subtree[12]->set_parent($subtree[11]);
+            $subtree[12]->set_deprel('nsubj');
+        }
         ###!!! TEMPORARY HACK: THROW AWAY REMNANT BECAUSE WE CANNOT CONVERT IT.
         if($node->deprel() eq 'remnant')
         {
