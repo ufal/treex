@@ -129,7 +129,8 @@ sub fix_morphology
                 $iset->add('pos' => 'adj', 'prontype' => 'ind');
             }
             # Total pronoun "svatko" (everybody) is currently annotated as indefinite.
-            elsif($lemma =~ m/^(svatko)$/)
+            # Same for "sve" (everything). Note that "sve" could be also a form of DET "sav" (every, all), and a PART ("imamo sve češće" = "máme stále častěji").
+            elsif($lemma =~ m/^(svatko|sve)$/)
             {
                 $iset->add('pos' => 'noun', 'prontype' => 'tot');
             }
