@@ -250,6 +250,13 @@ sub fix_morphology
                 $iset->set('voice' => 'pass');
             }
         }
+        # Converbs (adverbial participles, transgressives, gerunds) should have VerbForm=Conv, not Part.
+        # Fortunately we can recognize them because they are tagged ADV (while in Czech they would be VERB).
+        # Example: "govoreći", lemma "govoriti" ("speak").
+        if($node->is_adverb() && $node->is_participle())
+        {
+            $iset->set('verbform', 'conv');
+        }
         # "jedem" (I eat), lemma "jesti", is tagged NOUN and not VERB? Annotation error.
         if($node->form() eq 'jedem' && $lemma eq 'jesti' && $node->is_noun())
         {
