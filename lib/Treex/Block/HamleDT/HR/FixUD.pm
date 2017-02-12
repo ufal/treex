@@ -117,6 +117,37 @@ sub fix_morphology
             {
                 $iset->add('pos' => 'adj', 'prontype' => 'int|rel', 'poss' => 'poss');
             }
+            # Demonstrative pronouns have adjectival morphology and should thus be DET, although "taj" is often used as real PRON.
+            elsif($lemma =~ m/^(taj|ovaj|onaj|takav)$/)
+            {
+                $iset->add('pos' => 'adj', 'prontype' => 'dem');
+            }
+            # Indefinite pronouns "neki" (somebody), "nešto" (something) are already correctly annotated PRON PronType=Ind.
+            # Indefinite "nekakav" should be DET.
+            elsif($lemma =~ m/^(nekakav)$/)
+            {
+                $iset->add('pos' => 'adj', 'prontype' => 'ind');
+            }
+            # Total pronoun "svatko" (everybody) is currently annotated as indefinite.
+            elsif($lemma =~ m/^(svatko)$/)
+            {
+                $iset->add('pos' => 'noun', 'prontype' => 'tot');
+            }
+            # Total "svaki" (each, every) should be DET.
+            elsif($lemma =~ m/^(svaki)$/)
+            {
+                $iset->add('pos' => 'adj', 'prontype' => 'tot');
+            }
+            # Negative pronouns "nitko" (nobody), "ništa" (nothing) are currently annotated as indefinites.
+            elsif($lemma =~ m/^(nitko|ništa)$/)
+            {
+                $iset->add('pos' => 'noun', 'prontype' => 'neg');
+            }
+            # Negative "nikakav" should be DET.
+            elsif($lemma =~ m/^(nikakav)$/)
+            {
+                $iset->add('pos' => 'adj', 'prontype' => 'neg');
+            }
         }
         # Total determiner "sav" ("every, all") is originally PRON or ADJ.
         if($lemma eq 'sav' && ($node->is_adjective() || $node->is_pronominal()))
