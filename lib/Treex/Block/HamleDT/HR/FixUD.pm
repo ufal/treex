@@ -423,6 +423,15 @@ sub fix_relations
         {
             $node->set_deprel('advmod:emph');
         }
+        # Deficient sentential coordination, i.e. there is a coordinating conjunction in the beginning of the sentence:
+        # A postoji i etnička komponenta, s obzirom da pojedinci iz različitih zajednica mogu reći da diskriminacija -- bilo sada ili ranije -- utječe na mogućnost da izvuku korist iz privatizacije.
+        # The conjunction is currently attached to the main predicate as discourse.
+        # According to the guidelines it should be cc (see also https://github.com/UniversalDependencies/docs/issues/283,
+        # https://github.com/UniversalDependencies/docs/issues/237 and http://universaldependencies.org/u/dep/cc.html).
+        if($node->is_coordinator() && $node->parent()->deprel() eq 'root' && $node->deprel() eq 'discourse')
+        {
+            $node->set_deprel('cc');
+        }
         # Punctuation should be attached as punct or root.
         if($node->is_punctuation() && !$node->parent()->is_root())
         {
