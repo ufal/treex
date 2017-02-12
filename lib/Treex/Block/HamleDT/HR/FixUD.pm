@@ -155,6 +155,30 @@ sub fix_morphology
         {
             $iset->add('pos' => 'adj', 'prontype' => 'tot', 'degree' => '');
         }
+        # Pronominal quantifiers "koliko, toliko, nekoliko, mnogo, više, najviše, malo, manje, najmanje, vrlo, dosta" are currently tagged as adverbs.
+        # (Lemma "mnogo" covers "mnogo, više, najviše"; lemma "malo" covers "malo, manje, najmanje".)
+        # Many of them can also function as adverbs, for some it is the default function.
+        # Even "koliko" ("how many, how much") can act as adverb. For "toliko", the shifted adverbial meaning is "only".
+        # Example ADV: "Ne možete ni zamisliti koliko su svi plakali."
+        # In some Slavic treebanks the two functions are distinguished by context ADV (adverbs of degree) vs. DET (quantity of a nominal).
+        # Here we will leave them as adverbs, at least for now. But we will add NumType=Card (to mark that they are quantifiers) and PronType.
+        # Only "nekoliko" ("several") seems to be clearly a quantifier because in adverbial function one would use "malo".
+        if($lemma =~ m/^(koliko)$/)
+        {
+            $iset->add('prontype' => 'int|rel', 'numtype' => 'card');
+        }
+        elsif($lemma =~ m/^(toliko)$/)
+        {
+            $iset->add('prontype' => 'dem', 'numtype' => 'card');
+        }
+        elsif($lemma =~ m/^(nekoliko)$/)
+        {
+            $iset->add('pos' => 'adj', 'prontype' => 'ind', 'numtype' => 'card');
+        }
+        elsif($lemma =~ m/^(mnogo|malo|vrlo|dosta)$/)
+        {
+            $iset->add('prontype' => 'ind', 'numtype' => 'card');
+        }
         # Pronominal adverbs should get PronType.
         if($node->is_adverb())
         {
