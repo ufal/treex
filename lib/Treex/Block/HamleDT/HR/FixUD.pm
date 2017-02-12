@@ -362,6 +362,11 @@ sub fix_relations
         {
             $node->set_deprel('obl');
         }
+        # Relative adverbs (gdje, kuda, kada, kako, zašto) also should not be attached as mark.
+        elsif($node->is_adverb() && $node->deprel() eq 'mark')
+        {
+            $node->set_deprel('advmod');
+        }
         # Ordinal numerals modifying a nominal should be amod, not nummod.
         if($node->is_ordinal() && $node->deprel() eq 'nummod')
         {
