@@ -76,7 +76,8 @@ my %v12deprel =
     'csubjpass'  => 'csubj:pass',
     'auxpass'    => 'aux:pass',
     'nmod:agent' => 'obl:agent',
-    'neg'        => 'advmod',
+    # Conversion of the neg relation is nontrivial, see below.
+    #'neg'        => 'advmod',
     'name'       => 'flat',
     ###!!! We may want to convert 'foreign' to just 'flat' and check that both the child and the parent have the feature Foreign=Yes.
     'foreign'    => 'flat:foreign',
@@ -110,6 +111,17 @@ sub convert_deprels
             else
             {
                 $iset->set('polarity', 'neg');
+            }
+            # By default we assume that the neg relation is used for negative particles such as English "not".
+            # These particles should now be attached using the advmod relation.
+            # However, in Uyghur the neg relation was used for the negative copula "emes" and the new relation should be cop.
+            if($node->form() eq 'ئەمەس')
+            {
+                $node->set_deprel('cop');
+            }
+            else
+            {
+                $node->set_deprel('advmod');
             }
         }
         if(exists($v12deprel{$deprel}))
