@@ -1,4 +1,4 @@
-package Treex::Block::HamleDT::HU::FixUD;
+package Treex::Block::HamleDT::VI::FixUD;
 use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Common;
@@ -34,9 +34,9 @@ sub fix_features
 
 =over
 
-=item Treex::Block::HamleDT::HU::FixUD
+=item Treex::Block::HamleDT::VI::FixUD
 
-A block to fix Hungarian UD. Currently dummy.
+A block to fix Vietnamese UD. Currently dummy.
 
 The main UD 1 to 2 conversion is done in a separate block.
 
