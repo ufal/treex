@@ -12,20 +12,28 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
-    $self->fix_features($root);
+    $self->fix_multi_syllable_words($root);
 }
 
 
 
 #------------------------------------------------------------------------------
-# Features are stored in conll/feat and their format is not compatible with
-# Universal Dependencies.
+# UD v2 permits that Vietnamese has words with spaces.
 #------------------------------------------------------------------------------
-sub fix_features
+sub fix_multi_syllable_words
 {
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $form = $node->form();
+        if($form =~ m/_/ && $form !~ m/^_+$/)
+        {
+            $form =~ m/_+/ /g;
+            $node->set_form($form);
+        }
+    }
 }
 
 
