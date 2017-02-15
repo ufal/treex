@@ -30,7 +30,7 @@ sub fix_multi_syllable_words
         my $form = $node->form();
         if($form =~ m/_/ && $form !~ m/^_+$/)
         {
-            $form =~ m/_+/ /g;
+            $form =~ s/_+/ /g;
             $node->set_form($form);
         }
     }
