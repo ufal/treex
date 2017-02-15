@@ -228,7 +228,7 @@ sub process_atree {
         # Exception: FORM and LEMMA can contain spaces in approved cases and in Vietnamese.
         my @values = ($ord,
         #$form, $lemma,
-        $upos, $xpos, $feats, $pord, $deprel, $relations, $misc);
+        '_', '_', $upos, $xpos, $feats, $pord, $deprel, $relations, $misc);
         @values = map
         {
             my $x = $_ // '_';
@@ -239,6 +239,8 @@ sub process_atree {
             $x
         }
         (@values);
+        $values[1] = $form;
+        $values[2] = $lemma;
         print { $self->_file_handle() } join("\t", @values)."\n";
     }
     print { $self->_file_handle() } "\n" if $tree->get_descendants();
