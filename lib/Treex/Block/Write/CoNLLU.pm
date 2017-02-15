@@ -225,7 +225,10 @@ sub process_atree {
 
         # CoNLL-U columns: ID, FORM, LEMMA, UPOS, XPOS(treebank-specific), FEATS, HEAD, DEPREL, DEPS(additional), MISC
         # Make sure that values are not empty and that they do not contain spaces.
-        my @values = ($ord, $form, $lemma, $upos, $xpos, $feats, $pord, $deprel, $relations, $misc);
+        # Exception: FORM and LEMMA can contain spaces in approved cases and in Vietnamese.
+        my @values = ($ord,
+        #$form, $lemma,
+        $upos, $xpos, $feats, $pord, $deprel, $relations, $misc);
         @values = map
         {
             my $x = $_ // '_';
