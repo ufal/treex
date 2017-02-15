@@ -72,6 +72,7 @@ my %v12deprel =
 (
     'dobj'       => 'obj',
     'dobj:cau'   => 'obj:cau',
+    'dobj:lvc'   => 'obj:lvc',
     'nsubjpass'  => 'nsubj:pass',
     'csubjpass'  => 'csubj:pass',
     'auxpass'    => 'aux:pass',
