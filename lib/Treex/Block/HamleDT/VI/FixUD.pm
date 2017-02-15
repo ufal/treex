@@ -33,6 +33,12 @@ sub fix_multi_syllable_words
             $form =~ s/_+/ /g;
             $node->set_form($form);
         }
+        my $lemma = $node->lemma();
+        if($lemma =~ m/_/ && $lemma !~ m/^_+$/)
+        {
+            $lemma =~ s/_+/ /g;
+            $node->set_lemma($lemma);
+        }
     }
     $root->get_zone()->set_sentence($self->collect_sentence_text(@nodes));
 }
