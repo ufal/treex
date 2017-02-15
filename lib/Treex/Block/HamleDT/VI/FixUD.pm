@@ -24,7 +24,7 @@ sub fix_multi_syllable_words
 {
     my $self = shift;
     my $root = shift;
-    my @nodes = $root->get_descendants();
+    my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
         my $form = $node->form();
