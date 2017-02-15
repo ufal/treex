@@ -4,7 +4,7 @@ use List::MoreUtils qw(any);
 use Treex::Core::Common;
 use Lingua::Interset qw(decode);
 use utf8;
-extends 'Treex::Core::Block';
+extends 'Treex::Block::HamleDT::SplitFusedWords';
 
 
 
@@ -34,6 +34,7 @@ sub fix_multi_syllable_words
             $node->set_form($form);
         }
     }
+    $root->get_zone()->set_sentence($self->collect_sentence_text(@nodes));
 }
 
 
