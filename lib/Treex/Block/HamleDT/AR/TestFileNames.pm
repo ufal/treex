@@ -8,12 +8,13 @@ sub build_language { return log_fatal "Parameter 'language' must be given"; }
 has dev => ( is => 'ro', isa => 'Bool', default => 0, documentation => 'Should we also suggest development data set? Default: only training/test.' );
 has _stat => ( is => 'ro', default => sub { {} } );
 has dima => ( is => 'ro', isa => 'String', required => 1, documentation => 'Path to the tab-separated text file from Dima Taji.' );
-has _list_from_dima_taji => ( is => 'ro', isa => 'HashRef', builder => '_read_list_from_dima' );
+has _list_from_dima_taji => ( is => 'ro', isa => 'HashRef', builder => '_read_list_from_dima', lazy_build => 1 );
 
 sub _read_list_from_dima
 {
     my $self = shift;
     my $dima = $self->dima();
+    log_fatal("Unknown path to the file list form Dima") if(!defined($dima));
     open(DIMA, $dima) or log_fatal("Cannot read '$dima': $!");
     # DIMA: tab-separated values exported from Dima's Excel file. First row contains column headers.
     my @headers;
