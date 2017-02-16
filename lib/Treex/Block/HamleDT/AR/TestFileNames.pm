@@ -1,4 +1,4 @@
-package Treex::Block::Print::TestFileNames;
+package Treex::Block::HamleDT::AR::TestFileNames;
 use Moose;
 use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';
@@ -7,6 +7,41 @@ sub build_language { return log_fatal "Parameter 'language' must be given"; }
 
 has dev => ( is => 'ro', isa => 'Bool', default => 0, documentation => 'Should we also suggest development data set? Default: only training/test.' );
 has _stat => ( is => 'ro', default => sub { {} } );
+has dima => ( is => 'ro', isa => 'String', required => 1, documentation => 'Path to the tab-separated text file from Dima Taji.' );
+has _list_from_dima_taji => ( is => 'ro', isa => 'HashRef', builder => read_list_from_dima );
+
+sub read_list_from_dima
+{
+    my $self = shift;
+    my $dima = $self->dima();
+    open(DIMA, $dima) or log_fatal("Cannot read '$dima': $!");
+    # DIMA: tab-separated values exported from Dima's Excel file. First row contains column headers.
+    my @headers;
+    my @table;
+    my %division;
+    while(<DIMA>)
+    {
+        s/\r?\n$//;
+        my @row = split(/\t/, $_);
+        if(scalar(@headers)==0)
+        {
+            @headers = @row;
+        }
+        else
+        {
+            my %record;
+            for(my $i = 0; $i <= $#row; $i++)
+            {
+                $record{$headers[$i]} = $row[$i];
+            }
+            push(@table, \%record);
+            # Hash section names (Train, Dev, Test) for document ids.
+            $division{$record{'Document ID in PAUDT'}} = lc($record{'NYUADUDT division'});
+        }
+    }
+    close(DIMA);
+    return \%division;
+}
 
 sub process_anode
 {
@@ -29,10 +64,26 @@ sub process_end
     my $nfiles = @files;
     my $ndevfiles = 0;
     my $ntestfiles = 0;
+    my $div = $self->_list_from_dima_taji();
     foreach my $file (@files)
     {
         my $nfile = $stat->{$file};
-        if($self->need_more_dev($ndev, $n))
+        if(exists($div->{$file}))
+        {
+            if($self->dev() && $div->{$file} eq 'dev')
+            {
+                print("DEVFILE\t$file\t$nfile\n");
+                $ndev += $nfile;
+                $ndevfiles++;
+            }
+            elsif($div->{$file} eq 'test')
+            {
+                print("TESTFILE\t$file\t$nfile\n");
+                $ntest += $nfile;
+                $ntestfiles++;
+            }
+        }
+        elsif($self->need_more_dev($ndev, $n))
         {
             print("DEVFILE\t$file\t$nfile\n");
             $ndev += $nfile;
@@ -74,9 +125,14 @@ __END__
 
 =head1 NAME
 
-Treex::Block::Print::TestFileNames
+Treex::Block::HamleDT::AR::TestFileNames
 
 =head1 DESCRIPTION
+
+This block is based on Print::TestFileNames but it is not formally declared as
+its subclass. It reads a list of files that are predetermined for a particular
+division (train, dev or test). For the remaining files applies the default
+behavior:
 
 Suggests approximately every tenth document as test data.
 An even sampling of test documents from the corpus will ensure a balanced distribution of domains in both training and test.
