@@ -69,17 +69,19 @@ sub process_end
     foreach my $file (@files)
     {
         my $nfile = $stat->{$file};
-        if(exists($div->{$file}))
+        my $fileonly = $file;
+        $fileonly =~ s-^.*/--;
+        if(exists($div->{$fileonly}))
         {
-            if($self->dev() && $div->{$file} eq 'dev')
+            if($self->dev() && $div->{$fileonly} eq 'dev')
             {
-                print("DEVFILE\t$file\t$nfile\n");
+                print("DEVFILE\t$file\t$nfile\tDIMA\n");
                 $ndev += $nfile;
                 $ndevfiles++;
             }
-            elsif($div->{$file} eq 'test')
+            elsif($div->{$fileonly} eq 'test')
             {
-                print("TESTFILE\t$file\t$nfile\n");
+                print("TESTFILE\t$file\t$nfile\tDIMA\n");
                 $ntest += $nfile;
                 $ntestfiles++;
             }
