@@ -360,6 +360,9 @@ sub fix_tokenization
             # XPOSTAG of punctuation is the punctuation symbol itself.
             $pnode->set_conll_pos($punct);
             $pnode->set_deprel('punct');
+            ###!!! We must fix ord numbers of the entire sentence!
+            ###!!! Only if this is the last token of the sentence, will this work.
+            $pnode->_set_ord($nodes[$i]->ord()+1);
         }
     }
 }
