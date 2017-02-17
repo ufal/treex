@@ -355,6 +355,7 @@ sub fix_tokenization
             $nodes[$i]->set_no_space_after(1);
             my $pnode = $nodes[$i]->create_child();
             $pnode->set_form($punct);
+            $pnode->set_lemma($punct);
             $pnode->set_tag('PUNCT');
             $pnode->iset()->set('pos', 'punc');
             # XPOSTAG of punctuation is the punctuation symbol itself.
