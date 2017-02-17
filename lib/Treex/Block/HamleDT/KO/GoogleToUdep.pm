@@ -40,6 +40,8 @@ sub process_zone
     $self->fix_root_punctuation($root);
     $self->fix_sentence_segmentation($root);
     $self->fix_false_root_labels($root);
+    # Occasionally a final full stop sticks together with the preceding word.
+    $self->fix_tokenization($root);
 }
 
 
@@ -326,6 +328,38 @@ sub fix_false_root_labels
         if($node->deprel() eq 'root' && !$node->parent()->is_root())
         {
             $node->set_deprel('dep');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Punctuation is kept as one token with the neighboring word in the input data.
+# This method cuts it off.
+#------------------------------------------------------------------------------
+sub fix_tokenization
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    for(my $i = 0; $i <= $#nodes; $i++)
+    {
+        my $form = $nodes[$i]->form();
+        # Look for non-punctuation followed by punctuation, e.g. "주었다."
+        if($form =~ m/^(\PP+)(\pP+)$/)
+        {
+            my $nonpunct = $1;
+            my $punct = $2;
+            $nodes[$i]->set_form($nonpunct);
+            $nodes[$i]->set_no_space_after(1);
+            my $pnode = $nodes[$i]->create_child();
+            $pnode->set_form($punct);
+            $pnode->set_tag('PUNCT');
+            $pnode->iset()->set('pos', 'punc');
+            # XPOSTAG of punctuation is the punctuation symbol itself.
+            $pnode->set_conll_pos($punct);
+            $pnode->set_deprel('punct');
         }
     }
 }
