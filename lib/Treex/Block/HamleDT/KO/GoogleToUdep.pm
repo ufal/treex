@@ -347,6 +347,13 @@ sub fix_tokenization
     for(my $i = 0; $i <= $#nodes; $i++)
     {
         my $form = $nodes[$i]->form();
+        # Some word forms contain spaces, which is not allowed.
+        # Some contain the \x{FEFF} character, which is also a bug.
+        if($form =~ s/[\s\x{FEFF}\x{FFFE}]//g)
+        {
+            $form = '_' if($form eq '');
+            $nodes[$i]->set_form($form);
+        }
         # Look for non-punctuation followed by punctuation, e.g. "주었다."
         if($form =~ m/^(\PP+)(\pP+)$/)
         {
