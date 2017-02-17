@@ -343,6 +343,7 @@ sub fix_tokenization
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants({'ordered' => 1});
+    my $hit = 0;
     for(my $i = 0; $i <= $#nodes; $i++)
     {
         my $form = $nodes[$i]->form();
@@ -361,9 +362,26 @@ sub fix_tokenization
             # XPOSTAG of punctuation is the punctuation symbol itself.
             $pnode->set_conll_pos($punct);
             $pnode->set_deprel('punct');
-            ###!!! We must fix ord numbers of the entire sentence!
-            ###!!! Only if this is the last token of the sentence, will this work.
-            $pnode->_set_ord($nodes[$i]->ord()+1);
+            $pnode->wild()->{ord} = $nodes[$i]->ord()+0.1;
+            $hit = 1;
+        }
+    }
+    # Fix ords in the entire sentence.
+    if($hit)
+    {
+        @nodes = $root->get_descendants();
+        foreach my $node (@nodes)
+        {
+            if(!defined($node->wild()->{ord}))
+            {
+                $node->wild()->{ord} = $node->ord();
+            }
+        }
+        @nodes = sort {$a->wild()->{ord} <=> $b->wild()->{ord}} (@nodes);
+        for(my $i = 0; $i <= $#nodes; $i++)
+        {
+            $nodes[$i]->_set_ord($i+1);
+            delete($nodes[$i]->wild()->{ord});
         }
     }
 }
