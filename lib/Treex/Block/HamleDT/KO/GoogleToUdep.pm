@@ -360,8 +360,9 @@ sub fix_tokenization
             my $nonpunct = $1;
             my $punct = $2;
             $nodes[$i]->set_form($nonpunct);
-            $nodes[$i]->set_no_space_after(1);
             my $pnode = $nodes[$i]->create_child();
+            $pnode->set_no_space_after($nodes[$i]->no_space_after());
+            $nodes[$i]->set_no_space_after(1);
             $pnode->set_form($punct);
             $pnode->set_lemma($punct);
             $pnode->set_tag('PUNCT');
