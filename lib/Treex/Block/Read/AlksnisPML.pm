@@ -98,6 +98,15 @@ sub _convert_tree
     }
 }
 
+override '_create_val_refs' => sub
+{
+    my $self = shift;
+    my $pmldoc = shift;
+    my $document = shift;
+    # We do not do anything with valency dictionaries.
+    # But we must override this method to make BasePMLReader happy.
+};
+
 1;
 
 __END__
