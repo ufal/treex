@@ -50,23 +50,26 @@ sub process_atree {
     my $self = shift;
     my $tree = shift;
     my @nodes = $tree->get_descendants({'ordered' => 1});
-	# CPOSTAG    
-    map{$_->set_conll_cpos((substr $_->tag, 0, 1));}@nodes;
+	# CPOSTAG
+    map{$_->set_conll_cpos(defined($_->tag()) ? (substr $_->tag, 0, 1) : '_');}@nodes;
 	# POSTAG
-    map{$_->set_conll_pos((substr $_->tag, 0, 2));}@nodes;
-	# FEATS    
+    map{$_->set_conll_pos(defined($_->tag()) ? (substr $_->tag, 0, 2) : '_');}@nodes;
+	# FEATS
     foreach my $n (@nodes) {
 		my $feats = '_';
-		my @f;
-		foreach my $i (2..(length($n->tag)-1)) {
-			my $fval = substr $n->tag, $i, 1;
-			if ($fval ne '-') {
-				my $fname = $i+1; 
-				$fname = $self->get_fname($i+1) if ($self->has_fposition($i+1));
-				push @f, $fname . "=" . $fval;				
-			}
-		}
-		$feats = join("|", @f) if scalar @f > 0;
+        if(defined($n->tag()))
+        {
+            my @f;
+            foreach my $i (2..(length($n->tag)-1)) {
+            	my $fval = substr $n->tag, $i, 1;
+            	if ($fval ne '-') {
+            		my $fname = $i+1;
+            		$fname = $self->get_fname($i+1) if ($self->has_fposition($i+1));
+            		push @f, $fname . "=" . $fval;				
+            	}
+            }
+            $feats = join("|", @f) if scalar @f > 0;
+        }
 		$n->set_conll_feat($feats);
     }
     # DEPREL
@@ -79,12 +82,12 @@ __END__
 
 =head1 NAME
 
-Treex::Block:::A2A::FillCoNLLAttributes - Fills CoNLL features in a-nodes based on morphological tag and afun values.  
+Treex::Block:::A2A::FillCoNLLAttributes - Fills CoNLL features in a-nodes based on morphological tag and afun values.
 
 
 =head1 DESCRIPTION
 
-This block fills the CoNLL features of a-tree nodes given that the morphological (positional) 
+This block fills the CoNLL features of a-tree nodes given that the morphological (positional)
 tags and afun values are available for each a-node in the a-tree.
 
 
@@ -94,7 +97,7 @@ tags and afun values are available for each a-node in the a-tree.
 
 =item C<use_index_for_feat_name>
 
-If this value is 1, then the index positions of the positional tag will be used as feature names instead of searching for the feature 
+If this value is 1, then the index positions of the positional tag will be used as feature names instead of searching for the feature
 names in the hash reference (C<tag_features>). The default value is 0.
 
 =item C<tag_features>
@@ -109,7 +112,7 @@ Hash reference of tag positions and the corresponding position names according t
 Loganathan Ramasamy <ramasamy@ufal.mff.cuni.cz>
 
 
-=head1 COPYRIGHT AND LICENSE 
+=head1 COPYRIGHT AND LICENSE
 
 Copyright © 2013 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
