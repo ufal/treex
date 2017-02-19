@@ -72,10 +72,7 @@ sub _convert_tree
     my $self = shift;
     my $pml_node = shift;
     my $treex_node = shift;
-    foreach my $attr_name ('id', 'ord')
-    {
-        $self->_copy_attr($pml_node, $treex_node, $attr_name, $attr_name);
-    }
+    $self->_copy_attr($pml_node, $treex_node, 'word_ref', 'ord');
     $self->_copy_attr($pml_node, $treex_node, 'syfun', 'deprel');
     if(!$treex_node->is_root())
     {
