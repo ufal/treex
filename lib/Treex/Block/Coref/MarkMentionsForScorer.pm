@@ -88,6 +88,8 @@ sub process_tnode {
             pop @mention_nodes;
         }
     }
+
+    return if (!@mention_nodes);
     
     # the beginning of the mention
     push @{$mention_nodes[0]->wild->{coref_mention_start}}, $entity_idx;
