@@ -13,7 +13,10 @@ has harmonize_from_conll => (is=>'ro', isa=>'Bool', default=>0, documentation=>'
 # Util::Eval anode='$.set_id($.generate_new_id)'
 
 
-my $A2T_SCEN = <<'END';
+#my $A2T_SCEN = <<'END';
+my $LA_SCEN = <<'END';
+# a-layer
+W2A::UDPipe model_alias = la_thomisticus tokenize=1 tag=1 parse=0
 # t-layer
 A2T::LA::MarkEdgesToCollapse
 A2T::BuildTtree
@@ -43,7 +46,8 @@ sub get_scenario_string {
         $scen .= 'HamleDT::LA::HarmonizeIT ';
     }
 
-    $scen .= $A2T_SCEN;
+    #$scen .= $A2T_SCEN;
+    $scen .= $LA_SCEN;
     return $scen;
 }
 
@@ -56,7 +60,7 @@ __END__
 
 =head1 NAME
 
-Treex::Scen::Analysis::LA - Latin tectogrammatical analysis (from parsed a-trees)
+Treex::Scen::Analysis::LA - Latin UDPipe model (a-layer) and tectogrammatical analysis (from parsed a-trees)
 
 =head1 SYNOPSIS
 
