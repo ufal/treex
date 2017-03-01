@@ -10,7 +10,7 @@ sub process_atree
     my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
-        if($node->deprel() eq 'iobj')
+        if($node->iset()->is_auxiliary())
         {
             #$self->complain($node, $node->form());
         }

@@ -4,7 +4,7 @@ use Treex::Core::Common;
 
 use Morce::Czech;
 
-use DowngradeUTF8forISO2;
+use Treex::Tool::Transliteration::DowngradeUTF8forISO2;
 
 print STDERR "Starting tagger...\n";
 
@@ -39,7 +39,7 @@ while (<$file>) {
         my @fields = split /\t/;
         push @lines, \@fields;
 
-        push @forms, DowngradeUTF8forISO2::downgrade_utf8_for_iso2(
+        push @forms, Treex::Tool::Transliteration::DowngradeUTF8forISO2::downgrade_utf8_for_iso2(
 	    $fields[$formFieldIndex]
 	    );
         #push @forms, $fields[$formFieldIndex];

@@ -37,7 +37,7 @@ stderr = codecs.getwriter('utf-8')(sys.stderr)
 
 while True:
     try:
-        # read the input and try to further enlarge the buffer at most 10 times 
+        # read the input and try to further enlarge the buffer at most 10 times
         # (we don't want to fail if there's a unicode character right at the edge of the buffer)
         data = os.read(fd, 1024)
         if data == b'':

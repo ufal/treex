@@ -261,6 +261,45 @@ sub is_echild_of {
     return any { $_ == $potential_echild } @echildren;
 }
 
+my @eff_args = qw(dive or_topological ignore_incorrect_tree_structure);
+# Remove args relevant only to eff relations from arg_ref and return them
+sub _extract_eff_args {
+    my ($self, $arg_ref) = @_;
+
+    my $eff_arg_ref = {};
+    foreach my $eff_arg (@eff_args) {
+        if (defined $arg_ref->{$eff_arg}) {
+            $eff_arg_ref->{$eff_arg} = $arg_ref->{$eff_arg};
+            delete $arg_ref->{$eff_arg};
+        }
+    }
+
+    return $eff_arg_ref;
+}
+
+sub get_esiblings {
+    my ( $self, $arg_ref ) = @_;
+    log_fatal('Incorrect number of arguments') if @_ > 2;
+    if ( !defined $arg_ref ) {
+        $arg_ref = {};
+    }
+
+    my $eff_arg_ref = $self->_extract_eff_args($arg_ref);
+
+    my @eparents = $self->get_eparents($eff_arg_ref);
+    
+    my %esiblings_hash;
+    foreach my $eparent (@eparents) {
+        my @esiblings = grep { $_ ne $self } $eparent->get_echildren($eff_arg_ref);
+        foreach my $esibling (@esiblings) {
+            $esiblings_hash{$esibling->id} = $esibling;
+        }
+    }
+    my @esiblings = values %esiblings_hash;
+
+    return $self->_process_switches($arg_ref, @esiblings);
+}
+
 1;
 
 __END__

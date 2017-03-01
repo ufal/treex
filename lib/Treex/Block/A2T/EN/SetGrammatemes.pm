@@ -17,7 +17,7 @@ Readonly my %SUB_FOR_TAG => (
     PRP => \&_perspron, 'PRP$' => \&_perspron,
     WP  => \&_o_pron,   WRB    => \&_o_pron, WDT => \&_o_pron, DT => \&_o_pron, 'WP$' => \&_o_pron,
     CD  => \&_number,   PDT    => \&_number,                                                                 # PDT= half, all?, quite?, ...
-    VB  => \&_verb,     VBP    => \&_verb, VBZ => \&_verb, VBG => \&_verb, VBD => \&_verb, VBN => \&_verb,
+    VB  => \&_verb,     VBP    => \&_verb, VBZ => \&_verb, VBG => \&_verb, VBD => \&_verb, VBN => \&_verb, MD => \&_verb,
     RB => \&_adv, RBR => \&_adv, RBS => \&_adv,
 );
 
@@ -47,6 +47,7 @@ Readonly my %PERSPRON_INFO => (
     'yourselves' => '-P2',
     'they' => '-P3', 'their' => '-P3', 'themselves' => '-P3', 'them' => '-P3', 'theirs' => '-P3',
     'one' => '-S3',
+    '\'s' => '-P1', # "us" in "let's"
 );
 
 Readonly my %TECTO_NAME_FOR => (

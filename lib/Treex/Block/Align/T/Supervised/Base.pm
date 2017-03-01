@@ -2,14 +2,21 @@ package Treex::Block::Align::T::Supervised::Base;
 
 use Moose::Role;
 
-use Treex::Tool::Align::FeaturesRole;
+use Treex::Tool::ML::Ranker::Features;
 use Treex::Tool::Align::Features;
 
-has '_feat_extractor' => (is => 'ro', isa => 'Treex::Tool::Align::FeaturesRole', builder => '_build_feat_extractor');
+with 'Treex::Block::Filter::Node';
+
+has '_feat_extractor' => (is => 'ro', isa => 'Treex::Tool::ML::Ranker::Features', builder => '_build_feat_extractor');
 
 sub _build_feat_extractor {
     my ($self) = @_;
     return Treex::Tool::Align::Features->new();
+}
+
+sub _build_node_types {
+    my ($self) = @_;
+    return 'all_anaph';
 }
 
 sub _get_candidates {

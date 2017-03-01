@@ -15,14 +15,13 @@ extends 'Treex::Core::Block';
 
 has 'phrase_list_path' => ( is => 'ro', isa => 'Str' );
 has 'filter_id_prefixes' => ( is => 'ro', isa => 'Str', default => 'all' );
-# idx removed: libreoffice_16090, libreoffice_16123, libreoffice_73656
 has 'trg_lang' => (is => 'ro', isa => 'Str');
 
 has '_trie' => ( is => 'ro', isa => 'Treex::Tool::Gazetteer::Engine', builder => '_build_trie', lazy => 1);
 
 my %PHRASE_LIST_PATHS = (
     'en' => {
-        'cs' => 'data/models/gazeteer/cs_en/20151009_007.IT.cs_en.cs.gaz.gz',
+        'cs' => 'data/models/gazeteer/cs_en/20160801_008.IT.cs_en.cs.gaz.gz',
         'es' => 'data/models/gazeteer/es_en/20150821_002.IT.es_en.es.gaz.gz',
         'eu' => 'data/models/gazeteer/eu_en/20150821_002.IT.eu_en.eu.gaz.gz',
         'nl' => 'data/models/gazeteer/nl_en/20150821_004.IT.nl_en.nl.gaz.gz',
@@ -40,10 +39,10 @@ sub BUILD {
 
 sub _build_trie {
     my ($self) = @_;
-    my $trie = Treex::Tool::Gazetteer::Engine->new({ 
+    my $trie = Treex::Tool::Gazetteer::Engine->new({
         is_src => 1,
         path => $self->phrase_list_path,
-        filter_id_prefixes => $self->filter_id_prefixes 
+        filter_id_prefixes => $self->filter_id_prefixes
     });
     return $trie;
 }
@@ -57,7 +56,7 @@ sub process_atree {
     my ( $self, $atree ) = @_;
 
     my $matches = $self->_trie->match_phrases_in_atree($atree);
-    
+
     # assess which candidates are likely to be entity phrases and return only the mutually exclusive ones
     my $entities = $self->_resolve_entities($matches);
 
@@ -67,9 +66,9 @@ sub process_atree {
 
     # transform the a-tree
     my $entity_anodes = $self->_collapse_entity_anodes($atree, $entities);
-    
+
     my $collapsed_entities = $self->_collapse_neighboring_entities($entity_anodes);
-    
+
     $entity_anodes = $self->_collapse_entity_anodes($atree, $collapsed_entities);
 
 }
@@ -77,7 +76,7 @@ sub process_atree {
 
 sub _resolve_entities {
     my ($self, $matches) = @_;
-    
+
     #$Data::Dumper::Maxdepth = 2;
     #log_info Dumper($matches);
 
@@ -86,7 +85,7 @@ sub _resolve_entities {
     #log_info Dumper(\@scores);
 
     my @accepted_idx = grep {$scores[$_] > 0} 0 .. $#scores;
-    
+
     my @sorted_idx = sort {$scores[$b] <=> $scores[$a]} @accepted_idx;
 
     my %covered_anode = ();
@@ -98,7 +97,7 @@ sub _resolve_entities {
             $covered_anode{$_->id} = 1 foreach (@{$cand->[2]});
         }
     }
-    
+
     #log_info Dumper(\@resolved_entities);
 
     return \@resolved_entities;
@@ -109,7 +108,7 @@ sub score_match {
 
     my $feats = Treex::Tool::Gazetteer::Features::extract_feats($match);
     my $score = Treex::Tool::Gazetteer::RuleBasedScorer::score($feats);
-    
+
     return $score;
 }
 
@@ -124,11 +123,11 @@ sub _collapse_neighboring_entities {
     foreach my $anode (@$entity_anodes) {
         my $id = $anode->wild->{gazeteer_entity_id};
         my $phrase = $anode->wild->{matched_item};
-        
+
         next if (defined $covered_anodes{$anode->id});
 
         $covered_anodes{$anode->id} = 1;
-    
+
         my @consec_ids = ( $id );
         my @consec_phrases = ( $phrase );
         my @consec_anodes = ( $anode );
@@ -265,8 +264,8 @@ Path to a list of phrases to be matched.
 
 =head2 filter_id_prefixes
 
-One can limit the range of phrases a trie is filled with by setting the string which has to match with 
-the prefix of phrase identifiers. A special (and default) value 'all' determines that no filtering is 
+One can limit the range of phrases a trie is filled with by setting the string which has to match with
+the prefix of phrase identifiers. A special (and default) value 'all' determines that no filtering is
 performed. More than one value can be specified, delimited by a comma.
 
 =head1 AUTHORS

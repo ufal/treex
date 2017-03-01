@@ -33,8 +33,8 @@ override '_do_process_document' => sub {
     $yaml_text =~ s{: ''$}{: ""}mg;                                           # always put empty strings in double quotes
                                                                               # enquote words that would be considered boolean by PyYAML,
                                                                               # but avoid enquoting their usage inside sentences (where they aren't considered boolean)
-    $yaml_text =~ s{(^(?![ -]*sentence)[^:]+:\s*)(on|off|yes|no)(\s*(?:,|$))}{$1'$2'$3}mg;
-    $yaml_text =~ s{(^[^:]+:\s*)(on|off|yes|no)(\s*$)}{$1'$2'$3}mg;
+    $yaml_text =~ s{(^(?![ -]*sentence)[^:]+:\s*)(on|off|yes|no)(\s*(?:,|$))}{$1'$2'$3}mgi;
+    $yaml_text =~ s{(^[^:]+:\s*)(on|off|yes|no)(\s*$)}{$1'$2'$3}mgi;
 
     # output the result
 

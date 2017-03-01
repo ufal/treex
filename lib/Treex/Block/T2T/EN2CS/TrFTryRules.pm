@@ -114,7 +114,9 @@ sub formeme_for_tnode {
         return 'v:aby+fin';
     }
 
-    return 'v:zda+fin' if ( ($en_parent->t_lemma // '') eq 'check' and $en_formeme eq 'v:if+fin' );
+    my $en_parent_lemma = $en_parent->t_lemma // '';
+    return 'v:zda+fin' if $en_parent_lemma eq 'check' && $en_formeme eq 'v:if+fin';
+    return 'v:inf' if $en_formeme eq 'v:to+inf' && $en_parent_lemma eq 'need';
 
     return $QUICKFIX_TRANSLATION_OF{$en_formeme};
 }

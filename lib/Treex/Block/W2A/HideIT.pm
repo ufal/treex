@@ -3,6 +3,19 @@ use Moose;
 use Treex::Core::Common;
 extends 'Treex::Core::Block';
 
+has use_alphabetic_indexes => ( is => 'rw', isa => 'Bool', default => 0 );
+my @alphabet = ("aa".."zz");
+
+sub index {
+    my ($self, $index) = @_;
+
+    if ($self->use_alphabetic_indexes) {
+        return $alphabet[$index];
+    } else {
+        return $index;
+    }
+}
+
 sub process_zone {
     my ($self, $zone) = @_;
     my ($changed_sentence, $entities_ref) = $self->substitute_entities($zone->sentence);
@@ -29,15 +42,15 @@ sub substitute_entities {
   #$sentence =~ s|(?<!\s)(https?://)| $1|g
   #$sentence =~ s/(["<>{}“”«»–|—„‚‘]|\[|\]|``|\'\'|‘‘|\^)/ $1 /g;
   my $quotes = [
-    {start => '"', end =>'"'}, 
-    {start => "'", end =>"'"}, 
-    {start => '“', end =>'”'}, 
+    {start => '"', end =>'"'},
+    {start => "'", end =>"'"},
+    {start => '“', end =>'”'},
     {start => '«', end =>'»'},
     {start => '„', end =>'“'},
-    {start => '‚', end =>'‘'},    
+    {start => '‚', end =>'‘'},
     {start => '``', end =>'``'}
   ];
-  log_debug "Collecting cmds...\n";  
+  log_debug "Collecting cmds...\n";
   foreach my $quote (@$quotes){
     my $start = $quote->{start};
     my $end = $quote->{end};
@@ -53,12 +66,13 @@ sub substitute_entities {
       my $cmdString = $3;
       push(@commands, $cmdString);
       log_debug "Cmd: $cmdString\n";
-    }  
+    }
   }
   $sentence = $self->_mark_urls($sentence);
-  while($sentence =~ s/(<IT type=".*?">.*?<\/IT>)/xxxURLxxx/){
-    push(@urls, $1);
-    #log_debug "Entity: $2\n";
+  while($sentence =~ s{(<IT type=".*?">.*?</IT>|https?://\S*)}{xxxURLxxx}){
+    my $found = $1;
+    $found =~ s{^(http\S+)}{<IT type="url">$1</IT>};
+    push(@urls, $found);
   }
   while($sentence =~  s/([\w0-9._%+-]+@[^\s]+?)(\s)/xxxMAILxxx$2/){
   # This wold be more strict regexp for emails
@@ -76,7 +90,7 @@ sub substitute_entities {
   my $count = 1;
   foreach my $posible_path (@possible_paths){
     if (not (scalar split (/\s/, $posible_path) > scalar split (/\\/, $posible_path))) {
-      my $replace = "xxxUPATH" . $count . "xxx";
+      my $replace = "xxxUPATH" . $self->index($count) . "xxx";
       $sentence =~ s/\Q$posible_path\E/$replace/;
       $upaths{$replace} = $posible_path;
       $count++;
@@ -94,7 +108,7 @@ sub substitute_entities {
   $count = 1;
   foreach my $posible_path (@possible_paths){
     if (not (scalar split (/\s/, $posible_path) > scalar split (/\\/, $posible_path))) {
-      my $replace = "xxxWPATH" . $count . "xxx";
+      my $replace = "xxxWPATH" . $self->index($count) . "xxx";
       $sentence =~ s/\Q$posible_path\E/$replace/;
       $wpaths{$replace} = $posible_path;
       $count++;
@@ -105,7 +119,7 @@ sub substitute_entities {
   $count = 1;
   foreach my $posible_file (@possible_filenames){
     if (length $posible_file > 4) {
-      my $replace = "xxxPFILENAME" . $count . "xxx";
+      my $replace = "xxxPFILENAME" . $self->index($count) . "xxx";
       $sentence =~ s/$posible_file/$replace/;
       $files{$replace} = $posible_file;
       $count++;
@@ -119,7 +133,7 @@ sub substitute_entities {
     #log_debug "Entity: $2\n";
   #}
   if (scalar @urls > 0){
-    log_debug "In $sentence:\nFound urls:", join("\t", @urls), "\n";  
+    log_debug "In $sentence:\nFound urls:", join("\t", @urls), "\n";
     #die;
   }
   return ($sentence, {entities=> \@entities, commands=> \@commands, urls => \@urls, mails => \@mails, upaths => \%upaths, wpaths => \%wpaths, files => \%files});
@@ -158,7 +172,7 @@ Named entites from the IT domain (URLs, emails, Unix commands, Windows/Unix path
 are heuristically (based on quotes etc.) detected in C<$zone->sentence>
 and replaced with placeholders I<xxxURLxxx>, I<xxxMAILxxx> etc.
 The original sentence is backed up in C<$bundle->wild->{original_sentence}>
-and the extracted entites are stored in  C<$bundle->wild->{entites}>. 
+and the extracted entites are stored in  C<$bundle->wild->{entites}>.
 
 =head1 AUTHOR
 

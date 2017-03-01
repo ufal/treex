@@ -6,6 +6,22 @@ use Treex::Core::Common;
 
 extends 'Treex::Block::T2T::FixGrammatemesAfterTransfer';
 
+has domain => (
+     is => 'ro',
+     isa => enum( [qw(general IT)] ),
+     documentation => 'domain of the input texts',
+);
+
+override '_fix_tense' => sub {
+    my ( $self, $en_t_node, $cs_t_node ) = @_;
+
+    # Future tense is not common in the IT domain.
+    if ( $self->domain eq 'IT' && ($en_t_node->gram_tense||'') eq 'post'){
+        $en_t_node->set_gram_tense('sim');
+    }
+    return;
+};
+
 override '_fix_negation' => sub {
 
     my ( $self, $en_t_node, $cs_t_node ) = @_;
@@ -91,7 +107,7 @@ override '_fix_number' => sub {
     {
         $en_t_node->set_gram_number('sg');
     }
-    
+
     if ( $en_tlemma =~ /^(fish|sheep|information|percent)$/ ){
         $en_t_node->set_gram_number('sg');
     }
@@ -111,7 +127,7 @@ override '_fix_degcmp' => sub {
         or ( $en_tlemma eq 'increasingly' and $cs_tlemma eq 'daleko' )
         or ( $en_tlemma =~ /^first/ and $cs_tlemma =~ /^brz/ )
         or ( $en_tlemma eq 'top' and $cs_tlemma eq 'dobrý' )
-        or ( $en_tlemma eq 'elderly' and $cs_tlemma eq 'starý' ) 
+        or ( $en_tlemma eq 'elderly' and $cs_tlemma eq 'starý' )
         )
     {
         $t_node->set_gram_degcmp('pos');
@@ -127,7 +143,7 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::T2T::CS2EN::FixGrammatemesAfterTransfer
 
@@ -135,7 +151,7 @@ Treex::Block::T2T::CS2EN::FixGrammatemesAfterTransfer
 
 Handle necessary changes in grammatemes after transfer.
 
-=head1 AUTHORS 
+=head1 AUTHORS
 
 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 

@@ -212,12 +212,12 @@ sub _build_parser {
 
 sub _build_cache {
     my $self = shift;
-    
+
     if ( $self->runner && $self->runner->cache ) {
-        
+
         require Treex::Core::CacheBlock;
         require Treex::Tool::Memcached::Memcached;
-        
+
         return Treex::Tool::Memcached::Memcached::get_connection(
             "documents-cache"
         );
@@ -417,7 +417,8 @@ sub _run_with_cache {
             if ( $process == 1 ) {
                 log_info "Applying block $block_number/$number_of_blocks " . ref($block);
 
-                $block->process_start if ( !$block->is_started );
+                $block->process_start if !$block->is_started;
+                $block->_set_is_started(1);
 
                 #log_info("Document-hash: " . $document->get_hash());
                 $skip_from = $block_number + 1;
@@ -527,7 +528,8 @@ sub start {
 
     log_info "Applying process_start";
     foreach my $block ( @{ $self->loaded_blocks } ) {
-        $block->process_start() if ( !$block->is_started );
+        $block->process_start() if !$block->is_started;
+        $block->_set_is_started(1);
     }
 
     return;

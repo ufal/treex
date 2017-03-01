@@ -68,7 +68,7 @@ sub _convert_ttree {
             'dispmod', 'iterativeness', 'indeftype', 'person', 'numertype', 'politeness', 'negation', 'typgroup',
         );
         my @list_attribs = (
-            'compl.rf', 'coref_text.rf', 'coref_text', 'coref_gram.rf', 'a/aux.rf',
+            'compl.rf', 'coref_text.rf', 'coref_text', 'coref_gram.rf', 'bridging', 'a/aux.rf',
         );
 
         $self->_copy_attr( $pml_node, $treex_node, 'deepord', 'ord' );
@@ -134,6 +134,11 @@ sub _convert_atree {
     foreach my $pml_child ( $pml_node->children ) {
         my $treex_child = $treex_node->create_child;
         $self->_convert_atree( $pml_child, $treex_child );
+    }
+    # Unfortunately it is not guaranteed that the ord values in the input tree form a 1..N sequence.
+    if($treex_node->is_root())
+    {
+        $treex_node->_normalize_node_ordering();
     }
     return;
 }

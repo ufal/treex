@@ -66,6 +66,9 @@ sub node_style {
 sub _anode_style {
     my ( $self, $node ) = @_;
     my $linestyle = $node->wild->{changed} ? '#{Line-width:5}' : '';
+    if (defined $node->wild->{edgecolor}) {
+        $linestyle .= '#{Line-fill:' . $node->wild->{edgecolor} . '}';
+    }
     $linestyle .= '#{Line-width:5}' if $node->wild->{joined};
     $linestyle .= '#{Line-fill:#ff0000}' if $node->wild->{unchangeable};
     if ( $node->clause_number ) {

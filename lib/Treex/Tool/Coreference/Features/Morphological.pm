@@ -1,3 +1,7 @@
+##################################################
+########### THIS MODULE IS NEVER USED ############
+############### SHOULD BE REMOVED ################
+##################################################
 package Treex::Tool::Coreference::Features::Morphological;
 
 use Moose;

@@ -20,21 +20,31 @@ sub process_atree
         return;
     }
     # Node cannot be labeled AuxK if it is not the last node.
-    foreach my $node (@nodes)
+    # Exception: multiple punctuation symbols at the end of the sentence, such as period + quotation mark, or three dots.
+    for(my $i = 0; $i<=$#nodes; $i++)
     {
-        if($node->deprel() eq 'AuxK' && $node != $last_node)
+        if($nodes[$i]->deprel() eq 'AuxK' && $nodes[$i] != $last_node)
         {
-            $self->complain($node);
+            # Do not complain if all subsequent nodes are punctuation.
+            for(my $j = $i+1; $j<=$#nodes; $j++)
+            {
+                if(!defined($nodes[$j]->deprel()) || $nodes[$j]->deprel() !~ m/^Aux[GKX]$/)
+                {
+                    $self->complain($nodes[$i]);
+                    last;
+                }
+            }
         }
     }
     # Node cannot be labeled AuxX or AuxG if it is the last node.
-    if($last_node->deprel() =~ m/^Aux[GX]$/)
+    # Exception: quotation marks and brackets.
+    if($last_node->deprel() =~ m/^Aux[GX]$/ && $last_node->form() !~ m/["”“'’‘\)\]\}]/)
     {
         $self->complain($last_node);
     }
 }
 
-# (C) 2012 Jindřich Libovický <jlibovicky@gmail.com>
-# Copyright 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
+# Copyright © 2012 Jindřich Libovický <jlibovicky@gmail.com>
+# Copyright © 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 1;

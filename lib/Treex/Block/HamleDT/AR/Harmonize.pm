@@ -50,6 +50,105 @@ sub get_input_tag_for_interset
 
 
 #------------------------------------------------------------------------------
+# Copies to wild/misc attributes that we want to preserve in the CoNLL-U file.
+# Perhaps this task would be better match for Prague-to-UD conversion but it is
+# specific for PADT and Udep.pm is used for all treebanks.
+#------------------------------------------------------------------------------
+sub fix_morphology
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    # Detect sequences of nodes that share their source surface token.
+    my @fused_indices;
+    for(my $i = 0; $i < $#nodes; $i++)
+    {
+        my $wrf0 = $nodes[$i]->wild()->{wrf} // '';
+        my $wrf1 = $nodes[$i+1]->wild()->{wrf} // '';
+        log_warn('Missing reference to surface token') if($wrf0 eq '' || $wrf1 eq '');
+        if($wrf1 eq $wrf0)
+        {
+            push(@fused_indices, $i) if(scalar(@fused_indices)==0);
+            push(@fused_indices, $i+1);
+        }
+        else
+        {
+            if(scalar(@fused_indices)>1)
+            {
+                # We currently set the following wild attributes for fused nodes (see Write::CoNLLU):
+                # fused = start|middle|end
+                # fused_end = ord of the last node
+                # fused_form
+                for(my $j = 0; $j <= $#fused_indices; $j++)
+                {
+                    my $wild = $nodes[$fused_indices[$j]]->wild();
+                    $wild->{fused} = ($j==0) ? 'start' : ($j==$#fused_indices) ? 'end' : 'middle';
+                    $wild->{fused_end} = $nodes[$fused_indices[-1]]->ord();
+                    $wild->{fused_form} = $wild->{aform};
+                    # We will make the unvocalized surface forms the main forms of all nodes, except for syntactic words that are fused on surface.
+                    # For the syntactic words we only apply a primitive stripping of diacritical marks.
+                    $wild->{aform} = $nodes[$fused_indices[$j]]->form();
+                    $wild->{aform} =~ s/[\x{64B}-\x{652}]//g;
+                }
+            }
+            splice(@fused_indices);
+        }
+    }
+    # Copy attributes that shall be preserved to MISC.
+    foreach my $node (@nodes)
+    {
+        my $wild = $node->wild();
+        my @misc;
+        if(defined($wild->{misc}))
+        {
+            @misc = split(/\|/, $wild->{misc});
+        }
+        # Aform is the original unvocalized surface form. It should appear as FORM in the CoNLL-U file. Except for parts of fused forms where only vocalized form is available.
+        # Vform is the vocalized lexical form assigned during morphological analysis. It is a MISC attribute. But for unknown words the attribute contains only a copy of the surface form.
+        @misc = $self->add_misc('Vform', $node->form());
+        if(defined($wild->{aform}))
+        {
+            $node->set_form($wild->{aform});
+        }
+        if(defined($wild->{gloss}))
+        {
+            @misc = $self->add_misc('Gloss', $wild->{gloss}, @misc);
+        }
+        if(defined($wild->{root}))
+        {
+            @misc = $self->add_misc('Root', $wild->{root}, @misc);
+        }
+        if(scalar(@misc)>0)
+        {
+            $wild->{misc} = join('|', @misc);
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Adds an attribute-value pair to the list of MISC attributes for the last
+# column of the CoNLL-U file.
+#------------------------------------------------------------------------------
+sub add_misc
+{
+    my $self = shift;
+    my $misc_name = shift;
+    my $misc_value = shift;
+    my @misc = @_;
+    # Escape special characters & and | (only in the value; we assume that the name is safe).
+    $misc_value =~ s/&/&amp;/g;
+    $misc_value =~ s/\|/&verbar;/g;
+    # We assume that all MISC attributes are unique. Erase previous value if any.
+    @misc = grep {!m/^$misc_name=/} (@misc);
+    push(@misc, "$misc_name=$misc_value");
+    return @misc;
+}
+
+
+
+#------------------------------------------------------------------------------
 # Adjusts dependency relation labels.
 # less /net/data/conll/2007/ar/doc/README
 # http://ufal.mff.cuni.cz/pdt2.0/doc/manuals/cz/a-layer/html/ch03s02.html

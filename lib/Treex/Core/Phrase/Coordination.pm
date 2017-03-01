@@ -10,13 +10,19 @@ extends 'Treex::Core::Phrase::BaseNTerm';
 
 
 
+# We will keep the array of conjuncts (and of coordinators and punctuation symbols) ordered at all times.
+# New members are added relatively rarely. But every head() call (which also means every deprel(), node(), ord() etc. call)
+# needs the first conjunct, last coordinator and the like. Thus asking anything means sorting a lot.
+# And if there are many levels of nested coordination, we may not live long enough to see the output.
+
 has '_conjuncts_ref' =>
 (
     is       => 'ro',
     isa      => 'ArrayRef[Treex::Core::Phrase]',
     default  => sub { [] },
     documentation => 'The public should not access directly the array reference. '.
-        'They may use the public method conjuncts() to get the list.'
+        'They may use the public method conjuncts() to get the list. '.
+        'The array must be always ordered according to ord().'
 );
 
 has '_coordinators_ref' =>
@@ -26,7 +32,8 @@ has '_coordinators_ref' =>
     default  => sub { [] },
     documentation => 'Coordinating conjunctions and similarly working words but not punctuation. '.
         'The public should not access directly the array reference. '.
-        'They may use the public method coordinators() to get the list.'
+        'They may use the public method coordinators() to get the list. '.
+        'The array must be always ordered according to ord().'
 );
 
 has '_punctuation_ref' =>
@@ -36,7 +43,8 @@ has '_punctuation_ref' =>
     default  => sub { [] },
     documentation => 'Punctuation between conjuncts. '.
         'The public should not access directly the array reference. '.
-        'They may use the public method punctuation() to get the list.'
+        'They may use the public method punctuation() to get the list. '.
+        'The array must be always ordered according to ord().'
 );
 
 has 'head_rule' =>
@@ -113,6 +121,7 @@ sub BUILD
     }
     # Make sure that all core children refer to me as their parent.
     my @children = $self->core_children();
+    my %ord;
     foreach my $child (@children)
     {
         if(defined($child->parent()))
@@ -120,7 +129,12 @@ sub BUILD
             log_fatal("The core child already has another parent");
         }
         $child->_set_parent($self);
+        $ord{$child} = $child->ord();
     }
+    # Make sure that the lists of core children are sorted.
+    @{$self->{_conjuncts_ref}} = sort {$ord{$a} <=> $ord{$b}} (@{$self->{_conjuncts_ref}});
+    @{$self->{_coordinators_ref}} = sort {$ord{$a} <=> $ord{$b}} (@{$self->{_coordinators_ref}});
+    @{$self->{_punctuation_ref}} = sort {$ord{$a} <=> $ord{$b}} (@{$self->{_punctuation_ref}});
     # Take care of the initial deprel setting. Deprel is stored at individual
     # nodes, so make sure that the nodes responsible for storing the deprel
     # of the entire coordination (according to the current annotation style)
@@ -155,7 +169,8 @@ sub conjuncts
     my $self = shift;
     log_fatal('Dead') if($self->dead());
     my @conjuncts = @{$self->_conjuncts_ref()};
-    return $self->_order_required(@_) ? $self->order_phrases(@conjuncts) : @conjuncts;
+    # No need to ask about _order_required() and to order_phrases(); conjuncts are pre-ordered.
+    return @conjuncts;
 }
 
 
@@ -196,6 +211,13 @@ sub add_conjunct
     # Add it to my conjuncts.
     my $cnj = $self->_conjuncts_ref();
     push(@{$cnj}, $new_conjunct);
+    # Make sure that the lists of core children are sorted.
+    my %ord;
+    foreach my $conjunct (@{$cnj})
+    {
+        $ord{$conjunct} = $conjunct->ord();
+    }
+    @{$cnj} = sort {$ord{$a} <=> $ord{$b}} (@{$cnj});
 }
 
 
@@ -211,7 +233,8 @@ sub coordinators
     my $self = shift;
     log_fatal('Dead') if($self->dead());
     my @coordinators = @{$self->_coordinators_ref()};
-    return $self->_order_required(@_) ? $self->order_phrases(@coordinators) : @coordinators;
+    # No need to ask about _order_required() and to order_phrases(); coordinators are pre-ordered.
+    return @coordinators;
 }
 
 
@@ -252,6 +275,13 @@ sub add_coordinator
     # Add it to my coordinators.
     my $cnj = $self->_coordinators_ref();
     push(@{$cnj}, $new_coordinator);
+    # Make sure that the lists of core children are sorted.
+    my %ord;
+    foreach my $coordinator (@{$cnj})
+    {
+        $ord{$coordinator} = $coordinator->ord();
+    }
+    @{$cnj} = sort {$ord{$a} <=> $ord{$b}} (@{$cnj});
 }
 
 
@@ -267,7 +297,8 @@ sub punctuation
     my $self = shift;
     log_fatal('Dead') if($self->dead());
     my @punctuation = @{$self->_punctuation_ref()};
-    return $self->_order_required(@_) ? $self->order_phrases(@punctuation) : @punctuation;
+    # No need to ask about _order_required() and to order_phrases(); punctuation children are pre-ordered.
+    return @punctuation;
 }
 
 
@@ -308,6 +339,13 @@ sub add_punctuation
     # Add it to my coordinators.
     my $cnj = $self->_punctuation_ref();
     push(@{$cnj}, $new_punctuation);
+    # Make sure that the lists of core children are sorted.
+    my %ord;
+    foreach my $p (@{$cnj})
+    {
+        $ord{$p} = $p->ord();
+    }
+    @{$cnj} = sort {$ord{$a} <=> $ord{$b}} (@{$cnj});
 }
 
 
@@ -324,18 +362,20 @@ sub head
     if($rule eq 'first_conjunct')
     {
         # There is always at least one conjunct.
-        return ($self->conjuncts('ordered' => 1))[0];
+        # The list of conjuncts is always ordered.
+        return ($self->conjuncts())[0];
     }
     elsif($rule eq 'last_coordinator')
     {
         # It is not guaranteed that there are coordinators or punctuation.
-        my @coordinators = $self->coordinators('ordered' => 1);
+        # But it is guaranteed that the list of coordinators is always ordered, so we do not need to ask for 'ordered'=>1 now. (Same for punctuation.)
+        my @coordinators = $self->coordinators();
         if(scalar(@coordinators) > 0)
         {
             return $coordinators[-1];
         }
         # No coordinators found. What about punctuation?
-        my @punctuation = $self->punctuation('ordered' => 1);
+        my @punctuation = $self->punctuation();
         if(scalar(@punctuation) > 0)
         {
             return $punctuation[-1];

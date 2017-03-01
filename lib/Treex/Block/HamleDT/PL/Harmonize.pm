@@ -29,18 +29,14 @@ my $debug = 0;
 #   - handling of complements of all types (incl. subordination)
 #   - NumArgs
 #   - PrepArgs (seem to be working quite well)
-#   - eliminate 'NR's
-#   - tabularize
 # - improve coordination restructuring
 #   (in particular for the sentence-level coordination with no 'pred' deprel)
-# - test -> solve remaining problems
 #------------------------------------------------------------------------------
 sub process_zone
 {
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
-    $self->fix_morphology($root);
     # Phrase-based implementation of tree transformations (5.3.2016).
     my $builder = new Treex::Tool::PhraseBuilder::AlpinoToPrague
     (
@@ -87,14 +83,120 @@ sub fix_morphology
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $form = $node->form();
+        my $form = $node->form() // '';
+        my $lemma = $node->lemma() // '';
         my $iset = $node->iset();
+        # The source tagset does not distinguish between common and proper nouns.
+        if($node->is_noun() && $lemma ne lc($lemma))
+        {
+            $iset->add('nountype' => 'prop');
+        }
+        elsif($form =~ m/^by$/i && $node->is_particle())
+        {
+            $iset->set_hash({'pos' => 'verb', 'verbtype' => 'aux', 'aspect' => 'imp', 'verbform' => 'fin', 'mood' => 'cnd'});
+            $node->set_lemma('być');
+        }
         # The correct form is 'się' but due to typos in the corpus we have to
         # look for 'sie' and 'sia' as well.
-        if(defined($form) && $form =~ m/^si[ęea]$/i && $node->is_particle())
+        elsif($form =~ m/^si[ęea]$/i && $node->is_particle())
         {
             $iset->add('pos' => 'noun', 'prontype' => 'prs', 'reflex' => 'reflex');
             $iset->set('typo' => 'typo') if($form =~ m/^si[ea]$/i);
+        }
+        # Demonstrative pronouns and determiners.
+        elsif($lemma eq 'to' && $node->is_noun())
+        {
+            # Do not touch gender, number and case. Forms: tego, temu, to, tym.
+            $iset->add('pos' => 'noun', 'prontype' => 'dem');
+        }
+        elsif($lemma =~ m/^(ten|taki|tamten|ów)$/ && $node->is_adjective())
+        {
+            # Forms: ten, ta, to, ci, tą, te, tę, tego, tej, temu, tych, tym, tymi.
+            # Forms: taki, taka, takie, tacy, takiego, takiej, taką, takich, takim, takimi.
+            $iset->add('pos' => 'adj', 'prontype' => 'dem');
+        }
+        elsif($lemma =~ m/^(kto|co)$/ && $node->is_noun())
+        {
+            # Forms: kto, kogo, komu, kim.
+            # Forms: co, czego, czemu, czym.
+            $iset->add('pos' => 'noun', 'prontype' => 'int|rel');
+        }
+        elsif($lemma =~ m/^(jaki|który|czyj)$/ && $node->is_adjective())
+        {
+            # Forms: jaki, jaka, jakie, jacy, jakiego, jakiej, jaką, jakich, jakim, jakimi.
+            # Forms: który, która, które, którzy, którego, któremu, której, którą, których, którym, którymi.
+            $iset->add('pos' => 'adj', 'prontype' => 'int|rel');
+        }
+        elsif($lemma =~ m/^(ktoś|coś|ktokolwiek|cokolwiek)$/ && $node->is_noun())
+        {
+            # Forms: ktoś, kogoś, komuś, kimś.
+            # Forms: coś, czegoś, czemuś, czymś.
+            # Forms: cokolwiek.
+            $iset->add('pos' => 'adj', 'prontype' => 'ind');
+        }
+        elsif($lemma =~ m/^(jakiś|któryś|niejaki|niektóry|jakikolwiek|którykolwiek)$/ && $node->is_adjective())
+        {
+            $iset->add('pos' => 'adj', 'prontype' => 'ind');
+        }
+        elsif($lemma =~ m/^kilka/ && $node->is_numeral())
+        {
+            # kilka = how many; kilkaset = how many hundreds etc.
+            # Forms: kilka, kilku, kilkoma.
+            $iset->add('pos' => 'num', 'numtype' => 'card', 'prontype' => 'ind');
+        }
+        elsif($lemma =~ m/^(wszystko|wszyscy)$/ && $node->is_noun())
+        {
+            # Forms: wszystko, wszystkiego, wszystkim.
+            $iset->add('pos' => 'noun', 'prontype' => 'tot');
+        }
+        elsif($lemma =~ m/^(każdy|wszystek|wszelki)$/ && $node->is_adjective())
+        {
+            # Forms: każdy, każda, każde, każdego, każdemu, każdym, każdej, każdą.
+            $iset->add('pos' => 'adj', 'prontype' => 'tot');
+        }
+        elsif($lemma =~ m/^(nikt|nic)$/ && $node->is_noun())
+        {
+            # Forms: nikt, nikogo, nikomu, nikim.
+            # Forms: nic, niczego, niczemu, niczym.
+            $iset->add('pos' => 'noun', 'prontype' => 'neg');
+        }
+        elsif($lemma =~ m/^(żaden)$/ && $node->is_adjective())
+        {
+            # Forms: żaden, żadna, żadne, żadnego, żadnemu, żadnym, żadnej, żadną.
+            $iset->add('pos' => 'adj', 'prontype' => 'neg');
+        }
+        # L-participles (past tense) should be participles, not finite verbs, because they sometimes combine with finite auxiliary verbs
+        # and because they inflect for gender and not for person.
+        # Note that after this step we will not be able to distinguish the l-participles from adjectival active past participles (-wszy),
+        # unless we convert the latter to adjectives. In the long term we want to make them adjectives but it does not matter now because
+        # they do not occur in the data.
+        elsif($node->is_finite_verb() && $node->is_past())
+        {
+            $iset->add('verbform' => 'part', 'mood' => '', 'voice' => 'act');
+        }
+        # Verbal nouns should be nouns, not verbs.
+        elsif($node->is_verb() && $node->is_gerund())
+        {
+            $iset->add('pos' => 'noun');
+            # That was the easy part. But we also have to replace the verbal lemma (infinitive) by the nominal lemma (nominative singular).
+            # The endings are -[nc]ie/ia/iu/iem/iom/iach/iami; except for genitive plural, where we have just -ń.
+            my $newlemma = lc($form);
+            if($node->is_genitive() && $node->is_plural())
+            {
+                $newlemma =~ s/ń$/nie/;
+                log_warn("Unsure about lemma of verbal noun: genitive plural is '$form', suggested lemma is '$lemma'.");
+            }
+            else
+            {
+                $newlemma =~ s/i[eauo](m|ch|mi)?$/ie/;
+            }
+            # Negation.
+            if($newlemma =~ m/^nie/ && $lemma !~ m/^nie/)
+            {
+                $newlemma =~ s/^nie//;
+                $iset->add('negativeness' => 'neg');
+            }
+            $node->set_lemma($newlemma);
         }
         # Adjust the tag to the modified values of Interset.
         $self->set_pdt_tag($node);

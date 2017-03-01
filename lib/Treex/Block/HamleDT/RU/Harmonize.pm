@@ -569,6 +569,19 @@ sub convert_deprels
         {
             $deprel = 'ExD';
         }
+        # punct is a deprel that we introduce on reading Syntagrus, when creating nodes for punctuation.
+        elsif ($deprel eq 'punct')
+        {
+            my $form = $node->form() // '';
+            if($form eq ',')
+            {
+                $deprel = 'AuxX';
+            }
+            else
+            {
+                $deprel = 'AuxG';
+            }
+        }
         else
         {
             log_warn("Unknown dependency relation '$deprel'");

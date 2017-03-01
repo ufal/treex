@@ -34,6 +34,7 @@ sub process_zone
     my $self   = shift;
     my $zone   = shift;
     my $root = $zone->get_atree();
+    my @nodes = $root->get_descendants();
 
     # Adjust the sentence id that will be eventually printed in the CoNLL-U file.
     # Now we probably have something like "a_tree-ca-s30-root". Both "a_tree-" and "-root" are superfluous.
@@ -43,13 +44,32 @@ sub process_zone
     $root->set_id($id);
 
     # Convert CoNLL POS tags and features to Interset and PDT if possible.
-    $self->convert_tags( $root );
+    $self->convert_tags($root);
+    $self->fix_morphology($root);
+    foreach my $node (@nodes)
+    {
+        $self->set_pdt_tag($node);
+        # For the case we later access the CoNLL attributes, reset them as well, except for conll/pos, which holds the tag from the source tagset.
+        # (We can still specify other source attributes in Write::CoNLLX and similar blocks.)
+        my $tag = $node->tag(); # now the PDT tag
+        $node->set_conll_cpos(substr($tag, 0, 1));
+        $node->set_conll_feat($node->iset()->as_string_conllx());
+    }
 
     # Conversion from dependency relation tags to afuns (analytical function tags) must be done always
     # and it is almost always treebank-specific (only a few treebanks use the same tagset as the PDT).
-    $root->set_afun('AuxS');
+    $root->set_deprel('AuxS');
     $self->convert_deprels($root);
     $self->fix_annotation_errors($root);
+    # fix_annotation_errors() may have removed nodes so we must acquire a new list of nodes.
+    @nodes = $root->get_descendants();
+    # To avoid any confusion, make sure that 'deprel' is the only attribute bearing the dependency relation label.
+    # Otherwise later changes will break synchronization with 'afun' and 'conll/deprel'.
+    foreach my $node (@nodes)
+    {
+        $node->set_afun(undef);
+        $node->set_conll_deprel(undef);
+    }
 
     # The return value can be used by the overriding methods of subclasses.
     return $root;
@@ -80,14 +100,10 @@ sub convert_tags
             }
         }
         # Now that we have a copy of the original tag, we can convert it.
-        $self->decode_iset( $node );
-        $self->set_pdt_tag( $node );
-        # For the case we later access the CoNLL attributes, reset them as well.
-        # (We can still specify other source attributes in Write::CoNLLX and similar blocks.)
-        my $tag = $node->tag(); # now the PDT tag
-        $node->set_conll_cpos(substr($tag, 0, 1));
+        $self->decode_iset($node);
+        # Keep the original tag as the CoNLL POS attribute. The Write::CoNLLU block will print it alongside the universal POS tag.
+        # Do not do this before decoding Interset! The current value of conll/pos may be part of its input!
         $node->set_conll_pos($origtag);
-        $node->set_conll_feat($node->iset()->as_string_conllx());
     }
 }
 
@@ -166,6 +182,24 @@ sub set_upos_tag
     log_fatal("Undefined interset feature structure") if(!defined($f));
     my $upos = $f->get_upos();
     $node->set_tag($upos);
+}
+
+
+
+#------------------------------------------------------------------------------
+# A method to target known divergences in lemma, part of speech and
+# morphological features. This could include annotation errors as well as
+# differences by design. Unlike fix_annotation_errors() (see below), this
+# method is called before converting the dependency relation labels (but after
+# decoding the original tags into Interset features). This ancestor
+# implementation is empty; the real errors must be defined for each harmonized
+# treebank separately.
+#------------------------------------------------------------------------------
+sub fix_morphology
+{
+    my $self = shift;
+    my $root = shift;
+    return 1;
 }
 
 
@@ -250,14 +284,14 @@ sub fix_annotation_errors
 
 
 #------------------------------------------------------------------------------
-# Assigns default afuns. To be used if a node does not have a valid afun value
-# and we cannot tell anything more precise about the node.
+# Assigns default Prague deprels. To be used if a node does not have a valid
+# deprel value and we cannot tell anything more precise about the node.
 #------------------------------------------------------------------------------
-sub set_default_afun
+sub set_default_deprel
 {
     my $self = shift;
     my $node = shift;
-    my $afun;
+    my $deprel;
     my $parent = $node->parent();
     if($parent->is_root())
     {
@@ -265,11 +299,11 @@ sub set_default_afun
         # There could also be coordination of verbal predicates (possibly nested coordination) but we do not check it at the moment. ###!!!
         if($node->is_verb())
         {
-            $afun = 'Pred';
+            $deprel = 'Pred';
         }
         else
         {
-            $afun = 'ExD';
+            $deprel = 'ExD';
         }
     }
     else
@@ -277,16 +311,16 @@ sub set_default_afun
         # Nominal nodes are modified by attributes, verbal nodes by objects or adverbials.
         # (Adverbials are default because there are typically fewer constraints on them.)
         # Again, we do not check whether the parent is a coordination of verbs. ###!!!
-        if($parent->is_verb())
+        if($parent->is_verb() || $parent->is_adverb())
         {
-            $afun = 'Adv';
+            $deprel = 'Adv';
         }
         else
         {
-            $afun = 'Atr';
+            $deprel = 'Atr';
         }
     }
-    $node->set_afun($afun);
+    $node->set_deprel($deprel);
 }
 
 
@@ -799,7 +833,8 @@ sub log_sentence
 
     # get_position() returns numbers from 0 but Tred numbers sentences from 1.
     my $i = $root->get_bundle()->get_position() + 1;
-    log_info( "\#$i " . $root->get_zone()->sentence() );
+    my $sentence = $root->get_zone()->sentence() // '';
+    log_info( "\#$i $sentence" );
 }
 
 
@@ -817,6 +852,37 @@ sub sentence_contains
     my $query    = shift;
     my $sentence = $node->get_zone()->sentence();
     return $sentence =~ m/$query/;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Collects all nodes in a subtree of a given node. Useful for fixing known
+# annotation errors, see also get_node_spanstring(). Returns ordered list.
+#------------------------------------------------------------------------------
+sub get_node_subtree
+{
+    my $self = shift;
+    my $node = shift;
+    my @nodes = $node->get_descendants({'add_self' => 1, 'ordered' => 1});
+    return @nodes;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Collects word forms of all nodes in a subtree of a given node. Useful to
+# uniquely identify sentences or their parts that are known to contain
+# annotation errors. (We do not want to use node IDs because they are not fixed
+# enough in all treebanks.) Example usage:
+# if($self->get_node_spanstring($node) =~ m/^peça a URV em a sua mesada$/)
+#------------------------------------------------------------------------------
+sub get_node_spanstring
+{
+    my $self = shift;
+    my $node = shift;
+    my @nodes = $self->get_node_subtree($node);
+    return join(' ', map {$_->form() // ''} (@nodes));
 }
 
 

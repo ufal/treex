@@ -12,16 +12,22 @@ has '_abstractions' => ( isa => 'ArrayRef', is => 'rw', default => sub { [] } );
 
 has 'xs_instead' => ( isa => 'Str', is => 'rw', default => '' );
 
+has 'skip_factor' => ( isa => 'Int', is => 'rw', default => 1 );
 
 sub process_start {
     my ($self) = @_;
 
     open( my $fh, '<:utf8', ( $self->abstraction_file ) );
+    my $ctr = 0;
     while ( my $line = <$fh> ) {
-        chomp $line;
-        push @{ $self->_abstractions }, $line;
+        if ( $ctr % $self->skip_factor == 0 ) {
+            chomp $line;
+            push @{ $self->_abstractions }, $line;
+        }
+        ++$ctr;
     }
     close($fh);
+    return;
 }
 
 sub _get_next_abstraction {
@@ -69,7 +75,7 @@ sub process_ttree {
 
         $tnode->set_t_lemma($value);
     }
-
+    return;
 }
 
 1;
@@ -100,6 +106,12 @@ separated by spaces, one sentence per line).
 
 Replace all the de-abstracted names with a generic 'X' instead of the actual value.
 
+=item skip_factor
+
+Use only every C<skip_factor>-th line from the abstraction file (useful if the abstraction file
+specifies abstractions for C<n> synonymous paraphrases in a row, but only one realization is 
+generated).
+
 =back
 
 =head1 AUTHOR
@@ -108,7 +120,7 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2014-2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 

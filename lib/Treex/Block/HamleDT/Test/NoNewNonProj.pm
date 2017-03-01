@@ -37,11 +37,27 @@ sub process_bundle
             my $newn = scalar(@new_nodes);
             log_warning("The new tree does not have the same number of nodes as the old one.") if($newn!=$oldn);
             my $n = $oldn<=$newn ? $oldn : $newn;
+            my @oldnprj;
+            my @newnprj;
+            my $noldnprj = 0;
+            my $nnewnprj = 0;
             for(my $i = 0; $i<$n; $i++)
             {
-                if(!$old_nodes[$i]->is_nonprojective() && $new_nodes[$i]->is_nonprojective())
+                $oldnprj[$i] = $old_nodes[$i]->is_nonprojective();
+                $newnprj[$i] = $new_nodes[$i]->is_nonprojective();
+                $noldnprj++ if($oldnprj[$i]);
+                $nnewnprj++ if($newnprj[$i]);
+            }
+            # Sometimes a transformation just moves an existing nonprojectivity to a different node.
+            # Report new nonprojectivities only if the total number of nonprojective edges in the tree has increased.
+            if($nnewnprj > $noldnprj)
+            {
+                for(my $i = 0; $i<$n; $i++)
                 {
-                    $self->complain($new_nodes[$i]);
+                    if(!$oldnprj[$i] && $newnprj[$i])
+                    {
+                        $self->complain($new_nodes[$i]);
+                    }
                 }
             }
         }

@@ -390,7 +390,7 @@ sub _run_symal {
     my ( $reverse, $symal_args ) = _parse_dirsym( $sym );
 
     my $symal_outfile = "$mytmpdir/out.$sym";
-    my $symal_infile = $reverse ? "$mytmpdir/out.right" : "$mytmpdir/out.right";
+    my $symal_infile = $reverse ? "$mytmpdir/out.right" : "$mytmpdir/out.left";
 
     # run symal
     log_info "Running symal for symmetrization '$sym'";

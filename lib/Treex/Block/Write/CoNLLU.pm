@@ -1,35 +1,115 @@
 package Treex::Block::Write::CoNLLU;
-
-use strict;
-use warnings;
 use Moose;
 use Lingua::Interset qw(encode);
 use Treex::Core::Common;
 extends 'Treex::Block::Write::BaseTextWriter';
 
-has '+language'                        => ( required => 1 );
-has 'print_id'                         => ( is       => 'ro', isa => 'Bool', default => 1, documentation => 'print sent_id in CoNLL-U comment before each sentence' );
-has 'xpostag'                          => ( is       => 'ro', isa => 'Bool', default => 1, documentation => 'include a treebank-specific tag in the XPOSTAG column?' );
-has 'randomly_select_sentences_ratio'  => ( is       => 'rw', isa => 'Num',  default => 1 );
+has 'print_sent_id'                    => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print sent_id in CoNLL-U comment before each sentence' );
+has 'print_zone_id'                    => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'include zone id in sent_id comment after a slash' );
+has 'print_text'                       => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print sentence text in CoNLL-U comment before each sentence' );
+has 'randomly_select_sentences_ratio'  => ( is => 'rw', isa => 'Num',  default => 1 );
+has 'alignment'                        => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print alignment links in the 9th column' );
+
+# Where to find which CoNLL-U column?
+# All the following parameters can have a special value "0",
+# which means exclude this column (use "_" instead).
+# Otherwise they specify a comma-separated sequnce of attributes (fallbacks)
+# to try and use the first non-empty one.
+# The default values are chosen so they cover several scenarios
+# e.g. (deprel in $node->deprel or $node->conll_deprel or $node->afun).
+# However, when using this block in a given scenario where we know where to find each attribute,
+# it is recommended to override these defaults by explicitly specifying the parameters
+# and using just one item in each sequence.
+# "iset" is a special value which means to use Lingua::Interset::encode('mul::uposf', $node->iset)
+# for extracting UPOS and/or FEATS.
+has 'upos' => ( is => 'ro', default => 'iset', documentation => 'list of node attributes to check when printing the UPOS column' );
+has 'xpos' => ( is => 'ro', default => 'conll/pos,conll/cpos,tag', documentation => 'list of node attributes to check when printing the XPOS column' );
+has 'feats' => ( is => 'ro', default => 'iset,conll/feat', documentation => 'list of node attributes to check when printing the FEATS column' );
+has 'deprel' => ( is => 'ro', default => 'deprel,conll/deprel,afun', documentation => 'list of node attributes to check when printing the DEPREL column' );
 
 has _was => ( is => 'rw', default => sub{{}} );
 
 has '+extension' => ( default => '.conllu' );
 
-sub process_atree
-{
-    my $self = shift;
-    my $tree = shift;
+sub _get_upos {
+    my ($self, $node) = @_;
+    my @attrs = split /,/, $self->upos;
+    foreach my $attr (@attrs) {
+        return '_' if $attr eq '0';
+        # If we ask for UPOS from Interset and the Interset features are empty, we want to (and should!) get the 'X' tag.
+        # Not '_' and not a substitute from the next available attribute (conll/pos etc.) which is not even a valid universal POS tag.
+        if ($attr eq 'iset') {
+            return $node->iset()->get_upos();
+        } else {
+            my $value = $node->get_attr($attr);
+            return $value if defined $value && $value ne '';
+        }
+    }
+    return '_';
+}
+
+sub _get_xpos {
+    my ($self, $node) = @_;
+    my @attrs = split /,/, $self->xpos;
+    foreach my $attr (@attrs) {
+        return '_' if $attr eq '0';
+        my $value = $node->get_attr($attr);
+        return $value if defined $value && $value ne '';
+    }
+    return '_';
+}
+
+sub _get_feats {
+    my ($self, $node) = @_;
+    my @attrs = split /,/, $self->feats;
+    foreach my $attr (@attrs) {
+        return '_' if $attr eq '0';
+        if ($attr eq 'iset') {
+            my $isetfs = $node->iset();
+            if ($isetfs->get_nonempty_features()) {
+                my $upos_features = encode('mul::uposf', $isetfs);
+                my ($upos, $feat) = split(/\t/, $upos_features);
+                return $feat;
+            }
+        } else {
+            my $value = $node->get_attr($attr);
+            return $value if defined $value && $value ne '';
+        }
+    }
+    return '_';
+}
+
+sub _get_deprel {
+    my ($self, $node) = @_;
+    my @attrs = split /,/, $self->deprel;
+    foreach my $attr (@attrs) {
+        return '_' if $attr eq '0';
+        my $value = $node->get_attr($attr);
+        return $value if defined $value && $value ne '';
+    }
+    return '_';
+}
+
+
+sub process_atree {
+    my ($self, $tree) = @_;
+
     # if only random sentences are printed
     return if(rand() > $self->randomly_select_sentences_ratio());
     my @nodes = $tree->get_descendants({ordered => 1});
     # Empty sentences are not allowed.
     return if(scalar(@nodes)==0);
-    # Print sentence ID as a comment before the sentence.
-    # Example: "a-cmpr9406-001-p2s1" is the ID of the a-tree of the first training sentence of PDT, "Třikrát rychlejší než slovo".
-    if ($self->print_id)
-    {
-        print {$self->_file_handle()} ("\# sent_id ", $tree->id(), "\n");
+    # Print sentence (bundle) ID as a comment before the sentence.
+    if ($self->print_sent_id) {
+        my $sent_id = $tree->get_bundle->id;
+        if ($self->print_zone_id) {
+            $sent_id .= '/' . $tree->get_zone->get_label;
+        }
+        print {$self->_file_handle} "# sent_id = $sent_id\n";
+    }
+    if ($self->print_text) {
+        my $text = $tree->get_zone->sentence;
+        print {$self->_file_handle} "# text = $text\n" if defined $text;
     }
     # Print the original CoNLL-U comments for this sentence if present.
     my $comment = $tree->get_bundle->wild->{comment};
@@ -48,6 +128,7 @@ sub process_atree
         {
             my $first_fused_node_ord = $node->ord();
             my $last_fused_node_ord = $wild->{fused_end};
+            my $last_fused_node_no_space_after = 0;
             # We used to save the ord of the last element with every fused element but now it is no longer guaranteed.
             # Let's find out.
             if(!defined($last_fused_node_ord))
@@ -55,8 +136,15 @@ sub process_atree
                 for(my $j = $i+1; $j<=$#nodes; $j++)
                 {
                     $last_fused_node_ord = $nodes[$j]->ord();
+                    $last_fused_node_no_space_after = $nodes[$j]->no_space_after();
                     last if(defined($nodes[$j]->wild()->{fused}) && $nodes[$j]->wild()->{fused} eq 'end');
                 }
+            }
+            else
+            {
+                my $last_fused_node = $nodes[$last_fused_node_ord-1];
+                log_fatal('Node ord mismatch') if($last_fused_node->ord() != $last_fused_node_ord);
+                $last_fused_node_no_space_after = $last_fused_node->no_space_after();
             }
             my $range = '0-0';
             if(defined($first_fused_node_ord) && defined($last_fused_node_ord))
@@ -68,39 +156,24 @@ sub process_atree
                 log_warn("Cannot determine the span of a fused token");
             }
             my $form = $wild->{fused_form};
-            print { $self->_file_handle() } ("$range\t$form\t_\t_\t_\t_\t_\t_\t_\t_\n");
+            my $misc = $last_fused_node_no_space_after ? 'SpaceAfter=No' : '_';
+            print { $self->_file_handle() } ("$range\t$form\t_\t_\t_\t_\t_\t_\t_\t$misc\n");
         }
-        my $ord = $node->ord();
-        my $form = $node->form();
-        my $lemma = $node->lemma();
-        # We want to write the original, corpus-specific POS tag in the POSTAG column.
-        # It is not always clear where we should find it.
-        # At present I take conll/pos because that is where the original tag survives the
-        # HamleDT harmonization process (orig -> prague -> ud). If it is not defined,
-        # I take tag as back-off.
-        ###!!! It would be better to use a block parameter to let the user specify what tag we should use.
-        ###!!! Much in the same fashion as the attributes in Write::CoNLLX are selected.
-        my $tag = $node->conll_pos();
-        $tag = $node->tag() if(!defined($tag) || $tag eq '');
+        my $ord = $node->ord;
+        my $pord = $node->get_parent->ord;
+        my $form = $node->form;
+        my $lemma = $node->lemma;
 
-        # If no iset feature is set, we want to print "_" in the FEATS and UPOS columns.
-        # Unfortunately, it is difficult to detect this case
-        # because $node->iset() creates new Lingua::Interset::FeatureStructure,
-        # which has all (60) features set to an empty string.
-        # Using encode('mul::uposf', $isetfs) results in UPOS='X'.
-        # So we need to access directly $node->{iset}.
-        my ($upos, $feat);
-        if ($node->{iset}){
-            my $isetfs = $node->iset();
-            my $upos_features = encode('mul::uposf', $isetfs);
-            ($upos, $feat) = split(/\t/, $upos_features);
-        } else {
-            ($upos, $feat) = ('_', '_');
-        }
-        my $pord = $node->get_parent()->ord();
+        my $upos = $self->_get_upos($node);
+        my $xpos = $self->_get_xpos($node);
+        my $deprel = $self->_get_deprel($node);
+        my $feats = $self->_get_feats($node);
+
         my @misc;
         @misc = split(/\|/, $wild->{misc}) if(exists($wild->{misc}) && defined($wild->{misc}));
-        if($node->no_space_after())
+
+        # In the case of fused surface token, SpaceAfter=No may be specified for the surface token but NOT for the individual syntactic words.
+        if($node->no_space_after() && !defined($wild->{fused}))
         {
             unshift(@misc, 'SpaceAfter=No');
         }
@@ -108,6 +181,10 @@ sub process_atree
         if(defined($node->translit()))
         {
             push(@misc, 'Translit='.$node->translit());
+        }
+        if(defined($node->wild()->{lemma_translit}) && $node->wild()->{lemma_translit} !~ m/^_?$/)
+        {
+            push(@misc, 'LTranslit='.$node->wild()->{lemma_translit});
         }
         ###!!! (Czech)-specific wild attributes that have been cut off the lemma.
         ###!!! In the future we will want to make them normal attributes.
@@ -137,11 +214,18 @@ sub process_atree
             push(@misc, "LNumValue=$wild->{lnumvalue}");
         }
         my $misc = scalar(@misc)>0 ? join('|', @misc) : '_';
-        my $deprel = $node->deprel();
-        # CoNLL-U columns: ID, FORM, LEMMA, UPOSTAG, XPOSTAG(treebank-specific), FEATS, HEAD, DEPREL, DEPS(additional), MISC
+
+        my $relations = '_';
+        if ($self->alignment) {
+            my ($al_nodes, $al_types) = $node->get_aligned_nodes({directed=>1});
+            if (@$al_nodes) {
+                $relations = join '|', map {$self->_print_alignment($al_nodes->[$_], $al_types->[$_])} (0 .. @$al_nodes-1);
+            }
+        }
+
+        # CoNLL-U columns: ID, FORM, LEMMA, UPOS, XPOS(treebank-specific), FEATS, HEAD, DEPREL, DEPS(additional), MISC
         # Make sure that values are not empty and that they do not contain spaces.
-        my $xpostag = $self->xpostag() ? $tag : '_';
-        my @values = ($ord, $form, $lemma, $upos, $xpostag, $feat, $pord, $deprel, '_', $misc);
+        my @values = ($ord, $form, $lemma, $upos, $xpos, $feats, $pord, $deprel, $relations, $misc);
         @values = map
         {
             my $x = $_ // '_';
@@ -154,8 +238,21 @@ sub process_atree
         (@values);
         print { $self->_file_handle() } join("\t", @values)."\n";
     }
-    print { $self->_file_handle() } "\n" if($tree->get_descendants());
+    print { $self->_file_handle() } "\n" if $tree->get_descendants();
     return;
+}
+
+sub _print_alignment {
+    my ($self, $node, $type) = @_;
+    my $id = $node->get_bundle->id;
+    $id .= '/' . $node->get_zone->get_label;
+    $id .= '#' . $node->ord;
+    my $t = $type =~ /int/  ? 'int' :
+            $type =~ /gdfa/ ? 'gdfa':
+            $type =~ /left/ ? 'left':
+            $type =~ /right/? 'right':
+            $type =~ /rule|supervised/ ? 'rule' : 'other';
+    return "$id:align_$t";
 }
 
 1;
@@ -183,6 +280,19 @@ Output encoding. C<utf8> by default.
 
 The name of the output file, STDOUT by default.
 
+=item print_sent_id
+
+Print C<sent_id> in CoNLL-U comment before each sentence.
+
+=item print_zone_id
+
+Include zone id in the C<sent_id> comment after a slash. Example:
+C<sent_id = s350/cs>.
+
+=item print_text
+
+Print sentence text in CoNLL-U comment before each sentence.
+
 =back
 
 =head1 METHODS
@@ -199,8 +309,10 @@ Saves (prints) the CoNLL-U representation of one sentence (one dependency tree).
 
 Daniel Zeman
 
+Martin Popel
+
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2014 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2014, 2017 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

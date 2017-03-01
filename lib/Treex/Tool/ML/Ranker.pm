@@ -26,7 +26,7 @@ sub pick_winner {
             $max_idx = $i;
         }
     }
-    return $max_idx;
+    return ($max_idx, $max_weight);
 }
 
 1;
@@ -59,8 +59,8 @@ A path to the trained model for ranker.
 =item C<pick_winner>
 
 Based on the ranking of candidates returned from the method C<rank>, this
-method picks and returns a candidate with the highest score. Input parameter
-is a hash of candidates indexed by their ids.
+method picks and returns a candidate with the highest score and the score as the second item of the output.
+Input parameter is a hash of candidates indexed by their ids.
 
 =back
 

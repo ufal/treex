@@ -96,6 +96,23 @@ sub split_fused_words
                 }
             }
         }
+        elsif($node->form() =~ m/^(na|o|za)(č)$/i && $node->iset()->adpostype() eq 'preppron')
+        {
+            my $w1 = $1;
+            my $w2 = $2;
+            my $iset_hash = $node->iset()->get_hash();
+            my @new_nodes = $self->split_fused_token
+            (
+                $node,
+                {'form' => $w1,  'lemma'  => lc($w1), 'tag' => 'ADP',  'conll_pos' => 'RR--4----------',
+                                 'iset'   => {'pos' => 'adp', 'adpostype' => 'prep', 'case' => 'acc'},
+                                 'deprel' => 'case'},
+                {'form' => 'co', 'lemma'  => 'co',    'tag' => 'PRON', 'conll_pos' => 'PQ--4----------',
+                                 'iset'   => {'pos' => 'noun', 'prontype' => 'int|rel', 'gender' => 'neut', 'number' => 'sing', 'case' => 'acc'},
+                                 'deprel' => $node->deprel()}
+            );
+            $new_nodes[0]->set_parent($new_nodes[1]);
+        }
         elsif($node->form() =~ m/^(.+)(ť)$/i && $node->iset()->verbtype() eq 'verbconj')
         {
             my $w1 = $1;
@@ -107,7 +124,7 @@ sub split_fused_words
                 $node,
                 {'form' => $w1, 'lemma'  => $node->lemma(), 'tag' => $node->tag(), 'conll_pos' => 'Vt-S---3P-NA--2',
                                 'iset'   => $iset_hash,
-                                'deprel' => $node->conll_deprel()},
+                                'deprel' => $node->deprel()},
                 {'form' => $w2, 'lemma'  => 'neboť',        'tag' => 'CONJ',       'conll_pos' => 'J^-------------',
                                 'iset'   => {'pos' => 'conj', 'conjtype' => 'coor'},
                                 'deprel' => 'cc'}

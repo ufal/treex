@@ -23,6 +23,7 @@ Readonly my $CHILD_PARENT_TO_ONE_NODE => {
     third_time_CP     => 'potřetí#D',
     last_time_CP      => 'naposledy#D',
     right_click_CP    => 'pravým tlačítkem myši klikněte#V',
+    left_click_CP     => 'levým tlačítkem myši klikněte#V',
     check_mark_CP     => 'zaškrtnutí#N',
 };
 
@@ -160,8 +161,8 @@ sub process_tnode {
 
     # "where it says" -> "kde se píše"
     # this is probably QTLeap-specific, but "it says" should not occur anywhere else
-    if (    $en_tnode->t_lemma eq 'say'
-        and $en_tnode->gram_diathesis eq 'act' 
+    if (    $lemma eq 'say'
+        and $en_tnode->gram_diathesis eq 'act'
         and $en_tnode->gram_tense eq 'sim'
         and any { $_->t_lemma eq '#PersPron' && $_->formeme eq 'n:subj' && $_->gram_gender eq 'neut' && $_->gram_number eq 'sg' } $en_tnode->get_echildren
         )
@@ -173,7 +174,7 @@ sub process_tnode {
     }
 
     # "follow instructions" -> "postupujte podle pokynů"
-    if ( $en_tnode->t_lemma eq 'instruction' and $en_parent->t_lemma eq 'follow' ){
+    if ( $lemma eq 'instruction' and $en_parent->t_lemma eq 'follow' ){
         $cs_tnode->set_t_lemma('pokyn');
         $cs_tnode->set_formeme('n:podle+2');
         $cs_tnode->set_t_lemma_origin('rule-TrLFPhrases');
@@ -182,11 +183,20 @@ sub process_tnode {
         $cs_parent->set_t_lemma_origin('rule-TrLFPhrases');
     }
 
-    if ( $en_tnode->t_lemma eq '/_off' && $en_tnode->formeme eq 'n:on+X'){
+    if ( $lemma eq '/_off' && $formeme eq 'n:on+X'){
         $cs_tnode->set_t_lemma('zapnutí/vypnutí');
         $cs_tnode->set_formeme('x');
         $cs_tnode->set_t_lemma_origin('rule-TrLFPhrases');
         $cs_tnode->set_formeme_origin('rule-TrLFPhrases');
+    }
+
+    if ($lemma eq 'same' && $en_parent->t_lemma eq 'time' && $en_parent->formeme eq 'n:at+X') {
+        $cs_tnode->remove();
+        $cs_parent->set_t_lemma('současně');
+        $cs_parent->set_t_lemma_origin('TrLFPhrases');
+        $cs_parent->set_formeme('adv');
+        $cs_parent->set_formeme_origin('TrLFPhrases');
+        $cs_parent->set_attr('mlayer_pos', 'D');
     }
 
     # Two English t-nodes, child and parent, translates to one Czech t-node
@@ -252,7 +262,7 @@ sub try_1to2 {
                 t_lemma_origin => 'rule-TrLFPhrases',
                 formeme_origin => 'rule-TrLFPhrases',
                 clause_number  => $cs_tnode->clause_number,
-                nodetype       => 'complex',                
+                nodetype       => 'complex',
             }
         );
         $child->set_src_tnode($en_tnode);

@@ -41,12 +41,13 @@ my %lspecrel =
     'la'  => ['advmod:emph', 'auxpass:reflex'],
     'nl'  => ['compound:prt', 'det:nummod'],
     'no'  => ['acl:relcl', 'compound:prt'],
-    'pl'  => [],
+    'pl'  => ['det:numgov', 'det:nummod', 'nummod:gov'],
     'pt'  => ['acl:inf', 'acl:part', 'acl:relcl', 'advmod:emph', 'auxpass:reflex', 'det:poss', 'xcomp:adj'],
     'ro'  => ['advcl:tcl', 'advcl:tmod', 'advmod:tmod', 'cc:preconj', 'expl:impers', 'expl:pass', 'expl:poss', 'expl:pv', 'nmod:agent', 'nmod:pmod', 'nmod:tmod'],
     'sl'  => ['cc:preconj'],
     'sv'  => ['acl:relcl', 'compound:prt', 'nmod:agent', 'nmod:poss'],
     'ta'  => ['advmod:emph', 'compound:prt'],
+    'ug'  => ['advcl:cond', 'advmod:emph', 'aux:q', 'compound:lvc', 'compound:redup', 'conj>advcl', 'conj>dobj', 'conj>dobj:cau', 'conj>nmod', 'conj>nsubj', 'dobj:cau', 'nmod:abl', 'nmod:cau', 'nmod:clas', 'nmod:cmp', 'nmod:ins', 'nmod:loc', 'nmod:part', 'nmod:pass', 'nmod:poss', 'nmod:ref', 'nmod:tmod', 'nsubj:cop'],
     'xx'  => [],
 );
 

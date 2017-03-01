@@ -7,8 +7,8 @@ extends 'Treex::Core::Block';
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
-    # TODO add more conjunctions, but now it's ok for me
-    return if ( $tnode->formeme ne 'x' or $tnode->t_lemma !~ /^(and|or|but|yet)$/ );
+    # TODO somehow make this language independent and add more conjunctions, but now it's ok for me (English and Czech)
+    return if ( $tnode->formeme ne 'x' or $tnode->t_lemma !~ /^(and|or|but|yet|a|a?nebo|i|či)$/ );
     $tnode->set_functor('CONJ'); # needed for is_coap_root
 
     # first, check for adjacent children of the same formeme and only fix is_member
@@ -76,6 +76,6 @@ Ondřej Dušek <odusek@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2015-2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

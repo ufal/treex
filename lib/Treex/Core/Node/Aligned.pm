@@ -188,6 +188,8 @@ sub is_directed_aligned_to {
 sub delete_aligned_nodes_by_filter {
     my ($node, $filter) = @_;
 
+    $filter //= {};
+    $filter->{directed} //= 0;
     my ($nodes, $types) = $node->get_aligned_nodes($filter);
     for (my $i = 0; $i < @$nodes; $i++) {
         log_debug "[Core::Node::Aligned::delete_aligned_nodes_by_filter]\tremoving: " . $types->[$i] . " " . $nodes->[$i]->id, 1;

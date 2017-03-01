@@ -52,6 +52,8 @@ instead of
 
 =head1 SEE ALSO
 
+L<Treex::Block::A2A::CS::RemoveFeaturesFromLemmas> an alternative solution which also stores the features as wild attributes
+
 L<Treex::Tool::Lexicon::CS>
 
 L<Treex::Block::Write::LayerAttributes::CzechMLemmaTrunc>

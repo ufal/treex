@@ -37,6 +37,13 @@ has fl_agreement => (
      documentation => 'Use T2T::FormemeTLemmaAgreement with a specified function as parameter',
 );
 
+has terminology => (
+     is => 'ro',
+     isa => enum( [qw(auto no 0 yes)] ),
+     default => 'auto',
+     documentation => 'Use T2T::TrLApplyTbxDictionary with Microsoft Terminology Collection',
+);
+
 # TODO gazetteers should work without any dependance on source language here
 has src_lang => (
     is => 'ro',
@@ -48,6 +55,10 @@ sub BUILD {
     my ($self) = @_;
     if ($self->tm_adaptation eq 'auto'){
         $self->{tm_adaptation} = $self->domain eq 'IT' ? 'interpol' : 'no';
+    }
+
+    if ($self->terminology eq 'auto'){
+        $self->{terminology} = $self->domain eq 'IT' ? 'yes' : 'no';
     }
     return;
 }
@@ -69,7 +80,7 @@ sub get_scenario_string {
     'T2T::CopyTtree source_language=en source_selector=src',
     $self->gazetteer ? 'T2T::TrGazeteerItems src_lang='.$self->src_lang : (),
     'T2T::EN2ES::TrLTryRules',
-    $self->domain eq 'IT' ? 'T2T::TrLApplyTbxDictionary tbx=data/dictionaries/MicrosoftTermCollection.es.tbx tbx_src_id=en-US tbx_trg_id=es-es analysis=data/dictionaries/MicrosoftTermCollection.es.streex analysis_src_language=en analysis_src_selector=src analysis_trg_language=es analysis_trg_selector=trg src_blacklist=data/dictionaries/MicrosoftTermCollection.en-es.src.blacklist.txt' : (),
+    $self->terminology eq 'yes' ? 'T2T::TrLApplyTbxDictionary tbx=data/dictionaries/MicrosoftTermCollection.es.tbx tbx_src_id=en-US tbx_trg_id=es-es analysis=data/dictionaries/MicrosoftTermCollection.es.streex analysis_src_language=en analysis_src_selector=src analysis_trg_language=es analysis_trg_selector=trg src_blacklist=data/dictionaries/MicrosoftTermCollection.en-es.src.blacklist.txt' : (),
 
     "T2T::TrFAddVariantsInterpol model_dir=$TM_DIR models='
       static 1.0 Pilot1_formeme.static.gz

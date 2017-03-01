@@ -14,14 +14,18 @@ sub process_atree {
     my @anodes = $aroot->get_descendants({ordered=>1});
     for my $i (0..$#anodes){
         my $anode = $anodes[$i];
-        if ($anode->form =~ /^((right-)?click|check|drag|take|log|press|turn|visit)$/i){
-        
-            # Imperative cannot be preceded by a determiner, or determiner+adjective,
+        if ($anode->form =~ /^((right-)?click|check|drag|hit|take|log|press|turn|unplug|visit|tap|upgrade|use)$/i){
+            if ($anode->form eq 'click' && $i && $anodes[$i-1]->form eq 'left'){
+                $anodes[$i-1]->wild->{orig_tag} = $anodes[$i-1]->tag;
+                $anodes[$i-1]->set_tag('JJ');
+            }
+
+            # Imperative cannot be preceded by a determiner/verb/pronoun, or determiner+adjective,
             # in such cases, the original tag (NN) was correct.
-            next if $i > 0 && $anodes[$i-1]->tag eq 'DT';
-            next if $i > 1 && $anodes[$i-2]->tag eq 'DT' && $anodes[$i-1]->tag eq 'JJ'; # &&!$anodes[$i-1]->wild->{matched_item}; 
+            next if $i > 0 && $anodes[$i-1]->tag =~ /^(DT|VB|PRP)$/;
+            next if $i > 1 && $anodes[$i-2]->tag eq 'DT' && $anodes[$i-1]->tag eq 'JJ'; # &&!$anodes[$i-1]->wild->{matched_item};
             $anode->wild->{orig_tag} = $anode->tag;
-            $anode->set_tag('VB'); 
+            $anode->set_tag('VB');
         }
     }
 }
@@ -54,16 +58,16 @@ sub NEWprocess_atree {
     my @clauses = $self->guess_clauses($aroot);
     foreach my $clause (@clauses){
         my $first_word = $clause->[0];
-        
+
         # Check if the first word is a singular noun,
         next if $first_word->tag !~ /^NNP?$/;
-        
+
         #  but could be also a base-form verb (imperative).
         next if !$CAN_BE{VB}{lc $first_word->form};
-        
+
         # Check if there are no other possible verbs in the clause.
         next if any {$_->tag =~ /^(V|MD)/} @$clause;
-        
+
         $first_word->wild->{orig_tag} = $first_word->tag;
         $first_word->set_tag('VB');
     }
@@ -89,7 +93,7 @@ sub guess_clauses {
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::W2A::EN::FixTagsImperatives - change some NN to VB
 

@@ -1,18 +1,13 @@
 package Treex::Core::Phrase::Builder;
 
-use utf8;
 use namespace::autoclean;
-
 use Moose;
-use List::MoreUtils qw(any);
-use Treex::Core::Log;
+use Treex::Core::Common;
 use Treex::Core::Node;
 use Treex::Core::Phrase::Term;
 use Treex::Core::Phrase::NTerm;
 use Treex::Core::Phrase::PP;
 use Treex::Core::Phrase::Coordination;
-
-
 
 #------------------------------------------------------------------------------
 # Wraps a node (and its subtree, if any) in a phrase.
@@ -22,14 +17,14 @@ sub build
     my $self = shift;
     my $node = shift; # Treex::Core::Node
     my @nchildren = $node->children();
-    my $phrase = new Treex::Core::Phrase::Term('node' => $node);
+    my $phrase = Treex::Core::Phrase::Term->new('node' => $node);
     if(@nchildren)
     {
         # Move the is_member flag to the parent phrase.
         my $member = $phrase->is_member();
         $phrase->set_is_member(0);
         # Create a new nonterminal phrase and make the current terminal phrase its head child.
-        $phrase = new Treex::Core::Phrase::NTerm('head' => $phrase, 'is_member' => $member);
+        $phrase = Treex::Core::Phrase::NTerm->new('head' => $phrase, 'is_member' => $member);
         foreach my $nchild (@nchildren)
         {
             my $pchild = $self->build($nchild);
@@ -62,8 +57,6 @@ sub detect_special_constructions
     # Return the resulting phrase. It may be different from the input phrase.
     return $phrase;
 }
-
-
 
 __PACKAGE__->meta->make_immutable();
 

@@ -90,6 +90,9 @@
 
       <!--  References -->
       <member name="compl.rf"><list ordered="0"><cdata format="PMLREF"/></list></member>
+      <member name="bridging" required="0">
+        <list ordered="0" type="t-bridging-link.type"/>
+      </member>
       <member name="coref_text.rf"><list ordered="0"><cdata format="PMLREF"/></list></member>
       <member name="coref_text" required="0">
         <list ordered="0" type="t-coref_text-link.type"/>
@@ -117,6 +120,9 @@
       <member name="alignment">
           <list ordered="0" type="align-links.type"/>
       </member>
+
+      <!-- align_coref stuff (mnovak 26.2.2016) -->
+      <member name="is_align_coref" type="bool.type"/>
 
       <!-- TimeML stuff (ptacek 22.2.2010)-->
       <member name="timeml">
@@ -169,6 +175,63 @@
 	  		<member name="tag"><cdata format="any"/></member>
 	  	</structure>
 	  </member>
+
+      <!-- 14.2.2017 fucikova: for manual correction of val_frame slot alignment
+      between EngValLex and PDTVALLEX to create Czengvallex (Jana Sindlerova, Zdenka Uresova) -->
+      <member name="valalign">
+          <structure>
+              <member name="czengvallex_functor" >
+                  <alt type="func.type"/>
+              </member>
+              <member name="manual">
+                  <structure>
+                      <member name="aligned" type="bool.type"/>
+                      <member name="counterpart.rf">
+                          <cdata format="PMLREF"/>
+                      </member>
+                  </structure>
+              </member>
+              <member name="note">
+                  <list ordered="0" type="t-czengvallex_note.type"/>
+              </member>
+              <member name="coref.rf"><list ordered="0"><cdata format="PMLREF"/></list></member>
+              <member name="not_collect" type="bool.type"/>
+              <member name="slot_remove" type="bool.type"/>
+              <!-- The following links should not be saved to files:
+              <member name="vallex">
+              <structure>
+              <member name="status">
+              <choice>
+              <value>aligned</value>
+              <value>unaligned</value>
+              <value>not-in-frame</value>
+              </choice>
+              </member>
+              <member name="counterpart.rf">
+              <cdata format="PMLREF"/>
+              </member>
+              </structure>
+              </member>
+              <member name="auto">
+              <structure>
+              <member name="aligned" type="bool.type"/>
+              <member name="counterpart.rf">
+              <cdata format="PMLREF"/>
+              </member>
+              </structure>
+              </member>
+              <member name="verb">
+              <structure>
+              <member name="counterpart.rf">
+              <cdata format="PMLREF"/>
+              </member>
+              </structure>
+              </member>
+              -->
+          </structure>
+      </member>
+
+
 	<!-- ********* DEPRECATED / QUESTIONABLE ATTRIBUTES  ********* -->
 	
 	<!-- Named entities should be stored in n-trees - see treex_subschema_n_layer.xml
@@ -186,6 +249,25 @@
   </type>
 
 <!-- *************** Types of t-layer attributes *******************  -->
+
+  <type name="t-czengvallex_note.type">
+      <structure>
+          <member name="type" required="1">
+              <choice>
+                  <value>Frame</value>
+                  <value>Functor</value>
+                  <value>Structure</value>
+                  <value>Translation</value>
+                  <value>Question</value>
+                  <value>Other</value>
+              </choice>
+          </member>
+          <member name="text">
+              <cdata format="any"/>
+          </member>
+      </structure>
+  </type>
+
   <type name="t-anot_error.type">
     <list ordered="0">
 	  <cdata format="any"/>
@@ -201,6 +283,29 @@
             <cdata format="any"/>
           </member>
       </structure>
+  </type>
+  
+  <type name="t-bridging-link.type">
+    <structure>
+      <member name="target_node.rf" required="1">
+        <cdata format="PMLREF"/>
+      </member>
+      <member name="type" type="t-bridging-type.type" required="1"/>
+    </structure>
+  </type>
+
+  <type name="t-bridging-type.type">
+    <choice>
+      <value>CONTRAST</value>
+      <value>SUB_SET</value>
+      <value>SET_SUB</value>
+      <value>PART_WHOLE</value>
+      <value>WHOLE_PART</value>
+      <value>FUNCT_P</value>
+      <value>P_FUNCT</value>
+      <value>REST</value>
+      <value>ANAF</value>
+    </choice>
   </type>
 
   <type name="t-coref_text-link.type">
@@ -388,6 +493,8 @@
 
   <type name="t-dispmod.type">
     <choice>
+      <value>disp3</value>
+      <value>disp2</value>
       <value>disp1</value>
       <value>disp0</value>
       <value>nr</value>
@@ -481,6 +588,7 @@
       <value>sg</value>
       <value>du</value>
       <value>pl</value>
+      <value>sg|pl</value>
       <value>inher</value>
       <value>nr</value>
     </choice>
@@ -500,6 +608,11 @@
       <value>inan</value>
       <value>fem</value>
       <value>neut</value>
+      <value>fem|neut</value>
+      <value>anim|inan</value>
+      <value>inan|fem</value>
+      <value>anim|inan|neut</value>
+      <value>anim|inan|fem|neut</value>
       <value>inher</value>
       <value>nr</value>
     </choice>

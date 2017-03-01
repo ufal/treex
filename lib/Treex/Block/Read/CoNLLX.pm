@@ -7,9 +7,11 @@ use Treex::Core::Common;
 use File::Slurp;
 extends 'Treex::Block::Read::BaseCoNLLReader';
 
-has 'sent_in_file'   => ( is => 'rw', isa => 'Int', default => 0 );
 has 'feat_is_iset'   => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'deprel_is_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'is_member_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'is_parenthesis_root_within_afun' => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'sid_within_feat' => ( is => 'rw', isa => 'Bool', default => 0, documentation => 'A sid=.+ feature is interpreted as sentence (bundle) id. Read from first node, erased from all.' );
 
 sub next_document {
     my ($self) = @_;
@@ -26,20 +28,37 @@ sub next_document {
         # The default bundle id is something like "s1" where 1 is the number of the sentence.
         # If the input file is split to multiple Treex documents, it is the index of the sentence in the current output document.
         # But we want the input sentence number. If the Treex documents are later exported to one file again, the sentence ids should remain unique.
-        my $sentid  = $self->sent_in_file() + 1;
-        $bundle->set_id('s'.$sentid);
+        my $sentid = $self->sent_in_file() + 1;
+        my $sid = $self->sid_prefix().'s'.$sentid;
+        $bundle->set_id($sid);
         $self->set_sent_in_file($sentid);
         my $zone    = $bundle->create_zone( $self->language, $self->selector );
         my $aroot   = $zone->create_atree();
+        $aroot->set_id($sid.'/'.$self->language());
         if ( $self->deprel_is_afun ) {
             $aroot->set_afun('AuxS');
         }
         my @parents = (0);
         my @nodes   = ($aroot);
         my $sentence;
+        my $sid_set = 0;
         foreach my $token (@tokens) {
             next if $token =~ /^\s*$/;
             my ( $id, $form, $lemma, $cpos, $pos, $feat, $head, $deprel ) = split( /\t/, $token );
+            if ( $self->sid_within_feat() )
+            {
+                my @feat = split(/\|/, $feat);
+                my @sid = grep {m/^sid=.+$/} (@feat);
+                @feat = grep {!m/^sid=.+$/} (@feat);
+                $feat = join('|', @feat);
+                $feat = '_' if(!defined($feat) || $feat eq '');
+                if ( !$sid_set && scalar(@sid) >= 1 )
+                {
+                    $sid[0] =~ m/^sid=(.+)$/;
+                    $bundle->set_id($1);
+                    $sid_set = 1;
+                }
+            }
             my $newnode = $aroot->create_child();
             $newnode->shift_after_subtree($aroot);
             $newnode->set_form($form);
@@ -50,6 +69,17 @@ sub next_document {
             $newnode->set_conll_feat($feat);
             if ( $self->feat_is_iset ) {
                 $newnode->set_iset_conll_feat($feat);
+            }
+            if($self->is_parenthesis_root_within_afun)
+            {
+                if($deprel =~ s/_P$// || $deprel =~ s/_MP$/_M/ || $deprel =~ s/_PM$/_M/)
+                {
+                    $newnode->set_is_parenthesis_root(1);
+                }
+            }
+            if($self->is_member_within_afun() && $deprel =~ s/_M$//)
+            {
+                $newnode->set_is_member(1);
             }
             $newnode->set_conll_deprel($deprel);
             if ( $self->deprel_is_afun ) {
@@ -138,10 +168,11 @@ L<Treex::Core::Bundle>
 
 =head1 AUTHOR
 
-David Mareček
+David Mareček <marecek@ufal.mff.cuni.cz>
+Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2011-2013 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2011-2013, 2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

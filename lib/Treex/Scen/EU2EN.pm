@@ -27,6 +27,7 @@ has hideIT => (
 has gazetteer => (
      is => 'ro',
      isa => 'Str',
+     default => '0',
      documentation => 'Use W2A::GazeteerMatch A2T::ProjectGazeteerInfo T2T::TrGazeteerItems, default=all if domain=IT',
 );
 
@@ -36,9 +37,9 @@ sub BUILD {
     if (!defined $self->hideIT){
         $self->{hideIT} = $self->domain eq 'IT' ? 1 : 0;
     }
-    if (!defined $self->gazetteer){
-        $self->{gazetteer} = $self->domain eq 'IT' ? 'all' : '0';
-    }
+    # if (!defined $self->gazetteer){
+    #     $self->{gazetteer} = $self->domain eq 'IT' ? 'all' : '0';
+    # }
     if ($self->gazetteer) {
         $self->{src_lang} = "eu";
         $self->{trg_lang} = "en";

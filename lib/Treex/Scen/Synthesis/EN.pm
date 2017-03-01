@@ -53,7 +53,7 @@ sub get_scenario_string {
     'A2W::EN::FixCapitalization',
     'A2W::EN::ConcatenateTokens',
     'A2W::CS::RemoveRepeatedTokens',
-    'A2W::EN::Tidy',
+    'A2W::EN::Tidy domain=' . $self->domain,
     ;
 
     return $scen;
@@ -74,7 +74,7 @@ Treex::Scen::Synthesis::EN - English synthesis from t-trees
 
  # From command line
  treex -Len Scen::Synthesis::EN Write::Sentences -- en_ttrees.treex.gz
- 
+
  treex --dump_scenario Scen::Synthesis::EN
 
 =head1 DESCRIPTION

@@ -6,7 +6,7 @@ extends 'Treex::Core::Block';
 sub process_tnode {
     my ( $self, $tnode ) = @_;
 
-    if ( $tnode->formeme eq "n:attr" ) {
+    if ( $tnode->formeme eq 'n:attr' ) {
         my $par = $tnode->get_parent;
 
         if (defined $par->formeme
@@ -27,6 +27,7 @@ sub process_tnode {
             $par->shift_after_subtree( $tnode, { without_children => 1 } );
         }
     }
+    return;
 }
 
 1;
