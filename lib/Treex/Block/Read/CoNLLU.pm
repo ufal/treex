@@ -66,7 +66,8 @@ sub next_document {
                 }
                 next LINE;
             }
-            my ( $id, $form, $lemma, $upos, $postag, $feats, $head, $deprel, $deps, $misc, $rest ) = split( /\s/, $line );
+            # Since UD v2, the FORM and LEMMA columns may contain spaces, thus we can only use the TAB character as column separator.
+            my ( $id, $form, $lemma, $upos, $postag, $feats, $head, $deprel, $deps, $misc, $rest ) = split( /\t/, $line );
             log_warn "Extra columns: '$rest'" if $rest;
 
             # There may be fused tokens consisting of multiple syntactic words (= nodes). For example (German):
@@ -201,6 +202,6 @@ Daniel Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2015, 2017 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
