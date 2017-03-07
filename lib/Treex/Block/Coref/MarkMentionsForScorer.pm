@@ -10,7 +10,6 @@ extends 'Treex::Core::Block';
 has 'layer' => ( is => 'ro', isa => enum([qw/a t/]), default => 'a' );
 has 'only_heads' => ( is => 'ro', isa => 'Bool', default => 1 );
 has 'clear' => ( is => 'ro', isa => 'Bool', default => 1 );
-has 'dummy_cands' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 has '_entities' => ( is => 'rw', isa => 'HashRef[Str]', default => sub {{}} );
 
@@ -38,55 +37,32 @@ before 'process_document' => sub {
 
     $self->_set_entities({});
 
-    if (!$self->dummy_cands) {
-        my @ttrees = map { $_->get_tree($self->language,'t',$self->selector) } $doc->get_bundles;
-        my @chains = Treex::Tool::Coreference::Utils::get_coreference_entities(\@ttrees);
-        my $entity_idx = 1;
-        foreach my $chain (@chains) {
-            foreach my $node (@$chain) {
-                $self->_entities->{$node->id} = $entity_idx;
-            }
-            $entity_idx++;
+    my @ttrees = map { $_->get_tree($self->language,'t',$self->selector) } $doc->get_bundles;
+    my @chains = Treex::Tool::Coreference::Utils::get_coreference_entities(\@ttrees);
+    my $entity_idx = 1;
+    foreach my $chain (@chains) {
+        foreach my $node (@$chain) {
+            $self->_entities->{$node->id} = $entity_idx;
         }
+        $entity_idx++;
     }
 };
 
 sub process_tnode {
     my ($self, $tnode) = @_;
 
-    my $entity_idx;
-    if ($self->dummy_cands) {
-         return if (!Treex::Tool::Coreference::NodeFilter::matches($tnode, ['all_anaph_corbon17']));
-         $entity_idx = 0;
-    }
-    else {
 #    return if (!_is_coref_text_mention($tnode));
-        $entity_idx = $self->_entities->{$tnode->id};
-        return if (!defined $entity_idx);
-    }
+    my $entity_idx = $self->_entities->{$tnode->id};
+    return if (!defined $entity_idx);
     
     my @mention_nodes;
-    if ($self->only_heads) {
-        @mention_nodes = ( $tnode );
-    }
-    else {
-        @mention_nodes = get_desc_no_verbal_subtree($tnode);
-    }
-    return if (!@mention_nodes);
-# TODO what about discarding relative clauses
     if ($self->layer eq 'a') {
-
-        my $head_mention = $mention_nodes[0];
-        my $a_head_mention = $head_mention->get_lex_anode;
-        return if (!defined $a_head_mention);
-        
-        my @mention_anodes = grep {defined $_ && ($_ == $a_head_mention || $_->is_descendant_of($a_head_mention))}
-            map { $self->only_heads ? $_->get_lex_anode : $_->get_anodes } @mention_nodes;
-        @mention_nodes = sort {$a->ord <=> $b->ord} @mention_anodes;
-
-        if ($mention_nodes[-1]->form =~ /^[.,:]$/) {
-            pop @mention_nodes;
-        }
+        @mention_nodes = $self->surface_mention_by_t_expansion($tnode);
+        #$self->surface_mention_by_a_expansion;
+    }
+    # if asked for a mention on the t-layer, heads_only format is the only possible
+    else {
+        @mention_nodes = ( $tnode );
     }
 
     return if (!@mention_nodes);
@@ -95,6 +71,25 @@ sub process_tnode {
     push @{$mention_nodes[0]->wild->{coref_mention_start}}, $entity_idx;
     # the end of the mention
     push @{$mention_nodes[-1]->wild->{coref_mention_end}}, $entity_idx;
+}
+
+sub surface_mention_by_t_expansion {
+    my ($self, $tnode) = @_;
+    
+    my @mention_t_nodes = get_desc_no_verbal_subtree($tnode);
+    my $t_head_mention = $mention_t_nodes[0];
+    my $a_head_mention = $t_head_mention->get_lex_anode;
+    #return if (!defined $a_head_mention);
+    
+    my @mention_a_nodes = grep {defined $_ && (!defined $a_head_mention || $_ == $a_head_mention || $_->is_descendant_of($a_head_mention))}
+        map { $self->only_heads ? $_->get_lex_anode : $_->get_anodes } @mention_t_nodes;
+    
+    @mention_a_nodes = sort {$a->ord <=> $b->ord} @mention_a_nodes;
+
+    if (@mention_a_nodes > 0 && $mention_a_nodes[-1]->form =~ /^[.,:]$/) {
+        pop @mention_a_nodes;
+    }
+    return @mention_a_nodes;
 }
 
 sub get_desc_no_verbal_subtree {
