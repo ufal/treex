@@ -3,9 +3,11 @@ use Moose;
 use Treex::Core::Common;
 
 extends 'Treex::Core::Block';
-with 'Treex::Block::Coref::SupervisedBase' => {
-    -excludes => [ 'build_aligned_feats' ],
-};
+with 'Treex::Block::Coref::SupervisedBase';
+#=> {
+#    -alias => { build_aligned_feats => 'build_aligned_feats_base' },
+#    -excludes => 'build_aligned_feats',
+#};
 
 has 'model_type' => ( is => 'ro', isa => 'Str', predicate => 'has_model_type' );
 has 'model_path' => (
@@ -41,16 +43,17 @@ has '_ranker' => (
 sub BUILD {
     my ($self) = @_;
 
-    $self->build_aligned_feats;
-    $self->_build_model_for_type;
-    $self->build_model_path;
+    $self->aligned_feats;
+    $self->_model_for_type;
+    $self->model_path;
     $self->_ranker;
     $self->_feature_extractor;
     $self->_ante_cands_selector;
 }
 sub build_aligned_feats {
     my ($self) = @_;
-    return $self->model_type =~ /with_/ ? 1 : 0;
+    my $res = ($self->has_model_type && $self->model_type =~ /with_/) ? 1 : 0;
+    return $res;
 }
 sub _build_model_for_type {
     my ($self) = @_;

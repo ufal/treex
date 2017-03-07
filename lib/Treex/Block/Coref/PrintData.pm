@@ -26,6 +26,10 @@ sub BUILD {
     $self->_ante_cands_selector;
 }
 
+sub build_aligned_feats {
+    return 0;
+}
+
 before 'process_document' => sub {
     my ($self, $doc) = @_;
 
