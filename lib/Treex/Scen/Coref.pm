@@ -24,7 +24,7 @@ has 'modules' => (
 
 has 'model_type' => (
     is => 'ro',
-    isa => enum([qw/pdt pcedt_bi pcedt_bi.with_en/]),
+    isa => enum([qw/pdt pcedt_bi pcedt_bi.with_en pcedt_bi.with_en.treex_cr pcedt_bi.with_en.base_cr/]),
     predicate => 'has_model_type',
 );
 
@@ -70,7 +70,8 @@ sub get_en_scenario_string {
 
     my $scen = join "\n",
     'Util::SetGlobal language=en',
-    $self->modules->{relpron} || $self->modules->{all} ? 'Coref::EN::RelPron::Resolve'.$model_type : '',
+    $self->modules->{relpron}  || $self->modules->{all} ? 'Coref::EN::RelPron::Resolve'.$model_type : '',
+    $self->modules->{cor}      || $self->modules->{all} ? 'Coref::EN::Cor::Resolve'.$model_type : '',
     $self->modules->{reflpron} || $self->modules->{all} ? 'Coref::EN::ReflPron::Resolve'.$model_type : '',
     $self->modules->{perspron} || $self->modules->{all} ? 'Coref::EN::PersPron::Resolve'.$model_type : '',
     ;
