@@ -26,7 +26,9 @@ sub _build_feature_extractor {
     my $en_fe = Treex::Tool::Coreference::Features::EN::AllMonolingual->new();
     push @container, $en_fe;
 
+    #if (($self->has_model_type && $self->model_type =~ /with_/) || $self->aligned_feats) {
     if ($self->aligned_feats) {
+        log_info "Adding aligned features...";
         my $aligned_fe = Treex::Tool::Coreference::Features::Aligned->new({
             feat_extractors => [ 
                 Treex::Tool::Coreference::Features::CS::AllMonolingual->new(),

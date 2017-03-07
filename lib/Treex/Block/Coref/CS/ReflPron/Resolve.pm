@@ -7,7 +7,7 @@ with 'Treex::Block::Coref::CS::ReflPron::Base';
 
 use Treex::Tool::ML::VowpalWabbit::Ranker;
 
-has '+model_type' => ( isa => enum([qw/pdt pcedt_bi pcedt_bi.with_en/]), default => 'pdt' );
+has '+model_type' => ( isa => enum([qw/pdt pcedt_bi pcedt_bi.with_en pcedt_bi.with_en.treex_cr pcedt_bi.with_en.base_cr/]), default => 'pdt' );
 override '_build_model_for_type' => sub {
     my $dir = '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/reflpron/tmp/ml';
     return {
@@ -15,7 +15,14 @@ override '_build_model_for_type' => sub {
         'pdt' => "$dir/008_run_2017-01-17_21-35-21_16745.PDT.monolingual.feats-AllMonolingual/001.17cb9c0d6f.featset/018.68fb6.mlmethod/model/train.pdt.table.gz.vw.ranking.model",
         #'pcedt_bi' => "$dir/003_run_2017-01-15_01-20-41_18442.PCEDT.feats-AllMonolingual.round1/001.17cb9c0d6f.featset/001.0017e.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model",
         'pcedt_bi' => "$dir/007_run_2017-01-17_21-35-11_16598.PCEDT.monolingual.feats-AllMonolingual/001.17cb9c0d6f.featset/017.d31f8.mlmethod/model/train.pcedt_bi.table.gz.vw.ranking.model",
-        #'pcedt_bi.with_en' => "$dir/003_run_2017-01-15_01-20-41_18442.PCEDT.feats-AllMonolingual.round1/004.7f391f3429.featset/004.39acd.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model",
+        
+        # PCEDT.crosslingual aligned_all
+        'pcedt_bi.with_en' => "$dir/009_run_2017-01-18_00-55-58_14013.PCEDT.crosslingual.feats-AllMonolingual/002.88233bf9a2.featset/012.39acd.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model",
+        # PCEDT.crosslingual aligned_all+coref+mono_all
+        'pcedt_bi.with_en.treex_cr' => "$dir/009_run_2017-01-18_00-55-58_14013.PCEDT.crosslingual.feats-AllMonolingual/004.7f391f3429.featset/024.9c797.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model",
+        
+        # PCEDT.crosslingual-baseline aligned_all+coref+mono_all
+        'pcedt_bi.with_en.base_cr' => "$dir/010_run_2017-01-18_15-43-40_23396.PCEDT.crosslingual-baseline.feats-AllMonolingual/004.7f391f3429.featset/012.39acd.mlmethod/model/train.pcedt_bi.with_en.baseline.table.gz.vw.ranking.model",
     };
 };
 override '_build_ranker' => sub {

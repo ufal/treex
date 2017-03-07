@@ -30,12 +30,10 @@ has '_ante_cands_selector' => (
     builder     => '_build_ante_cands_selector',
 );
 
+requires 'build_aligned_feats';
+
 sub _build_special_classes {
     return [ "c^__SELF__" ];
-}
-
-sub build_aligned_feats {
-    return 0;
 }
 
 sub _build_node_types {
