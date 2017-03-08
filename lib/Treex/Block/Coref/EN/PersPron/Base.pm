@@ -36,7 +36,7 @@ sub _build_feature_extractor {
             ],
             align_lang => 'cs',
             align_selector => 'src',
-            align_types => ['supervised', '.*'],
+            align_types => ['coref_supervised', '.*'],
         });
         push @container, $aligned_fe;
     }
