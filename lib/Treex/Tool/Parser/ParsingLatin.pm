@@ -11,10 +11,11 @@ has model      => ( isa => 'Str', is => 'rw', required => 1);
 
 sub BUILD {
     my ($self) = @_;
-    my $cmd = system("bash /home/christophe/share_tools/parser/Parsing_Latin/pipeline/pipeline.sh");
+    my $exec = Treex::Core::Config->share_dir."/parser/Parsing_Latin/pipeline/pipeline.sh";
+    my $cmd = system("bash $exec -c").' 2>/dev/null';
  
     # start ParsingLatin
-    my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::bipipe( " $cmd, ':encoding(utf-8)' " );    
+    my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::bipipe( $cmd, ':encoding(utf-8)' );    
 
     $self->{reader} = $reader;
     $self->{writer} = $writer;
@@ -23,35 +24,6 @@ sub BUILD {
     return;
 
 }
-
-#sub BUILD {
-#    my ($self) = @_;
-#    my $tool_path = require_file_from_share(
-#        'parser/Parsing_Latin/pipeline/bin',
-#        ref($self)
-#    );
-   
-#   my $model_path = $self->model;
-#    if (!-e $model_path) {
-#        $model_path = Treex::Core::Config->share_dir."/parser/Parsing_Latin/pipeline/mod-and-conf/IT2-dx-mlp.model";
-#    }
-#    die "Missing $model_path\n" if !-e $model_path;
-
-#    my $model_name = $self->model;
-
-    #my $cmd = "$tool_path";
-  ##  my $exec = Treex::Core::Config->share_dir."/parser/Parsing_Latin/pipeline/pipeline.sh";
-#    my $cmd = system("bash /home/christophe/share_tools/parser/Parsing_Latin/pipeline/pipeline.sh");
- 
-    # start ParsingLatin
-#    my ( $reader, $writer, $pid ) = Treex::Tool::ProcessUtils::bipipe( " $cmd, ':encoding(utf-8)' " );    
-
-#    $self->{reader} = $reader;
-#    $self->{writer} = $writer;
-#    $self->{pid}    = $pid;
-
-#    return;
-#}
 
 sub parse_sentence {
     my ( $self, $forms, $lemmas, $cpostags, $postags, $feats ) = @_;
