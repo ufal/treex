@@ -62,6 +62,9 @@ sub get_scenario_string {
 
     push @blocks, "W2A::UDPipe model_alias=la_thomisticus tokenize=$tokenize tag=$tag parse=$parse"
         if $tokenize || $tag || $parse;
+    if ($parse) {
+        push @blocks, 'A2A::Deprel2Afun';
+    }
 
     if ($self->tecto ne 'none') {
         push @blocks,
