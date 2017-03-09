@@ -40,19 +40,12 @@ has tecto => (
 
 ## parameters for detailed tuning of the scenario
 
-has domain => (
-    is => 'ro',
-    isa => enum( [qw(general IT)] ),
-    default => 'general',
-    documentation => 'domain of the input texts',
-);
-
-has functors => (
-    is => 'ro',
-    isa => enum( [qw(simple MLProcess VW)] ),
-    default => 'simple',
-    documentation => 'Which analyzer of functors to use',
-);
+##has functors => (
+##    is => 'ro',
+##    isa => enum( [qw(simple MLProcess VW)] ),
+##    default => 'simple',
+##    documentation => 'Which analyzer of functors to use',
+##);
 
 sub get_scenario_string {
     my ($self) = @_;
@@ -126,7 +119,7 @@ __END__
 
 =head1 NAME
 
-Treex::Scen::Analysis::LA - Latin UDPipe model (a-layer) and tectogrammatical analysis (from parsed a-trees)
+Treex::Scen::Analysis::LA - UDPipe model (a-layer) and tectogrammatical analysis
 
 =head1 SYNOPSIS
 
