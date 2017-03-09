@@ -60,6 +60,9 @@ Treex::Block::W2A::LA::ParsingLatin
 =head1 DESCRIPTION
 
 Uses a combined parsing pipeline [DeSR (right, MPL) + DeSR (left, SVM) + DeSR (l, MLP) + Joint + MTGB]
+See Ponti, E., Passarotti, M., Differentia compositionem facit. A Slower-Paced and Reliable Parser for Latin, 
+    in Proceedings of the Tenth International Conference on Language Resources and Evaluation (LREC 2016), (Portorož, 23-28 May 2016), 
+    European Language Resources Association (ELRA), Portorož 2016: 683-688 [http://hdl.handle.net/10807/78692]
 
 =head1 AUTHORS
 
@@ -68,6 +71,6 @@ Christophe Onambélé <christophe.onambele@unicatt.it>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2016 by The CIRCSE Research Centre, Università Cattolica del Sacro Cuore (Milan, Italy)
+Copyright © 2017 by The CIRCSE Research Centre, Università Cattolica del Sacro Cuore (Milan, Italy)
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
