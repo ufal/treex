@@ -4,7 +4,6 @@ use Treex::Core::Common;
 
 ## main parameters
 
-
 has segmenter => (
     is => 'ro',
     handles => [qw(default none)],
@@ -40,46 +39,29 @@ has tecto => (
 
 ## parameters for detailed tuning of the scenario
 
-##has functors => (
-##    is => 'ro',
-##    isa => enum( [qw(simple MLProcess VW)] ),
-##    default => 'simple',
-##    documentation => 'Which analyzer of functors to use',
-##);
+#has functors => (
+#    is => 'ro',
+#    isa => enum( [qw(simple MLProcess VW)] ),
+#    default => 'simple',
+#    documentation => 'Which analyzer of functors to use',
+#);
 
 sub get_scenario_string {
     my ($self) = @_;
-    
-    
     my @blocks;
-    
+
     if ($self->segmenter ne 'none'){
         push @blocks,
             'W2A::LA::Segment',
             ;
     }
-    
-    if ($self->tokenizer ne 'none') {
-        push @blocks,
-#                'W2A::UDPipe model_alias=la_thomisticus tag=0 parse=0',
-            ;
-    }
 
-    if ($self->tagger ne 'none') {
-        push @blocks,
-#                'W2A::UDPipe model_alias=la_thomisticus tokenize=0 parse=0',
-                ;
-    }
+    my $tokenize = $self->tokenizer eq 'none' ? 0 : 1;
+    my $tag      = $self->tagger eq 'none' ? 0 : 1;
+    my $parse    = $self->parser eq 'none' ? 0 : 1;
 
- 
-    ######### Use just one UDPipe block  ############
-    
-    if ($self->parser ne 'none') {
-        push @blocks,
-#                'W2A::UDPipe model_alias=la_thomisticus tokenize=0 tag=0',
-                'W2A::UDPipe model_alias=la_thomisticus tokenize=0',
-                ;
-    }
+    push @blocks, "W2A::UDPipe model_alias=la_thomisticus tokenize=$tokenize tag=$tag parse=$parse"
+        if $tokenize || $tag || $parse;
 
     if ($self->tecto ne 'none') {
         push @blocks,
@@ -103,12 +85,9 @@ sub get_scenario_string {
                 'A2T::LA::TopicFocusArticulation',
                 ;
     }
-    
+
     return join "\n", @blocks;
-    
-
 }
-
 
 1;
 
@@ -126,8 +105,8 @@ Treex::Scen::Analysis::LA - UDPipe model (a-layer) and tectogrammatical analysis
 
 =head1 DESCRIPTION
 
-This scenario covers: tokenization (so sentence segmentation must be performed before), tagging, 
-lemmatization, dependency parsing (all three in UDPipe) and tectogrammatical analysis.
+This scenario covers: segmentation, tokenization, tagging,
+lemmatization, dependency parsing and tectogrammatical analysis.
 
 
 =head1 AUTHORS
