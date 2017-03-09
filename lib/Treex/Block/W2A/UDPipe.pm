@@ -55,6 +55,7 @@ has known_models => (
         it => 'data/models/udpipe/italian-ud-1.2-160523.udpipe',
         la => 'data/models/udpipe/latin-ud-1.2-160523.udpipe',
         la_itt => 'data/models/udpipe/latin-itt-ud-1.2-160523.udpipe',
+        la_thomisticus => 'data/models/udpipe/latin-thomisticus-170227.udpipe',
         la_proiel => 'data/models/udpipe/latin-proiel-ud-1.2-160523.udpipe',
         nl => 'data/models/udpipe/dutch-ud-1.2-160523.udpipe',
         no => 'data/models/udpipe/norwegian-ud-1.2-160523.udpipe',
