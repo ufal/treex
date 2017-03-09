@@ -116,7 +116,7 @@ Christophe Onambélé <christophe.onambele@unicatt.it>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2016 by The CIRCSE Research Centre, Università Cattolica del Sacro Cuore (Milan, Italy)
+Copyright © 2017 by The CIRCSE Research Centre, Università Cattolica del Sacro Cuore (Milan, Italy)
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
