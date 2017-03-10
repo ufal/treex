@@ -136,7 +136,17 @@ sub process_ttree {
                     $sent .= " ...".$diffs[$_]."...";
                 }
                 $sent} 0..$#sorted_sents;
-            print {$self->_file_handle} "\n";
+            my %langs_hash = map {$_->language => 1} $tnode->get_bundle->get_all_zones;
+            my @other_langs = grep {$_ ne $tnode->language} keys %langs_hash;
+            foreach my $lang ($tnode->language, @other_langs) {
+                print {$self->_file_handle} join " ", map {
+                    my $sent = $sorted_sents[$_]->get_bundle->get_zone($lang, $tnode->selector)->sentence;
+                    if ($diffs[$_]) {
+                        $sent .= " ...".$diffs[$_]."...";
+                    }
+                    $sent} 0..$#sorted_sents;
+                print {$self->_file_handle} "\n";
+            }
             print {$self->_file_handle} _coref_format(\@sorted_sents, $tnode->id);
             print {$self->_file_handle} "\n";
             print {$self->_file_handle} "\n";
