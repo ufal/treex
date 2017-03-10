@@ -14,15 +14,15 @@ override '_build_model_for_type' => sub {
         #'pdt' => "$dir/004_run_2017-01-15_01-21-00_18893.PDT.feats-AllMonolingual.round1/001.17cb9c0d6f.featset/003.d62b7.mlmethod/model/train.pdt.table.gz.vw.ranking.model",
         'pdt' => "$dir/008_run_2017-01-17_21-35-21_16745.PDT.monolingual.feats-AllMonolingual/001.17cb9c0d6f.featset/018.68fb6.mlmethod/model/train.pdt.table.gz.vw.ranking.model",
         #'pcedt_bi' => "$dir/003_run_2017-01-15_01-20-41_18442.PCEDT.feats-AllMonolingual.round1/001.17cb9c0d6f.featset/001.0017e.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model",
-        'pcedt_bi' => "$dir/007_run_2017-01-17_21-35-11_16598.PCEDT.monolingual.feats-AllMonolingual/001.17cb9c0d6f.featset/017.d31f8.mlmethod/model/train.pcedt_bi.table.gz.vw.ranking.model",
+        'pcedt_bi' => "$dir/011_run_2017-03-10_10-33-29_19175.PCEDT.mono.instance_num_fixed/001.17cb9c0d6f.featset/017.d31f8.mlmethod/model/train.pcedt_bi.table.gz.vw.ranking.model",
         
         # PCEDT.crosslingual aligned_all
-        'pcedt_bi.with_en' => "$dir/009_run_2017-01-18_00-55-58_14013.PCEDT.crosslingual.feats-AllMonolingual/002.88233bf9a2.featset/012.39acd.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model",
+        'pcedt_bi.with_en' => "$dir/012_run_2017-03-10_10-33-39_19348.PCEDT.cross.instance_num_fixed/002.88233bf9a2.featset/012.39acd.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model",
         # PCEDT.crosslingual aligned_all+coref+mono_all
-        'pcedt_bi.with_en.treex_cr' => "$dir/009_run_2017-01-18_00-55-58_14013.PCEDT.crosslingual.feats-AllMonolingual/004.7f391f3429.featset/024.9c797.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model",
+        'pcedt_bi.with_en.treex_cr' => "$dir/012_run_2017-03-10_10-33-39_19348.PCEDT.cross.instance_num_fixed/004.7f391f3429.featset/024.9c797.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model",
         
         # PCEDT.crosslingual-baseline aligned_all+coref+mono_all
-        'pcedt_bi.with_en.base_cr' => "$dir/010_run_2017-01-18_15-43-40_23396.PCEDT.crosslingual-baseline.feats-AllMonolingual/004.7f391f3429.featset/012.39acd.mlmethod/model/train.pcedt_bi.with_en.baseline.table.gz.vw.ranking.model",
+        'pcedt_bi.with_en.base_cr' => "$dir/013_run_2017-03-10_10-33-49_19543.PCEDT.cross-base.instance_num_fixed/004.7f391f3429.featset/012.39acd.mlmethod/model/train.pcedt_bi.with_en.baseline.table.gz.vw.ranking.model",
     };
 };
 override '_build_ranker' => sub {
