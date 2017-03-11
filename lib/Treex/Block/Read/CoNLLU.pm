@@ -66,6 +66,12 @@ sub next_document {
                 }
                 next LINE;
             }
+            # Since UD v2, there may be lines with empty nodes of the enhanced representation.
+            ###!!! Currently skip empty nodes!
+            elsif ($line =~ m/^\d+\.\d+/)
+            {
+                next LINE;
+            }
             # Since UD v2, the FORM and LEMMA columns may contain spaces, thus we can only use the TAB character as column separator.
             my ( $id, $form, $lemma, $upos, $postag, $feats, $head, $deprel, $deps, $misc, $rest ) = split( /\t/, $line );
             log_warn "Extra columns: '$rest'" if $rest;
