@@ -24,7 +24,8 @@ sub process_atree
                     # If they have other nouns as children, are these attached via the orphan relation?
                     foreach my $nc (@nconjuncts)
                     {
-                        my @nchildren = grep {$_->is_noun() && $_->deprel() !~ m/^orphan$/} ($nc->children());
+                        # Also ignore nmod relations. A noun can be modified by another noun via nmod, regardless whether it is an orphan.
+                        my @nchildren = grep {$_->is_noun() && $_->deprel() !~ m/^(orphan|nmod)$/} ($nc->children());
                         foreach my $nch (@nchildren)
                         {
                             $self->complain($nch, 'Candidate for the orphan relation?');
