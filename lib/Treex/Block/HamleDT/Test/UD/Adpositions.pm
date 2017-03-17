@@ -74,18 +74,27 @@ sub process_atree
 
 1;
 
-=over
+=encoding utf-8
 
-=item Treex::Block::HamleDT::Test::UD::Adpositions
+=head1 NAME
+
+Treex::Block::HamleDT::Test::UD::Adpositions
+
+=head1 DESCRIPTION
 
 A preposition normally depends on a following node (usually noun) and the relation is 'case'.
 It may also depend on a preceding node as 'fixed' or 'conj'.
 In case of ellipsis (incomplete sentence), it may depend on the root as 'root'.
 In any case, the preposition should be leaf.
 
-=back
+=head1 AUTHOR
 
-=cut
+Dan Zeman <zeman@ufal.mff.cuni.cz>
 
-# Copyright 2015 Dan Zeman
-# This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2015 by Institute of Formal and Applied Linguistics,
+Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
