@@ -25,7 +25,7 @@ sub process_atree
                     foreach my $nc (@nconjuncts)
                     {
                         # Also ignore nmod relations. A noun can be modified by another noun via nmod, regardless whether it is an orphan.
-                        my @nchildren = grep {$_->is_noun() && $_->deprel() !~ m/^(orphan|nmod|appos|conj)$/} ($nc->children());
+                        my @nchildren = grep {$_->is_noun() && $_->deprel() !~ m/^(orphan|nmod|appos|conj|compound|flat)(:|$)/} ($nc->children());
                         foreach my $nch (@nchildren)
                         {
                             $self->complain($nch, 'Candidate for the orphan relation?');
