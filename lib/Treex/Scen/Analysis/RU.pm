@@ -35,6 +35,7 @@ sub get_scenario_string {
     # copy UDPipe lemma to the wild and restore the TreeTagger lemma
     q(Util::Eval anode='$.wild->{udp_lemma} = $.lemma; $.set_lemma($.wild->{tt_lemma})'),
     q(Util::Eval anode='$.set_tag($.conll_pos)'),
+    q(Util::Eval anode='if (!$.tag) { if ($.form =~ /\d+([.,]\d+)?/) { $.set_tag("C=-------------") } else { $.set_tag("X@-------------") }}'),
     q(Util::Eval anode='$.set_afun($.deprel)'),
     q(Util::Eval anode='$.set_iset_conll_feat($.conll_feat)'),
     # rehang final punctuation
