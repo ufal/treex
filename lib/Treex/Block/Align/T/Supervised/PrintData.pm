@@ -2,6 +2,7 @@ package Treex::Block::Align::T::Supervised::PrintData;
 
 use Moose;
 use Treex::Core::Common;
+use Data::Printer;
 
 use Treex::Tool::ML::VowpalWabbit::Util;
 use Treex::Tool::Align::Utils;
@@ -44,7 +45,7 @@ sub process_filtered_tnode {
     my ($self, $tnode) = @_;
 
     my @cands = $self->_get_candidates($tnode, $self->align_language);
-    my $feats = $self->_feat_extractor->create_instances($tnode, \@cands);
+    my $feats = $self->_feat_extractor->create_instances($tnode, ["__SELF__"], \@cands);
     
     my ($gold_aligned_node) = $self->_get_positive_candidate($tnode);
     #log_info "GOLD_ALIGNED_LEMMA: ". ($gold_aligned_node != $tnode ? $gold_aligned_node->t_lemma : "undef");

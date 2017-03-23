@@ -157,7 +157,7 @@ sub process_filtered_tnode {
         log_warn "[".(ref $self)."] More than 100 alignment candidates.";
         return;
     }
-    my $feats = $self->_feat_extractor->create_instances($tnode, \@cands);
+    my $feats = $self->_feat_extractor->create_instances($tnode, ["__SELF__"], \@cands);
     my $winner_idx;
     if (Treex::Core::Log::get_error_level() eq 'DEBUG') {
         log_info "ALIGN SUPERVISED DEBUG ZONE";
