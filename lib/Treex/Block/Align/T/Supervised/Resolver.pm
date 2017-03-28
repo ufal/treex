@@ -167,7 +167,7 @@ sub process_filtered_tnode {
         ($winner_idx) = grep {$scores[$_] == $max} 0 .. $#scores;
     }
     else {
-        $winner_idx = $ranker->pick_winner($feats);
+        ($winner_idx) = $ranker->pick_winner($feats);
     }
 
     if ($self->delete_orig_align) {
