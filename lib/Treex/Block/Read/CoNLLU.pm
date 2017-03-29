@@ -46,8 +46,11 @@ sub next_document {
         LINE:
         foreach my $line (@lines) {
             next LINE if $line =~ /^\s*$/;
-            if ($line =~ s/^#\s*//) {
-                if ($line =~ m/sent_id(?:\s*=\s*|\s+)(.*)/) {
+            if ($line =~ s/^#\s*//)
+            {
+                # sent_id metadata sentence-level comment
+                if ($line =~ m/sent_id(?:\s*=\s*|\s+)(.*)/)
+                {
                     my $sid = $1;
                     my $zid = $self->language();
                     # Some CoNLL-U files already have sentence ids with "/language" suffix while others don't.
@@ -61,7 +64,15 @@ sub next_document {
                     $bundle->set_id( $sid );
                     $aroot->set_id( "$sid/$zid" );
                 }
-                else {
+                # text metadata sentence-level comment
+                elsif ($line =~ m/text\s*=\s*(.*)/)
+                {
+                    my $text = $1;
+                    $zone->set_sentence($text);
+                }
+                # any other sentence-level comment
+                else
+                {
                     $comment .= "$line\n";
                 }
                 next LINE;
