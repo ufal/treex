@@ -4,33 +4,67 @@ use Treex::Core::Common;
 extends 'Treex::Core::Block';
 use Treex::Tool::Lexicon::EN;
 
-sub process_tnode {
-    my ( $self, $infin_verb ) = @_;
+sub is_present_participle {
+    my ($verb) = @_;
+    my $averb = $verb->get_lex_anode;
+    return (defined $averb && $averb->is_verb && $averb->is_present && $averb->is_participle && (($verb->gram_verbmod // "nil") eq "nil"));
+}
 
+sub is_past_participle {
+    my ($verb) = @_;
+    my $averb = $verb->get_lex_anode;
+    return (defined $averb && $averb->is_verb && $averb->is_past && $averb->is_participle && (($verb->gram_verbmod // "nil") eq "nil"));
+}
+
+sub process_tnode {
+    my ( $self, $verb ) = @_;
+
+    my $functor;
     # Process infinitives only
-    return if !$infin_verb->is_infin;
-    
-    # Some infinitives may have subject (actor) on surface -> let's skip them
-    return if any {$_->functor eq 'ACT'} $infin_verb->get_children();
+    if ($verb->is_infin) {
+        # Some infinitives may have subject (actor) on surface -> let's skip them
+        return if any {$_->functor eq 'ACT'} $verb->get_children();
+
+        $functor = "ACT";
+    }
+    elsif (is_present_participle($verb)) {
+        $functor = "ACT";
+    }
+    elsif (is_past_participle($verb)) {
+        $functor = "PAT";
+    }
+    else {
+        return;
+    }
 
     # Add the generated #Cor node
-    my $cor = $infin_verb->create_child(
+    my $cor = $verb->create_child(
         {
             is_generated => 1,
             t_lemma      => '#Cor',
-            functor      => 'ACT',
+            functor      => $functor,
             formeme      => 'n:elided',
             nodetype     => 'qcomplex',
         }
     );
-    $cor->shift_before_node($infin_verb);
+    $cor->shift_before_node($verb);
 
    
     # distinguish the control type (object vs. subject)
-    return if $infin_verb->get_parent->is_root;
-    my ($grandpa) = $infin_verb->get_eparents();
-    my $antec_formeme = Treex::Tool::Lexicon::EN::is_object_control_verb( $grandpa->t_lemma || '_root' )
-     ? 'n:obj' : 'n:subj';
+    return if $verb->get_parent->is_root;
+    my ($grandpa) = $verb->get_eparents();
+    my $antec_formeme;
+    if ($verb->is_infin) {
+        $antec_formeme = Treex::Tool::Lexicon::EN::is_object_control_verb( $grandpa->t_lemma || '_root' )
+            ? 'n:obj' : 'n:subj';
+    }
+    # TODO: rule-based antecedent selection could be implemented in a more clever way
+    elsif (is_present_participle($verb)) {
+        $antec_formeme = 'n:subj';
+    }
+    elsif (is_past_participle($verb)) {
+        $antec_formeme = 'n:obj';
+    }
      
     # Find the antecedent and fill the coreference link
     my $antec = first { $_->formeme eq $antec_formeme } $grandpa->get_echildren;
