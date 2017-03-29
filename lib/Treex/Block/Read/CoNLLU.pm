@@ -47,7 +47,7 @@ sub next_document {
         foreach my $line (@lines) {
             next LINE if $line =~ /^\s*$/;
             if ($line =~ s/^#\s*//) {
-                if ($line =~ m/sent_id\s+(.*)/) {
+                if ($line =~ m/sent_id(\s*=\s*|\s+)(.*)/) {
                     my $sid = $1;
                     my $zid = $self->language();
                     # Some CoNLL-U files already have sentence ids with "/language" suffix while others don't.
