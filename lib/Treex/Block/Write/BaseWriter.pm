@@ -386,10 +386,6 @@ A string to append after C<file_stem>.
 If set to 1, the output files are compressed using GZip (if C<to> is used to set
 file names, the names must also contain the ".gz" suffix).
 
-=item C<clobber>
-
-If set to 1, existing destination files will be overwritten.
-
 =back
 
 =head1 DERIVED CLASSES
