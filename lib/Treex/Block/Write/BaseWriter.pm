@@ -86,7 +86,7 @@ sub BUILD {
     # fail soon if running under treex -p
     if ($self->scenario && $self->scenario->runner && $self->scenario->runner->jobindex) {
         # and if the output file is specified
-        if ($self->to ne '-' and $self->to ne '.') {
+        if (defined $self->to and $self->to ne '-' and $self->to ne '.') {
             log_fatal "Merging writer output with treex -p into file(s) (except for stdout) "
                 . "is not supported. to=" . $self->to;
         }
