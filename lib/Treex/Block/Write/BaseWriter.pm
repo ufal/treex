@@ -38,7 +38,7 @@ has stem_suffix => (
 has to => (
     isa           => 'Str',
     is            => 'rw',
-    documentation => 'The destination filename (default is "-" meaning standard output; '
+    documentation => 'The destination filename ("-" means the standard output; '
         . 'use "." for the filename inherited from upstream blocks).',
 );
 
