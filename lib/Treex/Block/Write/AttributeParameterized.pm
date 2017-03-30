@@ -291,6 +291,7 @@ sub _get_data {
 
 # Simple helper methods for _get_referenced_nodes
 Readonly my $GET_REF_NODES => {
+    'node'  => sub { return $_[1] },
     'lex_a_node'  => sub { return $_[1]->get_lex_anode() },
     'aux_a_nodes' => sub { return $_[1]->get_aux_anodes( { ordered => 1 } ) },
     't_node_for_lex' => sub { return $_[1]->get_referencing_nodes('a/lex.rf') },
