@@ -148,8 +148,10 @@ sub _is_relat_prague_via_tag {
     my $arg_iswhat = $args->{is_what} // 0;
     my $iswhat = $anode->tag =~ /^.Q/;
     return 0 if !ternary_arg($arg_iswhat, $iswhat);
+
+    my $isother = $anode->tag =~ /^.[149EJK\?]/;
     
-    return $anode->tag =~ /^.[149EJK\?]/;
+    return $iswhat || $isother;
 }
 
 # there is a problem with "již"
