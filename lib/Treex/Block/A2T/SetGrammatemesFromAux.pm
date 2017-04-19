@@ -18,7 +18,7 @@ sub process_tnode {
     
         # Set gram/gender and gram/number of a noun based on its article.
         if ($anode->is_article){
-            my $d = $anode->iset->definiteness;
+            my $d = $anode->is_definite;
             $tnode->set_gram_definiteness('definite') if $d eq 'def';
             $tnode->set_gram_definiteness('indefinite') if $d eq 'ind';
 

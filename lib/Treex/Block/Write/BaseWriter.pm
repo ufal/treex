@@ -38,7 +38,7 @@ has stem_suffix => (
 has to => (
     isa           => 'Str',
     is            => 'rw',
-    documentation => 'The destination filename (default is "-" meaning standard output; '
+    documentation => 'The destination filename ("-" means the standard output; '
         . 'use "." for the filename inherited from upstream blocks).',
 );
 
@@ -385,10 +385,6 @@ A string to append after C<file_stem>.
 
 If set to 1, the output files are compressed using GZip (if C<to> is used to set
 file names, the names must also contain the ".gz" suffix).
-
-=item C<clobber>
-
-If set to 1, existing destination files will be overwritten.
 
 =back
 
