@@ -15,10 +15,10 @@ sub process_anode {
     # fill in definiteness for articles
     if ( $anode->match_iset( 'prontype' => 'art' ) ) {
         if ( $anode->lemma eq 'the' ) {
-            $anode->iset->set_definiteness('def');
+            $anode->iset->set('definiteness', 'def');
         }
         elsif ( $anode->lemma =~ /^an?$/ ) {
-            $anode->iset->set_definiteness('ind');
+            $anode->iset->set('definiteness', 'ind');
         }
     }
 
