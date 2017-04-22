@@ -24,10 +24,10 @@ sub BUILD {
         log_fatal "Cannot specify both 'trg_layer' and 'trg_selector' arguments.";
     }
     if (defined $self->trg_layer && $self->trg_layer eq $self->layer) {
-        log_fatal "Arguments 'layer' and 'trg_layer' must differ.";
+        log_warn "Arguments 'layer' and 'trg_layer' must differ. Skipping the block.";
     }
     if (defined $self->trg_selector && $self->trg_selector eq $self->selector) {
-        log_fatal "Arguments 'selector' and 'trg_selector' must differ.";
+        log_warn "Arguments 'selector' and 'trg_selector' must differ. Skipping the block.";
     }
 }
 
@@ -46,6 +46,10 @@ sub _build_aligns_graph {
 
 sub process_bundle {
     my ($self, $bundle) = @_;
+    
+    # source and target layer / selector must differ
+    return if (defined $self->trg_layer && $self->trg_layer eq $self->layer);
+    return if (defined $self->trg_selector && $self->trg_selector eq $self->selector);
 
     foreach my $l1 (keys %{$self->_aligns_graph}) {
         my $src_tree = $bundle->get_tree($l1, $self->layer, $self->selector);
