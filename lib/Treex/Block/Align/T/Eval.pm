@@ -8,57 +8,65 @@ use List::MoreUtils qw/any/;
 extends 'Treex::Block::Write::BaseTextWriter';
 with 'Treex::Block::Filter::Node';
 
-has '+node_types' => ( default => 'all_anaph' );
 has 'align_language' => (is => 'ro', isa => 'Str', required => 1);
-has 'align_reltypes' => (is => 'ro', isa => 'Str', default => '!gold,!robust,!supervised,.*');
+has 'align_reltypes' => (is => 'ro', isa => 'Str', default => '!gold,!coref_gold,!robust,!supervised,!coref_supervised,.*');
 
-sub _process_node {
-    my ($self, $node) = @_;
-    
-    # get true and predicted aligned nodes
-    my ($true_nodes, $true_types) = $node->get_undirected_aligned_nodes({
-        language => $self->align_language,
-        selector => $self->selector,
-        rel_types => ['gold'],
-    });
-    log_debug "TRUE_TYPES: " . (join " ", @$true_types), 1;
+has 'penalize_analysis' => (is => 'ro', isa => 'Bool', default => 0);
+
+sub _build_node_types {
+    return 'all_anaph';
+}
+
+sub calculate_counts_for_node {
+    my ($self, $src_tnode) = @_;
+
+    my @ref_tnodes = $self->selector_counterparts($src_tnode, 'ref');
+    my (@ref_true_ali, @ref_true_types);
+    foreach my $ref_tnode (@ref_tnodes) {
+        my ($true_ali_part, $true_types_part) = $ref_tnode->get_undirected_aligned_nodes({
+            language => $self->align_language,
+            selector => 'ref',
+            rel_types => ['gold', 'coref_gold'],
+        });
+        push @ref_true_ali, @$true_ali_part;
+        push @ref_true_types, @$true_types_part;
+    }
+
     my @rel_types = split /,/, $self->align_reltypes;
-    my ($pred_nodes, $pred_types) = $node->get_undirected_aligned_nodes({
+    my ($src_pred_ali, $src_pred_types) = $src_tnode->get_undirected_aligned_nodes({
         language => $self->align_language,
         selector => $self->selector,
         rel_types => \@rel_types,
     });
-    log_debug "PRED_TYPES: " . (join " ", @$pred_types), 1;
-   
-    # get all candidates for alignment
-    my $layer = $node->get_layer;
-    my $aligned_tree = $node->get_bundle->get_tree($self->align_language, $layer, $self->selector);
-    my @aligned_cands = ( $node, $aligned_tree->get_descendants({ordered => 1}) );
-    
-    # set true indexes
-    my $true_idx;
-    if (!defined $true_nodes || !@$true_nodes) {
-        $true_nodes = [ $node ];
+
+    my @src_true_ali = map {$self->selector_counterparts($_, $src_tnode->selector)} @ref_true_ali;
+
+    my @both_ali = grep { my $pred_node = $_; any {$_ == $pred_node} @src_true_ali } @$src_pred_ali;
+
+    return map {scalar(@$_)} ($self->penalize_analysis ? \@ref_true_ali : \@src_true_ali, $src_pred_ali, \@both_ali);
+}
+
+sub selector_counterparts {
+    my ($self, $node, $selector) = @_;
+
+    if ($node->selector eq $selector) {
+        return $node;
     }
-    # +1 because the candidates are indexed from 1
-    my @true_idxs = map {$_ + 1} grep {my $ali_c = $aligned_cands[$_]; any {$_ == $ali_c} @$true_nodes} 0 .. $#aligned_cands;
-    $true_idx = join ",", @true_idxs;
-    
-    if (!defined $pred_nodes || !@$pred_nodes) {
-        $pred_nodes = [ $node ];
+    else {
+        my ($ali_nodes, $ali_types) = $node->get_undirected_aligned_nodes({
+            language => $node->language,
+            selector => $selector,
+        });
+        return @$ali_nodes;
     }
-    for (my $i = 0; $i < @aligned_cands; $i++) {
-        my $ali_c  = $aligned_cands[$i];
-        my $loss = (any {$_ == $ali_c} @$pred_nodes) ? "0.00" : "1.00";
-        print {$self->_file_handle} ($i+1).":$loss $true_idx-1\n";
-    }
-    print {$self->_file_handle} "\n";
 }
 
 sub process_filtered_tnode {
     my ($self, $tnode) = @_;
     
-    $self->_process_node($tnode);
+    my ($true, $pred, $both) = $self->calculate_counts_for_node($tnode);
+    print {$self->_file_handle} join " ", ($true, $pred, $both, $tnode->get_address);
+    print {$self->_file_handle} "\n";
 }
 
 # TODO for the time being, ignoring alignment of anodes with no tnode counterpart
