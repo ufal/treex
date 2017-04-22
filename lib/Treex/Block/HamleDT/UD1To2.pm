@@ -76,6 +76,7 @@ my %v12deprel =
     'nsubjpass'  => 'nsubj:pass',
     'csubjpass'  => 'csubj:pass',
     'auxpass'    => 'aux:pass',
+    'auxpass:reflex' => 'expl:pass',
     'nmod:agent' => 'obl:agent',
     # Conversion of the neg relation is nontrivial, see below.
     #'neg'        => 'advmod',
