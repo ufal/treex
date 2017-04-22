@@ -103,6 +103,12 @@ sub convert_deprels
         my $parent = $node->parent();
         my $deprel = $node->deprel();
         my $iset = $node->iset();
+        # Just in case the data is buggy...
+        if($parent->is_root())
+        {
+            $deprel = 'root';
+            $node->set_deprel('root');
+        }
         # If we are removing the 'neg' relation, make sure that the node has one of the features Polarity=Neg or PronType=Neg.
         if($deprel eq 'neg')
         {
