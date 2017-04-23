@@ -164,120 +164,126 @@ sub convert_chained_relations_to_orphans
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my @chained = grep {$_->deprel() =~ m/^conj>/} ($node->children());
-        my $n = scalar(@chained);
+        my @chained0 = grep {$_->deprel() =~ m/^conj>/} ($node->get_children({'ordered' => 1}));
+        my $n = scalar(@chained0);
         if($n > 0)
         {
-            if($n != 2)
+            # For even number of orphans assume they work in pairs. This is not
+            # granted but it is the most typical situation.
+            if($n%2 == 0)
             {
-                log_warn("Cannot convert chained conj>something relations when the number of orphans is $n");
-                next;
+                for(my $i = 0; $i < $n; $i += 2)
+                {
+                    my @chained = ($chained0[$i], $chained0[$i+1]);
+                    # Use the obliqueness hierarchy to determine which orphan will be promoted.
+                    my $promote;
+                    my $orphan;
+                    if($chained[0]->deprel() =~ m/nsubj/)
+                    {
+                        $promote = $chained[0];
+                        $orphan = $chained[1];
+                    }
+                    elsif($chained[1]->deprel() =~ m/nsubj/)
+                    {
+                        $promote = $chained[1];
+                        $orphan = $chained[0];
+                    }
+                    elsif($chained[0]->deprel() =~ m/dobj/)
+                    {
+                        $promote = $chained[0];
+                        $orphan = $chained[1];
+                    }
+                    elsif($chained[1]->deprel() =~ m/dobj/)
+                    {
+                        $promote = $chained[1];
+                        $orphan = $chained[0];
+                    }
+                    elsif($chained[0]->deprel() =~ m/iobj/)
+                    {
+                        $promote = $chained[0];
+                        $orphan = $chained[1];
+                    }
+                    elsif($chained[1]->deprel() =~ m/iobj/)
+                    {
+                        $promote = $chained[1];
+                        $orphan = $chained[0];
+                    }
+                    elsif($chained[0]->deprel() =~ m/nmod/)
+                    {
+                        $promote = $chained[0];
+                        $orphan = $chained[1];
+                    }
+                    elsif($chained[1]->deprel() =~ m/nmod/)
+                    {
+                        $promote = $chained[1];
+                        $orphan = $chained[0];
+                    }
+                    elsif($chained[0]->deprel() =~ m/advmod/)
+                    {
+                        $promote = $chained[0];
+                        $orphan = $chained[1];
+                    }
+                    elsif($chained[1]->deprel() =~ m/advmod/)
+                    {
+                        $promote = $chained[1];
+                        $orphan = $chained[0];
+                    }
+                    elsif($chained[0]->deprel() =~ m/csubj/)
+                    {
+                        $promote = $chained[0];
+                        $orphan = $chained[1];
+                    }
+                    elsif($chained[1]->deprel() =~ m/csubj/)
+                    {
+                        $promote = $chained[1];
+                        $orphan = $chained[0];
+                    }
+                    elsif($chained[0]->deprel() =~ m/xcomp/)
+                    {
+                        $promote = $chained[0];
+                        $orphan = $chained[1];
+                    }
+                    elsif($chained[1]->deprel() =~ m/xcomp/)
+                    {
+                        $promote = $chained[1];
+                        $orphan = $chained[0];
+                    }
+                    elsif($chained[0]->deprel() =~ m/ccomp/)
+                    {
+                        $promote = $chained[0];
+                        $orphan = $chained[1];
+                    }
+                    elsif($chained[1]->deprel() =~ m/ccomp/)
+                    {
+                        $promote = $chained[1];
+                        $orphan = $chained[0];
+                    }
+                    elsif($chained[0]->deprel() =~ m/advcl/)
+                    {
+                        $promote = $chained[0];
+                        $orphan = $chained[1];
+                    }
+                    elsif($chained[1]->deprel() =~ m/advcl/)
+                    {
+                        $promote = $chained[1];
+                        $orphan = $chained[0];
+                    }
+                    else
+                    {
+                        $promote = $chained[0];
+                        $orphan = $chained[1];
+                    }
+                    push(@{$promote->wild()->{deps}}, $promote->parent()->ord().':'.$promote->deprel());
+                    push(@{$orphan->wild()->{deps}}, $orphan->parent()->ord().':'.$orphan->deprel());
+                    $promote->set_deprel('conj');
+                    $orphan->set_parent($promote);
+                    $orphan->set_deprel('orphan');
+                }
             }
             else
             {
-                # Use the obliqueness hierarchy to determine which orphan will be promoted.
-                my $promote;
-                my $orphan;
-                if($chained[0]->deprel() =~ m/nsubj/)
-                {
-                    $promote = $chained[0];
-                    $orphan = $chained[1];
-                }
-                elsif($chained[1]->deprel() =~ m/nsubj/)
-                {
-                    $promote = $chained[1];
-                    $orphan = $chained[0];
-                }
-                elsif($chained[0]->deprel() =~ m/dobj/)
-                {
-                    $promote = $chained[0];
-                    $orphan = $chained[1];
-                }
-                elsif($chained[1]->deprel() =~ m/dobj/)
-                {
-                    $promote = $chained[1];
-                    $orphan = $chained[0];
-                }
-                elsif($chained[0]->deprel() =~ m/iobj/)
-                {
-                    $promote = $chained[0];
-                    $orphan = $chained[1];
-                }
-                elsif($chained[1]->deprel() =~ m/iobj/)
-                {
-                    $promote = $chained[1];
-                    $orphan = $chained[0];
-                }
-                elsif($chained[0]->deprel() =~ m/nmod/)
-                {
-                    $promote = $chained[0];
-                    $orphan = $chained[1];
-                }
-                elsif($chained[1]->deprel() =~ m/nmod/)
-                {
-                    $promote = $chained[1];
-                    $orphan = $chained[0];
-                }
-                elsif($chained[0]->deprel() =~ m/advmod/)
-                {
-                    $promote = $chained[0];
-                    $orphan = $chained[1];
-                }
-                elsif($chained[1]->deprel() =~ m/advmod/)
-                {
-                    $promote = $chained[1];
-                    $orphan = $chained[0];
-                }
-                elsif($chained[0]->deprel() =~ m/csubj/)
-                {
-                    $promote = $chained[0];
-                    $orphan = $chained[1];
-                }
-                elsif($chained[1]->deprel() =~ m/csubj/)
-                {
-                    $promote = $chained[1];
-                    $orphan = $chained[0];
-                }
-                elsif($chained[0]->deprel() =~ m/xcomp/)
-                {
-                    $promote = $chained[0];
-                    $orphan = $chained[1];
-                }
-                elsif($chained[1]->deprel() =~ m/xcomp/)
-                {
-                    $promote = $chained[1];
-                    $orphan = $chained[0];
-                }
-                elsif($chained[0]->deprel() =~ m/ccomp/)
-                {
-                    $promote = $chained[0];
-                    $orphan = $chained[1];
-                }
-                elsif($chained[1]->deprel() =~ m/ccomp/)
-                {
-                    $promote = $chained[1];
-                    $orphan = $chained[0];
-                }
-                elsif($chained[0]->deprel() =~ m/advcl/)
-                {
-                    $promote = $chained[0];
-                    $orphan = $chained[1];
-                }
-                elsif($chained[1]->deprel() =~ m/advcl/)
-                {
-                    $promote = $chained[1];
-                    $orphan = $chained[0];
-                }
-                else
-                {
-                    $promote = $chained[0];
-                    $orphan = $chained[1];
-                }
-                push(@{$promote->wild()->{deps}}, $promote->parent()->ord().':'.$promote->deprel());
-                push(@{$orphan->wild()->{deps}}, $orphan->parent()->ord().':'.$orphan->deprel());
-                $promote->set_deprel('conj');
-                $orphan->set_parent($promote);
-                $orphan->set_deprel('orphan');
+                log_warn("Cannot convert chained conj>something relations when the number of orphans is $n");
+                next;
             }
         }
     }
