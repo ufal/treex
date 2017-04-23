@@ -17,6 +17,7 @@ sub process_atree
     # Fix relations before morphology. The fixes depend only on UPOS tags, not on morphology (e.g. NOUN should not be attached as det).
     # And with better relations we will be more able to disambiguate morphological case and gender.
     $self->convert_deprels($root);
+    $self->convert_chained_relations_to_orphans($root);
     # Coordinating conjunctions and punctuation should now be attached to the following conjunct.
     # The Coordination phrase class already outputs the new structure, hence simple
     # conversion to phrases and back should do the trick.
@@ -27,7 +28,6 @@ sub process_atree
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
-    $self->convert_chained_relations_to_orphans($root);
 }
 
 
