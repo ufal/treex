@@ -165,11 +165,12 @@ sub convert_chained_relations_to_orphans
     foreach my $node (@nodes)
     {
         my @chained = grep {$_->deprel() =~ m/^conj>/} ($node->children());
-        if(scalar(@chained) > 0)
+        my $n = scalar(@chained);
+        if($n > 0)
         {
-            if(scalar(@chained) != 2)
+            if($n != 2)
             {
-                log_warn("Cannot convert chained conj>something relations when the number of orphans is not 2");
+                log_warn("Cannot convert chained conj>something relations when the number of orphans is $n");
                 next;
             }
             else
