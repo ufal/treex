@@ -27,7 +27,11 @@ sub process_anode
         {
             if($n->ord() < $pord)
             {
-                $lnbr = $n;
+                # Another punctuation node is not a candidate to become my parent.
+                unless($n->is_punctuation())
+                {
+                    $lnbr = $n;
+                }
             }
             else
             {
@@ -54,7 +58,8 @@ sub process_anode
         my $rnbr;
         foreach my $n (@nodes)
         {
-            if($n->ord() > $pord)
+            # Another punctuation node is not a candidate to become my parent.
+            if($n->ord() > $pord && !$n->is_punctuation())
             {
                 $rnbr = $n;
                 last;
