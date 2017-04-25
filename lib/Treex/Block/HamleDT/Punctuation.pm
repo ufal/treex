@@ -74,7 +74,7 @@ sub process_anode
         }
         # If we stopped on the left because it jumps to the right, and we have passed through the parent on the right, attach left.
         my $winner;
-        if(defined($lcand) && $lcand->parent()->ord() > $pord && $rcrumbs[$lcand->parent()->ord()] > 0)
+        if(defined($lcand) && $lcand->parent()->ord() > $pord && defined($rcrumbs[$lcand->parent()->ord()]) && $rcrumbs[$lcand->parent()->ord()] > 0)
         {
             $winner = $lcand;
         }
