@@ -192,8 +192,12 @@ Treex::Block::HamleDT::Punctuation
 
 =head1 DESCRIPTION
 
-Tries to re-attach punctuation projectively. It currently does not correctly
-handle paired punctuation.
+Tries to re-attach punctuation projectively.
+It should help in cases where punctuation is attached randomly, always to the root
+or always to the neighboring word. However, there are limits to what it can do;
+for example it cannot always recognize whether a comma is introduced to separate
+the block to its left or to its right. Hence if the punctuation before running
+this block is almost good, the block may actually do more harm than good.
 
 =back
 
