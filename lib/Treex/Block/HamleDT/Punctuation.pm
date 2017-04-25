@@ -48,7 +48,7 @@ sub process_anode
         if(defined($lcand))
         {
             $lcrumbs[$lcand->ord()]++;
-            while(!$lcand->parent()->is_root() && !$lcand->parent()->ord() > $pord)
+            while(!$lcand->parent()->is_root() && $lcand->parent()->ord() < $pord)
             {
                 $lcand = $lcand->parent();
                 $lcrumbs[$lcand->ord()]++;
@@ -71,7 +71,7 @@ sub process_anode
         if(defined($rcand))
         {
             $rcrumbs[$rcand->ord()]++;
-            while(!$rcand->parent()->is_root() && !$rcand->parent()->ord() < $pord)
+            while(!$rcand->parent()->is_root() && $rcand->parent()->ord() > $pord)
             {
                 $rcand = $rcand->parent();
                 $rcrumbs[$rcand->ord()]++;
