@@ -21,6 +21,7 @@ has 'skip_annotated' => ( is => 'ro', isa => 'Bool', default => 0 );
 has '_model_paths' => (is => 'ro', isa => 'HashRef[HashRef[Str]]', lazy => 1, builder => '_build_model_paths');
 has '_rankers' => (is => 'ro', isa => 'HashRef[HashRef[Treex::Tool::ML::VowpalWabbit::Ranker]]', builder => '_build_rankers', lazy => 1);
 has '_links' => ( is => 'rw', isa => 'HashRef[HashRef[Str]]', default => sub { {} } );
+has '_processed_nodes' => ( is => 'rw', isa => 'ArrayRef', default => sub { [] } );
 
 sub BUILD {
     my ($self) = @_;
@@ -90,6 +91,8 @@ sub _add_link {
 
 sub _finalize_links {
     my ($self, $bundle) = @_;
+    # links contains symmetrized decisions of the two resolvers
+    # links->{A}{A} means that the node A is unaligned
     my $links = $self->_links;
 
     my @possible_links = ();
@@ -129,9 +132,24 @@ sub _finalize_links {
     }
 }
 
+sub _remove_old_links {
+    my ($self) = @_;
+
+    if ($self->delete_orig_align) {
+        foreach my $tnode (@{$self->_processed_nodes}) {
+            $tnode->delete_aligned_nodes_by_filter({
+                language => $self->_get_align_lang($tnode->language),
+                selector => $self->selector, 
+                rel_types => ['!gold','.*'],
+            });
+        }
+    }
+}
+
 after 'process_bundle' => sub {
     my ($self, $bundle) = @_;
 
+    $self->_remove_old_links();
     $self->_finalize_links($bundle);
     $self->_set_links({});
 };
@@ -170,13 +188,8 @@ sub process_filtered_tnode {
         ($winner_idx) = $ranker->pick_winner($feats);
     }
 
-    if ($self->delete_orig_align) {
-        $tnode->delete_aligned_nodes_by_filter({
-            language => $self->_get_align_lang($tnode->language),
-            selector => $self->selector, 
-            rel_types => ['!gold','.*'],
-        });
-    }
+    push @{$self->_processed_nodes}, $tnode;
+
     $tnode->set_attr('is_align_coref', 1);
     $self->_add_link($tnode, $cands[$winner_idx]);
 }
