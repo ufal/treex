@@ -10,6 +10,26 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
+    ###!!! Note that the definition of paired punctuation is language-specific.
+    ###!!! Right now I need this block for German. But this should definitely be parameterized in the future!
+    ###!!! Also note that we cannot handle ASCII quotation marks, although heuristics could be used to tell opening/closing apart.
+    ###!!! Add ‘single’ quotes, but make sure these symbols are not used e.g. as apostrophes.
+    ###!!! We need to know the language, there are many other quotation styles,
+    ###!!! e.g. Finnish and Swedish uses the same symbol for opening and closing: ”X”.
+    ###!!! Danish uses the French quotes but swapped: »X«.
+    my %pairs =
+    (
+        '(' => ')',
+        '[' => ']',
+        '{' => '}',
+        '“' => '”', # quotation marks used in English,...
+        '„' => '“', # Czech, German, Russian,...
+        '«' => '»', # French, Russian, Spanish,...
+        '‹' => '›', # ditto
+        '《' => '》', # Korean, Chinese
+        '「' => '」', # Chinese, Japanese
+        '『' => '』'  # ditto
+    );
     my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
@@ -19,7 +39,7 @@ sub process_atree
         # to its left or right.
         # Punctuation normally does not have children. If it does, we will skip it.
         # It is unclear what to do anyway, and we won't have to check for cycles.
-        if($node->is_punctuation() && $node->is_leaf())
+        if($node->is_punctuation() && $node->is_leaf() && !exists($pairs{$node->form()}))
         {
             my $pord = $node->ord();
             # Find the left neighbor of the punctuation.
@@ -98,26 +118,6 @@ sub process_atree
         }
     }
     # Now make sure that paired punctuation is attached to the root of the enclosed phrase, if possible.
-    ###!!! Note that the definition of paired punctuation is language-specific.
-    ###!!! Right now I need this block for German. But this should definitely be parameterized in the future!
-    ###!!! Also note that we cannot handle ASCII quotation marks, although heuristics could be used to tell opening/closing apart.
-    ###!!! Add ‘single’ quotes, but make sure these symbols are not used e.g. as apostrophes.
-    ###!!! We need to know the language, there are many other quotation styles,
-    ###!!! e.g. Finnish and Swedish uses the same symbol for opening and closing: ”X”.
-    ###!!! Danish uses the French quotes but swapped: »X«.
-    my %pairs =
-    (
-        '(' => ')',
-        '[' => ']',
-        '{' => '}',
-        '“' => '”', # quotation marks used in English,...
-        '„' => '“', # Czech, German, Russian,...
-        '«' => '»', # French, Russian, Spanish,...
-        '‹' => '›', # ditto
-        '《' => '》', # Korean, Chinese
-        '「' => '」', # Chinese, Japanese
-        '『' => '』'  # ditto
-    );
     for(my $i = 0; $i <= $#nodes; $i++)
     {
         my $n0 = $nodes[$i];
