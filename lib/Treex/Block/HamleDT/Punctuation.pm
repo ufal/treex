@@ -101,12 +101,22 @@ sub process_atree
     ###!!! Note that the definition of paired punctuation is language-specific.
     ###!!! Right now I need this block for German. But this should definitely be parameterized in the future!
     ###!!! Also note that we cannot handle ASCII quotation marks, although heuristics could be used to tell opening/closing apart.
+    ###!!! Add ‘single’ quotes, but make sure these symbols are not used e.g. as apostrophes.
+    ###!!! We need to know the language, there are many other quotation styles,
+    ###!!! e.g. Finnish and Swedish uses the same symbol for opening and closing: ”X”.
+    ###!!! Danish uses the French quotes but swapped: »X«.
     my %pairs =
     (
         '(' => ')',
         '[' => ']',
         '{' => '}',
-        '„' => '“' # Czech and German quotation marks
+        '“' => '”', # quotation marks used in English,...
+        '„' => '“', # Czech, German, Russian,...
+        '«' => '»', # French, Russian, Spanish,...
+        '‹' => '›', # ditto
+        '《' => '》', # Korean, Chinese
+        '「' => '」', # Chinese, Japanese
+        '『' => '』'  # ditto
     );
     for(my $i = 0; $i <= $#nodes; $i++)
     {
