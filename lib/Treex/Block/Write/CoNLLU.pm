@@ -100,24 +100,44 @@ sub process_atree {
     # Empty sentences are not allowed.
     return if(scalar(@nodes)==0);
     # Print sentence (bundle) ID as a comment before the sentence.
-    if ($self->print_sent_id) {
+    my $comment = $tree->get_bundle()->wild()->{comment};
+    my @comment;
+    if ($comment)
+    {
+        chomp($comment);
+        @comment = split(/\n/, $comment);
+    }
+    if ($self->print_sent_id)
+    {
+        # If the CoNLL-U comments contain document id and/or paragraph id, print them before the sentence id.
+        my @newdocpar = grep {m/^new(doc|par)/i} (@comment);
+        if (scalar(@newdocpar)>0)
+        {
+            foreach my $c (@newdocpar)
+            {
+                print {$self->_file_handle} ("# $c\n");
+            }
+            @comment = grep {!m/^new(doc|par)/i} (@comment);
+        }
         my $sent_id = $tree->get_bundle->id;
-        if ($self->print_zone_id) {
+        if ($self->print_zone_id)
+        {
             $sent_id .= '/' . $tree->get_zone->get_label;
         }
         print {$self->_file_handle} "# sent_id = $sent_id\n";
     }
-    if ($self->print_text) {
+    if ($self->print_text)
+    {
         my $text = $tree->get_zone->sentence;
         print {$self->_file_handle} "# text = $text\n" if defined $text;
     }
     # Print the original CoNLL-U comments for this sentence if present.
-    my $comment = $tree->get_bundle->wild->{comment};
-    if ($comment)
+    if (scalar(@comment) > 0)
     {
-        chomp $comment;
-        $comment =~ s/\n/\n# /g;
-        say {$self->_file_handle()} '# '.$comment;
+        foreach my $c (@comment)
+        {
+            print {$self->_file_handle} ("# $c\n");
+        }
     }
     for(my $i = 0; $i<=$#nodes; $i++)
     {
