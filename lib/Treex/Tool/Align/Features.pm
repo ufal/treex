@@ -15,7 +15,7 @@ has '_sent_graphs' => ( is => 'rw', isa => 'HashRef', default => sub {{}});
 has '_subtree_aligns' => ( is => 'rw', isa => 'HashRef', default => sub {{}});
 has '_curr_filename' => (is => 'rw', isa => 'Str', default => "");
 
-my $GIZA_ORIG_RULES_FILTER = [ '!gold', '!robust', '!supervised', '.*' ];
+my $GIZA_ORIG_RULES_FILTER = [ '!gold', '!coref_gold', '!robust', '!supervised', '!coref_supervised', '.*' ];
 my %POSSIBLE_NODE_TYPES = map {$_ => 1} qw/perspron relpron zero/;
 
 sub _reset_global_structs {
