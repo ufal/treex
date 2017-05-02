@@ -80,13 +80,15 @@ sub _build_rankers {
 
 
 sub _add_link {
-    my ($self, $n1, $n2) = @_;
+    my ($self, $n1, $n2, $score) = @_;
 
     my ($n1_id, $n2_id) = map {$_->id} ($n1, $n2);
     my $links = $self->_links;
     
-    $links->{$n1_id}{$n2_id}++;
-    $links->{$n2_id}{$n1_id}++;
+    my $scores = $links->{$n1_id}{$n2_id} // [];
+    push @$scores, $score;
+    $links->{$n1_id}{$n2_id} = $scores;
+    $links->{$n2_id}{$n1_id} = $scores;
 }
 
 sub _finalize_links {
@@ -95,39 +97,49 @@ sub _finalize_links {
     # links->{A}{A} means that the node A is unaligned
     my $links = $self->_links;
 
-    my @possible_links = ();
-    my @links_scores = ();
+    my @two_score_links = ();
+    my @one_score_links = ();
+    my @one_score_scores = ();
     
     foreach my $from_id (sort keys %$links) {
         my $from_node = $bundle->get_document->get_node_by_id($from_id);
         foreach my $to_id (sort keys %{$links->{$from_id}}) {
             my $to_node = $bundle->get_document->get_node_by_id($to_id);
             next if ($from_id ne $to_id && $from_node->language eq $self->align_trg_lang);
-            push @possible_links, [$from_node, $to_node];
-            push @links_scores, $links->{$from_id}{$to_id};
+            
+            if (scalar @{$links->{$from_id}{$to_id}} > 1) {
+                push @two_score_links, [$from_node, $to_node];
+            }
+            else {
+                push @one_score_links, [$from_node, $to_node];
+                push @one_score_scores, $links->{$from_id}{$to_id}[0];
+            }
         }
     }
 
-    my @sorted_idx = sort {$links_scores[$b] <=> $links_scores[$a]} 0 .. $#links_scores;
+    my @one_score_sorted_idx = sort {$one_score_scores[$b] <=> $one_score_scores[$a]} 0 .. $#one_score_scores;
+    my @sorted_one_score_links = map {$one_score_links[$_]} @one_score_sorted_idx;
 
     my %covered_ids = ();
-    foreach my $idx (@sorted_idx) {
-        my $from_node = $possible_links[$idx]->[0];
-        my $to_node = $possible_links[$idx]->[1];
+    foreach my $list (\@two_score_links, \@sorted_one_score_links) {
+        foreach my $pair (@$list) {
+            my $from_node = $pair->[0];
+            my $to_node = $pair->[1];
 
-        if ($covered_ids{$from_node->id}) {
-            log_info "[".(ref $self)."] Alignment link ".$from_node->id." --> ".$to_node->id." skipped. The node ".$from_node->id." already covered.";
-        }
-        elsif ($covered_ids{$to_node->id}) {
-            log_info "[".(ref $self)."] Alignment link ".$from_node->id." --> ".$to_node->id." skipped. The node ".$to_node->id." already covered.";
-        }
-        else {
-            if ($from_node != $to_node) {
-                log_info "[".(ref $self)."] Adding alignment: " . $from_node->id . " --> " . $to_node->id;
-                Treex::Tool::Align::Utils::add_aligned_node($from_node, $to_node, $self->align_name);
+            if ($covered_ids{$from_node->id}) {
+                log_info "[".(ref $self)."] Alignment link ".$from_node->id." --> ".$to_node->id." skipped. The node ".$from_node->id." already covered.";
             }
-            $covered_ids{$from_node->id} = 1;
-            $covered_ids{$to_node->id} = 1;
+            elsif ($covered_ids{$to_node->id}) {
+                log_info "[".(ref $self)."] Alignment link ".$from_node->id." --> ".$to_node->id." skipped. The node ".$to_node->id." already covered.";
+            }
+            else {
+                if ($from_node != $to_node) {
+                    log_info "[".(ref $self)."] Adding alignment: " . $from_node->id . " --> " . $to_node->id;
+                    Treex::Tool::Align::Utils::add_aligned_node($from_node, $to_node, $self->align_name);
+                }
+                $covered_ids{$from_node->id} = 1;
+                $covered_ids{$to_node->id} = 1;
+            }
         }
     }
 }
@@ -152,6 +164,7 @@ after 'process_bundle' => sub {
     $self->_remove_old_links();
     $self->_finalize_links($bundle);
     $self->_set_links({});
+    $self->_set_processed_nodes([]);
 };
 
 sub _get_align_lang {
@@ -176,22 +189,22 @@ sub process_filtered_tnode {
         return;
     }
     my $feats = $self->_feat_extractor->create_instances($tnode, ["__SELF__"], \@cands);
-    my $winner_idx;
+    my ($winner_idx, $winner_score);
     if (Treex::Core::Log::get_error_level() eq 'DEBUG') {
         log_info "ALIGN SUPERVISED DEBUG ZONE";
         my @scores = $ranker->rank($feats);
         $tnode->wild->{align_supervised_scores} = { map {$cands[$_]->id => $scores[$_]} 0 .. $#cands };
-        my $max = max @scores;
-        ($winner_idx) = grep {$scores[$_] == $max} 0 .. $#scores;
+        $winner_score = max @scores;
+        ($winner_idx) = grep {$scores[$_] == $winner_score} 0 .. $#scores;
     }
     else {
-        ($winner_idx) = $ranker->pick_winner($feats);
+        ($winner_idx, $winner_score) = $ranker->pick_winner($feats);
     }
 
     push @{$self->_processed_nodes}, $tnode;
 
     $tnode->set_attr('is_align_coref', 1);
-    $self->_add_link($tnode, $cands[$winner_idx]);
+    $self->_add_link($tnode, $cands[$winner_idx], $winner_score);
 }
 
 1;
