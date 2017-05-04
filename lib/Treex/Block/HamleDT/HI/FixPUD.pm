@@ -12,10 +12,21 @@ sub process_anode
 {
     my $self = shift;
     my $node = shift;
+    # I don't know what attr is supposed to mean. There are two occurrences.
+    # It seems to be non-verbal predicate so maybe it should be restructured.
+    if ($node->deprel() eq 'attr')
+    {
+        $node->set_deprel('xcomp');
+    }
     # Compound:plur is a conversion error (it would work in Indonesian).
-    if ($node->deprel() eq 'compound:plur')
+    elsif ($node->deprel() eq 'compound:plur')
     {
         $node->set_deprel('compound:redup');
+    }
+    # Neg seems to be an annotation error. There is only one occurrence.
+    elsif ($node->deprel() eq 'neg')
+    {
+        $node->set_deprel('case');
     }
     # Obl:poss is a conversion error, it should be nmod:poss (unless it is also an annotation error).
     elsif ($node->deprel() eq 'obl:poss')
@@ -28,7 +39,8 @@ sub process_anode
         my $form = $node->form();
         # The right sibling should be an acl:relcl.
         my $rs = $node->get_right_neighbor();
-        if (defined($rs) && $rs->deprel() eq 'acl:relcl')
+        # In one case the sibling is not attached as acl:relcl but I think the relative pronoun should still be attached to it.
+        if (defined($rs)) # && $rs->deprel() eq 'acl:relcl')
         {
             my @children = $rs->get_children({'ordered' => 1});
             my $candidate = scalar(@children) > 0 ? $children[0] : $rs;
@@ -67,8 +79,13 @@ sub process_anode
         else
         {
             ###!!! We don't have the candidate for the new parent. So what?
+            # In one case the ref was already attached to the head of the relative clause.
+            if ($form =~ m/^(जिसने|जिन्होंने)$/ && $node->parent()->deprel() eq 'acl:relcl')
+            {
+                $node->set_deprel('nsubj');
+            }
             # थे is an annotation error.
-            if ($form eq 'थे')
+            elsif ($form eq 'थे')
             {
                 $node->set_deprel('aux');
             }
