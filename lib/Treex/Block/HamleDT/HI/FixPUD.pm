@@ -12,8 +12,13 @@ sub process_anode
 {
     my $self = shift;
     my $node = shift;
+    # Compound:plur is a conversion error (it would work in Indonesian).
+    if ($node->deprel() eq 'compound:plur')
+    {
+        $node->set_deprel('compound:redup');
+    }
     # Obl:poss is a conversion error, it should be nmod:poss (unless it is also an annotation error).
-    if ($node->deprel() eq 'obl:poss')
+    elsif ($node->deprel() eq 'obl:poss')
     {
         $node->set_deprel('nmod:poss');
     }
@@ -43,7 +48,7 @@ sub process_anode
                 $node->set_parent($rs);
                 $node->set_deprel('obl');
             }
-            elsif ($form =~ m/^(जिसका|जिसकी|जिनकी|जिसके|जिनके)$/)
+            elsif ($form =~ m/^(जिसका|जिनका|जिसकी|जिनकी|जिसके|जिनके)$/)
             {
                 $node->set_parent($candidate);
                 $node->set_deprel('nmod:poss');
@@ -58,16 +63,15 @@ sub process_anode
                 push(@misc, 'ToDo=जो');
                 $node->wild()->{misc} = join('|', @misc);
             }
-            # थे is an annotation error.
-            elsif ($form eq 'थे')
-            {
-                $node->set_parent($rs);
-                $node->set_deprel('aux');
-            }
         }
         else
         {
             ###!!! We don't have the candidate for the new parent. So what?
+            # थे is an annotation error.
+            if ($form eq 'थे')
+            {
+                $node->set_deprel('aux');
+            }
         }
     }
 }
