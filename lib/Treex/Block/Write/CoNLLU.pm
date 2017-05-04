@@ -191,7 +191,7 @@ sub process_atree {
         my $feats = $self->_get_feats($node);
 
         my @misc;
-        @misc = split(/\|/, $wild->{misc}) if(exists($wild->{misc}) && defined($wild->{misc}));
+        @misc = split(/\|/, $wild->{misc}) if(exists($wild->{misc}) && defined($wild->{misc}) && $wild->{misc} ne '_');
 
         # In the case of fused surface token, SpaceAfter=No may be specified for the surface token but NOT for the individual syntactic words.
         if($node->no_space_after() && !defined($wild->{fused}))
