@@ -39,8 +39,13 @@ sub process_anode
         my $form = $node->form();
         # The right sibling should be an acl:relcl.
         my $rs = $node->get_right_neighbor();
+        # थे is an annotation error.
+        if ($form eq 'थे')
+        {
+            $node->set_deprel('aux');
+        }
         # In one case the sibling is not attached as acl:relcl but I think the relative pronoun should still be attached to it.
-        if (defined($rs)) # && $rs->deprel() eq 'acl:relcl')
+        elsif (defined($rs)) # && $rs->deprel() eq 'acl:relcl')
         {
             my @children = $rs->get_children({'ordered' => 1});
             my $candidate = scalar(@children) > 0 ? $children[0] : $rs;
@@ -83,11 +88,6 @@ sub process_anode
             if ($form =~ m/^(जिसने|जिन्होंने)$/ && $node->parent()->deprel() eq 'acl:relcl')
             {
                 $node->set_deprel('nsubj');
-            }
-            # थे is an annotation error.
-            elsif ($form eq 'थे')
-            {
-                $node->set_deprel('aux');
             }
         }
     }
