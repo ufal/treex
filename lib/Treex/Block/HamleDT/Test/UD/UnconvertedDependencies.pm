@@ -8,10 +8,10 @@ extends 'Treex::Block::Test::BaseTester';
 my @relations =
 (
     'nsubj', 'nsubj:pass', 'obj', 'iobj', 'csubj', 'csubj:pass', 'ccomp', 'xcomp',
-    'obl', 'advmod', 'advmod:emph', 'advcl',
+    'obl', 'obl:agent', 'obl:tmod', 'advmod', 'advmod:emph', 'advcl',
     'vocative', 'discourse', 'expl', 'expl:pv', 'expl:pass', 'expl:impers', 'aux', 'aux:pass', 'cop', 'mark',
     'appos', 'nmod', 'nmod:poss', 'amod', 'det', 'nummod', 'acl', 'acl:relcl', 'case',
-    'compound', 'fixed', 'flat', 'flat:foreign', 'goeswith',
+    'compound', 'fixed', 'flat', 'flat:foreign', 'flat:name', 'goeswith',
     'conj', 'cc', 'punct',
     'list', 'dislocated', 'parataxis', 'orphan', 'reparandum',
     'root', 'dep'
@@ -35,7 +35,7 @@ my %lspecrel =
     'ga'  => ['case:voc', 'compound:prt', 'csubj:cleft', 'csubj:cop', 'mark:prt', 'nmod:poss', 'nmod:prep', 'nmod:tmod', 'xcomp:pred'],
     'grc' => [],
     'he'  => ['acl:inf', 'advmod:inf', 'advmod:phrase', 'aux:q', 'case:acc', 'case:gen', 'conj:discourse', 'det:def', 'det:quant', 'nmod:poss', 'nmod:smixut', 'nmod:tmod', 'nsubj:cop'],
-    'hi'  => [],
+    'hi'  => ['compound:conjv'],
     'hu'  => ['advmod:locy', 'advmod:mode', 'advmod:obl', 'advmod:que', 'advmod:tfrom', 'advmod:tlocy', 'advmod:to', 'advmod:tto', 'amod:att', 'amod:attlvc', 'amod:mode', 'amod:obl', 'ccomp:obj', 'ccomp:obl', 'ccomp:pred', 'compound:preverb', 'obj:lvc', 'flat:hu', 'nmod:att', 'nmod:attlvc', 'nmod:obl', 'nmod:obllvc', 'nsubj:lvc'],
     'it'  => ['det:poss', 'det:predet'],
     'la'  => [],
