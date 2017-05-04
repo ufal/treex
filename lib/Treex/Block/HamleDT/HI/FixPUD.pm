@@ -22,7 +22,7 @@ sub process_anode
     {
         my $form = $node->form();
         # The right sibling should be an acl:relcl.
-        my $rs = $node->get_right_siblinig();
+        my $rs = $node->get_right_neighbor();
         if (defined($rs) && $rs->deprel() eq 'acl:relcl')
         {
             my @children = $rs->get_children({'ordered' => 1});
