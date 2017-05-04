@@ -7,6 +7,7 @@ extends 'Treex::Block::Write::BaseTextWriter';
 has 'print_sent_id'                    => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print sent_id in CoNLL-U comment before each sentence' );
 has 'print_zone_id'                    => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'include zone id in sent_id comment after a slash' );
 has 'print_text'                       => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print sentence text in CoNLL-U comment before each sentence' );
+has 'sort_misc'                        => ( is => 'ro', isa => 'Bool', default => 0, documentation => 'MISC attributes will be sorted alphabetically' );
 has 'randomly_select_sentences_ratio'  => ( is => 'rw', isa => 'Num',  default => 1 );
 has 'alignment'                        => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print alignment links in the 9th column' );
 
@@ -232,6 +233,10 @@ sub process_atree {
         if(exists($wild->{lnumvalue}) && defined($wild->{lnumvalue}))
         {
             push(@misc, "LNumValue=$wild->{lnumvalue}");
+        }
+        if($self->sort_misc())
+        {
+            @misc = sort {lc($a) cmp lc($b)} (@misc);
         }
         my $misc = scalar(@misc)>0 ? join('|', @misc) : '_';
 
