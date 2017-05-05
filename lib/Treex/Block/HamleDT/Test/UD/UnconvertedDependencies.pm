@@ -48,7 +48,7 @@ my %lspecrel =
     'sv'  => ['compound:prt', 'nmod:agent', 'nmod:poss'],
     'ta'  => ['compound:prt'],
     'ug'  => ['advcl:cond', 'advmod:emph', 'aux:q', 'compound:lvc', 'compound:redup', 'conj>advcl', 'conj>obj', 'conj>obj:cau', 'conj>nmod', 'conj>nsubj', 'obj:cau', 'nmod:abl', 'nmod:cau', 'nmod:clas', 'nmod:cmp', 'nmod:ins', 'nmod:loc', 'nmod:part', 'nmod:pass', 'nmod:poss', 'nmod:ref', 'nmod:tmod', 'nsubj:cop'],
-    'zh'  => ['case:loc', 'discourse:sp', 'obl:patient'],
+    'zh'  => ['case:loc', 'discourse:sp', 'mark:adv', 'obl:patient'],
     'xx'  => [],
 );
 

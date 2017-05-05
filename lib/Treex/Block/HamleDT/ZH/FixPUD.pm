@@ -161,7 +161,7 @@ sub fix_deprels
         ###!!! fix later!
         elsif ($node->deprel() eq 'compound:prt')
         {
-            if ($node->parent()->is_verb())
+            if ($node->parent()->is_verb() || $node->parent()->is_adjective())
             {
                 $node->set_deprel('mark');
             }
