@@ -83,6 +83,13 @@ sub fix_deprels
             $node->iset()->set_hash({'pos' => 'conj', 'conjtype' => 'sub'});
             $node->set_deprel('mark');
         }
+        # 第[numeral] (i.e., tokens starting with the character 第) NUM & num > ADJ & amod
+        elsif ($node->form() =~ m/^第/ && $node->is_numeral())
+        {
+            $node->set_tag('ADJ');
+            $node->iset()->set('numtype' => 'ord');
+            $node->set_deprel('amod');
+        }
         # Martin/Udapi ud.Google2ud converted vmod to acl. But Herman observed that in Chinese it should often (always?) be advcl.
         elsif ($node->deprel() eq 'acl' && !$node->parent()->is_noun())
         {
