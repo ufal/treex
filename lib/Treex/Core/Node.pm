@@ -270,7 +270,7 @@ sub remove {
     }
     my $root     = $self->get_root();
     my $document = $self->get_document();
-    
+
     my @children = $self->get_children();
     if (@children){
         my $what_to_do = 'remove';
@@ -321,7 +321,7 @@ sub get_referencing_nodes {
     if ((defined $lang) && (defined $sel)) {
         my @ref_filtered_by_tree;
         if ($sel eq q() ) {
-            @ref_filtered_by_tree = grep { /(a|t)\_tree\-$lang\-.+/; }@{ $refs->{$type} };            
+            @ref_filtered_by_tree = grep { /(a|t)\_tree\-$lang\-.+/; }@{ $refs->{$type} };
         }
         else {
             @ref_filtered_by_tree = grep { /(a|t)\_tree\-$lang\_$sel\-.+/; }@{ $refs->{$type} };
@@ -709,6 +709,35 @@ sub get_address {
 
     #my $filename = Cwd::abs_path($file);
     return "$file##$position.$id";
+}
+
+# The MISC attributes from CoNLL-U files are stored as wild attributes.
+# These methods should be in a Universal Dependencies related role but we don't have one.
+# get_misc() returns a list of MISC attributes (possibly empty list)
+sub get_misc
+{
+    my @misc;
+    my $wild = $node->wild();
+    if (exists($wild->{misc}) && defined($wild->{misc}))
+    {
+        @misc = split(/\|/, $wild->{misc});
+    }
+    return @misc;
+}
+
+# set_misc() takes a list of MISC attributes (possibly empty list)
+sub set_misc
+{
+    my @misc = @_;
+    my $wild = $node->wild();
+    if (scalar(@misc) > 0)
+    {
+        $wild->{misc} = join('|', @misc);
+    }
+    else
+    {
+        delete($wild->{misc});
+    }
 }
 
 # Empty DESTROY method is a hack to get rid of the "Deep recursion warning"
