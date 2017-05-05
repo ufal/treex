@@ -129,6 +129,11 @@ sub fix_deprels
                 $node->set_deprel('advmod');
             }
         }
+        # pobj > obl (not nmod) if head of prep is a VERB
+        elsif ($node->deprel() eq 'nmod' && $node->parent()->is_verb())
+        {
+            $node->set_deprel('obl');
+        }
         # Obl:poss does not exist. Either it should be nmod:poss (and maybe the parent's POS tag is incorrect)
         # or there is a deeper problem; but then it is not clear what to do anyway. 9 occurrences.
         # Moreover, even nmod:poss is better avoided in Chinese (suggested by Herman) because the relation is often
