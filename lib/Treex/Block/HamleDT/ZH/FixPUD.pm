@@ -113,6 +113,7 @@ sub fix_deprels
                         $node->set_deprel('case');
                         $node->set_tag('ADP');
                         $node->iset()->set('pos' => 'adp'); # do not destroy voice
+                        $node->iset()->clear('verbtype');
                     }
                 }
             }
@@ -133,6 +134,7 @@ sub fix_deprels
                     $node->set_deprel('case');
                     $node->set_tag('ADP');
                     $node->iset()->set('pos' => 'adp'); # do not destroy voice
+                    $node->iset()->clear('verbtype');
                 }
             }
         }
