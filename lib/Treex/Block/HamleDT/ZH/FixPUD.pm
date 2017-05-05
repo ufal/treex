@@ -87,7 +87,7 @@ sub fix_deprels
         elsif ($node->form() =~ m/^第/ && $node->is_numeral())
         {
             $node->set_tag('ADJ');
-            $node->iset()->set('numtype' => 'ord');
+            $node->iset()->set_hash({'pos' => 'adj', 'numtype' => 'ord'});
             $node->set_deprel('amod');
         }
         # Martin/Udapi ud.Google2ud converted vmod to acl. But Herman observed that in Chinese it should often (always?) be advcl.
