@@ -77,7 +77,7 @@ sub fix_deprels
         {
             $node->set_deprel('mark:adv');
         }
-        elsif ($node->form() eq m/^(雖然|盡管|儘管|無論|的話|若|假如|即使|不管|不論|一旦|不但|只要)$/)
+        elsif ($node->form() =~ m/^(雖然|盡管|儘管|無論|的話|若|假如|即使|不管|不論|一旦|不但|只要)$/)
         {
             $node->iset()->set('conjtype' => 'sub');
             $node->set_deprel('mark');
