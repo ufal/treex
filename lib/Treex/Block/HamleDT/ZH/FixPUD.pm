@@ -113,6 +113,7 @@ sub fix_deprels
                         $node->set_deprel('case');
                         $node->set_tag('ADP');
                         $node->iset()->set_hash({'pos' => 'adp'});#, 'voice' => 'cau'});
+                        log_fatal('A už toho mám dost!');
                     }
                 }
             }
