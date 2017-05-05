@@ -95,6 +95,43 @@ sub fix_deprels
         {
             $node->set_deprel('advcl');
         }
+        # tokens 把 or 將 with "auxcaus"
+        elsif ($node->deprel() eq 'aux')
+        {
+            # The node now also has Voice=Cau but we don't have to check it.
+            if ($node->form() =~ m/^(把|將)$/)
+            {
+                # The parent should be verb and one of the siblings should be obj.
+                if ($node->parent()->is_verb())
+                {
+                    my @obj = grep {$_->deprel() eq 'obj'} ($node->parent()->get_children({'ordered' => 1}));
+                    if (scalar(@obj) == 1)
+                    {
+                        my $obj = $obj[0];
+                        $obj->set_deprel('obl:patient');
+                        $node->set_parent($obj);
+                        $node->set_deprel('case');
+                    }
+                }
+            }
+        }
+        # tokens with "auxpass"
+        elsif ($node->deprel() eq 'aux:pass')
+        {
+            # The node now also has Voice=Pass but we don't have to check it.
+            # The parent should be a verb. If it has a "subject", it is acutally "obl:agent".
+            if ($node->parent()->is_verb())
+            {
+                my @subj = grep {$_->deprel() eq 'nsubj'} ($node->parent()->get_children({'ordered' => 1}));
+                if (scalar(@subj) == 1)
+                {
+                    my $subj = $subj[0];
+                    $subj->set_deprel('obl:agent');
+                    $node->set_parent($subj);
+                    $node->set_deprel('case');
+                }
+            }
+        }
         elsif ($node->deprel() eq 'case' && $node->is_adposition())
         {
             # if the head of a token with ADP & case is a VERB or ADJ, change case > mark
