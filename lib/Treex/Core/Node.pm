@@ -716,8 +716,9 @@ sub get_address {
 # get_misc() returns a list of MISC attributes (possibly empty list)
 sub get_misc
 {
+    my $self = shift;
     my @misc;
-    my $wild = $node->wild();
+    my $wild = $self->wild();
     if (exists($wild->{misc}) && defined($wild->{misc}))
     {
         @misc = split(/\|/, $wild->{misc});
@@ -728,8 +729,9 @@ sub get_misc
 # set_misc() takes a list of MISC attributes (possibly empty list)
 sub set_misc
 {
+    my $self = shift;
     my @misc = @_;
-    my $wild = $node->wild();
+    my $wild = $self->wild();
     if (scalar(@misc) > 0)
     {
         $wild->{misc} = join('|', @misc);
