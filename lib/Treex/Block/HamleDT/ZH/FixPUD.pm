@@ -163,7 +163,11 @@ sub fix_deprels
         {
             if ($node->parent()->is_verb() || $node->parent()->is_adjective())
             {
-                $node->set_deprel('mark');
+                ###!!! mark:prt will help us later to distinguish these adverbial markers from normal subordinating conjunctions.
+                # e.g. adding 'qu' (verb: go; adverb: away) modifies the meaning of the main verb to go away of speaker/point of reference
+                #      adding 'lai' (verb: come; adverb: here) modifies the meaning of the main verb to go towards the speaker/point of reference
+                $node->set_deprel('mark:prt');
+                next;
             }
         }
         # {嗎, 的, 了, 呢, 吧, 呀, 罷了, 而已} X & discourse > PART & discourse:sp
