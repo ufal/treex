@@ -742,6 +742,39 @@ sub set_misc
     }
 }
 
+# set_misc_attr() takes an attribute name and value; assumes that MISC elements are attr=value pairs; replaces first or pushes at the end
+sub set_misc_attr
+{
+    my $self = shift;
+    my $attr = shift;
+    my $value = shift;
+    if (defined($attr) && defined($value))
+    {
+        my @misc = $self->get_misc();
+        my $found = 0;
+        for(my $i = 0; $i <= $#misc; $i++)
+        {
+            if ($misc[$i] =~ m/^(.+?)=(.+)$/ && $1 eq $attr)
+            {
+                if ($found)
+                {
+                    splice(@misc, $i--, 1);
+                }
+                else
+                {
+                    $misc[$i] = "$attr=$value";
+                    $found = 1;
+                }
+            }
+        }
+        if (!$found)
+        {
+            push(@misc, "$attr=$value");
+        }
+        $self->set_misc(@misc);
+    }
+}
+
 # Empty DESTROY method is a hack to get rid of the "Deep recursion warning"
 # in Treex::PML::Node::DESTROY and MooseX::NonMoose::Meta::Role::Class::_check_superclass_destructor.
 # Without this hack, you get the warning after creating a node with 99 or more children.
