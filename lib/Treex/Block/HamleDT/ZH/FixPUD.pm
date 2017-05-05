@@ -12,6 +12,19 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
+    $self->fix_tokenization($root);
+    $self->fix_deprels($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Merges adjacent tokens that are connected using the suff (now dep) relation.
+#------------------------------------------------------------------------------
+sub fix_tokenization
+{
+    my $self = shift;
+    my $root = shift;
     # Fix tokenization.
     # Tokens with tag AFFIX:
     # - join with its dependent as one token (if it has a dependent)
@@ -42,6 +55,27 @@ sub process_atree
                 splice(@nodes, $i--, 1);
                 $root->_normalize_node_ordering();
             }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes wrong dependency relation labels.
+#------------------------------------------------------------------------------
+sub fix_deprels
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        # Obl:poss does not exist. Either it should be nmod:poss (and maybe the parent's POS tag is incorrect)
+        # or there is a deeper problem; but then it is not clear what to do anyway. 9 occurrences.
+        if ($node->deprel() eq 'obl:poss')
+        {
+            $node->set_deprel('nmod:poss');
         }
     }
 }
