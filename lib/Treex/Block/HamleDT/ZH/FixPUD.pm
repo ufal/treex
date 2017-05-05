@@ -97,7 +97,7 @@ sub fix_deprels
         if ($node->deprel() eq 'case:loc' && $node->is_noun())
         {
             $node->set_tag('ADP');
-            $node->set_hash({'pos' => 'adp'});
+            $node->iset()->set_hash({'pos' => 'adp'});
         }
         # {嗎, 的, 了, 呢, 吧, 呀, 罷了, 而已} X & discourse > PART & discourse:sp
         elsif ($node->deprel() eq 'discourse' && $node->form() =~ m/^(嗎|的|了|呢|吧|呀|罷了|而已)$/)
