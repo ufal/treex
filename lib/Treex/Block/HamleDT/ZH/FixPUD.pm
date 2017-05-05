@@ -92,9 +92,11 @@ sub fix_deprels
         }
         # Obl:poss does not exist. Either it should be nmod:poss (and maybe the parent's POS tag is incorrect)
         # or there is a deeper problem; but then it is not clear what to do anyway. 9 occurrences.
-        elsif ($node->deprel() eq 'obl:poss')
+        # Moreover, even nmod:poss is better avoided in Chinese (suggested by Herman) because the relation is often
+        # a simple genitive-like modification without possessive meaning.
+        elsif ($node->deprel() =~ m/^(nmod|obl):poss$/)
         {
-            $node->set_deprel('nmod:poss');
+            $node->set_deprel($1);
         }
     }
 }
