@@ -88,6 +88,11 @@ sub fix_deprels
         {
             $node->set_deprel('advcl');
         }
+        # ADP & case > ADP & case:loc if head index is lower than token index (i.e., the head precedes the token)
+        elsif ($node->deprel() eq 'case' && $node->ord() > $node->parent()->ord() && $node->is_adposition())
+        {
+            $node->set_deprel('case:loc');
+        }
         # Relative adverb is not subordinating conjunction.
         elsif ($node->deprel() eq 'mark')
         {
