@@ -71,8 +71,14 @@ sub fix_deprels
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
+        # Martin/Udapi ud.Google2ud converted prt to compound:prt but it is correct only in Germanic languages.
+        # We will not check compound:prt because it may be something different in the future versions.
+        if ($node->form() eq '地' && $node->is_particle())
+        {
+            $node->set_deprel('mark:adv');
+        }
         # Martin/Udapi ud.Google2ud converted vmod to acl. But Herman observed that in Chinese it should often (always?) be advcl.
-        if ($node->deprel() eq 'acl' && !$node->parent()->is_noun())
+        elsif ($node->deprel() eq 'acl' && !$node->parent()->is_noun())
         {
             $node->set_deprel('advcl');
         }
