@@ -198,6 +198,11 @@ sub fix_deprels
         {
             $node->set_deprel($1);
         }
+        # An adverbial clause starting with 雖然 suīrán "although" has appeared as xcomp because the original annotation did not say what it is.
+        if ($node->deprel() =~ m/^(ccomp|xcomp)$/ && any {$_->form() eq '雖然'} ($node->children()))
+        {
+            $node->set_deprel('advcl');
+        }
     }
 }
 
