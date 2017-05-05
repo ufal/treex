@@ -95,10 +95,18 @@ sub fix_deprels
         {
             $node->set_deprel('advcl');
         }
-        # ADP & case > ADP & case:loc if head index is lower than token index (i.e., the head precedes the token)
-        elsif ($node->deprel() eq 'case' && $node->ord() > $node->parent()->ord() && $node->is_adposition())
+        elsif ($node->deprel() eq 'case' && $node->is_adposition())
         {
-            $node->set_deprel('case:loc');
+            # if the head of a token with ADP & case is a VERB or ADJ, change case > mark
+            if ($node->parent()->is_verb() || $node->parent()->is_adjective())
+            {
+                $node->set_deprel('mark');
+            }
+            # ADP & case > ADP & case:loc if head index is lower than token index (i.e., the head precedes the token)
+            elsif ($node->ord() > $node->parent()->ord())
+            {
+                $node->set_deprel('case:loc');
+            }
         }
         # tokens with NOUN & ncomp > ADP & case:loc
         if ($node->deprel() eq 'case:loc' && $node->is_noun())
