@@ -71,9 +71,14 @@ sub fix_deprels
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
+        # Martin/Udapi ud.Google2ud converted vmod to acl. But Herman observed that in Chinese it should often (always?) be advcl.
+        if ($node->deprel() eq 'acl' && !$node->parent()->is_noun())
+        {
+            $node->set_deprel('advcl');
+        }
         # Obl:poss does not exist. Either it should be nmod:poss (and maybe the parent's POS tag is incorrect)
         # or there is a deeper problem; but then it is not clear what to do anyway. 9 occurrences.
-        if ($node->deprel() eq 'obl:poss')
+        elsif ($node->deprel() eq 'obl:poss')
         {
             $node->set_deprel('nmod:poss');
         }
