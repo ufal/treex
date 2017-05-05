@@ -155,6 +155,17 @@ sub fix_deprels
             $node->set_tag('ADP');
             $node->iset()->set_hash({'pos' => 'adp'});
         }
+        # Many prt (now rendered as compound:prt) modify verbs but they are not the compound:prt of Germanic languages.
+        # They themselves are tagged ADV or VERB. In UD Chinese, they seem to be attached as mark.
+        # It is probably not correct but for the shared task we should follow the same approach.
+        ###!!! fix later!
+        elsif ($node->deprel() eq 'compound:prt')
+        {
+            if ($node->parent()->is_verb())
+            {
+                $node->set_deprel('mark');
+            }
+        }
         # {嗎, 的, 了, 呢, 吧, 呀, 罷了, 而已} X & discourse > PART & discourse:sp
         elsif ($node->deprel() eq 'discourse' && $node->form() =~ m/^(嗎|的|了|呢|吧|呀|罷了|而已)$/)
         {
