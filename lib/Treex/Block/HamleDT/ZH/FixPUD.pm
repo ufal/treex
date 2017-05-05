@@ -76,6 +76,14 @@ sub fix_deprels
         {
             $node->set_deprel('advcl');
         }
+        # Relative adverb is not subordinating conjunction.
+        elsif ($node->deprel() eq 'mark')
+        {
+            if ($node->is_adverb())
+            {
+                $node->set_deprel('advmod');
+            }
+        }
         # Obl:poss does not exist. Either it should be nmod:poss (and maybe the parent's POS tag is incorrect)
         # or there is a deeper problem; but then it is not clear what to do anyway. 9 occurrences.
         elsif ($node->deprel() eq 'obl:poss')
