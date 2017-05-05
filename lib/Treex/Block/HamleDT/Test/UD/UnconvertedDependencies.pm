@@ -9,7 +9,7 @@ my @relations =
 (
     'nsubj', 'nsubj:pass', 'obj', 'iobj', 'csubj', 'csubj:pass', 'ccomp', 'xcomp',
     'obl', 'obl:agent', 'obl:tmod', 'advmod', 'advmod:emph', 'advcl',
-    'vocative', 'discourse', 'expl', 'expl:pv', 'expl:pass', 'expl:impers', 'aux', 'aux:pass', 'cop', 'mark',
+    'vocative', 'discourse', 'expl', 'expl:pv', 'expl:pass', 'expl:impers', 'aux', 'aux:pass', 'cop', 'mark', 'mark:relcl',
     'appos', 'nmod', 'nmod:poss', 'amod', 'det', 'det:predet', 'nummod', 'acl', 'acl:relcl', 'case',
     'compound', 'fixed', 'flat', 'flat:foreign', 'flat:name', 'goeswith',
     'conj', 'cc', 'punct',
