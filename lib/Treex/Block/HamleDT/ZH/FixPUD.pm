@@ -31,6 +31,12 @@ sub process_atree
                 $nodes[$i-1]->set_translit($nodes[$i-1]->translit().$nodes[$i]->translit());
                 $nodes[$i-1]->set_parent($nodes[$i]->parent());
                 $nodes[$i-1]->set_deprel($nodes[$i]->deprel());
+                # Re-attach any other children to the merged node.
+                my @children = $nodes[$i]->children();
+                foreach my $c (@children)
+                {
+                    $c->set_parent($nodes[$i-1]);
+                }
                 $nodes[$i]->remove();
                 splice(@nodes, $i--, 1);
                 $root->_normalize_node_ordering();
