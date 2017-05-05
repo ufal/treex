@@ -10,7 +10,7 @@ my @relations =
     'nsubj', 'nsubj:pass', 'obj', 'iobj', 'csubj', 'csubj:pass', 'ccomp', 'xcomp',
     'obl', 'obl:agent', 'obl:tmod', 'advmod', 'advmod:emph', 'advcl',
     'vocative', 'discourse', 'expl', 'expl:pv', 'expl:pass', 'expl:impers', 'aux', 'aux:pass', 'cop', 'mark', 'mark:relcl',
-    'appos', 'nmod', 'nmod:poss', 'amod', 'det', 'det:predet', 'nummod', 'acl', 'acl:relcl', 'case',
+    'appos', 'nmod', 'nmod:poss', 'amod', 'det', 'det:predet', 'nummod', 'acl', 'acl:relcl', 'case', 'clf',
     'compound', 'fixed', 'flat', 'flat:foreign', 'flat:name', 'goeswith',
     'conj', 'cc', 'punct',
     'list', 'dislocated', 'parataxis', 'orphan', 'reparandum',
@@ -48,7 +48,7 @@ my %lspecrel =
     'sv'  => ['compound:prt', 'nmod:agent', 'nmod:poss'],
     'ta'  => ['compound:prt'],
     'ug'  => ['advcl:cond', 'advmod:emph', 'aux:q', 'compound:lvc', 'compound:redup', 'conj>advcl', 'conj>obj', 'conj>obj:cau', 'conj>nmod', 'conj>nsubj', 'obj:cau', 'nmod:abl', 'nmod:cau', 'nmod:clas', 'nmod:cmp', 'nmod:ins', 'nmod:loc', 'nmod:part', 'nmod:pass', 'nmod:poss', 'nmod:ref', 'nmod:tmod', 'nsubj:cop'],
-    'zh'  => ['case:loc'],
+    'zh'  => ['case:loc', 'discourse:sp'],
     'xx'  => [],
 );
 

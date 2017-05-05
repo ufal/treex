@@ -93,6 +93,13 @@ sub fix_deprels
         {
             $node->set_deprel('case:loc');
         }
+        # {嗎, 的, 了, 呢, 吧, 呀, 罷了, 而已} X & discourse > PART & discourse:sp
+        elsif ($node->deprel() eq 'discourse' && $node->form() =~ m/^(嗎|的|了|呢|吧|呀|罷了|而已)$/)
+        {
+            $node->set_tag('PART');
+            $node->iset()->set_hash({'pos' => 'part'});
+            $node->set_deprel('discourse:sp');
+        }
         # Relative adverb is not subordinating conjunction.
         elsif ($node->deprel() eq 'mark')
         {
