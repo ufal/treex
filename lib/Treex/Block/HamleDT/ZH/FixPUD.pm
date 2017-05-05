@@ -31,6 +31,7 @@ sub process_atree
                 $nodes[$i-1]->set_translit($nodes[$i-1]->translit().$nodes[$i]->translit());
                 $nodes[$i-1]->set_parent($nodes[$i]->parent());
                 $nodes[$i-1]->set_deprel($nodes[$i]->deprel());
+                $nodes[$i-1]->set_misc(grep {$_ ne 'OrigDeprel=suff'} ($nodes[$i-1]->get_misc()));
                 # Re-attach any other children to the merged node.
                 my @children = $nodes[$i]->children();
                 foreach my $c (@children)
