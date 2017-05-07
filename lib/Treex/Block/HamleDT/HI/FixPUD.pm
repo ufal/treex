@@ -142,6 +142,13 @@ sub process_anode
             $ko->set_deprel('iobj');
         }
     }
+    # If there are still two objects, one of them obj and the other ccomp, assume that the ccomp should depend on the obj.
+    my @obj = grep {$_->deprel() =~ m/^(obj|ccomp)(:|$)/} ($node->children());
+    if (scalar(@obj) == 2 && $obj[0]->deprel() eq 'obj' && $obj[1]->deprel() eq 'ccomp')
+    {
+        $obj[1]->set_parent($obj[0]);
+        $obj[1]->set_deprel('acl');
+    }
 }
 
 
