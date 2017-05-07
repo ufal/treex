@@ -106,7 +106,8 @@ sub process_anode
     # However, in UD Hindi 2.0 it is ADP and case. And we want to be consistent with UD Hindi.
     if (any {$_ eq 'ToDo=affix'} ($node->get_misc()))
     {
-        $node->iset()->set_hash({'pos' => 'adp'});
+        # However, these "postpositions" have gender, number and sometimes case. Let's not discard it!
+        $node->iset()->set('pos' => 'adp');
         $node->set_deprel('case');
         $node->set_misc(grep {$_ ne 'ToDo=affix'} ($node->get_misc()));
     }
