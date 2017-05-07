@@ -101,6 +101,15 @@ sub process_anode
     {
         $node->iset()->set_hash({'pos' => 'punc'});
     }
+    # वाले: Google attaches it to previous word as affix. Martin makes it PART and fixed.
+    # I would make it compound (and perhaps PART).
+    # However, in UD Hindi 2.0 it is ADP and case. And we want to be consistent with UD Hindi.
+    if (any {$_ eq 'ToDo=affix'} ($node->get_misc()))
+    {
+        $node->iset()->set_hash({'pos' => 'adp'});
+        $node->set_deprel('case');
+        $node->set_misc(grep {$_ ne 'ToDo=affix'} ($node->get_misc()));
+    }
 }
 
 
