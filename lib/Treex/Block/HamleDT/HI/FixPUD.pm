@@ -138,6 +138,11 @@ sub process_anode
             $node->set_parent($ls);
         }
     }
+    # Sentence-initial coordinating conjunction is sometimes attached as dep but it should be cc.
+    if ($node->is_coordinator() && $node->deprel() eq 'dep')
+    {
+        $node->set_deprel('cc');
+    }
     # Multiple objects: if one of them has the postposition 'को', label it as indirect object.
     my @obj = grep {$_->deprel() =~ m/^(obj|ccomp)(:|$)/} ($node->children());
     if (scalar(@obj) > 1)
@@ -149,7 +154,7 @@ sub process_anode
         }
     }
     # If there are still two objects, one of them obj and the other ccomp, assume that the ccomp should depend on the obj.
-    my @obj = grep {$_->deprel() =~ m/^(obj|ccomp)(:|$)/} ($node->children());
+    @obj = grep {$_->deprel() =~ m/^(obj|ccomp)(:|$)/} ($node->children());
     if (scalar(@obj) == 2 && $obj[0]->deprel() eq 'obj' && $obj[1]->deprel() eq 'ccomp')
     {
         $obj[1]->set_parent($obj[0]);
