@@ -88,6 +88,12 @@ sub process_anode
                 push(@misc, 'ToDo=जो');
                 $node->wild()->{misc} = join('|', @misc);
             }
+            # If there is punctuation to the left of the relative word, it should not be attached to the relative word.
+            my @punct = grep {$_->deprel() eq 'punct' && $_->ord() < $node->ord()} ($node->children());
+            foreach my $p (@punct)
+            {
+                $p->set_parent($node->parent());
+            }
         }
         else
         {
