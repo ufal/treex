@@ -99,7 +99,7 @@ sub process_anode
     # Punctuation must be tagged PUNCT, not X.
     if ($node->form() =~ m/^\pP+$/ && $node->deprel() eq 'punct')
     {
-        $node->iset()->set_hash('pos' => 'punc');
+        $node->iset()->set_hash({'pos' => 'punc'});
     }
 }
 
