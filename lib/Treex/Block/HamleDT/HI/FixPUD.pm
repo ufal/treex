@@ -149,6 +149,16 @@ sub process_anode
         $obj[1]->set_parent($obj[0]);
         $obj[1]->set_deprel('acl');
     }
+    # An infinitive attached to another verb should not be acl but xcomp.
+    # The Google annotation does not contain VerbForm=Inf but the XPOS tag is VINF.
+    if ($node->conll_pos() eq 'VINF')
+    {
+        $node->iset()->set('verbform', 'inf');
+        if ($node->parent()->is_verb() && $node->deprel() eq 'acl')
+        {
+            $node->set_deprel('xcomp');
+        }
+    }
 }
 
 
