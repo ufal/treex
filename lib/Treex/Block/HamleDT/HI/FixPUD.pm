@@ -12,6 +12,14 @@ sub process_anode
 {
     my $self = shift;
     my $node = shift;
+    #--------------------------------------------------------------------------
+    # PART OF SPEECH
+    if ($node->deprel() eq 'mark' && $node->form() =~ m/^(कि|क्योंकि|हालांकि|चाहे|यदि|इसलिए|जब|तब|जैसे|वैसे|तो)$/)
+    {
+        $node->iset()->set_hash({'pos' => 'conj', 'conjtype' => 'sub'});
+    }
+    #--------------------------------------------------------------------------
+    # DEPENDENCY RELATIONS
     # I don't know what attr is supposed to mean. There are two occurrences.
     # It seems to be non-verbal predicate so maybe it should be restructured.
     if ($node->deprel() eq 'attr')
