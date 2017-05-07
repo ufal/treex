@@ -45,7 +45,7 @@ sub process_anode
             $node->set_deprel('aux');
         }
         # In one case the sibling is not attached as acl:relcl but I think the relative pronoun should still be attached to it.
-        elsif (defined($rs)) # && $rs->deprel() eq 'acl:relcl')
+        elsif (defined($rs)) # && $rs->deprel() eq 'acl:relcl'
         {
             my @children = $rs->get_children({'ordered' => 1});
             my $candidate = scalar(@children) > 0 ? $children[0] : $rs;
@@ -90,6 +90,11 @@ sub process_anode
                 $node->set_deprel('nsubj');
             }
         }
+    }
+    # Auxiliary verbs must be tagged AUX, not VERB.
+    if ($node->is_verb() && $node->deprel() =~ m/^aux(:|$)/)
+    {
+        $node->iset()->set('verbtype' => 'aux');
     }
 }
 
