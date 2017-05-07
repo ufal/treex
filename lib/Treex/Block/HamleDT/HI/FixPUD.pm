@@ -132,6 +132,16 @@ sub process_anode
             $node->set_parent($ls);
         }
     }
+    # Multiple objects: if one of them has the postposition 'को', label it as indirect object.
+    my @obj = grep {$_->deprel() =~ m/^(obj|ccomp)(:|$)/} ($node->children());
+    if (scalar(@obj) > 1)
+    {
+        my @ko = grep {my $c = $_; any {$_->form() eq 'को'} ($c->children());} (@obj);
+        foreach my $ko (@ko)
+        {
+            $ko->set_deprel('iobj');
+        }
+    }
 }
 
 
