@@ -119,6 +119,19 @@ sub process_anode
         $node->set_deprel('case');
         $node->set_misc(grep {$_ ne 'ToDo=affix'} ($node->get_misc()));
     }
+    #--------------------------------------------------------------------------
+    # TREE STRUCTURE
+    # Postpositions are often attached to the right as siblings of their noun phrases,
+    # rather than to the left as children of their noun phrases.
+    if ($node->is_adposition() && $node->deprel() eq 'case' && $node->parent()->ord() > $node->ord())
+    {
+        my $ls = $node->get_left_neighbor();
+        if (defined($ls))
+        {
+            # We don't even check whether the left sibling is a noun. It can be an infinitive.
+            $node->set_parent($ls);
+        }
+    }
 }
 
 
