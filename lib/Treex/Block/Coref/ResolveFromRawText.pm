@@ -49,6 +49,7 @@ sub _get_bundle_blocks {
     }
     else {
         @bundle_blocks = ( \@bundles );
+        @block_ids = (1);
     }
     return (\@bundle_blocks, \@block_ids);
 }
