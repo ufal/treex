@@ -33,7 +33,13 @@ _term() {
 trap _term EXIT
 
 cd %s;
-%s -Xmx1024m -classpath "%s" -Delkfed.rootDir='%s' elkfed.webdemo.Demo
+CLASSPATH=.:%s
+for i in %s; do 
+    CLASSPATH=$CLASSPATH:$i;
+done
+export CLASSPATH
+export LD_LIBRARY_PATH=/usr/local/lib
+%s -Xmx1024m -Delkfed.rootDir='%s' elkfed.webdemo.Demo
 CMD
 
 sub java_version {
@@ -69,9 +75,9 @@ sub _init_bart {
     # TODO: dispose of the absolute paths for the deployment
     my $root_dir = $ENV{TMT_ROOT}.'/share/installed_tools/coreference/BART2.0/';
     log_info "BART ROOT DIR: $root_dir";
-    my $cp = join ":", map {$root_dir . $_} ("BART.jar", "libs/*");
+    my @cp = map {$root_dir . $_} ("BART.jar", "libs/*");
 
-    my $command = sprintf $BART_CMD, $dir, $java_cmd, $cp, $root_dir;
+    my $command = sprintf $BART_CMD, $dir, @cp, $java_cmd, $root_dir;
 
     open BART_SCRIPT, ">:utf8", "$dir/bart_script.sh";
     print BART_SCRIPT $command;
