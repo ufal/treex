@@ -11,12 +11,28 @@ use Data::Printer;
 extends 'Treex::Core::Block';
 with 'Treex::Block::Coref::ResolveFromRawText';
 
+#WARNING: You may find in troubles if this block is run on cluster in many
+#jobs and some of them are scheduled to the same machine. It may lead to
+#client-server communication problems and errors. So, make sure by checking
+#the logfiles if there are no "Error in HTTP response" messages.
+#Running it in 20 jobs worked fine for me.
+
+
+has 'algorithm' => ( 
+    is => 'ro',
+    isa => 'Str',
+    default => 'deterministic+mention',
+    documentation => 'values: deterministic|deterministic+mention|statistical|neural',
+);
+
 has 'tmp_dir_prefix' => ( is => 'ro', isa => 'Str', default => sub { -d '/COMP.TMP' ? '/COMP.TMP' : '.' } );
 has '_tmp_dir' => ( is => 'rw', isa => 'Maybe[File::Temp::Dir]' );
 has '_read' => ( is => 'rw', isa => 'Maybe[FileHandle]');
 has '_write' => ( is => 'rw', isa => 'Maybe[FileHandle]');
 has '_pid' => ( is => 'rw', isa => 'Maybe[Int]');
 has '_server_port' => ( is => 'rw', isa => 'Int' );
+
+has '_request_url' => ( is => 'ro', isa => 'Str', lazy => 1, builder => '_build_request_url' );
 
 my $STANFORD_CMD = <<'CMD';
 _term() { 
@@ -31,14 +47,31 @@ cd /net/cluster/TMP/mnovak/tools/StanfordCoreNLP/stanford-corenlp-full-2016-10-3
 java -mx6g -cp "*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer -port %d -timeout 1200000
 CMD
 
-my $STANFORD_SERVER_URL = 'http://localhost:%d/?properties={"annotators":"tokenize,ssplit,pos,lemma,ner,parse,dcoref","tokenize.whitespace":"true", "ssplit.eolonly":"true","outputFormat":"json"}';
+my $STANFORD_SERVER_URL = 'http://localhost:%d/?properties={"annotators":"tokenize,ssplit,pos,lemma,ner,parse,%s",%s"tokenize.whitespace":"true", "ssplit.eolonly":"true","outputFormat":"json"}';
 
-sub BUILD {
+sub process_start {
     my ($self) = @_;
     $self->_init_stanford;
 }
 
-sub DESTROY {
+sub _build_request_url {
+    my ($self) = @_;
+    
+    my %params = (
+        'deterministic' => ['dcoref', ''],
+        'deterministic+mention' => ['mention,dcoref', ''],
+        'statistical' => ['mention,coref', '"coref.algorithm":"statistical",'],
+        'neural' => ['mention,coref', '"coref.algorithm":"neural",'],
+    );
+
+    my @algparams = @{$params{$self->algorithm}};
+    p @algparams;
+
+    my $url = sprintf $STANFORD_SERVER_URL, $self->_server_port, @{$params{$self->algorithm}};
+    return $url;
+}
+
+sub process_end {
     my ($self) = @_;
     $self->_finish_stanford;
 }
@@ -52,6 +85,7 @@ sub _init_stanford {
     log_info "StanfordCoreNLP temporary directory: $dir";
     $self->_set_tmp_dir($dir);
 
+    # find a free port
     my $port = empty_port();
     $self->_set_server_port($port);
 
@@ -94,17 +128,19 @@ sub _prepare_raw_text {
 sub post_request {
     my ($self, $text) = @_;
 
-    my $ua = LWP::UserAgent->new();
-    my $url = sprintf $STANFORD_SERVER_URL, $self->_server_port;
-    my $req = HTTP::Request->new(POST => $url);
+    # build URL using port and specified parameters
+
+    my $req = HTTP::Request->new(POST => $self->_request_url);
     $req->content($text);
+    
+    my $ua = LWP::UserAgent->new();
     my $resp = $ua->request($req);
     if ($resp->is_success) {
         my $message = $resp->decoded_content;
         return decode_json $message;
     }
     else {
-        log_warn "Error in HTTP resposne: ".$resp->status_line;
+        log_warn "Error in HTTP response: ".$resp->status_line;
     }
     return;
 }
@@ -117,7 +153,15 @@ sub _process_bundle_block {
     my $raw_text = $self->_prepare_raw_text($bundles);
     #print STDERR $raw_text."\n";
 
+    my $tries = 0;
     my $stanford_coref = $self->post_request($raw_text);
+    # try restarting the server at most 3 times
+    while (!defined $stanford_coref && $tries < 3) {
+        $self->_finish_stanford;
+        $self->_init_stanford;
+        $stanford_coref = $self->post_request($raw_text);
+        $tries++;
+    }
     if (defined $stanford_coref) {
         $self->extract_stanford_coref_and_mark($stanford_coref, $bundles);
     }
@@ -145,20 +189,38 @@ sub extract_stanford_coref_and_mark {
     #my $sents = join "\n", map { my $sent = $_; join " ", map {$_->ord . ":" . $_->form} @$sent } @our_anodes;
     #print STDERR $sents."\n";
 
+    #my $debug = 0;
+
+    #print STDERR (join " ", map {scalar(@{$stanford_data->{corefs}->{$_}})} keys %{$stanford_data->{corefs}});
+    #print STDERR "\n";
+
+
     # create a list of entities and their mentions as a list of lists of mentions' head tnodes
     my @entities = ();
     foreach my $entity_id (keys %{$stanford_data->{corefs}}) {
+        #if ($entity_id == 93) {
+        #    $debug = 1;
+        #}
+        #else {
+        #    $debug = 0;
+        #}
         my $stanford_entity = $stanford_data->{corefs}->{$entity_id};
-        my @entity = ();
+        my $entity = [];
         foreach my $mention (@$stanford_entity) {
             # stanford mentions are indexed from 1
             my $anode = $our_anodes[$mention->{sentNum}-1][$mention->{headIndex}-1];
-            #printf STDERR "MENTION TEXT (%d, %d): %s\t ANODE FORM: %s\n", $mention->{sentNum}-1, $mention->{headIndex}-1, $mention->{text}, $anode->form;
+            #if ($debug) {
+            #    printf STDERR "MENTION TEXT (%d, %d): %s\t ANODE FORM: %s\n", $mention->{sentNum}-1, $mention->{headIndex}-1, $mention->{text}, $anode->form;
+            #}
             my ($tnode) = ($anode->get_referencing_nodes('a/lex.rf'), $anode->get_referencing_nodes('a/aux.rf'));
-            push @entity, $tnode;
+            #print STDERR "TNODE_ID: ".$tnode->id."\n";
+            push @$entity, $tnode;
         }
-        push @entities, \@entity;
+        push @entities, $entity;
     }
+
+    #print STDERR (join " ", map {scalar(@$_)} @entities);
+    #print STDERR "\n";
 
     foreach my $entity (@entities) {
         my $ante = undef;
@@ -184,6 +246,15 @@ Treex::Block::Coref::EN::ResolveStanfordCoreNLP
 =head1 DESCRIPTION
 
 Coreference resolver for English wrapping Stanford CoreNLP resolver.
+This runs a Stanford Core NLP system as a server and sends it requests.
+The input to the Stanford tool is sent tokenized and with sentences
+splitted. Therefore, this block prevents the Stanford system from running
+these two processing modules.
+WARNING: You may find in troubles if this block is run on cluster in many
+jobs and several of them are scheduled to the same machine. It may lead to
+client-server communication problems and errors. So, make sure by checking
+the logfiles if there are no "Error in HTTP response" messages.
+Running it in 20 jobs worked fine for me.
 
 =head1 AUTHORS
 
