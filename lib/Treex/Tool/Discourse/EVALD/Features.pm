@@ -90,8 +90,15 @@ sub extract_features_as_ranking {
     $self->collect_info($doc);
     my $feat_hash = $self->create_feat_hash($doc);
 
+    # create the "shared" part of the instance represenatiotn
+    # all features belong to the "default" namespace
     my @feat_array = map {my $key = $_->[0]; [ $key, $feat_hash->{$key} ]} @{$self->weka_featlist};
-    my @class_arrays = map { [[ 'class', $_ ]] } @{$self->all_classes};
+    unshift @feat_array, [ '|default', undef ];
+
+    # create the "cands" part of the instance representation
+    # in this case, every candidate correpsonds to a possible class => only a single feature "class" is specified
+    # the class feature should belong to a "class" namespace
+    my @class_arrays = map { [['|class', undef], ['class', $_ ]] } @{$self->all_classes};
     return [ \@class_arrays, \@feat_array ];
 }
 
