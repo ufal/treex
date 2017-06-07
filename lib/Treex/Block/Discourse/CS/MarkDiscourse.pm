@@ -135,7 +135,7 @@ sub process_document {
   _discourse_annotate_inter($self,$doc);
   
   my $file_discourse_links_count = $file_discourse_inter_count + $file_discourse_intra_count;
-  log_info("Number of discourse links created: $file_discourse_links_count (intra: $file_discourse_intra_count, inter: $file_discourse_inter_count)\n");
+  log_info("Number of discourse links created: $file_discourse_links_count (intra: $file_discourse_intra_count, inter: $file_discourse_inter_count)");
 
 } # process_document
 
