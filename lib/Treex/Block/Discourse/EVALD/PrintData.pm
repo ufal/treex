@@ -4,10 +4,12 @@ use Treex::Core::Common;
 use Data::Printer;
 
 use Treex::Tool::ML::VowpalWabbit::Util;
-#use Treex::Tool::ML::Weka::Util;
+use Treex::Tool::ML::Weka::Util;
 
 extends 'Treex::Block::Write::BaseTextWriter';
 with 'Treex::Block::Discourse::EVALD::Base';
+
+has 'format' => ( is => 'ro', isa => 'Str', default => 'vw' );
 
 sub extract_losses {
     my ($self, $doc) = @_;
@@ -31,6 +33,10 @@ sub process_ttree {
 
 sub print_header {
     my ($self, $doc) = @_;
+    if ($self->format eq 'weka') {
+        my $weka_header = Treex::Tool::ML::Weka::Util::format_header($self->_feat_extractor->weka_featlist, $self->_feat_extractor->all_classes);
+        print {$self->_file_handle} $weka_header;
+    }
     $self->_process_document($doc);
 }
 
@@ -40,8 +46,13 @@ sub _process_document {
     my $losses = $self->extract_losses($doc);
 
     my $feats = $self->_feat_extractor->extract_features($doc);
-    my $instance_str = Treex::Tool::ML::VowpalWabbit::Util::format_multiline($feats, $losses);
-    #my $instance_str = Treex::Tool::ML::Weka::Util::format_instance($feats, $losses, $self->_feat_extractor->weka_featlist, $self->_feat_extractor->all_classes);
+    my $instance_str;
+    if ($self->format eq 'vw') {
+        $instance_str = Treex::Tool::ML::VowpalWabbit::Util::format_multiline($feats, $losses);
+    }
+    elsif ($self->format eq 'weka') {
+        $instance_str = Treex::Tool::ML::Weka::Util::format_instance($feats, $losses, $self->_feat_extractor->weka_featlist, $self->_feat_extractor->all_classes);
+    }
 
     print {$self->_file_handle} $instance_str;
 }
