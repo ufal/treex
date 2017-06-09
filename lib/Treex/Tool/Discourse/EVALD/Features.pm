@@ -2,6 +2,8 @@ package Treex::Tool::Discourse::EVALD::Features;
 use Moose;
 use Treex::Core::Common;
 use POSIX;
+use Treex::Tool::Lexicon::CS;
+use Data::Printer;
 
 has 'target' => (
     is            => 'ro',
@@ -92,7 +94,8 @@ sub extract_features_as_ranking {
 
     # create the "shared" part of the instance represenatiotn
     # all features belong to the "default" namespace
-    my @feat_array = map {my $key = $_->[0]; [ $key, $feat_hash->{$key} ]} @{$self->weka_featlist};
+    #my @feat_array = map {my $key = $_->[0]; [ $key, $feat_hash->{$key} ]} @{$self->weka_featlist};
+    my @feat_array = map {[ $_, $feat_hash->{$_} ]} sort keys %$feat_hash;
     unshift @feat_array, [ '|default', undef ];
 
     # create the "cands" part of the instance representation
@@ -149,6 +152,7 @@ my $count_expansion;
 sub collect_info {
     my ($self, $doc) = @_;
     $self->collect_info_discourse($doc);
+    $self->collect_info_coreference($doc);
 }
 
 my %ha_discourse_type_2_class = ('synchr' => 'TEMPORAL',
@@ -361,6 +365,53 @@ sub collect_info_discourse {
     }
 }
 
+my $pron_a_count = 0;
+my $noun_a_count = 0;
+my %pron_a_subpos_counts = ();
+my %pron_a_lemmas = ();
+my $to_a_count = 0;
+
+my $pron_t_count = 0;
+my %pron_t_sempos_counts = ();
+my $perspron_act_t_count = 0;
+my %perspron_act_t_lemmas = ();
+
+# collects coreference-related information and counts from the document
+sub collect_info_coreference {
+    my ($self, $doc) = @_;
+
+    my @atrees = map {$_->get_tree($self->language, 'a', $self->selector)} $doc->get_bundles;
+    foreach my $atree (@atrees) {
+        foreach my $anode ($atree->get_descendants({ordered => 1})) {
+            if ($anode->tag =~ /^P/) {
+                $pron_a_count++;
+                my $subpos = substr($anode->tag, 1, 1);
+                $pron_a_subpos_counts{$subpos}++;
+                my $lemma = Treex::Tool::Lexicon::CS::truncate_lemma($anode->lemma, 1);
+                $pron_a_lemmas{$lemma}++;
+                $to_a_count++ if ($anode->form eq "to");
+            }
+            $noun_a_count++ if ($anode->tag =~ /^N/);
+        }
+    }
+    
+    my @ttrees = map {$_->get_tree($self->language, 't', $self->selector)} $doc->get_bundles;
+    foreach my $ttree (@ttrees) {
+        foreach my $tnode ($ttree->get_descendants({ordered => 1})) {
+            my $sempos = $tnode->gram_sempos // "";
+            if ($sempos =~ /pron/) {
+                $pron_t_count++;
+                $pron_t_sempos_counts{$sempos}++;
+                if ($sempos eq "n.pron.def.pers" && $tnode->functor eq "ACT") {
+                    $perspron_act_t_count++;
+                    my $anode = $tnode->get_lex_anode;
+                    $perspron_act_t_lemmas{defined $anode ? Treex::Tool::Lexicon::CS::truncate_lemma($anode->lemma, 1) : "undef"}++;
+                }
+            }
+        }
+    }
+}
+
 sub get_surface_connective {
   my ($doc, $arrow) = @_;
   my $ref_t_connectors = $arrow->{'t-connectors.rf'};
@@ -458,6 +509,7 @@ sub get_sentence_t {
   my $sentence = join '', map { defined( $_->form ) ? ( $_->form . ( $_->no_space_after ? '' : ' ' ) ) : '' } @a_nodes;
   return $sentence;
 } # get_sentence_t
+
 
 ############################################ USING COLLECTED INFORMATION TO EXTRACT FEATURES ############################################
 
@@ -573,10 +625,36 @@ sub get_george_udny_yule_index {
   return ceil($yule);
 }
 
+my @ALL_PRON_SUBPOS = qw/0 1 4 5 6 7 8 9 D E H J K L O P Q S W Y Z/;
+my @ALL_PRON_SEMPOS = qw/n.pron.def.pers n.pron.indef adj.pron.indef n.pron.def.demon adj.pron.def.demon adv.pron.def adv.pron.indef/;
+
 #------------------------------------ coreference-related features implemented in the 2nd year of the project by Michal ---------------------------
 sub coreference_features { 
     my ($self, $doc) = @_;
-    return {};
+
+    my $feats = {};
+    $feats->{prons_a_perc_words} = ceil($number_of_words ? 100*$pron_a_count/$number_of_words : 0);
+    $feats->{prons_a_perc_nps} = ceil(($pron_a_count+$noun_a_count) ? 100*$pron_a_count/($pron_a_count+$noun_a_count) : 0);
+    foreach my $subpos (@ALL_PRON_SUBPOS) {
+        my $subpos_count = $pron_a_subpos_counts{$subpos} // 0;
+        $feats->{"prons_a_".$subpos."_perc_words"} = ceil($number_of_words ? 100*$subpos_count/$number_of_words : 0);
+        $feats->{"prons_a_".$subpos."_perc_prons"} = ceil($pron_a_count ? 100*$subpos_count/$pron_a_count : 0);
+        $feats->{"prons_a_".$subpos."_perc_nps"}   = ceil(($pron_a_count+$noun_a_count) ? 100*$subpos_count/($pron_a_count+$noun_a_count) : 0);
+    }
+    $feats->{prons_a_lemmas_perc_words} = ceil($number_of_words ? 100*scalar(keys %pron_a_lemmas)/$number_of_words : 0);
+    $feats->{prons_a_lemmas_perc_prons} = ceil($pron_a_count ? 100*scalar(keys %pron_a_lemmas)/$pron_a_count : 0);
+    $feats->{to_a_perc_prons} = ceil($pron_a_count ? 100*$to_a_count/$pron_a_count : 0);
+
+    $feats->{prons_t_perc_tnodes} = ceil($number_of_t_lemmas ? 100*$pron_t_count/$number_of_t_lemmas : 0);
+    foreach my $sempos (@ALL_PRON_SUBPOS) {
+        my $sempos_count = $pron_t_sempos_counts{$sempos} // 0;
+        $feats->{"prons_t_".$sempos."_perc_prons"} = ceil($pron_t_count ? 100*$sempos_count/$pron_t_count : 0);
+    }
+    foreach my $lemma (keys %perspron_act_t_lemmas) {
+        my $lemma_count = $perspron_act_t_lemmas{$lemma} // 0;
+        $feats->{"perspron_t_".$lemma."_perc_persprons"} = ceil($perspron_act_t_count ? 100*$lemma_count/$perspron_act_t_count : 0);
+    }
+    return $feats;
 }
 
 
