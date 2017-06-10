@@ -93,10 +93,20 @@ sub extract_features_as_ranking {
     my $feat_hash = $self->create_feat_hash($doc);
 
     # create the "shared" part of the instance represenatiotn
-    # all features belong to the "default" namespace
-    #my @feat_array = map {my $key = $_->[0]; [ $key, $feat_hash->{$key} ]} @{$self->weka_featlist};
-    my @feat_array = map {[ $_, $feat_hash->{$_} ]} sort keys %$feat_hash;
-    unshift @feat_array, [ '|default', undef ];
+    # distribute them by the specified namespace ("ns^" prefix)
+    my %ns_feats = ();
+    foreach my $key (sort keys %$feat_hash) {
+        my ($ns, $feat) = split /\^/, $key, 2;
+        my $feat_list = $ns_feats{$ns};
+        if (!defined $feat_list) {
+            $feat_list = [[ "|$ns", undef ]];
+            $ns_feats{$ns} = $feat_list;
+        }
+        #my @feat_array = map {my $key = $_->[0]; [ $key, $feat_hash->{$key} ]} @{$self->weka_featlist};
+        # TODO: so far, all features are considered numeric - as weights   
+        push @$feat_list, [ $feat, undef, $feat_hash->{$key} ];
+    }
+    my @feat_array = map {@{$ns_feats{$_}}} sort keys %ns_feats;
 
     # create the "cands" part of the instance representation
     # in this case, every candidate correpsonds to a possible class => only a single feature "class" is specified
@@ -524,7 +534,7 @@ sub discourse_features {
 
     my %feats = ();
   
-    $feats{avg_words_per_sent} = ceil($number_of_words/$number_of_sentences);
+    $feats{'disc^avg_words_per_sent'} = ceil($number_of_words/$number_of_sentences);
   
     #my $different_t_lemmas = scalar(keys(%t_lemmas_counts));
     #print "$different_t_lemmas";
@@ -540,29 +550,29 @@ sub discourse_features {
       # print STDERR "There have not been 100 t_lemmas in the text - counting only so far observed different t_lemmas (in $number_of_t_lemmas): $t_lemmas_per_100_t_lemmas.\n";
     }
     
-    $feats{t_lemmas_per_100t_lemmas} = ceil($t_lemmas_per_100_t_lemmas);
-    $feats{simpson_index} = get_simpson_index();
-    $feats{yule_index} = get_george_udny_yule_index();
-    $feats{avg_PREDless_per_100sent} = ceil(100*$count_PREDless_sentences/$number_of_sentences);
-    $feats{avg_connective_words_coord_per_100sent} = ceil(100*$count_connective_words_coord/$number_of_sentences);
-    $feats{avg_connective_words_subord_per_100sent} = ceil(100*$count_connective_words_subord/$number_of_sentences);
-    $feats{avg_connective_words_per_100sent} = ceil(100*($count_connective_words_coord+$count_connective_words_subord)/$number_of_sentences);
-    $feats{avg_discourse_intra_per_100sent} = ceil(100*$number_of_discourse_relations_intra/$number_of_sentences);
-    $feats{avg_discourse_inter_per_100sent} = ceil(100*$number_of_discourse_relations_inter/$number_of_sentences);
-    $feats{avg_discourse_per_100sent} = ceil(100*($number_of_discourse_relations_inter + $number_of_discourse_relations_intra)/$number_of_sentences);
-    $feats{different_connectives} = scalar(keys(%connectives));
+    $feats{'disc^t_lemmas_per_100t_lemmas'} = ceil($t_lemmas_per_100_t_lemmas);
+    $feats{'disc^simpson_index'} = get_simpson_index();
+    $feats{'disc^yule_index'} = get_george_udny_yule_index();
+    $feats{'disc^avg_PREDless_per_100sent'} = ceil(100*$count_PREDless_sentences/$number_of_sentences);
+    $feats{'disc^avg_connective_words_coord_per_100sent'} = ceil(100*$count_connective_words_coord/$number_of_sentences);
+    $feats{'disc^avg_connective_words_subord_per_100sent'} = ceil(100*$count_connective_words_subord/$number_of_sentences);
+    $feats{'disc^avg_connective_words_per_100sent'} = ceil(100*($count_connective_words_coord+$count_connective_words_subord)/$number_of_sentences);
+    $feats{'disc^avg_discourse_intra_per_100sent'} = ceil(100*$number_of_discourse_relations_intra/$number_of_sentences);
+    $feats{'disc^avg_discourse_inter_per_100sent'} = ceil(100*$number_of_discourse_relations_inter/$number_of_sentences);
+    $feats{'disc^avg_discourse_per_100sent'} = ceil(100*($number_of_discourse_relations_inter + $number_of_discourse_relations_intra)/$number_of_sentences);
+    $feats{'disc^different_connectives'} = scalar(keys(%connectives));
 
-    $feats{perc_a} = ceil(100*(scalar($connectives{'a'}) ? scalar($connectives{'a'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{perc_ale} = ceil(100*(scalar($connectives{'ale'}) ? scalar($connectives{'ale'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{perc_protoze} = ceil(100*(scalar($connectives{'protože'}) ? scalar($connectives{'protože'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{perc_take} = ceil(100*((scalar($connectives{'také'}) or scalar($connectives{'taky'})) ? scalar($connectives{'také'}//0 + $connectives{'taky'}//0) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{perc_potom} = ceil(100*((scalar($connectives{'potom'}) or scalar($connectives{'pak'})) ? scalar($connectives{'potom'}//0 + $connectives{'pak'}//0) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{perc_kdyz} = ceil(100*(scalar($connectives{'když'}) ? scalar($connectives{'když'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{perc_nebo} = ceil(100*(scalar($connectives{'nebo'}) ? scalar($connectives{'nebo'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{perc_proto} = ceil(100*(scalar($connectives{'proto'}) ? scalar($connectives{'proto'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{perc_tak} = ceil(100*(scalar($connectives{'tak'}) ? scalar($connectives{'tak'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{perc_aby} = ceil(100*(scalar($connectives{'aby'}) ? scalar($connectives{'aby'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{perc_totiz} = ceil(100*(scalar($connectives{'totiž'}) ? scalar($connectives{'totiž'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'disc^perc_a'} = ceil(100*(scalar($connectives{'a'}) ? scalar($connectives{'a'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'disc^perc_ale'} = ceil(100*(scalar($connectives{'ale'}) ? scalar($connectives{'ale'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'disc^perc_protoze'} = ceil(100*(scalar($connectives{'protože'}) ? scalar($connectives{'protože'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'disc^perc_take'} = ceil(100*((scalar($connectives{'také'}) or scalar($connectives{'taky'})) ? scalar($connectives{'také'}//0 + $connectives{'taky'}//0) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'disc^perc_potom'} = ceil(100*((scalar($connectives{'potom'}) or scalar($connectives{'pak'})) ? scalar($connectives{'potom'}//0 + $connectives{'pak'}//0) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'disc^perc_kdyz'} = ceil(100*(scalar($connectives{'když'}) ? scalar($connectives{'když'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'disc^perc_nebo'} = ceil(100*(scalar($connectives{'nebo'}) ? scalar($connectives{'nebo'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'disc^perc_proto'} = ceil(100*(scalar($connectives{'proto'}) ? scalar($connectives{'proto'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'disc^perc_tak'} = ceil(100*(scalar($connectives{'tak'}) ? scalar($connectives{'tak'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'disc^perc_aby'} = ceil(100*(scalar($connectives{'aby'}) ? scalar($connectives{'aby'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'disc^perc_totiz'} = ceil(100*(scalar($connectives{'totiž'}) ? scalar($connectives{'totiž'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
   
   
     my @connective_usages_sorted = sort {$b <=> $a} map {$connectives{$_}} keys (%connectives); # sort numbers of usages of the connectives in the decreasing order (disregard the connectives themselves)
@@ -571,7 +581,7 @@ sub discourse_features {
       my $most_frequent_connectives_first = $connective_usages_sorted[0];
       $percent_most_frequent_connectives_first = ceil(100*$most_frequent_connectives_first/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
     }
-    $feats{perc_first_connective} = $percent_most_frequent_connectives_first;
+    $feats{'disc^perc_first_connective'} = $percent_most_frequent_connectives_first;
   
     my $percent_most_frequent_connectives_first_and_second = 0;
     if (scalar(@connective_usages_sorted) >= 2) {
@@ -581,12 +591,12 @@ sub discourse_features {
     else {
       $percent_most_frequent_connectives_first_and_second = $percent_most_frequent_connectives_first;
     }
-    $feats{perc_first_and_second_connectives} = $percent_most_frequent_connectives_first_and_second;
+    $feats{'disc^perc_first_and_second_connectives'} = $percent_most_frequent_connectives_first_and_second;
     
-    $feats{perc_temporal} = ceil(100*$count_temporal/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
-    $feats{perc_contingency} = ceil(100*$count_contingency/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
-    $feats{perc_contrast} = ceil(100*$count_contrast/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
-    $feats{perc_expansion} = ceil(100*$count_expansion/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
+    $feats{'disc^perc_temporal'} = ceil(100*$count_temporal/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
+    $feats{'disc^perc_contingency'} = ceil(100*$count_contingency/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
+    $feats{'disc^perc_contrast'} = ceil(100*$count_contrast/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
+    $feats{'disc^perc_expansion'} = ceil(100*$count_expansion/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
   
     return \%feats;
 }
@@ -633,26 +643,26 @@ sub coreference_features {
     my ($self, $doc) = @_;
 
     my $feats = {};
-    $feats->{prons_a_perc_words} = ceil($number_of_words ? 100*$pron_a_count/$number_of_words : 0);
-    $feats->{prons_a_perc_nps} = ceil(($pron_a_count+$noun_a_count) ? 100*$pron_a_count/($pron_a_count+$noun_a_count) : 0);
+    $feats->{'pron^prons_a_perc_words'} = ceil($number_of_words ? 100*$pron_a_count/$number_of_words : 0);
+    $feats->{'pron^prons_a_perc_nps'} = ceil(($pron_a_count+$noun_a_count) ? 100*$pron_a_count/($pron_a_count+$noun_a_count) : 0);
     foreach my $subpos (@ALL_PRON_SUBPOS) {
         my $subpos_count = $pron_a_subpos_counts{$subpos} // 0;
-        $feats->{"prons_a_".$subpos."_perc_words"} = ceil($number_of_words ? 100*$subpos_count/$number_of_words : 0);
-        $feats->{"prons_a_".$subpos."_perc_prons"} = ceil($pron_a_count ? 100*$subpos_count/$pron_a_count : 0);
-        $feats->{"prons_a_".$subpos."_perc_nps"}   = ceil(($pron_a_count+$noun_a_count) ? 100*$subpos_count/($pron_a_count+$noun_a_count) : 0);
+        $feats->{"pron^prons_a_".$subpos."_perc_words"} = ceil($number_of_words ? 100*$subpos_count/$number_of_words : 0);
+        $feats->{"pron^prons_a_".$subpos."_perc_prons"} = ceil($pron_a_count ? 100*$subpos_count/$pron_a_count : 0);
+        $feats->{"pron^prons_a_".$subpos."_perc_nps"}   = ceil(($pron_a_count+$noun_a_count) ? 100*$subpos_count/($pron_a_count+$noun_a_count) : 0);
     }
-    $feats->{prons_a_lemmas_perc_words} = ceil($number_of_words ? 100*scalar(keys %pron_a_lemmas)/$number_of_words : 0);
-    $feats->{prons_a_lemmas_perc_prons} = ceil($pron_a_count ? 100*scalar(keys %pron_a_lemmas)/$pron_a_count : 0);
-    $feats->{to_a_perc_prons} = ceil($pron_a_count ? 100*$to_a_count/$pron_a_count : 0);
+    $feats->{'pron^prons_a_lemmas_perc_words'} = ceil($number_of_words ? 100*scalar(keys %pron_a_lemmas)/$number_of_words : 0);
+    $feats->{'pron^prons_a_lemmas_perc_prons'} = ceil($pron_a_count ? 100*scalar(keys %pron_a_lemmas)/$pron_a_count : 0);
+    $feats->{'pron^to_a_perc_prons'} = ceil($pron_a_count ? 100*$to_a_count/$pron_a_count : 0);
 
-    $feats->{prons_t_perc_tnodes} = ceil($number_of_t_lemmas ? 100*$pron_t_count/$number_of_t_lemmas : 0);
+    $feats->{'disc^prons_t_perc_tnodes'} = ceil($number_of_t_lemmas ? 100*$pron_t_count/$number_of_t_lemmas : 0);
     foreach my $sempos (@ALL_PRON_SUBPOS) {
         my $sempos_count = $pron_t_sempos_counts{$sempos} // 0;
-        $feats->{"prons_t_".$sempos."_perc_prons"} = ceil($pron_t_count ? 100*$sempos_count/$pron_t_count : 0);
+        $feats->{"pron^prons_t_".$sempos."_perc_prons"} = ceil($pron_t_count ? 100*$sempos_count/$pron_t_count : 0);
     }
     foreach my $lemma (keys %perspron_act_t_lemmas) {
         my $lemma_count = $perspron_act_t_lemmas{$lemma} // 0;
-        $feats->{"perspron_t_".$lemma."_perc_persprons"} = ceil($perspron_act_t_count ? 100*$lemma_count/$perspron_act_t_count : 0);
+        $feats->{"pron^perspron_t_".$lemma."_perc_persprons"} = ceil($perspron_act_t_count ? 100*$lemma_count/$perspron_act_t_count : 0);
     }
     return $feats;
 }
