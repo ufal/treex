@@ -655,7 +655,7 @@ sub coreference_features {
     $feats->{'pron^prons_a_lemmas_perc_prons'} = ceil($pron_a_count ? 100*scalar(keys %pron_a_lemmas)/$pron_a_count : 0);
     $feats->{'pron^to_a_perc_prons'} = ceil($pron_a_count ? 100*$to_a_count/$pron_a_count : 0);
 
-    $feats->{'disc^prons_t_perc_tnodes'} = ceil($number_of_t_lemmas ? 100*$pron_t_count/$number_of_t_lemmas : 0);
+    $feats->{'pron^prons_t_perc_tnodes'} = ceil($number_of_t_lemmas ? 100*$pron_t_count/$number_of_t_lemmas : 0);
     foreach my $sempos (@ALL_PRON_SUBPOS) {
         my $sempos_count = $pron_t_sempos_counts{$sempos} // 0;
         $feats->{"pron^prons_t_".$sempos."_perc_prons"} = ceil($pron_t_count ? 100*$sempos_count/$pron_t_count : 0);
