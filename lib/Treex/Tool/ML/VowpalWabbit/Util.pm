@@ -104,6 +104,24 @@ sub parse_multiline {
     return map {$items{$_}} @{$args->{items}}
 }
 
+sub format_instance {
+    my ($feats, $labels, $comments, $tags) = @_;
+
+    my ($cand_feats, $shared_feats) = @$feats;
+    # multiline instance
+    if (defined $cand_feats && @$cand_feats) {
+        return format_multiline($feats, $labels, $comments, $tags);
+    }
+    # singleline instance
+    else {
+        if (!defined $tags) {
+            $tags = $labels;
+        }
+        return format_singleline($shared_feats, $labels, $tags, $comments);
+    }
+}
+
+
 sub format_multiline {
     my ($feats, $losses, $comments, $tags) = @_;
 
