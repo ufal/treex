@@ -1,14 +1,18 @@
 package Treex::Tool::ML::Weka::Util;
 use Moose;
 use Treex::Core::Common;
+use Data::Printer;
 
 sub format_instance {
     my ($feats, $losses, $feat_types, $all_classes) = @_;
-    
+
     my ($cands_feats, $shared_feats) = @$feats;
     my $label;
-    if ($losses) {
-        my ($true_idx) = grep {!$losses->[$_]} 0 .. $#$losses;
+    if (defined $losses) {
+        my $true_idx = $losses;
+        if (ref($losses) eq "ARRAY") {
+            ($true_idx) = grep {!$losses->[$_]} 0 .. $#$losses;
+        }
         $label = $all_classes->[$true_idx];
     }
 
@@ -19,7 +23,7 @@ sub format_singleline {
     my ($feats, $label) = @_;
     my @no_ns = grep {$_->[0] !~ /^\|/} @$feats;
     my $str = sprintf "%s, %s\n",
-        (join ", ", map {$_->[1]} @no_ns),
+        (join ", ", map {$_->[1] // $_->[2]} @no_ns),
         $label // "?";
     return $str; 
 }
@@ -28,7 +32,7 @@ sub format_header {
     my ($feat_types, $all_classes) = @_;
     
     my $header = '@RELATION Evald' . "\n\n";
-    $header .= join "\n", map {'@ATTRIBUTE '.$_->[0].'  '.$_->[1]} @$feat_types;
+    $header .= join "\n", map {my $name = $_->[0]; $name =~ s/^[^\^]*\^//; '@ATTRIBUTE '.$name.'  '.$_->[1]} @$feat_types;
     $header .= "\n";
     $header .= sprintf '@ATTRIBUTE class {%s}', join(", ", @$all_classes);
     $header .= "\n";
