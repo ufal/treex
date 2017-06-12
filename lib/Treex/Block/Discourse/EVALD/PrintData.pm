@@ -18,7 +18,7 @@ sub extract_labels {
     my $class;
     my $filename = $doc->full_filename;
     $filename =~ s/^.*\///;
-    if ($filename =~ /^([^_])+_/) {
+    if ($filename =~ /^([^_]+)_/) {
         $class = $1;
     }
     return if (!defined $class);
