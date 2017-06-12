@@ -29,42 +29,148 @@ sub build_all_classes {
 sub build_weka_featlist {
     my ($self) = @_;
     my $weka_feats_types = [
-      ["avg_words_per_sent",                          "NUMERIC"],
+    
+    # SURFACE FEATS
+      ["surf^avg_words_per_sent",                          "NUMERIC"],
 
     # ["different_t_lemmas",                          "NUMERIC"],
-      ["t_lemmas_per_100t_lemmas",                    "NUMERIC"],
-      ["simpson_index",                               "NUMERIC"],
-      ["yule_index",                                  "NUMERIC"],
-      ["avg_PREDless_per_100sent",                    "NUMERIC"],
+      ["surf^t_lemmas_per_100t_lemmas",                    "NUMERIC"],
+      ["surf^simpson_index",                               "NUMERIC"],
+      ["surf^yule_index",                                  "NUMERIC"],
+      ["surf^avg_PREDless_per_100sent",                    "NUMERIC"],
 
-      ["avg_connective_words_coord_per_100sent",      "NUMERIC"],
-      ["avg_connective_words_subord_per_100sent",     "NUMERIC"],
-      ["avg_connective_words_per_100sent",            "NUMERIC"],
+      ["surf^avg_connective_words_coord_per_100sent",      "NUMERIC"],
+      ["surf^avg_connective_words_subord_per_100sent",     "NUMERIC"],
+      ["surf^avg_connective_words_per_100sent",            "NUMERIC"],
 
-      ["avg_discourse_intra_per_100sent",             "NUMERIC"],
-      ["avg_discourse_inter_per_100sent",             "NUMERIC"],
-      ["avg_discourse_per_100sent",                   "NUMERIC"],
-      ["different_connectives",                       "NUMERIC"],
+    # ADVANCED FEATS
+      ["disc^avg_discourse_intra_per_100sent",             "NUMERIC"],
+      ["disc^avg_discourse_inter_per_100sent",             "NUMERIC"],
+      ["disc^avg_discourse_per_100sent",                   "NUMERIC"],
+      ["disc^different_connectives",                       "NUMERIC"],
+    
+      ["disc^perc_a",                                      "NUMERIC"],
+      ["disc^perc_ale",                                    "NUMERIC"],
+      ["disc^perc_protoze",                                "NUMERIC"],
+      ["disc^perc_take",                                   "NUMERIC"],
+      ["disc^perc_potom",                                  "NUMERIC"],
+      ["disc^perc_kdyz",                                   "NUMERIC"],
+      ["disc^perc_nebo",                                   "NUMERIC"],
+      ["disc^perc_proto",                                  "NUMERIC"],
+      ["disc^perc_tak",                                    "NUMERIC"],
+      ["disc^perc_aby",                                    "NUMERIC"],
+      ["disc^perc_totiz",                                  "NUMERIC"],
 
-      ["perc_a",                                      "NUMERIC"],
-      ["perc_ale",                                    "NUMERIC"],
-      ["perc_protoze",                                "NUMERIC"],
-      ["perc_take",                                   "NUMERIC"],
-      ["perc_potom",                                  "NUMERIC"],
-      ["perc_kdyz",                                   "NUMERIC"],
-      ["perc_nebo",                                   "NUMERIC"],
-      ["perc_proto",                                  "NUMERIC"],
-      ["perc_tak",                                    "NUMERIC"],
-      ["perc_aby",                                    "NUMERIC"],
-      ["perc_totiz",                                  "NUMERIC"],
-
-      ["perc_first_connective",                       "NUMERIC"],
-      ["perc_first_and_second_connectives",           "NUMERIC"],
+      ["disc^perc_first_connective",                       "NUMERIC"],
+      ["disc^perc_first_and_second_connectives",           "NUMERIC"],
       
-      ["perc_temporal",                               "NUMERIC"],
-      ["perc_contingency",                            "NUMERIC"],
-      ["perc_contrast",                               "NUMERIC"],
-      ["perc_expansion",                              "NUMERIC"],
+      ["disc^perc_temporal",                               "NUMERIC"],
+      ["disc^perc_contingency",                            "NUMERIC"],
+      ["disc^perc_contrast",                               "NUMERIC"],
+      ["disc^perc_expansion",                              "NUMERIC"],
+
+    # PRONOUN FEATS
+      ["pron^prons_a_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_perc_ns",				          "NUMERIC"],
+      ["pron^prons_a_0_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_1_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_4_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_5_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_6_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_7_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_8_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_9_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_D_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_E_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_H_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_J_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_K_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_L_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_O_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_P_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_Q_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_S_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_W_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_Y_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_Z_perc_words",				      "NUMERIC"],
+      ["pron^prons_a_0_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_1_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_4_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_5_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_6_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_7_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_8_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_9_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_D_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_E_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_H_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_J_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_K_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_L_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_O_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_P_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_Q_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_S_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_W_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_Y_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_Z_perc_prons",				      "NUMERIC"],
+      ["pron^prons_a_0_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_1_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_4_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_5_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_6_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_7_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_8_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_9_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_D_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_E_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_H_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_J_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_K_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_L_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_O_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_P_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_Q_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_S_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_W_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_Y_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_Z_perc_nps",				      "NUMERIC"],
+      ["pron^prons_a_lemmas_perc_words",			  "NUMERIC"],
+      ["pron^prons_a_lemmas_perc_prons",			  "NUMERIC"],
+      ["pron^to_a_perc_prons",				          "NUMERIC"],
+      ["pron^prons_t_perc_tnodes",				      "NUMERIC"],
+      ["pron^prons_t_0_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_1_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_4_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_5_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_6_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_7_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_8_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_9_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_D_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_E_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_H_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_J_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_K_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_L_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_O_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_P_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_Q_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_S_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_W_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_Y_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_Z_perc_prons",				      "NUMERIC"],
+      ["pron^perspron_t_já_perc_persprons",			  "NUMERIC"],
+      ["pron^perspron_t_jeho_perc_persprons",		  "NUMERIC"],
+      ["pron^perspron_t_můj_perc_persprons",		  "NUMERIC"],
+      ["pron^perspron_t_on_perc_persprons",			  "NUMERIC"],
+      ["pron^perspron_t_se_perc_persprons",			  "NUMERIC"],
+      ["pron^perspron_t_svůj_perc_persprons",		  "NUMERIC"],
+      ["pron^perspron_t_tvůj_perc_persprons",		  "NUMERIC"],
+      ["pron^perspron_t_ty_perc_persprons",			  "NUMERIC"],
+      ["pron^perspron_t_undef_perc_persprons",		  "NUMERIC"],
+
+      
     ];
     return $weka_feats_types;
 }
@@ -72,22 +178,7 @@ sub build_weka_featlist {
 ############################################ MAIN FEATURE EXTRACTING METHODS ############################################
 
 sub extract_features {
-    my ($self, $doc, $params) = @_;
-
-    # Ranking style is set as default
-    $params = {} if (!defined $params);
-    $params->{as_ranking} = 1 if (!defined $params->{as_ranking});
-
-    if ($params->{as_ranking}) {
-        return $self->extract_features_as_ranking($doc);
-    }
-    else {
-        log_fatal "Extracting EVALD features in non-ranking style is not supported, yet!";
-    }
-}
-
-sub extract_features_as_ranking {
-    my ($self, $doc) = @_;
+    my ($self, $doc, $multiline) = @_;
 
     $self->collect_info($doc);
     my $feat_hash = $self->create_feat_hash($doc);
@@ -95,24 +186,34 @@ sub extract_features_as_ranking {
     # create the "shared" part of the instance represenatiotn
     # distribute them by the specified namespace ("ns^" prefix)
     my %ns_feats = ();
-    foreach my $key (sort keys %$feat_hash) {
+    my @ns_ord = ();
+    foreach my $key (map {$_->[0]} @{$self->weka_featlist}) {
         my ($ns, $feat) = split /\^/, $key, 2;
         my $feat_list = $ns_feats{$ns};
         if (!defined $feat_list) {
             $feat_list = [[ "|$ns", undef ]];
             $ns_feats{$ns} = $feat_list;
+            push @ns_ord, $ns;
         }
         #my @feat_array = map {my $key = $_->[0]; [ $key, $feat_hash->{$key} ]} @{$self->weka_featlist};
         # TODO: so far, all features are considered numeric - as weights   
-        push @$feat_list, [ $feat, undef, $feat_hash->{$key} ];
+        push @$feat_list, [ $feat, undef, ( $feat_hash->{$key} // 0 ) ];
     }
-    my @feat_array = map {@{$ns_feats{$_}}} sort keys %ns_feats;
+    my @feat_array = map {@{$ns_feats{$_}}} @ns_ord;
 
+    # singleline style is set as default
+    $multiline = 0 if (!defined $multiline);
+    
+    # only if the features are requested in a ranking format
     # create the "cands" part of the instance representation
     # in this case, every candidate correpsonds to a possible class => only a single feature "class" is specified
     # the class feature should belong to a "class" namespace
-    my @class_arrays = map { [['|class', undef], ['class', $_ ]] } @{$self->all_classes};
-    return [ \@class_arrays, \@feat_array ];
+    my $class_arrays = undef;
+    if ($multiline) {
+        $class_arrays = [ map { [['|class', undef], ['class', $_ ]] } @{$self->all_classes} ];
+    }
+
+    return [ $class_arrays, \@feat_array ];
 }
 
 sub create_feat_hash {
@@ -534,7 +635,7 @@ sub discourse_features {
 
     my %feats = ();
   
-    $feats{'disc^avg_words_per_sent'} = ceil($number_of_words/$number_of_sentences);
+    $feats{'surf^avg_words_per_sent'} = ceil($number_of_words/$number_of_sentences);
   
     #my $different_t_lemmas = scalar(keys(%t_lemmas_counts));
     #print "$different_t_lemmas";
@@ -550,13 +651,14 @@ sub discourse_features {
       # print STDERR "There have not been 100 t_lemmas in the text - counting only so far observed different t_lemmas (in $number_of_t_lemmas): $t_lemmas_per_100_t_lemmas.\n";
     }
     
-    $feats{'disc^t_lemmas_per_100t_lemmas'} = ceil($t_lemmas_per_100_t_lemmas);
-    $feats{'disc^simpson_index'} = get_simpson_index();
-    $feats{'disc^yule_index'} = get_george_udny_yule_index();
-    $feats{'disc^avg_PREDless_per_100sent'} = ceil(100*$count_PREDless_sentences/$number_of_sentences);
-    $feats{'disc^avg_connective_words_coord_per_100sent'} = ceil(100*$count_connective_words_coord/$number_of_sentences);
-    $feats{'disc^avg_connective_words_subord_per_100sent'} = ceil(100*$count_connective_words_subord/$number_of_sentences);
-    $feats{'disc^avg_connective_words_per_100sent'} = ceil(100*($count_connective_words_coord+$count_connective_words_subord)/$number_of_sentences);
+    $feats{'surf^t_lemmas_per_100t_lemmas'} = ceil($t_lemmas_per_100_t_lemmas);
+    $feats{'surf^simpson_index'} = get_simpson_index();
+    $feats{'surf^yule_index'} = get_george_udny_yule_index();
+    $feats{'surf^avg_PREDless_per_100sent'} = ceil(100*$count_PREDless_sentences/$number_of_sentences);
+    $feats{'surf^avg_connective_words_coord_per_100sent'} = ceil(100*$count_connective_words_coord/$number_of_sentences);
+    $feats{'surf^avg_connective_words_subord_per_100sent'} = ceil(100*$count_connective_words_subord/$number_of_sentences);
+    $feats{'surf^avg_connective_words_per_100sent'} = ceil(100*($count_connective_words_coord+$count_connective_words_subord)/$number_of_sentences);
+    
     $feats{'disc^avg_discourse_intra_per_100sent'} = ceil(100*$number_of_discourse_relations_intra/$number_of_sentences);
     $feats{'disc^avg_discourse_inter_per_100sent'} = ceil(100*$number_of_discourse_relations_inter/$number_of_sentences);
     $feats{'disc^avg_discourse_per_100sent'} = ceil(100*($number_of_discourse_relations_inter + $number_of_discourse_relations_intra)/$number_of_sentences);
