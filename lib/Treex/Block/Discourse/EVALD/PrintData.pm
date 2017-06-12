@@ -10,8 +10,9 @@ extends 'Treex::Block::Write::BaseTextWriter';
 with 'Treex::Block::Discourse::EVALD::Base';
 
 has 'format' => ( is => 'ro', isa => 'Str', default => 'vw' );
+has 'multiline' => ( is => 'ro', isa => 'Bool', default => 0 );
 
-sub extract_losses {
+sub extract_labels {
     my ($self, $doc) = @_;
 
     my $class;
@@ -22,8 +23,16 @@ sub extract_losses {
     }
     return if (!defined $class);
 
-    my @losses = map {$class eq $_ ? 0 : 1} @{$self->_feat_extractor->all_classes};
-    return \@losses;
+    my $all_classes = $self->_feat_extractor->all_classes;
+    if ($self->multiline) {
+        my @losses = map {$class eq $_ ? 0 : 1} @$all_classes;
+        return \@losses;
+    }
+    # the returned class should be numeric to model it with linear regression => return the index
+    else {
+        my ($class_idx) = grep {$all_classes->[$_] eq $class} 0 .. $#$all_classes;
+        return $class_idx;
+    }
 }
 
 sub process_ttree {
@@ -43,15 +52,15 @@ sub print_header {
 sub _process_document {
     my ($self, $doc) = @_;
 
-    my $losses = $self->extract_losses($doc);
+    my $labels = $self->extract_labels($doc);
 
-    my $feats = $self->_feat_extractor->extract_features($doc);
+    my $feats = $self->_feat_extractor->extract_features($doc, $self->multiline);
     my $instance_str;
     if ($self->format eq 'vw') {
-        $instance_str = Treex::Tool::ML::VowpalWabbit::Util::format_multiline($feats, $losses);
+        $instance_str = Treex::Tool::ML::VowpalWabbit::Util::format_instance($feats, $labels);
     }
     elsif ($self->format eq 'weka') {
-        $instance_str = Treex::Tool::ML::Weka::Util::format_instance($feats, $losses, $self->_feat_extractor->weka_featlist, $self->_feat_extractor->all_classes);
+        $instance_str = Treex::Tool::ML::Weka::Util::format_instance($feats, $labels, $self->_feat_extractor->weka_featlist, $self->_feat_extractor->all_classes);
     }
 
     print {$self->_file_handle} $instance_str;
