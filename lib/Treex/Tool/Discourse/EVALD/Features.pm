@@ -71,7 +71,7 @@ sub build_weka_featlist {
 
     # PRONOUN FEATS
       ["pron^prons_a_perc_words",				      "NUMERIC"],
-      ["pron^prons_a_perc_ns",				          "NUMERIC"],
+      ["pron^prons_a_perc_nps",				          "NUMERIC"],
       ["pron^prons_a_0_perc_words",				      "NUMERIC"],
       ["pron^prons_a_1_perc_words",				      "NUMERIC"],
       ["pron^prons_a_4_perc_words",				      "NUMERIC"],
@@ -139,27 +139,13 @@ sub build_weka_featlist {
       ["pron^prons_a_lemmas_perc_prons",			  "NUMERIC"],
       ["pron^to_a_perc_prons",				          "NUMERIC"],
       ["pron^prons_t_perc_tnodes",				      "NUMERIC"],
-      ["pron^prons_t_0_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_1_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_4_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_5_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_6_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_7_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_8_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_9_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_D_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_E_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_H_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_J_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_K_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_L_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_O_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_P_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_Q_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_S_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_W_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_Y_perc_prons",				      "NUMERIC"],
-      ["pron^prons_t_Z_perc_prons",				      "NUMERIC"],
+      ["pron^prons_t_n.pron.def.pers_perc_prons",     "NUMERIC"],
+      ["pron^prons_t_n.pron.indef_perc_prons",	      "NUMERIC"],
+      ["pron^prons_t_adj.pron.indef_perc_prons",      "NUMERIC"],
+      ["pron^prons_t_n.pron.def.demon_perc_prons",    "NUMERIC"],
+      ["pron^prons_t_adj.pron.def.demon_perc_prons",  "NUMERIC"],
+      ["pron^prons_t_adv.pron.def_perc_prons",		  "NUMERIC"],
+      ["pron^prons_t_adv.pron.indef_perc_prons",	  "NUMERIC"],
       ["pron^perspron_t_já_perc_persprons",			  "NUMERIC"],
       ["pron^perspron_t_jeho_perc_persprons",		  "NUMERIC"],
       ["pron^perspron_t_můj_perc_persprons",		  "NUMERIC"],
@@ -491,6 +477,17 @@ my %perspron_act_t_lemmas = ();
 sub collect_info_coreference {
     my ($self, $doc) = @_;
 
+    $pron_a_count = 0;
+    $noun_a_count = 0;
+    %pron_a_subpos_counts = ();
+    %pron_a_lemmas = ();
+    $to_a_count = 0;
+
+    $pron_t_count = 0;
+    %pron_t_sempos_counts = ();
+    $perspron_act_t_count = 0;
+    %perspron_act_t_lemmas = ();
+    
     my @atrees = map {$_->get_tree($self->language, 'a', $self->selector)} $doc->get_bundles;
     foreach my $atree (@atrees) {
         foreach my $anode ($atree->get_descendants({ordered => 1})) {
@@ -758,7 +755,7 @@ sub coreference_features {
     $feats->{'pron^to_a_perc_prons'} = ceil($pron_a_count ? 100*$to_a_count/$pron_a_count : 0);
 
     $feats->{'pron^prons_t_perc_tnodes'} = ceil($number_of_t_lemmas ? 100*$pron_t_count/$number_of_t_lemmas : 0);
-    foreach my $sempos (@ALL_PRON_SUBPOS) {
+    foreach my $sempos (@ALL_PRON_SEMPOS) {
         my $sempos_count = $pron_t_sempos_counts{$sempos} // 0;
         $feats->{"pron^prons_t_".$sempos."_perc_prons"} = ceil($pron_t_count ? 100*$sempos_count/$pron_t_count : 0);
     }
