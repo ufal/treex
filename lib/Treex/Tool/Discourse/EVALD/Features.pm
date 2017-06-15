@@ -4,6 +4,9 @@ use Treex::Core::Common;
 use POSIX;
 use Treex::Tool::Lexicon::CS;
 use Data::Printer;
+use Treex::Tool::Coreference::Utils;
+use List::Util qw/sum/;
+use List::MoreUtils qw/uniq/;
 
 has 'target' => (
     is            => 'ro',
@@ -156,6 +159,15 @@ sub build_weka_featlist {
       ["pron^perspron_t_ty_perc_persprons",			  "NUMERIC"],
       ["pron^perspron_t_undef_perc_persprons",		  "NUMERIC"],
 
+      ["coref^chains_perc_words",                     "NUMERIC"],
+      ["coref^links_perc_words",                      "NUMERIC"],
+      ["coref^chains_len_2_perc_chains",              "NUMERIC"],
+      ["coref^chains_len_3_perc_chains",              "NUMERIC"],
+      ["coref^chains_len_4_perc_chains",              "NUMERIC"],
+      ["coref^chains_len_5_perc_chains",              "NUMERIC"],
+      ["coref^links_intra_perc_links",                "NUMERIC"],
+      ["coref^avg_lemma_variety",                     "NUMERIC"],
+      ["coref^avg_sempos_variety",                    "NUMERIC"],
       
     ];
     return $weka_feats_types;
@@ -736,10 +748,12 @@ sub get_george_udny_yule_index {
 
 my @ALL_PRON_SUBPOS = qw/0 1 4 5 6 7 8 9 D E H J K L O P Q S W Y Z/;
 my @ALL_PRON_SEMPOS = qw/n.pron.def.pers n.pron.indef adj.pron.indef n.pron.def.demon adj.pron.def.demon adv.pron.def adv.pron.indef/;
-
+my @ALL_CHAIN_LENGTHS = 2 .. 5;
 #------------------------------------ coreference-related features implemented in the 2nd year of the project by Michal ---------------------------
 sub coreference_features { 
     my ($self, $doc) = @_;
+
+    # PRONOUN FEATURES
 
     my $feats = {};
     $feats->{'pron^prons_a_perc_words'} = ceil($number_of_words ? 100*$pron_a_count/$number_of_words : 0);
@@ -763,6 +777,46 @@ sub coreference_features {
         my $lemma_count = $perspron_act_t_lemmas{$lemma} // 0;
         $feats->{"pron^perspron_t_".$lemma."_perc_persprons"} = ceil($perspron_act_t_count ? 100*$lemma_count/$perspron_act_t_count : 0);
     }
+
+    # COREFERENCE FEATURES
+    my @ttrees = map { $_->get_tree($self->language, 't', $self->selector) } $doc->get_bundles;
+    my @chains = Treex::Tool::Coreference::Utils::get_coreference_entities(\@ttrees, {ordered => 'deepord'});
+
+    $feats->{'coref^chains_perc_words'} = ceil($number_of_words ? 100*scalar(@chains)/$number_of_words : 0);
+    
+    my $num_links = (sum(map {scalar(@$_)} @chains) // 0) - scalar(@chains);
+    $feats->{'coref^links_perc_words'} = ceil($number_of_words ? 100*$num_links/$number_of_words : 0);
+    
+    my %link_lengths;
+    $link_lengths{scalar(@$_) < 5 ? scalar(@$_) : 5}++ foreach (@chains);
+    foreach my $len (@ALL_CHAIN_LENGTHS) {
+        $feats->{'coref^chains_len_'.$len.'_perc_chains'} = ceil(scalar(@chains) ? 100*($link_lengths{$len} // 0)/scalar(@chains) : 0);
+    }
+    
+    my $intrasent_links = 0;
+    foreach my $chain (@chains) {
+        my $prev_sentnum = undef;
+        foreach my $mention (@$chain) {
+            my $sentnum = $mention->get_bundle->get_position;
+            $intrasent_links++ if (defined $prev_sentnum && $sentnum == $prev_sentnum);
+            $prev_sentnum = $sentnum;
+        }
+    }
+    $feats->{'coref^links_intra_perc_links'} = ceil($num_links ? 100*$intrasent_links/$num_links : 0);
+
+    my $avg_lemmas_per_len = 0;
+    my $avg_sempos_per_len = 0;
+    foreach my $chain (@chains) {
+        my $lemmas_per_len = scalar(uniq map {$_->t_lemma} @$chain)/scalar(@$chain);
+        my $sempos_per_len = scalar(uniq map {$_->gram_sempos // "undef"} @$chain)/scalar(@$chain);
+        $avg_lemmas_per_len += $lemmas_per_len;
+        $avg_sempos_per_len += $sempos_per_len;
+    }
+    $avg_lemmas_per_len = scalar(@chains) ? $avg_lemmas_per_len / scalar(@chains) : 0;
+    $avg_sempos_per_len = scalar(@chains) ? $avg_sempos_per_len / scalar(@chains) : 0;
+    $feats->{'coref^avg_lemma_variety'} = ceil(100*$avg_lemmas_per_len);
+    $feats->{'coref^avg_sempos_variety'} = ceil(100*$avg_sempos_per_len);
+
     return $feats;
 }
 
