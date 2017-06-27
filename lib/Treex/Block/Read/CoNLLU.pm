@@ -154,7 +154,7 @@ sub next_document {
                     $newnode->set_no_space_after(1);
                 }
                 # Check whether MISC contains transliteration of the word form.
-                my @translit = grep {m/^Translit=(.+)$/} (@misc);
+                my @translit = map {s/^Translit=//; $_} (grep {m/^Translit=(.+)$/} (@misc));
                 if (scalar(@translit) > 0) {
                     $newnode->set_translit($translit[0]);
                     @misc = grep {!m/^Translit=/} (@misc);
