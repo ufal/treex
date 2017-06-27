@@ -159,6 +159,12 @@ sub next_document {
                     $newnode->set_translit($translit[0]);
                     @misc = grep {!m/^Translit=/} (@misc);
                 }
+                # Check whether MISC contains gloss of the word form.
+                my @gloss = map {my $x = $_; $x =~ s/^Gloss=//; $x} (grep {m/^Gloss=(.+)$/} (@misc));
+                if (scalar(@gloss) > 0) {
+                    $newnode->set_gloss($gloss[0]);
+                    @misc = grep {!m/^Gloss=/} (@misc);
+                }
                 # Remaining MISC attributes (those that we don't have special fields for) will be stored as wild attributes.
                 $newnode->set_misc(@misc);
             }
