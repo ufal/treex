@@ -144,11 +144,23 @@ sub next_document {
             if ($feats ne '_') {
                 $newnode->iset->add_ufeatures(split(/\|/, $feats));
             }
-            if ($misc && $misc =~ s/(^SpaceAfter=No(\|)?|\|SpaceAfter=No)//){
-                $newnode->set_no_space_after(1);
-            }
-            if ($misc && $misc ne '_'){
-                $newnode->wild->{misc} = $misc;
+            if ($misc && $misc ne '_') {
+                my @misc = split(/\|/, $misc);
+                # Check whether MISC contains SpaceAfter=No.
+                my $n0 = scalar(@misc);
+                @misc = grep {$_ ne 'SpaceAfter=No'} (@misc);
+                my $n1 = scalar(@misc);
+                if ($n1 < $n0) {
+                    $newnode->set_no_space_after(1);
+                }
+                # Check whether MISC contains transliteration of the word form.
+                my @translit = grep {m/^Translit=(.+)$/} (@misc);
+                if (scalar(@translit) > 0) {
+                    $newnode->set_translit($translit[0]);
+                    @misc = grep {!m/^Translit=/} (@misc);
+                }
+                # Remaining MISC attributes (those that we don't have special fields for) will be stored as wild attributes.
+                $newnode->set_misc(@misc);
             }
             if ($deps && $deps ne '_'){
                 $newnode->wild->{deps} = $deps;
