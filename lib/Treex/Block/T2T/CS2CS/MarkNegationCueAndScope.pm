@@ -7,6 +7,8 @@ extends 'Treex::Core::Block';
 
 has type => ( is => 'rw', isa => 'Str', default => '' );
 
+has subtype => ( is => 'rw', isa => 'Str', default => '' );
+
 has special => ( is => 'rw', isa => 'Str', default => '' );
 
 my %neg_tlemmas = (
@@ -67,6 +69,7 @@ sub process_ttree {
     foreach my $neg_tnode (@neg_tnodes_BC) {
         $negation_id++;
         my $type_ok;
+        my $subtype_ok;
         my $spec_ok;
         # CUE
         my $neg_anode = $neg_tnode->get_lex_anode;
@@ -113,12 +116,25 @@ sub process_ttree {
         my @scope_candidates = grep { $_->follows($neg_tnode) }
             $neg_tnode->get_parent->get_echildren( {add_self => 1} );
         # First defined tfa
-        my ($tfa) = map { $_->tfa }
-            sort { $a->ord <=> $b->ord }
+        my ($tfa_node) = sort { $a->ord <=> $b->ord }
             grep { defined $_->tfa }
             @scope_candidates;
-        if (defined $tfa) {
-            # type 1/2
+        if (defined $tfa_node) {
+            my $tfa = $tfa_node->tfa;
+            # subtype 1/2
+            if ($self->subtype eq '') {
+                $subtype_ok = 1;
+            } elsif ($self->subtype eq '3') {
+                $subtype_ok = 0;
+            } else {
+                if ($tfa_node->id eq $neg_tnode->get_parent->id) {
+                    # subtype 1
+                    $subtype_ok = $self->subtype eq '1';
+                } else {
+                    # subtype 2
+                    $subtype_ok = $self->subtype eq '2';
+                }
+            }
             # Add topological siblings (i.e. incl. coap root siblings)
             push @scope_candidates, $neg_tnode->get_siblings( {following_only => 1} );
             if ($self->special eq 'notfa' && !grep { !defined $_->tfa } @scope_candidates) {
@@ -136,11 +152,16 @@ sub process_ttree {
                 grep { tfa_ok($tfa, $_) }
                 @scope_candidates;
         } else {
-            # type 3
+            # subtype 3
             $spec_ok = !$self->special;
+            $subtype_ok = $self->subtype eq '' || $self->subtype eq '3';
             $neg_anode->wild->{negation}->{$negation_id}->{scope} = 1;
+            if (!defined $neg_tlemmas{$neg_anode->lemma}) {
+                $neg_anode->wild->{negation}->{$negation_id}->{scope_from} = 0;
+                $neg_anode->wild->{negation}->{$negation_id}->{scope_to} = 1;
+            }
         }
-        if ($type_ok && $spec_ok) {
+        if ($type_ok && $subtype_ok && $spec_ok) {
             push @{$aroot->wild->{negation}->{negation_ids}}, $negation_id;
         }
     }

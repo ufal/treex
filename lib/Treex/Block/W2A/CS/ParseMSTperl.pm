@@ -5,7 +5,7 @@ use warnings;
 use Moose;
 extends 'Treex::Block::W2A::ParseMSTperl';
 
-has 'model_name' => ( is => 'ro', isa => 'Str', default => 'pdt_form_small' ); #best: pdt_best
+has 'model_name' => ( is => 'ro', isa => 'Str', default => 'pdt_form_small' ); #best: pdt_form_lemma_ctag
 has 'model_dir' => ( is => 'ro', isa => 'Str', default => "data/models/parser/mst_perl/cs" );
 
 has 'alignment_language' => ( isa => 'Str', is => 'ro', default => 'en' );
@@ -42,7 +42,7 @@ L<Treex::Block::W2A::ParseMSTperl> which is the parser itself.
 
 Uses a rather small and simple model, which is good only for testing and toy
 examples.
-Use e.g. C<model_name=pdt_best> to get good results.
+Use e.g. C<model_name=pdt_form_lemma_ctag> to get good results.
 
 =head1 COPYRIGHT
 

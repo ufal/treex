@@ -197,6 +197,7 @@ sub process_atree {
         }
         my @misc = $node->get_misc();
 
+
         # In the case of fused surface token, SpaceAfter=No may be specified for the surface token but NOT for the individual syntactic words.
         if($node->no_space_after() && !defined($wild->{fused}))
         {

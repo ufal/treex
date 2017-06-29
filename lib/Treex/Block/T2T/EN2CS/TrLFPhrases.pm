@@ -62,6 +62,7 @@ sub process_ttree {
 
 sub process_tnode {
     my ( $self, $cs_tnode ) = @_;
+    return if ref $cs_tnode eq 'Treex::Core::Node::Deleted';
     my $en_tnode = $cs_tnode->src_tnode or return;
     my ( $lemma, $formeme ) = $en_tnode->get_attrs(qw(t_lemma formeme));
     my $en_parent = $en_tnode->get_parent();

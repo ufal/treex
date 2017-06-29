@@ -118,8 +118,8 @@ sub process_atree {
     }
 
     # Print headers (if required) and the tree itself
-    say { $self->_file_handle } '# sent_id ' . $root->address()           if $self->print_sent_id;
-    say { $self->_file_handle } '# sentence ' . $root->compute_sentence() if $self->print_sentence;
+    say { $self->_file_handle } '# sent_id = ' . $root->get_address()       if $self->print_sent_id;
+    say { $self->_file_handle } '# text = ' . $root->get_zone->sentence if $self->print_sentence;
     say { $self->_file_handle } $_ for @lines;
     print { $self->_file_handle } "\n" if $self->add_empty_line;
     return;
