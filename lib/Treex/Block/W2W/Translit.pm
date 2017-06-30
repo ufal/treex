@@ -17,6 +17,7 @@ use translit::mkhedruli; # Dan's transliteration table for Georgian script
 use translit::ethiopic; # Dan's transliteration table for Ethiopic (Amharic) script
 use translit::khmer; # Dan's transliteration table for Khmer script
 use translit::hebrew; # Rudolf's transliteration table for Hebrew script
+use translit::han2pinyin; # Dan's conversion of Han characters to pinyin (table from Unicode.org)
 
 has 'table' => (isa => 'HashRef', is => 'ro', default => sub {{}});
 has 'maxl' => (isa => 'Int', is => 'rw', default => 1, writer => '_set_maxl');
@@ -103,6 +104,7 @@ sub process_anode
         my $table = $self->table();
         my $maxl = $self->maxl();
         $translit = translit::prevest($table, $form, $maxl);
+        $translit = han2pinyin::pinyin($translit); ###!!! BETA
     }
     $node->set_attr('translit', $translit);
     # Transliterate lemma. There is no attribute for transliterated lemma, so store it as a wild attribute.
@@ -112,6 +114,7 @@ sub process_anode
         my $table = $self->table();
         my $maxl = $self->maxl();
         $translit = translit::prevest($table, $lemma, $maxl);
+        $translit = han2pinyin::pinyin($translit); ###!!! BETA
         $node->wild()->{lemma_translit} = $translit;
     }
 }

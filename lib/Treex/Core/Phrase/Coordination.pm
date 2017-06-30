@@ -576,39 +576,75 @@ sub project_dependencies
     if($head_rule eq 'first_conjunct')
     {
         # If the first conjunct has a deprel other than 'dep', and another conjunct has 'dep',
-        # then the other conjunct is an orphan caused by ellipsis. We currently keep the 'dep'
-        # relation for orphans and do not label them 'conj'.
-        ###!!! This is specific to the conversion from the Prague style to Universal Dependencies.
-        ###!!! It should be solved elsewhere. Even orphans are not the main business of coordinations.
+        # then the other conjunct is an orphan caused by ellipsis. This is specific to the
+        # conversion from the Prague style to Universal Dependencies.
+        ###!!! It should be solved elsewhere because orphans are not the main business of coordination.
+        ###!!! A group of sibling orphans could be a phrase type of its own. However, it is difficult
+        ###!!! to separate the issue from coordination and at present we just hack it here.
         my $dep_means_orphan = $self->deprel() ne 'dep';
+        if($dep_means_orphan)
+        {
+            my $first_orphan_node;
+            for(my $i = 0; $i <= $#conjuncts; $i++)
+            {
+                my $c = $conjuncts[$i];
+                if($c->deprel() eq 'dep')
+                {
+                    if(defined($first_orphan_node))
+                    {
+                        splice(@conjuncts, $i--, 1);
+                        my $orphan_node = $c->node();
+                        ###!!! We group all orphans together although there may be two or more orphan groups
+                        ###!!! (example: Jane won gold, [Mary silver] and [Cathy bronze].)
+                        ###!!! We should at least check whether there are any delimiters between the current orphan and the head orphan.
+                        $orphan_node->set_parent($first_orphan_node);
+                        $orphan_node->set_deprel('orphan');
+                    }
+                    else
+                    {
+                        $first_orphan_node = $c->node();
+                    }
+                }
+            }
+        }
         shift(@conjuncts);
         foreach my $c (@conjuncts)
         {
             my $conj_node = $c->node();
             $conj_node->set_parent($head_node);
-            ###!!! The old implementation of Udep did not care about the ExD orphans.
-            ###!!! Thus we will turn this off at least until we successfully pass regression tests
-            ###!!! and fully deploy the new implementation.
-            if(0 && ###!!!
-               $dep_means_orphan && $c->deprel() eq 'dep')
-            {
-                $conj_node->set_deprel('dep');
-            }
-            else
-            {
-                $conj_node->set_deprel('conj');
-            }
+            $conj_node->set_deprel('conj');
         }
+        # Since UD v2, delimiters are not attached to the first conjunct. They are attached to the immediately following conjunct.
+        my $fc = $head_node;
+        my $ifc = 0;
         foreach my $c (@coordinators)
         {
             my $coor_node = $c->node();
-            $coor_node->set_parent($head_node);
+            unless($coor_node->ord() < $head_node->ord())
+            {
+                while($ifc < $#conjuncts && $coor_node->ord() > $conjuncts[$ifc]->ord())
+                {
+                    $ifc++;
+                }
+                $fc = $conjuncts[$ifc]->node() if($ifc <= $#conjuncts);
+            }
+            $coor_node->set_parent($fc);
             $coor_node->set_deprel('cc');
         }
+        $fc = $head_node;
+        $ifc = 0;
         foreach my $p (@punctuation)
         {
             my $punct_node = $p->node();
-            $punct_node->set_parent($head_node);
+            unless($punct_node->ord() < $head_node->ord())
+            {
+                while($ifc < $#conjuncts && $punct_node->ord() > $conjuncts[$ifc]->ord())
+                {
+                    $ifc++;
+                }
+                $fc = $conjuncts[$ifc]->node() if($ifc <= $#conjuncts);
+            }
+            $punct_node->set_parent($fc);
             $punct_node->set_deprel('punct');
         }
         foreach my $d (@dependents)

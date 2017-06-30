@@ -6,19 +6,19 @@ extends 'Treex::Block::Test::BaseTester';
 sub process_atree
 {
     # We should not identify Czech compound prepositions using a list because sometimes an expression from the list is not annotated as a compound preposition in PDT.
-    # But at least we should check that the mwe-labeled relations have the expected tree structure.
-    # A contiguous sequence (word-order-based) of nodes labeled 'mwe' all belong to one multi-word expression.
+    # But at least we should check that the fixed-labeled relations have the expected tree structure.
+    # A contiguous sequence (word-order-based) of nodes labeled 'fixed' all belong to one multi-word expression.
     # Most MWEs are contiguous but there are exceptions (see below).
     # We assume that two or more consecutive MWEs are excluded.
     # (This rule may be abandoned in the future if we find counterexamples.)
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants({'ordered' => 1});
-    my @mwe_nodes = grep {my $d = $_->deprel(); defined($d) && $d eq 'mwe'} (@nodes);
+    my @mwe_nodes = grep {my $d = $_->deprel(); defined($d) && $d eq 'fixed'} (@nodes);
     my @mwe_groups;
     my $igroup = 0;
     my $last_ord;
-    # Split the list of mwe nodes into individual mwe groups.
+    # Split the list of fixed nodes into individual fixed groups.
     foreach my $node (@mwe_nodes)
     {
         my $ord = $node->ord();
@@ -39,12 +39,12 @@ sub process_atree
         # With a relative possessive determiner: "na jehož základě".
         if(0 && ($group->[0]->ord() - $parent->ord() != 1))
         {
-            $self->complain($group->[0], 'The parent does not immediately precede the first node labeled mwe');
+            $self->complain($group->[0], 'The parent does not immediately precede the first node labeled fixed');
         }
-        # Even if we do not require the head to immediately precede the mwe group, it must still lie to the left of the group.
+        # Even if we do not require the head to immediately precede the fixed group, it must still lie to the left of the group.
         elsif($parent->ord() > $group->[0]->ord())
         {
-            $self->complain($group->[0], 'The leftmost word of a MWE is always the head');
+            $self->complain($group->[0], 'The leftmost word of a fixed MWE is always the head');
         }
         else
         {
@@ -52,7 +52,7 @@ sub process_atree
             {
                 if($group->[$i]->parent() != $parent)
                 {
-                    $self->complain($group->[$i], 'All mwe nodes in one group must have the same parent');
+                    $self->complain($group->[$i], 'All fixed nodes in one group must have the same parent');
                     last;
                 }
             }
@@ -69,7 +69,7 @@ sub process_atree
 =item Treex::Block::HamleDT::Test::UD::CompoundPrepositions
 
 Check the analysis of Czech compound prepositions such as I<na rozdíl od>.
-The first token should be head, the second and the third token should depend on it as a C<mwe>.
+The first token should be head, the second and the third token should depend on it as a C<fixed>.
 
 =back
 

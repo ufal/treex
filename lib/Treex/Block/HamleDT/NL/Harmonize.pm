@@ -333,11 +333,18 @@ sub convert_deprels
         elsif ( $deprel eq 'vc' )
         {
             # We want to make the participle the head and the auxiliary verb its AuxV dependent.
-            if($node->is_participle() && $parent->lemma() eq 'heb')
+            # ben + participle = passive
+            # heb + participle = perfect
+            # word + participle = conditional/passive?
+            # modal + infinitive (or "zijn" tagged as indicative) = modal construction
+            if(($node->is_participle() || lc($node->form()) eq 'willen') && $parent->lemma() =~ m/^(ben|heb|word)$/ ||
+               ($node->is_infinitive() || lc($node->form()) eq 'zijn') && $parent->lemma() =~ m/^(blijf|wil|zal)$/)
             {
                 $deprel = 'AuxArg';
             }
             # The 'vc' label is also used for infinitive attached to a modal verb.
+            ###!!! We have now stolen at least part of these above! We should decide what we do with modals.
+            ###!!! In the Prague style, infinitives are complements of modals. In UD, modals are auxiliaries of infinitives.
             elsif($node->is_infinitive() && $parent->is_modal())
             {
                 $deprel = 'Obj';
@@ -397,6 +404,42 @@ sub fix_annotation_errors
         {
             $node->set_parent($nodes[$i+1]);
             $parent->set_parent($nodes[$i+1]);
+        }
+        # Al de pauselijke interventies inzake het Nabije_Oosten, Biafra, Vietnam zijn in_de_wind geslagen.
+        elsif($node->form() eq 'Nabije_Oosten' && $self->get_node_spanstring($node) =~ m/^het Nabije_Oosten , Biafra , Vietnam$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # Make the second comma the head.
+            $subtree[4]->set_parent($parent);
+            $subtree[4]->set_deprel($node->deprel());
+            # Attach the conjuncts to the head.
+            $subtree[1]->set_parent($subtree[4]);
+            $subtree[1]->set_deprel('CoordArg');
+            $subtree[3]->set_parent($subtree[4]);
+            $subtree[3]->set_deprel('CoordArg');
+            $subtree[5]->set_parent($subtree[4]);
+            $subtree[5]->set_deprel('CoordArg');
+            # Attach the other comma to the head.
+            $subtree[2]->set_parent($subtree[4]);
+            $subtree[2]->set_deprel('AuxX');
+        }
+        # Er is niemand in Nederland die weet wat de Surinamers is aangedaan, hoe Nederland met zijn slaven is omgegaan.
+        elsif($node->form() eq 'wat' && $self->get_node_spanstring($node) =~ m/^wat de Surinamers is aangedaan , hoe/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            # Make the comma the head.
+            $subtree[5]->set_parent($parent);
+            $subtree[5]->set_deprel($node->deprel());
+            # Attach the conjuncts to the head.
+            $subtree[3]->set_parent($subtree[5]);
+            $subtree[3]->set_deprel('CoordArg');
+            $subtree[11]->set_parent($subtree[5]);
+            $subtree[11]->set_deprel('CoordArg');
+            # Also fix the relative pronoun and adverb, which would otherwise be left for heuristics.
+            $subtree[0]->set_parent($subtree[4]);
+            $subtree[0]->set_deprel('Sb');
+            $subtree[6]->set_parent($subtree[12]);
+            $subtree[6]->set_deprel('Adv');
         }
     }
 }

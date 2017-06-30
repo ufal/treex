@@ -95,6 +95,29 @@ sub fix_annotation_errors
                 $node->set_deprel('CoordArg');
             }
         }
+        # L' edició , en vuit volums , en català i castellà , inclourà els textos que Salvador_Dalí va escriure des_de 1919 , quan _ tenia 15 anys , fins gairebé al final de la_seva vida .
+        # 1919 is the head, attached upwards as 'cc' (adjunct). Children: des_de (coord), tenia (S), fins (coord), final (sn).
+        # "fins" heads the subtree "fins gairebé al". But "al" should be attached to "final" and it isn't. And it is probably better not to do it as coordination anyway.
+        elsif($form eq '1919' && $self->get_node_spanstring($node) =~ m/^des_de 1919 , quan _ tenia 15 anys , fins gairebé al final de la_seva vida$/)
+        {
+            my @subtree = $self->get_node_subtree($node);
+            my $desde = $subtree[0];
+            my $fins = $subtree[9];
+            my $gairebe = $subtree[10];
+            my $al = $subtree[11];
+            my $final = $subtree[12];
+            $desde->set_parent($parent);
+            $desde->set_deprel('Adv');
+            $fins->set_parent($parent);
+            $fins->set_deprel('Adv');
+            $node->set_parent($desde);
+            $node->set_deprel('PrepArg');
+            $al->set_deprel('PrepArg');
+            $final->set_parent($al);
+            $final->set_deprel('PrepArg');
+            $gairebe->set_parent($final);
+            $gairebe->set_deprel('AuxZ');
+        }
     }
 }
 

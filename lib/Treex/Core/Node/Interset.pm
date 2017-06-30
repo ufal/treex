@@ -9,7 +9,7 @@ parameter interset_attribute => (
 
 use Treex::Core::Log;
 use List::Util qw(first); # TODO: this wouldn't be needed if there was Treex::Core::Common for roles
-use Lingua::Interset 2.050;
+use Lingua::Interset 3.003;
 use Lingua::Interset::FeatureStructure;
 use Data::Dumper;
 
@@ -58,6 +58,8 @@ has $interset_attribute => (
         is_conditional
         is_conjunction
         is_conjunctive
+        is_construct
+        is_converb
         is_coordinator
         is_dative
         is_definite
@@ -70,6 +72,7 @@ has $interset_attribute => (
         is_distributive
         is_dual
         is_elative
+        is_elevating
         is_ergative
         is_essive
         is_exclamative
@@ -78,10 +81,13 @@ has $interset_attribute => (
         is_finite_verb
         is_first_person
         is_foreign
+        is_formal
         is_future
         is_genitive
         is_gerund
         is_gerundive
+        is_human
+        is_humbling
         is_hyph
         is_illative
         is_imperative
@@ -160,6 +166,7 @@ has $interset_attribute => (
         is_translative
         is_typo
         is_verb
+        is_verbal_noun
         is_vocative
         is_wh
     )],

@@ -46,8 +46,11 @@ sub next_document {
         LINE:
         foreach my $line (@lines) {
             next LINE if $line =~ /^\s*$/;
-            if ($line =~ s/^#\s*//) {
-                if ($line =~ m/sent_id\s+(.*)/) {
+            if ($line =~ s/^#\s*//)
+            {
+                # sent_id metadata sentence-level comment
+                if ($line =~ m/sent_id(?:\s*=\s*|\s+)(.*)/)
+                {
                     my $sid = $1;
                     my $zid = $self->language();
                     # Some CoNLL-U files already have sentence ids with "/language" suffix while others don't.
@@ -61,12 +64,27 @@ sub next_document {
                     $bundle->set_id( $sid );
                     $aroot->set_id( "$sid/$zid" );
                 }
-                else {
+                # text metadata sentence-level comment
+                elsif ($line =~ m/text\s*=\s*(.*)/)
+                {
+                    my $text = $1;
+                    $zone->set_sentence($text);
+                }
+                # any other sentence-level comment
+                else
+                {
                     $comment .= "$line\n";
                 }
                 next LINE;
             }
-            my ( $id, $form, $lemma, $upos, $postag, $feats, $head, $deprel, $deps, $misc, $rest ) = split( /\s/, $line );
+            # Since UD v2, there may be lines with empty nodes of the enhanced representation.
+            ###!!! Currently skip empty nodes!
+            elsif ($line =~ m/^\d+\.\d+/)
+            {
+                next LINE;
+            }
+            # Since UD v2, the FORM and LEMMA columns may contain spaces, thus we can only use the TAB character as column separator.
+            my ( $id, $form, $lemma, $upos, $postag, $feats, $head, $deprel, $deps, $misc, $rest ) = split( /\t/, $line );
             log_warn "Extra columns: '$rest'" if $rest;
 
             # There may be fused tokens consisting of multiple syntactic words (= nodes). For example (German):
@@ -126,11 +144,29 @@ sub next_document {
             if ($feats ne '_') {
                 $newnode->iset->add_ufeatures(split(/\|/, $feats));
             }
-            if ($misc && $misc =~ s/(^SpaceAfter=No(\|)?|\|SpaceAfter=No)//){
-                $newnode->set_no_space_after(1);
-            }
-            if ($misc && $misc ne '_'){
-                $newnode->wild->{misc} = $misc;
+            if ($misc && $misc ne '_') {
+                my @misc = split(/\|/, $misc);
+                # Check whether MISC contains SpaceAfter=No.
+                my $n0 = scalar(@misc);
+                @misc = grep {$_ ne 'SpaceAfter=No'} (@misc);
+                my $n1 = scalar(@misc);
+                if ($n1 < $n0) {
+                    $newnode->set_no_space_after(1);
+                }
+                # Check whether MISC contains transliteration of the word form.
+                my @translit = map {my $x = $_; $x =~ s/^Translit=//; $x} (grep {m/^Translit=(.+)$/} (@misc));
+                if (scalar(@translit) > 0) {
+                    $newnode->set_translit($translit[0]);
+                    @misc = grep {!m/^Translit=/} (@misc);
+                }
+                # Check whether MISC contains gloss of the word form.
+                my @gloss = map {my $x = $_; $x =~ s/^Gloss=//; $x} (grep {m/^Gloss=(.+)$/} (@misc));
+                if (scalar(@gloss) > 0) {
+                    $newnode->set_gloss($gloss[0]);
+                    @misc = grep {!m/^Gloss=/} (@misc);
+                }
+                # Remaining MISC attributes (those that we don't have special fields for) will be stored as wild attributes.
+                $newnode->set_misc(@misc);
             }
             if ($deps && $deps ne '_'){
                 $newnode->wild->{deps} = $deps;
@@ -201,6 +237,6 @@ Daniel Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2015 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2015, 2017 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

@@ -68,6 +68,10 @@ sub need_more_test
 
 1;
 
+__END__
+
+=encoding utf-8
+
 =head1 NAME
 
 Treex::Block::Print::TestFileNames
@@ -78,7 +82,16 @@ Suggests approximately every tenth document as test data.
 An even sampling of test documents from the corpus will ensure a balanced distribution of domains in both training and test.
 The block counts tokens in each document and attempts to get 10% of all tokens as test.
 
-=cut
+=back
 
-# Copyright 2013 Dan Zeman <zeman@ufal.mff.cuni.cz>
-# This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
+=head1 AUTHOR
+
+Dan Zeman <zeman@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2013 by Institute of Formal and Applied Linguistics,
+Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.

@@ -11,7 +11,7 @@ sub process_atree
     foreach my $node (@nodes)
     {
         # A preposition normally depends on a following node (usually noun) and the relation is 'case'.
-        # It may also depend on a preceding node as 'mwe' or 'conj'.
+        # It may also depend on a preceding node as 'fixed' or 'conj'.
         # In case of ellipsis (incomplete sentence), it may depend on the root as 'root'.
         # In some languages the borderline between adpositions and subordinating conjunctions is fuzzy.
         # If a preposition is attached to a verb, it is treated as a subordinating conjunction and the relation is labeled 'mark'
@@ -26,10 +26,10 @@ sub process_atree
             my $parent = $node->parent();
             my $deprel = $node->deprel();
             # Do not test adpositions in foreign text, they have their own rules for attachment.
-            next if($deprel eq 'foreign');
+            next if($deprel =~ m/flat|foreign/);
             # Do not test adpositions that are part of a multi-word expression. MWE's must be tested separately by their own rules.
             # The whole MWE may act as something else than adposition. It can be an advmod.
-            next if($deprel eq 'mwe' || any {$_->deprel() eq 'mwe'} ($node->children()));
+            next if($deprel eq 'fixed' || any {$_->deprel() eq 'fixed'} ($node->children()));
             my $ok = $node->is_leaf();
             if(!$ok)
             {
@@ -74,18 +74,27 @@ sub process_atree
 
 1;
 
-=over
+=encoding utf-8
 
-=item Treex::Block::HamleDT::Test::UD::Adpositions
+=head1 NAME
+
+Treex::Block::HamleDT::Test::UD::Adpositions
+
+=head1 DESCRIPTION
 
 A preposition normally depends on a following node (usually noun) and the relation is 'case'.
-It may also depend on a preceding node as 'mwe' or 'conj'.
+It may also depend on a preceding node as 'fixed' or 'conj'.
 In case of ellipsis (incomplete sentence), it may depend on the root as 'root'.
 In any case, the preposition should be leaf.
 
-=back
+=head1 AUTHOR
 
-=cut
+Dan Zeman <zeman@ufal.mff.cuni.cz>
 
-# Copyright 2015 Dan Zeman
-# This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2015 by Institute of Formal and Applied Linguistics,
+Charles University in Prague
+
+This module is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.

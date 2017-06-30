@@ -22,7 +22,7 @@ has 'prep_is_head' =>
         'See Treex::Core::Phrase::PP, fun_is_head attribute.'
 );
 
-has 'mwe_is_head_first' =>
+has 'fixed_is_head_first' =>
 (
     is       => 'ro',
     isa      => 'Bool',
@@ -30,7 +30,7 @@ has 'mwe_is_head_first' =>
     default  => 1,
     documentation =>
         'Should the first token of a multi-word expression head the MWE? '.
-        'This is the rule for UD relations mwe and name. '.
+        'This is the rule for UD relations fixed and flat. '.
         'However, MW prepositions in Prague dependencies are head-last. '
 );
 
@@ -1027,20 +1027,20 @@ sub detect_prague_pp
         $c->{arg}->set_parent(undef);
         # If the preposition consists of multiple nodes, group them in a new NTerm first.
         # The main prepositional node has already been detached from its original parent so it can be used as the head elsewhere.
-        if(scalar(@{$c->{mwe}}) > 0)
+        if(scalar(@{$c->{fixed}}) > 0)
         {
             # In PDT, the last token (preposition or noun) is the head because it governs the case of the following noun.
             # In UD, the leftmost node of the MWE is its head.
             ###!!! If we want to make it variable we should define multi-word expressions as another specific phrase type.
-            my @mwe = sort {$a->node()->ord() <=> $b->node()->ord()} (@{$c->{mwe}}, $c->{fun});
-            my $head = $self->mwe_is_head_first() ? shift(@mwe) : pop(@mwe);
+            my @mwe = sort {$a->node()->ord() <=> $b->node()->ord()} (@{$c->{fixed}}, $c->{fun});
+            my $head = $self->fixed_is_head_first() ? shift(@mwe) : pop(@mwe);
             $head->set_parent(undef);
             $c->{fun} = new Treex::Core::Phrase::NTerm('head' => $head);
             $c->{fun}->set_deprel($fun_deprel);
             foreach my $mwp (@mwe)
             {
                 $mwp->set_parent($c->{fun});
-                $self->set_deprel($mwp, 'mwe');
+                $self->set_deprel($mwp, 'fixed');
             }
         }
         my $pp = new Treex::Core::Phrase::PP
@@ -1143,10 +1143,10 @@ sub classify_prague_pp_subphrases
     }
     my %classification =
     (
-        'fun' => $preposition,
-        'mwe' => \@mwauxp,
-        'arg' => $argument,
-        'dep' => [@candidates, @punc]
+        'fun'   => $preposition,
+        'fixed' => \@mwauxp,
+        'arg'   => $argument,
+        'dep'   => [@candidates, @punc]
     );
     return \%classification;
 }
@@ -1251,7 +1251,7 @@ sub detect_alpino_clause
             ###!!! We should implement heuristics to decide between subject, object or optional modifier.
             ###!!! Also note that the subordinator may be a multi-word noun phrase (welke boeken = which books) or a prepositional phrase (bij wat = by what).
             ###!!! All that will currently come out wrong.
-            $phrase->head()->set_deprel($self->map_deprel('dobj'));
+            $phrase->head()->set_deprel($self->map_deprel('obj'));
             $phrase->set_head($arguments[0]);
             $phrase->set_deprel($pp_deprel);
         }
@@ -1421,6 +1421,40 @@ sub convert_phrase_headed_by_modifier
             }
         }
     }
+    return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Examines a nonterminal phrase in the Prague style. If it recognizes a fixed
+# phrase where one of the members heads a nested fixed phrase, merges the two
+# phrases into one. For example, the German UD data from Google used chains of
+# fixed relations to annotate expressions "nach wie vor" and "so gut wie".
+#------------------------------------------------------------------------------
+sub detect_fixed_chain
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    my @dependents = $phrase->dependents('ordered' => 1);
+    my $is_fixed = any {$self->has_deprel($_, 'fixed')} (@dependents);
+    foreach my $d (@dependents)
+    {
+        if($self->has_deprel($d, 'fixed'))
+        {
+            # Does the fixed dependent have its own fixed dependents?
+            # If it does, re-attach them directly to the current phrase.
+            my @grandchildren = $d->dependents('ordered' => 1);
+            foreach my $gc (@grandchildren)
+            {
+                if($self->has_deprel($gc, 'fixed'))
+                {
+                    $gc->set_parent($phrase);
+                }
+            }
+        }
+    }
+    # Return the input NTerm phrase.
     return $phrase;
 }
 
