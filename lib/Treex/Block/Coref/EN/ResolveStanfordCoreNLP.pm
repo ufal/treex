@@ -7,6 +7,7 @@ use Net::EmptyPort qw(empty_port);
 use LWP::UserAgent;
 use JSON;
 use Data::Printer;
+use Encode qw(encode);
 
 extends 'Treex::Core::Block';
 with 'Treex::Block::Coref::ResolveFromRawText';
@@ -44,7 +45,7 @@ _term() {
 trap _term EXIT
 
 cd /net/cluster/TMP/mnovak/tools/StanfordCoreNLP/stanford-corenlp-full-2016-10-31;
-java -mx6g -cp "*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer -port %d -timeout 1200000
+java -mx6g -cp "*" edu.stanford.nlp.pipeline.StanfordCoreNLPServer -port %d -timeout 2400000
 CMD
 
 my $STANFORD_SERVER_URL = 'http://localhost:%d/?properties={"annotators":"tokenize,ssplit,pos,lemma,ner,parse,%s",%s"tokenize.whitespace":"true", "ssplit.eolonly":"true","outputFormat":"json"}';
@@ -130,6 +131,7 @@ sub post_request {
 
     # build URL using port and specified parameters
 
+    $text = encode('utf8', $text);
     my $req = HTTP::Request->new(POST => $self->_request_url);
     $req->content($text);
     
