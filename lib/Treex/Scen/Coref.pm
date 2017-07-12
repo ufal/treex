@@ -28,6 +28,12 @@ has 'model_type' => (
     predicate => 'has_model_type',
 );
 
+has 'diagnostics' => (
+    is => 'ro',
+    isa => 'Bool',
+    predicate => 'has_diagnostics',
+);
+
 sub get_scenario_string {
     my ($self) = @_;
     if ($self->language eq 'en') {
@@ -42,19 +48,29 @@ sub get_scenario_string {
     }
 }
 
+sub prepare_params {
+    my ($self) = @_;
+    
+    my $params = '';
+    if ($self->has_model_type) {
+        $params .= ' model_type='.$self->model_type;
+    }
+    if ($self->has_diagnostics) {
+        $params .= ' diagnostics='.$self->diagnostics;
+    }
+    return $params;
+}
+
 sub get_cs_scenario_string {
     my ($self) = @_;
 
-    my $model_type = '';
-    if ($self->has_model_type) {
-        $model_type = ' model_type='.$self->model_type;
-    }
+    my $params = $self->prepare_params;
 
     my $scen = join "\n",
     'Util::SetGlobal language=cs',
-    $self->modules->{relpron} || $self->modules->{all} ? 'Coref::CS::RelPron::Resolve'.$model_type : '',
-    $self->modules->{reflpron} || $self->modules->{all} ? 'Coref::CS::ReflPron::Resolve'.$model_type : '',
-    $self->modules->{perspron} || $self->modules->{all} ? 'Coref::CS::PersPron::Resolve'.$model_type : '',
+    $self->modules->{relpron} || $self->modules->{all} ? 'Coref::CS::RelPron::Resolve'.$params : '',
+    $self->modules->{reflpron} || $self->modules->{all} ? 'Coref::CS::ReflPron::Resolve'.$params : '',
+    $self->modules->{perspron} || $self->modules->{all} ? 'Coref::CS::PersPron::Resolve'.$params : '',
     ;
 
     return $scen;
@@ -63,17 +79,14 @@ sub get_cs_scenario_string {
 sub get_en_scenario_string {
     my ($self) = @_;
     
-    my $model_type = '';
-    if ($self->has_model_type) {
-        $model_type = ' model_type='.$self->model_type;
-    }
+    my $params = $self->prepare_params;
 
     my $scen = join "\n",
     'Util::SetGlobal language=en',
-    $self->modules->{relpron}  || $self->modules->{all} ? 'Coref::EN::RelPron::Resolve'.$model_type : '',
-    $self->modules->{cor}      || $self->modules->{all} ? 'Coref::EN::Cor::Resolve'.$model_type : '',
-    $self->modules->{reflpron} || $self->modules->{all} ? 'Coref::EN::ReflPron::Resolve'.$model_type : '',
-    $self->modules->{perspron} || $self->modules->{all} ? 'Coref::EN::PersPron::Resolve'.$model_type : '',
+    $self->modules->{relpron}  || $self->modules->{all} ? 'Coref::EN::RelPron::Resolve'.$params : '',
+    $self->modules->{cor}      || $self->modules->{all} ? 'Coref::EN::Cor::Resolve'.$params : '',
+    $self->modules->{reflpron} || $self->modules->{all} ? 'Coref::EN::ReflPron::Resolve'.$params : '',
+    $self->modules->{perspron} || $self->modules->{all} ? 'Coref::EN::PersPron::Resolve'.$params : '',
     ;
 
     return $scen;
