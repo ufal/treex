@@ -92,8 +92,7 @@ sub BUILD
 
 #------------------------------------------------------------------------------
 # Transliterates the word form and lemma of every node (token).
-###!!! NOTE: We process the whole tree because we will want to also
-###!!! transliterate the sentence attribute in the future.
+# Also translates the untokenized sentence attribute of the bundle-zone.
 #------------------------------------------------------------------------------
 sub process_atree
 {
