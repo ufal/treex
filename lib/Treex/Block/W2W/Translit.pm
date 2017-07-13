@@ -99,6 +99,33 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
+    # Transliterate the untokenized sentence text.
+    my $text = $root->get_zone()->sentence();
+    my $table = $self->table();
+    my $maxl = $self->maxl();
+    my $translit = translit::prevest($table, $text, $maxl);
+    $translit = han2pinyin::pinyin($translit); ###!!! BETA
+    # There is no dedicated attribute for sentence-level transliteration.
+    # Use the CoNLL-U comments stored as wild attributes.
+    my $comment = $root->get_bundle()->wild()->{comment};
+    my @comment;
+    if ($comment)
+    {
+        chomp($comment);
+        @comment = split(/\n/, $comment);
+    }
+    # Replace old transliteration, if any.
+    if (any {m/translit\s*=\s*.+/} (@comment))
+    {
+        @comment = map {m/translit\s*=\s*.+/ ? "translit = $translit" : $_} (@comment);
+    }
+    else
+    {
+        push(@comment, "translit = $translit");
+    }
+    $comment = join("\n", @comment)."\n";
+    $root->get_bundle()->wild()->{comment} = $comment;
+    # Now transliterate individual nodes.
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
@@ -106,8 +133,6 @@ sub process_atree
         my $translit;
         if(defined($form))
         {
-            my $table = $self->table();
-            my $maxl = $self->maxl();
             $translit = translit::prevest($table, $form, $maxl);
             $translit = han2pinyin::pinyin($translit); ###!!! BETA
         }
@@ -116,8 +141,6 @@ sub process_atree
         my $lemma = $node->lemma();
         if(defined($lemma))
         {
-            my $table = $self->table();
-            my $maxl = $self->maxl();
             $translit = translit::prevest($table, $lemma, $maxl);
             $translit = han2pinyin::pinyin($translit); ###!!! BETA
             $node->wild()->{lemma_translit} = $translit;
