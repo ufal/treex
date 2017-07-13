@@ -159,6 +159,12 @@ sub next_document {
                     $newnode->set_translit($translit[0]);
                     @misc = grep {!m/^Translit=/} (@misc);
                 }
+                # Check whether MISC contains transliteration of the lemma.
+                my @ltranslit = map {my $x = $_; $x =~ s/^LTranslit=//; $x} (grep {m/^LTranslit=(.+)$/} (@misc));
+                if (scalar(@ltranslit) > 0) {
+                    $newnode->set_ltranslit($ltranslit[0]);
+                    @misc = grep {!m/^LTranslit=/} (@misc);
+                }
                 # Check whether MISC contains gloss of the word form.
                 my @gloss = map {my $x = $_; $x =~ s/^Gloss=//; $x} (grep {m/^Gloss=(.+)$/} (@misc));
                 if (scalar(@gloss) > 0) {

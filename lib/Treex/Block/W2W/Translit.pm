@@ -134,15 +134,15 @@ sub process_atree
         {
             $translit = translit::prevest($table, $form, $maxl);
             $translit = han2pinyin::pinyin($translit); ###!!! BETA
+            $node->set_attr('translit', $translit);
         }
-        $node->set_attr('translit', $translit);
-        # Transliterate lemma. There is no attribute for transliterated lemma, so store it as a wild attribute.
+        # Transliterate lemma.
         my $lemma = $node->lemma();
         if(defined($lemma))
         {
             $translit = translit::prevest($table, $lemma, $maxl);
             $translit = han2pinyin::pinyin($translit); ###!!! BETA
-            $node->wild()->{lemma_translit} = $translit;
+            $node->set_attr('ltranslit', $translit);
         }
     }
 }

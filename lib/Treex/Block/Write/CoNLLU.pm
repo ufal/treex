@@ -193,19 +193,18 @@ sub process_atree {
         # If transliteration of the word form to Latin (or another) alphabet is available, put it in the MISC column.
         if(defined($node->translit()))
         {
-            $node->set_misc_attr('Translit', $node->translit())
+            $node->set_misc_attr('Translit', $node->translit());
+        }
+        if(defined($node->ltranslit()))
+        {
+            $node->set_misc_attr('LTranslit', $node->ltranslit());
         }
         my @misc = $node->get_misc();
-
 
         # In the case of fused surface token, SpaceAfter=No may be specified for the surface token but NOT for the individual syntactic words.
         if($node->no_space_after() && !defined($wild->{fused}))
         {
             unshift(@misc, 'SpaceAfter=No');
-        }
-        if(defined($node->wild()->{lemma_translit}) && $node->wild()->{lemma_translit} !~ m/^_?$/)
-        {
-            push(@misc, 'LTranslit='.$node->wild()->{lemma_translit});
         }
         ###!!! (Czech)-specific wild attributes that have been cut off the lemma.
         ###!!! In the future we will want to make them normal attributes.
