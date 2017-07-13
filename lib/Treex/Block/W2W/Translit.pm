@@ -91,31 +91,37 @@ sub BUILD
 
 
 #------------------------------------------------------------------------------
-# Transliterates the word form of one node (token).
+# Transliterates the word form and lemma of every node (token).
+###!!! NOTE: We process the whole tree because we will want to also
+###!!! transliterate the sentence attribute in the future.
 #------------------------------------------------------------------------------
-sub process_anode
+sub process_atree
 {
     my $self = shift;
-    my $node = shift;
-    my $form = $node->form();
-    my $translit;
-    if(defined($form))
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
     {
-        my $table = $self->table();
-        my $maxl = $self->maxl();
-        $translit = translit::prevest($table, $form, $maxl);
-        $translit = han2pinyin::pinyin($translit); ###!!! BETA
-    }
-    $node->set_attr('translit', $translit);
-    # Transliterate lemma. There is no attribute for transliterated lemma, so store it as a wild attribute.
-    my $lemma = $node->lemma();
-    if(defined($lemma))
-    {
-        my $table = $self->table();
-        my $maxl = $self->maxl();
-        $translit = translit::prevest($table, $lemma, $maxl);
-        $translit = han2pinyin::pinyin($translit); ###!!! BETA
-        $node->wild()->{lemma_translit} = $translit;
+        my $form = $node->form();
+        my $translit;
+        if(defined($form))
+        {
+            my $table = $self->table();
+            my $maxl = $self->maxl();
+            $translit = translit::prevest($table, $form, $maxl);
+            $translit = han2pinyin::pinyin($translit); ###!!! BETA
+        }
+        $node->set_attr('translit', $translit);
+        # Transliterate lemma. There is no attribute for transliterated lemma, so store it as a wild attribute.
+        my $lemma = $node->lemma();
+        if(defined($lemma))
+        {
+            my $table = $self->table();
+            my $maxl = $self->maxl();
+            $translit = translit::prevest($table, $lemma, $maxl);
+            $translit = han2pinyin::pinyin($translit); ###!!! BETA
+            $node->wild()->{lemma_translit} = $translit;
+        }
     }
 }
 
@@ -171,7 +177,7 @@ Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2008 – 2013 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2008 – 2013, 2017 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
