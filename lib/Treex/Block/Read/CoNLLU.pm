@@ -49,7 +49,7 @@ sub next_document {
             if ($line =~ s/^#\s*//)
             {
                 # sent_id metadata sentence-level comment
-                if ($line =~ m/sent_id(?:\s*=\s*|\s+)(.*)/)
+                if ($line =~ m/^\#\s*sent_id(?:\s*=\s*|\s+)(.*)/)
                 {
                     my $sid = $1;
                     my $zid = $self->language();
@@ -65,7 +65,7 @@ sub next_document {
                     $aroot->set_id( "$sid/$zid" );
                 }
                 # text metadata sentence-level comment
-                elsif ($line =~ m/text\s*=\s*(.*)/)
+                elsif ($line =~ m/^\#\s*text\s*=\s*(.*)/)
                 {
                     my $text = $1;
                     $zone->set_sentence($text);
