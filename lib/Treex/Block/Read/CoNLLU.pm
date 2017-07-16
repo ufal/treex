@@ -42,6 +42,9 @@ sub next_document {
         my $futo;
         my $fuform;
         my @funodes = ();
+        # Information about nodes that are not followed by a space.
+        # Because of fused tokens, we may have to note them in advance.
+        my @nsaflags = ();
 
         LINE:
         foreach my $line (@lines) {
@@ -91,15 +94,25 @@ sub next_document {
             # 2-3   zum   _     _
             # 2     zu    zu    ADP
             # 3     dem   der   DET
-            if ($id =~ /(\d+)-(\d+)/) {
+            if ($id =~ /(\d+)-(\d+)/)
+            {
                 $fufrom = $1;
                 $futo = $2;
                 $fuform = $form;
                 $printed_up_to = $2;
                 $sentence .= $form if defined $form;
-                $sentence .= ' ' if $misc !~ /SpaceAfter=No/;
+                if ($misc =~ m/SpaceAfter=No/)
+                {
+                    $nsaflags[$futo] = 1;
+                }
+                else
+                {
+                    $sentence .= ' ';
+                }
                 next LINE;
-            } elsif ($id > $printed_up_to) {
+            }
+            elsif ($id > $printed_up_to)
+            {
                 $sentence .= $form if defined $form;
                 $sentence .= ' ' if $misc !~ /SpaceAfter=No/;
             }
@@ -150,7 +163,7 @@ sub next_document {
                 my $n0 = scalar(@misc);
                 @misc = grep {$_ ne 'SpaceAfter=No'} (@misc);
                 my $n1 = scalar(@misc);
-                if ($n1 < $n0) {
+                if ($n1 < $n0 || $nsaflags[$newnode->ord()]) {
                     $newnode->set_no_space_after(1);
                 }
                 # Check whether MISC contains transliteration of the word form.
