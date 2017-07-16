@@ -199,6 +199,10 @@ sub process_atree {
         {
             $node->set_misc_attr('LTranslit', $node->ltranslit());
         }
+        if(defined($node->gloss()))
+        {
+            $node->set_misc_attr('Gloss', $node->gloss());
+        }
         my @misc = $node->get_misc();
 
         # In the case of fused surface token, SpaceAfter=No may be specified for the surface token but NOT for the individual syntactic words.
