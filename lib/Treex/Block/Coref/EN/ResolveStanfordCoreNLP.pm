@@ -8,6 +8,7 @@ use LWP::UserAgent;
 use JSON;
 use Data::Printer;
 use Encode qw(encode);
+use Treex::Tool::Coreference::NodeFilter;
 
 extends 'Treex::Core::Block';
 with 'Treex::Block::Coref::ResolveFromRawText';
@@ -209,12 +210,11 @@ sub extract_stanford_coref_and_mark {
         my $stanford_entity = $stanford_data->{corefs}->{$entity_id};
         my $entity = [];
         foreach my $mention (@$stanford_entity) {
-            # stanford mentions are indexed from 1
-            my $anode = $our_anodes[$mention->{sentNum}-1][$mention->{headIndex}-1];
-            #if ($debug) {
-            #    printf STDERR "MENTION TEXT (%d, %d): %s\t ANODE FORM: %s\n", $mention->{sentNum}-1, $mention->{headIndex}-1, $mention->{text}, $anode->form;
-            #}
-            my ($tnode) = ($anode->get_referencing_nodes('a/lex.rf'), $anode->get_referencing_nodes('a/aux.rf'));
+            my $tnode = $self->mention_to_tecto_by_gold_tree($mention, \@our_anodes);
+            if (!defined $tnode) {
+                $tnode = $self->mention_to_tecto_by_stanford_head($mention, \@our_anodes);
+            }
+        
             #print STDERR "TNODE_ID: ".$tnode->id."\n";
             push @$entity, $tnode;
         }
@@ -234,6 +234,57 @@ sub extract_stanford_coref_and_mark {
             $ante = $anaph;
         }
     }
+}
+
+# a way how to transform surface mention to a tectogrammatical coreference annotation
+# uses a Stanford's guess on a head
+sub mention_to_tecto_by_stanford_head {
+    my ($self, $mention, $our_anodes) = @_;
+    # stanford mentions are indexed from 1
+    my $anode = $our_anodes->[$mention->{sentNum}-1][$mention->{headIndex}-1];
+    #if ($debug) {
+    #    printf STDERR "MENTION TEXT (%d, %d): %s\t ANODE FORM: %s\n", $mention->{sentNum}-1, $mention->{headIndex}-1, $mention->{text}, $anode->form;
+    #}
+    my ($tnode) = ($anode->get_referencing_nodes('a/lex.rf'), $anode->get_referencing_nodes('a/aux.rf'));
+    return $tnode;
+}
+
+# a way how to transform surface mention to a tectogrammatical coreference annotation
+# uses a gold tree for this:
+# 1. project the start and the end of the mention to the gold tecto tree
+# 2. use the upper-most node within the mention as the head
+sub mention_to_tecto_by_gold_tree {
+    my ($self, $mention, $our_anodes) = @_;
+    #printf STDERR "MENTION TEXT (%d, %d): %s\t", $mention->{startIndex}-1, $mention->{endIndex}-1, $mention->{text};
+    my $head_src_anode = $our_anodes->[$mention->{sentNum}-1][$mention->{headIndex}-1];
+    my $start_src_anode = $our_anodes->[$mention->{sentNum}-1][$mention->{startIndex}-1];
+    # this must be a bug in a Stanford's output or I do not undestand it
+    my $end_src_anode = $our_anodes->[$mention->{sentNum}-1][$mention->{endIndex}-2];
+    #printf STDERR "S-START,HEAD,END: %s,%s,%s\t", $start_src_anode->form, $head_src_anode->form, $end_src_anode->form;
+    
+    my @between_src_anodes = $start_src_anode->get_nodes_between($end_src_anode);
+    
+    # find gold a-node counterparts
+    my @ref_anodes = map {
+        my ($n, $t) = $_->get_undirected_aligned_nodes({selector => "ref", language => $self->language});
+        @$n
+    } ( $start_src_anode, @between_src_anodes, $end_src_anode);
+    
+    # find a gold t-head
+    my @ref_tnodes = grep {defined $_} map {($_->get_referencing_nodes('a/lex.rf'), $_->get_referencing_nodes('a/aux.rf'))} @ref_anodes;
+    #my @t_head_nouns = grep {Treex::Tool::Coreference::NodeFilter::matches($_, ['all_anaph_corbon17'])} @t_head_cands;
+    my @ref_tnodes_depth_sorted = sort {$a->get_depth <=> $b->get_depth} @ref_tnodes;
+    my $ref_tnode = $ref_tnodes_depth_sorted[0];
+    return if (!defined $ref_tnode);
+    #printf STDERR "GOLD-HEAD LEMMA1: %s\t", $ref_tnode->t_lemma;
+
+    # get the auto t-head counterpart
+    my ($src_tnodes, $ref_tnode_types) = $ref_tnode->get_undirected_aligned_nodes({selector => "src", language => $self->language});
+    my $src_tnode = $src_tnodes->[0];
+    return if (!defined $src_tnode);
+    #printf STDERR "GOLD-HEAD LEMMA2: %s\n", $src_tnode->t_lemma;
+    
+    return $src_tnode;
 }
 
 1;
