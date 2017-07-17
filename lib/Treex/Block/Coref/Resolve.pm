@@ -97,7 +97,7 @@ sub process_filtered_tnode {
     my @ante_cands = $self->_ante_cands_selector->get_candidates( $t_node );
 
     if ($self->diagnostics) {
-        $t_node->wild->{coref_diag}{is_anaph} = 1;
+        #$t_node->wild->{coref_diag}{is_anaph} = 1;
         $_->wild->{coref_diag}{cand_for}{$t_node->id} = 1 foreach (@ante_cands);
     }
 
