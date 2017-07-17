@@ -18,6 +18,11 @@ has 'gold_selector' => ( is => 'ro', isa => 'Str', default => 'ref' );
 has 'pred_selector' => ( is => 'ro', isa => 'Str', default => 'src' );
 has '+extension' => ( default => '.tsv' );
 
+has 'follow_pred_chain_for_types' => (
+    is => 'ro', isa => 'CommaArrayRef', coerce => 1, default => '',
+    documentation => 'try following the coreferential chain if a predicted antecedent is of a certain type (e.g. relative pronouns and cors in the CoNLL2012 dataset, which have not been annotated)',
+);
+
 has '_id_to_eid' => ( is => 'rw', isa => 'HashRef' );
 
 sub build_id_to_entity {
@@ -65,7 +70,7 @@ sub process_bundle {
             next if (!Treex::Tool::Coreference::NodeFilter::matches($ali_src_tnode, $self->node_types) && $ali_types->[$i] eq 'monolingual.loose');
             #printf STDERR "ALI SRC TNODE: %s\n", $ali_src_tnode->get_address;
             $covered_src_nodes{$ali_src_tnode->id}++;
-            my @ali_src_antes = $ali_src_tnode->get_coref_nodes;
+            my @ali_src_antes = $self->get_src_antes($ali_src_tnode);
             my ($pred_eval_class, $both_eval_class);
             # src counterpart is anaphoric
             if (@ali_src_antes) {
@@ -95,7 +100,7 @@ sub process_bundle {
 
         my ($pred_eval_class, $both_eval_class);
 
-        my @src_antes = $src_tnode->get_coref_nodes;
+        my @src_antes = $self->get_src_antes($src_tnode);
         $pred_eval_class = @src_antes ? 1 : 0;
         
         my ($ref_anaphs, $ali_types) = $src_tnode->get_undirected_aligned_nodes({language => $self->language, selector => $self->gold_selector});
@@ -112,6 +117,36 @@ sub process_bundle {
         print {$self->_file_handle} join " ", (0, $pred_eval_class, $both_eval_class, $src_tnode->get_address);
         print {$self->_file_handle} "\n";
     }
+}
+
+# return directly predicted antecedents, if follow_pred_chain_for_types is disabled
+# return directly predicted antecedents, if there is no antecedent in a chain of any of the allowed types
+#   - this ensures that such instance is still counted as predicted
+# return first antecedents in a chain that are of any of the allowed types, otherwise
+sub get_src_antes {
+    my ($self, $src_anaph) = @_;
+    my @src_antes_direct = $src_anaph->get_coref_nodes;
+    return @src_antes_direct if (!@{$self->follow_pred_chain_for_types});
+
+    #my %visited_ids = ( $src_anaph->id => 1 );
+    my $debug = 0;
+    if ($src_anaph->id eq "t_tree-en_src-s97-n3605") {
+        $debug = 1;
+    }
+    print STDERR "ANAPH: ".$src_anaph->t_lemma."\n" if ($debug);
+
+    my @src_antes = @src_antes_direct;
+    print STDERR "ANTES: ".join(" ", map {$_->t_lemma} @src_antes)."\n" if ($debug);
+
+    #$visited_ids{$_->id} = 1 foreach (@src_antes);
+    while (@src_antes && all {Treex::Tool::Coreference::NodeFilter::matches($_, $self->follow_pred_chain_for_types)} @src_antes) {
+        #print STDERR "ANTES: ".$src_anaph->id." -> ".(join " ", map {$_->id} @src_antes)."\n";
+        @src_antes = map {$_->get_coref_nodes} @src_antes;
+        print STDERR "ANTES: ".join(" ", map {$_->t_lemma} @src_antes)."\n" if ($debug);
+        #$visited_ids{$_->id} = 1 foreach (@src_antes);
+    }
+
+    return @src_antes ? @src_antes : @src_antes_direct;
 }
 
 sub check_src_antes {
