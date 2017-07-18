@@ -17,7 +17,12 @@ sub process_anode
         {
             # Since the conjuncts are attached as my siblings, I am not attached to one of them, which would be the UD v2 style.
             # Instead, I am probably attached to the first sibling, which is the UD v1 style and which is now wrong.
-            $self->complain($node, 'Old style of cc attachment.');
+            # Exception: If there is nested coordination, I may be attached correctly to the next conjunct
+            # and still have conjuncts as siblings.
+            unless($node->parent()->deprel() eq 'conj' && $node->parent()->ord() > $node->ord())
+            {
+                $self->complain($node, 'Old style of cc attachment.');
+            }
         }
     }
 }
