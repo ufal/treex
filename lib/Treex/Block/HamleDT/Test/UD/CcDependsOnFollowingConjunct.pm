@@ -19,7 +19,9 @@ sub process_anode
             # Instead, I am probably attached to the first sibling, which is the UD v1 style and which is now wrong.
             # Exception: If there is nested coordination, I may be attached correctly to the next conjunct
             # and still have conjuncts as siblings.
-            unless($node->parent()->deprel() eq 'conj' && $node->parent()->ord() > $node->ord())
+            # Another exception: I may occur before the first conjunct and be correctly attached to it (but it does not have the 'conj' deprel),
+            # as in "ni Beograd ni Priština".
+            unless($node->parent()->ord() > $node->ord() && $node->parent()->ord() < $conjsiblings[0]->ord())
             {
                 $self->complain($node, 'Old style of cc attachment.');
             }
