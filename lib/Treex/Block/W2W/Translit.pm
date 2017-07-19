@@ -114,9 +114,9 @@ sub process_atree
         @comment = split(/\n/, $comment);
     }
     # Replace old transliteration, if any.
-    if (any {m/translit\s*=\s*.+/} (@comment))
+    if (any {m/^translit\s*=\s*.+/} (@comment))
     {
-        @comment = map {m/translit\s*=\s*.+/ ? "translit = $translit" : $_} (@comment);
+        @comment = map {m/^translit\s*=\s*.+/ ? "translit = $translit" : $_} (@comment);
     }
     else
     {
