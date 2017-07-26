@@ -24,6 +24,7 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+    $self->detect_proper_nouns($root);
 }
 
 
@@ -142,6 +143,35 @@ sub fix_morphology
             # Add the ending of masculine singular nominative long adjectives.
             $form .= 'ý';
             $node->set_lemma($form);
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# The tagset does not distinguish proper nouns. Mark nouns as proper if their
+# lemma is capitalized.
+#------------------------------------------------------------------------------
+sub detect_proper_nouns
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $iset = $node->iset();
+        my $lemma = $node->lemma();
+        if($iset->is_noun() && !$iset->is_pronoun())
+        {
+            if($lemma =~ m/^\p{Lu}/)
+            {
+                $iset->set('nountype', 'prop');
+            }
+            elsif($iset->nountype() eq '')
+            {
+                $iset->set('nountype', 'com');
+            }
         }
     }
 }
