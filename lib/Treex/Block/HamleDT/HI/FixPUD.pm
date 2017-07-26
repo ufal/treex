@@ -184,7 +184,12 @@ Fixes certain known problems with Google annotation of the Hindi part of the par
 
 =back
 
-=cut
+=head1 AUTHORS
 
-# Copyright 2017 Dan Zeman <zeman@ufal.mff.cuni.cz>
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+Daniel Zeman <zeman@ufal.mff.cuni.cz>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2017 by Institute of Formal and Applied Linguistics, Charles University, Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

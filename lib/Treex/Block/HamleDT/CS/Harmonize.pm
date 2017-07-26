@@ -618,8 +618,12 @@ minor changes take place. Morphological tags are decoded into Interset.
 
 =back
 
-=cut
+=head1 AUTHORS
 
-# Copyright 2011, 2014, 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
+Daniel Zeman <zeman@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011, 2014, 2015 by Institute of Formal and Applied Linguistics, Charles University, Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
