@@ -42,7 +42,7 @@ sub _build_dialect
         'cc'        => ['^AuxY$', 'AuxY'],  # coordinating conjunction
         'conj'      => ['^CoordArg$', 'CoordArg'], # conjunct
         'coord'     => ['^Coord$', 'Coord'],     # head of coordination (conjunction or punctuation)
-        'mwe'       => ['^AuxP$', 'AuxP'],       # non-head word of a multi-word expression; PDT has only multi-word prepositions
+        'fixed'     => ['^AuxP$', 'AuxP'],       # non-head word of a multi-word expression; PDT has only multi-word prepositions
         'compound'  => ['^Atr$', 'Atr'],         # non-head word of a compound
         'det'       => ['^AuxA$', 'AuxA'],       # determiner attached to noun
         'detarg'    => ['^DetArg$', 'DetArg'],   # noun attached to determiner
@@ -58,13 +58,13 @@ sub _build_dialect
         'nsubj'     => ['^Sb$', 'Sb'],           # nominal subject in active clause
         'nmod'      => ['^Atr|Adv$', 'Adv'],     # nominal modifier (attribute or adjunct)
         'advmod'    => ['^Adv$', 'Adv'],         # adverbial modifier (realized as adverb, not as a noun phrase)
-        'name'      => ['^Atr$', 'Atr'],         # non-head part of a multi-word named entity without internal syntactic structure
+        'flat'      => ['^Atr$', 'Atr'],         # non-head part of a multi-word named entity without internal syntactic structure
         'auxarg'    => ['^AuxArg$', 'AuxArg'],   # content verb (participle) attached to an auxiliary verb (finite)
         'auxv'      => ['^AuxV$', 'AuxV'],       # auxiliary verb attached to a main (content) verb
         'xcomp'     => ['^Obj$', 'Obj'],         # controlled verb (usually non-finite) attached to a controlling verb
         'ccomp'     => ['^Obj$', 'Obj'],         # complement clause that is not xcomp (note that non-core subordinate clauses are acl or advcl)
         'cxcomp'    => ['^Obj$', 'Obj'],
-        'dobj'      => ['^Obj$', 'Obj'],         # direct nominal object
+        'obj'       => ['^Obj$', 'Obj'],         # direct nominal object
         'iobj'      => ['^Obj$', 'Obj'],         # indirect nominal object
         'parataxis' => ['^ExD$', 'ExD'],         # loosely attached clause
         'root'      => ['^Pred$', 'Pred'],       # the top node attached to the artificial root

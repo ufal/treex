@@ -350,7 +350,6 @@ my @layers = map {lc} Treex::Core::Types::layers();
 # To be run only once when the file is opened. Tree depths never change.
 sub precompute_tree_depths {
     my ( $self, $bundle ) = @_;
-
     foreach my $zone ( $bundle->get_all_zones ) {
         foreach my $tree ( ref($zone) eq 'Treex::Core::BundleZone' ? $zone->get_all_trees : () ) {
             my $max_depth = 1;
@@ -667,7 +666,7 @@ sub node_style_hook {
             }
         }
         elsif ( defined $node->attr( $ref_attr ) ) {
-            my $links = $node->attr( $ref_attr ); 
+            my $links = $node->attr( $ref_attr );
             foreach my $link (@$links) {
                 push @target_ids, $link->{'target_node.rf'};
                 push @arrow_types, $ref_attr;

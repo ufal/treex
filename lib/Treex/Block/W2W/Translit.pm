@@ -17,6 +17,7 @@ use translit::mkhedruli; # Dan's transliteration table for Georgian script
 use translit::ethiopic; # Dan's transliteration table for Ethiopic (Amharic) script
 use translit::khmer; # Dan's transliteration table for Khmer script
 use translit::hebrew; # Rudolf's transliteration table for Hebrew script
+use translit::han2pinyin; # Dan's conversion of Han characters to pinyin (table from Unicode.org)
 
 has 'table' => (isa => 'HashRef', is => 'ro', default => sub {{}});
 has 'maxl' => (isa => 'Int', is => 'rw', default => 1, writer => '_set_maxl');
@@ -90,29 +91,59 @@ sub BUILD
 
 
 #------------------------------------------------------------------------------
-# Transliterates the word form of one node (token).
+# Transliterates the word form and lemma of every node (token).
+# Also translates the untokenized sentence attribute of the bundle-zone.
 #------------------------------------------------------------------------------
-sub process_anode
+sub process_atree
 {
     my $self = shift;
-    my $node = shift;
-    my $form = $node->form();
-    my $translit;
-    if(defined($form))
+    my $root = shift;
+    # Transliterate the untokenized sentence text.
+    my $text = $root->get_zone()->sentence();
+    my $table = $self->table();
+    my $maxl = $self->maxl();
+    my $translit = translit::prevest($table, $text, $maxl);
+    $translit = han2pinyin::pinyin($translit); ###!!! BETA
+    # There is no dedicated attribute for sentence-level transliteration.
+    # Use the CoNLL-U comments stored as wild attributes.
+    my $comment = $root->get_bundle()->wild()->{comment};
+    my @comment;
+    if ($comment)
     {
-        my $table = $self->table();
-        my $maxl = $self->maxl();
-        $translit = translit::prevest($table, $form, $maxl);
+        chomp($comment);
+        @comment = split(/\n/, $comment);
     }
-    $node->set_attr('translit', $translit);
-    # Transliterate lemma. There is no attribute for transliterated lemma, so store it as a wild attribute.
-    my $lemma = $node->lemma();
-    if(defined($lemma))
+    # Replace old transliteration, if any.
+    if (any {m/^translit\s*=\s*.+/} (@comment))
     {
-        my $table = $self->table();
-        my $maxl = $self->maxl();
-        $translit = translit::prevest($table, $lemma, $maxl);
-        $node->wild()->{lemma_translit} = $translit;
+        @comment = map {m/^translit\s*=\s*.+/ ? "translit = $translit" : $_} (@comment);
+    }
+    else
+    {
+        push(@comment, "translit = $translit");
+    }
+    $comment = join("\n", @comment)."\n";
+    $root->get_bundle()->wild()->{comment} = $comment;
+    # Now transliterate individual nodes.
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $form = $node->form();
+        my $translit;
+        if(defined($form))
+        {
+            $translit = translit::prevest($table, $form, $maxl);
+            $translit = han2pinyin::pinyin($translit); ###!!! BETA
+            $node->set_attr('translit', $translit);
+        }
+        # Transliterate lemma.
+        my $lemma = $node->lemma();
+        if(defined($lemma))
+        {
+            $translit = translit::prevest($table, $lemma, $maxl);
+            $translit = han2pinyin::pinyin($translit); ###!!! BETA
+            $node->set_attr('ltranslit', $translit);
+        }
     }
 }
 
@@ -168,7 +199,7 @@ Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2008 – 2013 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2008 – 2013, 2017 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 

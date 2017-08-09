@@ -42,7 +42,7 @@ sub _build_dialect
         'cc'        => ['^cc$', 'cc'],       # coordinating conjunction
         'conj'      => ['^conj$', 'conj'],   # conjunct
         'coord'     => ['^coord$', 'coord'], # head of coordination (conjunction or punctuation)
-        'mwe'       => ['^mwe$', 'mwe'],     # non-head word of a multi-word expression; PDT has only multi-word prepositions
+        'fixed'     => ['^(mwe|fixed)$', 'fixed'], # non-head word of a multi-word expression; PDT has only multi-word prepositions
         'compound'  => ['^compound$', 'compound'], # non-head word of a compound
         'det'       => ['^det$', 'det'],       # determiner attached to noun
         'detarg'    => ['^detarg$', 'detarg'], # noun attached to determiner
@@ -58,13 +58,13 @@ sub _build_dialect
         'nsubj'     => ['^nsubj$', 'nsubj'],   # nominal subject in active clause
         'nmod'      => ['^nmod$', 'nmod'],     # nominal modifier (attribute or adjunct)
         'advmod'    => ['^advmod$', 'advmod'], # adverbial modifier (realized as adverb, not as a noun phrase)
-        'name'      => ['^name$', 'name'],     # non-head part of a multi-word named entity without internal syntactic structure
+        'flat'      => ['^(name|flat)$', 'flat'], # non-head part of a multi-word named entity without internal syntactic structure
         'auxarg'    => ['^auxarg$', 'auxarg'], # content verb (participle) attached to an auxiliary verb (finite)
         'auxv'      => ['^aux$', 'aux'],       # auxiliary verb attached to a main (content) verb
         'xcomp'     => ['^xcomp$', 'xcomp'],   # controlled verb (usually non-finite) attached to a controlling verb
         'ccomp'     => ['^ccomp$', 'ccomp'],   # complement clause that is not xcomp (note that non-core subordinate clauses are acl or advcl)
         'cxcomp'    => ['^[cx]comp$'],
-        'dobj'      => ['^dobj$', 'dobj'],     # direct nominal object
+        'obj'       => ['^d?obj$', 'obj'],     # direct nominal object
         'iobj'      => ['^iobj$', 'iobj'],     # indirect nominal object
         'parataxis' => ['^parataxis$', 'parataxis'], # loosely attached clause
         'root'      => ['^root$', 'root'],     # the top node attached to the artificial root
@@ -201,24 +201,24 @@ sub detect_prague_copula
 
 
 #------------------------------------------------------------------------------
-# Looks for multi-word expressions, i.e. two or more nodes connected by the mwe
-# relation. Makes sure that the leftmost node is the head. MWEs in UD are
-# supposed to be flat and this method does not search recursively for nested
-# mwe relations. Prague treebanks do not have an equivalent of the mwe relation
-# but it may be recognized and introduced during conversion.
+# Looks for multi-word expressions, i.e. two or more nodes connected by the
+# relation 'fixed'. Makes sure that the leftmost node is the head. MWEs in UD
+# are supposed to be flat and this method does not search recursively for nested
+# fixed relations. Prague treebanks do not have an equivalent of the fixed
+# relation but it may be recognized and introduced during conversion.
 #------------------------------------------------------------------------------
 sub detect_multi_word_expression
 {
     my $self = shift;
     my $phrase = shift; # Treex::Core::Phrase
-    # Are there any non-core children attached as mwe?
+    # Are there any non-core children attached as fixed?
     my @dependents = $phrase->dependents();
-    my @mwe = grep {$self->is_deprel($_->deprel(), 'mwe')} (@dependents);
+    my @mwe = grep {$self->is_deprel($_->deprel(), 'fixed')} (@dependents);
     if(scalar(@mwe)>=1)
     {
-        my @nonmwe = grep {!$self->is_deprel($_->deprel(), 'mwe')} (@dependents);
-        # If there are mwe children, then the current phrase is a mwe, too.
-        # Detach the dependents first, so that we can put the current phrase on the same level with the other mwes.
+        my @nonmwe = grep {!$self->is_deprel($_->deprel(), 'fixed')} (@dependents);
+        # If there are fixed children, then the current phrase is a fixed, too.
+        # Detach the dependents first, so that we can put the current phrase on the same level with the other fixed.
         foreach my $d (@dependents)
         {
             $d->set_parent(undef);
@@ -226,10 +226,10 @@ sub detect_multi_word_expression
         my $deprel = $phrase->deprel();
         my $member = $phrase->is_member();
         $phrase->set_is_member(0);
-        # Add the current phrase (without dependents) to the mwes and order them.
+        # Add the current phrase (without dependents) to the fixed and order them.
         push(@mwe, $phrase);
         @mwe = sort {$a->ord() <=> $b->ord()} (@mwe);
-        # Create a new nonterminal phrase for the mwe only.
+        # Create a new nonterminal phrase for the fixed only.
         # (In the future we may also want to create a new subclass of nonterminal
         # phrases specifically for head-first multi-word segments. But it is not
         # necessary for transformations to work, so let's keep this for now.)
@@ -237,11 +237,11 @@ sub detect_multi_word_expression
         foreach my $n (@mwe)
         {
             $n->set_parent($mwephrase);
-            $self->set_deprel($n, 'mwe');
+            $self->set_deprel($n, 'fixed');
             $n->set_is_member(0);
         }
-        # Create a new nonterminal phrase that will group the mwe phrase with
-        # the original non-mwe dependents, if any.
+        # Create a new nonterminal phrase that will group the fixed phrase with
+        # the original non-fixed dependents, if any.
         if(scalar(@nonmwe)>=1)
         {
             $phrase = new Treex::Core::Phrase::NTerm('head' => $mwephrase);
@@ -274,12 +274,12 @@ sub detect_name_phrase
 {
     my $self = shift;
     my $phrase = shift; # Treex::Core::Phrase
-    # Are there any non-core children attached as name?
+    # Are there any non-core children attached as flat?
     my @dependents = $phrase->dependents();
-    my @name = grep {$self->is_deprel($_->deprel(), 'name')} (@dependents);
+    my @name = grep {$self->is_deprel($_->deprel(), 'flat')} (@dependents);
     if(scalar(@name)>=1)
     {
-        my @nonname = grep {!$self->is_deprel($_->deprel(), 'name')} (@dependents);
+        my @nonname = grep {!$self->is_deprel($_->deprel(), 'flat')} (@dependents);
         # If there are name children, then the current phrase is a name, too.
         # Detach the dependents first, so that we can put the current phrase on the same level with the other names.
         foreach my $d (@dependents)
@@ -300,7 +300,7 @@ sub detect_name_phrase
         foreach my $n (@name)
         {
             $n->set_parent($namephrase);
-            $self->set_deprel($n, 'name');
+            $self->set_deprel($n, 'flat');
             $n->set_is_member(0);
         }
         # Create a new nonterminal phrase that will group the name phrase with

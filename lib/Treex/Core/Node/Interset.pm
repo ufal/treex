@@ -9,7 +9,7 @@ parameter interset_attribute => (
 
 use Treex::Core::Log;
 use List::Util qw(first); # TODO: this wouldn't be needed if there was Treex::Core::Common for roles
-use Lingua::Interset 2.050;
+use Lingua::Interset 3.006;
 use Lingua::Interset::FeatureStructure;
 use Data::Dumper;
 
@@ -40,11 +40,13 @@ has $interset_attribute => (
         is_additive
         is_adessive
         is_adjective
+        is_admirative
         is_adposition
         is_adverb
         is_affirmative
         is_allative
         is_animate
+        is_antipassive
         is_aorist
         is_archaic
         is_article
@@ -58,7 +60,10 @@ has $interset_attribute => (
         is_conditional
         is_conjunction
         is_conjunctive
+        is_construct
+        is_converb
         is_coordinator
+        is_count_plural
         is_dative
         is_definite
         is_delative
@@ -67,25 +72,37 @@ has $interset_attribute => (
         is_destinative
         is_determiner
         is_diminutive
+        is_direct_voice
         is_distributive
         is_dual
         is_elative
+        is_elevating
+        is_equative
         is_ergative
         is_essive
         is_exclamative
         is_factive
         is_feminine
         is_finite_verb
+        is_first_hand
         is_first_person
         is_foreign
+        is_formal
+        is_fourth_person
         is_future
         is_genitive
         is_gerund
         is_gerundive
+        is_greater_paucal
+        is_greater_plural
+        is_habitual
+        is_human
+        is_humbling
         is_hyph
         is_illative
         is_imperative
         is_imperfect
+        is_impersonal
         is_inanimate
         is_indefinite
         is_indicative
@@ -97,6 +114,8 @@ has $interset_attribute => (
         is_interjection
         is_interrogative
         is_intransitive
+        is_inverse_number
+        is_iterative
         is_jussive
         is_lative
         is_locative
@@ -110,6 +129,7 @@ has $interset_attribute => (
         is_necessitative
         is_negative
         is_nominative
+        is_non_first_hand
         is_nonhuman
         is_neuter
         is_noun
@@ -120,6 +140,7 @@ has $interset_attribute => (
         is_particle
         is_partitive
         is_past
+        is_paucal
         is_perfect
         is_personal
         is_personal_pronoun
@@ -137,6 +158,7 @@ has $interset_attribute => (
         is_progressive
         is_prospective
         is_punctuation
+        is_purposive
         is_quotative
         is_rare
         is_reciprocal
@@ -144,6 +166,7 @@ has $interset_attribute => (
         is_relative
         is_second_person
         is_singular
+        is_specific
         is_subjunctive
         is_sublative
         is_subordinator
@@ -158,10 +181,13 @@ has $interset_attribute => (
         is_transgressive
         is_transitive
         is_translative
+        is_trial
         is_typo
         is_verb
+        is_verbal_noun
         is_vocative
         is_wh
+        is_zero_person
     )],
    # Note that we cannot export
    # $anode->iset->is_auxiliary as it would clash with the existing $anode->is_auxiliary

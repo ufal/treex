@@ -11,7 +11,11 @@ sub process_anode
     # Particles may also function like conjunctions ([cs] nejen).
     # Symbols may also function like conjunctions (+, ×).
     # Therefore we allow conjunctions, adverbs, particles and symbols.
-    if($node->deprel() eq 'cc' && !($node->is_conjunction() || $node->is_adverb() || $node->is_particle() || $node->is_symbol()))
+    if($node->deprel() eq 'cc' &&
+          (
+              !($node->is_conjunction() || $node->is_adverb() || $node->is_particle() || $node->is_symbol())
+          )
+      )
     {
         $self->complain($node, $node->form());
     }

@@ -10,9 +10,9 @@ sub process_atree
     my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
-        if($node->iset()->is_auxiliary())
+        if($node->deprel() =~ m/^orphan/)
         {
-            #$self->complain($node, $node->form());
+            $self->complain($node, $node->form());
         }
     }
 }

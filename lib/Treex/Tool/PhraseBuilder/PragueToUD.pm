@@ -187,7 +187,7 @@ sub detect_counted_noun_in_genitive
             $phrase->set_is_member(0);
             # If the deprel convertor returned nummod or its relatives, it means that the whole phrase (numeral+nominal)
             # originally modified another nominal as Atr. Since the counted noun is now going to head the phrase, we
-            # have to change the deprel to nmod. We would not change the deprel if it was nsubj, dobj, appos etc.
+            # have to change the deprel to nmod. We would not change the deprel if it was nsubj, obj, appos etc.
             if($self->is_deprel($deprel, 'nummod'))
             {
                 ###!!! We must translate the label to the current dialect!
@@ -213,7 +213,7 @@ sub detect_counted_noun_in_genitive
 #------------------------------------------------------------------------------
 # The Prague treebanks do not distinguish direct and indirect objects. There is
 # only one object relation, Obj. In Universal Dependencies we have to select
-# one object of each verb as the main one (dobj), the others should be labeled
+# one object of each verb as the main one (obj), the others should be labeled
 # as indirect (iobj). There is no easy way of doing this, but we can use a few
 # heuristics to solve at least some cases.
 #------------------------------------------------------------------------------
@@ -232,18 +232,18 @@ sub detect_indirect_object
         {
             foreach my $d (@dependents)
             {
-                if($self->is_deprel($d->deprel(), 'dobj'))
+                if($self->is_deprel($d->deprel(), 'obj'))
                 {
                     $self->set_deprel($d, 'iobj');
                 }
             }
         }
         # If there is an accusative object without preposition, all other objects are indirect.
-        elsif(any {$self->is_deprel($_->deprel(), 'dobj') && $self->get_phrase_case($_) eq 'acc'} (@dependents))
+        elsif(any {$self->is_deprel($_->deprel(), 'obj') && $self->get_phrase_case($_) eq 'acc'} (@dependents))
         {
             foreach my $d (@dependents)
             {
-                if($self->is_deprel($d->deprel(), 'dobj') && $self->get_phrase_case($d) ne 'acc')
+                if($self->is_deprel($d->deprel(), 'obj') && $self->get_phrase_case($d) ne 'acc')
                 {
                     $self->set_deprel($d, 'iobj');
                 }

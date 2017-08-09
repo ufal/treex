@@ -122,6 +122,13 @@ sub fix_morphology
         {
             $wild->{misc} = join('|', @misc);
         }
+        # There was one node without lemma but we always expect a non-empty lemma.
+        my $lemma = $node->lemma();
+        if(!defined($lemma) || $lemma eq '')
+        {
+            log_warn("Empty lemma of word form ".$node->form());
+            $node->set_lemma($node->form());
+        }
     }
 }
 

@@ -1,8 +1,9 @@
 package Treex::Block::HamleDT::SA::FixUD;
+use utf8;
 use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Common;
-use utf8;
+use Treex::Tool::PhraseBuilder::StanfordToUD;
 extends 'Treex::Core::Block';
 
 
@@ -11,10 +12,64 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
-    $self->fix_morphology($root);
+    $self->convert_deprels($root);
+    #$self->fix_morphology($root);
     $self->regenerate_upos($root);
-    $self->fix_root_punct($root);
-    $self->fix_case_mark($root);
+    # Coordinating conjunctions and punctuation should now be attached to the following conjunct.
+    # The Coordination phrase class already outputs the new structure, hence simple
+    # conversion to phrases and back should do the trick.
+    my $builder = new Treex::Tool::PhraseBuilder::StanfordToUD
+    (
+        'prep_is_head'           => 0,
+        'coordination_head_rule' => 'first_conjunct'
+    );
+    my $phrase = $builder->build($root);
+    $phrase->project_dependencies();
+}
+
+
+
+my %v12deprel =
+(
+    'dobj'      => 'obj',
+    'nsubjpass' => 'nsubj:pass',
+    'csubjpass' => 'csubj:pass',
+    'auxpass'   => 'aux:pass',
+    'neg'       => 'advmod',
+    'name'      => 'flat',
+    'foreign'   => 'flat:foreign',
+    'mwe'       => 'fixed'
+);
+
+
+
+#------------------------------------------------------------------------------
+# Converts dependency relations from UD v1 to v2.
+#------------------------------------------------------------------------------
+sub convert_deprels
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $parent = $node->parent();
+        my $deprel = $node->deprel();
+        if($deprel eq 'neg')
+        {
+            my $iset = $node->iset();
+            $iset->set('pos', 'part');
+            $iset->set('polarity', 'neg');
+        }
+        if(exists($v12deprel{$deprel}))
+        {
+            $node->set_deprel($v12deprel{$deprel});
+        }
+        elsif($deprel eq 'nmod' && $parent->is_verb())
+        {
+            $node->set_deprel('obl');
+        }
+    }
 }
 
 
@@ -224,58 +279,6 @@ sub regenerate_upos
     foreach my $node (@nodes)
     {
         $node->set_tag($node->iset()->get_upos());
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Fixes sentence-final punctuation attached to the artificial root node.
-#------------------------------------------------------------------------------
-sub fix_root_punct
-{
-    my $self = shift;
-    my $root = shift;
-    my @children = $root->children();
-    if(scalar(@children)==2 && $children[1]->is_punctuation())
-    {
-        $children[1]->set_parent($children[0]);
-        $children[1]->set_deprel('punct');
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Changes the relation between a preposition and a verb (infinitive) from case
-# to mark. Miguel has done something in that direction but there are still many
-# occurrences where this has not been fixed.
-#------------------------------------------------------------------------------
-sub fix_case_mark
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants({'ordered' => 1});
-    foreach my $node (@nodes)
-    {
-        if($node->deprel() eq 'case')
-        {
-            my $parent = $node->parent();
-            # Most prepositions modify infinitives: para preparar, en ir, de retornar...
-            if($parent->is_infinitive())
-            {
-                $node->set_deprel('mark');
-            }
-        }
-    }
-    # There is a bug caused by splitting preposition + determiner contractions:
-    # "desta vez" ("this time") is a MWE attached directly to the ROOT node.
-    if($nodes[0]->parent()->is_root() && $nodes[0]->form() eq 'De' &&
-       $nodes[1]->parent()->is_root() && $nodes[1]->form() eq 'esta')
-    {
-        $nodes[0]->set_deprel('root');
-        $nodes[1]->set_parent($nodes[0]);
-        $nodes[1]->set_deprel('mwe');
     }
 }
 

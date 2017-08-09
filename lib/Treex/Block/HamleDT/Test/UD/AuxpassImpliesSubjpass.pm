@@ -9,7 +9,7 @@ sub process_anode
     my $self = shift;
     my $node = shift;
     my @children = $node->children();
-    my @auxpass = grep {$_->deprel() =~ m/^auxpass/} (@children);
+    my @auxpass = grep {$_->deprel() =~ m/^(aux|expl):pass$/} (@children);
     if(scalar(@auxpass) > 0)
     {
         my @subj = grep {$_->deprel() =~ m/^[nc]subj$/} (@children);
@@ -26,8 +26,8 @@ sub process_anode
 
 =item Treex::Block::HamleDT::Test::UD::AuxpassImpliesSubjpass
 
-If a predicate has an C<auxpass> (or C<auxpass:refl>) child, its subject must
-be C<nsubjpass> or C<csubjpass> but not C<nsubj> or C<csubj>. Note that the
+If a predicate has an C<aux:pass> (or C<expl:pass>) child, its subject must
+be C<nsubj:pass> or C<csubj:pass> but not C<nsubj> or C<csubj>. Note that the
 other implication does not hold because there may be several auxiliaries and
 some of them may not be responsible for the passive voice. Also note that both
 the subject and the auxiliary may be omitted.

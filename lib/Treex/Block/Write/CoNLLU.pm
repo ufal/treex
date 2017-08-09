@@ -7,6 +7,7 @@ extends 'Treex::Block::Write::BaseTextWriter';
 has 'print_sent_id'                    => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print sent_id in CoNLL-U comment before each sentence' );
 has 'print_zone_id'                    => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'include zone id in sent_id comment after a slash' );
 has 'print_text'                       => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print sentence text in CoNLL-U comment before each sentence' );
+has 'sort_misc'                        => ( is => 'ro', isa => 'Bool', default => 0, documentation => 'MISC attributes will be sorted alphabetically' );
 has 'randomly_select_sentences_ratio'  => ( is => 'rw', isa => 'Num',  default => 1 );
 has 'alignment'                        => ( is => 'ro', isa => 'Bool', default => 1, documentation => 'print alignment links in the 9th column' );
 
@@ -100,24 +101,44 @@ sub process_atree {
     # Empty sentences are not allowed.
     return if(scalar(@nodes)==0);
     # Print sentence (bundle) ID as a comment before the sentence.
-    if ($self->print_sent_id) {
+    my $comment = $tree->get_bundle()->wild()->{comment};
+    my @comment;
+    if ($comment)
+    {
+        chomp($comment);
+        @comment = split(/\n/, $comment);
+    }
+    if ($self->print_sent_id)
+    {
+        # If the CoNLL-U comments contain document id and/or paragraph id, print them before the sentence id.
+        my @newdocpar = grep {m/^new(doc|par)/i} (@comment);
+        if (scalar(@newdocpar)>0)
+        {
+            foreach my $c (@newdocpar)
+            {
+                print {$self->_file_handle} ("# $c\n");
+            }
+            @comment = grep {!m/^new(doc|par)/i} (@comment);
+        }
         my $sent_id = $tree->get_bundle->id;
-        if ($self->print_zone_id) {
+        if ($self->print_zone_id)
+        {
             $sent_id .= '/' . $tree->get_zone->get_label;
         }
         print {$self->_file_handle} "# sent_id = $sent_id\n";
     }
-    if ($self->print_text) {
+    if ($self->print_text)
+    {
         my $text = $tree->get_zone->sentence;
         print {$self->_file_handle} "# text = $text\n" if defined $text;
     }
     # Print the original CoNLL-U comments for this sentence if present.
-    my $comment = $tree->get_bundle->wild->{comment};
-    if ($comment)
+    if (scalar(@comment) > 0)
     {
-        chomp $comment;
-        $comment =~ s/\n/\n# /g;
-        say {$self->_file_handle()} '# '.$comment;
+        foreach my $c (@comment)
+        {
+            print {$self->_file_handle} ("# $c\n");
+        }
     }
     for(my $i = 0; $i<=$#nodes; $i++)
     {
@@ -169,22 +190,25 @@ sub process_atree {
         my $deprel = $self->_get_deprel($node);
         my $feats = $self->_get_feats($node);
 
-        my @misc;
-        @misc = split(/\|/, $wild->{misc}) if(exists($wild->{misc}) && defined($wild->{misc}));
+        # If transliteration of the word form to Latin (or another) alphabet is available, put it in the MISC column.
+        if(defined($node->translit()))
+        {
+            $node->set_misc_attr('Translit', $node->translit());
+        }
+        if(defined($node->ltranslit()))
+        {
+            $node->set_misc_attr('LTranslit', $node->ltranslit());
+        }
+        if(defined($node->gloss()))
+        {
+            $node->set_misc_attr('Gloss', $node->gloss());
+        }
+        my @misc = $node->get_misc();
 
         # In the case of fused surface token, SpaceAfter=No may be specified for the surface token but NOT for the individual syntactic words.
         if($node->no_space_after() && !defined($wild->{fused}))
         {
             unshift(@misc, 'SpaceAfter=No');
-        }
-        # If transliteration of the word form to Latin (or another) alphabet is available, put it in the MISC column.
-        if(defined($node->translit()))
-        {
-            push(@misc, 'Translit='.$node->translit());
-        }
-        if(defined($node->wild()->{lemma_translit}) && $node->wild()->{lemma_translit} !~ m/^_?$/)
-        {
-            push(@misc, 'LTranslit='.$node->wild()->{lemma_translit});
         }
         ###!!! (Czech)-specific wild attributes that have been cut off the lemma.
         ###!!! In the future we will want to make them normal attributes.
@@ -213,6 +237,10 @@ sub process_atree {
         {
             push(@misc, "LNumValue=$wild->{lnumvalue}");
         }
+        if($self->sort_misc())
+        {
+            @misc = sort {lc($a) cmp lc($b)} (@misc);
+        }
         my $misc = scalar(@misc)>0 ? join('|', @misc) : '_';
 
         my $relations = '_';
@@ -225,7 +253,10 @@ sub process_atree {
 
         # CoNLL-U columns: ID, FORM, LEMMA, UPOS, XPOS(treebank-specific), FEATS, HEAD, DEPREL, DEPS(additional), MISC
         # Make sure that values are not empty and that they do not contain spaces.
-        my @values = ($ord, $form, $lemma, $upos, $xpos, $feats, $pord, $deprel, $relations, $misc);
+        # Exception: FORM and LEMMA can contain spaces in approved cases and in Vietnamese.
+        my @values = ($ord,
+        #$form, $lemma,
+        '_', '_', $upos, $xpos, $feats, $pord, $deprel, $relations, $misc);
         @values = map
         {
             my $x = $_ // '_';
@@ -236,6 +267,8 @@ sub process_atree {
             $x
         }
         (@values);
+        $values[1] = $form;
+        $values[2] = $lemma;
         print { $self->_file_handle() } join("\t", @values)."\n";
     }
     print { $self->_file_handle() } "\n" if $tree->get_descendants();

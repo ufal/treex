@@ -112,6 +112,12 @@ sub process_document
                     print("complete_match_token\t$n1\n");
                     $keep = 1;
                 }
+                # The number of sentences with only one error may be interesting to see how easily the corpus could be extended.
+                elsif($lerror == 1)
+                {
+                    print("one_error\t1\n");
+                    print("one_error_token\t$n1\n");
+                }
             }
         }
         if(!$keep)

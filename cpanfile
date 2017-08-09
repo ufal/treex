@@ -58,7 +58,7 @@ requires 'LWP';
 requires 'LWP::Simple';
 requires 'LWP::UserAgent';
 requires 'Lingua::EN::Tagger';
-requires 'Lingua::Interset', '2.050';
+requires 'Lingua::Interset', '3.006';
 requires 'Lingua::StopWords';
 requires 'List::MoreUtils';
 requires 'List::Pairwise';

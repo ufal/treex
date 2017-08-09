@@ -67,7 +67,9 @@ sub get_input_tag_for_interset
     my $conll_feat = $node->conll_feat();
     # Compose a tag string in the form expected by the pl::ipipan Interset driver.
     $conll_feat =~ s/\|/:/g;
-    return "$conll_pos:$conll_feat";
+    my $tag = $conll_pos;
+    $tag .= ":$conll_feat" unless($conll_feat eq '_');
+    return $tag;
 }
 
 
@@ -103,6 +105,30 @@ sub fix_morphology
             $iset->add('pos' => 'noun', 'prontype' => 'prs', 'reflex' => 'reflex');
             $iset->set('typo' => 'typo') if($form =~ m/^si[ea]$/i);
         }
+        # Possessive determiners.
+        elsif($lemma eq 'mój')
+        {
+            $iset->add('prontype' => 'prs', 'poss' => 'poss', 'person' => '1', 'possnumber' => 'sing', 'degree' => '');
+        }
+        elsif($lemma eq 'twój')
+        {
+            $iset->add('prontype' => 'prs', 'poss' => 'poss', 'person' => '2', 'possnumber' => 'sing', 'degree' => '');
+        }
+        ###!!! Third person possessive pronouns "jego", "jej", "ich" are analyzed as genitive forms of the personal pronouns "on", "ona", "ono", "oni".
+        ###!!! We cannot easily distinguish the possessive usage from other genitive usage, although the latter will be rather rare.
+        ###!!! The situation is different from Czech where the forms "její" and "jejich" cannot be used as genitive (which is "jí" and "jich", respectively).
+        elsif($lemma eq 'nasz')
+        {
+            $iset->add('prontype' => 'prs', 'poss' => 'poss', 'person' => '1', 'possnumber' => 'plur', 'degree' => '');
+        }
+        elsif($lemma eq 'wasz')
+        {
+            $iset->add('prontype' => 'prs', 'poss' => 'poss', 'person' => '2', 'possnumber' => 'plur', 'degree' => '');
+        }
+        elsif($lemma eq 'swój')
+        {
+            $iset->add('prontype' => 'prs', 'poss' => 'poss', 'reflex' => 'reflex', 'degree' => '');
+        }
         # Demonstrative pronouns and determiners.
         elsif($lemma eq 'to' && $node->is_noun())
         {
@@ -113,7 +139,7 @@ sub fix_morphology
         {
             # Forms: ten, ta, to, ci, tą, te, tę, tego, tej, temu, tych, tym, tymi.
             # Forms: taki, taka, takie, tacy, takiego, takiej, taką, takich, takim, takimi.
-            $iset->add('pos' => 'adj', 'prontype' => 'dem');
+            $iset->add('pos' => 'adj', 'prontype' => 'dem', 'degree' => '');
         }
         elsif($lemma =~ m/^(kto|co)$/ && $node->is_noun())
         {
@@ -125,18 +151,18 @@ sub fix_morphology
         {
             # Forms: jaki, jaka, jakie, jacy, jakiego, jakiej, jaką, jakich, jakim, jakimi.
             # Forms: który, która, które, którzy, którego, któremu, której, którą, których, którym, którymi.
-            $iset->add('pos' => 'adj', 'prontype' => 'int|rel');
+            $iset->add('pos' => 'adj', 'prontype' => 'int|rel', 'degree' => '');
         }
         elsif($lemma =~ m/^(ktoś|coś|ktokolwiek|cokolwiek)$/ && $node->is_noun())
         {
             # Forms: ktoś, kogoś, komuś, kimś.
             # Forms: coś, czegoś, czemuś, czymś.
             # Forms: cokolwiek.
-            $iset->add('pos' => 'adj', 'prontype' => 'ind');
+            $iset->add('pos' => 'noun', 'prontype' => 'ind');
         }
         elsif($lemma =~ m/^(jakiś|któryś|niejaki|niektóry|jakikolwiek|którykolwiek)$/ && $node->is_adjective())
         {
-            $iset->add('pos' => 'adj', 'prontype' => 'ind');
+            $iset->add('pos' => 'adj', 'prontype' => 'ind', 'degree' => '');
         }
         elsif($lemma =~ m/^kilka/ && $node->is_numeral())
         {
@@ -152,7 +178,7 @@ sub fix_morphology
         elsif($lemma =~ m/^(każdy|wszystek|wszelki)$/ && $node->is_adjective())
         {
             # Forms: każdy, każda, każde, każdego, każdemu, każdym, każdej, każdą.
-            $iset->add('pos' => 'adj', 'prontype' => 'tot');
+            $iset->add('pos' => 'adj', 'prontype' => 'tot', 'degree' => '');
         }
         elsif($lemma =~ m/^(nikt|nic)$/ && $node->is_noun())
         {
@@ -163,7 +189,22 @@ sub fix_morphology
         elsif($lemma =~ m/^(żaden)$/ && $node->is_adjective())
         {
             # Forms: żaden, żadna, żadne, żadnego, żadnemu, żadnym, żadnej, żadną.
-            $iset->add('pos' => 'adj', 'prontype' => 'neg');
+            $iset->add('pos' => 'adj', 'prontype' => 'neg', 'degree' => '');
+        }
+        # Participles should be adjectives, now they are verbs.
+        # The only exception is l-participles but they are not yet tagged as participles.
+        elsif($node->is_verb() && $node->is_participle())
+        {
+            $node->iset()->set('pos', 'adj');
+            # That was the easy part. But we must also change the lemma.
+            # poddano – poddać => poddany (passive participle)
+            # idące – iść => idący (active present participle)
+            my $form = lc($node->form());
+            # Remove gender/number/case morpheme if present.
+            $form =~ s/([cnt])(y|e|o|ego|emu|ym|a|ej|ą|i|ych|ymi)$/$1/;
+            # Add the ending of masculine singular nominative long adjectives.
+            $form .= 'y';
+            $node->set_lemma($form);
         }
         # L-participles (past tense) should be participles, not finite verbs, because they sometimes combine with finite auxiliary verbs
         # and because they inflect for gender and not for person.
@@ -175,7 +216,7 @@ sub fix_morphology
             $iset->add('verbform' => 'part', 'mood' => '', 'voice' => 'act');
         }
         # Verbal nouns should be nouns, not verbs.
-        elsif($node->is_verb() && $node->is_gerund())
+        elsif($node->is_verb() && $node->is_verbal_noun())
         {
             $iset->add('pos' => 'noun');
             # That was the easy part. But we also have to replace the verbal lemma (infinitive) by the nominal lemma (nominative singular).

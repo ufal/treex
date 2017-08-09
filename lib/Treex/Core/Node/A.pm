@@ -16,7 +16,7 @@ has [qw(form lemma tag no_space_after)] => ( is => 'rw' );
 # Original a-layer attributes
 # (Only afun and is_parenthesis_root originate from PDT, the rest was added in Treex).
 has [
-    qw(deprel afun is_parenthesis_root edge_to_collapse is_auxiliary translit gloss)
+    qw(deprel afun is_parenthesis_root edge_to_collapse is_auxiliary translit ltranslit gloss)
 ] => ( is => 'rw' );
 
 sub get_pml_type_name {
@@ -212,7 +212,7 @@ sub copy_attributes
     # We should copy all attributes that the node has but it is not easy to figure out which these are.
     # TODO: As a workaround, we list the attributes here directly.
     foreach my $attribute (
-        'form', 'lemma', 'tag', 'no_space_after', 'translit', 'gloss',
+        'form', 'lemma', 'tag', 'no_space_after', 'translit', 'ltranslit', 'gloss',
         'ord', 'deprel', 'afun', 'is_member', 'is_parenthesis_root',
         'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat', 'is_shared_modifier', 'morphcat',
         'clause_number', 'is_clause_head',

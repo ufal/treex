@@ -33,15 +33,23 @@
       <member name="hyph"><cdata format="any"/></member>
       <member name="typo"><cdata format="any"/></member>
       <member name="echo"><cdata format="any"/></member>
+      <member name="polarity"><cdata format="any"/></member>
+      <!-- temporarily also allowing obsolete negativeness; Interset will convert it to polarity -->
       <member name="negativeness"><cdata format="any"/></member>
+      <member name="definite"><cdata format="any"/></member>
+      <!-- temporarily also allowing obsolete definiteness; Interset will convert it to definite -->
       <member name="definiteness"><cdata format="any"/></member>
       <member name="gender"><cdata format="any"/></member>
+      <member name="animacy"><cdata format="any"/></member>
+      <!-- temporarily also allowing obsolete animateness; Interset will convert it to animacy -->
       <member name="animateness"><cdata format="any"/></member>
       <member name="number"><cdata format="any"/></member>
       <member name="case"><cdata format="any"/></member>
       <member name="prepcase"><cdata format="any"/></member>
       <member name="degree"><cdata format="any"/></member>
       <member name="person"><cdata format="any"/></member>
+      <member name="polite"><cdata format="any"/></member>
+      <!-- temporarily also allowing obsolete politeness; Interset will convert it to polite -->
       <member name="politeness"><cdata format="any"/></member>
       <member name="possgender"><cdata format="any"/></member>
       <member name="possnumber"><cdata format="any"/></member>
@@ -53,8 +61,14 @@
       <member name="absnumber"><cdata format="any"/></member>
       <member name="ergnumber"><cdata format="any"/></member>
       <member name="datnumber"><cdata format="any"/></member>
+      <member name="abspolite"><cdata format="any"/></member>
+      <!-- temporarily also allowing obsolete abspoliteness; Interset will convert it to abspolite -->
       <member name="abspoliteness"><cdata format="any"/></member>
+      <member name="ergpolite"><cdata format="any"/></member>
+      <!-- temporarily also allowing obsolete ergpoliteness; Interset will convert it to ergpolite -->
       <member name="ergpoliteness"><cdata format="any"/></member>
+      <member name="datpolite"><cdata format="any"/></member>
+      <!-- temporarily also allowing obsolete datpoliteness; Interset will convert it to datpolite -->
       <member name="datpoliteness"><cdata format="any"/></member>
       <member name="erggender"><cdata format="any"/></member>
       <member name="datgender"><cdata format="any"/></member>
