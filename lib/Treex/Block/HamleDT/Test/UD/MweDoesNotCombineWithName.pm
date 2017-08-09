@@ -9,11 +9,11 @@ sub process_anode
     my $self = shift;
     my $node = shift;
     my @children = $node->children();
-    my @mwe = grep {$_->deprel() eq 'mwe'} (@children);
-    my @name = grep {$_->deprel() eq 'name'} (@children);
+    my @mwe = grep {$_->deprel() eq 'fixed'} (@children);
+    my @name = grep {$_->deprel() eq 'flat'} (@children);
     if(scalar(@mwe) > 0 && scalar(@name) > 0)
     {
-        $self->complain($node, 'The node has both mwe and name children.');
+        $self->complain($node, 'The node has both fixed and flat children.');
     }
 }
 
@@ -23,16 +23,16 @@ sub process_anode
 
 =item Treex::Block::HamleDT::Test::UD::MweDoesNotCombineWithName
 
-The relations C<mwe> and C<name> are both used in flat structures of two or
+The relations C<fixed> and C<flat> are both used in flat structures of two or
 more nodes belonging to the same multi-word expression or name. The first word
-is the head and the other words are attached to it using the C<mwe> or C<name>
+is the head and the other words are attached to it using the C<fixed> or C<flat>
 relation.
 
 The head may have other children, too. If there are other children, they are
 understood as modifying the entire multi-word expression. However, one node
-cannot have a mix of C<mwe> and C<name> children. It cannot participate in two
-different multi-word expressions at the same time. Moreover, C<name> is used
-with proper nouns, C<mwe> is used with function words, and one word cannot be
+cannot have a mix of C<fixed> and C<flat> children. It cannot participate in two
+different multi-word expressions at the same time. Moreover, C<flat> is used
+with proper nouns, C<fixed> is used with function words, and one word cannot be
 both.
 
 =back

@@ -19,9 +19,9 @@ sub process_atree
             my $parent = $node->parent();
             my $deprel = $node->deprel();
             # Do not test subordinators in foreign text, they have their own rules for attachment.
-            next if($deprel eq 'foreign');
+            next if($deprel =~ m/flat|foreign/);
             # In some cases the subordinating conjunction can have children.
-            my @forbidden_children = grep {$_->deprel() !~ m/^(mwe)$/} ($node->children());
+            my @forbidden_children = grep {$_->deprel() !~ m/^(fixed)$/} ($node->children());
             my $ok = scalar(@forbidden_children)==0 || $parent->is_root();
             if($parent->is_root())
             {
@@ -31,7 +31,7 @@ sub process_atree
             {
                 my $dir = $node->ord() - $parent->ord();
                 my $form = $node->form();
-                if($deprel =~ m/^(conj|mwe)$/)
+                if($deprel =~ m/^(conj|fixed)$/)
                 {
                     $ok = $ok && $dir > 0; # parent is to the left from the subordinating conjunction
                 }

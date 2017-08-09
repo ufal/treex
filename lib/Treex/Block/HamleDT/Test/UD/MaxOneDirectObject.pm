@@ -10,7 +10,7 @@ sub process_anode
     my $node = shift;
     my @children = $node->children();
     # Note that we intentionally ignore language-specific subtypes because the rule may not apply to them.
-    my @subjects = grep {$_->deprel() =~ m/^(dobj|[cx]comp)$/} (@children);
+    my @subjects = grep {$_->deprel() =~ m/^(obj|[cx]comp)$/} (@children);
     if(scalar(@subjects) > 1)
     {
         $self->complain($node, 'No predicate can have more than one direct object.');

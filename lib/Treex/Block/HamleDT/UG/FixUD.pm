@@ -401,7 +401,7 @@ sub convert_deprels
         }
         elsif($deprel eq 'OBJ')
         {
-            $deprel = 'dobj';
+            $deprel = 'obj';
         }
         elsif($deprel eq 'OTHER')
         {

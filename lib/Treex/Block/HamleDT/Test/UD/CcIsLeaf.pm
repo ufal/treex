@@ -7,7 +7,7 @@ sub process_anode
 {
     my $self = shift;
     my $node = shift;
-    if($node->deprel() eq 'cc' && !$node->is_leaf())
+    if($node->deprel() eq 'cc' && !$node->is_leaf() && any {$_->deprel() ne 'fixed'} ($node->children()))
     {
         $self->complain($node, 'Node attached as cc should be leaf.');
     }

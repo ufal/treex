@@ -179,7 +179,7 @@ sub convert_deprels
             $deprel = 'ExD'; ###!!!???
         }
         # Direct object of verb. (If there is one object, it is direct. If there are more, one of them is direct and the rest are indirect.)
-        elsif($deprel =~ m/^dobj(:|$)/)
+        elsif($deprel =~ m/^d?obj(:|$)/)
         {
             $deprel = 'Obj';
         }
@@ -187,11 +187,6 @@ sub convert_deprels
         elsif($deprel =~ m/^expl(:|$)/)
         {
             $deprel = 'AuxT';
-        }
-        # Non-first word in a foreign segment in case of code switching.
-        elsif($deprel =~ m/^foreign(:|$)/)
-        {
-            $deprel = 'Atr';
         }
         # Two parts of what should be one word. May occur in poorly edited text.
         elsif($deprel =~ m/^goeswith(:|$)/)
@@ -214,7 +209,7 @@ sub convert_deprels
             $deprel = 'AuxC';
         }
         # Multi-word expression.
-        elsif($deprel =~ m/^mwe(:|$)/)
+        elsif($deprel =~ m/^(mwe|fixed)(:|$)/)
         {
             # A head-first phrase with all dependents labeled Atr is the behavior closest to PDT.
             ###!!! However, in the case of multi-word prepositions, it should be AuxP.
@@ -222,18 +217,13 @@ sub convert_deprels
             $deprel = 'Atr';
         }
         # Non-first part of a multi-word name, if no normal head-dependent relation can be recognized.
-        elsif($deprel =~ m/^name(:|$)/)
+        elsif($deprel =~ m/^(name|flat)(:|$)/)
         {
             $deprel = 'Atr';
         }
-        # Negation.
-        elsif($deprel =~ m/^neg(:|$)/)
-        {
-            $deprel = 'Neg';
-        }
         # Noun phrase that functions as an adverbial modifier, if attached to a predicate,
         # and as nominal attribute, if attached to another nominal.
-        elsif($deprel =~ m/^nmod(:|$)/)
+        elsif($deprel =~ m/^(nmod|obl)(:|$)/)
         {
             $deprel = $parent->is_verb() ? 'Adv' : 'Atr';
         }

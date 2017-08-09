@@ -14,6 +14,8 @@ has iset_driver =>
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
 
+
+
 #------------------------------------------------------------------------------
 # Reads the Slovak tree, converts morphosyntactic tags and dependency relation
 # labels, and transforms tree to adhere to the HamleDT guidelines.
@@ -24,6 +26,8 @@ sub process_zone
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
 }
+
+
 
 #------------------------------------------------------------------------------
 # Different source treebanks may use different attributes to store information
@@ -39,6 +43,275 @@ sub get_input_tag_for_interset
     my $node   = shift;
     return $node->tag();
 }
+
+
+
+#------------------------------------------------------------------------------
+# Adds Interset features that cannot be decoded from the PDT tags but they can
+# be inferred from lemmas and word forms.
+#------------------------------------------------------------------------------
+sub fix_morphology
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $lemma = $node->lemma();
+        my $iset = $node->iset();
+        # Fix Interset features of pronominal words.
+        if($node->is_pronominal())
+        {
+            ###!!! We also need to handle fusions: do_on na_on na_ono naň oň po_on pre_on preň u_on za_on
+            if($lemma =~ m/^(ja|ty|on|ona|ono|my|vy)$/)
+            {
+                $iset->set('pos', 'noun');
+                $iset->set('prontype', 'prs');
+            }
+            elsif($lemma =~ m/^(seba|si|sa)$/)
+            {
+                $iset->set('pos', 'noun');
+                $iset->set('prontype', 'prs');
+                $iset->set('reflex', 'reflex');
+            }
+            elsif($lemma =~ m/^(môj|tvoj)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'prs');
+                $iset->set('poss', 'poss');
+                $iset->set('possnumber', 'sing');
+            }
+            elsif($lemma =~ m/^(jeho)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'prs');
+                $iset->set('poss', 'poss');
+                $iset->set('possnumber', 'sing');
+                $iset->set('possgender', 'masc|neut');
+            }
+            elsif($lemma =~ m/^(jej)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'prs');
+                $iset->set('poss', 'poss');
+                $iset->set('possnumber', 'sing');
+                $iset->set('possgender', 'fem');
+            }
+            elsif($lemma =~ m/^(náš|váš|ich)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'prs');
+                $iset->set('poss', 'poss');
+                $iset->set('possnumber', 'plur');
+            }
+            elsif($lemma =~ m/^(svoj)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'prs');
+                $iset->set('poss', 'poss');
+                $iset->set('reflex', 'reflex');
+            }
+            # Unlike in Czech, there are separate lemmas for each gender (ten-ta-to).
+            # Neuter singular is very likely to act more like pronoun than like determiner but we currently keep it consistent with Czech and Slovenian, i.e. all demonstratives are DET.
+            elsif($lemma =~ m/^(ta|taktýto|takéto|taký|takýto|tamten|ten|tento|to|toto|tá|táto|týmto|onaký)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'dem');
+            }
+            elsif($lemma =~ m/^(kto|ktože|čo|čože)$/)
+            {
+                $iset->set('pos', 'noun');
+                $iset->set('prontype', 'int|rel');
+            }
+            elsif($lemma =~ m/^((nie|málo|všeli)(kto|čo)|(kto|čo)(si|koľvek))$/)
+            {
+                $iset->set('pos', 'noun');
+                $iset->set('prontype', 'ind');
+            }
+            elsif($lemma =~ m/^(všetko)$/)
+            {
+                $iset->set('pos', 'noun');
+                $iset->set('prontype', 'tot');
+            }
+            elsif($lemma =~ m/^(nik|nikto|nič)$/)
+            {
+                $iset->set('pos', 'noun');
+                $iset->set('prontype', 'neg');
+            }
+            elsif($lemma =~ m/^(aký|ktorý)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'int|rel');
+            }
+            elsif($lemma =~ m/^(čí)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'int|rel');
+                $iset->set('poss', 'poss');
+            }
+            elsif($lemma =~ m/^((da|kade|ne|všeli)(jaký)|(hoci|nie|poda)(ktorý)|iný|istý|všakovaký|(aký|ktorý)(si|koľvek))$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'ind');
+            }
+            elsif($lemma =~ m/^čí(si|koľvek)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'ind');
+                $iset->set('poss', 'poss');
+            }
+            elsif($lemma =~ m/^(sám|samý)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'emp');
+            }
+            elsif($lemma =~ m/^(každý|všetok)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'tot');
+            }
+            elsif($lemma =~ m/^(nijaký|žiaden|žiadny)$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'neg');
+            }
+            # Pronominal quantifiers (numerals).
+            elsif($lemma eq 'koľko')
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'int|rel');
+                $iset->set('numtype', 'card');
+            }
+            elsif($lemma eq 'koľkokrát')
+            {
+                $iset->set('pos', 'adv');
+                $iset->set('prontype', 'int|rel');
+                $iset->set('numtype', 'mult');
+            }
+            elsif($lemma eq 'toľko')
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'dem');
+                $iset->set('numtype', 'card');
+            }
+            elsif($lemma eq 'toľkokrát')
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'dem');
+                $iset->set('numtype', 'mult');
+            }
+            elsif($lemma =~ m/^nieko[ľl]k[oý]$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'ind');
+                $iset->set('numtype', 'card');
+            }
+            elsif($lemma =~ m/^(niekoľko|veľa)krát$/)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('prontype', 'ind');
+                $iset->set('numtype', 'mult');
+            }
+            # Pronominal adverbs.
+            elsif($lemma =~ m/^(ako|kadiaľ|kam|kamže|kde|kdeby|kedy|odkedy|odkiaľ|prečo)$/)
+            {
+                $iset->set('pos', 'adv');
+                $iset->set('prontype', 'int|rel');
+            }
+            elsif($lemma =~ m/^(nejako?|(nie|bohvie|daj|ktovie|málo)(ako|kde|kedy)|inak|inde|inokade|inokedy|ináč|(ako|kadiaľ|kam|kde|kdeby|kedy|odkedy|odkiaľ)(si|koľvek))$/)
+            {
+                $iset->set('pos', 'adv');
+                $iset->set('prontype', 'ind');
+            }
+            elsif($lemma =~ m/^(dosiaľ|dovtedy|natoľko|odtiaľ|odvtedy|onak|preto|sem|stadiaľ|tade|tadiaľ|tadiaľto|tak|takisto|takto|tam|tamhľa|tu|už|vtedy|zatiaľ)$/)
+            {
+                $iset->set('pos', 'adv');
+                $iset->set('prontype', 'dem');
+            }
+            elsif($lemma =~ m/^(všade|všelijako|vždy)$/)
+            {
+                $iset->set('pos', 'adv');
+                $iset->set('prontype', 'tot');
+            }
+            elsif($lemma =~ m/^(nijako|nikam|nikde|nikdy)$/)
+            {
+                $iset->set('pos', 'adv');
+                $iset->set('prontype', 'neg');
+            }
+        }
+        # Ordinal and multiplicative numerals must be distinguished from cardinals.
+        if($node->is_numeral())
+        {
+            # The following ordinal numeral lemmas have been observed in the corpus:
+            # desiaty, deviaty, deväťdesiaty, druhý, dvadsiaty, dvanásty, jedenásty,
+            # osemdesiaty, piaty, posledný, prvá, prvý, sedemdesiaty, siedmy,
+            # tretí, tridsiaty, trinásty, tristý, ôsmy, šesťdesiaty, šiesty, štvrtý, štvrý
+            if($lemma =~ m/(prvý|druhý|tretí|štvrtý|piaty|šiesty|siedmy|ôsmy|deviaty|siaty|sty|stý|posledný)$/i)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('numtype', 'ord');
+            }
+            elsif($lemma =~ m/(jedinký|jediný|dvojaký|dvojitý|štvrý|násobný|mnohoraký|mnohý|viacerý|ostatný)$/i)
+            {
+                $iset->set('pos', 'adj');
+                $iset->set('numtype', 'mult');
+            }
+            elsif($lemma =~ m/(krát|dvojako|raz|neraz)$/i)
+            {
+                $iset->set('pos', 'adv');
+                $iset->set('numtype', 'mult');
+            }
+            elsif($lemma =~ m/dvadsiatka/i)
+            {
+                $iset->set('pos', 'noun');
+            }
+        }
+        if($node->is_verb())
+        {
+            # Negation of verbs is treated as derivational morphology in the Slovak National Corpus.
+            # We have to merge negative verbs with their affirmative counterparts.
+            my $original_polarity = $node->iset()->polarity();
+            if($lemma =~ m/^ne./i && $lemma !~ m/^(nechať|nechávať|nenávidieť|nenávidený)$/i)
+            {
+                $lemma =~ s/^ne//i;
+                $node->set_lemma($lemma);
+                $iset->set('polarity', 'neg');
+            }
+            # In some cases the original annotation was OK: affirmative lemma of a negative form, negative polarity set.
+            # Make sure we do not rewrite it now!
+            # It does not make sense to mark polarity for "by". All other forms will have it marked.
+            elsif($original_polarity ne 'neg' && !$node->is_conditional())
+            {
+                $iset->set('polarity', 'pos');
+            }
+            # SNC has a dedicated POS tag ('G*') for participles, i.e. they are neither verbs nor adjectives there.
+            # Interset converts participles to verbs. However, we want only l-participles to be verbs.
+            # We can distinguish them by lemma: l-participles have the infinitive (zabil => zabiť), other participles have\
+            # masculine nominative form of the participle (obkľúčený => obkľúčený, žijúcu => žijúci).
+            if($node->is_participle())
+            {
+                if($lemma !~ m/ť$/)
+                {
+                    $iset->set('pos', 'adj');
+                }
+            }
+        }
+        # Distinguish coordinating and subordinating conjunctions.
+        if($node->is_conjunction())
+        {
+            if($lemma =~ m/^(a|aj|ale|alebo|ani|avšak|ba|buď|i|jednak|lebo|len|lenže|nielen|no|predsa|preto|pritom|pričom|prv|síce|tak|takže|teda|to|veď|však|zato|či|čiže)$/)
+            {
+                $node->iset()->set('conjtype', 'coor');
+            }
+            else # aby ak ako akoby akože akže až hoci ibaže keby keď keďže kým nech než pokiaľ pokým pretože tým čo čím že
+            {
+                $node->iset()->set('conjtype', 'sub');
+            }
+        }
+    }
+}
+
+
 
 #------------------------------------------------------------------------------
 # Convert dependency relation labels.
@@ -106,6 +379,8 @@ sub convert_deprels
         }
     }
 }
+
+
 
 #------------------------------------------------------------------------------
 # Fixes a few known annotation errors that appear in the data.
@@ -176,6 +451,8 @@ sub fix_annotation_errors
         }
     }
 }
+
+
 
 #------------------------------------------------------------------------------
 # The Slovak Treebank suffers from several hundred unassigned syntactic tags.
@@ -310,6 +587,8 @@ sub guess_deprel
     }
     return $deprel;
 }
+
+
 
 1;
 

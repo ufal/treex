@@ -67,9 +67,11 @@ sub process_atree {
     );
     my $phrase = $builder->build($root);
     $phrase->project_dependencies();
+    # The 'cop' relation can be recognized only after transformations.
+    $self->tag_copulas_aux($root);
     # Portuguese expressions "cerca_de" and "mais_de" were tagged as prepositions but attached as Atr.
     # Now the MWE are split and "cerca" is attached as nmod. Fix it to case.
-    my @nodes = $root->get_descendants();
+    my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
         my $form = $node->form() // '';
@@ -85,12 +87,11 @@ sub process_atree {
     $self->dissolve_chains_of_auxiliaries($root);
     $self->fix_jak_znamo($root);
     $self->classify_numerals($root);
-    $self->fix_determiners($root);
+    ###!!! Do not switch between DET and PRON just because there is / is not a modified nominal.
+    ###!!! $self->fix_determiners($root);
     $self->relabel_subordinate_clauses($root);
     $self->check_ncsubjpass_when_auxpass($root);
     $self->raise_punctuation_from_coordinating_conjunction($root);
-    # Sanity checks.
-    $self->check_determiners($root);
     ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
     ###!!! Copy them to conll/deprel (which is displayed) until we make Tred know deprel.
     foreach my $node (@nodes)
@@ -103,6 +104,13 @@ sub process_atree {
         $node->set_conll_deprel($node->deprel());
         $node->set_afun(undef); # just in case... (should be done already)
     }
+    # Some of the above transformations may have split or removed nodes.
+    # Make sure that the full sentence text corresponds to the nodes again.
+    ###!!! Note that for the Prague treebanks this may introduce unexpected differences.
+    ###!!! If there were typos in the underlying text or if numbers were normalized from "1,6" to "1.6",
+    ###!!! the sentence attribute contains the real input text, but it will be replaced by the normalized word forms now.
+    my $text = $self->collect_sentence_text(@nodes);
+    $root->get_zone()->set_sentence($text);
 }
 
 
@@ -249,7 +257,7 @@ sub convert_deprels
         # 1. It heads a prepositional phrase. The relation of the phrase to its parent is marked at the argument of the preposition.
         # 2. It is a leaf, attached to another preposition, forming a multi-word preposition. (In this case the word can be even a noun.)
         # Prepositional phrases will be later restructured. In the situation 1, the preposition will be attached to its argument as 'case'.
-        # In the situation 2, the first word in the multi-word prepositon will become the head and all other parts will be attached to it as 'mwe'.
+        # In the situation 2, the first word in the multi-word prepositon will become the head and all other parts will be attached to it as 'fixed'.
         elsif($deprel eq 'AuxP')
         {
             $deprel = 'case';
@@ -267,16 +275,16 @@ sub convert_deprels
         {
             $deprel = 'parataxis';
         }
-        # Subject: nsubj, nsubjpass, csubj, csubjpass
+        # Subject: nsubj, nsubj:pass, csubj, csubj:pass
         elsif($deprel eq 'Sb')
         {
             # Is the parent a passive verb?
             # Note that this will not catch all passives (e.g. reflexive passives).
-            # Thus we will later check whether there is an auxpass sibling.
+            # Thus we will later check whether there is an aux:pass sibling.
             if($parent->iset()->is_passive())
             {
                 # If this is a verb (including infinitive) then it is a clausal subject.
-                $deprel = $node->is_verb() ? 'csubjpass' : 'nsubjpass';
+                $deprel = $node->is_verb() ? 'csubj:pass' : 'nsubj:pass';
             }
             else # Parent is not passive.
             {
@@ -284,7 +292,7 @@ sub convert_deprels
                 $deprel = $node->is_verb() ? 'csubj' : 'nsubj';
             }
         }
-        # Object: dobj, iobj, ccomp, xcomp
+        # Object: obj, iobj, ccomp, xcomp
         elsif($deprel eq 'Obj')
         {
             ###!!! If a verb has two or more objects, we should select one direct object and the others will be indirect.
@@ -294,7 +302,7 @@ sub convert_deprels
             # If this is an infinitive then it is an xcomp (controlled clausal complement).
             # If this is a verb form other than infinitive then it is a ccomp.
             ###!!! TODO: But if the infinitive is part of periphrastic future, then it is ccomp, not xcomp!
-            $deprel = $node->is_verb() ? ($node->is_infinitive() ? 'xcomp' : 'ccomp') : 'dobj';
+            $deprel = $node->is_verb() ? ($node->is_infinitive() ? 'xcomp' : 'ccomp') : 'obj';
         }
         # Nominal predicate attached to a copula verb.
         elsif($deprel eq 'Pnom')
@@ -308,24 +316,22 @@ sub convert_deprels
             }
             # The symbol "=" is tagged SYM and substitutes a verb ("equals to"). This verb is not considered copula (only "to be" is copula).
             # Hence we will re-classify the relation as object.
-            elsif($parent->form() eq '=')
+            elsif(!$parent->is_root() && $parent->form() eq '=')
             {
-                $deprel = 'dobj';
+                $deprel = 'obj';
             }
             else
             {
                 $deprel = 'pnom';
             }
         }
-        # Adverbial modifier: advmod, nmod, advcl
-        # Note: UD also distinguishes the relation neg. In Czech, most negation is done using bound morphemes.
-        # Separate negative particles exist but they are either ExD (replacing elided negated "to be") or AuxZ ("ne poslední zvýšení cen").
-        # Examples: ne, nikoli, nikoliv, ani?, vůbec?
-        # I am not sure that we want to distinguish them from the other AuxZ using the neg relation.
-        # AuxZ words are mostly adverbs, coordinating conjunctions and particles. Other parts of speech are extremely rare.
+        # Adverbial modifier: advmod, obl, advcl
         elsif($deprel eq 'Adv')
         {
-            $deprel = $node->is_verb() ? 'advcl' : $node->is_noun() ? 'nmod' : 'advmod';
+            ###!!! Manual disambiguation is needed here. For example, in Czech:
+            ###!!! Úroda byla v tomto roce o mnoho lepší než loni.
+            ###!!! There should be obl(lepší, roce) but nmod(lepší, mnoho).
+            $deprel = $node->is_verb() ? 'advcl' : ($node->is_noun() || $node->is_adjective() || $node->is_numeral()) ? 'obl' : 'advmod';
         }
         # Attribute of a noun: amod, nummod, nmod, acl
         elsif($deprel eq 'Atr')
@@ -349,15 +355,14 @@ sub convert_deprels
             elsif($node->iset()->nametype() =~ m/(giv|sur|prs)/ &&
                   $parent->iset()->nametype() =~ m/(giv|sur|prs)/)
             {
-                $deprel = 'name';
+                $deprel = 'flat';
             }
             elsif($node->is_foreign() && $parent->is_foreign() ||
                   $node->is_foreign() && $node->is_adposition() && $parent->is_proper_noun())
                   ###!!! van Gogh, de Gaulle in Czech text; but it means we will have to reverse the relation left-to-right!
-                  ###!!! Maybe it will be better to change the relation to "name" when we have to reorder it anyway.
                   ###!!! Another solution would be to label the relation "case". But foreign prepositions do not have this function in Czech.
             {
-                $deprel = 'foreign';
+                $deprel = 'flat:foreign';
             }
             elsif($node->is_determiner() && $self->agree($node, $parent, 'case'))
             {
@@ -396,16 +401,16 @@ sub convert_deprels
         {
             $deprel = 'xcomp';
         }
-        # Auxiliary verb "být" ("to be"): aux, auxpass
+        # Auxiliary verb "být" ("to be"): aux, aux:pass
         elsif($deprel eq 'AuxV')
         {
-            $deprel = $parent->iset()->is_passive() ? 'auxpass' : 'aux';
+            $deprel = $parent->iset()->is_passive() ? 'aux:pass' : 'aux';
             # Side effect: We also want to modify Interset. The PDT tagset does not distinguish auxiliary verbs but UPOS does.
             $node->iset()->set('verbtype', 'aux');
         }
         # Reflexive pronoun "se", "si" with inherently reflexive verbs.
         # Unfortunately, previous harmonization to the Prague style abused the AuxT label to also cover Germanic verbal particles and other compound-like stuff with verbs.
-        # We have to test for reflexivity if we want to output expl!
+        # We have to test for reflexivity if we want to output expl:pv!
         elsif($deprel eq 'AuxT')
         {
             # This appears in Slavic languages, although in theory it could be used in some Romance and Germanic languages as well.
@@ -413,7 +418,7 @@ sub convert_deprels
             # Most Dutch pronouns used with this label are tagged as reflexive but a few are not.
             if($node->is_reflexive() || $node->is_pronoun())
             {
-                $deprel = 'expl';
+                $deprel = 'expl:pv';
             }
             # The Tamil deprel CC (compound) has also been converted to AuxT. 11 out of 12 occurrences are tagged as verbs.
             elsif($node->is_verb())
@@ -434,19 +439,12 @@ sub convert_deprels
         # Reflexive pronoun "se", "si" used for reflexive passive.
         elsif($deprel eq 'AuxR')
         {
-            $deprel = 'auxpass:reflex';
+            $deprel = 'expl:pass';
         }
         # AuxZ: intensifier or negation
         elsif($deprel eq 'AuxZ')
         {
-            # Negation is mostly done using bound prefix ne-.
-            # If it is a separate word ("ne už personálním, ale organizačním"; "potřeboval čtyřnohého a ne dvounohého přítele), it is labeled AuxZ.
-            ###!!! This is specific to Czech!
             my $lemma = $node->lemma();
-            if(defined($lemma) && $lemma eq 'ne')
-            {
-                $deprel = 'neg';
-            }
             # AuxZ is an emphasizing word (“especially on Monday”).
             # It also occurs with numbers (“jen čtyři firmy”, “jen několik procent”).
             # The word "jen" ("only") is not necessarily a restriction. It rather emphasizes that the number is a restriction.
@@ -456,15 +454,13 @@ sub convert_deprels
             # https://ufal.mff.cuni.cz/pdt2.0/doc/manuals/en/t-layer/html/ch07s07s05.html
             # Most frequent lemmas with AuxZ: i (4775 výskytů), jen, až, pouze, ani, už, již, ještě, také, především (689 výskytů)
             # Most frequent t-lemmas with RHEM: #Neg (7589 výskytů), i, jen, také, už, již, ani, až, pouze, například (500 výskytů)
-            else
-            {
-                $deprel = 'advmod:emph';
-            }
+            $deprel = 'advmod:emph';
         }
         # Neg: used in Prague-style harmonization of some treebanks (e.g. Romanian) for negation (elsewhere it may be AuxZ or Adv).
         elsif($deprel eq 'Neg')
         {
-            $deprel = 'neg';
+            # There was a separate 'neg' relation in UD v1 but it was removed in UD v2.
+            $deprel = 'advmod';
         }
         # The AuxY deprel is used in various situations, see below.
         elsif($deprel eq 'AuxY')
@@ -531,7 +527,7 @@ sub convert_deprels
             }
             else
             {
-                $deprel = 'nmod'; ###!!! or nsubj or dobj or whatever
+                $deprel = 'nmod'; ###!!! or nsubj or obj or whatever
             }
         }
         elsif($deprel =~ m/^Aux[XK]$/)
@@ -573,6 +569,28 @@ sub convert_deprels
     foreach my $node (@nodes)
     {
         delete($node->wild()->{prague_deprel});
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Since UD v2, verbal copulas must be tagged AUX and not VERB. We cannot check
+# this during the deprel conversion because we do not always see the real
+# copula as the parent of the Pnom node (hint: coordination).
+#------------------------------------------------------------------------------
+sub tag_copulas_aux
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'cop' && $node->is_verb())
+        {
+            $node->iset()->set('verbtype', 'aux');
+            $node->set_tag('AUX');
+        }
     }
 }
 
@@ -666,7 +684,7 @@ sub split_tokens_on_underscore
                $node->is_adverb() ||
                $node->is_conjunction())
             {
-                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'mwe');
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'fixed');
                 $self->tag_nodes(\@subnodes, {'pos' => 'noun', 'nountype' => 'com'});
             }
             # MW determiners or pronouns: [ca] el seu, la seva; [es] el mío; [pt] todo o
@@ -702,7 +720,7 @@ sub split_tokens_on_underscore
                 @subnodes = $self->attach_left_function_words(@subnodes);
             }
             # If the MWE is tagged as proper noun then the words will also be
-            # proper nouns and they will be connected using the 'name' relation.
+            # proper nouns and they will be connected using the 'flat' relation.
             # We have to ignore that some of these proper "nouns" are in fact
             # adjectives (e.g. "San" in "San Salvador"). But we will not ignore
             # function words such as "de". These are language-specific.
@@ -711,9 +729,9 @@ sub split_tokens_on_underscore
                 # This is currently the only type of MWE where a non-first node may become the head (in case of coordination).
                 # Thus we have to temporarily reset the is_member flag (and later carry it over to the new head).
                 ###!!!$node->set_is_member(undef);
-                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'name');
+                my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'flat');
                 $self->tag_nodes(\@subnodes, {'pos' => 'noun', 'nountype' => 'prop'});
-                # Change the 'name' relation of punctuation and numbers. (Do not touch the head node!)
+                # Change the 'flat' relation of punctuation and numbers. (Do not touch the head node!)
                 for(my $i = 1; $i<=$#subnodes; $i++)
                 {
                     if($subnodes[$i]->is_numeral())
@@ -775,7 +793,7 @@ sub split_tokens_on_underscore
                             $subnodes[$j-1]->set_deprel('punct');
                             $subnodes[$j-1]->set_is_member(undef);
                             $subnodes[$j-2]->set_parent($coord);
-                            $subnodes[$j-2]->set_deprel('name');
+                            $subnodes[$j-2]->set_deprel('flat');
                             $subnodes[$j-2]->set_is_member(1);
                             $j -= 2;
                         }
@@ -783,8 +801,8 @@ sub split_tokens_on_underscore
                         $i = $j+1;
                     }
                 }
-                ###!!! The 'name' relations should not bypass prepositions.
-                ###!!! Nouns with prepositions should be attached to the head of the prevous cluster as 'nmod', not 'name'.
+                ###!!! The 'flat' relations should not bypass prepositions.
+                ###!!! Nouns with prepositions should be attached to the head of the prevous cluster as 'nmod', not 'flat'.
                 # Now the first subnode is the head even if it is not the original node (Prague coordination).
                 # The parent is set correctly but the is_member flag is not; fix it.
                 $subnodes[0]->set_is_member($mwe_is_member);
@@ -841,7 +859,7 @@ sub split_tokens_on_underscore
             elsif($node->is_interjection())
             {
                 # It is only a few expressions but we would have to analyze them all manually.
-                # Neither mwe nor compound seems to be a good fit for these. Let's get around with 'dep' for the moment.
+                # Neither fixed nor compound seems to be a good fit for these. Let's get around with 'dep' for the moment.
                 my @subnodes = $self->generate_subnodes(\@nodes, $i, \@words, 'dep');
                 $self->tag_nodes(\@subnodes, {'pos' => 'int'});
             }
@@ -900,6 +918,45 @@ sub generate_subnodes
     for(my $j = $i + 1; $j <= $#{$nodes}; $j++)
     {
         $nodes->[$j]->_set_ord( $ord + $n + ($j - $i - 1) );
+    }
+    # If the original node had no_space_after set, this flag must be now set at the last subnode!
+    if($node->no_space_after() && scalar(@new_nodes)>0)
+    {
+        $node->set_no_space_after(undef);
+        $new_nodes[-1]->set_no_space_after(1);
+    }
+    # In addition, some guessing of no_space_after that we did in W2W::EstimateNoSpaceAfter must now be redone on the new nodes.
+    # For example, if the MWE was "La_Casa_d'_Andalusia", we now have "d'" that does not know that it should be adjacent to "Andalusia".
+    # The same holds for single quotes, e.g. "Fundació_'_la_Caixa_'".
+    if(scalar(@new_nodes) > 0)
+    {
+        my @all_nodes = ($node, @new_nodes);
+        my $nsq = 0;
+        for(my $i = 0; $i < $#all_nodes; $i++)
+        {
+            my $current_node = $all_nodes[$i];
+            if($current_node->form() =~ m/\pL'$/)
+            {
+                $current_node->set_no_space_after(1);
+            }
+            # Odd undirected quotes are considered opening, even are closing.
+            # It will not work if a quote is missing or if the quoted text spans multiple sentences.
+            if($current_node->form() eq "'")
+            {
+                $nsq++;
+                # If the number of quotes is even, the no_space_after flag has been set at the previous token.
+                # If the number of quotes is odd, we must set the flag now.
+                if($nsq % 2 == 1)
+                {
+                    $current_node->set_no_space_after(1);
+                }
+            }
+            # If the current number of quotes is odd, the next quote will be even.
+            if($all_nodes[$i+1]->form() eq "'" && $nsq % 2 == 1)
+            {
+                $current_node->set_no_space_after(1);
+            }
+        }
     }
     # Return the list of new nodes.
     return ($node, @new_nodes);
@@ -1248,7 +1305,7 @@ sub attach_left_function_words
 
 #------------------------------------------------------------------------------
 # In the Croatian SETimes corpus, given name of a person depends on the family
-# name, and the relation is labeled as apposition. Change the label to 'name'.
+# name, and the relation is labeled as apposition. Change the label to 'flat'.
 # This should be done before we start structural transformations.
 #------------------------------------------------------------------------------
 sub relabel_appos_name
@@ -1265,7 +1322,7 @@ sub relabel_appos_name
             next if($parent->is_root());
             if($node->is_proper_noun() && $parent->is_proper_noun() && $self->agree($node, $parent, 'case'))
             {
-                $node->set_deprel('name');
+                $node->set_deprel('flat');
             }
         }
     }
@@ -1341,8 +1398,8 @@ sub fix_em_que_de_que
 
 
 #------------------------------------------------------------------------------
-# If a verb has an auxpass(:refl) child, its subject must be also *pass. We
-# try to get the subjects right already during deprel conversion, checking
+# If a verb has an aux:pass or expl:pass child, its subject must be also *pass.
+# We try to get the subjects right already during deprel conversion, checking
 # whether the parent is a passive participle. But that will not work for
 # reflexive passives, where we have to wait until the reflexive pronoun has its
 # deprel. Probably it will also not work if the participle does not have the
@@ -1359,18 +1416,18 @@ sub check_ncsubjpass_when_auxpass
     foreach my $node (@nodes)
     {
         my @children = $node->children();
-        my @auxpass = grep {$_->deprel() =~ m/^auxpass/} (@children);
+        my @auxpass = grep {$_->deprel() =~ m/^(aux|expl):pass$/} (@children);
         if(scalar(@auxpass) > 0)
         {
             foreach my $child (@children)
             {
                 if($child->deprel() eq 'nsubj')
                 {
-                    $child->set_deprel('nsubjpass');
+                    $child->set_deprel('nsubj:pass');
                 }
                 elsif($child->deprel() eq 'csubj')
                 {
-                    $child->set_deprel('csubjpass');
+                    $child->set_deprel('csubj:pass');
                 }
             }
         }
@@ -1392,7 +1449,7 @@ sub dissolve_chains_of_auxiliaries
     foreach my $node (@nodes)
     {
         # An auxiliary verb may be attached to another auxiliary verb in coordination ([cs] "byl a bude prodáván").
-        # Thus we must check whether the deprel is aux (or auxpass). We also cannot dissolve the chain if the
+        # Thus we must check whether the deprel is aux (or aux:pass). We also cannot dissolve the chain if the
         # grandparent is root.
         if($node->iset()->is_auxiliary() && $node->parent()->iset()->is_auxiliary() && $node->deprel() =~ m/^aux/ && !$node->parent()->parent()->is_root())
         {
@@ -1513,6 +1570,9 @@ sub classify_numerals
 
 
 #------------------------------------------------------------------------------
+###!!! THIS METHOD SHOULD NOT BE USED UNDER UD V2! HOWEVER, I TEMPORARILY KEEP
+###!!! IT HERE BECAUSE WE MAY WANT TO USE IT FOR SELECTED WORDS, E.G. CZECH
+###!!! "to".
 # Changes some determiners to pronouns, based on syntactic annotation.
 # The Interset driver of the PDT tagset divides pronouns to pronouns and
 # determiners. It knows that some pronouns are capable of acting as determiners
@@ -1592,7 +1652,7 @@ sub fix_determiners {
                         # If it is attached via one of the following relations, it is a pronoun, not a determiner.
                         ###!!! We include 'conj' because conjuncts are more often than not pronouns and we do not want to implement the correct treatment of coordinations.
                         ###!!! Nevertheless it is possible that determiners are coordinated: "ochutnala můj i tvůj oběd".
-                        if($node->deprel() =~ m/^(nsubj|dobj|iobj|xcomp|advmod|case|appos|conj|cc|discourse|parataxis|foreign|dep)$/)
+                        if($node->deprel() =~ m/^(nsubj|obj|iobj|xcomp|advmod|case|appos|conj|cc|discourse|parataxis|flat:foreign|dep)$/)
                         {
                             $change = 1;
                         }
@@ -1659,48 +1719,6 @@ sub agree
         return 1 if($i2->contains($feature, $v1));
     }
     return 0;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Sanity check: everything that is tagged DET must be attached as det.
-#------------------------------------------------------------------------------
-sub check_determiners
-{
-    my $self  = shift;
-    my $root  = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        my $form = defined($node->form()) ? $node->form() : '<EMPTY>';
-        my $pform = $node->parent()->is_root() ? '<ROOT>' : defined($node->parent()->form()) ? $node->parent()->form() : '<EMPTY>';
-        my $npform;
-        if($node->parent()->ord() < $node->ord())
-        {
-            $npform = "($pform) $form";
-        }
-        else
-        {
-            $npform = "$form ($pform)";
-        }
-        # Determiner is a pronominal adjective.
-        my $iset = $node->iset();
-        if($iset->upos() eq 'DET')
-        {
-            if($node->deprel() !~ m/^(det(:numgov|:nummod)?|mwe)$/)
-            {
-                log_warn($npform.' is tagged DET but is not attached as det but as '.$node->deprel());
-            }
-        }
-        elsif($node->deprel() eq 'det')
-        {
-            if($iset->upos() ne 'DET')
-            {
-                log_warn($npform.' is attached as det but is not tagged DET');
-            }
-        }
-    }
 }
 
 
@@ -1792,7 +1810,7 @@ sub relabel_subordinate_clauses
                 {
                     # The Croatian treebank analyzes both subordinating conjunctions and relative pronouns
                     # the same way. We want to separate them again. Pronouns should not be labeled 'mark'.
-                    # They probably fill a slot in the frame of the subordinate verb: 'nsubj', 'dobj' etc.
+                    # They probably fill a slot in the frame of the subordinate verb: 'nsubj', 'obj' etc.
                     if($mark->is_pronoun() && $mark->is_noun())
                     {
                         my $case = $mark->iset()->case();
@@ -1802,7 +1820,7 @@ sub relabel_subordinate_clauses
                         }
                         else
                         {
-                            $mark->set_deprel('dobj');
+                            $mark->set_deprel('obj');
                         }
                     }
                 }
@@ -1821,6 +1839,66 @@ sub relabel_subordinate_clauses
             }
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the sentence text, observing the current setting of no_space_after
+# and of the fused multi-word tokens (still stored as wild attributes).
+#------------------------------------------------------------------------------
+sub collect_sentence_text
+{
+    my $self = shift;
+    my @nodes = @_;
+    my $text = '';
+    for(my $i = 0; $i<=$#nodes; $i++)
+    {
+        my $node = $nodes[$i];
+        my $wild = $node->wild();
+        my $fused = $wild->{fused};
+        if(defined($fused) && $fused eq 'start')
+        {
+            my $first_fused_node_ord = $node->ord();
+            my $last_fused_node_ord = $wild->{fused_end};
+            my $last_fused_node_no_space_after = 0;
+            # We used to save the ord of the last element with every fused element but now it is no longer guaranteed.
+            # Let's find out.
+            if(!defined($last_fused_node_ord))
+            {
+                for(my $j = $i+1; $j<=$#nodes; $j++)
+                {
+                    $last_fused_node_ord = $nodes[$j]->ord();
+                    $last_fused_node_no_space_after = $nodes[$j]->no_space_after();
+                    last if(defined($nodes[$j]->wild()->{fused}) && $nodes[$j]->wild()->{fused} eq 'end');
+                }
+            }
+            else
+            {
+                my $last_fused_node = $nodes[$last_fused_node_ord-1];
+                log_fatal('Node ord mismatch') if($last_fused_node->ord() != $last_fused_node_ord);
+                $last_fused_node_no_space_after = $last_fused_node->no_space_after();
+            }
+            if(defined($first_fused_node_ord) && defined($last_fused_node_ord))
+            {
+                $i += $last_fused_node_ord - $first_fused_node_ord;
+            }
+            else
+            {
+                log_warn("Cannot determine the span of a fused token");
+            }
+            $text .= $wild->{fused_form};
+            $text .= ' ' unless($last_fused_node_no_space_after);
+        }
+        else
+        {
+            $text .= $node->form();
+            $text .= ' ' unless($node->no_space_after());
+        }
+    }
+    $text =~ s/^\s+//;
+    $text =~ s/\s+$//;
+    return $text;
 }
 
 

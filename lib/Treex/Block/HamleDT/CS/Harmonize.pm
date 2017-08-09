@@ -38,7 +38,6 @@ sub process_zone
             $bundle->set_id($sentence_id);
         }
     }
-    $self->remove_features_from_lemmas($root);
     return;
 }
 
@@ -57,6 +56,108 @@ sub get_input_tag_for_interset
     my $self   = shift;
     my $node   = shift;
     return $node->tag();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Adds Interset features that cannot be decoded from the PDT tags but they can
+# be inferred from lemmas and word forms. This method is called from
+# SUPER->process_zone().
+#------------------------------------------------------------------------------
+sub fix_morphology
+{
+    my $self = shift;
+    my $root = shift;
+    # We must first normalize the lemmas because many subsequent rules depend on them.
+    $self->remove_features_from_lemmas($root);
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $lemma = $node->lemma();
+        # Fix Interset features of pronominal words.
+        if($node->is_pronominal())
+        {
+            # Indefinite pronouns and determiners cannot be distinguished by their PDT tag (PZ*).
+            if($lemma =~ m/^((ně|lec|ledas?|kde|bůhví|kdoví|nevím|málo|sotva)?(kdo|cos?)(si|koliv?)?|nikdo|nic)$/)
+            {
+                $node->iset()->set('pos', 'noun');
+            }
+            elsif($lemma =~ m/(^(jaký|který)|(jaký|který)$|^(každý|všechen|sám|žádný)$)/)
+            {
+                $node->iset()->set('pos', 'adj');
+            }
+            # Pronouns čí, něčí, čísi, číkoli, ledačí, kdečí, bůhvíčí, nevímčí, ničí should have Poss=Yes.
+            elsif($lemma =~ m/^((ně|lec|ledas?|kde|bůhví|kdoví|nevím|ni)?čí|čí(si|koliv?))$/)
+            {
+                $node->iset()->set('pos', 'adj');
+                $node->iset()->set('poss', 'poss');
+            }
+            # Pronoun (determiner) "sám" is difficult to classify in the traditional Czech system but in UD v2 we now have the prontype=emph, which is quite suitable.
+            if($lemma eq 'sám')
+            {
+                $node->iset()->set('prontype', 'emp');
+            }
+            # Pronominal numerals are all treated as combined demonstrative and indefinite, because the PDT tag is only one.
+            # But we can distinguish them by the lemma.
+            if($lemma =~ m/^kolikráte?$/)
+            {
+                $node->iset()->set('prontype', 'int|rel');
+            }
+            elsif($lemma =~ m/^((po)?((ně|kdoví|bůhví|nevím)kolik|(ne|pře)?(mnoho|málo)|(nej)?(více?|méně|míň)|moc|mó+c|hodně|bezpočtu|nespočet|nesčíslně)(átý|áté|erý|ero|k?ráte?)?)$/)
+            {
+                $node->iset()->set('prontype', 'ind');
+            }
+            elsif($lemma =~ m/^tolik(ráte?)?$/)
+            {
+                $node->iset()->set('prontype', 'dem');
+            }
+        }
+        # Pronominal adverbs.
+        if($node->is_adverb())
+        {
+            if($lemma =~ m/^(kde|kam|odkud|kudy|kdy|odkdy|dokdy|jak|proč)$/)
+            {
+                $node->iset()->set('prontype', 'int|rel');
+            }
+            elsif($lemma =~ m/^((ně|ledas?|málo|kde|bůhví|nevím)(kde|kam|kudy|kdy|jak)|(od|do)ně(kud|kdy)|(kde|kam|odkud|kudy|kdy|jak)(si|koliv?))$/)
+            {
+                $node->iset()->set('prontype', 'ind');
+            }
+            elsif($lemma =~ m/^(tady|zde|tu|tam|tamhle|onam|odsud|odtud|odtamtud|teď|nyní|tehdy|tentokráte?|tenkráte?|odtehdy|dotehdy|dosud|tak|proto)$/)
+            {
+                $node->iset()->set('prontype', 'dem');
+            }
+            elsif($lemma =~ m/^(všude|odevšad|všudy|vždy|odevždy|odjakživa|navždy)$/)
+            {
+                $node->iset()->set('prontype', 'tot');
+            }
+            elsif($lemma =~ m/^(nikde|nikam|odnikud|nikudy|nikdy|odnikdy|donikdy|nijak)$/)
+            {
+                $node->iset()->set('prontype', 'neg');
+            }
+        }
+        # Passive participles should be adjectives both in their short (predicative)
+        # and long (attributive) form. Now the long forms are adjectives and short
+        # forms are verbs (while the same dichotomy of non-verbal adjectives, such as
+        # starý-stár, is kept within adjectives).
+        if($node->is_verb() && $node->is_participle() && $node->iset()->is_passive())
+        {
+            $node->iset()->set('pos', 'adj');
+            $node->iset()->set('variant', 'short');
+            # That was the easy part. But we must also change the lemma.
+            # nést-nesen-nesený, brát-brán-braný, mazat-mazán-mazaný, péci-pečen-pečený, zavřít-zavřen-zavřený, tisknout-tištěn-tištěný, minout-minut-minutý, začít-začat-začatý,
+            # krýt-kryt-krytý, kupovat-kupován-kupovaný, prosit-prošen-prošený, trpět-trpěn-trpěný, sázet-sázen-sázený, dělat-dělán-dělaný
+            my $form = lc($node->form());
+            # Remove gender/number morpheme if present.
+            $form =~ s/[aoiy]$//;
+            # Stem vowel change "á" to "a".
+            $form =~ s/án$/an/;
+            # Add the ending of masculine singular nominative long adjectives.
+            $form .= 'ý';
+            $node->set_lemma($form);
+        }
+    }
 }
 
 
@@ -136,10 +237,59 @@ sub remove_features_from_lemmas
         # According to the documentation in http://ufal.mff.cuni.cz/techrep/tr27.pdf, lemmas may also encode the part of speech:
         # _:[NAJZMVDPCIFQX]
         # However, none of these codes actually appears in PDT 3.0 data.
+        # According to the documentation in http://ufal.mff.cuni.cz/techrep/tr27.pdf, lemmas may also encode style:
+        # _,[tnashelvx]
+        # It is not necessarily the same thing as the style in inflection.
+        # For instance, "zelenej" is a colloquial form of a neutral lemma "zelený".
+        # However, "zpackaný" is a colloquial lemma, regardless whether the form is "zpackaný" (neutral) or "zpackanej" (colloquial).
         # Move the foreign feature from the lemma to the Interset features.
         if($lemma =~ s/_,t//)
         {
             $iset->set('foreign', 'foreign');
+        }
+        # Vernacular (dialect)
+        if($lemma =~ s/_,n//)
+        {
+            # Examples: súdit, husličky
+            $iset->set('style', 'vrnc');
+        }
+        # The style flat _,a means "archaic" but it seems to be used inconsistently in the data. Discard it.
+        # The style flat _,s means "bookish" but it seems to be used inconsistently in the data. Discard it.
+        $lemma =~ s/_,[as]//;
+        # Colloquial
+        if($lemma =~ s/_,h//)
+        {
+            # Examples: vejstraha, bichle
+            $iset->set('style', 'coll');
+        }
+        # Expressive
+        if($lemma =~ s/_,e//)
+        {
+            # Examples: miminko, hovínko
+            $iset->set('style', 'expr');
+        }
+        # Slang, argot
+        if($lemma =~ s/_,l//)
+        {
+            # Examples: mukl, děcák, pécéčko
+            $iset->set('style', 'slng');
+        }
+        # Vulgar
+        if($lemma =~ s/_,v//)
+        {
+            # Examples: parchant, bordelový
+            $iset->set('style', 'vulg');
+        }
+        # The style flag _,x means, according to documentation, "outdated spelling or misspelling".
+        # But it occurs with a number of alternative spellings and sometimes it is debatable whether they are outdated, e.g. "patriotismus" vs. "patriotizmus".
+        # And there is one clear bug: lemma "serioznóst" instead of "serióznost".
+        if($lemma =~ s/_,x//)
+        {
+            # According to documentation in http://ufal.mff.cuni.cz/techrep/tr27.pdf,
+            # 2 means "variant, rarely used, bookish, or archaic".
+            $iset->set('variant', '2');
+            $iset->set('style', 'rare');
+            $lemma =~ s/^serioznóst$/serióznost/;
         }
         # Term categories encode (among others) types of named entities.
         # There may be two categories at one lemma.
@@ -167,14 +317,14 @@ sub remove_features_from_lemmas
                 $iset->set('nountype', 'prop');
             }
         }
-        elsif($node->is_noun() && !$node->is_pronoun())
+        elsif($node->is_noun() && !$node->is_pronoun() && $iset->nountype() eq '')
         {
             $iset->set('nountype', 'com');
         }
         # Numeric value after lemmas of numeral words.
         # Example: třikrát`3
         my $wild = $node->wild();
-        if($lemma =~ s/\`(\d+)//)
+        if($lemma =~ s/\`(\d+)//) # `
         {
             $wild->{lnumvalue} = $1;
         }
@@ -468,8 +618,12 @@ minor changes take place. Morphological tags are decoded into Interset.
 
 =back
 
-=cut
+=head1 AUTHORS
 
-# Copyright 2011, 2014, 2015 Dan Zeman <zeman@ufal.mff.cuni.cz>
+Daniel Zeman <zeman@ufal.mff.cuni.cz>
 
-# This file is distributed under the GNU General Public License v2. See $TMT_ROOT/README.
+=head1 COPYRIGHT AND LICENSE
+
+Copyright © 2011, 2014, 2015 by Institute of Formal and Applied Linguistics, Charles University, Prague
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

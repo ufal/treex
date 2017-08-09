@@ -110,30 +110,30 @@ my %conversion_table =
     'appos'     => 'appos',
     'attr'      => 'pnom', # predicative attribute (nominal predicate); structural transformation needed
     'aux'       => 'aux',
-    'auxpass'   => 'auxpass',
+    'auxpass'   => 'aux:pass',
     'cc'        => 'cc',
     'ccomp'     => 'ccomp',
-    'compmod'   => 'name', # Typically first name attached to last name (reversion needed). Can it be a compound noun too?
+    'compmod'   => 'flat', # Typically first name attached to last name (reversion needed). Can it be a compound noun too?
     'conj'      => 'conj',
     'csubj'     => 'csubj',
-    'csubjpass' => 'csubjpass',
+    'csubjpass' => 'csubj:pass',
     'dep'       => 'dep',
     'det'       => 'det',
-    'dobj'      => 'dobj',
+    'dobj'      => 'obj',
     'infmod'    => 'acl:inf', # infinitival clause used as a non-core dependent; rare; e.g. modifying a noun in "um pedido..., a ser analisado pelo STF, ..."
     'iobj'      => 'iobj',
     'mark'      => 'mark',
-    'mwe'       => 'mwe',
-    'neg'       => 'neg',
+    'mwe'       => 'fixed',
+    'neg'       => 'advmod',
     'nmod'      => 'nmod',
     'nsubj'     => 'nsubj',
-    'nsubjpass' => 'nsubjpass',
+    'nsubjpass' => 'nsubj:pass',
     'num'       => 'nummod',
     'p'         => 'punct',
     'parataxis' => 'parataxis',
     'partmod'   => 'acl:part', # participle acting as an adjectival modifier
     'poss'      => 'det:poss', # possessive determiner (pronoun)
-    'prt'       => 'expl', # the reflexive pronoun "se" when tagged as particle and used with an inherently reflexive verb ###!!! also compound:prt in Germanic languages?
+    'prt'       => 'expl:pv', # the reflexive pronoun "se" when tagged as particle and used with an inherently reflexive verb ###!!! also compound:prt in Germanic languages?
     'rcmod'     => 'acl:relcl', # relative clause
     'xcomp'     => 'xcomp'
 );
@@ -281,6 +281,8 @@ sub fix_sentence_segmentation
         }
         # Create bundles for the new sentences.
         my $current_bundle = $root->get_bundle();
+        my $current_sid = $current_bundle->id();
+        $current_bundle->set_id($current_sid.'a');
         my $document = $current_bundle->get_document();
         for(my $i = 1; $i<=$#sentences; $i++)
         {
@@ -288,6 +290,10 @@ sub fix_sentence_segmentation
             # If there are other zones in the source bundle (probably the 'orig' zone?), they will not be copied.
             # The entire original tree will stay with the converted tree of the first sentence.
             my $new_bundle = $document->create_bundle({'after' => $current_bundle});
+            # Get letter that will distinguish the new sentence in id. Make sure we do not go past 'z'.
+            log_fatal("Unexpectedly high number of sub-sentences") if($i > 25);
+            my $letter = chr(ord('a')+$i);
+            $new_bundle->set_id($current_sid.$letter);
             my $new_zone = $new_bundle->create_zone($self->language(), $self->selector());
             my $new_tree = $new_zone->create_atree();
             # Get the minimal and maximal ords in this sentence.
