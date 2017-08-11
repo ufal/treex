@@ -7,6 +7,7 @@ has to_language => ( isa => 'Str', is => 'ro', required => 1 );
 has to_selector => ( isa => 'Str', is => 'ro', default  => '' );
 has from        => ( isa => 'Str', is => 'ro', required => 1 );
 has inputcols   => ( isa => 'Str', is => 'ro', default  => 'int' );
+has delete_old  => ( isa => 'Bool', is => 'ro', default => 1 );
 
 #has skipped => ( isa => 'Str', is => 'ro');
 
@@ -57,8 +58,10 @@ sub process_atree {
     my ( $self, $a_root ) = @_;
 
     # delete previously made links
-    foreach my $a_node ( $a_root->get_descendants ) {
-        $a_node->set_attr( 'alignment', [] );
+    if ($self->delete_old) {
+        foreach my $a_node ( $a_root->get_descendants ) {
+            $a_node->set_attr( 'alignment', [] );
+        }
     }
 
     my $sentence_id = $a_root->get_document->loaded_from . "-" . $a_root->get_bundle->id;
