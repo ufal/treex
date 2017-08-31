@@ -22,9 +22,6 @@ sub process_tnode {
     my $functor;
     # Process infinitives only
     if ($verb->is_infin) {
-        # Some infinitives may have subject (actor) on surface -> let's skip them
-        return if any {$_->functor eq 'ACT'} $verb->get_children();
-
         $functor = "ACT";
     }
     elsif (is_present_participle($verb)) {
@@ -36,6 +33,9 @@ sub process_tnode {
     else {
         return;
     }
+        
+    # Some non-finite constructions may have the key argument expressed on surface -> let's skip them
+    return if any {$_->functor eq $functor} $verb->get_children();
 
     # Add the generated #Cor node
     my $cor = $verb->create_child(
