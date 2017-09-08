@@ -44,6 +44,7 @@ sub process_zone {
 
     $self->align_generated_nodes_by_tlemma_functor_parent($auto_free, $ref_free);
     $self->align_generated_nodes_by_functor_parent($auto_free);
+    $self->align_arguments_of_nonfinites_to_grandparents($auto_free);
 }
 
 sub _get_related_verbs_via_alayer {
@@ -100,6 +101,25 @@ sub align_generated_nodes_by_functor_parent {
         $ref_eq->add_aligned_node( $auto_node, 'monolingual.loose' );
         delete $auto_free->{$auto_node->id};
     }
+}
+
+sub align_arguments_of_nonfinites_to_grandparents {
+    my ($self, $auto_free) = @_;
+
+    foreach my $auto_node (values %$auto_free) {
+        my $auto_par = $auto_node->get_parent;
+        next if (!$auto_par);
+        my ($ref_par) = Treex::Tool::Align::Utils::aligned_transitively([$auto_par], [{rel_types => ['monolingual']}]);
+        next if (!$ref_par);
+        next if ($ref_par->formeme !~ /^adj/);
+        
+        my @ref_grand_epars = $ref_par->get_eparents;
+        foreach my $ref_grand_epar (@ref_grand_epars) {
+            $ref_grand_epar->add_aligned_node( $auto_node, 'monolingual.loose' );
+        }
+        delete $auto_free->{$auto_node->id};
+    }
+
 }
 
 1;
