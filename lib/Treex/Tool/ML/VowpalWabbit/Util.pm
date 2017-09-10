@@ -6,6 +6,7 @@ use List::Util qw/min/;
 
 my $SHARED_LABEL = "shared";
 my $FEAT_VAL_DELIM = "=";
+my $FEAT_WEIGHT_DELIM = "__WDELIM__";
 my $SELF_LABEL = "__SELF__";
 
 sub _add_default_args {
@@ -103,6 +104,24 @@ sub parse_multiline {
     return map {$items{$_}} @{$args->{items}}
 }
 
+sub format_instance {
+    my ($feats, $labels, $comments, $tags) = @_;
+
+    my ($cand_feats, $shared_feats) = @$feats;
+    # multiline instance
+    if (defined $cand_feats && @$cand_feats) {
+        return format_multiline($feats, $labels, $comments, $tags);
+    }
+    # singleline instance
+    else {
+        if (!defined $tags) {
+            $tags = $labels;
+        }
+        return format_singleline($shared_feats, $labels, $tags, $comments);
+    }
+}
+
+
 sub format_multiline {
     my ($feats, $losses, $comments, $tags) = @_;
 
@@ -162,7 +181,18 @@ sub format_singleline {
             ref($_) eq 'ARRAY' ?
                 ($_->[0] =~ /^\|/ ?
                     $_->[0] :
-                    join $FEAT_VAL_DELIM, @$_) :
+                    $_->[0] . ((defined $_->[1] || defined $_->[2]) ?
+                        (
+                            (defined $_->[1] ? 
+                                $FEAT_VAL_DELIM . $_->[1] : 
+                                ""
+                            ).(defined $_->[2] ? 
+                                $FEAT_WEIGHT_DELIM . sprintf("%.2f", $_->[2]) :
+                                ""
+                            )
+                        ) :
+                        undef)
+                ) :
                 $_;
         } @$feats;
         $feat_str .= join " ", (map {feat_perl_to_vw($_)} @feats_items);
@@ -282,6 +312,9 @@ sub feat_perl_to_vw {
     $feat =~ s/^\|/:/g;
     $feat =~ s/\|/__PIPE__/g;
     $feat =~ s/:/\|/g;
+
+    # the only place where ":" is allowed is the feature weight delimiter
+    $feat =~ s/$FEAT_WEIGHT_DELIM/:/g;
     
     $feat =~ s/\t/__TAB__/g;
     $feat =~ s/ /__SPACE__/g;

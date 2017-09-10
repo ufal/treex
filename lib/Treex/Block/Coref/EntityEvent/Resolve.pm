@@ -36,7 +36,10 @@ sub BUILD {
     $self->_feature_extractor;
     $self->_ante_cands_selector;
 }
-
+sub build_aligned_feats {
+    my ($self) = @_;
+    return 0;
+}
 sub _build_ranker {
     my ($self) = @_;
     return log_fatal "method _build_ranker must be overriden in " . ref($self);
