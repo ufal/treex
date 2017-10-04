@@ -8,14 +8,14 @@ has model => (
     is            => 'ro',
     isa           => 'Str',
     required      => 1,
-    documentation => 'filename of the model to be used relative to model_dir',
+    documentation => 'base filename of the models to be used, relative to model_dir',
 );
 
 has model_dir => (
     is            => 'ro',
     isa           => 'Str',
     default       => 'data/models/discourse/CS',
-    documentation => 'path to the model relative to Treex resource_path',
+    documentation => 'path to the models relative to Treex resource_path',
 );
 
 has classifier => (
@@ -30,19 +30,56 @@ sub process_zone {
 
 sub print_footer {
   my ($self, $doc) = @_;
+  
+  my %predicted_classes;
+  my %predicted_probabilities;
 
-  my $evald_features_file_name = $doc->full_filename . ".arff";
+  my @SETS = qw(all spelling morphology vocabulary syntax connectives_quantity connectives_diversity coreference);
+  
+  my $info_string = "\n\n================================================================================\n\nWEKA Evaluation Results for individual sets of features:\n\n";
 
-  my $arff = $doc->{'coherence_weka_arff'};
+  foreach my $set (@SETS) {
+    
+    # get the features in the arff format from the previous Treex block:
+    my $arff = $doc->{"coherence_weka_arff_$set"};
+    
+    # write it to a file to allow Weka to read it
+    my $evald_features_file_name = $doc->full_filename . ".$set.arff";
+    open(my $fh, '>', $evald_features_file_name) or die "Could not open file '$evald_features_file_name' $!";
+    print $fh "$arff";
+    close $fh;
+    
+    # evaluate in weka
+    my $model_name = $self->model . "_$set.model";
+    my @prediction = evaluate_weka($self, $model_name, $evald_features_file_name);
+    ($predicted_classes{$set}, $predicted_probabilities{$set}) = parse_weka_output(@prediction);
+    $info_string .= " - feature set '$set': class = '" . $predicted_classes{$set} . "', probability = '" . $predicted_probabilities{$set} . "'\n";
+  }
+  
+  $info_string .= "\n================================================================================\n";
 
-  open(my $fh, '>', $evald_features_file_name) or die "Could not open file '$evald_features_file_name' $!";
-  print $fh "$arff";
-  close $fh;
+  log_info($info_string);
 
-  # log_info("Evaluate:\n$features\n");
+  my $cs_zone = $doc->get_zone($self->language);
+
+  foreach my $set (@SETS) {
+    $cs_zone->set_attr('set_' . $set . '_evald_class', $predicted_classes{$set});
+    $cs_zone->set_attr('set_' . $set . '_evald_class_prob', $predicted_probabilities{$set});
+  }
+  #print {$self->_file_handle} "@prediction";
+  #if ($predicted_class ne 'N/A') {
+  #  print {$self->_file_handle} $info_string;
+  #}
+
+} # print_footer
+
+sub evaluate_weka {
+  my ($self, $model_name, $evald_features_file_name) = @_;
+  log_debug("Evaluating using model '$model_name'\n");
+
   my $weka_jar = Treex::Core::Resource::require_file_from_share('installed_tools/ml-process/lib/weka-3.8.0.jar');
   # my $weka_model = Treex::Core::Resource::require_file_from_share('data/models/discourse/CS/Merlin_trees.RandomForest.model');
-  my $weka_model = Treex::Core::Resource::require_file_from_share($self->model_dir . '/' . $self->model);
+  my $weka_model = Treex::Core::Resource::require_file_from_share($self->model_dir . '/' . $model_name);
 
   # my $class_name = 'weka.classifiers.trees.RandomForest';
   my $class_name = $self->classifier;
@@ -50,25 +87,9 @@ sub print_footer {
   
   my @prediction = qx($java_cmd);
   log_debug("Result: @prediction");
-
-  my ($predicted_class, $probability) = parse_weka_output(@prediction);
-  my $info_string;
-  if ($predicted_class ne 'N/A') {
-    $info_string = "\n\n================================================================================\n\nThe predicted class for the given text is '$predicted_class', with probability '$probability'\n\n================================================================================\n";
-    log_debug($info_string);
-  }
-
-  my $cs_zone = $doc->get_zone($self->language);
-  $cs_zone->set_attr('evald_class', $predicted_class);
-  $cs_zone->set_attr('evald_class_prob', $probability);
   
-  print {$self->_file_handle} "@prediction";
-  if ($predicted_class ne 'N/A') {
-    print {$self->_file_handle} $info_string;
-  }
-
-} # print_footer
-
+  return @prediction;
+}
 
 =item
 
