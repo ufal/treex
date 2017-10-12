@@ -45,7 +45,7 @@ sub print_footer {
     
     # write it to a file to allow Weka to read it
     my $evald_features_file_name = $doc->full_filename . ".$set.arff";
-    open(my $fh, '>:utf8', $evald_features_file_name) or die "Could not open file '$evald_features_file_name' $!";
+    open(my $fh, '>', $evald_features_file_name) or die "Could not open file '$evald_features_file_name' $!";
     print $fh "$arff";
     close $fh;
     
