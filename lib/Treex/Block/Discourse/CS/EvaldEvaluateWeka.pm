@@ -83,7 +83,7 @@ sub evaluate_weka {
 
   # my $class_name = 'weka.classifiers.trees.RandomForest';
   my $class_name = $self->classifier;
-  my $java_cmd = "java -cp $weka_jar $class_name -l $weka_model -T $evald_features_file_name -p 0";
+  my $java_cmd = "java -Dfile.encoding=UTF8 -cp $weka_jar $class_name -l $weka_model -T $evald_features_file_name -p 0";
   
   my @prediction = qx($java_cmd);
   log_debug("Result: @prediction");
