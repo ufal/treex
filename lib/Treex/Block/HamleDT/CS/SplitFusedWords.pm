@@ -95,6 +95,18 @@ sub split_fused_words
                     last;
                 }
             }
+            # In case of ellipsis, there is no participle and the multi-word token is attached to the root.
+            # Example: "A kdyby..."
+            # In such cases we now have two roots, "když" and "by". We should promote the conditional auxiliary and attach the conjunction as its child.
+            if($new_nodes[0]->parent()->is_root() && $new_nodes[1]->parent()->is_root())
+            {
+                $new_nodes[0]->set_parent($new_nodes[1]);
+                $new_nodes[0]->set_deprel('mark');
+                foreach my $child ($new_nodes[0]->children())
+                {
+                    $child->set_parent($new_nodes[0]);
+                }
+            }
         }
         elsif($node->form() =~ m/^(na|o|za)(č)$/i && $node->iset()->adpostype() eq 'preppron')
         {
