@@ -104,7 +104,7 @@ sub split_fused_words
                 $new_nodes[0]->set_deprel('mark');
                 foreach my $child ($new_nodes[0]->children())
                 {
-                    $child->set_parent($new_nodes[0]);
+                    $child->set_parent($new_nodes[1]);
                 }
             }
         }
