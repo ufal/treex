@@ -55,12 +55,15 @@ sub next_document {
                 if ( !$sid_set && scalar(@sid) >= 1 )
                 {
                     $sid[0] =~ m/^sid=(.+)$/;
-                    $bundle->set_id($1);
+                    $sid = $1;
+                    $bundle->set_id($sid);
+                    $aroot->set_id($sid.'/'.$self->language());
                     $sid_set = 1;
                 }
             }
             my $newnode = $aroot->create_child();
             $newnode->shift_after_subtree($aroot);
+            $newnode->set_id($sid.'-w'.$newnode->ord());
             $newnode->set_form($form);
             $newnode->set_lemma($lemma);
             $newnode->set_tag($pos);
