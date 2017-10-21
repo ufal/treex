@@ -17,6 +17,7 @@ sub process_zone
     my $zone = shift;
     my $root = $zone->get_atree();
     $self->split_fused_words($root);
+    $self->split_multiword_entities_cltt($root);
     $self->fix_jako_kdyby($root);
 }
 
@@ -143,6 +144,46 @@ sub split_fused_words
             );
             $new_nodes[1]->set_parent($new_nodes[0]);
             $new_nodes[1]->set_deprel('cc');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Splits multi-word entities that are treated as single tokens in the Czech
+# Legal Text Treebank (CLTT).
+#------------------------------------------------------------------------------
+sub split_multiword_entities_cltt
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        my $parent = $node->parent();
+        # Some entities are enclosed in quotation marks, which are part of the token. Example:
+        # "* Finanční výsledek hospodaření"
+        # Remove the quotation marks first.
+        if($node->form() =~ m/^"(.+)"$/)
+        {
+            my $w = $1;
+            my $iset_hash = $node->iset()->get_hash();
+            my @new_nodes = $self->split_fused_token
+            (
+                $node,
+                {'form' => '"', 'lemma'  => '"', 'tag' => 'PUNCT', 'conll_pos' => 'Z:-------------',
+                                'iset'   => {'pos' => 'punc'},
+                                'deprel' => 'punct'},
+                {'form' => $w,  'lemma'  => $node->lemma(), 'tag' => $node->tag(), 'conll_pos' => $node->conll_pos(),
+                                'iset'   => $iset_hash,
+                                'deprel' => $node->deprel()},
+                {'form' => '"', 'lemma'  => '"', 'tag' => 'PUNCT', 'conll_pos' => 'Z:-------------',
+                                'iset'   => {'pos' => 'punc'},
+                                'deprel' => 'punct'}
+            );
+            $new_nodes[0]->set_parent($new_nodes[1]);
+            $new_nodes[2]->set_parent($new_nodes[1]);
         }
     }
 }
