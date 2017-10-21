@@ -199,7 +199,8 @@ sub split_multiword_entities_cltt
         }
     }
     ###!!! Tohle teď musíme udělat, když nahoře nahrazujeme mezery podtržítky.
-    $root->get_zone()->set_sentence($self->collect_sentence_text());
+    @nodes = $root->get_descendants({ordered => 1});
+    $root->get_zone()->set_sentence($self->collect_sentence_text(@nodes));
 }
 
 
