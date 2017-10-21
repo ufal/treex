@@ -162,6 +162,17 @@ sub split_multiword_entities_cltt
     foreach my $node (@nodes)
     {
         my $parent = $node->parent();
+        ###!!! Provizorní řešení slov a lemmat, která obsahují mezery. Správně bychom je ale měli rozsekat na uzly!
+        my $form = $node->form();
+        if($form =~ s/ /_/g)
+        {
+            $node->set_form($form);
+        }
+        my $lemma = $node->lemma();
+        if($lemma =~ s/ /_/g)
+        {
+            $node->set_lemma($lemma);
+        }
         # Some entities are enclosed in quotation marks, which are part of the token. Example:
         # "* Finanční výsledek hospodaření"
         # Remove the quotation marks first.
@@ -169,6 +180,7 @@ sub split_multiword_entities_cltt
         {
             my $w = $1;
             my $iset_hash = $node->iset()->get_hash();
+            ###!!! Ovšem s uvozovkami bychom neměli zacházet jako s multi-word tokenem. Měli bychom je prostě obyčejně tokenizovat!
             my @new_nodes = $self->split_fused_token
             (
                 $node,
