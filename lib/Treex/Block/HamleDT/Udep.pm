@@ -299,10 +299,26 @@ sub convert_deprels
             ###!!! We would probably have to consider all valency frames to do that properly.
             ###!!! TODO: An approximation that we probably could do in the meantime is that
             ###!!! if there is one accusative and one or more non-accusatives, then the accusative is the direct object.
-            # If this is an infinitive then it is an xcomp (controlled clausal complement).
-            # If this is a verb form other than infinitive then it is a ccomp.
-            ###!!! TODO: But if the infinitive is part of periphrastic future, then it is ccomp, not xcomp!
-            $deprel = $node->is_verb() ? ($node->is_infinitive() ? 'xcomp' : 'ccomp') : 'obj';
+            $deprel = $node->is_verb() ?  : 'obj';
+            if($node->is_verb())
+            {
+                # If this is an infinitive then it is an xcomp (controlled clausal complement).
+                # If this is a verb form other than infinitive then it is a ccomp.
+                ###!!! TODO: But if the infinitive is part of periphrastic future, then it is ccomp, not xcomp!
+                $deprel = $node->is_infinitive() ? 'xcomp' : 'ccomp';
+            }
+            else # nominal object
+            {
+                # New in UD 2.1 for case-marking Indo-European languages:
+                # Prepositional objects are no longer "obj" but they are also not plain "obl".
+                # Instead, they get a special subtype, "obl:arg".
+                # We convert deprels before the structure is changed, so we can
+                # ask whether the direct parent node is a preposition.
+                ###!!! This will not work properly if there is coordination!
+                ###!!! We should recheck the structure when it has been transformed
+                ###!!! to UD, and see whether there are any "case" dependents.
+                $deprel = $parent->is_adposition() ? 'obl:arg' : 'obj';
+            }
         }
         # Nominal predicate attached to a copula verb.
         elsif($deprel eq 'Pnom')
