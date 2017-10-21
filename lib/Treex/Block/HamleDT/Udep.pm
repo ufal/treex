@@ -299,7 +299,6 @@ sub convert_deprels
             ###!!! We would probably have to consider all valency frames to do that properly.
             ###!!! TODO: An approximation that we probably could do in the meantime is that
             ###!!! if there is one accusative and one or more non-accusatives, then the accusative is the direct object.
-            $deprel = $node->is_verb() ?  : 'obj';
             if($node->is_verb())
             {
                 # If this is an infinitive then it is an xcomp (controlled clausal complement).
