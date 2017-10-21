@@ -198,6 +198,8 @@ sub split_multiword_entities_cltt
             $new_nodes[2]->set_parent($new_nodes[1]);
         }
     }
+    ###!!! Tohle teď musíme udělat, když nahoře nahrazujeme mezery podtržítky.
+    $root->get_zone()->set_sentence($self->collect_sentence_text());
 }
 
 
