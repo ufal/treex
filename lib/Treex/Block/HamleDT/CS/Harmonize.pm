@@ -113,6 +113,19 @@ sub fix_morphology
                 $node->iset()->set('prontype', 'dem');
             }
         }
+        # Jan Hajič's morphological analyzer tags "každý" simply as adjective (hence we did not catch it in the above branch),
+        # but it is an attributive pronoun, according to the Czech grammar.
+        if($lemma eq 'každý')
+        {
+            $node->iset()->set('pos', 'adj');
+            $node->iset()->set('prontype', 'tot');
+        }
+        # The relative pronoun "kterážto" (lemma "kterýžto") has the tag PJFS1----------, which leads to (wrongly) setting PrepCase=Npr,
+        # because otherwise the PJ* tags are used for the various non-prepositional forms of "jenž".
+        if($lemma eq 'kterýžto')
+        {
+            $node->iset()->clear('prepcase');
+        }
         # Pronominal adverbs.
         if($node->is_adverb())
         {
