@@ -1471,6 +1471,12 @@ sub check_ncsubjpass_when_auxpass
                 {
                     $child->set_deprel('csubj:pass');
                 }
+                # Specific to some languages only: if the oblique agent is expressed, it is a bare instrumental noun phrase.
+                # In the Prague-style annotation, it would be labeled as "obj" when we come here.
+                elsif($child->deprel() eq 'obj' && $child->is_instrumental())
+                {
+                    $child->set_deprel('obl:agent');
+                }
             }
         }
     }
