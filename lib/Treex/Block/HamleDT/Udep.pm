@@ -600,6 +600,12 @@ sub relabel_prepositional_objects
     {
         if($node->deprel() =~ m/^i?obj(:|$)/)
         {
+            ###!!! In Slavic languages, this condition does not work well with
+            ###!!! some quantified noun phrases, e.g. in Czech:
+            ###!!! Výbuch zranil kolem padesáti lidí.
+            ###!!! ("Kolem padesáti lidí" = "around fifty people" acts externally
+            ###!!! as neuter singular accusative, but internally its head "lidí"
+            ###!!! is masculine plural genitive and has a prepositional child.)
             if(any {$_->deprel() =~ m/^case(:|$)/} ($node->children()))
             {
                 $node->set_deprel('obl:arg');
