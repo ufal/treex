@@ -69,6 +69,8 @@ sub process_atree {
     $phrase->project_dependencies();
     # The 'cop' relation can be recognized only after transformations.
     $self->tag_copulas_aux($root);
+    # Look for prepositional objects (must be done after transformations).
+    $self->relabel_prepositional_objects($root);
     # Portuguese expressions "cerca_de" and "mais_de" were tagged as prepositions but attached as Atr.
     # Now the MWE are split and "cerca" is attached as nmod. Fix it to case.
     my @nodes = $root->get_descendants({'ordered' => 1});
@@ -578,6 +580,31 @@ sub convert_deprels
     foreach my $node (@nodes)
     {
         delete($node->wild()->{prague_deprel});
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Prepositional objects are considered oblique in many languages, although this
+# is not a universal rule. They should be labeled "obl:arg" instead of "obj".
+# We have tried to identify them during deprel conversion but some may have
+# slipped through because of interaction with coordination or apposition.
+#------------------------------------------------------------------------------
+sub relabel_prepositional_objects
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() =~ m/^[i]obj(:|$)/)
+        {
+            if(any {$_->deprel() =~ m/^case(:|$)/} ($node->children()))
+            {
+                $node->set_deprel('obl:arg');
+            }
+        }
     }
 }
 
