@@ -598,7 +598,7 @@ sub relabel_prepositional_objects
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        if($node->deprel() =~ m/^[i]obj(:|$)/)
+        if($node->deprel() =~ m/^i?obj(:|$)/)
         {
             if(any {$_->deprel() =~ m/^case(:|$)/} ($node->children()))
             {
