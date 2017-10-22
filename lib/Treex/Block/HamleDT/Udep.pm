@@ -87,8 +87,6 @@ sub process_atree {
     $self->dissolve_chains_of_auxiliaries($root);
     $self->fix_jak_znamo($root);
     $self->classify_numerals($root);
-    ###!!! Do not switch between DET and PRON just because there is / is not a modified nominal.
-    ###!!! $self->fix_determiners($root);
     $self->relabel_subordinate_clauses($root);
     $self->check_ncsubjpass_when_auxpass($root);
     $self->raise_punctuation_from_coordinating_conjunction($root);
@@ -381,10 +379,6 @@ sub convert_deprels
             }
             elsif($node->is_determiner() && $self->agree($node, $parent, 'case'))
             {
-                # Warning: In Czech and some other languages the tagset does not distinguish determiners from pronouns.
-                # The distinction is done during Interset decoding, using heuristics.
-                # It is not final at this place. Later in the fix_determiners() method we may decide to change DET back to PRON.
-                # In such case, we will also change det to nmod.
                 $deprel = 'det';
             }
             elsif($node->is_adjective())
@@ -1579,134 +1573,6 @@ sub classify_numerals
         {
             $iset->add('pos' => 'num', 'numtype' => 'card', 'prontype' => 'ind');
         }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-###!!! THIS METHOD SHOULD NOT BE USED UNDER UD V2! HOWEVER, I TEMPORARILY KEEP
-###!!! IT HERE BECAUSE WE MAY WANT TO USE IT FOR SELECTED WORDS, E.G. CZECH
-###!!! "to".
-# Changes some determiners to pronouns, based on syntactic annotation.
-# The Interset driver of the PDT tagset divides pronouns to pronouns and
-# determiners. It knows that some pronouns are capable of acting as determiners
-# nevertheless, they can still be used as pronouns (replacing a noun phrase
-# instead of modifying it). This method tries to figure out whether the word
-# actually modifies a noun phrase as an adjective.
-#
-# Coordination must have been converted before calling this method, because we
-# do not search for effective parent (e.g. in "některého žáka či žákyni").
-# Dependency relation labels must have been converted to UD labels.
-#------------------------------------------------------------------------------
-sub fix_determiners {
-    my ($self, $root)  = @_;
-
-    ###!!! Do not do anything for Maltese. There is no tree structure we could
-    ###!!! rely on. This is definitely not the best place to turn this off, we
-    ###!!! need a more general solution! But right now a quick hack is needed.
-    return if $root->language eq 'mt';
-
-    ###!!!
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        # The is_pronominal() method will catch all pronominal words, i.e. UPOS pronouns (pos=noun), determiners (pos=adj),
-        # even pronominal adverbs (pos=adv) and undecided words if the source tagset does not have determiners (pos=adj|noun).
-        if($node->is_pronominal())
-        {
-            # The is_adjective() method will catch both pos=adj and pos=adj|noun.
-            if($node->is_adjective())
-            {
-                my $parent = $node->parent();
-                my $change = 0; # do not change DET to PRON
-                # Articles are always determiners and never pronouns.
-                unless($node->is_article())
-                {
-                    if(!$parent->is_root())
-                    {
-                        # The common pattern is that the parent is a noun (or pronoun) and that it follows the determiner.
-                        #  possessive: můj pes (my dog)
-                        #  demonstrative: ten pes (that dog)
-                        #  interrogative: který pes (which dog)
-                        #  indefinite: nějaký pes (some dog)
-                        #  total: každý pes (every dog)
-                        #  negative: žádný pes (no dog)
-                        # Sometimes the determiner can follow the noun, instead of preceding it.
-                        #  v Německu samém (in Germany itself)
-                        #  té naší (the our)
-                        #  to vše (that all)
-                        #  nás všechny (us all)
-                        # But we want to rule out genitive constructions where one genitive pronoun post-modifies a noun phrase.
-                        #  nabídka všech (offer of all) (genitive construction; the words do not agree in case)
-                        #  půl tuctu jich (half dozen of them) (genitive construction; the words agree in case because tuctu is incidentially also genitive, but they do not agree in number; in addition, "jich" is a non-possessive personal pronoun which should never become det)
-                        #  firmy All - Impex (foreign determiner All; it cannot agree in case because it does not have case)
-                        #  děvy samy (girls themselves) (the words agree in case but the deprel is Atv, not Atr, thus we should not get through the 'amod' constraint above)
-                        # The tree has not changed from the Prague style except for coordination. Nominal predicates still depend on copulas.
-                        # If it does not modify a noun (adjective, pronoun), it is not a determiner.
-                        $change = 1 if(!$parent->is_noun() && !$parent->is_adjective());
-                        # If they do not agree, it is not a determiner.
-                        $change = 1 if(!$self->agree($node, $parent, 'case'));
-                        # The following Czech pronouns are never used as determiners:
-                        # - personal (not possessive) pronouns, including non-possessive reflexives
-                        # - *kdo, *co, nic
-                        # - "to" in the compound conjunction "a to"
-                        if($node->iset()->prontype() eq 'prs' && !$node->is_possessive() ||
-                           $node->form() =~ m/(kdo|co|^nic)$/i)
-                        {
-                            $change = 1;
-                        }
-                        elsif(lc($node->form()) eq 'to')
-                        {
-                            my @children = $node->children();
-                            if(any {lc($_->form()) eq 'a'} @children)
-                            {
-                                $change = 1;
-                            }
-                        }
-                        # If it is attached via one of the following relations, it is a pronoun, not a determiner.
-                        ###!!! We include 'conj' because conjuncts are more often than not pronouns and we do not want to implement the correct treatment of coordinations.
-                        ###!!! Nevertheless it is possible that determiners are coordinated: "ochutnala můj i tvůj oběd".
-                        if($node->deprel() =~ m/^(nsubj|obj|iobj|xcomp|advmod|case|appos|conj|cc|discourse|parataxis|flat:foreign|dep)$/)
-                        {
-                            $change = 1;
-                        }
-                    }
-                    else
-                    {
-                        # Neither pronoun nor determiner normally depend directly on the root.
-                        # They do so only in the case of ellipsis. Then we will call them pronouns, not determiners (usually it is their verbal head what has been deleted).
-                        $change = 1;
-                    }
-                }
-                if($change)
-                {
-                    # Change DET to PRON by changing Interset part of speech from adj to noun.
-                    $node->iset()->set('pos', 'noun');
-                    # The current deprel is probably det but that is not compatible with the word being tagged PRON. Change the deprel as well.
-                    $node->set_deprel('nmod') if($node->deprel() eq 'det');
-                }
-                else
-                {
-                    # We do not want words undecided between determiners and pronouns (pos=adj|noun).
-                    # Once we decided that a word is determiner, we will state it clearly (pos=adj)!
-                    $node->iset()->set('pos', 'adj');
-                }
-            } # if pos=adj or something + adj
-            # Pronominal numerals (quantifiers) "kolik", "mnoho" etc. are not determiners if they are not used together with a counted noun.
-            # They may be used e.g. as an object: "Kolik to stojí?" = "How-much it costs?"
-            # Important: We assume that the high-value numerals have been pushed down first.
-            # But beware: some numerals are adverbs and not pronouns (e.g. Portuguese "mais").
-            elsif($node->is_numeral() && !$node->is_adverb())
-            {
-                if($node->deprel() !~ m/^det(:numgov|:nummod)?$/)
-                {
-                    # If the dependency relation is not determiner-like, we do not want it tagged DET.
-                    # Then the next acceptable tag is PRON, which means we have to change Interset pos to noun.
-                    $node->iset()->set('pos', 'noun');
-                }
-            }
-        } # if is pronoun
     }
 }
 
