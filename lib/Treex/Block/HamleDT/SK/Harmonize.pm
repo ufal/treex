@@ -293,7 +293,7 @@ sub fix_morphology
             if($node->is_participle())
             {
                 #if($lemma !~ m/ť$/)
-                if($form !~ m/l[aoi]?$/)
+                if($form !~ m/l[aoiy]?$/i)
                 {
                     $iset->set('pos', 'adj');
                 }
