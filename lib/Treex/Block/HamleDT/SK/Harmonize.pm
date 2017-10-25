@@ -239,6 +239,19 @@ sub fix_morphology
                 $iset->set('pos', 'adv');
                 $iset->set('prontype', 'neg');
             }
+            # Now that we know personal (and possessive personal) pronouns (and determiners), we can mark their person value.
+            if($lemma =~ m/^(ja|my|môj|náš)$/)
+            {
+                $iset->set('person', 1);
+            }
+            elsif($lemma =~ m/^(ty|vy|tvoj|váš)$/)
+            {
+                $iset->set('person', 2);
+            }
+            elsif($lemma =~ m/^(on|ona|ono|jeho|jej|ich)$/)
+            {
+                $iset->set('person', 3);
+            }
         }
         # Ordinal and multiplicative numerals must be distinguished from cardinals.
         if($node->is_numeral())
