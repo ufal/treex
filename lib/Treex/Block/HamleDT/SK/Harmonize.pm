@@ -297,6 +297,9 @@ sub fix_morphology
                 {
                     $iset->set('pos', 'adj');
                 }
+                # We do not annotate person with Slavic participles because it is not expressed morphologically.
+                # However, the l-participles in Slovak seem to have the person feature.
+                $iset->clear('person');
             }
         }
         # Distinguish coordinating and subordinating conjunctions.
