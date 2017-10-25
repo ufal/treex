@@ -57,6 +57,7 @@ sub fix_morphology
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
+        my $form = $node->form();
         my $lemma = $node->lemma();
         my $iset = $node->iset();
         # Fix Interset features of pronominal words.
@@ -288,9 +289,11 @@ sub fix_morphology
             # Interset converts participles to verbs. However, we want only l-participles to be verbs.
             # We can distinguish them by lemma: l-participles have the infinitive (zabil => zabiť), other participles have
             # masculine nominative form of the participle (obkľúčený => obkľúčený, žijúcu => žijúci).
+            # Edit: Unfortunately, sometimes an l-participle has a lemma other than the infinitive, hence we should look at the form as well.
             if($node->is_participle())
             {
-                if($lemma !~ m/ť$/)
+                #if($lemma !~ m/ť$/)
+                if($form !~ m/l[aoi]?$/)
                 {
                     $iset->set('pos', 'adj');
                 }
