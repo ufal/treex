@@ -286,7 +286,7 @@ sub fix_morphology
             }
             # SNC has a dedicated POS tag ('G*') for participles, i.e. they are neither verbs nor adjectives there.
             # Interset converts participles to verbs. However, we want only l-participles to be verbs.
-            # We can distinguish them by lemma: l-participles have the infinitive (zabil => zabiť), other participles have\
+            # We can distinguish them by lemma: l-participles have the infinitive (zabil => zabiť), other participles have
             # masculine nominative form of the participle (obkľúčený => obkľúčený, žijúcu => žijúci).
             if($node->is_participle())
             {
