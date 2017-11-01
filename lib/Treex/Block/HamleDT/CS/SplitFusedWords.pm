@@ -17,6 +17,7 @@ sub process_zone
     my $zone = shift;
     my $root = $zone->get_atree();
     $self->split_fused_words($root);
+    $self->split_multiword_entities_cltt($root);
     $self->fix_jako_kdyby($root);
 }
 
@@ -95,6 +96,18 @@ sub split_fused_words
                     last;
                 }
             }
+            # In case of ellipsis, there is no participle and the multi-word token is attached to the root.
+            # Example: "A kdyby..."
+            # In such cases we now have two roots, "když" and "by". We should promote the conditional auxiliary and attach the conjunction as its child.
+            if($new_nodes[0]->parent()->is_root() && $new_nodes[1]->parent()->is_root())
+            {
+                $new_nodes[0]->set_parent($new_nodes[1]);
+                $new_nodes[0]->set_deprel('mark');
+                foreach my $child ($new_nodes[0]->children())
+                {
+                    $child->set_parent($new_nodes[1]);
+                }
+            }
         }
         elsif($node->form() =~ m/^(na|o|za)(č)$/i && $node->iset()->adpostype() eq 'preppron')
         {
@@ -133,6 +146,61 @@ sub split_fused_words
             $new_nodes[1]->set_deprel('cc');
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Splits multi-word entities that are treated as single tokens in the Czech
+# Legal Text Treebank (CLTT).
+#------------------------------------------------------------------------------
+sub split_multiword_entities_cltt
+{
+    my $self  = shift;
+    my $root  = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        my $parent = $node->parent();
+        ###!!! Provizorní řešení slov a lemmat, která obsahují mezery. Správně bychom je ale měli rozsekat na uzly!
+        my $form = $node->form();
+        if($form =~ s/ /_/g)
+        {
+            $node->set_form($form);
+        }
+        my $lemma = $node->lemma();
+        if($lemma =~ s/ /_/g)
+        {
+            $node->set_lemma($lemma);
+        }
+        # Some entities are enclosed in quotation marks, which are part of the token. Example:
+        # "* Finanční výsledek hospodaření"
+        # Remove the quotation marks first.
+        if($node->form() =~ m/^"(.+)"$/)
+        {
+            my $w = $1;
+            my $iset_hash = $node->iset()->get_hash();
+            ###!!! Ovšem s uvozovkami bychom neměli zacházet jako s multi-word tokenem. Měli bychom je prostě obyčejně tokenizovat!
+            my @new_nodes = $self->split_fused_token
+            (
+                $node,
+                {'form' => '"', 'lemma'  => '"', 'tag' => 'PUNCT', 'conll_pos' => 'Z:-------------',
+                                'iset'   => {'pos' => 'punc'},
+                                'deprel' => 'punct'},
+                {'form' => $w,  'lemma'  => $node->lemma(), 'tag' => $node->tag(), 'conll_pos' => $node->conll_pos(),
+                                'iset'   => $iset_hash,
+                                'deprel' => $node->deprel()},
+                {'form' => '"', 'lemma'  => '"', 'tag' => 'PUNCT', 'conll_pos' => 'Z:-------------',
+                                'iset'   => {'pos' => 'punc'},
+                                'deprel' => 'punct'}
+            );
+            $new_nodes[0]->set_parent($new_nodes[1]);
+            $new_nodes[2]->set_parent($new_nodes[1]);
+        }
+    }
+    ###!!! Tohle teď musíme udělat, když nahoře nahrazujeme mezery podtržítky.
+    @nodes = $root->get_descendants({ordered => 1});
+    $root->get_zone()->set_sentence($self->collect_sentence_text(@nodes));
 }
 
 

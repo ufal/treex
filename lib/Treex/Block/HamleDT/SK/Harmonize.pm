@@ -57,6 +57,7 @@ sub fix_morphology
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
+        my $form = $node->form();
         my $lemma = $node->lemma();
         my $iset = $node->iset();
         # Fix Interset features of pronominal words.
@@ -238,6 +239,19 @@ sub fix_morphology
                 $iset->set('pos', 'adv');
                 $iset->set('prontype', 'neg');
             }
+            # Now that we know personal (and possessive personal) pronouns (and determiners), we can mark their person value.
+            if($lemma =~ m/^(ja|my|môj|náš)$/)
+            {
+                $iset->set('person', 1);
+            }
+            elsif($lemma =~ m/^(ty|vy|tvoj|váš)$/)
+            {
+                $iset->set('person', 2);
+            }
+            elsif($lemma =~ m/^(on|ona|ono|jeho|jej|ich)$/)
+            {
+                $iset->set('person', 3);
+            }
         }
         # Ordinal and multiplicative numerals must be distinguished from cardinals.
         if($node->is_numeral())
@@ -286,14 +300,19 @@ sub fix_morphology
             }
             # SNC has a dedicated POS tag ('G*') for participles, i.e. they are neither verbs nor adjectives there.
             # Interset converts participles to verbs. However, we want only l-participles to be verbs.
-            # We can distinguish them by lemma: l-participles have the infinitive (zabil => zabiť), other participles have\
+            # We can distinguish them by lemma: l-participles have the infinitive (zabil => zabiť), other participles have
             # masculine nominative form of the participle (obkľúčený => obkľúčený, žijúcu => žijúci).
+            # Edit: Unfortunately, sometimes an l-participle has a lemma other than the infinitive, hence we should look at the form as well.
             if($node->is_participle())
             {
-                if($lemma !~ m/ť$/)
+                #if($lemma !~ m/ť$/)
+                if($form !~ m/l[aoiy]?$/i)
                 {
                     $iset->set('pos', 'adj');
                 }
+                # We do not annotate person with Slavic participles because it is not expressed morphologically.
+                # However, the l-participles in Slovak seem to have the person feature.
+                $iset->clear('person');
             }
         }
         # Distinguish coordinating and subordinating conjunctions.
