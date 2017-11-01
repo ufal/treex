@@ -10,18 +10,20 @@ use Treex::Tool::ML::VowpalWabbit::Ranker;
 has '+model_type' => ( isa => enum([qw/pdt pcedt_bi pcedt_bi.with_en pcedt_bi.with_en.treex_cr pcedt_bi.with_en.base_cr/]), default => 'pdt' );
 
 override '_build_model_for_type' => sub {
-    my $dir = 'data/models/coreference/CS/vw';
+    my $dir = '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml';
     return {
-        'pdt' => "$dir/perspron.2017-01-17.train.pdt.cs.vw.ranking.model",
-        'pcedt_bi' => "",
+        #'pdt' => "$dir/030_run_2017-01-15_01-09-01_29026.PDT.feats-AllMonolingual.round1/001.17cb9c0d6f.featset/004.39acd.mlmethod/model/train.pdt.table.gz.vw.ranking.model",
+        'pdt' => "$dir/034_run_2017-01-17_21-35-41_17073.PDT.monolingual.feats-AllMonolingual/001.17cb9c0d6f.featset/024.9c797.mlmethod/model/train.pdt.table.gz.vw.ranking.model",
+        #'pcedt_bi' => "$dir/027_run_2017-01-14_02-37-37_21334.PCEDT.new_models_with_EN.CS__AllMonolingual_feats/001.17cb9c0d6f.featset/002.22ec1.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model",
+        'pcedt_bi' => "$dir/037_run_2017-03-10_10-33-59_19724.PCEDT.mono.instance_num_fixed/001.17cb9c0d6f.featset/024.9c797.mlmethod/model/train.pcedt_bi.table.gz.vw.ranking.model",
         
         # PCEDT.crosslingual aligned_all
-        'pcedt_bi.with_en' => "",
+        'pcedt_bi.with_en' => "$dir/038_run_2017-03-10_10-34-09_19905.PCEDT.cross.instance_num_fixed/002.88233bf9a2.featset/022.88cd4.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model",
         # PCEDT.crosslingual aligned_all+coref+mono_all
-        'pcedt_bi.with_en.treex_cr' => "",
+        'pcedt_bi.with_en.treex_cr' => "$dir/038_run_2017-03-10_10-34-09_19905.PCEDT.cross.instance_num_fixed/004.7f391f3429.featset/022.88cd4.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model",
         
         # PCEDT.crosslingual-baseline aligned_all+coref+mono_all
-        'pcedt_bi.with_en.base_cr' => "",
+        'pcedt_bi.with_en.base_cr' => "$dir/039_run_2017-03-10_10-34-19_20139.PCEDT.cross-base.instance_num_fixed/004.7f391f3429.featset/010.22ec1.mlmethod/model/train.pcedt_bi.with_en.baseline.table.gz.vw.ranking.model",
     };
 };
 override '_build_ranker' => sub {
