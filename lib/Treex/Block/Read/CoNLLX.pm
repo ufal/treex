@@ -113,7 +113,7 @@ sub next_document {
         }
         # If we have read the sentence text from the text attribute (CoNLL-U-like extension), keep it.
         # Otherwise, set the sentence text as a concatenation of the word forms.
-        my $current_sentence = $zone->get_sentence($sentence);
+        my $current_sentence = $zone->sentence($sentence);
         if (!defined($current_sentence) || $current_sentence =~ m/^\s*$/)
         {
             $sentence =~ s/\s+$//;
