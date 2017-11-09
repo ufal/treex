@@ -111,8 +111,33 @@ sub next_document {
         foreach my $i ( 1 .. $#nodes ) {
             $nodes[$i]->set_parent( $nodes[ $parents[$i] ] );
         }
-        $sentence =~ s/\s+$//;
-        $zone->set_sentence($sentence);
+        # If we have read the sentence text from the text attribute (CoNLL-U-like extension), keep it.
+        # Otherwise, set the sentence text as a concatenation of the word forms.
+        my $current_sentence = $zone->get_sentence($sentence);
+        if (!defined($current_sentence) || $current_sentence =~ m/^\s*$/)
+        {
+            $sentence =~ s/\s+$//;
+            $zone->set_sentence($sentence);
+        }
+        # If we know the sentence before tokenization, we can infer the no_space_after attribute.
+        else
+        {
+            my $buffer = $current_sentence;
+            $buffer =~ s/^\s+//;
+            for (my $i = 1; $i <= $#nodes; $i++)
+            {
+                my $form = $nodes[$i]->form();
+                if ($buffer !~ s/^\Q$form\E//)
+                {
+                    log_warn("Word '$form' does not match text '$buffer'");
+                    last;
+                }
+                if ($buffer =~ s/^\s+//)
+                {
+                    $nodes[$i]->set_no_space_after(1);
+                }
+            }
+        }
     }
 
     return $document;
