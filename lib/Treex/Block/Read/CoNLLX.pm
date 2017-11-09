@@ -132,7 +132,7 @@ sub next_document {
                     log_warn("Word '$form' does not match text '$buffer'");
                     last;
                 }
-                if ($buffer =~ s/^\s+//)
+                if ($buffer !~ s/^\s+//)
                 {
                     $nodes[$i]->set_no_space_after(1);
                 }
