@@ -18,17 +18,21 @@ sub is_relat {
 }
 
 sub is_coz_cs {
-    my ($tnode) = @_;
-    my $anode = $tnode->get_lex_anode;
-    return 0 if !$anode;
-    return $anode->tag =~ /^.E/;
+    my ($node) = @_;
+    if ($node->get_layer eq "t") {
+        $node = $node->get_lex_anode;
+    }
+    return 0 if !$node;
+    return $node->tag =~ /^.E/;
 }
 
 sub is_co_cs {
-    my ($tnode) = @_;
-    my $anode = $tnode->get_lex_anode;
-    return 0 if !$anode;
-    return $anode->tag =~ /^.Q/;
+    my ($node) = @_;
+    if ($node->get_layer eq "t") {
+        $node = $node->get_lex_anode;
+    }
+    return 0 if !$node;
+    return $node->tag =~ /^.Q/;
 }
 
 sub _is_relat_cs {
