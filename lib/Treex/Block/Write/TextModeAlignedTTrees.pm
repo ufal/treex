@@ -85,10 +85,11 @@ sub _add_padding {
 
 sub align_to_lines {
     my ($self, $tree, $lang, $sel) = @_;
-    my @lines = ();
+    # add an empty line at the beginning to increase readibility
+    my @lines = ("");
     foreach my $node ($tree->get_descendants({ordered => 1})) {
         my ($alin, $alit) = $node->get_undirected_aligned_nodes({language => $lang, selector => $sel});
-        my @alistrs = map {"(". $node->ord . ", " . $_->ord . ")"} @$alin;
+        my @alistrs = map {sprintf "(%d, %d, %s)", $node->ord, $alin->[$_]->ord, $alit->[$_]} 0..$#$alin;
         push @lines, @alistrs;
     }
     return @lines;
@@ -126,7 +127,7 @@ sub process_bundle {
         $text .= $full_line . "\n";
     }
     # Print headers (if required) and the tree itself
-    say { $self->_file_handle } '# sent_id = ' . $bundle->get_address()       if $self->print_sent_id;
+    say { $self->_file_handle } '# sent_id = ' . $bundle->get_position()       if $self->print_sent_id;
     if ($self->print_sentence) {
         say { $self->_file_handle } '# '.$_->get_label.' = ' . $_->sentence for (map {$_->get_zone} @all_trees);
     }
