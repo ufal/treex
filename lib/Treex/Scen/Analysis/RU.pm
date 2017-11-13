@@ -20,59 +20,84 @@ has default_functor => (
     default => '',
 );
 
+has parser => (
+     is => 'ro',
+     isa => enum( [qw(default none)] ),
+     default => 'default',
+     documentation => 'Which POS tagger, lemmatizer, NER and dependency parser to use',
+);
+
+has tecto => (
+     is => 'ro',
+     isa => enum( [qw(default none)] ),
+     default => 'default',
+     documentation => 'Which tectogrammatical analysis to use',
+);
+
 sub get_scenario_string {
     my ($self) = @_;
+    my @blocks = ();
 
-    my $scen = join "\n",
-    $self->tokenized ? '' : 'W2A::RU::Tokenize',
-    # first run tree tagger, because it seems to produce better lemmas
-    'W2A::TagTreeTagger lemmatize=1',
-    # copy the TreeTagger lemma to the wild
-    q(Util::Eval anode='$.wild->{tt_lemma} = $.lemma'),
-    'A2N::RU::NameTag',
-    # Run Russian UDPipe
-    'W2A::UDPipe tokenize=0 model_alias=ru_prague',
-    # copy UDPipe lemma to the wild and restore the TreeTagger lemma
-    q(Util::Eval anode='$.wild->{udp_lemma} = $.lemma; $.set_lemma($.wild->{tt_lemma})'),
-    q(Util::Eval anode='$.set_tag($.conll_pos)'),
-    q(Util::Eval anode='if (!$.tag) { if ($.form =~ /\d+([.,]\d+)?/) { $.set_tag("C=-------------") } else { $.set_tag("X@-------------") }}'),
-    q(Util::Eval anode='$.set_afun($.deprel)'),
-    q(Util::Eval anode='$.set_iset_conll_feat($.conll_feat)'),
-    # rehang final punctuation
-    q(Util::Eval anode='if ($.conll_pos =~ /^Z/ && !$.get_next_node) {$.set_parent($.get_root)}'),
-    # set is_member
-    q(Util::Eval anode='my $afun = $.afun; if ($afun =~ /_M$/) {$.set_is_member(1); $afun =~ s/_M$//; $.set_afun($afun)}'),
-    $self->unknown_afun_to_atr ? q(Util::Eval anode='if ($.afun =~ /^(Apposition)|(NR)|(Neg)$/) {$.set_afun("Atr")}') : (),
-    'W2A::RU::FixPronouns',
-    # tecto analysis
-    'A2T::MarkEdgesToCollapse',
-    'A2T::BuildTtree',
-    'A2T::RehangUnaryCoordConj',
-    'A2T::SetIsMember',
-    'A2T::RU::SetCoapFunctors',
-#    q(Util::Eval tnode='print $.t_lemma."\n" if ($.is_coap_root);')
-    'A2T::FixIsMember',
-    'A2T::HideParentheses',
-    'A2T::SetSentmod',
-    'A2T::MoveAuxFromCoordToMembers',
-#    $self->gazetteer ? 'A2T::ProjectGazeteerInfo' : (),
-    'A2T::MarkClauseHeads',
-    'A2T::MarkRelClauseHeads',
-    'A2T::MarkRelClauseCoref ',
-    'A2T::SetNodetype',
-    'A2T::SetFormeme',
-    $self->default_functor ? (sprintf 'Util::Eval tnode=\'$.set_functor("%s")\'', $self->default_functor) : (),
-    'A2T::SetGrammatemes',
-    'A2T::SetGrammatemesFromAux',
-    'A2T::AddPersPronSb',
-    'A2T::MinimizeGrammatemes',
-    'A2T::FixAtomicNodes',
-    'A2T::MarkReflpronCoref',
-    'T2T::SetClauseNumber',
-    'A2T::SetDocOrds',
-    ;
+    if (!$self->tokenized) {
+        push @blocks, 'W2A::RU::Tokenize';
+    }
 
-    return $scen;
+    if ($self->parser ne 'none') {
+        push @blocks, (
+            # first run tree tagger, because it seems to produce better lemmas
+            'W2A::TagTreeTagger lemmatize=1',
+            # copy the TreeTagger lemma to the wild
+            q(Util::Eval anode='$.wild->{tt_lemma} = $.lemma'),
+            'A2N::RU::NameTag',
+            # Run Russian UDPipe
+            'W2A::UDPipe tokenize=0 model_alias=ru_prague',
+            # copy UDPipe lemma to the wild and restore the TreeTagger lemma
+            q(Util::Eval anode='$.wild->{udp_lemma} = $.lemma; $.set_lemma($.wild->{tt_lemma})'),
+            q(Util::Eval anode='$.set_tag($.conll_pos)'),
+            q(Util::Eval anode='if (!$.tag) { if ($.form =~ /\d+([.,]\d+)?/) { $.set_tag("C=-------------") } else { $.set_tag("X@-------------") }}'),
+            q(Util::Eval anode='$.set_afun($.deprel)'),
+            q(Util::Eval anode='$.set_iset_conll_feat($.conll_feat)'),
+            # rehang final punctuation
+            q(Util::Eval anode='if ($.conll_pos =~ /^Z/ && !$.get_next_node) {$.set_parent($.get_root)}'),
+            # set is_member
+            q(Util::Eval anode='my $afun = $.afun; if ($afun =~ /_M$/) {$.set_is_member(1); $afun =~ s/_M$//; $.set_afun($afun)}'),
+            $self->unknown_afun_to_atr ? q(Util::Eval anode='if ($.afun =~ /^(Apposition)|(NR)|(Neg)$/) {$.set_afun("Atr")}') : (),
+            'W2A::RU::FixPronouns',
+            );
+    }
+
+    if ($self->tecto ne 'none') {
+        push @blocks, (
+            # tecto analysis
+            'A2T::MarkEdgesToCollapse',
+            'A2T::BuildTtree',
+            'A2T::RehangUnaryCoordConj',
+            'A2T::SetIsMember',
+            'A2T::RU::SetCoapFunctors',
+            #    q(Util::Eval tnode='print $.t_lemma."\n" if ($.is_coap_root);')
+            'A2T::FixIsMember',
+            'A2T::HideParentheses',
+            'A2T::SetSentmod',
+            'A2T::MoveAuxFromCoordToMembers',
+            #    $self->gazetteer ? 'A2T::ProjectGazeteerInfo' : (),
+            'A2T::MarkClauseHeads',
+            'A2T::MarkRelClauseHeads',
+            'A2T::MarkRelClauseCoref ',
+            'A2T::SetNodetype',
+            'A2T::SetFormeme',
+            $self->default_functor ? (sprintf 'Util::Eval tnode=\'$.set_functor("%s")\'', $self->default_functor) : (),
+            'A2T::SetGrammatemes',
+            'A2T::SetGrammatemesFromAux',
+            'A2T::AddPersPronSb',
+            'A2T::MinimizeGrammatemes',
+            'A2T::FixAtomicNodes',
+            'A2T::MarkReflpronCoref',
+            'T2T::SetClauseNumber',
+            'A2T::SetDocOrds',
+            );
+    }
+
+    return join "\n", @blocks;
 }
 
 1;
