@@ -17,6 +17,8 @@ coerce 'LangsArrayRef'
 
 has 'align_langs' => ( is => 'ro', isa => 'LangsArrayRef', coerce => 1, required => 1 );
 has 'gold_ali_type' => ( is => 'ro', isa => 'Str', default => 'gold' );
+has 'only_missing_langs' => (is => 'ro', isa => 'Bool', default => 1, documentation => 'Skip occurrences where alignment links to all languages are covered.');
+
 #
 #has 'aligns' => ( is => 'ro', isa => 'Str', required => 1 );
 #has '_aligns_graph' => ( is => 'ro', isa => 'HashRef', builder => '_build_aligns_graph', lazy => 1 );
@@ -90,10 +92,10 @@ sub _print_for_layer_node {
 
     my $gold_aligns = Treex::Tool::Align::Annot::Util::get_gold_aligns($node, $self->align_langs, $self->gold_ali_type);
     my $align_info = Treex::Tool::Align::Annot::Util::get_align_info($gold_aligns);
-    
+
     # from collected align_info find out how many languages are covered
-    return if (scalar keys %$gold_aligns == scalar keys %$align_info);
-    
+    return if ($self->only_missing_langs && (scalar keys %$gold_aligns == scalar keys %$align_info));
+
     my $giza_aligns = $self->get_giza_aligns($node, $gold_aligns);
     my %merged_aligns = map {$_ => ( defined $align_info->{$_} ? $gold_aligns->{$_} : ($giza_aligns->{$_} // []))} keys %$gold_aligns;
 
