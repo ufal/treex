@@ -129,7 +129,15 @@ sub print_sentences_tnodes {
     my ($self, $nodes, $langs, $zones) = @_;
 
     for (my $i = 0; $i < @$langs; $i++) {
-        print {$self->_file_handle} uc($langs->[$i]).":\t" . $zones->[$i]->sentence . "\n";
+        my @hlanodes = map {
+            my $anode = $_->get_lex_anode;
+            if (!defined $anode) {
+                my $par = $_->get_parent;
+                $anode = $par->get_lex_anode;
+            };
+            $anode;
+        } @{$nodes->{$langs->[$i]}};
+        print {$self->_file_handle} uc($langs->[$i]).":\t" . _linearize_atree($zones->[$i], \@hlanodes, 1) . "\n";
     }
     for (my $i = 0; $i < @$langs; $i++) {
         print {$self->_file_handle} uc($langs->[$i])."_T:\t" . _linearize_ttree_structured($zones->[$i], $nodes->{$langs->[$i]}) . "\n";
@@ -137,14 +145,21 @@ sub print_sentences_tnodes {
 }
 
 sub _linearize_atree {
-    my ($zone, $on_nodes) = @_;
+    my ($zone, $on_nodes, $only_view) = @_;
+
+    my $start_bracket = "<";
+    my $end_bracket = ">";
+    if ($only_view) {
+        $start_bracket = "{";
+        $end_bracket = "}";
+    }
 
     my %on_nodes_indic = map {$_->id => 1} @$on_nodes;
 
     my @tree_nodes = $zone->get_atree->get_descendants({ordered => 1});
     my @tree_forms = map {
         my $form = escape_chars($_->form);
-        $on_nodes_indic{$_->id} ? "<" . $form . ">" : $_->form;
+        $on_nodes_indic{$_->id} ? $start_bracket . $form . $end_bracket : $_->form;
     } @tree_nodes;
 
     return join " ", @tree_forms;
@@ -219,6 +234,8 @@ sub escape_chars {
     $word =~ s/>/&gt;/g;
     $word =~ s/\[/&osb;/g;
     $word =~ s/\]/&csb;/g;
+    $word =~ s/\{/&ocb;/g;
+    $word =~ s/\}/&ccb;/g;
     return $word;
 }
 
