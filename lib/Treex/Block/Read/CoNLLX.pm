@@ -132,7 +132,9 @@ sub next_document {
                     log_warn("Word '$form' does not match text '$buffer'");
                     last;
                 }
-                if ($buffer !~ s/^\s+//)
+                # Remove spaces from the beginning of the buffer. Set the flag if there were no spaces.
+                # (Exception: if the buffer is empty, there still could be spaces between sentences, so leave the flag unset.)
+                if ($buffer ne '' && $buffer !~ s/^\s+//)
                 {
                     $nodes[$i]->set_no_space_after(1);
                 }
