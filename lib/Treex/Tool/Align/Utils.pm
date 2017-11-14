@@ -35,6 +35,20 @@ sub add_aligned_node {
     #}
 }
 
+sub check_gold_aligns_from_to {
+    my ($src_node, $trg_node, $rel_types) = @_;
+    my ($gold_src_ali, $gold_src_types) = $src_node->get_undirected_aligned_nodes({
+        language => $trg_node->language,
+        selector => $trg_node->selector,
+        rel_types => $rel_types });
+    if (my @other = grep {$_ != $trg_node} @$gold_src_ali) {
+        log_warn "A gold alignment link pointing to a different node in the same zone already exists for node: ".$src_node->get_address . " -> " . join ", ", map {$_->get_address} @other;
+        log_warn "Original trg_node: ".$trg_node->get_address;
+        log_warn "Align types: ".join ", ", @$gold_src_types;
+    }
+}
+
+
 sub aligned_transitively {
     my ($nodes, $filters) = @_;
 

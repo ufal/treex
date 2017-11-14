@@ -83,6 +83,11 @@ sub process_bundle {
                     $trg_node->wild->{align_info} = clone($trg_nodes_ali_info) if (defined $trg_nodes_ali_info);
                     for (my $i = 0; $i < @$trg_aligns; $i++) {
                         my $trg_aligned_node = $trg_aligns->[$i];
+
+                        # TODO: this should be done in a general way, no strict gold and coref_gold
+                        Treex::Tool::Align::Utils::check_gold_aligns_from_to($trg_node, $trg_aligned_node, ["gold", "coref_gold"]);
+                        Treex::Tool::Align::Utils::check_gold_aligns_from_to($trg_aligned_node, $trg_node, ["gold", "coref_gold"]);
+
                         my $trg_ali_type = $trg_ali_types->[$i];
                         $trg_aligned_node->wild->{align_info} = clone($trg_aligns_ali_info->[$i]) if (defined $trg_aligns_ali_info->[$i]);
                         log_info sprintf("Adding alignment of type '%s' between nodes: %s -> %s", $trg_ali_type, $trg_node->id, $trg_aligned_node->id);
