@@ -94,7 +94,10 @@ sub _print_for_layer_node {
     my $align_info = Treex::Tool::Align::Annot::Util::get_align_info($gold_aligns);
 
     # from collected align_info find out how many languages are covered
-    return if ($self->only_missing_langs && (scalar keys %$gold_aligns == scalar keys %$align_info));
+    # the language is not covered if there is no or an empty align_info for it
+    # the language should be revised if its align_info conatins __UNMATCHED__
+    my @infos_ok = grep {$_ !~ /^\s*$/ && $_ !~ /__UNMATCHED__/} values %$align_info;
+    return if ($self->only_missing_langs && (scalar keys %$gold_aligns == scalar @infos_ok));
 
     my $giza_aligns = $self->get_giza_aligns($node, $gold_aligns);
     my %merged_aligns = map {$_ => ( defined $align_info->{$_} ? $gold_aligns->{$_} : ($giza_aligns->{$_} // []))} keys %$gold_aligns;
@@ -154,7 +157,7 @@ sub _linearize_atree {
         $end_bracket = "}";
     }
 
-    my %on_nodes_indic = map {$_->id => 1} @$on_nodes;
+    my %on_nodes_indic = map {$_->id => 1} grep {defined $_} @$on_nodes;
 
     my @tree_nodes = $zone->get_atree->get_descendants({ordered => 1});
     my @tree_forms = map {
