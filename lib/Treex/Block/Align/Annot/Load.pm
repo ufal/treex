@@ -230,7 +230,13 @@ sub process_document {
         
             # making a link between a-nodes or t-nodes
             my $src_nodes = _find_nodes_by_idx($node->get_bundle, $src_rec, $src_lang, $selector);
+            if (!defined $src_nodes && $node->wild->{align_info}{$src_lang} !~ /__UNMATCHED__/) {
+                $node->wild->{align_info}{$src_lang} = '__UNMATCHED__ ' . $node->wild->{align_info}{$src_lang};
+            }
             my $trg_nodes = _find_nodes_by_idx($node->get_bundle, $trg_rec, $trg_lang, $selector);
+            if (!defined $trg_nodes && $node->wild->{align_info}{$trg_lang} !~ /__UNMATCHED__/) {
+                $node->wild->{align_info}{$trg_lang} = '__UNMATCHED__ ' . $node->wild->{align_info}{$trg_lang};
+            }
             _add_align($src_nodes, $trg_nodes, $align_type);
             
             # in the old format, alignment between a-nodes can be specified in t-nodes
