@@ -20,8 +20,8 @@ sub get_gold_aligns {
 sub get_align_info {
     my ($gold_aligns) = @_;
 
-    my @all_langs = keys %$gold_aligns;
-    my $align_info;
+    my @all_langs = sort keys %$gold_aligns;
+    my $align_info = {};
     foreach my $lang (@all_langs) {
         foreach my $align_node (@{$gold_aligns->{$lang}}) {
             my $partial_info = $align_node->wild->{align_info};
@@ -32,15 +32,25 @@ sub get_align_info {
                     $other_lang => $partial_info,
                 };
             }
-            foreach my $part_lang (keys %$partial_info) {
-                if (defined $align_info->{$part_lang}) {
-                    log_warn "The align_info wild attribute already set for language $part_lang in one of the nodes gold-aligned to ".$align_node->id.". Overwriting it with a new value.";
-                }
-                $align_info->{$part_lang} = $partial_info->{$part_lang};
-            }
+            merge_align_info($align_info, $partial_info);
         }
     }
     return $align_info;
+}
+
+sub merge_align_info {
+    my ($merged_ai, $new_ai, $node) = @_;
+    foreach my $lang (keys %$new_ai) {
+        my $old_value = $merged_ai->{$lang};
+        my $new_value = $new_ai->{$lang};
+        if (!defined $old_value || ($new_value =~ /\Q$old_value\E/)) {
+            $merged_ai->{$lang} = $new_value;
+        }
+        elsif ($old_value !~ /\Q$new_value\E/) {
+            log_warn "The align_info wild attribute already set for language $lang in one of the nodes gold-aligned to ".(defined $node ? $node->id : "???").". Merging it with a new value.";
+            $merged_ai->{$lang} .= "\t".$new_value;
+        }
+    }
 }
 
 1;
