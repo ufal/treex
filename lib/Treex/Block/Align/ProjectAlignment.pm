@@ -3,6 +3,7 @@ package Treex::Block::Align::ProjectAlignment;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Align::Utils;
+use Treex::Tool::Align::Annot::Util;
 use Clone qw/clone/;
 
 extends 'Treex::Core::Block';
@@ -80,7 +81,7 @@ sub process_bundle {
                 }
                 # create projected links
                 foreach my $trg_node (@$trg_nodes) {
-                    $trg_node->wild->{align_info} = clone($trg_nodes_ali_info) if (defined $trg_nodes_ali_info);
+                    _add_or_merge_align_info($trg_node, $trg_nodes_ali_info);
                     for (my $i = 0; $i < @$trg_aligns; $i++) {
                         my $trg_aligned_node = $trg_aligns->[$i];
 
@@ -89,7 +90,7 @@ sub process_bundle {
                         Treex::Tool::Align::Utils::check_gold_aligns_from_to($trg_aligned_node, $trg_node, ["gold", "coref_gold"]);
 
                         my $trg_ali_type = $trg_ali_types->[$i];
-                        $trg_aligned_node->wild->{align_info} = clone($trg_aligns_ali_info->[$i]) if (defined $trg_aligns_ali_info->[$i]);
+                        _add_or_merge_align_info($trg_aligned_node, $trg_aligns_ali_info->[$i]);
                         log_info sprintf("Adding alignment of type '%s' between nodes: %s -> %s", $trg_ali_type, $trg_node->id, $trg_aligned_node->id);
                         Treex::Tool::Align::Utils::add_aligned_node($trg_node, $trg_aligned_node, $trg_ali_type);
                     }
@@ -114,11 +115,19 @@ sub process_bundle {
                     );
                 }
                 foreach my $trg_node (@$trg_nodes) {
-                    $trg_node->wild->{align_info} = clone($trg_nodes_ali_info) if (defined $trg_nodes_ali_info);
+                    _add_or_merge_align_info($trg_node, $trg_nodes_ali_info);
                 }
             }
         }
     }
+}
+
+sub _add_or_merge_align_info {
+    my ($node, $other_ai) = @_;
+    return if (!defined $other_ai);
+    my $ai = $node->wild->{align_info} // {};
+    Treex::Tool::Align::Annot::Util::merge_align_info($ai, $other_ai, $node);
+    $node->wild->{align_info} = $ai;
 }
 
 sub _get_other_layer_counterpart {
