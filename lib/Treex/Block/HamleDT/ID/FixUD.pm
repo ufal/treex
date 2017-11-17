@@ -44,11 +44,11 @@ sub fix_morphology
                 # Remove lemma tags from the lemma.
                 $lemma =~ s/<.>//g;
                 # Remove morpheme boundaries from the lemma.
-                $lemma =~ s/\+//g;
+                $lemma =~ s/\+//g unless($lemma =~ m/^\++$/);
                 # Uppercase lemma characters trigger morphonological changes but we don't want them in the lemma.
                 # (On the other hand, we would like to have capitalized lemmas of proper nouns but we would need to look at the original form and use heuristics to achieve that.)
                 $lemma = lc($lemma);
-                $node->set_lemma($lemma);
+                $node->set_lemma($lemma) unless($lemma eq '');
                 $node->set_conll_pos($tag);
             }
             else
