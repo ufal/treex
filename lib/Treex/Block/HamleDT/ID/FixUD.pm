@@ -78,7 +78,7 @@ sub fix_morphology
                     my $n = $1;
                     my $d = $2;
                     $node->iset()->set('number', $n eq 'P' ? 'plur' : 'sing');
-                    $node->iset()->set('degree', $n eq 'S' ? 'sup' : 'pos');
+                    $node->iset()->set('degree', $d eq 'S' ? 'sup' : 'pos');
                 }
                 # Other tags are featureless. Just one character and two dashes.
                 # H ... coordinating conjunction
