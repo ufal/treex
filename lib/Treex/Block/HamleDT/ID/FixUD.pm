@@ -29,17 +29,27 @@ sub fix_morphology
     {
         # After UD release 2.1, we generated MorphInd analysis for every word and stored it in the MISC column.
         # http://septinalarasati.com/morphind/ (Septina Dian Larasati)
-        my @morphind = grep {m/^MorphInd=/} ($node->get_misc());
+        # Because it is a MISC attribute, any | and & were escaped; decode them.
+        my @morphind = map {s/&vert;/|/g; s/&amp;/&/g; $_} (grep {m/^MorphInd=/} ($node->get_misc()));
         if(scalar(@morphind)>0)
         {
             $morphind[0] =~ m/^MorphInd=\^(.*)\$$/;
             my $morphind = $1;
             # Simple words have just lemma, lemma tag and POS tag:
             # ini<b>_B--
-            if($morphind =~ m/^([^<>]+)<.>_(...)$/)
+            if($morphind =~ m/^([^_]+)_(...)$/)
             {
-                $node->set_lemma($1);
-                $node->set_conll_pos($2);
+                my $lemma = $1;
+                my $tag = $2;
+                # Remove lemma tags from the lemma.
+                $lemma =~ s/<.>//g;
+                # Remove morpheme boundaries from the lemma.
+                $lemma =~ s/\+//g;
+                # Uppercase lemma characters trigger morphonological changes but we don't want them in the lemma.
+                # (On the other hand, we would like to have capitalized lemmas of proper nouns but we would need to look at the original form and use heuristics to achieve that.)
+                $lemma = lc($lemma);
+                $node->set_lemma($lemma);
+                $node->set_conll_pos($tag);
             }
             else
             {
