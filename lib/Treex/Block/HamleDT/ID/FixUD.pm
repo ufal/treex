@@ -27,15 +27,24 @@ sub fix_morphology
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
-        # Reduplicated words (marking plural) should be compound, not fixed.
-        if($node->deprel() eq 'fixed' && lc($node->form()) eq lc($node->parent()->form()))
+        # After UD release 2.1, we generated MorphInd analysis for every word and stored it in the MISC column.
+        # http://septinalarasati.com/morphind/ (Septina Dian Larasati)
+        my @morphind = grep {m/^MorphInd=/} ($node->get_misc());
+        if(scalar(@morphind)>0)
         {
-            $node->set_deprel('compound:plur');
-        }
-        # Verbal copulas should be AUX and not VERB.
-        if($node->is_verb() && $node->deprel() eq 'cop')
-        {
-            $node->iset()->set('verbtype', 'aux');
+            $morphind[0] =~ m/^MorphInd=\^(.*)\$$/;
+            my $morphind = $1;
+            # Simple words have just lemma, lemma tag and POS tag:
+            # ini<b>_B--
+            if($morphind =~ m/^([^<>]+)<.>_(...)$/)
+            {
+                $node->set_lemma($1);
+                $node->set_conll_pos($2);
+            }
+            else
+            {
+                log_warn("Unexpected MorphInd format: $morphind");
+            }
         }
     }
 }
