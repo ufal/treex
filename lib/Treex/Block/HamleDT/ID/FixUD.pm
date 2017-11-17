@@ -50,6 +50,51 @@ sub fix_morphology
                 $lemma = lc($lemma);
                 $node->set_lemma($lemma) unless($lemma eq '');
                 $node->set_conll_pos($tag);
+                # Features.
+                if($tag =~ m/^N([SP])([MFD])$/)
+                {
+                    my $n = $1;
+                    my $g = $2;
+                    $node->iset()->set('number', $n eq 'P' ? 'plur' : 'sing');
+                    $node->iset()->set('gender', $g eq 'F' ? 'fem' : 'masc') unless($g eq 'D');
+                }
+                elsif($tag =~ m/^P([SP])([123])$/)
+                {
+                    my $n = $1;
+                    my $p = $2;
+                    $node->iset()->set('prontype', 'prs');
+                    $node->iset()->set('number', $n eq 'P' ? 'plur' : 'sing');
+                    $node->iset()->set('person', $p);
+                }
+                elsif($tag =~ m/^V([SP])([AP])$/)
+                {
+                    my $n = $1;
+                    my $v = $2;
+                    $node->iset()->set('number', $n eq 'P' ? 'plur' : 'sing');
+                    $node->iset()->set('voice', $v eq 'P' ? 'pass' : 'act');
+                }
+                elsif($tag =~ m/^A([SP])([PS])$/)
+                {
+                    my $n = $1;
+                    my $d = $2;
+                    $node->iset()->set('number', $n eq 'P' ? 'plur' : 'sing');
+                    $node->iset()->set('degree', $n eq 'S' ? 'sup' : 'pos');
+                }
+                # Other tags are featureless. Just one character and two dashes.
+                # H ... coordinating conjunction
+                # S ... subordinating conjunction
+                # F ... foreign word
+                # R ... preposition
+                # M ... modal
+                # B ... determiner
+                # D ... adverb
+                # T ... particle
+                # G ... negation
+                # I ... interjection
+                # O ... copula
+                # W ... question
+                # X ... unknown
+                # Z ... punctuation
             }
             else
             {
