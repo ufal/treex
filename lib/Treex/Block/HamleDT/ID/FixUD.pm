@@ -99,7 +99,7 @@ sub fix_morphology
             # The prefix anti- has the same function as in English.
             # para- similar to English para-
             # pasca- similar to English post-
-            elsif($morphind =~ m/^([^_]+)(<a>_ASP|<r>_R--|<f>_F--|<x>_X--)+([^_]+)_(...)$/)
+            elsif($morphind =~ m/^([^_]+)(?:<a>_ASP|<r>_R--|<f>_F--|<x>_X--)\+([^_]+)_(...)$/)
             {
                 my $lemma = $1.$2;
                 my $tag = $3;
@@ -112,6 +112,27 @@ sub fix_morphology
                 $lemma = lc($lemma);
                 $node->set_lemma($lemma) unless($lemma eq '');
                 $node->set_conll_pos($tag);
+                # Features.
+                $self->set_features($node, $tag);
+            }
+            # Prefixes tagged G-- signal negation.
+            # ke+tidak<g>_G--+jelas<a>+an_NSD (form: ketidakjelasan)
+            elsif($morphind =~ m/^[^_]+<g>_G--\+([^_]+)_(...)$/)
+            {
+                my $lemma = $1;
+                my $tag = $2;
+                # Remove lemma tags from the lemma.
+                $lemma =~ s/<.>//g;
+                # Remove morpheme boundaries from the lemma.
+                $lemma =~ s/\+//g unless($lemma =~ m/^\++$/);
+                # Uppercase lemma characters trigger morphonological changes but we don't want them in the lemma.
+                # (On the other hand, we would like to have capitalized lemmas of proper nouns but we would need to look at the original form and use heuristics to achieve that.)
+                $lemma = lc($lemma);
+                $node->set_lemma($lemma) unless($lemma eq '');
+                $node->set_conll_pos($tag);
+                # Features.
+                $self->set_features($node, $tag);
+                $node->iset()->set('polarity', 'neg');
             }
             else
             {
