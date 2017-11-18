@@ -200,6 +200,41 @@ sub set_features
         $node->iset()->set('possnumber', $n eq 'P' ? 'plur' : 'sing');
         $node->iset()->set('possperson', $p);
     }
+    elsif($tag =~ m/^B--$/)
+    {
+        # ini = this, it
+        # itu = that, it
+        # begini = like this (takovýhle)
+        # para = the
+        # tersebut = mentioned
+        if($node->lemma() =~ m/^((beg)?(ini|itu)|para|tersebut)$/)
+        {
+            $node->iset()->set('prontype', 'dem');
+        }
+        # semua = all, every
+        # setiap = every, each
+        # seluruh = whole, entire
+        elsif($node->lemma() =~ m/^(semua|setiap|seluruh)$/)
+        {
+            $node->iset()->set('prontype', 'tot');
+        }
+        # sebuah = a, an
+        # seorang = a, an
+        # suatu = one, some
+        # berbagai = various
+        # adanya = existing
+        elsif($node->lemma() =~ m/^(sebuah|seorang|suatu|berbagai|adanya)$/)
+        {
+            $node->iset()->set('prontype', 'ind');
+        }
+        # beberapa = some, several, few
+        # banyak = many, much
+        elsif($node->lemma() =~ m/^(beberapa|banyak)$/)
+        {
+            $node->iset()->set('prontype', 'ind');
+            $node->iset()->set('numtype', 'card');
+        }
+    }
     elsif($tag =~ m/^V([SP])([AP])$/)
     {
         my $n = $1;
@@ -224,7 +259,6 @@ sub set_features
     # F ... foreign word
     # R ... preposition
     # M ... modal
-    # B ... determiner
     # D ... adverb
     # T ... particle
     # G ... negation
