@@ -192,6 +192,14 @@ sub set_features
         {
             $node->iset()->set('clusivity', 'in');
         }
+        if($node->lemma() =~ m/^(saya|anda|beliau)$/)
+        {
+            $node->iset()->set('polite', 'form');
+        }
+        elsif($node->lemma() =~ m/^(aku|engkau|kamu)$/)
+        {
+            $node->iset()->set('polite', 'infm');
+        }
     }
     elsif($tag =~ m/^PossP([SP])([123])$/)
     {
@@ -211,10 +219,14 @@ sub set_features
         {
             $node->iset()->set('prontype', 'dem');
         }
+        # segala = all
+        # segenap = all
         # semua = all, every
         # setiap = every, each
+        # tiap = each
         # seluruh = whole, entire
-        elsif($node->lemma() =~ m/^(semua|setiap|seluruh)$/)
+        # keseluruhan = whole
+        elsif($node->lemma() =~ m/^(segala|segenap|semua|setiap|tiap|seluruh|keseluruhan)$/)
         {
             $node->iset()->set('prontype', 'tot');
         }
@@ -223,13 +235,16 @@ sub set_features
         # suatu = one, some
         # berbagai = various
         # adanya = existing
-        elsif($node->lemma() =~ m/^(sebuah|seorang|suatu|berbagai|adanya)$/)
+        # tertentu = certain
+        elsif($node->lemma() =~ m/^(sebuah|seorang|suatu|berbagai|adanya|tertentu)$/)
         {
             $node->iset()->set('prontype', 'ind');
         }
+        # sepasang = pair, couple
         # beberapa = some, several, few
+        # sejumlah = a number of
         # banyak = many, much
-        elsif($node->lemma() =~ m/^(beberapa|banyak)$/)
+        elsif($node->lemma() =~ m/^(beberapa|sepasang|sejumlah|banyak)$/)
         {
             $node->iset()->set('prontype', 'ind');
             $node->iset()->set('numtype', 'card');
