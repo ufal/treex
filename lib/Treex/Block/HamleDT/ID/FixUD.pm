@@ -97,10 +97,12 @@ sub fix_morphology
             }
             # anti<a>_ASP+gizi<n>_NSD
             # The prefix anti- has the same function as in English.
-            elsif($morphind =~ m/^anti<a>_ASP+([^_]+)_(...)$/)
+            # para- similar to English para-
+            # pasca- similar to English post-
+            elsif($morphind =~ m/^([^_]+)<a>_ASP+([^_]+)_(...)$/)
             {
-                my $lemma = "anti$1";
-                my $tag = $2;
+                my $lemma = $1.$2;
+                my $tag = $3;
                 # Remove lemma tags from the lemma.
                 $lemma =~ s/<.>//g;
                 # Remove morpheme boundaries from the lemma.
@@ -114,7 +116,7 @@ sub fix_morphology
             else
             {
                 my $form = $node->form();
-                log_warn("Form '$form' has unexpected MorphInd format: $morphind");
+                log_warn("Unexpected MorphInd format: $morphind (form: $form)");
             }
         }
     }
