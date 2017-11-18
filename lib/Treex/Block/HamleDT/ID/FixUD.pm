@@ -268,9 +268,19 @@ sub set_features
     {
         $node->iset()->set('prontype', 'int');
     }
+    # MorphInd documentation claims that S-- means "subordinating conjunction".
+    # But it is also assigned to the very frequent relative pronoun "yang".
+    elsif($tag =~ m/^S--$/)
+    {
+        # If the UPOS tag is PRON or DET, the main Interset part of speech will be noun or adj.
+        # This way we can distinguish relative pronouns/determiners from real subordinating conjunctions.
+        if($node->is_noun() || $node->is_adjective())
+        {
+            $node->iset()->set('prontype', 'rel');
+        }
+    }
     # Remaining tags are featureless. Just one character and two dashes.
     # H ... coordinating conjunction
-    # S ... subordinating conjunction
     # F ... foreign word
     # R ... preposition
     # M ... modal
