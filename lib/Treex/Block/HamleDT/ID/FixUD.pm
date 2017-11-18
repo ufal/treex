@@ -74,6 +74,7 @@ sub fix_morphology
                 $self->set_features($node, 'Poss'.$ptag);
             }
             # siapa<w>_W--+kah<t>_T
+            # http://indodic.com/affixeng.html
             elsif($morphind =~ m/^([^_]+)_(...)\+([kl]ah|pun)<t>_T--$/)
             {
                 # The -kah suffix marks the focus word of a question.
@@ -94,9 +95,26 @@ sub fix_morphology
                 # Features.
                 $self->set_features($node, $tag);
             }
+            # anti<a>_ASP+gizi<n>_NSD
+            # The prefix anti- has the same function as in English.
+            elsif($morphind =~ m/^anti<a>_ASP+([^_]+)_(...)$/)
+            {
+                my $lemma = "anti$1";
+                my $tag = $2;
+                # Remove lemma tags from the lemma.
+                $lemma =~ s/<.>//g;
+                # Remove morpheme boundaries from the lemma.
+                $lemma =~ s/\+//g unless($lemma =~ m/^\++$/);
+                # Uppercase lemma characters trigger morphonological changes but we don't want them in the lemma.
+                # (On the other hand, we would like to have capitalized lemmas of proper nouns but we would need to look at the original form and use heuristics to achieve that.)
+                $lemma = lc($lemma);
+                $node->set_lemma($lemma) unless($lemma eq '');
+                $node->set_conll_pos($tag);
+            }
             else
             {
-                log_warn("Unexpected MorphInd format: $morphind");
+                my $form = $node->form();
+                log_warn("Form '$form' has unexpected MorphInd format: $morphind");
             }
         }
     }
