@@ -96,7 +96,7 @@ sub fix_morphology
                 $self->set_features($node, $tag);
             }
             # Pronominal prefix of verb is a subject clitic.
-            elsif($morphind =~ m/^([^_]+)_(P..)\+([^_]+)_(V..)(\+[kl]ah<t>)_(T--)?$/)
+            elsif($morphind =~ m/^([^_]+)_(P..)\+([^_]+)_(V..)(?:\+([kl]ah<t>)_(T--))?$/)
             {
                 my $plemma = $1;
                 my $ptag = $2;
