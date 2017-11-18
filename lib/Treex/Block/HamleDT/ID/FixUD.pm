@@ -41,13 +41,7 @@ sub fix_morphology
             {
                 my $lemma = $1;
                 my $tag = $2;
-                # Remove lemma tags from the lemma.
-                $lemma =~ s/<.>//g;
-                # Remove morpheme boundaries from the lemma.
-                $lemma =~ s/\+//g unless($lemma =~ m/^\++$/);
-                # Uppercase lemma characters trigger morphonological changes but we don't want them in the lemma.
-                # (On the other hand, we would like to have capitalized lemmas of proper nouns but we would need to look at the original form and use heuristics to achieve that.)
-                $lemma = lc($lemma);
+                $lemma = $self->normalize_lemma($lemma);
                 $node->set_lemma($lemma) unless($lemma eq '');
                 $node->set_conll_pos($tag);
                 # Features.
@@ -60,13 +54,7 @@ sub fix_morphology
                 my $tag = $2;
                 my $plemma = $3;
                 my $ptag = $4;
-                # Remove lemma tags from the lemma.
-                $lemma =~ s/<.>//g;
-                # Remove morpheme boundaries from the lemma.
-                $lemma =~ s/\+//g unless($lemma =~ m/^\++$/);
-                # Uppercase lemma characters trigger morphonological changes but we don't want them in the lemma.
-                # (On the other hand, we would like to have capitalized lemmas of proper nouns but we would need to look at the original form and use heuristics to achieve that.)
-                $lemma = lc($lemma);
+                $lemma = $self->normalize_lemma($lemma);
                 $node->set_lemma($lemma) unless($lemma eq '');
                 $node->set_conll_pos("$tag+$ptag");
                 # Features.
@@ -83,13 +71,7 @@ sub fix_morphology
                 my $lemma = $1;
                 my $tag = $2;
                 my $ptag = 'T--';
-                # Remove lemma tags from the lemma.
-                $lemma =~ s/<.>//g;
-                # Remove morpheme boundaries from the lemma.
-                $lemma =~ s/\+//g unless($lemma =~ m/^\++$/);
-                # Uppercase lemma characters trigger morphonological changes but we don't want them in the lemma.
-                # (On the other hand, we would like to have capitalized lemmas of proper nouns but we would need to look at the original form and use heuristics to achieve that.)
-                $lemma = lc($lemma);
+                $lemma = $self->normalize_lemma($lemma);
                 $node->set_lemma($lemma) unless($lemma eq '');
                 $node->set_conll_pos("$tag+$ptag");
                 # Features.
@@ -104,13 +86,7 @@ sub fix_morphology
                 my $tag = $4;
                 my $ttag = $6;
                 $tag .= "+$ttag" if(defined($ttag));
-                # Remove lemma tags from the lemma.
-                $lemma =~ s/<.>//g;
-                # Remove morpheme boundaries from the lemma.
-                $lemma =~ s/\+//g unless($lemma =~ m/^\++$/);
-                # Uppercase lemma characters trigger morphonological changes but we don't want them in the lemma.
-                # (On the other hand, we would like to have capitalized lemmas of proper nouns but we would need to look at the original form and use heuristics to achieve that.)
-                $lemma = lc($lemma);
+                $lemma = $self->normalize_lemma($lemma);
                 $node->set_lemma($lemma) unless($lemma eq '');
                 $node->set_conll_pos("$ptag+$tag");
                 # Features.
@@ -126,13 +102,7 @@ sub fix_morphology
             {
                 my $lemma = $1.$2;
                 my $tag = $3;
-                # Remove lemma tags from the lemma.
-                $lemma =~ s/<.>//g;
-                # Remove morpheme boundaries from the lemma.
-                $lemma =~ s/\+//g unless($lemma =~ m/^\++$/);
-                # Uppercase lemma characters trigger morphonological changes but we don't want them in the lemma.
-                # (On the other hand, we would like to have capitalized lemmas of proper nouns but we would need to look at the original form and use heuristics to achieve that.)
-                $lemma = lc($lemma);
+                $lemma = $self->normalize_lemma($lemma);
                 $node->set_lemma($lemma) unless($lemma eq '');
                 $node->set_conll_pos($tag);
                 # Features.
@@ -144,13 +114,7 @@ sub fix_morphology
             {
                 my $lemma = $1;
                 my $tag = $2;
-                # Remove lemma tags from the lemma.
-                $lemma =~ s/<.>//g;
-                # Remove morpheme boundaries from the lemma.
-                $lemma =~ s/\+//g unless($lemma =~ m/^\++$/);
-                # Uppercase lemma characters trigger morphonological changes but we don't want them in the lemma.
-                # (On the other hand, we would like to have capitalized lemmas of proper nouns but we would need to look at the original form and use heuristics to achieve that.)
-                $lemma = lc($lemma);
+                $lemma = $self->normalize_lemma($lemma);
                 $node->set_lemma($lemma) unless($lemma eq '');
                 $node->set_conll_pos($tag);
                 # Features.
@@ -171,6 +135,27 @@ sub fix_morphology
             }
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Cleans up a lemma candidate taken from MorphInd.
+#------------------------------------------------------------------------------
+sub normalize_lemma
+{
+    my $self = shift;
+    my $lemma = shift;
+    # Example string from MorphInd: everything left of the underscore is the lemma candidate, the three characters on the right are the POS tag.
+    # ini<b>_B--
+    # Remove lemma tags (for example "<b>") from the lemma.
+    $lemma =~ s/<.>//g;
+    # Remove morpheme boundaries from the lemma.
+    $lemma =~ s/\+//g unless($lemma =~ m/^\++$/);
+    # Uppercase lemma characters trigger morphonological changes but we don't want them in the lemma.
+    # (On the other hand, we would like to have capitalized lemmas of proper nouns but we would need to look at the original form and use heuristics to achieve that.)
+    $lemma = lc($lemma);
+    return $lemma;
 }
 
 
@@ -201,13 +186,11 @@ sub set_features
         $node->iset()->set('person', $p);
         if($node->lemma() eq 'kami')
         {
-            ###!!! Unfortunately Interset does not know clusivity yet.
-            ###!!! $node->iset()->set('clusivity', 'ex');
+            $node->iset()->set('clusivity', 'ex');
         }
         elsif($node->lemma() eq 'kita')
         {
-            ###!!! Unfortunately Interset does not know clusivity yet.
-            ###!!! $node->iset()->set('clusivity', 'ex');
+            $node->iset()->set('clusivity', 'in');
         }
     }
     elsif($tag =~ m/^PossP([SP])([123])$/)
