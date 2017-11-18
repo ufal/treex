@@ -95,6 +95,29 @@ sub fix_morphology
                 # Features.
                 $self->set_features($node, $tag);
             }
+            # Pronominal prefix of verb is a subject clitic.
+            elsif($morphind =~ m/^([^_]+)_(P..)\+([^_]+)_(V..)(\+[kl]ah<t>)_(T--)?$/)
+            {
+                my $plemma = $1;
+                my $ptag = $2;
+                my $lemma = $3;
+                my $tag = $4;
+                my $ttag = $6;
+                $tag .= "+$ttag" if(defined($ttag));
+                # Remove lemma tags from the lemma.
+                $lemma =~ s/<.>//g;
+                # Remove morpheme boundaries from the lemma.
+                $lemma =~ s/\+//g unless($lemma =~ m/^\++$/);
+                # Uppercase lemma characters trigger morphonological changes but we don't want them in the lemma.
+                # (On the other hand, we would like to have capitalized lemmas of proper nouns but we would need to look at the original form and use heuristics to achieve that.)
+                $lemma = lc($lemma);
+                $node->set_lemma($lemma) unless($lemma eq '');
+                $node->set_conll_pos("$ptag+$tag");
+                # Features.
+                $self->set_features($node, $tag);
+                $self->set_features($node, $ptag);
+                $node->iset()->clear('prontype');
+            }
             # anti<a>_ASP+gizi<n>_NSD
             # The prefix anti- has the same function as in English.
             # para- similar to English para-
@@ -138,6 +161,7 @@ sub fix_morphology
             {
                 my $form = $node->form();
                 log_warn("Unexpected MorphInd format: $morphind (form: $form)");
+                $node->set_lemma($form);
             }
         }
     }
