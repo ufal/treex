@@ -157,6 +157,12 @@ sub fix_morphology
                 $self->set_features($node, $tag);
                 $node->iset()->set('polarity', 'neg');
             }
+            # Some unknown words actually do contain the underscore:
+            # assisted_gps<x>_X--
+            elsif($morphind =~ m/^[^<>]+<x>_X--$/)
+            {
+                $node->set_lemma($node->form());
+            }
             else
             {
                 my $form = $node->form();
@@ -193,6 +199,16 @@ sub set_features
         $node->iset()->set('prontype', 'prs');
         $node->iset()->set('number', $n eq 'P' ? 'plur' : 'sing');
         $node->iset()->set('person', $p);
+        if($node->lemma() eq 'kami')
+        {
+            ###!!! Unfortunately Interset does not know clusivity yet.
+            ###!!! $node->iset()->set('clusivity', 'ex');
+        }
+        elsif($node->lemma() eq 'kita')
+        {
+            ###!!! Unfortunately Interset does not know clusivity yet.
+            ###!!! $node->iset()->set('clusivity', 'ex');
+        }
     }
     elsif($tag =~ m/^PossP([SP])([123])$/)
     {
