@@ -99,7 +99,7 @@ sub fix_morphology
             # The prefix anti- has the same function as in English.
             # para- similar to English para-
             # pasca- similar to English post-
-            elsif($morphind =~ m/^([^_]+)<a>_ASP+([^_]+)_(...)$/)
+            elsif($morphind =~ m/^([^_]+)(<a>_ASP|<r>_R--)+([^_]+)_(...)$/)
             {
                 my $lemma = $1.$2;
                 my $tag = $3;
