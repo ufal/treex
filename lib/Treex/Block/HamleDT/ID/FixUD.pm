@@ -74,10 +74,11 @@ sub fix_morphology
                 $self->set_features($node, 'Poss'.$ptag);
             }
             # siapa<w>_W--+kah<t>_T
-            elsif($morphind =~ m/^([^_]+)_(...)\+kah<t>_T--$/)
+            elsif($morphind =~ m/^([^_]+)_(...)\+([kl]ah|pun)<t>_T--$/)
             {
                 # The -kah suffix marks the focus word of a question.
                 # We may want to define a language-specific feature for that but right now we must just discard it.
+                # The -lah suffix has many different and confusing usages but for simplicity we can say it is often used to give emphasis, to soften a command or to add politeness to an expression. Only about one in every 400 words in Indonesian publications will have the "-lah" suffix.
                 my $lemma = $1;
                 my $tag = $2;
                 my $ptag = 'T--';
