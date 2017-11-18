@@ -73,6 +73,26 @@ sub fix_morphology
                 $self->set_features($node, $tag);
                 $self->set_features($node, 'Poss'.$ptag);
             }
+            # siapa<w>_W--+kah<t>_T
+            elsif($morphind =~ m/^([^_]+)_(...)\+kah<t>_T--$/)
+            {
+                # The -kah suffix marks the focus word of a question.
+                # We may want to define a language-specific feature for that but right now we must just discard it.
+                my $lemma = $1;
+                my $tag = $2;
+                my $ptag = 'T--';
+                # Remove lemma tags from the lemma.
+                $lemma =~ s/<.>//g;
+                # Remove morpheme boundaries from the lemma.
+                $lemma =~ s/\+//g unless($lemma =~ m/^\++$/);
+                # Uppercase lemma characters trigger morphonological changes but we don't want them in the lemma.
+                # (On the other hand, we would like to have capitalized lemmas of proper nouns but we would need to look at the original form and use heuristics to achieve that.)
+                $lemma = lc($lemma);
+                $node->set_lemma($lemma) unless($lemma eq '');
+                $node->set_conll_pos("$tag+$ptag");
+                # Features.
+                $self->set_features($node, $tag);
+            }
             else
             {
                 log_warn("Unexpected MorphInd format: $morphind");
@@ -129,7 +149,11 @@ sub set_features
         $node->iset()->set('number', $n eq 'P' ? 'plur' : 'sing');
         $node->iset()->set('degree', $d eq 'S' ? 'sup' : 'pos');
     }
-    # Other tags are featureless. Just one character and two dashes.
+    elsif($tag =~ m/^W--$/)
+    {
+        $node->iset()->set('prontype', 'int');
+    }
+    # Remaining tags are featureless. Just one character and two dashes.
     # H ... coordinating conjunction
     # S ... subordinating conjunction
     # F ... foreign word
@@ -141,7 +165,6 @@ sub set_features
     # G ... negation
     # I ... interjection
     # O ... copula
-    # W ... question
     # X ... unknown
     # Z ... punctuation
 }
