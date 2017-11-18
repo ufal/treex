@@ -161,13 +161,13 @@ sub fix_morphology
             # assisted_gps<x>_X--
             elsif($morphind =~ m/^[^<>]+<x>_X--$/)
             {
-                $node->set_lemma($node->form());
+                $node->set_lemma(lc($node->form()));
             }
             else
             {
                 my $form = $node->form();
                 log_warn("Unexpected MorphInd format: $morphind (form: $form)");
-                $node->set_lemma($form);
+                $node->set_lemma(lc($form));
             }
         }
     }
