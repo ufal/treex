@@ -51,50 +51,27 @@ sub fix_morphology
                 $node->set_lemma($lemma) unless($lemma eq '');
                 $node->set_conll_pos($tag);
                 # Features.
-                if($tag =~ m/^N([SP])([MFD])$/)
-                {
-                    my $n = $1;
-                    my $g = $2;
-                    $node->iset()->set('number', $n eq 'P' ? 'plur' : 'sing');
-                    $node->iset()->set('gender', $g eq 'F' ? 'fem' : 'masc') unless($g eq 'D');
-                }
-                elsif($tag =~ m/^P([SP])([123])$/)
-                {
-                    my $n = $1;
-                    my $p = $2;
-                    $node->iset()->set('prontype', 'prs');
-                    $node->iset()->set('number', $n eq 'P' ? 'plur' : 'sing');
-                    $node->iset()->set('person', $p);
-                }
-                elsif($tag =~ m/^V([SP])([AP])$/)
-                {
-                    my $n = $1;
-                    my $v = $2;
-                    $node->iset()->set('number', $n eq 'P' ? 'plur' : 'sing');
-                    $node->iset()->set('voice', $v eq 'P' ? 'pass' : 'act');
-                }
-                elsif($tag =~ m/^A([SP])([PS])$/)
-                {
-                    my $n = $1;
-                    my $d = $2;
-                    $node->iset()->set('number', $n eq 'P' ? 'plur' : 'sing');
-                    $node->iset()->set('degree', $d eq 'S' ? 'sup' : 'pos');
-                }
-                # Other tags are featureless. Just one character and two dashes.
-                # H ... coordinating conjunction
-                # S ... subordinating conjunction
-                # F ... foreign word
-                # R ... preposition
-                # M ... modal
-                # B ... determiner
-                # D ... adverb
-                # T ... particle
-                # G ... negation
-                # I ... interjection
-                # O ... copula
-                # W ... question
-                # X ... unknown
-                # Z ... punctuation
+                $self->set_features($node, $tag);
+            }
+            # peN+huni<v>_NSD+dia<p>_PS3
+            elsif($morphind =~ m/^([^_]+)_(...)\+([^_]+)_(P..)$/)
+            {
+                my $lemma = $1;
+                my $tag = $2;
+                my $plemma = $3;
+                my $ptag = $4;
+                # Remove lemma tags from the lemma.
+                $lemma =~ s/<.>//g;
+                # Remove morpheme boundaries from the lemma.
+                $lemma =~ s/\+//g unless($lemma =~ m/^\++$/);
+                # Uppercase lemma characters trigger morphonological changes but we don't want them in the lemma.
+                # (On the other hand, we would like to have capitalized lemmas of proper nouns but we would need to look at the original form and use heuristics to achieve that.)
+                $lemma = lc($lemma);
+                $node->set_lemma($lemma) unless($lemma eq '');
+                $node->set_conll_pos("$tag+$ptag");
+                # Features.
+                $self->set_features($node, $tag);
+                $self->set_features($node, 'Poss'.$ptag);
             }
             else
             {
@@ -102,6 +79,71 @@ sub fix_morphology
             }
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Sets individual interset features based on MorphInd three-character POS tag.
+# Ideally we should just call Lingua::Interset::decode() but the driver for
+# MorphInd is not available at present. ###!!!
+#------------------------------------------------------------------------------
+sub set_features
+{
+    my $self = shift;
+    my $node = shift;
+    my $tag = shift;
+    if($tag =~ m/^N([SP])([MFD])$/)
+    {
+        my $n = $1;
+        my $g = $2;
+        $node->iset()->set('number', $n eq 'P' ? 'plur' : 'sing');
+        $node->iset()->set('gender', $g eq 'F' ? 'fem' : 'masc') unless($g eq 'D');
+    }
+    elsif($tag =~ m/^P([SP])([123])$/)
+    {
+        my $n = $1;
+        my $p = $2;
+        $node->iset()->set('prontype', 'prs');
+        $node->iset()->set('number', $n eq 'P' ? 'plur' : 'sing');
+        $node->iset()->set('person', $p);
+    }
+    elsif($tag =~ m/^PossP([SP])([123])$/)
+    {
+        my $n = $1;
+        my $p = $2;
+        $node->iset()->set('possnumber', $n eq 'P' ? 'plur' : 'sing');
+        $node->iset()->set('possperson', $p);
+    }
+    elsif($tag =~ m/^V([SP])([AP])$/)
+    {
+        my $n = $1;
+        my $v = $2;
+        $node->iset()->set('number', $n eq 'P' ? 'plur' : 'sing');
+        $node->iset()->set('voice', $v eq 'P' ? 'pass' : 'act');
+    }
+    elsif($tag =~ m/^A([SP])([PS])$/)
+    {
+        my $n = $1;
+        my $d = $2;
+        $node->iset()->set('number', $n eq 'P' ? 'plur' : 'sing');
+        $node->iset()->set('degree', $d eq 'S' ? 'sup' : 'pos');
+    }
+    # Other tags are featureless. Just one character and two dashes.
+    # H ... coordinating conjunction
+    # S ... subordinating conjunction
+    # F ... foreign word
+    # R ... preposition
+    # M ... modal
+    # B ... determiner
+    # D ... adverb
+    # T ... particle
+    # G ... negation
+    # I ... interjection
+    # O ... copula
+    # W ... question
+    # X ... unknown
+    # Z ... punctuation
 }
 
 
