@@ -366,10 +366,20 @@ sub remove_features_from_lemmas
                 if(defined($nrm) && $nrm > 0)
                 {
                     # Remove the specified number of trailing characters.
+                    # Warning: If there was the numeric lemma id suffix, it is counted in the characters removed!
+                    # pozornost-1_^(všímavý,_milý,_soustředěný)_(*5ý-1)
+                    # 5 characters from "pozornost-1" = "pozorn" + "ý-1"
+                    # if we wrongly remove them from "pozornost", the result will be "pozoý-1"
                     my $lderiv = $lemma;
+                    if(exists($wild->{lid}))
+                    {
+                        $lderiv .= $wild->{lid};
+                    }
                     $lderiv =~ s/.{$nrm}$//;
                     # Append the original suffix.
                     $lderiv .= $add if(defined($add));
+                    # But if it includes its own lemma identification number, remove it again.
+                    $lderiv =~ s/(.)-(\d+)/$1/;
                     if($lderiv eq $lemma)
                     {
                         log_warn("Lemma $lemma, derivation comment $comment, no change");
