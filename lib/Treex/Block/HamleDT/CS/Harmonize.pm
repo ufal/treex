@@ -373,7 +373,7 @@ sub remove_features_from_lemmas
                     my $lderiv = $lemma;
                     if(exists($wild->{lid}))
                     {
-                        $lderiv .= $wild->{lid};
+                        $lderiv .= '-'.$wild->{lid};
                     }
                     $lderiv =~ s/.{$nrm}$//;
                     # Append the original suffix.
