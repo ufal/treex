@@ -12,7 +12,7 @@ has add_empty_line => ( is=>'rw', isa=>'Bool', default=>1 );
 has indent   => ( is=>'ro', isa => 'Int',  default => 1, documentation => 'number of columns for better readability');
 has minimize_cross => ( is=>'ro', isa => 'Bool', default => 1, documentation => 'minimize crossings of edges in non-projective trees');
 has color      => ( is=>'rw', isa=>'Bool', default=> 1 );
-has attributes => ( is=>'ro', default=>'ord,t_lemma,functor' );
+has attributes => ( is=>'ro', default=>'ord,t_lemma,gram/sempos,functor,id' );
 has print_undef_as => (is=>'ro', default=>'');
 has colspace => ( is => 'ro', isa => "Int", default => 5 );
 has zones => ( is => 'ro', isa => 'Str', required => 1 );
@@ -20,6 +20,7 @@ has zones => ( is => 'ro', isa => 'Str', required => 1 );
 my %COLOR_OF = (
     t_lemma => 'cyan',
     functor => 'bright_blue',
+    'gram/sempos' => 'bright_red',
     ord => 'bright_yellow',
 );
 
