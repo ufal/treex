@@ -45,6 +45,10 @@ sub process_zone {
     $self->align_generated_nodes_by_tlemma_functor_parent($auto_free, $ref_free);
     $self->align_generated_nodes_by_functor_parent($auto_free);
     $self->align_arguments_of_nonfinites_to_grandparents($auto_free);
+    # align generated nodes on "ref" with their antecedents' counterparts in the "src" - gold coreference is used
+    $self->align_generated_nodes_to_coref_ante_counterpart($ref_free, $auto_free);
+    # align generated nodes on "src" with their antecedents' counterparts in the "ref" - automatic coreference is used
+    $self->align_generated_nodes_to_coref_ante_counterpart($auto_free, $ref_free, 1);
 }
 
 sub _get_related_verbs_via_alayer {
@@ -120,6 +124,24 @@ sub align_arguments_of_nonfinites_to_grandparents {
         delete $auto_free->{$auto_node->id};
     }
 
+}
+
+sub align_generated_nodes_to_coref_ante_counterpart {
+    my ($self, $from_free, $to_free, $to_from_arrow) = @_;
+    foreach my $from_node (values %$from_free) {
+        my @antes = $from_node->get_coref_nodes;
+        next if (!@antes);
+        my @to_antes = Treex::Tool::Align::Utils::aligned_transitively(\@antes, [{rel_types => ['monolingual']}]);
+        foreach my $to_ante (@to_antes) {
+            if ($to_from_arrow) {
+                $from_node->add_aligned_node($to_ante, 'monolingual.loose');
+            } 
+            else {
+                $to_ante->add_aligned_node($from_node, 'monolingual.loose');
+            }
+        }
+        delete $from_free->{$from_node->id};
+    }
 }
 
 1;
