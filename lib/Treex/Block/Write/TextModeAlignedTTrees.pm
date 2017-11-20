@@ -7,7 +7,7 @@ extends 'Treex::Block::Write::BaseTextWriter';
 use Data::Printer;
 
 has print_sent_id => ( is=>'ro', isa=>'Bool', default=>0 );
-has print_sentence => ( is=>'ro', isa=>'Bool', default=>0 );
+#has print_sentence => ( is=>'ro', isa=>'Bool', default=>0 );
 has add_empty_line => ( is=>'rw', isa=>'Bool', default=>1 );
 has indent   => ( is=>'ro', isa => 'Int',  default => 1, documentation => 'number of columns for better readability');
 has minimize_cross => ( is=>'ro', isa => 'Bool', default => 1, documentation => 'minimize crossings of edges in non-projective trees');
@@ -70,18 +70,28 @@ sub _compute_gaps {
 }
 
 sub _length {
-    my ($self, $str) = @_;
-    return length colorstrip($str);
+    my ($str) = @_;
+    return length colorstrip($str // "");
 }
 
-sub _add_padding {
-   my ($self, $lines) = @_;
-   my $max_length = max map {$self->_length($_)} @$lines;
-   my @padded_lines = map {
-        my $add_pad = $max_length - $self->_length($_);
-        $_ . (' 'x$add_pad)
-   } @$lines;
-   return @padded_lines;
+sub pad_vertically {
+    my ($cols) = @_;
+    my $height = max(map {scalar(@$_)} @$cols);
+    foreach my $col (@$cols) {
+        push @$col, map {undef} 1..($height-scalar(@$col));
+    }
+    return $height;
+}
+
+sub pad_horizontally {
+   my ($lines) = @_;
+   my $maxlen = max map {_length($_)} @$lines;
+   for (my $i = 0; $i < @$lines; $i++) {
+       my $line = $lines->[$i] // "";
+       my $add_pad = $maxlen - _length($line);
+       $lines->[$i] = $line . (' 'x$add_pad)
+   }
+   return $maxlen;
 }
 
 sub align_to_lines {
@@ -93,45 +103,82 @@ sub align_to_lines {
         my @alistrs = map {sprintf "(%d, %d, %s)", $node->ord, $alin->[$_]->ord, $alit->[$_]} 0..$#$alin;
         push @lines, @alistrs;
     }
-    return @lines;
+    return \@lines;
+}
+
+sub _text_to_block {
+    my ($text, $len) = @_;
+    my @words = split / /, $text;
+    my $curr_line = '';
+    my @lines = ();
+    foreach my $word (@words) {
+        my $oneline = $curr_line . (_length($curr_line) ? ' ' : '') . $word;
+        if (_length($word) > $len) {
+            push @lines, $curr_line;
+            my @splits = unpack("(A$len)*", $word);
+            $curr_line = pop @splits;
+            push @lines, @splits;
+        }
+        elsif (_length($oneline) <= $len) {
+            $curr_line = $oneline;
+        }
+        else {
+            push @lines, $curr_line;
+            $curr_line = $word;
+        }
+    }
+    push @lines, $curr_line;
+    return \@lines;
 }
 
 sub process_bundle {
     my ($self, $bundle) = @_;
 
-    my @all_trees = ();
     my $prev_tree = undef;
     my $tree_cols = [];
+    my $sent_cols = [];
     foreach my $zone_label (split /,/, $self->zones) {
         my ($language, $selector) = split /_/, $zone_label;
-        my $tree = $bundle->get_tree($language, 't', $selector);
-        push @all_trees, $tree;
 
+        # build align block
         if (defined $prev_tree) {
-            my @alilines = $self->align_to_lines($prev_tree, $language, $selector);
-            my @padded_alilines = $self->_add_padding(\@alilines);
-            push @$tree_cols, \@padded_alilines;
+            my $alilines = $self->align_to_lines($prev_tree, $language, $selector);
+            push @$tree_cols, $alilines;
+
+            push @$sent_cols, [];
         }
 
-        my @lines = $self->tree_to_lines($tree);
-        my @padded_lines = $self->_add_padding(\@lines);
-        push @$tree_cols, \@padded_lines;
+        # build tree block
+        my $tree = $bundle->get_tree($language, 't', $selector);
+        my $lines = $self->tree_to_lines($tree);
+        push @$tree_cols, $lines;
+        
+        my $maxlen_lines = max map {_length($_)} @$lines;
+
+        # build sentence block
+        my $sent = sprintf "%s: %s", map {$tree->get_zone->$_} qw/get_label sentence/;
+        my $sent_lines = _text_to_block($sent, $maxlen_lines);
+        push @$sent_cols, $sent_lines; 
 
         $prev_tree = $tree;
     }
+
+    # add vertical padding
+    my $sent_height = pad_vertically($sent_cols);
+    my $tree_height = pad_vertically($tree_cols);
+    my $joint_cols = [ map {[@{$sent_cols->[$_]}, @{$tree_cols->[$_]}]} 0..$#$sent_cols ];
+    pad_horizontally($_) foreach (@$joint_cols);
     
-    my @sizes = map {$self->_length($_->[0])} @$tree_cols;
+    
     my $colsep = " "x$self->colspace;
     my $text = "";
-    for (my $i = 0; $i < max(map {scalar(@$_)} @$tree_cols); $i++) {
-        my $full_line = join $colsep, map {$tree_cols->[$_][$i] // " "x$sizes[$_]} (0 .. $#$tree_cols);
+    for (my $i = 0; $i < $sent_height+$tree_height; $i++) {
+        my $full_line = join $colsep, map {$joint_cols->[$_][$i]} (0 .. $#$joint_cols);
         $text .= $full_line . "\n";
     }
+    
     # Print headers (if required) and the tree itself
     say { $self->_file_handle } '# sent_id = ' . $bundle->get_position()       if $self->print_sent_id;
-    if ($self->print_sentence) {
-        say { $self->_file_handle } '# '.$_->get_label.' = ' . $_->sentence for (map {$_->get_zone} @all_trees);
-    }
     print { $self->_file_handle } $text;
     print { $self->_file_handle } "\n" if $self->add_empty_line;
 }
@@ -151,11 +198,11 @@ sub tree_to_lines {
     while (my $node = pop @stack) {
         my @children = $node->get_children({ordered=>1, add_self=>1});
         my ($min_idx, $max_idx) = map {$index_of->{$_}} @children[0, -1];
-        my $max_length = max( map{$self->_length($lines[$_])} ($min_idx..$max_idx) );
+        my $max_length = max( map{_length($lines[$_])} ($min_idx..$max_idx) );
         for my $idx ($min_idx..$max_idx) {
             my $idx_node = $all[$idx];
             my $filler = $lines[$idx] =~ m/[─┌└├]$/ ? '─' : ' ';
-            $lines[$idx] .= $filler x ($max_length - $self->_length($lines[$idx]));
+            $lines[$idx] .= $filler x ($max_length - _length($lines[$idx]));
 
             my $min = ($idx == $min_idx);
             my $max = ($idx == $max_idx);
@@ -178,8 +225,7 @@ sub tree_to_lines {
         # sorting the stack to minimize crossings of edges
         @stack = sort {$gaps->{$b} <=> $gaps->{$a}} @stack if $self->minimize_cross;
     }
-    return @lines;
-
+    return \@lines;
 }
 
 # Render a node with its attributes
