@@ -11,7 +11,7 @@ with 'Treex::Block::Filter::Node';
 has 'align_language' => (is => 'ro', isa => 'Str', required => 1);
 has 'align_reltypes' => (is => 'ro', isa => 'Str', default => '!gold,!coref_gold,!robust,!supervised,!coref_supervised,.*');
 
-has 'penalize_analysis' => (is => 'ro', isa => 'Bool', default => 0);
+has 'penalize_analysis' => (is => 'ro', isa => 'Bool', default => 1);
 
 sub _build_node_types {
     return 'all_anaph';
