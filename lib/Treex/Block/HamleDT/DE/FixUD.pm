@@ -65,7 +65,42 @@ sub convert_deprels
         {
             $node->set_deprel('obl');
         }
+        # Fix inherently reflexive verbs.
+        if($node->is_reflexive() && $self->is_inherently_reflexive_verb($parent->lemma()))
+        {
+            $node->set_deprel('expl:pv');
+        }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Identifies German inherently reflexive verbs (echte reflexive Verben). Note
+# that there are very few verbs where we can automatically say that the they
+# are reflexive. In some cases they are mostly reflexive, but the transitive
+# usage cannot be excluded, although it is rare, obsolete or limited to some
+# dialects. In other cases the reflexive use has a meaning significantly
+# different from the transitive use, and it would deserve to be annotated using
+# expl:pv, but we cannot tell the two usages apart automatically.
+#------------------------------------------------------------------------------
+sub is_inherently_reflexive_verb
+{
+    my $self = shift;
+    my $lemma = shift;
+    # The following examples are taken from Knaurs Grammatik der deutschen Sprache, 1989
+    # (first line) + some additions (second line).
+    # with accusative
+    my @irva = qw(
+        bedanken beeilen befinden begeben erholen nähern schämen sorgen verlieben
+        anfreunden weigern
+    );
+    # with dative
+    my @irvd = qw(
+        aneignen anmaßen ausbitten einbilden getrauen gleichbleiben vornehmen
+    );
+    my $re = join('|', (@irva, @irvd));
+    return $lemma =~ m/^($re)$/;
 }
 
 
