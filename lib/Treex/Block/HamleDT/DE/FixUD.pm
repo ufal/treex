@@ -4,7 +4,7 @@ use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Common;
 use Treex::Tool::PhraseBuilder::StanfordToUD;
-extends 'Treex::Core::Block';
+extends 'Treex::Block::HamleDT::SplitFusedWords';
 
 
 
@@ -80,6 +80,7 @@ sub fix_morphology
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
+        $self->fix_mwt_capitalization($node);
         my $form = $node->form();
         my $lemma = $node->lemma();
         my $iset = $node->iset();
@@ -88,6 +89,9 @@ sub fix_morphology
             $iset->set('polarity', 'neg');
         }
     }
+    # It is possible that we changed the form of a multi-word token.
+    # Therefore we must re-generate the sentence text.
+    $root->get_zone()->set_sentence($self->collect_sentence_text(@nodes));
 }
 
 
@@ -124,6 +128,70 @@ sub regenerate_upos
     {
         $node->set_tag($node->iset()->get_upos());
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Makes capitalization of muti-word tokens consistent with capitalization of
+# their parts.
+#------------------------------------------------------------------------------
+sub fix_mwt_capitalization
+{
+    my $self = shift;
+    my $node = shift;
+    # Is this node part of a multi-word token?
+    if(exists($node->wild()->{fused}))
+    {
+        my $pform = $node->form();
+        my $fform = $node->wild()->{fused_form};
+        # It is not always clear whether we want to fix the mwt or the part.
+        # In German however, the most frequent error seems to be that in the
+        # beginning of a sentence, the mwt is not capitalized while its first
+        # part is.
+        if($node->wild()->{fused} eq 'start' && $node->ord()==1 && is_capitalized($pform) && is_lowercase($fform))
+        {
+            $fform =~ s/^(.)/\u$1/;
+            $node->wild()->{fused_form} = $fform;
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Checks whether a string is all-uppercase.
+#------------------------------------------------------------------------------
+sub is_uppercase
+{
+    my $string = shift;
+    return $string eq uc($string);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Checks whether a string is all-lowercase.
+#------------------------------------------------------------------------------
+sub is_lowercase
+{
+    my $string = shift;
+    return $string eq lc($string);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Checks whether a string is capitalized.
+#------------------------------------------------------------------------------
+sub is_capitalized
+{
+    my $string = shift;
+    return 0 if(length($string)==0);
+    $string =~ m/^(.)(.*)$/;
+    my $head = $1;
+    my $tail = $2;
+    return is_uppercase($head) && !is_uppercase($tail);
 }
 
 
