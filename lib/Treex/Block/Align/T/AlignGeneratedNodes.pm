@@ -129,16 +129,15 @@ sub align_arguments_of_nonfinites_to_grandparents {
 sub align_generated_nodes_to_coref_ante_counterpart {
     my ($self, $from_free, $to_free, $to_from_arrow) = @_;
     foreach my $from_node (values %$from_free) {
-        my @antes = $from_node->get_coref_nodes;
+        my @antes = grep {$_->get_root == $from_node->get_root} $from_node->get_coref_chain;
         next if (!@antes);
-        my @to_antes = Treex::Tool::Align::Utils::aligned_transitively(\@antes, [{rel_types => ['monolingual']}]);
-        foreach my $to_ante (@to_antes) {
-            if ($to_from_arrow) {
-                $from_node->add_aligned_node($to_ante, 'monolingual.loose');
-            } 
-            else {
-                $to_ante->add_aligned_node($from_node, 'monolingual.loose');
-            }
+        my ($to_ante) = Treex::Tool::Align::Utils::aligned_transitively(\@antes, [{rel_types => ['monolingual']}]);
+        next if (!defined $to_ante);
+        if ($to_from_arrow) {
+            $from_node->add_aligned_node($to_ante, 'monolingual.loose');
+        } 
+        else {
+            $to_ante->add_aligned_node($from_node, 'monolingual.loose');
         }
         delete $from_free->{$from_node->id};
     }
