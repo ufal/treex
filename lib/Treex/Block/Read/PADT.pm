@@ -301,8 +301,7 @@ override '_convert_atree' => sub
                 my $alemma = ElixirFM::orth($treex_node->lemma());
                 my $rlemma = ElixirFM::phon($treex_node->lemma());
                 push(@features, 'rlemma='.$rlemma);
-                # wild/lemma_translit, if present, is written in Write::CoNLLU as MISC LTranslit.
-                $treex_node->{wild}{lemma_translit} = $rlemma;
+                $treex_node->set_ltranslit($rlemma);
                 $treex_node->set_lemma($alemma);
             }
             # Copy English glosses from the reflex element.
