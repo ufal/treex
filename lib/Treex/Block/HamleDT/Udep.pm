@@ -71,7 +71,6 @@ sub process_atree {
     # Look for prepositional objects (must be done after transformations).
     $self->relabel_prepositional_objects($root);
     $self->change_case_to_mark_under_verb($root);
-    $self->fix_em_que_de_que($root);
     $self->dissolve_chains_of_auxiliaries($root);
     $self->fix_jak_znamo($root);
     $self->classify_numerals($root);
@@ -695,51 +694,6 @@ sub change_case_to_mark_under_verb
         if($node->deprel() eq 'case' && $node->parent()->is_verb())
         {
             $node->set_deprel('mark');
-        }
-    }
-}
-
-
-
-#------------------------------------------------------------------------------
-# Fixes Portuguese "em que" and "de que" where "que" is correctly tagged PRON
-# but incorrectly attached as mark. (This should have been fixed in the
-# conversion from Bosque to Prague, it is a conversion error there.)
-#------------------------------------------------------------------------------
-sub fix_em_que_de_que
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants();
-    foreach my $node (@nodes)
-    {
-        if($node->form() =~ m/^quem?$/i && $node->is_pronoun() && $node->deprel() eq 'mark')
-        {
-            my $ln = $node->get_left_neighbor();
-            if(defined($ln) && $ln->is_adposition()) # a, com, de, em, ...
-            {
-                $ln->set_parent($node);
-                $ln->set_deprel('case');
-                $node->set_deprel('nmod');
-                if($node->parent()->deprel() eq 'ccomp')
-                {
-                    $node->parent()->set_deprel('acl');
-                }
-            }
-        }
-        # "quem" = "who". It is rare and the only case without preposition (which it is, if the previous if did not help) that I have seen was subject.
-        if(lc($node->form()) eq 'quem' && $node->is_pronoun() && $node->deprel() eq 'mark')
-        {
-            # Two instances of "quem" already have the preposition attached as child but they are still not nmod.
-            my @adpchildren = grep {$_->is_adposition()} ($node->children());
-            if(scalar(@adpchildren) > 0)
-            {
-                $node->set_deprel('nmod');
-            }
-            else
-            {
-                $node->set_deprel('nsubj');
-            }
         }
     }
 }
