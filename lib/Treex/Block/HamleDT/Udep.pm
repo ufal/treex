@@ -80,15 +80,18 @@ sub process_atree {
     ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
     ###!!! Copy them to conll/deprel (which is displayed) until we make Tred know deprel.
     my @nodes = $root->get_descendants({'ordered' => 1});
-    foreach my $node (@nodes)
+    if(0)
     {
-        my $upos = $node->iset()->upos();
-        my $ufeat = join('|', $node->iset()->get_ufeatures());
-        $node->set_tag($upos);
-        $node->set_conll_cpos($upos);
-        $node->set_conll_feat($ufeat);
-        $node->set_conll_deprel($node->deprel());
-        $node->set_afun(undef); # just in case... (should be done already)
+        foreach my $node (@nodes)
+        {
+            my $upos = $node->iset()->upos();
+            my $ufeat = join('|', $node->iset()->get_ufeatures());
+            $node->set_tag($upos);
+            $node->set_conll_cpos($upos);
+            $node->set_conll_feat($ufeat);
+            $node->set_conll_deprel($node->deprel());
+            $node->set_afun(undef); # just in case... (should be done already)
+        }
     }
     # Some of the above transformations may have split or removed nodes.
     # Make sure that the full sentence text corresponds to the nodes again.
