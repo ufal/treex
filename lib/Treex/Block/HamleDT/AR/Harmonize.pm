@@ -28,6 +28,7 @@ sub process_zone
     $self->fill_in_lemmas($root);
     $self->fix_coap_ismember($root);
     $self->fix_auxp($root);
+    $self->fix_relative_pronouns($root);
 }
 
 
@@ -235,6 +236,22 @@ sub convert_deprels
             else
             {
                 $deprel = 'AuxV';
+            }
+        }
+
+        # AuxY: In PDT, it marks mostly additional conjunction in coordination.
+        # In PADT, it is also used with relative pronouns such as اَلَّتِي (allatī).
+        # Instead of serving as the subject or object of the following relative
+        # clause, for some reason the pronoun is attached as the clause's left
+        # sibling. We must fix this!
+        elsif ( $deprel eq 'AuxY' && $node->is_relative() )
+        {
+            my $neighbor = $node->get_right_neighbor();
+            # We won't check at this moment whether the neighbor's deprel is 'Atr'.
+            # Until all deprels are converted, we cannot be sure that they are stored in the deprel attribute and not elsewhere (e.g. in afun).
+            if (defined($neighbor))
+            {
+                $deprel = 'SbOfRelCl';
             }
         }
 
@@ -558,6 +575,45 @@ sub fix_auxp
                         $parent->set_is_member(0);
                     }
                 }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Reconsiders attachment of relative pronouns. In the original annotation they
+# are attached to their antecedent as AuxY. We want them attached as the subject
+# of the relative clause. So far we have re-labeled the relation from AuxY to
+# SbOfRelCl (because we couldn't re-attach it right away).
+#------------------------------------------------------------------------------
+sub fix_relative_pronouns
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'SbOfRelCl')
+        {
+            my $neighbor = $node->get_right_neighbor();
+            # We have checked that the neighbor exists. If it does not exist
+            # now, it must be a result of of intervening transformations.
+            if(!defined($neighbor))
+            {
+                log_warn("Relative pronoun '".$node->form()."' does not have a right neighbor.");
+                $node->set_deprel('Atr');
+            }
+            elsif($neighbor->deprel() ne 'Atr')
+            {
+                log_warn("Deprel of the right neighbor of the relative pronoun '".$node->form()."' is not Atr.");
+                $node->set_deprel('Atr');
+            }
+            else
+            {
+                $node->set_parent($neighbor);
+                $node->set_deprel('Sb');
             }
         }
     }
