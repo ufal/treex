@@ -79,7 +79,7 @@ sub process_atree {
     $self->raise_punctuation_from_coordinating_conjunction($root);
     ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
     ###!!! Copy them to conll/deprel (which is displayed) until we make Tred know deprel.
-    my @nodes = $root->get_descendants();
+    my @nodes = $root->get_descendants({'ordered' => 1});
     foreach my $node (@nodes)
     {
         my $upos = $node->iset()->upos();
