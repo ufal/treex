@@ -636,8 +636,19 @@ sub fix_relative_pronouns
             }
             else
             {
-                log_warn("Deprel of the right neighbor of the relative pronoun '".$node->form()."' is not Atr and the neighbor is not verb.");
-                $node->set_deprel('Atr');
+                # Try to find the relative clause further down the siblings.
+                my @siblings = $neighbor->get_siblings({following_only => 1, ordered => 1});
+                @siblings = grep {$_->deprel() eq 'Atr' || $_->is_verb()} (@siblings);
+                if(scalar(@siblings) >= 1)
+                {
+                    $node->set_parent($siblings[0]);
+                    $node->set_deprel('Sb');
+                }
+                else
+                {
+                    log_warn("Deprel of the right neighbor of the relative pronoun '".$node->form()."' is not Atr and the neighbor is not verb.");
+                    $node->set_deprel('Atr');
+                }
             }
         }
     }
