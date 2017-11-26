@@ -621,7 +621,7 @@ sub fix_relative_pronouns
             elsif($neighbor->deprel() eq 'AuxG')
             {
                 my $lq = $neighbor;
-                my @siblings = $lq->get_siblings({following_only => 1, ordered => 1});
+                my @siblings = $lq->get_siblings({following_only => 1});
                 if(scalar(@siblings) >= 2 && $siblings[0]->is_verb() && $siblings[1]->deprel() eq 'AuxG')
                 {
                     $lq->set_parent($siblings[0]);
@@ -637,7 +637,7 @@ sub fix_relative_pronouns
             else
             {
                 # Try to find the relative clause further down the siblings.
-                my @siblings = $neighbor->get_siblings({following_only => 1, ordered => 1});
+                my @siblings = $neighbor->get_siblings({following_only => 1});
                 @siblings = grep {$_->deprel() eq 'Atr' || $_->is_verb()} (@siblings);
                 if(scalar(@siblings) >= 1)
                 {
