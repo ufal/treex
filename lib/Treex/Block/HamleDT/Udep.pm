@@ -70,19 +70,6 @@ sub process_atree {
     $self->tag_copulas_aux($root);
     # Look for prepositional objects (must be done after transformations).
     $self->relabel_prepositional_objects($root);
-    # Portuguese expressions "cerca_de" and "mais_de" were tagged as prepositions but attached as Atr.
-    # Now the MWE are split and "cerca" is attached as nmod. Fix it to case.
-    my @nodes = $root->get_descendants({'ordered' => 1});
-    foreach my $node (@nodes)
-    {
-        my $form = $node->form() // '';
-        my $deprel = $node->deprel() // '';
-        my @children = $node->children();
-        if($form =~ m/^(cerca|mais)$/i && $deprel eq 'nmod' && scalar(@children)==1 && lc($children[0]->form()) eq 'de')
-        {
-            $node->set_deprel('case');
-        }
-    }
     $self->change_case_to_mark_under_verb($root);
     $self->fix_em_que_de_que($root);
     $self->dissolve_chains_of_auxiliaries($root);
