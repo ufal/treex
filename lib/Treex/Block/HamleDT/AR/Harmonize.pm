@@ -629,6 +629,10 @@ sub fix_relative_pronouns
                     $node->set_parent($siblings[0]);
                     $node->set_deprel('Sb');
                 }
+                else
+                {
+                    $node->set_deprel('Atr');
+                }
             }
             else
             {
