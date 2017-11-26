@@ -606,15 +606,34 @@ sub fix_relative_pronouns
                 log_warn("Relative pronoun '".$node->form()."' does not have a right neighbor.");
                 $node->set_deprel('Atr');
             }
-            elsif($neighbor->deprel() ne 'Atr')
-            {
-                log_warn("Deprel of the right neighbor of the relative pronoun '".$node->form()."' is not Atr.");
-                $node->set_deprel('Atr');
-            }
-            else
+            # If the right neighbor really is a relative clause, its Prague
+            # deprel should be 'Atr'. However, some of these clauses are actually
+            # labeled other things like 'Obj'! It's weird but as long as the node
+            # is a verb, it should be OK to attach the pronoun to it.
+            elsif($neighbor->deprel() eq 'Atr' || $neighbor->is_verb())
             {
                 $node->set_parent($neighbor);
                 $node->set_deprel('Sb');
+            }
+            # In one case the neighboring clause is enclosed in quotation marks
+            # and the quotation marks are not attached to the predicate of the clause,
+            # they are siblings of the pronoun.
+            elsif($neighbor->deprel() eq 'AuxG')
+            {
+                my $lq = $neighbor;
+                my @siblings = $lq->get_siblings({following_only => 1, ordered => 1});
+                if(scalar(@siblings) >= 2 && $siblings[0]->is_verb() && $siblings[1]->deprel() eq 'AuxG')
+                {
+                    $lq->set_parent($siblings[0]);
+                    $siblings[1]->set_parent($siblings[0]);
+                    $node->set_parent($siblings[0]);
+                    $node->set_deprel('Sb');
+                }
+            }
+            else
+            {
+                log_warn("Deprel of the right neighbor of the relative pronoun '".$node->form()."' is not Atr and the neighbor is not verb.");
+                $node->set_deprel('Atr');
             }
         }
     }
