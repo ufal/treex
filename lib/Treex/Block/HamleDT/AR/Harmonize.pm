@@ -127,7 +127,8 @@ sub fix_morphology
         my $lemma = $node->lemma();
         if(!defined($lemma) || $lemma eq '')
         {
-            log_warn("Empty lemma of word form ".$node->form());
+            # Disable the warnings. Many numbers and symbols actually lack the lemma.
+            #log_warn("Empty lemma of word form ".$node->form());
             $node->set_lemma($node->form());
         }
     }
