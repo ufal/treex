@@ -637,8 +637,10 @@ sub fix_relative_pronouns
             else
             {
                 # Try to find the relative clause further down the siblings.
+                # Its predicate may be non-verbal (with or without copula), even a prepositional phrase.
+                # Therefore, we only make sure that what we pick is not punctuation.
                 my @siblings = $neighbor->get_siblings({following_only => 1});
-                @siblings = grep {$_->deprel() eq 'Atr' || $_->is_verb()} (@siblings);
+                @siblings = grep {!$_->is_punctuation()} (@siblings);
                 if(scalar(@siblings) >= 1)
                 {
                     $node->set_parent($siblings[0]);
@@ -646,7 +648,7 @@ sub fix_relative_pronouns
                 }
                 else
                 {
-                    log_warn("Deprel of the right neighbor of the relative pronoun '".$node->form()."' is not Atr and the neighbor is not verb.");
+                    log_warn("Cannot find the relative clause introduced by the pronoun '".$node->form()."'.");
                     $node->set_deprel('Atr');
                 }
             }
