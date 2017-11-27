@@ -120,31 +120,24 @@ sub next_document {
             my $newnode = $aroot->create_child();
             $newnode->shift_after_subtree($aroot);
             # Nodes can become members of multiword tokens only after their ords are set.
-            if (defined($futo)) {
-                if ($id <= $futo) {
+            if (defined($futo))
+            {
+                if ($id <= $futo)
+                {
                     push(@funodes, $newnode);
                 }
-                if ($id >= $futo) {
-                    if (scalar(@funodes) >= 2) {
-                        for (my $i = 0; $i <= $#funodes; $i++) {
-                            my $fn = $funodes[$i];
-                            ###!!! Later we will want to make these attributes normal (not wild).
-                            $fn->wild->{fused_form} = $fuform;
-                            ###!!! The following two lines caused Out of Memory! We should use references instead.
-                            #$fn->wild->{fused_start} = $funodes[0];
-                            #$fn->wild->{fused_end} = $funodes[-1];
-                            $fn->wild->{fused} = ($i == 0) ? 'start' : ($i == $#funodes) ? 'end' : 'middle';
-                            ###!!! New method without wild attributes:
-                            if($i==0)
-                            {
-                                $fn->set_fused_form($fuform);
-                            }
-                            if($i<$#funodes)
-                            {
-                                $fn->set_fused_with_next(1);
-                            }
+                if ($id >= $futo)
+                {
+                    if (scalar(@funodes) >= 2)
+                    {
+                        $funodes[0]->set_fused_form($fuform);
+                        for (my $i = 0; $i < $#funodes; $i++)
+                        {
+                            $fn->set_fused_with_next(1);
                         }
-                    } else {
+                    }
+                    else
+                    {
                         log_warn "Fused token $fufrom-$futo $fuform was announced but less than 2 nodes were found";
                     }
                     $fufrom = undef;

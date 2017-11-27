@@ -143,30 +143,12 @@ sub process_atree {
     for(my $i = 0; $i<=$#nodes; $i++)
     {
         my $node = $nodes[$i];
-        my $wild = $node->wild();
-        my $fused = $wild->{fused};
-        if(defined($fused) && $fused eq 'start')
+        if($node->fused_with_next() && ($i==0 || !$nodes[$i-1]->fused_with_next()))
         {
+            my $last_fused_node = $node->get_fusion_end();
             my $first_fused_node_ord = $node->ord();
-            my $last_fused_node_ord = $wild->{fused_end};
-            my $last_fused_node_no_space_after = 0;
-            # We used to save the ord of the last element with every fused element but now it is no longer guaranteed.
-            # Let's find out.
-            if(!defined($last_fused_node_ord))
-            {
-                for(my $j = $i+1; $j<=$#nodes; $j++)
-                {
-                    $last_fused_node_ord = $nodes[$j]->ord();
-                    $last_fused_node_no_space_after = $nodes[$j]->no_space_after();
-                    last if(defined($nodes[$j]->wild()->{fused}) && $nodes[$j]->wild()->{fused} eq 'end');
-                }
-            }
-            else
-            {
-                my $last_fused_node = $nodes[$last_fused_node_ord-1];
-                log_fatal('Node ord mismatch') if($last_fused_node->ord() != $last_fused_node_ord);
-                $last_fused_node_no_space_after = $last_fused_node->no_space_after();
-            }
+            my $last_fused_node_ord = $last_fused_node->ord();
+            my $last_fused_node_no_space_after = $last_fused_node->no_space_after();
             my $range = '0-0';
             if(defined($first_fused_node_ord) && defined($last_fused_node_ord))
             {
@@ -176,7 +158,7 @@ sub process_atree {
             {
                 log_warn("Cannot determine the span of a fused token");
             }
-            my $form = $wild->{fused_form};
+            my $form = $node->get_fusion();
             my $misc = $last_fused_node_no_space_after ? 'SpaceAfter=No' : '_';
             print { $self->_file_handle() } ("$range\t$form\t_\t_\t_\t_\t_\t_\t_\t$misc\n");
         }
