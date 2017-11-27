@@ -118,6 +118,8 @@ sub next_document {
             }
 
             my $newnode = $aroot->create_child();
+            $newnode->shift_after_subtree($aroot);
+            # Nodes can become members of multiword tokens only after their ords are set.
             if (defined($futo)) {
                 if ($id <= $futo) {
                     push(@funodes, $newnode);
@@ -144,7 +146,6 @@ sub next_document {
                     splice(@funodes);
                 }
             }
-            $newnode->shift_after_subtree($aroot);
             $newnode->set_form($form);
             $newnode->set_lemma($lemma);
             # Tred and PML-TQ should preferably display upos as the main tag of the node.
