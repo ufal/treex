@@ -75,6 +75,10 @@
            However, in other styles (e.g. Stanford) this attribute might be useful. -->
       <member name="is_shared_modifier" type="bool.type"/>
 
+      <!-- Fused word forms (aka multiword tokens in Universal Dependencies -->
+      <member name="fused_with_next" type="bool.type" />
+      <member name="fused_form"><cdata format="any" /></member><!-- only at the first node of the fusion -->
+
       <!-- attributes for conversion to t-tree -->
       <member name="edge_to_collapse" type="bool.type"/>
       <member name="is_auxiliary" type="bool.type"/>

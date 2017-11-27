@@ -11,17 +11,11 @@ with 'Treex::Core::Node::InClause';
 with 'Treex::Core::Node::EffectiveRelations';
 with 'Treex::Core::Node::Interset' => { interset_attribute => 'iset' };
 
-# Original w-layer and m-layer attributes
-has [qw(form lemma tag no_space_after)] => ( is => 'rw' );
+has [qw(form lemma tag no_space_after fused_with_next fused_form)] => ( is => 'rw' );
 
-# Original a-layer attributes
-# (Only afun and is_parenthesis_root originate from PDT, the rest was added in Treex).
 has [
     qw(deprel afun is_parenthesis_root edge_to_collapse is_auxiliary translit ltranslit gloss)
 ] => ( is => 'rw' );
-
-# Reference to the multi-word token this node is part of (if any).
-has 'mwt' => ( is => 'rw', isa => 'Treex::Core::MWT' );
 
 sub get_pml_type_name {
     my ($self) = @_;
@@ -347,61 +341,90 @@ sub get_subtree_dependency_string
 
 
 #------------------------------------------------------------------------------
-# If this node is member of a multiword token, this method returns the MWT
-# object.
+# Says whether this node is member of a fused ("multiword") token.
 #------------------------------------------------------------------------------
-sub get_multiword_token
+sub is_fused
 {
     my $self = shift;
-    return $self->mwt();
+    return 1 if($self->fused_with_next());
+    my $prev = $self->get_prev_node();
+    return defined($prev) && $prev->fused_with_next();
 }
 
 
 
 #------------------------------------------------------------------------------
-# Creates a new MWT object and puts a list of nodes into it. The ord attributes
-# of the nodes must form a contiguous span and none of them can be currently
-# member of another MWT.
+# If this node is fused with one or more preceding nodes, returns the first
+# node of the fusion. Otherwise returns this node.
 #------------------------------------------------------------------------------
-sub create_multiword_token
+sub get_fusion_start
 {
     my $self = shift;
-    my $nodes = shift; # array reference
-    my $fform = shift; # the fused word form
-    my @nodes = sort {$a->ord() <=> $b->ord()} (@{$nodes});
-    if(scalar(@nodes)<2)
+    my $prev = $self->get_prev_node();
+    if(defined($prev) && $prev->fused_with_next())
     {
-        log_fatal("Cannot create multiword token from just one node.");
+        return $prev->get_fusion_start();
     }
-    # Check that the ords of the nodes form a contiguous span and are from this tree.
-    # Also, none of the nodes may be currently member of another MWT.
-    my $root = $self->get_root();
-    for(my $i = 0; $i <= $#nodes; $i++)
+    return $self;
+}
+
+
+
+#------------------------------------------------------------------------------
+# If this node is fused with one or more following nodes, returns the last
+# node of the fusion. Otherwise returns this node.
+#------------------------------------------------------------------------------
+sub get_fusion_end
+{
+    my $self = shift;
+    if($self->fused_with_next())
     {
-        if($nodes[$i]->get_root() != $root)
+        my $next = $self->get_next_node();
+        if(defined($next))
         {
-            log_fatal("All nodes added to a MWT must be from the current tree.");
-        }
-        if(defined($nodes[$i]->mwt()))
-        {
-            my $ord = $nodes[$i]->ord();
-            my $form = $nodes[$i]->form();
-            my $fform = $nodes[$i]->mwt()->form();
-            log_fatal("Node '$form' ($ord) is already member of MWT '$fform' and cannot be member of another MWT.");
-        }
-        if($i > 0 && $nodes[$i]->ord() != $nodes[$i-1]->ord() + 1)
-        {
-            my $sequence = join(', ', map {$_->ord()} (@nodes));
-            log_fatal("Ords of nodes in a multiword token do not form a contiguous span: $sequence.");
+            return $next->get_fusion_end();
         }
     }
-    my $mwt = Treex::Core::MWT->new();
-    $mwt->words->append(@nodes);
-    $mwt->set_form($fform);
-    foreach my $node (@nodes)
+    return $self;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns list of fused nodes including this node. If the node is not fused
+# with its neighbors, the list contains only this node.
+#------------------------------------------------------------------------------
+sub get_fused_nodes
+{
+    my $self = shift;
+    my @nodes = ($self);
+    my $x = $self->get_prev_node();
+    while(defined($x) && $x->fused_with_next())
     {
-        $node->set_mwt($mwt);
+        unshift(@nodes, $x);
+        $x = $x->get_prev_node();
     }
+    $x = $self;
+    while($x->fused_with_next())
+    {
+        $x = $x->get_next_node();
+        last if(!defined($x));
+        push(@nodes, $x);
+    }
+    return @nodes;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the fused form stored in the first node of the fusion (multiword
+# token). If this node is not part of any fusion, returns the fused_form of
+# this node, which should be undefined.
+#------------------------------------------------------------------------------
+sub get_fusion
+{
+    my $self = shift;
+    return $self->get_fusion_start()->fused_form();
 }
 
 
