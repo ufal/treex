@@ -11,7 +11,9 @@ sub process_anode
     my $deprel = $node->deprel() // '';
     if($deprel eq 'mark')
     {
-        if($node->is_pronoun())
+        # We cannot say anything if this is the head node of a fixed expression.
+        my @fixed = grep {$_->deprel() =~ m/^fixed(:|$)/} ($node->children());
+        if(scalar(@fixed) == 0 && $node->is_pronoun())
         {
             $self->complain($node, 'Pronoun should not be labeled mark');
         }
@@ -33,5 +35,5 @@ in the valency frame of the subordinate predicate.
 
 =cut
 
-# Copyright 2016 Dan Zeman
+# Copyright 2016, 2017 Dan Zeman
 # This file is distributed under the GNU GPL v2 or later. See $TMT_ROOT/README.
