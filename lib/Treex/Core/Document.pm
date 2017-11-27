@@ -163,7 +163,7 @@ sub BUILD {
                     # results in returning a $pmldoc which seems to be OK, but it contains no bundles,
                     # so Treex crashes on subsequent blocks which is misleading for users.
                     # If we really want to be fault-tolerant, it seems we would need to set Treex::PML::Instance::Reader::STRICT=0,
-                    # but I don't no enough about PML internals and I think it's better to make such errors fatal.
+                    # but I don't know enough about PML internals and I think it's better to make such errors fatal.
                     # Martin Popel
                     $factory->createDocumentFromFile( $params_rf->{filename});
                 };
