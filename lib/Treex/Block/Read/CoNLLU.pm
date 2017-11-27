@@ -133,7 +133,7 @@ sub next_document {
                         $funodes[0]->set_fused_form($fuform);
                         for (my $i = 0; $i < $#funodes; $i++)
                         {
-                            $fn->set_fused_with_next(1);
+                            $funodes[$i]->set_fused_with_next(1);
                         }
                     }
                     else
