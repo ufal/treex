@@ -1,4 +1,4 @@
-package Treex::Core::MWT
+package Treex::Core::MWT;
 
 use Moose;
 use Treex::Core::Common;
