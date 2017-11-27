@@ -3,6 +3,7 @@ package Treex::Core::Node::A;
 use namespace::autoclean;
 use Moose;
 use Treex::Core::Common;
+use Treex::Core::MWT;
 use Storable;
 extends 'Treex::Core::Node';
 with 'Treex::Core::Node::Ordered';
@@ -18,6 +19,9 @@ has [qw(form lemma tag no_space_after)] => ( is => 'rw' );
 has [
     qw(deprel afun is_parenthesis_root edge_to_collapse is_auxiliary translit ltranslit gloss)
 ] => ( is => 'rw' );
+
+# Reference to the multi-word token this node is part of (if any).
+has 'mwt' => ( is => 'rw', isa => 'Treex::Core::MWT' );
 
 sub get_pml_type_name {
     my ($self) = @_;
@@ -339,6 +343,68 @@ sub get_subtree_dependency_string
         return "$sentence\t$tree";
     }
 }
+
+
+
+#------------------------------------------------------------------------------
+# If this node is member of a multiword token, this method returns the MWT
+# object.
+#------------------------------------------------------------------------------
+sub get_multiword_token
+{
+    my $self = shift;
+    return $self->mwt();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Creates a new MWT object and puts a list of nodes into it. The ord attributes
+# of the nodes must form a contiguous span and none of them can be currently
+# member of another MWT.
+#------------------------------------------------------------------------------
+sub create_multiword_token
+{
+    my $self = shift;
+    my $nodes = shift; # array reference
+    my $fform = shift; # the fused word form
+    my @nodes = sort {$a->ord() <=> $b->ord()} (@{$nodes});
+    if(scalar(@nodes)<2)
+    {
+        log_fatal("Cannot create multiword token from just one node.");
+    }
+    # Check that the ords of the nodes form a contiguous span and are from this tree.
+    # Also, none of the nodes may be currently member of another MWT.
+    my $root = $self->get_root();
+    for(my $i = 0; $i <= $#nodes; $i++)
+    {
+        if($nodes[$i]->get_root() != $root)
+        {
+            log_fatal("All nodes added to a MWT must be from the current tree.");
+        }
+        if(defined($nodes[$i]->mwt()))
+        {
+            my $ord = $nodes[$i]->ord();
+            my $form = $nodes[$i]->form();
+            my $fform = $nodes[$i]->mwt()->form();
+            log_fatal("Node '$form' ($ord) is already member of MWT '$fform' and cannot be member of another MWT.");
+        }
+        if($i > 0 && $nodes[$i]->ord() != $nodes[$i-1]->ord() + 1)
+        {
+            my $sequence = join(', ', map {$_->ord()} (@nodes));
+            log_fatal("Ords of nodes in a multiword token do not form a contiguous span: $sequence.");
+        }
+    }
+    my $mwt = Treex::Core::MWT->new();
+    $mwt->words->append(@nodes);
+    $mwt->set_form($fform);
+    foreach my $node (@nodes)
+    {
+        $node->set_mwt($mwt);
+    }
+}
+
+
 
 #----------- CoNLL attributes -------------
 
