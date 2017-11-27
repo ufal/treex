@@ -19,9 +19,13 @@ has _words => (
     # and possibly it also checks if the nodes
     # are from the same tree with consecutive ords
     isa => 'Treex::PML::List',
-    builder => sub {Treex::PML::List->new()},
+    builder => '_build_words'
 );
 
+sub _build_words
+{
+    Treex::PML::List->new();
+}
 # TODO: allow calling new({words=>\@words, fused_form=>$fused_form});
 #sub BUILD {my ($self, $arg_ref) = @_;}
 
