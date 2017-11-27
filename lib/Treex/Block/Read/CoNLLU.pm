@@ -134,9 +134,16 @@ sub next_document {
                             #$fn->wild->{fused_start} = $funodes[0];
                             #$fn->wild->{fused_end} = $funodes[-1];
                             $fn->wild->{fused} = ($i == 0) ? 'start' : ($i == $#funodes) ? 'end' : 'middle';
+                            ###!!! New method without wild attributes:
+                            if($i==0)
+                            {
+                                $fn->set_fused_form($fuform);
+                            }
+                            if($i<$#funodes)
+                            {
+                                $fn->set_fused_with_next(1);
+                            }
                         }
-                        ###!!! New method of storing multiword tokens. Now in parallel with the old method.
-                        $aroot->create_multiword_token(\@funodes, $fuform);
                     } else {
                         log_warn "Fused token $fufrom-$futo $fuform was announced but less than 2 nodes were found";
                     }
