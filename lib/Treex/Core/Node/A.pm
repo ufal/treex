@@ -10,11 +10,8 @@ with 'Treex::Core::Node::InClause';
 with 'Treex::Core::Node::EffectiveRelations';
 with 'Treex::Core::Node::Interset' => { interset_attribute => 'iset' };
 
-# Original w-layer and m-layer attributes
-has [qw(form lemma tag no_space_after)] => ( is => 'rw' );
+has [qw(form lemma tag no_space_after fused_with_next fused_form)] => ( is => 'rw' );
 
-# Original a-layer attributes
-# (Only afun and is_parenthesis_root originate from PDT, the rest was added in Treex).
 has [
     qw(deprel afun is_parenthesis_root edge_to_collapse is_auxiliary translit ltranslit gloss)
 ] => ( is => 'rw' );
@@ -213,6 +210,7 @@ sub copy_attributes
     # TODO: As a workaround, we list the attributes here directly.
     foreach my $attribute (
         'form', 'lemma', 'tag', 'no_space_after', 'translit', 'ltranslit', 'gloss',
+        'fused_with_next', 'fused_form',
         'ord', 'deprel', 'afun', 'is_member', 'is_parenthesis_root',
         'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat', 'is_shared_modifier', 'morphcat',
         'clause_number', 'is_clause_head',
@@ -339,6 +337,132 @@ sub get_subtree_dependency_string
         return "$sentence\t$tree";
     }
 }
+
+
+
+#------------------------------------------------------------------------------
+# Says whether this node is member of a fused ("multiword") token.
+#------------------------------------------------------------------------------
+sub is_fused
+{
+    my $self = shift;
+    return 1 if($self->fused_with_next());
+    my $prev = $self->get_prev_node();
+    return defined($prev) && $prev->fused_with_next();
+}
+
+
+
+#------------------------------------------------------------------------------
+# If this node is fused with one or more preceding nodes, returns the first
+# node of the fusion. Otherwise returns this node.
+#------------------------------------------------------------------------------
+sub get_fusion_start
+{
+    my $self = shift;
+    my $prev = $self->get_prev_node();
+    if(defined($prev) && $prev->fused_with_next())
+    {
+        return $prev->get_fusion_start();
+    }
+    return $self;
+}
+
+
+
+#------------------------------------------------------------------------------
+# If this node is fused with one or more following nodes, returns the last
+# node of the fusion. Otherwise returns this node.
+#------------------------------------------------------------------------------
+sub get_fusion_end
+{
+    my $self = shift;
+    if($self->fused_with_next())
+    {
+        my $next = $self->get_next_node();
+        if(defined($next))
+        {
+            return $next->get_fusion_end();
+        }
+    }
+    return $self;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns list of fused nodes including this node. If the node is not fused
+# with its neighbors, the list contains only this node.
+#------------------------------------------------------------------------------
+sub get_fused_nodes
+{
+    my $self = shift;
+    my @nodes = ($self);
+    my $x = $self->get_prev_node();
+    while(defined($x) && $x->fused_with_next())
+    {
+        unshift(@nodes, $x);
+        $x = $x->get_prev_node();
+    }
+    $x = $self;
+    while($x->fused_with_next())
+    {
+        $x = $x->get_next_node();
+        last if(!defined($x));
+        push(@nodes, $x);
+    }
+    return @nodes;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the fused form stored in the first node of the fusion (multiword
+# token). If this node is not part of any fusion, returns the fused_form of
+# this node, which should be undefined.
+#------------------------------------------------------------------------------
+sub get_fusion
+{
+    my $self = shift;
+    return $self->get_fusion_start()->fused_form();
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the sentence text, observing the current setting of no_space_after
+# and of the fused multi-word tokens. That is, this method does not reach to
+# the sentence attribute of the zone. Instead, it visits all nodes including
+# $self, puts together their word forms and spaces. The result can be compared
+# to the zone's sentence attribute, or even used to update the attribute.
+#------------------------------------------------------------------------------
+sub collect_sentence_text
+{
+    my $self = shift;
+    my @nodes = $self->get_root()->get_descendants({'ordered' => 1});
+    my $text = '';
+    for(my $i = 0; $i<=$#nodes; $i++)
+    {
+        my $node = $nodes[$i];
+        if($node->is_fused() && $node->get_fusion_start() == $node)
+        {
+            my $last_node = $node->get_fusion_end();
+            $text .= $node->get_fusion();
+            $text .= ' ' unless($last_node->no_space_after());
+            $i += $last_node->ord() - $node->ord();
+        }
+        else
+        {
+            $text .= $node->form();
+            $text .= ' ' unless($node->no_space_after());
+        }
+    }
+    $text =~ s/^\s+//;
+    $text =~ s/\s+$//;
+    return $text;
+}
+
+
 
 #----------- CoNLL attributes -------------
 

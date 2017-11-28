@@ -126,7 +126,7 @@ sub fix_morphology
     }
     # It is possible that we changed the form of a multi-word token.
     # Therefore we must re-generate the sentence text.
-    $root->get_zone()->set_sentence($self->collect_sentence_text(@nodes));
+    $root->get_zone()->set_sentence($root->collect_sentence_text());
 }
 
 
@@ -176,18 +176,18 @@ sub fix_mwt_capitalization
     my $self = shift;
     my $node = shift;
     # Is this node part of a multi-word token?
-    if(exists($node->wild()->{fused}))
+    if($node->is_fused())
     {
         my $pform = $node->form();
-        my $fform = $node->wild()->{fused_form};
+        my $fform = $node->get_fusion();
         # It is not always clear whether we want to fix the mwt or the part.
         # In German however, the most frequent error seems to be that in the
         # beginning of a sentence, the mwt is not capitalized while its first
         # part is.
-        if($node->wild()->{fused} eq 'start' && $node->ord()==1 && is_capitalized($pform) && is_lowercase($fform))
+        if($node->get_fusion_start() == $node && $node->ord() == 1 && is_capitalized($pform) && is_lowercase($fform))
         {
             $fform =~ s/^(.)/\u$1/;
-            $node->wild()->{fused_form} = $fform;
+            $node->set_fused_form($fform);
         }
     }
 }

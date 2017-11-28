@@ -76,16 +76,17 @@ sub fix_morphology
         {
             if(scalar(@fused_indices)>1)
             {
-                # We currently set the following wild attributes for fused nodes (see Write::CoNLLU):
-                # fused = start|middle|end
-                # fused_end = ord of the last node
-                # fused_form
                 for(my $j = 0; $j <= $#fused_indices; $j++)
                 {
                     my $wild = $nodes[$fused_indices[$j]]->wild();
-                    $wild->{fused} = ($j==0) ? 'start' : ($j==$#fused_indices) ? 'end' : 'middle';
-                    $wild->{fused_end} = $nodes[$fused_indices[-1]]->ord();
-                    $wild->{fused_form} = $wild->{aform};
+                    if($j==0)
+                    {
+                        $nodes[$fused_indices[$j]]->set_fused_form($wild->{aform});
+                    }
+                    if($j<$#fused_indices)
+                    {
+                        $nodes[$fused_indices[$j]]->set_fused_with_next(1);
+                    }
                     # We will make the unvocalized surface forms the main forms of all nodes, except for syntactic words that are fused on surface.
                     # For the syntactic words we only apply a primitive stripping of diacritical marks.
                     $wild->{aform} = $nodes[$fused_indices[$j]]->form();

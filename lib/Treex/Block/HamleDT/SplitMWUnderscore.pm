@@ -22,8 +22,7 @@ sub process_atree {
     ###!!! Note that for the Prague treebanks this may introduce unexpected differences.
     ###!!! If there were typos in the underlying text or if numbers were normalized from "1,6" to "1.6",
     ###!!! the sentence attribute contains the real input text, but it will be replaced by the normalized word forms now.
-    my $text = $self->collect_sentence_text(@nodes);
-    $root->get_zone()->set_sentence($text);
+    $root->get_zone()->set_sentence($root->collect_sentence_text());
 }
 
 
@@ -703,66 +702,6 @@ sub attach_left_function_words
     }
     # The function words that had found their parents were removed from the array. Return the new array.
     return @nodes;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Returns the sentence text, observing the current setting of no_space_after
-# and of the fused multi-word tokens (still stored as wild attributes).
-#------------------------------------------------------------------------------
-sub collect_sentence_text
-{
-    my $self = shift;
-    my @nodes = @_;
-    my $text = '';
-    for(my $i = 0; $i<=$#nodes; $i++)
-    {
-        my $node = $nodes[$i];
-        my $wild = $node->wild();
-        my $fused = $wild->{fused};
-        if(defined($fused) && $fused eq 'start')
-        {
-            my $first_fused_node_ord = $node->ord();
-            my $last_fused_node_ord = $wild->{fused_end};
-            my $last_fused_node_no_space_after = 0;
-            # We used to save the ord of the last element with every fused element but now it is no longer guaranteed.
-            # Let's find out.
-            if(!defined($last_fused_node_ord))
-            {
-                for(my $j = $i+1; $j<=$#nodes; $j++)
-                {
-                    $last_fused_node_ord = $nodes[$j]->ord();
-                    $last_fused_node_no_space_after = $nodes[$j]->no_space_after();
-                    last if(defined($nodes[$j]->wild()->{fused}) && $nodes[$j]->wild()->{fused} eq 'end');
-                }
-            }
-            else
-            {
-                my $last_fused_node = $nodes[$last_fused_node_ord-1];
-                log_fatal('Node ord mismatch') if($last_fused_node->ord() != $last_fused_node_ord);
-                $last_fused_node_no_space_after = $last_fused_node->no_space_after();
-            }
-            if(defined($first_fused_node_ord) && defined($last_fused_node_ord))
-            {
-                $i += $last_fused_node_ord - $first_fused_node_ord;
-            }
-            else
-            {
-                log_warn("Cannot determine the span of a fused token");
-            }
-            $text .= $wild->{fused_form};
-            $text .= ' ' unless($last_fused_node_no_space_after);
-        }
-        else
-        {
-            $text .= $node->form();
-            $text .= ' ' unless($node->no_space_after());
-        }
-    }
-    $text =~ s/^\s+//;
-    $text =~ s/\s+$//;
-    return $text;
 }
 
 
