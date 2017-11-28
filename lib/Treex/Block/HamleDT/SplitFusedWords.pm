@@ -120,14 +120,14 @@ sub split_fused_token
     # save information about the group in every new node.
     my $fsord = $new_nodes[0]->ord();
     my $feord = $new_nodes[-1]->ord();
-    for(my $i = 0; $i <= $#new_nodes; $i++)
+    for(my $i = 0; $i < $#new_nodes; $i++)
     {
-        my $nnw = $new_nodes[$i]->wild();
-        ###!!! Later we will want to make these attributes normal (not wild).
-        $nnw->{fused_form} = $fused_form;
-        $nnw->{fused_start} = $fsord;
-        $nnw->{fused_end} = $feord;
-        $nnw->{fused} = ($i == 0) ? 'start' : ($i == $#new_nodes) ? 'end' : 'middle';
+        my $nn = $new_nodes[$i];
+        if($i==0)
+        {
+            $nn->set_fused_form($fused_form);
+        }
+        $nn->set_fused_with_next(1);
     }
     return @new_nodes;
 }
@@ -147,14 +147,14 @@ sub mark_multiword_token
     return if(scalar(@nodes) < 2);
     my $fsord = $nodes[0]->ord();
     my $feord = $nodes[-1]->ord();
-    for(my $i = 0; $i <= $#nodes; $i++)
+    for(my $i = 0; $i < $#nodes; $i++)
     {
-        my $nnw = $nodes[$i]->wild();
-        ###!!! Later we will want to make these attributes normal (not wild).
-        $nnw->{fused_form} = $fused_form;
-        $nnw->{fused_start} = $fsord;
-        $nnw->{fused_end} = $feord;
-        $nnw->{fused} = ($i == 0) ? 'start' : ($i == $#nodes) ? 'end' : 'middle';
+        my $nn = $nodes[$i];
+        if($i==0)
+        {
+            $nn->set_fused_form($fused_form);
+        }
+        $nn->set_fused_with_next(1);
     }
 }
 
@@ -162,7 +162,7 @@ sub mark_multiword_token
 
 #------------------------------------------------------------------------------
 # Returns the sentence text, observing the current setting of no_space_after
-# and of the fused multi-word tokens (still stored as wild attributes).
+# and of the fused multi-word tokens.
 #------------------------------------------------------------------------------
 sub collect_sentence_text
 {
@@ -172,40 +172,12 @@ sub collect_sentence_text
     for(my $i = 0; $i<=$#nodes; $i++)
     {
         my $node = $nodes[$i];
-        my $wild = $node->wild();
-        my $fused = $wild->{fused};
-        if(defined($fused) && $fused eq 'start')
+        if($node->is_fused() && $node->get_fusion_start() == $node)
         {
-            my $first_fused_node_ord = $node->ord();
-            my $last_fused_node_ord = $wild->{fused_end};
-            my $last_fused_node_no_space_after = 0;
-            # We used to save the ord of the last element with every fused element but now it is no longer guaranteed.
-            # Let's find out.
-            if(!defined($last_fused_node_ord))
-            {
-                for(my $j = $i+1; $j<=$#nodes; $j++)
-                {
-                    $last_fused_node_ord = $nodes[$j]->ord();
-                    $last_fused_node_no_space_after = $nodes[$j]->no_space_after();
-                    last if(defined($nodes[$j]->wild()->{fused}) && $nodes[$j]->wild()->{fused} eq 'end');
-                }
-            }
-            else
-            {
-                my $last_fused_node = $nodes[$last_fused_node_ord-1];
-                log_fatal('Node ord mismatch') if($last_fused_node->ord() != $last_fused_node_ord);
-                $last_fused_node_no_space_after = $last_fused_node->no_space_after();
-            }
-            if(defined($first_fused_node_ord) && defined($last_fused_node_ord))
-            {
-                $i += $last_fused_node_ord - $first_fused_node_ord;
-            }
-            else
-            {
-                log_warn("Cannot determine the span of a fused token");
-            }
-            $text .= $wild->{fused_form};
-            $text .= ' ' unless($last_fused_node_no_space_after);
+            my $last_node = $node->get_fusion_end();
+            $text .= $node->get_fusion();
+            $text .= ' ' unless($last_node->no_space_after());
+            $i += $last_node->ord() - $node->ord();
         }
         else
         {

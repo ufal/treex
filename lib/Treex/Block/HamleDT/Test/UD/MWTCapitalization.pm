@@ -13,11 +13,11 @@ sub process_atree
     foreach my $node (@nodes)
     {
         # Is this node part of a multi-word token?
-        if(exists($node->wild()->{fused}))
+        if($node->is_fused())
         {
             my $pform = $node->form();
-            my $fform = $node->wild()->{fused_form};
-            if($node->wild()->{fused} eq 'start')
+            my $fform = $node->get_fusion();
+            if($node->get_fusion_start() == $node)
             {
                 if(is_uppercase($fform) && !is_uppercase($pform) ||
                    is_lowercase($fform) && !is_lowercase($pform) ||
