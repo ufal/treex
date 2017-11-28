@@ -211,6 +211,7 @@ sub copy_attributes
     # TODO: As a workaround, we list the attributes here directly.
     foreach my $attribute (
         'form', 'lemma', 'tag', 'no_space_after', 'translit', 'ltranslit', 'gloss',
+        'fused_with_next', 'fused_form',
         'ord', 'deprel', 'afun', 'is_member', 'is_parenthesis_root',
         'conll/deprel', 'conll/cpos', 'conll/pos', 'conll/feat', 'is_shared_modifier', 'morphcat',
         'clause_number', 'is_clause_head',
