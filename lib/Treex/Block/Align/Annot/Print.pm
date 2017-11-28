@@ -211,8 +211,8 @@ sub _linearize_ttree_structured {
     
     my $highlight_indic = { map {$_->id => $_} grep {defined $_} @$highlight_arr };
 
-    my ($sub_root) = $zone->get_ttree->get_children({ordered => 1});
-    my $str = _linearize_subtree_recur($sub_root, $highlight_indic);
+    my @root_children = $zone->get_ttree->get_children({ordered => 1});
+    my $str = join " ", map {_linearize_subtree_recur($_, $highlight_indic)} @root_children;
     return $str;
 }
 
