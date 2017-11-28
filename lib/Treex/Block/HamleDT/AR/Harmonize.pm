@@ -242,18 +242,32 @@ sub convert_deprels
         }
 
         # AuxY: In PDT, it marks mostly additional conjunction in coordination.
-        # In PADT, it is also used with relative pronouns such as اَلَّتِي (allatī).
-        # Instead of serving as the subject or object of the following relative
-        # clause, for some reason the pronoun is attached as the clause's left
-        # sibling. We must fix this!
-        elsif ( $deprel eq 'AuxY' && $node->is_relative() )
+        # In PADT, it is also used in other contexts where PDT annotation would be different.
+        elsif ( $deprel eq 'AuxY' )
         {
-            my $neighbor = $node->get_right_neighbor();
-            # We won't check at this moment whether the neighbor's deprel is 'Atr'.
-            # Until all deprels are converted, we cannot be sure that they are stored in the deprel attribute and not elsewhere (e.g. in afun).
-            if (defined($neighbor))
+            # In PADT, it is also used with relative pronouns such as اَلَّتِي (allatī).
+            # Instead of serving as the subject or object of the following relative
+            # clause, for some reason the pronoun is attached as the clause's left
+            # sibling. We must fix this!
+            if ( $node->is_relative() )
             {
-                $deprel = 'SbOfRelCl';
+                my $neighbor = $node->get_right_neighbor();
+                # We won't check at this moment whether the neighbor's deprel is 'Atr'.
+                # Until all deprels are converted, we cannot be sure that they are stored in the deprel attribute and not elsewhere (e.g. in afun).
+                if (defined($neighbor))
+                {
+                    $deprel = 'SbOfRelCl';
+                }
+            }
+            # Multi-word prepositions in PADT: example: "bi ismi" (in the name of).
+            # The preposition ("bi") is the head and its deprel is 'AuxP'.
+            # The second word ("ismi") is attached to the preposition as 'AuxY'.
+            # The main noun (in the name of which it is, here in genitive case) is attached to the preposition and bears the real deprel of the phrase (e.g., 'Atr').
+            # In PDT, "ismi" would be 'AuxP' head, "bi" would be its 'AuxP' child and the main noun would be its second child.
+            # We can ask whether the parent is preposition (based on POS tag). We better not query the deprel (because it may still be in the afun attribute or elsewhere).
+            elsif ( $node->parent()->is_preposition() )
+            {
+                $deprel = 'AuxP';
             }
         }
 
