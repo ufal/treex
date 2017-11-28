@@ -126,7 +126,7 @@ sub fix_morphology
     }
     # It is possible that we changed the form of a multi-word token.
     # Therefore we must re-generate the sentence text.
-    $root->get_zone()->set_sentence($self->collect_sentence_text(@nodes));
+    $root->get_zone()->set_sentence($root->collect_sentence_text());
 }
 
 

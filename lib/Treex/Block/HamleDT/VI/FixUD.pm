@@ -40,7 +40,7 @@ sub fix_multi_syllable_words
             $node->set_lemma($lemma);
         }
     }
-    $root->get_zone()->set_sentence($self->collect_sentence_text(@nodes));
+    $root->get_zone()->set_sentence($root->collect_sentence_text());
 }
 
 

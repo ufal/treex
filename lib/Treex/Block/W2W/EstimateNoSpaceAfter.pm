@@ -139,7 +139,7 @@ sub process_zone
         }
     }
     # We have to set the sentence text anew.
-    my $text = $self->collect_sentence_text(@nodes);
+    my $text = $root->collect_sentence_text();
     $zone->set_sentence($text);
 }
 
@@ -165,38 +165,6 @@ sub i_th_node_is_terminal_punctuation
         }
     }
     return 1;
-}
-
-
-
-#------------------------------------------------------------------------------
-# Returns the sentence text, observing the current setting of no_space_after
-# and of the fused multi-word tokens.
-#------------------------------------------------------------------------------
-sub collect_sentence_text
-{
-    my $self = shift;
-    my @nodes = @_;
-    my $text = '';
-    for(my $i = 0; $i<=$#nodes; $i++)
-    {
-        my $node = $nodes[$i];
-        if($node->is_fused() && $node->get_fusion_start() == $node)
-        {
-            my $last_node = $node->get_fusion_end();
-            $text .= $node->get_fusion();
-            $text .= ' ' unless($last_node->no_space_after());
-            $i += $last_node->ord() - $node->ord();
-        }
-        else
-        {
-            $text .= $node->form();
-            $text .= ' ' unless($node->no_space_after());
-        }
-    }
-    $text =~ s/^\s+//;
-    $text =~ s/\s+$//;
-    return $text;
 }
 
 

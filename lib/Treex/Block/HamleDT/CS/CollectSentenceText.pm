@@ -3,7 +3,7 @@ use utf8;
 use Moose;
 use Treex::Core::Common;
 use Lingua::Interset qw(decode encode);
-extends 'Treex::Block::HamleDT::SplitFusedWords'; # collect_sentence_text()
+extends 'Treex::Core::Block';
 
 
 
@@ -16,8 +16,7 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $zone->get_atree();
-    my @nodes = $root->get_descendants({'ordered' => 1});
-    $zone->set_sentence($self->collect_sentence_text(@nodes));
+    $zone->set_sentence($root->collect_sentence_text());
 }
 
 
