@@ -3,7 +3,6 @@ package Treex::Core::Node::A;
 use namespace::autoclean;
 use Moose;
 use Treex::Core::Common;
-use Treex::Core::MWT;
 use Storable;
 extends 'Treex::Core::Node';
 with 'Treex::Core::Node::Ordered';
