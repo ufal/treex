@@ -49,12 +49,14 @@ sub process_zone {
 
     $self->align_generated_nodes_by_tlemma_functor_parent($to_free, $from_free);
     if ($self->monolingual) {
+        # loose monolingual alignments
+
         $self->align_generated_nodes_by_functor_parent($to_free);
         $self->align_arguments_of_nonfinites_to_grandparents($to_free);
         # align generated nodes on "ref" with their antecedents' counterparts in the "src" - gold coreference is used
-        $self->align_generated_nodes_to_coref_ante_counterpart($from_free, $to_free, 'forwards');
+        $self->align_generated_nodes_to_coref_ante_counterpart($from_free, 'forwards');
         # align generated nodes on "src" with their antecedents' counterparts in the "ref" - automatic coreference is used
-        $self->align_generated_nodes_to_coref_ante_counterpart($to_free, $from_free, 'backwards');
+        $self->align_generated_nodes_to_coref_ante_counterpart($to_free, 'backwards');
     }
 }
 
@@ -66,7 +68,7 @@ sub _align_filter {
         selector => $direction eq 'backwards' ? $self->selector : $self->to_selector,
     };
     if ($self->monolingual) {
-        $align_filter->{rel_types} = ['monolingual'];
+        $align_filter->{rel_types} = ['^monolingual$'];
     }
     return $align_filter;
 }
@@ -114,6 +116,7 @@ sub align_generated_nodes_by_tlemma_functor_parent {
         if ($from_node) {
             $from_node->add_aligned_node( $to_node, $self->_align_name );
             delete $to_free->{$to_node->id};
+            delete $from_free->{$from_node->id};
         }
     }
 }
@@ -157,7 +160,7 @@ sub align_arguments_of_nonfinites_to_grandparents {
 }
 
 sub align_generated_nodes_to_coref_ante_counterpart {
-    my ($self, $from_free, $to_free, $direction) = @_;
+    my ($self, $from_free, $direction) = @_;
     foreach my $from_node (values %$from_free) {
         my @antes = grep {$_->get_root == $from_node->get_root} $from_node->get_coref_chain;
         next if (!@antes);
