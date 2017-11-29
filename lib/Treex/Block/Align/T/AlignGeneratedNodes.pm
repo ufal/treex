@@ -108,8 +108,13 @@ sub align_generated_nodes_by_tlemma_functor_parent {
             next if ($processed{$from_epar->id});
             $processed{$from_epar->id}++;
             my @functor_kids = grep {$_->functor eq $to_node->functor} $from_epar->get_echildren({or_topological => 1});
-            # following ensures that the ref node is generated with one of the 3 t_lemmas as well as not yet covered
-            ($from_node) = grep { $_->t_lemma =~ /^(\#PersPron)|(\#Cor)|(\#Gen)$/ && $from_free->{$_->id} } @functor_kids;
+            if ($self->monolingual) {
+                # following ensures that the ref node is generated with one of the 3 t_lemmas as well as not yet covered
+                ($from_node) = grep { $_->t_lemma =~ /^(\#PersPron)|(\#Cor)|(\#Gen)$/ && $from_free->{$_->id} } @functor_kids;
+            }
+            else {
+                ($from_node) = @functor_kids;
+            }
             last if ($from_node);
         }
         
@@ -129,7 +134,7 @@ sub align_generated_nodes_by_functor_parent {
         next if (!$to_par);
         my ($from_par) = Treex::Tool::Align::Utils::aligned_transitively([$to_par], [ $self->_align_filter('backwards') ]);
         next if (!$from_par);
-        my ($from_eq) = grep {$_->functor eq $to_node->functor} $from_par->get_echildren;
+        my ($from_eq) = grep {$_->functor eq $to_node->functor} $from_par->get_echildren({or_topological => 1});
         next if (!$from_eq);
         my ($to_eq) = Treex::Tool::Align::Utils::aligned_transitively([$from_eq], [ $self->_align_filter('forwards') ]);
         next if (!$to_eq);
@@ -150,7 +155,7 @@ sub align_arguments_of_nonfinites_to_grandparents {
         next if (!$from_par);
         next if (!defined $from_par->formeme || $from_par->formeme !~ /^adj/);
         
-        my @from_grand_epars = $from_par->get_eparents;
+        my @from_grand_epars = $from_par->get_eparents({or_topological => 1});
         foreach my $from_grand_epar (@from_grand_epars) {
             $from_grand_epar->add_aligned_node( $to_node, $self->_align_name('loose') );
         }
