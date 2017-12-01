@@ -5,6 +5,7 @@ use Treex::Tool::Align::Utils;
 extends 'Treex::Core::Block';
 
 has 'monolingual' => ( is => 'ro', isa => 'Bool', default => 1 );
+has 'only_to_unaligned' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 has 'to_language' => (
     is         => 'ro',
@@ -47,16 +48,22 @@ sub process_zone {
     my $to_free = { map { $_->id => $_ } @to_nodes };
     my $from_free = { map { $_->id => $_ } @from_nodes };
 
-    $self->align_generated_nodes_by_tlemma_functor_parent($to_free, $from_free);
     if ($self->monolingual) {
+        # monolingual alignment
+        $self->align_generated_nodes_by_tlemma_functor_parent($to_free, $from_free, 'backwards');
+        
         # loose monolingual alignments
-
         $self->align_generated_nodes_by_functor_parent($to_free);
         $self->align_arguments_of_nonfinites_to_grandparents($to_free);
         # align generated nodes on "ref" with their antecedents' counterparts in the "src" - gold coreference is used
         $self->align_generated_nodes_to_coref_ante_counterpart($from_free, 'forwards');
         # align generated nodes on "src" with their antecedents' counterparts in the "ref" - automatic coreference is used
         $self->align_generated_nodes_to_coref_ante_counterpart($to_free, 'backwards');
+    }
+    else {
+        # monolingual alignment
+        $self->align_generated_nodes_by_tlemma_functor_parent($from_free, $to_free, 'forwards');
+        $self->align_generated_nodes_by_tlemma_functor_parent($to_free, $from_free, 'backwards');
     }
 }
 
@@ -96,32 +103,42 @@ sub _get_related_verbs_via_alayer {
 }
 
 sub align_generated_nodes_by_tlemma_functor_parent {
-    my ($self, $to_free, $from_free) = @_;
+    my ($self, $from_free, $to_free, $direction) = @_;
 
-    foreach my $to_node (values %$to_free) {
-        my @to_epars = $to_node->get_eparents({or_topological => 1});
-        my @from_epars = Treex::Tool::Align::Utils::aligned_transitively([@to_epars], [ $self->_align_filter('backwards') ]);
-        push @from_epars, map {$self->_get_related_verbs_via_alayer($_)} @to_epars;
+    foreach my $from_node (values %$from_free) {
+        next if (!defined $from_node->functor);
+        my @from_epars = $from_node->get_eparents({or_topological => 1});
+        my @to_epars = Treex::Tool::Align::Utils::aligned_transitively([@from_epars], [ $self->_align_filter($direction) ]);
+        push @to_epars, map {$self->_get_related_verbs_via_alayer($_)} @from_epars;
         my %processed = ();
-        my $from_node;
-        foreach my $from_epar (@from_epars) {
-            next if ($processed{$from_epar->id});
-            $processed{$from_epar->id}++;
-            my @functor_kids = grep {$_->functor eq $to_node->functor} $from_epar->get_echildren({or_topological => 1});
+        my $to_node;
+        foreach my $to_epar (@to_epars) {
+            next if ($processed{$to_epar->id});
+            $processed{$to_epar->id}++;
+            # having a counterpart of the parent, take his yet unaligned children keeping the same semantic role as $from_node has
+            my @functor_kids = grep {
+                my @kid_aligns = Treex::Tool::Align::Utils::aligned_transitively([$_], [ $self->_align_filter($direction eq 'forwards' ? 'backwards' : 'forwards') ]);
+                (!$self->only_to_unaligned || !@kid_aligns) && (defined $_->functor) && ($_->functor eq $from_node->functor)
+            } $to_epar->get_echildren({or_topological => 1});
             if ($self->monolingual) {
                 # following ensures that the ref node is generated with one of the 3 t_lemmas as well as not yet covered
-                ($from_node) = grep { $_->t_lemma =~ /^(\#PersPron)|(\#Cor)|(\#Gen)$/ && $from_free->{$_->id} } @functor_kids;
+                ($to_node) = grep { $_->t_lemma =~ /^(\#PersPron)|(\#Cor)|(\#Gen)$/ && $to_free->{$_->id} } @functor_kids;
             }
             else {
-                ($from_node) = @functor_kids;
+                ($to_node) = @functor_kids;
             }
-            last if ($from_node);
+            last if ($to_node);
         }
         
-        if ($from_node) {
-            $from_node->add_aligned_node( $to_node, $self->_align_name );
-            delete $to_free->{$to_node->id};
+        if ($to_node) {
+            if ($direction eq 'backwards') {
+                $to_node->add_aligned_node( $from_node, $self->_align_name );
+            }
+            else {
+                $from_node->add_aligned_node( $to_node, $self->_align_name );
+            }
             delete $from_free->{$from_node->id};
+            delete $to_free->{$to_node->id};
         }
     }
 }
