@@ -34,6 +34,12 @@ has 'diagnostics' => (
     predicate => 'has_diagnostics',
 );
 
+has 'aligned_feats' => (
+    is => 'ro',
+    isa => 'Bool',
+    default => 0,
+);
+
 sub get_scenario_string {
     my ($self) = @_;
     if ($self->language eq 'en') {
@@ -57,6 +63,9 @@ sub prepare_params {
     }
     if ($self->has_diagnostics) {
         $params .= ' diagnostics='.$self->diagnostics;
+    }
+    if ($self->aligned_feats) {
+        $params .= ' aligned_feats='.$self->aligned_feats;
     }
     return $params;
 }
