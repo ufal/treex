@@ -39,6 +39,13 @@ has tecto => (
      documentation => 'Which tectogrammatical analysis to use',
 );
 
+has coref => (
+    is => 'ro',
+    isa => enum( [qw(orig new)] ),
+    default => 'orig',
+    documentation => 'Which coreference resolver to use',
+);
+
 
 #
 # parameters for detailed tuning of the analysis
@@ -156,8 +163,21 @@ sub get_scenario_string {
             'T2T::SetClauseNumber',
             'A2T::CS::MarkReflpronCoref',
             'A2T::SetDocOrds',
-            'Coref::CS::PersPron::Resolve',
-#            'Coref::RearrangeLinks retain_cataphora=1',
+            ;
+        if ($self->coref eq 'orig') {
+            push @blocks,
+                'Coref::CS::PersPron::Resolve',
+#               'Coref::RearrangeLinks retain_cataphora=1',
+                ;
+        }
+        else {
+            push @blocks,
+                'A2T::CS::SetValencyFrameRefVW',
+                'Coref::RemoveLinks',
+                'Scen::Coref language=cs',
+                ;
+        }
+        push @blocks,
             'A2T::DisambiguateGrammatemes',
             ;
     }
