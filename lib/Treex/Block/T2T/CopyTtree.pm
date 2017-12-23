@@ -6,6 +6,7 @@ extends 'Treex::Core::Block';
 has '+language'       => ( required => 1 );
 has 'source_language' => ( is       => 'rw', isa => 'Str', lazy_build => 1 );
 has 'source_selector' => ( is       => 'rw', isa => 'Str', default => '' );
+has 'copy_refs_to_alayer' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 # TODO: copy attributes in a cleverer way
 my @ATTRS_TO_COPY = qw(ord t_lemma functor formeme is_member nodetype is_generated subfunctor
@@ -46,7 +47,7 @@ sub process_document {
         my $target_root = $target_zone->create_ttree( { overwrite => 1 } );
         $target_root->set_attr( 'atree.rf', undef );
 
-        copy_subtree( $source_root, $target_root, \%src2tgt );
+        $self->copy_subtree( $source_root, $target_root, \%src2tgt );
         $target_root->set_src_tnode($source_root);
     }
 
@@ -71,7 +72,7 @@ sub process_document {
 }
 
 sub copy_subtree {
-    my ( $source_root, $target_root, $src2tgt ) = @_;
+    my ( $self, $source_root, $target_root, $src2tgt ) = @_;
 
     foreach my $source_node ( $source_root->get_children( { ordered => 1 } ) ) {
         my $target_node = $target_root->create_child();
@@ -83,11 +84,15 @@ sub copy_subtree {
         foreach my $attr (@ATTRS_TO_COPY) {
             $target_node->set_attr( $attr, $source_node->get_attr($attr) );
         }
+        if ($self->copy_refs_to_alayer) {
+            $target_node->set_attr( 'a/lex.rf', $source_node->get_attr('a/lex.rf') );
+            $target_node->set_deref_attr( 'a/aux.rf', $source_node->get_deref_attr('a/aux.rf') // [] );
+        }
         $target_node->set_src_tnode($source_node);
         $target_node->set_t_lemma_origin('clone');
         $target_node->set_formeme_origin('clone');
 
-        copy_subtree( $source_node, $target_node, $src2tgt );
+        $self->copy_subtree( $source_node, $target_node, $src2tgt );
     }
 }
 
