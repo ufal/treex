@@ -14,6 +14,7 @@ sub process_tnode {
 
     if ($self->type eq 'text') {
         $tnode->set_attr( 'coref_text.rf', undef );
+        $tnode->set_attr( 'coref_text', undef );
     }
     elsif ($self->type eq 'gram') {
         $tnode->set_attr( 'coref_gram.rf', undef );
@@ -21,10 +22,12 @@ sub process_tnode {
     elsif ($self->type eq 'all') {
         $tnode->set_attr( 'coref_gram.rf', undef );
         $tnode->set_attr( 'coref_text.rf', undef );
+        $tnode->set_attr( 'coref_text', undef );
     }
     else {
         $tnode->set_attr( 'coref_gram.rf', undef );
         $tnode->set_attr( 'coref_text.rf', undef );
+        $tnode->set_attr( 'coref_text', undef );
         $tnode->set_attr( 'coref_special', undef );
     }
 }
