@@ -57,16 +57,10 @@ sub process_document {
         my $target_root = $target_zone->get_ttree();
         foreach my $t_node ( $target_root->get_descendants ) {
             my $src_tnode  = $t_node->src_tnode;
-            my $coref_gram = $src_tnode->get_deref_attr('coref_gram.rf');
-            my $coref_text = $src_tnode->get_deref_attr('coref_text.rf');
-            if ( defined $coref_gram ) {
-                my @nodelist = map { $src2tgt{$_} } @$coref_gram;
-                $t_node->set_deref_attr( 'coref_gram.rf', \@nodelist );
-            }
-            if ( defined $coref_text ) {
-                my @nodelist = map { $src2tgt{$_} } @$coref_text;
-                $t_node->set_deref_attr( 'coref_text.rf', \@nodelist );
-            }
+            my @coref_gram = map { $src2tgt{$_} } $src_tnode->get_coref_gram_nodes();
+            my @coref_text = map { $src2tgt{$_} } $src_tnode->get_coref_text_nodes();
+            $t_node->add_coref_gram_nodes(@coref_gram);
+            $t_node->add_coref_text_nodes(@coref_text);
         }
     }
 }
