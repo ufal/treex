@@ -268,6 +268,19 @@ sub _is_3rd_prodrop_cs_t {
     );
 }
 
+#------------------ sám, samotný and vlastní ----------------------
+#-- expressions that are often translated to English reflexives ---
+
+sub is_sam_samotny {
+    my ($node, $args) = @_;
+    if ($node->get_layer eq 't') {
+        $node = $node->get_lex_anode;
+    }
+    return 0 if (!defined $node);
+    return 0 if ($node->lemma !~ /^(sám_.*)|(samotný)|(vlastní_.*)$/);
+    return 1;
+}
+
 ########################### ENGLISH #############################
 
 # possible args:

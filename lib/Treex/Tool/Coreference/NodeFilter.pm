@@ -136,6 +136,9 @@ sub get_types_force {
     if (Treex::Tool::Coreference::NodeFilter::Noun::is_article($node, { definite => 1})) {
         $types->{'article.def'} = 1;
     }
+    if (Treex::Tool::Coreference::NodeFilter::PersPron::is_sam_samotny($node)) {
+        $types->{'sam_samotny'} = 1;
+    }
     return $types;
 }
 
