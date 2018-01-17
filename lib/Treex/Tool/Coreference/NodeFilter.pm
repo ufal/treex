@@ -29,15 +29,18 @@ sub get_types_force {
     if (Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {expressed => 1})) {
         $types->{perspron} = 1;
         $types->{all_anaph} = 1;
+        $types->{'all_anaph.no_cor'} = 1;
     }
     if (Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {expressed => 1, possessive => 1})) {
         $types->{'perspron.poss'} = 1;
         $types->{all_anaph} = 1;
+        $types->{'all_anaph.no_cor'} = 1;
     }
     if (Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {expressed => -1})) {
         $types->{perspron_unexpr} = 1;
         $types->{zero} = 1;
         $types->{all_anaph} = 1;
+        $types->{'all_anaph.no_cor'} = 1;
     }
     if (Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {skip_nonref => 1})) {
         $types->{'#perspron.coref'} = 1;
@@ -49,6 +52,7 @@ sub get_types_force {
         $types->{all_anaph_corbon17} = 1;
         $types->{'all_anaph.cr'} = 1;
         $types->{'all_anaph.cr.cs'} = 1;
+        $types->{'all_anaph.no_cor'} = 1;
     }
     if (Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {expressed => 1, reflexive => 1})) {
         $types->{'reflpron'} = 1;
@@ -56,6 +60,7 @@ sub get_types_force {
         $types->{all_anaph_corbon17} = 1;
         $types->{'all_anaph.cr'} = 1;
         $types->{'all_anaph.cr.cs'} = 1;
+        $types->{'all_anaph.no_cor'} = 1;
     }
     if (Treex::Tool::Coreference::NodeFilter::PersPron::is_pers($node, {expressed => 1, reflexive => 1, possessive => 1})) {
         $types->{'reflpron.poss'} = 1;
@@ -65,8 +70,9 @@ sub get_types_force {
         $types->{'reflpron.no_poss'} = 1;
         $types->{all_anaph_corbon17} = 1;
     }
-    # TODO: include prodrops in 1st or 2nd person (for Czech and Russian)
-    if (Treex::Tool::Coreference::NodeFilter::PersPron::is_pers($node, { expressed => 1, person_3rd => -1, reflexive => -1 })) {
+    # originally for CORBON 2017, only expressed pronouns were labeled
+    # if (Treex::Tool::Coreference::NodeFilter::PersPron::is_pers($node, { expressed => 1, person_3rd => -1, reflexive => -1 })) {
+    if (Treex::Tool::Coreference::NodeFilter::PersPron::is_pers($node, { expressed => 0, person_3rd => -1, reflexive => -1 })) {
         $types->{'#perspron.12.no_refl'} = 1;
         $types->{all_anaph_corbon17} = 1;
     }
@@ -75,6 +81,7 @@ sub get_types_force {
         $types->{all_anaph} = 1;
         $types->{'all_anaph.cr'} = 1;
         $types->{'all_anaph.cr.cs'} = 1;
+        $types->{'all_anaph.no_cor'} = 1;
     }
     if (Treex::Tool::Coreference::NodeFilter::RelPron::is_relat($node, { is_what => -1 })) {
         $types->{'relpron.no_what'} = 1;
@@ -86,6 +93,9 @@ sub get_types_force {
     if (Treex::Tool::Coreference::NodeFilter::RelPron::is_coz_cs($node) ||
         Treex::Tool::Coreference::NodeFilter::RelPron::is_co_cs($node)) {
         $types->{'relpron.co_coz'} = 1;
+    }
+    if (Treex::Tool::Coreference::NodeFilter::RelPron::is_relat($node, { is_that => 1 })) {
+        $types->{'relpron.that'} = 1;
     }
     if (Treex::Tool::Coreference::NodeFilter::PersPron::is_cor($node)) {
         $types->{cor} = 1;
@@ -122,6 +132,9 @@ sub get_types_force {
     }
     if (Treex::Tool::Coreference::NodeFilter::Coord::is_coord_root($node)) {
         $types->{coord} = 1;
+    }
+    if (Treex::Tool::Coreference::NodeFilter::Noun::is_article($node, { definite => 1})) {
+        $types->{'article.def'} = 1;
     }
     return $types;
 }

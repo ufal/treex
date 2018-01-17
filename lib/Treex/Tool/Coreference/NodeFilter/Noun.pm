@@ -4,6 +4,8 @@ use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Coreference::NodeFilter::Utils qw/ternary_arg/;
 
+###################### SEMANTIC NOUNS ############################
+
 sub is_sem_noun {
     my ($node, $args) = @_;
     if ($node->get_layer eq 't') {
@@ -41,7 +43,7 @@ sub _is_sem_noun_t_all {
     my $anode = $tnode->get_lex_anode;
     if (defined $anode) {
         my $arg_indefinite = $args->{indefinite} // 0;
-        my $indefinite = is_indefinite($anode);
+        my $indefinite = any {is_indefinite($_)} $anode->get_children;
         return 0 if !ternary_arg($arg_indefinite, $indefinite);
     }
 
@@ -49,22 +51,63 @@ sub _is_sem_noun_t_all {
     return (defined $tnode->gram_sempos && ($tnode->gram_sempos =~ /^n/));
 }
 
+####################### ARTICLE #############################
+
+sub is_article {
+    my ($node, $args) = @_;
+    if ($node->get_layer eq 'a') {
+        return _is_article_a($node, $args);
+    }
+}
+
+sub _is_article_a {
+    my ($anode, $args) = @_;
+    if ($anode->language eq 'en') {
+        return if (!_is_article_a_en($anode));
+    }
+    if ($anode->language eq 'de') {
+        return if (!_is_article_a_de($anode));
+    }
+    
+    my $arg_indefinite = $args->{indefinite} // 0;
+    my $indefinite = is_indefinite($anode);
+    return 0 if !ternary_arg($arg_indefinite, $indefinite);
+
+    my $arg_definite = $args->{definite} // 0;
+    my $definite = is_definite($anode);
+    return 0 if !ternary_arg($arg_definite, $definite);
+
+    return 1;
+}
+
+sub _is_article_a_en {
+    my ($anode, $args) = @_;
+    return ($anode->tag eq "DT");
+}
+
+sub _is_article_a_de {
+    my ($anode, $args) = @_;
+    # TODO: a criterion for a German article
+    return 1;
+}
+
+###################### ATTRIBUTE FUNCTIONS ####################
+
 sub is_indefinite {
     my ($anode) = @_;
     if ($anode->language eq 'de') {
-        my @kids = $anode->get_children;
-        return any {$_->lemma eq "ein"} @kids;
+        return ($anode->lemma eq "ein");
     }
     return 0;
 }
 
 sub is_definite {
     my ($anode) = @_;
+    if ($anode->language eq 'en') {
+        return ($anode->lemma eq "the");
+    }
     if ($anode->language eq 'de') {
-        my @kids = $anode->get_children;
-        return any {($_->lemma eq "der") || 
-                    ($_->lemma eq "die") ||
-                    ($_->lemma eq "das")} @kids;
+        return any {$anode->lemma eq $_} qw/der die das/;
     }
     return 0;
 }

@@ -65,11 +65,11 @@ sub _is_relat_cs_a {
 
     my $has_relat_tag = _is_relat_prague_via_tag($anode, $args);
     my $is_relat_lemma = _is_relat_cs_via_lemma($anode); 
-    
-    #return $has_relat_tag;
-    return $has_relat_tag || $is_relat_lemma;
-    
-    #return $is_relat_lemma;
+    return 0 if (!$has_relat_tag && !$is_relat_lemma);
+
+    return 0 if (($args->{is_that} // 0) == 1);
+
+    return 1;
 }
 
 sub _is_relat_en {
@@ -84,19 +84,27 @@ sub _is_relat_en {
 }
 
 sub _is_relat_en_t {
-    my ($tnode) = @_;
+    my ($tnode, $args) = @_;
     #my $is_via_indeftype = _is_relat_via_indeftype($tnode);
     #return $is_via_indeftype ? 1 : 0;
     my $anode = $tnode->get_lex_anode();
-    return _is_relat_en_a($anode);
+    return _is_relat_en_a($anode, $args);
 }
 
 sub _is_relat_en_a {
-    my ($anode) = @_;
+    my ($anode, $args) = @_;
     return 0 if (!defined $anode);
-    return 1 if ($anode->tag =~ /^W/);
-    return 1 if ($anode->tag eq "IN" && $anode->lemma eq "that" && !$anode->get_children());
-    return 0;
+    return 0 if (
+        ($anode->tag !~ /^W/) && 
+        ($anode->tag ne "IN" || $anode->lemma ne "that" || $anode->get_children())
+    );
+
+    # 'that' pronoun
+    my $arg_is_that = $args->{is_that} // 0;
+    my $is_that = ($anode->lemma eq "that");
+    return 0 if !ternary_arg($arg_is_that, $is_that);
+
+    return 1;
 }
 
 sub _is_relat_prague {
