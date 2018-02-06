@@ -5,6 +5,7 @@ use Treex::Core::Common;
 use List::MoreUtils qw/any/;
 use Treex::Tool::Align::Utils;
 use Treex::Tool::Coreference::Utils;
+use Treex::Tool::Coreference::NodeFilter;
 
 extends 'Treex::Core::Block';
 
@@ -45,6 +46,23 @@ sub process_document {
     }
 }
 
+sub debug_msg {
+    my ($self, $src_node, $trg_node, $is_first) = @_;
+    my $nnode = $src_node->get_n_node;
+    my $msg = join "\t",
+        "[Treex::Block::T2T::CopyCorefFromAlignment]",
+        "Projected=".(defined $trg_node ? 1 : 0),
+        "IsFirst=$is_first",
+        $src_node->id,
+        (defined $trg_node ? $trg_node->id : "undef"),
+        $src_node->t_lemma,
+        (defined $nnode ? $nnode->normalized_name : "undef"),
+        (join ",", Treex::Tool::Coreference::NodeFilter::get_types($src_node)),
+        (defined $trg_node ? (join ",", Treex::Tool::Coreference::NodeFilter::get_types($trg_node)) : "undef"),
+    ;
+    return $msg;
+}
+
 sub project_chain {
     my ($self, $src_chain_inverse) = @_;
 
@@ -57,9 +75,11 @@ sub project_chain {
     my $last_src_ante = shift @src_chain;
     my $last_trg_ante = $self->get_trg_node_and_link_multiple($last_src_ante, $covered_trg_nodes);
     $src_to_trg_nodes{$last_src_ante->id} = $last_trg_ante;
+    log_debug $self->debug_msg($last_src_ante, $last_trg_ante, 1), 1;
     while (my $src_anaph = shift @src_chain) {
         my $trg_anaph = $self->get_trg_node_and_link_multiple($src_anaph, $covered_trg_nodes);
         $src_to_trg_nodes{$src_anaph->id} = $trg_anaph;
+        log_debug $self->debug_msg($src_anaph, $trg_anaph, 0), 1;
 
         if (defined $trg_anaph) {
             my @src_dir_antes = $src_anaph->get_coref_nodes;
