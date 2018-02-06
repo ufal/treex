@@ -47,6 +47,11 @@ sub _is_sem_noun_t_all {
         return 0 if !ternary_arg($arg_indefinite, $indefinite);
     }
 
+    # proper
+    my $arg_proper = $args->{proper} // 0;
+    my $proper = is_proper($tnode);
+    return 0 if !ternary_arg($arg_proper, $proper);
+
     return 1 if (defined $tnode->formeme && $tnode->formeme =~ /^n/);
     return (defined $tnode->gram_sempos && ($tnode->gram_sempos =~ /^n/));
 }
@@ -108,6 +113,19 @@ sub is_definite {
     }
     if ($anode->language eq 'de') {
         return any {$anode->lemma eq $_} qw/der die das/;
+    }
+    return 0;
+}
+
+sub is_proper {
+    my ($node) = @_;
+    if ($node->get_layer eq "a") {
+        my $nnode = $node->n_node;
+        return (defined $nnode);
+    }
+    elsif ($node->get_layer eq "t") {
+        my $nnode = $node->get_n_node;
+        return ($node->is_name_of_person || defined $nnode);
     }
     return 0;
 }
