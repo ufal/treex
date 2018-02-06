@@ -31,6 +31,9 @@ sub get_types_force {
         $types->{all_anaph} = 1;
         $types->{'all_anaph.no_cor'} = 1;
     }
+    if (Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {expressed => 1, possessive => -1, reflexive => -1})) {
+        $types->{'perspron.pers'} = 1;
+    }
     if (Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {expressed => 1, possessive => 1})) {
         $types->{'perspron.poss'} = 1;
         $types->{all_anaph} = 1;
@@ -117,6 +120,18 @@ sub get_types_force {
         $types->{'noun.only.non_indefinite'} = 1;
         $types->{all_anaph_corbon17} = 1;
     }
+    if (Treex::Tool::Coreference::NodeFilter::Noun::is_sem_noun($node, { proper => 1 }) &&
+        !Treex::Tool::Coreference::NodeFilter::RelPron::is_relat($node) &&
+        !Treex::Tool::Coreference::NodeFilter::PersPron::is_pers($node, { expressed => 0, person_3rd => 0, reflexive => 0 }) &&
+        !Treex::Tool::Coreference::NodeFilter::DemonPron::is_demon($node)) {
+        $types->{'noun.only.proper'} = 1;
+    }
+    if (Treex::Tool::Coreference::NodeFilter::Noun::is_sem_noun($node, { proper => -1 }) &&
+        !Treex::Tool::Coreference::NodeFilter::RelPron::is_relat($node) &&
+        !Treex::Tool::Coreference::NodeFilter::PersPron::is_pers($node, { expressed => 0, person_3rd => 0, reflexive => 0 }) &&
+        !Treex::Tool::Coreference::NodeFilter::DemonPron::is_demon($node)) {
+        $types->{'noun.only.non_proper'} = 1;
+    }
     if (Treex::Tool::Coreference::NodeFilter::Noun::is_sem_noun($node)) {
         $types->{'noun'} = 1;
     }
@@ -145,13 +160,20 @@ sub get_types_force {
 sub get_matched_set {
     my ($node, $node_types) = @_;
     my %types = map {$_ => 1} get_types($node);
-    return grep {$types{$_}} @$node_types;
+    return grep {my $t = $_; $t =~ s/^!//; $types{$t}} @$node_types;
 }
 
 sub matches {
     my ($node, $node_types) = @_;
     return 1 if (!@$node_types);
-    return get_matched_set($node, $node_types) > 0;
+    # negatively defined selection
+    if (any {$_ =~ /^!/} @$node_types) {
+        return get_matched_set($node, $node_types) == 0;
+    }
+    # positively defined selection
+    else {
+        return get_matched_set($node, $node_types) > 0;
+    }
 }
 
 1;
