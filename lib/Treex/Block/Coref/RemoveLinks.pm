@@ -23,12 +23,14 @@ sub process_tnode {
         $tnode->set_attr( 'coref_gram.rf', undef );
         $tnode->set_attr( 'coref_text.rf', undef );
         $tnode->set_attr( 'coref_text', undef );
+        $tnode->set_attr( 'bridging', undef );
     }
     else {
         $tnode->set_attr( 'coref_gram.rf', undef );
         $tnode->set_attr( 'coref_text.rf', undef );
         $tnode->set_attr( 'coref_text', undef );
         $tnode->set_attr( 'coref_special', undef );
+        $tnode->set_attr( 'bridging', undef );
     }
 }
 
