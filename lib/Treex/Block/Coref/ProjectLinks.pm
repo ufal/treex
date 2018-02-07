@@ -36,7 +36,7 @@ sub process_document {
 
     my @zones = map {$_->get_zone($self->language, $self->selector)} $doc->get_bundles;
     if (any {!defined $_} @zones) {
-        log_fatal "[Treex::Block::T2T::CopyCorefFromAlignment] Zone must be specified by a language and selector.";
+        log_fatal "[Treex::Block::Coref::ProjectLinks] Zone must be specified by a language and selector.";
     }
     my @ttrees = map {$_->get_ttree} @zones;
 
@@ -50,7 +50,7 @@ sub debug_msg {
     my ($self, $src_node, $trg_node, $is_first) = @_;
     my $nnode = $src_node->get_n_node;
     my $msg = join "\t",
-        "[Treex::Block::T2T::CopyCorefFromAlignment]",
+        "[Treex::Block::Coref::ProjectLinks]",
         "Projected=".(defined $trg_node ? 1 : 0),
         "IsFirst=$is_first",
         $src_node->id,
