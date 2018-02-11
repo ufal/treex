@@ -60,6 +60,9 @@ sub get_types_force {
         $types->{'all_anaph.cr.cs'} = 1;
         $types->{'all_anaph.no_cor'} = 1;
     }
+    if (Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_prodrop($node, {parent_pos => 'v_expr', functor => 'ACT'})) {
+        $types->{'zero.subject'} = 1;
+    }
     if (Treex::Tool::Coreference::NodeFilter::PersPron::is_3rd_pers($node, {expressed => 1, reflexive => 1})) {
         $types->{'reflpron'} = 1;
         $types->{all_anaph} = 1;
