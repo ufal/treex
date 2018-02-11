@@ -48,17 +48,32 @@ sub check_gold_aligns_from_to {
     }
 }
 
+sub aligned_transitively_with_types {
+    my ($nodes, $filters) = @_;
+
+    my @level_aligned_nodes = @$nodes;
+    my @level_aligned_types = ();
+
+    my $filter;
+    foreach my $filter (@$filters) {
+        my @new_level_aligned_nodes = ();
+        my @new_level_aligned_types = ();
+        foreach my $level_node (@level_aligned_nodes) {
+            my ($n, $t) = $level_node->get_undirected_aligned_nodes($filter);
+            push @new_level_aligned_nodes, @$n;
+            push @new_level_aligned_types, @$t;
+        }
+        @level_aligned_nodes = @new_level_aligned_nodes;
+        @level_aligned_types = @new_level_aligned_types;
+    }
+    return (\@level_aligned_nodes, \@level_aligned_types);
+}
 
 sub aligned_transitively {
     my ($nodes, $filters) = @_;
 
-    my @level_aligned = @$nodes;
-
-    my $filter;
-    foreach my $filter (@$filters) {
-        @level_aligned = map {my ($n, $t) = $_->get_undirected_aligned_nodes($filter); @$n;} @level_aligned;
-    }
-    return @level_aligned;
+    my ($n, $t) = aligned_transitively_with_types($nodes, $filters);
+    return @$n;
 }
 
 sub aligned_robust {
