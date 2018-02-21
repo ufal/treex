@@ -11,36 +11,28 @@ use Treex::Tool::ML::VowpalWabbit::Ranker;
 
 # TODO: so far, no #Cor annotation in amutomatic Czech data => no CR used for Czech
 
-has '+model_path' => (
-    # PDT monolingual
-    #################
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/021_run_2016-08-25_18-10-03_13500.PDT.new_prodrop_filter/001.e6a6d5dba6.featset/004.37316.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
-    # joint feature set
-    default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/028_run_2017-01-14_12-37-34_26194.PDT.new_models_with_EN.CS__AllMonolingual_feats/001.17cb9c0d6f.featset/004.39acd.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
-    # UDPipe W2A
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/010_run_2016-07-20_11-29-14_21681.data_0007_-_UDPipe_W2A/001.6482ae07e1.featset/002.f59b5.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
-    # new limited features
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/004_run_2016-07-03_19-46-00_17837.using_Coreference_Features_Cor_-_new_features_-_so_far_limited/004.bc3425f2a5.featset/003.202e7.mlmethod/model/train.pdt.table.gz.vw.ranking.model',
-    
-    # PCEDT monolingual
-    #################
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/022_run_2016-08-25_18-40-12_14840.PCEDT.new_prodrop_filter/001.e6a6d5dba6.featset/004.37316.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model',
-    # joint feature set
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/027_run_2017-01-14_02-37-37_21334.PCEDT.new_models_with_EN.CS__AllMonolingual_feats/001.17cb9c0d6f.featset/002.22ec1.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model',
-    
-    # PCEDT cross-lingual
-    #################
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/022_run_2016-08-25_18-40-12_14840.PCEDT.new_prodrop_filter/004.68ab891a00.featset/004.37316.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model',
-    # joint feature set
-    #default => '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/perspron/tmp/ml/027_run_2017-01-14_02-37-37_21334.PCEDT.new_models_with_EN.CS__AllMonolingual_feats/004.7f391f3429.featset/002.22ec1.mlmethod/model/train.pcedt_bi.with_en.table.gz.vw.ranking.model',
-    
-);
+has '+model_type' => ( isa => enum([qw/pcedt_bi pcedt_bi.with_en pcedt_bi.with_en.treex_cr pcedt_bi.with_en.base_cr/]), default => 'pcedt_bi' );
+
+override '_build_model_for_type' => sub {
+    my $dir = '/home/mnovak/projects/czeng_coref/treex_cr_train/cs/cor/tmp/ml';
+# NOTHING TRAINED YET
+#    return {
+#        #'pcedt_bi' => "$dir/003_run_2017-01-16_10-35-53_22530.PCEDT.feats-AllMonolingual.round1/001.9fd0f3842c.featset/004.39acd.mlmethod/model/train.pcedt_bi.with_cs.table.gz.vw.ranking.model",
+#        'pcedt_bi' => "$dir/005_run_2017-01-17_22-34-07_28083.PCEDT.monolingual.feats-AllMonolingual/001.9fd0f3842c.featset/024.9c797.mlmethod/model/train.pcedt_bi.table.gz.vw.ranking.model",
+#        
+#        # PCEDT.crosslingual aligned_all
+#        'pcedt_bi.with_en' => "$dir/007_run_2017-01-19_00-19-24_9816.PCEDT.crosslingual.feats-AllMonolingual/002.28b9b793e5.featset/024.9c797.mlmethod/model/train.pcedt_bi.with_cs.table.gz.vw.ranking.model",
+#        # PCEDT.crosslingual aligned_all+coref+mono_all
+#        'pcedt_bi.with_en.treex_cr' => "$dir/007_run_2017-01-19_00-19-24_9816.PCEDT.crosslingual.feats-AllMonolingual/004.191e9db554.featset/024.9c797.mlmethod/model/train.pcedt_bi.with_cs.table.gz.vw.ranking.model",
+#        
+#        # PCEDT.crosslingual-baseline aligned_all+coref+mono_all
+#        'pcedt_bi.with_en.base_cr' => "$dir/006_run_2017-01-18_15-41-37_22245.PCEDT.crosslingual-baseline.feats-AllMonolingual/004.191e9db554.featset/024.9c797.mlmethod/model/train.pcedt_bi.with_cs.baseline.table.gz.vw.ranking.model",
+#    };
+    return {};
+};
 
 override '_build_ranker' => sub {
     my ($self) = @_;
-#    my $ranker = Treex::Tool::Coreference::RuleBasedRanker->new();
-#    my $ranker = Treex::Tool::Coreference::ProbDistrRanker->new(
-#    my $ranker = Treex::Tool::Coreference::PerceptronRanker->new( 
     my $ranker = Treex::Tool::ML::VowpalWabbit::Ranker->new( 
         { model_path => $self->model_path } 
     );
@@ -61,7 +53,7 @@ Treex::Block::Coref::CS::Cor::Resolve
 
 =head1 DESCRIPTION
 
-Pronoun coreference resolver for Czech.
+Cor coreference resolver for Czech.
 Settings:
 * English personal pronoun filtering of anaphor
 * candidates for the antecedent are nouns from current (prior to anaphor) and previous sentence
