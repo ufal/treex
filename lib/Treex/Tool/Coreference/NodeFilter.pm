@@ -126,7 +126,8 @@ sub get_types_force {
         $types->{'noun.only.non_indefinite'} = 1;
         $types->{all_anaph_corbon17} = 1;
     }
-    if (Treex::Tool::Coreference::NodeFilter::Noun::is_sem_noun($node, { proper => 1 }) &&
+    if ( (Treex::Tool::Coreference::NodeFilter::Noun::is_sem_noun($node, { proper => 1 }) || 
+          Treex::Tool::Coreference::NodeFilter::Noun::is_idph_forn_proper_all($node)) &&
         !Treex::Tool::Coreference::NodeFilter::RelPron::is_relat($node) &&
         !Treex::Tool::Coreference::NodeFilter::PersPron::is_pers($node, { expressed => 0, person_3rd => 0, reflexive => 0 }) &&
         !Treex::Tool::Coreference::NodeFilter::DemonPron::is_demon($node)) {

@@ -56,6 +56,17 @@ sub _is_sem_noun_t_all {
     return (defined $tnode->gram_sempos && ($tnode->gram_sempos =~ /^n/));
 }
 
+sub is_idph_forn_proper_all {
+    my ($node, $args) = @_;
+    return 0 if ($node->get_layer ne "t");
+
+    my $idph = $node->t_lemma eq "#Idph";
+    my $forn = $node->t_lemma eq "#Forn";
+    my $desc_proper = any {is_proper($_)} $node->get_descendants;
+
+    return ($idph || ($forn && $desc_proper));
+}
+
 ####################### ARTICLE #############################
 
 sub is_article {
