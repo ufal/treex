@@ -43,7 +43,12 @@ before 'process_document' => sub {
     
     my @ref_ttrees = map {$_->get_tree($self->language, 't', $self->gold_selector)} $doc->get_bundles;
     my @ref_chains = Treex::Tool::Coreference::Utils::get_coreference_entities(\@ref_ttrees);
-    my $ref_id_to_entity = build_id_to_entity(\@ref_chains);
+    my @src_ttrees = map {$_->get_tree($self->language, 't', $self->pred_selector)} $doc->get_bundles;
+    my @src_chains = Treex::Tool::Coreference::Utils::get_coreference_entities(\@src_ttrees);
+    my $ref_id_to_entity = {
+        $self->gold_selector => build_id_to_entity(\@ref_chains),
+        $self->pred_selector => build_id_to_entity(\@src_chains),
+    };
     $self->_set_id_to_eid($ref_id_to_entity);
 };
 
@@ -58,7 +63,7 @@ sub process_bundle {
         # process only the gold nodes that match the node type
         next if (!Treex::Tool::Coreference::NodeFilter::matches($ref_tnode, $self->node_types));
 
-        my $ref_tnode_eid = $self->_id_to_eid->{$ref_tnode->id};
+        my $ref_tnode_eid = $self->_id_to_eid->{$ref_tnode->selector}{$ref_tnode->id};
         my $gold_eval_class = $ref_tnode->get_coref_nodes > 0 ? 1 : 0;
         my ($ali_nodes, $ali_types) = $ref_tnode->get_undirected_aligned_nodes({language => $self->language, selector => $self->pred_selector});
         # process the ref nodes that have a src counterpart
@@ -72,10 +77,15 @@ sub process_bundle {
             $covered_src_nodes{$ali_src_tnode->id}++;
             my @ali_src_antes = $self->get_src_antes($ali_src_tnode);
             my ($pred_eval_class, $both_eval_class);
+            my @ali_ali_ref_antes = ();
             # src counterpart is anaphoric
             if (@ali_src_antes) {
+                @ali_ali_ref_antes = map {
+                    my ($n, $t) = $_->get_undirected_aligned_nodes({language => $self->language, selector => $self->gold_selector}); 
+                    @$n
+                } @ali_src_antes;
                 $pred_eval_class = 1;
-                $both_eval_class = $self->check_src_antes([$ref_tnode], \@ali_src_antes);
+                $both_eval_class = $self->check_ref_antes([$ref_tnode], \@ali_ali_ref_antes);
             }
             # src counterpart is not anaphoric
             else {
@@ -83,15 +93,13 @@ sub process_bundle {
                 $both_eval_class = ($pred_eval_class == $gold_eval_class) ? 1 : 0;
             }
 
-            print {$self->_file_handle} join " ", ($gold_eval_class, $pred_eval_class, $both_eval_class, $ref_tnode->get_address, $ref_tnode->get_address, $ali_src_tnode->get_address, (join ",", Treex::Tool::Coreference::NodeFilter::get_types($ref_tnode)));
-            print {$self->_file_handle} "\n";
+            print {$self->_file_handle} $self->get_instance_str($gold_eval_class, $pred_eval_class, $both_eval_class, $ref_tnode, $ali_src_tnode, \@ali_src_antes, \@ali_ali_ref_antes);
         }
         # process the ref nodes that have no src counterpart
         # considered correct if the ref node is non-anaphoric
         if (!@$ali_nodes) {
             #printf STDERR "NO SRC: %s %d\n", $ref_tnode->get_address, 1-$gold_eval_class;
-            print {$self->_file_handle} join " ", ($gold_eval_class, 0, 1-$gold_eval_class, $ref_tnode->get_address, $ref_tnode->get_address, "", (join ",", Treex::Tool::Coreference::NodeFilter::get_types($ref_tnode)));
-            print {$self->_file_handle} "\n";
+            print {$self->_file_handle} $self->get_instance_str($gold_eval_class, 0, 1-$gold_eval_class, $ref_tnode, undef, [], []);
         }
     }
     foreach my $src_tnode ($src_ttree->get_descendants({ordered => 1})) {
@@ -104,9 +112,13 @@ sub process_bundle {
         $pred_eval_class = @src_antes ? 1 : 0;
         
         my ($ref_anaphs, $ali_types) = $src_tnode->get_undirected_aligned_nodes({language => $self->language, selector => $self->gold_selector});
+        my @ali_ref_antes = map {
+            my ($n, $t) = $_->get_undirected_aligned_nodes({language => $self->language, selector => $self->gold_selector}); 
+            @$n
+        } @src_antes;
 
         if (@$ref_anaphs) {
-            $both_eval_class = $self->check_src_antes($ref_anaphs, \@src_antes);
+            $both_eval_class = $self->check_ref_antes($ref_anaphs, \@ali_ref_antes);
         }
         else {
             $both_eval_class = @src_antes ? 0 : 1;
@@ -114,8 +126,7 @@ sub process_bundle {
         
         #printf STDERR "NO REF: %s %d\n", $src_tnode->get_address, 1-$pred_eval_class;
         
-        print {$self->_file_handle} join " ", (0, $pred_eval_class, $both_eval_class, $src_tnode->get_address, "", $src_tnode->get_address, (join ",", Treex::Tool::Coreference::NodeFilter::get_types($src_tnode)));
-        print {$self->_file_handle} "\n";
+        print {$self->_file_handle} $self->get_instance_str(0, $pred_eval_class, $both_eval_class, undef, $src_tnode, \@src_antes, \@ali_ref_antes);
     }
 }
 
@@ -149,30 +160,51 @@ sub get_src_antes {
     return @src_antes ? @src_antes : @src_antes_direct;
 }
 
-sub check_src_antes {
-    my ($self, $ref_anaphs, $src_antes) = @_;
-
-    my @ref_antes = map {
-        my ($n, $t) = $_->get_undirected_aligned_nodes({language => $self->language, selector => $self->gold_selector}); 
-        @$n
-    } @$src_antes;
+sub check_ref_antes {
+    my ($self, $ref_anaphs, $ref_antes) = @_;
     
     my %ref_anaphs_id = map {$_->id => 1} @$ref_anaphs;
-    return 1 if (any {$ref_anaphs_id{$_->id}} @ref_antes);
+    return 1 if (any {$ref_anaphs_id{$_->id}} @$ref_antes);
     
     my %ref_anaphs_eid = ();
     foreach my $ref_anaph (@$ref_anaphs) {
-        my $anaph_eid = $self->_id_to_eid->{$ref_anaph->id};
+        my $anaph_eid = $self->_id_to_eid->{$ref_anaph->selector}{$ref_anaph->id};
         if (defined $anaph_eid) {
             $ref_anaphs_eid{$anaph_eid}++;
         }
     }
     return 1 if (any {
-        my $ante_eid = $self->_id_to_eid->{$_->id}; 
+        my $ante_eid = $self->_id_to_eid->{$_->selector}{$_->id}; 
         defined $ante_eid ? defined $ref_anaphs_eid{$ante_eid} : 0
-    } @ref_antes);
+    } @$ref_antes);
     
     return 0;
+}
+
+sub get_instance_str {
+    my ($self, $gold_eval_class, $pred_eval_class, $both_eval_class, $ref_tnode, $src_tnode, $src_antes, $ali_ref_antes) = @_;
+    my $main_tnode = $ref_tnode // $src_tnode;
+    my $str = join " ", (
+        $gold_eval_class,
+        $pred_eval_class,
+        $both_eval_class,
+        $main_tnode->get_address,
+        defined $ref_tnode ? $ref_tnode->get_address : "",
+        defined $src_tnode ? $src_tnode->get_address : "",
+        (join ",", Treex::Tool::Coreference::NodeFilter::get_types($main_tnode)),
+        $self->mention_match_tag([$src_tnode], [$ref_tnode], $src_antes, $ali_ref_antes),
+    );
+    $str .= "\n";
+    return $str;
+}
+
+sub mention_match_tag {
+    my ($self, @node_lists) = @_;
+    return join "", map {
+        my $nl = $_;
+        (any {defined $_ && $_->get_coref_nodes > 0} @$nl) ? "a" : (
+        (any {defined $_ && defined $self->_id_to_eid->{$_->selector}{$_->id}} @$nl) ? "e" : "0"); 
+    } @node_lists;
 }
  
 

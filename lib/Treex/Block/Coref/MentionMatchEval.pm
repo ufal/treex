@@ -44,21 +44,40 @@ sub process_bundle {
             $covered_src_nodes{$ali_src_tnode->id}++;
             my $is_src = $self->_src_mentions->{$ali_src_tnode->id} ? 1 : 0;
             my $is_both = ($is_ref && $is_src) ? 1 : 0;
-            print {$self->_file_handle} join " ", ($is_ref, $is_src, $is_both, $ref_tnode->get_address, join ",", Treex::Tool::Coreference::NodeFilter::get_types($ref_tnode));
-            print {$self->_file_handle} "\n";
+            print {$self->_file_handle} $self->get_instance_str($is_ref, $is_src, $is_both, $ref_tnode, $ali_src_tnode);
         }
         if (!@$ali_nodes) {
             #printf STDERR "NO SRC: %s %d\n", $ref_tnode->get_address, 1-$gold_eval_class;
-            print {$self->_file_handle} join " ", ($is_ref, 0, 0, $ref_tnode->get_address, join ",", Treex::Tool::Coreference::NodeFilter::get_types($ref_tnode));
-            print {$self->_file_handle} "\n";
+            print {$self->_file_handle} $self->get_instance_str($is_ref, 0, 0, $ref_tnode, undef);
         }
     }
     foreach my $src_tnode ($src_ttree->get_descendants({ordered => 1})) {
         next if (defined $covered_src_nodes{$src_tnode->id});
         my $is_src = $self->_src_mentions->{$src_tnode->id} ? 1 : 0;
-        print {$self->_file_handle} join " ", (0, $is_src, 0, $src_tnode->get_address, join ",", Treex::Tool::Coreference::NodeFilter::get_types($src_tnode));
-        print {$self->_file_handle} "\n";
+        print {$self->_file_handle} $self->get_instance_str(0, $is_src, 0, undef, $src_tnode);
     }
+}
+
+sub all_aligned_zones {
+    my ($self, $node) = @_;
+    my ($ns, $ts) = $node->get_undirected_aligned_nodes;
+    my @labels = map {my $n = $ns->[$_]; my $t = $ts->[$_]; $n->get_zone->get_label.":".$t} 0..$#$ns;
+    return @labels;
+}
+
+sub get_instance_str {
+    my ($self, $is_ref, $is_src, $is_both, $ref_tnode, $src_tnode) = @_;
+    my $main_tnode = $ref_tnode // $src_tnode;
+    my $str = join " ", (
+        $is_ref,
+        $is_src,
+        $is_both,
+        $ref_tnode->get_address,
+        (join ",", Treex::Tool::Coreference::NodeFilter::get_types($main_tnode)),
+        (defined $src_tnode ? join ",", $self->all_aligned_zones($src_tnode) : ""),
+    );
+    $str .= "\n";
+    return $str;
 }
 
 1;
