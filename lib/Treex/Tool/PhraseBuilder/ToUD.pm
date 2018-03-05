@@ -59,6 +59,7 @@ sub _build_dialect
         'nmod'      => ['^nmod$', 'nmod'],     # nominal modifier (attribute or adjunct)
         'advmod'    => ['^advmod$', 'advmod'], # adverbial modifier (realized as adverb, not as a noun phrase)
         'flat'      => ['^(name|flat)(:|$)', 'flat'], # non-head part of a multi-word named entity without internal syntactic structure; PDT has flat:foreign
+        'flat:foreign'=>['^flat:foreign$', 'flat:foreign'], # this is needed to be able to also set flat:foreign, not just recognize it
         'auxarg'    => ['^auxarg$', 'auxarg'], # content verb (participle) attached to an auxiliary verb (finite)
         'auxv'      => ['^aux$', 'aux'],       # auxiliary verb attached to a main (content) verb
         'xcomp'     => ['^xcomp$', 'xcomp'],   # controlled verb (usually non-finite) attached to a controlling verb
