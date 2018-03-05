@@ -79,11 +79,11 @@ sub fix_morphology
         if($node->is_pronominal())
         {
             # Indefinite pronouns and determiners cannot be distinguished by their PDT tag (PZ*).
-            if($lemma =~ m/^((ně|lec|ledas?|kde|bůhví|kdoví|nevím|málo|sotva)?(kdo|cos?)(si|koliv?)?|nikdo|nic)$/)
+            if($lemma =~ m/^((ně|lec|ledas?|kde|bůhví|kdoví|nevím|málo|sotva)?(kdo|cos?)(si|koliv?)?|nikdo|nic|nihil|nothing)$/)
             {
                 $node->iset()->set('pos', 'noun');
             }
-            elsif($lemma =~ m/(^(jaký|který)|(jaký|který)$|^(každý|všechen|sám|žádný)$)/)
+            elsif($lemma =~ m/(^(jaký|který)|(jaký|který)$|^(každý|všechen|sám|žádný|some|takýs)$)/)
             {
                 $node->iset()->set('pos', 'adj');
             }
