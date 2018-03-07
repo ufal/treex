@@ -464,6 +464,12 @@ sub add_punctuation_to_coordination
     {
         $conjuncts{$c}++;
     }
+    # We must not add a second copy of punctuation that is already listed!
+    my %already_there;
+    foreach my $c (@{$punctuation}, @{$coordinators})
+    {
+        $already_there{$c}++;
+    }
     my @conjuncts = sort {$a->ord() <=> $b->ord()} (@{$conjuncts});
     my @conjords = sort {$a <=> $b} (map {$_->ord()} (@conjuncts));
     my @delmords = sort {$a <=> $b} (map {$_->ord()} (@{$punctuation}, @{$coordinators}));
@@ -525,7 +531,7 @@ sub add_punctuation_to_coordination
             {
                 $result = $rterms[0];
             }
-            if(defined($result))
+            if(defined($result) && !exists($already_there{$result}))
             {
                 # Add the terminal phrase of the comma to our list of punctuation phrases.
                 # Then the coordination builder should automatically pick it and use it in the coordination.
