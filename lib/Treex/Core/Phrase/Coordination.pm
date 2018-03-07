@@ -128,7 +128,7 @@ sub BUILD
         {
             foreach my $child1 (@children)
             {
-                log_warn('CORE CHILD: '.$child->as_string());
+                log_warn('CORE CHILD: '.$child1->as_string());
             }
             log_warn('CHILDX: '.$child->as_string());
             log_warn('PARENT: '.$child->parent()->as_string());
