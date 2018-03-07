@@ -12,7 +12,6 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
-    $self->fix_features($root);
     # The conversion to phrases and back should fix various issues such as
     # left-to-right conj or flat:foreign.
     my $builder = new Treex::Tool::PhraseBuilder::StanfordToUD
@@ -26,28 +25,13 @@ sub process_atree
 
 
 
-#------------------------------------------------------------------------------
-# Features are stored in conll/feat and their format is not compatible with
-# Universal Dependencies.
-#------------------------------------------------------------------------------
-sub fix_features
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants();
-}
-
-
-
 1;
 
 =over
 
 =item Treex::Block::HamleDT::FA::FixUD
 
-A block to fix Persian UD. Currently dummy.
-
-The main UD 1 to 2 conversion is done in a separate block.
+A block to fix Persian UD. Currently only normalizes coordination, flat etc.
 
 =back
 
