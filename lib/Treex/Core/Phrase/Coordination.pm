@@ -126,6 +126,8 @@ sub BUILD
     {
         if(defined($child->parent()))
         {
+            log_warn('CHILD:  '.$child->as_string());
+            log_warn('PARENT: '.$child->parent()->as_string());
             log_fatal("The core child already has another parent");
         }
         $child->_set_parent($self);
