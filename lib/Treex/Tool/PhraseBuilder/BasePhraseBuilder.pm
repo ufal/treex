@@ -536,6 +536,7 @@ sub add_punctuation_to_coordination
                 # Add the terminal phrase of the comma to our list of punctuation phrases.
                 # Then the coordination builder should automatically pick it and use it in the coordination.
                 push(@{$punctuation}, $result);
+                $already_there{$result}++;
             }
         }
     }
