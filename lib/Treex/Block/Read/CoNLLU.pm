@@ -170,7 +170,7 @@ sub next_document {
                 my $n0 = scalar(@misc);
                 @misc = grep {$_ ne 'SpaceAfter=No'} (@misc);
                 my $n1 = scalar(@misc);
-                if ($n1 < $n0 || $nsaflags[$newnode->ord()]) {
+                if ($n1 < $n0) {
                     $newnode->set_no_space_after(1);
                 }
                 # Check whether MISC contains transliteration of the word form.
