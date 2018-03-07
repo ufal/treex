@@ -126,7 +126,11 @@ sub BUILD
     {
         if(defined($child->parent()))
         {
-            log_warn('CHILD:  '.$child->as_string());
+            foreach my $child1 (@children)
+            {
+                log_warn('CORE CHILD: '.$child->as_string());
+            }
+            log_warn('CHILDX: '.$child->as_string());
             log_warn('PARENT: '.$child->parent()->as_string());
             log_fatal("The core child already has another parent");
         }
