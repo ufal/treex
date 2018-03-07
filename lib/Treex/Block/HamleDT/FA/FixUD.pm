@@ -2,7 +2,7 @@ package Treex::Block::HamleDT::FA::FixUD;
 use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Common;
-use Lingua::Interset qw(decode);
+use Treex::Tool::PhraseBuilder::StanfordToUD;
 use utf8;
 extends 'Treex::Core::Block';
 
