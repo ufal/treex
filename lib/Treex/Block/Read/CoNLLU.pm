@@ -135,6 +135,10 @@ sub next_document {
                         {
                             $funodes[$i]->set_fused_with_next(1);
                         }
+                        if ($nsaflags[$futo])
+                        {
+                            $funodes[-1]->set_no_space_after(1);
+                        }
                     }
                     else
                     {
