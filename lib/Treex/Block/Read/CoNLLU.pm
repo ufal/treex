@@ -42,9 +42,7 @@ sub next_document {
         my $futo;
         my $fuform;
         my @funodes = ();
-        # Information about nodes that are not followed by a space.
-        # Because of fused tokens, we may have to note them in advance.
-        my @nsaflags = ();
+        my $funspaf; # no space after the fused token?
 
         LINE:
         foreach my $line (@lines) {
@@ -103,7 +101,7 @@ sub next_document {
                 $sentence .= $form if defined $form;
                 if ($misc =~ m/SpaceAfter=No/)
                 {
-                    $nsaflags[$futo] = 1;
+                    $funspaf = 1;
                 }
                 else
                 {
@@ -135,7 +133,7 @@ sub next_document {
                         {
                             $funodes[$i]->set_fused_with_next(1);
                         }
-                        if ($nsaflags[$futo])
+                        if ($funspaf)
                         {
                             $funodes[-1]->set_no_space_after(1);
                         }
@@ -148,6 +146,7 @@ sub next_document {
                     $futo = undef;
                     $fuform = undef;
                     splice(@funodes);
+                    $funspaf = undef;
                 }
             }
             $newnode->set_form($form);
