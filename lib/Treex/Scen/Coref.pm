@@ -2,6 +2,7 @@ package Treex::Scen::Coref;
 use Moose;
 use Moose::Util::TypeConstraints;
 use Treex::Core::Common;
+use Data::Printer;
 
 subtype 'ModuleIndicator' => as 'HashRef';
 coerce 'ModuleIndicator'
@@ -28,6 +29,12 @@ has 'model_type' => (
     predicate => 'has_model_type',
 );
 
+has 'models' => (
+    is => 'ro',
+    isa => 'Str',
+    predicate => 'has_models',
+);
+
 has 'diagnostics' => (
     is => 'ro',
     isa => 'Bool',
@@ -42,19 +49,30 @@ has 'aligned_feats' => (
 
 sub get_scenario_string {
     my ($self) = @_;
-    if ($self->language eq 'en') {
-        return $self->get_en_scenario_string();
-    }
-    elsif ($self->language eq 'cs') {
-        return $self->get_cs_scenario_string();
-    }
-    else {
-        log_warn "Coreference resolution for the language ".$self->language." is not supported.";
+
+    my $lang = $self->language;
+    
+    # so far, only Czech and English supported
+    if ($lang !~ /^(en|cs)$/) {
+        log_warn "Coreference resolution for the language ".$lang." is not supported.";
         return 'Util::Eval document="1;"';
     }
+
+    my $lang_CAP = uc $lang;
+    my $common_params = $self->prepare_common_params;
+
+    my $scen = join "\n",
+    'Util::SetGlobal language='.$lang,
+    $self->modules->{cor}       || $self->modules->{all} ? sprintf 'Coref::%s::Cor::Resolve %s %s',      $lang_CAP, $common_params, $self->prepare_anaphtype_params("cor") : '',
+    $self->modules->{relpron}   || $self->modules->{all} ? sprintf 'Coref::%s::RelPron::Resolve %s %s',  $lang_CAP, $common_params, $self->prepare_anaphtype_params("relpron") : '',
+    $self->modules->{reflpron}  || $self->modules->{all} ? sprintf 'Coref::%s::ReflPron::Resolve %s %s', $lang_CAP, $common_params, $self->prepare_anaphtype_params("reflpron") : '',
+    $self->modules->{perspron}  || $self->modules->{all} ? sprintf 'Coref::%s::PersPron::Resolve %s %s', $lang_CAP, $common_params, $self->prepare_anaphtype_params("#perspron.no_refl") : '',
+    ;
+
+    return $scen;
 }
 
-sub prepare_params {
+sub prepare_common_params {
     my ($self) = @_;
     
     my $params = '';
@@ -70,36 +88,21 @@ sub prepare_params {
     return $params;
 }
 
-sub get_cs_scenario_string {
-    my ($self) = @_;
+sub prepare_anaphtype_params {
+    my ($self, $type) = @_;
 
-    my $params = $self->prepare_params;
-
-    my $scen = join "\n",
-    'Util::SetGlobal language=cs',
-    $self->modules->{relpron} || $self->modules->{all} ? 'Coref::CS::RelPron::Resolve'.$params : '',
-    $self->modules->{reflpron} || $self->modules->{all} ? 'Coref::CS::ReflPron::Resolve'.$params : '',
-    $self->modules->{perspron} || $self->modules->{all} ? 'Coref::CS::PersPron::Resolve'.$params : '',
-    ;
-
-    return $scen;
+    my $params = '';
+    if ($self->has_models) {
+        my @paths = glob $self->models;
+        my @filtered_paths = grep {$_ =~ /([\/.]|^)\Q$type\E([\/.]|$)/} @paths;
+        if (@filtered_paths) {
+            log_warn "[Treex::Scen::Coref] Too many models for an anaphor type $type. Taking the first one: ".$filtered_paths[0] if (@filtered_paths > 1);
+            $params .= ' model_path='.$filtered_paths[0];
+        }
+    }
+    return $params;
 }
 
-sub get_en_scenario_string {
-    my ($self) = @_;
-    
-    my $params = $self->prepare_params;
-
-    my $scen = join "\n",
-    'Util::SetGlobal language=en',
-    $self->modules->{relpron}  || $self->modules->{all} ? 'Coref::EN::RelPron::Resolve'.$params : '',
-    $self->modules->{cor}      || $self->modules->{all} ? 'Coref::EN::Cor::Resolve'.$params : '',
-    $self->modules->{reflpron} || $self->modules->{all} ? 'Coref::EN::ReflPron::Resolve'.$params : '',
-    $self->modules->{perspron} || $self->modules->{all} ? 'Coref::EN::PersPron::Resolve'.$params : '',
-    ;
-
-    return $scen;
-}
 
 1;
 
