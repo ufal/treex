@@ -455,9 +455,12 @@ sub set_deprel
     if($self->head_rule() eq 'last_coordinator')
     {
         ###!!! Orphans from elided conjuncts are labeled 'ExD' in the Prague
-        ###!!! annotation style. This is the only legitimate case when a non-first
-        ###!!! "conjunct" has not the same deprel as the first conjunct.
-        my $exd_means_orphan = $conjuncts[0]->deprel() ne 'ExD';
+        ###!!! annotation style. This is the only legitimate case where two
+        ###!!! "conjuncts" have different deprels. Beware! In some languages
+        ###!!! it is possible that the initial "conjuncts" are 'ExD' and the
+        ###!!! final conjuncts are real. Therefore it is not enough to look at
+        ###!!! the first conjunct.
+        my $exd_means_orphan = scalar(grep {$_->deprel() ne 'ExD'} (@conjuncts)) > 0;
         foreach my $c (@conjuncts)
         {
             unless($exd_means_orphan && $c->deprel() eq 'ExD')
