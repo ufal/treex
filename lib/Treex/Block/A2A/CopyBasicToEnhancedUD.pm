@@ -1,4 +1,4 @@
-package Treex::Block::A2A::ConvertTags;
+package Treex::Block::A2A::CopyBasicToEnhancedUD;
 
 use Moose;
 use Treex::Core::Common;
