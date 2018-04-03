@@ -52,6 +52,15 @@ sub add_enhanced_parent_of_coordination
         if(defined($inode) && defined($inode->parent()))
         {
             push(@{$node->wild()->{enhanced}}, [$inode->parent()->ord(), $inode->deprel()]);
+            # The coordination may function as a shared dependent of other coordination.
+            if($inode->is_shared_modifier())
+            {
+                my @conjuncts = $self->recursively_collect_conjuncts($inode->parent());
+                foreach my $conjunct (@conjuncts)
+                {
+                    push(@{$node->wild()->{enhanced}}, [$conjunct->ord(), $inode->deprel()]);
+                }
+            }
         }
     }
 }
