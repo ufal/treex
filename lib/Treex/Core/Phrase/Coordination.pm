@@ -661,6 +661,8 @@ sub project_dependencies
             my $dep_node = $d->node();
             $dep_node->set_parent($head_node);
             $dep_node->set_deprel($d->project_deprel());
+            ###!!! Warning: We did not check whether any other nodes had the flag set in the input data!
+            $dep_node->set_is_shared_modifier(1);
         }
     }
     elsif($head_rule eq 'last_coordinator')
@@ -692,6 +694,8 @@ sub project_dependencies
             my $dep_node = $d->node();
             $dep_node->set_parent($head_node);
             $dep_node->set_deprel($d->project_deprel());
+            ###!!! Warning: We did not check whether any other nodes had the flag set in the input data!
+            $dep_node->set_is_shared_modifier(1);
         }
     }
     else
