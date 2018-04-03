@@ -46,10 +46,13 @@ sub BUILD {
     $self->aligned_feats;
     $self->_model_for_type;
     $self->model_path;
-    $self->_ranker;
     $self->_feature_extractor;
     $self->_ante_cands_selector;
 }
+after 'process_start' => sub {
+    my ($self) = @_;
+    $self->_ranker;
+};
 sub build_aligned_feats {
     my ($self) = @_;
     my $res = ($self->has_model_type && $self->model_type =~ /with_/) ? 1 : 0;
