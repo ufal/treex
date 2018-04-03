@@ -133,14 +133,14 @@ sub process_zone
         # However, for Tamil we also want a transliterated sentence, and for that we need to add an extra comment here.
         my $wild = $zone->get_bundle()->wild();
         my $comment = $wild->{comment};
-        if(defined($comment) && $comment ne '')
-        {
-            $comment .= "\n";
-        }
+        my @comment = split(/\n/, $comment);
+        # If there already is an older translit comment (perhaps not detokenized), remove it.
+        @comment = grep {!m/^translit\s*=/} (@comment);
         my $table = $self->table();
         my $maxl = $self->maxl();
         my $translit = translit::prevest($table, $text, $maxl);
-        $comment .= "translit = $translit";
+        push(@comment, "translit = $translit");
+        $comment = join("\n", @comment);
         $wild->{comment} = $comment;
     }
     else
