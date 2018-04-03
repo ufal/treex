@@ -27,6 +27,7 @@ sub process_anode
     $wild->{enhanced} = \@deps;
     ###!!! This should later go to its own block.
     $self->add_enhanced_parent_of_coordination($node);
+    $self->add_enhanced_shared_dependent_of_coordination($node);
 }
 
 
@@ -53,6 +54,59 @@ sub add_enhanced_parent_of_coordination
             push(@{$node->wild()->{enhanced}}, [$inode->parent()->ord(), $inode->deprel()]);
         }
     }
+}
+
+
+
+###!!! This should later go to its own block.
+#------------------------------------------------------------------------------
+# Propagates shared dependent of coordination to all conjuncts.
+#------------------------------------------------------------------------------
+sub add_enhanced_shared_dependent_of_coordination
+{
+    my $self = shift;
+    my $node = shift;
+    if($node->is_shared_modifier())
+    {
+        ###!!! I do not know whether all conjuncts in a coordinate shared dependent have the flag set!
+        if($node->deprel() =~ m/^conj(:|$)/)
+        {
+            log_warn('Shared dependent is also conjunct');
+            return;
+        }
+        # Presumably the parent node is a head of coordination but better check it.
+        if(defined($node->parent()))
+        {
+            my @conjuncts = $self->recursively_collect_conjuncts($node->parent());
+            foreach my $conjunct (@conjuncts)
+            {
+                push(@{$node->wild()->{enhanced}}, [$conjunct->ord(), $node->deprel()]);
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Returns the list of conj children of a given node. If there is nested
+# coordination, returns the nested conjuncts too.
+#------------------------------------------------------------------------------
+sub recursively_collect_conjuncts
+{
+    my $self = shift;
+    my $node = shift;
+    my @conjuncts = grep {$_->deprel() =~ m/^conj(:|$)/} ($node->children());
+    my @conjuncts2;
+    foreach my $c (@conjuncts)
+    {
+        my @c2 = $self->recursively_collect_conjuncts($c);
+        if(scalar(@c2) > 0)
+        {
+            push(@conjuncts2, @c2);
+        }
+    }
+    return (@conjuncts, @conjuncts2);
 }
 
 
