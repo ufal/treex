@@ -25,6 +25,34 @@ sub process_anode
     push(@deps, [$parent, $deprel]);
     # We assume that $wild->{enhanced} does not exist yet. If it does, we overwrite it!
     $wild->{enhanced} = \@deps;
+    ###!!! This should later go to its own block.
+    $self->add_enhanced_parent_of_coordination();
+}
+
+
+
+###!!! This should later go to its own block.
+#------------------------------------------------------------------------------
+# Propagates parent of coordination to all conjuncts.
+#------------------------------------------------------------------------------
+sub add_enhanced_parent_of_coordination
+{
+    my $self = shift;
+    my $node = shift;
+    if($node->deprel() =~ m/^conj(:|$)/)
+    {
+        # Find the nearest non-conj ancestor.
+        my $inode = $node->parent();
+        while(defined($inode))
+        {
+            last if($inode->deprel() !~ m/^conj(:|$)/);
+            $inode = $inode->parent();
+        }
+        if(defined($inode) && defined($inode->parent()))
+        {
+            push(@{$node->wild()->{enhanced}}, [$inode->parent()->ord(), $inode->deprel()]);
+        }
+    }
 }
 
 
