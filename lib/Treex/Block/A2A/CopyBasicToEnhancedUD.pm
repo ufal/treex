@@ -26,7 +26,7 @@ sub process_anode
     # We assume that $wild->{enhanced} does not exist yet. If it does, we overwrite it!
     $wild->{enhanced} = \@deps;
     ###!!! This should later go to its own block.
-    $self->add_enhanced_parent_of_coordination();
+    $self->add_enhanced_parent_of_coordination($node);
 }
 
 
