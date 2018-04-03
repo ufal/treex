@@ -259,7 +259,7 @@ sub process_atree {
         # Exception: FORM and LEMMA can contain spaces in approved cases and in Vietnamese.
         my @values = ($ord,
         #$form, $lemma,
-        '_', '_', $upos, $xpos, $feats, $pord, $deprel, $relations, $misc);
+        '_', '_', $upos, $xpos, $feats, $pord, $deprel, $deps, $misc);
         @values = map
         {
             my $x = $_ // '_';
