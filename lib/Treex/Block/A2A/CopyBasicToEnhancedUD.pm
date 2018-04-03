@@ -12,9 +12,10 @@ sub process_anode
     my $node = shift;
     my $wild = $node->wild();
     # $wild->{enhanced} is a list of pairs, where each pari contains:
-    # - a reference to a parent node
+    # - the ord of the parent node
     # - the type of the relation between the parent node and this node
-    my $parent = $node->parent();
+    # We do not store the Perl reference to the parent node in order to prevent cyclic references and issues with garbage collection.
+    my $parent = $node->parent()->ord();
     my $deprel = $node->deprel();
     my @deps = ();
     push(@deps, [$parent, $deprel]);
