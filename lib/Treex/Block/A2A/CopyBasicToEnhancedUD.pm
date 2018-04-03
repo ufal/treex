@@ -15,7 +15,11 @@ sub process_anode
     # - the ord of the parent node
     # - the type of the relation between the parent node and this node
     # We do not store the Perl reference to the parent node in order to prevent cyclic references and issues with garbage collection.
-    my $parent = $node->parent()->ord();
+    my $parent = 0;
+    if(defined($node->parent()) && defined($node->parent()->ord()))
+    {
+        $parent = $node->parent()->ord();
+    }
     my $deprel = $node->deprel();
     my @deps = ();
     push(@deps, [$parent, $deprel]);
