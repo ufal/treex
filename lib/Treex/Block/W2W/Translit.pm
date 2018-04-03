@@ -103,7 +103,7 @@ sub process_atree
     my $table = $self->table();
     my $maxl = $self->maxl();
     my $translit = translit::prevest($table, $text, $maxl);
-    $translit = han2pinyin::pinyin($translit); ###!!! BETA
+    $translit = translit::han2pinyin::pinyin($translit); ###!!! BETA
     # There is no dedicated attribute for sentence-level transliteration.
     # Use the CoNLL-U comments stored as wild attributes.
     my $comment = $root->get_bundle()->wild()->{comment};
@@ -133,7 +133,7 @@ sub process_atree
         if(defined($form))
         {
             $translit = translit::prevest($table, $form, $maxl);
-            $translit = han2pinyin::pinyin($translit); ###!!! BETA
+            $translit = translit::han2pinyin::pinyin($translit); ###!!! BETA
             $node->set_attr('translit', $translit);
         }
         # Transliterate lemma.
@@ -141,7 +141,7 @@ sub process_atree
         if(defined($lemma))
         {
             $translit = translit::prevest($table, $lemma, $maxl);
-            $translit = han2pinyin::pinyin($translit); ###!!! BETA
+            $translit = translit::han2pinyin::pinyin($translit); ###!!! BETA
             $node->set_attr('ltranslit', $translit);
         }
     }
