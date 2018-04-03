@@ -172,6 +172,27 @@ sub process_atree {
         my $deprel = $self->_get_deprel($node);
         my $feats = $self->_get_feats($node);
 
+        # Enhanced dependencies may be stored in a wild attribute.
+        my $wild = $node->wild();
+        my $deps = '_';
+        if(exists($wild->{enhanced}))
+        {
+            my @e = map {"$_->[0]:$_->[1]"} sort
+            {
+                my $result = $a->[0] <=> $b->[0];
+                unless($result)
+                {
+                    $result = $a->[1] cmp $b->[1];
+                }
+                $result;
+            }
+            (@{$wild->{enhanced}});
+            if(scalar(@e) > 0)
+            {
+                $deps = join('|', @e);
+            }
+        }
+
         # If transliteration of the word form to Latin (or another) alphabet is available, put it in the MISC column.
         if(defined($node->translit()))
         {
@@ -195,7 +216,6 @@ sub process_atree {
         ###!!! (Czech)-specific wild attributes that have been cut off the lemma.
         ###!!! In the future we will want to make them normal attributes.
         ###!!! Note: the {lid} attribute is now also collected for other treebanks, e.g. AGDT and LDT.
-        my $wild = $node->wild();
         if(exists($wild->{lid}) && defined($wild->{lid}))
         {
             if(defined($lemma))
