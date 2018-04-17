@@ -7,7 +7,7 @@ extends 'Treex::Core::Block';
 with 'Treex::Block::Filter::Node';
 
 sub _build_node_types {
-    return 'all_anaph';
+    return 'all_anaph.cr';
 }
 
 sub _build_layers {

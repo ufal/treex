@@ -4,6 +4,7 @@ use Treex::Core::Common;
 use Term::ANSIColor;
 
 use Treex::Tool::Coreference::Utils;
+use Treex::Tool::Coreference::NodeFilter;
 
 extends 'Treex::Block::Write::BaseTextWriter';
 
@@ -127,8 +128,9 @@ sub process_ttree {
 
             my @sorted_sents = sort {$self->_ord_of_ttree->{$a->id} <=> $self->_ord_of_ttree->{$b->id}} values %sents;
             my @diffs = map {$self->_ord_of_ttree->{$sorted_sents[$_+1]->id} - $self->_ord_of_ttree->{$sorted_sents[$_]->id} - 1} 0..$#sorted_sents-1;
-
-            print {$self->_file_handle} $tnode->get_address;
+        
+            my $type_str = join ",", Treex::Tool::Coreference::NodeFilter::get_types($tnode);
+            print {$self->_file_handle} join "\t", ($tnode->get_address, $type_str);
             print {$self->_file_handle} "\n";
             print {$self->_file_handle} join " ", map {
                 my $sent = $sorted_sents[$_]->get_zone->sentence;
