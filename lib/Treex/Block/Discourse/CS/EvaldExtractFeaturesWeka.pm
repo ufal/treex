@@ -205,6 +205,27 @@ my @ALL_PRON_SEMPOS = qw/n.pron.def.pers n.pron.indef adj.pron.indef n.pron.def.
 my @ALL_CHAIN_LENGTHS = 2 .. 5;
 my @ALL_PERSPRON_ACT_T_LEMMAS = qw/já jeho můj on se svůj tvůj ty undef/;
 
+# tfa
+
+my $number_of_RHEMs;
+my %RHEMs; # podobně jako u počtu různých konektorů, i tady počítám s tím, že jich bude málo, a rezignuji na normalizaci vůči délce textu
+my $count_sentences_PRED_in_first_or_second;
+my $count_tfa_t;
+my $count_tfa_c;
+my $count_tfa_f;
+my $count_F_T;
+my $count_ACT_at_end;
+my $count_SVO;
+my $count_OVS;
+                      
+my @ar_enclitics = qw(jsem jsi jsme jste bych bys by bychom byste si se mi ti mu mě tě ho tu to); # order of the enclitics in the main sentence
+my %ha_enclitics = map { $_ => 1 } @ar_enclitics;
+my $count_enclitic_at_first_position;
+my $count_wrong_enclitics_order;
+                      
+# ========                            
+
+
 
 sub process_document {
   my ($self, $doc) = @_;
@@ -318,6 +339,28 @@ sub process_document {
   $perspron_act_t_count = 0;
   %perspron_act_t_lemmas = ();
 
+  # tfa
+  
+  $number_of_RHEMs = 0;
+  %RHEMs = ();
+  $count_sentences_PRED_in_first_or_second = 0;
+  $count_tfa_t = 0;
+  $count_tfa_c = 0;
+  $count_tfa_f = 0;
+  
+  $count_F_T = 0;
+  my $prevsent_last_t_lemma = rand(); 
+  my $prevsent_lastbut1_t_lemma = rand(); 
+  my $prevsent_lastbut2_t_lemma = rand();
+
+  $count_ACT_at_end = 0;
+  $count_SVO = 0;
+  $count_OVS = 0;
+  $count_enclitic_at_first_position = 0;
+  $count_wrong_enclitics_order = 0;
+  
+  # ===============
+  
   my $prev_root;
 
   my @ttrees = map { $_->get_tree($self->language,'t',$self->selector) } $doc->get_bundles;
@@ -343,6 +386,10 @@ sub process_document {
     my $number_of_guessed = scalar(grep {$_ eq 1} @$r_guessed);
     # log_info("number of words: $number_of_words, number of guessed: $number_of_guessed\n");
     $number_of_typos+=$number_of_guessed;
+    
+    my $has_SVO = 0;
+    my $has_OVS = 0;
+    my $has_wrong_enclitics_order = 0;
     
     foreach my $anode (@anodes) {
     
@@ -418,7 +465,23 @@ sub process_document {
           if ($tag =~ /^V.......R/) {
             $number_of_past_tense++;
           }
-         
+          # ==== tfa - count SVO and OVS (incl. VO a OV)
+          if ($anode->level eq '1') { # verb as a main predicate
+            my $verb_ord = $anode->get_attr('ord');
+            my @echildren = $anode->get_echildren({ordered => 1});
+            my @subjects_left = grep {$_->get_attr('ord') < $verb_ord} grep {$_->get_attr('afun') and $_->get_attr('afun') eq 'Sb'} @echildren;
+            my @objects_left = grep {$_->get_attr('ord') < $verb_ord} grep {$_->get_attr('afun') and $_->get_attr('afun') eq 'Obj'} @echildren;
+            my @subjects_right = grep {$_->get_attr('ord') > $verb_ord} grep {$_->get_attr('afun') and $_->get_attr('afun') eq 'Sb'} @echildren;
+            my @objects_right = grep {$_->get_attr('ord') > $verb_ord} grep {$_->get_attr('afun') and $_->get_attr('afun') eq 'Obj'} @echildren;
+            if (!scalar(@subjects_right) and scalar(@objects_right) and !scalar(@objects_left)) {
+              $has_SVO = 1;
+            }
+            elsif (!scalar(@subjects_left) and !scalar(@objects_right) and scalar(@objects_left)) {
+              $has_OVS = 1;
+            }
+          }
+          
+          # ====
         }
         
         # case:
@@ -480,12 +543,55 @@ sub process_document {
         }
         
       }
+
+      my $afun = $anode->get_attr('afun') // '';
+
+      my $form_lc = lc($form // '');
+      if ($afun ne 'Pred' and $ha_enclitics{$form_lc}) {
+        if ($anode->get_attr('ord') eq 1) {
+          $count_enclitic_at_first_position++;
+        }
+      }
+
+=item
+
+má-li věta více příklonek, jejich pořadí je následující (šlo by sledovat, kolik je v textu vět, kde toto pořadí nesouhlasí):
+1. spojka -li
+2. pomocné sloveso (jsem, jsi, jsme, jste, bych, bys, by, bychom, byste)
+3. krátké tvary zvratných zájmen (si, se)
+4. krátké tvary osobních zájmen v dativu (mi, ti, mu)
+5. krátké tvary osobních zájmen v akuzativu (mě, tě, ho, tu, to)
+- příklady na pořadí více příklonek: Já jsem si to myslel. Já jsem mu to dal.
+
+=cut
+
+      if ($afun eq 'Pred' and $anode->level eq 1) { # non-coordinated Predicate of the main sentence
+        my @ar_encl_in_main = map {lc($_->get_attr('form'))} grep {$_->get_attr('form') and $ha_enclitics{lc($_->get_attr('form'))}} $anode->get_children({ordered => 1});
+        my $encl_in_main = scalar(@ar_encl_in_main);
+        if ($encl_in_main > 1) { # at least two enclitics in the main sentence
+          for (my $i=0; $i<$encl_in_main-1; $i++) {
+            my $order_1 = Treex::PML::Index(\@ar_enclitics, $ar_encl_in_main[$i]); # order in the list of all possible enclitics
+            my $order_2 = Treex::PML::Index(\@ar_enclitics, $ar_encl_in_main[$i+1]);
+            if ($order_1 > $order_2) {
+              $has_wrong_enclitics_order = 1;
+            }
+          }
+        }
+      }
+      
     }
+
+
+    $count_SVO++ if ($has_SVO);
+    $count_OVS++ if ($has_OVS);
+    $count_wrong_enclitics_order++ if ($has_wrong_enclitics_order);
     
     # then t-layer and discourse features
+    
     my @nodes = $t_root->get_descendants({ordered=>1, add_self=>0});
 
     my $has_PRED = 0;
+    my $has_PRED_in_first_or_second = 0;
     my $depth = 0;
     foreach my $node (@nodes) {
     
@@ -527,9 +633,18 @@ sub process_document {
       
       my $functor = $node->functor;
       if ($functor) {
+      
+        if ($functor eq 'RHEM') { # tfa
+          $number_of_RHEMs++;
+          $RHEMs{$t_lemma}++;
+        }
+
         if ($functor eq 'PRED') {
           $number_of_PREDs++;
           $has_PRED = 1;
+          if (is_in_first_or_second_position($node)) {
+            $has_PRED_in_first_or_second = 1;
+          }
         }
         else { # i.e. not PRED; is it a finite verb? If yes, it means a dependent clause                    
           my @anodes = $node->get_anodes();
@@ -596,6 +711,10 @@ sub process_document {
         }
       }
 
+      my $tfa = $node->get_attr('tfa') // 'none';
+      $count_tfa_t++ if ($tfa eq 't');
+      $count_tfa_c++ if ($tfa eq 'c');
+      $count_tfa_f++ if ($tfa eq 'f');
       
       my $ref_discourse_arrows = $node->get_attr('discourse');
       my @discourse_arrows = ();
@@ -649,11 +768,50 @@ sub process_document {
           }
         }
       }
+      
     }
     if (!$has_PRED) {
       $count_PREDless_sentences++;
     }
+    if (!$has_PRED_in_first_or_second) {
+      $count_sentences_PRED_in_first_or_second++;
+    }
     $number_of_tree_levels += $depth;
+    
+    # ==== tfa: count sentences where the Focus of the previous sentence becomes the Topic of the current sentence - simply by checking if any of the three first t_lemmas equals to any of the last three t_lemmas of the previous sentence (do not count #PersProns!)
+    # This could be improved by using the algorithm for division of the sentence into T and F parts and using coreference relations
+    
+    my $currentsent_first_t_lemma = $nodes[0] ? $nodes[0]->get_attr('t_lemma') // rand() : rand();
+    my $currentsent_second_t_lemma = $nodes[1] ? $nodes[1]->get_attr('t_lemma') // rand() : rand();
+    my $currentsent_third_t_lemma = $nodes[2] ? $nodes[2]->get_attr('t_lemma') // rand() : rand();
+    
+    my $F_T = 0;
+    $F_T = 1 if ($currentsent_first_t_lemma eq $prevsent_last_t_lemma or $currentsent_first_t_lemma eq $prevsent_lastbut1_t_lemma or $currentsent_first_t_lemma eq $prevsent_lastbut2_t_lemma);
+    $F_T = 1 if ($currentsent_second_t_lemma eq $prevsent_last_t_lemma or $currentsent_second_t_lemma eq $prevsent_lastbut1_t_lemma or $currentsent_second_t_lemma eq $prevsent_lastbut2_t_lemma);
+    $F_T = 1 if ($currentsent_third_t_lemma eq $prevsent_last_t_lemma or $currentsent_third_t_lemma eq $prevsent_lastbut1_t_lemma or $currentsent_third_t_lemma eq $prevsent_lastbut2_t_lemma);
+    $count_F_T++ if $F_T;
+  
+    $prevsent_last_t_lemma = $nodes[-1] ? $nodes[-1]->get_attr('t_lemma') // rand() : rand();
+    $prevsent_lastbut1_t_lemma = $nodes[-2] ? $nodes[-2]->get_attr('t_lemma') // rand() : rand();
+    $prevsent_lastbut2_t_lemma = $nodes[-3] ? $nodes[-3]->get_attr('t_lemma') // rand() : rand();
+    
+    $prevsent_last_t_lemma = rand() if ($prevsent_last_t_lemma eq '#PersPron');
+    $prevsent_lastbut1_t_lemma = rand() if ($prevsent_lastbut1_t_lemma eq '#PersPron');
+    $prevsent_lastbut2_t_lemma = rand() if ($prevsent_lastbut2_t_lemma eq '#PersPron');
+    
+    # ==== tfa: count sentences with main ACT at the last position in the sentence
+    
+    my $last_node = $nodes[-1];
+    my $last_node_functor = $last_node ? $last_node->get_attr('functor') // '' : '';
+    if ($last_node_functor eq 'ACT') {
+      my @eparents = $last_node->get_eparents();
+      if (scalar(@eparents) and $eparents[0]->get_attr('functor') and $eparents[0]->get_attr('functor') eq 'PRED') {
+        $count_ACT_at_end++;
+      }
+    }
+    
+    # ====
+
   }
 
   # Michal's coreference
@@ -700,6 +858,7 @@ sub process_document {
   my $features_connectives_quantity = '';
   my $features_connectives_diversity = '';
   my $features_coreference = '';
+  my $features_tfa = '';
   
   my $file_name = $doc->full_filename();
   $file_name =~ s/^.+\/([^\/]+)$/$1/;
@@ -1127,6 +1286,52 @@ sub process_document {
   $features_all .= "$avg_sempos_variety, ";
   $features_coreference .= "$avg_sempos_variety, ";
 
+  # tfa features:
+  
+  my $RHEMs_per_100words = ceil(100*$number_of_RHEMs/$number_of_words);
+  $features_all .= "$RHEMs_per_100words, ";
+  $features_tfa .= "$RHEMs_per_100words, ";
+
+  my $number_of_different_RHEMs = scalar(keys(%RHEMs));
+  $features_all .= "$number_of_different_RHEMs, ";
+  $features_tfa .= "$number_of_different_RHEMs, ";
+
+  my $avg_sent_PRED_in_first_or_second_per_100sent = ceil(100*$count_sentences_PRED_in_first_or_second/$number_of_sentences);
+  $features_all .= "$avg_sent_PRED_in_first_or_second_per_100sent, ";
+  $features_tfa .= "$avg_sent_PRED_in_first_or_second_per_100sent, ";
+
+  my $tfa_bound_nonbound_ratio_percent = ceil(100*($count_tfa_c + $count_tfa_t)/($count_tfa_c + $count_tfa_t + $count_tfa_f + 0.01)); # +0.01 to avoid division by 0
+  $features_all .= "$tfa_bound_nonbound_ratio_percent, ";
+  $features_tfa .= "$tfa_bound_nonbound_ratio_percent, ";
+
+  my $tfa_contrastive_among_bound_percent = ceil(100*($count_tfa_c)/($count_tfa_c + $count_tfa_t + 0.01)); # +0.01 to avoid division by 0
+  $features_all .= "$tfa_contrastive_among_bound_percent, ";
+  $features_tfa .= "$tfa_contrastive_among_bound_percent, ";
+
+  my $tfa_F_T_per_100sent = ceil(100*$count_F_T/$number_of_sentences);
+  $features_all .= "$tfa_F_T_per_100sent, ";
+  $features_tfa .= "$tfa_F_T_per_100sent, ";
+
+  my $tfa_ACT_at_end_per_100sent = ceil(100*$count_ACT_at_end/$number_of_sentences);
+  $features_all .= "$tfa_ACT_at_end_per_100sent, ";
+  $features_tfa .= "$tfa_ACT_at_end_per_100sent, ";
+
+  my $tfa_SVO_per_100sent = ceil(100*$count_SVO/$number_of_sentences);
+  $features_all .= "$tfa_SVO_per_100sent, ";
+  $features_tfa .= "$tfa_SVO_per_100sent, ";
+
+  my $tfa_OVS_per_100sent = ceil(100*$count_OVS/$number_of_sentences);
+  $features_all .= "$tfa_OVS_per_100sent, ";
+  $features_tfa .= "$tfa_OVS_per_100sent, ";
+
+  my $tfa_enclitic_first_per_100sent = ceil(100*$count_enclitic_at_first_position/$number_of_sentences);
+  $features_all .= "$tfa_enclitic_first_per_100sent, ";
+  $features_tfa .= "$tfa_enclitic_first_per_100sent, ";
+
+  my $tfa_wrong_enclitics_order_per_100sent = ceil(100*$count_wrong_enclitics_order/$number_of_sentences);
+  $features_all .= "$tfa_wrong_enclitics_order_per_100sent, ";
+  $features_tfa .= "$tfa_wrong_enclitics_order_per_100sent, ";
+
   
   #my $coherence_mark = get_document_attr('CEFR_coherence');
   #if ($coherence_mark) {
@@ -1148,6 +1353,7 @@ sub process_document {
     $features_connectives_quantity .= "?";
     $features_connectives_diversity .= "?";
     $features_coreference .= "?";
+    $features_tfa .= "?";
   #}
 
   # the output in the arff format:
@@ -1159,6 +1365,7 @@ sub process_document {
   my $arff_connectives_quantity = get_weka_header('connectives_quantity') . $features_connectives_quantity . "\n";
   my $arff_connectives_diversity = get_weka_header('connectives_diversity') . $features_connectives_diversity . "\n";
   my $arff_coreference = get_weka_header('coreference') . $features_coreference . "\n";
+  my $arff_tfa = get_weka_header('tfa') . $features_tfa . "\n";
 
   log_info("Training values - all features:\t$file_name\t$features_all\n");
   log_info("Training values - spelling features:\t$file_name\t$features_spelling\n");
@@ -1168,6 +1375,7 @@ sub process_document {
   log_info("Training values - connectives_quantity features:\t$file_name\t$features_connectives_quantity\n");
   log_info("Training values - connectives_diversity features:\t$file_name\t$features_connectives_diversity\n");
   log_info("Training values - coreference features:\t$file_name\t$features_coreference\n");
+  log_info("Training values - tfa features:\t$file_name\t$features_tfa\n");
   
   log_info("Arff - all features:\n\n$arff_all\n");
   log_info("Arff - spelling features:\n\n$arff_spelling\n");
@@ -1177,6 +1385,7 @@ sub process_document {
   log_info("Arff - connectives_quantity features:\n\n$arff_connectives_quantity\n");
   log_info("Arff - connectives_diversity features:\n\n$arff_connectives_diversity\n");
   log_info("Arff - coreference features:\n\n$arff_coreference\n");
+  log_info("Arff - tfa features:\n\n$arff_tfa\n");
 
   # store it in the document to be available for the subsequent Treex module(s)
   $doc->{'coherence_weka_arff_all'} = $arff_all;
@@ -1187,6 +1396,7 @@ sub process_document {
   $doc->{'coherence_weka_arff_connectives_quantity'} = $arff_connectives_quantity;
   $doc->{'coherence_weka_arff_connectives_diversity'} = $arff_connectives_diversity;
   $doc->{'coherence_weka_arff_coreference'} = $arff_coreference;
+  $doc->{'coherence_weka_arff_tfa'} = $arff_tfa;
   
 } # process_document
 
@@ -1293,7 +1503,6 @@ sub get_weka_header {
     $header .= '@ATTRIBUTE percentage_contrast  NUMERIC' . "\n";
     $header .= '@ATTRIBUTE percentage_expansion  NUMERIC' . "\n";
   }
-
   
   if ($set =~ /(all|coreference)/) {
 
@@ -1343,6 +1552,21 @@ sub get_weka_header {
     $header .= '@ATTRIBUTE avg_sempos_variety  NUMERIC' . "\n";
     
   }
+  
+  if ($set =~ /(all|tfa)/) {
+    $header .= '@ATTRIBUTE tfa_RHEMs_per_100sent  NUMERIC' . "\n";
+    $header .= '@ATTRIBUTE tfa_different_RHEMs  NUMERIC' . "\n";
+    $header .= '@ATTRIBUTE tfa_avg_sent_PRED_in_first_or_second_per_100sent  NUMERIC' . "\n";
+    $header .= '@ATTRIBUTE tfa_bound_vs_nonbound_ratio_percent  NUMERIC' . "\n";
+    $header .= '@ATTRIBUTE tfa_contrastive_among_bound_percent  NUMERIC' . "\n";
+    $header .= '@ATTRIBUTE tfa_F_T_per_100sent  NUMERIC' . "\n";
+    $header .= '@ATTRIBUTE tfa_ACT_at_end_per_100sent  NUMERIC' . "\n";
+    $header .= '@ATTRIBUTE tfa_SVO_per_100sent  NUMERIC' . "\n";
+    $header .= '@ATTRIBUTE tfa_OVS_per_100sent  NUMERIC' . "\n";
+    $header .= '@ATTRIBUTE tfa_enclitic_first_per_100sent  NUMERIC' . "\n";
+    $header .= '@ATTRIBUTE tfa_wrong_enclitics_order_per_100sent  NUMERIC' . "\n";
+  }
+
 
   if ($target eq 'L1') {
     $header .= '@ATTRIBUTE mark_coherence  {1, 2, 3, 4, 5}' . "\n";
@@ -1492,6 +1716,31 @@ sub get_aroot {
 }
 
 
+=item
+
+  The function checks whether the given verb node is on the first or second position in the clause.
+  If yes, it returns 1; otherwise 0.
+
+=cut
+
+sub is_in_first_or_second_position {
+  my ($verb) = @_;
+  my $verb_deepord = $verb->get_attr('ord');
+  my @sons =  $verb->get_children();
+  if ($verb->get_attr('is_member')) {
+    my $coap = $verb->get_parent();
+    my @non_member_brothers = grep {!$_->get_attr('is_member')} $coap->get_children();
+    if (scalar(@non_member_brothers)) {
+      push (@sons, @non_member_brothers);
+    }
+  }
+  my @relevant = grep {!$_->get_attr('is_generated')} grep {$_->get_attr('functor') !~ /^(CM|PREC|RHEM)$/} grep {!$_->get_attr('is_parenthesis')} @sons; # get rid of unimportant nodes
+  my @left = grep {$verb_deepord > $_->get_attr('ord')} @relevant; # take only nodes that are left from the verb
+  if (scalar(@left) > 1) { # not on the first or second position
+    return 0;
+  }
+  return 1;
+} # is_in_first_or_second_position
 
 
 
