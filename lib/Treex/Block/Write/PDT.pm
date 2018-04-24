@@ -24,18 +24,18 @@ sub process_document{
     log_info "Saving to $print_fn";
     # all [wamt] files are stored in the same directory - there should be no directory in relative paths
     $w_fn = $doc->file_stem . $self->_document_extension($doc);
-    
+
 
     $self->{extension} = '.m';
     $m_fn = $self->_get_filename($doc);
     $m_fh = $self->_open_file_handle($m_fn);
     $m_fn = $doc->file_stem . $self->_document_extension($doc);
-    
+
     $self->{extension} = '.a';
     $a_fn = $self->_get_filename($doc);
     $a_fh = $self->_open_file_handle($a_fn);
     $a_fn = $doc->file_stem . $self->_document_extension($doc);
-    
+
     $self->{extension} = '.t';
     $t_fn = $self->_get_filename($doc);
     $t_fh = $self->_open_file_handle($t_fn);
@@ -44,7 +44,7 @@ sub process_document{
     if ($self->version eq "3.0") {
         $version_flag = "_30";
     }
-    
+
     my $doc_id = $doc->file_stem . $doc->file_number;
     my $lang   = $self->language;
     my $vallex_name = $self->vallex_filename;
@@ -94,7 +94,7 @@ END
 END
 
     $self->Treex::Core::Block::process_document($doc);
-    
+
     print {$w_fh} "</para>\n</doc>\n</wdata>";
     print {$m_fh} "</mdata>";
     print {$a_fh} "</trees>\n</adata>";
@@ -167,15 +167,16 @@ sub print_tsubtree {
     my ($self, $tnode) = @_;
     my ($id, $ord) = $tnode->get_attrs(qw(id ord), {undefs=>'?'});
     print {$t_fh} "<LM id='t-$id'><deepord>$ord</deepord>";
-    
+
     # boolean attrs
     foreach my $attr (qw(is_dsp_root is_generated is_member is_name_of_person is_parenthesis is_state)){
         print {$t_fh} "<$attr>1</$attr>" if $tnode->get_attr($attr);
     }
-    
+
     # simple attrs
     foreach my $attr (qw(coref_special discourse_special functor nodetype sentmod subfunctor t_lemma tfa val_frame.rf)){
         my $val = $self->escape_xml($tnode->get_attr($attr));
+        $val = 'RSTR' if $attr eq 'functor' and (!$val or $val eq '???'); #TODO functor is required in PDT
         print {$t_fh} "<$attr>$val</$attr>" if defined $val;
     }
 
@@ -223,7 +224,8 @@ sub print_tsubtree {
         print {$t_fh} "<bridging>";
         foreach my $arrow (@arrows) { # take all bridging arrows starting at the given node
             # simple attrs
-            foreach my $attr (qw(target_node.rf type comment src)) {
+            # foreach my $attr (qw(target_node.rf type comment src)) {
+            foreach my $attr (qw(target_node.rf type comment)) {
                 my $val = $self->escape_xml($arrow->{$attr});
                 if ($attr eq 'target_node.rf') {
                   $val = "t-$val";
@@ -244,7 +246,8 @@ sub print_tsubtree {
         print {$t_fh} "<discourse>";
         foreach my $arrow (@discourse_arrows) { # take all discourse arrows starting at the given node
             # simple attrs
-            foreach my $attr (qw(target_node.rf type start_group_id start_range target_group_id target_range discourse_type is_negated comment src is_altlex is_compositional connective_inserted is_implicit is_NP)) {
+            # foreach my $attr (qw(target_node.rf type start_group_id start_range target_group_id target_range discourse_type is_negated comment src is_altlex is_compositional connective_inserted is_implicit is_NP)) {
+            foreach my $attr (qw(target_node.rf type start_group_id start_range target_group_id target_range discourse_type is_negated comment is_altlex is_compositional connective_inserted is_implicit is_NP)) {
                 my $val = $self->escape_xml($arrow->{$attr});
                 if ($attr eq 'target_node.rf') {
                   $val = "t-$val";
@@ -277,12 +280,35 @@ sub print_tsubtree {
     # grammatemes
     print {$t_fh} "<gram>";
     foreach my $attr (qw(sempos gender number degcmp verbmod deontmod tense aspect resultative dispmod iterativeness indeftype person number politeness negation)){ # definiteness diathesis
-        my $val = $tnode->get_attr("gram/$attr");
-        $val = 'n.denot' if !defined $val && $attr eq 'sempos'; #TODO sempos is required in PDT
-        print {$t_fh} "<$attr>$val</$attr>" if defined $val;
+        my $val = $tnode->get_attr("gram/$attr") // '';
+        $val = 'n.denot' if !$val and $attr eq 'sempos'; #TODO sempos is required in PDT
+
+        if ($self->version eq "3.0") { # grammatemes dispmod and resultative have been canceled, verbmod changed to factmod, and diatgram has been introduced (here ignoring diatgram for now)
+            next if ($attr =~ /^(dispmod|resultative)$/);
+            if ($attr eq 'verbmod') {
+                my $factmod;
+                $factmod = 'asserted' if ($val eq 'ind');
+                $factmod = 'appeal' if ($val eq 'imp');
+                $factmod = 'nil' if ($val =~ /^(nr|nil)$/);
+                if ($val eq 'cdn') {
+                    my $tense = $tnode->get_attr("gram/tense") // '';
+                    $factmod = $tense eq 'ant' ? 'irreal' : 'potential';
+                }
+                print {$t_fh} "<factmod>$factmod</factmod>" if defined $factmod;
+                next;
+            }
+            elsif ($attr eq 'tense') {
+                my $verbmod = $tnode->get_attr("gram/verbmod") // '';
+                if ($verbmod eq 'cdn') { # in PDT 3.0, tense is set to 'nil' in case of factmod values 'irreal' and 'potential' (i.e. originally in PDT 2.0 'cdn' in vebmod)
+                    print {$t_fh} "<tense>nil</tense>";
+                    next;
+                }
+            }
+        }
+        print {$t_fh} "<$attr>$val</$attr>" if $val;
     }
     print {$t_fh} "</gram>\n";
-    
+
     # references
     my $lex = $tnode->get_lex_anode();
     my @aux = $tnode->get_aux_anodes();
@@ -299,8 +325,8 @@ sub print_tsubtree {
         }
         print {$t_fh} "</a>\n";
     }
-    
-    
+
+
     # recursive children
     if (my @children = $tnode->get_children()){
         print {$t_fh} "\n<children>\n";
@@ -313,19 +339,19 @@ sub print_tsubtree {
 
 1;
 
-__END__        
+__END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::Write::PDT - save *.w,*.m,*.a,*.t files
 
 =head1 SYNOPSIS
- 
+
  # convert *.treex files to *.w.gz,*.m.gz,*.a.gz,*.t.gz
  treex Write::PDT -- *.treex
- 
+
  # convert *.treex.gz files to *.w,*.m,*.a,*.t
  treex Write::PDT compress=0 -- *.treex.gz
 
