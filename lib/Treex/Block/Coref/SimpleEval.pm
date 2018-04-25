@@ -191,7 +191,8 @@ sub get_instance_str {
         $main_tnode->get_address,
         defined $ref_tnode ? $ref_tnode->get_address : "",
         defined $src_tnode ? $src_tnode->get_address : "",
-        (join ",", Treex::Tool::Coreference::NodeFilter::get_types($main_tnode)),
+        defined $ref_tnode ? ("AT_REF:," . (join ",", Treex::Tool::Coreference::NodeFilter::get_types($ref_tnode)) . ",") : "",
+        defined $src_tnode ? ("AT_SRC:," . (join ",", Treex::Tool::Coreference::NodeFilter::get_types($src_tnode)) . ",") : "",
         $self->mention_match_tag([$src_tnode], [$ref_tnode], $src_antes, $ali_ref_antes),
     );
     $str .= "\n";
