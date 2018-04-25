@@ -39,9 +39,12 @@ sub _coref_format {
                 push @colors, "reverse";
             }
             if ($tnode->id eq $anaph_id) {
-                push @colors, "yellow";
-                $removed_or_merged = $tnode->wild->{coref_diag}{removed_or_merged} ? 1 : 0;
                 $ante_prob = $tnode->wild->{coref_diag}{ante_prob} // 1;
+                $removed_or_merged = $tnode->wild->{coref_diag}{removed_or_merged} ? 1 : 0;
+                if ($removed_or_merged) {
+                    push @colors, "on_white";
+                }
+                push @colors, "yellow";
             }
             elsif ($tnode->wild->{coref_diag}{sys_ante_for}{$anaph_id} && $tnode->wild->{coref_diag}{key_ante_for}{$anaph_id}) {
                 push @colors, "green";
