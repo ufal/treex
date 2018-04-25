@@ -53,11 +53,29 @@ sub process_document {
     }
     my @ttrees = map {$_->get_ttree} @zones;
 
+    my %all_processed = ();
+
+
+    # project source coreference chains
     my @chains = Treex::Tool::Coreference::Utils::get_coreference_entities(\@ttrees, { bridg_as_coref => $self->bridg_as_coref });
     my $entity_id = 1;
     foreach my $chain (@chains) {
-        $self->project_coref_entity($chain, $entity_id);
+        my @processed = $self->project_coref_entity($chain, $entity_id);
+        $all_processed{$_->id}++ foreach (@processed);
         $entity_id++;
+    }
+
+    # project singletons that correspond to multiple coreferential mentions in the target zone
+    foreach my $ttree (@ttrees) {
+        foreach my $src_tnode ($ttree->get_descendants) {
+            next if ($all_processed{$src_tnode->id});
+            my ($trg_tnodes, $ali_types) = $src_tnode->get_undirected_aligned_nodes($self->_align_filter);
+            next if (@$trg_tnodes < 2 && !any {$_ eq 'monolingual.loose'} @$ali_types);
+            for (my $i = 0; $i < @$trg_tnodes; $i++) {
+                $self->_project_to_node($src_tnode, $trg_tnodes->[$i], $ali_types->[$i], $entity_id);
+            }
+            $entity_id++;
+        }
     }
 
     # set coref_special
@@ -72,12 +90,31 @@ sub process_document {
             }
         }
     }
+    
+    # disambiguate multiple projected entities
+    my @trg_ttrees = map {$_->get_tree($self->to_language, 't', $self->to_selector)} $doc->get_bundles;
+    foreach my $trg_ttree (@trg_ttrees) {
+        foreach my $trg_tnode ($trg_ttree->get_descendants) {
+            if (defined $trg_tnode->wild->{$self->wild_attr_name}) {
+                my @all_entities = split /,/, $trg_tnode->wild->{$self->wild_attr_name};
+                my ($entity) = uniq grep {$_ !~ /\?/} @all_entities;
+                if (!defined $entity) {
+                    ($entity) = @all_entities;
+                }
+                $trg_tnode->wild->{$self->wild_attr_name} = $entity;
+                #printf STDERR "%s\t%s\n", $trg_tnode->wild->{$self->wild_attr_name}, $trg_tnode->get_address;
+            }
+        }
+    }
 }
 
 sub project_coref_entity {
     my ($self, $src_chain, $entity_id) = @_;
 
+    my @processed = ();
+
     foreach my $src_mention (@$src_chain) {
+        push @processed, $src_mention;
         my ($trg_mentions, $ali_types) = $src_mention->get_undirected_aligned_nodes($self->_align_filter);
         for (my $i = 0; $i < @$trg_mentions; $i++) {
             $self->_project_to_node($src_mention, $trg_mentions->[$i], $ali_types->[$i], $entity_id);
@@ -86,27 +123,30 @@ sub project_coref_entity {
         # set the entity id to counterparts of its members and set a flag indicating that the equivalence is not pure
         if (!@$trg_mentions && $src_mention->is_coap_root && $src_mention->functor ne "APPS") {
             foreach my $src_member ($src_mention->get_coap_members) {
+                push @processed, $src_member;
                 my ($trg_members, $ali_member_types) = $src_member->get_undirected_aligned_nodes($self->_align_filter);
                 for (my $i = 0; $i < @$trg_members; $i++) {
-                    $self->_project_to_node($src_member, $trg_members->[$i], $ali_member_types->[$i], $entity_id);
+                    $self->_project_to_node($src_mention, $trg_members->[$i], $ali_member_types->[$i], $entity_id);
                     $trg_members->[$i]->wild->{$self->wild_attr_name} .= "c";
                 }
             }
         }
     }
+
+    return @processed;
 }
 
 sub _project_to_node {
     my ($self, $src_node, $trg_node, $ali_type, $entity_id) = @_;
-    return if (defined $trg_node->wild->{$self->wild_attr_name});
+    my $entity_str = defined $trg_node->wild->{$self->wild_attr_name} ? ($trg_node->wild->{$self->wild_attr_name} . ",") : "";
     
-    my $entity_str = $entity_id;
+    $entity_str .= $entity_id;
     # loosely aligned nodes can be also non-anaphoric
     if ($ali_type eq 'monolingual.loose') {
         $entity_str .= "?";
     }
     $trg_node->wild->{$self->wild_attr_name} = $entity_str;
-    if ( !$src_node->get_coref_nodes ) {
+    if ( !$src_node->get_coref_nodes && $ali_type ne 'monolingual.loose' ) {
         $trg_node->wild->{$self->wild_attr_special_name} .= "f";
     }
 }
