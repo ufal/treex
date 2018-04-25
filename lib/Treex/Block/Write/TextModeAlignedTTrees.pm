@@ -12,7 +12,7 @@ has add_empty_line => ( is=>'rw', isa=>'Bool', default=>1 );
 has indent   => ( is=>'ro', isa => 'Int',  default => 1, documentation => 'number of columns for better readability');
 has minimize_cross => ( is=>'ro', isa => 'Bool', default => 1, documentation => 'minimize crossings of edges in non-projective trees');
 has color      => ( is=>'rw', isa=>'Bool', default=> 1 );
-has attributes => ( is=>'ro', default=>'ord,t_lemma,coref,gram/sempos,functor,id' );
+has attributes => ( is=>'ro', default=>'ord,t_lemma,coref,wild/coref_entity,wild/gold_coref_entity,wild/gold_coref_special,gram/sempos,functor,id' );
 has print_undef_as => (is=>'ro', default=>'');
 has colspace => ( is => 'ro', isa => "Int", default => 5 );
 has zones => ( is => 'ro', isa => 'Str', required => 1 );
@@ -23,6 +23,9 @@ my %COLOR_OF = (
     'gram/sempos' => 'bright_red',
     ord => 'bright_yellow',
     coref => 'magenta',
+    'wild/coref_entity' => 'magenta',
+    'wild/gold_coref_entity' => 'green',
+    'wild/gold_coref_special' => 'green',
 );
 
 # Symbols for drawing edges
@@ -240,6 +243,13 @@ sub node_to_string {
     if (defined $coref_idx) {
         my @antes = $node->get_coref_nodes;
         $values[$coref_idx] = (@antes > 0 ? "coref" : "");
+    }
+
+    # treat 'wild' attributes in a special way
+    my @wild_idx = grep {$ATTRS[$_] =~ /^wild\//} 0..$#ATTRS;
+    foreach my $idx (0..$#ATTRS) {
+        next if ($ATTRS[$idx] !~ /^wild\/(.*)$/);
+        $values[$idx] = $node->wild->{$1} // "";
     }
 
     if ($self->color){
