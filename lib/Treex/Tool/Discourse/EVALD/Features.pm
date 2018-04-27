@@ -5,6 +5,7 @@ use POSIX;
 use Treex::Tool::Lexicon::CS;
 use Data::Printer;
 use Treex::Tool::Coreference::Utils;
+use Treex::Tool::Tagger::MorphoDiTa;
 use List::Util qw/sum/;
 use List::MoreUtils qw/uniq/;
 
@@ -26,51 +27,102 @@ sub build_all_classes {
     }
     else {
       return ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
-    }  
+    }
 }
 
 sub build_weka_featlist {
     my ($self) = @_;
     my $weka_feats_types = [
-    
-    # SURFACE FEATS
-      ["surf^avg_words_per_sent",                          "NUMERIC"],
 
-    # ["different_t_lemmas",                          "NUMERIC"],
-      ["surf^t_lemmas_per_100t_lemmas",                    "NUMERIC"],
-      ["surf^simpson_index",                               "NUMERIC"],
-      ["surf^yule_index",                                  "NUMERIC"],
-      ["surf^avg_PREDless_per_100sent",                    "NUMERIC"],
+    # SPELLING FEATS
+      ["spell^typos_per_100words",       "NUMERIC"],
+      ["spell^punctuation_per_100words", "NUMERIC"],
 
-      ["surf^avg_connective_words_coord_per_100sent",      "NUMERIC"],
-      ["surf^avg_connective_words_subord_per_100sent",     "NUMERIC"],
-      ["surf^avg_connective_words_per_100sent",            "NUMERIC"],
+    # MORPHOLOGY FEATS
+      ["morph^passive_vs_active_ratio_percent",       "NUMERIC"],
+      ["morph^ind_vs_cdn_and_imp_ratio_percent",      "NUMERIC"],
+      ["morph^cpl_vs_proc_aspect_ratio_percent",      "NUMERIC"],
+      ["morph^future_tense_percent",                  "NUMERIC"],
+      ["morph^present_tense_percent",                 "NUMERIC"],
+      ["morph^past_tense_percent",                    "NUMERIC"],
+      ["morph^case_1_percent",                        "NUMERIC"],
+      ["morph^case_2_percent",                        "NUMERIC"],
+      ["morph^case_3_percent",                        "NUMERIC"],
+      ["morph^case_4_percent",                        "NUMERIC"],
+      ["morph^case_5_percent",                        "NUMERIC"],
+      ["morph^case_6_percent",                        "NUMERIC"],
+      ["morph^case_7_percent",                        "NUMERIC"],
+      ["morph^sing_vs_plural_ratio_percent",          "NUMERIC"],
+      ["morph^adj_degree_1_vs_2_and_3_ratio_percent", "NUMERIC"],
+      ["morph^adv_degree_1_vs_2_and_3_ratio_percent", "NUMERIC"],
+      ["morph^pos_noun_percent",                      "NUMERIC"],
+      ["morph^pos_adj_percent",                       "NUMERIC"],
+      ["morph^pos_pron_percent",                      "NUMERIC"],
+      ["morph^pos_num_percent",                       "NUMERIC"],
+      ["morph^pos_verb_percent",                      "NUMERIC"],
+      ["morph^pos_adv_percent",                       "NUMERIC"],
+      ["morph^pos_prep_percent",                      "NUMERIC"],
+      ["morph^pos_conj_percent",                      "NUMERIC"],
+      ["morph^pos_part_percent",                      "NUMERIC"],
+      ["morph^pos_inter_percent",                     "NUMERIC"],
 
-    # ADVANCED FEATS
-      ["disc^avg_discourse_intra_per_100sent",             "NUMERIC"],
-      ["disc^avg_discourse_inter_per_100sent",             "NUMERIC"],
-      ["disc^avg_discourse_per_100sent",                   "NUMERIC"],
-      ["disc^different_connectives",                       "NUMERIC"],
-    
-      ["disc^perc_a",                                      "NUMERIC"],
-      ["disc^perc_ale",                                    "NUMERIC"],
-      ["disc^perc_protoze",                                "NUMERIC"],
-      ["disc^perc_take",                                   "NUMERIC"],
-      ["disc^perc_potom",                                  "NUMERIC"],
-      ["disc^perc_kdyz",                                   "NUMERIC"],
-      ["disc^perc_nebo",                                   "NUMERIC"],
-      ["disc^perc_proto",                                  "NUMERIC"],
-      ["disc^perc_tak",                                    "NUMERIC"],
-      ["disc^perc_aby",                                    "NUMERIC"],
-      ["disc^perc_totiz",                                  "NUMERIC"],
+    # VOCABULARY FEATS
+      ["vocab^different_t_lemmas_per_100t_lemmas", "NUMERIC"],
+      ["vocab^simpson_index",                      "NUMERIC"],
+      ["vocab^george_udny_yule_index",             "NUMERIC"],
+      ["vocab^avg_length_of_words",                "NUMERIC"],
 
-      ["disc^perc_first_connective",                       "NUMERIC"],
-      ["disc^perc_first_and_second_connectives",           "NUMERIC"],
-      
-      ["disc^perc_temporal",                               "NUMERIC"],
-      ["disc^perc_contingency",                            "NUMERIC"],
-      ["disc^perc_contrast",                               "NUMERIC"],
-      ["disc^perc_expansion",                              "NUMERIC"],
+    # SYNTAX FEATS
+      ["syntax^avg_words_per_sent",                   "NUMERIC"],
+      ["syntax^avg_PREDless_per_100sent",             "NUMERIC"],
+      ["syntax^dependent_vs_sentences_ratio_percent", "NUMERIC"],
+      ["syntax^PREDs_per_100sent",                    "NUMERIC"],
+      ["syntax^dependent_clauses_RSTR_percent",       "NUMERIC"],
+      ["syntax^dependent_clauses_PAT_percent",        "NUMERIC"],
+      ["syntax^dependent_clauses_EFF_percent",        "NUMERIC"],
+      ["syntax^dependent_clauses_COND_percent",       "NUMERIC"],
+      ["syntax^dependent_clauses_ACT_percent",        "NUMERIC"],
+      ["syntax^dependent_clauses_CPR_percent",        "NUMERIC"],
+      ["syntax^dependent_clauses_PAR_percent",        "NUMERIC"],
+      ["syntax^dependent_clauses_CAUS_percent",       "NUMERIC"],
+      ["syntax^dependent_clauses_CNCS_percent",       "NUMERIC"],
+      ["syntax^dependent_clauses_TWHEN_percent",      "NUMERIC"],
+      ["syntax^avg_tree_levels",                      "NUMERIC"],
+      ["syntax^level_1_avg_branching",                "NUMERIC"],
+      ["syntax^level_2_avg_branching",                "NUMERIC"],
+      ["syntax^level_3_avg_branching",                "NUMERIC"],
+      ["syntax^level_4_avg_branching",                "NUMERIC"],
+
+    # CONNECTIVES_QUANTITY FEATS
+      ["conn_qua^avg_connective_words_coord_per_100sent",  "NUMERIC"],
+      ["conn_qua^avg_connective_words_subord_per_100sent", "NUMERIC"],
+      ["conn_qua^avg_connective_words_per_100sent",        "NUMERIC"],
+
+      ["conn_qua^avg_intra_per_100sent ",                  "NUMERIC"],
+      ["conn_qua^avg_inter_per_100sent",                   "NUMERIC"],
+      ["conn_qua^avg_discourse_per_100sent ",              "NUMERIC"],
+
+    # CONNECTIVES_DIVERSITY FEATS
+      ["conn_div^different_connectives",                    "NUMERIC"],
+      ["conn_div^percentage_a ",                            "NUMERIC"],
+      ["conn_div^percentage_ale ",                          "NUMERIC"],
+      ["conn_div^percentage_protoze ",                      "NUMERIC"],
+      ["conn_div^percentage_take_taky ",                    "NUMERIC"],
+      ["conn_div^percentage_potom_pak ",                    "NUMERIC"],
+      ["conn_div^percentage_kdyz ",                         "NUMERIC"],
+      ["conn_div^percentage_nebo ",                         "NUMERIC"],
+      ["conn_div^percentage_proto ",                        "NUMERIC"],
+      ["conn_div^percentage_tak ",                          "NUMERIC"],
+      ["conn_div^percentage_aby ",                          "NUMERIC"],
+      ["conn_div^percentage_totiz ",                        "NUMERIC"],
+
+      ["conn_div^percentage_first_connective ",             "NUMERIC"],
+      ["conn_div^percentage_first_and_second_connectives ", "NUMERIC"],
+
+      ["conn_div^percentage_temporal",                      "NUMERIC"],
+      ["conn_div^percentage_contingency",                   "NUMERIC"],
+      ["conn_div^percentage_contrast",                      "NUMERIC"],
+      ["conn_div^percentage_expansion",                     "NUMERIC"],
 
     # PRONOUN FEATS
       ["pron^prons_a_perc_words",				      "NUMERIC"],
@@ -168,7 +220,20 @@ sub build_weka_featlist {
       ["coref^links_intra_perc_links",                "NUMERIC"],
       ["coref^avg_lemma_variety",                     "NUMERIC"],
       ["coref^avg_sempos_variety",                    "NUMERIC"],
-      
+
+    # TFA FEATS
+      ["tfa^RHEMs_per_100sent",                            "NUMERIC"],
+      ["tfa^different_RHEMs",                              "NUMERIC"],
+      ["tfa^avg_sent_PRED_in_first_or_second_per_100sent", "NUMERIC"],
+      ["tfa^bound_vs_nonbound_ratio_percent",              "NUMERIC"],
+      ["tfa^contrastive_among_bound_percent",              "NUMERIC"],
+      ["tfa^F_T_per_100sent",                              "NUMERIC"],
+      ["tfa^ACT_at_end_per_100sent",                       "NUMERIC"],
+      ["tfa^SVO_per_100sent",                              "NUMERIC"],
+      ["tfa^OVS_per_100sent",                              "NUMERIC"],
+      ["tfa^enclitic_first_per_100sent",                   "NUMERIC"],
+      ["tfa^wrong_enclitics_order_per_100sent",            "NUMERIC"],
+
     ];
     return $weka_feats_types;
 }
@@ -194,14 +259,14 @@ sub extract_features {
             push @ns_ord, $ns;
         }
         #my @feat_array = map {my $key = $_->[0]; [ $key, $feat_hash->{$key} ]} @{$self->weka_featlist};
-        # TODO: so far, all features are considered numeric - as weights   
+        # TODO: so far, all features are considered numeric - as weights
         push @$feat_list, [ $feat, undef, ( $feat_hash->{$key} // 0 ) ];
     }
     my @feat_array = map {@{$ns_feats{$_}}} @ns_ord;
 
     # singleline style is set as default
     $multiline = 0 if (!defined $multiline);
-    
+
     # only if the features are requested in a ranking format
     # create the "cands" part of the instance representation
     # in this case, every candidate correpsonds to a possible class => only a single feature "class" is specified
@@ -217,10 +282,16 @@ sub extract_features {
 sub create_feat_hash {
     my ($self, $doc) = @_;
 
-    my $discourse_feats = $self->discourse_features($doc);
-    my $coreference_feats = $self->coreference_features($doc);
+    my $feats_spelling = $self->features_spelling($doc);
+    my $feats_morphology = $self->features_morphology($doc);
+    my $feats_vocabulary = $self->features_vocabulary($doc);
+    my $feats_syntax = $self->features_syntax($doc);
+    my $feats_connectives_quantity = $self->features_connectives_quantity($doc);
+    my $feats_connectives_diversity = $self->features_connectives_diversity($doc);
+    my $feats_coreference = $self->features_coreference($doc);
+    my $feats_tfa = $self->features_tfa($doc);
 
-    my %all_feats_hash = ( %$discourse_feats, %$coreference_feats );
+    my %all_feats_hash = ( %$feats_spelling, %$feats_morphology, %$feats_vocabulary, %$feats_syntax, %$feats_connectives_quantity, %$feats_connectives_diversity, %$feats_coreference, %$feats_tfa );
     return \%all_feats_hash;
 }
 
@@ -228,17 +299,71 @@ sub create_feat_hash {
 
 ############################################ COLLECTING INFORMATION AND COUNTS ############################################
 
+
+sub collect_info {
+    my ($self, $doc) = @_;
+    $self->collect_info_discourse($doc);
+    $self->collect_info_coreference($doc);
+}
+
+
 my $number_of_sentences;
 my $number_of_words;
 
-# baseline features:
+my $length_of_words; # to count the average length of words by dividing $length_of_words by $number_of_words
+
+my $number_of_typos;
+my $number_of_punctuation_marks;
+
+my $number_of_passive_verbs;
+my $number_of_active_verbs;
+
+my $number_of_indicative_mood;
+my $number_of_imper_and_cond_mood;
+
+my $number_of_proc_aspect;
+my $number_of_cpl_aspect;
+
+my $number_of_verbs;
+my $number_of_future_tense;
+my $number_of_present_tense;
+my $number_of_past_tense;
+
+my $number_of_case_1;
+my $number_of_case_2;
+my $number_of_case_3;
+my $number_of_case_4;
+my $number_of_case_5;
+my $number_of_case_6;
+my $number_of_case_7;
+
+my $number_of_singular;
+my $number_of_plural;
+
+my $number_of_adjectives_degree_1;
+my $number_of_adjectives_degree_2;
+my $number_of_adjectives_degree_3;
+
+my $number_of_adverbs_degree_1;
+my $number_of_adverbs_degree_2;
+my $number_of_adverbs_degree_3;
+
+my $number_of_pos_noun;
+my $number_of_pos_adj;
+my $number_of_pos_pron;
+my $number_of_pos_num;
+my $number_of_pos_verb;
+my $number_of_pos_adv;
+my $number_of_pos_prep;
+my $number_of_pos_conj;
+my $number_of_pos_part;
+my $number_of_pos_inter;
+
 my $count_connective_words_subord;
 my $count_connective_words_coord;
 
-# surface features:
 my %lemmas_counts;
 
-# t-layer features
 my %t_lemmas_counts;
 
 my %t_lemmas_counts_corrected;
@@ -248,7 +373,30 @@ my $number_of_t_lemmas;
 
 my $count_PREDless_sentences;
 
-# discourse-parsing features
+my $number_of_dependent_clauses;
+
+my $number_of_PREDs;
+
+my $number_of_dependent_clauses_RSTR;
+my $number_of_dependent_clauses_PAT;
+my $number_of_dependent_clauses_EFF;
+my $number_of_dependent_clauses_COND;
+my $number_of_dependent_clauses_ACT;
+my $number_of_dependent_clauses_CPR;
+my $number_of_dependent_clauses_PAR;
+my $number_of_dependent_clauses_CAUS;
+my $number_of_dependent_clauses_CNCS;
+my $number_of_dependent_clauses_TWHEN;
+
+my $number_of_tree_levels;
+
+my $level_1_number_of_nodes; # usually 1 in each tree :-)
+my $level_2_number_of_nodes;
+my $level_3_number_of_nodes;
+my $level_4_number_of_nodes;
+my $level_5_number_of_nodes;
+
+
 my $number_of_discourse_relations_intra;
 my $number_of_discourse_relations_inter;
 my %connectives;
@@ -258,11 +406,6 @@ my $count_temporal;
 my $count_contrast;
 my $count_expansion;
 
-sub collect_info {
-    my ($self, $doc) = @_;
-    $self->collect_info_discourse($doc);
-    $self->collect_info_coreference($doc);
-}
 
 my %ha_discourse_type_2_class = ('synchr' => 'TEMPORAL',
                                  'preced' => 'TEMPORAL',
@@ -335,45 +478,186 @@ my %ha_connectors_subord = ('protože' => '1',
                             'přestože' => '1',
                             'jestli' => '1');
 
-# collects discourse-related information and counts from the document
+
+# tfa
+
+my $number_of_RHEMs;
+my %RHEMs; # podobně jako u počtu různých konektorů, i tady počítám s tím, že jich bude málo, a rezignuji na normalizaci vůči délce textu
+my $count_sentences_PRED_in_first_or_second;
+my $count_tfa_t;
+my $count_tfa_c;
+my $count_tfa_f;
+my $count_F_T;
+my $count_ACT_at_end;
+my $count_SVO;
+my $count_OVS;
+
+my @ar_enclitics = qw(jsem jsi jsme jste bych bys by bychom byste si se mi ti mu mě tě ho tu to); # order of the enclitics in the main sentence
+my %ha_enclitics = map { $_ => 1 } @ar_enclitics;
+my $count_enclitic_at_first_position;
+my $count_wrong_enclitics_order;
+
+
+# ========
+
+
+# collects surface, discourse-related and tfa information and counts from the document (everything except coreference)
 sub collect_info_discourse {
     my ($self, $doc) = @_;
-    
+
     $number_of_words = 0;
+    $length_of_words = 0;
+    $number_of_typos = 0;
+    $number_of_punctuation_marks = 0;
+
+    $number_of_passive_verbs = 0;
+    $number_of_active_verbs = 0;
+
+    $number_of_indicative_mood = 0;
+    $number_of_imper_and_cond_mood = 0;
+
+    $number_of_proc_aspect = 0;
+    $number_of_cpl_aspect = 0;
+
+    $number_of_verbs = 0;
+    $number_of_future_tense = 0;
+    $number_of_present_tense = 0;
+    $number_of_past_tense = 0;
+
+    $number_of_case_1 = 0;
+    $number_of_case_2 = 0;
+    $number_of_case_3 = 0;
+    $number_of_case_4 = 0;
+    $number_of_case_5 = 0;
+    $number_of_case_6 = 0;
+    $number_of_case_7 = 0;
+
+    $number_of_singular = 0;
+    $number_of_plural = 0;
+
+    $number_of_adjectives_degree_1 = 0;
+    $number_of_adjectives_degree_2 = 0;
+    $number_of_adjectives_degree_3 = 0;
+
+    $number_of_adverbs_degree_1 = 0;
+    $number_of_adverbs_degree_2 = 0;
+    $number_of_adverbs_degree_3 = 0;
+
+    $number_of_pos_noun = 0;
+    $number_of_pos_adj = 0;
+    $number_of_pos_pron = 0;
+    $number_of_pos_num = 0;
+    $number_of_pos_verb = 0;
+    $number_of_pos_adv = 0;
+    $number_of_pos_prep = 0;
+    $number_of_pos_conj = 0;
+    $number_of_pos_part = 0;
+    $number_of_pos_inter = 0;
+
+
     $number_of_discourse_relations_intra = 0;
     $number_of_discourse_relations_inter = 0;
     %connectives = ();
     %t_lemmas_counts = ();
-  
+
     %t_lemmas_counts_corrected = ();
     $t_lemmas_per_100_t_lemmas = 0;
     $t_lemmas_per_100_t_lemmas_sum = 0;
     $number_of_t_lemmas = 0;
-  
+
     %lemmas_counts = ();
+
+    $count_PREDless_sentences = 0;
+
+    $number_of_dependent_clauses = 0;
+
+    $number_of_PREDs = 0;
+
+    $number_of_dependent_clauses_RSTR = 0;
+    $number_of_dependent_clauses_PAT = 0;
+    $number_of_dependent_clauses_EFF = 0;
+    $number_of_dependent_clauses_COND = 0;
+    $number_of_dependent_clauses_ACT = 0;
+    $number_of_dependent_clauses_CPR = 0;
+    $number_of_dependent_clauses_PAR = 0;
+    $number_of_dependent_clauses_CAUS = 0;
+    $number_of_dependent_clauses_CNCS = 0;
+    $number_of_dependent_clauses_TWHEN = 0;
+
+    $number_of_tree_levels = 0;
+
+    $level_1_number_of_nodes = 0;
+    $level_2_number_of_nodes = 0;
+    $level_3_number_of_nodes = 0;
+    $level_4_number_of_nodes = 0;
+    $level_5_number_of_nodes = 0;
+
     $count_contingency = 0;
     $count_temporal = 0;
     $count_contrast = 0;
     $count_expansion = 0;
     $count_connective_words_subord = 0;
     $count_connective_words_coord = 0;
-    $count_PREDless_sentences = 0;
-  
+
+    # tfa
+
+    $number_of_RHEMs = 0;
+    %RHEMs = ();
+    $count_sentences_PRED_in_first_or_second = 0;
+    $count_tfa_t = 0;
+    $count_tfa_c = 0;
+    $count_tfa_f = 0;
+
+    $count_F_T = 0;
+    my $prevsent_last_t_lemma = rand();
+    my $prevsent_lastbut1_t_lemma = rand();
+    my $prevsent_lastbut2_t_lemma = rand();
+
+    $count_ACT_at_end = 0;
+    $count_SVO = 0;
+    $count_OVS = 0;
+    $count_enclitic_at_first_position = 0;
+    $count_wrong_enclitics_order = 0;
+
+    # ===============
+
     my $prev_root;
-  
+
     my @ttrees = map { $_->get_tree($self->language,'t',$self->selector) } $doc->get_bundles;
-  
+
     $number_of_sentences = scalar(@ttrees);
-    
+
     foreach my $t_root (@ttrees) {
-  
+
   #    foreach my $t_node ($t_root->get_descendants({ordered=>1, add_self=>0})) {
-  
+
       # first surface features - numbers of coordinating and subordinating connective words taken from the a/m-layers
       my $a_root = get_aroot($doc, $t_root);
       my @anodes = grep {$_ ne $a_root} $a_root->get_descendants({ordered=>1, add_self=>0});
       $number_of_words += scalar(@anodes);
+
+      # number of spelling errors
+      my $tagger = Treex::Tool::Tagger::MorphoDiTa->new(
+      # model => 'data/models/morphodita/cs/czech-morfflex-pdt-131112.tagger-fast',
+      model => 'data/models/morphodita/cs/czech-morfflex-pdt-131112.tagger-best_accuracy',
+      );
+      my @forms = map {$_->form} grep {$_->form} @anodes;
+      my $r_guessed = $tagger->is_guessed(\@forms);
+      my $number_of_guessed = scalar(grep {$_ eq 1} @$r_guessed);
+      # log_info("number of words: $number_of_words, number of guessed: $number_of_guessed\n");
+      $number_of_typos+=$number_of_guessed;
+
+      my $has_SVO = 0;
+      my $has_OVS = 0;
+      my $has_wrong_enclitics_order = 0;
+
       foreach my $anode (@anodes) {
+
+        my $form = $anode->form;
+        if ($form) {
+          $length_of_words += length($form);
+        }
+
         my $lemma = $anode->lemma;
         if ($lemma) {
           $lemma =~ s/^(.[^-_^~]*)[-_^~].+$/$1/;
@@ -386,18 +670,219 @@ sub collect_info_discourse {
             $count_connective_words_subord++;
           }
         }
-      }
-      
+
+        my $tag = $anode->tag;
+        if ($tag) {
+          # pos
+          if ($tag =~ /^N/) {
+            $number_of_pos_noun++;
+          }
+          elsif ($tag =~ /^A/) {
+            $number_of_pos_adj++;
+          }
+          elsif ($tag =~ /^P/) {
+            $number_of_pos_pron++;
+          }
+          elsif ($tag =~ /^C/) {
+            $number_of_pos_num++;
+          }
+          elsif ($tag =~ /^V/) {
+            $number_of_pos_verb++;
+          }
+          elsif ($tag =~ /^D/) {
+            $number_of_pos_adv++;
+          }
+          elsif ($tag =~ /^R/) {
+            $number_of_pos_prep++;
+          }
+          elsif ($tag =~ /^J/) {
+            $number_of_pos_conj++;
+          }
+          elsif ($tag =~ /^T/) {
+            $number_of_pos_part++;
+          }
+          elsif ($tag =~ /^I/) {
+            $number_of_pos_inter++;
+          }
+
+          if ($tag =~ /^Z/) {
+            $number_of_punctuation_marks++;
+          }
+          if ($tag =~ /^V/) {
+            $number_of_verbs++;
+            if ($tag =~ /^Vs/) {
+              $number_of_passive_verbs++;
+            }
+            if ($tag =~ /^Vp/) {
+              $number_of_active_verbs++;
+            }
+            if ($tag =~ /^V.......F/) {
+              $number_of_future_tense++;
+            }
+            if ($tag =~ /^V.......P/) {
+              $number_of_present_tense++;
+            }
+            if ($tag =~ /^V.......R/) {
+              $number_of_past_tense++;
+            }
+            # ==== tfa - count SVO and OVS (incl. VO a OV)
+            if ($anode->level eq '1') { # verb as a main predicate
+              my $verb_ord = $anode->get_attr('ord');
+              my @echildren = $anode->get_echildren({ordered => 1});
+              my @subjects_left = grep {$_->get_attr('ord') < $verb_ord} grep {$_->get_attr('afun') and $_->get_attr('afun') eq 'Sb'} @echildren;
+              my @objects_left = grep {$_->get_attr('ord') < $verb_ord} grep {$_->get_attr('afun') and $_->get_attr('afun') eq 'Obj'} @echildren;
+              my @subjects_right = grep {$_->get_attr('ord') > $verb_ord} grep {$_->get_attr('afun') and $_->get_attr('afun') eq 'Sb'} @echildren;
+              my @objects_right = grep {$_->get_attr('ord') > $verb_ord} grep {$_->get_attr('afun') and $_->get_attr('afun') eq 'Obj'} @echildren;
+              if (!scalar(@subjects_right) and scalar(@objects_right) and !scalar(@objects_left)) {
+                $has_SVO = 1;
+              }
+              elsif (!scalar(@subjects_left) and !scalar(@objects_right) and scalar(@objects_left)) {
+                $has_OVS = 1;
+              }
+            }
+
+            # ====
+          }
+
+          # case:
+          if ($tag =~ /^....1/) {
+            $number_of_case_1++;
+          }
+          elsif ($tag =~ /^....2/) {
+            $number_of_case_2++;
+          }
+          elsif ($tag =~ /^....3/) {
+            $number_of_case_3++;
+          }
+          elsif ($tag =~ /^....4/) {
+            $number_of_case_4++;
+          }
+          elsif ($tag =~ /^....5/) {
+            $number_of_case_5++;
+          }
+          elsif ($tag =~ /^....6/) {
+            $number_of_case_6++;
+          }
+          elsif ($tag =~ /^....7/) {
+            $number_of_case_7++;
+          }
+
+          # number:
+          if ($tag =~ /^...S/) {
+            $number_of_singular++;
+          }
+          elsif ($tag =~ /^...P/) {
+            $number_of_plural++;
+          }
+
+          # adjectives:
+          if ($tag =~ /^A/) {
+            if ($tag =~ /^A........1/) {
+              $number_of_adjectives_degree_1++;
+            }
+            elsif ($tag =~ /^A........2/) {
+              $number_of_adjectives_degree_2++;
+            }
+            elsif ($tag =~ /^A........3/) {
+              $number_of_adjectives_degree_3++;
+            }
+          }
+
+          # adverbs:
+          if ($tag =~ /^D/) {
+            if ($tag =~ /^D........1/) {
+              $number_of_adverbs_degree_1++;
+            }
+            elsif ($tag =~ /^D........2/) {
+              $number_of_adverbs_degree_2++;
+            }
+            elsif ($tag =~ /^D........3/) {
+              $number_of_adverbs_degree_3++;
+            }
+
+          }
+
+        }
+
+        my $afun = $anode->get_attr('afun') // '';
+
+        my $form_lc = lc($form // '');
+        if ($afun ne 'Pred' and $ha_enclitics{$form_lc}) {
+          if ($anode->get_attr('ord') eq 1) {
+            $count_enclitic_at_first_position++;
+          }
+        }
+
+=item
+
+má-li věta více příklonek, jejich pořadí je následující (šlo by sledovat, kolik je v textu vět, kde toto pořadí nesouhlasí):
+1. spojka -li
+2. pomocné sloveso (jsem, jsi, jsme, jste, bych, bys, by, bychom, byste)
+3. krátké tvary zvratných zájmen (si, se)
+4. krátké tvary osobních zájmen v dativu (mi, ti, mu)
+5. krátké tvary osobních zájmen v akuzativu (mě, tě, ho, tu, to)
+- příklady na pořadí více příklonek: Já jsem si to myslel. Já jsem mu to dal.
+
+=cut
+
+        if ($afun eq 'Pred' and $anode->level eq 1) { # non-coordinated Predicate of the main sentence
+          my @ar_encl_in_main = map {lc($_->get_attr('form'))} grep {$_->get_attr('form') and $ha_enclitics{lc($_->get_attr('form'))}} $anode->get_children({ordered => 1});
+          my $encl_in_main = scalar(@ar_encl_in_main);
+          if ($encl_in_main > 1) { # at least two enclitics in the main sentence
+            for (my $i=0; $i<$encl_in_main-1; $i++) {
+              my $order_1 = Treex::PML::Index(\@ar_enclitics, $ar_encl_in_main[$i]); # order in the list of all possible enclitics
+              my $order_2 = Treex::PML::Index(\@ar_enclitics, $ar_encl_in_main[$i+1]);
+              if ($order_1 > $order_2) {
+                $has_wrong_enclitics_order = 1;
+              }
+            }
+          }
+        }
+
+      } # foreach my $anode
+
+
+      $count_SVO++ if ($has_SVO);
+      $count_OVS++ if ($has_OVS);
+      $count_wrong_enclitics_order++ if ($has_wrong_enclitics_order);
+
+
+      # ===================================
+
       # then t-layer and discourse features
+
       my @nodes = $t_root->get_descendants({ordered=>1, add_self=>0});
-  
+
       my $has_PRED = 0;
+      my $has_PRED_in_first_or_second = 0;
+      my $depth = 0;
+
       foreach my $node (@nodes) {
-      
+
+        my $level = $node->get_depth();
+        if ($level > $depth) {
+            $depth = $level;
+        }
+        if ($level == 1) {
+            $level_1_number_of_nodes++;
+        }
+        elsif ($level == 2) {
+            $level_2_number_of_nodes++;
+        }
+        elsif ($level == 3) {
+            $level_3_number_of_nodes++;
+        }
+        elsif ($level == 4) {
+            $level_4_number_of_nodes++;
+        }
+        elsif ($level == 5) {
+            $level_5_number_of_nodes++;
+        }
+
         my $t_lemma = $node->t_lemma;
         if ($t_lemma) {
           $t_lemmas_counts{$t_lemma}++;
-          
+
           $number_of_t_lemmas++;
           $t_lemmas_counts_corrected{$t_lemma}++;
           if ($number_of_t_lemmas/100 == ceil($number_of_t_lemmas/100)) { # divisible by 100
@@ -409,18 +894,98 @@ sub collect_info_discourse {
             %t_lemmas_counts_corrected = ();
           }
         }
-        
+
         my $functor = $node->functor;
-        if ($functor and $functor eq 'PRED') {
-          $has_PRED = 1;
+        if ($functor) {
+
+          if ($functor eq 'RHEM') { # tfa
+            $number_of_RHEMs++;
+            $RHEMs{$t_lemma}++;
+          }
+
+          if ($functor eq 'PRED') {
+            $number_of_PREDs++;
+            $has_PRED = 1;
+            if (is_in_first_or_second_position($node)) {
+              $has_PRED_in_first_or_second = 1;
+            }
+          }
+          else { # i.e. not PRED; is it a finite verb? If yes, it means a dependent clause
+            my @anodes = $node->get_anodes();
+            my $has_finite = 0;
+            foreach my $anode (@anodes) {
+              my $tag = $anode->tag;
+              if ($tag =~ /^V......[123]/) {
+                $has_finite = 1;
+                last;
+              }
+            }
+            if ($has_finite) {
+              $number_of_dependent_clauses++;
+              if ($functor eq 'RSTR') {
+                $number_of_dependent_clauses_RSTR++;
+              }
+              elsif ($functor eq 'PAT') {
+                $number_of_dependent_clauses_PAT++;
+              }
+              elsif ($functor eq 'EFF') {
+                $number_of_dependent_clauses_EFF++;
+              }
+              elsif ($functor eq 'COND') {
+                $number_of_dependent_clauses_COND++;
+              }
+              elsif ($functor eq 'ACT') {
+                $number_of_dependent_clauses_ACT++;
+              }
+              elsif ($functor eq 'CPR') {
+                $number_of_dependent_clauses_CPR++;
+              }
+              elsif ($functor eq 'PAR') {
+                $number_of_dependent_clauses_PAR++;
+              }
+              elsif ($functor eq 'CAUS') {
+                $number_of_dependent_clauses_CAUS++;
+              }
+              elsif ($functor eq 'CNCS') {
+                $number_of_dependent_clauses_CNCS++;
+              }
+              elsif ($functor eq 'TWHEN') {
+                $number_of_dependent_clauses_TWHEN++;
+              }
+            }
+          }
         }
-  
+
+        my $sempos = $node->gram_sempos // '';
+        if ($sempos eq 'v') {
+          my $verbmod = $node->gram_verbmod();
+          if ($verbmod eq 'ind') {
+            $number_of_indicative_mood++;
+          }
+          elsif ($verbmod eq 'cdn' or $verbmod eq 'imp') {
+            $number_of_imper_and_cond_mood++;
+          }
+
+          my $aspect = $node->gram_aspect();
+          if ($aspect eq 'proc') {
+            $number_of_proc_aspect++;
+          }
+          elsif ($aspect eq 'cpl') {
+            $number_of_cpl_aspect++;
+          }
+        }
+
+        my $tfa = $node->get_attr('tfa') // 'none';
+        $count_tfa_t++ if ($tfa eq 't');
+        $count_tfa_c++ if ($tfa eq 'c');
+        $count_tfa_f++ if ($tfa eq 'f');
+
         my $ref_discourse_arrows = $node->get_attr('discourse');
         my @discourse_arrows = ();
         if ($ref_discourse_arrows) {
           @discourse_arrows = @{$ref_discourse_arrows};
         }
-  
+
         foreach my $arrow (@discourse_arrows) { # take all discourse arrows starting at the given node
           #my $connective = get_surface_connector($arrow);
           #if (!defined($connective) or !length($connective)) {
@@ -446,10 +1011,10 @@ sub collect_info_discourse {
           else {
             log_warn("Warning - no target node!\n");
           }
-  
+
           my $connective = lc(get_surface_connective($doc, $arrow));
           $connectives{$connective}++;
-  
+
           my $discourse_type = $arrow->{'discourse_type'};
           my $class = $ha_discourse_type_2_class{$discourse_type};
           if ($class) {
@@ -467,12 +1032,54 @@ sub collect_info_discourse {
             }
           }
         }
-        if (!$has_PRED) {
-          $count_PREDless_sentences++;
+      } # foreach my $node
+
+      if (!$has_PRED) {
+        $count_PREDless_sentences++;
+      }
+      if (!$has_PRED_in_first_or_second) {
+        $count_sentences_PRED_in_first_or_second++;
+      }
+      $number_of_tree_levels += $depth;
+
+      # ==== tfa: count sentences where the Focus of the previous sentence becomes the Topic of the current sentence - simply by checking if any of the three first t_lemmas equals to any of the last three t_lemmas of the previous sentence (do not count #PersProns!)
+      # This could be improved by using the algorithm for division of the sentence into T and F parts and using coreference relations
+
+      my $currentsent_first_t_lemma = $nodes[0] ? $nodes[0]->get_attr('t_lemma') // rand() : rand();
+      my $currentsent_second_t_lemma = $nodes[1] ? $nodes[1]->get_attr('t_lemma') // rand() : rand();
+      my $currentsent_third_t_lemma = $nodes[2] ? $nodes[2]->get_attr('t_lemma') // rand() : rand();
+
+      my $F_T = 0;
+      $F_T = 1 if ($currentsent_first_t_lemma eq $prevsent_last_t_lemma or $currentsent_first_t_lemma eq $prevsent_lastbut1_t_lemma or $currentsent_first_t_lemma eq $prevsent_lastbut2_t_lemma);
+      $F_T = 1 if ($currentsent_second_t_lemma eq $prevsent_last_t_lemma or $currentsent_second_t_lemma eq $prevsent_lastbut1_t_lemma or $currentsent_second_t_lemma eq $prevsent_lastbut2_t_lemma);
+      $F_T = 1 if ($currentsent_third_t_lemma eq $prevsent_last_t_lemma or $currentsent_third_t_lemma eq $prevsent_lastbut1_t_lemma or $currentsent_third_t_lemma eq $prevsent_lastbut2_t_lemma);
+      $count_F_T++ if $F_T;
+
+      $prevsent_last_t_lemma = $nodes[-1] ? $nodes[-1]->get_attr('t_lemma') // rand() : rand();
+      $prevsent_lastbut1_t_lemma = $nodes[-2] ? $nodes[-2]->get_attr('t_lemma') // rand() : rand();
+      $prevsent_lastbut2_t_lemma = $nodes[-3] ? $nodes[-3]->get_attr('t_lemma') // rand() : rand();
+
+      $prevsent_last_t_lemma = rand() if ($prevsent_last_t_lemma eq '#PersPron');
+      $prevsent_lastbut1_t_lemma = rand() if ($prevsent_lastbut1_t_lemma eq '#PersPron');
+      $prevsent_lastbut2_t_lemma = rand() if ($prevsent_lastbut2_t_lemma eq '#PersPron');
+
+      # ==== tfa: count sentences with main ACT at the last position in the sentence
+
+      my $last_node = $nodes[-1];
+      my $last_node_functor = $last_node ? $last_node->get_attr('functor') // '' : '';
+      if ($last_node_functor eq 'ACT') {
+        my @eparents = $last_node->get_eparents();
+        if (scalar(@eparents) and $eparents[0]->get_attr('functor') and $eparents[0]->get_attr('functor') eq 'PRED') {
+          $count_ACT_at_end++;
         }
       }
-    }
-}
+
+      # ====
+
+    } # foreach my $t_root
+} # collect_info_discourse
+
+
 
 my $pron_a_count = 0;
 my $noun_a_count = 0;
@@ -499,7 +1106,7 @@ sub collect_info_coreference {
     %pron_t_sempos_counts = ();
     $perspron_act_t_count = 0;
     %perspron_act_t_lemmas = ();
-    
+
     my @atrees = map {$_->get_tree($self->language, 'a', $self->selector)} $doc->get_bundles;
     foreach my $atree (@atrees) {
         foreach my $anode ($atree->get_descendants({ordered => 1})) {
@@ -514,7 +1121,7 @@ sub collect_info_coreference {
             $noun_a_count++ if ($anode->tag =~ /^N/);
         }
     }
-    
+
     my @ttrees = map {$_->get_tree($self->language, 't', $self->selector)} $doc->get_bundles;
     foreach my $ttree (@ttrees) {
         foreach my $tnode ($ttree->get_descendants({ordered => 1})) {
@@ -532,6 +1139,295 @@ sub collect_info_coreference {
     }
 }
 
+
+
+############################################ USING COLLECTED INFORMATION TO EXTRACT FEATURES ############################################
+
+
+#------------------------------- spellign features ------------------------
+sub features_spelling {
+    my ($self, $doc) = @_;
+    my %feats = ();
+
+    $feats{'spell^typos_per_100words'} = ceil(100*$number_of_typos/$number_of_words);
+    $feats{'spell^punctuation_per_100words'} = ceil(100*$number_of_punctuation_marks/$number_of_words);
+
+    return \%feats;
+}
+
+#------------------------------- morphology features ------------------------
+sub features_morphology {
+    my ($self, $doc) = @_;
+    my %feats = ();
+
+    $feats{'morph^passive_vs_active_ratio_percent'} = ceil(100*$number_of_passive_verbs/($number_of_passive_verbs + $number_of_active_verbs + 0.01)); # +0.01 to avoid division by 0
+    $feats{'morph^ind_vs_cdn_and_imp_ratio_percent'} = ceil(100*$number_of_indicative_mood/($number_of_indicative_mood + $number_of_imper_and_cond_mood + 0.01));
+    $feats{'morph^cpl_vs_proc_aspect_ratio_percent'} = ceil(100*$number_of_cpl_aspect/($number_of_cpl_aspect + $number_of_proc_aspect + 0.01));
+    $feats{'morph^future_tense_percent'} = ceil(100*$number_of_future_tense/($number_of_verbs+0.01));
+    $feats{'morph^present_tense_percent'} = ceil(100*$number_of_present_tense/($number_of_verbs+0.01));
+    $feats{'morph^past_tense_percent'} = ceil(100*$number_of_past_tense/($number_of_verbs+0.01));
+    my $number_of_all_cases = $number_of_case_1 + $number_of_case_2 + $number_of_case_3 + $number_of_case_4 + $number_of_case_5 + $number_of_case_6 + $number_of_case_7;
+    $feats{'morph^case_1_percent'} = ceil(100*$number_of_case_1/($number_of_all_cases+0.01));
+    $feats{'morph^case_2_percent'} = ceil(100*$number_of_case_2/($number_of_all_cases+0.01));
+    $feats{'morph^case_3_percent'} = ceil(100*$number_of_case_3/($number_of_all_cases+0.01));
+    $feats{'morph^case_4_percent'} = ceil(100*$number_of_case_4/($number_of_all_cases+0.01));
+    $feats{'morph^case_5_percent'} = ceil(100*$number_of_case_5/($number_of_all_cases+0.01));
+    $feats{'morph^case_6_percent'} = ceil(100*$number_of_case_6/($number_of_all_cases+0.01));
+    $feats{'morph^case_7_percent'} = ceil(100*$number_of_case_7/($number_of_all_cases+0.01));
+    $feats{'morph^sing_vs_plural_ratio_percent'} = ceil(100*$number_of_singular/($number_of_singular + $number_of_plural + 0.01));
+    $feats{'morph^adj_degree_1_vs_2_and_3_ratio_percent'} = ceil(100*$number_of_adjectives_degree_1/($number_of_adjectives_degree_1 + $number_of_adjectives_degree_2 + $number_of_adjectives_degree_3 + 0.01));
+    $feats{'morph^adv_degree_1_vs_2_and_3_ratio_percent'} = ceil(100*$number_of_adverbs_degree_1/($number_of_adverbs_degree_1 + $number_of_adverbs_degree_2 + $number_of_adverbs_degree_3 + 0.01));
+    my $number_of_all_pos = $number_of_pos_noun + $number_of_pos_adj + $number_of_pos_pron + $number_of_pos_num + $number_of_pos_verb + $number_of_pos_adj + $number_of_pos_prep + $number_of_pos_conj + $number_of_pos_part + $number_of_pos_inter;
+    $feats{'morph^pos_noun_percent'} = ceil(100*$number_of_pos_noun/($number_of_all_pos+0.01));
+    $feats{'morph^pos_adj_percent'} = ceil(100*$number_of_pos_adj/($number_of_all_pos+0.01));
+    $feats{'morph^pos_pron_percent'} = ceil(100*$number_of_pos_pron/($number_of_all_pos+0.01));
+    $feats{'morph^pos_num_percent'} = ceil(100*$number_of_pos_num/($number_of_all_pos+0.01));
+    $feats{'morph^pos_verb_percent'} = ceil(100*$number_of_pos_verb/($number_of_all_pos+0.01));
+    $feats{'morph^pos_adv_percent'} = ceil(100*$number_of_pos_adv/($number_of_all_pos+0.01));
+    $feats{'morph^pos_prep_percent'} = ceil(100*$number_of_pos_prep/($number_of_all_pos+0.01));
+    $feats{'morph^pos_conj_percent'} = ceil(100*$number_of_pos_conj/($number_of_all_pos+0.01));
+    $feats{'morph^pos_part_percent'} = ceil(100*$number_of_pos_part/($number_of_all_pos+0.01));
+    $feats{'morph^pos_inter_percent'} = ceil(100*$number_of_pos_inter/($number_of_all_pos+0.01));
+
+    return \%feats;
+}
+
+#------------------------------- vocabulary features ------------------------
+sub features_vocabulary {
+    my ($self, $doc) = @_;
+    my %feats = ();
+
+    if (!$t_lemmas_per_100_t_lemmas) { # not set yet, i.e. there have been only less than 100 t_lemmas in total
+      $t_lemmas_per_100_t_lemmas = scalar (keys (%t_lemmas_counts_corrected)); # take only the number of so far observed different t_lemmas (do not normalize to 100 observed t_lemmas)
+    }
+    $feats{'vocab^different_t_lemmas_per_100t_lemmas'} = ceil($t_lemmas_per_100_t_lemmas);
+    $feats{'vocab^simpson_index'} = get_simpson_index();
+    $feats{'vocab^george_udny_yule_index'} = get_george_udny_yule_index();
+    $feats{'vocab^avg_length_of_words'} = ceil($length_of_words / $number_of_words);
+
+    return \%feats;
+}
+
+#------------------------------- syntax features ------------------------
+sub features_syntax {
+    my ($self, $doc) = @_;
+    my %feats = ();
+
+    $feats{'syntax^avg_words_per_sent'} = ceil($number_of_words/$number_of_sentences);
+    $feats{'syntax^avg_PREDless_per_100sent'} = ceil(100*$count_PREDless_sentences/$number_of_sentences);
+    $feats{'syntax^dependent_vs_sentences_ratio_percent'} = ceil(100*$number_of_dependent_clauses/($number_of_dependent_clauses + $number_of_sentences + 0.01)); # +0.01 to avoid division by 0
+    $feats{'syntax^PREDs_per_100sent'} = ceil(100*$number_of_PREDs/$number_of_sentences);
+    $feats{'syntax^dependent_clauses_RSTR_percent'} = ceil(100*$number_of_dependent_clauses_RSTR/($number_of_dependent_clauses + 0.01));
+    $feats{'syntax^dependent_clauses_PAT_percent'} = ceil(100*$number_of_dependent_clauses_PAT/($number_of_dependent_clauses + 0.01));
+    $feats{'syntax^dependent_clauses_EFF_percent'} = ceil(100*$number_of_dependent_clauses_EFF/($number_of_dependent_clauses + 0.01));
+    $feats{'syntax^dependent_clauses_COND_percent'} = ceil(100*$number_of_dependent_clauses_COND/($number_of_dependent_clauses + 0.01));
+    $feats{'syntax^dependent_clauses_ACT_percent'} = ceil(100*$number_of_dependent_clauses_ACT/($number_of_dependent_clauses + 0.01));
+    $feats{'syntax^dependent_clauses_CPR_percent'} = ceil(100*$number_of_dependent_clauses_CPR/($number_of_dependent_clauses + 0.01));
+    $feats{'syntax^dependent_clauses_PAR_percent'} = ceil(100*$number_of_dependent_clauses_PAR/($number_of_dependent_clauses + 0.01));
+    $feats{'syntax^dependent_clauses_CAUS_percent'} = ceil(100*$number_of_dependent_clauses_CAUS/($number_of_dependent_clauses + 0.01));
+    $feats{'syntax^dependent_clauses_CNCS_percent'} = ceil(100*$number_of_dependent_clauses_CNCS/($number_of_dependent_clauses + 0.01));
+    $feats{'syntax^dependent_clauses_TWHEN_percent'} = ceil(100*$number_of_dependent_clauses_TWHEN/($number_of_dependent_clauses + 0.01));
+    $feats{'syntax^avg_tree_levels'} = ceil($number_of_tree_levels/$number_of_sentences);
+    $feats{'syntax^level_1_avg_branching'} = ceil($level_2_number_of_nodes/($level_1_number_of_nodes + 0.01));
+    $feats{'syntax^level_2_avg_branching'} = ceil($level_3_number_of_nodes/($level_2_number_of_nodes + 0.01));
+    $feats{'syntax^level_3_avg_branching'} = ceil($level_4_number_of_nodes/($level_3_number_of_nodes + 0.01));
+    $feats{'syntax^level_4_avg_branching'} = ceil($level_5_number_of_nodes/($level_4_number_of_nodes + 0.01));
+
+    return \%feats;
+}
+
+#------------------------------- connectives quantity features ------------------------
+sub features_connectives_quantity {
+    my ($self, $doc) = @_;
+    my %feats = ();
+
+    $feats{'conn_qua^avg_connective_words_coord_per_100sent'} = ceil(100*$count_connective_words_coord/$number_of_sentences);
+    $feats{'conn_qua^avg_connective_words_subord_per_100sent'} = ceil(100*$count_connective_words_subord/$number_of_sentences);
+    $feats{'conn_qua^avg_connective_words_per_100sent'} = ceil(100*$count_connective_words_subord/$number_of_sentences);
+    $feats{'conn_qua^avg_intra_per_100sent '} = ceil(100*$number_of_discourse_relations_intra/$number_of_sentences);
+    $feats{'conn_qua^avg_inter_per_100sent'} = ceil(100*$number_of_discourse_relations_inter/$number_of_sentences);
+    $feats{'conn_qua^avg_discourse_per_100sent '} = ceil(100*($number_of_discourse_relations_inter + $number_of_discourse_relations_intra)/$number_of_sentences);
+
+    return \%feats;
+}
+
+#------------------------------- connectives diversity features ------------------------
+sub features_connectives_diversity {
+    my ($self, $doc) = @_;
+    my %feats = ();
+
+    $feats{'conn_div^different_connectives'} = scalar(keys(%connectives));
+    $feats{'conn_div^percentage_a '} = ceil(100*(scalar($connectives{'a'}) ? scalar($connectives{'a'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_ale '} = ceil(100*(scalar($connectives{'ale'}) ? scalar($connectives{'ale'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_protoze '} = ceil(100*(scalar($connectives{'protože'}) ? scalar($connectives{'protože'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_take_taky '} = ceil(100*((scalar($connectives{'také'}) or scalar($connectives{'taky'})) ? scalar($connectives{'také'}//0 + $connectives{'taky'}//0) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_potom_pak '} = ceil(100*((scalar($connectives{'potom'}) or scalar($connectives{'pak'})) ? scalar($connectives{'potom'}//0 + $connectives{'pak'}//0) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_kdyz '} = ceil(100*(scalar($connectives{'když'}) ? scalar($connectives{'když'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_nebo '} = ceil(100*(scalar($connectives{'nebo'}) ? scalar($connectives{'nebo'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_proto '} = ceil(100*(scalar($connectives{'proto'}) ? scalar($connectives{'proto'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_tak '} = ceil(100*(scalar($connectives{'tak'}) ? scalar($connectives{'tak'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_aby '} = ceil(100*(scalar($connectives{'aby'}) ? scalar($connectives{'aby'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    $feats{'conn_div^percentage_totiz '} = ceil(100*(scalar($connectives{'totiž'}) ? scalar($connectives{'totiž'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+
+    my @connective_usages_sorted = sort {$b <=> $a} map {$connectives{$_}} keys (%connectives); # sort numbers of usages of the connectives in the decreasing order (disregard the connectives themselves)
+    my $percent_most_frequent_connectives_first = 0;
+    if (scalar(@connective_usages_sorted) >= 1) {
+      my $most_frequent_connectives_first = $connective_usages_sorted[0];
+      $percent_most_frequent_connectives_first = ceil(100*$most_frequent_connectives_first/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    }
+    $feats{'conn_div^percentage_first_connective '} = $percent_most_frequent_connectives_first;
+
+    my $percent_most_frequent_connectives_first_and_second = 0;
+    if (scalar(@connective_usages_sorted) >= 2) {
+      my $most_frequent_connectives_first_and_second = $connective_usages_sorted[0] + $connective_usages_sorted[1];
+      $percent_most_frequent_connectives_first_and_second = ceil(100*$most_frequent_connectives_first_and_second/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
+    }
+    else {
+      $percent_most_frequent_connectives_first_and_second = $percent_most_frequent_connectives_first;
+    }
+    $feats{'conn_div^percentage_first_and_second_connectives '} = $percent_most_frequent_connectives_first_and_second;
+    $feats{'conn_div^percentage_temporal'} = ceil(100*$count_temporal/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
+    $feats{'conn_div^percentage_contingency'} = ceil(100*$count_contingency/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
+    $feats{'conn_div^percentage_contrast'} = ceil(100*$count_contrast/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
+    $feats{'conn_div^percentage_expansion'} = ceil(100*$count_expansion/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
+
+    return \%feats;
+}
+
+#------------------------------------ coreference-related features implemented in the 2nd year of the project by Michal ---------------------------
+
+my @ALL_PRON_SUBPOS = qw/0 1 4 5 6 7 8 9 D E H J K L O P Q S W Y Z/;
+my @ALL_PRON_SEMPOS = qw/n.pron.def.pers n.pron.indef adj.pron.indef n.pron.def.demon adj.pron.def.demon adv.pron.def adv.pron.indef/;
+my @ALL_CHAIN_LENGTHS = 2 .. 5;
+
+sub features_coreference {
+    my ($self, $doc) = @_;
+
+    # PRONOUN FEATURES
+
+    my $feats = {};
+    $feats->{'pron^prons_a_perc_words'} = ceil($number_of_words ? 100*$pron_a_count/$number_of_words : 0);
+    $feats->{'pron^prons_a_perc_nps'} = ceil(($pron_a_count+$noun_a_count) ? 100*$pron_a_count/($pron_a_count+$noun_a_count) : 0);
+    foreach my $subpos (@ALL_PRON_SUBPOS) {
+        my $subpos_count = $pron_a_subpos_counts{$subpos} // 0;
+        $feats->{"pron^prons_a_".$subpos."_perc_words"} = ceil($number_of_words ? 100*$subpos_count/$number_of_words : 0);
+        $feats->{"pron^prons_a_".$subpos."_perc_prons"} = ceil($pron_a_count ? 100*$subpos_count/$pron_a_count : 0);
+        $feats->{"pron^prons_a_".$subpos."_perc_nps"}   = ceil(($pron_a_count+$noun_a_count) ? 100*$subpos_count/($pron_a_count+$noun_a_count) : 0);
+    }
+    $feats->{'pron^prons_a_lemmas_perc_words'} = ceil($number_of_words ? 100*scalar(keys %pron_a_lemmas)/$number_of_words : 0);
+    $feats->{'pron^prons_a_lemmas_perc_prons'} = ceil($pron_a_count ? 100*scalar(keys %pron_a_lemmas)/$pron_a_count : 0);
+    $feats->{'pron^to_a_perc_prons'} = ceil($pron_a_count ? 100*$to_a_count/$pron_a_count : 0);
+
+    $feats->{'pron^prons_t_perc_tnodes'} = ceil($number_of_t_lemmas ? 100*$pron_t_count/$number_of_t_lemmas : 0);
+    foreach my $sempos (@ALL_PRON_SEMPOS) {
+        my $sempos_count = $pron_t_sempos_counts{$sempos} // 0;
+        $feats->{"pron^prons_t_".$sempos."_perc_prons"} = ceil($pron_t_count ? 100*$sempos_count/$pron_t_count : 0);
+    }
+    foreach my $lemma (keys %perspron_act_t_lemmas) {
+        my $lemma_count = $perspron_act_t_lemmas{$lemma} // 0;
+        $feats->{"pron^perspron_t_".$lemma."_perc_persprons"} = ceil($perspron_act_t_count ? 100*$lemma_count/$perspron_act_t_count : 0);
+    }
+
+    # COREFERENCE FEATURES
+    my @ttrees = map { $_->get_tree($self->language, 't', $self->selector) } $doc->get_bundles;
+    my @chains = Treex::Tool::Coreference::Utils::get_coreference_entities(\@ttrees, {ordered => 'deepord'});
+
+    $feats->{'coref^chains_perc_words'} = ceil($number_of_words ? 100*scalar(@chains)/$number_of_words : 0);
+
+    my $num_links = (sum(map {scalar(@$_)} @chains) // 0) - scalar(@chains);
+    $feats->{'coref^links_perc_words'} = ceil($number_of_words ? 100*$num_links/$number_of_words : 0);
+
+    my %link_lengths;
+    $link_lengths{scalar(@$_) < 5 ? scalar(@$_) : 5}++ foreach (@chains);
+    foreach my $len (@ALL_CHAIN_LENGTHS) {
+        $feats->{'coref^chains_len_'.$len.'_perc_chains'} = ceil(scalar(@chains) ? 100*($link_lengths{$len} // 0)/scalar(@chains) : 0);
+    }
+
+    my $intrasent_links = 0;
+    foreach my $chain (@chains) {
+        my $prev_sentnum = undef;
+        foreach my $mention (@$chain) {
+            my $sentnum = $mention->get_bundle->get_position;
+            $intrasent_links++ if (defined $prev_sentnum && $sentnum == $prev_sentnum);
+            $prev_sentnum = $sentnum;
+        }
+    }
+    $feats->{'coref^links_intra_perc_links'} = ceil($num_links ? 100*$intrasent_links/$num_links : 0);
+
+    my $avg_lemmas_per_len = 0;
+    my $avg_sempos_per_len = 0;
+    foreach my $chain (@chains) {
+        my $lemmas_per_len = scalar(uniq map {$_->t_lemma} @$chain)/scalar(@$chain);
+        my $sempos_per_len = scalar(uniq map {$_->gram_sempos // "undef"} @$chain)/scalar(@$chain);
+        $avg_lemmas_per_len += $lemmas_per_len;
+        $avg_sempos_per_len += $sempos_per_len;
+    }
+    $avg_lemmas_per_len = scalar(@chains) ? $avg_lemmas_per_len / scalar(@chains) : 0;
+    $avg_sempos_per_len = scalar(@chains) ? $avg_sempos_per_len / scalar(@chains) : 0;
+    $feats->{'coref^avg_lemma_variety'} = ceil(100*$avg_lemmas_per_len);
+    $feats->{'coref^avg_sempos_variety'} = ceil(100*$avg_sempos_per_len);
+
+    return $feats;
+}
+
+#------------------------------- tfa features ------------------------
+sub features_tfa {
+    my ($self, $doc) = @_;
+    my %feats = ();
+
+    $feats{'tfa^RHEMs_per_100sent'} = ceil(100*$number_of_RHEMs/$number_of_words);
+    $feats{'tfa^different_RHEMs'} = scalar(keys(%RHEMs));
+    $feats{'tfa^avg_sent_PRED_in_first_or_second_per_100sent'} = ceil(100*$count_sentences_PRED_in_first_or_second/$number_of_sentences);
+    $feats{'tfa^bound_vs_nonbound_ratio_percent'} = ceil(100*($count_tfa_c + $count_tfa_t)/($count_tfa_c + $count_tfa_t + $count_tfa_f + 0.01)); # +0.01 to avoid division by 0
+    $feats{'tfa^contrastive_among_bound_percent'} = ceil(100*($count_tfa_c)/($count_tfa_c + $count_tfa_t + 0.01));
+    $feats{'tfa^F_T_per_100sent'} = ceil(100*$count_F_T/$number_of_sentences);
+    $feats{'tfa^ACT_at_end_per_100sent'} = ceil(100*$count_ACT_at_end/$number_of_sentences);
+    $feats{'tfa^SVO_per_100sent'} = ceil(100*$count_SVO/$number_of_sentences);
+    $feats{'tfa^OVS_per_100sent'} = ceil(100*$count_OVS/$number_of_sentences);
+    $feats{'tfa^enclitic_first_per_100sent'} = ceil(100*$count_enclitic_at_first_position/$number_of_sentences);
+    $feats{'tfa^wrong_enclitics_order_per_100sent'} = ceil(100*$count_wrong_enclitics_order/$number_of_sentences);
+
+    return \%feats;
+}
+
+
+
+# ==================== supporting functions =======================
+
+sub get_simpson_index {
+  return 0 if ($number_of_words < 2);
+  my %frequencies_counts;
+  # count how many times various frequencies of lemmas occurred
+  foreach my $key (keys (%lemmas_counts)) {
+    $frequencies_counts{$lemmas_counts{$key}}++;
+  }
+  # count the simpson index
+  my $simpson = 0;
+  foreach my $frequency (keys (%frequencies_counts)) {
+    my $count = $frequencies_counts{$frequency};
+    $simpson += $count * $frequency/$number_of_words * ($frequency-1)/($number_of_words-1);
+    # print STDERR "Simpson so far: $simpson\n";
+  }
+  return ceil(10000*$simpson);
+}
+
+sub get_george_udny_yule_index {
+  my %frequencies_counts;
+  # count how many times various frequencies of lemmas occurred
+  foreach my $key (keys (%lemmas_counts)) {
+    $frequencies_counts{$lemmas_counts{$key}}++;
+  }
+  # count the George Udny Yule's index
+  my $inner = 0;
+  foreach my $frequency (keys (%frequencies_counts)) {
+    my $count = $frequencies_counts{$frequency};
+    $inner += $frequency * $frequency * $count;
+    # print STDERR "Yule inner sum so far: $inner\n";
+  }
+  my $yule = 10000 * ($inner - $number_of_words) / ($number_of_words * $number_of_words);
+  return ceil($yule);
+}
+
 sub get_surface_connective {
   my ($doc, $arrow) = @_;
   my $ref_t_connectors = $arrow->{'t-connectors.rf'};
@@ -539,7 +1435,7 @@ sub get_surface_connective {
 
   my @connectors_t_nodes = map {$doc->get_node_by_id($_)} @{$ref_t_connectors};
   my @connectors_a_nodes = map {$doc->get_node_by_id($_)} @{$ref_a_connectors};
-  
+
   if (! (@connectors_t_nodes or @connectors_a_nodes)) {
     return 'no_connective';
   }
@@ -607,7 +1503,7 @@ sub get_surface_connective {
       }
     }
   }
-  
+
   if ($add_negation) {
     $surface_connector = '#Neg ' . $surface_connector;
   }
@@ -630,195 +1526,31 @@ sub get_sentence_t {
   return $sentence;
 } # get_sentence_t
 
+=item
 
-############################################ USING COLLECTED INFORMATION TO EXTRACT FEATURES ############################################
+  The function checks whether the given verb node is on the first or second position in the clause.
+  If yes, it returns 1; otherwise 0.
 
-#-------------------------------  discourse-related features implemented in the 1st year of the project by Jirka ------------------------
-sub discourse_features {
-    my ($self, $doc) = @_;
+=cut
 
-    #my $file_name = FileName();
-    #$file_name =~ s/^.+\/([^\/]+)$/$1/;
-    #print "$file_name";
-    #print ", ";
-
-    my %feats = ();
-  
-    $feats{'surf^avg_words_per_sent'} = ceil($number_of_words/$number_of_sentences);
-  
-    #my $different_t_lemmas = scalar(keys(%t_lemmas_counts));
-    #print "$different_t_lemmas";
-    #print ", ";
-  
-    #my $new_number_of_t_lemmas = $number_of_t_lemmas - $t_lemmas_per_100_t_lemmas_sum;
-    #my $different_new_t_lemmas = scalar (keys (%t_lemmas_counts_corrected));
-    #print STDERR "Last addition - incorporating number of new different t_lemmas ($different_new_t_lemmas) among $new_number_of_t_lemmas t_lemmas to the running value ($t_lemmas_per_100_t_lemmas).\n";
-    #$t_lemmas_per_100_t_lemmas = ceil(($t_lemmas_per_100_t_lemmas * $t_lemmas_per_100_t_lemmas_sum + $different_new_t_lemmas * 100) / $number_of_t_lemmas);
-    #print STDERR "Final avarage number of different t_lemmas per 100 t_lemmas: $t_lemmas_per_100_t_lemmas.\n";
-    if (!$t_lemmas_per_100_t_lemmas) { # not set yet, i.e. there have been only less than 100 t_lemmas in total  
-      $t_lemmas_per_100_t_lemmas = scalar (keys (%t_lemmas_counts_corrected)); # take only the number of so far observed different t_lemmas (do not normalize to 100 observed t_lemmas)
-      # print STDERR "There have not been 100 t_lemmas in the text - counting only so far observed different t_lemmas (in $number_of_t_lemmas): $t_lemmas_per_100_t_lemmas.\n";
+sub is_in_first_or_second_position {
+  my ($verb) = @_;
+  my $verb_deepord = $verb->get_attr('ord');
+  my @sons =  $verb->get_children();
+  if ($verb->get_attr('is_member')) {
+    my $coap = $verb->get_parent();
+    my @non_member_brothers = grep {!$_->get_attr('is_member')} $coap->get_children();
+    if (scalar(@non_member_brothers)) {
+      push (@sons, @non_member_brothers);
     }
-    
-    $feats{'surf^t_lemmas_per_100t_lemmas'} = ceil($t_lemmas_per_100_t_lemmas);
-    $feats{'surf^simpson_index'} = get_simpson_index();
-    $feats{'surf^yule_index'} = get_george_udny_yule_index();
-    $feats{'surf^avg_PREDless_per_100sent'} = ceil(100*$count_PREDless_sentences/$number_of_sentences);
-    $feats{'surf^avg_connective_words_coord_per_100sent'} = ceil(100*$count_connective_words_coord/$number_of_sentences);
-    $feats{'surf^avg_connective_words_subord_per_100sent'} = ceil(100*$count_connective_words_subord/$number_of_sentences);
-    $feats{'surf^avg_connective_words_per_100sent'} = ceil(100*($count_connective_words_coord+$count_connective_words_subord)/$number_of_sentences);
-    
-    $feats{'disc^avg_discourse_intra_per_100sent'} = ceil(100*$number_of_discourse_relations_intra/$number_of_sentences);
-    $feats{'disc^avg_discourse_inter_per_100sent'} = ceil(100*$number_of_discourse_relations_inter/$number_of_sentences);
-    $feats{'disc^avg_discourse_per_100sent'} = ceil(100*($number_of_discourse_relations_inter + $number_of_discourse_relations_intra)/$number_of_sentences);
-    $feats{'disc^different_connectives'} = scalar(keys(%connectives));
-
-    $feats{'disc^perc_a'} = ceil(100*(scalar($connectives{'a'}) ? scalar($connectives{'a'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'disc^perc_ale'} = ceil(100*(scalar($connectives{'ale'}) ? scalar($connectives{'ale'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'disc^perc_protoze'} = ceil(100*(scalar($connectives{'protože'}) ? scalar($connectives{'protože'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'disc^perc_take'} = ceil(100*((scalar($connectives{'také'}) or scalar($connectives{'taky'})) ? scalar($connectives{'také'}//0 + $connectives{'taky'}//0) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'disc^perc_potom'} = ceil(100*((scalar($connectives{'potom'}) or scalar($connectives{'pak'})) ? scalar($connectives{'potom'}//0 + $connectives{'pak'}//0) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'disc^perc_kdyz'} = ceil(100*(scalar($connectives{'když'}) ? scalar($connectives{'když'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'disc^perc_nebo'} = ceil(100*(scalar($connectives{'nebo'}) ? scalar($connectives{'nebo'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'disc^perc_proto'} = ceil(100*(scalar($connectives{'proto'}) ? scalar($connectives{'proto'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'disc^perc_tak'} = ceil(100*(scalar($connectives{'tak'}) ? scalar($connectives{'tak'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'disc^perc_aby'} = ceil(100*(scalar($connectives{'aby'}) ? scalar($connectives{'aby'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    $feats{'disc^perc_totiz'} = ceil(100*(scalar($connectives{'totiž'}) ? scalar($connectives{'totiž'}) : 0)/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-  
-  
-    my @connective_usages_sorted = sort {$b <=> $a} map {$connectives{$_}} keys (%connectives); # sort numbers of usages of the connectives in the decreasing order (disregard the connectives themselves)
-    my $percent_most_frequent_connectives_first = 0;
-    if (scalar(@connective_usages_sorted) >= 1) {
-      my $most_frequent_connectives_first = $connective_usages_sorted[0];
-      $percent_most_frequent_connectives_first = ceil(100*$most_frequent_connectives_first/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    }
-    $feats{'disc^perc_first_connective'} = $percent_most_frequent_connectives_first;
-  
-    my $percent_most_frequent_connectives_first_and_second = 0;
-    if (scalar(@connective_usages_sorted) >= 2) {
-      my $most_frequent_connectives_first_and_second = $connective_usages_sorted[0] + $connective_usages_sorted[1];
-      $percent_most_frequent_connectives_first_and_second = ceil(100*$most_frequent_connectives_first_and_second/($number_of_discourse_relations_inter + $number_of_discourse_relations_intra + 0.01));
-    }
-    else {
-      $percent_most_frequent_connectives_first_and_second = $percent_most_frequent_connectives_first;
-    }
-    $feats{'disc^perc_first_and_second_connectives'} = $percent_most_frequent_connectives_first_and_second;
-    
-    $feats{'disc^perc_temporal'} = ceil(100*$count_temporal/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
-    $feats{'disc^perc_contingency'} = ceil(100*$count_contingency/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
-    $feats{'disc^perc_contrast'} = ceil(100*$count_contrast/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
-    $feats{'disc^perc_expansion'} = ceil(100*$count_expansion/($count_temporal + $count_contingency + $count_contrast + $count_expansion + 0.01));
-  
-    return \%feats;
-}
-
-sub get_simpson_index {
-  return 0 if ($number_of_words < 2);
-  my %frequencies_counts;
-  # count how many times various frequencies of lemmas occurred
-  foreach my $key (keys (%lemmas_counts)) {
-    $frequencies_counts{$lemmas_counts{$key}}++;
   }
-  # count the simpson index
-  my $simpson = 0;
-  foreach my $frequency (keys (%frequencies_counts)) {
-    my $count = $frequencies_counts{$frequency};
-    $simpson += $count * $frequency/$number_of_words * ($frequency-1)/($number_of_words-1);
-    # print STDERR "Simpson so far: $simpson\n";
+  my @relevant = grep {!$_->get_attr('is_generated')} grep {$_->get_attr('functor') !~ /^(CM|PREC|RHEM)$/} grep {!$_->get_attr('is_parenthesis')} @sons; # get rid of unimportant nodes
+  my @left = grep {$verb_deepord > $_->get_attr('ord')} @relevant; # take only nodes that are left from the verb
+  if (scalar(@left) > 1) { # not on the first or second position
+    return 0;
   }
-  return ceil(10000*$simpson);
-}
-
-sub get_george_udny_yule_index {
-  my %frequencies_counts;
-  # count how many times various frequencies of lemmas occurred
-  foreach my $key (keys (%lemmas_counts)) {
-    $frequencies_counts{$lemmas_counts{$key}}++;
-  }
-  # count the George Udny Yule's index
-  my $inner = 0;
-  foreach my $frequency (keys (%frequencies_counts)) {
-    my $count = $frequencies_counts{$frequency};
-    $inner += $frequency * $frequency * $count;
-    # print STDERR "Yule inner sum so far: $inner\n";
-  }
-  my $yule = 10000 * ($inner - $number_of_words) / ($number_of_words * $number_of_words);
-  return ceil($yule);
-}
-
-my @ALL_PRON_SUBPOS = qw/0 1 4 5 6 7 8 9 D E H J K L O P Q S W Y Z/;
-my @ALL_PRON_SEMPOS = qw/n.pron.def.pers n.pron.indef adj.pron.indef n.pron.def.demon adj.pron.def.demon adv.pron.def adv.pron.indef/;
-my @ALL_CHAIN_LENGTHS = 2 .. 5;
-#------------------------------------ coreference-related features implemented in the 2nd year of the project by Michal ---------------------------
-sub coreference_features { 
-    my ($self, $doc) = @_;
-
-    # PRONOUN FEATURES
-
-    my $feats = {};
-    $feats->{'pron^prons_a_perc_words'} = ceil($number_of_words ? 100*$pron_a_count/$number_of_words : 0);
-    $feats->{'pron^prons_a_perc_nps'} = ceil(($pron_a_count+$noun_a_count) ? 100*$pron_a_count/($pron_a_count+$noun_a_count) : 0);
-    foreach my $subpos (@ALL_PRON_SUBPOS) {
-        my $subpos_count = $pron_a_subpos_counts{$subpos} // 0;
-        $feats->{"pron^prons_a_".$subpos."_perc_words"} = ceil($number_of_words ? 100*$subpos_count/$number_of_words : 0);
-        $feats->{"pron^prons_a_".$subpos."_perc_prons"} = ceil($pron_a_count ? 100*$subpos_count/$pron_a_count : 0);
-        $feats->{"pron^prons_a_".$subpos."_perc_nps"}   = ceil(($pron_a_count+$noun_a_count) ? 100*$subpos_count/($pron_a_count+$noun_a_count) : 0);
-    }
-    $feats->{'pron^prons_a_lemmas_perc_words'} = ceil($number_of_words ? 100*scalar(keys %pron_a_lemmas)/$number_of_words : 0);
-    $feats->{'pron^prons_a_lemmas_perc_prons'} = ceil($pron_a_count ? 100*scalar(keys %pron_a_lemmas)/$pron_a_count : 0);
-    $feats->{'pron^to_a_perc_prons'} = ceil($pron_a_count ? 100*$to_a_count/$pron_a_count : 0);
-
-    $feats->{'pron^prons_t_perc_tnodes'} = ceil($number_of_t_lemmas ? 100*$pron_t_count/$number_of_t_lemmas : 0);
-    foreach my $sempos (@ALL_PRON_SEMPOS) {
-        my $sempos_count = $pron_t_sempos_counts{$sempos} // 0;
-        $feats->{"pron^prons_t_".$sempos."_perc_prons"} = ceil($pron_t_count ? 100*$sempos_count/$pron_t_count : 0);
-    }
-    foreach my $lemma (keys %perspron_act_t_lemmas) {
-        my $lemma_count = $perspron_act_t_lemmas{$lemma} // 0;
-        $feats->{"pron^perspron_t_".$lemma."_perc_persprons"} = ceil($perspron_act_t_count ? 100*$lemma_count/$perspron_act_t_count : 0);
-    }
-
-    # COREFERENCE FEATURES
-    my @ttrees = map { $_->get_tree($self->language, 't', $self->selector) } $doc->get_bundles;
-    my @chains = Treex::Tool::Coreference::Utils::get_coreference_entities(\@ttrees, {ordered => 'deepord'});
-
-    $feats->{'coref^chains_perc_words'} = ceil($number_of_words ? 100*scalar(@chains)/$number_of_words : 0);
-    
-    my $num_links = (sum(map {scalar(@$_)} @chains) // 0) - scalar(@chains);
-    $feats->{'coref^links_perc_words'} = ceil($number_of_words ? 100*$num_links/$number_of_words : 0);
-    
-    my %link_lengths;
-    $link_lengths{scalar(@$_) < 5 ? scalar(@$_) : 5}++ foreach (@chains);
-    foreach my $len (@ALL_CHAIN_LENGTHS) {
-        $feats->{'coref^chains_len_'.$len.'_perc_chains'} = ceil(scalar(@chains) ? 100*($link_lengths{$len} // 0)/scalar(@chains) : 0);
-    }
-    
-    my $intrasent_links = 0;
-    foreach my $chain (@chains) {
-        my $prev_sentnum = undef;
-        foreach my $mention (@$chain) {
-            my $sentnum = $mention->get_bundle->get_position;
-            $intrasent_links++ if (defined $prev_sentnum && $sentnum == $prev_sentnum);
-            $prev_sentnum = $sentnum;
-        }
-    }
-    $feats->{'coref^links_intra_perc_links'} = ceil($num_links ? 100*$intrasent_links/$num_links : 0);
-
-    my $avg_lemmas_per_len = 0;
-    my $avg_sempos_per_len = 0;
-    foreach my $chain (@chains) {
-        my $lemmas_per_len = scalar(uniq map {$_->t_lemma} @$chain)/scalar(@$chain);
-        my $sempos_per_len = scalar(uniq map {$_->gram_sempos // "undef"} @$chain)/scalar(@$chain);
-        $avg_lemmas_per_len += $lemmas_per_len;
-        $avg_sempos_per_len += $sempos_per_len;
-    }
-    $avg_lemmas_per_len = scalar(@chains) ? $avg_lemmas_per_len / scalar(@chains) : 0;
-    $avg_sempos_per_len = scalar(@chains) ? $avg_sempos_per_len / scalar(@chains) : 0;
-    $feats->{'coref^avg_lemma_variety'} = ceil(100*$avg_lemmas_per_len);
-    $feats->{'coref^avg_sempos_variety'} = ceil(100*$avg_sempos_per_len);
-
-    return $feats;
-}
+  return 1;
+} # is_in_first_or_second_position
 
 
 
@@ -838,11 +1570,12 @@ Extracts features from the data for evaluation of text coherence using the WEKA 
 
 =head1 AUTHOR
 
+Michal Novák <mnovak@ufal.mff.cuni.cz>
 Jiří Mírovský <mirovsky@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2016 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2018 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
