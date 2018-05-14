@@ -14,6 +14,7 @@ sub process_atree
     my $root = shift;
     $self->fix_morphology($root);
     $self->regenerate_upos($root);
+    $self->fix_relations($root);
     # Coordinating conjunctions and punctuation should now be attached to the following conjunct.
     # The Coordination phrase class already outputs the new structure, hence simple
     # conversion to phrases and back should do the trick.
@@ -58,6 +59,27 @@ sub regenerate_upos
     foreach my $node (@nodes)
     {
         $node->set_tag($node->iset()->get_upos());
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fixes known issues in dependency relations.
+#------------------------------------------------------------------------------
+sub fix_relations
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants({ordered => 1});
+    foreach my $node (@nodes)
+    {
+        my $deprel = $node->deprel();
+        if($deprel eq 'numc')
+        {
+            $deprel = 'flat';
+            $node->set_deprel($deprel);
+        }
     }
 }
 
