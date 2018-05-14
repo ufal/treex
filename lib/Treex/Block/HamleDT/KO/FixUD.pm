@@ -83,6 +83,14 @@ sub fix_relations
         {
             $deprel = 'compound:lvc';
         }
+        elsif($deprel eq 'obl:poss')
+        {
+            $deprel = 'obl';
+        }
+        elsif($deprel eq 'pref')
+        {
+            $deprel = 'det';
+        }
         $node->set_deprel($deprel);
     }
 }
