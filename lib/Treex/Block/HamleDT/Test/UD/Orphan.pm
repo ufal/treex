@@ -13,7 +13,7 @@ sub process_atree
         if($node->is_verb())
         {
             # For gapping it is necessary that the first verb has at least two arguments or adjuncts.
-            my @arguments = grep {$_->deprel() =~ m/^(nsubj|i?obj|obl|advmod|xcomp)(:$)/} ($node->children());
+            my @arguments = grep {$_->deprel() =~ m/^(nsubj|i?obj|obl|advmod|xcomp)(:|$)/} ($node->children());
             my @nconjuncts = grep {$_->deprel() eq 'conj' && $_->is_noun()} ($node->children());
             if(scalar(@arguments)>=2 && scalar(@nconjuncts)>=1)
             {
