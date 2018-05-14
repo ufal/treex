@@ -3,6 +3,7 @@ use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Common;
 use utf8;
+use Treex::Tool::PhraseBuilder::StanfordToUD;
 extends 'Treex::Core::Block';
 
 
@@ -13,6 +14,16 @@ sub process_atree
     my $root = shift;
     $self->fix_morphology($root);
     $self->regenerate_upos($root);
+    # Coordinating conjunctions and punctuation should now be attached to the following conjunct.
+    # The Coordination phrase class already outputs the new structure, hence simple
+    # conversion to phrases and back should do the trick.
+    my $builder = new Treex::Tool::PhraseBuilder::StanfordToUD
+    (
+        'prep_is_head'           => 0,
+        'coordination_head_rule' => 'first_conjunct'
+    );
+    my $phrase = $builder->build($root);
+    $phrase->project_dependencies();
 }
 
 
