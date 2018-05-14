@@ -78,8 +78,12 @@ sub fix_relations
         if($deprel eq 'numc')
         {
             $deprel = 'flat';
-            $node->set_deprel($deprel);
         }
+        elsif($deprel eq 'precomp')
+        {
+            $deprel = 'compound:lvc';
+        }
+        $node->set_deprel($deprel);
     }
 }
 
