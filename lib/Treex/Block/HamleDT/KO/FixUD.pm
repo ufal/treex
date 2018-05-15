@@ -55,8 +55,8 @@ sub fix_morphology
                 push(@nodes_to_delete, $node);
             }
         }
-        # Set lemma of punctuation and numbers to the form.
-        if($node->form() =~ m/^[\d\pP]+$/)
+        # Set lemma of punctuation, numbers and remaining particles to the form.
+        if($node->form() =~ m/^[\d\pP]+$/ || $node->is_particle())
         {
             $node->set_lemma($node->form());
         }
