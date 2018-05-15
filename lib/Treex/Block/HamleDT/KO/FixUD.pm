@@ -41,7 +41,7 @@ sub fix_morphology
     foreach my $node (@nodes)
     {
         # Rejoin nouns with case-marking postpositions.
-        if($node->is_particle() && $node->conll_pos() eq 'CM' && scalar($node->children())==0)
+        if($node->is_particle() && scalar($node->children())==0)
         {
             my $parent = $node->parent();
             if($parent->is_noun() && $parent->ord() == $node->ord()-1 && $parent->no_space_after())
@@ -50,7 +50,7 @@ sub fix_morphology
                 $parent->set_lemma($parent->form());
                 $parent->set_form($parent->form().$node->form());
                 $parent->set_no_space_after($node->no_space_after());
-                $parent->set_conll_pos($parent->conll_pos().'+CM');
+                $parent->set_conll_pos($parent->conll_pos().'+'.$node->conll_pos());
                 $parent->iset()->merge_hash_soft($node->iset()->get_hash());
                 push(@nodes_to_delete, $node);
             }
