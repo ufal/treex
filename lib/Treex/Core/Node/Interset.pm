@@ -361,38 +361,86 @@ method match_iset => sub {
     return 1;
 };
 
+#------------------------------------------------------------------------------
 # Goal: convert multivalues from arrays to strings:
 # e.g. iset/gender = ["fem", "neut"] becomes iset/gender = "fem|neut"
 # to enable storing in a PML file.
-method serialize_iset => sub {
+# Features tagset and other are not serialized. If they are set, copy them as
+# wild attributes so that they can be stored.
+#------------------------------------------------------------------------------
+method serialize_iset => sub
+{
     my ($self) = @_;
-    foreach my $feature ( $self->$interset_attribute->get_nonempty_features() ) {
+    foreach my $feature ( $self->$interset_attribute->get_nonempty_features() )
+    {
         my $value = $self->get_iset($feature);
-        unless ( $value eq '' ) {
+        unless ( $value eq '' )
+        {
             $self->set_attr("$interset_attribute/$feature", $value);
         }
+    }
+    if ( defined($self->$interset_attribute->{other}) && ref($self->$interset_attribute->{other}) eq 'HASH' )
+    {
+        # We assume that 'other' is a simple set of attribute-value pairs and we create a shallow copy.
+        my $i = $self->$interset_attribute;
+        my $w = $self->wild();
+        my @keys = keys(%{$i->{other}});
+        foreach my $k (@keys)
+        {
+            $w->{isetother}{$k} = $i->{other}{$k};
+        }
+        # We must also save the original tagset identifier. Without it the values in other are meaningless.
+        if($i->tagset() ne '')
+        {
+            $w->{isettagset} = $i->tagset();
+        }
+    }
+    else
+    {
+        delete($self->wild()->{isetother});
     }
     return;
 };
 
-
-
+#------------------------------------------------------------------------------
 # Goal: convert multivalues from strings to arrays:
 # e.g. iset/gender = "fem|neut" becomes iset/gender = ["fem", "neut"]
-method deserialize_iset => sub {
+# Features tagset and other are not serialized with Interset but they may have
+# been serialized as wild attributes.
+#------------------------------------------------------------------------------
+method deserialize_iset => sub
+{
     my ($self) = @_;
-
-    if (! $Treex::Core::Config::running_in_tred) {
+    if (! $Treex::Core::Config::running_in_tred)
+    {
         # iset
         # ttred does not like arrayrefs so only unserilaize if not in ttred
-        if ($self->$interset_attribute) {
+        if ($self->$interset_attribute)
+        {
             # this looks a bit weird,
             # but it ensures correct deserialization of multivalues,
             # i.e. turning e.g. "fem|neut" into ["fem", "neut"]
             $self->set_iset($self->$interset_attribute);
+            if (exists($self->wild()->{isetother}) && ref($self->wild()->{isetother}) eq 'HASH')
+            {
+                # We assume that 'other' is a simple set of attribute-value pairs and we create a shallow copy.
+                my $i = $self->$interset_attribute;
+                my $w = $self->wild();
+                delete($i->{other}) if(exists($i->{other}));
+                my @keys = keys(%{$w->{isetother}});
+                foreach my $k (@keys)
+                {
+                    $i->{other}{$k} = $w->{isetother}{$k};
+                }
+                delete($self->wild()->{isetother});
+            }
+            # We must also retreive the original tagset identifier. Without it the values in other are meaningless.
+            if (exists($self->wild()->{isettagset}))
+            {
+                $self->$interset_attribute->set_tagset($self->wild()->{isettagset});
+            }
         }
     }
-
     # iset_dump
     # (backward compatibility for files
     # created when iset_dump was used to store iset)
@@ -405,7 +453,6 @@ method deserialize_iset => sub {
             $self->serialize_iset();
         }
     }
-
     return;
 };
 

@@ -208,6 +208,7 @@ sub BUILD {
                         $correct_ord++;
                     }
                     $node->deserialize_wild;
+                    # Interset, if present, must be deserialized after wild because it relies on wild to take care of the 'other' feature.
                     if ( $node->DOES('Treex::Core::Node::Interset') ) {
                         $node->deserialize_iset;
                     }
@@ -559,10 +560,11 @@ sub _serialize_all_wild {
         $bundle->serialize_wild;
         foreach my $bundlezone ( $bundle->get_all_zones ) {
             foreach my $node ( map { $_->get_descendants( { add_self => 1 } ) } $bundlezone->get_all_trees ) {
-                $node->serialize_wild;
+                # Interset, if present, must be serialized before wild because it relies on wild to take care of the 'other' feature.
                 if ( $node->DOES('Treex::Core::Node::Interset') ) {
                     $node->serialize_iset;
                 }
+                $node->serialize_wild;
             }
         }
     }
