@@ -133,7 +133,10 @@ sub fix_morphology
         if($node->is_particle() && scalar($node->children())==0)
         {
             my $parent = $node->parent();
-            if($parent->is_noun() && $parent->ord() == $node->ord()-1 && $parent->no_space_after())
+            # Do not check that the parent is noun. There are similar patterns
+            # with adjectives, gerunds etc.
+            if(#$parent->is_noun() &&
+                $parent->ord() == $node->ord()-1 && $parent->no_space_after())
             {
                 $parent->set_misc_attr('MSeg', $parent->form().'-'.$node->form());
                 $parent->set_lemma($parent->form());
