@@ -41,7 +41,7 @@ sub fix_morphology
     foreach my $node (@nodes)
     {
         # Rejoin nouns with case-marking postpositions.
-        if($node->is_particle() && $node->conll_pos() eq 'CM')
+        if($node->is_particle() && $node->conll_pos() eq 'CM' && scalar($node->children())==0)
         {
             my $parent = $node->parent();
             if($parent->is_noun() && $parent->ord() == $node->ord()-1 && $parent->no_space_after())
