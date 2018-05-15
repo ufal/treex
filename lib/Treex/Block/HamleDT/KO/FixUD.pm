@@ -30,18 +30,34 @@ sub process_atree
 
 
 #------------------------------------------------------------------------------
-# Fixes known issues in features.
+# Fixes known issues in features. For Korean, this also means retokenization!
 #------------------------------------------------------------------------------
 sub fix_morphology
 {
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants({ordered => 1});
+    my @nodes_to_delete;
     foreach my $node (@nodes)
     {
-        my $form = $node->form();
-        my $iset = $node->iset();
-        ###!!! PLACEHOLDER
+        # Rejoin nouns with case-marking postpositions.
+        if($node->is_particle() && $node->conll_pos() eq 'CM')
+        {
+            my $parent = $node->parent();
+            if($parent->is_noun() && $parent->ord() == $node->ord()-1 && $parent->no_space_after())
+            {
+                $parent->set_form($parent->form().$node->form());
+                $parent->set_no_space_after($node->no_space_after());
+                $parent->set_conll_pos($parent->conll_pos().'+CM');
+                $parent->iset()->merge_hash_hard($node->iset()->get_hash());
+                $parent->set_misc_attr('MSeg', $parent->form().'-'.$node->form());
+                push(@nodes_to_delete, $node);
+            }
+        }
+    }
+    foreach my $node (@nodes_to_delete)
+    {
+        $node->remove(); # will take care of renumbering ords of the other nodes
     }
 }
 
