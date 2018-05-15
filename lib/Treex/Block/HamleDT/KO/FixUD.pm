@@ -47,12 +47,18 @@ sub fix_morphology
             if($parent->is_noun() && $parent->ord() == $node->ord()-1 && $parent->no_space_after())
             {
                 $parent->set_misc_attr('MSeg', $parent->form().'-'.$node->form());
+                $parent->set_lemma($parent->form());
                 $parent->set_form($parent->form().$node->form());
                 $parent->set_no_space_after($node->no_space_after());
                 $parent->set_conll_pos($parent->conll_pos().'+CM');
                 $parent->iset()->merge_hash_hard($node->iset()->get_hash());
                 push(@nodes_to_delete, $node);
             }
+        }
+        # Set lemma of punctuation and numbers to the form.
+        if($node->form() =~ m/^[\d\pP]+$/)
+        {
+            $node->set_lemma($node->form());
         }
     }
     foreach my $node (@nodes_to_delete)
