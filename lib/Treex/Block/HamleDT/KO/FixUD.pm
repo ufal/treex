@@ -51,7 +51,7 @@ sub fix_morphology
                 $parent->set_form($parent->form().$node->form());
                 $parent->set_no_space_after($node->no_space_after());
                 $parent->set_conll_pos($parent->conll_pos().'+CM');
-                $parent->iset()->merge_hash_hard($node->iset()->get_hash());
+                $parent->iset()->merge_hash_soft($node->iset()->get_hash());
                 push(@nodes_to_delete, $node);
             }
         }
