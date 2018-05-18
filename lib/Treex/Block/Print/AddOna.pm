@@ -1,7 +1,6 @@
 package Treex::Block::Print::AddOna;
 use Moose;
 use Treex::Core::Common;
-#use Treex::Tool::Lexicon::CS;
 use Treex::Tool::Lexicon::CS::PersonalRoles;
 extends 'Treex::Block::Write::BaseTextWriter';
 
@@ -15,11 +14,6 @@ sub process_ttree {
             and $tnode->functor eq 'ACT'
             and ($tnode->get_parent->gram_tense || '') =~ /sim|post/
             and $tnode->get_parent->gram_verbmod eq 'ind'
-            # Without restricting to dicendi verbs there were many cases
-            # where the antecedent was actually feminine-gender non-human
-            # "e.g. vláda"), thus "it" rather than "she" should be used in the translation.
-            #and Treex::Tool::Lexicon::CS::is_dicendi_verb($tnode->get_parent->t_lemma)
-            and $self->is_person($tnode->get_parent)
             ){
 
             # Don't add "ona" if the antecedent is not in a different sentence.
@@ -31,6 +25,9 @@ sub process_ttree {
               $iter = $antec;
             }
             next if !$antec or $antec->root == $tnode->root;
+
+            # Filter out non-human feminine nouns (e.g. "vláda", "zpráva").
+            next if !$self->is_person($antec);
 
             my $verb = $tnode->get_parent->get_lex_anode or next;
             my $ona = $verb->create_child(form=>'ona');
@@ -57,10 +54,7 @@ sub is_person{
     my ($self, $tnode) = @_;
     # Unfortunatelly, $node->is_name_of_person is not filled in the Czech t-analysis.
     return 1 if Treex::Tool::Lexicon::CS::PersonalRoles::is_personal_role($tnode->t_lemma);
-    my $anode = $tnode->get_lex_anode() or return 0;
-    return 1 if $anode->lemma =~ /;Y$/;
-    #my $n_node = $tnode->get_n_node() or return 0;
-    my $n_node = $anode->n_node or return 0;
+    my $n_node = $tnode->get_n_node() or return 0;
     return 1 if $n_node->ne_type =~ /^p/;
     return 0;
 }
