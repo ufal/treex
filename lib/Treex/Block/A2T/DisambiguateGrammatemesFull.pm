@@ -19,7 +19,7 @@ sub select_most_common_value {
         }
     }
     my ($best_value) = sort {$counter{$b} <=> $counter{$a}} keys %counter;
-    next if !$best_value;
+    return if !$best_value;
     foreach my $tnode (@$chain){
         $tnode->set_attr("gram/$gram", $best_value);
     }
@@ -28,7 +28,7 @@ sub select_most_common_value {
 
 sub disambiguate_gender_without_coref {
     my ($self, $tnode) = @_;
-    
+
     my $gender = $tnode->gram_gender;
     return if (!defined $gender);
     # do nothing if there is no ambiguity
@@ -89,7 +89,7 @@ Unlike Treex::Block::A2T::DisambiguateGrammatemes, this block uses the whole cor
 to select the most common value of gender and number (except "nr" and "inher"),
 thus even nodes in following sentences may help to resolve the ambiguity.
 
-The block disambiguates multi-values of number and gender grammatemes of anaphoric 
+The block disambiguates multi-values of number and gender grammatemes of anaphoric
 nodes by copying these values from its antecedent.
 By default, the 'inher' values are also replaced by their respective counterparts
 from the antecedent.
