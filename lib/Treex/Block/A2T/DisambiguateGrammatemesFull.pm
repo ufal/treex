@@ -8,11 +8,13 @@ extends 'Treex::Core::Block';
 
 has 'gender' => ( is => 'ro', isa => 'Bool', default => 1 );
 has 'number' => ( is => 'ro', isa => 'Bool', default => 1 );
+has 'delete_coref_if_incompatible'  => ( is => 'ro', isa => 'Bool', default => 1 );
 
 sub select_most_common_value {
     my ($self, $gram, $chain) = @_;
     my %counter;
     foreach my $tnode (@$chain) {
+        next if ref $tnode eq 'Treex::Core::Node::Deleted';
         my $g = $tnode->get_attr("gram/$gram") or next;
         foreach my $value (grep {!/nr|inher/} split /\|/, $g){
             $counter{$value}++;
@@ -21,7 +23,20 @@ sub select_most_common_value {
     my ($best_value) = sort {$counter{$b} <=> $counter{$a}} keys %counter;
     return if !$best_value;
     foreach my $tnode (@$chain){
-        $tnode->set_attr("gram/$gram", $best_value);
+        next if ref $tnode eq 'Treex::Core::Node::Deleted';
+        my $g = $tnode->get_attr("gram/$gram");
+        if (!$g or $g =~ /$best_value/ or $g eq 'nr' or $g eq 'inher' or !$self->delete_coref_if_incompatible){
+            $tnode->set_attr("gram/$gram", $best_value);
+        } else {
+            if ($tnode->formeme eq 'drop'){
+                $tnode->remove();
+            } else {
+                $tnode->remove_coref_nodes($tnode->get_coref_text_nodes);
+                foreach my $n ($tnode->get_referencing_nodes('coref_text.rf')){
+                    $n->remove_coref_nodes($tnode);
+                }
+            }
+        }
     }
     return;
 }
