@@ -3,6 +3,7 @@ package Treex::Block::Align::Annot::Load;
 use Moose;
 use Treex::Core::Common;
 use Treex::Tool::Align::Utils;
+use List::MoreUtils qw/any/;
 use Data::Printer;
 
 extends 'Treex::Core::Block';
@@ -238,12 +239,14 @@ sub process_document {
                 $node->wild->{align_info}{$trg_lang} = '__UNMATCHED__ ' . $node->wild->{align_info}{$trg_lang};
             }
             _add_align($src_nodes, $trg_nodes, $align_type);
+            _delete_old_align_info($node, $src_nodes, $trg_nodes);
             
             # in the old format, alignment between a-nodes can be specified in t-nodes
             if (@{$src_rec->{anodes_ids}} || @{$trg_rec->{anodes_ids}}) {
                 my $src_anodes = _find_anodes_by_id($doc, $src_rec, $src_nodes);
                 my $trg_anodes = _find_anodes_by_id($doc, $trg_rec, $trg_nodes);
                 _add_align($src_anodes, $trg_anodes, $align_type);
+                _delete_old_align_info($node, $src_anodes, $trg_anodes);
             }
         }
     }
@@ -277,6 +280,22 @@ sub _set_align_info {
         }
     }
     return \%annotated_langs;
+}
+
+sub _delete_old_align_info {
+    my ($info_node, @nodelists) = @_;
+    foreach my $nodelist (@nodelists) {
+        if (!any {$_ == $info_node} @$nodelist) {
+            foreach my $node (@$nodelist) {
+                if (defined $node->wild->{align_info}) {
+                    log_warn sprintf "Deleting old info for %s:\n%s",
+                        $node->get_address,
+                        (join "\n", map {$_ ." => ".$node->wild->{align_info}{$_}} sort keys %{$node->wild->{align_info}});
+                    delete $node->wild->{align_info};
+                }
+            }
+        }
+    }
 }
 
 sub _add_align {
