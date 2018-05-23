@@ -143,7 +143,7 @@ sub print_sentences_tnodes {
         print {$self->_file_handle} uc($langs->[$i]).":\t" . _linearize_atree($zones->[$i], \@hlanodes, 1) . "\n";
     }
     for (my $i = 0; $i < @$langs; $i++) {
-        print {$self->_file_handle} uc($langs->[$i])."_T:\t" . _linearize_ttree_structured($zones->[$i], $nodes->{$langs->[$i]}) . "\n";
+        print {$self->_file_handle} uc($langs->[$i])."_TT:\t" . _linearize_ttree_structured($zones->[$i], $nodes->{$langs->[$i]}) . "\n";
     }
 }
 
