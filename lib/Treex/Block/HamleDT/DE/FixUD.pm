@@ -115,7 +115,9 @@ sub fix_morphology
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
-        $self->fix_mwt_capitalization($node);
+        ###!!! Temporarily block fixing mwt capitalization because we messed up Adriane's contribution and we must revert it.
+        ###!!! It is no longer the correct solution to capitalize the surface token and leave the first part capitalized.
+        #$self->fix_mwt_capitalization($node);
         my $form = $node->form();
         my $lemma = $node->lemma();
         my $iset = $node->iset();
