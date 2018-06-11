@@ -115,9 +115,7 @@ sub fix_morphology
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
-        ###!!! Temporarily block fixing mwt capitalization because we messed up Adriane's contribution and we must revert it.
-        ###!!! It is no longer the correct solution to capitalize the surface token and leave the first part capitalized.
-        #$self->fix_mwt_capitalization($node);
+        $self->fix_mwt_capitalization($node);
         my $form = $node->form();
         my $lemma = $node->lemma();
         my $iset = $node->iset();
@@ -190,6 +188,12 @@ sub fix_mwt_capitalization
         {
             $fform =~ s/^(.)/\u$1/;
             $node->set_fused_form($fform);
+        }
+        # Occasionally the problem occurs also in the middle of the sentence, e.g. after punctuation that might terminate a sentence but does not here.
+        # In such cases we want to lowercase the first part.
+        elsif($node->get_fusion_start() == $node && is_capitalized($pform) && is_lowercase($fform))
+        {
+            $node->set_form(lc($pform));
         }
     }
 }
