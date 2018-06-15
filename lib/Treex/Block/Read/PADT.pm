@@ -307,12 +307,11 @@ override '_convert_atree' => sub
                 my $node_ids = join(',', @{$wtn->{$wrf}});
                 log_warn("Word '$aform' ($rform) [$wrf] lacks morphology but is linked from $n nodes [$node_ids].");
                 # Check whether there are alternative analyses in the element <with>.
+                # The attribute 'w' is of type Treex::PML::Node, and <with> groups its child nodes.
                 my $w = $pml_node->attr('w');
-                ###!!! Attribute 'w' is of type Treex::PML::Node.
-                ###!!! The element <with> represents the list of its child nodes.
                 my @analyses = $w->children();
-                my $children = join(', ', map {$_->attr('form')} (@analyses));
-                log_warn("Children $children");
+                my $m = scalar(@analyses);
+                log_warn("Found $m possible analyses.");
             }
             $treex_node->set_form($aform);
             $treex_node->set_attr('translit', $rform);
