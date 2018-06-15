@@ -308,7 +308,8 @@ override '_convert_atree' => sub
                 log_warn("Word '$aform' ($rform) [$wrf] lacks morphology but is linked from $n nodes [$node_ids].");
                 # Check whether there are alternative analyses in the element <with>.
                 my $analyses = $pml_node->attr('w');
-                if(defined($analyses) && scalar(@{$analyses}) > 0)
+                log_warn("Attribute w REF = ".ref($analyses));
+                if(0 && defined($analyses) && scalar(@{$analyses}) > 0)
                 {
                     my $m = scalar(@{$analyses});
                     log_warn("There are $m possible morphological analyses.");
