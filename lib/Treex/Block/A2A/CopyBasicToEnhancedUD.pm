@@ -75,7 +75,10 @@ sub add_enhanced_shared_dependent_of_coordination
 {
     my $self = shift;
     my $node = shift;
-    if($node->is_shared_modifier())
+    # Exclude shared "modifiers" whose deprel is 'cc'. They probably just help
+    # delimit the coordination. (In nested coordination "A - B and C - D", the
+    # conjunction 'and' would come out as a shared 'cc' dependent of 'C' and 'D'.)
+    if($node->is_shared_modifier() && $node->deprel() !~ m/^cc(:|$)/)
     {
         ###!!! I do not know whether all conjuncts in a coordinate shared dependent have the flag set!
         if($node->deprel() =~ m/^conj(:|$)/)
