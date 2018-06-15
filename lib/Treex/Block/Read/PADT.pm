@@ -309,6 +309,8 @@ override '_convert_atree' => sub
                 # Check whether there are alternative analyses in the element <with>.
                 my $analyses = $pml_node->attr('w');
                 log_warn("Attribute w REF = ".ref($analyses));
+                my $keys = join(',', sort(keys(%{$analyses})));
+                log_warn("Keys = $keys");
                 if(0 && defined($analyses) && scalar(@{$analyses}) > 0)
                 {
                     my $m = scalar(@{$analyses});
