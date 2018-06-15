@@ -12,7 +12,8 @@ has '+schema_dir' => ( builder => '_build_schema_dir', lazy_build => 0 );
 has '+_layers' => ( builder => '_build_layers', lazy_build => 1 );
 has '+_file_suffix' => ( default => '\.syntax\.pml(\.gz)?$' );
 has language => ( isa => 'Treex::Type::LangCode', is => 'ro', required => 1, default => 'ar' );
-has '_no_space_after' => ( isa => 'HashRef', is => 'rw', default => sub { {} }, documentation => 'hash word id => boolean space after wor no=1/yes=0|undef' );
+has '_no_space_after' => ( isa => 'HashRef', is => 'rw', default => sub { {} }, documentation => 'hash word id => boolean space after word no=1/yes=0|undef' );
+has '_word_to_nodes' => ( isa => 'HashRef', is => 'rw', default => sub { {} }, documentation => 'hash word id => list of nodes corresponding to the word' );
 
 sub _build_schema_dir
 {
@@ -109,6 +110,8 @@ override '_convert_all_trees' => sub
     # Erase the _no_space_after hash before processing the new document.
     my $nsa = $self->_no_space_after();
     %{$nsa} = ();
+    my $wtn = $self->_word_to_nodes();
+    %{$wtn} = ();
     # For each unit (sentence), loop over tokens and check whether they are separated by whitespace.
     for(my $i = 0; $i < $nunits; $i++)
     {
@@ -151,6 +154,7 @@ override '_convert_all_trees' => sub
         my $bundle = $document->create_bundle();
         my $zone = $bundle->create_zone($self->language(), $self->selector());
         my $aroot = $zone->create_atree();
+        $self->collect_wtn_references($pmldoc->{syntax}->tree($tree_number));
         $self->_convert_atree($pmldoc->{syntax}->tree($tree_number), $aroot);
         my $unit = $units[$tree_number];
         if(defined($unit))
@@ -214,6 +218,29 @@ sub tag2cpos
 
 
 #------------------------------------------------------------------------------
+# Recursively collects references between syntactic nodes and surface words.
+#------------------------------------------------------------------------------
+sub collect_wtn_references
+{
+    my $self = shift;
+    my $pml_node = shift;
+    my $wtn = $self->_word_to_nodes();
+    my $wrf = $pml_node->attr('w/w.rf');
+    if(defined($wrf))
+    {
+        $wrf =~ s/^w\#//;
+        push(@{$wtn->{$wrf}}, $pml_node->attr('id'));
+    }
+    # Recursively visit descendant nodes.
+    foreach my $pml_child ($pml_node->children())
+    {
+        $self->collect_wtn_references($pml_child);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Converts an a-tree from the PADT PML structure to the Treex structure.
 # Recursive.
 #------------------------------------------------------------------------------
@@ -223,6 +250,7 @@ override '_convert_atree' => sub
     my $pml_node = shift; # where to copy attributes from
     my $treex_node = shift; # where to copy attributes to
     my $nsa = $self->_no_space_after();
+    my $wtn = $self->_word_to_nodes();
     # The following attributes are present for all nodes including the root.
     foreach my $attr_name ('id', 'ord', 'afun')
     {
@@ -267,6 +295,18 @@ override '_convert_atree' => sub
         if(!defined($pml_node->attr('m')))
         {
             my $rform = Encode::Arabic::Buckwalter::encode('buckwalter', $aform);
+            # It is possible that several nodes point to the same word.
+            # It means that the surface word should be split to several syntactic words.
+            # If disambiguated morphology was available, we would see the split.
+            # If we do not see the split, we are about to create multiple copies of the entire surface word, which we do not want to do.
+            # But it is also possible that several splits are available and we just do not have the information which one is correct.
+            # (Example: HYT_ARB_20010912.0066, p7u1, first surface word corresponds to three syntactic nodes.)
+            if(defined($wrf) && defined($wtn->{$wrf}) && scalar(@{$wtn->{$wrf}}) > 1)
+            {
+                my $n = scalar(@{$wtn->{$wrf}});
+                my $node_ids = join(',', @{$wtn->{$wrf}});
+                log_warn("The word '$aform' ($rform) [$wrf] lacks morphological annotation but is referenced from $n syntactic nodes [$node_ids].");
+            }
             $treex_node->set_form($aform);
             $treex_node->set_attr('translit', $rform);
             $treex_node->set_lemma($aform);
