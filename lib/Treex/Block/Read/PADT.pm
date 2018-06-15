@@ -305,7 +305,14 @@ override '_convert_atree' => sub
             {
                 my $n = scalar(@{$wtn->{$wrf}});
                 my $node_ids = join(',', @{$wtn->{$wrf}});
-                log_warn("The word '$aform' ($rform) [$wrf] lacks morphological annotation but is referenced from $n syntactic nodes [$node_ids].");
+                log_warn("Word '$aform' ($rform) [$wrf] lacks morphology but is linked from $n nodes [$node_ids].");
+                # Check whether there are alternative analyses in the element <with>.
+                my $analyses = $pml_node->attr('w/with');
+                if(defined($analyses) && scalar(@{$analyses}) > 0)
+                {
+                    my $m = scalar(@{$analyses});
+                    log_warn("There are $m possible morphological analyses.");
+                }
             }
             $treex_node->set_form($aform);
             $treex_node->set_attr('translit', $rform);
