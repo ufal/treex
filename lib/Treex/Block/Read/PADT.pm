@@ -312,6 +312,17 @@ override '_convert_atree' => sub
                 my @analyses = $w->children();
                 my $m = scalar(@analyses);
                 log_warn("Found $m possible analyses.");
+                # We do not know which analysis is best so we will just pick the first one.
+                # However, we will prefer analysis where the number of tokens matches our number of nodes.
+                @analyses = grep {scalar($_->children())==$n} (@analyses);
+                $m = scalar(@analyses);
+                if($m > 0)
+                {
+                    my @tokens = map {$_->attr('form')} ($analyses[0]->children());
+                    my $tokens = join(' ', @tokens);
+                    my $nt = scalar(@tokens);
+                    log_warn("Selected analysis has $nt tokens: $tokens");
+                }
             }
             $treex_node->set_form($aform);
             $treex_node->set_attr('translit', $rform);
