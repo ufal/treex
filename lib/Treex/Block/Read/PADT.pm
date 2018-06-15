@@ -313,11 +313,6 @@ override '_convert_atree' => sub
                 my @analyses = $w->children();
                 my $children = join(', ', map {$_->attr('form')} (@analyses));
                 log_warn("Children $children");
-                if(0 && defined($analyses) && scalar(@{$analyses}) > 0)
-                {
-                    my $m = scalar(@{$analyses});
-                    log_warn("There are $m possible morphological analyses.");
-                }
             }
             $treex_node->set_form($aform);
             $treex_node->set_attr('translit', $rform);
