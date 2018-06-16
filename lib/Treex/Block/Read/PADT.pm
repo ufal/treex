@@ -13,7 +13,7 @@ has '+_layers' => ( builder => '_build_layers', lazy_build => 1 );
 has '+_file_suffix' => ( default => '\.syntax\.pml(\.gz)?$' );
 has language => ( isa => 'Treex::Type::LangCode', is => 'ro', required => 1, default => 'ar' );
 has '_no_space_after' => ( isa => 'HashRef', is => 'rw', default => sub { {} }, documentation => 'hash word id => boolean space after word no=1/yes=0|undef' );
-has '_word_to_nodes' => ( isa => 'HashRef', is => 'rw', default => sub { {} }, documentation => 'hash word id => list of nodes corresponding to the word' );
+has '_word_to_nodes' => ( isa => 'HashRef', is => 'rw', default => sub { {} }, documentation => 'hash word id => record, its main item is the list of nodes corresponding to the word' );
 
 sub _build_schema_dir
 {
@@ -236,7 +236,7 @@ sub collect_wtn_references
         );
         log_warn("Undefined node id") if(!defined($node_record{id}));
         log_warn("Undefined node ord") if(!defined($node_record{ord}));
-        push(@{$wtn->{$wrf}}, \%node_record);
+        push(@{$wtn->{$wrf}{nodes}}, \%node_record);
     }
     # Recursively visit descendant nodes.
     foreach my $pml_child ($pml_node->children())
@@ -307,18 +307,20 @@ override '_convert_atree' => sub
             # If we do not see the split, we are about to create multiple copies of the entire surface word, which we do not want to do.
             # But it is also possible that several splits are available and we just do not have the information which one is correct.
             # (Example: HYT_ARB_20010912.0066, p7u1, first surface word corresponds to three syntactic nodes.)
-            if(defined($wrf) && defined($wtn->{$wrf}) && scalar(@{$wtn->{$wrf}}) > 1)
+            if(defined($wrf) && defined($wtn->{$wrf}{nodes}) && scalar(@{$wtn->{$wrf}{nodes}}) > 1)
             {
-                my @fellow_nodes = sort {$a->{ord} <=> $b->{ord}} (@{$wtn->{$wrf}});
+                my @fellow_nodes = sort {$a->{ord} <=> $b->{ord}} (@{$wtn->{$wrf}{nodes}});
+                my $warn = !$wtn->{$wrf}{warned};
+                $wtn->{$wrf}{warned} = 1;
                 my $n = scalar(@fellow_nodes);
                 my $node_ids = join(', ', map {$_->{id}} (@fellow_nodes));
-                log_warn("Word '$aform' ($rform) [$wrf] lacks morphology but is linked from $n nodes [$node_ids].");
+                log_warn("Word '$aform' ($rform) [$wrf] lacks morphology but is linked from $n nodes [$node_ids].") if($warn);
                 # Check whether there are alternative analyses in the element <with>.
                 # The attribute 'w' is of type Treex::PML::Node, and <with> groups its child nodes.
                 my $w = $pml_node->attr('w');
                 my @analyses = $w->children();
                 my $m = scalar(@analyses);
-                log_warn("Found $m possible analyses.");
+                log_warn("Found $m possible analyses.") if($warn);
                 # We do not know which analysis is best so we will just pick the first one.
                 # However, we will prefer analysis where the number of tokens matches our number of nodes.
                 @analyses = grep {scalar($_->children())==$n} (@analyses);
@@ -328,7 +330,7 @@ override '_convert_atree' => sub
                     my @tokens = map {$_->attr('form')} ($analyses[0]->children());
                     my $tokens = join(' ', @tokens);
                     my $nt = scalar(@tokens);
-                    log_warn("Selected analysis has $nt tokens: $tokens");
+                    log_warn("Selected analysis has $nt tokens: $tokens") if($warn);
                     # Which token corresponds to the current node?
                     if(0)
                     {
