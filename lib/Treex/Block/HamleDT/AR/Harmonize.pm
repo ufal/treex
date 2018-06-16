@@ -121,7 +121,8 @@ sub fix_morphology
             @misc = $self->add_misc('Root', $wild->{root}, @misc);
         }
         # For debugging purposes, save the input form as well.
-        if(defined($wild->{PADT_input_form}))
+        ###!!! now turned off
+        if(0 && defined($wild->{PADT_input_form}))
         {
             @misc = $self->add_misc('PADTInputForm', $wild->{PADT_input_form}, @misc);
         }
