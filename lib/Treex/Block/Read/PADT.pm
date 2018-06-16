@@ -504,7 +504,7 @@ sub copy_m_token_to_treex_node
     my $mtoken = shift;
     my $node = shift;
     my $input_form = $mtoken->attr('form');
-    $node->set_lemma($mtoken->attr('cite/form'));
+    my $input_lemma = $mtoken->attr('cite/form');
     $node->set_tag($mtoken->attr('tag'));
     # Transliterate form and lemma to vocalized Arabic script.
     # (The data contain words and tokens, whereas tokens are subunits of words.
@@ -548,11 +548,26 @@ sub copy_m_token_to_treex_node
         # For debugging purposes, save the input form as well.
         $node->wild()->{PADT_input_form} = $input_form;
     }
-    if(defined($node->lemma()))
+    if(defined($input_lemma))
     {
-        my $alemma = $self->elixir_internal_to_arabic($node->lemma());
-        my $rlemma = $self->elixir_internal_to_romanized($node->lemma());
-        $node->set_lemma($alemma);
+        my $vlemma;
+        my $rlemma;
+        if($input_lemma =~ m/^[-AbtghdrzsfqklmnwyYT\`\._\^\'\|auiUIN]+$/) # '`
+        {
+            $vlemma = $self->elixir_internal_to_arabic($input_lemma);
+            $rlemma = $self->elixir_internal_to_romanized($input_lemma);
+        }
+        elsif($input_form =~ m/^[AbtvjHxd\*rzs\$SDTZEgfqklmnhwyY\'><\&\}\|\{\`auiFNK~op_]+$/) #'
+        {
+            $vlemma = $self->buckwalter_to_arabic($input_lemma);
+            $rlemma = $input_lemma;
+        }
+        else # Arabic script, possibly vocalized? Or something unexpected.
+        {
+            $vlemma = $input_lemma;
+            $rlemma = $self->arabic_to_buckwalter($input_lemma);
+        }
+        $node->set_lemma($vlemma);
         $node->set_ltranslit($rlemma);
     }
     # Copy English glosses from the reflex element.
