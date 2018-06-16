@@ -291,6 +291,7 @@ override '_convert_atree' => sub
         if(defined($aform))
         {
             $treex_node->wild()->{aform} = $aform;
+            $treex_node->wild()->{part_of_surface_form} = $aform;
         }
         # Attributes from the morphological layer.
         # Note that the *.morpho.pml file may contain multiple morphological analyses per surface word.
