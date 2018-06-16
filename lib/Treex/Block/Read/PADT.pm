@@ -346,8 +346,13 @@ override '_convert_atree' => sub
                     {
                         # The surface aform that we set above is no longer valid because it contains the entire string, not just this token.
                         # A new value will be set in copy_m_token_to_treex_node() but only if if it does not exist. So erase the current value now.
-                        $aform = undef;
-                        delete($treex_node->wild()->{aform});
+                        # However, we also want to preserve the surface string in a separate attribute so that it can be output in CoNLL-U if necessary.
+                        if(defined($aform))
+                        {
+                            $treex_node->wild()->{part_of_surface_form} = $aform;
+                            $aform = undef;
+                            delete($treex_node->wild()->{aform});
+                        }
                         my @tokens = $analyses[0]->children();
                         my $token = $tokens[$i];
                         $self->copy_m_token_to_treex_node($token, $treex_node);

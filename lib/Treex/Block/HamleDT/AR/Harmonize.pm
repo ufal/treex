@@ -81,7 +81,14 @@ sub fix_morphology
                     my $wild = $nodes[$fused_indices[$j]]->wild();
                     if($j==0)
                     {
-                        $nodes[$fused_indices[$j]]->set_fused_form($wild->{aform});
+                        if(defined($wild->{part_of_surface_form}))
+                        {
+                            $nodes[$fused_indices[$j]]->set_fused_form($wild->{part_of_surface_form});
+                        }
+                        else
+                        {
+                            log_warn('Unknown surface form of a multiword token.');
+                        }
                     }
                     if($j<$#fused_indices)
                     {
