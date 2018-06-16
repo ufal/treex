@@ -502,19 +502,34 @@ sub copy_m_token_to_treex_node
     my $self = shift;
     my $mtoken = shift;
     my $node = shift;
-    $node->set_form($mtoken->attr('form'));
+    my $input_form = $mtoken->attr('form');
     $node->set_lemma($mtoken->attr('cite/form'));
     $node->set_tag($mtoken->attr('tag'));
     # Transliterate form and lemma to vocalized Arabic script.
     # (The data contain words and tokens, whereas tokens are subunits of words.
     # The forms of words are stored in unvocalized Arabic script as they were on input.
     # The forms and lemmas of tokens are vocalized and romanized, so we must use ElixirFM to provide the Arabic script for them.)
-    if(defined($node->form()))
+    if(defined($input_form))
     {
-        my $aform = $self->vocalized_to_unvocalized($node->form());
-        my $rform = $self->vocalized_to_romanized($node->form());
+        # Not all words went the same path through morphological analysis. (Not even all unknown words came out the same!)
+        # Hence the form may be unvocalized Arabic, vocalized Arabic, Buckwalter and maybe even some other transliteration, I am not sure.
+        # Buckwalter symbols: AbtvjHxd*rzs$SDTZEgfqklmnhwyY'><&}|{`auiFNK~op_ (https://en.wikipedia.org/wiki/Buckwalter_transliteration)
+        my $vform;
+        if($input_form =~ m/^[AbtvjHxd\*rzs\$SDTZEgfqklmnhwyY\'><\&\}\|\{\`auiFNK~op_]+$/) #'
+        {
+            $vform = $self->buckwalter_to_arabic($input_form);
+        }
+        else
+        {
+            $vform = $input_form;
+        }
+        my $aform = $self->vocalized_to_unvocalized($vform);
+        my $rform = $self->vocalized_to_romanized($vform);
         $node->set_form($aform);
+        $node->wild()->{Vform} = $vform;
         $node->set_translit($rform);
+        # For debugging purposes, save the input form as well.
+        $node->wild()->{PADT_input_form} = $input_form;
     }
     if(defined($node->lemma()))
     {
