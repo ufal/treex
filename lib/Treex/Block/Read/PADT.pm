@@ -513,19 +513,33 @@ sub copy_m_token_to_treex_node
     if(defined($input_form))
     {
         # Not all words went the same path through morphological analysis. (Not even all unknown words came out the same!)
-        # Hence the form may be unvocalized Arabic, vocalized Arabic, Buckwalter and maybe even some other transliteration, I am not sure.
-        # Buckwalter symbols: AbtvjHxd*rzs$SDTZEgfqklmnhwyY'><&}|{`auiFNK~op_ (https://en.wikipedia.org/wiki/Buckwalter_transliteration)
+        # Hence the form may be unvocalized Arabic, vocalized Arabic, Buckwalter and ElixirFM internal romanized encoding.
+        # Arabic alphabet: ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي ی + hamza + alif + harakat (vowels) + ta marbouta, tatwil
+        # Buckwalter symbols: Abtv j H x d* rzs$ S D T Z Eg fqklmnhwyY '><&}|{` auiF N  K~o p_ (https://en.wikipedia.org/wiki/Buckwalter_transliteration)
+        # ElixirFM internal:  Abt_t^g.h_hd_drzs^s.s.d.t.z`.gfqklmnhwyY '|       auiaNuNiN ???
+        # Typically, we have vocalized Arabic for fully analyzed words,
+        # ElixirFM internal encoding for undisambiguated morphological analysis,
+        # and unvocalized Buckwalter for completely unknown words.
+        # It may not be always possible to tell apart Buckwalter from ElixirFM internal.
+        # We will try ElixirFM internal first.
         my $vform;
-        if($input_form =~ m/^[AbtvjHxd\*rzs\$SDTZEgfqklmnhwyY\'><\&\}\|\{\`auiFNK~op_]+$/) #'
+        my $rform;
+        if($input_form =~ m/^[AbtghdrzsfqklmnwyY\._\^\`\'\|auiN]$/) # '`
+        {
+            $vform = $self->elixir_internal_to_arabic($input_form);
+            $rform = $self->elixir_internal_to_romanized($input_form);
+        }
+        elsif($input_form =~ m/^[AbtvjHxd\*rzs\$SDTZEgfqklmnhwyY\'><\&\}\|\{\`auiFNK~op_]+$/) #'
         {
             $vform = $self->buckwalter_to_arabic($input_form);
+            $rform = $input_form;
         }
-        else
+        else # Arabic script, possibly vocalized? Or something unexpected.
         {
             $vform = $input_form;
+            $rform = $self->arabic_to_buckwalter($input_form);
         }
         my $aform = $self->vocalized_to_unvocalized($vform);
-        my $rform = $self->vocalized_to_romanized($vform);
         # By default, PADT form is vocalized Arabic, and the unvocalized form is a wild attribute.
         # Vocalized and unvocalized forms are swapped in HamleDT::AR::Harmonize but here we should keep the default rule.
         $node->set_form($vform);
@@ -536,8 +550,8 @@ sub copy_m_token_to_treex_node
     }
     if(defined($node->lemma()))
     {
-        my $alemma = $self->vocalized_to_unvocalized($node->lemma());
-        my $rlemma = $self->vocalized_to_romanized($node->lemma());
+        my $alemma = $self->elixir_internal_to_arabic($node->lemma());
+        my $rlemma = $self->elixir_internal_to_romanized($node->lemma());
         $node->set_lemma($alemma);
         $node->set_ltranslit($rlemma);
     }
@@ -669,9 +683,9 @@ sub buckwalter_to_arabic
 
 
 #------------------------------------------------------------------------------
-# Convert vocalized Arabic string to unvocalized Arabic orthography.
+# Converts ElixirFM internal romanized encoding to Arabic script (vocalized).
 #------------------------------------------------------------------------------
-sub vocalized_to_unvocalized
+sub elixir_internal_to_arabic
 {
     my $self = shift;
     my $x = shift;
@@ -682,14 +696,28 @@ sub vocalized_to_unvocalized
 
 
 #------------------------------------------------------------------------------
-# Convert vocalized Arabic string to fancy scientific transliteration (that is,
-# not Buckwalter but the Elixir-like diacriticized romanization).
+# Converts ElixirFM internal romanized encoding to scientific romanization with
+# diacritics.
 #------------------------------------------------------------------------------
-sub vocalized_to_romanized
+sub elixir_internal_to_romanized
 {
     my $self = shift;
     my $x = shift;
     my $y = ElixirFM::phon($x);
+    return $y;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Converts vocalized Arabic script to unvocalized (i.e., removes diacritics).
+#------------------------------------------------------------------------------
+sub vocalized_to_unvocalized
+{
+    my $self = shift;
+    my $x = shift;
+    my $y = $x;
+    $y =~ s/[\x{64B}-\x{652}]//g;
     return $y;
 }
 
