@@ -515,8 +515,8 @@ sub copy_m_token_to_treex_node
         # Not all words went the same path through morphological analysis. (Not even all unknown words came out the same!)
         # Hence the form may be unvocalized Arabic, vocalized Arabic, Buckwalter and ElixirFM internal romanized encoding.
         # Arabic alphabet: ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي ی + hamza + alif + harakat (vowels) + ta marbouta, tatwil
-        # Buckwalter symbols: Abtv j H x d* rzs$ S D T Z Eg fqklmnhwyY '><&}|{` auiF N  K~o   p_ (https://en.wikipedia.org/wiki/Buckwalter_transliteration)
-        # ElixirFM internal:  Abt_t^g.h_hd_drzs^s.s.d.t.z`.gfqklmnhwyY '|       auiaNuNiN AUI T-
+        # Buckwalter symbols: Abtv j H x d* rzs$ S D T Z Eg fqklmnhwyY '><&}|{`  auiF N  K~o   p_ (https://en.wikipedia.org/wiki/Buckwalter_transliteration)
+        # ElixirFM internal:  Abt_t^g.h_hd_drzs^s.s.d.t.z`.gfqklmnhwyY '|     _a auiaNuNiN AUI T-
         # Typically, we have vocalized Arabic for fully analyzed words,
         # ElixirFM internal encoding for undisambiguated morphological analysis,
         # and unvocalized Buckwalter for completely unknown words.
@@ -717,7 +717,7 @@ sub vocalized_to_unvocalized
     my $self = shift;
     my $x = shift;
     my $y = $x;
-    $y =~ s/[\x{64B}-\x{652}]//g;
+    $y =~ s/[\x{64B}-\x{65F}\x{670}]//g;
     return $y;
 }
 
