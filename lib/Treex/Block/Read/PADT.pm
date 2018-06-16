@@ -525,8 +525,10 @@ sub copy_m_token_to_treex_node
         }
         my $aform = $self->vocalized_to_unvocalized($vform);
         my $rform = $self->vocalized_to_romanized($vform);
-        $node->set_form($aform);
-        $node->wild()->{Vform} = $vform;
+        # By default, PADT form is vocalized Arabic, and the unvocalized form is a wild attribute.
+        # Vocalized and unvocalized forms are swapped in HamleDT::AR::Harmonize but here we should keep the default rule.
+        $node->set_form($vform);
+        $node->wild()->{aform} = $aform;
         $node->set_translit($rform);
         # For debugging purposes, save the input form as well.
         $node->wild()->{PADT_input_form} = $input_form;

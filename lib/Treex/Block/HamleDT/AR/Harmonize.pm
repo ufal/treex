@@ -120,6 +120,11 @@ sub fix_morphology
         {
             @misc = $self->add_misc('Root', $wild->{root}, @misc);
         }
+        # For debugging purposes, save the input form as well.
+        if(defined($wild->{PADT_input_form}))
+        {
+            @misc = $self->add_misc('PADTInputForm', $wild->{PADT_input_form}, @misc);
+        }
         if(scalar(@misc)>0)
         {
             $wild->{misc} = join('|', @misc);
