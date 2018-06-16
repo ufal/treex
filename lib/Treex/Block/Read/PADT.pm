@@ -524,7 +524,7 @@ sub copy_m_token_to_treex_node
         # We will try ElixirFM internal first.
         my $vform;
         my $rform;
-        if($input_form =~ m/^[AbtghdrzsfqklmnwyY\._\^\`\'\|auiN]$/) # '`
+        if($input_form =~ m/^[AbtghdrzsfqklmnwyY\`\._\^\'\|auiN]+$/) # '`
         {
             $vform = $self->elixir_internal_to_arabic($input_form);
             $rform = $self->elixir_internal_to_romanized($input_form);
