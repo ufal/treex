@@ -306,8 +306,7 @@ override '_convert_atree' => sub
             # If we do not see the split, we are about to create multiple copies of the entire surface word, which we do not want to do.
             # But it is also possible that several splits are available and we just do not have the information which one is correct.
             # (Example: HYT_ARB_20010912.0066, p7u1, first surface word corresponds to three syntactic nodes.)
-            ###!!! Temporarily block this new code.
-            if(0 && defined($wrf) && defined($wtn->{$wrf}{nodes}) && scalar(@{$wtn->{$wrf}{nodes}}) > 1)
+            if(defined($wrf) && defined($wtn->{$wrf}{nodes}) && scalar(@{$wtn->{$wrf}{nodes}}) > 1)
             {
                 my @fellow_nodes = sort {$a->{ord} <=> $b->{ord}} (@{$wtn->{$wrf}{nodes}});
                 my $warn = !$wtn->{$wrf}{warned};
@@ -345,11 +344,12 @@ override '_convert_atree' => sub
                     }
                     if($found)
                     {
+                        # The surface aform that we set above is no longer valid because it contains the entire string, not just this token.
+                        # A new value will be set in copy_m_token_to_treex_node() but only if if it does not exist. So erase the current value now.
+                        $aform = undef;
+                        delete($treex_node->wild()->{aform});
                         my @tokens = $analyses[0]->children();
                         my $token = $tokens[$i];
-                        ###!!! The forms of most tokens seem to be in Buckwalter.
-                        ###!!! However, I am not 100% sure that some of them are not in other transliteration.
-                        ###!!! And a few are clearly in the Arabic script (vocalized).
                         $self->copy_m_token_to_treex_node($token, $treex_node);
                         log_warn("Token corresponding to current node: voc ".$treex_node->form().", unv ".$treex_node->wild()->{aform}.", rom ".$treex_node->translit().", orig ".$treex_node->wild()->{PADT_input_form});
                     }
