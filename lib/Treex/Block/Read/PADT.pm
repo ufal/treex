@@ -300,7 +300,6 @@ override '_convert_atree' => sub
         # Out-of-vocabulary words do not have the 'm' section. We have to go directly to the 'w' layer.
         if(!defined($pml_node->attr('m')))
         {
-            my $rform = $self->arabic_to_buckwalter($aform);
             # It is possible that several nodes point to the same word.
             # It means that the surface word should be split to several syntactic words.
             # If disambiguated morphology was available, we would see the split.
@@ -315,6 +314,7 @@ override '_convert_atree' => sub
                 $wtn->{$wrf}{warned} = 1;
                 my $n = scalar(@fellow_nodes);
                 my $node_ids = join(', ', map {$_->{id}} (@fellow_nodes));
+                my $rform = $self->arabic_to_buckwalter($aform);
                 log_warn("Word '$aform' ($rform) [$wrf] lacks morphology but is linked from $n nodes [$node_ids].") if($warn);
                 # Check whether there are alternative analyses in the element <with>.
                 # The attribute 'w' is of type Treex::PML::Node, and <with> groups its child nodes.
@@ -361,6 +361,7 @@ override '_convert_atree' => sub
             }
             else # w.rf is not referenced from multiple nodes
             {
+                my $rform = $self->arabic_to_buckwalter($aform);
                 $treex_node->set_form($aform);
                 $treex_node->set_attr('translit', $rform);
                 $treex_node->set_lemma($aform);
@@ -540,11 +541,18 @@ sub copy_m_token_to_treex_node
             $vform = $input_form;
             $rform = $self->arabic_to_buckwalter($input_form);
         }
-        my $aform = $self->vocalized_to_unvocalized($vform);
         # By default, PADT form is vocalized Arabic, and the unvocalized form is a wild attribute.
         # Vocalized and unvocalized forms are swapped in HamleDT::AR::Harmonize but here we should keep the default rule.
+        ###!!! The unvocalized aform may have been taken already from the word layer and saved as a wild attribute.
+        ###!!! We do not know whether it was unvocalized the same way as we would do it.
+        ###!!! But we can be almost sure that it was available. Although it may not have been the right string:
+        ###!!! in case of multinode surface words, we got the entire word multiple times.
+        unless(defined($node->wild()->{aform}))
+        {
+            my $aform = $self->vocalized_to_unvocalized($vform);
+            $node->wild()->{aform} = $aform;
+        }
         $node->set_form($vform);
-        $node->wild()->{aform} = $aform;
         $node->set_translit($rform);
         # For debugging purposes, save the input form as well.
         $node->wild()->{PADT_input_form} = $input_form;
