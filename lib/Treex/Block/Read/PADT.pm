@@ -515,8 +515,8 @@ sub copy_m_token_to_treex_node
         # Not all words went the same path through morphological analysis. (Not even all unknown words came out the same!)
         # Hence the form may be unvocalized Arabic, vocalized Arabic, Buckwalter and ElixirFM internal romanized encoding.
         # Arabic alphabet: ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي ی + hamza + alif + harakat (vowels) + ta marbouta, tatwil
-        # Buckwalter symbols: Abtv j H x d* rzs$ S D T Z Eg fqklmnhwyY '><&}|{` auiF N  K~o p_ (https://en.wikipedia.org/wiki/Buckwalter_transliteration)
-        # ElixirFM internal:  Abt_t^g.h_hd_drzs^s.s.d.t.z`.gfqklmnhwyY '|       auiaNuNiN AUI -
+        # Buckwalter symbols: Abtv j H x d* rzs$ S D T Z Eg fqklmnhwyY '><&}|{` auiF N  K~o   p_ (https://en.wikipedia.org/wiki/Buckwalter_transliteration)
+        # ElixirFM internal:  Abt_t^g.h_hd_drzs^s.s.d.t.z`.gfqklmnhwyY '|       auiaNuNiN AUI T-
         # Typically, we have vocalized Arabic for fully analyzed words,
         # ElixirFM internal encoding for undisambiguated morphological analysis,
         # and unvocalized Buckwalter for completely unknown words.
@@ -524,7 +524,7 @@ sub copy_m_token_to_treex_node
         # We will try ElixirFM internal first.
         my $vform;
         my $rform;
-        if($input_form =~ m/^[-AbtghdrzsfqklmnwyY\`\._\^\'\|auiUIN]+$/) # '`
+        if($input_form =~ m/^[-AbtghdrzsfqklmnwyYT\`\._\^\'\|auiUIN]+$/) # '`
         {
             $vform = $self->elixir_internal_to_arabic($input_form);
             $rform = $self->elixir_internal_to_romanized($input_form);
