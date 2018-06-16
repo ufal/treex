@@ -332,41 +332,39 @@ override '_convert_atree' => sub
                     my $nt = scalar(@tokens);
                     log_warn("Selected analysis has $nt tokens: $tokens") if($warn);
                     # Which token corresponds to the current node?
-                    if(0)
+                    my $found = 0;
+                    my $i;
+                    for($i = 0; $i <= $#fellow_nodes; $i++)
                     {
-                        for(my $i = 0; $i <= $#fellow_nodes; $i++)
+                        if($fellow_nodes[$i]{id} eq $pml_node->attr('id'))
                         {
-                            if($fellow_nodes[$i]{id} eq $pml_node->attr('id'))
-                            {
-                                my $token = $analyses[0]->children();###!!![$i];
-                                my $vform = $self->buckwalter_to_arabic($token->attr('form'));
-                                my $aform = $self->vocalized_to_unvocalized($vform);
-                                my $rform = $self->vocalized_to_romanized($vform);
-                                my $vlemma = $self->buckwalter_to_arabic($token->attr('cite/form'));
-                                my $rlemma = $self->vocalized_to_romanized($vlemma);
-                                $treex_node->set_form($aform);
-                                $treex_node->set_translit($rform);
-                                $treex_node->set_lemma($vlemma);
-                                $treex_node->set_ltranslit($rlemma);
-                                $treex_node->set_tag($token->attr('tag'));
-                                # The form, root and lemma of tokens that are only parts of a surface string is in the Buckwalter transliteration.
-                                # We need the Arabic script instead.
-                                # elements of <Token>:
-                                # tag
-                                # form (Buckwalter)
-                                # root (Buckwalter)
-                                # cite/form = lemma (Buckwalter)
-                                # cite/reflex = gloss
-                            }
+                            $found = 1;
+                            last;
                         }
+                    }
+                    if($found)
+                    {
+                        my @tokens = $analyses[0]->children();
+                        my $token = $tokens[$i];
+                        ###!!! The forms of most tokens seem to be in Buckwalter.
+                        ###!!! However, I am not 100% sure that some of them are not in other transliteration.
+                        ###!!! And a few are clearly in the Arabic script (vocalized).
+                        $self->copy_m_token_to_treex_node($token, $treex_node);
+                    }
+                    else
+                    {
+                        log_fatal("Node ".$pml_node->attr('id')." not found among nodes referring to $wrf.");
                     }
                 }
             }
-            $treex_node->set_form($aform);
-            $treex_node->set_attr('translit', $rform);
-            $treex_node->set_lemma($aform);
-            $treex_node->set_tag('U---------');
-            $treex_node->{wild}{root} = 'OOV';
+            else # w.rf is not referenced from multiple nodes
+            {
+                $treex_node->set_form($aform);
+                $treex_node->set_attr('translit', $rform);
+                $treex_node->set_lemma($aform);
+                $treex_node->set_tag('U---------');
+                $treex_node->{wild}{root} = 'OOV';
+            }
         }
         else
         {
