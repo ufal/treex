@@ -266,7 +266,6 @@ override '_convert_atree' => sub
     # The following attributes are present for non-root nodes.
     if(not $treex_node->is_root())
     {
-        my @features;
         # Reference to the word layer can tell what Unit (of paragraph) this word belongs to.
         # It can also show us tokens that came from the same word and it can help with detokenization.
         # $pml_node->attr('m') typically refers to a <Token>. Its parent is a <Word>.
@@ -365,88 +364,31 @@ override '_convert_atree' => sub
             $treex_node->set_attr('translit', $rform);
             $treex_node->set_lemma($aform);
             $treex_node->set_tag('U---------');
-            if(defined($rform))
-            {
-                $rform =~ s/\s+/_/g;
-                $rform =~ s/\|/:/g;
-                push(@features, 'rform='.$rform);
-            }
-            push(@features, 'root=OOV');
+            $treex_node->{wild}{root} = 'OOV';
         }
         else
         {
             $self->copy_m_token_to_treex_node($pml_node->attr('m'), $treex_node);
-            if(defined($treex_node->translit()))
-            {
-                push(@features, 'rform='.$treex_node->translit());
-            }
-            if(defined($treex_node->ltranslit()))
-            {
-                push(@features, 'rlemma='.$treex_node->ltranslit());
-            }
-            if(exists($treex_node->{wild}{gloss}) && defined($treex_node->{wild}{gloss}))
-            {
-                push(@features, 'gloss='.$treex_node->{wild}{gloss});
-            }
-            if(exists($treex_node->{wild}{root}) && defined($treex_node->{wild}{root}))
-            {
-                my $root = $treex_node->{wild}{root};
-                $root =~ s/\s+/_/g;
-                $root =~ s/\|/:/g;
-                push(@features, 'root='.$root);
-            }
-            if(0)
-            {
-                $self->_copy_attr($pml_node, $treex_node, 'm/form',      'form');
-                $self->_copy_attr($pml_node, $treex_node, 'm/cite/form', 'lemma');
-                $self->_copy_attr($pml_node, $treex_node, 'm/tag',       'tag');
-                # Transliterate form and lemma to vocalized Arabic script.
-                # (The data contain words and tokens, whereas tokens are subunits of words.
-                # The forms of words are stored in unvocalized Arabic script as they were on input.
-                # The forms and lemmas of tokens are vocalized and romanized, so we must use ElixirFM to provide the Arabic script for them.)
-                if(defined($treex_node->form()))
-                {
-                    my $aform = $self->vocalized_to_unvocalized($treex_node->form());
-                    my $rform = $self->vocalized_to_romanized($treex_node->form());
-                    push(@features, 'rform='.$rform);
-                    $treex_node->set_attr('translit', $rform);
-                    $treex_node->set_form($aform);
-                }
-                if(defined($treex_node->lemma()))
-                {
-                    my $alemma = $self->vocalized_to_unvocalized($treex_node->lemma());
-                    my $rlemma = $self->vocalized_to_romanized($treex_node->lemma());
-                    push(@features, 'rlemma='.$rlemma);
-                    $treex_node->set_ltranslit($rlemma);
-                    $treex_node->set_lemma($alemma);
-                }
-                # Copy English glosses from the reflex element.
-                # m/cite/reflex has type Treex::PML::List=ARRAY.
-                my $glosses = $pml_node->attr('m/cite/reflex');
-                if(defined($glosses))
-                {
-                    my $gloss = join(',', map {s/\s+/_/g; $_;} @{$glosses});
-                    $treex_node->{wild}{gloss} = $gloss;
-                    push(@features, 'gloss='.$gloss);
-                }
-                # Attributes specific to Arabic morphology.
-                if(defined($pml_node->attr('m/root')))
-                {
-                    my $root = $pml_node->attr('m/root');
-                    $treex_node->{wild}{root} = $root;
-                    $root =~ s/\s+/_/g;
-                    $root =~ s/\|/:/g;
-                    push(@features, 'root='.$root);
-                }
-                if(defined($pml_node->attr('m/morphs')))
-                {
-                    my $morphs = $pml_node->attr('m/morphs');
-                    $treex_node->{wild}{morphs} = $morphs;
-                    #$morphs =~ s/\s+/_/g;
-                    #$morphs =~ s/\|/:/g;
-                    #push(@features, 'morphs='.$morphs);
-                }
-            }
+        }
+        my @features;
+        if(defined($treex_node->translit()))
+        {
+            push(@features, 'rform='.$treex_node->translit());
+        }
+        if(defined($treex_node->ltranslit()))
+        {
+            push(@features, 'rlemma='.$treex_node->ltranslit());
+        }
+        if(exists($treex_node->{wild}{gloss}) && defined($treex_node->{wild}{gloss}))
+        {
+            push(@features, 'gloss='.$treex_node->{wild}{gloss});
+        }
+        if(exists($treex_node->{wild}{root}) && defined($treex_node->{wild}{root}))
+        {
+            my $root = $treex_node->{wild}{root};
+            $root =~ s/\s+/_/g;
+            $root =~ s/\|/:/g;
+            push(@features, 'root='.$root);
         }
         if(defined($treex_node->tag()))
         {
