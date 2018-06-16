@@ -587,7 +587,7 @@ sub copy_m_token_to_treex_node
     if(defined($glosses))
     {
         my $gloss = join(',', map {s/\s+/_/g; $_;} @{$glosses});
-        $treex_node->{wild}{gloss} = $gloss;
+        $node->{wild}{gloss} = $gloss;
     }
     # Attributes specific to Arabic morphology.
     if(defined($mtoken->attr('root')))
