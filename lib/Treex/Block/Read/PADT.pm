@@ -337,7 +337,7 @@ override '_convert_atree' => sub
                         {
                             if($fellow_nodes[$i]{id} eq $pml_node->attr('id'))
                             {
-                                my $token = $analyses[0]->children()[$i];
+                                my $token = $analyses[0]->children();###!!![$i];
                                 my $vform = $self->buckwalter_to_arabic($token->attr('form'));
                                 my $aform = $self->vocalized_to_unvocalized($vform);
                                 my $rform = $self->vocalized_to_romanized($vform);
