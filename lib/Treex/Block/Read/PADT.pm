@@ -229,7 +229,14 @@ sub collect_wtn_references
     if(defined($wrf))
     {
         $wrf =~ s/^w\#//;
-        push(@{$wtn->{$wrf}}, $pml_node->attr('id'));
+        my %node_record =
+        (
+            'id'  => $pml_node->attr('id'),
+            'ord' => $pml_node->attr('ord')
+        );
+        log_warn("Undefined node id") if(!defined($node_record{id}));
+        log_warn("Undefined node ord") if(!defined($node_record{ord}));
+        push(@{$wtn->{$wrf}}, \%node_record);
     }
     # Recursively visit descendant nodes.
     foreach my $pml_child ($pml_node->children())
@@ -294,7 +301,7 @@ override '_convert_atree' => sub
         # Out-of-vocabulary words do not have the 'm' section. We have to go directly to the 'w' layer.
         if(!defined($pml_node->attr('m')))
         {
-            my $rform = Encode::Arabic::Buckwalter::encode('buckwalter', $aform);
+            my $rform = $self->arabic_to_buckwalter($aform);
             # It is possible that several nodes point to the same word.
             # It means that the surface word should be split to several syntactic words.
             # If disambiguated morphology was available, we would see the split.
@@ -303,8 +310,9 @@ override '_convert_atree' => sub
             # (Example: HYT_ARB_20010912.0066, p7u1, first surface word corresponds to three syntactic nodes.)
             if(defined($wrf) && defined($wtn->{$wrf}) && scalar(@{$wtn->{$wrf}}) > 1)
             {
-                my $n = scalar(@{$wtn->{$wrf}});
-                my $node_ids = join(',', @{$wtn->{$wrf}});
+                my @fellow_nodes = sort {$a->{ord} <=> $b->{ord}} (@{$wtn->{$wrf}});
+                my $n = scalar(@fellow_nodes);
+                my $node_ids = join(', ', map {$_->{id}} (@fellow_nodes));
                 log_warn("Word '$aform' ($rform) [$wrf] lacks morphology but is linked from $n nodes [$node_ids].");
                 # Check whether there are alternative analyses in the element <with>.
                 # The attribute 'w' is of type Treex::PML::Node, and <with> groups its child nodes.
@@ -322,6 +330,35 @@ override '_convert_atree' => sub
                     my $tokens = join(' ', @tokens);
                     my $nt = scalar(@tokens);
                     log_warn("Selected analysis has $nt tokens: $tokens");
+                    # Which token corresponds to the current node?
+                    if(0)
+                    {
+                        for(my $i = 0; $i <= $#fellow_nodes; $i++)
+                        {
+                            if($fellow_nodes[$i]{id} eq $pml_node->attr('id'))
+                            {
+                                my $token = $analyses[0]->children()[$i];
+                                my $vform = $self->buckwalter_to_arabic($token->attr('form'));
+                                my $aform = $self->vocalized_to_unvocalized($vform);
+                                my $rform = $self->vocalized_to_romanized($vform);
+                                my $vlemma = $self->buckwalter_to_arabic($token->attr('cite/form'));
+                                my $rlemma = $self->vocalized_to_romanized($vlemma);
+                                $treex_node->set_form($aform);
+                                $treex_node->set_translit($rform);
+                                $treex_node->set_lemma($vlemma);
+                                $treex_node->set_ltranslit($rlemma);
+                                $treex_node->set_tag($token->attr('tag'));
+                                # The form, root and lemma of tokens that are only parts of a surface string is in the Buckwalter transliteration.
+                                # We need the Arabic script instead.
+                                # elements of <Token>:
+                                # tag
+                                # form (Buckwalter)
+                                # root (Buckwalter)
+                                # cite/form = lemma (Buckwalter)
+                                # cite/reflex = gloss
+                            }
+                        }
+                    }
                 }
             }
             $treex_node->set_form($aform);
@@ -338,54 +375,77 @@ override '_convert_atree' => sub
         }
         else
         {
-            $self->_copy_attr($pml_node, $treex_node, 'm/form',      'form');
-            $self->_copy_attr($pml_node, $treex_node, 'm/cite/form', 'lemma');
-            $self->_copy_attr($pml_node, $treex_node, 'm/tag',       'tag');
-            # Transliterate form and lemma to vocalized Arabic script.
-            # (The data contain words and tokens, whereas tokens are subunits of words.
-            # The forms of words are stored in unvocalized Arabic script as they were on input.
-            # The forms and lemmas of tokens are vocalized and romanized, so we must use ElixirFM to provide the Arabic script for them.)
-            if(defined($treex_node->form()))
+            $self->copy_m_token_to_treex_node($pml_node->attr('m'), $treex_node);
+            if(defined($treex_node->translit()))
             {
-                my $aform = ElixirFM::orth($treex_node->form());
-                my $rform = ElixirFM::phon($treex_node->form());
-                push(@features, 'rform='.$rform);
-                $treex_node->set_attr('translit', $rform);
-                $treex_node->set_form($aform);
+                push(@features, 'rform='.$treex_node->translit());
             }
-            if(defined($treex_node->lemma()))
+            if(defined($treex_node->ltranslit()))
             {
-                my $alemma = ElixirFM::orth($treex_node->lemma());
-                my $rlemma = ElixirFM::phon($treex_node->lemma());
-                push(@features, 'rlemma='.$rlemma);
-                $treex_node->set_ltranslit($rlemma);
-                $treex_node->set_lemma($alemma);
+                push(@features, 'rlemma='.$treex_node->ltranslit());
             }
-            # Copy English glosses from the reflex element.
-            # m/cite/reflex has type Treex::PML::List=ARRAY.
-            my $glosses = $pml_node->attr('m/cite/reflex');
-            if(defined($glosses))
+            if(exists($treex_node->{wild}{gloss}) && defined($treex_node->{wild}{gloss}))
             {
-                my $gloss = join(',', map {s/\s+/_/g; $_;} @{$glosses});
-                $treex_node->{wild}{gloss} = $gloss;
-                push(@features, 'gloss='.$gloss);
+                push(@features, 'gloss='.$treex_node->{wild}{gloss});
             }
-            # Attributes specific to Arabic morphology.
-            if(defined($pml_node->attr('m/root')))
+            if(exists($treex_node->{wild}{root}) && defined($treex_node->{wild}{root}))
             {
-                my $root = $pml_node->attr('m/root');
-                $treex_node->{wild}{root} = $root;
+                my $root = $treex_node->{wild}{root};
                 $root =~ s/\s+/_/g;
                 $root =~ s/\|/:/g;
                 push(@features, 'root='.$root);
             }
-            if(defined($pml_node->attr('m/morphs')))
+            if(0)
             {
-                my $morphs = $pml_node->attr('m/morphs');
-                $treex_node->{wild}{morphs} = $morphs;
-                #$morphs =~ s/\s+/_/g;
-                #$morphs =~ s/\|/:/g;
-                #push(@features, 'morphs='.$morphs);
+                $self->_copy_attr($pml_node, $treex_node, 'm/form',      'form');
+                $self->_copy_attr($pml_node, $treex_node, 'm/cite/form', 'lemma');
+                $self->_copy_attr($pml_node, $treex_node, 'm/tag',       'tag');
+                # Transliterate form and lemma to vocalized Arabic script.
+                # (The data contain words and tokens, whereas tokens are subunits of words.
+                # The forms of words are stored in unvocalized Arabic script as they were on input.
+                # The forms and lemmas of tokens are vocalized and romanized, so we must use ElixirFM to provide the Arabic script for them.)
+                if(defined($treex_node->form()))
+                {
+                    my $aform = $self->vocalized_to_unvocalized($treex_node->form());
+                    my $rform = $self->vocalized_to_romanized($treex_node->form());
+                    push(@features, 'rform='.$rform);
+                    $treex_node->set_attr('translit', $rform);
+                    $treex_node->set_form($aform);
+                }
+                if(defined($treex_node->lemma()))
+                {
+                    my $alemma = $self->vocalized_to_unvocalized($treex_node->lemma());
+                    my $rlemma = $self->vocalized_to_romanized($treex_node->lemma());
+                    push(@features, 'rlemma='.$rlemma);
+                    $treex_node->set_ltranslit($rlemma);
+                    $treex_node->set_lemma($alemma);
+                }
+                # Copy English glosses from the reflex element.
+                # m/cite/reflex has type Treex::PML::List=ARRAY.
+                my $glosses = $pml_node->attr('m/cite/reflex');
+                if(defined($glosses))
+                {
+                    my $gloss = join(',', map {s/\s+/_/g; $_;} @{$glosses});
+                    $treex_node->{wild}{gloss} = $gloss;
+                    push(@features, 'gloss='.$gloss);
+                }
+                # Attributes specific to Arabic morphology.
+                if(defined($pml_node->attr('m/root')))
+                {
+                    my $root = $pml_node->attr('m/root');
+                    $treex_node->{wild}{root} = $root;
+                    $root =~ s/\s+/_/g;
+                    $root =~ s/\|/:/g;
+                    push(@features, 'root='.$root);
+                }
+                if(defined($pml_node->attr('m/morphs')))
+                {
+                    my $morphs = $pml_node->attr('m/morphs');
+                    $treex_node->{wild}{morphs} = $morphs;
+                    #$morphs =~ s/\s+/_/g;
+                    #$morphs =~ s/\|/:/g;
+                    #push(@features, 'morphs='.$morphs);
+                }
             }
         }
         if(defined($treex_node->tag()))
@@ -493,6 +553,58 @@ override '_convert_atree' => sub
 
 
 #------------------------------------------------------------------------------
+# Copy attributes of a token defined by morphological analysis to a treex node.
+#------------------------------------------------------------------------------
+sub copy_m_token_to_treex_node
+{
+    my $self = shift;
+    my $mtoken = shift;
+    my $node = shift;
+    $node->set_form($mtoken->attr('form'));
+    $node->set_lemma($mtoken->attr('cite/form'));
+    $node->set_tag($mtoken->attr('tag'));
+    # Transliterate form and lemma to vocalized Arabic script.
+    # (The data contain words and tokens, whereas tokens are subunits of words.
+    # The forms of words are stored in unvocalized Arabic script as they were on input.
+    # The forms and lemmas of tokens are vocalized and romanized, so we must use ElixirFM to provide the Arabic script for them.)
+    if(defined($node->form()))
+    {
+        my $aform = $self->vocalized_to_unvocalized($node->form());
+        my $rform = $self->vocalized_to_romanized($node->form());
+        $node->set_form($aform);
+        $node->set_translit($rform);
+    }
+    if(defined($node->lemma()))
+    {
+        my $alemma = $self->vocalized_to_unvocalized($node->lemma());
+        my $rlemma = $self->vocalized_to_romanized($node->lemma());
+        $node->set_lemma($alemma);
+        $node->set_ltranslit($rlemma);
+    }
+    # Copy English glosses from the reflex element.
+    # m/cite/reflex has type Treex::PML::List=ARRAY.
+    my $glosses = $mtoken->attr('cite/reflex');
+    if(defined($glosses))
+    {
+        my $gloss = join(',', map {s/\s+/_/g; $_;} @{$glosses});
+        $treex_node->{wild}{gloss} = $gloss;
+    }
+    # Attributes specific to Arabic morphology.
+    if(defined($mtoken->attr('root')))
+    {
+        my $root = $mtoken->attr('root');
+        $node->{wild}{root} = $root;
+    }
+    if(defined($mtoken->attr('morphs')) && $mtoken->attr('morphs') !~ m/^_+$/)
+    {
+        my $morphs = $mtoken->attr('morphs');
+        $node->{wild}{morphs} = $morphs;
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # We must override the method that creates references to valency dictionary.
 # We do not expect any such references in the current version of PADT, so the
 # overridden method is empty.
@@ -566,6 +678,62 @@ sub dbgstrarray
     }
     return '[ '.join(', ', @s).' ]';
 }
+
+
+
+#------------------------------------------------------------------------------
+# Converts an Arabic string (vocalized or not) to its Buckwalter
+# transliteration.
+#------------------------------------------------------------------------------
+sub arabic_to_buckwalter
+{
+    my $self = shift;
+    my $x = shift;
+    my $y = Encode::Arabic::Buckwalter::encode('buckwalter', $x);
+    return $y;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Converts a Buckwalter string (vocalized or not) to Arabic script.
+#------------------------------------------------------------------------------
+sub buckwalter_to_arabic
+{
+    my $self = shift;
+    my $x = shift;
+    my $y = Encode::Arabic::Buckwalter::decode('buckwalter', $x);
+    return $y;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Convert vocalized Arabic string to unvocalized Arabic orthography.
+#------------------------------------------------------------------------------
+sub vocalized_to_unvocalized
+{
+    my $self = shift;
+    my $x = shift;
+    my $y = ElixirFM::orth($x);
+    return $y;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Convert vocalized Arabic string to fancy scientific transliteration (that is,
+# not Buckwalter but the Elixir-like diacriticized romanization).
+#------------------------------------------------------------------------------
+sub vocalized_to_romanized
+{
+    my $self = shift;
+    my $x = shift;
+    my $y = ElixirFM::phon($x);
+    return $y;
+}
+
+
 
 1;
 
