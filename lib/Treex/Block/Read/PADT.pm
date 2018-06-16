@@ -350,6 +350,7 @@ override '_convert_atree' => sub
                         ###!!! However, I am not 100% sure that some of them are not in other transliteration.
                         ###!!! And a few are clearly in the Arabic script (vocalized).
                         $self->copy_m_token_to_treex_node($token, $treex_node);
+                        log_warn("Token corresponding to current node: voc ".$treex_node->form().", unv ".$treex_node->wild()->{aform}.", rom ".$treex_node->translit().", orig ".$treex_node->wild()->{PADT_input_form});
                     }
                     else
                     {
