@@ -307,7 +307,8 @@ override '_convert_atree' => sub
             # If we do not see the split, we are about to create multiple copies of the entire surface word, which we do not want to do.
             # But it is also possible that several splits are available and we just do not have the information which one is correct.
             # (Example: HYT_ARB_20010912.0066, p7u1, first surface word corresponds to three syntactic nodes.)
-            if(defined($wrf) && defined($wtn->{$wrf}{nodes}) && scalar(@{$wtn->{$wrf}{nodes}}) > 1)
+            ###!!! Temporarily block this new code.
+            if(0 && defined($wrf) && defined($wtn->{$wrf}{nodes}) && scalar(@{$wtn->{$wrf}{nodes}}) > 1)
             {
                 my @fellow_nodes = sort {$a->{ord} <=> $b->{ord}} (@{$wtn->{$wrf}{nodes}});
                 my $warn = !$wtn->{$wrf}{warned};
@@ -732,7 +733,14 @@ sub vocalized_to_unvocalized
     my $self = shift;
     my $x = shift;
     my $y = $x;
+    # Remove combining diacritics.
     $y =~ s/[\x{64B}-\x{65F}\x{670}]//g;
+    # Convert diacriticized alif (with madda, hamza or wasla) to plain alif.
+    $y =~ s/[\x{622}\x{623}\x{625}\x{671}]/\x{627}/g;
+    # Convert diacriticized waw to plain waw.
+    $y =~ s/[\x{624}]/\x{648}/g;
+    # Convert diacriticized yeh to plain yeh.
+    $y =~ s/[\x{626}]/\x{64A}/g;
     return $y;
 }
 
