@@ -10,6 +10,7 @@ has 'target' => (
     required      => 1,
     documentation => 'target classification set, two possible values: L1 for native speakers, L2 for second language learners',
 );
+has 'ns_filter' => ( is => 'ro', isa => 'Str' );
 has '_feat_extractor' => ( is => 'ro', isa => 'Treex::Tool::Discourse::EVALD::Features', builder => '_build_feat_extractor', lazy => 1 );
 
 sub BUILD {
@@ -19,7 +20,7 @@ sub BUILD {
 
 sub _build_feat_extractor {
     my ($self) = @_;
-    return Treex::Tool::Discourse::EVALD::Features->new({ target => $self->target, language => $self->language, selector => $self->selector });
+    return Treex::Tool::Discourse::EVALD::Features->new({ target => $self->target, language => $self->language, selector => $self->selector, ns_filter => $self->ns_filter });
 }
 
 1;

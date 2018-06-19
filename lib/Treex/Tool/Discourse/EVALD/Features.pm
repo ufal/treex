@@ -15,10 +15,11 @@ has 'target' => (
     required      => 1,
     documentation => 'target classification set, two possible values: L1 for native speakers, L2 for second language learners',
 );
+has 'ns_filter' => ( is => 'ro', isa => 'Str' );
 has 'language' => ( is => 'ro', isa => 'Str', required => 1 );
 has 'selector' => ( is => 'ro', isa => 'Str', default => '' );
 has 'all_classes' => ( is => 'ro', isa => 'ArrayRef[Str]', builder => 'build_all_classes', lazy => 1 );
-has 'weka_featlist' => ( is => 'ro', isa => 'ArrayRef[ArrayRef[Str]]', builder => 'build_weka_featlist' );
+has 'weka_featlist' => ( is => 'ro', isa => 'ArrayRef[ArrayRef[Str]]', builder => 'build_weka_featlist', lazy => 1 );
 
 sub build_all_classes {
     my ($self) = @_;
@@ -235,10 +236,35 @@ sub build_weka_featlist {
       ["tfa^wrong_enclitics_order_per_100sent",            "NUMERIC"],
 
     ];
-    return $weka_feats_types;
+    return [ grep {$self->filter_namespace($_->[0])} @$weka_feats_types ];
 }
 
 ############################################ MAIN FEATURE EXTRACTING METHODS ############################################
+
+sub filter_namespace {
+    my ($self, $name) = @_;
+    my ($ns) = split /\^/, $name;
+    #print STDERR $ns."\n";
+    my @all_ns = split /,/, $self->ns_filter;
+    my @pos_ns = grep {$_ =~ /^\+$ns/} @all_ns;
+    if (@pos_ns) {
+        #print STDERR "NS=1\n";
+        return 1;
+    }
+    my @neg_ns = grep {$_ =~ /^-$ns/} @all_ns;
+    if (@neg_ns) {
+        #print STDERR "NS=0\n";
+        return 0;
+    }
+    if (grep {$_ =~ /^-/} @all_ns) {
+        #print STDERR "NSA=1\n";
+        return 1;
+    }
+    else {
+        #print STDERR "NSA=0\n";
+        return 0;
+    }
+}
 
 sub extract_features {
     my ($self, $doc, $multiline) = @_;
