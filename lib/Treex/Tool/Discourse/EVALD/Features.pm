@@ -256,13 +256,13 @@ sub filter_namespace {
         #print STDERR "NS=0\n";
         return 0;
     }
-    if (grep {$_ =~ /^-/} @all_ns) {
+    if (grep {$_ =~ /^\+/} @all_ns) {
         #print STDERR "NSA=1\n";
-        return 1;
+        return 0;
     }
     else {
         #print STDERR "NSA=0\n";
-        return 0;
+        return 1;
     }
 }
 
