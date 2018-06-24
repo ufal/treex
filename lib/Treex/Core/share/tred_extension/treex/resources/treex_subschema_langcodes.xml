@@ -230,6 +230,10 @@
       <value>sm</value> <!-- Samoan -->
       <value>mi</value> <!-- Māori -->
       <value>ty</value> <!-- Tahitian -->
+      <!-- Australian languages -->
+      <value>dbl</value> <!-- Dyirbal -->
+      <value>wbp</value> <!-- Warlpiri -->
+      <value>yii</value> <!-- Yidiny -->
       <!-- Eskimo-Aleutan languages -->
       <value>ik</value> <!-- Inupiaq -->
       <value>iu</value> <!-- Inuit -->
