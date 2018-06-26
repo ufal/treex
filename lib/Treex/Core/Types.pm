@@ -46,6 +46,7 @@ my %EXTRA_LANG_CODES = (
     'bxr'     => "Buryat",
     'ckb'     => "Sorani", # Central Kurdish
     'cop'     => "Coptic",        # ISO 639-2
+    'dbl'     => "Dyirbal",
     'dsb'     => "Lower Sorbian",
     'ell'     => "Modern Greek",  # ISO 639-3
     'got'     => "Gothic",        # ISO 639-2
@@ -67,6 +68,8 @@ my %EXTRA_LANG_CODES = (
     'swl'     => "Swedish Sign Language",
     'und'     => "unknown", # ISO 639-2 code for undetermined/unknown language
     'xal'     => "Kalmyk",
+    'wbp'     => "Warlpiri",
+    'yii'     => "Yidiny",
     'yue'     => "Cantonese",
 );
 

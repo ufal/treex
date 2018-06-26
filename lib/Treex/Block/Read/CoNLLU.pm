@@ -35,6 +35,7 @@ sub next_document {
         $aroot->set_id($sid.'/'.$self->language());
         my @parents = (0);
         my @nodes   = ($aroot);
+        my $sentence_read_from_input_text = 0; # if the (now mandatory) text attribute was present, do not reset zone->sentence to concatenation of nodes!
         my $sentence;
         my $printed_up_to = 0;
         # Information about the current fused token (see below).
@@ -70,6 +71,7 @@ sub next_document {
                 {
                     my $text = $1;
                     $zone->set_sentence($text);
+                    $sentence_read_from_input_text = 1;
                 }
                 # any other sentence-level comment
                 else
@@ -117,6 +119,9 @@ sub next_document {
 
             my $newnode = $aroot->create_child();
             $newnode->shift_after_subtree($aroot);
+            # Some applications (e.g., PML-TQ) require that the node id be unique treebank-wide.
+            # Thus we will make the sentence id part of node id, assuming that sentence id is unique.
+            $newnode->set_id($sid.'/'.$id);
             # Nodes can become members of multiword tokens only after their ords are set.
             if (defined($futo))
             {
@@ -204,7 +209,10 @@ sub next_document {
             $nodes[$i]->set_parent( $nodes[ $parents[$i] ] );
         }
         $sentence =~ s/\s+$//;
-        $zone->set_sentence($sentence);
+        unless($sentence_read_from_input_text)
+        {
+            $zone->set_sentence($sentence);
+        }
         $bundle->wild->{comment} = $comment;
     }
 
