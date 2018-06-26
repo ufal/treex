@@ -1,4 +1,4 @@
-package Treex::Block::HamleDT::HU::FixUD;
+package Treex::Block::HamleDT::DA::FixUD;
 use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Common;
@@ -29,9 +29,9 @@ sub process_atree
 
 =over
 
-=item Treex::Block::HamleDT::HU::FixUD
+=item Treex::Block::HamleDT::DA::FixUD
 
-A block to fix Hungarian UD. Currently only normalizes coordination, flat etc.
+A block to fix Danish UD. Currently only normalizes coordination, flat etc.
 
 =back
 
@@ -41,6 +41,6 @@ Daniel Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2017, 2018 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2018 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

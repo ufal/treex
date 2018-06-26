@@ -35,6 +35,7 @@ sub next_document {
         $aroot->set_id($sid.'/'.$self->language());
         my @parents = (0);
         my @nodes   = ($aroot);
+        my $sentence_read_from_input_text = 0; # if the (now mandatory) text attribute was present, do not reset zone->sentence to concatenation of nodes!
         my $sentence;
         my $printed_up_to = 0;
         # Information about the current fused token (see below).
@@ -42,9 +43,7 @@ sub next_document {
         my $futo;
         my $fuform;
         my @funodes = ();
-        # Information about nodes that are not followed by a space.
-        # Because of fused tokens, we may have to note them in advance.
-        my @nsaflags = ();
+        my $funspaf; # no space after the fused token?
 
         LINE:
         foreach my $line (@lines) {
@@ -72,6 +71,7 @@ sub next_document {
                 {
                     my $text = $1;
                     $zone->set_sentence($text);
+                    $sentence_read_from_input_text = 1;
                 }
                 # any other sentence-level comment
                 else
@@ -103,7 +103,7 @@ sub next_document {
                 $sentence .= $form if defined $form;
                 if ($misc =~ m/SpaceAfter=No/)
                 {
-                    $nsaflags[$futo] = 1;
+                    $funspaf = 1;
                 }
                 else
                 {
@@ -118,31 +118,42 @@ sub next_document {
             }
 
             my $newnode = $aroot->create_child();
-            if (defined($futo)) {
-                if ($id <= $futo) {
+            $newnode->shift_after_subtree($aroot);
+            # Some applications (e.g., PML-TQ) require that the node id be unique treebank-wide.
+            # Thus we will make the sentence id part of node id, assuming that sentence id is unique.
+            $newnode->set_id($sid.'/'.$id);
+            # Nodes can become members of multiword tokens only after their ords are set.
+            if (defined($futo))
+            {
+                if ($id <= $futo)
+                {
                     push(@funodes, $newnode);
                 }
-                if ($id >= $futo) {
-                    if (scalar(@funodes) >= 2) {
-                        for (my $i = 0; $i <= $#funodes; $i++) {
-                            my $fn = $funodes[$i];
-                            ###!!! Later we will want to make these attributes normal (not wild).
-                            $fn->wild->{fused_form} = $fuform;
-                            ###!!! The following two lines caused Out of Memory! We should use references instead.
-                            #$fn->wild->{fused_start} = $funodes[0];
-                            #$fn->wild->{fused_end} = $funodes[-1];
-                            $fn->wild->{fused} = ($i == 0) ? 'start' : ($i == $#funodes) ? 'end' : 'middle';
+                if ($id >= $futo)
+                {
+                    if (scalar(@funodes) >= 2)
+                    {
+                        $funodes[0]->set_fused_form($fuform);
+                        for (my $i = 0; $i < $#funodes; $i++)
+                        {
+                            $funodes[$i]->set_fused_with_next(1);
                         }
-                    } else {
+                        if ($funspaf)
+                        {
+                            $funodes[-1]->set_no_space_after(1);
+                        }
+                    }
+                    else
+                    {
                         log_warn "Fused token $fufrom-$futo $fuform was announced but less than 2 nodes were found";
                     }
                     $fufrom = undef;
                     $futo = undef;
                     $fuform = undef;
                     splice(@funodes);
+                    $funspaf = undef;
                 }
             }
-            $newnode->shift_after_subtree($aroot);
             $newnode->set_form($form);
             $newnode->set_lemma($lemma);
             # Tred and PML-TQ should preferably display upos as the main tag of the node.
@@ -163,7 +174,7 @@ sub next_document {
                 my $n0 = scalar(@misc);
                 @misc = grep {$_ ne 'SpaceAfter=No'} (@misc);
                 my $n1 = scalar(@misc);
-                if ($n1 < $n0 || $nsaflags[$newnode->ord()]) {
+                if ($n1 < $n0) {
                     $newnode->set_no_space_after(1);
                 }
                 # Check whether MISC contains transliteration of the word form.
@@ -198,7 +209,10 @@ sub next_document {
             $nodes[$i]->set_parent( $nodes[ $parents[$i] ] );
         }
         $sentence =~ s/\s+$//;
-        $zone->set_sentence($sentence);
+        unless($sentence_read_from_input_text)
+        {
+            $zone->set_sentence($sentence);
+        }
         $bundle->wild->{comment} = $comment;
     }
 

@@ -92,9 +92,8 @@
       <value>fa</value> <!-- Persian -->
       <value>ae</value> <!-- Avestan -->
       <value>ku</value> <!-- Kurdish -->
-      <value>ku-latn</value> <!-- Kurdish in Latin script -->
-      <value>ku-arab</value> <!-- Kurdish in Arabic script -->
-      <value>ku-cyrl</value> <!-- Kurdish in Cyrillic script -->
+      <value>kmr</value> <!-- Kurmanji (Northern Kurdish) -->
+      <value>ckb</value> <!-- Sorani (Central Kurdish) -->
       <value>os</value> <!-- Ossetic -->
       <value>tg</value> <!-- Tajiki (in Cyrillic script) -->
       <value>ps</value> <!-- Pashto -->
@@ -167,7 +166,9 @@
       <value>fi</value> <!-- Finnish -->
       <value>et</value> <!-- Estonian -->
       <value>kv</value> <!-- Komi -->
+      <value>myv</value> <!-- Erzya -->
       <value>se</value> <!-- Northern Sami -->
+      <value>sme</value> <!-- Northern Sami -->
       <!-- other European and Caucasian languages -->
       <value>eu</value> <!-- Basque -->
       <value>ka</value> <!-- Georgian -->
@@ -229,6 +230,10 @@
       <value>sm</value> <!-- Samoan -->
       <value>mi</value> <!-- Māori -->
       <value>ty</value> <!-- Tahitian -->
+      <!-- Australian languages -->
+      <value>dbl</value> <!-- Dyirbal -->
+      <value>wbp</value> <!-- Warlpiri -->
+      <value>yii</value> <!-- Yidiny -->
       <!-- Eskimo-Aleutan languages -->
       <value>ik</value> <!-- Inupiaq -->
       <value>iu</value> <!-- Inuit -->
@@ -240,6 +245,7 @@
       <value>qu</value> <!-- Quechua -->
       <value>ay</value> <!-- Aymara -->
       <value>gn</value> <!-- Guaraní -->
+      <value>shp</value> <!-- Shipibo -->
       <!-- other languages -->
       <value>bi</value> <!-- Bislama -->
       <value>eo</value> <!-- Esperanto -->
@@ -247,6 +253,7 @@
       <value>ie</value> <!-- Interlingue -->
       <value>io</value> <!-- Ido -->
       <value>vo</value> <!-- Volapük -->
+      <value>swl</value> <!-- Swedish Sign Language -->
       <value>und</value> <!-- ISO 639-2 code for undetermined/unknown language -->
     </choice>
   </type>

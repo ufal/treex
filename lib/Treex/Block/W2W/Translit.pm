@@ -17,6 +17,7 @@ use translit::mkhedruli; # Dan's transliteration table for Georgian script
 use translit::ethiopic; # Dan's transliteration table for Ethiopic (Amharic) script
 use translit::khmer; # Dan's transliteration table for Khmer script
 use translit::hebrew; # Rudolf's transliteration table for Hebrew script
+use translit::hangeul; # Dan's transliteration table for Korean Hangeul script
 use translit::han2pinyin; # Dan's conversion of Han characters to pinyin (table from Unicode.org)
 
 has 'table' => (isa => 'HashRef', is => 'ro', default => sub {{}});
@@ -83,6 +84,8 @@ sub BUILD
     translit::khmer::inicializovat($table);
     # Hebrew script
     translit::hebrew::inicializovat($table);
+    # Korean Hangeul script
+    translit::hangeul::inicializovat($table);
     # Figure out and return the maximum length of an input sequence.
     my $maxl = 1; map {$maxl = max2($maxl, length($_))} (keys(%{$table}));
     $self->_set_maxl($maxl);
@@ -103,7 +106,7 @@ sub process_atree
     my $table = $self->table();
     my $maxl = $self->maxl();
     my $translit = translit::prevest($table, $text, $maxl);
-    $translit = han2pinyin::pinyin($translit); ###!!! BETA
+    $translit = translit::han2pinyin::pinyin($translit); ###!!! BETA
     # There is no dedicated attribute for sentence-level transliteration.
     # Use the CoNLL-U comments stored as wild attributes.
     my $comment = $root->get_bundle()->wild()->{comment};
@@ -133,7 +136,7 @@ sub process_atree
         if(defined($form))
         {
             $translit = translit::prevest($table, $form, $maxl);
-            $translit = han2pinyin::pinyin($translit); ###!!! BETA
+            $translit = translit::han2pinyin::pinyin($translit); ###!!! BETA
             $node->set_attr('translit', $translit);
         }
         # Transliterate lemma.
@@ -141,7 +144,7 @@ sub process_atree
         if(defined($lemma))
         {
             $translit = translit::prevest($table, $lemma, $maxl);
-            $translit = han2pinyin::pinyin($translit); ###!!! BETA
+            $translit = translit::han2pinyin::pinyin($translit); ###!!! BETA
             $node->set_attr('ltranslit', $translit);
         }
     }
@@ -199,7 +202,7 @@ Dan Zeman <zeman@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2008 – 2013, 2017 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2008 – 2013, 2017, 2018 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 

@@ -34,6 +34,10 @@ sub detect_special_constructions
         $phrase = $self->detect_stanford_pp($phrase);
         # The Alpino treebank has finite auxiliary verbs as heads of participles.
         $phrase = $self->detect_auxiliary_head($phrase);
+        # The following line added 24.11.2017 because of Polish. Hopefully it
+        # does not do any damage in the other Alpino-like treebanks where it is
+        # not needed.
+        $phrase = $self->convert_phrase_headed_by_modifier($phrase);
     }
     # Return the resulting phrase. It may be different from the input phrase.
     return $phrase;

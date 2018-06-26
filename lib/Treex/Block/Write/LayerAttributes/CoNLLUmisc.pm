@@ -9,7 +9,7 @@ has '+return_values_names' => ( default => sub { [''] } );
 sub modify_single {
 
     my ( $self, $node ) = @_;
-        
+
         my $wild = $node->wild();
         my $ord = $node->ord;
         my $form = $node->form;
@@ -19,7 +19,7 @@ sub modify_single {
         @misc = split(/\|/, $wild->{misc}) if(exists($wild->{misc}) && defined($wild->{misc}));
 
         # In the case of fused surface token, SpaceAfter=No may be specified for the surface token but NOT for the individual syntactic words.
-        if($node->no_space_after() && !defined($wild->{fused}))
+        if($node->no_space_after() && !$node->is_fused())
         {
             unshift(@misc, 'SpaceAfter=No');
         }
@@ -59,7 +59,7 @@ sub modify_single {
         {
             push(@misc, "LNumValue=$wild->{lnumvalue}");
         }
-        
+
     return join('|', @misc);
 }
 
@@ -69,7 +69,7 @@ __END__
 
 =encoding utf-8
 
-=head1 NAME 
+=head1 NAME
 
 Treex::Block::Write::LayerAttributes::CoNLLUmisc
 
@@ -88,7 +88,7 @@ Rudolf Rosa <rosa@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2017 by Institute of Formal and Applied Linguistics, 
+Copyright © 2017 by Institute of Formal and Applied Linguistics,
 Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.

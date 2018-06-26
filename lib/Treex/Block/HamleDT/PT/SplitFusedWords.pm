@@ -22,9 +22,7 @@ sub process_zone
     ###!!! Note that for the Prague treebanks this may introduce unexpected differences.
     ###!!! If there were typos in the underlying text or if numbers were normalized from "1,6" to "1.6",
     ###!!! the sentence attribute contains the real input text, but it will be replaced by the normalized word forms now.
-    my @nodes = $root->get_descendants({'ordered' => 1});
-    my $text = $self->collect_sentence_text(@nodes);
-    $zone->set_sentence($text);
+    $zone->set_sentence($root->collect_sentence_text());
 }
 
 

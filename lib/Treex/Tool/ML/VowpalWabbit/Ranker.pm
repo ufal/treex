@@ -5,10 +5,11 @@ use Treex::Tool::ProcessUtils;
 use Treex::Core::Common;
 use Treex::Core::Resource qw(require_file_from_share);
 use Treex::Tool::ML::VowpalWabbit::Util;
+use List::MoreUtils qw/any/;
 
 with 'Treex::Tool::ML::Ranker';
 
-has 'vw_path' => (is => 'ro', isa => 'Str', required => 1, default => $ENV{TMT_ROOT}.'/share/installed_tools/ml/vowpal_wabbit-v8.1-3cf3f692/vowpalwabbit/vw');
+has 'vw_path' => (is => 'ro', isa => 'Str', required => 1, builder => '_build_path');
 #has 'vw_path' => (is => 'ro', isa => 'Str', required => 1, default => $ENV{TMT_ROOT}.'/share/installed_tools/ml/vowpal_wabbit-v7.10.1-7453326e57/vowpalwabbit/vw');
 #has 'vw_path' => (is => 'ro', isa => 'Str', required => 1, default => '/net/cluster/TMP/mnovak/tools/vowpal_wabbit-v7.7-e9f67eca58/vowpalwabbit/vw');
 #has 'vw_path' => (is => 'ro', isa => 'Str', required => 1, default => '/net/work/people/mnovak/tools/x86_64/vowpal_wabbit/vowpalwabbit/vw');
@@ -29,6 +30,16 @@ sub BUILD {
     $write->autoflush();    
     $self->_set_read_handle($read);
     $self->_set_write_handle($write);
+}
+
+sub _build_path {
+    my ($self) = @_;
+    # use the VW compiled for Ubuntu 18.04
+    if (any {$_ =~ /Ubuntu\/18\.04/} @INC) {
+        return $ENV{TMT_ROOT}.'/share/installed_tools/ml/vowpal_wabbit-v8.1-3cf3f692-ubuntu18.04/vowpalwabbit/vw';
+    }
+    # use the VW compiled for Ubuntu 14.04
+    return $ENV{TMT_ROOT}.'/share/installed_tools/ml/vowpal_wabbit-v8.1-3cf3f692/vowpalwabbit/vw';
 }
 
 sub _locate_model_file {

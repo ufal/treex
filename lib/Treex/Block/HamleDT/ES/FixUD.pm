@@ -16,6 +16,7 @@ sub process_atree
 #    $self->regenerate_upos($root);
     $self->fix_root_punct($root);
     $self->fix_case_mark($root);
+    $self->fix_acl_under_verb($root);
 }
 
 
@@ -513,6 +514,28 @@ sub fix_case_mark
             {
                 $node->set_deprel('mark');
             }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# A clause attached to a verb cannot be acl, those are reserved to modifiers of
+# nominals. It can be advcl, or xcomp (secondary predication) or it should be
+# reattached to a nominal argument of the verb. A full disambiguation would
+# have to be manual. We now resort to a simple relabeling to advcl.
+#------------------------------------------------------------------------------
+sub fix_acl_under_verb
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() =~ m/^acl(:|$)/ && $node->parent()->is_verb())
+        {
+            $node->set_deprel('advcl');
         }
     }
 }

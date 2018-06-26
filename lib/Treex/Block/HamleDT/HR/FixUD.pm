@@ -14,6 +14,15 @@ sub process_atree
     $self->fix_morphology($root);
     $self->regenerate_upos($root);
     $self->fix_relations($root);
+    # The conversion to phrases and back should fix various issues such as
+    # left-to-right conj or flat:foreign.
+    my $builder = new Treex::Tool::PhraseBuilder::StanfordToUD
+    (
+        'prep_is_head'           => 0,
+        'coordination_head_rule' => 'first_conjunct'
+    );
+    my $phrase = $builder->build($root);
+    $phrase->project_dependencies();
 }
 
 

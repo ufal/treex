@@ -48,6 +48,7 @@
       <member name="prepcase"><cdata format="any"/></member>
       <member name="degree"><cdata format="any"/></member>
       <member name="person"><cdata format="any"/></member>
+      <member name="clusivity"><cdata format="any"/></member>
       <member name="polite"><cdata format="any"/></member>
       <!-- temporarily also allowing obsolete politeness; Interset will convert it to polite -->
       <member name="politeness"><cdata format="any"/></member>

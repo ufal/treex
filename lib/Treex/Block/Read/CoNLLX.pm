@@ -44,63 +44,102 @@ sub next_document {
         my $sid_set = 0;
         foreach my $token (@tokens) {
             next if $token =~ /^\s*$/;
-            my ( $id, $form, $lemma, $cpos, $pos, $feat, $head, $deprel ) = split( /\t/, $token );
-            if ( $self->sid_within_feat() )
+            # Well-formed CoNLL-X files cannot contain comment lines like CoNLL-U.
+            # However, occasionally the comments may be useful and they don't
+            # interfer with anything genuinely CoNLL-X.
+            # Read the text of the sentence if present.
+            if ($token =~ m/^\#\s*text\s*=\s*(.*)/)
             {
-                my @feat = split(/\|/, $feat);
-                my @sid = grep {m/^sid=.+$/} (@feat);
-                @feat = grep {!m/^sid=.+$/} (@feat);
-                $feat = join('|', @feat);
-                $feat = '_' if(!defined($feat) || $feat eq '');
-                if ( !$sid_set && scalar(@sid) >= 1 )
+                my $text = $1;
+                $zone->set_sentence($text);
+            }
+            else
+            {
+                my ( $id, $form, $lemma, $cpos, $pos, $feat, $head, $deprel ) = split( /\t/, $token );
+                if ( $self->sid_within_feat() )
                 {
-                    $sid[0] =~ m/^sid=(.+)$/;
-                    $sid = $1;
-                    $bundle->set_id($sid);
-                    $aroot->set_id($sid.'/'.$self->language());
-                    $sid_set = 1;
+                    my @feat = split(/\|/, $feat);
+                    my @sid = grep {m/^sid=.+$/} (@feat);
+                    @feat = grep {!m/^sid=.+$/} (@feat);
+                    $feat = join('|', @feat);
+                    $feat = '_' if(!defined($feat) || $feat eq '');
+                    if ( !$sid_set && scalar(@sid) >= 1 )
+                    {
+                        $sid[0] =~ m/^sid=(.+)$/;
+                        $sid = $1;
+                        $bundle->set_id($sid);
+                        $aroot->set_id($sid.'/'.$self->language());
+                        $sid_set = 1;
+                    }
                 }
-            }
-            my $newnode = $aroot->create_child();
-            $newnode->shift_after_subtree($aroot);
-            $newnode->set_id($sid.'-w'.$newnode->ord());
-            $newnode->set_form($form);
-            $newnode->set_lemma($lemma);
-            $newnode->set_tag($pos);
-            $newnode->set_conll_cpos($cpos);
-            $newnode->set_conll_pos($pos);
-            $newnode->set_conll_feat($feat);
-            if ( $self->feat_is_iset ) {
-                $newnode->set_iset_conll_feat($feat);
-            }
-            if($self->is_parenthesis_root_within_afun)
-            {
-                if($deprel =~ s/_P$// || $deprel =~ s/_MP$/_M/ || $deprel =~ s/_PM$/_M/)
+                my $newnode = $aroot->create_child();
+                $newnode->shift_after_subtree($aroot);
+                $newnode->set_id($sid.'-w'.$newnode->ord());
+                $newnode->set_form($form);
+                $newnode->set_lemma($lemma);
+                $newnode->set_tag($pos);
+                $newnode->set_conll_cpos($cpos);
+                $newnode->set_conll_pos($pos);
+                $newnode->set_conll_feat($feat);
+                if ( $self->feat_is_iset ) {
+                    $newnode->set_iset_conll_feat($feat);
+                }
+                if($self->is_parenthesis_root_within_afun)
                 {
-                    $newnode->set_is_parenthesis_root(1);
+                    if($deprel =~ s/_P$// || $deprel =~ s/_MP$/_M/ || $deprel =~ s/_PM$/_M/)
+                    {
+                        $newnode->set_is_parenthesis_root(1);
+                    }
                 }
-            }
-            if($self->is_member_within_afun() && $deprel =~ s/_M$//)
-            {
-                $newnode->set_is_member(1);
-            }
-            $newnode->set_conll_deprel($deprel);
-            if ( $self->deprel_is_afun ) {
-                if ( $deprel =~ /_M$/ ) {
+                if($self->is_member_within_afun() && $deprel =~ s/_M$//)
+                {
                     $newnode->set_is_member(1);
-                    $deprel =~ s/_M$//;
                 }
-                $newnode->set_afun($deprel);
+                $newnode->set_conll_deprel($deprel);
+                if ( $self->deprel_is_afun ) {
+                    if ( $deprel =~ /_M$/ ) {
+                        $newnode->set_is_member(1);
+                        $deprel =~ s/_M$//;
+                    }
+                    $newnode->set_afun($deprel);
+                }
+                $sentence .= "$form " if(defined($form));
+                push @nodes,   $newnode;
+                push @parents, $head;
             }
-            $sentence .= "$form " if(defined($form));
-            push @nodes,   $newnode;
-            push @parents, $head;
         }
         foreach my $i ( 1 .. $#nodes ) {
             $nodes[$i]->set_parent( $nodes[ $parents[$i] ] );
         }
-        $sentence =~ s/\s+$//;
-        $zone->set_sentence($sentence);
+        # If we have read the sentence text from the text attribute (CoNLL-U-like extension), keep it.
+        # Otherwise, set the sentence text as a concatenation of the word forms.
+        my $current_sentence = $zone->sentence($sentence);
+        if (!defined($current_sentence) || $current_sentence =~ m/^\s*$/)
+        {
+            $sentence =~ s/\s+$//;
+            $zone->set_sentence($sentence);
+        }
+        # If we know the sentence before tokenization, we can infer the no_space_after attribute.
+        else
+        {
+            my $buffer = $current_sentence;
+            $buffer =~ s/^\s+//;
+            for (my $i = 1; $i <= $#nodes; $i++)
+            {
+                my $form = $nodes[$i]->form();
+                if ($buffer !~ s/^\Q$form\E//)
+                {
+                    log_warn("Word '$form' does not match text '$buffer'");
+                    last;
+                }
+                # Remove spaces from the beginning of the buffer. Set the flag if there were no spaces.
+                # (Exception: if the buffer is empty, there still could be spaces between sentences, so leave the flag unset.)
+                if ($buffer ne '' && $buffer !~ s/^\s+//)
+                {
+                    $nodes[$i]->set_no_space_after(1);
+                }
+            }
+        }
     }
 
     return $document;

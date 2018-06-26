@@ -12,7 +12,8 @@ has '+schema_dir' => ( builder => '_build_schema_dir', lazy_build => 0 );
 has '+_layers' => ( builder => '_build_layers', lazy_build => 1 );
 has '+_file_suffix' => ( default => '\.syntax\.pml(\.gz)?$' );
 has language => ( isa => 'Treex::Type::LangCode', is => 'ro', required => 1, default => 'ar' );
-has '_no_space_after' => ( isa => 'HashRef', is => 'rw', default => sub { {} }, documentation => 'hash word id => boolean space after wor no=1/yes=0|undef' );
+has '_no_space_after' => ( isa => 'HashRef', is => 'rw', default => sub { {} }, documentation => 'hash word id => boolean space after word no=1/yes=0|undef' );
+has '_word_to_nodes' => ( isa => 'HashRef', is => 'rw', default => sub { {} }, documentation => 'hash word id => record, its main item is the list of nodes corresponding to the word' );
 
 sub _build_schema_dir
 {
@@ -109,6 +110,8 @@ override '_convert_all_trees' => sub
     # Erase the _no_space_after hash before processing the new document.
     my $nsa = $self->_no_space_after();
     %{$nsa} = ();
+    my $wtn = $self->_word_to_nodes();
+    %{$wtn} = ();
     # For each unit (sentence), loop over tokens and check whether they are separated by whitespace.
     for(my $i = 0; $i < $nunits; $i++)
     {
@@ -151,6 +154,7 @@ override '_convert_all_trees' => sub
         my $bundle = $document->create_bundle();
         my $zone = $bundle->create_zone($self->language(), $self->selector());
         my $aroot = $zone->create_atree();
+        $self->collect_wtn_references($pmldoc->{syntax}->tree($tree_number));
         $self->_convert_atree($pmldoc->{syntax}->tree($tree_number), $aroot);
         my $unit = $units[$tree_number];
         if(defined($unit))
@@ -214,6 +218,36 @@ sub tag2cpos
 
 
 #------------------------------------------------------------------------------
+# Recursively collects references between syntactic nodes and surface words.
+#------------------------------------------------------------------------------
+sub collect_wtn_references
+{
+    my $self = shift;
+    my $pml_node = shift;
+    my $wtn = $self->_word_to_nodes();
+    my $wrf = $pml_node->attr('w/w.rf');
+    if(defined($wrf))
+    {
+        $wrf =~ s/^w\#//;
+        my %node_record =
+        (
+            'id'  => $pml_node->attr('id'),
+            'ord' => $pml_node->attr('ord')
+        );
+        log_warn("Undefined node id") if(!defined($node_record{id}));
+        log_warn("Undefined node ord") if(!defined($node_record{ord}));
+        push(@{$wtn->{$wrf}{nodes}}, \%node_record);
+    }
+    # Recursively visit descendant nodes.
+    foreach my $pml_child ($pml_node->children())
+    {
+        $self->collect_wtn_references($pml_child);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # Converts an a-tree from the PADT PML structure to the Treex structure.
 # Recursive.
 #------------------------------------------------------------------------------
@@ -223,6 +257,7 @@ override '_convert_atree' => sub
     my $pml_node = shift; # where to copy attributes from
     my $treex_node = shift; # where to copy attributes to
     my $nsa = $self->_no_space_after();
+    my $wtn = $self->_word_to_nodes();
     # The following attributes are present for all nodes including the root.
     foreach my $attr_name ('id', 'ord', 'afun')
     {
@@ -231,7 +266,6 @@ override '_convert_atree' => sub
     # The following attributes are present for non-root nodes.
     if(not $treex_node->is_root())
     {
-        my @features;
         # Reference to the word layer can tell what Unit (of paragraph) this word belongs to.
         # It can also show us tokens that came from the same word and it can help with detokenization.
         # $pml_node->attr('m') typically refers to a <Token>. Its parent is a <Word>.
@@ -257,6 +291,7 @@ override '_convert_atree' => sub
         if(defined($aform))
         {
             $treex_node->wild()->{aform} = $aform;
+            $treex_node->wild()->{part_of_surface_form} = $aform;
         }
         # Attributes from the morphological layer.
         # Note that the *.morpho.pml file may contain multiple morphological analyses per surface word.
@@ -266,71 +301,103 @@ override '_convert_atree' => sub
         # Out-of-vocabulary words do not have the 'm' section. We have to go directly to the 'w' layer.
         if(!defined($pml_node->attr('m')))
         {
-            my $rform = Encode::Arabic::Buckwalter::encode('buckwalter', $aform);
-            $treex_node->set_form($aform);
-            $treex_node->set_attr('translit', $rform);
-            $treex_node->set_lemma($aform);
-            $treex_node->set_tag('U---------');
-            if(defined($rform))
+            # It is possible that several nodes point to the same word.
+            # It means that the surface word should be split to several syntactic words.
+            # If disambiguated morphology was available, we would see the split.
+            # If we do not see the split, we are about to create multiple copies of the entire surface word, which we do not want to do.
+            # But it is also possible that several splits are available and we just do not have the information which one is correct.
+            # (Example: HYT_ARB_20010912.0066, p7u1, first surface word corresponds to three syntactic nodes.)
+            if(defined($wrf) && defined($wtn->{$wrf}{nodes}) && scalar(@{$wtn->{$wrf}{nodes}}) > 1)
             {
-                $rform =~ s/\s+/_/g;
-                $rform =~ s/\|/:/g;
-                push(@features, 'rform='.$rform);
+                my @fellow_nodes = sort {$a->{ord} <=> $b->{ord}} (@{$wtn->{$wrf}{nodes}});
+                my $warn = !$wtn->{$wrf}{warned};
+                $wtn->{$wrf}{warned} = 1;
+                my $n = scalar(@fellow_nodes);
+                my $node_ids = join(', ', map {$_->{id}} (@fellow_nodes));
+                my $rform = $self->arabic_to_buckwalter($aform);
+                log_warn("Word '$aform' ($rform) [$wrf] lacks morphology but is linked from $n nodes [$node_ids].") if($warn);
+                # Check whether there are alternative analyses in the element <with>.
+                # The attribute 'w' is of type Treex::PML::Node, and <with> groups its child nodes.
+                my $w = $pml_node->attr('w');
+                my @analyses = $w->children();
+                my $m = scalar(@analyses);
+                log_warn("Found $m possible analyses.") if($warn);
+                # We do not know which analysis is best so we will just pick the first one.
+                # However, we will prefer analysis where the number of tokens matches our number of nodes.
+                @analyses = grep {scalar($_->children())==$n} (@analyses);
+                $m = scalar(@analyses);
+                if($m > 0)
+                {
+                    my @tokens = map {$_->attr('form')} ($analyses[0]->children());
+                    my $tokens = join(' ', @tokens);
+                    my $nt = scalar(@tokens);
+                    log_warn("Selected analysis has $nt tokens: $tokens") if($warn);
+                    # Which token corresponds to the current node?
+                    my $found = 0;
+                    my $i;
+                    for($i = 0; $i <= $#fellow_nodes; $i++)
+                    {
+                        if($fellow_nodes[$i]{id} eq $pml_node->attr('id'))
+                        {
+                            $found = 1;
+                            last;
+                        }
+                    }
+                    if($found)
+                    {
+                        # The surface aform that we set above is no longer valid because it contains the entire string, not just this token.
+                        # A new value will be set in copy_m_token_to_treex_node() but only if if it does not exist. So erase the current value now.
+                        # However, we also want to preserve the surface string in a separate attribute so that it can be output in CoNLL-U if necessary.
+                        if(defined($aform))
+                        {
+                            $treex_node->wild()->{part_of_surface_form} = $aform;
+                            $aform = undef;
+                            delete($treex_node->wild()->{aform});
+                        }
+                        my @tokens = $analyses[0]->children();
+                        my $token = $tokens[$i];
+                        $self->copy_m_token_to_treex_node($token, $treex_node);
+                        log_warn("Token corresponding to current node: voc ".$treex_node->form().", unv ".$treex_node->wild()->{aform}.", rom ".$treex_node->translit().", orig ".$treex_node->wild()->{PADT_input_form});
+                    }
+                    else
+                    {
+                        log_fatal("Node ".$pml_node->attr('id')." not found among nodes referring to $wrf.");
+                    }
+                }
             }
-            push(@features, 'root=OOV');
+            else # w.rf is not referenced from multiple nodes
+            {
+                my $rform = $self->arabic_to_buckwalter($aform);
+                $treex_node->set_form($aform);
+                $treex_node->set_attr('translit', $rform);
+                $treex_node->set_lemma($aform);
+                $treex_node->set_tag('U---------');
+                $treex_node->{wild}{root} = 'OOV';
+            }
         }
         else
         {
-            $self->_copy_attr($pml_node, $treex_node, 'm/form',      'form');
-            $self->_copy_attr($pml_node, $treex_node, 'm/cite/form', 'lemma');
-            $self->_copy_attr($pml_node, $treex_node, 'm/tag',       'tag');
-            # Transliterate form and lemma to vocalized Arabic script.
-            # (The data contain words and tokens, whereas tokens are subunits of words.
-            # The forms of words are stored in unvocalized Arabic script as they were on input.
-            # The forms and lemmas of tokens are vocalized and romanized, so we must use ElixirFM to provide the Arabic script for them.)
-            if(defined($treex_node->form()))
-            {
-                my $aform = ElixirFM::orth($treex_node->form());
-                my $rform = ElixirFM::phon($treex_node->form());
-                push(@features, 'rform='.$rform);
-                $treex_node->set_attr('translit', $rform);
-                $treex_node->set_form($aform);
-            }
-            if(defined($treex_node->lemma()))
-            {
-                my $alemma = ElixirFM::orth($treex_node->lemma());
-                my $rlemma = ElixirFM::phon($treex_node->lemma());
-                push(@features, 'rlemma='.$rlemma);
-                # wild/lemma_translit, if present, is written in Write::CoNLLU as MISC LTranslit.
-                $treex_node->{wild}{lemma_translit} = $rlemma;
-                $treex_node->set_lemma($alemma);
-            }
-            # Copy English glosses from the reflex element.
-            # m/cite/reflex has type Treex::PML::List=ARRAY.
-            my $glosses = $pml_node->attr('m/cite/reflex');
-            if(defined($glosses))
-            {
-                my $gloss = join(',', map {s/\s+/_/g; $_;} @{$glosses});
-                $treex_node->{wild}{gloss} = $gloss;
-                push(@features, 'gloss='.$gloss);
-            }
-            # Attributes specific to Arabic morphology.
-            if(defined($pml_node->attr('m/root')))
-            {
-                my $root = $pml_node->attr('m/root');
-                $treex_node->{wild}{root} = $root;
-                $root =~ s/\s+/_/g;
-                $root =~ s/\|/:/g;
-                push(@features, 'root='.$root);
-            }
-            if(defined($pml_node->attr('m/morphs')))
-            {
-                my $morphs = $pml_node->attr('m/morphs');
-                $treex_node->{wild}{morphs} = $morphs;
-                #$morphs =~ s/\s+/_/g;
-                #$morphs =~ s/\|/:/g;
-                #push(@features, 'morphs='.$morphs);
-            }
+            $self->copy_m_token_to_treex_node($pml_node->attr('m'), $treex_node);
+        }
+        my @features;
+        if(defined($treex_node->translit()))
+        {
+            push(@features, 'rform='.$treex_node->translit());
+        }
+        if(defined($treex_node->ltranslit()))
+        {
+            push(@features, 'rlemma='.$treex_node->ltranslit());
+        }
+        if(exists($treex_node->{wild}{gloss}) && defined($treex_node->{wild}{gloss}))
+        {
+            push(@features, 'gloss='.$treex_node->{wild}{gloss});
+        }
+        if(exists($treex_node->{wild}{root}) && defined($treex_node->{wild}{root}))
+        {
+            my $root = $treex_node->{wild}{root};
+            $root =~ s/\s+/_/g;
+            $root =~ s/\|/:/g;
+            push(@features, 'root='.$root);
         }
         if(defined($treex_node->tag()))
         {
@@ -437,6 +504,111 @@ override '_convert_atree' => sub
 
 
 #------------------------------------------------------------------------------
+# Copy attributes of a token defined by morphological analysis to a treex node.
+#------------------------------------------------------------------------------
+sub copy_m_token_to_treex_node
+{
+    my $self = shift;
+    my $mtoken = shift;
+    my $node = shift;
+    my $input_form = $mtoken->attr('form');
+    my $input_lemma = $mtoken->attr('cite/form');
+    $node->set_tag($mtoken->attr('tag'));
+    # Transliterate form and lemma to vocalized Arabic script.
+    # (The data contain words and tokens, whereas tokens are subunits of words.
+    # The forms of words are stored in unvocalized Arabic script as they were on input.
+    # The forms and lemmas of tokens are vocalized and romanized, so we must use ElixirFM to provide the Arabic script for them.)
+    if(defined($input_form))
+    {
+        # Not all words went the same path through morphological analysis. (Not even all unknown words came out the same!)
+        # Hence the form may be unvocalized Arabic, vocalized Arabic, Buckwalter and ElixirFM internal romanized encoding.
+        # Arabic alphabet: ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي ی + hamza + alif + harakat (vowels) + ta marbouta, tatwil
+        # Buckwalter symbols: Abtv j H x d* rzs$ S D T Z Eg fqklmnhwyY '><&}|{`  auiF N  K~o   p_ (https://en.wikipedia.org/wiki/Buckwalter_transliteration)
+        # ElixirFM internal:  Abt_t^g.h_hd_drzs^s.s.d.t.z`.gfqklmnhwyY '|     _a auiaNuNiN AUIW T-
+        # Typically, we have vocalized Arabic for fully analyzed words,
+        # ElixirFM internal encoding for undisambiguated morphological analysis,
+        # and unvocalized Buckwalter for completely unknown words.
+        # It may not be always possible to tell apart Buckwalter from ElixirFM internal.
+        # We will try ElixirFM internal first.
+        my $vform;
+        my $rform;
+        if($input_form =~ m/^[-AbtghdrzsfqklmnwyYT\`\._\^\'\|auiUINW0-9,;\?]+$/) # '`
+        {
+            $vform = $self->elixir_internal_to_arabic($input_form);
+            $rform = $self->elixir_internal_to_romanized($input_form);
+        }
+        elsif($input_form =~ m/^[AbtvjHxd\*rzs\$SDTZEgfqklmnhwyY\'><\&\}\|\{\`auiFNK~op_]+$/) #'
+        {
+            $vform = $self->buckwalter_to_arabic($input_form);
+            $rform = $input_form;
+        }
+        else # Arabic script, possibly vocalized? Or something unexpected.
+        {
+            $vform = $input_form;
+            $rform = $self->arabic_to_buckwalter($input_form);
+        }
+        # By default, PADT form is vocalized Arabic, and the unvocalized form is a wild attribute.
+        # Vocalized and unvocalized forms are swapped in HamleDT::AR::Harmonize but here we should keep the default rule.
+        ###!!! The unvocalized aform may have been taken already from the word layer and saved as a wild attribute.
+        ###!!! We do not know whether it was unvocalized the same way as we would do it.
+        ###!!! But we can be almost sure that it was available. Although it may not have been the right string:
+        ###!!! in case of multinode surface words, we got the entire word multiple times.
+        unless(defined($node->wild()->{aform}))
+        {
+            my $aform = $self->vocalized_to_unvocalized($vform);
+            $node->wild()->{aform} = $aform;
+        }
+        $node->set_form($vform);
+        $node->set_translit($rform);
+        # For debugging purposes, save the input form as well.
+        $node->wild()->{PADT_input_form} = $input_form;
+    }
+    if(defined($input_lemma))
+    {
+        my $vlemma;
+        my $rlemma;
+        if($input_lemma =~ m/^[-AbtghdrzsfqklmnwyYT\`\._\^\'\|auiUIN]+$/) # '`
+        {
+            $vlemma = $self->elixir_internal_to_arabic($input_lemma);
+            $rlemma = $self->elixir_internal_to_romanized($input_lemma);
+        }
+        elsif($input_form =~ m/^[AbtvjHxd\*rzs\$SDTZEgfqklmnhwyY\'><\&\}\|\{\`auiFNK~op_]+$/) #'
+        {
+            $vlemma = $self->buckwalter_to_arabic($input_lemma);
+            $rlemma = $input_lemma;
+        }
+        else # Arabic script, possibly vocalized? Or something unexpected.
+        {
+            $vlemma = $input_lemma;
+            $rlemma = $self->arabic_to_buckwalter($input_lemma);
+        }
+        $node->set_lemma($vlemma);
+        $node->set_ltranslit($rlemma);
+    }
+    # Copy English glosses from the reflex element.
+    # m/cite/reflex has type Treex::PML::List=ARRAY.
+    my $glosses = $mtoken->attr('cite/reflex');
+    if(defined($glosses))
+    {
+        my $gloss = join(',', map {s/\s+/_/g; $_;} @{$glosses});
+        $node->{wild}{gloss} = $gloss;
+    }
+    # Attributes specific to Arabic morphology.
+    if(defined($mtoken->attr('root')))
+    {
+        my $root = $mtoken->attr('root');
+        $node->{wild}{root} = $root;
+    }
+    if(defined($mtoken->attr('morphs')) && $mtoken->attr('morphs') !~ m/^_+$/)
+    {
+        my $morphs = $mtoken->attr('morphs');
+        $node->{wild}{morphs} = $morphs;
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # We must override the method that creates references to valency dictionary.
 # We do not expect any such references in the current version of PADT, so the
 # overridden method is empty.
@@ -510,6 +682,83 @@ sub dbgstrarray
     }
     return '[ '.join(', ', @s).' ]';
 }
+
+
+
+#------------------------------------------------------------------------------
+# Converts an Arabic string (vocalized or not) to its Buckwalter
+# transliteration.
+#------------------------------------------------------------------------------
+sub arabic_to_buckwalter
+{
+    my $self = shift;
+    my $x = shift;
+    my $y = Encode::Arabic::Buckwalter::encode('buckwalter', $x);
+    return $y;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Converts a Buckwalter string (vocalized or not) to Arabic script.
+#------------------------------------------------------------------------------
+sub buckwalter_to_arabic
+{
+    my $self = shift;
+    my $x = shift;
+    my $y = Encode::Arabic::Buckwalter::decode('buckwalter', $x);
+    return $y;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Converts ElixirFM internal romanized encoding to Arabic script (vocalized).
+#------------------------------------------------------------------------------
+sub elixir_internal_to_arabic
+{
+    my $self = shift;
+    my $x = shift;
+    my $y = ElixirFM::orth($x);
+    return $y;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Converts ElixirFM internal romanized encoding to scientific romanization with
+# diacritics.
+#------------------------------------------------------------------------------
+sub elixir_internal_to_romanized
+{
+    my $self = shift;
+    my $x = shift;
+    my $y = ElixirFM::phon($x);
+    return $y;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Converts vocalized Arabic script to unvocalized (i.e., removes diacritics).
+#------------------------------------------------------------------------------
+sub vocalized_to_unvocalized
+{
+    my $self = shift;
+    my $x = shift;
+    my $y = $x;
+    # Remove combining diacritics.
+    $y =~ s/[\x{64B}-\x{65F}\x{670}]//g;
+    # Convert diacriticized alif (with madda, hamza or wasla) to plain alif.
+    $y =~ s/[\x{622}\x{623}\x{625}\x{671}]/\x{627}/g;
+    # Convert diacriticized waw to plain waw.
+    $y =~ s/[\x{624}]/\x{648}/g;
+    # Convert diacriticized yeh to plain yeh.
+    $y =~ s/[\x{626}]/\x{64A}/g;
+    return $y;
+}
+
+
 
 1;
 

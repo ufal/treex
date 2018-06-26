@@ -126,6 +126,12 @@ sub BUILD
     {
         if(defined($child->parent()))
         {
+            foreach my $child1 (@children)
+            {
+                log_warn('CORE CHILD: '.$child1->as_string());
+            }
+            log_warn('CHILDX: '.$child->as_string());
+            log_warn('PARENT: '.$child->parent()->as_string());
             log_fatal("The core child already has another parent");
         }
         $child->_set_parent($self);
@@ -449,9 +455,12 @@ sub set_deprel
     if($self->head_rule() eq 'last_coordinator')
     {
         ###!!! Orphans from elided conjuncts are labeled 'ExD' in the Prague
-        ###!!! annotation style. This is the only legitimate case when a non-first
-        ###!!! "conjunct" has not the same deprel as the first conjunct.
-        my $exd_means_orphan = $conjuncts[0]->deprel() ne 'ExD';
+        ###!!! annotation style. This is the only legitimate case where two
+        ###!!! "conjuncts" have different deprels. Beware! In some languages
+        ###!!! it is possible that the initial "conjuncts" are 'ExD' and the
+        ###!!! final conjuncts are real. Therefore it is not enough to look at
+        ###!!! the first conjunct.
+        my $exd_means_orphan = scalar(grep {$_->deprel() ne 'ExD'} (@conjuncts)) > 0;
         foreach my $c (@conjuncts)
         {
             unless($exd_means_orphan && $c->deprel() eq 'ExD')
@@ -652,6 +661,8 @@ sub project_dependencies
             my $dep_node = $d->node();
             $dep_node->set_parent($head_node);
             $dep_node->set_deprel($d->project_deprel());
+            ###!!! Warning: We did not check whether any other nodes had the flag set in the input data!
+            $dep_node->set_is_shared_modifier(1);
         }
     }
     elsif($head_rule eq 'last_coordinator')
@@ -683,6 +694,8 @@ sub project_dependencies
             my $dep_node = $d->node();
             $dep_node->set_parent($head_node);
             $dep_node->set_deprel($d->project_deprel());
+            ###!!! Warning: We did not check whether any other nodes had the flag set in the input data!
+            $dep_node->set_is_shared_modifier(1);
         }
     }
     else

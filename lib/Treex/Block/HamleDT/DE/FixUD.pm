@@ -4,7 +4,7 @@ use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Common;
 use Treex::Tool::PhraseBuilder::StanfordToUD;
-extends 'Treex::Core::Block';
+extends 'Treex::Block::HamleDT::SplitFusedWords';
 
 
 
@@ -65,7 +65,42 @@ sub convert_deprels
         {
             $node->set_deprel('obl');
         }
+        # Fix inherently reflexive verbs.
+        if($node->is_reflexive() && $self->is_inherently_reflexive_verb($parent->lemma()))
+        {
+            $node->set_deprel('expl:pv');
+        }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Identifies German inherently reflexive verbs (echte reflexive Verben). Note
+# that there are very few verbs where we can automatically say that the they
+# are reflexive. In some cases they are mostly reflexive, but the transitive
+# usage cannot be excluded, although it is rare, obsolete or limited to some
+# dialects. In other cases the reflexive use has a meaning significantly
+# different from the transitive use, and it would deserve to be annotated using
+# expl:pv, but we cannot tell the two usages apart automatically.
+#------------------------------------------------------------------------------
+sub is_inherently_reflexive_verb
+{
+    my $self = shift;
+    my $lemma = shift;
+    # The following examples are taken from Knaurs Grammatik der deutschen Sprache, 1989
+    # (first line) + some additions (second line).
+    # with accusative
+    my @irva = qw(
+        bedanken beeilen befinden begeben erholen nähern schämen sorgen verlieben
+        anfreunden weigern
+    );
+    # with dative
+    my @irvd = qw(
+        aneignen anmaßen ausbitten einbilden getrauen gleichbleiben vornehmen
+    );
+    my $re = join('|', (@irva, @irvd));
+    return $lemma =~ m/^($re)$/;
 }
 
 
@@ -80,6 +115,7 @@ sub fix_morphology
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
+        $self->fix_mwt_capitalization($node);
         my $form = $node->form();
         my $lemma = $node->lemma();
         my $iset = $node->iset();
@@ -88,6 +124,9 @@ sub fix_morphology
             $iset->set('polarity', 'neg');
         }
     }
+    # It is possible that we changed the form of a multi-word token.
+    # Therefore we must re-generate the sentence text.
+    $root->get_zone()->set_sentence($root->collect_sentence_text());
 }
 
 
@@ -124,6 +163,76 @@ sub regenerate_upos
     {
         $node->set_tag($node->iset()->get_upos());
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Makes capitalization of muti-word tokens consistent with capitalization of
+# their parts.
+#------------------------------------------------------------------------------
+sub fix_mwt_capitalization
+{
+    my $self = shift;
+    my $node = shift;
+    # Is this node part of a multi-word token?
+    if($node->is_fused())
+    {
+        my $pform = $node->form();
+        my $fform = $node->get_fusion();
+        # It is not always clear whether we want to fix the mwt or the part.
+        # In German however, the most frequent error seems to be that in the
+        # beginning of a sentence, the mwt is not capitalized while its first
+        # part is.
+        if($node->get_fusion_start() == $node && $node->ord() == 1 && is_capitalized($pform) && is_lowercase($fform))
+        {
+            $fform =~ s/^(.)/\u$1/;
+            $node->set_fused_form($fform);
+        }
+        # Occasionally the problem occurs also in the middle of the sentence, e.g. after punctuation that might terminate a sentence but does not here.
+        # In such cases we want to lowercase the first part.
+        elsif($node->get_fusion_start() == $node && is_capitalized($pform) && is_lowercase($fform))
+        {
+            $node->set_form(lc($pform));
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Checks whether a string is all-uppercase.
+#------------------------------------------------------------------------------
+sub is_uppercase
+{
+    my $string = shift;
+    return $string eq uc($string);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Checks whether a string is all-lowercase.
+#------------------------------------------------------------------------------
+sub is_lowercase
+{
+    my $string = shift;
+    return $string eq lc($string);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Checks whether a string is capitalized.
+#------------------------------------------------------------------------------
+sub is_capitalized
+{
+    my $string = shift;
+    return 0 if(length($string)==0);
+    $string =~ m/^(.)(.*)$/;
+    my $head = $1;
+    my $tail = $2;
+    return is_uppercase($head) && !is_uppercase($tail);
 }
 
 

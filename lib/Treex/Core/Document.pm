@@ -163,10 +163,17 @@ sub BUILD {
                     # results in returning a $pmldoc which seems to be OK, but it contains no bundles,
                     # so Treex crashes on subsequent blocks which is misleading for users.
                     # If we really want to be fault-tolerant, it seems we would need to set Treex::PML::Instance::Reader::STRICT=0,
-                    # but I don't no enough about PML internals and I think it's better to make such errors fatal.
+                    # but I don't know enough about PML internals and I think it's better to make such errors fatal.
                     # Martin Popel
-                    $factory->createDocumentFromFile( $params_rf->{filename});
+                    # 2018-03-05: Dan Zeman: adding recover=>1 again.
+                    # Random strange errors happen with visually correct files on cluster in the PML backend ("extra content after document end").
+                    # It is paralyzing my work.
+                    $factory->createDocumentFromFile( $params_rf->{filename}, {'recover' => 1} );
                 };
+                if ($Treex::PML::FSError) {
+                    log_warn "Treex::PML::FSError: $Treex::PML::FSError";
+                    log_warn "Trying to process the document anyway.";
+                }
                 log_fatal "Error while loading " . $params_rf->{filename} . ( $@ ? "\n$@" : '' )
                     if !defined $pmldoc;
             }
@@ -201,6 +208,7 @@ sub BUILD {
                         $correct_ord++;
                     }
                     $node->deserialize_wild;
+                    # Interset, if present, must be deserialized after wild because it relies on wild to take care of the 'other' feature.
                     if ( $node->DOES('Treex::Core::Node::Interset') ) {
                         $node->deserialize_iset;
                     }
@@ -482,7 +490,7 @@ sub get_all_zones {
     my $self = shift;
     my $meta = $self->metaData('pml_root')->{meta};
     return if !$meta->{zones};
-    
+
     # Each element is a pair [$name, $value]. We need just the values.
     return map {$_->[1]}  $meta->{zones}->elements;
 }
@@ -552,10 +560,11 @@ sub _serialize_all_wild {
         $bundle->serialize_wild;
         foreach my $bundlezone ( $bundle->get_all_zones ) {
             foreach my $node ( map { $_->get_descendants( { add_self => 1 } ) } $bundlezone->get_all_trees ) {
-                $node->serialize_wild;
+                # Interset, if present, must be serialized before wild because it relies on wild to take care of the 'other' feature.
                 if ( $node->DOES('Treex::Core::Node::Interset') ) {
                     $node->serialize_iset;
                 }
+                $node->serialize_wild;
             }
         }
     }

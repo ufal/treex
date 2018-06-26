@@ -28,6 +28,7 @@ sub process_zone
     $self->fill_in_lemmas($root);
     $self->fix_coap_ismember($root);
     $self->fix_auxp($root);
+    $self->fix_relative_pronouns($root);
 }
 
 
@@ -75,16 +76,24 @@ sub fix_morphology
         {
             if(scalar(@fused_indices)>1)
             {
-                # We currently set the following wild attributes for fused nodes (see Write::CoNLLU):
-                # fused = start|middle|end
-                # fused_end = ord of the last node
-                # fused_form
                 for(my $j = 0; $j <= $#fused_indices; $j++)
                 {
                     my $wild = $nodes[$fused_indices[$j]]->wild();
-                    $wild->{fused} = ($j==0) ? 'start' : ($j==$#fused_indices) ? 'end' : 'middle';
-                    $wild->{fused_end} = $nodes[$fused_indices[-1]]->ord();
-                    $wild->{fused_form} = $wild->{aform};
+                    if($j==0)
+                    {
+                        if(defined($wild->{part_of_surface_form}))
+                        {
+                            $nodes[$fused_indices[$j]]->set_fused_form($wild->{part_of_surface_form});
+                        }
+                        else
+                        {
+                            log_warn('Unknown surface form of a multiword token.');
+                        }
+                    }
+                    if($j<$#fused_indices)
+                    {
+                        $nodes[$fused_indices[$j]]->set_fused_with_next(1);
+                    }
                     # We will make the unvocalized surface forms the main forms of all nodes, except for syntactic words that are fused on surface.
                     # For the syntactic words we only apply a primitive stripping of diacritical marks.
                     $wild->{aform} = $nodes[$fused_indices[$j]]->form();
@@ -118,6 +127,12 @@ sub fix_morphology
         {
             @misc = $self->add_misc('Root', $wild->{root}, @misc);
         }
+        # For debugging purposes, save the input form as well.
+        ###!!! now turned off
+        if(0 && defined($wild->{PADT_input_form}))
+        {
+            @misc = $self->add_misc('PADTInputForm', $wild->{PADT_input_form}, @misc);
+        }
         if(scalar(@misc)>0)
         {
             $wild->{misc} = join('|', @misc);
@@ -126,7 +141,8 @@ sub fix_morphology
         my $lemma = $node->lemma();
         if(!defined($lemma) || $lemma eq '')
         {
-            log_warn("Empty lemma of word form ".$node->form());
+            # Disable the warnings. Many numbers and symbols actually lack the lemma.
+            #log_warn("Empty lemma of word form ".$node->form());
             $node->set_lemma($node->form());
         }
     }
@@ -235,6 +251,36 @@ sub convert_deprels
             else
             {
                 $deprel = 'AuxV';
+            }
+        }
+
+        # AuxY: In PDT, it marks mostly additional conjunction in coordination.
+        # In PADT, it is also used in other contexts where PDT annotation would be different.
+        elsif ( $deprel eq 'AuxY' )
+        {
+            # In PADT, it is also used with relative pronouns such as اَلَّتِي (allatī).
+            # Instead of serving as the subject or object of the following relative
+            # clause, for some reason the pronoun is attached as the clause's left
+            # sibling. We must fix this!
+            if ( $node->is_relative() )
+            {
+                my $neighbor = $node->get_right_neighbor();
+                # We won't check at this moment whether the neighbor's deprel is 'Atr'.
+                # Until all deprels are converted, we cannot be sure that they are stored in the deprel attribute and not elsewhere (e.g. in afun).
+                if (defined($neighbor))
+                {
+                    $deprel = 'SbOfRelCl';
+                }
+            }
+            # Multi-word prepositions in PADT: example: "bi ismi" (in the name of).
+            # The preposition ("bi") is the head and its deprel is 'AuxP'.
+            # The second word ("ismi") is attached to the preposition as 'AuxY'.
+            # The main noun (in the name of which it is, here in genitive case) is attached to the preposition and bears the real deprel of the phrase (e.g., 'Atr').
+            # In PDT, "ismi" would be 'AuxP' head, "bi" would be its 'AuxP' child and the main noun would be its second child.
+            # We can ask whether the parent is preposition (based on POS tag). We better not query the deprel (because it may still be in the afun attribute or elsewhere).
+            elsif ( $node->parent()->is_preposition() )
+            {
+                $deprel = 'AuxP';
             }
         }
 
@@ -557,6 +603,81 @@ sub fix_auxp
                         $node->set_is_member(1);
                         $parent->set_is_member(0);
                     }
+                }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Reconsiders attachment of relative pronouns. In the original annotation they
+# are attached to their antecedent as AuxY. We want them attached as the subject
+# of the relative clause. So far we have re-labeled the relation from AuxY to
+# SbOfRelCl (because we couldn't re-attach it right away).
+#------------------------------------------------------------------------------
+sub fix_relative_pronouns
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() eq 'SbOfRelCl')
+        {
+            my $neighbor = $node->get_right_neighbor();
+            # We have checked that the neighbor exists. If it does not exist
+            # now, it must be a result of of intervening transformations.
+            if(!defined($neighbor))
+            {
+                log_warn("Relative pronoun '".$node->form()."' does not have a right neighbor.");
+                $node->set_deprel('Atr');
+            }
+            # If the right neighbor really is a relative clause, its Prague
+            # deprel should be 'Atr'. However, some of these clauses are actually
+            # labeled other things like 'Obj'! It's weird but as long as the node
+            # is a verb, it should be OK to attach the pronoun to it.
+            elsif($neighbor->deprel() eq 'Atr' || $neighbor->is_verb())
+            {
+                $node->set_parent($neighbor);
+                $node->set_deprel('Sb');
+            }
+            # In one case the neighboring clause is enclosed in quotation marks
+            # and the quotation marks are not attached to the predicate of the clause,
+            # they are siblings of the pronoun.
+            elsif($neighbor->deprel() eq 'AuxG')
+            {
+                my $lq = $neighbor;
+                my @siblings = $lq->get_siblings({following_only => 1});
+                if(scalar(@siblings) >= 2 && $siblings[0]->is_verb() && $siblings[1]->deprel() eq 'AuxG')
+                {
+                    $lq->set_parent($siblings[0]);
+                    $siblings[1]->set_parent($siblings[0]);
+                    $node->set_parent($siblings[0]);
+                    $node->set_deprel('Sb');
+                }
+                else
+                {
+                    $node->set_deprel('Atr');
+                }
+            }
+            else
+            {
+                # Try to find the relative clause further down the siblings.
+                # Its predicate may be non-verbal (with or without copula), even a prepositional phrase.
+                # Therefore, we only make sure that what we pick is not punctuation.
+                my @siblings = $neighbor->get_siblings({following_only => 1});
+                @siblings = grep {!$_->is_punctuation()} (@siblings);
+                if(scalar(@siblings) >= 1)
+                {
+                    $node->set_parent($siblings[0]);
+                    $node->set_deprel('Sb');
+                }
+                else
+                {
+                    log_warn("Cannot find the relative clause introduced by the pronoun '".$node->form()."'.");
+                    $node->set_deprel('Atr');
                 }
             }
         }

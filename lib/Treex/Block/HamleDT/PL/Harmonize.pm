@@ -346,9 +346,19 @@ sub convert_deprels
                 $node->set_deprel('SubArg');
             }
             # parent is a numeral -> Atr (counted noun in genitive is governed by the numeral, like in Czech)
+            # Unlike in Czech, numerals govern counted nouns even if the latter are not forced to the genitive.
+            # Example: zatrzymać cztery osoby (to arrest four persons), in the original tree "osoby" is a comp(lement) of "cztery".
             elsif ($eparent->is_numeral())
             {
-                $node->set_deprel('Atr');
+                # agreeing attribute: reverse the dependency
+                if ($eparent->iset()->case() eq $node->iset()->case())
+                {
+                    $node->set_deprel('NumArg');
+                }
+                else
+                {
+                    $node->set_deprel('Atr');
+                }
             }
             # parent is a noun -> Atr
             elsif ($eparent->is_noun())

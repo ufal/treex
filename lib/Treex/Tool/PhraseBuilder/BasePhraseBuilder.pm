@@ -464,6 +464,12 @@ sub add_punctuation_to_coordination
     {
         $conjuncts{$c}++;
     }
+    # We must not add a second copy of punctuation that is already listed!
+    my %already_there;
+    foreach my $c (@{$punctuation}, @{$coordinators})
+    {
+        $already_there{$c}++;
+    }
     my @conjuncts = sort {$a->ord() <=> $b->ord()} (@{$conjuncts});
     my @conjords = sort {$a <=> $b} (map {$_->ord()} (@conjuncts));
     my @delmords = sort {$a <=> $b} (map {$_->ord()} (@{$punctuation}, @{$coordinators}));
@@ -525,11 +531,12 @@ sub add_punctuation_to_coordination
             {
                 $result = $rterms[0];
             }
-            if(defined($result))
+            if(defined($result) && !exists($already_there{$result}))
             {
                 # Add the terminal phrase of the comma to our list of punctuation phrases.
                 # Then the coordination builder should automatically pick it and use it in the coordination.
                 push(@{$punctuation}, $result);
+                $already_there{$result}++;
             }
         }
     }
@@ -695,8 +702,18 @@ sub surround_nterm_by_coordination
     my @outpunct = grep {my $o = $_->ord(); $o < $cmin || $o > $cmax;} (@{$punctuation});
     # Detach all conjuncts, coordinators and delimiting punctuation from the
     # input phrase so that we can use them in the new Coordination phrase.
+    my %map;
     foreach my $d (@{$conjuncts}, @{$coordinators}, @inpunct)
     {
+        # Check that none of the core children appears twice in the lists.
+        my $dstr = $d->as_string();
+        if(exists($map{$dstr}))
+        {
+            log_warn($self->get_sentence_for_phrase($phrase));
+            log_warn($dstr);
+            log_fatal('The phrase occurs more than once in the lists of conjuncts, coordinators and punctuation.');
+        }
+        $map{$dstr}++;
         if($d->is_core_child())
         {
             log_warn($self->get_sentence_for_phrase($phrase));
