@@ -92,7 +92,15 @@ sub _not_equals {
 
 sub _index_my_id {
     my $self = shift;
-    $self->get_document->index_node_by_id( $self->id, $self );
+    # It is possible that get_document is undefined at the moment (for example
+    # if we are reading one large document and splitting it to many small documents).
+    # Then there is nothing to index (and everything will be probably indexed
+    # later when the document is created).
+    my $document = $self->get_document();
+    if (defined($document))
+    {
+        $document->index_node_by_id( $self->id, $self );
+    }
     return;
 }
 
