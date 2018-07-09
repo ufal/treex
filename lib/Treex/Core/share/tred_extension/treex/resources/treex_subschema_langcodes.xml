@@ -65,6 +65,7 @@
       <value>ca</value> <!-- Catalan -->
       <value>oc</value> <!-- Occitan -->
       <value>fr</value> <!-- French -->
+      <value>fro</value> <!-- Old French -->
       <value>wa</value> <!-- Walloon -->
       <value>ht</value> <!-- Haitian -->
       <value>rm</value> <!-- Rhaeto-Romance -->
@@ -166,6 +167,7 @@
       <value>fi</value> <!-- Finnish -->
       <value>et</value> <!-- Estonian -->
       <value>kv</value> <!-- Komi -->
+      <value>kpv</value> <!-- Komi Zyrian -->
       <value>myv</value> <!-- Erzya -->
       <value>se</value> <!-- Northern Sami -->
       <value>sme</value> <!-- Northern Sami -->
