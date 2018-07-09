@@ -253,6 +253,7 @@
       <value>ie</value> <!-- Interlingue -->
       <value>io</value> <!-- Ido -->
       <value>vo</value> <!-- Volapük -->
+      <value>pcm</value> <!-- Nigerian Pidgin (Naija) -->
       <value>swl</value> <!-- Swedish Sign Language -->
       <value>und</value> <!-- ISO 639-2 code for undetermined/unknown language -->
     </choice>

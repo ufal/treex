@@ -62,6 +62,7 @@ my %EXTRA_LANG_CODES = (
     'mul'     => "multiple languages", # ISO 639-2 code
     'myv'     => "Erzya",
     'nan'     => "Taiwanese",
+    'pcm'     => "Nigerian Pidgin (Naija)",
     'rmy'     => "Romany",
     'sah'     => "Yakut",
     'sme'     => "North Sami",
