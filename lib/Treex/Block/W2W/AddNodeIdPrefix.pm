@@ -11,6 +11,14 @@ has 'prefix' =>
     default => ''
 );
 
+has 'scsubst' =>
+(
+    is      => 'ro',
+    isa     => 'Bool',
+    default => undef,
+    documentation => 'Replace special characters in node id for PML-TQ.'
+);
+
 
 
 sub process_anode
@@ -20,6 +28,22 @@ sub process_anode
     my $id = $node->id();
     my $prefix = $self->prefix();
     $id = $prefix.$id;
+    # For PML-TQ, we may want to simplify the repertory of special characters in node ids
+    # (especially the slashes ('/') used to pose problems for node highlighting in SVG).
+    if ($self->scsubst())
+    {
+        # We are going to use colons as separators of id segments. Replace any pre-existing colons by periods.
+        $id =~ s/:+/./g;
+        # Slashes, if any, separate id segments. Replace them by colons, which are harmless in regular expressions.
+        $id =~ s{/+}{:}g;
+        # The first underscore should be treated as a segment separator too.
+        # It comes from the prefix and it separates language code from treebank code.
+        $id =~ s/_/:/;
+        # Reduce some other commonly used symbols.
+        $id =~ s/[-\.;,\+\*\&%=\$\@~\#!\?\(\)\[\]\{\}<>\^\"\'\`\\\|]+/./g;
+        # Reduce spaces and underscores.
+        $id =~ s/[_\s]+/_/g;
+    }
     $node->set_id($id);
 }
 
