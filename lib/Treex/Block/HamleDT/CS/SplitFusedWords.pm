@@ -126,6 +126,25 @@ sub split_fused_words
             );
             $new_nodes[0]->set_parent($new_nodes[1]);
         }
+        # L-participles and passive participles with the clitic auxiliary "-s" ("jsi").
+        # Note that the person feature in the tag is unassigned although it could be "2".
+        elsif($node->form() =~ m/^(.+)(s)$/i && $node->is_participle())
+        {
+            my $w1 = $1;
+            my $w2 = $2;
+            my $iset_hash = $node->iset()->get_hash();
+            my $host_recipe = {'form' => $w1,
+                'lemma'  => $node->lemma(), 'tag' => $node->tag(), 'conll_pos' => $node->conll_pos(),
+                'iset'   => $iset_hash,
+                'deprel' => $node->deprel()};
+            my $aux_recipe = {'form' => 'jsi',
+                'lemma'  => 'být',          'tag' => 'AUX',        'conll_pos' => 'VB-S---2P-AA---',
+                'iset'   => {'pos' => 'verb', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act',
+                             'person' => '2', 'number' => 'sing', 'polarity' => 'pos'},
+                'deprel' => $node->iset()->is_passive() ? 'aux:pass' : 'aux'};
+            my @new_nodes = $self->split_fused_token($node, $host_recipe, $aux_recipe);
+            $new_nodes[1]->set_parent($new_nodes[0]);
+        }
         # Pronouns and conjunctions with the clitic auxiliary "-s" ("jsi").
         elsif($node->form() =~ m/^(co|jak|jestli|kdo|se|si|ty|vždyť|že)(s)$/i && $node->is_second_person())
         {
