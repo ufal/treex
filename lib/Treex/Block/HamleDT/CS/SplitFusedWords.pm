@@ -126,7 +126,8 @@ sub split_fused_words
             );
             $new_nodes[0]->set_parent($new_nodes[1]);
         }
-        elsif($node->form() =~ m/^(co|kdo|se|si|ty)(s)$/i && $node->is_second_person())
+        # Pronouns and conjunctions with the clitic auxiliary "-s" ("jsi").
+        elsif($node->form() =~ m/^(co|jak|jestli|kdo|se|si|ty|vždyť|že)(s)$/i && $node->is_second_person())
         {
             my $w1 = $1;
             my $w2 = $2;
