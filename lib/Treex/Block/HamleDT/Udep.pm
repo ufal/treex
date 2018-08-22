@@ -403,7 +403,8 @@ sub convert_deprels
         # Auxiliary verb "být" ("to be"): aux, aux:pass
         elsif($deprel eq 'AuxV')
         {
-            $deprel = $parent->iset()->is_passive() ? 'aux:pass' : 'aux';
+            # The Czech conditional auxiliary "by" is not aux:pass even if attached to a passive verb.
+            $deprel = $parent->iset()->is_passive() && !$node->is_conditional() ? 'aux:pass' : 'aux';
             # Side effect: We also want to modify Interset. The PDT tagset does not distinguish auxiliary verbs but UPOS does.
             $node->iset()->set('verbtype', 'aux');
         }
