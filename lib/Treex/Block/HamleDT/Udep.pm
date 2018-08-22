@@ -355,8 +355,15 @@ sub convert_deprels
                     $deprel = 'det:nummod';
                 }
             }
-            elsif($node->iset()->nametype() =~ m/(giv|sur|prs)/ &&
-                  $parent->iset()->nametype() =~ m/(giv|sur|prs)/)
+            # Names and surnames should be connected using flat or flat:name, the first node is the head.
+            # The flat structure extends to titles and occupations such as "Mr.", "professor", "president",
+            # provided that they agree with the name in gender, number and case, and they precede the name (at least in Czech).
+            elsif($parent->iset()->nametype() =~ m/(giv|sur|prs)/ &&
+                  ($node->iset()->nametype() =~ m/(giv|sur|prs)/ ||
+                   $node->ord() < $parent->ord() &&
+                   $node->iset()->gender() eq $parent->iset()->gender() &&
+                   $node->iset()->number() eq $parent->iset()->number() &&
+                   $node->iset()->case() eq $parent->iset()->case()))
             {
                 $deprel = 'flat';
             }
