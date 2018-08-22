@@ -361,7 +361,9 @@ sub convert_deprels
             elsif($parent->iset()->nametype() =~ m/(giv|sur|prs)/ &&
                   ($node->iset()->nametype() =~ m/(giv|sur|prs)/ ||
                    $node->ord() < $parent->ord() &&
+                   $node->is_noun() && !$node->is_pronominal() &&
                    $node->iset()->gender() eq $parent->iset()->gender() &&
+                   $node->iset()->animacy() eq $parent->iset()->animacy() &&
                    $node->iset()->number() eq $parent->iset()->number() &&
                    $node->iset()->case() eq $parent->iset()->case()))
             {
