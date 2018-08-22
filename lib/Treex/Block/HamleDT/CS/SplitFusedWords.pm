@@ -137,13 +137,16 @@ sub split_fused_words
                 'lemma'  => $node->lemma(), 'tag' => $node->tag(), 'conll_pos' => $node->conll_pos(),
                 'iset'   => $iset_hash,
                 'deprel' => $node->deprel()};
+            my $aux_deprel = $node->iset()->is_passive() ? 'aux:pass' : 'aux';
             my $aux_recipe = {'form' => 'jsi',
                 'lemma'  => 'být',          'tag' => 'AUX',        'conll_pos' => 'VB-S---2P-AA---',
                 'iset'   => {'pos' => 'verb', 'verbform' => 'fin', 'mood' => 'ind', 'tense' => 'pres', 'voice' => 'act',
                              'person' => '2', 'number' => 'sing', 'polarity' => 'pos'},
-                'deprel' => $node->iset()->is_passive() ? 'aux:pass' : 'aux'};
+                'deprel' => $aux_deprel};
             my @new_nodes = $self->split_fused_token($node, $host_recipe, $aux_recipe);
             $new_nodes[1]->set_parent($new_nodes[0]);
+            # We must reset the deprel because if the original node was root, it has been set to root at both the new nodes.
+            $new_nodes[1]->set_deprel($aux_deprel);
         }
         # Pronouns and conjunctions with the clitic auxiliary "-s" ("jsi").
         elsif($node->form() =~ m/^(co|jak|jestli|kdo|se|si|ty|vždyť|že)(s)$/i && $node->is_second_person())
