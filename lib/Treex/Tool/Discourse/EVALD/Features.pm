@@ -269,8 +269,13 @@ sub filter_namespace {
 sub extract_features {
     my ($self, $doc, $multiline) = @_;
 
-    $self->collect_info($doc);
-    my $feat_hash = $self->create_feat_hash($doc);
+    # if EVALD features have not yet been generated for the document, generate and store them
+    my $feat_hash = $doc->wild->{evald_feat_hash};
+    if (!defined $feat_hash) {
+        $self->collect_info($doc);
+        $feat_hash = $self->create_feat_hash($doc);
+        $doc->wild->{evald_feat_hash} = $feat_hash;
+    }
 
     # create the "shared" part of the instance represenatiotn
     # distribute them by the specified namespace ("ns^" prefix)

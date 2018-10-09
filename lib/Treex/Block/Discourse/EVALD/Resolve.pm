@@ -43,6 +43,7 @@ my %filters_to_featset = (
   '+syntax' => 'syntax',
   '+conn_qua' => 'connectives_quantity',
   '+conn_div' => 'connectives_diversity',
+  '+conn_qua,+conn_div' => 'connectives',
   '+pron,+coref' => 'coreference',
   '+tfa' => 'tfa',
 );
@@ -51,6 +52,8 @@ my %filters_to_featset = (
 sub process_document {
     my ($self, $doc) = @_;
 
+    #log_info "EVALD RESOLVE: START";
+
     # obtaining the feature structure in a multiline format not supported yet
     my $instance_str = Treex::Tool::ML::Weka::Util::format_header($self->_feat_extractor->weka_featlist, $self->_feat_extractor->all_classes);
     my $feats = $self->_feat_extractor->extract_features($doc, 0);
@@ -58,15 +61,21 @@ sub process_document {
     print STDERR $instance_str;
     print STDERR "\n";
 
+    #log_info "EVALD RESOLVE: INSTANCES READY";
+
     # write it to a file to allow Weka to read it
     my $evald_features_file_name = $doc->full_filename . ($self->ns_filter ? ".".$self->ns_filter : "") . ".arff";
     open my $fh, '>:utf8', $evald_features_file_name or die "Could not open file '$evald_features_file_name' $!";
     print $fh $instance_str;
     close $fh;
 
+    #log_info "EVALD RESOLVE: INSTANCES STORED TO AN ARFF FILE";
+
     my @prediction = $self->evaluate_weka($evald_features_file_name);
     my ($class, $prob) = Treex::Tool::ML::Weka::Util::parse_output(@prediction);
     log_info "EVALD Weka model results:\tfeature set: ".$self->ns_filter."\tclass: $class\tprobability: $prob";
+
+    #log_info "EVALD RESOLVE: PREDICTIONS RETURNED";
   
     my $zone = $doc->get_zone($self->language);
 
@@ -74,6 +83,8 @@ sub process_document {
     
     $zone->set_attr('set_' . $set . '_evald_class', $class);
     $zone->set_attr('set_' . $set . '_evald_class_prob', $prob);
+
+    #log_info "EVALD RESOLVE: END";
 }
 
 sub evaluate_weka {
