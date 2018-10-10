@@ -57,7 +57,7 @@ sub fix_morphology
     my $self = shift;
     my $root = shift;
     # We must first normalize the lemmas because many subsequent rules depend on them.
-###!!! NOT IN FICTREE DATA!    $self->remove_features_from_lemmas($root);
+    $self->remove_features_from_lemmas($root);
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
