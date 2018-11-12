@@ -117,6 +117,7 @@
       <value>dv</value> <!-- Divehi -->
       <value>rmy</value> <!-- Romany -->
       <!-- Semitic languages -->
+      <value>akk</value> <!-- Akkadian -->
       <value>ar</value> <!-- Arabic -->
       <value>mt</value> <!-- Maltese -->
       <value>he</value> <!-- Hebrew -->
@@ -257,6 +258,7 @@
       <value>vo</value> <!-- Volapük -->
       <value>pcm</value> <!-- Nigerian Pidgin (Naija) -->
       <value>swl</value> <!-- Swedish Sign Language -->
+      <value>qhe</value> <!-- Hindi-English (bilingual) -->
       <value>und</value> <!-- ISO 639-2 code for undetermined/unknown language -->
     </choice>
   </type>
