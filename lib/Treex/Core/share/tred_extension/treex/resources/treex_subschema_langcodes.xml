@@ -65,6 +65,7 @@
       <value>ca</value> <!-- Catalan -->
       <value>oc</value> <!-- Occitan -->
       <value>fr</value> <!-- French -->
+      <value>fro</value> <!-- Old French -->
       <value>wa</value> <!-- Walloon -->
       <value>ht</value> <!-- Haitian -->
       <value>rm</value> <!-- Rhaeto-Romance -->
@@ -116,6 +117,7 @@
       <value>dv</value> <!-- Divehi -->
       <value>rmy</value> <!-- Romany -->
       <!-- Semitic languages -->
+      <value>akk</value> <!-- Akkadian -->
       <value>ar</value> <!-- Arabic -->
       <value>mt</value> <!-- Maltese -->
       <value>he</value> <!-- Hebrew -->
@@ -166,6 +168,7 @@
       <value>fi</value> <!-- Finnish -->
       <value>et</value> <!-- Estonian -->
       <value>kv</value> <!-- Komi -->
+      <value>kpv</value> <!-- Komi Zyrian -->
       <value>myv</value> <!-- Erzya -->
       <value>se</value> <!-- Northern Sami -->
       <value>sme</value> <!-- Northern Sami -->
@@ -253,7 +256,9 @@
       <value>ie</value> <!-- Interlingue -->
       <value>io</value> <!-- Ido -->
       <value>vo</value> <!-- Volapük -->
+      <value>pcm</value> <!-- Nigerian Pidgin (Naija) -->
       <value>swl</value> <!-- Swedish Sign Language -->
+      <value>qhe</value> <!-- Hindi-English (bilingual) -->
       <value>und</value> <!-- ISO 639-2 code for undetermined/unknown language -->
     </choice>
   </type>

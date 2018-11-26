@@ -3,3 +3,4 @@
 *.pyc
 /lib/Treex/Tool/Flect/flect/
 .*.swp
+*.lnk

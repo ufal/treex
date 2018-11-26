@@ -355,8 +355,17 @@ sub convert_deprels
                     $deprel = 'det:nummod';
                 }
             }
-            elsif($node->iset()->nametype() =~ m/(giv|sur|prs)/ &&
-                  $parent->iset()->nametype() =~ m/(giv|sur|prs)/)
+            # Names and surnames should be connected using flat or flat:name, the first node is the head.
+            # The flat structure extends to titles and occupations such as "Mr.", "professor", "president",
+            # provided that they agree with the name in gender, number and case, and they precede the name (at least in Czech).
+            elsif($parent->iset()->nametype() =~ m/(giv|sur|prs)/ &&
+                  ($node->iset()->nametype() =~ m/(giv|sur|prs)/ ||
+                   $node->ord() < $parent->ord() &&
+                   $node->is_noun() && !$node->is_pronominal() &&
+                   $node->iset()->gender() eq $parent->iset()->gender() &&
+                   $node->iset()->animacy() eq $parent->iset()->animacy() &&
+                   $node->iset()->number() eq $parent->iset()->number() &&
+                   $node->iset()->case() eq $parent->iset()->case()))
             {
                 $deprel = 'flat';
             }
@@ -403,7 +412,8 @@ sub convert_deprels
         # Auxiliary verb "být" ("to be"): aux, aux:pass
         elsif($deprel eq 'AuxV')
         {
-            $deprel = $parent->iset()->is_passive() ? 'aux:pass' : 'aux';
+            # The Czech conditional auxiliary "by" is not aux:pass even if attached to a passive verb.
+            $deprel = $parent->iset()->is_passive() && !$node->is_conditional() ? 'aux:pass' : 'aux';
             # Side effect: We also want to modify Interset. The PDT tagset does not distinguish auxiliary verbs but UPOS does.
             $node->iset()->set('verbtype', 'aux');
         }

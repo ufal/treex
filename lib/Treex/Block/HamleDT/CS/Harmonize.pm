@@ -158,6 +158,13 @@ sub fix_morphology
         {
             $node->iset()->set('pos', 'adj');
             $node->iset()->set('variant', 'short');
+            # Before changing the lemma from the infinitive to the participle, copy the old lemma to the LDeriv attribute in MISC.
+            # LDeriv may already exist if the verb itself is derived. If that's the case, overwrite it.
+            my $lemma = $node->lemma();
+            if(defined($lemma))
+            {
+                $node->set_misc_attr('LDeriv', $lemma);
+            }
             # That was the easy part. But we must also change the lemma.
             # nést-nesen-nesený, brát-brán-braný, mazat-mazán-mazaný, péci-pečen-pečený, zavřít-zavřen-zavřený, tisknout-tištěn-tištěný, minout-minut-minutý, začít-začat-začatý,
             # krýt-kryt-krytý, kupovat-kupován-kupovaný, prosit-prošen-prošený, trpět-trpěn-trpěný, sázet-sázen-sázený, dělat-dělán-dělaný

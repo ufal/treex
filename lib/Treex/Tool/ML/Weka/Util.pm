@@ -40,6 +40,20 @@ sub format_header {
     return $header;
 }
 
+sub parse_output {
+  my @lines = @_;
+  my $predicted_class = 'N/A';
+  my $probability = 'N/A';
+  foreach my $line (@lines) {
+    if ($line =~ /\d+\s+\d+:\?\s+\d+:(\S+)\s+(\S+)/) {
+      $predicted_class = $1;
+      $probability = $2;
+      last;
+    }
+  }
+  return ($predicted_class, $probability);
+}
+
 1;
 __END__
 

@@ -42,24 +42,14 @@ sub process_clause {
 
     @clitics = grep { _verb_group_root($_) eq $clause_root } @clitics;
 
-    #    foreach my $clitic (@clitics) {
-    #	if (_verb_group_root($clitic) ne $clause_root) {
-    #	    print "QQQ Not moving '".$clitic->form
-    #		."' from below '".$clitic->get_parent->form
-    #		." (real clause root '".$clause_root->form
-    #		." but returned'". _verb_group_root($clitic)->form."')\t"
-    #		.$clitic->get_bundle->get_attr('czech_target_sentence')."\n";
-    #	}
-    #    }
-
     # 3) Find the word (called $first) before Wackernagel's position, beware of coordinated/ing conjunction taking the 1st pos
     my $coord = _is_coord_taking_1st_pos( $clause_root );
     my $first;
 
     if ( !$coord ){
-        $first = _find_eo1st_pos( $clause_root, $nodes[0] );    
+        $first = _find_eo1st_pos( $clause_root, $nodes[0] );
     }
-    
+
     # 4) Shift all clitics
     # 4a) at the beginning of the clause if the coordinated subjunction/coordinating conjunction fills the 1st position
     if ( $coord ){
@@ -80,27 +70,27 @@ sub process_clause {
 # Return 1 if the given clause root is coordinated and the coordinating conjunction / shared subordinating
 # conjunction is taking up the 1st position.
 
-# E.g., in "Běžel, aby se zahřál a dostal se dřív domů.", the word "zahřál" gets 1, since "aby" fills 
+# E.g., in "Běžel, aby se zahřál a dostal se dřív domů.", the word "zahřál" gets 1, since "aby" fills
 # the 1st position, "dostal" gets 0, since "a" does not take up the 1st pos.
 # In "Stačí, když to přinesete na úřad nebo to tam pošlete doporučeně", both "přinesete" and "pošlete"
-# will get 1, since "když" and "nebo" both take up the 1st pos.  
+# will get 1, since "když" and "nebo" both take up the 1st pos.
 sub _is_coord_taking_1st_pos {
-    
+
     my ( $clause_root ) = @_;
-    
+
     my ($coap) = $clause_root->get_parent;
     return 0 if ( !$coap || !$coap->is_coap_root );
-    
-    my ($eparent) = $clause_root->get_eparents;    
+
+    my ($eparent) = $clause_root->get_eparents;
     return 0 if ( !$eparent || ( $eparent->afun || '' ) ne 'AuxC' );
 
     my (@coord_members) = grep { $_->is_member } $coap->get_children( { ordered=>1 } );
     return 0 if ( !@coord_members );
 
-    # only fire for the first coordination member and the last one with selected coord. conjunctions 
+    # only fire for the first coordination member and the last one with selected coord. conjunctions
     # ('a' and 'ale' do not fill the 1st position)
     return ( $clause_root == $coord_members[0] )
-        || ( $clause_root == $coord_members[-1] && $coap->lemma !~ /^(a|ale)$/ );     
+        || ( $clause_root == $coord_members[-1] && $coap->lemma !~ /^(a|ale)$/ );
 }
 
 
@@ -108,7 +98,7 @@ sub _is_coord_taking_1st_pos {
 sub _find_eo1st_pos {
     my ( $clause_root, $clause_first ) = @_;
     my $first;
-    
+
     # 3a) Clause root is the leftmost node = $first (typical for subordinating conjunctions)
     if ($clause_root == $clause_first
         and not first { ( $_->afun || "" ) eq "AuxC" } $clause_root->get_children
@@ -117,7 +107,7 @@ sub _find_eo1st_pos {
         $first = $clause_root;
     }
     # 3b) otherwise $first is one of the clause root's children
-    else {   
+    else {
         my $n = $clause_root->clause_number;
         $first = first { !_ignore( $_, $n ) } $clause_root->get_children( { ordered => 1, add_self => 1 } );
         if ( !$first ) { $first = $clause_root; }
@@ -144,9 +134,6 @@ sub _verb_group_root {
     }
 
     return $verb_root;
-
-    #if $verb_root ne $clitic;
-    #return;
 }
 
 sub _is_clitic {
@@ -194,7 +181,7 @@ sub _order {
     return 2 if $form =~ /^(se|si)$/;
     return 3 if $form =~ /^(mi|ti|mu|jí|nám|vám|jim)$/;
     return 4 if $form =~ /^(mě|tě|ho|ji|nás|vás|je|to)$/;
-    return 6 if $form =~ /^(tam|sem)$/;                                       # according to Krivan, 2006
+    return 6 if $form =~ /^(tam|sem)$/; # Fringe clitics according to http://ufal.mff.cuni.cz/~hana/bib/hana-diss.pdf
 
     # All other clitics have rank 5:
     # tag=.[7Hc] ses sis bysme
@@ -255,7 +242,7 @@ to the so called second position in the clause
 (according to Wackernagel's law). If there are more clitics in
 one clause, they are sorted according to simple grammatical rules.
 
-=head1 AUTHORS 
+=head1 AUTHORS
 
 Zdeněk Žabokrtský <zabokrtsky@ufal.mff.cuni.cz>
 

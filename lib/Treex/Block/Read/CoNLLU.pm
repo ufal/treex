@@ -121,7 +121,7 @@ sub next_document {
             $newnode->shift_after_subtree($aroot);
             # Some applications (e.g., PML-TQ) require that the node id be unique treebank-wide.
             # Thus we will make the sentence id part of node id, assuming that sentence id is unique.
-            $newnode->set_id($sid.'/'.$id);
+            $newnode->set_id($bundle->id().'/'.$id);
             # Nodes can become members of multiword tokens only after their ords are set.
             if (defined($futo))
             {
