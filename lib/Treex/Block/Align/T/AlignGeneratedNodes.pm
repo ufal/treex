@@ -156,7 +156,8 @@ sub align_generated_nodes_by_functor_parent {
         my ($to_eq) = Treex::Tool::Align::Utils::aligned_transitively([$from_eq], [ $self->_align_filter('forwards') ]);
         next if (!$to_eq);
         next if ($to_eq->clause_number == $to_node->clause_number);
-        
+
+        log_debug "LOOSE-MONOALIGN-functor_parent: ".$from_eq->get_address, 1;
         $from_eq->add_aligned_node( $to_node, $self->_align_name('loose') );
         delete $to_free->{$to_node->id};
     }
@@ -174,6 +175,7 @@ sub align_arguments_of_nonfinites_to_grandparents {
         
         my @from_grand_epars = $from_par->get_eparents({or_topological => 1});
         foreach my $from_grand_epar (@from_grand_epars) {
+            log_debug "LOOSE-MONOALIGN-nonfin_grandparent: ".$from_grand_epar->get_address, 1;
             $from_grand_epar->add_aligned_node( $to_node, $self->_align_name('loose') );
         }
         delete $to_free->{$to_node->id};
@@ -189,9 +191,11 @@ sub align_generated_nodes_to_coref_ante_counterpart {
         my ($to_ante) = Treex::Tool::Align::Utils::aligned_transitively(\@antes, [ $self->_align_filter($direction) ]);
         next if (!defined $to_ante);
         if ($direction eq 'forwards') {
+            log_debug "LOOSE-MONOALIGN-ante_counter-forward: ".$from_node->get_address, 1;
             $from_node->add_aligned_node($to_ante, $self->_align_name('loose'));
         } 
         else {
+            log_debug "LOOSE-MONOALIGN-ante_counter-backward: ".$to_ante->get_address, 1;
             $to_ante->add_aligned_node($from_node, $self->_align_name('loose'));
         }
         delete $from_free->{$from_node->id};
