@@ -32,7 +32,7 @@ sub get_align_info {
                     $other_lang => $partial_info,
                 };
             }
-            merge_align_info($align_info, $partial_info);
+            merge_align_info($align_info, $partial_info, $align_node);
         }
     }
     return $align_info;
