@@ -166,6 +166,73 @@ sub get_coreference_entities {
 
     return @sorted_chains;
 }
+
+sub get_anodes_with_zero_tnodes {
+    my ($zone) = @_;
+
+    my @all_node_ords = ();
+
+    # extract zero tnodes and estimate their surface ords
+    my $ttree = $zone->get_ttree;
+    my $gener_ords = _get_generated_ords($ttree);
+    my @all_tnodes = $ttree->get_descendants;
+    push @all_node_ords, map {[$_, $gener_ords->{$_->id}]} grep {defined $gener_ords->{$_->id}} @all_tnodes;
+
+    my $atree = $zone->get_atree;
+    my @all_anodes = $atree->get_descendants;
+    push @all_node_ords, map {[$_, $_->ord]} @all_anodes;
+
+    my @sorted_all_node_ords = sort {$a->[1] <=> $b->[1]} @all_node_ords;
+    my @sorted_all_nodes = map {$_->[0]} @sorted_all_node_ords;
+    return @sorted_all_nodes;
+}
+
+# a function for sigmoid with its values ranging (-1, 1)
+sub _sigmoid {
+    my ($x) = @_;
+    return 2*1/(1+exp(-$x)) - 1;
+}
+
+sub _get_ord_for_generated {
+    my ($tnode, $ords) = @_;
+    return if (!$tnode->is_generated);
+    return if ($tnode->t_lemma !~ /^#(PersPron|Cor|Gen)/);
+#        log_info "GENER LEMMA: ".$tnode->t_lemma;
+
+    my $par = $tnode->get_parent;
+    my $deepord_diff = $tnode->ord - $par->ord;
+
+    # get parent's ord first
+    my $par_ord = $ords->{$par->id};
+    if (!defined $par_ord) {
+        # Option 1: take the first of all a-nodes assocciated with the parental t-node, if the t-node precedes the parental t-node. Otherwise, take the last node.
+        #my @apars = sort {$a->ord <=> $b->ord} $par->get_anodes;
+        #$par_ord = $deepord_diff > 0 ? $apars[$#apars]->ord : $apars[0]->ord;
+        # Option 2: take the lexical a-node
+        my $par_anode = $par->get_lex_anode;
+        return if (!defined $par_anode);
+        $par_ord = $par_anode->ord;
+    }
+
+    return $par_ord + _sigmoid($deepord_diff);
+}
+
+sub _get_generated_ords {
+    my ($ttree) = @_;
+    my $ords = {};
+    my @node_queue = ( $ttree );
+    my $curr_node;
+    while (@node_queue) {
+        $curr_node = shift @node_queue;
+        my $ord = _get_ord_for_generated($curr_node, $ords);
+        if (defined $ord) {
+            $ords->{$curr_node->id} = $ord;
+        }
+        my @children = $curr_node->get_children;
+        push @node_queue, @children;
+    }
+    return $ords;
+}
  
 1;
 
@@ -203,6 +270,12 @@ The following parameters are supported:
     ordered
         deepord - nodes in chains are ordered by their deep order
         topological - nodes in chains are ordered in a topological order (outcoming nodes first)
+
+=item C<get_anodes_with_zero_tnodes>
+
+Get a-nodes ordered as their corresponding forms appear in the sentence.
+In addition, selected zeros are included (#PersPron, #Cor and #Gen).
+Their positions are calculated using the position of their parents.
 
 =back
 
