@@ -79,7 +79,7 @@ sub process_atree {
             if !$line || $line =~ /^\s*$/;
         @p = split( /\t/, $line );
         if ( @p > 0 
-            && ($p[0] eq $sentence_id || $p[0] =~ /\Q$sentence_id$/ ) ) {
+            && ($p[0] eq $sentence_id || $p[0] =~ /\Q$sentence_id\E$/ ) ) {
             $found = 1;
         }
     }
