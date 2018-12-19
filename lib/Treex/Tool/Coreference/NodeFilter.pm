@@ -14,10 +14,9 @@ use List::MoreUtils qw/any/;
 
 sub get_types {
     my ($node) = @_;
-    my @types = @{$node->wild->{filter_types} // []};
     #if (!@types) {
         my $types_hash = get_types_force($node);
-        @types = sort keys %$types_hash;
+        my @types = sort keys %$types_hash;
         $node->wild->{filter_types} = \@types;
     #}
     return @types;
