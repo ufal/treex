@@ -3,6 +3,7 @@ package Treex::Block::Write::SemEval2010;
 use Moose;
 use Moose::Util::TypeConstraints;
 use Treex::Core::Common;
+use Treex::Tool::Coreference::Utils;
 
 extends 'Treex::Block::Write::BaseTextWriter';
 
@@ -13,6 +14,8 @@ has '+language' => ( required => 1 );
 has '+extension' => ( default => '.conll' );
 
 has 'layer' => ( is => 'ro', isa => enum([qw/a t/]), default => 'a' );
+
+has 'include_zeros' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 override 'print_header' => sub {
     my ($self, $doc) = @_;
@@ -28,22 +31,21 @@ override 'print_footer' => sub {
 sub process_zone {
     my ($self, $zone) = @_;
 
-    my $tree;
+    my @nodes;
     if ($self->layer eq "a") {
-        $tree = $zone->get_atree;
+        if ($self->include_zeros) {
+            @nodes = Treex::Tool::Coreference::Utils::get_anodes_with_zero_tnodes($zone);
+        }
+        else {
+            @nodes = $zone->get_atree->get_descendants({ordered => 1});
+        }
     }
     else {
-        $tree = $zone->get_ttree;
+        @nodes = $zone->get_ttree->get_descendants({ordered => 1});
     }
-    $self->_process_tree($tree);
-}
 
-sub _process_tree {
-    my ($self, $tree) = @_;
-    my @nodes = $tree->get_descendants({ordered => 1});
-
-    my @data = map {_extract_data($_)} @nodes;
-   
+    my @data = map {$self->_extract_data($_)} @nodes;
+ 
     my $str = join "\n", (map {join "\t", @$_} @data);
     print { $self->_file_handle } "$str\n\n";
 }
@@ -87,7 +89,7 @@ sub _create_coref_str {
 }
 
 sub _extract_data {
-    my ($node) = @_;
+    my ($self, $node) = @_;
 
     my ($id, $token, $lemma, $pos, $head, $deprel, $coref, $treex_id);
 
@@ -106,8 +108,16 @@ sub _extract_data {
         $pos = defined $lex_anode ? $lex_anode->tag : $NOT_SET;
         $deprel = $node->functor;
     }
-    $id = $node->wild->{doc_ord} // $node->ord;
-    $head = !$node->is_root ? ($node->get_parent->wild->{doc_ord} // $node->get_parent->ord) : 0;
+    if ($node->get_layer eq "t" && $self->include_zeros) {
+        my $par = $node->get_parent;
+        my $apar = $par->get_lex_anode;
+        $id = $apar->wild->{doc_ord} . "-" . $node->ord;
+        $head = $apar->wild->{doc_ord};
+    }
+    else {
+        $id = $node->wild->{doc_ord} // $node->ord;
+        $head = !$node->is_root ? ($node->get_parent->wild->{doc_ord} // $node->get_parent->ord) : 0;
+    }
     $coref = _create_coref_str($node) || $NOT_SET;
     $treex_id = $node->id;
 

@@ -10,6 +10,7 @@ extends 'Treex::Core::Block';
 has 'layer' => ( is => 'ro', isa => enum([qw/a t/]), default => 'a' );
 has 'only_heads' => ( is => 'ro', isa => 'Bool', default => 1 );
 has 'clear' => ( is => 'ro', isa => 'Bool', default => 1 );
+has 'auto_alayer' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 has '_entities' => ( is => 'rw', isa => 'HashRef[Str]', default => sub {{}} );
 
@@ -75,32 +76,73 @@ sub process_tnode {
 
 sub surface_mention_by_t_expansion {
     my ($self, $tnode) = @_;
+
+    # get t-node span
+    my @mention_t_nodes;
+    if ($self->only_heads) {
+        @mention_t_nodes = ( $tnode );
+    }
+    else {
+        # if the tnode is a verb: extract its full subtree (whole clause with all embedded subclauses)
+        # otherwise: extract the subtree without embedded verbal subtrees
+        @mention_t_nodes = get_desc_no_verbal_subtree($tnode, !_is_verb($tnode));
+    }
     
-    my @mention_t_nodes = get_desc_no_verbal_subtree($tnode);
-    my $t_head_mention = $mention_t_nodes[0];
-    my $a_head_mention = $t_head_mention->get_lex_anode;
-    #return if (!defined $a_head_mention);
-    
-    my @mention_a_nodes = grep {defined $_ && (!defined $a_head_mention || $_ == $a_head_mention || $_->is_descendant_of($a_head_mention))}
-        map { $self->only_heads ? $_->get_lex_anode : $_->get_anodes } @mention_t_nodes;
-    
+    # obtain corresponding a-nodes and sort them as they appear in the sentence
+    my @mention_a_nodes = map { $self->only_heads ? $_->get_lex_anode : $_->get_anodes } @mention_t_nodes;
     @mention_a_nodes = sort {$a->ord <=> $b->ord} @mention_a_nodes;
 
-    if (@mention_a_nodes > 0 && $mention_a_nodes[-1]->form =~ /^[.,:]$/) {
-        pop @mention_a_nodes;
+    # remove leading preposition and other words that do not belong to the head's subtree on the a-layer
+    if ($self->auto_alayer) {
+        while (@mention_a_nodes && $mention_a_nodes[0]->is_preposition) {
+            shift @mention_a_nodes;
+        }
     }
+    else {
+        my $t_head_mention = $mention_t_nodes[0];
+        my $a_head_mention = $t_head_mention->get_lex_anode;
+        @mention_a_nodes = grep {defined $_ && (!defined $a_head_mention || $_ == $a_head_mention || $_->is_descendant_of($a_head_mention))} @mention_a_nodes;
+    }
+    
+    # possibly remove punctuation
+    if (@mention_a_nodes > 0) {
+        my $first_word = $mention_a_nodes[0];
+        my $last_word = $mention_a_nodes[-1];
+       
+        # remove the trailing punctuation
+        if ($mention_a_nodes[-1]->form =~ /^[.,:]$/) {
+            pop @mention_a_nodes;
+        }
+        
+        # remove the opening or closing pair symbols
+        if ($first_word->form =~ /^["'\({\[]$/ && $last_word->form !~ /^["'}\)\]]$/) {
+            shift @mention_a_nodes;
+        }
+        elsif ($first_word->form !~ /^["'\({\[]$/ && $last_word->form =~ /^["'}\)\]]$/) {
+            pop @mention_a_nodes;
+        }
+        elsif ($first_word->form =~ /^["'\({\[]$/ && $last_word->form =~ /^["'}\)\]]$/ && @mention_a_nodes < 3) {
+            @mention_a_nodes = ();
+        }
+    }
+    
     return @mention_a_nodes;
 }
 
 sub get_desc_no_verbal_subtree {
-    my ($tnode) = @_;
+    my ($tnode, $no_verbal_subtree) = @_;
     my @desc = ( $tnode );
     foreach my $kid ($tnode->get_children) {
-        next if ((defined $kid->formeme && $kid->formeme =~ /^v/) || (defined $kid->gram_sempos && $kid->gram_sempos =~ /^v/));
+        next if ($no_verbal_subtree && _is_verb($kid));
         my @subdesc = get_desc_no_verbal_subtree($kid);
         push @desc, @subdesc;
     }
     return @desc;
+}
+
+sub _is_verb {
+    my ($tnode) = @_;
+    return ((defined $tnode->formeme && $tnode->formeme =~ /^v/) || (defined $tnode->gram_sempos && $tnode->gram_sempos =~ /^v/));
 }
 
 1;
