@@ -12,6 +12,9 @@ has '+_file_suffix' => ( default => '\.pml(\.gz)?$' );
 has '+schema_dir'   => ( required => 0, builder => '_build_schema_dir' );
 has 'language'      => ( is => 'ro', isa => 'Treex::Type::LangCode', required=>1 );
 
+has 'last_loaded_from' => ( is => 'rw', isa => 'Str', default => '' );
+has 'sent_in_file'     => ( is => 'rw', isa => 'Int', default => 0 );
+
 sub _build_schema_dir
 {
     my ($self) = @_;
@@ -56,6 +59,20 @@ override '_convert_all_trees' => sub
     for(my $i = 0; $i < $n_trees; $i++)
     {
         my $bundle = $document->create_bundle();
+        # Make sure that the bundle id contains the name of the file.
+        my $loaded_from = $document->loaded_from(); # the full path to the input file
+        my $file_stem = $document->file_stem(); # this will be used in the comment
+        if($loaded_from eq $self->last_loaded_from())
+        {
+            $self->set_sent_in_file($self->sent_in_file() + 1);
+        }
+        else
+        {
+            $self->set_last_loaded_from($loaded_from);
+            $self->set_sent_in_file(1);
+        }
+        my $sent_in_file = $self->sent_in_file();
+        $bundle->set_id("$file_stem-s$sent_in_file");
         my $zone = $bundle->create_zone($self->language(), $self->selector());
         my $root = $zone->create_atree();
         ###!!! Read::PDT would now call _convert_mtree (or atree or ttree) from BasePMLReader.
