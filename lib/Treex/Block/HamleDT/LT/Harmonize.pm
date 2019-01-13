@@ -114,7 +114,7 @@ sub convert_deprels
         # The _Co suffix signals conjuncts.
         # The _Ap suffix signals members of apposition.
         # We will later reshape appositions but the routine will expect is_member set.
-        if($deprel =~ s/_(Co|Ap)$//i)
+        if($deprel =~ s/_(Co|Ap)$//i || $deprel =~ s/_Co_/_/i)
         {
             $node->set_is_member(1);
         }
@@ -195,6 +195,11 @@ sub convert_deprels
             {
                 $deprel = 'Pnom';
             }
+        }
+        # Rgp is an error (it is the POS tag for adverbs, not an afun).
+        if($deprel =~ m/^Rgp$/i)
+        {
+            $deprel = 'Adv';
         }
         # Adj is Lithuanian-specific and it probably means "adjunct".
         if($deprel eq 'Adj')
