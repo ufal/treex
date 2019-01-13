@@ -110,6 +110,7 @@ sub convert_deprels
         # There were erroneous afuns with trailing spaces in Alksnis!
         $deprel =~ s/\s+$//;
         $deprel =~ s/^\s+//;
+        $deprel =~ s/^aux([a-z])$/Aux\U$1/i;
         # The _Co suffix signals conjuncts.
         # The _Ap suffix signals members of apposition.
         # We will later reshape appositions but the routine will expect is_member set.
@@ -228,6 +229,12 @@ sub convert_deprels
             {
                 $deprel = 'ExD';
             }
+        }
+        # Parenthetical.
+        if($deprel =~ m/^par$/i)
+        {
+            $node->set_is_parenthesis_root(1);
+            $deprel = 'Pred';
         }
         $node->set_deprel($deprel);
     }
