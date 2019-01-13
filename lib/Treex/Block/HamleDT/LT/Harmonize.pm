@@ -196,6 +196,15 @@ sub convert_deprels
                 $deprel = 'Pnom';
             }
         }
+        # AuxL is the first name attached to the last name.
+        if($deprel =~ m/^AuxL$/i)
+        {
+            $deprel = 'Atr';
+        }
+        if($deprel =~ m/^Aux$/i)
+        {
+            $deprel = 'AuxZ';
+        }
         # Rgp is an error (it is the POS tag for adverbs, not an afun).
         if($deprel =~ m/^Rgp$/i)
         {
