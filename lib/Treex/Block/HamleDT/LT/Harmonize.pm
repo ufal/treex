@@ -67,13 +67,20 @@ sub fix_morphology
     foreach my $node (@nodes)
     {
         my $form = $node->form() // '';
-        my $tag = $node->tag() // '';
-        # Several times, a quotation mark is XPOS-tagged "Aux", which should have been its afun (deprel),
-        # and the afun is "-".
-        if($form =~ m/^\pP+$/ && $tag eq 'Aux')
+        # Several times, a quotation mark is XPOS-tagged "Aux", which should
+        # have been its afun (deprel), and the afun is "-". By the time this
+        # method is called, $node->tag() has been copied as original tag to
+        # $node->conll_pos(), so we must update it there too.
+        my $origtag = $node->conll_pos() // '';
+        if($form =~ m/^\pP+$/ && $origtag eq 'Aux')
         {
-            $tag = 'Z';
-            $node->set_tag($tag);
+            $origtag = 'Z';
+            $node->set_conll_pos($origtag);
+            $node->set_tag('Z');
+            # Decode it to Interset again.
+            $self->decode_iset($node);
+            # The corresponding PDT-like tag will be created after this method
+            # finished, so we do not have to care of it now.
         }
     }
 }
