@@ -92,6 +92,9 @@ sub convert_deprels
         $deprel = $node->afun() if(!defined($deprel));
         $deprel = $node->conll_deprel() if(!defined($deprel));
         $deprel = 'NR' if(!defined($deprel));
+        # There were erroneous afuns with trailing spaces in Alksnis!
+        $deprel =~ s/\s+$//;
+        $deprel =~ s/^\s+//;
         # The _Co suffix signals conjuncts.
         # The _Ap suffix signals members of apposition.
         # We will later reshape appositions but the routine will expect is_member set.
