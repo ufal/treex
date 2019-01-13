@@ -204,12 +204,12 @@ sub convert_deprels
         # serves as a subject of the matrix clause. Example:
         # tai, ką mes kalbame = what we are talking about (lit. "that, what we discuss")
         # Similarly, Pred_Obj seems to be a clause that modifies a noun.
-        if($deprel =~ m/^Pred_(Sub|Obj|Adj|Atr)$/i)
+        if($deprel =~ m/^PredN?_(Sub|Obj|Adj|Atr)$/i)
         {
             $deprel = 'Atr';
         }
         # Combined deprels (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
-        if($deprel =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/)
+        if($deprel =~ m/^((Atr)|(Adv)|(Obj))_?((Atr)|(Adv)|(Obj))/i)
         {
             $deprel = 'Atr';
         }
