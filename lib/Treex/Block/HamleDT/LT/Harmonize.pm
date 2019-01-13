@@ -9,7 +9,7 @@ has iset_driver =>
     is            => 'ro',
     isa           => 'Str',
     required      => 1,
-    default       => 'cs::multext',
+    default       => 'cs::multext', ###!!! We need a Lithuanian Multext driver instead!
     documentation => 'Which interset driver should be used to decode tags in this treebank? '.
                      'Lowercase, language code :: treebank code, e.g. "cs::pdt".'
 );
@@ -55,7 +55,13 @@ sub get_input_tag_for_interset
 {
     my $self   = shift;
     my $node   = shift;
-    return $node->tag();
+    # Some nodes have no tags and the Interset driver is not happy about it.
+    my $tag = $node->tag();
+    if(!defined($tag) || $tag eq '')
+    {
+        $tag = 'X';
+    }
+    return $tag;
 }
 
 
