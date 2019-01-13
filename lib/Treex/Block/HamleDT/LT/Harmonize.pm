@@ -90,6 +90,7 @@ sub convert_deprels
         $deprel = $node->afun() if(!defined($deprel));
         $deprel = $node->conll_deprel() if(!defined($deprel));
         $deprel = 'NR' if(!defined($deprel));
+        my $parent = $node->parent();
         # The _Co suffix signals conjuncts.
         # The _Ap suffix signals members of apposition.
         # We will later reshape appositions but the routine will expect is_member set.
@@ -102,11 +103,25 @@ sub convert_deprels
         {
             $deprel = 'Sb';
         }
+        # PredN seems to be the nominal predicate. If the copula "būti" is present,
+        # the topology is similar to that of Pnom in Czech. But in Lithuanian,
+        # the copula seems to be omitted often. If the copula is missing, the
+        # nominal predicate (PredN) is attached to the subject, which is the
+        # opposite of what we want in UD. Since we are now doing just Prague
+        # harmonization (and there is no similar construction in Czech, we just
+        # leave PredN there for further processing).
+        if($deprel eq 'PredN')
+        {
+            my $plemma = $parent->lemma();
+            if(defined($plemma) && $plemma eq 'būti')
+            {
+                $deprel = 'Pnom';
+            }
+        }
         # Adj is Lithuanian-specific and it probably means "adjunct".
         if($deprel eq 'Adj')
         {
-            my $parent = $node->parent();
-            if(defined($parent) && ($parent->is_noun() || $parent->is_numeral()))
+            if($parent->is_noun() || $parent->is_numeral())
             {
                 $deprel = 'Atr';
             }
