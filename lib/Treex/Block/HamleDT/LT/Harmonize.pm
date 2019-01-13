@@ -220,7 +220,7 @@ sub convert_deprels
             {
                 $deprel = 'AuxG';
             }
-            elsif($node->is_coordinator())
+            elsif($node->is_conjunction())
             {
                 $deprel = 'AuxY';
             }
