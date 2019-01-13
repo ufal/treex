@@ -167,6 +167,10 @@ sub convert_deprels
         }
         # Deprel may have changed in the previous if, let's update $deprel.
         $deprel = $node->deprel();
+        if($deprel =~ m/^PredV?_(Sub|Obj|Adj|Atr)$/i)
+        {
+            $deprel = $1;
+        }
         # Sub is subject; in PDT it is labeled "Sb".
         # One subject in Alksnis is by error labeled "Suj".
         if($deprel =~ m/^Su[bj]$/)
@@ -187,10 +191,6 @@ sub convert_deprels
             {
                 $deprel = 'Pnom';
             }
-        }
-        if($deprel =~ m/^PredV?_(Sub|Obj|Adj|Atr)$/i)
-        {
-            $deprel = $1;
         }
         # Adj is Lithuanian-specific and it probably means "adjunct".
         if($deprel eq 'Adj')
