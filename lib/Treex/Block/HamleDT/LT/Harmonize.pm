@@ -196,6 +196,11 @@ sub convert_deprels
                 $deprel = 'Pnom';
             }
         }
+        # PredV seems to be often an infinitive completing another verb.
+        if($deprel =~ m/^PredV$/i)
+        {
+            $deprel = 'Obj';
+        }
         # AuxL is the first name attached to the last name.
         if($deprel =~ m/^AuxL$/i)
         {
