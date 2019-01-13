@@ -136,7 +136,7 @@ sub convert_deprels
         # The tag after ExD describes the dependency of the elided parent on the grandparent.
         # Example: ADV_ExD0_PRED_CO
         # Similar cases in PDT get just ExD.
-        if($deprel =~ m/ExD/)
+        if($deprel =~ m/ExD/i)
         {
             # If the chained label is something like COORD_ExD0_OBJ_CO_ExD1_PRED,
             # this node should be Coord and the conjuncts should get ExD.
