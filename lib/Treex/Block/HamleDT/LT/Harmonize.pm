@@ -188,6 +188,10 @@ sub convert_deprels
                 $deprel = 'Pnom';
             }
         }
+        if($deprel =~ m/^PredV?_(Sub|Obj|Adj|Atr)$/i)
+        {
+            $deprel = $1;
+        }
         # Adj is Lithuanian-specific and it probably means "adjunct".
         if($deprel eq 'Adj')
         {
