@@ -81,6 +81,8 @@ sub convert_deprels
     my $self  = shift;
     my $root  = shift;
     my @nodes = $root->get_descendants();
+    # First loop: copy deprel to deprel and convert _CO and _AP to is_member.
+    # Leave everything else untouched until we know that is_member is set correctly for all nodes.
     foreach my $node (@nodes)
     {
         ###!!! We need a well-defined way of specifying where to take the source label.
@@ -97,6 +99,52 @@ sub convert_deprels
         if($deprel =~ s/_(Co|Ap)$//i)
         {
             $node->set_is_member(1);
+        }
+        # Annotation error (one occurrence in PDT 3.0): Coord must not be leaf.
+        if($deprel eq 'Coord' && $node->is_leaf() && $node->parent()->is_root())
+        {
+            $deprel = 'ExD';
+        }
+        $node->set_deprel($deprel);
+    }
+    # Second loop: process chained dependency labels and decide, what nodes are ExD, Coord, Apos, AuxP or AuxC.
+    # At the same time translate the other deprels to the dialect of HamleDT.
+    foreach my $node (@nodes)
+    {
+        my $deprel = $node->deprel();
+        # There are chained dependency labels that describe situation around elipsis.
+        # They ought to contain an ExD, which may be indexed (e.g. ExD0).
+        # The tag before ExD describes the dependency of the node on its elided parent.
+        # The tag after ExD describes the dependency of the elided parent on the grandparent.
+        # Example: ADV_ExD0_PRED_CO
+        # Similar cases in PDT get just ExD.
+        if($deprel =~ m/ExD/)
+        {
+            # If the chained label is something like COORD_ExD0_OBJ_CO_ExD1_PRED,
+            # this node should be Coord and the conjuncts should get ExD.
+            # However, we still cannot set deprel=ExD for the conjuncts.
+            # This would involve traversing also AuxP nodes and nested Coord, so we need to have all Coords in place first.
+            if($deprel =~ m/^Coord/i)
+            {
+                $node->set_deprel('Coord');
+                $node->wild()->{'ExD conjuncts'} = 1;
+            }
+            elsif($deprel =~ m/^Apos/i)
+            {
+                $node->set_deprel('Apos');
+                $node->wild()->{'ExD conjuncts'} = 1;
+            }
+            # Do not change AuxX and AuxG either.
+            # These deprels reflect more what the node is than how it modifies its parent.
+            elsif($deprel =~ m/^(Aux[CPGX])/)
+            {
+                $node->set_deprel($1);
+                $node->wild()->{'ExD conjuncts'} = 1;
+            }
+            else
+            {
+                $node->set_deprel('ExD');
+            }
         }
         # Sub is subject; in PDT it is labeled "Sb".
         if($deprel eq 'Sub')
@@ -135,17 +183,65 @@ sub convert_deprels
         {
             $deprel = 'Atr';
         }
-        # Annotation error (one occurrence in PDT 3.0): Coord must not be leaf.
-        if($deprel eq 'Coord' && $node->is_leaf() && $node->parent()->is_root())
+        # AuxG cannot be conjunct in HamleDT but it happens in AGDT (and we cannot be sure that it does not happen in Alksnis).
+        if($node->deprel() eq 'AuxG' && $node->is_member())
         {
-            $deprel = 'ExD';
+            $node->set_is_member(undef);
         }
-        $node->set_deprel($deprel);
     }
-    # Coordination of prepositional phrases or subordinate clauses:
-    # In PDT, is_member is set at the node that bears the real deprel. It is not set at the AuxP/AuxC node.
-    # In HamleDT (and in Treex in general), is_member is set directly at the child of the coordination head (preposition or not).
-    $self->pdt_to_treex_is_member_conversion($root);
+    # Third loop: we still cannot rely on is_member because it is not guaranteed that it is always set directly under COORD or APOS.
+    # The source data follow the PDT convention that AuxP and AuxC nodes do not have it (and thus it is marked at a lower level).
+    # In contrast, Treex marks is_member directly under Coord or Apos. We cannot convert it later because we need reliable is_member
+    # for deprel conversion.
+    foreach my $node (@nodes)
+    {
+        # no is_member allowed directly below root
+        if($node->is_member() and $node->parent()->is_root())
+        {
+            $node->set_is_member(undef);
+        }
+        if($node->is_member())
+        {
+            my $new_member = $self->_climb_up_below_coap($node);
+            if($new_member && $new_member != $node)
+            {
+                $new_member->set_is_member(1);
+                $node->set_is_member(undef);
+            }
+        }
+    }
+    # Fourth loop: if there are inconsistencies in coordination even after moving is_member up to Aux[PC], fix them.
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() !~ m/^(Coord|Apos)$/)
+        {
+            my @members = grep {$_->is_member()} ($node->children());
+            if(scalar(@members)>0)
+            {
+                if($node->iset()->pos() =~ m/^(conj|punc|part|adv)$/)
+                {
+                    $node->set_deprel('Coord');
+                }
+                else
+                {
+                    foreach my $member (@members)
+                    {
+                        $member->set_is_member(undef);
+                    }
+                }
+            }
+        }
+    }
+    # Fifth loop: finish propagating ExD down the tree at coordination and apposition.
+    foreach my $node (@nodes)
+    {
+        if($node->wild()->{'ExD conjuncts'})
+        {
+            # set_real_deprel() goes down if it sees Coord, Apos, AuxP or AuxC
+            $self->set_real_deprel($node, 'ExD');
+            delete($node->wild()->{'ExD conjuncts'});
+        }
+    }
 }
 
 
