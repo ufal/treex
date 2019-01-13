@@ -97,6 +97,11 @@ sub convert_deprels
         {
             $node->set_is_member(1);
         }
+        # Sub is subject; in PDT it is labeled "Sb".
+        if($deprel eq 'Sub')
+        {
+            $deprel = 'Sb';
+        }
         # Adj is Lithuanian-specific and it probably means "adjunct".
         if($deprel eq 'Adj')
         {
