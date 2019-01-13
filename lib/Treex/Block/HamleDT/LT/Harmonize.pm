@@ -92,7 +92,6 @@ sub convert_deprels
         $deprel = $node->afun() if(!defined($deprel));
         $deprel = $node->conll_deprel() if(!defined($deprel));
         $deprel = 'NR' if(!defined($deprel));
-        my $parent = $node->parent();
         # The _Co suffix signals conjuncts.
         # The _Ap suffix signals members of apposition.
         # We will later reshape appositions but the routine will expect is_member set.
@@ -112,6 +111,7 @@ sub convert_deprels
     foreach my $node (@nodes)
     {
         my $deprel = $node->deprel();
+        my $parent = $node->parent();
         # There are chained dependency labels that describe situation around elipsis.
         # They ought to contain an ExD, which may be indexed (e.g. ExD0).
         # The tag before ExD describes the dependency of the node on its elided parent.
