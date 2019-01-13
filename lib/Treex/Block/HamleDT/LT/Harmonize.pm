@@ -167,6 +167,10 @@ sub convert_deprels
         }
         # Deprel may have changed in the previous if, let's update $deprel.
         $deprel = $node->deprel();
+        if($deprel =~ s/_Par$//i)
+        {
+            $node->set_is_parenthesis_root(1);
+        }
         if($deprel =~ m/^PredV_(Sub|Obj|Adj|Atr)$/i)
         {
             $deprel = $1;
