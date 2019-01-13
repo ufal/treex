@@ -152,7 +152,8 @@ sub convert_deprels
         # Deprel may have changed in the previous if, let's update $deprel.
         $deprel = $node->deprel();
         # Sub is subject; in PDT it is labeled "Sb".
-        if($deprel eq 'Sub')
+        # One subject in Alksnis is by error labeled "Suj".
+        if($deprel =~ m/^Su[bj]$/)
         {
             $deprel = 'Sb';
         }
