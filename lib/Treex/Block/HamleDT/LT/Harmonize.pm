@@ -56,10 +56,13 @@ sub get_input_tag_for_interset
     my $self   = shift;
     my $node   = shift;
     # Some nodes have no tags and the Interset driver is not happy about it.
+    # Typically these are punctuation nodes. Multext-East does not define
+    # a common tag for punctuation but some Multext-based tagsets use "Z",
+    # and that is what Interset eventually expects.
     my $tag = $node->tag();
     if(!defined($tag) || $tag eq '')
     {
-        $tag = 'X';
+        $tag = 'Z';
     }
     return $tag;
 }
