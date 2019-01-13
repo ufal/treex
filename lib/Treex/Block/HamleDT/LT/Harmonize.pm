@@ -66,8 +66,8 @@ sub fix_morphology
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $form = $node->form();
-        my $tag = $node->tag();
+        my $form = $node->form() // '';
+        my $tag = $node->tag() // '';
         # Several times, a quotation mark is XPOS-tagged "Aux", which should have been its afun (deprel),
         # and the afun is "-".
         if($form =~ m/^\pP+$/ && $tag eq 'Aux')
