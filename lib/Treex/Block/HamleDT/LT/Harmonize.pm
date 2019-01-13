@@ -66,7 +66,15 @@ sub fix_morphology
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
-        my $lemma = $node->lemma();
+        my $form = $node->form();
+        my $tag = $node->tag();
+        # Several times, a quotation mark is XPOS-tagged "Aux", which should have been its afun (deprel),
+        # and the afun is "-".
+        if($form =~ m/^\pP+$/ && $tag eq 'Aux')
+        {
+            $tag = 'Z';
+            $node->set_tag($tag);
+        }
     }
 }
 
@@ -193,6 +201,22 @@ sub convert_deprels
         if($node->deprel() eq 'AuxG' && $node->is_member())
         {
             $node->set_is_member(undef);
+        }
+        # Several times, a quotation mark is XPOS-tagged "Aux", which should have been its afun (deprel),
+        # and the afun is "-". We have already fixed the XPOS tag in fix_morphology() because
+        # that method is called before converting the tags, unlike this one. But now we also must
+        # fix the dependency relation.
+        # There are also a few non-punctuation nodes that lack the afun.
+        if($deprel eq '-')
+        {
+            if($node->is_punctuation())
+            {
+                $deprel = 'AuxG';
+            }
+            else
+            {
+                $deprel = 'ExD';
+            }
         }
         $node->set_deprel($deprel);
     }
