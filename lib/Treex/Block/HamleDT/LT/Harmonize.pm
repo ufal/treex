@@ -97,8 +97,21 @@ sub convert_deprels
         {
             $node->set_is_member(1);
         }
-        # combined deprels (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
-        if ( $deprel =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/ )
+        # Adj is Lithuanian-specific and it probably means "adjunct".
+        if($deprel eq 'Adj')
+        {
+            my $parent = $node->parent();
+            if(defined($parent) && ($parent->is_noun() || $parent->is_numeral()))
+            {
+                $deprel = 'Atr';
+            }
+            else
+            {
+                $deprel = 'Adv';
+            }
+        }
+        # Combined deprels (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
+        if($deprel =~ m/^((Atr)|(Adv)|(Obj))((Atr)|(Adv)|(Obj))/)
         {
             $deprel = 'Atr';
         }
