@@ -220,6 +220,10 @@ sub convert_deprels
             {
                 $deprel = 'AuxG';
             }
+            elsif($node->is_coordinator())
+            {
+                $deprel = 'AuxY';
+            }
             else
             {
                 $deprel = 'ExD';
