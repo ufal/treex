@@ -146,6 +146,8 @@ sub convert_deprels
                 $node->set_deprel('ExD');
             }
         }
+        # Deprel may have changed in the previous if, let's update $deprel.
+        $deprel = $node->deprel();
         # Sub is subject; in PDT it is labeled "Sb".
         if($deprel eq 'Sub')
         {
@@ -188,6 +190,7 @@ sub convert_deprels
         {
             $node->set_is_member(undef);
         }
+        $node->set_deprel($deprel);
     }
     # Third loop: we still cannot rely on is_member because it is not guaranteed that it is always set directly under COORD or APOS.
     # The source data follow the PDT convention that AuxP and AuxC nodes do not have it (and thus it is marked at a lower level).
