@@ -19,6 +19,8 @@ sub process_anode
     {
         $form =~ s/^\s+//;
         $form =~ s/\s+$//;
+        # Some treebanks allow a space inside the word but two or more consecutive spaces are disallowed.
+        $form =~ s/\s+/ /g;
         $node->set_form($form);
     }
     my $lemma = $node->lemma();
@@ -26,6 +28,8 @@ sub process_anode
     {
         $lemma =~ s/^\s+//;
         $lemma =~ s/\s+$//;
+        # Some treebanks allow a space inside the word but two or more consecutive spaces are disallowed.
+        $lemma =~ s/\s+/ /g;
         $node->set_lemma($lemma);
     }
 }
