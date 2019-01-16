@@ -54,6 +54,7 @@ sub detect_special_constructions
         $phrase = $self->detect_prague_pp($phrase);
         $phrase = $self->detect_colon_predicate($phrase);
         $phrase = $self->detect_prague_copula($phrase);
+        $phrase = $self->detect_predn_under_subject($phrase);
         $phrase = $self->detect_name_phrase($phrase);
         $phrase = $self->detect_compound_numeral($phrase);
         $phrase = $self->detect_counted_noun_in_genitive($phrase) if($self->counted_genitives());
@@ -67,6 +68,44 @@ sub detect_special_constructions
     }
     # Return the resulting phrase. It may be different from the input phrase.
     return $phrase;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Looks for nominal predicate that was attached as a dependent of the subject
+# because no overt copula was present in the sentence. This type of annotation
+# occurs in the Lithuanian ALKSNIS treebank. We revert the dependency so that
+# the subject is attached as a child of the nominal predicate.
+#------------------------------------------------------------------------------
+sub detect_predn_under_subject
+{
+    my $self = shift;
+    my $phrase = shift; # Treex::Core::Phrase
+    # Are there non-core children whose deprel is predn?
+    my @dependents = $phrase->dependents('ordered' => 1);
+    my @predndeps = grep {$self->is_deprel($_->deprel(), 'predn')} (@dependents);
+    if(scalar(@predndeps)==1)
+    {
+        my $subject = $phrase->head();
+        my $deprel = $phrase->deprel();
+        $phrase->set_head($predndeps[0]);
+        $phrase->set_deprel($deprel);
+        if($subject->node()->is_verb())
+        {
+            $self->set_deprel($subject, 'csubj');
+        }
+        else
+        {
+            $self->set_deprel($subject, 'nsubj');
+        }
+        $subject->set_is_member(undef);
+        # Some of the other members of the phrase are private modifiers of the
+        # subject, others modify the clause. We do not have means to tell them
+        # apart. At present we just let them depend on the new head of the
+        # phrase, i.e., the nominal predicate. It may turn out to be more
+        # advantageous to make them private dependents of the subject.
+    }
 }
 
 

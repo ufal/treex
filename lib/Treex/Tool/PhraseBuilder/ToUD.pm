@@ -53,9 +53,11 @@ sub _build_dialect
         'genmod'    => ['^nmod$', 'nmod'],     # genitive or possessive noun attached to the modified (possessed) noun
         'genarg'    => ['^genarg$', 'genarg'], # possessed (modified) noun attached to possessive (genitive) noun that modifies it
         'pnom'      => ['^pnom$', 'pnom'],     # nominal predicate (predicative adjective or noun) attached to a copula
+        'predn'     => ['^predn$', 'predn'],   # nominal predicate attached to the subject when no copula is present (used in Lithuanian ALKSNIS)
         'cop'       => ['^cop$', 'cop'],       # copula attached to a nominal predicate
         'subj'      => ['subj'],               # subject (nominal or clausal, active or passive)
         'nsubj'     => ['^nsubj$', 'nsubj'],   # nominal subject in active clause
+        'csubj'     => ['^csubj$', 'csubj'],   # clausal subject in active clause
         'nmod'      => ['^nmod$', 'nmod'],     # nominal modifier (attribute or adjunct)
         'advmod'    => ['^advmod$', 'advmod'], # adverbial modifier (realized as adverb, not as a noun phrase)
         'flat'      => ['^(name|flat)(:|$)', 'flat'], # non-head part of a multi-word named entity without internal syntactic structure; PDT has flat:foreign
