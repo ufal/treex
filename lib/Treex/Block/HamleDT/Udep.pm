@@ -332,7 +332,7 @@ sub convert_deprels
         # It could also depend on the artificial root node if there is no verb in the sentence.
         elsif($deprel eq 'PredN')
         {
-            if($parent->is_root())
+            if($parent->is_root() || $parent->wild()->{prague_deprel} =~ m/^Coord/i && $parent->parent()->is_root())
             {
                 # One of them will later be picked as the 'root' child.
                 # We want the others to become its conjuncts.
