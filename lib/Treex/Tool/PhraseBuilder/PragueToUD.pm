@@ -85,11 +85,11 @@ sub detect_predn_under_subject
     # Are there non-core children whose deprel is predn?
     my @dependents = $phrase->dependents('ordered' => 1);
     my @predndeps = grep {$self->is_deprel($_->deprel(), 'predn')} (@dependents);
-    if(scalar(@predndeps)==1)
+    if(scalar(@predndeps)>=1)
     {
         my $subject = $phrase->head();
         my $deprel = $phrase->deprel();
-        $phrase->set_head($predndeps[0]);
+        $phrase->set_head(shift(@predndeps));
         $phrase->set_deprel($deprel);
         if($subject->node()->is_verb())
         {
@@ -105,6 +105,15 @@ sub detect_predn_under_subject
         # apart. At present we just let them depend on the new head of the
         # phrase, i.e., the nominal predicate. It may turn out to be more
         # advantageous to make them private dependents of the subject.
+        # It is not uncommon that more than one PredN depend on the same node.
+        # I do not know what that means or whether it is an annotation error.
+        # If all of them are really predicates, then they could be coordinate
+        # (asyndetic coordination) or there could be secondary predication.
+        # We assume the latter and approximate it by using the xcomp relation.
+        foreach my $secpred (@predndeps)
+        {
+            $self->set_deprel($secpred, 'xcomp');
+        }
     }
     # Return the resulting phrase. It may be different from the input phrase.
     return $phrase;
