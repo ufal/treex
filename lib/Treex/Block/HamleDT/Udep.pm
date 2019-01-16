@@ -328,6 +328,12 @@ sub convert_deprels
                 $deprel = 'pnom';
             }
         }
+        # Nominal predicate attached to the subject if there is no copula (Lithuanian ALKSNIS).
+        elsif($deprel eq 'PredN')
+        {
+            # It will be restructured later, then the deprel will also change.
+            $deprel = 'predn';
+        }
         # Adverbial modifier: advmod, obl, advcl
         elsif($deprel eq 'Adv')
         {
