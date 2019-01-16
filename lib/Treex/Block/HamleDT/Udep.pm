@@ -329,10 +329,20 @@ sub convert_deprels
             }
         }
         # Nominal predicate attached to the subject if there is no copula (Lithuanian ALKSNIS).
+        # It could also depend on the artificial root node if there is no verb in the sentence.
         elsif($deprel eq 'PredN')
         {
-            # It will be restructured later, then the deprel will also change.
-            $deprel = 'predn';
+            if($parent->is_root())
+            {
+                # One of them will later be picked as the 'root' child.
+                # We want the others to become its conjuncts.
+                $deprel = 'conj';
+            }
+            else # under subject without copula
+            {
+                # It will be restructured later, then the deprel will also change.
+                $deprel = 'predn';
+            }
         }
         # Adverbial modifier: advmod, obl, advcl
         elsif($deprel eq 'Adv')
