@@ -106,6 +106,8 @@ sub detect_predn_under_subject
         # phrase, i.e., the nominal predicate. It may turn out to be more
         # advantageous to make them private dependents of the subject.
     }
+    # Return the resulting phrase. It may be different from the input phrase.
+    return $phrase;
 }
 
 
