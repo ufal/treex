@@ -357,7 +357,7 @@ sub convert_deprels
             {
                 # Before we decide that it is apposition or coordination, let's get rid of children that are themselves punctuation.
                 my @punctchildren = grep {$_->is_punctuation()} (@children);
-                @children = grep {!$_->is_punctuation()} (@children);
+                my @nopunctchildren = grep {!$_->is_punctuation()} (@children);
                 foreach my $child (@punctchildren)
                 {
                     # For now, we simply attach the child higher. It is not safe
@@ -372,23 +372,23 @@ sub convert_deprels
                     $child->set_parent($newparent);
                     $child->set_is_member(undef);
                 }
-                if(scalar(@children)==2 &&
-                    $children[0]->ord() < $node->ord() &&
-                    $children[1]->ord() > $node->ord())
+                if(scalar(@nopunctchildren)==2 &&
+                    $nopunctchildren[0]->ord() < $node->ord() &&
+                    $nopunctchildren[1]->ord() > $node->ord())
                 {
                     $node->set_deprel('Apos');
-                    $children[0]->set_is_member(1);
-                    $children[1]->set_is_member(1);
+                    $nopunctchildren[0]->set_is_member(1);
+                    $nopunctchildren[1]->set_is_member(1);
                 }
-                elsif(scalar(@children)>=2)
+                elsif(scalar(@nopunctchildren)>=2)
                 {
                     $node->set_deprel('Coord');
-                    foreach my $child (@children)
+                    foreach my $child (@nopunctchildren)
                     {
                         $child->set_is_member(1);
                     }
                 }
-                elsif(scalar(@children)==1)
+                elsif(scalar(@nopunctchildren)==1)
                 {
                     # Attach the child as my sibling or even higher, if my parent is also punctuation.
                     my $newparent = $node->parent();
@@ -396,8 +396,8 @@ sub convert_deprels
                     {
                         $newparent = $newparent->parent();
                     }
-                    $children[0]->set_parent($newparent);
-                    $children[0]->set_is_member(undef);
+                    $nopunctchildren[0]->set_parent($newparent);
+                    $nopunctchildren[0]->set_is_member(undef);
                 }
             }
         }
