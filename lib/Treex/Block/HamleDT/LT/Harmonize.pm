@@ -431,6 +431,10 @@ sub fix_annotation_errors
         my $lemma = $node->lemma() // '';
         my $deprel = $node->deprel() // '';
         my $spanstring = $self->get_node_spanstring($node);
+        if($form eq 'apie' && $deprel eq 'AuxK')
+        {
+            $node->set_deprel('AuxP');
+        }
     }
 }
 
