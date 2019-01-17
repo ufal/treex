@@ -353,7 +353,8 @@ sub convert_deprels
             ###!!! Manual disambiguation is needed here. For example, in Czech:
             ###!!! Úroda byla v tomto roce o mnoho lepší než loni.
             ###!!! There should be obl(lepší, roce) but nmod(lepší, mnoho).
-            $deprel = $node->is_verb() ? 'advcl' : ($node->is_noun() || $node->is_adjective() || $node->is_numeral()) ? 'obl' : 'advmod';
+            # Adposition leads to 'obl' because of preposition stranding in languages like English (i.e., it is promoted in ellipsis).
+            $deprel = $node->is_verb() ? 'advcl' : ($node->is_noun() || $node->is_adjective() || $node->is_numeral() || $node->is_adposition()) ? 'obl' : 'advmod';
         }
         # Attribute of a noun: amod, nummod, nmod, acl
         elsif($deprel eq 'Atr')
