@@ -310,7 +310,9 @@ sub convert_deprels
     {
         if($node->deprel() !~ m/^(Coord|Apos)$/)
         {
-            my @members = grep {$_->is_member()} ($node->children());
+            # If a conjunction or punctuation node has children with is_member set, it must be labeled as Coord or Apos.
+            my @children = $node->get_children({'ordered' => 1});
+            my @members = grep {$_->is_member()} (@children);
             if(scalar(@members)>0)
             {
                 if($node->iset()->pos() =~ m/^(conj|punc|part|adv)$/)
@@ -324,6 +326,16 @@ sub convert_deprels
                         $member->set_is_member(undef);
                     }
                 }
+            }
+            # Punctuation can have children only if it heads coordination or apposition.
+            # By default we assume apposition, provided the configuration seems compatible with apposition.
+            elsif($node->is_punctuation() && scalar(@children)==2 &&
+                $children[0]->ord() < $node->ord() && !$children[0]->is_punctuation() &&
+                $children[1]->ord() > $node->ord() && !$children[1]->is_punctuation())
+            {
+                $node->set_deprel('Apos');
+                $children[0]->set_is_member(1);
+                $children[1]->set_is_member(1);
             }
         }
     }
