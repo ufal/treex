@@ -380,7 +380,7 @@ sub convert_deprels
                     $children[0]->set_is_member(1);
                     $children[1]->set_is_member(1);
                 }
-                elsif(scalar(@children>=2))
+                elsif(scalar(@children)>=2)
                 {
                     $node->set_deprel('Coord');
                     foreach my $child (@children)
