@@ -73,6 +73,8 @@ sub process_atree {
     $self->relabel_prepositional_objects($root);
     $self->change_case_to_mark_under_verb($root);
     $self->dissolve_chains_of_auxiliaries($root);
+    ###!!! The following method removes symptoms but we may want to find and remove the cause.
+    $self->fix_multiple_subjects($root);
     $self->fix_jak_znamo($root);
     $self->classify_numerals($root);
     $self->relabel_subordinate_clauses($root);
@@ -818,6 +820,29 @@ sub dissolve_chains_of_auxiliaries
         if($node->iset()->is_auxiliary() && $node->parent()->iset()->is_auxiliary() && $node->deprel() =~ m/^aux/ && !$node->parent()->parent()->is_root())
         {
             $node->set_parent($node->parent()->parent());
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Make sure that no node has more than two subjects. Normally it should not be
+# more than one but if a nested clause acts as a nonverbal predicate and there
+# is no copula in the outer clause, it is possible that both the outer and the
+# inner subject will be attached to the same node.
+#------------------------------------------------------------------------------
+sub fix_multiple_subjects
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my @subjects = grep {$_->deprel() =~ m/subj/} ($node->get_children({'ordered' => 1}));
+        for(my $i = 2; $i <= $#subjects; $i++)
+        {
+            $subjects[$i]->set_deprel('dep');
         }
     }
 }
