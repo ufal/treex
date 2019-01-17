@@ -350,6 +350,7 @@ sub convert_deprels
                     $children[0]->set_parent($newparent);
                     $children[0]->set_is_member(undef);
                 }
+            }
         }
     }
     # Fifth loop: finish propagating ExD down the tree at coordination and apposition.
