@@ -358,8 +358,8 @@ sub convert_deprels
                     {
                         $newparent = $newparent->parent();
                     }
-                    $children[0]->set_parent($newparent);
-                    $children[0]->set_is_member(undef);
+                    $child->set_parent($newparent);
+                    $child->set_is_member(undef);
                 }
                 if(scalar(@children)==2 &&
                     $children[0]->ord() < $node->ord() &&
