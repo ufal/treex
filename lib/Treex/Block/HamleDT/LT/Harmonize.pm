@@ -208,7 +208,18 @@ sub convert_deprels
         }
         if($deprel =~ m/^Aux$/i)
         {
-            $deprel = 'AuxZ';
+            if($node->form() eq ',')
+            {
+                $deprel = 'AuxX';
+            }
+            elsif($node->is_punctuation())
+            {
+                $deprel = 'AuxG';
+            }
+            else
+            {
+                $deprel = 'AuxZ';
+            }
         }
         # Rgp is an error (it is the POS tag for adverbs, not an afun).
         if($deprel =~ m/^Rgp$/i)
