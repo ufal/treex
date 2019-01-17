@@ -118,10 +118,21 @@ sub convert_deprels
         {
             $node->set_is_member(1);
         }
-        # Annotation error (one occurrence in PDT 3.0): Coord must not be leaf.
-        if($deprel eq 'Coord' && $node->is_leaf() && $node->parent()->is_root())
+        # Annotation errors: Coord must not be leaf.
+        if($deprel eq 'Coord' && $node->is_leaf())
         {
-            $deprel = 'ExD';
+            if($node->form() eq ',')
+            {
+                $deprel = 'AuxX';
+            }
+            elsif($node->is_punctuation())
+            {
+                $deprel = 'AuxG';
+            }
+            else
+            {
+                $deprel = 'ExD';
+            }
         }
         $node->set_deprel($deprel);
     }
