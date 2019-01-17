@@ -68,6 +68,7 @@ sub process_atree {
     $phrase->project_dependencies();
     # The 'cop' relation can be recognized only after transformations.
     $self->tag_copulas_aux($root);
+    $self->fix_unknown_tags($root);
     # Look for prepositional objects (must be done after transformations).
     $self->relabel_prepositional_objects($root);
     $self->change_case_to_mark_under_verb($root);
@@ -646,6 +647,31 @@ sub tag_copulas_aux
         {
             $node->iset()->set('verbtype', 'aux');
             $node->set_tag('AUX');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Sometimes the UPOS tag is unknown ("X") but the dependency relation tells us
+# what the probable part of speech is. This method will change unknown tags to
+# specific tags if there are enough clues.
+#------------------------------------------------------------------------------
+sub fix_unknown_tags
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->tag() eq 'X')
+        {
+            if($node->deprel() =~ m/^advmod(:|$)/)
+            {
+                $node->iset()->set('pos', 'adv');
+                $node->set_tag('ADV');
+            }
         }
     }
 }
