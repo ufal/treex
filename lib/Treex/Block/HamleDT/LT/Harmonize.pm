@@ -169,7 +169,20 @@ sub convert_deprels
         $deprel = $node->deprel();
         if($deprel =~ s/_Par$//i)
         {
-            $node->set_is_parenthesis_root(1);
+            ###!!! Už na to nemám nervy. Parenteze se v PDT moc často nevyskytovala,
+            ###!!! takže její převod a interakce s koordinací a dalšími konstrukcemi
+            ###!!! asi není dotažená a občas mi to nějak hapruje.
+            ###!!! Jeden PredN_Par napojený jako shared modifier na Coord spojku
+            ###!!! se mi tam rozsypal a nepřevedl, tak ho prostě násilím předělám
+            ###!!! na obyčejný Pred.
+            if($deprel eq 'PredN')
+            {
+                $deprel = 'Pred';
+            }
+            else
+            {
+                $node->set_is_parenthesis_root(1);
+            }
         }
         if($deprel =~ m/^PredV_(Sub|Obj|Adj|Atr)$/i)
         {
