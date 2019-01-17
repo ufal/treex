@@ -50,7 +50,8 @@ sub process_atree
                 if($n->ord() < $pord)
                 {
                     # Another punctuation node is not a candidate to become my parent.
-                    unless($n->is_punctuation())
+                    # Same for some functional nodes.
+                    unless($n->is_punctuation() || $n->deprel() =~ m/^(aux|case|cc|mark)(:|$)/)
                     {
                         $lnbr = $n;
                     }
@@ -81,7 +82,8 @@ sub process_atree
             foreach my $n (@nodes)
             {
                 # Another punctuation node is not a candidate to become my parent.
-                if($n->ord() > $pord && !$n->is_punctuation())
+                # Same for some functional nodes.
+                if($n->ord() > $pord && !$n->is_punctuation() && $n->deprel() !~ m/^(aux|case|cc|mark)(:|$)/)
                 {
                     $rnbr = $n;
                     last;
