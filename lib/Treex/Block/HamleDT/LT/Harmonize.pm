@@ -344,13 +344,38 @@ sub convert_deprels
             # By default we assume apposition, provided the configuration seems compatible with apposition.
             elsif($node->is_punctuation())
             {
+                # Before we decide that it is apposition or coordination, let's get rid of children that are themselves punctuation.
+                my @punctchildren = grep {$_->is_punctuation()} (@children);
+                @children = grep {!$_->is_punctuation()} (@children);
+                foreach my $child (@punctchildren)
+                {
+                    # For now, we simply attach the child higher. It is not safe
+                    # w.r.t. nonprojectivities but there is no guarantee anyway
+                    # that punctuation is projective, so we will have to look
+                    # into that later.
+                    my $newparent = $node->parent();
+                    while($newparent->is_punctuation() && !$newparent->is_root())
+                    {
+                        $newparent = $newparent->parent();
+                    }
+                    $children[0]->set_parent($newparent);
+                    $children[0]->set_is_member(undef);
+                }
                 if(scalar(@children)==2 &&
-                    $children[0]->ord() < $node->ord() && !$children[0]->is_punctuation() &&
-                    $children[1]->ord() > $node->ord() && !$children[1]->is_punctuation())
+                    $children[0]->ord() < $node->ord() &&
+                    $children[1]->ord() > $node->ord())
                 {
                     $node->set_deprel('Apos');
                     $children[0]->set_is_member(1);
                     $children[1]->set_is_member(1);
+                }
+                elsif(scalar(@children>=2))
+                {
+                    $node->set_deprel('Coord');
+                    foreach my $child (@children)
+                    {
+                        $child->set_is_member(1);
+                    }
                 }
                 elsif(scalar(@children)==1)
                 {
