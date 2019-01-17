@@ -329,14 +329,27 @@ sub convert_deprels
             }
             # Punctuation can have children only if it heads coordination or apposition.
             # By default we assume apposition, provided the configuration seems compatible with apposition.
-            elsif($node->is_punctuation() && scalar(@children)==2 &&
-                $children[0]->ord() < $node->ord() && !$children[0]->is_punctuation() &&
-                $children[1]->ord() > $node->ord() && !$children[1]->is_punctuation())
+            elsif($node->is_punctuation())
             {
-                $node->set_deprel('Apos');
-                $children[0]->set_is_member(1);
-                $children[1]->set_is_member(1);
-            }
+                if(scalar(@children)==2 &&
+                    $children[0]->ord() < $node->ord() && !$children[0]->is_punctuation() &&
+                    $children[1]->ord() > $node->ord() && !$children[1]->is_punctuation())
+                {
+                    $node->set_deprel('Apos');
+                    $children[0]->set_is_member(1);
+                    $children[1]->set_is_member(1);
+                }
+                elsif(scalar(@children)==1)
+                {
+                    # Attach the child as my sibling or even higher, if my parent is also punctuation.
+                    my $newparent = $node->parent();
+                    while($newparent->is_punctuation() && !$newparent->is_root())
+                    {
+                        $newparent = $newparent->parent();
+                    }
+                    $children[0]->set_parent($newparent);
+                    $children[0]->set_is_member(undef);
+                }
         }
     }
     # Fifth loop: finish propagating ExD down the tree at coordination and apposition.
