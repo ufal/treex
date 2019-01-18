@@ -82,6 +82,46 @@ sub fix_morphology
             # The corresponding PDT-like tag will be created after this method
             # finished, so we do not have to care of it now.
         }
+        # Fix Interset features of pronominal words.
+        # The original Lithuanian Multext tagset does not distinguish pronoun types at all.
+        if($node->is_pronominal())
+        {
+            # Personal pronouns:
+            # 1 Sing: aš manęs man mane manyje manimi
+            # 1 Dual: mudu mudvi mudviejų mudviem mudviese
+            # 1 Plur: mes mūsų mums mus mumis mumyse
+            # 2 Sing: tu tavęs tau tave tavyje tavimi
+            # 2 Dual: judu judvi judviejų judviem judviese
+            # 2 Plur: jūs jūsų jums jus jumis jumyse
+            # 3 Sing Masc: jis jo jam jį juo jame jo
+            # 3 Sing Fem:  ji jos jai ją ja joje
+            # 3 Dual Masc: juodu jiedu jųdviejų jodviem jiedviese
+            # 3 Dual Fem:  jiedvi jųdviejų jodviem jiedviese
+            # 3 Plur Masc: jie jų jiems juos jais juose
+            # 3 Plur Fem:  jos jų joms jas jomis jose
+            # Reflex: savęs sau save savimi savim savyje savy
+            # The data already indicate number and case; both singular ("I") and plural ("we") have the same lemma ("aš").
+            if($lemma =~ m/^(aš|tu|jis|savęs)$/)
+            {
+                $node->iset()->set('prontype', 'prs');
+                if($lemma eq 'aš')
+                {
+                    $node->iset()->set('person', '1');
+                }
+                elsif($lemma eq 'tu')
+                {
+                    $node->iset()->set('person', '2');
+                }
+                elsif($lemma eq 'jis')
+                {
+                    $node->iset()->set('person', '3');
+                }
+                else # savęs
+                {
+                    $node->iset()->set('reflex', 'yes');
+                }
+            }
+        }
     }
 }
 
