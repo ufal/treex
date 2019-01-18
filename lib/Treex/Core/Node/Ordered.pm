@@ -406,7 +406,7 @@ sub get_gap
     {
         # If there are multiple overlapping gaps, return the shortest one.
         # If two gaps have the same shortest length, the choice is arbitrary.
-        @gaps = sort {length(@{$a}) <=> length(@{$b})} (@gaps);
+        @gaps = sort {scalar(@{$a}) <=> scalar(@{$b})} (@gaps);
         return @{$gaps[0]};
     }
     else
