@@ -86,6 +86,7 @@ sub fix_morphology
         # The original Lithuanian Multext tagset does not distinguish pronoun types at all.
         if($node->is_pronominal())
         {
+            my $lemma = $node->lemma() // '';
             # Personal pronouns:
             # 1 Sing: aš manęs man mane manyje manimi
             # 1 Dual: mudu mudvi mudviejų mudviem mudviese
