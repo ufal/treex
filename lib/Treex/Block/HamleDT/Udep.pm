@@ -473,7 +473,12 @@ sub convert_deprels
         # AuxZ: intensifier or negation
         elsif($deprel eq 'AuxZ')
         {
-            my $lemma = $node->lemma();
+            # In the Lithuanian treebank, some interjections are attached as AuxZ.
+            # Interjections should be discourse in UD.
+            if($node->is_interjection())
+            {
+                $deprel = 'discourse';
+            }
             # AuxZ is an emphasizing word (“especially on Monday”).
             # It also occurs with numbers (“jen čtyři firmy”, “jen několik procent”).
             # The word "jen" ("only") is not necessarily a restriction. It rather emphasizes that the number is a restriction.
@@ -483,7 +488,10 @@ sub convert_deprels
             # https://ufal.mff.cuni.cz/pdt2.0/doc/manuals/en/t-layer/html/ch07s07s05.html
             # Most frequent lemmas with AuxZ: i (4775 výskytů), jen, až, pouze, ani, už, již, ještě, také, především (689 výskytů)
             # Most frequent t-lemmas with RHEM: #Neg (7589 výskytů), i, jen, také, už, již, ani, až, pouze, například (500 výskytů)
-            $deprel = 'advmod:emph';
+            else
+            {
+                $deprel = 'advmod:emph';
+            }
         }
         # Neg: used in Prague-style harmonization of some treebanks (e.g. Romanian) for negation (elsewhere it may be AuxZ or Adv).
         elsif($deprel eq 'Neg')
