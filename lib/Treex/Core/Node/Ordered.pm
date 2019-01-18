@@ -355,12 +355,12 @@ sub get_gap
             if(!$self->is_descendant_of($parent))
             {
                 my %record =
-                {
+                (
                     'child'  => $node,
                     'parent' => $parent,
                     'lord'   => $i<$j ? $i : $j,
                     'rord'   => $j>$i ? $j : $i
-                };
+                );
                 push(@over, \%record);
             }
         }

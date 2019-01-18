@@ -226,9 +226,10 @@ sub check_current_attachment
     # If it is in a gap between a parent and its nonprojective dependent,
     # there must be a non-punctuation node in the same gap so that the other
     # node can be held responsible for causing the nonprojectivity.
+    # The UD validator actually requires more than that: the punctuation in
+    # the gap must also directly depend on another node in the same gap.
     my @gap = $node->get_gap();
-    my @nonpunct_in_gap = grep {!$_->is_punctuation()} (@gap);
-    return 0 if(scalar(@gap)>0 && scalar(@nonpunct_in_gap)==0);
+    return 0 if(scalar(@gap)>0 && !any {$_ == $parent} (@gap));
     return 1;
 }
 

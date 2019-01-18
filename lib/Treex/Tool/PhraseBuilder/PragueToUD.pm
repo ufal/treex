@@ -89,7 +89,8 @@ sub detect_predn_under_subject
     {
         my $subject = $phrase->head();
         my $deprel = $phrase->deprel();
-        $phrase->set_head(shift(@predndeps));
+        # Beware that we may receive a new nonterminal encapsulating the original phrase.
+        $phrase = $phrase->set_head(shift(@predndeps));
         $phrase->set_deprel($deprel);
         if($subject->node()->is_verb())
         {
