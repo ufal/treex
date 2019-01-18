@@ -240,6 +240,10 @@ sub convert_deprels
             {
                 $deprel = 'AuxG';
             }
+            elsif($node->is_adposition())
+            {
+                $deprel = 'AuxP';
+            }
             else
             {
                 $deprel = 'AuxZ';
@@ -475,6 +479,12 @@ sub fix_annotation_errors
         if($form eq 'apie' && $deprel eq 'AuxK')
         {
             $node->set_deprel('AuxP');
+        }
+        # There is a hyphen marked as conjunct in Jonuskaite_V2-s57.
+        if($node->is_punctuation() && $node->is_member() && $deprel eq 'ExD' && $node->is_leaf())
+        {
+            $node->set_deprel('AuxG');
+            $node->set_is_member(undef);
         }
     }
 }
