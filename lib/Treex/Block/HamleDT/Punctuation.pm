@@ -41,6 +41,9 @@ sub process_atree
         # It is unclear what to do anyway, and we won't have to check for cycles.
         if($node->is_punctuation() && $node->is_leaf() && !exists($pairs{$node->form()}))
         {
+            # Do not try to fix nodes that do not have an obvious problem.
+            my $ok = $self->check_current_attachment($node);
+            next if($ok);
             my $pord = $node->ord();
             # Find the left neighbor of the punctuation.
             ###!!! We could probably keep track of the left neighbors as we loop over the nodes. But I don't feel like rewriting this now.
@@ -188,6 +191,45 @@ sub process_atree
             }
         }
     }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Checks whether a punctuation node violates the attachment guidelines of
+# Universal Dependencies.
+#------------------------------------------------------------------------------
+sub check_current_attachment
+{
+    my $self = shift;
+    my $node = shift;
+    # We only check punctuation nodes (tagged PUNCT) here.
+    # Other nodes are always correct from our perspective.
+    # We also assume that the PUNCT nodes already have the 'punct' deprel.
+    # Any violations of this rule are dealt with elsewhere.
+    # Furthermore, we check the attachment of $node to its parent but we do not
+    # check that $node does not have children.
+    return 1 if(!$node->is_punctuation());
+    # If the node is attached to the root and has the 'root' deprel, we consider
+    # it correct. We do not test whether this is the only node with the 'root'
+    # deprel, and we do not check whether the sentence consists solely of
+    # punctuation symbols, which is the only situation when punctuation can
+    # be attached via 'root'.
+    my $parent = $node->parent();
+    return 1 if($parent->is_root() && $node->deprel() eq 'root');
+    # A punctuation node must not be attached to node types that normally do
+    # not take dependents.
+    return 0 if($parent->deprel() =~ m/^(aux|case|cc|cop|mark|punct)(:|$)/);
+    # The attachment of a punctuation node must not be nonprojective.
+    return 0 if($node->is_nonprojective());
+    # The punctuation node itself must not cause nonprojectivity of others.
+    # If it is in a gap between a parent and its nonprojective dependent,
+    # there must be a non-punctuation node in the same gap so that the other
+    # node can be held responsible for causing the nonprojectivity.
+    my @gap = $node->get_gap();
+    my @nonpunct_in_gap = grep {!$_->is_punctuation()} (@gap);
+    return 0 if(scalar(@gap)>0 && scalar(@nonpunct_in_gap)==0);
+    return 1;
 }
 
 

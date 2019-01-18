@@ -315,6 +315,106 @@ sub is_nonprojective
     return 0;
 }
 
+#------------------------------------------------------------------------------
+# If the node is in a gap that causes nonprojectivity of a dependency, this
+# method returns the ordered list of all nodes in the same gap. (The gap is
+# contiguous; there may be multiple gaps within one nonprojectivity.) If the
+# node is member of multiple overlapping gaps (corresponding to different
+# nonprojective edges going over the node), this method returns the smallest
+# gap containing the node. If the node is not part of any gap, the method
+# returns an empty list.
+#------------------------------------------------------------------------------
+sub get_gap
+{
+    log_fatal('Incorrect number of arguments') if(scalar(@_)!=1);
+    my $self = shift;
+    # We need access to all nodes in the tree.
+    my $root = $self->get_root();
+    my @nodes = $root->get_descendants({'ordered' => 1});
+    # Normally the index of a node in @nodes will be the node's ord() - 1.
+    # But it is not guaranteed. We will thus work only with the indices of
+    # the elements of @nodes. To be able to ask a node about its index, we will
+    # temporarily store the indices as wild attributes.
+    for(my $i = 0; $i <= $#nodes; $i++)
+    {
+        $nodes[$i]->wild()->{i} = $i;
+    }
+    # Find all dependencies that go nonprojectively over this node.
+    my $is = $self->wild()->{i};
+    my @over;
+    foreach my $node (@nodes)
+    {
+        next if($node == $self);
+        my $parent = $node->parent();
+        # Nodes that depend directly on the root cannot be nonprojective.
+        next if($parent->is_root());
+        my $i = $node->wild()->{i};
+        my $j = $parent->wild()->{i};
+        if($i<$is && $j>$is || $j<$is && $i>$is)
+        {
+            if(!$self->is_descendant_of($parent))
+            {
+                my %record =
+                {
+                    'child'  => $node,
+                    'parent' => $parent,
+                    'lord'   => $i<$j ? $i : $j,
+                    'rord'   => $j>$i ? $j : $i
+                };
+                push(@over, \%record);
+            }
+        }
+    }
+    # For every nonprojectivity where this node is in the gap, get the nodes
+    # in the gap.
+    my @gaps;
+    foreach my $nprj (@over)
+    {
+        my @gap = ($self);
+        # Look for other gap members on the left.
+        for(my $i = $is-1; $i > $nprj->{lord}; $i--)
+        {
+            if(!$nodes[$i]->is_descendant_of($nprj->{parent}))
+            {
+                unshift(@gap, $nodes[$i]);
+            }
+            else
+            {
+                last;
+            }
+        }
+        # Look for other gap members on the right.
+        for(my $i = $is+1; $i < $nprj->{rord}; $i++)
+        {
+            if(!$nodes[$i]->is_descendant_of($nprj->{parent}))
+            {
+                push(@gap, $nodes[$i]);
+            }
+            else
+            {
+                last;
+            }
+        }
+        push(@gaps, \@gap);
+    }
+    # Clean up. Remove the temporary wild attributes.
+    foreach my $node (@nodes)
+    {
+        delete($node->wild()->{i});
+    }
+    if(scalar(@gaps)>=1)
+    {
+        # If there are multiple overlapping gaps, return the shortest one.
+        # If two gaps have the same shortest length, the choice is arbitrary.
+        @gaps = sort {length(@{$a}) <=> length(@{$b})} (@gaps);
+        return @{$gaps[0]};
+    }
+    else
+    {
+        return ();
+    }
+}
+
 1;
 
 __END__
