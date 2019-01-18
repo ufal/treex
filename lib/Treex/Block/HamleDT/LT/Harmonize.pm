@@ -136,7 +136,7 @@ sub convert_deprels
         }
         $node->set_deprel($deprel);
     }
-    # Second loop: process chained dependency labels and decide, what nodes are ExD, Coord, Apos, AuxP or AuxC.
+    # Second loop: process chained dependency labels and decide what nodes are ExD, Coord, Apos, AuxP or AuxC.
     # At the same time translate the other deprels to the dialect of HamleDT.
     foreach my $node (@nodes)
     {
@@ -332,7 +332,42 @@ sub convert_deprels
     # Fourth loop: if there are inconsistencies in coordination even after moving is_member up to Aux[PC], fix them.
     foreach my $node (@nodes)
     {
-        if($node->deprel() !~ m/^(Coord|Apos)$/)
+        # A node labeled Coord or Apos must have at least one member child.
+        if($node->deprel() =~ m/^(Coord|Apos)$/)
+        {
+            my @children = $node->get_children({'ordered' => 1});
+            my @members = grep {$_->is_member()} (@children);
+            if(scalar(@members)==0)
+            {
+                # Are there candidates for members among the children?
+                my @non_aux_children = grep {$_->deprel() !~ m/^Aux/} (@children);
+                if(scalar(@non_aux_children)>0)
+                {
+                    foreach my $child (@non_aux_children)
+                    {
+                        $child->set_is_member(1);
+                    }
+                }
+                # If we cannot make any child a member, we must replace the Coord|Afun label with something else.
+                else
+                {
+                    if($node->form() eq ',')
+                    {
+                        $node->set_deprel('AuxX');
+                    }
+                    elsif($node->is_punctuation())
+                    {
+                        $node->set_deprel('AuxG');
+                    }
+                    else
+                    {
+                        $node->set_deprel('AuxY');
+                    }
+                }
+            }
+        }
+        # If a node is not labeled Coord or Apos, it cannot have member children.
+        else
         {
             # If a conjunction or punctuation node has children with is_member set, it must be labeled as Coord or Apos.
             my @children = $node->get_children({'ordered' => 1});
