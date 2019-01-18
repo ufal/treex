@@ -122,6 +122,57 @@ sub fix_morphology
                     $node->iset()->set('reflex', 'yes');
                 }
             }
+            # Demonstrative pronouns/determiners.
+            elsif($lemma =~ m/^(šis|tas|toks|anas|šitas)$/)
+            {
+                $node->iset()->set('pos', 'adj');
+                $node->iset()->set('prontype', 'dem');
+            }
+            # Interrogative/relative pronouns/determiners.
+            # kas = who: does not inflect for gender
+            # kuris = which: inflects for gender
+            # koks = what kind of: ditto
+            # kelintas = what rank (interrogative ordinal): ditto
+            # katras = which of two: probably ditto
+            elsif($lemma =~ m/^(kas|kuris|koks|kelintas|katras)$/)
+            {
+                $node->iset()->set('pos', 'adj') unless($lemma eq 'kas');
+                $node->iset()->set('prontype', 'int');
+            }
+            # Total pronouns.
+            # visas = all: inflects for gender
+            # kiekvienas = every: ditto
+            # abu = both: tagged as cardinal numeral, not pronoun (as in Czech); but inflects for gender
+            elsif($lemma =~ m/^(visas|kiekvienas)$/)
+            {
+                $node->iset()->set('pos', 'adj');
+                $node->iset()->set('prontype', 'tot');
+            }
+            # Emphatic pronoun.
+            # pats = oneself: inflects for gender
+            elsif($lemma =~ m/^(pats)$/)
+            {
+                $node->iset()->set('pos', 'adj');
+                $node->iset()->set('prontype', 'emp');
+            }
+            # Negative pronoun.
+            # niekas = nobody, nothing: does not inflect for gender
+            # joks = no, none: inflects for gender
+            elsif($lemma =~ m/^(niekas|joks)$/)
+            {
+                $node->iset()->set('pos', 'adj') unless($lemma eq 'niekas');
+                $node->iset()->set('prontype', 'neg');
+            }
+            # Indefinite pronouns are composed of two tokens, one of them is interrogative.
+            # At present they are represented as single nodes in ALKSNIS but it may be changed in the future.
+            # kažkas = unknown something
+            # kas nors = unspecific something
+            # kai kas = specific something
+            # bet kas = anything
+            else
+            {
+                $node->iset()->set('prontype', 'ind');
+            }
         }
     }
 }
