@@ -46,24 +46,7 @@ sub process_atree
             next if($ok);
             my $pord = $node->ord();
             # Find the left neighbor of the punctuation.
-            ###!!! We could probably keep track of the left neighbors as we loop over the nodes. But I don't feel like rewriting this now.
-            my $lnbr;
-            foreach my $n (@nodes)
-            {
-                if($n->ord() < $pord)
-                {
-                    # Another punctuation node is not a candidate to become my parent.
-                    # Same for some functional nodes.
-                    unless($n->is_punctuation() || $n->deprel() =~ m/^(aux|case|cc|mark)(:|$)/)
-                    {
-                        $lnbr = $n;
-                    }
-                }
-                else
-                {
-                    last;
-                }
-            }
+            my $lnbr = $self->find_candidate_left($node, \@nodes);
             # Can we get higher on the left-hand side?
             # Check that the parent is not to the right and that it is not the root.
             # Since the punctuation should not have children, we should not create a non-projectivity if we check the roof edges going to the right.
@@ -71,7 +54,8 @@ sub process_atree
             # For example, the left neighbor (node i-1) may have its parent at i-3, and the node i-2 forms a gap (does not depend on i-3).
             my $lcand = $lnbr;
             my @lcrumbs;
-            if(defined($lcand))
+            ###!!! TEMPORARILY TURNING OFF. THIS CAN CAUSE NONPROJECTIVITY IF WE GO HIGHER THAN AN EDGE ATTACHED FROM THE RIGHT TO THE LEFT.
+            if(0 && defined($lcand))
             {
                 $lcrumbs[$lcand->ord()]++;
                 while(!$lcand->parent()->is_root() && $lcand->parent()->ord() < $pord)
@@ -81,21 +65,12 @@ sub process_atree
                 }
             }
             # Find the right neighbor of the punctuation.
-            my $rnbr;
-            foreach my $n (@nodes)
-            {
-                # Another punctuation node is not a candidate to become my parent.
-                # Same for some functional nodes.
-                if($n->ord() > $pord && !$n->is_punctuation() && $n->deprel() !~ m/^(aux|case|cc|mark)(:|$)/)
-                {
-                    $rnbr = $n;
-                    last;
-                }
-            }
+            my $rnbr = $self->find_candidate_right($node, \@nodes);
             # Can we get higher on the right-hand side?
             my $rcand = $rnbr;
             my @rcrumbs;
-            if(defined($rcand))
+            ###!!! TEMPORARILY TURNING OFF. THIS CAN CAUSE NONPROJECTIVITY IF WE GO HIGHER THAN AN EDGE ATTACHED FROM THE LEFT TO THE RIGHT.
+            if(0 && defined($rcand))
             {
                 $rcrumbs[$rcand->ord()]++;
                 while(!$rcand->parent()->is_root() && $rcand->parent()->ord() > $pord)
@@ -104,21 +79,29 @@ sub process_atree
                     $rcrumbs[$rcand->ord()]++;
                 }
             }
-            # If we stopped on the left because it jumps to the right, and we have passed through the parent on the right, attach left.
-            my $winner;
-            if(defined($lcand) && $lcand->parent()->ord() > $pord && defined($rcrumbs[$lcand->parent()->ord()]) && $rcrumbs[$lcand->parent()->ord()] > 0)
+            if(0)###!!!
             {
-                $winner = $lcand;
+                # If we stopped on the left because it jumps to the right, and we have passed through the parent on the right, attach left.
+                my $winner;
+                if(defined($lcand) && $lcand->parent()->ord() > $pord && defined($rcrumbs[$lcand->parent()->ord()]) && $rcrumbs[$lcand->parent()->ord()] > 0)
+                {
+                    $winner = $lcand;
+                }
+                # Note that it is possible that neither $lcand nor $rcand exist (the punctuation is the only token, attached to the root node).
+                elsif(defined($rcand))
+                {
+                    $winner = $rcand;
+                }
             }
-            # Note that it is possible that neither $lcand nor $rcand exist (the punctuation is the only token, attached to the root node).
-            elsif(defined($rcand))
-            {
-                $winner = $rcand;
-            }
+            my $winner = defined($lcand) ? $lcand : $rcand;
             if(defined($winner))
             {
                 $node->set_parent($winner);
                 $node->set_deprel('punct');
+            }
+            else
+            {
+                log_warn("Failed to find better attachment for punctuation node ".$node->form());
             }
         }
     }
@@ -231,6 +214,96 @@ sub check_current_attachment
     my @gap = $node->get_gap();
     return 0 if(scalar(@gap)>0 && !any {$_ == $parent} (@gap));
     return 1;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Finds the first candidate on the left, if it exists.
+#------------------------------------------------------------------------------
+sub find_candidate_left
+{
+    my $self = shift;
+    my $node = shift;
+    my $nodes = shift; # array reference, ordered list of tree nodes including $node
+    # We do not know the index of $node in @{$nodes}. We cannot rely on ord() being always the index+1.
+    my $in;
+    for(my $i = 0; $i <= $#{$nodes}; $i++)
+    {
+        if($nodes->[$i] == $node)
+        {
+            $in = $i;
+            last;
+        }
+    }
+    log_fatal("Node $node not found on list $nodes") if(!defined($in));
+    return undef if($in==0);
+    my $candidate = $nodes->[$in-1];
+    # Certain types of nodes are not good candidates because they normally do not take dependents.
+    # We cannot skip them because that could cause nonprojectivity.
+    # But we can climb to their ancestors, as long as these lie to the left of the original node.
+    while($candidate->is_punctuation() || $candidate->deprel() =~ m/^(aux|case|cc|cop|mark|punct)(:|$)/)
+    {
+        my $parent = $candidate->parent();
+        if($parent->is_root())
+        {
+            return $parent;
+        }
+        elsif($parent->ord() < $node->ord())
+        {
+            $candidate = $parent;
+        }
+        else
+        {
+            return undef;
+        }
+    }
+    return $candidate;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Finds the first candidate on the right (or the root), if it exists.
+#------------------------------------------------------------------------------
+sub find_candidate_right
+{
+    my $self = shift;
+    my $node = shift;
+    my $nodes = shift; # array reference, ordered list of tree nodes including $node
+    # We do not know the index of $node in @{$nodes}. We cannot rely on ord() being always the index+1.
+    my $in;
+    for(my $i = 0; $i <= $#{$nodes}; $i++)
+    {
+        if($nodes->[$i] == $node)
+        {
+            $in = $i;
+            last;
+        }
+    }
+    log_fatal("Node $node not found on list $nodes") if(!defined($in));
+    return undef if($in==$#{$nodes});
+    my $candidate = $nodes->[$in+1];
+    # Certain types of nodes are not good candidates because they normally do not take dependents.
+    # We cannot skip them because that could cause nonprojectivity.
+    # But we can climb to their ancestors, as long as these lie to the left of the original node.
+    while($candidate->is_punctuation() || $candidate->deprel() =~ m/^(aux|case|cc|cop|mark|punct)(:|$)/)
+    {
+        my $parent = $candidate->parent();
+        if($parent->is_root())
+        {
+            return $parent;
+        }
+        elsif($parent->ord() > $node->ord())
+        {
+            $candidate = $parent;
+        }
+        else
+        {
+            return undef;
+        }
+    }
+    return $candidate;
 }
 
 
