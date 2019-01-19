@@ -539,7 +539,8 @@ sub convert_deprels
         # Punctuation can have children only if it heads coordination or apposition.
         # By default we assume apposition, provided the configuration seems compatible with apposition.
         # Note that even if the punctuation node's afun is currently Coord, it is not guaranteed that its children are marked as conjuncts.
-        if($node->is_punctuation())
+        # Same for coordinating conjunctions.
+        if($node->is_punctuation() || $node->deprel() eq 'AuxY')
         {
             my @children = $node->get_children({'ordered' => 1});
             my @members = grep {$_->is_member()} (@children);
