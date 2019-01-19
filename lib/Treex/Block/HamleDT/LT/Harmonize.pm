@@ -192,22 +192,28 @@ sub fix_morphology
             # ir, o, bei = and
             # bet = but
             # ar, arba = or
-            # tačiau = however
-            # tai, taigi = so, therefore, thus
+            # tačiau, vis dėlto = however
+            # tad, tai, taigi = so, therefore, thus
             # kuo = wherewith
-            if($lemma =~ m/^(ir|bet|o|ar|bei|arba|tačiau|tai|taigi|kuo)$/)
+            # kadangi = whereas
+            # ne = no??? (neither-no?)
+            # tegul = let's???
+            if($lemma =~ m/^(ir|bet|o|ar|arba|bei|beigi|tačiau|vis dėlto|tai|taigi|kuo|kadangi|tad)$/)
             {
                 $node->iset()->set('conjtype', 'coor');
             }
-            # kad, jog = that
+            # kad, jog, tuo = that
             # kai = when
             # kaip, lyg, tarsi = as, like
+            # nei ... kaip ... = as ... as ...
             # nes = because
             # jei, jeigu = if
             # nebent = unless
             # nors = although
             # negu = than
-            elsif($lemma =~ m/^(kad|kai|kaip|lyg|tarsi|nes|jei|jeigu|nebent|nors|negu|jog)$/)
+            # kol = until
+            # užuot = instead of
+            elsif($lemma =~ m/^(kad|jog|tuo|kai|kaip|lyg|tarsi|nei|nes|jei|jeigu|nebent|nors|negu|kol|užuot)$/)
             {
                 $node->iset()->set('conjtype', 'sub');
             }
