@@ -57,12 +57,7 @@ sub process_atree
             ###!!! TEMPORARILY TURNING OFF. THIS CAN CAUSE NONPROJECTIVITY IF WE GO HIGHER THAN AN EDGE ATTACHED FROM THE RIGHT TO THE LEFT.
             if(0 && defined($lcand))
             {
-                $lcrumbs[$lcand->ord()]++;
-                while(!$lcand->parent()->is_root() && $lcand->parent()->ord() < $pord)
-                {
-                    $lcand = $lcand->parent();
-                    $lcrumbs[$lcand->ord()]++;
-                }
+                $lcand = $self->climb($lcand, $node, -1, \@lcrumbs);
             }
             # Find the right neighbor of the punctuation.
             my $rnbr = $self->find_candidate_right($node, \@nodes);
@@ -72,12 +67,7 @@ sub process_atree
             ###!!! TEMPORARILY TURNING OFF. THIS CAN CAUSE NONPROJECTIVITY IF WE GO HIGHER THAN AN EDGE ATTACHED FROM THE LEFT TO THE RIGHT.
             if(0 && defined($rcand))
             {
-                $rcrumbs[$rcand->ord()]++;
-                while(!$rcand->parent()->is_root() && $rcand->parent()->ord() > $pord)
-                {
-                    $rcand = $rcand->parent();
-                    $rcrumbs[$rcand->ord()]++;
-                }
+                $rcand = $self->climb($rcand, $node, +1, \@rcrumbs);
             }
             if(0)###!!!
             {
@@ -304,6 +294,68 @@ sub find_candidate_right
         }
     }
     return $candidate;
+}
+
+
+
+#------------------------------------------------------------------------------
+# Given an existing attachment candidate, see if we can attach the node higher.
+# Keep traces or "bread crumbs" on candidates we have visited. Keep the search
+# on one side of the node to be attached.
+#------------------------------------------------------------------------------
+sub climb
+{
+    my $self = shift;
+    my $candidate = shift; # reference to node
+    my $child = shift; # node to be attached
+    my $side = shift; # -1 = left; +1 = right
+    my $crumbs = shift; # reference to array indexed by node ords (hopefully they are integers if nothing else)
+    $crumbs->[$candidate->ord()]++;
+    # We do not have to care about climbing to a candidate that normally does not take dependents (aux, cc etc.)
+    # If we can climb to it, then it already has a dependent anyway.
+    # However, we must check that we do not cause nonprojectivity by climbing too high.
+    # There could be a node that we skipped on the other side (because it is aux, cc etc.)
+    # and that node might be attached somewhere to our side; if we climb above that node's parent,
+    # it will make that node's attachment nonprojective.
+    while(!$candidate->parent()->is_root() && ($candidate->parent()->ord() <=> $child->ord()) == $side &&
+          !$self->would_cause_nonprojectivity($candidate->parent(), $node))
+    {
+        $candidate = $candidate->parent();
+        $crumbs->[$candidate->ord()]++;
+    }
+    return $candidate;
+}
+
+
+
+#------------------------------------------------------------------------------
+# For a candidate attachment, tells whether it would cause a new
+# nonprojectivity, provided the rest of the tree stays as it is. We want to
+# use the relatively complex method Node->get_gap(), which means that we must
+# temporarily attach the node to the candidate parent. This will throw an
+# exception if there is a cycle. But then we should not be considering the
+# parent anyways.
+#------------------------------------------------------------------------------
+sub would_cause_nonprojectivity
+{
+    my $self = shift;
+    my $parent = shift;
+    my $child = shift;
+    # Remember the current attachment of the child so we can later restore it.
+    my $current_parent = $child->parent();
+    # We could now check for potential cycles by calling $parent->is_descendant_of($child).
+    # But it is not clear what we should do if the answer is yes. And at present,
+    # this module does not try to attach punctuation nodes that are not leaves.
+    $child->set_parent($parent);
+    # The punctuation node itself must not cause nonprojectivity of others.
+    # If the gap contains other, non-punctuation nodes, we could hold those
+    # other nodes responsible for the gap, but then the child would have to be
+    # attached to them and not to something else. So we will consider any gap
+    # a problem.
+    my @gap = $child->get_gap();
+    # Restore the current parent.
+    $child->set_parent($current_parent);
+    return scalar(@gap);
 }
 
 
