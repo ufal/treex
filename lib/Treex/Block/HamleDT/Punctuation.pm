@@ -371,11 +371,13 @@ sub decide_left_or_right
     {
         return $lcand;
     }
+    # If the right-hand-side candidate is not defined, attach left without
+    # further conditions. Otherwise attach right.
     # Note that it is possible that neither $lcand nor $rcand exist.
     # The punctuation may be the only token, attached to the root node,
     # or there may be unsuitable and nonprojective candidates on both sides.
     # Therefore we may be still returning an undefined value now.
-    return $rcand;
+    return defined($rcand) ? $rcand : $lcand;
 }
 
 
