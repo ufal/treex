@@ -318,7 +318,7 @@ sub climb
     # and that node might be attached somewhere to our side; if we climb above that node's parent,
     # it will make that node's attachment nonprojective.
     while(!$candidate->parent()->is_root() && ($candidate->parent()->ord() <=> $child->ord()) == $side &&
-          !$self->would_cause_nonprojectivity($candidate->parent(), $node))
+          !$self->would_cause_nonprojectivity($candidate->parent(), $child))
     {
         $candidate = $candidate->parent();
         $crumbs->[$candidate->ord()]++;
