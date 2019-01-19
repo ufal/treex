@@ -67,7 +67,7 @@ sub process_atree
             {
                 $rcand = $self->climb($rcand, $node, +1, \@rcrumbs);
             }
-            my $winner = $self->decide_left_or_right($node->{form}, $pord, $lcand, \@lcrumbs, $rcand, \@rcrumbs);
+            my $winner = $self->decide_left_or_right($node->form(), $pord, $lcand, \@lcrumbs, $rcand, \@rcrumbs);
             if(defined($winner))
             {
                 $node->set_parent($winner);
