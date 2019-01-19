@@ -434,7 +434,7 @@ sub convert_deprels
             elsif($node->is_conjunction())
             {
                 # Is it a coordination head?
-                my @members = grep {$_->is_member()} (@{$node->children()});
+                my @members = grep {$_->is_member()} ($node->children());
                 if(scalar(@members)==0)
                 {
                     $deprel = 'AuxY';
