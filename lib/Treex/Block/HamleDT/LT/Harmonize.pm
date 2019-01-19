@@ -76,17 +76,28 @@ sub fix_morphology
         {
             $origtag = 'Z';
             $node->set_conll_pos($origtag);
-            $node->set_tag('Z');
+            $node->set_tag($origtag);
             # Decode it to Interset again.
             $self->decode_iset($node);
             # The corresponding PDT-like tag will be created after this method
-            # finished, so we do not have to care of it now.
+            # has finished, so we do not have to care of it now.
         }
+        # Annotation error: conjunction "kad" ("that") annotated as punctuation.
+        if($node->is_punctuation() && $node->form() =~ m/^kad$/i)
+        {
+            $origtag = 'Cg';
+            $node->set_conll_pos($origtag);
+            $node->set_tag($origtag);
+            # Decode it to Interset again.
+            $self->decode_iset($node);
+            # The corresponding PDT-like tag will be created after this method
+            # has finished, so we do not have to care of it now.
+        }
+        my $lemma = $node->lemma() // '';
         # Fix Interset features of pronominal words.
         # The original Lithuanian Multext tagset does not distinguish pronoun types at all.
         if($node->is_pronominal())
         {
-            my $lemma = $node->lemma() // '';
             # Personal pronouns:
             # 1 Sing: aš manęs man mane manyje manimi
             # 1 Dual: mudu mudvi mudviejų mudviem mudviese
@@ -172,6 +183,32 @@ sub fix_morphology
             else
             {
                 $node->iset()->set('prontype', 'ind');
+            }
+        }
+        # Fix Interset features of conjunctions.
+        # The original Lithuanian Multext tagset does not distinguish coordinating and subordinating conjunctions.
+        if($node->is_conjunction())
+        {
+            # ir, o, bei = and
+            # bet = but
+            # ar, arba = or
+            # tačiau = however
+            # tai, taigi = so, therefore, thus
+            if($lemma =~ m/^(ir|bet|o|ar|bei|arba|tačiau|tai|taigi)$/)
+            {
+                $node->iset()->set('conjtype', 'coor');
+            }
+            # kad, jog = that
+            # kai = when
+            # kaip = as, like
+            # nes = because
+            # jei, jeigu = if
+            # nebent = unless
+            # nors = although
+            # negu = than
+            elsif($lemma =~ m/^(kad|kai|kaip|nes|jei|jeigu|nebent|nors|negu|jog)$/)
+            {
+                $node->iset()->set('conjtype', 'sub');
             }
         }
     }
