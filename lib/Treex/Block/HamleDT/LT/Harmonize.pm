@@ -622,6 +622,17 @@ sub fix_annotation_errors
             $node->set_deprel('AuxG');
             $node->set_is_member(undef);
         }
+        # Subordinating conjunction wrongly attached as adjunct.
+        # kaip už ją atsiskaityta
+        if($form eq 'kaip' && $node->is_leaf() && $node->parent()->form() eq 'atsiskaityta')
+        {
+            my $verb = $node->parent();
+            my $comma = $node->get_left_neighbor();
+            $comma->set_parent($node);
+            $node->set_parent($verb->parent());
+            $node->set_deprel('AuxC');
+            $verb->set_parent($node);
+        }
     }
 }
 
