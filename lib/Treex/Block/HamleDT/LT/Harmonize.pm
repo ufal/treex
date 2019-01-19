@@ -201,13 +201,13 @@ sub fix_morphology
             }
             # kad, jog = that
             # kai = when
-            # kaip, lyg = as, like
+            # kaip, lyg, tarsi = as, like
             # nes = because
             # jei, jeigu = if
             # nebent = unless
             # nors = although
             # negu = than
-            elsif($lemma =~ m/^(kad|kai|kaip|lyg|nes|jei|jeigu|nebent|nors|negu|jog)$/)
+            elsif($lemma =~ m/^(kad|kai|kaip|lyg|tarsi|nes|jei|jeigu|nebent|nors|negu|jog)$/)
             {
                 $node->iset()->set('conjtype', 'sub');
             }
