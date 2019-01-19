@@ -54,8 +54,7 @@ sub process_atree
             # For example, the left neighbor (node i-1) may have its parent at i-3, and the node i-2 forms a gap (does not depend on i-3).
             my $lcand = $lnbr;
             my @lcrumbs;
-            ###!!! TEMPORARILY TURNING OFF. THIS CAN CAUSE NONPROJECTIVITY IF WE GO HIGHER THAN AN EDGE ATTACHED FROM THE RIGHT TO THE LEFT.
-            if(0 && defined($lcand))
+            if(defined($lcand))
             {
                 $lcand = $self->climb($lcand, $node, -1, \@lcrumbs);
             }
@@ -64,8 +63,7 @@ sub process_atree
             # Can we get higher on the right-hand side?
             my $rcand = $rnbr;
             my @rcrumbs;
-            ###!!! TEMPORARILY TURNING OFF. THIS CAN CAUSE NONPROJECTIVITY IF WE GO HIGHER THAN AN EDGE ATTACHED FROM THE LEFT TO THE RIGHT.
-            if(0 && defined($rcand))
+            if(defined($rcand))
             {
                 $rcand = $self->climb($rcand, $node, +1, \@rcrumbs);
             }
