@@ -67,21 +67,7 @@ sub process_atree
             {
                 $rcand = $self->climb($rcand, $node, +1, \@rcrumbs);
             }
-            if(0)###!!!
-            {
-                # If we stopped on the left because it jumps to the right, and we have passed through the parent on the right, attach left.
-                my $winner;
-                if(defined($lcand) && $lcand->parent()->ord() > $pord && defined($rcrumbs[$lcand->parent()->ord()]) && $rcrumbs[$lcand->parent()->ord()] > 0)
-                {
-                    $winner = $lcand;
-                }
-                # Note that it is possible that neither $lcand nor $rcand exist (the punctuation is the only token, attached to the root node).
-                elsif(defined($rcand))
-                {
-                    $winner = $rcand;
-                }
-            }
-            my $winner = defined($lcand) ? $lcand : $rcand;
+            my $winner = $self->decide_left_or_right($node->{form}, $pord, $lcand, \@lcrumbs, $rcand, \@rcrumbs);
             if(defined($winner))
             {
                 $node->set_parent($winner);
@@ -354,6 +340,42 @@ sub would_cause_nonprojectivity
     # Restore the current parent.
     $child->set_parent($current_parent);
     return scalar(@gap);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Chooses between left and right attachment of the punctuation node.
+#------------------------------------------------------------------------------
+sub decide_left_or_right
+{
+    my $self = shift;
+    my $form = shift; # the punctuation token to be attached
+    my $pord = shift; # the ord of the punctuation node to be attached
+    my $lcand = shift;
+    my $lcrumbs = shift;
+    my $rcand = shift;
+    my $rcrumbs = shift;
+    # Some punctuation symbols are more likely to depend on the left.
+    if($form =~ m/^[\.\!\?\)\]\}]$/ && defined($lcand))
+    {
+        return $lcand;
+    }
+    # Some punctuation symbols are more likely to depend on the right.
+    if($form =~ m/^[\(\[\{]$/ && defined($rcand))
+    {
+        return $rcand;
+    }
+    # If we stopped on the left because it jumps to the right, and we have passed through the parent on the right, attach left.
+    if(defined($lcand) && $lcand->parent()->ord() > $pord && defined($rcrumbs->[$lcand->parent()->ord()]) && $rcrumbs->[$lcand->parent()->ord()] > 0)
+    {
+        return $lcand;
+    }
+    # Note that it is possible that neither $lcand nor $rcand exist.
+    # The punctuation may be the only token, attached to the root node,
+    # or there may be unsuitable and nonprojective candidates on both sides.
+    # Therefore we may be still returning an undefined value now.
+    return $rcand;
 }
 
 
