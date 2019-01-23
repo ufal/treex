@@ -105,7 +105,7 @@ sub convert_deprels
             $node->set_parent($parent);
         }
         # Sometimes a prepositional phrase is still headed by the preposition.
-        if($node->deprel() =~ m/^(obj|nmod|nsubj|xcomp|advmod|compound|det)(:|$)/ && $parent->deprel() eq 'case')
+        if($node->deprel() =~ m/^(obj|nmod|nsubj|xcomp|advmod|compound|det|amod|nummod)(:|$)/ && $parent->deprel() eq 'case')
         {
             if($parent->parent()->is_noun())
             {
