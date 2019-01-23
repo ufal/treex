@@ -17,31 +17,7 @@ sub process_atree
     $self->convert_deprels($root);
     $self->fix_morphology($root);
     $self->regenerate_upos($root);
-    # Coordinating conjunctions and punctuation should now be attached to the following conjunct.
-    # The Coordination phrase class already outputs the new structure, hence simple
-    # conversion to phrases and back should do the trick.
-    my $builder = new Treex::Tool::PhraseBuilder::StanfordToUD
-    (
-        'prep_is_head'           => 0,
-        'coordination_head_rule' => 'first_conjunct'
-    );
-    my $phrase = $builder->build($root);
-    $phrase->project_dependencies();
 }
-
-
-
-my %v12deprel =
-(
-    'dobj'      => 'obj',
-    'nsubjpass' => 'nsubj:pass',
-    'csubjpass' => 'csubj:pass',
-    'auxpass'   => 'aux:pass',
-    'neg'       => 'advmod',
-    'name'      => 'flat',
-    'foreign'   => 'flat:foreign',
-    'mwe'       => 'fixed'
-);
 
 
 
@@ -57,19 +33,109 @@ sub convert_deprels
     {
         my $parent = $node->parent();
         my $deprel = $node->deprel();
-        if(exists($v12deprel{$deprel}))
-        {
-            $node->set_deprel($v12deprel{$deprel});
-        }
-        elsif($deprel eq 'nmod' && $parent->is_verb())
-        {
-            $node->set_deprel('obl');
-        }
         # Fix inherently reflexive verbs.
         if($node->is_reflexive() && $self->is_inherently_reflexive_verb($parent->lemma()))
         {
             $node->set_deprel('expl:pv');
         }
+        $self->fix_genitive_noun_modifiers($node);
+        # "um" is attached to an infinitive as 'aux' instead of 'mark'.
+        if($node->is_adposition() && $parent->is_verb() && $deprel =~ m/^aux(:|$)/)
+        {
+            $node->set_deprel('mark');
+        }
+        # Error: advmod(Optiker, keinem) should be det.
+        if($parent->is_noun() && $node->deprel() =~ m/^advmod(:|$)/ && !$node->is_adverb())
+        {
+            my $upos = $node->tag();
+            if($upos =~ m/^(PRON|NOUN|PROPN)$/)
+            {
+                $node->set_deprel('nmod');
+            }
+            elsif($upos eq 'ADJ')
+            {
+                $node->set_deprel('amod');
+            }
+            elsif($upos eq 'NUM')
+            {
+                $node->set_deprel('nummod');
+            }
+            elsif($upos eq 'DET')
+            {
+                $node->set_deprel('det');
+            }
+        }
+        # Sometimes "kein" is attached to an adjective instead of the following noun.
+        elsif($node->lemma() eq 'kein' && $parent->deprel() eq 'amod' && $node->deprel() =~ m/^advmod(:|$)/)
+        {
+            $parent = $parent->parent();
+            $node->set_parent($parent);
+            $deprel = 'det';
+            $node->set_deprel($deprel);
+        }
+        # In "auch wenn", "wenn" is 'mark' or 'cc' and "auch" is wrongly attached as 'advmod' to "wenn".
+        if($node->deprel() =~ m/^advmod(:|$)/ && $parent->deprel() =~ m/^(cc|mark)(:|$)/)
+        {
+            $parent = $parent->parent();
+            $node->set_parent($parent);
+        }
+        # Words like "Million" are tagged NOUN but attached as nummod. They have to be nmod.
+        if($node->is_noun() && $node->deprel() eq 'nummod')
+        {
+            $deprel = 'nmod';
+            $node->set_deprel($deprel);
+        }
+        # Adjectives cannot be attached as det. They have to be amod.
+        if($node->is_adjective() && !$node->is_pronominal() && $node->deprel() eq 'det')
+        {
+            $deprel = 'amod';
+            $node->set_deprel($deprel);
+        }
+        # Nouns attached as cop should in fact be nsubj (they are subjects of nonverbal predicates in sentences where copula is missing).
+        if($node->is_noun() && !$node->is_pronominal() && $node->deprel() eq 'cop')
+        {
+            $deprel = 'nsubj';
+            $node->set_deprel($deprel);
+        }
+        # Auxiliary verbs, adverbial modifiers and conjunctions are sometimes wrongly attached to the copula instead of the nominal predicate.
+        $parent = $node->parent();
+        if(defined($parent->deprel()) && $parent->deprel() =~ m/^(cop|aux)(:|$)/ && $deprel !~ m/^(conj|punct)$/)
+        {
+            $parent = $parent->parent();
+            $node->set_parent($parent);
+        }
+        # Sometimes a prepositional phrase is still headed by the preposition.
+        if($node->deprel() eq 'obj' && $parent->deprel() eq 'case')
+        {
+            if($parent->parent()->is_noun())
+            {
+                $deprel = 'nmod';
+            }
+            else
+            {
+                $deprel = 'obl';
+            }
+            my $preposition = $node->parent();
+            $parent = $preposition->parent();
+            $node->set_parent($parent);
+            $node->set_deprel($deprel);
+            $preposition->set_parent($node);
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Genitive nouns are sometimes attached as 'det' instead of 'nmod'. Fix it.
+#------------------------------------------------------------------------------
+sub fix_genitive_noun_modifiers
+{
+    my $self = shift;
+    my $node = shift;
+    if($node->is_noun() && !$node->is_pronominal() && $node->is_genitive() && $node->deprel() eq 'det')
+    {
+        $node->set_deprel('nmod');
     }
 }
 
@@ -122,6 +188,42 @@ sub fix_morphology
         if($lemma eq 'nicht')
         {
             $iset->set('polarity', 'neg');
+        }
+        # "ihres" is determiner, not adjective.
+        if($node->tag() eq 'ADJ' && $node->conll_pos() =~ m/^P.+AT$/ && $lemma !~ m/^(nett|fein|genügend|direkt)$/i)
+        {
+            $node->iset()->set('prontype', 'prn');
+        }
+        # Getting lemmas of auxiliary verbs right is important because the
+        # validator uses them to check that normal verbs are not tagged as
+        # auxiliary.
+        if($node->is_verb())
+        {
+            if($form =~ m/^ha(ben|be?s?t?|s?t)$/i)
+            {
+                $lemma = 'haben';
+                $node->set_lemma($lemma);
+            }
+            # There is even one occurrence of "wir" meaning "wird".
+            elsif($form =~ m/^((ge)?w[eio]rd|wir$)/i)
+            {
+                $lemma = 'werden';
+                $node->set_lemma($lemma);
+            }
+            elsif($form =~ m/^kanns$/i)
+            {
+                $lemma = 'können';
+                $node->set_lemma($lemma);
+            }
+        }
+        # 'ein' can work as the indefinite article or as the number 'one' and the borderline is fuzzy.
+        # In case of conflict, trust the dependency relation.
+        if($lemma eq 'ein' && $node->deprel() =~ m/^nummod(:|$)/)
+        {
+            $node->iset()->set('pos', 'num');
+            $node->iset()->set('numtype', 'card');
+            $node->iset()->clear('prontype');
+            $node->iset()->clear('definite');
         }
     }
     # It is possible that we changed the form of a multi-word token.
