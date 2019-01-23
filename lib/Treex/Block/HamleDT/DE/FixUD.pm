@@ -127,6 +127,7 @@ sub convert_deprels
             $deprel = 'obl';
             $node->set_deprel($deprel);
         }
+        $self->fix_auxiliary_verb($node);
     }
 }
 
