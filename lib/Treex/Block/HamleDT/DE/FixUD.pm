@@ -140,7 +140,7 @@ sub fix_auxiliary_verb
 {
     my $self = shift;
     my $node = shift;
-    if($node->is_auxiliary_verb() && $node->deprel() =~ m/^aux(:|$)/ && $node->lemma() =~ m/^(bleiben)$/)
+    if($node->tag() eq 'AUX' && $node->deprel() =~ m/^aux(:|$)/ && $node->lemma() =~ m/^(bleiben)$/)
     {
         # We assume that the "auxiliary" verb is attached to an infinitive
         # which in fact should depend on the "auxiliary" (as xcomp).
