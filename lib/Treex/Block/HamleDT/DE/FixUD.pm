@@ -140,26 +140,53 @@ sub fix_auxiliary_verb
 {
     my $self = shift;
     my $node = shift;
-    if($node->tag() eq 'AUX' && $node->deprel() =~ m/^aux(:|$)/ && $node->lemma() =~ m/^(bleiben)$/)
+    if($node->tag() eq 'AUX')
     {
-        # We assume that the "auxiliary" verb is attached to an infinitive
-        # which in fact should depend on the "auxiliary" (as xcomp).
-        # We further assume (although it is not guaranteed) that all other
-        # aux dependents of that infinitive are real auxiliaries.
-        # If there were other spuriious auxiliaries, it would matter
-        # in which order we reattach them.
-        my $infinitive = $node->parent();
-        if($infinitive->is_infinitive())
+        if($node->deprel() =~ m/^aux(:|$)/ && $node->lemma() =~ m/^(bleiben)$/)
         {
-            my $parent = $infinitive->parent();
-            my $deprel = $infinitive->deprel();
+            # We assume that the "auxiliary" verb is attached to an infinitive
+            # which in fact should depend on the "auxiliary" (as xcomp).
+            # We further assume (although it is not guaranteed) that all other
+            # aux dependents of that infinitive are real auxiliaries.
+            # If there were other spuriious auxiliaries, it would matter
+            # in which order we reattach them.
+            my $infinitive = $node->parent();
+            if($infinitive->is_infinitive())
+            {
+                my $parent = $infinitive->parent();
+                my $deprel = $infinitive->deprel();
+                $node->set_parent($parent);
+                $node->set_deprel($deprel);
+                $infinitive->set_parent($node);
+                $infinitive->set_deprel('xcomp');
+                # Subject, adjuncts and other auxiliaries go up.
+                # Non-subject arguments remain with the infinitive.
+                my @children = $infinitive->children();
+                foreach my $child (@children)
+                {
+                    if($child->deprel() =~ m/^(([nc]subj|advmod|aux)(:|$)|obl$)/ ||
+                       $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg')
+                    {
+                        $child->set_parent($node);
+                    }
+                }
+                # We also need to change the part-of-speech tag from AUX to VERB.
+                $node->iset()->clear('verbtype');
+                $node->set_tag('VERB');
+            }
+        }
+        elsif($node->deprel() eq 'cop' && $node->lemma() =~ m/^(bleiben)$/)
+        {
+            my $pnom = $node->parent();
+            my $parent = $pnom->parent();
+            my $deprel = $pnom->deprel();
             $node->set_parent($parent);
             $node->set_deprel($deprel);
-            $infinitive->set_parent($node);
-            $infinitive->set_deprel('xcomp');
+            $pnom->set_parent($node);
+            $pnom->set_deprel('xcomp');
             # Subject, adjuncts and other auxiliaries go up.
-            # Non-subject arguments remain with the infinitive.
-            my @children = $infinitive->children();
+            # Noun modifiers remain with the nominal predicate.
+            my @children = $pnom->children();
             foreach my $child (@children)
             {
                 if($child->deprel() =~ m/^(([nc]subj|advmod|aux)(:|$)|obl$)/ ||
@@ -168,10 +195,10 @@ sub fix_auxiliary_verb
                     $child->set_parent($node);
                 }
             }
+            # We also need to change the part-of-speech tag from AUX to VERB.
+            $node->iset()->clear('verbtype');
+            $node->set_tag('VERB');
         }
-        # We also need to change the part-of-speech tag from AUX to VERB.
-        $node->iset()->clear('verbtype');
-        $node->set_tag('VERB');
     }
 }
 
