@@ -105,7 +105,7 @@ sub convert_deprels
             $node->set_parent($parent);
         }
         # Sometimes a prepositional phrase is still headed by the preposition.
-        if($node->deprel() eq 'obj' && $parent->deprel() eq 'case')
+        if($node->deprel() =~ m/^(obj|nmod|nsubj|xcomp)(:|$)/ && $parent->deprel() eq 'case')
         {
             if($parent->parent()->is_noun())
             {
@@ -121,6 +121,73 @@ sub convert_deprels
             $node->set_deprel($deprel);
             $preposition->set_parent($node);
         }
+        $self->fix_right_to_left_apposition($node);
+        if($node->is_pronoun() && $node->deprel() eq 'advmod')
+        {
+            $deprel = 'obl';
+            $node->set_deprel($deprel);
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fix auxiliary verb that should not be auxiliary.
+#------------------------------------------------------------------------------
+sub fix_auxiliary_verb
+{
+    my $self = shift;
+    my $node = shift;
+    if($node->lemma() =~ m/^(bleiben)$/)
+    {
+        # We assume that the "auxiliary" verb is attached to an infinitive
+        # which in fact should depend on the "auxiliary" (as xcomp).
+        # We further assume (although it is not guaranteed) that all other
+        # aux dependents of that infinitive are real auxiliaries.
+        # If there were other spuriious auxiliaries, it would matter
+        # in which order we reattach them.
+        my $infinitive = $node->parent();
+        if($infinitive->is_infinitive())
+        {
+            my $parent = $infinitive->parent();
+            my $deprel = $infinitive->deprel();
+            $node->set_parent($parent);
+            $node->set_deprel($deprel);
+            $infinitive->set_parent($node);
+            $infinitive->set_deprel('xcomp');
+            # Subject, adjuncts and other auxiliaries go up.
+            # Non-subject arguments remain with the infinitive.
+            my @children = $infinitive->children();
+            foreach my $child (@children)
+            {
+                if($child->deprel() =~ m/^(([nc]subj|advmod|aux)(:|$)|obl$)/ ||
+                   $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg')
+                {
+                    $child->set_parent($node);
+                }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Right-to-left appositions occur when a short nonverbal phrase introduces the
+# sentence: "Danke, die Blumen sind eingetroffen."
+#------------------------------------------------------------------------------
+sub fix_right_to_left_apposition
+{
+    my $self = shift;
+    my $node = shift;
+    if($node->deprel() eq 'appos' && $node->parent()->ord() > $node->ord() && $node->parent()->deprel() eq 'root')
+    {
+        my $current_root = $node->parent();
+        $node->set_parent($current_root->parent());
+        $node->set_deprel('root');
+        $current_root->set_parent($node);
+        $current_root->set_deprel('appos');
     }
 }
 
