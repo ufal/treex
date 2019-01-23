@@ -175,7 +175,8 @@ sub fix_auxiliary_verb
                 $node->set_tag('VERB');
             }
         }
-        elsif($node->deprel() eq 'cop' && $node->lemma() =~ m/^(bleiben)$/)
+        elsif($node->deprel() eq 'cop' &&
+              $node->lemma() =~ m/^(bleiben|machen)$/)
         {
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
