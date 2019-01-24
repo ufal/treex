@@ -175,8 +175,34 @@ sub check_current_attachment
     my $parent = $node->parent();
     return 1 if($parent->is_root() && $node->deprel() eq 'root');
     # A punctuation node must not be attached to node types that normally do
-    # not take dependents.
-    return 0 if($parent->deprel() =~ m/^(aux|case|cc|cop|mark|punct)(:|$)/);
+    # not take dependents. There are some exceptions though.
+    if($parent->deprel() =~ m/^(aux|case|cc|cop|mark|punct)(:|$)/)
+    {
+        # A period attached to the immediately preceding token may mark abbreviation and is always OK.
+        if($node->form() eq '.' && $parent->ord() == $node->ord()-1)
+        {
+            return 1;
+        }
+        # A paired quotation mark can be attached to the word inside even if it is a function word.
+        elsif($node->form() eq '"')
+        {
+            my @lpunct = grep {$_->ord() < $parent->ord()} ($parent->get_children({'ordered' => 1}));
+            my @rpunct = grep {$_->ord() > $parent->ord()} ($parent->get_children({'ordered' => 1}));
+            if((any {$_->form() eq $node->form()} (@lpunct)) &&
+               (any {$_->form() eq $node->form()} (@rpunct)))
+            {
+                return 1;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+        else
+        {
+            return 0;
+        }
+    }
     # The attachment of a punctuation node must not be nonprojective.
     return 0 if($node->is_nonprojective());
     # The punctuation node itself must not cause nonprojectivity of others.

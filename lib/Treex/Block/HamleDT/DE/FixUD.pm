@@ -105,7 +105,8 @@ sub convert_deprels
             $node->set_parent($parent);
         }
         # Sometimes a prepositional phrase is still headed by the preposition.
-        if($node->deprel() =~ m/^(obj|nmod|nsubj|xcomp|advmod|compound|det|amod|nummod)(:|$)/ && $parent->deprel() eq 'case')
+        # The 'dep' child of 'case' often occurs at the end of a truncated sentence.
+        if($node->deprel() =~ m/^(obj|obl|nmod|nsubj|xcomp|advmod|compound|det|amod|nummod|acl|dep)(:|$)/ && $parent->deprel() eq 'case')
         {
             if($parent->parent()->is_noun())
             {
@@ -284,6 +285,7 @@ sub fix_morphology
         my $form = $node->form();
         my $lemma = $node->lemma();
         my $iset = $node->iset();
+        my $deprel = $node->deprel();
         if($lemma eq 'nicht')
         {
             $iset->set('polarity', 'neg');
@@ -324,10 +326,175 @@ sub fix_morphology
             $node->iset()->clear('prontype');
             $node->iset()->clear('definite');
         }
+        # Occasionally an auxiliary verb is tagged VERB instead of AUX.
+        # In case of conflict, trust the dependency relation.
+        if($iset->is_verb() && !$iset->is_auxiliary() && $deprel =~ m/^aux(:|$)/)
+        {
+            $iset->set('verbtype', 'aux');
+            $node->set_tag('AUX');
+        }
+        # The conjunction "dass" is often misspelled "das" and then wrongly analyzed as pronoun or determiner.
+        # Some of the errors can be recognized by the correct dependency relation 'mark'.
+        if($form =~ m/^das$/i && $iset->is_pronominal() && $deprel eq 'mark')
+        {
+            $lemma = 'dass';
+            $node->set_lemma($lemma);
+            $iset->set_hash({'pos' => 'conj', 'conjtype' => 'sub', 'typo' => 'yes'});
+            $node->set_tag('SCONJ');
+            $node->set_conll_pos('KOUS');
+            $node->set_misc_attr('CorrectForm', 'dass'); ###!!! We should mimic the capitalization of the wrong form here.
+        }
+        # The pronominal adverbs "worin", "wonach", "wovon" etc are often tagged PRON and attached as 'mark'.
+        if($form =~ m/^wo\pL/i && $iset->is_pronominal() && $deprel eq 'mark')
+        {
+            $iset->set('pos', 'adv');
+            $node->set_tag('ADV');
+            $deprel = 'advmod';
+            $node->set_deprel($deprel);
+        }
+        # The foreign prepositions "of", "from", "de" etc. in foreign named entities are tagged PROPN but attached as 'case'.
+        $self->restructure_propn_span_of_foreign_preposition($node);
+        $deprel = $node->deprel();
+        # The preposition "von" is wrongly tagged PROPN when it occurs in a personal name such as "Fritz von Opel".
+        if($form =~ m/^(von|als|an|für|in|ohne|unter|zu)$/i && $iset->is_proper_noun() && $deprel eq 'case')
+        {
+            $iset->set_hash({'pos' => 'adp'});
+            $node->set_tag('ADP');
+        }
+        # The English possessive "'s" in named entities is tagged PRON but attached as 'case'.
+        if($form =~ m/^'s$/i && $iset->is_pronominal() && $node->parent()->ord() < $node->ord() && $deprel eq 'case')
+        {
+            $iset->set_hash({'foreign' => 'yes'});
+            $node->set_tag('X');
+            $lemma = "'s";
+            $node->set_lemma($lemma);
+            $deprel = 'flat';
+            $node->set_deprel($deprel);
+        }
+        # The "&" symbol is escaped as "&amp;" and often tagged NOUN or PROPN.
+        $form = '&' if($form eq '&amp;');
+        if($form eq '&')
+        {
+            $node->set_form($form);
+            $lemma = '&';
+            $node->set_lemma($lemma);
+            $iset->set_hash({'pos' => 'sym'});
+            $node->set_tag('SYM');
+        }
     }
     # It is possible that we changed the form of a multi-word token.
     # Therefore we must re-generate the sentence text.
     $root->get_zone()->set_sentence($root->collect_sentence_text());
+}
+
+
+
+#------------------------------------------------------------------------------
+# A foreign preposition tagged PROPN is usually part of a foreign multi-word
+# named entity. We want to analyze the named entity as a flat structure.
+#------------------------------------------------------------------------------
+sub restructure_propn_span_of_foreign_preposition
+{
+    my $self = shift;
+    my $node = shift;
+    # In the original GSD data, foreign prepositions are treated as 'case'
+    # dependents, despite being tagged PROPN. Some of them are even mistagged
+    # as PRON.
+    if(($node->is_proper_noun() || $node->is_pronoun()) && $node->deprel() eq 'case' &&
+       $node->form() =~ m/^(for|from|of|on|to|upon|de|d'|du|à|aux|en|del|da|do|dos|di|della|a|cum|på|na)$/i
+       # A similar problem can occur with foreign auxiliary verbs.
+       ||
+       $node->is_proper_noun() && $node->deprel() =~ m/^aux(:|$)/ &&
+       $node->form() =~ m/^(do|'m)$/i
+      )
+    {
+        # Find the span of proper nouns this node is part of.
+        my $root = $node->get_root();
+        my @nodes = $root->get_descendants({'ordered' => 1});
+        my $prev_is_propn = 0;
+        my $span_begin;
+        my $span_end;
+        my $span_found = 0;
+        for(my $i = 0; $i <= $#nodes; $i++)
+        {
+            my $this_is_propn = $nodes[$i]->is_proper_noun();
+            # Occasionally a PROPN span is interleaved with hyphens: "Stratford-upon-Avon"
+            $this_is_propn = 1 if(!$this_is_propn && $prev_is_propn && $nodes[$i]->form() eq '-');
+            if($this_is_propn && !$prev_is_propn)
+            {
+                $span_begin = $i;
+            }
+            elsif(!$this_is_propn && $prev_is_propn)
+            {
+                if($span_found)
+                {
+                    $span_end = $i-1;
+                    last;
+                }
+                else
+                {
+                    $span_begin = undef;
+                    $span_end = undef;
+                }
+            }
+            if($this_is_propn && $nodes[$i] == $node)
+            {
+                $span_found = 1;
+            }
+            $prev_is_propn = $this_is_propn;
+        }
+        if($span_found)
+        {
+            if(!defined($span_end))
+            {
+                $span_end = $#nodes;
+            }
+            # Identify edges incoming to the span. Hopefully there is only one.
+            my @incoming;
+            for(my $i = $span_begin; $i <= $span_end; $i++)
+            {
+                my $parent = $nodes[$i]->parent();
+                if($parent->ord() < $nodes[$span_begin]->ord() || $parent->ord() > $nodes[$span_end]->ord())
+                {
+                    push(@incoming, {'parent' => $parent, 'deprel' => $nodes[$i]->deprel()});
+                }
+            }
+            ###!!! If there are multiple incoming edges, we should identify the subtree of which our node is member.
+            ###!!! But it is even not guaranteed that the subtree corresponds to a contiguous subspan.
+            ###!!! For now, let's take the first incoming edge and ignore the others.
+            if(scalar(@incoming) >= 1)
+            {
+                # To prevent cycles, we must first attach all span nodes to the root, then to their correct parents.
+                for(my $i = $span_begin; $i <= $span_end; $i++)
+                {
+                    $nodes[$i]->set_parent($root);
+                    # Get rid of German morphology, if any.
+                    unless($nodes[$i]->form() eq '-')
+                    {
+                        $nodes[$i]->iset()->set_hash({'pos' => 'noun', 'nountype' => 'prop', 'foreign' => 'yes'});
+                    }
+                }
+                $nodes[$span_begin]->set_parent($incoming[0]{parent});
+                $nodes[$span_begin]->set_deprel($incoming[0]{deprel});
+                for(my $i = $span_begin+1; $i <= $span_end; $i++)
+                {
+                    $nodes[$i]->set_parent($nodes[$span_begin]);
+                    unless($nodes[$i]->form() eq '-')
+                    {
+                        $nodes[$i]->set_deprel('flat');
+                    }
+                }
+            }
+            else
+            {
+                log_warn("Something must be wrong. We did not find any edge incoming to the PROPN span of node '".$node->form()."'");
+            }
+        }
+        else
+        {
+            log_warn("Something must be wrong. We did not find the PROPN span of node '".$node->form()."'");
+        }
+    }
 }
 
 
