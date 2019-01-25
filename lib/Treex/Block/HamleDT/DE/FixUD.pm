@@ -177,7 +177,7 @@ sub fix_auxiliary_verb
             }
         }
         elsif($node->deprel() eq 'cop' &&
-              $node->lemma() =~ m/^(bleiben|erscheinen|heißen|machen|scheinen)$/)
+              $node->lemma() =~ m/^(bleiben|ernennen|erscheinen|heißen|machen|nennen|scheinen)$/)
         {
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
@@ -327,6 +327,11 @@ sub fix_morphology
             elsif($form =~ m/^kanns$/i)
             {
                 $lemma = 'können';
+                $node->set_lemma($lemma);
+            }
+            elsif($form =~ m/^genannt$/i)
+            {
+                $lemma = 'nennen';
                 $node->set_lemma($lemma);
             }
         }
