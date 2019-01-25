@@ -352,23 +352,35 @@ sub fix_morphology
             $deprel = 'advmod';
             $node->set_deprel($deprel);
         }
+        # Unknown adverbs, often abbreviated such as "usw."
+        if($node->tag() eq 'X' && $deprel eq 'advmod')
+        {
+            $iset->set('pos', 'adv');
+            $node->set_tag('ADV');
+        }
         # The foreign prepositions "of", "from", "de" etc. in foreign named entities are tagged PROPN but attached as 'case'.
         $self->restructure_propn_span_of_foreign_preposition($node);
         $deprel = $node->deprel();
         # The preposition "von" is wrongly tagged PROPN when it occurs in a personal name such as "Fritz von Opel".
-        if($form =~ m/^(von|als|an|für|in|ohne|unter|zu)$/i && $iset->is_proper_noun() && $deprel eq 'case')
+        if($form =~ m/^(von|als|an|für|in|ohne|über|unter|zu)$/i && $iset->is_proper_noun() && $deprel eq 'case')
         {
             $iset->set_hash({'pos' => 'adp'});
             $node->set_tag('ADP');
         }
         # The English possessive "'s" in named entities is tagged PRON but attached as 'case'.
-        if($form =~ m/^'s$/i && $iset->is_pronominal() && $node->parent()->ord() < $node->ord() && $deprel eq 'case')
+        if($form =~ m/^'s$/i && $iset->is_pronominal() && $node->parent()->ord() < $node->ord() && $deprel eq 'case') #'
         {
             $iset->set_hash({'foreign' => 'yes'});
             $node->set_tag('X');
             $lemma = "'s";
             $node->set_lemma($lemma);
             $deprel = 'flat';
+            $node->set_deprel($deprel);
+        }
+        # Infinitival "zu" was not converted from 'aux' to 'mark' when the parent was an adjectival participle.
+        if($form =~ m/^zu$/i && $iset->is_particle() && $deprel eq 'aux')
+        {
+            $deprel = 'mark';
             $node->set_deprel($deprel);
         }
         # The "&" symbol is escaped as "&amp;" and often tagged NOUN or PROPN.
@@ -400,11 +412,11 @@ sub restructure_propn_span_of_foreign_preposition
     # In the original GSD data, foreign prepositions are treated as 'case'
     # dependents, despite being tagged PROPN.
     if($node->is_proper_noun() && $node->deprel() eq 'case' &&
-       $node->form() =~ m/^(against|as|at|for|from|of|on|to|upon|de|d'|du|à|aux|en|par|sous|a|al|del|hasta|da|do|dos|di|della|cum|pro|van|voor|på|na)$/i #'
+       $node->form() =~ m/^(against|as|at|for|from|inside|of|on|to|upon|de|d'|du|à|aux|en|par|sous|a|al|del|hasta|da|do|dos|di|della|cum|pro|van|voor|på|na)$/i #'
        # A similar problem can occur with foreign auxiliary verbs.
        ||
        $node->is_proper_noun() && $node->deprel() =~ m/^aux(:|$)/ &&
-       $node->form() =~ m/^(do|'m)$/i
+       $node->form() =~ m/^(do|'m|to|will)$/i #'
       )
     {
         # Find the span of proper nouns this node is part of.
