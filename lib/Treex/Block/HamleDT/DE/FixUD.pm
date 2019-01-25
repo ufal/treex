@@ -178,7 +178,7 @@ sub fix_auxiliary_verb
             }
         }
         elsif($node->deprel() eq 'cop' &&
-              $node->lemma() =~ m/^(anerkennen|ansehen|auftreten|bedeuten|befinden|befördern|berufen|beschimpfen|bestehen|bestimmen|betiteln|betragen|bezeichnen|bilden|bleiben|darstellen|degradieren|deuten|dienen|duften|einstufen|empfinden|entlarven|entwickeln|entziffern|erachten|erheben|erklären|ernennen|erscheinen|erweitern|feiern|feststellen|finden|folgen|fungieren|gehen|gelten|gestalten|glauben|gründen|halten|heißen|identifizieren|kosten|lauten|liegen|machen|messen|nehmen|nennen|prägen|scheinen|sehen|stehen|stellen|überzeugen|umbauen|umbenennen|umbilden|umwandeln|verlegen|versterben|vorstellen|wählen|wandeln|wirken)$/)
+              $node->lemma() =~ m/^(amtieren|anerkennen|ansehen|aufbauen|auftreten|bedeuten|befinden|befördern|berufen|beschimpfen|bestehen|bestimmen|betiteln|betragen|bezeichnen|bilden|bleiben|darstellen|degradieren|deuten|dienen|duften|einstufen|empfinden|entlarven|entwickeln|entziffern|erachten|erheben|erklären|ernennen|erscheinen|erweitern|feiern|feststellen|finden|folgen|fungieren|gehen|gelten|gestalten|glauben|gründen|halten|heißen|identifizieren|kosten|küren|lauten|liegen|machen|messen|nehmen|nennen|prägen|scheinen|schlagen|schmecken|sehen|stehen|stellen|überzeugen|umbauen|umbenennen|umbilden|umwandeln|verhaften|verlegen|versterben|vorstellen|wählen|wandeln|wirken)$/)
         {
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
