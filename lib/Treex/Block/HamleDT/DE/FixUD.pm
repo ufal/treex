@@ -177,7 +177,7 @@ sub fix_auxiliary_verb
             }
         }
         elsif($node->deprel() eq 'cop' &&
-              $node->lemma() =~ m/^(bleiben|ernennen|erscheinen|gelten|heißen|lauten|machen|nennen|scheinen)$/)
+              $node->lemma() =~ m/^(betragen|bezeichnen|bleiben|ernennen|erscheinen|finden|gelten|heißen|lauten|machen|nennen|scheinen)$/)
         {
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
