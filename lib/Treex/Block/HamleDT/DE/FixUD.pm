@@ -398,9 +398,8 @@ sub restructure_propn_span_of_foreign_preposition
     my $self = shift;
     my $node = shift;
     # In the original GSD data, foreign prepositions are treated as 'case'
-    # dependents, despite being tagged PROPN. Some of them are even mistagged
-    # as PRON.
-    if(($node->is_proper_noun() || $node->is_pronoun()) && $node->deprel() eq 'case' &&
+    # dependents, despite being tagged PROPN.
+    if($node->is_proper_noun() && $node->deprel() eq 'case' &&
        $node->form() =~ m/^(against|as|at|for|from|of|on|to|upon|de|d'|du|à|aux|en|par|sous|a|al|del|hasta|da|do|dos|di|della|cum|pro|van|voor|på|na)$/i #'
        # A similar problem can occur with foreign auxiliary verbs.
        ||
