@@ -99,7 +99,7 @@ sub convert_deprels
         }
         # Auxiliary verbs, adverbial modifiers and conjunctions are sometimes wrongly attached to the copula instead of the nominal predicate.
         $parent = $node->parent();
-        if(defined($parent->deprel()) && $parent->deprel() =~ m/^(cop|aux)(:|$)/ && $deprel !~ m/^(conj|punct)$/)
+        if(defined($parent->deprel()) && $parent->deprel() =~ m/^(cop|aux)(:|$)/ && $deprel !~ m/^(conj|fixed|goeswith|reparandum|punct)$/)
         {
             $parent = $parent->parent();
             $node->set_parent($parent);
@@ -362,7 +362,7 @@ sub fix_morphology
         $self->restructure_propn_span_of_foreign_preposition($node);
         $deprel = $node->deprel();
         # The preposition "von" is wrongly tagged PROPN when it occurs in a personal name such as "Fritz von Opel".
-        if($form =~ m/^(von|als|an|für|in|ohne|über|unter|zu)$/i && $iset->is_proper_noun() && $deprel eq 'case')
+        if($form =~ m/^(von|als|an|für|gegen|in|mit|nach|ohne|über|unter|zu)$/i && $iset->is_proper_noun() && $deprel eq 'case')
         {
             $iset->set_hash({'pos' => 'adp'});
             $node->set_tag('ADP');
@@ -412,11 +412,11 @@ sub restructure_propn_span_of_foreign_preposition
     # In the original GSD data, foreign prepositions are treated as 'case'
     # dependents, despite being tagged PROPN.
     if($node->is_proper_noun() && $node->deprel() eq 'case' &&
-       $node->form() =~ m/^(against|as|at|for|from|inside|of|on|to|upon|de|d'|du|à|aux|en|par|sous|a|al|del|hasta|da|do|dos|di|della|cum|pro|van|voor|på|na)$/i #'
+       $node->form() =~ m/^(against|as|at|by|for|from|inside|into|of|off|on|to|upon|with|de|d'|du|à|au|aux|en|par|sous|sur|a|al|del|hasta|da|do|dos|di|della|cum|pro|van|voor|på|na|z)$/i #'
        # A similar problem can occur with foreign auxiliary verbs.
        ||
        $node->is_proper_noun() && $node->deprel() =~ m/^aux(:|$)/ &&
-       $node->form() =~ m/^(do|'m|to|will)$/i #'
+       $node->form() =~ m/^(can|do|'m|to|will)$/i #'
       )
     {
         # Find the span of proper nouns this node is part of.
