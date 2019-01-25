@@ -143,7 +143,7 @@ sub fix_auxiliary_verb
     my $node = shift;
     if($node->tag() eq 'AUX')
     {
-        if($node->deprel() =~ m/^aux(:|$)/ && $node->lemma() =~ m/^(bleiben)$/)
+        if($node->deprel() =~ m/^aux(:|$)/ && $node->lemma() =~ m/^(bekommen|bleiben)$/)
         {
             # We assume that the "auxiliary" verb is attached to an infinitive
             # which in fact should depend on the "auxiliary" (as xcomp).
@@ -165,7 +165,7 @@ sub fix_auxiliary_verb
                 my @children = $infinitive->children();
                 foreach my $child (@children)
                 {
-                    if($child->deprel() =~ m/^(([nc]subj|advmod|aux)(:|$)|obl$)/ ||
+                    if($child->deprel() =~ m/^(([nc]subj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
                        $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg')
                     {
                         $child->set_parent($node);
@@ -177,7 +177,7 @@ sub fix_auxiliary_verb
             }
         }
         elsif($node->deprel() eq 'cop' &&
-              $node->lemma() =~ m/^(anerkennen|ansehen|auftreten|bedeuten|befördern|berufen|beschimpfen|bestehen|bestimmen|betiteln|betragen|bezeichnen|bilden|bleiben|darstellen|degradieren|deuten|dienen|duften|einstufen|empfinden|entlarven|entwickeln|entziffern|erachten|erheben|erklären|ernennen|erscheinen|feiern|feststellen|finden|folgen|fungieren|gehen|gelten|gestalten|glauben|gründen|halten|heißen|identifizieren|kosten|lauten|liegen|machen|messen|nehmen|nennen|scheinen|sehen|stehen|stellen|überzeugen|umbauen|umbenennen|umwandeln|versterben|vorstellen|wählen|wandeln|wirken)$/)
+              $node->lemma() =~ m/^(anerkennen|ansehen|auftreten|bedeuten|befinden|befördern|berufen|beschimpfen|bestehen|bestimmen|betiteln|betragen|bezeichnen|bilden|bleiben|darstellen|degradieren|deuten|dienen|duften|einstufen|empfinden|entlarven|entwickeln|entziffern|erachten|erheben|erklären|ernennen|erscheinen|erweitern|feiern|feststellen|finden|folgen|fungieren|gehen|gelten|gestalten|glauben|gründen|halten|heißen|identifizieren|kosten|lauten|liegen|machen|messen|nehmen|nennen|prägen|scheinen|sehen|stehen|stellen|überzeugen|umbauen|umbenennen|umbilden|umwandeln|verlegen|versterben|vorstellen|wählen|wandeln|wirken)$/)
         {
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
