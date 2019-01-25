@@ -152,7 +152,8 @@ sub fix_auxiliary_verb
             # If there were other spuriious auxiliaries, it would matter
             # in which order we reattach them.
             my $infinitive = $node->parent();
-            if($infinitive->is_infinitive())
+            # In some cases it is not infinitive but participle: "bekommt angeboten".
+            if($infinitive->is_infinitive() || $infinitive->is_participle())
             {
                 my $parent = $infinitive->parent();
                 my $deprel = $infinitive->deprel();
