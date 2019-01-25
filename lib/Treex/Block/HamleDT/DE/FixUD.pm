@@ -295,6 +295,18 @@ sub fix_morphology
         {
             $node->iset()->set('prontype', 'prn');
         }
+        # "Ein" can be a cardinal numeral ("one") or the indefinite article ("a").
+        # If we want to analyze it as a numeral, we must make sure that the
+        # Interset features do not contain prontype; otherwise the output tag
+        # will be DET.
+        if($form =~ m/^ein(e[rsmn]?)?$/i && $deprel eq 'nummod')
+        {
+            $lemma = 'ein';
+            $node->set_lemma($lemma);
+            $iset->clear('prontype');
+            $iset->set('numtype', 'card');
+            $node->set_tag('NUM');
+        }
         # Getting lemmas of auxiliary verbs right is important because the
         # validator uses them to check that normal verbs are not tagged as
         # auxiliary.
@@ -412,7 +424,7 @@ sub restructure_propn_span_of_foreign_preposition
     # In the original GSD data, foreign prepositions are treated as 'case'
     # dependents, despite being tagged PROPN.
     if($node->is_proper_noun() && $node->deprel() eq 'case' &&
-       $node->form() =~ m/^(against|as|at|by|for|from|inside|into|of|off|on|to|upon|with|de|d'|du|à|au|aux|en|par|sous|sur|a|al|del|hasta|da|do|dos|di|della|cum|pro|van|voor|på|na|z)$/i #'
+       $node->form() =~ m/^(about|against|as|at|by|for|from|inside|into|of|off|on|to|upon|with|de|d'|du|à|au|aux|en|par|sous|sur|a|al|del|hasta|da|do|dos|di|della|delle|cum|pro|van|voor|på|na|nad|z)$/i #'
        # A similar problem can occur with foreign auxiliary verbs.
        ||
        $node->is_proper_noun() && $node->deprel() =~ m/^aux(:|$)/ &&
