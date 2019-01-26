@@ -178,7 +178,7 @@ sub fix_auxiliary_verb
             }
         }
         elsif($node->deprel() eq 'cop' &&
-              $node->lemma() =~ m/^(abkürzen|amtieren|anerkennen|ansehen|aufbauen|auftreten|bedeuten|befinden|befördern|benennen|berufen|beschimpfen|bestehen|bestimmen|betiteln|betragen|bezeichnen|bilden|bleiben|darstellen|degradieren|deuten|dienen|duften|einstufen|empfinden|entlarven|entwickeln|entziffern|erachten|erheben|erklären|ernennen|eröffnen|erscheinen|erwähnen|erweisen|erweitern|feiern|feststellen|finden|folgen|fungieren|gehen|gelten|gestalten|glauben|gründen|halten|handeln|heißen|identifizieren|kosten|küren|lauten|liegen|listen|machen|messen|nehmen|nennen|nominieren|prägen|scheinen|schlagen|schmecken|sehen|stehen|stellen|überzeugen|umbauen|umbenennen|umbilden|umwandeln|verarbeiten|vereidigen|verhaften|verlegen|versterben|vorstellen|wählen|wandeln|wirken)$/)
+              $node->lemma() =~ m/^(abkürzen|amtieren|anerkennen|anfühlen|ansehen|aufbauen|auftreten|bedeuten|befinden|befördern|benennen|berufen|beschimpfen|bestehen|bestimmen|betiteln|betragen|bezeichnen|bilden|bleiben|darstellen|degradieren|deuten|dienen|duften|einstufen|empfinden|entlarven|entwickeln|entziffern|erachten|erheben|erklären|ernennen|eröffnen|erscheinen|erwähnen|erweisen|erweitern|feiern|feststellen|finden|folgen|fungieren|gehen|gelten|gestalten|glauben|gründen|halten|handeln|heißen|identifizieren|kosten|küren|lauten|liegen|listen|machen|messen|nehmen|nennen|nominieren|prägen|scheinen|schlagen|schmecken|sehen|stehen|stellen|überzeugen|umbauen|umbenennen|umbilden|umwandeln|verarbeiten|vereidigen|verhaften|verlegen|versterben|vorstellen|wählen|wandeln|wirken)$/)
         {
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
@@ -312,11 +312,16 @@ sub fix_morphology
         # Getting lemmas of auxiliary verbs right is important because the
         # validator uses them to check that normal verbs are not tagged as
         # auxiliary.
-        if($node->is_verb())
+        if($node->is_verb() || $node->tag() eq 'AUX')
         {
             if($form =~ m/^ha(ben|be?s?t?|s?t)$/i)
             {
                 $lemma = 'haben';
+                $node->set_lemma($lemma);
+            }
+            elsif($form =~ m/^(seyn|waren)$/i)
+            {
+                $lemma = 'sein';
                 $node->set_lemma($lemma);
             }
             # There is even one occurrence of "wir" meaning "wird".
@@ -330,11 +335,18 @@ sub fix_morphology
                 $lemma = 'können';
                 $node->set_lemma($lemma);
             }
-            elsif($form =~ m/^genannt$/i)
+            elsif($form =~ m/^angefühlt$/i)
             {
-                $lemma = 'nennen';
+                $lemma = 'anfühlen';
                 $node->set_lemma($lemma);
             }
+        }
+        if($form =~ 'genannten' && $node->tag() eq 'AUX')
+        {
+            $node->iset()->set('pos', 'adj');
+            $node->iset()->clear('verbtype');
+            $node->iset()->set('verbform', 'part');
+            $node->set_tag('ADJ');
         }
         # 'ein' can work as the indefinite article or as the number 'one' and the borderline is fuzzy.
         # In case of conflict, trust the dependency relation.
