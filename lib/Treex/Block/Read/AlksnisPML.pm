@@ -10,7 +10,11 @@ use Treex::PML::Instance;
 has '+_layers'      => ( builder => '_build_layers', lazy_build => 1 );
 has '+_file_suffix' => ( default => '\.pml(\.gz)?$' );
 has '+schema_dir'   => ( required => 0, builder => '_build_schema_dir' );
-has 'language'      => ( is => 'ro', isa => 'Treex::Type::LangCode', required=>1 );
+# ALKSNIS v2 (the first publicly released version) used schema "antisDplus_schema.pml".
+# ALKSNIS v2.2 uses "AlksnisSchema-1.3.pml".
+# There are some important differences in the schemas! Use the parameter schema_version=antisDplus_schema to toggle the old version.
+has 'schema_version' => ( is => 'ro', isa => 'Str', default => 'AlksnisSchema-1.3', documentation => 'Use "antisDplus_schema" to toggle the old version.' );
+has 'language'       => ( is => 'ro', isa => 'Treex::Type::LangCode', required=>1 );
 
 has 'last_loaded_from' => ( is => 'rw', isa => 'Str', default => '' );
 has 'sent_in_file'     => ( is => 'rw', isa => 'Int', default => 0 );
@@ -90,14 +94,22 @@ sub _convert_tree
     my $pml_node = shift;
     my $treex_node = shift;
     $self->_copy_attr($pml_node, $treex_node, 'word_ref', 'ord');
-    $self->_copy_attr($pml_node, $treex_node, 'syfun', 'deprel');
     if(!$treex_node->is_root())
     {
-        foreach my $attr_name ('form', 'lemma')
+        if($self->schema_version() eq 'antisDplus_schema')
         {
-            $self->_copy_attr($pml_node, $treex_node, $attr_name, $attr_name);
+            $self->_copy_attr($pml_node, $treex_node, 'form', 'form');
+            $self->_copy_attr($pml_node, $treex_node, 'lemma', 'lemma');
+            $self->_copy_attr($pml_node, $treex_node, 'ana', 'tag');
+            $self->_copy_attr($pml_node, $treex_node, 'syfun', 'deprel');
         }
-        $self->_copy_attr($pml_node, $treex_node, 'ana', 'tag');
+        else # AlksnisSchema-1.3
+        {
+            $self->_copy_attr($pml_node, $treex_node, 'token', 'form');
+            $self->_copy_attr($pml_node, $treex_node, 'lemma', 'lemma');
+            $self->_copy_attr($pml_node, $treex_node, 'morph', 'tag');
+            $self->_copy_attr($pml_node, $treex_node, 'synt', 'deprel');
+        }
         #$self->_copy_attr($pml_node, $treex_node, 'role', 'functor');
     }
     foreach my $pml_child ($pml_node->children())
