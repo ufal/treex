@@ -71,6 +71,11 @@ sub process_atree {
     $self->fix_unknown_tags($root);
     # Look for prepositional objects (must be done after transformations).
     $self->relabel_prepositional_objects($root);
+    # Look for objects under nouns. It must be done after transformations
+    # because we may have not seen the noun previously (because of intervening
+    # AuxP and Coord nodes). A noun can be a predicate and then it can have
+    # a subject and oblique dependents. But it cannot have an object.
+    $self->relabel_objects_under_nominals($root);
     $self->change_case_to_mark_under_verb($root);
     $self->dissolve_chains_of_auxiliaries($root);
     ###!!! The following method removes symptoms but we may want to find and remove the cause.
@@ -649,6 +654,29 @@ sub relabel_prepositional_objects
             {
                 $node->set_deprel('obl:arg');
             }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Nominals can be predicates and then they can have subject and oblique
+# dependents. But they cannot have objects.
+#------------------------------------------------------------------------------
+sub relabel_objects_under_nominals
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        my $parent = $node->parent();
+        my $deprel = $node->deprel();
+        if(($parent->is_noun() || $parent->is_pronominal() || $parent->is_numeral()) && $deprel =~ m/^i?obj(:|$)/)
+        {
+            $deprel = 'nmod';
+            $node->set_deprel($deprel);
         }
     }
 }
