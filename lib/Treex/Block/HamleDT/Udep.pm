@@ -95,7 +95,7 @@ sub process_atree {
     }
     ###!!! The EasyTreex extension of Tred currently does not display values of the deprel attribute.
     ###!!! Copy them to conll/deprel (which is displayed) until we make Tred know deprel.
-    my @nodes = $root->get_descendants({'ordered' => 1});
+    @nodes = $root->get_descendants({'ordered' => 1});
     if(1)
     {
         foreach my $node (@nodes)
