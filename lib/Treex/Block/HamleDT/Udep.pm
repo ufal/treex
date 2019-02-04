@@ -435,6 +435,14 @@ sub convert_deprels
                 $deprel = 'nmod';
             }
         }
+        # App is used in the Lithuanian ALKSNIS 2.2 treebank and we keep it in the common Prague style even though
+        # other treebanks do not use it, because the distinction is important when further converting to UD.
+        # App means "appendix" / "priedėlis". Title or occupation is attached to the following name as App;
+        # their morphological case is usually identical. App is similar to Atr, but in UD it should be 'flat', not 'nmod'.
+        elsif($deprel eq 'App')
+        {
+            $deprel = 'flat';
+        }
         # AuxA is not an official deprel used in HamleDT 2.0. Nevertheless it has been introduced in some (not all)
         # languages by people who want to use the resulting data in TectoMT. It marks articles attached to nouns.
         elsif($deprel eq 'AuxA')
