@@ -665,6 +665,22 @@ sub fix_annotation_errors
             $node->set_deprel('AuxC');
             $verb->set_parent($node);
         }
+        # Non-projective comma in pikti_tevai-s45.
+        # , ar jau nurimau, kad galėčiau spręsti iškilusią problemą? “,
+        # The last comma is attached to "kad", while the question mark and the
+        # quotation mark are attached to the first comma, which is the head of
+        # coordination.
+        if($form eq ',' && $node->ord() == 26  && $node->parent()->ord() == 19 && $node->is_nonprojective())
+        {
+            if(!$node->parent()->is_root() &&
+               !$node->parent()->parent()->is_root() &&
+               !$node->parent()->parent()->parent()->is_root() &&
+               !$node->parent()->parent()->parent()->parent()->is_root() &&
+               $node->parent()->parent()->parent()->parent()->form() eq ',')
+            {
+                $node->set_parent($node->parent()->parent()->parent()->parent());
+            }
+        }
     }
 }
 
