@@ -39,7 +39,13 @@ sub process_atree
         # to its left or right.
         # Punctuation normally does not have children. If it does, we will skip it.
         # It is unclear what to do anyway, and we won't have to check for cycles.
-        if($node->is_punctuation() && $node->is_leaf() && !exists($pairs{$node->form()}))
+        ###!!! Originally we also required in this condition:  && !exists($pairs{$node->form()})
+        ###!!! The purpose was to leave paired punctuation for the other block below.
+        ###!!! However, the other block below is outdated and does not work properly.
+        ###!!! As a result, non-projectively placed paired punctuation now may get unnoticed and unfixed.
+        ###!!! As a temporary solution, we let this first block solve any punctuation.
+        ###!!! As a permanent solution, the other block should be fixed.
+        if($node->is_punctuation() && $node->is_leaf())
         {
             # Do not try to fix nodes that do not have an obvious problem.
             my $ok = $self->check_current_attachment($node);
