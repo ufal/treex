@@ -374,6 +374,12 @@ sub convert_deprels
         {
             $deprel = 'Atr';
         }
+        # There is one occurrence of relation 'Aux?'. It is a typo in the relation
+        # label. In fact, this particular occurrence should be Coord.
+        if($deprel eq 'Aux?')
+        {
+            $deprel = 'Coord';
+        }
         if($deprel =~ m/^Aux$/i)
         {
             if($node->form() eq ',')
