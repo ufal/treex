@@ -366,6 +366,14 @@ sub convert_deprels
         {
             $deprel = 'Atr';
         }
+        # AtrQ seems to be a genitive noun phrase with partitive interpretation,
+        # attached to a quantifier. The documentation explains it as "Atributas
+        # (kokybės turinio)", which Google translates as "Attribute (Quality
+        # Content)".
+        if($deprel =~ m/^AtrQ$/i)
+        {
+            $deprel = 'Atr';
+        }
         if($deprel =~ m/^Aux$/i)
         {
             if($node->form() eq ',')
