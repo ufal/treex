@@ -410,6 +410,11 @@ sub convert_deprels
         {
             $deprel = 'Atr';
         }
+        # Pred_Adv is the predicate of an adverbial clause (possibly under AuxC).
+        if($deprel =~ m/^Pred_Adv$/i)
+        {
+            $deprel = 'Adv';
+        }
         # Combined deprels (AtrAtr, AtrAdv, AdvAtr, AtrObj, ObjAtr)
         if($deprel =~ m/^((Atr)|(Adv)|(Obj))_?((Atr)|(Adv)|(Obj))/i)
         {
