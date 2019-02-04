@@ -419,7 +419,8 @@ sub convert_deprels
             $deprel = 'Atr';
         }
         # Pred_Adv is the predicate of an adverbial clause (possibly under AuxC).
-        if($deprel =~ m/^Pred_Adv$/i)
+        # PredN_Adv seems to be, analogously, a nominal predicate of an adverbial clause.
+        if($deprel =~ m/^PredN?_Adv$/i)
         {
             $deprel = 'Adv';
         }
