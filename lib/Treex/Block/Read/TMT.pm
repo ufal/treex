@@ -85,7 +85,9 @@ override '_convert_all_trees' => sub
         # The first child is <trees/>.
         # The second child is <generic_subbundles>.
         # Its first and only child is <generic_subbundle>.
-        my $subbundle = $tmtbundle->firstson()->rbrother()->firstson();
+        #my $subbundle = $tmtbundle->firstson()->rbrother()->firstson();
+        my $subbundle = $tmtbundle->attr('generic_subbundles/generic_subbundle');
+        log_fatal('Cannot find the generic subbundle.') if(!defined($subbundle));
         # The subbundle has two children:
         # <sentence>
         # <trees>
