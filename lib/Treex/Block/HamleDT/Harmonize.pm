@@ -53,7 +53,6 @@ sub process_zone
     # and it is almost always treebank-specific (only a few treebanks use the same tagset as the PDT).
     $root->set_deprel('AuxS');
     $self->convert_deprels($root);
-    $self->fix_annotation_errors($root);
     ###!!! DEBUG: REPORT APOS NODES THAT DO NOT HAVE MEMBERS
     {
         my @apos = grep {$_->deprel() =~ m/^Apos/i} ($root->get_descendants());
@@ -64,6 +63,7 @@ sub process_zone
         }
     }
     ###!!! DEBUG END
+    $self->fix_annotation_errors($root);
     # fix_annotation_errors() may have removed nodes so we must acquire a new list of nodes.
     @nodes = $root->get_descendants();
     # To avoid any confusion, make sure that 'deprel' is the only attribute bearing the dependency relation label.
