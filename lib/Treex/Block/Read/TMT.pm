@@ -87,6 +87,7 @@ override '_convert_all_trees' => sub
         # Its first and only child is <generic_subbundle>.
         my $subbundle = $tmtbundle->attr('generic_subbundles/generic_subbundle');
         log_fatal('Cannot find the generic subbundle.') if(!defined($subbundle));
+        log_fatal($subbundle->type());
         # The subbundle has two children:
         # <sentence>
         # <trees>
