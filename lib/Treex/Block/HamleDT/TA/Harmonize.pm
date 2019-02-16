@@ -112,8 +112,9 @@ sub fix_annotation_errors
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
-        # Fix conjuncts outside coordination.
-        if($node->is_member() && $node->parent()->deprel() ne 'Coord')
+        # Fix members outside coordination or apposition.
+        ###!!! The Apos tag in TamilTB is used differently from other Prague treebanks! No members are expected under Apos!
+        if($node->is_member() && $node->parent()->deprel() !~ m/^(Coord|Apos)/)
         {
             my $parent = $node->parent();
             if($parent->form() eq 'um' || $parent->deprel() eq 'AuxX')
