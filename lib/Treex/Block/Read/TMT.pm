@@ -83,9 +83,12 @@ override '_convert_all_trees' => sub
     foreach my $tmtbundle (@tmtbundles)
     {
         # The first child is <trees/>.
-        # The second child is <generic_subbundles>.
+        # The second child is <generic_subbundles>. Its type is Treex::PML::List.
         # Its first and only child is <generic_subbundle>.
-        my $subbundle = $tmtbundle->attr('generic_subbundles/generic_subbundle');
+        my $subbundles = $tmtbundle->attr('generic_subbundles');
+        log_fatal('Cannot find the list of generic subbundles.') if(!defined($subbundles));
+        log_fatal('Expected just one generic subbundle, found '.$subbundles->count().'.') if($subbundles->count() != 1);
+        my $subbundle = $subbundles->value_at(0);
         log_fatal('Cannot find the generic subbundle.') if(!defined($subbundle));
         log_fatal($subbundle->type());
         # The subbundle has two children:
