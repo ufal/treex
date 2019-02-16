@@ -98,7 +98,8 @@ override '_convert_all_trees' => sub
         # <a_tree>
         # We can ignore the m_tree because all morphological attributes are also
         # copied to the a_tree.
-        my $a_tree = $subbundle->attr('trees/a_tree');
+        my $trees = $subbundle->attr('trees'); # Treex::PML::Struct
+        my $a_tree = $trees->get_member('a_tree');
         log_fatal('Cannot find the a-tree.') if(!defined($a_tree));
         my $bundle = $document->create_bundle();
         my $zone = $bundle->create_zone($self->language(), $self->selector());
