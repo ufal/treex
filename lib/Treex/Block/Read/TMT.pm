@@ -104,7 +104,7 @@ override '_convert_all_trees' => sub
         my $bundle = $document->create_bundle();
         my $zone = $bundle->create_zone($self->language(), $self->selector());
         my $root = $zone->create_atree();
-        $self->_convert_tree($a_tree, $root);
+        $self->_convert_atree($a_tree, $root);
         $zone->set_sentence($root->get_subtree_string());
     }
 };
