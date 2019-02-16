@@ -94,14 +94,16 @@ override '_convert_all_trees' => sub
         # In the case of the Tamil Treebank, the trees are the following (each type occurs once):
         # <m_tree>
         # <a_tree>
-        my $m_tree = $subbundle->firstson()->rbrother()->firstson();
-        my $a_tree = $m_tree->rbrother();
+        #my $m_tree = $subbundle->firstson()->rbrother()->firstson();
+        #my $a_tree = $m_tree->rbrother();
+        my $a_tree = $subbundle->attr('trees/a_tree');
+        log_fatal('Cannot find the a-tree.') if(!defined($a_tree));
         my $bundle = $document->create_bundle();
         my $zone = $bundle->create_zone($self->language(), $self->selector());
         my $root = $zone->create_atree();
         # We can ignore the m_tree because all morphological attributes are also
         # copied to the a_tree.
-        $self->_convert_tree($m_tree, $root);
+        $self->_convert_tree($a_tree, $root);
         $zone->set_sentence($root->get_subtree_string());
     }
 };
