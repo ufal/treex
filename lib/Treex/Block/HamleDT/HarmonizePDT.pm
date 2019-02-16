@@ -15,16 +15,6 @@ sub process_zone
     my $zone   = shift;
     my $tagset = shift;
     my $root = $self->SUPER::process_zone($zone, $tagset);
-    ###!!! DEBUG: REPORT APOS NODES THAT DO NOT HAVE MEMBERS
-    {
-        my @apos = grep {$_->deprel() =~ m/^Apos/i} ($root->get_descendants());
-        @apos = grep {my @c = $_->children(); @c = grep {$_->is_member()} (@c); scalar(@c)==0} (@apos);
-        if(scalar(@apos) > 0)
-        {
-            log_warn('DEBUG: Apos without members');
-        }
-    }
-    ###!!! DEBUG END
     my @nodes = $root->get_descendants({ordered => 1});
     # An easy bug to fix in deprels. It is rare but it exists.
     foreach my $node (@nodes)

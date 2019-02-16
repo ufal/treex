@@ -54,6 +54,16 @@ sub process_zone
     $root->set_deprel('AuxS');
     $self->convert_deprels($root);
     $self->fix_annotation_errors($root);
+    ###!!! DEBUG: REPORT APOS NODES THAT DO NOT HAVE MEMBERS
+    {
+        my @apos = grep {$_->deprel() =~ m/^Apos/i} ($root->get_descendants());
+        @apos = grep {my @c = $_->children(); @c = grep {$_->is_member()} (@c); scalar(@c)==0} (@apos);
+        if(scalar(@apos) > 0)
+        {
+            log_warn('DEBUG: Apos without members');
+        }
+    }
+    ###!!! DEBUG END
     # fix_annotation_errors() may have removed nodes so we must acquire a new list of nodes.
     @nodes = $root->get_descendants();
     # To avoid any confusion, make sure that 'deprel' is the only attribute bearing the dependency relation label.
