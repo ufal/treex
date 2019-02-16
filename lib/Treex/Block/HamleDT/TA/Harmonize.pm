@@ -70,7 +70,16 @@ sub convert_deprels
         # modifier.
         if($deprel eq 'Apos')
         {
-            $deprel = 'Apposition';
+            ###!!! The Apos in Tamil Treebank denotes the hypotactic apposition
+            ###!!! and we could simply relabel it with the HamleDT label for
+            ###!!! hypotactic apposition, i.e., 'Apposition'. However, it is not
+            ###!!! clear whether the label is used in situations comparable to
+            ###!!! appositions in other Prague treebanks. Moreover, we would
+            ###!!! have to make sure that the relation goes left-to-right (in
+            ###!!! TamilTB it goes usually right-to-left). Therefore we now
+            ###!!! convert it just to Atr.
+            #$deprel = 'Apposition';
+            $deprel = 'Atr';
         }
         # Certain TamilTB-specific deprels are not part of the HamleDT label set.
         # Adverbial complements and adjuncts are merged to just adverbials.
