@@ -204,7 +204,7 @@ block is not general enough to read any TMT file.
 Example:
 
 TAMILTB=/net/data/TamilTB/TamilTB.v0.1/data
-treex Read::TMT 'from=$TAMILTB/TamilTB.v0.1.tmt' Write::CoNLLX deprel_attribute=afun > pokus.ta.conll
+treex Read::TMT schema_dir=TMT_schema from=$TAMILTB/TamilTB.v0.1.tmt Write::CoNLLX deprel_attribute=afun > pokus.ta.conll
 
 =head1 PARAMETERS
 
