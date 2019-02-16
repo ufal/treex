@@ -84,15 +84,12 @@ override '_convert_all_trees' => sub
     {
         # The first child is <trees/>.
         # The second child is <generic_subbundles>. Its type is Treex::PML::Seq.
-        # Its first and only child is <generic_subbundle>.
+        # Its first and only child is <generic_subbundle>. Its type is Treex::PML::Struct.
         my $subbundles = $tmtbundle->attr('generic_subbundles');
         log_fatal('Cannot find the list of generic subbundles.') if(!defined($subbundles));
         my @subbundles_elements = $subbundles->elements();
         log_fatal('Expected just one generic subbundle, found '.scalar(@subbundles_elements).'.') if(scalar(@subbundles_elements) != 1);
-        log_info('Subbundles element = ['.join(', ', @{$subbundles_elements[0]}).']');
         my $subbundle = $subbundles->value_at(0);
-        log_fatal('Cannot find the generic subbundle.') if(!defined($subbundle));
-        log_fatal($subbundle->type());
         # The subbundle has two children:
         # <sentence>
         # <trees>
@@ -101,9 +98,6 @@ override '_convert_all_trees' => sub
         # <a_tree>
         # We can ignore the m_tree because all morphological attributes are also
         # copied to the a_tree.
-        my $trees = $subbundle->attr('trees');
-        log_fatal('Cannot find the list of trees in the subbundle.') if(!defined($trees));
-        log_fatal($trees->type());
         my $a_tree = $subbundle->attr('trees/a_tree');
         log_fatal('Cannot find the a-tree.') if(!defined($a_tree));
         my $bundle = $document->create_bundle();
