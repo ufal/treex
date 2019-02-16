@@ -36,6 +36,16 @@ sub process_zone
     }
     # Is_member should be set directly under the Coord|Apos node. Some Prague-style treebanks have it deeper.
     # Fix it here, before building phrases (it will not harm treebanks that are already OK.)
+    ###!!! DEBUG: REPORT APOS NODES THAT DO NOT HAVE MEMBERS
+    {
+        my @apos = grep {$_->deprel() =~ m/^Apos/i} ($root->get_descendants());
+        @apos = grep {my @c = $_->children(); @c = grep {$_->is_member()} (@c); scalar(@c)==0} (@apos);
+        if(scalar(@apos) > 0)
+        {
+            log_warn('DEBUG: Apos without members');
+        }
+    }
+    ###!!! DEBUG END
     $self->pdt_to_treex_is_member_conversion($root);
     ###!!! DEBUG: REPORT APOS NODES THAT DO NOT HAVE MEMBERS
     {
