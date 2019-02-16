@@ -904,6 +904,7 @@ sub detect_prague_apposition
         if($n == 0)
         {
             log_warn('Apposition without members');
+            log_warn($phrase->as_string());
             # We cannot keep 'apos' as the deprel of the phrase if there are no members.
             my $node = $phrase->node();
             my $deprel_id = defined($node->form()) && $node->form() eq ',' ? 'auxx' : $node->is_punctuation() ? 'auxg' : 'auxy';
