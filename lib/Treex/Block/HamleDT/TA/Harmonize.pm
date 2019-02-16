@@ -61,9 +61,16 @@ sub convert_deprels
         $deprel = $node->afun() if(!defined($deprel));
         $deprel = $node->conll_deprel() if(!defined($deprel));
         $deprel = 'NR' if(!defined($deprel));
-        if ( $deprel =~ s/_M$// )
+        if($deprel =~ s/_M$//)
         {
             $node->set_is_member(1);
+        }
+        # The Apos tag in TamilTB is used differently from other Prague treebanks!
+        # No members are expected under Apos! Instead, Apos denotes the appositional
+        # modifier.
+        if($deprel eq 'Apos')
+        {
+            $deprel = 'Apposition';
         }
         # Certain TamilTB-specific deprels are not part of the HamleDT label set.
         # Adverbial complements and adjuncts are merged to just adverbials.
@@ -112,9 +119,9 @@ sub fix_annotation_errors
     my @nodes = $root->get_descendants({ordered => 1});
     foreach my $node (@nodes)
     {
-        # Fix members outside coordination or apposition.
-        ###!!! The Apos tag in TamilTB is used differently from other Prague treebanks! No members are expected under Apos!
-        if($node->is_member() && $node->parent()->deprel() !~ m/^(Coord|Apos)/)
+        # Fix members outside coordination.
+        # The Apos tag in TamilTB is used differently from other Prague treebanks! No members are expected under Apos!
+        if($node->is_member() && $node->parent()->deprel() ne 'Coord')
         {
             my $parent = $node->parent();
             if($parent->form() eq 'um' || $parent->deprel() eq 'AuxX')
