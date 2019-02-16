@@ -85,7 +85,6 @@ override '_convert_all_trees' => sub
         # The first child is <trees/>.
         # The second child is <generic_subbundles>.
         # Its first and only child is <generic_subbundle>.
-        #my $subbundle = $tmtbundle->firstson()->rbrother()->firstson();
         my $subbundle = $tmtbundle->attr('generic_subbundles/generic_subbundle');
         log_fatal('Cannot find the generic subbundle.') if(!defined($subbundle));
         # The subbundle has two children:
@@ -94,15 +93,16 @@ override '_convert_all_trees' => sub
         # In the case of the Tamil Treebank, the trees are the following (each type occurs once):
         # <m_tree>
         # <a_tree>
-        #my $m_tree = $subbundle->firstson()->rbrother()->firstson();
-        #my $a_tree = $m_tree->rbrother();
+        # We can ignore the m_tree because all morphological attributes are also
+        # copied to the a_tree.
+        my $trees = $subbundle->attr('trees');
+        log_fatal('Cannot find the list of trees in the subbundle.') if(!defined($trees));
+        log_fatal($trees->type());
         my $a_tree = $subbundle->attr('trees/a_tree');
         log_fatal('Cannot find the a-tree.') if(!defined($a_tree));
         my $bundle = $document->create_bundle();
         my $zone = $bundle->create_zone($self->language(), $self->selector());
         my $root = $zone->create_atree();
-        # We can ignore the m_tree because all morphological attributes are also
-        # copied to the a_tree.
         $self->_convert_tree($a_tree, $root);
         $zone->set_sentence($root->get_subtree_string());
     }
