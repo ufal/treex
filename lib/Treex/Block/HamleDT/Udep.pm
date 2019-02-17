@@ -70,7 +70,7 @@ sub process_atree {
     $self->tag_copulas_aux($root);
     $self->fix_unknown_tags($root);
     # Look for prepositional objects (must be done after transformations).
-    $self->relabel_prepositional_objects($root);
+    $self->relabel_oblique_objects($root);
     # Look for objects under nouns. It must be done after transformations
     # because we may have not seen the noun previously (because of intervening
     # AuxP and Coord nodes). A noun can be a predicate and then it can have
@@ -643,7 +643,7 @@ sub convert_deprels
 # We have tried to identify them during deprel conversion but some may have
 # slipped through because of interaction with coordination or apposition.
 #------------------------------------------------------------------------------
-sub relabel_prepositional_objects
+sub relabel_oblique_objects
 {
     my $self = shift;
     my $root = shift;
@@ -652,17 +652,44 @@ sub relabel_prepositional_objects
     {
         if($node->deprel() =~ m/^i?obj(:|$)/)
         {
-            ###!!! In Slavic languages, this condition does not work well with
-            ###!!! some quantified noun phrases, e.g. in Czech:
-            ###!!! Výbuch zranil kolem padesáti lidí.
-            ###!!! ("Kolem padesáti lidí" = "around fifty people" acts externally
-            ###!!! as neuter singular accusative, but internally its head "lidí"
-            ###!!! is masculine plural genitive and has a prepositional child.)
-            if(any {$_->deprel() =~ m/^case(:|$)/} ($node->children()))
+            if(!$self->is_core_argument($node))
             {
                 $node->set_deprel('obl:arg');
             }
         }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Tells for a noun phrase in a given language whether it can be a core argument
+# of a verb, based on its morphological case and adposition, if any. This
+# method must be called after tree transformations because we look for the
+# adposition among children of the current node, and we do not expect
+# coordination to step in our way.
+#------------------------------------------------------------------------------
+sub is_core_argument
+{
+    my $self = shift;
+    my $node = shift;
+    my $language = $self->language();
+    my @adp = grep {$_->deprel() =~ m/^case(:|$)/} ($node->get_children({'ordered' => 1}));
+    # Tamil: dative and prepositional objects are oblique.
+    if($language eq 'ta')
+    {
+        return !$node->is_dative() && scalar(@adp) == 0;
+    }
+    # Default: prepositional objects are oblique.
+    ###!!! In Slavic languages, this condition does not work well with
+    ###!!! some quantified noun phrases, e.g. in Czech:
+    ###!!! Výbuch zranil kolem padesáti lidí.
+    ###!!! ("Kolem padesáti lidí" = "around fifty people" acts externally
+    ###!!! as neuter singular accusative, but internally its head "lidí"
+    ###!!! is masculine plural genitive and has a prepositional child.)
+    else
+    {
+        return scalar(@adp) == 0;
     }
 }
 
