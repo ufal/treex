@@ -675,10 +675,10 @@ sub is_core_argument
     my $node = shift;
     my $language = $self->language();
     my @adp = grep {$_->deprel() =~ m/^case(:|$)/} ($node->get_children({'ordered' => 1}));
-    # Tamil: dative and prepositional objects are oblique.
+    # Tamil: dative, instrumental and prepositional objects are oblique.
     if($language eq 'ta')
     {
-        return !$node->is_dative() && scalar(@adp) == 0;
+        return !$node->is_dative() && !$node->is_instrumental() && scalar(@adp) == 0;
     }
     # Default: prepositional objects are oblique.
     ###!!! In Slavic languages, this condition does not work well with
