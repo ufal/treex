@@ -392,6 +392,7 @@ sub _discourse_annotate_inter {
           if (scalar(@connectors)) { # found one or more connectors
             my $start_node = $t_node;
             my $target_node = ($prev_root->get_children())[0]; # usually there is one linguistic child below the technical root
+            next if (!defined $target_node);
             my $target_id = $target_node->id;
             my @core_connectors = simplify(@connectors); # if the connective is compounded with 'a', e.g. "a proto", take only the "proto" to determine the discourse type
             my $discourse_type = $ha_inter_connector_level2_2_discourse_type{$core_connectors[0]->t_lemma};
