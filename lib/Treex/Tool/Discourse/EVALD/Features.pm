@@ -376,7 +376,7 @@ sub create_feat_hash {
     my $feats_tfa = $self->features_tfa($doc);
     my $feats_readability = $self->features_readability($doc);
 
-    my %all_feats_hash = ( %$feats_spelling, %$feats_morphology, %$feats_vocabulary, %$feats_syntax, %$feats_connectives_quantity, %$feats_connectives_diversity, %$feats_coreference, %$feats_tfa, %feats_readability );
+    my %all_feats_hash = ( %$feats_spelling, %$feats_morphology, %$feats_vocabulary, %$feats_syntax, %$feats_connectives_quantity, %$feats_connectives_diversity, %$feats_coreference, %$feats_tfa, %$feats_readability );
     return \%all_feats_hash;
 }
 
