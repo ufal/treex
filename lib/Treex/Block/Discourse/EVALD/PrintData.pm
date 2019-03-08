@@ -11,6 +11,7 @@ with 'Treex::Block::Discourse::EVALD::Base';
 
 has 'format' => ( is => 'ro', isa => 'Str', default => 'vw' );
 has 'multiline' => ( is => 'ro', isa => 'Bool', default => 0 );
+has 'no_labels' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 sub extract_labels {
     my ($self, $doc) = @_;
@@ -52,7 +53,10 @@ sub print_header {
 sub _process_document {
     my ($self, $doc) = @_;
 
-    my $labels = $self->extract_labels($doc);
+    my $labels;
+    if (!$self->no_labels) {
+        $labels = $self->extract_labels($doc);
+    }
 
     my $feats = $self->_feat_extractor->extract_features($doc, $self->multiline);
     my $instance_str;
