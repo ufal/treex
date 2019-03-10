@@ -598,6 +598,11 @@ sub fix_specific_constructions
                 $node->set_deprel('det');
             }
         }
+        # "Medio" is tagged 'NUM' but sometimes attached as 'det'; it should be 'nummod'.
+        elsif($node->is_numeral() && $node->deprel() =~ m/^det(:|$)/)
+        {
+            $node->set_deprel('nummod');
+        }
         # Occasionally a subordinating conjunction such as "porque" or "que" is
         # attached as 'advmod' instead of 'mark'.
         # Note that we want to do this only after we checked any specific errors
