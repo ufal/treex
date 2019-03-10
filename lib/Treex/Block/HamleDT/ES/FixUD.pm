@@ -11,6 +11,7 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
+    $self->fix_xml_entities($root);
     $self->fix_pos($root);
 #    $self->fix_morphology($root);
     $self->regenerate_upos($root);
@@ -20,6 +21,41 @@ sub process_atree
     $self->fix_coord_conj_head($root);
     $self->fix_advmod_obl($root);
 #    $self->fix_como_si($root);
+}
+
+
+
+#------------------------------------------------------------------------------
+# Decode XML entities left in the text.
+#------------------------------------------------------------------------------
+sub fix_xml_entities
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    my $n_changed_forms = 0;
+    foreach my $node (@nodes)
+    {
+        my $form = $node->form();
+        # XML entity should only appear in XML files but elsewhere it should be decoded.
+        if($form eq '&amp;')
+        {
+            $form = '&';
+            $node->set_form($form);
+            $n_changed_forms++;
+        }
+        my $lemma = $node->lemma();
+        if($lemma eq '&amp;')
+        {
+            $lemma = '&';
+            $node->set_lemma($lemma);
+        }
+    }
+    # If we changed a form, we must re-generate the sentence text.
+    if($n_changed_forms > 0)
+    {
+        $root->get_zone()->set_sentence($root->collect_sentence_text());
+    }
 }
 
 
@@ -36,12 +72,6 @@ sub fix_pos
     foreach my $node (@nodes)
     {
         my $form = $node->form();
-        # XML entity should only appear in XML files but elsewhere it should be decoded.
-        if($form eq '&amp;')
-        {
-            $form = '&';
-            $node->set_form($form);
-        }
         my $iset = $node->iset();
         # Now the positive approach: Tag certain closed-class words regardless the context.
         # For example, the forms of the personal pronoun "yo" occasionally appear as PROPN or X and we want to unify them.
