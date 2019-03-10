@@ -20,7 +20,7 @@ sub process_atree
     $self->fix_acl_under_verb($root);
     $self->fix_coord_conj_head($root);
     $self->fix_advmod_obl($root);
-    $self->fix_como_si($root);
+    $self->fix_specific_constructions($root);
 }
 
 
@@ -554,16 +554,18 @@ sub fix_case_mark
 
 
 #------------------------------------------------------------------------------
-# Adverbial clause starting with "como si" is sometimes headed by "como" while
-# "si" is the 'mark' of the verb. Both "como" and "si" should be markers.
+# Fixes deprels and sometimes even transforms specific constructions that we
+# know are sometimes annotated wrongly.
 #------------------------------------------------------------------------------
-sub fix_como_si
+sub fix_specific_constructions
 {
     my $self = shift;
     my $root = shift;
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
+        # Adverbial clause starting with "como si" is sometimes headed by "como" while
+        # "si" is the 'mark' of the verb. Both "como" and "si" should be markers.
         if($node->form() =~ m/^como$/i)
         {
             my @children = $node->get_children({'ordered' => 1});
@@ -589,12 +591,20 @@ sub fix_como_si
         }
         # "Tanto" occurs in "tanto como", which functions as a compound conjunction.
         # However, as a pronoun (quantifier), it cannot be 'cc': "de tanta paciencia como veneno"
-        if($node->lemma() eq 'tanto' && $node->is_pronoun() && $node->deprel() =~ m/^cc(:|$)/)
+        elsif($node->lemma() eq 'tanto' && $node->is_pronoun() && $node->deprel() =~ m/^cc(:|$)/)
         {
             if($node->parent()->is_noun())
             {
                 $node->set_deprel('det');
             }
+        }
+        # Occasionally a subordinating conjunction such as "porque" or "que" is
+        # attached as 'advmod' instead of 'mark'.
+        # Note that we want to do this only after we checked any specific errors
+        # such as the "como si" above ("como" is also 'SCONJ').
+        elsif($node->is_subordinator() && $node->deprel() =~ m/^advmod(:|$)/)
+        {
+            $node->set_deprel('mark');
         }
     }
 }
