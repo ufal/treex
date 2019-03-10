@@ -32,7 +32,7 @@ sub format_header {
     my ($feat_types, $all_classes) = @_;
     
     my $header = '@RELATION Evald' . "\n\n";
-    $header .= join "\n", map {my $name = $_->[0]; $name =~ s/^[^\^]*\^//; '@ATTRIBUTE '.$name.'  '.$_->[1]} @$feat_types;
+    $header .= join "\n", map {my $name = $_->[0]; '@ATTRIBUTE '.$name.'  '.$_->[1]} @$feat_types;
     $header .= "\n";
     $header .= sprintf '@ATTRIBUTE class {%s}', join(", ", @$all_classes);
     $header .= "\n";

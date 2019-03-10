@@ -39,7 +39,7 @@ sub process_document {
     $tfa_relevant_without_tfa += $tfa_relevant_without_tfa_after;
   }
 
-  log_info("Number of tfa values set: 't': $file_tfa_t_count, 'c': $file_tfa_c_count, 'f': $file_tfa_f_count, tfa relevant nodes without tfa value: $tfa_relevant_without_tfa\n");
+  log_info("Number of tfa values set: 't': $file_tfa_t_count, 'c': $file_tfa_c_count, 'f': $file_tfa_f_count, tfa relevant nodes without tfa value: $tfa_relevant_without_tfa");
 
 } # process_document
 

@@ -36,8 +36,11 @@ sub build_weka_featlist {
     my $weka_feats_types = [
 
     # SPELLING FEATS
-      ["spell^typos_per_100words",       "NUMERIC"],
-      ["spell^punctuation_per_100words", "NUMERIC"],
+      ["spell^typos_per_100words",                          "NUMERIC"],
+      ["spell^punctuation_per_100words",                    "NUMERIC"],
+      ["spell^accented_per_100chars",                       "NUMERIC"],
+      ["spell^diphthons_per_100chars",                      "NUMERIC"],
+      ["spell^capitals_at_sentence_beginnings_per_100sent", "NUMERIC"],
 
     # MORPHOLOGY FEATS
       ["morph^passive_vs_active_ratio_percent",       "NUMERIC"],
@@ -72,6 +75,9 @@ sub build_weka_featlist {
       ["vocab^simpson_index",                      "NUMERIC"],
       ["vocab^george_udny_yule_index",             "NUMERIC"],
       ["vocab^avg_length_of_words",                "NUMERIC"],
+      ["vocab^lemma_byt_among_verbs_percent",      "NUMERIC"],
+      ["vocab^lemma_mit_among_verbs_percent",      "NUMERIC"],
+      ["vocab^most_frequent_lemma_percent",        "NUMERIC"],
 
     # SYNTAX FEATS
       ["syntax^avg_words_per_sent",                   "NUMERIC"],
@@ -93,6 +99,46 @@ sub build_weka_featlist {
       ["syntax^level_2_avg_branching",                "NUMERIC"],
       ["syntax^level_3_avg_branching",                "NUMERIC"],
       ["syntax^level_4_avg_branching",                "NUMERIC"],
+      ["syntax^deepord_1_ACT_percent",                "NUMERIC"],
+      ["syntax^deepord_1_PAT_percent",                "NUMERIC"],
+      ["syntax^deepord_1_PREC_percent",               "NUMERIC"],
+      ["syntax^deepord_1_DENOM_percent",              "NUMERIC"],
+      ["syntax^deepord_1_RSTR_percent",               "NUMERIC"],
+      ["syntax^deepord_1_TWHEN_percent",              "NUMERIC"],
+      ["syntax^deepord_1_LOC_percent",                "NUMERIC"],
+      ["syntax^deepord_1_PRED_percent",               "NUMERIC"],
+      ["syntax^deepord_1_APP_percent",                "NUMERIC"],
+      ["syntax^deepord_1_RHEM_percent",               "NUMERIC"],
+      ["syntax^deepord_2_ACT_percent",                "NUMERIC"],
+      ["syntax^deepord_2_PAT_percent",                "NUMERIC"],
+      ["syntax^deepord_2_PREC_percent",               "NUMERIC"],
+      ["syntax^deepord_2_DENOM_percent",              "NUMERIC"],
+      ["syntax^deepord_2_RSTR_percent",               "NUMERIC"],
+      ["syntax^deepord_2_TWHEN_percent",              "NUMERIC"],
+      ["syntax^deepord_2_LOC_percent",                "NUMERIC"],
+      ["syntax^deepord_2_PRED_percent",               "NUMERIC"],
+      ["syntax^deepord_2_APP_percent",                "NUMERIC"],
+      ["syntax^deepord_2_RHEM_percent",               "NUMERIC"],
+      ["syntax^ord_1_POS_N_percent",                  "NUMERIC"],
+      ["syntax^ord_1_POS_A_percent",                  "NUMERIC"],
+      ["syntax^ord_1_POS_P_percent",                  "NUMERIC"],
+      ["syntax^ord_1_POS_C_percent",                  "NUMERIC"],
+      ["syntax^ord_1_POS_V_percent",                  "NUMERIC"],
+      ["syntax^ord_1_POS_D_percent",                  "NUMERIC"],
+      ["syntax^ord_1_POS_R_percent",                  "NUMERIC"],
+      ["syntax^ord_1_POS_J_percent",                  "NUMERIC"],
+      ["syntax^ord_1_POS_T_percent",                  "NUMERIC"],
+      ["syntax^ord_1_POS_I_percent",                  "NUMERIC"],
+      ["syntax^ord_2_POS_N_percent",                  "NUMERIC"],
+      ["syntax^ord_2_POS_A_percent",                  "NUMERIC"],
+      ["syntax^ord_2_POS_P_percent",                  "NUMERIC"],
+      ["syntax^ord_2_POS_C_percent",                  "NUMERIC"],
+      ["syntax^ord_2_POS_V_percent",                  "NUMERIC"],
+      ["syntax^ord_2_POS_D_percent",                  "NUMERIC"],
+      ["syntax^ord_2_POS_R_percent",                  "NUMERIC"],
+      ["syntax^ord_2_POS_J_percent",                  "NUMERIC"],
+      ["syntax^ord_2_POS_T_percent",                  "NUMERIC"],
+      ["syntax^ord_2_POS_I_percent",                  "NUMERIC"],
 
     # CONNECTIVES_QUANTITY FEATS
       ["conn_qua^avg_connective_words_coord_per_100sent",  "NUMERIC"],
@@ -235,6 +281,13 @@ sub build_weka_featlist {
       ["tfa^enclitic_first_per_100sent",                   "NUMERIC"],
       ["tfa^wrong_enclitics_order_per_100sent",            "NUMERIC"],
 
+    # READABILITY FEATS
+      ["readability^flesch_reading_ease",         "NUMERIC"],
+      ["readability^flesch_kincaid_grade_level",  "NUMERIC"],
+      ["readability^smog_index",                  "NUMERIC"],
+      ["readability^coleman_liau_index",          "NUMERIC"],
+      ["readability^automated_readability_index", "NUMERIC"],
+      
     ];
     return [ grep {$self->filter_namespace($_->[0])} @$weka_feats_types ];
 }
@@ -321,8 +374,9 @@ sub create_feat_hash {
     my $feats_connectives_diversity = $self->features_connectives_diversity($doc);
     my $feats_coreference = $self->features_coreference($doc);
     my $feats_tfa = $self->features_tfa($doc);
+    my $feats_readability = $self->features_readability($doc);
 
-    my %all_feats_hash = ( %$feats_spelling, %$feats_morphology, %$feats_vocabulary, %$feats_syntax, %$feats_connectives_quantity, %$feats_connectives_diversity, %$feats_coreference, %$feats_tfa );
+    my %all_feats_hash = ( %$feats_spelling, %$feats_morphology, %$feats_vocabulary, %$feats_syntax, %$feats_connectives_quantity, %$feats_connectives_diversity, %$feats_coreference, %$feats_tfa, %$feats_readability );
     return \%all_feats_hash;
 }
 
@@ -340,11 +394,20 @@ sub collect_info {
 
 my $number_of_sentences;
 my $number_of_words;
+my $number_of_syllables;
+my $number_of_characters;
 
-my $length_of_words; # to count the average length of words by dividing $length_of_words by $number_of_words
+my $number_of_polysyllables; # words with three or more syllables
 
 my $number_of_typos;
 my $number_of_punctuation_marks;
+
+my $number_of_diphthongs; # diphthongs (dvojhlásky) au, ou, eu
+
+my $number_of_accented_characters;
+my $number_of_capitals_after_stops;
+
+my $number_of_unstressed_enclitics;
 
 my $number_of_passive_verbs;
 my $number_of_active_verbs;
@@ -396,6 +459,12 @@ my $count_connective_words_coord;
 my %lemmas_counts;
 
 my %t_lemmas_counts;
+
+my %functors_position_1_counts; 
+my %functors_position_2_counts; 
+
+my %pos_position_1_counts; 
+my %pos_position_2_counts; 
 
 my %t_lemmas_counts_corrected;
 my $t_lemmas_per_100_t_lemmas;
@@ -537,9 +606,18 @@ sub collect_info_discourse {
     my ($self, $doc) = @_;
 
     $number_of_words = 0;
-    $length_of_words = 0;
+    $number_of_characters = 0;
+    $number_of_syllables = 0;
     $number_of_typos = 0;
     $number_of_punctuation_marks = 0;
+
+    $number_of_polysyllables = 0;
+    $number_of_diphthongs = 0;
+
+    $number_of_accented_characters = 0;
+    $number_of_capitals_after_stops = 0;
+
+    $number_of_unstressed_enclitics = 0;
 
     $number_of_passive_verbs = 0;
     $number_of_active_verbs = 0;
@@ -596,6 +674,12 @@ sub collect_info_discourse {
     $t_lemmas_per_100_t_lemmas_sum = 0;
     $number_of_t_lemmas = 0;
 
+    %functors_position_1_counts = ();
+    %functors_position_2_counts = ();
+
+    %pos_position_1_counts = ();
+    %pos_position_2_counts = ();
+    
     %lemmas_counts = ();
 
     $count_PREDless_sentences = 0;
@@ -686,9 +770,45 @@ sub collect_info_discourse {
 
         my $form = $anode->form;
         if ($form) {
-          $length_of_words += length($form);
+          $number_of_characters += length($form);
         }
 
+        my $syllables = count_syllables($form); 
+        $number_of_syllables += $syllables; 
+        if ($syllables >= 3) { 
+          $number_of_polysyllables++; 
+        } 
+
+        for my $i (0..length($form)-1) { 
+          my $char = substr($form, $i, 1); 
+          if ($char =~ /[áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]/) { 
+            $number_of_accented_characters++; 
+          } 
+        } 
+
+        my $ord = $anode->ord; 
+        if ($ord eq '1') { 
+          my $first_character = substr($form, 0, 1); 
+          if ($first_character =~ /[A-Z]/) { 
+            $number_of_capitals_after_stops++; # number of capital letters at sentence beginnings 
+          } 
+          my $pos = substr($anode->tag // 'X', 0, 1); 
+          $pos_position_1_counts{$pos}++; 
+        } 
+        elsif ($ord eq '2') { 
+          my $pos = substr($anode->tag // 'X', 0, 1); 
+          $pos_position_2_counts{$pos}++; 
+        } 
+        
+        if (lc($form) =~ /(au|ou|eu)/) { 
+          $number_of_diphthongs++; 
+        } 
+
+        if (lc($form) =~ /^(li|jsem|jsi|jsme|jste|bych|bys|by|bychom|byste|si|se|mi|ti|mu|mě|tě|ho|tu|to)$/) { 
+          $number_of_unstressed_enclitics++; 
+        } 
+        
+        
         my $lemma = $anode->lemma;
         if ($lemma) {
           $lemma =~ s/^(.[^-_^~]*)[-_^~].+$/$1/;
@@ -887,6 +1007,17 @@ má-li věta více příklonek, jejich pořadí je následující (šlo by sledo
       my $has_PRED = 0;
       my $has_PRED_in_first_or_second = 0;
       my $depth = 0;
+
+      if (scalar(@nodes) > 0) {
+        my $node_1 = $nodes[0];
+        my $functor_1 = $node_1->functor // 'X';
+        $functors_position_1_counts{$functor_1}++;
+      }
+      if (scalar(@nodes) > 1) {
+        my $node_2 = $nodes[1];
+        my $functor_2 = $node_2->functor // 'X';
+        $functors_position_2_counts{$functor_2}++;
+      }
 
       foreach my $node (@nodes) {
 
@@ -1182,6 +1313,9 @@ sub features_spelling {
 
     $feats{'spell^typos_per_100words'} = ceil(100*$number_of_typos/$number_of_words);
     $feats{'spell^punctuation_per_100words'} = ceil(100*$number_of_punctuation_marks/$number_of_words);
+    $feats{'spell^accented_per_100chars'} = ceil(100*$number_of_accented_characters/$number_of_characters);
+    $feats{'spell^diphthons_per_100chars'} = ceil(100*$number_of_diphthongs/$number_of_characters);
+    $feats{'spell^capitals_at_sentence_beginnings_per_100sent'} = ceil(100*$number_of_capitals_after_stops/$number_of_sentences);
 
     return \%feats;
 }
@@ -1234,7 +1368,19 @@ sub features_vocabulary {
     $feats{'vocab^different_t_lemmas_per_100t_lemmas'} = ceil($t_lemmas_per_100_t_lemmas);
     $feats{'vocab^simpson_index'} = get_simpson_index();
     $feats{'vocab^george_udny_yule_index'} = get_george_udny_yule_index();
-    $feats{'vocab^avg_length_of_words'} = ceil($length_of_words / $number_of_words);
+    $feats{'vocab^avg_length_of_words'} = ceil($number_of_characters / $number_of_words);
+    $feats{'vocab^lemma_byt_among_verbs_percent'} = ceil(100*$lemmas_counts{'být'}/($number_of_pos_verb+0.01));
+    $feats{'vocab^lemma_mit_among_verbs_percent'} = ceil(100*$lemmas_counts{'mít'}/($number_of_pos_verb+0.01));
+
+    # my $most_frequent_lemma = '';
+    my $max_lemma_frequency = -1;
+    while ((my $lemma, my $frequency) = each %lemmas_counts) {
+      if ($frequency > $max_lemma_frequency) {
+        $max_lemma_frequency = $frequency;
+        # $most_frequent_lemma = $lemma;
+      }
+    }
+    $feats{'vocab^most_frequent_lemma_percent'} = ceil(100*$max_lemma_frequency/($number_of_words+0.01));
 
     return \%feats;
 }
@@ -1263,6 +1409,26 @@ sub features_syntax {
     $feats{'syntax^level_2_avg_branching'} = ceil($level_3_number_of_nodes/($level_2_number_of_nodes + 0.01));
     $feats{'syntax^level_3_avg_branching'} = ceil($level_4_number_of_nodes/($level_3_number_of_nodes + 0.01));
     $feats{'syntax^level_4_avg_branching'} = ceil($level_5_number_of_nodes/($level_4_number_of_nodes + 0.01));
+
+    # ten most frequent functors at the deepord="1" position
+    foreach my $functor (qw(ACT PAT PREC DENOM RSTR TWHEN LOC PRED APP RHEM)) {
+      $feats{'syntax^deepord_1_' . $functor . '_percent'} = ceil(100*$functors_position_1_counts{$functor}/($number_of_sentences + 0.01));
+    }
+
+    # ten most frequent functors at the deepord="2" position
+    foreach my $functor (qw(RSTR ACT PRED PAT APP ADDR TWHEN RHEM LOC PAR)) {
+      $feats{'syntax^deepord_2_' . $functor . '_percent'} = ceil(100*$functors_position_2_counts{$functor}/($number_of_sentences + 0.01));
+    }
+
+    # ten POS values at the ord="1" position
+    foreach my $pos (qw(N A P C V D R J T I)) {
+      $feats{'syntax^ord_1_POS_' . $pos . '_percent'} = ceil(100*$pos_position_1_counts{$pos}/($number_of_sentences + 0.01));
+    }
+
+    # ten POS values at the ord="2" position
+    foreach my $pos (qw(N A P C V D R J T I)) {
+      $feats{'syntax^ord_2_POS_' . $pos . '_percent'} = ceil(100*$pos_position_2_counts{$pos}/($number_of_sentences + 0.01));
+    }
 
     return \%feats;
 }
@@ -1421,6 +1587,19 @@ sub features_tfa {
     return \%feats;
 }
 
+#------------------------------- readability features ------------------------
+sub features_readability {
+    my ($self, $doc) = @_;
+    my %feats = ();
+
+    $feats{'readability^flesch_reading_ease'} = ceil(206.835 - 1.015 * ($number_of_words / $number_of_sentences) - 84.6 * ($number_of_syllables / $number_of_words));
+    $feats{'readability^flesch_kincaid_grade_level'} = ceil(0.39 * ($number_of_words / $number_of_sentences) + 11.8 * ($number_of_syllables / $number_of_words) - 15.59);
+    $feats{'readability^smog_index'} = ceil(1.043 * sqrt($number_of_polysyllables * (30 / $number_of_sentences)) + 3.1291);
+    $feats{'readability^coleman_liau_index'} = ceil(0.0588 * (100 * $number_of_characters / $number_of_words) - 0.296 * (100 * $number_of_sentences / $number_of_words) - 15.8);
+    $feats{'readability^automated_readability_index'} = ceil(4.71 * ($number_of_characters / $number_of_words) + 0.5 * ($number_of_words / $number_of_sentences) - 21.43);
+
+    return \%feats;
+}
 
 
 # ==================== supporting functions =======================
@@ -1557,6 +1736,16 @@ sub get_sentence_t {
   return $sentence;
 } # get_sentence_t
 
+sub count_syllables {
+  my ($form) = @_;
+  my $lower = lc($form);
+  my @lr = $lower =~ /[^aeiouyáéěíóúůý][lr][^aeiouyáéěíóúůý]/g; # slabikotvorná l, r
+  my @vowels = $lower =~ /(a|e|i|o|u|y|á|é|ě|í|ó|ú|ů|ý)/g; # samohlásky
+  my @diphthons = $lower =~ /(au|ou|eu)/g; # dvojhlásky
+  my $syllables = scalar(@lr) + scalar(@vowels) - scalar(@diphthons);
+  return $syllables;
+}
+
 =item
 
   The function checks whether the given verb node is on the first or second position in the clause.
@@ -1593,11 +1782,11 @@ __END__
 
 =head1 NAME
 
-Treex::Block::Discourse::CS::EvaldExtractFeaturesWeka
+Treex::Tool::Discourse::EVALD::Features
 
 =head1 DESCRIPTION
 
-Extracts features from the data for evaluation of text coherence using the WEKA toolkit
+Extracts features from the data for evaluation of text coherence
 
 =head1 AUTHOR
 
@@ -1606,7 +1795,7 @@ Jiří Mírovský <mirovsky@ufal.mff.cuni.cz>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright © 2018 by Institute of Formal and Applied Linguistics, Charles University in Prague
+Copyright © 2019 by Institute of Formal and Applied Linguistics, Charles University in Prague
 
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
