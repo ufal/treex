@@ -431,6 +431,12 @@ sub fix_morphology
         {
             $iset->set('degree', 'cmp');
         }
+        # "Porque" is adverb, not a subordinating conjunction.
+        if($iset->is_conjunction() && $form =~ m/^porque$/i)
+        {
+            $iset->set('pos', 'adv');
+            $iset->set('prontype', 'int');
+        }
         # Fix verbal features.
         if($iset->is_verb())
         {
@@ -538,7 +544,9 @@ sub fix_advmod_obl
             # Numeral could be a date. Example: el 16 de junio
             if($node->is_numeral())
             {
-                $node->set_deprel('obl:tmod');
+                # It is not guaranteed that it is a temporal modifier, so only use 'obl', not 'obl:tmod'.
+                # Non-temporal examples include cincuenta in: más de cincuenta
+                $node->set_deprel('obl');
             }
         }
     }
