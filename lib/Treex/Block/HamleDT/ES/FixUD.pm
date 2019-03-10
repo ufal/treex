@@ -20,7 +20,7 @@ sub process_atree
     $self->fix_acl_under_verb($root);
     $self->fix_coord_conj_head($root);
     $self->fix_advmod_obl($root);
-#    $self->fix_como_si($root);
+    $self->fix_como_si($root);
 }
 
 
