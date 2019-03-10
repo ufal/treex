@@ -1,8 +1,8 @@
 package Treex::Block::HamleDT::ES::FixUD;
+use utf8;
 use Moose;
 use List::MoreUtils qw(any);
 use Treex::Core::Common;
-use utf8;
 extends 'Treex::Core::Block';
 
 
@@ -17,6 +17,7 @@ sub process_atree
     $self->fix_root_punct($root);
     $self->fix_case_mark($root);
     $self->fix_acl_under_verb($root);
+    $self->fix_coord_conj_head($root);
 }
 
 
@@ -536,6 +537,56 @@ sub fix_acl_under_verb
         if($node->deprel() =~ m/^acl(:|$)/ && $node->parent()->is_verb())
         {
             $node->set_deprel('advcl');
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Some cooridnation in AnCora stays headed by a conjunction, fix it.
+#------------------------------------------------------------------------------
+sub fix_coord_conj_head
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        # Example: no sólo de sus calamidades, sino también de su historia
+        # (not only of their calamities but also of their history)
+        # Conjunctions "no sólo" and "sino también" are fixed expressions.
+        # The phrase is currently headed by "sino" (cc), with children "no" (cc), calamidades (obl), and historia (obl).
+        if($node->deprel() eq 'cc')
+        {
+            my @children = $node->get_children({'ordered' => 1});
+            my @conjuncts = grep {$_->deprel() !~ m/^(fixed|cc|punct)(:|$)/} (@children);
+            my @delimiters = grep {$_->deprel() =~ m/^(cc|punct)(:|$)/} (@children);
+            if(scalar(@conjuncts) >= 1)
+            {
+                my $newhead = $conjuncts[0];
+                # Assume that the current deprel of the conjunct is correct.
+                $newhead->set_parent($node->parent());
+                # Attach the other conjuncts to the first conjunct.
+                for(my $i = 1; $i <= $#conjuncts; $i++)
+                {
+                    $conjuncts[$i]->set_parent($newhead);
+                    $conjuncts[$i]->set_deprel('conj');
+                }
+                # Add the original head to the set of delimiters.
+                push(@delimiters, $node);
+                @delimiters = sort {$a->ord() <=> $b->ord()} (@delimiters);
+                # Attach each delimiter to the immediately following conjunct.
+                # Attach it to the last conjunct if there is no following conjunct.
+                foreach my $delimiter (@delimiters)
+                {
+                    while($delimiter->ord() > $conjuncts[0]->ord() && scalar(@conjuncts) > 1)
+                    {
+                        shift(@conjuncts);
+                    }
+                    $delimiter->set_parent($conjuncts[0]);
+                }
+            }
         }
     }
 }
