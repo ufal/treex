@@ -587,6 +587,15 @@ sub fix_como_si
                 $node->set_deprel('mark');
             }
         }
+        # "Tanto" occurs in "tanto como", which functions as a compound conjunction.
+        # However, as a pronoun (quantifier), it cannot be 'cc': "de tanta paciencia como veneno"
+        if($node->lemma() eq 'tanto' && $node->is_pronoun() && $node->deprel() =~ m/^cc(:|$)/)
+        {
+            if($node->parent()->is_noun())
+            {
+                $node->set_deprel('det');
+            }
+        }
     }
 }
 
