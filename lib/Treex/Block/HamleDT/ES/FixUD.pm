@@ -18,6 +18,7 @@ sub process_atree
     $self->fix_case_mark($root);
     $self->fix_acl_under_verb($root);
     $self->fix_coord_conj_head($root);
+    $self->fix_advmod_obl($root);
 }
 
 
@@ -522,6 +523,30 @@ sub fix_case_mark
 
 
 #------------------------------------------------------------------------------
+# Changes the relation from an adverbial modifier to an oblique nominal
+# dependent in cases where the dependent is not an adverb.
+#------------------------------------------------------------------------------
+sub fix_advmod_obl
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->deprel() =~ m/^advmod(:|$)/)
+        {
+            # Numeral could be a date. Example: el 16 de junio
+            if($node->is_numeral())
+            {
+                $node->set_deprel('obl:tmod');
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
 # A clause attached to a verb cannot be acl, those are reserved to modifiers of
 # nominals. It can be advcl, or xcomp (secondary predication) or it should be
 # reattached to a nominal argument of the verb. A full disambiguation would
@@ -560,7 +585,7 @@ sub fix_coord_conj_head
         if($node->deprel() eq 'cc')
         {
             my @children = $node->get_children({'ordered' => 1});
-            my @conjuncts = grep {$_->deprel() !~ m/^(fixed|cc|punct)(:|$)/} (@children);
+            my @conjuncts = grep {$_->deprel() !~ m/^(fixed|goeswith|cc|punct)(:|$)/} (@children);
             my @delimiters = grep {$_->deprel() =~ m/^(cc|punct)(:|$)/} (@children);
             if(scalar(@conjuncts) >= 1)
             {
