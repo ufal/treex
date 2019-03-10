@@ -599,7 +599,9 @@ sub fix_specific_constructions
             }
         }
         # "Medio" is tagged 'NUM' but sometimes attached as 'det'; it should be 'nummod'.
-        elsif($node->is_numeral() && $node->deprel() =~ m/^det(:|$)/)
+        # Warning: $node->is_numeral() will return 1 even if the main tag is not NUM!
+        # E.g. some indefinite articles are DET but they still have NumType=Card.
+        elsif($node->tag() eq 'NUM' && $node->deprel() =~ m/^det(:|$)/)
         {
             $node->set_deprel('nummod');
         }
