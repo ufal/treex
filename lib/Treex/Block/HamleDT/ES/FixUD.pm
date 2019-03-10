@@ -11,14 +11,15 @@ sub process_atree
 {
     my $self = shift;
     my $root = shift;
-#    $self->fix_pos($root);
+    $self->fix_pos($root);
 #    $self->fix_morphology($root);
-#    $self->regenerate_upos($root);
+    $self->regenerate_upos($root);
     $self->fix_root_punct($root);
     $self->fix_case_mark($root);
     $self->fix_acl_under_verb($root);
     $self->fix_coord_conj_head($root);
     $self->fix_advmod_obl($root);
+    $self->fix_como_si($root);
 }
 
 
@@ -235,6 +236,12 @@ sub fix_pos
             $iset->clear('nountype');
             $iset->add('pos' => 'adj', 'prontype' => 'prn');
         }
+        # "Porque" is adverb, not a subordinating conjunction.
+        if($iset->is_conjunction() && $form =~ m/^porque$/i)
+        {
+            $iset->set('pos', 'adv');
+            $iset->set('prontype', 'int');
+        }
         # The "%" symbol should be tagged SYM. Now it is sometimes tagged NOUN.
         if($form eq '%')
         {
@@ -431,12 +438,6 @@ sub fix_morphology
         {
             $iset->set('degree', 'cmp');
         }
-        # "Porque" is adverb, not a subordinating conjunction.
-        if($iset->is_conjunction() && $form =~ m/^porque$/i)
-        {
-            $iset->set('pos', 'adv');
-            $iset->set('prontype', 'int');
-        }
         # Fix verbal features.
         if($iset->is_verb())
         {
@@ -520,6 +521,45 @@ sub fix_case_mark
             # Some exceptions: desde hace cinco años
             if($parent->is_infinitive() || $parent->form() =~ m/^hace$/i)
             {
+                $node->set_deprel('mark');
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Adverbial clause starting with "como si" is sometimes headed by "como" while
+# "si" is the 'mark' of the verb. Both "como" and "si" should be markers.
+#------------------------------------------------------------------------------
+sub fix_como_si
+{
+    my $self = shift;
+    my $root = shift;
+    my @nodes = $root->get_descendants();
+    foreach my $node (@nodes)
+    {
+        if($node->form() =~ m/^como$/i)
+        {
+            my @children = $node->get_children({'ordered' => 1});
+            my @verbs = grep {$_->is_verb()} (@children);
+            if(scalar(@verbs) >= 1)
+            {
+                my $verb = $verbs[0];
+                # We could now check for the presence of "si" under the verb but would its absence change anything?
+                $verb->set_parent($node->parent());
+                $verb->set_deprel('advcl');
+                # Reattach all other children of "como" under the verb.
+                foreach my $child (@children)
+                {
+                    unless($child == $verb)
+                    {
+                        $child->set_parent($verb);
+                    }
+                }
+                # Reattach "como" to the verb.
+                $node->set_parent($verb);
                 $node->set_deprel('mark');
             }
         }
