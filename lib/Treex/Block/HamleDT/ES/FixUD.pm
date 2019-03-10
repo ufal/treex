@@ -19,7 +19,7 @@ sub process_atree
     $self->fix_acl_under_verb($root);
     $self->fix_coord_conj_head($root);
     $self->fix_advmod_obl($root);
-    $self->fix_como_si($root);
+#    $self->fix_como_si($root);
 }
 
 
@@ -235,12 +235,6 @@ sub fix_pos
         {
             $iset->clear('nountype');
             $iset->add('pos' => 'adj', 'prontype' => 'prn');
-        }
-        # "Porque" is adverb, not a subordinating conjunction.
-        if($iset->is_conjunction() && $form =~ m/^porque$/i)
-        {
-            $iset->set('pos', 'adv');
-            $iset->set('prontype', 'int');
         }
         # The "%" symbol should be tagged SYM. Now it is sometimes tagged NOUN.
         if($form eq '%')
