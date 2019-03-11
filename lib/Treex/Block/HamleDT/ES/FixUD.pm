@@ -794,7 +794,7 @@ sub fix_auxiliary_verb
             $node->iset()->clear('verbtype');
             my $nphead = $node->parent();
             $node->set_parent($nphead->parent());
-            if($nphead->deprel() =~ m/^(obl|advmod)(:|$)/)
+            if($nphead->deprel() =~ m/^(obl|advmod|obj|nmod|appos)(:|$)/)
             {
                 $node->set_deprel('advcl');
             }
