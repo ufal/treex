@@ -870,6 +870,32 @@ sub fix_auxiliary_verb
             $node->set_tag('VERB');
             $node->iset()->clear('verbtype');
         }
+        elsif($node->deprel() eq 'cop' &&
+              $node->lemma() =~ m/^(parecer)$/)
+        {
+            my $pnom = $node->parent();
+            my $parent = $pnom->parent();
+            my $deprel = $pnom->deprel();
+            $node->set_parent($parent);
+            $node->set_deprel($deprel);
+            $pnom->set_parent($node);
+            $pnom->set_deprel('xcomp');
+            # Subject, adjuncts and other auxiliaries go up.
+            # We also have to raise conjunctions and punctuation, otherwise we risk nonprojectivities.
+            # Noun modifiers remain with the nominal predicate.
+            my @children = $pnom->children();
+            foreach my $child (@children)
+            {
+                if($child->deprel() =~ m/^(([nc]subj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
+                   $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg')
+                {
+                    $child->set_parent($node);
+                }
+            }
+            # We also need to change the part-of-speech tag from AUX to VERB.
+            $node->set_tag('VERB');
+            $node->iset()->clear('verbtype');
+        }
     }
 }
 
