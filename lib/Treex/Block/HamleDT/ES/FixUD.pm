@@ -646,6 +646,8 @@ sub fix_specific_constructions
         }
         # Apposition should be left-to-right and should not compete with flat.
         $self->fix_right_to_left_apposition($node);
+        # AnCora reaches much broader for auxiliary verbs. Many of them should be main verbs in UD.
+        $self->fix_auxiliary_verb($node);
     }
 }
 
@@ -765,6 +767,42 @@ sub fix_coord_conj_head
                     }
                     $delimiter->set_parent($conjuncts[0]);
                 }
+            }
+        }
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# Fix auxiliary verb that should not be auxiliary.
+#------------------------------------------------------------------------------
+sub fix_auxiliary_verb
+{
+    my $self = shift;
+    my $node = shift;
+    if($node->tag() eq 'AUX')
+    {
+        # Hacer often occurs in temporal expressions like "hace unos días" ("some days ago").
+        # hace 16 meses
+        # hace algunos días
+        # hace un par de días ("par" is the head)
+        # hace poco (meaning "recently"; "poco" is adverb, the phrase is advmod instead of obl)
+        if($node->form() =~ m/^hace$/i && $node->parent()->tag() =~ m/^(NOUN|PRON|DET|NUM|ADV)$/)
+        {
+            $node->set_tag('VERB');
+            $node->iset()->clear('verbtype');
+            my $nphead = $node->parent();
+            $node->set_parent($nphead->parent());
+            $node->set_deprel('advcl');
+            $nphead->set_parent($node);
+            $nphead->set_deprel('obj');
+            # If there were children of the NP head to the left of "hace" (e.g., punctuation),
+            # they are now nonprojective. Reattach them to "hace".
+            my @leftchildren = grep {$_->ord() < $node->ord()} ($nphead->children());
+            foreach my $child (@leftchildren)
+            {
+                $child->set_parent($node);
             }
         }
     }
