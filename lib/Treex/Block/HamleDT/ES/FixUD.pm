@@ -613,6 +613,31 @@ sub fix_specific_constructions
         {
             $node->set_deprel('mark');
         }
+        # Apposition should be left-to-right and should not compete with flat.
+        $self->fix_right_to_left_apposition($node);
+    }
+}
+
+
+
+#------------------------------------------------------------------------------
+# The co-occurrence of a title with a personal name is sometimes treated as
+# apposition. It is wrong at least because apposition should not go right-to-
+# left and here it goes from the name to the preceding title. However, it
+# should probably be re-labeled as flat.
+# Example: doña Esperanza Aguirre
+#------------------------------------------------------------------------------
+sub fix_right_to_left_apposition
+{
+    my $self = shift;
+    my $node = shift;
+    if($node->deprel() eq 'appos' && $node->parent()->ord() > $node->ord())
+    {
+        my $right_member = $node->parent();
+        $node->set_parent($right_member->parent());
+        $node->set_deprel($right_member->deprel());
+        $right_member->set_parent($node);
+        $right_member->set_deprel('flat'); ###!!! or appos? How do we know?
     }
 }
 
