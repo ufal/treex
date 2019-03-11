@@ -1369,8 +1369,8 @@ sub features_vocabulary {
     $feats{'vocab^simpson_index'} = get_simpson_index();
     $feats{'vocab^george_udny_yule_index'} = get_george_udny_yule_index();
     $feats{'vocab^avg_length_of_words'} = ceil($number_of_characters / $number_of_words);
-    $feats{'vocab^lemma_byt_among_verbs_percent'} = ceil(100*$lemmas_counts{'být'}/($number_of_pos_verb+0.01));
-    $feats{'vocab^lemma_mit_among_verbs_percent'} = ceil(100*$lemmas_counts{'mít'}/($number_of_pos_verb+0.01));
+    $feats{'vocab^lemma_byt_among_verbs_percent'} = ceil(100*($lemmas_counts{'být'}//0)/($number_of_pos_verb+0.01));
+    $feats{'vocab^lemma_mit_among_verbs_percent'} = ceil(100*($lemmas_counts{'mít'}//0)/($number_of_pos_verb+0.01));
 
     # my $most_frequent_lemma = '';
     my $max_lemma_frequency = -1;
