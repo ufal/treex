@@ -794,7 +794,18 @@ sub fix_auxiliary_verb
             $node->iset()->clear('verbtype');
             my $nphead = $node->parent();
             $node->set_parent($nphead->parent());
-            $node->set_deprel('advcl');
+            if($nphead->deprel() =~ m/^(obl|advmod)(:|$)/)
+            {
+                $node->set_deprel('advcl');
+            }
+            elsif($nphead->deprel() =~ m/^(root|conj)(:|$)/)
+            {
+                $node->set_deprel($nphead->deprel());
+            }
+            else
+            {
+                log_warn("Unexpected deprel '".$nphead->deprel()."' of a 'hace unos días'-type phrase");
+            }
             $nphead->set_parent($node);
             $nphead->set_deprel('obj');
             # If there were children of the NP head to the left of "hace" (e.g., punctuation),
