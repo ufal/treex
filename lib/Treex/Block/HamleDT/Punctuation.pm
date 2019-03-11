@@ -252,6 +252,8 @@ sub find_candidate_left
     # Certain types of nodes are not good candidates because they normally do not take dependents.
     # We cannot skip them because that could cause nonprojectivity.
     # But we can climb to their ancestors, as long as these lie to the left of the original node.
+    # We also have to check for nonprojectivity because the left neighbor may
+    # be currently attached nonprojectively and if we attach to its parent we will be nonprojective too.
     while($candidate->is_punctuation() || $candidate->deprel() =~ m/^(aux|case|cc|cop|mark|punct)(:|$)/)
     {
         my $parent = $candidate->parent();
@@ -259,7 +261,7 @@ sub find_candidate_left
         {
             return $parent;
         }
-        elsif($parent->ord() < $node->ord())
+        elsif($parent->ord() < $node->ord() && !$self->would_be_nonprojective($parent, $node))
         {
             $candidate = $parent;
         }
@@ -296,7 +298,9 @@ sub find_candidate_right
     my $candidate = $nodes->[$in+1];
     # Certain types of nodes are not good candidates because they normally do not take dependents.
     # We cannot skip them because that could cause nonprojectivity.
-    # But we can climb to their ancestors, as long as these lie to the left of the original node.
+    # But we can climb to their ancestors, as long as these lie to the right of the original node.
+    # We also have to check for nonprojectivity because the right neighbor may
+    # be currently attached nonprojectively and if we attach to its parent we will be nonprojective too.
     while($candidate->is_punctuation() || $candidate->deprel() =~ m/^(aux|case|cc|cop|mark|punct)(:|$)/)
     {
         my $parent = $candidate->parent();
@@ -304,7 +308,7 @@ sub find_candidate_right
         {
             return $parent;
         }
-        elsif($parent->ord() > $node->ord())
+        elsif($parent->ord() > $node->ord() && !$self->would_be_nonprojective($parent, $node))
         {
             $candidate = $parent;
         }
@@ -344,6 +348,32 @@ sub climb
         $crumbs->[$candidate->ord()]++;
     }
     return $candidate;
+}
+
+
+
+#------------------------------------------------------------------------------
+# For a candidate attachment, tells whether it would be nonprojective. We want
+# to use the relatively complex method Node->is_nonprojective(), which means
+# that we must temporarily attach the node to the candidate parent. This will
+# throw an exception if there is a cycle. But then we should not be considering
+# the parent anyways.
+#------------------------------------------------------------------------------
+sub would_be_nonprojective
+{
+    my $self = shift;
+    my $parent = shift;
+    my $child = shift;
+    # Remember the current attachment of the child so we can later restore it.
+    my $current_parent = $child->parent();
+    # We could now check for potential cycles by calling $parent->is_descendant_of($child).
+    # But it is not clear what we should do if the answer is yes. And at present,
+    # this module does not try to attach punctuation nodes that are not leaves.
+    $child->set_parent($parent);
+    my $nprj = $child->is_nonprojective();
+    # Restore the current parent.
+    $child->set_parent($current_parent);
+    return $nprj;
 }
 
 
