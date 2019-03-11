@@ -816,6 +816,38 @@ sub fix_auxiliary_verb
                 $child->set_parent($node);
             }
         }
+        # Finite auxiliary modifying an infinitive.
+        # Examples: "suelen hablar" ("they are used to talk")
+        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_infinitive() && $node->lemma() =~ m/^(soler)$/)
+        {
+            # We assume that the "auxiliary" verb is attached to an infinitive
+            # which in fact should depend on the "auxiliary" (as xcomp).
+            # We further assume (although it is not guaranteed) that all other
+            # aux dependents of that infinitive are real auxiliaries.
+            # If there were other spuriious auxiliaries, it would matter
+            # in which order we reattach them.
+            my $infinitive = $node->parent();
+            my $parent = $infinitive->parent();
+            my $deprel = $infinitive->deprel();
+            $node->set_parent($parent);
+            $node->set_deprel($deprel);
+            $infinitive->set_parent($node);
+            $infinitive->set_deprel('xcomp');
+            # Subject, adjuncts and other auxiliaries go up.
+            # Non-subject arguments remain with the infinitive.
+            my @children = $infinitive->children();
+            foreach my $child (@children)
+            {
+                if($child->deprel() =~ m/^(([nc]subj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
+                   $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg')
+                {
+                    $child->set_parent($node);
+                }
+            }
+            # We also need to change the part-of-speech tag from AUX to VERB.
+            $node->set_tag('VERB');
+            $node->iset()->clear('verbtype');
+        }
     }
 }
 
