@@ -287,7 +287,7 @@ sub build_weka_featlist {
       ["readability^smog_index",                  "NUMERIC"],
       ["readability^coleman_liau_index",          "NUMERIC"],
       ["readability^automated_readability_index", "NUMERIC"],
-      
+
     ];
     return [ grep {$self->filter_namespace($_->[0])} @$weka_feats_types ];
 }
@@ -460,11 +460,11 @@ my %lemmas_counts;
 
 my %t_lemmas_counts;
 
-my %functors_position_1_counts; 
-my %functors_position_2_counts; 
+my %functors_position_1_counts;
+my %functors_position_2_counts;
 
-my %pos_position_1_counts; 
-my %pos_position_2_counts; 
+my %pos_position_1_counts;
+my %pos_position_2_counts;
 
 my %t_lemmas_counts_corrected;
 my $t_lemmas_per_100_t_lemmas;
@@ -679,7 +679,7 @@ sub collect_info_discourse {
 
     %pos_position_1_counts = ();
     %pos_position_2_counts = ();
-    
+
     %lemmas_counts = ();
 
     $count_PREDless_sentences = 0;
@@ -773,42 +773,42 @@ sub collect_info_discourse {
           $number_of_characters += length($form);
         }
 
-        my $syllables = count_syllables($form); 
-        $number_of_syllables += $syllables; 
-        if ($syllables >= 3) { 
-          $number_of_polysyllables++; 
-        } 
+        my $syllables = count_syllables($form);
+        $number_of_syllables += $syllables;
+        if ($syllables >= 3) {
+          $number_of_polysyllables++;
+        }
 
-        for my $i (0..length($form)-1) { 
-          my $char = substr($form, $i, 1); 
-          if ($char =~ /[áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]/) { 
-            $number_of_accented_characters++; 
-          } 
-        } 
+        for my $i (0..length($form)-1) {
+          my $char = substr($form, $i, 1);
+          if ($char =~ /[áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]/) {
+            $number_of_accented_characters++;
+          }
+        }
 
-        my $ord = $anode->ord; 
-        if ($ord eq '1') { 
-          my $first_character = substr($form, 0, 1); 
-          if ($first_character =~ /[A-Z]/) { 
-            $number_of_capitals_after_stops++; # number of capital letters at sentence beginnings 
-          } 
-          my $pos = substr($anode->tag // 'X', 0, 1); 
-          $pos_position_1_counts{$pos}++; 
-        } 
-        elsif ($ord eq '2') { 
-          my $pos = substr($anode->tag // 'X', 0, 1); 
-          $pos_position_2_counts{$pos}++; 
-        } 
-        
-        if (lc($form) =~ /(au|ou|eu)/) { 
-          $number_of_diphthongs++; 
-        } 
+        my $ord = $anode->ord;
+        if ($ord eq '1') {
+          my $first_character = substr($form, 0, 1);
+          if ($first_character =~ /[A-Z]/) {
+            $number_of_capitals_after_stops++; # number of capital letters at sentence beginnings
+          }
+          my $pos = substr($anode->tag // 'X', 0, 1);
+          $pos_position_1_counts{$pos}++;
+        }
+        elsif ($ord eq '2') {
+          my $pos = substr($anode->tag // 'X', 0, 1);
+          $pos_position_2_counts{$pos}++;
+        }
 
-        if (lc($form) =~ /^(li|jsem|jsi|jsme|jste|bych|bys|by|bychom|byste|si|se|mi|ti|mu|mě|tě|ho|tu|to)$/) { 
-          $number_of_unstressed_enclitics++; 
-        } 
-        
-        
+        if (lc($form) =~ /(au|ou|eu)/) {
+          $number_of_diphthongs++;
+        }
+
+        if (lc($form) =~ /^(li|jsem|jsi|jsme|jste|bych|bys|by|bychom|byste|si|se|mi|ti|mu|mě|tě|ho|tu|to)$/) {
+          $number_of_unstressed_enclitics++;
+        }
+
+
         my $lemma = $anode->lemma;
         if ($lemma) {
           $lemma =~ s/^(.[^-_^~]*)[-_^~].+$/$1/;
@@ -1369,8 +1369,8 @@ sub features_vocabulary {
     $feats{'vocab^simpson_index'} = get_simpson_index();
     $feats{'vocab^george_udny_yule_index'} = get_george_udny_yule_index();
     $feats{'vocab^avg_length_of_words'} = ceil($number_of_characters / $number_of_words);
-    $feats{'vocab^lemma_byt_among_verbs_percent'} = ceil(100*$lemmas_counts{'být'}/($number_of_pos_verb+0.01));
-    $feats{'vocab^lemma_mit_among_verbs_percent'} = ceil(100*$lemmas_counts{'mít'}/($number_of_pos_verb+0.01));
+    $feats{'vocab^lemma_byt_among_verbs_percent'} = ceil(100*($lemmas_counts{'být'}//0)/($number_of_pos_verb+0.01));
+    $feats{'vocab^lemma_mit_among_verbs_percent'} = ceil(100*($lemmas_counts{'mít'}//0)/($number_of_pos_verb+0.01));
 
     # my $most_frequent_lemma = '';
     my $max_lemma_frequency = -1;
@@ -1412,22 +1412,22 @@ sub features_syntax {
 
     # ten most frequent functors at the deepord="1" position
     foreach my $functor (qw(ACT PAT PREC DENOM RSTR TWHEN LOC PRED APP RHEM)) {
-      $feats{'syntax^deepord_1_' . $functor . '_percent'} = ceil(100*$functors_position_1_counts{$functor}/($number_of_sentences + 0.01));
+      $feats{'syntax^deepord_1_' . $functor . '_percent'} = ceil(100*($functors_position_1_counts{$functor}//0)/($number_of_sentences + 0.01));
     }
 
     # ten most frequent functors at the deepord="2" position
     foreach my $functor (qw(RSTR ACT PRED PAT APP ADDR TWHEN RHEM LOC PAR)) {
-      $feats{'syntax^deepord_2_' . $functor . '_percent'} = ceil(100*$functors_position_2_counts{$functor}/($number_of_sentences + 0.01));
+      $feats{'syntax^deepord_2_' . $functor . '_percent'} = ceil(100*($functors_position_2_counts{$functor}//0)/($number_of_sentences + 0.01));
     }
 
     # ten POS values at the ord="1" position
     foreach my $pos (qw(N A P C V D R J T I)) {
-      $feats{'syntax^ord_1_POS_' . $pos . '_percent'} = ceil(100*$pos_position_1_counts{$pos}/($number_of_sentences + 0.01));
+      $feats{'syntax^ord_1_POS_' . $pos . '_percent'} = ceil(100*($pos_position_1_counts{$pos}//0)/($number_of_sentences + 0.01));
     }
 
     # ten POS values at the ord="2" position
     foreach my $pos (qw(N A P C V D R J T I)) {
-      $feats{'syntax^ord_2_POS_' . $pos . '_percent'} = ceil(100*$pos_position_2_counts{$pos}/($number_of_sentences + 0.01));
+      $feats{'syntax^ord_2_POS_' . $pos . '_percent'} = ceil(100*($pos_position_2_counts{$pos}//0)/($number_of_sentences + 0.01));
     }
 
     return \%feats;
