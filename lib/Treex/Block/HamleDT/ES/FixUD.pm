@@ -848,6 +848,28 @@ sub fix_auxiliary_verb
             $node->set_tag('VERB');
             $node->iset()->clear('verbtype');
         }
+        # Prepositions with infinitives are analyzed in a strange way.
+        # Sometimes the infinitive is a pseudo-auxiliary.
+        # Examples: "para evitar que el Congresillo designe..." ("to prevent the Congress from designating...")
+        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->is_infinitive() && $node->lemma() =~ m/^(evitar)$/ &&
+              defined($node->get_left_neighbor()) && $node->get_left_neighbor()->form() =~ m/^para$/i &&
+              defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^que$/i)
+        {
+            my $complement = $node->parent();
+            $node->set_parent($complement->parent());
+            $node->set_deprel($complement->deprel());
+            # Left siblings of the infinitive should depend on the infinitive. Probably it is just the preposition.
+            my @left = grep {$_->ord() < $node->ord()} ($complement->children());
+            foreach my $l (@left)
+            {
+                $l->set_parent($node);
+            }
+            $complement->set_parent($node);
+            $complement->set_deprel('ccomp');
+            # We also need to change the part-of-speech tag from AUX to VERB.
+            $node->set_tag('VERB');
+            $node->iset()->clear('verbtype');
+        }
     }
 }
 
