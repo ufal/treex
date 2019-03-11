@@ -77,14 +77,14 @@ sub process_atree
             if(defined($winner))
             {
                 # Debugging: save the decision in wild attributes.
-                $node->wild()->{debug_punctuation} = $node->parent()->ord().':'.$node->parent()->form().' --> '.$winner->ord().':'.$winner->form();
+                #$node->wild()->{debug_punctuation} = $node->parent()->ord().':'.$node->parent()->form().' --> '.$winner->ord().':'.$winner->form();
                 $node->set_parent($winner);
                 $node->set_deprel('punct');
             }
             else
             {
                 # Debugging: save the decision in wild attributes.
-                $node->wild()->{debug_punctuation} = $node->parent()->ord().':'.$node->parent()->form().' --> nothing better found';
+                #$node->wild()->{debug_punctuation} = $node->parent()->ord().':'.$node->parent()->form().' --> nothing better found';
                 log_warn("Failed to find better attachment for punctuation node ".$node->form());
             }
         }

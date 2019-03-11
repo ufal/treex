@@ -564,9 +564,40 @@ sub fix_specific_constructions
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
+        # Relative prepositional adverbial phrase "ante lo cual" ("before which")
+        # has the preposition "ante" as the head, which is wrong.
+        if($node->is_adposition() && $node->deprel() =~ m/^advmod(:|$)/)
+        {
+            my @children = $node->get_children({'ordered' => 1});
+            # If there is 'fixed' or 'goeswith' among the children, the 'advmod'
+            # relation may be correct (the whole expression may function as an
+            # adverb).
+            my @okchildren = grep {$_->deprel() =~ m/^(fixed|goeswith)(:|$)/} (@children);
+            unless(@okchildren)
+            {
+                # We expect one normal child, plus possibly some punctuation children.
+                my @nonpunctchildren = grep {$_->deprel() !~ m/^punct(:|$)/} (@children);
+                if(scalar(@nonpunctchildren)==1)
+                {
+                    my $newhead = $nonpunctchildren[0];
+                    $newhead->set_parent($node->parent());
+                    $newhead->set_deprel('obl');
+                    # Reattach the punctuation children, if any, to the new head.
+                    foreach my $child (@children)
+                    {
+                        unless($child == $newhead)
+                        {
+                            $child->set_parent($newhead);
+                        }
+                    }
+                    $node->set_parent($newhead);
+                    $node->set_deprel('case');
+                }
+            }
+        }
         # Adverbial clause starting with "como si" is sometimes headed by "como" while
         # "si" is the 'mark' of the verb. Both "como" and "si" should be markers.
-        if($node->form() =~ m/^como$/i)
+        elsif($node->form() =~ m/^como$/i)
         {
             my @children = $node->get_children({'ordered' => 1});
             my @verbs = grep {$_->is_verb()} (@children);
