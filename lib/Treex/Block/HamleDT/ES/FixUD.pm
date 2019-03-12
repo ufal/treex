@@ -851,7 +851,12 @@ sub fix_auxiliary_verb
         # Causative auxiliary modifying an infinitive.
         # Examples: "volverla a calentar" ("return her to warming")
         #   "hacerle cometer faltas" ("make him commit faults")
-        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_infinitive() && $node->lemma() =~ m/^(hacer|volver)$/)
+        # Similarly-looking pattern: "quedarse paralizados" ("stay paralyzed")
+        # Here we have a participle instead of infinitive, and the auxiliary has
+        # an "object" only because of the reflexive "se".
+        elsif($node->deprel() =~ m/^aux(:|$)/ &&
+              ($node->parent()->is_infinitive() || $node->parent()->is_participle()) &&
+              $node->lemma() =~ m/^(hacer|quedar|volver)$/)
         {
             # We assume that the "auxiliary" verb is attached to an infinitive
             # which in fact should depend on the "auxiliary" (as xcomp).
@@ -876,7 +881,7 @@ sub fix_auxiliary_verb
             my @children = $infinitive->children();
             foreach my $child (@children)
             {
-                if($child != $preposition &&
+                if((!defined($preposition) || $child != $preposition) &&
                    ($child->deprel() =~ m/^(([nc]subj|obj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
                     $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg'))
                 {
