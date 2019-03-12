@@ -564,9 +564,25 @@ sub fix_specific_constructions
     my @nodes = $root->get_descendants();
     foreach my $node (@nodes)
     {
+        # Determiners should not be attached as 'case'.
+        if($node->is_determiner() && $node->deprel() =~ m/^case(:|$)/)
+        {
+            $node->set_deprel('det');
+        }
+        # Numerals should not be attached as 'case'.
+        elsif($node->is_cardinal() && $node->deprel() =~ m/^case(:|$)/)
+        {
+            $node->set_deprel('nummod');
+        }
+        elsif($node->form() =~ m/^sí$/i && $node->deprel() =~ m/^advmod(:|$)/)
+        {
+            $node->set_tag('INTJ');
+            $node->iset()->set('pos', 'int');
+            $node->set_deprel('advcl');
+        }
         # Relative prepositional adverbial phrase "ante lo cual" ("before which")
         # has the preposition "ante" as the head, which is wrong.
-        if($node->is_adposition() && $node->deprel() =~ m/^advmod(:|$)/)
+        elsif($node->is_adposition() && $node->deprel() =~ m/^advmod(:|$)/)
         {
             my @children = $node->get_children({'ordered' => 1});
             # If there is 'fixed' or 'goeswith' among the children, the 'advmod'
@@ -788,7 +804,8 @@ sub fix_auxiliary_verb
         # hace algunos días
         # hace un par de días ("par" is the head)
         # hace poco (meaning "recently"; "poco" is adverb, the phrase is advmod instead of obl)
-        if($node->form() =~ m/^hace$/i && $node->parent()->tag() =~ m/^(NOUN|PRON|DET|NUM|ADV)$/)
+        # desde hacía tiempo
+        if($node->form() =~ m/^(hace|hacía)$/i && $node->parent()->tag() =~ m/^(NOUN|PRON|DET|NUM|ADV)$/)
         {
             $node->set_tag('VERB');
             $node->iset()->clear('verbtype');
@@ -818,7 +835,7 @@ sub fix_auxiliary_verb
         }
         # Auxiliary modifying an infinitive.
         # Examples: "suelen hablar" ("they are used to talk")
-        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_infinitive() && $node->lemma() =~ m/^(soler)$/)
+        elsif($node->lemma() =~ m/^(lograr|soler)$/ && $node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_infinitive())
         {
             # We assume that the "auxiliary" verb is attached to an infinitive
             # which in fact should depend on the "auxiliary" (as xcomp).
@@ -856,7 +873,7 @@ sub fix_auxiliary_verb
         # an "object" only because of the reflexive "se".
         elsif($node->deprel() =~ m/^aux(:|$)/ &&
               ($node->parent()->is_infinitive() || $node->parent()->is_participle()) &&
-              $node->lemma() =~ m/^(hacer|quedar|volver)$/)
+              $node->lemma() =~ m/^(hacer|preguntar|quedar|sufrir|volver)$/)
         {
             # We assume that the "auxiliary" verb is attached to an infinitive
             # which in fact should depend on the "auxiliary" (as xcomp).
@@ -901,7 +918,11 @@ sub fix_auxiliary_verb
         }
         # Auxiliary modifying a gerund.
         # Examples: "siguen teniendo" ("they keep having")
-        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_gerund() && $node->lemma() =~ m/^(seguir)$/)
+        # The gerund can also be our right neighbor if it is a copula.
+        # Examples: "sigue siendo uno de los hombres" ("stays being one of those men")
+        elsif($node->lemma() =~ m/^(seguir)$/ && $node->deprel() =~ m/^aux(:|$)/ &&
+              ($node->parent()->is_gerund() ||
+               defined($node->get_right_neighbor()) && $node->get_right_neighbor()->deprel() =~ m/^cop(:|$)/ && $node->get_right_neighbor()->is_gerund()))
         {
             # We assume that the "auxiliary" verb is attached to a gerund
             # which in fact should depend on the "auxiliary" (as xcomp).
@@ -933,7 +954,9 @@ sub fix_auxiliary_verb
         }
         # Prepositions with infinitives are analyzed in a strange way.
         # Sometimes the infinitive is a content verb and the finite form is a pseudo-auxiliary.
-        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_infinitive() && $node->lemma() =~ m/^(acabar|comenzar|llegar|tender|tratar)$/ &&
+        elsif($node->lemma() =~ m/^(acabar|colar|comenzar|continuar|dejar|llegar|pasar|tender|tratar)$/ &&
+              $node->deprel() =~ m/^aux(:|$)/ &&
+              ($node->parent()->is_infinitive() || $node->parent()->is_gerund() || $node->parent()->is_participle()) &&
               defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^(a|de)$/i)
         {
             my $infinitive = $node->parent();
@@ -962,8 +985,9 @@ sub fix_auxiliary_verb
         # Prepositions with infinitives are analyzed in a strange way.
         # Sometimes the infinitive is a pseudo-auxiliary.
         # Examples: "para evitar que el Congresillo designe..." ("to prevent the Congress from designating...")
-        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->is_infinitive() && $node->lemma() =~ m/^(evitar)$/ &&
-              defined($node->get_left_neighbor()) && $node->get_left_neighbor()->form() =~ m/^para$/i &&
+        # "tras indicar que ... sitúa" ("after indicating that ... situates")
+        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->is_infinitive() && $node->lemma() =~ m/^(evitar|impedir|indicar)$/ &&
+              defined($node->get_left_neighbor()) && $node->get_left_neighbor()->form() =~ m/^(para|tras)$/i &&
               defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^que$/i)
         {
             my $complement = $node->parent();
@@ -984,7 +1008,7 @@ sub fix_auxiliary_verb
         # Some pseudo-auxiliaries take finite clauses as complements.
         # Note: this was the case also in the previous block but that was a special case where the auxiliary was in a "para infinitive" form.
         # Examples: "evitar que se repitan los errores" ("prevent that the errors are repeated")
-        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->lemma() =~ m/^(evitar)$/ &&
+        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->lemma() =~ m/^(evitar|impedir|indicar)$/ &&
               defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^que$/i)
         {
             my $complement = $node->parent();
@@ -1003,8 +1027,9 @@ sub fix_auxiliary_verb
             $node->iset()->clear('verbtype');
         }
         # Copulas other than "ser" and "estar" should not be copulas.
-        elsif($node->deprel() eq 'cop' &&
-              $node->lemma() =~ m/^(parecer)$/)
+        elsif($node->lemma() =~ m/^(dejar|encontrar|parecer)$/ &&
+              ($node->deprel() eq 'cop' ||
+               $node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_adjective()))
         {
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
@@ -1019,7 +1044,7 @@ sub fix_auxiliary_verb
             my @children = $pnom->children();
             foreach my $child (@children)
             {
-                if($child->deprel() =~ m/^(([nc]subj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
+                if($child->deprel() =~ m/^(([nc]subj|obj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
                    $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg')
                 {
                     $child->set_parent($node);
