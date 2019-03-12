@@ -850,8 +850,8 @@ sub fix_auxiliary_verb
         }
         # Prepositions with infinitives are analyzed in a strange way.
         # Sometimes the infinitive is a content verb and the finite form is a pseudo-auxiliary.
-        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_infinitive() && $node->lemma() =~ m/^(acabar)$/ &&
-              defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^de$/i)
+        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_infinitive() && $node->lemma() =~ m/^(acabar|comenzar|llegar)$/ &&
+              defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^(a|de)$/i)
         {
             my $infinitive = $node->parent();
             my $preposition = $node->get_right_neighbor();
