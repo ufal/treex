@@ -850,7 +850,8 @@ sub fix_auxiliary_verb
         }
         # Causative auxiliary modifying an infinitive.
         # Examples: "volverla a calentar" ("return her to warming")
-        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_infinitive() && $node->lemma() =~ m/^(volver)$/)
+        #   "hacerle cometer faltas" ("make him commit faults")
+        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_infinitive() && $node->lemma() =~ m/^(hacer|volver)$/)
         {
             # We assume that the "auxiliary" verb is attached to an infinitive
             # which in fact should depend on the "auxiliary" (as xcomp).
