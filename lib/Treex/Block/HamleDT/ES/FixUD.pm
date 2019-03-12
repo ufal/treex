@@ -816,7 +816,7 @@ sub fix_auxiliary_verb
                 $child->set_parent($node);
             }
         }
-        # Finite auxiliary modifying an infinitive.
+        # Auxiliary modifying an infinitive.
         # Examples: "suelen hablar" ("they are used to talk")
         elsif($node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_infinitive() && $node->lemma() =~ m/^(soler)$/)
         {
@@ -848,7 +848,40 @@ sub fix_auxiliary_verb
             $node->set_tag('VERB');
             $node->iset()->clear('verbtype');
         }
-        # Finite auxiliary modifying a gerund.
+        # Causative auxiliary modifying an infinitive.
+        # Examples: "volverla a calentar" ("return her to warming")
+        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_infinitive() && $node->lemma() =~ m/^(volver)$/)
+        {
+            # We assume that the "auxiliary" verb is attached to an infinitive
+            # which in fact should depend on the "auxiliary" (as xcomp).
+            # We further assume (although it is not guaranteed) that all other
+            # aux dependents of that infinitive are real auxiliaries.
+            # If there were other spurious auxiliaries, it would matter
+            # in which order we reattach them.
+            my $infinitive = $node->parent();
+            my $parent = $infinitive->parent();
+            my $deprel = $infinitive->deprel();
+            $node->set_parent($parent);
+            $node->set_deprel($deprel);
+            $infinitive->set_parent($node);
+            $infinitive->set_deprel('xcomp');
+            # Subject, adjuncts and other auxiliaries go up.
+            # Non-subject arguments remain with the infinitive.
+            # Unlike in the normal auxiliary-infinitive pattern, the direct object goes also up because it is the causee.
+            my @children = $infinitive->children();
+            foreach my $child (@children)
+            {
+                if($child->deprel() =~ m/^(([nc]subj|obj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
+                   $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg')
+                {
+                    $child->set_parent($node);
+                }
+            }
+            # We also need to change the part-of-speech tag from AUX to VERB.
+            $node->set_tag('VERB');
+            $node->iset()->clear('verbtype');
+        }
+        # Auxiliary modifying a gerund.
         # Examples: "siguen teniendo" ("they keep having")
         elsif($node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_gerund() && $node->lemma() =~ m/^(seguir)$/)
         {
