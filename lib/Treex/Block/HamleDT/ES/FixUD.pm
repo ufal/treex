@@ -824,7 +824,7 @@ sub fix_auxiliary_verb
             # which in fact should depend on the "auxiliary" (as xcomp).
             # We further assume (although it is not guaranteed) that all other
             # aux dependents of that infinitive are real auxiliaries.
-            # If there were other spuriious auxiliaries, it would matter
+            # If there were other spurious auxiliaries, it would matter
             # in which order we reattach them.
             my $infinitive = $node->parent();
             my $parent = $infinitive->parent();
@@ -836,6 +836,38 @@ sub fix_auxiliary_verb
             # Subject, adjuncts and other auxiliaries go up.
             # Non-subject arguments remain with the infinitive.
             my @children = $infinitive->children();
+            foreach my $child (@children)
+            {
+                if($child->deprel() =~ m/^(([nc]subj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
+                   $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg')
+                {
+                    $child->set_parent($node);
+                }
+            }
+            # We also need to change the part-of-speech tag from AUX to VERB.
+            $node->set_tag('VERB');
+            $node->iset()->clear('verbtype');
+        }
+        # Finite auxiliary modifying a gerund.
+        # Examples: "siguen teniendo" ("they keep having")
+        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_gerund() && $node->lemma() =~ m/^(seguir)$/)
+        {
+            # We assume that the "auxiliary" verb is attached to a gerund
+            # which in fact should depend on the "auxiliary" (as xcomp).
+            # We further assume (although it is not guaranteed) that all other
+            # aux dependents of that gerund are real auxiliaries.
+            # If there were other spurious auxiliaries, it would matter
+            # in which order we reattach them.
+            my $gerund = $node->parent();
+            my $parent = $gerund->parent();
+            my $deprel = $gerund->deprel();
+            $node->set_parent($parent);
+            $node->set_deprel($deprel);
+            $gerund->set_parent($node);
+            $gerund->set_deprel('xcomp');
+            # Subject, adjuncts and other auxiliaries go up.
+            # Non-subject arguments remain with the infinitive.
+            my @children = $gerund->children();
             foreach my $child (@children)
             {
                 if($child->deprel() =~ m/^(([nc]subj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
