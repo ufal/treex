@@ -1002,6 +1002,7 @@ sub fix_auxiliary_verb
             $node->set_tag('VERB');
             $node->iset()->clear('verbtype');
         }
+        # Copulas other than "ser" and "estar" should not be copulas.
         elsif($node->deprel() eq 'cop' &&
               $node->lemma() =~ m/^(parecer)$/)
         {
@@ -1024,6 +1025,17 @@ sub fix_auxiliary_verb
                     $child->set_parent($node);
                 }
             }
+            # We also need to change the part-of-speech tag from AUX to VERB.
+            $node->set_tag('VERB');
+            $node->iset()->clear('verbtype');
+        }
+        # "como diciendo" ("like saying")
+        elsif($node->form() =~ m/^diciendo$/i && defined($node->get_left_neighbor()) && $node->get_left_neighbor()->form() =~ m/^como$/i)
+        {
+            my $como = $node->get_left_neighbor();
+            $como->set_parent($node);
+            $como->set_deprel('mark');
+            $node->set_deprel('parataxis');
             # We also need to change the part-of-speech tag from AUX to VERB.
             $node->set_tag('VERB');
             $node->iset()->clear('verbtype');
