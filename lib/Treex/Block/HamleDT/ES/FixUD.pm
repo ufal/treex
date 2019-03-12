@@ -850,7 +850,7 @@ sub fix_auxiliary_verb
         }
         # Prepositions with infinitives are analyzed in a strange way.
         # Sometimes the infinitive is a content verb and the finite form is a pseudo-auxiliary.
-        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_infinitive() && $node->lemma() =~ m/^(acabar|comenzar|llegar)$/ &&
+        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_infinitive() && $node->lemma() =~ m/^(acabar|comenzar|llegar|tender|tratar)$/ &&
               defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^(a|de)$/i)
         {
             my $infinitive = $node->parent();
@@ -876,6 +876,7 @@ sub fix_auxiliary_verb
             $node->set_tag('VERB');
             $node->iset()->clear('verbtype');
         }
+        # Prepositions with infinitives are analyzed in a strange way.
         # Sometimes the infinitive is a pseudo-auxiliary.
         # Examples: "para evitar que el Congresillo designe..." ("to prevent the Congress from designating...")
         elsif($node->deprel() =~ m/^aux(:|$)/ && $node->is_infinitive() && $node->lemma() =~ m/^(evitar)$/ &&
@@ -886,6 +887,27 @@ sub fix_auxiliary_verb
             $node->set_parent($complement->parent());
             $node->set_deprel($complement->deprel());
             # Left siblings of the infinitive should depend on the infinitive. Probably it is just the preposition.
+            my @left = grep {$_->ord() < $node->ord()} ($complement->children());
+            foreach my $l (@left)
+            {
+                $l->set_parent($node);
+            }
+            $complement->set_parent($node);
+            $complement->set_deprel('ccomp');
+            # We also need to change the part-of-speech tag from AUX to VERB.
+            $node->set_tag('VERB');
+            $node->iset()->clear('verbtype');
+        }
+        # Some pseudo-auxiliaries take finite clauses as complements.
+        # Note: this was the case also in the previous block but that was a special case where the auxiliary was in a "para infinitive" form.
+        # Examples: "evitar que se repitan los errores" ("prevent that the errors are repeated")
+        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->lemma() =~ m/^(evitar)$/ &&
+              defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^que$/i)
+        {
+            my $complement = $node->parent();
+            $node->set_parent($complement->parent());
+            $node->set_deprel($complement->deprel());
+            # Left siblings of the auxiliary should depend on it.
             my @left = grep {$_->ord() < $node->ord()} ($complement->children());
             foreach my $l (@left)
             {
