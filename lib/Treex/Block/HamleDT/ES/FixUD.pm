@@ -854,6 +854,7 @@ sub fix_auxiliary_verb
               defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^de$/i)
         {
             my $infinitive = $node->parent();
+            my $preposition = $node->get_right_neighbor();
             $node->set_parent($infinitive->parent());
             $node->set_deprel($infinitive->deprel());
             $infinitive->set_parent($node);
@@ -863,8 +864,10 @@ sub fix_auxiliary_verb
             my @children = $infinitive->children();
             foreach my $child (@children)
             {
-                if($child->deprel() =~ m/^(([nc]subj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
-                   $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg')
+                # The preposition between the auxiliary and the infinitive should stay dependent on the infinitive.
+                if($child != $preposition &&
+                   ($child->deprel() =~ m/^(([nc]subj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
+                    $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg'))
                 {
                     $child->set_parent($node);
                 }
