@@ -870,6 +870,13 @@ sub fix_auxiliary_verb
             $preposition = $prepositions[0] if(scalar(@prepositions) >= 1);
             my $parent = $infinitive->parent();
             my $deprel = $infinitive->deprel();
+            # If the content verb ($infinitive) is a participle instead of an infinitive,
+            # it may have been attached as a non-clause; however, now we have definitely
+            # a clause.
+            $deprel =~ s/^nsubj/csubj/;
+            $deprel =~ s/^i?obj/ccomp/;
+            $deprel =~ s/^(advmod|obl)/advcl/;
+            $deprel =~ s/^(nmod|amod|appos)/acl/;
             $node->set_parent($parent);
             $node->set_deprel($deprel);
             $infinitive->set_parent($node);
