@@ -859,6 +859,9 @@ sub fix_auxiliary_verb
             # If there were other spurious auxiliaries, it would matter
             # in which order we reattach them.
             my $infinitive = $node->parent();
+            my $preposition;
+            my @prepositions = grep {$_->form() =~ m/^a$/i && $_->ord() > $node->ord() && $_->ord() < $infinitive->ord()} ($infinitive->get_children({'ordered' => 1}));
+            $preposition = $prepositions[0] if(scalar(@prepositions) >= 1);
             my $parent = $infinitive->parent();
             my $deprel = $infinitive->deprel();
             $node->set_parent($parent);
@@ -868,11 +871,13 @@ sub fix_auxiliary_verb
             # Subject, adjuncts and other auxiliaries go up.
             # Non-subject arguments remain with the infinitive.
             # Unlike in the normal auxiliary-infinitive pattern, the direct object goes also up because it is the causee.
+            # On the other hand, the preposition "a" before the infinitive belongs to the infinitive.
             my @children = $infinitive->children();
             foreach my $child (@children)
             {
-                if($child->deprel() =~ m/^(([nc]subj|obj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
-                   $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg')
+                if($child != $preposition &&
+                   ($child->deprel() =~ m/^(([nc]subj|obj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
+                    $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg'))
                 {
                     $child->set_parent($node);
                 }
