@@ -849,6 +849,30 @@ sub fix_auxiliary_verb
             $node->iset()->clear('verbtype');
         }
         # Prepositions with infinitives are analyzed in a strange way.
+        # Sometimes the infinitive is a content verb and the finite form is a pseudo-auxiliary.
+        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_infinitive() && $node->lemma() =~ m/^(acabar)$/ &&
+              defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^de$/i)
+        {
+            my $infinitive = $node->parent();
+            $node->set_parent($infinitive->parent());
+            $node->set_deprel($infinitive->deprel());
+            $infinitive->set_parent($node);
+            $infinitive->set_deprel('xcomp');
+            # Subject, adjuncts and other auxiliaries go up.
+            # Non-subject arguments remain with the infinitive.
+            my @children = $infinitive->children();
+            foreach my $child (@children)
+            {
+                if($child->deprel() =~ m/^(([nc]subj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
+                   $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg')
+                {
+                    $child->set_parent($node);
+                }
+            }
+            # We also need to change the part-of-speech tag from AUX to VERB.
+            $node->set_tag('VERB');
+            $node->iset()->clear('verbtype');
+        }
         # Sometimes the infinitive is a pseudo-auxiliary.
         # Examples: "para evitar que el Congresillo designe..." ("to prevent the Congress from designating...")
         elsif($node->deprel() =~ m/^aux(:|$)/ && $node->is_infinitive() && $node->lemma() =~ m/^(evitar)$/ &&
