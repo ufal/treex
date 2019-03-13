@@ -833,56 +833,35 @@ sub fix_auxiliary_verb
                 $child->set_parent($node);
             }
         }
-        # Auxiliary modifying an infinitive.
-        # Examples: "suelen hablar" ("they are used to talk")
-        elsif($node->lemma() =~ m/^(lograr|soler)$/ && $node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_infinitive())
-        {
-            # We assume that the "auxiliary" verb is attached to an infinitive
-            # which in fact should depend on the "auxiliary" (as xcomp).
-            # We further assume (although it is not guaranteed) that all other
-            # aux dependents of that infinitive are real auxiliaries.
-            # If there were other spurious auxiliaries, it would matter
-            # in which order we reattach them.
-            my $infinitive = $node->parent();
-            my $parent = $infinitive->parent();
-            my $deprel = $infinitive->deprel();
-            $node->set_parent($parent);
-            $node->set_deprel($deprel);
-            $infinitive->set_parent($node);
-            $infinitive->set_deprel('xcomp');
-            # Subject, adjuncts and other auxiliaries go up.
-            # Non-subject arguments remain with the infinitive.
-            my @children = $infinitive->children();
-            foreach my $child (@children)
-            {
-                if($child->deprel() =~ m/^(([nc]subj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
-                   $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg')
-                {
-                    $child->set_parent($node);
-                }
-            }
-            # We also need to change the part-of-speech tag from AUX to VERB.
-            $node->set_tag('VERB');
-            $node->iset()->clear('verbtype');
-        }
-        # Causative auxiliary modifying an infinitive.
-        # Examples: "volverla a calentar" ("return her to warming")
+        # Any verb that takes an infinitive, gerund or participle of another verb as complement
+        # can be treated as auxiliary in the original treebank. We call them pseudo-auxiliaries
+        # and promote them back to the head position.
+        # We further assume (although it is not guaranteed) that all other
+        # aux dependents of that infinitive are real auxiliaries.
+        # If there were other spurious auxiliaries, it would matter
+        # in which order we reattach them.
+        # Examples:
+        #   "suelen hablar" ("they are used to talk")
+        #   "volverla a calentar" ("return her to warming") (causative auxiliary)
         #   "hacerle cometer faltas" ("make him commit faults")
         #   "no se deje asustar" ("does not let himself to get scared")
         # Similarly-looking pattern: "quedarse paralizados" ("stay paralyzed")
         # Here we have a participle instead of infinitive, and the auxiliary has
         # an "object" only because of the reflexive "se".
-        elsif($node->deprel() =~ m/^aux(:|$)/ &&
-              ($node->parent()->is_infinitive() || $node->parent()->is_participle()) &&
-              $node->lemma() =~ m/^(dejar|hacer|preguntar|quedar|sufrir|volver)$/)
+        # Examples with the gerund:
+        #   "siguen teniendo" ("they keep having")
+        #   "continuó presionando" ("he continued pressing")
+        # The gerund can also be our right neighbor if it is a copula.
+        # Examples:
+        #   "sigue siendo uno de los hombres" ("stays being one of those men")
+        elsif($node->lemma() =~ m/^(continuar|dejar|hacer|lograr|preguntar|quedar|seguir|soler|sufrir|volver)$/ &&
+              $node->deprel() =~ m/^aux(:|$)/ &&
+              ($node->parent()->is_infinitive() || $node->parent()->is_participle() || $node->parent()->is_gerund() ||
+               defined($node->get_right_neighbor()) && $node->get_right_neighbor()->deprel() =~ m/^cop(:|$)/ &&
+               ($node->get_right_neighbor()->is_infinitive() || $node->get_right_neighbor()->is_participle() || $node->get_right_neighbor()->is_gerund())))
         {
-            # We assume that the "auxiliary" verb is attached to an infinitive
-            # which in fact should depend on the "auxiliary" (as xcomp).
-            # We further assume (although it is not guaranteed) that all other
-            # aux dependents of that infinitive are real auxiliaries.
-            # If there were other spurious auxiliaries, it would matter
-            # in which order we reattach them.
             my $infinitive = $node->parent();
+            # Sometimes there is a preposition between the pseudo-auxiliary and the infinitive, sometimes not.
             my $preposition;
             my @prepositions = grep {$_->form() =~ m/^a$/i && $_->ord() > $node->ord() && $_->ord() < $infinitive->ord()} ($infinitive->get_children({'ordered' => 1}));
             $preposition = $prepositions[0] if(scalar(@prepositions) >= 1);
@@ -900,53 +879,18 @@ sub fix_auxiliary_verb
             $infinitive->set_parent($node);
             $infinitive->set_deprel('xcomp');
             # Subject, adjuncts and other auxiliaries go up.
-            # Non-subject arguments remain with the infinitive.
-            # Unlike in the normal auxiliary-infinitive pattern, the direct object goes also up because it is the causee.
-            # On the other hand, the preposition "a" before the infinitive belongs to the infinitive.
+            # The preposition between the auxiliary and the infinitive, if present, stays with the infinitive.
+            # Non-subject arguments go up if they occur before the auxiliary or between it and the infinitive.
+            # (Example is the causative auxiliary: volver la a cometer faltas (la belongs to volver, faltas to cometer).)
+            # Non-subject arguments occurring after the infinitive remain with the infinitive.
             my @children = $infinitive->children();
             foreach my $child (@children)
             {
-                if((!defined($preposition) || $child != $preposition) &&
-                   ($child->deprel() =~ m/^(([nc]subj|obj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
-                    $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg'))
-                {
-                    $child->set_parent($node);
-                }
-            }
-            # We also need to change the part-of-speech tag from AUX to VERB.
-            $node->set_tag('VERB');
-            $node->iset()->clear('verbtype');
-        }
-        # Auxiliary modifying a gerund.
-        # Examples: "siguen teniendo" ("they keep having")
-        # "continuó presionando"
-        # The gerund can also be our right neighbor if it is a copula.
-        # Examples: "sigue siendo uno de los hombres" ("stays being one of those men")
-        elsif($node->lemma() =~ m/^(continuar|seguir)$/ &&
-              $node->deprel() =~ m/^aux(:|$)/ &&
-              ($node->parent()->is_gerund() ||
-               defined($node->get_right_neighbor()) && $node->get_right_neighbor()->deprel() =~ m/^cop(:|$)/ && $node->get_right_neighbor()->is_gerund()))
-        {
-            # We assume that the "auxiliary" verb is attached to a gerund
-            # which in fact should depend on the "auxiliary" (as xcomp).
-            # We further assume (although it is not guaranteed) that all other
-            # aux dependents of that gerund are real auxiliaries.
-            # If there were other spurious auxiliaries, it would matter
-            # in which order we reattach them.
-            my $gerund = $node->parent();
-            my $parent = $gerund->parent();
-            my $deprel = $gerund->deprel();
-            $node->set_parent($parent);
-            $node->set_deprel($deprel);
-            $gerund->set_parent($node);
-            $gerund->set_deprel('xcomp');
-            # Subject, adjuncts and other auxiliaries go up.
-            # Non-subject arguments remain with the infinitive.
-            my @children = $gerund->children();
-            foreach my $child (@children)
-            {
-                if($child->deprel() =~ m/^(([nc]subj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
-                   $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg')
+                my $child_is_object = $child->deprel() =~ m/^(i?obj)(:|$)/ || $child->deprel() eq 'obl:arg';
+                if($child_is_object && $child->ord() < $infinitive->ord() ||
+                   ($child->deprel() =~ m/^(([nc]subj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
+                    $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg') &&
+                   (!defined($preposition) || $child != $preposition))
                 {
                     $child->set_parent($node);
                 }
