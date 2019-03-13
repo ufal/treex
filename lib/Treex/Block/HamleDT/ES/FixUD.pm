@@ -954,7 +954,7 @@ sub fix_auxiliary_verb
         }
         # Prepositions with infinitives are analyzed in a strange way.
         # Sometimes the infinitive is a content verb and the finite form is a pseudo-auxiliary.
-        elsif($node->lemma() =~ m/^(acabar|colar|comenzar|continuar|dejar|llegar|pasar|tender|tratar)$/ &&
+        elsif($node->lemma() =~ m/^(acabar|colar|comenzar|continuar|dejar|llegar|pasar|tender|terminar|tratar)$/ &&
               $node->deprel() =~ m/^aux(:|$)/ &&
               ($node->parent()->is_infinitive() || $node->parent()->is_gerund() || $node->parent()->is_participle()) &&
               defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^(a|de)$/i)
@@ -986,7 +986,7 @@ sub fix_auxiliary_verb
         # Sometimes the infinitive is a pseudo-auxiliary.
         # Examples: "para evitar que el Congresillo designe..." ("to prevent the Congress from designating...")
         # "tras indicar que ... sitúa" ("after indicating that ... situates")
-        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->is_infinitive() && $node->lemma() =~ m/^(evitar|impedir|indicar)$/ &&
+        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->is_infinitive() && $node->lemma() =~ m/^(evitar|impedir|indicar|reclamar)$/ &&
               defined($node->get_left_neighbor()) && $node->get_left_neighbor()->form() =~ m/^(para|tras)$/i &&
               defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^que$/i)
         {
@@ -1008,7 +1008,7 @@ sub fix_auxiliary_verb
         # Some pseudo-auxiliaries take finite clauses as complements.
         # Note: this was the case also in the previous block but that was a special case where the auxiliary was in a "para infinitive" form.
         # Examples: "evitar que se repitan los errores" ("prevent that the errors are repeated")
-        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->lemma() =~ m/^(evitar|impedir|indicar)$/ &&
+        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->lemma() =~ m/^(evitar|impedir|indicar|reclamar)$/ &&
               defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^que$/i)
         {
             my $complement = $node->parent();
