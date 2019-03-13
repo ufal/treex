@@ -868,12 +868,13 @@ sub fix_auxiliary_verb
         # Causative auxiliary modifying an infinitive.
         # Examples: "volverla a calentar" ("return her to warming")
         #   "hacerle cometer faltas" ("make him commit faults")
+        #   "no se deje asustar" ("does not let himself to get scared")
         # Similarly-looking pattern: "quedarse paralizados" ("stay paralyzed")
         # Here we have a participle instead of infinitive, and the auxiliary has
         # an "object" only because of the reflexive "se".
         elsif($node->deprel() =~ m/^aux(:|$)/ &&
               ($node->parent()->is_infinitive() || $node->parent()->is_participle()) &&
-              $node->lemma() =~ m/^(hacer|preguntar|quedar|sufrir|volver)$/)
+              $node->lemma() =~ m/^(dejar|hacer|preguntar|quedar|sufrir|volver)$/)
         {
             # We assume that the "auxiliary" verb is attached to an infinitive
             # which in fact should depend on the "auxiliary" (as xcomp).
@@ -918,9 +919,11 @@ sub fix_auxiliary_verb
         }
         # Auxiliary modifying a gerund.
         # Examples: "siguen teniendo" ("they keep having")
+        # "continuó presionando"
         # The gerund can also be our right neighbor if it is a copula.
         # Examples: "sigue siendo uno de los hombres" ("stays being one of those men")
-        elsif($node->lemma() =~ m/^(seguir)$/ && $node->deprel() =~ m/^aux(:|$)/ &&
+        elsif($node->lemma() =~ m/^(continuar|seguir)$/ &&
+              $node->deprel() =~ m/^aux(:|$)/ &&
               ($node->parent()->is_gerund() ||
                defined($node->get_right_neighbor()) && $node->get_right_neighbor()->deprel() =~ m/^cop(:|$)/ && $node->get_right_neighbor()->is_gerund()))
         {
@@ -954,7 +957,7 @@ sub fix_auxiliary_verb
         }
         # Prepositions with infinitives are analyzed in a strange way.
         # Sometimes the infinitive is a content verb and the finite form is a pseudo-auxiliary.
-        elsif($node->lemma() =~ m/^(acabar|colar|comenzar|continuar|dejar|llegar|pasar|tender|terminar|tratar)$/ &&
+        elsif($node->lemma() =~ m/^(acabar|colar|comenzar|continuar|dejar|empezar|llegar|pasar|tender|terminar|tratar)$/ &&
               $node->deprel() =~ m/^aux(:|$)/ &&
               ($node->parent()->is_infinitive() || $node->parent()->is_gerund() || $node->parent()->is_participle()) &&
               defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^(a|de)$/i)
@@ -985,10 +988,12 @@ sub fix_auxiliary_verb
         # Prepositions with infinitives are analyzed in a strange way.
         # Sometimes the infinitive is a pseudo-auxiliary.
         # Examples: "para evitar que el Congresillo designe..." ("to prevent the Congress from designating...")
+        #   "de ver que ayuda" ("to see that it helps")
         # "tras indicar que ... sitúa" ("after indicating that ... situates")
-        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->is_infinitive() && $node->lemma() =~ m/^(evitar|impedir|indicar|reclamar)$/ &&
-              defined($node->get_left_neighbor()) && $node->get_left_neighbor()->form() =~ m/^(para|tras)$/i &&
-              defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^que$/i)
+        elsif($node->lemma() =~ m/^(añadir|considerar|decir|evitar|impedir|indicar|reclamar|ver)$/ &&
+              $node->deprel() =~ m/^aux(:|$)/ && $node->is_infinitive() &&
+              defined($node->get_left_neighbor()) && $node->get_left_neighbor()->form() =~ m/^(al|de|para|tras)$/i &&
+              defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^(que|:)$/i)
         {
             my $complement = $node->parent();
             $node->set_parent($complement->parent());
@@ -1008,7 +1013,8 @@ sub fix_auxiliary_verb
         # Some pseudo-auxiliaries take finite clauses as complements.
         # Note: this was the case also in the previous block but that was a special case where the auxiliary was in a "para infinitive" form.
         # Examples: "evitar que se repitan los errores" ("prevent that the errors are repeated")
-        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->lemma() =~ m/^(evitar|impedir|indicar|reclamar)$/ &&
+        # "diciendo que le gustaría..." ("saying that they would like...")
+        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->lemma() =~ m/^(decir|evitar|impedir|indicar|reclamar)$/ &&
               defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^que$/i)
         {
             my $complement = $node->parent();
