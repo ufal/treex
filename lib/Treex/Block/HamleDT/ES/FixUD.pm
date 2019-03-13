@@ -856,9 +856,13 @@ sub fix_auxiliary_verb
         #   "sigue siendo uno de los hombres" ("stays being one of those men")
         elsif($node->lemma() =~ m/^(continuar|dejar|hacer|lograr|preguntar|quedar|seguir|soler|sufrir|volver)$/ &&
               $node->deprel() =~ m/^aux(:|$)/ &&
+              $node->parent()->ord() > $node->ord() &&
               ($node->parent()->is_infinitive() || $node->parent()->is_participle() || $node->parent()->is_gerund() ||
                defined($node->get_right_neighbor()) && $node->get_right_neighbor()->deprel() =~ m/^cop(:|$)/ &&
-               ($node->get_right_neighbor()->is_infinitive() || $node->get_right_neighbor()->is_participle() || $node->get_right_neighbor()->is_gerund())))
+               ($node->get_right_neighbor()->is_infinitive() || $node->get_right_neighbor()->is_participle() || $node->get_right_neighbor()->is_gerund())) &&
+              # We must be careful if this clause is a conjunct. We must not cause a conj relation to go right-to-left.
+              ($node->parent()->deprel() !~ m/^conj(:|$)/ || $node->parent()->parent()->ord() < $node->ord())
+             )
         {
             my $infinitive = $node->parent();
             # Sometimes there is a preposition between the pseudo-auxiliary and the infinitive, sometimes not.
