@@ -985,42 +985,29 @@ sub fix_auxiliary_verb
             $node->set_tag('VERB');
             $node->iset()->clear('verbtype');
         }
-        # Prepositions with infinitives are analyzed in a strange way.
-        # Sometimes the infinitive is a pseudo-auxiliary.
-        # Examples: "para evitar que el Congresillo designe..." ("to prevent the Congress from designating...")
+        # Pseudo-auxiliaries that occur with finite clauses.
+        # Examples:
+        #   "para evitar que el Congresillo designe..." ("to prevent the Congress from designating...")
         #   "de ver que ayuda" ("to see that it helps")
-        # "tras indicar que ... sitúa" ("after indicating that ... situates")
-        elsif($node->lemma() =~ m/^(añadir|considerar|decir|evitar|impedir|indicar|reclamar|ver)$/ &&
-              $node->deprel() =~ m/^aux(:|$)/ && $node->is_infinitive() &&
-              defined($node->get_left_neighbor()) && $node->get_left_neighbor()->form() =~ m/^(al|de|para|tras)$/i &&
-              defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^(que|:)$/i)
+        #   "tras indicar que ... sitúa" ("after indicating that ... situates")
+        #   "evitar que se repitan los errores" ("prevent that the errors are repeated")
+        #   "diciendo que le gustaría..." ("saying that they would like...")
+        # Instead of trying to enumerate all wrong lemmas, maybe we could just
+        # list the lemmas that we approve of.
+        # wrong (not exhaustive): $node->lemma() =~ m/^(añadir|considerar|decir|evitar|impedir|indicar|reclamar|ver)$/
+        # correct auxiliaries:    $node->lemma() =~ m/^(ser|estar|haber|ir|tener|deber|poder|saber|querer)$/
+        my $approved_auxiliary = $node->lemma() =~ m/^(ser|estar|haber|ir|tener|deber|poder|saber|querer)$/;
+        if(!$approved_auxiliary && $node->deprel() =~ m/^aux(:|$)/ &&
+           defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^(que|:)$/i &&
+           $node->parent()->ord() > $node->ord())
+           # We also do not need to check that the pseudo-auxiliary is an infinitive with a preposition.
+           # Because there are cases where the pseudo-auxiliary is infinitive or gerund without preposition, and they are processed the same way.
+           # $node->is_infinitive() && defined($node->get_left_neighbor()) && $node->get_left_neighbor()->form() =~ m/^(al|de|para|tras)$/i
         {
             my $complement = $node->parent();
             $node->set_parent($complement->parent());
             $node->set_deprel($complement->deprel());
             # Left siblings of the infinitive should depend on the infinitive. Probably it is just the preposition.
-            my @left = grep {$_->ord() < $node->ord()} ($complement->children());
-            foreach my $l (@left)
-            {
-                $l->set_parent($node);
-            }
-            $complement->set_parent($node);
-            $complement->set_deprel('ccomp');
-            # We also need to change the part-of-speech tag from AUX to VERB.
-            $node->set_tag('VERB');
-            $node->iset()->clear('verbtype');
-        }
-        # Some pseudo-auxiliaries take finite clauses as complements.
-        # Note: this was the case also in the previous block but that was a special case where the auxiliary was in a "para infinitive" form.
-        # Examples: "evitar que se repitan los errores" ("prevent that the errors are repeated")
-        # "diciendo que le gustaría..." ("saying that they would like...")
-        elsif($node->deprel() =~ m/^aux(:|$)/ && $node->lemma() =~ m/^(decir|evitar|impedir|indicar|reclamar)$/ &&
-              defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^que$/i)
-        {
-            my $complement = $node->parent();
-            $node->set_parent($complement->parent());
-            $node->set_deprel($complement->deprel());
-            # Left siblings of the auxiliary should depend on it.
             my @left = grep {$_->ord() < $node->ord()} ($complement->children());
             foreach my $l (@left)
             {
