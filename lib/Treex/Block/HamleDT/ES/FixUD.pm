@@ -482,6 +482,11 @@ sub fix_morphology
             {
                 $node->set_lemma('ser');
             }
+            # Lemma of "hincapié" ("emphasis") should be "hincapié", not "hacer_hincapié".
+            elsif($form eq 'hincapié')
+            {
+                $node->set_lemma('hincapié');
+            }
         }
         # Mark words in foreign scripts.
         my $letters_only = $form;
@@ -923,7 +928,7 @@ sub fix_auxiliary_verb
         #   "evitar que se repitan los errores" ("prevent that the errors are repeated")
         #   "diciendo que le gustaría..." ("saying that they would like...")
         elsif(!$approved_auxiliary && $node->deprel() =~ m/^aux(:|$)/ &&
-           defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^(que|:)$/i &&
+           defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^(que|si|cómo|:)$/i &&
            $node->parent()->ord() > $node->ord() &&
            # We must be careful if this clause is a conjunct. We must not cause a conj relation to go right-to-left.
            ($node->parent()->deprel() !~ m/^conj(:|$)/ || $node->parent()->parent()->ord() < $node->ord()))
