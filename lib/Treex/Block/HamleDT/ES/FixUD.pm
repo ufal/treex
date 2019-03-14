@@ -917,7 +917,9 @@ sub fix_auxiliary_verb
         my $approved_auxiliary = $node->lemma() =~ m/^(ser|estar|haber|ir|tener|deber|poder|saber|querer)$/;
         if(!$approved_auxiliary && $node->deprel() =~ m/^aux(:|$)/ &&
            defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^(que|:)$/i &&
-           $node->parent()->ord() > $node->ord())
+           $node->parent()->ord() > $node->ord() &&
+           # We must be careful if this clause is a conjunct. We must not cause a conj relation to go right-to-left.
+           ($node->parent()->deprel() !~ m/^conj(:|$)/ || $node->parent()->parent()->ord() < $node->ord()))
            # We also do not need to check that the pseudo-auxiliary is an infinitive with a preposition.
            # Because there are cases where the pseudo-auxiliary is infinitive or gerund without preposition, and they are processed the same way.
            # $node->is_infinitive() && defined($node->get_left_neighbor()) && $node->get_left_neighbor()->form() =~ m/^(al|de|para|tras)$/i
