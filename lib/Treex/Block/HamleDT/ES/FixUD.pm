@@ -13,7 +13,7 @@ sub process_atree
     my $root = shift;
     $self->fix_xml_entities($root);
     $self->fix_pos($root);
-#    $self->fix_morphology($root);
+    $self->fix_morphology($root);
     $self->regenerate_upos($root);
     $self->fix_root_punct($root);
     $self->fix_case_mark($root);
