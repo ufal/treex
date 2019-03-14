@@ -854,20 +854,20 @@ sub fix_auxiliary_verb
         # The gerund can also be our right neighbor if it is a copula.
         # Examples:
         #   "sigue siendo uno de los hombres" ("stays being one of those men")
-        elsif($node->lemma() =~ m/^(continuar|dejar|hacer|lograr|preguntar|quedar|seguir|soler|sufrir|volver)$/ &&
+        elsif($node->lemma() =~ m/^(acabar|colar|comenzar|continuar|dejar|empezar|hacer|lograr|llegar|pasar|preguntar|quedar|seguir|soler|sufrir|tender|terminar|tratar|volver)$/ &&
               $node->deprel() =~ m/^aux(:|$)/ &&
               $node->parent()->ord() > $node->ord() &&
-              ($node->parent()->is_infinitive() || $node->parent()->is_participle() || $node->parent()->is_gerund() ||
+              ($node->parent()->is_infinitive() || $node->parent()->is_gerund() || $node->parent()->is_participle() ||
                defined($node->get_right_neighbor()) && $node->get_right_neighbor()->deprel() =~ m/^cop(:|$)/ &&
-               ($node->get_right_neighbor()->is_infinitive() || $node->get_right_neighbor()->is_participle() || $node->get_right_neighbor()->is_gerund())) &&
+               ($node->get_right_neighbor()->is_infinitive() || $node->get_right_neighbor()->is_gerund() || $node->get_right_neighbor()->is_participle())) &&
               # We must be careful if this clause is a conjunct. We must not cause a conj relation to go right-to-left.
               ($node->parent()->deprel() !~ m/^conj(:|$)/ || $node->parent()->parent()->ord() < $node->ord())
              )
         {
             my $infinitive = $node->parent();
             # Sometimes there is a preposition between the pseudo-auxiliary and the infinitive, sometimes not.
-            my $preposition;
-            my @prepositions = grep {$_->form() =~ m/^a$/i && $_->ord() > $node->ord() && $_->ord() < $infinitive->ord()} ($infinitive->get_children({'ordered' => 1}));
+            my $preposition; # a|al|de|del, maybe others?
+            my @prepositions = grep {$_->is_adposition() && $_->ord() > $node->ord() && $_->ord() < $infinitive->ord()} ($infinitive->get_children({'ordered' => 1}));
             $preposition = $prepositions[0] if(scalar(@prepositions) >= 1);
             my $parent = $infinitive->parent();
             my $deprel = $infinitive->deprel();
@@ -895,36 +895,6 @@ sub fix_auxiliary_verb
                    ($child->deprel() =~ m/^(([nc]subj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
                     $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg') &&
                    (!defined($preposition) || $child != $preposition))
-                {
-                    $child->set_parent($node);
-                }
-            }
-            # We also need to change the part-of-speech tag from AUX to VERB.
-            $node->set_tag('VERB');
-            $node->iset()->clear('verbtype');
-        }
-        # Prepositions with infinitives are analyzed in a strange way.
-        # Sometimes the infinitive is a content verb and the finite form is a pseudo-auxiliary.
-        elsif($node->lemma() =~ m/^(acabar|colar|comenzar|continuar|dejar|empezar|llegar|pasar|tender|terminar|tratar)$/ &&
-              $node->deprel() =~ m/^aux(:|$)/ &&
-              ($node->parent()->is_infinitive() || $node->parent()->is_gerund() || $node->parent()->is_participle()) &&
-              defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^(a|de)$/i)
-        {
-            my $infinitive = $node->parent();
-            my $preposition = $node->get_right_neighbor();
-            $node->set_parent($infinitive->parent());
-            $node->set_deprel($infinitive->deprel());
-            $infinitive->set_parent($node);
-            $infinitive->set_deprel('xcomp');
-            # Subject, adjuncts and other auxiliaries go up.
-            # Non-subject arguments remain with the infinitive.
-            my @children = $infinitive->children();
-            foreach my $child (@children)
-            {
-                # The preposition between the auxiliary and the infinitive should stay dependent on the infinitive.
-                if($child != $preposition &&
-                   ($child->deprel() =~ m/^(([nc]subj|advmod|discourse|vocative|aux|mark|cc|punct)(:|$)|obl$)/ ||
-                    $child->deprel() =~ m/^obl:([a-z]+)$/ && $1 ne 'arg'))
                 {
                     $child->set_parent($node);
                 }
