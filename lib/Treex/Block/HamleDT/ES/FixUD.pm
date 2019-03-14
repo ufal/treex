@@ -301,7 +301,7 @@ sub fix_morphology
             $iset->clear('gender', 'number', 'person', 'verbform');
         }
         # The person feature also cannot occur with non-pronominal nouns, adjectives and numerals.
-        if((($iset->is_noun() || $iset->is_adjective()) && !$iset->is_pronoun()) || $iset->is_numeral())
+        if((($iset->is_noun() || $iset->is_adjective()) && !($iset->is_pronoun() || $iset->is_determiner())) || $iset->is_numeral())
         {
             $iset->clear('person');
         }
@@ -476,6 +476,11 @@ sub fix_morphology
             if($iset->is_indicative() && $iset->tense() eq '')
             {
                 $iset->set('mood', 'cnd');
+            }
+            # There was an error in lemma of "FUE" (meaning "was", but the entire sentence was in uppercase).
+            if($form eq 'FUE')
+            {
+                $node->set_lemma('ser');
             }
         }
         # Mark words in foreign scripts.
