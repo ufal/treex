@@ -854,15 +854,21 @@ sub fix_auxiliary_verb
         # The gerund can also be our right neighbor if it is a copula.
         # Examples:
         #   "sigue siendo uno de los hombres" ("stays being one of those men")
-        elsif($node->lemma() =~ m/^(acabar|colar|comenzar|continuar|dejar|empezar|hacer|lograr|llegar|pasar|preguntar|quedar|seguir|soler|sufrir|tender|terminar|tratar|volver)$/ &&
-              $node->deprel() =~ m/^aux(:|$)/ &&
-              $node->parent()->ord() > $node->ord() &&
-              ($node->parent()->is_infinitive() || $node->parent()->is_gerund() || $node->parent()->is_participle() ||
-               defined($node->get_right_neighbor()) && $node->get_right_neighbor()->deprel() =~ m/^cop(:|$)/ &&
-               ($node->get_right_neighbor()->is_infinitive() || $node->get_right_neighbor()->is_gerund() || $node->get_right_neighbor()->is_participle())) &&
-              # We must be careful if this clause is a conjunct. We must not cause a conj relation to go right-to-left.
-              ($node->parent()->deprel() !~ m/^conj(:|$)/ || $node->parent()->parent()->ord() < $node->ord())
-             )
+        # Instead of trying to enumerate all wrong lemmas, maybe we could just
+        # list the lemmas that we approve of.
+        # wrong (not exhaustive): $node->lemma() =~ m/^(añadir|considerar|decir|evitar|impedir|indicar|reclamar|ver)$/
+        # wrong (not exhaustive): $node->lemma() =~ m/^(acabar|colar|comenzar|continuar|dejar|empezar|hacer|lograr|llegar|pasar|preguntar|quedar|seguir|soler|sufrir|tender|terminar|tratar|volver)$/
+        # correct auxiliaries:    $node->lemma() =~ m/^(ser|estar|haber|ir|tener|deber|poder|saber|querer)$/
+        my $approved_auxiliary = $node->lemma() =~ m/^(ser|estar|haber|ir|tener|deber|poder|saber|querer)$/;
+        if(!$approved_auxiliary &&
+           $node->deprel() =~ m/^aux(:|$)/ &&
+           $node->parent()->ord() > $node->ord() &&
+           ($node->parent()->is_infinitive() || $node->parent()->is_gerund() || $node->parent()->is_participle() ||
+            defined($node->get_right_neighbor()) && $node->get_right_neighbor()->deprel() =~ m/^cop(:|$)/ &&
+            ($node->get_right_neighbor()->is_infinitive() || $node->get_right_neighbor()->is_gerund() || $node->get_right_neighbor()->is_participle())) &&
+           # We must be careful if this clause is a conjunct. We must not cause a conj relation to go right-to-left.
+           ($node->parent()->deprel() !~ m/^conj(:|$)/ || $node->parent()->parent()->ord() < $node->ord())
+          )
         {
             my $infinitive = $node->parent();
             # Sometimes there is a preposition between the pseudo-auxiliary and the infinitive, sometimes not.
@@ -910,12 +916,7 @@ sub fix_auxiliary_verb
         #   "tras indicar que ... sitúa" ("after indicating that ... situates")
         #   "evitar que se repitan los errores" ("prevent that the errors are repeated")
         #   "diciendo que le gustaría..." ("saying that they would like...")
-        # Instead of trying to enumerate all wrong lemmas, maybe we could just
-        # list the lemmas that we approve of.
-        # wrong (not exhaustive): $node->lemma() =~ m/^(añadir|considerar|decir|evitar|impedir|indicar|reclamar|ver)$/
-        # correct auxiliaries:    $node->lemma() =~ m/^(ser|estar|haber|ir|tener|deber|poder|saber|querer)$/
-        my $approved_auxiliary = $node->lemma() =~ m/^(ser|estar|haber|ir|tener|deber|poder|saber|querer)$/;
-        if(!$approved_auxiliary && $node->deprel() =~ m/^aux(:|$)/ &&
+        elsif(!$approved_auxiliary && $node->deprel() =~ m/^aux(:|$)/ &&
            defined($node->get_right_neighbor()) && $node->get_right_neighbor()->form() =~ m/^(que|:)$/i &&
            $node->parent()->ord() > $node->ord() &&
            # We must be careful if this clause is a conjunct. We must not cause a conj relation to go right-to-left.
