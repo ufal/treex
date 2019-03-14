@@ -865,6 +865,7 @@ sub fix_auxiliary_verb
         # wrong (not exhaustive): $node->lemma() =~ m/^(acabar|colar|comenzar|continuar|dejar|empezar|hacer|lograr|llegar|pasar|preguntar|quedar|seguir|soler|sufrir|tender|terminar|tratar|volver)$/
         # correct auxiliaries:    $node->lemma() =~ m/^(ser|estar|haber|ir|tener|deber|poder|saber|querer)$/
         my $approved_auxiliary = $node->lemma() =~ m/^(ser|estar|haber|ir|tener|deber|poder|saber|querer)$/;
+        my $approved_copula    = $node->lemma() =~ m/^(ser|estar)$/;
         if(!$approved_auxiliary &&
            $node->deprel() =~ m/^aux(:|$)/ &&
            $node->parent()->ord() > $node->ord() &&
@@ -946,13 +947,19 @@ sub fix_auxiliary_verb
             $node->iset()->clear('verbtype');
         }
         # Copulas other than "ser" and "estar" should not be copulas.
-        elsif($node->lemma() =~ m/^(dejar|encontrar|parecer)$/ &&
+        elsif(!$approved_copula &&
               ($node->deprel() eq 'cop' ||
                $node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_adjective()))
         {
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
             my $deprel = $pnom->deprel();
+            # The nominal predicate may have been attached as a non-clause;
+            # however, now we have definitely a clause.
+            $deprel =~ s/^nsubj/csubj/;
+            $deprel =~ s/^i?obj/ccomp/;
+            $deprel =~ s/^(advmod|obl)/advcl/;
+            $deprel =~ s/^(nmod|amod|appos)/acl/;
             $node->set_parent($parent);
             $node->set_deprel($deprel);
             $pnom->set_parent($node);
