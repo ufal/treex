@@ -947,9 +947,10 @@ sub fix_auxiliary_verb
             $node->iset()->clear('verbtype');
         }
         # Copulas other than "ser" and "estar" should not be copulas.
-        elsif(!$approved_copula &&
-              ($node->deprel() eq 'cop' ||
-               $node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_adjective()))
+        elsif((!$approved_copula && $node->deprel() =~ m/^cop(:|$)/ ||
+               !$approved_auxiliary && $node->deprel() =~ m/^aux(:|$)/ && $node->parent()->is_adjective()) &&
+              # We must be careful if this clause is a conjunct. We must not cause a conj relation to go right-to-left.
+              ($node->parent()->deprel() !~ m/^conj(:|$)/ || $node->parent()->parent()->ord() < $node->ord()))
         {
             my $pnom = $node->parent();
             my $parent = $pnom->parent();
