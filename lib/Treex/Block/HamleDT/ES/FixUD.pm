@@ -627,7 +627,11 @@ sub fix_specific_constructions
         {
             my @children = $node->get_children({'ordered' => 1});
             my @verbs = grep {$_->is_verb()} (@children);
-            if(scalar(@verbs) >= 1)
+            # One exception where "como" should actually head the sentence is
+            # when "como" is a nominal predicate:
+            # "No sé, como está Raúl." lit. "Not I-know, how is Raúl."
+            my @copulas = grep {$_->deprel() =~ m/^cop(:|$)/} (@verbs);
+            if(scalar(@verbs) >= 1 && scalar(@copulas) == 0)
             {
                 my $verb = $verbs[0];
                 # We could now check for the presence of "si" under the verb but would its absence change anything?
