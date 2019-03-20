@@ -8,6 +8,7 @@ use Treex::Tool::Coreference::Utils;
 use Treex::Tool::Tagger::MorphoDiTa;
 use List::Util qw/sum/;
 use List::MoreUtils qw/uniq/;
+use Treex::Tool::Python::RunFunc;
 
 has 'target' => (
     is            => 'ro',
@@ -20,6 +21,13 @@ has 'language' => ( is => 'ro', isa => 'Str', required => 1 );
 has 'selector' => ( is => 'ro', isa => 'Str', default => '' );
 has 'all_classes' => ( is => 'ro', isa => 'ArrayRef[Str]', builder => 'build_all_classes', lazy => 1 );
 has 'weka_featlist' => ( is => 'ro', isa => 'ArrayRef[ArrayRef[Str]]', builder => 'build_weka_featlist', lazy => 1 );
+has 'kenlm_model' => ( is => 'ro', isa => 'Str', default => '/home/straka/students/naplava/kenlm-cs-syn_v4/cs-syn_v4_5.bin' );
+has '_kenlm_python' => ( is => 'ro', builder => '_build_kenlm_python', lazy => 1 );
+
+sub BUILD {
+    my ($self) = @_;
+    $self->_kenlm_python;
+}
 
 sub build_all_classes {
     my ($self) = @_;
@@ -288,8 +296,29 @@ sub build_weka_featlist {
       ["readability^coleman_liau_index",          "NUMERIC"],
       ["readability^automated_readability_index", "NUMERIC"],
 
+    # KENLM FEATS
+      ["kenlm^sent_beos_avg_logprob",       "NUMERIC"],
+      ["kenlm^sent_avg_logprob",            "NUMERIC"],
+      ["kenlm^text_beos_avg_logprob",       "NUMERIC"],
+      ["kenlm^text_avg_logprob",            "NUMERIC"],
+
     ];
     return [ grep {$self->filter_namespace($_->[0])} @$weka_feats_types ];
+}
+
+my $KENLM_PYTHON_INTRO = <<KENLM;
+import kenlm
+import sys
+print >> sys.stderr, "Loading KenLM model..."
+model = kenlm.LanguageModel("%s")
+KENLM
+
+sub _build_kenlm_python {
+    my ($self) = @_;
+    my $python = Treex::Tool::Python::RunFunc->new();
+    my $cmd = sprintf $KENLM_PYTHON_INTRO, $self->kenlm_model;
+    $python->command($cmd);
+    return $python;
 }
 
 ############################################ MAIN FEATURE EXTRACTING METHODS ############################################
@@ -375,8 +404,20 @@ sub create_feat_hash {
     my $feats_coreference = $self->features_coreference($doc);
     my $feats_tfa = $self->features_tfa($doc);
     my $feats_readability = $self->features_readability($doc);
+    my $feats_kenlm = $self->features_kenlm($doc);
 
-    my %all_feats_hash = ( %$feats_spelling, %$feats_morphology, %$feats_vocabulary, %$feats_syntax, %$feats_connectives_quantity, %$feats_connectives_diversity, %$feats_coreference, %$feats_tfa, %$feats_readability );
+    my %all_feats_hash = (
+        %$feats_spelling,
+        %$feats_morphology,
+        %$feats_vocabulary,
+        %$feats_syntax,
+        %$feats_connectives_quantity,
+        %$feats_connectives_diversity,
+        %$feats_coreference,
+        %$feats_tfa,
+        %$feats_readability,
+        %$feats_kenlm,
+    );
     return \%all_feats_hash;
 }
 
@@ -1601,6 +1642,37 @@ sub features_readability {
     return \%feats;
 }
 
+#------------------------------- KenLM features ------------------------
+sub features_kenlm {
+    my ($self, $doc) = @_;
+    my %feats = ();
+
+    my @atrees = map {$_->get_tree($self->language, 'a', $self->selector)} $doc->get_bundles;
+    my $token_count = 0;
+    my $full_text = "";
+    my $sent_beos_avg_logprob = 0;
+    my $sent_avg_logprob = 0;
+    foreach my $atree (@atrees) {
+        my @anodes = $atree->get_descendants({ordered => 1});
+        my $sent = join " ", map {$_->form} @anodes;
+        $sent =~ s/"/\\"/g;
+        $sent_beos_avg_logprob += $self->_kenlm_python->command(sprintf 'print model.score("%s")', $sent) / (scalar @anodes + 1);
+        $sent_avg_logprob += $self->_kenlm_python->command(sprintf 'print model.score("%s", bos=False, eos=False)', $sent) / scalar @anodes;
+        $full_text .= "$sent ";
+        $token_count += scalar @anodes;
+    }
+    $full_text =~ s/ +$//;
+
+    my $text_beos_avg_logprob = $self->_kenlm_python->command(sprintf 'print model.score("%s")', $full_text);
+    my $text_avg_logprob = $self->_kenlm_python->command(sprintf 'print model.score("%s", bos=False, eos=False)', $full_text);
+
+    $feats{'kenlm^sent_beos_avg_logprob'} = sprintf "%.2f", 10**($sent_beos_avg_logprob / (scalar @atrees + 1)) * 10000;
+    $feats{'kenlm^sent_avg_logprob'} = sprintf "%.2f", 10**($sent_avg_logprob / scalar @atrees) * 10000;
+    $feats{'kenlm^text_beos_avg_logprob'} = sprintf "%.2f", 10**($text_beos_avg_logprob / ($token_count + 1)) * 10000;
+    $feats{'kenlm^text_avg_logprob'} = sprintf "%.2f", 10**($text_avg_logprob / $token_count) * 10000;
+
+    return \%feats;
+}
 
 # ==================== supporting functions =======================
 
