@@ -185,6 +185,12 @@ sub fix_morphology
                 $node->iset()->set('prontype', 'ind');
             }
         }
+        # The definiteness feature seems to be relevant for ordinal but not for cardinal numerals.
+        # Yet occasionally a cardinal numeral is tagged as indefinite. Fix it.
+        if($node->is_cardinal())
+        {
+            $node->iset()->clear('definite');
+        }
         # Fix Interset features of conjunctions.
         # The original Lithuanian Multext tagset does not distinguish coordinating and subordinating conjunctions.
         if($node->is_conjunction())
