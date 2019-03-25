@@ -94,7 +94,8 @@ sub convert_deprels
         # Nouns attached as cop should in fact be nsubj (they are subjects of nonverbal predicates in sentences where copula is missing).
         # The same holds for pronouns, such as "alles" ("everything"). In general pronouns can be copulas, but not in German.
         # (In Interset, is_noun() will catch pronouns as well.)
-        if($node->is_noun() && $node->deprel() eq 'cop')
+        # Another case is "ein" ("one") but it is tagged as determiner, not pronoun.
+        if(($node->is_noun() || $node->lemma() eq 'ein') && $node->deprel() eq 'cop')
         {
             $deprel = 'nsubj';
             $node->set_deprel($deprel);
