@@ -92,7 +92,7 @@ sub convert_deprels
                 $child->set_parent($node);
             }
         }
-        elsif($node->form() =~ m/es$/i && $node->parent()->ord() < $node->ord() && $node->parent()->lemma() eq 'etwas')
+        elsif($node->form() =~ m/es$/i && !$node->parent()->is_root() && $node->parent()->ord() < $node->ord() && $node->parent()->lemma() eq 'etwas')
         {
             $node->set_deprel('nmod');
             # Some instances have even a bad tag, such as PROPN or ADJ.
