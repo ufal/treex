@@ -73,6 +73,34 @@ sub convert_deprels
             $deprel = 'det';
             $node->set_deprel($deprel);
         }
+        # The pattern "etwas *es" (e.g. "etwas Besseres") is annotated inconsistently.
+        # We make "etwas" always the head.
+        if($node->lemma() eq 'etwas' && $node->parent()->ord() > $node->ord() && $node->parent()->form() =~ m/es$/i)
+        {
+            my $noun = $node->parent();
+            $node->set_parent($noun->parent());
+            $node->set_deprel($noun->deprel());
+            $noun->set_parent($node);
+            $noun->set_deprel('nmod');
+            # Some instances have even a bad tag, such as PROPN or ADJ.
+            $noun->set_tag('NOUN');
+            $noun->iset()->set('pos' => 'noun');
+            $noun->iset()->set('nountype' => 'com');
+            $noun->iset()->set('gender' => 'neut');
+            foreach my $child ($noun->children())
+            {
+                $child->set_parent($node);
+            }
+        }
+        elsif($node->form() =~ m/es$/i && $node->parent()->ord() < $node->ord() && $node->parent()->lemma() eq 'etwas')
+        {
+            $node->set_deprel('nmod');
+            # Some instances have even a bad tag, such as PROPN or ADJ.
+            $node->set_tag('NOUN');
+            $node->iset()->set('pos' => 'noun');
+            $node->iset()->set('nountype' => 'com');
+            $node->iset()->set('gender' => 'neut');
+        }
         # In "auch wenn", "wenn" is 'mark' or 'cc' and "auch" is wrongly attached as 'advmod' to "wenn".
         if($node->deprel() =~ m/^advmod(:|$)/ && $parent->deprel() =~ m/^(cc|mark)(:|$)/)
         {
