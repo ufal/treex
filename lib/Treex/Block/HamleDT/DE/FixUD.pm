@@ -87,6 +87,7 @@ sub convert_deprels
             $noun->iset()->set('pos' => 'noun');
             $noun->iset()->set('nountype' => 'com');
             $noun->iset()->set('gender' => 'neut');
+            $noun->iset()->set('number' => 'sing');
             foreach my $child ($noun->children())
             {
                 $child->set_parent($node);
@@ -100,6 +101,7 @@ sub convert_deprels
             $node->iset()->set('pos' => 'noun');
             $node->iset()->set('nountype' => 'com');
             $node->iset()->set('gender' => 'neut');
+            $noun->iset()->set('number' => 'sing');
         }
         # In "auch wenn", "wenn" is 'mark' or 'cc' and "auch" is wrongly attached as 'advmod' to "wenn".
         if($node->deprel() =~ m/^advmod(:|$)/ && $parent->deprel() =~ m/^(cc|mark)(:|$)/)
