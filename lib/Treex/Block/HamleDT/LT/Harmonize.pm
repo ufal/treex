@@ -23,6 +23,10 @@ sub process_zone
     my $self = shift;
     my $zone = shift;
     my $root = $self->SUPER::process_zone($zone);
+    # HamleDT::Harmonize will call methods of this block in the following order:
+    # - fix_morphology() ... called after converting the tags to Interset
+    # - convert_deprels()
+    # - fix_annotation_errors()
     return;
 }
 
@@ -223,6 +227,13 @@ sub fix_morphology
             {
                 $node->iset()->set('conjtype', 'sub');
             }
+        }
+        # All abbreviations (original tag 'Ys') have unknown part of speech.
+        # The abbreviation of "metus" ("year") should be noun. Later when we
+        # convert from Prague to UD, it will help us to choose 'obl' instead of 'advmod'.
+        if($node->lemma() =~ m/^m\.?$/ && $node->is_abbreviation() && $node->iset()->pos() eq '')
+        {
+            $node->iset()->set('pos', 'noun');
         }
     }
 }
