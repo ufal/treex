@@ -340,7 +340,7 @@ sub fix_morphology
         if($iset->prontype() ne '' && !$iset->is_article())
         {
             # Figure out the type of pronoun.
-            if($form =~ m/^(yo|me|mí|nosotros|nos|tú|te|ti|vosotros|vos|os|usted|ustedes|él|ella|ello|le|lo|la|ellos|ellas|les|los|las|se)$/i)
+            if($form =~ m/^(yo|me|mí|conmigo|nosotros|nos|tú|te|ti|contigo|vosotros|vos|os|usted|ustedes|él|ella|ello|le|lo|la|ellos|ellas|les|los|las|se|sí|consigo)$/i)
             {
                 $iset->set('prontype', 'prs');
                 # For some reason, the second person plural pronouns have wrong lemmas (os:os, vos:vo, vosotros:vosotro).
