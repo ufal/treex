@@ -542,8 +542,10 @@ sub fix_morphology
             }
             # Auxiliary verb must be tagged AUX, not VERB.
             # Copula must be tagged AUX, not VERB.
-            if($lemma =~ m/^(ser|estar|haber|tener|ir|poder|saber|querer|deber)$/ && $node->deprel() =~ m/^aux(:|$)/ ||
-               $lemma =~ m/^(ser|estar)$/ && $node->deprel() =~ m/^cop(:|$)/)
+            # In lemmatized treebanks we want to do this only for approved auxiliary verbs.
+            # However, we want it to work in unlemmatized treebanks too, so we add '_' as an approved lemma.
+            if($lemma =~ m/^(ser|estar|haber|tener|ir|poder|saber|querer|deber|_)$/ && $node->deprel() =~ m/^aux(:|$)/ ||
+               $lemma =~ m/^(ser|estar|_)$/ && $node->deprel() =~ m/^cop(:|$)/)
             {
                 $node->set_tag('AUX');
                 $node->iset()->set('verbtype', 'aux');
