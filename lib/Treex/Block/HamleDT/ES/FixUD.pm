@@ -540,8 +540,10 @@ sub fix_morphology
                 $lemma = $form_to_lemma{lc($form)};
                 $node->set_lemma($lemma);
             }
+            # Auxiliary verb must be tagged AUX, not VERB.
             # Copula must be tagged AUX, not VERB.
-            if($lemma =~ m/^(ser|estar)$/ && $node->deprel() =~ m/^cop(:|$)/)
+            if($lemma =~ m/^(ser|estar|haber|tener|ir|poder|saber|querer|deber)$/ && $node->deprel() =~ m/^aux(:|$)/ ||
+               $lemma =~ m/^(ser|estar)$/ && $node->deprel() =~ m/^cop(:|$)/)
             {
                 $node->set_tag('AUX');
                 $node->iset()->set('verbtype', 'aux');
