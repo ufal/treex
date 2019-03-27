@@ -12,7 +12,6 @@ sub process_atree
     my $self = shift;
     my $root = shift;
     $self->fix_xml_entities($root);
-    $self->fix_pos($root);
     $self->fix_morphology($root);
     $self->regenerate_upos($root);
     $self->fix_root_punct($root);
@@ -61,10 +60,9 @@ sub fix_xml_entities
 
 
 #------------------------------------------------------------------------------
-# Fixes known errors in part-of-speech tags. These errors were found when lists
-# of words in closed categories were inspected.
+# Fixes known errors in lemmas, part-of-speech tags and morphological features.
 #------------------------------------------------------------------------------
-sub fix_pos
+sub fix_morphology
 {
     my $self = shift;
     my $root = shift;
@@ -272,23 +270,8 @@ sub fix_pos
             $iset->set('pos', 'sym');
             $iset->clear('gender', 'number', 'case', 'degree', 'prontype', 'numtype', 'poss', 'reflex', 'verbform', 'mood', 'tense', 'person');
         }
-    } # foreach node
-}
-
-
-
-#------------------------------------------------------------------------------
-# Fixes known issues in features.
-#------------------------------------------------------------------------------
-sub fix_morphology
-{
-    my $self = shift;
-    my $root = shift;
-    my @nodes = $root->get_descendants({ordered => 1});
-    foreach my $node (@nodes)
-    {
-        my $form = $node->form();
-        my $iset = $node->iset();
+        #----------------------------------------------------------------------
+        # Check compatibility of features with part of speech.
         # The common gender should not be used in Spanish.
         # It should be empty, which means any gender, which in case of Spanish is masculine or feminine.
         if($iset->is_common_gender())
@@ -462,7 +445,7 @@ sub fix_morphology
         {
             $iset->set('degree', 'cmp');
         }
-        # Fix verbal features.
+        # Fix verbs including auxiliaries.
         if($iset->is_verb())
         {
             # Every verb has a verbform. Those that do not have any verbform yet, are probably finite.
@@ -477,15 +460,24 @@ sub fix_morphology
             {
                 $iset->set('mood', 'cnd');
             }
-            # There was an error in lemma of "FUE" (meaning "was", but the entire sentence was in uppercase).
-            if($form eq 'FUE')
+            # There are occasional errors in lemmatization.
+            # The following hash maps lowercased forms to lemmas (assuming we know it is a verb).
+            my %form_to_lemma =
+            (
+                'fue' => 'ser',
+                'habéis' => 'haber',
+                'hincapié' => 'hincapié', # not 'hacer_hincapié'
+                'podía' => 'poder',
+                'podra' => 'podrir', # but probably it is a typo and it should have been 'podrá', future of 'poder'
+                'podréis' => 'poder',
+                'tenéis' => 'tener',
+                'vuelve' => 'volver',
+                'vuelvo' => 'volver'
+            );
+            my $lemma = $node->lemma();
+            if($lemma !~ m/r$/ && exists($form_to_lemma{lc($form)}))
             {
-                $node->set_lemma('ser');
-            }
-            # Lemma of "hincapié" ("emphasis") should be "hincapié", not "hacer_hincapié".
-            elsif($form eq 'hincapié')
-            {
-                $node->set_lemma('hincapié');
+                $node->set_lemma($form_to_lemma{lc($form)});
             }
         }
         # Mark words in foreign scripts.
@@ -497,7 +489,7 @@ sub fix_morphology
         {
             $iset->set('foreign', 'fscript');
         }
-    }
+    } # foreach node
 }
 
 
