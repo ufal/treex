@@ -505,7 +505,7 @@ sub fix_morphology
                 'podras' => 'poder',
                 'podre' => 'poder', # should be "podré"
                 'podréis' => 'poder',
-                'podriaí' => 'poder',
+                'podriaís' => 'poder',
                 'podrían' => 'poder',
                 'pudiéndo' => 'poder', # should be "pudiendo"
                 'pudiera' => 'poder',
@@ -528,6 +528,7 @@ sub fix_morphology
                 'tenia' => 'tener', # should be "tenía"
                 'terminó' => 'terminar',
                 'tuve' => 'tener',
+                'vino' => 'venir',
                 'volví' => 'volver',
                 'volvi' => 'volver',
                 'vuelve' => 'volver',
@@ -536,7 +537,14 @@ sub fix_morphology
             my $lemma = $node->lemma();
             if($lemma !~ m/r$/ && exists($form_to_lemma{lc($form)}))
             {
-                $node->set_lemma($form_to_lemma{lc($form)});
+                $lemma = $form_to_lemma{lc($form)};
+                $node->set_lemma($lemma);
+            }
+            # Copula must be tagged AUX, not VERB.
+            if($lemma =~ m/^(ser|estar)$/ && $node->deprel() =~ m/^cop(:|$)/)
+            {
+                $node->set_tag('AUX');
+                $node->iset()->set('verbtype', 'aux');
             }
         }
         # Mark words in foreign scripts.
