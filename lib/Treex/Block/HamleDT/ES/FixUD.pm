@@ -936,8 +936,9 @@ sub fix_auxiliary_verb
         # wrong (not exhaustive): $node->lemma() =~ m/^(añadir|considerar|decir|evitar|impedir|indicar|reclamar|ver)$/
         # wrong (not exhaustive): $node->lemma() =~ m/^(acabar|colar|comenzar|continuar|dejar|empezar|hacer|lograr|llegar|pasar|preguntar|quedar|seguir|soler|sufrir|tender|terminar|tratar|volver)$/
         # correct auxiliaries:    $node->lemma() =~ m/^(ser|estar|haber|ir|tener|deber|poder|saber|querer)$/
-        my $approved_auxiliary = $node->lemma() =~ m/^(ser|estar|haber|ir|tener|deber|poder|saber|querer)$/;
-        my $approved_copula    = $node->lemma() =~ m/^(ser|estar)$/;
+        # We must also approve the empty lemma '_', otherwise this method would mess up unlemmatized treebanks.
+        my $approved_auxiliary = $node->lemma() =~ m/^(ser|estar|haber|ir|tener|deber|poder|saber|querer|_)$/;
+        my $approved_copula    = $node->lemma() =~ m/^(ser|estar|_)$/;
         # Warn if the lemma does not end in "-r". That could mean that we have
         # a genuine auxiliary which is just wrongly lemmatized (e.g., "habiendo").
         # Of course it could also mean that we have a correct lemma of a non-verb.
