@@ -464,13 +464,32 @@ sub fix_morphology
             # The following hash maps lowercased forms to lemmas (assuming we know it is a verb).
             my %form_to_lemma =
             (
+                'acaba' => 'acabar',
+                'acabo' => 'acabar',
+                'arrepentiréis' => 'arrepentir',
+                'deje' => 'dejar',
+                'dejéis' => 'dejar',
+                'estuve' => 'estar',
                 'fue' => 'ser',
+                'fuera' => 'ser', # subjunctive imperfect; it could be also an adverb!
                 'habéis' => 'haber',
+                'habeis' => 'haber', # should be "habéis"
+                'habiéndo' => 'haber', # should be "habiendo"
                 'hincapié' => 'hincapié', # not 'hacer_hincapié'
                 'podía' => 'poder',
-                'podra' => 'podrir', # but probably it is a typo and it should have been 'podrá', future of 'poder'
+                'podra' => 'poder', # should be "podrá"
+                'podre' => 'poder', # should be "podré"
                 'podréis' => 'poder',
+                'pudiéndo' => 'poder', # should be "pudiendo"
+                'puede' => 'poder',
+                'pueden' => 'poder',
+                'puedes' => 'poder',
+                'serás' => 'ser',
+                'suelo' => 'soler',
+                'tendrian' => 'tener', # should be "tendrían"
                 'tenéis' => 'tener',
+                'tenia' => 'tener', # should be "tenía"
+                'tuve' => 'tener',
                 'vuelve' => 'volver',
                 'vuelvo' => 'volver'
             );
