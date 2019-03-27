@@ -875,6 +875,13 @@ sub fix_auxiliary_verb
         # correct auxiliaries:    $node->lemma() =~ m/^(ser|estar|haber|ir|tener|deber|poder|saber|querer)$/
         my $approved_auxiliary = $node->lemma() =~ m/^(ser|estar|haber|ir|tener|deber|poder|saber|querer)$/;
         my $approved_copula    = $node->lemma() =~ m/^(ser|estar)$/;
+        # Warn if the lemma does not end in "-r". That could mean that we have
+        # a genuine auxiliary which is just wrongly lemmatized (e.g., "habiendo").
+        # Of course it could also mean that we have a correct lemma of a non-verb.
+        if($node->lemma() !~ m/r$/)
+        {
+            log_warn("AUX lemma '".$node->lemma()."' does not look like an infinitive.");
+        }
         if(!$approved_auxiliary &&
            $node->deprel() =~ m/^aux(:|$)/ &&
            $node->parent()->ord() > $node->ord() &&
