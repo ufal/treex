@@ -941,7 +941,7 @@ sub fix_auxiliary_verb
         # Warn if the lemma does not end in "-r". That could mean that we have
         # a genuine auxiliary which is just wrongly lemmatized (e.g., "habiendo").
         # Of course it could also mean that we have a correct lemma of a non-verb.
-        if($node->lemma() !~ m/r$/)
+        if($node->lemma() !~ m/r$/ && $node->lemma() ne '_')
         {
             log_warn("AUX lemma '".$node->lemma()."' of '".$node->form()."' does not look like an infinitive.");
         }
