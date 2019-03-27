@@ -466,30 +466,54 @@ sub fix_morphology
             (
                 'acaba' => 'acabar',
                 'acabo' => 'acabar',
+                'andaba' => 'andar',
                 'arrepentiréis' => 'arrepentir',
+                'continuo' => 'continuar',
                 'deje' => 'dejar',
                 'dejéis' => 'dejar',
+                'dejeis' => 'dejar', # should be "dejéis"
+                'dejo' => 'dejar',
+                'esta' => 'estar', # should be "está"
+                'este' => 'estar', # should be "esté"
+                'estoy' => 'estar',
                 'estuve' => 'estar',
                 'fue' => 'ser',
                 'fuera' => 'ser', # subjunctive imperfect; it could be also an adverb!
+                'fuero' => 'ser',
                 'habéis' => 'haber',
                 'habeis' => 'haber', # should be "habéis"
                 'habiéndo' => 'haber', # should be "habiendo"
+                'haya' => 'haber',
                 'hincapié' => 'hincapié', # not 'hacer_hincapié'
+                'llevo' => 'llevar',
+                'negándo' => 'negar', # should be "negando"
+                'pod' => 'poder',
+                'podeis' => 'poder',
                 'podía' => 'poder',
                 'podra' => 'poder', # should be "podrá"
+                'podrás' => 'poder',
                 'podre' => 'poder', # should be "podré"
                 'podréis' => 'poder',
+                'podriaí' => 'poder',
                 'pudiéndo' => 'poder', # should be "pudiendo"
+                'pudiera' => 'poder',
                 'puede' => 'poder',
                 'pueden' => 'poder',
                 'puedes' => 'poder',
+                'recuerdo' => 'recordar',
+                'seguimo' => 'seguir',
                 'serás' => 'ser',
+                'serán' => 'ser',
+                'seréis' => 'ser',
+                'sigo' => 'seguir',
+                'suelen' => 'soler',
                 'suelo' => 'soler',
                 'tendrian' => 'tener', # should be "tendrían"
                 'tenéis' => 'tener',
+                'tengo' => 'tener',
                 'tenia' => 'tener', # should be "tenía"
                 'tuve' => 'tener',
+                'volví' => 'volver',
                 'vuelve' => 'volver',
                 'vuelvo' => 'volver'
             );
@@ -891,7 +915,7 @@ sub fix_auxiliary_verb
         # Of course it could also mean that we have a correct lemma of a non-verb.
         if($node->lemma() !~ m/r$/)
         {
-            log_warn("AUX lemma '".$node->lemma()."' does not look like an infinitive.");
+            log_warn("AUX lemma '".$node->lemma()."' of '".$node->form()."' does not look like an infinitive.");
         }
         if(!$approved_auxiliary &&
            $node->deprel() =~ m/^aux(:|$)/ &&
