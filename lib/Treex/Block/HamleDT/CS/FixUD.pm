@@ -121,7 +121,8 @@ sub fix_constructions
     # Czech "a to" ("viz.") is a multi-word conjunction. In PDT it is headed by
     # "to", which is a demonstrative pronoun, not conjunction. Transform it and
     # use the 'fixed' relation.
-    if(lc($node->form()) eq 'a' && lc($parent->form()) eq 'to' && $parent->ord() > $node->ord() && $parent->deprel() =~ m/^cc(:|$)/)
+    if(lc($node->form()) eq 'a' && $deprel =~ m/^cc(:|$)/ &&
+       lc($parent->form()) eq 'to' && $parent->deprel() =~ m/^cc(:|$)/ && $parent->ord() > $node->ord())
     {
         my $grandparent = $parent->parent();
         $node->set_parent($grandparent);
